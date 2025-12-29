@@ -103,6 +103,12 @@ The `talosctl images talos-bundle` command now accepts optional `--ovelays` and 
 If those are set to `false`, the command will not attempt to reach out to the container registry to fetch the latest versions and digests of the overlays and extensions.
 """
 
+    [notes.images_k8s_bundle]
+        title = "Talosctl images k8s-bundle subcommand accepts version parameter"
+        description = """\
+The `talosctl images k8s-bundle` command now accepts an optional version overrides arguments.
+"""
+
 [make_deps]
 
     [make_deps.tools]

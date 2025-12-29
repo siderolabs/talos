@@ -339,7 +339,7 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 					DNSServiceIPv6: dnsServiceIPv6,
 
 					FlannelEnabled:         cfgProvider.Cluster().Network().CNI().Name() == constants.FlannelCNI,
-					FlannelImage:           images.Flannel,
+					FlannelImage:           images.Flannel.String(),
 					FlannelExtraArgs:       cfgProvider.Cluster().Network().CNI().Flannel().ExtraArgs(),
 					FlannelKubeServiceHost: flannelKubeServiceHost,
 					FlannelKubeServicePort: flannelKubeServicePort,

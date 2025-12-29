@@ -7,26 +7,25 @@ package images
 import (
 	"fmt"
 
+	"github.com/google/go-containerregistry/pkg/name"
+
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // Versions holds all the images (and their versions) that are used in Talos.
 type Versions struct {
-	Etcd    string
-	Flannel string
-	CoreDNS string
+	Etcd    name.Tag
+	Flannel name.Tag
+	CoreDNS name.Tag
 
-	Kubelet               string
-	KubeAPIServer         string
-	KubeControllerManager string
-	KubeProxy             string
-	KubeScheduler         string
+	Kubelet               name.Tag
+	KubeAPIServer         name.Tag
+	KubeControllerManager name.Tag
+	KubeProxy             name.Tag
+	KubeScheduler         name.Tag
 
-	Installer string
-	Talos     string
-
-	Pause string
+	Pause name.Tag
 }
 
 // DefaultSandboxImage is defined as a constant in cri package of containerd, and it's not exported.
@@ -38,47 +37,121 @@ const DefaultSandboxImage = "registry.k8s.io/pause:3.10.1"
 func List(config config.Config) Versions {
 	var images Versions
 
-	images.Etcd = config.Cluster().Etcd().Image()
-	images.CoreDNS = config.Cluster().CoreDNS().Image()
-	images.Flannel = fmt.Sprintf("ghcr.io/siderolabs/flannel:%s", constants.FlannelVersion) // mirrored from docker.io/flannelcni/flannel
-	images.Kubelet = config.Machine().Kubelet().Image()
-	images.KubeAPIServer = config.Cluster().APIServer().Image()
-	images.KubeControllerManager = config.Cluster().ControllerManager().Image()
-	images.KubeProxy = config.Cluster().Proxy().Image()
-	images.KubeScheduler = config.Cluster().Scheduler().Image()
+	images.Etcd = mustParseTag(config.Cluster().Etcd().Image())
+	images.CoreDNS = mustParseTag(config.Cluster().CoreDNS().Image())
+	images.Flannel = mustParseTag(fmt.Sprintf("ghcr.io/siderolabs/flannel:%s", constants.FlannelVersion)) // mirrored from docker.io/flannelcni/flannel
+	images.Kubelet = mustParseTag(config.Machine().Kubelet().Image())
+	images.KubeAPIServer = mustParseTag(config.Cluster().APIServer().Image())
+	images.KubeControllerManager = mustParseTag(config.Cluster().ControllerManager().Image())
+	images.KubeProxy = mustParseTag(config.Cluster().Proxy().Image())
+	images.KubeScheduler = mustParseTag(config.Cluster().Scheduler().Image())
 
-	images.Installer = DefaultInstallerImage
-	images.Talos = DefaultTalosImage
-
-	images.Pause = DefaultSandboxImage
+	images.Pause = mustParseTag(DefaultSandboxImage)
 
 	return images
 }
 
-// SourceBundle holds the core images (and their versions) that are used to build Talos.
-type SourceBundle struct {
-	Installer     string
-	InstallerBase string
-	Imager        string
-	Talos         string
-	TalosctlAll   string
+// VersionsListOptions allows overriding the default component versions
+// displayed to the user.
+//
+// Any non-empty field value replaces the corresponding default version
+// when presenting available or selected versions. Fields left empty
+// will fall back to their built-in defaults.
+type VersionsListOptions struct {
+	// KubernetesVersion overrides the default Kubernetes version.
+	KubernetesVersion string
 
-	Overlays   string
-	Extensions string
+	// CoreDNSVersion overrides the default CoreDNS version.
+	CoreDNSVersion string
+
+	// EtcdVersion overrides the default etcd version.
+	EtcdVersion string
+
+	// FlannelVersion overrides the default Flannel version.
+	FlannelVersion string
+
+	// PauseVersion overrides the default pause container image version.
+	PauseVersion string
+}
+
+// ListWithOptions returns image versions with overrides.
+func ListWithOptions(config config.Config, opts VersionsListOptions) Versions {
+	images := List(config)
+
+	if opts.CoreDNSVersion != "" {
+		images.CoreDNS = images.CoreDNS.Tag(opts.CoreDNSVersion)
+	}
+
+	if opts.EtcdVersion != "" {
+		images.Etcd = images.Etcd.Tag(opts.EtcdVersion)
+	}
+
+	if opts.FlannelVersion != "" {
+		images.Flannel = images.Flannel.Tag(opts.FlannelVersion)
+	}
+
+	if opts.PauseVersion != "" {
+		images.Pause = images.Pause.Tag(opts.PauseVersion)
+	}
+
+	if opts.KubernetesVersion != "" {
+		images.Kubelet = images.Kubelet.Tag(opts.KubernetesVersion)
+		images.KubeAPIServer = images.KubeAPIServer.Tag(opts.KubernetesVersion)
+		images.KubeControllerManager = images.KubeControllerManager.Tag(opts.KubernetesVersion)
+		images.KubeProxy = images.KubeProxy.Tag(opts.KubernetesVersion)
+		images.KubeScheduler = images.KubeScheduler.Tag(opts.KubernetesVersion)
+	}
+
+	return images
+}
+
+func mustParseTag(s string) name.Tag {
+	r, err := name.ParseReference(s)
+	if err != nil {
+		panic(err)
+	}
+
+	t, ok := r.(name.Tag)
+	if !ok {
+		panic(fmt.Sprintf("%T is not name.Tag: %#+v", r, r))
+	}
+
+	return t
+}
+
+func mustParseReferenceWithTag(ref, tag string) name.Tag {
+	r, err := name.ParseReference(ref)
+	if err != nil {
+		panic(err)
+	}
+
+	return r.Context().Tag(tag)
+}
+
+// TalosBundle holds the core images (and their versions) that are used to build Talos.
+type TalosBundle struct {
+	Installer     name.Tag
+	InstallerBase name.Tag
+	Imager        name.Tag
+	Talos         name.Tag
+	TalosctlAll   name.Tag
+
+	Overlays   name.Tag
+	Extensions name.Tag
 }
 
 // ListSourcesFor returns source bundle for specific version.
-func ListSourcesFor(tag string) SourceBundle {
-	var bundle SourceBundle
+func ListSourcesFor(tag string) TalosBundle {
+	var bundle TalosBundle
 
-	bundle.Installer = DefaultInstallerImageRepository + ":" + tag
-	bundle.InstallerBase = DefaultInstallerBaseImageRepository + ":" + tag
-	bundle.Imager = DefaultImagerImageRepository + ":" + tag
-	bundle.Talos = DefaultTalosImageRepository + ":" + tag
-	bundle.TalosctlAll = DefaultTalosctlAllImageRepository + ":" + tag
+	bundle.Installer = mustParseReferenceWithTag(DefaultInstallerImageRepository, tag)
+	bundle.InstallerBase = mustParseReferenceWithTag(DefaultInstallerBaseImageRepository, tag)
+	bundle.Imager = mustParseReferenceWithTag(DefaultImagerImageRepository, tag)
+	bundle.Talos = mustParseReferenceWithTag(DefaultTalosImageRepository, tag)
+	bundle.TalosctlAll = mustParseReferenceWithTag(DefaultTalosctlAllImageRepository, tag)
 
-	bundle.Overlays = DefaultOverlaysManifestRepository + ":" + tag
-	bundle.Extensions = DefaultExtensionsManifestRepository + ":" + tag
+	bundle.Overlays = mustParseReferenceWithTag(DefaultOverlaysManifestRepository, tag)
+	bundle.Extensions = mustParseReferenceWithTag(DefaultExtensionsManifestRepository, tag)
 
 	return bundle
 }

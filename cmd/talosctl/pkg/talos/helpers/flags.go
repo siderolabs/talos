@@ -8,32 +8,32 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/blang/semver/v4"
 	"github.com/spf13/pflag"
 )
 
-// choiceValue implements the [pflag.Value] interface.
 type choiceValue struct {
 	value    string
 	validate func(string) error
 }
 
-// Set sets the value of the choice.
-func (f *choiceValue) Set(s string) error {
-	err := f.validate(s)
+// Set implements pflag.Value interface.
+func (v *choiceValue) Set(s string) error {
+	err := v.validate(s)
 	if err != nil {
 		return err
 	}
 
-	f.value = s
+	v.value = s
 
 	return nil
 }
 
-// Type returns the type of the choice, which must be "string" for [pflag.FlagSet.GetString].
-func (f *choiceValue) Type() string { return "string" }
+// Type implements pflag.Value interface.
+func (v *choiceValue) Type() string { return "string" }
 
-// String returns the current value of the choice.
-func (f *choiceValue) String() string { return f.value }
+// String implements pflag.Value interface.
+func (v *choiceValue) String() string { return v.value }
 
 // StringChoice returns a [choiceValue] that validates the value against a set
 // of choices. Only the last value will be used if multiple values are set.
@@ -49,5 +49,56 @@ func StringChoice(defaultValue string, otherChoices ...string) pflag.Value {
 
 			return fmt.Errorf("must be one of %v", choices)
 		},
+	}
+}
+
+type semverValue struct {
+	value      semver.Version
+	validators []SemverValidateFunc
+}
+
+// SemverValidateFunc allows setting restrictions on the version.
+type SemverValidateFunc func(v semver.Version) error
+
+// Set implements pflag.Value interface.
+func (v *semverValue) Set(s string) error {
+	vers, err := semver.ParseTolerant(s)
+	if err != nil {
+		return err
+	}
+
+	for _, validator := range v.validators {
+		if err := validator(vers); err != nil {
+			return err
+		}
+	}
+
+	v.value = vers
+
+	return nil
+}
+
+// Type implements pflag.Value interface.
+func (v *semverValue) Type() string { return "semver" }
+
+// String implements pflag.Value interface.
+func (v *semverValue) String() string { return "v" + v.value.String() }
+
+// Semver returns a pflag.Value that parses and stores a semantic version.
+//
+// Parsing is performed using semver.ParseTolerant. After parsing, any provided
+// SemverValidateFunc validators are applied in order and may reject the version.
+//
+// The returned value is initialized with defaultValue, which is used until Set
+// is called successfully.
+func Semver(defaultValue string, validators ...SemverValidateFunc) pflag.Value {
+	v, err := semver.ParseTolerant(defaultValue)
+	if err != nil {
+		panic(err)
+	}
+
+	return &semverValue{
+		value:      v,
+		validators: validators,
 	}
 }
