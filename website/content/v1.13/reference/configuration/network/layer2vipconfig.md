@@ -20,7 +20,7 @@ title: Layer2VIPConfig
 {{< highlight yaml >}}
 apiVersion: v1alpha1
 kind: Layer2VIPConfig
-name: int0 # IP address to be advertised as a Layer 2 VIP.
+name: 10.3.0.1 # IP address to be advertised as a Layer 2 VIP.
 link: enp0s2 # Name of the link to assign the VIP to.
 {{< /highlight >}}
 
