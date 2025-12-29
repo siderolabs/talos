@@ -84,7 +84,7 @@ func NewLayer2VIPConfigV1Alpha1(name string) *Layer2VIPConfigV1Alpha1 {
 
 func exampleLayer2VIPConfigV1Alpha1() *Layer2VIPConfigV1Alpha1 {
 	cfg := NewLayer2VIPConfigV1Alpha1("int0")
-	cfg.LinkName = "enp0s2"
+	cfg.LinkName = "10.3.0.1"
 
 	return cfg
 }
