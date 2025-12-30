@@ -27,7 +27,7 @@ EMBED_TARGET ?= embed
 TOOLS_PREFIX ?= ghcr.io/siderolabs/tools
 TOOLS ?= v1.13.0-alpha.0-6-g896f8b9
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.13.0-alpha.0-24-g972f44d
+PKGS ?= v1.13.0-alpha.0-27-ga220898
 GENERATE_VEX_PREFIX ?= ghcr.io/siderolabs/generate-vex
 GENERATE_VEX ?= latest
 
@@ -53,6 +53,7 @@ PKG_IPXE ?= $(PKGS_PREFIX)/ipxe:$(PKGS)
 PKG_KERNEL ?= $(PKGS_PREFIX)/kernel:$(PKGS)
 PKG_KMOD ?= $(PKGS_PREFIX)/kmod:$(PKGS)
 PKG_LIBAIO ?= $(PKGS_PREFIX)/libaio:$(PKGS)
+PKG_LIBARCHIVE ?= $(PKGS_PREFIX)/libarchive:$(PKGS)
 PKG_LIBATTR ?= $(PKGS_PREFIX)/libattr:$(PKGS)
 PKG_LIBBURN ?= $(PKGS_PREFIX)/libburn:$(PKGS)
 PKG_LIBCAP ?= $(PKGS_PREFIX)/libcap:$(PKGS)
@@ -205,6 +206,7 @@ COMMON_ARGS += --build-arg=PKG_IPXE=$(PKG_IPXE)
 COMMON_ARGS += --build-arg=PKG_KERNEL=$(PKG_KERNEL)
 COMMON_ARGS += --build-arg=PKG_KMOD=$(PKG_KMOD)
 COMMON_ARGS += --build-arg=PKG_LIBAIO=$(PKG_LIBAIO)
+COMMON_ARGS += --build-arg=PKG_LIBARCHIVE=$(PKG_LIBARCHIVE)
 COMMON_ARGS += --build-arg=PKG_LIBATTR=$(PKG_LIBATTR)
 COMMON_ARGS += --build-arg=PKG_LIBBURN=$(PKG_LIBBURN)
 COMMON_ARGS += --build-arg=PKG_LIBCAP=$(PKG_LIBCAP)
@@ -430,6 +432,7 @@ image-%: ## Builds the specified image. Valid options are aws, azure, digital-oc
 		arch=$$(basename "$${platform}") && \
 		docker run --rm -t \
 			--network=host \
+			--user $(shell id -u):$(shell id -g) \
 			-v $(PWD)/$(ARTIFACTS):/secureboot:ro \
 			-v $(PWD)/$(ARTIFACTS):/out \
 			-e GITHUB_TOKEN \
@@ -438,7 +441,7 @@ image-%: ## Builds the specified image. Valid options are aws, azure, digital-oc
 			$(REGISTRY_AND_USERNAME)/imager:$(IMAGE_TAG_IN) $* \
 			--arch $$arch \
 			--base-installer-image $(REGISTRY_AND_USERNAME)/installer-base:$(IMAGE_TAG_IN) \
-			$(IMAGER_ARGS) ; \
+			$(IMAGER_ARGS) || exit 1 ; \
 	done
 
 .PHONY: images-essential

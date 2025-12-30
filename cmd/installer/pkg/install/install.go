@@ -359,7 +359,7 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 		return fmt.Errorf("failed to create partitions: %w", err)
 	}
 
-	if err := i.formatPartitions(mode, partitionOptions); err != nil {
+	if err := i.formatPartitions(ctx, mode, partitionOptions); err != nil {
 		return fmt.Errorf("failed to format partitions: %w", err)
 	}
 
@@ -549,10 +549,16 @@ func (i *Installer) getBootPartitions(ctx context.Context, mode Mode, bootloader
 		return nil, fmt.Errorf("failed to generate bootloader assets: %w", err)
 	}
 
+	efiPartitionPresent := slices.ContainsFunc(partitionOptions, func(p partition.Options) bool {
+		return p.Label == constants.EFIPartitionLabel && p.SourceDirectory != ""
+	})
+
 	// We need to move out bootloaderOptions.MountPrefix+/boot/EFI to bootloaderOptions.MountPrefix+/EFI otherwise
 	// BOOT partition will be populated with EFI directory inside boot directory.
-	if err := os.Rename(filepath.Join(bootloaderOptions.MountPrefix, constants.EFIMountPoint), filepath.Join(bootloaderOptions.MountPrefix, "EFI")); err != nil {
-		return nil, fmt.Errorf("failed to move EFI directory: %w", err)
+	if efiPartitionPresent {
+		if err := os.Rename(filepath.Join(bootloaderOptions.MountPrefix, constants.EFIMountPoint), filepath.Join(bootloaderOptions.MountPrefix, "EFI")); err != nil {
+			return nil, fmt.Errorf("failed to move EFI directory: %w", err)
+		}
 	}
 
 	return partitionOptions, nil
@@ -645,14 +651,14 @@ func (i *Installer) createPartitions(ctx context.Context, mode Mode, bd *block.D
 // formatPartitions formats the created partitions populating them with filesystems and data as required.
 //
 //nolint:gocyclo
-func (i *Installer) formatPartitions(mode Mode, parts []partition.Options) error {
+func (i *Installer) formatPartitions(ctx context.Context, mode Mode, parts []partition.Options) error {
 	switch mode {
 	case ModeInstall:
 		// format also populates partitions, so we need to make sure source directories are set
 		for idx, p := range parts {
 			devName := partitioning.DevName(i.options.DiskPath, uint(idx+1))
 
-			if err := partition.Format(devName, &p.FormatOptions, i.options.Version, i.options.Printf); err != nil {
+			if err := partition.Format(ctx, devName, &p.FormatOptions, i.options.Version, i.options.Printf); err != nil {
 				return fmt.Errorf("failed to format partition %s: %w", devName, err)
 			}
 		}
@@ -681,7 +687,7 @@ func (i *Installer) formatPartitions(mode Mode, parts []partition.Options) error
 		}
 
 		for idx, p := range parts {
-			if err := i.handlePartitionDataPopulation(idx, p, pt); err != nil {
+			if err := i.handlePartitionDataPopulation(ctx, idx, p, pt); err != nil {
 				return fmt.Errorf("failed to handle partition data population for partition %s: %w", p.Label, err)
 			}
 		}
@@ -697,7 +703,7 @@ func (i *Installer) formatPartitions(mode Mode, parts []partition.Options) error
 }
 
 //nolint:gocyclo
-func (i *Installer) handlePartitionDataPopulation(idx int, p partition.Options, pt *gpt.Table) error {
+func (i *Installer) handlePartitionDataPopulation(ctx context.Context, idx int, p partition.Options, pt *gpt.Table) error {
 	// skip data population for partitions without filesystem ie. partition.FilesystemTypeNone
 	// or zeroed partitions ie. partition.FilesystemTypeZeroes
 	if p.FileSystemType == partition.FilesystemTypeNone || p.FileSystemType == partition.FilesystemTypeZeroes {
@@ -720,7 +726,7 @@ func (i *Installer) handlePartitionDataPopulation(idx int, p partition.Options, 
 		return fmt.Errorf("failed to touch files in source directory %s for partition %s: %w", p.SourceDirectory, p.Label, err)
 	}
 
-	if err := partition.Format(partitionImageFile, &p.FormatOptions, i.options.Version, i.options.Printf); err != nil {
+	if err := partition.Format(ctx, partitionImageFile, &p.FormatOptions, i.options.Version, i.options.Printf); err != nil {
 		return fmt.Errorf("failed to format partition %s: %w", partitionImageFile, err)
 	}
 

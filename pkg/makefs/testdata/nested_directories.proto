@@ -1,0 +1,8 @@
+/
+0 0
+d--755 0 0
+ root.txt ---644 0 0 FILEPATH/root.txt
+ subdir d--755 0 0
+  nested.txt ---644 0 0 FILEPATH/subdir/nested.txt
+ $
+$

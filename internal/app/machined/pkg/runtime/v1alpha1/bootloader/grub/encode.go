@@ -15,7 +15,7 @@ import (
 // Write the grub configuration to the given file.
 func (c *Config) Write(path string, printf func(string, ...any)) error {
 	dir := filepath.Dir(path)
-	if err := os.MkdirAll(dir, os.ModeDir); err != nil {
+	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return err
 	}
 

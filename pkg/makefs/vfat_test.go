@@ -43,7 +43,7 @@ func TestVFATWithSourceDirectory(t *testing.T) {
 	require.NoError(t, f.Close())
 
 	// Format and populate VFAT
-	err = makefs.VFAT(vfatImg, makefs.WithLabel("TEST"), makefs.WithSourceDirectory(sourceDir))
+	err = makefs.VFAT(t.Context(), vfatImg, makefs.WithLabel("TEST"), makefs.WithSourceDirectory(sourceDir))
 	require.NoError(t, err)
 
 	// Verify file contents using mcopy
