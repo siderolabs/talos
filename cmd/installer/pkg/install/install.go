@@ -549,10 +549,16 @@ func (i *Installer) getBootPartitions(ctx context.Context, mode Mode, bootloader
 		return nil, fmt.Errorf("failed to generate bootloader assets: %w", err)
 	}
 
+	efiPartitionPresent := slices.ContainsFunc(partitionOptions, func(p partition.Options) bool {
+		return p.Label == constants.EFIPartitionLabel && p.SourceDirectory != ""
+	})
+
 	// We need to move out bootloaderOptions.MountPrefix+/boot/EFI to bootloaderOptions.MountPrefix+/EFI otherwise
 	// BOOT partition will be populated with EFI directory inside boot directory.
-	if err := os.Rename(filepath.Join(bootloaderOptions.MountPrefix, constants.EFIMountPoint), filepath.Join(bootloaderOptions.MountPrefix, "EFI")); err != nil {
-		return nil, fmt.Errorf("failed to move EFI directory: %w", err)
+	if efiPartitionPresent {
+		if err := os.Rename(filepath.Join(bootloaderOptions.MountPrefix, constants.EFIMountPoint), filepath.Join(bootloaderOptions.MountPrefix, "EFI")); err != nil {
+			return nil, fmt.Errorf("failed to move EFI directory: %w", err)
+		}
 	}
 
 	return partitionOptions, nil

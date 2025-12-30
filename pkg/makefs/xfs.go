@@ -8,8 +8,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"os"
 
 	"github.com/siderolabs/go-cmd/pkg/cmd"
+	"golang.org/x/sys/unix"
 )
 
 const (
@@ -39,6 +42,8 @@ func XFSRepair(partname string) error {
 }
 
 // XFS creates a XFS filesystem on the specified partition.
+//
+//nolint:gocyclo
 func XFS(ctx context.Context, partname string, setters ...Option) error {
 	if partname == "" {
 		return errors.New("missing path to disk")
@@ -66,7 +71,30 @@ func XFS(ctx context.Context, partname string, setters ...Option) error {
 	}
 
 	if opts.SourceDirectory != "" {
-		args = append(args, "-p", fmt.Sprintf("file=%s", opts.SourceDirectory))
+		r, err := GenerateProtofile(opts.SourceDirectory)
+		if err != nil {
+			return fmt.Errorf("failed to generate protofile: %w", err)
+		}
+
+		fd, err := unix.MemfdCreate("protofile", 0)
+		if err != nil {
+			return fmt.Errorf("error creating memfd for protofile: %w", err)
+		}
+
+		protoMemfd := os.NewFile(uintptr(fd), "protofile")
+		defer protoMemfd.Close() //nolint:errcheck
+
+		_, err = io.Copy(protoMemfd, r)
+		if err != nil {
+			return fmt.Errorf("failed to write protofile to memfd: %w", err)
+		}
+
+		// Seek back to the beginning so mkfs.xfs can read from start
+		if _, err := protoMemfd.Seek(0, 0); err != nil {
+			return fmt.Errorf("failed to seek protofile: %w", err)
+		}
+
+		args = append(args, "-p", fmt.Sprintf("file=/proc/self/fd/%d", protoMemfd.Fd()))
 	}
 
 	if opts.Reproducible {

@@ -262,7 +262,7 @@ func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Repor
 		}
 	}
 
-	if err := generator.Generate(); err != nil {
+	if err := generator.Generate(ctx); err != nil {
 		return err
 	}
 

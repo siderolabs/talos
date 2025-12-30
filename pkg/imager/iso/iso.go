@@ -6,6 +6,7 @@
 package iso
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
@@ -61,7 +62,7 @@ type ExecutorOptions struct {
 
 // Generator is an interface for executing the iso generation.
 type Generator interface {
-	Generate() error
+	Generate(ctx context.Context) error
 }
 
 // Options describe the input generating different types of ISOs.
@@ -92,7 +93,7 @@ type Options struct {
 }
 
 // Generate creates an ISO image.
-func (e *ExecutorOptions) Generate() error {
+func (e *ExecutorOptions) Generate(ctx context.Context) error {
 	if epoch, ok, err := utils.SourceDateEpoch(); err != nil {
 		return err
 	} else if ok {
@@ -116,7 +117,7 @@ func (e *ExecutorOptions) Generate() error {
 		)
 	}
 
-	_, err := cmd.Run(e.Command, e.Arguments...)
+	_, err := cmd.RunContext(ctx, e.Command, e.Arguments...)
 	if err != nil {
 		return fmt.Errorf("failed to create ISO: %w", err)
 	}

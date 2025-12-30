@@ -5,6 +5,9 @@
 package makefs_test
 
 import (
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -40,5 +43,23 @@ func TestPartitionGUIDFromLabel(t *testing.T) {
 		t.Run(tt.label, func(t *testing.T) {
 			require.Equal(t, tt.expected, makefs.GUIDFromLabel(tt.label).String())
 		})
+	}
+}
+
+// populateTestDir is a helper function to populate a test directory with files,
+// it can handle nested files and directories, file content is populated with the name of the file.
+// All files are created relative to the provided dir.
+func populateTestDir(t *testing.T, dir string, files []string) {
+	t.Helper()
+
+	for _, file := range files {
+		fullPath := filepath.Join(dir, file)
+
+		if strings.HasSuffix(file, "/") {
+			require.NoError(t, os.MkdirAll(fullPath, 0o755))
+		} else {
+			require.NoError(t, os.MkdirAll(filepath.Dir(fullPath), 0o755))
+			require.NoError(t, os.WriteFile(fullPath, []byte(file), 0o644))
+		}
 	}
 }

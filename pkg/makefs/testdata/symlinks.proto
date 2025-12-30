@@ -1,0 +1,6 @@
+/
+0 0
+d--755 0 0
+ link.txt l--777 0 0 target.txt
+ target.txt ---644 0 0 FILEPATH/target.txt
+$

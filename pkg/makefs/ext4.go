@@ -8,8 +8,15 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
+	"os"
+	"os/exec"
+	"strconv"
+	"time"
 
 	"github.com/siderolabs/go-cmd/pkg/cmd"
+
+	"github.com/siderolabs/talos/pkg/imager/utils"
 )
 
 const (
@@ -18,6 +25,8 @@ const (
 )
 
 // Ext4 creates a ext4 filesystem on the specified partition.
+//
+//nolint:gocyclo
 func Ext4(ctx context.Context, partname string, setters ...Option) error {
 	if partname == "" {
 		return errors.New("missing path to disk")
@@ -46,8 +55,31 @@ func Ext4(ctx context.Context, partname string, setters ...Option) error {
 		args = append(args, "-E", fmt.Sprintf("hash_seed=%s", partitionGUID.String()))
 	}
 
+	var errCh chan error
+
+	// Use a tar archive instead of passing a source directory directly to mke2fs.
+	// This allows us to force all files in the image to be owned by root (uid/gid 0)
+	// regardless of their ownership on the host, enabling rootless operation without
+	// requiring elevated privileges.
 	if opts.SourceDirectory != "" {
-		args = append(args, "-d", opts.SourceDirectory)
+		errCh = make(chan error, 1)
+
+		pr, pw, err := os.Pipe()
+		if err != nil {
+			return fmt.Errorf("failed to create pipe: %w", err)
+		}
+
+		defer pr.Close() //nolint:errcheck
+
+		args = append(args, "-d", "-")
+
+		ctx = cmd.WithStdin(ctx, pr)
+
+		go func() {
+			defer pw.Close() //nolint:errcheck
+
+			errCh <- handleTarArchive(ctx, opts.SourceDirectory, pw)
+		}()
 	}
 
 	args = append(args, partname)
@@ -55,8 +87,15 @@ func Ext4(ctx context.Context, partname string, setters ...Option) error {
 	opts.Printf("creating ext4 filesystem on %s with args: %v", partname, args)
 
 	_, err := cmd.RunContext(ctx, "mkfs.ext4", args...)
+	if err != nil {
+		return err
+	}
 
-	return err
+	if errCh != nil {
+		return <-errCh
+	}
+
+	return nil
 }
 
 // Ext4Resize expands a ext4 filesystem to the maximum possible.
@@ -82,4 +121,48 @@ func Ext4Repair(partname string) error {
 	}
 
 	return nil
+}
+
+// handleTarArchive creates a tar archive from the sourceDir and writes it to the provided
+// io.WriteCloser.
+func handleTarArchive(ctx context.Context, sourceDir string, w io.WriteCloser) error {
+	timestamp, ok, err := utils.SourceDateEpoch()
+	if err != nil {
+		return fmt.Errorf("failed to get SOURCE_DATE_EPOCH: %w", err)
+	}
+
+	if !ok {
+		timestamp = time.Now().Unix()
+	}
+
+	cmd := exec.CommandContext(
+		ctx,
+		"tar",
+		"-cf",
+		"-",
+		"-C",
+		sourceDir,
+		"--sort=name",
+		"--owner=0",
+		"--group=0",
+		"--numeric-owner",
+		"--mtime=@"+strconv.FormatInt(timestamp, 10),
+		".",
+	)
+
+	cmd.Stdout = w
+	cmd.Stderr = os.Stderr
+
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("failed to start tar command: %w", err)
+	}
+
+	closeErr := w.Close()
+	waitErr := cmd.Wait()
+
+	if closeErr != nil {
+		return fmt.Errorf("failed to close pipe writer: %w", closeErr)
+	}
+
+	return waitErr
 }
