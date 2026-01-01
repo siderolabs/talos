@@ -117,6 +117,20 @@ message LocatorSpec {
   google.api.expr.v1alpha1.CheckedExpr disk_match = 2;
 }
 
+// LogicalVolumeSpec describes an LVM Logical Volume.
+message LogicalVolumeSpec {
+  string name = 1;
+  string vg_name = 2;
+  uint64 size = 3;
+  talos.resource.definitions.enums.BlockLVType type = 4;
+  int64 stripes = 5;
+  int64 mirrors = 6;
+  string uuid = 7;
+  string device_path = 8;
+  string symlink = 9;
+  string state = 10;
+}
+
 // MountRequestSpec is the spec for MountRequest.
 message MountRequestSpec {
   string volume_id = 1;
@@ -169,6 +183,16 @@ message PartitionSpec {
   string label = 4;
   string type_uuid = 5;
   uint64 relative_max_size = 6;
+}
+
+// PhysicalVolumeSpec describes an LVM Physical Volume.
+message PhysicalVolumeSpec {
+  string device_path = 1;
+  string vg_name = 2;
+  uint64 size = 3;
+  string uuid = 4;
+  uint64 allocated_extents = 5;
+  uint64 total_extents = 6;
 }
 
 // ProvisioningSpec is the spec for volume provisioning.
@@ -228,6 +252,18 @@ message VolumeConfigSpec {
   MountSpec mount = 5;
   EncryptionSpec encryption = 6;
   SymlinkProvisioningSpec symlink = 7;
+}
+
+// VolumeGroupSpec describes an LVM Volume Group.
+message VolumeGroupSpec {
+  string name = 1;
+  repeated string physical_volumes = 2;
+  uint64 total_size = 3;
+  uint64 free_size = 4;
+  string uuid = 5;
+  uint64 extent_size = 6;
+  uint32 lv_count = 7;
+  uint32 pv_count = 8;
 }
 
 // VolumeMountRequestSpec is the spec for VolumeMountRequest.
