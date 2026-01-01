@@ -965,16 +965,6 @@ func (m *LogicalVolumeSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x3a
 	}
-	if m.Mirrors != 0 {
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Mirrors))
-		i--
-		dAtA[i] = 0x30
-	}
-	if m.Stripes != 0 {
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Stripes))
-		i--
-		dAtA[i] = 0x28
-	}
 	if m.Type != 0 {
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Type))
 		i--
@@ -2907,12 +2897,6 @@ func (m *LogicalVolumeSpec) SizeVT() (n int) {
 	}
 	if m.Type != 0 {
 		n += 1 + protohelpers.SizeOfVarint(uint64(m.Type))
-	}
-	if m.Stripes != 0 {
-		n += 1 + protohelpers.SizeOfVarint(uint64(m.Stripes))
-	}
-	if m.Mirrors != 0 {
-		n += 1 + protohelpers.SizeOfVarint(uint64(m.Mirrors))
 	}
 	l = len(m.Uuid)
 	if l > 0 {
@@ -6167,44 +6151,6 @@ func (m *LogicalVolumeSpec) UnmarshalVT(dAtA []byte) error {
 				b := dAtA[iNdEx]
 				iNdEx++
 				m.Type |= enums.BlockLVType(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 5:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Stripes", wireType)
-			}
-			m.Stripes = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.Stripes |= int64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 6:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Mirrors", wireType)
-			}
-			m.Mirrors = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.Mirrors |= int64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}

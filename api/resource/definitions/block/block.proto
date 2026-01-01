@@ -123,8 +123,6 @@ message LogicalVolumeSpec {
   string vg_name = 2;
   uint64 size = 3;
   talos.resource.definitions.enums.BlockLVType type = 4;
-  int64 stripes = 5;
-  int64 mirrors = 6;
   string uuid = 7;
   string device_path = 8;
   string symlink = 9;

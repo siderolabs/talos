@@ -587,11 +587,11 @@ func (i *FSParameterType) UnmarshalText(text []byte) error {
 	return err
 }
 
-const _LVTypeName = "linearstripedmirror"
+const _LVTypeName = "linear"
 
-var _LVTypeIndex = [...]uint8{0, 6, 13, 19}
+var _LVTypeIndex = [...]uint8{0, 6}
 
-const _LVTypeLowerName = "linearstripedmirror"
+const _LVTypeLowerName = "linear"
 
 func (i LVType) String() string {
 	if i < 0 || i >= LVType(len(_LVTypeIndex)-1) {
@@ -605,25 +605,17 @@ func (i LVType) String() string {
 func _LVTypeNoOp() {
 	var x [1]struct{}
 	_ = x[LVTypeLinear-(0)]
-	_ = x[LVTypeStriped-(1)]
-	_ = x[LVTypeMirror-(2)]
 }
 
-var _LVTypeValues = []LVType{LVTypeLinear, LVTypeStriped, LVTypeMirror}
+var _LVTypeValues = []LVType{LVTypeLinear}
 
 var _LVTypeNameToValueMap = map[string]LVType{
-	_LVTypeName[0:6]:        LVTypeLinear,
-	_LVTypeLowerName[0:6]:   LVTypeLinear,
-	_LVTypeName[6:13]:       LVTypeStriped,
-	_LVTypeLowerName[6:13]:  LVTypeStriped,
-	_LVTypeName[13:19]:      LVTypeMirror,
-	_LVTypeLowerName[13:19]: LVTypeMirror,
+	_LVTypeName[0:6]:      LVTypeLinear,
+	_LVTypeLowerName[0:6]: LVTypeLinear,
 }
 
 var _LVTypeNames = []string{
 	_LVTypeName[0:6],
-	_LVTypeName[6:13],
-	_LVTypeName[13:19],
 }
 
 // LVTypeString retrieves an enum value from the enum constants string name.

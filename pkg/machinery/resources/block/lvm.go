@@ -146,16 +146,14 @@ func (VolumeGroupExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 // LogicalVolumeType is type of LogicalVolume resource.
 const LogicalVolumeType = resource.Type("LogicalVolumes.block.talos.dev")
 
-// LVType describes the type of logical volume (linear, striped, mirror).
+// LVType describes the type of logical volume.
 type LVType int
 
 // Logical volume types.
 //
 //structprotogen:gen_enum
 const (
-	LVTypeLinear  LVType = iota // linear
-	LVTypeStriped               // striped
-	LVTypeMirror                // mirror
+	LVTypeLinear LVType = iota // linear
 )
 
 // LogicalVolume represents an LVM logical volume resource.
@@ -169,8 +167,6 @@ type LogicalVolumeSpec struct {
 	VGName     string `yaml:"vgName" protobuf:"2"`
 	Size       uint64 `yaml:"size" protobuf:"3"`
 	Type       LVType `yaml:"type" protobuf:"4"`
-	Stripes    int    `yaml:"stripes,omitempty" protobuf:"5"`
-	Mirrors    int    `yaml:"mirrors,omitempty" protobuf:"6"`
 	UUID       string `yaml:"uuid,omitempty" protobuf:"7"`
 	DevicePath string `yaml:"devicePath,omitempty" protobuf:"8"`
 	Symlink    string `yaml:"symlink,omitempty" protobuf:"9"`

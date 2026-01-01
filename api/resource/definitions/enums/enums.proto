@@ -715,11 +715,9 @@ enum BlockFSParameterType {
   FS_PARAMETER_TYPE_BINARY_VALUE = 2;
 }
 
-// BlockLVType describes the type of logical volume (linear, striped, mirror).
+// BlockLVType describes the type of logical volume.
 enum BlockLVType {
   LV_TYPE_LINEAR = 0;
-  LV_TYPE_STRIPED = 1;
-  LV_TYPE_MIRROR = 2;
 }
 
 // BlockVolumePhase describes volume phase.

@@ -954,8 +954,6 @@ type LogicalVolumeSpec struct {
 	VgName        string                 `protobuf:"bytes,2,opt,name=vg_name,json=vgName,proto3" json:"vg_name,omitempty"`
 	Size          uint64                 `protobuf:"varint,3,opt,name=size,proto3" json:"size,omitempty"`
 	Type          enums.BlockLVType      `protobuf:"varint,4,opt,name=type,proto3,enum=talos.resource.definitions.enums.BlockLVType" json:"type,omitempty"`
-	Stripes       int64                  `protobuf:"varint,5,opt,name=stripes,proto3" json:"stripes,omitempty"`
-	Mirrors       int64                  `protobuf:"varint,6,opt,name=mirrors,proto3" json:"mirrors,omitempty"`
 	Uuid          string                 `protobuf:"bytes,7,opt,name=uuid,proto3" json:"uuid,omitempty"`
 	DevicePath    string                 `protobuf:"bytes,8,opt,name=device_path,json=devicePath,proto3" json:"device_path,omitempty"`
 	Symlink       string                 `protobuf:"bytes,9,opt,name=symlink,proto3" json:"symlink,omitempty"`
@@ -1020,20 +1018,6 @@ func (x *LogicalVolumeSpec) GetType() enums.BlockLVType {
 		return x.Type
 	}
 	return enums.BlockLVType(0)
-}
-
-func (x *LogicalVolumeSpec) GetStripes() int64 {
-	if x != nil {
-		return x.Stripes
-	}
-	return 0
-}
-
-func (x *LogicalVolumeSpec) GetMirrors() int64 {
-	if x != nil {
-		return x.Mirrors
-	}
-	return 0
 }
 
 func (x *LogicalVolumeSpec) GetUuid() string {
@@ -2796,14 +2780,12 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\vLocatorSpec\x12;\n" +
 	"\x05match\x18\x01 \x01(\v2%.google.api.expr.v1alpha1.CheckedExprR\x05match\x12D\n" +
 	"\n" +
-	"disk_match\x18\x02 \x01(\v2%.google.api.expr.v1alpha1.CheckedExprR\tdiskMatch\"\xb0\x02\n" +
+	"disk_match\x18\x02 \x01(\v2%.google.api.expr.v1alpha1.CheckedExprR\tdiskMatch\"\xfc\x01\n" +
 	"\x11LogicalVolumeSpec\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x17\n" +
 	"\avg_name\x18\x02 \x01(\tR\x06vgName\x12\x12\n" +
 	"\x04size\x18\x03 \x01(\x04R\x04size\x12A\n" +
-	"\x04type\x18\x04 \x01(\x0e2-.talos.resource.definitions.enums.BlockLVTypeR\x04type\x12\x18\n" +
-	"\astripes\x18\x05 \x01(\x03R\astripes\x12\x18\n" +
-	"\amirrors\x18\x06 \x01(\x03R\amirrors\x12\x12\n" +
+	"\x04type\x18\x04 \x01(\x0e2-.talos.resource.definitions.enums.BlockLVTypeR\x04type\x12\x12\n" +
 	"\x04uuid\x18\a \x01(\tR\x04uuid\x12\x1f\n" +
 	"\vdevice_path\x18\b \x01(\tR\n" +
 	"devicePath\x12\x18\n" +

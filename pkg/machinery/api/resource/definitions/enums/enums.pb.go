@@ -3292,26 +3292,20 @@ func (BlockFSParameterType) EnumDescriptor() ([]byte, []int) {
 	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{39}
 }
 
-// BlockLVType describes the type of logical volume (linear, striped, mirror).
+// BlockLVType describes the type of logical volume.
 type BlockLVType int32
 
 const (
-	BlockLVType_LV_TYPE_LINEAR  BlockLVType = 0
-	BlockLVType_LV_TYPE_STRIPED BlockLVType = 1
-	BlockLVType_LV_TYPE_MIRROR  BlockLVType = 2
+	BlockLVType_LV_TYPE_LINEAR BlockLVType = 0
 )
 
 // Enum value maps for BlockLVType.
 var (
 	BlockLVType_name = map[int32]string{
 		0: "LV_TYPE_LINEAR",
-		1: "LV_TYPE_STRIPED",
-		2: "LV_TYPE_MIRROR",
 	}
 	BlockLVType_value = map[string]int32{
-		"LV_TYPE_LINEAR":  0,
-		"LV_TYPE_STRIPED": 1,
-		"LV_TYPE_MIRROR":  2,
+		"LV_TYPE_LINEAR": 0,
 	}
 )
 
@@ -4360,11 +4354,9 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x14BlockFSParameterType\x12\"\n" +
 	"\x1eFS_PARAMETER_TYPE_STRING_VALUE\x10\x00\x12#\n" +
 	"\x1fFS_PARAMETER_TYPE_BOOLEAN_VALUE\x10\x01\x12\"\n" +
-	"\x1eFS_PARAMETER_TYPE_BINARY_VALUE\x10\x02*J\n" +
+	"\x1eFS_PARAMETER_TYPE_BINARY_VALUE\x10\x02*!\n" +
 	"\vBlockLVType\x12\x12\n" +
-	"\x0eLV_TYPE_LINEAR\x10\x00\x12\x13\n" +
-	"\x0fLV_TYPE_STRIPED\x10\x01\x12\x12\n" +
-	"\x0eLV_TYPE_MIRROR\x10\x02*\xe3\x01\n" +
+	"\x0eLV_TYPE_LINEAR\x10\x00*\xe3\x01\n" +
 	"\x10BlockVolumePhase\x12\x18\n" +
 	"\x14VOLUME_PHASE_WAITING\x10\x00\x12\x17\n" +
 	"\x13VOLUME_PHASE_FAILED\x10\x01\x12\x18\n" +
