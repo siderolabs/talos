@@ -29,11 +29,23 @@ import (
 // ManifestsSuite verifies Kubernetes manifest sync.
 type ManifestsSuite struct {
 	base.K8sSuite
+
+	ctx       context.Context //nolint:containedctx
+	ctxCancel context.CancelFunc
 }
 
 // SuiteName returns the name of the suite.
 func (suite *ManifestsSuite) SuiteName() string {
 	return "k8s.ManifestsSuite"
+}
+
+// SetupTest ...
+func (suite *ManifestsSuite) SetupTest() {
+	// make sure API calls have timeout
+	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 5*time.Minute)
+
+	suite.ClearConnectionRefused(suite.ctx, suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeWorker)...)
+	suite.AssertClusterHealthy(suite.ctx)
 }
 
 type manifestSyncWriter struct {
@@ -52,11 +64,20 @@ func (suite *ManifestsSuite) TestSync() {
 		suite.T().Skip("skip without full cluster state")
 	}
 
+	cpNode := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
+
+	nodeCtx := client.WithNode(suite.ctx, cpNode)
+
+	config, err := suite.ReadConfigFromNode(nodeCtx)
+	suite.Require().NoError(err)
+
+	// some tests creates cluster without kube-proxy, skip in this case
+	if !config.Cluster().Proxy().Enabled() {
+		suite.T().Skip("skip when kube-proxy is disabled")
+	}
+
 	clusterAccess := access.NewAdapter(suite.Cluster, provision.WithTalosClient(suite.Client))
 	defer clusterAccess.Close() //nolint:errcheck
-
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
-	suite.T().Cleanup(cancel)
 
 	// 1. Patch all controlplane nodes with extra arg for kube-proxy
 	suite.T().Log("adding extra arg to kube-proxy")
@@ -71,13 +92,13 @@ func (suite *ManifestsSuite) TestSync() {
 		},
 	}
 
-	for _, node := range suite.DiscoverNodeInternalIPsByType(ctx, machine.TypeControlPlane) {
-		suite.PatchMachineConfig(client.WithNode(ctx, node), extraArgPatch)
+	for _, node := range suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeControlPlane) {
+		suite.PatchMachineConfig(client.WithNode(suite.ctx, node), extraArgPatch)
 	}
 
 	// wait for the manifest to be updated
-	for _, node := range suite.DiscoverNodeInternalIPsByType(ctx, machine.TypeControlPlane) {
-		rtestutils.AssertResource(client.WithNode(ctx, node), suite.T(), suite.Client.COSI,
+	for _, node := range suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeControlPlane) {
+		rtestutils.AssertResource(client.WithNode(suite.ctx, node), suite.T(), suite.Client.COSI,
 			"10-kube-proxy",
 			func(manifest *k8s.Manifest, asrt *assert.Assertions) {
 				marshaled, err := yaml.Marshal(manifest.TypedSpec())
@@ -90,7 +111,7 @@ func (suite *ManifestsSuite) TestSync() {
 
 	// 2. Roll out manifests
 	suite.Require().NoError(kubernetes.PerformManifestsSync(
-		ctx,
+		suite.ctx,
 		clusterAccess,
 		true,
 		kubernetes.UpgradeOptions{
@@ -99,7 +120,7 @@ func (suite *ManifestsSuite) TestSync() {
 	))
 
 	// 3. Assert that kube-proxy has the extra arg
-	pods, err := suite.Clientset.CoreV1().Pods("kube-system").List(ctx, metav1.ListOptions{
+	pods, err := suite.Clientset.CoreV1().Pods("kube-system").List(suite.ctx, metav1.ListOptions{
 		LabelSelector: "k8s-app=kube-proxy",
 	})
 	suite.Require().NoError(err)
@@ -122,20 +143,20 @@ func (suite *ManifestsSuite) TestSync() {
 		},
 	}
 
-	for _, node := range suite.DiscoverNodeInternalIPsByType(ctx, machine.TypeControlPlane) {
-		suite.PatchMachineConfig(client.WithNode(ctx, node), disablePatch)
+	for _, node := range suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeControlPlane) {
+		suite.PatchMachineConfig(client.WithNode(suite.ctx, node), disablePatch)
 	}
 
 	// wait for the manifest to be removed
-	for _, node := range suite.DiscoverNodeInternalIPsByType(ctx, machine.TypeControlPlane) {
-		rtestutils.AssertNoResource[*k8s.Manifest](client.WithNode(ctx, node), suite.T(), suite.Client.COSI,
+	for _, node := range suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeControlPlane) {
+		rtestutils.AssertNoResource[*k8s.Manifest](client.WithNode(suite.ctx, node), suite.T(), suite.Client.COSI,
 			"10-kube-proxy",
 		)
 	}
 
 	// 5. Roll out manifests
 	suite.Require().NoError(kubernetes.PerformManifestsSync(
-		ctx,
+		suite.ctx,
 		clusterAccess,
 		true,
 		kubernetes.UpgradeOptions{
@@ -144,7 +165,7 @@ func (suite *ManifestsSuite) TestSync() {
 	))
 
 	// 6. Assert that kube-proxy is removed
-	suite.Require().NoError(suite.EnsureResourceIsDeleted(ctx, 10*time.Second, appsv1.SchemeGroupVersion.WithResource("daemonsets"), "kube-system", "kube-proxy"))
+	suite.Require().NoError(suite.EnsureResourceIsDeleted(suite.ctx, 10*time.Second, appsv1.SchemeGroupVersion.WithResource("daemonsets"), "kube-system", "kube-proxy"))
 
 	// 7. Re-enable kube-proxy
 	suite.T().Log("enabling kube-proxy")
@@ -162,16 +183,16 @@ func (suite *ManifestsSuite) TestSync() {
 		},
 	}
 
-	for _, node := range suite.DiscoverNodeInternalIPsByType(ctx, machine.TypeControlPlane) {
-		suite.PatchMachineConfig(client.WithNode(ctx, node), enablePatch)
+	for _, node := range suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeControlPlane) {
+		suite.PatchMachineConfig(client.WithNode(suite.ctx, node), enablePatch)
 	}
 
 	// 8. Assert that kube-proxy is back
 	suite.Require().NoError(
-		suite.WaitForResourceToBeAvailable(ctx, 30*time.Second, "kube-system", appsv1.GroupName, "DaemonSet", appsv1.SchemeGroupVersion.Version, "kube-proxy"),
+		suite.WaitForResourceToBeAvailable(suite.ctx, 30*time.Second, "kube-system", appsv1.GroupName, "DaemonSet", appsv1.SchemeGroupVersion.Version, "kube-proxy"),
 	)
 
-	suite.AssertClusterHealthy(ctx)
+	suite.AssertClusterHealthy(suite.ctx)
 }
 
 func init() {
