@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@bc4d96a0885af9f87e23f018f87c86d800e334d9 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -46,7 +46,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -112,7 +112,7 @@ jobs:
           ref: main
           repository: siderolabs/contrib
       - name: setup tf
-        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # version: v3.1.2
+        uses: hashicorp/setup-terraform@92e4d08fe1d24283952afa28216efa8f4ed5aeab # version: v3.1.2
         with:
           terraform_wrapper: "false"
       - name: tf apply
