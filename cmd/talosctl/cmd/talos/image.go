@@ -198,6 +198,12 @@ var imageSourceBundleCmd = &cobra.Command{
 				panic(err) // panic, this should never happen
 			}
 
+			maximumVersion.Patch = 0
+			maximumVersion.Pre = nil
+			if err := maximumVersion.IncrementMinor(); err != nil {
+				panic(err) // panic, this should never happen
+			}
+
 			// If no version specified, use current version
 			if len(args) == 0 {
 				return nil
@@ -205,13 +211,19 @@ var imageSourceBundleCmd = &cobra.Command{
 
 			tag := args[0]
 
+			if !strings.HasPrefix(tag, "v") {
+				return fmt.Errorf("invalid tag %q: must have \"v\" prefix", tag)
+			}
+
 			ver, err := semver.ParseTolerant(tag)
 			if err != nil {
-				return fmt.Errorf("invalid argument %q for %q: tag must be a valid semver", tag, cmd.CommandPath())
+				return fmt.Errorf("invalid argument %q: tag must be a valid semver", tag)
 			}
 
 			if !ver.GTE(minimumVersion) || !ver.LT(maximumVersion) {
-				return fmt.Errorf("invalid argument %q for %q: tag for the bundle must be within range \"v%s\" - \"v%s\"", tag, cmd.CommandPath(), minimumVersion, maximumVersion)
+				return fmt.Errorf(
+					"invalid tag %q: must be between v%s (inclusive) and v%s (exclusive)", tag, minimumVersion, maximumVersion,
+				)
 			}
 
 			return nil
