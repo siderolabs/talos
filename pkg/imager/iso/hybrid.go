@@ -4,15 +4,18 @@
 
 package iso
 
-import "path/filepath"
+import (
+	"context"
+	"path/filepath"
+)
 
 // CreateHybrid creates an ISO image that supports both BIOS and UEFI booting.
-func (options Options) CreateHybrid(printf func(string, ...any)) (Generator, error) {
+func (options Options) CreateHybrid(ctx context.Context, printf func(string, ...any)) (Generator, error) {
 	if _, err := options.CreateGRUB(printf); err != nil {
 		return nil, err
 	}
 
-	if _, err := options.CreateUEFI(printf); err != nil {
+	if _, err := options.CreateUEFI(ctx, printf); err != nil {
 		return nil, err
 	}
 

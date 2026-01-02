@@ -6,6 +6,7 @@
 package partition
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/siderolabs/go-blockdevice/v2/block"
@@ -82,7 +83,7 @@ func NewFormatOptions(opts ...FormatOption) *FormatOptions {
 }
 
 // Format zeroes the device and formats it using filesystem type provided.
-func Format(devname string, t *FormatOptions, talosVersion string, printf func(string, ...any)) error {
+func Format(ctx context.Context, devname string, t *FormatOptions, talosVersion string, printf func(string, ...any)) error {
 	opts := []makefs.Option{
 		makefs.WithForce(t.Force),
 		makefs.WithLabel(t.Label),
@@ -109,13 +110,13 @@ func Format(devname string, t *FormatOptions, talosVersion string, printf func(s
 	case FilesystemTypeZeroes:
 		return zeroPartition(devname)
 	case FilesystemTypeVFAT:
-		return makefs.VFAT(devname, opts...)
+		return makefs.VFAT(ctx, devname, opts...)
 	case FilesystemTypeXFS:
 		opts = append(opts, makefs.WithConfigFile(quirks.New(talosVersion).XFSMkfsConfig()))
 
-		return makefs.XFS(devname, opts...)
+		return makefs.XFS(ctx, devname, opts...)
 	case FileSystemTypeExt4:
-		return makefs.Ext4(devname, opts...)
+		return makefs.Ext4(ctx, devname, opts...)
 	default:
 		return fmt.Errorf("unsupported filesystem type: %q", t.FileSystemType)
 	}

@@ -31,6 +31,7 @@ ARG PKG_IPXE=scratch
 ARG PKG_KERNEL=scratch
 ARG PKG_KMOD=scratch
 ARG PKG_LIBAIO=scratch
+ARG PKG_LIBARCHIVE=scratch
 ARG PKG_LIBATTR=scratch
 ARG PKG_LIBBURN=scratch
 ARG PKG_LIBCAP=scratch
@@ -111,6 +112,9 @@ FROM --platform=arm64 ${PKG_IPTABLES} AS pkg-iptables-arm64
 
 FROM --platform=amd64 ${PKG_IPXE} AS pkg-ipxe-amd64
 FROM --platform=arm64 ${PKG_IPXE} AS pkg-ipxe-arm64
+
+FROM --platform=amd64 ${PKG_LIBARCHIVE} AS pkg-libarchive-amd64
+FROM --platform=arm64 ${PKG_LIBARCHIVE} AS pkg-libarchive-arm64
 
 FROM --platform=amd64 ${PKG_LIBATTR} AS pkg-libattr-amd64
 FROM --platform=arm64 ${PKG_LIBATTR} AS pkg-libattr-arm64
@@ -199,6 +203,7 @@ FROM ${PKG_DOSFSTOOLS} AS pkg-dosfstools
 FROM ${PKG_E2FSPROGS} AS pkg-e2fsprogs
 FROM ${PKG_GLIB} AS pkg-glib
 FROM ${PKG_KMOD} AS pkg-kmod
+FROM ${PKG_LIBARCHIVE} AS pkg-libarchive
 FROM ${PKG_LIBATTR} AS pkg-libattr
 FROM ${PKG_LIBBURN} AS pkg-libburn
 FROM ${PKG_LIBINIH} AS pkg-libinih
@@ -707,6 +712,7 @@ COPY --link --from=pkg-systemd-udevd-amd64 /usr/share/spdx/systemd.spdx.json /ro
 COPY --link --from=pkg-libcap-amd64 / /rootfs
 COPY --link --exclude=usr/share --from=pkg-iptables-amd64 / /rootfs
 COPY --link --from=pkg-iptables-amd64 /usr/share/spdx/iptables.spdx.json /rootfs/usr/share/spdx/iptables.spdx.json
+COPY --link --from=pkg-libarchive-amd64 / /rootfs
 COPY --link --from=pkg-libattr-amd64 / /rootfs
 COPY --link --from=pkg-libinih-amd64 / /rootfs
 COPY --link --exclude=usr/include --from=pkg-libjansson-amd64 / /rootfs
@@ -792,6 +798,7 @@ COPY --link --from=pkg-systemd-udevd-arm64 /usr/share/spdx/systemd.spdx.json /ro
 COPY --link --from=pkg-libcap-arm64 / /rootfs
 COPY --link --exclude=usr/share --from=pkg-iptables-arm64 / /rootfs
 COPY --link --from=pkg-iptables-arm64 /usr/share/spdx/iptables.spdx.json /rootfs/usr/share/spdx/iptables.spdx.json
+COPY --link --from=pkg-libarchive-arm64 / /rootfs
 COPY --link --from=pkg-libattr-arm64 / /rootfs
 COPY --link --from=pkg-libinih-arm64 / /rootfs
 COPY --link --exclude=usr/include --from=pkg-libjansson-arm64 / /rootfs
@@ -1104,6 +1111,7 @@ COPY --link --exclude=**/*.a --exclude=**/*.la --exclude=usr/include --exclude=u
 COPY --link --from=pkg-grub-amd64 /usr/lib/grub /usr/lib/grub
 COPY --link --from=pkg-grub-arm64 /usr/lib/grub /usr/lib/grub
 COPY --link --exclude=usr/include --exclude=usr/lib/pkgconfig --exclude=usr/share/pkgconfig --exclude=usr/share/bash-completion --from=pkg-kmod / /
+COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libarchive / /
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libburn / /
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libisoburn / /
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libisofs / /

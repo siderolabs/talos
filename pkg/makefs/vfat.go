@@ -5,6 +5,7 @@
 package makefs
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -21,7 +22,7 @@ const (
 )
 
 // VFAT creates a VFAT filesystem on the specified partition.
-func VFAT(partname string, setters ...Option) error {
+func VFAT(ctx context.Context, partname string, setters ...Option) error {
 	opts := NewDefaultOptions(setters...)
 
 	var args []string
@@ -36,7 +37,7 @@ func VFAT(partname string, setters ...Option) error {
 
 	args = append(args, partname)
 
-	_, err := cmd.Run("mkfs.vfat", args...)
+	_, err := cmd.RunContext(ctx, "mkfs.vfat", args...)
 	if err != nil {
 		return err
 	}
