@@ -43,14 +43,20 @@ func NewConfigController() *ConfigController {
 				if cfg != nil && cfg.Config().Machine() != nil {
 					c := cfg.Config()
 
-					res.TypedSpec().Enabled = c.Machine().Network().KubeSpan().Enabled()
+					if c.NetworkKubeSpanConfig() != nil {
+						res.TypedSpec().Enabled = c.NetworkKubeSpanConfig().Enabled()
+						res.TypedSpec().ForceRouting = c.NetworkKubeSpanConfig().ForceRouting()
+						res.TypedSpec().AdvertiseKubernetesNetworks = c.NetworkKubeSpanConfig().AdvertiseKubernetesNetworks()
+						res.TypedSpec().HarvestExtraEndpoints = c.NetworkKubeSpanConfig().HarvestExtraEndpoints()
+						res.TypedSpec().MTU = c.NetworkKubeSpanConfig().MTU()
+
+						if c.NetworkKubeSpanConfig().Filters() != nil {
+							res.TypedSpec().EndpointFilters = c.NetworkKubeSpanConfig().Filters().Endpoints()
+						}
+					}
+
 					res.TypedSpec().ClusterID = c.Cluster().ID()
 					res.TypedSpec().SharedSecret = c.Cluster().Secret()
-					res.TypedSpec().ForceRouting = c.Machine().Network().KubeSpan().ForceRouting()
-					res.TypedSpec().AdvertiseKubernetesNetworks = c.Machine().Network().KubeSpan().AdvertiseKubernetesNetworks()
-					res.TypedSpec().HarvestExtraEndpoints = c.Machine().Network().KubeSpan().HarvestExtraEndpoints()
-					res.TypedSpec().MTU = c.Machine().Network().KubeSpan().MTU()
-					res.TypedSpec().EndpointFilters = c.Machine().Network().KubeSpan().Filters().Endpoints()
 					res.TypedSpec().ExtraEndpoints = c.KubespanConfig().ExtraAnnouncedEndpoints()
 				}
 

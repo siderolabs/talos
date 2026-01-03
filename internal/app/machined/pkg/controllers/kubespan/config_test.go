@@ -111,6 +111,55 @@ func (suite *ConfigSuite) TestReconcileDisabled() {
 	))
 }
 
+func (suite *ConfigSuite) TestReconcileMultiDoc() {
+	suite.Require().NoError(suite.runtime.RegisterController(kubespanctrl.NewConfigController()))
+
+	suite.startRuntime()
+
+	kubeSpanCfg := network.NewKubeSpanV1Alpha1()
+	kubeSpanCfg.ConfigEnabled = pointer.To(true)
+	kubeSpanCfg.ConfigMTU = pointer.To(uint32(1380))
+	kubeSpanCfg.ConfigFilters = &network.KubeSpanFiltersConfig{
+		ConfigEndpoints: []string{"0.0.0.0/0", "::/0"},
+	}
+
+	ctr, err := container.New(
+		&v1alpha1.Config{
+			ConfigVersion: "v1alpha1",
+			MachineConfig: &v1alpha1.MachineConfig{},
+			ClusterConfig: &v1alpha1.ClusterConfig{
+				ClusterID:     "test-cluster-id-multi-doc",
+				ClusterSecret: "test-cluster-secret-multi-doc",
+			},
+		},
+		kubeSpanCfg,
+	)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
+
+	specMD := resource.NewMetadata(config.NamespaceName, kubespan.ConfigType, kubespan.ConfigID, resource.VersionUndefined)
+
+	suite.Assert().NoError(retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		suite.assertResource(
+			specMD,
+			func(res resource.Resource) error {
+				spec := res.(*kubespan.Config).TypedSpec()
+
+				suite.Assert().True(spec.Enabled)
+				suite.Assert().Equal("test-cluster-id-multi-doc", spec.ClusterID)
+				suite.Assert().Equal("test-cluster-secret-multi-doc", spec.SharedSecret)
+				suite.Assert().Equal(uint32(1380), spec.MTU)
+				suite.Assert().Equal([]string{"0.0.0.0/0", "::/0"}, spec.EndpointFilters)
+
+				return nil
+			},
+		),
+	))
+}
+
 func TestConfigSuite(t *testing.T) {
 	t.Parallel()
 

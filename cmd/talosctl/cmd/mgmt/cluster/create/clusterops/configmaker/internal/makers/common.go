@@ -29,6 +29,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -202,6 +203,21 @@ func (m *Maker[T]) initConfigBundleOps() error {
 	}
 
 	configBundleOps = append(configBundleOps, configPatchBundleOps...)
+
+	// Add multi-doc KubeSpan config for Talos 1.13+
+	if m.Ops.EnableKubeSpan && m.VersionContract != nil && m.VersionContract.Greater(config.TalosVersion1_12) {
+		kubeSpanDoc := network.NewKubeSpanV1Alpha1()
+		kubeSpanDoc.ConfigEnabled = pointer.To(true)
+
+		provider, err := container.New(kubeSpanDoc)
+		if err != nil {
+			return err
+		}
+
+		configBundleOps = append(configBundleOps, bundle.WithPatch(
+			[]configpatcher.Patch{configpatcher.NewStrategicMergePatch(provider)},
+		))
+	}
 
 	m.ConfigBundleOps = configBundleOps
 
@@ -451,11 +467,14 @@ func (m *Maker[T]) initGenOps() error {
 	}
 
 	if m.Ops.EnableKubeSpan {
-		genOptions = slices.Concat(genOptions,
-			[]generate.Option{generate.WithNetworkOptions(
-				v1alpha1.WithKubeSpan(),
-			)},
-		)
+		// For Talos 1.12 and older, use legacy v1alpha1 configuration
+		if m.VersionContract == nil || !m.VersionContract.Greater(config.TalosVersion1_12) {
+			genOptions = slices.Concat(genOptions,
+				[]generate.Option{generate.WithNetworkOptions(
+					v1alpha1.WithKubeSpan(),
+				)},
+			)
+		}
 	}
 
 	m.GenOps = genOptions

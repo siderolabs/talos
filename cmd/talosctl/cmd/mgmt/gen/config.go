@@ -15,6 +15,7 @@ import (
 
 	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/gen/xslices"
+	"github.com/siderolabs/go-pointer"
 	sideronet "github.com/siderolabs/net"
 	"github.com/spf13/cobra"
 	"go.yaml.in/yaml/v4"
@@ -24,10 +25,12 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/bundle"
 	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -194,9 +197,9 @@ func writeConfig(args []string) error {
 		genOptions = append(genOptions, generate.WithRegistryMirror(left, right))
 	}
 
-	if genConfigCmdFlags.talosVersion != "" {
-		var versionContract *config.VersionContract
+	var versionContract *config.VersionContract
 
+	if genConfigCmdFlags.talosVersion != "" {
 		versionContract, err = config.ParseContractFromVersion(genConfigCmdFlags.talosVersion)
 		if err != nil {
 			return fmt.Errorf("invalid talos-version: %w", err)
@@ -205,12 +208,15 @@ func writeConfig(args []string) error {
 		genOptions = append(genOptions, generate.WithVersionContract(versionContract))
 	}
 
+	// Add KubeSpan configuration based on version
 	if genConfigCmdFlags.withKubeSpan {
-		genOptions = append(genOptions,
-			generate.WithNetworkOptions(
-				v1alpha1.WithKubeSpan(),
-			),
-		)
+		if versionContract == nil || !versionContract.Greater(config.TalosVersion1_12) {
+			genOptions = append(genOptions,
+				generate.WithNetworkOptions(
+					v1alpha1.WithKubeSpan(),
+				),
+			)
+		}
 	}
 
 	if genConfigCmdFlags.withSecrets != "" {
@@ -256,6 +262,22 @@ func writeConfig(args []string) error {
 		genConfigCmdFlags.configPatchWorker)
 	if err != nil {
 		return err
+	}
+
+	// Add multi-doc KubeSpan config for Talos 1.13+
+	if genConfigCmdFlags.withKubeSpan && versionContract != nil && versionContract.Greater(config.TalosVersion1_12) {
+		kubeSpanDoc := network.NewKubeSpanV1Alpha1()
+		kubeSpanDoc.ConfigEnabled = pointer.To(true)
+
+		provider, containerErr := container.New(kubeSpanDoc)
+		if containerErr != nil {
+			return containerErr
+		}
+
+		patch := configpatcher.NewStrategicMergePatch(provider)
+		if err = configBundle.ApplyPatches([]configpatcher.Patch{patch}, true, true); err != nil {
+			return fmt.Errorf("failed to apply KubeSpan patch: %w", err)
+		}
 	}
 
 	return writeConfigBundle(configBundle, paths, commentsFlags)

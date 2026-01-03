@@ -1,0 +1,6 @@
+apiVersion: v1alpha1
+kind: KubeSpanConfig
+enabled: true
+advertiseKubernetesNetworks: false
+allowDownPeerBypass: false
+mtu: 1420
