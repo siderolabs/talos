@@ -5,6 +5,7 @@
 package makefs
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -38,7 +39,7 @@ func XFSRepair(partname string) error {
 }
 
 // XFS creates a XFS filesystem on the specified partition.
-func XFS(partname string, setters ...Option) error {
+func XFS(ctx context.Context, partname string, setters ...Option) error {
 	if partname == "" {
 		return errors.New("missing path to disk")
 	}
@@ -82,7 +83,7 @@ func XFS(partname string, setters ...Option) error {
 
 	opts.Printf("creating xfs filesystem on %s with args: %v", partname, args)
 
-	_, err := cmd.Run("mkfs.xfs", args...)
+	_, err := cmd.RunContext(ctx, "mkfs.xfs", args...)
 
 	return err
 }

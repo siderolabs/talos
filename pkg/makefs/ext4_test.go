@@ -31,7 +31,8 @@ func TestExt4Reproducibility(t *testing.T) {
 		t.Fatalf("failed to create file: %v", err)
 	}
 
-	if err := makefs.Ext4(tempFile,
+	if err := makefs.Ext4(t.Context(),
+		tempFile,
 		makefs.WithReproducible(true),
 		makefs.WithLabel("TESTLABEL"),
 	); err != nil {
@@ -47,7 +48,8 @@ func TestExt4Reproducibility(t *testing.T) {
 	sum1 := sha256.Sum256(fileData)
 
 	// create the filesystem again
-	if err := makefs.Ext4(tempFile,
+	if err := makefs.Ext4(t.Context(),
+		tempFile,
 		makefs.WithReproducible(true),
 		makefs.WithLabel("TESTLABEL"),
 		makefs.WithForce(true)); err != nil {
@@ -81,7 +83,7 @@ func TestExt4Resize(t *testing.T) {
 		t.Fatalf("failed to create file: %v", err)
 	}
 
-	if err := makefs.Ext4(tempFile); err != nil {
+	if err := makefs.Ext4(t.Context(), tempFile); err != nil {
 		t.Fatalf("failed to create ext4 filesystem: %v", err)
 	}
 

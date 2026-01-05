@@ -114,7 +114,7 @@ func Format(ctx context.Context, logger *zap.Logger, volumeContext ManagerContex
 
 		makefsOptions = append(makefsOptions, makefs.WithConfigFile(quirks.New("").XFSMkfsConfig()))
 
-		if err = makefs.XFS(volumeContext.Status.MountLocation, makefsOptions...); err != nil {
+		if err = makefs.XFS(ctx, volumeContext.Status.MountLocation, makefsOptions...); err != nil {
 			return xerrors.NewTaggedf[Retryable]("error formatting XFS: %w", err)
 		}
 	case block.FilesystemTypeEXT4:
@@ -124,7 +124,7 @@ func Format(ctx context.Context, logger *zap.Logger, volumeContext ManagerContex
 			makefsOptions = append(makefsOptions, makefs.WithLabel(volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Label))
 		}
 
-		if err = makefs.Ext4(volumeContext.Status.MountLocation, makefsOptions...); err != nil {
+		if err = makefs.Ext4(ctx, volumeContext.Status.MountLocation, makefsOptions...); err != nil {
 			return xerrors.NewTaggedf[Retryable]("error formatting ext4: %w", err)
 		}
 	case block.FilesystemTypeSwap:

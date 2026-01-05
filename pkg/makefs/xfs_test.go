@@ -104,7 +104,7 @@ realtime =none                   extsz=4096   blocks=0, rtextents=0
 			require.NoError(t, os.WriteFile(tempFile, nil, 0o644))
 			require.NoError(t, os.Truncate(tempFile, test.size))
 
-			require.NoError(t, makefs.XFS(tempFile))
+			require.NoError(t, makefs.XFS(t.Context(), tempFile))
 
 			var stdout bytes.Buffer
 
@@ -136,7 +136,8 @@ func TestXFSReproducibility(t *testing.T) {
 		t.Fatalf("failed to create file: %v", err)
 	}
 
-	if err := makefs.XFS(tempFile,
+	if err := makefs.XFS(t.Context(),
+		tempFile,
 		makefs.WithReproducible(true),
 		makefs.WithLabel("TESTLABEL"),
 	); err != nil {
@@ -152,7 +153,8 @@ func TestXFSReproducibility(t *testing.T) {
 	sum1 := sha256.Sum256(fileData)
 
 	// create the filesystem again
-	if err := makefs.XFS(tempFile,
+	if err := makefs.XFS(t.Context(),
+		tempFile,
 		makefs.WithReproducible(true),
 		makefs.WithForce(true),
 		makefs.WithLabel("TESTLABEL"),

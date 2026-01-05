@@ -5,6 +5,7 @@
 package makefs
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -17,7 +18,7 @@ const (
 )
 
 // Ext4 creates a ext4 filesystem on the specified partition.
-func Ext4(partname string, setters ...Option) error {
+func Ext4(ctx context.Context, partname string, setters ...Option) error {
 	if partname == "" {
 		return errors.New("missing path to disk")
 	}
@@ -53,7 +54,7 @@ func Ext4(partname string, setters ...Option) error {
 
 	opts.Printf("creating ext4 filesystem on %s with args: %v", partname, args)
 
-	_, err := cmd.Run("mkfs.ext4", args...)
+	_, err := cmd.RunContext(ctx, "mkfs.ext4", args...)
 
 	return err
 }

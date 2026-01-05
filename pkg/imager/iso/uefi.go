@@ -6,6 +6,7 @@ package iso
 
 import (
 	"bytes"
+	"context"
 	_ "embed"
 	"fmt"
 	"os"
@@ -33,7 +34,7 @@ var loaderConfigTemplate string
 // The ISO created supports only booting in UEFI mode, and supports SecureBoot.
 //
 //nolint:gocyclo,cyclop
-func (options Options) CreateUEFI(printf func(string, ...any)) (Generator, error) {
+func (options Options) CreateUEFI(ctx context.Context, printf func(string, ...any)) (Generator, error) {
 	if err := os.MkdirAll(options.ScratchDir, 0o755); err != nil {
 		return nil, err
 	}
@@ -80,7 +81,7 @@ func (options Options) CreateUEFI(printf func(string, ...any)) (Generator, error
 		makefs.WithReproducible(true),
 	}
 
-	if err := makefs.VFAT(efiBootImg, fopts...); err != nil {
+	if err := makefs.VFAT(ctx, efiBootImg, fopts...); err != nil {
 		return nil, err
 	}
 

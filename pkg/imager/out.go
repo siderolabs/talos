@@ -180,7 +180,7 @@ func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Repor
 			options.SignatureKeyPath = i.prof.Input.SecureBoot.SignatureKeyPath
 		}
 
-		generator, err = options.CreateUEFI(printf)
+		generator, err = options.CreateUEFI(ctx, printf)
 		if err != nil {
 			return err
 		}
@@ -204,12 +204,12 @@ func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Repor
 
 		switch i.prof.Output.ISOOptions.Bootloader {
 		case profile.BootLoaderKindDualBoot:
-			generator, err = options.CreateHybrid(printf)
+			generator, err = options.CreateHybrid(ctx, printf)
 			if err != nil {
 				return err
 			}
 		case profile.BootLoaderKindSDBoot:
-			generator, err = options.CreateUEFI(printf)
+			generator, err = options.CreateUEFI(ctx, printf)
 			if err != nil {
 				return err
 			}
@@ -239,7 +239,7 @@ func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Repor
 			OutPath:    path,
 		}
 
-		generator, err = options.CreateHybrid(printf)
+		generator, err = options.CreateHybrid(ctx, printf)
 		if err != nil {
 			return err
 		}
