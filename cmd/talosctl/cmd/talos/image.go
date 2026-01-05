@@ -173,20 +173,13 @@ var imageDefaultCmd = &cobra.Command{
 	},
 }
 
-const (
-	provisionerDocker    = "docker"
-	provisionerInstaller = "installer"
-	provisionerAll       = "all"
-)
+var imageTalosBundleCmdFlags = struct {
+	extensions bool
+	overlays   bool
+}{}
 
-var imageDefaultCmdFlags = struct {
-	provisioner pflag.Value
-}{
-	provisioner: helpers.StringChoice(provisionerInstaller, provisionerDocker, provisionerAll),
-}
-
-// imageSourceBundleCmd represents the image talos-bundle command.
-var imageSourceBundleCmd = &cobra.Command{
+// imageTalosBundleCmd represents the image talos-bundle command.
+var imageTalosBundleCmd = &cobra.Command{
 	Use:   "talos-bundle [talos-version]",
 	Short: "List the default system images and extensions used for Talos",
 	Long:  ``,
@@ -246,16 +239,6 @@ var imageSourceBundleCmd = &cobra.Command{
 
 		sources := images.ListSourcesFor(tag)
 
-		extensions, err = artifacts.FetchOfficialExtensions(tag)
-		if err != nil {
-			return fmt.Errorf("error fetching official extensions for %s: %w", tag, err)
-		}
-
-		overlays, err = artifacts.FetchOfficialOverlays(tag)
-		if err != nil {
-			return fmt.Errorf("error fetching official overlays for %s: %w", tag, err)
-		}
-
 		fmt.Printf("%s\n", sources.Installer)
 		fmt.Printf("%s\n", sources.InstallerBase)
 		fmt.Printf("%s\n", sources.Imager)
@@ -266,12 +249,26 @@ var imageSourceBundleCmd = &cobra.Command{
 
 		digestedReferences := []string{}
 
-		for _, overlay := range overlays {
-			digestedReferences = append(digestedReferences, fmt.Sprintf("%s@%s", overlay.TaggedReference.String(), overlay.Digest))
+		if imageTalosBundleCmdFlags.extensions {
+			extensions, err = artifacts.FetchOfficialExtensions(tag)
+			if err != nil {
+				return fmt.Errorf("error fetching official extensions for %s: %w", tag, err)
+			}
+
+			for _, extension := range extensions {
+				digestedReferences = append(digestedReferences, fmt.Sprintf("%s@%s", extension.TaggedReference.String(), extension.Digest))
+			}
 		}
 
-		for _, extension := range extensions {
-			digestedReferences = append(digestedReferences, fmt.Sprintf("%s@%s", extension.TaggedReference.String(), extension.Digest))
+		if imageTalosBundleCmdFlags.overlays {
+			overlays, err = artifacts.FetchOfficialOverlays(tag)
+			if err != nil {
+				return fmt.Errorf("error fetching official overlays for %s: %w", tag, err)
+			}
+
+			for _, overlay := range overlays {
+				digestedReferences = append(digestedReferences, fmt.Sprintf("%s@%s", overlay.TaggedReference.String(), overlay.Digest))
+			}
 		}
 
 		slices.Sort(digestedReferences)
@@ -647,12 +644,14 @@ func init() {
 	imageCmd.PersistentFlags().StringVar(&imageCmdFlags.namespace, "namespace", "cri", "namespace to use: `system` (etcd and kubelet images) or `cri` for all Kubernetes workloads")
 	addCommand(imageCmd)
 
-	imageCmd.AddCommand(imageDefaultCmd)
-	imageDefaultCmd.PersistentFlags().Var(imageDefaultCmdFlags.provisioner, "provisioner", "include provisioner specific images")
-
 	imageCmd.AddCommand(imageListCmd)
 	imageCmd.AddCommand(imagePullCmd)
-	imageCmd.AddCommand(imageSourceBundleCmd)
+
+	imageCmd.AddCommand(imageTalosBundleCmd)
+	imageTalosBundleCmd.PersistentFlags().BoolVar(&imageTalosBundleCmdFlags.overlays, "overlays", true, "Include images that belong to Talos overlays")
+	imageTalosBundleCmd.PersistentFlags().BoolVar(&imageTalosBundleCmdFlags.extensions, "extensions", true, "Include images that belong to Talos extensions")
+
+	imageCmd.AddCommand(imageDefaultCmd)
 
 	imageCmd.AddCommand(imageCacheCreateCmd)
 	imageCacheCreateCmd.PersistentFlags().StringVar(&imageCacheCreateCmdFlags.imageCachePath, "image-cache-path", "", "directory to save the image cache in OCI format")

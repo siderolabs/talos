@@ -2215,8 +2215,7 @@ talosctl image k8s-bundle [flags]
 ### Options
 
 ```
-  -h, --help                 help for k8s-bundle
-      --provisioner string   include provisioner specific images (default "installer")
+  -h, --help   help for k8s-bundle
 ```
 
 ### Options inherited from parent commands
@@ -2306,7 +2305,9 @@ talosctl image talos-bundle [talos-version] [flags]
 ### Options
 
 ```
-  -h, --help   help for talos-bundle
+      --extensions   Include images that belong to Talos extensions (default true)
+  -h, --help         help for talos-bundle
+      --overlays     Include images that belong to Talos overlays (default true)
 ```
 
 ### Options inherited from parent commands
