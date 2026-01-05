@@ -23,6 +23,13 @@ Linux: 6.18.5
 Talos is built with Go 1.25.6.
 """
 
+    [notes.talosctl_images_talos_bundle]
+        title = "`talosctl images talos-bundle` can ignore reaching to the registry"
+        description = """\
+The `talosctl images talos-bundle` command now accepts optional `--ovelays` and `--extensions` flags.
+If those are set to `false`, the command will not attempt to reach out to the container registry to fetch the latest versions and digests of the overlays and extensions.
+"""
+
 [make_deps]
 
     [make_deps.tools]
