@@ -3405,16 +3405,16 @@ func (BlockVolumePhase) EnumDescriptor() ([]byte, []int) {
 type BlockVolumeType int32
 
 const (
-	BlockVolumeType_VOLUME_TYPE_PARTITION       BlockVolumeType = 0
-	BlockVolumeType_VOLUME_TYPE_DISK            BlockVolumeType = 1
-	BlockVolumeType_VOLUME_TYPE_TMPFS           BlockVolumeType = 2
-	BlockVolumeType_VOLUME_TYPE_DIRECTORY       BlockVolumeType = 3
-	BlockVolumeType_VOLUME_TYPE_SYMLINK         BlockVolumeType = 4
-	BlockVolumeType_VOLUME_TYPE_OVERLAY         BlockVolumeType = 5
-	BlockVolumeType_VOLUME_TYPE_EXTERNAL        BlockVolumeType = 6
-	BlockVolumeType_VOLUME_TYPE_PHYSICAL_VOLUME BlockVolumeType = 7
-	BlockVolumeType_VOLUME_TYPE_VOLUME_GROUP    BlockVolumeType = 8
-	BlockVolumeType_VOLUME_TYPE_LOGICAL_VOLUME  BlockVolumeType = 9
+	BlockVolumeType_VOLUME_TYPE_PARTITION           BlockVolumeType = 0
+	BlockVolumeType_VOLUME_TYPE_DISK                BlockVolumeType = 1
+	BlockVolumeType_VOLUME_TYPE_TMPFS               BlockVolumeType = 2
+	BlockVolumeType_VOLUME_TYPE_DIRECTORY           BlockVolumeType = 3
+	BlockVolumeType_VOLUME_TYPE_SYMLINK             BlockVolumeType = 4
+	BlockVolumeType_VOLUME_TYPE_OVERLAY             BlockVolumeType = 5
+	BlockVolumeType_VOLUME_TYPE_EXTERNAL            BlockVolumeType = 6
+	BlockVolumeType_LVM_VOLUME_TYPE_PHYSICAL_VOLUME BlockVolumeType = 7
+	BlockVolumeType_LVM_VOLUME_TYPE_VOLUME_GROUP    BlockVolumeType = 8
+	BlockVolumeType_LVM_VOLUME_TYPE_LOGICAL_VOLUME  BlockVolumeType = 9
 )
 
 // Enum value maps for BlockVolumeType.
@@ -3427,21 +3427,21 @@ var (
 		4: "VOLUME_TYPE_SYMLINK",
 		5: "VOLUME_TYPE_OVERLAY",
 		6: "VOLUME_TYPE_EXTERNAL",
-		7: "VOLUME_TYPE_PHYSICAL_VOLUME",
-		8: "VOLUME_TYPE_VOLUME_GROUP",
-		9: "VOLUME_TYPE_LOGICAL_VOLUME",
+		7: "LVM_VOLUME_TYPE_PHYSICAL_VOLUME",
+		8: "LVM_VOLUME_TYPE_VOLUME_GROUP",
+		9: "LVM_VOLUME_TYPE_LOGICAL_VOLUME",
 	}
 	BlockVolumeType_value = map[string]int32{
-		"VOLUME_TYPE_PARTITION":       0,
-		"VOLUME_TYPE_DISK":            1,
-		"VOLUME_TYPE_TMPFS":           2,
-		"VOLUME_TYPE_DIRECTORY":       3,
-		"VOLUME_TYPE_SYMLINK":         4,
-		"VOLUME_TYPE_OVERLAY":         5,
-		"VOLUME_TYPE_EXTERNAL":        6,
-		"VOLUME_TYPE_PHYSICAL_VOLUME": 7,
-		"VOLUME_TYPE_VOLUME_GROUP":    8,
-		"VOLUME_TYPE_LOGICAL_VOLUME":  9,
+		"VOLUME_TYPE_PARTITION":           0,
+		"VOLUME_TYPE_DISK":                1,
+		"VOLUME_TYPE_TMPFS":               2,
+		"VOLUME_TYPE_DIRECTORY":           3,
+		"VOLUME_TYPE_SYMLINK":             4,
+		"VOLUME_TYPE_OVERLAY":             5,
+		"VOLUME_TYPE_EXTERNAL":            6,
+		"LVM_VOLUME_TYPE_PHYSICAL_VOLUME": 7,
+		"LVM_VOLUME_TYPE_VOLUME_GROUP":    8,
+		"LVM_VOLUME_TYPE_LOGICAL_VOLUME":  9,
 	}
 )
 
@@ -4365,7 +4365,7 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x18VOLUME_PHASE_PROVISIONED\x10\x04\x12\x19\n" +
 	"\x15VOLUME_PHASE_PREPARED\x10\x05\x12\x16\n" +
 	"\x12VOLUME_PHASE_READY\x10\x06\x12\x17\n" +
-	"\x13VOLUME_PHASE_CLOSED\x10\a*\x9f\x02\n" +
+	"\x13VOLUME_PHASE_CLOSED\x10\a*\xab\x02\n" +
 	"\x0fBlockVolumeType\x12\x19\n" +
 	"\x15VOLUME_TYPE_PARTITION\x10\x00\x12\x14\n" +
 	"\x10VOLUME_TYPE_DISK\x10\x01\x12\x15\n" +
@@ -4373,10 +4373,10 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x15VOLUME_TYPE_DIRECTORY\x10\x03\x12\x17\n" +
 	"\x13VOLUME_TYPE_SYMLINK\x10\x04\x12\x17\n" +
 	"\x13VOLUME_TYPE_OVERLAY\x10\x05\x12\x18\n" +
-	"\x14VOLUME_TYPE_EXTERNAL\x10\x06\x12\x1f\n" +
-	"\x1bVOLUME_TYPE_PHYSICAL_VOLUME\x10\a\x12\x1c\n" +
-	"\x18VOLUME_TYPE_VOLUME_GROUP\x10\b\x12\x1e\n" +
-	"\x1aVOLUME_TYPE_LOGICAL_VOLUME\x10\t*\x96\x01\n" +
+	"\x14VOLUME_TYPE_EXTERNAL\x10\x06\x12#\n" +
+	"\x1fLVM_VOLUME_TYPE_PHYSICAL_VOLUME\x10\a\x12 \n" +
+	"\x1cLVM_VOLUME_TYPE_VOLUME_GROUP\x10\b\x12\"\n" +
+	"\x1eLVM_VOLUME_TYPE_LOGICAL_VOLUME\x10\t*\x96\x01\n" +
 	"\x13CriImageCacheStatus\x12\x1e\n" +
 	"\x1aIMAGE_CACHE_STATUS_UNKNOWN\x10\x00\x12\x1f\n" +
 	"\x1bIMAGE_CACHE_STATUS_DISABLED\x10\x01\x12 \n" +

@@ -31,12 +31,12 @@ func _VolumeTypeNoOp() {
 	_ = x[VolumeTypeSymlink-(4)]
 	_ = x[VolumeTypeOverlay-(5)]
 	_ = x[VolumeTypeExternal-(6)]
-	_ = x[VolumeTypePhysicalVolume-(7)]
-	_ = x[VolumeTypeVolumeGroup-(8)]
-	_ = x[VolumeTypeLogicalVolume-(9)]
+	_ = x[LVMVolumeTypePhysicalVolume-(7)]
+	_ = x[LVMVolumeTypeVolumeGroup-(8)]
+	_ = x[LVMVolumeTypeLogicalVolume-(9)]
 }
 
-var _VolumeTypeValues = []VolumeType{VolumeTypePartition, VolumeTypeDisk, VolumeTypeTmpfs, VolumeTypeDirectory, VolumeTypeSymlink, VolumeTypeOverlay, VolumeTypeExternal, VolumeTypePhysicalVolume, VolumeTypeVolumeGroup, VolumeTypeLogicalVolume}
+var _VolumeTypeValues = []VolumeType{VolumeTypePartition, VolumeTypeDisk, VolumeTypeTmpfs, VolumeTypeDirectory, VolumeTypeSymlink, VolumeTypeOverlay, VolumeTypeExternal, LVMVolumeTypePhysicalVolume, LVMVolumeTypeVolumeGroup, LVMVolumeTypeLogicalVolume}
 
 var _VolumeTypeNameToValueMap = map[string]VolumeType{
 	_VolumeTypeName[0:9]:        VolumeTypePartition,
@@ -53,12 +53,12 @@ var _VolumeTypeNameToValueMap = map[string]VolumeType{
 	_VolumeTypeLowerName[34:41]: VolumeTypeOverlay,
 	_VolumeTypeName[41:49]:      VolumeTypeExternal,
 	_VolumeTypeLowerName[41:49]: VolumeTypeExternal,
-	_VolumeTypeName[49:64]:      VolumeTypePhysicalVolume,
-	_VolumeTypeLowerName[49:64]: VolumeTypePhysicalVolume,
-	_VolumeTypeName[64:76]:      VolumeTypeVolumeGroup,
-	_VolumeTypeLowerName[64:76]: VolumeTypeVolumeGroup,
-	_VolumeTypeName[76:90]:      VolumeTypeLogicalVolume,
-	_VolumeTypeLowerName[76:90]: VolumeTypeLogicalVolume,
+	_VolumeTypeName[49:64]:      LVMVolumeTypePhysicalVolume,
+	_VolumeTypeLowerName[49:64]: LVMVolumeTypePhysicalVolume,
+	_VolumeTypeName[64:76]:      LVMVolumeTypeVolumeGroup,
+	_VolumeTypeLowerName[64:76]: LVMVolumeTypeVolumeGroup,
+	_VolumeTypeName[76:90]:      LVMVolumeTypeLogicalVolume,
+	_VolumeTypeLowerName[76:90]: LVMVolumeTypeLogicalVolume,
 }
 
 var _VolumeTypeNames = []string{
