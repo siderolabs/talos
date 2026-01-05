@@ -347,6 +347,211 @@
       "type": "object",
       "description": "FilesystemSpec configures the filesystem for the volume."
     },
+    "block.LVMLogicalVolumeConfig": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the logical volume.\n",
+          "markdownDescription": "Name of the logical volume.",
+          "x-intellij-html-description": "\u003cp\u003eName of the logical volume.\u003c/p\u003e\n"
+        },
+        "volumeGroup": {
+          "type": "string",
+          "title": "volumeGroup",
+          "description": "Volume group name this logical volume belongs to.\n",
+          "markdownDescription": "Volume group name this logical volume belongs to.",
+          "x-intellij-html-description": "\u003cp\u003eVolume group name this logical volume belongs to.\u003c/p\u003e\n"
+        },
+        "size": {
+          "type": "string",
+          "title": "size",
+          "description": "Size of the logical volume.\n",
+          "markdownDescription": "Size of the logical volume.",
+          "x-intellij-html-description": "\u003cp\u003eSize of the logical volume.\u003c/p\u003e\n"
+        },
+        "type": {
+          "type": "string",
+          "title": "type",
+          "description": "Type of the logical volume.\nIf not specified, defaults to linear.\n",
+          "markdownDescription": "Type of the logical volume.\nIf not specified, defaults to linear.",
+          "x-intellij-html-description": "\u003cp\u003eType of the logical volume.\nIf not specified, defaults to linear.\u003c/p\u003e\n"
+        },
+        "filesystem": {
+          "$ref": "#/$defs/block.FilesystemSpec",
+          "title": "filesystem",
+          "description": "Filesystem configuration for the logical volume.\n",
+          "markdownDescription": "Filesystem configuration for the logical volume.",
+          "x-intellij-html-description": "\u003cp\u003eFilesystem configuration for the logical volume.\u003c/p\u003e\n"
+        },
+        "mount": {
+          "$ref": "#/$defs/block.LVMMountSpec",
+          "title": "mount",
+          "description": "Mount configuration for the logical volume.\n",
+          "markdownDescription": "Mount configuration for the logical volume.",
+          "x-intellij-html-description": "\u003cp\u003eMount configuration for the logical volume.\u003c/p\u003e\n"
+        },
+        "encryption": {
+          "$ref": "#/$defs/block.EncryptionSpec",
+          "title": "encryption",
+          "description": "Encryption configuration for the logical volume.\n",
+          "markdownDescription": "Encryption configuration for the logical volume.",
+          "x-intellij-html-description": "\u003cp\u003eEncryption configuration for the logical volume.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "LVMLogicalVolumeConfig describes an LVM logical volume configuration."
+    },
+    "block.LVMMountSpec": {
+      "properties": {
+        "path": {
+          "type": "string",
+          "title": "path",
+          "description": "Path where the volume should be mounted.\n",
+          "markdownDescription": "Path where the volume should be mounted.",
+          "x-intellij-html-description": "\u003cp\u003ePath where the volume should be mounted.\u003c/p\u003e\n"
+        },
+        "options": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "options",
+          "description": "Mount options.\n",
+          "markdownDescription": "Mount options.",
+          "x-intellij-html-description": "\u003cp\u003eMount options.\u003c/p\u003e\n"
+        },
+        "readOnly": {
+          "type": "boolean",
+          "title": "readOnly",
+          "description": "Mount the volume as read-only.\n",
+          "markdownDescription": "Mount the volume as read-only.",
+          "x-intellij-html-description": "\u003cp\u003eMount the volume as read-only.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "LVMMountSpec describes mount configuration for an LVM logical volume."
+    },
+    "block.LVMPhysicalVolumeConfig": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Optional name for the physical volume for referencing in volume groups.\nIf not specified, the device path is used as the identifier.\n",
+          "markdownDescription": "Optional name for the physical volume for referencing in volume groups.\nIf not specified, the device path is used as the identifier.",
+          "x-intellij-html-description": "\u003cp\u003eOptional name for the physical volume for referencing in volume groups.\nIf not specified, the device path is used as the identifier.\u003c/p\u003e\n"
+        },
+        "device": {
+          "type": "string",
+          "title": "device",
+          "description": "Device path for the physical volume.\n",
+          "markdownDescription": "Device path for the physical volume.",
+          "x-intellij-html-description": "\u003cp\u003eDevice path for the physical volume.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "LVMPhysicalVolumeConfig describes an LVM physical volume configuration."
+    },
+    "block.LVMVolumeConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "LVMVolumeConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the LVM configuration.\n\nName can only contain lowercase and uppercase ASCII letters, digits, and hyphens.\n",
+          "markdownDescription": "Name of the LVM configuration.\n\nName can only contain lowercase and uppercase ASCII letters, digits, and hyphens.",
+          "x-intellij-html-description": "\u003cp\u003eName of the LVM configuration.\u003c/p\u003e\n\n\u003cp\u003eName can only contain lowercase and uppercase ASCII letters, digits, and hyphens.\u003c/p\u003e\n"
+        },
+        "physicalVolumes": {
+          "items": {
+            "$ref": "#/$defs/block.LVMPhysicalVolumeConfig"
+          },
+          "type": "array",
+          "title": "physicalVolumes",
+          "description": "Physical volumes to create.\n",
+          "markdownDescription": "Physical volumes to create.",
+          "x-intellij-html-description": "\u003cp\u003ePhysical volumes to create.\u003c/p\u003e\n"
+        },
+        "volumeGroups": {
+          "items": {
+            "$ref": "#/$defs/block.LVMVolumeGroupConfig"
+          },
+          "type": "array",
+          "title": "volumeGroups",
+          "description": "Volume groups to create.\n",
+          "markdownDescription": "Volume groups to create.",
+          "x-intellij-html-description": "\u003cp\u003eVolume groups to create.\u003c/p\u003e\n"
+        },
+        "logicalVolumes": {
+          "items": {
+            "$ref": "#/$defs/block.LVMLogicalVolumeConfig"
+          },
+          "type": "array",
+          "title": "logicalVolumes",
+          "description": "Logical volumes to create.\n",
+          "markdownDescription": "Logical volumes to create.",
+          "x-intellij-html-description": "\u003cp\u003eLogical volumes to create.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "LVMVolumeConfig is an LVM volume configuration document.\\nLVM volume configuration allows configuring LVM physical volumes, volume groups, and logical volumes.\\nEach component is optional, allowing Talos to manage only what you specify.\\nFor example, you can manage only PVs and VGs, letting a CSI driver manage logical volumes.\\n"
+    },
+    "block.LVMVolumeGroupConfig": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the volume group.\n",
+          "markdownDescription": "Name of the volume group.",
+          "x-intellij-html-description": "\u003cp\u003eName of the volume group.\u003c/p\u003e\n"
+        },
+        "physicalVolumes": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "physicalVolumes",
+          "description": "Physical volumes to include in this volume group.\n",
+          "markdownDescription": "Physical volumes to include in this volume group.",
+          "x-intellij-html-description": "\u003cp\u003ePhysical volumes to include in this volume group.\u003c/p\u003e\n"
+        },
+        "extentSize": {
+          "type": "string",
+          "title": "extentSize",
+          "description": "Extent size for the volume group.\nIf not specified, defaults to 4 MiB.\n",
+          "markdownDescription": "Extent size for the volume group.\nIf not specified, defaults to 4 MiB.",
+          "x-intellij-html-description": "\u003cp\u003eExtent size for the volume group.\nIf not specified, defaults to 4 MiB.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "LVMVolumeGroupConfig describes an LVM volume group configuration."
+    },
     "block.MountSpec": {
       "properties": {
         "readOnly": {
@@ -5218,6 +5423,9 @@
     },
     {
       "$ref": "#/$defs/block.ExternalVolumeConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/block.LVMVolumeConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/block.RawVolumeConfigV1Alpha1"

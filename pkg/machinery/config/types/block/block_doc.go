@@ -17,6 +17,10 @@ func (EncryptionSpec) Doc() *encoder.Doc {
 		Description: "EncryptionSpec represents volume encryption settings.",
 		AppearsIn: []encoder.Appearance{
 			{
+				TypeName:  "LVMLogicalVolumeConfig",
+				FieldName: "encryption",
+			},
+			{
 				TypeName:  "RawVolumeConfigV1Alpha1",
 				FieldName: "encryption",
 			},
@@ -504,6 +508,244 @@ func (VirtiofsMountSpec) Doc() *encoder.Doc {
 	return doc
 }
 
+func (LVMPhysicalVolumeConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "LVMPhysicalVolumeConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "LVMPhysicalVolumeConfig describes an LVM physical volume configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "LVMPhysicalVolumeConfig describes an LVM physical volume configuration.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "LVMVolumeConfigV1Alpha1",
+				FieldName: "physicalVolumes",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Optional name for the physical volume for referencing in volume groups.\nIf not specified, the device path is used as the identifier.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Optional name for the physical volume for referencing in volume groups." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "device",
+				Type:        "string",
+				Note:        "",
+				Description: "Device path for the physical volume.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Device path for the physical volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[1].AddExample("", "/dev/sdb")
+
+	return doc
+}
+
+func (LVMVolumeGroupConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "LVMVolumeGroupConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "LVMVolumeGroupConfig describes an LVM volume group configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "LVMVolumeGroupConfig describes an LVM volume group configuration.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "LVMVolumeConfigV1Alpha1",
+				FieldName: "volumeGroups",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the volume group.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the volume group." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "physicalVolumes",
+				Type:        "[]string",
+				Note:        "",
+				Description: "Physical volumes to include in this volume group.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Physical volumes to include in this volume group." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "extentSize",
+				Type:        "ByteSize",
+				Note:        "",
+				Description: "Extent size for the volume group.\nIf not specified, defaults to 4 MiB.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Extent size for the volume group." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[2].AddExample("", "4MiB")
+	doc.Fields[2].AddExample("", "8MiB")
+
+	return doc
+}
+
+func (LVMLogicalVolumeConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "LVMLogicalVolumeConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "LVMLogicalVolumeConfig describes an LVM logical volume configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "LVMLogicalVolumeConfig describes an LVM logical volume configuration.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "LVMVolumeConfigV1Alpha1",
+				FieldName: "logicalVolumes",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the logical volume.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the logical volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "volumeGroup",
+				Type:        "string",
+				Note:        "",
+				Description: "Volume group name this logical volume belongs to.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Volume group name this logical volume belongs to." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "size",
+				Type:        "ByteSize",
+				Note:        "",
+				Description: "Size of the logical volume.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Size of the logical volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "type",
+				Type:        "LVType",
+				Note:        "",
+				Description: "Type of the logical volume.\nIf not specified, defaults to linear.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Type of the logical volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"linear",
+				},
+			},
+			{
+				Name:        "filesystem",
+				Type:        "FilesystemSpec",
+				Note:        "",
+				Description: "Filesystem configuration for the logical volume.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Filesystem configuration for the logical volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "mount",
+				Type:        "LVMMountSpec",
+				Note:        "",
+				Description: "Mount configuration for the logical volume.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Mount configuration for the logical volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "encryption",
+				Type:        "EncryptionSpec",
+				Note:        "",
+				Description: "Encryption configuration for the logical volume.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Encryption configuration for the logical volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[2].AddExample("", "100GB")
+	doc.Fields[2].AddExample("", "50GiB")
+
+	return doc
+}
+
+func (LVMMountSpec) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "LVMMountSpec",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "LVMMountSpec describes mount configuration for an LVM logical volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "LVMMountSpec describes mount configuration for an LVM logical volume.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "LVMLogicalVolumeConfig",
+				FieldName: "mount",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "path",
+				Type:        "string",
+				Note:        "",
+				Description: "Path where the volume should be mounted.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Path where the volume should be mounted." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "options",
+				Type:        "[]string",
+				Note:        "",
+				Description: "Mount options.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Mount options." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "readOnly",
+				Type:        "bool",
+				Note:        "",
+				Description: "Mount the volume as read-only.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Mount the volume as read-only." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("", "/var/lib/postgresql")
+
+	return doc
+}
+
+func (LVMVolumeConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "LVMVolumeConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "LVMVolumeConfig is an LVM volume configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "LVMVolumeConfig is an LVM volume configuration document.\nLVM volume configuration allows configuring LVM physical volumes, volume groups, and logical volumes.\nEach component is optional, allowing Talos to manage only what you specify.\nFor example, you can manage only PVs and VGs, letting a CSI driver manage logical volumes.\n",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the LVM configuration.\n\nName can only contain lowercase and uppercase ASCII letters, digits, and hyphens.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the LVM configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "physicalVolumes",
+				Type:        "[]LVMPhysicalVolumeConfig",
+				Note:        "",
+				Description: "Physical volumes to create.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Physical volumes to create." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "volumeGroups",
+				Type:        "[]LVMVolumeGroupConfig",
+				Note:        "",
+				Description: "Volume groups to create.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Volume groups to create." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "logicalVolumes",
+				Type:        "[]LVMLogicalVolumeConfig",
+				Note:        "",
+				Description: "Logical volumes to create.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Logical volumes to create." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleLVMVolumeConfigSimple())
+
+	doc.AddExample("", exampleLVMVolumeConfigForCSI())
+
+	return doc
+}
+
 func (RawVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "RawVolumeConfig",
@@ -650,6 +892,10 @@ func (FilesystemSpec) Doc() *encoder.Doc {
 		Comments:    [3]string{"" /* encoder.HeadComment */, "FilesystemSpec configures the filesystem for the volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
 		Description: "FilesystemSpec configures the filesystem for the volume.",
 		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "LVMLogicalVolumeConfig",
+				FieldName: "filesystem",
+			},
 			{
 				TypeName:  "UserVolumeConfigV1Alpha1",
 				FieldName: "filesystem",
@@ -861,6 +1107,11 @@ func GetFileDoc() *encoder.FileDoc {
 			ExternalVolumeConfigV1Alpha1{}.Doc(),
 			ExternalMountSpec{}.Doc(),
 			VirtiofsMountSpec{}.Doc(),
+			LVMPhysicalVolumeConfig{}.Doc(),
+			LVMVolumeGroupConfig{}.Doc(),
+			LVMLogicalVolumeConfig{}.Doc(),
+			LVMMountSpec{}.Doc(),
+			LVMVolumeConfigV1Alpha1{}.Doc(),
 			RawVolumeConfigV1Alpha1{}.Doc(),
 			SwapVolumeConfigV1Alpha1{}.Doc(),
 			UserVolumeConfigV1Alpha1{}.Doc(),
