@@ -1,3 +1,64 @@
+## [Talos 1.12.1](https://github.com/siderolabs/talos/releases/tag/v1.12.1) (2026-01-05)
+
+Welcome to the v1.12.1 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.18.2
+
+Talos is built with Go 1.25.5.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Mateusz Urbanek
+* Dmitrii Sharshakov
+
+### Changes
+<details><summary>6 commits</summary>
+<p>
+
+* [`78a785604`](https://github.com/siderolabs/talos/commit/78a785604ad40eb9f1634c9db5477bd6ce99428c) chore: run rekres and update dependencies
+* [`c31067173`](https://github.com/siderolabs/talos/commit/c3106717392a34fcca959b414f5064d6c799eaa3) fix: disable swap for system services
+* [`a7e8426cf`](https://github.com/siderolabs/talos/commit/a7e8426cfb46f4c46476243032e2f4ade1fe9dfc) test: skip the source bundle on exact tag
+* [`943984167`](https://github.com/siderolabs/talos/commit/943984167c22af0853d2c956677a241acece807f) fix: probe small images correctly
+* [`42df71637`](https://github.com/siderolabs/talos/commit/42df71637763b1bf10bdf0fe89f650c367605b8c) fix: invalid versions check in talos-bundle
+* [`a3e90e445`](https://github.com/siderolabs/talos/commit/a3e90e445f0f99b050eb98fcd9565b2b5e3397bf) fix: make upgrade work with SELinux enforcing=1
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>2 commits</summary>
+<p>
+
+* [`90ff196`](https://github.com/siderolabs/pkgs/commit/90ff1965cdb2ab54d8e826f3673324cd1b5c94da) chore: run rekres and update dependencies
+* [`2b30517`](https://github.com/siderolabs/pkgs/commit/2b3051775ca0d7531f65b81572e391a96b4a2c04) feat: update Linux to 6.18.2
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`5df8bae`](https://github.com/siderolabs/tools/commit/5df8baedd100b6f117f664f383944daaf3371804) chore: run rekres and update dependencies
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/klauspost/compress**            v1.18.1 -> v1.18.2
+* **github.com/siderolabs/go-blockdevice/v2**  v2.0.20 -> v2.0.22
+* **github.com/siderolabs/pkgs**               v1.12.0-23-ge0b78b8 -> v1.12.0-25-g90ff196
+* **github.com/siderolabs/tools**              v1.12.0-2-g7d57df0 -> v1.12.0-3-g5df8bae
+
+Previous release can be found at [v1.12.0](https://github.com/siderolabs/talos/releases/tag/v1.12.0)
+
 ## [Talos 1.12.0](https://github.com/siderolabs/talos/releases/tag/v1.12.0) (2025-12-22)
 
 Welcome to the v1.12.0 release of Talos!
