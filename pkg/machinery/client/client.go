@@ -1018,9 +1018,14 @@ func (c *Client) ImagePull(ctx context.Context, namespace common.ContainerdNames
 	return err
 }
 
-// DebugContainer streams a container image archive and runs it in the system containerd namespace.
-func (c *Client) DebugContainer(ctx context.Context, callOptions ...grpc.CallOption) (machineapi.MachineService_DebugContainerClient, error) {
-	return c.MachineClient.DebugContainer(ctx, callOptions...)
+// DebugContainerCreate creates a debug container.
+func (c *Client) DebugContainerCreate(ctx context.Context, callOptions ...grpc.CallOption) (machineapi.MachineService_DebugContainerCreateClient, error) {
+	return c.MachineClient.DebugContainerCreate(ctx, callOptions...)
+}
+
+// DebugContainerRun runs a debug container.
+func (c *Client) DebugContainerRun(ctx context.Context, callOptions ...grpc.CallOption) (machineapi.MachineService_DebugContainerRunClient, error) {
+	return c.MachineClient.DebugContainerRun(ctx, callOptions...)
 }
 
 // BlockDeviceWipe wipes a block device which is not used as a volume.

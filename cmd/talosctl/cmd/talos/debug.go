@@ -21,15 +21,12 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/siderolabs/talos/internal/pkg/containers/image"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/reporter"
 )
-
-// TODO(laurazard):
-// - set ENV variables
-// - clean up
 
 var debugCmdFlags struct {
 	args []string
@@ -46,7 +43,10 @@ var debugCmd = &cobra.Command{
 	Use:   "debug <image-tar-path|image ref> [args]",
 	Short: "Run a debug container from an image archive or reference",
 	Example: `  # Run a debug container from a local tar archive
-  talosctl -n 172.20.0.2 debug ./debug-tools.tar /bin/sh`,
+    talosctl -n 172.20.0.2 debug ./debug-tools.tar --args /bin/sh
+
+  # Run a debug container from an image reference
+    talosctl -n 172.20.0.2 debug docker.io/library/alpine:latest --args /bin/sh`,
 
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -62,7 +62,7 @@ var debugCmd = &cobra.Command{
 			ctx, cancel := context.WithCancel(ctx)
 			defer cancel()
 
-			stream, err := c.DebugContainer(ctx,
+			stream, err := c.DebugContainerCreate(ctx,
 				grpc.MaxCallRecvMsgSize(4*1024*1024), // 4 MiB
 				grpc.MaxCallSendMsgSize(4*1024*1024),
 			)
@@ -71,234 +71,141 @@ var debugCmd = &cobra.Command{
 			}
 
 			rep := reporter.New()
-
-			var (
-				sendC    = make(chan *machine.DebugContainerRequest, 100)
-				sendDone chan error
-				recvDone = make(chan error, 1)
-
-				stdinDone chan error
-
-				exitCode int32 = -1
-			)
-
-			pullProgWriter := pullProgressWriter{
-				reporter:     rep,
-				ongoingPulls: pullJobs{},
-			}
-
-			stopCancelC := make(chan struct{})
-			go func() {
-				c := make(chan os.Signal, 1)
-				signal.Notify(c, forwardedSignals...)
-				select {
-				case <-c:
-					cancel()
-				case <-stopCancelC:
-				}
-				signal.Stop(c)
-			}()
-
-			go func() {
-				var pullComplete bool
-
-				for {
-					msg, err := stream.Recv()
-					if err != nil {
-						if status.Code(err) == codes.Canceled {
-							recvDone <- context.Canceled
-
-							return
-						}
-
-						recvDone <- err
-
-						return
-					}
-
-					switch msg.Resp.(type) {
-					case *machine.DebugContainerResponse_PullProgress:
-						if pullComplete {
-							continue
-						}
-
-						pullProgress := msg.GetPullProgress()
-						id := pullProgress.GetId()
-
-						if id == "done" {
-							pullComplete = true
-							rep.Report(reporter.Update{
-								Message: "Image pull complete",
-								Status:  reporter.StatusSucceeded,
-							})
-
-							continue
-						}
-
-						current := pullProgress.GetCurrent()
-						total := pullProgress.GetTotal()
-						message := pullProgress.GetMessage()
-						pullProgWriter.updateJob(id, message, current, total)
-
-						pullProgWriter.printLayerProgress()
-
-					case *machine.DebugContainerResponse_ContainerId:
-						stopCancelC <- struct{}{}
-						sigHandler(ctx, sendC)
-						rep.Report(reporter.Update{
-							Message: "Container ready",
-							Status:  reporter.StatusSucceeded,
-						})
-
-						fmt.Println()
-
-						if term.IsTerminal(int(os.Stdin.Fd())) {
-							oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
-							if err != nil {
-								recvDone <- fmt.Errorf("failed to set terminal to raw mode: %w", err)
-
-								return
-							}
-							defer func() {
-								if oldState != nil {
-									term.Restore(int(os.Stdin.Fd()), oldState) //nolint:errcheck
-								}
-							}()
-						}
-
-						// container is ready, start reading stdin
-						stdinDone = stdinReader(ctx, sendC)
-
-						// start sendLoop
-						if sendDone == nil {
-							sendDone = sendLoop(ctx, stream, sendC)
-						}
-
-					case *machine.DebugContainerResponse_StdoutData:
-						if stdoutData := msg.GetStdoutData(); stdoutData != nil {
-							os.Stdout.Write(stdoutData) //nolint:errcheck
-						}
-
-					case *machine.DebugContainerResponse_ExitCode:
-						exitCode = msg.GetExitCode()
-						recvDone <- io.EOF
-
-						return
-
-					default:
-						fmt.Printf("Unknown type\n")
-					}
-				}
-			}()
-
 			rep.Report(reporter.Update{
 				Message: "Sending container spec..",
 				Status:  reporter.StatusRunning,
 			})
 
-			// send spec first
-			spec := &machine.DebugContainerRequest{
-				Request: &machine.DebugContainerRequest_Spec{
-					Spec: &machine.DebugContainerSpec{
-						Args: debugCmdFlags.args,
-					},
-				},
+			ctrID, err := createContainer(ctx, rep, args[0], stream)
+			if err != nil {
+				return err
 			}
 
-			// check if arg is a tar archive
-			imageArg := args[0]
-			imageFile, err := os.Open(imageArg)
-			if errors.Is(err, os.ErrNotExist) {
-				spec.Request.(*machine.DebugContainerRequest_Spec).Spec.ImageRef = imageArg
-			}
-			defer imageFile.Close() //nolint:errcheck
-
-			if err := stream.Send(spec); err != nil {
-				return fmt.Errorf("failed to send spec: %w", err)
+			if err := stream.CloseSend(); err != nil {
+				return err
 			}
 
-			rep.Report(reporter.Update{
-				Message: "Container spec sent",
-				Status:  reporter.StatusSucceeded,
-			})
-
-			if imageFile != nil {
-				if err := sendImage(ctx, stream, args[0], rep); err != nil {
-					return fmt.Errorf("failed to send image: %w", err)
-				}
+			runStream, err := c.DebugContainerRun(ctx,
+				grpc.MaxCallRecvMsgSize(4*1024*1024), // 4 MiB
+				grpc.MaxCallSendMsgSize(4*1024*1024),
+			)
+			if err != nil {
+				return fmt.Errorf("failed to create debug container stream: %w", err)
 			}
 
-			select {
-			case err := <-stdinDone:
-				if err != nil && err != io.EOF {
-					fmt.Fprintf(os.Stderr, "%s\n", err.Error())
-				}
-
-				cancel() // cancels sigHandler, stdinReader goroutines
-
-				close(sendC)
-				if sendDone != nil {
-					<-sendDone
-				}
-
-				// if we're done piping stdin, close send stream and wait
-				// for the server to exit which will cause recvLoop to return
-				if err := stream.CloseSend(); err != nil {
-					fmt.Fprintf(os.Stderr, "Warning: failed to close send stream: %v\n", err)
-				}
-
-				if recvErr := <-recvDone; recvErr != nil && recvErr != io.EOF {
-					return recvErr
-				}
-
-			case err := <-recvDone:
+			if term.IsTerminal(int(os.Stdin.Fd())) {
+				oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
 				if err != nil {
-					if err == context.Canceled {
-						rep.Report(reporter.Update{
-							Message: "context canceled",
-							Status:  reporter.StatusError,
-						})
+					return fmt.Errorf("failed to set terminal to raw mode: %w", err)
+				}
 
-						return nil
-					} else if err != io.EOF {
-						rep.Report(reporter.Update{
-							Message: fmt.Sprintf("Error: %s", err.Error()),
-							Status:  reporter.StatusError,
-						})
-
-						return nil
+				defer func() {
+					if oldState != nil {
+						term.Restore(int(os.Stdin.Fd()), oldState) //nolint:errcheck
 					}
-				}
-
-				cancel() // cancels sigHandler, stdinReader goroutines
-
-				if stdinDone != nil {
-					<-stdinDone
-				}
-
-				close(sendC)
-				if sendDone != nil {
-					<-sendDone
-				}
+				}()
 			}
 
-			if exitCode != -1 && exitCode != 0 {
-				rep.Report(reporter.Update{
-					Message: fmt.Sprintf("Container exited with status code %d", exitCode),
-					Status:  reporter.StatusSucceeded,
-				})
-			}
-
-			return nil
+			return runContainer(ctx, rep, runStream, ctrID)
 		})
 	},
 }
 
-func sendImage(ctx context.Context, stream machine.MachineService_DebugContainerClient, path string, rep *reporter.Reporter) error {
-	imageFile, err := os.Open(path)
+func createContainer(ctx context.Context, rep *reporter.Reporter, imageArg string, stream machine.MachineService_DebugContainerCreateClient) (string, error) { //nolint:gocyclo
+	ctx, cancel := signal.NotifyContext(ctx, os.Interrupt)
+	defer cancel()
+
+	imageFile, err := os.Open(imageArg)
 	if err != nil {
-		return fmt.Errorf("failed to open image file: %w", err)
+		if !errors.Is(err, os.ErrNotExist) {
+			return "", err
+		}
+	} else {
+		defer imageFile.Close() //nolint:errcheck
 	}
+
+	spec := &machine.DebugContainerCreateRequest_Spec{
+		Spec: &machine.DebugContainerSpec{
+			Args: debugCmdFlags.args,
+		},
+	}
+	if imageFile == nil {
+		spec.Spec.ImageRef = imageArg
+	}
+
+	if err := stream.Send(&machine.DebugContainerCreateRequest{
+		Request: spec,
+	}); err != nil {
+		return "", fmt.Errorf("failed to send spec: %w", err)
+	}
+
+	rep.Report(reporter.Update{
+		Message: "Container spec sent",
+		Status:  reporter.StatusSucceeded,
+	})
+
+	if imageFile != nil {
+		if err := sendImage(ctx, stream, imageFile, rep); err != nil {
+			return "", fmt.Errorf("failed to send image: %w", err)
+		}
+	}
+
+	pullProgWriter := pullProgressWriter{
+		reporter:     rep,
+		ongoingPulls: pullJobs{},
+	}
+
+	var pullComplete bool
+
+	for {
+		msg, err := stream.Recv()
+		if err != nil {
+			if status.Code(err) == codes.Canceled {
+				return "", context.Canceled
+			}
+
+			return "", err
+		}
+
+		switch msg.Response.(type) {
+		case *machine.DebugContainerCreateResponse_PullProgress:
+			if pullComplete {
+				continue
+			}
+
+			pullProgress := msg.GetPullProgress()
+			id := pullProgress.GetLayerId()
+
+			if id == "done" {
+				pullComplete = true
+
+				rep.Report(reporter.Update{
+					Message: "Image pull complete",
+					Status:  reporter.StatusSucceeded,
+				})
+
+				continue
+			}
+
+			pullProgWriter.updateJob(id, pullProgress.GetProgressStatus())
+
+			pullProgWriter.printLayerProgress()
+
+		case *machine.DebugContainerCreateResponse_ContainerId:
+			rep.Report(reporter.Update{
+				Message: fmt.Sprintf("Container created: %s\n", msg.GetContainerId()),
+				Status:  reporter.StatusSucceeded,
+			})
+
+			return msg.GetContainerId(), nil
+
+		default:
+			fmt.Printf("Unknown type\n")
+		}
+	}
+}
+
+func sendImage(ctx context.Context, stream machine.MachineService_DebugContainerCreateClient, imageFile *os.File, rep *reporter.Reporter) error {
 	defer imageFile.Close() //nolint:errcheck
 
 	fileInfo, err := imageFile.Stat()
@@ -331,8 +238,8 @@ func sendImage(ctx context.Context, stream machine.MachineService_DebugContainer
 			break
 		}
 
-		req := &machine.DebugContainerRequest{
-			Request: &machine.DebugContainerRequest_ImageChunk{
+		req := &machine.DebugContainerCreateRequest{
+			Request: &machine.DebugContainerCreateRequest_ImageChunk{
 				ImageChunk: &common.Data{
 					Bytes: buf[:n],
 				},
@@ -357,8 +264,8 @@ func sendImage(ctx context.Context, stream machine.MachineService_DebugContainer
 		Status:  reporter.StatusSucceeded,
 	})
 
-	req := &machine.DebugContainerRequest{
-		Request: &machine.DebugContainerRequest_ImageChunk{
+	req := &machine.DebugContainerCreateRequest{
+		Request: &machine.DebugContainerCreateRequest_ImageChunk{
 			ImageChunk: &common.Data{
 				Bytes: []byte{},
 			},
@@ -372,23 +279,168 @@ func sendImage(ctx context.Context, stream machine.MachineService_DebugContainer
 	return nil
 }
 
+func runContainer(ctx context.Context, rep *reporter.Reporter, stream machine.MachineService_DebugContainerRunClient, containerID string) error { //nolint:gocyclo,cyclop
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	rep.Report(reporter.Update{
+		Message: fmt.Sprintf("Starting container: %s\n", containerID),
+		Status:  reporter.StatusRunning,
+	})
+
+	err := stream.Send(&machine.DebugContainerRunRequest{
+		Request: &machine.DebugContainerRunRequest_ContainerId{
+			ContainerId: containerID,
+		},
+	})
+	if err != nil {
+		return fmt.Errorf("failed to send container ID: %w", err)
+	}
+	// TODO(laurazard): stay attached until container removed
+
+	rep.Report(reporter.Update{
+		Message: fmt.Sprintf("Container started: %s\n", containerID),
+		Status:  reporter.StatusSucceeded,
+	})
+
+	var (
+		sendC    = make(chan *machine.DebugContainerRunRequest, 100)
+		sendDone chan error
+		recvDone = make(chan error, 1)
+
+		stdinDone chan error
+
+		exitCode int32 = -1
+	)
+
+	sigHandler(ctx, sendC)
+
+	stdinDone = stdinReader(ctx, sendC)
+	sendDone = sendLoop(ctx, stream, sendC)
+
+	go func() {
+		for {
+			msg, err := stream.Recv()
+			if err != nil {
+				if status.Code(err) == codes.Canceled {
+					recvDone <- context.Canceled
+
+					return
+				}
+
+				recvDone <- err
+
+				return
+			}
+
+			switch msg.Resp.(type) {
+			case *machine.DebugContainerRunResponse_StdoutData:
+				if stdoutData := msg.GetStdoutData(); stdoutData != nil {
+					os.Stdout.Write(stdoutData) //nolint:errcheck
+				}
+
+			case *machine.DebugContainerRunResponse_ExitCode:
+				exitCode = msg.GetExitCode()
+
+				recvDone <- io.EOF
+
+				return
+
+			default:
+				fmt.Printf("Unknown type\n")
+			}
+		}
+	}()
+
+	// either stdin closes first, and we cancel goroutines and CloseSend this end of the stream
+	// or recvLoop exits first (container exit or error), and we cancel goroutines and wait
+	// for stdinReader to finish
+	select {
+	case err := <-stdinDone:
+		if err != nil && err != io.EOF {
+			fmt.Fprintf(os.Stderr, "%s\n", err.Error())
+		}
+
+		cancel() // cancels sigHandler, stdinReader goroutines
+
+		close(sendC)
+
+		if sendDone != nil {
+			<-sendDone
+		}
+
+		// close send stream and wait for the server to exit
+		// which will cause recvLoop to return
+		if err := stream.CloseSend(); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to close send stream: %v\n", err)
+		}
+
+		if recvErr := <-recvDone; recvErr != nil && recvErr != io.EOF {
+			return recvErr
+		}
+
+	case err := <-recvDone:
+		if err != nil {
+			if err == context.Canceled {
+				rep.Report(reporter.Update{
+					Message: "context canceled",
+					Status:  reporter.StatusError,
+				})
+
+				return nil
+			} else if err != io.EOF {
+				rep.Report(reporter.Update{
+					Message: fmt.Sprintf("Error: %s", err.Error()),
+					Status:  reporter.StatusError,
+				})
+
+				return nil
+			}
+		}
+
+		cancel() // sigHandler, stdinReader goroutines
+
+		if stdinDone != nil {
+			<-stdinDone
+		}
+
+		close(sendC)
+
+		if sendDone != nil {
+			<-sendDone
+		}
+	}
+
+	if exitCode != -1 && exitCode != 0 {
+		rep.Report(reporter.Update{
+			Message: fmt.Sprintf("Container exited with status code %d", exitCode),
+			Status:  reporter.StatusSucceeded,
+		})
+	}
+
+	return nil
+}
+
 var forwardedSignals = []os.Signal{
 	syscall.SIGINT,
 	syscall.SIGTERM,
 	syscall.SIGQUIT,
 	syscall.SIGHUP,
+	syscall.SIGWINCH,
 }
 
-func sigHandler(ctx context.Context, msgC chan<- *machine.DebugContainerRequest) {
+// sigHandler registers signal handlers for the signals in
+// `forwardedSignals`, and sends them to `msgC`.
+//
+// In case the signal received is `SIGWINCH`, the size of the user's
+// terminal is queried and sent as a `DebugContainerTerminalResize`
+// message, in order to resize the container's terminal.
+func sigHandler(ctx context.Context, msgC chan<- *machine.DebugContainerRunRequest) {
 	sigC := make(chan os.Signal, 1)
 	signal.Notify(sigC, forwardedSignals...)
 
-	winchC := make(chan os.Signal, 1)
-	signal.Notify(winchC, syscall.SIGWINCH)
-
 	go func() {
 		defer func() {
-			defer signal.Stop(winchC)
 			defer signal.Stop(sigC)
 		}()
 
@@ -397,26 +449,29 @@ func sigHandler(ctx context.Context, msgC chan<- *machine.DebugContainerRequest)
 			case <-ctx.Done():
 				return
 
-			case <-winchC:
-				if term.IsTerminal(int(os.Stdin.Fd())) {
-					width, height, err := term.GetSize(int(os.Stdin.Fd()))
-					if err != nil {
-						continue
+			case sig := <-sigC:
+				if sig.(syscall.Signal) == syscall.SIGWINCH {
+					if term.IsTerminal(int(os.Stdin.Fd())) {
+						width, height, err := term.GetSize(int(os.Stdin.Fd()))
+						if err != nil {
+							continue
+						}
+
+						msgC <- &machine.DebugContainerRunRequest{
+							Request: &machine.DebugContainerRunRequest_TermResize{
+								TermResize: &machine.DebugContainerTerminalResize{
+									Width:  int32(width),
+									Height: int32(height),
+								},
+							},
+						}
 					}
 
-					msgC <- &machine.DebugContainerRequest{
-						Request: &machine.DebugContainerRequest_TermResize{
-							TermResize: &machine.DebugContainerTerminalResize{
-								Width:  int32(width),
-								Height: int32(height),
-							},
-						},
-					}
+					continue
 				}
 
-			case sig := <-sigC:
-				msgC <- &machine.DebugContainerRequest{
-					Request: &machine.DebugContainerRequest_Signal{
+				msgC <- &machine.DebugContainerRunRequest{
+					Request: &machine.DebugContainerRunRequest_Signal{
 						Signal: int32(sig.(syscall.Signal)),
 					},
 				}
@@ -424,10 +479,23 @@ func sigHandler(ctx context.Context, msgC chan<- *machine.DebugContainerRequest)
 		}
 	}()
 
-	winchC <- syscall.SIGWINCH // just trigger an initial resize
+	sigC <- syscall.SIGWINCH // trigger an initial resize
 }
 
-func stdinReader(ctx context.Context, msgC chan<- *machine.DebugContainerRequest) chan error {
+// stdinReader reads from stdin and sends data to msgC.
+//
+// This implementation is unfortunately a bit complex. This is due
+// to the fact that reading from stdin is a blocking syscall, which
+// means if we just do `os.Stdin.Read` and send it's output to
+// `msgC`, canceling `ctx` won't cause this goroutine to end (that
+// will only happen when there's something to read from stdin, and
+// the goroutine will loop around and check `ctx.Done()`.
+// To address this, wrap `os.Stdin` in a `io.Pipe()` we can cancel,
+// and launch a separate goroutine to close the pipe when `ctx` is
+// canceled.
+// This way, as soon as `ctx` is canceled, the pipe is closed and
+// the main goroutine will get an `io.EOF` and exit.
+func stdinReader(ctx context.Context, msgC chan<- *machine.DebugContainerRunRequest) chan error {
 	r, w := io.Pipe()
 	done := make(chan error)
 
@@ -456,8 +524,8 @@ func stdinReader(ctx context.Context, msgC chan<- *machine.DebugContainerRequest
 				continue
 			}
 
-			msgC <- &machine.DebugContainerRequest{
-				Request: &machine.DebugContainerRequest_StdinData{
+			msgC <- &machine.DebugContainerRunRequest{
+				Request: &machine.DebugContainerRunRequest_StdinData{
 					StdinData: buf[:n],
 				},
 			}
@@ -467,7 +535,7 @@ func stdinReader(ctx context.Context, msgC chan<- *machine.DebugContainerRequest
 	return done
 }
 
-func sendLoop(ctx context.Context, stream machine.MachineService_DebugContainerClient, msgC chan *machine.DebugContainerRequest) chan error {
+func sendLoop(ctx context.Context, stream machine.MachineService_DebugContainerRunClient, msgC chan *machine.DebugContainerRunRequest) chan error {
 	done := make(chan error)
 
 	go func() {
@@ -508,14 +576,8 @@ func formatBytes(bytes int64) string {
 }
 
 type pullJob struct {
-	ID      string
-	Message string
-	Current int64
-	Total   int64
-}
-
-func (p *pullJob) progress() float64 {
-	return float64(p.Current) / float64(p.Total) * 100
+	LayerID string
+	Status  *machine.DebugContainerPullProgressStatus
 }
 
 type pullJobs []*pullJob
@@ -529,7 +591,7 @@ func (p pullJobs) Swap(i, j int) {
 }
 
 func (p pullJobs) Less(i, j int) bool {
-	return p[i].ID < p[j].ID
+	return p[i].LayerID < p[j].LayerID
 }
 
 type pullProgressWriter struct {
@@ -537,22 +599,18 @@ type pullProgressWriter struct {
 	ongoingPulls pullJobs
 }
 
-func (p *pullProgressWriter) updateJob(id, message string, current, total int64) {
+func (p *pullProgressWriter) updateJob(layerID string, progress *machine.DebugContainerPullProgressStatus) {
 	for _, job := range p.ongoingPulls {
-		if job.ID == id {
-			job.Message = message
-			job.Current = current
-			job.Total = total
+		if job.LayerID == layerID {
+			job.Status = progress
 
 			return
 		}
 	}
 
 	p.ongoingPulls = append(p.ongoingPulls, &pullJob{
-		ID:      id,
-		Message: message,
-		Current: current,
-		Total:   total,
+		LayerID: layerID,
+		Status:  progress,
 	})
 }
 
@@ -563,19 +621,7 @@ func (p *pullProgressWriter) printLayerProgress() {
 	sb.WriteString("Pulling image:\n")
 
 	for _, job := range p.ongoingPulls {
-		if job.Message == "Downloading" {
-			fmt.Fprintf(&sb, "%s: %s (%.1f%%)\n", job.ID, job.Message, job.progress())
-
-			continue
-		}
-
-		if job.Message == "Extracting" {
-			fmt.Fprintf(&sb, "%s: %s (%ds)\n", job.ID, job.Message, job.Current)
-
-			continue
-		}
-
-		fmt.Fprintf(&sb, "%s: %s\n", job.ID, job.Message)
+		fmt.Fprintf(&sb, "  %s", image.FmtStatus(job.Status))
 	}
 
 	p.reporter.Report(reporter.Update{
