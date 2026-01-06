@@ -2,11 +2,12 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package runtime
+package image
 
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"sort"
 	"sync"
@@ -25,10 +26,36 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 )
 
-type pullProgress struct {
-	srv         machine.MachineService_DebugContainerServer
+// FmtStatus formats the pull progress status into a human-readable string.
+func FmtStatus(s *machine.DebugContainerPullProgressStatus) string {
+	switch s.GetStatus() {
+	case machine.DebugContainerPullProgressStatus_DOWNLOADING:
+		return fmt.Sprintf("Downloading (%.1f%%)\n", s.Progress)
+
+	case machine.DebugContainerPullProgressStatus_DOWNLOAD_COMPLETE:
+		return "Download Complete\n"
+
+	case machine.DebugContainerPullProgressStatus_EXTRACTING:
+		return fmt.Sprintf("Extracting (%.1fs)\n", s.Progress)
+
+	case machine.DebugContainerPullProgressStatus_EXTRACT_COMPLETE:
+		return "Pull Complete\n"
+
+	case machine.DebugContainerPullProgressStatus_ALREADY_EXISTS:
+		return "Already Exists\n"
+	}
+
+	return ""
+}
+
+// UpdateFn is used by PullProgress to report progress updates.
+type UpdateFn func(*machine.DebugContainerPullProgress)
+
+// PullProgress tracks and reports the progress of image pulls.
+type PullProgress struct {
 	store       content.Store
 	snapshotter snapshots.Snapshotter
+	updateFn    UpdateFn
 
 	mu    sync.Mutex
 	descs map[digest.Digest]ocispec.Descriptor // guarded by mu
@@ -37,9 +64,10 @@ type pullProgress struct {
 	unpackStart map[digest.Digest]time.Time
 }
 
-func newPullProgress(srv machine.MachineService_DebugContainerServer, store content.Store, snapshotter snapshots.Snapshotter) *pullProgress {
-	return &pullProgress{
-		srv:         srv,
+// NewPullProgress creates a new PullProgress instance.
+func NewPullProgress(store content.Store, snapshotter snapshots.Snapshotter, fn UpdateFn) *PullProgress {
+	return &PullProgress{
+		updateFn:    fn,
 		store:       store,
 		snapshotter: snapshotter,
 		descs:       make(map[digest.Digest]ocispec.Descriptor),
@@ -47,7 +75,8 @@ func newPullProgress(srv machine.MachineService_DebugContainerServer, store cont
 	}
 }
 
-func (p *pullProgress) showProgress(ctx context.Context) func() {
+// ShowProgress starts tracking and reporting pull progress.
+func (p *PullProgress) ShowProgress(ctx context.Context) func() {
 	ctx, cancel := context.WithCancel(ctx)
 
 	start := time.Now()
@@ -86,19 +115,13 @@ func (p *pullProgress) showProgress(ctx context.Context) func() {
 		cancel()
 		<-lastUpdate
 
-		if err := p.srv.Send(&machine.DebugContainerResponse{
-			Resp: &machine.DebugContainerResponse_PullProgress{
-				PullProgress: &machine.DebugContainerPullProgress{
-					Id: "done",
-				},
-			},
-		}); err != nil {
-			log.Printf("debug container: failed to send pull progress: %s", err.Error())
-		}
+		p.updateFn(&machine.DebugContainerPullProgress{
+			LayerId: "done",
+		})
 	}
 }
 
-func (p *pullProgress) trackProgress(ctx context.Context, start time.Time) error {
+func (p *PullProgress) trackProgress(ctx context.Context, start time.Time) error {
 	err := p.trackOngoingPulls(ctx, start)
 	if err != nil {
 		return err
@@ -107,7 +130,7 @@ func (p *pullProgress) trackProgress(ctx context.Context, start time.Time) error
 	return p.trackPulledLayers(ctx)
 }
 
-func (p *pullProgress) trackOngoingPulls(ctx context.Context, start time.Time) error {
+func (p *PullProgress) trackOngoingPulls(ctx context.Context, start time.Time) error { //nolint:gocyclo
 	actives, err := p.store.ListStatuses(ctx, "")
 	if err != nil {
 		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
@@ -132,11 +155,13 @@ func (p *pullProgress) trackOngoingPulls(ctx context.Context, start time.Time) e
 				continue
 			}
 
-			p.sendUpdate(stringid.TruncateID(j.Digest.Encoded()),
-				"Downloading",
-				info.Offset,
-				info.Total,
-			)
+			p.updateFn(&machine.DebugContainerPullProgress{
+				LayerId: stringid.TruncateID(j.Digest.Encoded()),
+				ProgressStatus: &machine.DebugContainerPullProgressStatus{
+					Status:   machine.DebugContainerPullProgressStatus_DOWNLOADING,
+					Progress: (float64(info.Offset) / float64(info.Total)) * 100,
+				},
+			})
 
 			continue
 		}
@@ -149,10 +174,12 @@ func (p *pullProgress) trackOngoingPulls(ctx context.Context, start time.Time) e
 			}
 
 		case info.CreatedAt.After(start):
-			p.sendUpdate(stringid.TruncateID(j.Digest.Encoded()),
-				"Download complete",
-				0, 0,
-			)
+			p.updateFn(&machine.DebugContainerPullProgress{
+				LayerId: stringid.TruncateID(j.Digest.Encoded()),
+				ProgressStatus: &machine.DebugContainerPullProgressStatus{
+					Status: machine.DebugContainerPullProgressStatus_DOWNLOAD_COMPLETE,
+				},
+			})
 
 			if images.IsLayerType(j.MediaType) {
 				p.layers = append(p.layers, j)
@@ -161,10 +188,12 @@ func (p *pullProgress) trackOngoingPulls(ctx context.Context, start time.Time) e
 			p.remove(j)
 
 		default:
-			p.sendUpdate(stringid.TruncateID(j.Digest.Encoded()),
-				"Already exists",
-				0, 0,
-			)
+			p.updateFn(&machine.DebugContainerPullProgress{
+				LayerId: stringid.TruncateID(j.Digest.Encoded()),
+				ProgressStatus: &machine.DebugContainerPullProgressStatus{
+					Status: machine.DebugContainerPullProgressStatus_ALREADY_EXISTS,
+				},
+			})
 
 			if images.IsLayerType(j.MediaType) {
 				p.layers = append(p.layers, j)
@@ -177,7 +206,7 @@ func (p *pullProgress) trackOngoingPulls(ctx context.Context, start time.Time) e
 	return nil
 }
 
-func (p *pullProgress) trackPulledLayers(ctx context.Context) error {
+func (p *PullProgress) trackPulledLayers(ctx context.Context) error {
 	var committedIdx []int
 
 	for idx, desc := range p.layers {
@@ -189,27 +218,33 @@ func (p *pullProgress) trackPulledLayers(ctx context.Context) error {
 					p.unpackStart = make(map[digest.Digest]time.Time)
 				}
 
-				var seconds int64
+				var elapsed time.Duration
 
 				if began, ok := p.unpackStart[desc.Digest]; !ok {
 					p.unpackStart[desc.Digest] = time.Now()
 				} else {
-					seconds = int64(time.Since(began).Seconds())
+					elapsed = time.Since(began)
 				}
 
-				p.sendUpdate(stringid.TruncateID(desc.Digest.Encoded()),
-					"Extracting",
-					1+seconds,
-					0,
-				)
+				p.updateFn(&machine.DebugContainerPullProgress{
+					LayerId: stringid.TruncateID(desc.Digest.Encoded()),
+					ProgressStatus: &machine.DebugContainerPullProgressStatus{
+						Status:   machine.DebugContainerPullProgressStatus_EXTRACTING,
+						Progress: elapsed.Seconds(),
+					},
+				})
 
 				return nil
 			}
 
 			if sn.Kind == snapshots.KindCommitted {
-				p.sendUpdate(stringid.TruncateID(desc.Digest.Encoded()),
-					"Pull complete",
-					0, 0,
+				p.updateFn(
+					&machine.DebugContainerPullProgress{
+						LayerId: stringid.TruncateID(desc.Digest.Encoded()),
+						ProgressStatus: &machine.DebugContainerPullProgressStatus{
+							Status: machine.DebugContainerPullProgressStatus_EXTRACT_COMPLETE,
+						},
+					},
 				)
 
 				committedIdx = append(committedIdx, idx)
@@ -224,7 +259,7 @@ func (p *pullProgress) trackPulledLayers(ctx context.Context) error {
 		}
 	}
 
-	// Remove finished/committed layers from p.layers
+	// remove finished/committed layers from p.layers
 	if len(committedIdx) > 0 {
 		sort.Ints(committedIdx)
 
@@ -236,22 +271,8 @@ func (p *pullProgress) trackPulledLayers(ctx context.Context) error {
 	return nil
 }
 
-func (p *pullProgress) sendUpdate(id, message string, current, total int64) {
-	if err := p.srv.Send(&machine.DebugContainerResponse{
-		Resp: &machine.DebugContainerResponse_PullProgress{
-			PullProgress: &machine.DebugContainerPullProgress{
-				Id:      id,
-				Message: message,
-				Current: current,
-				Total:   total,
-			},
-		},
-	}); err != nil {
-		log.Printf("debug container: failed to send pull progress: %s", err.Error())
-	}
-}
-
-func (p *pullProgress) add(desc ...ocispec.Descriptor) {
+// Add adds new descriptors to be tracked.
+func (p *PullProgress) Add(desc ...ocispec.Descriptor) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -264,14 +285,14 @@ func (p *pullProgress) add(desc ...ocispec.Descriptor) {
 	}
 }
 
-func (p *pullProgress) remove(desc ocispec.Descriptor) {
+func (p *PullProgress) remove(desc ocispec.Descriptor) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
 	delete(p.descs, desc.Digest)
 }
 
-func (p *pullProgress) jobs() []ocispec.Descriptor {
+func (p *PullProgress) jobs() []ocispec.Descriptor {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 

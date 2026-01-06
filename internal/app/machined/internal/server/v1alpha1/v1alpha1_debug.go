@@ -27,14 +27,13 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/siderolabs/talos/internal/pkg/capability"
+	"github.com/siderolabs/talos/internal/pkg/containers/image"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
-// DebugContainer implements the machine.MachineServer interface.
-// It receives a container image as an OCI tar archive stream, imports
-// it into containerd, and runs it with debug privileges.
-func (s *Server) DebugContainer(srv machine.MachineService_DebugContainerServer) error { //nolint:gocyclo
+// DebugContainerCreate implements the machine.MachineServer interface.
+func (s *Server) DebugContainerCreate(srv machine.MachineService_DebugContainerCreateServer) error { //nolint:gocyclo
 	ctx := srv.Context()
 
 	client, err := containerdapi.New(constants.SystemContainerdAddress,
@@ -96,27 +95,35 @@ func (s *Server) DebugContainer(srv machine.MachineService_DebugContainerServer)
 		return err
 	}
 
-	defer func() {
-		err := ctr.Delete(context.Background(), containerdapi.WithSnapshotCleanup)
-		if err != nil {
-			log.Printf("failed to delete debug container: %s", err.Error())
-		}
-	}()
-
-	return runAndAttachContainer(ctx, srv, ctr)
+	return srv.Send(&machine.DebugContainerCreateResponse{
+		Response: &machine.DebugContainerCreateResponse_ContainerId{
+			ContainerId: ctr.ID(),
+		},
+	})
 }
 
-func pullImageByRef(ctx context.Context, client *containerdapi.Client, imageRef string, srv machine.MachineService_DebugContainerServer) (containerdapi.Image, error) {
-	pp := newPullProgress(srv,
+func pullImageByRef(ctx context.Context, client *containerdapi.Client, imageRef string, srv machine.MachineService_DebugContainerCreateServer) (containerdapi.Image, error) {
+	updateFn := func(layerProgress *machine.DebugContainerPullProgress) {
+		if err := srv.Send(&machine.DebugContainerCreateResponse{
+			Response: &machine.DebugContainerCreateResponse_PullProgress{
+				PullProgress: layerProgress,
+			},
+		}); err != nil {
+			log.Printf("debug container: failed to send pull progress: %s", err.Error())
+		}
+	}
+	pp := image.NewPullProgress(
 		client.ContentStore(),
-		client.SnapshotService("overlayfs"))
+		client.SnapshotService("overlayfs"),
+		updateFn,
+	)
 
 	opts := []containerdapi.RemoteOpt{
 		containerdapi.WithPlatformMatcher(platforms.Default()),
 		containerdapi.WithPullUnpack,
 		containerdapi.WithImageHandler(images.HandlerFunc(func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
 			if images.IsLayerType(desc.MediaType) {
-				pp.add(desc)
+				pp.Add(desc)
 			}
 
 			return nil, nil
@@ -129,7 +136,7 @@ func pullImageByRef(ctx context.Context, client *containerdapi.Client, imageRef 
 		err error
 	)
 
-	finishProgress := pp.showProgress(ctx)
+	finishProgress := pp.ShowProgress(ctx)
 	defer finishProgress()
 
 	img, err = client.Pull(ctx, imageRef, opts...)
@@ -140,13 +147,16 @@ func pullImageByRef(ctx context.Context, client *containerdapi.Client, imageRef 
 	return img, nil
 }
 
+//nolint:gocyclo
 func importImageStream(ctx context.Context,
 	client *containerdapi.Client,
-	srv machine.MachineService_DebugContainerServer,
+	srv machine.MachineService_DebugContainerCreateServer,
 ) (containerdapi.Image, error) {
 	r, w := io.Pipe()
 
 	go func() {
+		defer w.Close() //nolint:errcheck
+
 		for {
 			msg, err := srv.Recv()
 			if err != nil {
@@ -245,18 +255,6 @@ func createDebugContainer(
 		oci.WithImageConfig(image),
 	}
 
-	// # mount -t tmpfs none /sys/kernel/debug/
-	// # cd sys/kernel/tracing/^C
-	//
-	// # mkdir -p /sys/kernel/debug/tracing
-	// # mount --bind /host/sys/kernel/tracing /sys/kernel/debug/tracing
-	// # pwru --output-tuple 'host 1.1.1.1'
-	// 2025/12/16 15:21:06 Attaching kprobes (via kprobe)...
-
-	// TODO(laurazard): extension service
-	// kprobe type network debugging
-	// (packet where are you cillium/pwru)
-
 	if len(spec.Args) > 0 {
 		ociOpts = append(ociOpts, oci.WithProcessArgs(spec.Args...))
 	}
@@ -287,9 +285,47 @@ func createDebugContainer(
 	return container, nil
 }
 
+func generateContainerID() (string, error) {
+	b := make([]byte, 8)
+	if _, err := rand.Read(b); err != nil {
+		return "", fmt.Errorf("failed to generate random ID: %w", err)
+	}
+
+	return fmt.Sprintf("debug-%s", hex.EncodeToString(b)), nil
+}
+
+// DebugContainerRun implements the machine.MachineServer interface.
+func (s *Server) DebugContainerRun(srv machine.MachineService_DebugContainerRunServer) error { //nolint:gocyclo
+	ctx := srv.Context()
+
+	client, err := containerdapi.New(constants.SystemContainerdAddress,
+		containerdapi.WithDefaultNamespace(constants.SystemContainerdNamespace))
+	if err != nil {
+		return fmt.Errorf("failed to connect to system containerd: %s", err)
+	}
+	defer client.Close() //nolint:errcheck
+
+	req, err := srv.Recv()
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "failed to receive container ID: %v", err)
+	}
+
+	containerID := req.GetContainerId()
+	if containerID == "" {
+		return status.Errorf(codes.InvalidArgument, "expected container ID")
+	}
+
+	ctr, err := client.LoadContainer(ctx, containerID)
+	if err != nil {
+		return fmt.Errorf("failed to load container: %v", err)
+	}
+
+	return runAndAttachContainer(ctx, srv, ctr)
+}
+
 func runAndAttachContainer(
 	ctx context.Context,
-	srv machine.MachineService_DebugContainerServer,
+	srv machine.MachineService_DebugContainerRunServer,
 	ctr containerdapi.Container,
 ) error {
 	grpcStreamer, stdinR, stdoutW := newGrpcStreamWriter(srv)
@@ -326,25 +362,7 @@ func runAndAttachContainer(
 		return fmt.Errorf("failed to wait for task: %v", err)
 	}
 
-	err = srv.Send(&machine.DebugContainerResponse{
-		Resp: &machine.DebugContainerResponse_ContainerId{
-			ContainerId: task.ID(),
-		},
-	})
-	if err != nil {
-		return err
-	}
-
 	grpcStreamer.stream(statusC, task)
 
 	return nil
-}
-
-func generateContainerID() (string, error) {
-	b := make([]byte, 8)
-	if _, err := rand.Read(b); err != nil {
-		return "", fmt.Errorf("failed to generate random ID: %w", err)
-	}
-
-	return fmt.Sprintf("debug-%s", hex.EncodeToString(b)), nil
 }

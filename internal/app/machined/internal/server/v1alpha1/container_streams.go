@@ -17,7 +17,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 )
 
-func newGrpcStreamWriter(srv machine.MachineService_DebugContainerServer) (
+func newGrpcStreamWriter(srv machine.MachineService_DebugContainerRunServer) (
 	*grpcStdioStreamer,
 	io.Reader,
 	io.Writer,
@@ -34,7 +34,7 @@ func newGrpcStreamWriter(srv machine.MachineService_DebugContainerServer) (
 }
 
 type grpcStdioStreamer struct {
-	srv machine.MachineService_DebugContainerServer
+	srv machine.MachineService_DebugContainerRunServer
 
 	stdinW  *io.PipeWriter
 	stdoutR *io.PipeReader
@@ -68,8 +68,8 @@ func (g *grpcStdioStreamer) stream(statusC <-chan containerdapi.ExitStatus, task
 		// then, sending the exit code back to the client makes
 		// the client disconnect, causing the recvLoop which is
 		// hanging on srv.Recv() to exit
-		if err := g.srv.Send(&machine.DebugContainerResponse{
-			Resp: &machine.DebugContainerResponse_ExitCode{
+		if err := g.srv.Send(&machine.DebugContainerRunResponse{
+			Resp: &machine.DebugContainerRunResponse_ExitCode{
 				ExitCode: int32(ec.ExitCode()),
 			},
 		}); err != nil {
@@ -109,9 +109,9 @@ func (g *grpcStdioStreamer) recvLoop(task containerdapi.Task) {
 	}
 }
 
-func (g *grpcStdioStreamer) processMessage(task containerdapi.Task, msg *machine.DebugContainerRequest) {
+func (g *grpcStdioStreamer) processMessage(task containerdapi.Task, msg *machine.DebugContainerRunRequest) {
 	switch msg.Request.(type) {
-	case *machine.DebugContainerRequest_StdinData:
+	case *machine.DebugContainerRunRequest_StdinData:
 		if stdinData := msg.GetStdinData(); stdinData != nil {
 			_, err := g.stdinW.Write(stdinData)
 			if err != nil {
@@ -123,7 +123,7 @@ func (g *grpcStdioStreamer) processMessage(task containerdapi.Task, msg *machine
 			}
 		}
 
-	case *machine.DebugContainerRequest_TermResize:
+	case *machine.DebugContainerRunRequest_TermResize:
 		err := task.Resize(
 			context.Background(),
 			uint32(msg.GetTermResize().Width),
@@ -132,7 +132,7 @@ func (g *grpcStdioStreamer) processMessage(task containerdapi.Task, msg *machine
 			log.Printf("debug container: failed to resize terminal: %v", err)
 		}
 
-	case *machine.DebugContainerRequest_Signal:
+	case *machine.DebugContainerRunRequest_Signal:
 		signalNum := msg.GetSignal()
 		log.Printf("debug container: received signal %d, forwarding to task", signalNum)
 
@@ -158,8 +158,8 @@ func (g *grpcStdioStreamer) sendLoop() {
 			break
 		}
 
-		err = g.srv.Send(&machine.DebugContainerResponse{
-			Resp: &machine.DebugContainerResponse_StdoutData{
+		err = g.srv.Send(&machine.DebugContainerRunResponse{
+			Resp: &machine.DebugContainerRunResponse_StdoutData{
 				StdoutData: b[:n],
 			},
 		})
