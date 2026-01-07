@@ -179,7 +179,7 @@ func beforeExecCallback(pa *syscall.ProcAttr, data any) error {
 func (p *processRunner) build(extraLogWriter io.Writer) (commandWrapper, error) {
 	wrapper := commandWrapper{}
 
-	env := slices.Concat([]string{"PATH=" + constants.PATH}, p.opts.Env, os.Environ())
+	env := slices.Concat([]string{constants.EnvPath}, p.opts.Env, os.Environ())
 	launcher := cap.NewLauncher(p.args.ProcessArgs[0], p.args.ProcessArgs, env)
 
 	if p.opts.UID > 0 {

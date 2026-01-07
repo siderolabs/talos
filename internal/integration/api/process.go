@@ -17,6 +17,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // ProcessSuite ...
@@ -95,7 +96,7 @@ func (suite *ProcessSuite) TestProcessCapabilities() {
 
 					suite.Require().Contains(
 						suite.readProcfs(nodeCtx, p.Pid, "environ"),
-						"XDG_RUNTIME_DIR=/run",
+						constants.EnvXDGRuntimeDir,
 					)
 					suite.Require().Contains(
 						suite.readProcfs(nodeCtx, p.Pid, "status"),
@@ -160,7 +161,7 @@ func (suite *ProcessSuite) TestProcessCapabilities() {
 
 					suite.Require().Contains(
 						suite.readProcfs(nodeCtx, p.Pid, "environ"),
-						"XDG_RUNTIME_DIR=/run",
+						constants.EnvXDGRuntimeDir,
 					)
 					suite.Require().Contains(
 						suite.readProcfs(nodeCtx, p.Pid, "status"),

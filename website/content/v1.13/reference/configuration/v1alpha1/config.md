@@ -163,19 +163,6 @@ files:
       path: /tmp/file.txt # The path of the file.
       op: append # The operation to use
 {{< /highlight >}}</details> | |
-|`env` |Env |The `env` field allows for the addition of environment variables.<br>All environment variables are set on PID 1 in addition to every service. <details><summary>Show example(s)</summary>Environment variables definition examples.:{{< highlight yaml >}}
-env:
-    GRPC_GO_LOG_SEVERITY_LEVEL: info
-    GRPC_GO_LOG_VERBOSITY_LEVEL: "99"
-    https_proxy: http://SERVER:PORT/
-{{< /highlight >}}{{< highlight yaml >}}
-env:
-    GRPC_GO_LOG_SEVERITY_LEVEL: error
-    https_proxy: https://USERNAME:PASSWORD@SERVER:PORT/
-{{< /highlight >}}{{< highlight yaml >}}
-env:
-    https_proxy: http://DOMAIN\USERNAME:PASSWORD@SERVER:PORT/
-{{< /highlight >}}</details> |``GRPC_GO_LOG_VERBOSITY_LEVEL``<br />``GRPC_GO_LOG_SEVERITY_LEVEL``<br />``http_proxy``<br />``https_proxy``<br />``no_proxy``<br /> |
 |`sysctls` |map[string]string |Used to configure the machine's sysctls. <details><summary>Show example(s)</summary>MachineSysctls usage example.:{{< highlight yaml >}}
 sysctls:
     kernel.domainname: talos.dev

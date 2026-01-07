@@ -8,7 +8,6 @@ package services
 import (
 	"context"
 	"fmt"
-	"strconv"
 	"strings"
 
 	"github.com/siderolabs/go-pointer"
@@ -111,9 +110,9 @@ func (d *Dashboard) Runner(r runtime.Runtime) (runner.Runner, error) {
 	},
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithEnv([]string{
-			"TERM=linux",
-			constants.TcellMinimizeEnvironment,
-			"GOMEMLIMIT=" + strconv.Itoa(constants.CgroupDashboardMaxMemory/5*4),
+			constants.EnvTerm,
+			constants.EnvTcellMinimizeEnvironment,
+			constants.EnvDashboardGomemlimit(),
 		}),
 		runner.WithStdinFile(tty),
 		runner.WithStdoutFile(tty),

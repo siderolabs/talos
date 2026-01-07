@@ -13,6 +13,7 @@ import (
 	"net/netip"
 	"os"
 	goruntime "runtime"
+	"slices"
 	"strings"
 	"time"
 
@@ -186,8 +187,9 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 
 	env := environment.Get(r.Config())
 
-	if goruntime.GOARCH == "arm64" {
-		env = append(env, "ETCD_UNSUPPORTED_ARCH=arm64")
+	// NOTE: leave it here for future unsupported architectures, so we can know where to add them
+	if slices.Contains([]string{}, goruntime.GOARCH) {
+		env = append(env, "ETCD_UNSUPPORTED_ARCH="+goruntime.GOARCH)
 	}
 
 	env = append(env, "ETCD_CIPHER_SUITES=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305") //nolint:lll

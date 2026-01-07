@@ -31,8 +31,3 @@ var Strict = sync.OnceValue(func() bool {
 
 	return strict
 })
-
-// StrictEnvironmentVariable returns the environment variable that can be used to enable strict FIPS mode.
-func StrictEnvironmentVariable() string {
-	return "GODEBUG=fips140=only"
-}

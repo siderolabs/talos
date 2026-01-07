@@ -111,7 +111,7 @@ func (suite *ContainerdSuite) SetupSuite() {
 		false,
 		args,
 		runner.WithLoggingManager(suite.loggingManager),
-		runner.WithEnv([]string{"PATH=/bin:" + constants.PATH}),
+		runner.WithEnv([]string{constants.EnvPathWithBin}),
 		runner.WithCgroupPath("/"+suite.T().Name()),
 	)
 	suite.Require().NoError(suite.containerdRunner.Open())

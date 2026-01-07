@@ -12,7 +12,6 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"strconv"
 	"time"
 
 	"github.com/containerd/containerd/v2/pkg/cap"
@@ -158,16 +157,16 @@ func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
 
 	env := environment.Get(r.Config())
 	env = append(env,
-		constants.TcellMinimizeEnvironment,
-		"GOMEMLIMIT="+strconv.Itoa(constants.CgroupTrustdMaxMemory/5*4),
+		constants.EnvTcellMinimizeEnvironment,
+		constants.EnvTrustdGomemlimit(),
 	)
 
 	if debug.RaceEnabled {
-		env = append(env, "GORACE=halt_on_error=1")
+		env = append(env, constants.EnvGoraceHaltOnError)
 	}
 
 	if fipsmode.Strict() {
-		env = append(env, fipsmode.StrictEnvironmentVariable())
+		env = append(env, constants.EnvFIPS140ModeStrict)
 	}
 
 	return restart.New(containerd.NewRunner(

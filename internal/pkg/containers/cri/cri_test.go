@@ -110,7 +110,7 @@ func (suite *CRISuite) SetupSuite() {
 		false,
 		args,
 		runner.WithLoggingManager(logging.NewFileLoggingManager(suite.tmpDir)),
-		runner.WithEnv([]string{"PATH=/bin:" + constants.PATH}),
+		runner.WithEnv([]string{constants.EnvPathWithBin}),
 		runner.WithCgroupPath(suite.tmpDir),
 	)
 	suite.Require().NoError(suite.containerdRunner.Open())

@@ -25,6 +25,11 @@ message DiagnosticSpec {
   repeated string details = 2;
 }
 
+// EnvironmentSpec describes the specification of Environment resource.
+message EnvironmentSpec {
+  repeated string variables = 1;
+}
+
 // EventSinkConfigSpec describes configuration of Talos event log streaming.
 message EventSinkConfigSpec {
   string endpoint = 1;

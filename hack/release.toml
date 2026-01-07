@@ -109,6 +109,17 @@ If those are set to `false`, the command will not attempt to reach out to the co
 The `talosctl images k8s-bundle` command now accepts an optional version overrides arguments.
 """
 
+    [notes.environment_config]
+        title = "Environment Configuration Document"
+        description = """\
+A new `EnvironmentConfig` document has been introduced to allow users to specify environment variables for Talos components.
+It replaces and deprecates the previous method of setting environment variables via the `.machine.env` field.
+
+Multiple values for the same environment variable will replace previous values, with the last one taking precedence.
+
+To remove an environment variable, remove it from the `EnvironmentConfig` document and restart the node.
+"""
+
 [make_deps]
 
     [make_deps.tools]

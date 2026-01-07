@@ -90,19 +90,19 @@ func Switch(prefix string, mountpoints mount.Managers) (err error) {
 	log.Println("executing /sbin/init")
 
 	envv := []string{
-		"GRPC_ENFORCE_ALPN_ENABLED=false",
-		constants.TcellMinimizeEnvironment,
+		constants.EnvGRPCEnforccceALPNEnabled,
+		constants.EnvTcellMinimizeEnvironment,
 	}
 
 	if debug.RaceEnabled {
-		envv = append(envv, "GORACE=halt_on_error=1")
+		envv = append(envv, constants.EnvGoraceHaltOnError)
 
 		log.Printf("race detection enabled with halt_on_error=1")
 	}
 
 	if val := procfs.ProcCmdline().Get("talos.fips140"); val != nil && fipsmode.Enabled() {
 		if pointer.SafeDeref(val.First()) == "strict" {
-			envv = append(envv, fipsmode.StrictEnvironmentVariable())
+			envv = append(envv, constants.EnvFIPS140ModeStrict)
 		}
 	}
 

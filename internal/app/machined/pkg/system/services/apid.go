@@ -12,7 +12,6 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"time"
 
@@ -172,9 +171,9 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 	mounts = bindMountContainerMarker(mounts)
 
 	env := []string{
-		constants.TcellMinimizeEnvironment,
-		"GRPC_ENFORCE_ALPN_ENABLED=false",
-		"GOMEMLIMIT=" + strconv.Itoa(constants.CgroupApidMaxMemory/5*4),
+		constants.EnvTcellMinimizeEnvironment,
+		constants.EnvGRPCEnforccceALPNEnabled,
+		constants.EnvApidGomemlimit(),
 	}
 
 	for _, value := range environment.Get(r.Config()) {
@@ -194,11 +193,11 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 	}
 
 	if debug.RaceEnabled {
-		env = append(env, "GORACE=halt_on_error=1")
+		env = append(env, constants.EnvGoraceHaltOnError)
 	}
 
 	if fipsmode.Strict() {
-		env = append(env, fipsmode.StrictEnvironmentVariable())
+		env = append(env, constants.EnvFIPS140ModeStrict)
 	}
 
 	return restart.New(containerd.NewRunner(

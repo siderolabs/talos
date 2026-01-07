@@ -8,7 +8,6 @@ package constants
 import (
 	"time"
 
-	cni "github.com/containerd/go-cni"
 	"github.com/siderolabs/crypto/x509"
 )
 
@@ -202,9 +201,6 @@ const (
 	// ISOFilesystemLabel is the label of the ISO file system for the Talos
 	// installer.
 	ISOFilesystemLabel = "TALOS"
-
-	// PATH defines all locations where executables are stored.
-	PATH = "/usr/bin:/usr/local/sbin:/usr/local/bin:" + cni.DefaultCNIDir
 
 	// KubernetesDefaultCertificateValidityDuration specifies default certificate duration for Kubernetes generated certificates.
 	KubernetesDefaultCertificateValidityDuration = time.Hour * 24 * 365
@@ -1178,9 +1174,6 @@ const (
 
 	// GRPCMaxMessageSize is the maximum message size for Talos API.
 	GRPCMaxMessageSize = 32 * 1024 * 1024
-
-	// TcellMinimizeEnvironment is the environment variable to minimize tcell library memory usage (skips rune width calculation).
-	TcellMinimizeEnvironment = "TCELL_MINIMIZE=1"
 
 	// DefaultKubePrismPort is the default port for the KubePrism loadbalancer.
 	DefaultKubePrismPort = 7445

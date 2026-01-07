@@ -547,7 +547,7 @@ func processFiles(inputFiles []string, outputFile, schemaOutputFile, versionTagF
 
 func packageToDoc(pkg *packageType, aliases map[string]aliasType) *Doc {
 	if len(pkg.structs) == 0 {
-		log.Fatalf("failed to find types that could be documented in %v", pkg.file)
+		log.Fatalf("failed to find types that could be documented in %v (package %v)", pkg.file, pkg.name)
 	}
 
 	doc := &Doc{

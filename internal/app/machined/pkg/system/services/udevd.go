@@ -96,9 +96,7 @@ func (c *Udevd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithSelinuxLabel(constants.SelinuxLabelUdevd),
 		runner.WithDroppedCapabilities(constants.UdevdDroppedCapabilities),
 		runner.WithEnv([]string{
-			// append a default value for XDG_RUNTIME_DIR for the services running on the host
-			// see https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
-			"XDG_RUNTIME_DIR=/run",
+			constants.EnvXDGRuntimeDir,
 		}),
 	),
 		restart.WithType(restart.Forever),

@@ -122,9 +122,7 @@ func (c *CRI) Runner(r runtime.Runtime) (runner.Runner, error) {
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithEnv(append(
 			environment.Get(r.Config()),
-			// append a default value for XDG_RUNTIME_DIR for the services running on the host
-			// see https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html
-			"XDG_RUNTIME_DIR=/run",
+			constants.EnvXDGRuntimeDir,
 		)),
 		runner.WithOOMScoreAdj(-500),
 		runner.WithCgroupPath(constants.CgroupPodRuntime),

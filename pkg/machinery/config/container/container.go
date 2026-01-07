@@ -218,6 +218,11 @@ func (container *Container) Runtime() config.RuntimeConfig {
 	return config.WrapRuntimeConfigList(findMatchingDocs[config.RuntimeConfig](container.documents)...)
 }
 
+// Environment implements config.Config interface.
+func (container *Container) Environment() config.EnvironmentConfig {
+	return config.WrapEnvironmentConfigList(findMatchingDocs[config.EnvironmentConfig](container.documents)...)
+}
+
 // NetworkRules implements config.Config interface.
 func (container *Container) NetworkRules() config.NetworkRuleConfig {
 	return config.WrapNetworkRuleConfigList(findMatchingDocs[config.NetworkRuleConfigSignal](container.documents)...)

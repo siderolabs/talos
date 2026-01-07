@@ -5,6 +5,8 @@
 package config
 
 import (
+	"iter"
+	"maps"
 	"net/url"
 	"time"
 
@@ -18,6 +20,24 @@ type RuntimeConfig interface {
 	EventsEndpoint() *string
 	KmsgLogURLs() []*url.URL
 	WatchdogTimer() WatchdogTimerConfig
+}
+
+// EnvironmentConfig defines the interface to access Talos environment configuration.
+type EnvironmentConfig interface {
+	Variables() map[string]string
+}
+
+// WrapEnvironmentConfigList wraps a list of EnvironmentConfig into a single EnvironmentConfig aggregating the results.
+func WrapEnvironmentConfigList(configs ...EnvironmentConfig) EnvironmentConfig {
+	return environmentConfigWrapper(configs)
+}
+
+type environmentConfigWrapper []EnvironmentConfig
+
+func (w environmentConfigWrapper) Variables() map[string]string {
+	return mergeMaps(w, func(c EnvironmentConfig) iter.Seq2[string, string] {
+		return maps.All(c.Variables())
+	})
 }
 
 // WatchdogTimerConfig defines the interface to access Talos watchdog timer configuration.

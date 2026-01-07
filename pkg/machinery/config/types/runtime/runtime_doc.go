@@ -71,6 +71,42 @@ func (EventSinkV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (EnvironmentV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "EnvironmentConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "EnvironmentConfig is an environment config document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "EnvironmentConfig is an environment config document.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "variables",
+				Type:        "Env",
+				Note:        "",
+				Description: "This field allows for the addition of environment variables.\nAll environment variables are set on PID 1 in addition to every service.\nPropagation of environment variables to services is done only at initial service start time.\nTo modify environment variables for services, the node must be restarted.\nMultiple values for the same environment variable (in multiple documents) will replace previous values, with the last one taking precedence.\nFully removing an environment variable can only be achieved by removing it from the document and restarting the machine.\nEnvironment variable names are validated, and should:\n  - start with an uppercase letter, lowercase letter, or an underscore (_) character, and\n  - contain only uppercase and lowercase letters, underscore (_) characters, and numbers.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "This field allows for the addition of environment variables." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"`GRPC_GO_LOG_VERBOSITY_LEVEL`",
+					"`GRPC_GO_LOG_SEVERITY_LEVEL`",
+					"`http_proxy`",
+					"`https_proxy`",
+					"`no_proxy`",
+				},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleEnvironmentV1Alpha1())
+
+	doc.Fields[1].AddExample("Environment variables definition examples.", exampleEnvVars0())
+	doc.Fields[1].AddExample("", exampleEnvVars1())
+	doc.Fields[1].AddExample("", exampleEnvVars2())
+
+	return doc
+}
+
 func (OOMV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "OOMConfig",
@@ -152,6 +188,7 @@ func GetFileDoc() *encoder.FileDoc {
 		Structs: []*encoder.Doc{
 			KmsgLogV1Alpha1{}.Doc(),
 			EventSinkV1Alpha1{}.Doc(),
+			EnvironmentV1Alpha1{}.Doc(),
 			OOMV1Alpha1{}.Doc(),
 			WatchdogTimerV1Alpha1{}.Doc(),
 		},

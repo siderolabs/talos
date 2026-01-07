@@ -27,6 +27,7 @@ import (
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/security"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
@@ -85,6 +86,8 @@ func generateConfigPatch(caPEM []byte) error {
 		},
 	}
 
+	patch2 := runtime.NewEnvironmentV1Alpha1()
+
 	if airgappedFlags.injectHTTPProxy {
 		proxyURL := fmt.Sprintf("http://%s", net.JoinHostPort(airgappedFlags.advertisedAddress.String(), strconv.Itoa(airgappedFlags.proxyPort)))
 
@@ -92,20 +95,18 @@ func generateConfigPatch(caPEM []byte) error {
 			proxyURL = fmt.Sprintf("https://%s", net.JoinHostPort(airgappedFlags.advertisedAddress.String(), strconv.Itoa(airgappedFlags.httpsProxyPort)))
 		}
 
-		patch1.MachineConfig = &v1alpha1.MachineConfig{
-			MachineEnv: map[string]string{
-				"http_proxy":  proxyURL,
-				"https_proxy": proxyURL,
-				"no_proxy":    fmt.Sprintf("%s/24", airgappedFlags.advertisedAddress.String()),
-			},
+		patch2.EnvironmentVariables = map[string]string{
+			"http_proxy":  proxyURL,
+			"https_proxy": proxyURL,
+			"no_proxy":    fmt.Sprintf("%s/24", airgappedFlags.advertisedAddress.String()),
 		}
 	}
 
-	patch2 := security.NewTrustedRootsConfigV1Alpha1()
-	patch2.MetaName = "air-gapped-ca"
-	patch2.Certificates = string(caPEM)
+	patch3 := security.NewTrustedRootsConfigV1Alpha1()
+	patch3.MetaName = "air-gapped-ca"
+	patch3.Certificates = string(caPEM)
 
-	ctr, err := container.New(patch1, patch2)
+	ctr, err := container.New(patch1, patch2, patch3)
 	if err != nil {
 		return err
 	}

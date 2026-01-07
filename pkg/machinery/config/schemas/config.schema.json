@@ -3003,6 +3003,47 @@
       ],
       "description": "WireguardPeer describes a Wireguard peer configuration."
     },
+    "runtime.EnvironmentV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "EnvironmentConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "variables": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "variables",
+          "description": "This field allows for the addition of environment variables.\nAll environment variables are set on PID 1 in addition to every service.\nPropagation of environment variables to services is done only at initial service start time.\nTo modify environment variables for services, the node must be restarted.\nMultiple values for the same environment variable (in multiple documents) will replace previous values, with the last one taking precedence.\nFully removing an environment variable can only be achieved by removing it from the document and restarting the machine.\nEnvironment variable names are validated, and should:\n  - start with an uppercase letter, lowercase letter, or an underscore () character, and\n  - contain only uppercase and lowercase letters, underscore () characters, and numbers.\n",
+          "markdownDescription": "This field allows for the addition of environment variables.\nAll environment variables are set on PID 1 in addition to every service.\nPropagation of environment variables to services is done only at initial service start time.\nTo modify environment variables for services, the node must be restarted.\nMultiple values for the same environment variable (in multiple documents) will replace previous values, with the last one taking precedence.\nFully removing an environment variable can only be achieved by removing it from the document and restarting the machine.\nEnvironment variable names are validated, and should:\n  - start with an uppercase letter, lowercase letter, or an underscore (_) character, and\n  - contain only uppercase and lowercase letters, underscore (_) characters, and numbers.",
+          "x-intellij-html-description": "\u003cp\u003eThis field allows for the addition of environment variables.\nAll environment variables are set on PID 1 in addition to every service.\nPropagation of environment variables to services is done only at initial service start time.\nTo modify environment variables for services, the node must be restarted.\nMultiple values for the same environment variable (in multiple documents) will replace previous values, with the last one taking precedence.\nFully removing an environment variable can only be achieved by removing it from the document and restarting the machine.\nEnvironment variable names are validated, and should:\n  - start with an uppercase letter, lowercase letter, or an underscore (\u003cem\u003e) character, and\n  - contain only uppercase and lowercase letters, underscore (\u003c/em\u003e) characters, and numbers.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "EnvironmentConfig is an environment config document."
+    },
     "runtime.EventSinkV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -4714,18 +4755,6 @@
           "markdownDescription": "Allows the addition of user specified files.\nThe value of `op` can be `create`, `overwrite`, or `append`.\nIn the case of `create`, `path` must not exist.\nIn the case of `overwrite`, and `append`, `path` must be a valid file.\nIf an `op` value of `append` is used, the existing file will be appended.\nNote that the file contents are not required to be base64 encoded.",
           "x-intellij-html-description": "\u003cp\u003eAllows the addition of user specified files.\nThe value of \u003ccode\u003eop\u003c/code\u003e can be \u003ccode\u003ecreate\u003c/code\u003e, \u003ccode\u003eoverwrite\u003c/code\u003e, or \u003ccode\u003eappend\u003c/code\u003e.\nIn the case of \u003ccode\u003ecreate\u003c/code\u003e, \u003ccode\u003epath\u003c/code\u003e must not exist.\nIn the case of \u003ccode\u003eoverwrite\u003c/code\u003e, and \u003ccode\u003eappend\u003c/code\u003e, \u003ccode\u003epath\u003c/code\u003e must be a valid file.\nIf an \u003ccode\u003eop\u003c/code\u003e value of \u003ccode\u003eappend\u003c/code\u003e is used, the existing file will be appended.\nNote that the file contents are not required to be base64 encoded.\u003c/p\u003e\n"
         },
-        "env": {
-          "patternProperties": {
-            ".*": {
-              "type": "string"
-            }
-          },
-          "type": "object",
-          "title": "env",
-          "description": "The env field allows for the addition of environment variables.\nAll environment variables are set on PID 1 in addition to every service.\n",
-          "markdownDescription": "The `env` field allows for the addition of environment variables.\nAll environment variables are set on PID 1 in addition to every service.",
-          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eenv\u003c/code\u003e field allows for the addition of environment variables.\nAll environment variables are set on PID 1 in addition to every service.\u003c/p\u003e\n"
-        },
         "sysctls": {
           "patternProperties": {
             ".*": {
@@ -5305,6 +5334,9 @@
     },
     {
       "$ref": "#/$defs/network.WireguardConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/runtime.EnvironmentV1Alpha1"
     },
     {
       "$ref": "#/$defs/runtime.EventSinkV1Alpha1"
