@@ -159,20 +159,7 @@ func (MachineConfig) Doc() *encoder.Doc {
 				Description: "Allows the addition of user specified files.\nThe value of `op` can be `create`, `overwrite`, or `append`.\nIn the case of `create`, `path` must not exist.\nIn the case of `overwrite`, and `append`, `path` must be a valid file.\nIf an `op` value of `append` is used, the existing file will be appended.\nNote that the file contents are not required to be base64 encoded.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Allows the addition of user specified files." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "env",
-				Type:        "Env",
-				Note:        "",
-				Description: "The `env` field allows for the addition of environment variables.\nAll environment variables are set on PID 1 in addition to every service.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `env` field allows for the addition of environment variables." /* encoder.LineComment */, "" /* encoder.FootComment */},
-				Values: []string{
-					"`GRPC_GO_LOG_VERBOSITY_LEVEL`",
-					"`GRPC_GO_LOG_SEVERITY_LEVEL`",
-					"`http_proxy`",
-					"`https_proxy`",
-					"`no_proxy`",
-				},
-			},
+			{},
 			{},
 			{
 				Name:        "sysctls",
@@ -266,9 +253,6 @@ func (MachineConfig) Doc() *encoder.Doc {
 	doc.Fields[7].AddExample("nginx static pod.", machinePodsExample())
 	doc.Fields[10].AddExample("MachineInstall config usage example.", machineInstallExample())
 	doc.Fields[11].AddExample("MachineFiles usage example.", machineFilesExample())
-	doc.Fields[12].AddExample("Environment variables definition examples.", machineEnvExamples0())
-	doc.Fields[12].AddExample("", machineEnvExamples1())
-	doc.Fields[12].AddExample("", machineEnvExamples2())
 	doc.Fields[14].AddExample("MachineSysctls usage example.", machineSysctlsExample())
 	doc.Fields[15].AddExample("MachineSysfs usage example.", machineSysfsExample())
 	doc.Fields[18].AddExample("", machineFeaturesExample())

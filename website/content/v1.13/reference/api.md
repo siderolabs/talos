@@ -438,6 +438,7 @@ description: Talos gRPC API reference.
     - [BootedEntrySpec](#talos.resource.definitions.runtime.BootedEntrySpec)
     - [DevicesStatusSpec](#talos.resource.definitions.runtime.DevicesStatusSpec)
     - [DiagnosticSpec](#talos.resource.definitions.runtime.DiagnosticSpec)
+    - [EnvironmentSpec](#talos.resource.definitions.runtime.EnvironmentSpec)
     - [EventSinkConfigSpec](#talos.resource.definitions.runtime.EventSinkConfigSpec)
     - [ExtensionServiceConfigFile](#talos.resource.definitions.runtime.ExtensionServiceConfigFile)
     - [ExtensionServiceConfigSpec](#talos.resource.definitions.runtime.ExtensionServiceConfigSpec)
@@ -7817,6 +7818,21 @@ DiagnosticSpec is the spec for devices status.
 | ----- | ---- | ----- | ----------- |
 | message | [string](#string) |  |  |
 | details | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.EnvironmentSpec"></a>
+
+### EnvironmentSpec
+EnvironmentSpec describes the specification of Environment resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| variables | [string](#string) | repeated |  |
 
 
 

@@ -196,25 +196,9 @@ type MachineConfig struct {
 	//      - name: MachineFiles usage example.
 	//        value: machineFilesExample()
 	MachineFiles []*MachineFile `yaml:"files,omitempty"` // Note: The specified `path` is relative to `/var`.
-	//   description: |
-	//     The `env` field allows for the addition of environment variables.
-	//     All environment variables are set on PID 1 in addition to every service.
-	//   values:
-	//     - "`GRPC_GO_LOG_VERBOSITY_LEVEL`"
-	//     - "`GRPC_GO_LOG_SEVERITY_LEVEL`"
-	//     - "`http_proxy`"
-	//     - "`https_proxy`"
-	//     - "`no_proxy`"
-	//   examples:
-	//     - name: Environment variables definition examples.
-	//       value: machineEnvExamples0()
-	//     - value: machineEnvExamples1()
-	//     - value: machineEnvExamples2()
-	//   schema:
-	//     type: object
-	//     patternProperties:
-	//       ".*":
-	//         type: string
+	// docgen:nodoc
+	//
+	// Deprecated: Use 'EnvironmentConfig' instead.
 	MachineEnv Env `yaml:"env,omitempty"`
 	// docgen:nodoc
 	//
@@ -1617,6 +1601,8 @@ type EncryptionKeyTPM struct {
 type EncryptionKeyNodeID struct{}
 
 // Env represents a set of environment variables.
+//
+//docgen:nodoc
 type Env = map[string]string
 
 // ResourcesConfig represents the pod resources.

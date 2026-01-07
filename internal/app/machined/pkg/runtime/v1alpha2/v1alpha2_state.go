@@ -207,6 +207,7 @@ func NewState() (*State, error) {
 		&runtime.BootedEntry{},
 		&runtime.DevicesStatus{},
 		&runtime.Diagnostic{},
+		&runtime.Environment{},
 		&runtime.EventSinkConfig{},
 		&runtime.ExtensionServiceConfig{},
 		&runtime.ExtensionServiceConfigStatus{},
