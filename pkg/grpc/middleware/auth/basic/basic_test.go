@@ -4,11 +4,30 @@
 
 package basic_test
 
-import "testing"
+import (
+	"testing"
 
-func TestEmpty(t *testing.T) {
-	// added for accurate coverage estimation
-	//
-	// please remove it once any unit-test is added
-	// for this package
+	"github.com/siderolabs/talos/pkg/grpc/middleware/auth/basic"
+)
+
+func TestParseAuthority(t *testing.T) {
+	cases := []struct {
+		host string
+		want string
+	}{
+		{"127.0.0.1", ""},
+		{"127.0.0.1:443", ""},
+		{"[::1]", ""},
+		{"[::1]:443", ""},
+		{"example.com", "example.com"},
+		{"example.com:443", "example.com"},
+		{"[example.com]:443", "example.com"},
+		{"", ""},
+	}
+	for _, c := range cases {
+		got := basic.ParseAuthority(c.host)
+		if got != c.want {
+			t.Fatalf("ParseAuthority(%q) = %q, want %q", c.host, got, c.want)
+		}
+	}
 }
