@@ -174,10 +174,10 @@ func bootstrapCluster(ctx context.Context, clusterAccess *access.Adapter, cOps c
 	checkCtx, checkCtxCancel := context.WithTimeout(ctx, cOps.ClusterWaitTimeout)
 	defer checkCtxCancel()
 
-	checks := check.DefaultClusterChecks()
+	checks := check.DefaultClusterChecks(cOps.ClusterWaitTimeout)
 
 	if cOps.SkipK8sNodeReadinessCheck {
-		checks = slices.Concat(check.PreBootSequenceChecks(), check.K8sComponentsReadinessChecks())
+		checks = slices.Concat(check.PreBootSequenceChecks(cOps.ClusterWaitTimeout), check.K8sComponentsReadinessChecks(cOps.ClusterWaitTimeout))
 	}
 
 	checks = slices.Concat(checks, check.ExtraClusterChecks())

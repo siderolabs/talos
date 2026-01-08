@@ -231,7 +231,7 @@ func (suite *TinkSuite) TestDeploy() {
 		check.Wait(
 			ctx,
 			clusterAccess,
-			check.DefaultClusterChecks(),
+			check.DefaultClusterChecks(5*time.Minute),
 			check.StderrReporter(),
 		),
 	)

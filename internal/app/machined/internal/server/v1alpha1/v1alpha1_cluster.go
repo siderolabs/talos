@@ -75,7 +75,7 @@ func (s *Server) HealthCheck(in *clusterapi.HealthCheckRequest, srv clusterapi.C
 		return err
 	}
 
-	return check.Wait(checkCtx, &state, append(check.DefaultClusterChecks(), check.ExtraClusterChecks()...), &healthReporter{srv: srv})
+	return check.Wait(checkCtx, &state, append(check.DefaultClusterChecks(in.WaitTimeout.AsDuration()), check.ExtraClusterChecks()...), &healthReporter{srv: srv})
 }
 
 type healthReporter struct {
