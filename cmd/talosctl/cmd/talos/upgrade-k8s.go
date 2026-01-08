@@ -7,9 +7,12 @@ package talos
 import (
 	"context"
 	"fmt"
+	"time"
 
+	"github.com/siderolabs/go-kubernetes/kubernetes/manifests"
 	"github.com/siderolabs/go-kubernetes/kubernetes/upgrade"
 	"github.com/spf13/cobra"
+	"sigs.k8s.io/cli-utils/pkg/inventory"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/pkg/cluster"
@@ -36,25 +39,40 @@ var upgradeK8sCmdFlags struct {
 	FromVersion string
 	ToVersion   string
 
-	withExamples bool
-	withDocs     bool
+	withExamples        bool
+	withDocs            bool
+	inventoryPolicy     string
+	pruneTimeoutSec     int
+	reconcileTimeoutSec int
 }
 
 func init() {
+	ssaDefaults := manifests.DefaultSSApplyBehaviorOptions()
+
 	upgradeK8sCmd.Flags().StringVar(&upgradeK8sCmdFlags.FromVersion, "from", "", "the Kubernetes control plane version to upgrade from")
 	upgradeK8sCmd.Flags().StringVar(&upgradeK8sCmdFlags.ToVersion, "to", constants.DefaultKubernetesVersion, "the Kubernetes control plane version to upgrade to")
 	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.ControlPlaneEndpoint, "endpoint", "", "the cluster control plane endpoint")
 	upgradeK8sCmd.Flags().BoolVarP(&upgradeK8sCmdFlags.withExamples, "with-examples", "", true, "patch all machine configs with the commented examples")
 	upgradeK8sCmd.Flags().BoolVarP(&upgradeK8sCmdFlags.withDocs, "with-docs", "", true, "patch all machine configs adding the documentation for each field")
-	upgradeK8sCmd.Flags().BoolVar(&upgradeOptions.DryRun, "dry-run", false, "skip the actual upgrade and show the upgrade plan instead")
 	upgradeK8sCmd.Flags().BoolVar(&upgradeOptions.PrePullImages, "pre-pull-images", true, "pre-pull images before upgrade")
 	upgradeK8sCmd.Flags().BoolVar(&upgradeOptions.UpgradeKubelet, "upgrade-kubelet", true, "upgrade kubelet service")
+	upgradeK8sCmd.Flags().BoolVar(&upgradeOptions.DryRun, "dry-run", ssaDefaults.DryRun, "skip the actual upgrade and show the upgrade plan instead")
 
 	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.KubeletImage, "kubelet-image", constants.KubeletImage, "kubelet image to use")
 	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.APIServerImage, "apiserver-image", constants.KubernetesAPIServerImage, "kube-apiserver image to use")
 	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.ControllerManagerImage, "controller-manager-image", constants.KubernetesControllerManagerImage, "kube-controller-manager image to use")
 	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.SchedulerImage, "scheduler-image", constants.KubernetesSchedulerImage, "kube-scheduler image to use")
 	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.ProxyImage, "proxy-image", constants.KubeProxyImage, "kube-proxy image to use")
+
+	// manifest sync related options
+	upgradeK8sCmd.Flags().BoolVar(&upgradeOptions.ForceConflicts, "mamifests-force-conflicts", ssaDefaults.ForceConflicts, "overwrite the fields when applying even if the field manager differs")
+	upgradeK8sCmd.Flags().BoolVar(&upgradeOptions.NoPrune, "mamifests-no-prune", ssaDefaults.NoPrune, "whether pruning of previously applied objects should happen after apply")
+	upgradeK8sCmd.Flags().StringVar(&upgradeK8sCmdFlags.inventoryPolicy, "mamifests-inventory-policy", ssaDefaults.InventoryPolicy.String(),
+		"kubernetes SSA inventory policy (one of 'MustMatch', 'AdoptIfNoInventory' or 'AdoptAll')")
+	upgradeK8sCmd.Flags().IntVar(&upgradeK8sCmdFlags.pruneTimeoutSec, "mamifests-prune-timeout", int(ssaDefaults.PruneTimeout.Seconds()),
+		"how long to wait for resources to be pruned in secunds (set to zero to disable waiting for resources to be fully deleted)")
+	upgradeK8sCmd.Flags().IntVar(&upgradeK8sCmdFlags.reconcileTimeoutSec, "mamifests-reconcile-timeout", int(ssaDefaults.ReconcileTimeout.Seconds()),
+		"how long to wait for resources to be prfully reconciled in secunds (set to zero to disable waiting for resources to be fully reoondiled)")
 
 	addCommand(upgradeK8sCmd)
 }
@@ -109,7 +127,28 @@ func upgradeKubernetes(ctx context.Context, c *client.Client) error {
 		commentsFlags |= encoder.CommentsExamples
 	}
 
+	policy, err := parseInventoryPolicy(upgradeK8sCmdFlags.inventoryPolicy)
+	if err != nil {
+		return err
+	}
+
+	upgradeOptions.InventoryPolicy = policy
 	upgradeOptions.EncoderOpt = encoder.WithComments(commentsFlags)
+	upgradeOptions.PruneTimeout = time.Duration(upgradeK8sCmdFlags.pruneTimeoutSec * int(time.Second))
+	upgradeOptions.ReconcileTimeout = time.Duration(upgradeK8sCmdFlags.reconcileTimeoutSec * int(time.Second))
 
 	return k8s.Upgrade(ctx, &state, upgradeOptions)
+}
+
+func parseInventoryPolicy(policy string) (inventory.Policy, error) {
+	switch policy {
+	case "MustMatch":
+		return inventory.PolicyMustMatch, nil
+	case "AdoptIfNoInventory":
+		return inventory.PolicyAdoptIfNoInventory, nil
+	case "AdoptAll":
+		return inventory.PolicyAdoptAll, nil
+	default:
+		return 0, fmt.Errorf("invalid inventory policy %q: must be one of 'MustMatch', 'AdoptIfNoInventory', or 'AdoptAll'", policy)
+	}
 }
