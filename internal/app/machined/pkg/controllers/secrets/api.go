@@ -269,7 +269,7 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 				return err
 			}
 		} else {
-			if err := ctrl.generateWorker(ctx, r, logger, rootSpec, endpointsStr, "", certSANs); err != nil {
+			if err := ctrl.generateWorker(ctx, r, logger, rootSpec, endpointsStr, certSANs); err != nil {
 				return err
 			}
 		}
@@ -336,11 +336,9 @@ func (ctrl *APIController) generateControlPlane(ctx context.Context, r controlle
 }
 
 func (ctrl *APIController) generateWorker(ctx context.Context, r controller.Runtime, logger *zap.Logger,
-	rootSpec *secrets.OSRootSpec, endpointsStr []string, endpointHost string, certSANs *secrets.CertSANSpec,
+	rootSpec *secrets.OSRootSpec, endpointsStr []string, certSANs *secrets.CertSANSpec,
 ) error {
-	logger.Debug("Initializing CSR generator", zap.Strings("endpoints", endpointsStr), zap.String("host", endpointHost))
-
-	remoteGen, err := gen.NewRemoteGenerator(rootSpec.Token, endpointsStr, endpointHost, rootSpec.AcceptedCAs)
+	remoteGen, err := gen.NewRemoteGenerator(rootSpec.Token, endpointsStr, rootSpec.AcceptedCAs)
 	if err != nil {
 		return fmt.Errorf("failed creating trustd client: %w", err)
 	}

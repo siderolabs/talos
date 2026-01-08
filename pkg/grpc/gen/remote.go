@@ -31,7 +31,7 @@ type RemoteGenerator struct {
 }
 
 // NewRemoteGenerator initializes a RemoteGenerator with a preconfigured grpc.ClientConn.
-func NewRemoteGenerator(token string, endpoints []string, host string, acceptedCAs []*x509.PEMEncodedCertificate) (g *RemoteGenerator, err error) {
+func NewRemoteGenerator(token string, endpoints []string, acceptedCAs []*x509.PEMEncodedCertificate) (g *RemoteGenerator, err error) {
 	if len(endpoints) == 0 {
 		return nil, errors.New("at least one root of trust endpoint is required")
 	}
@@ -42,7 +42,7 @@ func NewRemoteGenerator(token string, endpoints []string, host string, acceptedC
 
 	remoteGeneratorPprof.Add(g, 1)
 
-	conn, err := basic.NewConnection(fmt.Sprintf("%s:///%s", resolver.RoundRobinResolverScheme, strings.Join(endpoints, ",")), host, basic.NewTokenCredentials(token), acceptedCAs)
+	conn, err := basic.NewConnection(fmt.Sprintf("%s:///%s", resolver.RoundRobinResolverScheme, strings.Join(endpoints, ",")), basic.NewTokenCredentials(token), acceptedCAs)
 	if err != nil {
 		return nil, err
 	}
