@@ -508,12 +508,23 @@ func syncManifestsSSA(ctx context.Context, objects []*unstructured.Unstructured,
 		return err
 	}
 
+	ssaOptions := manifests.SSAOptions{
+		FieldManagerName:   constants.KubernetesFieldManagerName,
+		InventoryNamespace: constants.KubernetesInventoryNamespace,
+		InventoryName:      constants.KubernetesBootstrapManifestsInventoryName,
+		SSApplyBehaviorOptions: manifests.SSApplyBehaviorOptions{
+			DryRun:           options.DryRun,
+			InventoryPolicy:  options.InventoryPolicy,
+			ReconcileTimeout: options.ReconcileTimeout,
+			PruneTimeout:     options.PruneTimeout,
+			ForceConflicts:   options.ForceConflicts,
+			NoPrune:          options.NoPrune,
+		},
+	}
+
 	options.Log("comparing with live objects")
 
-	result, err := manifests.DiffSSA(ctx, objects, config,
-		constants.KubernetesFieldManagerName,
-		constants.KubernetesInventoryNamespace,
-		constants.KubernetesBootstrapManifestsInventoryName)
+	result, err := manifests.DiffSSA(ctx, objects, config, ssaOptions)
 	if err != nil {
 		return err
 	}
@@ -538,10 +549,7 @@ func syncManifestsSSA(ctx context.Context, objects []*unstructured.Unstructured,
 		ctx,
 		objects,
 		config,
-		options.DryRun,
-		constants.KubernetesFieldManagerName,
-		constants.KubernetesInventoryNamespace,
-		constants.KubernetesBootstrapManifestsInventoryName,
+		ssaOptions,
 		options.Log,
 	)
 }

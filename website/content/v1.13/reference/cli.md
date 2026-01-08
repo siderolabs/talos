@@ -3291,26 +3291,31 @@ talosctl upgrade-k8s [flags]
 ### Options
 
 ```
-      --apiserver-image string            kube-apiserver image to use (default "registry.k8s.io/kube-apiserver")
-  -c, --cluster string                    Cluster to connect to if a proxy endpoint is used.
-      --context string                    Context to be used in command
-      --controller-manager-image string   kube-controller-manager image to use (default "registry.k8s.io/kube-controller-manager")
-      --dry-run                           skip the actual upgrade and show the upgrade plan instead
-      --endpoint string                   the cluster control plane endpoint
-  -e, --endpoints strings                 override default endpoints in Talos configuration
-      --from string                       the Kubernetes control plane version to upgrade from
-  -h, --help                              help for upgrade-k8s
-      --kubelet-image string              kubelet image to use (default "ghcr.io/siderolabs/kubelet")
-  -n, --nodes strings                     target the specified nodes
-      --pre-pull-images                   pre-pull images before upgrade (default true)
-      --proxy-image string                kube-proxy image to use (default "registry.k8s.io/kube-proxy")
-      --scheduler-image string            kube-scheduler image to use (default "registry.k8s.io/kube-scheduler")
-      --siderov1-keys-dir string          The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string                The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
-      --to string                         the Kubernetes control plane version to upgrade to (default "1.35.0")
-      --upgrade-kubelet                   upgrade kubelet service (default true)
-      --with-docs                         patch all machine configs adding the documentation for each field (default true)
-      --with-examples                     patch all machine configs with the commented examples (default true)
+      --apiserver-image string                 kube-apiserver image to use (default "registry.k8s.io/kube-apiserver")
+  -c, --cluster string                         Cluster to connect to if a proxy endpoint is used.
+      --context string                         Context to be used in command
+      --controller-manager-image string        kube-controller-manager image to use (default "registry.k8s.io/kube-controller-manager")
+      --dry-run                                skip the actual upgrade and show the upgrade plan instead
+      --endpoint string                        the cluster control plane endpoint
+  -e, --endpoints strings                      override default endpoints in Talos configuration
+      --from string                            the Kubernetes control plane version to upgrade from
+  -h, --help                                   help for upgrade-k8s
+      --kubelet-image string                   kubelet image to use (default "ghcr.io/siderolabs/kubelet")
+      --manifests-force-conflicts              overwrite the fields when applying even if the field manager differs
+      --manifests-inventory-policy string      kubernetes SSA inventory policy (one of 'MustMatch', 'AdoptIfNoInventory' or 'AdoptAll') (default "AdoptIfNoInventory")
+      --manifests-no-prune                     whether pruning of previously applied objects should happen after apply
+      --manifests-prune-timeout duration       how long to wait for resources to be fully deleted (set to zero to disable waiting) (default 3m0s)
+      --manifests-reconcile-timeout duration   how long to wait for resources to be fully reconciled (set to zero to disable waiting) (default 3m0s)
+  -n, --nodes strings                          target the specified nodes
+      --pre-pull-images                        pre-pull images before upgrade (default true)
+      --proxy-image string                     kube-proxy image to use (default "registry.k8s.io/kube-proxy")
+      --scheduler-image string                 kube-scheduler image to use (default "registry.k8s.io/kube-scheduler")
+      --siderov1-keys-dir string               The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
+      --talosconfig string                     The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --to string                              the Kubernetes control plane version to upgrade to (default "1.35.0")
+      --upgrade-kubelet                        upgrade kubelet service (default true)
+      --with-docs                              patch all machine configs adding the documentation for each field (default true)
+      --with-examples                          patch all machine configs with the commented examples (default true)
 ```
 
 ### SEE ALSO

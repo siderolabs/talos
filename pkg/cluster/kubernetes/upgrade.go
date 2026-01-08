@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 
+	"github.com/siderolabs/go-kubernetes/kubernetes/manifests"
 	"github.com/siderolabs/go-kubernetes/kubernetes/upgrade"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
@@ -23,13 +24,14 @@ const (
 
 // UpgradeOptions represents Kubernetes control plane upgrade settings.
 type UpgradeOptions struct {
+	manifests.SSApplyBehaviorOptions
+
 	Path *upgrade.Path
 
 	ControlPlaneEndpoint string
 	LogOutput            io.Writer
 	PrePullImages        bool
 	UpgradeKubelet       bool
-	DryRun               bool
 	EncoderOpt           encoder.Option
 
 	KubeletImage           string
