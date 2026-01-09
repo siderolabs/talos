@@ -92,10 +92,10 @@ func (suite *SpecSuite) TestReconcile() {
 					netip.MustParseAddr("10.0.0.5"),
 				},
 				ListenPeerAddresses: []netip.Addr{
-					netip.IPv6Unspecified(),
+					netip.IPv4Unspecified(),
 				},
 				ListenClientAddresses: []netip.Addr{
-					netip.IPv6Unspecified(),
+					netip.IPv4Unspecified(),
 				},
 			},
 		},
@@ -114,10 +114,10 @@ func (suite *SpecSuite) TestReconcile() {
 					netip.MustParseAddr("192.168.1.1"),
 				},
 				ListenPeerAddresses: []netip.Addr{
-					netip.IPv6Unspecified(),
+					netip.IPv4Unspecified(),
 				},
 				ListenClientAddresses: []netip.Addr{
-					netip.IPv6Unspecified(),
+					netip.IPv4Unspecified(),
 				},
 			},
 		},
@@ -139,10 +139,10 @@ func (suite *SpecSuite) TestReconcile() {
 					netip.MustParseAddr("1.3.5.7"),
 				},
 				ListenPeerAddresses: []netip.Addr{
-					netip.IPv6Unspecified(),
+					netip.IPv4Unspecified(),
 				},
 				ListenClientAddresses: []netip.Addr{
-					netip.IPv6Unspecified(),
+					netip.IPv4Unspecified(),
 				},
 			},
 		},
@@ -165,10 +165,10 @@ func (suite *SpecSuite) TestReconcile() {
 					netip.MustParseAddr("192.168.1.1"),
 				},
 				ListenPeerAddresses: []netip.Addr{
-					netip.IPv6Unspecified(),
+					netip.IPv4Unspecified(),
 				},
 				ListenClientAddresses: []netip.Addr{
-					netip.IPv6Unspecified(),
+					netip.IPv4Unspecified(),
 				},
 			},
 		},
@@ -197,7 +197,7 @@ func (suite *SpecSuite) TestReconcile() {
 					netip.MustParseAddr("192.168.1.50"),
 				},
 				ListenClientAddresses: []netip.Addr{
-					netip.MustParseAddr("::1"),
+					netip.MustParseAddr("127.0.0.1"),
 					netip.MustParseAddr("192.168.1.1"),
 					netip.MustParseAddr("192.168.1.50"),
 				},

@@ -155,17 +155,8 @@ func (ctrl *SpecController) Run(ctx context.Context, r controller.Runtime, _ *za
 			xslices.Map(etcdConfig.TypedSpec().ListenExcludeSubnets, func(cidr string) string { return "!" + cidr }),
 		)
 
-		defaultListenAddress := netip.AddrFrom4([4]byte{0, 0, 0, 0})
+		defaultListenAddress := netip.IPv4Unspecified()
 		loopbackAddress := netip.AddrFrom4([4]byte{127, 0, 0, 1})
-
-		for _, ip := range routedAddrs {
-			if ip.Is6() {
-				defaultListenAddress = netip.IPv6Unspecified()
-				loopbackAddress = netip.MustParseAddr("::1")
-
-				break
-			}
-		}
 
 		var (
 			advertisedIPs   []netip.Addr

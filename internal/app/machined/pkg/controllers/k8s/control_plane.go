@@ -192,7 +192,7 @@ func NewControlPlaneAPIServerController() *ControlPlaneAPIServerController {
 					Image:                cfgProvider.Cluster().APIServer().Image(),
 					CloudProvider:        cloudProvider,
 					ControlPlaneEndpoint: cfgProvider.Cluster().Endpoint().String(),
-					EtcdServers:          []string{fmt.Sprintf("https://%s", nethelpers.JoinHostPort("localhost", constants.EtcdClientPort))},
+					EtcdServers:          []string{fmt.Sprintf("https://%s", nethelpers.JoinHostPort("127.0.0.1", constants.EtcdClientPort))},
 					LocalPort:            cfgProvider.Cluster().LocalAPIServerPort(),
 					ServiceCIDRs:         cfgProvider.Cluster().Network().ServiceCIDRs(),
 					ExtraArgs:            cfgProvider.Cluster().APIServer().ExtraArgs(),

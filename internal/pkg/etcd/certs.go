@@ -30,15 +30,10 @@ func (gen *CertificateGenerator) buildOptions(autoSANs, includeLocalhost bool) [
 	addresses := gen.NodeAddresses.TypedSpec().IPs()
 
 	if includeLocalhost {
-		addresses = append(addresses, netip.MustParseAddr("127.0.0.1"))
-
-		for _, addr := range addresses {
-			if addr.Is6() {
-				addresses = append(addresses, netip.MustParseAddr("::1"))
-
-				break
-			}
-		}
+		addresses = append(addresses,
+			netip.MustParseAddr("127.0.0.1"),
+			netip.MustParseAddr("::1"),
+		)
 	}
 
 	hostname := gen.HostnameStatus.TypedSpec().Hostname
