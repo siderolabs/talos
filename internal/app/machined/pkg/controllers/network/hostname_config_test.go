@@ -20,7 +20,9 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	networkcfg "github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -100,7 +102,7 @@ func (suite *HostnameConfigSuite) TestCmdline() {
 	}, rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
-func (suite *HostnameConfigSuite) TestMachineConfiguration() {
+func (suite *HostnameConfigSuite) TestLegacyMachineConfiguration() {
 	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.HostnameConfigController{}))
 
 	u, err := url.Parse("https://foo:6443")
@@ -144,6 +146,58 @@ func (suite *HostnameConfigSuite) TestMachineConfiguration() {
 	suite.Require().NoError(err)
 
 	ctest.AssertNoResource[*network.HostnameSpec](suite, "configuration/hostname", rtestutils.WithNamespace(network.ConfigNamespaceName))
+}
+
+func (suite *HostnameConfigSuite) TestMachineConfigurationStaticHostname() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.HostnameConfigController{}))
+
+	hostnameCfg := networkcfg.NewHostnameConfigV1Alpha1()
+	hostnameCfg.ConfigAuto = pointer.To(nethelpers.AutoHostnameKindOff)
+	hostnameCfg.ConfigHostname = "my-hostname"
+
+	ctr, err := container.New(hostnameCfg)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	ctest.AssertResource(
+		suite, "configuration/hostname", func(r *network.HostnameSpec, asrt *assert.Assertions) {
+			asrt.Equal("my-hostname", r.TypedSpec().Hostname)
+			asrt.Equal("", r.TypedSpec().Domainname)
+			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
+		}, rtestutils.WithNamespace(network.ConfigNamespaceName),
+	)
+
+	ctest.AssertNoResource[*network.HostnameSpec](suite, "default/hostname", rtestutils.WithNamespace(network.ConfigNamespaceName))
+
+	suite.Destroy(cfg)
+
+	ctest.AssertNoResource[*network.HostnameSpec](suite, "configuration/hostname", rtestutils.WithNamespace(network.ConfigNamespaceName))
+	ctest.AssertNoResource[*network.HostnameSpec](suite, "default/hostname", rtestutils.WithNamespace(network.ConfigNamespaceName))
+}
+
+func (suite *HostnameConfigSuite) TestMachineConfigurationDefaultStable() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.HostnameConfigController{}))
+
+	hostnameCfg := networkcfg.NewHostnameConfigV1Alpha1()
+	hostnameCfg.ConfigAuto = pointer.To(nethelpers.AutoHostnameKindStable)
+
+	ctr, err := container.New(hostnameCfg)
+	suite.Require().NoError(err)
+
+	id := cluster.NewIdentity(cluster.NamespaceName, cluster.LocalIdentity)
+	id.TypedSpec().NodeID = "fGdOI05hVrx3YMagLo0Bwxa2Nm9BAswWm8XLeEj0aS4"
+	suite.Create(id)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	ctest.AssertResource(suite, "default/hostname", func(r *network.HostnameSpec, asrt *assert.Assertions) {
+		asrt.Equal("talos-hwz-sw5", r.TypedSpec().Hostname)
+		asrt.Equal("", r.TypedSpec().Domainname)
+		asrt.Equal(network.ConfigDefault, r.TypedSpec().ConfigLayer)
+	}, rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
 func TestHostnameConfigSuite(t *testing.T) {
