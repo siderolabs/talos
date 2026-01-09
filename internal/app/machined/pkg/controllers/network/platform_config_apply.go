@@ -14,6 +14,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"go.uber.org/zap"
 
+	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -200,6 +201,10 @@ func (ctrl *PlatformConfigApplyController) apply(ctx context.Context, r controll
 
 					*spec = newSpec.(network.LinkSpecSpec) //nolint:forcetypeassert
 					spec.ConfigLayer = network.ConfigPlatform
+
+					if spec.Kind == network.LinkKindBond {
+						networkadapter.BondMasterSpec(&spec.BondMaster).FillDefaults()
+					}
 
 					return nil
 				}
