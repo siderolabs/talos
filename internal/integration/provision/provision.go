@@ -180,14 +180,16 @@ func (suite *BaseSuite) waitForClusterHealth() {
 			time.Sleep(15 * time.Second)
 		}
 
-		checkCtx, checkCtxCancel := context.WithTimeout(suite.ctx, 15*time.Minute)
+		timeout := 15 * time.Minute
+
+		checkCtx, checkCtxCancel := context.WithTimeout(suite.ctx, timeout)
 		defer checkCtxCancel()
 
 		suite.Require().NoError(
 			check.Wait(
 				checkCtx,
 				suite.clusterAccess,
-				check.DefaultClusterChecks(),
+				check.DefaultClusterChecks(timeout),
 				check.StderrReporter(),
 			),
 		)

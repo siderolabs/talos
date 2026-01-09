@@ -144,7 +144,7 @@ func healthOnClient(ctx context.Context, c *client.Client) error {
 	checkCtx, checkCtxCancel := context.WithTimeout(ctx, healthCmdFlags.clusterWaitTimeout)
 	defer checkCtxCancel()
 
-	return check.Wait(checkCtx, &state, append(check.DefaultClusterChecks(), check.ExtraClusterChecks()...), check.StderrReporter())
+	return check.Wait(checkCtx, &state, append(check.DefaultClusterChecks(healthCmdFlags.clusterWaitTimeout), check.ExtraClusterChecks()...), check.StderrReporter())
 }
 
 func healthOnServer(ctx context.Context, c *client.Client) error {
