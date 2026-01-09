@@ -3298,12 +3298,17 @@ talosctl upgrade-k8s [flags]
       --dry-run                           skip the actual upgrade and show the upgrade plan instead
       --endpoint string                   the cluster control plane endpoint
   -e, --endpoints strings                 override default endpoints in Talos configuration
+      --force-conflicts                   overwrite the fields when applying even if the field manager differs
       --from string                       the Kubernetes control plane version to upgrade from
   -h, --help                              help for upgrade-k8s
+      --inventory-policy string           kubernetes SSA inventory policy (one of 'MustMatch', 'AdoptIfNoInventory' or 'AdoptAll') (default "AdoptIfNoInventory")
       --kubelet-image string              kubelet image to use (default "ghcr.io/siderolabs/kubelet")
+      --no-prune                          whether pruning of previously applied objects should happen after apply
   -n, --nodes strings                     target the specified nodes
       --pre-pull-images                   pre-pull images before upgrade (default true)
       --proxy-image string                kube-proxy image to use (default "registry.k8s.io/kube-proxy")
+      --prune-timeout int                 how long to wait for resources to be pruned in secunds (set to zero to disable waiting for resources to be fully deleted) (default 180)
+      --reconcile-timeout int             how long to wait for resources to be prfully reconciled in secunds (set to zero to disable waiting for resources to be fully reoondiled) (default 180)
       --scheduler-image string            kube-scheduler image to use (default "registry.k8s.io/kube-scheduler")
       --siderov1-keys-dir string          The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
       --talosconfig string                The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
