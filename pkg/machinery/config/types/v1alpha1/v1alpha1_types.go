@@ -169,8 +169,10 @@ type MachineConfig struct {
 	//     items:
 	//       type: object
 	MachinePods []Unstructured `yaml:"pods,omitempty"`
-	//   description: |
-	//     Provides machine specific network configuration options.
+	// docgen:nodoc
+	//
+	// Deprecated: All fields within NetworkConfig are deprecated. Use multi-document network config types instead:
+	// HostnameConfig, NetworkDeviceConfig, ResolverConfig, StaticHostConfig, KubeSpanConfig.
 	MachineNetwork *NetworkConfig `yaml:"network,omitempty"`
 	// docgen:nodoc
 	//
@@ -674,6 +676,8 @@ type KubeletNodeIPConfig struct {
 }
 
 // NetworkConfig represents the machine's networking config values.
+//
+// Deprecated: all fields in NetworkConfig are deprecated, use corresponding multi-doc config types instead.
 type NetworkConfig struct {
 	// docgen:nodoc
 	//
@@ -695,10 +699,9 @@ type NetworkConfig struct {
 	//
 	// Deprecated: Use `StatisHostConfig` instead.
 	ExtraHostEntries []*ExtraHost `yaml:"extraHostEntries,omitempty"`
-	//   description: |
-	//     Configures KubeSpan feature.
-	//   examples:
-	//     - value: networkKubeSpanExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeSpanConfig` document instead.
 	NetworkKubeSpan *NetworkKubeSpan `yaml:"kubespan,omitempty"`
 	// docgen:nodoc
 	//
@@ -2350,6 +2353,8 @@ type ClusterInlineManifest struct {
 }
 
 // NetworkKubeSpan struct describes KubeSpan configuration.
+//
+// Deprecated: Use KubeSpanConfig document instead.
 type NetworkKubeSpan struct {
 	// description: |
 	//   Enable the KubeSpan feature.

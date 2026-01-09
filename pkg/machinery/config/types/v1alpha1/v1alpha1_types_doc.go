@@ -137,13 +137,7 @@ func (MachineConfig) Doc() *encoder.Doc {
 				Description: "Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver.\n\nStatic pods can be used to run components which should be started before the Kubernetes control plane is up.\nTalos doesn't validate the pod definition.\nUpdates to this field can be applied without a reboot.\n\nSee https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "network",
-				Type:        "NetworkConfig",
-				Note:        "",
-				Description: "Provides machine specific network configuration options.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Provides machine specific network configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{},
 			{
 				Name:        "install",
@@ -900,30 +894,10 @@ func (NetworkConfig) Doc() *encoder.Doc {
 		Type:        "NetworkConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "NetworkConfig represents the machine's networking config values." /* encoder.LineComment */, "" /* encoder.FootComment */},
 		Description: "NetworkConfig represents the machine's networking config values.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "MachineConfig",
-				FieldName: "network",
-			},
-		},
 		Fields: []encoder.Doc{
-			{},
-			{},
-			{},
-			{},
-			{},
-			{
-				Name:        "kubespan",
-				Type:        "NetworkKubeSpan",
-				Note:        "",
-				Description: "Configures KubeSpan feature.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures KubeSpan feature." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{},
+			{}, {}, {}, {}, {}, {}, {},
 		},
 	}
-
-	doc.Fields[5].AddExample("", networkKubeSpanExample())
 
 	return doc
 }
@@ -2188,12 +2162,6 @@ func (NetworkKubeSpan) Doc() *encoder.Doc {
 		Type:        "NetworkKubeSpan",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "NetworkKubeSpan struct describes KubeSpan configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
 		Description: "NetworkKubeSpan struct describes KubeSpan configuration.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "NetworkConfig",
-				FieldName: "kubespan",
-			},
-		},
 		Fields: []encoder.Doc{
 			{
 				Name:        "enabled",
@@ -2239,8 +2207,6 @@ func (NetworkKubeSpan) Doc() *encoder.Doc {
 			},
 		},
 	}
-
-	doc.AddExample("", networkKubeSpanExample())
 
 	return doc
 }

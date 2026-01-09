@@ -143,7 +143,7 @@ type MachineScheduler interface {
 // This is a legacy interface which is going to be decomposed and removed in the future.
 type MachineNetwork interface {
 	Devices() []Device
-	KubeSpan() KubeSpan
+	KubeSpan() NetworkKubeSpanConfig
 }
 
 // Device represents a network interface.
@@ -292,18 +292,18 @@ type Route interface {
 	MTU() uint32
 }
 
-// KubeSpan configures KubeSpan feature.
-type KubeSpan interface {
+// NetworkKubeSpanConfig configures KubeSpan feature.
+type NetworkKubeSpanConfig interface {
 	Enabled() bool
 	ForceRouting() bool
 	AdvertiseKubernetesNetworks() bool
 	HarvestExtraEndpoints() bool
 	MTU() uint32
-	Filters() KubeSpanFilters
+	Filters() NetworkKubeSpanFilters
 }
 
-// KubeSpanFilters configures KubeSpan filters.
-type KubeSpanFilters interface {
+// NetworkKubeSpanFilters configures KubeSpan filters.
+type NetworkKubeSpanFilters interface {
 	Endpoints() []string
 }
 

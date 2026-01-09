@@ -596,7 +596,7 @@ func (n *NetworkConfig) ExtraHosts() []config.NetworkStaticHostConfig {
 }
 
 // KubeSpan implements the config.Provider interface.
-func (n *NetworkConfig) KubeSpan() config.KubeSpan {
+func (n *NetworkConfig) KubeSpan() config.NetworkKubeSpanConfig {
 	if n.NetworkKubeSpan == nil {
 		return &NetworkKubeSpan{}
 	}
@@ -1177,8 +1177,8 @@ func (k *NetworkKubeSpan) MTU() uint32 {
 	return mtu
 }
 
-// Filters implements the KubeSpan interface.
-func (k *NetworkKubeSpan) Filters() config.KubeSpanFilters {
+// Filters implements the NetworkKubeSpanConfig interface.
+func (k *NetworkKubeSpan) Filters() config.NetworkKubeSpanFilters {
 	if k.KubeSpanFilters == nil {
 		return &KubeSpanFilters{}
 	}
