@@ -90,7 +90,7 @@ func (ctrl *HostnameConfigController) Run(ctx context.Context, r controller.Runt
 			if !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting config: %w", err)
 			}
-		} else if cfg.Config().Machine() != nil {
+		} else {
 			cfgProvider = cfg.Config()
 		}
 
