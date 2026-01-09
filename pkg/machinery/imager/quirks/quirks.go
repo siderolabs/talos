@@ -250,8 +250,10 @@ func (q Quirks) XFSMkfsConfig() string {
 	// if the version doesn't parse, we assume it's latest Talos
 	// update when we have a new LTS config
 	case version == nil:
-		return "/usr/share/xfsprogs/mkfs/lts_6.12.conf"
+		return "/usr/share/xfsprogs/mkfs/lts_6.18.conf"
 	// add new version once we have a new LTS config
+	case version.GTE(semver.MustParse("1.13.0")):
+		return "/usr/share/xfsprogs/mkfs/lts_6.18.conf"
 	case version.GTE(semver.MustParse("1.10.0")):
 		return "/usr/share/xfsprogs/mkfs/lts_6.12.conf"
 	case version.GTE(semver.MustParse("1.8.0")) && version.LT(semver.MustParse("1.10.0")):

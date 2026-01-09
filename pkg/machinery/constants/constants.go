@@ -14,7 +14,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "6.18.2-talos"
+	DefaultKernelVersion = "6.18.4-talos"
 
 	// KernelParamConfig is the kernel parameter name for specifying the URL.
 	// to the config.
@@ -1304,19 +1304,6 @@ const (
 
 	// LogFlushPeriod is the period for flushing in-memory log buffers to the filesystem.
 	LogFlushPeriod = 15 * time.Second
-)
-
-// See https://linux.die.net/man/3/klogctl
-//
-//nolint:stylecheck,revive
-const (
-	// SYSLOG_ACTION_SIZE_BUFFER is a named type argument to klogctl.
-	//nolint:golint
-	SYSLOG_ACTION_SIZE_BUFFER = 10
-
-	// SYSLOG_ACTION_READ_ALL is a named type argument to klogctl.
-	//nolint:golint
-	SYSLOG_ACTION_READ_ALL = 3
 )
 
 // names of variable that can be substituted in the talos.config kernel parameter.

@@ -164,10 +164,15 @@ func TestXFSMkfsConfigFile(t *testing.T) {
 			expected: "/usr/share/xfsprogs/mkfs/lts_6.12.conf",
 		},
 		{
+			version:  "1.12.0",
 			expected: "/usr/share/xfsprogs/mkfs/lts_6.12.conf",
 		},
 		{
-			expected: "/usr/share/xfsprogs/mkfs/lts_6.12.conf",
+			version:  "1.13.0",
+			expected: "/usr/share/xfsprogs/mkfs/lts_6.18.conf",
+		},
+		{
+			expected: "/usr/share/xfsprogs/mkfs/lts_6.18.conf",
 		},
 	} {
 		t.Run(test.version, func(t *testing.T) {

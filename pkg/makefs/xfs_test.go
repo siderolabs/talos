@@ -39,10 +39,10 @@ func TestXFSInfo(t *testing.T) { //nolint:tparallel
          =                       sectsz=512   attr=2, projid32bit=1
          =                       crc=1        finobt=1, sparse=1, rmapbt=1
          =                       reflink=1    bigtime=1 inobtcount=1 nrext64=1
-         =                       exchange=0   metadir=0
+         =                       exchange=1   metadir=0
 data     =                       bsize=4096   blocks=262144, imaxpct=25
          =                       sunit=0      swidth=0 blks
-naming   =version 2              bsize=4096   ascii-ci=0, ftype=1, parent=0
+naming   =version 2              bsize=4096   ascii-ci=0, ftype=1, parent=1
 log      =internal log           bsize=4096   blocks=16384, version=2
          =                       sectsz=512   sunit=0 blks, lazy-count=1
 realtime =none                   extsz=4096   blocks=0, rtextents=0
@@ -59,10 +59,10 @@ realtime =none                   extsz=4096   blocks=0, rtextents=0
          =                       sectsz=512   attr=2, projid32bit=1
          =                       crc=1        finobt=1, sparse=1, rmapbt=1
          =                       reflink=1    bigtime=1 inobtcount=1 nrext64=1
-         =                       exchange=0   metadir=0
+         =                       exchange=1   metadir=0
 data     =                       bsize=4096   blocks=2621440, imaxpct=25
          =                       sunit=0      swidth=0 blks
-naming   =version 2              bsize=4096   ascii-ci=0, ftype=1, parent=0
+naming   =version 2              bsize=4096   ascii-ci=0, ftype=1, parent=1
 log      =internal log           bsize=4096   blocks=16384, version=2
          =                       sectsz=512   sunit=0 blks, lazy-count=1
 realtime =none                   extsz=4096   blocks=0, rtextents=0
@@ -79,10 +79,10 @@ realtime =none                   extsz=4096   blocks=0, rtextents=0
          =                       sectsz=512   attr=2, projid32bit=1
          =                       crc=1        finobt=1, sparse=1, rmapbt=1
          =                       reflink=1    bigtime=1 inobtcount=1 nrext64=1
-         =                       exchange=0   metadir=0
+         =                       exchange=1   metadir=0
 data     =                       bsize=4096   blocks=26214400, imaxpct=25
          =                       sunit=0      swidth=0 blks
-naming   =version 2              bsize=4096   ascii-ci=0, ftype=1, parent=0
+naming   =version 2              bsize=4096   ascii-ci=0, ftype=1, parent=1
 log      =internal log           bsize=4096   blocks=16384, version=2
          =                       sectsz=512   sunit=0 blks, lazy-count=1
 realtime =none                   extsz=4096   blocks=0, rtextents=0
