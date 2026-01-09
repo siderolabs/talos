@@ -461,6 +461,55 @@ func (suite *LinkSpecSuite) TestBond() {
 	ctest.AssertNoResource[*network.LinkStatus](suite, bondName)
 }
 
+func (suite *LinkSpecSuite) TestBondActiveBackup() {
+	bondName := suite.uniqueDummyInterface()
+	bond := network.NewLinkSpec(network.NamespaceName, bondName)
+	*bond.TypedSpec() = network.LinkSpecSpec{
+		Name:    bondName,
+		Type:    nethelpers.LinkEther,
+		Kind:    network.LinkKindBond,
+		Up:      true,
+		Logical: true,
+		BondMaster: network.BondMasterSpec{
+			Mode:            nethelpers.BondModeActiveBackup,
+			HashPolicy:      nethelpers.BondXmitPolicyLayer2,
+			LACPRate:        nethelpers.LACPRateSlow,
+			ARPValidate:     nethelpers.ARPValidateNone,
+			ARPAllTargets:   nethelpers.ARPAllTargetsAny,
+			PrimaryReselect: nethelpers.PrimaryReselectAlways,
+			FailOverMac:     nethelpers.FailOverMACNone,
+		},
+		ConfigLayer: network.ConfigDefault,
+	}
+
+	networkadapter.BondMasterSpec(&bond.TypedSpec().BondMaster).FillDefaults()
+
+	for idx := range 2 {
+		dummyName := suite.uniqueDummyInterface()
+		dummy := network.NewLinkSpec(network.NamespaceName, dummyName)
+		*dummy.TypedSpec() = network.LinkSpecSpec{
+			Name:    dummyName,
+			Type:    nethelpers.LinkEther,
+			Kind:    "dummy",
+			Up:      true,
+			Logical: true,
+			BondSlave: network.BondSlave{
+				MasterName: bondName,
+				SlaveIndex: idx,
+			},
+			ConfigLayer: network.ConfigDefault,
+		}
+		suite.Create(dummy)
+	}
+
+	suite.Create(bond)
+
+	ctest.AssertResource(suite, bondName, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Equal(network.LinkKindBond, r.TypedSpec().Kind)
+		asrt.Contains([]nethelpers.OperationalState{nethelpers.OperStateUp, nethelpers.OperStateUnknown}, r.TypedSpec().OperationalState)
+	})
+}
+
 //nolint:gocyclo
 func (suite *LinkSpecSuite) TestBond8023ad() {
 	bondName := suite.uniqueDummyInterface()
