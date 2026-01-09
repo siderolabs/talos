@@ -10,11 +10,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/crypto/x509"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
@@ -26,8 +23,11 @@ import (
 )
 
 func TestEtcdSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, &EtcdSuite{
 		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 5 * time.Second,
 			AfterSetup: func(suite *ctest.DefaultSuite) {
 				suite.Require().NoError(suite.Runtime().RegisterController(&secretsctrl.EtcdController{}))
 			},
@@ -52,124 +52,100 @@ func (suite *EtcdSuite) TestReconcile() {
 		Crt: etcdCA.CrtPEM,
 		Key: etcdCA.KeyPEM,
 	}
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), rootSecrets))
+	suite.Create(rootSecrets)
 
 	networkStatus := network.NewStatus(network.NamespaceName, network.StatusID)
 	networkStatus.TypedSpec().AddressReady = true
 	networkStatus.TypedSpec().HostnameReady = true
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), networkStatus))
+	suite.Create(networkStatus)
 
 	hostnameStatus := network.NewHostnameStatus(network.NamespaceName, network.HostnameID)
 	hostnameStatus.TypedSpec().Hostname = "host"
 	hostnameStatus.TypedSpec().Domainname = "domain"
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), hostnameStatus))
+	suite.Create(hostnameStatus)
 
 	nodeAddresses := network.NewNodeAddress(network.NamespaceName, network.FilteredNodeAddressID(network.NodeAddressAccumulativeID, k8s.NodeAddressFilterNoK8s))
 	nodeAddresses.TypedSpec().Addresses = []netip.Prefix{
 		netip.MustParsePrefix("10.3.4.5/24"),
 		netip.MustParsePrefix("2001:db8::1eaf/64"),
 	}
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), nodeAddresses))
+	suite.Create(nodeAddresses)
 
 	timeSync := timeres.NewStatus()
 	timeSync.TypedSpec().Synced = true
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), timeSync))
+	suite.Create(timeSync)
 
-	suite.AssertWithin(3*time.Second, 100*time.Millisecond,
-		ctest.WrapRetry(func(assert *assert.Assertions, require *require.Assertions) {
-			certs, err := ctest.Get[*secrets.Etcd](
-				suite,
-				resource.NewMetadata(
-					secrets.NamespaceName,
-					secrets.EtcdType,
-					secrets.EtcdID,
-					resource.VersionUndefined,
-				),
-			)
-			if err != nil {
-				if state.IsNotFoundError(err) {
-					assert.NoError(err)
-				} else {
-					require.NoError(err)
-				}
+	ctest.AssertResource(suite, secrets.EtcdID, func(certs *secrets.Etcd, asrt *assert.Assertions) {
+		etcdCerts := certs.TypedSpec()
 
-				return
-			}
+		serverCert, err := etcdCerts.Etcd.GetCert()
+		if !asrt.NoError(err) {
+			return
+		}
 
-			etcdCerts := certs.TypedSpec()
+		asrt.Equal([]string{"host", "host.domain", "localhost"}, serverCert.DNSNames)
+		asrt.Equal("[10.3.4.5 2001:db8::1eaf 127.0.0.1 ::1]", fmt.Sprintf("%v", serverCert.IPAddresses))
 
-			serverCert, err := etcdCerts.Etcd.GetCert()
-			require.NoError(err)
+		asrt.Equal("host", serverCert.Subject.CommonName)
 
-			assert.Equal([]string{"host", "host.domain", "localhost"}, serverCert.DNSNames)
-			assert.Equal("[10.3.4.5 2001:db8::1eaf 127.0.0.1 ::1]", fmt.Sprintf("%v", serverCert.IPAddresses))
+		peerCert, err := etcdCerts.EtcdPeer.GetCert()
+		if !asrt.NoError(err) {
+			return
+		}
 
-			assert.Equal("host", serverCert.Subject.CommonName)
+		asrt.Equal([]string{"host", "host.domain"}, peerCert.DNSNames)
+		asrt.Equal("[10.3.4.5 2001:db8::1eaf]", fmt.Sprintf("%v", peerCert.IPAddresses))
 
-			peerCert, err := etcdCerts.EtcdPeer.GetCert()
-			require.NoError(err)
+		asrt.Equal("host", peerCert.Subject.CommonName)
 
-			assert.Equal([]string{"host", "host.domain"}, peerCert.DNSNames)
-			assert.Equal("[10.3.4.5 2001:db8::1eaf]", fmt.Sprintf("%v", peerCert.IPAddresses))
+		adminCert, err := etcdCerts.EtcdAdmin.GetCert()
+		if !asrt.NoError(err) {
+			return
+		}
 
-			assert.Equal("host", peerCert.Subject.CommonName)
+		asrt.Empty(adminCert.DNSNames)
+		asrt.Empty(adminCert.IPAddresses)
 
-			adminCert, err := etcdCerts.EtcdAdmin.GetCert()
-			require.NoError(err)
+		asrt.Equal("talos", adminCert.Subject.CommonName)
 
-			assert.Empty(adminCert.DNSNames)
-			assert.Empty(adminCert.IPAddresses)
+		kubeAPICert, err := etcdCerts.EtcdAPIServer.GetCert()
+		if !asrt.NoError(err) {
+			return
+		}
 
-			assert.Equal("talos", adminCert.Subject.CommonName)
+		asrt.Empty(kubeAPICert.DNSNames)
+		asrt.Empty(kubeAPICert.IPAddresses)
 
-			kubeAPICert, err := etcdCerts.EtcdAPIServer.GetCert()
-			require.NoError(err)
-
-			assert.Empty(kubeAPICert.DNSNames)
-			assert.Empty(kubeAPICert.IPAddresses)
-
-			assert.Equal("kube-apiserver", kubeAPICert.Subject.CommonName)
-		}))
+		asrt.Equal("kube-apiserver", kubeAPICert.Subject.CommonName)
+	})
 
 	// update node addresses, certs should be updated
 	nodeAddresses.TypedSpec().Addresses = []netip.Prefix{
 		netip.MustParsePrefix("10.3.4.5/24"),
 	}
-	suite.Require().NoError(suite.State().Update(suite.Ctx(), nodeAddresses))
+	suite.Update(nodeAddresses)
 
-	suite.AssertWithin(3*time.Second, 100*time.Millisecond,
-		ctest.WrapRetry(func(assert *assert.Assertions, require *require.Assertions) {
-			certs, err := ctest.Get[*secrets.Etcd](
-				suite,
-				resource.NewMetadata(
-					secrets.NamespaceName,
-					secrets.EtcdType,
-					secrets.EtcdID,
-					resource.VersionUndefined,
-				),
-			)
-			if err != nil {
-				require.NoError(err)
+	ctest.AssertResource(suite, secrets.EtcdID, func(certs *secrets.Etcd, asrt *assert.Assertions) {
+		etcdCerts := certs.TypedSpec()
 
-				return
-			}
+		serverCert, err := etcdCerts.Etcd.GetCert()
+		if !asrt.NoError(err) {
+			return
+		}
 
-			etcdCerts := certs.TypedSpec()
+		asrt.Equal([]string{"host", "host.domain", "localhost"}, serverCert.DNSNames)
+		asrt.Equal("[10.3.4.5 127.0.0.1 ::1]", fmt.Sprintf("%v", serverCert.IPAddresses))
 
-			serverCert, err := etcdCerts.Etcd.GetCert()
-			require.NoError(err)
+		asrt.Equal("host", serverCert.Subject.CommonName)
 
-			assert.Equal([]string{"host", "host.domain", "localhost"}, serverCert.DNSNames)
-			assert.Equal("[10.3.4.5 127.0.0.1]", fmt.Sprintf("%v", serverCert.IPAddresses))
+		peerCert, err := etcdCerts.EtcdPeer.GetCert()
+		if !asrt.NoError(err) {
+			return
+		}
 
-			assert.Equal("host", serverCert.Subject.CommonName)
+		asrt.Equal([]string{"host", "host.domain"}, peerCert.DNSNames)
+		asrt.Equal("[10.3.4.5]", fmt.Sprintf("%v", peerCert.IPAddresses))
 
-			peerCert, err := etcdCerts.EtcdPeer.GetCert()
-			require.NoError(err)
-
-			assert.Equal([]string{"host", "host.domain"}, peerCert.DNSNames)
-			assert.Equal("[10.3.4.5]", fmt.Sprintf("%v", peerCert.IPAddresses))
-
-			assert.Equal("host", peerCert.Subject.CommonName)
-		}))
+		asrt.Equal("host", peerCert.Subject.CommonName)
+	})
 }
