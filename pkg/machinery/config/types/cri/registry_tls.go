@@ -159,6 +159,10 @@ func (s *RegistryTLSConfigV1Alpha1) Validate(validation.RuntimeMode, ...validati
 
 // ClientIdentity implements config.RegistryTLSConfigDocument interface.
 func (s *RegistryTLSConfigV1Alpha1) ClientIdentity() *x509.PEMEncodedCertificateAndKey {
+	if s.TLSClientIdentity == nil {
+		return nil
+	}
+
 	return &x509.PEMEncodedCertificateAndKey{
 		Crt: []byte(s.TLSClientIdentity.Cert),
 		Key: []byte(s.TLSClientIdentity.Key),
@@ -167,6 +171,10 @@ func (s *RegistryTLSConfigV1Alpha1) ClientIdentity() *x509.PEMEncodedCertificate
 
 // CA implements config.RegistryTLSConfigDocument interface.
 func (s *RegistryTLSConfigV1Alpha1) CA() []byte {
+	if s.TLSCA == "" {
+		return nil
+	}
+
 	return []byte(s.TLSCA)
 }
 

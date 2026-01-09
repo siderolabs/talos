@@ -323,7 +323,10 @@ func (suite *ConfigSuite) TestRegistryNewStyle() {
 	}
 	tr1.TLSCA = "-----BEGIN CERTIFICATE-----\nMIID...IDAQAB\n-----END CERTIFICATE-----"
 
-	ctr, err := container.New(mr1, ar1, tr1)
+	tr2 := criconfig.NewRegistryTLSConfigV1Alpha1("another-registry")
+	tr2.TLSInsecureSkipVerify = pointer.To(true)
+
+	ctr, err := container.New(mr1, ar1, tr1, tr2)
 	suite.Require().NoError(err)
 
 	cfg := config.NewMachineConfig(ctr)
@@ -369,6 +372,9 @@ func (suite *ConfigSuite) TestRegistryNewStyle() {
 						Key: []byte("-----BEGIN PRIVATE KEY-----\nMIIE...AB\n-----END PRIVATE KEY-----"),
 					},
 					TLSCA: []byte("-----BEGIN CERTIFICATE-----\nMIID...IDAQAB\n-----END CERTIFICATE-----"),
+				},
+				"another-registry": {
+					TLSInsecureSkipVerify: true,
 				},
 			},
 			spec.RegistryTLSs,
