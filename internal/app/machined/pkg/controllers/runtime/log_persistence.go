@@ -21,6 +21,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime/internal/logfile"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
@@ -44,7 +45,7 @@ func (ctrl *LogPersistenceController) Name() string {
 func (ctrl *LogPersistenceController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
-			Namespace: block.NamespaceName,
+			Namespace: resources.InMemoryNamespace,
 			Type:      block.VolumeMountStatusType,
 			Kind:      controller.InputStrong,
 		},

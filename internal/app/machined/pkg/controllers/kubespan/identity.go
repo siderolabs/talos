@@ -22,6 +22,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
+	"github.com/siderolabs/talos/pkg/machinery/resources"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
@@ -55,7 +56,7 @@ func (ctrl *IdentityController) Inputs() []controller.Input {
 			Kind:      controller.InputWeak,
 		},
 		{
-			Namespace: block.NamespaceName,
+			Namespace: resources.InMemoryNamespace,
 			Type:      block.VolumeMountStatusType,
 			Kind:      controller.InputStrong,
 		},

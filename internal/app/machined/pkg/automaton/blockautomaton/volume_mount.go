@@ -141,7 +141,7 @@ func callbackWithMountStatus(mountStatus *block.VolumeMountStatus) func(
 //
 // Transitions to: removeMountRequest.
 func removeMountStatusFinalizer(ctx context.Context, r controller.ReaderWriter, logger *zap.Logger, mountContext volumeMountContext) (automaton.ControllerStateFunc[volumeMountContext], error) {
-	if err := r.RemoveFinalizer(ctx, block.NewVolumeMountStatus(block.NamespaceName, mountContext.mountID).Metadata(), mountContext.requester); err != nil {
+	if err := r.RemoveFinalizer(ctx, block.NewVolumeMountStatus(mountContext.mountID).Metadata(), mountContext.requester); err != nil {
 		return nil, fmt.Errorf("error removing finalizer: %w", err)
 	}
 

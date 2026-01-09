@@ -66,7 +66,7 @@ func TestVolumeMounter(t *testing.T) {
 	// no-op run, as the volume mount status doesn't exist
 	require.NoError(t, volumeMounter.Run(ctx, adapter, logger))
 
-	vms := block.NewVolumeMountStatus(block.NamespaceName, mountID)
+	vms := block.NewVolumeMountStatus(mountID)
 	require.NoError(t, st.Create(ctx, vms))
 
 	// 2nd run, should put a finalizer on the volume mount status and call the callback 1st time
@@ -153,7 +153,7 @@ func TestVolumeMounterReadWrite(t *testing.T) {
 
 	require.NoError(t, st.AddFinalizer(ctx, block.NewVolumeMountRequest(block.NamespaceName, mountID).Metadata(), "test"))
 
-	vms := block.NewVolumeMountStatus(block.NamespaceName, mountID)
+	vms := block.NewVolumeMountStatus(mountID)
 	vms.TypedSpec().ReadOnly = true // volume is mounted read-only (from some other request)
 	require.NoError(t, st.Create(ctx, vms))
 

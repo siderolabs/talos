@@ -20,6 +20,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/automaton"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/automaton/blockautomaton"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	"github.com/siderolabs/talos/pkg/xfs"
@@ -46,7 +47,7 @@ func (ctrl *PlatformConfigStoreController) Inputs() []controller.Input {
 			Kind:      controller.InputStrong,
 		},
 		{
-			Namespace: block.NamespaceName,
+			Namespace: resources.InMemoryNamespace,
 			Type:      block.VolumeMountStatusType,
 			Kind:      controller.InputStrong,
 		},

@@ -94,7 +94,7 @@ func (suite *ImageCacheConfigSuite) TestReconcileFeatureEnabled() {
 	)
 
 	// simulate ISO being mounted
-	vms1 := block.NewVolumeMountStatus(block.NamespaceName, ctrlName+"-"+crictrl.VolumeImageCacheISO)
+	vms1 := block.NewVolumeMountStatus(ctrlName + "-" + crictrl.VolumeImageCacheISO)
 	vms1.TypedSpec().ReadOnly = true
 	vms1.TypedSpec().Target = constants.ImageCacheISOMountPoint
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), vms1))
@@ -111,7 +111,7 @@ func (suite *ImageCacheConfigSuite) TestReconcileFeatureEnabled() {
 	suite.Require().NoError(suite.State().Update(suite.Ctx(), vs2))
 
 	// simulate disk being mounted
-	vms2 := block.NewVolumeMountStatus(block.NamespaceName, ctrlName+"-"+crictrl.VolumeImageCacheDISK)
+	vms2 := block.NewVolumeMountStatus(ctrlName + "-" + crictrl.VolumeImageCacheDISK)
 	vms2.TypedSpec().ReadOnly = false
 	vms2.TypedSpec().Target = constants.ImageCacheDiskMountPoint
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), vms2))
@@ -177,7 +177,7 @@ func (suite *ImageCacheConfigSuite) TestReconcileJustDiskVolume() {
 	suite.Update(vs2)
 
 	// simulate disk being mounted
-	vms2 := block.NewVolumeMountStatus(block.NamespaceName, ctrlName+"-"+crictrl.VolumeImageCacheDISK)
+	vms2 := block.NewVolumeMountStatus(ctrlName + "-" + crictrl.VolumeImageCacheDISK)
 	vms2.TypedSpec().ReadOnly = false
 	vms2.TypedSpec().Target = constants.ImageCacheDiskMountPoint
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), vms2))
@@ -213,7 +213,7 @@ func (suite *ImageCacheConfigSuite) TestReconcileJustDiskVolume() {
 	// * volume mount status is being torn down
 	suite.Destroy(vs1)
 
-	_, err := suite.State().Teardown(suite.Ctx(), block.NewVolumeMountStatus(block.NamespaceName, ctrlName+"-"+crictrl.VolumeImageCacheDISK).Metadata())
+	_, err := suite.State().Teardown(suite.Ctx(), block.NewVolumeMountStatus(ctrlName+"-"+crictrl.VolumeImageCacheDISK).Metadata())
 	suite.Require().NoError(err)
 
 	// controller should remove its finalizer
@@ -272,7 +272,7 @@ func (suite *ImageCacheConfigSuite) TestReconcileWithImageCacheVolume() {
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), vs2))
 
 	// simulate disk being mounted
-	vms := block.NewVolumeMountStatus(block.NamespaceName, ctrlName+"-"+crictrl.VolumeImageCacheDISK)
+	vms := block.NewVolumeMountStatus(ctrlName + "-" + crictrl.VolumeImageCacheDISK)
 	vms.TypedSpec().ReadOnly = false
 	vms.TypedSpec().Target = constants.ImageCacheDiskMountPoint
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), vms))

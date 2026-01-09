@@ -70,7 +70,7 @@ func (suite *LogPersistenceSuite) TestDefault() {
 
 	logDir := suite.T().TempDir()
 
-	vms := block.NewVolumeMountStatus(block.NamespaceName, requestID)
+	vms := block.NewVolumeMountStatus(requestID)
 	vms.TypedSpec().Target = logDir
 	suite.Create(vms)
 

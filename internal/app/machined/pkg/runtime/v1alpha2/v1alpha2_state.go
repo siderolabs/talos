@@ -6,15 +6,22 @@ package v1alpha2
 
 import (
 	"context"
+	stdtime "time"
 
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
+	"github.com/cosi-project/runtime/pkg/state/impl/store"
 	"github.com/cosi-project/runtime/pkg/state/registry"
+	"github.com/cosi-project/state-sqlite/pkg/state/impl/sqlite"
+	zombiesqlite "zombiezen.com/go/sqlite"
+	"zombiezen.com/go/sqlite/sqlitex"
 
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -48,15 +55,38 @@ func NewState() (*State, error) {
 
 	ctx := context.TODO()
 
-	s.resources = state.WrapCore(namespaced.NewState(
-		func(ns string) state.CoreState {
-			return inmem.NewStateWithOptions(
-				inmem.WithHistoryInitialCapacity(8),
-				inmem.WithHistoryMaxCapacity(1024),
-				inmem.WithHistoryGap(4),
-			)(ns)
+	pool, err := sqlitex.NewPool("file::memory:?mode=memory&cache=shared",
+		sqlitex.PoolOptions{
+			Flags:    zombiesqlite.OpenReadWrite | zombiesqlite.OpenCreate | zombiesqlite.OpenWAL | zombiesqlite.OpenURI,
+			PoolSize: 16,
 		},
-	))
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	coreState, err := sqlite.NewState(ctx, pool, store.ProtobufMarshaler{},
+		sqlite.WithCompactKeepEvents(1024),
+		sqlite.WithCompactMinAge(10*stdtime.Minute),
+		sqlite.WithCompactionInterval(5*stdtime.Minute),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	inmemState := inmem.NewStateWithOptions(inmem.WithHistoryInitialCapacity(8),
+		inmem.WithHistoryMaxCapacity(1024),
+		inmem.WithHistoryGap(4))(resources.InMemoryNamespace)
+
+	s.resources = state.WrapCore(namespaced.NewState(func(ns resource.Namespace) state.CoreState {
+		switch ns {
+		case resources.InMemoryNamespace:
+			return inmemState
+		default:
+			return coreState
+		}
+	}))
+
 	s.namespaceRegistry = registry.NewNamespaceRegistry(s.resources)
 	s.resourceRegistry = registry.NewResourceRegistry(s.resources)
 
@@ -88,6 +118,7 @@ func NewState() (*State, error) {
 		{cri.NamespaceName, "CRI Seccomp resources."},
 		{secrets.NamespaceName, "Resources with secret material."},
 		{perf.NamespaceName, "Stats resources."},
+		{resources.InMemoryNamespace, "In-memory only resources."},
 	} {
 		if err := s.namespaceRegistry.Register(ctx, ns.name, ns.description); err != nil {
 			return nil, err

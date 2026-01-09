@@ -17,6 +17,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/automaton/blockautomaton"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
@@ -37,7 +38,7 @@ func (ctrl *NodeIdentityController) Name() string {
 func (ctrl *NodeIdentityController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
-			Namespace: block.NamespaceName,
+			Namespace: resources.InMemoryNamespace,
 			Type:      block.VolumeMountStatusType,
 			Kind:      controller.InputStrong,
 		},
