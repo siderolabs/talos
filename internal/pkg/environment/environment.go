@@ -34,9 +34,17 @@ func GetCmdline(cmdline *procfs.Cmdline, cfg config.Config) []string {
 		result = append(result, *val)
 	}
 
-	if cfg != nil && cfg.Machine() != nil {
-		for k, v := range cfg.Machine().Env() {
-			result = append(result, k+"="+v)
+	if cfg != nil {
+		if cfg.Machine() != nil {
+			for k, v := range cfg.Machine().Env() {
+				result = append(result, k+"="+v)
+			}
+		}
+
+		if cfg.Environment() != nil {
+			for k, v := range cfg.Environment().Variables() {
+				result = append(result, k+"="+v)
+			}
 		}
 	}
 

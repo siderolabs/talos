@@ -133,27 +133,6 @@ func machineFilesExample() []*MachineFile {
 	}
 }
 
-func machineEnvExamples0() Env {
-	return Env{
-		"GRPC_GO_LOG_VERBOSITY_LEVEL": "99",
-		"GRPC_GO_LOG_SEVERITY_LEVEL":  "info",
-		"https_proxy":                 "http://SERVER:PORT/",
-	}
-}
-
-func machineEnvExamples1() Env {
-	return Env{
-		"GRPC_GO_LOG_SEVERITY_LEVEL": "error",
-		"https_proxy":                "https://USERNAME:PASSWORD@SERVER:PORT/",
-	}
-}
-
-func machineEnvExamples2() Env {
-	return Env{
-		"https_proxy": "http://DOMAIN\\USERNAME:PASSWORD@SERVER:PORT/",
-	}
-}
-
 func machineSysctlsExample() map[string]string {
 	return map[string]string{
 		"kernel.domainname":                   "talos.dev",

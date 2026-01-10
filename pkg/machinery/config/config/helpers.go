@@ -4,6 +4,11 @@
 
 package config
 
+import (
+	"iter"
+	"maps"
+)
+
 func findFirstValue[T any, R comparable](documents []T, getter func(T) R) R {
 	var zeroR R
 
@@ -21,6 +26,16 @@ func aggregateValues[T any, R any](documents []T, getter func(T) []R) []R {
 
 	for _, document := range documents {
 		result = append(result, getter(document)...)
+	}
+
+	return result
+}
+
+func mergeMaps[T any, K comparable, V any](documents []T, getter func(T) iter.Seq2[K, V]) map[K]V {
+	result := make(map[K]V)
+
+	for _, document := range documents {
+		maps.Insert(result, getter(document))
 	}
 
 	return result
