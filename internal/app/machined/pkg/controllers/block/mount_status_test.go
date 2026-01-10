@@ -36,7 +36,7 @@ func TestMountStatusSuite(t *testing.T) {
 }
 
 func (suite *MountStatusSuite) TestReconcile() {
-	mountStatus1 := block.NewMountStatus(block.NamespaceName, "volume1")
+	mountStatus1 := block.NewMountStatus("volume1")
 	mountStatus1.TypedSpec().Spec = block.MountRequestSpec{
 		VolumeID:     "volume1",
 		Requesters:   []string{"requester1", "requester2"},
@@ -61,7 +61,7 @@ func (suite *MountStatusSuite) TestReconcile() {
 	})
 
 	// add a finalizer for volume mount status
-	suite.AddFinalizer(block.NewVolumeMountStatus(block.NamespaceName, "requester1/volume1").Metadata(), "test-finalizer")
+	suite.AddFinalizer(block.NewVolumeMountStatus("requester1/volume1").Metadata(), "test-finalizer")
 
 	// now, teardown the mount status
 	ready, err := suite.State().Teardown(suite.Ctx(), mountStatus1.Metadata())
@@ -77,7 +77,7 @@ func (suite *MountStatusSuite) TestReconcile() {
 	})
 
 	// remove finalizer from volume mount status
-	suite.RemoveFinalizer(block.NewVolumeMountStatus(block.NamespaceName, "requester1/volume1").Metadata(), "test-finalizer")
+	suite.RemoveFinalizer(block.NewVolumeMountStatus("requester1/volume1").Metadata(), "test-finalizer")
 
 	// volume mount status should be destroyed
 	ctest.AssertNoResource[*block.VolumeMountStatus](suite, "requester1/volume1")
@@ -91,7 +91,7 @@ func (suite *MountStatusSuite) TestReconcile() {
 }
 
 func (suite *MountStatusSuite) TestReconcileRequesterGoingOut() {
-	mountStatus1 := block.NewMountStatus(block.NamespaceName, "volume1")
+	mountStatus1 := block.NewMountStatus("volume1")
 	mountStatus1.TypedSpec().Spec = block.MountRequestSpec{
 		VolumeID:     "volume1",
 		Requesters:   []string{"requester1", "requester2"},
@@ -111,7 +111,7 @@ func (suite *MountStatusSuite) TestReconcileRequesterGoingOut() {
 	)
 
 	// put a finalizer on volume mount status
-	suite.AddFinalizer(block.NewVolumeMountStatus(block.NamespaceName, "requester1/volume1").Metadata(), "test-finalizer")
+	suite.AddFinalizer(block.NewVolumeMountStatus("requester1/volume1").Metadata(), "test-finalizer")
 
 	// update the mount status, as if requester1 is no longer mounting it
 	mountStatus1, err := safe.StateGetByID[*block.MountStatus](suite.Ctx(), suite.State(), mountStatus1.Metadata().ID())
@@ -127,7 +127,7 @@ func (suite *MountStatusSuite) TestReconcileRequesterGoingOut() {
 	})
 
 	// remove finalizer from volume mount status
-	suite.RemoveFinalizer(block.NewVolumeMountStatus(block.NamespaceName, "requester1/volume1").Metadata(), "test-finalizer")
+	suite.RemoveFinalizer(block.NewVolumeMountStatus("requester1/volume1").Metadata(), "test-finalizer")
 
 	// volume mount status should be destroyed
 	ctest.AssertNoResource[*block.VolumeMountStatus](suite, "requester1/volume1")

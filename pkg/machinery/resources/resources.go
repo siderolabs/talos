@@ -4,3 +4,5 @@
 
 // Package resources provides common Talos resources settings.
 package resources
+
+const InMemoryNamespace = "in-memory"

@@ -27,6 +27,8 @@ replace (
 // this a fork with containerd 2.2 branch + the commit from the PR above
 replace github.com/containerd/containerd/v2 => github.com/smira/containerd/v2 v2.0.0-20251218145129-b4f1f2900b80
 
+replace github.com/cosi-project/state-sqlite => github.com/smira/state-sqlite v0.0.0-20260108201100-39b5e8be2658
+
 // Kubernetes dependencies sharing the same version.
 require (
 	k8s.io/api v0.35.0
@@ -68,6 +70,7 @@ require (
 	github.com/coredns/coredns v1.13.2
 	github.com/coreos/go-iptables v0.8.0
 	github.com/cosi-project/runtime v1.13.0
+	github.com/cosi-project/state-sqlite v0.1.1
 	github.com/detailyang/go-fallocate v0.0.0-20180908115635-432fa640bd2e
 	github.com/diskfs/go-diskfs v1.7.1-0.20251223133332-fc569a00ea19
 	github.com/distribution/reference v0.6.0
@@ -194,6 +197,7 @@ require (
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.77
 	sigs.k8s.io/cli-utils v0.37.3-0.20250918194211-77c836a69463
 	sigs.k8s.io/hydrophone v0.7.0
+	zombiezen.com/go/sqlite v1.4.2
 )
 
 require (
@@ -316,6 +320,7 @@ require (
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
+	github.com/ncruces/go-strftime v0.1.9 // indirect
 	github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d // indirect
 	github.com/opencontainers/selinux v1.13.0 // indirect
 	github.com/opentracing/opentracing-go v1.2.0 // indirect
@@ -329,6 +334,7 @@ require (
 	github.com/prometheus/client_golang v1.23.2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.67.4 // indirect
+	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/sasha-s/go-deadlock v0.3.5 // indirect
@@ -359,7 +365,7 @@ require (
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.46.0 // indirect
-	golang.org/x/exp v0.0.0-20250506013437-ce4c2cf36ca6 // indirect
+	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b // indirect
 	golang.org/x/mod v0.30.0 // indirect
 	golang.org/x/tools v0.39.0 // indirect
 	golang.zx2c4.com/wintun v0.0.0-20230126152724-0fa3db229ce2 // indirect
@@ -374,6 +380,10 @@ require (
 	k8s.io/component-helpers v0.35.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912 // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.77 // indirect
+	modernc.org/libc v1.66.10 // indirect
+	modernc.org/mathutil v1.7.1 // indirect
+	modernc.org/memory v1.11.0 // indirect
+	modernc.org/sqlite v1.41.0 // indirect
 	rsc.io/qr v0.2.0 // indirect
 	sigs.k8s.io/controller-runtime v0.22.2 // indirect
 	sigs.k8s.io/json v0.0.0-20250730193827-2d320260d730 // indirect

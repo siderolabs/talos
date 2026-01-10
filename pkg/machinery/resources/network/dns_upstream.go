@@ -13,6 +13,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/handle"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+
+	"github.com/siderolabs/talos/pkg/machinery/resources"
 )
 
 // DNSUpstreamType is type of DNSUpstream resource.
@@ -42,7 +44,7 @@ func (d DNSUpstreamSpecSpec) MarshalYAML() (any, error) {
 // NewDNSUpstream initializes a DNSUpstream resource.
 func NewDNSUpstream(id resource.ID) *DNSUpstream {
 	return typed.NewResource[DNSUpstreamSpec, DNSUpstreamExtension](
-		resource.NewMetadata(NamespaceName, DNSUpstreamType, id, resource.VersionUndefined),
+		resource.NewMetadata(resources.InMemoryNamespace, DNSUpstreamType, id, resource.VersionUndefined),
 		DNSUpstreamSpec{Value: DNSUpstreamSpecSpec{}},
 	)
 }
@@ -55,7 +57,7 @@ func (DNSUpstreamExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             DNSUpstreamType,
 		Aliases:          []resource.Type{},
-		DefaultNamespace: NamespaceName,
+		DefaultNamespace: resources.InMemoryNamespace,
 		PrintColumns: []meta.PrintColumn{
 			{
 				Name:     "Healthy",

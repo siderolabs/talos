@@ -49,7 +49,7 @@ func (suite *PlatformConfigStoreSuite) TestStoreConfig() {
 		asrt.Equal(constants.StatePartitionLabel, mountRequest.TypedSpec().VolumeID)
 	})
 
-	volumeMountStatus := block.NewVolumeMountStatus(block.NamespaceName, mountID)
+	volumeMountStatus := block.NewVolumeMountStatus(mountID)
 	volumeMountStatus.TypedSpec().Target = statePath
 	suite.Create(volumeMountStatus)
 
