@@ -97,7 +97,13 @@ func (a Args) Args() []string {
 	args := make([]string, 0, len(a))
 
 	for _, key := range keys {
-		args = append(args, fmt.Sprintf("--%s=%s", key, a[key]))
+		if strings.Contains(a[key], ",") {
+			for val := range strings.SplitSeq(a[key], ",") {
+				args = append(args, fmt.Sprintf("--%s=%s", key, val))
+			}
+		} else {
+			args = append(args, fmt.Sprintf("--%s=%s", key, a[key]))
+		}
 	}
 
 	return args
