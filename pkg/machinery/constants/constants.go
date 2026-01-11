@@ -1165,7 +1165,7 @@ const (
 	//   crane cp docker.io/flannel/flannel:vX.Y.Z ghcr.io/siderolabs/flannel:vX.Y.Z
 	//
 	// renovate: datasource=github-releases depName=flannel-io/flannel
-	FlannelVersion = "v0.27.4"
+	FlannelVersion = "v0.28.0"
 
 	// PlatformMetal is the name of the metal platform.
 	PlatformMetal = "metal"
