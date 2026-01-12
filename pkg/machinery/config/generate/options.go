@@ -151,15 +151,6 @@ func WithDebug(enable bool) Option {
 	}
 }
 
-// WithPersist enables persistence of machine config across reboots.
-func WithPersist(enable bool) Option {
-	return func(o *Options) error {
-		o.Persist = enable
-
-		return nil
-	}
-}
-
 // WithClusterCNIConfig specifies custom cluster CNI config.
 func WithClusterCNIConfig(config *v1alpha1.CNIConfig) Option {
 	return func(o *Options) error {
@@ -255,8 +246,7 @@ type Options struct {
 	SecretsBundle *secrets.Bundle
 
 	// Base settings.
-	Debug   bool
-	Persist bool
+	Debug bool
 
 	// Machine settings: install.
 	InstallDisk            string
@@ -298,7 +288,6 @@ type Options struct {
 func DefaultOptions() Options {
 	return Options{
 		DNSDomain: "cluster.local",
-		Persist:   true,
 		Roles:     role.MakeSet(role.Admin),
 	}
 }

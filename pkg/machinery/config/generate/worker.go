@@ -24,7 +24,7 @@ func (in *Input) worker() ([]config.Document, error) {
 	v1alpha1Config := &v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
 		ConfigDebug:   pointer.To(in.Options.Debug),
-		ConfigPersist: pointer.To(in.Options.Persist),
+		ConfigPersist: pointer.To(true),
 	}
 
 	networkConfig := &v1alpha1.NetworkConfig{}

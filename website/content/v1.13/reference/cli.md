@@ -1728,7 +1728,6 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
       --kubernetes-version string                desired kubernetes version to run (default "1.35.0")
   -o, --output string                            destination to output generated files. when multiple output types are specified, it must be a directory. for a single output type, it must either be a file path, or "-" for stdout
   -t, --output-types strings                     types of outputs to be generated. valid types are: ["controlplane" "worker" "talosconfig"] (default [controlplane,worker,talosconfig])
-  -p, --persist                                  the desired persist value for configs (default true)
       --registry-mirror strings                  list of registry mirrors to use in format: <registry host>=<mirror URL>
       --talos-version string                     the desired Talos version to generate config for (backwards compatibility, e.g. v0.8)
       --version string                           the desired machine config version to generate (default "v1alpha1")

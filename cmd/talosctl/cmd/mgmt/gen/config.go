@@ -70,7 +70,6 @@ var genConfigCmdFlags struct {
 	configPatchControlPlane []string
 	configPatchWorker       []string
 	registryMirrors         []string
-	persistConfig           bool
 	withExamples            bool
 	withDocs                bool
 	withClusterDiscovery    bool
@@ -233,7 +232,6 @@ func writeConfig(args []string) error {
 		generate.WithInstallImage(genConfigCmdFlags.installImage),
 		generate.WithAdditionalSubjectAltNames(genConfigCmdFlags.additionalSANs),
 		generate.WithDNSDomain(genConfigCmdFlags.dnsDomain),
-		generate.WithPersist(genConfigCmdFlags.persistConfig),
 		generate.WithClusterDiscovery(genConfigCmdFlags.withClusterDiscovery),
 	)
 
@@ -442,7 +440,6 @@ func init() {
 	genConfigCmd.Flags().StringArrayVar(&genConfigCmdFlags.configPatchControlPlane, "config-patch-control-plane", nil, "patch generated machineconfigs (applied to 'init' and 'controlplane' types)")
 	genConfigCmd.Flags().StringArrayVar(&genConfigCmdFlags.configPatchWorker, "config-patch-worker", nil, "patch generated machineconfigs (applied to 'worker' type)")
 	genConfigCmd.Flags().StringSliceVar(&genConfigCmdFlags.registryMirrors, "registry-mirror", []string{}, "list of registry mirrors to use in format: <registry host>=<mirror URL>")
-	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.persistConfig, "persist", "p", true, "the desired persist value for configs")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withExamples, "with-examples", "", true, "renders all machine configs with the commented examples")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withDocs, "with-docs", "", true, "renders all machine configs adding the documentation for each field")
 	genConfigCmd.Flags().BoolVarP(&genConfigCmdFlags.withClusterDiscovery, "with-cluster-discovery", "", true, "enable cluster discovery feature")
