@@ -66,6 +66,7 @@ kernel/drivers/hid/hid-topseed.ko
 kernel/drivers/hwmon/fam15h_power.ko
 kernel/drivers/hwmon/i5500_temp.ko
 kernel/drivers/hwmon/i5k_amb.ko
+kernel/drivers/hwmon/it87.ko
 kernel/drivers/hwmon/k10temp.ko
 kernel/drivers/hwmon/k8temp.ko
 kernel/drivers/i2c/algos/i2c-algo-bit.ko
