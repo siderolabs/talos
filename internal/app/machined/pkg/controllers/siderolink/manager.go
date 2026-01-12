@@ -10,6 +10,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"net"
 	"net/netip"
 	"os"
 	"time"
@@ -212,9 +213,17 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 			return errors.New("host returned no endpoints")
 		}
 
+		// in case the endpoint is a hostname, resolve it to an IP address each time we reconnect
+		// if the IP behind the DNS name changes, it will trigger a change in the LinkSpec, and
+		// it will update the Wireguard peer endpoint accordingly
+		resolvedEndpoint, err := net.ResolveUDPAddr("udp", ep)
+		if err != nil {
+			return fmt.Errorf("error resolving endpoint %q: %w", ep, err)
+		}
+
 		logger.Info(
 			"configuring siderolink connection",
-			zap.String("peer_endpoint", ep),
+			zap.String("peer_endpoint", resolvedEndpoint.String()),
 			zap.String("next_peer_endpoint", ctrl.pd.PeekNextEndpoint()),
 		)
 
@@ -244,7 +253,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 					Peers: []network.WireguardPeer{
 						{
 							PublicKey: ctrl.pd.ServerPublicKey,
-							Endpoint:  ep,
+							Endpoint:  resolvedEndpoint.String(),
 							AllowedIPs: []netip.Prefix{
 								netip.PrefixFrom(serverAddress, serverAddress.BitLen()),
 							},
