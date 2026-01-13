@@ -2834,6 +2834,13 @@ Capture the network packets from the node.
 
 The command launches packet capture on the node and streams back the packets as raw pcap file.
 
+```
+talosctl pcap [flags]
+```
+
+### Examples
+
+```
 Default behavior is to decode the packets with internal decoder to stdout:
 
     talosctl pcap -i eth0
@@ -2857,9 +2864,6 @@ for e.g. Wireguard tunnels:
 As packet capture is transmitted over the network, it is recommended to filter out the Talos API traffic,
 e.g. by excluding packets with the port 50000.
    
-
-```
-talosctl pcap [flags]
 ```
 
 ### Options

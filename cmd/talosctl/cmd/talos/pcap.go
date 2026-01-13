@@ -39,9 +39,8 @@ var pcapCmd = &cobra.Command{
 	Use:     "pcap",
 	Aliases: []string{"tcpdump"},
 	Short:   "Capture the network packets from the node.",
-	Long: `The command launches packet capture on the node and streams back the packets as raw pcap file.
-
-Default behavior is to decode the packets with internal decoder to stdout:
+	Long:    `The command launches packet capture on the node and streams back the packets as raw pcap file.`,
+	Example: `Default behavior is to decode the packets with internal decoder to stdout:
 
     talosctl pcap -i eth0
 
