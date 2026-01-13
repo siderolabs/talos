@@ -1397,6 +1397,11 @@ type FlannelCNIConfig struct {
 	//     - value: >
 	//         []string{"--iface-can-reach=192.168.1.1"}
 	FlanneldExtraArgs []string `yaml:"extraArgs,omitempty"`
+	//   description: |
+	//     Deploys kube-network-policies along with flannel.
+	//   examples:
+	//     - kubeNetworkPoliciesEnabled: true
+	FlannelKubeNetworkPoliciesEnabled bool `yaml:"kubeNetworkPoliciesEnabled,omitempty"`
 }
 
 var _ config.ExternalCloudProvider = (*ExternalCloudProviderConfig)(nil)

@@ -1660,10 +1660,24 @@ func (FlannelCNIConfig) Doc() *encoder.Doc {
 				Description: "Extra arguments for 'flanneld'.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra arguments for 'flanneld'." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "kubeNetworkPoliciesEnabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "Deploys kube-network-policies along with flannel.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Deploys kube-network-policies along with flannel." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"true",
+					"yes",
+					"false",
+					"no",
+				},
+			},
 		},
 	}
 
 	doc.Fields[0].AddExample("", []string{"--iface-can-reach=192.168.1.1"})
+	doc.Fields[1].AddExample("", true)
 
 	return doc
 }

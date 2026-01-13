@@ -29,3 +29,12 @@ func (c *FlannelCNIConfig) ExtraArgs() []string {
 
 	return c.FlanneldExtraArgs
 }
+
+// KubeNetworkPoliciesEnabled implements the config.FlannelCNI interface.
+func (c *FlannelCNIConfig) KubeNetworkPoliciesEnabled() bool {
+	if c == nil {
+		return false
+	}
+
+	return c.FlannelKubeNetworkPoliciesEnabled
+}
