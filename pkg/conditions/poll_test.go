@@ -31,7 +31,7 @@ func TestPollingCondition(t *testing.T) {
 			}
 
 			return nil
-		}, time.Second, time.Millisecond)
+		}, time.Millisecond)
 
 		err := cond.Wait(t.Context())
 		assert.NoError(t, err)
@@ -52,7 +52,7 @@ func TestPollingCondition(t *testing.T) {
 			}
 
 			return conditions.ErrSkipAssertion
-		}, time.Second, time.Millisecond)
+		}, time.Millisecond)
 
 		err := cond.Wait(t.Context())
 		assert.NoError(t, err)
@@ -69,9 +69,12 @@ func TestPollingCondition(t *testing.T) {
 			calls++
 
 			return errors.New("failed")
-		}, time.Second, 750*time.Millisecond)
+		}, 750*time.Millisecond)
 
-		err := cond.Wait(t.Context())
+		ctx, cancel := context.WithTimeout(t.Context(), 1400*time.Millisecond)
+		defer cancel()
+
+		err := cond.Wait(ctx)
 		assert.Equal(t, context.DeadlineExceeded, err)
 		assert.Equal(t, "Test condition: failed", cond.String())
 		assert.Equal(t, 2, calls)

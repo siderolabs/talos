@@ -26,9 +26,9 @@ type pollingCondition struct {
 	lastErr    error
 	lastErrSet bool
 
-	assertion         AssertionFunc
-	description       string
-	timeout, interval time.Duration
+	assertion   AssertionFunc
+	description string
+	interval    time.Duration
 }
 
 func (p *pollingCondition) String() string {
@@ -53,9 +53,6 @@ func (p *pollingCondition) Wait(ctx context.Context) error {
 	ticker := time.NewTicker(p.interval)
 	defer ticker.Stop()
 
-	timeoutCtx, timeoutCtxCancel := context.WithTimeout(ctx, p.timeout)
-	defer timeoutCtxCancel()
-
 	for {
 		err := func() error {
 			runCtx, runCtxCancel := context.WithTimeout(ctx, p.interval)
@@ -75,20 +72,19 @@ func (p *pollingCondition) Wait(ctx context.Context) error {
 		}
 
 		select {
-		case <-timeoutCtx.Done():
-			return timeoutCtx.Err()
+		case <-ctx.Done():
+			return ctx.Err()
 		case <-ticker.C:
 		}
 	}
 }
 
-// PollingCondition converts AssertionFunc into Condition by calling it every interval until timeout
-// is reached.
-func PollingCondition(description string, assertion AssertionFunc, timeout, interval time.Duration) Condition {
+// PollingCondition converts AssertionFunc into Condition by calling it every interval until
+// it completes or the context is canceled.
+func PollingCondition(description string, assertion AssertionFunc, interval time.Duration) Condition {
 	return &pollingCondition{
 		assertion:   assertion,
 		description: description,
-		timeout:     timeout,
 		interval:    interval,
 	}
 }

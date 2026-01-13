@@ -23,7 +23,7 @@ func DefaultClusterChecks() []ClusterCheck {
 			func(cluster ClusterInfo) conditions.Condition {
 				return conditions.PollingCondition("all k8s nodes to report ready", func(ctx context.Context) error {
 					return K8sAllNodesReadyAssertion(ctx, cluster)
-				}, 10*time.Minute, 5*time.Second)
+				}, 5*time.Second)
 			},
 
 			// wait for kube-proxy to report ready
@@ -39,7 +39,7 @@ func DefaultClusterChecks() []ClusterCheck {
 					}
 
 					return K8sPodReadyAssertion(ctx, cluster, replicas, "kube-system", "k8s-app=kube-proxy")
-				}, 5*time.Minute, 5*time.Second)
+				}, 5*time.Second)
 			},
 
 			// wait for coredns to report ready
@@ -55,14 +55,14 @@ func DefaultClusterChecks() []ClusterCheck {
 					}
 
 					return K8sPodReadyAssertion(ctx, cluster, replicas, "kube-system", "k8s-app=kube-dns")
-				}, 5*time.Minute, 5*time.Second)
+				}, 5*time.Second)
 			},
 
 			// wait for all the nodes to be schedulable
 			func(cluster ClusterInfo) conditions.Condition {
 				return conditions.PollingCondition("all k8s nodes to report schedulable", func(ctx context.Context) error {
 					return K8sAllNodesSchedulableAssertion(ctx, cluster)
-				}, 5*time.Minute, 5*time.Second)
+				}, 5*time.Second)
 			},
 		},
 	)
@@ -77,21 +77,21 @@ func K8sComponentsReadinessChecks() []ClusterCheck {
 		func(cluster ClusterInfo) conditions.Condition {
 			return conditions.PollingCondition("all k8s nodes to report", func(ctx context.Context) error {
 				return K8sAllNodesReportedAssertion(ctx, cluster)
-			}, 5*time.Minute, 30*time.Second) // give more time per each attempt, as this check is going to build and cache kubeconfig
+			}, 30*time.Second) // give more time per each attempt, as this check is going to build and cache kubeconfig
 		},
 
 		// wait for k8s control plane static pods
 		func(cluster ClusterInfo) conditions.Condition {
 			return conditions.PollingCondition("all control plane static pods to be running", func(ctx context.Context) error {
 				return K8sControlPlaneStaticPods(ctx, cluster)
-			}, 5*time.Minute, 5*time.Second)
+			}, 5*time.Second)
 		},
 
 		// wait for HA k8s control plane
 		func(cluster ClusterInfo) conditions.Condition {
 			return conditions.PollingCondition("all control plane components to be ready", func(ctx context.Context) error {
 				return K8sFullControlPlaneAssertion(ctx, cluster)
-			}, 5*time.Minute, 5*time.Second)
+			}, 5*time.Second)
 		},
 	}
 }
@@ -110,63 +110,63 @@ func PreBootSequenceChecks() []ClusterCheck {
 		func(cluster ClusterInfo) conditions.Condition {
 			return conditions.PollingCondition("etcd to be healthy", func(ctx context.Context) error {
 				return ServiceHealthAssertion(ctx, cluster, "etcd", WithNodeTypes(machine.TypeInit, machine.TypeControlPlane))
-			}, 5*time.Minute, 5*time.Second)
+			}, 5*time.Second)
 		},
 
 		// wait for etcd members to be consistent across nodes
 		func(cluster ClusterInfo) conditions.Condition {
 			return conditions.PollingCondition("etcd members to be consistent across nodes", func(ctx context.Context) error {
 				return EtcdConsistentAssertion(ctx, cluster)
-			}, 5*time.Minute, 5*time.Second)
+			}, 5*time.Second)
 		},
 
 		// wait for etcd members to be the control plane nodes
 		func(cluster ClusterInfo) conditions.Condition {
 			return conditions.PollingCondition("etcd members to be control plane nodes", func(ctx context.Context) error {
 				return EtcdControlPlaneNodesAssertion(ctx, cluster)
-			}, 5*time.Minute, 5*time.Second)
+			}, 5*time.Second)
 		},
 
 		// wait for apid to be ready on all the nodes
 		func(cluster ClusterInfo) conditions.Condition {
 			return conditions.PollingCondition("apid to be ready", func(ctx context.Context) error {
 				return ApidReadyAssertion(ctx, cluster)
-			}, 5*time.Minute, 5*time.Second)
+			}, 5*time.Second)
 		},
 
 		// wait for all nodes to report their memory size
 		func(cluster ClusterInfo) conditions.Condition {
 			return conditions.PollingCondition("all nodes memory sizes", func(ctx context.Context) error {
 				return AllNodesMemorySizes(ctx, cluster)
-			}, 5*time.Minute, 5*time.Second)
+			}, 5*time.Second)
 		},
 
 		// wait for all nodes to report their disk size
 		func(cluster ClusterInfo) conditions.Condition {
 			return conditions.PollingCondition("all nodes disk sizes", func(ctx context.Context) error {
 				return AllNodesDiskSizes(ctx, cluster)
-			}, 5*time.Minute, 5*time.Second)
+			}, 5*time.Second)
 		},
 
 		// check diagnostics
 		func(cluster ClusterInfo) conditions.Condition {
 			return conditions.PollingCondition("no diagnostics", func(ctx context.Context) error {
 				return NoDiagnostics(ctx, cluster)
-			}, time.Minute, 5*time.Second)
+			}, 5*time.Second)
 		},
 
 		// wait for kubelet to be healthy on all
 		func(cluster ClusterInfo) conditions.Condition {
 			return conditions.PollingCondition("kubelet to be healthy", func(ctx context.Context) error {
 				return ServiceHealthAssertion(ctx, cluster, "kubelet", WithNodeTypes(machine.TypeInit, machine.TypeControlPlane))
-			}, 5*time.Minute, 5*time.Second)
+			}, 5*time.Second)
 		},
 
 		// wait for all nodes to finish booting
 		func(cluster ClusterInfo) conditions.Condition {
 			return conditions.PollingCondition("all nodes to finish boot sequence", func(ctx context.Context) error {
 				return AllNodesBootedAssertion(ctx, cluster)
-			}, 5*time.Minute, 5*time.Second)
+			}, 5*time.Second)
 		},
 	}
 }
