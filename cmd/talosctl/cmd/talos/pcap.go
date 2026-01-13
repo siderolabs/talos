@@ -46,21 +46,21 @@ Default behavior is to decode the packets with internal decoder to stdout:
     talosctl pcap -i eth0
 
 Raw pcap file can be saved with ` + "`--output`" + ` flag:
-
+` + "```
     talosctl pcap -i eth0 --output eth0.pcap
-
+```" + `
 Output can be piped to tcpdump:
-
+" + ````
     talosctl pcap -i eth0 -o - | tcpdump -vvv -r -
-
+```" + `
 BPF filter can be applied, but it has to compiled to BPF instructions first using tcpdump.
 Correct link type should be specified for the tcpdump: EN10MB for Ethernet links and RAW
 for e.g. Wireguard tunnels:
-
+" + ````
     talosctl pcap -i eth0 --bpf-filter "$(tcpdump -dd -y EN10MB 'tcp and dst port 80')"
 
     talosctl pcap -i kubespan --bpf-filter "$(tcpdump -dd -y RAW 'port 50000')"
-
+```" + `
 As packet capture is transmitted over the network, it is recommended to filter out the Talos API traffic,
 e.g. by excluding packets with the port 50000.
    `,
