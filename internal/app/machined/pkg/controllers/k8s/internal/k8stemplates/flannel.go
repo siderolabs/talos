@@ -24,6 +24,24 @@ import (
 // FlannelClusterRoleTemplate returns the template of the ClusterRole
 // for the flannel CNI plugin.
 func FlannelClusterRoleTemplate() runtime.Object {
+	rules := []rbacv1.PolicyRule{
+		{
+			APIGroups: []string{""},
+			Resources: []string{"pods"},
+			Verbs:     []string{"get"},
+		},
+		{
+			APIGroups: []string{""},
+			Resources: []string{"nodes"},
+			Verbs:     []string{"get", "list", "watch"},
+		},
+		{
+			APIGroups: []string{""},
+			Resources: []string{"nodes/status"},
+			Verbs:     []string{"patch"},
+		},
+	}
+
 	return &rbacv1.ClusterRole{
 		TypeMeta: v1.TypeMeta{
 			APIVersion: rbacv1.SchemeGroupVersion.String(),
@@ -35,23 +53,7 @@ func FlannelClusterRoleTemplate() runtime.Object {
 				"k8s-app": "flannel",
 			},
 		},
-		Rules: []rbacv1.PolicyRule{
-			{
-				APIGroups: []string{""},
-				Resources: []string{"pods"},
-				Verbs:     []string{"get"},
-			},
-			{
-				APIGroups: []string{""},
-				Resources: []string{"nodes"},
-				Verbs:     []string{"get", "list", "watch"},
-			},
-			{
-				APIGroups: []string{""},
-				Resources: []string{"nodes/status"},
-				Verbs:     []string{"patch"},
-			},
-		},
+		Rules: rules,
 	}
 }
 
@@ -226,6 +228,55 @@ func FlannelDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) runtime.Ob
 		})
 	}
 
+	volumes := []corev1.Volume{
+		{Name: "run", VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{Path: "/run/flannel"}}},
+		{Name: "cni-plugin", VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{Path: "/opt/cni/bin"}}},
+		{Name: "cni", VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{Path: "/etc/cni/net.d"}}},
+		{Name: "flannel-cfg", VolumeSource: corev1.VolumeSource{
+			ConfigMap: &corev1.ConfigMapVolumeSource{
+				LocalObjectReference: corev1.LocalObjectReference{Name: "kube-flannel-cfg"},
+			},
+		}},
+	}
+
+	containers := []corev1.Container{
+		{
+			Name:    "kube-flannel",
+			Image:   spec.FlannelImage,
+			Command: []string{"/opt/bin/flanneld"},
+			Args: slices.Concat(
+				[]string{
+					"--ip-masq",
+					"--kube-subnet-mgr",
+				},
+				spec.FlannelExtraArgs,
+			),
+			Env: envVars,
+			Resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("100m"),
+					corev1.ResourceMemory: resource.MustParse("50Mi"),
+				},
+			},
+			SecurityContext: &corev1.SecurityContext{
+				Capabilities: &corev1.Capabilities{
+					Add: []corev1.Capability{"NET_ADMIN", "NET_RAW"},
+				},
+				Privileged: pointer.To(false),
+			},
+			VolumeMounts: []corev1.VolumeMount{
+				{
+					Name:      "run",
+					MountPath: "/run/flannel",
+				},
+				{
+					Name:      "flannel-cfg",
+					MountPath: "/etc/kube-flannel/",
+				},
+			},
+		},
+	}
+
 	return &appsv1.DaemonSet{
 		TypeMeta: v1.TypeMeta{
 			APIVersion: appsv1.SchemeGroupVersion.String(),
@@ -271,43 +322,7 @@ func FlannelDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) runtime.Ob
 							},
 						},
 					},
-					Containers: []corev1.Container{
-						{
-							Name:    "kube-flannel",
-							Image:   spec.FlannelImage,
-							Command: []string{"/opt/bin/flanneld"},
-							Args: slices.Concat(
-								[]string{
-									"--ip-masq",
-									"--kube-subnet-mgr",
-								},
-								spec.FlannelExtraArgs,
-							),
-							Env: envVars,
-							Resources: corev1.ResourceRequirements{
-								Requests: corev1.ResourceList{
-									corev1.ResourceCPU:    resource.MustParse("100m"),
-									corev1.ResourceMemory: resource.MustParse("50Mi"),
-								},
-							},
-							SecurityContext: &corev1.SecurityContext{
-								Capabilities: &corev1.Capabilities{
-									Add: []corev1.Capability{"NET_ADMIN", "NET_RAW"},
-								},
-								Privileged: pointer.To(false),
-							},
-							VolumeMounts: []corev1.VolumeMount{
-								{
-									Name:      "run",
-									MountPath: "/run/flannel",
-								},
-								{
-									Name:      "flannel-cfg",
-									MountPath: "/etc/kube-flannel/",
-								},
-							},
-						},
-					},
+					Containers: containers,
 					InitContainers: []corev1.Container{
 						{
 							Name:    "install-config",
@@ -327,16 +342,7 @@ func FlannelDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) runtime.Ob
 						{Effect: corev1.TaintEffectNoSchedule, Operator: corev1.TolerationOpExists},
 						{Effect: corev1.TaintEffectNoExecute, Operator: corev1.TolerationOpExists},
 					},
-					Volumes: []corev1.Volume{
-						{Name: "run", VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{Path: "/run/flannel"}}},
-						{Name: "cni-plugin", VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{Path: "/opt/cni/bin"}}},
-						{Name: "cni", VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{Path: "/etc/cni/net.d"}}},
-						{Name: "flannel-cfg", VolumeSource: corev1.VolumeSource{
-							ConfigMap: &corev1.ConfigMapVolumeSource{
-								LocalObjectReference: corev1.LocalObjectReference{Name: "kube-flannel-cfg"},
-							},
-						}},
-					},
+					Volumes: volumes,
 				},
 			},
 		},
