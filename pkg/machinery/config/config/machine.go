@@ -308,7 +308,7 @@ type NetworkDeviceSelector interface {
 type Kubelet interface {
 	Image() string
 	ClusterDNS() []string
-	ExtraArgs() map[string]string
+	ExtraArgs() map[string][]string
 	ExtraMounts() []specs.Mount
 	ExtraConfig() map[string]any
 	CredentialProviderConfig() map[string]any

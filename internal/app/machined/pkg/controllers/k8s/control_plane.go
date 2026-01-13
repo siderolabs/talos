@@ -188,6 +188,11 @@ func NewControlPlaneAPIServerController() *ControlPlaneAPIServerController {
 					advertisedAddress = ""
 				}
 
+				extraArgs := make(map[string]k8s.ArgValues, len(cfgProvider.Cluster().APIServer().ExtraArgs()))
+				for k, v := range cfgProvider.Cluster().APIServer().ExtraArgs() {
+					extraArgs[k] = k8s.ArgValues{Values: v}
+				}
+
 				*res.TypedSpec() = k8s.APIServerConfigSpec{
 					Image:                cfgProvider.Cluster().APIServer().Image(),
 					CloudProvider:        cloudProvider,
@@ -195,7 +200,7 @@ func NewControlPlaneAPIServerController() *ControlPlaneAPIServerController {
 					EtcdServers:          []string{fmt.Sprintf("https://%s", nethelpers.JoinHostPort("127.0.0.1", constants.EtcdClientPort))},
 					LocalPort:            cfgProvider.Cluster().LocalAPIServerPort(),
 					ServiceCIDRs:         cfgProvider.Cluster().Network().ServiceCIDRs(),
-					ExtraArgs:            cfgProvider.Cluster().APIServer().ExtraArgs(),
+					ExtraArgs:            extraArgs,
 					ExtraVolumes:         convertVolumes(cfgProvider.Cluster().APIServer().ExtraVolumes()),
 					EnvironmentVariables: cfgProvider.Cluster().APIServer().Env(),
 					AdvertisedAddress:    advertisedAddress,
@@ -226,13 +231,18 @@ func NewControlPlaneControllerManagerController() *ControlPlaneControllerManager
 					cloudProvider = CloudProviderExternal
 				}
 
+				extraArgs := make(map[string]k8s.ArgValues, len(cfgProvider.Cluster().ControllerManager().ExtraArgs()))
+				for k, v := range cfgProvider.Cluster().ControllerManager().ExtraArgs() {
+					extraArgs[k] = k8s.ArgValues{Values: v}
+				}
+
 				*res.TypedSpec() = k8s.ControllerManagerConfigSpec{
 					Enabled:              !cfgProvider.Machine().Controlplane().ControllerManager().Disabled(),
 					Image:                cfgProvider.Cluster().ControllerManager().Image(),
 					CloudProvider:        cloudProvider,
 					PodCIDRs:             cfgProvider.Cluster().Network().PodCIDRs(),
 					ServiceCIDRs:         cfgProvider.Cluster().Network().ServiceCIDRs(),
-					ExtraArgs:            cfgProvider.Cluster().ControllerManager().ExtraArgs(),
+					ExtraArgs:            extraArgs,
 					ExtraVolumes:         convertVolumes(cfgProvider.Cluster().ControllerManager().ExtraVolumes()),
 					EnvironmentVariables: cfgProvider.Cluster().ControllerManager().Env(),
 					Resources:            convertResources(cfgProvider.Cluster().ControllerManager().Resources()),
@@ -256,10 +266,15 @@ func NewControlPlaneSchedulerController() *ControlPlaneSchedulerController {
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, machineConfig *config.MachineConfig, res *k8s.SchedulerConfig) error {
 				cfgProvider := machineConfig.Config()
 
+				extraArgs := make(map[string]k8s.ArgValues, len(cfgProvider.Cluster().Scheduler().ExtraArgs()))
+				for k, v := range cfgProvider.Cluster().Scheduler().ExtraArgs() {
+					extraArgs[k] = k8s.ArgValues{Values: v}
+				}
+
 				*res.TypedSpec() = k8s.SchedulerConfigSpec{
 					Enabled:              !cfgProvider.Machine().Controlplane().Scheduler().Disabled(),
 					Image:                cfgProvider.Cluster().Scheduler().Image(),
-					ExtraArgs:            cfgProvider.Cluster().Scheduler().ExtraArgs(),
+					ExtraArgs:            extraArgs,
 					ExtraVolumes:         convertVolumes(cfgProvider.Cluster().Scheduler().ExtraVolumes()),
 					EnvironmentVariables: cfgProvider.Cluster().Scheduler().Env(),
 					Resources:            convertResources(cfgProvider.Cluster().Scheduler().Resources()),
@@ -469,11 +484,11 @@ func getProxyArgs(cfgProvider talosconfig.Config) ([]string, error) {
 	}
 
 	builder := argsbuilder.Args{
-		"cluster-cidr":           clusterCidr,
-		"hostname-override":      "$(NODE_NAME)",
-		"kubeconfig":             "/etc/kubernetes/kubeconfig",
-		"proxy-mode":             proxyMode,
-		"conntrack-max-per-core": "0",
+		"cluster-cidr":           {clusterCidr},
+		"hostname-override":      {"$(NODE_NAME)"},
+		"kubeconfig":             {"/etc/kubernetes/kubeconfig"},
+		"proxy-mode":             {proxyMode},
+		"conntrack-max-per-core": {"0"},
 	}
 
 	policies := argsbuilder.MergePolicies{

@@ -131,29 +131,30 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 		expectedNodename := nodename.TypedSpec().Nodename
 
 		args := argsbuilder.Args{
-			"config": "/etc/kubernetes/kubelet.yaml",
-
-			"cert-dir": constants.KubeletPKIDir,
-
-			"hostname-override": expectedNodename,
+			"config":            argsbuilder.Value{"/etc/kubernetes/kubelet.yaml"},
+			"cert-dir":          argsbuilder.Value{constants.KubeletPKIDir},
+			"hostname-override": argsbuilder.Value{expectedNodename},
 		}
 
 		if !cfgSpec.SkipNodeRegistration {
-			args["bootstrap-kubeconfig"] = constants.KubeletBootstrapKubeconfig
-			args["kubeconfig"] = constants.KubeletKubeconfig
+			args["bootstrap-kubeconfig"] = argsbuilder.Value{constants.KubeletBootstrapKubeconfig}
+			args["kubeconfig"] = argsbuilder.Value{constants.KubeletKubeconfig}
 		}
 
 		if cfgSpec.CloudProviderExternal {
 			// we still need to specify `--cloud-provider=external` for the kubelet
 			// to get the node properly tainted so that it gets picked up by the external CCM
-			args["cloud-provider"] = CloudProviderExternal
+			args["cloud-provider"] = argsbuilder.Value{CloudProviderExternal}
 		}
 
 		if !kubeletVersion.SupportsKubeletConfigContainerRuntimeEndpoint() {
-			args["container-runtime-endpoint"] = constants.CRIContainerdAddress
+			args["container-runtime-endpoint"] = argsbuilder.Value{constants.CRIContainerdAddress}
 		}
 
-		extraArgs := argsbuilder.Args(cfgSpec.ExtraArgs)
+		extraArgs := make(argsbuilder.Args, len(cfgSpec.ExtraArgs))
+		for k, v := range cfgSpec.ExtraArgs {
+			extraArgs[k] = v.Values
+		}
 
 		// if the user supplied a hostname override, we do not manage it anymore
 		if extraArgs.Contains("hostname-override") {
@@ -172,7 +173,7 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 			}
 
 			nodeIPsString := xslices.Map(nodeIP.TypedSpec().Addresses, netip.Addr.String)
-			args["node-ip"] = strings.Join(nodeIPsString, ",")
+			args["node-ip"] = argsbuilder.Value{strings.Join(nodeIPsString, ",")} // NOTE: flag has string type, cannot be multiple
 		}
 
 		if err = args.Merge(extraArgs, argsbuilder.WithMergePolicies(
@@ -190,8 +191,8 @@ func (ctrl *KubeletSpecController) Run(ctx context.Context, r controller.Runtime
 
 		// these flags are present from v1.24
 		if cfgSpec.CredentialProviderConfig != nil {
-			args["image-credential-provider-bin-dir"] = constants.KubeletCredentialProviderBinDir
-			args["image-credential-provider-config"] = constants.KubeletCredentialProviderConfig
+			args["image-credential-provider-bin-dir"] = argsbuilder.Value{constants.KubeletCredentialProviderBinDir}
+			args["image-credential-provider-config"] = argsbuilder.Value{constants.KubeletCredentialProviderConfig}
 		}
 
 		kubeletConfig, err := NewKubeletConfiguration(cfgSpec, kubeletVersion, machineType.MachineType())
@@ -330,7 +331,7 @@ func NewKubeletConfiguration(cfgSpec *k8s.KubeletConfigSpec, kubeletVersion comp
 		if slices.IndexFunc(config.RegisterWithTaints, func(t corev1.Taint) bool {
 			return t.Key == constants.LabelNodeRoleControlPlane
 		}) == -1 { // don't add the taint if it's already in the config
-			if cfgSpec.ExtraArgs["register-with-taints"] == "" { // don't clash with taints provided via extraArgs, it is deprecated on kubelet side
+			if cfgSpec.ExtraArgs["register-with-taints"].Values == nil { // don't clash with taints provided via extraArgs, it is deprecated on kubelet side
 				config.RegisterWithTaints = append(config.RegisterWithTaints,
 					corev1.Taint{
 						Key:    constants.LabelNodeRoleControlPlane,

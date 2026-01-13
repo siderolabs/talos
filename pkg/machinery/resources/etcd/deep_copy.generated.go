@@ -30,9 +30,14 @@ func (o ConfigSpec) DeepCopy() ConfigSpec {
 		copy(cp.ListenExcludeSubnets, o.ListenExcludeSubnets)
 	}
 	if o.ExtraArgs != nil {
-		cp.ExtraArgs = make(map[string]string, len(o.ExtraArgs))
+		cp.ExtraArgs = make(map[string]ArgValues, len(o.ExtraArgs))
 		for k2, v2 := range o.ExtraArgs {
-			cp.ExtraArgs[k2] = v2
+			var cp_ExtraArgs_v2 ArgValues
+			if v2.Values != nil {
+				cp_ExtraArgs_v2.Values = make([]string, len(v2.Values))
+				copy(cp_ExtraArgs_v2.Values, v2.Values)
+			}
+			cp.ExtraArgs[k2] = cp_ExtraArgs_v2
 		}
 	}
 	return cp
@@ -60,9 +65,14 @@ func (o SpecSpec) DeepCopy() SpecSpec {
 		copy(cp.ListenClientAddresses, o.ListenClientAddresses)
 	}
 	if o.ExtraArgs != nil {
-		cp.ExtraArgs = make(map[string]string, len(o.ExtraArgs))
+		cp.ExtraArgs = make(map[string]ArgValues, len(o.ExtraArgs))
 		for k2, v2 := range o.ExtraArgs {
-			cp.ExtraArgs[k2] = v2
+			var cp_ExtraArgs_v2 ArgValues
+			if v2.Values != nil {
+				cp_ExtraArgs_v2.Values = make([]string, len(v2.Values))
+				copy(cp_ExtraArgs_v2.Values, v2.Values)
+			}
+			cp.ExtraArgs[k2] = cp_ExtraArgs_v2
 		}
 	}
 	return cp

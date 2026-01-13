@@ -51,6 +51,6 @@ func WithDenyList(denyList Args) MergeOption {
 type ArgsBuilder interface {
 	MustMerge(Args, ...MergeOption)
 	Merge(Args, ...MergeOption) error
-	Set(string, string) ArgsBuilder
+	Set(string, []string) ArgsBuilder
 	Args() []string
 }

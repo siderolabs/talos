@@ -32,8 +32,16 @@ type ConfigSpec struct {
 	ListenValidSubnets   []string `yaml:"listenValidSubnets,omitempty" protobuf:"5"`
 	ListenExcludeSubnets []string `yaml:"listenExcludeSubnets" protobuf:"6"`
 
-	Image     string            `yaml:"image" protobuf:"3"`
-	ExtraArgs map[string]string `yaml:"extraArgs" protobuf:"4"`
+	Image string `yaml:"image" protobuf:"3"`
+
+	ExtraArgs map[string]ArgValues `yaml:"extraArgs" protobuf:"4"`
+}
+
+// ArgValues represents values for a command line argument which can be specified multiple times.
+//
+//gotagsrewrite:gen
+type ArgValues struct {
+	Values []string `yaml:"values" protobuf:"1"`
 }
 
 // NewConfig initializes a Config resource.

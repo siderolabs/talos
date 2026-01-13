@@ -365,9 +365,14 @@ clusterDNS:
     - 10.96.0.10
     - 169.254.2.53
 {{< /highlight >}}</details> | |
-|`extraArgs` |map[string]string |The `extraArgs` field is used to provide additional flags to the kubelet. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`extraArgs` |Args |The `extraArgs` field is used to provide additional flags to the kubelet. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 extraArgs:
     key: value
+{{< /highlight >}}{{< highlight yaml >}}
+extraArgs:
+    key:
+        - value1
+        - value2
 {{< /highlight >}}</details> | |
 |`extraMounts` |<a href="#Config.machine.kubelet.extraMounts.">[]ExtraMount</a> |The `extraMounts` field is used to add additional mounts to the kubelet container.<br>Note that either `bind` or `rbind` are required in the `options`. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 extraMounts:
@@ -1424,7 +1429,7 @@ cluster:
 |`image` |string |The container image used in the API server manifest. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 image: registry.k8s.io/kube-apiserver:v1.35.0
 {{< /highlight >}}</details> | |
-|`extraArgs` |map[string]string |Extra arguments to supply to the API server.  | |
+|`extraArgs` |Args |Extra arguments to supply to the API server.  | |
 |`extraVolumes` |<a href="#Config.cluster.apiServer.extraVolumes.">[]VolumeMountConfig</a> |Extra volumes to mount to the API server static pod.  | |
 |`env` |Env |The `env` field allows for the addition of environment variables for the control plane component.  | |
 |`certSANs` |[]string |Extra certificate subject alternative names for the API server's certificate.  | |
@@ -1645,7 +1650,7 @@ cluster:
 |`image` |string |The container image used in the controller manager manifest. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 image: registry.k8s.io/kube-controller-manager:v1.35.0
 {{< /highlight >}}</details> | |
-|`extraArgs` |map[string]string |Extra arguments to supply to the controller manager.  | |
+|`extraArgs` |Args |Extra arguments to supply to the controller manager.  | |
 |`extraVolumes` |<a href="#Config.cluster.controllerManager.extraVolumes.">[]VolumeMountConfig</a> |Extra volumes to mount to the controller manager static pod.  | |
 |`env` |Env |The `env` field allows for the addition of environment variables for the control plane component.  | |
 |`resources` |<a href="#Config.cluster.controllerManager.resources">ResourcesConfig</a> |Configure the controller manager resources.  | |
@@ -1733,7 +1738,7 @@ disabled: false
 image: registry.k8s.io/kube-proxy:v1.35.0
 {{< /highlight >}}</details> | |
 |`mode` |string |proxy mode of kube-proxy.<br>The default is 'iptables'.  | |
-|`extraArgs` |map[string]string |Extra arguments to supply to kube-proxy.  | |
+|`extraArgs` |Args |Extra arguments to supply to kube-proxy.  | |
 
 
 
@@ -1761,7 +1766,7 @@ cluster:
 |`image` |string |The container image used in the scheduler manifest. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 image: registry.k8s.io/kube-scheduler:v1.35.0
 {{< /highlight >}}</details> | |
-|`extraArgs` |map[string]string |Extra arguments to supply to the scheduler.  | |
+|`extraArgs` |Args |Extra arguments to supply to the scheduler.  | |
 |`extraVolumes` |<a href="#Config.cluster.scheduler.extraVolumes.">[]VolumeMountConfig</a> |Extra volumes to mount to the scheduler static pod.  | |
 |`env` |Env |The `env` field allows for the addition of environment variables for the control plane component.  | |
 |`resources` |<a href="#Config.cluster.scheduler.resources">ResourcesConfig</a> |Configure the scheduler resources.  | |
@@ -1937,7 +1942,7 @@ ca:
     crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
     key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 {{< /highlight >}}</details> | |
-|`extraArgs` |map[string]string |Extra arguments to supply to etcd.<br>Note that the following args are not allowed:<br><br>- `name`<br>- `data-dir`<br>- `initial-cluster-state`<br>- `listen-peer-urls`<br>- `listen-client-urls`<br>- `cert-file`<br>- `key-file`<br>- `trusted-ca-file`<br>- `peer-client-cert-auth`<br>- `peer-cert-file`<br>- `peer-trusted-ca-file`<br>- `peer-key-file`  | |
+|`extraArgs` |Args |Extra arguments to supply to etcd.<br>Note that the following args are not allowed:<br><br>- `name`<br>- `data-dir`<br>- `initial-cluster-state`<br>- `listen-peer-urls`<br>- `listen-client-urls`<br>- `cert-file`<br>- `key-file`<br>- `trusted-ca-file`<br>- `peer-client-cert-auth`<br>- `peer-cert-file`<br>- `peer-trusted-ca-file`<br>- `peer-key-file`  | |
 |`advertisedSubnets` |[]string |The `advertisedSubnets` field configures the networks to pick etcd advertised IP from.<br><br>IPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.<br>Negative subnet matches should be specified last to filter out IPs picked by positive matches.<br>If not specified, advertised IP is selected as the first routable address of the node. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 advertisedSubnets:
     - 10.0.0.0/8

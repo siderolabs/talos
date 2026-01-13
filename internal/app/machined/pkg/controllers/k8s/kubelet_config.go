@@ -67,8 +67,13 @@ func NewKubeletConfigController() *KubeletConfigController {
 					kubeletConfig.ClusterDNS = xslices.Map(addrs, netip.Addr.String)
 				}
 
+				extraArgs := make(map[string]k8s.ArgValues, len(cfgProvider.Machine().Kubelet().ExtraArgs()))
+				for k, v := range cfgProvider.Machine().Kubelet().ExtraArgs() {
+					extraArgs[k] = k8s.ArgValues{Values: v}
+				}
+
 				kubeletConfig.ClusterDomain = cfgProvider.Cluster().Network().DNSDomain()
-				kubeletConfig.ExtraArgs = cfgProvider.Machine().Kubelet().ExtraArgs()
+				kubeletConfig.ExtraArgs = extraArgs
 				kubeletConfig.ExtraMounts = cfgProvider.Machine().Kubelet().ExtraMounts()
 				kubeletConfig.ExtraConfig = cfgProvider.Machine().Kubelet().ExtraConfig()
 				kubeletConfig.CloudProviderExternal = cfgProvider.Cluster().ExternalCloudProvider().Enabled()

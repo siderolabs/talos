@@ -25,8 +25,8 @@ func (s *SchedulerConfig) Image() string {
 }
 
 // ExtraArgs implements the config.Scheduler interface.
-func (s *SchedulerConfig) ExtraArgs() map[string]string {
-	return s.ExtraArgsConfig
+func (s *SchedulerConfig) ExtraArgs() map[string][]string {
+	return s.ExtraArgsConfig.ToMap()
 }
 
 // ExtraVolumes implements the config.Scheduler interface.

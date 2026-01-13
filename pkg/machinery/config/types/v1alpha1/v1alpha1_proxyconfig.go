@@ -34,6 +34,6 @@ func (p *ProxyConfig) Mode() string {
 }
 
 // ExtraArgs implements the config.Proxy interface.
-func (p *ProxyConfig) ExtraArgs() map[string]string {
-	return p.ExtraArgsConfig
+func (p *ProxyConfig) ExtraArgs() map[string][]string {
+	return p.ExtraArgsConfig.ToMap()
 }

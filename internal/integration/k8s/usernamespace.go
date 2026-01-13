@@ -75,7 +75,17 @@ func (suite *UserNamespaceSuite) TestUserNamespace() {
 		suite.T().Skip("skipping test since no api server extra args found")
 	} else {
 		if featureGates, ok := controlPlaneNodeConfig.Cluster().APIServer().ExtraArgs()["feature-gates"]; ok {
-			if !strings.Contains(featureGates, "UserNamespacesSupport=true") {
+			hasUserNamespacesSupport := false
+
+			for _, featureGate := range featureGates {
+				if strings.Contains(featureGate, "UserNamespacesSupport=true") {
+					hasUserNamespacesSupport = true
+
+					break
+				}
+			}
+
+			if !hasUserNamespacesSupport {
 				suite.T().Skip("skipping test since user namespace feature gate is not enabled for kube-apiserver")
 			}
 		}

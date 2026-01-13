@@ -24,13 +24,58 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// ArgValues represents values for a command line argument which can be specified multiple times.
+type ArgValues struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Values        []string               `protobuf:"bytes,1,rep,name=values,proto3" json:"values,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ArgValues) Reset() {
+	*x = ArgValues{}
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ArgValues) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ArgValues) ProtoMessage() {}
+
+func (x *ArgValues) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ArgValues.ProtoReflect.Descriptor instead.
+func (*ArgValues) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_etcd_etcd_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *ArgValues) GetValues() []string {
+	if x != nil {
+		return x.Values
+	}
+	return nil
+}
+
 // ConfigSpec describes (some) configuration settings of etcd.
 type ConfigSpec struct {
 	state                   protoimpl.MessageState `protogen:"open.v1"`
 	AdvertiseValidSubnets   []string               `protobuf:"bytes,1,rep,name=advertise_valid_subnets,json=advertiseValidSubnets,proto3" json:"advertise_valid_subnets,omitempty"`
 	AdvertiseExcludeSubnets []string               `protobuf:"bytes,2,rep,name=advertise_exclude_subnets,json=advertiseExcludeSubnets,proto3" json:"advertise_exclude_subnets,omitempty"`
 	Image                   string                 `protobuf:"bytes,3,opt,name=image,proto3" json:"image,omitempty"`
-	ExtraArgs               map[string]string      `protobuf:"bytes,4,rep,name=extra_args,json=extraArgs,proto3" json:"extra_args,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	ExtraArgs               map[string]*ArgValues  `protobuf:"bytes,4,rep,name=extra_args,json=extraArgs,proto3" json:"extra_args,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	ListenValidSubnets      []string               `protobuf:"bytes,5,rep,name=listen_valid_subnets,json=listenValidSubnets,proto3" json:"listen_valid_subnets,omitempty"`
 	ListenExcludeSubnets    []string               `protobuf:"bytes,6,rep,name=listen_exclude_subnets,json=listenExcludeSubnets,proto3" json:"listen_exclude_subnets,omitempty"`
 	unknownFields           protoimpl.UnknownFields
@@ -39,7 +84,7 @@ type ConfigSpec struct {
 
 func (x *ConfigSpec) Reset() {
 	*x = ConfigSpec{}
-	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[0]
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -51,7 +96,7 @@ func (x *ConfigSpec) String() string {
 func (*ConfigSpec) ProtoMessage() {}
 
 func (x *ConfigSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[0]
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -64,7 +109,7 @@ func (x *ConfigSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ConfigSpec.ProtoReflect.Descriptor instead.
 func (*ConfigSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_etcd_etcd_proto_rawDescGZIP(), []int{0}
+	return file_resource_definitions_etcd_etcd_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *ConfigSpec) GetAdvertiseValidSubnets() []string {
@@ -88,7 +133,7 @@ func (x *ConfigSpec) GetImage() string {
 	return ""
 }
 
-func (x *ConfigSpec) GetExtraArgs() map[string]string {
+func (x *ConfigSpec) GetExtraArgs() map[string]*ArgValues {
 	if x != nil {
 		return x.ExtraArgs
 	}
@@ -119,7 +164,7 @@ type MemberSpec struct {
 
 func (x *MemberSpec) Reset() {
 	*x = MemberSpec{}
-	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[1]
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -131,7 +176,7 @@ func (x *MemberSpec) String() string {
 func (*MemberSpec) ProtoMessage() {}
 
 func (x *MemberSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[1]
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -144,7 +189,7 @@ func (x *MemberSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MemberSpec.ProtoReflect.Descriptor instead.
 func (*MemberSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_etcd_etcd_proto_rawDescGZIP(), []int{1}
+	return file_resource_definitions_etcd_etcd_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *MemberSpec) GetMemberId() string {
@@ -165,7 +210,7 @@ type PKIStatusSpec struct {
 
 func (x *PKIStatusSpec) Reset() {
 	*x = PKIStatusSpec{}
-	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[2]
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -177,7 +222,7 @@ func (x *PKIStatusSpec) String() string {
 func (*PKIStatusSpec) ProtoMessage() {}
 
 func (x *PKIStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[2]
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -190,7 +235,7 @@ func (x *PKIStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PKIStatusSpec.ProtoReflect.Descriptor instead.
 func (*PKIStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_etcd_etcd_proto_rawDescGZIP(), []int{2}
+	return file_resource_definitions_etcd_etcd_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *PKIStatusSpec) GetReady() bool {
@@ -213,7 +258,7 @@ type SpecSpec struct {
 	Name                  string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	AdvertisedAddresses   []*common.NetIP        `protobuf:"bytes,2,rep,name=advertised_addresses,json=advertisedAddresses,proto3" json:"advertised_addresses,omitempty"`
 	Image                 string                 `protobuf:"bytes,3,opt,name=image,proto3" json:"image,omitempty"`
-	ExtraArgs             map[string]string      `protobuf:"bytes,4,rep,name=extra_args,json=extraArgs,proto3" json:"extra_args,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	ExtraArgs             map[string]*ArgValues  `protobuf:"bytes,4,rep,name=extra_args,json=extraArgs,proto3" json:"extra_args,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	ListenPeerAddresses   []*common.NetIP        `protobuf:"bytes,5,rep,name=listen_peer_addresses,json=listenPeerAddresses,proto3" json:"listen_peer_addresses,omitempty"`
 	ListenClientAddresses []*common.NetIP        `protobuf:"bytes,6,rep,name=listen_client_addresses,json=listenClientAddresses,proto3" json:"listen_client_addresses,omitempty"`
 	unknownFields         protoimpl.UnknownFields
@@ -222,7 +267,7 @@ type SpecSpec struct {
 
 func (x *SpecSpec) Reset() {
 	*x = SpecSpec{}
-	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[3]
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -234,7 +279,7 @@ func (x *SpecSpec) String() string {
 func (*SpecSpec) ProtoMessage() {}
 
 func (x *SpecSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[3]
+	mi := &file_resource_definitions_etcd_etcd_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -247,7 +292,7 @@ func (x *SpecSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SpecSpec.ProtoReflect.Descriptor instead.
 func (*SpecSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_etcd_etcd_proto_rawDescGZIP(), []int{3}
+	return file_resource_definitions_etcd_etcd_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *SpecSpec) GetName() string {
@@ -271,7 +316,7 @@ func (x *SpecSpec) GetImage() string {
 	return ""
 }
 
-func (x *SpecSpec) GetExtraArgs() map[string]string {
+func (x *SpecSpec) GetExtraArgs() map[string]*ArgValues {
 	if x != nil {
 		return x.ExtraArgs
 	}
@@ -296,7 +341,9 @@ var File_resource_definitions_etcd_etcd_proto protoreflect.FileDescriptor
 
 const file_resource_definitions_etcd_etcd_proto_rawDesc = "" +
 	"\n" +
-	"$resource/definitions/etcd/etcd.proto\x12\x1ftalos.resource.definitions.etcd\x1a\x13common/common.proto\"\x97\x03\n" +
+	"$resource/definitions/etcd/etcd.proto\x12\x1ftalos.resource.definitions.etcd\x1a\x13common/common.proto\"#\n" +
+	"\tArgValues\x12\x16\n" +
+	"\x06values\x18\x01 \x03(\tR\x06values\"\xc3\x03\n" +
 	"\n" +
 	"ConfigSpec\x126\n" +
 	"\x17advertise_valid_subnets\x18\x01 \x03(\tR\x15advertiseValidSubnets\x12:\n" +
@@ -305,16 +352,16 @@ const file_resource_definitions_etcd_etcd_proto_rawDesc = "" +
 	"\n" +
 	"extra_args\x18\x04 \x03(\v2:.talos.resource.definitions.etcd.ConfigSpec.ExtraArgsEntryR\textraArgs\x120\n" +
 	"\x14listen_valid_subnets\x18\x05 \x03(\tR\x12listenValidSubnets\x124\n" +
-	"\x16listen_exclude_subnets\x18\x06 \x03(\tR\x14listenExcludeSubnets\x1a<\n" +
+	"\x16listen_exclude_subnets\x18\x06 \x03(\tR\x14listenExcludeSubnets\x1ah\n" +
 	"\x0eExtraArgsEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\")\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12@\n" +
+	"\x05value\x18\x02 \x01(\v2*.talos.resource.definitions.etcd.ArgValuesR\x05value:\x028\x01\")\n" +
 	"\n" +
 	"MemberSpec\x12\x1b\n" +
 	"\tmember_id\x18\x01 \x01(\tR\bmemberId\"?\n" +
 	"\rPKIStatusSpec\x12\x14\n" +
 	"\x05ready\x18\x01 \x01(\bR\x05ready\x12\x18\n" +
-	"\aversion\x18\x02 \x01(\tR\aversion\"\x97\x03\n" +
+	"\aversion\x18\x02 \x01(\tR\aversion\"\xc3\x03\n" +
 	"\bSpecSpec\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12@\n" +
 	"\x14advertised_addresses\x18\x02 \x03(\v2\r.common.NetIPR\x13advertisedAddresses\x12\x14\n" +
@@ -322,10 +369,10 @@ const file_resource_definitions_etcd_etcd_proto_rawDesc = "" +
 	"\n" +
 	"extra_args\x18\x04 \x03(\v28.talos.resource.definitions.etcd.SpecSpec.ExtraArgsEntryR\textraArgs\x12A\n" +
 	"\x15listen_peer_addresses\x18\x05 \x03(\v2\r.common.NetIPR\x13listenPeerAddresses\x12E\n" +
-	"\x17listen_client_addresses\x18\x06 \x03(\v2\r.common.NetIPR\x15listenClientAddresses\x1a<\n" +
+	"\x17listen_client_addresses\x18\x06 \x03(\v2\r.common.NetIPR\x15listenClientAddresses\x1ah\n" +
 	"\x0eExtraArgsEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01Br\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12@\n" +
+	"\x05value\x18\x02 \x01(\v2*.talos.resource.definitions.etcd.ArgValuesR\x05value:\x028\x01Br\n" +
 	"'dev.talos.api.resource.definitions.etcdZGgithub.com/siderolabs/talos/pkg/machinery/api/resource/definitions/etcdb\x06proto3"
 
 var (
@@ -340,27 +387,30 @@ func file_resource_definitions_etcd_etcd_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_etcd_etcd_proto_rawDescData
 }
 
-var file_resource_definitions_etcd_etcd_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_resource_definitions_etcd_etcd_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_resource_definitions_etcd_etcd_proto_goTypes = []any{
-	(*ConfigSpec)(nil),    // 0: talos.resource.definitions.etcd.ConfigSpec
-	(*MemberSpec)(nil),    // 1: talos.resource.definitions.etcd.MemberSpec
-	(*PKIStatusSpec)(nil), // 2: talos.resource.definitions.etcd.PKIStatusSpec
-	(*SpecSpec)(nil),      // 3: talos.resource.definitions.etcd.SpecSpec
-	nil,                   // 4: talos.resource.definitions.etcd.ConfigSpec.ExtraArgsEntry
-	nil,                   // 5: talos.resource.definitions.etcd.SpecSpec.ExtraArgsEntry
-	(*common.NetIP)(nil),  // 6: common.NetIP
+	(*ArgValues)(nil),     // 0: talos.resource.definitions.etcd.ArgValues
+	(*ConfigSpec)(nil),    // 1: talos.resource.definitions.etcd.ConfigSpec
+	(*MemberSpec)(nil),    // 2: talos.resource.definitions.etcd.MemberSpec
+	(*PKIStatusSpec)(nil), // 3: talos.resource.definitions.etcd.PKIStatusSpec
+	(*SpecSpec)(nil),      // 4: talos.resource.definitions.etcd.SpecSpec
+	nil,                   // 5: talos.resource.definitions.etcd.ConfigSpec.ExtraArgsEntry
+	nil,                   // 6: talos.resource.definitions.etcd.SpecSpec.ExtraArgsEntry
+	(*common.NetIP)(nil),  // 7: common.NetIP
 }
 var file_resource_definitions_etcd_etcd_proto_depIdxs = []int32{
-	4, // 0: talos.resource.definitions.etcd.ConfigSpec.extra_args:type_name -> talos.resource.definitions.etcd.ConfigSpec.ExtraArgsEntry
-	6, // 1: talos.resource.definitions.etcd.SpecSpec.advertised_addresses:type_name -> common.NetIP
-	5, // 2: talos.resource.definitions.etcd.SpecSpec.extra_args:type_name -> talos.resource.definitions.etcd.SpecSpec.ExtraArgsEntry
-	6, // 3: talos.resource.definitions.etcd.SpecSpec.listen_peer_addresses:type_name -> common.NetIP
-	6, // 4: talos.resource.definitions.etcd.SpecSpec.listen_client_addresses:type_name -> common.NetIP
-	5, // [5:5] is the sub-list for method output_type
-	5, // [5:5] is the sub-list for method input_type
-	5, // [5:5] is the sub-list for extension type_name
-	5, // [5:5] is the sub-list for extension extendee
-	0, // [0:5] is the sub-list for field type_name
+	5, // 0: talos.resource.definitions.etcd.ConfigSpec.extra_args:type_name -> talos.resource.definitions.etcd.ConfigSpec.ExtraArgsEntry
+	7, // 1: talos.resource.definitions.etcd.SpecSpec.advertised_addresses:type_name -> common.NetIP
+	6, // 2: talos.resource.definitions.etcd.SpecSpec.extra_args:type_name -> talos.resource.definitions.etcd.SpecSpec.ExtraArgsEntry
+	7, // 3: talos.resource.definitions.etcd.SpecSpec.listen_peer_addresses:type_name -> common.NetIP
+	7, // 4: talos.resource.definitions.etcd.SpecSpec.listen_client_addresses:type_name -> common.NetIP
+	0, // 5: talos.resource.definitions.etcd.ConfigSpec.ExtraArgsEntry.value:type_name -> talos.resource.definitions.etcd.ArgValues
+	0, // 6: talos.resource.definitions.etcd.SpecSpec.ExtraArgsEntry.value:type_name -> talos.resource.definitions.etcd.ArgValues
+	7, // [7:7] is the sub-list for method output_type
+	7, // [7:7] is the sub-list for method input_type
+	7, // [7:7] is the sub-list for extension type_name
+	7, // [7:7] is the sub-list for extension extendee
+	0, // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_etcd_etcd_proto_init() }
@@ -374,7 +424,7 @@ func file_resource_definitions_etcd_etcd_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_etcd_etcd_proto_rawDesc), len(file_resource_definitions_etcd_etcd_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

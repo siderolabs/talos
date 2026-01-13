@@ -55,7 +55,24 @@ func (suite *ConfigSuite) TestReconcile() {
 			},
 			expectedConfig: etcd.ConfigSpec{
 				Image:                 "foo/bar:v1.0.0",
-				ExtraArgs:             map[string]string{},
+				ExtraArgs:             map[string]etcd.ArgValues{},
+				AdvertiseValidSubnets: nil,
+				ListenValidSubnets:    nil,
+			},
+		},
+		{
+			name: "extra args config",
+			etcdConfig: &v1alpha1.EtcdConfig{
+				ContainerImage: "foo/bar:v1.0.0",
+				EtcdExtraArgs: v1alpha1.Args{
+					"foo": v1alpha1.NewArgValue("", []string{"bar", "baz"}),
+				},
+			},
+			expectedConfig: etcd.ConfigSpec{
+				Image: "foo/bar:v1.0.0",
+				ExtraArgs: map[string]etcd.ArgValues{
+					"foo": {Values: []string{"bar", "baz"}},
+				},
 				AdvertiseValidSubnets: nil,
 				ListenValidSubnets:    nil,
 			},
@@ -64,15 +81,15 @@ func (suite *ConfigSuite) TestReconcile() {
 			name: "legacy subnet",
 			etcdConfig: &v1alpha1.EtcdConfig{
 				ContainerImage: "foo/bar:v1.0.0",
-				EtcdExtraArgs: map[string]string{
-					"arg": "value",
+				EtcdExtraArgs: v1alpha1.Args{
+					"arg": v1alpha1.NewArgValue("value", nil),
 				},
 				EtcdSubnet: "10.0.0.0/8",
 			},
 			expectedConfig: etcd.ConfigSpec{
 				Image: "foo/bar:v1.0.0",
-				ExtraArgs: map[string]string{
-					"arg": "value",
+				ExtraArgs: map[string]etcd.ArgValues{
+					"arg": {Values: []string{"value"}},
 				},
 				AdvertiseValidSubnets: []string{"10.0.0.0/8"},
 				ListenValidSubnets:    nil,
@@ -86,7 +103,7 @@ func (suite *ConfigSuite) TestReconcile() {
 			},
 			expectedConfig: etcd.ConfigSpec{
 				Image:                 "foo/bar:v1.0.0",
-				ExtraArgs:             map[string]string{},
+				ExtraArgs:             map[string]etcd.ArgValues{},
 				AdvertiseValidSubnets: []string{"10.0.0.0/8", "192.168.0.0/24"},
 				ListenValidSubnets:    []string{"10.0.0.0/8", "192.168.0.0/24"},
 			},
@@ -100,7 +117,7 @@ func (suite *ConfigSuite) TestReconcile() {
 			},
 			expectedConfig: etcd.ConfigSpec{
 				Image:                 "foo/bar:v1.0.0",
-				ExtraArgs:             map[string]string{},
+				ExtraArgs:             map[string]etcd.ArgValues{},
 				AdvertiseValidSubnets: []string{"10.0.0.0/8", "192.168.0.0/24"},
 				ListenValidSubnets:    []string{"10.0.0.0/8"},
 			},
@@ -120,7 +137,7 @@ func (suite *ConfigSuite) TestReconcile() {
 			},
 			expectedConfig: etcd.ConfigSpec{
 				Image:                   "foo/bar:v1.0.0",
-				ExtraArgs:               map[string]string{},
+				ExtraArgs:               map[string]etcd.ArgValues{},
 				AdvertiseValidSubnets:   nil,
 				AdvertiseExcludeSubnets: []string{"10.0.0.4"},
 				ListenValidSubnets:      nil,
@@ -139,7 +156,7 @@ func (suite *ConfigSuite) TestReconcile() {
 			},
 			expectedConfig: etcd.ConfigSpec{
 				Image:                   "foo/bar:v1.0.0",
-				ExtraArgs:               map[string]string{},
+				ExtraArgs:               map[string]etcd.ArgValues{},
 				AdvertiseValidSubnets:   nil,
 				AdvertiseExcludeSubnets: []string{"10.0.0.4"},
 				ListenValidSubnets:      nil,
@@ -161,7 +178,7 @@ func (suite *ConfigSuite) TestReconcile() {
 			},
 			expectedConfig: etcd.ConfigSpec{
 				Image:                   "foo/bar:v1.0.0",
-				ExtraArgs:               map[string]string{},
+				ExtraArgs:               map[string]etcd.ArgValues{},
 				AdvertiseValidSubnets:   []string{"10.0.0.0/8", "192.168.0.0/24"},
 				AdvertiseExcludeSubnets: []string{"10.0.0.4"},
 				ListenValidSubnets:      []string{"10.0.0.0/8", "192.168.0.0/24"},
@@ -181,7 +198,7 @@ func (suite *ConfigSuite) TestReconcile() {
 			},
 			expectedConfig: etcd.ConfigSpec{
 				Image:                   "foo/bar:v1.0.0",
-				ExtraArgs:               map[string]string{},
+				ExtraArgs:               map[string]etcd.ArgValues{},
 				AdvertiseValidSubnets:   []string{"10.0.0.0/8", "192.168.0.0/24"},
 				AdvertiseExcludeSubnets: []string{"10.0.0.4"},
 				ListenValidSubnets:      []string{"10.0.0.0/8", "192.168.0.0/24"},

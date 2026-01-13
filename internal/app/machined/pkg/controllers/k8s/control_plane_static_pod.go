@@ -353,59 +353,64 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 	}
 
 	builder := argsbuilder.Args{
-		"admission-control-config-file": filepath.Join(constants.KubernetesAPIServerConfigDir, "admission-control-config.yaml"),
-		"allow-privileged":              "true",
+		"admission-control-config-file": {filepath.Join(constants.KubernetesAPIServerConfigDir, "admission-control-config.yaml")},
+		"allow-privileged":              {"true"},
 		// Do not accept anonymous requests by default. Otherwise the kube-apiserver will set the request's group to system:unauthenticated exposing endpoints like /version etc.
-		"anonymous-auth":                     "false",
-		"api-audiences":                      cfg.ControlPlaneEndpoint,
-		"bind-address":                       "0.0.0.0",
-		"client-ca-file":                     filepath.Join(constants.KubernetesAPIServerSecretsDir, "ca.crt"),
-		"enable-admission-plugins":           strings.Join(enabledAdmissionPlugins, ","),
-		"requestheader-client-ca-file":       filepath.Join(constants.KubernetesAPIServerSecretsDir, "aggregator-ca.crt"),
-		"requestheader-allowed-names":        "front-proxy-client",
-		"requestheader-extra-headers-prefix": "X-Remote-Extra-",
-		"requestheader-group-headers":        "X-Remote-Group",
-		"requestheader-username-headers":     "X-Remote-User",
-		"proxy-client-cert-file":             filepath.Join(constants.KubernetesAPIServerSecretsDir, "front-proxy-client.crt"),
-		"proxy-client-key-file":              filepath.Join(constants.KubernetesAPIServerSecretsDir, "front-proxy-client.key"),
-		"enable-bootstrap-token-auth":        "true",
+		"anonymous-auth":                     {"false"},
+		"api-audiences":                      {cfg.ControlPlaneEndpoint},
+		"bind-address":                       {"0.0.0.0"},
+		"client-ca-file":                     {filepath.Join(constants.KubernetesAPIServerSecretsDir, "ca.crt")},
+		"enable-admission-plugins":           {strings.Join(enabledAdmissionPlugins, ",")},
+		"requestheader-client-ca-file":       {filepath.Join(constants.KubernetesAPIServerSecretsDir, "aggregator-ca.crt")},
+		"requestheader-allowed-names":        {"front-proxy-client"},
+		"requestheader-extra-headers-prefix": {"X-Remote-Extra-"},
+		"requestheader-group-headers":        {"X-Remote-Group"},
+		"requestheader-username-headers":     {"X-Remote-User"},
+		"proxy-client-cert-file":             {filepath.Join(constants.KubernetesAPIServerSecretsDir, "front-proxy-client.crt")},
+		"proxy-client-key-file":              {filepath.Join(constants.KubernetesAPIServerSecretsDir, "front-proxy-client.key")},
+		"enable-bootstrap-token-auth":        {"true"},
 		// NB: using TLS 1.2 instead of 1.3 here for interoperability, since this is an externally-facing service.
-		"tls-min-version":                  "VersionTLS12",
-		"tls-cipher-suites":                "TLS_AES_128_GCM_SHA256,TLS_AES_256_GCM_SHA384,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256", //nolint:lll
-		"encryption-provider-config":       filepath.Join(constants.KubernetesAPIServerSecretsDir, "encryptionconfig.yaml"),
-		"audit-policy-file":                filepath.Join(constants.KubernetesAPIServerConfigDir, "auditpolicy.yaml"),
-		"audit-log-path":                   filepath.Join(constants.KubernetesAuditLogDir, "kube-apiserver.log"),
-		"audit-log-maxage":                 "30",
-		"audit-log-maxbackup":              "10",
-		"audit-log-maxsize":                "100",
-		"profiling":                        "false",
-		"etcd-cafile":                      filepath.Join(constants.KubernetesAPIServerSecretsDir, "etcd-client-ca.crt"),
-		"etcd-certfile":                    filepath.Join(constants.KubernetesAPIServerSecretsDir, "etcd-client.crt"),
-		"etcd-keyfile":                     filepath.Join(constants.KubernetesAPIServerSecretsDir, "etcd-client.key"),
-		"etcd-servers":                     strings.Join(cfg.EtcdServers, ","),
-		"kubelet-client-certificate":       filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver-kubelet-client.crt"),
-		"kubelet-client-key":               filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver-kubelet-client.key"),
-		"secure-port":                      strconv.FormatInt(int64(cfg.LocalPort), 10),
-		"service-account-issuer":           cfg.ControlPlaneEndpoint,
-		"service-account-key-file":         filepath.Join(constants.KubernetesAPIServerSecretsDir, "service-account.pub"),
-		"service-account-signing-key-file": filepath.Join(constants.KubernetesAPIServerSecretsDir, "service-account.key"),
-		"service-cluster-ip-range":         strings.Join(cfg.ServiceCIDRs, ","),
-		"tls-cert-file":                    filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver.crt"),
-		"tls-private-key-file":             filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver.key"),
-		"kubelet-preferred-address-types":  "InternalIP,ExternalIP,Hostname",
+		"tls-min-version":                  {"VersionTLS12"},
+		"tls-cipher-suites":                {"TLS_AES_128_GCM_SHA256,TLS_AES_256_GCM_SHA384,TLS_CHACHA20_POLY1305_SHA256,TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256"}, //nolint:lll
+		"encryption-provider-config":       {filepath.Join(constants.KubernetesAPIServerSecretsDir, "encryptionconfig.yaml")},
+		"audit-policy-file":                {filepath.Join(constants.KubernetesAPIServerConfigDir, "auditpolicy.yaml")},
+		"audit-log-path":                   {filepath.Join(constants.KubernetesAuditLogDir, "kube-apiserver.log")},
+		"audit-log-maxage":                 {"30"},
+		"audit-log-maxbackup":              {"10"},
+		"audit-log-maxsize":                {"100"},
+		"profiling":                        {"false"},
+		"etcd-cafile":                      {filepath.Join(constants.KubernetesAPIServerSecretsDir, "etcd-client-ca.crt")},
+		"etcd-certfile":                    {filepath.Join(constants.KubernetesAPIServerSecretsDir, "etcd-client.crt")},
+		"etcd-keyfile":                     {filepath.Join(constants.KubernetesAPIServerSecretsDir, "etcd-client.key")},
+		"etcd-servers":                     {strings.Join(cfg.EtcdServers, ",")},
+		"kubelet-client-certificate":       {filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver-kubelet-client.crt")},
+		"kubelet-client-key":               {filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver-kubelet-client.key")},
+		"secure-port":                      {strconv.FormatInt(int64(cfg.LocalPort), 10)},
+		"service-account-issuer":           {cfg.ControlPlaneEndpoint},
+		"service-account-key-file":         {filepath.Join(constants.KubernetesAPIServerSecretsDir, "service-account.pub")},
+		"service-account-signing-key-file": {filepath.Join(constants.KubernetesAPIServerSecretsDir, "service-account.key")},
+		"service-cluster-ip-range":         {strings.Join(cfg.ServiceCIDRs, ",")},
+		"tls-cert-file":                    {filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver.crt")},
+		"tls-private-key-file":             {filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver.key")},
+		"kubelet-preferred-address-types":  {"InternalIP,ExternalIP,Hostname"},
 	}
 
 	if cfg.AdvertisedAddress != "" {
-		builder.Set("advertise-address", cfg.AdvertisedAddress)
+		builder.Set("advertise-address", argsbuilder.Value{cfg.AdvertisedAddress})
 	}
 
 	k8sVersion := compatibility.VersionFromImageRef(cfg.Image)
 
 	if cfg.CloudProvider != "" && !k8sVersion.CloudProviderFlagRemoved() {
-		builder.Set("cloud-provider", cfg.CloudProvider)
+		builder.Set("cloud-provider", argsbuilder.Value{cfg.CloudProvider})
 	}
 
-	handleKubeAPIServerAuthorizationFlags(k8sVersion, builder, cfg.ExtraArgs)
+	extraArgs := make(argsbuilder.Args, len(cfg.ExtraArgs))
+	for k, v := range cfg.ExtraArgs {
+		extraArgs[k] = v.Values
+	}
+
+	handleKubeAPIServerAuthorizationFlags(k8sVersion, builder, extraArgs)
 
 	mergePolicies := argsbuilder.MergePolicies{
 		"enable-admission-plugins": argsbuilder.MergeAdditive,
@@ -431,7 +436,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 		"authorization-config":             argsbuilder.MergeDenied,
 	}
 
-	if err := builder.Merge(cfg.ExtraArgs, argsbuilder.WithMergePolicies(mergePolicies)); err != nil {
+	if err := builder.Merge(extraArgs, argsbuilder.WithMergePolicies(mergePolicies)); err != nil {
 		return "", err
 	}
 
@@ -576,28 +581,28 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 	}
 
 	builder := argsbuilder.Args{
-		"allocate-node-cidrs":              "true",
-		"bind-address":                     "127.0.0.1",
-		"cluster-cidr":                     strings.Join(cfg.PodCIDRs, ","),
-		"service-cluster-ip-range":         strings.Join(cfg.ServiceCIDRs, ","),
-		"cluster-signing-cert-file":        filepath.Join(constants.KubernetesControllerManagerSecretsDir, "ca.crt"),
-		"cluster-signing-key-file":         filepath.Join(constants.KubernetesControllerManagerSecretsDir, "ca.key"),
-		"controllers":                      "*,tokencleaner",
-		"configure-cloud-routes":           "false",
-		"kubeconfig":                       filepath.Join(constants.KubernetesControllerManagerSecretsDir, "kubeconfig"),
-		"authentication-kubeconfig":        filepath.Join(constants.KubernetesControllerManagerSecretsDir, "kubeconfig"),
-		"authorization-kubeconfig":         filepath.Join(constants.KubernetesControllerManagerSecretsDir, "kubeconfig"),
-		"leader-elect":                     "true",
-		"root-ca-file":                     filepath.Join(constants.KubernetesControllerManagerSecretsDir, "ca.crt"),
-		"service-account-private-key-file": filepath.Join(constants.KubernetesControllerManagerSecretsDir, "service-account.key"),
-		"profiling":                        "false",
-		"tls-min-version":                  "VersionTLS13",
+		"allocate-node-cidrs":              {"true"},
+		"bind-address":                     {"127.0.0.1"},
+		"cluster-cidr":                     {strings.Join(cfg.PodCIDRs, ",")},
+		"service-cluster-ip-range":         {strings.Join(cfg.ServiceCIDRs, ",")},
+		"cluster-signing-cert-file":        {filepath.Join(constants.KubernetesControllerManagerSecretsDir, "ca.crt")},
+		"cluster-signing-key-file":         {filepath.Join(constants.KubernetesControllerManagerSecretsDir, "ca.key")},
+		"controllers":                      {"*,tokencleaner"},
+		"configure-cloud-routes":           {"false"},
+		"kubeconfig":                       {filepath.Join(constants.KubernetesControllerManagerSecretsDir, "kubeconfig")},
+		"authentication-kubeconfig":        {filepath.Join(constants.KubernetesControllerManagerSecretsDir, "kubeconfig")},
+		"authorization-kubeconfig":         {filepath.Join(constants.KubernetesControllerManagerSecretsDir, "kubeconfig")},
+		"leader-elect":                     {"true"},
+		"root-ca-file":                     {filepath.Join(constants.KubernetesControllerManagerSecretsDir, "ca.crt")},
+		"service-account-private-key-file": {filepath.Join(constants.KubernetesControllerManagerSecretsDir, "service-account.key")},
+		"profiling":                        {"false"},
+		"tls-min-version":                  {"VersionTLS13"},
 	}
 
 	k8sVersion := compatibility.VersionFromImageRef(cfg.Image)
 
 	if cfg.CloudProvider != "" && !k8sVersion.CloudProviderFlagRemoved() {
-		builder.Set("cloud-provider", cfg.CloudProvider)
+		builder.Set("cloud-provider", argsbuilder.Value{cfg.CloudProvider})
 	}
 
 	mergePolicies := argsbuilder.MergePolicies{
@@ -612,7 +617,12 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 		"service-account-private-key-file": argsbuilder.MergeDenied,
 	}
 
-	if err := builder.Merge(cfg.ExtraArgs, argsbuilder.WithMergePolicies(mergePolicies)); err != nil {
+	extraArgs := make(argsbuilder.Args, len(cfg.ExtraArgs))
+	for k, v := range cfg.ExtraArgs {
+		extraArgs[k] = v.Values
+	}
+
+	if err := builder.Merge(extraArgs, argsbuilder.WithMergePolicies(mergePolicies)); err != nil {
 		return "", err
 	}
 
@@ -750,14 +760,14 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 	}
 
 	builder := argsbuilder.Args{
-		"config":                                 filepath.Join(constants.KubernetesSchedulerConfigDir, "scheduler-config.yaml"),
-		"authentication-tolerate-lookup-failure": "false",
-		"authentication-kubeconfig":              filepath.Join(constants.KubernetesSchedulerSecretsDir, "kubeconfig"),
-		"authorization-kubeconfig":               filepath.Join(constants.KubernetesSchedulerSecretsDir, "kubeconfig"),
-		"bind-address":                           "127.0.0.1",
-		"leader-elect":                           "true",
-		"profiling":                              "false",
-		"tls-min-version":                        "VersionTLS13",
+		"config":                                 {filepath.Join(constants.KubernetesSchedulerConfigDir, "scheduler-config.yaml")},
+		"authentication-tolerate-lookup-failure": {"false"},
+		"authentication-kubeconfig":              {filepath.Join(constants.KubernetesSchedulerSecretsDir, "kubeconfig")},
+		"authorization-kubeconfig":               {filepath.Join(constants.KubernetesSchedulerSecretsDir, "kubeconfig")},
+		"bind-address":                           {"127.0.0.1"},
+		"leader-elect":                           {"true"},
+		"profiling":                              {"false"},
+		"tls-min-version":                        {"VersionTLS13"},
 	}
 
 	mergePolicies := argsbuilder.MergePolicies{
@@ -767,7 +777,12 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 		"config":                    argsbuilder.MergeDenied,
 	}
 
-	if err := builder.Merge(cfg.ExtraArgs, argsbuilder.WithMergePolicies(mergePolicies)); err != nil {
+	extraArgs := make(argsbuilder.Args, len(cfg.ExtraArgs))
+	for k, v := range cfg.ExtraArgs {
+		extraArgs[k] = v.Values
+	}
+
+	if err := builder.Merge(extraArgs, argsbuilder.WithMergePolicies(mergePolicies)); err != nil {
 		return "", err
 	}
 
@@ -917,30 +932,30 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 	})
 }
 
-func kubeAPIServerExtraArgsHasAuthorizationWebhooFlags(extraArgs map[string]string) bool {
+func kubeAPIServerExtraArgsHasAuthorizationWebhooFlags(extraArgs map[string][]string) bool {
 	return slices.ContainsFunc(maps.Keys(extraArgs), func(arg string) bool {
 		return strings.HasPrefix(arg, "authorization-webhook-")
 	})
 }
 
-func kubeAPIServerExtraArgsHasAuthorizationModeFlag(extraArgs map[string]string) bool {
+func kubeAPIServerExtraArgsHasAuthorizationModeFlag(extraArgs map[string][]string) bool {
 	_, ok := extraArgs["authorization-mode"]
 
 	return ok
 }
 
-func handleKubeAPIServerAuthorizationFlags(kubeVersion compatibility.Version, argBuilder argsbuilder.Args, extraArgs map[string]string) {
+func handleKubeAPIServerAuthorizationFlags(kubeVersion compatibility.Version, argBuilder argsbuilder.Args, extraArgs map[string][]string) {
 	// this handle multiple cases:
 	// 1. user already has set `authorization-mode` flag, we'll just merge our default `authorization-mode` flag
 	if kubeAPIServerExtraArgsHasAuthorizationModeFlag(extraArgs) {
-		argBuilder.Set("authorization-mode", "Node,RBAC")
+		argBuilder.Set("authorization-mode", argsbuilder.Value{"Node,RBAC"})
 
 		return
 	}
 
 	// 2. user has set `authorization-webhook-*` flags, we'll just merge our default `authorization-mode` flag
 	if kubeAPIServerExtraArgsHasAuthorizationWebhooFlags(extraArgs) {
-		argBuilder.Set("authorization-mode", "Node,RBAC")
+		argBuilder.Set("authorization-mode", argsbuilder.Value{"Node,RBAC"})
 
 		return
 	}
@@ -949,15 +964,15 @@ func handleKubeAPIServerAuthorizationFlags(kubeVersion compatibility.Version, ar
 	// machine config validation should handle the case where either of `authorization-mode` or `authorization-webhook-*` flags are set
 	// along with `authorizationConfig`
 	if !kubeVersion.KubeAPIServerSupportsAuthorizationConfigFile() {
-		argBuilder.Set("authorization-mode", "Node,RBAC")
+		argBuilder.Set("authorization-mode", argsbuilder.Value{"Node,RBAC"})
 
 		return
 	}
 
 	if !kubeVersion.FeatureFlagStructuredAuthorizationConfigurationEnabledByDefault() {
 		// feature-gates flag can be set multiple times, since it has merge addictive policy
-		argBuilder.Set("feature-gates", "StructuredAuthorizationConfiguration=true")
+		argBuilder.Set("feature-gates", argsbuilder.Value{"StructuredAuthorizationConfiguration=true"})
 	}
 
-	argBuilder.Set("authorization-config", filepath.Join(constants.KubernetesAPIServerConfigDir, "authorization-config.yaml"))
+	argBuilder.Set("authorization-config", argsbuilder.Value{filepath.Join(constants.KubernetesAPIServerConfigDir, "authorization-config.yaml")})
 }

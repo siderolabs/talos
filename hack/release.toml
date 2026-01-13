@@ -129,6 +129,15 @@ It replaces and deprecates the previous method of configuring KubeSpan via the `
 The old configuration field will continue to work for backward compatibility.
 """
 
+    [notes.extraArgs]
+        title = "Extra Arguments accept slices in addition to strings"
+        description = """\
+Several Talos configuration fields that previously accepted single string values for extra arguments have been updated to accept slices of strings as well.
+This includes fields such as `.cluster.apiServer.extraArgs`.
+
+BREAKING: If you were relying on the resources EtcdConfigs, KubeletConfigs, ControllerManagerConfigs, SchedulerConfigs or APIServerConfigs, the protobuf format has changed from `map<string,string>` to `map<string,message>`.
+"""
+
 [make_deps]
 
     [make_deps.tools]

@@ -28,12 +28,12 @@ type Spec = typed.Resource[SpecSpec, SpecExtension]
 //
 //gotagsrewrite:gen
 type SpecSpec struct {
-	Name                  string            `yaml:"name" protobuf:"1"`
-	AdvertisedAddresses   []netip.Addr      `yaml:"advertisedAddresses" protobuf:"2"`
-	ListenPeerAddresses   []netip.Addr      `yaml:"listenPeerAddresses" protobuf:"5"`
-	ListenClientAddresses []netip.Addr      `yaml:"listenClientAddresses" protobuf:"6"`
-	Image                 string            `yaml:"image" protobuf:"3"`
-	ExtraArgs             map[string]string `yaml:"extraArgs" protobuf:"4"`
+	Name                  string               `yaml:"name" protobuf:"1"`
+	AdvertisedAddresses   []netip.Addr         `yaml:"advertisedAddresses" protobuf:"2"`
+	ListenPeerAddresses   []netip.Addr         `yaml:"listenPeerAddresses" protobuf:"5"`
+	ListenClientAddresses []netip.Addr         `yaml:"listenClientAddresses" protobuf:"6"`
+	Image                 string               `yaml:"image" protobuf:"3"`
+	ExtraArgs             map[string]ArgValues `yaml:"extraArgs" protobuf:"4"`
 }
 
 // NewSpec initializes a Spec resource.

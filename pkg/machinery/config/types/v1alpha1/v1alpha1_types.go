@@ -43,6 +43,103 @@ func init() {
 	})
 }
 
+// Args represents a map of argument names to their values.
+type Args map[string]ArgValue
+
+// ToMap converts Args to a map of string slices.
+func (a Args) ToMap() map[string][]string {
+	result := make(map[string][]string)
+
+	for key, argValue := range a {
+		// technically this shouldn't happen due to validation during unmarshalling
+		// but just in case, we handle case when both are set
+		value := make([]string, 0)
+
+		if argValue.strValue != "" {
+			value = append(value, argValue.strValue)
+		}
+
+		if argValue.listValue != nil {
+			value = append(value, argValue.listValue...)
+		}
+
+		result[key] = value
+	}
+
+	return result
+}
+
+// ArgValue represents a value for an argument, which can be either a single string or a list of strings.
+// docgen:nodoc
+type ArgValue struct {
+	listValue []string
+	strValue  string
+}
+
+// NewArgValue creates a new ArgValue from either a string or a list of strings.
+func NewArgValue(s string, l []string) ArgValue {
+	return ArgValue{
+		listValue: l,
+		strValue:  s,
+	}
+}
+
+// MarshalYAML is a custom marshaller for `ArgValue`.
+func (a ArgValue) MarshalYAML() (any, error) {
+	if a.listValue != nil {
+		return &yaml.Node{
+			Kind: yaml.SequenceNode,
+			Tag:  "!!seq",
+			Content: func() []*yaml.Node {
+				var nodes []*yaml.Node
+
+				for _, item := range a.listValue {
+					nodes = append(nodes, &yaml.Node{
+						Kind:  yaml.ScalarNode,
+						Tag:   "!!str",
+						Value: item,
+					})
+				}
+
+				return nodes
+			}(),
+		}, nil
+	}
+
+	if a.strValue != "" {
+		return &yaml.Node{
+			Kind:  yaml.ScalarNode,
+			Tag:   "!!str",
+			Value: a.strValue,
+		}, nil
+	}
+
+	return nil, nil
+}
+
+// UnmarshalYAML is a custom unmarshaller for `ArgValue`.
+func (a *ArgValue) UnmarshalYAML(unmarshal func(any) error) error {
+	// Try scalar string first
+	var s string
+	if err := unmarshal(&s); err == nil {
+		a.strValue = s
+		a.listValue = nil
+
+		return nil
+	}
+
+	// Then try list of strings
+	var l []string
+	if err := unmarshal(&l); err == nil {
+		a.listValue = l
+		a.strValue = ""
+
+		return nil
+	}
+
+	return fmt.Errorf("arg value must be a string or list of strings")
+}
+
 // Config defines the v1alpha1.Config Talos machine configuration document.
 //
 //	examples:
@@ -578,10 +675,22 @@ type KubeletConfig struct {
 	//     The `extraArgs` field is used to provide additional flags to the kubelet.
 	//   examples:
 	//     - value: >
-	//         map[string]string{
-	//           "key": "value",
+	//         Args{
+	//           "key": ArgValue{strValue: "value"},
 	//         }
-	KubeletExtraArgs map[string]string `yaml:"extraArgs,omitempty"`
+	//     - value: >
+	//         Args{
+	//           "key": ArgValue{listValue: []string{"value1", "value2"}},
+	//         }
+	//   schema:
+	//     type: object
+	//     additionalProperties:
+	//       oneOf:
+	//         - type: string
+	//         - type: array
+	//           items:
+	//             type: string
+	KubeletExtraArgs Args `yaml:"extraArgs,omitempty"`
 	//   description: |
 	//     The `extraMounts` field is used to add additional mounts to the kubelet container.
 	//     Note that either `bind` or `rbind` are required in the `options`.
@@ -1063,7 +1172,15 @@ type APIServerConfig struct {
 	ContainerImage string `yaml:"image,omitempty"`
 	//   description: |
 	//     Extra arguments to supply to the API server.
-	ExtraArgsConfig map[string]string `yaml:"extraArgs,omitempty"`
+	//   schema:
+	//     type: object
+	//     additionalProperties:
+	//       oneOf:
+	//         - type: string
+	//         - type: array
+	//           items:
+	//             type: string
+	ExtraArgsConfig Args `yaml:"extraArgs,omitempty"`
 	//   description: |
 	//     Extra volumes to mount to the API server static pod.
 	ExtraVolumesConfig []VolumeMountConfig `yaml:"extraVolumes,omitempty"`
@@ -1190,7 +1307,15 @@ type ControllerManagerConfig struct {
 	ContainerImage string `yaml:"image,omitempty"`
 	//   description: |
 	//     Extra arguments to supply to the controller manager.
-	ExtraArgsConfig map[string]string `yaml:"extraArgs,omitempty"`
+	//   schema:
+	//     type: object
+	//     additionalProperties:
+	//       oneOf:
+	//         - type: string
+	//         - type: array
+	//           items:
+	//             type: string
+	ExtraArgsConfig Args `yaml:"extraArgs,omitempty"`
 	//   description: |
 	//     Extra volumes to mount to the controller manager static pod.
 	ExtraVolumesConfig []VolumeMountConfig `yaml:"extraVolumes,omitempty"`
@@ -1227,7 +1352,15 @@ type ProxyConfig struct {
 	ModeConfig string `yaml:"mode,omitempty"`
 	//   description: |
 	//     Extra arguments to supply to kube-proxy.
-	ExtraArgsConfig map[string]string `yaml:"extraArgs,omitempty"`
+	//   schema:
+	//     type: object
+	//     additionalProperties:
+	//       oneOf:
+	//         - type: string
+	//         - type: array
+	//           items:
+	//             type: string
+	ExtraArgsConfig Args `yaml:"extraArgs,omitempty"`
 }
 
 var _ config.Scheduler = (*SchedulerConfig)(nil)
@@ -1241,7 +1374,15 @@ type SchedulerConfig struct {
 	ContainerImage string `yaml:"image,omitempty"`
 	//   description: |
 	//     Extra arguments to supply to the scheduler.
-	ExtraArgsConfig map[string]string `yaml:"extraArgs,omitempty"`
+	//   schema:
+	//     type: object
+	//     additionalProperties:
+	//       oneOf:
+	//         - type: string
+	//         - type: array
+	//           items:
+	//             type: string
+	ExtraArgsConfig Args `yaml:"extraArgs,omitempty"`
 	//   description: |
 	//     Extra volumes to mount to the scheduler static pod.
 	ExtraVolumesConfig []VolumeMountConfig `yaml:"extraVolumes,omitempty"`
@@ -1306,11 +1447,19 @@ type EtcdConfig struct {
 	//     - `peer-key-file`
 	//   examples:
 	//     - values: >
-	//         map[string]string{
-	//           "initial-cluster": "https://1.2.3.4:2380",
-	//           "advertise-client-urls": "https://1.2.3.4:2379",
+	//         Args{
+	//           "initial-cluster": ArgValue{strValue: "https://1.2.3.4:2380"},
+	//           "advertise-client-urls": ArgValue{strValue: "https://1.2.3.4:2379"},
 	//         }
-	EtcdExtraArgs map[string]string `yaml:"extraArgs,omitempty"`
+	//   schema:
+	//     type: object
+	//     additionalProperties:
+	//       oneOf:
+	//         - type: string
+	//         - type: array
+	//           items:
+	//             type: string
+	EtcdExtraArgs Args `yaml:"extraArgs,omitempty"`
 	// docgen:nodoc
 	//
 	// Deprecated: use EtcdAdvertistedSubnets

@@ -16,7 +16,7 @@ import (
 type Key = string
 
 // Value represents an arg value.
-type Value = string
+type Value = []string
 
 // Args represents a set of args.
 type Args map[Key]Value
@@ -49,33 +49,49 @@ func (a Args) Merge(args Args, setters ...MergeOption) error {
 		switch policy {
 		case MergeDenied:
 			return NewDenylistError(key)
-		case MergeAdditive:
-			values := strings.Split(a[key], ",")
-			definedValues := map[string]struct{}{}
 
+		case MergeOverwrite:
+			a[key] = slices.Clone(val)
+
+		case MergeAdditive:
+			// 1. Join the existing []string slice into one string so we can Split it.
+			//    This handles cases where a[key] might be ["a", "b"] or ["a,b"].
+			rawExisting := strings.Join(a[key], ",")
+			values := strings.Split(rawExisting, ",")
+
+			definedValues := map[string]struct{}{}
 			i := 0
 
 			for _, v := range values {
-				definedValues[strings.TrimSpace(v)] = struct{}{}
-
-				if v != "" {
-					values[i] = v
-					i++
+				cleanV := strings.TrimSpace(v)
+				if cleanV != "" {
+					// Only keep if unique
+					if _, seen := definedValues[cleanV]; !seen {
+						definedValues[cleanV] = struct{}{}
+						values[i] = cleanV
+						i++
+					}
 				}
 			}
 
 			values = values[:i]
 
-			for v := range strings.SplitSeq(val, ",") {
+			// 2. Join the incoming 'val' slice so we can SplitSeq over it.
+			rawIncoming := strings.Join(val, ",")
+
+			for v := range strings.SplitSeq(rawIncoming, ",") {
 				v = strings.TrimSpace(v)
-				if _, defined := definedValues[v]; !defined {
-					values = append(values, v)
+				if v != "" {
+					if _, defined := definedValues[v]; !defined {
+						values = append(values, v)
+						// Mark as defined to prevent duplicates within the incoming values too
+						definedValues[v] = struct{}{}
+					}
 				}
 			}
 
-			a[key] = strings.Join(values, ",")
-		case MergeOverwrite:
-			a[key] = val
+			// 3. Join the results and wrap in a []string to satisfy the type.
+			a[key] = []string{strings.Join(values, ",")}
 		}
 	}
 
@@ -83,7 +99,7 @@ func (a Args) Merge(args Args, setters ...MergeOption) error {
 }
 
 // Set implements the ArgsBuilder interface.
-func (a Args) Set(k, v Key) ArgsBuilder {
+func (a Args) Set(k Key, v Value) ArgsBuilder {
 	a[k] = v
 
 	return a
@@ -97,7 +113,14 @@ func (a Args) Args() []string {
 	args := make([]string, 0, len(a))
 
 	for _, key := range keys {
-		args = append(args, fmt.Sprintf("--%s=%s", key, a[key]))
+		vals := a[key]
+
+		for _, val := range vals {
+			args = append(
+				args,
+				fmt.Sprintf("--%s=%s", key, val),
+			)
+		}
 	}
 
 	return args

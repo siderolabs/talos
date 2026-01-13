@@ -409,6 +409,10 @@ func formatTypeName(fieldTypePkg string, fieldType string, declPkg string) (stri
 		return "resource/definitions/runtime/runtime.proto", "talos.resource.definitions.runtime.PlatformMetadataSpec"
 	case typeData{"github.com/siderolabs/talos/pkg/machinery/resources/block", "ParameterSpec"}:
 		return "resource/definitions/block/block.proto", "talos.resource.definitions.block.ParameterSpec"
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/resources/etcd", "ArgValues"}:
+		return "resource/definitions/etcd/etcd.proto", "talos.resource.definitions.etcd.ArgValues"
+	case typeData{"github.com/siderolabs/talos/pkg/machinery/resources/k8s", "ArgValues"}:
+		return "resource/definitions/k8s/k8s.proto", "talos.resource.definitions.k8s.ArgValues"
 	default:
 		return "", ""
 	}

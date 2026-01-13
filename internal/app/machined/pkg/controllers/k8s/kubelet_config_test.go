@@ -86,8 +86,8 @@ func (suite *KubeletConfigSuite) TestReconcile() {
 					MachineKubelet: &v1alpha1.KubeletConfig{
 						KubeletImage:      "kubelet",
 						KubeletClusterDNS: []string{"10.0.0.1"},
-						KubeletExtraArgs: map[string]string{
-							"enable-feature": "foo",
+						KubeletExtraArgs: v1alpha1.Args{
+							"enable-feature": v1alpha1.NewArgValue("foo", nil),
 						},
 						KubeletExtraMounts: []v1alpha1.ExtraMount{
 							{
@@ -149,8 +149,8 @@ func (suite *KubeletConfigSuite) TestReconcile() {
 				suite.Assert().Equal([]string{"10.0.0.1"}, spec.ClusterDNS)
 				suite.Assert().Equal("service.svc", spec.ClusterDomain)
 				suite.Assert().Equal(
-					map[string]string{
-						"enable-feature": "foo",
+					map[string]k8s.ArgValues{
+						"enable-feature": {Values: []string{"foo"}},
 					},
 					spec.ExtraArgs,
 				)

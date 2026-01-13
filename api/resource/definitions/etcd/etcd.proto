@@ -7,12 +7,17 @@ option java_package = "dev.talos.api.resource.definitions.etcd";
 
 import "common/common.proto";
 
+// ArgValues represents values for a command line argument which can be specified multiple times.
+message ArgValues {
+  repeated string values = 1;
+}
+
 // ConfigSpec describes (some) configuration settings of etcd.
 message ConfigSpec {
   repeated string advertise_valid_subnets = 1;
   repeated string advertise_exclude_subnets = 2;
   string image = 3;
-  map<string, string> extra_args = 4;
+  map<string, ArgValues> extra_args = 4;
   repeated string listen_valid_subnets = 5;
   repeated string listen_exclude_subnets = 6;
 }
@@ -33,7 +38,7 @@ message SpecSpec {
   string name = 1;
   repeated common.NetIP advertised_addresses = 2;
   string image = 3;
-  map<string, string> extra_args = 4;
+  map<string, ArgValues> extra_args = 4;
   repeated common.NetIP listen_peer_addresses = 5;
   repeated common.NetIP listen_client_addresses = 6;
 }

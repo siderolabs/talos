@@ -77,7 +77,7 @@ type FlannelCNI interface {
 // options.
 type APIServer interface {
 	Image() string
-	ExtraArgs() map[string]string
+	ExtraArgs() map[string][]string
 	ExtraVolumes() []VolumeMount
 	Env() Env
 	AdmissionControl() []AdmissionPlugin
@@ -103,7 +103,7 @@ type AuthorizationConfigAuthorizer interface {
 // options.
 type ControllerManager interface {
 	Image() string
-	ExtraArgs() map[string]string
+	ExtraArgs() map[string][]string
 	ExtraVolumes() []VolumeMount
 	Env() Env
 	Resources() Resources
@@ -120,14 +120,14 @@ type Proxy interface {
 	Mode() string
 
 	// ExtraArgs describe an additional set of arguments to be supplied to the execution of `kube-proxy`
-	ExtraArgs() map[string]string
+	ExtraArgs() map[string][]string
 }
 
 // Scheduler defines the requirements for a config that pertains to scheduler related
 // options.
 type Scheduler interface {
 	Image() string
-	ExtraArgs() map[string]string
+	ExtraArgs() map[string][]string
 	ExtraVolumes() []VolumeMount
 	Env() Env
 	Resources() Resources
@@ -139,7 +139,7 @@ type Scheduler interface {
 type Etcd interface {
 	Image() string
 	CA() *x509.PEMEncodedCertificateAndKey
-	ExtraArgs() map[string]string
+	ExtraArgs() map[string][]string
 	AdvertisedSubnets() []string
 	ListenSubnets() []string
 }

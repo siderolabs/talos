@@ -743,7 +743,7 @@ func (KubeletConfig) Doc() *encoder.Doc {
 			},
 			{
 				Name:        "extraArgs",
-				Type:        "map[string]string",
+				Type:        "Args",
 				Note:        "",
 				Description: "The `extraArgs` field is used to provide additional flags to the kubelet.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The `extraArgs` field is used to provide additional flags to the kubelet." /* encoder.LineComment */, "" /* encoder.FootComment */},
@@ -835,8 +835,11 @@ func (KubeletConfig) Doc() *encoder.Doc {
 
 	doc.Fields[0].AddExample("", kubeletImageExample())
 	doc.Fields[1].AddExample("", []string{"10.96.0.10", "169.254.2.53"})
-	doc.Fields[2].AddExample("", map[string]string{
-		"key": "value",
+	doc.Fields[2].AddExample("", Args{
+		"key": ArgValue{strValue: "value"},
+	})
+	doc.Fields[2].AddExample("", Args{
+		"key": ArgValue{listValue: []string{"value1", "value2"}},
 	})
 	doc.Fields[3].AddExample("", kubeletExtraMountsExample())
 	doc.Fields[4].AddExample("", kubeletExtraConfigExample())
@@ -1167,7 +1170,7 @@ func (APIServerConfig) Doc() *encoder.Doc {
 			},
 			{
 				Name:        "extraArgs",
-				Type:        "map[string]string",
+				Type:        "Args",
 				Note:        "",
 				Description: "Extra arguments to supply to the API server.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra arguments to supply to the API server." /* encoder.LineComment */, "" /* encoder.FootComment */},
@@ -1331,7 +1334,7 @@ func (ControllerManagerConfig) Doc() *encoder.Doc {
 			},
 			{
 				Name:        "extraArgs",
-				Type:        "map[string]string",
+				Type:        "Args",
 				Note:        "",
 				Description: "Extra arguments to supply to the controller manager.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra arguments to supply to the controller manager." /* encoder.LineComment */, "" /* encoder.FootComment */},
@@ -1402,7 +1405,7 @@ func (ProxyConfig) Doc() *encoder.Doc {
 			},
 			{
 				Name:        "extraArgs",
-				Type:        "map[string]string",
+				Type:        "Args",
 				Note:        "",
 				Description: "Extra arguments to supply to kube-proxy.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra arguments to supply to kube-proxy." /* encoder.LineComment */, "" /* encoder.FootComment */},
@@ -1439,7 +1442,7 @@ func (SchedulerConfig) Doc() *encoder.Doc {
 			},
 			{
 				Name:        "extraArgs",
-				Type:        "map[string]string",
+				Type:        "Args",
 				Note:        "",
 				Description: "Extra arguments to supply to the scheduler.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra arguments to supply to the scheduler." /* encoder.LineComment */, "" /* encoder.FootComment */},
@@ -1510,7 +1513,7 @@ func (EtcdConfig) Doc() *encoder.Doc {
 			},
 			{
 				Name:        "extraArgs",
-				Type:        "map[string]string",
+				Type:        "Args",
 				Note:        "",
 				Description: "Extra arguments to supply to etcd.\nNote that the following args are not allowed:\n\n- `name`\n- `data-dir`\n- `initial-cluster-state`\n- `listen-peer-urls`\n- `listen-client-urls`\n- `cert-file`\n- `key-file`\n- `trusted-ca-file`\n- `peer-client-cert-auth`\n- `peer-cert-file`\n- `peer-trusted-ca-file`\n- `peer-key-file`",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra arguments to supply to etcd." /* encoder.LineComment */, "" /* encoder.FootComment */},

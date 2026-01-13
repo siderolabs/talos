@@ -17,7 +17,7 @@ message APIServerConfigSpec {
   repeated string etcd_servers = 4;
   int64 local_port = 5;
   repeated string service_cid_rs = 6;
-  map<string, string> extra_args = 7;
+  map<string, ArgValues> extra_args = 7;
   repeated ExtraVolume extra_volumes = 8;
   map<string, string> environment_variables = 9;
   string advertised_address = 11;
@@ -33,6 +33,11 @@ message AdmissionControlConfigSpec {
 message AdmissionPluginSpec {
   string name = 1;
   google.protobuf.Struct configuration = 2;
+}
+
+// ArgValues represents values for a command line argument which can be specified multiple times.
+message ArgValues {
+  repeated string values = 1;
 }
 
 // AuditPolicyConfigSpec is audit policy configuration for kube-apiserver.
@@ -87,7 +92,7 @@ message ControllerManagerConfigSpec {
   string cloud_provider = 3;
   repeated string pod_cid_rs = 4;
   repeated string service_cid_rs = 5;
-  map<string, string> extra_args = 6;
+  map<string, ArgValues> extra_args = 6;
   repeated ExtraVolume extra_volumes = 7;
   map<string, string> environment_variables = 8;
   Resources resources = 9;
@@ -150,7 +155,7 @@ message KubeletConfigSpec {
   string image = 1;
   repeated string cluster_dns = 2;
   string cluster_domain = 3;
-  map<string, string> extra_args = 4;
+  map<string, ArgValues> extra_args = 4;
   repeated talos.resource.definitions.proto.Mount extra_mounts = 5;
   google.protobuf.Struct extra_config = 6;
   bool cloud_provider_external = 7;
@@ -239,7 +244,7 @@ message Resources {
 message SchedulerConfigSpec {
   bool enabled = 1;
   string image = 2;
-  map<string, string> extra_args = 3;
+  map<string, ArgValues> extra_args = 3;
   repeated ExtraVolume extra_volumes = 4;
   map<string, string> environment_variables = 5;
   Resources resources = 6;

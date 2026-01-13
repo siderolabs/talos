@@ -27,13 +27,13 @@ type SchedulerConfig = typed.Resource[SchedulerConfigSpec, SchedulerConfigExtens
 //
 //gotagsrewrite:gen
 type SchedulerConfigSpec struct {
-	Enabled              bool              `yaml:"enabled" protobuf:"1"`
-	Image                string            `yaml:"image" protobuf:"2"`
-	ExtraArgs            map[string]string `yaml:"extraArgs" protobuf:"3"`
-	ExtraVolumes         []ExtraVolume     `yaml:"extraVolumes" protobuf:"4"`
-	EnvironmentVariables map[string]string `yaml:"environmentVariables" protobuf:"5"`
-	Resources            Resources         `yaml:"resources" protobuf:"6"`
-	Config               map[string]any    `yaml:"config" protobuf:"7"`
+	Enabled              bool                 `yaml:"enabled" protobuf:"1"`
+	Image                string               `yaml:"image" protobuf:"2"`
+	ExtraArgs            map[string]ArgValues `yaml:"extraArgs" protobuf:"3"`
+	ExtraVolumes         []ExtraVolume        `yaml:"extraVolumes" protobuf:"4"`
+	EnvironmentVariables map[string]string    `yaml:"environmentVariables" protobuf:"5"`
+	Resources            Resources            `yaml:"resources" protobuf:"6"`
+	Config               map[string]any       `yaml:"config" protobuf:"7"`
 }
 
 // NewSchedulerConfig returns new SchedulerConfig resource.

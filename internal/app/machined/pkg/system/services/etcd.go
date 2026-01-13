@@ -375,37 +375,41 @@ func buildInitialCluster(ctx context.Context, r runtime.Runtime, name string, pe
 	return initial, id, nil
 }
 
+//nolint:gocyclo
 func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime, spec *etcdresource.SpecSpec) error {
 	var upgraded bool
 
 	_, upgraded = r.State().Machine().Meta().ReadTag(meta.Upgrade)
 
 	denyListArgs := argsbuilder.Args{
-		"name":                               spec.Name,
-		"auto-tls":                           "false",
-		"peer-auto-tls":                      "false",
-		"data-dir":                           constants.EtcdDataPath,
-		"listen-peer-urls":                   formatEtcdURLs(spec.ListenPeerAddresses, constants.EtcdPeerPort),
-		"listen-client-urls":                 formatEtcdURLs(spec.ListenClientAddresses, constants.EtcdClientPort),
-		"client-cert-auth":                   "true",
-		"cert-file":                          constants.EtcdCert,
-		"key-file":                           constants.EtcdKey,
-		"trusted-ca-file":                    constants.EtcdCACert,
-		"peer-client-cert-auth":              "true",
-		"peer-cert-file":                     constants.EtcdPeerCert,
-		"peer-key-file":                      constants.EtcdPeerKey,
-		"peer-trusted-ca-file":               constants.EtcdCACert,
-		"experimental-initial-corrupt-check": "true",
-		"experimental-watch-progress-notify-interval": "5s",
-		"experimental-compact-hash-check-enabled":     "true",
+		"name":                               {spec.Name},
+		"auto-tls":                           {"false"},
+		"peer-auto-tls":                      {"false"},
+		"data-dir":                           {constants.EtcdDataPath},
+		"listen-peer-urls":                   {formatEtcdURLs(spec.ListenPeerAddresses, constants.EtcdPeerPort)},
+		"listen-client-urls":                 {formatEtcdURLs(spec.ListenClientAddresses, constants.EtcdClientPort)},
+		"client-cert-auth":                   {"true"},
+		"cert-file":                          {constants.EtcdCert},
+		"key-file":                           {constants.EtcdKey},
+		"trusted-ca-file":                    {constants.EtcdCACert},
+		"peer-client-cert-auth":              {"true"},
+		"peer-cert-file":                     {constants.EtcdPeerCert},
+		"peer-key-file":                      {constants.EtcdPeerKey},
+		"peer-trusted-ca-file":               {constants.EtcdCACert},
+		"experimental-initial-corrupt-check": {"true"},
+		"experimental-watch-progress-notify-interval": {"5s"},
+		"experimental-compact-hash-check-enabled":     {"true"},
 	}
 
-	extraArgs := argsbuilder.Args(spec.ExtraArgs)
+	extraArgs := make(argsbuilder.Args, len(spec.ExtraArgs))
+	for k, v := range spec.ExtraArgs {
+		extraArgs[k] = v.Values
+	}
 
 	denyList := argsbuilder.WithDenyList(denyListArgs)
 
 	if !extraArgs.Contains("initial-cluster-state") {
-		denyListArgs.Set("initial-cluster-state", "new")
+		denyListArgs.Set("initial-cluster-state", argsbuilder.Value{"new"})
 	}
 
 	// If the initial cluster isn't explicitly defined, we need to discover any
@@ -420,7 +424,7 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime, spec *etcdres
 			initialCluster := formatClusterURLs(spec.Name, getEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort))
 
 			if upgraded {
-				denyListArgs.Set("initial-cluster-state", "existing")
+				denyListArgs.Set("initial-cluster-state", argsbuilder.Value{"existing"})
 
 				initialCluster, e.learnerMemberID, err = buildInitialCluster(ctx, r, spec.Name, getEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort))
 				if err != nil {
@@ -428,21 +432,21 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime, spec *etcdres
 				}
 			}
 
-			denyListArgs.Set("initial-cluster", initialCluster)
+			denyListArgs.Set("initial-cluster", argsbuilder.Value{initialCluster})
 		} else {
-			denyListArgs.Set("initial-cluster-state", "existing")
+			denyListArgs.Set("initial-cluster-state", argsbuilder.Value{"existing"})
 		}
 	}
 
 	if !extraArgs.Contains("initial-advertise-peer-urls") {
 		denyListArgs.Set("initial-advertise-peer-urls",
-			formatEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort),
+			argsbuilder.Value{formatEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort)},
 		)
 	}
 
 	if !extraArgs.Contains("advertise-client-urls") {
 		denyListArgs.Set("advertise-client-urls",
-			formatEtcdURLs(spec.AdvertisedAddresses, constants.EtcdClientPort),
+			argsbuilder.Value{formatEtcdURLs(spec.AdvertisedAddresses, constants.EtcdClientPort)},
 		)
 	}
 
@@ -458,26 +462,29 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime, spec *etcdres
 //nolint:gocyclo
 func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime, spec *etcdresource.SpecSpec) error {
 	denyListArgs := argsbuilder.Args{
-		"name":                               spec.Name,
-		"auto-tls":                           "false",
-		"peer-auto-tls":                      "false",
-		"data-dir":                           constants.EtcdDataPath,
-		"listen-peer-urls":                   formatEtcdURLs(spec.ListenPeerAddresses, constants.EtcdPeerPort),
-		"listen-client-urls":                 formatEtcdURLs(spec.ListenClientAddresses, constants.EtcdClientPort),
-		"client-cert-auth":                   "true",
-		"cert-file":                          constants.EtcdCert,
-		"key-file":                           constants.EtcdKey,
-		"trusted-ca-file":                    constants.EtcdCACert,
-		"peer-client-cert-auth":              "true",
-		"peer-cert-file":                     constants.EtcdPeerCert,
-		"peer-key-file":                      constants.EtcdPeerKey,
-		"peer-trusted-ca-file":               constants.EtcdCACert,
-		"experimental-initial-corrupt-check": "true",
-		"experimental-watch-progress-notify-interval": "5s",
-		"experimental-compact-hash-check-enabled":     "true",
+		"name":                               {spec.Name},
+		"auto-tls":                           {"false"},
+		"peer-auto-tls":                      {"false"},
+		"data-dir":                           {constants.EtcdDataPath},
+		"listen-peer-urls":                   {formatEtcdURLs(spec.ListenPeerAddresses, constants.EtcdPeerPort)},
+		"listen-client-urls":                 {formatEtcdURLs(spec.ListenClientAddresses, constants.EtcdClientPort)},
+		"client-cert-auth":                   {"true"},
+		"cert-file":                          {constants.EtcdCert},
+		"key-file":                           {constants.EtcdKey},
+		"trusted-ca-file":                    {constants.EtcdCACert},
+		"peer-client-cert-auth":              {"true"},
+		"peer-cert-file":                     {constants.EtcdPeerCert},
+		"peer-key-file":                      {constants.EtcdPeerKey},
+		"peer-trusted-ca-file":               {constants.EtcdCACert},
+		"experimental-initial-corrupt-check": {"true"},
+		"experimental-watch-progress-notify-interval": {"5s"},
+		"experimental-compact-hash-check-enabled":     {"true"},
 	}
 
-	extraArgs := argsbuilder.Args(spec.ExtraArgs)
+	extraArgs := make(argsbuilder.Args, len(spec.ExtraArgs))
+	for k, v := range spec.ExtraArgs {
+		extraArgs[k] = v.Values
+	}
 
 	denyList := argsbuilder.WithDenyList(denyListArgs)
 
@@ -497,9 +504,9 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime, spec 
 	if ok {
 		if !extraArgs.Contains("initial-cluster-state") {
 			if e.Bootstrap {
-				denyListArgs.Set("initial-cluster-state", "new")
+				denyListArgs.Set("initial-cluster-state", argsbuilder.Value{"new"})
 			} else {
-				denyListArgs.Set("initial-cluster-state", "existing")
+				denyListArgs.Set("initial-cluster-state", argsbuilder.Value{"existing"})
 			}
 		}
 
@@ -515,19 +522,19 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime, spec 
 				}
 			}
 
-			denyListArgs.Set("initial-cluster", initialCluster)
+			denyListArgs.Set("initial-cluster", argsbuilder.Value{initialCluster})
 		}
 
 		if !extraArgs.Contains("initial-advertise-peer-urls") {
 			denyListArgs.Set("initial-advertise-peer-urls",
-				formatEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort),
+				argsbuilder.Value{formatEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort)},
 			)
 		}
 	}
 
 	if !extraArgs.Contains("advertise-client-urls") {
 		denyListArgs.Set("advertise-client-urls",
-			formatEtcdURLs(spec.AdvertisedAddresses, constants.EtcdClientPort),
+			argsbuilder.Value{formatEtcdURLs(spec.AdvertisedAddresses, constants.EtcdClientPort)},
 		)
 	}
 

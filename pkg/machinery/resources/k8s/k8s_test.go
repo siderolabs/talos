@@ -64,7 +64,7 @@ func TestKubeletConfig(t *testing.T) {
 	cfg.TypedSpec().Image = "kubelet:v1.0.0"
 	cfg.TypedSpec().ClusterDNS = []string{"10.96.0.10"}
 	cfg.TypedSpec().ClusterDomain = "cluster.local"
-	cfg.TypedSpec().ExtraArgs = map[string]string{"foo": "bar"}
+	cfg.TypedSpec().ExtraArgs = map[string]k8s.ArgValues{"foo": {Values: []string{"bar"}}}
 	cfg.TypedSpec().ExtraMounts = []specs.Mount{
 		{
 			Destination: "/tmp",

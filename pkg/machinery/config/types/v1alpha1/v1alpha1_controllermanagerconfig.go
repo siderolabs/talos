@@ -25,8 +25,8 @@ func (c *ControllerManagerConfig) Image() string {
 }
 
 // ExtraArgs implements the config.ControllerManager interface.
-func (c *ControllerManagerConfig) ExtraArgs() map[string]string {
-	return c.ExtraArgsConfig
+func (c *ControllerManagerConfig) ExtraArgs() map[string][]string {
+	return c.ExtraArgsConfig.ToMap()
 }
 
 // ExtraVolumes implements the config.ControllerManager interface.

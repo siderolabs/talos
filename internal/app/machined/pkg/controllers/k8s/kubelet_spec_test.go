@@ -41,7 +41,7 @@ func (suite *KubeletSpecSuite) TestReconcileDefault() {
 	cfg.TypedSpec().Image = "kubelet:v1.29.0"
 	cfg.TypedSpec().ClusterDNS = []string{"10.96.0.10"}
 	cfg.TypedSpec().ClusterDomain = "cluster.local"
-	cfg.TypedSpec().ExtraArgs = map[string]string{"foo": "bar"}
+	cfg.TypedSpec().ExtraArgs = map[string]k8s.ArgValues{"foo": {Values: []string{"bar"}}}
 	cfg.TypedSpec().ExtraMounts = []specs.Mount{
 		{
 			Destination: "/tmp",
@@ -95,7 +95,7 @@ func (suite *KubeletSpecSuite) TestReconcileWithExplicitNodeIP() {
 	cfg.TypedSpec().Image = "kubelet:v1.29.0"
 	cfg.TypedSpec().ClusterDNS = []string{"10.96.0.10"}
 	cfg.TypedSpec().ClusterDomain = "cluster.local"
-	cfg.TypedSpec().ExtraArgs = map[string]string{"node-ip": "10.0.0.1"}
+	cfg.TypedSpec().ExtraArgs = map[string]k8s.ArgValues{"node-ip": {Values: []string{"10.0.0.1"}}}
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
 
@@ -130,7 +130,7 @@ func (suite *KubeletSpecSuite) TestReconcileWithContainerRuntimeEndpointFlag() {
 	cfg.TypedSpec().Image = "kubelet:v1.25.0"
 	cfg.TypedSpec().ClusterDNS = []string{"10.96.0.10"}
 	cfg.TypedSpec().ClusterDomain = "cluster.local"
-	cfg.TypedSpec().ExtraArgs = map[string]string{"node-ip": "10.0.0.1"}
+	cfg.TypedSpec().ExtraArgs = map[string]k8s.ArgValues{"node-ip": {Values: []string{"10.0.0.1"}}}
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
 

@@ -29,12 +29,8 @@ func (e *EtcdConfig) CA() *x509.PEMEncodedCertificateAndKey {
 }
 
 // ExtraArgs implements the config.Etcd interface.
-func (e *EtcdConfig) ExtraArgs() map[string]string {
-	if e.EtcdExtraArgs == nil {
-		return make(map[string]string)
-	}
-
-	return e.EtcdExtraArgs
+func (e *EtcdConfig) ExtraArgs() map[string][]string {
+	return e.EtcdExtraArgs.ToMap()
 }
 
 // AdvertisedSubnets implements the config.Etcd interface.

@@ -20,6 +20,8 @@ import (
 type ConfigController = transform.Controller[*config.MachineConfig, *etcd.Config]
 
 // NewConfigController instanciates the config controller.
+//
+//nolint:gocyclo
 func NewConfigController() *ConfigController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *etcd.Config]{
@@ -64,7 +66,14 @@ func NewConfigController() *ConfigController {
 				}
 
 				cfg.TypedSpec().Image = machineConfig.Config().Cluster().Etcd().Image()
-				cfg.TypedSpec().ExtraArgs = machineConfig.Config().Cluster().Etcd().ExtraArgs()
+
+				extraArgs := make(map[string]etcd.ArgValues, len(machineConfig.Config().Cluster().Etcd().ExtraArgs()))
+
+				for k, v := range machineConfig.Config().Cluster().Etcd().ExtraArgs() {
+					extraArgs[k] = etcd.ArgValues{Values: v}
+				}
+
+				cfg.TypedSpec().ExtraArgs = extraArgs
 
 				return nil
 			},

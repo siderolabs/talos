@@ -52,8 +52,8 @@ func (a *APIServerConfig) Image() string {
 }
 
 // ExtraArgs implements the config.APIServer interface.
-func (a *APIServerConfig) ExtraArgs() map[string]string {
-	return a.ExtraArgsConfig
+func (a *APIServerConfig) ExtraArgs() map[string][]string {
+	return a.ExtraArgsConfig.ToMap()
 }
 
 // ExtraVolumes implements the config.APIServer interface.

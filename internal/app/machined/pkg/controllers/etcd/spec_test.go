@@ -78,15 +78,15 @@ func (suite *SpecSuite) TestReconcile() {
 			name: "defaults",
 			cfg: etcd.ConfigSpec{
 				Image: "foo/bar:v1.0.0",
-				ExtraArgs: map[string]string{
-					"arg": "value",
+				ExtraArgs: map[string]etcd.ArgValues{
+					"arg": {Values: []string{"value"}},
 				},
 			},
 			expected: etcd.SpecSpec{
 				Name:  "worker1",
 				Image: "foo/bar:v1.0.0",
-				ExtraArgs: map[string]string{
-					"arg": "value",
+				ExtraArgs: map[string]etcd.ArgValues{
+					"arg": {Values: []string{"value"}},
 				},
 				AdvertisedAddresses: []netip.Addr{
 					netip.MustParseAddr("10.0.0.5"),

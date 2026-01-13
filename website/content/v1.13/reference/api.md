@@ -346,6 +346,7 @@ description: Talos gRPC API reference.
     - [SeccompProfileSpec](#talos.resource.definitions.cri.SeccompProfileSpec)
   
 - [resource/definitions/etcd/etcd.proto](#resource/definitions/etcd/etcd.proto)
+    - [ArgValues](#talos.resource.definitions.etcd.ArgValues)
     - [ConfigSpec](#talos.resource.definitions.etcd.ConfigSpec)
     - [ConfigSpec.ExtraArgsEntry](#talos.resource.definitions.etcd.ConfigSpec.ExtraArgsEntry)
     - [MemberSpec](#talos.resource.definitions.etcd.MemberSpec)
@@ -381,6 +382,7 @@ description: Talos gRPC API reference.
     - [APIServerConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.APIServerConfigSpec.ExtraArgsEntry)
     - [AdmissionControlConfigSpec](#talos.resource.definitions.k8s.AdmissionControlConfigSpec)
     - [AdmissionPluginSpec](#talos.resource.definitions.k8s.AdmissionPluginSpec)
+    - [ArgValues](#talos.resource.definitions.k8s.ArgValues)
     - [AuditPolicyConfigSpec](#talos.resource.definitions.k8s.AuditPolicyConfigSpec)
     - [AuthorizationAuthorizersSpec](#talos.resource.definitions.k8s.AuthorizationAuthorizersSpec)
     - [AuthorizationConfigSpec](#talos.resource.definitions.k8s.AuthorizationConfigSpec)
@@ -6367,6 +6369,21 @@ SeccompProfileSpec represents the SeccompProfile.
 
 
 
+<a name="talos.resource.definitions.etcd.ArgValues"></a>
+
+### ArgValues
+ArgValues represents values for a command line argument which can be specified multiple times.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| values | [string](#string) | repeated |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.etcd.ConfigSpec"></a>
 
 ### ConfigSpec
@@ -6396,7 +6413,7 @@ ConfigSpec describes (some) configuration settings of etcd.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
+| value | [ArgValues](#talos.resource.definitions.etcd.ArgValues) |  |  |
 
 
 
@@ -6463,7 +6480,7 @@ SpecSpec describes (some) Specuration settings of etcd.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
+| value | [ArgValues](#talos.resource.definitions.etcd.ArgValues) |  |  |
 
 
 
@@ -6859,7 +6876,7 @@ APIServerConfigSpec is configuration for kube-apiserver.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
+| value | [ArgValues](#talos.resource.definitions.k8s.ArgValues) |  |  |
 
 
 
@@ -6891,6 +6908,21 @@ AdmissionPluginSpec is a single admission plugin configuration Admission Control
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  |  |
 | configuration | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.ArgValues"></a>
+
+### ArgValues
+ArgValues represents values for a command line argument which can be specified multiple times.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| values | [string](#string) | repeated |  |
 
 
 
@@ -7040,7 +7072,7 @@ ControllerManagerConfigSpec is configuration for kube-controller-manager.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
+| value | [ArgValues](#talos.resource.definitions.k8s.ArgValues) |  |  |
 
 
 
@@ -7232,7 +7264,7 @@ KubeletConfigSpec holds the source of kubelet configuration.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
+| value | [ArgValues](#talos.resource.definitions.k8s.ArgValues) |  |  |
 
 
 
@@ -7531,7 +7563,7 @@ SchedulerConfigSpec is configuration for kube-scheduler.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | key | [string](#string) |  |  |
-| value | [string](#string) |  |  |
+| value | [ArgValues](#talos.resource.definitions.k8s.ArgValues) |  |  |
 
 
 

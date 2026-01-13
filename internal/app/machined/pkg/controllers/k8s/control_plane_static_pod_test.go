@@ -171,113 +171,113 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraMounts() {
 func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraArgsK8s() {
 	tests := []struct {
 		k8sVersion  string
-		args        map[string]string
-		expected    map[string]string
+		args        map[string]k8s.ArgValues
+		expected    map[string][]string
 		expectError bool
 	}{
 		{
 			k8sVersion: "v1.28.0", // authorization-config not supported and `authorization-mode` is not set
-			args: map[string]string{
-				"enable-admission-plugins": "NodeRestriction,PodNodeSelector",
-				"bind-address":             "127.0.0.1",
-				"audit-log-batch-max-size": "2",
-				"feature-gates":            "PodNodeSelector=true",
+			args: map[string]k8s.ArgValues{
+				"enable-admission-plugins": {Values: []string{"NodeRestriction,PodNodeSelector"}},
+				"bind-address":             {Values: []string{"127.0.0.1"}},
+				"audit-log-batch-max-size": {Values: []string{"2"}},
+				"feature-gates":            {Values: []string{"PodNodeSelector=true"}},
 			},
-			expected: map[string]string{
-				"enable-admission-plugins": "NodeRestriction,PodNodeSelector",
-				"authorization-mode":       "Node,RBAC",
-				"bind-address":             "127.0.0.1",
-				"audit-log-batch-max-size": "2",
-				"feature-gates":            "PodNodeSelector=true",
+			expected: map[string][]string{
+				"enable-admission-plugins": {"NodeRestriction,PodNodeSelector"},
+				"authorization-mode":       {"Node,RBAC"},
+				"bind-address":             {"127.0.0.1"},
+				"audit-log-batch-max-size": {"2"},
+				"feature-gates":            {"PodNodeSelector=true"},
 			},
 		},
 		{
 			k8sVersion: "v1.28.0", // authorization-config not supported
-			args: map[string]string{
-				"enable-admission-plugins": "NodeRestriction,PodNodeSelector",
-				"authorization-mode":       "Webhook",
-				"bind-address":             "127.0.0.1",
-				"audit-log-batch-max-size": "2",
-				"feature-gates":            "PodNodeSelector=true",
+			args: map[string]k8s.ArgValues{
+				"enable-admission-plugins": {Values: []string{"NodeRestriction,PodNodeSelector"}},
+				"authorization-mode":       {Values: []string{"Webhook"}},
+				"bind-address":             {Values: []string{"127.0.0.1"}},
+				"audit-log-batch-max-size": {Values: []string{"2"}},
+				"feature-gates":            {Values: []string{"PodNodeSelector=true"}},
 			},
-			expected: map[string]string{
-				"enable-admission-plugins": "NodeRestriction,PodNodeSelector",
-				"authorization-mode":       "Node,RBAC,Webhook",
-				"bind-address":             "127.0.0.1",
-				"audit-log-batch-max-size": "2",
-				"feature-gates":            "PodNodeSelector=true",
+			expected: map[string][]string{
+				"enable-admission-plugins": {"NodeRestriction,PodNodeSelector"},
+				"authorization-mode":       {"Node,RBAC,Webhook"},
+				"bind-address":             {"127.0.0.1"},
+				"audit-log-batch-max-size": {"2"},
+				"feature-gates":            {"PodNodeSelector=true"},
 			},
 		},
 		{
 			k8sVersion: "v1.29.0", // authorization-config supported, but feature-gates is alpha
-			args: map[string]string{
-				"enable-admission-plugins": "NodeRestriction,PodNodeSelector",
-				"bind-address":             "127.0.0.1",
-				"audit-log-batch-max-size": "2",
-				"feature-gates":            "PodNodeSelector=true",
+			args: map[string]k8s.ArgValues{
+				"enable-admission-plugins": {Values: []string{"NodeRestriction,PodNodeSelector"}},
+				"bind-address":             {Values: []string{"127.0.0.1"}},
+				"audit-log-batch-max-size": {Values: []string{"2"}},
+				"feature-gates":            {Values: []string{"PodNodeSelector=true"}},
 			},
-			expected: map[string]string{
-				"enable-admission-plugins": "NodeRestriction,PodNodeSelector",
-				"bind-address":             "127.0.0.1",
-				"audit-log-batch-max-size": "2",
-				"feature-gates":            "StructuredAuthorizationConfiguration=true,PodNodeSelector=true",
-				"authorization-config":     filepath.Join(constants.KubernetesAPIServerConfigDir, "authorization-config.yaml"),
+			expected: map[string][]string{
+				"enable-admission-plugins": {"NodeRestriction,PodNodeSelector"},
+				"bind-address":             {"127.0.0.1"},
+				"audit-log-batch-max-size": {"2"},
+				"feature-gates":            {"StructuredAuthorizationConfiguration=true,PodNodeSelector=true"},
+				"authorization-config":     {filepath.Join(constants.KubernetesAPIServerConfigDir, "authorization-config.yaml")},
 			},
 		},
 		{
 			k8sVersion: "v1.29.0", // authorization-config supported, but feature-gates is alpha, upgrade scenario where `authorization-mode` is already set
-			args: map[string]string{
-				"enable-admission-plugins": "NodeRestriction,PodNodeSelector",
-				"bind-address":             "127.0.0.1",
-				"audit-log-batch-max-size": "2",
-				"feature-gates":            "PodNodeSelector=true",
-				"authorization-mode":       "Webhook,Node",
+			args: map[string]k8s.ArgValues{
+				"enable-admission-plugins": {Values: []string{"NodeRestriction,PodNodeSelector"}},
+				"bind-address":             {Values: []string{"127.0.0.1"}},
+				"audit-log-batch-max-size": {Values: []string{"2"}},
+				"feature-gates":            {Values: []string{"PodNodeSelector=true"}},
+				"authorization-mode":       {Values: []string{"Webhook,Node"}},
 			},
-			expected: map[string]string{
-				"enable-admission-plugins": "NodeRestriction,PodNodeSelector",
-				"bind-address":             "127.0.0.1",
-				"audit-log-batch-max-size": "2",
-				"feature-gates":            "PodNodeSelector=true",
-				"authorization-mode":       "Node,RBAC,Webhook",
+			expected: map[string][]string{
+				"enable-admission-plugins": {"NodeRestriction,PodNodeSelector"},
+				"bind-address":             {"127.0.0.1"},
+				"audit-log-batch-max-size": {"2"},
+				"feature-gates":            {"PodNodeSelector=true"},
+				"authorization-mode":       {"Node,RBAC,Webhook"},
 			},
 		},
 		{
 			k8sVersion: "v1.30.0", // authorization-config supported, feature-gates is beta (enabled by default), upgrade scenario where `authorization-webhook-*` is already set
-			args: map[string]string{
-				"enable-admission-plugins":      "NodeRestriction,PodNodeSelector",
-				"bind-address":                  "127.0.0.1",
-				"audit-log-batch-max-size":      "2",
-				"feature-gates":                 "PodNodeSelector=true",
-				"authorization-webhook-version": "v1",
+			args: map[string]k8s.ArgValues{
+				"enable-admission-plugins":      {Values: []string{"NodeRestriction,PodNodeSelector"}},
+				"bind-address":                  {Values: []string{"127.0.0.1"}},
+				"audit-log-batch-max-size":      {Values: []string{"2"}},
+				"feature-gates":                 {Values: []string{"PodNodeSelector=true"}},
+				"authorization-webhook-version": {Values: []string{"v1"}},
 			},
-			expected: map[string]string{
-				"enable-admission-plugins":      "NodeRestriction,PodNodeSelector",
-				"bind-address":                  "127.0.0.1",
-				"audit-log-batch-max-size":      "2",
-				"feature-gates":                 "PodNodeSelector=true",
-				"authorization-mode":            "Node,RBAC",
-				"authorization-webhook-version": "v1",
+			expected: map[string][]string{
+				"enable-admission-plugins":      {"NodeRestriction,PodNodeSelector"},
+				"bind-address":                  {"127.0.0.1"},
+				"audit-log-batch-max-size":      {"2"},
+				"feature-gates":                 {"PodNodeSelector=true"},
+				"authorization-mode":            {"Node,RBAC"},
+				"authorization-webhook-version": {"v1"},
 			},
 		},
 		{
 			k8sVersion: "v1.30.0", // authorization-config supported, feature-gates is beta (enabled by default)
-			args: map[string]string{
-				"enable-admission-plugins": "NodeRestriction,PodNodeSelector",
-				"bind-address":             "127.0.0.1",
-				"audit-log-batch-max-size": "2",
-				"feature-gates":            "PodNodeSelector=true",
+			args: map[string]k8s.ArgValues{
+				"enable-admission-plugins": {Values: []string{"NodeRestriction,PodNodeSelector"}},
+				"bind-address":             {Values: []string{"127.0.0.1"}},
+				"audit-log-batch-max-size": {Values: []string{"2"}},
+				"feature-gates":            {Values: []string{"PodNodeSelector=true"}},
 			},
-			expected: map[string]string{
-				"enable-admission-plugins": "NodeRestriction,PodNodeSelector",
-				"bind-address":             "127.0.0.1",
-				"audit-log-batch-max-size": "2",
-				"feature-gates":            "PodNodeSelector=true",
-				"authorization-config":     filepath.Join(constants.KubernetesAPIServerConfigDir, "authorization-config.yaml"),
+			expected: map[string][]string{
+				"enable-admission-plugins": {"NodeRestriction,PodNodeSelector"},
+				"bind-address":             {"127.0.0.1"},
+				"audit-log-batch-max-size": {"2"},
+				"feature-gates":            {"PodNodeSelector=true"},
+				"authorization-config":     {filepath.Join(constants.KubernetesAPIServerConfigDir, "authorization-config.yaml")},
 			},
 		},
 		{
-			args: map[string]string{
-				"proxy-client-key-file": "front-proxy-client.key",
+			args: map[string]k8s.ArgValues{
+				"proxy-client-key-file": {Values: []string{"front-proxy-client.key"}},
 			},
 			expectError: true,
 		},
@@ -320,16 +320,22 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraArgsK8s() {
 
 			assert.NotEmpty(apiServerPod.Spec.Containers)
 
-			assertArg := func(arg, equals string) {
+			assertArg := func(arg string, equals []string) {
+				actual := make([]string, 0, len(equals))
+
 				for _, param := range apiServerPod.Spec.Containers[0].Command {
 					if strings.HasPrefix(param, fmt.Sprintf("--%s", arg)) {
 						key, value, ok := strings.Cut(param, "=")
 						assert.True(ok, "expected '=' in %s", param)
 
 						assert.Equal("--"+arg, key)
-						assert.Equal(equals, value)
+
+						actual = append(actual, value)
 					}
 				}
+
+				assert.Equal(len(equals), len(actual))
+				assert.ElementsMatch(equals, actual)
 			}
 
 			for k, v := range test.expected {

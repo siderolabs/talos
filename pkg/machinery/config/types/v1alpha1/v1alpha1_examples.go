@@ -76,8 +76,8 @@ func machineControlplaneExample() *MachineControlPlaneConfig {
 func machineKubeletExample() *KubeletConfig {
 	return &KubeletConfig{
 		KubeletImage: (&KubeletConfig{}).Image(),
-		KubeletExtraArgs: map[string]string{
-			"feature-gates": "ServerSideApply=true",
+		KubeletExtraArgs: Args{
+			"feature-gates": ArgValue{strValue: "ServerSideApply=true"},
 		},
 	}
 }
@@ -215,9 +215,9 @@ func resourcesConfigLimitsExample() Unstructured {
 func clusterAPIServerExample() *APIServerConfig {
 	return &APIServerConfig{
 		ContainerImage: (&APIServerConfig{}).Image(),
-		ExtraArgsConfig: map[string]string{
-			"feature-gates":                    "ServerSideApply=true",
-			"http2-max-streams-per-connection": "32",
+		ExtraArgsConfig: Args{
+			"feature-gates":                    ArgValue{strValue: "ServerSideApply=true"},
+			"http2-max-streams-per-connection": ArgValue{strValue: "32"},
 		},
 		CertSANs: []string{
 			"1.2.3.4",
@@ -233,8 +233,8 @@ func clusterAPIServerImageExample() string {
 func clusterControllerManagerExample() *ControllerManagerConfig {
 	return &ControllerManagerConfig{
 		ContainerImage: (&ControllerManagerConfig{}).Image(),
-		ExtraArgsConfig: map[string]string{
-			"feature-gates": "ServerSideApply=true",
+		ExtraArgsConfig: Args{
+			"feature-gates": ArgValue{strValue: "ServerSideApply=true"},
 		},
 	}
 }
@@ -246,8 +246,8 @@ func clusterControllerManagerImageExample() string {
 func clusterProxyExample() *ProxyConfig {
 	return &ProxyConfig{
 		ContainerImage: (&ProxyConfig{}).Image(),
-		ExtraArgsConfig: map[string]string{
-			"proxy-mode": "iptables",
+		ExtraArgsConfig: Args{
+			"proxy-mode": ArgValue{strValue: "iptables"},
 		},
 		ModeConfig: "ipvs",
 	}
@@ -260,8 +260,8 @@ func clusterProxyImageExample() string {
 func clusterSchedulerExample() *SchedulerConfig {
 	return &SchedulerConfig{
 		ContainerImage: (&SchedulerConfig{}).Image(),
-		ExtraArgsConfig: map[string]string{
-			"feature-gates": "AllBeta=true",
+		ExtraArgsConfig: Args{
+			"feature-gates": ArgValue{strValue: "AllBeta=true"},
 		},
 	}
 }
@@ -273,8 +273,8 @@ func clusterSchedulerImageExample() string {
 func clusterEtcdExample() *EtcdConfig {
 	return &EtcdConfig{
 		ContainerImage: (&EtcdConfig{}).Image(),
-		EtcdExtraArgs: map[string]string{
-			"election-timeout": "5000",
+		EtcdExtraArgs: Args{
+			"election-timeout": ArgValue{strValue: "5000"},
 		},
 		RootCA: pemEncodedCertificateExample(),
 	}

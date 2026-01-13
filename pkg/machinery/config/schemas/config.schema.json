@@ -3405,10 +3405,18 @@
           "x-intellij-html-description": "\u003cp\u003eThe container image used in the API server manifest.\u003c/p\u003e\n"
         },
         "extraArgs": {
-          "patternProperties": {
-            ".*": {
-              "type": "string"
-            }
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ]
           },
           "type": "object",
           "title": "extraArgs",
@@ -3963,10 +3971,18 @@
           "x-intellij-html-description": "\u003cp\u003eThe container image used in the controller manager manifest.\u003c/p\u003e\n"
         },
         "extraArgs": {
-          "patternProperties": {
-            ".*": {
-              "type": "string"
-            }
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ]
           },
           "type": "object",
           "title": "extraArgs",
@@ -4082,10 +4098,18 @@
           "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eca\u003c/code\u003e is the root certificate authority of the PKI.\nIt is composed of a base64 encoded \u003ccode\u003ecrt\u003c/code\u003e and \u003ccode\u003ekey\u003c/code\u003e.\u003c/p\u003e\n"
         },
         "extraArgs": {
-          "patternProperties": {
-            ".*": {
-              "type": "string"
-            }
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ]
           },
           "type": "object",
           "title": "extraArgs",
@@ -4514,10 +4538,18 @@
           "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eClusterDNS\u003c/code\u003e field is an optional reference to an alternative kubelet clusterDNS ip list.\u003c/p\u003e\n"
         },
         "extraArgs": {
-          "patternProperties": {
-            ".*": {
-              "type": "string"
-            }
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ]
           },
           "type": "object",
           "title": "extraArgs",
@@ -5062,10 +5094,18 @@
           "x-intellij-html-description": "\u003cp\u003eproxy mode of kube-proxy.\nThe default is \u0026lsquo;iptables\u0026rsquo;.\u003c/p\u003e\n"
         },
         "extraArgs": {
-          "patternProperties": {
-            ".*": {
-              "type": "string"
-            }
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ]
           },
           "type": "object",
           "title": "extraArgs",
@@ -5144,10 +5184,18 @@
           "x-intellij-html-description": "\u003cp\u003eThe container image used in the scheduler manifest.\u003c/p\u003e\n"
         },
         "extraArgs": {
-          "patternProperties": {
-            ".*": {
-              "type": "string"
-            }
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ]
           },
           "type": "object",
           "title": "extraArgs",

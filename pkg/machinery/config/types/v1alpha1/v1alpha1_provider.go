@@ -373,12 +373,12 @@ func (k *KubeletConfig) ClusterDNS() []string {
 }
 
 // ExtraArgs implements the config.Provider interface.
-func (k *KubeletConfig) ExtraArgs() map[string]string {
+func (k *KubeletConfig) ExtraArgs() map[string][]string {
 	if k == nil || k.KubeletExtraArgs == nil {
-		return make(map[string]string)
+		return make(map[string][]string)
 	}
 
-	return k.KubeletExtraArgs
+	return k.KubeletExtraArgs.ToMap()
 }
 
 // ExtraMounts implements the config.Provider interface.
