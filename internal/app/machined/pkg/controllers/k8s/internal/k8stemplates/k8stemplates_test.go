@@ -166,7 +166,17 @@ func TestTemplates(t *testing.T) {
 		},
 		{
 			name: "flannel-cluster-role",
-			obj:  k8stemplates.FlannelClusterRoleTemplate,
+			obj: func() runtime.Object {
+				return k8stemplates.FlannelClusterRoleTemplate(&k8s.BootstrapManifestsConfigSpec{})
+			},
+		},
+		{
+			name: "flannel-cluster-role-with-network-policies",
+			obj: func() runtime.Object {
+				return k8stemplates.FlannelClusterRoleTemplate(&k8s.BootstrapManifestsConfigSpec{
+					FlannelKubeNetworkPoliciesEnabled: true,
+				})
+			},
 		},
 		{
 			name: "flannel-cluster-role-binding",
@@ -206,6 +216,17 @@ func TestTemplates(t *testing.T) {
 				return k8stemplates.FlannelDaemonSetTemplate(&k8s.BootstrapManifestsConfigSpec{
 					FlannelImage:     "quay.io/coreos/flannel:v0.14.0",
 					FlannelExtraArgs: []string{"--foo=bar"},
+				})
+			},
+		},
+		{
+			name: "flannel-daemonset-with-network-policies",
+			obj: func() runtime.Object {
+				return k8stemplates.FlannelDaemonSetTemplate(&k8s.BootstrapManifestsConfigSpec{
+					FlannelImage:                      "quay.io/coreos/flannel:v0.14.0",
+					FlannelExtraArgs:                  []string{"--foo=bar"},
+					FlannelKubeNetworkPoliciesEnabled: true,
+					FlannelKubeNetworkPoliciesImage:   "registry.k8s.io/networking/kube-network-policies:v0.7.0",
 				})
 			},
 		},

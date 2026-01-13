@@ -23,7 +23,7 @@ import (
 
 // FlannelClusterRoleTemplate returns the template of the ClusterRole
 // for the flannel CNI plugin.
-func FlannelClusterRoleTemplate() runtime.Object {
+func FlannelClusterRoleTemplate(spec *k8s.BootstrapManifestsConfigSpec) runtime.Object {
 	rules := []rbacv1.PolicyRule{
 		{
 			APIGroups: []string{""},
@@ -35,6 +35,21 @@ func FlannelClusterRoleTemplate() runtime.Object {
 			Resources: []string{"nodes/status"},
 			Verbs:     []string{"patch"},
 		},
+	}
+
+	if spec.FlannelKubeNetworkPoliciesEnabled {
+		rules = append(rules, []rbacv1.PolicyRule{
+			{
+				APIGroups: []string{"networking.k8s.io"},
+				Resources: []string{"networkpolicies"},
+				Verbs:     []string{"list", "watch"},
+			},
+			{
+				APIGroups: []string{"policy.networking.k8s.io"},
+				Resources: []string{"adminnetworkpolicies", "baselineadminnetworkpolicies"},
+				Verbs:     []string{"list", "watch"},
+			},
+		}...)
 	}
 
 	return &rbacv1.ClusterRole{
@@ -234,6 +249,13 @@ func FlannelDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) runtime.Ob
 		}},
 	}
 
+	if spec.FlannelKubeNetworkPoliciesEnabled {
+		volumes = append(volumes, corev1.Volume{
+			Name:         "lib-modules",
+			VolumeSource: corev1.VolumeSource{HostPath: &corev1.HostPathVolumeSource{Path: "/lib/modules"}},
+		})
+	}
+
 	containers := []corev1.Container{
 		{
 			Name:    "kube-flannel",
@@ -270,6 +292,47 @@ func FlannelDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) runtime.Ob
 				},
 			},
 		},
+	}
+
+	if spec.FlannelKubeNetworkPoliciesEnabled {
+		containers = append(containers, corev1.Container{
+			Name:  "kube-network-policies",
+			Image: spec.FlannelKubeNetworkPoliciesImage,
+			Command: []string{
+				"/bin/netpol",
+				"--hostname-override=$(MY_NODE_NAME)",
+				"--v=2",
+			},
+			Env: []corev1.EnvVar{
+				{
+					Name: "MY_NODE_NAME",
+					ValueFrom: &corev1.EnvVarSource{
+						FieldRef: &corev1.ObjectFieldSelector{
+							FieldPath: "spec.nodeName",
+						},
+					},
+				},
+			},
+			Resources: corev1.ResourceRequirements{
+				Requests: corev1.ResourceList{
+					corev1.ResourceCPU:    resource.MustParse("100m"),
+					corev1.ResourceMemory: resource.MustParse("50Mi"),
+				},
+			},
+			SecurityContext: &corev1.SecurityContext{
+				Capabilities: &corev1.Capabilities{
+					Add: []corev1.Capability{"NET_ADMIN"},
+				},
+				Privileged: pointer.To(true),
+			},
+			VolumeMounts: []corev1.VolumeMount{
+				{
+					Name:      "lib-modules",
+					MountPath: "/lib/modules",
+					ReadOnly:  true,
+				},
+			},
+		})
 	}
 
 	return &appsv1.DaemonSet{
