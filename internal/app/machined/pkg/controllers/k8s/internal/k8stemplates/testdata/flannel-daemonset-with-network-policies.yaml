@@ -63,6 +63,30 @@ spec:
           name: run
         - mountPath: /etc/kube-flannel/
           name: flannel-cfg
+      - command:
+        - /bin/netpol
+        - --hostname-override=$(MY_NODE_NAME)
+        - --v=2
+        env:
+        - name: MY_NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        image: registry.k8s.io/networking/kube-network-policies:v0.7.0
+        name: kube-network-policies
+        resources:
+          requests:
+            cpu: 100m
+            memory: 50Mi
+        securityContext:
+          capabilities:
+            add:
+            - NET_ADMIN
+          privileged: true
+        volumeMounts:
+        - mountPath: /lib/modules
+          name: lib-modules
+          readOnly: true
       hostNetwork: true
       initContainers:
       - args:
@@ -96,6 +120,9 @@ spec:
       - configMap:
           name: kube-flannel-cfg
         name: flannel-cfg
+      - hostPath:
+          path: /usr/lib/modules
+        name: lib-modules
   updateStrategy: {}
 status:
   currentNumberScheduled: 0

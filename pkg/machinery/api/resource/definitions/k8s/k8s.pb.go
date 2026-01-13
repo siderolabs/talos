@@ -455,26 +455,28 @@ func (x *AuthorizationConfigSpec) GetConfig() []*AuthorizationAuthorizersSpec {
 
 // BootstrapManifestsConfigSpec is configuration for bootstrap manifests.
 type BootstrapManifestsConfigSpec struct {
-	state                    protoimpl.MessageState `protogen:"open.v1"`
-	Server                   string                 `protobuf:"bytes,1,opt,name=server,proto3" json:"server,omitempty"`
-	ClusterDomain            string                 `protobuf:"bytes,2,opt,name=cluster_domain,json=clusterDomain,proto3" json:"cluster_domain,omitempty"`
-	PodCidRs                 []string               `protobuf:"bytes,3,rep,name=pod_cid_rs,json=podCidRs,proto3" json:"pod_cid_rs,omitempty"`
-	ProxyEnabled             bool                   `protobuf:"varint,4,opt,name=proxy_enabled,json=proxyEnabled,proto3" json:"proxy_enabled,omitempty"`
-	ProxyImage               string                 `protobuf:"bytes,5,opt,name=proxy_image,json=proxyImage,proto3" json:"proxy_image,omitempty"`
-	ProxyArgs                []string               `protobuf:"bytes,6,rep,name=proxy_args,json=proxyArgs,proto3" json:"proxy_args,omitempty"`
-	CoreDnsEnabled           bool                   `protobuf:"varint,7,opt,name=core_dns_enabled,json=coreDnsEnabled,proto3" json:"core_dns_enabled,omitempty"`
-	CoreDnsImage             string                 `protobuf:"bytes,8,opt,name=core_dns_image,json=coreDnsImage,proto3" json:"core_dns_image,omitempty"`
-	DnsServiceIp             string                 `protobuf:"bytes,9,opt,name=dns_service_ip,json=dnsServiceIp,proto3" json:"dns_service_ip,omitempty"`
-	DnsServiceIPv6           string                 `protobuf:"bytes,10,opt,name=dns_service_i_pv6,json=dnsServiceIPv6,proto3" json:"dns_service_i_pv6,omitempty"`
-	FlannelEnabled           bool                   `protobuf:"varint,11,opt,name=flannel_enabled,json=flannelEnabled,proto3" json:"flannel_enabled,omitempty"`
-	FlannelImage             string                 `protobuf:"bytes,12,opt,name=flannel_image,json=flannelImage,proto3" json:"flannel_image,omitempty"`
-	PodSecurityPolicyEnabled bool                   `protobuf:"varint,14,opt,name=pod_security_policy_enabled,json=podSecurityPolicyEnabled,proto3" json:"pod_security_policy_enabled,omitempty"`
-	TalosApiServiceEnabled   bool                   `protobuf:"varint,15,opt,name=talos_api_service_enabled,json=talosApiServiceEnabled,proto3" json:"talos_api_service_enabled,omitempty"`
-	FlannelExtraArgs         []string               `protobuf:"bytes,16,rep,name=flannel_extra_args,json=flannelExtraArgs,proto3" json:"flannel_extra_args,omitempty"`
-	FlannelKubeServiceHost   string                 `protobuf:"bytes,17,opt,name=flannel_kube_service_host,json=flannelKubeServiceHost,proto3" json:"flannel_kube_service_host,omitempty"`
-	FlannelKubeServicePort   string                 `protobuf:"bytes,18,opt,name=flannel_kube_service_port,json=flannelKubeServicePort,proto3" json:"flannel_kube_service_port,omitempty"`
-	unknownFields            protoimpl.UnknownFields
-	sizeCache                protoimpl.SizeCache
+	state                             protoimpl.MessageState `protogen:"open.v1"`
+	Server                            string                 `protobuf:"bytes,1,opt,name=server,proto3" json:"server,omitempty"`
+	ClusterDomain                     string                 `protobuf:"bytes,2,opt,name=cluster_domain,json=clusterDomain,proto3" json:"cluster_domain,omitempty"`
+	PodCidRs                          []string               `protobuf:"bytes,3,rep,name=pod_cid_rs,json=podCidRs,proto3" json:"pod_cid_rs,omitempty"`
+	ProxyEnabled                      bool                   `protobuf:"varint,4,opt,name=proxy_enabled,json=proxyEnabled,proto3" json:"proxy_enabled,omitempty"`
+	ProxyImage                        string                 `protobuf:"bytes,5,opt,name=proxy_image,json=proxyImage,proto3" json:"proxy_image,omitempty"`
+	ProxyArgs                         []string               `protobuf:"bytes,6,rep,name=proxy_args,json=proxyArgs,proto3" json:"proxy_args,omitempty"`
+	CoreDnsEnabled                    bool                   `protobuf:"varint,7,opt,name=core_dns_enabled,json=coreDnsEnabled,proto3" json:"core_dns_enabled,omitempty"`
+	CoreDnsImage                      string                 `protobuf:"bytes,8,opt,name=core_dns_image,json=coreDnsImage,proto3" json:"core_dns_image,omitempty"`
+	DnsServiceIp                      string                 `protobuf:"bytes,9,opt,name=dns_service_ip,json=dnsServiceIp,proto3" json:"dns_service_ip,omitempty"`
+	DnsServiceIPv6                    string                 `protobuf:"bytes,10,opt,name=dns_service_i_pv6,json=dnsServiceIPv6,proto3" json:"dns_service_i_pv6,omitempty"`
+	FlannelEnabled                    bool                   `protobuf:"varint,11,opt,name=flannel_enabled,json=flannelEnabled,proto3" json:"flannel_enabled,omitempty"`
+	FlannelImage                      string                 `protobuf:"bytes,12,opt,name=flannel_image,json=flannelImage,proto3" json:"flannel_image,omitempty"`
+	PodSecurityPolicyEnabled          bool                   `protobuf:"varint,14,opt,name=pod_security_policy_enabled,json=podSecurityPolicyEnabled,proto3" json:"pod_security_policy_enabled,omitempty"`
+	TalosApiServiceEnabled            bool                   `protobuf:"varint,15,opt,name=talos_api_service_enabled,json=talosApiServiceEnabled,proto3" json:"talos_api_service_enabled,omitempty"`
+	FlannelExtraArgs                  []string               `protobuf:"bytes,16,rep,name=flannel_extra_args,json=flannelExtraArgs,proto3" json:"flannel_extra_args,omitempty"`
+	FlannelKubeServiceHost            string                 `protobuf:"bytes,17,opt,name=flannel_kube_service_host,json=flannelKubeServiceHost,proto3" json:"flannel_kube_service_host,omitempty"`
+	FlannelKubeServicePort            string                 `protobuf:"bytes,18,opt,name=flannel_kube_service_port,json=flannelKubeServicePort,proto3" json:"flannel_kube_service_port,omitempty"`
+	FlannelKubeNetworkPoliciesEnabled bool                   `protobuf:"varint,19,opt,name=flannel_kube_network_policies_enabled,json=flannelKubeNetworkPoliciesEnabled,proto3" json:"flannel_kube_network_policies_enabled,omitempty"`
+	FlannelKubeNetworkPoliciesImage   string                 `protobuf:"bytes,20,opt,name=flannel_kube_network_policies_image,json=flannelKubeNetworkPoliciesImage,proto3" json:"flannel_kube_network_policies_image,omitempty"`
+	unknownFields                     protoimpl.UnknownFields
+	sizeCache                         protoimpl.SizeCache
 }
 
 func (x *BootstrapManifestsConfigSpec) Reset() {
@@ -622,6 +624,20 @@ func (x *BootstrapManifestsConfigSpec) GetFlannelKubeServiceHost() string {
 func (x *BootstrapManifestsConfigSpec) GetFlannelKubeServicePort() string {
 	if x != nil {
 		return x.FlannelKubeServicePort
+	}
+	return ""
+}
+
+func (x *BootstrapManifestsConfigSpec) GetFlannelKubeNetworkPoliciesEnabled() bool {
+	if x != nil {
+		return x.FlannelKubeNetworkPoliciesEnabled
+	}
+	return false
+}
+
+func (x *BootstrapManifestsConfigSpec) GetFlannelKubeNetworkPoliciesImage() string {
+	if x != nil {
+		return x.FlannelKubeNetworkPoliciesImage
 	}
 	return ""
 }
@@ -2398,7 +2414,7 @@ const file_resource_definitions_k8s_k8s_proto_rawDesc = "" +
 	"\awebhook\x18\x03 \x01(\v2\x17.google.protobuf.StructR\awebhook\"\x85\x01\n" +
 	"\x17AuthorizationConfigSpec\x12\x14\n" +
 	"\x05image\x18\x01 \x01(\tR\x05image\x12T\n" +
-	"\x06config\x18\x02 \x03(\v2<.talos.resource.definitions.k8s.AuthorizationAuthorizersSpecR\x06config\"\xed\x05\n" +
+	"\x06config\x18\x02 \x03(\v2<.talos.resource.definitions.k8s.AuthorizationAuthorizersSpecR\x06config\"\x8d\a\n" +
 	"\x1cBootstrapManifestsConfigSpec\x12\x16\n" +
 	"\x06server\x18\x01 \x01(\tR\x06server\x12%\n" +
 	"\x0ecluster_domain\x18\x02 \x01(\tR\rclusterDomain\x12\x1c\n" +
@@ -2420,7 +2436,9 @@ const file_resource_definitions_k8s_k8s_proto_rawDesc = "" +
 	"\x19talos_api_service_enabled\x18\x0f \x01(\bR\x16talosApiServiceEnabled\x12,\n" +
 	"\x12flannel_extra_args\x18\x10 \x03(\tR\x10flannelExtraArgs\x129\n" +
 	"\x19flannel_kube_service_host\x18\x11 \x01(\tR\x16flannelKubeServiceHost\x129\n" +
-	"\x19flannel_kube_service_port\x18\x12 \x01(\tR\x16flannelKubeServicePort\"B\n" +
+	"\x19flannel_kube_service_port\x18\x12 \x01(\tR\x16flannelKubeServicePort\x12P\n" +
+	"%flannel_kube_network_policies_enabled\x18\x13 \x01(\bR!flannelKubeNetworkPoliciesEnabled\x12L\n" +
+	"#flannel_kube_network_policies_image\x18\x14 \x01(\tR\x1fflannelKubeNetworkPoliciesImage\"B\n" +
 	"\x10ConfigStatusSpec\x12\x14\n" +
 	"\x05ready\x18\x01 \x01(\bR\x05ready\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\tR\aversion\"\xfd\x05\n" +

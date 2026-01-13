@@ -353,11 +353,13 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 					DNSServiceIP:   dnsServiceIP,
 					DNSServiceIPv6: dnsServiceIPv6,
 
-					FlannelEnabled:         cfgProvider.Cluster().Network().CNI().Name() == constants.FlannelCNI,
-					FlannelImage:           images.Flannel.String(),
-					FlannelExtraArgs:       cfgProvider.Cluster().Network().CNI().Flannel().ExtraArgs(),
-					FlannelKubeServiceHost: flannelKubeServiceHost,
-					FlannelKubeServicePort: flannelKubeServicePort,
+					FlannelEnabled:                    cfgProvider.Cluster().Network().CNI().Name() == constants.FlannelCNI,
+					FlannelImage:                      images.Flannel.String(),
+					FlannelExtraArgs:                  cfgProvider.Cluster().Network().CNI().Flannel().ExtraArgs(),
+					FlannelKubeServiceHost:            flannelKubeServiceHost,
+					FlannelKubeServicePort:            flannelKubeServicePort,
+					FlannelKubeNetworkPoliciesEnabled: cfgProvider.Cluster().Network().CNI().Flannel().KubeNetworkPoliciesEnabled(),
+					FlannelKubeNetworkPoliciesImage:   images.KubeNetworkPolicies.String(),
 
 					TalosAPIServiceEnabled: cfgProvider.Machine().Features().KubernetesTalosAPIAccess().Enabled(),
 				}

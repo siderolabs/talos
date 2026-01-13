@@ -77,6 +77,8 @@ message BootstrapManifestsConfigSpec {
   repeated string flannel_extra_args = 16;
   string flannel_kube_service_host = 17;
   string flannel_kube_service_port = 18;
+  bool flannel_kube_network_policies_enabled = 19;
+  string flannel_kube_network_policies_image = 20;
 }
 
 // ConfigStatusSpec describes status of rendered secrets.

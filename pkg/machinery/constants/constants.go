@@ -1166,6 +1166,11 @@ const (
 	// renovate: datasource=github-releases depName=flannel-io/flannel
 	FlannelVersion = "v0.27.4"
 
+	// KubeNetworkPoliciesVersion is the version of kube-network-policies when network policies are enabled for flannel.
+	//
+	// renovate: datasource=docker depName=registry.k8s.io/networking/kube-network-policies
+	KubeNetworkPoliciesVersion = "v0.9.2"
+
 	// PlatformMetal is the name of the metal platform.
 	PlatformMetal = "metal"
 

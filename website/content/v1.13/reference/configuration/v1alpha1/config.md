@@ -1340,6 +1340,7 @@ FlannelCNIConfig represents the Flannel CNI configuration options.
 extraArgs:
     - --iface-can-reach=192.168.1.1
 {{< /highlight >}}</details> | |
+|`kubeNetworkPoliciesEnabled` |bool |Deploys kube-network-policies along with Flannel.<br><br>This enables Kubernetes Network Policies support in the cluster.  | |
 
 
 

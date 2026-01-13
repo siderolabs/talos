@@ -53,6 +53,8 @@ var conformanceKubernetesCmd = &cobra.Command{
 				return hydrophone.FastConformance(ctx, &state)
 			case "certified":
 				return hydrophone.CertifiedConformance(ctx, &state)
+			case "network-policy":
+				return hydrophone.NetworkPolicies(ctx, &state)
 			default:
 				return fmt.Errorf("unsupported conformance mode %v", conformanceKubernetesCmdFlags.mode)
 			}
@@ -61,7 +63,7 @@ var conformanceKubernetesCmd = &cobra.Command{
 }
 
 func init() {
-	conformanceKubernetesCmd.Flags().StringVar(&conformanceKubernetesCmdFlags.mode, "mode", "fast", "conformance test mode: [fast, certified]")
+	conformanceKubernetesCmd.Flags().StringVar(&conformanceKubernetesCmdFlags.mode, "mode", "fast", "conformance test mode: [fast, certified, network-policy]")
 	conformanceCmd.AddCommand(conformanceKubernetesCmd)
 	addCommand(conformanceCmd)
 }

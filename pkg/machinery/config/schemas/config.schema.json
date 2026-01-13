@@ -4451,6 +4451,13 @@
           "description": "Extra arguments for ‘flanneld’.\n",
           "markdownDescription": "Extra arguments for 'flanneld'.",
           "x-intellij-html-description": "\u003cp\u003eExtra arguments for \u0026lsquo;flanneld\u0026rsquo;.\u003c/p\u003e\n"
+        },
+        "kubeNetworkPoliciesEnabled": {
+          "type": "boolean",
+          "title": "kubeNetworkPoliciesEnabled",
+          "description": "Deploys kube-network-policies along with Flannel.\n\nThis enables Kubernetes Network Policies support in the cluster.\n",
+          "markdownDescription": "Deploys kube-network-policies along with Flannel.\n\nThis enables Kubernetes Network Policies support in the cluster.",
+          "x-intellij-html-description": "\u003cp\u003eDeploys kube-network-policies along with Flannel.\u003c/p\u003e\n\n\u003cp\u003eThis enables Kubernetes Network Policies support in the cluster.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

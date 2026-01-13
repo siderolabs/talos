@@ -22,6 +22,7 @@ type Versions struct {
 	Kubelet               name.Tag
 	KubeAPIServer         name.Tag
 	KubeControllerManager name.Tag
+	KubeNetworkPolicies   name.Tag
 	KubeProxy             name.Tag
 	KubeScheduler         name.Tag
 
@@ -43,6 +44,7 @@ func List(config config.Config) Versions {
 	images.Kubelet = mustParseTag(config.Machine().Kubelet().Image())
 	images.KubeAPIServer = mustParseTag(config.Cluster().APIServer().Image())
 	images.KubeControllerManager = mustParseTag(config.Cluster().ControllerManager().Image())
+	images.KubeNetworkPolicies = mustParseTag(fmt.Sprintf("registry.k8s.io/networking/kube-network-policies:%s", constants.KubeNetworkPoliciesVersion))
 	images.KubeProxy = mustParseTag(config.Cluster().Proxy().Image())
 	images.KubeScheduler = mustParseTag(config.Cluster().Scheduler().Image())
 
@@ -72,6 +74,9 @@ type VersionsListOptions struct {
 
 	// PauseVersion overrides the default pause container image version.
 	PauseVersion string
+
+	// KubeNetworkPoliciesVersion overrides the default kube-network-policies version.
+	KubeNetworkPoliciesVersion string
 }
 
 // ListWithOptions returns image versions with overrides.
@@ -100,6 +105,10 @@ func ListWithOptions(config config.Config, opts VersionsListOptions) Versions {
 		images.KubeControllerManager = images.KubeControllerManager.Tag(opts.KubernetesVersion)
 		images.KubeProxy = images.KubeProxy.Tag(opts.KubernetesVersion)
 		images.KubeScheduler = images.KubeScheduler.Tag(opts.KubernetesVersion)
+	}
+
+	if opts.KubeNetworkPoliciesVersion != "" {
+		images.KubeNetworkPolicies = images.KubeNetworkPolicies.Tag(opts.KubeNetworkPoliciesVersion)
 	}
 
 	return images

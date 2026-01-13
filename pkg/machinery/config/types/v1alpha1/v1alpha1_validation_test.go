@@ -2001,6 +2001,24 @@ func TestValidateCNI(t *testing.T) {
 			},
 		},
 		{
+			name: "FlannelKubeNetworkPoliciesDisabled",
+			config: &v1alpha1.CNIConfig{
+				CNIName: constants.FlannelCNI,
+				CNIFlannel: &v1alpha1.FlannelCNIConfig{
+					FlannelKubeNetworkPoliciesEnabled: pointer.To(false),
+				},
+			},
+		},
+		{
+			name: "FlannelKubeNetworkPoliciesEnabled",
+			config: &v1alpha1.CNIConfig{
+				CNIName: constants.FlannelCNI,
+				CNIFlannel: &v1alpha1.FlannelCNIConfig{
+					FlannelKubeNetworkPoliciesEnabled: pointer.To(true),
+				},
+			},
+		},
+		{
 			name: "CustomNoManifests",
 			config: &v1alpha1.CNIConfig{
 				CNIName: constants.CustomCNI,
@@ -2021,6 +2039,31 @@ func TestValidateCNI(t *testing.T) {
 				},
 			},
 			expectedError: "1 error occurred:\n\t* \"flanneldExtraArgs\" field should be empty for \"custom\" CNI\n\n",
+		},
+		{
+			name: "CustomFlannelKubeNetworkPoliciesDisabled",
+			config: &v1alpha1.CNIConfig{
+				CNIName: constants.CustomCNI,
+				CNIUrls: []string{
+					"https://host.test/quick-install.yaml",
+				},
+				CNIFlannel: &v1alpha1.FlannelCNIConfig{
+					FlannelKubeNetworkPoliciesEnabled: pointer.To(false),
+				},
+			},
+		},
+		{
+			name: "CustomFlannelKubeNetworkPoliciesEnabled",
+			config: &v1alpha1.CNIConfig{
+				CNIName: constants.CustomCNI,
+				CNIUrls: []string{
+					"https://host.test/quick-install.yaml",
+				},
+				CNIFlannel: &v1alpha1.FlannelCNIConfig{
+					FlannelKubeNetworkPoliciesEnabled: pointer.To(true),
+				},
+			},
+			expectedError: "1 error occurred:\n\t* \"flannelKubeNetworkPoliciesEnabled\" should not be enabled for \"custom\" CNI\n\n",
 		},
 		{
 			name: "CustomManifests",
@@ -2046,6 +2089,25 @@ func TestValidateCNI(t *testing.T) {
 				},
 			},
 			expectedError: "1 error occurred:\n\t* \"urls\" field should be empty for \"none\" CNI\n\n",
+		},
+		{
+			name: "NoneFlannelKubeNetworkPoliciesDisabled",
+			config: &v1alpha1.CNIConfig{
+				CNIName: constants.NoneCNI,
+				CNIFlannel: &v1alpha1.FlannelCNIConfig{
+					FlannelKubeNetworkPoliciesEnabled: pointer.To(false),
+				},
+			},
+		},
+		{
+			name: "NoneFlannelKubeNetworkPoliciesEnabled",
+			config: &v1alpha1.CNIConfig{
+				CNIName: constants.NoneCNI,
+				CNIFlannel: &v1alpha1.FlannelCNIConfig{
+					FlannelKubeNetworkPoliciesEnabled: pointer.To(true),
+				},
+			},
+			expectedError: "1 error occurred:\n\t* \"flannelKubeNetworkPoliciesEnabled\" should not be enabled for \"none\" CNI\n\n",
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {

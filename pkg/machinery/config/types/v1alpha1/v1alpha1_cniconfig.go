@@ -4,7 +4,11 @@
 
 package v1alpha1
 
-import "github.com/siderolabs/talos/pkg/machinery/config/config"
+import (
+	"github.com/siderolabs/go-pointer"
+
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
+)
 
 // Name implements the config.CNI interface.
 func (c *CNIConfig) Name() string {
@@ -28,4 +32,13 @@ func (c *FlannelCNIConfig) ExtraArgs() []string {
 	}
 
 	return c.FlanneldExtraArgs
+}
+
+// KubeNetworkPoliciesEnabled implements the config.FlannelCNI interface.
+func (c *FlannelCNIConfig) KubeNetworkPoliciesEnabled() bool {
+	if c == nil {
+		return false
+	}
+
+	return pointer.SafeDeref(c.FlannelKubeNetworkPoliciesEnabled)
 }

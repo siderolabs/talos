@@ -1663,6 +1663,13 @@ func (FlannelCNIConfig) Doc() *encoder.Doc {
 				Description: "Extra arguments for 'flanneld'.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra arguments for 'flanneld'." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "kubeNetworkPoliciesEnabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "Deploys kube-network-policies along with Flannel.\n\nThis enables Kubernetes Network Policies support in the cluster.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Deploys kube-network-policies along with Flannel." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 

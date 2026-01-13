@@ -58,6 +58,23 @@ func DefaultOptions() *Options {
 	}
 }
 
+// NetworkPolicies runs only network policy related tests.
+func NetworkPolicies(ctx context.Context, cluster cluster.K8sProvider) error {
+	options := Options{
+		RunTests: []string{
+			`\[Feature:NetworkPolicy\]`,
+		},
+		Parallel: 4,
+
+		RunTimeout:    15 * time.Minute,
+		DeleteTimeout: 3 * time.Minute,
+
+		KubernetesVersion: constants.DefaultKubernetesVersion,
+	}
+
+	return Run(ctx, cluster, &options)
+}
+
 // FastConformance runs conformance suite in two passes: parallel + serial for non parallel-safe tests.
 func FastConformance(ctx context.Context, cluster cluster.K8sProvider) error {
 	optionsList := []Options{

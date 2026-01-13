@@ -1,0 +1,8 @@
+# enable network policies in flannel CNI plugin
+# see PR: https://github.com/siderolabs/talos/pull/12590
+cluster:
+  network:
+    cni:
+      name: flannel
+      flannel:
+        kubeNetworkPoliciesEnabled: true

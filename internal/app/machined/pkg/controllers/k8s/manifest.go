@@ -214,7 +214,7 @@ func (ctrl *ManifestController) render(cfg k8s.BootstrapManifestsConfigSpec, scr
 			renderedManifest{
 				"05-flannel",
 				[]runtime.Object{
-					k8stemplates.FlannelClusterRoleTemplate(),
+					k8stemplates.FlannelClusterRoleTemplate(&cfg),
 					k8stemplates.FlannelClusterRoleBindingTemplate(),
 					k8stemplates.FlannelServiceAccountTemplate(),
 					k8stemplates.FlannelConfigMapTemplate(&cfg),

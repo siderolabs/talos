@@ -185,6 +185,26 @@ Talos Linux now provides a way to run and attach to the privileged debug contain
 The debug container might be used for troubleshooting and debugging purposes.
 """
 
+    [notes.network-policy]
+        title = "Flannel CNI with Network Policy Support"
+        description = """\
+Talos Linux now supports optionally deploying Flannel CNI with [network policy support](https://kubernetes.io/docs/concepts/services-networking/network-policies/) enabled.
+The network policy implementation is [kube-network-policies](https://github.com/kubernetes-sigs/kube-network-policies/).
+
+To enable Flannel CNI with network policy support, use the following machine configuration patch:
+
+```yaml
+cluster:
+  network:
+    cni:
+      name: flannel
+      flannel:
+        kubeNetworkPoliciesEnabled: true
+```
+
+(If the cluster is already running, sync the bootstrap manifests after applying the patch to deploy the new CNI configuration.)
+"""
+
 [make_deps]
 
     [make_deps.tools]
