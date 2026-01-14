@@ -27,21 +27,21 @@ import (
 )
 
 // FmtStatus formats the pull progress status into a human-readable string.
-func FmtStatus(s *machine.DebugContainerPullProgressStatus) string {
+func FmtStatus(s *machine.ImagePullLayerProgress) string {
 	switch s.GetStatus() {
-	case machine.DebugContainerPullProgressStatus_DOWNLOADING:
+	case machine.ImagePullLayerProgress_DOWNLOADING:
 		return fmt.Sprintf("Downloading (%.1f%%)\n", s.Progress)
 
-	case machine.DebugContainerPullProgressStatus_DOWNLOAD_COMPLETE:
+	case machine.ImagePullLayerProgress_DOWNLOAD_COMPLETE:
 		return "Download Complete\n"
 
-	case machine.DebugContainerPullProgressStatus_EXTRACTING:
+	case machine.ImagePullLayerProgress_EXTRACTING:
 		return fmt.Sprintf("Extracting (%.1fs)\n", s.Progress)
 
-	case machine.DebugContainerPullProgressStatus_EXTRACT_COMPLETE:
+	case machine.ImagePullLayerProgress_EXTRACT_COMPLETE:
 		return "Pull Complete\n"
 
-	case machine.DebugContainerPullProgressStatus_ALREADY_EXISTS:
+	case machine.ImagePullLayerProgress_ALREADY_EXISTS:
 		return "Already Exists\n"
 	}
 
@@ -49,7 +49,7 @@ func FmtStatus(s *machine.DebugContainerPullProgressStatus) string {
 }
 
 // UpdateFn is used by PullProgress to report progress updates.
-type UpdateFn func(*machine.DebugContainerPullProgress)
+type UpdateFn func(*machine.ImagePullProgress)
 
 // PullProgress tracks and reports the progress of image pulls.
 type PullProgress struct {
@@ -115,9 +115,9 @@ func (p *PullProgress) ShowProgress(ctx context.Context) func() {
 		cancel()
 		<-lastUpdate
 
-		p.updateFn(&machine.DebugContainerPullProgress{
-			LayerId: "done",
-		})
+		// p.updateFn(&machine.DebugContainerPullProgress{
+		// 	LayerId: "done",
+		// })
 	}
 }
 
@@ -155,10 +155,10 @@ func (p *PullProgress) trackOngoingPulls(ctx context.Context, start time.Time) e
 				continue
 			}
 
-			p.updateFn(&machine.DebugContainerPullProgress{
+			p.updateFn(&machine.ImagePullProgress{
 				LayerId: stringid.TruncateID(j.Digest.Encoded()),
-				ProgressStatus: &machine.DebugContainerPullProgressStatus{
-					Status:   machine.DebugContainerPullProgressStatus_DOWNLOADING,
+				Progress: &machine.ImagePullLayerProgress{
+					Status:   machine.ImagePullLayerProgress_DOWNLOADING,
 					Progress: (float64(info.Offset) / float64(info.Total)) * 100,
 				},
 			})
@@ -174,10 +174,10 @@ func (p *PullProgress) trackOngoingPulls(ctx context.Context, start time.Time) e
 			}
 
 		case info.CreatedAt.After(start):
-			p.updateFn(&machine.DebugContainerPullProgress{
+			p.updateFn(&machine.ImagePullProgress{
 				LayerId: stringid.TruncateID(j.Digest.Encoded()),
-				ProgressStatus: &machine.DebugContainerPullProgressStatus{
-					Status: machine.DebugContainerPullProgressStatus_DOWNLOAD_COMPLETE,
+				Progress: &machine.ImagePullLayerProgress{
+					Status: machine.ImagePullLayerProgress_DOWNLOAD_COMPLETE,
 				},
 			})
 
@@ -188,10 +188,10 @@ func (p *PullProgress) trackOngoingPulls(ctx context.Context, start time.Time) e
 			p.remove(j)
 
 		default:
-			p.updateFn(&machine.DebugContainerPullProgress{
+			p.updateFn(&machine.ImagePullProgress{
 				LayerId: stringid.TruncateID(j.Digest.Encoded()),
-				ProgressStatus: &machine.DebugContainerPullProgressStatus{
-					Status: machine.DebugContainerPullProgressStatus_ALREADY_EXISTS,
+				Progress: &machine.ImagePullLayerProgress{
+					Status: machine.ImagePullLayerProgress_ALREADY_EXISTS,
 				},
 			})
 
@@ -226,10 +226,10 @@ func (p *PullProgress) trackPulledLayers(ctx context.Context) error {
 					elapsed = time.Since(began)
 				}
 
-				p.updateFn(&machine.DebugContainerPullProgress{
+				p.updateFn(&machine.ImagePullProgress{
 					LayerId: stringid.TruncateID(desc.Digest.Encoded()),
-					ProgressStatus: &machine.DebugContainerPullProgressStatus{
-						Status:   machine.DebugContainerPullProgressStatus_EXTRACTING,
+					Progress: &machine.ImagePullLayerProgress{
+						Status:   machine.ImagePullLayerProgress_EXTRACTING,
 						Progress: elapsed.Seconds(),
 					},
 				})
@@ -239,10 +239,10 @@ func (p *PullProgress) trackPulledLayers(ctx context.Context) error {
 
 			if sn.Kind == snapshots.KindCommitted {
 				p.updateFn(
-					&machine.DebugContainerPullProgress{
+					&machine.ImagePullProgress{
 						LayerId: stringid.TruncateID(desc.Digest.Encoded()),
-						ProgressStatus: &machine.DebugContainerPullProgressStatus{
-							Status: machine.DebugContainerPullProgressStatus_EXTRACT_COMPLETE,
+						Progress: &machine.ImagePullLayerProgress{
+							Status: machine.ImagePullLayerProgress_EXTRACT_COMPLETE,
 						},
 					},
 				)

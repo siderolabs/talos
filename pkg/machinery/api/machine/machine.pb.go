@@ -836,26 +836,26 @@ func (ConnectRecord_TimerActive) EnumDescriptor() ([]byte, []int) {
 	return file_machine_machine_proto_rawDescGZIP(), []int{158, 1}
 }
 
-type DebugContainerPullProgressStatus_Status int32
+type ImagePullLayerProgress_Status int32
 
 const (
-	DebugContainerPullProgressStatus_DOWNLOADING       DebugContainerPullProgressStatus_Status = 0
-	DebugContainerPullProgressStatus_DOWNLOAD_COMPLETE DebugContainerPullProgressStatus_Status = 1
-	DebugContainerPullProgressStatus_EXTRACTING        DebugContainerPullProgressStatus_Status = 2
-	DebugContainerPullProgressStatus_EXTRACT_COMPLETE  DebugContainerPullProgressStatus_Status = 3
-	DebugContainerPullProgressStatus_ALREADY_EXISTS    DebugContainerPullProgressStatus_Status = 4
+	ImagePullLayerProgress_DOWNLOADING       ImagePullLayerProgress_Status = 0
+	ImagePullLayerProgress_DOWNLOAD_COMPLETE ImagePullLayerProgress_Status = 1
+	ImagePullLayerProgress_EXTRACTING        ImagePullLayerProgress_Status = 2
+	ImagePullLayerProgress_EXTRACT_COMPLETE  ImagePullLayerProgress_Status = 3
+	ImagePullLayerProgress_ALREADY_EXISTS    ImagePullLayerProgress_Status = 4
 )
 
-// Enum value maps for DebugContainerPullProgressStatus_Status.
+// Enum value maps for ImagePullLayerProgress_Status.
 var (
-	DebugContainerPullProgressStatus_Status_name = map[int32]string{
+	ImagePullLayerProgress_Status_name = map[int32]string{
 		0: "DOWNLOADING",
 		1: "DOWNLOAD_COMPLETE",
 		2: "EXTRACTING",
 		3: "EXTRACT_COMPLETE",
 		4: "ALREADY_EXISTS",
 	}
-	DebugContainerPullProgressStatus_Status_value = map[string]int32{
+	ImagePullLayerProgress_Status_value = map[string]int32{
 		"DOWNLOADING":       0,
 		"DOWNLOAD_COMPLETE": 1,
 		"EXTRACTING":        2,
@@ -864,30 +864,30 @@ var (
 	}
 )
 
-func (x DebugContainerPullProgressStatus_Status) Enum() *DebugContainerPullProgressStatus_Status {
-	p := new(DebugContainerPullProgressStatus_Status)
+func (x ImagePullLayerProgress_Status) Enum() *ImagePullLayerProgress_Status {
+	p := new(ImagePullLayerProgress_Status)
 	*p = x
 	return p
 }
 
-func (x DebugContainerPullProgressStatus_Status) String() string {
+func (x ImagePullLayerProgress_Status) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (DebugContainerPullProgressStatus_Status) Descriptor() protoreflect.EnumDescriptor {
+func (ImagePullLayerProgress_Status) Descriptor() protoreflect.EnumDescriptor {
 	return file_machine_machine_proto_enumTypes[15].Descriptor()
 }
 
-func (DebugContainerPullProgressStatus_Status) Type() protoreflect.EnumType {
+func (ImagePullLayerProgress_Status) Type() protoreflect.EnumType {
 	return &file_machine_machine_proto_enumTypes[15]
 }
 
-func (x DebugContainerPullProgressStatus_Status) Number() protoreflect.EnumNumber {
+func (x ImagePullLayerProgress_Status) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use DebugContainerPullProgressStatus_Status.Descriptor instead.
-func (DebugContainerPullProgressStatus_Status) EnumDescriptor() ([]byte, []int) {
+// Deprecated: Use ImagePullLayerProgress_Status.Descriptor instead.
+func (ImagePullLayerProgress_Status) EnumDescriptor() ([]byte, []int) {
 	return file_machine_machine_proto_rawDescGZIP(), []int{177, 0}
 }
 
@@ -11512,7 +11512,7 @@ func (x *DebugContainerCreateResponse) GetResponse() isDebugContainerCreateRespo
 	return nil
 }
 
-func (x *DebugContainerCreateResponse) GetPullProgress() *DebugContainerPullProgress {
+func (x *DebugContainerCreateResponse) GetPullProgress() *ImagePullProgress {
 	if x != nil {
 		if x, ok := x.Response.(*DebugContainerCreateResponse_PullProgress); ok {
 			return x.PullProgress
@@ -11535,7 +11535,7 @@ type isDebugContainerCreateResponse_Response interface {
 }
 
 type DebugContainerCreateResponse_PullProgress struct {
-	PullProgress *DebugContainerPullProgress `protobuf:"bytes,1,opt,name=pull_progress,json=pullProgress,proto3,oneof"`
+	PullProgress *ImagePullProgress `protobuf:"bytes,1,opt,name=pull_progress,json=pullProgress,proto3,oneof"`
 }
 
 type DebugContainerCreateResponse_ContainerId struct {
@@ -11712,28 +11712,28 @@ func (x *DebugContainerTerminalResize) GetHeight() int32 {
 	return 0
 }
 
-type DebugContainerPullProgressStatus struct {
-	state         protoimpl.MessageState                  `protogen:"open.v1"`
-	Status        DebugContainerPullProgressStatus_Status `protobuf:"varint,1,opt,name=status,proto3,enum=machine.DebugContainerPullProgressStatus_Status" json:"status,omitempty"`
-	Progress      float64                                 `protobuf:"fixed64,2,opt,name=progress,proto3" json:"progress,omitempty"`
+type ImagePullLayerProgress struct {
+	state         protoimpl.MessageState        `protogen:"open.v1"`
+	Status        ImagePullLayerProgress_Status `protobuf:"varint,1,opt,name=status,proto3,enum=machine.ImagePullLayerProgress_Status" json:"status,omitempty"`
+	Progress      float64                       `protobuf:"fixed64,2,opt,name=progress,proto3" json:"progress,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DebugContainerPullProgressStatus) Reset() {
-	*x = DebugContainerPullProgressStatus{}
+func (x *ImagePullLayerProgress) Reset() {
+	*x = ImagePullLayerProgress{}
 	mi := &file_machine_machine_proto_msgTypes[177]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DebugContainerPullProgressStatus) String() string {
+func (x *ImagePullLayerProgress) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DebugContainerPullProgressStatus) ProtoMessage() {}
+func (*ImagePullLayerProgress) ProtoMessage() {}
 
-func (x *DebugContainerPullProgressStatus) ProtoReflect() protoreflect.Message {
+func (x *ImagePullLayerProgress) ProtoReflect() protoreflect.Message {
 	mi := &file_machine_machine_proto_msgTypes[177]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -11745,47 +11745,47 @@ func (x *DebugContainerPullProgressStatus) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DebugContainerPullProgressStatus.ProtoReflect.Descriptor instead.
-func (*DebugContainerPullProgressStatus) Descriptor() ([]byte, []int) {
+// Deprecated: Use ImagePullLayerProgress.ProtoReflect.Descriptor instead.
+func (*ImagePullLayerProgress) Descriptor() ([]byte, []int) {
 	return file_machine_machine_proto_rawDescGZIP(), []int{177}
 }
 
-func (x *DebugContainerPullProgressStatus) GetStatus() DebugContainerPullProgressStatus_Status {
+func (x *ImagePullLayerProgress) GetStatus() ImagePullLayerProgress_Status {
 	if x != nil {
 		return x.Status
 	}
-	return DebugContainerPullProgressStatus_DOWNLOADING
+	return ImagePullLayerProgress_DOWNLOADING
 }
 
-func (x *DebugContainerPullProgressStatus) GetProgress() float64 {
+func (x *ImagePullLayerProgress) GetProgress() float64 {
 	if x != nil {
 		return x.Progress
 	}
 	return 0
 }
 
-type DebugContainerPullProgress struct {
-	state          protoimpl.MessageState            `protogen:"open.v1"`
-	LayerId        string                            `protobuf:"bytes,1,opt,name=layer_id,json=layerId,proto3" json:"layer_id,omitempty"`
-	ProgressStatus *DebugContainerPullProgressStatus `protobuf:"bytes,2,opt,name=progress_status,json=progressStatus,proto3" json:"progress_status,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+type ImagePullProgress struct {
+	state         protoimpl.MessageState  `protogen:"open.v1"`
+	LayerId       string                  `protobuf:"bytes,1,opt,name=layer_id,json=layerId,proto3" json:"layer_id,omitempty"`
+	Progress      *ImagePullLayerProgress `protobuf:"bytes,2,opt,name=progress,proto3" json:"progress,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
-func (x *DebugContainerPullProgress) Reset() {
-	*x = DebugContainerPullProgress{}
+func (x *ImagePullProgress) Reset() {
+	*x = ImagePullProgress{}
 	mi := &file_machine_machine_proto_msgTypes[178]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *DebugContainerPullProgress) String() string {
+func (x *ImagePullProgress) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*DebugContainerPullProgress) ProtoMessage() {}
+func (*ImagePullProgress) ProtoMessage() {}
 
-func (x *DebugContainerPullProgress) ProtoReflect() protoreflect.Message {
+func (x *ImagePullProgress) ProtoReflect() protoreflect.Message {
 	mi := &file_machine_machine_proto_msgTypes[178]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -11797,21 +11797,21 @@ func (x *DebugContainerPullProgress) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use DebugContainerPullProgress.ProtoReflect.Descriptor instead.
-func (*DebugContainerPullProgress) Descriptor() ([]byte, []int) {
+// Deprecated: Use ImagePullProgress.ProtoReflect.Descriptor instead.
+func (*ImagePullProgress) Descriptor() ([]byte, []int) {
 	return file_machine_machine_proto_rawDescGZIP(), []int{178}
 }
 
-func (x *DebugContainerPullProgress) GetLayerId() string {
+func (x *ImagePullProgress) GetLayerId() string {
 	if x != nil {
 		return x.LayerId
 	}
 	return ""
 }
 
-func (x *DebugContainerPullProgress) GetProgressStatus() *DebugContainerPullProgressStatus {
+func (x *ImagePullProgress) GetProgress() *ImagePullLayerProgress {
 	if x != nil {
-		return x.ProgressStatus
+		return x.Progress
 	}
 	return nil
 }
@@ -13145,9 +13145,9 @@ const file_machine_machine_proto_rawDesc = "" +
 	"\x03env\x18\x03 \x03(\v2$.machine.DebugContainerSpec.EnvEntryR\x03env\x1a6\n" +
 	"\bEnvEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x9b\x01\n" +
-	"\x1cDebugContainerCreateResponse\x12J\n" +
-	"\rpull_progress\x18\x01 \x01(\v2#.machine.DebugContainerPullProgressH\x00R\fpullProgress\x12#\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\x92\x01\n" +
+	"\x1cDebugContainerCreateResponse\x12A\n" +
+	"\rpull_progress\x18\x01 \x01(\v2\x1a.machine.ImagePullProgressH\x00R\fpullProgress\x12#\n" +
 	"\fcontainer_id\x18\x02 \x01(\tH\x00R\vcontainerIdB\n" +
 	"\n" +
 	"\bresponse\"\xcf\x01\n" +
@@ -13161,9 +13161,9 @@ const file_machine_machine_proto_rawDesc = "" +
 	"\arequest\"L\n" +
 	"\x1cDebugContainerTerminalResize\x12\x14\n" +
 	"\x05width\x18\x01 \x01(\x05R\x05width\x12\x16\n" +
-	"\x06height\x18\x02 \x01(\x05R\x06height\"\xf4\x01\n" +
-	" DebugContainerPullProgressStatus\x12H\n" +
-	"\x06status\x18\x01 \x01(\x0e20.machine.DebugContainerPullProgressStatus.StatusR\x06status\x12\x1a\n" +
+	"\x06height\x18\x02 \x01(\x05R\x06height\"\xe0\x01\n" +
+	"\x16ImagePullLayerProgress\x12>\n" +
+	"\x06status\x18\x01 \x01(\x0e2&.machine.ImagePullLayerProgress.StatusR\x06status\x12\x1a\n" +
 	"\bprogress\x18\x02 \x01(\x01R\bprogress\"j\n" +
 	"\x06Status\x12\x0f\n" +
 	"\vDOWNLOADING\x10\x00\x12\x15\n" +
@@ -13171,10 +13171,10 @@ const file_machine_machine_proto_rawDesc = "" +
 	"\n" +
 	"EXTRACTING\x10\x02\x12\x14\n" +
 	"\x10EXTRACT_COMPLETE\x10\x03\x12\x12\n" +
-	"\x0eALREADY_EXISTS\x10\x04\"\x8b\x01\n" +
-	"\x1aDebugContainerPullProgress\x12\x19\n" +
-	"\blayer_id\x18\x01 \x01(\tR\alayerId\x12R\n" +
-	"\x0fprogress_status\x18\x02 \x01(\v2).machine.DebugContainerPullProgressStatusR\x0eprogressStatus\"e\n" +
+	"\x0eALREADY_EXISTS\x10\x04\"k\n" +
+	"\x11ImagePullProgress\x12\x19\n" +
+	"\blayer_id\x18\x01 \x01(\tR\alayerId\x12;\n" +
+	"\bprogress\x18\x02 \x01(\v2\x1f.machine.ImagePullLayerProgressR\bprogress\"e\n" +
 	"\x19DebugContainerRunResponse\x12!\n" +
 	"\vstdout_data\x18\x02 \x01(\fH\x00R\n" +
 	"stdoutData\x12\x1d\n" +
@@ -13274,7 +13274,7 @@ var file_machine_machine_proto_goTypes = []any{
 	(NetstatRequest_Filter)(0),                              // 12: machine.NetstatRequest.Filter
 	(ConnectRecord_State)(0),                                // 13: machine.ConnectRecord.State
 	(ConnectRecord_TimerActive)(0),                          // 14: machine.ConnectRecord.TimerActive
-	(DebugContainerPullProgressStatus_Status)(0),            // 15: machine.DebugContainerPullProgressStatus.Status
+	(ImagePullLayerProgress_Status)(0),                      // 15: machine.ImagePullLayerProgress.Status
 	(*ApplyConfigurationRequest)(nil),                       // 16: machine.ApplyConfigurationRequest
 	(*ApplyConfiguration)(nil),                              // 17: machine.ApplyConfiguration
 	(*ApplyConfigurationResponse)(nil),                      // 18: machine.ApplyConfigurationResponse
@@ -13452,8 +13452,8 @@ var file_machine_machine_proto_goTypes = []any{
 	(*DebugContainerCreateResponse)(nil),                    // 190: machine.DebugContainerCreateResponse
 	(*DebugContainerRunRequest)(nil),                        // 191: machine.DebugContainerRunRequest
 	(*DebugContainerTerminalResize)(nil),                    // 192: machine.DebugContainerTerminalResize
-	(*DebugContainerPullProgressStatus)(nil),                // 193: machine.DebugContainerPullProgressStatus
-	(*DebugContainerPullProgress)(nil),                      // 194: machine.DebugContainerPullProgress
+	(*ImagePullLayerProgress)(nil),                          // 193: machine.ImagePullLayerProgress
+	(*ImagePullProgress)(nil),                               // 194: machine.ImagePullProgress
 	(*DebugContainerRunResponse)(nil),                       // 195: machine.DebugContainerRunResponse
 	(*MachineStatusEvent_MachineStatus)(nil),                // 196: machine.MachineStatusEvent.MachineStatus
 	(*MachineStatusEvent_MachineStatus_UnmetCondition)(nil), // 197: machine.MachineStatusEvent.MachineStatus.UnmetCondition
@@ -13643,10 +13643,10 @@ var file_machine_machine_proto_depIdxs = []int32{
 	189, // 167: machine.DebugContainerCreateRequest.spec:type_name -> machine.DebugContainerSpec
 	210, // 168: machine.DebugContainerCreateRequest.image_chunk:type_name -> common.Data
 	202, // 169: machine.DebugContainerSpec.env:type_name -> machine.DebugContainerSpec.EnvEntry
-	194, // 170: machine.DebugContainerCreateResponse.pull_progress:type_name -> machine.DebugContainerPullProgress
+	194, // 170: machine.DebugContainerCreateResponse.pull_progress:type_name -> machine.ImagePullProgress
 	192, // 171: machine.DebugContainerRunRequest.term_resize:type_name -> machine.DebugContainerTerminalResize
-	15,  // 172: machine.DebugContainerPullProgressStatus.status:type_name -> machine.DebugContainerPullProgressStatus.Status
-	193, // 173: machine.DebugContainerPullProgress.progress_status:type_name -> machine.DebugContainerPullProgressStatus
+	15,  // 172: machine.ImagePullLayerProgress.status:type_name -> machine.ImagePullLayerProgress.Status
+	193, // 173: machine.ImagePullProgress.progress:type_name -> machine.ImagePullLayerProgress
 	197, // 174: machine.MachineStatusEvent.MachineStatus.unmet_conditions:type_name -> machine.MachineStatusEvent.MachineStatus.UnmetCondition
 	16,  // 175: machine.MachineService.ApplyConfiguration:input_type -> machine.ApplyConfigurationRequest
 	22,  // 176: machine.MachineService.Bootstrap:input_type -> machine.BootstrapRequest

@@ -1422,7 +1422,7 @@ message DebugContainerSpec {
 
 message DebugContainerCreateResponse {
   oneof response {
-    DebugContainerPullProgress pull_progress = 1;
+    ImagePullProgress pull_progress = 1;
     string container_id = 2;
   }
 }
@@ -1441,7 +1441,7 @@ message DebugContainerTerminalResize {
   int32 height = 2;
 }
 
-message DebugContainerPullProgressStatus {
+message ImagePullLayerProgress {
   enum Status {
     DOWNLOADING = 0;
     DOWNLOAD_COMPLETE = 1;
@@ -1453,9 +1453,9 @@ message DebugContainerPullProgressStatus {
   double progress = 2;
 }
 
-message DebugContainerPullProgress {
+message ImagePullProgress{
   string layer_id = 1;
-  DebugContainerPullProgressStatus progress_status = 2;
+  ImagePullLayerProgress progress = 2;
 }
 
 message DebugContainerRunResponse {
