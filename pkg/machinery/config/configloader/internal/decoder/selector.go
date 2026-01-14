@@ -141,6 +141,10 @@ func deleteForPath(val reflect.Value, path []string, key, value string) error {
 	}
 
 	if val.Kind() == reflect.Pointer || val.Kind() == reflect.Interface {
+		if val.IsNil() {
+			return ErrLookupFailed
+		}
+
 		return deleteForPath(val.Elem(), path, key, value)
 	}
 
