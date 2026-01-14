@@ -107,7 +107,7 @@ func (v *VolumeWipeTarget) wipeWithParentLocked(log func(string, ...any)) error 
 
 	log("wiping volume %q (%s)", v.GetLabel(), v.devName)
 
-	return bd.FastWipe()
+	return WipeWithSignatures(bd, v.devName, log)
 }
 
 func (v *VolumeWipeTarget) dropWithParentLocked(parentBd *block.Device, log func(string, ...any)) error {

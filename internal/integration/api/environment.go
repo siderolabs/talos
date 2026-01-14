@@ -80,6 +80,7 @@ func (suite *EnvironmentSuite) TestEnvironment() {
 		suite.ctx, node, func(nodeCtx context.Context) error {
 			return base.IgnoreGRPCUnavailable(suite.Client.Reboot(nodeCtx))
 		}, 5*time.Minute,
+		suite.CleanupFailedPods,
 	)
 
 	suite.Require().Eventually(func() bool {
@@ -95,6 +96,7 @@ func (suite *EnvironmentSuite) TestEnvironment() {
 		suite.ctx, node, func(nodeCtx context.Context) error {
 			return base.IgnoreGRPCUnavailable(suite.Client.Reboot(nodeCtx))
 		}, 5*time.Minute,
+		suite.CleanupFailedPods,
 	)
 
 	suite.Require().Eventually(func() bool {
