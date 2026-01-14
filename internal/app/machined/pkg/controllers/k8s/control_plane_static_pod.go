@@ -429,6 +429,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 		"etcd-keyfile":                     argsbuilder.MergeDenied,
 		"kubelet-client-certificate":       argsbuilder.MergeDenied,
 		"kubelet-client-key":               argsbuilder.MergeDenied,
+		"service-account-issuer":           argsbuilder.MergePrepend,
 		"service-account-key-file":         argsbuilder.MergeDenied,
 		"service-account-signing-key-file": argsbuilder.MergeDenied,
 		"tls-cert-file":                    argsbuilder.MergeDenied,

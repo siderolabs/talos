@@ -138,6 +138,12 @@ This includes fields such as `.cluster.apiServer.extraArgs`.
 BREAKING: If you were relying on the resources EtcdConfigs, KubeletConfigs, ControllerManagerConfigs, SchedulerConfigs or APIServerConfigs, the protobuf format has changed from `map<string,string>` to `map<string,message>`.
 """
 
+    [notes.serviceAccountIssuer]
+    title = "Service Account Issuer configuration"
+    description = """\
+In API Server, passing extra args with `service-account-issuer` will prepend them before default value.
+"""
+
 [make_deps]
 
     [make_deps.tools]

@@ -23,9 +23,10 @@ func (suite *ArgsbuilderSuite) TestMergeAdditive() {
 	}
 
 	suite.Require().NoError(
-		args.Merge(argsbuilder.Args{
-			"param": {"value2, value10"},
-		},
+		args.Merge(
+			argsbuilder.Args{
+				"param": {"value2, value10"},
+			},
 			argsbuilder.WithMergePolicies(argsbuilder.MergePolicies{
 				"param": argsbuilder.MergeAdditive,
 			}),
@@ -71,6 +72,72 @@ func (suite *ArgsbuilderSuite) TestMergeOverwrite() {
 
 	suite.Require().Equal([]string{"value10", "value11"}, args["param"])
 	suite.Assert().Equal([]string{"--param=value10", "--param=value11"}, args.Args())
+}
+
+//nolint:dupl
+func (suite *ArgsbuilderSuite) TestMergePrepend() {
+	args := argsbuilder.Args{
+		"param": {"value1"},
+	}
+
+	suite.Require().NoError(
+		args.Merge(argsbuilder.Args{
+			"param": {"value2", "value3"},
+		},
+			argsbuilder.WithMergePolicies(argsbuilder.MergePolicies{
+				"param": argsbuilder.MergePrepend,
+			}),
+		),
+	)
+
+	suite.Require().Equal([]string{"value2", "value3", "value1"}, args["param"])
+	suite.Assert().Equal([]string{"--param=value2", "--param=value3", "--param=value1"}, args.Args())
+
+	suite.Require().NoError(
+		args.Merge(argsbuilder.Args{
+			"param": {"value4"},
+		},
+			argsbuilder.WithMergePolicies(argsbuilder.MergePolicies{
+				"param": argsbuilder.MergePrepend,
+			}),
+		),
+	)
+
+	suite.Require().Equal([]string{"value4", "value2", "value3", "value1"}, args["param"])
+	suite.Assert().Equal([]string{"--param=value4", "--param=value2", "--param=value3", "--param=value1"}, args.Args())
+}
+
+//nolint:dupl
+func (suite *ArgsbuilderSuite) TestMergeAppend() {
+	args := argsbuilder.Args{
+		"param": {"value1"},
+	}
+
+	suite.Require().NoError(
+		args.Merge(argsbuilder.Args{
+			"param": {"value2", "value3"},
+		},
+			argsbuilder.WithMergePolicies(argsbuilder.MergePolicies{
+				"param": argsbuilder.MergeAppend,
+			}),
+		),
+	)
+
+	suite.Require().Equal([]string{"value1", "value2", "value3"}, args["param"])
+	suite.Assert().Equal([]string{"--param=value1", "--param=value2", "--param=value3"}, args.Args())
+
+	suite.Require().NoError(
+		args.Merge(argsbuilder.Args{
+			"param": {"value4"},
+		},
+			argsbuilder.WithMergePolicies(argsbuilder.MergePolicies{
+				"param": argsbuilder.MergeAppend,
+			}),
+		),
+	)
+
+	suite.Require().Equal([]string{"value1", "value2", "value3", "value4"}, args["param"])
+	suite.Assert().Equal([]string{"--param=value1", "--param=value2", "--param=value3", "--param=value4"}, args.Args())
 }
 
 func (suite *ArgsbuilderSuite) TestMergeDenied() {

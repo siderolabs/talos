@@ -14,6 +14,10 @@ const (
 	MergeAdditive
 	// MergeDenied fail merge if another object has the arg defined.
 	MergeDenied
+	// MergePrepend prepends new values before existing ones.
+	MergePrepend
+	// MergeAppend appends new values after existing ones.
+	MergeAppend
 )
 
 // MergePolicies merge policy map.

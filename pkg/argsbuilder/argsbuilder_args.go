@@ -53,6 +53,18 @@ func (a Args) Merge(args Args, setters ...MergeOption) error {
 		case MergeOverwrite:
 			a[key] = slices.Clone(val)
 
+		case MergeAppend:
+			existing := make([]string, 0, len(val)+len(a[key]))
+			existing = append(existing, a[key]...)
+			existing = append(existing, val...)
+			a[key] = existing
+
+		case MergePrepend:
+			existing := make([]string, 0, len(val)+len(a[key]))
+			existing = append(existing, val...)
+			existing = append(existing, a[key]...)
+			a[key] = existing
+
 		case MergeAdditive:
 			// 1. Join the existing []string slice into one string so we can Split it.
 			//    This handles cases where a[key] might be ["a", "b"] or ["a,b"].
