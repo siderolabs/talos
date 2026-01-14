@@ -357,7 +357,8 @@ func (o *OpenStack) ParseMetadata(
 // Configuration implements the runtime.Platform interface.
 func (o *OpenStack) Configuration(ctx context.Context, r state.State) (machineConfig []byte, err error) {
 	_, _, machineConfig, err = o.configFromCD(ctx, r)
-	if err != nil {
+	// Fall back to network if config drive not found or user_data missing
+	if stderrors.Is(err, errors.ErrNoConfigSource) || stderrors.Is(err, errors.ErrNoUserData) {
 		if err = netutils.Wait(ctx, r); err != nil {
 			return nil, err
 		}
@@ -366,6 +367,8 @@ func (o *OpenStack) Configuration(ctx context.Context, r state.State) (machineCo
 		if err != nil {
 			return nil, err
 		}
+	} else if err != nil {
+		return nil, err
 	}
 
 	// Some openstack setups does not allow you to change user-data,
@@ -395,7 +398,10 @@ func (o *OpenStack) NetworkConfiguration(ctx context.Context, st state.State, ch
 	networkSource := false
 
 	metadataConfigDl, metadataNetworkConfigDl, _, err := o.configFromCD(ctx, st)
-	if err != nil {
+
+	switch {
+	case stderrors.Is(err, errors.ErrNoConfigSource):
+		// Config drive not found, fall back to network metadata service
 		metadataConfigDl, metadataNetworkConfigDl, _, err = o.configFromNetwork(ctx)
 		if stderrors.Is(err, errors.ErrNoConfigSource) {
 			err = nil
@@ -406,6 +412,11 @@ func (o *OpenStack) NetworkConfiguration(ctx context.Context, st state.State, ch
 		}
 
 		networkSource = true
+	case stderrors.Is(err, errors.ErrNoUserData):
+		// Config drive found but user_data missing - use metadata from config drive
+		err = nil
+	case err != nil:
+		return err
 	}
 
 	var (

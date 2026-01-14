@@ -148,7 +148,7 @@ func (o *OpenStack) configFromCD(ctx context.Context, r state.State) (metaConfig
 	}
 
 	if machineConfig == nil {
-		err = errors.ErrNoConfigSource
+		err = errors.ErrNoUserData
 	}
 
 	return metaConfig, networkConfig, machineConfig, err
