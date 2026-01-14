@@ -292,3 +292,36 @@ func TestApplyMultiDocCPDelete(t *testing.T) {
 		})
 	}
 }
+
+//go:embed testdata/patchdeletemissing/config.yaml
+var configPatchDeleteMissing []byte
+
+func TestPatchDeleteMissing(t *testing.T) {
+	patches, err := configpatcher.LoadPatches([]string{
+		"@testdata/patchdeletemissing/strategic1.yaml",
+	})
+	require.NoError(t, err)
+
+	cfg, err := configloader.NewFromBytes(configPatchDeleteMissing)
+	require.NoError(t, err)
+
+	for _, tt := range []struct {
+		name  string
+		input configpatcher.Input
+	}{
+		{
+			name:  "WithConfig",
+			input: configpatcher.WithConfig(cfg),
+		},
+		{
+			name:  "WithBytes",
+			input: configpatcher.WithBytes(configPatchDeleteMissing),
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := configpatcher.Apply(tt.input, patches)
+			require.Error(t, err)
+			require.ErrorContains(t, err, `patch delete: path 'machine.network.hostname' in document '/v1alpha1': failed to delete path 'machine.network.hostname': lookup failed`)
+		})
+	}
+}
