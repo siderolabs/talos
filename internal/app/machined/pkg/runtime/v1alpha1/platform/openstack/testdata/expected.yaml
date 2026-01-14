@@ -94,6 +94,17 @@ links:
       masterName: bond0
       slaveIndex: 1
       layer: platform
+    - name: bond0.100
+      logical: true
+      up: true
+      mtu: 1400
+      kind: vlan
+      type: ether
+      parentName: bond0
+      vlan:
+        vlanID: 100
+        vlanProtocol: 802.1q
+      layer: platform
 routes:
     - family: inet6
       dst: ""
@@ -190,6 +201,13 @@ operators:
       requireUp: true
       dhcp6:
         routeMetric: 2048
+        skipHostnameRequest: true
+      layer: platform
+    - operator: dhcp4
+      linkName: bond0.100
+      requireUp: true
+      dhcp4:
+        routeMetric: 1024
         skipHostnameRequest: true
       layer: platform
 externalIPs:

@@ -52,6 +52,9 @@ type NetworkConfig struct {
 		BondLinks      []string `json:"bond_links,omitempty"`
 		BondMIIMon     uint32   `json:"bond_miimon,string,omitempty"`
 		BondHashPolicy string   `json:"bond_xmit_hash_policy,omitempty"`
+		VlanID         uint16   `json:"vlan_id,omitempty"`
+		VlanLink       string   `json:"vlan_link,omitempty"`
+		VlanMac        string   `json:"vlan_mac_address,omitempty"`
 	} `json:"links"`
 	Networks []struct {
 		ID      string `json:"id,omitempty"`

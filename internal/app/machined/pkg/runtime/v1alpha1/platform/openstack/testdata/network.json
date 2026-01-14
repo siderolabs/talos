@@ -43,6 +43,15 @@
             "id": "83f59825-bf2d-4ea7-98be-edc772fe82de",
             "type": "phy",
             "ethernet_mac_address": "4c:d9:8f:b3:34:f7"
+        },
+        {
+            "id": "vlan-interface-001",
+            "vif_id": "acf55ef1-9a79-4c59-bec7-1ebf01a9a918",
+            "type": "vlan",
+            "mtu": 1400,
+            "vlan_mac_address": null,
+            "vlan_link": "tap7819ff08-20",
+            "vlan_id": 100
         }
     ],
     "networks": [
@@ -138,6 +147,12 @@
                     "address": "8.8.4.4"
                 }
             ]
+        },
+        {
+            "id": "vlan-network",
+            "type": "ipv4_dhcp",
+            "link": "vlan-interface-001",
+            "network_id": "5ee412a7-13c5-4306-ad4d-85c06241e5f4"
         }
     ],
     "services": [
