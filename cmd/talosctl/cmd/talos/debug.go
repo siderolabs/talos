@@ -14,6 +14,7 @@ import (
 	"sort"
 	"strings"
 	"syscall"
+	"time"
 
 	"github.com/spf13/cobra"
 	"golang.org/x/term"
@@ -40,7 +41,7 @@ func init() {
 
 // debugCmd represents the debug command.
 var debugCmd = &cobra.Command{
-	Use:   "debug <image-tar-path|image ref> [args]",
+	Use:   "debugmeow <image-tar-path|image ref> [args]",
 	Short: "Run a debug container from an image archive or reference",
 	Example: `  # Run a debug container from a local tar archive
     talosctl -n 172.20.0.2 debug ./debug-tools.tar --args /bin/sh
@@ -93,19 +94,6 @@ var debugCmd = &cobra.Command{
 				return fmt.Errorf("failed to create debug container stream: %w", err)
 			}
 
-			if term.IsTerminal(int(os.Stdin.Fd())) {
-				oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
-				if err != nil {
-					return fmt.Errorf("failed to set terminal to raw mode: %w", err)
-				}
-
-				defer func() {
-					if oldState != nil {
-						term.Restore(int(os.Stdin.Fd()), oldState) //nolint:errcheck
-					}
-				}()
-			}
-
 			return runContainer(ctx, rep, runStream, ctrID)
 		})
 	},
@@ -155,8 +143,6 @@ func createContainer(ctx context.Context, rep *reporter.Reporter, imageArg strin
 		ongoingPulls: pullJobs{},
 	}
 
-	var pullComplete bool
-
 	for {
 		msg, err := stream.Recv()
 		if err != nil {
@@ -169,25 +155,10 @@ func createContainer(ctx context.Context, rep *reporter.Reporter, imageArg strin
 
 		switch msg.Response.(type) {
 		case *machine.DebugContainerCreateResponse_PullProgress:
-			if pullComplete {
-				continue
-			}
-
 			pullProgress := msg.GetPullProgress()
 			id := pullProgress.GetLayerId()
 
-			if id == "done" {
-				pullComplete = true
-
-				rep.Report(reporter.Update{
-					Message: "Image pull complete",
-					Status:  reporter.StatusSucceeded,
-				})
-
-				continue
-			}
-
-			pullProgWriter.updateJob(id, pullProgress.GetProgressStatus())
+			pullProgWriter.updateJob(id, pullProgress.GetProgress())
 
 			pullProgWriter.printLayerProgress()
 
@@ -200,7 +171,7 @@ func createContainer(ctx context.Context, rep *reporter.Reporter, imageArg strin
 			return msg.GetContainerId(), nil
 
 		default:
-			fmt.Printf("Unknown type\n")
+			return "", fmt.Errorf("unknown response type")
 		}
 	}
 }
@@ -283,10 +254,25 @@ func runContainer(ctx context.Context, rep *reporter.Reporter, stream machine.Ma
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	rep.Report(reporter.Update{
-		Message: fmt.Sprintf("Starting container: %s\n", containerID),
-		Status:  reporter.StatusRunning,
-	})
+	startingContainerSpinnerCtx, startingContainerSpinnerCancel := context.WithCancel(context.Background())
+	defer startingContainerSpinnerCancel()
+
+	go func() {
+		timer := time.NewTicker(100 * time.Millisecond)
+		defer timer.Stop()
+
+		for {
+			select {
+			case <-startingContainerSpinnerCtx.Done():
+				return
+			case <-timer.C:
+				rep.Report(reporter.Update{
+					Message: fmt.Sprintf("Starting container: %s\n ", strings.TrimSpace(containerID)),
+					Status:  reporter.StatusRunning,
+				})
+			}
+		}
+	}()
 
 	err := stream.Send(&machine.DebugContainerRunRequest{
 		Request: &machine.DebugContainerRunRequest_ContainerId{
@@ -296,13 +282,33 @@ func runContainer(ctx context.Context, rep *reporter.Reporter, stream machine.Ma
 	if err != nil {
 		return fmt.Errorf("failed to send container ID: %w", err)
 	}
-	// TODO(laurazard): stay attached until container removed
+
+	_, err = stream.Recv()
+	if err != nil {
+		return err
+	}
+
+	startingContainerSpinnerCancel()
 
 	rep.Report(reporter.Update{
-		Message: fmt.Sprintf("Container started: %s\n", containerID),
+		Message: fmt.Sprintf("Container started: %s", containerID),
 		Status:  reporter.StatusSucceeded,
 	})
 
+	if term.IsTerminal(int(os.Stdin.Fd())) {
+		oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
+		if err != nil {
+			return fmt.Errorf("failed to set terminal to raw mode: %w", err)
+		}
+
+		defer func() {
+			if oldState != nil {
+				term.Restore(int(os.Stdin.Fd()), oldState) //nolint:errcheck
+			}
+		}()
+	}
+
+	// TODO(laurazard): stay attached until container removed
 	var (
 		sendC    = make(chan *machine.DebugContainerRunRequest, 100)
 		sendDone chan error
@@ -429,12 +435,12 @@ var forwardedSignals = []os.Signal{
 	syscall.SIGWINCH,
 }
 
-// sigHandler registers signal handlers for the signals in
-// `forwardedSignals`, and sends them to `msgC`.
+// sigHandler registers signal handlers for the signals in `forwardedSignals`,
+// and sends them to `msgC`.
 //
-// In case the signal received is `SIGWINCH`, the size of the user's
-// terminal is queried and sent as a `DebugContainerTerminalResize`
-// message, in order to resize the container's terminal.
+// In case the signal received is `SIGWINCH`, the size of the user's terminal
+// is queried and sent as a `DebugContainerTerminalResize` message, in order
+// to resize the container's terminal.
 func sigHandler(ctx context.Context, msgC chan<- *machine.DebugContainerRunRequest) {
 	sigC := make(chan os.Signal, 1)
 	signal.Notify(sigC, forwardedSignals...)
@@ -484,17 +490,15 @@ func sigHandler(ctx context.Context, msgC chan<- *machine.DebugContainerRunReque
 
 // stdinReader reads from stdin and sends data to msgC.
 //
-// This implementation is unfortunately a bit complex. This is due
-// to the fact that reading from stdin is a blocking syscall, which
-// means if we just do `os.Stdin.Read` and send it's output to
-// `msgC`, canceling `ctx` won't cause this goroutine to end (that
-// will only happen when there's something to read from stdin, and
-// the goroutine will loop around and check `ctx.Done()`.
-// To address this, wrap `os.Stdin` in a `io.Pipe()` we can cancel,
-// and launch a separate goroutine to close the pipe when `ctx` is
-// canceled.
-// This way, as soon as `ctx` is canceled, the pipe is closed and
-// the main goroutine will get an `io.EOF` and exit.
+// This implementation is unfortunately a bit complex. This is due to the fact
+// that reading from stdin is a blocking syscall, which means if we just do
+// `os.Stdin.Read` and send it's output to `msgC`, canceling `ctx` won't cause
+// this goroutine to end (that will only happen when there's something to read
+// from stdin, and the goroutine will loop around and check `ctx.Done()`.
+// To address this, wrap `os.Stdin` in a `io.Pipe()` we can cancel, and launch a
+// separate goroutine to close the pipe when `ctx` is canceled.
+// This way, as soon as `ctx` is canceled, the pipe is closed and the main
+// goroutine will get an `io.EOF` and exit.
 func stdinReader(ctx context.Context, msgC chan<- *machine.DebugContainerRunRequest) chan error {
 	r, w := io.Pipe()
 	done := make(chan error)
@@ -535,7 +539,17 @@ func stdinReader(ctx context.Context, msgC chan<- *machine.DebugContainerRunRequ
 	return done
 }
 
-func sendLoop(ctx context.Context, stream machine.MachineService_DebugContainerRunClient, msgC chan *machine.DebugContainerRunRequest) chan error {
+// sendLoop launches a goroutine that reads messages from msgC and sends them to
+// the gRPC stream.
+// The launched goroutine exits if ctx is canceled, or an error is returned while
+// sending a message to the gRPC stream.
+//
+// sendLoop returns a channel that will receive the error (or nil) when the
+// goroutine exits.
+func sendLoop(ctx context.Context,
+	stream machine.MachineService_DebugContainerRunClient,
+	msgC chan *machine.DebugContainerRunRequest,
+) chan error {
 	done := make(chan error)
 
 	go func() {
@@ -577,7 +591,7 @@ func formatBytes(bytes int64) string {
 
 type pullJob struct {
 	LayerID string
-	Status  *machine.DebugContainerPullProgressStatus
+	Status  *machine.ImagePullLayerProgress
 }
 
 type pullJobs []*pullJob
@@ -599,7 +613,7 @@ type pullProgressWriter struct {
 	ongoingPulls pullJobs
 }
 
-func (p *pullProgressWriter) updateJob(layerID string, progress *machine.DebugContainerPullProgressStatus) {
+func (p *pullProgressWriter) updateJob(layerID string, progress *machine.ImagePullLayerProgress) {
 	for _, job := range p.ongoingPulls {
 		if job.LayerID == layerID {
 			job.Status = progress

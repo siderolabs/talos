@@ -11078,7 +11078,7 @@ func (m *DebugContainerTerminalResize) MarshalToSizedBufferVT(dAtA []byte) (int,
 	return len(dAtA) - i, nil
 }
 
-func (m *DebugContainerPullProgressStatus) MarshalVT() (dAtA []byte, err error) {
+func (m *ImagePullLayerProgress) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -11091,12 +11091,12 @@ func (m *DebugContainerPullProgressStatus) MarshalVT() (dAtA []byte, err error) 
 	return dAtA[:n], nil
 }
 
-func (m *DebugContainerPullProgressStatus) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ImagePullLayerProgress) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *DebugContainerPullProgressStatus) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ImagePullLayerProgress) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -11122,7 +11122,7 @@ func (m *DebugContainerPullProgressStatus) MarshalToSizedBufferVT(dAtA []byte) (
 	return len(dAtA) - i, nil
 }
 
-func (m *DebugContainerPullProgress) MarshalVT() (dAtA []byte, err error) {
+func (m *ImagePullProgress) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -11135,12 +11135,12 @@ func (m *DebugContainerPullProgress) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *DebugContainerPullProgress) MarshalToVT(dAtA []byte) (int, error) {
+func (m *ImagePullProgress) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *DebugContainerPullProgress) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *ImagePullProgress) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -11152,8 +11152,8 @@ func (m *DebugContainerPullProgress) MarshalToSizedBufferVT(dAtA []byte) (int, e
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if m.ProgressStatus != nil {
-		size, err := m.ProgressStatus.MarshalToSizedBufferVT(dAtA[:i])
+	if m.Progress != nil {
+		size, err := m.Progress.MarshalToSizedBufferVT(dAtA[:i])
 		if err != nil {
 			return 0, err
 		}
@@ -15557,7 +15557,7 @@ func (m *DebugContainerTerminalResize) SizeVT() (n int) {
 	return n
 }
 
-func (m *DebugContainerPullProgressStatus) SizeVT() (n int) {
+func (m *ImagePullLayerProgress) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -15573,7 +15573,7 @@ func (m *DebugContainerPullProgressStatus) SizeVT() (n int) {
 	return n
 }
 
-func (m *DebugContainerPullProgress) SizeVT() (n int) {
+func (m *ImagePullProgress) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -15583,8 +15583,8 @@ func (m *DebugContainerPullProgress) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	if m.ProgressStatus != nil {
-		l = m.ProgressStatus.SizeVT()
+	if m.Progress != nil {
+		l = m.Progress.SizeVT()
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
 	n += len(m.unknownFields)
@@ -39982,7 +39982,7 @@ func (m *DebugContainerCreateResponse) UnmarshalVT(dAtA []byte) error {
 					return err
 				}
 			} else {
-				v := &DebugContainerPullProgress{}
+				v := &ImagePullProgress{}
 				if err := v.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 					return err
 				}
@@ -40309,7 +40309,7 @@ func (m *DebugContainerTerminalResize) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *DebugContainerPullProgressStatus) UnmarshalVT(dAtA []byte) error {
+func (m *ImagePullLayerProgress) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -40332,10 +40332,10 @@ func (m *DebugContainerPullProgressStatus) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: DebugContainerPullProgressStatus: wiretype end group for non-group")
+			return fmt.Errorf("proto: ImagePullLayerProgress: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: DebugContainerPullProgressStatus: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ImagePullLayerProgress: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -40352,7 +40352,7 @@ func (m *DebugContainerPullProgressStatus) UnmarshalVT(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				m.Status |= DebugContainerPullProgressStatus_Status(b&0x7F) << shift
+				m.Status |= ImagePullLayerProgress_Status(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -40390,7 +40390,7 @@ func (m *DebugContainerPullProgressStatus) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *DebugContainerPullProgress) UnmarshalVT(dAtA []byte) error {
+func (m *ImagePullProgress) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -40413,10 +40413,10 @@ func (m *DebugContainerPullProgress) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: DebugContainerPullProgress: wiretype end group for non-group")
+			return fmt.Errorf("proto: ImagePullProgress: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: DebugContainerPullProgress: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: ImagePullProgress: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -40453,7 +40453,7 @@ func (m *DebugContainerPullProgress) UnmarshalVT(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ProgressStatus", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Progress", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -40480,10 +40480,10 @@ func (m *DebugContainerPullProgress) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.ProgressStatus == nil {
-				m.ProgressStatus = &DebugContainerPullProgressStatus{}
+			if m.Progress == nil {
+				m.Progress = &ImagePullLayerProgress{}
 			}
-			if err := m.ProgressStatus.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+			if err := m.Progress.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

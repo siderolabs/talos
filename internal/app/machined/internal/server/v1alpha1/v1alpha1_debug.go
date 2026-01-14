@@ -11,6 +11,8 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"sync"
+	"time"
 
 	containerdapi "github.com/containerd/containerd/v2/client"
 	"github.com/containerd/containerd/v2/core/images"
@@ -31,6 +33,140 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
+
+type imageCache struct {
+	ctrdClient *containerdapi.Client
+
+	mu         sync.Mutex
+	images     map[containerdapi.Image]chan struct{}
+	containers map[containerdapi.Container]chan struct{}
+}
+
+const debugContainerImageTTL = 5 * time.Second
+
+func (ic *imageCache) initClientIfNil() {
+	if ic.ctrdClient != nil {
+		return
+	}
+
+	client, err := containerdapi.New(constants.SystemContainerdAddress,
+		containerdapi.WithDefaultNamespace(constants.SystemContainerdNamespace))
+	if err != nil {
+		log.Printf("failed to connect to system containerd: %s", err)
+	}
+
+	ic.ctrdClient = client
+}
+
+func (ic *imageCache) addImage(img containerdapi.Image) {
+	ic.mu.Lock()
+	defer ic.mu.Unlock()
+
+	usedC := make(chan struct{})
+
+	go func() {
+		timer := time.NewTimer(debugContainerImageTTL)
+		select {
+		case <-timer.C:
+			log.Printf("debug container image TTL expired, deleting image %s", img.Name())
+
+			ic.initClientIfNil()
+
+			err := ic.ctrdClient.ImageService().Delete(context.Background(), img.Name(), images.SynchronousDelete())
+			if err != nil {
+				log.Printf("failed to delete image %s: %v", img.Name(), err)
+			}
+		case <-usedC:
+			log.Printf("debug container image %s marked as used, skipping deletion", img.Name())
+		}
+	}()
+
+	ic.images[img] = usedC
+}
+
+// TODO: client does image pull or image import RPC request
+// then a debug container create RPC
+// then a debug container run RPC (but these two might be the same)
+// TODO: I guess there is already garbage collection done for
+// images in the system namespace? maybe a tag should be added,
+// so we can be more aggressive in deleting debug images.
+
+func (ic *imageCache) addContainer(ctr containerdapi.Container) {
+	ic.mu.Lock()
+	defer ic.mu.Unlock()
+
+	usedC := make(chan struct{})
+
+	go func() {
+		timer := time.NewTimer(debugContainerImageTTL)
+		select {
+		case <-timer.C:
+			log.Printf("debug container image TTL expired, deleting container %s", ctr.ID())
+
+			ic.initClientIfNil()
+
+			ctr, err := ic.ctrdClient.LoadContainer(context.Background(), ctr.ID())
+			if err != nil {
+				log.Printf("failed to load container %s: %v", ctr.ID(), err)
+			}
+
+			err = ctr.Delete(context.Background(), containerdapi.WithSnapshotCleanup)
+			if err != nil {
+				log.Printf("failed to delete container %s: %v", ctr.ID(), err)
+			}
+		case <-usedC:
+			log.Printf("debug container image %s marked as used, skipping deletion", ctr.ID())
+		}
+	}()
+
+	ic.containers[ctr] = usedC
+}
+
+func (ic *imageCache) markCtrUsed(ctrID string) {
+	ic.mu.Lock()
+	defer ic.mu.Unlock()
+
+	var (
+		usedCtr containerdapi.Container
+		usedC   chan struct{}
+	)
+
+	for ctr, c := range ic.containers {
+		if ctr.ID() == ctrID {
+			usedCtr = ctr
+			usedC = c
+		}
+	}
+
+	close(usedC)
+	delete(ic.containers, usedCtr)
+}
+
+func (ic *imageCache) markImageUsed(imgName string) {
+	ic.mu.Lock()
+	defer ic.mu.Unlock()
+
+	var (
+		usedImage containerdapi.Image
+		usedC     chan struct{}
+	)
+
+	for img, c := range ic.images {
+		if img.Name() == imgName {
+			usedImage = img
+			usedC = c
+		}
+	}
+
+	close(usedC)
+	delete(ic.images, usedImage)
+}
+
+var ic = &imageCache{
+	mu:         sync.Mutex{},
+	images:     map[containerdapi.Image]chan struct{}{},
+	containers: map[containerdapi.Container]chan struct{}{},
+}
 
 // DebugContainerCreate implements the machine.MachineServer interface.
 func (s *Server) DebugContainerCreate(srv machine.MachineService_DebugContainerCreateServer) error { //nolint:gocyclo
@@ -83,17 +219,14 @@ func (s *Server) DebugContainerCreate(srv machine.MachineService_DebugContainerC
 		}
 	}
 
-	defer func() {
-		err = client.ImageService().Delete(context.Background(), img.Name(), images.SynchronousDelete())
-		if err != nil {
-			log.Printf("failed to delete image %s: %v", img.Name(), err)
-		}
-	}()
+	ic.addImage(img)
 
 	ctr, err := createDebugContainer(ctx, client, img, spec)
 	if err != nil {
 		return err
 	}
+
+	ic.addContainer(ctr)
 
 	return srv.Send(&machine.DebugContainerCreateResponse{
 		Response: &machine.DebugContainerCreateResponse_ContainerId{
@@ -103,7 +236,7 @@ func (s *Server) DebugContainerCreate(srv machine.MachineService_DebugContainerC
 }
 
 func pullImageByRef(ctx context.Context, client *containerdapi.Client, imageRef string, srv machine.MachineService_DebugContainerCreateServer) (containerdapi.Image, error) {
-	updateFn := func(layerProgress *machine.DebugContainerPullProgress) {
+	updateFn := func(layerProgress *machine.ImagePullProgress) {
 		if err := srv.Send(&machine.DebugContainerCreateResponse{
 			Response: &machine.DebugContainerCreateResponse_PullProgress{
 				PullProgress: layerProgress,
@@ -319,6 +452,35 @@ func (s *Server) DebugContainerRun(srv machine.MachineService_DebugContainerRunS
 	if err != nil {
 		return fmt.Errorf("failed to load container: %v", err)
 	}
+
+	ic.markCtrUsed(containerID)
+
+	defer func() {
+		cleanupErr := ctr.Delete(context.Background(), containerdapi.WithSnapshotCleanup)
+		if cleanupErr != nil {
+			log.Printf("debug container: failed to delete container %s: %s", containerID, cleanupErr.Error())
+		}
+
+		log.Printf("debug container: container %s deleted", containerID)
+	}()
+
+	ctrImage, err := ctr.Image(ctx)
+	if err != nil {
+		return err
+	}
+
+	ic.markImageUsed(ctrImage.Name())
+
+	defer func() {
+		err := client.ImageService().Delete(context.Background(),
+			ctrImage.Name(),
+			images.SynchronousDelete())
+		if err != nil {
+			log.Printf("debug container: failed to delete image %s: %s", ctrImage.Name(), err.Error())
+		}
+
+		log.Printf("debug container: image %s deleted", ctrImage.Name())
+	}()
 
 	return runAndAttachContainer(ctx, srv, ctr)
 }
