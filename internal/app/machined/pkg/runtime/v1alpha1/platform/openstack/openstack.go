@@ -214,6 +214,41 @@ func (o *OpenStack) ParseMetadata(
 		}
 	}
 
+	// VLANs
+	for _, netLink := range unmarshalledNetworkConfig.Links {
+		if netLink.Type != "vlan" {
+			continue
+		}
+
+		parentName, ok := ifaces[netLink.VlanLink]
+		if !ok {
+			parentName = netLink.VlanLink
+		}
+
+		vlanName := fmt.Sprintf("%s.%d", parentName, netLink.VlanID)
+		ifaces[netLink.ID] = vlanName
+
+		vlanLink := network.LinkSpecSpec{
+			ConfigLayer: network.ConfigPlatform,
+			Name:        vlanName,
+			Logical:     true,
+			Up:          true,
+			Kind:        network.LinkKindVLAN,
+			Type:        nethelpers.LinkEther,
+			ParentName:  parentName,
+			VLAN: network.VLANSpec{
+				VID:      netLink.VlanID,
+				Protocol: nethelpers.VLANProtocol8021Q,
+			},
+		}
+
+		if netLink.MTU != 0 {
+			vlanLink.MTU = uint32(netLink.MTU)
+		}
+
+		networkConfig.Links = append(networkConfig.Links, vlanLink)
+	}
+
 	for _, ntwrk := range unmarshalledNetworkConfig.Networks {
 		if ntwrk.ID == "" || ifaces[ntwrk.Link] == "" {
 			continue
