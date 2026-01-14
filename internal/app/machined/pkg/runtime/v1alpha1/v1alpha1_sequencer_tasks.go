@@ -1125,7 +1125,11 @@ func ResetSystemDisk(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, s
 
 				defer dev.Close() //nolint:errcheck
 
-				return dev.FastWipe()
+				if err = partition.WipeWithSignatures(dev, devPath, logger.Printf); err != nil {
+					return err
+				}
+
+				return nil
 			}(systemDiskPath); err != nil {
 				return fmt.Errorf("failed to wipe system disk %s: %w", systemDiskPath, err)
 			}
@@ -1163,7 +1167,11 @@ func ResetUserDisks(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, st
 
 			logger.Printf("wiping user disk %s", deviceName)
 
-			return dev.FastWipe()
+			if err = partition.WipeWithSignatures(dev, deviceName, logger.Printf); err != nil {
+				return err
+			}
+
+			return nil
 		}
 
 		for _, deviceName := range in.GetUserDisksToWipe() {

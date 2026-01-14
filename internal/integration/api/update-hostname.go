@@ -137,31 +137,11 @@ func (suite *UpdateHostnameSuite) TestUpdateHostname() {
 }
 
 func (suite *UpdateHostnameSuite) updateHostname(nodeCtx context.Context, newHostname string) {
-	// [TODO]: this should be dropped once Terraform Provider is updated for Talos 1.12
-	// do a negative patch removing v1alpha1 hostname-related config
-	// In "normal" tests config is generated without hostname v1alpha1 parts,
-	// but when the cluster is generated via Terraform, it uses outdated machinery and
-	// generates config with v1alpha1 hostname parts.
-	v1alpha1Drop := map[string]any{
-		"machine": map[string]any{
-			"network": map[string]any{
-				"hostname": map[string]any{
-					"$patch": "delete",
-				},
-			},
-			"features": map[string]any{
-				"stableHostname": map[string]any{
-					"$patch": "delete",
-				},
-			},
-		},
-	}
-
 	hostnameConfig := network.NewHostnameConfigV1Alpha1()
 	hostnameConfig.ConfigAuto = pointer.To(nethelpers.AutoHostnameKindOff)
 	hostnameConfig.ConfigHostname = newHostname
 
-	suite.PatchMachineConfig(nodeCtx, v1alpha1Drop, hostnameConfig)
+	suite.PatchMachineConfig(nodeCtx, hostnameConfig)
 }
 
 func init() {

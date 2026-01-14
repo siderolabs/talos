@@ -11,12 +11,9 @@ import (
 	"log"
 	"path/filepath"
 	"slices"
-	"strings"
 
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-blockdevice/v2/blkid"
 	blockdev "github.com/siderolabs/go-blockdevice/v2/block"
 	"github.com/siderolabs/go-blockdevice/v2/partitioning/gpt"
 	"google.golang.org/grpc/codes"
@@ -24,6 +21,7 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/machinery/api/storage"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
@@ -305,31 +303,8 @@ func (s *Server) wipeDevice(deviceName string, method storage.BlockDeviceWipeDes
 	case storage.BlockDeviceWipeDescriptor_FAST:
 		log.Printf("wiping block device %q with fast method", deviceName)
 
-		info, err := blkid.Probe(bd.File(), blkid.WithSkipLocking(true))
-		if err == nil && info != nil && len(info.SignatureRanges) > 0 { // probe successful, wipe by signatures
-			if err = bd.FastWipe(xslices.Map(info.SignatureRanges, func(r blkid.SignatureRange) blockdev.Range {
-				return blockdev.Range(r)
-			})...); err != nil {
-				return status.Errorf(codes.Internal, "failed to wipe block device %q: %v", deviceName, err)
-			}
-
-			log.Printf("block device %q wiped by ranges: %s",
-				deviceName,
-				strings.Join(
-					xslices.Map(info.SignatureRanges,
-						func(r blkid.SignatureRange) string {
-							return fmt.Sprintf("%d-%d", r.Offset, r.Offset+r.Size)
-						},
-					),
-					", ",
-				),
-			)
-		} else { // probe failed, use default fast wipe
-			if err = bd.FastWipe(); err != nil {
-				return status.Errorf(codes.Internal, "failed to wipe block device %q: %v", deviceName, err)
-			}
-
-			log.Printf("block device %q wiped with fast method", deviceName)
+		if err = partition.WipeWithSignatures(bd, deviceName, log.Printf); err != nil {
+			return status.Error(codes.Internal, err.Error())
 		}
 	default:
 		return status.Errorf(codes.InvalidArgument, "unsupported wipe method %s", method)

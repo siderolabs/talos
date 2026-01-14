@@ -27,6 +27,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/resources"
 	storaged "github.com/siderolabs/talos/internal/app/storaged"
 	"github.com/siderolabs/talos/internal/pkg/configuration"
+	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/api/storage"
@@ -273,7 +274,7 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (*machine.
 
 	defer dev.Close() //nolint:errcheck
 
-	if err = dev.FastWipe(); err != nil {
+	if err = partition.WipeWithSignatures(dev, systemDisk.DevPath, log.Printf); err != nil {
 		return nil, err
 	}
 
@@ -290,8 +291,7 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (*machine.
 
 			log.Printf("wiping user disk %s", deviceName)
 
-			err = dev.FastWipe()
-			if err != nil {
+			if err = partition.WipeWithSignatures(dev, deviceName, log.Printf); err != nil {
 				return nil, err
 			}
 		}
