@@ -1282,12 +1282,18 @@ const (
 	ContainerMarkerFilePath = "/usr/etc/in-container"
 
 	// DefaultOOMTriggerExpression is the default CEL expression used to determine whether to trigger OOM.
-	DefaultOOMTriggerExpression = `memory_full_avg10 > 12.0 && d_memory_full_avg10 > 0.0 && time_since_trigger > duration("500ms")`
+	DefaultOOMTriggerExpression = `((init_memory_full_avg10 > 5.0 && d_init_memory_full_avg10 > 0.0) ||
+		(system_memory_full_avg10 > 15.0 && d_system_memory_full_avg10 > 0.0) ||
+		(podruntime_memory_full_avg10 > 20.0 && d_podruntime_memory_full_avg10 > 0.0)) &&
+		(d_memory_full_avg10 > 0.0 || memory_full_avg10 > 75.0) && time_since_trigger > duration("500ms")`
 
 	// DefaultOOMCgroupRankingExpression is the default CEL expression used to rank cgroups for OOM killer.
 	DefaultOOMCgroupRankingExpression = `memory_max.hasValue() ? 0.0 :
 		{Besteffort: 1.0, Burstable: 0.5, Guaranteed: 0.0, Podruntime: 0.0, System: 0.0}[class] *
 		   double(memory_current.orValue(0u))`
+
+	// OOMActionLogKeep is the number of OOM action log entries to keep in memory.
+	OOMActionLogKeep = 50
 
 	// SDStubCmdlineExtraOEMVar is the name of the SMBIOS OEM variable that can be used to pass extra kernel command line parameters to systemd-stub.
 	SDStubCmdlineExtraOEMVar = "io.systemd.stub.kernel-cmdline-extra"

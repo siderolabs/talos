@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/google/cel-go/common/types"
@@ -68,40 +69,66 @@ func EvaluateTrigger(triggerExpr cel.Expression, evalContext map[string]any) (bo
 
 // PopulatePsiToCtx populates the context with PSI data from a cgroup.
 func PopulatePsiToCtx(cgroup string, evalContext map[string]any, psi map[string]float64, sampleInterval time.Duration) error {
-	node, err := cgroups.GetCgroupProperty(cgroup, "memory.pressure")
-	if err != nil {
-		return fmt.Errorf("cannot read memory pressure: %w", err)
-	}
+	for _, subtree := range []string{
+		"",
+		"init",
+		"system",
+		"podruntime",
+		"kubepods/besteffort",
+		"kubepods/burstable",
+		"kubepods/guaranteed",
+	} {
+		node, err := cgroups.GetCgroupProperty(filepath.Join(cgroup, subtree), "memory.pressure")
 
-	for _, psiType := range []string{"some", "full"} {
-		for _, span := range []string{"avg10", "avg60", "avg300", "total"} {
-			spans, ok := node.MemoryPressure[psiType]
-			if !ok {
-				return fmt.Errorf("cannot find memory pressure type: type: %s", psiType)
+		for _, psiType := range []string{"some", "full"} {
+			for _, span := range []string{"avg10", "avg60", "avg300", "total"} {
+				value := 0.
+
+				// Default non-existent cgroups to all-zero, e.g. during system boot
+				if err == nil {
+					value, err = extractPsiEntry(node, psiType, span)
+					if err != nil {
+						return err
+					}
+				}
+
+				subtreePrefix := subtree
+				if subtreePrefix != "" {
+					subtreePrefix = strings.ReplaceAll(subtreePrefix, "/", "_")
+					subtreePrefix += "_"
+				}
+
+				diff := 0.
+				if oldValue, ok := psi[subtreePrefix+"memory_"+psiType+"_"+span]; ok {
+					diff = (value - oldValue) / sampleInterval.Seconds()
+				}
+
+				evalContext["d_"+subtreePrefix+"memory_"+psiType+"_"+span] = diff
+				evalContext[subtreePrefix+"memory_"+psiType+"_"+span] = value
+				psi[subtreePrefix+"memory_"+psiType+"_"+span] = value
 			}
-
-			value, ok := spans[span]
-			if !ok {
-				return fmt.Errorf("cannot find memory pressure span: span: %s", span)
-			}
-
-			if !value.IsSet || value.IsMax {
-				return fmt.Errorf("PSI is not defined")
-			}
-
-			diff := 0.
-
-			if oldValue, ok := psi["memory_"+psiType+"_"+span]; ok {
-				diff = (value.Float64() - oldValue) / sampleInterval.Seconds()
-			}
-
-			evalContext["d_memory_"+psiType+"_"+span] = diff
-			evalContext["memory_"+psiType+"_"+span] = value.Float64()
-			psi["memory_"+psiType+"_"+span] = value.Float64()
 		}
 	}
 
 	return nil
+}
+
+func extractPsiEntry(node *cgroups.Node, psiType string, span string) (float64, error) {
+	spans, ok := node.MemoryPressure[psiType]
+	if !ok {
+		return 0, fmt.Errorf("cannot find memory pressure type: type: %s", psiType)
+	}
+
+	cgValue, ok := spans[span]
+	if !ok {
+		return 0, fmt.Errorf("cannot find memory pressure span: span: %s", span)
+	}
+
+	if !cgValue.IsSet || cgValue.IsMax {
+		return 0, fmt.Errorf("PSI is not defined")
+	}
+
+	return cgValue.Float64(), nil
 }
 
 // RankCgroups ranks cgroups using a scoring expression and returns a map.

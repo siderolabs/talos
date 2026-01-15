@@ -183,7 +183,6 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 			return err
 		}
 
-		// TODO: evaluate on different cgroups, not only root. E.g. action when podruntime experiences high PSI.
 		if trigger {
 			score, processes := ctrl.OomAction(logger, ctrl.CgroupRoot, scoringExpr)
 
@@ -203,8 +202,8 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 
 			ctrl.idSeq++
 
-			if len(ctrl.actionLog) > 10 {
-				ctrl.actionLog = ctrl.actionLog[len(ctrl.actionLog)-10:]
+			if len(ctrl.actionLog) > constants.OOMActionLogKeep {
+				ctrl.actionLog = ctrl.actionLog[len(ctrl.actionLog)-constants.OOMActionLogKeep:]
 			}
 
 			ctrl.ActionTriggered = time.Now()
