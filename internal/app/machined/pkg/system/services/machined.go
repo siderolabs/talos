@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/siderolabs/go-debug"
+	"go.uber.org/zap/zapcore"
 	"google.golang.org/grpc"
 
 	v1alpha1server "github.com/siderolabs/talos/internal/app/machined/internal/server/v1alpha1"
@@ -27,6 +28,7 @@ import (
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/grpc/factory"
 	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
+	"github.com/siderolabs/talos/pkg/logging"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/role"
 )
@@ -135,6 +137,12 @@ func (s *machinedService) Main(ctx context.Context, _ runtime.Runtime, logWriter
 		Logger:        log.New(logWriter, "machined/authz/authorizer ", log.Flags()).Printf,
 	}
 
+	logger := logging.ZapLogger(
+		logging.NewLogDestination(logWriter, zapcore.DebugLevel,
+			logging.WithColoredLevels(),
+		),
+	)
+
 	// Start the API server.
 	server := factory.NewServer( //nolint:contextcheck
 		&v1alpha1server.Server{
@@ -143,6 +151,8 @@ func (s *machinedService) Main(ctx context.Context, _ runtime.Runtime, logWriter
 			EtcdBootstrapper: BootstrapEtcd,
 
 			ShutdownCtx: ctx,
+
+			Logger: logger,
 		},
 		factory.WithLog("machined ", logWriter),
 

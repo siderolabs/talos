@@ -1,0 +1,28 @@
+syntax = "proto3";
+
+package talos.resource.definitions.security;
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/security";
+option java_package = "dev.talos.api.resource.definitions.security";
+
+// ImageKeylessVerifierSpec represents a signature verification provider.
+message ImageKeylessVerifierSpec {
+  string issuer = 1;
+  string subject = 2;
+  string subject_regex = 3;
+  string rekor_url = 4;
+}
+
+// ImagePublicKeyVerifierSpec represents a signature verification provider with static public key.
+message ImagePublicKeyVerifierSpec {
+  string certificate = 1;
+}
+
+// ImageVerificationRuleSpec represents a verification rule.
+message ImageVerificationRuleSpec {
+  string image_pattern = 2;
+  bool verify = 3;
+  ImageKeylessVerifierSpec keyless_verifier = 4;
+  ImagePublicKeyVerifierSpec public_key_verifier = 5;
+}
+

@@ -1,0 +1,15 @@
+apiVersion: v1alpha1
+kind: ImageVerificationConfig
+rules:
+    - image: ghcr.io/*
+      verify: true
+      keyless:
+        issuer: https://token.actions.githubusercontent.com
+        subjectRegex: https://github.com/myorg/.*
+    - image: my-registry/*
+      verify: true
+      publicKey:
+        certificate: |-
+            -----BEGIN CERTIFICATE-----
+            MII--Sample Value--
+            -----END CERTIFICATE-----

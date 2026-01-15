@@ -44,6 +44,7 @@ import (
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/concurrency"
+	"go.uber.org/zap"
 	"golang.org/x/net/bpf"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
@@ -117,6 +118,9 @@ type Server struct {
 	// ShutdownCtx signals that the server is shutting down.
 	ShutdownCtx context.Context //nolint:containedctx
 
+	// Zap logger.
+	Logger *zap.Logger
+
 	server *grpc.Server
 }
 
@@ -150,7 +154,7 @@ func (s *Server) Register(obj *grpc.Server) {
 	resourceState = state.WrapCore(state.Filter(resourceState, resources.AccessPolicy(resourceState)))
 
 	machine.RegisterMachineServiceServer(obj, s)
-	machine.RegisterImageServiceServer(obj, images.NewService(s.Controller))
+	machine.RegisterImageServiceServer(obj, images.NewService(s.Controller, s.Logger))
 	machine.RegisterDebugServiceServer(obj, &debug.Service{})
 	cluster.RegisterClusterServiceServer(obj, s)
 	cosiv1alpha1.RegisterStateServer(obj, server.NewState(resourceState))
