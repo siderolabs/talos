@@ -1075,6 +1075,8 @@ func (suite *VolumesSuite) TestRawVolumes() {
 }
 
 // TestExistingVolumes performs a series of operations on existing volumes: mount/unmount, etc.
+//
+//nolint:gocyclo
 func (suite *VolumesSuite) TestExistingVolumes() {
 	if testing.Short() {
 		suite.T().Skip("skipping test in short mode.")
@@ -1200,6 +1202,50 @@ func (suite *VolumesSuite) TestExistingVolumes() {
 	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{existingVolumeID},
 		func(vs *block.MountStatus, asrt *assert.Assertions) {
 			asrt.True(vs.TypedSpec().ReadOnly)
+		})
+
+	// test disableAccessTime mount option
+	existingVolumeDoc.MountSpec.MountReadOnly = nil
+	existingVolumeDoc.MountSpec.MountDisableAccessTime = pointer.To(true)
+	suite.PatchMachineConfig(ctx, existingVolumeDoc)
+
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{existingVolumeID},
+		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+			found := false
+
+			for _, param := range vs.TypedSpec().MountSpec.Parameters {
+				if param.Name == "noatime" && param.Type == block.FSParameterTypeBooleanValue {
+					found = true
+
+					break
+				}
+			}
+
+			asrt.True(found, "expected noatime parameter to be present in mount spec")
+		})
+
+	// test secure mount option
+	existingVolumeDoc.MountSpec.MountDisableAccessTime = nil
+	existingVolumeDoc.MountSpec.MountSecure = pointer.To(true)
+	suite.PatchMachineConfig(ctx, existingVolumeDoc)
+
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{existingVolumeID},
+		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+			hasSuid := false
+			hasDev := false
+
+			for _, param := range vs.TypedSpec().MountSpec.Parameters {
+				if param.Name == "nosuid" && param.Type == block.FSParameterTypeBooleanValue {
+					hasSuid = true
+				}
+
+				if param.Name == "nodev" && param.Type == block.FSParameterTypeBooleanValue {
+					hasDev = true
+				}
+			}
+
+			asrt.True(hasSuid, "expected nosuid parameter to be present when secure is true")
+			asrt.True(hasDev, "expected nodev parameter to be present when secure is true")
 		})
 
 	// clean up

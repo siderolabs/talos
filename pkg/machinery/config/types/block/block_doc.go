@@ -398,6 +398,20 @@ func (MountSpec) Doc() *encoder.Doc {
 				Description: "Mount the volume read-only.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Mount the volume read-only." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "disableAccessTime",
+				Type:        "bool",
+				Note:        "",
+				Description: "If true, disable file access time updates.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "If true, disable file access time updates." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "secure",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable secure mount options (nosuid, nodev).\n\nDefaults to true for better security.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable secure mount options (nosuid, nodev)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
