@@ -33,7 +33,7 @@ func GetEndpoints(ctx context.Context, resources state.State) ([]string, error) 
 		endpointAddrs = endpointAddrs.Merge(res)
 	}
 
-	if len(endpointAddrs) == 0 {
+	if endpointAddrs.IsEmpty() {
 		return nil, errors.New("no controlplane endpoints discovered yet")
 	}
 

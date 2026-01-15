@@ -175,6 +175,10 @@ func (o EndpointSpec) DeepCopy() EndpointSpec {
 		cp.Addresses = make([]netip.Addr, len(o.Addresses))
 		copy(cp.Addresses, o.Addresses)
 	}
+	if o.Hosts != nil {
+		cp.Hosts = make([]string, len(o.Hosts))
+		copy(cp.Hosts, o.Hosts)
+	}
 	return cp
 }
 

@@ -108,7 +108,7 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 			endpointAddrs = endpointAddrs.Merge(endpointResource)
 		}
 
-		if len(endpointAddrs) == 0 {
+		if endpointAddrs.IsEmpty() {
 			continue
 		}
 
@@ -212,20 +212,20 @@ func (ctrl *EndpointController) ensureTalosEndpointSlices(ctx context.Context, l
 		addrsIPv6 k8s.EndpointList
 	)
 
-	for _, addr := range endpointAddrs {
+	for _, addr := range endpointAddrs.Addresses {
 		switch {
 		case addr.Is4():
-			addrsIPv4 = append(addrsIPv4, addr)
+			addrsIPv4.Addresses = append(addrsIPv4.Addresses, addr)
 
 		case addr.Is6():
-			addrsIPv6 = append(addrsIPv6, addr)
+			addrsIPv6.Addresses = append(addrsIPv6.Addresses, addr)
 
 		default:
 			// ignore other address types
 		}
 	}
 
-	if len(addrsIPv4) == 0 {
+	if len(addrsIPv4.Addresses) == 0 {
 		if err := ctrl.deleteTalosEndpointSlicesTyped(ctx, logger, client, discoveryv1.AddressTypeIPv4); err != nil {
 			return fmt.Errorf("error deleting Talos API endpoint slices for IPv4: %w", err)
 		}
@@ -235,7 +235,7 @@ func (ctrl *EndpointController) ensureTalosEndpointSlices(ctx context.Context, l
 		}
 	}
 
-	if len(addrsIPv6) == 0 {
+	if len(addrsIPv6.Addresses) == 0 {
 		if err := ctrl.deleteTalosEndpointSlicesTyped(ctx, logger, client, discoveryv1.AddressTypeIPv6); err != nil {
 			return fmt.Errorf("error deleting Talos API endpoint slices for IPv6: %w", err)
 		}
@@ -306,7 +306,7 @@ func (ctrl *EndpointController) ensureTalosEndpointSlicesTyped(
 			},
 		}
 
-		for _, addr := range endpointAddrs {
+		for _, addr := range endpointAddrs.Addresses {
 			newEndpointSlice.Endpoints = append(
 				newEndpointSlice.Endpoints,
 				discoveryv1.Endpoint{

@@ -7050,12 +7050,13 @@ ControllerManagerConfigSpec is configuration for kube-controller-manager.
 <a name="talos.resource.definitions.k8s.EndpointSpec"></a>
 
 ### EndpointSpec
-EndpointSpec describes status of rendered secrets.
+EndpointSpec describes a list of endpoints to connect to.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | addresses | [common.NetIP](#common.NetIP) | repeated |  |
+| hosts | [string](#string) | repeated |  |
 
 
 

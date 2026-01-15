@@ -93,9 +93,10 @@ message ControllerManagerConfigSpec {
   Resources resources = 9;
 }
 
-// EndpointSpec describes status of rendered secrets.
+// EndpointSpec describes a list of endpoints to connect to.
 message EndpointSpec {
   repeated common.NetIP addresses = 1;
+  repeated string hosts = 2;
 }
 
 // ExtraManifest defines a single extra manifest to download.
