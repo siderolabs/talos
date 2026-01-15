@@ -1,5 +1,7 @@
 apiVersion: v1alpha1
 kind: OOMConfig
-triggerExpression: memory_full_avg10 > 12.0 && d_memory_full_avg10 > 0.0 && time_since_trigger > duration("500ms")
+triggerExpression: |-
+    multiply_qos_vectors(d_qos_memory_full_total, {System: 8.0, Podruntime: 4.0}) > 3000.0 ||
+    memory_full_avg10 > 75.0 && time_since_trigger > duration("10s")
 cgroupRankingExpression: 'memory_max.hasValue() ? 0.0 : ({Besteffort: 1.0, Burstable: 0.5, Guaranteed: 0.0, Podruntime: 0.0, System: 0.0}[class] * double(memory_current.orValue(0u)))'
 sampleInterval: 100ms
