@@ -5,6 +5,7 @@
 package profile
 
 import (
+	"github.com/siderolabs/talos/pkg/machinery/imager/imageropts"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
@@ -109,18 +110,14 @@ const (
 )
 
 // BootloaderKind is a bootloader for the disk image.
-type BootloaderKind int
+type BootloaderKind = imageropts.BootloaderKind
 
+// BootloaderKind values re-exported from imageropts.
 const (
-	// BootLoaderKindNone is the zero value.
-	BootLoaderKindNone BootloaderKind = iota // none
-	// BootLoaderKindDualBoot is the dual-boot bootloader.
-	// using sd-boot for UEFI and GRUB for BIOS.
-	BootLoaderKindDualBoot // dual-boot
-	// BootLoaderKindSDBoot is the sd-boot bootloader.
-	BootLoaderKindSDBoot // sd-boot
-	// BootLoaderKindGrub is the GRUB bootloader.
-	BootLoaderKindGrub // grub
+	BootLoaderKindNone     = imageropts.BootLoaderKindNone
+	BootLoaderKindDualBoot = imageropts.BootLoaderKindDualBoot
+	BootLoaderKindSDBoot   = imageropts.BootLoaderKindSDBoot
+	BootLoaderKindGrub     = imageropts.BootLoaderKindGrub
 )
 
 // FillDefaults fills default values for the output.
