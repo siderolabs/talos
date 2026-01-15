@@ -9,10 +9,13 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config"
+	mc "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -132,6 +135,29 @@ func (suite *GenerateSuite) TestGenerateTalosconfigSuccess() {
 	suite.Require().NoError(err)
 
 	suite.Equal([]string{string(role.Admin)}, cert.Subject.Organization)
+}
+
+func TestGenerateRegistryMirrorsOrder(t *testing.T) {
+	t.Parallel()
+
+	input, err := generate.NewInput("test", "https://10.0.1.5", constants.DefaultKubernetesVersion,
+		generate.WithRegistryMirror("b.com", "http://127.0.0.1:5004"),
+		generate.WithRegistryMirror("a.com", "http://127.0.0.1:5005"),
+	)
+
+	require.NoError(t, err)
+
+	cfg, err := input.Config(machine.TypeControlPlane)
+
+	require.NoError(t, err)
+
+	named, ok := cfg.Documents()[1].(mc.NamedDocument)
+	require.True(t, ok)
+	assert.Equal(t, "a.com", named.Name())
+
+	named, ok = cfg.Documents()[2].(mc.NamedDocument)
+	require.True(t, ok)
+	assert.Equal(t, "b.com", named.Name())
 }
 
 type runtimeMode struct {
