@@ -13,6 +13,7 @@ import (
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
+	"github.com/google/cel-go/common/types/traits"
 	"github.com/ryanuber/go-glob"
 	"github.com/siderolabs/gen/xslices"
 
@@ -88,29 +89,88 @@ var VolumeLocator = sync.OnceValue(func() *cel.Env {
 var OOMTrigger = sync.OnceValue(func() *cel.Env {
 	env, err := cel.NewEnv(
 		slices.Concat(
-			slices.Concat(
-				[]cel.EnvOption{
-					cel.Variable("memory_some_avg10", types.DoubleType),
-					cel.Variable("memory_some_avg60", types.DoubleType),
-					cel.Variable("memory_some_avg300", types.DoubleType),
-					cel.Variable("memory_some_total", types.DoubleType),
-					cel.Variable("memory_full_avg10", types.DoubleType),
-					cel.Variable("memory_full_avg60", types.DoubleType),
-					cel.Variable("memory_full_avg300", types.DoubleType),
-					cel.Variable("memory_full_total", types.DoubleType),
-					cel.Variable("d_memory_some_avg10", types.DoubleType),
-					cel.Variable("d_memory_some_avg60", types.DoubleType),
-					cel.Variable("d_memory_some_avg300", types.DoubleType),
-					cel.Variable("d_memory_some_total", types.DoubleType),
-					cel.Variable("d_memory_full_avg10", types.DoubleType),
-					cel.Variable("d_memory_full_avg60", types.DoubleType),
-					cel.Variable("d_memory_full_avg300", types.DoubleType),
-					cel.Variable("d_memory_full_total", types.DoubleType),
-					cel.Variable("time_since_trigger", types.DurationType),
-					cel.OptionalTypes(),
-				},
-				celUnitMultipliersConstants(),
-			),
+			[]cel.EnvOption{
+				// root cgroup PSI memory metrics
+				cel.Variable("memory_some_avg10", types.DoubleType),
+				cel.Variable("memory_some_avg60", types.DoubleType),
+				cel.Variable("memory_some_avg300", types.DoubleType),
+				cel.Variable("memory_some_total", types.DoubleType),
+				cel.Variable("memory_full_avg10", types.DoubleType),
+				cel.Variable("memory_full_avg60", types.DoubleType),
+				cel.Variable("memory_full_avg300", types.DoubleType),
+				cel.Variable("memory_full_total", types.DoubleType),
+				// root cgroup delta with last observation
+				cel.Variable("d_memory_some_avg10", types.DoubleType),
+				cel.Variable("d_memory_some_avg60", types.DoubleType),
+				cel.Variable("d_memory_some_avg300", types.DoubleType),
+				cel.Variable("d_memory_some_total", types.DoubleType),
+				cel.Variable("d_memory_full_avg10", types.DoubleType),
+				cel.Variable("d_memory_full_avg60", types.DoubleType),
+				cel.Variable("d_memory_full_avg300", types.DoubleType),
+				cel.Variable("d_memory_full_total", types.DoubleType),
+				// per QoS class PSI memory metrics
+				cel.Variable("qos_memory_some_avg10", types.NewMapType(types.IntType, types.DoubleType)),
+				cel.Variable("qos_memory_some_avg60", types.NewMapType(types.IntType, types.DoubleType)),
+				cel.Variable("qos_memory_some_avg300", types.NewMapType(types.IntType, types.DoubleType)),
+				cel.Variable("qos_memory_some_total", types.NewMapType(types.IntType, types.DoubleType)),
+				cel.Variable("qos_memory_full_avg10", types.NewMapType(types.IntType, types.DoubleType)),
+				cel.Variable("qos_memory_full_avg60", types.NewMapType(types.IntType, types.DoubleType)),
+				cel.Variable("qos_memory_full_avg300", types.NewMapType(types.IntType, types.DoubleType)),
+				cel.Variable("qos_memory_full_total", types.NewMapType(types.IntType, types.DoubleType)),
+				// per QoS class delta with last observation
+				cel.Variable("d_qos_memory_some_avg10", types.NewMapType(types.IntType, types.DoubleType)),
+				cel.Variable("d_qos_memory_some_avg60", types.NewMapType(types.IntType, types.DoubleType)),
+				cel.Variable("d_qos_memory_some_avg300", types.NewMapType(types.IntType, types.DoubleType)),
+				cel.Variable("d_qos_memory_some_total", types.NewMapType(types.IntType, types.DoubleType)),
+				cel.Variable("d_qos_memory_full_avg10", types.NewMapType(types.IntType, types.DoubleType)),
+				cel.Variable("d_qos_memory_full_avg60", types.NewMapType(types.IntType, types.DoubleType)),
+				cel.Variable("d_qos_memory_full_avg300", types.NewMapType(types.IntType, types.DoubleType)),
+				cel.Variable("d_qos_memory_full_total", types.NewMapType(types.IntType, types.DoubleType)),
+				// per QoS memory usage absolute values
+				cel.Variable("qos_memory_current", types.NewMapType(types.IntType, types.DoubleType)),
+				cel.Variable("qos_memory_peak", types.NewMapType(types.IntType, types.DoubleType)),
+				cel.Variable("qos_memory_max", types.NewMapType(types.IntType, types.DoubleType)),
+				cel.Variable("d_qos_memory_current", types.NewMapType(types.IntType, types.DoubleType)),
+				cel.Variable("d_qos_memory_peak", types.NewMapType(types.IntType, types.DoubleType)),
+				cel.Variable("d_qos_memory_max", types.NewMapType(types.IntType, types.DoubleType)),
+				// time since last OOM trigger
+				cel.Variable("time_since_trigger", types.DurationType),
+				cel.OptionalTypes(),
+				// multiply_qos_vectors(qos_memory_some_avg_10, {Besteffort: 1.0, Burstable: 0.0, Guaranteed: 0.0, Podruntime: 1.0, System: 1.0}) -> double
+				//
+				// Multiplies the values of two QoS class maps and returns the sum.
+				cel.Function("multiply_qos_vectors",
+					cel.Overload("multiply_qos_vectors_ma_map_double",
+						[]*cel.Type{
+							cel.MapType(cel.DynType, cel.DoubleType),
+							cel.MapType(cel.DynType, cel.DoubleType),
+						},
+						cel.DoubleType,
+						cel.BinaryBinding(func(lhs, rhs ref.Val) ref.Val {
+							var result float64
+
+							lhsMap := lhs.(traits.Mapper)
+							lhsIter := lhsMap.Iterator()
+							rhsIndexer := rhs.(traits.Indexer)
+
+							for lhsIter.HasNext() == types.True {
+								key := lhsIter.Next()
+								lValue := lhsMap.Get(key)
+
+								rValue := rhsIndexer.Get(key)
+								if types.IsError(rValue) {
+									continue
+								}
+
+								result += float64(lValue.(types.Double)) * float64(rValue.(types.Double))
+							}
+
+							return types.Double(result)
+						}),
+					),
+				),
+			},
+			celUnitMultipliersConstants(),
 			celCgroupClassConstants(),
 		)...,
 	)
@@ -125,17 +185,15 @@ var OOMTrigger = sync.OnceValue(func() *cel.Env {
 var OOMCgroupScoring = sync.OnceValue(func() *cel.Env {
 	env, err := cel.NewEnv(
 		slices.Concat(
-			slices.Concat(
-				[]cel.EnvOption{
-					cel.Variable("memory_max", types.NewOptionalType(types.UintType)),
-					cel.Variable("memory_current", types.NewOptionalType(types.UintType)),
-					cel.Variable("memory_peak", types.NewOptionalType(types.UintType)),
-					cel.Variable("path", types.StringType),
-					cel.Variable("class", types.IntType),
-					cel.OptionalTypes(),
-				},
-				celUnitMultipliersConstants(),
-			),
+			[]cel.EnvOption{
+				cel.Variable("memory_max", types.NewOptionalType(types.UintType)),
+				cel.Variable("memory_current", types.NewOptionalType(types.UintType)),
+				cel.Variable("memory_peak", types.NewOptionalType(types.UintType)),
+				cel.Variable("path", types.StringType),
+				cel.Variable("class", types.IntType),
+				cel.OptionalTypes(),
+			},
+			celUnitMultipliersConstants(),
 			celCgroupClassConstants(),
 		)...,
 	)
