@@ -72,7 +72,10 @@ func (k *Kubelet) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	// Pull the image and unpack it.
 	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
 
-	img, err := image.Pull(containerdctx, cri.RegistryBuilder(r.State().V1Alpha2().Resources()), client, spec.Image,
+	img, err := image.Pull(containerdctx,
+		cri.RegistryBuilder(r.State().V1Alpha2().Resources()),
+		r.State().V1Alpha2().Resources(),
+		client, spec.Image,
 		image.WithSkipIfAlreadyPulled(),
 		image.WithProgressReporter(console.NewProgressReporter),
 	)

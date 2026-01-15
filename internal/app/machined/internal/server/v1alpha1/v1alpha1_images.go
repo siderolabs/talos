@@ -96,7 +96,10 @@ func (s *Server) ImagePull(ctx context.Context, req *machine.ImagePullRequest) (
 		return nil, err
 	}
 
-	_, err = image.Pull(ctx, cri.RegistryBuilder(s.Controller.Runtime().State().V1Alpha2().Resources()), client, req.Reference,
+	_, err = image.Pull(ctx,
+		cri.RegistryBuilder(s.Controller.Runtime().State().V1Alpha2().Resources()),
+		s.Controller.Runtime().State().V1Alpha2().Resources(),
+		client, req.Reference,
 		image.WithSkipIfAlreadyPulled(),
 		image.WithMaxNotFoundRetries(0), // return an error immediately if the image is not found
 	)

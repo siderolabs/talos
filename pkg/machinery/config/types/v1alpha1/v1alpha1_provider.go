@@ -510,6 +510,14 @@ func (c *Config) RegistryTLSConfigs() map[string]config.RegistryTLSConfig {
 	return result
 }
 
+// ImageVerificationConfigs implements the config.Config interface.
+//
+// v1alpha1 config does not support image verification configs in the main document,
+// they are provided as separate documents.
+func (c *Config) ImageVerificationConfigs() map[string]config.ImageVerificationConfig {
+	return nil
+}
+
 type registryEndpointWrapper struct {
 	endpoint     string
 	overridePath bool

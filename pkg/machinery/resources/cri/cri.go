@@ -38,14 +38,21 @@ type Registries interface {
 }
 
 // RegistryBuilder implements image.RegistriesBuilder.
-func RegistryBuilder(st state.State) func(ctx context.Context) (Registries, error) {
+func RegistryBuilder(st state.State, opts ...func(*RegistriesConfigSpec)) func(ctx context.Context) (Registries, error) {
 	return func(ctx context.Context) (Registries, error) {
 		regs, err := safe.StateWatchFor[*RegistriesConfig](ctx, st, NewRegistriesConfig().Metadata(), state.WithEventTypes(state.Created, state.Updated))
 		if err != nil {
 			return nil, err
 		}
 
-		return regs.TypedSpec(), nil
+		spec := regs.TypedSpec()
+
+		// mutate the spec with the provided options
+		for _, opt := range opts {
+			opt(spec)
+		}
+
+		return spec, nil
 	}
 }
 

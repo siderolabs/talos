@@ -9,11 +9,14 @@ import (
 	"context"
 	"errors"
 	"io"
+	"maps"
 
 	containerdapi "github.com/containerd/containerd/v2/client"
 	"github.com/containerd/containerd/v2/core/images"
 	"github.com/containerd/errdefs"
 	"github.com/containerd/platforms"
+	"github.com/distribution/reference"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -34,12 +37,14 @@ type Service struct {
 	machine.UnimplementedImageServiceServer
 
 	controller runtime.Controller
+	logger     *zap.Logger
 }
 
 // NewService creates a new ImageService.
-func NewService(controller runtime.Controller) *Service {
+func NewService(controller runtime.Controller, logger *zap.Logger) *Service {
 	return &Service{
 		controller: controller,
+		logger:     logger,
 	}
 }
 
@@ -63,6 +68,7 @@ func (svc *Service) List(req *machine.ImageServiceListRequest, srv grpc.ServerSt
 			Name:      image.Name,
 			Digest:    image.Target.Digest.String(),
 			CreatedAt: timestamppb.New(image.CreatedAt),
+			Labels:    maps.Clone(image.Labels),
 		}
 
 		size, err := image.Size(ctx, client.ContentStore(), platforms.Default())
@@ -90,6 +96,7 @@ func (svc *Service) Pull(req *machine.ImageServicePullRequest, srv grpc.ServerSt
 
 	img, err := image.Pull(ctx,
 		cri.RegistryBuilder(svc.controller.Runtime().State().V1Alpha2().Resources()),
+		svc.controller.Runtime().State().V1Alpha2().Resources(),
 		client,
 		req.GetImageRef(),
 		image.WithSkipIfAlreadyPulled(),
@@ -118,9 +125,21 @@ func (svc *Service) Pull(req *machine.ImageServicePullRequest, srv grpc.ServerSt
 		return err
 	}
 
+	pulledRef := img.Name()
+
+	parsedRef, err := reference.ParseDockerRef(pulledRef)
+	if err != nil {
+		return status.Errorf(codes.Internal, "error parsing image reference: %s", err)
+	}
+
+	if _, ok := parsedRef.(reference.Canonical); !ok {
+		// if the reference is not canonical, pin it
+		pulledRef = parsedRef.Name() + "@" + img.Target().Digest.String()
+	}
+
 	return srv.Send(&machine.ImageServicePullResponse{
 		Response: &machine.ImageServicePullResponse_Name{
-			Name: img.Name(),
+			Name: pulledRef,
 		},
 	})
 }

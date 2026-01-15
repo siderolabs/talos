@@ -19,6 +19,7 @@ import (
 	"github.com/containerd/containerd/v2/pkg/namespaces"
 	"github.com/containerd/containerd/v2/pkg/oci"
 	"github.com/containerd/errdefs"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/go-kmsg"
 	"github.com/siderolabs/go-procfs/procfs"
@@ -43,6 +44,7 @@ func RunInstallerContainer(
 	disk, platform, ref string,
 	cfg configcore.Config,
 	cfgContainer configcore.Container,
+	resources state.State,
 	registryBuilder image.RegistriesBuilder,
 	opts ...Option,
 ) error {
@@ -82,7 +84,7 @@ func RunInstallerContainer(
 	if img == nil || err != nil && errdefs.IsNotFound(err) {
 		log.Printf("pulling %q", ref)
 
-		img, err = image.Pull(ctx, registryBuilder, client, ref, image.WithProgressReporter(console.NewProgressReporter))
+		img, err = image.Pull(ctx, registryBuilder, resources, client, ref, image.WithProgressReporter(console.NewProgressReporter))
 	}
 
 	if err != nil {

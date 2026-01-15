@@ -25,6 +25,7 @@ const (
 	ImageService_Pull_FullMethodName   = "/machine.ImageService/Pull"
 	ImageService_Import_FullMethodName = "/machine.ImageService/Import"
 	ImageService_Remove_FullMethodName = "/machine.ImageService/Remove"
+	ImageService_Verify_FullMethodName = "/machine.ImageService/Verify"
 )
 
 // ImageServiceClient is the client API for ImageService service.
@@ -41,6 +42,8 @@ type ImageServiceClient interface {
 	Import(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[ImageServiceImportRequest, ImageServiceImportResponse], error)
 	// Remove an image from the containerd.
 	Remove(ctx context.Context, in *ImageServiceRemoveRequest, opts ...grpc.CallOption) (*emptypb.Empty, error)
+	// Verify an image signature.
+	Verify(ctx context.Context, in *ImageServiceVerifyRequest, opts ...grpc.CallOption) (*ImageServiceVerifyResponse, error)
 }
 
 type imageServiceClient struct {
@@ -112,6 +115,16 @@ func (c *imageServiceClient) Remove(ctx context.Context, in *ImageServiceRemoveR
 	return out, nil
 }
 
+func (c *imageServiceClient) Verify(ctx context.Context, in *ImageServiceVerifyRequest, opts ...grpc.CallOption) (*ImageServiceVerifyResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ImageServiceVerifyResponse)
+	err := c.cc.Invoke(ctx, ImageService_Verify_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ImageServiceServer is the server API for ImageService service.
 // All implementations must embed UnimplementedImageServiceServer
 // for forward compatibility.
@@ -126,6 +139,8 @@ type ImageServiceServer interface {
 	Import(grpc.ClientStreamingServer[ImageServiceImportRequest, ImageServiceImportResponse]) error
 	// Remove an image from the containerd.
 	Remove(context.Context, *ImageServiceRemoveRequest) (*emptypb.Empty, error)
+	// Verify an image signature.
+	Verify(context.Context, *ImageServiceVerifyRequest) (*ImageServiceVerifyResponse, error)
 	mustEmbedUnimplementedImageServiceServer()
 }
 
@@ -147,6 +162,9 @@ func (UnimplementedImageServiceServer) Import(grpc.ClientStreamingServer[ImageSe
 }
 func (UnimplementedImageServiceServer) Remove(context.Context, *ImageServiceRemoveRequest) (*emptypb.Empty, error) {
 	return nil, status.Error(codes.Unimplemented, "method Remove not implemented")
+}
+func (UnimplementedImageServiceServer) Verify(context.Context, *ImageServiceVerifyRequest) (*ImageServiceVerifyResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Verify not implemented")
 }
 func (UnimplementedImageServiceServer) mustEmbedUnimplementedImageServiceServer() {}
 func (UnimplementedImageServiceServer) testEmbeddedByValue()                      {}
@@ -216,6 +234,24 @@ func _ImageService_Remove_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ImageService_Verify_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ImageServiceVerifyRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ImageServiceServer).Verify(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ImageService_Verify_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ImageServiceServer).Verify(ctx, req.(*ImageServiceVerifyRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ImageService_ServiceDesc is the grpc.ServiceDesc for ImageService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -226,6 +262,10 @@ var ImageService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Remove",
 			Handler:    _ImageService_Remove_Handler,
+		},
+		{
+			MethodName: "Verify",
+			Handler:    _ImageService_Verify_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

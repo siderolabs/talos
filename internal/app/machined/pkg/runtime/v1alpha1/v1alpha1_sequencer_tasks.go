@@ -1337,6 +1337,7 @@ func Upgrade(_ runtime.Sequence, data any) (runtime.TaskExecutionFunc, string) {
 			in.GetImage(),
 			r.Config(),
 			r.ConfigContainer(),
+			r.State().V1Alpha2().Resources(),
 			crires.RegistryBuilder(r.State().V1Alpha2().Resources()),
 			install.OptionsFromUpgradeRequest(r, in)...,
 		)
@@ -1488,7 +1489,7 @@ func UnmountEphemeralPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc
 
 // Install mounts or installs the system partitions.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func Install(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		switch {
@@ -1542,6 +1543,7 @@ func Install(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 				installerImage,
 				r.Config(),
 				r.ConfigContainer(),
+				r.State().V1Alpha2().Resources(),
 				crires.RegistryBuilder(r.State().V1Alpha2().Resources()),
 				install.WithForce(true),
 				install.WithZero(r.Config().Machine().Install().Zero()),
@@ -1608,6 +1610,7 @@ func Install(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 				r.State().Machine().StagedInstallImageRef(),
 				r.Config(),
 				r.ConfigContainer(),
+				r.State().V1Alpha2().Resources(),
 				crires.RegistryBuilder(r.State().V1Alpha2().Resources()),
 				install.WithOptions(options),
 			)

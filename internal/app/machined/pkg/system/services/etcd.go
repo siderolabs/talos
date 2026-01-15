@@ -102,7 +102,10 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) error {
 		return fmt.Errorf("failed to get etcd spec: %w", err)
 	}
 
-	img, err := image.Pull(containerdctx, cri.RegistryBuilder(r.State().V1Alpha2().Resources()), client, spec.TypedSpec().Image,
+	img, err := image.Pull(containerdctx,
+		cri.RegistryBuilder(r.State().V1Alpha2().Resources()),
+		r.State().V1Alpha2().Resources(),
+		client, spec.TypedSpec().Image,
 		image.WithSkipIfAlreadyPulled(),
 		image.WithProgressReporter(console.NewProgressReporter),
 	)

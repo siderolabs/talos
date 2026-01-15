@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	stdlog "log"
+	"maps"
 	"time"
 
 	containerd "github.com/containerd/containerd/v2/client"
@@ -17,12 +18,18 @@ import (
 	"github.com/containerd/errdefs"
 	"github.com/containerd/log"
 	"github.com/containerd/platforms"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/distribution/reference"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/sirupsen/logrus"
+	"go.uber.org/zap"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/siderolabs/talos/internal/pkg/containers/image/progress"
+	"github.com/siderolabs/talos/internal/pkg/containers/image/verify"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cri"
 )
 
@@ -108,8 +115,15 @@ func (s *simpleProgressReporter) Update(p progress.LayerPullProgress) {
 // Pull is a convenience function that wraps the containerd image pull func with
 // retry functionality.
 //
-//nolint:gocyclo
-func Pull(ctx context.Context, registryBuilder RegistriesBuilder, client *containerd.Client, ref string, opt ...PullOption) (img containerd.Image, err error) {
+//nolint:gocyclo,cyclop
+func Pull(
+	ctx context.Context,
+	registryBuilder RegistriesBuilder,
+	resources state.State,
+	client *containerd.Client,
+	ref string,
+	opt ...PullOption,
+) (img containerd.Image, err error) {
 	opts := DefaultPullOptions()
 
 	for _, o := range opt {
@@ -158,11 +172,41 @@ func Pull(ctx context.Context, registryBuilder RegistriesBuilder, client *contai
 
 		resolver := NewResolver(registriesConfig)
 
+		verifyResult, err := verify.ImageSignature(ctx, zap.NewNop(), resources, resolver, ref)
+		if err != nil {
+			switch status.Code(err) { //nolint:exhaustive
+			case codes.PermissionDenied:
+				// verification denied by matched rule, no need to retry
+				return errors.New(status.Convert(err).Message())
+			case codes.NotFound:
+				// verification failed because image not found, no need to retry
+				notFoundErrors++
+
+				if notFoundErrors > opts.MaxNotFoundRetries {
+					return err
+				}
+
+				return retry.ExpectedError(err)
+			default:
+				return retry.ExpectedError(err)
+			}
+		}
+
 		containerdRemoteOpts := []containerd.RemoteOpt{
 			containerd.WithPullUnpack,
 			containerd.WithChildLabelMap(images.ChildGCLabelsFilterLayers),
 			containerd.WithPlatformMatcher(platforms.OnlyStrict(platforms.DefaultSpec())),
 			containerd.WithResolver(resolver),
+		}
+
+		pullRef := ref
+
+		if verifyResult.Verified {
+			containerdRemoteOpts = append(containerdRemoteOpts,
+				containerd.WithPullLabel(constants.ImageLabelVerified, verifyResult.Message),
+			)
+
+			pullRef = verifyResult.DigestedImageRef
 		}
 
 		if opts.NewProgressReporter != nil {
@@ -198,7 +242,7 @@ func Pull(ctx context.Context, registryBuilder RegistriesBuilder, client *contai
 
 		if img, err = client.Pull(
 			ctx,
-			ref,
+			pullRef,
 			containerdRemoteOpts...,
 		); err != nil {
 			err = fmt.Errorf("failed to pull image %q: %w", ref, err)
@@ -243,7 +287,7 @@ func manageAliases(ctx context.Context, client *containerd.Client, namedRef refe
 	}
 
 	for _, newRef := range refs {
-		if err := createAlias(ctx, client, newRef, img.Target()); err != nil {
+		if err := createAlias(ctx, client, newRef, img.Target(), img.Labels()); err != nil {
 			return err
 		}
 	}
@@ -251,10 +295,11 @@ func manageAliases(ctx context.Context, client *containerd.Client, namedRef refe
 	return nil
 }
 
-func createAlias(ctx context.Context, client *containerd.Client, name string, desc ocispec.Descriptor) error {
+func createAlias(ctx context.Context, client *containerd.Client, name string, desc ocispec.Descriptor, labels map[string]string) error {
 	img := images.Image{
 		Name:   name,
 		Target: desc,
+		Labels: labels,
 	}
 
 	oldImg, err := client.ImageService().Create(ctx, img)
@@ -262,11 +307,11 @@ func createAlias(ctx context.Context, client *containerd.Client, name string, de
 		return err
 	}
 
-	if oldImg.Target.Digest == img.Target.Digest {
+	if oldImg.Target.Digest == img.Target.Digest && maps.Equal(oldImg.Labels, img.Labels) {
 		return nil
 	}
 
-	_, err = client.ImageService().Update(ctx, img, "target")
+	_, err = client.ImageService().Update(ctx, img, "target", "labels")
 
 	return err
 }

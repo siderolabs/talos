@@ -237,3 +237,7 @@
 ; [  110.873621] audit: type=1400 audit(1742647858.928:213): avc:  denied  { relabelfrom } for  pid=4732 comm="containerd" name="etc" dev="vda4" ino=122484 scontext=system_u:system_r:pod_t:s0 tcontext=system_u:object_r:ephemeral_t:s0 tclass=dir permissive=1
 ; [  110.875762] audit: type=1400 audit(1742647858.928:213): avc:  denied  { relabelto } for  pid=4732 comm="containerd" name="etc" dev="vda4" ino=122484 scontext=system_u:system_r:pod_t:s0 tcontext=system_u:object_r:ephemeral_t:s0 tclass=dir permissive=1
 (allow pod_p ephemeral_t (fs_classes (relabelfrom relabelto)))
+
+; CRI containerd should talk machined API to call machine.ImageService/Verify API
+(allow pod_containerd_t machine_socket_t (fs_classes (rw)))
+(allow pod_containerd_t init_t (unix_stream_socket (connectto)))

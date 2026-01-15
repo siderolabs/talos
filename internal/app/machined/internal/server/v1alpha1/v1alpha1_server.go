@@ -155,7 +155,7 @@ func (s *Server) Register(obj *grpc.Server) {
 	resourceState = state.WrapCore(state.Filter(resourceState, resources.AccessPolicy(resourceState)))
 
 	machine.RegisterMachineServiceServer(obj, s)
-	machine.RegisterImageServiceServer(obj, images.NewService(s.Controller))
+	machine.RegisterImageServiceServer(obj, images.NewService(s.Controller, s.Logger))
 	machine.RegisterDebugServiceServer(obj, &debug.Service{})
 	machine.RegisterLifecycleServiceServer(obj, lifecycle.NewService(s.Controller.Runtime(), s.Logger))
 	cluster.RegisterClusterServiceServer(obj, s)
@@ -482,7 +482,7 @@ func (s *Server) Shutdown(ctx context.Context, in *machine.ShutdownRequest) (rep
 
 // Upgrade initiates an upgrade.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (*machine.UpgradeResponse, error) {
 	actorID := uuid.New().String()
 
@@ -496,7 +496,12 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (*mach
 
 	log.Printf("validating %q", in.GetImage())
 
-	if err := install.PullAndValidateInstallerImage(ctx, crires.RegistryBuilder(s.Controller.Runtime().State().V1Alpha2().Resources()), in.GetImage()); err != nil {
+	if err := install.PullAndValidateInstallerImage(
+		ctx,
+		s.Controller.Runtime().State().V1Alpha2().Resources(),
+		crires.RegistryBuilder(s.Controller.Runtime().State().V1Alpha2().Resources()),
+		in.GetImage(),
+	); err != nil {
 		return nil, fmt.Errorf("error validating installer image %q: %w", in.GetImage(), err)
 	}
 

@@ -14,6 +14,7 @@ import (
 	"github.com/containerd/containerd/v2/pkg/namespaces"
 	"github.com/containerd/containerd/v2/pkg/oci"
 	"github.com/containerd/errdefs"
+	"github.com/cosi-project/runtime/pkg/state"
 
 	"github.com/siderolabs/talos/internal/pkg/containers/image"
 	"github.com/siderolabs/talos/internal/pkg/containers/image/console"
@@ -24,7 +25,7 @@ import (
 // PullAndValidateInstallerImage pulls down the installer and validates that it can run.
 //
 //nolint:gocyclo
-func PullAndValidateInstallerImage(ctx context.Context, registryBuilder image.RegistriesBuilder, ref string) error {
+func PullAndValidateInstallerImage(ctx context.Context, resources state.State, registryBuilder image.RegistriesBuilder, ref string) error {
 	// Pull down specified installer image early so we can bail if it doesn't exist in the upstream registry
 	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
 
@@ -37,7 +38,7 @@ func PullAndValidateInstallerImage(ctx context.Context, registryBuilder image.Re
 
 	defer client.Close() //nolint:errcheck
 
-	img, err := image.Pull(containerdctx, registryBuilder, client, ref,
+	img, err := image.Pull(containerdctx, registryBuilder, resources, client, ref,
 		image.WithSkipIfAlreadyPulled(),
 		image.WithMaxNotFoundRetries(1),
 		image.WithProgressReporter(console.NewProgressReporter),

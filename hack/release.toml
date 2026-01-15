@@ -243,6 +243,14 @@ alongside some hardening features, such as BTI on supported ARM systems.
 Talos now supports VRF (Virtual Routing and Forwarding) via the new `VRFConfig` machine config document.
 """
 
+    [notes.image_signatures]
+        title = "Container Image Signature Verification"
+        description = """\
+Talos now supports machine-wide container image signature verification via the new `ImageVerificationConfig` machine config document.
+
+Any image which gets pulled on the node will be verified against the configured rules, and if no rule matches, it will be pulled without verification.
+"""
+
     [notest.blackhole_routes]
         title = "Blackhole Route Support"
         description = """\

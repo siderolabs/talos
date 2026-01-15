@@ -483,6 +483,16 @@ func (container *Container) RegistryTLSConfigs() map[string]config.RegistryTLSCo
 	return cfg
 }
 
+// ImageVerificationConfig implements config.Config interface.
+func (container *Container) ImageVerificationConfig() config.ImageVerificationConfig {
+	docs := findMatchingDocs[config.ImageVerificationConfig](container.documents)
+	if len(docs) == 0 {
+		return nil
+	}
+
+	return docs[0]
+}
+
 // Bytes returns source YAML representation (if available) or does default encoding.
 func (container *Container) Bytes() ([]byte, error) {
 	if !container.readonly {

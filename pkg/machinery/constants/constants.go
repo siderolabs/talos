@@ -1165,6 +1165,7 @@ const (
 	//
 	// Note: while updating, make sure to copy flannel image from docker.io to ghcr.io:
 	//   crane cp docker.io/flannel/flannel:vX.Y.Z ghcr.io/siderolabs/flannel:vX.Y.Z
+	// And sign the image using image-signer.
 	//
 	// renovate: datasource=github-releases depName=flannel-io/flannel
 	FlannelVersion = "v0.28.1"
@@ -1313,6 +1314,9 @@ const (
 
 	// LogFlushPeriod is the period for flushing in-memory log buffers to the filesystem.
 	LogFlushPeriod = 15 * time.Second
+
+	// ImageLabelVerified is the label key for the verified image label.
+	ImageLabelVerified = "talos.dev/verified"
 )
 
 // names of variable that can be substituted in the talos.config kernel parameter.

@@ -153,14 +153,15 @@ func imageList() error {
 			if !headerWritten {
 				headerWritten = true
 
-				fmt.Fprintln(w, "NODE\tIMAGE\tDIGEST\tSIZE\tCREATED")
+				fmt.Fprintln(w, "NODE\tIMAGE\tDIGEST\tSIZE\tLABELS\tCREATED")
 			}
 
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\t%s\n",
 				resp.Node,
 				resp.Payload.GetName(),
 				resp.Payload.GetDigest(),
 				humanize.Bytes(uint64(resp.Payload.GetSize())),
+				helpers.FormatLabels(resp.Payload.GetLabels()),
 				resp.Payload.GetCreatedAt().AsTime().Format(time.RFC3339),
 			)
 		}
@@ -673,7 +674,7 @@ var imageIntegrationCmd = &cobra.Command{
 			imgs.KubeNetworkPolicies.String(),
 			"registry.k8s.io/conformance:v" + constants.DefaultKubernetesVersion,
 			"docker.io/library/alpine:latest",
-			"ghcr.io/siderolabs/talosctl:latest",
+			"ghcr.io/siderolabs/talosctl:v1.12.4",
 			"registry.k8s.io/kube-apiserver:v1.27.0",
 			"registry.k8s.io/kube-apiserver:v1.27.1",
 			"docker.io/library/alpine:3.23",

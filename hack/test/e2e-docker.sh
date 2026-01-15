@@ -16,6 +16,7 @@ function create_cluster {
     --image="${IMAGE}" \
     --workers=1 \
     --mtu=1430 \
+    --config-patch=hack/test/patches/image-verification.yaml \
     "${REGISTRY_MIRROR_FLAGS[@]}"
 
   "${TALOSCTL}" config node 10.5.0.2
