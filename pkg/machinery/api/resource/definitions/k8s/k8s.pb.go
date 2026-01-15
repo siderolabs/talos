@@ -743,10 +743,11 @@ func (x *ControllerManagerConfigSpec) GetResources() *Resources {
 	return nil
 }
 
-// EndpointSpec describes status of rendered secrets.
+// EndpointSpec describes a list of endpoints to connect to.
 type EndpointSpec struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Addresses     []*common.NetIP        `protobuf:"bytes,1,rep,name=addresses,proto3" json:"addresses,omitempty"`
+	Hosts         []string               `protobuf:"bytes,2,rep,name=hosts,proto3" json:"hosts,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -784,6 +785,13 @@ func (*EndpointSpec) Descriptor() ([]byte, []int) {
 func (x *EndpointSpec) GetAddresses() []*common.NetIP {
 	if x != nil {
 		return x.Addresses
+	}
+	return nil
+}
+
+func (x *EndpointSpec) GetHosts() []string {
+	if x != nil {
+		return x.Hosts
 	}
 	return nil
 }
@@ -2378,9 +2386,10 @@ const file_resource_definitions_k8s_k8s_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1aG\n" +
 	"\x19EnvironmentVariablesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\";\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"Q\n" +
 	"\fEndpointSpec\x12+\n" +
-	"\taddresses\x18\x01 \x03(\v2\r.common.NetIPR\taddresses\"\xa1\x02\n" +
+	"\taddresses\x18\x01 \x03(\v2\r.common.NetIPR\taddresses\x12\x14\n" +
+	"\x05hosts\x18\x02 \x03(\tR\x05hosts\"\xa1\x02\n" +
 	"\rExtraManifest\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x10\n" +
 	"\x03url\x18\x02 \x01(\tR\x03url\x12\x1a\n" +

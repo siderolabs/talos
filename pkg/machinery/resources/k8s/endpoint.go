@@ -32,11 +32,12 @@ const ControlPlaneKubernetesEndpointsID = resource.ID("controlplane")
 // Endpoint resource holds definition of rendered secrets.
 type Endpoint = typed.Resource[EndpointSpec, EndpointExtension]
 
-// EndpointSpec describes status of rendered secrets.
+// EndpointSpec describes a list of endpoints to connect to.
 //
 //gotagsrewrite:gen
 type EndpointSpec struct {
 	Addresses []netip.Addr `yaml:"addresses" protobuf:"1"`
+	Hosts     []string     `yaml:"hosts" protobuf:"2"`
 }
 
 // NewEndpoint initializes the Endpoint resource.
@@ -61,32 +62,56 @@ func (EndpointExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 				Name:     "Addresses",
 				JSONPath: "{.addresses}",
 			},
+			{
+				Name:     "Hosts",
+				JSONPath: "{.hosts}",
+			},
 		},
 	}
 }
 
 // EndpointList is a flattened list of endpoints.
-type EndpointList []netip.Addr
+type EndpointList struct {
+	Addresses []netip.Addr
+	Hosts     []string
+}
 
 // Merge endpoints from multiple Endpoint resources into a single list.
 func (l EndpointList) Merge(endpoint *Endpoint) EndpointList {
 	for _, ip := range endpoint.TypedSpec().Addresses {
-		idx, _ := slices.BinarySearchFunc(l, ip, func(a netip.Addr, target netip.Addr) int {
+		idx, _ := slices.BinarySearchFunc(l.Addresses, ip, func(a netip.Addr, target netip.Addr) int {
 			return a.Compare(target)
 		})
-		if idx < len(l) && l[idx].Compare(ip) == 0 {
+		if idx < len(l.Addresses) && l.Addresses[idx].Compare(ip) == 0 {
 			continue
 		}
 
-		l = slices.Insert(l, idx, ip)
+		l.Addresses = slices.Insert(l.Addresses, idx, ip)
+	}
+
+	for _, host := range endpoint.TypedSpec().Hosts {
+		idx, _ := slices.BinarySearch(l.Hosts, host)
+		if idx < len(l.Hosts) && l.Hosts[idx] == host {
+			continue
+		}
+
+		l.Hosts = slices.Insert(l.Hosts, idx, host)
 	}
 
 	return l
 }
 
+// IsEmpty checks if the EndpointList is empty.
+func (l EndpointList) IsEmpty() bool {
+	return len(l.Addresses) == 0 && len(l.Hosts) == 0
+}
+
 // Strings returns a slice of formatted endpoints to string.
 func (l EndpointList) Strings() []string {
-	return xslices.Map(l, netip.Addr.String)
+	return slices.Concat(
+		xslices.Map(l.Addresses, netip.Addr.String),
+		l.Hosts,
+	)
 }
 
 func init() {

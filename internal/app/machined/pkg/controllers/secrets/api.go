@@ -257,7 +257,7 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 				endpointAddrs = endpointAddrs.Merge(res.(*k8s.Endpoint))
 			}
 
-			if len(endpointAddrs) == 0 {
+			if endpointAddrs.IsEmpty() {
 				continue
 			}
 
