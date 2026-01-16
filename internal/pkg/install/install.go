@@ -28,6 +28,7 @@ import (
 	containerdrunner "github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/siderolabs/talos/internal/pkg/capability"
 	"github.com/siderolabs/talos/internal/pkg/containers/image"
+	"github.com/siderolabs/talos/internal/pkg/containers/image/console"
 	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -81,7 +82,7 @@ func RunInstallerContainer(
 	if img == nil || err != nil && errdefs.IsNotFound(err) {
 		log.Printf("pulling %q", ref)
 
-		img, err = image.Pull(ctx, registryBuilder, client, ref)
+		img, err = image.Pull(ctx, registryBuilder, client, ref, image.WithProgressReporter(console.NewProgressReporter))
 	}
 
 	if err != nil {

@@ -38,6 +38,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/siderolabs/talos/internal/pkg/containers/image"
+	"github.com/siderolabs/talos/internal/pkg/containers/image/console"
 	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/internal/pkg/etcd"
 	"github.com/siderolabs/talos/pkg/argsbuilder"
@@ -101,7 +102,10 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) error {
 		return fmt.Errorf("failed to get etcd spec: %w", err)
 	}
 
-	img, err := image.Pull(containerdctx, cri.RegistryBuilder(r.State().V1Alpha2().Resources()), client, spec.TypedSpec().Image, image.WithSkipIfAlreadyPulled())
+	img, err := image.Pull(containerdctx, cri.RegistryBuilder(r.State().V1Alpha2().Resources()), client, spec.TypedSpec().Image,
+		image.WithSkipIfAlreadyPulled(),
+		image.WithProgressReporter(console.NewProgressReporter),
+	)
 	if err != nil {
 		return fmt.Errorf("failed to pull image %q: %w", spec.TypedSpec().Image, err)
 	}

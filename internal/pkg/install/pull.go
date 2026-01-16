@@ -16,6 +16,7 @@ import (
 	"github.com/containerd/errdefs"
 
 	"github.com/siderolabs/talos/internal/pkg/containers/image"
+	"github.com/siderolabs/talos/internal/pkg/containers/image/console"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -39,6 +40,7 @@ func PullAndValidateInstallerImage(ctx context.Context, registryBuilder image.Re
 	img, err := image.Pull(containerdctx, registryBuilder, client, ref,
 		image.WithSkipIfAlreadyPulled(),
 		image.WithMaxNotFoundRetries(1),
+		image.WithProgressReporter(console.NewProgressReporter),
 	)
 	if err != nil {
 		return err

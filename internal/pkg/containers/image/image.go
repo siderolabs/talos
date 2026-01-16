@@ -13,6 +13,7 @@ import (
 
 	containerd "github.com/containerd/containerd/v2/client"
 	"github.com/containerd/containerd/v2/core/images"
+	"github.com/containerd/containerd/v2/pkg/snapshotters"
 	"github.com/containerd/errdefs"
 	"github.com/containerd/log"
 	"github.com/containerd/platforms"
@@ -21,6 +22,7 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/sirupsen/logrus"
 
+	"github.com/siderolabs/talos/internal/pkg/containers/image/progress"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cri"
 )
 
@@ -37,6 +39,7 @@ type PullOption func(*PullOptions)
 type PullOptions struct {
 	SkipIfAlreadyPulled bool
 	MaxNotFoundRetries  int
+	NewProgressReporter NewProgressReporter
 }
 
 // DefaultPullOptions returns default options for Pull function.
@@ -60,6 +63,23 @@ func WithMaxNotFoundRetries(maxRetries int) PullOption {
 		opts.MaxNotFoundRetries = maxRetries
 	}
 }
+
+// WithProgressReporter enables reporting pull progress.
+func WithProgressReporter(newReporter NewProgressReporter) PullOption {
+	return func(opts *PullOptions) {
+		opts.NewProgressReporter = newReporter
+	}
+}
+
+// ProgressReporter is an interface for reporting image pull progress.
+type ProgressReporter interface {
+	Start()
+	Stop()
+	Update(progress.LayerPullProgress)
+}
+
+// NewProgressReporter creates a new progress reporter.
+type NewProgressReporter func(imageRef string) ProgressReporter
 
 // RegistriesBuilder is a function that returns registries configuration.
 type RegistriesBuilder = func(context.Context) (cri.Registries, error)
@@ -117,13 +137,48 @@ func Pull(ctx context.Context, registryBuilder RegistriesBuilder, client *contai
 
 		resolver := NewResolver(registriesConfig)
 
+		containerdRemoteOpts := []containerd.RemoteOpt{
+			containerd.WithPullUnpack,
+			containerd.WithChildLabelMap(images.ChildGCLabelsFilterLayers),
+			containerd.WithPlatformMatcher(platforms.OnlyStrict(platforms.DefaultSpec())),
+			containerd.WithResolver(resolver),
+		}
+
+		if opts.NewProgressReporter != nil {
+			reporter := opts.NewProgressReporter(ref)
+
+			reporter.Start()
+			defer reporter.Stop()
+
+			pp := progress.NewPullProgress(
+				client.ContentStore(),
+				client.SnapshotService("overlayfs"),
+				reporter.Update,
+			)
+
+			finishProgress := pp.ShowProgress(ctx)
+			defer finishProgress()
+
+			containerdRemoteOpts = append(containerdRemoteOpts,
+				containerd.WithImageHandler(
+					images.HandlerFunc(
+						func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
+							if images.IsLayerType(desc.MediaType) {
+								pp.Add(desc)
+							}
+
+							return nil, nil
+						},
+					),
+				),
+				containerd.WithImageHandlerWrapper(snapshotters.AppendInfoHandlerWrapper(ref)),
+			)
+		}
+
 		if img, err = client.Pull(
 			ctx,
 			ref,
-			containerd.WithPullUnpack,
-			containerd.WithResolver(resolver),
-			containerd.WithChildLabelMap(images.ChildGCLabelsFilterLayers),
-			containerd.WithPlatformMatcher(platforms.OnlyStrict(platforms.DefaultSpec())),
+			containerdRemoteOpts...,
 		); err != nil {
 			err = fmt.Errorf("failed to pull image %q: %w", ref, err)
 			if errors.Is(err, errdefs.ErrNotFound) {
