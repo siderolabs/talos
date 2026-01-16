@@ -29,6 +29,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/siderolabs/talos/internal/pkg/capability"
 	"github.com/siderolabs/talos/internal/pkg/containers/image"
+	"github.com/siderolabs/talos/internal/pkg/containers/image/console"
 	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
@@ -71,7 +72,10 @@ func (k *Kubelet) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	// Pull the image and unpack it.
 	containerdctx := namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
 
-	img, err := image.Pull(containerdctx, cri.RegistryBuilder(r.State().V1Alpha2().Resources()), client, spec.Image, image.WithSkipIfAlreadyPulled())
+	img, err := image.Pull(containerdctx, cri.RegistryBuilder(r.State().V1Alpha2().Resources()), client, spec.Image,
+		image.WithSkipIfAlreadyPulled(),
+		image.WithProgressReporter(console.NewProgressReporter),
+	)
 	if err != nil {
 		return err
 	}
