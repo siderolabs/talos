@@ -84,6 +84,10 @@ func (r *Router) Director(ctx context.Context, fullMethodName string) (proxy.Mod
 			return proxy.One2One, nil, status.Error(codes.InvalidArgument, "one-2-many proxying is not supported for COSI methods")
 		}
 
+		if strings.HasPrefix(fullMethodName, "/machine.MachineService/DebugContainer") {
+			return proxy.One2One, nil, status.Error(codes.InvalidArgument, "one-2-many proxying is not supported for COSI methods")
+		}
+
 		return r.aggregateDirector(nodes)
 	case okNode:
 		return r.singleDirector(node[0])

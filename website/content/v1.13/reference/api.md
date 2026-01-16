@@ -72,6 +72,15 @@ description: Talos gRPC API reference.
     - [ControlPlaneConfig](#machine.ControlPlaneConfig)
     - [CopyRequest](#machine.CopyRequest)
     - [DHCPOptionsConfig](#machine.DHCPOptionsConfig)
+    - [DebugContainerCreateRequest](#machine.DebugContainerCreateRequest)
+    - [DebugContainerCreateResponse](#machine.DebugContainerCreateResponse)
+    - [DebugContainerPullProgress](#machine.DebugContainerPullProgress)
+    - [DebugContainerPullProgressStatus](#machine.DebugContainerPullProgressStatus)
+    - [DebugContainerRunRequest](#machine.DebugContainerRunRequest)
+    - [DebugContainerRunResponse](#machine.DebugContainerRunResponse)
+    - [DebugContainerSpec](#machine.DebugContainerSpec)
+    - [DebugContainerSpec.EnvEntry](#machine.DebugContainerSpec.EnvEntry)
+    - [DebugContainerTerminalResize](#machine.DebugContainerTerminalResize)
     - [DiskStat](#machine.DiskStat)
     - [DiskStats](#machine.DiskStats)
     - [DiskStatsResponse](#machine.DiskStatsResponse)
@@ -225,6 +234,7 @@ description: Talos gRPC API reference.
     - [ApplyConfigurationRequest.Mode](#machine.ApplyConfigurationRequest.Mode)
     - [ConnectRecord.State](#machine.ConnectRecord.State)
     - [ConnectRecord.TimerActive](#machine.ConnectRecord.TimerActive)
+    - [DebugContainerPullProgressStatus.Status](#machine.DebugContainerPullProgressStatus.Status)
     - [EtcdMemberAlarm.AlarmType](#machine.EtcdMemberAlarm.AlarmType)
     - [ListRequest.Type](#machine.ListRequest.Type)
     - [MachineConfig.MachineType](#machine.MachineConfig.MachineType)
@@ -1558,6 +1568,153 @@ Copy produces .tar.gz archive which is streamed back to the caller
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | route_metric | [uint32](#uint32) |  |  |
+
+
+
+
+
+
+<a name="machine.DebugContainerCreateRequest"></a>
+
+### DebugContainerCreateRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| spec | [DebugContainerSpec](#machine.DebugContainerSpec) |  |  |
+| image_chunk | [common.Data](#common.Data) |  |  |
+
+
+
+
+
+
+<a name="machine.DebugContainerCreateResponse"></a>
+
+### DebugContainerCreateResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pull_progress | [DebugContainerPullProgress](#machine.DebugContainerPullProgress) |  |  |
+| container_id | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.DebugContainerPullProgress"></a>
+
+### DebugContainerPullProgress
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| layer_id | [string](#string) |  |  |
+| progress_status | [DebugContainerPullProgressStatus](#machine.DebugContainerPullProgressStatus) |  |  |
+
+
+
+
+
+
+<a name="machine.DebugContainerPullProgressStatus"></a>
+
+### DebugContainerPullProgressStatus
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [DebugContainerPullProgressStatus.Status](#machine.DebugContainerPullProgressStatus.Status) |  |  |
+| progress | [double](#double) |  |  |
+
+
+
+
+
+
+<a name="machine.DebugContainerRunRequest"></a>
+
+### DebugContainerRunRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| container_id | [string](#string) |  |  |
+| stdin_data | [bytes](#bytes) |  |  |
+| signal | [int32](#int32) |  |  |
+| term_resize | [DebugContainerTerminalResize](#machine.DebugContainerTerminalResize) |  |  |
+
+
+
+
+
+
+<a name="machine.DebugContainerRunResponse"></a>
+
+### DebugContainerRunResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| stdout_data | [bytes](#bytes) |  |  |
+| exit_code | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="machine.DebugContainerSpec"></a>
+
+### DebugContainerSpec
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| image_ref | [string](#string) |  |  |
+| args | [string](#string) | repeated |  |
+| env | [DebugContainerSpec.EnvEntry](#machine.DebugContainerSpec.EnvEntry) | repeated |  |
+
+
+
+
+
+
+<a name="machine.DebugContainerSpec.EnvEntry"></a>
+
+### DebugContainerSpec.EnvEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.DebugContainerTerminalResize"></a>
+
+### DebugContainerTerminalResize
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| width | [int32](#int32) |  |  |
+| height | [int32](#int32) |  |  |
 
 
 
@@ -4111,6 +4268,21 @@ rpc upgrade
 
 
 
+<a name="machine.DebugContainerPullProgressStatus.Status"></a>
+
+### DebugContainerPullProgressStatus.Status
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| DOWNLOADING | 0 |  |
+| DOWNLOAD_COMPLETE | 1 |  |
+| EXTRACTING | 2 |  |
+| EXTRACT_COMPLETE | 3 |  |
+| ALREADY_EXISTS | 4 |  |
+
+
+
 <a name="machine.EtcdMemberAlarm.AlarmType"></a>
 
 ### EtcdMemberAlarm.AlarmType
@@ -4342,6 +4514,8 @@ The machine service definition.
 | MetaDelete | [MetaDeleteRequest](#machine.MetaDeleteRequest) | [MetaDeleteResponse](#machine.MetaDeleteResponse) | MetaDelete deletes a META key. |
 | ImageList | [ImageListRequest](#machine.ImageListRequest) | [ImageListResponse](#machine.ImageListResponse) stream | ImageList lists images in the CRI. |
 | ImagePull | [ImagePullRequest](#machine.ImagePullRequest) | [ImagePullResponse](#machine.ImagePullResponse) | ImagePull pulls an image into the CRI. |
+| DebugContainerCreate | [DebugContainerCreateRequest](#machine.DebugContainerCreateRequest) stream | [DebugContainerCreateResponse](#machine.DebugContainerCreateResponse) stream | DebugContainerCreate |
+| DebugContainerRun | [DebugContainerRunRequest](#machine.DebugContainerRunRequest) stream | [DebugContainerRunResponse](#machine.DebugContainerRunResponse) stream | DebugContainerRun |
 
  <!-- end services -->
 

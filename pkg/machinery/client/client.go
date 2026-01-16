@@ -1018,6 +1018,16 @@ func (c *Client) ImagePull(ctx context.Context, namespace common.ContainerdNames
 	return err
 }
 
+// DebugContainerCreate creates a debug container.
+func (c *Client) DebugContainerCreate(ctx context.Context, callOptions ...grpc.CallOption) (machineapi.MachineService_DebugContainerCreateClient, error) {
+	return c.MachineClient.DebugContainerCreate(ctx, callOptions...)
+}
+
+// DebugContainerRun runs a debug container.
+func (c *Client) DebugContainerRun(ctx context.Context, callOptions ...grpc.CallOption) (machineapi.MachineService_DebugContainerRunClient, error) {
+	return c.MachineClient.DebugContainerRun(ctx, callOptions...)
+}
+
 // BlockDeviceWipe wipes a block device which is not used as a volume.
 func (c *Client) BlockDeviceWipe(ctx context.Context, req *storageapi.BlockDeviceWipeRequest, callOptions ...grpc.CallOption) error {
 	resp, err := c.StorageClient.BlockDeviceWipe(ctx, req, callOptions...)
