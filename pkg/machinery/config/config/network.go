@@ -169,6 +169,7 @@ type NetworkRouteConfig interface {
 	MTU() optional.Optional[uint32]
 	Metric() optional.Optional[uint32]
 	Table() optional.Optional[nethelpers.RoutingTable]
+	Type() optional.Optional[nethelpers.RouteType]
 }
 
 // NetworkLinkAliasConfig defines a network link alias configuration.
