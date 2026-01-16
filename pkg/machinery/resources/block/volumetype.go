@@ -11,11 +11,14 @@ type VolumeType int
 //
 //structprotogen:gen_enum
 const (
-	VolumeTypePartition VolumeType = iota // partition
-	VolumeTypeDisk                        // disk
-	VolumeTypeTmpfs                       // tmpfs
-	VolumeTypeDirectory                   // directory
-	VolumeTypeSymlink                     // symlink
-	VolumeTypeOverlay                     // overlay
-	VolumeTypeExternal                    // external
+	VolumeTypePartition         VolumeType = iota // partition
+	VolumeTypeDisk                                // disk
+	VolumeTypeTmpfs                               // tmpfs
+	VolumeTypeDirectory                           // directory
+	VolumeTypeSymlink                             // symlink
+	VolumeTypeOverlay                             // overlay
+	VolumeTypeExternal                            // external
+	LVMVolumeTypePhysicalVolume                   // physical volume
+	LVMVolumeTypeVolumeGroup                      // volume group
+	LVMVolumeTypeLogicalVolume                    // logical volume
 )
