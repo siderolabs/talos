@@ -10,7 +10,6 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/google/cel-go/common/types"
@@ -68,17 +67,26 @@ func EvaluateTrigger(triggerExpr cel.Expression, evalContext map[string]any) (bo
 }
 
 // PopulatePsiToCtx populates the context with PSI data from a cgroup.
+//
+//nolint:gocyclo
 func PopulatePsiToCtx(cgroup string, evalContext map[string]any, psi map[string]float64, sampleInterval time.Duration) error {
-	for _, subtree := range []string{
-		"",
-		"init",
-		"system",
-		"podruntime",
-		"kubepods/besteffort",
-		"kubepods/burstable",
-		"kubepods/guaranteed",
+	if sampleInterval <= 0 {
+		return fmt.Errorf("sample interval must be greater than zero")
+	}
+
+	for _, subtree := range []struct {
+		path string
+		qos  runtime.QoSCgroupClass
+	}{
+		{"", -1},
+		{"init", runtime.QoSCgroupClassSystem},
+		{"system", runtime.QoSCgroupClassSystem},
+		{"podruntime", runtime.QoSCgroupClassPodruntime},
+		{"kubepods/besteffort", runtime.QoSCgroupClassBesteffort},
+		{"kubepods/burstable", runtime.QoSCgroupClassBurstable},
+		{"kubepods/guaranteed", runtime.QoSCgroupClassGuaranteed},
 	} {
-		node, err := cgroups.GetCgroupProperty(filepath.Join(cgroup, subtree), "memory.pressure")
+		node, err := cgroups.GetCgroupProperty(filepath.Join(cgroup, subtree.path), "memory.pressure")
 
 		for _, psiType := range []string{"some", "full"} {
 			for _, span := range []string{"avg10", "avg60", "avg300", "total"} {
@@ -92,20 +100,36 @@ func PopulatePsiToCtx(cgroup string, evalContext map[string]any, psi map[string]
 					}
 				}
 
-				subtreePrefix := subtree
-				if subtreePrefix != "" {
-					subtreePrefix = strings.ReplaceAll(subtreePrefix, "/", "_")
-					subtreePrefix += "_"
-				}
+				// calculate delta
+				psiPath := subtree.path + "/" + "memory_" + psiType + "_" + span
 
 				diff := 0.
-				if oldValue, ok := psi[subtreePrefix+"memory_"+psiType+"_"+span]; ok {
+				if oldValue, ok := psi[psiPath]; ok {
 					diff = (value - oldValue) / sampleInterval.Seconds()
 				}
 
-				evalContext["d_"+subtreePrefix+"memory_"+psiType+"_"+span] = diff
-				evalContext[subtreePrefix+"memory_"+psiType+"_"+span] = value
-				psi[subtreePrefix+"memory_"+psiType+"_"+span] = value
+				psi[psiPath] = value
+
+				if subtree.qos == -1 {
+					evalContext["d_memory_"+psiType+"_"+span] = diff
+					evalContext["memory_"+psiType+"_"+span] = value
+				} else {
+					valuesMap, ok := evalContext["qos_memory_"+psiType+"_"+span]
+					if !ok {
+						valuesMap = map[int]float64{}
+						evalContext["qos_memory_"+psiType+"_"+span] = valuesMap
+					}
+
+					valuesMap.(map[int]float64)[int(subtree.qos)] += value
+
+					dValuesMap, ok := evalContext["d_qos_memory_"+psiType+"_"+span]
+					if !ok {
+						dValuesMap = map[int]float64{}
+						evalContext["d_qos_memory_"+psiType+"_"+span] = dValuesMap
+					}
+
+					dValuesMap.(map[int]float64)[int(subtree.qos)] += diff
+				}
 			}
 		}
 	}

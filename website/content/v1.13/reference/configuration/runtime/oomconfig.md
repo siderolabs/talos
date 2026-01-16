@@ -17,9 +17,8 @@ title: OOMConfig
 apiVersion: v1alpha1
 kind: OOMConfig
 triggerExpression: |- # This expression defines when to trigger OOM action.
-    (init_memory_full_avg10 > 5.0 && d_init_memory_full_avg10 > 0.0 || system_memory_full_avg10 > 15.0 &&
-    d_system_memory_full_avg10 > 0.0 || podruntime_memory_full_avg10 > 20.0 && d_podruntime_memory_full_avg10 > 0.0) &&
-    (d_memory_full_avg10 > 0.0 || memory_full_avg10 > 75.0) && time_since_trigger > duration("500ms")
+    multiply_qos_vectors(d_qos_memory_full_total, {System: 8.0, Podruntime: 1.0}) > 3000.0 ||
+    memory_full_avg10 > 75.0 && time_since_trigger > duration("10s")
 cgroupRankingExpression: 'memory_max.hasValue() ? 0.0 : ({Besteffort: 1.0, Burstable: 0.5, Guaranteed: 0.0, Podruntime: 0.0, System: 0.0}[class] * double(memory_current.orValue(0u)))' # This expression defines how to rank cgroups for OOM handler.
 sampleInterval: 100ms # How often should the trigger expression be evaluated.
 {{< /highlight >}}
