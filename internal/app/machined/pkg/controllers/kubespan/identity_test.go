@@ -52,7 +52,7 @@ func (suite *IdentitySuite) TestGenerate() {
 
 	ctest.AssertNoResource[*kubespan.Identity](suite, kubespan.LocalIdentity)
 
-	volumeMountStatus := block.NewVolumeMountStatus(block.NamespaceName, mountID)
+	volumeMountStatus := block.NewVolumeMountStatus(mountID)
 	volumeMountStatus.TypedSpec().Target = statePath
 	suite.Create(volumeMountStatus)
 
@@ -110,7 +110,7 @@ publicKey: Oak2fBEWngBhwslBxDVgnRNHXs88OAp4kjroSX0uqUE=
 
 	ctest.AssertNoResource[*kubespan.Identity](suite, kubespan.LocalIdentity)
 
-	volumeMountStatus := block.NewVolumeMountStatus(block.NamespaceName, mountID)
+	volumeMountStatus := block.NewVolumeMountStatus(mountID)
 	volumeMountStatus.TypedSpec().Target = statePath
 	suite.Create(volumeMountStatus)
 

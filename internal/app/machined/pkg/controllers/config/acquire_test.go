@@ -291,7 +291,7 @@ func (suite *AcquireSuite) injectViaDisk(cfg []byte, wait bool) {
 
 	suite.Require().NoError(os.WriteFile(filepath.Join(statePath, constants.ConfigFilename), cfg, 0o644))
 
-	volumeMountStatus := block.NewVolumeMountStatus(block.NamespaceName, mountID)
+	volumeMountStatus := block.NewVolumeMountStatus(mountID)
 	volumeMountStatus.TypedSpec().Target = statePath
 	suite.Create(volumeMountStatus)
 

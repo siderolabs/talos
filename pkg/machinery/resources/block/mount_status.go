@@ -11,6 +11,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 
 	"github.com/siderolabs/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/resources"
 )
 
 // MountStatusType is type of MountStatus resource.
@@ -48,9 +49,9 @@ func (m *MountStatusSpec) Root() any {
 }
 
 // NewMountStatus initializes a MountStatus resource.
-func NewMountStatus(namespace resource.Namespace, id resource.ID) *MountStatus {
+func NewMountStatus(id resource.ID) *MountStatus {
 	return typed.NewResource[MountStatusSpec, MountStatusExtension](
-		resource.NewMetadata(namespace, MountStatusType, id, resource.VersionUndefined),
+		resource.NewMetadata(resources.InMemoryNamespace, MountStatusType, id, resource.VersionUndefined),
 		MountStatusSpec{},
 	)
 }
@@ -63,7 +64,7 @@ func (MountStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             MountStatusType,
 		Aliases:          []resource.Type{},
-		DefaultNamespace: NamespaceName,
+		DefaultNamespace: resources.InMemoryNamespace,
 		PrintColumns: []meta.PrintColumn{
 			{
 				Name:     "Source",

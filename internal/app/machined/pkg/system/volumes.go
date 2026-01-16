@@ -26,7 +26,7 @@ func (svcrunner *ServiceRunner) deleteVolumeMountRequest(ctx context.Context, re
 	slices.Reverse(requests)
 
 	for _, request := range requests {
-		if err := st.RemoveFinalizer(ctx, block.NewVolumeMountStatus(block.NamespaceName, request.requestID).Metadata(), "service"); err != nil {
+		if err := st.RemoveFinalizer(ctx, block.NewVolumeMountStatus(request.requestID).Metadata(), "service"); err != nil {
 			if !state.IsNotFoundError(err) {
 				return fmt.Errorf("failed to remove finalizer from mount status %q: %w", request.requestID, err)
 			}
@@ -41,7 +41,7 @@ func (svcrunner *ServiceRunner) deleteVolumeMountRequest(ctx context.Context, re
 	}
 
 	for _, request := range requests {
-		if _, err := st.WatchFor(ctx, block.NewVolumeMountStatus(block.NamespaceName, request.requestID).Metadata(), state.WithEventTypes(state.Destroyed)); err != nil {
+		if _, err := st.WatchFor(ctx, block.NewVolumeMountStatus(request.requestID).Metadata(), state.WithEventTypes(state.Destroyed)); err != nil {
 			return fmt.Errorf("failed to watch for volume mount status to be destroyed %q: %w", request.requestID, err)
 		}
 	}
@@ -78,7 +78,7 @@ func (cond *volumesMountedCondition) Wait(ctx context.Context) error {
 
 		// wait for the mount status
 		_, err := cond.st.WatchFor(ctx,
-			block.NewVolumeMountStatus(block.NamespaceName, req.requestID).Metadata(),
+			block.NewVolumeMountStatus(req.requestID).Metadata(),
 			state.WithEventTypes(state.Created, state.Updated),
 			state.WithPhases(resource.PhaseRunning),
 		)
@@ -86,7 +86,7 @@ func (cond *volumesMountedCondition) Wait(ctx context.Context) error {
 			return err
 		}
 
-		if err = cond.st.AddFinalizer(ctx, block.NewVolumeMountStatus(block.NamespaceName, req.requestID).Metadata(), "service"); err != nil {
+		if err = cond.st.AddFinalizer(ctx, block.NewVolumeMountStatus(req.requestID).Metadata(), "service"); err != nil {
 			return err
 		}
 

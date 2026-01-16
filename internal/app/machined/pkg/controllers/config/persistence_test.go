@@ -52,7 +52,7 @@ func (suite *PersistenceSuite) TestPersist() {
 		asrt.Equal(constants.StatePartitionLabel, mountRequest.TypedSpec().VolumeID)
 	})
 
-	volumeMountStatus := block.NewVolumeMountStatus(block.NamespaceName, mountID)
+	volumeMountStatus := block.NewVolumeMountStatus(mountID)
 	volumeMountStatus.TypedSpec().Target = statePath
 	suite.Create(volumeMountStatus)
 
@@ -86,7 +86,7 @@ func (suite *PersistenceSuite) TestPersist() {
 		asrt.False(vl.Metadata().Finalizers().Empty())
 	})
 
-	volumeMountStatus = block.NewVolumeMountStatus(block.NamespaceName, mountID)
+	volumeMountStatus = block.NewVolumeMountStatus(mountID)
 	volumeMountStatus.TypedSpec().Target = statePath
 	suite.Create(volumeMountStatus)
 

@@ -153,7 +153,7 @@ func (suite *UserDiskConfigSuite) TestReconcileUserDisk() {
 
 	// now emulate that the mount requests are fulfilled
 	for _, id := range []string{disk1 + "-1", disk1 + "-2", disk2 + "-1"} {
-		volumeMountStatus := block.NewVolumeMountStatus(block.NamespaceName, id)
+		volumeMountStatus := block.NewVolumeMountStatus(id)
 		suite.Create(volumeMountStatus)
 
 		suite.AddFinalizer(block.NewVolumeMountRequest(block.NamespaceName, id).Metadata(), "test")
@@ -174,7 +174,7 @@ func (suite *UserDiskConfigSuite) TestReconcileUserDisk() {
 
 	// start tearing down volume mount status
 	for _, id := range []string{disk1 + "-1", disk1 + "-2", disk2 + "-1"} {
-		_, err := suite.State().Teardown(suite.Ctx(), block.NewVolumeMountStatus(block.NamespaceName, id).Metadata())
+		_, err := suite.State().Teardown(suite.Ctx(), block.NewVolumeMountStatus(id).Metadata())
 		suite.Require().NoError(err)
 	}
 
