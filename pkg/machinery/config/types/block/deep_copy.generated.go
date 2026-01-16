@@ -13,6 +13,14 @@ func (o *ExistingVolumeConfigV1Alpha1) DeepCopy() *ExistingVolumeConfigV1Alpha1 
 		cp.MountSpec.MountReadOnly = new(bool)
 		*cp.MountSpec.MountReadOnly = *o.MountSpec.MountReadOnly
 	}
+	if o.MountSpec.MountDisableAccessTime != nil {
+		cp.MountSpec.MountDisableAccessTime = new(bool)
+		*cp.MountSpec.MountDisableAccessTime = *o.MountSpec.MountDisableAccessTime
+	}
+	if o.MountSpec.MountSecure != nil {
+		cp.MountSpec.MountSecure = new(bool)
+		*cp.MountSpec.MountSecure = *o.MountSpec.MountSecure
+	}
 	return &cp
 }
 

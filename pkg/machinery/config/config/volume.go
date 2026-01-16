@@ -132,6 +132,8 @@ type VolumeDiscoveryConfig interface {
 // VolumeMountConfig defines the interface to access volume mount configuration.
 type VolumeMountConfig interface {
 	ReadOnly() bool
+	DisableAccessTime() bool
+	Secure() bool
 }
 
 // ExternalMountConfig defines the interface to access volume mount configuration.

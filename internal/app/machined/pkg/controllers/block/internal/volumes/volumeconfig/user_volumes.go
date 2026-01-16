@@ -190,6 +190,20 @@ func ExistingVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) 
 
 	for _, existingVolumeConfig := range c.ExistingVolumeConfigs() {
 		volumeID := constants.ExistingVolumePrefix + existingVolumeConfig.Name()
+
+		// Build mount parameters based on configuration
+		var params []block.ParameterSpec
+
+		if existingVolumeConfig.Mount().DisableAccessTime() {
+			params = append(params, block.NewBooleanParameter("noatime"))
+		}
+
+		// Add secure mount options (nosuid, nodev) by default
+		if existingVolumeConfig.Mount().Secure() {
+			params = append(params, block.NewBooleanParameter("nosuid"))
+			params = append(params, block.NewBooleanParameter("nodev"))
+		}
+
 		resources = append(resources, VolumeResource{
 			VolumeID: volumeID,
 			Label:    block.ExistingVolumeLabel,
@@ -203,6 +217,7 @@ func ExistingVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) 
 					FileMode:     0o755,
 					UID:          0,
 					GID:          0,
+					Parameters:   params,
 				}).
 				WriterFunc(),
 			MountTransformFunc: HandleExistingVolumeMountRequest(existingVolumeConfig),
