@@ -1,0 +1,8 @@
+apiVersion: v1alpha1
+kind: ProbeConfig
+name: proxy-check
+interval: 1s
+failureThreshold: 3
+tcp:
+    endpoint: proxy.example.com:3128
+    timeout: 10s
