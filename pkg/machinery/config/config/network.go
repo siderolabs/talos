@@ -330,3 +330,17 @@ type NetworkKubeSpanConfig interface {
 type NetworkKubeSpanFilters interface {
 	Endpoints() []string
 }
+
+// NetworkCommonProbeConfig defines a network connectivity probe configuration.
+type NetworkCommonProbeConfig interface {
+	NamedDocument
+	Interval() time.Duration
+	FailureThreshold() int
+}
+
+// NetworkTCPProbeConfig defines a TCP probe configuration.
+type NetworkTCPProbeConfig interface {
+	NetworkCommonProbeConfig
+	Endpoint() string
+	Timeout() time.Duration
+}

@@ -1,0 +1,7 @@
+apiVersion: v1alpha1
+kind: TCPProbeConfig
+name: proxy-check
+interval: 1s
+failureThreshold: 3
+endpoint: proxy.example.com:3128
+timeout: 10s

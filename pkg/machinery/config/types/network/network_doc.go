@@ -8,6 +8,7 @@ package network
 
 import (
 	"net/netip"
+	"time"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
@@ -1562,6 +1563,88 @@ func (StaticHostConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (TCPProbeConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "TCPProbeConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "TCPProbeConfig is a config document to configure network TCP connectivity probes." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "TCPProbeConfig is a config document to configure network TCP connectivity probes.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the probe.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the probe." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Type:   "CommonProbeConfig",
+				Inline: true,
+			},
+			{
+				Name:        "endpoint",
+				Type:        "string",
+				Note:        "",
+				Description: "Endpoint to probe in the format host:port.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Endpoint to probe in the format host:port." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "timeout",
+				Type:        "Duration",
+				Note:        "",
+				Description: "Timeout for the probe.\nDefaults to 10s.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Timeout for the probe." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleTCPProbeConfigV1Alpha1())
+
+	doc.Fields[1].AddExample("", "proxy-check")
+	doc.Fields[3].AddExample("", "proxy.example.com:3128")
+	doc.Fields[4].AddExample("", 10*time.Second)
+
+	return doc
+}
+
+func (CommonProbeConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "CommonProbeConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "CommonProbeConfig holds fields common to all probe types." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "CommonProbeConfig holds fields common to all probe types.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "TCPProbeConfigV1Alpha1",
+				FieldName: "",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "interval",
+				Type:        "Duration",
+				Note:        "",
+				Description: "Interval between probe attempts.\nDefaults to 1s.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Interval between probe attempts." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "failureThreshold",
+				Type:        "int",
+				Note:        "",
+				Description: "Number of consecutive failures for the probe to be considered failed after having succeeded.\nDefaults to 0 (immediately fail on first failure).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Number of consecutive failures for the probe to be considered failed after having succeeded." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("", time.Second)
+	doc.Fields[1].AddExample("", 3)
+
+	return doc
+}
+
 func (TimeSyncConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "TimeSyncConfig",
@@ -1867,6 +1950,8 @@ func GetFileDoc() *encoder.FileDoc {
 			RulePortSelector{}.Doc(),
 			IngressRule{}.Doc(),
 			StaticHostConfigV1Alpha1{}.Doc(),
+			TCPProbeConfigV1Alpha1{}.Doc(),
+			CommonProbeConfig{}.Doc(),
 			TimeSyncConfigV1Alpha1{}.Doc(),
 			NTPConfig{}.Doc(),
 			PTPConfig{}.Doc(),

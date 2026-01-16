@@ -390,6 +390,11 @@ func (container *Container) NetworkVirtualIPConfigs() []config.NetworkVirtualIPC
 	return findMatchingDocs[config.NetworkVirtualIPConfig](container.documents)
 }
 
+// NetworkProbeConfigs implements config.Config interface.
+func (container *Container) NetworkProbeConfigs() []config.NetworkCommonProbeConfig {
+	return findMatchingDocs[config.NetworkCommonProbeConfig](container.documents)
+}
+
 // RunDefaultDHCPOperators implements config.Config interface.
 //
 // The rules for this are:

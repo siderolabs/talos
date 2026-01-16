@@ -1583,6 +1583,28 @@
       "type": "object",
       "description": "CommonLinkConfig is common configuration for network links, and logical links."
     },
+    "network.CommonProbeConfig": {
+      "properties": {
+        "interval": {
+          "type": "string",
+          "pattern": "^[-+]?(((\\d+(\\.\\d*)?|\\d*(\\.\\d+)+)([nuµm]?s|m|h))|0)+$",
+          "title": "interval",
+          "description": "Interval between probe attempts.\nDefaults to 1s.\n",
+          "markdownDescription": "Interval between probe attempts.\nDefaults to 1s.",
+          "x-intellij-html-description": "\u003cp\u003eInterval between probe attempts.\nDefaults to 1s.\u003c/p\u003e\n"
+        },
+        "failureThreshold": {
+          "type": "integer",
+          "title": "failureThreshold",
+          "description": "Number of consecutive failures for the probe to be considered failed after having succeeded.\nDefaults to 0 (immediately fail on first failure).\n",
+          "markdownDescription": "Number of consecutive failures for the probe to be considered failed after having succeeded.\nDefaults to 0 (immediately fail on first failure).",
+          "x-intellij-html-description": "\u003cp\u003eNumber of consecutive failures for the probe to be considered failed after having succeeded.\nDefaults to 0 (immediately fail on first failure).\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "CommonProbeConfig holds fields common to all probe types."
+    },
     "network.DHCPv4ConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -2767,6 +2789,74 @@
         "name"
       ],
       "description": "StaticHostConfig is a config document to set /etc/hosts entries."
+    },
+    "network.TCPProbeConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "TCPProbeConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the probe.\n",
+          "markdownDescription": "Name of the probe.",
+          "x-intellij-html-description": "\u003cp\u003eName of the probe.\u003c/p\u003e\n"
+        },
+        "interval": {
+          "type": "string",
+          "pattern": "^[-+]?(((\\d+(\\.\\d*)?|\\d*(\\.\\d+)+)([nuµm]?s|m|h))|0)+$",
+          "title": "interval",
+          "description": "Interval between probe attempts.\nDefaults to 1s.\n",
+          "markdownDescription": "Interval between probe attempts.\nDefaults to 1s.",
+          "x-intellij-html-description": "\u003cp\u003eInterval between probe attempts.\nDefaults to 1s.\u003c/p\u003e\n"
+        },
+        "failureThreshold": {
+          "type": "integer",
+          "title": "failureThreshold",
+          "description": "Number of consecutive failures for the probe to be considered failed after having succeeded.\nDefaults to 0 (immediately fail on first failure).\n",
+          "markdownDescription": "Number of consecutive failures for the probe to be considered failed after having succeeded.\nDefaults to 0 (immediately fail on first failure).",
+          "x-intellij-html-description": "\u003cp\u003eNumber of consecutive failures for the probe to be considered failed after having succeeded.\nDefaults to 0 (immediately fail on first failure).\u003c/p\u003e\n"
+        },
+        "endpoint": {
+          "type": "string",
+          "title": "endpoint",
+          "description": "Endpoint to probe in the format host:port.\n",
+          "markdownDescription": "Endpoint to probe in the format host:port.",
+          "x-intellij-html-description": "\u003cp\u003eEndpoint to probe in the format host:port.\u003c/p\u003e\n"
+        },
+        "timeout": {
+          "type": "string",
+          "pattern": "^[-+]?(((\\d+(\\.\\d*)?|\\d*(\\.\\d+)+)([nuµm]?s|m|h))|0)+$",
+          "title": "timeout",
+          "description": "Timeout for the probe.\nDefaults to 10s.\n",
+          "markdownDescription": "Timeout for the probe.\nDefaults to 10s.",
+          "x-intellij-html-description": "\u003cp\u003eTimeout for the probe.\nDefaults to 10s.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "endpoint",
+        "kind",
+        "name"
+      ],
+      "description": "TCPProbeConfig is a config document to configure network TCP connectivity probes."
     },
     "network.TimeSyncConfigV1Alpha1": {
       "properties": {
@@ -5377,6 +5467,9 @@
     },
     {
       "$ref": "#/$defs/network.StaticHostConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/network.TCPProbeConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/network.TimeSyncConfigV1Alpha1"
