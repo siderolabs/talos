@@ -499,7 +499,7 @@ func (i *Installer) handleMeta(ctx context.Context, mode Mode, previousLabel str
 			return fmt.Errorf("failed to write back META partition data: %w", err)
 		}
 
-		return gptdev.Sync()
+		return nil
 	default:
 		return fmt.Errorf("unknown image mode: %d", mode)
 	}
@@ -696,7 +696,7 @@ func (i *Installer) formatPartitions(ctx context.Context, mode Mode, parts []par
 			return fmt.Errorf("failed to handle GRUB blocklist: %w", err)
 		}
 
-		return gptdev.Sync()
+		return nil
 	default:
 		return fmt.Errorf("unknown image mode: %d", mode)
 	}
@@ -770,17 +770,23 @@ func (i *Installer) handleGrubBlocklist(gptdev gpt.Device, pt *gpt.Table, partit
 		return nil
 	}
 
-	efiPartitionInfo := xslices.Filter(partitionOptions, func(p partition.Options) bool {
-		return p.Label == constants.EFIPartitionLabel
-	})
-
-	if len(efiPartitionInfo) == 0 {
-		return fmt.Errorf("failed to find EFI partition for GRUB blocklist handling")
-	}
-
 	sectorSize := gptdev.GetSectorSize()
 
-	if err := grub.PatchBlocklistsForDiskImage(sectorSize, efiPartitionInfo[0].Size, i.options.MountPrefix); err != nil {
+	var biosPartition *gpt.Partition
+
+	for _, p := range pt.Partitions() {
+		if p.Name == constants.BIOSGrubPartitionLabel {
+			biosPartition = p
+
+			break
+		}
+	}
+
+	if biosPartition == nil {
+		return fmt.Errorf("failed to find BOOT partition for GRUB blocklist handling")
+	}
+
+	if err := grub.PatchBlocklistsForDiskImage(sectorSize, biosPartition.FirstLBA, i.options.MountPrefix); err != nil {
 		return fmt.Errorf("failed to patch GRUB blocklists: %w", err)
 	}
 

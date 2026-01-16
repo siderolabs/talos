@@ -42,8 +42,6 @@ func WipeWithSignatures(bd *block.Device, deviceName string, log func(string, ..
 				),
 			)
 		}
-
-		return nil
 	}
 
 	// probe failed or no signatures found, fast wipe
