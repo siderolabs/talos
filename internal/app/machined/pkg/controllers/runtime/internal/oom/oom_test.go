@@ -328,7 +328,7 @@ func TestPopulatePsiToCtx(t *testing.T) {
 					int(runtime.QoSCgroupClassBurstable):  0.0,
 					int(runtime.QoSCgroupClassGuaranteed): 0.0,
 					int(runtime.QoSCgroupClassPodruntime): 1.0654831e+07,
-					int(runtime.QoSCgroupClassSystem):     2.1309662e+07,
+					int(runtime.QoSCgroupClassSystem):     1.0654937e+07,
 				},
 				"d_qos_memory_some_avg10": map[int]float64{
 					int(runtime.QoSCgroupClassBesteffort): 0.0,
@@ -531,7 +531,7 @@ func TestPopulatePsiToCtx(t *testing.T) {
 
 			ctx := map[string]any{}
 
-			err := oom.PopulatePsiToCtx(test.dir, ctx, make(map[string]float64), 0)
+			err := oom.PopulatePsiToCtx(test.dir, ctx, make(map[string]float64), 500*time.Millisecond)
 
 			if test.expectErr == "" {
 				require.NoError(t, err)
@@ -595,9 +595,12 @@ func TestEvaluateTrigger(t *testing.T) {
 			ctx: map[string]any{
 				"time_since_trigger": 300 * time.Millisecond,
 			},
-			triggerExpr: triggerExpr1,
-			expect:      false,
-			expectErr:   "",
+			triggerExpr: cel.MustExpression(cel.ParseBooleanExpression(
+				`memory_full_avg10 > 12.0 && time_since_trigger > duration("500ms")`,
+				celenv.OOMTrigger(),
+			)),
+			expect:    false,
+			expectErr: "",
 		},
 		{
 			name: "cgroup-true-hot-overridden",
