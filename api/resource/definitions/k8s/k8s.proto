@@ -213,6 +213,7 @@ message NodeStatusSpec {
   bool unschedulable = 3;
   map<string, string> labels = 4;
   map<string, string> annotations = 5;
+  repeated common.NetIPPrefix pod_cid_rs = 6;
 }
 
 // NodeTaintSpecSpec represents a label that's attached to a Talos node.

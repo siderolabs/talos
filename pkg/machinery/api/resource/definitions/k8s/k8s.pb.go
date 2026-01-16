@@ -1735,6 +1735,7 @@ type NodeStatusSpec struct {
 	Unschedulable bool                   `protobuf:"varint,3,opt,name=unschedulable,proto3" json:"unschedulable,omitempty"`
 	Labels        map[string]string      `protobuf:"bytes,4,rep,name=labels,proto3" json:"labels,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	Annotations   map[string]string      `protobuf:"bytes,5,rep,name=annotations,proto3" json:"annotations,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	PodCidRs      []*common.NetIPPrefix  `protobuf:"bytes,6,rep,name=pod_cid_rs,json=podCidRs,proto3" json:"pod_cid_rs,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1800,6 +1801,13 @@ func (x *NodeStatusSpec) GetLabels() map[string]string {
 func (x *NodeStatusSpec) GetAnnotations() map[string]string {
 	if x != nil {
 		return x.Annotations
+	}
+	return nil
+}
+
+func (x *NodeStatusSpec) GetPodCidRs() []*common.NetIPPrefix {
+	if x != nil {
+		return x.PodCidRs
 	}
 	return nil
 }
@@ -2462,14 +2470,16 @@ const file_resource_definitions_k8s_k8s_proto_rawDesc = "" +
 	"\taddresses\x18\x01 \x03(\v2\r.common.NetIPR\taddresses\";\n" +
 	"\x11NodeLabelSpecSpec\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value\"\xa3\x03\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value\"\xd6\x03\n" +
 	"\x0eNodeStatusSpec\x12\x1a\n" +
 	"\bnodename\x18\x01 \x01(\tR\bnodename\x12\x1d\n" +
 	"\n" +
 	"node_ready\x18\x02 \x01(\bR\tnodeReady\x12$\n" +
 	"\runschedulable\x18\x03 \x01(\bR\runschedulable\x12R\n" +
 	"\x06labels\x18\x04 \x03(\v2:.talos.resource.definitions.k8s.NodeStatusSpec.LabelsEntryR\x06labels\x12a\n" +
-	"\vannotations\x18\x05 \x03(\v2?.talos.resource.definitions.k8s.NodeStatusSpec.AnnotationsEntryR\vannotations\x1a9\n" +
+	"\vannotations\x18\x05 \x03(\v2?.talos.resource.definitions.k8s.NodeStatusSpec.AnnotationsEntryR\vannotations\x121\n" +
+	"\n" +
+	"pod_cid_rs\x18\x06 \x03(\v2\x13.common.NetIPPrefixR\bpodCidRs\x1a9\n" +
 	"\vLabelsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a>\n" +
@@ -2586,6 +2596,7 @@ var file_resource_definitions_k8s_k8s_proto_goTypes = []any{
 	(*structpb.Struct)(nil),              // 47: google.protobuf.Struct
 	(*common.NetIP)(nil),                 // 48: common.NetIP
 	(*proto.Mount)(nil),                  // 49: talos.resource.definitions.proto.Mount
+	(*common.NetIPPrefix)(nil),           // 50: common.NetIPPrefix
 }
 var file_resource_definitions_k8s_k8s_proto_depIdxs = []int32{
 	35, // 0: talos.resource.definitions.k8s.APIServerConfigSpec.extra_args:type_name -> talos.resource.definitions.k8s.APIServerConfigSpec.ExtraArgsEntry
@@ -2617,21 +2628,22 @@ var file_resource_definitions_k8s_k8s_proto_depIdxs = []int32{
 	48, // 26: talos.resource.definitions.k8s.NodeIPSpec.addresses:type_name -> common.NetIP
 	41, // 27: talos.resource.definitions.k8s.NodeStatusSpec.labels:type_name -> talos.resource.definitions.k8s.NodeStatusSpec.LabelsEntry
 	42, // 28: talos.resource.definitions.k8s.NodeStatusSpec.annotations:type_name -> talos.resource.definitions.k8s.NodeStatusSpec.AnnotationsEntry
-	43, // 29: talos.resource.definitions.k8s.Resources.requests:type_name -> talos.resource.definitions.k8s.Resources.RequestsEntry
-	44, // 30: talos.resource.definitions.k8s.Resources.limits:type_name -> talos.resource.definitions.k8s.Resources.LimitsEntry
-	45, // 31: talos.resource.definitions.k8s.SchedulerConfigSpec.extra_args:type_name -> talos.resource.definitions.k8s.SchedulerConfigSpec.ExtraArgsEntry
-	12, // 32: talos.resource.definitions.k8s.SchedulerConfigSpec.extra_volumes:type_name -> talos.resource.definitions.k8s.ExtraVolume
-	46, // 33: talos.resource.definitions.k8s.SchedulerConfigSpec.environment_variables:type_name -> talos.resource.definitions.k8s.SchedulerConfigSpec.EnvironmentVariablesEntry
-	28, // 34: talos.resource.definitions.k8s.SchedulerConfigSpec.resources:type_name -> talos.resource.definitions.k8s.Resources
-	47, // 35: talos.resource.definitions.k8s.SchedulerConfigSpec.config:type_name -> google.protobuf.Struct
-	47, // 36: talos.resource.definitions.k8s.SingleManifest.object:type_name -> google.protobuf.Struct
-	47, // 37: talos.resource.definitions.k8s.StaticPodSpec.pod:type_name -> google.protobuf.Struct
-	47, // 38: talos.resource.definitions.k8s.StaticPodStatusSpec.pod_status:type_name -> google.protobuf.Struct
-	39, // [39:39] is the sub-list for method output_type
-	39, // [39:39] is the sub-list for method input_type
-	39, // [39:39] is the sub-list for extension type_name
-	39, // [39:39] is the sub-list for extension extendee
-	0,  // [0:39] is the sub-list for field type_name
+	50, // 29: talos.resource.definitions.k8s.NodeStatusSpec.pod_cid_rs:type_name -> common.NetIPPrefix
+	43, // 30: talos.resource.definitions.k8s.Resources.requests:type_name -> talos.resource.definitions.k8s.Resources.RequestsEntry
+	44, // 31: talos.resource.definitions.k8s.Resources.limits:type_name -> talos.resource.definitions.k8s.Resources.LimitsEntry
+	45, // 32: talos.resource.definitions.k8s.SchedulerConfigSpec.extra_args:type_name -> talos.resource.definitions.k8s.SchedulerConfigSpec.ExtraArgsEntry
+	12, // 33: talos.resource.definitions.k8s.SchedulerConfigSpec.extra_volumes:type_name -> talos.resource.definitions.k8s.ExtraVolume
+	46, // 34: talos.resource.definitions.k8s.SchedulerConfigSpec.environment_variables:type_name -> talos.resource.definitions.k8s.SchedulerConfigSpec.EnvironmentVariablesEntry
+	28, // 35: talos.resource.definitions.k8s.SchedulerConfigSpec.resources:type_name -> talos.resource.definitions.k8s.Resources
+	47, // 36: talos.resource.definitions.k8s.SchedulerConfigSpec.config:type_name -> google.protobuf.Struct
+	47, // 37: talos.resource.definitions.k8s.SingleManifest.object:type_name -> google.protobuf.Struct
+	47, // 38: talos.resource.definitions.k8s.StaticPodSpec.pod:type_name -> google.protobuf.Struct
+	47, // 39: talos.resource.definitions.k8s.StaticPodStatusSpec.pod_status:type_name -> google.protobuf.Struct
+	40, // [40:40] is the sub-list for method output_type
+	40, // [40:40] is the sub-list for method input_type
+	40, // [40:40] is the sub-list for extension type_name
+	40, // [40:40] is the sub-list for extension extendee
+	0,  // [0:40] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_k8s_k8s_proto_init() }

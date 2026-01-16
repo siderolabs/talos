@@ -409,6 +409,10 @@ func (o NodeStatusSpec) DeepCopy() NodeStatusSpec {
 			cp.Annotations[k2] = v2
 		}
 	}
+	if o.PodCIDRs != nil {
+		cp.PodCIDRs = make([]netip.Prefix, len(o.PodCIDRs))
+		copy(cp.PodCIDRs, o.PodCIDRs)
+	}
 	return cp
 }
 

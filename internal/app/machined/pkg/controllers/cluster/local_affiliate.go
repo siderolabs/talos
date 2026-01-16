@@ -69,6 +69,11 @@ func (ctrl *LocalAffiliateController) Inputs() []controller.Input {
 			Kind:      controller.InputWeak,
 		},
 		{
+			Namespace: k8s.NamespaceName,
+			Type:      k8s.NodeStatusType,
+			Kind:      controller.InputWeak,
+		},
+		{
 			Namespace: kubespan.NamespaceName,
 			Type:      kubespan.IdentityType,
 			ID:        optional.Some(kubespan.LocalIdentity),
@@ -196,9 +201,9 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 			return fmt.Errorf("error getting kubespan config: %w", err)
 		}
 
-		ksAdditionalAddresses, err := safe.ReaderGetByID[*network.NodeAddress](ctx, r, network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterOnlyK8s))
+		nodeStatus, err := safe.ReaderGetByID[*k8s.NodeStatus](ctx, r, nodename.TypedSpec().Nodename)
 		if err != nil && !state.IsNotFoundError(err) {
-			return fmt.Errorf("error getting kubespan additional addresses: %w", err)
+			return fmt.Errorf("error getting node status: %w", err)
 		}
 
 		discoveredPublicIPs, err := safe.ReaderList[*network.AddressStatus](ctx, r, resource.NewMetadata(cluster.NamespaceName, network.AddressStatusType, "", resource.VersionUndefined))
@@ -245,8 +250,8 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 					spec.KubeSpan.Address = kubespanIdentity.TypedSpec().Address.Addr()
 					spec.KubeSpan.PublicKey = kubespanIdentity.TypedSpec().PublicKey
 
-					if kubespanConfig.TypedSpec().AdvertiseKubernetesNetworks && ksAdditionalAddresses != nil {
-						spec.KubeSpan.AdditionalAddresses = slices.Clone(ksAdditionalAddresses.TypedSpec().Addresses)
+					if kubespanConfig.TypedSpec().AdvertiseKubernetesNetworks && nodeStatus != nil {
+						spec.KubeSpan.AdditionalAddresses = slices.Clone(nodeStatus.TypedSpec().PodCIDRs)
 					} else {
 						spec.KubeSpan.AdditionalAddresses = nil
 					}

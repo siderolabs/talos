@@ -38,6 +38,17 @@ func (ctrl *AddressFilterController) Inputs() []controller.Input {
 			ID:        optional.Some(config.ActiveID),
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: k8s.NamespaceName,
+			Type:      k8s.NodenameType,
+			ID:        optional.Some(k8s.NodenameID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: k8s.NamespaceName,
+			Type:      k8s.NodeStatusType,
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -53,7 +64,7 @@ func (ctrl *AddressFilterController) Outputs() []controller.Output {
 
 // Run implements controller.Controller interface.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (ctrl *AddressFilterController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	for {
 		select {
@@ -65,6 +76,20 @@ func (ctrl *AddressFilterController) Run(ctx context.Context, r controller.Runti
 		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
 		if err != nil && !state.IsNotFoundError(err) {
 			return fmt.Errorf("error getting config: %w", err)
+		}
+
+		nodeName, err := safe.ReaderGetByID[*k8s.Nodename](ctx, r, k8s.NodenameID)
+		if err != nil && !state.IsNotFoundError(err) {
+			return fmt.Errorf("error getting nodename: %w", err)
+		}
+
+		var nodeStatus *k8s.NodeStatus
+
+		if nodeName != nil {
+			nodeStatus, err = safe.ReaderGetByID[*k8s.NodeStatus](ctx, r, nodeName.TypedSpec().Nodename)
+			if err != nil && !state.IsNotFoundError(err) {
+				return fmt.Errorf("error getting nodename: %w", err)
+			}
 		}
 
 		r.StartTrackingOutputs()
@@ -83,6 +108,10 @@ func (ctrl *AddressFilterController) Run(ctx context.Context, r controller.Runti
 				}
 
 				podCIDRs = append(podCIDRs, ipPrefix)
+			}
+
+			if nodeStatus != nil {
+				podCIDRs = append(podCIDRs, nodeStatus.TypedSpec().PodCIDRs...)
 			}
 
 			for _, cidr := range cfgProvider.Cluster().Network().ServiceCIDRs() {

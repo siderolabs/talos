@@ -5,6 +5,8 @@
 package k8s
 
 import (
+	"net/netip"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
@@ -28,6 +30,7 @@ type NodeStatusSpec struct {
 	Unschedulable bool              `yaml:"unschedulable" protobuf:"3"`
 	Labels        map[string]string `yaml:"labels" protobuf:"4"`
 	Annotations   map[string]string `yaml:"annotations" protobuf:"5"`
+	PodCIDRs      []netip.Prefix    `yaml:"podCIDRs" protobuf:"6"`
 }
 
 // NewNodeStatus initializes a NodeStatus resource.

@@ -7,6 +7,7 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -179,6 +180,18 @@ func (ctrl *NodeStatusController) Run(ctx context.Context, r controller.Runtime,
 		}
 
 		if node != nil {
+			podCIDRs := make([]netip.Prefix, 0, len(node.Spec.PodCIDRs))
+			for _, cidr := range node.Spec.PodCIDRs {
+				prefix, err := netip.ParsePrefix(cidr)
+				if err != nil {
+					logger.Warn("error parsing pod CIDR", zap.String("cidr", cidr), zap.Error(err))
+
+					continue
+				}
+
+				podCIDRs = append(podCIDRs, prefix)
+			}
+
 			if err = safe.WriterModify(ctx, r, k8s.NewNodeStatus(k8s.NamespaceName, node.Name),
 				func(res *k8s.NodeStatus) error {
 					res.TypedSpec().Nodename = node.Name
@@ -186,6 +199,7 @@ func (ctrl *NodeStatusController) Run(ctx context.Context, r controller.Runtime,
 					res.TypedSpec().Labels = node.Labels
 					res.TypedSpec().Annotations = node.Annotations
 					res.TypedSpec().NodeReady = false
+					res.TypedSpec().PodCIDRs = podCIDRs
 
 					for _, condition := range node.Status.Conditions {
 						if condition.Type == v1.NodeReady {
