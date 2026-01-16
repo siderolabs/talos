@@ -7398,6 +7398,7 @@ NodeStatusSpec describes Kubernetes NodeStatus.
 | unschedulable | [bool](#bool) |  |  |
 | labels | [NodeStatusSpec.LabelsEntry](#talos.resource.definitions.k8s.NodeStatusSpec.LabelsEntry) | repeated |  |
 | annotations | [NodeStatusSpec.AnnotationsEntry](#talos.resource.definitions.k8s.NodeStatusSpec.AnnotationsEntry) | repeated |  |
+| pod_cid_rs | [common.NetIPPrefix](#common.NetIPPrefix) | repeated |  |
 
 
 

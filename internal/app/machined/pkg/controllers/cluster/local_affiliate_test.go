@@ -37,7 +37,7 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 
 	suite.Require().NoError(suite.runtime.RegisterController(&clusterctrl.LocalAffiliateController{}))
 
-	nodeIdentity, nonK8sRoutedAddresses, discoveryConfig := suite.createResources()
+	nodeIdentity, nonK8sRoutedAddresses, nodeName, discoveryConfig := suite.createResources()
 
 	machineType := config.NewMachineType()
 	machineType.SetMachineType(machine.TypeWorker)
@@ -82,9 +82,9 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 	nonK8sRoutedAddresses.TypedSpec().Addresses = append(nonK8sRoutedAddresses.TypedSpec().Addresses, ksIdentity.TypedSpec().Address)
 	suite.Require().NoError(suite.state.Update(suite.ctx, nonK8sRoutedAddresses))
 
-	onlyK8sAddresses := network.NewNodeAddress(network.NamespaceName, network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterOnlyK8s))
-	onlyK8sAddresses.TypedSpec().Addresses = []netip.Prefix{netip.MustParsePrefix("10.244.1.0/24")}
-	suite.Require().NoError(suite.state.Create(suite.ctx, onlyK8sAddresses))
+	nodeStatus := k8s.NewNodeStatus(k8s.NamespaceName, nodeName.TypedSpec().Nodename)
+	nodeStatus.TypedSpec().PodCIDRs = []netip.Prefix{netip.MustParsePrefix("10.244.1.0/24")}
+	suite.Require().NoError(suite.state.Create(suite.ctx, nodeStatus))
 
 	// add discovered public IPs
 	for _, addr := range []netip.Addr{
@@ -151,7 +151,7 @@ func (suite *LocalAffiliateSuite) TestCPGeneration() {
 
 	suite.Require().NoError(suite.runtime.RegisterController(&clusterctrl.LocalAffiliateController{}))
 
-	nodeIdentity, _, discoveryConfig := suite.createResources()
+	nodeIdentity, _, _, discoveryConfig := suite.createResources()
 
 	machineType := config.NewMachineType()
 	machineType.SetMachineType(machine.TypeControlPlane)
@@ -185,7 +185,7 @@ func (suite *LocalAffiliateSuite) TestCPGeneration() {
 	ctest.AssertNoResource[*cluster.Affiliate](suite, nodeIdentity.TypedSpec().NodeID)
 }
 
-func (suite *LocalAffiliateSuite) createResources() (*cluster.Identity, *network.NodeAddress, *cluster.Config) {
+func (suite *LocalAffiliateSuite) createResources() (*cluster.Identity, *network.NodeAddress, *k8s.Nodename, *cluster.Config) {
 	// regular discovery affiliate
 	discoveryConfig := cluster.NewConfig(config.NamespaceName, cluster.ConfigID)
 	discoveryConfig.TypedSpec().DiscoveryEnabled = true
@@ -224,7 +224,7 @@ func (suite *LocalAffiliateSuite) createResources() (*cluster.Identity, *network
 	}
 	suite.Require().NoError(suite.state.Create(suite.ctx, nonK8sRoutedAddresses))
 
-	return nodeIdentity, nonK8sRoutedAddresses, discoveryConfig
+	return nodeIdentity, nonK8sRoutedAddresses, nodename, discoveryConfig
 }
 
 func TestLocalAffiliateSuite(t *testing.T) {
