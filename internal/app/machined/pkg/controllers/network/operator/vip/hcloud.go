@@ -16,6 +16,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/download"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
 // HCloudHandler implements assignment and release of Virtual IPs using API.
@@ -33,7 +34,10 @@ type HCloudHandler struct {
 // NewHCloudHandler creates new NewEHCloudHandler.
 func NewHCloudHandler(logger *zap.Logger, vip string, spec network.VIPHCloudSpec) *HCloudHandler {
 	return &HCloudHandler{
-		client: hcloud.NewClient(hcloud.WithToken(spec.APIToken)),
+		client: hcloud.NewClient(
+			hcloud.WithToken(spec.APIToken),
+			hcloud.WithApplication(version.Name, version.Tag),
+		),
 
 		logger: logger,
 
@@ -172,7 +176,10 @@ func GetNetworkAndDeviceIDs(ctx context.Context, spec *network.VIPHCloudSpec, vi
 		return fmt.Errorf("error getting instance-id id: %w", err)
 	}
 
-	client := hcloud.NewClient(hcloud.WithToken(spec.APIToken))
+	client := hcloud.NewClient(
+		hcloud.WithToken(spec.APIToken),
+		hcloud.WithApplication(version.Name, version.Tag),
+	)
 
 	server, _, err := client.Server.GetByID(ctx, spec.DeviceID)
 	if err != nil {
