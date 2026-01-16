@@ -19,13 +19,9 @@ import (
 // - include/grub/i386/pc/boot.h: GRUB_BOOT_MACHINE_KERNEL_SECTOR == 0x5c
 // - util/setup.c: write_rootdev() patches boot.img fields and writes sector in LE64
 // - core image embedded blocklist continuation at core.img offset 0x1F4.
-func PatchBlocklistsForDiskImage(sectorSize uint, efiPartitionSizeBytes uint64, mountPrefix string) error {
+func PatchBlocklistsForDiskImage(sectorSize uint, biosBootStartSector uint64, mountPrefix string) error {
 	if sectorSize == 0 {
 		return fmt.Errorf("sector size must be set to patch GRUB blocklists")
-	}
-
-	if efiPartitionSizeBytes == 0 {
-		return fmt.Errorf("EFI partition size must be set to patch GRUB blocklists")
 	}
 
 	// Talos partition layout (GPT): EFI (gpt1, efiPartitionSizeBytes), BIOS (gpt2, 1MiB), BOOT (gpt3)
@@ -35,11 +31,6 @@ func PatchBlocklistsForDiskImage(sectorSize uint, efiPartitionSizeBytes uint64, 
 		bootImgJumpOffset         = 0x66  // patched to NOP NOP (0x90 0x90) by grub-install on GPT
 		coreImgBlocklistOffset    = 0x1f4 // embedded blocklist continuation inside core.img
 	)
-
-	firstPartitionStart := uint64(1024*1024) / uint64(sectorSize) // first partition starts at 1MiB in sectors
-
-	efiPartitionSectors := efiPartitionSizeBytes / uint64(sectorSize) // EFI partition size in sectors
-	biosBootStartSector := firstPartitionStart + efiPartitionSectors
 
 	bootImgPath := filepath.Join(mountPrefix, "boot.img")
 	coreImgPath := filepath.Join(mountPrefix, "core.img")
@@ -80,8 +71,10 @@ func PatchBlocklistsForDiskImage(sectorSize uint, efiPartitionSizeBytes uint64, 
 	}
 
 	// Patch 3: core.img embedded blocklist continuation (LE64) points to start+1
-	cont := biosBootStartSector + 1
-	binary.LittleEndian.PutUint64(coreImg[coreImgBlocklistOffset:], cont)
+	//
+	// The boot.img only loads the first sector of core.img, so the embedded blocklist
+	// continuation must point to the second sector of core.img.
+	binary.LittleEndian.PutUint64(coreImg[coreImgBlocklistOffset:], biosBootStartSector+1)
 
 	if err := os.WriteFile(coreImgPath, coreImg, 0o644); err != nil {
 		return fmt.Errorf("failed to write patched core.img: %w", err)
