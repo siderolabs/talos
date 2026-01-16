@@ -1248,6 +1248,25 @@ func (RouteConfig) Doc() *encoder.Doc {
 				Description: "The routing table to use for the route.\n\nIf not specified, the main routing table will be used.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The routing table to use for the route." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "type",
+				Type:        "RouteType",
+				Note:        "",
+				Description: "The route type.\n\nIf not specified, the route type will be unicast (or multicast for multicast destinations).\nCommon types: unicast, local, broadcast, blackhole, unreachable, prohibit.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The route type." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"local",
+					"broadcast",
+					"unicast",
+					"multicast",
+					"blackhole",
+					"unreachable",
+					"prohibit",
+					"throw",
+					"nat",
+					"xresolve",
+				},
+			},
 		},
 	}
 

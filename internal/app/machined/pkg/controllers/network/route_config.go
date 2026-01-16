@@ -332,9 +332,9 @@ func (ctrl *RouteConfigController) processMachineConfig(linkConfigs []cfg.Networ
 			route.OutLinkName = linkConfig.Name()
 			route.ConfigLayer = network.ConfigMachineConfiguration
 
-			route.Type = nethelpers.TypeUnicast
+			route.Type = spec.Type().ValueOr(nethelpers.TypeUnicast)
 
-			if route.Destination.Addr().IsMulticast() {
+			if !spec.Type().IsPresent() && route.Destination.Addr().IsMulticast() {
 				route.Type = nethelpers.TypeMulticast
 			}
 

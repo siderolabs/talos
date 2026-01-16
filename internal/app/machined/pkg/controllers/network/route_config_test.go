@@ -278,6 +278,54 @@ func (suite *RouteConfigSuite) TestMachineConfiguration() {
 	)
 }
 
+func (suite *RouteConfigSuite) TestMachineConfigurationWithRouteType() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.RouteConfigController{}))
+
+	lc1 := networkcfg.NewLinkConfigV1Alpha1("enp0s2")
+	lc1.LinkRoutes = []networkcfg.RouteConfig{
+		{
+			RouteDestination: networkcfg.Prefix{Prefix: netip.MustParsePrefix("0.0.0.0/0")},
+			RouteType:        nethelpers.TypeBlackhole,
+		},
+		{
+			RouteDestination: networkcfg.Prefix{Prefix: netip.MustParsePrefix("192.168.1.0/24")},
+			RouteGateway:     networkcfg.Addr{Addr: netip.MustParseAddr("192.168.1.1")},
+			RouteType:        nethelpers.TypeUnicast,
+		},
+	}
+
+	ctr, err := container.New(lc1)
+	suite.Require().NoError(err)
+
+	suite.Create(config.NewMachineConfig(ctr))
+
+	ctest.AssertResources(
+		suite,
+		[]string{
+			"configuration/inet4///1024",
+			"configuration/inet4/192.168.1.1/192.168.1.0/24/1024",
+		},
+		func(r *network.RouteSpec, asrt *assert.Assertions) {
+			switch r.Metadata().ID() {
+			case "configuration/inet4///1024":
+				asrt.Equal("enp0s2", r.TypedSpec().OutLinkName)
+				asrt.Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
+				asrt.Equal(nethelpers.TypeBlackhole, r.TypedSpec().Type)
+				asrt.Equal(netip.Addr{}, r.TypedSpec().Gateway)
+				asrt.EqualValues(network.DefaultRouteMetric, r.TypedSpec().Priority)
+			case "configuration/inet4/192.168.1.1/192.168.1.0/24/1024":
+				asrt.Equal("enp0s2", r.TypedSpec().OutLinkName)
+				asrt.Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
+				asrt.Equal(nethelpers.TypeUnicast, r.TypedSpec().Type)
+				asrt.EqualValues(network.DefaultRouteMetric, r.TypedSpec().Priority)
+			}
+
+			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
+		},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
+	)
+}
+
 func TestRouteConfigSuite(t *testing.T) {
 	t.Parallel()
 

@@ -2601,6 +2601,24 @@
           "description": "The routing table to use for the route.\n\nIf not specified, the main routing table will be used.\n",
           "markdownDescription": "The routing table to use for the route.\n\nIf not specified, the main routing table will be used.",
           "x-intellij-html-description": "\u003cp\u003eThe routing table to use for the route.\u003c/p\u003e\n\n\u003cp\u003eIf not specified, the main routing table will be used.\u003c/p\u003e\n"
+        },
+        "type": {
+          "enum": [
+            "local",
+            "broadcast",
+            "unicast",
+            "multicast",
+            "blackhole",
+            "unreachable",
+            "prohibit",
+            "throw",
+            "nat",
+            "xresolve"
+          ],
+          "title": "type",
+          "description": "The route type.\n\nIf not specified, the route type will be unicast (or multicast for multicast destinations).\nCommon types: unicast, local, broadcast, blackhole, unreachable, prohibit.\n",
+          "markdownDescription": "The route type.\n\nIf not specified, the route type will be unicast (or multicast for multicast destinations).\nCommon types: unicast, local, broadcast, blackhole, unreachable, prohibit.",
+          "x-intellij-html-description": "\u003cp\u003eThe route type.\u003c/p\u003e\n\n\u003cp\u003eIf not specified, the route type will be unicast (or multicast for multicast destinations).\nCommon types: unicast, local, broadcast, blackhole, unreachable, prohibit.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

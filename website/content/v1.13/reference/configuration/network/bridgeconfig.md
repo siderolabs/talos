@@ -130,6 +130,7 @@ gateway: 10.0.0.1
 |`metric` |uint32 |The optional metric for the route.  | |
 |`mtu` |uint32 |The optional MTU for the route.  | |
 |`table` |RoutingTable |The routing table to use for the route.<br><br>If not specified, the main routing table will be used.  | |
+|`type` |RouteType |The route type.<br><br>If not specified, the route type will be unicast (or multicast for multicast destinations).<br>Common types: unicast, local, broadcast, blackhole, unreachable, prohibit.  |`local`<br />`broadcast`<br />`unicast`<br />`multicast`<br />`blackhole`<br />`unreachable`<br />`prohibit`<br />`throw`<br />`nat`<br />`xresolve`<br /> |
 
 
 
