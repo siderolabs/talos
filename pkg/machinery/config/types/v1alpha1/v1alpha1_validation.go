@@ -467,6 +467,11 @@ func ValidateCNI(cni config.CNI) ([]string, error) {
 			result = multierror.Append(result, err)
 		}
 
+		if cni.Flannel().KubeNetworkPoliciesEnabled() {
+			err := fmt.Errorf(`"flannelKubeNetworkPoliciesEnabled" should not be enabled for %q CNI`, cni.Name())
+			result = multierror.Append(result, err)
+		}
+
 	case constants.CustomCNI:
 		if len(cni.URLs()) == 0 {
 			warn := fmt.Sprintf(`"urls" field should not be empty for %q CNI`, cni.Name())
@@ -475,6 +480,11 @@ func ValidateCNI(cni config.CNI) ([]string, error) {
 
 		if len(cni.Flannel().ExtraArgs()) != 0 {
 			err := fmt.Errorf(`"flanneldExtraArgs" field should be empty for %q CNI`, cni.Name())
+			result = multierror.Append(result, err)
+		}
+
+		if cni.Flannel().KubeNetworkPoliciesEnabled() {
+			err := fmt.Errorf(`"flannelKubeNetworkPoliciesEnabled" should not be enabled for %q CNI`, cni.Name())
 			result = multierror.Append(result, err)
 		}
 
