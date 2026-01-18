@@ -114,12 +114,189 @@ func TestPopulatePsiToCtx(t *testing.T) {
 		expectErr string
 		expect    map[string]any
 	}{
+		//nolint:dupl
 		{
 			name:      "empty",
 			dir:       "./testdata/empty",
-			expectErr: "cannot read memory pressure: error opening cgroupfs file open testdata/empty/memory.pressure: no such file or directory",
-			expect:    map[string]any{},
+			expectErr: "",
+			expect: map[string]any{
+				"memory_full_avg10":    0.0,
+				"memory_full_avg300":   0.0,
+				"memory_full_avg60":    0.0,
+				"memory_full_total":    0.0,
+				"memory_some_avg10":    0.0,
+				"memory_some_avg300":   0.0,
+				"memory_some_avg60":    0.0,
+				"memory_some_total":    0.0,
+				"d_memory_full_avg10":  0.0,
+				"d_memory_full_avg300": 0.0,
+				"d_memory_full_avg60":  0.0,
+				"d_memory_full_total":  0.0,
+				"d_memory_some_avg10":  0.0,
+				"d_memory_some_avg300": 0.0,
+				"d_memory_some_avg60":  0.0,
+				"d_memory_some_total":  0.0,
+
+				"qos_memory_some_avg10": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"qos_memory_some_avg60": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"qos_memory_some_avg300": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"qos_memory_some_total": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"qos_memory_full_avg10": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"qos_memory_full_avg60": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"qos_memory_full_avg300": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"qos_memory_full_total": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_some_avg10": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_some_avg60": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_some_avg300": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_some_total": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_full_avg10": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_full_avg60": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_full_avg300": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_full_total": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+
+				"qos_memory_current": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_current": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+
+				"qos_memory_peak": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_peak": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+
+				"qos_memory_max": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_max": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+			},
 		},
+		//nolint:dupl
 		{
 			name:      "false",
 			dir:       "./testdata/trigger-false",
@@ -141,8 +318,167 @@ func TestPopulatePsiToCtx(t *testing.T) {
 				"d_memory_some_avg300": 0.0,
 				"d_memory_some_avg60":  0.0,
 				"d_memory_some_total":  0.0,
+
+				"qos_memory_some_avg10": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 2.82,
+					int(runtime.QoSCgroupClassSystem):     5.64,
+				},
+				"qos_memory_some_avg60": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 5.95,
+					int(runtime.QoSCgroupClassSystem):     11.9,
+				},
+				"qos_memory_some_avg300": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 1.97,
+					int(runtime.QoSCgroupClassSystem):     3.94,
+				},
+				"qos_memory_some_total": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 1.217234e+07,
+					int(runtime.QoSCgroupClassSystem):     2.434468e+07,
+				},
+				"qos_memory_full_avg10": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 2.4,
+					int(runtime.QoSCgroupClassSystem):     4.8,
+				},
+				"qos_memory_full_avg60": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 5.16,
+					int(runtime.QoSCgroupClassSystem):     10.32,
+				},
+				"qos_memory_full_avg300": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 1.71,
+					int(runtime.QoSCgroupClassSystem):     3.42,
+				},
+				"qos_memory_full_total": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 1.0654831e+07,
+					int(runtime.QoSCgroupClassSystem):     1.0654937e+07,
+				},
+				"d_qos_memory_some_avg10": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_some_avg60": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_some_avg300": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_some_total": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_full_avg10": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_full_avg60": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_full_avg300": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_full_total": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+
+				"qos_memory_current": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_current": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+
+				"qos_memory_peak": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_peak": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+
+				"qos_memory_max": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_max": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
 			},
 		},
+		// //nolint:dupl
 		{
 			name:      "true",
 			dir:       "./testdata/trigger-true",
@@ -164,6 +500,164 @@ func TestPopulatePsiToCtx(t *testing.T) {
 				"d_memory_some_avg300": 0.0,
 				"d_memory_some_avg60":  0.0,
 				"d_memory_some_total":  0.0,
+
+				"qos_memory_some_avg10": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 17.06,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 17.06,
+					int(runtime.QoSCgroupClassSystem):     34.12,
+				},
+				"qos_memory_some_avg60": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 8.04,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 8.04,
+					int(runtime.QoSCgroupClassSystem):     16.08,
+				},
+				"qos_memory_some_avg300": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 2.1,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 2.1,
+					int(runtime.QoSCgroupClassSystem):     4.2,
+				},
+				"qos_memory_some_total": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 1.217234e+07,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 1.217234e+07,
+					int(runtime.QoSCgroupClassSystem):     2.434468e+07,
+				},
+				"qos_memory_full_avg10": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 14.54,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 14.54,
+					int(runtime.QoSCgroupClassSystem):     29.08,
+				},
+				"qos_memory_full_avg60": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 6.97,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 6.97,
+					int(runtime.QoSCgroupClassSystem):     13.94,
+				},
+				"qos_memory_full_avg300": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 1.82,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 1.82,
+					int(runtime.QoSCgroupClassSystem):     3.64,
+				},
+				"qos_memory_full_total": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 1.0654831e+07,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 1.0654831e+07,
+					int(runtime.QoSCgroupClassSystem):     2.1309662e+07,
+				},
+				"d_qos_memory_some_avg10": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_some_avg60": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_some_avg300": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_some_total": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_full_avg10": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_full_avg60": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_full_avg300": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_full_total": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+
+				"qos_memory_current": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_current": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+
+				"qos_memory_peak": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_peak": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+
+				"qos_memory_max": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_max": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
 			},
 		},
 	} {
@@ -172,7 +666,7 @@ func TestPopulatePsiToCtx(t *testing.T) {
 
 			ctx := map[string]any{}
 
-			err := oom.PopulatePsiToCtx(test.dir, ctx, make(map[string]float64), 0)
+			err := oom.PopulatePsiToCtx(test.dir, ctx, make(map[string]float64), 500*time.Millisecond)
 
 			if test.expectErr == "" {
 				require.NoError(t, err)
@@ -208,7 +702,7 @@ func TestEvaluateTrigger(t *testing.T) {
 			},
 			triggerExpr: triggerExpr1,
 			expect:      false,
-			expectErr:   "cannot read memory pressure: error opening cgroupfs file open testdata/empty/memory.pressure: no such file or directory",
+			expectErr:   "",
 		},
 		{
 			name: "cgroup-false",
@@ -236,9 +730,12 @@ func TestEvaluateTrigger(t *testing.T) {
 			ctx: map[string]any{
 				"time_since_trigger": 300 * time.Millisecond,
 			},
-			triggerExpr: triggerExpr1,
-			expect:      false,
-			expectErr:   "",
+			triggerExpr: cel.MustExpression(cel.ParseBooleanExpression(
+				`memory_full_avg10 > 12.0 && time_since_trigger > duration("500ms")`,
+				celenv.OOMTrigger(),
+			)),
+			expect:    false,
+			expectErr: "",
 		},
 		{
 			name: "cgroup-true-hot-overridden",
@@ -253,6 +750,17 @@ func TestEvaluateTrigger(t *testing.T) {
 			expect:    true,
 			expectErr: "",
 		},
+		{
+			name: "test multiply_qos",
+			ctx:  map[string]any{},
+			dir:  "./testdata/trigger-true",
+			triggerExpr: cel.MustExpression(cel.ParseBooleanExpression(
+				// 5 * 1 + 2 * -1 + 0 * 3 == 3
+				`multiply_qos_vectors({Besteffort: 5.0, Burstable: 2.0, Guaranteed: 0.0, System: 1.0}, {Besteffort: 1.0, Burstable: -1.0, Guaranteed: 3.0}) == 3.0`,
+				celenv.OOMTrigger(),
+			)),
+			expect: true,
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
@@ -266,7 +774,9 @@ func TestEvaluateTrigger(t *testing.T) {
 				"memory_some_avg300": 0,
 				"memory_some_avg60":  0,
 				"memory_some_total":  0,
-			}, 0)
+
+				"init/memory_full_total": 0,
+			}, 500*time.Millisecond)
 
 			if test.expectErr == "" {
 				require.NoError(t, err)

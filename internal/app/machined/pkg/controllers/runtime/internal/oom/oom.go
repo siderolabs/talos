@@ -8,6 +8,7 @@ package oom
 import (
 	"fmt"
 	"io/fs"
+	"math"
 	"os"
 	"path/filepath"
 	"time"
@@ -67,41 +68,140 @@ func EvaluateTrigger(triggerExpr cel.Expression, evalContext map[string]any) (bo
 }
 
 // PopulatePsiToCtx populates the context with PSI data from a cgroup.
-func PopulatePsiToCtx(cgroup string, evalContext map[string]any, psi map[string]float64, sampleInterval time.Duration) error {
-	node, err := cgroups.GetCgroupProperty(cgroup, "memory.pressure")
-	if err != nil {
-		return fmt.Errorf("cannot read memory pressure: %w", err)
+//
+//nolint:gocyclo
+func PopulatePsiToCtx(cgroup string, evalContext map[string]any, oldValues map[string]float64, sampleInterval time.Duration) error {
+	if sampleInterval <= 0 {
+		return fmt.Errorf("sample interval must be greater than zero")
 	}
 
-	for _, psiType := range []string{"some", "full"} {
-		for _, span := range []string{"avg10", "avg60", "avg300", "total"} {
-			spans, ok := node.MemoryPressure[psiType]
-			if !ok {
-				return fmt.Errorf("cannot find memory pressure type: type: %s", psiType)
+	for _, subtree := range []struct {
+		path string
+		qos  runtime.QoSCgroupClass
+	}{
+		{"", -1},
+		{"init", runtime.QoSCgroupClassSystem},
+		{"system", runtime.QoSCgroupClassSystem},
+		{"podruntime", runtime.QoSCgroupClassPodruntime},
+		{"kubepods/besteffort", runtime.QoSCgroupClassBesteffort},
+		{"kubepods/burstable", runtime.QoSCgroupClassBurstable},
+		{"kubepods/guaranteed", runtime.QoSCgroupClassGuaranteed},
+	} {
+		node, err := cgroups.GetCgroupProperty(filepath.Join(cgroup, subtree.path), "memory.pressure")
+
+		for _, psiType := range []string{"some", "full"} {
+			for _, span := range []string{"avg10", "avg60", "avg300", "total"} {
+				value := 0.
+
+				// Default non-existent cgroups to all-zero, e.g. during system boot
+				if err == nil {
+					value, err = extractPsiEntry(node, psiType, span)
+					if err != nil {
+						return err
+					}
+				}
+
+				// calculate delta
+				psiPath := subtree.path + "/" + "memory_" + psiType + "_" + span
+
+				diff := 0.
+				if oldValue, ok := oldValues[psiPath]; ok {
+					diff = (value - oldValue) / sampleInterval.Seconds()
+				}
+
+				oldValues[psiPath] = value
+
+				if subtree.qos == -1 {
+					evalContext["d_memory_"+psiType+"_"+span] = diff
+					evalContext["memory_"+psiType+"_"+span] = value
+				} else {
+					valuesMap, ok := evalContext["qos_memory_"+psiType+"_"+span]
+					if !ok {
+						valuesMap = map[int]float64{}
+						evalContext["qos_memory_"+psiType+"_"+span] = valuesMap
+					}
+
+					valuesMap.(map[int]float64)[int(subtree.qos)] += value
+
+					dValuesMap, ok := evalContext["d_qos_memory_"+psiType+"_"+span]
+					if !ok {
+						dValuesMap = map[int]float64{}
+						evalContext["d_qos_memory_"+psiType+"_"+span] = dValuesMap
+					}
+
+					dValuesMap.(map[int]float64)[int(subtree.qos)] += diff
+				}
+			}
+		}
+
+		node = &cgroups.Node{}
+		// Best effort, if any is not present it will return NaN
+		cgroups.ReadCgroupfsProperty(node, filepath.Join(cgroup, subtree.path), "memory.current") //nolint:errcheck
+		cgroups.ReadCgroupfsProperty(node, filepath.Join(cgroup, subtree.path), "memory.max")     //nolint:errcheck
+		cgroups.ReadCgroupfsProperty(node, filepath.Join(cgroup, subtree.path), "memory.peak")    //nolint:errcheck
+
+		if subtree.qos == -1 {
+			continue
+		}
+
+		for _, parameter := range []struct {
+			name  string
+			value float64
+		}{
+			{"current", node.MemoryCurrent.Float64()},
+			{"max", node.MemoryMax.Float64()},
+			{"peak", node.MemoryPeak.Float64()},
+		} {
+			value := parameter.value
+			// These values cannot be expressed in JSON
+			if math.IsNaN(value) || math.IsInf(value, 0) {
+				value = 0.0
 			}
 
-			value, ok := spans[span]
+			valuesMap, ok := evalContext["qos_memory_"+parameter.name]
 			if !ok {
-				return fmt.Errorf("cannot find memory pressure span: span: %s", span)
+				valuesMap = map[int]float64{}
+				evalContext["qos_memory_"+parameter.name] = valuesMap
 			}
 
-			if !value.IsSet || value.IsMax {
-				return fmt.Errorf("PSI is not defined")
-			}
+			valuesMap.(map[int]float64)[int(subtree.qos)] += value
+
+			oldPath := subtree.path + "/" + "memory_" + parameter.name
 
 			diff := 0.
-
-			if oldValue, ok := psi["memory_"+psiType+"_"+span]; ok {
-				diff = (value.Float64() - oldValue) / sampleInterval.Seconds()
+			if oldValue, ok := oldValues[oldPath]; ok {
+				diff = (value - oldValue) / sampleInterval.Seconds()
 			}
 
-			evalContext["d_memory_"+psiType+"_"+span] = diff
-			evalContext["memory_"+psiType+"_"+span] = value.Float64()
-			psi["memory_"+psiType+"_"+span] = value.Float64()
+			dValuesMap, ok := evalContext["d_qos_memory_"+parameter.name]
+			if !ok {
+				dValuesMap = map[int]float64{}
+				evalContext["d_qos_memory_"+parameter.name] = dValuesMap
+			}
+
+			dValuesMap.(map[int]float64)[int(subtree.qos)] += diff
 		}
 	}
 
 	return nil
+}
+
+func extractPsiEntry(node *cgroups.Node, psiType string, span string) (float64, error) {
+	spans, ok := node.MemoryPressure[psiType]
+	if !ok {
+		return 0, fmt.Errorf("cannot find memory pressure type: type: %s", psiType)
+	}
+
+	cgValue, ok := spans[span]
+	if !ok {
+		return 0, fmt.Errorf("cannot find memory pressure span: span: %s", span)
+	}
+
+	if !cgValue.IsSet || cgValue.IsMax {
+		return 0, fmt.Errorf("PSI is not defined")
+	}
+
+	return cgValue.Float64(), nil
 }
 
 // RankCgroups ranks cgroups using a scoring expression and returns a map.
