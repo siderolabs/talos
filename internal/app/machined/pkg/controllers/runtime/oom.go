@@ -46,7 +46,7 @@ type OOMController struct {
 	V1Alpha1Mode    runtime.Mode
 	actionLog       []actionLogItem
 	idSeq           int
-	psi             map[string]float64
+	oldValues       map[string]float64
 }
 
 // Name implements controller.Controller interface.
@@ -118,7 +118,7 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 	triggerExpr := defaultTriggerExpr()
 	scoringExpr := defaultScoringExpr()
 	sampleInterval := defaultSampleInterval
-	ctrl.psi = make(map[string]float64)
+	ctrl.oldValues = make(map[string]float64)
 
 	ticker := time.NewTicker(sampleInterval)
 	tickerC := ticker.C
@@ -152,7 +152,7 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 			"time_since_trigger": time.Since(ctrl.ActionTriggered),
 		}
 
-		err := oom.PopulatePsiToCtx(ctrl.CgroupRoot, evalContext, ctrl.psi, sampleInterval)
+		err := oom.PopulatePsiToCtx(ctrl.CgroupRoot, evalContext, ctrl.oldValues, sampleInterval)
 		if err != nil {
 			logger.Error("cannot populate PSI context", zap.Error(err))
 

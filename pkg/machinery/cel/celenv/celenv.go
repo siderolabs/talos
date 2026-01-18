@@ -126,6 +126,13 @@ var OOMTrigger = sync.OnceValue(func() *cel.Env {
 				cel.Variable("d_qos_memory_full_avg60", types.NewMapType(types.IntType, types.DoubleType)),
 				cel.Variable("d_qos_memory_full_avg300", types.NewMapType(types.IntType, types.DoubleType)),
 				cel.Variable("d_qos_memory_full_total", types.NewMapType(types.IntType, types.DoubleType)),
+				// per QoS memory usage absolute values
+				cel.Variable("qos_memory_current", types.NewMapType(types.IntType, types.DoubleType)),
+				cel.Variable("qos_memory_peak", types.NewMapType(types.IntType, types.DoubleType)),
+				cel.Variable("qos_memory_max", types.NewMapType(types.IntType, types.DoubleType)),
+				cel.Variable("d_qos_memory_current", types.NewMapType(types.IntType, types.DoubleType)),
+				cel.Variable("d_qos_memory_peak", types.NewMapType(types.IntType, types.DoubleType)),
+				cel.Variable("d_qos_memory_max", types.NewMapType(types.IntType, types.DoubleType)),
 				// time since last OOM trigger
 				cel.Variable("time_since_trigger", types.DurationType),
 				cel.OptionalTypes(),

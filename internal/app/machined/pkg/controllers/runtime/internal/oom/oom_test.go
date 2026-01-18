@@ -249,6 +249,51 @@ func TestPopulatePsiToCtx(t *testing.T) {
 					int(runtime.QoSCgroupClassPodruntime): 0.0,
 					int(runtime.QoSCgroupClassSystem):     0.0,
 				},
+
+				"qos_memory_current": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_current": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+
+				"qos_memory_peak": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_peak": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+
+				"qos_memory_max": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_max": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
 			},
 		},
 		//nolint:dupl
@@ -386,6 +431,51 @@ func TestPopulatePsiToCtx(t *testing.T) {
 					int(runtime.QoSCgroupClassPodruntime): 0.0,
 					int(runtime.QoSCgroupClassSystem):     0.0,
 				},
+
+				"qos_memory_current": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_current": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+
+				"qos_memory_peak": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_peak": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+
+				"qos_memory_max": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_max": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
 			},
 		},
 		// //nolint:dupl
@@ -517,6 +607,51 @@ func TestPopulatePsiToCtx(t *testing.T) {
 					int(runtime.QoSCgroupClassSystem):     0.0,
 				},
 				"d_qos_memory_full_total": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+
+				"qos_memory_current": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_current": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+
+				"qos_memory_peak": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_peak": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+
+				"qos_memory_max": map[int]float64{
+					int(runtime.QoSCgroupClassBesteffort): 0.0,
+					int(runtime.QoSCgroupClassBurstable):  0.0,
+					int(runtime.QoSCgroupClassGuaranteed): 0.0,
+					int(runtime.QoSCgroupClassPodruntime): 0.0,
+					int(runtime.QoSCgroupClassSystem):     0.0,
+				},
+				"d_qos_memory_max": map[int]float64{
 					int(runtime.QoSCgroupClassBesteffort): 0.0,
 					int(runtime.QoSCgroupClassBurstable):  0.0,
 					int(runtime.QoSCgroupClassGuaranteed): 0.0,

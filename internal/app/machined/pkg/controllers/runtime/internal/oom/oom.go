@@ -8,6 +8,7 @@ package oom
 import (
 	"fmt"
 	"io/fs"
+	"math"
 	"os"
 	"path/filepath"
 	"time"
@@ -69,7 +70,7 @@ func EvaluateTrigger(triggerExpr cel.Expression, evalContext map[string]any) (bo
 // PopulatePsiToCtx populates the context with PSI data from a cgroup.
 //
 //nolint:gocyclo
-func PopulatePsiToCtx(cgroup string, evalContext map[string]any, psi map[string]float64, sampleInterval time.Duration) error {
+func PopulatePsiToCtx(cgroup string, evalContext map[string]any, oldValues map[string]float64, sampleInterval time.Duration) error {
 	if sampleInterval <= 0 {
 		return fmt.Errorf("sample interval must be greater than zero")
 	}
@@ -104,11 +105,11 @@ func PopulatePsiToCtx(cgroup string, evalContext map[string]any, psi map[string]
 				psiPath := subtree.path + "/" + "memory_" + psiType + "_" + span
 
 				diff := 0.
-				if oldValue, ok := psi[psiPath]; ok {
+				if oldValue, ok := oldValues[psiPath]; ok {
 					diff = (value - oldValue) / sampleInterval.Seconds()
 				}
 
-				psi[psiPath] = value
+				oldValues[psiPath] = value
 
 				if subtree.qos == -1 {
 					evalContext["d_memory_"+psiType+"_"+span] = diff
@@ -131,6 +132,54 @@ func PopulatePsiToCtx(cgroup string, evalContext map[string]any, psi map[string]
 					dValuesMap.(map[int]float64)[int(subtree.qos)] += diff
 				}
 			}
+		}
+
+		node = &cgroups.Node{}
+		// Best effort, if any is not present it will return NaN
+		cgroups.ReadCgroupfsProperty(node, filepath.Join(cgroup, subtree.path), "memory.current") //nolint:errcheck
+		cgroups.ReadCgroupfsProperty(node, filepath.Join(cgroup, subtree.path), "memory.max")     //nolint:errcheck
+		cgroups.ReadCgroupfsProperty(node, filepath.Join(cgroup, subtree.path), "memory.peak")    //nolint:errcheck
+
+		if subtree.qos == -1 {
+			continue
+		}
+
+		for _, parameter := range []struct {
+			name  string
+			value float64
+		}{
+			{"current", node.MemoryCurrent.Float64()},
+			{"max", node.MemoryMax.Float64()},
+			{"peak", node.MemoryPeak.Float64()},
+		} {
+			value := parameter.value
+			// These values cannot be expressed in JSON
+			if math.IsNaN(value) || math.IsInf(value, 0) {
+				value = 0.0
+			}
+
+			valuesMap, ok := evalContext["qos_memory_"+parameter.name]
+			if !ok {
+				valuesMap = map[int]float64{}
+				evalContext["qos_memory_"+parameter.name] = valuesMap
+			}
+
+			valuesMap.(map[int]float64)[int(subtree.qos)] += value
+
+			oldPath := subtree.path + "/" + "memory_" + parameter.name
+
+			diff := 0.
+			if oldValue, ok := oldValues[oldPath]; ok {
+				diff = (value - oldValue) / sampleInterval.Seconds()
+			}
+
+			dValuesMap, ok := evalContext["d_qos_memory_"+parameter.name]
+			if !ok {
+				dValuesMap = map[int]float64{}
+				evalContext["d_qos_memory_"+parameter.name] = dValuesMap
+			}
+
+			dValuesMap.(map[int]float64)[int(subtree.qos)] += diff
 		}
 	}
 
