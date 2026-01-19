@@ -99,6 +99,7 @@ type UserVolumeConfig interface {
 	Provisioning() VolumeProvisioningConfig
 	Filesystem() FilesystemConfig
 	Encryption() EncryptionConfig
+	Mount() UserMountConfig
 }
 
 // RawVolumeConfig defines the interface to access raw volume configuration.
@@ -130,14 +131,24 @@ type VolumeDiscoveryConfig interface {
 	VolumeSelector() cel.Expression
 }
 
+// UserMountConfig defines the interface to access volume mount configuration.
+type UserMountConfig interface {
+	DisableAccessTime() bool
+	Secure() bool
+}
+
 // VolumeMountConfig defines the interface to access volume mount configuration.
 type VolumeMountConfig interface {
 	ReadOnly() bool
+	DisableAccessTime() bool
+	Secure() bool
 }
 
 // ExternalMountConfig defines the interface to access volume mount configuration.
 type ExternalMountConfig interface {
 	ReadOnly() bool
+	DisableAccessTime() bool
+	Secure() bool
 	Virtiofs() optional.Optional[ExternalMountConfigSpec]
 }
 

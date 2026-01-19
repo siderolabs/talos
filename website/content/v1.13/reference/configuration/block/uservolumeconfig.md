@@ -159,6 +159,7 @@ encryption:
 |`provisioning` |<a href="#UserVolumeConfig.provisioning">ProvisioningSpec</a> |The provisioning describes how the volume is provisioned.  | |
 |`filesystem` |<a href="#UserVolumeConfig.filesystem">FilesystemSpec</a> |The filesystem describes how the volume is formatted.  | |
 |`encryption` |<a href="#UserVolumeConfig.encryption">EncryptionSpec</a> |The encryption describes how the volume is encrypted.  | |
+|`mount` |<a href="#UserVolumeConfig.mount">UserMountSpec</a> |The mount describes additional mount options.  | |
 
 
 
@@ -379,6 +380,23 @@ EncryptionKeyTPMOptions represents the options for TPM-based key protection.
 
 
 
+
+
+
+
+
+
+## mount {#UserVolumeConfig.mount}
+
+UserMountSpec describes how the volume is mounted.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`disableAccessTime` |bool |If true, disable file access time updates.  | |
+|`secure` |bool |Enable secure mount options (nosuid, nodev).<br><br>Defaults to true for better security.  | |
 
 
 

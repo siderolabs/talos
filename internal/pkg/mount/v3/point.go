@@ -284,7 +284,45 @@ func (p *Point) RemountReadWrite() error {
 	}, 0)
 }
 
+// SetDisableAccessTime sets or clears the noatime mount attribute.
+func (p *Point) SetDisableAccessTime(disable bool) error {
+	if p.detached {
+		return nil
+	}
+
+	if disable {
+		return p.setattr(&unix.MountAttr{
+			Attr_set: unix.MOUNT_ATTR_NOATIME,
+		}, 0)
+	}
+
+	return p.setattr(&unix.MountAttr{
+		Attr_clr: unix.MOUNT_ATTR_NOATIME,
+	}, 0)
+}
+
+// SetSecure sets or clears the nosuid and nodev mount attributes.
+func (p *Point) SetSecure(secure bool) error {
+	if p.detached {
+		return nil
+	}
+
+	if secure {
+		return p.setattr(&unix.MountAttr{
+			Attr_set: unix.MOUNT_ATTR_NOSUID | unix.MOUNT_ATTR_NODEV,
+		}, 0)
+	}
+
+	return p.setattr(&unix.MountAttr{
+		Attr_clr: unix.MOUNT_ATTR_NOSUID | unix.MOUNT_ATTR_NODEV,
+	}, 0)
+}
+
 func (p *Point) setattr(attr *unix.MountAttr, flags int) error {
+	if (attr.Attr_set&unix.MOUNT_ATTR_NOATIME) != 0 || (attr.Attr_clr&unix.MOUNT_ATTR_NOATIME) != 0 {
+		attr.Attr_clr |= unix.MOUNT_ATTR__ATIME
+	}
+
 	fd, err := p.root.Fd()
 	if err != nil && !errors.Is(err, os.ErrClosed) {
 		return err

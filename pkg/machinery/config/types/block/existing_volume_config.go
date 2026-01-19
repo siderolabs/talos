@@ -107,6 +107,14 @@ type MountSpec struct {
 	//   description: |
 	//     Mount the volume read-only.
 	MountReadOnly *bool `yaml:"readOnly,omitempty"`
+	//   description: |
+	//     If true, disable file access time updates.
+	MountDisableAccessTime *bool `yaml:"disableAccessTime,omitempty"`
+	//   description: |
+	//     Enable secure mount options (nosuid, nodev).
+	//
+	//     Defaults to true for better security.
+	MountSecure *bool `yaml:"secure,omitempty"`
 }
 
 // NewExistingVolumeConfigV1Alpha1 creates a new raw volume config document.
@@ -220,4 +228,18 @@ func (s VolumeDiscoverySpec) VolumeSelector() cel.Expression {
 // ReadOnly implements config.VolumeMountConfig interface.
 func (s MountSpec) ReadOnly() bool {
 	return pointer.SafeDeref(s.MountReadOnly)
+}
+
+// DisableAccessTime implements config.VolumeMountConfig interface.
+func (s MountSpec) DisableAccessTime() bool {
+	return pointer.SafeDeref(s.MountDisableAccessTime)
+}
+
+// Secure implements config.VolumeMountConfig interface.
+func (s MountSpec) Secure() bool {
+	if s.MountSecure == nil {
+		return true
+	}
+
+	return *s.MountSecure
 }

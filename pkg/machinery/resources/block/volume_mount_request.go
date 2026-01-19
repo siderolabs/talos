@@ -25,11 +25,11 @@ type VolumeMountRequest = typed.Resource[VolumeMountRequestSpec, VolumeMountRequ
 type VolumeMountRequestSpec struct {
 	VolumeID string `yaml:"volumeID" protobuf:"1"`
 
-	ReadOnly bool `yaml:"readOnly" protobuf:"3"`
-
-	Detached bool `yaml:"detached" protobuf:"4"`
-
-	Requester string `yaml:"requester" protobuf:"2"`
+	Requester         string `yaml:"requester" protobuf:"2"`
+	ReadOnly          bool   `yaml:"readOnly" protobuf:"3"`
+	Detached          bool   `yaml:"detached" protobuf:"4"`
+	DisableAccessTime bool   `yaml:"disableAccessTime" protobuf:"5"`
+	Secure            bool   `yaml:"secure" protobuf:"6"`
 }
 
 // NewVolumeMountRequest initializes a VolumeMountRequest resource.
