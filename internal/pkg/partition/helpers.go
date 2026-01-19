@@ -42,10 +42,12 @@ func WipeWithSignatures(bd *block.Device, deviceName string, log func(string, ..
 				),
 			)
 		}
-
-		return nil
 	}
 
+	// [TODO]: wipe the first/last 1MiB after wiping by signatures to cover somewhat unknown edge cases
+	// What has been observed so far is that wiping VFAT signature still makes `mkfs.xfs` believe there is
+	// a VFAT filesystem on the partition, refusing to create XFS over it without `-f` flag.
+	//
 	// probe failed or no signatures found, fast wipe
 	if err = bd.FastWipe(); err != nil {
 		return fmt.Errorf("failed to wipe block device %q: %v", deviceName, err)
