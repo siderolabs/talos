@@ -116,6 +116,7 @@ func GetEphemeralVolumeTransformer(inContainer bool) volumeConfigTransformer {
 							MinSize:         extraVolumeConfig.Provisioning().MinSize().ValueOr(quirks.New("").PartitionSizes().EphemeralMinSize()),
 							MaxSize:         extraVolumeConfig.Provisioning().MaxSize().ValueOrZero(),
 							RelativeMaxSize: extraVolumeConfig.Provisioning().RelativeMaxSize().ValueOrZero(),
+							NegativeMaxSize: extraVolumeConfig.Provisioning().MaxSizeNegative(),
 							Grow:            extraVolumeConfig.Provisioning().Grow().ValueOr(true),
 							Label:           constants.EphemeralPartitionLabel,
 							TypeUUID:        partition.LinuxFilesystemData,

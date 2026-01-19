@@ -115,3 +115,16 @@ func (s Size) IsZero() bool {
 func (s Size) IsRelative() bool {
 	return (s.PercentageSize != nil && !s.PercentageSize.IsZero())
 }
+
+// IsNegative returns true if the value is negative.
+func (s Size) IsNegative() bool {
+	if s.ByteSize != nil {
+		return s.ByteSize.IsNegative()
+	}
+
+	if s.PercentageSize != nil {
+		return s.PercentageSize.IsNegative()
+	}
+
+	return false
+}

@@ -33,6 +33,7 @@ type VolumeProvisioningConfig interface {
 	MinSize() optional.Optional[uint64]
 	MaxSize() optional.Optional[uint64]
 	RelativeMaxSize() optional.Optional[uint64]
+	MaxSizeNegative() bool
 }
 
 // WrapVolumesConfigList wraps a list of VolumeConfig providing access by name.
@@ -82,12 +83,12 @@ func (emptyVolumeConfig) MaxSize() optional.Optional[uint64] {
 	return optional.None[uint64]()
 }
 
-func (emptyVolumeConfig) RelativeMinSize() optional.Optional[uint64] {
+func (emptyVolumeConfig) RelativeMaxSize() optional.Optional[uint64] {
 	return optional.None[uint64]()
 }
 
-func (emptyVolumeConfig) RelativeMaxSize() optional.Optional[uint64] {
-	return optional.None[uint64]()
+func (emptyVolumeConfig) MaxSizeNegative() bool {
+	return false
 }
 
 // UserVolumeConfig defines the interface to access user volume configuration.

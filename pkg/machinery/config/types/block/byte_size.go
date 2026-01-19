@@ -5,6 +5,7 @@
 package block
 
 import (
+	"bytes"
 	"encoding"
 	"fmt"
 	"slices"
@@ -22,11 +23,12 @@ var (
 	_ yaml.IsZeroer            = ByteSize{}
 )
 
-// ByteSize is a byte size which can be convienintly represented as a human readable string
+// ByteSize is a byte size which can be conveniently represented as a human readable string
 // with IEC sizes, e.g. 100MB.
 type ByteSize struct {
-	value *uint64
-	raw   []byte
+	value    *uint64
+	raw      []byte
+	negative bool
 }
 
 // Value returns the value.
@@ -40,8 +42,13 @@ func (bs ByteSize) MarshalText() ([]byte, error) {
 		return bs.raw, nil
 	}
 
+	negative := ""
+	if bs.negative {
+		negative = "-"
+	}
+
 	if bs.value != nil {
-		return []byte(strconv.FormatUint(*bs.value, 10)), nil
+		return []byte(negative + strconv.FormatUint(*bs.value, 10)), nil
 	}
 
 	return nil, nil
@@ -53,13 +60,20 @@ func (bs *ByteSize) UnmarshalText(text []byte) error {
 		return nil
 	}
 
+	raw := slices.Clone(text)
+
+	if v, ok := bytes.CutPrefix(text, []byte("-")); ok {
+		text = v
+		bs.negative = true
+	}
+
 	value, err := humanize.ParseBytes(string(text))
 	if err != nil {
 		return err
 	}
 
 	bs.value = pointer.To(value)
-	bs.raw = slices.Clone(text)
+	bs.raw = raw
 
 	return nil
 }
@@ -80,4 +94,9 @@ func (bs *ByteSize) Merge(other any) error {
 	bs.value = otherBS.value
 
 	return nil
+}
+
+// IsNegative returns true if the value is negative.
+func (bs ByteSize) IsNegative() bool {
+	return bs.negative
 }

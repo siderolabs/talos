@@ -105,6 +105,7 @@ func UserVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 						MinSize:         cmp.Or(userVolumeConfig.Provisioning().MinSize().ValueOrZero(), MinUserVolumeSize),
 						MaxSize:         userVolumeConfig.Provisioning().MaxSize().ValueOrZero(),
 						RelativeMaxSize: userVolumeConfig.Provisioning().RelativeMaxSize().ValueOrZero(),
+						NegativeMaxSize: userVolumeConfig.Provisioning().MaxSizeNegative(),
 						Grow:            userVolumeConfig.Provisioning().Grow().ValueOrZero(),
 						Label:           volumeID,
 						TypeUUID:        partition.LinuxFilesystemData,
@@ -317,6 +318,7 @@ func SwapVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 					PartitionSpec: block.PartitionSpec{
 						MaxSize:         cmp.Or(swapVolumeConfig.Provisioning().MaxSize().ValueOrZero(), MinUserVolumeSize),
 						RelativeMaxSize: swapVolumeConfig.Provisioning().RelativeMaxSize().ValueOrZero(),
+						NegativeMaxSize: swapVolumeConfig.Provisioning().MaxSizeNegative(),
 						Grow:            swapVolumeConfig.Provisioning().Grow().ValueOrZero(),
 						Label:           volumeID,
 						TypeUUID:        partition.LinkSwap,

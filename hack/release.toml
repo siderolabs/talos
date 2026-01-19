@@ -146,6 +146,15 @@ This allows easy migration, e.g. by changing `.cluster.controlPlane.endpoint` to
 `.cluster.apiServer.extraArgs["service-account-issuer"]`.
 """
 
+    [notes.negativeMaxVolumeSize]
+    title = "Negative Max Volume Size"
+    description = """\
+Negative max size represents the amount of space to be left free on the device, rather than the size the volume should consume.
+For example:
+    * a max size of "-10GiB" means the volume can grow to the available space minus 10GiB.
+    * a max size of "-25%" means the volume can grow to the available space minus 25%.
+"""
+
 [make_deps]
 
     [make_deps.tools]

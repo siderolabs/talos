@@ -66,6 +66,19 @@ func TestVolumeConfigMarshalUnmarshal(t *testing.T) {
 			},
 		},
 		{
+			name:     "negative max size",
+			filename: "volumeconfig_negativemaxsize.yaml",
+			cfg: func(t *testing.T) *block.VolumeConfigV1Alpha1 {
+				c := block.NewVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("-10GiB")
+				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
+
+				return c
+			},
+		},
+		{
 			name:     "state",
 			filename: "volumeconfig_state.yaml",
 			cfg: func(t *testing.T) *block.VolumeConfigV1Alpha1 {
@@ -172,6 +185,21 @@ func TestVolumeConfigValidate(t *testing.T) {
 			expectedErrors: "min size is greater than max size",
 		},
 		{
+			name: "min size negative",
+
+			cfg: func(t *testing.T) *block.VolumeConfigV1Alpha1 {
+				c := block.NewVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+
+				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("-10GiB")
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("10GiB")
+
+				return c
+			},
+
+			expectedErrors: "min size cannot be negative",
+		},
+		{
 			name: "state provisioning config",
 
 			cfg: func(t *testing.T) *block.VolumeConfigV1Alpha1 {
@@ -252,6 +280,34 @@ func TestVolumeConfigValidate(t *testing.T) {
 
 				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.size > 120u * GiB`)))
 				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("2.5TiB")
+				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
+
+				return c
+			},
+		},
+		{
+			name: "valid negative",
+
+			cfg: func(t *testing.T) *block.VolumeConfigV1Alpha1 {
+				c := block.NewVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+
+				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.size > 120u * GiB`)))
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("-2GiB")
+				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
+
+				return c
+			},
+		},
+		{
+			name: "valid percentage",
+
+			cfg: func(t *testing.T) *block.VolumeConfigV1Alpha1 {
+				c := block.NewVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+
+				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.size > 120u * GiB`)))
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("90%")
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
 
 				return c

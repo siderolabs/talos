@@ -65,7 +65,11 @@ func CreatePartition(ctx context.Context, logger *zap.Logger, diskPath string, v
 	available := pt.LargestContiguousAllocatable()
 
 	size := volumeCfg.TypedSpec().Provisioning.PartitionSpec.MinSize
-	maxSize := volumeCfg.TypedSpec().Provisioning.PartitionSpec.ResolveMaxSize(available)
+
+	maxSize, err := volumeCfg.TypedSpec().Provisioning.PartitionSpec.ResolveMaxSize(available)
+	if err != nil {
+		return CreatePartitionResult{}, fmt.Errorf("error resolving max size: %w", err)
+	}
 
 	if available < size {
 		// should never happen

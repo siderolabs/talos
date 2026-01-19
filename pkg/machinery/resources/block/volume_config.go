@@ -5,6 +5,7 @@
 package block
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -97,6 +98,9 @@ type PartitionSpec struct {
 	// Partition maximum size (relative), if not set, grows to the maximum size.
 	RelativeMaxSize uint64 `yaml:"relativeMaxSize" protobuf:"6"`
 
+	// NegativeMaxSize indicates that MaxSize or RelativeMaxSize represents space to be left free on the device rather than space to consume.
+	NegativeMaxSize bool `yaml:"negativeMaxSize" protobuf:"7"`
+
 	// Grow the partition automatically to the maximum size.
 	Grow bool `yaml:"grow" protobuf:"3"`
 
@@ -108,12 +112,25 @@ type PartitionSpec struct {
 }
 
 // ResolveMaxSize resolves the maximum size of the partition.
-func (ps *PartitionSpec) ResolveMaxSize(available uint64) uint64 {
+// Returns the maximum size of the partition and an error if the partition size cannot be resolved.
+func (ps *PartitionSpec) ResolveMaxSize(available uint64) (uint64, error) {
+	var size uint64
+
 	if ps.RelativeMaxSize != 0 {
-		return available * ps.RelativeMaxSize / 100
+		size = available * ps.RelativeMaxSize / 100
+	} else {
+		size = ps.MaxSize
 	}
 
-	return ps.MaxSize
+	if ps.NegativeMaxSize {
+		if size > available {
+			return 0, fmt.Errorf("partition size cannot be negative")
+		}
+
+		return available - size, nil
+	}
+
+	return size, nil
 }
 
 // LocatorSpec is the spec for volume locator.

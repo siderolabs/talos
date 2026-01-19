@@ -1286,6 +1286,16 @@ func (m *PartitionSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.NegativeMaxSize {
+		i--
+		if m.NegativeMaxSize {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x38
+	}
 	if m.RelativeMaxSize != 0 {
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.RelativeMaxSize))
 		i--
@@ -2813,6 +2823,9 @@ func (m *PartitionSpec) SizeVT() (n int) {
 	}
 	if m.RelativeMaxSize != 0 {
 		n += 1 + protohelpers.SizeOfVarint(uint64(m.RelativeMaxSize))
+	}
+	if m.NegativeMaxSize {
+		n += 2
 	}
 	n += len(m.unknownFields)
 	return n
@@ -6795,6 +6808,26 @@ func (m *PartitionSpec) UnmarshalVT(dAtA []byte) error {
 					break
 				}
 			}
+		case 7:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NegativeMaxSize", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.NegativeMaxSize = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

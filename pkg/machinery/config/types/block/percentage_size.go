@@ -24,8 +24,9 @@ var (
 
 // PercentageSize is a size in percents.
 type PercentageSize struct {
-	value *uint64
-	raw   []byte
+	value    *uint64
+	raw      []byte
+	negative bool
 }
 
 // Value returns the value.
@@ -59,6 +60,13 @@ func (ps *PercentageSize) UnmarshalText(text []byte) error {
 		return fmt.Errorf("percentage must end with '%%'")
 	}
 
+	raw := slices.Clone(text)
+
+	if v, ok := bytes.CutPrefix(text, []byte("-")); ok {
+		text = v
+		ps.negative = true
+	}
+
 	numStr := string(text[:len(text)-1])
 
 	value, err := strconv.ParseFloat(numStr, 64)
@@ -71,7 +79,7 @@ func (ps *PercentageSize) UnmarshalText(text []byte) error {
 	}
 
 	ps.value = pointer.To(uint64(value))
-	ps.raw = slices.Clone(text)
+	ps.raw = raw
 
 	return nil
 }
@@ -79,4 +87,9 @@ func (ps *PercentageSize) UnmarshalText(text []byte) error {
 // IsZero implements yaml.IsZeroer.
 func (ps PercentageSize) IsZero() bool {
 	return ps.value == nil && ps.raw == nil
+}
+
+// IsNegative returns true if the value is negative.
+func (ps PercentageSize) IsNegative() bool {
+	return ps.negative
 }

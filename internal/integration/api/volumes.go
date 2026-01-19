@@ -524,7 +524,19 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 		return doc
 	})
 
-	configDocs = append(configDocs, xslices.Map(volumeIDs[1:], func(volumeID string) any {
+	configDocs = append(configDocs, xslices.Map(volumeIDs[1:2], func(volumeID string) any {
+		doc := blockcfg.NewUserVolumeConfigV1Alpha1()
+		doc.MetaName = volumeID
+		doc.ProvisioningSpec.DiskSelectorSpec.Match = cel.MustExpression(
+			cel.ParseBooleanExpression(fmt.Sprintf("'%s' in disk.symlinks", disk.TypedSpec().Symlinks[0]), celenv.DiskLocator()),
+		)
+		doc.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("100MiB")
+		doc.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("-60%")
+
+		return doc
+	})...)
+
+	configDocs = append(configDocs, xslices.Map(volumeIDs[2:], func(volumeID string) any {
 		doc := blockcfg.NewUserVolumeConfigV1Alpha1()
 		doc.MetaName = volumeID
 		doc.ProvisioningSpec.DiskSelectorSpec.Match = cel.MustExpression(
@@ -535,6 +547,8 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 
 		return doc
 	})...)
+
+	suite.Require().Equal(len(configDocs), len(volumeIDs))
 
 	// create user volumes
 	suite.PatchMachineConfig(ctx, configDocs...)

@@ -104,6 +104,11 @@ type ProvisioningSpec struct {
 	ProvisioningMaxSize Size `yaml:"maxSize,omitempty"`
 }
 
+// MaxSizeNegative returns true if the maximum size is negative.
+func (p ProvisioningSpec) MaxSizeNegative() bool {
+	return p.ProvisioningMaxSize.IsNegative()
+}
+
 // DiskSelector selects a disk for the volume.
 type DiskSelector struct {
 	//   description: |
@@ -220,11 +225,11 @@ func (s *VolumeConfigV1Alpha1) Encryption() config.EncryptionConfig {
 // Validate the provisioning spec.
 //
 //nolint:gocyclo
-func (s ProvisioningSpec) Validate(required bool, sizeSupported bool) ([]string, error) {
+func (p ProvisioningSpec) Validate(required bool, sizeSupported bool) ([]string, error) {
 	var validationErrors error
 
-	if !s.DiskSelectorSpec.Match.IsZero() {
-		if err := s.DiskSelectorSpec.Match.ParseBool(celenv.DiskLocator()); err != nil {
+	if !p.DiskSelectorSpec.Match.IsZero() {
+		if err := p.DiskSelectorSpec.Match.ParseBool(celenv.DiskLocator()); err != nil {
 			validationErrors = errors.Join(validationErrors, fmt.Errorf("disk selector is invalid: %w", err))
 		}
 	} else if required {
@@ -232,17 +237,19 @@ func (s ProvisioningSpec) Validate(required bool, sizeSupported bool) ([]string,
 	}
 
 	if sizeSupported {
-		if !s.ProvisioningMinSize.IsZero() && !s.ProvisioningMaxSize.IsZero() && !s.ProvisioningMaxSize.IsRelative() {
-			if s.ProvisioningMinSize.Value() > s.ProvisioningMaxSize.Value() {
+		if !p.ProvisioningMinSize.IsZero() && !p.ProvisioningMaxSize.IsZero() && !p.ProvisioningMaxSize.IsRelative() && !p.ProvisioningMaxSize.IsNegative() {
+			if p.ProvisioningMinSize.Value() > p.ProvisioningMaxSize.Value() {
 				validationErrors = errors.Join(validationErrors, errors.New("min size is greater than max size"))
 			}
-		} else if required && s.ProvisioningMinSize.IsZero() && s.ProvisioningMaxSize.IsZero() {
+		} else if required && p.ProvisioningMinSize.IsZero() && p.ProvisioningMaxSize.IsZero() {
 			validationErrors = errors.Join(validationErrors, errors.New("min size or max size is required"))
 		}
-	} else {
-		if !s.ProvisioningMinSize.IsZero() || !s.ProvisioningMaxSize.IsZero() || s.Grow().IsPresent() {
-			validationErrors = errors.Join(validationErrors, errors.New("min size, max size and grow are not supported"))
+
+		if p.ProvisioningMinSize.IsNegative() {
+			validationErrors = errors.Join(validationErrors, errors.New("min size cannot be negative"))
 		}
+	} else if !p.ProvisioningMinSize.IsZero() || !p.ProvisioningMaxSize.IsZero() || p.Grow().IsPresent() {
+		validationErrors = errors.Join(validationErrors, errors.New("min size, max size and grow are not supported"))
 	}
 
 	return nil, validationErrors
@@ -269,53 +276,53 @@ func (s *VolumeConfigV1Alpha1) V1Alpha1ConflictValidate(v1alpha1Config *v1alpha1
 }
 
 // IsZero checks if the provisioning spec is zero.
-func (s ProvisioningSpec) IsZero() bool {
-	return s.ProvisioningGrow == nil && s.ProvisioningMaxSize.IsZero() && s.ProvisioningMinSize.IsZero() && s.DiskSelectorSpec.Match.IsZero()
+func (p ProvisioningSpec) IsZero() bool {
+	return p.ProvisioningGrow == nil && p.ProvisioningMaxSize.IsZero() && p.ProvisioningMinSize.IsZero() && p.DiskSelectorSpec.Match.IsZero()
 }
 
 // DiskSelector implements config.VolumeProvisioningConfig interface.
-func (s ProvisioningSpec) DiskSelector() optional.Optional[cel.Expression] {
-	if s.DiskSelectorSpec.Match.IsZero() {
+func (p ProvisioningSpec) DiskSelector() optional.Optional[cel.Expression] {
+	if p.DiskSelectorSpec.Match.IsZero() {
 		return optional.None[cel.Expression]()
 	}
 
-	return optional.Some(s.DiskSelectorSpec.Match)
+	return optional.Some(p.DiskSelectorSpec.Match)
 }
 
 // Grow implements config.VolumeProvisioningConfig interface.
-func (s ProvisioningSpec) Grow() optional.Optional[bool] {
-	if s.ProvisioningGrow == nil {
+func (p ProvisioningSpec) Grow() optional.Optional[bool] {
+	if p.ProvisioningGrow == nil {
 		return optional.None[bool]()
 	}
 
-	return optional.Some(*s.ProvisioningGrow)
+	return optional.Some(*p.ProvisioningGrow)
 }
 
 // MinSize implements config.VolumeProvisioningConfig interface.
-func (s ProvisioningSpec) MinSize() optional.Optional[uint64] {
-	if s.ProvisioningMinSize.IsZero() {
+func (p ProvisioningSpec) MinSize() optional.Optional[uint64] {
+	if p.ProvisioningMinSize.IsZero() {
 		return optional.None[uint64]()
 	}
 
-	return optional.Some(s.ProvisioningMinSize.Value())
+	return optional.Some(p.ProvisioningMinSize.Value())
 }
 
 // MaxSize implements config.VolumeProvisioningConfig interface.
-func (s ProvisioningSpec) MaxSize() optional.Optional[uint64] {
-	if s.ProvisioningMaxSize.IsZero() {
+func (p ProvisioningSpec) MaxSize() optional.Optional[uint64] {
+	if p.ProvisioningMaxSize.IsZero() {
 		return optional.None[uint64]()
 	}
 
-	return optional.Some(s.ProvisioningMaxSize.Value())
+	return optional.Some(p.ProvisioningMaxSize.Value())
 }
 
 // RelativeMaxSize implements config.VolumeProvisioningConfig interface.
-func (s ProvisioningSpec) RelativeMaxSize() optional.Optional[uint64] {
-	if s.ProvisioningMaxSize.IsZero() {
+func (p ProvisioningSpec) RelativeMaxSize() optional.Optional[uint64] {
+	if p.ProvisioningMaxSize.IsZero() {
 		return optional.None[uint64]()
 	}
 
-	val, ok := s.ProvisioningMaxSize.RelativeValue()
+	val, ok := p.ProvisioningMaxSize.RelativeValue()
 	if !ok {
 		return optional.None[uint64]()
 	}
