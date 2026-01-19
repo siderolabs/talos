@@ -91,6 +91,21 @@ type UserVolumeConfigV1Alpha1 struct {
 	//   description: |
 	//     The encryption describes how the volume is encrypted.
 	EncryptionSpec EncryptionSpec `yaml:"encryption,omitempty"`
+	//   description: |
+	//     The mount describes additional mount options.
+	MountSpec UserMountSpec `yaml:"mount,omitempty"`
+}
+
+// UserMountSpec describes how the volume is mounted.
+type UserMountSpec struct {
+	//   description: |
+	//     If true, disable file access time updates.
+	MountDisableAccessTime *bool `yaml:"disableAccessTime,omitempty"`
+	//   description: |
+	//     Enable secure mount options (nosuid, nodev).
+	//
+	//     Defaults to true for better security.
+	MountSecure *bool `yaml:"secure,omitempty"`
 }
 
 // NewUserVolumeConfigV1Alpha1 creates a new user volume config document.
@@ -244,6 +259,10 @@ func (s *UserVolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validatio
 			validationErrors = errors.Join(validationErrors, errors.New("filesystem spec is invalid for volumeType directory"))
 		}
 
+		if !s.MountSpec.IsZero() {
+			validationErrors = errors.Join(validationErrors, errors.New("mount spec is invalid for volumeType directory"))
+		}
+
 	case block.VolumeTypeDisk:
 		extraWarnings, extraErrors := s.ProvisioningSpec.Validate(true, false)
 
@@ -313,6 +332,11 @@ func (s *UserVolumeConfigV1Alpha1) Encryption() config.EncryptionConfig {
 	return s.EncryptionSpec
 }
 
+// Mount implements config.UserVolumeConfig interface.
+func (s *UserVolumeConfigV1Alpha1) Mount() config.UserVolumeMountConfig {
+	return s.MountSpec
+}
+
 // FilesystemSpec configures the filesystem for the volume.
 type FilesystemSpec struct {
 	//   description: |
@@ -362,4 +386,23 @@ func (s FilesystemSpec) Validate() ([]string, error) {
 	}
 
 	return nil, nil
+}
+
+// IsZero checks if the mount spec is zero.
+func (s UserMountSpec) IsZero() bool {
+	return s.MountDisableAccessTime == nil && s.MountSecure == nil
+}
+
+// DisableAccessTime implements config.UserVolumeMountConfig interface.
+func (s UserMountSpec) DisableAccessTime() bool {
+	return pointer.SafeDeref(s.MountDisableAccessTime)
+}
+
+// Secure implements config.UserVolumeMountConfig interface.
+func (s UserMountSpec) Secure() bool {
+	if s.MountSecure == nil {
+		return true
+	}
+
+	return *s.MountSecure
 }

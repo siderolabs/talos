@@ -199,6 +199,34 @@
       "type": "object",
       "description": "EncryptionSpec represents volume encryption settings."
     },
+    "block.ExistingMountSpec": {
+      "properties": {
+        "readOnly": {
+          "type": "boolean",
+          "title": "readOnly",
+          "description": "Mount the volume read-only.\n",
+          "markdownDescription": "Mount the volume read-only.",
+          "x-intellij-html-description": "\u003cp\u003eMount the volume read-only.\u003c/p\u003e\n"
+        },
+        "disableAccessTime": {
+          "type": "boolean",
+          "title": "disableAccessTime",
+          "description": "If true, disable file access time updates.\n",
+          "markdownDescription": "If true, disable file access time updates.",
+          "x-intellij-html-description": "\u003cp\u003eIf true, disable file access time updates.\u003c/p\u003e\n"
+        },
+        "secure": {
+          "type": "boolean",
+          "title": "secure",
+          "description": "Enable secure mount options (nosuid, nodev).\n\nDefaults to true for better security.\n",
+          "markdownDescription": "Enable secure mount options (nosuid, nodev).\n\nDefaults to true for better security.",
+          "x-intellij-html-description": "\u003cp\u003eEnable secure mount options (nosuid, nodev).\u003c/p\u003e\n\n\u003cp\u003eDefaults to true for better security.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "ExistingMountSpec describes how the volume is mounted."
+    },
     "block.ExistingVolumeConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -234,7 +262,7 @@
           "x-intellij-html-description": "\u003cp\u003eThe discovery describes how to find a volume.\u003c/p\u003e\n"
         },
         "mount": {
-          "$ref": "#/$defs/block.MountSpec",
+          "$ref": "#/$defs/block.ExistingMountSpec",
           "title": "mount",
           "description": "The mount describes additional mount options.\n",
           "markdownDescription": "The mount describes additional mount options.",
@@ -257,6 +285,20 @@
           "description": "Mount the volume read-only.\n",
           "markdownDescription": "Mount the volume read-only.",
           "x-intellij-html-description": "\u003cp\u003eMount the volume read-only.\u003c/p\u003e\n"
+        },
+        "disableAccessTime": {
+          "type": "boolean",
+          "title": "disableAccessTime",
+          "description": "If true, disable file access time updates.\n",
+          "markdownDescription": "If true, disable file access time updates.",
+          "x-intellij-html-description": "\u003cp\u003eIf true, disable file access time updates.\u003c/p\u003e\n"
+        },
+        "secure": {
+          "type": "boolean",
+          "title": "secure",
+          "description": "Enable secure mount options (nosuid, nodev).\n\nDefaults to true for better security.\n",
+          "markdownDescription": "Enable secure mount options (nosuid, nodev).\n\nDefaults to true for better security.",
+          "x-intellij-html-description": "\u003cp\u003eEnable secure mount options (nosuid, nodev).\u003c/p\u003e\n\n\u003cp\u003eDefaults to true for better security.\u003c/p\u003e\n"
         },
         "virtiofs": {
           "$ref": "#/$defs/block.VirtiofsMountSpec",
@@ -349,12 +391,12 @@
     },
     "block.MountSpec": {
       "properties": {
-        "readOnly": {
+        "secure": {
           "type": "boolean",
-          "title": "readOnly",
-          "description": "Mount the volume read-only.\n",
-          "markdownDescription": "Mount the volume read-only.",
-          "x-intellij-html-description": "\u003cp\u003eMount the volume read-only.\u003c/p\u003e\n"
+          "title": "secure",
+          "description": "Enable secure mount options (nosuid, nodev).\n\nDefaults to true for better security.\n",
+          "markdownDescription": "Enable secure mount options (nosuid, nodev).\n\nDefaults to true for better security.",
+          "x-intellij-html-description": "\u003cp\u003eEnable secure mount options (nosuid, nodev).\u003c/p\u003e\n\n\u003cp\u003eDefaults to true for better security.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -496,6 +538,27 @@
       ],
       "description": "SwapVolumeConfig is a disk swap volume configuration document.\\nSwap volume is automatically allocated as a partition on the specified disk\\nand activated as swap, removing a swap volume deactivates swap.\\nThe partition label is automatically generated as `s-\u003cname\u003e`.\\n"
     },
+    "block.UserMountSpec": {
+      "properties": {
+        "disableAccessTime": {
+          "type": "boolean",
+          "title": "disableAccessTime",
+          "description": "If true, disable file access time updates.\n",
+          "markdownDescription": "If true, disable file access time updates.",
+          "x-intellij-html-description": "\u003cp\u003eIf true, disable file access time updates.\u003c/p\u003e\n"
+        },
+        "secure": {
+          "type": "boolean",
+          "title": "secure",
+          "description": "Enable secure mount options (nosuid, nodev).\n\nDefaults to true for better security.\n",
+          "markdownDescription": "Enable secure mount options (nosuid, nodev).\n\nDefaults to true for better security.",
+          "x-intellij-html-description": "\u003cp\u003eEnable secure mount options (nosuid, nodev).\u003c/p\u003e\n\n\u003cp\u003eDefaults to true for better security.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "UserMountSpec describes how the volume is mounted."
+    },
     "block.UserVolumeConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -554,6 +617,13 @@
           "description": "The encryption describes how the volume is encrypted.\n",
           "markdownDescription": "The encryption describes how the volume is encrypted.",
           "x-intellij-html-description": "\u003cp\u003eThe encryption describes how the volume is encrypted.\u003c/p\u003e\n"
+        },
+        "mount": {
+          "$ref": "#/$defs/block.UserMountSpec",
+          "title": "mount",
+          "description": "The mount describes additional mount options.\n",
+          "markdownDescription": "The mount describes additional mount options.",
+          "x-intellij-html-description": "\u003cp\u003eThe mount describes additional mount options.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -618,6 +688,13 @@
           "description": "The encryption describes how the volume is encrypted.\n",
           "markdownDescription": "The encryption describes how the volume is encrypted.",
           "x-intellij-html-description": "\u003cp\u003eThe encryption describes how the volume is encrypted.\u003c/p\u003e\n"
+        },
+        "mount": {
+          "$ref": "#/$defs/block.MountSpec",
+          "title": "mount",
+          "description": "The mount describes additional mount options.\n",
+          "markdownDescription": "The mount describes additional mount options.",
+          "x-intellij-html-description": "\u003cp\u003eThe mount describes additional mount options.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

@@ -125,6 +125,8 @@ message MountRequestSpec {
   repeated string requester_i_ds = 4;
   bool read_only = 5;
   bool detached = 6;
+  bool disable_access_time = 7;
+  bool secure = 8;
 }
 
 // MountSpec is the spec for volume mount.
@@ -237,6 +239,8 @@ message VolumeMountRequestSpec {
   string requester = 2;
   bool read_only = 3;
   bool detached = 4;
+  bool disable_access_time = 5;
+  bool secure = 6;
 }
 
 // VolumeMountStatusSpec is the spec for VolumeMountStatus.
@@ -246,6 +250,8 @@ message VolumeMountStatusSpec {
   string target = 3;
   bool read_only = 4;
   bool detached = 5;
+  bool disable_access_time = 6;
+  bool secure = 7;
 }
 
 // VolumeStatusSpec is the spec for VolumeStatus resource.

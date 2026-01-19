@@ -86,6 +86,14 @@ type ExternalMountSpec struct {
 	//   description: |
 	//     Mount the volume read-only.
 	MountReadOnly *bool `yaml:"readOnly,omitempty"`
+	//   description: |
+	//     If true, disable file access time updates.
+	MountDisableAccessTime *bool `yaml:"disableAccessTime,omitempty"`
+	//   description: |
+	//     Enable secure mount options (nosuid, nodev).
+	//
+	//     Defaults to true for better security.
+	MountSecure *bool `yaml:"secure,omitempty"`
 
 	//   description: |
 	//     Virtiofs mount options.
@@ -190,25 +198,39 @@ func (s *ExternalVolumeConfigV1Alpha1) Type() FilesystemType {
 }
 
 // Mount implements config.ExternalVolumeConfig interface.
-func (s *ExternalVolumeConfigV1Alpha1) Mount() config.ExternalMountConfig {
+func (s *ExternalVolumeConfigV1Alpha1) Mount() config.ExternalVolumeMountConfig {
 	return s.MountSpec
 }
 
-// ReadOnly implements config.VolumeMountConfig interface.
+// ReadOnly implements config.ExternalVolumeMountConfig interface.
 func (s ExternalMountSpec) ReadOnly() bool {
 	return pointer.SafeDeref(s.MountReadOnly)
 }
 
-// Virtiofs implements config.VolumeMountConfig interface.
-func (s ExternalMountSpec) Virtiofs() optional.Optional[config.ExternalMountConfigSpec] {
-	if s.MountVirtiofs == nil {
-		return optional.None[config.ExternalMountConfigSpec]()
-	}
-
-	return optional.Some[config.ExternalMountConfigSpec](*s.MountVirtiofs)
+// DisableAccessTime implements config.ExternalVolumeMountConfig interface.
+func (s ExternalMountSpec) DisableAccessTime() bool {
+	return pointer.SafeDeref(s.MountDisableAccessTime)
 }
 
-// Source implements config.ExternalMountConfigSpec interface.
+// Secure implements config.ExternalVolumeMountConfig interface.
+func (s ExternalMountSpec) Secure() bool {
+	if s.MountSecure == nil {
+		return true
+	}
+
+	return *s.MountSecure
+}
+
+// Virtiofs implements config.VolumeMountConfig interface.
+func (s ExternalMountSpec) Virtiofs() optional.Optional[config.ExternalVolumeMountConfigSpec] {
+	if s.MountVirtiofs == nil {
+		return optional.None[config.ExternalVolumeMountConfigSpec]()
+	}
+
+	return optional.Some[config.ExternalVolumeMountConfigSpec](*s.MountVirtiofs)
+}
+
+// Source implements config.ExternalVolumeMountConfigSpec interface.
 func (s VirtiofsMountSpec) Source() string {
 	return s.VirtiofsTag
 }

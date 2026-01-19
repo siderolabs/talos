@@ -91,6 +91,8 @@ func (ctrl *MountStatusController) Run(ctx context.Context, r controller.Runtime
 							vms.TypedSpec().VolumeID = mountStatus.TypedSpec().Spec.VolumeID
 							vms.TypedSpec().ReadOnly = mountStatus.TypedSpec().Spec.ReadOnly
 							vms.TypedSpec().Detached = mountStatus.TypedSpec().Detached
+							vms.TypedSpec().DisableAccessTime = mountStatus.TypedSpec().Spec.DisableAccessTime
+							vms.TypedSpec().Secure = mountStatus.TypedSpec().Spec.Secure
 
 							// This needs to be set through accessor, and is not guaranteed to resolve to a valid root.
 							vms.TypedSpec().SetRoot(mountStatus.TypedSpec().Root())

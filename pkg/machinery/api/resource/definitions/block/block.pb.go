@@ -949,15 +949,17 @@ func (x *LocatorSpec) GetDiskMatch() *v1alpha1.CheckedExpr {
 
 // MountRequestSpec is the spec for MountRequest.
 type MountRequestSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	VolumeId      string                 `protobuf:"bytes,1,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
-	ParentMountId string                 `protobuf:"bytes,2,opt,name=parent_mount_id,json=parentMountId,proto3" json:"parent_mount_id,omitempty"`
-	Requesters    []string               `protobuf:"bytes,3,rep,name=requesters,proto3" json:"requesters,omitempty"`
-	RequesterIDs  []string               `protobuf:"bytes,4,rep,name=requester_i_ds,json=requesterIDs,proto3" json:"requester_i_ds,omitempty"`
-	ReadOnly      bool                   `protobuf:"varint,5,opt,name=read_only,json=readOnly,proto3" json:"read_only,omitempty"`
-	Detached      bool                   `protobuf:"varint,6,opt,name=detached,proto3" json:"detached,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	VolumeId          string                 `protobuf:"bytes,1,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
+	ParentMountId     string                 `protobuf:"bytes,2,opt,name=parent_mount_id,json=parentMountId,proto3" json:"parent_mount_id,omitempty"`
+	Requesters        []string               `protobuf:"bytes,3,rep,name=requesters,proto3" json:"requesters,omitempty"`
+	RequesterIDs      []string               `protobuf:"bytes,4,rep,name=requester_i_ds,json=requesterIDs,proto3" json:"requester_i_ds,omitempty"`
+	ReadOnly          bool                   `protobuf:"varint,5,opt,name=read_only,json=readOnly,proto3" json:"read_only,omitempty"`
+	Detached          bool                   `protobuf:"varint,6,opt,name=detached,proto3" json:"detached,omitempty"`
+	DisableAccessTime bool                   `protobuf:"varint,7,opt,name=disable_access_time,json=disableAccessTime,proto3" json:"disable_access_time,omitempty"`
+	Secure            bool                   `protobuf:"varint,8,opt,name=secure,proto3" json:"secure,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *MountRequestSpec) Reset() {
@@ -1028,6 +1030,20 @@ func (x *MountRequestSpec) GetReadOnly() bool {
 func (x *MountRequestSpec) GetDetached() bool {
 	if x != nil {
 		return x.Detached
+	}
+	return false
+}
+
+func (x *MountRequestSpec) GetDisableAccessTime() bool {
+	if x != nil {
+		return x.DisableAccessTime
+	}
+	return false
+}
+
+func (x *MountRequestSpec) GetSecure() bool {
+	if x != nil {
+		return x.Secure
 	}
 	return false
 }
@@ -1926,13 +1942,15 @@ func (x *VolumeConfigSpec) GetSymlink() *SymlinkProvisioningSpec {
 
 // VolumeMountRequestSpec is the spec for VolumeMountRequest.
 type VolumeMountRequestSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	VolumeId      string                 `protobuf:"bytes,1,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
-	Requester     string                 `protobuf:"bytes,2,opt,name=requester,proto3" json:"requester,omitempty"`
-	ReadOnly      bool                   `protobuf:"varint,3,opt,name=read_only,json=readOnly,proto3" json:"read_only,omitempty"`
-	Detached      bool                   `protobuf:"varint,4,opt,name=detached,proto3" json:"detached,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	VolumeId          string                 `protobuf:"bytes,1,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
+	Requester         string                 `protobuf:"bytes,2,opt,name=requester,proto3" json:"requester,omitempty"`
+	ReadOnly          bool                   `protobuf:"varint,3,opt,name=read_only,json=readOnly,proto3" json:"read_only,omitempty"`
+	Detached          bool                   `protobuf:"varint,4,opt,name=detached,proto3" json:"detached,omitempty"`
+	DisableAccessTime bool                   `protobuf:"varint,5,opt,name=disable_access_time,json=disableAccessTime,proto3" json:"disable_access_time,omitempty"`
+	Secure            bool                   `protobuf:"varint,6,opt,name=secure,proto3" json:"secure,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *VolumeMountRequestSpec) Reset() {
@@ -1993,16 +2011,32 @@ func (x *VolumeMountRequestSpec) GetDetached() bool {
 	return false
 }
 
+func (x *VolumeMountRequestSpec) GetDisableAccessTime() bool {
+	if x != nil {
+		return x.DisableAccessTime
+	}
+	return false
+}
+
+func (x *VolumeMountRequestSpec) GetSecure() bool {
+	if x != nil {
+		return x.Secure
+	}
+	return false
+}
+
 // VolumeMountStatusSpec is the spec for VolumeMountStatus.
 type VolumeMountStatusSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	VolumeId      string                 `protobuf:"bytes,1,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
-	Requester     string                 `protobuf:"bytes,2,opt,name=requester,proto3" json:"requester,omitempty"`
-	Target        string                 `protobuf:"bytes,3,opt,name=target,proto3" json:"target,omitempty"`
-	ReadOnly      bool                   `protobuf:"varint,4,opt,name=read_only,json=readOnly,proto3" json:"read_only,omitempty"`
-	Detached      bool                   `protobuf:"varint,5,opt,name=detached,proto3" json:"detached,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	VolumeId          string                 `protobuf:"bytes,1,opt,name=volume_id,json=volumeId,proto3" json:"volume_id,omitempty"`
+	Requester         string                 `protobuf:"bytes,2,opt,name=requester,proto3" json:"requester,omitempty"`
+	Target            string                 `protobuf:"bytes,3,opt,name=target,proto3" json:"target,omitempty"`
+	ReadOnly          bool                   `protobuf:"varint,4,opt,name=read_only,json=readOnly,proto3" json:"read_only,omitempty"`
+	Detached          bool                   `protobuf:"varint,5,opt,name=detached,proto3" json:"detached,omitempty"`
+	DisableAccessTime bool                   `protobuf:"varint,6,opt,name=disable_access_time,json=disableAccessTime,proto3" json:"disable_access_time,omitempty"`
+	Secure            bool                   `protobuf:"varint,7,opt,name=secure,proto3" json:"secure,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *VolumeMountStatusSpec) Reset() {
@@ -2066,6 +2100,20 @@ func (x *VolumeMountStatusSpec) GetReadOnly() bool {
 func (x *VolumeMountStatusSpec) GetDetached() bool {
 	if x != nil {
 		return x.Detached
+	}
+	return false
+}
+
+func (x *VolumeMountStatusSpec) GetDisableAccessTime() bool {
+	if x != nil {
+		return x.DisableAccessTime
+	}
+	return false
+}
+
+func (x *VolumeMountStatusSpec) GetSecure() bool {
+	if x != nil {
+		return x.Secure
 	}
 	return false
 }
@@ -2501,7 +2549,7 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\vLocatorSpec\x12;\n" +
 	"\x05match\x18\x01 \x01(\v2%.google.api.expr.v1alpha1.CheckedExprR\x05match\x12D\n" +
 	"\n" +
-	"disk_match\x18\x02 \x01(\v2%.google.api.expr.v1alpha1.CheckedExprR\tdiskMatch\"\xd6\x01\n" +
+	"disk_match\x18\x02 \x01(\v2%.google.api.expr.v1alpha1.CheckedExprR\tdiskMatch\"\x9e\x02\n" +
 	"\x10MountRequestSpec\x12\x1b\n" +
 	"\tvolume_id\x18\x01 \x01(\tR\bvolumeId\x12&\n" +
 	"\x0fparent_mount_id\x18\x02 \x01(\tR\rparentMountId\x12\x1e\n" +
@@ -2510,7 +2558,9 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"requesters\x12$\n" +
 	"\x0erequester_i_ds\x18\x04 \x03(\tR\frequesterIDs\x12\x1b\n" +
 	"\tread_only\x18\x05 \x01(\bR\breadOnly\x12\x1a\n" +
-	"\bdetached\x18\x06 \x01(\bR\bdetached\"\x82\x03\n" +
+	"\bdetached\x18\x06 \x01(\bR\bdetached\x12.\n" +
+	"\x13disable_access_time\x18\a \x01(\bR\x11disableAccessTime\x12\x16\n" +
+	"\x06secure\x18\b \x01(\bR\x06secure\"\x82\x03\n" +
 	"\tMountSpec\x12\x1f\n" +
 	"\vtarget_path\x18\x01 \x01(\tR\n" +
 	"targetPath\x12#\n" +
@@ -2592,18 +2642,22 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\n" +
 	"encryption\x18\x06 \x01(\v20.talos.resource.definitions.block.EncryptionSpecR\n" +
 	"encryption\x12S\n" +
-	"\asymlink\x18\a \x01(\v29.talos.resource.definitions.block.SymlinkProvisioningSpecR\asymlink\"\x8c\x01\n" +
+	"\asymlink\x18\a \x01(\v29.talos.resource.definitions.block.SymlinkProvisioningSpecR\asymlink\"\xd4\x01\n" +
 	"\x16VolumeMountRequestSpec\x12\x1b\n" +
 	"\tvolume_id\x18\x01 \x01(\tR\bvolumeId\x12\x1c\n" +
 	"\trequester\x18\x02 \x01(\tR\trequester\x12\x1b\n" +
 	"\tread_only\x18\x03 \x01(\bR\breadOnly\x12\x1a\n" +
-	"\bdetached\x18\x04 \x01(\bR\bdetached\"\xa3\x01\n" +
+	"\bdetached\x18\x04 \x01(\bR\bdetached\x12.\n" +
+	"\x13disable_access_time\x18\x05 \x01(\bR\x11disableAccessTime\x12\x16\n" +
+	"\x06secure\x18\x06 \x01(\bR\x06secure\"\xeb\x01\n" +
 	"\x15VolumeMountStatusSpec\x12\x1b\n" +
 	"\tvolume_id\x18\x01 \x01(\tR\bvolumeId\x12\x1c\n" +
 	"\trequester\x18\x02 \x01(\tR\trequester\x12\x16\n" +
 	"\x06target\x18\x03 \x01(\tR\x06target\x12\x1b\n" +
 	"\tread_only\x18\x04 \x01(\bR\breadOnly\x12\x1a\n" +
-	"\bdetached\x18\x05 \x01(\bR\bdetached\"\x83\n" +
+	"\bdetached\x18\x05 \x01(\bR\bdetached\x12.\n" +
+	"\x13disable_access_time\x18\x06 \x01(\bR\x11disableAccessTime\x12\x16\n" +
+	"\x06secure\x18\a \x01(\bR\x06secure\"\x83\n" +
 	"\n" +
 	"\x10VolumeStatusSpec\x12H\n" +
 	"\x05phase\x18\x01 \x01(\x0e22.talos.resource.definitions.enums.BlockVolumePhaseR\x05phase\x12\x1a\n" +

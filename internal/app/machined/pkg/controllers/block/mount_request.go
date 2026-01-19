@@ -103,17 +103,26 @@ func (ctrl *MountRequestController) Run(ctx context.Context, r controller.Runtim
 
 			if _, exists := desiredMountRequests[volumeID]; !exists {
 				desiredMountRequests[volumeID] = &block.MountRequestSpec{
-					VolumeID: volumeID,
-					ReadOnly: volumeMountRequest.TypedSpec().ReadOnly,
-					Detached: volumeMountRequest.TypedSpec().Detached,
+					VolumeID:          volumeID,
+					ReadOnly:          volumeMountRequest.TypedSpec().ReadOnly,
+					Detached:          volumeMountRequest.TypedSpec().Detached,
+					DisableAccessTime: volumeMountRequest.TypedSpec().DisableAccessTime,
+					Secure:            volumeMountRequest.TypedSpec().Secure,
 				}
 			}
 
 			desiredMountRequest := desiredMountRequests[volumeID]
 			desiredMountRequest.Requesters = append(desiredMountRequest.Requesters, volumeMountRequest.TypedSpec().Requester)
 			desiredMountRequest.RequesterIDs = append(desiredMountRequest.RequesterIDs, volumeMountRequest.Metadata().ID())
-			desiredMountRequest.ReadOnly = desiredMountRequest.ReadOnly && volumeMountRequest.TypedSpec().ReadOnly // read-only if all requesters are read-only
-			desiredMountRequest.Detached = desiredMountRequest.Detached && volumeMountRequest.TypedSpec().Detached // detached if all requesters are detached
+
+			// read-only if all requesters are read-only
+			desiredMountRequest.ReadOnly = desiredMountRequest.ReadOnly && volumeMountRequest.TypedSpec().ReadOnly
+			// detached if all requesters are detached
+			desiredMountRequest.Detached = desiredMountRequest.Detached && volumeMountRequest.TypedSpec().Detached
+			// disable access time if any requester wants it disabled
+			desiredMountRequest.DisableAccessTime = desiredMountRequest.DisableAccessTime || volumeMountRequest.TypedSpec().DisableAccessTime
+			// secure if any requester wants it secure
+			desiredMountRequest.Secure = desiredMountRequest.Secure || volumeMountRequest.TypedSpec().Secure
 			desiredMountRequest.ParentMountID = volumeStatus.TypedSpec().MountSpec.ParentID
 		}
 

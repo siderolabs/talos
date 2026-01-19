@@ -60,6 +60,7 @@ provisioning:
 |`name` |string |Name of the volume.  | |
 |`provisioning` |<a href="#VolumeConfig.provisioning">ProvisioningSpec</a> |The provisioning describes how the volume is provisioned.  | |
 |`encryption` |<a href="#VolumeConfig.encryption">EncryptionSpec</a> |The encryption describes how the volume is encrypted.  | |
+|`mount` |<a href="#VolumeConfig.mount">MountSpec</a> |The mount describes additional mount options.  | |
 
 
 
@@ -263,6 +264,22 @@ EncryptionKeyTPMOptions represents the options for TPM-based key protection.
 
 
 
+
+
+
+
+
+
+## mount {#VolumeConfig.mount}
+
+MountSpec describes how the volume is mounted.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`secure` |bool |Enable secure mount options (nosuid, nodev).<br><br>Defaults to true for better security.  | |
 
 
 

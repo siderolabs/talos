@@ -24,6 +24,7 @@ type VolumeConfig interface {
 	NamedDocument
 	Provisioning() VolumeProvisioningConfig
 	Encryption() EncryptionConfig
+	Mount() VolumeMountConfig
 }
 
 // VolumeProvisioningConfig defines the interface to access volume provisioning configuration.
@@ -91,6 +92,24 @@ func (emptyVolumeConfig) MaxSizeNegative() bool {
 	return false
 }
 
+func (emptyVolumeConfig) Mount() VolumeMountConfig {
+	return emptyVolumeMountConfig{}
+}
+
+type emptyVolumeMountConfig struct{}
+
+func (emptyVolumeMountConfig) DisableAccessTime() bool {
+	return false
+}
+
+func (emptyVolumeMountConfig) Secure() bool {
+	return true
+}
+
+func (emptyVolumeMountConfig) ReadOnly() bool {
+	return false
+}
+
 // UserVolumeConfig defines the interface to access user volume configuration.
 type UserVolumeConfig interface {
 	NamedDocument
@@ -99,6 +118,7 @@ type UserVolumeConfig interface {
 	Provisioning() VolumeProvisioningConfig
 	Filesystem() FilesystemConfig
 	Encryption() EncryptionConfig
+	Mount() UserVolumeMountConfig
 }
 
 // RawVolumeConfig defines the interface to access raw volume configuration.
@@ -114,7 +134,7 @@ type ExistingVolumeConfig interface {
 	NamedDocument
 	ExistingVolumeConfigSignal()
 	VolumeDiscovery() VolumeDiscoveryConfig
-	Mount() VolumeMountConfig
+	Mount() ExistingVolumeMountConfig
 }
 
 // ExternalVolumeConfig defines the interface to access external volume configuration.
@@ -122,7 +142,7 @@ type ExternalVolumeConfig interface {
 	NamedDocument
 	ExternalVolumeConfigSignal()
 	Type() block.FilesystemType
-	Mount() ExternalMountConfig
+	Mount() ExternalVolumeMountConfig
 }
 
 // VolumeDiscoveryConfig defines the interface to discover volumes.
@@ -132,17 +152,29 @@ type VolumeDiscoveryConfig interface {
 
 // VolumeMountConfig defines the interface to access volume mount configuration.
 type VolumeMountConfig interface {
+	Secure() bool
+}
+
+// UserVolumeMountConfig defines the interface to access volume mount configuration.
+type UserVolumeMountConfig interface {
+	VolumeMountConfig
+	DisableAccessTime() bool
+}
+
+// ExistingVolumeMountConfig defines the interface to access volume mount configuration.
+type ExistingVolumeMountConfig interface {
+	UserVolumeMountConfig
 	ReadOnly() bool
 }
 
-// ExternalMountConfig defines the interface to access volume mount configuration.
-type ExternalMountConfig interface {
-	ReadOnly() bool
-	Virtiofs() optional.Optional[ExternalMountConfigSpec]
+// ExternalVolumeMountConfig defines the interface to access volume mount configuration.
+type ExternalVolumeMountConfig interface {
+	ExistingVolumeMountConfig
+	Virtiofs() optional.Optional[ExternalVolumeMountConfigSpec]
 }
 
-// ExternalMountConfigSpec defines the interface to access external mount configuration spec.
-type ExternalMountConfigSpec interface {
+// ExternalVolumeMountConfigSpec defines the interface to access external mount configuration spec.
+type ExternalVolumeMountConfigSpec interface {
 	Source() string
 	Parameters() ([]block.ParameterSpec, error)
 }

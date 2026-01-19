@@ -69,6 +69,18 @@ type VolumeConfigV1Alpha1 struct {
 	//   description: |
 	//     The encryption describes how the volume is encrypted.
 	EncryptionSpec EncryptionSpec `yaml:"encryption,omitempty"`
+	//   description: |
+	//     The mount describes additional mount options.
+	MountSpec MountSpec `yaml:"mount,omitempty"`
+}
+
+// MountSpec describes how the volume is mounted.
+type MountSpec struct {
+	//   description: |
+	//     Enable secure mount options (nosuid, nodev).
+	//
+	//     Defaults to true for better security.
+	MountSecure *bool `yaml:"secure,omitempty"`
 }
 
 // ProvisioningSpec describes how the volume is provisioned.
@@ -222,6 +234,11 @@ func (s *VolumeConfigV1Alpha1) Encryption() config.EncryptionConfig {
 	return s.EncryptionSpec
 }
 
+// Mount implements config.VolumeConfig interface.
+func (s *VolumeConfigV1Alpha1) Mount() config.VolumeMountConfig {
+	return s.MountSpec
+}
+
 // Validate the provisioning spec.
 //
 //nolint:gocyclo
@@ -328,4 +345,13 @@ func (p ProvisioningSpec) RelativeMaxSize() optional.Optional[uint64] {
 	}
 
 	return optional.Some(val)
+}
+
+// Secure implements config.VolumeMountConfig interface.
+func (s MountSpec) Secure() bool {
+	if s.MountSecure == nil {
+		return true
+	}
+
+	return *s.MountSecure
 }

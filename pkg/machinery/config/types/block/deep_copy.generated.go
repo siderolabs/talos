@@ -13,6 +13,14 @@ func (o *ExistingVolumeConfigV1Alpha1) DeepCopy() *ExistingVolumeConfigV1Alpha1 
 		cp.MountSpec.MountReadOnly = new(bool)
 		*cp.MountSpec.MountReadOnly = *o.MountSpec.MountReadOnly
 	}
+	if o.MountSpec.MountDisableAccessTime != nil {
+		cp.MountSpec.MountDisableAccessTime = new(bool)
+		*cp.MountSpec.MountDisableAccessTime = *o.MountSpec.MountDisableAccessTime
+	}
+	if o.MountSpec.MountSecure != nil {
+		cp.MountSpec.MountSecure = new(bool)
+		*cp.MountSpec.MountSecure = *o.MountSpec.MountSecure
+	}
 	return &cp
 }
 
@@ -273,6 +281,14 @@ func (o *UserVolumeConfigV1Alpha1) DeepCopy() *UserVolumeConfigV1Alpha1 {
 		cp.EncryptionSpec.EncryptionPerfOptions = make([]string, len(o.EncryptionSpec.EncryptionPerfOptions))
 		copy(cp.EncryptionSpec.EncryptionPerfOptions, o.EncryptionSpec.EncryptionPerfOptions)
 	}
+	if o.MountSpec.MountDisableAccessTime != nil {
+		cp.MountSpec.MountDisableAccessTime = new(bool)
+		*cp.MountSpec.MountDisableAccessTime = *o.MountSpec.MountDisableAccessTime
+	}
+	if o.MountSpec.MountSecure != nil {
+		cp.MountSpec.MountSecure = new(bool)
+		*cp.MountSpec.MountSecure = *o.MountSpec.MountSecure
+	}
 	return &cp
 }
 
@@ -282,6 +298,14 @@ func (o *ExternalVolumeConfigV1Alpha1) DeepCopy() *ExternalVolumeConfigV1Alpha1 
 	if o.MountSpec.MountReadOnly != nil {
 		cp.MountSpec.MountReadOnly = new(bool)
 		*cp.MountSpec.MountReadOnly = *o.MountSpec.MountReadOnly
+	}
+	if o.MountSpec.MountDisableAccessTime != nil {
+		cp.MountSpec.MountDisableAccessTime = new(bool)
+		*cp.MountSpec.MountDisableAccessTime = *o.MountSpec.MountDisableAccessTime
+	}
+	if o.MountSpec.MountSecure != nil {
+		cp.MountSpec.MountSecure = new(bool)
+		*cp.MountSpec.MountSecure = *o.MountSpec.MountSecure
 	}
 	if o.MountSpec.MountVirtiofs != nil {
 		cp.MountSpec.MountVirtiofs = new(VirtiofsMountSpec)
@@ -370,6 +394,10 @@ func (o *VolumeConfigV1Alpha1) DeepCopy() *VolumeConfigV1Alpha1 {
 	if o.EncryptionSpec.EncryptionPerfOptions != nil {
 		cp.EncryptionSpec.EncryptionPerfOptions = make([]string, len(o.EncryptionSpec.EncryptionPerfOptions))
 		copy(cp.EncryptionSpec.EncryptionPerfOptions, o.EncryptionSpec.EncryptionPerfOptions)
+	}
+	if o.MountSpec.MountSecure != nil {
+		cp.MountSpec.MountSecure = new(bool)
+		*cp.MountSpec.MountSecure = *o.MountSpec.MountSecure
 	}
 	return &cp
 }

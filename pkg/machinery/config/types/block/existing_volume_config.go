@@ -68,7 +68,7 @@ type ExistingVolumeConfigV1Alpha1 struct {
 	VolumeDiscoverySpec VolumeDiscoverySpec `yaml:"discovery,omitempty"`
 	//   description: |
 	//     The mount describes additional mount options.
-	MountSpec MountSpec `yaml:"mount,omitempty"`
+	MountSpec ExistingMountSpec `yaml:"mount,omitempty"`
 }
 
 // VolumeDiscoverySpec describes how the volume is discovered.
@@ -102,11 +102,19 @@ func exampleVolumeSelector2() cel.Expression {
 	return cel.MustExpression(cel.ParseBooleanExpression(`volume.name == "xfs" && disk.serial == "SERIAL123"`, celenv.VolumeLocator()))
 }
 
-// MountSpec describes how the volume is mounted.
-type MountSpec struct {
+// ExistingMountSpec describes how the volume is mounted.
+type ExistingMountSpec struct {
 	//   description: |
 	//     Mount the volume read-only.
 	MountReadOnly *bool `yaml:"readOnly,omitempty"`
+	//   description: |
+	//     If true, disable file access time updates.
+	MountDisableAccessTime *bool `yaml:"disableAccessTime,omitempty"`
+	//   description: |
+	//     Enable secure mount options (nosuid, nodev).
+	//
+	//     Defaults to true for better security.
+	MountSecure *bool `yaml:"secure,omitempty"`
 }
 
 // NewExistingVolumeConfigV1Alpha1 creates a new raw volume config document.
@@ -193,7 +201,7 @@ func (s *ExistingVolumeConfigV1Alpha1) VolumeDiscovery() config.VolumeDiscoveryC
 }
 
 // Mount implements config.ExistingVolumeConfig interface.
-func (s *ExistingVolumeConfigV1Alpha1) Mount() config.VolumeMountConfig {
+func (s *ExistingVolumeConfigV1Alpha1) Mount() config.ExistingVolumeMountConfig {
 	return s.MountSpec
 }
 
@@ -217,7 +225,21 @@ func (s VolumeDiscoverySpec) VolumeSelector() cel.Expression {
 	return s.VolumeSelectorConfig.Match
 }
 
-// ReadOnly implements config.VolumeMountConfig interface.
-func (s MountSpec) ReadOnly() bool {
+// ReadOnly implements config.ExistingVolumeMountConfig interface.
+func (s ExistingMountSpec) ReadOnly() bool {
 	return pointer.SafeDeref(s.MountReadOnly)
+}
+
+// DisableAccessTime implements config.ExistingVolumeMountConfig interface.
+func (s ExistingMountSpec) DisableAccessTime() bool {
+	return pointer.SafeDeref(s.MountDisableAccessTime)
+}
+
+// Secure implements config.ExistingVolumeMountConfig interface.
+func (s ExistingMountSpec) Secure() bool {
+	if s.MountSecure == nil {
+		return true
+	}
+
+	return *s.MountSecure
 }

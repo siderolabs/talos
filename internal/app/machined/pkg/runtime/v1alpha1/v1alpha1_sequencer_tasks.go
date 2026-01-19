@@ -1447,6 +1447,11 @@ func MountEphemeralPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, 
 		mountRequest.TypedSpec().VolumeID = constants.EphemeralPartitionLabel
 		mountRequest.TypedSpec().Requester = "sequencer"
 
+		if cfg := r.Config(); cfg != nil {
+			vol, _ := cfg.Volumes().ByName(constants.EphemeralPartitionLabel)
+			mountRequest.TypedSpec().Secure = vol.Mount().Secure()
+		}
+
 		if err := r.State().V1Alpha2().Resources().Create(ctx, mountRequest); err != nil {
 			return fmt.Errorf("failed to create EPHEMERAL mount request: %w", err)
 		}

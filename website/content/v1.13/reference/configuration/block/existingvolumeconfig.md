@@ -33,7 +33,7 @@ discovery:
 |-------|------|-------------|----------|
 |`name` |string |Name of the volume.<br><br>Name can only contain:<br>lowercase and uppercase ASCII letters, digits, and hyphens.  | |
 |`discovery` |<a href="#ExistingVolumeConfig.discovery">VolumeDiscoverySpec</a> |The discovery describes how to find a volume.  | |
-|`mount` |<a href="#ExistingVolumeConfig.mount">MountSpec</a> |The mount describes additional mount options.  | |
+|`mount` |<a href="#ExistingVolumeConfig.mount">ExistingMountSpec</a> |The mount describes additional mount options.  | |
 
 
 
@@ -76,7 +76,7 @@ match: volume.name == "xfs" && disk.serial == "SERIAL123"
 
 ## mount {#ExistingVolumeConfig.mount}
 
-MountSpec describes how the volume is mounted.
+ExistingMountSpec describes how the volume is mounted.
 
 
 
@@ -84,6 +84,8 @@ MountSpec describes how the volume is mounted.
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`readOnly` |bool |Mount the volume read-only.  | |
+|`disableAccessTime` |bool |If true, disable file access time updates.  | |
+|`secure` |bool |Enable secure mount options (nosuid, nodev).<br><br>Defaults to true for better security.  | |
 
 
 

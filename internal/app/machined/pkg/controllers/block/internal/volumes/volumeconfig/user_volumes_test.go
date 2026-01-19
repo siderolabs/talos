@@ -272,7 +272,7 @@ func TestExistingVolumeTransformer(t *testing.T) {
 							Match: cel.MustExpression(cel.ParseBooleanExpression(`volume.partition_label == "MY-DATA"`, celenv.VolumeLocator())),
 						},
 					},
-					MountSpec: blockcfg.MountSpec{
+					MountSpec: blockcfg.ExistingMountSpec{
 						MountReadOnly: pointer.To(false),
 					},
 				},
@@ -314,7 +314,7 @@ func TestExistingVolumeTransformer(t *testing.T) {
 							Match: cel.MustExpression(cel.ParseBooleanExpression(`volume.partition_label == "READONLY-DATA"`, celenv.VolumeLocator())),
 						},
 					},
-					MountSpec: blockcfg.MountSpec{
+					MountSpec: blockcfg.ExistingMountSpec{
 						MountReadOnly: pointer.To(true),
 					},
 				},

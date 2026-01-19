@@ -49,6 +49,8 @@ ExternalMountSpec describes how the external volume is mounted.
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`readOnly` |bool |Mount the volume read-only.  | |
+|`disableAccessTime` |bool |If true, disable file access time updates.  | |
+|`secure` |bool |Enable secure mount options (nosuid, nodev).<br><br>Defaults to true for better security.  | |
 |`virtiofs` |<a href="#ExternalVolumeConfig.mount.virtiofs">VirtiofsMountSpec</a> |Virtiofs mount options.  | |
 
 

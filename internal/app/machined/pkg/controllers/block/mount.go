@@ -34,9 +34,11 @@ import (
 )
 
 type mountContext struct {
-	point     *mount.Point
-	readOnly  bool
-	unmounter func() error
+	point             *mount.Point
+	readOnly          bool
+	disableAccessTime bool
+	secure            bool
+	unmounter         func() error
 }
 
 // MountController performs actual mount/unmount operations based on the MountRequests.
@@ -563,7 +565,7 @@ func (ctrl *MountController) updateTargetSettings(
 	return nil
 }
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (ctrl *MountController) handleDiskMountOperation(
 	logger *zap.Logger,
 	mountSource, mountTarget string,
@@ -621,6 +623,14 @@ func (ctrl *MountController) handleDiskMountOperation(
 			mount.WithSelinuxLabel(volumeStatus.TypedSpec().MountSpec.SelinuxLabel),
 		)
 
+		if mountRequest.TypedSpec().DisableAccessTime {
+			opts = append(opts, mount.WithDisableAccessTime())
+		}
+
+		if mountRequest.TypedSpec().Secure {
+			opts = append(opts, mount.WithSecure())
+		}
+
 		if mountRequest.TypedSpec().ReadOnly {
 			opts = append(opts, mount.WithReadOnly())
 		}
@@ -660,15 +670,22 @@ func (ctrl *MountController) handleDiskMountOperation(
 			zap.String("target", mountTarget),
 			zap.Stringer("filesystem", mountFilesystem),
 			zap.Bool("read_only", mountRequest.TypedSpec().ReadOnly),
+			zap.Bool("secure", mountRequest.TypedSpec().Secure),
+			zap.Bool("disable_access_time", mountRequest.TypedSpec().DisableAccessTime),
 			zap.Bool("detached", mountRequest.TypedSpec().Detached),
 		)
 
-		ctrl.activeMounts[mountRequest.Metadata().ID()] = &mountContext{
-			point:     mountpoint,
-			readOnly:  mountRequest.TypedSpec().ReadOnly,
-			unmounter: manager.Unmount,
+		mountCtx = &mountContext{
+			point:             mountpoint,
+			readOnly:          mountRequest.TypedSpec().ReadOnly,
+			disableAccessTime: mountRequest.TypedSpec().DisableAccessTime,
+			secure:            mountRequest.TypedSpec().Secure,
+			unmounter:         manager.Unmount,
 		}
-	} else if mountCtx.readOnly != mountRequest.TypedSpec().ReadOnly { // remount if needed
+		ctrl.activeMounts[mountRequest.Metadata().ID()] = mountCtx
+	}
+
+	if mountCtx.readOnly != mountRequest.TypedSpec().ReadOnly { // remount if needed
 		var err error
 
 		switch mountRequest.TypedSpec().ReadOnly {
@@ -688,6 +705,36 @@ func (ctrl *MountController) handleDiskMountOperation(
 		)
 
 		mountCtx.readOnly = mountRequest.TypedSpec().ReadOnly
+	}
+
+	//nolint:dupl
+	if mountCtx.disableAccessTime != mountRequest.TypedSpec().DisableAccessTime {
+		err := mountCtx.point.SetDisableAccessTime(mountRequest.TypedSpec().DisableAccessTime)
+		if err != nil {
+			return fmt.Errorf("failed to update disableAccessTime for %q: %w", mountRequest.Metadata().ID(), err)
+		}
+
+		logger.Info("volume mount attributes updated",
+			zap.String("volume", volumeStatus.Metadata().ID()),
+			zap.String("disable_access_time", fmt.Sprintf("%v -> %v", mountCtx.disableAccessTime, mountRequest.TypedSpec().DisableAccessTime)),
+		)
+
+		mountCtx.disableAccessTime = mountRequest.TypedSpec().DisableAccessTime
+	}
+
+	//nolint:dupl
+	if mountCtx.secure != mountRequest.TypedSpec().Secure {
+		err := mountCtx.point.SetSecure(mountRequest.TypedSpec().Secure)
+		if err != nil {
+			return fmt.Errorf("failed to update secure for %q: %w", mountRequest.Metadata().ID(), err)
+		}
+
+		logger.Info("volume mount attributes updated",
+			zap.String("volume", volumeStatus.Metadata().ID()),
+			zap.String("secure", fmt.Sprintf("%v -> %v", mountCtx.secure, mountRequest.TypedSpec().Secure)),
+		)
+
+		mountCtx.secure = mountRequest.TypedSpec().Secure
 	}
 
 	return nil

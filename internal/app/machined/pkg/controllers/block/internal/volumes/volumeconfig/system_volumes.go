@@ -50,7 +50,7 @@ func GetSystemVolumeTransformers(ctx context.Context,
 // GetStateVolumeTransformer returns the transformer for the STATE volume.
 func GetStateVolumeTransformer(encryptionMeta *runtime.MetaKey, inContainer, isAgent bool) volumeConfigTransformer {
 	return func(cfg configconfig.Config) ([]VolumeResource, error) {
-		var volumeConfigurator func(vc *block.VolumeConfig) error
+		var volumeConfigurator func(*block.VolumeConfig) error
 
 		if inContainer {
 			volumeConfigurator = NewBuilder().

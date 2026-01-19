@@ -46,11 +46,12 @@ func UserVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 		userVolumeResource := VolumeResource{
 			VolumeID:           volumeID,
 			Label:              block.UserVolumeLabel,
-			MountTransformFunc: DefaultMountTransform,
+			MountTransformFunc: HandleUserVolumeMountRequest(userVolumeConfig), // This is overridden for Directory type below.
 		}
 
 		switch userVolumeConfig.Type().ValueOr(block.VolumeTypePartition) {
 		case block.VolumeTypeDirectory:
+			userVolumeResource.MountTransformFunc = DefaultMountTransform
 			userVolumeResource.TransformFunc = NewBuilder().
 				WithType(block.VolumeTypeDirectory).
 				WithMount(block.MountSpec{
@@ -191,6 +192,7 @@ func ExistingVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) 
 
 	for _, existingVolumeConfig := range c.ExistingVolumeConfigs() {
 		volumeID := constants.ExistingVolumePrefix + existingVolumeConfig.Name()
+
 		resources = append(resources, VolumeResource{
 			VolumeID: volumeID,
 			Label:    block.ExistingVolumeLabel,
@@ -336,11 +338,23 @@ func SwapVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 	return resources, nil
 }
 
+// HandleUserVolumeMountRequest returns a MountTransformFunc for user volumes.
+func HandleUserVolumeMountRequest(userVolumeConfig configconfig.UserVolumeConfig) func(m *block.VolumeMountRequest) error {
+	return func(m *block.VolumeMountRequest) error {
+		m.TypedSpec().DisableAccessTime = userVolumeConfig.Mount().DisableAccessTime()
+		m.TypedSpec().Secure = userVolumeConfig.Mount().Secure()
+
+		return nil
+	}
+}
+
 // HandleExistingVolumeMountRequest returns a MountTransformFunc for existing volumes.
 // It sets `VolumeMountRequestSpec.ReadOnly` based on the existing configuration.
 func HandleExistingVolumeMountRequest(existingVolumeConfig configconfig.ExistingVolumeConfig) func(m *block.VolumeMountRequest) error {
 	return func(m *block.VolumeMountRequest) error {
 		m.TypedSpec().ReadOnly = existingVolumeConfig.Mount().ReadOnly()
+		m.TypedSpec().DisableAccessTime = existingVolumeConfig.Mount().DisableAccessTime()
+		m.TypedSpec().Secure = existingVolumeConfig.Mount().Secure()
 
 		return nil
 	}
@@ -350,6 +364,8 @@ func HandleExistingVolumeMountRequest(existingVolumeConfig configconfig.Existing
 func HandleExternalVolumeMountRequest(externalVolumeConfig configconfig.ExternalVolumeConfig) func(m *block.VolumeMountRequest) error {
 	return func(m *block.VolumeMountRequest) error {
 		m.TypedSpec().ReadOnly = externalVolumeConfig.Mount().ReadOnly()
+		m.TypedSpec().DisableAccessTime = externalVolumeConfig.Mount().DisableAccessTime()
+		m.TypedSpec().Secure = externalVolumeConfig.Mount().Secure()
 
 		return nil
 	}

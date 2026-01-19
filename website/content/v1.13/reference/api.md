@@ -5926,6 +5926,8 @@ MountRequestSpec is the spec for MountRequest.
 | requester_i_ds | [string](#string) | repeated |  |
 | read_only | [bool](#bool) |  |  |
 | detached | [bool](#bool) |  |  |
+| disable_access_time | [bool](#bool) |  |  |
+| secure | [bool](#bool) |  |  |
 
 
 
@@ -6168,6 +6170,8 @@ VolumeMountRequestSpec is the spec for VolumeMountRequest.
 | requester | [string](#string) |  |  |
 | read_only | [bool](#bool) |  |  |
 | detached | [bool](#bool) |  |  |
+| disable_access_time | [bool](#bool) |  |  |
+| secure | [bool](#bool) |  |  |
 
 
 
@@ -6187,6 +6191,8 @@ VolumeMountStatusSpec is the spec for VolumeMountStatus.
 | target | [string](#string) |  |  |
 | read_only | [bool](#bool) |  |  |
 | detached | [bool](#bool) |  |  |
+| disable_access_time | [bool](#bool) |  |  |
+| secure | [bool](#bool) |  |  |
 
 
 
