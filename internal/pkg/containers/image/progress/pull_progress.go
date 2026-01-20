@@ -13,11 +13,11 @@ import (
 	"sync"
 	"time"
 
-	"github.com/containerd/containerd/pkg/snapshotters"
 	"github.com/containerd/containerd/v2/core/content"
 	"github.com/containerd/containerd/v2/core/images"
 	"github.com/containerd/containerd/v2/core/remotes"
 	"github.com/containerd/containerd/v2/core/snapshots"
+	"github.com/containerd/containerd/v2/pkg/snapshotters"
 	"github.com/containerd/errdefs"
 	"github.com/moby/moby/client/pkg/stringid"
 	"github.com/opencontainers/go-digest"
