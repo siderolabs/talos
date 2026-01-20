@@ -144,7 +144,7 @@ bondMaster:
     arpAllTargets: any
     primary: 3
     primaryReselect: better
-    failOverMac: 2
+    failOverMac: follow
     adSelect: count
     miimon: 33
     updelay: 100

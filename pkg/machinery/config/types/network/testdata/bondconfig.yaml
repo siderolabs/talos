@@ -10,6 +10,7 @@ updelay: 200
 downdelay: 200
 xmitHashPolicy: layer3+4
 lacpRate: slow
+failOverMac: follow
 adActorSysPrio: 65535
 resendIGMP: 1
 packetsPerSlave: 1

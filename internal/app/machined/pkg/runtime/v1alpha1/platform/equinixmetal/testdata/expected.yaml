@@ -48,7 +48,7 @@ links:
         arpValidate: none
         arpAllTargets: any
         primaryReselect: always
-        failOverMac: 0
+        failOverMac: none
         miimon: 100
         updelay: 200
         downdelay: 200

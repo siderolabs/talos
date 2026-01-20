@@ -30,6 +30,7 @@ func TestBondConfigMarshalStability(t *testing.T) {
 	cfg.BondLinks = []string{"eth0", "eth1"}
 	cfg.BondMode = pointer.To(nethelpers.BondMode8023AD)
 	cfg.BondXmitHashPolicy = pointer.To(nethelpers.BondXmitPolicyLayer34)
+	cfg.BondFailOverMAC = pointer.To(nethelpers.FailOverMACFollow)
 	cfg.BondLACPRate = pointer.To(nethelpers.LACPRateSlow)
 	cfg.BondMIIMon = pointer.To(uint32(100))
 	cfg.BondUpDelay = pointer.To(uint32(200))
@@ -70,6 +71,7 @@ func TestBondConfigUnmarshal(t *testing.T) {
 		BondLinks:           []string{"eth0", "eth1"},
 		BondMode:            pointer.To(nethelpers.BondMode8023AD),
 		BondXmitHashPolicy:  pointer.To(nethelpers.BondXmitPolicyLayer34),
+		BondFailOverMAC:     pointer.To(nethelpers.FailOverMACFollow),
 		BondLACPRate:        pointer.To(nethelpers.LACPRateSlow),
 		BondMIIMon:          pointer.To(uint32(100)),
 		BondUpDelay:         pointer.To(uint32(200)),
