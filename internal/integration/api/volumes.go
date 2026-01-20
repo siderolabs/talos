@@ -648,14 +648,19 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, userVolumeID)
 	}
 
-	suite.Require().NoError(suite.Client.BlockDeviceWipe(ctx, &storage.BlockDeviceWipeRequest{
-		Devices: []*storage.BlockDeviceWipeDescriptor{
-			{
-				Device: filepath.Base(userDisks[0]),
-				Method: storage.BlockDeviceWipeDescriptor_FAST,
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		// a little retry loop, as the device might be considered busy for a little while after unmounting
+		asrt := assert.New(collect)
+
+		asrt.NoError(suite.Client.BlockDeviceWipe(ctx, &storage.BlockDeviceWipeRequest{
+			Devices: []*storage.BlockDeviceWipeDescriptor{
+				{
+					Device: filepath.Base(userDisks[0]),
+					Method: storage.BlockDeviceWipeDescriptor_FAST,
+				},
 			},
-		},
-	}))
+		}))
+	}, time.Minute, time.Second, "failed to wipe disk %s", userDisks[0])
 
 	// wait for the discovered volume reflect wiped status
 	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, filepath.Base(userDisks[0]),
@@ -819,14 +824,19 @@ func (suite *VolumesSuite) TestUserVolumesDisk() {
 		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, userVolumeID)
 	}
 
-	suite.Require().NoError(suite.Client.BlockDeviceWipe(ctx, &storage.BlockDeviceWipeRequest{
-		Devices: []*storage.BlockDeviceWipeDescriptor{
-			{
-				Device: filepath.Base(userDisks[0]),
-				Method: storage.BlockDeviceWipeDescriptor_FAST,
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		// a little retry loop, as the device might be considered busy for a little while after unmounting
+		asrt := assert.New(collect)
+
+		asrt.NoError(suite.Client.BlockDeviceWipe(ctx, &storage.BlockDeviceWipeRequest{
+			Devices: []*storage.BlockDeviceWipeDescriptor{
+				{
+					Device: filepath.Base(userDisks[0]),
+					Method: storage.BlockDeviceWipeDescriptor_FAST,
+				},
 			},
-		},
-	}))
+		}))
+	}, time.Minute, time.Second, "failed to wipe disk %s", userDisks[0])
 
 	// wait for the discovered volume reflect wiped status
 	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, filepath.Base(userDisks[0]),
@@ -1058,14 +1068,19 @@ func (suite *VolumesSuite) TestRawVolumes() {
 		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, rawVolumeID)
 	}
 
-	suite.Require().NoError(suite.Client.BlockDeviceWipe(ctx, &storage.BlockDeviceWipeRequest{
-		Devices: []*storage.BlockDeviceWipeDescriptor{
-			{
-				Device: filepath.Base(userDisks[0]),
-				Method: storage.BlockDeviceWipeDescriptor_FAST,
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		// a little retry loop, as the device might be considered busy for a little while after unmounting
+		asrt := assert.New(collect)
+
+		asrt.NoError(suite.Client.BlockDeviceWipe(ctx, &storage.BlockDeviceWipeRequest{
+			Devices: []*storage.BlockDeviceWipeDescriptor{
+				{
+					Device: filepath.Base(userDisks[0]),
+					Method: storage.BlockDeviceWipeDescriptor_FAST,
+				},
 			},
-		},
-	}))
+		}))
+	}, time.Minute, time.Second, "failed to wipe disk %s", userDisks[0])
 
 	// wait for the discovered volume reflect wiped status
 	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, filepath.Base(userDisks[0]),
@@ -1207,14 +1222,19 @@ func (suite *VolumesSuite) TestExistingVolumes() {
 
 	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, existingVolumeID)
 
-	suite.Require().NoError(suite.Client.BlockDeviceWipe(ctx, &storage.BlockDeviceWipeRequest{
-		Devices: []*storage.BlockDeviceWipeDescriptor{
-			{
-				Device: filepath.Base(userDisks[0]),
-				Method: storage.BlockDeviceWipeDescriptor_FAST,
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		// a little retry loop, as the device might be considered busy for a little while after unmounting
+		asrt := assert.New(collect)
+
+		asrt.NoError(suite.Client.BlockDeviceWipe(ctx, &storage.BlockDeviceWipeRequest{
+			Devices: []*storage.BlockDeviceWipeDescriptor{
+				{
+					Device: filepath.Base(userDisks[0]),
+					Method: storage.BlockDeviceWipeDescriptor_FAST,
+				},
 			},
-		},
-	}))
+		}))
+	}, time.Minute, time.Second, "failed to wipe disk %s", userDisks[0])
 
 	// wait for the discovered volume reflect wiped status
 	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, filepath.Base(userDisks[0]),
@@ -1442,14 +1462,19 @@ func (suite *VolumesSuite) TestSwapOnOff() {
 	rtestutils.AssertNoResource[*block.SwapStatus](ctx, suite.T(), suite.Client.COSI, volumeStatus.TypedSpec().MountLocation)
 	rtestutils.AssertNoResource[*block.VolumeConfig](ctx, suite.T(), suite.Client.COSI, swapVolumeID)
 
-	suite.Require().NoError(suite.Client.BlockDeviceWipe(ctx, &storage.BlockDeviceWipeRequest{
-		Devices: []*storage.BlockDeviceWipeDescriptor{
-			{
-				Device: filepath.Base(userDisks[0]),
-				Method: storage.BlockDeviceWipeDescriptor_FAST,
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		// a little retry loop, as the device might be considered busy for a little while after unmounting
+		asrt := assert.New(collect)
+
+		asrt.NoError(suite.Client.BlockDeviceWipe(ctx, &storage.BlockDeviceWipeRequest{
+			Devices: []*storage.BlockDeviceWipeDescriptor{
+				{
+					Device: filepath.Base(userDisks[0]),
+					Method: storage.BlockDeviceWipeDescriptor_FAST,
+				},
 			},
-		},
-	}))
+		}))
+	}, time.Minute, time.Second, "failed to wipe disk %s", userDisks[0])
 }
 
 // TestZswapStatus verifies that all zswap-enabled machines have zswap running.
