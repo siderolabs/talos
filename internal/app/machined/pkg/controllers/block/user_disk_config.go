@@ -22,6 +22,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	machineconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 )
@@ -49,7 +50,7 @@ func (ctrl *UserDiskConfigController) Inputs() []controller.Input {
 			Kind:      controller.InputDestroyReady,
 		},
 		{
-			Namespace: block.NamespaceName,
+			Namespace: resources.InMemoryNamespace,
 			Type:      block.VolumeMountStatusType,
 			Kind:      controller.InputStrong,
 		},

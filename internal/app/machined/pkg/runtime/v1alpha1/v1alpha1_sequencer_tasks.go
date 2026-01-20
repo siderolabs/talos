@@ -1453,7 +1453,7 @@ func MountEphemeralPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, 
 
 		if _, err := r.State().V1Alpha2().Resources().WatchFor(
 			ctx,
-			blockres.NewVolumeMountStatus(blockres.NamespaceName, constants.EphemeralPartitionLabel).Metadata(),
+			blockres.NewVolumeMountStatus(constants.EphemeralPartitionLabel).Metadata(),
 			state.WithEventTypes(state.Created, state.Updated),
 		); err != nil {
 			return fmt.Errorf("failed to wait for EPHEMERAL to be mounted: %w", err)

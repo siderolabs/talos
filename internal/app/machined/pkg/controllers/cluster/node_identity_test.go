@@ -35,7 +35,7 @@ func (suite *NodeIdentitySuite) TestDefault() {
 
 	ctest.AssertNoResource[*cluster.Identity](suite, cluster.LocalIdentity)
 
-	volumeMountStatus := block.NewVolumeMountStatus(block.NamespaceName, mountID)
+	volumeMountStatus := block.NewVolumeMountStatus(mountID)
 	volumeMountStatus.TypedSpec().Target = statePath
 	suite.Create(volumeMountStatus)
 
@@ -64,7 +64,7 @@ func (suite *NodeIdentitySuite) TestLoad() {
 
 	ctest.AssertNoResource[*cluster.Identity](suite, cluster.LocalIdentity)
 
-	volumeMountStatus := block.NewVolumeMountStatus(block.NamespaceName, mountID)
+	volumeMountStatus := block.NewVolumeMountStatus(mountID)
 	volumeMountStatus.TypedSpec().Target = statePath
 	suite.Create(volumeMountStatus)
 

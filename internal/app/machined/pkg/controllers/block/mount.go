@@ -28,6 +28,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/filetree"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/xfs"
 	"github.com/siderolabs/talos/pkg/xfs/fsopen"
@@ -63,7 +64,7 @@ func (ctrl *MountController) Inputs() []controller.Input {
 			Kind:      controller.InputStrong,
 		},
 		{
-			Namespace: block.NamespaceName,
+			Namespace: resources.InMemoryNamespace,
 			Type:      block.MountStatusType,
 			Kind:      controller.InputStrong,
 		},
@@ -227,7 +228,7 @@ func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logg
 				}
 
 				if err = safe.WriterModify(
-					ctx, r, block.NewMountStatus(block.NamespaceName, mountRequest.Metadata().ID()),
+					ctx, r, block.NewMountStatus(mountRequest.Metadata().ID()),
 					func(mountStatus *block.MountStatus) error {
 						mountStatus.TypedSpec().Spec = *mountRequest.TypedSpec()
 						mountStatus.TypedSpec().Source = mountSource
@@ -261,7 +262,7 @@ func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logg
 func (ctrl *MountController) tearDownMountStatus(ctx context.Context, r controller.Runtime, logger *zap.Logger, mountRequest *block.MountRequest) (bool, error) {
 	logger = logger.With(zap.String("mount_request", mountRequest.Metadata().ID()))
 
-	okToDestroy, err := r.Teardown(ctx, block.NewMountStatus(block.NamespaceName, mountRequest.Metadata().ID()).Metadata())
+	okToDestroy, err := r.Teardown(ctx, block.NewMountStatus(mountRequest.Metadata().ID()).Metadata())
 	if err != nil {
 		if state.IsNotFoundError(err) {
 			// no mount status, we are done
@@ -277,7 +278,7 @@ func (ctrl *MountController) tearDownMountStatus(ctx context.Context, r controll
 		return false, nil
 	}
 
-	err = r.Destroy(ctx, block.NewMountStatus(block.NamespaceName, mountRequest.Metadata().ID()).Metadata())
+	err = r.Destroy(ctx, block.NewMountStatus(mountRequest.Metadata().ID()).Metadata())
 	if err != nil {
 		return false, fmt.Errorf("failed to destroy mount status %q: %w", mountRequest.Metadata().ID(), err)
 	}

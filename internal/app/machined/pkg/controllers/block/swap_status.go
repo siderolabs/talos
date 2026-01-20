@@ -20,6 +20,7 @@ import (
 	"go.uber.org/zap"
 
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/resources"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
@@ -39,7 +40,7 @@ func (ctrl *SwapStatusController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
 			// not really a dependency, but we refresh swap status on mount status change
-			Namespace: block.NamespaceName,
+			Namespace: resources.InMemoryNamespace,
 			Type:      block.MountStatusType,
 			Kind:      controller.InputWeak,
 		},

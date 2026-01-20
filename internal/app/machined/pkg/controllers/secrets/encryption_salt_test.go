@@ -35,7 +35,7 @@ func (suite *EncryptionSaltSuite) TestDefault() {
 
 	ctest.AssertNoResource[*secrets.EncryptionSalt](suite, secrets.EncryptionSaltID)
 
-	volumeMountStatus := block.NewVolumeMountStatus(block.NamespaceName, mountID)
+	volumeMountStatus := block.NewVolumeMountStatus(mountID)
 	volumeMountStatus.TypedSpec().Target = statePath
 	suite.Create(volumeMountStatus)
 
@@ -72,7 +72,7 @@ func (suite *EncryptionSaltSuite) TestLoad() {
 
 	ctest.AssertNoResource[*secrets.EncryptionSalt](suite, secrets.EncryptionSaltID)
 
-	volumeMountStatus := block.NewVolumeMountStatus(block.NamespaceName, mountID)
+	volumeMountStatus := block.NewVolumeMountStatus(mountID)
 	volumeMountStatus.TypedSpec().Target = statePath
 	suite.Create(volumeMountStatus)
 

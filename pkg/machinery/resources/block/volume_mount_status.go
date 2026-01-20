@@ -11,6 +11,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 
 	"github.com/siderolabs/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/resources"
 )
 
 // VolumeMountStatusType is type of VolumeMountStatus resource.
@@ -45,9 +46,9 @@ func (m *VolumeMountStatusSpec) Root() any {
 }
 
 // NewVolumeMountStatus initializes a VolumeMountStatus resource.
-func NewVolumeMountStatus(namespace resource.Namespace, id resource.ID) *VolumeMountStatus {
+func NewVolumeMountStatus(id resource.ID) *VolumeMountStatus {
 	return typed.NewResource[VolumeMountStatusSpec, VolumeMountStatusExtension](
-		resource.NewMetadata(namespace, VolumeMountStatusType, id, resource.VersionUndefined),
+		resource.NewMetadata(resources.InMemoryNamespace, VolumeMountStatusType, id, resource.VersionUndefined),
 		VolumeMountStatusSpec{},
 	)
 }
@@ -60,7 +61,7 @@ func (VolumeMountStatusExtension) ResourceDefinition() meta.ResourceDefinitionSp
 	return meta.ResourceDefinitionSpec{
 		Type:             VolumeMountStatusType,
 		Aliases:          []resource.Type{},
-		DefaultNamespace: NamespaceName,
+		DefaultNamespace: resources.InMemoryNamespace,
 		PrintColumns: []meta.PrintColumn{
 			{
 				Name:     "Volume ID",

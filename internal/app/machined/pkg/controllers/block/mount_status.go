@@ -15,6 +15,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/pkg/machinery/resources"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
@@ -30,12 +31,12 @@ func (ctrl *MountStatusController) Name() string {
 func (ctrl *MountStatusController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
-			Namespace: block.NamespaceName,
+			Namespace: resources.InMemoryNamespace,
 			Type:      block.MountStatusType,
 			Kind:      controller.InputStrong,
 		},
 		{
-			Namespace: block.NamespaceName,
+			Namespace: resources.InMemoryNamespace,
 			Type:      block.VolumeMountStatusType,
 			Kind:      controller.InputDestroyReady,
 		},
@@ -83,7 +84,7 @@ func (ctrl *MountStatusController) Run(ctx context.Context, r controller.Runtime
 					requestID := mountStatus.TypedSpec().Spec.RequesterIDs[i]
 
 					if err = safe.WriterModify(
-						ctx, r, block.NewVolumeMountStatus(block.NamespaceName, requestID),
+						ctx, r, block.NewVolumeMountStatus(requestID),
 						func(vms *block.VolumeMountStatus) error {
 							vms.Metadata().Labels().Set("mount-status-id", mountStatus.Metadata().ID())
 							vms.TypedSpec().Requester = requester
