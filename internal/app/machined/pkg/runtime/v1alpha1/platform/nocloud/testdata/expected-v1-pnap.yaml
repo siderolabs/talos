@@ -42,7 +42,7 @@ links:
         arpValidate: none
         arpAllTargets: any
         primaryReselect: always
-        failOverMac: 0
+        failOverMac: none
         miimon: 100
         resendIgmp: 1
         lpInterval: 1
