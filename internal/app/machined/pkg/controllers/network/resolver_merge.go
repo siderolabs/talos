@@ -40,14 +40,19 @@ func NewResolverMergeController() controller.Controller {
 
 				final.SearchDomains = slices.Insert(final.SearchDomains, 0, spec.SearchDomains...)
 
-				if spec.ConfigLayer == final.ConfigLayer {
+				switch spec.ConfigLayer { //nolint:exhaustive
+				case final.ConfigLayer:
 					// simply append server lists on the same layer
 					final.DNSServers = append(final.DNSServers, spec.DNSServers...)
-				} else {
+				case network.ConfigMachineConfiguration:
+					// machine configuration layer overrides any previous layers completely
+					final.DNSServers = slices.Clone(spec.DNSServers)
+				default:
 					// otherwise, do a smart merge across IPv4/IPv6
-					final.ConfigLayer = spec.ConfigLayer
 					mergeDNSServers(&final.DNSServers, spec.DNSServers)
 				}
+
+				final.ConfigLayer = spec.ConfigLayer
 			}
 
 			if final.DNSServers != nil {
@@ -63,7 +68,7 @@ func NewResolverMergeController() controller.Controller {
 
 func mergeDNSServers(dst *[]netip.Addr, src []netip.Addr) {
 	if *dst == nil {
-		*dst = src
+		*dst = slices.Clone(src)
 
 		return
 	}
@@ -81,6 +86,6 @@ func mergeDNSServers(dst *[]netip.Addr, src []netip.Addr) {
 	case dstHasV6 && !srcHasV6:
 		*dst = slices.Concat(src, xslices.Filter(*dst, netip.Addr.Is6))
 	default:
-		*dst = src
+		*dst = slices.Clone(src)
 	}
 }

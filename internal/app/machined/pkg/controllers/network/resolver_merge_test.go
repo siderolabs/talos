@@ -117,6 +117,36 @@ func (suite *ResolverMergeSuite) TestMergeIPv46() {
 	)
 }
 
+func (suite *ResolverMergeSuite) TestMergeIPv6OnlyConfig() {
+	def := network.NewResolverSpec(network.ConfigNamespaceName, "default/resolvers")
+	*def.TypedSpec() = network.ResolverSpecSpec{
+		DNSServers: []netip.Addr{
+			netip.MustParseAddr(constants.DefaultPrimaryResolver),
+			netip.MustParseAddr(constants.DefaultSecondaryResolver),
+		},
+		ConfigLayer: network.ConfigDefault,
+	}
+
+	cfg := network.NewResolverSpec(network.ConfigNamespaceName, "cfg/resolvers")
+	*cfg.TypedSpec() = network.ResolverSpecSpec{
+		DNSServers:  []netip.Addr{netip.MustParseAddr("fe80::1")},
+		ConfigLayer: network.ConfigMachineConfiguration,
+	}
+
+	for _, res := range []resource.Resource{def, cfg} {
+		suite.Create(res)
+	}
+
+	suite.assertResolvers(
+		[]string{
+			"resolvers",
+		}, func(r *network.ResolverSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
+			asrt.Equal(`["fe80::1"]`, fmt.Sprintf("%q", r.TypedSpec().DNSServers))
+		},
+	)
+}
+
 func TestResolverMergeSuite(t *testing.T) {
 	t.Parallel()
 

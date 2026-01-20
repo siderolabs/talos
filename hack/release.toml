@@ -139,8 +139,8 @@ BREAKING: If you were relying on the resources EtcdConfigs, KubeletConfigs, Cont
 """
 
     [notes.serviceAccountIssuer]
-    title = "Service Account Issuer configuration"
-    description = """\
+        title = "Service Account Issuer configuration"
+        description = """\
 In API Server, passing extra args with `service-account-issuer` will append them after default value.
 This allows easy migration, e.g. by changing `.cluster.controlPlane.endpoint` to new value, and keeping the old value in
 `.cluster.apiServer.extraArgs["service-account-issuer"]`.
@@ -153,6 +153,13 @@ Negative max size represents the amount of space to be left free on the device, 
 For example:
     * a max size of "-10GiB" means the volume can grow to the available space minus 10GiB.
     * a max size of "-25%" means the volume can grow to the available space minus 25%.
+"""
+
+    [notes.resolver_config]
+        title = "ResolverConfig"
+        description = """\
+The nameservers configuration in machine configuration now overwrites any previous layers (defaults, platform, etc.) when specified.
+Previously a smart merge was performed to keep IPv4/IPv6 nameservers from lower layers if the machine configuration specified only one type.
 """
 
 [make_deps]
