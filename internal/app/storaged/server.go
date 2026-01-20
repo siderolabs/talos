@@ -7,6 +7,7 @@ package internal
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"path/filepath"
@@ -16,6 +17,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	blockdev "github.com/siderolabs/go-blockdevice/v2/block"
 	"github.com/siderolabs/go-blockdevice/v2/partitioning/gpt"
+	"golang.org/x/sys/unix"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
@@ -264,8 +266,15 @@ func (s *Server) wipeDevice(deviceName string, method storage.BlockDeviceWipeDes
 		defer parentBd.Close() //nolint:errcheck
 	}
 
-	bd, err := blockdev.NewFromPath(filepath.Join("/dev", deviceName), blockdev.OpenForWrite())
+	bd, err := blockdev.NewFromPath(filepath.Join("/dev", deviceName),
+		blockdev.OpenForWrite(),
+		blockdev.OpenAssertNotMounted(),
+	)
 	if err != nil {
+		if errors.Is(err, unix.EBUSY) {
+			return status.Errorf(codes.FailedPrecondition, "block device %q is mounted or in use", deviceName)
+		}
+
 		return status.Errorf(codes.Internal, "failed to open block device %q: %v", deviceName, err)
 	}
 
