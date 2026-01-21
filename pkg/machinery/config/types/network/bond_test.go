@@ -158,6 +158,12 @@ func TestBondValidate(t *testing.T) {
 
 				return cfg
 			},
+
+			expectedWarnings: []string{
+				"miimon was not specified for 802.3ad bond",
+				"updelay was not specified for 802.3ad bond",
+				"downdelay was not specified for 802.3ad bond",
+			},
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
