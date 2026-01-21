@@ -359,12 +359,34 @@ func (s *BondConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Opti
 
 	if s.BondMode == nil {
 		errs = errors.Join(errs, errors.New("bond mode must be specified"))
+	} else if *s.BondMode == nethelpers.BondMode8023AD {
+		warnings = append(warnings, s.validateFor8023AD()...)
 	}
 
 	extraWarnings, extraErrs := s.CommonLinkConfig.Validate()
 	errs, warnings = errors.Join(errs, extraErrs), append(warnings, extraWarnings...)
 
 	return warnings, errs
+}
+
+func (s *BondConfigV1Alpha1) validateFor8023AD() []string {
+	const warn = " was not specified for 802.3ad bond"
+
+	var warnings []string
+
+	if s.BondMIIMon == nil {
+		warnings = append(warnings, "miimon"+warn)
+	}
+
+	if s.BondUpDelay == nil {
+		warnings = append(warnings, "updelay"+warn)
+	}
+
+	if s.BondDownDelay == nil {
+		warnings = append(warnings, "downdelay"+warn)
+	}
+
+	return warnings
 }
 
 // Links implements NetworkBondConfig interface.
