@@ -309,7 +309,7 @@ func CloudPlatforms() []Platform {
 
 			Architectures:   []Arch{ArchAmd64, ArchArm64},
 			Documentation:   "/talos-guides/install/cloud-platforms/oracle/",
-			DiskImageSuffix: "raw.xz",
+			DiskImageSuffix: "qcow2",
 			BootMethods: []BootMethod{
 				BootMethodDiskImage,
 			},
