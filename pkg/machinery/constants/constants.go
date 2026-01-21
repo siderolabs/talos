@@ -1320,7 +1320,8 @@ const (
 	ContainerMarkerFilePath = "/usr/etc/in-container"
 
 	// DefaultOOMTriggerExpression is the default CEL expression used to determine whether to trigger OOM.
-	DefaultOOMTriggerExpression = `(multiply_qos_vectors(d_qos_memory_full_total, {System: 8.0, Podruntime: 4.0}) > 3000.0) ||
+	DefaultOOMTriggerExpression = `(multiply_qos_vectors(d_qos_memory_full_total, {System: 8.0, Podruntime: 4.0}) > 3000.0 &&
+	     multiply_qos_vectors(qos_memory_full_avg10, {System: 1.0, Podruntime: 1.0}) > 5.0) ||
 		(memory_full_avg10 > 75.0 && time_since_trigger > duration("10s"))`
 
 	// DefaultOOMCgroupRankingExpression is the default CEL expression used to rank cgroups for OOM killer.
