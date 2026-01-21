@@ -5,6 +5,7 @@
 package hardware_test
 
 import (
+	"io"
 	"os"
 	"testing"
 	"time"
@@ -47,6 +48,16 @@ func (suite *SystemInfoSuite) TestPopulateSystemInformation() {
 	suite.startRuntime()
 
 	suite.Require().NoError(suite.state.Create(suite.ctx, runtime.NewMetaLoaded()))
+
+	systemInformation := hardware.SystemInformationSpec{
+		Manufacturer: "Supermicro",
+		ProductName:  "SYS-1027R-WRF",
+		Version:      "0123456789",
+		SerialNumber: "E09626824801435",
+		UUID:         "00000000-0000-0000-0000-002590eb9628",
+		WakeUpType:   "Power Switch",
+		SKUNumber:    "",
+	}
 
 	cpuSpecs := map[string]hardware.ProcessorSpec{
 		"CPU-1": {
@@ -97,6 +108,10 @@ func (suite *SystemInfoSuite) TestPopulateSystemInformation() {
 		},
 	}
 
+	ctest.AssertResource(suite, hardware.SystemInformationID, func(r *hardware.SystemInformation, assertions *assert.Assertions) {
+		assertions.Equal(systemInformation, *r.TypedSpec())
+	})
+
 	for k, v := range cpuSpecs {
 		ctest.AssertResource(suite, k, func(r *hardware.Processor, assertions *assert.Assertions) {
 			assertions.Equal(v, *r.TypedSpec())
@@ -106,6 +121,37 @@ func (suite *SystemInfoSuite) TestPopulateSystemInformation() {
 	for k, v := range memorySpecs {
 		ctest.AssertResource(suite, k, func(r *hardware.MemoryModule, assertions *assert.Assertions) {
 			assertions.Equal(v, *r.TypedSpec())
+		})
+	}
+}
+
+func (suite *SystemInfoSuite) TestPopulateSystemInformationEmpty() {
+	version := smbios.Version{Major: 3, Minor: 3, Revision: 0} // dummy version
+	s, err := smbios.Decode(io.NewSectionReader(nil, 0, 0), version)
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(
+		suite.runtime.RegisterController(
+			&hardwarectrl.SystemInfoController{
+				SMBIOS: s,
+			},
+		),
+	)
+
+	suite.startRuntime()
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, runtime.NewMetaLoaded()))
+
+	memorySpecs := map[string]hardware.MemoryModuleSpec{
+		"UNKNOWN": {
+			Manufacturer: "UNKNOWN",
+		},
+	}
+
+	for k, v := range memorySpecs {
+		ctest.AssertResource(suite, k, func(r *hardware.MemoryModule, assertions *assert.Assertions) {
+			assertions.Equal(v.DeviceLocator, r.TypedSpec().DeviceLocator)
+			assertions.NotZero(r.TypedSpec().Size)
 		})
 	}
 }
