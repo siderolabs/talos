@@ -1,3 +1,101 @@
+## [Talos 1.12.2](https://github.com/siderolabs/talos/releases/tag/v1.12.2) (2026-01-21)
+
+Welcome to the v1.12.2 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### `talosctl images talos-bundle` can ignore reaching to the registry
+
+The `talosctl images talos-bundle` command now accepts optional `--ovelays` and `--extensions` flags.
+If those are set to `false`, the command will not attempt to reach out to the container registry to fetch the latest versions and digests of the overlays and extensions.
+
+
+### Component Updates
+
+Linux: 6.18.5
+
+Talos is built with Go 1.25.6.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Dmitrii Sharshakov
+* Andras BALI
+* Artem Chernyshev
+* Jonas Lammler
+* Mateusz Urbanek
+* Max Makarov
+* Noel Georgi
+
+### Changes
+<details><summary>20 commits</summary>
+<p>
+
+* [`30da0bc19`](https://github.com/siderolabs/talos/commit/30da0bc19eb699dabf966cce38ef4477add193d4) fix: oracle platform file format
+* [`7ddb37b1f`](https://github.com/siderolabs/talos/commit/7ddb37b1f3e2abf6c3406d35be92093fe4512eff) fix: make OOM expression a bit less sensitive
+* [`e438ec23e`](https://github.com/siderolabs/talos/commit/e438ec23eefef97bbaa160dd6bb133b48a267ac7) fix: marshal of FailOverMac property
+* [`717ed7265`](https://github.com/siderolabs/talos/commit/717ed726569d1270e2fb48df60e5fd7f43d1885b) fix: check if the device is not mounted when wiping
+* [`c95c9fd06`](https://github.com/siderolabs/talos/commit/c95c9fd06508f02a770100f87da754a6fd3b9fa8) fix: wipe the first/last 1MiB in addition to wiping by signatures
+* [`52bed358d`](https://github.com/siderolabs/talos/commit/52bed358d3606d04e6b4acded5dfe26cdb5f0ec9) fix: add talos version to Hetzner Cloud client user agent
+* [`0e447a431`](https://github.com/siderolabs/talos/commit/0e447a4318ff2b7a398a719144690b22dce1e3f7) fix: make OOM controller more precise by considering separate cgroup PSI
+* [`3b974b99e`](https://github.com/siderolabs/talos/commit/3b974b99e583c3a5bdd80e239517ef1ebc19de9c) fix: sort mirrors and tls configs when generating the machine config
+* [`8b16fe50b`](https://github.com/siderolabs/talos/commit/8b16fe50bb44c7cb4bd3f50580a3ea18cdc3a727) feat: add VLAN support to OpenStack platform
+* [`eb8480c4c`](https://github.com/siderolabs/talos/commit/eb8480c4ce088bd9fe705302c7e588aa01da207b) fix: panic in configpatcher when the whole section is missing
+* [`4d44306dd`](https://github.com/siderolabs/talos/commit/4d44306dd148c872803578dc3880bbab307612b9) fix: wipe disk by signatures
+* [`cca4cd269`](https://github.com/siderolabs/talos/commit/cca4cd269b0a4ac24627d195fad4bd9fa00c3f85) feat: add it87 hwmon module
+* [`d9480eef2`](https://github.com/siderolabs/talos/commit/d9480eef2ed45b35d5f1782b651c1499451536c5) fix: resolve SideroLink Wireguard endpoint on reconnect
+* [`e16c2d5bb`](https://github.com/siderolabs/talos/commit/e16c2d5bba1b6dce241905dc9e4846d45a774f78) fix: handle correctly incomplete RegistryTLSConfig
+* [`dedd273df`](https://github.com/siderolabs/talos/commit/dedd273dfcd5d721e63cbe0124623ce2b5e50df4) fix: bond config via platform
+* [`f527cff23`](https://github.com/siderolabs/talos/commit/f527cff239cf246891ef6e053d0aec5ce8900e22) fix: allow HostnameConfig to be used with incomplete machine config
+* [`10918136c`](https://github.com/siderolabs/talos/commit/10918136c6338506d08dd86b57d82b880ea50348) fix: lock down etcd listen address to IPv4 localhost
+* [`9f8d938db`](https://github.com/siderolabs/talos/commit/9f8d938db68f4c872ccf65573339e4761b4a09d4) fix: print talosctl images to release notes
+* [`95433c167`](https://github.com/siderolabs/talos/commit/95433c167493a7650513379866e544bdb0adbc2e) fix: update VIP config example
+* [`919394fee`](https://github.com/siderolabs/talos/commit/919394fee8122bd583ac1f0cfc55d8a0d3e3d3cb) feat: update Go to 1.25.6
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>7 commits</summary>
+<p>
+
+* [`4f8efaf`](https://github.com/siderolabs/pkgs/commit/4f8efafbae293c2b53c196990b773024d13ca6a5) fix: enable pinctrl for Raspberry Pi 5
+* [`3a36a01`](https://github.com/siderolabs/pkgs/commit/3a36a01a80f0b611d237b6f4afaed6767ca44f4d) feat: update NVIDIA LTS and production driver versions
+* [`d364d04`](https://github.com/siderolabs/pkgs/commit/d364d04e36354684762251504f97c35606db01a8) feat: update Linux to 6.18.5
+* [`a3d6cc4`](https://github.com/siderolabs/pkgs/commit/a3d6cc481781b2619debe7f3300f3111f712e8d6) feat: update Linux firmware to 20260110
+* [`40fa324`](https://github.com/siderolabs/pkgs/commit/40fa324fa262dacba146ca4c7bf4ea10b31958a8) feat: enable IT87 hwmon module
+* [`8b8f314`](https://github.com/siderolabs/pkgs/commit/8b8f3149aa337ee377fa7724c7b28bbec9f9250e) feat: enable IPV6_MROUTE
+* [`3571127`](https://github.com/siderolabs/pkgs/commit/357112785127fdcac76e4f64b9bbd646ded04a95) feat: update Go to 1.25.6
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`31959f4`](https://github.com/siderolabs/tools/commit/31959f432338f80579dc0565a40133b83976c65f) feat: update Go to 1.25.6
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/klauspost/compress**            v1.18.2 -> v1.18.3
+* **github.com/siderolabs/go-blockdevice/v2**  v2.0.22 -> v2.0.23
+* **github.com/siderolabs/pkgs**               v1.12.0-25-g90ff196 -> v1.12.0-32-g4f8efaf
+* **github.com/siderolabs/tools**              v1.12.0-3-g5df8bae -> v1.12.0-4-g31959f4
+* **go.uber.org/zap**                          v1.27.0 -> v1.27.1
+* **golang.org/x/net**                         v0.47.0 -> v0.48.0
+* **golang.org/x/oauth2**                      v0.33.0 -> v0.34.0
+* **golang.org/x/sync**                        v0.18.0 -> v0.19.0
+* **golang.org/x/sys**                         v0.38.0 -> v0.40.0
+* **golang.org/x/term**                        v0.37.0 -> v0.38.0
+* **golang.org/x/text**                        v0.31.0 -> v0.33.0
+
+Previous release can be found at [v1.12.1](https://github.com/siderolabs/talos/releases/tag/v1.12.1)
+
 ## [Talos 1.12.1](https://github.com/siderolabs/talos/releases/tag/v1.12.1) (2026-01-05)
 
 Welcome to the v1.12.1 release of Talos!
