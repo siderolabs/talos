@@ -12,6 +12,9 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/aws/aws-sdk-go-v2/service/acm"
+	"github.com/siderolabs/go-pointer"
+
 	"github.com/siderolabs/talos/internal/pkg/secureboot/pesign"
 )
 
@@ -54,6 +57,41 @@ func NewSecureBootSigner(ctx context.Context, kmsKeyID, awsRegion, certPath stri
 	cert, err := x509.ParseCertificate(certBlock.Bytes)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse certificate: %w", err)
+	}
+
+	return &SecureBootSigner{
+		keySigner: keySigner,
+		cert:      cert,
+	}, nil
+}
+
+// NewSecureBootACMSigner creates a new SecureBootSigner using an ACM certificate.
+func NewSecureBootACMSigner(ctx context.Context, kmsKeyID, awsRegion, acmCertificateARN string) (*SecureBootSigner, error) {
+	keySigner, err := NewPCRSigner(ctx, kmsKeyID, awsRegion)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initialize certificate key signer (kms): %w", err)
+	}
+
+	acmClient, err := getAcmClient(ctx, awsRegion)
+	if err != nil {
+		return nil, fmt.Errorf("failed to build ACM client: %w", err)
+	}
+
+	resp, err := acmClient.GetCertificate(ctx, &acm.GetCertificateInput{
+		CertificateArn: &acmCertificateARN,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get certificate: %w", err)
+	}
+
+	certBlock, _ := pem.Decode([]byte(pointer.SafeDeref(resp.Certificate)))
+	if certBlock == nil {
+		return nil, fmt.Errorf("failed to decode certificate")
+	}
+
+	cert, err := x509.ParseCertificate(certBlock.Bytes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode certificate: %w", err)
 	}
 
 	return &SecureBootSigner{

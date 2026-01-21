@@ -10,6 +10,7 @@ import (
 	"fmt"
 
 	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/acm"
 	"github.com/aws/aws-sdk-go-v2/service/kms"
 )
 
@@ -20,4 +21,13 @@ func getKmsClient(ctx context.Context, awsRegion string) (*kms.Client, error) {
 	}
 
 	return kms.NewFromConfig(awsCfg), nil
+}
+
+func getAcmClient(ctx context.Context, awsRegion string) (*acm.Client, error) {
+	awsCfg, err := config.LoadDefaultConfig(ctx, config.WithRegion(awsRegion))
+	if err != nil {
+		return nil, fmt.Errorf("error initializing AWS default config: %w", err)
+	}
+
+	return acm.NewFromConfig(awsCfg), nil
 }

@@ -15,7 +15,7 @@ import (
 )
 
 func TestIntegration(t *testing.T) {
-	for _, envVar := range []string{"AWS_KMS_KEY_ID", "AWS_REGION", "AWS_CERT_PATH"} {
+	for _, envVar := range []string{"AWS_KMS_KEY_ID", "AWS_REGION", "AWS_CERT_PATH", "AWS_CERT_ARN"} {
 		if os.Getenv(envVar) == "" {
 			t.Skipf("%s not set", envVar)
 		}
@@ -33,5 +33,11 @@ func TestIntegration(t *testing.T) {
 	require.NoError(t, err)
 
 	_, err = sbSigner.Signer().Sign(nil, digest[:], nil)
+	require.NoError(t, err)
+
+	sbAcmSigner, err := aws.NewSecureBootACMSigner(t.Context(), os.Getenv("AWS_KMS_KEY_ID"), os.Getenv("AWS_REGION"), os.Getenv("AWS_CERT_ARN"))
+	require.NoError(t, err)
+
+	_, err = sbAcmSigner.Signer().Sign(nil, digest[:], nil)
 	require.NoError(t, err)
 }

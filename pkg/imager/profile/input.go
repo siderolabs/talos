@@ -111,11 +111,12 @@ type SigningKeyAndCertificate struct {
 	AzureCertificateID string `yaml:"azureCertificateID,omitempty"`
 	// AWS.
 	//
-	// AWS KMS Key ID and region.
-	// AWS doesn't have a good way to store a certificate, so it's expected to be a file.
+	// AWS KMS Key ID, ACM certificate ARN, and region.
+	// Support local cert file for legacy use cases.
 	AwsKMSKeyID string `yaml:"awsKMSKeyID,omitempty"`
 	AwsRegion   string `yaml:"awsRegion,omitempty"`
 	AwsCertPath string `yaml:"awsCertPath,omitempty"`
+	AwsCertARN  string `yaml:"awsCertARN,omitempty"`
 }
 
 // SigningKey describes a signing key.
@@ -159,6 +160,8 @@ func (keyAndCert SigningKeyAndCertificate) GetSigner(ctx context.Context) (pesig
 		return file.NewSecureBootSigner(keyAndCert.CertPath, keyAndCert.KeyPath)
 	case keyAndCert.AzureVaultURL != "" && keyAndCert.AzureCertificateID != "":
 		return azure.NewSecureBootSigner(ctx, keyAndCert.AzureVaultURL, keyAndCert.AzureCertificateID, keyAndCert.AzureCertificateID)
+	case keyAndCert.AwsKMSKeyID != "" && keyAndCert.AwsCertARN != "":
+		return aws.NewSecureBootACMSigner(ctx, keyAndCert.AwsKMSKeyID, keyAndCert.AwsRegion, keyAndCert.AwsCertARN)
 	case keyAndCert.AwsKMSKeyID != "" && keyAndCert.AwsCertPath != "":
 		return aws.NewSecureBootSigner(ctx, keyAndCert.AwsKMSKeyID, keyAndCert.AwsRegion, keyAndCert.AwsCertPath)
 	default:
