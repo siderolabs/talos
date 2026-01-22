@@ -154,6 +154,7 @@ func ReadFromVolume(ctx context.Context, r state.State, labels []string, cb func
 		mount.WithFsopen(
 			volumeStatus.TypedSpec().Filesystem.String(),
 			fsopen.WithSource(volumeStatus.TypedSpec().MountLocation),
+			fsopen.WithBoolParameter("ro"),
 		),
 		mount.WithDetached(),
 	)
