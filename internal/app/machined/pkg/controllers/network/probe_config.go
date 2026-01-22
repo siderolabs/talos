@@ -81,7 +81,7 @@ func (ctrl *ProbeConfigController) Run(ctx context.Context, r controller.Runtime
 		}
 
 		if err = r.CleanupOutputs(ctx,
-			resource.NewMetadata(network.NamespaceName, network.ProbeSpecType, "", resource.VersionUndefined),
+			resource.NewMetadata(network.ConfigNamespaceName, network.ProbeSpecType, "", resource.VersionUndefined),
 		); err != nil {
 			return fmt.Errorf("error cleaning up outputs: %w", err)
 		}
@@ -100,7 +100,7 @@ func (ctrl *ProbeConfigController) apply(ctx context.Context, r controller.Runti
 		if err := safe.WriterModify(
 			ctx,
 			r,
-			network.NewProbeSpec(network.NamespaceName, id),
+			network.NewProbeSpec(network.ConfigNamespaceName, network.LayeredID(spec.ConfigLayer, id)),
 			func(r *network.ProbeSpec) error {
 				*r.TypedSpec() = spec
 

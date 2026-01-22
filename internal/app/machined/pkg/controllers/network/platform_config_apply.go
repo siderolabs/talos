@@ -378,10 +378,15 @@ func (ctrl *PlatformConfigApplyController) apply(ctx context.Context, r controll
 			idBuilder: func(spec any) (resource.ID, error) {
 				probeSpec := spec.(network.ProbeSpecSpec) //nolint:forcetypeassert
 
-				return probeSpec.ID()
+				id, err := probeSpec.ID()
+				if err != nil {
+					return "", err
+				}
+
+				return network.LayeredID(network.ConfigPlatform, id), nil
 			},
 			resourceBuilder: func(id string) resource.Resource {
-				return network.NewProbeSpec(network.NamespaceName, id)
+				return network.NewProbeSpec(network.ConfigNamespaceName, id)
 			},
 			resourceModifier: func(newSpec any) func(r resource.Resource) error {
 				return func(r resource.Resource) error {

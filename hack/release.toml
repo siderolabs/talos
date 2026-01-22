@@ -162,6 +162,13 @@ The nameservers configuration in machine configuration now overwrites any previo
 Previously a smart merge was performed to keep IPv4/IPv6 nameservers from lower layers if the machine configuration specified only one type.
 """
 
+    [notes.probe_config]
+        title = "ProbeConfig"
+        description = """\
+The TCPProbeConfig configuration document allows to configure TCP probes for network reachability checks.
+This allows to define a custom connectivity condition.
+"""
+
 [make_deps]
 
     [make_deps.tools]

@@ -45,7 +45,7 @@ func (suite *ProbeConfigSuite) TestSingleProbe() {
 	ctest.AssertResources(
 		suite,
 		[]string{
-			"tcp:proxy.example.com:3128",
+			"configuration/tcp:proxy.example.com:3128",
 		}, func(r *network.ProbeSpec, asrt *assert.Assertions) {
 			asrt.Equal(time.Second, r.TypedSpec().Interval)
 			asrt.Equal(3, r.TypedSpec().FailureThreshold)
@@ -53,7 +53,7 @@ func (suite *ProbeConfigSuite) TestSingleProbe() {
 			asrt.Equal(10*time.Second, r.TypedSpec().TCP.Timeout)
 			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
 		},
-		rtestutils.WithNamespace(network.NamespaceName),
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
 
 	// Update the probe config
@@ -68,17 +68,17 @@ func (suite *ProbeConfigSuite) TestSingleProbe() {
 	ctest.AssertResources(
 		suite,
 		[]string{
-			"tcp:proxy.example.com:3128",
+			"configuration/tcp:proxy.example.com:3128",
 		}, func(r *network.ProbeSpec, asrt *assert.Assertions) {
 			asrt.Equal(5, r.TypedSpec().FailureThreshold)
 		},
-		rtestutils.WithNamespace(network.NamespaceName),
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
 
 	// Remove the config
 	suite.Destroy(cfg)
 
-	ctest.AssertNoResource[*network.ProbeSpec](suite, "tcp:proxy.example.com:3128", rtestutils.WithNamespace(network.NamespaceName))
+	ctest.AssertNoResource[*network.ProbeSpec](suite, "configuration/tcp:proxy.example.com:3128", rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
 func (suite *ProbeConfigSuite) TestMultipleProbes() {
@@ -106,30 +106,30 @@ func (suite *ProbeConfigSuite) TestMultipleProbes() {
 	ctest.AssertResources(
 		suite,
 		[]string{
-			"tcp:proxy.example.com:3128",
+			"configuration/tcp:proxy.example.com:3128",
 		}, func(r *network.ProbeSpec, asrt *assert.Assertions) {
 			asrt.Equal("proxy.example.com:3128", r.TypedSpec().TCP.Endpoint)
 			asrt.Equal(3, r.TypedSpec().FailureThreshold)
 		},
-		rtestutils.WithNamespace(network.NamespaceName),
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
 
 	ctest.AssertResources(
 		suite,
 		[]string{
-			"tcp:8.8.8.8:53",
+			"configuration/tcp:8.8.8.8:53",
 		}, func(r *network.ProbeSpec, asrt *assert.Assertions) {
 			asrt.Equal("8.8.8.8:53", r.TypedSpec().TCP.Endpoint)
 			asrt.Equal(2, r.TypedSpec().FailureThreshold)
 		},
-		rtestutils.WithNamespace(network.NamespaceName),
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
 
 	suite.Destroy(cfg)
 
 	// Verify both probes are removed
-	ctest.AssertNoResource[*network.ProbeSpec](suite, "tcp:proxy.example.com:3128", rtestutils.WithNamespace(network.NamespaceName))
-	ctest.AssertNoResource[*network.ProbeSpec](suite, "tcp:8.8.8.8:53", rtestutils.WithNamespace(network.NamespaceName))
+	ctest.AssertNoResource[*network.ProbeSpec](suite, "configuration/tcp:proxy.example.com:3128", rtestutils.WithNamespace(network.ConfigNamespaceName))
+	ctest.AssertNoResource[*network.ProbeSpec](suite, "configuration/tcp:8.8.8.8:53", rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
 func TestProbeConfigSuite(t *testing.T) {

@@ -355,6 +355,8 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&network.PlatformConfigLoadController{},
 		&network.PlatformConfigStoreController{},
 		&network.ProbeController{},
+		&network.ProbeConfigController{},
+		network.NewProbeMergeController(),
 		&network.ResolverConfigController{
 			Cmdline: procfs.ProcCmdline(),
 		},
@@ -369,7 +371,6 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&network.StatusController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
-		&network.ProbeConfigController{},
 		&network.TimeServerConfigController{
 			Cmdline: procfs.ProcCmdline(),
 		},

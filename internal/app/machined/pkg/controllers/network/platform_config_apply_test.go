@@ -248,14 +248,16 @@ func (suite *PlatformConfigApplySuite) TestProbes() {
 	suite.Create(platformConfig)
 
 	ctest.AssertResources(suite, []string{
-		"tcp:example.com:80",
-		"tcp:example.com:443",
+		"platform/tcp:example.com:80",
+		"platform/tcp:example.com:443",
 	}, func(r *network.ProbeSpec, asrt *assert.Assertions) {
 		spec := r.TypedSpec()
 
 		asrt.Equal(time.Second, spec.Interval)
 		asrt.Equal(network.ConfigPlatform, spec.ConfigLayer)
-	})
+	},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
+	)
 }
 
 func (suite *PlatformConfigApplySuite) TestExternalIPs() {
