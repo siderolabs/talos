@@ -42,6 +42,9 @@ type Options struct {
 	// ClusterInfo provides information about cluster topology.
 	ClusterInfo cluster.Info
 
+	// KubernetesEndpoint overrides the default Kubernetes API endpoint.
+	KubernetesEndpoint string
+
 	// NewKubernetesCA is the new CA for Kubernetes API.
 	NewKubernetesCA *x509.PEMEncodedCertificateAndKey
 
@@ -168,6 +171,7 @@ func (r *rotator) fetchClient(ctx context.Context, clientPtr **cluster.Kubernete
 
 	*clientPtr = &cluster.KubernetesClient{
 		ClientProvider: r.talosClientProvider,
+		ForceEndpoint:  r.opts.KubernetesEndpoint,
 	}
 
 	_, err := (*clientPtr).K8sClient(client.WithNode(ctx, firstNode.InternalIP.String()))

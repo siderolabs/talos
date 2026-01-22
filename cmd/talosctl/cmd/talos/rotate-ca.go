@@ -150,6 +150,8 @@ func rotateKubernetesCA(ctx context.Context, c *client.Client, encoderOpt encode
 		TalosClient: c,
 		ClusterInfo: clusterInfo,
 
+		KubernetesEndpoint: rotateCACmdFlags.forceEndpoint,
+
 		NewKubernetesCA: newBundle.Certs.K8s,
 
 		EncoderOption: encoderOpt,
