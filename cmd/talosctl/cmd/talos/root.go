@@ -52,6 +52,12 @@ func WithClientMaintenance(enforceFingerprints []string, action func(context.Con
 	return GlobalArgs.WithClientMaintenance(enforceFingerprints, action)
 }
 
+// WithClientSkipVerify wraps common code to initialize Talos client with TLS verification disabled
+// but with client certificate authentication preserved.
+func WithClientSkipVerify(action func(context.Context, *client.Client) error) error {
+	return GlobalArgs.WithClientSkipVerify(action)
+}
+
 // Commands is a list of commands published by the package.
 var Commands []*cobra.Command
 
@@ -81,6 +87,7 @@ func addCommand(cmd *cobra.Command) {
 		),
 	)
 	cli.Should(cmd.RegisterFlagCompletionFunc("context", CompleteConfigContext))
+	cmd.PersistentFlags().BoolVar(&GlobalArgs.SkipVerify, "skip-verify", false, "skip TLS certificate verification (keeps client authentication)")
 
 	Commands = append(Commands, cmd)
 }

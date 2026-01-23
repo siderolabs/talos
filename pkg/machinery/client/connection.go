@@ -74,6 +74,16 @@ func (c *Client) getConn(opts ...grpc.DialOption) (*grpcConnectionWrapper, error
 		return nil, fmt.Errorf("failed to resolve configuration context: %w", err)
 	}
 
+	// If skipVerify is enabled, build TLS config with InsecureSkipVerify but preserve client certificate
+	if c.options.skipVerify {
+		skipVerifyTLSConfig, err := buildSkipVerifyTLSConfig(c.options.configContext)
+		if err != nil {
+			return nil, err
+		}
+
+		return c.makeConnection(target, credentials.NewTLS(skipVerifyTLSConfig), dialOpts)
+	}
+
 	basicAuth := c.options.configContext.Auth.Basic
 	if basicAuth != nil {
 		dialOpts = append(dialOpts, WithGRPCBasicAuth(basicAuth.Username, basicAuth.Password))
@@ -149,6 +159,25 @@ func buildTLSConfig(configContext *clientconfig.Context) (*tls.Config, error) {
 
 	if crt != nil {
 		tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
+		tlsConfig.Certificates = append(tlsConfig.Certificates, *crt)
+	}
+
+	return tlsConfig, nil
+}
+
+// buildSkipVerifyTLSConfig creates a TLS config with InsecureSkipVerify enabled
+// but preserves client certificate authentication.
+func buildSkipVerifyTLSConfig(configContext *clientconfig.Context) (*tls.Config, error) {
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: true,
+	}
+
+	crt, err := CertificateFromConfigContext(configContext)
+	if err != nil {
+		return nil, fmt.Errorf("failed to acquire credentials: %w", err)
+	}
+
+	if crt != nil {
 		tlsConfig.Certificates = append(tlsConfig.Certificates, *crt)
 	}
 

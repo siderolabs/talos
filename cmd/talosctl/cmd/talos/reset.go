@@ -113,6 +113,10 @@ var resetCmd = &cobra.Command{
 				return WithClientMaintenance(nil, resetNoWait)
 			}
 
+			if GlobalArgs.SkipVerify {
+				return WithClientSkipVerify(resetNoWait)
+			}
+
 			return WithClient(resetNoWait)
 		}
 
