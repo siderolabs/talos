@@ -85,13 +85,13 @@ func parse(r io.Reader, allowPatchDelete bool) (decoded []config.Document, err e
 		}
 
 		if manifests.Kind != yaml.DocumentNode {
-			return nil, errors.New("expected a document")
+			return nil, fmt.Errorf("expected a document at line %d", manifests.Line)
 		}
 
 		if allowPatchDelete {
 			decoded, err = AppendDeletesTo(&manifests, decoded, i)
 			if err != nil {
-				return nil, err
+				return nil, fmt.Errorf("error processing patch delete statements at line %d: %w", manifests.Line, err)
 			}
 
 			if manifests.IsZero() {
@@ -100,6 +100,20 @@ func parse(r io.Reader, allowPatchDelete bool) (decoded []config.Document, err e
 		}
 
 		for _, manifest := range manifests.Content {
+			switch manifest.Kind { //nolint:exhaustive
+			case yaml.MappingNode:
+				// expected
+			case yaml.ScalarNode:
+				if manifest.Tag == "!!null" {
+					// skip null documents
+					continue
+				}
+
+				fallthrough
+			default:
+				return nil, fmt.Errorf("expected a YAML document at line %d", manifest.Line)
+			}
+
 			id := documentID{
 				APIVersion: findValue(manifest, ManifestAPIVersionKey, false),
 				Kind:       cmp.Or(findValue(manifest, ManifestKindKey, false), "v1alpha1"),
@@ -107,7 +121,7 @@ func parse(r io.Reader, allowPatchDelete bool) (decoded []config.Document, err e
 			}
 
 			if _, ok := knownDocuments[id]; ok {
-				return nil, fmt.Errorf("duplicate document %s/%s/%s is not allowed", id.APIVersion, id.Kind, id.Name)
+				return nil, fmt.Errorf("duplicate document %s/%s/%s is not allowed (line %d)", id.APIVersion, id.Kind, id.Name, manifest.Line)
 			}
 
 			knownDocuments[id] = struct{}{}
@@ -115,7 +129,7 @@ func parse(r io.Reader, allowPatchDelete bool) (decoded []config.Document, err e
 			var target config.Document
 
 			if target, err = decode(manifest); err != nil {
-				return nil, err
+				return nil, fmt.Errorf("error decoding document %s/%s/%s (line %d): %w", id.APIVersion, id.Kind, id.Name, manifest.Line, err)
 			}
 
 			decoded = append(decoded, target)
