@@ -121,6 +121,9 @@ func (c *Config) generateGrubImage(opts options.InstallOptions) error {
 		"all_video",
 	}
 
+	const grubPrefix = "(hd0,gpt3)/grub" // EFI, BIOS, BOOT
+
+	// in amd64 mode only, install GRUB BIOS mode
 	if opts.Arch == "amd64" {
 		grub32Modules := []string{
 			"biosdisk",
@@ -133,7 +136,7 @@ func (c *Config) generateGrubImage(opts options.InstallOptions) error {
 			"--output",
 			filepath.Join(opts.MountPrefix, "core.img"),
 			"--prefix",
-			"(hd0,gpt3)/grub",
+			grubPrefix,
 		}
 
 		args = append(args, slices.Concat(grubModules, grub32Modules)...)
@@ -153,18 +156,14 @@ func (c *Config) generateGrubImage(opts options.InstallOptions) error {
 
 	grubEFIPath := filepath.Join(opts.MountPrefix, "grub-efi.img")
 
-	var (
-		platform string
-		prefix   string
-	)
+	var platform string
 
+	// install GRUB in UEFI mode
 	switch opts.Arch {
 	case "amd64":
 		platform = "x86_64-efi"
-		prefix = "(hd0,gpt3)/grub" // EFI, BIOS, BOOT
 	case "arm64":
 		platform = "arm64-efi"
-		prefix = "(hd0,gpt2)/grub" // EFI, BOOT
 	default:
 		return fmt.Errorf("unsupported architecture for grub image: %s", opts.Arch)
 	}
@@ -175,7 +174,7 @@ func (c *Config) generateGrubImage(opts options.InstallOptions) error {
 		"--output",
 		grubEFIPath,
 		"--prefix",
-		prefix,
+		grubPrefix,
 		"--compression",
 		"xz",
 	}
