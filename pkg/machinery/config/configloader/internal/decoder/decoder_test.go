@@ -129,13 +129,29 @@ test: true
 			expectedErr: "",
 		},
 		{
+			name: "empty docs",
+			source: []byte(`---
+kind: mock
+apiVersion: v1alpha1
+test: true
+---
+---
+`),
+			expected: []config.Document{
+				&Mock{
+					Test: true,
+				},
+			},
+			expectedErr: "",
+		},
+		{
 			name: "missing kind",
 			source: []byte(`---
 apiVersion: v1alpha2
 test: true
 `),
 			expected:    nil,
-			expectedErr: "missing kind",
+			expectedErr: "error decoding document v1alpha2/v1alpha1/ (line 2): missing kind",
 		},
 		{
 			name: "empty kind",
@@ -145,7 +161,7 @@ apiVersion: v1alpha2
 test: true
 `),
 			expected:    nil,
-			expectedErr: "missing kind",
+			expectedErr: "error decoding document v1alpha2/v1alpha1/ (line 2): missing kind",
 		},
 		{
 			name: "tab instead of spaces",
@@ -167,7 +183,7 @@ test: true
 extra: fail
 `),
 			expected:    nil,
-			expectedErr: "unknown keys found during decoding:\nextra: fail\n",
+			expectedErr: "error decoding document v1alpha1/mock/ (line 2): unknown keys found during decoding:\nextra: fail\n",
 		},
 		{
 			name: "extra fields in map",
@@ -180,7 +196,7 @@ map:
     extra: me
 `),
 			expected:    nil,
-			expectedErr: "unknown keys found during decoding:\nmap:\n    first:\n        extra: me\n",
+			expectedErr: "error decoding document v1alpha2/mock/ (line 2): unknown keys found during decoding:\nmap:\n    first:\n        extra: me\n",
 		},
 		{
 			name: "extra fields in slice",
@@ -194,7 +210,7 @@ slice:
     fields: here
 `),
 			expected:    nil,
-			expectedErr: "unknown keys found during decoding:\nslice:\n    - fields: here\n      more: extra\n      not: working\n",
+			expectedErr: "error decoding document v1alpha2/mock/ (line 2): unknown keys found during decoding:\nslice:\n    - fields: here\n      more: extra\n      not: working\n",
 		},
 		{
 			name: "extra zero fields in map",
@@ -207,7 +223,7 @@ map:
       b: {}
 `),
 			expected:    nil,
-			expectedErr: "unknown keys found during decoding:\nmap:\n    second:\n        a:\n            b: {}\n",
+			expectedErr: "error decoding document v1alpha2/mock/ (line 2): unknown keys found during decoding:\nmap:\n    second:\n        a:\n            b: {}\n",
 		},
 		{
 			name: "valid nested",
@@ -306,7 +322,7 @@ config:
           - content: MONITOR ${upsmonHost} 1 remote pass foo
             mountPath: /usr/local/etc/nut/upsmon.conf
 `),
-			expectedErr: "\"ExtensionServiceConfig\" \"\": not registered",
+			expectedErr: "error decoding document /ExtensionServiceConfig/ (line 2): \"ExtensionServiceConfig\" \"\": not registered",
 		},
 	}
 
