@@ -84,6 +84,7 @@ kernel/drivers/md/bcache/bcache.ko
 kernel/drivers/md/dm-bio-prison.ko
 kernel/drivers/md/dm-cache-smq.ko
 kernel/drivers/md/dm-cache.ko
+kernel/drivers/md/dm-integrity.ko
 kernel/drivers/md/dm-multipath.ko
 kernel/drivers/md/dm-raid.ko
 kernel/drivers/md/dm-round-robin.ko
@@ -230,8 +231,6 @@ kernel/drivers/watchdog/sp5100_tco.ko
 kernel/drivers/watchdog/watchdog.ko
 kernel/drivers/watchdog/wdat_wdt.ko
 kernel/drivers/watchdog/xen_wdt.ko
-kernel/lib/crc/crc-t10dif.ko
-kernel/lib/crc/crc64.ko
 kernel/lib/crc/crc8.ko
 kernel/lib/objagg.ko
 kernel/lib/parman.ko

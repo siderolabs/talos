@@ -66,6 +66,7 @@ kernel/drivers/md/bcache/bcache.ko
 kernel/drivers/md/dm-bio-prison.ko
 kernel/drivers/md/dm-cache-smq.ko
 kernel/drivers/md/dm-cache.ko
+kernel/drivers/md/dm-integrity.ko
 kernel/drivers/md/dm-multipath.ko
 kernel/drivers/md/dm-raid.ko
 kernel/drivers/md/dm-round-robin.ko
