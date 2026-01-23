@@ -528,17 +528,17 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime, spec 
 
 			denyListArgs.Set("initial-cluster", argsbuilder.Value{initialCluster})
 		}
-
-		if !extraArgs.Contains("initial-advertise-peer-urls") {
-			denyListArgs.Set("initial-advertise-peer-urls",
-				argsbuilder.Value{formatEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort)},
-			)
-		}
 	}
 
 	if !extraArgs.Contains("advertise-client-urls") {
 		denyListArgs.Set("advertise-client-urls",
 			argsbuilder.Value{formatEtcdURLs(spec.AdvertisedAddresses, constants.EtcdClientPort)},
+		)
+	}
+
+	if !extraArgs.Contains("initial-advertise-peer-urls") {
+		denyListArgs.Set("initial-advertise-peer-urls",
+			argsbuilder.Value{formatEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort)},
 		)
 	}
 
