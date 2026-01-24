@@ -271,6 +271,7 @@ func (s *VolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Op
 
 	switch vtype { //nolint:exhaustive
 	case block.VolumeTypePartition:
+
 		extraWarnings, extraErrors := s.ProvisioningSpec.Validate(false, true)
 		warnings = append(warnings, extraWarnings...)
 		validationErrors = errors.Join(validationErrors, extraErrors)
@@ -279,7 +280,9 @@ func (s *VolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Op
 		warnings = append(warnings, extraWarnings...)
 		validationErrors = errors.Join(validationErrors, extraErrors)
 	case block.VolumeTypeMemory:
-		// memory == tmpfs semantics: only size can be specified.
+		if s.MetaName == constants.StatePartitionLabel {
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("volumeType %q is not allowed for the %q volume", vtype, s.MetaName))
+		}
 		if !s.EncryptionSpec.IsZero() {
 			validationErrors = errors.Join(validationErrors, fmt.Errorf("encryption config is not allowed for volumeType %q", vtype))
 		}
@@ -329,10 +332,6 @@ func (s *VolumeConfigV1Alpha1) validateVolumeConstraints() error {
 
 	switch s.MetaName {
 	case constants.StatePartitionLabel:
-		if s.VolumeType != nil && *s.VolumeType != block.VolumeTypePartition {
-			validationErrors = errors.Join(validationErrors, fmt.Errorf("volumeType %q is not allowed for the %q volume", *s.VolumeType, s.MetaName))
-		}
-
 		// no provisioning config is allowed for the state partition.
 		if !s.ProvisioningSpec.IsZero() {
 			validationErrors = errors.Join(validationErrors, fmt.Errorf("provisioning config is not allowed for the %q volume", s.MetaName))
