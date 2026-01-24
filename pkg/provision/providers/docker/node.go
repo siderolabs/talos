@@ -320,12 +320,10 @@ func genPortMap(portList []string, defaultHostIP string) (portMap, error) {
 		}
 
 		portSetRet[natPort] = struct{}{}
-		portMapRet[natPort] = []network.PortBinding{
-			{
-				HostIP:   hostAddr,
-				HostPort: hostPort,
-			},
-		}
+		portMapRet[natPort] = append(portMapRet[natPort], network.PortBinding{
+			HostIP:   hostAddr,
+			HostPort: hostPort,
+		})
 	}
 
 	return portMap{portSetRet, portMapRet}, nil
