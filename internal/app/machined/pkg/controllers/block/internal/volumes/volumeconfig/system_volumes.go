@@ -133,7 +133,7 @@ func GetEphemeralVolumeTransformer(inContainer bool) volumeConfigTransformer {
 						}).
 						Apply(vc.TypedSpec())
 				}
-				
+
 				return NewBuilder().
 					WithType(block.VolumeTypePartition).
 					WithProvisioning(block.ProvisioningSpec{
