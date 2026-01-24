@@ -1,0 +1,16 @@
+---
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: STATE
+volumeType: memory
+---
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: EPHEMERAL
+volumeType: memory
+provisioning:
+  minSize: 3GiB
+---
+# Single-node ephemeral cluster: schedule workloads on the control plane.
+cluster:
+  allowSchedulingOnControlPlanes: true

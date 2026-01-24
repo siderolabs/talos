@@ -16,13 +16,13 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cri"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	criseccompresource "github.com/siderolabs/talos/pkg/machinery/resources/cri"
-	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 func (suite *CRISeccompProfileFileSuite) TestReconcileSeccompProfileFile() {
 	// need to mock mountStatus so that the controller moves ahead with the actual code
-	mountStatus := runtimeres.NewMountStatus(runtimeres.NamespaceName, "EPHEMERAL")
+	mountStatus := block.NewVolumeMountStatus(block.NamespaceName, "EPHEMERAL")
 	suite.Create(mountStatus)
 
 	for _, tt := range []struct {

@@ -788,6 +788,7 @@ enum BlockVolumeType {
   VOLUME_TYPE_SYMLINK = 4;
   VOLUME_TYPE_OVERLAY = 5;
   VOLUME_TYPE_EXTERNAL = 6;
+  VOLUME_TYPE_MEMORY = 7;
 }
 
 // StorageLVMLogicalVolumeType describes the layout of an LVM logical volume.

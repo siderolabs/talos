@@ -27,7 +27,12 @@ func LocateAndProvision(ctx context.Context, logger *zap.Logger, vc ManagerConte
 
 	// 2. Handle simple types (Tmpfs, Overlay, External, etc.)
 	// If handled, we return early.
-	if done := handleSimpleVolumeTypes(vc); done {
+	done, err := handleSimpleVolumeTypes(vc)
+	if err != nil {
+		return err
+	}
+
+	if done {
 		return nil
 	}
 
@@ -60,14 +65,35 @@ func LocateAndProvision(ctx context.Context, logger *zap.Logger, vc ManagerConte
 
 // handleSimpleVolumeTypes handles non-provisionable types.
 // Returns true if the volume type was handled.
-func handleSimpleVolumeTypes(vc ManagerContext) bool {
+func handleSimpleVolumeTypes(vc ManagerContext) (bool, error) {
 	spec := vc.Cfg.TypedSpec()
 
 	switch spec.Type {
 	case block.VolumeTypeTmpfs, block.VolumeTypeDirectory, block.VolumeTypeSymlink, block.VolumeTypeOverlay:
 		vc.Status.Phase = block.VolumePhaseReady
 
-		return true
+		return true, nil
+
+	case block.VolumeTypeMemory:
+		for _, param := range spec.Mount.Parameters {
+			if param.Name != "size" || param.String == nil {
+				continue
+			}
+
+			var size uint64
+
+			if _, err := fmt.Sscanf(*param.String, "%d", &size); err != nil {
+				return false, fmt.Errorf("failed to parse size parameter: %w", err)
+			}
+
+			vc.Status.SetSize(size)
+
+			break
+		}
+
+		vc.Status.Phase = block.VolumePhaseReady
+
+		return true, nil
 
 	case block.VolumeTypeExternal:
 		vc.Status.Phase = block.VolumePhaseReady
@@ -75,13 +101,13 @@ func handleSimpleVolumeTypes(vc ManagerContext) bool {
 		vc.Status.Location = spec.Provisioning.DiskSelector.External
 		vc.Status.MountLocation = spec.Provisioning.DiskSelector.External
 
-		return true
+		return true, nil
 
 	case block.VolumeTypeDisk, block.VolumeTypePartition:
 		fallthrough
 
 	default:
-		return false
+		return false, nil
 	}
 }
 
@@ -123,7 +149,7 @@ func locateDiskByDiskMatch(vc ManagerContext) (bool, error) {
 	var matchedDisks []string
 
 	for _, diskCtx := range vc.Disks {
-		matches, err := spec.Locator.DiskMatch.EvalBool(env, map[string]any{"disk": diskCtx.Disk})
+		matches, err := spec.Locator.DiskMatch.EvalBool(env, diskCtx.ToCELContext())
 		if err != nil {
 			return false, fmt.Errorf("error evaluating disk locator: %w", err)
 		}
@@ -173,11 +199,22 @@ func locateVolumeByMatch(vc ManagerContext) (bool, error) {
 	env := celenv.VolumeLocator()
 
 	for _, dv := range vc.DiscoveredVolumes {
-		matchContext := map[string]any{"volume": dv}
+		matchContext := map[string]any{
+			"volume":      dv,
+			"system_disk": false,
+		}
 
 		// Resolve the parent disk for CEL context
-		if disk := vc.FindDisk(cmp.Or(dv.ParentDevPath, dv.DevPath)); disk != nil {
-			matchContext["disk"] = disk
+		for _, diskCtx := range vc.Disks {
+			if diskCtx.Disk.DevPath == cmp.Or(dv.ParentDevPath, dv.DevPath) {
+				matchContext["disk"] = diskCtx.Disk
+
+				if val, ok := diskCtx.SystemDisk.Get(); ok {
+					matchContext["system_disk"] = val
+				}
+
+				break
+			}
 		}
 
 		matches, err := spec.Locator.Match.EvalBool(env, matchContext)
@@ -332,7 +369,7 @@ func applyProvisioning(ctx context.Context, logger *zap.Logger, vc ManagerContex
 		vc.Status.PartitionUUID = partRes.Partition.PartGUID.String()
 		vc.Status.SetSize(partRes.Size)
 
-	case block.VolumeTypeTmpfs, block.VolumeTypeDirectory, block.VolumeTypeSymlink, block.VolumeTypeOverlay, block.VolumeTypeExternal:
+	case block.VolumeTypeTmpfs, block.VolumeTypeDirectory, block.VolumeTypeSymlink, block.VolumeTypeOverlay, block.VolumeTypeExternal, block.VolumeTypeMemory:
 		fallthrough
 
 	default:

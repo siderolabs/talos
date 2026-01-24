@@ -79,6 +79,10 @@ type TalosSuite struct {
 	// placed on dedicated partitions instead of directories under EPHEMERAL, i.e. with the
 	// `hack/test/patches/dedicated-system-volumes-{controlplane,worker}.yaml` config patches applied.
 	DedicatedSystemVolumes bool
+	// EphemeralNode marks the cluster as fully ephemeral (STATE + EPHEMERAL backed by tmpfs).
+	// Tests sensitive to persistent state should skip when this is true; the dedicated
+	// ephemeral test suite uses this to gate its assertions.
+	EphemeralNode bool
 
 	discoveredNodes cluster.Info
 }

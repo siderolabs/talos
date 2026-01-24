@@ -62,6 +62,7 @@ provisioning:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`name` |string |Name of the volume.  | |
+|`volumeType` |VolumeType |Volume type.  |`memory`<br />`partition`<br /> |
 |`provisioning` |<a href="#VolumeConfig.provisioning">ProvisioningSpec</a> |The provisioning describes how the volume is provisioned.  | |
 |`filesystem` |<a href="#VolumeConfig.filesystem">SystemVolumeFilesystemSpec</a> |The filesystem describes how the volume is formatted.<br><br>Note: this only takes effect at the time the volume is formatted.  | |
 |`encryption` |<a href="#VolumeConfig.encryption">EncryptionSpec</a> |The encryption describes how the volume is encrypted.  | |

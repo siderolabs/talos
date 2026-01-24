@@ -35,9 +35,9 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
-	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
 
@@ -83,8 +83,8 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 			Kind:      controller.InputWeak,
 		},
 		{
-			Namespace: runtimeres.NamespaceName,
-			Type:      runtimeres.MountStatusType,
+			Namespace: block.NamespaceName,
+			Type:      block.VolumeMountStatusType,
 			ID:        optional.Some(constants.EphemeralPartitionLabel),
 			Kind:      controller.InputWeak,
 		},
@@ -108,7 +108,7 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 			return fmt.Errorf("error getting etc file status: %w", err)
 		}
 
-		_, err = r.Get(ctx, resource.NewMetadata(runtimeres.NamespaceName, runtimeres.MountStatusType, constants.EphemeralPartitionLabel, resource.VersionUndefined))
+		_, err = r.Get(ctx, resource.NewMetadata(block.NamespaceName, block.VolumeMountStatusType, constants.EphemeralPartitionLabel, resource.VersionUndefined))
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				// in container mode EPHEMERAL is always mounted

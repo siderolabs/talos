@@ -319,6 +319,21 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 				volumeStatus.TypedSpec().ParentID = vc.TypedSpec().ParentID
 
 				volumeStatuses[vc.Metadata().ID()] = volumeStatus
+			} else if volumeStatus.TypedSpec().Type != vc.TypedSpec().Type {
+				// volume type changed at runtime (e.g. switching to a memory-backed STATE
+				// after the machine config is acquired); reset the locate state so the
+				// new type is fully reconciled.
+				volumeStatus.TypedSpec().Type = vc.TypedSpec().Type
+				volumeStatus.TypedSpec().ParentID = vc.TypedSpec().ParentID
+				volumeStatus.TypedSpec().Phase = block.VolumePhaseWaiting
+				volumeStatus.TypedSpec().Location = ""
+				volumeStatus.TypedSpec().MountLocation = ""
+				volumeStatus.TypedSpec().ParentLocation = ""
+				volumeStatus.TypedSpec().PartitionUUID = ""
+				volumeStatus.TypedSpec().Filesystem = block.FilesystemType(0)
+				volumeStatus.TypedSpec().ErrorMessage = ""
+				volumeStatus.TypedSpec().PreFailPhase = block.VolumePhase(0)
+				volumeStatus.TypedSpec().SetSize(0)
 			}
 
 			// propagate resolved trim/scrub configuration and the encryption discard setting to the status,
@@ -386,6 +401,7 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 						block.VolumeTypeDirectory,
 						block.VolumeTypeOverlay,
 						block.VolumeTypeSymlink,
+						block.VolumeTypeMemory,
 					},
 					volumeStatus.TypedSpec().Type,
 				)

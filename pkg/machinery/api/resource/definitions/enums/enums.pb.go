@@ -3698,6 +3698,7 @@ const (
 	BlockVolumeType_VOLUME_TYPE_SYMLINK   BlockVolumeType = 4
 	BlockVolumeType_VOLUME_TYPE_OVERLAY   BlockVolumeType = 5
 	BlockVolumeType_VOLUME_TYPE_EXTERNAL  BlockVolumeType = 6
+	BlockVolumeType_VOLUME_TYPE_MEMORY    BlockVolumeType = 7
 )
 
 // Enum value maps for BlockVolumeType.
@@ -3710,6 +3711,7 @@ var (
 		4: "VOLUME_TYPE_SYMLINK",
 		5: "VOLUME_TYPE_OVERLAY",
 		6: "VOLUME_TYPE_EXTERNAL",
+		7: "VOLUME_TYPE_MEMORY",
 	}
 	BlockVolumeType_value = map[string]int32{
 		"VOLUME_TYPE_PARTITION": 0,
@@ -3719,6 +3721,7 @@ var (
 		"VOLUME_TYPE_SYMLINK":   4,
 		"VOLUME_TYPE_OVERLAY":   5,
 		"VOLUME_TYPE_EXTERNAL":  6,
+		"VOLUME_TYPE_MEMORY":    7,
 	}
 )
 
@@ -4874,7 +4877,7 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x18VOLUME_PHASE_PROVISIONED\x10\x04\x12\x19\n" +
 	"\x15VOLUME_PHASE_PREPARED\x10\x05\x12\x16\n" +
 	"\x12VOLUME_PHASE_READY\x10\x06\x12\x17\n" +
-	"\x13VOLUME_PHASE_CLOSED\x10\a*\xc0\x01\n" +
+	"\x13VOLUME_PHASE_CLOSED\x10\a*\xd8\x01\n" +
 	"\x0fBlockVolumeType\x12\x19\n" +
 	"\x15VOLUME_TYPE_PARTITION\x10\x00\x12\x14\n" +
 	"\x10VOLUME_TYPE_DISK\x10\x01\x12\x15\n" +
@@ -4882,7 +4885,8 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x15VOLUME_TYPE_DIRECTORY\x10\x03\x12\x17\n" +
 	"\x13VOLUME_TYPE_SYMLINK\x10\x04\x12\x17\n" +
 	"\x13VOLUME_TYPE_OVERLAY\x10\x05\x12\x18\n" +
-	"\x14VOLUME_TYPE_EXTERNAL\x10\x06*\xab\x01\n" +
+	"\x14VOLUME_TYPE_EXTERNAL\x10\x06\x12\x16\n" +
+	"\x12VOLUME_TYPE_MEMORY\x10\a*\xab\x01\n" +
 	"\x1bStorageLVMLogicalVolumeType\x12\"\n" +
 	"\x1eLVM_LOGICAL_VOLUME_TYPE_LINEAR\x10\x00\x12!\n" +
 	"\x1dLVM_LOGICAL_VOLUME_TYPE_RAID1\x10\x01\x12!\n" +
