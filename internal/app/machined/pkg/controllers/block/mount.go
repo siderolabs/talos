@@ -487,8 +487,6 @@ func (ctrl *MountController) handleMemoryMountOperation(
 ) error {
 	_, ok := ctrl.activeMounts[mountRequest.Metadata().ID()]
 
-	logger = logger.With(zap.String("mount_request.id", mountRequest.Metadata().ID()))
-
 	if !ok {
 		var sizeOpt string
 
@@ -541,7 +539,7 @@ func (ctrl *MountController) handleMemoryMountOperation(
 		)
 
 		ctrl.activeMounts[mountRequest.Metadata().ID()] = &mountContext{
-			point:    nil, // No mount.Point for direct unix.Mount
+			point:    nil,
 			readOnly: mountRequest.TypedSpec().ReadOnly,
 			unmounter: func() error {
 				return unix.Unmount(mountTarget, 0)
@@ -1182,11 +1180,6 @@ func (ctrl *MountController) handleMemoryUnmountOperation(
 		return nil
 	}
 
-	logger.Info("unmounting memory volume",
-		zap.String("volume", volumeStatus.Metadata().ID()),
-		zap.String("target", volumeStatus.TypedSpec().MountLocation),
-	)
-
 	if err := mountCtx.unmounter(); err != nil {
 		return fmt.Errorf("failed to unmount memory volume %q: %w", mountRequest.Metadata().ID(), err)
 	}
@@ -1195,6 +1188,7 @@ func (ctrl *MountController) handleMemoryUnmountOperation(
 
 	logger.Info("memory volume unmounted",
 		zap.String("volume", volumeStatus.Metadata().ID()),
+		zap.String("target", volumeStatus.TypedSpec().MountLocation),
 	)
 
 	return nil
