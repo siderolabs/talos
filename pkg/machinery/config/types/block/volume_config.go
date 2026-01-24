@@ -209,6 +209,7 @@ func (s *VolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Op
 
 	switch vtype { //nolint:exhaustive
 	case block.VolumeTypePartition:
+
 		extraWarnings, extraErrors := s.ProvisioningSpec.Validate(false, true)
 		warnings = append(warnings, extraWarnings...)
 		validationErrors = errors.Join(validationErrors, extraErrors)
@@ -218,12 +219,11 @@ func (s *VolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Op
 		validationErrors = errors.Join(validationErrors, extraErrors)
 
 	case block.VolumeTypeMemory:
+
 		if s.MetaName == constants.StatePartitionLabel {
-			// covered above, but keep a dedicated message for clarity
 			validationErrors = errors.Join(validationErrors, fmt.Errorf("volumeType %q is not allowed for the %q volume", vtype, s.MetaName))
 		}
 
-		// memory == tmpfs semantics: only size can be specified.
 		if !s.EncryptionSpec.IsZero() {
 			validationErrors = errors.Join(validationErrors, fmt.Errorf("encryption config is not allowed for volumeType %q", vtype))
 		}

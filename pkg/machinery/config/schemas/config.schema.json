@@ -605,6 +605,16 @@
           "markdownDescription": "Name of the volume.",
           "x-intellij-html-description": "\u003cp\u003eName of the volume.\u003c/p\u003e\n"
         },
+        "volumeType": {
+          "enum": [
+            "memory",
+            "partition"
+          ],
+          "title": "volumeType",
+          "description": "Volume type.\n",
+          "markdownDescription": "Volume type.",
+          "x-intellij-html-description": "\u003cp\u003eVolume type.\u003c/p\u003e\n"
+        },
         "provisioning": {
           "$ref": "#/$defs/block.ProvisioningSpec",
           "title": "provisioning",

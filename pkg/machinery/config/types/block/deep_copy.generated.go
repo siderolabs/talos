@@ -293,6 +293,10 @@ func (o *ExternalVolumeConfigV1Alpha1) DeepCopy() *ExternalVolumeConfigV1Alpha1 
 // DeepCopy generates a deep copy of *VolumeConfigV1Alpha1.
 func (o *VolumeConfigV1Alpha1) DeepCopy() *VolumeConfigV1Alpha1 {
 	var cp VolumeConfigV1Alpha1 = *o
+	if o.VolumeType != nil {
+		cp.VolumeType = new(VolumeType)
+		*cp.VolumeType = *o.VolumeType
+	}
 	if o.ProvisioningSpec.ProvisioningGrow != nil {
 		cp.ProvisioningSpec.ProvisioningGrow = new(bool)
 		*cp.ProvisioningSpec.ProvisioningGrow = *o.ProvisioningSpec.ProvisioningGrow
