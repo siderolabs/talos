@@ -27,7 +27,12 @@ func LocateAndProvision(ctx context.Context, logger *zap.Logger, vc ManagerConte
 
 	// 2. Handle simple types (Tmpfs, Overlay, External, etc.)
 	// If handled, we return early.
-	if done := handleSimpleVolumeTypes(vc); done {
+	handled, err := handleSimpleVolumeTypes(vc)
+	if err != nil {
+		return err
+	}
+
+	if handled {
 		return nil
 	}
 
@@ -60,14 +65,33 @@ func LocateAndProvision(ctx context.Context, logger *zap.Logger, vc ManagerConte
 
 // handleSimpleVolumeTypes handles non-provisionable types.
 // Returns true if the volume type was handled.
-func handleSimpleVolumeTypes(vc ManagerContext) bool {
+func handleSimpleVolumeTypes(vc ManagerContext) (bool, error) {
 	spec := vc.Cfg.TypedSpec()
 
 	switch spec.Type {
 	case block.VolumeTypeTmpfs, block.VolumeTypeDirectory, block.VolumeTypeSymlink, block.VolumeTypeOverlay:
 		vc.Status.Phase = block.VolumePhaseReady
 
-		return true
+		return true, nil
+
+	case block.VolumeTypeMemory:
+		// memory volumes are always ready, but need size from parameters
+		for _, param := range spec.Mount.Parameters {
+			if param.Name == "size" && param.String != nil {
+				var size uint64
+				if _, err := fmt.Sscanf(*param.String, "%d", &size); err != nil {
+					return false, fmt.Errorf("failed to parse size parameter: %w", err)
+				}
+
+				vc.Status.SetSize(size)
+
+				break
+			}
+		}
+
+		vc.Status.Phase = block.VolumePhaseReady
+
+		return true, nil
 
 	case block.VolumeTypeExternal:
 		vc.Status.Phase = block.VolumePhaseReady
@@ -75,13 +99,13 @@ func handleSimpleVolumeTypes(vc ManagerContext) bool {
 		vc.Status.Location = spec.Provisioning.DiskSelector.External
 		vc.Status.MountLocation = spec.Provisioning.DiskSelector.External
 
-		return true
+		return true, nil
 
 	case block.VolumeTypeDisk, block.VolumeTypePartition:
 		fallthrough
 
 	default:
-		return false
+		return false, nil
 	}
 }
 
