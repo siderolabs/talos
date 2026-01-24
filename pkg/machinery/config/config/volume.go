@@ -22,6 +22,7 @@ type VolumesConfig interface {
 // VolumeConfig defines the interface to access volume configuration.
 type VolumeConfig interface {
 	NamedDocument
+	Type() optional.Optional[block.VolumeType]
 	Provisioning() VolumeProvisioningConfig
 	Encryption() EncryptionConfig
 }
@@ -56,6 +57,10 @@ type emptyVolumeConfig struct{}
 
 func (emptyVolumeConfig) Name() string {
 	return ""
+}
+
+func (emptyVolumeConfig) Type() optional.Optional[block.VolumeType] {
+	return optional.None[block.VolumeType]()
 }
 
 func (emptyVolumeConfig) Provisioning() VolumeProvisioningConfig {

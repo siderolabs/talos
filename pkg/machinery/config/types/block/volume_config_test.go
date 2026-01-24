@@ -244,6 +244,94 @@ func TestVolumeConfigValidate(t *testing.T) {
 			expectedErrors: "TPM PCR 24 is out of range (0-23)\nTPM PCR 25 is out of range (0-23)",
 		},
 		{
+			name: "memory disallows disk selector",
+
+			cfg: func(t *testing.T) *block.VolumeConfigV1Alpha1 {
+				c := block.NewVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+
+				vt := blockres.VolumeTypeMemory
+				c.VolumeType = &vt
+
+				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`system_disk`)))
+				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("3GiB")
+
+				return c
+			},
+
+			expectedErrors: "disk selector is not allowed for volumeType \"memory\"",
+		},
+		{
+			name: "memory requires min size",
+
+			cfg: func(*testing.T) *block.VolumeConfigV1Alpha1 {
+				c := block.NewVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+
+				vt := blockres.VolumeTypeMemory
+				c.VolumeType = &vt
+
+				return c
+			},
+
+			expectedErrors: "size (provisioning.minSize) is required for volumeType \"memory\"",
+		},
+		{
+			name: "memory disallows max size",
+
+			cfg: func(*testing.T) *block.VolumeConfigV1Alpha1 {
+				c := block.NewVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+
+				vt := blockres.VolumeTypeMemory
+				c.VolumeType = &vt
+				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("3GiB")
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("4GiB")
+
+				return c
+			},
+
+			expectedErrors: "max size is not allowed for volumeType \"memory\"",
+		},
+		{
+			name: "memory disallows encryption",
+
+			cfg: func(*testing.T) *block.VolumeConfigV1Alpha1 {
+				c := block.NewVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+
+				vt := blockres.VolumeTypeMemory
+				c.VolumeType = &vt
+				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("3GiB")
+
+				c.EncryptionSpec.EncryptionProvider = blockres.EncryptionProviderLUKS2
+				c.EncryptionSpec.EncryptionKeys = []block.EncryptionKey{{
+					KeySlot: 0,
+					KeyStatic: &block.EncryptionKeyStatic{
+						KeyData: "topsecret",
+					},
+				}}
+
+				return c
+			},
+
+			expectedErrors: "encryption config is not allowed for volumeType \"memory\"",
+		},
+		{
+			name: "memory valid",
+
+			cfg: func(*testing.T) *block.VolumeConfigV1Alpha1 {
+				c := block.NewVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+
+				vt := blockres.VolumeTypeMemory
+				c.VolumeType = &vt
+				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("3GiB")
+
+				return c
+			},
+		},
+		{
 			name: "valid",
 
 			cfg: func(t *testing.T) *block.VolumeConfigV1Alpha1 {

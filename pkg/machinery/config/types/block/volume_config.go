@@ -64,6 +64,12 @@ type VolumeConfigV1Alpha1 struct {
 	//     Name of the volume.
 	MetaName string `yaml:"name"`
 	//   description: |
+	//     Volume type.
+	//   values:
+	//     - memory
+	//     - partition
+	VolumeType *VolumeType `yaml:"volumeType,omitempty"`
+	//   description: |
 	//     The provisioning describes how the volume is provisioned.
 	ProvisioningSpec ProvisioningSpec `yaml:"provisioning,omitempty"`
 	//   description: |
@@ -178,7 +184,16 @@ func (s *VolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Op
 		validationErrors error
 	)
 
+	vtype := block.VolumeTypePartition
+	if s.VolumeType != nil {
+		vtype = *s.VolumeType
+	}
+
 	if s.MetaName == constants.StatePartitionLabel {
+		if vtype != block.VolumeTypePartition {
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("volumeType %q is not allowed for the %q volume", vtype, s.MetaName))
+		}
+
 		// no provisioning config is allowed for the state partition.
 		if !s.ProvisioningSpec.IsZero() {
 			validationErrors = errors.Join(validationErrors, fmt.Errorf("provisioning config is not allowed for the %q volume", s.MetaName))
@@ -192,13 +207,46 @@ func (s *VolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Op
 		}
 	}
 
-	extraWarnings, extraErrors := s.ProvisioningSpec.Validate(false, true)
-	warnings = append(warnings, extraWarnings...)
-	validationErrors = errors.Join(validationErrors, extraErrors)
+	switch vtype { //nolint:exhaustive
+	case block.VolumeTypePartition:
+		extraWarnings, extraErrors := s.ProvisioningSpec.Validate(false, true)
+		warnings = append(warnings, extraWarnings...)
+		validationErrors = errors.Join(validationErrors, extraErrors)
 
-	extraWarnings, extraErrors = s.EncryptionSpec.Validate()
-	warnings = append(warnings, extraWarnings...)
-	validationErrors = errors.Join(validationErrors, extraErrors)
+		extraWarnings, extraErrors = s.EncryptionSpec.Validate()
+		warnings = append(warnings, extraWarnings...)
+		validationErrors = errors.Join(validationErrors, extraErrors)
+
+	case block.VolumeTypeMemory:
+		if s.MetaName == constants.StatePartitionLabel {
+			// covered above, but keep a dedicated message for clarity
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("volumeType %q is not allowed for the %q volume", vtype, s.MetaName))
+		}
+
+		// memory == tmpfs semantics: only size can be specified.
+		if !s.EncryptionSpec.IsZero() {
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("encryption config is not allowed for volumeType %q", vtype))
+		}
+
+		if !s.ProvisioningSpec.DiskSelectorSpec.Match.IsZero() {
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("disk selector is not allowed for volumeType %q", vtype))
+		}
+
+		if s.ProvisioningSpec.ProvisioningGrow != nil {
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("grow is not allowed for volumeType %q", vtype))
+		}
+
+		if !s.ProvisioningSpec.ProvisioningMaxSize.IsZero() {
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("max size is not allowed for volumeType %q", vtype))
+		}
+
+		if s.ProvisioningSpec.ProvisioningMinSize.IsZero() {
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("size (provisioning.minSize) is required for volumeType %q", vtype))
+		}
+
+	default:
+		validationErrors = errors.Join(validationErrors, fmt.Errorf("unsupported volume type %q", vtype))
+	}
 
 	return warnings, validationErrors
 }
@@ -215,6 +263,15 @@ func (s *VolumeConfigV1Alpha1) Encryption() config.EncryptionConfig {
 	}
 
 	return s.EncryptionSpec
+}
+
+// Type implements config.VolumeConfig interface.
+func (s *VolumeConfigV1Alpha1) Type() optional.Optional[block.VolumeType] {
+	if s.VolumeType == nil {
+		return optional.None[block.VolumeType]()
+	}
+
+	return optional.Some(*s.VolumeType)
 }
 
 // Validate the provisioning spec.

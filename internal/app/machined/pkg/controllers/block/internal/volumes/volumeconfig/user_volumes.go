@@ -125,7 +125,7 @@ func UserVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 				WithConvertEncryptionConfiguration(userVolumeConfig.Encryption()).
 				WriterFunc()
 
-		case block.VolumeTypeTmpfs, block.VolumeTypeSymlink, block.VolumeTypeOverlay, block.VolumeTypeExternal:
+		case block.VolumeTypeTmpfs, block.VolumeTypeSymlink, block.VolumeTypeOverlay, block.VolumeTypeExternal, block.VolumeTypeMemory:
 			fallthrough
 
 		default:

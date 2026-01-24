@@ -36,6 +36,23 @@ func LocateAndProvision(ctx context.Context, logger *zap.Logger, volumeContext M
 		volumeContext.Status.Phase = block.VolumePhaseReady
 
 		return nil
+	case block.VolumeTypeMemory:
+		// memory volumes are always ready, but need size from parameters
+		for _, param := range volumeContext.Cfg.TypedSpec().Mount.Parameters {
+			if param.Name == "size" && param.String != nil {
+				var size uint64
+				if _, err := fmt.Sscanf(*param.String, "%d", &size); err != nil {
+					return fmt.Errorf("failed to parse size parameter: %w", err)
+				}
+				volumeContext.Status.SetSize(size)
+
+				break
+			}
+		}
+
+		volumeContext.Status.Phase = block.VolumePhaseReady
+
+		return nil
 	case block.VolumeTypeExternal:
 		// volume types above are always ready, but need some additional parameters set
 		volumeContext.Status.Phase = block.VolumePhaseReady
@@ -59,7 +76,7 @@ func LocateAndProvision(ctx context.Context, logger *zap.Logger, volumeContext M
 			locatorMatch taloscel.Expression
 		)
 
-		matchContext := map[string]any{}
+		matchContext := map[string]any{"system_disk": false}
 
 		switch {
 		case !volumeContext.Cfg.TypedSpec().Locator.Match.IsZero():
@@ -77,12 +94,18 @@ func LocateAndProvision(ctx context.Context, logger *zap.Logger, volumeContext M
 		for _, diskCtx := range volumeContext.Disks {
 			if dv.ParentDevPath != "" && diskCtx.Disk.DevPath == dv.ParentDevPath {
 				matchContext["disk"] = diskCtx.Disk
+				if val, ok := diskCtx.SystemDisk.Get(); ok {
+					matchContext["system_disk"] = val
+				}
 
 				break
 			}
 
 			if dv.ParentDevPath == "" && diskCtx.Disk.DevPath == dv.DevPath {
 				matchContext["disk"] = diskCtx.Disk
+				if val, ok := diskCtx.SystemDisk.Get(); ok {
+					matchContext["system_disk"] = val
+				}
 
 				break
 			}

@@ -11,6 +11,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/siderolabs/go-pointer"
+
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/volumes"
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -105,6 +107,29 @@ func GetEphemeralVolumeTransformer(inContainer bool) volumeConfigTransformer {
 			volumeConfigurator = func(vc *block.VolumeConfig) error {
 				extraVolumeConfig, _ := cfg.Volumes().ByName(constants.EphemeralPartitionLabel)
 
+				// Check if memory type is specified
+				if extraVolumeConfig.Type().ValueOr(block.VolumeTypePartition) == block.VolumeTypeMemory {
+					minSize := extraVolumeConfig.Provisioning().MinSize().ValueOr(quirks.New("").PartitionSizes().EphemeralMinSize())
+
+					return NewBuilder().
+						WithType(block.VolumeTypeMemory).
+						WithMount(block.MountSpec{
+							TargetPath:   constants.EphemeralMountPoint,
+							SelinuxLabel: constants.EphemeralSelinuxLabel,
+							FileMode:     0o755,
+							UID:          0,
+							GID:          0,
+							Parameters: []block.ParameterSpec{
+								{
+									Type:   block.FSParameterTypeStringValue,
+									Name:   "size",
+									String: pointer.To(fmt.Sprintf("%d", minSize)),
+								},
+							},
+						}).
+						Apply(vc.TypedSpec())
+				}
+				
 				return NewBuilder().
 					WithType(block.VolumeTypePartition).
 					WithProvisioning(block.ProvisioningSpec{
