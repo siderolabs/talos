@@ -508,48 +508,23 @@ func syncManifestsSSA(ctx context.Context, objects []*unstructured.Unstructured,
 		return err
 	}
 
-	ssaOptions := manifests.SSAOptions{
-		FieldManagerName:   constants.KubernetesFieldManagerName,
-		InventoryNamespace: constants.KubernetesInventoryNamespace,
-		InventoryName:      constants.KubernetesBootstrapManifestsInventoryName,
-		SSApplyBehaviorOptions: manifests.SSApplyBehaviorOptions{
-			DryRun:           options.DryRun,
-			InventoryPolicy:  options.InventoryPolicy,
-			ReconcileTimeout: options.ReconcileTimeout,
-			PruneTimeout:     options.PruneTimeout,
-			ForceConflicts:   options.ForceConflicts,
-			NoPrune:          options.NoPrune,
-		},
-	}
-
-	options.Log("comparing with live objects")
-
-	result, err := manifests.DiffSSA(ctx, objects, config, ssaOptions)
-	if err != nil {
-		return err
-	}
-
-	if len(result) == 0 {
-		options.Log("< no changes detected")
-	}
-
-	for _, r := range result {
-		objPath := fmt.Sprintf("%s %s/%s", r.Object.GroupVersionKind().Kind, r.Object.GetNamespace(), r.Object.GetName())
-		if r.Object.GetNamespace() == "" {
-			objPath = fmt.Sprintf("%s %s", r.Object.GroupVersionKind().Kind, r.Object.GetName())
-		}
-
-		options.Log("< %s %s", r.Action, objPath)
-		options.Log("%s", r.Diff)
-	}
-
-	options.Log("applying manifests")
-
-	return manifests.SyncWithLogSSA(
+	return manifests.SyncAndDiffWithLogSSA(
 		ctx,
 		objects,
 		config,
-		ssaOptions,
+		manifests.SSAOptions{
+			FieldManagerName:   constants.KubernetesFieldManagerName,
+			InventoryNamespace: constants.KubernetesInventoryNamespace,
+			InventoryName:      constants.KubernetesBootstrapManifestsInventoryName,
+			SSApplyBehaviorOptions: manifests.SSApplyBehaviorOptions{
+				DryRun:           options.DryRun,
+				InventoryPolicy:  options.InventoryPolicy,
+				ReconcileTimeout: options.ReconcileTimeout,
+				PruneTimeout:     options.PruneTimeout,
+				ForceConflicts:   options.ForceConflicts,
+				NoPrune:          options.NoPrune,
+			},
+		},
 		options.Log,
 	)
 }
