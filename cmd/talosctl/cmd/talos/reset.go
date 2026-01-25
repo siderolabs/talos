@@ -74,6 +74,7 @@ var resetCmdFlags struct {
 	graceful           bool
 	reboot             bool
 	insecure           bool
+	noConfirm          bool
 	wipeMode           WipeMode
 	userDisksToWipe    []string
 	systemLabelsToWipe []string
@@ -86,6 +87,22 @@ var resetCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if !resetCmdFlags.noConfirm {
+			prompt := "Are you sure you want to reset the node(s)"
+
+			if len(GlobalArgs.Nodes) > 0 {
+				nodes := strings.Join(GlobalArgs.Nodes, ", ")
+				prompt = fmt.Sprintf("%s: %s?", prompt, nodes)
+			} else {
+				prompt += " from the current context?"
+			}
+
+			if !helpers.Confirm(prompt) {
+				fmt.Println("Abort.")
+				return nil
+			}
+		}
+
 		if resetCmdFlags.debug {
 			resetCmdFlags.wait = true
 		}
@@ -188,6 +205,7 @@ func init() {
 	resetCmd.Flags().BoolVar(&resetCmdFlags.graceful, "graceful", true, "if true, attempt to cordon/drain node and leave etcd (if applicable)")
 	resetCmd.Flags().BoolVar(&resetCmdFlags.reboot, "reboot", false, "if true, reboot the node after resetting instead of shutting down")
 	resetCmd.Flags().BoolVar(&resetCmdFlags.insecure, "insecure", false, "reset using the insecure (encrypted with no auth) maintenance service")
+	resetCmd.Flags().BoolVarP(&resetCmdFlags.noConfirm, "noconfirm", "y", false, "if set, do not ask for confirmation")
 	resetCmd.Flags().Var(&resetCmdFlags.wipeMode, "wipe-mode", "disk reset mode")
 	resetCmd.Flags().StringSliceVar(&resetCmdFlags.userDisksToWipe, "user-disks-to-wipe", nil, "if set, wipes defined devices in the list")
 	resetCmd.Flags().StringSliceVar(&resetCmdFlags.systemLabelsToWipe, "system-labels-to-wipe", nil, "if set, just wipe selected system disk partitions by label but keep other partitions intact")

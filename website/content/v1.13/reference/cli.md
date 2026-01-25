@@ -2983,6 +2983,7 @@ talosctl reset [flags]
       --graceful                                 if true, attempt to cordon/drain node and leave etcd (if applicable) (default true)
   -h, --help                                     help for reset
       --insecure                                 reset using the insecure (encrypted with no auth) maintenance service
+  -y, --noconfirm                                if set, do not ask for confirmation
   -n, --nodes strings                            target the specified nodes
       --reboot                                   if true, reboot the node after resetting instead of shutting down
       --siderov1-keys-dir string                 The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
