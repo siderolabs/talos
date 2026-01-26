@@ -156,6 +156,13 @@ func editFn(c *client.Client) func(context.Context, string, resource.Resource, e
 }
 
 func stripEditingComment(in []byte) []byte {
+	// Note: on Windows, we use crlf.NewCRLFWriter which converts LF to CRLF before opening the editor.
+	// So this code block below undoes that conversion back to LF for consistent processing.
+	if runtime.GOOS == "windows" {
+		// revert back CRLF to LF for processing
+		in = bytes.ReplaceAll(in, []byte("\r\n"), []byte("\n"))
+	}
+
 	for {
 		idx := bytes.Index(in, []byte{'\n'})
 		if idx == -1 {
