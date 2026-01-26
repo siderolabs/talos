@@ -61,6 +61,16 @@ func SBCs() []SBC {
 			MinVersion: semver.MustParse("1.10.0-beta.0"),
 		},
 		{
+			Name: "rpi5",
+
+			OverlayName:  "rpi5",
+			OverlayImage: "siderolabs/sbc-raspberrypi",
+
+			Label: "Raspberry Pi 5",
+
+			MinVersion: semver.MustParse("1.12.3"),
+		},
+		{
 			Name: "bananapi_m64",
 
 			BoardName: "bananapi_m64",
