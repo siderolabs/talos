@@ -698,6 +698,17 @@ func (VolumeConfigV1Alpha1) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
+				Name:        "volumeType",
+				Type:        "VolumeType",
+				Note:        "",
+				Description: "Volume type.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Volume type." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"memory",
+					"partition",
+				},
+			},
+			{
 				Name:        "provisioning",
 				Type:        "ProvisioningSpec",
 				Note:        "",

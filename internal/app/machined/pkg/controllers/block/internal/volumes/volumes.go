@@ -67,7 +67,8 @@ type DiskContext struct {
 // ToCELContext converts the disk context to CEL contexts.
 func (d *DiskContext) ToCELContext() map[string]any {
 	result := map[string]any{
-		"disk": d.Disk,
+		"disk":        d.Disk,
+		"system_disk": false,
 	}
 
 	if val, ok := d.SystemDisk.Get(); ok {
