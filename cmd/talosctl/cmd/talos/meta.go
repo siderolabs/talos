@@ -43,6 +43,10 @@ var metaWriteCmd = &cobra.Command{
 			return WithClientMaintenance(nil, fn)
 		}
 
+		if GlobalArgs.SkipVerify {
+			return WithClientSkipVerify(fn)
+		}
+
 		return WithClient(fn)
 	},
 }
@@ -64,6 +68,10 @@ var metaDeleteCmd = &cobra.Command{
 
 		if metaCmdFlags.insecure {
 			return WithClientMaintenance(nil, fn)
+		}
+
+		if GlobalArgs.SkipVerify {
+			return WithClientSkipVerify(fn)
 		}
 
 		return WithClient(fn)

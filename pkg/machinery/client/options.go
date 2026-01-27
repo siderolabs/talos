@@ -32,6 +32,7 @@ type Options struct {
 	unixSocketPath      string
 	clusterNameOverride string
 	sideroV1KeysDir     string
+	skipVerify          bool
 }
 
 // OptionFunc sets an option for the creation of the Client.
@@ -153,6 +154,17 @@ func WithCluster(cluster string) OptionFunc {
 func WithSideroV1KeysDir(keysDir string) OptionFunc {
 	return func(o *Options) error {
 		o.sideroV1KeysDir = keysDir
+
+		return nil
+	}
+}
+
+// WithSkipVerify disables TLS certificate verification while preserving client authentication.
+// This is useful when connecting to nodes via IP addresses not listed in the server certificate's SANs,
+// or when the server certificate is signed by an unknown CA.
+func WithSkipVerify() OptionFunc {
+	return func(o *Options) error {
+		o.skipVerify = true
 
 		return nil
 	}
