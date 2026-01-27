@@ -148,10 +148,15 @@ func (suite *NetworkConfigSuite) TestDummyLinkConfig() {
 			RouteDestination: network.Prefix{Prefix: netip.MustParsePrefix("fd13:1235::/64")},
 			RouteGateway:     network.Addr{Addr: netip.MustParseAddr("fd13:1234::ffff")},
 		},
+		{
+			RouteDestination: network.Prefix{Prefix: netip.MustParsePrefix("fd13:1236::/64")},
+			RouteType:        nethelpers.TypeBlackhole,
+		},
 	}
 
 	addressID := dummyName + "/fd13:1234::1/64"
 	routeID := dummyName + "/inet6/fd13:1234::ffff/fd13:1235::/64/1024"
+	routeBlackholeID := "lo" + "/inet6//fd13:1236::/64/1024"
 	addressRouteID := dummyName + "/inet6//fd13:1234::/64/100"
 
 	suite.PatchMachineConfig(nodeCtx, dummy)
@@ -171,9 +176,14 @@ func (suite *NetworkConfigSuite) TestDummyLinkConfig() {
 	)
 
 	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI,
-		[]resource.ID{routeID, addressRouteID},
+		[]resource.ID{routeID, routeBlackholeID, addressRouteID},
 		func(route *networkres.RouteStatus, asrt *assert.Assertions) {
-			asrt.Equal(dummyName, route.TypedSpec().OutLinkName)
+			if route.Metadata().ID() == routeBlackholeID {
+				asrt.Equal(nethelpers.TypeBlackhole, route.TypedSpec().Type)
+			} else {
+				asrt.Equal(dummyName, route.TypedSpec().OutLinkName)
+				asrt.Equal(nethelpers.TypeUnicast, route.TypedSpec().Type)
+			}
 		},
 	)
 
@@ -183,6 +193,7 @@ func (suite *NetworkConfigSuite) TestDummyLinkConfig() {
 	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.COSI, addressID)
 	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.COSI, addressRouteID)
 	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.COSI, routeID)
+	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.COSI, routeBlackholeID)
 }
 
 // TestLinkConfig tests configuring physical links.

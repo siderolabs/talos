@@ -17,6 +17,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
 //go:embed testdata/linkconfig.yaml
@@ -44,6 +45,7 @@ func TestLinkConfigMarshalStability(t *testing.T) {
 		},
 		{
 			RouteGateway: network.Addr{netip.MustParseAddr("fe80::1")},
+			RouteType:    nethelpers.TypeBlackhole,
 		},
 	}
 	cfg.LinkMulticast = pointer.To(true)
@@ -90,6 +92,7 @@ func TestLinkConfigUnmarshal(t *testing.T) {
 				},
 				{
 					RouteGateway: network.Addr{netip.MustParseAddr("fe80::1")},
+					RouteType:    nethelpers.TypeBlackhole,
 				},
 			},
 			LinkMulticast: pointer.To(true),
