@@ -77,8 +77,6 @@ const (
 	MachineService_MetaDelete_FullMethodName                  = "/machine.MachineService/MetaDelete"
 	MachineService_ImageList_FullMethodName                   = "/machine.MachineService/ImageList"
 	MachineService_ImagePull_FullMethodName                   = "/machine.MachineService/ImagePull"
-	MachineService_DebugContainerCreate_FullMethodName        = "/machine.MachineService/DebugContainerCreate"
-	MachineService_DebugContainerRun_FullMethodName           = "/machine.MachineService/DebugContainerRun"
 )
 
 // MachineServiceClient is the client API for MachineService service.
@@ -173,14 +171,16 @@ type MachineServiceClient interface {
 	MetaWrite(ctx context.Context, in *MetaWriteRequest, opts ...grpc.CallOption) (*MetaWriteResponse, error)
 	// MetaDelete deletes a META key.
 	MetaDelete(ctx context.Context, in *MetaDeleteRequest, opts ...grpc.CallOption) (*MetaDeleteResponse, error)
+	// Deprecated: Do not use.
 	// ImageList lists images in the CRI.
+	//
+	// Use ImageService List RPC instead.
 	ImageList(ctx context.Context, in *ImageListRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ImageListResponse], error)
+	// Deprecated: Do not use.
 	// ImagePull pulls an image into the CRI.
+	//
+	// Use ImageService Pull RPC instead.
 	ImagePull(ctx context.Context, in *ImagePullRequest, opts ...grpc.CallOption) (*ImagePullResponse, error)
-	// DebugContainerCreate
-	DebugContainerCreate(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[DebugContainerCreateRequest, DebugContainerCreateResponse], error)
-	// DebugContainerRun
-	DebugContainerRun(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[DebugContainerRunRequest, DebugContainerRunResponse], error)
 }
 
 type machineServiceClient struct {
@@ -804,6 +804,7 @@ func (c *machineServiceClient) MetaDelete(ctx context.Context, in *MetaDeleteReq
 	return out, nil
 }
 
+// Deprecated: Do not use.
 func (c *machineServiceClient) ImageList(ctx context.Context, in *ImageListRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ImageListResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[11], MachineService_ImageList_FullMethodName, cOpts...)
@@ -823,6 +824,7 @@ func (c *machineServiceClient) ImageList(ctx context.Context, in *ImageListReque
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type MachineService_ImageListClient = grpc.ServerStreamingClient[ImageListResponse]
 
+// Deprecated: Do not use.
 func (c *machineServiceClient) ImagePull(ctx context.Context, in *ImagePullRequest, opts ...grpc.CallOption) (*ImagePullResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ImagePullResponse)
@@ -832,32 +834,6 @@ func (c *machineServiceClient) ImagePull(ctx context.Context, in *ImagePullReque
 	}
 	return out, nil
 }
-
-func (c *machineServiceClient) DebugContainerCreate(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[DebugContainerCreateRequest, DebugContainerCreateResponse], error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[12], MachineService_DebugContainerCreate_FullMethodName, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &grpc.GenericClientStream[DebugContainerCreateRequest, DebugContainerCreateResponse]{ClientStream: stream}
-	return x, nil
-}
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type MachineService_DebugContainerCreateClient = grpc.BidiStreamingClient[DebugContainerCreateRequest, DebugContainerCreateResponse]
-
-func (c *machineServiceClient) DebugContainerRun(ctx context.Context, opts ...grpc.CallOption) (grpc.BidiStreamingClient[DebugContainerRunRequest, DebugContainerRunResponse], error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[13], MachineService_DebugContainerRun_FullMethodName, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	x := &grpc.GenericClientStream[DebugContainerRunRequest, DebugContainerRunResponse]{ClientStream: stream}
-	return x, nil
-}
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type MachineService_DebugContainerRunClient = grpc.BidiStreamingClient[DebugContainerRunRequest, DebugContainerRunResponse]
 
 // MachineServiceServer is the server API for MachineService service.
 // All implementations must embed UnimplementedMachineServiceServer
@@ -951,14 +927,16 @@ type MachineServiceServer interface {
 	MetaWrite(context.Context, *MetaWriteRequest) (*MetaWriteResponse, error)
 	// MetaDelete deletes a META key.
 	MetaDelete(context.Context, *MetaDeleteRequest) (*MetaDeleteResponse, error)
+	// Deprecated: Do not use.
 	// ImageList lists images in the CRI.
+	//
+	// Use ImageService List RPC instead.
 	ImageList(*ImageListRequest, grpc.ServerStreamingServer[ImageListResponse]) error
+	// Deprecated: Do not use.
 	// ImagePull pulls an image into the CRI.
+	//
+	// Use ImageService Pull RPC instead.
 	ImagePull(context.Context, *ImagePullRequest) (*ImagePullResponse, error)
-	// DebugContainerCreate
-	DebugContainerCreate(grpc.BidiStreamingServer[DebugContainerCreateRequest, DebugContainerCreateResponse]) error
-	// DebugContainerRun
-	DebugContainerRun(grpc.BidiStreamingServer[DebugContainerRunRequest, DebugContainerRunResponse]) error
 	mustEmbedUnimplementedMachineServiceServer()
 }
 
@@ -1130,12 +1108,6 @@ func (UnimplementedMachineServiceServer) ImageList(*ImageListRequest, grpc.Serve
 }
 func (UnimplementedMachineServiceServer) ImagePull(context.Context, *ImagePullRequest) (*ImagePullResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ImagePull not implemented")
-}
-func (UnimplementedMachineServiceServer) DebugContainerCreate(grpc.BidiStreamingServer[DebugContainerCreateRequest, DebugContainerCreateResponse]) error {
-	return status.Error(codes.Unimplemented, "method DebugContainerCreate not implemented")
-}
-func (UnimplementedMachineServiceServer) DebugContainerRun(grpc.BidiStreamingServer[DebugContainerRunRequest, DebugContainerRunResponse]) error {
-	return status.Error(codes.Unimplemented, "method DebugContainerRun not implemented")
 }
 func (UnimplementedMachineServiceServer) mustEmbedUnimplementedMachineServiceServer() {}
 func (UnimplementedMachineServiceServer) testEmbeddedByValue()                        {}
@@ -2042,20 +2014,6 @@ func _MachineService_ImagePull_Handler(srv interface{}, ctx context.Context, dec
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MachineService_DebugContainerCreate_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(MachineServiceServer).DebugContainerCreate(&grpc.GenericServerStream[DebugContainerCreateRequest, DebugContainerCreateResponse]{ServerStream: stream})
-}
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type MachineService_DebugContainerCreateServer = grpc.BidiStreamingServer[DebugContainerCreateRequest, DebugContainerCreateResponse]
-
-func _MachineService_DebugContainerRun_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(MachineServiceServer).DebugContainerRun(&grpc.GenericServerStream[DebugContainerRunRequest, DebugContainerRunResponse]{ServerStream: stream})
-}
-
-// This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
-type MachineService_DebugContainerRunServer = grpc.BidiStreamingServer[DebugContainerRunRequest, DebugContainerRunResponse]
-
 // MachineService_ServiceDesc is the grpc.ServiceDesc for MachineService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -2292,18 +2250,6 @@ var MachineService_ServiceDesc = grpc.ServiceDesc{
 			StreamName:    "ImageList",
 			Handler:       _MachineService_ImageList_Handler,
 			ServerStreams: true,
-		},
-		{
-			StreamName:    "DebugContainerCreate",
-			Handler:       _MachineService_DebugContainerCreate_Handler,
-			ServerStreams: true,
-			ClientStreams: true,
-		},
-		{
-			StreamName:    "DebugContainerRun",
-			Handler:       _MachineService_DebugContainerRun_Handler,
-			ServerStreams: true,
-			ClientStreams: true,
 		},
 	},
 	Metadata: "machine/machine.proto",

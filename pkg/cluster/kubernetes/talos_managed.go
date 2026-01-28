@@ -172,6 +172,7 @@ func prePullImages(ctx context.Context, talosClient *client.Client, options Upgr
 		for _, node := range options.controlPlaneNodes {
 			options.Log(" > %q: pre-pulling %s", node, imageRef)
 
+			//nolint:staticcheck // using legacy method, but should be refactored
 			err := talosClient.ImagePull(client.WithNode(ctx, node), common.ContainerdNamespace_NS_CRI, imageRef)
 			if err != nil {
 				if status.Code(err) == codes.Unimplemented {
@@ -198,6 +199,7 @@ func prePullImages(ctx context.Context, talosClient *client.Client, options Upgr
 
 		options.Log(" > %q: pre-pulling %s", node, imageRef)
 
+		//nolint:staticcheck // using legacy method, but should be refactored
 		err = talosClient.ImagePull(client.WithNode(ctx, node), common.ContainerdNamespace_NS_SYSTEM, imageRef)
 		if err != nil {
 			if status.Code(err) == codes.Unimplemented {

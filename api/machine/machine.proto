@@ -100,13 +100,19 @@ service MachineService {
   // MetaDelete deletes a META key.
   rpc MetaDelete(MetaDeleteRequest) returns (MetaDeleteResponse);
   // ImageList lists images in the CRI.
-  rpc ImageList(ImageListRequest) returns (stream ImageListResponse);
+  //
+  // Use ImageService List RPC instead.
+  rpc ImageList(ImageListRequest) returns (stream ImageListResponse) {
+    option (common.remove_deprecated_method) = "v1.18";
+    option deprecated = true;
+  }
   // ImagePull pulls an image into the CRI.
-  rpc ImagePull(ImagePullRequest) returns (ImagePullResponse);
-  // DebugContainerCreate
-  rpc DebugContainerCreate(stream DebugContainerCreateRequest) returns (stream DebugContainerCreateResponse);
-  // DebugContainerRun
-  rpc DebugContainerRun(stream DebugContainerRunRequest) returns (stream DebugContainerRunResponse);
+  //
+  // Use ImageService Pull RPC instead.
+  rpc ImagePull(ImagePullRequest) returns (ImagePullResponse) {
+    option (common.remove_deprecated_method) = "v1.18";
+    option deprecated = true;
+  }
 }
 
 // rpc applyConfiguration
@@ -1405,62 +1411,4 @@ message ImagePull {
 
 message ImagePullResponse {
   repeated ImagePull messages = 1;
-}
-
-message DebugContainerCreateRequest {
-  oneof request {
-    DebugContainerSpec spec = 1;
-    common.Data image_chunk = 2;
-  }
-}
-
-message DebugContainerSpec {
-  string image_ref = 1;
-  repeated string args = 2;
-  map<string, string> env = 3;
-}
-
-message DebugContainerCreateResponse {
-  oneof response {
-    ImagePullProgress pull_progress = 1;
-    string container_id = 2;
-  }
-}
-
-message DebugContainerRunRequest {
-  oneof request {
-    string container_id = 1;
-    bytes stdin_data = 2;
-    int32 signal = 3;
-    DebugContainerTerminalResize term_resize = 4;
-  }
-}
-
-message DebugContainerTerminalResize {
-  int32 width = 1;
-  int32 height = 2;
-}
-
-message ImagePullLayerProgress {
-  enum Status {
-    DOWNLOADING = 0;
-    DOWNLOAD_COMPLETE = 1;
-    EXTRACTING = 2;
-    EXTRACT_COMPLETE = 3;
-    ALREADY_EXISTS = 4;
-  }
-  Status status = 1;
-  double progress = 2;
-}
-
-message ImagePullProgress{
-  string layer_id = 1;
-  ImagePullLayerProgress progress = 2;
-}
-
-message DebugContainerRunResponse {
-  oneof resp {
-    bytes stdout_data = 2;
-    int32 exit_code = 3;
-  }
 }

@@ -80,26 +80,50 @@ func (c *Args) WithClientNoNodes(action func(context.Context, *client.Client) er
 // ErrConfigContext is returned when config context cannot be resolved.
 var ErrConfigContext = errors.New("failed to resolve config context")
 
+func (c *Args) getNodes(cli *client.Client) ([]string, error) {
+	if len(c.Nodes) < 1 {
+		configContext := cli.GetConfigContext()
+		if configContext == nil {
+			return nil, ErrConfigContext
+		}
+
+		c.Nodes = configContext.Nodes
+	}
+
+	if len(c.Nodes) < 1 {
+		return nil, errors.New("nodes are not set for the command: please use `--nodes` flag or configuration file to set the nodes to run the command against")
+	}
+
+	return c.Nodes, nil
+}
+
 // WithClient builds upon WithClientNoNodes to provide set of nodes on request context based on config & flags.
 func (c *Args) WithClient(action func(context.Context, *client.Client) error, dialOptions ...grpc.DialOption) error {
 	return c.WithClientNoNodes(
 		func(ctx context.Context, cli *client.Client) error {
-			if len(c.Nodes) < 1 {
-				configContext := cli.GetConfigContext()
-				if configContext == nil {
-					return ErrConfigContext
-				}
-
-				c.Nodes = configContext.Nodes
+			nodes, err := c.getNodes(cli)
+			if err != nil {
+				return err
 			}
 
-			if len(c.Nodes) < 1 {
-				return errors.New("nodes are not set for the command: please use `--nodes` flag or configuration file to set the nodes to run the command against")
-			}
-
-			ctx = client.WithNodes(ctx, c.Nodes...)
+			ctx = client.WithNodes(ctx, nodes...)
 
 			return action(ctx, cli)
+		},
+		dialOptions...,
+	)
+}
+
+// WithClientAndNodes builds upon WithClientNoNodes to provide a list of nodes to the function.
+func (c *Args) WithClientAndNodes(action func(context.Context, *client.Client, []string) error, dialOptions ...grpc.DialOption) error {
+	return c.WithClientNoNodes(
+		func(ctx context.Context, cli *client.Client) error {
+			nodes, err := c.getNodes(cli)
+			if err != nil {
+				return err
+			}
+
+			return action(ctx, cli, nodes)
 		},
 		dialOptions...,
 	)

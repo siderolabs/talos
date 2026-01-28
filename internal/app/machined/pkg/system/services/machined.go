@@ -38,14 +38,18 @@ var rules = map[string]role.Set{
 
 	"/inspect.InspectService/ControllerRuntimeDependencies": role.MakeSet(role.Admin, role.Operator, role.Reader),
 
+	"/machine.DebugService/ContainerRun": role.MakeSet(role.Admin),
+
+	"/machine.ImageService/List":   role.MakeSet(role.Admin, role.Operator, role.Reader),
+	"/machine.ImageService/Pull":   role.MakeSet(role.Admin, role.Operator),
+	"/machine.ImageService/Import": role.MakeSet(role.Admin),
+
 	"/machine.MachineService/ApplyConfiguration":          role.MakeSet(role.Admin),
 	"/machine.MachineService/Bootstrap":                   role.MakeSet(role.Admin),
 	"/machine.MachineService/CPUInfo":                     role.MakeSet(role.Admin, role.Operator, role.Reader),
 	"/machine.MachineService/CPUFreqStats":                role.MakeSet(role.Admin, role.Operator, role.Reader),
 	"/machine.MachineService/Containers":                  role.MakeSet(role.Admin, role.Operator, role.Reader),
 	"/machine.MachineService/Copy":                        role.MakeSet(role.Admin),
-	"/machine.MachineService/DebugContainerCreate":        role.MakeSet(role.Admin),
-	"/machine.MachineService/DebugContainerRun":           role.MakeSet(role.Admin),
 	"/machine.MachineService/DiskStats":                   role.MakeSet(role.Admin, role.Operator, role.Reader),
 	"/machine.MachineService/DiskUsage":                   role.MakeSet(role.Admin, role.Operator, role.Reader),
 	"/machine.MachineService/Dmesg":                       role.MakeSet(role.Admin, role.Operator, role.Reader),

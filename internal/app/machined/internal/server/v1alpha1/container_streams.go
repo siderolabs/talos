@@ -4,6 +4,7 @@
 
 package runtime
 
+/*
 import (
 	"context"
 	"io"
@@ -172,3 +173,4 @@ func (g *grpcStdioStreamer) sendLoop() {
 		}
 	}
 }
+*/

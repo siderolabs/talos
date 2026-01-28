@@ -37,6 +37,8 @@ const (
 )
 
 // LayerPullProgress represents the progress of an image pull operation.
+//
+// Note: keep this in sync machine/images.proto.
 type LayerPullProgress struct {
 	LayerID string
 	Status  LayerPullStatus

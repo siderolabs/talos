@@ -4,6 +4,7 @@
 
 package talos
 
+/*
 import (
 	"context"
 	"errors"
@@ -643,3 +644,4 @@ func (p *pullProgressWriter) printLayerProgress() {
 		Status:  reporter.StatusRunning,
 	})
 }
+*/

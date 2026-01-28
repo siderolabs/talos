@@ -4,6 +4,7 @@
 
 package runtime
 
+/*
 import (
 	"context"
 	"crypto/rand"
@@ -528,3 +529,4 @@ func runAndAttachContainer(
 
 	return nil
 }
+*/
