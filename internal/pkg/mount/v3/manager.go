@@ -210,13 +210,19 @@ func WithMountAttributes(flags int) ManagerOption {
 	}
 }
 
+// WithDisableAccessTime sets MOUNT_ATTR_NOATIME.
+func WithDisableAccessTime() ManagerOption {
+	return WithMountAttributes(unix.MOUNT_ATTR_NOATIME)
+}
+
+// WithSecure sets MOUNT_ATTR_NOSUID and MOUNT_ATTR_NODEV.
+func WithSecure() ManagerOption {
+	return WithMountAttributes(unix.MOUNT_ATTR_NOSUID | unix.MOUNT_ATTR_NODEV)
+}
+
 // WithReadOnly sets the mount as read only.
 func WithReadOnly() ManagerOption {
-	return ManagerOption{
-		set: func(m *Manager) {
-			m.mountattr |= unix.MOUNT_ATTR_RDONLY
-		},
-	}
+	return WithMountAttributes(unix.MOUNT_ATTR_RDONLY)
 }
 
 // WithDetached sets the mount as detached.

@@ -608,6 +608,28 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 
 	suite.Require().Empty(expectedLabels, "expected labels %v to be set on discovered volumes", expectedLabels)
 
+	// test disableAccessTime mount option
+	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountDisableAccessTime = pointer.To(true)
+	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountSecure = pointer.To(false)
+	suite.PatchMachineConfig(ctx, configDocs...)
+
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{userVolumeIDs[0]},
+		func(vs *block.MountStatus, asrt *assert.Assertions) {
+			asrt.False(vs.TypedSpec().Spec.Secure, "expected Secure to be false")
+			asrt.True(vs.TypedSpec().Spec.DisableAccessTime, "expected DisableAccessTime to be true")
+		})
+
+	// test secure mount option
+	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountDisableAccessTime = pointer.To(false)
+	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountSecure = pointer.To(true)
+	suite.PatchMachineConfig(ctx, configDocs...)
+
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{userVolumeIDs[0]},
+		func(vs *block.MountStatus, asrt *assert.Assertions) {
+			asrt.False(vs.TypedSpec().Spec.DisableAccessTime, "expected DisableAccessTime to be false")
+			asrt.True(vs.TypedSpec().Spec.Secure, "expected Secure to be true")
+		})
+
 	// now, remove one of the volumes, wipe the partition and re-create the volume
 	vs, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, userVolumeIDs[0])
 	suite.Require().NoError(err)
@@ -781,6 +803,28 @@ func (suite *VolumesSuite) TestUserVolumesDisk() {
 
 		return nil
 	}))
+
+	// test disableAccessTime mount option
+	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountDisableAccessTime = pointer.To(true)
+	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountSecure = pointer.To(false)
+	suite.PatchMachineConfig(ctx, configDocs...)
+
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{userVolumeIDs[0]},
+		func(vs *block.MountStatus, asrt *assert.Assertions) {
+			asrt.False(vs.TypedSpec().Spec.Secure, "expected Secure to be false")
+			asrt.True(vs.TypedSpec().Spec.DisableAccessTime, "expected DisableAccessTime to be true")
+		})
+
+	// test secure mount option
+	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountDisableAccessTime = pointer.To(false)
+	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountSecure = pointer.To(true)
+	suite.PatchMachineConfig(ctx, configDocs...)
+
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{userVolumeIDs[0]},
+		func(vs *block.MountStatus, asrt *assert.Assertions) {
+			asrt.False(vs.TypedSpec().Spec.DisableAccessTime, "expected DisableAccessTime to be false")
+			asrt.True(vs.TypedSpec().Spec.Secure, "expected Secure to be true")
+		})
 
 	// now, remove one of the volumes, wipe the partition and re-create the volume
 	vs, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, userVolumeIDs[0])
@@ -1104,6 +1148,8 @@ func (suite *VolumesSuite) TestRawVolumes() {
 }
 
 // TestExistingVolumes performs a series of operations on existing volumes: mount/unmount, etc.
+//
+//nolint:gocyclo
 func (suite *VolumesSuite) TestExistingVolumes() {
 	if testing.Short() {
 		suite.T().Skip("skipping test in short mode.")
@@ -1229,6 +1275,27 @@ func (suite *VolumesSuite) TestExistingVolumes() {
 	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{existingVolumeID},
 		func(vs *block.MountStatus, asrt *assert.Assertions) {
 			asrt.True(vs.TypedSpec().ReadOnly)
+		})
+
+	// test disableAccessTime mount option
+	existingVolumeDoc.MountSpec.MountReadOnly = nil
+	existingVolumeDoc.MountSpec.MountDisableAccessTime = pointer.To(true)
+	existingVolumeDoc.MountSpec.MountSecure = pointer.To(false)
+	suite.PatchMachineConfig(ctx, existingVolumeDoc)
+
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{existingVolumeID},
+		func(vs *block.MountStatus, asrt *assert.Assertions) {
+			asrt.True(vs.TypedSpec().Spec.DisableAccessTime, "expected DisableAccessTime to be true")
+		})
+
+	// test secure mount option
+	existingVolumeDoc.MountSpec.MountDisableAccessTime = pointer.To(false)
+	existingVolumeDoc.MountSpec.MountSecure = pointer.To(true)
+	suite.PatchMachineConfig(ctx, existingVolumeDoc)
+
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{existingVolumeID},
+		func(vs *block.MountStatus, asrt *assert.Assertions) {
+			asrt.True(vs.TypedSpec().Spec.Secure, "expected Secure to be true")
 		})
 
 	// clean up

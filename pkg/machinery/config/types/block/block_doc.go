@@ -398,6 +398,20 @@ func (MountSpec) Doc() *encoder.Doc {
 				Description: "Mount the volume read-only.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Mount the volume read-only." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "disableAccessTime",
+				Type:        "bool",
+				Note:        "",
+				Description: "If true, disable file access time updates.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "If true, disable file access time updates." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "secure",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable secure mount options (nosuid, nodev).\n\nDefaults to true for better security.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable secure mount options (nosuid, nodev)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
@@ -465,6 +479,20 @@ func (ExternalMountSpec) Doc() *encoder.Doc {
 				Note:        "",
 				Description: "Mount the volume read-only.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Mount the volume read-only." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "disableAccessTime",
+				Type:        "bool",
+				Note:        "",
+				Description: "If true, disable file access time updates.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "If true, disable file access time updates." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "secure",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable secure mount options (nosuid, nodev).\n\nDefaults to true for better security.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable secure mount options (nosuid, nodev)." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
 				Name:        "virtiofs",
@@ -632,6 +660,13 @@ func (UserVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "The encryption describes how the volume is encrypted.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The encryption describes how the volume is encrypted." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "mount",
+				Type:        "UserMountSpec",
+				Note:        "",
+				Description: "The mount describes additional mount options.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The mount describes additional mount options." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
@@ -640,6 +675,38 @@ func (UserVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	doc.AddExample("", exampleUserVolumeConfigV1Alpha1Disk())
 
 	doc.AddExample("", exampleUserVolumeConfigV1Alpha1Partition())
+
+	return doc
+}
+
+func (UserMountSpec) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "UserMountSpec",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "UserMountSpec describes how the volume is mounted." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "UserMountSpec describes how the volume is mounted.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "UserVolumeConfigV1Alpha1",
+				FieldName: "mount",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "disableAccessTime",
+				Type:        "bool",
+				Note:        "",
+				Description: "If true, disable file access time updates.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "If true, disable file access time updates." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "secure",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable secure mount options (nosuid, nodev).\n\nDefaults to true for better security.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable secure mount options (nosuid, nodev)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
 
 	return doc
 }
@@ -864,6 +931,7 @@ func GetFileDoc() *encoder.FileDoc {
 			RawVolumeConfigV1Alpha1{}.Doc(),
 			SwapVolumeConfigV1Alpha1{}.Doc(),
 			UserVolumeConfigV1Alpha1{}.Doc(),
+			UserMountSpec{}.Doc(),
 			FilesystemSpec{}.Doc(),
 			VolumeConfigV1Alpha1{}.Doc(),
 			ProvisioningSpec{}.Doc(),

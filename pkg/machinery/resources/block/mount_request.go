@@ -29,6 +29,9 @@ type MountRequestSpec struct {
 	ReadOnly      bool   `yaml:"readOnly" protobuf:"5"`
 	Detached      bool   `yaml:"detached" protobuf:"6"`
 
+	DisableAccessTime bool `yaml:"disableAccessTime,omitempty" protobuf:"7"`
+	Secure            bool `yaml:"secure,omitempty" protobuf:"8"`
+
 	Requesters   []string `yaml:"requesters" protobuf:"3"`
 	RequesterIDs []string `yaml:"requesterIDs" protobuf:"4"`
 }

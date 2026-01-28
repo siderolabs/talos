@@ -86,6 +86,14 @@ type ExternalMountSpec struct {
 	//   description: |
 	//     Mount the volume read-only.
 	MountReadOnly *bool `yaml:"readOnly,omitempty"`
+	//   description: |
+	//     If true, disable file access time updates.
+	MountDisableAccessTime *bool `yaml:"disableAccessTime,omitempty"`
+	//   description: |
+	//     Enable secure mount options (nosuid, nodev).
+	//
+	//     Defaults to true for better security.
+	MountSecure *bool `yaml:"secure,omitempty"`
 
 	//   description: |
 	//     Virtiofs mount options.
@@ -194,9 +202,23 @@ func (s *ExternalVolumeConfigV1Alpha1) Mount() config.ExternalMountConfig {
 	return s.MountSpec
 }
 
-// ReadOnly implements config.VolumeMountConfig interface.
+// ReadOnly implements config.ExternalMountConfig interface.
 func (s ExternalMountSpec) ReadOnly() bool {
 	return pointer.SafeDeref(s.MountReadOnly)
+}
+
+// DisableAccessTime implements config.ExternalMountConfig interface.
+func (s ExternalMountSpec) DisableAccessTime() bool {
+	return pointer.SafeDeref(s.MountDisableAccessTime)
+}
+
+// Secure implements config.ExternalMountConfig interface.
+func (s ExternalMountSpec) Secure() bool {
+	if s.MountSecure == nil {
+		return true
+	}
+
+	return *s.MountSecure
 }
 
 // Virtiofs implements config.VolumeMountConfig interface.
