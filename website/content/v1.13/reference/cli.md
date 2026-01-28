@@ -1134,6 +1134,41 @@ talosctl dashboard [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl debug
+
+Run a debug container from an image archive or reference
+
+```
+talosctl debug <image-tar-path|image ref> [args] [flags]
+```
+
+### Examples
+
+```
+  # Run a debug container from a local tar archive
+    talosctl -n 172.20.0.2 debug ./debug-tools.tar --args /bin/sh
+
+  # Run a debug container from an image reference
+    talosctl -n 172.20.0.2 debug docker.io/library/alpine:latest --args /bin/sh
+```
+
+### Options
+
+```
+      --args strings               arguments to pass to the container
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
+      --context string             Context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+  -h, --help                       help for debug
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
+      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+
 ## talosctl dmesg
 
 Retrieve kernel logs
@@ -3482,6 +3517,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl containers](#talosctl-containers)	 - List containers
 * [talosctl copy](#talosctl-copy)	 - Copy data out from the node
 * [talosctl dashboard](#talosctl-dashboard)	 - Cluster dashboard with node overview, logs and real-time metrics
+* [talosctl debug](#talosctl-debug)	 - Run a debug container from an image archive or reference
 * [talosctl dmesg](#talosctl-dmesg)	 - Retrieve kernel logs
 * [talosctl edit](#talosctl-edit)	 - Edit Talos node machine configuration with the default editor.
 * [talosctl etcd](#talosctl-etcd)	 - Manage etcd

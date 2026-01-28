@@ -84,6 +84,27 @@ type NewProgressReporter func(imageRef string) ProgressReporter
 // RegistriesBuilder is a function that returns registries configuration.
 type RegistriesBuilder = func(context.Context) (cri.Registries, error)
 
+// NewSimpleProgressReporter creates a simple progress reporter that just needs Update function.
+func NewSimpleProgressReporter(updateFn func(progress.LayerPullProgress)) NewProgressReporter {
+	return func(imageRef string) ProgressReporter {
+		return &simpleProgressReporter{
+			updateFn: updateFn,
+		}
+	}
+}
+
+type simpleProgressReporter struct {
+	updateFn func(progress.LayerPullProgress)
+}
+
+func (s *simpleProgressReporter) Start() {}
+
+func (s *simpleProgressReporter) Stop() {}
+
+func (s *simpleProgressReporter) Update(p progress.LayerPullProgress) {
+	s.updateFn(p)
+}
+
 // Pull is a convenience function that wraps the containerd image pull func with
 // retry functionality.
 //

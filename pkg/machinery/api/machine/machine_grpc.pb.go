@@ -171,9 +171,15 @@ type MachineServiceClient interface {
 	MetaWrite(ctx context.Context, in *MetaWriteRequest, opts ...grpc.CallOption) (*MetaWriteResponse, error)
 	// MetaDelete deletes a META key.
 	MetaDelete(ctx context.Context, in *MetaDeleteRequest, opts ...grpc.CallOption) (*MetaDeleteResponse, error)
+	// Deprecated: Do not use.
 	// ImageList lists images in the CRI.
+	//
+	// Use ImageService List RPC instead.
 	ImageList(ctx context.Context, in *ImageListRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ImageListResponse], error)
+	// Deprecated: Do not use.
 	// ImagePull pulls an image into the CRI.
+	//
+	// Use ImageService Pull RPC instead.
 	ImagePull(ctx context.Context, in *ImagePullRequest, opts ...grpc.CallOption) (*ImagePullResponse, error)
 }
 
@@ -798,6 +804,7 @@ func (c *machineServiceClient) MetaDelete(ctx context.Context, in *MetaDeleteReq
 	return out, nil
 }
 
+// Deprecated: Do not use.
 func (c *machineServiceClient) ImageList(ctx context.Context, in *ImageListRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ImageListResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	stream, err := c.cc.NewStream(ctx, &MachineService_ServiceDesc.Streams[11], MachineService_ImageList_FullMethodName, cOpts...)
@@ -817,6 +824,7 @@ func (c *machineServiceClient) ImageList(ctx context.Context, in *ImageListReque
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type MachineService_ImageListClient = grpc.ServerStreamingClient[ImageListResponse]
 
+// Deprecated: Do not use.
 func (c *machineServiceClient) ImagePull(ctx context.Context, in *ImagePullRequest, opts ...grpc.CallOption) (*ImagePullResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ImagePullResponse)
@@ -919,9 +927,15 @@ type MachineServiceServer interface {
 	MetaWrite(context.Context, *MetaWriteRequest) (*MetaWriteResponse, error)
 	// MetaDelete deletes a META key.
 	MetaDelete(context.Context, *MetaDeleteRequest) (*MetaDeleteResponse, error)
+	// Deprecated: Do not use.
 	// ImageList lists images in the CRI.
+	//
+	// Use ImageService List RPC instead.
 	ImageList(*ImageListRequest, grpc.ServerStreamingServer[ImageListResponse]) error
+	// Deprecated: Do not use.
 	// ImagePull pulls an image into the CRI.
+	//
+	// Use ImageService Pull RPC instead.
 	ImagePull(context.Context, *ImagePullRequest) (*ImagePullResponse, error)
 	mustEmbedUnimplementedMachineServiceServer()
 }

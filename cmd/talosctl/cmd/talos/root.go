@@ -47,6 +47,11 @@ func WithClient(action func(context.Context, *client.Client) error, dialOptions 
 	return GlobalArgs.WithClient(action, dialOptions...)
 }
 
+// WithClientAndNodes builds upon WithClientNoNodes to pass a list of nodes via command function.
+func WithClientAndNodes(action func(context.Context, *client.Client, []string) error, dialOptions ...grpc.DialOption) error {
+	return GlobalArgs.WithClientAndNodes(action, dialOptions...)
+}
+
 // WithClientMaintenance wraps common code to initialize Talos client in maintenance (insecure mode).
 func WithClientMaintenance(enforceFingerprints []string, action func(context.Context, *client.Client) error) error {
 	return GlobalArgs.WithClientMaintenance(enforceFingerprints, action)
