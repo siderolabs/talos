@@ -15,7 +15,27 @@ jobs:
           echo "version=${VERSION}" >> $GITHUB_OUTPUT
           echo "Version: ${VERSION}"
 
+      - name: Check if release is latest
+        id: check-latest
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          LATEST_TAG=$(gh release view --repo ${{ github.repository }} --json tagName -q '.tagName')
+          CURRENT_TAG="${GITHUB_REF#refs/tags/}"
+
+          echo "Latest release tag: ${LATEST_TAG}"
+          echo "Current release tag: ${CURRENT_TAG}"
+
+          if [ "${CURRENT_TAG}" != "${LATEST_TAG}" ]; then
+            echo "This release (${CURRENT_TAG}) is not the latest (${LATEST_TAG}). Skipping update."
+            echo "is_latest=false" >> $GITHUB_OUTPUT
+          else
+            echo "This release is the latest. Proceeding with update."
+            echo "is_latest=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Checkout homebrew-tap repository
+        if: steps.check-latest.outputs.is_latest == 'true'
         uses: actions/checkout@v6
         with:
           repository: siderolabs/homebrew-tap
@@ -23,6 +43,7 @@ jobs:
           path: homebrew-tap
 
       - name: Update Homebrew formula
+        if: steps.check-latest.outputs.is_latest == 'true'
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
@@ -57,6 +78,7 @@ jobs:
           cat "${FORMULA}"
 
       - name: Commit and push changes
+        if: steps.check-latest.outputs.is_latest == 'true'
         env:
           VERSION: ${{ steps.version.outputs.version }}
         run: |
@@ -71,6 +93,7 @@ jobs:
           git push origin "update-talosctl-v${VERSION}"
 
       - name: Create Pull Request
+        if: steps.check-latest.outputs.is_latest == 'true'
         env:
           VERSION: ${{ steps.version.outputs.version }}
           GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
