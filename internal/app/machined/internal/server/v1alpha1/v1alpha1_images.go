@@ -40,6 +40,8 @@ func containerdNamespaceHelper(ctx context.Context, ns common.ContainerdNamespac
 }
 
 // ImageList lists the images in the CRI.
+//
+// Deprecated: use ImageService.List instead.
 func (s *Server) ImageList(req *machine.ImageListRequest, srv machine.MachineService_ImageListServer) error {
 	client, err := containerdapi.New(constants.CRIContainerdAddress)
 	if err != nil {
@@ -79,6 +81,8 @@ func (s *Server) ImageList(req *machine.ImageListRequest, srv machine.MachineSer
 }
 
 // ImagePull pulls an image to the CRI.
+//
+// Deprecated: use ImageService.Pull instead.
 func (s *Server) ImagePull(ctx context.Context, req *machine.ImagePullRequest) (*machine.ImagePullResponse, error) {
 	client, err := containerdapi.New(constants.CRIContainerdAddress)
 	if err != nil {

@@ -9,7 +9,7 @@ import (
 	"context"
 	"errors"
 	"log"
-	"sort"
+	"slices"
 	"sync"
 	"time"
 
@@ -37,6 +37,8 @@ const (
 )
 
 // LayerPullProgress represents the progress of an image pull operation.
+//
+// Note: keep this in sync machine/images.proto.
 type LayerPullProgress struct {
 	LayerID string
 	Status  LayerPullStatus
@@ -102,7 +104,7 @@ func (p *PullProgress) ShowProgress(ctx context.Context) func() {
 			case <-ticker.C:
 				if err := p.trackProgress(ctx, start); err != nil {
 					if !errors.Is(err, context.Canceled) && !errors.Is(err, context.DeadlineExceeded) {
-						log.Printf("Updating progress failed %s", err.Error())
+						log.Printf("updating progress failed %s", err.Error())
 					}
 				}
 			}
@@ -131,8 +133,6 @@ func (p *PullProgress) trackOngoingPulls(ctx context.Context, start time.Time) e
 		if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
 			return err
 		}
-
-		log.Printf("status check failed: %s", err.Error())
 
 		return nil
 	}
@@ -196,6 +196,7 @@ func (p *PullProgress) trackOngoingPulls(ctx context.Context, start time.Time) e
 	return nil
 }
 
+//nolint:gocyclo
 func (p *PullProgress) trackPulledLayers(ctx context.Context) error {
 	var committedIdx []int
 
@@ -247,10 +248,14 @@ func (p *PullProgress) trackPulledLayers(ctx context.Context) error {
 
 	// remove finished/committed layers from p.layers
 	if len(committedIdx) > 0 {
-		sort.Ints(committedIdx)
+		slices.Sort(committedIdx)
 
 		for i := len(committedIdx) - 1; i >= 0; i-- {
-			p.layers = append(p.layers[:committedIdx[i]], p.layers[committedIdx[i]+1:]...)
+			if i < len(committedIdx)-1 && committedIdx[i] == committedIdx[i+1] {
+				continue
+			}
+
+			p.layers = slices.Delete(p.layers, committedIdx[i], committedIdx[i]+1)
 		}
 	}
 

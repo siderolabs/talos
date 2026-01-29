@@ -27,6 +27,7 @@ func collectMethods(t *testing.T) map[string]struct{} {
 		cosi.State_ServiceDesc,
 		cluster.ClusterService_ServiceDesc,
 		inspect.InspectService_ServiceDesc,
+		machine.ImageService_ServiceDesc,
 		machine.MachineService_ServiceDesc,
 		// security.SecurityService_ServiceDesc, - not in machined
 		storage.StorageService_ServiceDesc,

@@ -26,7 +26,13 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 	"go.uber.org/zap"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos/multiplex"
+	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos/pull"
 	mgmthelpers "github.com/siderolabs/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/artifacts"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
@@ -45,6 +51,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/version"
+	"github.com/siderolabs/talos/pkg/reporter"
 )
 
 type imageCmdFlagsType struct {
@@ -64,11 +71,28 @@ func (flags imageCmdFlagsType) apiNamespace() (common.ContainerdNamespace, error
 	}
 }
 
+func (flags imageCmdFlagsType) containerdInstance() (*common.ContainerdInstance, error) {
+	switch flags.namespace {
+	case "cri":
+		return &common.ContainerdInstance{
+			Driver:    common.ContainerDriver_CRI,
+			Namespace: common.ContainerdNamespace_NS_CRI,
+		}, nil
+	case "system":
+		return &common.ContainerdInstance{
+			Driver:    common.ContainerDriver_CRI, // backwards compatibility
+			Namespace: common.ContainerdNamespace_NS_SYSTEM,
+		}, nil
+	default:
+		return nil, fmt.Errorf("unsupported namespace %q", flags.namespace)
+	}
+}
+
 // imagesCmd represents the image command.
 var imageCmd = &cobra.Command{
 	Use:     "image",
 	Aliases: []string{"images"},
-	Short:   "Manage CRI container images",
+	Short:   "Manage container images",
 	Long:    ``,
 	Args:    cobra.NoArgs,
 }
@@ -77,65 +101,249 @@ var imageCmd = &cobra.Command{
 var imageListCmd = &cobra.Command{
 	Use:     "list",
 	Aliases: []string{"l", "ls"},
-	Short:   "List CRI images",
+	Short:   "List images in the machine's container runtime",
 	Long:    ``,
 	Args:    cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClient(func(ctx context.Context, c *client.Client) error {
-			ns, err := imageCmdFlags.apiNamespace()
-			if err != nil {
-				return err
-			}
-
-			rcv, err := c.ImageList(ctx, ns)
-			if err != nil {
-				return fmt.Errorf("error listing images: %w", err)
-			}
-
-			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-			fmt.Fprintln(w, "NODE\tIMAGE\tDIGEST\tSIZE\tCREATED")
-
-			if err = helpers.ReadGRPCStream(rcv, func(msg *machine.ImageListResponse, node string, multipleNodes bool) error {
-				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
-					node,
-					msg.Name,
-					msg.Digest,
-					humanize.Bytes(uint64(msg.Size)),
-					msg.CreatedAt.AsTime().Format(time.RFC3339),
-				)
-
-				return nil
-			}); err != nil {
-				return err
-			}
-
-			return w.Flush()
-		})
+		return imageList()
 	},
+}
+
+func imageList() error {
+	return WithClientAndNodes(func(ctx context.Context, c *client.Client, nodes []string) error {
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+
+		containerdInstance, err := imageCmdFlags.containerdInstance()
+		if err != nil {
+			return err
+		}
+
+		responseChan := multiplex.Streaming(ctx, nodes,
+			func(ctx context.Context) (grpc.ServerStreamingClient[machine.ImageServiceListResponse], error) {
+				return c.ImageClient.List(ctx, &machine.ImageServiceListRequest{
+					Containerd: containerdInstance,
+				})
+			},
+		)
+
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		headerWritten := false
+
+		var errs error
+
+		for resp := range responseChan {
+			if resp.Err != nil {
+				if status.Code(resp.Err) == codes.Unimplemented {
+					// fallback to legacy API for older Talos
+					return imageListLegacy()
+				}
+
+				errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+
+				continue
+			}
+
+			if !headerWritten {
+				headerWritten = true
+
+				fmt.Fprintln(w, "NODE\tIMAGE\tDIGEST\tSIZE\tCREATED")
+			}
+
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
+				resp.Node,
+				resp.Payload.GetName(),
+				resp.Payload.GetDigest(),
+				humanize.Bytes(uint64(resp.Payload.GetSize())),
+				resp.Payload.GetCreatedAt().AsTime().Format(time.RFC3339),
+			)
+		}
+
+		return errors.Join(errs, w.Flush())
+	})
+}
+
+// imageListLegacy lists images using the legacy ImageList API.
+//
+// Note: remove me in Talos 1.15.
+func imageListLegacy() error {
+	return WithClient(func(ctx context.Context, c *client.Client) error {
+		ns, err := imageCmdFlags.apiNamespace()
+		if err != nil {
+			return err
+		}
+
+		rcv, err := c.ImageList(ctx, ns) //nolint:staticcheck // legacy talosctl methods, to be removed in Talos 1.15
+		if err != nil {
+			return fmt.Errorf("error listing images: %w", err)
+		}
+
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		fmt.Fprintln(w, "NODE\tIMAGE\tDIGEST\tSIZE\tCREATED")
+
+		if err = helpers.ReadGRPCStream(rcv, func(msg *machine.ImageListResponse, node string, multipleNodes bool) error {
+			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n",
+				node,
+				msg.Name,
+				msg.Digest,
+				humanize.Bytes(uint64(msg.Size)),
+				msg.CreatedAt.AsTime().Format(time.RFC3339),
+			)
+
+			return nil
+		}); err != nil {
+			return err
+		}
+
+		return w.Flush()
+	})
 }
 
 // imagePullCmd represents the image pull command.
 var imagePullCmd = &cobra.Command{
 	Use:     "pull <image>",
 	Aliases: []string{"p"},
-	Short:   "Pull an image into CRI",
+	Short:   "Pull an image into the machine's container runtime",
 	Long:    ``,
 	Args:    cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClient(func(ctx context.Context, c *client.Client) error {
-			ns, err := imageCmdFlags.apiNamespace()
-			if err != nil {
-				return err
-			}
-
-			err = c.ImagePull(ctx, ns, args[0])
-			if err != nil {
-				return fmt.Errorf("error pulling image: %w", err)
-			}
-
-			return nil
-		})
+		return imagePull(args[0])
 	},
+}
+
+// imagePull pulls an image using modern API and showing progress.
+func imagePull(imageRef string) error {
+	return WithClientAndNodes(func(ctx context.Context, c *client.Client, nodes []string) error {
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+
+		containerdInstance, err := imageCmdFlags.containerdInstance()
+		if err != nil {
+			return err
+		}
+
+		responseChan := multiplex.Streaming(ctx, nodes,
+			func(ctx context.Context) (grpc.ServerStreamingClient[machine.ImageServicePullResponse], error) {
+				return c.ImageClient.Pull(ctx, &machine.ImageServicePullRequest{
+					Containerd: containerdInstance,
+					ImageRef:   imageRef,
+				})
+			},
+		)
+
+		rep := reporter.New()
+		finishedPulls := map[string]string{}
+
+		var (
+			w    pull.ProgressWriter
+			errs error
+		)
+
+		for resp := range responseChan {
+			if resp.Err != nil {
+				if status.Code(resp.Err) == codes.Unimplemented {
+					// fallback to legacy API for older Talos
+					return imagePullLegacy(imageRef)
+				}
+
+				errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+
+				continue
+			}
+
+			switch payload := resp.Payload.Response.(type) {
+			case *machine.ImageServicePullResponse_PullProgress:
+				if !rep.IsColorized() {
+					// don't show progress if not colorized/terminal
+					continue
+				}
+
+				w.UpdateJob(resp.Node, payload.PullProgress.GetLayerId(), payload.PullProgress.GetProgress())
+
+				w.PrintLayerProgress(rep)
+			case *machine.ImageServicePullResponse_Name:
+				finishedPulls[resp.Node] = payload.Name
+			}
+		}
+
+		if len(finishedPulls) > 0 {
+			var sb strings.Builder
+
+			for node, imageName := range finishedPulls {
+				fmt.Fprintf(&sb, "%s: pulled image %s\n", node, imageName)
+			}
+
+			rep.Report(reporter.Update{
+				Message: sb.String(),
+				Status:  reporter.StatusSucceeded,
+			})
+		}
+
+		return errs
+	})
+}
+
+// imagePullLegacy pulls an image using the legacy ImagePull API.
+//
+// Note: remove me in Talos 1.15.
+func imagePullLegacy(imageRef string) error {
+	return WithClient(func(ctx context.Context, c *client.Client) error {
+		ns, err := imageCmdFlags.apiNamespace()
+		if err != nil {
+			return err
+		}
+
+		err = c.ImagePull(ctx, ns, imageRef) //nolint:staticcheck // legacy talosctl methods, to be removed in Talos 1.15
+		if err != nil {
+			return fmt.Errorf("error pulling image: %w", err)
+		}
+
+		return nil
+	})
+}
+
+// imageRemoveCmd represents the image remove command.
+var imageRemoveCmd = &cobra.Command{
+	Use:     "remove <image>",
+	Aliases: []string{"rm"},
+	Short:   "Remove an image from the machine's container runtime",
+	Long:    ``,
+	Args:    cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return imageRemove(args[0])
+	},
+}
+
+// imageRemove removes an image using modern API.
+func imageRemove(imageRef string) error {
+	return WithClientAndNodes(func(ctx context.Context, c *client.Client, nodes []string) error {
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+
+		containerdInstance, err := imageCmdFlags.containerdInstance()
+		if err != nil {
+			return err
+		}
+
+		responseChan := multiplex.Unary(ctx, nodes,
+			func(ctx context.Context) (*emptypb.Empty, error) {
+				return c.ImageClient.Remove(ctx, &machine.ImageServiceRemoveRequest{
+					Containerd: containerdInstance,
+					ImageRef:   imageRef,
+				})
+			},
+		)
+
+		var errs error
+
+		for resp := range responseChan {
+			if resp.Err != nil {
+				errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+			}
+		}
+
+		return errs
+	})
 }
 
 var imageK8sBundleCmdFlags = struct {
@@ -666,6 +874,7 @@ func init() {
 
 	imageCmd.AddCommand(imageListCmd)
 	imageCmd.AddCommand(imagePullCmd)
+	imageCmd.AddCommand(imageRemoveCmd)
 
 	imageCmd.AddCommand(imageTalosBundleCmd)
 	imageTalosBundleCmd.PersistentFlags().BoolVar(&imageTalosBundleCmdFlags.overlays, "overlays", true, "Include images that belong to Talos overlays")

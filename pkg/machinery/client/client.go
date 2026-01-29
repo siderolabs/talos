@@ -44,6 +44,7 @@ type Client struct {
 	ClusterClient clusterapi.ClusterServiceClient
 	StorageClient storageapi.StorageServiceClient
 	InspectClient inspectapi.InspectServiceClient
+	ImageClient   machineapi.ImageServiceClient
 
 	COSI state.State
 
@@ -169,6 +170,7 @@ func New(_ context.Context, opts ...OptionFunc) (c *Client, err error) {
 	c.ClusterClient = clusterapi.NewClusterServiceClient(c.conn)
 	c.StorageClient = storageapi.NewStorageServiceClient(c.conn)
 	c.InspectClient = inspectapi.NewInspectServiceClient(c.conn)
+	c.ImageClient = machineapi.NewImageServiceClient(c.conn)
 
 	c.Inspect = &InspectClient{c.InspectClient}
 	c.COSI = state.WrapCore(client.NewAdapter(cosiv1alpha1.NewStateClient(c.conn)))
@@ -994,6 +996,8 @@ func (c *Client) MetaDelete(ctx context.Context, key uint8, callOptions ...grpc.
 }
 
 // ImageList lists images in the CRI.
+//
+// Deprecated: use ImageServiceClient instead.
 func (c *Client) ImageList(ctx context.Context, namespace common.ContainerdNamespace, callOptions ...grpc.CallOption) (machineapi.MachineService_ImageListClient, error) {
 	return c.MachineClient.ImageList(ctx,
 		&machineapi.ImageListRequest{
@@ -1004,6 +1008,8 @@ func (c *Client) ImageList(ctx context.Context, namespace common.ContainerdNames
 }
 
 // ImagePull pre-pulls an image to the CRI.
+//
+// Deprecated: use ImageServiceClient instead.
 func (c *Client) ImagePull(ctx context.Context, namespace common.ContainerdNamespace, imageRef string, callOptions ...grpc.CallOption) error {
 	resp, err := c.MachineClient.ImagePull(ctx,
 		&machineapi.ImagePullRequest{

@@ -203,6 +203,8 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&cri.ImageCacheConfigController{
 			V1Alpha1ServiceManager: system.Services(ctrl.v1alpha1Runtime),
 		},
+		cri.NewImageGCController("containerd", false),
+		cri.NewImageGCController("cri", false),
 		&cri.RegistriesConfigController{},
 		&cri.SeccompProfileController{},
 		&cri.SeccompProfileFileController{
@@ -380,7 +382,6 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&runtimecontrollers.BootedEntryController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
-		&runtimecontrollers.CRIImageGCController{},
 		&runtimecontrollers.DevicesStatusController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},

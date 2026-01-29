@@ -56,6 +56,11 @@ func New() *Reporter {
 	}
 }
 
+// IsColorized returns true if the reporter is colorized.
+func (r *Reporter) IsColorized() bool {
+	return r.colorized
+}
+
 // Report reports an update to the reporter.
 //
 //nolint:gocyclo

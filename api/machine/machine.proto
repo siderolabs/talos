@@ -100,9 +100,19 @@ service MachineService {
   // MetaDelete deletes a META key.
   rpc MetaDelete(MetaDeleteRequest) returns (MetaDeleteResponse);
   // ImageList lists images in the CRI.
-  rpc ImageList(ImageListRequest) returns (stream ImageListResponse);
+  //
+  // Use ImageService List RPC instead.
+  rpc ImageList(ImageListRequest) returns (stream ImageListResponse) {
+    option (common.remove_deprecated_method) = "v1.18";
+    option deprecated = true;
+  }
   // ImagePull pulls an image into the CRI.
-  rpc ImagePull(ImagePullRequest) returns (ImagePullResponse);
+  //
+  // Use ImageService Pull RPC instead.
+  rpc ImagePull(ImagePullRequest) returns (ImagePullResponse) {
+    option (common.remove_deprecated_method) = "v1.18";
+    option deprecated = true;
+  }
 }
 
 // rpc applyConfiguration

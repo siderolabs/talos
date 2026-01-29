@@ -478,6 +478,60 @@ func (x *EmptyResponse) GetMessages() []*Empty {
 	return nil
 }
 
+type ContainerdInstance struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Containerd instance to use.
+	Driver ContainerDriver `protobuf:"varint,1,opt,name=driver,proto3,enum=common.ContainerDriver" json:"driver,omitempty"`
+	// Containerd namespace to use.
+	Namespace     ContainerdNamespace `protobuf:"varint,2,opt,name=namespace,proto3,enum=common.ContainerdNamespace" json:"namespace,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ContainerdInstance) Reset() {
+	*x = ContainerdInstance{}
+	mi := &file_common_common_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ContainerdInstance) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ContainerdInstance) ProtoMessage() {}
+
+func (x *ContainerdInstance) ProtoReflect() protoreflect.Message {
+	mi := &file_common_common_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ContainerdInstance.ProtoReflect.Descriptor instead.
+func (*ContainerdInstance) Descriptor() ([]byte, []int) {
+	return file_common_common_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *ContainerdInstance) GetDriver() ContainerDriver {
+	if x != nil {
+		return x.Driver
+	}
+	return ContainerDriver_CONTAINERD
+}
+
+func (x *ContainerdInstance) GetNamespace() ContainerdNamespace {
+	if x != nil {
+		return x.Namespace
+	}
+	return ContainerdNamespace_NS_UNKNOWN
+}
+
 type URL struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	FullPath      string                 `protobuf:"bytes,1,opt,name=full_path,json=fullPath,proto3" json:"full_path,omitempty"`
@@ -487,7 +541,7 @@ type URL struct {
 
 func (x *URL) Reset() {
 	*x = URL{}
-	mi := &file_common_common_proto_msgTypes[6]
+	mi := &file_common_common_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -499,7 +553,7 @@ func (x *URL) String() string {
 func (*URL) ProtoMessage() {}
 
 func (x *URL) ProtoReflect() protoreflect.Message {
-	mi := &file_common_common_proto_msgTypes[6]
+	mi := &file_common_common_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -512,7 +566,7 @@ func (x *URL) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use URL.ProtoReflect.Descriptor instead.
 func (*URL) Descriptor() ([]byte, []int) {
-	return file_common_common_proto_rawDescGZIP(), []int{6}
+	return file_common_common_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *URL) GetFullPath() string {
@@ -532,7 +586,7 @@ type PEMEncodedCertificateAndKey struct {
 
 func (x *PEMEncodedCertificateAndKey) Reset() {
 	*x = PEMEncodedCertificateAndKey{}
-	mi := &file_common_common_proto_msgTypes[7]
+	mi := &file_common_common_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -544,7 +598,7 @@ func (x *PEMEncodedCertificateAndKey) String() string {
 func (*PEMEncodedCertificateAndKey) ProtoMessage() {}
 
 func (x *PEMEncodedCertificateAndKey) ProtoReflect() protoreflect.Message {
-	mi := &file_common_common_proto_msgTypes[7]
+	mi := &file_common_common_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -557,7 +611,7 @@ func (x *PEMEncodedCertificateAndKey) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PEMEncodedCertificateAndKey.ProtoReflect.Descriptor instead.
 func (*PEMEncodedCertificateAndKey) Descriptor() ([]byte, []int) {
-	return file_common_common_proto_rawDescGZIP(), []int{7}
+	return file_common_common_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *PEMEncodedCertificateAndKey) GetCrt() []byte {
@@ -583,7 +637,7 @@ type PEMEncodedKey struct {
 
 func (x *PEMEncodedKey) Reset() {
 	*x = PEMEncodedKey{}
-	mi := &file_common_common_proto_msgTypes[8]
+	mi := &file_common_common_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -595,7 +649,7 @@ func (x *PEMEncodedKey) String() string {
 func (*PEMEncodedKey) ProtoMessage() {}
 
 func (x *PEMEncodedKey) ProtoReflect() protoreflect.Message {
-	mi := &file_common_common_proto_msgTypes[8]
+	mi := &file_common_common_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -608,7 +662,7 @@ func (x *PEMEncodedKey) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PEMEncodedKey.ProtoReflect.Descriptor instead.
 func (*PEMEncodedKey) Descriptor() ([]byte, []int) {
-	return file_common_common_proto_rawDescGZIP(), []int{8}
+	return file_common_common_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *PEMEncodedKey) GetKey() []byte {
@@ -627,7 +681,7 @@ type PEMEncodedCertificate struct {
 
 func (x *PEMEncodedCertificate) Reset() {
 	*x = PEMEncodedCertificate{}
-	mi := &file_common_common_proto_msgTypes[9]
+	mi := &file_common_common_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -639,7 +693,7 @@ func (x *PEMEncodedCertificate) String() string {
 func (*PEMEncodedCertificate) ProtoMessage() {}
 
 func (x *PEMEncodedCertificate) ProtoReflect() protoreflect.Message {
-	mi := &file_common_common_proto_msgTypes[9]
+	mi := &file_common_common_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -652,7 +706,7 @@ func (x *PEMEncodedCertificate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PEMEncodedCertificate.ProtoReflect.Descriptor instead.
 func (*PEMEncodedCertificate) Descriptor() ([]byte, []int) {
-	return file_common_common_proto_rawDescGZIP(), []int{9}
+	return file_common_common_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *PEMEncodedCertificate) GetCrt() []byte {
@@ -671,7 +725,7 @@ type NetIP struct {
 
 func (x *NetIP) Reset() {
 	*x = NetIP{}
-	mi := &file_common_common_proto_msgTypes[10]
+	mi := &file_common_common_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -683,7 +737,7 @@ func (x *NetIP) String() string {
 func (*NetIP) ProtoMessage() {}
 
 func (x *NetIP) ProtoReflect() protoreflect.Message {
-	mi := &file_common_common_proto_msgTypes[10]
+	mi := &file_common_common_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -696,7 +750,7 @@ func (x *NetIP) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NetIP.ProtoReflect.Descriptor instead.
 func (*NetIP) Descriptor() ([]byte, []int) {
-	return file_common_common_proto_rawDescGZIP(), []int{10}
+	return file_common_common_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *NetIP) GetIp() []byte {
@@ -716,7 +770,7 @@ type NetIPPort struct {
 
 func (x *NetIPPort) Reset() {
 	*x = NetIPPort{}
-	mi := &file_common_common_proto_msgTypes[11]
+	mi := &file_common_common_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -728,7 +782,7 @@ func (x *NetIPPort) String() string {
 func (*NetIPPort) ProtoMessage() {}
 
 func (x *NetIPPort) ProtoReflect() protoreflect.Message {
-	mi := &file_common_common_proto_msgTypes[11]
+	mi := &file_common_common_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -741,7 +795,7 @@ func (x *NetIPPort) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NetIPPort.ProtoReflect.Descriptor instead.
 func (*NetIPPort) Descriptor() ([]byte, []int) {
-	return file_common_common_proto_rawDescGZIP(), []int{11}
+	return file_common_common_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *NetIPPort) GetIp() []byte {
@@ -768,7 +822,7 @@ type NetIPPrefix struct {
 
 func (x *NetIPPrefix) Reset() {
 	*x = NetIPPrefix{}
-	mi := &file_common_common_proto_msgTypes[12]
+	mi := &file_common_common_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -780,7 +834,7 @@ func (x *NetIPPrefix) String() string {
 func (*NetIPPrefix) ProtoMessage() {}
 
 func (x *NetIPPrefix) ProtoReflect() protoreflect.Message {
-	mi := &file_common_common_proto_msgTypes[12]
+	mi := &file_common_common_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -793,7 +847,7 @@ func (x *NetIPPrefix) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NetIPPrefix.ProtoReflect.Descriptor instead.
 func (*NetIPPrefix) Descriptor() ([]byte, []int) {
-	return file_common_common_proto_rawDescGZIP(), []int{12}
+	return file_common_common_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *NetIPPrefix) GetIp() []byte {
@@ -930,7 +984,10 @@ const file_common_common_proto_rawDesc = "" +
 	"\x05Empty\x12,\n" +
 	"\bmetadata\x18\x01 \x01(\v2\x10.common.MetadataR\bmetadata\":\n" +
 	"\rEmptyResponse\x12)\n" +
-	"\bmessages\x18\x01 \x03(\v2\r.common.EmptyR\bmessages\"\"\n" +
+	"\bmessages\x18\x01 \x03(\v2\r.common.EmptyR\bmessages\"\x80\x01\n" +
+	"\x12ContainerdInstance\x12/\n" +
+	"\x06driver\x18\x01 \x01(\x0e2\x17.common.ContainerDriverR\x06driver\x129\n" +
+	"\tnamespace\x18\x02 \x01(\x0e2\x1b.common.ContainerdNamespaceR\tnamespace\"\"\n" +
 	"\x03URL\x12\x1b\n" +
 	"\tfull_path\x18\x01 \x01(\tR\bfullPath\"A\n" +
 	"\x1bPEMEncodedCertificateAndKey\x12\x10\n" +
@@ -984,7 +1041,7 @@ func file_common_common_proto_rawDescGZIP() []byte {
 }
 
 var file_common_common_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_common_common_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_common_common_proto_msgTypes = make([]protoimpl.MessageInfo, 14)
 var file_common_common_proto_goTypes = []any{
 	(Code)(0),                             // 0: common.Code
 	(ContainerDriver)(0),                  // 1: common.ContainerDriver
@@ -995,41 +1052,44 @@ var file_common_common_proto_goTypes = []any{
 	(*DataResponse)(nil),                  // 6: common.DataResponse
 	(*Empty)(nil),                         // 7: common.Empty
 	(*EmptyResponse)(nil),                 // 8: common.EmptyResponse
-	(*URL)(nil),                           // 9: common.URL
-	(*PEMEncodedCertificateAndKey)(nil),   // 10: common.PEMEncodedCertificateAndKey
-	(*PEMEncodedKey)(nil),                 // 11: common.PEMEncodedKey
-	(*PEMEncodedCertificate)(nil),         // 12: common.PEMEncodedCertificate
-	(*NetIP)(nil),                         // 13: common.NetIP
-	(*NetIPPort)(nil),                     // 14: common.NetIPPort
-	(*NetIPPrefix)(nil),                   // 15: common.NetIPPrefix
-	(*anypb.Any)(nil),                     // 16: google.protobuf.Any
-	(*status.Status)(nil),                 // 17: google.rpc.Status
-	(*descriptorpb.MessageOptions)(nil),   // 18: google.protobuf.MessageOptions
-	(*descriptorpb.FieldOptions)(nil),     // 19: google.protobuf.FieldOptions
-	(*descriptorpb.EnumOptions)(nil),      // 20: google.protobuf.EnumOptions
-	(*descriptorpb.EnumValueOptions)(nil), // 21: google.protobuf.EnumValueOptions
-	(*descriptorpb.MethodOptions)(nil),    // 22: google.protobuf.MethodOptions
-	(*descriptorpb.ServiceOptions)(nil),   // 23: google.protobuf.ServiceOptions
+	(*ContainerdInstance)(nil),            // 9: common.ContainerdInstance
+	(*URL)(nil),                           // 10: common.URL
+	(*PEMEncodedCertificateAndKey)(nil),   // 11: common.PEMEncodedCertificateAndKey
+	(*PEMEncodedKey)(nil),                 // 12: common.PEMEncodedKey
+	(*PEMEncodedCertificate)(nil),         // 13: common.PEMEncodedCertificate
+	(*NetIP)(nil),                         // 14: common.NetIP
+	(*NetIPPort)(nil),                     // 15: common.NetIPPort
+	(*NetIPPrefix)(nil),                   // 16: common.NetIPPrefix
+	(*anypb.Any)(nil),                     // 17: google.protobuf.Any
+	(*status.Status)(nil),                 // 18: google.rpc.Status
+	(*descriptorpb.MessageOptions)(nil),   // 19: google.protobuf.MessageOptions
+	(*descriptorpb.FieldOptions)(nil),     // 20: google.protobuf.FieldOptions
+	(*descriptorpb.EnumOptions)(nil),      // 21: google.protobuf.EnumOptions
+	(*descriptorpb.EnumValueOptions)(nil), // 22: google.protobuf.EnumValueOptions
+	(*descriptorpb.MethodOptions)(nil),    // 23: google.protobuf.MethodOptions
+	(*descriptorpb.ServiceOptions)(nil),   // 24: google.protobuf.ServiceOptions
 }
 var file_common_common_proto_depIdxs = []int32{
 	0,  // 0: common.Error.code:type_name -> common.Code
-	16, // 1: common.Error.details:type_name -> google.protobuf.Any
-	17, // 2: common.Metadata.status:type_name -> google.rpc.Status
+	17, // 1: common.Error.details:type_name -> google.protobuf.Any
+	18, // 2: common.Metadata.status:type_name -> google.rpc.Status
 	4,  // 3: common.Data.metadata:type_name -> common.Metadata
 	5,  // 4: common.DataResponse.messages:type_name -> common.Data
 	4,  // 5: common.Empty.metadata:type_name -> common.Metadata
 	7,  // 6: common.EmptyResponse.messages:type_name -> common.Empty
-	18, // 7: common.remove_deprecated_message:extendee -> google.protobuf.MessageOptions
-	19, // 8: common.remove_deprecated_field:extendee -> google.protobuf.FieldOptions
-	20, // 9: common.remove_deprecated_enum:extendee -> google.protobuf.EnumOptions
-	21, // 10: common.remove_deprecated_enum_value:extendee -> google.protobuf.EnumValueOptions
-	22, // 11: common.remove_deprecated_method:extendee -> google.protobuf.MethodOptions
-	23, // 12: common.remove_deprecated_service:extendee -> google.protobuf.ServiceOptions
-	13, // [13:13] is the sub-list for method output_type
-	13, // [13:13] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	7,  // [7:13] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	1,  // 7: common.ContainerdInstance.driver:type_name -> common.ContainerDriver
+	2,  // 8: common.ContainerdInstance.namespace:type_name -> common.ContainerdNamespace
+	19, // 9: common.remove_deprecated_message:extendee -> google.protobuf.MessageOptions
+	20, // 10: common.remove_deprecated_field:extendee -> google.protobuf.FieldOptions
+	21, // 11: common.remove_deprecated_enum:extendee -> google.protobuf.EnumOptions
+	22, // 12: common.remove_deprecated_enum_value:extendee -> google.protobuf.EnumValueOptions
+	23, // 13: common.remove_deprecated_method:extendee -> google.protobuf.MethodOptions
+	24, // 14: common.remove_deprecated_service:extendee -> google.protobuf.ServiceOptions
+	15, // [15:15] is the sub-list for method output_type
+	15, // [15:15] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	9,  // [9:15] is the sub-list for extension extendee
+	0,  // [0:9] is the sub-list for field type_name
 }
 
 func init() { file_common_common_proto_init() }
@@ -1043,7 +1103,7 @@ func file_common_common_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_common_common_proto_rawDesc), len(file_common_common_proto_rawDesc)),
 			NumEnums:      3,
-			NumMessages:   13,
+			NumMessages:   14,
 			NumExtensions: 6,
 			NumServices:   0,
 		},

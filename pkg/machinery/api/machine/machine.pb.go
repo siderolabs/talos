@@ -12502,7 +12502,7 @@ const file_machine_machine_proto_rawDesc = "" +
 	"\tImagePull\x12,\n" +
 	"\bmetadata\x18\x01 \x01(\v2\x10.common.MetadataR\bmetadata\"C\n" +
 	"\x11ImagePullResponse\x12.\n" +
-	"\bmessages\x18\x01 \x03(\v2\x12.machine.ImagePullR\bmessages2\xc5\x1d\n" +
+	"\bmessages\x18\x01 \x03(\v2\x12.machine.ImagePullR\bmessages2\xe1\x1d\n" +
 	"\x0eMachineService\x12]\n" +
 	"\x12ApplyConfiguration\x12\".machine.ApplyConfigurationRequest\x1a#.machine.ApplyConfigurationResponse\x12B\n" +
 	"\tBootstrap\x12\x19.machine.BootstrapRequest\x1a\x1a.machine.BootstrapResponse\x12E\n" +
@@ -12560,9 +12560,9 @@ const file_machine_machine_proto_rawDesc = "" +
 	"\aNetstat\x12\x17.machine.NetstatRequest\x1a\x18.machine.NetstatResponse\x12B\n" +
 	"\tMetaWrite\x12\x19.machine.MetaWriteRequest\x1a\x1a.machine.MetaWriteResponse\x12E\n" +
 	"\n" +
-	"MetaDelete\x12\x1a.machine.MetaDeleteRequest\x1a\x1b.machine.MetaDeleteResponse\x12D\n" +
-	"\tImageList\x12\x19.machine.ImageListRequest\x1a\x1a.machine.ImageListResponse0\x01\x12B\n" +
-	"\tImagePull\x12\x19.machine.ImagePullRequest\x1a\x1a.machine.ImagePullResponseBN\n" +
+	"MetaDelete\x12\x1a.machine.MetaDeleteRequest\x1a\x1b.machine.MetaDeleteResponse\x12R\n" +
+	"\tImageList\x12\x19.machine.ImageListRequest\x1a\x1a.machine.ImageListResponse\"\f\xea\xbb-\x05v1.18\x88\x02\x010\x01\x12P\n" +
+	"\tImagePull\x12\x19.machine.ImagePullRequest\x1a\x1a.machine.ImagePullResponse\"\f\xea\xbb-\x05v1.18\x88\x02\x01BN\n" +
 	"\x15dev.talos.api.machineZ5github.com/siderolabs/talos/pkg/machinery/api/machineb\x06proto3"
 
 var (

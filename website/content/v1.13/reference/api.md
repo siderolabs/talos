@@ -6,6 +6,7 @@ description: Talos gRPC API reference.
 ## Table of Contents
 
 - [common/common.proto](#common/common.proto)
+    - [ContainerdInstance](#common.ContainerdInstance)
     - [Data](#common.Data)
     - [DataResponse](#common.DataResponse)
     - [Empty](#common.Empty)
@@ -41,6 +42,21 @@ description: Talos gRPC API reference.
     - [DependencyEdgeType](#inspect.DependencyEdgeType)
   
     - [InspectService](#inspect.InspectService)
+  
+- [machine/image.proto](#machine/image.proto)
+    - [ImageServiceImportRequest](#machine.ImageServiceImportRequest)
+    - [ImageServiceImportResponse](#machine.ImageServiceImportResponse)
+    - [ImageServiceListRequest](#machine.ImageServiceListRequest)
+    - [ImageServiceListResponse](#machine.ImageServiceListResponse)
+    - [ImageServicePullLayerProgress](#machine.ImageServicePullLayerProgress)
+    - [ImageServicePullProgress](#machine.ImageServicePullProgress)
+    - [ImageServicePullRequest](#machine.ImageServicePullRequest)
+    - [ImageServicePullResponse](#machine.ImageServicePullResponse)
+    - [ImageServiceRemoveRequest](#machine.ImageServiceRemoveRequest)
+  
+    - [ImageServicePullLayerProgress.Status](#machine.ImageServicePullLayerProgress.Status)
+  
+    - [ImageService](#machine.ImageService)
   
 - [machine/machine.proto](#machine/machine.proto)
     - [AddressEvent](#machine.AddressEvent)
@@ -603,6 +619,22 @@ description: Talos gRPC API reference.
 
 
 
+<a name="common.ContainerdInstance"></a>
+
+### ContainerdInstance
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| driver | [ContainerDriver](#common.ContainerDriver) |  | Containerd instance to use. |
+| namespace | [ContainerdNamespace](#common.ContainerdNamespace) |  | Containerd namespace to use. |
+
+
+
+
+
+
 <a name="common.Data"></a>
 
 ### Data
@@ -1029,6 +1061,196 @@ InspectService provides auxiliary API to inspect OS internals.
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | ControllerRuntimeDependencies | [.google.protobuf.Empty](#google.protobuf.Empty) | [ControllerRuntimeDependenciesResponse](#inspect.ControllerRuntimeDependenciesResponse) |  |
+
+ <!-- end services -->
+
+
+
+<a name="machine/image.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## machine/image.proto
+
+
+
+<a name="machine.ImageServiceImportRequest"></a>
+
+### ImageServiceImportRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| containerd | [common.ContainerdInstance](#common.ContainerdInstance) |  | Containerd instance to use. |
+| image_chunk | [common.Data](#common.Data) |  | Chunk of the image tarball. |
+
+
+
+
+
+
+<a name="machine.ImageServiceImportResponse"></a>
+
+### ImageServiceImportResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | Name of the imported image. |
+
+
+
+
+
+
+<a name="machine.ImageServiceListRequest"></a>
+
+### ImageServiceListRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| containerd | [common.ContainerdInstance](#common.ContainerdInstance) |  |  |
+
+
+
+
+
+
+<a name="machine.ImageServiceListResponse"></a>
+
+### ImageServiceListResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| digest | [string](#string) |  |  |
+| size | [int64](#int64) |  |  |
+| created_at | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
+
+
+
+
+
+
+<a name="machine.ImageServicePullLayerProgress"></a>
+
+### ImageServicePullLayerProgress
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| status | [ImageServicePullLayerProgress.Status](#machine.ImageServicePullLayerProgress.Status) |  |  |
+| elapsed | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| offset | [int64](#int64) |  |  |
+| total | [int64](#int64) |  |  |
+
+
+
+
+
+
+<a name="machine.ImageServicePullProgress"></a>
+
+### ImageServicePullProgress
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| layer_id | [string](#string) |  |  |
+| progress | [ImageServicePullLayerProgress](#machine.ImageServicePullLayerProgress) |  |  |
+
+
+
+
+
+
+<a name="machine.ImageServicePullRequest"></a>
+
+### ImageServicePullRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| containerd | [common.ContainerdInstance](#common.ContainerdInstance) |  |  |
+| image_ref | [string](#string) |  | Image reference to pull. |
+
+
+
+
+
+
+<a name="machine.ImageServicePullResponse"></a>
+
+### ImageServicePullResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | Name of the pulled image (when done). |
+| pull_progress | [ImageServicePullProgress](#machine.ImageServicePullProgress) |  | Progress of the image pull (intermediate updates). |
+
+
+
+
+
+
+<a name="machine.ImageServiceRemoveRequest"></a>
+
+### ImageServiceRemoveRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| containerd | [common.ContainerdInstance](#common.ContainerdInstance) |  |  |
+| image_ref | [string](#string) |  | Image reference to remove. |
+
+
+
+
+
+ <!-- end messages -->
+
+
+<a name="machine.ImageServicePullLayerProgress.Status"></a>
+
+### ImageServicePullLayerProgress.Status
+
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| DOWNLOADING | 0 | Keep this in sync with ImagePullLayerProgress.Status. |
+| DOWNLOAD_COMPLETE | 1 |  |
+| EXTRACTING | 2 |  |
+| EXTRACT_COMPLETE | 3 |  |
+| ALREADY_EXISTS | 4 |  |
+
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="machine.ImageService"></a>
+
+### ImageService
+The machine service definition.
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| List | [ImageServiceListRequest](#machine.ImageServiceListRequest) | [ImageServiceListResponse](#machine.ImageServiceListResponse) stream | List images in the containerd. |
+| Pull | [ImageServicePullRequest](#machine.ImageServicePullRequest) | [ImageServicePullResponse](#machine.ImageServicePullResponse) stream | Pull an image into the containerd. |
+| Import | [ImageServiceImportRequest](#machine.ImageServiceImportRequest) stream | [ImageServiceImportResponse](#machine.ImageServiceImportResponse) | Import an image from a stream (tarball). |
+| Remove | [ImageServiceRemoveRequest](#machine.ImageServiceRemoveRequest) | [.google.protobuf.Empty](#google.protobuf.Empty) | Remove an image from the containerd. |
 
  <!-- end services -->
 
@@ -4340,8 +4562,12 @@ The machine service definition.
 | Netstat | [NetstatRequest](#machine.NetstatRequest) | [NetstatResponse](#machine.NetstatResponse) | Netstat provides information about network connections. |
 | MetaWrite | [MetaWriteRequest](#machine.MetaWriteRequest) | [MetaWriteResponse](#machine.MetaWriteResponse) | MetaWrite writes a META key-value pair. |
 | MetaDelete | [MetaDeleteRequest](#machine.MetaDeleteRequest) | [MetaDeleteResponse](#machine.MetaDeleteResponse) | MetaDelete deletes a META key. |
-| ImageList | [ImageListRequest](#machine.ImageListRequest) | [ImageListResponse](#machine.ImageListResponse) stream | ImageList lists images in the CRI. |
-| ImagePull | [ImagePullRequest](#machine.ImagePullRequest) | [ImagePullResponse](#machine.ImagePullResponse) | ImagePull pulls an image into the CRI. |
+| ImageList | [ImageListRequest](#machine.ImageListRequest) | [ImageListResponse](#machine.ImageListResponse) stream | ImageList lists images in the CRI.
+
+Use ImageService List RPC instead. |
+| ImagePull | [ImagePullRequest](#machine.ImagePullRequest) | [ImagePullResponse](#machine.ImagePullResponse) | ImagePull pulls an image into the CRI.
+
+Use ImageService Pull RPC instead. |
 
  <!-- end services -->
 

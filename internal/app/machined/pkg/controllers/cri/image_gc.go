@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package runtime
+package cri
 
 import (
 	"context"
@@ -34,10 +34,24 @@ const ImageCleanupInterval = 15 * time.Minute
 // ImageGCGracePeriod is the minimum age of an image before it can be deleted.
 const ImageGCGracePeriod = 4 * ImageCleanupInterval
 
-// CRIImageGCController renders manifests based on templates and config/secrets.
-type CRIImageGCController struct {
+// NewImageGCController creates a new ImageGCController.
+func NewImageGCController(containerdName string, buildExpectedImages bool) *ImageGCController {
+	controllerName := "cri." + containerdName + "ImageGCController"
+
+	return &ImageGCController{
+		containerdName:      containerdName,
+		controllerName:      controllerName,
+		buildExpectedImages: buildExpectedImages,
+	}
+}
+
+// ImageGCController performs garbage collection of unused container images.
+type ImageGCController struct {
 	ImageServiceProvider func() (ImageServiceProvider, error)
 
+	containerdName             string
+	controllerName             string
+	buildExpectedImages        bool
 	imageFirstSeenUnreferenced map[string]time.Time
 }
 
@@ -48,48 +62,68 @@ type ImageServiceProvider interface {
 }
 
 // Name implements controller.Controller interface.
-func (ctrl *CRIImageGCController) Name() string {
-	return "runtime.CRIImageGCController"
+func (ctrl *ImageGCController) Name() string {
+	return ctrl.controllerName
 }
 
 // Inputs implements controller.Controller interface.
-func (ctrl *CRIImageGCController) Inputs() []controller.Input {
-	return []controller.Input{
+func (ctrl *ImageGCController) Inputs() []controller.Input {
+	inputs := []controller.Input{
 		{
 			Namespace: v1alpha1.NamespaceName,
 			Type:      v1alpha1.ServiceType,
-			ID:        optional.Some("cri"),
-			Kind:      controller.InputWeak,
-		},
-		{
-			Namespace: k8s.NamespaceName,
-			Type:      k8s.KubeletSpecType,
-			ID:        optional.Some(k8s.KubeletID),
-			Kind:      controller.InputWeak,
-		},
-		{
-			Namespace: etcd.NamespaceName,
-			Type:      etcd.SpecType,
-			ID:        optional.Some(etcd.SpecID),
+			ID:        optional.Some(ctrl.containerdName),
 			Kind:      controller.InputWeak,
 		},
 	}
+
+	if ctrl.buildExpectedImages {
+		inputs = append(inputs,
+			controller.Input{
+				Namespace: k8s.NamespaceName,
+				Type:      k8s.KubeletSpecType,
+				ID:        optional.Some(k8s.KubeletID),
+				Kind:      controller.InputWeak,
+			},
+			controller.Input{
+				Namespace: etcd.NamespaceName,
+				Type:      etcd.SpecType,
+				ID:        optional.Some(etcd.SpecID),
+				Kind:      controller.InputWeak,
+			},
+		)
+	}
+
+	return inputs
 }
 
 // Outputs implements controller.Controller interface.
-func (ctrl *CRIImageGCController) Outputs() []controller.Output {
+func (ctrl *ImageGCController) Outputs() []controller.Output {
 	return nil
 }
 
-func defaultImageServiceProvider() (ImageServiceProvider, error) {
-	criClient, err := containerd.New(constants.CRIContainerdAddress)
-	if err != nil {
-		return nil, fmt.Errorf("error creating CRI containerd client: %w", err)
-	}
+func defaultImageServiceProvider(containerdName string) func() (ImageServiceProvider, error) {
+	return func() (ImageServiceProvider, error) {
+		var addr string
 
-	return &containerdImageServiceProvider{
-		criClient: criClient,
-	}, nil
+		switch containerdName {
+		case "cri":
+			addr = constants.CRIContainerdAddress
+		case "containerd":
+			addr = constants.SystemContainerdAddress
+		default:
+			return nil, fmt.Errorf("unknown containerd name: %s", containerdName)
+		}
+
+		criClient, err := containerd.New(addr)
+		if err != nil {
+			return nil, fmt.Errorf("error creating containerd client: %w", err)
+		}
+
+		return &containerdImageServiceProvider{
+			criClient: criClient,
+		}, nil
+	}
 }
 
 type containerdImageServiceProvider struct {
@@ -107,9 +141,9 @@ func (s *containerdImageServiceProvider) Close() error {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo,cyclop
-func (ctrl *CRIImageGCController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+func (ctrl *ImageGCController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	if ctrl.ImageServiceProvider == nil {
-		ctrl.ImageServiceProvider = defaultImageServiceProvider
+		ctrl.ImageServiceProvider = defaultImageServiceProvider(ctrl.containerdName)
 	}
 
 	if ctrl.imageFirstSeenUnreferenced == nil {
@@ -117,7 +151,7 @@ func (ctrl *CRIImageGCController) Run(ctx context.Context, r controller.Runtime,
 	}
 
 	var (
-		criIsUp              bool
+		containerdIsUp       bool
 		expectedImages       []string
 		imageServiceProvider ImageServiceProvider
 	)
@@ -136,7 +170,7 @@ func (ctrl *CRIImageGCController) Run(ctx context.Context, r controller.Runtime,
 		case <-ctx.Done():
 			return nil
 		case <-ticker.C:
-			if !criIsUp || len(expectedImages) == 0 {
+			if !containerdIsUp || (ctrl.buildExpectedImages && len(expectedImages) == 0) {
 				continue
 			}
 
@@ -153,31 +187,33 @@ func (ctrl *CRIImageGCController) Run(ctx context.Context, r controller.Runtime,
 				return fmt.Errorf("error running image cleanup: %w", err)
 			}
 		case <-r.EventCh():
-			criService, err := safe.ReaderGet[*v1alpha1.Service](ctx, r, resource.NewMetadata(v1alpha1.NamespaceName, v1alpha1.ServiceType, "cri", resource.VersionUndefined))
+			containerdService, err := safe.ReaderGet[*v1alpha1.Service](ctx, r, resource.NewMetadata(v1alpha1.NamespaceName, v1alpha1.ServiceType, ctrl.containerdName, resource.VersionUndefined))
 			if err != nil && !state.IsNotFoundError(err) {
-				return fmt.Errorf("error getting CRI service: %w", err)
+				return fmt.Errorf("error getting container service: %w", err)
 			}
 
-			criIsUp = criService != nil && criService.TypedSpec().Running && criService.TypedSpec().Healthy
+			containerdIsUp = containerdService != nil && containerdService.TypedSpec().Running && containerdService.TypedSpec().Healthy
 
 			expectedImages = nil
 
-			etcdSpec, err := safe.ReaderGet[*etcd.Spec](ctx, r, resource.NewMetadata(etcd.NamespaceName, etcd.SpecType, etcd.SpecID, resource.VersionUndefined))
-			if err != nil && !state.IsNotFoundError(err) {
-				return fmt.Errorf("error getting etcd spec: %w", err)
-			}
+			if ctrl.buildExpectedImages {
+				etcdSpec, err := safe.ReaderGet[*etcd.Spec](ctx, r, resource.NewMetadata(etcd.NamespaceName, etcd.SpecType, etcd.SpecID, resource.VersionUndefined))
+				if err != nil && !state.IsNotFoundError(err) {
+					return fmt.Errorf("error getting etcd spec: %w", err)
+				}
 
-			if etcdSpec != nil {
-				expectedImages = append(expectedImages, etcdSpec.TypedSpec().Image)
-			}
+				if etcdSpec != nil {
+					expectedImages = append(expectedImages, etcdSpec.TypedSpec().Image)
+				}
 
-			kubeletSpec, err := safe.ReaderGet[*k8s.KubeletSpec](ctx, r, resource.NewMetadata(k8s.NamespaceName, k8s.KubeletSpecType, k8s.KubeletID, resource.VersionUndefined))
-			if err != nil && !state.IsNotFoundError(err) {
-				return fmt.Errorf("error getting kubelet spec: %w", err)
-			}
+				kubeletSpec, err := safe.ReaderGet[*k8s.KubeletSpec](ctx, r, resource.NewMetadata(k8s.NamespaceName, k8s.KubeletSpecType, k8s.KubeletID, resource.VersionUndefined))
+				if err != nil && !state.IsNotFoundError(err) {
+					return fmt.Errorf("error getting kubelet spec: %w", err)
+				}
 
-			if kubeletSpec != nil {
-				expectedImages = append(expectedImages, kubeletSpec.TypedSpec().Image)
+				if kubeletSpec != nil {
+					expectedImages = append(expectedImages, kubeletSpec.TypedSpec().Image)
+				}
 			}
 		}
 
@@ -186,71 +222,61 @@ func (ctrl *CRIImageGCController) Run(ctx context.Context, r controller.Runtime,
 }
 
 //nolint:gocyclo
-func buildExpectedImageNames(logger *zap.Logger, actualImages []images.Image, expectedImages []string) (map[string]struct{}, error) {
-	var parseErrors []error
+func buildExpectedDigests(logger *zap.Logger, actualImages []images.Image, expectedImages []string) (map[string]struct{}, error) {
+	var parseErrors error
 
 	expectedReferences := xslices.Map(expectedImages, func(ref string) reference.Named {
 		res, parseErr := reference.ParseNamed(ref)
 
-		parseErrors = append(parseErrors, parseErr)
+		parseErrors = errors.Join(parseErrors, parseErr)
 
 		return res
 	})
 
-	if err := errors.Join(parseErrors...); err != nil {
-		return nil, fmt.Errorf("error parsing expected images: %w", err)
+	if parseErrors != nil {
+		return nil, fmt.Errorf("error parsing expected images: %w", parseErrors)
 	}
 
-	expectedImageNames := map[string]struct{}{}
+	expectedDigests := map[string]struct{}{}
 
-	for _, image := range actualImages {
-		imageRef, err := reference.ParseAnyReference(image.Name)
-		if err != nil {
-			logger.Debug("failed to parse image reference", zap.Error(err), zap.String("image", image.Name))
+	for _, expectedRef := range expectedReferences {
+		// easy case: image ref has digest, record it
+		if expectedDigested, ok := expectedRef.(reference.Digested); ok {
+			expectedDigests[expectedDigested.Digest().String()] = struct{}{}
 
 			continue
 		}
 
-		digest := image.Target.Digest.String()
+		// hard case: iterate over actual images to find the digest for the tag
+		for _, image := range actualImages {
+			imageRef, err := reference.ParseAnyReference(image.Name)
+			if err != nil {
+				logger.Debug("failed to parse image reference", zap.Error(err), zap.String("image", image.Name))
 
-		switch ref := imageRef.(type) {
-		case reference.NamedTagged:
-			for _, expectedRef := range expectedReferences {
+				continue
+			}
+
+			digest := image.Target.Digest.String()
+
+			if ref, ok := imageRef.(reference.NamedTagged); ok {
 				if expectedRef.Name() != ref.Name() {
 					continue
 				}
 
 				if expectedTagged, ok := expectedRef.(reference.Tagged); ok && ref.Tag() == expectedTagged.Tag() {
-					// this is expected image by tag, inject other forms of the ref
-					expectedImageNames[digest] = struct{}{}
-					expectedImageNames[expectedRef.Name()+":"+expectedTagged.Tag()] = struct{}{}
-					expectedImageNames[expectedRef.Name()+"@"+digest] = struct{}{}
-				}
-			}
-		case reference.Canonical:
-			for _, expectedRef := range expectedReferences {
-				if expectedRef.Name() != ref.Name() {
-					continue
-				}
+					// this is expected image by tag, inject digest
+					expectedDigests[digest] = struct{}{}
 
-				if expectedDigested, ok := expectedRef.(reference.Digested); ok && ref.Digest() == expectedDigested.Digest() {
-					// this is expected image by digest, inject other forms of the ref
-					expectedImageNames[digest] = struct{}{}
-					expectedImageNames[expectedRef.Name()+"@"+digest] = struct{}{}
-
-					// if the image is also tagged, inject the tagged version of it
-					if expectedTagged, ok := expectedRef.(reference.Tagged); ok {
-						expectedImageNames[expectedRef.Name()+":"+expectedTagged.Tag()] = struct{}{}
-					}
+					break
 				}
 			}
 		}
 	}
 
-	return expectedImageNames, nil
+	return expectedDigests, nil
 }
 
-func (ctrl *CRIImageGCController) cleanup(ctx context.Context, logger *zap.Logger, imageService images.Store, expectedImages []string) error {
+func (ctrl *ImageGCController) cleanup(ctx context.Context, logger *zap.Logger, imageService images.Store, expectedImages []string) error {
 	logger.Debug("running image cleanup")
 
 	ctx = namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
@@ -260,15 +286,15 @@ func (ctrl *CRIImageGCController) cleanup(ctx context.Context, logger *zap.Logge
 		return fmt.Errorf("error listing images: %w", err)
 	}
 
-	// first pass: scan actualImages and expand expectedReferences with other non-canonical refs
-	expectedImageNames, err := buildExpectedImageNames(logger, actualImages, expectedImages)
+	// first pass: scan actualImages and expand expectedImages from tags to digests
+	expectedDigests, err := buildExpectedDigests(logger, actualImages, expectedImages)
 	if err != nil {
 		return err
 	}
 
 	// second pass, drop whatever is not expected
 	for _, image := range actualImages {
-		_, shouldKeep := expectedImageNames[image.Name]
+		_, shouldKeep := expectedDigests[image.Target.Digest.String()]
 
 		if shouldKeep {
 			logger.Debug("image is referenced, skipping garbage collection", zap.String("image", image.Name))

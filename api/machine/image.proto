@@ -1,0 +1,90 @@
+syntax = "proto3";
+
+package machine;
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/machine";
+option java_package = "dev.talos.api.machine";
+
+import "common/common.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+// The machine service definition.
+service ImageService {
+  // List images in the containerd.
+  rpc List(ImageServiceListRequest) returns (stream ImageServiceListResponse);
+  // Pull an image into the containerd.
+  rpc Pull(ImageServicePullRequest) returns (stream ImageServicePullResponse);
+  // Import an image from a stream (tarball).
+  rpc Import(stream ImageServiceImportRequest) returns (ImageServiceImportResponse);
+  // Remove an image from the containerd.
+  rpc Remove (ImageServiceRemoveRequest) returns (google.protobuf.Empty);
+}
+
+message ImageServiceListRequest {
+  common.ContainerdInstance containerd = 1;
+}
+
+message ImageServiceListResponse {
+  string name = 1;
+  string digest = 2;
+  int64 size = 3;
+  google.protobuf.Timestamp created_at = 4;
+}
+
+message ImageServicePullRequest {
+  common.ContainerdInstance containerd = 1;
+  // Image reference to pull.
+  string image_ref = 3;
+}
+
+message ImageServicePullResponse {
+  oneof response {
+    // Name of the pulled image (when done).
+    string name = 1;
+    // Progress of the image pull (intermediate updates).
+    ImageServicePullProgress pull_progress = 2;
+  }
+}
+
+
+message ImageServiceImportRequest {
+  oneof request {
+    // Containerd instance to use.
+    common.ContainerdInstance containerd = 1;
+    // Chunk of the image tarball.
+    common.Data image_chunk = 2;
+  }
+}
+
+message ImageServiceImportResponse {
+  // Name of the imported image.
+  string name = 1;
+}
+
+message ImageServicePullLayerProgress {
+  enum Status {
+    // Keep this in sync with ImagePullLayerProgress.Status.
+    DOWNLOADING = 0;
+    DOWNLOAD_COMPLETE = 1;
+    EXTRACTING = 2;
+    EXTRACT_COMPLETE = 3;
+    ALREADY_EXISTS = 4;
+  }
+  Status status = 1;
+  google.protobuf.Duration elapsed = 2;
+  int64 offset = 3;
+  int64 total = 4;
+}
+
+message ImageServicePullProgress{
+  string layer_id = 1;
+  ImageServicePullLayerProgress progress = 2;
+}
+
+message ImageServiceRemoveRequest {
+  common.ContainerdInstance containerd = 1;
+  // Image reference to remove.
+  string image_ref = 2;
+}

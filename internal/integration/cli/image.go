@@ -187,6 +187,7 @@ func (suite *ImageSuite) TestPull() {
 
 	suite.RunCLI([]string{"image", "pull", "--nodes", node, image},
 		base.StdoutEmpty(),
+		base.StderrShouldMatch(regexp.MustCompile(regexp.QuoteMeta("pulled image registry.k8s.io/kube-apiserver:v1.27.0"))),
 	)
 
 	// verify that pulled image appeared, also image aliases should appear
@@ -194,6 +195,11 @@ func (suite *ImageSuite) TestPull() {
 		base.StdoutShouldMatch(regexp.MustCompile(regexp.QuoteMeta(image))),
 		base.StdoutShouldMatch(regexp.MustCompile(regexp.QuoteMeta("sha256:89b8d9dbef2b905b7d028ca8b7f79d35ebd9baa66b0a3ee2ddd4f3e0e2804b45"))),
 		base.StdoutShouldMatch(regexp.MustCompile(regexp.QuoteMeta("registry.k8s.io/kube-apiserver@sha256:89b8d9dbef2b905b7d028ca8b7f79d35ebd9baa66b0a3ee2ddd4f3e0e2804b45"))),
+	)
+
+	// remove the image
+	suite.RunCLI([]string{"image", "remove", "--nodes", node, image},
+		base.StdoutEmpty(),
 	)
 }
 
