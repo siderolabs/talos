@@ -79,9 +79,15 @@ func (r *Router) Director(ctx context.Context, fullMethodName string) (proxy.Mod
 
 	switch {
 	case okNodes:
-		// COSI methods do not support one-2-many proxying.
-		if strings.HasPrefix(fullMethodName, "/cosi.") {
-			return proxy.One2One, nil, status.Error(codes.InvalidArgument, "one-2-many proxying is not supported for COSI methods")
+		// Explicit list of gRPC methods that support one-2-many proxying.
+		switch {
+		case strings.HasPrefix(fullMethodName, "/machine.MachineService/"):
+		case strings.HasPrefix(fullMethodName, "/cluster.ClusterService/"):
+		case strings.HasPrefix(fullMethodName, "/inspect.InspectService/"):
+		case strings.HasPrefix(fullMethodName, "/storage.StorageService/"):
+		case strings.HasPrefix(fullMethodName, "/time.TimeService/"):
+		default:
+			return proxy.One2One, nil, status.Errorf(codes.InvalidArgument, "one-2-many proxying is not supported for method %s", fullMethodName)
 		}
 
 		return r.aggregateDirector(nodes)
