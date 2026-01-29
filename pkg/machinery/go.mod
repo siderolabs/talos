@@ -19,10 +19,11 @@ require (
 	github.com/hexops/gotextdiff v1.0.3
 	github.com/jsimonetti/rtnetlink/v2 v2.1.0
 	github.com/mdlayher/ethtool v0.5.0
-	github.com/opencontainers/runtime-spec v1.2.1
-	github.com/planetscale/vtprotobuf v0.6.1-0.20241121165744-79df5c4772f2
+	github.com/opencontainers/runtime-spec v1.3.0
+	github.com/planetscale/vtprotobuf v0.6.1-0.20250313105119-ba97887b0a25
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
+	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	github.com/siderolabs/crypto v0.6.4
 	github.com/siderolabs/gen v0.8.6
 	github.com/siderolabs/go-api-signature v0.3.12
@@ -30,11 +31,11 @@ require (
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/protoenc v0.2.4
 	github.com/stretchr/testify v1.11.1
-	go.yaml.in/yaml/v4 v4.0.0-rc.3
-	golang.org/x/net v0.48.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20251213004720-97cd9d5aeac2
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20251213004720-97cd9d5aeac2
-	google.golang.org/grpc v1.77.0
+	go.yaml.in/yaml/v4 v4.0.0-rc.4
+	golang.org/x/net v0.49.0
+	google.golang.org/genproto/googleapis/api v0.0.0-20260128011058-8636f8732409
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260128011058-8636f8732409
+	google.golang.org/grpc v1.78.0
 	google.golang.org/protobuf v1.36.11
 	gopkg.in/yaml.v3 v3.0.1
 )
@@ -68,11 +69,11 @@ require (
 	github.com/stoewer/go-strcase v1.3.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
-	golang.org/x/crypto v0.46.0 // indirect
+	golang.org/x/crypto v0.47.0 // indirect
 	golang.org/x/exp v0.0.0-20250128182459-e0ece0dbea4c // indirect
 	golang.org/x/sync v0.19.0 // indirect
-	golang.org/x/sys v0.39.0 // indirect
-	golang.org/x/text v0.32.0 // indirect
+	golang.org/x/sys v0.40.0 // indirect
+	golang.org/x/text v0.33.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
