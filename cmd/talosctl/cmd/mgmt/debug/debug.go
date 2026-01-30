@@ -11,7 +11,7 @@ import (
 
 // Cmd represents the debug command.
 var Cmd = &cobra.Command{
-	Use:    "debug",
+	Use:    "debug-tool",
 	Short:  "A collection of commands to facilitate debugging of Talos.",
 	Hidden: true,
 	Long:   ``,
