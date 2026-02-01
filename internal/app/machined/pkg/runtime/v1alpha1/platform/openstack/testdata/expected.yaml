@@ -36,6 +36,7 @@ links:
       mtu: 1500
       kind: bond
       type: ether
+      hardwareAddr: 4c:d9:8f:b3:34:f7
       bondMaster:
         mode: 802.3ad
         xmitHashPolicy: layer2+3
