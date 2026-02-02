@@ -301,5 +301,25 @@ func SBCs() []SBC {
 
 			MinVersion: semver.MustParse("1.12.0-beta.0"),
 		},
+		{
+			Name: "friendlyelec-cm3588-nas",
+
+			OverlayName:  "friendlyelec-cm3588-nas",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label: "FriendlyELEC CM3588 NAS",
+
+			MinVersion: semver.MustParse("1.13.0-alpha.1"),
+		},
+		{
+			Name: "rock5b-plus",
+
+			OverlayName:  "rock5b-plus",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label: "Rock 5B Plus",
+
+			MinVersion: semver.MustParse("1.13.0-alpha.1"),
+		},
 	}
 }
