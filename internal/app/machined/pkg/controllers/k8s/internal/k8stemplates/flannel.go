@@ -27,12 +27,7 @@ func FlannelClusterRoleTemplate() runtime.Object {
 	rules := []rbacv1.PolicyRule{
 		{
 			APIGroups: []string{""},
-			Resources: []string{"pods"},
-			Verbs:     []string{"get"},
-		},
-		{
-			APIGroups: []string{""},
-			Resources: []string{"nodes"},
+			Resources: []string{"pods", "nodes", "namespaces"},
 			Verbs:     []string{"get", "list", "watch"},
 		},
 		{
