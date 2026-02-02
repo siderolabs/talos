@@ -30,12 +30,19 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
 	"github.com/siderolabs/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
 //nolint:gocyclo,cyclop
 func (p *provisioner) createNode(ctx context.Context, state *provision.State, clusterReq provision.ClusterRequest, nodeReq provision.NodeRequest, opts *provision.Options) (provision.NodeInfo, error) {
 	arch := Arch(opts.TargetArch)
 	pidPath := state.GetRelativePath(fmt.Sprintf("%s.pid", nodeReq.Name))
+
+	// Ensure any existing launcher for this node is stopped before starting a new one.
+	// This prevents orphaned launcher processes when the PID file gets overwritten.
+	if err := vm.StopProcessByPidfile(pidPath); err != nil {
+		fmt.Fprintf(opts.LogWriter, "warning: failed to stop existing launcher for %s: %v\n", nodeReq.Name, err)
+	}
 
 	var pflashImages []string
 
