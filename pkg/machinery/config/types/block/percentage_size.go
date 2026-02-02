@@ -80,3 +80,16 @@ func (ps *PercentageSize) UnmarshalText(text []byte) error {
 func (ps PercentageSize) IsZero() bool {
 	return ps.value == nil && ps.raw == nil
 }
+
+// Merge implements merger interface.
+func (ps *PercentageSize) Merge(other any) error {
+	otherPS, ok := other.(PercentageSize)
+	if !ok {
+		return fmt.Errorf("cannot merge %T with %T", ps, other)
+	}
+
+	ps.raw = otherPS.raw
+	ps.value = otherPS.value
+
+	return nil
+}
