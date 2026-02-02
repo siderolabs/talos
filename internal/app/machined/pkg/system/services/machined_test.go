@@ -8,41 +8,26 @@ import (
 	"fmt"
 	"testing"
 
-	cosi "github.com/cosi-project/runtime/api/v1alpha1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"google.golang.org/grpc"
 
-	"github.com/siderolabs/talos/pkg/machinery/api/cluster"
-	"github.com/siderolabs/talos/pkg/machinery/api/inspect"
-	"github.com/siderolabs/talos/pkg/machinery/api/machine"
-	"github.com/siderolabs/talos/pkg/machinery/api/storage"
-	"github.com/siderolabs/talos/pkg/machinery/api/time"
+	"github.com/siderolabs/talos/pkg/machinery/api"
 )
 
 func collectMethods(t *testing.T) map[string]struct{} {
 	methods := make(map[string]struct{})
 
-	for _, service := range []grpc.ServiceDesc{
-		cosi.State_ServiceDesc,
-		cluster.ClusterService_ServiceDesc,
-		inspect.InspectService_ServiceDesc,
-		machine.ImageService_ServiceDesc,
-		machine.MachineService_ServiceDesc,
-		// security.SecurityService_ServiceDesc, - not in machined
-		storage.StorageService_ServiceDesc,
-		time.TimeService_ServiceDesc,
-	} {
-		for _, method := range service.Methods {
-			s := fmt.Sprintf("/%s/%s", service.ServiceName, method.MethodName)
-			require.NotContains(t, methods, s)
-			methods[s] = struct{}{}
-		}
+	for _, service := range api.TalosAPIdAllAPIs() {
+		for i := range service.Services().Len() {
+			svc := service.Services().Get(i)
 
-		for _, stream := range service.Streams {
-			s := fmt.Sprintf("/%s/%s", service.ServiceName, stream.StreamName)
-			require.NotContains(t, methods, s)
-			methods[s] = struct{}{}
+			for j := range svc.Methods().Len() {
+				method := svc.Methods().Get(j)
+
+				s := fmt.Sprintf("/%s/%s", svc.FullName(), method.Name())
+				require.NotContains(t, methods, s)
+				methods[s] = struct{}{}
+			}
 		}
 	}
 
