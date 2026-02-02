@@ -93,3 +93,16 @@ func (ps PercentageSize) IsZero() bool {
 func (ps PercentageSize) IsNegative() bool {
 	return ps.negative
 }
+
+// Merge implements merger interface.
+func (ps *PercentageSize) Merge(other any) error {
+	otherPS, ok := other.(PercentageSize)
+	if !ok {
+		return fmt.Errorf("cannot merge %T with %T", ps, other)
+	}
+
+	ps.raw = otherPS.raw
+	ps.value = otherPS.value
+
+	return nil
+}
