@@ -33,7 +33,7 @@ GENERATE_VEX ?= latest
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
 CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest
-IMAGE_SIGNER_RELEASE ?= v0.1.1
+IMAGE_SIGNER_RELEASE ?= v0.2.0
 
 PKG_APPARMOR ?= $(PKGS_PREFIX)/apparmor:$(PKGS)
 PKG_CA_CERTIFICATES ?= $(PKGS_PREFIX)/ca-certificates:$(PKGS)
