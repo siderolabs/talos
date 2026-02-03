@@ -7,11 +7,33 @@ package volumes_test
 import (
 	"testing"
 
+	"github.com/siderolabs/gen/optional"
+	blockpb "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/volumes"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
+
+func TestDiskContextToCELContext_SystemDiskDefault(t *testing.T) {
+	t.Parallel()
+
+	ctx := (&volumes.DiskContext{Disk: &blockpb.DiskSpec{DevPath: "/dev/vda"}}).ToCELContext()
+
+	val, ok := ctx["system_disk"]
+	assert.True(t, ok)
+	assert.Equal(t, false, val)
+}
+
+func TestDiskContextToCELContext_SystemDiskExplicit(t *testing.T) {
+	t.Parallel()
+
+	ctx := (&volumes.DiskContext{Disk: &blockpb.DiskSpec{DevPath: "/dev/vda"}, SystemDisk: optional.Some(true)}).ToCELContext()
+
+	val, ok := ctx["system_disk"]
+	assert.True(t, ok)
+	assert.Equal(t, true, val)
+}
 
 func TestCompareVolumeConfigs(t *testing.T) {
 	t.Parallel()

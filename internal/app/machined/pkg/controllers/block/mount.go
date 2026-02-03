@@ -306,6 +306,9 @@ func (ctrl *MountController) handleMountOperation(
 	case block.VolumeTypeTmpfs:
 		return fmt.Errorf("not implemented yet")
 
+	case block.VolumeTypeMemory:
+		return ctrl.handleMemoryMountOperation(logger, filepath.Join(rootPath, mountTarget), mountRequest, volumeStatus)
+
 	case block.VolumeTypeExternal:
 		return ctrl.handleDiskMountOperation(logger, mountSource, filepath.Join(rootPath, mountTarget), mountFilesystem, mountRequest, volumeStatus)
 
@@ -427,6 +430,79 @@ func (ctrl *MountController) handleBindMountOperation(
 			readOnly:  mountRequest.TypedSpec().ReadOnly,
 			unmounter: manager.Unmount,
 		}
+	}
+
+	return nil
+}
+
+func (ctrl *MountController) handleMemoryMountOperation(
+	logger *zap.Logger,
+	mountTarget string,
+	mountRequest *block.MountRequest,
+	volumeStatus *block.VolumeStatus,
+) error {
+	_, ok := ctrl.activeMounts[mountRequest.Metadata().ID()]
+
+	if !ok {
+		var sizeOpt string
+
+		for _, param := range volumeStatus.TypedSpec().MountSpec.Parameters {
+			if param.Name == "size" && param.String != nil {
+				sizeOpt = fmt.Sprintf("size=%s", *param.String)
+
+				break
+			}
+		}
+
+		if sizeOpt == "" {
+			return fmt.Errorf("memory volume requires size parameter")
+		}
+
+		logger.Info("mounting memory volume",
+			zap.String("target", mountTarget),
+			zap.String("size", sizeOpt),
+		)
+
+		// Create the mount point directory if it doesn't exist
+		if err := os.MkdirAll(mountTarget, volumeStatus.TypedSpec().MountSpec.FileMode); err != nil {
+			return fmt.Errorf("failed to create target path: %w", err)
+		}
+
+		// Mount tmpfs
+		if err := unix.Mount("tmpfs", mountTarget, "tmpfs", 0, sizeOpt); err != nil {
+			return fmt.Errorf("failed to mount tmpfs at %s: %w", mountTarget, err)
+		}
+
+		if volumeStatus.TypedSpec().MountSpec.SelinuxLabel != "" {
+			if err := selinux.SetLabel(mountTarget, volumeStatus.TypedSpec().MountSpec.SelinuxLabel); err != nil {
+				unix.Unmount(mountTarget, 0) //nolint:errcheck
+
+				return fmt.Errorf("failed to set selinux label: %w", err)
+			}
+		}
+
+		if !mountRequest.TypedSpec().ReadOnly && !mountRequest.TypedSpec().Detached {
+			if err := ctrl.updateTargetSettings(mountTarget, volumeStatus.TypedSpec().MountSpec); err != nil {
+				unix.Unmount(mountTarget, 0) //nolint:errcheck
+
+				return fmt.Errorf("failed to update target settings: %w", err)
+			}
+		}
+
+		logger.Info("memory volume mounted successfully",
+			zap.String("volume", volumeStatus.Metadata().ID()),
+			zap.String("target", mountTarget),
+		)
+
+		ctrl.activeMounts[mountRequest.Metadata().ID()] = &mountContext{
+			point:    nil,
+			readOnly: mountRequest.TypedSpec().ReadOnly,
+			unmounter: func() error {
+				return unix.Unmount(mountTarget, 0)
+			},
+		}
+
+		return nil
 	}
 
 	return nil
@@ -778,6 +854,9 @@ func (ctrl *MountController) handleUnmountOperation(
 	case block.VolumeTypeTmpfs:
 		return fmt.Errorf("not implemented yet")
 
+	case block.VolumeTypeMemory:
+		return ctrl.handleMemoryUnmountOperation(logger, mountRequest, volumeStatus)
+
 	case block.VolumeTypeExternal:
 		return ctrl.handleDiskUnmountOperation(logger, mountRequest, volumeStatus)
 
@@ -842,6 +921,30 @@ func (ctrl *MountController) handleDirectoryUnmountOperation(
 		zap.String("volume", mountRequest.Metadata().ID()),
 		zap.String("source", mountCtx.point.Source()),
 		zap.String("target", mountCtx.point.Target()),
+	)
+
+	return nil
+}
+
+func (ctrl *MountController) handleMemoryUnmountOperation(
+	logger *zap.Logger,
+	mountRequest *block.MountRequest,
+	volumeStatus *block.VolumeStatus,
+) error {
+	mountCtx, ok := ctrl.activeMounts[mountRequest.Metadata().ID()]
+	if !ok {
+		return nil
+	}
+
+	if err := mountCtx.unmounter(); err != nil {
+		return fmt.Errorf("failed to unmount memory volume %q: %w", mountRequest.Metadata().ID(), err)
+	}
+
+	delete(ctrl.activeMounts, mountRequest.Metadata().ID())
+
+	logger.Info("memory volume unmounted",
+		zap.String("volume", volumeStatus.Metadata().ID()),
+		zap.String("target", volumeStatus.TypedSpec().MountLocation),
 	)
 
 	return nil
