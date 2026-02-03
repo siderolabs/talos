@@ -111,6 +111,23 @@ func (widget *Header) humanizeCPUFrequency(mhz float64) string {
 	return fmt.Sprintf("%s%s", humanize.Ftoa(value), unit)
 }
 
+// formatUptime returns a duration in a human readable form.
+//
+// If d>24h returns format "23d72h3m5s", otherwise "72h3m5s".
+func formatUptime(d time.Duration) string {
+	const day = 24 * time.Hour
+
+	d = d.Round(time.Second)
+	if d >= day {
+		uptimeDays := d / day
+		uptimeRest := d % day
+
+		return fmt.Sprintf("%dd%s", uptimeDays, uptimeRest)
+	}
+
+	return d.String()
+}
+
 // Spinner is a set of characters compatible with Linux virtual console CP437.
 var spinner = []string{"\u2510", "\u2518", "\u2514", "\u250C"}
 
@@ -152,7 +169,8 @@ func (widget *Header) updateNodeAPIData(node string, data *apidata.Node) {
 	}
 
 	if data.SystemStat != nil && data.SystemStat.BootTime != 0 {
-		nodeData.uptime = time.Since(time.Unix(int64(data.SystemStat.GetBootTime()), 0)).Round(time.Second).String()
+		uptime := time.Since(time.Unix(int64(data.SystemStat.GetBootTime()), 0))
+		nodeData.uptime = formatUptime(uptime)
 	} else {
 		nodeData.uptime = notAvailable
 	}
