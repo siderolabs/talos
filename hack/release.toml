@@ -99,7 +99,7 @@ The switch and inventory backfill is automatic and no action is needed from the 
     [notes.talosctl_images_talos_bundle]
         title = "`talosctl images talos-bundle` can ignore reaching to the registry"
         description = """\
-The `talosctl images talos-bundle` command now accepts optional `--ovelays` and `--extensions` flags.
+The `talosctl images talos-bundle` command now accepts optional `--overlays` and `--extensions` flags.
 If those are set to `false`, the command will not attempt to reach out to the container registry to fetch the latest versions and digests of the overlays and extensions.
 """
 
