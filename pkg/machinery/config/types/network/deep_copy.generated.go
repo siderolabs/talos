@@ -451,6 +451,14 @@ func (o *LinkConfigV1Alpha1) DeepCopy() *LinkConfigV1Alpha1 {
 // DeepCopy generates a deep copy of *LinkAliasConfigV1Alpha1.
 func (o *LinkAliasConfigV1Alpha1) DeepCopy() *LinkAliasConfigV1Alpha1 {
 	var cp LinkAliasConfigV1Alpha1 = *o
+	if o.Selector.RequireUniqueMatch != nil {
+		cp.Selector.RequireUniqueMatch = new(bool)
+		*cp.Selector.RequireUniqueMatch = *o.Selector.RequireUniqueMatch
+	}
+	if o.Selector.SkipAliasedLinks != nil {
+		cp.Selector.SkipAliasedLinks = new(bool)
+		*cp.Selector.SkipAliasedLinks = *o.Selector.SkipAliasedLinks
+	}
 	return &cp
 }
 

@@ -8,6 +8,7 @@ import (
 	_ "embed"
 	"testing"
 
+	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -27,6 +28,8 @@ func TestLinkAliasConfigMarshalStability(t *testing.T) {
 
 	cfg := network.NewLinkAliasConfigV1Alpha1("net0")
 	cfg.Selector.Match = cel.MustExpression(cel.ParseBooleanExpression(`mac(link.permanent_addr) == "00:1a:2b:3c:4d:5e"`, celenv.LinkLocator()))
+	cfg.Selector.RequireUniqueMatch = pointer.To(true)
+	cfg.Selector.SkipAliasedLinks = pointer.To(false)
 
 	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
 	require.NoError(t, err)
@@ -51,6 +54,10 @@ func TestLinkAliasConfigUnmarshal(t *testing.T) {
 			MetaKind:       network.LinkAliasKind,
 		},
 		MetaName: "net0",
+		Selector: network.LinkSelector{
+			RequireUniqueMatch: pointer.To(true),
+			SkipAliasedLinks:   pointer.To(false),
+		},
 	}
 	require.NoError(t, c.Selector.Match.UnmarshalText([]byte(`mac(link.permanent_addr) == "00:1a:2b:3c:4d:5e"`)))
 
@@ -103,6 +110,26 @@ func TestLinkAliasValidate(t *testing.T) {
 				return c
 			},
 		},
+		{
+			name: "valid with requireUniqueMatch false",
+			cfg: func() *network.LinkAliasConfigV1Alpha1 {
+				c := network.NewLinkAliasConfigV1Alpha1("int0")
+				require.NoError(t, c.Selector.Match.UnmarshalText([]byte(`link.driver == "e1000"`)))
+				c.Selector.RequireUniqueMatch = pointer.To(false)
+
+				return c
+			},
+		},
+		{
+			name: "valid with skipAliasedLinks true",
+			cfg: func() *network.LinkAliasConfigV1Alpha1 {
+				c := network.NewLinkAliasConfigV1Alpha1("int0")
+				require.NoError(t, c.Selector.Match.UnmarshalText([]byte(`link.driver == "e1000"`)))
+				c.Selector.SkipAliasedLinks = pointer.To(true)
+
+				return c
+			},
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
@@ -118,4 +145,21 @@ func TestLinkAliasValidate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestLinkAliasConfigDefaults(t *testing.T) {
+	t.Parallel()
+
+	c := network.NewLinkAliasConfigV1Alpha1("int0")
+
+	// Test defaults
+	assert.True(t, c.RequireUniqueMatch(), "RequireUniqueMatch should default to true")
+	assert.False(t, c.SkipAliasedLinks(), "SkipAliasedLinks should default to false")
+
+	// Test explicit values
+	c.Selector.RequireUniqueMatch = pointer.To(false)
+	c.Selector.SkipAliasedLinks = pointer.To(true)
+
+	assert.False(t, c.RequireUniqueMatch(), "RequireUniqueMatch should be false when set")
+	assert.True(t, c.SkipAliasedLinks(), "SkipAliasedLinks should be true when set")
 }

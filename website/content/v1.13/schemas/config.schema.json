@@ -2376,9 +2376,9 @@
         "selector": {
           "$ref": "#/$defs/network.LinkSelector",
           "title": "selector",
-          "description": "Selector to match the link to alias.\n\nSelector must match exactly one link, otherwise an error is returned.\nIf multiple selectors match the same link, the first one is used.\n",
-          "markdownDescription": "Selector to match the link to alias.\n\nSelector must match exactly one link, otherwise an error is returned.\nIf multiple selectors match the same link, the first one is used.",
-          "x-intellij-html-description": "\u003cp\u003eSelector to match the link to alias.\u003c/p\u003e\n\n\u003cp\u003eSelector must match exactly one link, otherwise an error is returned.\nIf multiple selectors match the same link, the first one is used.\u003c/p\u003e\n"
+          "description": "Selector to match the link to alias.\n\nBy default, the selector must match exactly one link, otherwise the alias is not applied.\nSet requireUniqueMatch to false to allow multiple matches and use the first matching link.\nIf multiple selectors match the same link, the first one is used.\n",
+          "markdownDescription": "Selector to match the link to alias.\n\nBy default, the selector must match exactly one link, otherwise the alias is not applied.\nSet `requireUniqueMatch` to `false` to allow multiple matches and use the first matching link.\nIf multiple selectors match the same link, the first one is used.",
+          "x-intellij-html-description": "\u003cp\u003eSelector to match the link to alias.\u003c/p\u003e\n\n\u003cp\u003eBy default, the selector must match exactly one link, otherwise the alias is not applied.\nSet \u003ccode\u003erequireUniqueMatch\u003c/code\u003e to \u003ccode\u003efalse\u003c/code\u003e to allow multiple matches and use the first matching link.\nIf multiple selectors match the same link, the first one is used.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -2476,6 +2476,20 @@
           "description": "The Common Expression Language (CEL) expression to match the link.\n",
           "markdownDescription": "The Common Expression Language (CEL) expression to match the link.",
           "x-intellij-html-description": "\u003cp\u003eThe Common Expression Language (CEL) expression to match the link.\u003c/p\u003e\n"
+        },
+        "requireUniqueMatch": {
+          "type": "boolean",
+          "title": "requireUniqueMatch",
+          "description": "Require the selector to match exactly one link.\n\nWhen set to false, if multiple links match the selector, the first matching link is used.\nWhen set to true (default), if multiple links match, the alias is not applied.\n",
+          "markdownDescription": "Require the selector to match exactly one link.\n\nWhen set to `false`, if multiple links match the selector, the first matching link is used.\nWhen set to `true` (default), if multiple links match, the alias is not applied.",
+          "x-intellij-html-description": "\u003cp\u003eRequire the selector to match exactly one link.\u003c/p\u003e\n\n\u003cp\u003eWhen set to \u003ccode\u003efalse\u003c/code\u003e, if multiple links match the selector, the first matching link is used.\nWhen set to \u003ccode\u003etrue\u003c/code\u003e (default), if multiple links match, the alias is not applied.\u003c/p\u003e\n"
+        },
+        "skipAliasedLinks": {
+          "type": "boolean",
+          "title": "skipAliasedLinks",
+          "description": "Skip links that already have an alias assigned by a previous LinkAliasConfig.\n\nThis allows creating sequential aliases like net0 and net1 from any N links\nby using the same broad selector and relying on processing order.\n",
+          "markdownDescription": "Skip links that already have an alias assigned by a previous LinkAliasConfig.\n\nThis allows creating sequential aliases like `net0` and `net1` from any N links\nby using the same broad selector and relying on processing order.",
+          "x-intellij-html-description": "\u003cp\u003eSkip links that already have an alias assigned by a previous LinkAliasConfig.\u003c/p\u003e\n\n\u003cp\u003eThis allows creating sequential aliases like \u003ccode\u003enet0\u003c/code\u003e and \u003ccode\u003enet1\u003c/code\u003e from any N links\nby using the same broad selector and relying on processing order.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

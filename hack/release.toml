@@ -129,6 +129,17 @@ It replaces and deprecates the previous method of configuring KubeSpan via the `
 The old configuration field will continue to work for backward compatibility.
 """
 
+    [notes.link_alias_config]
+        title = "LinkAliasConfig Selector Enhancements"
+        description = """\
+`LinkAliasConfig` selector now supports two new options:
+
+- `requireUniqueMatch` (default: `true`): When `false`, uses the first matching link instead of requiring exactly one match.
+- `skipAliasedLinks` (default: `false`): When `true`, skips links already aliased by a previous `LinkAliasConfig`.
+
+This enables creating stable aliases like `net0`, `net1` from any N links, useful for `BondConfig` and `BridgeConfig` member interfaces on varying hardware.
+"""
+
     [notes.extraArgs]
         title = "Extra Arguments accept slices in addition to strings"
         description = """\
