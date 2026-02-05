@@ -19,6 +19,7 @@ import (
 //nolint:interfacebloat
 type Provisioner interface {
 	Create(context.Context, ClusterRequest, ...Option) (Cluster, error)
+	Start(context.Context, Cluster, ...Option) error
 	Destroy(context.Context, Cluster, ...Option) error
 
 	Reflect(ctx context.Context, clusterName, stateDirectory string) (Cluster, error)
