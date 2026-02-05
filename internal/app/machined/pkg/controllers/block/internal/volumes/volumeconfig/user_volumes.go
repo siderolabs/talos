@@ -232,7 +232,8 @@ func SwapVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 						Match: swapVolumeConfig.Provisioning().DiskSelector().ValueOr(noMatch),
 					},
 					PartitionSpec: block.PartitionSpec{
-						MaxSize:         cmp.Or(swapVolumeConfig.Provisioning().MaxSize().ValueOrZero(), MinUserVolumeSize),
+						MinSize:         cmp.Or(swapVolumeConfig.Provisioning().MinSize().ValueOrZero(), MinUserVolumeSize),
+						MaxSize:         swapVolumeConfig.Provisioning().MaxSize().ValueOrZero(),
 						RelativeMaxSize: swapVolumeConfig.Provisioning().RelativeMaxSize().ValueOrZero(),
 						Grow:            swapVolumeConfig.Provisioning().Grow().ValueOrZero(),
 						Label:           volumeID,

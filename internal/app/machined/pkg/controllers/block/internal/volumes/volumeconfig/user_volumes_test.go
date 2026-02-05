@@ -383,6 +383,49 @@ func TestSwapVolumeTransformer(t *testing.T) {
 					assert.Equal(t, block.FilesystemTypeSwap, vc.TypedSpec().Provisioning.FilesystemSpec.Type)
 					assert.Equal(t, constants.SwapVolumePrefix+"swap1", vc.TypedSpec().Provisioning.PartitionSpec.Label)
 					assert.Equal(t, block.WaveUserVolumes, vc.TypedSpec().Provisioning.Wave)
+
+					assert.EqualValues(t, volumeconfig.MinUserVolumeSize, vc.TypedSpec().Provisioning.PartitionSpec.MinSize)
+					assert.EqualValues(t, 0, vc.TypedSpec().Provisioning.PartitionSpec.MaxSize)
+				})
+
+				testMountTransformFunc(t, resources[0].MountTransformFunc, func(t *testing.T, m *block.VolumeMountRequest, err error) {
+					// default mount transform is noop
+					require.NoError(t, err)
+				})
+			},
+		},
+		{
+			name: "swap volume with sizes",
+			cfg: []*blockcfg.SwapVolumeConfigV1Alpha1{
+				{
+					Meta: meta.Meta{
+						MetaKind:       blockcfg.SwapVolumeConfigKind,
+						MetaAPIVersion: "v1alpha1",
+					},
+					MetaName: "swap1",
+					ProvisioningSpec: blockcfg.ProvisioningSpec{
+						ProvisioningMinSize: blockcfg.MustByteSize("1GB"),
+						ProvisioningMaxSize: blockcfg.MustSize("2GB"),
+					},
+				},
+			},
+			checkFunc: func(t *testing.T, resources []volumeconfig.VolumeResource) {
+				require.Len(t, resources, 1)
+
+				assert.Equal(t, constants.SwapVolumePrefix+"swap1", resources[0].VolumeID)
+				assert.Equal(t, block.SwapVolumeLabel, resources[0].Label)
+
+				testTransformFunc(t, resources[0].TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
+					require.NoError(t, err)
+
+					assert.Equal(t, block.VolumeTypePartition, vc.TypedSpec().Type)
+
+					assert.Equal(t, block.FilesystemTypeSwap, vc.TypedSpec().Provisioning.FilesystemSpec.Type)
+					assert.Equal(t, constants.SwapVolumePrefix+"swap1", vc.TypedSpec().Provisioning.PartitionSpec.Label)
+					assert.Equal(t, block.WaveUserVolumes, vc.TypedSpec().Provisioning.Wave)
+
+					assert.EqualValues(t, 1*1000*1000*1000, vc.TypedSpec().Provisioning.PartitionSpec.MinSize)
+					assert.EqualValues(t, 2*1000*1000*1000, vc.TypedSpec().Provisioning.PartitionSpec.MaxSize)
 				})
 
 				testMountTransformFunc(t, resources[0].MountTransformFunc, func(t *testing.T, m *block.VolumeMountRequest, err error) {
