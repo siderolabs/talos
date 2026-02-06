@@ -290,7 +290,7 @@ func (suite *TinkSuite) getTinkManifests(namespace, serviceName, ssName, talosIm
 		"app": "talos-cp",
 	}
 
-	tinkManifests := []runtime.Object{
+	tinkManifests := []runtime.Object{ //nolint:prealloc // this is a test
 		&corev1.Namespace{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "Namespace",

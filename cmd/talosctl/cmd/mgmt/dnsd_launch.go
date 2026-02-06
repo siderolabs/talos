@@ -8,8 +8,10 @@ package mgmt
 
 import (
 	"net"
+	"slices"
 	"strings"
 
+	"github.com/siderolabs/gen/xslices"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 
@@ -29,11 +31,7 @@ var dnsdLaunchCmd = &cobra.Command{
 	Args:   cobra.NoArgs,
 	Hidden: true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		var ips []net.IP
-
-		for ip := range strings.SplitSeq(dnsdLaunchCmdFlags.addr, ",") {
-			ips = append(ips, net.ParseIP(ip))
-		}
+		ips := xslices.Map(slices.Collect(strings.SplitSeq(dnsdLaunchCmdFlags.addr, ",")), net.ParseIP)
 
 		var eg errgroup.Group
 

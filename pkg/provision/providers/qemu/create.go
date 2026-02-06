@@ -116,7 +116,7 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 		}
 	}
 
-	var nodeInfo []provision.NodeInfo
+	var nodeInfo []provision.NodeInfo //nolint:prealloc // this is created by p.createNodes
 
 	fmt.Fprintln(options.LogWriter, "creating controlplane nodes")
 

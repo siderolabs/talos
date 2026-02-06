@@ -20,7 +20,7 @@ import (
 )
 
 func TestGenerateConfig(t *testing.T) {
-	configBundleOpts := []bundle.Option{
+	configBundleOpts := []bundle.Option{ //nolint:prealloc // this is a test
 		bundle.WithInputOptions(
 			&bundle.InputOptions{
 				ClusterName: "test-cluster",

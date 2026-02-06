@@ -191,7 +191,7 @@ func (s *VolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Op
 	}
 
 	var (
-		warnings         []string
+		warnings         []string //nolint:prealloc
 		validationErrors error
 	)
 

@@ -91,7 +91,7 @@ func (a ArgValue) MarshalYAML() (any, error) {
 			Kind: yaml.SequenceNode,
 			Tag:  "!!seq",
 			Content: func() []*yaml.Node {
-				var nodes []*yaml.Node
+				nodes := make([]*yaml.Node, 0, len(a.listValue))
 
 				for _, item := range a.listValue {
 					nodes = append(nodes, &yaml.Node{

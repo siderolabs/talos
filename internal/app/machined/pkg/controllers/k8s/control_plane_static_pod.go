@@ -348,7 +348,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 
 	enabledAdmissionPlugins := []string{"NodeRestriction"}
 
-	args := []string{
+	args := []string{ //nolint:prealloc // very dynamic length
 		"/usr/local/bin/kube-apiserver",
 	}
 
@@ -576,7 +576,7 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 		return "", nil
 	}
 
-	args := []string{
+	args := []string{ //nolint:prealloc // very dynamic length
 		"/usr/local/bin/kube-controller-manager",
 		"--use-service-account-credentials",
 	}
@@ -756,7 +756,7 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 		return "", nil
 	}
 
-	args := []string{
+	args := []string{ //nolint:prealloc // very dynamic length
 		"/usr/local/bin/kube-scheduler",
 	}
 

@@ -22,10 +22,14 @@ func findFirstValue[T any, R comparable](documents []T, getter func(T) R) R {
 }
 
 func aggregateValues[T any, R any](documents []T, getter func(T) []R) []R {
-	var result []R
+	result := make([]R, 0, len(documents))
 
 	for _, document := range documents {
 		result = append(result, getter(document)...)
+	}
+
+	if len(result) == 0 {
+		return nil
 	}
 
 	return result

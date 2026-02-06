@@ -463,7 +463,7 @@ func StartAllServices(runtime.Sequence, any) (runtime.TaskExecutionFunc, string)
 
 		svcs.LoadAndStart(serviceList...)
 
-		var all []conditions.Condition
+		all := make([]conditions.Condition, 0, len(svcs.List()))
 
 		logger.Printf("waiting for %d services", len(svcs.List()))
 

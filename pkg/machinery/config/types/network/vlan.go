@@ -163,7 +163,7 @@ func (s *VLANConfigV1Alpha1) ConflictsWithKinds() []string {
 func (s *VLANConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
 	var (
 		errs     error
-		warnings []string
+		warnings []string //nolint:prealloc
 	)
 
 	if s.MetaName == "" {

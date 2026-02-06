@@ -219,7 +219,7 @@ func (suite *ImageSuite) TestCacheCreateOCI() {
 
 	cacheDir := suite.T().TempDir()
 
-	args := []string{"image", "cache-create", "--image-cache-path", cacheDir, "--force", "--layout", "oci"}
+	args := []string{"image", "cache-create", "--image-cache-path", cacheDir, "--force", "--layout", "oci"} //nolint:prealloc // this is a test
 
 	args = append(args, imagesArgs...)
 
@@ -244,7 +244,7 @@ func (suite *ImageSuite) TestCacheCreateFlat() {
 
 	cacheDir := suite.T().TempDir()
 
-	args := []string{"image", "cache-create", "--image-cache-path", cacheDir, "--force", "--layout", "flat"}
+	args := []string{"image", "cache-create", "--image-cache-path", cacheDir, "--force", "--layout", "flat"} //nolint:prealloc // this is a test
 
 	args = append(args, imagesArgs...)
 

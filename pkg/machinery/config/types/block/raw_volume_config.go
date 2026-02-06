@@ -111,7 +111,7 @@ func (s *RawVolumeConfigV1Alpha1) Clone() config.Document {
 //nolint:gocyclo,dupl
 func (s *RawVolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
 	var (
-		warnings         []string
+		warnings         []string //nolint:prealloc
 		validationErrors error
 	)
 
