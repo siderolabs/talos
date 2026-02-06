@@ -46,6 +46,11 @@ func (ctrl *AddressConfigController) Inputs() []controller.Input {
 			Kind:      controller.InputWeak,
 		},
 		{
+			Namespace: network.NamespaceName,
+			Type:      network.LinkStatusType,
+			Kind:      controller.InputWeak,
+		},
+		{
 			Namespace: config.NamespaceName,
 			Type:      config.MachineConfigType,
 			ID:        optional.Some(config.ActiveID),
@@ -95,6 +100,13 @@ func (ctrl *AddressConfigController) Run(ctx context.Context, r controller.Runti
 			}
 		}
 
+		linkStatuses, err := safe.ReaderListAll[*network.LinkStatus](ctx, r)
+		if err != nil {
+			return fmt.Errorf("error listing link statuses: %w", err)
+		}
+
+		linkNameResolver := network.NewLinkResolver(linkStatuses.All)
+
 		// parse kernel cmdline for the address
 		cmdlineAddresses := ctrl.parseCmdline(logger)
 		for _, cmdlineAddress := range cmdlineAddresses {
@@ -122,7 +134,7 @@ func (ctrl *AddressConfigController) Run(ctx context.Context, r controller.Runti
 		}
 
 		if cfg != nil {
-			if err = ctrl.apply(ctx, r, ctrl.processMachineConfig(cfg.Config().NetworkCommonLinkConfigs())); err != nil {
+			if err = ctrl.apply(ctx, r, ctrl.processMachineConfig(cfg.Config().NetworkCommonLinkConfigs(), linkNameResolver)); err != nil {
 				return fmt.Errorf("error applying machine configuration addresses: %w", err)
 			}
 		}
@@ -288,13 +300,16 @@ func (ctrl *AddressConfigController) processDevicesConfiguration(logger *zap.Log
 	return addresses
 }
 
-func (ctrl *AddressConfigController) processMachineConfig(linkConfigs []cfg.NetworkCommonLinkConfig) (addresses []network.AddressSpecSpec) {
+func (ctrl *AddressConfigController) processMachineConfig(linkConfigs []cfg.NetworkCommonLinkConfig, linkNameResolver *network.LinkResolver) (addresses []network.AddressSpecSpec) {
 	for _, linkConfig := range linkConfigs {
+		// Resolve link alias to physical name to ensure consistent AddressSpec IDs
+		linkName := linkNameResolver.Resolve(linkConfig.Name())
+
 		for _, addr := range linkConfig.Addresses() {
 			address := network.AddressSpecSpec{
 				Address:     addr.Address(),
 				Scope:       nethelpers.ScopeGlobal,
-				LinkName:    linkConfig.Name(),
+				LinkName:    linkName,
 				ConfigLayer: network.ConfigMachineConfiguration,
 				Priority:    addr.RoutePriority().ValueOrZero(),
 				Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),

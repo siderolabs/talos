@@ -237,6 +237,45 @@ func (suite *AddressConfigSuite) TestMachineConfiguration() {
 	)
 }
 
+func (suite *AddressConfigSuite) TestMachineConfigurationWithLinkAlias() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.AddressConfigController{}))
+
+	// Create a LinkStatus for a physical interface
+	linkStatus := network.NewLinkStatus(network.NamespaceName, "eth0")
+	linkStatus.TypedSpec().Type = nethelpers.LinkEther
+	linkStatus.TypedSpec().LinkState = true
+	linkStatus.TypedSpec().Alias = "myalias" // Set alias
+	suite.Create(linkStatus)
+
+	// Create a LinkConfig using the alias name
+	lc := networkcfg.NewLinkConfigV1Alpha1("myalias")
+	lc.LinkAddresses = []networkcfg.AddressConfig{
+		{
+			AddressAddress: netip.MustParsePrefix("192.168.1.100/24"),
+		},
+	}
+
+	ctr, err := container.New(lc)
+	suite.Require().NoError(err)
+
+	suite.Create(config.NewMachineConfig(ctr))
+
+	// Assert that the AddressSpec is created with the physical link name (eth0), not the alias
+	ctest.AssertResources(
+		suite,
+		[]string{
+			"configuration/eth0/192.168.1.100/24",
+		},
+		func(r *network.AddressSpec, asrt *assert.Assertions) {
+			// The LinkName should be resolved to the physical name "eth0", not the alias "myalias"
+			asrt.Equal("eth0", r.TypedSpec().LinkName)
+			asrt.Equal(netip.MustParsePrefix("192.168.1.100/24"), r.TypedSpec().Address)
+			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
+		},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
+	)
+}
+
 func TestAddressConfigSuite(t *testing.T) {
 	suite.Run(t, &AddressConfigSuite{
 		DefaultSuite: ctest.DefaultSuite{
