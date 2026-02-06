@@ -168,6 +168,23 @@ type RouteConfig struct {
 	//   schema:
 	//     type: string
 	RouteTable nethelpers.RoutingTable `yaml:"table,omitempty"`
+	//   description: |
+	//     The route type.
+	//
+	//     If not specified, the route type will be unicast (or multicast for multicast destinations).
+	//     Common types: unicast, local, broadcast, blackhole, unreachable, prohibit.
+	//   values:
+	//     - "local"
+	//     - "broadcast"
+	//     - "unicast"
+	//     - "multicast"
+	//     - "blackhole"
+	//     - "unreachable"
+	//     - "prohibit"
+	//     - "throw"
+	//     - "nat"
+	//     - "xresolve"
+	RouteType nethelpers.RouteType `yaml:"type,omitempty"`
 }
 
 // NewLinkConfigV1Alpha1 creates a new LinkConfig config document.
@@ -385,4 +402,13 @@ func (r RouteConfig) Table() optional.Optional[nethelpers.RoutingTable] {
 	}
 
 	return optional.Some(r.RouteTable)
+}
+
+// Type implements NetworkRouteConfig interface.
+func (r RouteConfig) Type() optional.Optional[nethelpers.RouteType] {
+	if r.RouteType == nethelpers.TypeUnspec {
+		return optional.None[nethelpers.RouteType]()
+	}
+
+	return optional.Some(r.RouteType)
 }
