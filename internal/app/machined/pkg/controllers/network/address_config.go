@@ -302,7 +302,9 @@ func (ctrl *AddressConfigController) processDevicesConfiguration(logger *zap.Log
 
 func (ctrl *AddressConfigController) processMachineConfig(linkConfigs []cfg.NetworkCommonLinkConfig, linkNameResolver *network.LinkResolver) (addresses []network.AddressSpecSpec) {
 	for _, linkConfig := range linkConfigs {
-		// Resolve link alias to physical name to ensure consistent AddressSpec IDs
+		// Resolve link alias to physical name to ensure consistent AddressSpec IDs.
+		// If the alias cannot be resolved (e.g., LinkStatus not yet available),
+		// the original name is returned as a fallback, which is safe behavior.
 		linkName := linkNameResolver.Resolve(linkConfig.Name())
 
 		for _, addr := range linkConfig.Addresses() {
