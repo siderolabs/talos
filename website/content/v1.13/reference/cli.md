@@ -600,6 +600,37 @@ talosctl cluster show [flags]
 
 * [talosctl cluster](#talosctl-cluster)	 - A collection of commands for managing local docker-based or QEMU-based clusters
 
+## talosctl cluster start
+
+Starts a stopped local Talos Kubernetes cluster
+
+### Synopsis
+
+Starts a local Talos Kubernetes cluster that was previously created but is now stopped.
+This is useful when the development container is restarted and the VM processes are no longer running.
+The cluster state (disks, configs) must still exist from a previous 'cluster create' command.
+
+```
+talosctl cluster start [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for start
+```
+
+### Options inherited from parent commands
+
+```
+      --name string    the name of the cluster (default "talos-default")
+      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
+```
+
+### SEE ALSO
+
+* [talosctl cluster](#talosctl-cluster)	 - A collection of commands for managing local docker-based or QEMU-based clusters
+
 ## talosctl cluster
 
 A collection of commands for managing local docker-based or QEMU-based clusters
@@ -618,6 +649,7 @@ A collection of commands for managing local docker-based or QEMU-based clusters
 * [talosctl cluster create](#talosctl-cluster-create)	 - Create a local Talos cluster.
 * [talosctl cluster destroy](#talosctl-cluster-destroy)	 - Destroys a local Talos kubernetes cluster
 * [talosctl cluster show](#talosctl-cluster-show)	 - Shows info about a local provisioned kubernetes cluster
+* [talosctl cluster start](#talosctl-cluster-start)	 - Starts a stopped local Talos Kubernetes cluster
 
 ## talosctl completion
 

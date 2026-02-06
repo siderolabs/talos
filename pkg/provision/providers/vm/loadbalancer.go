@@ -24,7 +24,41 @@ const (
 
 // CreateLoadBalancer creates load balancer.
 func (p *Provisioner) CreateLoadBalancer(state *provision.State, clusterReq provision.ClusterRequest) error {
+	controlPlaneIPs := xslices.Map(clusterReq.Nodes.ControlPlaneNodes(),
+		func(req provision.NodeRequest) string { return req.IPs[0].String() })
+
+	state.LoadBalancerConfig = &provision.LoadBalancerConfig{
+		BindAddress: GetLbBindIP(clusterReq.Network.GatewayAddrs[0]),
+		Upstreams:   controlPlaneIPs,
+		Ports:       clusterReq.Network.LoadBalancerPorts,
+	}
+	state.SelfExecutable = clusterReq.SelfExecutable
+
+	return p.StartLoadBalancer(state)
+}
+
+// DestroyLoadBalancer destroys load balancer.
+func (p *Provisioner) DestroyLoadBalancer(state *provision.State) error {
 	pidPath := state.GetRelativePath(lbPid)
+
+	return StopProcessByPidfile(pidPath)
+}
+
+// StartLoadBalancer starts the load balancer if not already running, using saved state config.
+func (p *Provisioner) StartLoadBalancer(state *provision.State) error {
+	pidPath := state.GetRelativePath(lbPid)
+
+	if IsProcessRunning(pidPath) {
+		return nil
+	}
+
+	if state.LoadBalancerConfig == nil {
+		return fmt.Errorf("no load balancer config in state; cluster was created with older talosctl, please destroy and recreate")
+	}
+
+	if state.SelfExecutable == "" {
+		return fmt.Errorf("no self executable path in state; cluster was created with older talosctl, please destroy and recreate")
+	}
 
 	logFile, err := os.OpenFile(state.GetRelativePath(lbLog), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o666)
 	if err != nil {
@@ -33,20 +67,19 @@ func (p *Provisioner) CreateLoadBalancer(state *provision.State, clusterReq prov
 
 	defer logFile.Close() //nolint:errcheck
 
-	controlPlaneIPs := xslices.Map(clusterReq.Nodes.ControlPlaneNodes(), func(req provision.NodeRequest) string { return req.IPs[0].String() })
-	ports := xslices.Map(clusterReq.Network.LoadBalancerPorts, strconv.Itoa)
+	ports := xslices.Map(state.LoadBalancerConfig.Ports, strconv.Itoa)
 
 	args := []string{
 		"loadbalancer-launch",
-		"--loadbalancer-addr", getLbBindIP(clusterReq.Network.GatewayAddrs[0]),
-		"--loadbalancer-upstreams", strings.Join(controlPlaneIPs, ","),
+		"--loadbalancer-addr", state.LoadBalancerConfig.BindAddress,
+		"--loadbalancer-upstreams", strings.Join(state.LoadBalancerConfig.Upstreams, ","),
 	}
 
 	if len(ports) > 0 {
 		args = append(args, "--loadbalancer-ports", strings.Join(ports, ","))
 	}
 
-	cmd := exec.Command(clusterReq.SelfExecutable, args...) //nolint:noctx // runs in background
+	cmd := exec.Command(state.SelfExecutable, args...) //nolint:noctx // runs in background
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile
 	cmd.SysProcAttr = &syscall.SysProcAttr{
@@ -62,11 +95,4 @@ func (p *Provisioner) CreateLoadBalancer(state *provision.State, clusterReq prov
 	}
 
 	return nil
-}
-
-// DestroyLoadBalancer destroys load balancer.
-func (p *Provisioner) DestroyLoadBalancer(state *provision.State) error {
-	pidPath := state.GetRelativePath(lbPid)
-
-	return StopProcessByPidfile(pidPath)
 }

@@ -34,16 +34,20 @@ import (
 	"github.com/siderolabs/talos/pkg/provision"
 )
 
-// CreateNetwork builds bridge interface name by taking part of checksum of the network name
-// so that interface name is defined by network name, and different networks have
-// different bridge interfaces.
-//
-//nolint:gocyclo
-func (p *Provisioner) CreateNetwork(ctx context.Context, state *provision.State, network provision.NetworkRequest, options provision.Options) error {
-	networkNameHash := sha256.Sum256([]byte(network.Name))
-	state.BridgeName = fmt.Sprintf("%s%s", "talos", hex.EncodeToString(networkNameHash[:])[:8])
+// bridgeConfig holds configuration for creating a CNI bridge interface.
+type bridgeConfig struct {
+	networkName  string
+	bridgeName   string
+	mtu          int
+	ipMasquerade bool
+	cidrs        []netip.Prefix
+	gatewayAddrs []netip.Addr
+	cniBinPath   []string
+	cniCacheDir  string
+}
 
-	// bring up the bridge interface for the first time to get gateway IP assigned
+// createBridgeInterface creates a CNI bridge interface using the provided configuration.
+func (p *Provisioner) createBridgeInterface(ctx context.Context, cfg bridgeConfig) error {
 	t := template.Must(template.New("bridge").Parse(bridgeTemplate))
 
 	var buf bytes.Buffer
@@ -54,21 +58,21 @@ func (p *Provisioner) CreateNetwork(ctx context.Context, state *provision.State,
 		MTU           string
 		IPMasquerade  bool
 	}{
-		NetworkName:   network.Name,
-		InterfaceName: state.BridgeName,
-		MTU:           strconv.Itoa(network.MTU),
-		IPMasquerade:  !network.Airgapped,
+		NetworkName:   cfg.networkName,
+		InterfaceName: cfg.bridgeName,
+		MTU:           strconv.Itoa(cfg.mtu),
+		IPMasquerade:  cfg.ipMasquerade,
 	})
 	if err != nil {
 		return fmt.Errorf("error templating bridge CNI config: %w", err)
 	}
 
-	bridgeConfig, err := libcni.NetworkPluginConfFromBytes(buf.Bytes())
+	bridgeConf, err := libcni.NetworkPluginConfFromBytes(buf.Bytes())
 	if err != nil {
 		return fmt.Errorf("error parsing bridge CNI config: %w", err)
 	}
 
-	cniConfig := libcni.NewCNIConfigWithCacheDir(network.CNI.BinPath, network.CNI.CacheDir, nil)
+	cniConfig := libcni.NewCNIConfigWithCacheDir(cfg.cniBinPath, cfg.cniCacheDir, nil)
 
 	ns, err := testutils.NewNS()
 	if err != nil {
@@ -81,19 +85,19 @@ func (p *Provisioner) CreateNetwork(ctx context.Context, state *provision.State,
 	}()
 
 	// pick a fake address to use for provisioning an interface
-	fakeIPs := make([]string, len(network.CIDRs))
+	fakeIPs := make([]string, len(cfg.cidrs))
 	for j := range fakeIPs {
 		var fakeIP netip.Addr
 
-		fakeIP, err = sideronet.NthIPInNetwork(network.CIDRs[j], 2)
+		fakeIP, err = sideronet.NthIPInNetwork(cfg.cidrs[j], 2)
 		if err != nil {
 			return err
 		}
 
-		fakeIPs[j] = sideronet.FormatCIDR(fakeIP, network.CIDRs[j])
+		fakeIPs[j] = sideronet.FormatCIDR(fakeIP, cfg.cidrs[j])
 	}
 
-	gatewayAddrs := xslices.Map(network.GatewayAddrs, netip.Addr.String)
+	gatewayAddrs := xslices.Map(cfg.gatewayAddrs, netip.Addr.String)
 
 	containerID := uuid.New().String()
 	runtimeConf := libcni.RuntimeConf{
@@ -107,22 +111,57 @@ func (p *Provisioner) CreateNetwork(ctx context.Context, state *provision.State,
 		},
 	}
 
-	_, err = cniConfig.AddNetwork(ctx, bridgeConfig, &runtimeConf)
+	_, err = cniConfig.AddNetwork(ctx, bridgeConf, &runtimeConf)
 	if err != nil {
 		return fmt.Errorf("error provisioning bridge CNI network: %w", err)
 	}
 
-	err = cniConfig.DelNetwork(ctx, bridgeConfig, &runtimeConf)
+	err = cniConfig.DelNetwork(ctx, bridgeConf, &runtimeConf)
 	if err != nil {
 		return fmt.Errorf("error deleting bridge CNI network: %w", err)
 	}
 
+	// allow traffic on the bridge via `DOCKER-USER` chain
+	// Docker enables br-netfilter which causes layer2 packets to be filtered with iptables, but we'd like to skip that
+	// if Docker is not running, this will be no-op
+	//
+	// See https://serverfault.com/questions/963759/docker-breaks-libvirt-bridge-network for more details
+	if err = p.allowBridgeTraffic(cfg.bridgeName); err != nil {
+		return fmt.Errorf("error configuring DOCKER-USER chain: %w", err)
+	}
+
+	return nil
+}
+
+// CreateNetwork builds bridge interface name by taking part of checksum of the network name
+// so that interface name is defined by network name, and different networks have
+// different bridge interfaces.
+func (p *Provisioner) CreateNetwork(ctx context.Context, state *provision.State, network provision.NetworkRequest, options provision.Options) error {
+	networkNameHash := sha256.Sum256([]byte(network.Name))
+	state.BridgeName = fmt.Sprintf("%s%s", "talos", hex.EncodeToString(networkNameHash[:])[:8])
+
+	ipMasquerade := !network.Airgapped
+
+	// bring up the bridge interface for the first time to get gateway IP assigned
+	if err := p.createBridgeInterface(ctx, bridgeConfig{
+		networkName:  network.Name,
+		bridgeName:   state.BridgeName,
+		mtu:          network.MTU,
+		ipMasquerade: ipMasquerade,
+		cidrs:        network.CIDRs,
+		gatewayAddrs: network.GatewayAddrs,
+		cniBinPath:   network.CNI.BinPath,
+		cniCacheDir:  network.CNI.CacheDir,
+	}); err != nil {
+		return err
+	}
+
 	// prepare an actual network config to be used by the VMs
-	t = template.Must(template.New("network").Parse(networkTemplate))
+	t := template.Must(template.New("network").Parse(networkTemplate))
 
-	buf.Reset()
+	var buf bytes.Buffer
 
-	err = t.Execute(&buf, struct {
+	err := t.Execute(&buf, struct {
 		NetworkName   string
 		InterfaceName string
 		MTU           string
@@ -131,7 +170,7 @@ func (p *Provisioner) CreateNetwork(ctx context.Context, state *provision.State,
 		NetworkName:   network.Name,
 		InterfaceName: state.BridgeName,
 		MTU:           strconv.Itoa(network.MTU),
-		IPMasquerade:  !network.Airgapped,
+		IPMasquerade:  ipMasquerade,
 	})
 	if err != nil {
 		return fmt.Errorf("error templating VM CNI config: %w", err)
@@ -139,15 +178,6 @@ func (p *Provisioner) CreateNetwork(ctx context.Context, state *provision.State,
 
 	if state.VMCNIConfig, err = libcni.ConfListFromBytes(buf.Bytes()); err != nil {
 		return fmt.Errorf("error parsing VM CNI config: %w", err)
-	}
-
-	// allow traffic on the bridge via `DOCKER-USER` chain
-	// Docker enables br-netfilter which causes layer2 packets to be filtered with iptables, but we'd like to skip that
-	// if Docker is not running, this will be no-op
-	//
-	// See https://serverfault.com/questions/963759/docker-breaks-libvirt-bridge-network for more details
-	if err = p.allowBridgeTraffic(state.BridgeName); err != nil {
-		return fmt.Errorf("error configuring DOCKER-USER chain: %w", err)
 	}
 
 	// configure bridge interface with network chaos if flag is set
@@ -341,6 +371,40 @@ func (p *Provisioner) configureNetworkChaos(network provision.NetworkRequest, st
 	}
 
 	return nil
+}
+
+// RecreateNetwork recreates the network bridge from saved state for cluster restart.
+// This is a simpler version of CreateNetwork that works with existing state.
+func (p *Provisioner) RecreateNetwork(ctx context.Context, state *provision.State, options provision.Options) error {
+	// Check if bridge already exists
+	_, err := net.InterfaceByName(state.BridgeName)
+	if err == nil {
+		// Bridge exists, just ensure traffic rules are set
+		if err = p.allowBridgeTraffic(state.BridgeName); err != nil {
+			return fmt.Errorf("error configuring DOCKER-USER chain: %w", err)
+		}
+
+		return nil
+	}
+
+	// Bridge doesn't exist, need to recreate it
+	// Use CNI config from state (saved during cluster create)
+	if state.CNIConfig == nil {
+		return fmt.Errorf("no CNI config in state")
+	}
+
+	networkInfo := state.ClusterInfo.Network
+
+	return p.createBridgeInterface(ctx, bridgeConfig{
+		networkName:  networkInfo.Name,
+		bridgeName:   state.BridgeName,
+		mtu:          networkInfo.MTU,
+		ipMasquerade: networkInfo.IPMasquerade,
+		cidrs:        networkInfo.CIDRs,
+		gatewayAddrs: networkInfo.GatewayAddrs,
+		cniBinPath:   state.CNIConfig.BinPath,
+		cniCacheDir:  state.CNIConfig.CacheDir,
+	})
 }
 
 // DestroyNetwork destroy bridge interface by name to clean up.
