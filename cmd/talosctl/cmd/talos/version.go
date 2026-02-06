@@ -54,6 +54,10 @@ var versionCmd = &cobra.Command{
 			return WithClientMaintenance(nil, cmdVersion)
 		}
 
+		if GlobalArgs.SkipVerify {
+			return WithClientSkipVerify(cmdVersion)
+		}
+
 		return WithClient(cmdVersion)
 	},
 }

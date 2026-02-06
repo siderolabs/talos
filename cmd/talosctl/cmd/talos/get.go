@@ -56,6 +56,10 @@ To get a list of all available resource definitions, issue 'talosctl get rd'`,
 			return WithClientMaintenance(nil, getResources(args))
 		}
 
+		if GlobalArgs.SkipVerify {
+			return WithClientSkipVerify(getResources(args))
+		}
+
 		return WithClient(getResources(args))
 	},
 }
