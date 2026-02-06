@@ -458,7 +458,8 @@ func (m *Qemu) getLegacyDiskEncryptionPatch(keys []*v1alpha1.EncryptionKey) (con
 }
 
 func (m *Qemu) initDisks() error {
-	workerExtraDisks := []*provision.Disk{}
+	workerExtraDisks := make([]*provision.Disk, 0, len(m.EOps.Disks.Requests())-1)
+
 	primaryDisks := []*provision.Disk{
 		{
 			Size:            m.EOps.Disks.Requests()[0].Size.Bytes(),

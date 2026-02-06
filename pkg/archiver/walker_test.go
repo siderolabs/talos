@@ -24,7 +24,7 @@ func (suite *WalkerSuite) TestIterationDir() {
 	ch, err := archiver.Walker(context.Background(), suite.tmpDir, archiver.WithSkipRoot())
 	suite.Require().NoError(err)
 
-	relPaths := []string(nil)
+	relPaths := []string(nil) //nolint:prealloc // this is a test
 
 	for fi := range ch {
 		suite.Require().NoError(fi.Error)
@@ -48,7 +48,7 @@ func (suite *WalkerSuite) TestIterationFilter() {
 	ch, err := archiver.Walker(context.Background(), suite.tmpDir, archiver.WithSkipRoot(), archiver.WithFnmatchPatterns("dev/*", "lib"))
 	suite.Require().NoError(err)
 
-	relPaths := []string(nil)
+	relPaths := []string(nil) //nolint:prealloc // this is a test
 
 	for fi := range ch {
 		suite.Require().NoError(fi.Error)
@@ -103,7 +103,7 @@ func (suite *WalkerSuite) TestIterationMaxRecurseDepth() {
 			ch, err := archiver.Walker(context.Background(), suite.tmpDir, archiver.WithMaxRecurseDepth(test.maxDepth))
 			suite.Require().NoError(err)
 
-			var result []string
+			var result []string //nolint:prealloc // this is a test
 
 			for fi := range ch {
 				suite.Require().NoError(fi.Error)
@@ -119,7 +119,7 @@ func (suite *WalkerSuite) TestIterationFile() {
 	ch, err := archiver.Walker(context.Background(), filepath.Join(suite.tmpDir, "usr/bin/cp"))
 	suite.Require().NoError(err)
 
-	relPaths := []string(nil)
+	relPaths := []string(nil) //nolint:prealloc // this is a test
 
 	for fi := range ch {
 		suite.Require().NoError(fi.Error)
@@ -156,7 +156,7 @@ func (suite *WalkerSuite) TestIterationSymlink() {
 	ch, err := archiver.Walker(context.Background(), newname)
 	suite.Require().NoError(err)
 
-	relPaths := []string(nil)
+	relPaths := []string(nil) //nolint:prealloc // this is a test
 
 	for fi := range ch {
 		suite.Require().NoError(fi.Error)
@@ -175,7 +175,7 @@ func (suite *WalkerSuite) TestIterationTypes() {
 	ch, err := archiver.Walker(context.Background(), suite.tmpDir, archiver.WithFileTypes(archiver.DirectoryFileType))
 	suite.Require().NoError(err)
 
-	relPaths := []string(nil)
+	relPaths := []string(nil) //nolint:prealloc // this is a test
 
 	for fi := range ch {
 		suite.Require().NoError(fi.Error)

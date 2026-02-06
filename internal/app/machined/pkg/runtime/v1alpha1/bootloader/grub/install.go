@@ -130,7 +130,7 @@ func (c *Config) generateGrubImage(opts options.InstallOptions) error {
 			"part_msdos",
 		}
 
-		args := []string{
+		args := []string{ //nolint:prealloc // very dynamic length
 			"--format",
 			"i386-pc",
 			"--output",
@@ -168,7 +168,7 @@ func (c *Config) generateGrubImage(opts options.InstallOptions) error {
 		return fmt.Errorf("unsupported architecture for grub image: %s", opts.Arch)
 	}
 
-	args := []string{
+	args := []string{ //nolint:prealloc // very dynamic length
 		"--format",
 		platform,
 		"--output",

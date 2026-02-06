@@ -159,7 +159,7 @@ func (s *ExistingVolumeConfigV1Alpha1) ConflictsWithKinds() []string {
 //nolint:gocyclo,dupl
 func (s *ExistingVolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
 	var (
-		warnings         []string
+		warnings         []string //nolint:prealloc
 		validationErrors error
 	)
 

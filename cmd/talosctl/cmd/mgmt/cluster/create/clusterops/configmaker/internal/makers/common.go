@@ -193,16 +193,12 @@ func (m *Maker[T]) initProvisionOps() error {
 }
 
 func (m *Maker[T]) initConfigBundleOps() error {
-	configBundleOps := []bundle.Option{}
-
 	configPatchBundleOps, err := getConfigPatchBundleOps(m.Ops)
 	if err != nil {
 		return err
 	}
 
-	configBundleOps = append(configBundleOps, configPatchBundleOps...)
-
-	m.ConfigBundleOps = configBundleOps
+	m.ConfigBundleOps = slices.Clone(configPatchBundleOps)
 
 	return nil
 }

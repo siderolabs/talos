@@ -390,11 +390,9 @@ func (ctrl *MountController) handleBindMountOperation(
 			}
 		}
 
-		var opts []mount.ManagerOption
-
-		opts = append(opts,
+		opts := []mount.ManagerOption{
 			mount.WithSelinuxLabel(volumeStatus.TypedSpec().MountSpec.SelinuxLabel),
-		)
+		}
 
 		manager := mount.NewManager(slices.Concat(
 			[]mount.ManagerOption{

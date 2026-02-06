@@ -77,7 +77,7 @@ func (arch Arch) PFlash(uefiEnabled bool, extraUEFISearchPaths []string) []PFlas
 	switch arch {
 	case ArchArm64:
 		// default search paths
-		uefiSourcePathPrefixes := []string{
+		uefiSourcePathPrefixes := []string{ //nolint:prealloc // complex length
 			"/usr/share/AAVMF", // most standard location
 			"/usr/share/qemu-efi-aarch64",
 			"/usr/share/OVMF",
@@ -128,7 +128,7 @@ func (arch Arch) PFlash(uefiEnabled bool, extraUEFISearchPaths []string) []PFlas
 		}
 
 		// Default search paths
-		uefiSourcePathPrefixes := []string{
+		uefiSourcePathPrefixes := []string{ //nolint:prealloc // complex length
 			"/usr/share/ovmf",
 			"/usr/share/OVMF",
 			"/usr/share/qemu",

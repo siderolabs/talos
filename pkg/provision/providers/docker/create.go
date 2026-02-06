@@ -44,7 +44,7 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 		return nil, fmt.Errorf("unable to create or re-use a docker network: %w", err)
 	}
 
-	var nodeInfo []provision.NodeInfo
+	var nodeInfo []provision.NodeInfo //nolint:prealloc // this is created by p.createNodes
 
 	fmt.Fprintln(options.LogWriter, "creating controlplane nodes")
 
@@ -54,7 +54,7 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 
 	fmt.Fprintln(options.LogWriter, "creating worker nodes")
 
-	var workerNodeInfo []provision.NodeInfo
+	var workerNodeInfo []provision.NodeInfo //nolint:prealloc // this is created by p.createNodes
 
 	if workerNodeInfo, err = p.createNodes(ctx, request, request.Nodes.WorkerNodes(), &options, false); err != nil {
 		return nil, err
