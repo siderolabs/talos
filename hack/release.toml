@@ -29,7 +29,7 @@ runc: 1.4.0
 systemd: 259
 cryptsetup: 2.8.3
 
-Talos is built with Go 1.25.6.
+Talos is built with Go 1.25.7.
 """
 
     [notes.external_volumes]
