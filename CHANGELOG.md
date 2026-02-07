@@ -1,3 +1,73 @@
+## [Talos 1.12.3](https://github.com/siderolabs/talos/releases/tag/v1.12.3) (2026-02-07)
+
+Welcome to the v1.12.3 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.18.8
+
+Talos is built with Go 1.25.7.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Mateusz Urbanek
+* Andrei Kvapil
+* Gregor Gruener
+* Matthew Sanabria
+
+### Changes
+<details><summary>13 commits</summary>
+<p>
+
+* [`65782007e`](https://github.com/siderolabs/talos/commit/65782007edf028ec496148b145fb39c0beed2208) feat: update Linux kernel with dm-integrity
+* [`b8f824525`](https://github.com/siderolabs/talos/commit/b8f824525316cc3d22e6cf9e0da16a239b8a2831) fix: add hostname to endpoints
+* [`624f9b52a`](https://github.com/siderolabs/talos/commit/624f9b52ab80ddcd972e13536a57684f3f16c9f6) chore: update deps
+* [`3aa153992`](https://github.com/siderolabs/talos/commit/3aa153992a8a246eebf942e6f3d23056de24f108) fix: implement merger for PercentageSize
+* [`f17d07cb7`](https://github.com/siderolabs/talos/commit/f17d07cb7a36e6b52dc9325ce99a70a6c7e19110) feat: add a helper module to generate standard patches
+* [`4a3385dfb`](https://github.com/siderolabs/talos/commit/4a3385dfbdbaf196915eb2aa6ab149f30e3aa025) fix: undo CRLF on Windows (talosctl edit)
+* [`a842775a8`](https://github.com/siderolabs/talos/commit/a842775a8ad8cfb80d98d8fab1f58f345aabb363) feat: add RPi5 to the list of supported SBCs
+* [`b8cdb6100`](https://github.com/siderolabs/talos/commit/b8cdb6100b3a140abe7e653de054d323c2c1d1de) fix(talosctl): pass --k8s-endpoint flag to rotate-ca kubernetes rotation
+* [`27cbe29cc`](https://github.com/siderolabs/talos/commit/27cbe29cc0bda3e7eb39fffab0d2598a3ec85180) fix: skip empty documents on config decoding
+* [`8f49dd220`](https://github.com/siderolabs/talos/commit/8f49dd2209b78ea0b9ec68b61fea967cd3756fab) fix: open the filesystem as read-only
+* [`b2a83d12a`](https://github.com/siderolabs/talos/commit/b2a83d12a6000fcae0fa02da9c879a1c3f846ff7) fix: always set advertised peer URLs
+* [`249acdbb5`](https://github.com/siderolabs/talos/commit/249acdbb5a6374a4a4da07909514cafbede58771) fix: fallback to /proc/meminfo for memory modules
+* [`bc56bdff7`](https://github.com/siderolabs/talos/commit/bc56bdff74eef787a9ed6ae5e4d7178e9a6d8114) fix: add warnings to 802.3ad bond
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>3 commits</summary>
+<p>
+
+* [`15d5d78`](https://github.com/siderolabs/pkgs/commit/15d5d78c8979da873aedc3e6577617429b9e3cba) chore: update deps
+* [`4469bd7`](https://github.com/siderolabs/pkgs/commit/4469bd7cf5de0475568113987188eee63a085891) chore: update kernel
+* [`51108e5`](https://github.com/siderolabs/pkgs/commit/51108e5356109db4cd348878335abe7931e6ed81) feat: enable dm-integrity
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>2 commits</summary>
+<p>
+
+* [`dc37e09`](https://github.com/siderolabs/tools/commit/dc37e094634d67dd164d9cb4c0abb96bb9cea123) chore: update deps
+* [`36fb49a`](https://github.com/siderolabs/tools/commit/36fb49a3b4077d0d798307fa2e31688b8d0f6db9) feat: update OpenSSL to 3.6.1
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/pkgs**   v1.12.0-32-g4f8efaf -> v1.12.0-35-g15d5d78
+* **github.com/siderolabs/tools**  v1.12.0-4-g31959f4 -> v1.12.0-6-gdc37e09
+
+Previous release can be found at [v1.12.2](https://github.com/siderolabs/talos/releases/tag/v1.12.2)
+
 ## [Talos 1.12.2](https://github.com/siderolabs/talos/releases/tag/v1.12.2) (2026-01-21)
 
 Welcome to the v1.12.2 release of Talos!
