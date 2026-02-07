@@ -12,9 +12,12 @@ import (
 	stderrors "errors"
 	"fmt"
 	"log"
+	"net"
 	"net/netip"
 	"strings"
+	"time"
 
+	"github.com/cenkalti/backoff/v4"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/go-procfs/procfs"
@@ -48,8 +51,9 @@ func (o *OpenStack) ParseMetadata(
 	extIPs []netip.Addr,
 	metadata *MetadataConfig,
 	st state.State,
-) (*runtime.PlatformNetworkConfig, error) {
+) (*runtime.PlatformNetworkConfig, bool, error) {
 	networkConfig := &runtime.PlatformNetworkConfig{}
+	needsReconcile := false
 
 	if metadata.Hostname != "" {
 		hostnameSpec := network.HostnameSpecSpec{
@@ -57,7 +61,7 @@ func (o *OpenStack) ParseMetadata(
 		}
 
 		if err := hostnameSpec.ParseFQDN(metadata.Hostname); err != nil {
-			return nil, err
+			return nil, false, err
 		}
 
 		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
@@ -72,7 +76,7 @@ func (o *OpenStack) ParseMetadata(
 			if ip, err := netip.ParseAddr(netsvc.Address); err == nil {
 				dnsIPs = append(dnsIPs, ip)
 			} else {
-				return nil, fmt.Errorf("failed to parse dns service ip: %w", err)
+				return nil, false, fmt.Errorf("failed to parse dns service ip: %w", err)
 			}
 		}
 	}
@@ -86,7 +90,7 @@ func (o *OpenStack) ParseMetadata(
 
 	hostInterfaces, err := safe.StateListAll[*network.LinkStatus](ctx, st)
 	if err != nil {
-		return nil, fmt.Errorf("error listing host interfaces: %w", err)
+		return nil, false, fmt.Errorf("error listing host interfaces: %w", err)
 	}
 
 	ifaces := make(map[string]string)
@@ -103,12 +107,12 @@ func (o *OpenStack) ParseMetadata(
 
 		mode, err := nethelpers.BondModeByName(netLink.BondMode)
 		if err != nil {
-			return nil, fmt.Errorf("invalid bond_mode: %w", err)
+			return nil, false, fmt.Errorf("invalid bond_mode: %w", err)
 		}
 
 		hashPolicy, err := nethelpers.BondXmitHashPolicyByName(netLink.BondHashPolicy)
 		if err != nil {
-			return nil, fmt.Errorf("invalid bond_xmit_hash_policy: %w", err)
+			return nil, false, fmt.Errorf("invalid bond_xmit_hash_policy: %w", err)
 		}
 
 		bondName := fmt.Sprintf("bond%d", bondIndex)
@@ -126,10 +130,16 @@ func (o *OpenStack) ParseMetadata(
 				Mode:       mode,
 				MIIMon:     netLink.BondMIIMon,
 				HashPolicy: hashPolicy,
-				UpDelay:    200,
-				DownDelay:  200,
-				LACPRate:   nethelpers.LACPRateFast,
 			},
+		}
+
+		if netLink.Mac != "" {
+			mac, err := net.ParseMAC(netLink.Mac)
+			if err != nil {
+				return nil, false, fmt.Errorf("invalid bond MAC address %q: %w", netLink.Mac, err)
+			}
+
+			bondLink.HardwareAddress = nethelpers.HardwareAddr(mac)
 		}
 
 		if mode == nethelpers.BondMode8023AD {
@@ -179,7 +189,12 @@ func (o *OpenStack) ParseMetadata(
 			linkName := ""
 
 			for hostInterface := range hostInterfaces.All() {
-				if strings.EqualFold(hostInterface.TypedSpec().PermanentAddr.String(), netLink.Mac) {
+				macAddress := hostInterface.TypedSpec().PermanentAddr.String()
+				if macAddress == "" {
+					macAddress = hostInterface.TypedSpec().HardwareAddr.String()
+				}
+
+				if strings.EqualFold(macAddress, netLink.Mac) {
 					linkName = hostInterface.Metadata().ID()
 
 					break
@@ -190,6 +205,8 @@ func (o *OpenStack) ParseMetadata(
 				linkName = fmt.Sprintf("eth%d", idx)
 
 				log.Printf("failed to find interface with MAC %q, using %q", netLink.Mac, linkName)
+
+				needsReconcile = true
 			}
 
 			ifaces[netLink.ID] = linkName
@@ -290,7 +307,7 @@ func (o *OpenStack) ParseMetadata(
 		if ntwrk.Address != "" {
 			ipPrefix, err := address.IPPrefixFrom(ntwrk.Address, ntwrk.Netmask)
 			if err != nil {
-				return nil, fmt.Errorf("failed to parse ip address: %w", err)
+				return nil, false, fmt.Errorf("failed to parse ip address: %w", err)
 			}
 
 			family := nethelpers.FamilyInet4
@@ -312,7 +329,7 @@ func (o *OpenStack) ParseMetadata(
 			if ntwrk.Gateway != "" {
 				gw, err := netip.ParseAddr(ntwrk.Gateway)
 				if err != nil {
-					return nil, fmt.Errorf("failed to parse gateway ip: %w", err)
+					return nil, false, fmt.Errorf("failed to parse gateway ip: %w", err)
 				}
 
 				priority := uint32(network.DefaultRouteMetric)
@@ -341,12 +358,12 @@ func (o *OpenStack) ParseMetadata(
 		for _, route := range ntwrk.Routes {
 			gw, err := netip.ParseAddr(route.Gateway)
 			if err != nil {
-				return nil, fmt.Errorf("failed to parse route gateway: %w", err)
+				return nil, false, fmt.Errorf("failed to parse route gateway: %w", err)
 			}
 
 			dest, err := address.IPPrefixFrom(route.Network, route.Netmask)
 			if err != nil {
-				return nil, fmt.Errorf("failed to parse route network: %w", err)
+				return nil, false, fmt.Errorf("failed to parse route network: %w", err)
 			}
 
 			family := nethelpers.FamilyInet4
@@ -386,7 +403,7 @@ func (o *OpenStack) ParseMetadata(
 		ProviderID:   fmt.Sprintf("openstack:///%s", metadata.UUID),
 	}
 
-	return networkConfig, nil
+	return networkConfig, needsReconcile, nil
 }
 
 // Configuration implements the runtime.Platform interface.
@@ -427,6 +444,11 @@ func (o *OpenStack) KernelArgs(string, quirks.Quirks) procfs.Parameters {
 
 // NetworkConfiguration implements the runtime.Platform interface.
 func (o *OpenStack) NetworkConfiguration(ctx context.Context, st state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
+	// wait for devices to be ready before proceeding, otherwise we might not find network interfaces by MAC
+	if err := netutils.WaitForDevicesReady(ctx, st); err != nil {
+		return fmt.Errorf("error waiting for devices to be ready: %w", err)
+	}
+
 	networkSource := false
 
 	metadataConfigDl, metadataNetworkConfigDl, _, err := o.configFromCD(ctx, st)
@@ -462,16 +484,36 @@ func (o *OpenStack) NetworkConfiguration(ctx context.Context, st state.State, ch
 		}
 	}
 
-	networkConfig, err := o.ParseMetadata(ctx, &unmarshalledNetworkConfig, extIPs, &meta, st)
-	if err != nil {
-		return err
-	}
+	// do a loop to retry network config remap in case of missing links
+	// on each try, export the configuration as it is, and if the network is reconciled next time, export the reconciled configuration
+	bckoff := backoff.NewExponentialBackOff()
 
-	select {
-	case ch <- networkConfig:
-	case <-ctx.Done():
-		return ctx.Err()
-	}
+	for {
+		networkConfig, needsReconcile, err := o.ParseMetadata(ctx, &unmarshalledNetworkConfig, extIPs, &meta, st)
+		if err != nil {
+			return err
+		}
 
-	return nil
+		select {
+		case ch <- networkConfig:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
+
+		if !needsReconcile {
+			return nil
+		}
+
+		// wait for backoff to retry network config remap
+		nextBackoff := bckoff.NextBackOff()
+		if nextBackoff == backoff.Stop {
+			return nil
+		}
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(nextBackoff):
+		}
+	}
 }

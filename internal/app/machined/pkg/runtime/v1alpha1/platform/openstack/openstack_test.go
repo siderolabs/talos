@@ -68,8 +68,9 @@ func TestParseMetadata(t *testing.T) {
 	eth4.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0x4c, 0xd9, 0x8f, 0xb3, 0x34, 0xf7}
 	require.NoError(t, st.Create(ctx, eth4))
 
-	networkConfig, err := o.ParseMetadata(ctx, &n, []netip.Addr{netip.MustParseAddr("1.2.3.4")}, &metadata, st)
+	networkConfig, needsReconcile, err := o.ParseMetadata(ctx, &n, []netip.Addr{netip.MustParseAddr("1.2.3.4")}, &metadata, st)
 	require.NoError(t, err)
+	assert.False(t, needsReconcile)
 
 	marshaled, err := yaml.Marshal(networkConfig)
 	require.NoError(t, err)
