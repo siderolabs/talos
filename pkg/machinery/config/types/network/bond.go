@@ -429,7 +429,7 @@ func (s *BondConfigV1Alpha1) DownDelay() optional.Optional[uint32] {
 // UseCarrier implements NetworkBondConfig interface.
 func (s *BondConfigV1Alpha1) UseCarrier() optional.Optional[bool] {
 	if s.BondUseCarrier == nil {
-		return optional.None[bool]()
+		return optional.Some(true)
 	}
 
 	return optional.Some(*s.BondUseCarrier)
