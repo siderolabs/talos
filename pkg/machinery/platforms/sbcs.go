@@ -40,6 +40,16 @@ func (s SBC) DiskImagePath(talosVersion string) string {
 func SBCs() []SBC {
 	return []SBC{
 		{
+			Name: "rpi_5",
+
+			OverlayName:  "rpi_5",
+			OverlayImage: "siderolabs/sbc-raspberrypi",
+
+			Label: "Raspberry Pi 5",
+
+			MinVersion: semver.MustParse("1.12.3"),
+		},
+		{
 			Name: "rpi_generic",
 
 			BoardName: "rpi_generic",
