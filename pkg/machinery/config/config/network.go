@@ -175,6 +175,11 @@ type NetworkRouteConfig interface {
 type NetworkLinkAliasConfig interface {
 	NamedDocument
 	LinkSelector() cel.Expression
+	// RequireUniqueMatch returns true if the selector must match exactly one link.
+	// When false, if multiple links match, the first matching link is used.
+	RequireUniqueMatch() bool
+	// SkipAliasedLinks returns true if links that already have an alias should be skipped.
+	SkipAliasedLinks() bool
 }
 
 // NetworkDHCPConfig defines a DHCP configuration for a network link.

@@ -113,6 +113,13 @@ func (ctrl *LinkAliasConfigController) Run(ctx context.Context, r controller.Run
 			var matchedLinks []*network.LinkStatus
 
 			for idx, link := range physicalLinkSpecs {
+				// Skip links that already have an alias if skipAliasedLinks is enabled
+				if lac.SkipAliasedLinks() {
+					if _, ok := linkAliases[physicalLinks[idx].Metadata().ID()]; ok {
+						continue
+					}
+				}
+
 				matches, err := lac.LinkSelector().EvalBool(celenv.LinkLocator(), map[string]any{
 					"link": link,
 				})
@@ -130,15 +137,26 @@ func (ctrl *LinkAliasConfigController) Run(ctx context.Context, r controller.Run
 			}
 
 			if len(matchedLinks) > 1 {
-				logger.Warn("link selector matched multiple links, skipping",
+				if lac.RequireUniqueMatch() {
+					logger.Warn("link selector matched multiple links, skipping",
+						zap.String("selector", lac.LinkSelector().String()),
+						zap.String("alias", lac.Name()),
+						zap.Strings("links", xslices.Map(matchedLinks, func(item *network.LinkStatus) string {
+							return item.Metadata().ID()
+						})),
+					)
+
+					continue
+				}
+
+				logger.Info("link selector matched multiple links, using first match",
 					zap.String("selector", lac.LinkSelector().String()),
 					zap.String("alias", lac.Name()),
+					zap.String("selected_link", matchedLinks[0].Metadata().ID()),
 					zap.Strings("links", xslices.Map(matchedLinks, func(item *network.LinkStatus) string {
 						return item.Metadata().ID()
 					})),
 				)
-
-				continue
 			}
 
 			matchedLink := matchedLinks[0]

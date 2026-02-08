@@ -65,7 +65,8 @@ type LinkAliasConfigV1Alpha1 struct {
 	//   description: |
 	//     Selector to match the link to alias.
 	//
-	//     Selector must match exactly one link, otherwise an error is returned.
+	//     By default, the selector must match exactly one link, otherwise the alias is not applied.
+	//     Set `requireUniqueMatch` to `false` to allow multiple matches and use the first matching link.
 	//     If multiple selectors match the same link, the first one is used.
 	Selector LinkSelector `yaml:"selector,omitempty"`
 }
@@ -87,6 +88,22 @@ type LinkSelector struct {
 	//        exampleLinkSelector3()
 	//      name: match links by driver name
 	Match cel.Expression `yaml:"match,omitempty"`
+	//   description: |
+	//     Require the selector to match exactly one link.
+	//
+	//     When set to `false`, if multiple links match the selector, the first matching link is used.
+	//     When set to `true` (default), if multiple links match, the alias is not applied.
+	//   schema:
+	//     type: boolean
+	RequireUniqueMatch *bool `yaml:"requireUniqueMatch,omitempty"`
+	//   description: |
+	//     Skip links that already have an alias assigned by a previous LinkAliasConfig.
+	//
+	//     This allows creating sequential aliases like `net0` and `net1` from any N links
+	//     by using the same broad selector and relying on processing order.
+	//   schema:
+	//     type: boolean
+	SkipAliasedLinks *bool `yaml:"skipAliasedLinks,omitempty"`
 }
 
 // NewLinkAliasConfigV1Alpha1 creates a new LinkAliasConfig config document.
@@ -154,4 +171,22 @@ func (s *LinkAliasConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation
 // LinkSelector implements config.NetworkLinkAliasConfig interface.
 func (s *LinkAliasConfigV1Alpha1) LinkSelector() cel.Expression {
 	return s.Selector.Match
+}
+
+// RequireUniqueMatch implements config.NetworkLinkAliasConfig interface.
+func (s *LinkAliasConfigV1Alpha1) RequireUniqueMatch() bool {
+	if s.Selector.RequireUniqueMatch == nil {
+		return true
+	}
+
+	return *s.Selector.RequireUniqueMatch
+}
+
+// SkipAliasedLinks implements config.NetworkLinkAliasConfig interface.
+func (s *LinkAliasConfigV1Alpha1) SkipAliasedLinks() bool {
+	if s.Selector.SkipAliasedLinks == nil {
+		return false
+	}
+
+	return *s.Selector.SkipAliasedLinks
 }
