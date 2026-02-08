@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@bc4d96a0885af9f87e23f018f87c86d800e334d9 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -40,13 +40,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # version: v6.0.1
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.1
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # version: v3.11.1
+        uses: docker/setup-buildx-action@7c525be6cc8a882d5163ce04293cac18617c709f # version: v3.11.1
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -106,13 +106,13 @@ jobs:
         run: |
           make e2e-gcp-prepare
       - name: checkout contrib
-        uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # version: v6.0.1
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.1
         with:
           path: _out/contrib
           ref: main
           repository: siderolabs/contrib
       - name: setup tf
-        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # version: v3.1.2
+        uses: hashicorp/setup-terraform@ce70bcf31a3711a1efd50b61e7216b0196b6f4f1 # version: v3.1.2
         with:
           terraform_wrapper: "false"
       - name: tf apply
