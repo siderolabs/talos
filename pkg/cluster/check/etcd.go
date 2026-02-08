@@ -28,7 +28,7 @@ func EtcdConsistentAssertion(ctx context.Context, cl ClusterInfo) error {
 		return err
 	}
 
-	var nodes []cluster.NodeInfo
+	var nodes []cluster.NodeInfo //nolint:prealloc // dynamic
 
 	initNodes := cl.NodesByType(machine.TypeInit)
 	nodes = append(nodes, initNodes...)

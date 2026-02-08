@@ -48,7 +48,7 @@ func TestGetSystemVolumeTransformers(t *testing.T) {
 	transformers := volumeconfig.GetSystemVolumeTransformers(ctx, encryptionMeta, false, false)
 	require.Len(t, transformers, 5, "should return 5 transformers")
 
-	var allResources []volumeconfig.VolumeResource
+	var allResources []volumeconfig.VolumeResource //nolint:prealloc // this is a test
 
 	for _, transformer := range transformers {
 		resources, err := transformer(container.NewV1Alpha1(&baseCfg))

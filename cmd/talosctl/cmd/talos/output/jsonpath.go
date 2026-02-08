@@ -52,7 +52,7 @@ func printResult(wr io.Writer, result reflect.Value) error {
 		kind == reflect.Slice ||
 		kind == reflect.Struct
 
-	var text []byte
+	var text []byte //nolint:prealloc // dynamic
 
 	var err error
 

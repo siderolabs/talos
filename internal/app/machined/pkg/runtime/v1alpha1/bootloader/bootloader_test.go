@@ -113,7 +113,7 @@ func TestCleanup(t *testing.T) {
 
 	quirk := quirks.New("")
 
-	partitions := []partition.Options{
+	partitions := []partition.Options{ //nolint:prealloc // this is a test
 		partition.NewPartitionOptions(false, quirk, partition.WithLabel(constants.EFIPartitionLabel)),
 		partition.NewPartitionOptions(false, quirk, partition.WithLabel(constants.BIOSGrubPartitionLabel)),
 		partition.NewPartitionOptions(false, quirk, partition.WithLabel(constants.BootPartitionLabel)),

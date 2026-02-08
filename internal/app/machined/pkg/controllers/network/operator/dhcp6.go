@@ -230,16 +230,12 @@ func (d *DHCP6) renew(ctx context.Context) (time.Duration, error) {
 
 	defer cli.Close() //nolint:errcheck
 
-	var modifiers []dhcpv6.Modifier
-
 	clientIdentifierModifiers, err := GetDHCPv6ClientIdentifier(ctx, d.state, d.logger, d.linkName, d.clientIdentifier)
 	if err != nil {
 		return 0, fmt.Errorf("error getting DHCPv6 client identifier: %w", err)
 	}
 
-	modifiers = append(modifiers, clientIdentifierModifiers...)
-
-	reply, err := cli.RapidSolicit(ctx, modifiers...)
+	reply, err := cli.RapidSolicit(ctx, clientIdentifierModifiers...)
 	if err != nil {
 		return 0, err
 	}

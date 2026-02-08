@@ -10,9 +10,9 @@ import (
 	"errors"
 	"io"
 
-	"github.com/containerd/containerd/errdefs"
 	containerdapi "github.com/containerd/containerd/v2/client"
 	"github.com/containerd/containerd/v2/core/images"
+	"github.com/containerd/errdefs"
 	"github.com/containerd/platforms"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"

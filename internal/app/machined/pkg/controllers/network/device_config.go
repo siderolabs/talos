@@ -175,7 +175,7 @@ func (ctrl *DeviceConfigController) getDevicesBySelector(device talosconfig.Devi
 }
 
 func (ctrl *DeviceConfigController) expandBondSelector(device *v1alpha1.Device, links safe.List[*network.LinkStatus]) error {
-	var matches []*network.LinkStatus
+	matches := make([]*network.LinkStatus, 0, len(device.Bond().Selectors()))
 
 	for _, selector := range device.Bond().Selectors() {
 		matches = append(matches,
