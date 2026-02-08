@@ -71,6 +71,7 @@ type CNI interface {
 // FlannelCNI defines the requirements for a config that pertains to configure Flannel.
 type FlannelCNI interface {
 	ExtraArgs() []string
+	KubeNetworkPoliciesEnabled() bool
 }
 
 // APIServer defines the requirements for a config that pertains to apiserver related
