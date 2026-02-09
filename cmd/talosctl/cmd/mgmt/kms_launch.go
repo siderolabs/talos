@@ -13,6 +13,7 @@ import (
 	"github.com/siderolabs/kms-client/api/kms"
 	"github.com/siderolabs/kms-client/pkg/server"
 	"github.com/spf13/cobra"
+	"go.uber.org/zap"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 
@@ -36,7 +37,16 @@ var kmsLaunchCmd = &cobra.Command{
 			return errors.New("no key provided to the KMS server")
 		}
 
-		srv := server.NewServer(func(_ context.Context, nodeUUID string) ([]byte, error) {
+		logger, err := zap.NewDevelopment()
+		if err != nil {
+			return err
+		}
+		defer logger.Sync() //nolint:errcheck
+
+		undo := zap.RedirectStdLog(logger)
+		defer undo()
+
+		srv := server.NewServer(logger, func(_ context.Context, nodeUUID string) ([]byte, error) {
 			return kmsLaunchCmdFlags.key, nil
 		})
 
@@ -45,7 +55,7 @@ var kmsLaunchCmd = &cobra.Command{
 			return err
 		}
 
-		log.Printf("starting KMS server on %s", kmsLaunchCmdFlags.addr)
+		logger.Info("starting KMS server", zap.String("address", kmsLaunchCmdFlags.addr))
 
 		logMiddleware := grpclog.NewMiddleware(log.New(log.Writer(), "", log.Flags()))
 

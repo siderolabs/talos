@@ -6,6 +6,9 @@ package secrets
 
 import (
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -108,7 +111,14 @@ func (ctrl *EncryptionSaltController) establishEncryptionSalt(ctx context.Contex
 			return fmt.Errorf("error modifying resource: %w", err)
 		}
 
-		logger.Info("encryption salt established")
+		// encryption salt thumbprint for debugging purposes
+		saltHMAC := hmac.New(sha256.New, salt.DiskSalt)
+		saltHMAC.Write([]byte("encryption salt checksum"))
+		saltChecksum := saltHMAC.Sum(nil)
+
+		logger.Info("encryption salt established",
+			zap.String("salt_checksum", hex.EncodeToString(saltChecksum)),
+		)
 
 		return nil
 	})

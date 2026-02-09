@@ -7,7 +7,6 @@ package log
 
 import (
 	"context"
-	"log"
 	"slices"
 	"strings"
 	"time"
@@ -20,11 +19,16 @@ import (
 
 // Middleware provides grpc logging middleware.
 type Middleware struct {
-	logger *log.Logger
+	logger Logger
+}
+
+// Logger is the interface that the Middleware expects for logging.
+type Logger interface {
+	Printf(format string, v ...any)
 }
 
 // NewMiddleware creates new logging middleware.
-func NewMiddleware(logger *log.Logger) *Middleware {
+func NewMiddleware(logger Logger) *Middleware {
 	return &Middleware{
 		logger: logger,
 	}

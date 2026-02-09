@@ -223,7 +223,7 @@ func (h *Handler) syncKeys(ctx context.Context, logger *zap.Logger, path string,
 
 				failedSyncs = append(failedSyncs, fmt.Sprintf("error updating key slot %s %T: %s", slot, handler, err))
 			} else {
-				logger.Info("updated encryption key", zap.Int("slot", handler.Slot()))
+				logger.Info("updated encryption key", zap.Int("slot", handler.Slot()), zap.String("handler", fmt.Sprintf("%T", handler)))
 			}
 		} else {
 			// keyslot does not exist so just add the key
@@ -232,7 +232,7 @@ func (h *Handler) syncKeys(ctx context.Context, logger *zap.Logger, path string,
 
 				failedSyncs = append(failedSyncs, fmt.Sprintf("error adding key slot %s %T: %s", slot, handler, err))
 			} else {
-				logger.Info("added encryption key", zap.Int("slot", handler.Slot()))
+				logger.Info("added encryption key", zap.Int("slot", handler.Slot()), zap.String("handler", fmt.Sprintf("%T", handler)))
 			}
 		}
 	}
@@ -347,7 +347,7 @@ func (h *Handler) tryHandlers(
 		if err != nil {
 			errs = multierror.Append(errs, err)
 
-			logger.Warn("failed to call key handler", zap.Int("slot", h.Slot()), zap.Error(err))
+			logger.Warn("failed to call key handler", zap.Int("slot", h.Slot()), zap.String("handler", fmt.Sprintf("%T", h)), zap.Error(err))
 
 			continue
 		}

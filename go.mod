@@ -157,7 +157,7 @@ require (
 	github.com/siderolabs/go-tail v0.1.1
 	github.com/siderolabs/go-talos-support v0.1.4
 	github.com/siderolabs/grpc-proxy v0.5.1
-	github.com/siderolabs/kms-client v0.1.0
+	github.com/siderolabs/kms-client v0.2.0
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/proto-codec v0.1.3
 	github.com/siderolabs/siderolink v0.3.15
