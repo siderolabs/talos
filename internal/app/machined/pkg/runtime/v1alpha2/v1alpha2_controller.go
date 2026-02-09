@@ -204,7 +204,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			V1Alpha1ServiceManager: system.Services(ctrl.v1alpha1Runtime),
 		},
 		cri.NewImageGCController("containerd", false),
-		cri.NewImageGCController("cri", false),
+		cri.NewImageGCController("cri", true),
 		&cri.RegistriesConfigController{},
 		&cri.SeccompProfileController{},
 		&cri.SeccompProfileFileController{
