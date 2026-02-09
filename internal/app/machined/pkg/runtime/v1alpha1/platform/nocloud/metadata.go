@@ -175,6 +175,7 @@ func (n *Nocloud) configFromNetwork(ctx context.Context, metaBaseURL string, r s
 	machineConfig, err = download.Download(ctx, metaBaseURL+configUserDataPath)
 	if err != nil {
 		log.Printf("user-data not found (optional): %s", err)
+
 		machineConfig = nil
 		err = nil
 	}

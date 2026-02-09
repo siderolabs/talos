@@ -97,8 +97,9 @@ func (n *Nocloud) Configuration(ctx context.Context, r state.State) ([]byte, err
 		return nil, err
 	}
 
-	if machineConfigDl == nil || len(machineConfigDl) == 0 {
+	if len(machineConfigDl) == 0 {
 		log.Printf("user-data not provided, network-config only mode")
+
 		return nil, errors.ErrNoConfigSource
 	}
 
@@ -147,7 +148,7 @@ func (n *Nocloud) NetworkConfiguration(ctx context.Context, st state.State, ch c
 		return err
 	}
 
-	if metadataNetworkConfigDl == nil || len(metadataNetworkConfigDl) == 0 {
+	if len(metadataNetworkConfigDl) == 0 {
 		// no data, use cached network configuration if available
 		return nil
 	}
