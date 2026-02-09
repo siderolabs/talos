@@ -8,139 +8,259 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/google/cel-go/cel"
 	"github.com/siderolabs/gen/value"
 	"github.com/siderolabs/gen/xerrors"
 	"github.com/siderolabs/go-blockdevice/v2/partitioning"
 	"go.uber.org/zap"
 
-	taloscel "github.com/siderolabs/talos/pkg/machinery/cel"
+	blockpb "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
 // LocateAndProvision locates and provisions a volume.
-//
-// It verifies that the volume is either already created, and ready to be used,
-// or provisions it.
-//
-//nolint:gocyclo,cyclop
-func LocateAndProvision(ctx context.Context, logger *zap.Logger, volumeContext ManagerContext) error {
-	volumeContext.Status.MountSpec = volumeContext.Cfg.TypedSpec().Mount
-	volumeContext.Status.SymlinkSpec = volumeContext.Cfg.TypedSpec().Symlink
-	volumeType := volumeContext.Cfg.TypedSpec().Type
+func LocateAndProvision(ctx context.Context, logger *zap.Logger, vc ManagerContext) error {
+	// 1. Setup common status fields
+	vc.Status.MountSpec = vc.Cfg.TypedSpec().Mount
+	vc.Status.SymlinkSpec = vc.Cfg.TypedSpec().Symlink
 
-	switch volumeType {
-	case block.VolumeTypeTmpfs, block.VolumeTypeDirectory, block.VolumeTypeSymlink, block.VolumeTypeOverlay:
-		// volume types above are always ready
-		volumeContext.Status.Phase = block.VolumePhaseReady
-
+	// 2. Handle simple types (Tmpfs, Overlay, External, etc.)
+	// If handled, we return early.
+	if done := handleSimpleVolumeTypes(vc); done {
 		return nil
-	case block.VolumeTypeExternal:
-		// volume types above are always ready, but need some additional parameters set
-		volumeContext.Status.Phase = block.VolumePhaseReady
-		volumeContext.Status.Filesystem = volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Type
-		volumeContext.Status.Location = volumeContext.Cfg.TypedSpec().Provisioning.DiskSelector.External
-		volumeContext.Status.MountLocation = volumeContext.Cfg.TypedSpec().Provisioning.DiskSelector.External
-
-		return nil
-	case block.VolumeTypeDisk, block.VolumeTypePartition:
 	}
 
-	// below for partition/disk volumes:
-	if value.IsZero(volumeContext.Cfg.TypedSpec().Locator) {
+	// 3. Validation for Disk/Partition types
+	if value.IsZero(vc.Cfg.TypedSpec().Locator) {
 		return fmt.Errorf("volume locator is not set")
 	}
 
-	// attempt to discover the volume
-	for _, dv := range volumeContext.DiscoveredVolumes {
-		var (
-			locatorEnv   *cel.Env
-			locatorMatch taloscel.Expression
-		)
+	// 4. Attempt to locate an existing volume
+	located, err := locateExistingVolume(vc)
+	if err != nil {
+		return err
+	}
 
-		matchContext := map[string]any{}
+	if located {
+		return nil
+	}
 
-		switch {
-		case !volumeContext.Cfg.TypedSpec().Locator.Match.IsZero():
-			locatorEnv = celenv.VolumeLocator()
-			matchContext["volume"] = dv
-			locatorMatch = volumeContext.Cfg.TypedSpec().Locator.Match
-		case !volumeContext.Cfg.TypedSpec().Locator.DiskMatch.IsZero():
-			locatorEnv = celenv.DiskLocator()
-			locatorMatch = volumeContext.Cfg.TypedSpec().Locator.DiskMatch
-		default:
-			return fmt.Errorf("no locator expression set for volume")
+	// 5. Handle Waiting State
+	// If not found and devices aren't ready, we must wait.
+	if !vc.DevicesReady {
+		vc.Status.Phase = block.VolumePhaseWaiting
+
+		return nil
+	}
+
+	// 6. Provision new volume
+	return provisionNewVolume(ctx, logger, vc)
+}
+
+// handleSimpleVolumeTypes handles non-provisionable types.
+// Returns true if the volume type was handled.
+func handleSimpleVolumeTypes(vc ManagerContext) bool {
+	spec := vc.Cfg.TypedSpec()
+
+	switch spec.Type {
+	case block.VolumeTypeTmpfs, block.VolumeTypeDirectory, block.VolumeTypeSymlink, block.VolumeTypeOverlay:
+		vc.Status.Phase = block.VolumePhaseReady
+
+		return true
+
+	case block.VolumeTypeExternal:
+		vc.Status.Phase = block.VolumePhaseReady
+		vc.Status.Filesystem = spec.Provisioning.FilesystemSpec.Type
+		vc.Status.Location = spec.Provisioning.DiskSelector.External
+		vc.Status.MountLocation = spec.Provisioning.DiskSelector.External
+
+		return true
+
+	case block.VolumeTypeDisk, block.VolumeTypePartition:
+		fallthrough
+
+	default:
+		return false
+	}
+}
+
+// locateExistingVolume iterates through discovered volumes or disks to find a match.
+//
+// For disk volumes with a DiskMatch locator the function iterates over disks
+// (each disk is evaluated exactly once) and then picks the best discovered
+// volume for the matched disk.  For all other volume types it iterates over
+// discovered volumes and returns on the first match.
+func locateExistingVolume(vc ManagerContext) (bool, error) {
+	spec := vc.Cfg.TypedSpec()
+
+	switch {
+	case !spec.Locator.DiskMatch.IsZero():
+		if spec.Type != block.VolumeTypeDisk {
+			return false, fmt.Errorf("DiskMatch locator is only valid for disk volumes")
 		}
 
-		// add disk to the context, so we can use it in CEL expressions
-		for _, diskCtx := range volumeContext.Disks {
-			if dv.ParentDevPath != "" && diskCtx.Disk.DevPath == dv.ParentDevPath {
-				matchContext["disk"] = diskCtx.Disk
+		return locateDiskByDiskMatch(vc)
+	case !spec.Locator.Match.IsZero():
+		return locateVolumeByMatch(vc)
+	default:
+		return false, fmt.Errorf("no locator expression set for volume")
+	}
+}
 
-				break
-			}
+// locateDiskByDiskMatch handles VolumeTypeDisk with Locator.DiskMatch.
+//
+// It iterates over disks (not discovered volumes), so each physical disk is
+// evaluated exactly once. If more than one disk matches, an error is returned.
+// The best discovered volume for the matched disk is then selected, preferring
+// whole-disk entries over partition entries.
+//
+//nolint:gocyclo
+func locateDiskByDiskMatch(vc ManagerContext) (bool, error) {
+	spec := vc.Cfg.TypedSpec()
+	env := celenv.DiskLocator()
 
-			if dv.ParentDevPath == "" && diskCtx.Disk.DevPath == dv.DevPath {
-				matchContext["disk"] = diskCtx.Disk
+	var matchedDisks []string
 
-				break
-			}
-		}
-
-		matches, err := locatorMatch.EvalBool(locatorEnv, matchContext)
+	for _, diskCtx := range vc.Disks {
+		matches, err := spec.Locator.DiskMatch.EvalBool(env, map[string]any{"disk": diskCtx.Disk})
 		if err != nil {
-			return fmt.Errorf("error evaluating volume locator: %w", err)
+			return false, fmt.Errorf("error evaluating disk locator: %w", err)
 		}
 
 		if matches {
-			volumeContext.Status.Phase = block.VolumePhaseLocated
-			volumeContext.Status.Location = dv.DevPath
-			volumeContext.Status.PartitionIndex = int(dv.PartitionIndex)
-			volumeContext.Status.ParentLocation = dv.ParentDevPath
-
-			volumeContext.Status.UUID = dv.Uuid
-			volumeContext.Status.PartitionUUID = dv.PartitionUuid
-			volumeContext.Status.SetSize(dv.Size)
-
-			return nil
+			matchedDisks = append(matchedDisks, diskCtx.Disk.DevPath)
 		}
 	}
 
-	if !volumeContext.DevicesReady {
-		// volume wasn't located and devices are not ready yet, so we need to wait
-		volumeContext.Status.Phase = block.VolumePhaseWaiting
-
-		return nil
+	if len(matchedDisks) > 1 {
+		return false, fmt.Errorf("multiple disks matched locator for disk volume; matched disks: %v", matchedDisks)
 	}
 
-	// if we got here, the volume is missing, so it needs to be provisioned
-	if value.IsZero(volumeContext.Cfg.TypedSpec().Provisioning) {
-		// the volume can't be provisioned, because the provisioning instructions are missing
-		volumeContext.Status.Phase = block.VolumePhaseMissing
-
-		return nil
+	if len(matchedDisks) == 0 {
+		return false, nil
 	}
 
-	if !volumeContext.PreviousWaveProvisioned {
-		// previous wave is not provisioned yet
-		volumeContext.Status.Phase = block.VolumePhaseWaiting
+	diskDev := matchedDisks[0]
 
-		return nil
-	}
+	// Find the best discovered volume for this disk, preferring whole-disk
+	// entries (ParentDevPath == "") over partition entries.
+	var matchedVol *blockpb.DiscoveredVolumeSpec
 
-	// locate the disk(s) for the volume
-	var matchedDisks []string
-
-	for _, diskCtx := range volumeContext.Disks {
-		if diskCtx.Disk.Readonly {
-			// skip readonly disks, they can't be provisioned either way
+	for _, dv := range vc.DiscoveredVolumes {
+		if dv.DevPath != diskDev && dv.ParentDevPath != diskDev {
 			continue
 		}
 
-		matches, err := volumeContext.Cfg.TypedSpec().Provisioning.DiskSelector.Match.EvalBool(celenv.DiskLocator(), diskCtx.ToCELContext())
+		if matchedVol == nil || (matchedVol.ParentDevPath != "" && dv.ParentDevPath == "") {
+			matchedVol = dv
+		}
+	}
+
+	if matchedVol != nil {
+		applyLocatedStatus(vc, matchedVol)
+
+		return true, nil
+	}
+
+	return false, nil
+}
+
+// locateVolumeByMatch handles volumes with Locator.Match (a CEL expression
+// evaluated against each discovered volume).
+func locateVolumeByMatch(vc ManagerContext) (bool, error) {
+	spec := vc.Cfg.TypedSpec()
+	env := celenv.VolumeLocator()
+
+	for _, dv := range vc.DiscoveredVolumes {
+		matchContext := map[string]any{"volume": dv}
+
+		// Resolve the parent disk for CEL context
+		for _, diskCtx := range vc.Disks {
+			if (dv.ParentDevPath != "" && diskCtx.Disk.DevPath == dv.ParentDevPath) ||
+				(dv.ParentDevPath == "" && diskCtx.Disk.DevPath == dv.DevPath) {
+				matchContext["disk"] = diskCtx.Disk
+
+				break
+			}
+		}
+
+		matches, err := spec.Locator.Match.EvalBool(env, matchContext)
 		if err != nil {
-			return fmt.Errorf("error evaluating disk locator: %w", err)
+			return false, fmt.Errorf("error evaluating volume locator: %w", err)
+		}
+
+		if matches {
+			applyLocatedStatus(vc, dv)
+
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+// applyLocatedStatus updates the status when a volume is found.
+func applyLocatedStatus(vc ManagerContext, vol *blockpb.DiscoveredVolumeSpec) {
+	vc.Status.Phase = block.VolumePhaseLocated
+	vc.Status.Location = vol.DevPath
+	vc.Status.PartitionIndex = int(vol.PartitionIndex)
+	vc.Status.ParentLocation = vol.ParentDevPath
+	vc.Status.UUID = vol.Uuid
+	vc.Status.PartitionUUID = vol.PartitionUuid
+	vc.Status.SetSize(vol.Size)
+}
+
+// provisionNewVolume handles the creation/provisioning of missing volumes.
+func provisionNewVolume(ctx context.Context, logger *zap.Logger, vc ManagerContext) error {
+	spec := vc.Cfg.TypedSpec()
+
+	// Pre-checks
+	if value.IsZero(spec.Provisioning) {
+		vc.Status.Phase = block.VolumePhaseMissing
+
+		return nil
+	}
+
+	if !vc.PreviousWaveProvisioned {
+		vc.Status.Phase = block.VolumePhaseWaiting
+
+		return nil
+	}
+
+	// 1. Find candidate disks
+	candidates, err := findCandidateDisks(vc)
+	if err != nil {
+		return err
+	}
+
+	logger.Debug("matched disks", zap.Strings("disks", candidates))
+
+	// 2. Select the best fit
+	pickedDisk, diskRes, err := selectBestDisk(logger, candidates, vc.Cfg)
+	if err != nil {
+		return err
+	}
+
+	logger.Debug("picked disk", zap.String("disk", pickedDisk))
+
+	// 3. Apply Provisioning (Update status or Create Partition)
+	return applyProvisioning(ctx, logger, vc, pickedDisk, diskRes)
+}
+
+// findCandidateDisks filters available disks based on the selector.
+func findCandidateDisks(vc ManagerContext) ([]string, error) {
+	var matchedDisks []string
+
+	spec := vc.Cfg.TypedSpec()
+
+	for _, diskCtx := range vc.Disks {
+		if diskCtx.Disk.Readonly {
+			continue
+		}
+
+		matches, err := spec.Provisioning.DiskSelector.Match.EvalBool(celenv.DiskLocator(), diskCtx.ToCELContext())
+		if err != nil {
+			return nil, fmt.Errorf("error evaluating disk locator: %w", err)
 		}
 
 		if matches {
@@ -149,66 +269,78 @@ func LocateAndProvision(ctx context.Context, logger *zap.Logger, volumeContext M
 	}
 
 	if len(matchedDisks) == 0 {
-		return fmt.Errorf("no disks matched selector for volume")
+		return nil, fmt.Errorf("no disks matched selector for volume")
 	}
 
-	if volumeType == block.VolumeTypeDisk && len(matchedDisks) > 1 {
-		return fmt.Errorf("multiple disks matched selector for disk volume; matched disks: %v", matchedDisks)
+	if spec.Type == block.VolumeTypeDisk && len(matchedDisks) > 1 {
+		return nil, fmt.Errorf("multiple disks matched locator for disk volume; matched disks: %v", matchedDisks)
 	}
 
-	logger.Debug("matched disks", zap.Strings("disks", matchedDisks))
+	return matchedDisks, nil
+}
 
-	// analyze each disk, until we find the one which is the best fit
+// selectBestDisk analyzes candidates and picks the one that satisfies constraints.
+func selectBestDisk(logger *zap.Logger, candidates []string, cfg *block.VolumeConfig) (string, CheckDiskResult, error) {
 	var (
 		pickedDisk      string
-		diskCheckResult CheckDiskResult
+		finalResult     CheckDiskResult
 		rejectedReasons = map[DiskRejectedReason]int{}
 	)
 
-	for _, matchedDisk := range matchedDisks {
-		diskCheckResult = CheckDiskForProvisioning(logger, matchedDisk, volumeContext.Cfg)
-		if diskCheckResult.CanProvision {
-			pickedDisk = matchedDisk
+	for _, disk := range candidates {
+		res := CheckDiskForProvisioning(logger, disk, cfg)
+		if res.CanProvision {
+			pickedDisk = disk
+			finalResult = res
 
 			break
 		}
 
-		rejectedReasons[diskCheckResult.RejectedReason]++
+		rejectedReasons[res.RejectedReason]++
 	}
 
 	if pickedDisk == "" {
-		return xerrors.NewTaggedf[Retryable]("no disks matched for volume (%d matched selector): %d have not enough space, %d have wrong format, %d have other issues",
-			len(matchedDisks),
+		err := xerrors.NewTaggedf[Retryable](
+			"no disks matched for volume (%d matched selector): %d have not enough space, %d have wrong format, %d have other issues",
+			len(candidates),
 			rejectedReasons[NotEnoughSpace],
 			rejectedReasons[WrongFormat],
 			rejectedReasons[GeneralError],
 		)
+
+		return "", CheckDiskResult{}, err
 	}
 
-	logger.Debug("picked disk", zap.String("disk", pickedDisk))
+	return pickedDisk, finalResult, nil
+}
 
-	switch volumeType { //nolint:exhaustive
+// applyProvisioning performs the final provisioning step.
+func applyProvisioning(ctx context.Context, logger *zap.Logger, vc ManagerContext, disk string, res CheckDiskResult) error {
+	switch vc.Cfg.TypedSpec().Type {
 	case block.VolumeTypeDisk:
-		// the disk got matched, so we are done here
-		volumeContext.Status.Phase = block.VolumePhaseProvisioned
-		volumeContext.Status.Location = pickedDisk
-		volumeContext.Status.ParentLocation = ""
-		volumeContext.Status.SetSize(diskCheckResult.DiskSize)
+		vc.Status.Phase = block.VolumePhaseProvisioned
+		vc.Status.Location = disk
+		vc.Status.ParentLocation = ""
+		vc.Status.SetSize(res.DiskSize)
+
 	case block.VolumeTypePartition:
-		// we need to create a partition on the disk
-		partitionCreateResult, err := CreatePartition(ctx, logger, pickedDisk, volumeContext.Cfg, diskCheckResult.HasGPT)
+		partRes, err := CreatePartition(ctx, logger, disk, vc.Cfg, res.HasGPT)
 		if err != nil {
 			return fmt.Errorf("error creating partition: %w", err)
 		}
 
-		volumeContext.Status.Phase = block.VolumePhaseProvisioned
-		volumeContext.Status.Location = partitioning.DevName(pickedDisk, uint(partitionCreateResult.PartitionIdx))
-		volumeContext.Status.PartitionIndex = partitionCreateResult.PartitionIdx
-		volumeContext.Status.ParentLocation = pickedDisk
-		volumeContext.Status.PartitionUUID = partitionCreateResult.Partition.PartGUID.String()
-		volumeContext.Status.SetSize(partitionCreateResult.Size)
+		vc.Status.Phase = block.VolumePhaseProvisioned
+		vc.Status.Location = partitioning.DevName(disk, uint(partRes.PartitionIdx))
+		vc.Status.PartitionIndex = partRes.PartitionIdx
+		vc.Status.ParentLocation = disk
+		vc.Status.PartitionUUID = partRes.Partition.PartGUID.String()
+		vc.Status.SetSize(partRes.Size)
+
+	case block.VolumeTypeTmpfs, block.VolumeTypeDirectory, block.VolumeTypeSymlink, block.VolumeTypeOverlay, block.VolumeTypeExternal:
+		fallthrough
+
 	default:
-		panic("unexpected volume type")
+		panic(fmt.Sprintf("unexpected volume type: %s", vc.Cfg.TypedSpec().Type))
 	}
 
 	return nil

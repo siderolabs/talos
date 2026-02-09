@@ -1424,6 +1424,108 @@ func (suite *VolumesSuite) TestExternalVolumesVirtiofs() {
 	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, externalVolumeID)
 }
 
+// TestVolumeProvisioningErrors verifies that volume provisioning fails correctly for invalid disk selectors.
+func (suite *VolumesSuite) TestVolumeProvisioningErrors() {
+	if testing.Short() {
+		suite.T().Skip("skipping test in short mode.")
+	}
+
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping test for non-qemu provisioner")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	nodeName := k8sNode.Name
+
+	ctx := client.WithNode(suite.ctx, node)
+
+	suite.Run("NoDisksMatchedSelector", func() {
+		volumeID := fmt.Sprintf("nodsks-%04x", rand.Int31())
+		userVolumeID := constants.UserVolumePrefix + volumeID
+
+		doc := blockcfg.NewUserVolumeConfigV1Alpha1()
+		doc.MetaName = volumeID
+		doc.ProvisioningSpec.DiskSelectorSpec.Match = cel.MustExpression(
+			cel.ParseBooleanExpression(
+				"disk.serial == 'nonexistent-serial-xyz-00000'",
+				celenv.DiskLocator(),
+			),
+		)
+		doc.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("100MiB")
+		doc.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("500MiB")
+
+		suite.PatchMachineConfig(ctx, doc)
+
+		suite.T().Logf("verifying volume %s on node %s/%s fails with no disks matched", userVolumeID, node, nodeName)
+
+		rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []string{userVolumeID},
+			func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+				asrt.Equalf(block.VolumePhaseFailed, vs.TypedSpec().Phase,
+					"Expected %q, but got %q (%s)", block.VolumePhaseFailed, vs.TypedSpec().Phase, vs.Metadata().ID())
+				asrt.Contains(vs.TypedSpec().ErrorMessage, "no disks matched selector for volume",
+					"expected error message to contain 'no disks matched selector for volume', got: %s", vs.TypedSpec().ErrorMessage)
+			},
+		)
+
+		// clean up
+		suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.UserVolumeConfigKind, volumeID)
+
+		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, userVolumeID)
+	})
+
+	suite.Run("MultipleDisksMatchedForDiskVolume", func() {
+		userDisks := suite.UserDisks(suite.ctx, node)
+
+		if len(userDisks) < 2 {
+			suite.T().Skipf("skipping test, need at least 2 user disks on node %s/%s: %q", node, nodeName, userDisks)
+		}
+
+		volumeID := fmt.Sprintf("multi-%04x", rand.Int31())
+		userVolumeID := constants.UserVolumePrefix + volumeID
+
+		// build a selector that matches multiple user disks by using an OR of their symlinks
+		disk0, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.COSI, filepath.Base(userDisks[0]))
+		suite.Require().NoError(err)
+		suite.Require().NotEmpty(disk0.TypedSpec().Symlinks, "expected disk0 to have at least one symlink")
+
+		disk1, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.COSI, filepath.Base(userDisks[1]))
+		suite.Require().NoError(err)
+		suite.Require().NotEmpty(disk1.TypedSpec().Symlinks, "expected disk1 to have at least one symlink")
+
+		matchExpr := fmt.Sprintf("'%s' in disk.symlinks || '%s' in disk.symlinks",
+			disk0.TypedSpec().Symlinks[0], disk1.TypedSpec().Symlinks[0])
+
+		doc := blockcfg.NewUserVolumeConfigV1Alpha1()
+		doc.MetaName = volumeID
+		doc.VolumeType = pointer.To(block.VolumeTypeDisk)
+		doc.ProvisioningSpec.DiskSelectorSpec.Match = cel.MustExpression(
+			cel.ParseBooleanExpression(matchExpr, celenv.DiskLocator()),
+		)
+
+		suite.PatchMachineConfig(ctx, doc)
+
+		suite.T().Logf("verifying volume %s on node %s/%s fails with multiple disks matched", userVolumeID, node, nodeName)
+
+		rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []string{userVolumeID},
+			func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+				asrt.Equalf(block.VolumePhaseFailed, vs.TypedSpec().Phase,
+					"Expected %q, but got %q (%s)", block.VolumePhaseFailed, vs.TypedSpec().Phase, vs.Metadata().ID())
+				asrt.Contains(vs.TypedSpec().ErrorMessage, "multiple disks matched locator for disk volume",
+					"expected error message to contain 'multiple disks matched locator for disk volume', got: %s", vs.TypedSpec().ErrorMessage)
+			},
+		)
+
+		// clean up
+		suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.UserVolumeConfigKind, volumeID)
+
+		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, userVolumeID)
+	})
+}
+
 // TestSwapStatus verifies that all swap volumes are successfully enabled.
 func (suite *VolumesSuite) TestSwapStatus() {
 	for _, node := range suite.DiscoverNodeInternalIPs(suite.ctx) {
