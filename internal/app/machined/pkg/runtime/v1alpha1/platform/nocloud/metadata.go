@@ -172,9 +172,12 @@ func (n *Nocloud) configFromNetwork(ctx context.Context, metaBaseURL string, r s
 
 	log.Printf("fetching machine config from: %q", metaBaseURL+configUserDataPath)
 
-	machineConfig, err = download.Download(ctx, metaBaseURL+configUserDataPath,
-		download.WithErrorOnNotFound(errors.ErrNoConfigSource),
-		download.WithErrorOnEmptyResponse(errors.ErrNoConfigSource))
+	machineConfig, err = download.Download(ctx, metaBaseURL+configUserDataPath)
+	if err != nil {
+		log.Printf("user-data not found (optional): %s", err)
+		machineConfig = nil
+		err = nil
+	}
 
 	return metaConfig, networkConfig, machineConfig, err
 }
@@ -208,7 +211,7 @@ func (n *Nocloud) configFromCD(ctx context.Context, r state.State) (metaConfig [
 
 			machineConfig, err = xfs.ReadFile(root, configUserDataPath)
 			if err != nil {
-				log.Printf("failed to read %s: %s", configUserDataPath, err)
+				log.Printf("user-data not found (optional): %s", err)
 
 				machineConfig = nil
 			}
@@ -224,9 +227,7 @@ func (n *Nocloud) configFromCD(ctx context.Context, r state.State) (metaConfig [
 		return nil, nil, nil, err
 	}
 
-	if machineConfig == nil {
-		err = errors.ErrNoConfigSource
-	}
+	// user-data is now optional, do not return error if missing
 
 	return metaConfig, networkConfig, machineConfig, err
 }

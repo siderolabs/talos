@@ -9,6 +9,7 @@ import (
 	"context"
 	stderrors "errors"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
@@ -96,6 +97,11 @@ func (n *Nocloud) Configuration(ctx context.Context, r state.State) ([]byte, err
 		return nil, err
 	}
 
+	if machineConfigDl == nil || len(machineConfigDl) == 0 {
+		log.Printf("user-data not provided, network-config only mode")
+		return nil, errors.ErrNoConfigSource
+	}
+
 	firstLine, rest, _ := bytes.Cut(machineConfigDl, []byte("\n"))
 	firstLine = bytes.TrimSpace(firstLine)
 
@@ -141,7 +147,7 @@ func (n *Nocloud) NetworkConfiguration(ctx context.Context, st state.State, ch c
 		return err
 	}
 
-	if metadataNetworkConfigDl == nil {
+	if metadataNetworkConfigDl == nil || len(metadataNetworkConfigDl) == 0 {
 		// no data, use cached network configuration if available
 		return nil
 	}

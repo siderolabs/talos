@@ -52,6 +52,12 @@ var expectedNetworkConfigV2 string
 //go:embed testdata/expected-v2-serverscom.yaml
 var expectedNetworkConfigV2Serverscom string
 
+//go:embed testdata/network-only.yaml
+var rawNetworkConfigNetworkOnly []byte
+
+//go:embed testdata/expected-network-only.yaml
+var expectedNetworkConfigNetworkOnly string
+
 func TestParseNetworkConfig(t *testing.T) {
 	t.Parallel()
 
@@ -88,6 +94,11 @@ func TestParseNetworkConfig(t *testing.T) {
 			name:     "V2-servers.com",
 			raw:      rawNetworkConfigV2Serverscom,
 			expected: expectedNetworkConfigV2Serverscom,
+		},
+		{
+			name:     "Network-Only",
+			raw:      rawNetworkConfigNetworkOnly,
+			expected: expectedNetworkConfigNetworkOnly,
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
@@ -188,6 +199,19 @@ func TestMedatada(t *testing.T) {
 		InstanceID:  "80d6927ecb30c1707b12f38ed1211535930ff16e",
 		InternalDNS: "talos-worker-3",
 	}, md)
+}
+
+func TestDecodeNetworkConfigEmpty(t *testing.T) {
+	t.Parallel()
+
+	// Test empty content
+	_, err := nocloud.DecodeNetworkConfig([]byte{})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "failed to decode network configuration")
+
+	// Test whitespace only
+	_, err = nocloud.DecodeNetworkConfig([]byte("   \n  \n"))
+	require.Error(t, err)
 }
 
 func TestExtractURL(t *testing.T) {
