@@ -1,95 +1,51 @@
-links:
-    - name: eth0
-      up: true
-      mtu: 0
-      logical: false
-      kind: ""
-      type: ""
-      parentname: ""
-      bondslave:
-        masterName: ""
-        slaveIndex: 0
-      bondmaster:
-        mode: 0
-        hashPolicy: 0
-        lacpRate: 0
-        arpValidate: 0
-        arpAllTargets: 0
-        primary: ""
-        primaryReselect: 0
-        failOverMac: 0
-        adselect: 0
-        miimon: 0
-        updelay: 0
-        downdelay: 0
-        arpInterval: 0
-        resendIgmp: 0
-        minLinks: 0
-        lpInterval: 0
-        packetsPerSlave: 0
-        numPeerNotif: 0
-        tlbDynamicLb: 0
-        allSlavesActive: 0
-        useCarrier: true
-        adActorSysPrio: 0
-        adUserPortKey: 0
-        adActorSystem: ""
-        arpIPTarget: []
-        adLacpActive: 0
-      vlan:
-        vid: 0
-        protocol: 0
-      configlayer: platform
 addresses:
     - address: 192.168.1.100/24
-      linkname: eth0
-      family: 2
-      scope: 0
-      flags: 128
-      configlayer: platform
-routes:
-    - family: 2
-      gateway: 192.168.1.1
-      source: 0.0.0.0
-      destination: 0.0.0.0/0
-      outlinkname: eth0
-      table: 254
-      priority: 1024
-      scope: 0
-      type: 1
-      flags: 0
-      protocol: 4
-      configlayer: platform
+      linkName: eth0
+      family: inet4
+      scope: global
+      flags: permanent
+      layer: platform
+links:
+    - name: eth0
+      logical: false
+      up: true
       mtu: 0
+      kind: ""
+      type: netrom
+      layer: platform
+routes:
+    - family: inet4
+      dst: ""
+      src: ""
+      gateway: 192.168.1.1
+      outLinkName: eth0
+      table: main
+      priority: 1024
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
 hostnames:
-    - hostname: ""
-      domainname: ""
-      configlayer: platform
+    - hostname: talos
+      domainname: fqdn
+      layer: platform
 resolvers:
-    - dnsservers:
+    - dnsServers:
         - 8.8.8.8
         - 1.1.1.1
-      configlayer: platform
+      layer: platform
+timeServers: []
 operators:
-    - operator: 1
-      linkname: eth0
-      requireup: true
+    - operator: dhcp4
+      linkName: eth0
+      requireUp: true
       dhcp4:
-        routemetric: 1024
-      dhcp6:
-        routemetric: 0
-      vip:
-        ip: 0.0.0.0
-        gratuitousarp: false
-      configlayer: platform
+        routeMetric: 1024
+      layer: platform
+externalIPs: []
 metadata:
     platform: nocloud
-    hostname: ""
-    region: ""
-    zone: ""
-    instancetype: ""
-    instanceid: ""
-    providerid: ""
-    spot: false
-    internaldns: ""
-    externaldns: ""
+    hostname: talos.fqdn
+    instanceId: "0"
+    internalDNS: talos.fqdn
