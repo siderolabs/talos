@@ -29,9 +29,10 @@ type Options struct {
 	contextOverride    string
 	contextOverrideSet bool
 
-	unixSocketPath      string
-	clusterNameOverride string
-	sideroV1KeysDir     string
+	unixSocketPath       string
+	clusterNameOverride  string
+	sideroV1KeysDir      string
+	serviceAccountBase64 string
 }
 
 // OptionFunc sets an option for the creation of the Client.
@@ -153,6 +154,17 @@ func WithCluster(cluster string) OptionFunc {
 func WithSideroV1KeysDir(keysDir string) OptionFunc {
 	return func(o *Options) error {
 		o.sideroV1KeysDir = keysDir
+
+		return nil
+	}
+}
+
+// WithServiceAccount sets the base64-encoded service account key for authentication.
+//
+// When set, the service account key takes priority over SIDERO_SERVICE_ACCOUNT_KEY and OMNI_SERVICE_ACCOUNT_KEY environment variables.
+func WithServiceAccount(serviceAccountBase64 string) OptionFunc {
+	return func(o *Options) error {
+		o.serviceAccountBase64 = serviceAccountBase64
 
 		return nil
 	}
