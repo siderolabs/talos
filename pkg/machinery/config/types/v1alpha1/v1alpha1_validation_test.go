@@ -277,7 +277,7 @@ func TestValidate(t *testing.T) {
 			},
 			requiresInstall: true,
 			expectedWarnings: []string{
-				".machine.install.extensions is deprecated, please see https://www.talos.dev/latest/talos-guides/install/boot-assets/",
+				".machine.install.extensions is deprecated, please see https://docs.siderolabs.com/talos/latest/platform-specific-installations/boot-assets",
 			},
 		},
 		{

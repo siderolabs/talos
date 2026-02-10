@@ -303,7 +303,7 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 		}
 
 		if len(extensions) > 0 {
-			warnings = append(warnings, ".machine.install.extensions is deprecated, please see https://www.talos.dev/latest/talos-guides/install/boot-assets/")
+			warnings = append(warnings, ".machine.install.extensions is deprecated, please see https://docs.siderolabs.com/talos/latest/platform-specific-installations/boot-assets")
 		}
 	}
 
@@ -994,7 +994,7 @@ func (c *Config) RuntimeValidate(ctx context.Context, st state.State, mode valid
 		}
 
 		if len(c.MachineConfig.Install().Extensions()) > 0 {
-			warnings = append(warnings, ".machine.install.extensions is deprecated, please see https://www.talos.dev/latest/talos-guides/install/boot-assets/")
+			warnings = append(warnings, ".machine.install.extensions is deprecated, please see https://docs.siderolabs.com/talos/latest/platform-specific-installations/boot-assets")
 		}
 
 		if err := ValidateKubernetesImageTag(c.Machine().Kubelet().Image()); err != nil {
