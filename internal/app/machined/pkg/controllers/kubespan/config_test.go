@@ -38,6 +38,9 @@ func (suite *ConfigSuite) TestReconcileConfig() {
 				MachineNetwork: &v1alpha1.NetworkConfig{
 					NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{
 						KubeSpanEnabled: pointer.To(true),
+						KubeSpanFilters: &v1alpha1.KubeSpanFilters{
+							KubeSpanFiltersExcludeAdvertisedNetworks: []string{"10.0.0.0/8"},
+						},
 					},
 				},
 			},
@@ -73,6 +76,7 @@ func (suite *ConfigSuite) TestReconcileConfig() {
 				suite.Assert().False(spec.AdvertiseKubernetesNetworks)
 				suite.Assert().False(spec.HarvestExtraEndpoints)
 				suite.Assert().Equal("[\"192.168.33.11:1001\"]", fmt.Sprintf("%q", spec.ExtraEndpoints))
+				suite.Assert().Equal([]netip.Prefix{netip.MustParsePrefix("10.0.0.0/8")}, spec.ExcludeAdvertisedNetworks)
 
 				return nil
 			},

@@ -1068,6 +1068,9 @@ const (
 	// KubeSpanKnownEndpointsAnnotation is the node annotation used to list the (comma-separated) known-good Wireguard endpoints for the node, as seen by other peers.
 	KubeSpanKnownEndpointsAnnotation = "networking.talos.dev/kubespan-endpoints"
 
+	// KubeSpanExcludeAdvertisedNetworksAnnotation is the node annotation used to list the (comma-separated) set of subnets to be excluded from advertisement.
+	KubeSpanExcludeAdvertisedNetworksAnnotation = "networking.talos.dev/kubespan-exclude-advertised-networks"
+
 	// KubeSpanLinkName is the link name for the KubeSpan Wireguard interface.
 	KubeSpanLinkName = "kubespan"
 

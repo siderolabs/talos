@@ -46,6 +46,8 @@ type ConfigSpec struct {
 	HarvestExtraEndpoints bool `yaml:"harvestExtraEndpoints" protobuf:"8"`
 	// Extra endpoints to announce.
 	ExtraEndpoints []netip.AddrPort `yaml:"extraEndpoints,omitempty" protobuf:"9"`
+	// If not empty, filter advertised networks using the list of CIDRs.
+	ExcludeAdvertisedNetworks []netip.Prefix `yaml:"excludeAdvertisedNetworks,omitempty" protobuf:"10"`
 }
 
 // NewConfig initializes a Config resource.

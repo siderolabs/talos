@@ -6,6 +6,7 @@ package v1alpha1
 
 import (
 	"fmt"
+	"net/netip"
 	"os"
 	"slices"
 	"strings"
@@ -1189,6 +1190,27 @@ func (k *NetworkKubeSpan) Filters() config.KubeSpanFilters {
 // Endpoints implements the config.KubeSpanFilters interface.
 func (k *KubeSpanFilters) Endpoints() []string {
 	return k.KubeSpanFiltersEndpoints
+}
+
+// ExcludeAdvertisedNetworks implements the config.KubeSpanFilters interface.
+func (k *KubeSpanFilters) ExcludeAdvertisedNetworks() []netip.Prefix {
+	if len(k.KubeSpanFiltersExcludeAdvertisedNetworks) == 0 {
+		return nil
+	}
+
+	result := make([]netip.Prefix, 0, len(k.KubeSpanFiltersExcludeAdvertisedNetworks))
+
+	for _, cidrStr := range k.KubeSpanFiltersExcludeAdvertisedNetworks {
+		// prefixes are validated, so for defensive programming, we can ignore errors here.
+		prefix, err := netip.ParsePrefix(cidrStr)
+		if err != nil {
+			continue
+		}
+
+		result = append(result, prefix)
+	}
+
+	return result
 }
 
 // Disabled implements the config.Provider interface.

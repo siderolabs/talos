@@ -4288,6 +4288,16 @@
           "description": "Filter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections.\n\nBy default, all addresses are advertised, and KubeSpan cycles through all endpoints until it finds one that works.\n\nDefault value: no filtering.\n",
           "markdownDescription": "Filter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections.\n\nBy default, all addresses are advertised, and KubeSpan cycles through all endpoints until it finds one that works.\n\nDefault value: no filtering.",
           "x-intellij-html-description": "\u003cp\u003eFilter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections.\u003c/p\u003e\n\n\u003cp\u003eBy default, all addresses are advertised, and KubeSpan cycles through all endpoints until it finds one that works.\u003c/p\u003e\n\n\u003cp\u003eDefault value: no filtering.\u003c/p\u003e\n"
+        },
+        "excludeAdvertisedNetworks": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "excludeAdvertisedNetworks",
+          "description": "Filter networks (e.g., host addresses, pod CIDRs if enabled) which will be advertised over KubeSpan.\n\nBy default, all networks are advertised.\nUse this filter to exclude some networks from being advertised.\n\nNote: excluded networks will not be reachable over KubeSpan, so make sure\nthese networks are still reachable via some other route (e.g., direct connection).\n\nDefault value: no filtering.\n",
+          "markdownDescription": "Filter networks (e.g., host addresses, pod CIDRs if enabled) which will be advertised over KubeSpan.\n\nBy default, all networks are advertised.\nUse this filter to exclude some networks from being advertised.\n\nNote: excluded networks will not be reachable over KubeSpan, so make sure\nthese networks are still reachable via some other route (e.g., direct connection).\n\nDefault value: no filtering.",
+          "x-intellij-html-description": "\u003cp\u003eFilter networks (e.g., host addresses, pod CIDRs if enabled) which will be advertised over KubeSpan.\u003c/p\u003e\n\n\u003cp\u003eBy default, all networks are advertised.\nUse this filter to exclude some networks from being advertised.\u003c/p\u003e\n\n\u003cp\u003eNote: excluded networks will not be reachable over KubeSpan, so make sure\nthese networks are still reachable via some other route (e.g., direct connection).\u003c/p\u003e\n\n\u003cp\u003eDefault value: no filtering.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

@@ -587,6 +587,10 @@ endpoints:
     - '!192.168.0.0/16'
     - ::/0
 {{< /highlight >}}</details> | |
+|`excludeAdvertisedNetworks` |[]string |Filter networks (e.g., host addresses, pod CIDRs if enabled) which will be advertised over KubeSpan.<br><br>By default, all networks are advertised.<br>Use this filter to exclude some networks from being advertised.<br><br>Note: excluded networks will not be reachable over KubeSpan, so make sure<br>these networks are still reachable via some other route (e.g., direct connection).<br><br>Default value: no filtering. <details><summary>Show example(s)</summary>Exclude private networks from being advertised.:{{< highlight yaml >}}
+excludeAdvertisedNetworks:
+    - 172.16.0.0/12
+{{< /highlight >}}</details> | |
 
 
 

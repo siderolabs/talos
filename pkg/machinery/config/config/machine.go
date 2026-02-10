@@ -5,6 +5,7 @@
 package config
 
 import (
+	"net/netip"
 	"net/url"
 	"os"
 	"time"
@@ -305,6 +306,7 @@ type KubeSpan interface {
 // KubeSpanFilters configures KubeSpan filters.
 type KubeSpanFilters interface {
 	Endpoints() []string
+	ExcludeAdvertisedNetworks() []netip.Prefix
 }
 
 // NetworkDeviceSelector defines the set of fields that can be used to pick network a device.

@@ -83,10 +83,11 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 		MachineType: machine.TypeControlPlane,
 		Addresses:   []netip.Addr{netip.MustParseAddr("192.168.3.4")},
 		KubeSpan: cluster.KubeSpanAffiliateSpec{
-			PublicKey:           "PLPNBddmTgHJhtw0vxltq1ZBdPP9RNOEUd5JjJZzBRY=",
-			Address:             netip.MustParseAddr("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),
-			AdditionalAddresses: []netip.Prefix{netip.MustParsePrefix("10.244.3.1/24")},
-			Endpoints:           []netip.AddrPort{netip.MustParseAddrPort("10.0.0.2:51820"), netip.MustParseAddrPort("192.168.3.4:51820")},
+			PublicKey:                 "PLPNBddmTgHJhtw0vxltq1ZBdPP9RNOEUd5JjJZzBRY=",
+			Address:                   netip.MustParseAddr("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),
+			AdditionalAddresses:       []netip.Prefix{netip.MustParsePrefix("10.244.3.1/24")},
+			Endpoints:                 []netip.AddrPort{netip.MustParseAddrPort("10.0.0.2:51820"), netip.MustParseAddrPort("192.168.3.4:51820")},
+			ExcludeAdvertisedNetworks: []netip.Prefix{netip.MustParsePrefix("0.0.0.0/0")},
 		},
 		ControlPlane: &cluster.ControlPlane{APIServerPort: 6443},
 	}
@@ -141,6 +142,12 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 							Bits: 24,
 						},
 					},
+					ExcludeAdvertisedAddresses: []*pb.IPPrefix{
+						{
+							Ip:   []byte("\x00\x00\x00\x00"),
+							Bits: 0,
+						},
+					},
 				},
 				ControlPlane: &pb.ControlPlane{ApiServerPort: 6443},
 			}, affiliates[0].Affiliate))
@@ -179,6 +186,12 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 						Bits: 24,
 					},
 				},
+				ExcludeAdvertisedAddresses: []*pb.IPPrefix{
+					{
+						Ip:   []byte("\x01\x01\x01\x01"),
+						Bits: 32,
+					},
+				},
 			},
 		},
 		Endpoints: []*pb.Endpoint{
@@ -204,6 +217,7 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 			suite.Assert().Equal(netip.MustParseAddr("fd50:8d60:4238:6302:f857:23ff:fe21:d1e1"), spec.KubeSpan.Address)
 			suite.Assert().Equal("1CXkdhWBm58c36kTpchR8iGlXHG1ruHa5W8gsFqD8Qs=", spec.KubeSpan.PublicKey)
 			suite.Assert().Equal([]netip.Prefix{netip.MustParsePrefix("10.244.4.1/24")}, spec.KubeSpan.AdditionalAddresses)
+			suite.Assert().Equal([]netip.Prefix{netip.MustParsePrefix("1.1.1.1/32")}, spec.KubeSpan.ExcludeAdvertisedNetworks)
 			suite.Assert().Equal([]netip.AddrPort{netip.MustParseAddrPort("192.168.3.5:51820")}, spec.KubeSpan.Endpoints)
 			suite.Assert().Zero(spec.ControlPlane)
 		},

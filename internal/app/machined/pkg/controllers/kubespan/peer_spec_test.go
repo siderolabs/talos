@@ -58,10 +58,11 @@ func (suite *PeerSpecSuite) TestReconcile() {
 		MachineType: machine.TypeControlPlane,
 		Addresses:   []netip.Addr{netip.MustParseAddr("192.168.3.4")},
 		KubeSpan: cluster.KubeSpanAffiliateSpec{
-			PublicKey:           "PLPNBddmTgHJhtw0vxltq1ZBdPP9RNOEUd5JjJZzBRY=",
-			Address:             netip.MustParseAddr("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),
-			AdditionalAddresses: []netip.Prefix{netip.MustParsePrefix("10.244.3.1/24"), netip.MustParsePrefix("10.244.3.0/32")},
-			Endpoints:           []netip.AddrPort{netip.MustParseAddrPort("10.0.0.2:51820"), netip.MustParseAddrPort("192.168.3.4:51820")},
+			PublicKey:                 "PLPNBddmTgHJhtw0vxltq1ZBdPP9RNOEUd5JjJZzBRY=",
+			Address:                   netip.MustParseAddr("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0"),
+			AdditionalAddresses:       []netip.Prefix{netip.MustParsePrefix("10.244.3.1/24"), netip.MustParsePrefix("10.244.3.0/32")},
+			Endpoints:                 []netip.AddrPort{netip.MustParseAddrPort("10.0.0.2:51820"), netip.MustParseAddrPort("192.168.3.4:51820")},
+			ExcludeAdvertisedNetworks: []netip.Prefix{netip.MustParsePrefix("10.244.3.128/25")},
 		},
 	}
 
@@ -123,7 +124,7 @@ func (suite *PeerSpecSuite) TestReconcile() {
 				spec := res.(*kubespan.PeerSpec).TypedSpec()
 
 				suite.Assert().Equal("fd50:8d60:4238:6302:f857:23ff:fe21:d1e0", spec.Address.String())
-				suite.Assert().Equal("[10.244.3.0/24 192.168.3.4/32 fd50:8d60:4238:6302:f857:23ff:fe21:d1e0/128]", fmt.Sprintf("%v", spec.AllowedIPs))
+				suite.Assert().Equal("[10.244.3.0/25 192.168.3.4/32 fd50:8d60:4238:6302:f857:23ff:fe21:d1e0/128]", fmt.Sprintf("%v", spec.AllowedIPs))
 				suite.Assert().Equal([]netip.AddrPort{netip.MustParseAddrPort("10.0.0.2:51820"), netip.MustParseAddrPort("192.168.3.4:51820")}, spec.Endpoints)
 				suite.Assert().Equal("bar", spec.Label)
 

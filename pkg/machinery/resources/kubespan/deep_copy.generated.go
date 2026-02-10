@@ -21,6 +21,10 @@ func (o ConfigSpec) DeepCopy() ConfigSpec {
 		cp.ExtraEndpoints = make([]netip.AddrPort, len(o.ExtraEndpoints))
 		copy(cp.ExtraEndpoints, o.ExtraEndpoints)
 	}
+	if o.ExcludeAdvertisedNetworks != nil {
+		cp.ExcludeAdvertisedNetworks = make([]netip.Prefix, len(o.ExcludeAdvertisedNetworks))
+		copy(cp.ExcludeAdvertisedNetworks, o.ExcludeAdvertisedNetworks)
+	}
 	return cp
 }
 

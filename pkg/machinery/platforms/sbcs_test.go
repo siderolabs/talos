@@ -26,7 +26,7 @@ func TestSBC(t *testing.T) {
 		{
 			name: "rpi_generic",
 
-			sbc:          platforms.SBCs()[0],
+			sbc:          platforms.SBCs()[1],
 			talosVersion: "1.9.0",
 
 			expectedDiskImagePath: "metal-arm64.raw.xz",
@@ -34,7 +34,7 @@ func TestSBC(t *testing.T) {
 		{
 			name: "bananapi_m64",
 
-			sbc:          platforms.SBCs()[0],
+			sbc:          platforms.SBCs()[1],
 			talosVersion: "1.4.0",
 
 			expectedDiskImagePath: "metal-rpi_generic-arm64.raw.xz",

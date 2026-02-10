@@ -51,6 +51,7 @@ func NewConfigController() *ConfigController {
 					res.TypedSpec().HarvestExtraEndpoints = c.Machine().Network().KubeSpan().HarvestExtraEndpoints()
 					res.TypedSpec().MTU = c.Machine().Network().KubeSpan().MTU()
 					res.TypedSpec().EndpointFilters = c.Machine().Network().KubeSpan().Filters().Endpoints()
+					res.TypedSpec().ExcludeAdvertisedNetworks = c.Machine().Network().KubeSpan().Filters().ExcludeAdvertisedNetworks()
 					res.TypedSpec().ExtraEndpoints = c.KubespanConfig().ExtraAnnouncedEndpoints()
 				}
 

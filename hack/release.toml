@@ -23,6 +23,15 @@ Linux: 6.18.9
 Talos is built with Go 1.25.7.
 """
 
+    [notes.kubespan-filters]
+        title = "KubeSpan Advertised Network Filters"
+        description = """\
+KubeSpan now supports filtering of advertised networks using the `excludeAdvertisedNetworks` field in the `KubeSpanConfig` document.
+This allows users to specify a list of CIDRs to exclude from the advertised networks. Please note that routing must be symmetric for any
+pair of peers, so if one peer excludes a certain network, the other peer must also exclude it. In other words, for any given pair of peers,
+and any pair of their addresses, the traffic should either go through KubeSpan or not, but not one way or the other.
+"""
+
 [make_deps]
 
     [make_deps.tools]
