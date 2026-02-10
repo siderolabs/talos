@@ -13,7 +13,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "6.18.8-talos"
+	DefaultKernelVersion = "6.18.9-talos"
 
 	// KernelParamConfig is the kernel parameter name for specifying the URL.
 	// to the config.
@@ -391,7 +391,7 @@ const (
 
 	// DefaultCoreDNSVersion is the default version for the CoreDNS.
 	// renovate: datasource=docker depName=registry.k8s.io/coredns/coredns
-	DefaultCoreDNSVersion = "v1.13.2"
+	DefaultCoreDNSVersion = "v1.14.1"
 
 	// LabelNodeRoleControlPlane is the node label required by a control plane node.
 	LabelNodeRoleControlPlane = "node-role.kubernetes.io/control-plane"
@@ -1164,7 +1164,7 @@ const (
 	//   crane cp docker.io/flannel/flannel:vX.Y.Z ghcr.io/siderolabs/flannel:vX.Y.Z
 	//
 	// renovate: datasource=github-releases depName=flannel-io/flannel
-	FlannelVersion = "v0.27.4"
+	FlannelVersion = "v0.28.1"
 
 	// KubeNetworkPoliciesVersion is the version of kube-network-policies when network policies are enabled for flannel.
 	//

@@ -18,12 +18,13 @@ preface = """
     [notes.updates]
         title = "Component Updates"
         description = """\
-Linux: 6.18.8
+Linux: 6.18.9
 containerd: 2.2.1
 etcd: 3.6.7
-CoreDNS: 1.13.2
+CoreDNS: 1.14.1
 Kubernetes: 1.35.0
 Flannel CNI plugin: v1.9.0-flannel1
+Flannel: 0.28.1
 LVM2: 2_03_38
 runc: 1.4.0
 systemd: 259
