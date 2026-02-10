@@ -256,6 +256,8 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 						spec.KubeSpan.AdditionalAddresses = nil
 					}
 
+					spec.KubeSpan.ExcludeAdvertisedNetworks = kubespanConfig.TypedSpec().ExcludeAdvertisedNetworks
+
 					endpointIPs := xslices.Filter(currentNodeIPs, func(ip netip.Addr) bool {
 						if ip == spec.KubeSpan.Address {
 							// skip kubespan local address

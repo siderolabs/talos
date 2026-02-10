@@ -4,3 +4,6 @@ enabled: true
 advertiseKubernetesNetworks: false
 allowDownPeerBypass: false
 mtu: 1420
+filters:
+    excludeAdvertisedNetworks:
+        - 2007::/64

@@ -206,6 +206,15 @@ cluster:
 (If the cluster is already running, sync the bootstrap manifests after applying the patch to deploy the new CNI configuration.)
 """
 
+    [notes.kubespan-filters]
+        title = "KubeSpan Advertised Network Filters"
+        description = """\
+KubeSpan now supports filtering of advertised networks using the `excludeAdvertisedNetworks` field in the `KubeSpanConfig` document.
+This allows users to specify a list of CIDRs to exclude from the advertised networks. Please note that routing must be symmetric for any
+pair of peers, so if one peer excludes a certain network, the other peer must also exclude it. In other words, for any given pair of peers,
+and any pair of their addresses, the traffic should either go through KubeSpan or not, but not one way or the other.
+"""
+
 [make_deps]
 
     [make_deps.tools]

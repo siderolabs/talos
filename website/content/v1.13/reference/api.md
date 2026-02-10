@@ -6514,6 +6514,7 @@ KubeSpanAffiliateSpec describes additional information specific for the KubeSpan
 | address | [common.NetIP](#common.NetIP) |  |  |
 | additional_addresses | [common.NetIPPrefix](#common.NetIPPrefix) | repeated |  |
 | endpoints | [common.NetIPPort](#common.NetIPPort) | repeated |  |
+| exclude_advertised_networks | [common.NetIPPrefix](#common.NetIPPrefix) | repeated |  |
 
 
 
@@ -8083,6 +8084,7 @@ ConfigSpec describes KubeSpan configuration..
 | endpoint_filters | [string](#string) | repeated |  |
 | harvest_extra_endpoints | [bool](#bool) |  |  |
 | extra_endpoints | [common.NetIPPort](#common.NetIPPort) | repeated |  |
+| exclude_advertised_networks | [common.NetIPPrefix](#common.NetIPPrefix) | repeated |  |
 
 
 

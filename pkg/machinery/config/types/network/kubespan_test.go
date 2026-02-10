@@ -6,6 +6,7 @@ package network_test
 
 import (
 	_ "embed"
+	"net/netip"
 	"testing"
 
 	"github.com/siderolabs/go-pointer"
@@ -28,6 +29,9 @@ func TestKubeSpanConfigMarshalStability(t *testing.T) {
 	cfg.ConfigAdvertiseKubernetesNetworks = pointer.To(false)
 	cfg.ConfigAllowDownPeerBypass = pointer.To(false)
 	cfg.ConfigMTU = pointer.To(uint32(1420))
+	cfg.ConfigFilters = &network.KubeSpanFiltersConfig{
+		ConfigExcludeAdvertisedNetworks: []network.Prefix{{netip.MustParsePrefix("2007::/64")}},
+	}
 
 	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
 	require.NoError(t, err)
@@ -44,7 +48,8 @@ func TestKubeSpanConfigUnmarshal(t *testing.T) {
 	cfg.ConfigEnabled = pointer.To(true)
 	cfg.ConfigMTU = pointer.To(uint32(1500))
 	cfg.ConfigFilters = &network.KubeSpanFiltersConfig{
-		ConfigEndpoints: []string{"0.0.0.0/0", "!192.168.0.0/16"},
+		ConfigEndpoints:                 []string{"0.0.0.0/0", "!192.168.0.0/16"},
+		ConfigExcludeAdvertisedNetworks: []network.Prefix{{netip.MustParsePrefix("2007::/64")}},
 	}
 
 	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
@@ -56,6 +61,7 @@ func TestKubeSpanConfigUnmarshal(t *testing.T) {
 	assert.True(t, cfg.Enabled())
 	assert.Equal(t, uint32(1500), cfg.MTU())
 	assert.Equal(t, []string{"0.0.0.0/0", "!192.168.0.0/16"}, cfg.Filters().Endpoints())
+	assert.Equal(t, []netip.Prefix{netip.MustParsePrefix("2007::/64")}, cfg.Filters().ExcludeAdvertisedNetworks())
 }
 
 func TestKubeSpanConfigValidate(t *testing.T) {
@@ -132,7 +138,7 @@ func TestKubeSpanConfigValidate(t *testing.T) {
 
 				return cfg
 			},
-			expectedError: `KubeSpan endpoint filer is not valid: "/8"`,
+			expectedError: `KubeSpan endpoint filter is not valid: "/8"`,
 		},
 		{
 			name: "all options enabled",
@@ -234,7 +240,8 @@ func TestKubeSpanConfigInterface(t *testing.T) {
 	cfg.ConfigHarvestExtraEndpoints = pointer.To(true)
 	cfg.ConfigMTU = pointer.To(uint32(1380))
 	cfg.ConfigFilters = &network.KubeSpanFiltersConfig{
-		ConfigEndpoints: []string{"192.168.0.0/16"},
+		ConfigEndpoints:                 []string{"192.168.0.0/16"},
+		ConfigExcludeAdvertisedNetworks: []network.Prefix{{netip.MustParsePrefix("0.0.0.0/0")}},
 	}
 
 	// Test interface methods
@@ -245,4 +252,5 @@ func TestKubeSpanConfigInterface(t *testing.T) {
 	assert.Equal(t, uint32(1380), cfg.MTU())
 	assert.NotNil(t, cfg.Filters())
 	assert.Equal(t, []string{"192.168.0.0/16"}, cfg.Filters().Endpoints())
+	assert.Equal(t, []netip.Prefix{netip.MustParsePrefix("0.0.0.0/0")}, cfg.Filters().ExcludeAdvertisedNetworks())
 }

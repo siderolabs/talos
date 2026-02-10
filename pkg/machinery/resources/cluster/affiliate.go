@@ -32,10 +32,11 @@ type Affiliate = typed.Resource[AffiliateSpec, AffiliateExtension]
 //
 //gotagsrewrite:gen
 type KubeSpanAffiliateSpec struct {
-	PublicKey           string           `yaml:"publicKey" protobuf:"1"`
-	Address             netip.Addr       `yaml:"address" protobuf:"2"`
-	AdditionalAddresses []netip.Prefix   `yaml:"additionalAddresses" protobuf:"3"`
-	Endpoints           []netip.AddrPort `yaml:"endpoints" protobuf:"4"`
+	PublicKey                 string           `yaml:"publicKey" protobuf:"1"`
+	Address                   netip.Addr       `yaml:"address" protobuf:"2"`
+	AdditionalAddresses       []netip.Prefix   `yaml:"additionalAddresses" protobuf:"3"`
+	Endpoints                 []netip.AddrPort `yaml:"endpoints" protobuf:"4"`
+	ExcludeAdvertisedNetworks []netip.Prefix   `yaml:"excludeAdvertisedNetworks" protobuf:"5"`
 }
 
 // NewAffiliate initializes the Affiliate resource.
@@ -134,6 +135,14 @@ func (spec *AffiliateSpec) Merge(other *AffiliateSpec) {
 
 		if !found {
 			spec.KubeSpan.AdditionalAddresses = append(spec.KubeSpan.AdditionalAddresses, addr)
+		}
+	}
+
+	for _, filter := range other.KubeSpan.ExcludeAdvertisedNetworks {
+		found := slices.Contains(spec.KubeSpan.ExcludeAdvertisedNetworks, filter)
+
+		if !found {
+			spec.KubeSpan.ExcludeAdvertisedNetworks = append(spec.KubeSpan.ExcludeAdvertisedNetworks, filter)
 		}
 	}
 

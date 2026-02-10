@@ -56,6 +56,7 @@ message KubeSpanAffiliateSpec {
   common.NetIP address = 2;
   repeated common.NetIPPrefix additional_addresses = 3;
   repeated common.NetIPPort endpoints = 4;
+  repeated common.NetIPPrefix exclude_advertised_networks = 5;
 }
 
 // MemberSpec describes Member state.

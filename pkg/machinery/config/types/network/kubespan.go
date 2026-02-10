@@ -9,8 +9,10 @@ package network
 import (
 	"errors"
 	"fmt"
+	"net/netip"
 	"strings"
 
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 	sideronet "github.com/siderolabs/net"
 
@@ -113,6 +115,26 @@ type KubeSpanFiltersConfig struct {
 	//     items:
 	//       type: string
 	ConfigEndpoints []string `yaml:"endpoints,omitempty"`
+
+	//   description: |
+	//     Filter networks (e.g., host addresses, pod CIDRs if enabled) which will be advertised over KubeSpan.
+	//
+	//     By default, all networks are advertised.
+	//     Use this filter to exclude some networks from being advertised.
+	//
+	//     Note: excluded networks will not be reachable over KubeSpan, so make sure
+	//     these networks are still reachable via some other route (e.g., direct connection).
+	//
+	//     Default value: no filtering.
+	//   examples:
+	//     - name: Exclude private networks from being advertised.
+	//       value: '[]Prefix{{netip.MustParsePrefix("192.168.1.0/24")}}'
+	//   schema:
+	//     type: array
+	//     items:
+	//       type: string
+	//       pattern: ^[0-9a-f.:]+/\d{1,3}$
+	ConfigExcludeAdvertisedNetworks []Prefix `yaml:"excludeAdvertisedNetworks,omitempty"`
 }
 
 // NewKubeSpanV1Alpha1 creates a new KubeSpanConfig config document.
@@ -133,7 +155,8 @@ func exampleKubeSpanV1Alpha1() *KubeSpanConfigV1Alpha1 {
 	cfg.ConfigHarvestExtraEndpoints = pointer.To(false)
 	cfg.ConfigMTU = pointer.To(uint32(1420))
 	cfg.ConfigFilters = &KubeSpanFiltersConfig{
-		ConfigEndpoints: []string{"0.0.0.0/0", "::/0"},
+		ConfigEndpoints:                 []string{"0.0.0.0/0", "::/0"},
+		ConfigExcludeAdvertisedNetworks: []Prefix{{netip.MustParsePrefix("192.168.1.0/24")}, {netip.MustParsePrefix("2003::/16")}},
 	}
 
 	return cfg
@@ -157,7 +180,7 @@ func (s *KubeSpanConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.
 			cidr = strings.TrimPrefix(cidr, "!")
 
 			if _, err := sideronet.ParseSubnetOrAddress(cidr); err != nil {
-				errs = errors.Join(errs, fmt.Errorf("KubeSpan endpoint filer is not valid: %q", cidr))
+				errs = errors.Join(errs, fmt.Errorf("KubeSpan endpoint filter is not valid: %q", cidr))
 			}
 		}
 	}
@@ -217,4 +240,9 @@ func (s *KubeSpanConfigV1Alpha1) Filters() config.NetworkKubeSpanFilters {
 // Endpoints implements config.NetworkKubeSpanFilters interface.
 func (f *KubeSpanFiltersConfig) Endpoints() []string {
 	return f.ConfigEndpoints
+}
+
+// ExcludeAdvertisedNetworks implements config.NetworkKubeSpanFilters interface.
+func (f *KubeSpanFiltersConfig) ExcludeAdvertisedNetworks() []netip.Prefix {
+	return xslices.Map(f.ConfigExcludeAdvertisedNetworks, func(p Prefix) netip.Prefix { return p.Prefix })
 }

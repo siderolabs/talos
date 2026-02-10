@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/netip"
 	"net/url"
 	"os"
 	"reflect"
@@ -281,7 +282,16 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 			cidr = strings.TrimPrefix(cidr, "!")
 
 			if _, err := sideronet.ParseSubnetOrAddress(cidr); err != nil {
-				result = multierror.Append(result, fmt.Errorf("KubeSpan endpoint filer is not valid: %q", cidr))
+				result = multierror.Append(result, fmt.Errorf("KubeSpan endpoint filter is not valid: %q", cidr))
+			}
+		}
+
+		if c.MachineConfig.MachineNetwork.NetworkKubeSpan.KubeSpanFilters != nil {
+			for _, cidr := range c.MachineConfig.MachineNetwork.NetworkKubeSpan.KubeSpanFilters.KubeSpanFiltersExcludeAdvertisedNetworks {
+				_, err := netip.ParsePrefix(cidr)
+				if err != nil {
+					result = multierror.Append(result, fmt.Errorf("KubeSpan exclude advertised networks filter is not valid: %q", cidr))
+				}
 			}
 		}
 	}

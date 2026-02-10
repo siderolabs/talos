@@ -1708,7 +1708,81 @@ func TestValidate(t *testing.T) {
 					},
 				},
 			},
-			expectedError: "2 errors occurred:\n\t* KubeSpan endpoint filer is not valid: \"10\"\n\t* KubeSpan endpoint filer is not valid: \"123::/456\"\n\n",
+			expectedError: "2 errors occurred:\n\t* KubeSpan endpoint filter is not valid: \"10\"\n\t* KubeSpan endpoint filter is not valid: \"123::/456\"\n\n",
+		},
+		{
+			name: "GoodKubeSpanAdvertisedNetworkFilters",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "worker",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{
+							KubeSpanEnabled: pointer.To(true),
+							KubeSpanFilters: &v1alpha1.KubeSpanFilters{
+								KubeSpanFiltersExcludeAdvertisedNetworks: []string{
+									"0.0.0.0/0",
+									"10.0.0.0/8",
+									"172.16.0.0/12",
+									"::/0",
+								},
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+					ClusterID:     "test",
+					ClusterSecret: "test",
+					ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{
+						DiscoveryEnabled: pointer.To(true),
+					},
+				},
+			},
+			expectedError: "",
+		},
+		{
+			name: "BadKubeSpanAdvertisedNetworkFilters",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "worker",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{
+							KubeSpanEnabled: pointer.To(true),
+							KubeSpanFilters: &v1alpha1.KubeSpanFilters{
+								KubeSpanFiltersExcludeAdvertisedNetworks: []string{
+									"invalid",
+									"123::/456",
+								},
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+					ClusterID:     "test",
+					ClusterSecret: "test",
+					ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{
+						DiscoveryEnabled: pointer.To(true),
+					},
+				},
+			},
+			expectedError: "2 errors occurred:\n\t* KubeSpan exclude advertised networks filter is not valid: \"invalid\"\n\t* KubeSpan exclude advertised networks filter is not valid: \"123::/456\"\n\n",
 		},
 		{
 			name: "KubeSpanSmallMTU",
