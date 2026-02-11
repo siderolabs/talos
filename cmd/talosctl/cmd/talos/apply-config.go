@@ -98,6 +98,10 @@ var applyConfigCmd = &cobra.Command{
 				return WithClientMaintenance(applyConfigCmdFlags.certFingerprints, f)
 			}
 
+			if GlobalArgs.SkipVerify {
+				return WithClientSkipVerify(f)
+			}
+
 			return WithClient(f)
 		}
 

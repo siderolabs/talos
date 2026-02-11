@@ -43,6 +43,10 @@ Use device names as arguments, for example: vda or sda5.`,
 			return WithClientMaintenance(nil, cmdWipe(args))
 		}
 
+		if GlobalArgs.SkipVerify {
+			return WithClientSkipVerify(cmdWipe(args))
+		}
+
 		return WithClient(cmdWipe(args))
 	},
 }

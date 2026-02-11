@@ -8,6 +8,7 @@ package global
 import (
 	"context"
 	"crypto/tls"
+	"encoding/base64"
 	"errors"
 	"fmt"
 
@@ -27,6 +28,7 @@ type Args struct {
 	Nodes           []string
 	Endpoints       []string
 	SideroV1KeysDir string
+	SkipVerify      bool
 }
 
 // NodeList returns the list of nodes to run the command against.
@@ -38,6 +40,11 @@ func (c *Args) NodeList() []string {
 //
 // WithClientNoNodes doesn't set any node information on the request context.
 func (c *Args) WithClientNoNodes(action func(context.Context, *client.Client) error, dialOptions ...grpc.DialOption) error {
+	// If SkipVerify is set, use WithClientSkipVerify instead
+	if c.SkipVerify {
+		return c.WithClientSkipVerify(action)
+	}
+
 	return cli.WithContext(
 		context.Background(), func(ctx context.Context) error {
 			cfg, err := clientconfig.Open(c.Talosconfig)
@@ -161,6 +168,84 @@ func (c *Args) WithClientMaintenance(enforceFingerprints []string, action func(c
 			defer c.Close()
 
 			return action(ctx, c)
+		},
+	)
+}
+
+// WithClientSkipVerify wraps common code to initialize Talos client with TLS verification disabled
+// but with client certificate authentication preserved.
+// This is useful when connecting to nodes via IP addresses not listed in the server certificate's SANs.
+func (c *Args) WithClientSkipVerify(action func(context.Context, *client.Client) error) error {
+	return cli.WithContext(
+		context.Background(), func(ctx context.Context) error {
+			cfg, err := clientconfig.Open(c.Talosconfig)
+			if err != nil {
+				return fmt.Errorf("failed to open config file %q: %w", c.Talosconfig, err)
+			}
+
+			// Get context name - use override if specified, otherwise use default
+			contextName := c.CmdContext
+			if contextName == "" {
+				contextName = cfg.Context
+			}
+
+			configContext, ok := cfg.Contexts[contextName]
+			if !ok {
+				return fmt.Errorf("context %q not found in config", contextName)
+			}
+
+			// Build TLS config with InsecureSkipVerify but preserve client certificate
+			tlsConfig := &tls.Config{
+				InsecureSkipVerify: true,
+			}
+
+			// Add client certificate if available
+			if configContext.Crt != "" && configContext.Key != "" {
+				crtBytes, err := base64.StdEncoding.DecodeString(configContext.Crt)
+				if err != nil {
+					return fmt.Errorf("error decoding certificate: %w", err)
+				}
+
+				keyBytes, err := base64.StdEncoding.DecodeString(configContext.Key)
+				if err != nil {
+					return fmt.Errorf("error decoding key: %w", err)
+				}
+
+				cert, err := tls.X509KeyPair(crtBytes, keyBytes)
+				if err != nil {
+					return fmt.Errorf("could not load client key pair: %w", err)
+				}
+
+				tlsConfig.Certificates = []tls.Certificate{cert}
+			}
+
+			opts := []client.OptionFunc{
+				client.WithTLSConfig(tlsConfig),
+				client.WithDefaultGRPCDialOptions(),
+			}
+
+			// Use endpoints from command-line flags or config
+			if len(c.Endpoints) > 0 {
+				opts = append(opts, client.WithEndpoints(c.Endpoints...))
+			} else if len(configContext.Endpoints) > 0 {
+				opts = append(opts, client.WithEndpoints(configContext.Endpoints...))
+			}
+
+			cli, err := client.New(ctx, opts...)
+			if err != nil {
+				return fmt.Errorf("error constructing client: %w", err)
+			}
+			//nolint:errcheck
+			defer cli.Close()
+
+			// Set nodes on context
+			if len(c.Nodes) > 0 {
+				ctx = client.WithNodes(ctx, c.Nodes...)
+			} else if len(configContext.Nodes) > 0 {
+				ctx = client.WithNodes(ctx, configContext.Nodes...)
+			}
+
+			return action(ctx, cli)
 		},
 	)
 }

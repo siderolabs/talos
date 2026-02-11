@@ -130,6 +130,10 @@ func runUpgradeNoWait(opts []client.UpgradeOption) error {
 		return WithClientMaintenance(nil, upgradeFn)
 	}
 
+	if GlobalArgs.SkipVerify {
+		return WithClientSkipVerify(upgradeFn)
+	}
+
 	return WithClient(upgradeFn)
 }
 
