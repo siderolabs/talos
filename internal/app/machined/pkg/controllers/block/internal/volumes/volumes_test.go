@@ -25,6 +25,18 @@ func TestCompareVolumeConfigs(t *testing.T) {
 		expected int
 	}{
 		{
+			name: "no provisioning instructions",
+
+			a: &block.VolumeConfigSpec{},
+			b: &block.VolumeConfigSpec{
+				Provisioning: block.ProvisioningSpec{
+					Wave: block.WaveSystemDisk,
+				},
+			},
+
+			expected: -1,
+		},
+		{
 			name: "different wave",
 
 			a: &block.VolumeConfigSpec{
@@ -35,6 +47,9 @@ func TestCompareVolumeConfigs(t *testing.T) {
 			b: &block.VolumeConfigSpec{
 				Provisioning: block.ProvisioningSpec{
 					Wave: block.WaveUserVolumes,
+					FilesystemSpec: block.FilesystemSpec{
+						Type: block.FilesystemTypeEXT4,
+					},
 				},
 			},
 
