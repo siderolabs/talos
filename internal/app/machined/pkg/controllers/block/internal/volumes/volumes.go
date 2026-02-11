@@ -10,6 +10,7 @@ import (
 	"math"
 
 	"github.com/siderolabs/gen/optional"
+	"github.com/siderolabs/gen/value"
 
 	"github.com/siderolabs/talos/internal/pkg/encryption"
 	blockpb "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
@@ -18,7 +19,12 @@ import (
 
 // CompareVolumeConfigs compares two volume configs in the proposed order of provisioning.
 func CompareVolumeConfigs(a, b *block.VolumeConfig) int {
-	// first, sort by wave, smaller wave first
+	// first, sort volumes without provisioning instructions first, as they don't block provisioning of other volumes
+	if c := cmpBool(!value.IsZero(a.TypedSpec().Provisioning), !value.IsZero(b.TypedSpec().Provisioning)); c != 0 {
+		return c
+	}
+
+	// second, sort by wave, smaller wave first
 	if c := cmp.Compare(a.TypedSpec().Provisioning.Wave, b.TypedSpec().Provisioning.Wave); c != 0 {
 		return c
 	}
