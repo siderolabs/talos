@@ -1,3 +1,77 @@
+## [Talos 1.12.4](https://github.com/siderolabs/talos/releases/tag/v1.12.4) (2026-02-12)
+
+Welcome to the v1.12.4 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### KubeSpan Advertised Network Filters
+
+KubeSpan now supports filtering of advertised networks using the `excludeAdvertisedNetworks` field in the `KubeSpanConfig` document.
+This allows users to specify a list of CIDRs to exclude from the advertised networks. Please note that routing must be symmetric for any
+pair of peers, so if one peer excludes a certain network, the other peer must also exclude it. In other words, for any given pair of peers,
+and any pair of their addresses, the traffic should either go through KubeSpan or not, but not one way or the other.
+
+
+### Component Updates
+
+Linux: 6.18.9
+
+Talos is built with Go 1.25.7.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Daniil Kivenko
+* Florian Ströger
+* Fritz Schaal
+* Mateusz Urbanek
+
+### Changes
+<details><summary>8 commits</summary>
+<p>
+
+* [`14dde14eb`](https://github.com/siderolabs/talos/commit/14dde14eb0e2f4416ed90be29b0540bad9ee3671) feat: add filter for KubeSpan advertised networks
+* [`c277d0119`](https://github.com/siderolabs/talos/commit/c277d011900bdcfc09cbb2b3b67135c92dc1bf02) fix: ignore volumes in wave calculation without provisioning
+* [`f90af88d8`](https://github.com/siderolabs/talos/commit/f90af88d89d3f43a73727b13a997738dfc82edc7) fix: use node podCIDRs for kubespan advertiseKubernetesNetworks
+* [`a025ea46c`](https://github.com/siderolabs/talos/commit/a025ea46c5076b3565d176030d48227bf0fb0b0e) feat: add IPv6 GRE support
+* [`924125420`](https://github.com/siderolabs/talos/commit/924125420bdc9be437b46656fc77392aae4bc1e6) fix: typo with rpi_5 profile name
+* [`64f49851a`](https://github.com/siderolabs/talos/commit/64f49851aa346ec5a03106933e0336127241d90c) fix: swap volume configuration for min/max size
+* [`19354ab58`](https://github.com/siderolabs/talos/commit/19354ab58527a9e9afc0670d36675870e4ae5b00) feat: update Linux to 6.18.9
+* [`639c1c928`](https://github.com/siderolabs/talos/commit/639c1c928a664d180bd16674f9f9879c83e0c37d) fix: mismerge of nft with json support
+</p>
+</details>
+
+### Changes from siderolabs/discovery-api
+<details><summary>2 commits</summary>
+<p>
+
+* [`9c06846`](https://github.com/siderolabs/discovery-api/commit/9c06846e6f9f4f5765d5e431f8e25dc44a7ff337) feat: change the way excluded addresses are specified
+* [`f71a14a`](https://github.com/siderolabs/discovery-api/commit/f71a14a251c1e267d7a3701342563965947cc76f) feat: add advertised filters to discovery data
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>4 commits</summary>
+<p>
+
+* [`b1fc4c6`](https://github.com/siderolabs/pkgs/commit/b1fc4c63dec888ea44aa0d5e0ede878d385e599e) feat: update NVIDIA LTS to 580.126.16
+* [`f7a8163`](https://github.com/siderolabs/pkgs/commit/f7a81634d8214520a3f895bb0b0954d1af56e6f8) feat: update Linux to 6.18.9
+* [`32290ff`](https://github.com/siderolabs/pkgs/commit/32290ff9007bf9e0f959ddb0f5bbe00adf3266d2) feat: enable ip6_gre
+* [`da46073`](https://github.com/siderolabs/pkgs/commit/da460730c1980c178416cd7b20e6d1954ea2a673) feat: enable NFT_BRIDGE config
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/discovery-api**  v0.1.6 -> v0.1.8
+* **github.com/siderolabs/pkgs**           v1.12.0-35-g15d5d78 -> v1.12.0-39-gb1fc4c6
+
+Previous release can be found at [v1.12.3](https://github.com/siderolabs/talos/releases/tag/v1.12.3)
+
 ## [Talos 1.12.3](https://github.com/siderolabs/talos/releases/tag/v1.12.3) (2026-02-07)
 
 Welcome to the v1.12.3 release of Talos!
