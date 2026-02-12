@@ -194,7 +194,7 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 	}
 
 	if !reflect.DeepEqual(currentConfig, newConfig) {
-		diff, err := configdiff.DiffToString(container.NewV1Alpha1(currentConfig), container.NewV1Alpha1(newConfig))
+		diff, err := configdiff.DiffConfigs(container.NewV1Alpha1(currentConfig), container.NewV1Alpha1(newConfig))
 		if err != nil {
 			return fmt.Errorf("error calculating diff: %w", err)
 		}

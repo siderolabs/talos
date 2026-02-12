@@ -318,7 +318,7 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 }
 
 func generateDiff(r runtime.Runtime, provider config.Provider) (string, error) {
-	documentsDiff, err := configdiff.DiffToString(r.ConfigContainer(), provider)
+	documentsDiff, err := configdiff.DiffConfigs(r.ConfigContainer(), provider)
 	if err != nil {
 		return "", err
 	}

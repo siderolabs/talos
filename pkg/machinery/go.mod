@@ -12,13 +12,12 @@ require (
 	github.com/dustin/go-humanize v1.0.1
 	github.com/emicklei/dot v1.9.2
 	github.com/evanphx/json-patch v5.9.11+incompatible
-	github.com/fatih/color v1.18.0
 	github.com/ghodss/yaml v1.0.0
 	github.com/google/cel-go v0.26.1
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/hexops/gotextdiff v1.0.3
 	github.com/jsimonetti/rtnetlink/v2 v2.1.0
 	github.com/mdlayher/ethtool v0.4.0
+	github.com/neticdk/go-stdlib v1.0.0
 	github.com/opencontainers/runtime-spec v1.2.1
 	github.com/planetscale/vtprotobuf v0.6.1-0.20241121165744-79df5c4772f2
 	github.com/ryanuber/go-glob v1.0.0
@@ -36,6 +35,7 @@ require (
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20251111163417-95abcf5c77ba
 	google.golang.org/grpc v1.76.0
 	google.golang.org/protobuf v1.36.10
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -54,8 +54,6 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.27.3 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/josharian/native v1.1.0 // indirect
-	github.com/mattn/go-colorable v0.1.14 // indirect
-	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mdlayher/genetlink v1.3.2 // indirect
 	github.com/mdlayher/netlink v1.8.0 // indirect
 	github.com/mdlayher/socket v0.5.1 // indirect
@@ -74,5 +72,4 @@ require (
 	golang.org/x/text v0.31.0 // indirect
 	golang.org/x/time v0.14.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
