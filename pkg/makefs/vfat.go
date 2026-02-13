@@ -7,6 +7,7 @@ package makefs
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
@@ -111,10 +112,12 @@ func populateVFAT(partname, sourceDir string) error {
 }
 
 func createFATFile(srcPath, destPath string, dfs filesystem.FileSystem) error {
-	srcFile, err := os.ReadFile(srcPath)
+	srcFile, err := os.Open(srcPath)
 	if err != nil {
 		return fmt.Errorf("failed to open source file %q: %w", srcPath, err)
 	}
+
+	defer srcFile.Close() //nolint:errcheck
 
 	destFile, err := dfs.OpenFile(destPath, os.O_CREATE|os.O_RDWR)
 	if err != nil {
@@ -123,7 +126,7 @@ func createFATFile(srcPath, destPath string, dfs filesystem.FileSystem) error {
 
 	defer destFile.Close() //nolint:errcheck
 
-	if _, err := destFile.Write(srcFile); err != nil {
+	if _, err := io.Copy(destFile, srcFile); err != nil {
 		return fmt.Errorf("failed to write to destination file %q in FAT filesystem: %w", destPath, err)
 	}
 
