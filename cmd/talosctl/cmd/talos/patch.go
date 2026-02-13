@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/spf13/cobra"
 	"go.yaml.in/yaml/v4"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -38,6 +39,20 @@ var patchCmdFlags struct {
 
 func extractMachineConfigBody(mc resource.Resource) ([]byte, error) {
 	if mc.Metadata().Annotations().Empty() {
+		// this is backwards compatibility for versions of Talos which marshaled the MachineConfig spec as a YAML document
+		// instead of putting it as string
+		//
+		// if try to go via yaml.Marshal path, it will cut off all documents after the first one (as there is no way to return
+		// multiple documents from MarshalYAML), so we need to extract the original body from the resource
+		if pb, ok := mc.(*protobuf.Resource); ok {
+			p, err := pb.Marshal()
+			if err != nil {
+				return nil, fmt.Errorf("marshal protobuf resource: %w", err)
+			}
+
+			return []byte(p.GetSpec().GetYamlSpec()), nil
+		}
+
 		return yaml.Marshal(mc.Spec())
 	}
 
