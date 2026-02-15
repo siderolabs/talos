@@ -22,8 +22,7 @@ func TestVirtiofsFlag_AccumulatesAndRequests(t *testing.T) {
 	fs.Var(&d, "virtiofs", "")
 
 	args := []string{
-		"--virtiofs", "/mnt/shared/1:/tmp/mnt-shared-1.sock",
-		"--virtiofs", "/mnt/shared/2:/tmp/mnt-shared-2.sock,/mnt/shared/3:/tmp/mnt-shared-3.sock",
+		"--virtiofs", "/mnt/shared/1:/tmp/mnt-shared-1.sock,/mnt/shared/2:/tmp/mnt-shared-2.sock,/mnt/shared/3:/tmp/mnt-shared-3.sock",
 	}
 
 	err := fs.Parse(args)
@@ -52,6 +51,16 @@ func TestVirtiofsFlag_SetInvalid(t *testing.T) {
 
 	var f flags.Virtiofs
 
-	err := f.Set("invalid-no-colon")
+	err := f.Set("/mnt/shared/1:/tmp/mnt-shared-1.sock")
+	assert.NoError(t, err)
+
+	assert.Equal(t, "/mnt/shared/1:/tmp/mnt-shared-1.sock", f.String())
+
+	err = f.Set("/mnt/shared/1:/tmp/mnt-shared-1.sock,/mnt/shared/2:/tmp/mnt-shared-2.sock")
+	assert.NoError(t, err)
+
+	assert.Equal(t, "/mnt/shared/1:/tmp/mnt-shared-1.sock,/mnt/shared/2:/tmp/mnt-shared-2.sock", f.String())
+
+	err = f.Set("invalid-no-colon")
 	assert.Error(t, err)
 }

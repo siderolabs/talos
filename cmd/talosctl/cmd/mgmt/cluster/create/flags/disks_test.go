@@ -23,8 +23,7 @@ func TestDisksFlag_ExtraOpts(t *testing.T) {
 	fs.Var(&d, "disks", "")
 
 	args := []string{
-		"--disks", "virtio:1GiB:serial=test-1",
-		"--disks", "virtiofs:1GiB:tag=foo,virtiofs:1GiB:tag=bar",
+		"--disks", "virtio:1GiB:serial=test-1,virtiofs:1GiB:tag=foo,virtiofs:1GiB:tag=bar",
 	}
 
 	err := fs.Parse(args)
@@ -70,8 +69,7 @@ func TestDisksFlag_AccumulatesAndRequests(t *testing.T) {
 	fs.Var(&d, "disks", "")
 
 	args := []string{
-		"--disks", "virtio:1GiB",
-		"--disks", "nvme:10GiB,sata:512MiB",
+		"--disks", "virtio:1GiB,nvme:10GiB,sata:512MiB",
 	}
 
 	err := fs.Parse(args)
@@ -102,11 +100,21 @@ func TestDisksFlag_AccumulatesAndRequests(t *testing.T) {
 	assert.Equal(t, "virtio:1GiB,nvme:10GiB,sata:512MiB", d.String())
 }
 
-func TestDisksFlag_SetInvalid(t *testing.T) {
+func TestDisksFlag_Set(t *testing.T) {
 	t.Parallel()
 
 	var d flags.Disks
 
-	err := d.Set("invalid-no-colon")
+	err := d.Set("virtio:6gb")
+	assert.NoError(t, err)
+
+	assert.Equal(t, "virtio:6gb", d.String())
+
+	err = d.Set("nvme:12mb,sata:2gb")
+	assert.NoError(t, err)
+
+	assert.Equal(t, "nvme:12mb,sata:2gb", d.String())
+
+	err = d.Set("invalid-no-colon")
 	assert.Error(t, err)
 }
