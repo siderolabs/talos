@@ -83,7 +83,7 @@ func (f *Disks) Set(value string) error {
 		return err
 	}
 
-	f.requests = append(f.requests, reqs...)
+	f.requests = reqs
 
 	return nil
 }
