@@ -190,7 +190,6 @@ require (
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
 	gopkg.in/typ.v4 v4.4.0
 	k8s.io/klog/v2 v2.130.1
-	k8s.io/utils v0.0.0-20260108192941-914a6e750570
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.77
 	sigs.k8s.io/cli-utils v0.37.3-0.20250918194211-77c836a69463
 	sigs.k8s.io/hydrophone v0.7.0
@@ -369,6 +368,7 @@ require (
 	k8s.io/cli-runtime v0.35.0 // indirect
 	k8s.io/component-helpers v0.35.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912 // indirect
+	k8s.io/utils v0.0.0-20260108192941-914a6e750570 // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.77 // indirect
 	rsc.io/qr v0.2.0 // indirect
 	sigs.k8s.io/controller-runtime v0.22.2 // indirect

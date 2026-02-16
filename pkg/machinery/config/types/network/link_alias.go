@@ -9,6 +9,7 @@ package network
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
@@ -43,6 +44,7 @@ var (
 //
 //	examples:
 //	  - value: exampleLinkAliasConfigV1Alpha1()
+//	  - value: exampleLinkAliasMultipleConfigV1Alpha1()
 //	alias: LinkAliasConfig
 //	schemaRoot: true
 //	schemaMeta: v1alpha1/LinkAliasConfig
@@ -55,17 +57,26 @@ type LinkAliasConfigV1Alpha1 struct {
 	//    Don't use system interface names like "eth0", "ens3", "enp0s2", etc. as those may conflict
 	//    with existing physical interfaces.
 	//
+	//    The name can contain a single integer format verb (`%d`) to create multiple aliases
+	//    from a single config document. When a format verb is detected, each matched link receives a sequential
+	//    alias (e.g. `net0`, `net1`, ...) based on hardware address order of the links.
+	//    Links already aliased by a previous config are automatically skipped.
+	//
 	//   examples:
 	//    - value: >
 	//       "net0"
 	//    - value: >
 	//       "private"
+	//    - value: >
+	//       "net%d"
 	//   schemaRequired: true
 	MetaName string `yaml:"name"`
 	//   description: |
 	//     Selector to match the link to alias.
 	//
-	//     Selector must match exactly one link, otherwise an error is returned.
+	//     When the alias name is a fixed string, the selector must match exactly one link.
+	//     When the alias name contains a format verb (e.g. `net%d`), the selector may match multiple links
+	//     and each match receives a sequential alias.
 	//     If multiple selectors match the same link, the first one is used.
 	Selector LinkSelector `yaml:"selector,omitempty"`
 }
@@ -107,6 +118,13 @@ func exampleLinkAliasConfigV1Alpha1() *LinkAliasConfigV1Alpha1 {
 	return cfg
 }
 
+func exampleLinkAliasMultipleConfigV1Alpha1() *LinkAliasConfigV1Alpha1 {
+	cfg := NewLinkAliasConfigV1Alpha1("net%d")
+	cfg.Selector.Match = exampleLinkSelector3()
+
+	return cfg
+}
+
 func exampleLinkSelector1() cel.Expression {
 	return cel.MustExpression(cel.ParseBooleanExpression(`mac(link.permanent_addr) == "00:1a:2b:3c:4d:5e"`, celenv.LinkLocator()))
 }
@@ -138,6 +156,11 @@ func (s *LinkAliasConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation
 
 	if s.MetaName == "" {
 		errs = errors.Join(errs, errors.New("name must be specified"))
+	} else if s.IsPatternAlias() {
+		prefix, suffix, _ := strings.Cut(s.MetaName, "%")
+		if suffix != "d" || prefix == "" {
+			errs = errors.Join(errs, fmt.Errorf("name %q contains an invalid format verb, use %%d suffix", s.MetaName))
+		}
 	}
 
 	if !s.Selector.Match.IsZero() {
@@ -154,4 +177,10 @@ func (s *LinkAliasConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation
 // LinkSelector implements config.NetworkLinkAliasConfig interface.
 func (s *LinkAliasConfigV1Alpha1) LinkSelector() cel.Expression {
 	return s.Selector.Match
+}
+
+// IsPatternAlias returns true if the alias name contains a format verb (e.g. %d)
+// indicating this config should create multiple aliases.
+func (s *LinkAliasConfigV1Alpha1) IsPatternAlias() bool {
+	return strings.ContainsRune(s.MetaName, '%')
 }

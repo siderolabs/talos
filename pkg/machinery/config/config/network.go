@@ -175,6 +175,7 @@ type NetworkRouteConfig interface {
 type NetworkLinkAliasConfig interface {
 	NamedDocument
 	LinkSelector() cel.Expression
+	IsPatternAlias() bool
 }
 
 // NetworkDHCPConfig defines a DHCP configuration for a network link.

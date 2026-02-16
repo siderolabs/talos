@@ -1280,14 +1280,14 @@ func (LinkAliasConfigV1Alpha1) Doc() *encoder.Doc {
 				Name:        "name",
 				Type:        "string",
 				Note:        "",
-				Description: "Alias for the link.\n\nDon't use system interface names like \"eth0\", \"ens3\", \"enp0s2\", etc. as those may conflict\nwith existing physical interfaces.",
+				Description: "Alias for the link.\n\nDon't use system interface names like \"eth0\", \"ens3\", \"enp0s2\", etc. as those may conflict\nwith existing physical interfaces.\n\nThe name can contain a single integer format verb (`%d`) to create multiple aliases\nfrom a single config document. When a format verb is detected, each matched link receives a sequential\nalias (e.g. `net0`, `net1`, ...) based on hardware address order of the links.\nLinks already aliased by a previous config are automatically skipped.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Alias for the link." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
 				Name:        "selector",
 				Type:        "LinkSelector",
 				Note:        "",
-				Description: "Selector to match the link to alias.\n\nSelector must match exactly one link, otherwise an error is returned.\nIf multiple selectors match the same link, the first one is used.",
+				Description: "Selector to match the link to alias.\n\nWhen the alias name is a fixed string, the selector must match exactly one link.\nWhen the alias name contains a format verb (e.g. `net%d`), the selector may match multiple links\nand each match receives a sequential alias.\nIf multiple selectors match the same link, the first one is used.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Selector to match the link to alias." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
@@ -1295,8 +1295,11 @@ func (LinkAliasConfigV1Alpha1) Doc() *encoder.Doc {
 
 	doc.AddExample("", exampleLinkAliasConfigV1Alpha1())
 
+	doc.AddExample("", exampleLinkAliasMultipleConfigV1Alpha1())
+
 	doc.Fields[1].AddExample("", "net0")
 	doc.Fields[1].AddExample("", "private")
+	doc.Fields[1].AddExample("", "net%d")
 
 	return doc
 }

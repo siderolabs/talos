@@ -131,6 +131,19 @@ It replaces and deprecates the previous method of configuring KubeSpan via the `
 The old configuration field will continue to work for backward compatibility.
 """
 
+    [notes.link_alias_config]
+        title = "LinkAliasConfig Pattern-Based Multi-Alias"
+        description = """\
+`LinkAliasConfig` now supports pattern-based alias names using `%d` format verb (e.g. `net%d`).
+
+When the alias name contains a `%d` format verb, the selector is allowed to match multiple links.
+Each matched link receives a sequential alias (e.g. `net0`, `net1`, ...) based on hardware address order
+of the links. Links already aliased by a previous config are automatically skipped.
+
+This enables creating stable aliases from any N links using a single config document,
+useful for `BondConfig` and `BridgeConfig` member interfaces on varying hardware.
+"""
+
     [notes.extraArgs]
         title = "Extra Arguments accept slices in addition to strings"
         description = """\

@@ -5,9 +5,12 @@
 package network
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"slices"
+	"strconv"
+	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -89,6 +92,21 @@ func (ctrl *LinkAliasConfigController) Run(ctx context.Context, r controller.Run
 			return item.TypedSpec().Physical()
 		})
 
+		// sort the links by MAC address to ensure consistent alias assignment for pattern-based configs
+		slices.SortFunc(physicalLinks, func(a, b *network.LinkStatus) int {
+			addrA := a.TypedSpec().PermanentAddr
+			if len(addrA) == 0 {
+				addrA = a.TypedSpec().HardwareAddr
+			}
+
+			addrB := b.TypedSpec().PermanentAddr
+			if len(addrB) == 0 {
+				addrB = b.TypedSpec().HardwareAddr
+			}
+
+			return bytes.Compare(addrA, addrB)
+		})
+
 		physicalLinkSpecs := make([]*networkpb.LinkStatusSpec, 0, len(physicalLinks))
 
 		for _, link := range physicalLinks {
@@ -106,6 +124,11 @@ func (ctrl *LinkAliasConfigController) Run(ctx context.Context, r controller.Run
 		if cfg != nil {
 			linkAliasConfigs = cfg.Config().NetworkLinkAliasConfigs()
 		}
+
+		// sort the link alias configs by name to ensure deterministic processing order
+		slices.SortFunc(linkAliasConfigs, func(a, b configconfig.NetworkLinkAliasConfig) int {
+			return strings.Compare(a.Name(), b.Name())
+		})
 
 		linkAliases := map[string]string{}
 
@@ -125,11 +148,8 @@ func (ctrl *LinkAliasConfigController) Run(ctx context.Context, r controller.Run
 				}
 			}
 
-			if len(matchedLinks) == 0 {
-				continue
-			}
-
-			if len(matchedLinks) > 1 {
+			// Fixed name: require exactly one match
+			if len(matchedLinks) > 1 && !lac.IsPatternAlias() {
 				logger.Warn("link selector matched multiple links, skipping",
 					zap.String("selector", lac.LinkSelector().String()),
 					zap.String("alias", lac.Name()),
@@ -141,19 +161,33 @@ func (ctrl *LinkAliasConfigController) Run(ctx context.Context, r controller.Run
 				continue
 			}
 
-			matchedLink := matchedLinks[0]
+			matchedLinks = xslices.Filter(matchedLinks, func(matchedLink *network.LinkStatus) bool {
+				_, alreadyAliased := linkAliases[matchedLink.Metadata().ID()]
+				if alreadyAliased {
+					logger.Warn("link already has an alias, skipping",
+						zap.String("link", matchedLink.Metadata().ID()),
+						zap.String("existing_alias", linkAliases[matchedLink.Metadata().ID()]),
+						zap.String("new_alias", lac.Name()),
+					)
+				}
 
-			if _, ok := linkAliases[matchedLink.Metadata().ID()]; ok {
-				logger.Warn("link already has an alias, skipping",
-					zap.String("link", matchedLink.Metadata().ID()),
-					zap.String("existing_alias", linkAliases[matchedLink.Metadata().ID()]),
-					zap.String("new_alias", lac.Name()),
-				)
+				return !alreadyAliased
+			})
 
+			if len(matchedLinks) == 0 {
 				continue
 			}
 
-			linkAliases[matchedLink.Metadata().ID()] = lac.Name()
+			if lac.IsPatternAlias() {
+				// Pattern-based name: create sequential aliases for each matched link in name order
+				for counter, matchedLink := range matchedLinks {
+					linkAliases[matchedLink.Metadata().ID()] = strings.Replace(lac.Name(), "%d", strconv.Itoa(counter), 1)
+				}
+			} else {
+				matchedLink := matchedLinks[0]
+
+				linkAliases[matchedLink.Metadata().ID()] = lac.Name()
+			}
 		}
 
 		for linkID, alias := range linkAliases {

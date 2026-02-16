@@ -103,6 +103,48 @@ func TestLinkAliasValidate(t *testing.T) {
 				return c
 			},
 		},
+		{
+			name: "valid pattern name",
+			cfg: func() *network.LinkAliasConfigV1Alpha1 {
+				c := network.NewLinkAliasConfigV1Alpha1("net%d")
+				require.NoError(t, c.Selector.Match.UnmarshalText([]byte(`link.type == 1`)))
+
+				return c
+			},
+		},
+		{
+			name: "invalid pattern name with padding",
+			cfg: func() *network.LinkAliasConfigV1Alpha1 {
+				c := network.NewLinkAliasConfigV1Alpha1("net%02d")
+				require.NoError(t, c.Selector.Match.UnmarshalText([]byte(`link.type == 1`)))
+
+				return c
+			},
+
+			expectedError: "name \"net%02d\" contains an invalid format verb, use %d suffix",
+		},
+		{
+			name: "invalid pattern name with multiple verbs",
+			cfg: func() *network.LinkAliasConfigV1Alpha1 {
+				c := network.NewLinkAliasConfigV1Alpha1("net%d-port%d")
+				require.NoError(t, c.Selector.Match.UnmarshalText([]byte(`link.type == 1`)))
+
+				return c
+			},
+
+			expectedError: "name \"net%d-port%d\" contains an invalid format verb, use %d suffix",
+		},
+		{
+			name: "invalid format verb",
+			cfg: func() *network.LinkAliasConfigV1Alpha1 {
+				c := network.NewLinkAliasConfigV1Alpha1("net%s")
+				require.NoError(t, c.Selector.Match.UnmarshalText([]byte(`link.type == 1`)))
+
+				return c
+			},
+
+			expectedError: `name "net%s" contains an invalid format verb, use %d suffix`,
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
