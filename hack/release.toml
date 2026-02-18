@@ -20,7 +20,7 @@ preface = """
         description = """\
 Linux: 6.18.9
 containerd: 2.2.1
-etcd: 3.6.7
+etcd: 3.6.8
 CoreDNS: 1.14.1
 Kubernetes: 1.35.0
 Flannel CNI plugin: v1.9.0-flannel1
