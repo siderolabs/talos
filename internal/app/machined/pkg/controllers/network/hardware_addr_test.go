@@ -6,80 +6,21 @@
 package network_test
 
 import (
-	"context"
 	"net"
-	"sync"
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/controller/runtime"
-	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
-	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	"go.uber.org/zap/zaptest"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
 type HardwareAddrSuite struct {
-	suite.Suite
-
-	state state.State
-
-	runtime *runtime.Runtime
-	wg      sync.WaitGroup
-
-	ctx       context.Context //nolint:containedctx
-	ctxCancel context.CancelFunc
-}
-
-func (suite *HardwareAddrSuite) SetupTest() {
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
-
-	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
-
-	var err error
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
-	suite.Require().NoError(err)
-
-	suite.Require().NoError(suite.runtime.RegisterController(&netctrl.HardwareAddrController{}))
-
-	suite.startRuntime()
-}
-
-func (suite *HardwareAddrSuite) startRuntime() {
-	suite.wg.Go(func() {
-		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	})
-}
-
-func (suite *HardwareAddrSuite) assertHWAddr(requiredIDs []string, check func(*network.HardwareAddr, *assert.Assertions)) {
-	assertResources(suite.ctx, suite.T(), suite.state, requiredIDs, check)
-}
-
-func (suite *HardwareAddrSuite) assertNoHWAddr(id string) error {
-	resources, err := suite.state.List(
-		suite.ctx,
-		resource.NewMetadata(network.NamespaceName, network.HardwareAddrType, "", resource.VersionUndefined),
-	)
-	if err != nil {
-		return err
-	}
-
-	for _, res := range resources.Items {
-		if res.Metadata().ID() == id {
-			return retry.ExpectedErrorf("interface %q is still there", id)
-		}
-	}
-
-	return nil
+	ctest.DefaultSuite
 }
 
 func (suite *HardwareAddrSuite) TestFirst() {
@@ -103,45 +44,44 @@ func (suite *HardwareAddrSuite) TestFirst() {
 	bond0.TypedSpec().Kind = "bond"
 	bond0.TypedSpec().HardwareAddr = mustParseMAC("56:a0:a0:87:1c:fb")
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, bond0))
-	suite.Require().NoError(suite.state.Create(suite.ctx, eth1))
+	suite.Create(bond0)
+	suite.Create(eth1)
 
-	suite.assertHWAddr(
-		[]string{network.FirstHardwareAddr}, func(r *network.HardwareAddr, asrt *assert.Assertions) {
+	ctest.AssertResource(
+		suite,
+		network.FirstHardwareAddr,
+		func(r *network.HardwareAddr, asrt *assert.Assertions) {
 			asrt.Equal(eth1.Metadata().ID(), r.TypedSpec().Name)
 			asrt.Equal("6a:2b:bd:b2:fc:e0", net.HardwareAddr(r.TypedSpec().HardwareAddr).String())
 		},
 	)
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, eth0))
+	suite.Create(eth0)
 
-	suite.assertHWAddr(
-		[]string{network.FirstHardwareAddr}, func(r *network.HardwareAddr, asrt *assert.Assertions) {
+	ctest.AssertResource(
+		suite,
+		network.FirstHardwareAddr,
+		func(r *network.HardwareAddr, asrt *assert.Assertions) {
 			asrt.Equal(eth0.Metadata().ID(), r.TypedSpec().Name)
 			asrt.Equal("56:a0:a0:87:1c:fa", net.HardwareAddr(r.TypedSpec().HardwareAddr).String())
 		},
 	)
 
-	suite.Require().NoError(suite.state.Destroy(suite.ctx, eth0.Metadata()))
-	suite.Require().NoError(suite.state.Destroy(suite.ctx, eth1.Metadata()))
+	suite.Destroy(eth0)
+	suite.Destroy(eth1)
 
-	suite.Assert().NoError(
-		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				return suite.assertNoHWAddr(network.FirstHardwareAddr)
-			},
-		),
-	)
-}
-
-func (suite *HardwareAddrSuite) TearDownTest() {
-	suite.T().Log("tear down")
-
-	suite.ctxCancel()
-
-	suite.wg.Wait()
+	ctest.AssertNoResource[*network.HardwareAddr](suite, network.FirstHardwareAddr)
 }
 
 func TestHardwareAddrSuite(t *testing.T) {
-	suite.Run(t, new(HardwareAddrSuite))
+	t.Parallel()
+
+	suite.Run(t, &HardwareAddrSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 5 * time.Second,
+			AfterSetup: func(suite *ctest.DefaultSuite) {
+				suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.HardwareAddrController{}))
+			},
+		},
+	})
 }
