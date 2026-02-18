@@ -994,7 +994,7 @@ talosctl conformance kubernetes [flags]
 
 ```
   -h, --help          help for kubernetes
-      --mode string   conformance test mode: [fast, certified] (default "fast")
+      --mode string   conformance test mode: [fast, certified, network-policy] (default "fast")
 ```
 
 ### Options inherited from parent commands
@@ -2250,11 +2250,12 @@ talosctl image k8s-bundle [flags]
 ### Options
 
 ```
-      --coredns-version semver   CoreDNS semantic version (default v1.13.2)
-      --etcd-version semver      ETCD semantic version (default v3.6.7)
-      --flannel-version semver   Flannel CNI semantic version (default v0.27.4)
-  -h, --help                     help for k8s-bundle
-      --k8s-version semver       Kubernetes semantic version (default v1.35.0)
+      --coredns-version semver                 CoreDNS semantic version (default v1.14.1)
+      --etcd-version semver                    ETCD semantic version (default v3.6.8)
+      --flannel-version semver                 Flannel CNI semantic version (default v0.28.1)
+  -h, --help                                   help for k8s-bundle
+      --k8s-version semver                     Kubernetes semantic version (default v1.35.0)
+      --kube-network-policies-version semver   kube-network-policies semantic version (default v0.9.2)
 ```
 
 ### Options inherited from parent commands

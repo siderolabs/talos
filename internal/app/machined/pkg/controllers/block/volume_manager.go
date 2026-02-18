@@ -18,6 +18,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
+	"github.com/siderolabs/gen/value"
 	"github.com/siderolabs/gen/xerrors"
 	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
@@ -403,7 +404,9 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 				volumeStatus.TypedSpec().PreFailPhase = block.VolumePhase(0)
 			}
 
-			if volumeStatus.TypedSpec().Phase != block.VolumePhaseReady {
+			// if the volume is not ready yet, we can consider the wave not fully provisioned, so the next wave can't start provisioning either
+			// but if the volume doesn't have provisioning instructions, we don't block on it being ready
+			if volumeStatus.TypedSpec().Phase != block.VolumePhaseReady && !value.IsZero(vc.TypedSpec().Provisioning) {
 				fullyProvisionedWave = vc.TypedSpec().Provisioning.Wave - 1
 			}
 

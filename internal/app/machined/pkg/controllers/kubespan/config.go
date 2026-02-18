@@ -52,6 +52,7 @@ func NewConfigController() *ConfigController {
 
 						if c.NetworkKubeSpanConfig().Filters() != nil {
 							res.TypedSpec().EndpointFilters = c.NetworkKubeSpanConfig().Filters().Endpoints()
+							res.TypedSpec().ExcludeAdvertisedNetworks = c.NetworkKubeSpanConfig().Filters().ExcludeAdvertisedNetworks()
 						}
 					}
 

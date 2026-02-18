@@ -6514,6 +6514,7 @@ KubeSpanAffiliateSpec describes additional information specific for the KubeSpan
 | address | [common.NetIP](#common.NetIP) |  |  |
 | additional_addresses | [common.NetIPPrefix](#common.NetIPPrefix) | repeated |  |
 | endpoints | [common.NetIPPort](#common.NetIPPort) | repeated |  |
+| exclude_advertised_networks | [common.NetIPPrefix](#common.NetIPPrefix) | repeated |  |
 
 
 
@@ -7370,6 +7371,8 @@ BootstrapManifestsConfigSpec is configuration for bootstrap manifests.
 | flannel_extra_args | [string](#string) | repeated |  |
 | flannel_kube_service_host | [string](#string) |  |  |
 | flannel_kube_service_port | [string](#string) |  |  |
+| flannel_kube_network_policies_enabled | [bool](#bool) |  |  |
+| flannel_kube_network_policies_image | [string](#string) |  |  |
 
 
 
@@ -8081,6 +8084,7 @@ ConfigSpec describes KubeSpan configuration..
 | endpoint_filters | [string](#string) | repeated |  |
 | harvest_extra_endpoints | [bool](#bool) |  |  |
 | extra_endpoints | [common.NetIPPort](#common.NetIPPort) | repeated |  |
+| exclude_advertised_networks | [common.NetIPPrefix](#common.NetIPPrefix) | repeated |  |
 
 
 

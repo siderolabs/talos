@@ -11,6 +11,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
+	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/state"
 	yaml "go.yaml.in/yaml/v4"
 
@@ -80,6 +81,20 @@ func (m *mcYamlRepr) Spec() any { return &mcYamlSpec{res: m.Resource} }
 type mcYamlSpec struct{ res resource.Resource }
 
 func (m *mcYamlSpec) MarshalYAML() (any, error) {
+	// this is backwards compatibility for versions of Talos which marshaled the MachineConfig spec as a YAML document
+	// instead of putting it as string
+	//
+	// if try to go via yaml.Marshal path, it will cut off all documents after the first one (as there is no way to return
+	// multiple documents from MarshalYAML), so we need to extract the original body from the resource
+	if pb, ok := m.res.(*protobuf.Resource); ok {
+		p, err := pb.Marshal()
+		if err != nil {
+			return nil, fmt.Errorf("marshal protobuf resource: %w", err)
+		}
+
+		return p.GetSpec().GetYamlSpec(), nil
+	}
+
 	out, err := yaml.Marshal(m.res.Spec())
 	if err != nil {
 		return nil, err

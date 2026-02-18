@@ -277,7 +277,7 @@ func TestValidate(t *testing.T) {
 			},
 			requiresInstall: true,
 			expectedWarnings: []string{
-				".machine.install.extensions is deprecated, please see https://www.talos.dev/latest/talos-guides/install/boot-assets/",
+				".machine.install.extensions is deprecated, please see https://docs.siderolabs.com/talos/latest/platform-specific-installations/boot-assets",
 			},
 		},
 		{
@@ -1708,7 +1708,81 @@ func TestValidate(t *testing.T) {
 					},
 				},
 			},
-			expectedError: "2 errors occurred:\n\t* KubeSpan endpoint filer is not valid: \"10\"\n\t* KubeSpan endpoint filer is not valid: \"123::/456\"\n\n",
+			expectedError: "2 errors occurred:\n\t* KubeSpan endpoint filter is not valid: \"10\"\n\t* KubeSpan endpoint filter is not valid: \"123::/456\"\n\n",
+		},
+		{
+			name: "GoodKubeSpanAdvertisedNetworkFilters",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "worker",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{
+							KubeSpanEnabled: pointer.To(true),
+							KubeSpanFilters: &v1alpha1.KubeSpanFilters{
+								KubeSpanFiltersExcludeAdvertisedNetworks: []string{
+									"0.0.0.0/0",
+									"10.0.0.0/8",
+									"172.16.0.0/12",
+									"::/0",
+								},
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+					ClusterID:     "test",
+					ClusterSecret: "test",
+					ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{
+						DiscoveryEnabled: pointer.To(true),
+					},
+				},
+			},
+			expectedError: "",
+		},
+		{
+			name: "BadKubeSpanAdvertisedNetworkFilters",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "worker",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
+					MachineNetwork: &v1alpha1.NetworkConfig{
+						NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{
+							KubeSpanEnabled: pointer.To(true),
+							KubeSpanFilters: &v1alpha1.KubeSpanFilters{
+								KubeSpanFiltersExcludeAdvertisedNetworks: []string{
+									"invalid",
+									"123::/456",
+								},
+							},
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							endpointURL,
+						},
+					},
+					ClusterID:     "test",
+					ClusterSecret: "test",
+					ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{
+						DiscoveryEnabled: pointer.To(true),
+					},
+				},
+			},
+			expectedError: "2 errors occurred:\n\t* KubeSpan exclude advertised networks filter is not valid: \"invalid\"\n\t* KubeSpan exclude advertised networks filter is not valid: \"123::/456\"\n\n",
 		},
 		{
 			name: "KubeSpanSmallMTU",
@@ -2001,6 +2075,24 @@ func TestValidateCNI(t *testing.T) {
 			},
 		},
 		{
+			name: "FlannelKubeNetworkPoliciesDisabled",
+			config: &v1alpha1.CNIConfig{
+				CNIName: constants.FlannelCNI,
+				CNIFlannel: &v1alpha1.FlannelCNIConfig{
+					FlannelKubeNetworkPoliciesEnabled: pointer.To(false),
+				},
+			},
+		},
+		{
+			name: "FlannelKubeNetworkPoliciesEnabled",
+			config: &v1alpha1.CNIConfig{
+				CNIName: constants.FlannelCNI,
+				CNIFlannel: &v1alpha1.FlannelCNIConfig{
+					FlannelKubeNetworkPoliciesEnabled: pointer.To(true),
+				},
+			},
+		},
+		{
 			name: "CustomNoManifests",
 			config: &v1alpha1.CNIConfig{
 				CNIName: constants.CustomCNI,
@@ -2021,6 +2113,31 @@ func TestValidateCNI(t *testing.T) {
 				},
 			},
 			expectedError: "1 error occurred:\n\t* \"flanneldExtraArgs\" field should be empty for \"custom\" CNI\n\n",
+		},
+		{
+			name: "CustomFlannelKubeNetworkPoliciesDisabled",
+			config: &v1alpha1.CNIConfig{
+				CNIName: constants.CustomCNI,
+				CNIUrls: []string{
+					"https://host.test/quick-install.yaml",
+				},
+				CNIFlannel: &v1alpha1.FlannelCNIConfig{
+					FlannelKubeNetworkPoliciesEnabled: pointer.To(false),
+				},
+			},
+		},
+		{
+			name: "CustomFlannelKubeNetworkPoliciesEnabled",
+			config: &v1alpha1.CNIConfig{
+				CNIName: constants.CustomCNI,
+				CNIUrls: []string{
+					"https://host.test/quick-install.yaml",
+				},
+				CNIFlannel: &v1alpha1.FlannelCNIConfig{
+					FlannelKubeNetworkPoliciesEnabled: pointer.To(true),
+				},
+			},
+			expectedError: "1 error occurred:\n\t* \"flannelKubeNetworkPoliciesEnabled\" should not be enabled for \"custom\" CNI\n\n",
 		},
 		{
 			name: "CustomManifests",
@@ -2046,6 +2163,25 @@ func TestValidateCNI(t *testing.T) {
 				},
 			},
 			expectedError: "1 error occurred:\n\t* \"urls\" field should be empty for \"none\" CNI\n\n",
+		},
+		{
+			name: "NoneFlannelKubeNetworkPoliciesDisabled",
+			config: &v1alpha1.CNIConfig{
+				CNIName: constants.NoneCNI,
+				CNIFlannel: &v1alpha1.FlannelCNIConfig{
+					FlannelKubeNetworkPoliciesEnabled: pointer.To(false),
+				},
+			},
+		},
+		{
+			name: "NoneFlannelKubeNetworkPoliciesEnabled",
+			config: &v1alpha1.CNIConfig{
+				CNIName: constants.NoneCNI,
+				CNIFlannel: &v1alpha1.FlannelCNIConfig{
+					FlannelKubeNetworkPoliciesEnabled: pointer.To(true),
+				},
+			},
+			expectedError: "1 error occurred:\n\t* \"flannelKubeNetworkPoliciesEnabled\" should not be enabled for \"none\" CNI\n\n",
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {

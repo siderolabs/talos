@@ -987,10 +987,18 @@ func (KubeSpanFiltersConfig) Doc() *encoder.Doc {
 				Description: "Filter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections.\n\nBy default, all addresses are advertised, and KubeSpan cycles through all endpoints until it finds one that works.\n\nDefault value: no filtering.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Filter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "excludeAdvertisedNetworks",
+				Type:        "[]Prefix",
+				Note:        "",
+				Description: "Filter networks (e.g., host addresses, pod CIDRs if enabled) which will be advertised over KubeSpan.\n\nBy default, all networks are advertised.\nUse this filter to exclude some networks from being advertised.\n\nNote: excluded networks will not be reachable over KubeSpan, so make sure\nthese networks are still reachable via some other route (e.g., direct connection).\n\nDefault value: no filtering.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Filter networks (e.g., host addresses, pod CIDRs if enabled) which will be advertised over KubeSpan." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
 	doc.Fields[0].AddExample("Exclude addresses in 192.168.0.0/16 subnet.", []string{"0.0.0.0/0", "!192.168.0.0/16", "::/0"})
+	doc.Fields[1].AddExample("Exclude private networks from being advertised.", []Prefix{{netip.MustParsePrefix("192.168.1.0/24")}})
 
 	return doc
 }

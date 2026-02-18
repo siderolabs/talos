@@ -9,12 +9,8 @@ rules:
   - ""
   resources:
   - pods
-  verbs:
-  - get
-- apiGroups:
-  - ""
-  resources:
   - nodes
+  - namespaces
   verbs:
   - get
   - list

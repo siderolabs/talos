@@ -86,3 +86,9 @@
 ; Manage keys
 (allow containerd_p self (key (view read write search link setattr create)))
 
+; Containerd uses igzip on amd64 and pigz on arm64 when pulling images
+(allow sys_containerd_t bin_exec_t (file (execute_no_trans execute)))
+(allow sys_containerd_t bin_exec_t (fs_classes (ro)))
+
+; PTYs are allocated for talosctl debug
+(allow sys_containerd_t devpts_t (fs_classes (rw)))

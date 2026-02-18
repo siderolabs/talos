@@ -11,6 +11,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/netip"
 	"net/url"
 	"os"
 	"reflect"
@@ -281,7 +282,16 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 			cidr = strings.TrimPrefix(cidr, "!")
 
 			if _, err := sideronet.ParseSubnetOrAddress(cidr); err != nil {
-				result = multierror.Append(result, fmt.Errorf("KubeSpan endpoint filer is not valid: %q", cidr))
+				result = multierror.Append(result, fmt.Errorf("KubeSpan endpoint filter is not valid: %q", cidr))
+			}
+		}
+
+		if c.MachineConfig.MachineNetwork.NetworkKubeSpan.KubeSpanFilters != nil {
+			for _, cidr := range c.MachineConfig.MachineNetwork.NetworkKubeSpan.KubeSpanFilters.KubeSpanFiltersExcludeAdvertisedNetworks {
+				_, err := netip.ParsePrefix(cidr)
+				if err != nil {
+					result = multierror.Append(result, fmt.Errorf("KubeSpan exclude advertised networks filter is not valid: %q", cidr))
+				}
 			}
 		}
 	}
@@ -303,7 +313,7 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 		}
 
 		if len(extensions) > 0 {
-			warnings = append(warnings, ".machine.install.extensions is deprecated, please see https://www.talos.dev/latest/talos-guides/install/boot-assets/")
+			warnings = append(warnings, ".machine.install.extensions is deprecated, please see https://docs.siderolabs.com/talos/latest/platform-specific-installations/boot-assets")
 		}
 	}
 
@@ -467,6 +477,11 @@ func ValidateCNI(cni config.CNI) ([]string, error) {
 			result = multierror.Append(result, err)
 		}
 
+		if cni.Flannel().KubeNetworkPoliciesEnabled() {
+			err := fmt.Errorf(`"flannelKubeNetworkPoliciesEnabled" should not be enabled for %q CNI`, cni.Name())
+			result = multierror.Append(result, err)
+		}
+
 	case constants.CustomCNI:
 		if len(cni.URLs()) == 0 {
 			warn := fmt.Sprintf(`"urls" field should not be empty for %q CNI`, cni.Name())
@@ -475,6 +490,11 @@ func ValidateCNI(cni config.CNI) ([]string, error) {
 
 		if len(cni.Flannel().ExtraArgs()) != 0 {
 			err := fmt.Errorf(`"flanneldExtraArgs" field should be empty for %q CNI`, cni.Name())
+			result = multierror.Append(result, err)
+		}
+
+		if cni.Flannel().KubeNetworkPoliciesEnabled() {
+			err := fmt.Errorf(`"flannelKubeNetworkPoliciesEnabled" should not be enabled for %q CNI`, cni.Name())
 			result = multierror.Append(result, err)
 		}
 
@@ -984,7 +1004,7 @@ func (c *Config) RuntimeValidate(ctx context.Context, st state.State, mode valid
 		}
 
 		if len(c.MachineConfig.Install().Extensions()) > 0 {
-			warnings = append(warnings, ".machine.install.extensions is deprecated, please see https://www.talos.dev/latest/talos-guides/install/boot-assets/")
+			warnings = append(warnings, ".machine.install.extensions is deprecated, please see https://docs.siderolabs.com/talos/latest/platform-specific-installations/boot-assets")
 		}
 
 		if err := ValidateKubernetesImageTag(c.Machine().Kubelet().Image()); err != nil {

@@ -121,6 +121,10 @@ func (ctrl *PeerSpecController) Run(ctx context.Context, r controller.Runtime, l
 					builder.Add(ip)
 				}
 
+				for _, ipPrefix := range spec.KubeSpan.ExcludeAdvertisedNetworks {
+					builder.RemovePrefix(ipPrefix)
+				}
+
 				builder.Add(spec.KubeSpan.Address)
 
 				var ipSet *netipx.IPSet

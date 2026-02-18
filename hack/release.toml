@@ -18,12 +18,13 @@ preface = """
     [notes.updates]
         title = "Component Updates"
         description = """\
-Linux: 6.18.8
+Linux: 6.18.9
 containerd: 2.2.1
-etcd: 3.6.7
-CoreDNS: 1.13.2
+etcd: 3.6.8
+CoreDNS: 1.14.1
 Kubernetes: 1.35.0
 Flannel CNI plugin: v1.9.0-flannel1
+Flannel: 0.28.1
 LVM2: 2_03_38
 runc: 1.4.0
 systemd: 259
@@ -183,6 +184,35 @@ The CLI commands `talosctl image pull`, `talosctl image list` and `talosctl imag
         description = """\
 Talos Linux now provides a way to run and attach to the privileged debug container with a user-provided container image.
 The debug container might be used for troubleshooting and debugging purposes.
+"""
+
+    [notes.network-policy]
+        title = "Flannel CNI with Network Policy Support"
+        description = """\
+Talos Linux now supports optionally deploying Flannel CNI with [network policy support](https://kubernetes.io/docs/concepts/services-networking/network-policies/) enabled.
+The network policy implementation is [kube-network-policies](https://github.com/kubernetes-sigs/kube-network-policies/).
+
+To enable Flannel CNI with network policy support, use the following machine configuration patch:
+
+```yaml
+cluster:
+  network:
+    cni:
+      name: flannel
+      flannel:
+        kubeNetworkPoliciesEnabled: true
+```
+
+(If the cluster is already running, sync the bootstrap manifests after applying the patch to deploy the new CNI configuration.)
+"""
+
+    [notes.kubespan-filters]
+        title = "KubeSpan Advertised Network Filters"
+        description = """\
+KubeSpan now supports filtering of advertised networks using the `excludeAdvertisedNetworks` field in the `KubeSpanConfig` document.
+This allows users to specify a list of CIDRs to exclude from the advertised networks. Please note that routing must be symmetric for any
+pair of peers, so if one peer excludes a certain network, the other peer must also exclude it. In other words, for any given pair of peers,
+and any pair of their addresses, the traffic should either go through KubeSpan or not, but not one way or the other.
 """
 
 [make_deps]

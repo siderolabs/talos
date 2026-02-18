@@ -35,7 +35,7 @@ func AppendDeletesTo(n *yaml.Node, dest []config.Document, idx int) (_ []config.
 			dest = append(dest, makeSelector(path, n.Content[0], idx, "", ""))
 		case yaml.SequenceNode:
 			dest = append(dest, makeSequenceSelector(path, n.Content[0], elem.node, idx))
-		case yaml.ScalarNode, yaml.AliasNode:
+		case yaml.ScalarNode, yaml.AliasNode, yaml.StreamNode:
 		}
 
 		return true
@@ -177,7 +177,7 @@ func processNode(
 				}
 			}
 		}
-	case yaml.ScalarNode, yaml.AliasNode:
+	case yaml.ScalarNode, yaml.AliasNode, yaml.StreamNode:
 	}
 
 	return true, false

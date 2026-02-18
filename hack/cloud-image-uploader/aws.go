@@ -241,7 +241,7 @@ func (au *AWSUploader) registerAMI(ctx context.Context, region string, svc *ec2.
 
 	log.Printf("aws: applied policy to bucket %q", bucketName)
 
-	uploader := manager.NewUploader(s3Svc)
+	uploader := manager.NewUploader(s3Svc) //nolint:staticcheck
 
 	var g errgroup.Group
 
@@ -278,7 +278,7 @@ func (au *AWSUploader) tagSnapshot(ctx context.Context, svc *ec2.Client, snapsho
 }
 
 //nolint:gocyclo
-func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *ec2.Client, arch, bucketName string, uploader *manager.Uploader) error {
+func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *ec2.Client, arch, bucketName string, uploader *manager.Uploader) error { //nolint:staticcheck
 	err := retry.Constant(30*time.Minute, retry.WithUnits(time.Second), retry.WithErrorLogging(true)).RetryWithContext(ctx, func(ctx context.Context) error {
 		source, err := os.Open(au.Options.AWSImage(arch))
 		if err != nil {
@@ -294,7 +294,7 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 
 		defer image.Close()
 
-		_, err = uploader.Upload(ctx, &s3.PutObjectInput{
+		_, err = uploader.Upload(ctx, &s3.PutObjectInput{ //nolint:staticcheck
 			Bucket: pointer.To(bucketName),
 			Key:    pointer.To(fmt.Sprintf("disk-%s.raw", arch)),
 			Body:   image,

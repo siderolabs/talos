@@ -355,6 +355,12 @@ func pbAffiliate(affiliate *cluster.AffiliateSpec) *pb.Affiliate {
 					Ip:   takeResult(address.Addr().MarshalBinary()),
 				}
 			}),
+			ExcludeAdvertisedAddresses: xslices.Map(affiliate.KubeSpan.ExcludeAdvertisedNetworks, func(address netip.Prefix) *pb.IPPrefix {
+				return &pb.IPPrefix{
+					Bits: uint32(address.Bits()),
+					Ip:   takeResult(address.Addr().MarshalBinary()),
+				}
+			}),
 		}
 	}
 
@@ -496,6 +502,16 @@ func specAffiliate(affiliate *pb.Affiliate, endpoints []*pb.Endpoint) cluster.Af
 
 			if err := ip.UnmarshalBinary(endpoints[i].Ip); err == nil {
 				result.KubeSpan.Endpoints = append(result.KubeSpan.Endpoints, netip.AddrPortFrom(ip, uint16(endpoints[i].Port)))
+			}
+		}
+
+		result.KubeSpan.ExcludeAdvertisedNetworks = make([]netip.Prefix, 0, len(affiliate.Kubespan.ExcludeAdvertisedAddresses))
+
+		for i := range affiliate.Kubespan.ExcludeAdvertisedAddresses {
+			var ip netip.Addr
+
+			if err := ip.UnmarshalBinary(affiliate.Kubespan.ExcludeAdvertisedAddresses[i].Ip); err == nil {
+				result.KubeSpan.ExcludeAdvertisedNetworks = append(result.KubeSpan.ExcludeAdvertisedNetworks, netip.PrefixFrom(ip, int(affiliate.Kubespan.ExcludeAdvertisedAddresses[i].Bits)))
 			}
 		}
 	}

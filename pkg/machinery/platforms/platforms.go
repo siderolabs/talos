@@ -132,7 +132,7 @@ func MetalPlatform() Platform {
 		Description: "Runs on bare-metal servers",
 
 		Architectures:   []Arch{ArchAmd64, ArchArm64},
-		Documentation:   "/talos-guides/install/bare-metal-platforms/",
+		Documentation:   "/platform-specific-installations/bare-metal-platforms/bootloader",
 		DiskImageSuffix: "raw.zst",
 		BootMethods: []BootMethod{
 			BootMethodISO,
@@ -155,7 +155,7 @@ func CloudPlatforms() []Platform {
 			Description: "Runs on AWS VMs booted from an AMI",
 
 			Architectures:   []Arch{ArchAmd64, ArchArm64},
-			Documentation:   "/talos-guides/install/cloud-platforms/aws/",
+			Documentation:   "/platform-specific-installations/cloud-platforms/aws",
 			DiskImageSuffix: "raw.xz",
 			BootMethods: []BootMethod{
 				BootMethodDiskImage,
@@ -168,7 +168,7 @@ func CloudPlatforms() []Platform {
 			Description: "Runs on Google Cloud VMs booted from a disk image",
 
 			Architectures:   []Arch{ArchAmd64, ArchArm64},
-			Documentation:   "/talos-guides/install/cloud-platforms/gcp/",
+			Documentation:   "/platform-specific-installations/cloud-platforms/gcp",
 			DiskImageSuffix: "raw.tar.gz",
 			BootMethods: []BootMethod{
 				BootMethodDiskImage,
@@ -181,7 +181,7 @@ func CloudPlatforms() []Platform {
 			Description: "Runs on Equinix Metal bare-metal servers",
 
 			Architectures: []Arch{ArchAmd64, ArchArm64},
-			Documentation: "/talos-guides/install/bare-metal-platforms/equinix-metal/",
+			Documentation: "/platform-specific-installations/bare-metal-platforms/equinix-metal",
 			BootMethods: []BootMethod{
 				BootMethodPXE,
 			},
@@ -194,7 +194,7 @@ func CloudPlatforms() []Platform {
 			Description: "Runs on Microsoft Azure Linux Virtual Machines",
 
 			Architectures:   []Arch{ArchAmd64, ArchArm64},
-			Documentation:   "/talos-guides/install/cloud-platforms/azure/",
+			Documentation:   "/platform-specific-installations/cloud-platforms/azure",
 			DiskImageSuffix: "vhd.xz",
 			BootMethods: []BootMethod{
 				BootMethodDiskImage,
@@ -207,7 +207,7 @@ func CloudPlatforms() []Platform {
 			Description: "Runs on Digital Ocean droplets",
 
 			Architectures:   []Arch{ArchAmd64},
-			Documentation:   "/talos-guides/install/cloud-platforms/digitalocean/",
+			Documentation:   "/platform-specific-installations/cloud-platforms/digitalocean",
 			DiskImageSuffix: "raw.gz",
 			BootMethods: []BootMethod{
 				BootMethodDiskImage,
@@ -220,7 +220,7 @@ func CloudPlatforms() []Platform {
 			Description: "Runs on various hypervisors supporting 'nocloud' metadata (Proxmox, Oxide Computer, etc.)",
 
 			Architectures:   []Arch{ArchAmd64, ArchArm64},
-			Documentation:   "/talos-guides/install/cloud-platforms/nocloud/",
+			Documentation:   "/platform-specific-installations/cloud-platforms/nocloud",
 			DiskImageSuffix: "raw.xz",
 			BootMethods: []BootMethod{
 				BootMethodDiskImage,
@@ -236,7 +236,7 @@ func CloudPlatforms() []Platform {
 			Description: "Runs on OpenStack virtual machines",
 
 			Architectures:   []Arch{ArchAmd64, ArchArm64},
-			Documentation:   "/talos-guides/install/cloud-platforms/openstack/",
+			Documentation:   "/platform-specific-installations/cloud-platforms/openstack",
 			DiskImageSuffix: "raw.xz",
 			BootMethods: []BootMethod{
 				BootMethodDiskImage,
@@ -251,7 +251,7 @@ func CloudPlatforms() []Platform {
 			Description: "Runs on VMWare ESXi virtual machines",
 
 			Architectures:   []Arch{ArchAmd64, ArchArm64},
-			Documentation:   "/talos-guides/install/virtualized-platforms/vmware/",
+			Documentation:   "/platform-specific-installations/virtualized-platforms/vmware",
 			DiskImageSuffix: "ova",
 			BootMethods: []BootMethod{
 				BootMethodDiskImage,
@@ -267,7 +267,7 @@ func CloudPlatforms() []Platform {
 
 			Architectures:   []Arch{ArchAmd64},
 			MinVersion:      semver.MustParse("1.7.0"),
-			Documentation:   "/talos-guides/install/cloud-platforms/akamai/",
+			Documentation:   "/platform-specific-installations/cloud-platforms/akamai",
 			DiskImageSuffix: "raw.gz",
 			BootMethods: []BootMethod{
 				BootMethodDiskImage,
@@ -280,7 +280,7 @@ func CloudPlatforms() []Platform {
 			Description: "Runs on Apache CloudStack virtual machines",
 
 			Architectures:   []Arch{ArchAmd64, ArchArm64},
-			Documentation:   "/talos-guides/install/cloud-platforms/cloudstack/",
+			Documentation:   "/platform-specific-installations/cloud-platforms/cloudstack",
 			DiskImageSuffix: "raw.gz",
 			BootMethods: []BootMethod{
 				BootMethodDiskImage,
@@ -295,7 +295,7 @@ func CloudPlatforms() []Platform {
 			Description: "Runs on Hetzner virtual machines",
 
 			Architectures:   []Arch{ArchAmd64},
-			Documentation:   "/talos-guides/install/cloud-platforms/hetzner/",
+			Documentation:   "/platform-specific-installations/cloud-platforms/hetzner",
 			DiskImageSuffix: "raw.xz",
 			BootMethods: []BootMethod{
 				BootMethodDiskImage,
@@ -308,7 +308,7 @@ func CloudPlatforms() []Platform {
 			Description: "Runs on Oracle Cloud virtual machines",
 
 			Architectures:   []Arch{ArchAmd64, ArchArm64},
-			Documentation:   "/talos-guides/install/cloud-platforms/oracle/",
+			Documentation:   "/platform-specific-installations/cloud-platforms/oracle",
 			DiskImageSuffix: "qcow2",
 			BootMethods: []BootMethod{
 				BootMethodDiskImage,
@@ -321,7 +321,7 @@ func CloudPlatforms() []Platform {
 			Description: "Runs on UpCloud virtual machines",
 
 			Architectures:   []Arch{ArchAmd64},
-			Documentation:   "/talos-guides/install/cloud-platforms/upcloud/",
+			Documentation:   "/platform-specific-installations/cloud-platforms/upcloud",
 			DiskImageSuffix: "raw.xz",
 			BootMethods: []BootMethod{
 				BootMethodDiskImage,
@@ -334,7 +334,7 @@ func CloudPlatforms() []Platform {
 			Description: "Runs on Vultr Cloud Compute virtual machines",
 
 			Architectures: []Arch{ArchAmd64},
-			Documentation: "/talos-guides/install/cloud-platforms/vultr/",
+			Documentation: "/platform-specific-installations/cloud-platforms/vultr",
 			BootMethods: []BootMethod{
 				BootMethodISO,
 				BootMethodPXE,
@@ -348,7 +348,7 @@ func CloudPlatforms() []Platform {
 			Description: "Runs on Exoscale virtual machines",
 
 			Architectures:   []Arch{ArchAmd64, ArchArm64},
-			Documentation:   "/talos-guides/install/cloud-platforms/exoscale/",
+			Documentation:   "/platform-specific-installations/cloud-platforms/exoscale",
 			DiskImageSuffix: "qcow2",
 			BootMethods: []BootMethod{
 				BootMethodDiskImage,
@@ -363,7 +363,7 @@ func CloudPlatforms() []Platform {
 
 			Architectures:   []Arch{ArchAmd64, ArchArm64},
 			DiskImageSuffix: "raw.zst",
-			Documentation:   "/talos-guides/install/virtualized-platforms/opennebula/",
+			Documentation:   "/platform-specific-installations/virtualized-platforms/opennebula",
 			BootMethods: []BootMethod{
 				BootMethodDiskImage,
 				BootMethodISO,
@@ -378,7 +378,7 @@ func CloudPlatforms() []Platform {
 
 			Architectures:   []Arch{ArchAmd64, ArchArm64},
 			DiskImageSuffix: "raw.zst",
-			Documentation:   "/talos-guides/install/cloud-platforms/scaleway/",
+			Documentation:   "/platform-specific-installations/cloud-platforms/scaleway",
 			BootMethods: []BootMethod{
 				BootMethodDiskImage,
 				BootMethodISO,

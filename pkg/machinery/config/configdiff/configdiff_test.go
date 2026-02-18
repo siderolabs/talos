@@ -75,7 +75,7 @@ func TestDiffString(t *testing.T) {
 			oldCfg := must.Value(container.New(test.oldCfg...))(t)
 			newCfg := must.Value(container.New(test.newCfg...))(t)
 
-			got, err := configdiff.DiffToString(oldCfg, newCfg)
+			got, err := configdiff.DiffConfigs(oldCfg, newCfg)
 			require.NoError(t, err)
 
 			require.Equal(t, test.want, got)

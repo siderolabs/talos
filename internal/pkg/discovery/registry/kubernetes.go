@@ -61,13 +61,14 @@ func AnnotationsFromAffiliate(affiliate *cluster.Affiliate) map[string]string {
 	}
 
 	return map[string]string{
-		constants.ClusterNodeIDAnnotation:            affiliate.Metadata().ID(),
-		constants.NetworkSelfIPsAnnotation:           ipsToString(affiliate.TypedSpec().Addresses),
-		constants.NetworkAPIServerPortAnnotation:     apiServerPort,
-		constants.KubeSpanIPAnnotation:               kubeSpanAddress,
-		constants.KubeSpanPublicKeyAnnotation:        affiliate.TypedSpec().KubeSpan.PublicKey,
-		constants.KubeSpanAssignedPrefixesAnnotation: ipPrefixesToString(affiliate.TypedSpec().KubeSpan.AdditionalAddresses),
-		constants.KubeSpanKnownEndpointsAnnotation:   ipPortsToString(affiliate.TypedSpec().KubeSpan.Endpoints),
+		constants.ClusterNodeIDAnnotation:                     affiliate.Metadata().ID(),
+		constants.NetworkSelfIPsAnnotation:                    ipsToString(affiliate.TypedSpec().Addresses),
+		constants.NetworkAPIServerPortAnnotation:              apiServerPort,
+		constants.KubeSpanIPAnnotation:                        kubeSpanAddress,
+		constants.KubeSpanPublicKeyAnnotation:                 affiliate.TypedSpec().KubeSpan.PublicKey,
+		constants.KubeSpanAssignedPrefixesAnnotation:          ipPrefixesToString(affiliate.TypedSpec().KubeSpan.AdditionalAddresses),
+		constants.KubeSpanKnownEndpointsAnnotation:            ipPortsToString(affiliate.TypedSpec().KubeSpan.Endpoints),
+		constants.KubeSpanExcludeAdvertisedNetworksAnnotation: ipPrefixesToString(affiliate.TypedSpec().KubeSpan.ExcludeAdvertisedNetworks),
 	}
 }
 
@@ -136,6 +137,10 @@ func AffiliateFromNode(node *v1.Node) *cluster.AffiliateSpec {
 				APIServerPort: port,
 			}
 		}
+	}
+
+	if advertisedFilters, ok := node.Annotations[constants.KubeSpanExcludeAdvertisedNetworksAnnotation]; ok {
+		affiliate.KubeSpan.ExcludeAdvertisedNetworks = parseIPPrefixes(advertisedFilters)
 	}
 
 	return affiliate

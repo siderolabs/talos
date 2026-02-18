@@ -366,6 +366,10 @@ case "${TEST_MODE:-default}" in
         run_kubernetes_integration_test
     fi
 
+    if [ "${TEST_MODE:-default}" = "network-policy" ]; then
+        run_kubernetes_conformance_test network-policy
+    fi
+
     if [ "${WITH_TEST:-none}" != "none" ]; then
       "${WITH_TEST}"
     fi

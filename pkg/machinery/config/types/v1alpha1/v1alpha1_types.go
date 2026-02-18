@@ -1546,6 +1546,11 @@ type FlannelCNIConfig struct {
 	//     - value: >
 	//         []string{"--iface-can-reach=192.168.1.1"}
 	FlanneldExtraArgs []string `yaml:"extraArgs,omitempty"`
+	//   description: |
+	//     Deploys kube-network-policies along with Flannel.
+	//
+	//     This enables Kubernetes Network Policies support in the cluster.
+	FlannelKubeNetworkPoliciesEnabled *bool `yaml:"kubeNetworkPoliciesEnabled,omitempty"`
 }
 
 var _ config.ExternalCloudProvider = (*ExternalCloudProviderConfig)(nil)
@@ -2544,6 +2549,20 @@ type KubeSpanFilters struct {
 	//   - name: Exclude addresses in 192.168.0.0/16 subnet.
 	//     value: '[]string{"0.0.0.0/0", "!192.168.0.0/16", "::/0"}'
 	KubeSpanFiltersEndpoints []string `yaml:"endpoints,omitempty"`
+	// description: |
+	//   Filter networks (e.g., host addresses, pod CIDRs if enabled) which will be advertised over KubeSpan.
+	//
+	//   By default, all networks are advertised.
+	//   Use this filter to exclude some networks from being advertised.
+	//
+	//   Note: excluded networks will not be reachable over KubeSpan, so make sure
+	//   these networks are still reachable via some other route (e.g., direct connection).
+	//
+	//   Default value: no filtering.
+	// examples:
+	//   - name: Exclude private networks from being advertised.
+	//     value: '[]string{"172.16.0.0/12"}'
+	KubeSpanFiltersExcludeAdvertisedNetworks []string `yaml:"excludeAdvertisedNetworks,omitempty"`
 }
 
 // NetworkDeviceSelector struct describes network device selector.

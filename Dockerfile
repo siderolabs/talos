@@ -1,4 +1,4 @@
-# syntax = docker/dockerfile-upstream:1.20.0-labs
+# syntax = docker/dockerfile-upstream:1.21.0-labs
 
 # Meta args applied to stage base names.
 
@@ -1084,6 +1084,7 @@ COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libinih / /
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-liblzma / /
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-liburcu / /
+COPY --link --from=pkg-mtools / /
 COPY --link --from=pkg-xfsprogs / /
 # Only copy the installer binary and none of the tools used for building it.
 COPY --link --from=installer-image-gen /rootfs /
@@ -1116,7 +1117,6 @@ COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libburn / /
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libisoburn / /
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-libisofs / /
-COPY --link --from=pkg-mtools / /
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --exclude=usr/lib/cmake --from=pkg-openssl / /
 COPY --link --from=pkg-open-vmdk / /
 COPY --link --exclude=**/*.a --exclude=**/*.la  --exclude=usr/include --exclude=usr/lib/pkgconfig --from=pkg-pcre2 / /

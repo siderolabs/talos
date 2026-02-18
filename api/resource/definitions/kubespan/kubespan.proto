@@ -20,6 +20,7 @@ message ConfigSpec {
   repeated string endpoint_filters = 7;
   bool harvest_extra_endpoints = 8;
   repeated common.NetIPPort extra_endpoints = 9;
+  repeated common.NetIPPrefix exclude_advertised_networks = 10;
 }
 
 // EndpointSpec describes Endpoint state.

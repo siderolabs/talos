@@ -76,6 +76,7 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 	ksConfig.TypedSpec().EndpointFilters = []string{"0.0.0.0/0", "!192.168.0.0/16", "2001::/16"}
 	ksConfig.TypedSpec().AdvertiseKubernetesNetworks = true
 	ksConfig.TypedSpec().ExtraEndpoints = []netip.AddrPort{netip.MustParseAddrPort("10.5.0.1:51820"), netip.MustParseAddrPort("1.2.3.4:5678")}
+	ksConfig.TypedSpec().ExcludeAdvertisedNetworks = []netip.Prefix{netip.MustParsePrefix("2001:123:4567::/64")}
 	suite.Require().NoError(suite.state.Create(suite.ctx, ksConfig))
 
 	// add KS address to the list of node addresses, it should be ignored in the endpoints
@@ -115,6 +116,7 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 
 		asrt.NotZero(spec.KubeSpan.PublicKey)
 		asrt.NotZero(spec.KubeSpan.AdditionalAddresses)
+		asrt.Len(spec.KubeSpan.ExcludeAdvertisedNetworks, 1)
 
 		asrt.Equal(ksIdentity.TypedSpec().Address.Addr(), spec.KubeSpan.Address)
 		asrt.Equal(ksIdentity.TypedSpec().PublicKey, spec.KubeSpan.PublicKey)

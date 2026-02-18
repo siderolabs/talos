@@ -34,6 +34,9 @@ func (suite *ConfigSuite) TestReconcileConfig() {
 				MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
 					NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{ //nolint:staticcheck // legacy config
 						KubeSpanEnabled: pointer.To(true),
+						KubeSpanFilters: &v1alpha1.KubeSpanFilters{
+							KubeSpanFiltersExcludeAdvertisedNetworks: []string{"10.0.0.0/8"},
+						},
 					},
 				},
 			},
@@ -62,6 +65,7 @@ func (suite *ConfigSuite) TestReconcileConfig() {
 		asrt.False(spec.AdvertiseKubernetesNetworks)
 		asrt.False(spec.HarvestExtraEndpoints)
 		asrt.Equal("[\"192.168.33.11:1001\"]", fmt.Sprintf("%q", spec.ExtraEndpoints))
+		asrt.Equal([]netip.Prefix{netip.MustParsePrefix("10.0.0.0/8")}, spec.ExcludeAdvertisedNetworks)
 	})
 }
 
@@ -87,7 +91,8 @@ func (suite *ConfigSuite) TestReconcileMultiDoc() {
 	kubeSpanCfg.ConfigEnabled = pointer.To(true)
 	kubeSpanCfg.ConfigMTU = pointer.To(uint32(1380))
 	kubeSpanCfg.ConfigFilters = &network.KubeSpanFiltersConfig{
-		ConfigEndpoints: []string{"0.0.0.0/0", "::/0"},
+		ConfigEndpoints:                 []string{"0.0.0.0/0", "::/0"},
+		ConfigExcludeAdvertisedNetworks: []network.Prefix{{Prefix: netip.MustParsePrefix("10.0.0.0/8")}},
 	}
 
 	ctr, err := container.New(
@@ -114,6 +119,7 @@ func (suite *ConfigSuite) TestReconcileMultiDoc() {
 			asrt.Equal("test-cluster-secret-multi-doc", spec.SharedSecret)
 			asrt.Equal(uint32(1380), spec.MTU)
 			asrt.Equal([]string{"0.0.0.0/0", "::/0"}, spec.EndpointFilters)
+			asrt.Equal([]netip.Prefix{netip.MustParsePrefix("10.0.0.0/8")}, spec.ExcludeAdvertisedNetworks)
 		},
 	)
 }

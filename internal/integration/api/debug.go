@@ -53,89 +53,91 @@ func (suite *DebugSuite) TestRunAlpine() {
 
 	image := "docker.io/library/alpine:3.23"
 
-	rcv, err := suite.Client.ImageClient.Pull(ctx, &machine.ImageServicePullRequest{
-		Containerd: &common.ContainerdInstance{
-			Driver:    common.ContainerDriver_CRI,
-			Namespace: common.ContainerdNamespace_NS_SYSTEM,
-		},
-		ImageRef: image,
-	})
-	suite.Require().NoError(err)
+	for _, driver := range []common.ContainerDriver{common.ContainerDriver_CRI, common.ContainerDriver_CONTAINERD} {
+		rcv, err := suite.Client.ImageClient.Pull(ctx, &machine.ImageServicePullRequest{
+			Containerd: &common.ContainerdInstance{
+				Driver:    driver,
+				Namespace: common.ContainerdNamespace_NS_SYSTEM,
+			},
+			ImageRef: image,
+		})
+		suite.Require().NoError(err)
 
-	var pulledImage string
+		var pulledImage string
 
-	for {
-		msg, err := rcv.Recv()
-		if err != nil {
-			if errors.Is(err, io.EOF) {
-				break
+		for {
+			msg, err := rcv.Recv()
+			if err != nil {
+				if errors.Is(err, io.EOF) {
+					break
+				}
+
+				suite.Require().NoError(err)
 			}
 
-			suite.Require().NoError(err)
+			// ignore progress messages, but the last message should contain the image name
+			pulledImage = msg.GetName()
 		}
 
-		// ignore progress messages, but the last message should contain the image name
-		pulledImage = msg.GetName()
-	}
+		cli, err := suite.Client.DebugClient.ContainerRun(ctx)
+		suite.Require().NoError(err)
 
-	cli, err := suite.Client.DebugClient.ContainerRun(ctx)
-	suite.Require().NoError(err)
-
-	suite.Require().NoError(cli.Send(&machine.DebugContainerRunRequest{
-		Request: &machine.DebugContainerRunRequest_Spec{
-			Spec: &machine.DebugContainerRunRequestSpec{
-				Containerd: &common.ContainerdInstance{
-					Driver:    common.ContainerDriver_CRI,
-					Namespace: common.ContainerdNamespace_NS_SYSTEM,
+		suite.Require().NoError(cli.Send(&machine.DebugContainerRunRequest{
+			Request: &machine.DebugContainerRunRequest_Spec{
+				Spec: &machine.DebugContainerRunRequestSpec{
+					Containerd: &common.ContainerdInstance{
+						Driver:    driver,
+						Namespace: common.ContainerdNamespace_NS_SYSTEM,
+					},
+					ImageName: pulledImage,
+					Profile:   machine.DebugContainerRunRequestSpec_PROFILE_PRIVILEGED,
+					Tty:       true,
 				},
-				ImageName: pulledImage,
-				Profile:   machine.DebugContainerRunRequestSpec_PROFILE_PRIVILEGED,
-				Tty:       true,
 			},
-		},
-	}))
+		}))
 
-	readUntil := func(needle string) {
-		var out strings.Builder
+		readUntil := func(needle string) {
+			var out strings.Builder
+
+			for {
+				msg, err := cli.Recv()
+				suite.Require().NoError(err)
+
+				if msg.GetStdoutData() != nil {
+					out.Write(msg.GetStdoutData())
+				}
+
+				if strings.Contains(out.String(), needle) {
+					return
+				}
+			}
+		}
+
+		readUntil("/ # ")
+
+		suite.Require().NoError(cli.Send(&machine.DebugContainerRunRequest{
+			Request: &machine.DebugContainerRunRequest_StdinData{
+				StdinData: []byte("uname\n"),
+			},
+		}))
+
+		readUntil("Linux")
+
+		suite.Require().NoError(cli.CloseSend())
 
 		for {
 			msg, err := cli.Recv()
 			suite.Require().NoError(err)
 
-			if msg.GetStdoutData() != nil {
-				out.Write(msg.GetStdoutData())
+			if exitCode, ok := msg.GetResp().(*machine.DebugContainerRunResponse_ExitCode); ok {
+				// SIGHUP is 128 + 1
+				suite.Equal(int32(129), exitCode.ExitCode)
+
+				break
 			}
 
-			if strings.Contains(out.String(), needle) {
-				return
-			}
+			suite.T().Logf("got extra stdout: %q", string(msg.GetStdoutData()))
 		}
-	}
-
-	readUntil("/ # ")
-
-	suite.Require().NoError(cli.Send(&machine.DebugContainerRunRequest{
-		Request: &machine.DebugContainerRunRequest_StdinData{
-			StdinData: []byte("uname\n"),
-		},
-	}))
-
-	readUntil("Linux")
-
-	suite.Require().NoError(cli.CloseSend())
-
-	for {
-		msg, err := cli.Recv()
-		suite.Require().NoError(err)
-
-		if exitCode, ok := msg.GetResp().(*machine.DebugContainerRunResponse_ExitCode); ok {
-			// SIGHUP is 128 + 1
-			suite.Equal(int32(129), exitCode.ExitCode)
-
-			break
-		}
-
-		suite.T().Logf("got extra stdout: %q", string(msg.GetStdoutData()))
 	}
 }
 

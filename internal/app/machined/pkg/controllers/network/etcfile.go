@@ -193,17 +193,15 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 			}
 		}
 
-		if hostnameStatus != nil && nodeAddressStatus != nil {
-			if err = safe.WriterModify(ctx, r, files.NewEtcFileSpec(files.NamespaceName, "hosts"),
-				func(r *files.EtcFileSpec) error {
-					r.TypedSpec().Contents, err = ctrl.renderHosts(hostnameStatus.TypedSpec(), nodeAddressStatus.TypedSpec(), cfgProvider)
-					r.TypedSpec().Mode = 0o644
-					r.TypedSpec().SelinuxLabel = constants.EtcSelinuxLabel
+		if err = safe.WriterModify(ctx, r, files.NewEtcFileSpec(files.NamespaceName, "hosts"),
+			func(r *files.EtcFileSpec) error {
+				r.TypedSpec().Contents, err = ctrl.renderHosts(hostnameStatus, nodeAddressStatus, cfgProvider)
+				r.TypedSpec().Mode = 0o644
+				r.TypedSpec().SelinuxLabel = constants.EtcSelinuxLabel
 
-					return err
-				}); err != nil {
-				return fmt.Errorf("error modifying hosts: %w", err)
-			}
+				return err
+			}); err != nil {
+			return fmt.Errorf("error modifying hosts: %w", err)
 		}
 
 		r.ResetRestartBackoff()
@@ -240,7 +238,7 @@ func renderResolvConf(nameservers iter.Seq2[int, netip.Addr], searchDomains []st
 	return buf.Bytes()
 }
 
-func (ctrl *EtcFileController) renderHosts(hostnameStatus *network.HostnameStatusSpec, nodeAddressStatus *network.NodeAddressSpec, cfgProvider talosconfig.Config) ([]byte, error) {
+func (ctrl *EtcFileController) renderHosts(hostnameStatus *network.HostnameStatus, nodeAddressStatus *network.NodeAddress, cfgProvider talosconfig.Config) ([]byte, error) {
 	var buf bytes.Buffer
 
 	tabW := tabwriter.NewWriter(&buf, 0, 0, 1, ' ', 0)
@@ -249,13 +247,15 @@ func (ctrl *EtcFileController) renderHosts(hostnameStatus *network.HostnameStatu
 
 	write("127.0.0.1\tlocalhost\n")
 
-	write(fmt.Sprintf("%s\t%s", nodeAddressStatus.Addresses[0].Addr(), hostnameStatus.FQDN()))
+	if nodeAddressStatus != nil && hostnameStatus != nil {
+		write(fmt.Sprintf("%s\t%s", nodeAddressStatus.TypedSpec().Addresses[0].Addr(), hostnameStatus.TypedSpec().FQDN()))
 
-	if hostnameStatus.Hostname != hostnameStatus.FQDN() {
-		write(" " + hostnameStatus.Hostname)
+		if hostnameStatus.TypedSpec().Hostname != hostnameStatus.TypedSpec().FQDN() {
+			write(" " + hostnameStatus.TypedSpec().Hostname)
+		}
+
+		write("\n")
 	}
-
-	write("\n")
 
 	write("::1\tlocalhost ip6-localhost ip6-loopback\n")
 	write("ff02::1\tip6-allnodes\n")

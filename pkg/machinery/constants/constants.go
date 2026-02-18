@@ -13,7 +13,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "6.18.8-talos"
+	DefaultKernelVersion = "6.18.9-talos"
 
 	// KernelParamConfig is the kernel parameter name for specifying the URL.
 	// to the config.
@@ -391,7 +391,7 @@ const (
 
 	// DefaultCoreDNSVersion is the default version for the CoreDNS.
 	// renovate: datasource=docker depName=registry.k8s.io/coredns/coredns
-	DefaultCoreDNSVersion = "v1.13.2"
+	DefaultCoreDNSVersion = "v1.14.1"
 
 	// LabelNodeRoleControlPlane is the node label required by a control plane node.
 	LabelNodeRoleControlPlane = "node-role.kubernetes.io/control-plane"
@@ -425,7 +425,7 @@ const (
 
 	// DefaultEtcdVersion is the default target version of etcd.
 	// renovate: datasource=docker depName=registry.k8s.io/etcd
-	DefaultEtcdVersion = "v3.6.7"
+	DefaultEtcdVersion = "v3.6.8"
 
 	// EtcdRootTalosKey is the root etcd key for Talos-specific storage.
 	EtcdRootTalosKey = "talos:v1"
@@ -1024,6 +1024,9 @@ const (
 	// KubeSpanKnownEndpointsAnnotation is the node annotation used to list the (comma-separated) known-good Wireguard endpoints for the node, as seen by other peers.
 	KubeSpanKnownEndpointsAnnotation = "networking.talos.dev/kubespan-endpoints"
 
+	// KubeSpanExcludeAdvertisedNetworksAnnotation is the node annotation used to list the (comma-separated) set of subnets to be excluded from advertisement.
+	KubeSpanExcludeAdvertisedNetworksAnnotation = "networking.talos.dev/kubespan-exclude-advertised-networks"
+
 	// KubeSpanLinkName is the link name for the KubeSpan Wireguard interface.
 	KubeSpanLinkName = "kubespan"
 
@@ -1164,7 +1167,12 @@ const (
 	//   crane cp docker.io/flannel/flannel:vX.Y.Z ghcr.io/siderolabs/flannel:vX.Y.Z
 	//
 	// renovate: datasource=github-releases depName=flannel-io/flannel
-	FlannelVersion = "v0.27.4"
+	FlannelVersion = "v0.28.1"
+
+	// KubeNetworkPoliciesVersion is the version of kube-network-policies when network policies are enabled for flannel.
+	//
+	// renovate: datasource=docker depName=registry.k8s.io/networking/kube-network-policies
+	KubeNetworkPoliciesVersion = "v0.9.2"
 
 	// PlatformMetal is the name of the metal platform.
 	PlatformMetal = "metal"

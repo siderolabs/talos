@@ -92,10 +92,11 @@ func (c *Client) getConn(opts ...grpc.DialOption) (*grpcConnectionWrapper, error
 		}
 
 		authInterceptor := interceptor.New(interceptor.Options{
-			UserKeyProvider: getKeyProvider(c.options.sideroV1KeysDir),
-			ContextName:     contextName,
-			Identity:        sideroV1.Identity,
-			ClientName:      "Talos",
+			UserKeyProvider:      getKeyProvider(c.options.sideroV1KeysDir),
+			ContextName:          contextName,
+			Identity:             sideroV1.Identity,
+			ClientName:           "Talos",
+			ServiceAccountBase64: c.options.serviceAccountBase64,
 		})
 
 		dialOpts = append(dialOpts,

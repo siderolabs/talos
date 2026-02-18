@@ -9,7 +9,7 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1
 	github.com/siderolabs/gen v0.8.6
 	github.com/wk8/go-ordered-map/v2 v2.1.8
-	go.yaml.in/yaml/v4 v4.0.0-rc.3
+	go.yaml.in/yaml/v4 v4.0.0-rc.4
 	mvdan.cc/gofumpt v0.9.2
 )
 

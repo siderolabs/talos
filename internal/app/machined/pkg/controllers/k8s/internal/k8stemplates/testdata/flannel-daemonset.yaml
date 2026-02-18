@@ -91,9 +91,6 @@ spec:
           path: /run/flannel
         name: run
       - hostPath:
-          path: /opt/cni/bin
-        name: cni-plugin
-      - hostPath:
           path: /etc/cni/net.d
         name: cni
       - configMap:

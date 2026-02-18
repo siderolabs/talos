@@ -455,15 +455,17 @@ func imageRemove(imageRef string) error {
 }
 
 var imageK8sBundleCmdFlags = struct {
-	k8sVersion     pflag.Value
-	flannelVersion pflag.Value
-	corednsVersion pflag.Value
-	etcdVersion    pflag.Value
+	k8sVersion                 pflag.Value
+	flannelVersion             pflag.Value
+	corednsVersion             pflag.Value
+	etcdVersion                pflag.Value
+	kubeNetworkPoliciesVersion pflag.Value
 }{
-	k8sVersion:     helpers.Semver(constants.DefaultKubernetesVersion),
-	flannelVersion: helpers.Semver(constants.FlannelVersion),
-	corednsVersion: helpers.Semver(constants.DefaultCoreDNSVersion),
-	etcdVersion:    helpers.Semver(constants.DefaultEtcdVersion),
+	k8sVersion:                 helpers.Semver(constants.DefaultKubernetesVersion),
+	flannelVersion:             helpers.Semver(constants.FlannelVersion),
+	corednsVersion:             helpers.Semver(constants.DefaultCoreDNSVersion),
+	etcdVersion:                helpers.Semver(constants.DefaultEtcdVersion),
+	kubeNetworkPoliciesVersion: helpers.Semver(constants.KubeNetworkPoliciesVersion),
 }
 
 // imageK8sBundleCmd represents the image k8s-bundle command.
@@ -488,10 +490,11 @@ var imageK8sBundleCmd = &cobra.Command{
 				},
 			}),
 			images.VersionsListOptions{
-				KubernetesVersion: imageK8sBundleCmdFlags.k8sVersion.String(),
-				EtcdVersion:       imageK8sBundleCmdFlags.etcdVersion.String(),
-				FlannelVersion:    imageK8sBundleCmdFlags.flannelVersion.String(),
-				CoreDNSVersion:    imageK8sBundleCmdFlags.corednsVersion.String(),
+				KubernetesVersion:          imageK8sBundleCmdFlags.k8sVersion.String(),
+				EtcdVersion:                imageK8sBundleCmdFlags.etcdVersion.String(),
+				FlannelVersion:             imageK8sBundleCmdFlags.flannelVersion.String(),
+				CoreDNSVersion:             imageK8sBundleCmdFlags.corednsVersion.String(),
+				KubeNetworkPoliciesVersion: imageK8sBundleCmdFlags.kubeNetworkPoliciesVersion.String(),
 			},
 		)
 
@@ -504,6 +507,7 @@ var imageK8sBundleCmd = &cobra.Command{
 		fmt.Printf("%s\n", images.KubeScheduler)
 		fmt.Printf("%s\n", images.KubeProxy)
 		fmt.Printf("%s\n", images.Kubelet)
+		fmt.Printf("%s\n", images.KubeNetworkPolicies)
 
 		return nil
 	},
@@ -662,6 +666,7 @@ var imageIntegrationCmd = &cobra.Command{
 			imgs.KubeProxy.String(),
 			imgs.Kubelet.String(),
 			imgs.Pause.String(),
+			imgs.KubeNetworkPolicies.String(),
 			"registry.k8s.io/conformance:v" + constants.DefaultKubernetesVersion,
 			"docker.io/library/alpine:latest",
 			"ghcr.io/siderolabs/talosctl:latest",
@@ -997,6 +1002,7 @@ func init() {
 	imageK8sBundleCmd.PersistentFlags().Var(imageK8sBundleCmdFlags.etcdVersion, "etcd-version", "ETCD semantic version")
 	imageK8sBundleCmd.PersistentFlags().Var(imageK8sBundleCmdFlags.flannelVersion, "flannel-version", "Flannel CNI semantic version")
 	imageK8sBundleCmd.PersistentFlags().Var(imageK8sBundleCmdFlags.corednsVersion, "coredns-version", "CoreDNS semantic version")
+	imageK8sBundleCmd.PersistentFlags().Var(imageK8sBundleCmdFlags.kubeNetworkPoliciesVersion, "kube-network-policies-version", "kube-network-policies semantic version")
 
 	imageCmd.AddCommand(imageCacheCreateCmd)
 	imageCacheCreateCmd.PersistentFlags().StringVar(&imageCacheCreateCmdFlags.imageCachePath, "image-cache-path", "", "directory to save the image cache in OCI format")

@@ -1,6 +1,6 @@
 # Contributing
 
-More information about contributing to Talos can be found in the [Documentation](https://www.talos.dev/latest/learn-more/developing-talos/).
+More information about contributing to Talos can be found in the [Documentation](https://docs.siderolabs.com/talos/latest/build-and-extend-talos/custom-images-and-development/developing-talos).
 
 ## Developer Certificate of Origin
 

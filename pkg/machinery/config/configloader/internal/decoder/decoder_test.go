@@ -172,7 +172,7 @@ spec:
 	test: true
 `),
 			expected:    nil,
-			expectedErr: "decode error: yaml: line 5: found character that cannot start any token",
+			expectedErr: "decode error: yaml: while scanning for the next token at line 5: found character that cannot start any token",
 		},
 		{
 			name: "extra field",
@@ -285,7 +285,7 @@ omit: false
 			name:        "internal error",
 			source:      []byte(":   \xea"),
 			expected:    nil,
-			expectedErr: "decode error: yaml: incomplete UTF-8 octet sequence",
+			expectedErr: "decode error: yaml: offset 4: incomplete UTF-8 octet sequence",
 		},
 		{
 			name: "unstructured config",

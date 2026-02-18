@@ -167,7 +167,7 @@ func createDebugContainer(
 				Options:     []string{"rbind", "rw"},
 			},
 		}),
-		oci.WithSelinuxLabel(""), // TODO: consider implementing a specific policy for debug containers
+		oci.WithSelinuxLabel(""), // SELinux will automatically transition the debug container into the proper context
 		oci.WithApparmorProfile(""),
 		oci.WithSeccompUnconfined,
 		oci.WithImageConfig(image),

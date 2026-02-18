@@ -329,6 +329,7 @@ type NetworkKubeSpanConfig interface {
 // NetworkKubeSpanFilters configures KubeSpan filters.
 type NetworkKubeSpanFilters interface {
 	Endpoints() []string
+	ExcludeAdvertisedNetworks() []netip.Prefix
 }
 
 // NetworkCommonProbeConfig defines a network connectivity probe configuration.
