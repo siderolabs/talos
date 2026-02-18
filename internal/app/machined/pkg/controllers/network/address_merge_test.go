@@ -5,15 +5,11 @@
 package network_test
 
 import (
-	"context"
 	"net/netip"
 	"testing"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -139,42 +135,4 @@ func TestAddressMergeSuite(t *testing.T) {
 			},
 		},
 	})
-}
-
-func assertResources[R rtestutils.ResourceWithRD](
-	ctx context.Context,
-	t *testing.T,
-	state state.State,
-	requiredIDs []string,
-	check func(R, *assert.Assertions),
-	opts ...rtestutils.Option,
-) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-
-	rtestutils.AssertResources(
-		ctx,
-		t,
-		state,
-		xslices.Map(requiredIDs, func(id string) resource.ID { return id }),
-		check,
-		opts...,
-	)
-}
-
-func assertNoResource[R rtestutils.ResourceWithRD](
-	ctx context.Context,
-	t *testing.T,
-	state state.State,
-	id string,
-) {
-	ctx, cancel := context.WithTimeout(ctx, 10*time.Second)
-	defer cancel()
-
-	rtestutils.AssertNoResource[R](
-		ctx,
-		t,
-		state,
-		id,
-	)
 }
