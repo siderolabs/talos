@@ -311,6 +311,21 @@ func (ctrl *ManifestApplyController) apply(
 			return fmt.Errorf("error checking resource existence: %w", err)
 		}
 
+		// Set inventory annotation.
+		annotations := obj.GetAnnotations()
+		if annotations == nil {
+			annotations = make(map[string]string)
+		}
+
+		inventoryAnnotation, inventoryAnnotationSet := annotations["config.k8s.io/owning-inventory"]
+
+		if inventoryAnnotationSet && inventoryAnnotation != constants.KubernetesBootstrapManifestsInventoryName {
+			return fmt.Errorf("unexpected foreign inventory annotation on %s ", objName)
+		}
+
+		annotations["config.k8s.io/owning-inventory"] = constants.KubernetesBootstrapManifestsInventoryName
+		obj.SetAnnotations(annotations)
+
 		_, err = dr.Apply(ctx, obj.GetName(), obj, metav1.ApplyOptions{
 			FieldManager: constants.KubernetesFieldManagerName,
 		})
