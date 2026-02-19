@@ -7,6 +7,7 @@ package k8s
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 
 	yaml "go.yaml.in/yaml/v4"
 	apiserverv1 "k8s.io/apiserver/pkg/apis/apiserver/v1"
@@ -60,7 +61,7 @@ func (d *EncryptionConfigurationDoc) APIVersion() string {
 // Clone implements config.Document interface.
 func (d *EncryptionConfigurationDoc) Clone() config.Document {
 	return &EncryptionConfigurationDoc{
-		Fields: deepCopyMap(d.Fields),
+		Fields: maps.Clone(d.Fields),
 	}
 }
 
@@ -106,35 +107,4 @@ func (d *EncryptionConfigurationDoc) Validate(validation.RuntimeMode, ...validat
 	}
 
 	return nil, nil
-}
-
-// deepCopyMap creates a deep copy of a map[string]any.
-func deepCopyMap(m map[string]any) map[string]any {
-	if m == nil {
-		return nil
-	}
-
-	cp := make(map[string]any, len(m))
-
-	for k, v := range m {
-		cp[k] = deepCopyValue(v)
-	}
-
-	return cp
-}
-
-func deepCopyValue(v any) any {
-	switch val := v.(type) {
-	case map[string]any:
-		return deepCopyMap(val)
-	case []any:
-		cp := make([]any, len(val))
-		for i, item := range val {
-			cp[i] = deepCopyValue(item)
-		}
-
-		return cp
-	default:
-		return v
-	}
 }
