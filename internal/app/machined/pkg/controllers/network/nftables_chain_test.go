@@ -13,7 +13,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
@@ -79,7 +78,7 @@ func (s *NfTablesChainSuite) TestAcceptLo() {
 			MatchOIfName: &network.NfTablesIfNameMatch{
 				InterfaceNames: []string{"lo"},
 			},
-			Verdict: pointer.To(nethelpers.VerdictAccept),
+			Verdict: new(nethelpers.VerdictAccept),
 		},
 	}
 
@@ -104,7 +103,7 @@ func (s *NfTablesChainSuite) TestAcceptMultipleIfnames() {
 			MatchIIfName: &network.NfTablesIfNameMatch{
 				InterfaceNames: []string{"eth0", "eth1"},
 			},
-			Verdict: pointer.To(nethelpers.VerdictAccept),
+			Verdict: new(nethelpers.VerdictAccept),
 		},
 	}
 
@@ -128,7 +127,7 @@ func (s *NfTablesChainSuite) TestPolicyDrop() {
 	chain.TypedSpec().Policy = nethelpers.VerdictDrop
 	chain.TypedSpec().Rules = []network.NfTablesRule{
 		{
-			Verdict: pointer.To(nethelpers.VerdictAccept),
+			Verdict: new(nethelpers.VerdictAccept),
 		},
 	}
 
@@ -156,7 +155,7 @@ func (s *NfTablesChainSuite) TestICMPLimit() {
 			MatchLimit: &network.NfTablesLimitMatch{
 				PacketRatePerSecond: 5,
 			},
-			Verdict: pointer.To(nethelpers.VerdictAccept),
+			Verdict: new(nethelpers.VerdictAccept),
 		},
 	}
 
@@ -184,7 +183,7 @@ func (s *NfTablesChainSuite) TestConntrackCounter() {
 					nethelpers.ConntrackStateRelated,
 				},
 			},
-			Verdict: pointer.To(nethelpers.VerdictAccept),
+			Verdict: new(nethelpers.VerdictAccept),
 		},
 		{
 			MatchConntrackState: &network.NfTablesConntrackStateMatch{
@@ -193,7 +192,7 @@ func (s *NfTablesChainSuite) TestConntrackCounter() {
 				},
 			},
 			AnonCounter: true,
-			Verdict:     pointer.To(nethelpers.VerdictDrop),
+			Verdict:     new(nethelpers.VerdictDrop),
 		},
 	}
 
@@ -235,7 +234,7 @@ func (s *NfTablesChainSuite) TestMatchMarksSubnets() {
 					netip.MustParsePrefix("192.168.0.0/24"),
 				},
 			},
-			Verdict: pointer.To(nethelpers.VerdictAccept),
+			Verdict: new(nethelpers.VerdictAccept),
 		},
 	}
 
@@ -297,7 +296,7 @@ func (s *NfTablesChainSuite) TestUpdateChains() {
 					netip.MustParsePrefix("192.168.0.0/24"),
 				},
 			},
-			Verdict: pointer.To(nethelpers.VerdictAccept),
+			Verdict: new(nethelpers.VerdictAccept),
 		},
 	}
 
@@ -409,7 +408,7 @@ func (s *NfTablesChainSuite) TestL4Match() {
 					},
 				},
 			},
-			Verdict: pointer.To(nethelpers.VerdictDrop),
+			Verdict: new(nethelpers.VerdictDrop),
 		},
 	}
 
@@ -453,7 +452,7 @@ func (s *NfTablesChainSuite) TestL4Match2() {
 					},
 				},
 			},
-			Verdict: pointer.To(nethelpers.VerdictDrop),
+			Verdict: new(nethelpers.VerdictDrop),
 		},
 	}
 
@@ -505,7 +504,7 @@ func (s *NfTablesChainSuite) TestL4MatchAdjacentPorts() {
 					},
 				},
 			},
-			Verdict: pointer.To(nethelpers.VerdictDrop),
+			Verdict: new(nethelpers.VerdictDrop),
 		},
 	}
 
@@ -544,7 +543,7 @@ func (s *NfTablesChainSuite) TestL4MatchAny() {
 					},
 				},
 			},
-			Verdict: pointer.To(nethelpers.VerdictAccept),
+			Verdict: new(nethelpers.VerdictAccept),
 		},
 	}
 
@@ -578,7 +577,7 @@ func (s *NfTablesChainSuite) TestICMPTypeMatch() {
 				},
 			},
 			AnonCounter: true,
-			Verdict:     pointer.To(nethelpers.VerdictDrop),
+			Verdict:     new(nethelpers.VerdictDrop),
 		},
 	}
 

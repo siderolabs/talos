@@ -8,7 +8,6 @@ import (
 	"maps"
 
 	"github.com/siderolabs/gen/optional"
-	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
@@ -201,7 +200,7 @@ func WithRoles(roles role.Set) Option {
 // WithClusterDiscovery enables cluster discovery feature.
 func WithClusterDiscovery(enabled bool) Option {
 	return func(o *Options) error {
-		o.DiscoveryEnabled = pointer.To(enabled)
+		o.DiscoveryEnabled = new(enabled)
 
 		return nil
 	}

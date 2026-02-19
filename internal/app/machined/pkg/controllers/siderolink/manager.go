@@ -20,7 +20,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
-	"github.com/siderolabs/go-pointer"
 	pb "github.com/siderolabs/siderolink/api/siderolink"
 	"github.com/siderolabs/siderolink/pkg/wireguard"
 	"go.uber.org/zap"
@@ -390,22 +389,22 @@ func (ctrl *ManagerController) provision(ctx context.Context, r controller.Runti
 		var wgOverGRPC *bool
 
 		if cfg.TypedSpec().Tunnel {
-			wgOverGRPC = pointer.To(true)
+			wgOverGRPC = new(true)
 		}
 
 		sideroLinkClient := pb.NewProvisionServiceClient(conn)
 		request := &pb.ProvisionRequest{
 			NodeUuid:          nodeUUID,
 			NodePublicKey:     ctrl.nodeKey.PublicKey().String(),
-			NodeUniqueToken:   pointer.To(uniqTokenRes.TypedSpec().Token),
-			TalosVersion:      pointer.To(version.Tag),
+			NodeUniqueToken:   new(uniqTokenRes.TypedSpec().Token),
+			TalosVersion:      new(version.Tag),
 			WireguardOverGrpc: wgOverGRPC,
 		}
 
 		token := cfg.TypedSpec().JoinToken
 
 		if token != "" {
-			request.JoinToken = pointer.To(token)
+			request.JoinToken = new(token)
 		}
 
 		return sideroLinkClient.Provision(ctx, request)

@@ -17,7 +17,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/siderolabs/talos/internal/integration/base"
@@ -157,10 +156,10 @@ func (suite *TrustedBootSuite) TestEncryptionConfigRotate() {
 				existing,
 				{
 					KeyTPM: &blockcfg.EncryptionKeyTPM{
-						// TPMCheckSecurebootStatusOnEnroll: pointer.To(true),
+						// TPMCheckSecurebootStatusOnEnroll: new(true),
 					},
 					KeySlot:        nextSlot,
-					KeyLockToSTATE: pointer.To(true),
+					KeyLockToSTATE: new(true),
 				},
 			},
 
@@ -175,10 +174,10 @@ func (suite *TrustedBootSuite) TestEncryptionConfigRotate() {
 			keys: []blockcfg.EncryptionKey{
 				{
 					KeyTPM: &blockcfg.EncryptionKeyTPM{
-						// TPMCheckSecurebootStatusOnEnroll: pointer.To(true),
+						// TPMCheckSecurebootStatusOnEnroll: new(true),
 					},
 					KeySlot:        nextSlot,
-					KeyLockToSTATE: pointer.To(true),
+					KeyLockToSTATE: new(true),
 				},
 			},
 
@@ -193,20 +192,20 @@ func (suite *TrustedBootSuite) TestEncryptionConfigRotate() {
 			keys: []blockcfg.EncryptionKey{
 				{
 					KeyTPM: &blockcfg.EncryptionKeyTPM{
-						// TPMCheckSecurebootStatusOnEnroll: pointer.To(true),
+						// TPMCheckSecurebootStatusOnEnroll: new(true),
 					},
 					KeySlot:        nextSlot,
-					KeyLockToSTATE: pointer.To(true),
+					KeyLockToSTATE: new(true),
 				},
 				{
 					KeyTPM: &blockcfg.EncryptionKeyTPM{
-						// TPMCheckSecurebootStatusOnEnroll: pointer.To(true),
+						// TPMCheckSecurebootStatusOnEnroll: new(true),
 						TPMOptions: &blockcfg.EncryptionKeyTPMOptions{
 							PCRs: []int{},
 						},
 					},
 					KeySlot:        nextSlot + 1,
-					KeyLockToSTATE: pointer.To(false),
+					KeyLockToSTATE: new(false),
 				},
 			},
 
@@ -220,13 +219,13 @@ func (suite *TrustedBootSuite) TestEncryptionConfigRotate() {
 			keys: []blockcfg.EncryptionKey{
 				{
 					KeyTPM: &blockcfg.EncryptionKeyTPM{
-						// TPMCheckSecurebootStatusOnEnroll: pointer.To(true),
+						// TPMCheckSecurebootStatusOnEnroll: new(true),
 						TPMOptions: &blockcfg.EncryptionKeyTPMOptions{
 							PCRs: []int{},
 						},
 					},
 					KeySlot:        nextSlot + 1,
-					KeyLockToSTATE: pointer.To(false),
+					KeyLockToSTATE: new(false),
 				},
 			},
 
@@ -241,23 +240,23 @@ func (suite *TrustedBootSuite) TestEncryptionConfigRotate() {
 			keys: []blockcfg.EncryptionKey{
 				{
 					KeyTPM: &blockcfg.EncryptionKeyTPM{
-						// TPMCheckSecurebootStatusOnEnroll: pointer.To(true),
+						// TPMCheckSecurebootStatusOnEnroll: new(true),
 						TPMOptions: &blockcfg.EncryptionKeyTPMOptions{
 							PCRs: []int{},
 						},
 					},
 					KeySlot:        nextSlot + 1,
-					KeyLockToSTATE: pointer.To(false),
+					KeyLockToSTATE: new(false),
 				},
 				{
 					KeyTPM: &blockcfg.EncryptionKeyTPM{
-						// TPMCheckSecurebootStatusOnEnroll: pointer.To(true),
+						// TPMCheckSecurebootStatusOnEnroll: new(true),
 						TPMOptions: &blockcfg.EncryptionKeyTPMOptions{
 							PCRs: []int{0, constants.SecureBootStatePCR},
 						},
 					},
 					KeySlot:        nextSlot + 2,
-					KeyLockToSTATE: pointer.To(true),
+					KeyLockToSTATE: new(true),
 				},
 			},
 
@@ -271,13 +270,13 @@ func (suite *TrustedBootSuite) TestEncryptionConfigRotate() {
 			keys: []blockcfg.EncryptionKey{
 				{
 					KeyTPM: &blockcfg.EncryptionKeyTPM{
-						// TPMCheckSecurebootStatusOnEnroll: pointer.To(true),
+						// TPMCheckSecurebootStatusOnEnroll: new(true),
 						TPMOptions: &blockcfg.EncryptionKeyTPMOptions{
 							PCRs: []int{0, constants.SecureBootStatePCR},
 						},
 					},
 					KeySlot:        nextSlot + 2,
-					KeyLockToSTATE: pointer.To(true),
+					KeyLockToSTATE: new(true),
 				},
 			},
 

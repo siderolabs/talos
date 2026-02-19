@@ -61,6 +61,7 @@ var lsCmd = &cobra.Command{
 
 			// handle all variants: --type=f,l; -tfl; etc
 			var reqTypes []machineapi.ListRequest_Type
+
 			for _, typ := range types {
 				for _, t := range typ {
 					// handle both `find -type X` and os.FileMode.String() designations
@@ -151,6 +152,7 @@ var lsCmd = &cobra.Command{
 				}
 
 				label := ""
+
 				if info.Xattrs != nil {
 					for _, l := range info.Xattrs {
 						if l.Name == "security.selinux" {

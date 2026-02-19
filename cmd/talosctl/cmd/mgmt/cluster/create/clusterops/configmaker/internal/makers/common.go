@@ -17,7 +17,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	sideronet "github.com/siderolabs/net"
 
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops"
@@ -627,7 +626,7 @@ func (m *Maker[T]) initNodeRequests() error {
 			Type:                machineType,
 			Memory:              int64(controlplaneResources.Memory.Bytes()),
 			NanoCPUs:            controlplaneResources.NanoCPUs,
-			UUID:                pointer.To(nodeUUID),
+			UUID:                new(nodeUUID),
 			SkipInjectingConfig: m.Ops.SkipInjectingConfig,
 		})
 	}
@@ -648,7 +647,7 @@ func (m *Maker[T]) initNodeRequests() error {
 			Type:                machine.TypeWorker,
 			Memory:              int64(workerResources.Memory.Bytes()),
 			NanoCPUs:            workerResources.NanoCPUs,
-			UUID:                pointer.To(nodeUUID),
+			UUID:                new(nodeUUID),
 			SkipInjectingConfig: m.Ops.SkipInjectingConfig,
 		})
 	}

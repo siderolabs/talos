@@ -76,8 +76,8 @@ func NewZswapConfigV1Alpha1() *ZswapConfigV1Alpha1 {
 
 func exampleZswapConfigV1Alpha1() *ZswapConfigV1Alpha1 {
 	cfg := NewZswapConfigV1Alpha1()
-	cfg.MaxPoolPercentConfig = pointer.To(25)
-	cfg.ShrinkerEnabledConfig = pointer.To(true)
+	cfg.MaxPoolPercentConfig = new(25)
+	cfg.ShrinkerEnabledConfig = new(true)
 
 	return cfg
 }

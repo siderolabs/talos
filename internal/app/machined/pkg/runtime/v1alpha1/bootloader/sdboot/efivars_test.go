@@ -11,7 +11,6 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/siderolabs/go-blockdevice/v2/blkid"
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/sdboot"
@@ -58,12 +57,12 @@ func TestSetBootEntry(t *testing.T) {
 		Parts: []blkid.NestedProbeResult{
 			{
 				NestedResult: blkid.NestedResult{
-					PartitionUUID:   pointer.To(uuid.MustParse("3c8f4e2e-1dd2-4a5b-9f6d-8f3c9e6d7c3b")),
-					PartitionLabel:  pointer.To(constants.EFIPartitionLabel),
+					PartitionUUID:   new(uuid.MustParse("3c8f4e2e-1dd2-4a5b-9f6d-8f3c9e6d7c3b")),
+					PartitionLabel:  new(constants.EFIPartitionLabel),
 					PartitionOffset: 2048,
 					PartitionSize:   409600,
 					PartitionIndex:  1,
-					PartitionType:   pointer.To(uuid.MustParse("c12a7328-f81f-11d2-ba4b-00a0c93ec93b")),
+					PartitionType:   new(uuid.MustParse("c12a7328-f81f-11d2-ba4b-00a0c93ec93b")),
 				},
 			},
 		},

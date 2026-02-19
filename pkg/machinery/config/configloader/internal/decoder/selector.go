@@ -12,8 +12,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/siderolabs/go-pointer"
-
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 )
 
@@ -35,7 +33,7 @@ type selector struct {
 
 func (s *selector) Kind() string           { return s.docKind }
 func (s *selector) APIVersion() string     { return s.docAPIVersion }
-func (s *selector) Clone() config.Document { return pointer.To(s.clone()) }
+func (s *selector) Clone() config.Document { return new(s.clone()) }
 func (s *selector) DocIdx() int            { return s.docIdx }
 
 func (s *selector) PathAsString() string { return strings.Join(s.path, ".") }

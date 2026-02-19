@@ -20,7 +20,6 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-kubernetes/kubernetes/compatibility"
-	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
 	apiresource "k8s.io/apimachinery/pkg/api/resource"
@@ -478,7 +477,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 				},
 			},
 			Spec: v1.PodSpec{
-				Priority:          pointer.To(systemCriticalPriority),
+				Priority:          new(systemCriticalPriority),
 				PriorityClassName: "system-cluster-critical",
 				Containers: []v1.Container{
 					{
@@ -516,7 +515,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 						}, volumeMounts(cfg.ExtraVolumes)...),
 						Resources: resources,
 						SecurityContext: &v1.SecurityContext{
-							AllowPrivilegeEscalation: pointer.To(false),
+							AllowPrivilegeEscalation: new(false),
 							Capabilities: &v1.Capabilities{
 								Drop: []v1.Capability{"ALL"},
 								// kube-apiserver binary has cap_net_bind_service=+ep set.
@@ -532,9 +531,9 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 				},
 				HostNetwork: true,
 				SecurityContext: &v1.PodSecurityContext{
-					RunAsNonRoot: pointer.To(true),
-					RunAsUser:    pointer.To[int64](constants.KubernetesAPIServerRunUser),
-					RunAsGroup:   pointer.To[int64](constants.KubernetesAPIServerRunGroup),
+					RunAsNonRoot: new(true),
+					RunAsUser:    new(int64(constants.KubernetesAPIServerRunUser)),
+					RunAsGroup:   new(int64(constants.KubernetesAPIServerRunGroup)),
 				},
 				Volumes: append([]v1.Volume{
 					{
@@ -663,7 +662,7 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 				},
 			},
 			Spec: v1.PodSpec{
-				Priority:          pointer.To(systemCriticalPriority),
+				Priority:          new(systemCriticalPriority),
 				PriorityClassName: "system-cluster-critical",
 				Containers: []v1.Container{
 					{
@@ -716,7 +715,7 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 						},
 						Resources: resources,
 						SecurityContext: &v1.SecurityContext{
-							AllowPrivilegeEscalation: pointer.To(false),
+							AllowPrivilegeEscalation: new(false),
 							Capabilities: &v1.Capabilities{
 								Drop: []v1.Capability{"ALL"},
 							},
@@ -728,9 +727,9 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 				},
 				HostNetwork: true,
 				SecurityContext: &v1.PodSecurityContext{
-					RunAsNonRoot: pointer.To(true),
-					RunAsUser:    pointer.To[int64](constants.KubernetesControllerManagerRunUser),
-					RunAsGroup:   pointer.To[int64](constants.KubernetesControllerManagerRunGroup),
+					RunAsNonRoot: new(true),
+					RunAsUser:    new(int64(constants.KubernetesControllerManagerRunUser)),
+					RunAsGroup:   new(int64(constants.KubernetesControllerManagerRunGroup)),
 				},
 				Volumes: append([]v1.Volume{
 					{
@@ -858,7 +857,7 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 				},
 			},
 			Spec: v1.PodSpec{
-				Priority:          pointer.To(systemCriticalPriority),
+				Priority:          new(systemCriticalPriority),
 				PriorityClassName: "system-cluster-critical",
 				Containers: []v1.Container{
 					{
@@ -894,7 +893,7 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 						ReadinessProbe: readinessProbe,
 						Resources:      resources,
 						SecurityContext: &v1.SecurityContext{
-							AllowPrivilegeEscalation: pointer.To(false),
+							AllowPrivilegeEscalation: new(false),
 							Capabilities: &v1.Capabilities{
 								Drop: []v1.Capability{"ALL"},
 							},
@@ -906,9 +905,9 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 				},
 				HostNetwork: true,
 				SecurityContext: &v1.PodSecurityContext{
-					RunAsNonRoot: pointer.To(true),
-					RunAsUser:    pointer.To[int64](constants.KubernetesSchedulerRunUser),
-					RunAsGroup:   pointer.To[int64](constants.KubernetesSchedulerRunGroup),
+					RunAsNonRoot: new(true),
+					RunAsUser:    new(int64(constants.KubernetesSchedulerRunUser)),
+					RunAsGroup:   new(int64(constants.KubernetesSchedulerRunGroup)),
 				},
 				Volumes: append([]v1.Volume{
 					{

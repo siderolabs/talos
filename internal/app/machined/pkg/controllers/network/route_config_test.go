@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
-	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -125,7 +124,7 @@ func (suite *RouteConfigSuite) TestMachineConfigurationLegacy() {
 								},
 							},
 							{
-								DeviceIgnore:    pointer.To(true),
+								DeviceIgnore:    new(true),
 								DeviceInterface: "eth4",
 								DeviceAddresses: []string{"192.168.0.24/28"},
 								DeviceRoutes: []*v1alpha1.Route{

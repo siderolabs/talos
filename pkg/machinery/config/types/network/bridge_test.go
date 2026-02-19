@@ -9,7 +9,6 @@ import (
 	"net/netip"
 	"testing"
 
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -27,9 +26,9 @@ func TestBridgeConfigMarshalStability(t *testing.T) {
 
 	cfg := network.NewBridgeConfigV1Alpha1("bridge.1")
 	cfg.BridgeLinks = []string{"eno1", "eno5"}
-	cfg.BridgeSTP.BridgeSTPEnabled = pointer.To(true)
-	cfg.BridgeVLAN.BridgeVLANFiltering = pointer.To(false)
-	cfg.LinkUp = pointer.To(true)
+	cfg.BridgeSTP.BridgeSTPEnabled = new(true)
+	cfg.BridgeVLAN.BridgeVLANFiltering = new(false)
+	cfg.LinkUp = new(true)
 	cfg.LinkAddresses = []network.AddressConfig{
 		{
 			AddressAddress: netip.MustParsePrefix("1.2.3.5/32"),
@@ -60,10 +59,10 @@ func TestBridgeConfigUnmarshal(t *testing.T) {
 		},
 		MetaName:    "bridge.1",
 		BridgeLinks: []string{"eno1", "eno5"},
-		BridgeSTP:   network.BridgeSTPConfig{BridgeSTPEnabled: pointer.To(true)},
-		BridgeVLAN:  network.BridgeVLANConfig{BridgeVLANFiltering: pointer.To(false)},
+		BridgeSTP:   network.BridgeSTPConfig{BridgeSTPEnabled: new(true)},
+		BridgeVLAN:  network.BridgeVLANConfig{BridgeVLANFiltering: new(false)},
 		CommonLinkConfig: network.CommonLinkConfig{
-			LinkUp: pointer.To(true),
+			LinkUp: new(true),
 			LinkAddresses: []network.AddressConfig{
 				{
 					AddressAddress: netip.MustParsePrefix("1.2.3.5/32"),
@@ -105,8 +104,8 @@ func TestBridgeValidate(t *testing.T) {
 			cfg: func() *network.BridgeConfigV1Alpha1 {
 				cfg := network.NewBridgeConfigV1Alpha1("Bridge25")
 				cfg.BridgeLinks = []string{"eth0", "eth1"}
-				cfg.BridgeSTP.BridgeSTPEnabled = pointer.To(true)
-				cfg.BridgeVLAN.BridgeVLANFiltering = pointer.To(true)
+				cfg.BridgeSTP.BridgeSTPEnabled = new(true)
+				cfg.BridgeVLAN.BridgeVLANFiltering = new(true)
 				cfg.LinkAddresses = []network.AddressConfig{
 					{
 						AddressAddress: netip.MustParsePrefix("192.168.1.100/24"),

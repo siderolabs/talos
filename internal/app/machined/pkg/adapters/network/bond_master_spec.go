@@ -9,7 +9,6 @@ import (
 	"net/netip"
 
 	"github.com/mdlayher/netlink"
-	"github.com/siderolabs/go-pointer"
 	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
@@ -204,7 +203,7 @@ func (a bondMaster) Decode(data []byte) error {
 		case unix.IFLA_BOND_ARP_ALL_TARGETS:
 			bond.ARPAllTargets = nethelpers.ARPAllTargets(decoder.Uint32())
 		case unix.IFLA_BOND_PRIMARY:
-			bond.PrimaryIndex = pointer.To(decoder.Uint32())
+			bond.PrimaryIndex = new(decoder.Uint32())
 		case unix.IFLA_BOND_PRIMARY_RESELECT:
 			bond.PrimaryReselect = nethelpers.PrimaryReselect(decoder.Uint8())
 		case unix.IFLA_BOND_FAIL_OVER_MAC:

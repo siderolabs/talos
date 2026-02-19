@@ -10,7 +10,6 @@ import (
 	"fmt"
 
 	"github.com/siderolabs/gen/xerrors"
-	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -61,7 +60,7 @@ func UserVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 					FileMode:     0o755,
 					UID:          0,
 					GID:          0,
-					BindTarget:   pointer.To(userVolumeConfig.Name()),
+					BindTarget:   new(userVolumeConfig.Name()),
 				}).
 				WriterFunc()
 

@@ -13,7 +13,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	pb "github.com/siderolabs/siderolink/api/siderolink"
 	"github.com/stretchr/testify/assert"
@@ -162,7 +161,7 @@ func (suite *ManagerSuite) TestReconcile() {
 	// remove config
 	configPtr := siderolink.NewConfig(config.NamespaceName, siderolink.ConfigID).Metadata()
 	destroyErr := suite.State().Destroy(suite.Ctx(), configPtr,
-		state.WithDestroyOwner(pointer.To(siderolinkctrl.ConfigController{}).Name()))
+		state.WithDestroyOwner(new(siderolinkctrl.ConfigController{}).Name()))
 	suite.Require().NoError(destroyErr)
 
 	ctest.AssertNoResource[*network.LinkSpec](suite,

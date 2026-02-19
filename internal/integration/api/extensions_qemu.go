@@ -22,7 +22,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	corev1 "k8s.io/api/core/v1"
 	nodev1 "k8s.io/api/node/v1"
@@ -273,7 +272,7 @@ func (suite *ExtensionsSuiteQEMU) testRuntimeClass(runtimeClassName, handlerName
 			Name: testName,
 		},
 		Spec: corev1.PodSpec{
-			RuntimeClassName: pointer.To(runtimeClassName),
+			RuntimeClassName: new(runtimeClassName),
 			Containers: []corev1.Container{
 				{
 					Name:  testName,
@@ -572,7 +571,7 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsSpin() {
 					Command: []string{"/"},
 				},
 			},
-			RuntimeClassName: pointer.To("wasmtime-spin-v2"),
+			RuntimeClassName: new("wasmtime-spin-v2"),
 		},
 	}, metav1.CreateOptions{})
 	defer suite.Clientset.CoreV1().Pods("default").Delete(suite.ctx, "spin-test", metav1.DeleteOptions{}) //nolint:errcheck

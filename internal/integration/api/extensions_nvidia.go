@@ -13,7 +13,6 @@ import (
 	"io"
 	"time"
 
-	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-retry/retry"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -214,7 +213,7 @@ func nvidiaCUDATestJob() *batchv1.Job {
 			Name: "cuda-test",
 		},
 		Spec: batchv1.JobSpec{
-			Completions: pointer.To[int32](1),
+			Completions: new(int32(1)),
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "cuda-test",
@@ -247,7 +246,7 @@ func nvidiaCUDATestJob() *batchv1.Job {
 						},
 					},
 					RestartPolicy:    corev1.RestartPolicyNever,
-					RuntimeClassName: pointer.To("nvidia"),
+					RuntimeClassName: new("nvidia"),
 				},
 			},
 		},

@@ -9,7 +9,6 @@ import (
 	"net/netip"
 	"testing"
 
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -28,7 +27,7 @@ func TestDummyLinkConfigMarshalStability(t *testing.T) {
 
 	cfg := network.NewDummyLinkConfigV1Alpha1("dummy1")
 	cfg.HardwareAddressConfig = nethelpers.HardwareAddr{0x2e, 0x3c, 0x4d, 0x5e, 0x6f, 0x70}
-	cfg.LinkUp = pointer.To(true)
+	cfg.LinkUp = new(true)
 	cfg.LinkAddresses = []network.AddressConfig{
 		{
 			AddressAddress: netip.MustParsePrefix("192.168.1.100/32"),
@@ -60,7 +59,7 @@ func TestDummyLinkConfigUnmarshal(t *testing.T) {
 		MetaName:              "dummy1",
 		HardwareAddressConfig: nethelpers.HardwareAddr{0x2e, 0x3c, 0x4d, 0x5e, 0x6f, 0x70},
 		CommonLinkConfig: network.CommonLinkConfig{
-			LinkUp: pointer.To(true),
+			LinkUp: new(true),
 			LinkAddresses: []network.AddressConfig{
 				{
 					AddressAddress: netip.MustParsePrefix("192.168.1.100/32"),

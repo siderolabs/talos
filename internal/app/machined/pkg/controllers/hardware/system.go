@@ -207,6 +207,7 @@ func (ctrl *SystemInfoController) reconcileMemoryModules(ctx context.Context, r 
 			if info.MemTotalBytes != nil {
 				hwadapter.MemoryModule(res).TypedSpec().Size = uint32(*info.MemTotal / 1024)
 			}
+
 			hwadapter.MemoryModule(res).TypedSpec().Manufacturer = memoryModuleUnknown
 
 			return nil

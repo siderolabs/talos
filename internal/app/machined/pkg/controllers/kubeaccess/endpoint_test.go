@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
-	"k8s.io/utils/ptr"
 
 	kubeaccessctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/kubeaccess"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -41,9 +40,9 @@ func TestPopulateEndpointSlice(t *testing.T) {
 				{
 					Addresses: []string{"192.168.1.1"},
 					Conditions: discoveryv1.EndpointConditions{
-						Ready:       ptr.To(true),
-						Serving:     ptr.To(true),
-						Terminating: ptr.To(false),
+						Ready:       new(true),
+						Serving:     new(true),
+						Terminating: new(false),
 					},
 				},
 			},
@@ -62,25 +61,25 @@ func TestPopulateEndpointSlice(t *testing.T) {
 				{
 					Addresses: []string{"192.168.1.1"},
 					Conditions: discoveryv1.EndpointConditions{
-						Ready:       ptr.To(true),
-						Serving:     ptr.To(true),
-						Terminating: ptr.To(false),
+						Ready:       new(true),
+						Serving:     new(true),
+						Terminating: new(false),
 					},
 				},
 				{
 					Addresses: []string{"192.168.1.2"},
 					Conditions: discoveryv1.EndpointConditions{
-						Ready:       ptr.To(true),
-						Serving:     ptr.To(true),
-						Terminating: ptr.To(false),
+						Ready:       new(true),
+						Serving:     new(true),
+						Terminating: new(false),
 					},
 				},
 				{
 					Addresses: []string{"192.168.1.3"},
 					Conditions: discoveryv1.EndpointConditions{
-						Ready:       ptr.To(true),
-						Serving:     ptr.To(true),
-						Terminating: ptr.To(false),
+						Ready:       new(true),
+						Serving:     new(true),
+						Terminating: new(false),
 					},
 				},
 			},
@@ -92,25 +91,25 @@ func TestPopulateEndpointSlice(t *testing.T) {
 					{
 						Addresses: []string{"10.0.0.1"},
 						Conditions: discoveryv1.EndpointConditions{
-							Ready:       ptr.To(true),
-							Serving:     ptr.To(true),
-							Terminating: ptr.To(false),
+							Ready:       new(true),
+							Serving:     new(true),
+							Terminating: new(false),
 						},
 					},
 					{
 						Addresses: []string{"10.0.0.2"},
 						Conditions: discoveryv1.EndpointConditions{
-							Ready:       ptr.To(true),
-							Serving:     ptr.To(true),
-							Terminating: ptr.To(false),
+							Ready:       new(true),
+							Serving:     new(true),
+							Terminating: new(false),
 						},
 					},
 					{
 						Addresses: []string{"10.0.0.3"},
 						Conditions: discoveryv1.EndpointConditions{
-							Ready:       ptr.To(true),
-							Serving:     ptr.To(true),
-							Terminating: ptr.To(false),
+							Ready:       new(true),
+							Serving:     new(true),
+							Terminating: new(false),
 						},
 					},
 				},
@@ -124,9 +123,9 @@ func TestPopulateEndpointSlice(t *testing.T) {
 				{
 					Addresses: []string{"10.0.0.1"},
 					Conditions: discoveryv1.EndpointConditions{
-						Ready:       ptr.To(true),
-						Serving:     ptr.To(true),
-						Terminating: ptr.To(false),
+						Ready:       new(true),
+						Serving:     new(true),
+						Terminating: new(false),
 					},
 				},
 			},
@@ -138,17 +137,17 @@ func TestPopulateEndpointSlice(t *testing.T) {
 					{
 						Addresses: []string{"10.0.0.1"},
 						Conditions: discoveryv1.EndpointConditions{
-							Ready:       ptr.To(true),
-							Serving:     ptr.To(true),
-							Terminating: ptr.To(false),
+							Ready:       new(true),
+							Serving:     new(true),
+							Terminating: new(false),
 						},
 					},
 					{
 						Addresses: []string{"10.0.0.2"},
 						Conditions: discoveryv1.EndpointConditions{
-							Ready:       ptr.To(true),
-							Serving:     ptr.To(true),
-							Terminating: ptr.To(false),
+							Ready:       new(true),
+							Serving:     new(true),
+							Terminating: new(false),
 						},
 					},
 				},
@@ -163,17 +162,17 @@ func TestPopulateEndpointSlice(t *testing.T) {
 				{
 					Addresses: []string{"192.168.1.1"},
 					Conditions: discoveryv1.EndpointConditions{
-						Ready:       ptr.To(true),
-						Serving:     ptr.To(true),
-						Terminating: ptr.To(false),
+						Ready:       new(true),
+						Serving:     new(true),
+						Terminating: new(false),
 					},
 				},
 				{
 					Addresses: []string{"192.168.1.2"},
 					Conditions: discoveryv1.EndpointConditions{
-						Ready:       ptr.To(true),
-						Serving:     ptr.To(true),
-						Terminating: ptr.To(false),
+						Ready:       new(true),
+						Serving:     new(true),
+						Terminating: new(false),
 					},
 				},
 			},
@@ -185,9 +184,9 @@ func TestPopulateEndpointSlice(t *testing.T) {
 					{
 						Addresses: []string{"10.0.0.1"},
 						Conditions: discoveryv1.EndpointConditions{
-							Ready:       ptr.To(true),
-							Serving:     ptr.To(true),
-							Terminating: ptr.To(false),
+							Ready:       new(true),
+							Serving:     new(true),
+							Terminating: new(false),
 						},
 					},
 				},
@@ -203,17 +202,17 @@ func TestPopulateEndpointSlice(t *testing.T) {
 				{
 					Addresses: []string{"192.168.1.1"},
 					Conditions: discoveryv1.EndpointConditions{
-						Ready:       ptr.To(true),
-						Serving:     ptr.To(true),
-						Terminating: ptr.To(false),
+						Ready:       new(true),
+						Serving:     new(true),
+						Terminating: new(false),
 					},
 				},
 				{
 					Addresses: []string{"192.168.1.2"},
 					Conditions: discoveryv1.EndpointConditions{
-						Ready:       ptr.To(true),
-						Serving:     ptr.To(true),
-						Terminating: ptr.To(false),
+						Ready:       new(true),
+						Serving:     new(true),
+						Terminating: new(false),
 					},
 				},
 			},
@@ -225,9 +224,9 @@ func TestPopulateEndpointSlice(t *testing.T) {
 					{
 						Addresses: []string{"10.0.0.1"},
 						Conditions: discoveryv1.EndpointConditions{
-							Ready:       ptr.To(true),
-							Serving:     ptr.To(true),
-							Terminating: ptr.To(false),
+							Ready:       new(true),
+							Serving:     new(true),
+							Terminating: new(false),
 						},
 					},
 				},
@@ -248,17 +247,17 @@ func TestPopulateEndpointSlice(t *testing.T) {
 				{
 					Addresses: []string{"fd00::1"},
 					Conditions: discoveryv1.EndpointConditions{
-						Ready:       ptr.To(true),
-						Serving:     ptr.To(true),
-						Terminating: ptr.To(false),
+						Ready:       new(true),
+						Serving:     new(true),
+						Terminating: new(false),
 					},
 				},
 				{
 					Addresses: []string{"fd00::2"},
 					Conditions: discoveryv1.EndpointConditions{
-						Ready:       ptr.To(true),
-						Serving:     ptr.To(true),
-						Terminating: ptr.To(false),
+						Ready:       new(true),
+						Serving:     new(true),
+						Terminating: new(false),
 					},
 				},
 			},

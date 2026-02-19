@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -50,7 +49,7 @@ func TestUserVolumeTransformer(t *testing.T) {
 						MetaAPIVersion: "v1alpha1",
 					},
 					MetaName:   "foo",
-					VolumeType: pointer.To(block.VolumeTypePartition),
+					VolumeType: new(block.VolumeTypePartition),
 					FilesystemSpec: blockcfg.FilesystemSpec{
 						FilesystemType: block.FilesystemTypeXFS,
 					},
@@ -89,7 +88,7 @@ func TestUserVolumeTransformer(t *testing.T) {
 					MetaAPIVersion: "v1alpha1",
 				},
 				MetaName:   "bar",
-				VolumeType: pointer.To(block.VolumeTypeDirectory),
+				VolumeType: new(block.VolumeTypeDirectory),
 				FilesystemSpec: blockcfg.FilesystemSpec{
 					FilesystemType: block.FilesystemTypeXFS,
 				},
@@ -110,7 +109,7 @@ func TestUserVolumeTransformer(t *testing.T) {
 
 					assert.Equal(t, "bar", vc.TypedSpec().Mount.TargetPath)
 					assert.Equal(t, constants.UserVolumeMountPoint, vc.TypedSpec().Mount.ParentID)
-					assert.Equal(t, pointer.To("bar"), vc.TypedSpec().Mount.BindTarget)
+					assert.Equal(t, new("bar"), vc.TypedSpec().Mount.BindTarget)
 					assert.Equal(t, fs.FileMode(0o755), vc.TypedSpec().Mount.FileMode)
 				})
 
@@ -127,7 +126,7 @@ func TestUserVolumeTransformer(t *testing.T) {
 					MetaKind:       blockcfg.UserVolumeConfigKind,
 					MetaAPIVersion: "v1alpha1",
 				},
-				VolumeType: pointer.To(block.VolumeTypeTmpfs),
+				VolumeType: new(block.VolumeTypeTmpfs),
 			}},
 			checkFunc: func(t *testing.T, resources []volumeconfig.VolumeResource, err error) {
 				require.Error(t, err)
@@ -144,7 +143,7 @@ func TestUserVolumeTransformer(t *testing.T) {
 					MetaAPIVersion: "v1alpha1",
 				},
 				MetaName:   "foo",
-				VolumeType: pointer.To(block.VolumeTypePartition),
+				VolumeType: new(block.VolumeTypePartition),
 				FilesystemSpec: blockcfg.FilesystemSpec{
 					FilesystemType: block.FilesystemTypeXFS,
 				},
@@ -154,7 +153,7 @@ func TestUserVolumeTransformer(t *testing.T) {
 					MetaAPIVersion: "v1alpha1",
 				},
 				MetaName:   "bar",
-				VolumeType: pointer.To(block.VolumeTypeDirectory),
+				VolumeType: new(block.VolumeTypeDirectory),
 				FilesystemSpec: blockcfg.FilesystemSpec{
 					FilesystemType: block.FilesystemTypeXFS,
 				},
@@ -273,7 +272,7 @@ func TestExistingVolumeTransformer(t *testing.T) {
 						},
 					},
 					MountSpec: blockcfg.ExistingMountSpec{
-						MountReadOnly: pointer.To(false),
+						MountReadOnly: new(false),
 					},
 				},
 			},
@@ -315,7 +314,7 @@ func TestExistingVolumeTransformer(t *testing.T) {
 						},
 					},
 					MountSpec: blockcfg.ExistingMountSpec{
-						MountReadOnly: pointer.To(true),
+						MountReadOnly: new(true),
 					},
 				},
 			},
@@ -373,7 +372,7 @@ func TestExternalVolumeTransformer(t *testing.T) {
 					MetaName:       "external-data",
 					FilesystemType: block.FilesystemTypeVirtiofs,
 					MountSpec: blockcfg.ExternalMountSpec{
-						MountReadOnly: pointer.To(false),
+						MountReadOnly: new(false),
 						MountVirtiofs: &blockcfg.VirtiofsMountSpec{
 							VirtiofsTag: "data",
 						},
@@ -415,7 +414,7 @@ func TestExternalVolumeTransformer(t *testing.T) {
 					MetaName:       "external-data",
 					FilesystemType: block.FilesystemTypeVirtiofs,
 					MountSpec: blockcfg.ExternalMountSpec{
-						MountReadOnly: pointer.To(true),
+						MountReadOnly: new(true),
 						MountVirtiofs: &blockcfg.VirtiofsMountSpec{
 							VirtiofsTag: "data",
 						},

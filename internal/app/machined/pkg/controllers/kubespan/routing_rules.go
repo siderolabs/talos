@@ -52,9 +52,9 @@ func (m *rulesManager) Install() error {
 		Table:  m.TargetTable,
 		Action: unix.RTN_UNICAST,
 		Attributes: &rtnetlink.RuleAttributes{
-			FwMark:   pointer.To(m.InternalMark),
-			FwMask:   pointer.To(m.MarkMask),
-			Priority: pointer.To(nextRuleNumber(nc, unix.AF_INET)),
+			FwMark:   new(m.InternalMark),
+			FwMask:   new(m.MarkMask),
+			Priority: new(nextRuleNumber(nc, unix.AF_INET)),
 		},
 	}); err != nil {
 		if !errors.Is(err, os.ErrExist) {
@@ -67,9 +67,9 @@ func (m *rulesManager) Install() error {
 		Table:  m.TargetTable,
 		Action: unix.RTN_UNICAST,
 		Attributes: &rtnetlink.RuleAttributes{
-			FwMark:   pointer.To(m.InternalMark),
-			FwMask:   pointer.To(m.MarkMask),
-			Priority: pointer.To(nextRuleNumber(nc, unix.AF_INET6)),
+			FwMark:   new(m.InternalMark),
+			FwMask:   new(m.MarkMask),
+			Priority: new(nextRuleNumber(nc, unix.AF_INET6)),
 		},
 	}); err != nil {
 		if !errors.Is(err, os.ErrExist) {

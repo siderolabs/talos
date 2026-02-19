@@ -11,7 +11,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -34,7 +33,7 @@ func (suite *ConfigSuite) TestReconcileConfig() {
 			ClusterID:     "cluster1",
 			ClusterSecret: "kCQsKr4B28VUl7qw1sVkTDNF9fFH++ViIuKsss+C6kc=",
 			ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{
-				DiscoveryEnabled: pointer.To(true),
+				DiscoveryEnabled: new(true),
 			},
 		},
 	}))
@@ -69,10 +68,10 @@ func (suite *ConfigSuite) TestReconcileConfigCustom() {
 			ClusterID:     "cluster1",
 			ClusterSecret: "kCQsKr4B28VUl7qw1sVkTDNF9fFH++ViIuKsss+C6kc=",
 			ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{
-				DiscoveryEnabled: pointer.To(true),
+				DiscoveryEnabled: new(true),
 				DiscoveryRegistries: v1alpha1.DiscoveryRegistriesConfig{
 					RegistryKubernetes: v1alpha1.RegistryKubernetesConfig{
-						RegistryDisabled: pointer.To(true),
+						RegistryDisabled: new(true),
 					},
 					RegistryService: v1alpha1.RegistryServiceConfig{
 						RegistryEndpoint: "https://[2001:470:6d:30e:565d:e162:e2a0:cf5a]:3456/",
@@ -104,10 +103,10 @@ func (suite *ConfigSuite) TestReconcileConfigCustomInsecure() {
 			ClusterID:     "cluster1",
 			ClusterSecret: "kCQsKr4B28VUl7qw1sVkTDNF9fFH++ViIuKsss+C6kc=",
 			ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{
-				DiscoveryEnabled: pointer.To(true),
+				DiscoveryEnabled: new(true),
 				DiscoveryRegistries: v1alpha1.DiscoveryRegistriesConfig{
 					RegistryKubernetes: v1alpha1.RegistryKubernetesConfig{
-						RegistryDisabled: pointer.To(true),
+						RegistryDisabled: new(true),
 					},
 					RegistryService: v1alpha1.RegistryServiceConfig{
 						RegistryEndpoint: "http://localhost:3000",

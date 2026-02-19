@@ -62,6 +62,7 @@ var genCSRCmd = &cobra.Command{
 		}
 
 		ips := []net.IP{parsed}
+
 		opts = append(opts, x509.Organization(roles.Strings()...))
 		opts = append(opts, x509.IPAddresses(ips))
 

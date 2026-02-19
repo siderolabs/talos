@@ -103,14 +103,14 @@ func NewRegistryMirrorConfigV1Alpha1(name string) *RegistryMirrorConfigV1Alpha1 
 
 func exampleRegistryMirrorConfigVAlpha1() *RegistryMirrorConfigV1Alpha1 {
 	cfg := NewRegistryMirrorConfigV1Alpha1("registry.k8s.io")
-	cfg.RegistrySkipFallback = pointer.To(true)
+	cfg.RegistrySkipFallback = new(true)
 	cfg.RegistryEndpoints = []RegistryEndpoint{
 		{
 			EndpointURL: meta.URL{URL: ensure.Value(url.Parse("https://my-private-registry.local:5000"))},
 		},
 		{
 			EndpointURL:          meta.URL{URL: ensure.Value(url.Parse("http://my-harbor/v2/registry-k8s.io/"))},
-			EndpointOverridePath: pointer.To(true),
+			EndpointOverridePath: new(true),
 		},
 	}
 

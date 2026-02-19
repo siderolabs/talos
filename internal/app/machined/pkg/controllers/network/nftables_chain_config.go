@@ -16,7 +16,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -139,7 +138,7 @@ func (ctrl *NfTablesChainConfigController) buildIngressChain(cfg *config.Machine
 					Operator: nethelpers.OperatorEqual,
 				},
 				AnonCounter: true,
-				Verdict:     pointer.To(nethelpers.VerdictAccept),
+				Verdict:     new(nethelpers.VerdictAccept),
 			},
 		}
 
@@ -158,7 +157,7 @@ func (ctrl *NfTablesChainConfigController) buildIngressChain(cfg *config.Machine
 						},
 					},
 					AnonCounter: true,
-					Verdict:     pointer.To(nethelpers.VerdictAccept),
+					Verdict:     new(nethelpers.VerdictAccept),
 				},
 				network.NfTablesRule{
 					MatchConntrackState: &network.NfTablesConntrackStateMatch{
@@ -167,7 +166,7 @@ func (ctrl *NfTablesChainConfigController) buildIngressChain(cfg *config.Machine
 						},
 					},
 					AnonCounter: true,
-					Verdict:     pointer.To(nethelpers.VerdictDrop),
+					Verdict:     new(nethelpers.VerdictDrop),
 				},
 				// CVE-1999-0524 mitigation: drop timestamp and address mask ICMP requests
 				network.NfTablesRule{
@@ -183,7 +182,7 @@ func (ctrl *NfTablesChainConfigController) buildIngressChain(cfg *config.Machine
 						},
 					},
 					AnonCounter: true,
-					Verdict:     pointer.To(nethelpers.VerdictDrop),
+					Verdict:     new(nethelpers.VerdictDrop),
 				},
 				// allow ICMP and ICMPv6 explicitly
 				network.NfTablesRule{
@@ -194,7 +193,7 @@ func (ctrl *NfTablesChainConfigController) buildIngressChain(cfg *config.Machine
 						PacketRatePerSecond: 5,
 					},
 					AnonCounter: true,
-					Verdict:     pointer.To(nethelpers.VerdictAccept),
+					Verdict:     new(nethelpers.VerdictAccept),
 				},
 				network.NfTablesRule{
 					MatchLayer4: &network.NfTablesLayer4Match{
@@ -204,7 +203,7 @@ func (ctrl *NfTablesChainConfigController) buildIngressChain(cfg *config.Machine
 						PacketRatePerSecond: 5,
 					},
 					AnonCounter: true,
-					Verdict:     pointer.To(nethelpers.VerdictAccept),
+					Verdict:     new(nethelpers.VerdictAccept),
 				},
 			)
 
@@ -235,7 +234,7 @@ func (ctrl *NfTablesChainConfigController) buildIngressChain(cfg *config.Machine
 									},
 								},
 								AnonCounter: true,
-								Verdict:     pointer.To(nethelpers.VerdictAccept),
+								Verdict:     new(nethelpers.VerdictAccept),
 							},
 						)
 					}
@@ -259,7 +258,7 @@ func (ctrl *NfTablesChainConfigController) buildIngressChain(cfg *config.Machine
 							),
 						},
 						AnonCounter: true,
-						Verdict:     pointer.To(nethelpers.VerdictAccept),
+						Verdict:     new(nethelpers.VerdictAccept),
 					},
 				)
 			}
@@ -296,7 +295,7 @@ func (ctrl *NfTablesChainConfigController) buildIngressChain(cfg *config.Machine
 						},
 					},
 					AnonCounter: true,
-					Verdict:     pointer.To(verdict),
+					Verdict:     new(verdict),
 				},
 			)
 		}
@@ -336,7 +335,7 @@ func (ctrl *NfTablesChainConfigController) buildPreroutingChain(cfg *config.Mach
 					Operator: nethelpers.OperatorEqual,
 				},
 				AnonCounter: true,
-				Verdict:     pointer.To(nethelpers.VerdictAccept),
+				Verdict:     new(nethelpers.VerdictAccept),
 			},
 		}
 
@@ -348,7 +347,7 @@ func (ctrl *NfTablesChainConfigController) buildPreroutingChain(cfg *config.Mach
 					Invert:         true,
 				},
 				AnonCounter: true,
-				Verdict:     pointer.To(nethelpers.VerdictAccept),
+				Verdict:     new(nethelpers.VerdictAccept),
 			},
 		)
 
@@ -388,7 +387,7 @@ func (ctrl *NfTablesChainConfigController) buildPreroutingChain(cfg *config.Mach
 						},
 					},
 					AnonCounter: true,
-					Verdict:     pointer.To(verdict),
+					Verdict:     new(verdict),
 				},
 			)
 		}
@@ -406,7 +405,7 @@ func (ctrl *NfTablesChainConfigController) buildPreroutingChain(cfg *config.Mach
 						Protocol: nethelpers.ProtocolTCP,
 					},
 					AnonCounter: true,
-					Verdict:     pointer.To(nethelpers.VerdictDrop),
+					Verdict:     new(nethelpers.VerdictDrop),
 				},
 				network.NfTablesRule{
 					MatchConntrackState: &network.NfTablesConntrackStateMatch{
@@ -418,7 +417,7 @@ func (ctrl *NfTablesChainConfigController) buildPreroutingChain(cfg *config.Mach
 						Protocol: nethelpers.ProtocolUDP,
 					},
 					AnonCounter: true,
-					Verdict:     pointer.To(nethelpers.VerdictDrop),
+					Verdict:     new(nethelpers.VerdictDrop),
 				},
 			)
 		}

@@ -1447,7 +1447,7 @@ func (s *Server) Events(req *machine.EventsRequest, l machine.MachineService_Eve
 }
 
 func sendEmptyEvent(req *machine.EventsRequest, l machine.MachineService_EventsServer) error {
-	emptyEvent, err := pointer.To(runtime.NewEvent(nil, req.WithActorId)).ToMachineEvent()
+	emptyEvent, err := new(runtime.NewEvent(nil, req.WithActorId)).ToMachineEvent()
 	if err != nil {
 		return err
 	}

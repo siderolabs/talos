@@ -33,12 +33,15 @@ var genKeypairCmd = &cobra.Command{
 			if parsed == nil {
 				return fmt.Errorf("invalid IP: %s", genKeypairCmdFlags.ip)
 			}
+
 			ips := []net.IP{parsed}
 			opts = append(opts, x509.IPAddresses(ips))
 		}
+
 		if genKeypairCmdFlags.organization != "" {
 			opts = append(opts, x509.Organization(genKeypairCmdFlags.organization))
 		}
+
 		ca, err := x509.NewSelfSignedCertificateAuthority(opts...)
 		if err != nil {
 			return fmt.Errorf("error generating CA: %s", err)
@@ -54,6 +57,7 @@ var genKeypairCmd = &cobra.Command{
 		if err := os.WriteFile(certFile, ca.CrtPEM, 0o600); err != nil {
 			return fmt.Errorf("error writing certificate: %s", err)
 		}
+
 		if err := os.WriteFile(keyFile, ca.KeyPEM, 0o600); err != nil {
 			return fmt.Errorf("error writing key: %s", err)
 		}

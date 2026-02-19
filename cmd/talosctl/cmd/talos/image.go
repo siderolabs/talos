@@ -532,6 +532,7 @@ var imageTalosBundleCmd = &cobra.Command{
 			}
 
 			maximumVersion.Patch = 0
+
 			maximumVersion.Pre = nil
 			if err := maximumVersion.IncrementMinor(); err != nil {
 				panic(err) // panic, this should never happen

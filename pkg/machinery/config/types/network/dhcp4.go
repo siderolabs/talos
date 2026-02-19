@@ -103,7 +103,7 @@ func NewDHCPv4ConfigV1Alpha1(name string) *DHCPv4ConfigV1Alpha1 {
 
 func exampleDHCPv4ConfigV1Alpha1() *DHCPv4ConfigV1Alpha1 {
 	cfg := NewDHCPv4ConfigV1Alpha1("enp0s2")
-	cfg.ConfigClientIdentifier = pointer.To(nethelpers.ClientIdentifierMAC)
+	cfg.ConfigClientIdentifier = new(nethelpers.ClientIdentifierMAC)
 
 	return cfg
 }

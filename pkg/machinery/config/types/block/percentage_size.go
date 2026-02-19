@@ -78,7 +78,7 @@ func (ps *PercentageSize) UnmarshalText(text []byte) error {
 		return fmt.Errorf("percentage must be between 0 and 100, got %v", value)
 	}
 
-	ps.value = pointer.To(uint64(value))
+	ps.value = new(uint64(value))
 	ps.raw = raw
 
 	return nil

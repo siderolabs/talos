@@ -7,7 +7,6 @@ package k8stemplates
 import (
 	"slices"
 
-	"github.com/siderolabs/go-pointer"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -43,7 +42,7 @@ func KubeProxyDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) runtime.
 			UpdateStrategy: appsv1.DaemonSetUpdateStrategy{
 				Type: appsv1.RollingUpdateDaemonSetStrategyType,
 				RollingUpdate: &appsv1.RollingUpdateDaemonSet{
-					MaxUnavailable: pointer.To(intstr.FromInt(1)),
+					MaxUnavailable: new(intstr.FromInt(1)),
 				},
 			},
 			Template: corev1.PodTemplateSpec{
@@ -81,7 +80,7 @@ func KubeProxyDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) runtime.
 								},
 							},
 							SecurityContext: &corev1.SecurityContext{
-								Privileged: pointer.To(true),
+								Privileged: new(true),
 							},
 							VolumeMounts: []corev1.VolumeMount{
 								{

@@ -9,7 +9,6 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -62,11 +61,11 @@ func TestMerge(t *testing.T) {
 			left: &Config{
 				A: "a",
 				B: 3,
-				C: pointer.To(true),
+				C: new(true),
 				Slice: []Struct{
 					{
 						DA: true,
-						DB: pointer.To(1),
+						DB: new(1),
 					},
 				},
 				Map: map[string]Struct{
@@ -74,7 +73,7 @@ func TestMerge(t *testing.T) {
 						DA: true,
 					},
 					"b": {
-						DB: pointer.To(2),
+						DB: new(2),
 					},
 				},
 			},
@@ -84,46 +83,46 @@ func TestMerge(t *testing.T) {
 				Slice: []Struct{
 					{
 						DA: false,
-						DB: pointer.To(2),
+						DB: new(2),
 					},
 				},
 				Map: map[string]Struct{
 					"a": {
-						DB: pointer.To(3),
+						DB: new(3),
 					},
 					"b": {
 						DA: true,
-						DB: pointer.To(5),
+						DB: new(5),
 					},
 					"c": {
-						DB: pointer.To(4),
+						DB: new(4),
 					},
 				},
 			},
 			expected: &Config{
 				A: "aa",
 				B: 4,
-				C: pointer.To(true),
+				C: new(true),
 				Slice: []Struct{
 					{
 						DA: true,
-						DB: pointer.To(1),
+						DB: new(1),
 					},
 					{
 						DA: false,
-						DB: pointer.To(2),
+						DB: new(2),
 					},
 				},
 				Map: map[string]Struct{
 					"a": {
-						DB: pointer.To(3),
+						DB: new(3),
 					},
 					"b": {
 						DA: true,
-						DB: pointer.To(5),
+						DB: new(5),
 					},
 					"c": {
-						DB: pointer.To(4),
+						DB: new(4),
 					},
 				},
 			},
@@ -133,11 +132,11 @@ func TestMerge(t *testing.T) {
 			left: &Config{
 				A: "a",
 				B: 3,
-				C: pointer.To(true),
+				C: new(true),
 				Slice: []Struct{
 					{
 						DA: false,
-						DB: pointer.To(2),
+						DB: new(2),
 					},
 				},
 				Map: map[string]Struct{
@@ -145,7 +144,7 @@ func TestMerge(t *testing.T) {
 						DA: true,
 					},
 					"b": {
-						DB: pointer.To(2),
+						DB: new(2),
 					},
 				},
 			},
@@ -153,11 +152,11 @@ func TestMerge(t *testing.T) {
 			expected: &Config{
 				A: "a",
 				B: 3,
-				C: pointer.To(true),
+				C: new(true),
 				Slice: []Struct{
 					{
 						DA: false,
-						DB: pointer.To(2),
+						DB: new(2),
 					},
 				},
 				Map: map[string]Struct{
@@ -165,7 +164,7 @@ func TestMerge(t *testing.T) {
 						DA: true,
 					},
 					"b": {
-						DB: pointer.To(2),
+						DB: new(2),
 					},
 				},
 			},
@@ -176,11 +175,11 @@ func TestMerge(t *testing.T) {
 			right: &Config{
 				A: "a",
 				B: 3,
-				C: pointer.To(true),
+				C: new(true),
 				Slice: []Struct{
 					{
 						DA: false,
-						DB: pointer.To(2),
+						DB: new(2),
 					},
 				},
 				Map: map[string]Struct{
@@ -188,18 +187,18 @@ func TestMerge(t *testing.T) {
 						DA: true,
 					},
 					"b": {
-						DB: pointer.To(2),
+						DB: new(2),
 					},
 				},
 			},
 			expected: &Config{
 				A: "a",
 				B: 3,
-				C: pointer.To(true),
+				C: new(true),
 				Slice: []Struct{
 					{
 						DA: false,
-						DB: pointer.To(2),
+						DB: new(2),
 					},
 				},
 				Map: map[string]Struct{
@@ -207,7 +206,7 @@ func TestMerge(t *testing.T) {
 						DA: true,
 					},
 					"b": {
-						DB: pointer.To(2),
+						DB: new(2),
 					},
 				},
 			},
@@ -249,13 +248,13 @@ func TestMerge(t *testing.T) {
 		{
 			name: "merge with pointer override",
 			left: &Config{
-				D: pointer.To(1),
+				D: new(1),
 			},
 			right: &Config{
-				D: pointer.To(0),
+				D: new(0),
 			},
 			expected: &Config{
-				D: pointer.To(0),
+				D: new(0),
 			},
 		},
 		{

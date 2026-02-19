@@ -12,7 +12,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
-	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
@@ -223,7 +222,7 @@ func NewStringParameter(name, value string) ParameterSpec {
 	return ParameterSpec{
 		Type:   FSParameterTypeStringValue,
 		Name:   name,
-		String: pointer.To(value),
+		String: new(value),
 	}
 }
 

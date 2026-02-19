@@ -7,8 +7,6 @@
 package v1alpha1
 
 import (
-	"github.com/siderolabs/go-pointer"
-
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -1415,7 +1413,7 @@ func (ProxyConfig) Doc() *encoder.Doc {
 
 	doc.AddExample("", clusterProxyExample())
 
-	doc.Fields[0].AddExample("", pointer.To(false))
+	doc.Fields[0].AddExample("", new(false))
 	doc.Fields[1].AddExample("", clusterProxyImageExample())
 
 	return doc

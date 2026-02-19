@@ -9,7 +9,6 @@ import (
 	"net/netip"
 	"testing"
 
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -37,7 +36,7 @@ func TestResolverConfigMarshalStability(t *testing.T) {
 	}
 	cfg.ResolverSearchDomains = network.SearchDomainsConfig{
 		SearchDomains:        []string{"example.org", "example.com"},
-		SearchDisableDefault: pointer.To(false),
+		SearchDisableDefault: new(false),
 	}
 
 	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
@@ -72,7 +71,7 @@ func TestResolverConfigUnmarshal(t *testing.T) {
 		},
 		ResolverSearchDomains: network.SearchDomainsConfig{
 			SearchDomains:        []string{"example.org", "example.com"},
-			SearchDisableDefault: pointer.To(false),
+			SearchDisableDefault: new(false),
 		},
 	}, docs[0])
 }
@@ -123,7 +122,7 @@ func TestResolverV1Alpha1Validate(t *testing.T) {
 			v1alpha1Cfg: &v1alpha1.Config{
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
-						NetworkDisableSearchDomain: pointer.To(true),
+						NetworkDisableSearchDomain: new(true),
 					},
 				},
 			},

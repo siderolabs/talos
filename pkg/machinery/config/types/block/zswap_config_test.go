@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -33,8 +32,8 @@ func TestZswapConfigMarshalUnmarshal(t *testing.T) {
 			filename: "zswapconfig_full.yaml",
 			cfg: func(t *testing.T) *block.ZswapConfigV1Alpha1 {
 				c := block.NewZswapConfigV1Alpha1()
-				c.MaxPoolPercentConfig = pointer.To(50)
-				c.ShrinkerEnabledConfig = pointer.To(true)
+				c.MaxPoolPercentConfig = new(50)
+				c.ShrinkerEnabledConfig = new(true)
 
 				return c
 			},
@@ -103,8 +102,8 @@ func TestZswapVolumeConfigValidate(t *testing.T) {
 
 			cfg: func(t *testing.T) *block.ZswapConfigV1Alpha1 {
 				c := block.NewZswapConfigV1Alpha1()
-				c.MaxPoolPercentConfig = pointer.To(50)
-				c.ShrinkerEnabledConfig = pointer.To(true)
+				c.MaxPoolPercentConfig = new(50)
+				c.ShrinkerEnabledConfig = new(true)
 
 				return c
 			},
@@ -114,7 +113,7 @@ func TestZswapVolumeConfigValidate(t *testing.T) {
 
 			cfg: func(t *testing.T) *block.ZswapConfigV1Alpha1 {
 				c := block.NewZswapConfigV1Alpha1()
-				c.MaxPoolPercentConfig = pointer.To(150)
+				c.MaxPoolPercentConfig = new(150)
 
 				return c
 			},

@@ -24,7 +24,6 @@ import (
 	"github.com/containerd/cgroups/v3/cgroup2"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/go-debug"
-	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/internal/pkg/containermode"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -88,22 +87,22 @@ func getCgroupV2Resources(name string) *cgroup2.Resources {
 	case constants.CgroupInit:
 		return &cgroup2.Resources{
 			Memory: &cgroup2.Memory{
-				Min:  pointer.To[int64](constants.CgroupInitReservedMemory),
-				Low:  pointer.To[int64](constants.CgroupInitReservedMemory * 2),
-				Swap: pointer.To[int64](0),
+				Min:  new(int64(constants.CgroupInitReservedMemory)),
+				Low:  new(int64(constants.CgroupInitReservedMemory * 2)),
+				Swap: new(int64(0)),
 			},
 			CPU: &cgroup2.CPU{
-				Weight: pointer.To[uint64](MillicoresToCPUWeight(MilliCores(constants.CgroupInitMillicores))),
+				Weight: new(MillicoresToCPUWeight(MilliCores(constants.CgroupInitMillicores))),
 			},
 		}
 	case constants.CgroupSystem:
 		return &cgroup2.Resources{
 			Memory: &cgroup2.Memory{
-				Min: pointer.To[int64](constants.CgroupSystemReservedMemory),
-				Low: pointer.To[int64](constants.CgroupSystemReservedMemory * 2),
+				Min: new(int64(constants.CgroupSystemReservedMemory)),
+				Low: new(int64(constants.CgroupSystemReservedMemory * 2)),
 			},
 			CPU: &cgroup2.CPU{
-				Weight: pointer.To[uint64](MillicoresToCPUWeight(MilliCores(constants.CgroupSystemMillicores))),
+				Weight: new(MillicoresToCPUWeight(MilliCores(constants.CgroupSystemMillicores))),
 			},
 		}
 	case constants.CgroupSystemDebug:
@@ -111,94 +110,94 @@ func getCgroupV2Resources(name string) *cgroup2.Resources {
 	case constants.CgroupSystemRuntime:
 		return &cgroup2.Resources{
 			Memory: &cgroup2.Memory{
-				Min:  pointer.To[int64](constants.CgroupSystemRuntimeReservedMemory),
-				Low:  pointer.To[int64](constants.CgroupSystemRuntimeReservedMemory * 2),
-				Swap: pointer.To[int64](0),
+				Min:  new(int64(constants.CgroupSystemRuntimeReservedMemory)),
+				Low:  new(int64(constants.CgroupSystemRuntimeReservedMemory * 2)),
+				Swap: new(int64(0)),
 			},
 			CPU: &cgroup2.CPU{
-				Weight: pointer.To[uint64](MillicoresToCPUWeight(MilliCores(constants.CgroupSystemRuntimeMillicores))),
+				Weight: new(MillicoresToCPUWeight(MilliCores(constants.CgroupSystemRuntimeMillicores))),
 			},
 		}
 	case constants.CgroupUdevd:
 		return &cgroup2.Resources{
 			Memory: &cgroup2.Memory{
-				Min:  pointer.To[int64](constants.CgroupUdevdReservedMemory),
-				Low:  pointer.To[int64](constants.CgroupUdevdReservedMemory * 2),
-				Swap: pointer.To[int64](0),
+				Min:  new(int64(constants.CgroupUdevdReservedMemory)),
+				Low:  new(int64(constants.CgroupUdevdReservedMemory * 2)),
+				Swap: new(int64(0)),
 			},
 			CPU: &cgroup2.CPU{
-				Weight: pointer.To[uint64](MillicoresToCPUWeight(MilliCores(constants.CgroupUdevdMillicores))),
+				Weight: new(MillicoresToCPUWeight(MilliCores(constants.CgroupUdevdMillicores))),
 			},
 		}
 	case constants.CgroupPodRuntimeRoot:
 		return &cgroup2.Resources{
 			CPU: &cgroup2.CPU{
-				Weight: pointer.To[uint64](MillicoresToCPUWeight(MilliCores(constants.CgroupPodRuntimeRootMillicores))),
+				Weight: new(MillicoresToCPUWeight(MilliCores(constants.CgroupPodRuntimeRootMillicores))),
 			},
 		}
 	case constants.CgroupPodRuntime:
 		return &cgroup2.Resources{
 			Memory: &cgroup2.Memory{
-				Min:  pointer.To[int64](constants.CgroupPodRuntimeReservedMemory),
-				Low:  pointer.To[int64](constants.CgroupPodRuntimeReservedMemory * 2),
-				Swap: pointer.To[int64](0),
+				Min:  new(int64(constants.CgroupPodRuntimeReservedMemory)),
+				Low:  new(int64(constants.CgroupPodRuntimeReservedMemory * 2)),
+				Swap: new(int64(0)),
 			},
 			CPU: &cgroup2.CPU{
-				Weight: pointer.To[uint64](MillicoresToCPUWeight(MilliCores(constants.CgroupPodRuntimeMillicores))),
+				Weight: new(MillicoresToCPUWeight(MilliCores(constants.CgroupPodRuntimeMillicores))),
 			},
 		}
 	case constants.CgroupKubelet:
 		return &cgroup2.Resources{
 			Memory: &cgroup2.Memory{
-				Min:  pointer.To[int64](constants.CgroupKubeletReservedMemory),
-				Low:  pointer.To[int64](constants.CgroupKubeletReservedMemory * 2),
-				Swap: pointer.To[int64](0),
+				Min:  new(int64(constants.CgroupKubeletReservedMemory)),
+				Low:  new(int64(constants.CgroupKubeletReservedMemory * 2)),
+				Swap: new(int64(0)),
 			},
 			CPU: &cgroup2.CPU{
-				Weight: pointer.To[uint64](MillicoresToCPUWeight(MilliCores(constants.CgroupKubeletMillicores))),
+				Weight: new(MillicoresToCPUWeight(MilliCores(constants.CgroupKubeletMillicores))),
 			},
 		}
 	case constants.CgroupEtcd:
 		return &cgroup2.Resources{
 			Memory: &cgroup2.Memory{
-				Low:  pointer.To[int64](constants.CgroupEtcdReservedMemory),
-				Swap: pointer.To[int64](0),
+				Low:  new(int64(constants.CgroupEtcdReservedMemory)),
+				Swap: new(int64(0)),
 			},
 			CPU: &cgroup2.CPU{
-				Weight: pointer.To[uint64](MillicoresToCPUWeight(MilliCores(constants.CgroupEtcdMillicores))),
+				Weight: new(MillicoresToCPUWeight(MilliCores(constants.CgroupEtcdMillicores))),
 			},
 		}
 	case constants.CgroupDashboard:
 		return &cgroup2.Resources{
 			Memory: &cgroup2.Memory{
-				Max: zeroIfRace(pointer.To[int64](constants.CgroupDashboardMaxMemory)),
+				Max: zeroIfRace(new(int64(constants.CgroupDashboardMaxMemory))),
 			},
 			CPU: &cgroup2.CPU{
-				Weight: pointer.To[uint64](MillicoresToCPUWeight(MilliCores(constants.CgroupDashboardMillicores))),
+				Weight: new(MillicoresToCPUWeight(MilliCores(constants.CgroupDashboardMillicores))),
 			},
 		}
 	case constants.CgroupApid:
 		return &cgroup2.Resources{
 			Memory: &cgroup2.Memory{
-				Min:  pointer.To[int64](constants.CgroupApidReservedMemory),
-				Low:  pointer.To[int64](constants.CgroupApidReservedMemory * 2),
-				Max:  zeroIfRace(pointer.To[int64](constants.CgroupApidMaxMemory)),
-				Swap: pointer.To[int64](0),
+				Min:  new(int64(constants.CgroupApidReservedMemory)),
+				Low:  new(int64(constants.CgroupApidReservedMemory * 2)),
+				Max:  zeroIfRace(new(int64(constants.CgroupApidMaxMemory))),
+				Swap: new(int64(0)),
 			},
 			CPU: &cgroup2.CPU{
-				Weight: pointer.To[uint64](MillicoresToCPUWeight(MilliCores(constants.CgroupApidMillicores))),
+				Weight: new(MillicoresToCPUWeight(MilliCores(constants.CgroupApidMillicores))),
 			},
 		}
 	case constants.CgroupTrustd:
 		return &cgroup2.Resources{
 			Memory: &cgroup2.Memory{
-				Min:  pointer.To[int64](constants.CgroupTrustdReservedMemory),
-				Low:  pointer.To[int64](constants.CgroupTrustdReservedMemory * 2),
-				Max:  zeroIfRace(pointer.To[int64](constants.CgroupTrustdMaxMemory)),
-				Swap: pointer.To[int64](0),
+				Min:  new(int64(constants.CgroupTrustdReservedMemory)),
+				Low:  new(int64(constants.CgroupTrustdReservedMemory * 2)),
+				Max:  zeroIfRace(new(int64(constants.CgroupTrustdMaxMemory))),
+				Swap: new(int64(0)),
 			},
 			CPU: &cgroup2.CPU{
-				Weight: pointer.To[uint64](MillicoresToCPUWeight(MilliCores(constants.CgroupTrustdMillicores))),
+				Weight: new(MillicoresToCPUWeight(MilliCores(constants.CgroupTrustdMillicores))),
 			},
 		}
 	}

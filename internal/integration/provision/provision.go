@@ -22,7 +22,6 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/v2/encryption"
 	"github.com/siderolabs/go-kubernetes/kubernetes/upgrade"
-	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/siderolabs/go-retry/retry"
 	sideronet "github.com/siderolabs/net"
@@ -567,7 +566,7 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 				{
 					KeySlot:        0,
 					KeyNodeID:      &block.EncryptionKeyNodeID{},
-					KeyLockToSTATE: pointer.To(true),
+					KeyLockToSTATE: new(true),
 				},
 			}
 

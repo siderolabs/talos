@@ -10,7 +10,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/siderolabs/go-pointer"
 	v1 "k8s.io/api/core/v1"
 
 	"github.com/siderolabs/talos/internal/integration/base"
@@ -215,7 +214,7 @@ func (suite *NodeLabelsSuite) setAllowScheduling(nodeIP string, allowScheduling 
 
 	bytes := suite.PatchV1Alpha1Config(nodeConfig, func(nodeConfigRaw *v1alpha1.Config) {
 		if allowScheduling {
-			nodeConfigRaw.ClusterConfig.AllowSchedulingOnControlPlanes = pointer.To(true)
+			nodeConfigRaw.ClusterConfig.AllowSchedulingOnControlPlanes = new(true)
 		} else {
 			nodeConfigRaw.ClusterConfig.AllowSchedulingOnControlPlanes = nil
 		}

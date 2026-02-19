@@ -9,7 +9,6 @@ import (
 	"net/url"
 
 	"github.com/siderolabs/crypto/x509"
-	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
@@ -21,8 +20,8 @@ import (
 func (in *Input) worker() ([]config.Document, error) {
 	v1alpha1Config := &v1alpha1.Config{
 		ConfigVersion: "v1alpha1",
-		ConfigDebug:   pointer.To(in.Options.Debug),
-		ConfigPersist: pointer.To(true),
+		ConfigDebug:   new(in.Options.Debug),
+		ConfigPersist: new(true),
 	}
 
 	machine := &v1alpha1.MachineConfig{
@@ -36,7 +35,7 @@ func (in *Input) worker() ([]config.Document, error) {
 		MachineInstall: &v1alpha1.InstallConfig{
 			InstallDisk:            in.Options.InstallDisk,
 			InstallImage:           in.Options.InstallImage,
-			InstallWipe:            pointer.To(false),
+			InstallWipe:            new(false),
 			InstallExtraKernelArgs: in.Options.InstallExtraKernelArgs,
 		},
 		MachineDisks:    in.Options.MachineDisks,
@@ -45,46 +44,46 @@ func (in *Input) worker() ([]config.Document, error) {
 	}
 
 	if in.Options.VersionContract.GrubUseUKICmdlineDefault() {
-		machine.MachineInstall.InstallGrubUseUKICmdline = pointer.To(true)
+		machine.MachineInstall.InstallGrubUseUKICmdline = new(true)
 	}
 
 	if !in.Options.VersionContract.HideRBACAndKeyUsage() {
-		machine.MachineFeatures.RBAC = pointer.To(true)
+		machine.MachineFeatures.RBAC = new(true)
 
 		if in.Options.VersionContract.ApidExtKeyUsageCheckEnabled() {
-			machine.MachineFeatures.ApidCheckExtKeyUsage = pointer.To(true)
+			machine.MachineFeatures.ApidCheckExtKeyUsage = new(true)
 		}
 	}
 
 	if in.Options.VersionContract.DiskQuotaSupportEnabled() {
-		machine.MachineFeatures.DiskQuotaSupport = pointer.To(true)
+		machine.MachineFeatures.DiskQuotaSupport = new(true)
 	}
 
 	if kubePrismPort, optionSet := in.Options.KubePrismPort.Get(); optionSet { // default to enabled, but if set explicitly, allow it to be disabled
 		if kubePrismPort > 0 {
 			machine.MachineFeatures.KubePrismSupport = &v1alpha1.KubePrism{
-				ServerEnabled: pointer.To(true),
+				ServerEnabled: new(true),
 				ServerPort:    kubePrismPort,
 			}
 		}
 	} else if in.Options.VersionContract.KubePrismEnabled() {
 		machine.MachineFeatures.KubePrismSupport = &v1alpha1.KubePrism{
-			ServerEnabled: pointer.To(true),
+			ServerEnabled: new(true),
 			ServerPort:    constants.DefaultKubePrismPort,
 		}
 	}
 
 	if in.Options.VersionContract.KubeletDefaultRuntimeSeccompProfileEnabled() {
-		machine.MachineKubelet.KubeletDefaultRuntimeSeccompProfileEnabled = pointer.To(true)
+		machine.MachineKubelet.KubeletDefaultRuntimeSeccompProfileEnabled = new(true)
 	}
 
 	if in.Options.VersionContract.KubeletManifestsDirectoryDisabled() {
-		machine.MachineKubelet.KubeletDisableManifestsDirectory = pointer.To(true)
+		machine.MachineKubelet.KubeletDisableManifestsDirectory = new(true)
 	}
 
 	if in.Options.VersionContract.HostDNSEnabled() {
 		machine.MachineFeatures.HostDNSSupport = &v1alpha1.HostDNSConfig{
-			HostDNSEnabled:              pointer.To(true),
+			HostDNSEnabled:              new(true),
 			HostDNSForwardKubeDNSToHost: ptrOrNil(in.Options.HostDNSForwardKubeDNSToHost.ValueOrZero() || in.Options.VersionContract.HostDNSForwardKubeDNSToHost()),
 		}
 	}
@@ -112,11 +111,11 @@ func (in *Input) worker() ([]config.Document, error) {
 
 	if in.Options.DiscoveryEnabled != nil {
 		cluster.ClusterDiscoveryConfig = &v1alpha1.ClusterDiscoveryConfig{
-			DiscoveryEnabled: pointer.To(*in.Options.DiscoveryEnabled),
+			DiscoveryEnabled: new(*in.Options.DiscoveryEnabled),
 		}
 
 		if in.Options.VersionContract.KubernetesDiscoveryBackendDisabled() {
-			cluster.ClusterDiscoveryConfig.DiscoveryRegistries.RegistryKubernetes.RegistryDisabled = pointer.To(true)
+			cluster.ClusterDiscoveryConfig.DiscoveryRegistries.RegistryKubernetes.RegistryDisabled = new(true)
 		}
 	}
 

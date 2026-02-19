@@ -86,6 +86,7 @@ var configEndpointCmd = &cobra.Command{
 		}
 
 		ctxData.Endpoints = args
+
 		if err := c.Save(GlobalArgs.Talosconfig); err != nil {
 			return fmt.Errorf("error writing config: %w", err)
 		}
@@ -117,6 +118,7 @@ var configNodeCmd = &cobra.Command{
 		}
 
 		ctxData.Nodes = args
+
 		if err := c.Save(GlobalArgs.Talosconfig); err != nil {
 			return fmt.Errorf("error writing config: %w", err)
 		}
@@ -166,6 +168,7 @@ var configAddCmd = &cobra.Command{
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		context := args[0]
+
 		c, err := clientconfig.Open(GlobalArgs.Talosconfig)
 		if err != nil {
 			return fmt.Errorf("error reading config: %w", err)
@@ -175,6 +178,7 @@ var configAddCmd = &cobra.Command{
 
 		if configAddCmdFlags.ca != "" {
 			var caBytes []byte
+
 			caBytes, err = os.ReadFile(configAddCmdFlags.ca)
 			if err != nil {
 				return fmt.Errorf("error reading CA: %w", err)
@@ -261,6 +265,7 @@ var configRemoveCmd = &cobra.Command{
 			}
 
 			noChanges = false
+
 			delete(c.Contexts, match)
 		}
 
@@ -330,6 +335,7 @@ var configGetContextsCmd = &cobra.Command{
 
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 		fmt.Fprintln(w, "CURRENT\tNAME\tENDPOINTS\tNODES")
+
 		for _, name := range keys {
 			context := c.Contexts[name]
 
@@ -366,6 +372,7 @@ var configMergeCmd = &cobra.Command{
 	Args:  cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		from := args[0]
+
 		c, err := clientconfig.Open(GlobalArgs.Talosconfig)
 		if err != nil {
 			return fmt.Errorf("error reading config: %w", err)

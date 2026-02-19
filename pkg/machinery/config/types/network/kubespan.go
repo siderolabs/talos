@@ -149,11 +149,11 @@ func NewKubeSpanV1Alpha1() *KubeSpanConfigV1Alpha1 {
 
 func exampleKubeSpanV1Alpha1() *KubeSpanConfigV1Alpha1 {
 	cfg := NewKubeSpanV1Alpha1()
-	cfg.ConfigEnabled = pointer.To(true)
-	cfg.ConfigAdvertiseKubernetesNetworks = pointer.To(false)
-	cfg.ConfigAllowDownPeerBypass = pointer.To(false)
-	cfg.ConfigHarvestExtraEndpoints = pointer.To(false)
-	cfg.ConfigMTU = pointer.To(uint32(1420))
+	cfg.ConfigEnabled = new(true)
+	cfg.ConfigAdvertiseKubernetesNetworks = new(false)
+	cfg.ConfigAllowDownPeerBypass = new(false)
+	cfg.ConfigHarvestExtraEndpoints = new(false)
+	cfg.ConfigMTU = new(uint32(1420))
 	cfg.ConfigFilters = &KubeSpanFiltersConfig{
 		ConfigEndpoints:                 []string{"0.0.0.0/0", "::/0"},
 		ConfigExcludeAdvertisedNetworks: []Prefix{{netip.MustParsePrefix("192.168.1.0/24")}, {netip.MustParsePrefix("2003::/16")}},

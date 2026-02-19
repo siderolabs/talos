@@ -8,7 +8,6 @@ import (
 	"cmp"
 	"fmt"
 
-	"github.com/siderolabs/go-pointer"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -79,9 +78,9 @@ func CoreDNSService(spec *k8s.BootstrapManifestsConfigSpec) runtime.Object {
 	}
 
 	if spec.DNSServiceIP != "" && spec.DNSServiceIPv6 != "" {
-		obj.Spec.IPFamilyPolicy = pointer.To(corev1.IPFamilyPolicyRequireDualStack)
+		obj.Spec.IPFamilyPolicy = new(corev1.IPFamilyPolicyRequireDualStack)
 	} else {
-		obj.Spec.IPFamilyPolicy = pointer.To(corev1.IPFamilyPolicySingleStack)
+		obj.Spec.IPFamilyPolicy = new(corev1.IPFamilyPolicySingleStack)
 	}
 
 	return obj
@@ -230,11 +229,11 @@ func CoreDNSDeployment(spec *k8s.BootstrapManifestsConfigSpec) runtime.Object {
 			},
 		},
 		Spec: appsv1.DeploymentSpec{
-			Replicas: pointer.To(int32(2)),
+			Replicas: new(int32(2)),
 			Strategy: appsv1.DeploymentStrategy{
 				Type: appsv1.RollingUpdateDeploymentStrategyType,
 				RollingUpdate: &appsv1.RollingUpdateDeployment{
-					MaxUnavailable: pointer.To(intstr.FromInt(1)),
+					MaxUnavailable: new(intstr.FromInt(1)),
 				},
 			},
 			Selector: &v1.LabelSelector{
@@ -355,12 +354,12 @@ func CoreDNSDeployment(spec *k8s.BootstrapManifestsConfigSpec) runtime.Object {
 								},
 							},
 							SecurityContext: &corev1.SecurityContext{
-								AllowPrivilegeEscalation: pointer.To(false),
+								AllowPrivilegeEscalation: new(false),
 								Capabilities: &corev1.Capabilities{
 									Add:  []corev1.Capability{"NET_BIND_SERVICE"},
 									Drop: []corev1.Capability{"ALL"},
 								},
-								ReadOnlyRootFilesystem: pointer.To(true),
+								ReadOnlyRootFilesystem: new(true),
 							},
 						},
 					},

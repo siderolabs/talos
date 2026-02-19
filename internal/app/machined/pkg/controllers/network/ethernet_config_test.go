@@ -27,7 +27,7 @@ type EthernetConfigSuite struct {
 func (suite *EthernetConfigSuite) TestReconcile() {
 	cfg1 := networkcfg.NewEthernetConfigV1Alpha1("enp0s1")
 	cfg1.ChannelsConfig = &networkcfg.EthernetChannelsConfig{
-		RX: pointer.To[uint32](4),
+		RX: new(uint32(4)),
 	}
 
 	ctr, err := container.New(cfg1)
@@ -45,7 +45,7 @@ func (suite *EthernetConfigSuite) TestReconcile() {
 		"tx-checksum-ipv4": true,
 	}
 	cfg2.RingsConfig = &networkcfg.EthernetRingsConfig{
-		RX: pointer.To[uint32](16),
+		RX: new(uint32(16)),
 	}
 
 	ctr, err = container.New(cfg1, cfg2)

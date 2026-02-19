@@ -10,7 +10,6 @@ import (
 
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/xtesting/must"
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -34,7 +33,7 @@ func TestNew(t *testing.T) {
 	v1alpha1Cfg := &v1alpha1.Config{
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineFeatures: &v1alpha1.FeaturesConfig{
-				DiskQuotaSupport: pointer.To(true),
+				DiskQuotaSupport: new(true),
 			},
 		},
 		ClusterConfig: &v1alpha1.ClusterConfig{

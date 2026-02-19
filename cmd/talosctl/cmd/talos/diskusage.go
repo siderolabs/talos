@@ -105,6 +105,7 @@ var duCmd = &cobra.Command{
 					} else {
 						fmt.Fprintln(w, "SIZE\tNAME")
 					}
+
 					addedHeader = true
 				}
 

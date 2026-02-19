@@ -11,8 +11,6 @@ import (
 	"net"
 	"net/url"
 
-	"github.com/siderolabs/go-pointer"
-
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
@@ -86,7 +84,7 @@ func (s *EventSinkV1Alpha1) Runtime() config.RuntimeConfig {
 
 // EventsEndpoint implements config.RuntimeConfig interface.
 func (s *EventSinkV1Alpha1) EventsEndpoint() *string {
-	return pointer.To(s.Endpoint)
+	return new(s.Endpoint)
 }
 
 // KmsgLogURLs implements config.RuntimeConfig interface.

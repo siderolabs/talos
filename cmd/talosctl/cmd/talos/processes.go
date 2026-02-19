@@ -48,11 +48,13 @@ var processesCmd = &cobra.Command{
 				if err = ui.Init(); err != nil {
 					return fmt.Errorf("failed to initialize termui: %w", err)
 				}
+
 				defer ui.Close()
 
 				processesUI(ctx, c)
 			default:
 				var output string
+
 				output, err = processesOutput(ctx, c)
 				if err != nil {
 					return err

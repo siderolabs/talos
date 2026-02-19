@@ -428,7 +428,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 							Type:   slave.Type,
 							Index:  slave.Index,
 							Attributes: &rtnetlink.LinkAttributes{
-								Master: pointer.To[uint32](0),
+								Master: new(uint32(0)),
 							},
 						}); err != nil {
 							return fmt.Errorf("error unslaving link %q under %q: %w", slave.Attributes.Name, link.TypedSpec().BondSlave.MasterName, err)
@@ -502,7 +502,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 							Type:   slave.Type,
 							Index:  slave.Index,
 							Attributes: &rtnetlink.LinkAttributes{
-								Master: pointer.To[uint32](0),
+								Master: new(uint32(0)),
 							},
 						}); err != nil {
 							return fmt.Errorf("error unslaving link %q under %q: %w", slave.Attributes.Name, link.TypedSpec().BridgeSlave.MasterName, err)
@@ -691,13 +691,13 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 				Type:   existing.Type,
 				Index:  existing.Index,
 				Attributes: &rtnetlink.LinkAttributes{
-					Master: pointer.To(masterIndex),
+					Master: new(masterIndex),
 				},
 			}); err != nil {
 				return fmt.Errorf("error enslaving/unslaving link %q under %q: %w", link.TypedSpec().Name, masterName, err)
 			}
 
-			existing.Attributes.Master = pointer.To(masterIndex)
+			existing.Attributes.Master = new(masterIndex)
 
 			logger.Info("enslaved/unslaved link", zap.String("parent", masterName))
 		}

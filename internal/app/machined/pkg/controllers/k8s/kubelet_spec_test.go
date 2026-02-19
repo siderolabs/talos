@@ -14,7 +14,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/go-kubernetes/kubernetes/compatibility"
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -353,10 +352,10 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 				ClientCAFile: constants.KubernetesCACert,
 			},
 			Webhook: kubeletconfig.KubeletWebhookAuthentication{
-				Enabled: pointer.To(true),
+				Enabled: new(true),
 			},
 			Anonymous: kubeletconfig.KubeletAnonymousAuthentication{
-				Enabled: pointer.To(false),
+				Enabled: new(false),
 			},
 		},
 		Authorization: kubeletconfig.KubeletAuthorization{
@@ -368,11 +367,11 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 		RotateCertificates:    true,
 		ProtectKernelDefaults: true,
 		Address:               "0.0.0.0",
-		OOMScoreAdj:           pointer.To[int32](constants.KubeletOOMScoreAdj),
+		OOMScoreAdj:           new(int32(constants.KubeletOOMScoreAdj)),
 		ClusterDomain:         "cluster.local",
 		ClusterDNS:            []string{"10.0.0.5"},
-		SerializeImagePulls:   pointer.To(false),
-		FailSwapOn:            pointer.To(false),
+		SerializeImagePulls:   new(false),
+		FailSwapOn:            new(false),
 		SystemReserved: map[string]string{
 			"cpu":               constants.KubeletSystemReservedCPU,
 			"memory":            constants.KubeletSystemReservedMemoryWorker,
@@ -388,7 +387,7 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 		TLSMinVersion:                   "VersionTLS13",
 		StaticPodPath:                   constants.ManifestsDirectory,
 		ContainerRuntimeEndpoint:        "unix://" + constants.CRIContainerdAddress,
-		ResolverConfig:                  pointer.To(constants.PodResolvConfPath),
+		ResolverConfig:                  new(constants.PodResolvConfPath),
 	}
 
 	for _, tt := range []struct {
@@ -410,8 +409,8 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 			},
 			kubeletVersion: compatibility.VersionFromImageRef("ghcr.io/siderolabs/kubelet:v1.29.0"),
 			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
-				kc.OOMScoreAdj = pointer.To[int32](-300)
-				kc.EnableDebuggingHandlers = pointer.To(true)
+				kc.OOMScoreAdj = new(int32(-300))
+				kc.EnableDebuggingHandlers = new(true)
 			},
 			machineType: machine.TypeWorker,
 		},
@@ -459,7 +458,7 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 			},
 			kubeletVersion: compatibility.VersionFromImageRef("ghcr.io/siderolabs/kubelet:v1.29.0"),
 			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
-				kc.SeccompDefault = pointer.To(true)
+				kc.SeccompDefault = new(true)
 			},
 			machineType: machine.TypeWorker,
 		},
@@ -472,7 +471,7 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 			},
 			kubeletVersion: compatibility.VersionFromImageRef("ghcr.io/siderolabs/kubelet:v1.29.0"),
 			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {
-				kc.Authentication.Webhook.Enabled = pointer.To(false)
+				kc.Authentication.Webhook.Enabled = new(false)
 				kc.Authorization.Mode = kubeletconfig.KubeletAuthorizationModeAlwaysAllow
 			},
 			machineType: machine.TypeWorker,

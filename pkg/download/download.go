@@ -165,6 +165,7 @@ func Download(ctx context.Context, endpoint string, opts ...Option) (b []byte, e
 
 		if err = func() error {
 			var u *url.URL
+
 			u, err = url.Parse(attemptEndpoint)
 			if err != nil {
 				return err
@@ -172,6 +173,7 @@ func Download(ctx context.Context, endpoint string, opts ...Option) (b []byte, e
 
 			if u.Scheme == "file" {
 				var fileContent []byte
+
 				fileContent, err = os.ReadFile(u.Path)
 				if err != nil {
 					return err

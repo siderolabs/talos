@@ -273,6 +273,7 @@ func TestStandardDirectoryVolumesTransformer(t *testing.T) {
 				require.Len(t, resources, 1+14) // +1 for /var/run symlink, +14 for standard directories
 
 				var varRunSymlinkResource *volumeconfig.VolumeResource
+
 				for i := range resources {
 					if resources[i].VolumeID == "/var/run" {
 						varRunSymlinkResource = &resources[i]
@@ -294,9 +295,11 @@ func TestStandardDirectoryVolumesTransformer(t *testing.T) {
 				expectedPaths := []string{"/var/log", "/var/lib", constants.EtcdDataVolumeID}
 				for _, expectedPath := range expectedPaths {
 					var found bool
+
 					for i := range resources {
 						if resources[i].VolumeID == expectedPath {
 							found = true
+
 							assert.Equal(t, block.SystemVolumeLabel, resources[i].Label)
 							testTransformFunc(t, resources[i].TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
 								require.NoError(t, err)
@@ -307,6 +310,7 @@ func TestStandardDirectoryVolumesTransformer(t *testing.T) {
 							break
 						}
 					}
+
 					assert.True(t, found, "should have resource for %s", expectedPath)
 				}
 			},

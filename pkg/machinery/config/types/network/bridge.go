@@ -10,7 +10,6 @@ import (
 	"errors"
 
 	"github.com/siderolabs/gen/optional"
-	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
@@ -140,7 +139,7 @@ func NewBridgeConfigV1Alpha1(name string) *BridgeConfigV1Alpha1 {
 func exampleBridgeConfigV1Alpha1() *BridgeConfigV1Alpha1 {
 	cfg := NewBridgeConfigV1Alpha1("bridge.3")
 	cfg.BridgeLinks = []string{"eno1", "eno2"}
-	cfg.BridgeSTP.BridgeSTPEnabled = pointer.To(true)
+	cfg.BridgeSTP.BridgeSTPEnabled = new(true)
 
 	return cfg
 }

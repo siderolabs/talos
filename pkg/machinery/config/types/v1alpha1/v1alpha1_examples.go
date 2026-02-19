@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/siderolabs/crypto/x509"
-	"github.com/siderolabs/go-pointer"
 	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
@@ -65,10 +64,10 @@ func pemEncodedKeyExample() *x509.PEMEncodedKey {
 func machineControlplaneExample() *MachineControlPlaneConfig {
 	return &MachineControlPlaneConfig{
 		MachineControllerManager: &MachineControllerManagerConfig{
-			MachineControllerManagerDisabled: pointer.To(false),
+			MachineControllerManagerDisabled: new(false),
 		},
 		MachineScheduler: &MachineSchedulerConfig{
-			MachineSchedulerDisabled: pointer.To(true),
+			MachineSchedulerDisabled: new(true),
 		},
 	}
 }
@@ -90,8 +89,8 @@ func machineInstallExample() *InstallConfig {
 	return &InstallConfig{
 		InstallDisk:              "/dev/sda",
 		InstallImage:             "ghcr.io/siderolabs/installer:latest",
-		InstallWipe:              pointer.To(false),
-		InstallGrubUseUKICmdline: pointer.To(true),
+		InstallWipe:              new(false),
+		InstallGrubUseUKICmdline: new(true),
 	}
 }
 
@@ -149,7 +148,7 @@ func machineSysfsExample() map[string]string {
 
 func machineFeaturesExample() *FeaturesConfig {
 	return &FeaturesConfig{
-		DiskQuotaSupport: pointer.To(true),
+		DiskQuotaSupport: new(true),
 	}
 }
 
@@ -296,7 +295,7 @@ func clusterCoreDNSExample() *CoreDNS {
 
 func clusterExternalCloudProviderConfigExample() *ExternalCloudProviderConfig {
 	return &ExternalCloudProviderConfig{
-		ExternalEnabled: pointer.To(true),
+		ExternalEnabled: new(true),
 		ExternalManifests: []string{
 			"https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml",
 			"https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/aws-cloud-controller-manager-daemonset.yaml",
@@ -375,7 +374,7 @@ metadata:
 
 func clusterDiscoveryExample() ClusterDiscoveryConfig {
 	return ClusterDiscoveryConfig{
-		DiscoveryEnabled: pointer.To(true),
+		DiscoveryEnabled: new(true),
 		DiscoveryRegistries: DiscoveryRegistriesConfig{
 			RegistryService: RegistryServiceConfig{
 				RegistryEndpoint: constants.DefaultDiscoveryServiceEndpoint,
@@ -552,7 +551,7 @@ func authorizationConfigExample() []*AuthorizationConfigAuthorizerConfig {
 
 func kubernetesTalosAPIAccessConfigExample() *KubernetesTalosAPIAccessConfig {
 	return &KubernetesTalosAPIAccessConfig{
-		AccessEnabled: pointer.To(true),
+		AccessEnabled: new(true),
 		AccessAllowedRoles: []string{
 			"os:reader",
 		},

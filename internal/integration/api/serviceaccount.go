@@ -11,7 +11,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-retry/retry"
 	corev1 "k8s.io/api/core/v1"
 	eventsv1 "k8s.io/api/events/v1"
@@ -333,7 +332,7 @@ func (suite *ServiceAccountSuite) configureAPIAccess(
 
 		bytes := suite.PatchV1Alpha1Config(nodeConfig, func(nodeConfigRaw *v1alpha1.Config) {
 			accessConfig := v1alpha1.KubernetesTalosAPIAccessConfig{
-				AccessEnabled:                     pointer.To(enabled),
+				AccessEnabled:                     new(enabled),
 				AccessAllowedRoles:                allowedRoles,
 				AccessAllowedKubernetesNamespaces: allowedNamespaces,
 			}

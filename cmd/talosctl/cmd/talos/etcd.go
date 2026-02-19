@@ -96,6 +96,7 @@ var etcdAlarmListCmd = &cobra.Command{
 				if response == nil {
 					return fmt.Errorf("error getting alarms: %w", err)
 				}
+
 				cli.Warning("%s", err)
 			}
 
@@ -119,6 +120,7 @@ var etcdAlarmDisarmCmd = &cobra.Command{
 				if response == nil {
 					return fmt.Errorf("error disarming alarms: %w", err)
 				}
+
 				cli.Warning("%s", err)
 			}
 
@@ -214,6 +216,7 @@ var etcdMemberListCmd = &cobra.Command{
 				if response == nil {
 					return fmt.Errorf("error getting members: %w", err)
 				}
+
 				cli.Warning("%s", err)
 			}
 
@@ -234,6 +237,7 @@ var etcdMemberListCmd = &cobra.Command{
 					if i == 0 && j == 0 {
 						if node != "" {
 							fmt.Fprintln(w, "NODE\tID\tHOSTNAME\tPEER URLS\tCLIENT URLS\tLEARNER")
+
 							pattern = "%s\t" + pattern
 						} else {
 							fmt.Fprintln(w, "ID\tHOSTNAME\tPEER URLS\tCLIENT URLS\tLEARNER")
@@ -272,6 +276,7 @@ var etcdStatusCmd = &cobra.Command{
 				if response == nil {
 					return fmt.Errorf("error getting status: %w", err)
 				}
+
 				cli.Warning("%s", err)
 			}
 

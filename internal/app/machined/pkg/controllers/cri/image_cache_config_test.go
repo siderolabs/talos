@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -53,7 +52,7 @@ func (suite *ImageCacheConfigSuite) TestReconcileFeatureEnabled() {
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineFeatures: &v1alpha1.FeaturesConfig{
 				ImageCacheSupport: &v1alpha1.ImageCacheConfig{
-					CacheLocalEnabled: pointer.To(true),
+					CacheLocalEnabled: new(true),
 				},
 			},
 		},
@@ -143,7 +142,7 @@ func (suite *ImageCacheConfigSuite) TestReconcileJustDiskVolume() {
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineFeatures: &v1alpha1.FeaturesConfig{
 				ImageCacheSupport: &v1alpha1.ImageCacheConfig{
-					CacheLocalEnabled: pointer.To(true),
+					CacheLocalEnabled: new(true),
 				},
 			},
 		},
@@ -232,7 +231,7 @@ func (suite *ImageCacheConfigSuite) TestReconcileWithImageCacheVolume() {
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineFeatures: &v1alpha1.FeaturesConfig{
 				ImageCacheSupport: &v1alpha1.ImageCacheConfig{
-					CacheLocalEnabled: pointer.To(true),
+					CacheLocalEnabled: new(true),
 				},
 			},
 		},

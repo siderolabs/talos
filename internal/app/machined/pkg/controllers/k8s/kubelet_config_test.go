@@ -18,7 +18,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/opencontainers/runtime-spec/specs-go"
-	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap/zaptest"
@@ -101,7 +100,7 @@ func (suite *KubeletConfigSuite) TestReconcile() {
 								"serverTLSBootstrap": true,
 							},
 						},
-						KubeletDefaultRuntimeSeccompProfileEnabled: pointer.To(true),
+						KubeletDefaultRuntimeSeccompProfileEnabled: new(true),
 					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
@@ -111,7 +110,7 @@ func (suite *KubeletConfigSuite) TestReconcile() {
 						},
 					},
 					ExternalCloudProviderConfig: &v1alpha1.ExternalCloudProviderConfig{
-						ExternalEnabled: pointer.To(true),
+						ExternalEnabled: new(true),
 					},
 					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
 						DNSDomain: "service.svc",

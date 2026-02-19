@@ -17,7 +17,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -303,7 +302,7 @@ func (suite *VolumeConfigSuite) TestReconcileExtraEPHEMERALConfig() {
 				DiskSelectorSpec: blockcfg.DiskSelector{
 					Match: cel.MustExpression(cel.ParseBooleanExpression(`disk.transport == "nvme"`, celenv.DiskLocator())),
 				},
-				ProvisioningGrow:    pointer.To(false),
+				ProvisioningGrow:    new(false),
 				ProvisioningMaxSize: blockcfg.MustSize("2.5TiB"),
 			},
 			EncryptionSpec: blockcfg.EncryptionSpec{
@@ -423,7 +422,7 @@ func (suite *VolumeConfigSuite) TestReconcileUserSwapVolumes() {
 
 	uvPart2 := blockcfg.NewUserVolumeConfigV1Alpha1()
 	uvPart2.MetaName = userVolumeNames[1]
-	uvPart2.VolumeType = pointer.To(block.VolumeTypePartition)
+	uvPart2.VolumeType = new(block.VolumeTypePartition)
 	suite.Require().NoError(uvPart2.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`!system_disk`)))
 	uvPart2.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("1TiB")
 	uvPart2.EncryptionSpec = blockcfg.EncryptionSpec{
@@ -442,7 +441,7 @@ func (suite *VolumeConfigSuite) TestReconcileUserSwapVolumes() {
 
 	uvDir1 := blockcfg.NewUserVolumeConfigV1Alpha1()
 	uvDir1.MetaName = userVolumeNames[2]
-	uvDir1.VolumeType = pointer.To(block.VolumeTypeDirectory)
+	uvDir1.VolumeType = new(block.VolumeTypeDirectory)
 
 	uvDisk1 := blockcfg.NewUserVolumeConfigV1Alpha1()
 	uvDisk1.MetaName = userVolumeNames[3]

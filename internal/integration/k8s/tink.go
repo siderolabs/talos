@@ -20,7 +20,6 @@ import (
 
 	"github.com/siderolabs/gen/ensure"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
 	appsv1 "k8s.io/api/apps/v1"
@@ -344,7 +343,7 @@ func (suite *TinkSuite) getTinkManifests(namespace, serviceName, ssName, talosIm
 		},
 		Spec: appsv1.StatefulSetSpec{
 			ServiceName: serviceName,
-			Replicas:    pointer.To(int32(1)),
+			Replicas:    new(int32(1)),
 			Selector: &metav1.LabelSelector{
 				MatchLabels: labels,
 			},
@@ -359,8 +358,8 @@ func (suite *TinkSuite) getTinkManifests(namespace, serviceName, ssName, talosIm
 							Image:           talosImage,
 							ImagePullPolicy: corev1.PullAlways,
 							SecurityContext: &corev1.SecurityContext{
-								Privileged:             pointer.To(true),
-								ReadOnlyRootFilesystem: pointer.To(true),
+								Privileged:             new(true),
+								ReadOnlyRootFilesystem: new(true),
 								SeccompProfile: &corev1.SeccompProfile{
 									Type: corev1.SeccompProfileTypeUnconfined,
 								},

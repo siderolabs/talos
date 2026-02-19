@@ -36,6 +36,7 @@ var versionCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if !versionCmdFlags.json {
 			fmt.Println("Client:")
+
 			if versionCmdFlags.shortVersion {
 				version.PrintShortVersion()
 			} else {

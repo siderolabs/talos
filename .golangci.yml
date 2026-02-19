@@ -362,6 +362,54 @@ linters:
         path: pkg/machinery/resources/time
         text: avoid package names that conflict with Go standard library package names
       - linters:
+          - revive
+        path: pkg/machinery/resources/runtime
+        text: avoid package names that conflict with Go standard library package names
+      - linters:
+          - revive
+        path: pkg/machinery/version
+        text: avoid package names that conflict with Go standard library package names
+      - linters:
+          - revive
+        path: pkg/machinery/config/types/runtime
+        text: avoid package names that conflict with Go standard library package names
+      - linters:
+          - revive
+        path: cmd/talosctl/cmd/mgmt/debug
+        text: avoid package names that conflict with Go standard library package names
+      - linters:
+          - revive
+        path: internal/app/debug
+        text: avoid package names that conflict with Go standard library package names
+      - linters:
+          - revive
+        path: internal/app/machined/internal/server/v1alpha1
+        text: avoid package names that conflict with Go standard library package names
+      - linters:
+          - revive
+        path: internal/app/machined/pkg/controllers/runtime
+        text: avoid package names that conflict with Go standard library package names
+      - linters:
+          - revive
+        path: internal/app/machined/pkg/runtime
+        text: avoid package names that conflict with Go standard library package names
+      - linters:
+          - revive
+        path: internal/app/syslogd/internal/parser
+        text: avoid package names that conflict with Go standard library package names
+      - linters:
+          - revive
+        path: internal/pkg/containers/image
+        text: avoid package names that conflict with Go standard library package names
+      - linters:
+          - revive
+        path: internal/pkg/uki/internal/pe
+        text: avoid package names that conflict with Go standard library package names
+      - linters:
+          - revive
+        path: pkg/grpc/middleware/log
+        text: avoid package names that conflict with Go standard library package names
+      - linters:
           - dupl
         path: config/types/v1alpha1
       - linters:

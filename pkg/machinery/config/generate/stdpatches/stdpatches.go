@@ -6,7 +6,6 @@
 package stdpatches
 
 import (
-	"github.com/siderolabs/go-pointer"
 	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
@@ -21,7 +20,7 @@ import (
 func WithStaticHostname(versionContract *config.VersionContract, hostname string) ([]byte, error) {
 	if versionContract.MultidocNetworkConfigSupported() {
 		hostnameConfig := network.NewHostnameConfigV1Alpha1()
-		hostnameConfig.ConfigAuto = pointer.To(nethelpers.AutoHostnameKindOff)
+		hostnameConfig.ConfigAuto = new(nethelpers.AutoHostnameKindOff)
 		hostnameConfig.ConfigHostname = hostname
 
 		return patchFromDocument(hostnameConfig)

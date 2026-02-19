@@ -131,7 +131,7 @@ func exampleResolverConfigV1Alpha1() *ResolverConfigV1Alpha1 {
 func exampleResolverConfigV1Alpha2() *ResolverConfigV1Alpha1 {
 	cfg := NewResolverConfigV1Alpha1()
 	cfg.ResolverSearchDomains = SearchDomainsConfig{
-		SearchDisableDefault: pointer.To(true),
+		SearchDisableDefault: new(true),
 	}
 
 	return cfg

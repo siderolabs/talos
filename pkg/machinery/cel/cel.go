@@ -12,7 +12,6 @@ import (
 
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/common/types"
-	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/protoenc"
 	"go.yaml.in/yaml/v4"
 	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
@@ -204,7 +203,7 @@ func (expr *Expression) UnmarshalText(data []byte) error {
 		return nil
 	}
 
-	expr.expression = pointer.To(string(data))
+	expr.expression = new(string(data))
 
 	return nil
 }

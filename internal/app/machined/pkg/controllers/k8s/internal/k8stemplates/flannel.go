@@ -10,7 +10,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/siderolabs/go-pointer"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -161,12 +160,12 @@ func FlannelConfigMapTemplate(spec *k8s.BootstrapManifestsConfigSpec) runtime.Ob
 			hasIPv4 = true
 		} else {
 			netConf.IPv6Network = cidr
-			netConf.EnableIPv6 = pointer.To(true)
+			netConf.EnableIPv6 = new(true)
 		}
 	}
 
 	if !hasIPv4 {
-		netConf.EnableIPv4 = pointer.To(false)
+		netConf.EnableIPv4 = new(false)
 	}
 
 	netConfJSON, err := json.MarshalIndent(netConf, "", "  ")
@@ -278,7 +277,7 @@ func FlannelDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) runtime.Ob
 				Capabilities: &corev1.Capabilities{
 					Add: []corev1.Capability{"NET_ADMIN", "NET_RAW"},
 				},
-				Privileged: pointer.To(false),
+				Privileged: new(false),
 			},
 			VolumeMounts: []corev1.VolumeMount{
 				{
@@ -322,7 +321,7 @@ func FlannelDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) runtime.Ob
 				Capabilities: &corev1.Capabilities{
 					Add: []corev1.Capability{"NET_ADMIN"},
 				},
-				Privileged: pointer.To(true),
+				Privileged: new(true),
 			},
 			VolumeMounts: []corev1.VolumeMount{
 				{

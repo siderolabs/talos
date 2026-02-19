@@ -72,7 +72,7 @@ func (bs *ByteSize) UnmarshalText(text []byte) error {
 		return err
 	}
 
-	bs.value = pointer.To(value)
+	bs.value = new(value)
 	bs.raw = raw
 
 	return nil

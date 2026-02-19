@@ -10,7 +10,6 @@ import (
 
 	"github.com/google/nftables"
 	"github.com/google/nftables/expr"
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go4.org/netipx"
@@ -106,7 +105,7 @@ func TestNfTablesRuleCompile(t *testing.T) { //nolint:tparallel
 					InterfaceNames: []string{"eth0"},
 					Operator:       nethelpers.OperatorNotEqual,
 				},
-				Verdict: pointer.To(nethelpers.VerdictAccept),
+				Verdict: new(nethelpers.VerdictAccept),
 			},
 			expectedRules: [][]expr.Any{
 				{
@@ -164,7 +163,7 @@ func TestNfTablesRuleCompile(t *testing.T) { //nolint:tparallel
 			name: "match on empty source address",
 			spec: networkres.NfTablesRule{
 				MatchSourceAddress: &networkres.NfTablesAddressMatch{},
-				Verdict:            pointer.To(nethelpers.VerdictDrop),
+				Verdict:            new(nethelpers.VerdictDrop),
 			},
 		},
 		{
@@ -178,7 +177,7 @@ func TestNfTablesRuleCompile(t *testing.T) { //nolint:tparallel
 						netip.MustParsePrefix("192.168.4.0/24"),
 					},
 				},
-				Verdict: pointer.To(nethelpers.VerdictDrop),
+				Verdict: new(nethelpers.VerdictDrop),
 			},
 			expectedRules: [][]expr.Any{
 				{
@@ -224,7 +223,7 @@ func TestNfTablesRuleCompile(t *testing.T) { //nolint:tparallel
 					},
 					Invert: true,
 				},
-				Verdict: pointer.To(nethelpers.VerdictDrop),
+				Verdict: new(nethelpers.VerdictDrop),
 			},
 			expectedRules: [][]expr.Any{
 				{
@@ -290,7 +289,7 @@ func TestNfTablesRuleCompile(t *testing.T) { //nolint:tparallel
 						netip.MustParsePrefix("20fe::/16"),
 					},
 				},
-				Verdict: pointer.To(nethelpers.VerdictDrop),
+				Verdict: new(nethelpers.VerdictDrop),
 			},
 			expectedRules: [][]expr.Any{
 				{
@@ -331,7 +330,7 @@ func TestNfTablesRuleCompile(t *testing.T) { //nolint:tparallel
 					},
 					Invert: true,
 				},
-				Verdict: pointer.To(nethelpers.VerdictDrop),
+				Verdict: new(nethelpers.VerdictDrop),
 			},
 			expectedRules: [][]expr.Any{
 				{

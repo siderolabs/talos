@@ -1433,7 +1433,7 @@ func CleanupBootloader(runtime.Sequence, any) (runtime.TaskExecutionFunc, string
 		}
 
 		if _, err := r.State().Machine().Meta().DeleteTag(ctx, metamachinery.DiskImageBootloader); err != nil {
-			return fmt.Errorf("failed to delete tag %q: %w", metamachinery.DiskImageBootloader, err)
+			return fmt.Errorf("failed to delete tag %d: %w", metamachinery.DiskImageBootloader, err)
 		}
 
 		return r.State().Machine().Meta().Flush()

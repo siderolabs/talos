@@ -27,10 +27,11 @@ Flannel CNI plugin: v1.9.0-flannel1
 Flannel: 0.28.1
 LVM2: 2_03_38
 runc: 1.4.0
-systemd: 259
+systemd: 259.1
 cryptsetup: 2.8.3
+Tenstorrent: 2.7.0
 
-Talos is built with Go 1.25.7.
+Talos is built with Go 1.26.0.
 """
 
     [notes.external_volumes]
@@ -213,6 +214,13 @@ KubeSpan now supports filtering of advertised networks using the `excludeAdverti
 This allows users to specify a list of CIDRs to exclude from the advertised networks. Please note that routing must be symmetric for any
 pair of peers, so if one peer excludes a certain network, the other peer must also exclude it. In other words, for any given pair of peers,
 and any pair of their addresses, the traffic should either go through KubeSpan or not, but not one way or the other.
+"""
+
+    [notes.clang-thinlto]
+        title = "Clang built kernel and ThinLTO"
+        description = """\
+Talos now uses a kernel built using Clang compiler, and optimized using ThinLTO. This should bring a small performance improvement,
+alongside some hardening features, such as BTI on supported ARM systems.
 """
 
 [make_deps]

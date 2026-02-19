@@ -27,7 +27,6 @@ import (
 	"github.com/google/uuid"
 	"github.com/jsimonetti/rtnetlink/v2"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	sideronet "github.com/siderolabs/net"
 	"golang.org/x/sys/unix"
 
@@ -319,8 +318,8 @@ func (p *Provisioner) configureNetworkChaos(network provision.NetworkRequest, st
 			Attribute: tc.Attribute{
 				Kind: "netem",
 				Netem: &tc.Netem{
-					Jitter64:  pointer.To(int64(network.Jitter)),
-					Latency64: pointer.To(int64(network.Latency)),
+					Jitter64:  new(int64(network.Jitter)),
+					Latency64: new(int64(network.Latency)),
 					Qopt: tc.NetemQopt{
 						Limit: 1000,
 						Loss:  uint32(packetLoss / 100 * math.MaxUint32),

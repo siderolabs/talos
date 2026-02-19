@@ -88,6 +88,7 @@ var docsCmd = &cobra.Command{
 			}
 
 			filename := filepath.Join(dir, "cli.md")
+
 			f, err := os.Create(filename)
 			if err != nil {
 				return err

@@ -59,6 +59,7 @@ var timeCmd = &cobra.Command{
 			defaultNode := client.AddrFromPeer(&remotePeer)
 
 			var localtime, remotetime time.Time
+
 			for _, msg := range resp.Messages {
 				node := defaultNode
 

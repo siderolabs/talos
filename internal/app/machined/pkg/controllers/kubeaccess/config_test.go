@@ -10,7 +10,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -33,7 +32,7 @@ func (suite *ConfigSuite) TestReconcileConfig() {
 			MachineType: "controlplane",
 			MachineFeatures: &v1alpha1.FeaturesConfig{
 				KubernetesTalosAPIAccessConfig: &v1alpha1.KubernetesTalosAPIAccessConfig{
-					AccessEnabled:                     pointer.To(true),
+					AccessEnabled:                     new(true),
 					AccessAllowedRoles:                []string{"os:admin"},
 					AccessAllowedKubernetesNamespaces: []string{"kube-system"},
 				},
@@ -78,7 +77,7 @@ func (suite *ConfigSuite) TestReconcileWorker() {
 			MachineType: "worker",
 			MachineFeatures: &v1alpha1.FeaturesConfig{
 				KubernetesTalosAPIAccessConfig: &v1alpha1.KubernetesTalosAPIAccessConfig{
-					AccessEnabled:                     pointer.To(true),
+					AccessEnabled:                     new(true),
 					AccessAllowedRoles:                []string{"os:admin"},
 					AccessAllowedKubernetesNamespaces: []string{"kube-system"},
 				},

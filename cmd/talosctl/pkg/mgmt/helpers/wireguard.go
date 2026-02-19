@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	sideronet "github.com/siderolabs/net"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
@@ -75,7 +74,7 @@ func NewWireguardConfigBundle(ips []netip.Addr, wireguardCidr string, listenPort
 				AddressAddress: netip.PrefixFrom(wgAddr, wgCidr.Bits()),
 			},
 		}
-		config.LinkUp = pointer.To(true)
+		config.LinkUp = new(true)
 		config.LinkMTU = 1500
 
 		if i < controlplanesCount {

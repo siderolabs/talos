@@ -11,7 +11,6 @@ import (
 
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/ensure"
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -39,7 +38,7 @@ func (suite *ConfigSuite) TestRegistry() {
 				RegistryMirrors: map[string]*v1alpha1.RegistryMirrorConfig{
 					"docker.io": {
 						MirrorEndpoints:    []string{"https://mirror.io"},
-						MirrorOverridePath: pointer.To(true),
+						MirrorOverridePath: new(true),
 					},
 				},
 			},
@@ -201,7 +200,7 @@ func (suite *ConfigSuite) TestRegistryTLS() {
 				RegistryConfig: map[string]*v1alpha1.RegistryConfig{
 					"docker.io": {
 						RegistryTLS: &v1alpha1.RegistryTLSConfig{
-							TLSInsecureSkipVerify: pointer.To(true),
+							TLSInsecureSkipVerify: new(true),
 						},
 					},
 				},
@@ -304,7 +303,7 @@ func (suite *ConfigSuite) TestRegistryNewStyle() {
 	mr1.RegistryEndpoints = []criconfig.RegistryEndpoint{
 		{
 			EndpointURL:          meta.URL{URL: ensure.Value(url.Parse("https://mirror1.io"))},
-			EndpointOverridePath: pointer.To(true),
+			EndpointOverridePath: new(true),
 		},
 		{
 			EndpointURL: meta.URL{URL: ensure.Value(url.Parse("https://mirror2.io"))},
@@ -316,7 +315,7 @@ func (suite *ConfigSuite) TestRegistryNewStyle() {
 	ar1.RegistryPassword = "docker-pass"
 
 	tr1 := criconfig.NewRegistryTLSConfigV1Alpha1("private-registry:3000")
-	tr1.TLSInsecureSkipVerify = pointer.To(true)
+	tr1.TLSInsecureSkipVerify = new(true)
 	tr1.TLSClientIdentity = &meta.CertificateAndKey{
 		Cert: "-----BEGIN CERTIFICATE-----\nMIID...IDAQAB\n-----END CERTIFICATE-----",
 		Key:  "-----BEGIN PRIVATE KEY-----\nMIIE...AB\n-----END PRIVATE KEY-----",
@@ -324,7 +323,7 @@ func (suite *ConfigSuite) TestRegistryNewStyle() {
 	tr1.TLSCA = "-----BEGIN CERTIFICATE-----\nMIID...IDAQAB\n-----END CERTIFICATE-----"
 
 	tr2 := criconfig.NewRegistryTLSConfigV1Alpha1("another-registry")
-	tr2.TLSInsecureSkipVerify = pointer.To(true)
+	tr2.TLSInsecureSkipVerify = new(true)
 
 	ctr, err := container.New(mr1, ar1, tr1, tr2)
 	suite.Require().NoError(err)

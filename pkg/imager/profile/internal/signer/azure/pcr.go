@@ -14,7 +14,6 @@ import (
 	"math/big"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys"
-	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/internal/pkg/measure"
 )
@@ -53,11 +52,11 @@ func (s *KeySigner) Sign(_ io.Reader, digest []byte, opts crypto.SignerOpts) (si
 
 	switch hf { //nolint:exhaustive
 	case crypto.SHA256:
-		params.Algorithm = pointer.To(azkeys.SignatureAlgorithmRS256)
+		params.Algorithm = new(azkeys.SignatureAlgorithmRS256)
 	case crypto.SHA384:
-		params.Algorithm = pointer.To(azkeys.SignatureAlgorithmRS384)
+		params.Algorithm = new(azkeys.SignatureAlgorithmRS384)
 	case crypto.SHA512:
-		params.Algorithm = pointer.To(azkeys.SignatureAlgorithmRS512)
+		params.Algorithm = new(azkeys.SignatureAlgorithmRS512)
 	default:
 		return nil, errors.New("unsupported hashing function")
 	}

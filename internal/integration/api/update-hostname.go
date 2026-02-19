@@ -12,7 +12,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/siderolabs/go-pointer"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -138,7 +137,7 @@ func (suite *UpdateHostnameSuite) TestUpdateHostname() {
 
 func (suite *UpdateHostnameSuite) updateHostname(nodeCtx context.Context, newHostname string) {
 	hostnameConfig := network.NewHostnameConfigV1Alpha1()
-	hostnameConfig.ConfigAuto = pointer.To(nethelpers.AutoHostnameKindOff)
+	hostnameConfig.ConfigAuto = new(nethelpers.AutoHostnameKindOff)
 	hostnameConfig.ConfigHostname = newHostname
 
 	suite.PatchMachineConfig(nodeCtx, hostnameConfig)

@@ -131,7 +131,7 @@ func (suite *EthernetSuite) TestEthernetConfig() {
 
 		cfgDocument := networkconfig.NewEthernetConfigV1Alpha1(linkName)
 		cfgDocument.RingsConfig = &networkconfig.EthernetRingsConfig{
-			RX: pointer.To(newRX),
+			RX: new(newRX),
 		}
 		suite.PatchMachineConfig(nodeCtx, cfgDocument)
 

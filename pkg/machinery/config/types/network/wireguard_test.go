@@ -9,7 +9,6 @@ import (
 	"net/netip"
 	"testing"
 
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -43,7 +42,7 @@ func TestWireguardConfigMarshalStability(t *testing.T) {
 			WireguardEndpoint:     network.AddrPort{netip.MustParseAddrPort("10.3.4.3:2222")},
 		},
 	}
-	cfg.LinkUp = pointer.To(true)
+	cfg.LinkUp = new(true)
 	cfg.LinkAddresses = []network.AddressConfig{
 		{
 			AddressAddress: netip.MustParsePrefix("192.168.1.100/32"),
@@ -104,7 +103,7 @@ func TestWireguardConfigUnmarshal(t *testing.T) {
 			},
 		},
 		CommonLinkConfig: network.CommonLinkConfig{
-			LinkUp: pointer.To(true),
+			LinkUp: new(true),
 			LinkAddresses: []network.AddressConfig{
 				{
 					AddressAddress: netip.MustParsePrefix("192.168.1.100/32"),

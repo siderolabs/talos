@@ -237,12 +237,14 @@ func (ctrl *LinkStatusController) reconcile(
 			status.Flags = nethelpers.LinkFlags(link.Flags)
 			status.Type = nethelpers.LinkType(link.Type)
 			status.QueueDisc = link.Attributes.QueueDisc
+
 			status.MTU = link.Attributes.MTU
 			if link.Attributes.Master != nil {
 				status.MasterIndex = *link.Attributes.Master
 			} else {
 				status.MasterIndex = 0
 			}
+
 			status.OperationalState = nethelpers.OperationalState(link.Attributes.OperationalState)
 			if link.Attributes.Info != nil {
 				status.Kind = link.Attributes.Info.Kind

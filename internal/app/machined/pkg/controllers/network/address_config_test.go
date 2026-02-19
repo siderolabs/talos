@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
-	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -131,7 +130,7 @@ func (suite *AddressConfigSuite) TestMachineConfigurationLegacy() {
 								DeviceCIDR:      "192.168.0.24/28",
 							},
 							{
-								DeviceIgnore:    pointer.To(true),
+								DeviceIgnore:    new(true),
 								DeviceInterface: "eth4",
 								DeviceCIDR:      "192.168.0.24/28",
 							},
@@ -211,7 +210,7 @@ func (suite *AddressConfigSuite) TestMachineConfiguration() {
 	lc2.LinkAddresses = []networkcfg.AddressConfig{
 		{
 			AddressAddress:  netip.MustParsePrefix("172.20.0.1/20"),
-			AddressPriority: pointer.To[uint32](100),
+			AddressPriority: new(uint32(100)),
 		},
 	}
 

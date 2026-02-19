@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
-	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -122,7 +121,7 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 								DeviceMTU:       9001,
 							},
 							{
-								DeviceIgnore:    pointer.To(true),
+								DeviceIgnore:    new(true),
 								DeviceInterface: "eth2",
 								DeviceAddresses: []string{"192.168.0.24/28"},
 							},
@@ -164,7 +163,7 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 								DeviceBridge: &v1alpha1.Bridge{
 									BridgedInterfaces: []string{"eth4", "eth5"},
 									BridgeSTP: &v1alpha1.STP{
-										STPEnabled: pointer.To(false),
+										STPEnabled: new(false),
 									},
 								},
 							},
@@ -176,16 +175,16 @@ func (suite *LinkConfigSuite) TestMachineConfiguration() {
 								DeviceInterface: "br0",
 								DeviceBridge: &v1alpha1.Bridge{
 									BridgeSTP: &v1alpha1.STP{
-										STPEnabled: pointer.To(true),
+										STPEnabled: new(true),
 									},
 									BridgeVLAN: &v1alpha1.BridgeVLAN{
-										BridgeVLANFiltering: pointer.To(true),
+										BridgeVLANFiltering: new(true),
 									},
 								},
 							},
 							{
 								DeviceInterface: "dummy0",
-								DeviceDummy:     pointer.To(true),
+								DeviceDummy:     new(true),
 							},
 							{
 								DeviceInterface: "wireguard0",
@@ -369,7 +368,7 @@ func (suite *LinkConfigSuite) TestMachineConfigurationWithAliases() {
 								DeviceMTU:       9001,
 							},
 							{
-								DeviceIgnore:    pointer.To(true),
+								DeviceIgnore:    new(true),
 								DeviceInterface: "enx0456",
 							},
 							{
@@ -472,27 +471,27 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyle() {
 
 	dc1 := networkcfg.NewDummyLinkConfigV1Alpha1("dummy1")
 	dc1.HardwareAddressConfig = nethelpers.HardwareAddr{0x02, 0x42, 0xac, 0x11, 0x00, 0x02}
-	dc1.LinkUp = pointer.To(true)
+	dc1.LinkUp = new(true)
 
 	vl1 := networkcfg.NewVLANConfigV1Alpha1("dummy1.100")
 	vl1.VLANIDConfig = 100
 	vl1.ParentLinkConfig = "dummy1"
-	vl1.VLANModeConfig = pointer.To(nethelpers.VLANProtocol8021AD)
+	vl1.VLANModeConfig = new(nethelpers.VLANProtocol8021AD)
 	vl1.LinkMTU = 200
-	vl1.LinkUp = pointer.To(true)
+	vl1.LinkUp = new(true)
 
 	dc2 := networkcfg.NewDummyLinkConfigV1Alpha1("dummy2")
 	dc3 := networkcfg.NewDummyLinkConfigV1Alpha1("dummy3")
 
 	bc1 := networkcfg.NewBondConfigV1Alpha1("bond357")
-	bc1.BondMode = pointer.To(nethelpers.BondModeActiveBackup)
+	bc1.BondMode = new(nethelpers.BondModeActiveBackup)
 	bc1.BondLinks = []string{"dummy2", "dummy3"}
-	bc1.BondUpDelay = pointer.To(uint32(200))
+	bc1.BondUpDelay = new(uint32(200))
 
 	br1 := networkcfg.NewBridgeConfigV1Alpha1("br0")
 	br1.BridgeLinks = []string{"enp0s2", "eth1"}
-	br1.BridgeSTP.BridgeSTPEnabled = pointer.To(true)
-	br1.BridgeVLAN.BridgeVLANFiltering = pointer.To(true)
+	br1.BridgeSTP.BridgeSTPEnabled = new(true)
+	br1.BridgeVLAN.BridgeVLANFiltering = new(true)
 
 	ctr, err := container.New(dc1, lc1, vl1, dc2, dc3, bc1, br1)
 	suite.Require().NoError(err)
@@ -591,7 +590,7 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleNotFIPS() {
 	suite.Require().NoError(err)
 
 	wc1 := networkcfg.NewWireguardConfigV1Alpha1("wg0")
-	wc1.LinkUp = pointer.To(true)
+	wc1.LinkUp = new(true)
 	wc1.WireguardPrivateKey = privKey.String()
 	wc1.WireguardListenPort = 12345
 	wc1.WireguardPeers = []networkcfg.WireguardPeer{
@@ -787,9 +786,9 @@ func (suite *LinkConfigSuite) TestMulticast() {
 	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkConfigController{}))
 
 	lc1 := networkcfg.NewLinkConfigV1Alpha1("enp1s1")
-	lc1.LinkMulticast = pointer.To(false)
+	lc1.LinkMulticast = new(false)
 	lc2 := networkcfg.NewLinkConfigV1Alpha1("enp1s2")
-	lc2.LinkMulticast = pointer.To(true)
+	lc2.LinkMulticast = new(true)
 
 	ctr, err := container.New(lc1, lc2)
 	suite.Require().NoError(err)

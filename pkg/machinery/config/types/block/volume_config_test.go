@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -235,7 +234,7 @@ func TestVolumeConfigValidate(t *testing.T) {
 							KeyStatic: &block.EncryptionKeyStatic{
 								KeyData: "topsecret2",
 							},
-							KeyLockToSTATE: pointer.To(true),
+							KeyLockToSTATE: new(true),
 						},
 					},
 				}

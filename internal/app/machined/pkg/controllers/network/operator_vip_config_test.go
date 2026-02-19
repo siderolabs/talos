@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -67,21 +66,21 @@ func (suite *OperatorVIPConfigSuite) TestMachineConfigurationLegacyVIP() {
 						NetworkInterfaces: []*v1alpha1.Device{
 							{
 								DeviceInterface: "eth1",
-								DeviceDHCP:      pointer.To(true),
+								DeviceDHCP:      new(true),
 								DeviceVIPConfig: &v1alpha1.DeviceVIPConfig{
 									SharedIP: "2.3.4.5",
 								},
 							},
 							{
 								DeviceInterface: "eth2",
-								DeviceDHCP:      pointer.To(true),
+								DeviceDHCP:      new(true),
 								DeviceVIPConfig: &v1alpha1.DeviceVIPConfig{
 									SharedIP: "fd7a:115c:a1e0:ab12:4843:cd96:6277:2302",
 								},
 							},
 							{
 								DeviceInterface: "eth3",
-								DeviceDHCP:      pointer.To(true),
+								DeviceDHCP:      new(true),
 								DeviceVlans: []*v1alpha1.Vlan{
 									{
 										VlanID: 26,
@@ -93,7 +92,7 @@ func (suite *OperatorVIPConfigSuite) TestMachineConfigurationLegacyVIP() {
 							},
 							{
 								DeviceInterface: "enxa",
-								DeviceDHCP:      pointer.To(true),
+								DeviceDHCP:      new(true),
 								DeviceVIPConfig: &v1alpha1.DeviceVIPConfig{
 									SharedIP: "2.3.4.5",
 								},

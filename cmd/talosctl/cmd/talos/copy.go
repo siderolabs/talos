@@ -68,10 +68,12 @@ captures ownership and permission bits.`,
 			if err == nil && !fi.IsDir() {
 				return fmt.Errorf("local path %q should be a directory", args[1])
 			}
+
 			if err != nil {
 				if !errors.Is(err, fs.ErrNotExist) {
 					return fmt.Errorf("failed to stat local path: %w", err)
 				}
+
 				if err = os.MkdirAll(localPath, 0o777); err != nil {
 					return fmt.Errorf("error creating local path %q: %w", localPath, err)
 				}

@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
-	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -117,7 +116,7 @@ func (suite *ResolverConfigSuite) TestWithHostnameStatus() {
 	hostnameStatus.TypedSpec().Domainname = "example.org"
 	suite.Update(hostnameStatus)
 
-	cfg.Container().RawV1Alpha1().MachineConfig.MachineNetwork.NetworkDisableSearchDomain = pointer.To(true) //nolint:staticcheck
+	cfg.Container().RawV1Alpha1().MachineConfig.MachineNetwork.NetworkDisableSearchDomain = new(true) //nolint:staticcheck
 	suite.Update(cfg)
 
 	ctest.AssertResources(

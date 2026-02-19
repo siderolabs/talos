@@ -9,7 +9,6 @@ import (
 	_ "embed"
 	"testing"
 
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -28,8 +27,8 @@ func TestDHCPv4ConfigMarshalStability(t *testing.T) {
 
 	cfg := network.NewDHCPv4ConfigV1Alpha1("enp0s3")
 	cfg.ConfigRouteMetric = 512
-	cfg.ConfigIgnoreHostname = pointer.To(true)
-	cfg.ConfigClientIdentifier = pointer.To(nethelpers.ClientIdentifierDUID)
+	cfg.ConfigIgnoreHostname = new(true)
+	cfg.ConfigClientIdentifier = new(nethelpers.ClientIdentifierDUID)
 	cfg.ConfigDUIDRaw = nethelpers.HardwareAddr{0x00, 0x01, 0x00, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0x01, 0x23, 0x45}
 
 	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
@@ -56,8 +55,8 @@ func TestDHCPv4ConfigUnmarshal(t *testing.T) {
 		},
 		MetaName:               "enp0s3",
 		ConfigRouteMetric:      512,
-		ConfigIgnoreHostname:   pointer.To(true),
-		ConfigClientIdentifier: pointer.To(nethelpers.ClientIdentifierDUID),
+		ConfigIgnoreHostname:   new(true),
+		ConfigClientIdentifier: new(nethelpers.ClientIdentifierDUID),
 		ConfigDUIDRaw:          nethelpers.HardwareAddr{0x00, 0x01, 0x00, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0x01, 0x23, 0x45},
 	}, docs[0])
 }
@@ -75,7 +74,7 @@ func TestDHCPv4ConfigValidate(t *testing.T) {
 			name: "valid config with duidRaw",
 			cfg: func() *network.DHCPv4ConfigV1Alpha1 {
 				c := network.NewDHCPv4ConfigV1Alpha1("enp0s3")
-				c.ConfigClientIdentifier = pointer.To(nethelpers.ClientIdentifierDUID)
+				c.ConfigClientIdentifier = new(nethelpers.ClientIdentifierDUID)
 				c.ConfigDUIDRaw = nethelpers.HardwareAddr{0x00, 0x01, 0x00, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0x01, 0x23, 0x45}
 
 				return c
@@ -85,7 +84,7 @@ func TestDHCPv4ConfigValidate(t *testing.T) {
 			name: "invalid config missing duidRaw",
 			cfg: func() *network.DHCPv4ConfigV1Alpha1 {
 				c := network.NewDHCPv4ConfigV1Alpha1("enp0s3")
-				c.ConfigClientIdentifier = pointer.To(nethelpers.ClientIdentifierDUID)
+				c.ConfigClientIdentifier = new(nethelpers.ClientIdentifierDUID)
 
 				return c
 			},

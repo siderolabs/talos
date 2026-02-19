@@ -12,7 +12,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/siderolabs/gen/maps"
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -112,7 +111,7 @@ func (suite *DeviceConfigSpecSuite) TestSelectors() {
 					// device selector which matches physical interfaces
 					{
 						DeviceSelector: &v1alpha1.NetworkDeviceSelector{
-							NetworkDevicePhysical: pointer.To(true),
+							NetworkDevicePhysical: new(true),
 						},
 						DeviceAddresses: []string{"192.168.6.0/24"},
 					},

@@ -123,7 +123,7 @@ const userVolumeName = "local-data"
 func exampleUserVolumeConfigV1Alpha1Partition() *UserVolumeConfigV1Alpha1 {
 	cfg := NewUserVolumeConfigV1Alpha1()
 	cfg.MetaName = userVolumeName
-	cfg.VolumeType = pointer.To(block.VolumeTypePartition)
+	cfg.VolumeType = new(block.VolumeTypePartition)
 	cfg.ProvisioningSpec = ProvisioningSpec{
 		DiskSelectorSpec: DiskSelector{
 			Match: cel.MustExpression(cel.ParseBooleanExpression(`disk.transport == "nvme"`, celenv.DiskLocator())),
@@ -155,7 +155,7 @@ func exampleUserVolumeConfigV1Alpha1Partition() *UserVolumeConfigV1Alpha1 {
 func exampleUserVolumeConfigV1Alpha1Directory() *UserVolumeConfigV1Alpha1 {
 	cfg := NewUserVolumeConfigV1Alpha1()
 	cfg.MetaName = userVolumeName
-	cfg.VolumeType = pointer.To(block.VolumeTypeDirectory)
+	cfg.VolumeType = new(block.VolumeTypeDirectory)
 
 	return cfg
 }
@@ -163,7 +163,7 @@ func exampleUserVolumeConfigV1Alpha1Directory() *UserVolumeConfigV1Alpha1 {
 func exampleUserVolumeConfigV1Alpha1Disk() *UserVolumeConfigV1Alpha1 {
 	cfg := NewUserVolumeConfigV1Alpha1()
 	cfg.MetaName = userVolumeName
-	cfg.VolumeType = pointer.To(block.VolumeTypeDisk)
+	cfg.VolumeType = new(block.VolumeTypeDisk)
 	cfg.ProvisioningSpec = ProvisioningSpec{
 		DiskSelectorSpec: DiskSelector{
 			Match: cel.MustExpression(cel.ParseBooleanExpression(`disk.transport == "nvme"`, celenv.DiskLocator())),

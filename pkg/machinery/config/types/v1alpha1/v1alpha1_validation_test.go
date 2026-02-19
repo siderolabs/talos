@@ -13,7 +13,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/siderolabs/crypto/x509"
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -292,7 +291,7 @@ func TestValidate(t *testing.T) {
 					MachineInstall: &v1alpha1.InstallConfig{
 						InstallDisk:              "/dev/vda",
 						InstallExtraKernelArgs:   []string{"foo=bar"},
-						InstallGrubUseUKICmdline: pointer.To(true),
+						InstallGrubUseUKICmdline: new(true),
 					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
@@ -323,7 +322,7 @@ func TestValidate(t *testing.T) {
 						},
 					},
 					ExternalCloudProviderConfig: &v1alpha1.ExternalCloudProviderConfig{
-						ExternalEnabled: pointer.To(true),
+						ExternalEnabled: new(true),
 						ExternalManifests: []string{
 							"https://www.example.com/manifest1.yaml",
 							"https://www.example.com/manifest2.yaml",
@@ -349,7 +348,7 @@ func TestValidate(t *testing.T) {
 						},
 					},
 					ExternalCloudProviderConfig: &v1alpha1.ExternalCloudProviderConfig{
-						ExternalEnabled: pointer.To(true),
+						ExternalEnabled: new(true),
 					},
 				},
 			},
@@ -417,7 +416,7 @@ func TestValidate(t *testing.T) {
 						},
 					},
 					ExternalCloudProviderConfig: &v1alpha1.ExternalCloudProviderConfig{
-						ExternalEnabled: pointer.To(true),
+						ExternalEnabled: new(true),
 						ExternalManifests: []string{
 							"/manifest.yaml",
 						},
@@ -859,7 +858,7 @@ func TestValidate(t *testing.T) {
 							},
 							{
 								DeviceInterface: "eth0",
-								DeviceDHCP:      pointer.To(true),
+								DeviceDHCP:      new(true),
 							},
 							{
 								DeviceInterface: "eth1",
@@ -915,7 +914,7 @@ func TestValidate(t *testing.T) {
 							},
 							{
 								DeviceInterface: "eth0",
-								DeviceDHCP:      pointer.To(true),
+								DeviceDHCP:      new(true),
 							},
 							{
 								DeviceInterface: "eth1",
@@ -1198,7 +1197,7 @@ func TestValidate(t *testing.T) {
 					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{
-							KubeSpanEnabled: pointer.To(true),
+							KubeSpanEnabled: new(true),
 						},
 					},
 				},
@@ -1234,7 +1233,7 @@ func TestValidate(t *testing.T) {
 						},
 					},
 					ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{
-						DiscoveryEnabled: pointer.To(true),
+						DiscoveryEnabled: new(true),
 						DiscoveryRegistries: v1alpha1.DiscoveryRegistriesConfig{
 							RegistryService: v1alpha1.RegistryServiceConfig{
 								RegistryEndpoint: "foo",
@@ -1263,7 +1262,7 @@ func TestValidate(t *testing.T) {
 						},
 					},
 					ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{
-						DiscoveryEnabled: pointer.To(true),
+						DiscoveryEnabled: new(true),
 					},
 				},
 			},
@@ -1558,9 +1557,9 @@ func TestValidate(t *testing.T) {
 						Crt: []byte("foo"),
 					},
 					MachineFeatures: &v1alpha1.FeaturesConfig{
-						RBAC: pointer.To(true),
+						RBAC: new(true),
 						KubernetesTalosAPIAccessConfig: &v1alpha1.KubernetesTalosAPIAccessConfig{
-							AccessEnabled: pointer.To(true),
+							AccessEnabled: new(true),
 						},
 					},
 				},
@@ -1585,9 +1584,9 @@ func TestValidate(t *testing.T) {
 						Key: []byte("bar"),
 					},
 					MachineFeatures: &v1alpha1.FeaturesConfig{
-						RBAC: pointer.To(true),
+						RBAC: new(true),
 						KubernetesTalosAPIAccessConfig: &v1alpha1.KubernetesTalosAPIAccessConfig{
-							AccessEnabled: pointer.To(true),
+							AccessEnabled: new(true),
 							AccessAllowedRoles: []string{
 								"os:reader",
 								"invalid:role1",
@@ -1648,7 +1647,7 @@ func TestValidate(t *testing.T) {
 					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{
-							KubeSpanEnabled: pointer.To(true),
+							KubeSpanEnabled: new(true),
 							KubeSpanFilters: &v1alpha1.KubeSpanFilters{
 								KubeSpanFiltersEndpoints: []string{
 									"0.0.0.0/0",
@@ -1668,7 +1667,7 @@ func TestValidate(t *testing.T) {
 					ClusterID:     "test",
 					ClusterSecret: "test",
 					ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{
-						DiscoveryEnabled: pointer.To(true),
+						DiscoveryEnabled: new(true),
 					},
 				},
 			},
@@ -1685,7 +1684,7 @@ func TestValidate(t *testing.T) {
 					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{
-							KubeSpanEnabled: pointer.To(true),
+							KubeSpanEnabled: new(true),
 							KubeSpanFilters: &v1alpha1.KubeSpanFilters{
 								KubeSpanFiltersEndpoints: []string{
 									"!10",
@@ -1704,7 +1703,7 @@ func TestValidate(t *testing.T) {
 					ClusterID:     "test",
 					ClusterSecret: "test",
 					ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{
-						DiscoveryEnabled: pointer.To(true),
+						DiscoveryEnabled: new(true),
 					},
 				},
 			},
@@ -1721,7 +1720,7 @@ func TestValidate(t *testing.T) {
 					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{
-							KubeSpanEnabled: pointer.To(true),
+							KubeSpanEnabled: new(true),
 							KubeSpanFilters: &v1alpha1.KubeSpanFilters{
 								KubeSpanFiltersExcludeAdvertisedNetworks: []string{
 									"0.0.0.0/0",
@@ -1742,7 +1741,7 @@ func TestValidate(t *testing.T) {
 					ClusterID:     "test",
 					ClusterSecret: "test",
 					ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{
-						DiscoveryEnabled: pointer.To(true),
+						DiscoveryEnabled: new(true),
 					},
 				},
 			},
@@ -1759,7 +1758,7 @@ func TestValidate(t *testing.T) {
 					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{
-							KubeSpanEnabled: pointer.To(true),
+							KubeSpanEnabled: new(true),
 							KubeSpanFilters: &v1alpha1.KubeSpanFilters{
 								KubeSpanFiltersExcludeAdvertisedNetworks: []string{
 									"invalid",
@@ -1778,7 +1777,7 @@ func TestValidate(t *testing.T) {
 					ClusterID:     "test",
 					ClusterSecret: "test",
 					ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{
-						DiscoveryEnabled: pointer.To(true),
+						DiscoveryEnabled: new(true),
 					},
 				},
 			},
@@ -1795,8 +1794,8 @@ func TestValidate(t *testing.T) {
 					},
 					MachineNetwork: &v1alpha1.NetworkConfig{
 						NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{
-							KubeSpanEnabled: pointer.To(true),
-							KubeSpanMTU:     pointer.To(uint32(576)),
+							KubeSpanEnabled: new(true),
+							KubeSpanMTU:     new(uint32(576)),
 						},
 					},
 				},
@@ -1809,7 +1808,7 @@ func TestValidate(t *testing.T) {
 					ClusterID:     "test",
 					ClusterSecret: "test",
 					ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{
-						DiscoveryEnabled: pointer.To(true),
+						DiscoveryEnabled: new(true),
 					},
 				},
 			},
@@ -2079,7 +2078,7 @@ func TestValidateCNI(t *testing.T) {
 			config: &v1alpha1.CNIConfig{
 				CNIName: constants.FlannelCNI,
 				CNIFlannel: &v1alpha1.FlannelCNIConfig{
-					FlannelKubeNetworkPoliciesEnabled: pointer.To(false),
+					FlannelKubeNetworkPoliciesEnabled: new(false),
 				},
 			},
 		},
@@ -2088,7 +2087,7 @@ func TestValidateCNI(t *testing.T) {
 			config: &v1alpha1.CNIConfig{
 				CNIName: constants.FlannelCNI,
 				CNIFlannel: &v1alpha1.FlannelCNIConfig{
-					FlannelKubeNetworkPoliciesEnabled: pointer.To(true),
+					FlannelKubeNetworkPoliciesEnabled: new(true),
 				},
 			},
 		},
@@ -2122,7 +2121,7 @@ func TestValidateCNI(t *testing.T) {
 					"https://host.test/quick-install.yaml",
 				},
 				CNIFlannel: &v1alpha1.FlannelCNIConfig{
-					FlannelKubeNetworkPoliciesEnabled: pointer.To(false),
+					FlannelKubeNetworkPoliciesEnabled: new(false),
 				},
 			},
 		},
@@ -2134,7 +2133,7 @@ func TestValidateCNI(t *testing.T) {
 					"https://host.test/quick-install.yaml",
 				},
 				CNIFlannel: &v1alpha1.FlannelCNIConfig{
-					FlannelKubeNetworkPoliciesEnabled: pointer.To(true),
+					FlannelKubeNetworkPoliciesEnabled: new(true),
 				},
 			},
 			expectedError: "1 error occurred:\n\t* \"flannelKubeNetworkPoliciesEnabled\" should not be enabled for \"custom\" CNI\n\n",
@@ -2169,7 +2168,7 @@ func TestValidateCNI(t *testing.T) {
 			config: &v1alpha1.CNIConfig{
 				CNIName: constants.NoneCNI,
 				CNIFlannel: &v1alpha1.FlannelCNIConfig{
-					FlannelKubeNetworkPoliciesEnabled: pointer.To(false),
+					FlannelKubeNetworkPoliciesEnabled: new(false),
 				},
 			},
 		},
@@ -2178,7 +2177,7 @@ func TestValidateCNI(t *testing.T) {
 			config: &v1alpha1.CNIConfig{
 				CNIName: constants.NoneCNI,
 				CNIFlannel: &v1alpha1.FlannelCNIConfig{
-					FlannelKubeNetworkPoliciesEnabled: pointer.To(true),
+					FlannelKubeNetworkPoliciesEnabled: new(true),
 				},
 			},
 			expectedError: "1 error occurred:\n\t* \"flannelKubeNetworkPoliciesEnabled\" should not be enabled for \"none\" CNI\n\n",

@@ -15,7 +15,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/channel"
-	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/siderolabs/go-retry/retry"
 	"go.yaml.in/yaml/v4"
@@ -230,7 +229,7 @@ func (m *Metal) NetworkConfiguration(ctx context.Context, st state.State, ch cha
 		}
 
 		cfg := metaCfg
-		cfg.Metadata = pointer.To(metadata.DeepCopy())
+		cfg.Metadata = new(metadata.DeepCopy())
 
 		if !channel.SendWithContext(ctx, ch, &cfg) {
 			return ctx.Err()

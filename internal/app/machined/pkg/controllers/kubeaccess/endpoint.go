@@ -25,7 +25,6 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
-	"k8s.io/utils/ptr"
 
 	"github.com/siderolabs/talos/pkg/kubernetes"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -332,9 +331,9 @@ func (ctrl *EndpointController) ensureTalosEndpointSlicesTyped(
 func PopulateEndpointSlice(endpointSlice *discoveryv1.EndpointSlice, endpointAddrs k8s.EndpointList) {
 	endpointSlice.Ports = []discoveryv1.EndpointPort{
 		{
-			Name:     ptr.To("apid"),
-			Port:     ptr.To[int32](constants.ApidPort),
-			Protocol: ptr.To(corev1.ProtocolTCP),
+			Name:     new("apid"),
+			Port:     new(int32(constants.ApidPort)),
+			Protocol: new(corev1.ProtocolTCP),
 		},
 	}
 
@@ -346,9 +345,9 @@ func PopulateEndpointSlice(endpointSlice *discoveryv1.EndpointSlice, endpointAdd
 			discoveryv1.Endpoint{
 				Addresses: []string{addr.String()},
 				Conditions: discoveryv1.EndpointConditions{
-					Ready:       ptr.To(true),
-					Serving:     ptr.To(true),
-					Terminating: ptr.To(false),
+					Ready:       new(true),
+					Serving:     new(true),
+					Terminating: new(false),
 				},
 			},
 		)

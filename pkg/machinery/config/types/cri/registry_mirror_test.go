@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/siderolabs/gen/ensure"
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -27,14 +26,14 @@ func TestRegistryMirrorConfigMarshalStability(t *testing.T) {
 	t.Parallel()
 
 	cfg := cri.NewRegistryMirrorConfigV1Alpha1("ghcr.io")
-	cfg.RegistrySkipFallback = pointer.To(true)
+	cfg.RegistrySkipFallback = new(true)
 	cfg.RegistryEndpoints = []cri.RegistryEndpoint{
 		{
 			EndpointURL: meta.URL{URL: ensure.Value(url.Parse("https://my-private-registry.local:5000"))},
 		},
 		{
 			EndpointURL:          meta.URL{URL: ensure.Value(url.Parse("http://my-harbor/v2/registry-k8s.io/"))},
-			EndpointOverridePath: pointer.To(true),
+			EndpointOverridePath: new(true),
 		},
 	}
 
@@ -61,14 +60,14 @@ func TestRegistryMirrorConfigUnmarshal(t *testing.T) {
 			MetaKind:       cri.RegistryMirrorConfig,
 		},
 		MetaName:             "ghcr.io",
-		RegistrySkipFallback: pointer.To(true),
+		RegistrySkipFallback: new(true),
 		RegistryEndpoints: []cri.RegistryEndpoint{
 			{
 				EndpointURL: meta.URL{URL: ensure.Value(url.Parse("https://my-private-registry.local:5000"))},
 			},
 			{
 				EndpointURL:          meta.URL{URL: ensure.Value(url.Parse("http://my-harbor/v2/registry-k8s.io/"))},
-				EndpointOverridePath: pointer.To(true),
+				EndpointOverridePath: new(true),
 			},
 		},
 	}, docs[0])
@@ -140,7 +139,7 @@ func TestRegistryMirrorConfigValidate(t *testing.T) {
 					},
 					{
 						EndpointURL:          meta.URL{URL: ensure.Value(url.Parse("http://my-harbor/v2/registry-k8s.io/"))},
-						EndpointOverridePath: pointer.To(true),
+						EndpointOverridePath: new(true),
 					},
 				}
 

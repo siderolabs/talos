@@ -94,6 +94,7 @@ var debugCmd = &cobra.Command{
 			// new context so that SIGINT/similar won't immediately cancel streaming
 			// and instead allow us to forward the signal to the container
 			ctx = context.WithoutCancel(ctx)
+
 			ctx, cancel := context.WithCancel(ctx)
 			defer cancel()
 

@@ -160,13 +160,13 @@ func NewEthernetConfigV1Alpha1(name string) *EthernetConfigV1Alpha1 {
 func exampleEthernetConfigV1Alpha1() *EthernetConfigV1Alpha1 {
 	cfg := NewEthernetConfigV1Alpha1("enp0s2")
 	cfg.RingsConfig = &EthernetRingsConfig{
-		RX: pointer.To[uint32](256),
+		RX: new(uint32(256)),
 	}
 	cfg.FeaturesConfig = map[string]bool{
 		"tx-tcp-segmentation": false,
 	}
 	cfg.ChannelsConfig = &EthernetChannelsConfig{
-		RX: pointer.To[uint32](4),
+		RX: new(uint32(4)),
 	}
 
 	return cfg

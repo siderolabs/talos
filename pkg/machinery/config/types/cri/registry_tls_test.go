@@ -9,7 +9,6 @@ import (
 	"testing"
 
 	"github.com/siderolabs/crypto/x509"
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -31,7 +30,7 @@ func TestRegistryTLSConfigMarshalStability(t *testing.T) {
 		Cert: "-----BEGIN CERTIFICATE-----\nMIID...IDAQAB\n-----END CERTIFICATE-----",
 		Key:  "-----BEGIN PRIVATE KEY-----\nMIIE...AB\n-----END PRIVATE KEY-----",
 	}
-	cfg.TLSInsecureSkipVerify = pointer.To(true)
+	cfg.TLSInsecureSkipVerify = new(true)
 
 	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
 	require.NoError(t, err)
@@ -61,7 +60,7 @@ func TestRegistryTLSConfigUnmarshal(t *testing.T) {
 			Cert: "-----BEGIN CERTIFICATE-----\nMIID...IDAQAB\n-----END CERTIFICATE-----",
 			Key:  "-----BEGIN PRIVATE KEY-----\nMIIE...AB\n-----END PRIVATE KEY-----",
 		},
-		TLSInsecureSkipVerify: pointer.To(true),
+		TLSInsecureSkipVerify: new(true),
 	}, docs[0])
 }
 
@@ -87,7 +86,7 @@ func TestRegistryTLSConfigValidate(t *testing.T) {
 			name: "valid small",
 			cfg: func() *cri.RegistryTLSConfigV1Alpha1 {
 				cfg := cri.NewRegistryTLSConfigV1Alpha1("rr.k8s.io")
-				cfg.TLSInsecureSkipVerify = pointer.To(true)
+				cfg.TLSInsecureSkipVerify = new(true)
 
 				return cfg
 			},
@@ -105,7 +104,7 @@ func TestRegistryTLSConfigValidate(t *testing.T) {
 					Cert: string(ca.CrtPEM),
 					Key:  string(ca.KeyPEM),
 				}
-				cfg.TLSInsecureSkipVerify = pointer.To(false)
+				cfg.TLSInsecureSkipVerify = new(false)
 
 				return cfg
 			},

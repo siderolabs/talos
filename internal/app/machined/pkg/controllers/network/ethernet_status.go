@@ -14,7 +14,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/mdlayher/ethtool"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/watch"
@@ -164,7 +163,7 @@ func (ctrl *EthernetStatusController) reconcile(
 			if linkState == nil {
 				res.TypedSpec().LinkState = nil
 			} else {
-				res.TypedSpec().LinkState = pointer.To(linkState.Link)
+				res.TypedSpec().LinkState = new(linkState.Link)
 			}
 
 			if rings == nil {

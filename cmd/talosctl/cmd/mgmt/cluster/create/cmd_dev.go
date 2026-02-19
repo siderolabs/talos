@@ -281,7 +281,7 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 				}
 
 				var disks strings.Builder
-				disks.WriteString(fmt.Sprintf("virtio:%d", legacyOps.clusterDiskSize))
+				fmt.Fprintf(&disks, "virtio:%d", legacyOps.clusterDiskSize)
 
 				for i := range legacyOps.extraDisks {
 					driver := "ide"
@@ -309,7 +309,7 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 						}
 					}
 
-					disks.WriteString(fmt.Sprintf(",%s:%d%s%s", driver, legacyOps.extraDiskSize, tag, serial))
+					fmt.Fprintf(&disks, ",%s:%d%s%s", driver, legacyOps.extraDiskSize, tag, serial)
 				}
 
 				qOps.Disks = flags.Disks{}

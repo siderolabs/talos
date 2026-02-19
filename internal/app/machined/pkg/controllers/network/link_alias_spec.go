@@ -125,7 +125,7 @@ func (ctrl *LinkAliasSpecController) Run(ctx context.Context, r controller.Runti
 				if err = conn.Link.Set(&rtnetlink.LinkMessage{
 					Index: link.Index,
 					Attributes: &rtnetlink.LinkAttributes{
-						Alias: pointer.To(""),
+						Alias: new(""),
 					},
 				}); err != nil {
 					multiErr = multierror.Append(multiErr, fmt.Errorf("error removing alias %q from link %q: %w", currentAlias, link.Attributes.Name, err))
@@ -140,7 +140,7 @@ func (ctrl *LinkAliasSpecController) Run(ctx context.Context, r controller.Runti
 				if err = conn.Link.Set(&rtnetlink.LinkMessage{
 					Index: link.Index,
 					Attributes: &rtnetlink.LinkAttributes{
-						Alias: pointer.To(expectedAlias),
+						Alias: new(expectedAlias),
 					},
 				}); err != nil {
 					multiErr = multierror.Append(multiErr, fmt.Errorf("error setting alias %q on link %q: %w", expectedAlias, link.Attributes.Name, err))

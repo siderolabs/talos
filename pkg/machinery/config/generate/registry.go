@@ -10,8 +10,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/siderolabs/go-pointer"
-
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/cri"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
@@ -65,7 +63,7 @@ func (in *Input) generateRegistryConfigs(machine *v1alpha1.MachineConfig) ([]con
 				machine.MachineRegistries.RegistryConfig[host].RegistryTLS = &v1alpha1.RegistryTLSConfig{} //nolint:staticcheck // backwards compatibility
 			}
 
-			machine.MachineRegistries.RegistryConfig[host].RegistryTLS.TLSInsecureSkipVerify = pointer.To(true) //nolint:staticcheck // backwards compatibility
+			machine.MachineRegistries.RegistryConfig[host].RegistryTLS.TLSInsecureSkipVerify = new(true) //nolint:staticcheck // backwards compatibility
 		}
 
 		return nil, nil
@@ -107,7 +105,7 @@ func (in *Input) generateRegistryConfigs(machine *v1alpha1.MachineConfig) ([]con
 			tlsConfigs[host] = cri.NewRegistryTLSConfigV1Alpha1(host)
 		}
 
-		tlsConfigs[host].TLSInsecureSkipVerify = pointer.To(true)
+		tlsConfigs[host].TLSInsecureSkipVerify = new(true)
 	}
 
 	for _, tlsConfig := range tlsConfigs {

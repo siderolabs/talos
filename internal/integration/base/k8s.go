@@ -23,7 +23,6 @@ import (
 
 	"github.com/siderolabs/gen/channel"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-retry/retry"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -286,7 +285,7 @@ func (p *pod) WithHostVolumeMount(hostPath, mountPath string) podInfo {
 		VolumeSource: corev1.VolumeSource{
 			HostPath: &corev1.HostPathVolumeSource{
 				Path: hostPath,
-				Type: pointer.To(corev1.HostPathDirectoryOrCreate),
+				Type: new(corev1.HostPathDirectoryOrCreate),
 			},
 		},
 	})
@@ -359,7 +358,7 @@ func (p *pod) Exec(ctx context.Context, command string) (string, string, error) 
 
 func (p *pod) Delete(ctx context.Context) error {
 	err := p.suite.Clientset.CoreV1().Pods(p.namespace).Delete(ctx, p.name, metav1.DeleteOptions{
-		GracePeriodSeconds: pointer.To[int64](0),
+		GracePeriodSeconds: new(int64(0)),
 	})
 	if err != nil && errors.IsNotFound(err) {
 		return nil
@@ -400,7 +399,7 @@ func (k8sSuite *K8sSuite) NewPrivilegedPod(name string) (podInfo, error) {
 							"trap : TERM INT; (tail -f /dev/null) & wait",
 						},
 						SecurityContext: &corev1.SecurityContext{
-							Privileged: pointer.To(true),
+							Privileged: new(true),
 						},
 						// lvm commands even though executed in the host mount namespace, still need access to /dev 🤷🏼,
 						// otherwise lvcreate commands hangs on semop syscall

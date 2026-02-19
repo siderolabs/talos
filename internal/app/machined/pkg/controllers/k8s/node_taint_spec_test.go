@@ -12,7 +12,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	v1 "k8s.io/api/core/v1"
@@ -59,13 +58,13 @@ func (suite *NodeTaintsSuite) updateMachineConfig(machineType machine.Type, allo
 				MachineNodeTaints: nodeTaints,
 			},
 			ClusterConfig: &v1alpha1.ClusterConfig{
-				AllowSchedulingOnControlPlanes: pointer.To(allowScheduling),
+				AllowSchedulingOnControlPlanes: new(allowScheduling),
 			},
 		}))
 
 		suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
 	} else {
-		cfg.Container().RawV1Alpha1().ClusterConfig.AllowSchedulingOnControlPlanes = pointer.To(allowScheduling)
+		cfg.Container().RawV1Alpha1().ClusterConfig.AllowSchedulingOnControlPlanes = new(allowScheduling)
 		cfg.Container().RawV1Alpha1().MachineConfig.MachineType = machineType.String()
 		cfg.Container().RawV1Alpha1().MachineConfig.MachineNodeTaints = nodeTaints
 		suite.Require().NoError(suite.State().Update(suite.Ctx(), cfg))

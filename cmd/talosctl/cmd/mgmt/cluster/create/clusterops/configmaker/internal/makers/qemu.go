@@ -15,7 +15,6 @@ import (
 
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/v2/encryption"
-	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	sideronet "github.com/siderolabs/net"
 	"go.yaml.in/yaml/v4"
@@ -313,7 +312,7 @@ func (m *Qemu) ModifyNodes() error {
 	case "metal-iso":
 		configInjectionMethod = provision.ConfigInjectionMethodMetalISO
 	default:
-		return fmt.Errorf("unknown config injection method %q", configInjectionMethod)
+		return fmt.Errorf("unknown config injection method %d", configInjectionMethod)
 	}
 
 	var extraKernelArgs *procfs.Cmdline
@@ -407,7 +406,7 @@ func (*Qemu) getDiskEncryptionPatch(spec struct {
 
 	if spec.label != constants.StatePartitionLabel {
 		for idx := range blockCfg.EncryptionSpec.EncryptionKeys {
-			blockCfg.EncryptionSpec.EncryptionKeys[idx].KeyLockToSTATE = pointer.To(true)
+			blockCfg.EncryptionSpec.EncryptionKeys[idx].KeyLockToSTATE = new(true)
 		}
 	}
 
@@ -608,7 +607,7 @@ func (m *Qemu) getEncryptionKeys(diskEncryptionKeyTypes []string) ([]*v1alpha1.E
 			keyTPM := &v1alpha1.EncryptionKeyTPM{}
 
 			if m.VersionContract.SecureBootEnrollEnforcementSupported() {
-				keyTPM.TPMCheckSecurebootStatusOnEnroll = pointer.To(true)
+				keyTPM.TPMCheckSecurebootStatusOnEnroll = new(true)
 			}
 
 			keys = append(keys, &v1alpha1.EncryptionKey{
@@ -634,7 +633,7 @@ func convertEncryptionKeys(keys []*v1alpha1.EncryptionKey) []block.EncryptionKey
 		}
 
 		if k.KeyKMS != nil {
-			r.KeyKMS = pointer.To(block.EncryptionKeyKMS(*k.KeyKMS))
+			r.KeyKMS = new(block.EncryptionKeyKMS(*k.KeyKMS))
 		}
 
 		if k.KeyTPM != nil {
@@ -642,15 +641,15 @@ func convertEncryptionKeys(keys []*v1alpha1.EncryptionKey) []block.EncryptionKey
 				TPMCheckSecurebootStatusOnEnroll: k.KeyTPM.TPMCheckSecurebootStatusOnEnroll,
 			}
 
-			r.KeyTPM = pointer.To(encryptionKeyTPM)
+			r.KeyTPM = new(encryptionKeyTPM)
 		}
 
 		if k.KeyNodeID != nil {
-			r.KeyNodeID = pointer.To(block.EncryptionKeyNodeID(*k.KeyNodeID))
+			r.KeyNodeID = new(block.EncryptionKeyNodeID(*k.KeyNodeID))
 		}
 
 		if k.KeyStatic != nil {
-			r.KeyStatic = pointer.To(block.EncryptionKeyStatic(*k.KeyStatic))
+			r.KeyStatic = new(block.EncryptionKeyStatic(*k.KeyStatic))
 		}
 
 		return r

@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/mdlayher/ethtool"
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v4"
@@ -65,7 +64,7 @@ func TestLinkStatusMarshalYAML(t *testing.T) {
 			LACPRate:        nethelpers.LACPRateFast,
 			ARPValidate:     nethelpers.ARPValidateAll,
 			ARPAllTargets:   nethelpers.ARPAllTargetsAny,
-			PrimaryIndex:    pointer.To[uint32](3),
+			PrimaryIndex:    new(uint32(3)),
 			PrimaryReselect: nethelpers.PrimaryReselectBetter,
 			FailOverMac:     nethelpers.FailOverMACFollow,
 			ADSelect:        nethelpers.ADSelectCount,

@@ -19,7 +19,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/jsimonetti/rtnetlink/v2"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -103,7 +102,7 @@ func (suite *LinkSpecSuite) TestDummy() {
 
 	// attempt to change multicast flag
 	ctest.UpdateWithConflicts(suite, dummy, func(r *network.LinkSpec) error {
-		r.TypedSpec().Multicast = pointer.To(true)
+		r.TypedSpec().Multicast = new(true)
 
 		return nil
 	})
@@ -115,7 +114,7 @@ func (suite *LinkSpecSuite) TestDummy() {
 	// attempt to disable multicast
 	ctest.UpdateWithConflicts(suite, dummy, func(r *network.LinkSpec) error {
 		r.TypedSpec().Multicast = new(bool)
-		r.TypedSpec().Multicast = pointer.To(false)
+		r.TypedSpec().Multicast = new(false)
 
 		return nil
 	})

@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"testing"
 
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -30,7 +29,7 @@ func (suite *KubePrismConfigControllerSuite) TestGeneration() {
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineFeatures: &v1alpha1.FeaturesConfig{
 				KubePrismSupport: &v1alpha1.KubePrism{
-					ServerEnabled: pointer.To(true),
+					ServerEnabled: new(true),
 					ServerPort:    7445,
 				},
 			},
@@ -76,7 +75,7 @@ func (suite *KubePrismConfigControllerSuite) TestGeneration() {
 
 	ctest.UpdateWithConflicts(suite, mc, func(cfg *config.MachineConfig) error {
 		balancer := cfg.Config().Machine().Features().KubePrism().(*v1alpha1.KubePrism)
-		balancer.ServerEnabled = pointer.To(false)
+		balancer.ServerEnabled = new(false)
 
 		return nil
 	})
@@ -85,7 +84,7 @@ func (suite *KubePrismConfigControllerSuite) TestGeneration() {
 
 	ctest.UpdateWithConflicts(suite, mc, func(cfg *config.MachineConfig) error {
 		balancer := cfg.Config().Machine().Features().KubePrism().(*v1alpha1.KubePrism)
-		balancer.ServerEnabled = pointer.To(true)
+		balancer.ServerEnabled = new(true)
 		balancer.ServerPort = 7446
 
 		return nil

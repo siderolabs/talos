@@ -23,7 +23,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/google/uuid"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
@@ -609,8 +608,8 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 	suite.Require().Empty(expectedLabels, "expected labels %v to be set on discovered volumes", expectedLabels)
 
 	// test disableAccessTime mount option
-	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountDisableAccessTime = pointer.To(true)
-	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountSecure = pointer.To(false)
+	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountDisableAccessTime = new(true)
+	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountSecure = new(false)
 	suite.PatchMachineConfig(ctx, configDocs...)
 
 	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{userVolumeIDs[0]},
@@ -620,8 +619,8 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 		})
 
 	// test secure mount option
-	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountDisableAccessTime = pointer.To(false)
-	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountSecure = pointer.To(true)
+	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountDisableAccessTime = new(false)
+	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountSecure = new(true)
 	suite.PatchMachineConfig(ctx, configDocs...)
 
 	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{userVolumeIDs[0]},
@@ -657,7 +656,7 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 	rtestutils.AssertNoResource[*block.DiscoveredVolume](ctx, suite.T(), suite.Client.COSI, filepath.Base(vs.TypedSpec().Location))
 
 	// re-create the volume with project quota support
-	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).FilesystemSpec.ProjectQuotaSupportConfig = pointer.To(true)
+	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).FilesystemSpec.ProjectQuotaSupportConfig = new(true)
 	suite.PatchMachineConfig(ctx, configDocs[0])
 
 	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, userVolumeIDs,
@@ -750,7 +749,7 @@ func (suite *VolumesSuite) TestUserVolumesDisk() {
 	configDocs := xslices.Map(volumeIDs, func(volumeID string) any {
 		doc := blockcfg.NewUserVolumeConfigV1Alpha1()
 		doc.MetaName = volumeID
-		doc.VolumeType = pointer.To(block.VolumeTypeDisk)
+		doc.VolumeType = new(block.VolumeTypeDisk)
 		doc.ProvisioningSpec.DiskSelectorSpec.Match = cel.MustExpression(
 			cel.ParseBooleanExpression(fmt.Sprintf("'%s' in disk.symlinks", disk.TypedSpec().Symlinks[0]), celenv.DiskLocator()),
 		)
@@ -805,8 +804,8 @@ func (suite *VolumesSuite) TestUserVolumesDisk() {
 	}))
 
 	// test disableAccessTime mount option
-	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountDisableAccessTime = pointer.To(true)
-	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountSecure = pointer.To(false)
+	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountDisableAccessTime = new(true)
+	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountSecure = new(false)
 	suite.PatchMachineConfig(ctx, configDocs...)
 
 	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{userVolumeIDs[0]},
@@ -816,8 +815,8 @@ func (suite *VolumesSuite) TestUserVolumesDisk() {
 		})
 
 	// test secure mount option
-	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountDisableAccessTime = pointer.To(false)
-	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountSecure = pointer.To(true)
+	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountDisableAccessTime = new(false)
+	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).MountSpec.MountSecure = new(true)
 	suite.PatchMachineConfig(ctx, configDocs...)
 
 	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{userVolumeIDs[0]},
@@ -855,7 +854,7 @@ func (suite *VolumesSuite) TestUserVolumesDisk() {
 	})
 
 	// re-create the volume with project quota support
-	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).FilesystemSpec.ProjectQuotaSupportConfig = pointer.To(true)
+	configDocs[0].(*blockcfg.UserVolumeConfigV1Alpha1).FilesystemSpec.ProjectQuotaSupportConfig = new(true)
 	suite.PatchMachineConfig(ctx, configDocs[0])
 
 	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, userVolumeIDs,
@@ -937,7 +936,7 @@ func (suite *VolumesSuite) TestUserVolumesDirectory() {
 	configDocs := xslices.Map(volumeIDs, func(volumeID string) any {
 		doc := blockcfg.NewUserVolumeConfigV1Alpha1()
 		doc.MetaName = volumeID
-		doc.VolumeType = pointer.To(block.VolumeTypeDirectory)
+		doc.VolumeType = new(block.VolumeTypeDirectory)
 
 		return doc
 	})
@@ -1269,7 +1268,7 @@ func (suite *VolumesSuite) TestExistingVolumes() {
 	}))
 
 	// now, re-mount the existing volume as read-only
-	existingVolumeDoc.MountSpec.MountReadOnly = pointer.To(true)
+	existingVolumeDoc.MountSpec.MountReadOnly = new(true)
 	suite.PatchMachineConfig(ctx, existingVolumeDoc)
 
 	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{existingVolumeID},
@@ -1279,8 +1278,8 @@ func (suite *VolumesSuite) TestExistingVolumes() {
 
 	// test disableAccessTime mount option
 	existingVolumeDoc.MountSpec.MountReadOnly = nil
-	existingVolumeDoc.MountSpec.MountDisableAccessTime = pointer.To(true)
-	existingVolumeDoc.MountSpec.MountSecure = pointer.To(false)
+	existingVolumeDoc.MountSpec.MountDisableAccessTime = new(true)
+	existingVolumeDoc.MountSpec.MountSecure = new(false)
 	suite.PatchMachineConfig(ctx, existingVolumeDoc)
 
 	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{existingVolumeID},
@@ -1289,8 +1288,8 @@ func (suite *VolumesSuite) TestExistingVolumes() {
 		})
 
 	// test secure mount option
-	existingVolumeDoc.MountSpec.MountDisableAccessTime = pointer.To(false)
-	existingVolumeDoc.MountSpec.MountSecure = pointer.To(true)
+	existingVolumeDoc.MountSpec.MountDisableAccessTime = new(false)
+	existingVolumeDoc.MountSpec.MountSecure = new(true)
 	suite.PatchMachineConfig(ctx, existingVolumeDoc)
 
 	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{existingVolumeID},
@@ -1410,7 +1409,7 @@ func (suite *VolumesSuite) TestExternalVolumesVirtiofs() {
 	}))
 
 	// now, re-mount the external volume as read-only
-	externalVolumeDoc.MountSpec.MountReadOnly = pointer.To(true)
+	externalVolumeDoc.MountSpec.MountReadOnly = new(true)
 	suite.PatchMachineConfig(ctx, externalVolumeDoc)
 
 	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, []resource.ID{externalVolumeID},
@@ -1501,7 +1500,7 @@ func (suite *VolumesSuite) TestVolumeProvisioningErrors() {
 
 		doc := blockcfg.NewUserVolumeConfigV1Alpha1()
 		doc.MetaName = volumeID
-		doc.VolumeType = pointer.To(block.VolumeTypeDisk)
+		doc.VolumeType = new(block.VolumeTypeDisk)
 		doc.ProvisioningSpec.DiskSelectorSpec.Match = cel.MustExpression(
 			cel.ParseBooleanExpression(matchExpr, celenv.DiskLocator()),
 		)

@@ -1339,7 +1339,7 @@ type ProxyConfig struct {
 	//   description: |
 	//     Disable kube-proxy deployment on cluster bootstrap.
 	//   examples:
-	//     - value: pointer.To(false)
+	//     - value: new(false)
 	Disabled *bool `yaml:"disabled,omitempty"`
 	//   description: |
 	//     The container image used in the kube-proxy manifest.

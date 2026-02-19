@@ -9,7 +9,6 @@ import (
 	"net/netip"
 	"testing"
 
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -25,10 +24,10 @@ func TestKubeSpanConfigMarshalStability(t *testing.T) {
 	t.Parallel()
 
 	cfg := network.NewKubeSpanV1Alpha1()
-	cfg.ConfigEnabled = pointer.To(true)
-	cfg.ConfigAdvertiseKubernetesNetworks = pointer.To(false)
-	cfg.ConfigAllowDownPeerBypass = pointer.To(false)
-	cfg.ConfigMTU = pointer.To(uint32(1420))
+	cfg.ConfigEnabled = new(true)
+	cfg.ConfigAdvertiseKubernetesNetworks = new(false)
+	cfg.ConfigAllowDownPeerBypass = new(false)
+	cfg.ConfigMTU = new(uint32(1420))
 	cfg.ConfigFilters = &network.KubeSpanFiltersConfig{
 		ConfigExcludeAdvertisedNetworks: []network.Prefix{{netip.MustParsePrefix("2007::/64")}},
 	}
@@ -45,8 +44,8 @@ func TestKubeSpanConfigUnmarshal(t *testing.T) {
 	t.Parallel()
 
 	cfg := network.NewKubeSpanV1Alpha1()
-	cfg.ConfigEnabled = pointer.To(true)
-	cfg.ConfigMTU = pointer.To(uint32(1500))
+	cfg.ConfigEnabled = new(true)
+	cfg.ConfigMTU = new(uint32(1500))
 	cfg.ConfigFilters = &network.KubeSpanFiltersConfig{
 		ConfigEndpoints:                 []string{"0.0.0.0/0", "!192.168.0.0/16"},
 		ConfigExcludeAdvertisedNetworks: []network.Prefix{{netip.MustParsePrefix("2007::/64")}},
@@ -78,7 +77,7 @@ func TestKubeSpanConfigValidate(t *testing.T) {
 			name: "valid default",
 			cfg: func() *network.KubeSpanConfigV1Alpha1 {
 				cfg := network.NewKubeSpanV1Alpha1()
-				cfg.ConfigEnabled = pointer.To(true)
+				cfg.ConfigEnabled = new(true)
 
 				return cfg
 			},
@@ -87,8 +86,8 @@ func TestKubeSpanConfigValidate(t *testing.T) {
 			name: "valid with MTU",
 			cfg: func() *network.KubeSpanConfigV1Alpha1 {
 				cfg := network.NewKubeSpanV1Alpha1()
-				cfg.ConfigEnabled = pointer.To(true)
-				cfg.ConfigMTU = pointer.To(uint32(1420))
+				cfg.ConfigEnabled = new(true)
+				cfg.ConfigMTU = new(uint32(1420))
 
 				return cfg
 			},
@@ -97,8 +96,8 @@ func TestKubeSpanConfigValidate(t *testing.T) {
 			name: "MTU too low",
 			cfg: func() *network.KubeSpanConfigV1Alpha1 {
 				cfg := network.NewKubeSpanV1Alpha1()
-				cfg.ConfigEnabled = pointer.To(true)
-				cfg.ConfigMTU = pointer.To(uint32(1279))
+				cfg.ConfigEnabled = new(true)
+				cfg.ConfigMTU = new(uint32(1279))
 
 				return cfg
 			},
@@ -109,8 +108,8 @@ func TestKubeSpanConfigValidate(t *testing.T) {
 			name: "MTU at minimum",
 			cfg: func() *network.KubeSpanConfigV1Alpha1 {
 				cfg := network.NewKubeSpanV1Alpha1()
-				cfg.ConfigEnabled = pointer.To(true)
-				cfg.ConfigMTU = pointer.To(uint32(1280))
+				cfg.ConfigEnabled = new(true)
+				cfg.ConfigMTU = new(uint32(1280))
 
 				return cfg
 			},
@@ -119,7 +118,7 @@ func TestKubeSpanConfigValidate(t *testing.T) {
 			name: "with filters",
 			cfg: func() *network.KubeSpanConfigV1Alpha1 {
 				cfg := network.NewKubeSpanV1Alpha1()
-				cfg.ConfigEnabled = pointer.To(true)
+				cfg.ConfigEnabled = new(true)
 				cfg.ConfigFilters = &network.KubeSpanFiltersConfig{
 					ConfigEndpoints: []string{"0.0.0.0/0", "!10.0.0.0/8"},
 				}
@@ -131,7 +130,7 @@ func TestKubeSpanConfigValidate(t *testing.T) {
 			name: "with invalid filters",
 			cfg: func() *network.KubeSpanConfigV1Alpha1 {
 				cfg := network.NewKubeSpanV1Alpha1()
-				cfg.ConfigEnabled = pointer.To(true)
+				cfg.ConfigEnabled = new(true)
 				cfg.ConfigFilters = &network.KubeSpanFiltersConfig{
 					ConfigEndpoints: []string{"0.0.0.0/0", "!/8"},
 				}
@@ -144,11 +143,11 @@ func TestKubeSpanConfigValidate(t *testing.T) {
 			name: "all options enabled",
 			cfg: func() *network.KubeSpanConfigV1Alpha1 {
 				cfg := network.NewKubeSpanV1Alpha1()
-				cfg.ConfigEnabled = pointer.To(true)
-				cfg.ConfigAdvertiseKubernetesNetworks = pointer.To(true)
-				cfg.ConfigAllowDownPeerBypass = pointer.To(true)
-				cfg.ConfigHarvestExtraEndpoints = pointer.To(true)
-				cfg.ConfigMTU = pointer.To(uint32(1400))
+				cfg.ConfigEnabled = new(true)
+				cfg.ConfigAdvertiseKubernetesNetworks = new(true)
+				cfg.ConfigAllowDownPeerBypass = new(true)
+				cfg.ConfigHarvestExtraEndpoints = new(true)
+				cfg.ConfigMTU = new(uint32(1400))
 
 				return cfg
 			},
@@ -184,7 +183,7 @@ func TestKubeSpanConfigConflictValidate(t *testing.T) {
 			name: "no conflict when v1alpha1 empty",
 			cfg: func() *network.KubeSpanConfigV1Alpha1 {
 				cfg := network.NewKubeSpanV1Alpha1()
-				cfg.ConfigEnabled = pointer.To(true)
+				cfg.ConfigEnabled = new(true)
 
 				return cfg
 			},
@@ -196,7 +195,7 @@ func TestKubeSpanConfigConflictValidate(t *testing.T) {
 			name: "conflict when both set",
 			cfg: func() *network.KubeSpanConfigV1Alpha1 {
 				cfg := network.NewKubeSpanV1Alpha1()
-				cfg.ConfigEnabled = pointer.To(true)
+				cfg.ConfigEnabled = new(true)
 
 				return cfg
 			},
@@ -205,7 +204,7 @@ func TestKubeSpanConfigConflictValidate(t *testing.T) {
 				cfg.MachineConfig = &v1alpha1.MachineConfig{
 					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
 						NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{ //nolint:staticcheck // legacy config
-							KubeSpanEnabled: pointer.To(true),
+							KubeSpanEnabled: new(true),
 						},
 					},
 				}
@@ -234,11 +233,11 @@ func TestKubeSpanConfigInterface(t *testing.T) {
 	t.Parallel()
 
 	cfg := network.NewKubeSpanV1Alpha1()
-	cfg.ConfigEnabled = pointer.To(true)
-	cfg.ConfigAdvertiseKubernetesNetworks = pointer.To(true)
-	cfg.ConfigAllowDownPeerBypass = pointer.To(false)
-	cfg.ConfigHarvestExtraEndpoints = pointer.To(true)
-	cfg.ConfigMTU = pointer.To(uint32(1380))
+	cfg.ConfigEnabled = new(true)
+	cfg.ConfigAdvertiseKubernetesNetworks = new(true)
+	cfg.ConfigAllowDownPeerBypass = new(false)
+	cfg.ConfigHarvestExtraEndpoints = new(true)
+	cfg.ConfigMTU = new(uint32(1380))
 	cfg.ConfigFilters = &network.KubeSpanFiltersConfig{
 		ConfigEndpoints:                 []string{"192.168.0.0/16"},
 		ConfigExcludeAdvertisedNetworks: []network.Prefix{{netip.MustParsePrefix("0.0.0.0/0")}},

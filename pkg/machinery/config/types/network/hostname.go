@@ -99,7 +99,7 @@ func exampleHostnameConfigV1Alpha1() *HostnameConfigV1Alpha1 {
 
 func exampleHostnameConfigV1Alpha2() *HostnameConfigV1Alpha1 {
 	cfg := NewHostnameConfigV1Alpha1()
-	cfg.ConfigAuto = pointer.To(nethelpers.AutoHostnameKindStable)
+	cfg.ConfigAuto = new(nethelpers.AutoHostnameKindStable)
 
 	return cfg
 }

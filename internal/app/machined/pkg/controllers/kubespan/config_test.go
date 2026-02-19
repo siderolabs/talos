@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -33,7 +32,7 @@ func (suite *ConfigSuite) TestReconcileConfig() {
 			MachineConfig: &v1alpha1.MachineConfig{
 				MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
 					NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{ //nolint:staticcheck // legacy config
-						KubeSpanEnabled: pointer.To(true),
+						KubeSpanEnabled: new(true),
 						KubeSpanFilters: &v1alpha1.KubeSpanFilters{
 							KubeSpanFiltersExcludeAdvertisedNetworks: []string{"10.0.0.0/8"},
 						},
@@ -88,8 +87,8 @@ func (suite *ConfigSuite) TestReconcileDisabled() {
 
 func (suite *ConfigSuite) TestReconcileMultiDoc() {
 	kubeSpanCfg := network.NewKubeSpanV1Alpha1()
-	kubeSpanCfg.ConfigEnabled = pointer.To(true)
-	kubeSpanCfg.ConfigMTU = pointer.To(uint32(1380))
+	kubeSpanCfg.ConfigEnabled = new(true)
+	kubeSpanCfg.ConfigMTU = new(uint32(1380))
 	kubeSpanCfg.ConfigFilters = &network.KubeSpanFiltersConfig{
 		ConfigEndpoints:                 []string{"0.0.0.0/0", "::/0"},
 		ConfigExcludeAdvertisedNetworks: []network.Prefix{{Prefix: netip.MustParsePrefix("10.0.0.0/8")}},

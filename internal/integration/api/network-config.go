@@ -135,12 +135,12 @@ func (suite *NetworkConfigSuite) TestDummyLinkConfig() {
 
 	dummy := network.NewDummyLinkConfigV1Alpha1(dummyName)
 	dummy.HardwareAddressConfig = nethelpers.HardwareAddr{0x02, 0x00, 0x00, 0x00, byte(rand.IntN(256)), byte(rand.IntN(256))}
-	dummy.LinkUp = pointer.To(true)
+	dummy.LinkUp = new(true)
 	dummy.LinkMTU = 9000
 	dummy.LinkAddresses = []network.AddressConfig{
 		{
 			AddressAddress:  netip.MustParsePrefix("fd13:1234::1/64"),
-			AddressPriority: pointer.To[uint32](100),
+			AddressPriority: new(uint32(100)),
 		},
 	}
 	dummy.LinkRoutes = []network.RouteConfig{
@@ -216,7 +216,7 @@ func (suite *NetworkConfigSuite) TestLinkConfig() {
 	cfg.LinkAddresses = []network.AddressConfig{
 		{
 			AddressAddress:  netip.MustParsePrefix("fd13:1234::2/64"),
-			AddressPriority: pointer.To[uint32](2048),
+			AddressPriority: new(uint32(2048)),
 		},
 	}
 
@@ -364,7 +364,7 @@ func (suite *NetworkConfigSuite) TestVLANConfig() {
 	dummyName := fmt.Sprintf("dummy%d", rand.IntN(10000))
 
 	dummy := network.NewDummyLinkConfigV1Alpha1(dummyName)
-	dummy.LinkUp = pointer.To(true)
+	dummy.LinkUp = new(true)
 	dummy.LinkMTU = 9000
 
 	vlanName := dummyName + ".v"
@@ -376,7 +376,7 @@ func (suite *NetworkConfigSuite) TestVLANConfig() {
 	vlan.LinkAddresses = []network.AddressConfig{
 		{
 			AddressAddress:  netip.MustParsePrefix("fd13:1234::1/64"),
-			AddressPriority: pointer.To[uint32](100),
+			AddressPriority: new(uint32(100)),
 		},
 	}
 	vlan.LinkRoutes = []network.RouteConfig{
@@ -455,21 +455,21 @@ func (suite *NetworkConfigSuite) TestBondConfig() {
 
 	bond := network.NewBondConfigV1Alpha1(bondName)
 	bond.BondLinks = dummyNames
-	bond.BondMode = pointer.To(nethelpers.BondMode8023AD)
-	bond.BondMIIMon = pointer.To(uint32(100))
-	bond.BondUpDelay = pointer.To(uint32(200))
-	bond.BondDownDelay = pointer.To(uint32(300))
-	bond.BondLACPRate = pointer.To(nethelpers.LACPRateSlow)
-	bond.BondADActorSysPrio = pointer.To(uint16(65535))
-	bond.BondResendIGMP = pointer.To(uint32(1))
-	bond.BondPacketsPerSlave = pointer.To(uint32(1))
+	bond.BondMode = new(nethelpers.BondMode8023AD)
+	bond.BondMIIMon = new(uint32(100))
+	bond.BondUpDelay = new(uint32(200))
+	bond.BondDownDelay = new(uint32(300))
+	bond.BondLACPRate = new(nethelpers.LACPRateSlow)
+	bond.BondADActorSysPrio = new(uint16(65535))
+	bond.BondResendIGMP = new(uint32(1))
+	bond.BondPacketsPerSlave = new(uint32(1))
 	bond.HardwareAddressConfig = nethelpers.HardwareAddr{0x02, 0x00, 0x00, 0x00, byte(rand.IntN(256)), byte(rand.IntN(256))}
-	bond.LinkUp = pointer.To(true)
+	bond.LinkUp = new(true)
 	bond.LinkMTU = 2000
 	bond.LinkAddresses = []network.AddressConfig{
 		{
 			AddressAddress:  netip.MustParsePrefix("fd13:1235::1/64"),
-			AddressPriority: pointer.To[uint32](100),
+			AddressPriority: new(uint32(100)),
 		},
 	}
 	bond.LinkRoutes = []network.RouteConfig{
@@ -551,9 +551,9 @@ func (suite *NetworkConfigSuite) TestBridgeConfig() {
 
 	bridge := network.NewBridgeConfigV1Alpha1(bridgeName)
 	bridge.BridgeLinks = dummyNames
-	bridge.BridgeSTP.BridgeSTPEnabled = pointer.To(true)
+	bridge.BridgeSTP.BridgeSTPEnabled = new(true)
 	bridge.HardwareAddressConfig = nethelpers.HardwareAddr{0x02, 0x00, 0x00, 0x00, byte(rand.IntN(256)), byte(rand.IntN(256))}
-	bridge.LinkUp = pointer.To(true)
+	bridge.LinkUp = new(true)
 
 	suite.PatchMachineConfig(nodeCtx, append(dummyConfigs, bridge)...)
 
@@ -614,7 +614,7 @@ func (suite *NetworkConfigSuite) TestWireguardConfig() {
 			},
 		},
 	}
-	wg.LinkUp = pointer.To(true)
+	wg.LinkUp = new(true)
 
 	suite.PatchMachineConfig(nodeCtx, wg)
 

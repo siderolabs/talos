@@ -299,15 +299,15 @@ func NewBondConfigV1Alpha1(name string) *BondConfigV1Alpha1 {
 func exampleBondConfigV1Alpha1() *BondConfigV1Alpha1 {
 	cfg := NewBondConfigV1Alpha1("bond.int")
 	cfg.BondLinks = []string{"enp1s2", "enp1s2"}
-	cfg.BondMode = pointer.To(nethelpers.BondMode8023AD)
-	cfg.BondXmitHashPolicy = pointer.To(nethelpers.BondXmitPolicyLayer34)
-	cfg.BondLACPRate = pointer.To(nethelpers.LACPRateSlow)
-	cfg.BondMIIMon = pointer.To(uint32(100))
-	cfg.BondUpDelay = pointer.To(uint32(200))
-	cfg.BondDownDelay = pointer.To(uint32(200))
-	cfg.BondResendIGMP = pointer.To(uint32(1))
-	cfg.BondPacketsPerSlave = pointer.To(uint32(1))
-	cfg.BondADActorSysPrio = pointer.To(uint16(65535))
+	cfg.BondMode = new(nethelpers.BondMode8023AD)
+	cfg.BondXmitHashPolicy = new(nethelpers.BondXmitPolicyLayer34)
+	cfg.BondLACPRate = new(nethelpers.LACPRateSlow)
+	cfg.BondMIIMon = new(uint32(100))
+	cfg.BondUpDelay = new(uint32(200))
+	cfg.BondDownDelay = new(uint32(200))
+	cfg.BondResendIGMP = new(uint32(1))
+	cfg.BondPacketsPerSlave = new(uint32(1))
+	cfg.BondADActorSysPrio = new(uint16(65535))
 
 	cfg.LinkAddresses = []AddressConfig{
 		{

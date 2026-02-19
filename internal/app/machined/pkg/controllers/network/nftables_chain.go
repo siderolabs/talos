@@ -14,7 +14,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/google/nftables"
 	"github.com/google/nftables/expr"
-	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 
 	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
@@ -114,10 +113,10 @@ func (ctrl *NfTablesChainController) Run(ctx context.Context, r controller.Runti
 			nfChain := conn.AddChain(&nftables.Chain{
 				Name:     chain.Metadata().ID(),
 				Table:    talosTable,
-				Hooknum:  pointer.To(nftables.ChainHook(chain.TypedSpec().Hook)),
-				Priority: pointer.To(nftables.ChainPriority(chain.TypedSpec().Priority)),
+				Hooknum:  new(nftables.ChainHook(chain.TypedSpec().Hook)),
+				Priority: new(nftables.ChainPriority(chain.TypedSpec().Priority)),
 				Type:     nftables.ChainType(chain.TypedSpec().Type),
-				Policy:   pointer.To(nftables.ChainPolicy(chain.TypedSpec().Policy)),
+				Policy:   new(nftables.ChainPolicy(chain.TypedSpec().Policy)),
 			})
 
 			for _, rule := range chain.TypedSpec().Rules {

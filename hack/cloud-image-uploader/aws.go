@@ -60,7 +60,7 @@ func GetAWSDefaultRegions(ctx context.Context) ([]string, error) {
 	resp, err := svc.DescribeRegions(ctx, &ec2.DescribeRegionsInput{
 		Filters: []types.Filter{
 			{
-				Name:   pointer.To("opt-in-status"),
+				Name:   new("opt-in-status"),
 				Values: []string{"opt-in-not-required", "opted-in"},
 			},
 		},
@@ -133,7 +133,7 @@ func cleanupBucket(s3Svc *s3.Client, bucketName string) {
 	defer cancel()
 
 	mpuPaginator := s3.NewListMultipartUploadsPaginator(s3Svc, &s3.ListMultipartUploadsInput{
-		Bucket: pointer.To(bucketName),
+		Bucket: new(bucketName),
 	})
 
 	for mpuPaginator.HasMorePages() {
@@ -146,7 +146,7 @@ func cleanupBucket(s3Svc *s3.Client, bucketName string) {
 
 		for _, upload := range page.Uploads {
 			_, err = s3Svc.AbortMultipartUpload(ctx, &s3.AbortMultipartUploadInput{
-				Bucket:   pointer.To(bucketName),
+				Bucket:   new(bucketName),
 				Key:      upload.Key,
 				UploadId: upload.UploadId,
 			})
@@ -157,7 +157,7 @@ func cleanupBucket(s3Svc *s3.Client, bucketName string) {
 	}
 
 	objectsPaginator := s3.NewListObjectsV2Paginator(s3Svc, &s3.ListObjectsV2Input{
-		Bucket: pointer.To(bucketName),
+		Bucket: new(bucketName),
 	})
 
 	for objectsPaginator.HasMorePages() {
@@ -173,7 +173,7 @@ func cleanupBucket(s3Svc *s3.Client, bucketName string) {
 		}
 
 		_, err = s3Svc.DeleteObjects(ctx, &s3.DeleteObjectsInput{
-			Bucket: pointer.To(bucketName),
+			Bucket: new(bucketName),
 			Delete: &s3types.Delete{
 				Objects: xslices.Map(page.Contents, func(obj s3types.Object) s3types.ObjectIdentifier {
 					return s3types.ObjectIdentifier{
@@ -212,7 +212,7 @@ func (au *AWSUploader) registerAMI(ctx context.Context, region string, svc *ec2.
 	}
 
 	_, err := s3Svc.CreateBucket(ctx, &s3.CreateBucketInput{
-		Bucket:                    pointer.To(bucketName),
+		Bucket:                    new(bucketName),
 		CreateBucketConfiguration: createBucketConfiguration,
 	})
 	if err != nil {
@@ -220,7 +220,7 @@ func (au *AWSUploader) registerAMI(ctx context.Context, region string, svc *ec2.
 	}
 
 	if err = s3.NewBucketExistsWaiter(s3Svc).Wait(ctx, &s3.HeadBucketInput{
-		Bucket: pointer.To(bucketName),
+		Bucket: new(bucketName),
 	}, time.Minute); err != nil {
 		return fmt.Errorf("failed waiting for S3 bucket: %w", err)
 	}
@@ -232,8 +232,8 @@ func (au *AWSUploader) registerAMI(ctx context.Context, region string, svc *ec2.
 	}()
 
 	_, err = s3Svc.PutBucketPolicy(ctx, &s3.PutBucketPolicyInput{
-		Bucket: pointer.To(bucketName),
-		Policy: pointer.To(fmt.Sprintf(denyInsecurePolicyTemplate, bucketName, bucketName)),
+		Bucket: new(bucketName),
+		Policy: new(fmt.Sprintf(denyInsecurePolicyTemplate, bucketName, bucketName)),
 	})
 	if err != nil {
 		return fmt.Errorf("failed applying S3 bucket policy: %w", err)
@@ -268,8 +268,8 @@ func (au *AWSUploader) tagSnapshot(ctx context.Context, svc *ec2.Client, snapsho
 	_, tagErr := svc.CreateTags(ctx, &ec2.CreateTagsInput{
 		Resources: []string{snapshotID},
 		Tags: []types.Tag{{
-			Key:   pointer.To("Name"),
-			Value: pointer.To(imageName),
+			Key:   new("Name"),
+			Value: new(imageName),
 		}},
 	})
 	if tagErr != nil {
@@ -295,8 +295,8 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 		defer image.Close()
 
 		_, err = uploader.Upload(ctx, &s3.PutObjectInput{ //nolint:staticcheck
-			Bucket: pointer.To(bucketName),
-			Key:    pointer.To(fmt.Sprintf("disk-%s.raw", arch)),
+			Bucket: new(bucketName),
+			Key:    new(fmt.Sprintf("disk-%s.raw", arch)),
 			Body:   image,
 		})
 
@@ -309,13 +309,13 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 	log.Printf("aws: import into %s/%s, image uploaded to S3", region, arch)
 
 	resp, err := svc.ImportSnapshot(ctx, &ec2.ImportSnapshotInput{
-		Description: pointer.To(fmt.Sprintf("Talos Image %s %s %s", au.Options.Tag, arch, region)),
+		Description: new(fmt.Sprintf("Talos Image %s %s %s", au.Options.Tag, arch, region)),
 		DiskContainer: &types.SnapshotDiskContainer{
-			Description: pointer.To(fmt.Sprintf("Talos Image %s %s %s", au.Options.Tag, arch, region)),
-			Format:      pointer.To("raw"),
+			Description: new(fmt.Sprintf("Talos Image %s %s %s", au.Options.Tag, arch, region)),
+			Format:      new("raw"),
 			UserBucket: &types.UserBucket{
-				S3Bucket: pointer.To(bucketName),
-				S3Key:    pointer.To(fmt.Sprintf("disk-%s.raw", arch)),
+				S3Bucket: new(bucketName),
+				S3Key:    new(fmt.Sprintf("disk-%s.raw", arch)),
 			},
 		},
 	})
@@ -406,20 +406,20 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 		Name: aws.String(imageName),
 		BlockDeviceMappings: []types.BlockDeviceMapping{
 			{
-				DeviceName:  pointer.To("/dev/xvda"),
-				VirtualName: pointer.To("talos"),
+				DeviceName:  new("/dev/xvda"),
+				VirtualName: new("talos"),
 				Ebs: &types.EbsBlockDevice{
-					DeleteOnTermination: pointer.To(true),
-					SnapshotId:          pointer.To(snapshotID),
-					VolumeSize:          pointer.To[int32](20),
+					DeleteOnTermination: new(true),
+					SnapshotId:          new(snapshotID),
+					VolumeSize:          new(int32(20)),
 					VolumeType:          types.VolumeTypeGp2,
 				},
 			},
 		},
-		RootDeviceName:     pointer.To("/dev/xvda"),
-		VirtualizationType: pointer.To("hvm"),
-		EnaSupport:         pointer.To(true),
-		Description:        pointer.To(fmt.Sprintf("Talos AMI %s %s %s", au.Options.Tag, arch, region)),
+		RootDeviceName:     new("/dev/xvda"),
+		VirtualizationType: new("hvm"),
+		EnaSupport:         new(true),
+		Description:        new(fmt.Sprintf("Talos AMI %s %s %s", au.Options.Tag, arch, region)),
 		Architecture:       awsArchitectures[arch],
 		ImdsSupport:        types.ImdsSupportValuesV20,
 	}

@@ -47,6 +47,7 @@ var validateCmd = &cobra.Command{
 		for _, w := range warnings {
 			cli.Warning("%s", w)
 		}
+
 		if err != nil {
 			return err
 		}

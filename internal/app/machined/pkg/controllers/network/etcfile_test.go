@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -251,7 +250,7 @@ func (suite *EtcFileConfigSuite) TestNoSearchDomainLegacy() {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
-						NetworkDisableSearchDomain: pointer.To(true),
+						NetworkDisableSearchDomain: new(true),
 					},
 				},
 			},
@@ -270,7 +269,7 @@ func (suite *EtcFileConfigSuite) TestNoSearchDomainLegacy() {
 func (suite *EtcFileConfigSuite) TestNoSearchDomainNewStyle() {
 	hc := networkcfg.NewResolverConfigV1Alpha1()
 	hc.ResolverSearchDomains = networkcfg.SearchDomainsConfig{
-		SearchDisableDefault: pointer.To(true),
+		SearchDisableDefault: new(true),
 	}
 
 	ctr, err := container.New(hc)

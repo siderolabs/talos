@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -27,7 +26,7 @@ func TestTimeSyncConfigMarshalStability(t *testing.T) {
 	t.Parallel()
 
 	cfg := network.NewTimeSyncConfigV1Alpha1()
-	cfg.TimeEnabled = pointer.To(true)
+	cfg.TimeEnabled = new(true)
 	cfg.TimeBootTimeout = time.Minute
 	cfg.TimeNTP = &network.NTPConfig{
 		Servers: []string{"time.cloudflare.com"},
@@ -55,7 +54,7 @@ func TestTimeSyncConfigUnmarshal(t *testing.T) {
 			MetaAPIVersion: "v1alpha1",
 			MetaKind:       network.TimeSyncKind,
 		},
-		TimeEnabled:     pointer.To(true),
+		TimeEnabled:     new(true),
 		TimeBootTimeout: time.Minute,
 		TimeNTP: &network.NTPConfig{
 			Servers: []string{"time.cloudflare.com"},
@@ -177,7 +176,7 @@ func TestTimeSyncV1Alpha1Validate(t *testing.T) {
 			v1alpha1Cfg: &v1alpha1.Config{
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineTime: &v1alpha1.TimeConfig{
-						TimeDisabled: pointer.To(true),
+						TimeDisabled: new(true),
 					},
 				},
 			},

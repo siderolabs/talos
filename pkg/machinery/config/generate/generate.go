@@ -14,8 +14,6 @@ import (
 	"slices"
 	"time"
 
-	"github.com/siderolabs/go-pointer"
-
 	coreconfig "github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
@@ -94,7 +92,7 @@ func NewInput(clustername, endpoint, kubernetesVersion string, opts ...Option) (
 	additionalSubjectAltNames := slices.Clone(input.Options.AdditionalSubjectAltNames)
 
 	if input.Options.DiscoveryEnabled == nil {
-		input.Options.DiscoveryEnabled = pointer.To(true)
+		input.Options.DiscoveryEnabled = new(true)
 	}
 
 	input.ClusterName = clustername

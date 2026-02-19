@@ -9,7 +9,6 @@ import (
 	"net/netip"
 	"testing"
 
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -28,17 +27,17 @@ func TestBondConfigMarshalStability(t *testing.T) {
 
 	cfg := network.NewBondConfigV1Alpha1("agg.0")
 	cfg.BondLinks = []string{"eth0", "eth1"}
-	cfg.BondMode = pointer.To(nethelpers.BondMode8023AD)
-	cfg.BondXmitHashPolicy = pointer.To(nethelpers.BondXmitPolicyLayer34)
-	cfg.BondFailOverMAC = pointer.To(nethelpers.FailOverMACFollow)
-	cfg.BondLACPRate = pointer.To(nethelpers.LACPRateSlow)
-	cfg.BondMIIMon = pointer.To(uint32(100))
-	cfg.BondUpDelay = pointer.To(uint32(200))
-	cfg.BondDownDelay = pointer.To(uint32(200))
-	cfg.BondResendIGMP = pointer.To(uint32(1))
-	cfg.BondPacketsPerSlave = pointer.To(uint32(1))
-	cfg.BondADActorSysPrio = pointer.To(uint16(65535))
-	cfg.LinkUp = pointer.To(true)
+	cfg.BondMode = new(nethelpers.BondMode8023AD)
+	cfg.BondXmitHashPolicy = new(nethelpers.BondXmitPolicyLayer34)
+	cfg.BondFailOverMAC = new(nethelpers.FailOverMACFollow)
+	cfg.BondLACPRate = new(nethelpers.LACPRateSlow)
+	cfg.BondMIIMon = new(uint32(100))
+	cfg.BondUpDelay = new(uint32(200))
+	cfg.BondDownDelay = new(uint32(200))
+	cfg.BondResendIGMP = new(uint32(1))
+	cfg.BondPacketsPerSlave = new(uint32(1))
+	cfg.BondADActorSysPrio = new(uint16(65535))
+	cfg.LinkUp = new(true)
 	cfg.LinkAddresses = []network.AddressConfig{
 		{
 			AddressAddress: netip.MustParsePrefix("1.2.3.4/24"),
@@ -69,18 +68,18 @@ func TestBondConfigUnmarshal(t *testing.T) {
 		},
 		MetaName:            "agg.0",
 		BondLinks:           []string{"eth0", "eth1"},
-		BondMode:            pointer.To(nethelpers.BondMode8023AD),
-		BondXmitHashPolicy:  pointer.To(nethelpers.BondXmitPolicyLayer34),
-		BondFailOverMAC:     pointer.To(nethelpers.FailOverMACFollow),
-		BondLACPRate:        pointer.To(nethelpers.LACPRateSlow),
-		BondMIIMon:          pointer.To(uint32(100)),
-		BondUpDelay:         pointer.To(uint32(200)),
-		BondDownDelay:       pointer.To(uint32(200)),
-		BondResendIGMP:      pointer.To(uint32(1)),
-		BondPacketsPerSlave: pointer.To(uint32(1)),
-		BondADActorSysPrio:  pointer.To(uint16(65535)),
+		BondMode:            new(nethelpers.BondMode8023AD),
+		BondXmitHashPolicy:  new(nethelpers.BondXmitPolicyLayer34),
+		BondFailOverMAC:     new(nethelpers.FailOverMACFollow),
+		BondLACPRate:        new(nethelpers.LACPRateSlow),
+		BondMIIMon:          new(uint32(100)),
+		BondUpDelay:         new(uint32(200)),
+		BondDownDelay:       new(uint32(200)),
+		BondResendIGMP:      new(uint32(1)),
+		BondPacketsPerSlave: new(uint32(1)),
+		BondADActorSysPrio:  new(uint16(65535)),
 		CommonLinkConfig: network.CommonLinkConfig{
-			LinkUp: pointer.To(true),
+			LinkUp: new(true),
 			LinkAddresses: []network.AddressConfig{
 				{
 					AddressAddress: netip.MustParsePrefix("1.2.3.4/24"),
@@ -113,7 +112,7 @@ func TestBondValidate(t *testing.T) {
 
 			cfg: func() *network.BondConfigV1Alpha1 {
 				cfg := network.NewBondConfigV1Alpha1("bond0")
-				cfg.BondMode = pointer.To(nethelpers.BondModeActiveBackup)
+				cfg.BondMode = new(nethelpers.BondModeActiveBackup)
 
 				return cfg
 			},
@@ -137,7 +136,7 @@ func TestBondValidate(t *testing.T) {
 			cfg: func() *network.BondConfigV1Alpha1 {
 				cfg := network.NewBondConfigV1Alpha1("bond25")
 				cfg.BondLinks = []string{"eth0", "eth1"}
-				cfg.BondMode = pointer.To(nethelpers.BondMode8023AD)
+				cfg.BondMode = new(nethelpers.BondMode8023AD)
 				cfg.LinkAddresses = []network.AddressConfig{
 					{
 						AddressAddress: netip.MustParsePrefix("192.168.1.100/24"),

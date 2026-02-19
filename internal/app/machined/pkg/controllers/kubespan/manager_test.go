@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
@@ -261,7 +260,7 @@ func (suite *ManagerSuite) TestReconcile() {
 						Mask:  constants.KubeSpanDefaultFirewallMask,
 						Value: constants.KubeSpanDefaultFirewallMark,
 					},
-					Verdict: pointer.To(nethelpers.VerdictAccept),
+					Verdict: new(nethelpers.VerdictAccept),
 				},
 				spec.Rules[0],
 			)
@@ -278,7 +277,7 @@ func (suite *ManagerSuite) TestReconcile() {
 						Mask: ^uint32(constants.KubeSpanDefaultFirewallMask),
 						Xor:  constants.KubeSpanDefaultForceFirewallMark,
 					},
-					Verdict: pointer.To(nethelpers.VerdictAccept),
+					Verdict: new(nethelpers.VerdictAccept),
 				},
 				spec.Rules[1],
 			)
@@ -303,7 +302,7 @@ func (suite *ManagerSuite) TestReconcile() {
 						Mask: ^uint32(constants.KubeSpanDefaultFirewallMask),
 						Xor:  constants.KubeSpanDefaultForceFirewallMark,
 					},
-					Verdict: pointer.To(nethelpers.VerdictAccept),
+					Verdict: new(nethelpers.VerdictAccept),
 				},
 				spec.Rules[1],
 			)
@@ -356,7 +355,7 @@ func (suite *ManagerSuite) TestReconcile() {
 						Mask: ^uint32(constants.KubeSpanDefaultFirewallMask),
 						Xor:  constants.KubeSpanDefaultForceFirewallMark,
 					},
-					Verdict: pointer.To(nethelpers.VerdictAccept),
+					Verdict: new(nethelpers.VerdictAccept),
 				},
 				spec.Rules[1],
 			)

@@ -176,7 +176,7 @@ func (ctrl *VolumeConfigController) setupStateEncryption(ctx context.Context, l 
 
 	ok, err = ctrl.MetaProvider.Meta().SetTagBytes(ctx, meta.StateEncryptionConfig, metaEncryptionConfig)
 	if err != nil {
-		return fmt.Errorf("error setting meta tag %q: %w", meta.StateEncryptionConfig, err)
+		return fmt.Errorf("error setting meta tag %d: %w", meta.StateEncryptionConfig, err)
 	}
 
 	if !ok {

@@ -19,7 +19,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/value"
-	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	"go4.org/netipx"
 	"golang.zx2c4.com/wireguard/wgctrl"
@@ -379,7 +378,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 							Mask:  constants.KubeSpanDefaultFirewallMask,
 							Value: constants.KubeSpanDefaultFirewallMark,
 						},
-						Verdict: pointer.To(nethelpers.VerdictAccept),
+						Verdict: new(nethelpers.VerdictAccept),
 					},
 					{
 						MatchDestinationAddress: &network.NfTablesAddressMatch{
@@ -389,7 +388,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 							Mask: ^uint32(constants.KubeSpanDefaultFirewallMask),
 							Xor:  constants.KubeSpanDefaultForceFirewallMark,
 						},
-						Verdict: pointer.To(nethelpers.VerdictAccept),
+						Verdict: new(nethelpers.VerdictAccept),
 					},
 				}
 
@@ -418,13 +417,13 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 							Mask:  constants.KubeSpanDefaultFirewallMask,
 							Value: constants.KubeSpanDefaultFirewallMark,
 						},
-						Verdict: pointer.To(nethelpers.VerdictAccept),
+						Verdict: new(nethelpers.VerdictAccept),
 					},
 					{
 						MatchOIfName: &network.NfTablesIfNameMatch{
 							InterfaceNames: []string{"lo"},
 						},
-						Verdict: pointer.To(nethelpers.VerdictAccept),
+						Verdict: new(nethelpers.VerdictAccept),
 					},
 					{
 						MatchDestinationAddress: &network.NfTablesAddressMatch{
@@ -442,7 +441,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 							Mask: ^uint32(constants.KubeSpanDefaultFirewallMask),
 							Xor:  constants.KubeSpanDefaultForceFirewallMark,
 						},
-						Verdict: pointer.To(nethelpers.VerdictAccept),
+						Verdict: new(nethelpers.VerdictAccept),
 					},
 				}
 

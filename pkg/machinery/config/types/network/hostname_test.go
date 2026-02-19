@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -26,7 +25,7 @@ func TestHostnameConfigMarshalStability(t *testing.T) {
 	t.Parallel()
 
 	cfg := network.NewHostnameConfigV1Alpha1()
-	cfg.ConfigAuto = pointer.To(nethelpers.AutoHostnameKindStable)
+	cfg.ConfigAuto = new(nethelpers.AutoHostnameKindStable)
 
 	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
 	require.NoError(t, err)
@@ -57,7 +56,7 @@ func TestHostnameConfigValidate(t *testing.T) {
 			cfg: func() *network.HostnameConfigV1Alpha1 {
 				cfg := network.NewHostnameConfigV1Alpha1()
 				cfg.ConfigHostname = "example.org"
-				cfg.ConfigAuto = pointer.To(nethelpers.AutoHostnameKindStable)
+				cfg.ConfigAuto = new(nethelpers.AutoHostnameKindStable)
 
 				return cfg
 			},
@@ -68,7 +67,7 @@ func TestHostnameConfigValidate(t *testing.T) {
 			name: "invalid auto",
 			cfg: func() *network.HostnameConfigV1Alpha1 {
 				cfg := network.NewHostnameConfigV1Alpha1()
-				cfg.ConfigAuto = pointer.To(nethelpers.AutoHostnameKindAddr)
+				cfg.ConfigAuto = new(nethelpers.AutoHostnameKindAddr)
 
 				return cfg
 			},
@@ -132,7 +131,7 @@ func TestHostnameConfigValidate(t *testing.T) {
 			name: "valid 2",
 			cfg: func() *network.HostnameConfigV1Alpha1 {
 				cfg := network.NewHostnameConfigV1Alpha1()
-				cfg.ConfigAuto = pointer.To(nethelpers.AutoHostnameKindStable)
+				cfg.ConfigAuto = new(nethelpers.AutoHostnameKindStable)
 
 				return cfg
 			},
@@ -187,7 +186,7 @@ func TestHostnameV1Alpha1Validate(t *testing.T) {
 			v1alpha1Cfg: &v1alpha1.Config{
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineFeatures: &v1alpha1.FeaturesConfig{
-						StableHostname: pointer.To(true),
+						StableHostname: new(true),
 					},
 				},
 			},

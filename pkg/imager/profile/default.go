@@ -5,8 +5,6 @@
 package profile
 
 import (
-	"github.com/siderolabs/go-pointer"
-
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -25,7 +23,7 @@ var Default = map[string]Profile{
 	// ISO
 	"iso": {
 		Platform:   constants.PlatformMetal,
-		SecureBoot: pointer.To(false),
+		SecureBoot: new(false),
 		Output: Output{
 			Kind:      OutKindISO,
 			OutFormat: OutFormatRaw,
@@ -33,7 +31,7 @@ var Default = map[string]Profile{
 	},
 	"secureboot-iso": {
 		Platform:   constants.PlatformMetal,
-		SecureBoot: pointer.To(true),
+		SecureBoot: new(true),
 		Output: Output{
 			Kind:      OutKindISO,
 			OutFormat: OutFormatRaw,
@@ -45,7 +43,7 @@ var Default = map[string]Profile{
 	// Metal images
 	"metal": {
 		Platform:   constants.PlatformMetal,
-		SecureBoot: pointer.To(false),
+		SecureBoot: new(false),
 		Output: Output{
 			Kind:      OutKindImage,
 			OutFormat: OutFormatZSTD,
@@ -57,7 +55,7 @@ var Default = map[string]Profile{
 	},
 	"metal-uki": {
 		Platform:   constants.PlatformMetal,
-		SecureBoot: pointer.To(false),
+		SecureBoot: new(false),
 		Output: Output{
 			Kind:      OutKindUKI,
 			OutFormat: OutFormatRaw,
@@ -65,7 +63,7 @@ var Default = map[string]Profile{
 	},
 	"secureboot-metal-uki": {
 		Platform:   constants.PlatformMetal,
-		SecureBoot: pointer.To(true),
+		SecureBoot: new(true),
 		Output: Output{
 			Kind:      OutKindUKI,
 			OutFormat: OutFormatRaw,
@@ -73,7 +71,7 @@ var Default = map[string]Profile{
 	},
 	"secureboot-metal": {
 		Platform:   constants.PlatformMetal,
-		SecureBoot: pointer.To(true),
+		SecureBoot: new(true),
 		Output: Output{
 			Kind:      OutKindImage,
 			OutFormat: OutFormatZSTD,
@@ -85,7 +83,7 @@ var Default = map[string]Profile{
 	},
 	"installer": {
 		Platform:   "metal",
-		SecureBoot: pointer.To(false),
+		SecureBoot: new(false),
 		Output: Output{
 			Kind:      OutKindInstaller,
 			OutFormat: OutFormatRaw,
@@ -93,7 +91,7 @@ var Default = map[string]Profile{
 	},
 	"secureboot-installer": {
 		Platform:   "metal",
-		SecureBoot: pointer.To(true),
+		SecureBoot: new(true),
 		Output: Output{
 			Kind:      OutKindInstaller,
 			OutFormat: OutFormatRaw,
@@ -102,7 +100,7 @@ var Default = map[string]Profile{
 	// Clouds
 	"akamai": {
 		Platform:   "akamai",
-		SecureBoot: pointer.To(false),
+		SecureBoot: new(false),
 		Output: Output{
 			Kind:      OutKindImage,
 			OutFormat: OutFormatGZ,
@@ -114,7 +112,7 @@ var Default = map[string]Profile{
 	},
 	"aws": {
 		Platform:   "aws",
-		SecureBoot: pointer.To(false),
+		SecureBoot: new(false),
 		Output: Output{
 			Kind:      OutKindImage,
 			OutFormat: OutFormatZSTD,
@@ -126,7 +124,7 @@ var Default = map[string]Profile{
 	},
 	"azure": {
 		Platform:   "azure",
-		SecureBoot: pointer.To(false),
+		SecureBoot: new(false),
 		Output: Output{
 			Kind:      OutKindImage,
 			OutFormat: OutFormatZSTD,
@@ -139,7 +137,7 @@ var Default = map[string]Profile{
 	},
 	"cloudstack": {
 		Platform:   "cloudstack",
-		SecureBoot: pointer.To(false),
+		SecureBoot: new(false),
 		Output: Output{
 			Kind:      OutKindImage,
 			OutFormat: OutFormatZSTD,
@@ -151,7 +149,7 @@ var Default = map[string]Profile{
 	},
 	"digital-ocean": {
 		Platform:   "digital-ocean",
-		SecureBoot: pointer.To(false),
+		SecureBoot: new(false),
 		Output: Output{
 			Kind:      OutKindImage,
 			OutFormat: OutFormatGZ,
@@ -163,7 +161,7 @@ var Default = map[string]Profile{
 	},
 	"exoscale": {
 		Platform:   "exoscale",
-		SecureBoot: pointer.To(false),
+		SecureBoot: new(false),
 		Output: Output{
 			Kind:      OutKindImage,
 			OutFormat: OutFormatZSTD,
@@ -176,7 +174,7 @@ var Default = map[string]Profile{
 	},
 	"gcp": {
 		Platform:   "gcp",
-		SecureBoot: pointer.To(false),
+		SecureBoot: new(false),
 		Output: Output{
 			Kind:      OutKindImage,
 			OutFormat: OutFormatTar,
@@ -188,7 +186,7 @@ var Default = map[string]Profile{
 	},
 	"hcloud": {
 		Platform:   "hcloud",
-		SecureBoot: pointer.To(false),
+		SecureBoot: new(false),
 		Output: Output{
 			Kind:      OutKindImage,
 			OutFormat: OutFormatZSTD,
@@ -200,7 +198,7 @@ var Default = map[string]Profile{
 	},
 	"nocloud": {
 		Platform:   "nocloud",
-		SecureBoot: pointer.To(false),
+		SecureBoot: new(false),
 		Output: Output{
 			Kind:      OutKindImage,
 			OutFormat: OutFormatZSTD,
@@ -212,7 +210,7 @@ var Default = map[string]Profile{
 	},
 	"opennebula": {
 		Platform:   "opennebula",
-		SecureBoot: pointer.To(false),
+		SecureBoot: new(false),
 		Output: Output{
 			Kind:      OutKindImage,
 			OutFormat: OutFormatZSTD,
@@ -224,7 +222,7 @@ var Default = map[string]Profile{
 	},
 	"openstack": {
 		Platform:   "openstack",
-		SecureBoot: pointer.To(false),
+		SecureBoot: new(false),
 		Output: Output{
 			Kind:      OutKindImage,
 			OutFormat: OutFormatZSTD,
@@ -236,7 +234,7 @@ var Default = map[string]Profile{
 	},
 	"oracle": {
 		Platform:   "oracle",
-		SecureBoot: pointer.To(false),
+		SecureBoot: new(false),
 		Output: Output{
 			Kind:      OutKindImage,
 			OutFormat: OutFormatZSTD,
@@ -249,7 +247,7 @@ var Default = map[string]Profile{
 	},
 	"scaleway": {
 		Platform:   "scaleway",
-		SecureBoot: pointer.To(false),
+		SecureBoot: new(false),
 		Output: Output{
 			Kind:      OutKindImage,
 			OutFormat: OutFormatZSTD,
@@ -261,7 +259,7 @@ var Default = map[string]Profile{
 	},
 	"upcloud": {
 		Platform:   "upcloud",
-		SecureBoot: pointer.To(false),
+		SecureBoot: new(false),
 		Output: Output{
 			Kind:      OutKindImage,
 			OutFormat: OutFormatZSTD,
@@ -273,7 +271,7 @@ var Default = map[string]Profile{
 	},
 	"vmware": {
 		Platform:   "vmware",
-		SecureBoot: pointer.To(false),
+		SecureBoot: new(false),
 		Output: Output{
 			Kind:      OutKindImage,
 			OutFormat: OutFormatRaw,
@@ -285,7 +283,7 @@ var Default = map[string]Profile{
 	},
 	"vultr": {
 		Platform:   "vultr",
-		SecureBoot: pointer.To(false),
+		SecureBoot: new(false),
 		Output: Output{
 			Kind:      OutKindImage,
 			OutFormat: OutFormatZSTD,

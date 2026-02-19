@@ -11,7 +11,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -75,7 +74,7 @@ func (suite *NodenameSuite) TestFQDN() {
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineKubelet: &v1alpha1.KubeletConfig{
-						KubeletRegisterWithFQDN: pointer.To(true),
+						KubeletRegisterWithFQDN: new(true),
 					},
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{

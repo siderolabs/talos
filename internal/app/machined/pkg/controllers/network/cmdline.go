@@ -16,7 +16,6 @@ import (
 
 	"github.com/siderolabs/gen/pair/ordered"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -482,7 +481,7 @@ func parseBondOptions(options string) (v1alpha1.Bond, error) {
 			}
 
 			if useCarrier == 1 {
-				bond.BondUseCarrier = pointer.To(true)
+				bond.BondUseCarrier = new(true)
 			}
 		default:
 			return bond, fmt.Errorf("unknown bond option: %s", optionPair[0])

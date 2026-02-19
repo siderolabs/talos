@@ -9,7 +9,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -163,7 +162,7 @@ func TestHostnameBridging(t *testing.T) {
 							NetworkHostname: "my-machine",
 						},
 						MachineFeatures: &v1alpha1.FeaturesConfig{
-							StableHostname: pointer.To(true),
+							StableHostname: new(true),
 						},
 					},
 				})
@@ -207,7 +206,7 @@ func TestHostnameBridging(t *testing.T) {
 
 			cfg: func(*testing.T) config.Config {
 				hc := network.NewHostnameConfigV1Alpha1()
-				hc.ConfigAuto = pointer.To(nethelpers.AutoHostnameKindStable)
+				hc.ConfigAuto = new(nethelpers.AutoHostnameKindStable)
 
 				c, err := container.New(
 					hc,
@@ -262,7 +261,7 @@ func TestResolverBridging(t *testing.T) {
 						MachineNetwork: &v1alpha1.NetworkConfig{
 							NameServers:                []string{"2.2.2.2", "3.3.3.3"},
 							Searches:                   []string{"universe.com", "galaxy.org"},
-							NetworkDisableSearchDomain: pointer.To(true),
+							NetworkDisableSearchDomain: new(true),
 						},
 					},
 				})
@@ -300,7 +299,7 @@ func TestResolverBridging(t *testing.T) {
 				}
 				rc.ResolverSearchDomains = network.SearchDomainsConfig{
 					SearchDomains:        []string{"universe.com", "galaxy.org"},
-					SearchDisableDefault: pointer.To(true),
+					SearchDisableDefault: new(true),
 				}
 
 				c, err := container.New(
@@ -383,7 +382,7 @@ func TestTimeSyncBridging(t *testing.T) {
 				return container.NewV1Alpha1(&v1alpha1.Config{
 					MachineConfig: &v1alpha1.MachineConfig{
 						MachineTime: &v1alpha1.TimeConfig{
-							TimeDisabled:    pointer.To(true),
+							TimeDisabled:    new(true),
 							TimeServers:     []string{"time1.example.com", "time2.example.com"},
 							TimeBootTimeout: 30 * time.Second,
 						},
@@ -497,7 +496,7 @@ func TestKubeSpanBridging(t *testing.T) {
 					MachineConfig: &v1alpha1.MachineConfig{
 						MachineNetwork: &v1alpha1.NetworkConfig{
 							NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{
-								KubeSpanEnabled: pointer.To(true),
+								KubeSpanEnabled: new(true),
 							},
 						},
 					},
@@ -524,7 +523,7 @@ func TestKubeSpanBridging(t *testing.T) {
 
 			cfg: func(*testing.T) config.Config {
 				kc := network.NewKubeSpanV1Alpha1()
-				kc.ConfigEnabled = pointer.To(true)
+				kc.ConfigEnabled = new(true)
 
 				c, err := container.New(
 					kc,

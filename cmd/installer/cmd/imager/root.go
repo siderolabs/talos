@@ -100,7 +100,6 @@ var rootCmd = &cobra.Command{
 						}
 
 						continue
-
 					}
 
 					k, v, _ := strings.Cut(option, "=")
@@ -181,6 +180,7 @@ var rootCmd = &cobra.Command{
 					if prof.Input.SecureBoot == nil {
 						prof.Input.SecureBoot = &profile.SecureBootAssets{}
 					}
+
 					prof.Input.SecureBoot.IncludeWellKnownCerts = true
 				}
 

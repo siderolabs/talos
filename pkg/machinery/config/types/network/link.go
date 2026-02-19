@@ -13,7 +13,6 @@ import (
 
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
@@ -184,7 +183,7 @@ func NewLinkConfigV1Alpha1(name string) *LinkConfigV1Alpha1 {
 func exampleLinkConfigV1Alpha1() *LinkConfigV1Alpha1 {
 	cfg := NewLinkConfigV1Alpha1("enp0s2")
 	cfg.LinkMTU = 9000
-	cfg.LinkUp = pointer.To(true)
+	cfg.LinkUp = new(true)
 	cfg.LinkAddresses = []AddressConfig{
 		{
 			AddressAddress: netip.MustParsePrefix("192.168.1.100/24"),

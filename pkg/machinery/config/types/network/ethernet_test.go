@@ -8,7 +8,6 @@ import (
 	_ "embed"
 	"testing"
 
-	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -27,13 +26,13 @@ func TestEthernetConfigMarshalStability(t *testing.T) {
 
 	cfg := network.NewEthernetConfigV1Alpha1("enp0s1")
 	cfg.RingsConfig = &network.EthernetRingsConfig{
-		RX: pointer.To[uint32](16),
+		RX: new(uint32(16)),
 	}
 	cfg.FeaturesConfig = map[string]bool{
 		"tx-checksum-ipv4": true,
 	}
 	cfg.ChannelsConfig = &network.EthernetChannelsConfig{
-		Combined: pointer.To[uint32](1),
+		Combined: new(uint32(1)),
 	}
 	cfg.WakeOnLANConfig = []nethelpers.WOLMode{
 		nethelpers.WOLModeUnicast,
@@ -67,10 +66,10 @@ func TestEthernetConfigUnmarshal(t *testing.T) {
 			"tx-checksum-ipv4": true,
 		},
 		RingsConfig: &network.EthernetRingsConfig{
-			RX: pointer.To[uint32](16),
+			RX: new(uint32(16)),
 		},
 		ChannelsConfig: &network.EthernetChannelsConfig{
-			Combined: pointer.To[uint32](1),
+			Combined: new(uint32(1)),
 		},
 		WakeOnLANConfig: []nethelpers.WOLMode{
 			nethelpers.WOLModeUnicast,
@@ -105,7 +104,7 @@ func TestEthernetValidate(t *testing.T) {
 					"tx-checksum-ipv4": true,
 				}
 				cfg.RingsConfig = &network.EthernetRingsConfig{
-					RX: pointer.To[uint32](16),
+					RX: new(uint32(16)),
 				}
 
 				return cfg

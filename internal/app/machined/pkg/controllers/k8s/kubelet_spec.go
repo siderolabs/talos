@@ -19,7 +19,6 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-kubernetes/kubernetes/compatibility"
-	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -289,10 +288,10 @@ func NewKubeletConfiguration(cfgSpec *k8s.KubeletConfigSpec, kubeletVersion comp
 			ClientCAFile: constants.KubernetesCACert,
 		},
 		Webhook: kubeletconfig.KubeletWebhookAuthentication{
-			Enabled: pointer.To(true),
+			Enabled: new(true),
 		},
 		Anonymous: kubeletconfig.KubeletAnonymousAuthentication{
-			Enabled: pointer.To(false),
+			Enabled: new(false),
 		},
 	}
 	config.Authorization = kubeletconfig.KubeletAuthorization{
@@ -309,7 +308,7 @@ func NewKubeletConfiguration(cfgSpec *k8s.KubeletConfigSpec, kubeletVersion comp
 	}
 
 	if cfgSpec.DefaultRuntimeSeccompEnabled {
-		config.SeccompDefault = pointer.To(true)
+		config.SeccompDefault = new(true)
 	}
 
 	if cfgSpec.EnableFSQuotaMonitoring {
@@ -323,7 +322,7 @@ func NewKubeletConfiguration(cfgSpec *k8s.KubeletConfigSpec, kubeletVersion comp
 	}
 
 	if cfgSpec.SkipNodeRegistration {
-		config.Authentication.Webhook.Enabled = pointer.To(false)
+		config.Authentication.Webhook.Enabled = new(false)
 		config.Authorization.Mode = kubeletconfig.KubeletAuthorizationModeAlwaysAllow
 	} else if machineType.IsControlPlane() && !cfgSpec.AllowSchedulingOnControlPlane {
 		// register with taint to prevent scheduling on control plane nodes race with NodeApplyController applying the initial taint
@@ -348,7 +347,7 @@ func NewKubeletConfiguration(cfgSpec *k8s.KubeletConfigSpec, kubeletVersion comp
 	}
 
 	if config.OOMScoreAdj == nil {
-		config.OOMScoreAdj = pointer.To[int32](constants.KubeletOOMScoreAdj)
+		config.OOMScoreAdj = new(int32(constants.KubeletOOMScoreAdj))
 	}
 
 	if config.ClusterDomain == "" {
@@ -360,11 +359,11 @@ func NewKubeletConfiguration(cfgSpec *k8s.KubeletConfigSpec, kubeletVersion comp
 	}
 
 	if config.SerializeImagePulls == nil {
-		config.SerializeImagePulls = pointer.To(false)
+		config.SerializeImagePulls = new(false)
 	}
 
 	if config.FailSwapOn == nil {
-		config.FailSwapOn = pointer.To(false)
+		config.FailSwapOn = new(false)
 	}
 
 	if len(config.SystemReserved) == 0 {
@@ -403,7 +402,7 @@ func NewKubeletConfiguration(cfgSpec *k8s.KubeletConfigSpec, kubeletVersion comp
 		config.TLSMinVersion = "VersionTLS13"
 	}
 
-	config.ResolverConfig = pointer.To(constants.PodResolvConfPath)
+	config.ResolverConfig = new(constants.PodResolvConfPath)
 
 	return config, nil
 }
