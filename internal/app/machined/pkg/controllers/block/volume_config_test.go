@@ -82,6 +82,9 @@ func TestVolumeConfigSuite(t *testing.T) {
 }
 
 func (suite *VolumeConfigSuite) TestReconcileDefaults() {
+	// user volume mount point should be hold mounted all the time to prevent cascading unmounts on kubelet restart
+	ctest.AssertResource(suite, constants.UserVolumeMountPoint, func(*block.VolumeMountRequest, *assert.Assertions) {})
+
 	// no machine config, default config which only searches for
 	ctest.AssertResource(suite, constants.MetaPartitionLabel, func(r *block.VolumeConfig, asrt *assert.Assertions) {
 		asrt.Empty(r.TypedSpec().Provisioning)
