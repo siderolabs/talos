@@ -298,31 +298,7 @@ func (ctrl *EndpointController) ensureTalosEndpointSlicesTyped(
 			newEndpointSlice = oldEndpointSlice.DeepCopy()
 		}
 
-		newEndpointSlice.Ports = []discoveryv1.EndpointPort{
-			{
-				Name:     ptr.To("apid"),
-				Port:     ptr.To[int32](constants.ApidPort),
-				Protocol: ptr.To(corev1.ProtocolTCP),
-			},
-		}
-
-		for _, addr := range endpointAddrs.Addresses {
-			newEndpointSlice.Endpoints = append(
-				newEndpointSlice.Endpoints,
-				discoveryv1.Endpoint{
-					Addresses: []string{addr.String()},
-					Conditions: discoveryv1.EndpointConditions{
-						Ready:       ptr.To(true),
-						Serving:     ptr.To(true),
-						Terminating: ptr.To(false),
-					},
-				},
-			)
-		}
-
-		newEndpointSlice.Endpoints = xslices.Deduplicate(newEndpointSlice.Endpoints, func(e discoveryv1.Endpoint) string {
-			return e.Addresses[0]
-		})
+		PopulateEndpointSlice(newEndpointSlice, endpointAddrs)
 
 		if oldEndpointSlice != nil &&
 			(reflect.DeepEqual(oldEndpointSlice.Endpoints, newEndpointSlice.Endpoints) &&
@@ -348,6 +324,39 @@ func (ctrl *EndpointController) ensureTalosEndpointSlicesTyped(
 			return fmt.Errorf("error updating Kubernetes Talos API endpoint slices: %w", err)
 		}
 	}
+}
+
+// PopulateEndpointSlice populates the given EndpointSlice with ports and endpoints from the given endpoint addresses.
+//
+// The EndpointSlice's existing Endpoints and Ports fields are overwritten.
+func PopulateEndpointSlice(endpointSlice *discoveryv1.EndpointSlice, endpointAddrs k8s.EndpointList) {
+	endpointSlice.Ports = []discoveryv1.EndpointPort{
+		{
+			Name:     ptr.To("apid"),
+			Port:     ptr.To[int32](constants.ApidPort),
+			Protocol: ptr.To(corev1.ProtocolTCP),
+		},
+	}
+
+	endpointSlice.Endpoints = nil
+
+	for _, addr := range endpointAddrs.Addresses {
+		endpointSlice.Endpoints = append(
+			endpointSlice.Endpoints,
+			discoveryv1.Endpoint{
+				Addresses: []string{addr.String()},
+				Conditions: discoveryv1.EndpointConditions{
+					Ready:       ptr.To(true),
+					Serving:     ptr.To(true),
+					Terminating: ptr.To(false),
+				},
+			},
+		)
+	}
+
+	endpointSlice.Endpoints = xslices.Deduplicate(endpointSlice.Endpoints, func(e discoveryv1.Endpoint) string {
+		return e.Addresses[0]
+	})
 }
 
 //nolint:gocyclo
