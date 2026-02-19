@@ -74,7 +74,7 @@ func (d *EncryptionConfigurationDoc) Merge(other any) error {
 		return fmt.Errorf("unexpected type for merge: %T", other)
 	}
 
-	d.Fields = deepCopyMap(otherDoc.Fields)
+	d.Fields = maps.Clone(otherDoc.Fields)
 
 	return nil
 }
