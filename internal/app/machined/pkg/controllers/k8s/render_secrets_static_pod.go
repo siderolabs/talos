@@ -23,6 +23,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s/internal/k8stemplates"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
@@ -66,6 +67,12 @@ func (ctrl *RenderSecretsStaticPodController) Inputs() []controller.Input {
 			Namespace: secrets.NamespaceName,
 			Type:      secrets.EtcdType,
 			ID:        optional.Some(secrets.EtcdID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineConfigType,
+			ID:        optional.Some(config.ActiveID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -138,6 +145,15 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 			}
 
 			return fmt.Errorf("error getting secrets resource: %w", err)
+		}
+
+		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return fmt.Errorf("error getting machine config to check for custom etcd encryptionconfig: %w", err)
 		}
 
 		rootEtcdSecrets := rootEtcdRes.TypedSpec()
@@ -229,6 +245,14 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 					{
 						filename: "encryptionconfig.yaml",
 						contentFunc: func() ([]byte, error) {
+							if cfg != nil {
+								customEtcdEncryption := cfg.Config().EtcdEncryption()
+
+								if customEtcdEncryption != nil {
+									return []byte(customEtcdEncryption.EtcdEncryptionConfig()), nil
+								}
+							}
+
 							return k8stemplates.Marshal(k8stemplates.APIServerEncryptionConfig(rootK8sSecrets))
 						},
 					},
