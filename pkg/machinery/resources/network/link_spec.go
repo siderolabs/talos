@@ -56,10 +56,14 @@ type LinkSpecSpec struct {
 	// BridgeSlave indicates master link for bridged interfaces.
 	BridgeSlave BridgeSlave `yaml:"bridgeSlave,omitempty" protobuf:"9"`
 
+	// VRFSlave indicates master link for interfaces in a vrf
+	VRFSlave VRFSlave `yaml:"vrfSlave,omitempty" protobuf:"18"`
+
 	// These structures are present depending on "Kind" for Logical interfaces.
 	VLAN         VLANSpec         `yaml:"vlan,omitempty" protobuf:"10"`
 	BondMaster   BondMasterSpec   `yaml:"bondMaster,omitempty" protobuf:"11"`
 	BridgeMaster BridgeMasterSpec `yaml:"bridgeMaster,omitempty" protobuf:"12"`
+	VRFMaster    VRFMasterSpec    `yaml:"vrfMaster,omitempty" protobuf:"17"`
 	Wireguard    WireguardSpec    `yaml:"wireguard,omitempty" protobuf:"13"`
 
 	// Configuration layer.
@@ -88,6 +92,13 @@ type BridgeSlave struct {
 	MasterName string `yaml:"masterName,omitempty" protobuf:"1"`
 }
 
+// VRFSlave contains the name of the master vrf for an interface
+//
+//gotagsrewrite:gen
+type VRFSlave struct {
+	MasterName string `yaml:"masterName,omitempty" protobuf:"1"`
+}
+
 // Merge with other, overwriting fields from other if set.
 func (spec *LinkSpecSpec) Merge(other *LinkSpecSpec) error {
 	// prefer Logical, as it is defined for bonds/vlans, etc.
@@ -101,6 +112,8 @@ func (spec *LinkSpecSpec) Merge(other *LinkSpecSpec) error {
 	updateIfNotZero(&spec.VLAN, other.VLAN)
 	updateIfNotZero(&spec.BridgeMaster, other.BridgeMaster)
 	updateIfNotZero(&spec.BridgeSlave, other.BridgeSlave)
+	updateIfNotZero(&spec.VRFMaster, other.VRFMaster)
+	updateIfNotZero(&spec.VRFSlave, other.VRFSlave)
 
 	if !other.BondMaster.IsZero() {
 		spec.BondMaster = other.BondMaster.DeepCopy()

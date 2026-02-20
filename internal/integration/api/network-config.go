@@ -582,6 +582,60 @@ func (suite *NetworkConfigSuite) TestBridgeConfig() {
 	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, bridgeName)
 }
 
+// TestVRFConfig tests creation of vrf interfaces.
+func (suite *NetworkConfigSuite) TestVRFConfig() {
+	if suite.Cluster == nil {
+		suite.T().Skip("skipping if cluster is not qemu/docker")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	suite.T().Logf("testing on node %q", node)
+
+	dummyNames := xslices.Map([]int{0, 1}, func(int) string {
+		return fmt.Sprintf("dummy%d", rand.IntN(10000))
+	})
+
+	dummyConfigs := xslices.Map(dummyNames, func(name string) any {
+		return network.NewDummyLinkConfigV1Alpha1(name)
+	})
+
+	vrfName := "vrf." + strconv.Itoa(rand.IntN(10000))
+
+	vrf := network.NewVRFConfigV1Alpha1(vrfName)
+	vrf.VRFLinks = dummyNames
+	vrf.VRFTable = nethelpers.Table123
+	vrf.HardwareAddressConfig = nethelpers.HardwareAddr{0x02, 0x00, 0x00, 0x00, byte(rand.IntN(256)), byte(rand.IntN(256))}
+	vrf.LinkUp = new(true)
+
+	suite.PatchMachineConfig(nodeCtx, append(dummyConfigs, vrf)...)
+
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, dummyNames,
+		func(link *networkres.LinkStatus, asrt *assert.Assertions) {
+			asrt.Equal("dummy", link.TypedSpec().Kind)
+			asrt.NotZero(link.TypedSpec().MasterIndex)
+		},
+	)
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, vrfName,
+		func(link *networkres.LinkStatus, asrt *assert.Assertions) {
+			asrt.Equal("vrf", link.TypedSpec().Kind)
+			asrt.Equal(vrf.VRFTable, link.TypedSpec().VRFMaster.Table)
+			asrt.Equal(vrf.HardwareAddressConfig, link.TypedSpec().HardwareAddr)
+		},
+	)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.VRFKind, vrfName)
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.DummyLinkKind, dummyNames...)
+
+	for _, dummyName := range dummyNames {
+		rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, dummyName)
+	}
+
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, vrfName)
+}
+
 // TestWireguardConfig tests creation of Wireguard interfaces.
 func (suite *NetworkConfigSuite) TestWireguardConfig() {
 	if suite.Cluster == nil {

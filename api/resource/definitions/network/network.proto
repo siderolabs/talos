@@ -252,6 +252,8 @@ message LinkSpecSpec {
   talos.resource.definitions.enums.NetworkConfigLayer config_layer = 14;
   bytes hardware_address = 15;
   bool multicast = 16;
+  VRFMasterSpec vrf_master = 17;
+  VRFSlave vrf_slave = 18;
 }
 
 // LinkStatusSpec describes status of rendered secrets.
@@ -288,6 +290,7 @@ message LinkStatusSpec {
   bytes permanent_addr = 30;
   string alias = 31;
   repeated string alt_names = 32;
+  VRFMasterSpec vrf_master = 33;
 }
 
 // NfTablesAddressMatch describes the match on the IP address.
@@ -548,6 +551,16 @@ message VIPOperatorSpec {
 message VLANSpec {
   uint32 vid = 1;
   talos.resource.definitions.enums.NethelpersVLANProtocol protocol = 2;
+}
+
+// VRFMasterSpec describes vrf settings if Kind == "vrf".
+message VRFMasterSpec {
+  talos.resource.definitions.enums.NethelpersRoutingTable table = 1;
+}
+
+// VRFSlave contains the name of the master vrf for an interface
+message VRFSlave {
+  string master_name = 1;
 }
 
 // WireguardPeer describes a single peer.

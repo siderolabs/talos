@@ -79,5 +79,6 @@ const (
 	LinkKindVLAN      = "vlan"
 	LinkKindBond      = "bond"
 	LinkKindBridge    = "bridge"
+	LinkKindVRF       = "vrf"
 	LinkKindWireguard = "wireguard"
 )

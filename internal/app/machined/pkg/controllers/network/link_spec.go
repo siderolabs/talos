@@ -307,6 +307,28 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 				}
 			}
 
+			// sync VRF spec, as it can't be modified on the fly
+			if !replace && link.TypedSpec().Kind == network.LinkKindVRF {
+				var existingVRF network.VRFMasterSpec
+
+				if existingRawLinkData == nil {
+					return fmt.Errorf("existing link %q has no data, can't decode vrf settings", link.TypedSpec().Name)
+				}
+
+				if err := networkadapter.VRFMasterSpec(&existingVRF).Decode(existingRawLinkData); err != nil {
+					return fmt.Errorf("error decoding vrf properties on %q: %w", link.TypedSpec().Name, err)
+				}
+
+				if existingVRF != link.TypedSpec().VRFMaster {
+					logger.Info("replacing vrf link",
+						zap.Stringer("old_table", existingVRF.Table),
+						zap.Stringer("new_table", link.TypedSpec().VRFMaster.Table),
+					)
+
+					replace = true
+				}
+			}
+
 			if replace {
 				if err := conn.Link.Delete(existing.Index); err != nil {
 					return fmt.Errorf("error deleting link %q: %w", link.TypedSpec().Name, err)
@@ -326,6 +348,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 
 			// create logical interface
 			var (
+				masterIndex *uint32
 				parentIndex uint32
 				data        []byte
 				err         error
@@ -349,12 +372,34 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 				}
 			}
 
+			// vrf settings should be set on interface creation (parent + vrf settings)
+			if link.TypedSpec().VRFSlave.MasterName != "" {
+				master := findLink(*links, link.TypedSpec().VRFSlave.MasterName, false)
+				if master == nil {
+					// master doesn't exist yet, skip it
+					return nil
+				}
+
+				masterIndex = &master.Index
+				logger.Info("creating vrf slave link",
+					zap.Uint32p("master_index", masterIndex),
+				)
+			}
+
+			if link.TypedSpec().Kind == network.LinkKindVRF {
+				data, err = networkadapter.VRFMasterSpec(&link.TypedSpec().VRFMaster).Encode()
+				if err != nil {
+					return fmt.Errorf("error encoding vrf attributes for link %q: %w", link.TypedSpec().Name, err)
+				}
+			}
+
 			if err = conn.Link.New(&rtnetlink.LinkMessage{
 				Type: uint16(link.TypedSpec().Type),
 				Attributes: &rtnetlink.LinkAttributes{
 					Name:    link.TypedSpec().Name,
 					Address: net.HardwareAddr(link.TypedSpec().HardwareAddress),
 					Type:    parentIndex,
+					Master:  masterIndex,
 					Info: &rtnetlink.LinkInfo{
 						Kind: link.TypedSpec().Kind,
 						Data: &rtnetlink.LinkData{
@@ -672,6 +717,14 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 		if bridgeMasterName != "" {
 			if master := findLink(*links, bridgeMasterName, false); master != nil { // bridge master can't be an alias
 				masterName = bridgeMasterName
+				masterIndex = master.Index
+			}
+		}
+
+		vrfMasterName := link.TypedSpec().VRFSlave.MasterName
+		if vrfMasterName != "" {
+			if master := findLink(*links, vrfMasterName, false); master != nil { // vrf master can't be an alias
+				masterName = vrfMasterName
 				masterIndex = master.Index
 			}
 		}

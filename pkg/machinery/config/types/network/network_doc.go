@@ -436,6 +436,61 @@ func (BridgeVLANConfig) Doc() *encoder.Doc {
 	return doc
 }
 
+func (VRFConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VRFConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VRFConfig is a config document to create a vrf and assign links to it." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VRFConfig is a config document to create a vrf and assign links to it.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the vrf link (interface) to be created.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the vrf link (interface) to be created." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "hardwareAddr",
+				Type:        "HardwareAddr",
+				Note:        "",
+				Description: "Override the hardware (MAC) address of the link.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Override the hardware (MAC) address of the link." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "links",
+				Type:        "[]string",
+				Note:        "",
+				Description: "Names of the links (interfaces) to be assigned to this vrf.\nLink aliases can be used here as well.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Names of the links (interfaces) to be assigned to this vrf." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "table",
+				Type:        "RoutingTable",
+				Note:        "",
+				Description: "Routing table number to use for this vrf.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Routing table number to use for this vrf." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Type:   "CommonLinkConfig",
+				Inline: true,
+			},
+		},
+	}
+
+	doc.AddExample("", exampleVRFConfigV1Alpha1())
+
+	doc.Fields[1].AddExample("", "vrf-blue")
+	doc.Fields[2].AddExample("", nethelpers.HardwareAddr{0x2e, 0x3c, 0x4d, 0x5e, 0x6f, 0x70})
+	doc.Fields[3].AddExample("", []string{"enp1s3", "enp1s2"})
+	doc.Fields[4].AddExample("", 10)
+
+	return doc
+}
+
 func (DefaultActionConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "NetworkDefaultActionConfig",
@@ -1107,6 +1162,10 @@ func (CommonLinkConfig) Doc() *encoder.Doc {
 			},
 			{
 				TypeName:  "BridgeConfigV1Alpha1",
+				FieldName: "",
+			},
+			{
+				TypeName:  "VRFConfigV1Alpha1",
 				FieldName: "",
 			},
 			{
@@ -1935,6 +1994,7 @@ func GetFileDoc() *encoder.FileDoc {
 			BridgeConfigV1Alpha1{}.Doc(),
 			BridgeSTPConfig{}.Doc(),
 			BridgeVLANConfig{}.Doc(),
+			VRFConfigV1Alpha1{}.Doc(),
 			DefaultActionConfigV1Alpha1{}.Doc(),
 			DHCPv4ConfigV1Alpha1{}.Doc(),
 			DHCPv6ConfigV1Alpha1{}.Doc(),

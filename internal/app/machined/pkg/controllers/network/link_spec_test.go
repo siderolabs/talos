@@ -682,6 +682,99 @@ func (suite *LinkSpecSuite) TestBridge() {
 }
 
 //nolint:gocyclo
+func (suite *LinkSpecSuite) TestVRF() {
+	vrfName := suite.uniqueDummyInterface()
+	vrf := network.NewLinkSpec(network.NamespaceName, vrfName)
+	*vrf.TypedSpec() = network.LinkSpecSpec{
+		Name:    vrfName,
+		Type:    nethelpers.LinkEther,
+		Kind:    network.LinkKindVRF,
+		Up:      true,
+		Logical: true,
+		VRFMaster: network.VRFMasterSpec{
+			Table: 123,
+		},
+		ConfigLayer: network.ConfigDefault,
+	}
+
+	dummy0Name := suite.uniqueDummyInterface()
+	dummy0 := network.NewLinkSpec(network.NamespaceName, dummy0Name)
+	*dummy0.TypedSpec() = network.LinkSpecSpec{
+		Name:    dummy0Name,
+		Type:    nethelpers.LinkEther,
+		Kind:    "dummy",
+		Up:      true,
+		Logical: true,
+		VRFSlave: network.VRFSlave{
+			MasterName: vrfName,
+		},
+		ConfigLayer: network.ConfigDefault,
+	}
+
+	dummy1Name := suite.uniqueDummyInterface()
+	dummy1 := network.NewLinkSpec(network.NamespaceName, dummy1Name)
+	*dummy1.TypedSpec() = network.LinkSpecSpec{
+		Name:    dummy1Name,
+		Type:    nethelpers.LinkEther,
+		Kind:    "dummy",
+		Up:      true,
+		Logical: true,
+		VRFSlave: network.VRFSlave{
+			MasterName: vrfName,
+		},
+		ConfigLayer: network.ConfigDefault,
+	}
+
+	for _, res := range []resource.Resource{dummy0, dummy1, vrf} {
+		suite.Create(res)
+	}
+
+	ctest.AssertResources(suite, []string{dummy0Name, dummy1Name, vrfName}, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		switch r.Metadata().ID() {
+		case vrfName:
+			asrt.Equal(network.LinkKindVRF, r.TypedSpec().Kind)
+			asrt.Contains([]nethelpers.OperationalState{nethelpers.OperStateUp, nethelpers.OperStateUnknown}, r.TypedSpec().OperationalState)
+		case dummy0Name, dummy1Name:
+			asrt.Equal("dummy", r.TypedSpec().Kind)
+			asrt.Equal(nethelpers.OperStateUnknown, r.TypedSpec().OperationalState)
+			asrt.NotZero(r.TypedSpec().MasterIndex)
+		}
+	})
+
+	// attempt to change the vrf table
+	ctest.UpdateWithConflicts(suite, vrf, func(r *network.LinkSpec) error {
+		r.TypedSpec().VRFMaster.Table = nethelpers.Table124
+
+		return nil
+	})
+
+	ctest.AssertResource(suite, vrfName, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Equal(network.LinkKindVRF, r.TypedSpec().Kind)
+		asrt.Equal(nethelpers.Table124, r.TypedSpec().VRFMaster.Table)
+	})
+
+	// unslave one of the interfaces
+	ctest.UpdateWithConflicts(suite, dummy0, func(r *network.LinkSpec) error {
+		r.TypedSpec().VRFSlave.MasterName = ""
+
+		return nil
+	})
+
+	ctest.AssertResource(suite, dummy0Name, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Zero(r.TypedSpec().MasterIndex)
+	})
+
+	// teardown the links
+	for _, r := range []resource.Resource{dummy0, dummy1, vrf} {
+		suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), r.Metadata()))
+	}
+
+	ctest.AssertNoResource[*network.LinkStatus](suite, dummy0Name)
+	ctest.AssertNoResource[*network.LinkStatus](suite, dummy1Name)
+	ctest.AssertNoResource[*network.LinkStatus](suite, vrfName)
+}
+
+//nolint:gocyclo
 func (suite *LinkSpecSuite) TestWireguard() {
 	if fipsmode.Strict() {
 		suite.T().Skip("skipping test in strict FIPS mode")

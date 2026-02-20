@@ -237,6 +237,12 @@ Talos now uses a kernel built using Clang compiler, and optimized using ThinLTO.
 alongside some hardening features, such as BTI on supported ARM systems.
 """
 
+    [notes.vrf]
+        title = "VRF Support"
+        description = """\
+Talos now supports VRF (Virtual Routing and Forwarding) via the new `VRFConfig` machine config document.
+"""
+
 [make_deps]
 
     [make_deps.tools]

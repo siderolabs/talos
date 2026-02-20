@@ -297,6 +297,16 @@ type BridgeVLANConfig interface {
 	FilteringEnabled() optional.Optional[bool]
 }
 
+// NetworkVRFConfig defines a vrf link configuration.
+type NetworkVRFConfig interface {
+	NamedDocument
+	NetworkCommonLinkConfig
+	NetworkHardwareAddressConfig
+	VRFConfig()
+	Links() []string
+	Table() nethelpers.RoutingTable
+}
+
 // NetworkWireguardConfig defines a Wireguard link configuration.
 type NetworkWireguardConfig interface {
 	NamedDocument

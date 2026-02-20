@@ -573,6 +573,72 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyle() {
 	)
 }
 
+func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleVRF() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkConfigController{}))
+
+	lc1 := networkcfg.NewLinkConfigV1Alpha1("enp0s2")
+	lc1.LinkMTU = 9001
+
+	dc1 := networkcfg.NewDummyLinkConfigV1Alpha1("dummy1")
+	dc1.HardwareAddressConfig = nethelpers.HardwareAddr{0x02, 0x42, 0xac, 0x11, 0x00, 0x02}
+	dc1.LinkUp = new(true)
+
+	vrf := networkcfg.NewVRFConfigV1Alpha1("vrf-blue")
+	vrf.VRFLinks = []string{"enp0s2", "dummy1"}
+	vrf.VRFTable = nethelpers.Table123
+
+	ctr, err := container.New(lc1, dc1, vrf)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	for _, link := range []struct {
+		name    string
+		aliases []string
+	}{
+		{
+			name:    "eth0",
+			aliases: []string{"enp0s2"},
+		},
+	} {
+		status := network.NewLinkStatus(network.NamespaceName, link.name)
+		status.TypedSpec().AltNames = link.aliases
+
+		suite.Create(status)
+	}
+
+	suite.assertLinks(
+		[]string{
+			"configuration/eth0",
+			"configuration/dummy1",
+			"configuration/vrf-blue",
+		}, func(r *network.LinkSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
+
+			switch r.TypedSpec().Name {
+			case "eth0":
+				asrt.True(r.TypedSpec().Up)
+				asrt.False(r.TypedSpec().Logical)
+				asrt.EqualValues(9001, r.TypedSpec().MTU)
+				asrt.Equal("vrf-blue", r.TypedSpec().VRFSlave.MasterName)
+			case "dummy1":
+				asrt.True(r.TypedSpec().Up)
+				asrt.True(r.TypedSpec().Logical)
+				asrt.Equal(nethelpers.LinkEther, r.TypedSpec().Type)
+				asrt.Equal("dummy", r.TypedSpec().Kind)
+				asrt.Equal("vrf-blue", r.TypedSpec().VRFSlave.MasterName)
+			case "vrf-blue":
+				asrt.True(r.TypedSpec().Up)
+				asrt.True(r.TypedSpec().Logical)
+				asrt.Equal(nethelpers.LinkEther, r.TypedSpec().Type)
+				asrt.Equal(network.LinkKindVRF, r.TypedSpec().Kind)
+				asrt.Equal(nethelpers.Table123, r.TypedSpec().VRFMaster.Table)
+			}
+		},
+	)
+}
+
 func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleNotFIPS() {
 	if fipsmode.Strict() {
 		suite.T().Skip("skipping test in strict FIPS mode")

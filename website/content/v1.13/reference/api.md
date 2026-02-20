@@ -554,6 +554,8 @@ description: Talos gRPC API reference.
     - [VIPHCloudSpec](#talos.resource.definitions.network.VIPHCloudSpec)
     - [VIPOperatorSpec](#talos.resource.definitions.network.VIPOperatorSpec)
     - [VLANSpec](#talos.resource.definitions.network.VLANSpec)
+    - [VRFMasterSpec](#talos.resource.definitions.network.VRFMasterSpec)
+    - [VRFSlave](#talos.resource.definitions.network.VRFSlave)
     - [WireguardPeer](#talos.resource.definitions.network.WireguardPeer)
     - [WireguardSpec](#talos.resource.definitions.network.WireguardSpec)
   
@@ -9186,6 +9188,8 @@ LinkSpecSpec describes spec for the link.
 | config_layer | [talos.resource.definitions.enums.NetworkConfigLayer](#talos.resource.definitions.enums.NetworkConfigLayer) |  |  |
 | hardware_address | [bytes](#bytes) |  |  |
 | multicast | [bool](#bool) |  |  |
+| vrf_master | [VRFMasterSpec](#talos.resource.definitions.network.VRFMasterSpec) |  |  |
+| vrf_slave | [VRFSlave](#talos.resource.definitions.network.VRFSlave) |  |  |
 
 
 
@@ -9232,6 +9236,7 @@ LinkStatusSpec describes status of rendered secrets.
 | permanent_addr | [bytes](#bytes) |  |  |
 | alias | [string](#string) |  |  |
 | alt_names | [string](#string) | repeated |  |
+| vrf_master | [VRFMasterSpec](#talos.resource.definitions.network.VRFMasterSpec) |  |  |
 
 
 
@@ -9812,6 +9817,36 @@ VLANSpec describes VLAN settings if Kind == "vlan".
 | ----- | ---- | ----- | ----------- |
 | vid | [uint32](#uint32) |  |  |
 | protocol | [talos.resource.definitions.enums.NethelpersVLANProtocol](#talos.resource.definitions.enums.NethelpersVLANProtocol) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.VRFMasterSpec"></a>
+
+### VRFMasterSpec
+VRFMasterSpec describes vrf settings if Kind == "vrf".
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| table | [talos.resource.definitions.enums.NethelpersRoutingTable](#talos.resource.definitions.enums.NethelpersRoutingTable) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.VRFSlave"></a>
+
+### VRFSlave
+VRFSlave contains the name of the master vrf for an interface
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| master_name | [string](#string) |  |  |
 
 
 

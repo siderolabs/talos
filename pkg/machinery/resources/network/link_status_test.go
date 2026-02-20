@@ -84,6 +84,9 @@ func TestLinkStatusMarshalYAML(t *testing.T) {
 			ADUserPortKey:   7,
 			PeerNotifyDelay: 40,
 		},
+		VRFMaster: network.VRFMasterSpec{
+			Table: 123,
+		},
 		Wireguard: network.WireguardSpec{
 			PublicKey:    "bar=",
 			ListenPort:   51820,
@@ -160,6 +163,8 @@ bondMaster:
     adActorSysPrio: 6
     adUserPortKey: 7
     peerNotifyDelay: 40
+vrfMaster:
+    table: "123"
 wireguard:
     publicKey: bar=
     listenPort: 51820

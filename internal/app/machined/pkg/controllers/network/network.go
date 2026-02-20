@@ -193,3 +193,21 @@ func SetBridgeMaster(link *network.LinkSpecSpec, bridge talosconfig.NetworkBridg
 		},
 	}
 }
+
+// SetVRFSlave sets the vrf slave spec.
+func SetVRFSlave(link *network.LinkSpecSpec, vrf string) {
+	link.VRFSlave = network.VRFSlave{
+		MasterName: vrf,
+	}
+}
+
+// SetVRFMaster sets the vrf master spec.
+func SetVRFMaster(link *network.LinkSpecSpec, vrf talosconfig.NetworkVRFConfig) {
+	link.Logical = true
+	link.Kind = network.LinkKindVRF
+	link.Type = nethelpers.LinkEther
+
+	link.VRFMaster = network.VRFMasterSpec{
+		Table: vrf.Table(),
+	}
+}

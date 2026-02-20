@@ -483,6 +483,22 @@ func (ctrl *LinkConfigController) processLinkConfigs(logger *zap.Logger, linkMap
 
 				SetBridgeSlave(linkMap[slaveLinkName], linkName)
 			}
+		case talosconfig.NetworkVRFConfig:
+			SetVRFMaster(linkMap[linkName], specificLinkConfig)
+
+			vrfLinks := xslices.Map(specificLinkConfig.Links(), linkNameResolver.Resolve)
+
+			for _, slaveLinkName := range vrfLinks {
+				if _, exists := linkMap[slaveLinkName]; !exists {
+					linkMap[slaveLinkName] = &network.LinkSpecSpec{
+						Name:        slaveLinkName,
+						Up:          true,
+						ConfigLayer: network.ConfigMachineConfiguration,
+					}
+				}
+
+				SetVRFSlave(linkMap[slaveLinkName], linkName)
+			}
 		case talosconfig.NetworkWireguardConfig:
 			wireguardLink(linkMap[linkName], specificLinkConfig)
 		default:

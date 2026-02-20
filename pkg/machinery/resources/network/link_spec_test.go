@@ -31,6 +31,9 @@ func TestLinkSpecMarshalYAML(t *testing.T) {
 			MasterName: "bond0",
 			SlaveIndex: 0,
 		},
+		VRFSlave: network.VRFSlave{
+			MasterName: "vrf-blue",
+		},
 		VLAN: network.VLANSpec{
 			VID:      25,
 			Protocol: nethelpers.VLANProtocol8021AD,
@@ -60,6 +63,9 @@ func TestLinkSpecMarshalYAML(t *testing.T) {
 			ADActorSysPrio:  6,
 			ADUserPortKey:   7,
 			PeerNotifyDelay: 40,
+		},
+		VRFMaster: network.VRFMasterSpec{
+			Table: 123,
 		},
 		Wireguard: network.WireguardSpec{
 			PrivateKey:   "foo=",
@@ -93,6 +99,8 @@ kind: eth
 type: ether
 parentName: eth1
 masterName: bond0
+vrfSlave:
+    masterName: vrf-blue
 vlan:
     vlanID: 25
     vlanProtocol: 802.1ad
@@ -121,6 +129,8 @@ bondMaster:
     adActorSysPrio: 6
     adUserPortKey: 7
     peerNotifyDelay: 40
+vrfMaster:
+    table: "123"
 wireguard:
     privateKey: foo=
     publicKey: bar=

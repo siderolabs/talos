@@ -3108,6 +3108,111 @@
       ],
       "description": "VLANConfig is a config document to create a VLAN (virtual LAN) over a parent link."
     },
+    "network.VRFConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "VRFConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the vrf link (interface) to be created.\n",
+          "markdownDescription": "Name of the vrf link (interface) to be created.",
+          "x-intellij-html-description": "\u003cp\u003eName of the vrf link (interface) to be created.\u003c/p\u003e\n"
+        },
+        "hardwareAddr": {
+          "type": "string",
+          "pattern": "^[0-9a-f:]+$",
+          "title": "hardwareAddr",
+          "description": "Override the hardware (MAC) address of the link.\n",
+          "markdownDescription": "Override the hardware (MAC) address of the link.",
+          "x-intellij-html-description": "\u003cp\u003eOverride the hardware (MAC) address of the link.\u003c/p\u003e\n"
+        },
+        "links": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "links",
+          "description": "Names of the links (interfaces) to be assigned to this vrf.\nLink aliases can be used here as well.\n",
+          "markdownDescription": "Names of the links (interfaces) to be assigned to this vrf.\nLink aliases can be used here as well.",
+          "x-intellij-html-description": "\u003cp\u003eNames of the links (interfaces) to be assigned to this vrf.\nLink aliases can be used here as well.\u003c/p\u003e\n"
+        },
+        "table": {
+          "type": "string",
+          "title": "table",
+          "description": "Routing table number to use for this vrf.\n",
+          "markdownDescription": "Routing table number to use for this vrf.",
+          "x-intellij-html-description": "\u003cp\u003eRouting table number to use for this vrf.\u003c/p\u003e\n"
+        },
+        "up": {
+          "type": "boolean",
+          "title": "up",
+          "description": "Bring the link up or down.\n\nIf not specified, the link will be brought up.\n",
+          "markdownDescription": "Bring the link up or down.\n\nIf not specified, the link will be brought up.",
+          "x-intellij-html-description": "\u003cp\u003eBring the link up or down.\u003c/p\u003e\n\n\u003cp\u003eIf not specified, the link will be brought up.\u003c/p\u003e\n"
+        },
+        "mtu": {
+          "type": "integer",
+          "title": "mtu",
+          "description": "Configure LinkMTU (Maximum Transmission Unit) for the link.\n\nIf not specified, the system default LinkMTU will be used (usually 1500).\n",
+          "markdownDescription": "Configure LinkMTU (Maximum Transmission Unit) for the link.\n\nIf not specified, the system default LinkMTU will be used (usually 1500).",
+          "x-intellij-html-description": "\u003cp\u003eConfigure LinkMTU (Maximum Transmission Unit) for the link.\u003c/p\u003e\n\n\u003cp\u003eIf not specified, the system default LinkMTU will be used (usually 1500).\u003c/p\u003e\n"
+        },
+        "addresses": {
+          "items": {
+            "$ref": "#/$defs/network.AddressConfig"
+          },
+          "type": "array",
+          "title": "addresses",
+          "description": "Configure addresses to be statically assigned to the link.\n",
+          "markdownDescription": "Configure addresses to be statically assigned to the link.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure addresses to be statically assigned to the link.\u003c/p\u003e\n"
+        },
+        "routes": {
+          "items": {
+            "$ref": "#/$defs/network.RouteConfig"
+          },
+          "type": "array",
+          "title": "routes",
+          "description": "Configure routes to be statically created via the link.\n",
+          "markdownDescription": "Configure routes to be statically created via the link.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure routes to be statically created via the link.\u003c/p\u003e\n"
+        },
+        "multicast": {
+          "type": "boolean",
+          "title": "multicast",
+          "description": "Set the multicast capability of the link.\n",
+          "markdownDescription": "Set the multicast capability of the link.",
+          "x-intellij-html-description": "\u003cp\u003eSet the multicast capability of the link.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "links",
+        "name",
+        "table"
+      ],
+      "description": "VRFConfig is a config document to create a vrf and assign links to it."
+    },
     "network.WireguardConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -5571,6 +5676,9 @@
     },
     {
       "$ref": "#/$defs/network.VLANConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/network.VRFConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/network.WireguardConfigV1Alpha1"

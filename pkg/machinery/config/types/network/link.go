@@ -42,6 +42,7 @@ func conflictingLinkKinds(selfKind string) []string {
 		DummyLinkKind,
 		LinkKind,
 		VLANKind,
+		VRFKind,
 		WireguardKind,
 	}, func(kind string) bool {
 		return kind != selfKind

@@ -343,6 +343,12 @@ func (ctrl *LinkStatusController) reconcile(
 				} else if err = networkadapter.BridgeMasterSpec(&status.BridgeMaster).Decode(rawLinkData); err != nil {
 					logger.Warn("failure decoding bridge attributes", zap.Error(err), zap.String("link", link.Attributes.Name))
 				}
+			case network.LinkKindVRF:
+				if rawLinkData == nil {
+					logger.Warn("vrf link data is nil", zap.String("link", link.Attributes.Name))
+				} else if err = networkadapter.VRFMasterSpec(&status.VRFMaster).Decode(rawLinkData); err != nil {
+					logger.Warn("failure decoding vrf attributes", zap.Error(err), zap.String("link", link.Attributes.Name))
+				}
 			case network.LinkKindWireguard:
 				if wgClient == nil {
 					return fmt.Errorf("wireguard client not available, but wireguard interface was discovered: %q", link.Attributes.Name)

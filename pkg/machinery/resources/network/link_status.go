@@ -60,6 +60,7 @@ type LinkStatusSpec struct {
 	VLAN         VLANSpec         `yaml:"vlan,omitempty" protobuf:"26"`
 	BridgeMaster BridgeMasterSpec `yaml:"bridgeMaster,omitempty" protobuf:"27"`
 	BondMaster   BondMasterSpec   `yaml:"bondMaster,omitempty" protobuf:"28"`
+	VRFMaster    VRFMasterSpec    `yaml:"vrfMaster,omitempty" protobuf:"33"`
 	Wireguard    WireguardSpec    `yaml:"wireguard,omitempty" protobuf:"29"`
 }
 

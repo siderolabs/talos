@@ -280,6 +280,13 @@ type BridgeVLANSpec struct {
 	FilteringEnabled bool `yaml:"filteringEnabled" protobuf:"1"`
 }
 
+// VRFMasterSpec describes vrf settings if Kind == "vrf".
+//
+//gotagsrewrite:gen
+type VRFMasterSpec struct {
+	Table nethelpers.RoutingTable `yaml:"table" protobuf:"1"`
+}
+
 // WireguardSpec describes Wireguard settings if Kind == "wireguard".
 //
 //gotagsrewrite:gen
