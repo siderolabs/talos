@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"os"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -54,8 +55,43 @@ func NewClientFromKubeletKubeconfig() (*Client, error) {
 	return NewForConfig(config)
 }
 
+func loadPKIIntoVariable(data *[]byte, path *string) error {
+	if len(*data) > 0 {
+		return nil
+	}
+
+	if *path == "" {
+		return fmt.Errorf("no certificate data or file provided")
+	}
+
+	pkiData, err := os.ReadFile(*path)
+	if err != nil {
+		return fmt.Errorf("failed to read certificate file: %w", err)
+	}
+
+	*data = pkiData
+	*path = ""
+
+	return nil
+}
+
 // NewForConfig initializes and returns a client using the provided config.
 func NewForConfig(config *restclient.Config) (*Client, error) {
+	// read the certificates into byte slices to prevent the client from launching automatic
+	// certificate reload
+	if err := loadPKIIntoVariable(&config.TLSClientConfig.CAData, &config.TLSClientConfig.CAFile); err != nil {
+		return nil, fmt.Errorf("failed to load CA certificate: %w", err)
+	}
+
+	if err := loadPKIIntoVariable(&config.TLSClientConfig.CertData, &config.TLSClientConfig.CertFile); err != nil {
+		return nil, fmt.Errorf("failed to load client certificate: %w", err)
+	}
+
+	if err := loadPKIIntoVariable(&config.TLSClientConfig.KeyData, &config.TLSClientConfig.KeyFile); err != nil {
+		return nil, fmt.Errorf("failed to load client key: %w", err)
+	}
+
+	// now, initialize the client using the standard method
 	client, err := taloskubernetes.NewForConfig(config)
 	if err != nil {
 		return nil, err
