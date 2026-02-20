@@ -14,12 +14,29 @@ import (
 	"syscall"
 
 	"github.com/siderolabs/gen/xslices"
-
-	"github.com/siderolabs/talos/pkg/provision"
 )
 
-func (p *Provisioner) startDNSd(state *State, clusterReq provision.ClusterRequest) error {
+func (p *Provisioner) stopDNSd(state *State) error {
 	pidPath := state.GetRelativePath(dnsPid)
+
+	return StopProcessByPidfile(pidPath)
+}
+
+// StartDNSd starts the DNS server if not already running, using saved state config.
+func (p *Provisioner) StartDNSd(state *State) error {
+	pidPath := state.GetRelativePath(dnsPid)
+
+	if IsProcessRunning(pidPath) {
+		return nil
+	}
+
+	if state.DNSdConfig == nil {
+		return fmt.Errorf("no DNSd config in state; cluster was created with older talosctl, please destroy and recreate")
+	}
+
+	if state.SelfExecutable == "" {
+		return fmt.Errorf("no self executable path in state; cluster was created with older talosctl, please destroy and recreate")
+	}
 
 	logFile, err := os.OpenFile(state.GetRelativePath(dnsLog), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o666)
 	if err != nil {
@@ -28,7 +45,7 @@ func (p *Provisioner) startDNSd(state *State, clusterReq provision.ClusterReques
 
 	defer logFile.Close() //nolint:errcheck
 
-	gatewayAddrs := xslices.Map(clusterReq.Network.GatewayAddrs, netip.Addr.String)
+	gatewayAddrs := xslices.Map(state.DNSdConfig.GatewayAddrs, netip.Addr.String)
 
 	args := []string{
 		"dnsd-launch",
@@ -36,7 +53,7 @@ func (p *Provisioner) startDNSd(state *State, clusterReq provision.ClusterReques
 		"--resolv-conf", "/etc/resolv.conf",
 	}
 
-	cmd := exec.Command(clusterReq.SelfExecutable, args...) //nolint:noctx // runs in background
+	cmd := exec.Command(state.SelfExecutable, args...) //nolint:noctx // runs in background
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile
 	cmd.SysProcAttr = &syscall.SysProcAttr{
@@ -52,10 +69,4 @@ func (p *Provisioner) startDNSd(state *State, clusterReq provision.ClusterReques
 	}
 
 	return nil
-}
-
-func (p *Provisioner) stopDNSd(state *State) error {
-	pidPath := state.GetRelativePath(dnsPid)
-
-	return StopProcessByPidfile(pidPath)
 }

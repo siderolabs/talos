@@ -68,7 +68,12 @@ const (
 
 // CreateDNSd creates the DNSd server.
 func (p *Provisioner) CreateDNSd(state *State, clusterReq provision.ClusterRequest) error {
-	return p.startDNSd(state, clusterReq)
+	state.DNSdConfig = &provision.DNSdConfig{
+		GatewayAddrs: clusterReq.Network.GatewayAddrs,
+	}
+	state.SelfExecutable = clusterReq.SelfExecutable
+
+	return p.StartDNSd(state)
 }
 
 // DestroyDNSd destoys DNSd server.

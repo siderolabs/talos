@@ -12,5 +12,11 @@ import (
 
 // CreateDHCPd creates a DHCP server.
 func (p *Provisioner) CreateDHCPd(ctx context.Context, state *provision.State, clusterReq provision.ClusterRequest) error {
-	return p.startDHCPd(state, clusterReq)
+	state.DHCPdConfig = &provision.DHCPdConfig{
+		GatewayAddrs:   clusterReq.Network.GatewayAddrs,
+		IPXEBootScript: clusterReq.IPXEBootScript,
+	}
+	state.SelfExecutable = clusterReq.SelfExecutable
+
+	return p.StartDHCPd(state)
 }
