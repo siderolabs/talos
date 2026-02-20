@@ -5,7 +5,6 @@
 package dashboard
 
 import (
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/siderolabs/talos/internal/pkg/dashboard/apidata"
@@ -20,8 +19,7 @@ type MonitorGrid struct {
 
 	apiDataListeners []APIDataListener
 
-	processTableInner *components.ProcessTable
-	processTable      *components.TermUIWrapper
+	processTable *components.ProcessTable
 }
 
 // NewMonitorGrid initializes MonitorGrid.
@@ -53,19 +51,19 @@ func NewMonitorGrid(app *tview.Application) *MonitorGrid {
 	memGraph := components.NewMemGraph()
 	loadAvgGraph := components.NewLoadAvgGraph()
 
-	graphGrid.AddItem(components.NewTermUIWrapper(cpuGraph), 0, 0, 1, 1, 0, 0, false)
-	graphGrid.AddItem(components.NewTermUIWrapper(memGraph), 0, 1, 1, 1, 0, 0, false)
-	graphGrid.AddItem(components.NewTermUIWrapper(loadAvgGraph), 0, 2, 1, 1, 0, 0, false)
+	graphGrid.AddItem(cpuGraph, 0, 0, 1, 1, 0, 0, false)
+	graphGrid.AddItem(memGraph, 0, 1, 1, 1, 0, 0, false)
+	graphGrid.AddItem(loadAvgGraph, 0, 2, 1, 1, 0, 0, false)
 
 	bottomGrid := tview.NewGrid().SetRows(0, 0).SetColumns(-1, -3)
 
 	netSparkline := components.NewNetSparkline()
 	diskSparkline := components.NewDiskSparkline()
 
-	widget.initProcessTable()
+	widget.processTable = components.NewProcessTable()
 
-	bottomGrid.AddItem(components.NewTermUIWrapper(netSparkline), 0, 0, 1, 1, 0, 0, false)
-	bottomGrid.AddItem(components.NewTermUIWrapper(diskSparkline), 1, 0, 1, 1, 0, 0, false)
+	bottomGrid.AddItem(netSparkline, 0, 0, 1, 1, 0, 0, false)
+	bottomGrid.AddItem(diskSparkline, 1, 0, 1, 1, 0, 0, false)
 	bottomGrid.AddItem(widget.processTable, 0, 1, 2, 1, 0, 0, false)
 
 	widget.AddItem(infoGrid, 0, 0, 1, 1, 0, 0, false)
@@ -83,7 +81,7 @@ func NewMonitorGrid(app *tview.Application) *MonitorGrid {
 		loadAvgGraph,
 		netSparkline,
 		diskSparkline,
-		widget.processTableInner,
+		widget.processTable,
 	}
 
 	return widget
@@ -99,31 +97,8 @@ func (widget *MonitorGrid) OnAPIDataChange(node string, data *apidata.Data) {
 // OnScreenSelect implements the screenSelectListener interface.
 func (widget *MonitorGrid) onScreenSelect(active bool) {
 	if active {
-		widget.processTableInner.ScrollTop()
+		widget.processTable.ScrollToBeginning()
+		widget.processTable.Select(1, 0)
 		widget.app.SetFocus(widget.processTable)
 	}
-}
-
-func (widget *MonitorGrid) initProcessTable() {
-	widget.processTableInner = components.NewProcessTable()
-
-	widget.processTable = components.NewTermUIWrapper(widget.processTableInner)
-	widget.processTable.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		switch {
-		case event.Key() == tcell.KeyUp, event.Rune() == 'k':
-			widget.processTableInner.ScrollUp()
-		case event.Key() == tcell.KeyDown, event.Rune() == 'j':
-			widget.processTableInner.ScrollDown()
-		case event.Key() == tcell.KeyCtrlU:
-			widget.processTableInner.ScrollHalfPageUp()
-		case event.Key() == tcell.KeyCtrlD:
-			widget.processTableInner.ScrollHalfPageDown()
-		case event.Key() == tcell.KeyCtrlB, event.Key() == tcell.KeyPgUp:
-			widget.processTableInner.ScrollPageUp()
-		case event.Key() == tcell.KeyCtrlF, event.Key() == tcell.KeyPgDn:
-			widget.processTableInner.ScrollPageDown()
-		}
-
-		return event
-	})
 }

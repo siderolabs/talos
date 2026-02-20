@@ -16,7 +16,6 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	_ "github.com/gdamore/tcell/v2/terminfo/l/linux" // linux terminal is used when running on the machine, but not included with tcell_minimal
-	"github.com/gizak/termui/v3"
 	"github.com/rivo/tview"
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/xslices"
@@ -35,9 +34,6 @@ import (
 func init() {
 	// set background to be left as the default color of the terminal
 	tview.Styles.PrimitiveBackgroundColor = tcell.ColorDefault
-
-	// set the titles of the termui (legacy) to be bold
-	termui.Theme.Block.Title.Modifier = termui.ModifierBold
 }
 
 // Screen is a dashboard screen.

@@ -5,39 +5,47 @@
 package components
 
 import (
-	ui "github.com/gizak/termui/v3"
-	"github.com/gizak/termui/v3/widgets"
+	"github.com/gdamore/tcell/v2"
+	"github.com/navidys/tvxwidgets"
+	"github.com/rivo/tview"
 
 	"github.com/siderolabs/talos/internal/pkg/dashboard/apidata"
 )
 
 // BaseSparklineGroup represents the widget with some sparklines.
 type BaseSparklineGroup struct {
-	widgets.SparklineGroup
+	tview.Primitive
 
+	sparklines []*tvxwidgets.Sparkline
 	dataLabels []string
 }
 
 // NewBaseSparklineGroup initializes BaseSparklineGroup.
 func NewBaseSparklineGroup(title string, labels, dataLabels []string) *BaseSparklineGroup {
-	sparklines := make([]*widgets.Sparkline, len(labels))
+	flex := tview.NewFlex().SetDirection(tview.FlexRow)
+	root := tview.NewFrame(flex).
+		SetBorders(0, 0, 0, 0, 0, 0).
+		AddText(title, true, tview.AlignLeft, tcell.ColorDefault)
 
-	for i := range sparklines {
-		sparklines[i] = widgets.NewSparkline()
-		sparklines[i].Title = labels[i]
-		sparklines[i].Data = []float64{0, 0}
-		sparklines[i].LineColor = ui.Theme.Plot.Lines[i]
+	colors := []tcell.Color{tcell.ColorRed, tcell.ColorGreen}
+
+	sparklines := make([]*tvxwidgets.Sparkline, len(labels))
+
+	for i := range labels {
+		sparklines[i] = tvxwidgets.NewSparkline()
+		sparklines[i].SetBorder(false)
+		sparklines[i].SetDataTitle(labels[i])
+		sparklines[i].SetTitleColor(tcell.ColorDefault)
+		sparklines[i].SetLineColor(colors[i%len(colors)])
+
+		flex.AddItem(sparklines[i], 0, 1, false)
 	}
 
-	widget := &BaseSparklineGroup{
-		SparklineGroup: *widgets.NewSparklineGroup(sparklines...),
-		dataLabels:     dataLabels,
+	return &BaseSparklineGroup{
+		Primitive:  root,
+		sparklines: sparklines,
+		dataLabels: dataLabels,
 	}
-
-	widget.Border = false
-	widget.Title = title
-
-	return widget
 }
 
 // OnAPIDataChange implements the APIDataListener interface.
@@ -45,14 +53,14 @@ func (widget *BaseSparklineGroup) OnAPIDataChange(node string, data *apidata.Dat
 	nodeData := data.Nodes[node]
 
 	if nodeData == nil {
-		for i := range widget.Sparklines {
-			widget.Sparklines[i].Data = []float64{0, 0}
+		for i := range widget.sparklines {
+			widget.sparklines[i].SetData([]float64{0})
 		}
 
 		return
 	}
 
-	width := widget.Inner.Dx()
+	_, _, width, _ := widget.GetRect() //nolint:dogsled
 
 	for i, name := range widget.dataLabels {
 		series := nodeData.Series[name]
@@ -61,16 +69,16 @@ func (widget *BaseSparklineGroup) OnAPIDataChange(node string, data *apidata.Dat
 			width = len(series)
 		}
 
-		widget.Sparklines[i].Data = series[len(series)-width:]
+		widget.sparklines[i].SetData(series[len(series)-width:])
 	}
 }
 
 // NewNetSparkline creates network sparkline.
 func NewNetSparkline() *BaseSparklineGroup {
-	return NewBaseSparklineGroup("NET", []string{"RX", "TX"}, []string{"netrxbytes", "nettxbytes"})
+	return NewBaseSparklineGroup(" [::b]NET", []string{"RX", "TX"}, []string{"netrxbytes", "nettxbytes"})
 }
 
 // NewDiskSparkline creates disk sparkline.
 func NewDiskSparkline() *BaseSparklineGroup {
-	return NewBaseSparklineGroup("DISK", []string{"READ", "WRITE"}, []string{"diskrdsectors", "diskwrsectors"})
+	return NewBaseSparklineGroup(" [::b]DISK", []string{"READ", "WRITE"}, []string{"diskrdsectors", "diskwrsectors"})
 }

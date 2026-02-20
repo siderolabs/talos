@@ -10,27 +10,19 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
-	"time"
 
 	"github.com/dustin/go-humanize"
-	ui "github.com/gizak/termui/v3"
-	"github.com/gizak/termui/v3/widgets"
 	"github.com/ryanuber/columnize"
 	"github.com/spf13/cobra"
-	"golang.org/x/term"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
-	"github.com/siderolabs/talos/pkg/cli"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
-var (
-	sortMethod     string
-	watchProcesses bool
-)
+var sortMethod string
 
 // processesCmd represents the processes command.
 var processesCmd = &cobra.Command{
@@ -41,28 +33,12 @@ var processesCmd = &cobra.Command{
 	Args:    cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClient(func(ctx context.Context, c *client.Client) error {
-			var err error
-
-			switch {
-			case watchProcesses:
-				if err = ui.Init(); err != nil {
-					return fmt.Errorf("failed to initialize termui: %w", err)
-				}
-
-				defer ui.Close()
-
-				processesUI(ctx, c)
-			default:
-				var output string
-
-				output, err = processesOutput(ctx, c)
-				if err != nil {
-					return err
-				}
-				// Note this is unlimited output of process lines
-				// we arent artificially limited by the box we would otherwise draw
-				fmt.Println(output)
+			output, err := processesOutput(ctx, c)
+			if err != nil {
+				return err
 			}
+
+			fmt.Println(output)
 
 			return nil
 		})
@@ -71,72 +47,7 @@ var processesCmd = &cobra.Command{
 
 func init() {
 	processesCmd.Flags().StringVarP(&sortMethod, "sort", "s", "rss", "Column to sort output by. [rss|cpu]")
-	processesCmd.Flags().BoolVarP(&watchProcesses, "watch", "w", false, "Stream running processes")
 	addCommand(processesCmd)
-}
-
-func processesUI(ctx context.Context, c *client.Client) {
-	l := widgets.NewParagraph()
-	l.Border = false
-	l.WrapText = false
-	l.PaddingTop = 0
-	l.PaddingBottom = 0
-
-	var processOutput string
-
-	draw := func() {
-		// Attempt to get terminal dimensions
-		// Since we're getting this data on each call
-		// we'll be able to handle terminal window resizing
-		w, h, err := term.GetSize(0)
-		cli.Should(err)
-		// x, y, w, h
-		l.SetRect(0, 0, w, h)
-		l.WrapText = false
-
-		processOutput, err = processesOutput(ctx, c)
-		if err != nil {
-			l.Text = err.Error()
-			l.WrapText = true
-
-			ui.Render(l)
-
-			return
-		}
-
-		// Dont refresh if we dont have any output
-		if processOutput == "" {
-			return
-		}
-
-		// Truncate our output based on terminal size
-		l.Text = processOutput
-
-		ui.Render(l)
-	}
-
-	draw()
-
-	uiEvents := ui.PollEvents()
-	ticker := time.NewTicker(time.Second).C
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case e := <-uiEvents:
-			switch e.ID {
-			case "q", "<C-c>":
-				return
-			case "r", "m":
-				sortMethod = "rss"
-			case "c":
-				sortMethod = "cpu"
-			}
-		case <-ticker:
-			draw()
-		}
-	}
 }
 
 type by func(p1, p2 *machineapi.ProcessInfo) bool
