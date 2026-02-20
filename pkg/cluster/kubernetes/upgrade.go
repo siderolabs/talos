@@ -7,9 +7,10 @@ package kubernetes
 import (
 	"fmt"
 	"io"
+	"time"
 
-	"github.com/siderolabs/go-kubernetes/kubernetes/manifests"
 	"github.com/siderolabs/go-kubernetes/kubernetes/upgrade"
+	"sigs.k8s.io/cli-utils/pkg/inventory"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 )
@@ -24,10 +25,9 @@ const (
 
 // UpgradeOptions represents Kubernetes control plane upgrade settings.
 type UpgradeOptions struct {
-	manifests.SSApplyBehaviorOptions
-
 	Path *upgrade.Path
 
+	DryRun               bool
 	ControlPlaneEndpoint string
 	LogOutput            io.Writer
 	PrePullImages        bool
@@ -39,6 +39,12 @@ type UpgradeOptions struct {
 	ControllerManagerImage string
 	SchedulerImage         string
 	ProxyImage             string
+
+	ForceConflicts   bool
+	NoPrune          bool
+	PruneTimeout     time.Duration
+	ReconcileTimeout time.Duration
+	InventoryPolicy  inventory.Policy
 
 	controlPlaneNodes []string
 	workerNodes       []string

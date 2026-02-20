@@ -3375,8 +3375,8 @@ talosctl upgrade-k8s [flags]
       --manifests-force-conflicts              overwrite the fields when applying even if the field manager differs
       --manifests-inventory-policy string      kubernetes SSA inventory policy (one of 'MustMatch', 'AdoptIfNoInventory' or 'AdoptAll') (default "AdoptIfNoInventory")
       --manifests-no-prune                     whether pruning of previously applied objects should happen after apply
-      --manifests-prune-timeout duration       how long to wait for resources to be fully deleted (set to zero to disable waiting) (default 3m0s)
-      --manifests-reconcile-timeout duration   how long to wait for resources to be fully reconciled (set to zero to disable waiting) (default 3m0s)
+      --manifests-prune-timeout duration       how long to wait for resources to be fully deleted (set to zero to disable waiting) (default 1m0s)
+      --manifests-reconcile-timeout duration   how long to wait for resources to be fully reconciled (set to zero to disable waiting) (default 1m0s)
   -n, --nodes strings                          target the specified nodes
       --pre-pull-images                        pre-pull images before upgrade (default true)
       --proxy-image string                     kube-proxy image to use (default "registry.k8s.io/kube-proxy")
