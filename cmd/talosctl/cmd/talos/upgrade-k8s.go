@@ -8,7 +8,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/siderolabs/go-kubernetes/kubernetes/manifests"
+	"github.com/fluxcd/pkg/ssa"
 	"github.com/siderolabs/go-kubernetes/kubernetes/upgrade"
 	"github.com/spf13/cobra"
 	"sigs.k8s.io/cli-utils/pkg/inventory"
@@ -44,8 +44,6 @@ var upgradeK8sCmdFlags struct {
 }
 
 func init() {
-	ssaDefaults := manifests.DefaultSSApplyBehaviorOptions()
-
 	upgradeK8sCmd.Flags().StringVar(&upgradeK8sCmdFlags.FromVersion, "from", "", "the Kubernetes control plane version to upgrade from")
 	upgradeK8sCmd.Flags().StringVar(&upgradeK8sCmdFlags.ToVersion, "to", constants.DefaultKubernetesVersion, "the Kubernetes control plane version to upgrade to")
 	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.ControlPlaneEndpoint, "endpoint", "", "the cluster control plane endpoint")
@@ -62,13 +60,13 @@ func init() {
 	upgradeK8sCmd.Flags().StringVar(&upgradeOptions.ProxyImage, "proxy-image", constants.KubeProxyImage, "kube-proxy image to use")
 
 	// manifest sync related options
-	upgradeK8sCmd.Flags().BoolVar(&upgradeOptions.ForceConflicts, "manifests-force-conflicts", ssaDefaults.ForceConflicts, "overwrite the fields when applying even if the field manager differs")
-	upgradeK8sCmd.Flags().BoolVar(&upgradeOptions.NoPrune, "manifests-no-prune", ssaDefaults.NoPrune, "whether pruning of previously applied objects should happen after apply")
-	upgradeK8sCmd.Flags().StringVar(&upgradeK8sCmdFlags.inventoryPolicy, "manifests-inventory-policy", ssaDefaults.InventoryPolicy.String(),
+	upgradeK8sCmd.Flags().BoolVar(&upgradeOptions.ForceConflicts, "manifests-force-conflicts", false, "overwrite the fields when applying even if the field manager differs")
+	upgradeK8sCmd.Flags().BoolVar(&upgradeOptions.NoPrune, "manifests-no-prune", false, "whether pruning of previously applied objects should happen after apply")
+	upgradeK8sCmd.Flags().StringVar(&upgradeK8sCmdFlags.inventoryPolicy, "manifests-inventory-policy", "AdoptIfNoInventory",
 		"kubernetes SSA inventory policy (one of 'MustMatch', 'AdoptIfNoInventory' or 'AdoptAll')")
-	upgradeK8sCmd.Flags().DurationVar(&upgradeOptions.PruneTimeout, "manifests-prune-timeout", ssaDefaults.PruneTimeout,
+	upgradeK8sCmd.Flags().DurationVar(&upgradeOptions.PruneTimeout, "manifests-prune-timeout", ssa.DefaultApplyOptions().WaitTimeout,
 		"how long to wait for resources to be fully deleted (set to zero to disable waiting)")
-	upgradeK8sCmd.Flags().DurationVar(&upgradeOptions.ReconcileTimeout, "manifests-reconcile-timeout", ssaDefaults.ReconcileTimeout,
+	upgradeK8sCmd.Flags().DurationVar(&upgradeOptions.ReconcileTimeout, "manifests-reconcile-timeout", ssa.DefaultWaitOptions().Timeout,
 		"how long to wait for resources to be fully reconciled (set to zero to disable waiting)")
 
 	addCommand(upgradeK8sCmd)
