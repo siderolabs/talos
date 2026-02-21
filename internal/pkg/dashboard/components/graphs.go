@@ -5,29 +5,44 @@
 package components
 
 import (
-	"github.com/gizak/termui/v3/widgets"
-	"github.com/siderolabs/gen/xslices"
+	"slices"
+
+	"github.com/gdamore/tcell/v2"
+	"github.com/navidys/tvxwidgets"
+	"github.com/rivo/tview"
 
 	"github.com/siderolabs/talos/internal/pkg/dashboard/apidata"
 )
 
 // BaseGraph represents the widget with some usage graph.
 type BaseGraph struct {
-	widgets.Plot
+	tview.Primitive
+
+	plot   *tvxwidgets.Plot
+	labels []string
 }
 
 // NewBaseGraph initializes BaseGraph.
 func NewBaseGraph(title string, labels []string) *BaseGraph {
 	widget := &BaseGraph{
-		Plot: *widgets.NewPlot(),
+		plot:   tvxwidgets.NewPlot(),
+		labels: labels,
 	}
 
-	widget.Border = false
-	widget.Title = title
-	widget.DataLabels = labels
-	widget.ShowAxes = false
-	// TODO: looks to be a bug as it requires at least 2 points
-	widget.Data = xslices.Map(labels, func(label string) []float64 { return []float64{0, 0} })
+	root := tview.NewFrame(widget.plot).
+		SetBorders(0, 0, 0, 0, 0, 0).
+		AddText(title, true, tview.AlignCenter, tcell.ColorDefault)
+
+	widget.plot.SetBorder(false)
+	widget.plot.SetLineColor([]tcell.Color{
+		tcell.ColorRed,
+		tcell.ColorGreen,
+	})
+	widget.plot.SetTitle(title)
+	widget.plot.SetDrawAxes(false)
+	widget.plot.SetMarker(tvxwidgets.PlotMarkerBraille)
+
+	widget.Primitive = root
 
 	return widget
 }
@@ -37,46 +52,43 @@ func (widget *BaseGraph) OnAPIDataChange(node string, data *apidata.Data) {
 	nodeData := data.Nodes[node]
 
 	if nodeData == nil {
-		for i := range widget.Data {
-			widget.Data[i] = []float64{0, 0}
+		plotData := make([][]float64, len(widget.labels))
+
+		for i := range widget.labels {
+			plotData[i] = []float64{0}
 		}
+
+		widget.plot.SetData(plotData)
 
 		return
 	}
 
-	width := widget.Inner.Dx()
+	_, _, width, _ := widget.plot.GetPlotRect() //nolint:dogsled
 
-	for i, name := range widget.DataLabels {
+	plotData := make([][]float64, len(widget.labels))
+
+	for i, name := range widget.labels {
 		series := nodeData.Series[name]
 
-		width = min(width, len(series))
+		maxPoints := min(width, len(series))
 
-		widget.Data[i] = widget.leftPadSeries(series[len(series)-width:], 2)
-	}
-}
-
-func (widget *BaseGraph) leftPadSeries(series []float64, size int) []float64 {
-	if len(series) >= size {
-		return series
+		plotData[i] = slices.Clone(series[len(series)-maxPoints:])
 	}
 
-	padded := make([]float64, size)
-	copy(padded[size-len(series):], series)
-
-	return padded
+	widget.plot.SetData(plotData)
 }
 
 // NewCPUGraph creates CPU usage graph.
 func NewCPUGraph() *BaseGraph {
-	return NewBaseGraph("CPU USER/SYSTEM", []string{"user", "system"})
+	return NewBaseGraph("[::b]CPU USER/SYSTEM", []string{"user", "system"})
 }
 
 // NewMemGraph creates mem usage graph.
 func NewMemGraph() *BaseGraph {
-	return NewBaseGraph("MEM USED", []string{"mem"})
+	return NewBaseGraph("[::b]MEM USED", []string{"mem"})
 }
 
 // NewLoadAvgGraph creates loadavg graph.
 func NewLoadAvgGraph() *BaseGraph {
-	return NewBaseGraph("LOAD AVG 60sec", []string{"loadavg"})
+	return NewBaseGraph("[::b]LOAD AVG 60sec", []string{"loadavg"})
 }

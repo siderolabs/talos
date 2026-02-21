@@ -5,44 +5,56 @@
 package components
 
 import (
-	"fmt"
 	"math"
 
-	ui "github.com/gizak/termui/v3"
-	"github.com/gizak/termui/v3/widgets"
+	"github.com/gdamore/tcell/v2"
+	"github.com/navidys/tvxwidgets"
+	"github.com/rivo/tview"
 
 	"github.com/siderolabs/talos/internal/pkg/dashboard/apidata"
 )
 
 // SystemGauges quickly show CPU/mem load.
 type SystemGauges struct {
-	*TermUIWrapper
+	tview.Primitive
 
-	inner *systemGaugesInner
+	cpuGauge *tvxwidgets.PercentageModeGauge
+	memGauge *tvxwidgets.PercentageModeGauge
 }
 
 // NewSystemGauges creates SystemGauges.
 func NewSystemGauges() *SystemGauges {
-	inner := systemGaugesInner{
-		Block: *ui.NewBlock(),
-	}
+	root := tview.NewGrid().SetRows(0).SetColumns(0)
+	root.SetBorderPadding(1, 2, 1, 1)
 
-	inner.cpuGauge = widgets.NewGauge()
-	inner.cpuGauge.Border = false
-	inner.cpuGauge.Title = "CPU"
+	cpuGauge := tvxwidgets.NewPercentageModeGauge()
+	cpuGauge.SetBorder(false)
+	cpuGauge.SetMaxValue(100)
+	cpuGauge.SetPgBgColor(tview.Styles.ContrastBackgroundColor)
 
-	inner.memGauge = widgets.NewGauge()
-	inner.memGauge.Title = "MEM"
-	inner.memGauge.Border = false
+	cpuFrame := tview.NewFrame(cpuGauge)
+	cpuFrame.SetBorders(0, 0, 0, 0, 0, 0).
+		AddText("[::b]CPU", true, tview.AlignLeft, tcell.ColorDefault)
 
-	wrapper := NewTermUIWrapper(&inner)
+	root.AddItem(cpuFrame, 0, 0, 1, 1, 0, 0, false)
+
+	memGauge := tvxwidgets.NewPercentageModeGauge()
+	memGauge.SetBorder(false)
+	memGauge.SetMaxValue(100)
+	memGauge.SetPgBgColor(tview.Styles.ContrastBackgroundColor)
+
+	memFrame := tview.NewFrame(memGauge)
+	memFrame.SetBorders(0, 0, 0, 0, 0, 0).
+		AddText("[::b]MEM", true, tview.AlignLeft, tcell.ColorDefault)
+
+	root.AddItem(memFrame, 1, 0, 1, 1, 0, 0, false)
 
 	widget := &SystemGauges{
-		TermUIWrapper: wrapper,
-		inner:         &inner,
-	}
+		Primitive: root,
 
-	widget.SetBorderPadding(1, 0, 0, 0)
+		cpuGauge: cpuGauge,
+		memGauge: memGauge,
+	}
 
 	return widget
 }
@@ -52,46 +64,13 @@ func (widget *SystemGauges) OnAPIDataChange(node string, data *apidata.Data) {
 	nodeData := data.Nodes[node]
 
 	if nodeData == nil {
-		widget.inner.cpuGauge.Label = noData
-		widget.inner.cpuGauge.Percent = 0
-		widget.inner.memGauge.Label = noData
-		widget.inner.memGauge.Percent = 0
+		widget.cpuGauge.SetValue(0)
+		widget.memGauge.SetValue(0)
 	} else {
 		memUsed := nodeData.MemUsage()
-
-		widget.inner.memGauge.Percent = int(math.Round(memUsed * 100.0))
-		widget.inner.memGauge.Label = fmt.Sprintf("%.1f%%", memUsed*100.0)
+		widget.memGauge.SetValue(int(math.Round(memUsed * 100.0)))
 
 		cpuUsed := nodeData.CPUUsageByName("usage")
-
-		widget.inner.cpuGauge.Percent = int(math.Round(cpuUsed * 100.0))
-		widget.inner.cpuGauge.Label = fmt.Sprintf("%.1f%%", cpuUsed*100.0)
-	}
-}
-
-type systemGaugesInner struct {
-	ui.Block
-
-	cpuGauge *widgets.Gauge
-	memGauge *widgets.Gauge
-}
-
-// Draw implements io.Drawable.
-func (widget *systemGaugesInner) Draw(buf *ui.Buffer) {
-	width := widget.Dx()
-	height := widget.Dy()
-
-	y := 0
-	itemHeight := 2
-
-	for _, item := range []ui.Drawable{widget.cpuGauge, widget.memGauge} {
-		item.SetRect(widget.Min.X, widget.Min.Y+y, widget.Min.X+width, widget.Min.Y+y+itemHeight+1)
-		item.Draw(buf)
-
-		y += itemHeight
-
-		if y > height {
-			break
-		}
+		widget.cpuGauge.SetValue(int(math.Round(cpuUsed * 100.0)))
 	}
 }

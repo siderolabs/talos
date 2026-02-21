@@ -2974,7 +2974,6 @@ talosctl processes [flags]
       --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
   -s, --sort string                Column to sort output by. [rss|cpu] (default "rss")
       --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
-  -w, --watch                      Stream running processes
 ```
 
 ### SEE ALSO
