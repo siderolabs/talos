@@ -7,6 +7,7 @@ package cgroupsprinter
 import (
 	"embed"
 	"io/fs"
+	"path"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -37,7 +38,8 @@ func GetPresetNames() []string {
 
 // GetPreset returns the preset by name.
 func GetPreset(name string) Schema {
-	f, err := presetsFS.Open(filepath.Join("presets", name+".yaml"))
+	// embed.FS always uses / as separator, even on Windows, we need OS-agnostic path joining here
+	f, err := presetsFS.Open(path.Join("presets", name+".yaml"))
 	if err != nil {
 		panic(err) // should not fail
 	}
