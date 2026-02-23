@@ -5,6 +5,7 @@
 package makefs
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -18,8 +19,8 @@ const (
 
 // XFSGrow expands a XFS filesystem to the maximum possible. The partition
 // MUST be mounted, or this will fail.
-func XFSGrow(partname string) error {
-	_, err := cmd.Run("xfs_growfs", "-d", partname)
+func XFSGrow(ctx context.Context, partname string) error {
+	_, err := cmd.RunWithOptions(ctx, "xfs_growfs", []string{"-d", partname})
 	if err != nil {
 		return fmt.Errorf("failed to grow XFS filesystem: %w", err)
 	}
@@ -28,8 +29,8 @@ func XFSGrow(partname string) error {
 }
 
 // XFSRepair repairs a XFS filesystem on the specified partition.
-func XFSRepair(partname string) error {
-	_, err := cmd.Run("xfs_repair", partname)
+func XFSRepair(ctx context.Context, partname string) error {
+	_, err := cmd.RunWithOptions(ctx, "xfs_repair", []string{partname})
 	if err != nil {
 		return fmt.Errorf("error repairing XFS filesystem: %w", err)
 	}
@@ -66,7 +67,7 @@ func XFS(partname string, setters ...Option) error {
 
 	args = append(args, partname)
 
-	_, err := cmd.Run("mkfs.xfs", args...)
+	_, err := cmd.Run("mkfs.xfs", args...) //nolint:staticcheck
 
 	return err
 }

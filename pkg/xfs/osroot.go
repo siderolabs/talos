@@ -5,6 +5,7 @@
 package xfs
 
 import (
+	"context"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -31,7 +32,7 @@ func (root *OSRoot) Close() error {
 }
 
 // RepairFS is no-op for OSRoot.
-func (root *OSRoot) RepairFS() error {
+func (root *OSRoot) RepairFS(context.Context) error {
 	return nil
 }
 

@@ -302,7 +302,7 @@ func parseRouteEntry(entry, linkName string) (network.RouteSpecSpec, error) {
 // ParseRoutes parses the ETH*_ROUTES variable into RouteSpecSpec entries.
 // Multiple routes are separated by commas.
 func ParseRoutes(routesStr, linkName string) ([]network.RouteSpecSpec, error) {
-	var routes []network.RouteSpecSpec
+	var routes []network.RouteSpecSpec //nolint:prealloc
 
 	for entry := range strings.SplitSeq(routesStr, ",") {
 		entry = strings.TrimSpace(entry)
@@ -801,7 +801,7 @@ func (o *OpenNebula) ParseMetadata(st state.State, oneContextPlain []byte) (*run
 	// SEARCH_DOMAIN). These are applied regardless of interface, matching the
 	// reference get_nameservers()/get_searchdomains() which processes global
 	// variables before per-interface ones.
-	var allDNSIPs []netip.Addr
+	var allDNSIPs []netip.Addr //nolint:prealloc
 
 	for s := range strings.FieldsSeq(oneContext["DNS"]) {
 		ip, err := netip.ParseAddr(s)

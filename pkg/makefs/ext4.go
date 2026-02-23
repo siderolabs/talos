@@ -5,6 +5,7 @@
 package makefs
 
 import (
+	"context"
 	"crypto/sha256"
 	"fmt"
 
@@ -47,19 +48,19 @@ func Ext4(partname string, setters ...Option) error {
 
 	args = append(args, partname)
 
-	_, err := cmd.Run("mkfs.ext4", args...)
+	_, err := cmd.Run("mkfs.ext4", args...) //nolint:staticcheck
 
 	return err
 }
 
 // Ext4Resize expands a ext4 filesystem to the maximum possible.
-func Ext4Resize(partname string) error {
+func Ext4Resize(ctx context.Context, partname string) error {
 	// resizing the filesystem requires a check first
-	if err := Ext4Repair(partname); err != nil {
+	if err := Ext4Repair(ctx, partname); err != nil {
 		return fmt.Errorf("failed to repair before growing ext4 filesystem: %w", err)
 	}
 
-	_, err := cmd.Run("resize2fs", partname)
+	_, err := cmd.RunWithOptions(ctx, "resize2fs", []string{partname})
 	if err != nil {
 		return fmt.Errorf("failed to grow ext4 filesystem: %w", err)
 	}
@@ -68,8 +69,8 @@ func Ext4Resize(partname string) error {
 }
 
 // Ext4Repair repairs a ext4 filesystem.
-func Ext4Repair(partname string) error {
-	_, err := cmd.Run("e2fsck", "-f", "-p", partname)
+func Ext4Repair(ctx context.Context, partname string) error {
+	_, err := cmd.RunWithOptions(ctx, "e2fsck", []string{"-f", "-p", partname})
 	if err != nil {
 		return fmt.Errorf("failed to repair ext4 filesystem: %w", err)
 	}

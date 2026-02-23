@@ -29,7 +29,7 @@ func VFAT(partname string, setters ...Option) error {
 
 	args = append(args, partname)
 
-	_, err := cmd.Run("mkfs.vfat", args...)
+	_, err := cmd.Run("mkfs.vfat", args...) //nolint:staticcheck
 
 	return err
 }

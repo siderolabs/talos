@@ -85,12 +85,18 @@ func (cliSuite *CLISuite) discoverKubectl() cluster.Info {
 	// rely on `nodes:` being set in talosconfig
 	cliSuite.RunCLI([]string{"kubeconfig", tempDir}, StdoutEmpty())
 
-	masterNodes, err := cmd.Run(cliSuite.KubectlPath, "--kubeconfig", filepath.Join(tempDir, "kubeconfig"), "get", "nodes",
-		"-o", "jsonpath={.items[*].status.addresses[?(@.type==\"InternalIP\")].address}", fmt.Sprintf("--selector=%s", constants.LabelNodeRoleControlPlane))
+	masterNodes, err := cmd.RunWithOptions(cliSuite.T().Context(), cliSuite.KubectlPath,
+		[]string{
+			"--kubeconfig", filepath.Join(tempDir, "kubeconfig"), "get", "nodes",
+			"-o", "jsonpath={.items[*].status.addresses[?(@.type==\"InternalIP\")].address}", fmt.Sprintf("--selector=%s", constants.LabelNodeRoleControlPlane),
+		})
 	cliSuite.Require().NoError(err)
 
-	workerNodes, err := cmd.Run(cliSuite.KubectlPath, "--kubeconfig", filepath.Join(tempDir, "kubeconfig"), "get", "nodes",
-		"-o", "jsonpath={.items[*].status.addresses[?(@.type==\"InternalIP\")].address}", fmt.Sprintf("--selector=!%s", constants.LabelNodeRoleControlPlane))
+	workerNodes, err := cmd.RunWithOptions(cliSuite.T().Context(), cliSuite.KubectlPath,
+		[]string{
+			"--kubeconfig", filepath.Join(tempDir, "kubeconfig"), "get", "nodes",
+			"-o", "jsonpath={.items[*].status.addresses[?(@.type==\"InternalIP\")].address}", fmt.Sprintf("--selector=!%s", constants.LabelNodeRoleControlPlane),
+		})
 	cliSuite.Require().NoError(err)
 
 	nodeInfo, err := newNodeInfo(

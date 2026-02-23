@@ -162,13 +162,15 @@ func (ctrl *LVMActivationController) Run(ctx context.Context, r controller.Runti
 			logger.Info("activating LVM volume", zap.String("name", vgName))
 
 			// activate the volume group
-			if _, err = cmd.RunContext(ctx,
+			if _, err = cmd.RunWithOptions(ctx,
 				"/sbin/lvm",
-				"vgchange",
-				"-aay",
-				"--autoactivation",
-				"event",
-				vgName,
+				[]string{
+					"vgchange",
+					"-aay",
+					"--autoactivation",
+					"event",
+					vgName,
+				},
 			); err != nil {
 				multiErr = multierror.Append(multiErr, fmt.Errorf("failed to activate LVM volume %s: %w", vgName, err))
 			} else {
@@ -187,17 +189,19 @@ func (ctrl *LVMActivationController) Run(ctx context.Context, r controller.Runti
 func (ctrl *LVMActivationController) checkVGNeedsActivation(ctx context.Context, devicePath string) (string, error) {
 	// first we check if all associated volumes are available
 	// https://man7.org/linux/man-pages/man7/lvmautoactivation.7.html
-	stdOut, err := cmd.RunContext(ctx,
+	stdOut, err := cmd.RunWithOptions(ctx,
 		"/sbin/lvm",
-		"pvscan",
-		"--cache",
-		"--listvg",
-		"--checkcomplete",
-		"--vgonline",
-		"--autoactivation",
-		"event",
-		"--udevoutput",
-		devicePath,
+		[]string{
+			"pvscan",
+			"--cache",
+			"--listvg",
+			"--checkcomplete",
+			"--vgonline",
+			"--autoactivation",
+			"event",
+			"--udevoutput",
+			devicePath,
+		},
 	)
 	if err != nil {
 		return "", fmt.Errorf("failed to check if LVM volume backed by device %s needs activation: %w", devicePath, err)

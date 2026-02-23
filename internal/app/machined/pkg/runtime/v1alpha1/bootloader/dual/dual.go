@@ -166,7 +166,7 @@ func (c *Config) installGrub(opts options.InstallOptions) error {
 
 	opts.Printf("executing: grub-install %s", strings.Join(args, " "))
 
-	if _, err := cmd.Run("grub-install", args...); err != nil {
+	if _, err := cmd.Run("grub-install", args...); err != nil { //nolint:staticcheck
 		return fmt.Errorf("failed to install grub: %w", err)
 	}
 

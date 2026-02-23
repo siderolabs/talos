@@ -6,13 +6,14 @@
 package vmdkconvert
 
 import (
+	"context"
 	"os"
 
 	"github.com/siderolabs/go-cmd/pkg/cmd"
 )
 
 // ConvertToStreamOptimizedVMDK converts a raw / flat / sparse disk image to a stream optimized VMDK.
-func ConvertToStreamOptimizedVMDK(path string, printf func(string, ...any)) error {
+func ConvertToStreamOptimizedVMDK(ctx context.Context, path string, printf func(string, ...any)) error {
 	src := path + ".in"
 	dest := path
 
@@ -22,7 +23,7 @@ func ConvertToStreamOptimizedVMDK(path string, printf func(string, ...any)) erro
 		return err
 	}
 
-	if _, err := cmd.Run("vmdk-convert", src, dest); err != nil {
+	if _, err := cmd.RunWithOptions(ctx, "vmdk-convert", []string{src, dest}); err != nil {
 		return err
 	}
 

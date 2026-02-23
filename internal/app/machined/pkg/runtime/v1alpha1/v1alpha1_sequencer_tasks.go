@@ -294,22 +294,22 @@ func WriteUdevRules(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 		}
 
 		if len(rules) > 0 {
-			if _, err := cmd.RunContext(ctx, "/sbin/udevadm", "control", "--reload"); err != nil {
+			if _, err := cmd.RunWithOptions(ctx, "/sbin/udevadm", []string{"control", "--reload"}); err != nil {
 				return err
 			}
 
-			if _, err := cmd.RunContext(ctx, "/sbin/udevadm", "trigger", "--type=devices", "--action=add"); err != nil {
+			if _, err := cmd.RunWithOptions(ctx, "/sbin/udevadm", []string{"trigger", "--type=devices", "--action=add"}); err != nil {
 				return err
 			}
 
-			if _, err := cmd.RunContext(ctx, "/sbin/udevadm", "trigger", "--type=subsystems", "--action=add"); err != nil {
+			if _, err := cmd.RunWithOptions(ctx, "/sbin/udevadm", []string{"trigger", "--type=subsystems", "--action=add"}); err != nil {
 				return err
 			}
 
 			// This ensures that `udevd` finishes processing kernel events, triggered by
 			// `udevd trigger`, to prevent a race condition when a user specifies a path
 			// under `/dev/disk/*` in any disk definitions.
-			_, err := cmd.RunContext(ctx, "/sbin/udevadm", "settle", "--timeout=50")
+			_, err := cmd.RunWithOptions(ctx, "/sbin/udevadm", []string{"settle", "--timeout=50"})
 
 			return err
 		}

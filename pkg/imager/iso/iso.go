@@ -116,7 +116,7 @@ func (e *ExecutorOptions) Generate() error {
 		)
 	}
 
-	_, err := cmd.Run(e.Command, e.Arguments...)
+	_, err := cmd.Run(e.Command, e.Arguments...) //nolint:staticcheck
 	if err != nil {
 		return fmt.Errorf("failed to create ISO: %w", err)
 	}
