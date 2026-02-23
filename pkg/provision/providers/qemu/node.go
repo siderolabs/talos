@@ -116,7 +116,7 @@ func (p *provisioner) createNode(ctx context.Context, state *provision.State, cl
 		case provision.ConfigInjectionMethodMetalISO:
 			cmdline.Append("talos.config", "metal-iso")
 
-			extraISOPath, err = p.createMetalConfigISO(state, nodeReq.Name, nodeConfig)
+			extraISOPath, err = p.createMetalConfigISO(ctx, state, nodeReq.Name, nodeConfig)
 			if err != nil {
 				return provision.NodeInfo{}, fmt.Errorf("error creating metal-iso: %w", err)
 			}
@@ -379,7 +379,7 @@ func (p *provisioner) handleOptionalZSTDDiskImage(provisionerDisk, diskImagePath
 	return err
 }
 
-func (p *provisioner) createMetalConfigISO(state *provision.State, nodeName, config string) (string, error) {
+func (p *provisioner) createMetalConfigISO(ctx context.Context, state *provision.State, nodeName, config string) (string, error) {
 	isoPath := state.GetRelativePath(nodeName + "-metal-config.iso")
 
 	tmpDir, err := os.MkdirTemp("", "talos-metal-config-iso")
@@ -393,7 +393,7 @@ func (p *provisioner) createMetalConfigISO(state *provision.State, nodeName, con
 		return "", err
 	}
 
-	_, err = cmd.Run("mkisofs", "-joliet", "-rock", "-volid", "metal-iso", "-output", isoPath, tmpDir)
+	_, err = cmd.RunWithOptions(ctx, "mkisofs", []string{"-joliet", "-rock", "-volid", "metal-iso", "-output", isoPath, tmpDir})
 	if err != nil {
 		return "", err
 	}

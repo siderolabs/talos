@@ -154,17 +154,20 @@ func (options Options) CreateUEFI(ctx context.Context, printf func(string, ...an
 		return nil, err
 	}
 
-	if _, err := cmd.Run(
+	if _, err := cmd.RunWithOptions(
+		ctx,
 		"mcopy",
-		"-s", // recursive
-		"-p", // preserve attributes
-		"-Q", // quit on error
-		"-m", // preserve modification time
-		"-i",
-		efiBootImg,
-		filepath.Join(options.ScratchDir, "EFI"),
-		filepath.Join(options.ScratchDir, "loader"),
-		"::",
+		[]string{
+			"-s", // recursive
+			"-p", // preserve attributes
+			"-Q", // quit on error
+			"-m", // preserve modification time
+			"-i",
+			efiBootImg,
+			filepath.Join(options.ScratchDir, "EFI"),
+			filepath.Join(options.ScratchDir, "loader"),
+			"::",
+		},
 	); err != nil {
 		return nil, err
 	}

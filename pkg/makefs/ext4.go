@@ -86,7 +86,7 @@ func Ext4(ctx context.Context, partname string, setters ...Option) error {
 
 	opts.Printf("creating ext4 filesystem on %s with args: %v", partname, args)
 
-	_, err := cmd.RunContext(ctx, "mkfs.ext4", args...)
+	_, err := cmd.RunWithOptions(ctx, "mkfs.ext4", args)
 	if err != nil {
 		return err
 	}
@@ -99,13 +99,13 @@ func Ext4(ctx context.Context, partname string, setters ...Option) error {
 }
 
 // Ext4Resize expands a ext4 filesystem to the maximum possible.
-func Ext4Resize(partname string) error {
+func Ext4Resize(ctx context.Context, partname string) error {
 	// resizing the filesystem requires a check first
-	if err := Ext4Repair(partname); err != nil {
+	if err := Ext4Repair(ctx, partname); err != nil {
 		return fmt.Errorf("failed to repair before growing ext4 filesystem: %w", err)
 	}
 
-	_, err := cmd.Run("resize2fs", partname)
+	_, err := cmd.RunWithOptions(ctx, "resize2fs", []string{partname})
 	if err != nil {
 		return fmt.Errorf("failed to grow ext4 filesystem: %w", err)
 	}
@@ -114,8 +114,8 @@ func Ext4Resize(partname string) error {
 }
 
 // Ext4Repair repairs a ext4 filesystem.
-func Ext4Repair(partname string) error {
-	_, err := cmd.Run("e2fsck", "-f", "-p", partname)
+func Ext4Repair(ctx context.Context, partname string) error {
+	_, err := cmd.RunWithOptions(ctx, "e2fsck", []string{"-f", "-p", partname})
 	if err != nil {
 		return fmt.Errorf("failed to repair ext4 filesystem: %w", err)
 	}

@@ -179,7 +179,7 @@ func (p *Point) retry(f func() error, isUnmount bool) error {
 				return retry.ExpectedError(err)
 			case unix.EUCLEAN, unix.EIO:
 				if !isUnmount {
-					if errRepair := p.root.RepairFS(); errRepair != nil {
+					if errRepair := p.root.RepairFS(context.Background()); errRepair != nil {
 						return fmt.Errorf("error repairing: %w", errRepair)
 					}
 				}
@@ -192,7 +192,7 @@ func (p *Point) retry(f func() error, isUnmount bool) error {
 				}
 
 				if !isMounted && !isUnmount {
-					if errRepair := p.root.RepairFS(); errRepair != nil {
+					if errRepair := p.root.RepairFS(context.Background()); errRepair != nil {
 						return fmt.Errorf("error repairing: %w", errRepair)
 					}
 

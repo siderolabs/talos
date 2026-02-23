@@ -5,6 +5,7 @@
 package grub
 
 import (
+	"context"
 	"path/filepath"
 
 	"github.com/siderolabs/go-blockdevice/v2/blkid"
@@ -66,7 +67,7 @@ func (c *Config) Upgrade(opts options.InstallOptions) (*options.InstallResult, e
 				return err
 			}
 
-			if err := c.runGrubInstall(opts, efiFound); err != nil {
+			if err := c.runGrubInstall(context.Background(), opts, efiFound); err != nil {
 				return err
 			}
 

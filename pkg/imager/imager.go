@@ -168,11 +168,11 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 		// do nothing
 		return outputAssetPath, nil
 	case profile.OutFormatXZ:
-		return i.postProcessXz(outputAssetPath, report)
+		return i.postProcessXz(ctx, outputAssetPath, report)
 	case profile.OutFormatGZ:
-		return i.postProcessGz(outputAssetPath, report)
+		return i.postProcessGz(ctx, outputAssetPath, report)
 	case profile.OutFormatZSTD:
-		return i.postProcessZstd(outputAssetPath, report)
+		return i.postProcessZstd(ctx, outputAssetPath, report)
 	case profile.OutFormatTar:
 		return i.postProcessTar(ctx, outputAssetPath, report)
 	case profile.OutFormatUnknown:

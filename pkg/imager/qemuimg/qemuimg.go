@@ -6,13 +6,14 @@
 package qemuimg
 
 import (
+	"context"
 	"os"
 
 	"github.com/siderolabs/go-cmd/pkg/cmd"
 )
 
 // Convert converts an image from one format to another.
-func Convert(inputFmt, outputFmt, options, path string, printf func(string, ...any)) error {
+func Convert(ctx context.Context, inputFmt, outputFmt, options, path string, printf func(string, ...any)) error {
 	src := path + ".in"
 	dest := path
 
@@ -22,7 +23,7 @@ func Convert(inputFmt, outputFmt, options, path string, printf func(string, ...a
 		return err
 	}
 
-	if _, err := cmd.Run("qemu-img", "convert", "-f", inputFmt, "-O", outputFmt, "-o", options, src, dest); err != nil {
+	if _, err := cmd.RunWithOptions(ctx, "qemu-img", []string{"convert", "-f", inputFmt, "-O", outputFmt, "-o", options, src, dest}); err != nil {
 		return err
 	}
 
@@ -30,8 +31,8 @@ func Convert(inputFmt, outputFmt, options, path string, printf func(string, ...a
 }
 
 // Resize an image.
-func Resize(file, size string) error {
-	if _, err := cmd.Run("qemu-img", "resize", file, size); err != nil {
+func Resize(ctx context.Context, file, size string) error {
+	if _, err := cmd.RunWithOptions(ctx, "qemu-img", []string{"resize", file, size}); err != nil {
 		return err
 	}
 

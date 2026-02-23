@@ -104,5 +104,5 @@ func TestExt4Resize(t *testing.T) {
 		t.Fatalf("failed to resize file: %v", err)
 	}
 
-	assert.NoError(t, makefs.Ext4Resize(tempFile))
+	assert.NoError(t, makefs.Ext4Resize(t.Context(), tempFile))
 }

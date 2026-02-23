@@ -117,7 +117,7 @@ func (e *ExecutorOptions) Generate(ctx context.Context) error {
 		)
 	}
 
-	_, err := cmd.RunContext(ctx, e.Command, e.Arguments...)
+	_, err := cmd.RunWithOptions(ctx, e.Command, e.Arguments)
 	if err != nil {
 		return fmt.Errorf("failed to create ISO: %w", err)
 	}

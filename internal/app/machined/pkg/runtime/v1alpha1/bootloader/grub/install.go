@@ -5,6 +5,7 @@
 package grub
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -74,7 +75,7 @@ func (c *Config) Install(opts options.InstallOptions) (*options.InstallResult, e
 		opts.BootDisk,
 		mountSpecs,
 		func() error {
-			if err := c.runGrubInstall(opts, efiFound); err != nil {
+			if err := c.runGrubInstall(context.Background(), opts, efiFound); err != nil {
 				return err
 			}
 
@@ -94,7 +95,7 @@ func (c *Config) Install(opts options.InstallOptions) (*options.InstallResult, e
 	}, err
 }
 
-func (c *Config) generateGrubImage(opts options.InstallOptions) error {
+func (c *Config) generateGrubImage(ctx context.Context, opts options.InstallOptions) error {
 	var copyInstructions []utils.CopyInstruction
 
 	grubSourceDirectory := "/usr/lib/grub"
@@ -141,9 +142,10 @@ func (c *Config) generateGrubImage(opts options.InstallOptions) error {
 
 		args = append(args, slices.Concat(grubModules, grub32Modules)...)
 
-		if _, err := cmd.Run(
+		if _, err := cmd.RunWithOptions(
+			ctx,
 			"grub-mkimage",
-			args...,
+			args,
 		); err != nil {
 			return fmt.Errorf("failed to generate grub core image: %w", err)
 		}
@@ -180,9 +182,10 @@ func (c *Config) generateGrubImage(opts options.InstallOptions) error {
 	}
 	args = append(args, grubModules...)
 
-	if _, err := cmd.Run(
+	if _, err := cmd.RunWithOptions(
+		ctx,
 		"grub-mkimage",
-		args...,
+		args,
 	); err != nil {
 		return fmt.Errorf("failed to generate grub efi image: %w", err)
 	}
@@ -282,14 +285,14 @@ func (c *Config) generateAssets(opts options.InstallOptions) error {
 	}
 
 	if opts.ImageMode {
-		return c.generateGrubImage(opts)
+		return c.generateGrubImage(context.Background(), opts)
 	}
 
 	return nil
 }
 
 //nolint:gocyclo
-func (c *Config) runGrubInstall(opts options.InstallOptions, efiMode bool) error {
+func (c *Config) runGrubInstall(ctx context.Context, opts options.InstallOptions, efiMode bool) error {
 	var platforms []string
 
 	switch opts.Arch {
@@ -330,7 +333,7 @@ func (c *Config) runGrubInstall(opts options.InstallOptions, efiMode bool) error
 
 		opts.Printf("executing: grub-install %s", strings.Join(args, " "))
 
-		if _, err := cmd.Run("grub-install", args...); err != nil {
+		if _, err := cmd.RunWithOptions(ctx, "grub-install", args); err != nil {
 			return fmt.Errorf("failed to install grub: %w", err)
 		}
 	}

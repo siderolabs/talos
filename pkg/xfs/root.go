@@ -9,6 +9,7 @@
 package xfs
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -24,7 +25,7 @@ import (
 type FS interface {
 	Open() (int, error)
 	io.Closer
-	Repair() error
+	Repair(context.Context) error
 
 	Source() string
 	FSType() string
@@ -38,7 +39,7 @@ type Root interface {
 
 	io.Closer
 	OpenFS() error
-	RepairFS() error
+	RepairFS(context.Context) error
 	Fd() (int, error)
 
 	Mkdir(name string, perm os.FileMode) error

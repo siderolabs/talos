@@ -80,7 +80,7 @@ func Format(ctx context.Context, logger *zap.Logger, volumeContext ManagerContex
 		// filesystem already exists and matches the requested type
 		if volumeContext.Cfg.TypedSpec().Provisioning.PartitionSpec.Grow {
 			// if the partition is set to grow, we need to grow the filesystem
-			if err = GrowFilesystem(logger, volumeContext); err != nil {
+			if err = GrowFilesystem(ctx, logger, volumeContext); err != nil {
 				return fmt.Errorf("error growing filesystem: %w", err)
 			}
 		}
@@ -145,7 +145,7 @@ func Format(ctx context.Context, logger *zap.Logger, volumeContext ManagerContex
 }
 
 // GrowFilesystem grows the filesystem on the block device.
-func GrowFilesystem(logger *zap.Logger, volumeContext ManagerContext) error {
+func GrowFilesystem(ctx context.Context, logger *zap.Logger, volumeContext ManagerContext) error {
 	switch volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Type { //nolint:exhaustive
 	case block.FilesystemTypeXFS:
 		// XFS requires partition to be mounted to grow
@@ -173,7 +173,7 @@ func GrowFilesystem(logger *zap.Logger, volumeContext ManagerContext) error {
 
 		logger.Info("growing XFS filesystem", zap.String("device", volumeContext.Status.MountLocation))
 
-		if err = makefs.XFSGrow(tmpDir); err != nil {
+		if err = makefs.XFSGrow(ctx, tmpDir); err != nil {
 			return fmt.Errorf("error growing XFS: %w", err)
 		}
 
@@ -181,7 +181,7 @@ func GrowFilesystem(logger *zap.Logger, volumeContext ManagerContext) error {
 	case block.FilesystemTypeEXT4:
 		logger.Info("growing ext4 filesystem", zap.String("device", volumeContext.Status.MountLocation))
 
-		if err := makefs.Ext4Resize(volumeContext.Status.MountLocation); err != nil {
+		if err := makefs.Ext4Resize(ctx, volumeContext.Status.MountLocation); err != nil {
 			return fmt.Errorf("error growing ext4: %w", err)
 		}
 

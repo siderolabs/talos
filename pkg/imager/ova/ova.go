@@ -7,6 +7,7 @@ package ova
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"io"
@@ -142,7 +143,7 @@ const ovfTpl = `<?xml version="1.0" encoding="UTF-8"?>
 // CreateOVAFromRAW creates an OVA from a RAW disk.
 //
 //nolint:gocyclo
-func CreateOVAFromRAW(outPath, arch, scratchPath string, diskSize int64, printf func(string, ...any)) error {
+func CreateOVAFromRAW(ctx context.Context, outPath, arch, scratchPath string, diskSize int64, printf func(string, ...any)) error {
 	if err := os.MkdirAll(scratchPath, 0o755); err != nil {
 		return err
 	}
@@ -153,7 +154,7 @@ func CreateOVAFromRAW(outPath, arch, scratchPath string, diskSize int64, printf 
 		return err
 	}
 
-	if err := vmdkconvert.ConvertToStreamOptimizedVMDK(vmdkPath, printf); err != nil {
+	if err := vmdkconvert.ConvertToStreamOptimizedVMDK(ctx, vmdkPath, printf); err != nil {
 		return err
 	}
 
@@ -199,7 +200,7 @@ func CreateOVAFromRAW(outPath, arch, scratchPath string, diskSize int64, printf 
 		return err
 	}
 
-	if _, err = cmd.Run("tar", "-cvf", outPath, "-C", scratchPath, "disk.ovf", "disk.mf", "disk.vmdk"); err != nil {
+	if _, err = cmd.RunWithOptions(ctx, "tar", []string{"-cvf", outPath, "-C", scratchPath, "disk.ovf", "disk.mf", "disk.vmdk"}); err != nil {
 		return err
 	}
 

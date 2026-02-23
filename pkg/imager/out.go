@@ -282,17 +282,17 @@ func (i *Imager) outImage(ctx context.Context, path string, report *reporter.Rep
 	case profile.DiskFormatRaw:
 		// nothing to do
 	case profile.DiskFormatQCOW2:
-		if err := qemuimg.Convert("raw", "qcow2", i.prof.Output.ImageOptions.DiskFormatOptions, path, printf); err != nil {
+		if err := qemuimg.Convert(ctx, "raw", "qcow2", i.prof.Output.ImageOptions.DiskFormatOptions, path, printf); err != nil {
 			return err
 		}
 	case profile.DiskFormatVPC:
-		if err := qemuimg.Convert("raw", "vpc", i.prof.Output.ImageOptions.DiskFormatOptions, path, printf); err != nil {
+		if err := qemuimg.Convert(ctx, "raw", "vpc", i.prof.Output.ImageOptions.DiskFormatOptions, path, printf); err != nil {
 			return err
 		}
 	case profile.DiskFormatOVA:
 		scratchPath := filepath.Join(i.tempDir, "ova")
 
-		if err := ova.CreateOVAFromRAW(path, i.prof.Arch, scratchPath, i.prof.Output.ImageOptions.DiskSize, printf); err != nil {
+		if err := ova.CreateOVAFromRAW(ctx, path, i.prof.Arch, scratchPath, i.prof.Output.ImageOptions.DiskSize, printf); err != nil {
 			return err
 		}
 	case profile.DiskFormatUnknown:

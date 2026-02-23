@@ -11,6 +11,7 @@
 package opentree
 
 import (
+	"context"
 	"fmt"
 
 	"golang.org/x/sys/unix"
@@ -90,7 +91,7 @@ func (fs *FS) Close() error {
 
 // Repair repairs the filesystem if needed.
 // This method is a no-op as the `open_tree` syscall does not support repair operations.
-func (fs *FS) Repair() error {
+func (fs *FS) Repair(context.Context) error {
 	return nil
 }
 

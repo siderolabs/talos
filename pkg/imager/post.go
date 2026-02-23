@@ -122,10 +122,10 @@ func (i *Imager) postProcessTar(ctx context.Context, filename string, report *re
 	return outPath, nil
 }
 
-func (i *Imager) postProcessGz(filename string, report *reporter.Reporter) (string, error) {
+func (i *Imager) postProcessGz(ctx context.Context, filename string, report *reporter.Reporter) (string, error) {
 	report.Report(reporter.Update{Message: "compressing .gz", Status: reporter.StatusRunning})
 
-	if _, err := cmd.Run("pigz", "-6", "--no-time", "-f", filename); err != nil {
+	if _, err := cmd.RunWithOptions(ctx, "pigz", []string{"-6", "--no-time", "-f", filename}); err != nil {
 		return "", err
 	}
 
@@ -134,10 +134,10 @@ func (i *Imager) postProcessGz(filename string, report *reporter.Reporter) (stri
 	return filename + ".gz", nil
 }
 
-func (i *Imager) postProcessXz(filename string, report *reporter.Reporter) (string, error) {
+func (i *Imager) postProcessXz(ctx context.Context, filename string, report *reporter.Reporter) (string, error) {
 	report.Report(reporter.Update{Message: "compressing .xz", Status: reporter.StatusRunning})
 
-	if _, err := cmd.Run("xz", "-0", "-f", "-T", "0", filename); err != nil {
+	if _, err := cmd.RunWithOptions(ctx, "xz", []string{"-0", "-f", "-T", "0", filename}); err != nil {
 		return "", err
 	}
 
@@ -146,12 +146,12 @@ func (i *Imager) postProcessXz(filename string, report *reporter.Reporter) (stri
 	return filename + ".xz", nil
 }
 
-func (i *Imager) postProcessZstd(filename string, report *reporter.Reporter) (string, error) {
+func (i *Imager) postProcessZstd(ctx context.Context, filename string, report *reporter.Reporter) (string, error) {
 	report.Report(reporter.Update{Message: "compressing .zst", Status: reporter.StatusRunning})
 
 	out := filename + ".zst"
 
-	if _, err := cmd.Run("zstd", "-T0", "--rm", "-18", "--quiet", "--force", "-o", out, filename); err != nil {
+	if _, err := cmd.RunWithOptions(ctx, "zstd", []string{"-T0", "--rm", "-18", "--quiet", "--force", "-o", out, filename}); err != nil {
 		return "", err
 	}
 

@@ -34,14 +34,14 @@ func VFAT(ctx context.Context, partname string, setters ...Option) error {
 
 	args = append(args, partname)
 
-	_, err := cmd.RunContext(ctx, "mkfs.vfat", args...)
+	_, err := cmd.RunWithOptions(ctx, "mkfs.vfat", args)
 	if err != nil {
 		return err
 	}
 
 	// If source directory is specified, populate the filesystem using mtools
 	if opts.SourceDirectory != "" {
-		if err := populateVFAT(partname, opts.SourceDirectory); err != nil {
+		if err := populateVFAT(ctx, partname, opts.SourceDirectory); err != nil {
 			return fmt.Errorf("failed to populate VFAT filesystem: %w", err)
 		}
 	}
@@ -51,7 +51,7 @@ func VFAT(ctx context.Context, partname string, setters ...Option) error {
 
 // populateVFAT populates a VFAT filesystem on the given partition with the
 // contents of sourceDir.
-func populateVFAT(partname, sourceDir string) error {
+func populateVFAT(ctx context.Context, partname, sourceDir string) error {
 	entries, err := os.ReadDir(sourceDir)
 	if err != nil {
 		return fmt.Errorf("failed to read source directory %q: %w", sourceDir, err)
@@ -67,16 +67,19 @@ func populateVFAT(partname, sourceDir string) error {
 			return fmt.Errorf("unsupported file type for entry %q in source directory %q", entry.Name(), sourceDir)
 		}
 
-		if _, err := cmd.Run(
+		if _, err := cmd.RunWithOptions(
+			ctx,
 			"mcopy",
-			"-s", // recursive
-			"-p", // preserve attributes
-			"-Q", // quit on error
-			"-m", // preserve modification time
-			"-i",
-			partname,
-			filepath.Join(sourceDir, entry.Name()),
-			"::",
+			[]string{
+				"-s", // recursive
+				"-p", // preserve attributes
+				"-Q", // quit on error
+				"-m", // preserve modification time
+				"-i",
+				partname,
+				filepath.Join(sourceDir, entry.Name()),
+				"::",
+			},
 		); err != nil {
 			return err
 		}

@@ -9,6 +9,7 @@
 package fsopen
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
@@ -157,8 +158,8 @@ func (fs *FS) Close() error {
 }
 
 // Repair attempts to repair the filesystem if it is in a dirty state.
-func (fs *FS) Repair() error {
-	var repairFunc func(partition string) error
+func (fs *FS) Repair(ctx context.Context) error {
+	var repairFunc func(ctx context.Context, partition string) error
 
 	switch fs.fstype {
 	case makefs.FilesystemTypeEXT4:
@@ -169,7 +170,7 @@ func (fs *FS) Repair() error {
 		return fmt.Errorf("%w: %s", ErrRepairUnsupported, fs.fstype)
 	}
 
-	if err := repairFunc(fs.source); err != nil {
+	if err := repairFunc(ctx, fs.source); err != nil {
 		return fmt.Errorf("repair %q: %w", fs.source, err)
 	}
 

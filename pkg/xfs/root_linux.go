@@ -7,6 +7,7 @@
 package xfs
 
 import (
+	"context"
 	"fmt"
 	"io/fs"
 	"os"
@@ -56,8 +57,8 @@ func (root *UnixRoot) Close() error {
 }
 
 // RepairFS repairs the underlying filesystem if necessary.
-func (root *UnixRoot) RepairFS() error {
-	return root.FS.Repair()
+func (root *UnixRoot) RepairFS(ctx context.Context) error {
+	return root.FS.Repair(ctx)
 }
 
 // Fd returns the file descriptor of the mounted root filesystem.

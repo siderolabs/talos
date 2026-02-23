@@ -51,7 +51,7 @@ func TestVFATWithSourceDirectory(t *testing.T) {
 	require.NoError(t, os.MkdirAll(extractDir, 0o755))
 
 	// Extract all files
-	_, err = cmd.Run("mcopy", "-s", "-i", vfatImg, "::/", extractDir)
+	_, err = cmd.RunWithOptions(t.Context(), "mcopy", []string{"-s", "-i", vfatImg, "::/", extractDir})
 	require.NoError(t, err)
 
 	// Verify extracted files with full filenames
