@@ -30,6 +30,7 @@ runc: 1.4.0
 systemd: 259.1
 cryptsetup: 2.8.3
 Tenstorrent: 2.7.0
+iptables: 1.8.12
 
 Talos is built with Go 1.26.0.
 """
