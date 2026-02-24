@@ -58,6 +58,7 @@ kernel/drivers/hid/hid-lg-g15.ko
 kernel/drivers/hid/hid-logitech.ko
 kernel/drivers/hid/hid-microsoft.ko
 kernel/drivers/hid/hid-monterey.ko
+kernel/drivers/hid/hid-multitouch.ko
 kernel/drivers/hid/hid-petalynx.ko
 kernel/drivers/hid/hid-pl.ko
 kernel/drivers/hid/hid-samsung.ko
