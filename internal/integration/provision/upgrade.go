@@ -46,6 +46,8 @@ type upgradeSpec struct {
 	ControlplaneNodes int
 	WorkerNodes       int
 
+	// Deprecated: staged upgrades are not supported by the new LifecycleService API.
+	// Use the legacy MachineService.Upgrade path instead.
 	UpgradeStage    bool
 	WithEncryption  bool
 	WithBios        bool
