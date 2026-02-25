@@ -2,10 +2,10 @@ syntax = "proto3";
 
 package machine;
 
+import "common/common.proto";
+
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/machine";
 option java_package = "dev.talos.api.machine";
-
-import "common/common.proto";
 
 // DebugService provides debugging and inspection capabilities for a Talos node.
 service DebugService {

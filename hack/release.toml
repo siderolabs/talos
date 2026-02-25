@@ -249,6 +249,13 @@ Talos now supports VRF (Virtual Routing and Forwarding) via the new `VRFConfig` 
 Talos now supports blackhole routes via the new `BlackholeRouteConfig` machine config document.
 """
 
+    [notes.install_upgrade_api]
+        title = "Install and Upgrade API"
+        description = """\
+Talos now exposes install and upgrade operations via the `LifecycleService` API, enabling programmatic installs and upgrades through a single, consistent interface.
+The legacy upgrade API is deprecated; new integrations should migrate to `LifecycleService` for future compatibility.
+"""
+
 [make_deps]
 
     [make_deps.tools]

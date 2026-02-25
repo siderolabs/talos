@@ -2531,6 +2531,34 @@ Inspect internals of Talos
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl inspect dependencies](#talosctl-inspect-dependencies)	 - Inspect controller-resource dependencies as graphviz graph.
 
+## talosctl install
+
+Install Talos on the target node using the provided disk
+
+```
+talosctl install disk [flags]
+```
+
+### Options
+
+```
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
+      --context string             Context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+  -f, --force                      force the upgrade (skip checks on etcd health and members, might lead to data loss)
+  -h, --help                       help for install
+  -i, --image string               the container image to use for performing the install (default "ghcr.io/siderolabs/installer:v1.13.0-alpha.2")
+      --insecure                   upgrade using the insecure (encrypted with no auth) maintenance service
+      --namespace system           namespace to use: system (CRI containerd) or `inmem` for in-memory containerd instance (default "inmem")
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
+      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+
 ## talosctl kubeconfig
 
 Download the admin kubeconfig from the node
@@ -3559,6 +3587,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl image](#talosctl-image)	 - Manage container images
 * [talosctl inject](#talosctl-inject)	 - Inject Talos API resources into Kubernetes manifests
 * [talosctl inspect](#talosctl-inspect)	 - Inspect internals of Talos
+* [talosctl install](#talosctl-install)	 - Install Talos on the target node using the provided disk
 * [talosctl kubeconfig](#talosctl-kubeconfig)	 - Download the admin kubeconfig from the node
 * [talosctl list](#talosctl-list)	 - Retrieve a directory listing
 * [talosctl logs](#talosctl-logs)	 - Retrieve logs for a service

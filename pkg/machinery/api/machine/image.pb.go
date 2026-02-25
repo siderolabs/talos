@@ -638,7 +638,7 @@ var File_machine_image_proto protoreflect.FileDescriptor
 
 const file_machine_image_proto_rawDesc = "" +
 	"\n" +
-	"\x13machine/image.proto\x12\amachine\x1a\x13common/common.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x1bgoogle/protobuf/empty.proto\"U\n" +
+	"\x13machine/image.proto\x12\amachine\x1a\x13common/common.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"U\n" +
 	"\x17ImageServiceListRequest\x12:\n" +
 	"\n" +
 	"containerd\x18\x01 \x01(\v2\x1a.common.ContainerdInstanceR\n" +

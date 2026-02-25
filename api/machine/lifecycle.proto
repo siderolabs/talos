@@ -1,0 +1,73 @@
+syntax = "proto3";
+
+package machine;
+
+import "common/common.proto";
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/machine";
+option java_package = "dev.talos.api.machine";
+
+// The LifecycleService handles installation and upgrade operations.
+service LifecycleService {
+  // Install Talos to disk.
+  // The RPC should fail if the Talos is already installed on the target disk.
+  rpc Install(LifecycleServiceInstallRequest) returns (stream LifecycleServiceInstallResponse);
+  // Upgrade Talos to a new version.
+  // The RPC should fail if Talos is not already installed on the target disk.
+  rpc Upgrade(LifecycleServiceUpgradeRequest) returns (stream LifecycleServiceUpgradeResponse);
+}
+
+// InstallArtifactsSource specifies the source of the installation artifacts.
+message InstallArtifactsSource {
+  // The reference name of the image, as returned by `talosctl image pull`.
+  string image_name = 1;
+}
+
+// InstallDestination specifies the target for installation.
+message InstallDestination {
+  // The disk to which Talos should be installed, e.g. "/dev/sda".
+  string disk = 1;
+}
+
+// LifecycleServiceInstallRequest contains the necessary information to perform an installation.
+message LifecycleServiceInstallRequest {
+  // The containerd instance to use for pulling the installation artifacts.
+  common.ContainerdInstance containerd = 1;
+  // The source of the installation artifacts.
+  InstallArtifactsSource source = 2;
+  // The destination for the installation.
+  InstallDestination destination = 3;
+}
+
+// LifecycleServiceInstallProgress represents the progress of the installation or upgrade process.
+message LifecycleServiceInstallProgress {
+  oneof response {
+    // A message indicating the current progress of the installation or upgrade.
+    string message = 1;
+    // An exit code indicating the result of the installation or upgrade process.
+    // A non-zero value indicates an error.
+    // Server SHOULD NOT respond with error, even if the value is non-zero.
+    // It's responsibility of the client to handle the exit code appropriately.
+    int32 exit_code = 2;
+  }
+}
+
+// LifecycleServiceInstallResponse is the response message for the Install RPC, containing progress updates.
+message LifecycleServiceInstallResponse {
+  // The progress of the installation process.
+  LifecycleServiceInstallProgress progress = 1;
+}
+
+// LifecycleServiceUpgradeRequest contains the necessary information to perform an upgrade.
+message LifecycleServiceUpgradeRequest {
+  // The containerd instance to use for pulling the installation artifacts.
+  common.ContainerdInstance containerd = 1;
+  // The source of the installation artifacts for the upgrade.
+  InstallArtifactsSource source = 2;
+}
+
+// LifecycleServiceUpgradeResponse is the response message for the Upgrade RPC, containing progress updates.
+message LifecycleServiceUpgradeResponse {
+  // The progress of the upgrade process.
+  LifecycleServiceInstallProgress progress = 1;
+}

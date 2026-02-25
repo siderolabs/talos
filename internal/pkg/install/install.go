@@ -48,7 +48,7 @@ func RunInstallerContainer(
 ) error {
 	const containerID = "upgrade"
 
-	options := DefaultInstallOptions()
+	options := Options{Pull: true} //nolint:staticcheck
 
 	for _, opt := range opts {
 		if err := opt(&options); err != nil {
@@ -268,7 +268,6 @@ func RunInstallerContainer(
 // OptionsFromUpgradeRequest builds installer options from upgrade request.
 func OptionsFromUpgradeRequest(r runtime.Runtime, in *machineapi.UpgradeRequest) []Option {
 	opts := []Option{
-		WithPull(false),
 		WithUpgrade(true),
 		WithForce(!in.GetPreserve()),
 	}

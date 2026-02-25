@@ -9,6 +9,7 @@ type Option func(o *Options) error
 
 // Options describes the install options.
 type Options struct {
+	// Deprecated: Pull is not used in new Lifecycle API.
 	Pull            bool
 	Force           bool
 	Upgrade         bool
@@ -18,9 +19,7 @@ type Options struct {
 
 // DefaultInstallOptions returns default options.
 func DefaultInstallOptions() Options {
-	return Options{
-		Pull: true,
-	}
+	return Options{}
 }
 
 // Apply list of Option.
@@ -44,6 +43,8 @@ func WithOptions(opts Options) Option {
 }
 
 // WithPull sets the pull option.
+//
+// Deprecated: Pull is not used in new Lifecycle API.
 func WithPull(b bool) Option {
 	return func(o *Options) error {
 		o.Pull = b

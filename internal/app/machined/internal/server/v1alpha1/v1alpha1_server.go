@@ -44,6 +44,7 @@ import (
 	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/client/v3/concurrency"
+	"go.uber.org/zap"
 	"golang.org/x/net/bpf"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
@@ -53,6 +54,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/debug"
 	"github.com/siderolabs/talos/internal/app/images"
+	"github.com/siderolabs/talos/internal/app/lifecycle"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
@@ -117,6 +119,9 @@ type Server struct {
 	// ShutdownCtx signals that the server is shutting down.
 	ShutdownCtx context.Context //nolint:containedctx
 
+	// Zap logger.
+	Logger *zap.Logger
+
 	server *grpc.Server
 }
 
@@ -152,6 +157,7 @@ func (s *Server) Register(obj *grpc.Server) {
 	machine.RegisterMachineServiceServer(obj, s)
 	machine.RegisterImageServiceServer(obj, images.NewService(s.Controller))
 	machine.RegisterDebugServiceServer(obj, &debug.Service{})
+	machine.RegisterLifecycleServiceServer(obj, lifecycle.NewService(s.Controller.Runtime(), s.Logger))
 	cluster.RegisterClusterServiceServer(obj, s)
 	cosiv1alpha1.RegisterStateServer(obj, server.NewState(resourceState))
 	inspect.RegisterInspectServiceServer(obj, &InspectServer{server: s})
@@ -521,7 +527,7 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (*mach
 			return nil, fmt.Errorf("error adding staged upgrade image ref tag: %w", err)
 		}
 
-		opts := install.DefaultInstallOptions()
+		opts := install.Options{Pull: true} //nolint:staticcheck
 		if err := opts.Apply(install.OptionsFromUpgradeRequest(s.Controller.Runtime(), in)...); err != nil {
 			return nil, fmt.Errorf("error applying install options: %w", err)
 		}
