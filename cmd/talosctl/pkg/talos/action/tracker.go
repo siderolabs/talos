@@ -97,6 +97,15 @@ type Tracker struct {
 // TrackerOption is the functional option for the Tracker.
 type TrackerOption func(*Tracker)
 
+// WithReporter sets the reporter for the tracker.
+func WithReporter(r *reporter.Reporter) TrackerOption {
+	return func(t *Tracker) {
+		if r != nil {
+			t.reporter = r
+		}
+	}
+}
+
 // WithTimeout sets the timeout for the tracker.
 func WithTimeout(timeout time.Duration) TrackerOption {
 	return func(t *Tracker) {

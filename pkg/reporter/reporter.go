@@ -14,6 +14,8 @@ import (
 	"github.com/fatih/color"
 	"github.com/mattn/go-isatty"
 	"golang.org/x/term"
+
+	"github.com/siderolabs/talos/pkg/flags"
 )
 
 // Status represents the status of an Update.
@@ -48,12 +50,68 @@ type Reporter struct {
 	spinnerIdx int
 }
 
+// OutputMode represents the output mode of the reporter.
+type OutputMode int32
+
+// String implements the fmt.Stringer interface for OutputMode.
+func (o OutputMode) String() string {
+	return outputModeNames[int32(o)]
+}
+
+var outputModeValues = map[string]int32{
+	"AUTO":  int32(OutputModeAuto),
+	"PLAIN": int32(OutputModePlain),
+}
+
+var outputModeNames = map[int32]string{
+	int32(OutputModeAuto):  "AUTO",
+	int32(OutputModePlain): "PLAIN",
+}
+
+const (
+	// OutputModeAuto represents the automatic output mode, which detects if the output is a terminal.
+	OutputModeAuto OutputMode = iota
+
+	// OutputModePlain represents the plain output mode, which disables colorization and spinner.
+	OutputModePlain
+)
+
+// NewOutputModeFlag returns a pflag.Value for the output mode.
+func NewOutputModeFlag() flags.PflagExtended[OutputMode] {
+	return flags.ProtoEnum(
+		OutputModeAuto,
+		outputModeValues,
+		outputModeNames,
+	)
+}
+
+// Option represents an option for configuring the Reporter.
+type Option func(*Reporter)
+
+// WithOutputMode returns an Option that sets the output mode of the Reporter.
+func WithOutputMode(mode OutputMode) Option {
+	return func(r *Reporter) {
+		switch mode {
+		case OutputModePlain:
+			r.colorized = false
+		case OutputModeAuto:
+			r.colorized = isatty.IsTerminal(r.w.Fd())
+		}
+	}
+}
+
 // New returns a console reporter with stderr output.
-func New() *Reporter {
-	return &Reporter{
+func New(opts ...Option) *Reporter {
+	rep := &Reporter{
 		w:         os.Stderr,
 		colorized: isatty.IsTerminal(os.Stderr.Fd()),
 	}
+
+	for _, opt := range opts {
+		opt(rep)
+	}
+
+	return rep
 }
 
 // IsColorized returns true if the reporter is colorized.

@@ -256,6 +256,13 @@ Talos now exposes install and upgrade operations via the `LifecycleService` API,
 The legacy upgrade API is deprecated; new integrations should migrate to `LifecycleService` for future compatibility.
 """
 
+    [notes.talosctl_upgrade_lifecycle]
+        title = "Lifecycle Upgrade in talosctl"
+        description = """\
+`talosctl` upgrades now route through `LifecycleService`, aligning CLI behavior with the new install/upgrade API and unifying the upgrade path.
+This change is transparent to users but standardizes the backend used for upgrades.
+"""
+
 [make_deps]
 
     [make_deps.tools]

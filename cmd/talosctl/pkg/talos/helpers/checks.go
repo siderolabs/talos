@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/blang/semver/v4"
+	"github.com/siderolabs/gen/xerrors"
 	"google.golang.org/grpc/metadata"
 
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
@@ -45,6 +46,34 @@ func CheckErrors[T interface{ GetMetadata() *common.Metadata }](messages ...T) e
 	}
 
 	return err
+}
+
+// VersionOutsideRangeError is returned when a node is running a Talos version that is outside the desired range.
+type VersionOutsideRangeError struct{}
+
+// TalosVersionCheck verifies that all nodes are running the desired Talos version.
+func TalosVersionCheck(ctx context.Context, c *client.Client, desired semver.Range) error {
+	serverVersions, err := c.Version(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting server versions: %w", err)
+	}
+
+	var errs error
+
+	for _, msg := range serverVersions.GetMessages() {
+		node := msg.GetMetadata().GetHostname()
+
+		serverVersion, err := semver.ParseTolerant(msg.GetVersion().Tag)
+		if err != nil {
+			return fmt.Errorf("%s: error parsing server version: %w", node, err)
+		}
+
+		if !desired(serverVersion) {
+			errs = errors.Join(errs, xerrors.NewTaggedf[VersionOutsideRangeError]("%s: server version %s is outside the desired range", node, serverVersion))
+		}
+	}
+
+	return errs
 }
 
 // ClientVersionCheck verifies that client is not outdated vs. Talos version.

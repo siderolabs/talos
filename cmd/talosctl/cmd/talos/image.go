@@ -37,6 +37,7 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/artifacts"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services/registry"
+	"github.com/siderolabs/talos/pkg/flags"
 	"github.com/siderolabs/talos/pkg/imager/cache"
 	"github.com/siderolabs/talos/pkg/images"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
@@ -262,6 +263,8 @@ func imagePullInternal(
 	for resp := range responseChan {
 		if resp.Err != nil {
 			if status.Code(resp.Err) == codes.Unimplemented {
+				cancel()
+
 				// fallback to legacy API for older Talos
 				return nil, imagePullLegacy(imageRef)
 			}
@@ -461,11 +464,11 @@ var imageK8sBundleCmdFlags = struct {
 	etcdVersion                pflag.Value
 	kubeNetworkPoliciesVersion pflag.Value
 }{
-	k8sVersion:                 helpers.Semver(constants.DefaultKubernetesVersion),
-	flannelVersion:             helpers.Semver(constants.FlannelVersion),
-	corednsVersion:             helpers.Semver(constants.DefaultCoreDNSVersion),
-	etcdVersion:                helpers.Semver(constants.DefaultEtcdVersion),
-	kubeNetworkPoliciesVersion: helpers.Semver(constants.KubeNetworkPoliciesVersion),
+	k8sVersion:                 flags.Semver(constants.DefaultKubernetesVersion),
+	flannelVersion:             flags.Semver(constants.FlannelVersion),
+	corednsVersion:             flags.Semver(constants.DefaultCoreDNSVersion),
+	etcdVersion:                flags.Semver(constants.DefaultEtcdVersion),
+	kubeNetworkPoliciesVersion: flags.Semver(constants.KubeNetworkPoliciesVersion),
 }
 
 // imageK8sBundleCmd represents the image k8s-bundle command.
@@ -554,9 +557,9 @@ var imageTalosBundleCmd = &cobra.Command{
 				return fmt.Errorf("invalid argument %q: tag must be a valid semver", tag)
 			}
 
-			if !ver.GTE(minimumVersion) || !ver.LT(maximumVersion) {
+			if !ver.GTE(talosBundleMinimumVersion) || !ver.LT(maximumVersion) {
 				return fmt.Errorf(
-					"invalid tag %q: must be between v%s (inclusive) and v%s (exclusive)", tag, minimumVersion, maximumVersion,
+					"invalid tag %q: must be between v%s (inclusive) and v%s (exclusive)", tag, talosBundleMinimumVersion, maximumVersion,
 				)
 			}
 
@@ -622,7 +625,7 @@ var imageTalosBundleCmd = &cobra.Command{
 	},
 }
 
-var minimumVersion = semver.MustParse("1.11.0-alpha.0")
+var talosBundleMinimumVersion = semver.MustParse("1.11.0-alpha.0")
 
 // imageIntegrationCmd represents the integration image command.
 var imageIntegrationCmd = &cobra.Command{
@@ -786,7 +789,7 @@ var imageCacheCreateCmdFlags = struct {
 	insecure bool
 	force    bool
 }{
-	layout: helpers.StringChoice(layoutOCI, layoutFlat),
+	layout: flags.StringChoice(layoutOCI, layoutFlat),
 }
 
 // imageCacheServeCmd represents the image cache serve command.
@@ -986,7 +989,7 @@ var imageCacheCertGenCmdFlags struct {
 
 func init() {
 	imageCmd.PersistentFlags().StringVar(&imageCmdFlags.namespace, "namespace", "cri",
-		"namespace to use: `system` (etcd and kubelet images) or `cri` for all Kubernetes workloads, `inmem` for in-memory containerd instance",
+		"namespace to use: \"system\" (etcd and kubelet images), \"cri\" for all Kubernetes workloads, \"inmem\" for in-memory containerd instance",
 	)
 	addCommand(imageCmd)
 
