@@ -8,6 +8,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -46,29 +47,33 @@ var rebootCmd = &cobra.Command{
 			return fmt.Errorf("invalid reboot mode: %q", rebootCmdFlags.mode)
 		}
 
-		if !rebootCmdFlags.wait {
-			return WithClient(func(ctx context.Context, c *client.Client) error {
-				if err := helpers.ClientVersionCheck(ctx, c); err != nil {
-					return err
-				}
-
-				if err := c.Reboot(ctx, opts...); err != nil {
-					return fmt.Errorf("error executing reboot: %s", err)
-				}
-
-				return nil
-			})
-		}
-
-		return action.NewTracker(
-			&GlobalArgs,
-			action.MachineReadyEventFn,
-			rebootGetActorID(opts...),
-			action.WithPostCheck(action.BootIDChangedPostCheckFn),
-			action.WithDebug(rebootCmdFlags.debug),
-			action.WithTimeout(rebootCmdFlags.timeout),
-		).Run()
+		return rebootInternal(rebootCmdFlags.debug, rebootCmdFlags.debug, rebootCmdFlags.timeout, opts...)
 	},
+}
+
+func rebootInternal(wait, debug bool, timeout time.Duration, opts ...client.RebootMode) error {
+	if !wait {
+		return WithClient(func(ctx context.Context, c *client.Client) error {
+			if err := helpers.ClientVersionCheck(ctx, c); err != nil {
+				return err
+			}
+
+			if err := c.Reboot(ctx, opts...); err != nil {
+				return fmt.Errorf("error executing reboot: %s", err)
+			}
+
+			return nil
+		})
+	}
+
+	return action.NewTracker(
+		&GlobalArgs,
+		action.MachineReadyEventFn,
+		rebootGetActorID(opts...),
+		action.WithPostCheck(action.BootIDChangedPostCheckFn),
+		action.WithDebug(debug),
+		action.WithTimeout(timeout),
+	).Run()
 }
 
 func rebootGetActorID(opts ...client.RebootMode) func(ctx context.Context, c *client.Client) (string, error) {

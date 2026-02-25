@@ -331,6 +331,13 @@ func (c *Client) ResetGenericWithResponse(ctx context.Context, req *machineapi.R
 // RebootMode provides various mode through which the reboot process can be done.
 type RebootMode func(*machineapi.RebootRequest)
 
+// WithRebootMode sets the reboot mode for the Reboot API call.
+func WithRebootMode(mode machineapi.RebootRequest_Mode) func(req *machineapi.RebootRequest) {
+	return func(req *machineapi.RebootRequest) {
+		req.Mode = mode
+	}
+}
+
 // WithPowerCycle option runs the Reboot fun in powercycle mode.
 func WithPowerCycle(req *machineapi.RebootRequest) {
 	req.Mode = machineapi.RebootRequest_POWERCYCLE
