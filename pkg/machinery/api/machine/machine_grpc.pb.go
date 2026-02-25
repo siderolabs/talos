@@ -159,6 +159,10 @@ type MachineServiceClient interface {
 	Shutdown(ctx context.Context, in *ShutdownRequest, opts ...grpc.CallOption) (*ShutdownResponse, error)
 	Stats(ctx context.Context, in *StatsRequest, opts ...grpc.CallOption) (*StatsResponse, error)
 	SystemStat(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*SystemStatResponse, error)
+	// Deprecated: Do not use.
+	// Upgrade initiates the upgrade of the node to a new version of Talos.
+	//
+	// Use LifecycleService Upgrade RPC instead.
 	Upgrade(ctx context.Context, in *UpgradeRequest, opts ...grpc.CallOption) (*UpgradeResponse, error)
 	Version(ctx context.Context, in *emptypb.Empty, opts ...grpc.CallOption) (*VersionResponse, error)
 	// GenerateClientConfiguration generates talosctl client configuration (talosconfig).
@@ -725,6 +729,7 @@ func (c *machineServiceClient) SystemStat(ctx context.Context, in *emptypb.Empty
 	return out, nil
 }
 
+// Deprecated: Do not use.
 func (c *machineServiceClient) Upgrade(ctx context.Context, in *UpgradeRequest, opts ...grpc.CallOption) (*UpgradeResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(UpgradeResponse)
@@ -915,6 +920,10 @@ type MachineServiceServer interface {
 	Shutdown(context.Context, *ShutdownRequest) (*ShutdownResponse, error)
 	Stats(context.Context, *StatsRequest) (*StatsResponse, error)
 	SystemStat(context.Context, *emptypb.Empty) (*SystemStatResponse, error)
+	// Deprecated: Do not use.
+	// Upgrade initiates the upgrade of the node to a new version of Talos.
+	//
+	// Use LifecycleService Upgrade RPC instead.
 	Upgrade(context.Context, *UpgradeRequest) (*UpgradeResponse, error)
 	Version(context.Context, *emptypb.Empty) (*VersionResponse, error)
 	// GenerateClientConfiguration generates talosctl client configuration (talosconfig).

@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package machine;
+
+import "common/common.proto";
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/machine";
+option java_package = "dev.talos.api.machine";
+
+// The LifecycleService handles installation and upgrade operations.
+service LifecycleService {
+  // Install Talos to disk (if it hasn't been installed yet).
+  rpc Install(LifecycleServiceInstallRequest) returns (stream LifecycleServiceInstallResponse);
+  // Upgrade Talos to a new version.
+  rpc Upgrade(LifecycleServiceUpgradeRequest) returns (stream LifecycleServiceUpgradeResponse);
+}
+
+message InstallArtifactsSource {
+  string image_name = 1;
+}
+
+message InstallDestination {
+  string disk = 1;
+}
+
+message LifecycleServiceInstallRequest {
+  common.ContainerdInstance containerd = 1;
+  InstallArtifactsSource source = 2;
+  InstallDestination destination = 3;
+}
+
+message LifecycleServiceInstallProgress {
+  oneof response {
+    string message = 1;
+    int32 exit_code = 2;
+  }
+}
+
+message LifecycleServiceInstallResponse {
+  LifecycleServiceInstallProgress progress = 1;
+}
+
+message LifecycleServiceUpgradeRequest {
+  common.ContainerdInstance containerd = 1;
+  InstallArtifactsSource source = 2;
+}
+
+message LifecycleServiceUpgradeResponse {
+  LifecycleServiceInstallProgress progress = 1;
+}

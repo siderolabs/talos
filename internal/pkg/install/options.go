@@ -4,11 +4,14 @@
 
 package install
 
+import "log"
+
 // Option is a functional option.
 type Option func(o *Options) error
 
 // Options describes the install options.
 type Options struct {
+	// Deprecated: Pull is not used in new Lifecycle API.
 	Pull            bool
 	Force           bool
 	Upgrade         bool
@@ -46,6 +49,8 @@ func WithOptions(opts Options) Option {
 // WithPull sets the pull option.
 func WithPull(b bool) Option {
 	return func(o *Options) error {
+		log.Printf("The Pull option is deprecated, ignored in Lifecycle API, and will be removed in a future release.")
+
 		o.Pull = b
 
 		return nil

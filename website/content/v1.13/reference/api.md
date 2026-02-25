@@ -69,6 +69,17 @@ description: Talos gRPC API reference.
   
     - [ImageService](#machine.ImageService)
   
+- [machine/lifecycle.proto](#machine/lifecycle.proto)
+    - [InstallArtifactsSource](#machine.InstallArtifactsSource)
+    - [InstallDestination](#machine.InstallDestination)
+    - [LifecycleServiceInstallProgress](#machine.LifecycleServiceInstallProgress)
+    - [LifecycleServiceInstallRequest](#machine.LifecycleServiceInstallRequest)
+    - [LifecycleServiceInstallResponse](#machine.LifecycleServiceInstallResponse)
+    - [LifecycleServiceUpgradeRequest](#machine.LifecycleServiceUpgradeRequest)
+    - [LifecycleServiceUpgradeResponse](#machine.LifecycleServiceUpgradeResponse)
+  
+    - [LifecycleService](#machine.LifecycleService)
+  
 - [machine/machine.proto](#machine/machine.proto)
     - [AddressEvent](#machine.AddressEvent)
     - [ApplyConfiguration](#machine.ApplyConfiguration)
@@ -1388,6 +1399,142 @@ The machine service definition.
 | Pull | [ImageServicePullRequest](#machine.ImageServicePullRequest) | [ImageServicePullResponse](#machine.ImageServicePullResponse) stream | Pull an image into the containerd. |
 | Import | [ImageServiceImportRequest](#machine.ImageServiceImportRequest) stream | [ImageServiceImportResponse](#machine.ImageServiceImportResponse) | Import an image from a stream (tarball). |
 | Remove | [ImageServiceRemoveRequest](#machine.ImageServiceRemoveRequest) | [.google.protobuf.Empty](#google.protobuf.Empty) | Remove an image from the containerd. |
+
+ <!-- end services -->
+
+
+
+<a name="machine/lifecycle.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## machine/lifecycle.proto
+
+
+
+<a name="machine.InstallArtifactsSource"></a>
+
+### InstallArtifactsSource
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| image_name | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.InstallDestination"></a>
+
+### InstallDestination
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| disk | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="machine.LifecycleServiceInstallProgress"></a>
+
+### LifecycleServiceInstallProgress
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| message | [string](#string) |  |  |
+| exit_code | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="machine.LifecycleServiceInstallRequest"></a>
+
+### LifecycleServiceInstallRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| containerd | [common.ContainerdInstance](#common.ContainerdInstance) |  |  |
+| source | [InstallArtifactsSource](#machine.InstallArtifactsSource) |  |  |
+| destination | [InstallDestination](#machine.InstallDestination) |  |  |
+
+
+
+
+
+
+<a name="machine.LifecycleServiceInstallResponse"></a>
+
+### LifecycleServiceInstallResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| progress | [LifecycleServiceInstallProgress](#machine.LifecycleServiceInstallProgress) |  |  |
+
+
+
+
+
+
+<a name="machine.LifecycleServiceUpgradeRequest"></a>
+
+### LifecycleServiceUpgradeRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| containerd | [common.ContainerdInstance](#common.ContainerdInstance) |  |  |
+| source | [InstallArtifactsSource](#machine.InstallArtifactsSource) |  |  |
+
+
+
+
+
+
+<a name="machine.LifecycleServiceUpgradeResponse"></a>
+
+### LifecycleServiceUpgradeResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| progress | [LifecycleServiceInstallProgress](#machine.LifecycleServiceInstallProgress) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="machine.LifecycleService"></a>
+
+### LifecycleService
+The LifecycleService handles installation and upgrade operations.
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| Install | [LifecycleServiceInstallRequest](#machine.LifecycleServiceInstallRequest) | [LifecycleServiceInstallResponse](#machine.LifecycleServiceInstallResponse) stream | Install Talos to disk (if it hasn't been installed yet). |
+| Upgrade | [LifecycleServiceUpgradeRequest](#machine.LifecycleServiceUpgradeRequest) | [LifecycleServiceUpgradeResponse](#machine.LifecycleServiceUpgradeResponse) stream | Upgrade Talos to a new version. |
 
  <!-- end services -->
 
@@ -4692,19 +4839,15 @@ The machine service definition.
 | Shutdown | [ShutdownRequest](#machine.ShutdownRequest) | [ShutdownResponse](#machine.ShutdownResponse) |  |
 | Stats | [StatsRequest](#machine.StatsRequest) | [StatsResponse](#machine.StatsResponse) |  |
 | SystemStat | [.google.protobuf.Empty](#google.protobuf.Empty) | [SystemStatResponse](#machine.SystemStatResponse) |  |
-| Upgrade | [UpgradeRequest](#machine.UpgradeRequest) | [UpgradeResponse](#machine.UpgradeResponse) |  |
+| Upgrade | [UpgradeRequest](#machine.UpgradeRequest) | [UpgradeResponse](#machine.UpgradeResponse) | Upgrade initiates the upgrade of the node to a new version of Talos.<br><br>Use LifecycleService Upgrade RPC instead. |
 | Version | [.google.protobuf.Empty](#google.protobuf.Empty) | [VersionResponse](#machine.VersionResponse) |  |
 | GenerateClientConfiguration | [GenerateClientConfigurationRequest](#machine.GenerateClientConfigurationRequest) | [GenerateClientConfigurationResponse](#machine.GenerateClientConfigurationResponse) | GenerateClientConfiguration generates talosctl client configuration (talosconfig). |
 | PacketCapture | [PacketCaptureRequest](#machine.PacketCaptureRequest) | [.common.Data](#common.Data) stream | PacketCapture performs packet capture and streams back pcap file. |
 | Netstat | [NetstatRequest](#machine.NetstatRequest) | [NetstatResponse](#machine.NetstatResponse) | Netstat provides information about network connections. |
 | MetaWrite | [MetaWriteRequest](#machine.MetaWriteRequest) | [MetaWriteResponse](#machine.MetaWriteResponse) | MetaWrite writes a META key-value pair. |
 | MetaDelete | [MetaDeleteRequest](#machine.MetaDeleteRequest) | [MetaDeleteResponse](#machine.MetaDeleteResponse) | MetaDelete deletes a META key. |
-| ImageList | [ImageListRequest](#machine.ImageListRequest) | [ImageListResponse](#machine.ImageListResponse) stream | ImageList lists images in the CRI.
-
-Use ImageService List RPC instead. |
-| ImagePull | [ImagePullRequest](#machine.ImagePullRequest) | [ImagePullResponse](#machine.ImagePullResponse) | ImagePull pulls an image into the CRI.
-
-Use ImageService Pull RPC instead. |
+| ImageList | [ImageListRequest](#machine.ImageListRequest) | [ImageListResponse](#machine.ImageListResponse) stream | ImageList lists images in the CRI.<br><br>Use ImageService List RPC instead. |
+| ImagePull | [ImagePullRequest](#machine.ImagePullRequest) | [ImagePullResponse](#machine.ImagePullResponse) | ImagePull pulls an image into the CRI.<br><br>Use ImageService Pull RPC instead. |
 
  <!-- end services -->
 
@@ -4725,9 +4868,7 @@ MessageConfigSpec is the spec for the config.MachineConfig resource.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| yaml_marshalled | [bytes](#bytes) |  | Contains YAML marshalled machine configuration.
-
-Byte representation is preserved as the machine configuration was submitted to the node. |
+| yaml_marshalled | [bytes](#bytes) |  | Contains YAML marshalled machine configuration.<br><br>Byte representation is preserved as the machine configuration was submitted to the node. |
 
 
 
@@ -10550,9 +10691,7 @@ The device should not be used as a secondary (e.g. part of LVM).
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| device | [string](#string) |  | Device name to wipe (e.g. sda or sda5).
-
-The name should be submitted without `/dev/` prefix. |
+| device | [string](#string) |  | Device name to wipe (e.g. sda or sda5).<br><br>The name should be submitted without `/dev/` prefix. |
 | method | [BlockDeviceWipeDescriptor.Method](#storage.BlockDeviceWipeDescriptor.Method) |  | Wipe method to use. |
 | skip_volume_check | [bool](#bool) |  | Skip the volume in use check. |
 | skip_secondary_check | [bool](#bool) |  | Skip the secondary disk check (e.g. underlying disk for RAID or LVM). |
@@ -10693,9 +10832,7 @@ StorageService represents the storage service.
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | Disks | [.google.protobuf.Empty](#google.protobuf.Empty) | [DisksResponse](#storage.DisksResponse) |  |
-| BlockDeviceWipe | [BlockDeviceWipeRequest](#storage.BlockDeviceWipeRequest) | [BlockDeviceWipeResponse](#storage.BlockDeviceWipeResponse) | BlockDeviceWipe performs a wipe of the blockdevice (partition or disk).
-
-The method doesn't require a reboot, and it can only wipe blockdevices which are not being used as volumes at the moment. Wiping of volumes requires a different API. |
+| BlockDeviceWipe | [BlockDeviceWipeRequest](#storage.BlockDeviceWipeRequest) | [BlockDeviceWipeResponse](#storage.BlockDeviceWipeResponse) | BlockDeviceWipe performs a wipe of the blockdevice (partition or disk).<br><br>The method doesn't require a reboot, and it can only wipe blockdevices which are not being used as volumes at the moment. Wiping of volumes requires a different API. |
 
  <!-- end services -->
 
