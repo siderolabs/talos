@@ -10,7 +10,9 @@ package provision
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 	"net/netip"
 	"os"
 	"path/filepath"
@@ -28,6 +30,8 @@ import (
 	sideronet "github.com/siderolabs/net"
 	"github.com/stretchr/testify/suite"
 	"go.yaml.in/yaml/v4"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -37,6 +41,7 @@ import (
 	"github.com/siderolabs/talos/pkg/cluster/check"
 	"github.com/siderolabs/talos/pkg/cluster/hydrophone"
 	"github.com/siderolabs/talos/pkg/cluster/kubernetes"
+	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	talosclient "github.com/siderolabs/talos/pkg/machinery/client"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
@@ -287,11 +292,13 @@ func (suite *BaseSuite) readVersion(nodeCtx context.Context, client *talosclient
 
 type upgradeOptions struct {
 	TargetInstallerImage string
-	UpgradeStage         bool
-	TargetVersion        string
+	// Deprecated: staged upgrades are not supported by the new LifecycleService API.
+	// Use the legacy MachineService.Upgrade path instead.
+	UpgradeStage  bool
+	TargetVersion string
 }
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (suite *BaseSuite) upgradeNode(client *talosclient.Client, node provision.NodeInfo, options upgradeOptions) {
 	suite.T().Logf("upgrading node %s", node.IPs[0])
 
@@ -300,6 +307,130 @@ func (suite *BaseSuite) upgradeNode(client *talosclient.Client, node provision.N
 
 	nodeCtx := talosclient.WithNodes(ctx, node.IPs[0].String())
 
+	// Staged upgrades are not supported by the new LifecycleService API,
+	// so skip straight to the legacy path.
+	if !options.UpgradeStage {
+		if suite.tryUpgradeViaLifecycleService(nodeCtx, client, node, options) {
+			// LifecycleService.Upgrade succeeded — trigger reboot and wait.
+			suite.T().Logf("upgrade via LifecycleService succeeded, rebooting node %s", node.IPs[0])
+
+			suite.Require().NoError(client.Reboot(nodeCtx))
+			suite.waitForUpgrade(nodeCtx, client, node, options)
+
+			return
+		}
+
+		suite.T().Logf("LifecycleService.Upgrade not available, falling back to legacy MachineService.Upgrade")
+	}
+
+	// Legacy path: MachineService.Upgrade (handles image pull, install, and reboot in one call).
+	suite.upgradeNodeLegacy(nodeCtx, client, options)
+	suite.waitForUpgrade(nodeCtx, client, node, options)
+}
+
+// tryUpgradeViaLifecycleService attempts to upgrade via the new streaming
+// LifecycleService.Upgrade API. It pre-pulls the installer image, then calls
+// the streaming RPC. Returns true on success, false if the server returned
+// codes.Unimplemented (indicating the API is not available).
+//
+//nolint:gocyclo
+func (suite *BaseSuite) tryUpgradeViaLifecycleService(
+	nodeCtx context.Context,
+	c *talosclient.Client,
+	node provision.NodeInfo,
+	options upgradeOptions,
+) bool {
+	// Step 1: Pre-pull the installer image into the system containerd namespace.
+	suite.T().Logf("pre-pulling installer image %q on node %s", options.TargetInstallerImage, node.IPs[0])
+
+	containerdInstance := &common.ContainerdInstance{
+		Driver:    common.ContainerDriver_CONTAINERD,
+		Namespace: common.ContainerdNamespace_NS_SYSTEM,
+	}
+
+	pullStream, err := c.ImageClient.Pull(nodeCtx, &machineapi.ImageServicePullRequest{
+		Containerd: containerdInstance,
+		ImageRef:   options.TargetInstallerImage,
+	})
+	if err != nil {
+		if status.Code(err) == codes.Unimplemented {
+			return false
+		}
+
+		suite.Require().NoError(err, "failed to start image pull stream")
+	}
+
+	// Drain the pull stream to completion.
+	for {
+		_, pullErr := pullStream.Recv()
+		if pullErr != nil {
+			if errors.Is(pullErr, io.EOF) {
+				break
+			}
+
+			if status.Code(pullErr) == codes.Unimplemented {
+				return false
+			}
+
+			suite.Require().NoError(pullErr, "error during image pull")
+		}
+	}
+
+	// Step 2: Call LifecycleService.Upgrade (streaming).
+	stream, err := c.LifecycleClient.Upgrade(nodeCtx, &machineapi.LifecycleServiceUpgradeRequest{
+		Containerd: containerdInstance,
+		Source: &machineapi.InstallArtifactsSource{
+			ImageName: options.TargetInstallerImage,
+		},
+	})
+	if err != nil {
+		if status.Code(err) == codes.Unimplemented {
+			return false
+		}
+
+		suite.Require().NoError(err, "failed to start LifecycleService.Upgrade stream")
+	}
+
+	var exitCode int32
+
+	for {
+		resp, recvErr := stream.Recv()
+		if recvErr != nil {
+			if errors.Is(recvErr, io.EOF) {
+				break
+			}
+
+			if status.Code(recvErr) == codes.Unimplemented {
+				return false
+			}
+
+			suite.Require().NoError(recvErr, "error receiving LifecycleService.Upgrade response")
+		}
+
+		switch payload := resp.GetProgress().GetResponse().(type) {
+		case *machineapi.LifecycleServiceInstallProgress_Message:
+			suite.T().Logf("upgrade log: %s", payload.Message)
+		case *machineapi.LifecycleServiceInstallProgress_ExitCode:
+			exitCode = payload.ExitCode
+		default:
+			suite.Failf("unexpected response type from LifecycleService.Upgrade", "got %T", payload)
+		}
+	}
+
+	suite.Require().Equal(int32(0), exitCode, "LifecycleService.Upgrade exited with non-zero code")
+
+	return true
+}
+
+// upgradeNodeLegacy performs an upgrade using the legacy (deprecated) MachineService.Upgrade
+// unary API, which handles image pull, install, and reboot in a single call.
+//
+//nolint:gocyclo
+func (suite *BaseSuite) upgradeNodeLegacy(
+	nodeCtx context.Context,
+	c *talosclient.Client,
+	options upgradeOptions,
+) {
 	var (
 		resp *machineapi.UpgradeResponse
 		err  error
@@ -307,7 +438,7 @@ func (suite *BaseSuite) upgradeNode(client *talosclient.Client, node provision.N
 
 	err = retry.Constant(time.Minute, retry.WithUnits(10*time.Second)).Retry(
 		func() error {
-			resp, err = client.Upgrade(
+			resp, err = c.Upgrade( //nolint:staticcheck // using deprecated API for testing backward compatibility
 				nodeCtx,
 				options.TargetInstallerImage,
 				options.UpgradeStage,
@@ -337,7 +468,7 @@ func (suite *BaseSuite) upgradeNode(client *talosclient.Client, node provision.N
 	eventCh := make(chan talosclient.EventResult)
 
 	// watch for events
-	suite.Require().NoError(client.EventsWatchV2(nodeCtx, eventCh, talosclient.WithActorID(actorID), talosclient.WithTailEvents(-1)))
+	suite.Require().NoError(c.EventsWatchV2(nodeCtx, eventCh, talosclient.WithActorID(actorID), talosclient.WithTailEvents(-1)))
 
 	waitTimer := time.NewTimer(5 * time.Minute)
 	defer waitTimer.Stop()
@@ -365,21 +496,33 @@ waitLoop:
 			}
 		case <-waitTimer.C:
 			suite.FailNow("timeout waiting for upgrade to finish")
-		case <-ctx.Done():
+		case <-nodeCtx.Done():
 			suite.FailNow("context canceled")
 		}
 	}
+}
 
+// waitForUpgrade waits for the node to come back up after a reboot with the
+// expected target version, then verifies cluster health. This is shared by
+// both the new LifecycleService and the legacy MachineService upgrade paths.
+func (suite *BaseSuite) waitForUpgrade(
+	nodeCtx context.Context,
+	c *talosclient.Client,
+	node provision.NodeInfo,
+	options upgradeOptions,
+) {
 	// wait for the apid to be shut down
 	time.Sleep(10 * time.Second)
 
 	// wait for the version to be equal to target version
+	var err error
+
 	suite.Require().NoError(
 		retry.Constant(10 * time.Minute).Retry(
 			func() error {
 				var version string
 
-				version, err = suite.readVersion(nodeCtx, client)
+				version, err = suite.readVersion(nodeCtx, c)
 				if err != nil {
 					// API might be unresponsive during upgrade
 					return retry.ExpectedError(err)
