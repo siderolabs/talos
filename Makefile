@@ -515,9 +515,17 @@ integration-images-list: ## Generate list of integration images.
 		$(TALOSCTL_EXECUTABLE) images integration --installer-tag=$(IMAGE_TAG_IN) --registry-and-user=$(REGISTRY_AND_USERNAME) \
 		> $(ARTIFACTS)/integration-images.txt
 
+IGNORE_CACHE_IMAGES ?= registry.k8s.io/e2e-test-images/node-perf/pytorch-wide-deep
+# Convert space-separated list into grep-compatible regex (img1|img2|img3)
+IGNORE_CACHE_IMAGES_RE := $(subst $(space),|,$(strip $(IGNORE_CACHE_IMAGES)))
+
+# space helper
+space := $(empty) $(empty)
+empty :=
+
 .PHONY: cache-create
 cache-create: installer imager integration-images-list ## Generate image cache.
-	@cat $(ARTIFACTS)/integration-images.txt | \
+	@grep -vE "$(IGNORE_CACHE_IMAGES_RE)" $(ARTIFACTS)/integration-images.txt | \
 		$(TALOSCTL_EXECUTABLE) images cache-create --image-cache-path=/tmp/cache.tar --images=- --force
 	@crane push /tmp/cache.tar $(REGISTRY_AND_USERNAME)/image-cache:$(IMAGE_TAG_OUT)
 	@$(MAKE) image-iso IMAGER_ARGS="--image-cache=$(REGISTRY_AND_USERNAME)/image-cache:$(IMAGE_TAG_OUT) --extra-kernel-arg='console=ttyS0'"
