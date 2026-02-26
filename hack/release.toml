@@ -243,6 +243,12 @@ alongside some hardening features, such as BTI on supported ARM systems.
 Talos now supports VRF (Virtual Routing and Forwarding) via the new `VRFConfig` machine config document.
 """
 
+    [notest.blackhole_routes]
+        title = "Blackhole Route Support"
+        description = """\
+Talos now supports blackhole routes via the new `BlackholeRouteConfig` machine config document.
+"""
+
 [make_deps]
 
     [make_deps.tools]

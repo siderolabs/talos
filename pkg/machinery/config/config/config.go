@@ -31,6 +31,7 @@ type Config interface { //nolint:interfacebloat
 	NetworkDHCPv6Configs() []NetworkDHCPv6Config
 	NetworkVirtualIPConfigs() []NetworkVirtualIPConfig
 	NetworkProbeConfigs() []NetworkCommonProbeConfig
+	NetworkBlackholeRouteConfigs() []NetworkBlackholeRouteConfig
 
 	// - block devices/storage:
 	Volumes() VolumesConfig

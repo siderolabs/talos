@@ -14,6 +14,40 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
+func (BlackholeRouteConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "BlackholeRouteConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "BlackholeRouteConfig is a config document to configure blackhole routes." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "BlackholeRouteConfig is a config document to configure blackhole routes.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Route destination as an address prefix.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Route destination as an address prefix." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "metric",
+				Type:        "uint32",
+				Note:        "",
+				Description: "The optional metric for the route.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The optional metric for the route." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleBlackholeRouteConfigV1Alpha1())
+
+	doc.Fields[1].AddExample("", "10.0.0.0/12")
+
+	return doc
+}
+
 func (BondConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "BondConfig",
@@ -1990,6 +2024,7 @@ func GetFileDoc() *encoder.FileDoc {
 		Name:        "network",
 		Description: "Package network provides network machine configuration documents.\n",
 		Structs: []*encoder.Doc{
+			BlackholeRouteConfigV1Alpha1{}.Doc(),
 			BondConfigV1Alpha1{}.Doc(),
 			BridgeConfigV1Alpha1{}.Doc(),
 			BridgeSTPConfig{}.Doc(),

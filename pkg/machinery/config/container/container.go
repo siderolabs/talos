@@ -395,6 +395,11 @@ func (container *Container) NetworkProbeConfigs() []config.NetworkCommonProbeCon
 	return findMatchingDocs[config.NetworkCommonProbeConfig](container.documents)
 }
 
+// NetworkBlackholeRouteConfigs implements config.Config interface.
+func (container *Container) NetworkBlackholeRouteConfigs() []config.NetworkBlackholeRouteConfig {
+	return findMatchingDocs[config.NetworkBlackholeRouteConfig](container.documents)
+}
+
 // RunDefaultDHCPOperators implements config.Config interface.
 //
 // The rules for this are:

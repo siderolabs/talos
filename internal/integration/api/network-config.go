@@ -690,6 +690,30 @@ func (suite *NetworkConfigSuite) TestWireguardConfig() {
 	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, wgName)
 }
 
+// TestBlackholeRouteConfig tests creation of blackhole routes.
+func (suite *NetworkConfigSuite) TestBlackholeRouteConfig() {
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	suite.T().Logf("testing on node %q", node)
+
+	const dest = "fd13:1236::/64"
+
+	cfg := network.NewBlackholeRouteConfigV1Alpha1(dest)
+	suite.PatchMachineConfig(nodeCtx, cfg)
+
+	const routeBlackholeID = "lo/inet6//" + dest + "/1024"
+
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI,
+		[]resource.ID{routeBlackholeID},
+		func(route *networkres.RouteStatus, asrt *assert.Assertions) {
+			asrt.Equal(nethelpers.TypeBlackhole, route.TypedSpec().Type)
+		},
+	)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.BlackholeRouteKind, dest)
+}
+
 func init() {
 	allSuites = append(allSuites, new(NetworkConfigSuite))
 }

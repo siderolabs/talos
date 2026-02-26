@@ -1,0 +1,4 @@
+apiVersion: v1alpha1
+kind: BlackholeRouteConfig
+name: 169.254.1.1/32
+metric: 2000

@@ -1135,6 +1135,50 @@
       ],
       "description": "AddressConfig represents a network address configuration."
     },
+    "network.BlackholeRouteConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "BlackholeRouteConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Route destination as an address prefix.\n",
+          "markdownDescription": "Route destination as an address prefix.",
+          "x-intellij-html-description": "\u003cp\u003eRoute destination as an address prefix.\u003c/p\u003e\n"
+        },
+        "metric": {
+          "type": "integer",
+          "title": "metric",
+          "description": "The optional metric for the route.\n",
+          "markdownDescription": "The optional metric for the route.",
+          "x-intellij-html-description": "\u003cp\u003eThe optional metric for the route.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "name"
+      ],
+      "description": "BlackholeRouteConfig is a config document to configure blackhole routes."
+    },
     "network.BondConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -5616,6 +5660,9 @@
     },
     {
       "$ref": "#/$defs/hardware.PCIDriverRebindConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/network.BlackholeRouteConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/network.BondConfigV1Alpha1"

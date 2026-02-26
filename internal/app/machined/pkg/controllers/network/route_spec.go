@@ -200,6 +200,7 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 				zap.String("link", route.TypedSpec().OutLinkName),
 				zap.Uint32("priority", route.TypedSpec().Priority),
 				zap.Stringer("family", route.TypedSpec().Family),
+				zap.Stringer("type", route.TypedSpec().Type),
 			)
 		}
 
@@ -228,7 +229,8 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 				existing.Attributes.OutIface == linkIndex &&
 				(value.IsZero(route.TypedSpec().Source) ||
 					existing.Attributes.Src.Equal(route.TypedSpec().Source.AsSlice())) &&
-				existingMTU == route.TypedSpec().MTU {
+				existingMTU == route.TypedSpec().MTU &&
+				existing.Type == uint8(route.TypedSpec().Type) {
 				matchFound = true
 
 				continue
@@ -256,6 +258,10 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 				zap.Uint32("new_link_index", linkIndex),
 				zap.Stringer("old_source", existing.Attributes.Src),
 				zap.String("new_source", sourceStr),
+				zap.Uint32("old_mtu", existingMTU),
+				zap.Uint32("new_mtu", route.TypedSpec().MTU),
+				zap.Stringer("old_type", nethelpers.RouteType(existing.Type)),
+				zap.Stringer("new_type", route.TypedSpec().Type),
 			)
 		}
 
@@ -301,6 +307,7 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 			zap.String("link", route.TypedSpec().OutLinkName),
 			zap.Uint32("priority", route.TypedSpec().Priority),
 			zap.Stringer("family", route.TypedSpec().Family),
+			zap.Stringer("type", route.TypedSpec().Type),
 		)
 	}
 

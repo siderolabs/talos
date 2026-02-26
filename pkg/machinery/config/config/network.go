@@ -356,3 +356,10 @@ type NetworkTCPProbeConfig interface {
 	Endpoint() string
 	Timeout() time.Duration
 }
+
+// NetworkBlackholeRouteConfig defines a blackhole route configuration.
+type NetworkBlackholeRouteConfig interface {
+	NamedDocument
+	BlackholeRouteConfig()
+	Metric() optional.Optional[uint32]
+}

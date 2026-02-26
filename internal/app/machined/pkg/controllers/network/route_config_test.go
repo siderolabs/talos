@@ -248,7 +248,10 @@ func (suite *RouteConfigSuite) TestMachineConfiguration() {
 		},
 	}
 
-	ctr, err := container.New(lc1, lc2)
+	bc1 := networkcfg.NewBlackholeRouteConfigV1Alpha1("10.1.3.4/32")
+	bc1.RouteMetric = 300
+
+	ctr, err := container.New(lc1, lc2, bc1)
 	suite.Require().NoError(err)
 
 	suite.Create(config.NewMachineConfig(ctr))
@@ -258,6 +261,7 @@ func (suite *RouteConfigSuite) TestMachineConfiguration() {
 		[]string{
 			"configuration/enp0s3/inet6/2001:470:6d:30e:8ed2:b60c:9d2f:803b//200",
 			"configuration/inet4/10.12.3.1/10.12.3.0/24/1024",
+			"configuration/inet4//10.1.3.4/32/300",
 		},
 		func(r *network.RouteSpec, asrt *assert.Assertions) {
 			switch r.Metadata().ID() {
@@ -269,6 +273,11 @@ func (suite *RouteConfigSuite) TestMachineConfiguration() {
 				asrt.Equal("enp0s2", r.TypedSpec().OutLinkName)
 				asrt.Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
 				asrt.EqualValues(network.DefaultRouteMetric, r.TypedSpec().Priority)
+			case "configuration/inet4//10.1.3.4/32/300":
+				asrt.Equal("lo", r.TypedSpec().OutLinkName)
+				asrt.Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
+				asrt.EqualValues(300, r.TypedSpec().Priority)
+				asrt.Equal(nethelpers.TypeBlackhole, r.TypedSpec().Type)
 			}
 
 			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
