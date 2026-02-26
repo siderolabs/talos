@@ -10,6 +10,10 @@ machine:
               dhcp: true
 cluster:
     controlPlane: null
+    proxy:
+        extraArgs:
+            foo: bar
+            metrics-bind-address: $(POD_IP):10249
     inlineManifests:
         - name: cilium
           contents: |

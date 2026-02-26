@@ -21,6 +21,7 @@ package v1alpha1
 
 import (
 	"fmt"
+	"maps"
 	"net/url"
 	"os"
 	"regexp"
@@ -67,6 +68,26 @@ func (a Args) ToMap() map[string][]string {
 	}
 
 	return result
+}
+
+// Merge with another Args.
+func (a *Args) Merge(other any) error {
+	otherArgs, ok := other.(Args)
+	if !ok {
+		return fmt.Errorf("cannot merge Args with %T", other)
+	}
+
+	if len(otherArgs) == 0 {
+		return nil
+	}
+
+	if *a == nil {
+		*a = make(Args)
+	}
+
+	maps.Copy(*a, otherArgs)
+
+	return nil
 }
 
 // ArgValue represents a value for an argument, which can be either a single string or a list of strings.

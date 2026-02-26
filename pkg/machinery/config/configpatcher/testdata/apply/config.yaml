@@ -5,3 +5,8 @@ machine:
     interfaces:
       - interface: eth0
         dhcp: true
+cluster:
+  proxy:
+    extraArgs:
+       metrics-bind-address: $(POD_IP):10249
+       foo: bar

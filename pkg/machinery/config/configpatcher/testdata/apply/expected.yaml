@@ -23,4 +23,8 @@ machine:
                     - 10.3.4.7
                   routes: []
                   vlanId: 101
-cluster: null
+cluster:
+    controlPlane: null
+    proxy:
+        extraArgs:
+            metrics-bind-address: $(POD_IP):10249

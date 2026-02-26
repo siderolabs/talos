@@ -7,3 +7,9 @@ machine:
             addresses: [10.3.4.6]
           - vlanId: 101
             addresses: [10.3.4.7]
+cluster:
+  proxy:
+    extraArgs:
+       metrics-bind-address: $(POD_IP):10249
+       foo:
+         $patch: delete
