@@ -2255,7 +2255,7 @@ talosctl image k8s-bundle [flags]
       --flannel-version semver                 Flannel CNI semantic version (default v0.28.1)
   -h, --help                                   help for k8s-bundle
       --k8s-version semver                     Kubernetes semantic version (default v1.36.0-alpha.1)
-      --kube-network-policies-version semver   kube-network-policies semantic version (default v0.9.2)
+      --kube-network-policies-version semver   kube-network-policies semantic version (default v1.0.0)
 ```
 
 ### Options inherited from parent commands

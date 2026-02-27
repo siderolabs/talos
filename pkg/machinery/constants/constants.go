@@ -1172,7 +1172,7 @@ const (
 	// KubeNetworkPoliciesVersion is the version of kube-network-policies when network policies are enabled for flannel.
 	//
 	// renovate: datasource=docker depName=registry.k8s.io/networking/kube-network-policies
-	KubeNetworkPoliciesVersion = "v0.9.2"
+	KubeNetworkPoliciesVersion = "v1.0.0"
 
 	// PlatformMetal is the name of the metal platform.
 	PlatformMetal = "metal"
