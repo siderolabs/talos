@@ -24,6 +24,12 @@ var oneContextPlain []byte
 //go:embed testdata/expected.yaml
 var expectedNetworkConfig string
 
+//go:embed testdata/metadata_no_network_flag.yaml
+var oneContextPlainNoNetworkFlag []byte
+
+//go:embed testdata/expected_no_network_flag.yaml
+var expectedNetworkConfigNoNetworkFlag string
+
 func TestParseMetadata(t *testing.T) {
 	o := &opennebula.OpenNebula{}
 	st := state.WrapCore(namespaced.NewState(inmem.Build))
@@ -36,4 +42,21 @@ func TestParseMetadata(t *testing.T) {
 
 	t.Log(string(marshaled))
 	assert.Equal(t, expectedNetworkConfig, string(marshaled))
+}
+
+// TestParseMetadataNoNetworkFlag verifies that ETH*_ variables are processed
+// regardless of the NETWORK context variable value. NETWORK=YES is a
+// server-side OpenNebula directive and should not gate guest-side processing.
+func TestParseMetadataNoNetworkFlag(t *testing.T) {
+	o := &opennebula.OpenNebula{}
+	st := state.WrapCore(namespaced.NewState(inmem.Build))
+
+	networkConfig, err := o.ParseMetadata(st, oneContextPlainNoNetworkFlag)
+	require.NoError(t, err)
+
+	marshaled, err := yaml.Marshal(networkConfig)
+	require.NoError(t, err)
+
+	t.Log(string(marshaled))
+	assert.Equal(t, expectedNetworkConfigNoNetworkFlag, string(marshaled))
 }
