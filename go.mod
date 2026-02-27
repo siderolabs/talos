@@ -147,7 +147,7 @@ require (
 	github.com/siderolabs/go-debug v0.6.2
 	github.com/siderolabs/go-kmsg v0.1.4
 	github.com/siderolabs/go-kubeconfig v0.1.1
-	github.com/siderolabs/go-kubernetes v0.2.32
+	github.com/siderolabs/go-kubernetes v0.2.33
 	github.com/siderolabs/go-loadbalancer v0.5.0
 	github.com/siderolabs/go-pcidb v0.3.2
 	github.com/siderolabs/go-pointer v1.0.1
@@ -191,7 +191,6 @@ require (
 	gopkg.in/typ.v4 v4.4.0
 	k8s.io/klog/v2 v2.130.1
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.77
-	sigs.k8s.io/cli-utils v0.37.3-0.20250918194211-77c836a69463
 	sigs.k8s.io/hydrophone v0.7.0
 )
 
@@ -250,7 +249,6 @@ require (
 	github.com/evanphx/json-patch v5.9.11+incompatible // indirect
 	github.com/evanphx/json-patch/v5 v5.9.11 // indirect
 	github.com/exponent-io/jsonpath v0.0.0-20210407135951-1de76d718b3f // indirect
-	github.com/fatih/camelcase v1.0.0 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fluxcd/cli-utils v0.36.0-flux.15 // indirect
 	github.com/fluxcd/pkg/ssa v0.60.0 // indirect
@@ -329,7 +327,6 @@ require (
 	github.com/siderolabs/protoenc v0.2.4 // indirect
 	github.com/siderolabs/tcpproxy v0.1.0 // indirect
 	github.com/spf13/afero v1.14.0 // indirect
-	github.com/spyzhov/ajson v0.9.6 // indirect
 	github.com/u-root/uio v0.0.0-20240224005618-d2acac8f3701 // indirect
 	github.com/vbatts/tar-split v0.12.2 // indirect
 	github.com/vishvananda/netlink v1.3.1 // indirect
@@ -364,7 +361,6 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/cli-runtime v0.35.0 // indirect
-	k8s.io/component-helpers v0.35.0 // indirect
 	k8s.io/kube-openapi v0.0.0-20250910181357-589584f1c912 // indirect
 	k8s.io/utils v0.0.0-20260108192941-914a6e750570 // indirect
 	kernel.org/pub/linux/libs/security/libcap/psx v1.2.77 // indirect

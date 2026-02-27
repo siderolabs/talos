@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
-	"github.com/siderolabs/go-kubernetes/kubernetes/manifests"
 	"github.com/stretchr/testify/assert"
 	"go.yaml.in/yaml/v4"
 	appsv1 "k8s.io/api/apps/v1"
@@ -116,8 +115,8 @@ func (suite *ManifestsSuite) TestSync() {
 		clusterAccess,
 		true,
 		kubernetes.UpgradeOptions{
-			LogOutput:              manifestSyncWriter{t: suite.T()},
-			SSApplyBehaviorOptions: manifests.DefaultSSApplyBehaviorOptions(),
+			LogOutput:        manifestSyncWriter{t: suite.T()},
+			ReconcileTimeout: 30 * time.Second,
 		},
 	))
 

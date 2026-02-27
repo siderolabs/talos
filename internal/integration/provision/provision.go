@@ -21,6 +21,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/v2/encryption"
+	"github.com/siderolabs/go-kubernetes/kubernetes/ssa"
 	"github.com/siderolabs/go-kubernetes/kubernetes/upgrade"
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/siderolabs/go-retry/retry"
@@ -429,6 +430,9 @@ func (suite *BaseSuite) upgradeKubernetes(fromVersion, toVersion string, skipKub
 		ProxyImage:             constants.KubeProxyImage,
 
 		EncoderOpt: encoder.WithComments(encoder.CommentsAll),
+
+		InventoryPolicy:  ssa.InventoryPolicyAdoptIfNoInventory,
+		ReconcileTimeout: 3 * time.Minute,
 	}
 
 	suite.Require().NoError(kubernetes.Upgrade(suite.ctx, suite.clusterAccess, options))

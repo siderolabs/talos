@@ -19,6 +19,8 @@ import (
 	"github.com/siderolabs/gen/channel"
 	"github.com/siderolabs/gen/xiter"
 	"github.com/siderolabs/go-kubernetes/kubernetes/manifests"
+	"github.com/siderolabs/go-kubernetes/kubernetes/ssa"
+	ssacli "github.com/siderolabs/go-kubernetes/kubernetes/ssa/cli"
 	"github.com/siderolabs/go-kubernetes/kubernetes/upgrade"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -504,31 +506,77 @@ func syncManifests(ctx context.Context, objects []*unstructured.Unstructured, cl
 	return manifests.SyncWithLog(ctx, objects, config, options.DryRun, options.Log)
 }
 
+//nolint:gocyclo
 func syncManifestsSSA(ctx context.Context, objects []*unstructured.Unstructured, cluster UpgradeProvider, options UpgradeOptions) error {
 	config, err := cluster.K8sRestConfig(ctx)
 	if err != nil {
 		return err
 	}
 
-	return manifests.SyncAndDiffWithLogSSA(
-		ctx,
-		objects,
-		config,
-		manifests.SSAOptions{
-			FieldManagerName:   constants.KubernetesFieldManagerName,
-			InventoryNamespace: constants.KubernetesInventoryNamespace,
-			InventoryName:      constants.KubernetesBootstrapManifestsInventoryName,
-			SSApplyBehaviorOptions: manifests.SSApplyBehaviorOptions{
-				DryRun:           options.DryRun,
-				InventoryPolicy:  options.InventoryPolicy,
-				ReconcileTimeout: options.ReconcileTimeout,
-				PruneTimeout:     options.PruneTimeout,
-				ForceConflicts:   options.ForceConflicts,
-				NoPrune:          options.NoPrune,
-			},
-		},
-		options.Log,
+	updatingManifestsLogline := "updating manifests"
+	if options.DryRun {
+		updatingManifestsLogline += " (dry run)"
+	}
+
+	options.Log("%s", updatingManifestsLogline)
+
+	manager, err := ssa.NewManager(ctx, config,
+		constants.KubernetesFieldManagerName,
+		constants.KubernetesInventoryNamespace,
+		constants.KubernetesBootstrapManifestsInventoryName,
 	)
+	if err != nil {
+		return fmt.Errorf("error creating SSA manager: %w", err)
+	}
+
+	defer manager.Close()
+
+	if options.DryRun {
+		// only do the diff in dry-run mode
+		changes, err := manager.Diff(ctx, objects, ssa.DiffOptions{
+			NoPrune:         options.NoPrune,
+			InventoryPolicy: options.InventoryPolicy,
+		})
+		if err != nil {
+			return fmt.Errorf("error diffing manifests: %w", err)
+		}
+
+		for _, change := range changes {
+			options.Log(" < %s %s", change.Action, change.Subject)
+
+			if change.Diff != "" {
+				options.Log("%s", change.Diff)
+			}
+		}
+
+		return nil
+	}
+
+	changes, err := manager.Apply(ctx, objects, ssa.ApplyOptions{
+		InventoryPolicy: options.InventoryPolicy,
+		WaitTimeout:     options.ReconcileTimeout,
+		NoPrune:         options.NoPrune,
+		Force:           options.ForceManifests,
+	})
+	if err != nil {
+		return fmt.Errorf("error applying manifests: %w", err)
+	}
+
+	ssacli.LogApplyResults(ctx, changes, manager, options.Log)
+
+	if options.SkipManifestWait {
+		options.Log("skipping waiting for manifest reconciliation")
+
+		return nil
+	}
+
+	waitOptions := ssa.WaitOptions{
+		Interval: 2 * time.Second,
+		Timeout:  options.ReconcileTimeout,
+		FailFast: true,
+	}
+
+	return ssacli.Wait(ctx, changes, options.Log, manager, waitOptions)
 }
 
 //nolint:gocyclo

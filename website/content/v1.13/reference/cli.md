@@ -3371,11 +3371,10 @@ talosctl upgrade-k8s [flags]
       --from string                            the Kubernetes control plane version to upgrade from
   -h, --help                                   help for upgrade-k8s
       --kubelet-image string                   kubelet image to use (default "ghcr.io/siderolabs/kubelet")
-      --manifests-force-conflicts              overwrite the fields when applying even if the field manager differs
+      --manifests-force                        whether to recreate objects that contain immutable field changes
       --manifests-inventory-policy string      kubernetes SSA inventory policy (one of 'MustMatch', 'AdoptIfNoInventory' or 'AdoptAll') (default "AdoptIfNoInventory")
       --manifests-no-prune                     whether pruning of previously applied objects should happen after apply
-      --manifests-prune-timeout duration       how long to wait for resources to be fully deleted (set to zero to disable waiting) (default 3m0s)
-      --manifests-reconcile-timeout duration   how long to wait for resources to be fully reconciled (set to zero to disable waiting) (default 3m0s)
+      --manifests-reconcile-timeout duration   how long to wait for resources to be fully reconciled (set to zero to disable waiting) (default 5m0s)
   -n, --nodes strings                          target the specified nodes
       --pre-pull-images                        pre-pull images before upgrade (default true)
       --proxy-image string                     kube-proxy image to use (default "registry.k8s.io/kube-proxy")

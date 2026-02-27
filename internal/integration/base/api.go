@@ -397,12 +397,16 @@ func (apiSuite *APISuite) ClearConnectionRefused(ctx context.Context, nodes ...s
 		numMasterNodes = 3
 	}
 
+	apiSuite.T().Log("run ClearConnectionRefused")
+
 	apiSuite.Require().NoError(retry.Constant(backoff.DefaultConfig.MaxDelay, retry.WithUnits(time.Second)).Retry(func() error {
 		for range numMasterNodes * 5 {
 			_, err := apiSuite.Client.Version(client.WithNodes(ctx, nodes...))
 			if err == nil {
 				continue
 			}
+
+			apiSuite.T().Log(err.Error())
 
 			if client.StatusCode(err) == codes.Unavailable || client.StatusCode(err) == codes.Canceled {
 				return retry.ExpectedError(err)
