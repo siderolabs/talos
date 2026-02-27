@@ -57,122 +57,126 @@ func (o *OpenNebula) ParseMetadata(st state.State, oneContextPlain []byte) (*run
 		}
 	}
 
-	if oneContext["NETWORK"] == "YES" {
-		// Iterate through parsed environment variables
-		for key := range oneContext {
-			// Dereference the pointer here
-			if strings.HasPrefix(key, "ETH") && strings.HasSuffix(key, "_MAC") {
-				ifaceName := strings.TrimSuffix(key, "_MAC")
-				ifaceNameLower := strings.ToLower(ifaceName)
+	// Iterate through parsed environment variables looking for ETHn_MAC keys.
+	// The presence of ETHn_MAC is the sole trigger for interface configuration,
+	// matching the behavior of the official OpenNebula guest contextualization
+	// scripts (one-apps/context-linux: get_context_interfaces() uses ETH*_MAC
+	// presence exclusively). The NETWORK context variable is a server-side
+	// directive that tells OpenNebula to auto-inject ETH*_ variables from NIC
+	// definitions; it is not a guest-side signal and is never read by the
+	// official scripts.
+	for key := range oneContext {
+		if strings.HasPrefix(key, "ETH") && strings.HasSuffix(key, "_MAC") {
+			ifaceName := strings.TrimSuffix(key, "_MAC")
+			ifaceNameLower := strings.ToLower(ifaceName)
 
-				if oneContext[ifaceName+"_METHOD"] == "dhcp" {
-					// Create DHCP4 OperatorSpec entry
-					networkConfig.Operators = append(networkConfig.Operators,
-						network.OperatorSpecSpec{
-							Operator:  network.OperatorDHCP4,
-							LinkName:  ifaceNameLower,
-							RequireUp: true,
-							DHCP4: network.DHCP4OperatorSpec{
-								RouteMetric:         1024,
-								SkipHostnameRequest: true,
-							},
-							ConfigLayer: network.ConfigPlatform,
+			if oneContext[ifaceName+"_METHOD"] == "dhcp" {
+				// Create DHCP4 OperatorSpec entry
+				networkConfig.Operators = append(networkConfig.Operators,
+					network.OperatorSpecSpec{
+						Operator:  network.OperatorDHCP4,
+						LinkName:  ifaceNameLower,
+						RequireUp: true,
+						DHCP4: network.DHCP4OperatorSpec{
+							RouteMetric:         1024,
+							SkipHostnameRequest: true,
 						},
-					)
-				} else {
-					// Parse IP address and create AddressSpecSpec entry
-					ipPrefix, err := address.IPPrefixFrom(oneContext[ifaceName+"_IP"], oneContext[ifaceName+"_MASK"])
-					if err != nil {
-						return nil, fmt.Errorf("failed to parse IP address: %w", err)
-					}
-
-					networkConfig.Addresses = append(networkConfig.Addresses,
-						network.AddressSpecSpec{
-							Address:         ipPrefix,
-							LinkName:        ifaceNameLower,
-							Family:          nethelpers.FamilyInet4,
-							Scope:           nethelpers.ScopeGlobal,
-							Flags:           nethelpers.AddressFlags(nethelpers.AddressPermanent),
-							AnnounceWithARP: false,
-							ConfigLayer:     network.ConfigPlatform,
-						},
-					)
-
-					var mtu uint32
-
-					if oneContext[ifaceName+"_MTU"] == "" {
-						mtu = 0
-					} else {
-						var mtu64 uint64
-
-						mtu64, err = strconv.ParseUint(oneContext[ifaceName+"_MTU"], 10, 32)
-						// check if any error happened
-						if err != nil {
-							return nil, fmt.Errorf("failed to parse MTU: %w", err)
-						}
-
-						mtu = uint32(mtu64)
-					}
-
-					// Create LinkSpecSpec entry
-					networkConfig.Links = append(networkConfig.Links,
-						network.LinkSpecSpec{
-							Name:        ifaceNameLower,
-							Logical:     false,
-							Up:          true,
-							MTU:         mtu,
-							Kind:        "",
-							Type:        nethelpers.LinkEther,
-							ParentName:  "",
-							ConfigLayer: network.ConfigPlatform,
-						},
-					)
-
-					if oneContext[ifaceName+"_GATEWAY"] != "" {
-						// Parse gateway address and create RouteSpecSpec entry
-						gateway, err := netip.ParseAddr(oneContext[ifaceName+"_GATEWAY"])
-						if err != nil {
-							return nil, fmt.Errorf("failed to parse gateway ip: %w", err)
-						}
-
-						route := network.RouteSpecSpec{
-							ConfigLayer: network.ConfigPlatform,
-							Gateway:     gateway,
-							OutLinkName: ifaceNameLower,
-							Table:       nethelpers.TableMain,
-							Protocol:    nethelpers.ProtocolStatic,
-							Type:        nethelpers.TypeUnicast,
-							Family:      nethelpers.FamilyInet4,
-							Priority:    network.DefaultRouteMetric,
-						}
-
-						route.Normalize()
-
-						networkConfig.Routes = append(networkConfig.Routes, route)
-					}
-
-					// Parse DNS servers
-					dnsServers := strings.Fields(oneContext[ifaceName+"_DNS"])
-
-					var dnsIPs []netip.Addr
-
-					for _, dnsServer := range dnsServers {
-						ip, err := netip.ParseAddr(dnsServer)
-						if err != nil {
-							return nil, fmt.Errorf("failed to parse DNS server IP: %w", err)
-						}
-
-						dnsIPs = append(dnsIPs, ip)
-					}
-
-					// Create ResolverSpecSpec entry with multiple DNS servers
-					networkConfig.Resolvers = append(networkConfig.Resolvers,
-						network.ResolverSpecSpec{
-							DNSServers:  dnsIPs,
-							ConfigLayer: network.ConfigPlatform,
-						},
-					)
+						ConfigLayer: network.ConfigPlatform,
+					},
+				)
+			} else {
+				// Parse IP address and create AddressSpecSpec entry
+				ipPrefix, err := address.IPPrefixFrom(oneContext[ifaceName+"_IP"], oneContext[ifaceName+"_MASK"])
+				if err != nil {
+					return nil, fmt.Errorf("failed to parse IP address: %w", err)
 				}
+
+				networkConfig.Addresses = append(networkConfig.Addresses,
+					network.AddressSpecSpec{
+						Address:         ipPrefix,
+						LinkName:        ifaceNameLower,
+						Family:          nethelpers.FamilyInet4,
+						Scope:           nethelpers.ScopeGlobal,
+						Flags:           nethelpers.AddressFlags(nethelpers.AddressPermanent),
+						AnnounceWithARP: false,
+						ConfigLayer:     network.ConfigPlatform,
+					},
+				)
+
+				var mtu uint32
+
+				if oneContext[ifaceName+"_MTU"] == "" {
+					mtu = 0
+				} else {
+					var mtu64 uint64
+
+					mtu64, err = strconv.ParseUint(oneContext[ifaceName+"_MTU"], 10, 32)
+					// check if any error happened
+					if err != nil {
+						return nil, fmt.Errorf("failed to parse MTU: %w", err)
+					}
+
+					mtu = uint32(mtu64)
+				}
+
+				// Create LinkSpecSpec entry
+				networkConfig.Links = append(networkConfig.Links,
+					network.LinkSpecSpec{
+						Name:        ifaceNameLower,
+						Logical:     false,
+						Up:          true,
+						MTU:         mtu,
+						Kind:        "",
+						Type:        nethelpers.LinkEther,
+						ParentName:  "",
+						ConfigLayer: network.ConfigPlatform,
+					},
+				)
+
+				if oneContext[ifaceName+"_GATEWAY"] != "" {
+					// Parse gateway address and create RouteSpecSpec entry
+					gateway, err := netip.ParseAddr(oneContext[ifaceName+"_GATEWAY"])
+					if err != nil {
+						return nil, fmt.Errorf("failed to parse gateway ip: %w", err)
+					}
+
+					route := network.RouteSpecSpec{
+						ConfigLayer: network.ConfigPlatform,
+						Gateway:     gateway,
+						OutLinkName: ifaceNameLower,
+						Table:       nethelpers.TableMain,
+						Protocol:    nethelpers.ProtocolStatic,
+						Type:        nethelpers.TypeUnicast,
+						Family:      nethelpers.FamilyInet4,
+						Priority:    network.DefaultRouteMetric,
+					}
+
+					route.Normalize()
+
+					networkConfig.Routes = append(networkConfig.Routes, route)
+				}
+
+				// Parse DNS servers
+				dnsServers := strings.Fields(oneContext[ifaceName+"_DNS"])
+
+				var dnsIPs []netip.Addr
+
+				for _, dnsServer := range dnsServers {
+					ip, err := netip.ParseAddr(dnsServer)
+					if err != nil {
+						return nil, fmt.Errorf("failed to parse DNS server IP: %w", err)
+					}
+
+					dnsIPs = append(dnsIPs, ip)
+				}
+
+				// Create ResolverSpecSpec entry with multiple DNS servers
+				networkConfig.Resolvers = append(networkConfig.Resolvers,
+					network.ResolverSpecSpec{
+						DNSServers:  dnsIPs,
+						ConfigLayer: network.ConfigPlatform,
+					},
+				)
 			}
 		}
 	}
