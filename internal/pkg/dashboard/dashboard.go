@@ -164,6 +164,7 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 
 	dashboard.pages = tview.NewPages().AddPage(pageMain, dashboard.mainGrid, true, true)
 
+	dashboard.app.EnableMouse(true)
 	dashboard.app.SetRoot(dashboard.pages, true).SetFocus(dashboard.pages)
 
 	header := components.NewHeader()
@@ -182,6 +183,25 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 	})
 
 	dashboard.footer = components.NewFooter(screenKeyToName, nodes)
+
+	dashboard.footer.NodeClick = func(node string) {
+		allowNodeNavigation := dashboard.selectedScreenConfig != nil && dashboard.selectedScreenConfig.allowNodeNavigation
+		if !allowNodeNavigation {
+			return
+		}
+
+		for i, n := range dashboard.nodes {
+			if n == node {
+				dashboard.selectNodeByIndex(i)
+
+				break
+			}
+		}
+	}
+
+	dashboard.footer.ScreenClick = func(screenName string) {
+		dashboard.selectScreen(Screen(screenName))
+	}
 
 	dashboard.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		config, screenOk := screenConfigByKeyCode[event.Key()]
