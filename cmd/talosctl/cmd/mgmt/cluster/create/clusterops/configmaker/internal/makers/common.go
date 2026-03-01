@@ -379,18 +379,30 @@ func (m *Maker[T]) initCIDRs() error {
 	}
 
 	if !cidr4.Addr().Is4() {
-		return errors.New("IPV4 CIDR expected, got IPV6 CIDR")
+		return errors.New("IPv4 CIDR expected for --cidr, got IPv6 CIDR")
 	}
 
-	// use ULA IPv6 network fd00::/8, add 'TAL' in hex to build /32 network, add IPv4 CIDR to build /64 unique network
-	cidr6, err := netip.ParsePrefix(
-		fmt.Sprintf(
-			"fd74:616c:%02x%02x:%02x%02x::/64",
-			cidr4.Addr().As4()[0], cidr4.Addr().As4()[1], cidr4.Addr().As4()[2], cidr4.Addr().As4()[3],
-		),
-	)
-	if err != nil {
-		return fmt.Errorf("error validating cidr IPv6 block: %w", err)
+	var cidr6 netip.Prefix
+
+	if m.Ops.NetworkCIDRv6 != "" {
+		cidr6, err = netip.ParsePrefix(m.Ops.NetworkCIDRv6)
+		if err != nil {
+			return fmt.Errorf("error validating cidr-v6 block: %w", err)
+		}
+
+		if !cidr6.Addr().Is6() {
+			return errors.New("IPv6 CIDR expected for --cidr-v6, got IPv4 CIDR")
+		}
+	} else {
+		cidr6, err = netip.ParsePrefix(
+			fmt.Sprintf(
+				"fd74:616c:%02x%02x:%02x%02x::/64",
+				cidr4.Addr().As4()[0], cidr4.Addr().As4()[1], cidr4.Addr().As4()[2], cidr4.Addr().As4()[3],
+			),
+		)
+		if err != nil {
+			return fmt.Errorf("error validating cidr IPv6 block: %w", err)
+		}
 	}
 
 	var cidrs []netip.Prefix
