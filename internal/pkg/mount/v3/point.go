@@ -87,12 +87,27 @@ func (p *Point) Mount(opts Options) error {
 			}
 		}
 
-		if err := selinux.SetLabel(p.target, p.selinuxLabel); err != nil && !errors.Is(err, unix.ENOTSUP) {
-			return fmt.Errorf("error setting selinux label on %q: %w", p.target, err)
-		}
-
-		return nil
+		return FilterSelinuxLabelErrors(p.Target(), p.FSType(), selinux.SetLabel(p.target, p.selinuxLabel))
 	}, false)
+}
+
+// FilterSelinuxLabelErrors filters out certain errors when setting the SELinux label on the mount point.
+//   - ENOTSUP is ignored for all filesystems, as it indicates that the filesystem does not support extended attributes.
+//   - EROFS is ignored for virtiofs, as it indicates that the underlying filesystem is read-only and does not support setting labels.
+func FilterSelinuxLabelErrors(target, fstype string, err error) error {
+	if err == nil {
+		return nil
+	}
+
+	if errors.Is(err, unix.ENOTSUP) {
+		return nil
+	}
+
+	if fstype == "virtiofs" && errors.Is(err, unix.EROFS) {
+		return nil
+	}
+
+	return fmt.Errorf("error setting selinux label on %q: %w", target, err)
 }
 
 // Share makes the mount point shared.

@@ -22,7 +22,6 @@ import (
 	"github.com/siderolabs/go-blockdevice/v2/swap"
 	"github.com/siderolabs/go-pointer"
 	"go.uber.org/zap"
-	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
@@ -357,7 +356,7 @@ func (ctrl *MountController) handleDirectoryMountOperation(
 		}
 	}
 
-	return ctrl.updateTargetSettings(targetPath, volumeStatus.TypedSpec().MountSpec)
+	return ctrl.updateTargetSettings(targetPath, volumeStatus.TypedSpec().Filesystem, volumeStatus.TypedSpec().MountSpec)
 }
 
 func (ctrl *MountController) handleBindMountOperation(
@@ -409,7 +408,7 @@ func (ctrl *MountController) handleBindMountOperation(
 		}
 
 		if !mountRequest.TypedSpec().ReadOnly && !mountRequest.TypedSpec().Detached {
-			if err = ctrl.updateTargetSettings(mountTarget, volumeStatus.TypedSpec().MountSpec); err != nil {
+			if err = ctrl.updateTargetSettings(mountTarget, volumeStatus.TypedSpec().Filesystem, volumeStatus.TypedSpec().MountSpec); err != nil {
 				manager.Unmount() //nolint:errcheck
 
 				return fmt.Errorf("failed to update target settings %q: %w", mountRequest.Metadata().ID(), err)
@@ -515,6 +514,7 @@ func (ctrl *MountController) handleSymlinkMountOperation(
 //nolint:gocyclo
 func (ctrl *MountController) updateTargetSettings(
 	targetPath string,
+	fstype block.FilesystemType,
 	mountSpec block.MountSpec,
 ) error {
 	if err := os.Chmod(targetPath, mountSpec.FileMode); err != nil {
@@ -556,11 +556,7 @@ func (ctrl *MountController) updateTargetSettings(
 		err = selinux.SetLabel(targetPath, mountSpec.SelinuxLabel)
 	}
 
-	if err != nil && !errors.Is(err, unix.ENOTSUP) {
-		return fmt.Errorf("error setting label on %q: %w", currentLabel, err)
-	}
-
-	return nil
+	return mount.FilterSelinuxLabelErrors(targetPath, fstype.String(), err)
 }
 
 //nolint:gocyclo,cyclop
@@ -655,7 +651,7 @@ func (ctrl *MountController) handleDiskMountOperation(
 		}
 
 		if !mountRequest.TypedSpec().ReadOnly && !mountRequest.TypedSpec().Detached {
-			if err = ctrl.updateTargetSettings(mountTarget, volumeStatus.TypedSpec().MountSpec); err != nil {
+			if err = ctrl.updateTargetSettings(mountTarget, volumeStatus.TypedSpec().Filesystem, volumeStatus.TypedSpec().MountSpec); err != nil {
 				manager.Unmount() //nolint:errcheck
 
 				return fmt.Errorf("failed to update target settings %q: %w", mountRequest.Metadata().ID(), err)
@@ -764,7 +760,7 @@ func (ctrl *MountController) handleOverlayMountOperation(
 		return fmt.Errorf("failed to mount %q: %w", mountRequest.Metadata().ID(), err)
 	}
 
-	if err = ctrl.updateTargetSettings(mountTarget, volumeStatus.TypedSpec().MountSpec); err != nil {
+	if err = ctrl.updateTargetSettings(mountTarget, volumeStatus.TypedSpec().Filesystem, volumeStatus.TypedSpec().MountSpec); err != nil {
 		manager.Unmount() //nolint:errcheck
 
 		return fmt.Errorf("failed to update target settings %q: %w", mountRequest.Metadata().ID(), err)
