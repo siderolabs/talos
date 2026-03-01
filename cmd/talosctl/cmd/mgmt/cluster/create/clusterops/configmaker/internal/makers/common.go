@@ -385,6 +385,8 @@ func (m *Maker[T]) initCIDRs() error {
 	var cidr6 netip.Prefix
 
 	if m.Ops.NetworkCIDRv6 != "" {
+		m.Ops.NetworkIPv6 = true
+
 		cidr6, err = netip.ParsePrefix(m.Ops.NetworkCIDRv6)
 		if err != nil {
 			return fmt.Errorf("error validating cidr-v6 block: %w", err)
