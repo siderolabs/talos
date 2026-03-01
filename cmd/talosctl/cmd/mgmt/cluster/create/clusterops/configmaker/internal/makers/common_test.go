@@ -147,6 +147,61 @@ func TestCommonMaker_MachineConfig(t *testing.T) {
 	assertConfigDefaultness(t, cOps, m)
 }
 
+func TestCommonMaker_CustomIPv6CIDR(t *testing.T) {
+	cOps := clusterops.GetCommon()
+	cOps.Controlplanes = 1
+	cOps.Workers = 1
+	cOps.NetworkIPv6 = true
+	cOps.NetworkCIDRv6 = "2a01:e11:2440:2435::/80"
+	cOps.RootOps.ClusterName = "test-custom-v6"
+
+	m := getInitializedTestMaker(t, cOps)
+
+	assert.Equal(t, 2, len(m.Cidrs))
+	assert.Equal(t, "10.5.0.0/24", m.Cidrs[0].String())
+	assert.Equal(t, "2a01:e11:2440:2435::/80", m.Cidrs[1].String())
+
+	controlplanes := m.ClusterRequest.Nodes.ControlPlaneNodes()
+	workers := m.ClusterRequest.Nodes.WorkerNodes()
+
+	assert.Equal(t, "10.5.0.2", controlplanes[0].IPs[0].String())
+	assert.Equal(t, "2a01:e11:2440:2435::2", controlplanes[0].IPs[1].String())
+	assert.Equal(t, "10.5.0.3", workers[0].IPs[0].String())
+	assert.Equal(t, "2a01:e11:2440:2435::3", workers[0].IPs[1].String())
+}
+
+func TestCommonMaker_CustomIPv6CIDR_Invalid(t *testing.T) {
+	cOps := clusterops.GetCommon()
+	cOps.NetworkIPv6 = true
+	cOps.NetworkCIDRv6 = "invalid-cidr"
+	cOps.RootOps.ClusterName = "test-invalid-v6"
+
+	m, err := makers.New(makers.MakerOptions[any]{CommonOps: cOps, Provisioner: testProvisioner{}})
+	require.NoError(t, err)
+
+	m.SetExtraOptionsProvider(&nothingProvider{})
+
+	err = m.Init()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "cidr-v6")
+}
+
+func TestCommonMaker_CustomIPv6CIDR_IPv4Passed(t *testing.T) {
+	cOps := clusterops.GetCommon()
+	cOps.NetworkIPv6 = true
+	cOps.NetworkCIDRv6 = "10.5.0.0/24"
+	cOps.RootOps.ClusterName = "test-ipv4-to-v6"
+
+	m, err := makers.New(makers.MakerOptions[any]{CommonOps: cOps, Provisioner: testProvisioner{}})
+	require.NoError(t, err)
+
+	m.SetExtraOptionsProvider(&nothingProvider{})
+
+	err = m.Init()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "IPv6 CIDR expected for --cidr-v6")
+}
+
 // assertConfigDefaultness makes sure the maker-generated machine configs are not different from default talos machine configs.
 func assertConfigDefaultness[ExtraOps any](t *testing.T, cOps clusterops.Common, m makers.Maker[ExtraOps], desiredExtraGenOps ...generate.Option) {
 	var versionContract *config.VersionContract
