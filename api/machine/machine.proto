@@ -2,14 +2,14 @@ syntax = "proto3";
 
 package machine;
 
-option go_package = "github.com/siderolabs/talos/pkg/machinery/api/machine";
-option java_package = "dev.talos.api.machine";
-
 import "common/common.proto";
 import "google/protobuf/any.proto";
 import "google/protobuf/duration.proto";
 import "google/protobuf/empty.proto";
 import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/machine";
+option java_package = "dev.talos.api.machine";
 
 // The machine service definition.
 service MachineService {
@@ -87,7 +87,13 @@ service MachineService {
   rpc Shutdown(ShutdownRequest) returns (ShutdownResponse);
   rpc Stats(StatsRequest) returns (StatsResponse);
   rpc SystemStat(google.protobuf.Empty) returns (SystemStatResponse);
-  rpc Upgrade(UpgradeRequest) returns (UpgradeResponse);
+  // Upgrade initiates the upgrade of the node to a new version of Talos.
+  //
+  // Use LifecycleService Upgrade RPC instead.
+  rpc Upgrade(UpgradeRequest) returns (UpgradeResponse) {
+    option (common.remove_deprecated_method) = "v1.18";
+    option deprecated = true;
+  }
   rpc Version(google.protobuf.Empty) returns (VersionResponse);
   // GenerateClientConfiguration generates talosctl client configuration (talosconfig).
   rpc GenerateClientConfiguration(GenerateClientConfigurationRequest) returns (GenerateClientConfigurationResponse);

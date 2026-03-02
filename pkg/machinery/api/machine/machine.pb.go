@@ -12502,7 +12502,7 @@ const file_machine_machine_proto_rawDesc = "" +
 	"\tImagePull\x12,\n" +
 	"\bmetadata\x18\x01 \x01(\v2\x10.common.MetadataR\bmetadata\"C\n" +
 	"\x11ImagePullResponse\x12.\n" +
-	"\bmessages\x18\x01 \x03(\v2\x12.machine.ImagePullR\bmessages2\xe1\x1d\n" +
+	"\bmessages\x18\x01 \x03(\v2\x12.machine.ImagePullR\bmessages2\xef\x1d\n" +
 	"\x0eMachineService\x12]\n" +
 	"\x12ApplyConfiguration\x12\".machine.ApplyConfigurationRequest\x1a#.machine.ApplyConfigurationResponse\x12B\n" +
 	"\tBootstrap\x12\x19.machine.BootstrapRequest\x1a\x1a.machine.BootstrapResponse\x12E\n" +
@@ -12552,8 +12552,8 @@ const file_machine_machine_proto_rawDesc = "" +
 	"\bShutdown\x12\x18.machine.ShutdownRequest\x1a\x19.machine.ShutdownResponse\x126\n" +
 	"\x05Stats\x12\x15.machine.StatsRequest\x1a\x16.machine.StatsResponse\x12A\n" +
 	"\n" +
-	"SystemStat\x12\x16.google.protobuf.Empty\x1a\x1b.machine.SystemStatResponse\x12<\n" +
-	"\aUpgrade\x12\x17.machine.UpgradeRequest\x1a\x18.machine.UpgradeResponse\x12;\n" +
+	"SystemStat\x12\x16.google.protobuf.Empty\x1a\x1b.machine.SystemStatResponse\x12J\n" +
+	"\aUpgrade\x12\x17.machine.UpgradeRequest\x1a\x18.machine.UpgradeResponse\"\f\xea\xbb-\x05v1.18\x88\x02\x01\x12;\n" +
 	"\aVersion\x12\x16.google.protobuf.Empty\x1a\x18.machine.VersionResponse\x12x\n" +
 	"\x1bGenerateClientConfiguration\x12+.machine.GenerateClientConfigurationRequest\x1a,.machine.GenerateClientConfigurationResponse\x12>\n" +
 	"\rPacketCapture\x12\x1d.machine.PacketCaptureRequest\x1a\f.common.Data0\x01\x12<\n" +

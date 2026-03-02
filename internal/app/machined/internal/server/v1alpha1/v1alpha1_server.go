@@ -53,6 +53,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/debug"
 	"github.com/siderolabs/talos/internal/app/images"
+	"github.com/siderolabs/talos/internal/app/lifecycle"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
@@ -152,6 +153,7 @@ func (s *Server) Register(obj *grpc.Server) {
 	machine.RegisterMachineServiceServer(obj, s)
 	machine.RegisterImageServiceServer(obj, images.NewService(s.Controller))
 	machine.RegisterDebugServiceServer(obj, &debug.Service{})
+	machine.RegisterLifecycleServiceServer(obj, lifecycle.NewService(s.Controller.Runtime())) // TODO: How do we access logger?
 	cluster.RegisterClusterServiceServer(obj, s)
 	cosiv1alpha1.RegisterStateServer(obj, server.NewState(resourceState))
 	inspect.RegisterInspectServiceServer(obj, &InspectServer{server: s})

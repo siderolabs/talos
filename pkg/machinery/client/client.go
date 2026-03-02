@@ -39,13 +39,14 @@ type Client struct {
 	options *Options
 	conn    *grpcConnectionWrapper
 
-	MachineClient machineapi.MachineServiceClient
-	TimeClient    timeapi.TimeServiceClient
-	ClusterClient clusterapi.ClusterServiceClient
-	StorageClient storageapi.StorageServiceClient
-	InspectClient inspectapi.InspectServiceClient
-	ImageClient   machineapi.ImageServiceClient
-	DebugClient   machineapi.DebugServiceClient
+	MachineClient   machineapi.MachineServiceClient
+	TimeClient      timeapi.TimeServiceClient
+	ClusterClient   clusterapi.ClusterServiceClient
+	StorageClient   storageapi.StorageServiceClient
+	InspectClient   inspectapi.InspectServiceClient
+	ImageClient     machineapi.ImageServiceClient
+	DebugClient     machineapi.DebugServiceClient
+	LifecycleClient machineapi.LifecycleServiceClient
 
 	COSI state.State
 
@@ -173,6 +174,7 @@ func New(_ context.Context, opts ...OptionFunc) (c *Client, err error) {
 	c.InspectClient = inspectapi.NewInspectServiceClient(c.conn)
 	c.ImageClient = machineapi.NewImageServiceClient(c.conn)
 	c.DebugClient = machineapi.NewDebugServiceClient(c.conn)
+	c.LifecycleClient = machineapi.NewLifecycleServiceClient(c.conn)
 
 	c.Inspect = &InspectClient{c.InspectClient}
 	c.COSI = state.WrapCore(client.NewAdapter(cosiv1alpha1.NewStateClient(c.conn)))
@@ -328,6 +330,13 @@ func (c *Client) ResetGenericWithResponse(ctx context.Context, req *machineapi.R
 
 // RebootMode provides various mode through which the reboot process can be done.
 type RebootMode func(*machineapi.RebootRequest)
+
+// WithRebootMode sets the reboot mode for the Reboot API call.
+func WithRebootMode(mode machineapi.RebootRequest_Mode) func(req *machineapi.RebootRequest) {
+	return func(req *machineapi.RebootRequest) {
+		req.Mode = mode
+	}
+}
 
 // WithPowerCycle option runs the Reboot fun in powercycle mode.
 func WithPowerCycle(req *machineapi.RebootRequest) {
@@ -567,6 +576,8 @@ func WithUpgradeGRPCCallOptions(opts ...grpc.CallOption) UpgradeOption {
 }
 
 // Upgrade initiates a Talos upgrade and implements the proto.MachineServiceClient interface.
+//
+// Deprecated: use LifecycleClient instead.
 func (c *Client) Upgrade(ctx context.Context, image string, stage, force bool, callOptions ...grpc.CallOption) (*machineapi.UpgradeResponse, error) {
 	return c.UpgradeWithOptions(
 		ctx,
@@ -579,6 +590,8 @@ func (c *Client) Upgrade(ctx context.Context, image string, stage, force bool, c
 }
 
 // UpgradeWithOptions initiates a Talos upgrade with the given options.
+//
+// Deprecated: use LifecycleClient instead.
 func (c *Client) UpgradeWithOptions(ctx context.Context, opts ...UpgradeOption) (*machineapi.UpgradeResponse, error) {
 	var options UpgradeOptions
 

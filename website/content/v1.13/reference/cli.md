@@ -2139,7 +2139,7 @@ talosctl image cache-cert-gen [flags]
   -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
-      --namespace system           namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads, `inmem` for in-memory containerd instance (default "cri")
+      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "cri")
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
       --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
@@ -2190,7 +2190,7 @@ talosctl images default | talosctl images cache-create --image-cache-path=/tmp/t
   -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
-      --namespace system           namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads, `inmem` for in-memory containerd instance (default "cri")
+      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "cri")
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
       --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
@@ -2229,7 +2229,7 @@ talosctl image cache-serve [flags]
   -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
-      --namespace system           namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads, `inmem` for in-memory containerd instance (default "cri")
+      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "cri")
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
       --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
@@ -2264,7 +2264,7 @@ talosctl image k8s-bundle [flags]
   -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
-      --namespace system           namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads, `inmem` for in-memory containerd instance (default "cri")
+      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "cri")
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
       --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
@@ -2294,7 +2294,7 @@ talosctl image list [flags]
   -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
-      --namespace system           namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads, `inmem` for in-memory containerd instance (default "cri")
+      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "cri")
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
       --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
@@ -2324,7 +2324,7 @@ talosctl image pull <image> [flags]
   -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
-      --namespace system           namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads, `inmem` for in-memory containerd instance (default "cri")
+      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "cri")
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
       --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
@@ -2354,7 +2354,7 @@ talosctl image remove <image> [flags]
   -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
-      --namespace system           namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads, `inmem` for in-memory containerd instance (default "cri")
+      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "cri")
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
       --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
@@ -2386,7 +2386,7 @@ talosctl image talos-bundle [talos-version] [flags]
   -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
-      --namespace system           namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads, `inmem` for in-memory containerd instance (default "cri")
+      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "cri")
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
       --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
@@ -2407,7 +2407,7 @@ Manage container images
       --context string             Context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for image
-      --namespace system           namespace to use: system (etcd and kubelet images) or `cri` for all Kubernetes workloads, `inmem` for in-memory containerd instance (default "cri")
+      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "cri")
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
       --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
@@ -3329,14 +3329,12 @@ talosctl upgrade [flags]
       --context string             Context to be used in command
       --debug                      debug operation from kernel logs. --wait is set to true when this flag is set
   -e, --endpoints strings          override default endpoints in Talos configuration
-  -f, --force                      force the upgrade (skip checks on etcd health and members, might lead to data loss)
   -h, --help                       help for upgrade
   -i, --image string               the container image to use for performing the install (default "ghcr.io/siderolabs/installer:v1.13.0-alpha.2")
-      --insecure                   upgrade using the insecure (encrypted with no auth) maintenance service
+      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "system")
   -n, --nodes strings              target the specified nodes
-  -m, --reboot-mode string         select the reboot mode during upgrade. Mode "powercycle" bypasses kexec. Valid values are: ["default" "powercycle"]. (default "default")
+  -m, --reboot-mode string         select the reboot mode during upgrade. Mode "powercycle" bypasses kexec. Values: [default force powercycle] (default "default")
       --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-  -s, --stage                      stage the upgrade to perform it after a reboot
       --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
       --timeout duration           time to wait for the operation is complete if --debug or --wait is set (default 30m0s)
       --wait                       wait for the operation to complete, tracking its progress. always set to true when --debug is set (default true)
