@@ -28,7 +28,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -52,7 +52,7 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow

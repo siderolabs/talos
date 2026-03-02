@@ -103,13 +103,13 @@ INTEGRATION_TEST := integration-test
 INTEGRATION_TEST_DEFAULT_TARGET := $(INTEGRATION_TEST)-$(OPERATING_SYSTEM)
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-KUBECTL_VERSION ?= v1.36.0-alpha.1
+KUBECTL_VERSION ?= v1.36.0-alpha.2
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.49
 # renovate: datasource=github-releases depName=helm/helm
 HELM_VERSION ?= v4.1.1
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.19.0
+CILIUM_CLI_VERSION ?= v0.19.2
 # renovate: datasource=github-releases depName=microsoft/secureboot_objects
 MICROSOFT_SECUREBOOT_RELEASE ?= v1.1.3
 
