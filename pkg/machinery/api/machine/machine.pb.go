@@ -2304,6 +2304,11 @@ type UpgradeRequest struct {
 	Stage         bool                      `protobuf:"varint,3,opt,name=stage,proto3" json:"stage,omitempty"`
 	Force         bool                      `protobuf:"varint,4,opt,name=force,proto3" json:"force,omitempty"`
 	RebootMode    UpgradeRequest_RebootMode `protobuf:"varint,5,opt,name=reboot_mode,json=rebootMode,proto3,enum=machine.UpgradeRequest_RebootMode" json:"reboot_mode,omitempty"`
+	Factory       string                    `protobuf:"bytes,6,opt,name=factory,proto3" json:"factory,omitempty"`
+	Schematic     string                    `protobuf:"bytes,7,opt,name=schematic,proto3" json:"schematic,omitempty"`
+	Version       string                    `protobuf:"bytes,8,opt,name=version,proto3" json:"version,omitempty"`
+	SecureBoot    *bool                     `protobuf:"varint,9,opt,name=secure_boot,json=secureBoot,proto3,oneof" json:"secure_boot,omitempty"`
+	Platform      string                    `protobuf:"bytes,10,opt,name=platform,proto3" json:"platform,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2371,6 +2376,41 @@ func (x *UpgradeRequest) GetRebootMode() UpgradeRequest_RebootMode {
 		return x.RebootMode
 	}
 	return UpgradeRequest_DEFAULT
+}
+
+func (x *UpgradeRequest) GetFactory() string {
+	if x != nil {
+		return x.Factory
+	}
+	return ""
+}
+
+func (x *UpgradeRequest) GetSchematic() string {
+	if x != nil {
+		return x.Schematic
+	}
+	return ""
+}
+
+func (x *UpgradeRequest) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *UpgradeRequest) GetSecureBoot() bool {
+	if x != nil && x.SecureBoot != nil {
+		return *x.SecureBoot
+	}
+	return false
+}
+
+func (x *UpgradeRequest) GetPlatform() string {
+	if x != nil {
+		return x.Platform
+	}
+	return ""
 }
 
 type Upgrade struct {
@@ -11773,19 +11813,27 @@ const file_machine_machine_proto_rawDesc = "" +
 	"\x0fShutdownRequest\x12\x14\n" +
 	"\x05force\x18\x01 \x01(\bR\x05force\"A\n" +
 	"\x10ShutdownResponse\x12-\n" +
-	"\bmessages\x18\x01 \x03(\v2\x11.machine.ShutdownR\bmessages\"\xde\x01\n" +
+	"\bmessages\x18\x01 \x03(\v2\x11.machine.ShutdownR\bmessages\"\x82\x03\n" +
 	"\x0eUpgradeRequest\x12\x14\n" +
 	"\x05image\x18\x01 \x01(\tR\x05image\x12\x1a\n" +
 	"\bpreserve\x18\x02 \x01(\bR\bpreserve\x12\x14\n" +
 	"\x05stage\x18\x03 \x01(\bR\x05stage\x12\x14\n" +
 	"\x05force\x18\x04 \x01(\bR\x05force\x12C\n" +
 	"\vreboot_mode\x18\x05 \x01(\x0e2\".machine.UpgradeRequest.RebootModeR\n" +
-	"rebootMode\")\n" +
+	"rebootMode\x12\x18\n" +
+	"\afactory\x18\x06 \x01(\tR\afactory\x12\x1c\n" +
+	"\tschematic\x18\a \x01(\tR\tschematic\x12\x18\n" +
+	"\aversion\x18\b \x01(\tR\aversion\x12$\n" +
+	"\vsecure_boot\x18\t \x01(\bH\x00R\n" +
+	"secureBoot\x88\x01\x01\x12\x1a\n" +
+	"\bplatform\x18\n" +
+	" \x01(\tR\bplatform\")\n" +
 	"\n" +
 	"RebootMode\x12\v\n" +
 	"\aDEFAULT\x10\x00\x12\x0e\n" +
 	"\n" +
-	"POWERCYCLE\x10\x01\"d\n" +
+	"POWERCYCLE\x10\x01B\x0e\n" +
+	"\f_secure_boot\"d\n" +
 	"\aUpgrade\x12,\n" +
 	"\bmetadata\x18\x01 \x01(\v2\x10.common.MetadataR\bmetadata\x12\x10\n" +
 	"\x03ack\x18\x02 \x01(\tR\x03ack\x12\x19\n" +
@@ -13072,6 +13120,7 @@ func file_machine_machine_proto_init() {
 	if File_machine_machine_proto != nil {
 		return
 	}
+	file_machine_machine_proto_msgTypes[27].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

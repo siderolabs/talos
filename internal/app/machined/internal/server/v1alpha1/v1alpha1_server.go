@@ -476,7 +476,7 @@ func (s *Server) Shutdown(ctx context.Context, in *machine.ShutdownRequest) (rep
 
 // Upgrade initiates an upgrade.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (*machine.UpgradeResponse, error) {
 	actorID := uuid.New().String()
 
@@ -488,10 +488,17 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (*mach
 
 	log.Printf("upgrade request received: staged %v, force %v, reboot mode %v", in.GetStage(), in.GetForce(), in.GetRebootMode().String())
 
-	log.Printf("validating %q", in.GetImage())
+	// Resolve image: use legacy --image if provided, otherwise build from components
+	imageRef := in.GetImage()
+	if imageRef == "" {
+		// Build image URL from component fields
+		imageRef = s.buildImageFromComponents(in)
+	}
 
-	if err := install.PullAndValidateInstallerImage(ctx, crires.RegistryBuilder(s.Controller.Runtime().State().V1Alpha2().Resources()), in.GetImage()); err != nil {
-		return nil, fmt.Errorf("error validating installer image %q: %w", in.GetImage(), err)
+	log.Printf("validating %q", imageRef)
+
+	if err := install.PullAndValidateInstallerImage(ctx, crires.RegistryBuilder(s.Controller.Runtime().State().V1Alpha2().Resources()), imageRef); err != nil {
+		return nil, fmt.Errorf("error validating installer image %q: %w", imageRef, err)
 	}
 
 	if s.Controller.Runtime().Config().Machine().Type() != machinetype.TypeWorker && !in.GetForce() {
@@ -516,8 +523,11 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (*mach
 
 	runCtx := context.WithValue(context.Background(), runtime.ActorIDCtxKey{}, actorID)
 
+	// Update the request with resolved image
+	in.Image = imageRef
+
 	if in.GetStage() {
-		if ok, err := s.Controller.Runtime().State().Machine().Meta().SetTag(ctx, meta.StagedUpgradeImageRef, in.GetImage()); !ok || err != nil {
+		if ok, err := s.Controller.Runtime().State().Machine().Meta().SetTag(ctx, meta.StagedUpgradeImageRef, imageRef); !ok || err != nil {
 			return nil, fmt.Errorf("error adding staged upgrade image ref tag: %w", err)
 		}
 
@@ -566,6 +576,62 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (*mach
 			},
 		},
 	}, nil
+}
+
+// buildImageFromComponents constructs an Image Factory URL from component fields.
+// Falls back to defaults when components are not provided.
+func (s *Server) buildImageFromComponents(in *machine.UpgradeRequest) string {
+	factory := in.GetFactory()
+	if factory == "" {
+		factory = "factory.talos.dev"
+	}
+
+	schematic := in.GetSchematic()
+	if schematic == "" {
+		cfg := s.Controller.Runtime().Config()
+		if cfg != nil {
+			installImage := cfg.Machine().Install().Image()
+			if before, _, found := strings.Cut(installImage, ":"); found {
+				if idx := strings.LastIndex(before, "/"); idx != -1 {
+					candidate := before[idx+1:]
+					if len(candidate) == 64 {
+						schematic = candidate
+					}
+				}
+			}
+		}
+	}
+
+	talosVersion := in.GetVersion()
+	if talosVersion == "" {
+		talosVersion = version.Tag
+	}
+
+	platform := in.GetPlatform()
+	if platform == "" && s.Controller.Runtime().State().Platform() != nil {
+		platform = s.Controller.Runtime().State().Platform().Name()
+	}
+
+	// Build platform-specific installer URL
+	installerType := platform + "-installer"
+	secureBoot := in.SecureBoot != nil && *in.SecureBoot
+	if secureBoot {
+		installerType += "-secureboot"
+	}
+
+	// Ensure version has 'v' prefix
+	if !strings.HasPrefix(talosVersion, "v") {
+		talosVersion = "v" + talosVersion
+	}
+
+	var imageURL string
+	if schematic == "" {
+		imageURL = fmt.Sprintf("%s/%s:%s", factory, installerType, talosVersion)
+	} else {
+		imageURL = fmt.Sprintf("%s/%s/%s:%s", factory, installerType, schematic, talosVersion)
+	}
+
+	return imageURL
 }
 
 // ResetOptions implements runtime.ResetOptions interface.

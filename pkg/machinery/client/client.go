@@ -559,6 +559,41 @@ func WithUpgradeForce(force bool) UpgradeOption {
 	}
 }
 
+// WithUpgradeFactory sets the Image Factory host for the upgrade.
+func WithUpgradeFactory(factory string) UpgradeOption {
+	return func(req *UpgradeOptions) {
+		req.Request.Factory = factory
+	}
+}
+
+// WithUpgradeSchematic sets the schematic ID for the upgrade.
+func WithUpgradeSchematic(schematic string) UpgradeOption {
+	return func(req *UpgradeOptions) {
+		req.Request.Schematic = schematic
+	}
+}
+
+// WithUpgradeVersion sets the Talos version for the upgrade.
+func WithUpgradeVersion(version string) UpgradeOption {
+	return func(req *UpgradeOptions) {
+		req.Request.Version = version
+	}
+}
+
+// WithUpgradeSecureBoot sets the secure boot setting for the upgrade.
+func WithUpgradeSecureBoot(secureBoot *bool) UpgradeOption {
+	return func(req *UpgradeOptions) {
+		req.Request.SecureBoot = secureBoot
+	}
+}
+
+// WithUpgradePlatform sets the platform for the upgrade.
+func WithUpgradePlatform(platform string) UpgradeOption {
+	return func(req *UpgradeOptions) {
+		req.Request.Platform = platform
+	}
+}
+
 // WithUpgradeGRPCCallOptions sets the gRPC call options for the upgrade.
 func WithUpgradeGRPCCallOptions(opts ...grpc.CallOption) UpgradeOption {
 	return func(req *UpgradeOptions) {

@@ -356,6 +356,12 @@ message UpgradeRequest {
   bool stage = 3;
   bool force = 4;
   RebootMode reboot_mode = 5;
+  
+  string factory = 6;
+  string schematic = 7;
+  string version = 8;
+  optional bool secure_boot = 9;
+  string platform = 10;
 }
 
 message Upgrade {
