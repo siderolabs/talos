@@ -22,6 +22,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/cri"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/hardware"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime/extensions"
@@ -145,6 +146,10 @@ var docsCmd = &cobra.Command{
 				{
 					name:    "cri",
 					fileDoc: cri.GetFileDoc(),
+				},
+				{
+					name:    "k8s",
+					fileDoc: k8s.GetFileDoc(),
 				},
 			} {
 				path := filepath.Join(dir, pkg.name)
