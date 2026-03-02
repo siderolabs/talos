@@ -26,6 +26,7 @@ var (
 	registryMirrorFlagName    = "registry-mirror"
 	networkMTUFlagName        = "mtu"
 	networkCIDRFlagName       = "cidr"
+	networkCIDRv6FlagName     = "cidr-v6"
 	talosVersionFlagName      = "talos-version"
 
 	// Flags that have been renamed in the user-facing commands.
