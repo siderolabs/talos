@@ -6,6 +6,7 @@ package images
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/google/go-containerregistry/pkg/name"
 
@@ -115,6 +116,8 @@ func ListWithOptions(config config.Config, opts VersionsListOptions) Versions {
 }
 
 func mustParseTag(s string) name.Tag {
+	s, _, _ = strings.Cut(s, "@") // ignore digest if present
+
 	r, err := name.ParseReference(s)
 	if err != nil {
 		panic(err)

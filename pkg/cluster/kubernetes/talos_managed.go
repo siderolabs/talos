@@ -392,6 +392,7 @@ func upgradeStaticPodPatcher(options UpgradeOptions, service string, configResou
 		}
 
 		logUpdate := func(oldImage string) {
+			oldImage, _, _ = strings.Cut(oldImage, "@") // ignore digest if present
 			_, version, _ := strings.Cut(oldImage, ":")
 
 			if version == "" {
