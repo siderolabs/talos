@@ -191,6 +191,8 @@ func upgradeKubeletPatcher(
 		}
 
 		oldImage := kubeletSpec.TypedSpec().Image
+		oldImage, _, _ = strings.Cut(oldImage, "@") // ignore digest if present
+
 		oldSuffix := extractKubeletVersionSuffix(oldImage)
 		newVersion := options.Path.ToVersion() + oldSuffix
 

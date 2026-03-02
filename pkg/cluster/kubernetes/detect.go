@@ -48,12 +48,14 @@ func DetectLowestVersion(ctx context.Context, cluster UpgradeProvider, options U
 				continue
 			}
 
-			idx := strings.LastIndex(container.Image, ":")
-			if idx == -1 {
+			image, _, _ := strings.Cut(container.Image, "@")
+
+			_, imageTag, ok := strings.Cut(image, ":")
+			if !ok {
 				continue
 			}
 
-			v, err := semver.ParseTolerant(strings.TrimLeft(container.Image[idx+1:], "v"))
+			v, err := semver.ParseTolerant(strings.TrimLeft(imageTag, "v"))
 			if err != nil {
 				options.Log("failed to parse %s container version %s", app, err)
 
