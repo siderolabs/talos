@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -40,20 +40,20 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@7c525be6cc8a882d5163ce04293cac18617c709f # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
         if: github.event_name != 'schedule'
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # version: v7.0.0
+        uses: actions/download-artifact@70fc10c6e5e1ce46ad2ea6f2b72d43f7d47b13c3 # version: v7.0.0
         with:
           name: talos-artifacts
           path: _out
@@ -166,7 +166,7 @@ jobs:
           sudo -E make e2e-image-factory
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # version: v6.0.0
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v6.0.0
         with:
           name: talos-logs-integration-image-factory
           path: |-
