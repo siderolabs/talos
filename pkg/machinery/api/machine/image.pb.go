@@ -634,6 +634,188 @@ func (x *ImageServiceRemoveRequest) GetImageRef() string {
 	return ""
 }
 
+type ImageServiceVerifyRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Image reference to verify.
+	//
+	// The image reference could be either in:
+	//   - the digest form (e.g. "docker.io/library/nginx@sha256:abc123...") to ensure that the exact image is verified.
+	//   - the tag form (e.g. "docker.io/library/nginx:latest") to verify the image currently pointed by the tag, and the resolved
+	//     digested will be returned in the response.
+	//
+	// Any other format will cause the error.
+	ImageRef string `protobuf:"bytes,1,opt,name=image_ref,json=imageRef,proto3" json:"image_ref,omitempty"`
+	// Authentication credentials for the registry (if needed).
+	//
+	// By default Talos will use configured auth, but additional
+	// image pull secret can be submitted here.
+	Credentials   *ImageServiceCredentials `protobuf:"bytes,2,opt,name=credentials,proto3" json:"credentials,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ImageServiceVerifyRequest) Reset() {
+	*x = ImageServiceVerifyRequest{}
+	mi := &file_machine_image_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ImageServiceVerifyRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ImageServiceVerifyRequest) ProtoMessage() {}
+
+func (x *ImageServiceVerifyRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_machine_image_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ImageServiceVerifyRequest.ProtoReflect.Descriptor instead.
+func (*ImageServiceVerifyRequest) Descriptor() ([]byte, []int) {
+	return file_machine_image_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ImageServiceVerifyRequest) GetImageRef() string {
+	if x != nil {
+		return x.ImageRef
+	}
+	return ""
+}
+
+func (x *ImageServiceVerifyRequest) GetCredentials() *ImageServiceCredentials {
+	if x != nil {
+		return x.Credentials
+	}
+	return nil
+}
+
+type ImageServiceCredentials struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Host of the registry (e.g. "docker.io").
+	Host string `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
+	// Username for the registry.
+	Username string `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	// Password (token) for the registry.
+	Password      string `protobuf:"bytes,3,opt,name=password,proto3" json:"password,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ImageServiceCredentials) Reset() {
+	*x = ImageServiceCredentials{}
+	mi := &file_machine_image_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ImageServiceCredentials) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ImageServiceCredentials) ProtoMessage() {}
+
+func (x *ImageServiceCredentials) ProtoReflect() protoreflect.Message {
+	mi := &file_machine_image_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ImageServiceCredentials.ProtoReflect.Descriptor instead.
+func (*ImageServiceCredentials) Descriptor() ([]byte, []int) {
+	return file_machine_image_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *ImageServiceCredentials) GetHost() string {
+	if x != nil {
+		return x.Host
+	}
+	return ""
+}
+
+func (x *ImageServiceCredentials) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *ImageServiceCredentials) GetPassword() string {
+	if x != nil {
+		return x.Password
+	}
+	return ""
+}
+
+type ImageServiceVerifyResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Was the image verified: if it didn't match any verify rule, false will be returned.
+	// If the image matched the rule, but the verification failed, an error will be returned.
+	Verified bool `protobuf:"varint,1,opt,name=verified,proto3" json:"verified,omitempty"`
+	// Free-form verification result message, e.g. with details about the matched rule and how the image was verified.
+	Message       string `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ImageServiceVerifyResponse) Reset() {
+	*x = ImageServiceVerifyResponse{}
+	mi := &file_machine_image_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ImageServiceVerifyResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ImageServiceVerifyResponse) ProtoMessage() {}
+
+func (x *ImageServiceVerifyResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_machine_image_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ImageServiceVerifyResponse.ProtoReflect.Descriptor instead.
+func (*ImageServiceVerifyResponse) Descriptor() ([]byte, []int) {
+	return file_machine_image_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *ImageServiceVerifyResponse) GetVerified() bool {
+	if x != nil {
+		return x.Verified
+	}
+	return false
+}
+
+func (x *ImageServiceVerifyResponse) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
 var File_machine_image_proto protoreflect.FileDescriptor
 
 const file_machine_image_proto_rawDesc = "" +
@@ -687,12 +869,23 @@ const file_machine_image_proto_rawDesc = "" +
 	"\n" +
 	"containerd\x18\x01 \x01(\v2\x1a.common.ContainerdInstanceR\n" +
 	"containerd\x12\x1b\n" +
-	"\timage_ref\x18\x02 \x01(\tR\bimageRef2\xc7\x02\n" +
+	"\timage_ref\x18\x02 \x01(\tR\bimageRef\"|\n" +
+	"\x19ImageServiceVerifyRequest\x12\x1b\n" +
+	"\timage_ref\x18\x01 \x01(\tR\bimageRef\x12B\n" +
+	"\vcredentials\x18\x02 \x01(\v2 .machine.ImageServiceCredentialsR\vcredentials\"e\n" +
+	"\x17ImageServiceCredentials\x12\x12\n" +
+	"\x04host\x18\x01 \x01(\tR\x04host\x12\x1a\n" +
+	"\busername\x18\x02 \x01(\tR\busername\x12\x1a\n" +
+	"\bpassword\x18\x03 \x01(\tR\bpassword\"R\n" +
+	"\x1aImageServiceVerifyResponse\x12\x1a\n" +
+	"\bverified\x18\x01 \x01(\bR\bverified\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage2\x9a\x03\n" +
 	"\fImageService\x12M\n" +
 	"\x04List\x12 .machine.ImageServiceListRequest\x1a!.machine.ImageServiceListResponse0\x01\x12M\n" +
 	"\x04Pull\x12 .machine.ImageServicePullRequest\x1a!.machine.ImageServicePullResponse0\x01\x12S\n" +
 	"\x06Import\x12\".machine.ImageServiceImportRequest\x1a#.machine.ImageServiceImportResponse(\x01\x12D\n" +
-	"\x06Remove\x12\".machine.ImageServiceRemoveRequest\x1a\x16.google.protobuf.EmptyBN\n" +
+	"\x06Remove\x12\".machine.ImageServiceRemoveRequest\x1a\x16.google.protobuf.Empty\x12Q\n" +
+	"\x06Verify\x12\".machine.ImageServiceVerifyRequest\x1a#.machine.ImageServiceVerifyResponseBN\n" +
 	"\x15dev.talos.api.machineZ5github.com/siderolabs/talos/pkg/machinery/api/machineb\x06proto3"
 
 var (
@@ -708,7 +901,7 @@ func file_machine_image_proto_rawDescGZIP() []byte {
 }
 
 var file_machine_image_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_machine_image_proto_msgTypes = make([]protoimpl.MessageInfo, 9)
+var file_machine_image_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_machine_image_proto_goTypes = []any{
 	(ImageServicePullLayerProgress_Status)(0), // 0: machine.ImageServicePullLayerProgress.Status
 	(*ImageServiceListRequest)(nil),           // 1: machine.ImageServiceListRequest
@@ -720,36 +913,42 @@ var file_machine_image_proto_goTypes = []any{
 	(*ImageServicePullLayerProgress)(nil),     // 7: machine.ImageServicePullLayerProgress
 	(*ImageServicePullProgress)(nil),          // 8: machine.ImageServicePullProgress
 	(*ImageServiceRemoveRequest)(nil),         // 9: machine.ImageServiceRemoveRequest
-	(*common.ContainerdInstance)(nil),         // 10: common.ContainerdInstance
-	(*timestamppb.Timestamp)(nil),             // 11: google.protobuf.Timestamp
-	(*common.Data)(nil),                       // 12: common.Data
-	(*durationpb.Duration)(nil),               // 13: google.protobuf.Duration
-	(*emptypb.Empty)(nil),                     // 14: google.protobuf.Empty
+	(*ImageServiceVerifyRequest)(nil),         // 10: machine.ImageServiceVerifyRequest
+	(*ImageServiceCredentials)(nil),           // 11: machine.ImageServiceCredentials
+	(*ImageServiceVerifyResponse)(nil),        // 12: machine.ImageServiceVerifyResponse
+	(*common.ContainerdInstance)(nil),         // 13: common.ContainerdInstance
+	(*timestamppb.Timestamp)(nil),             // 14: google.protobuf.Timestamp
+	(*common.Data)(nil),                       // 15: common.Data
+	(*durationpb.Duration)(nil),               // 16: google.protobuf.Duration
+	(*emptypb.Empty)(nil),                     // 17: google.protobuf.Empty
 }
 var file_machine_image_proto_depIdxs = []int32{
-	10, // 0: machine.ImageServiceListRequest.containerd:type_name -> common.ContainerdInstance
-	11, // 1: machine.ImageServiceListResponse.created_at:type_name -> google.protobuf.Timestamp
-	10, // 2: machine.ImageServicePullRequest.containerd:type_name -> common.ContainerdInstance
+	13, // 0: machine.ImageServiceListRequest.containerd:type_name -> common.ContainerdInstance
+	14, // 1: machine.ImageServiceListResponse.created_at:type_name -> google.protobuf.Timestamp
+	13, // 2: machine.ImageServicePullRequest.containerd:type_name -> common.ContainerdInstance
 	8,  // 3: machine.ImageServicePullResponse.pull_progress:type_name -> machine.ImageServicePullProgress
-	10, // 4: machine.ImageServiceImportRequest.containerd:type_name -> common.ContainerdInstance
-	12, // 5: machine.ImageServiceImportRequest.image_chunk:type_name -> common.Data
+	13, // 4: machine.ImageServiceImportRequest.containerd:type_name -> common.ContainerdInstance
+	15, // 5: machine.ImageServiceImportRequest.image_chunk:type_name -> common.Data
 	0,  // 6: machine.ImageServicePullLayerProgress.status:type_name -> machine.ImageServicePullLayerProgress.Status
-	13, // 7: machine.ImageServicePullLayerProgress.elapsed:type_name -> google.protobuf.Duration
+	16, // 7: machine.ImageServicePullLayerProgress.elapsed:type_name -> google.protobuf.Duration
 	7,  // 8: machine.ImageServicePullProgress.progress:type_name -> machine.ImageServicePullLayerProgress
-	10, // 9: machine.ImageServiceRemoveRequest.containerd:type_name -> common.ContainerdInstance
-	1,  // 10: machine.ImageService.List:input_type -> machine.ImageServiceListRequest
-	3,  // 11: machine.ImageService.Pull:input_type -> machine.ImageServicePullRequest
-	5,  // 12: machine.ImageService.Import:input_type -> machine.ImageServiceImportRequest
-	9,  // 13: machine.ImageService.Remove:input_type -> machine.ImageServiceRemoveRequest
-	2,  // 14: machine.ImageService.List:output_type -> machine.ImageServiceListResponse
-	4,  // 15: machine.ImageService.Pull:output_type -> machine.ImageServicePullResponse
-	6,  // 16: machine.ImageService.Import:output_type -> machine.ImageServiceImportResponse
-	14, // 17: machine.ImageService.Remove:output_type -> google.protobuf.Empty
-	14, // [14:18] is the sub-list for method output_type
-	10, // [10:14] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	13, // 9: machine.ImageServiceRemoveRequest.containerd:type_name -> common.ContainerdInstance
+	11, // 10: machine.ImageServiceVerifyRequest.credentials:type_name -> machine.ImageServiceCredentials
+	1,  // 11: machine.ImageService.List:input_type -> machine.ImageServiceListRequest
+	3,  // 12: machine.ImageService.Pull:input_type -> machine.ImageServicePullRequest
+	5,  // 13: machine.ImageService.Import:input_type -> machine.ImageServiceImportRequest
+	9,  // 14: machine.ImageService.Remove:input_type -> machine.ImageServiceRemoveRequest
+	10, // 15: machine.ImageService.Verify:input_type -> machine.ImageServiceVerifyRequest
+	2,  // 16: machine.ImageService.List:output_type -> machine.ImageServiceListResponse
+	4,  // 17: machine.ImageService.Pull:output_type -> machine.ImageServicePullResponse
+	6,  // 18: machine.ImageService.Import:output_type -> machine.ImageServiceImportResponse
+	17, // 19: machine.ImageService.Remove:output_type -> google.protobuf.Empty
+	12, // 20: machine.ImageService.Verify:output_type -> machine.ImageServiceVerifyResponse
+	16, // [16:21] is the sub-list for method output_type
+	11, // [11:16] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_machine_image_proto_init() }
@@ -771,7 +970,7 @@ func file_machine_image_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_machine_image_proto_rawDesc), len(file_machine_image_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   9,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

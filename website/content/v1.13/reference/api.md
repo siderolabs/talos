@@ -55,6 +55,7 @@ description: Talos gRPC API reference.
     - [DebugService](#machine.DebugService)
   
 - [machine/image.proto](#machine/image.proto)
+    - [ImageServiceCredentials](#machine.ImageServiceCredentials)
     - [ImageServiceImportRequest](#machine.ImageServiceImportRequest)
     - [ImageServiceImportResponse](#machine.ImageServiceImportResponse)
     - [ImageServiceListRequest](#machine.ImageServiceListRequest)
@@ -64,6 +65,8 @@ description: Talos gRPC API reference.
     - [ImageServicePullRequest](#machine.ImageServicePullRequest)
     - [ImageServicePullResponse](#machine.ImageServicePullResponse)
     - [ImageServiceRemoveRequest](#machine.ImageServiceRemoveRequest)
+    - [ImageServiceVerifyRequest](#machine.ImageServiceVerifyRequest)
+    - [ImageServiceVerifyResponse](#machine.ImageServiceVerifyResponse)
   
     - [ImageServicePullLayerProgress.Status](#machine.ImageServicePullLayerProgress.Status)
   
@@ -578,6 +581,11 @@ description: Talos gRPC API reference.
     - [MaintenanceServiceCertsSpec](#talos.resource.definitions.secrets.MaintenanceServiceCertsSpec)
     - [OSRootSpec](#talos.resource.definitions.secrets.OSRootSpec)
     - [TrustdCertsSpec](#talos.resource.definitions.secrets.TrustdCertsSpec)
+  
+- [resource/definitions/security/security.proto](#resource/definitions/security/security.proto)
+    - [ImageKeylessVerifierSpec](#talos.resource.definitions.security.ImageKeylessVerifierSpec)
+    - [ImagePublicKeyVerifierSpec](#talos.resource.definitions.security.ImagePublicKeyVerifierSpec)
+    - [ImageVerificationRuleSpec](#talos.resource.definitions.security.ImageVerificationRuleSpec)
   
 - [resource/definitions/siderolink/siderolink.proto](#resource/definitions/siderolink/siderolink.proto)
     - [ConfigSpec](#talos.resource.definitions.siderolink.ConfigSpec)
@@ -1210,6 +1218,23 @@ DebugService provides debugging and inspection capabilities for a Talos node.
 
 
 
+<a name="machine.ImageServiceCredentials"></a>
+
+### ImageServiceCredentials
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| host | [string](#string) |  | Host of the registry (e.g. "docker.io"). |
+| username | [string](#string) |  | Username for the registry. |
+| password | [string](#string) |  | Password (token) for the registry. |
+
+
+
+
+
+
 <a name="machine.ImageServiceImportRequest"></a>
 
 ### ImageServiceImportRequest
@@ -1355,6 +1380,44 @@ DebugService provides debugging and inspection capabilities for a Talos node.
 
 
 
+
+<a name="machine.ImageServiceVerifyRequest"></a>
+
+### ImageServiceVerifyRequest
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| image_ref | [string](#string) |  | Image reference to verify.
+
+The image reference could be either in: * the digest form (e.g. "docker.io/library/nginx@sha256:abc123...") to ensure that the exact image is verified. * the tag form (e.g. "docker.io/library/nginx:latest") to verify the image currently pointed by the tag, and the resolved digested will be returned in the response.
+
+Any other format will cause the error. |
+| credentials | [ImageServiceCredentials](#machine.ImageServiceCredentials) |  | Authentication credentials for the registry (if needed).
+
+By default Talos will use configured auth, but additional image pull secret can be submitted here. |
+
+
+
+
+
+
+<a name="machine.ImageServiceVerifyResponse"></a>
+
+### ImageServiceVerifyResponse
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| verified | [bool](#bool) |  | Was the image verified: if it didn't match any verify rule, false will be returned. If the image matched the rule, but the verification failed, an error will be returned. |
+| message | [string](#string) |  | Free-form verification result message, e.g. with details about the matched rule and how the image was verified. |
+
+
+
+
+
  <!-- end messages -->
 
 
@@ -1388,6 +1451,7 @@ The machine service definition.
 | Pull | [ImageServicePullRequest](#machine.ImageServicePullRequest) | [ImageServicePullResponse](#machine.ImageServicePullResponse) stream | Pull an image into the containerd. |
 | Import | [ImageServiceImportRequest](#machine.ImageServiceImportRequest) stream | [ImageServiceImportResponse](#machine.ImageServiceImportResponse) | Import an image from a stream (tarball). |
 | Remove | [ImageServiceRemoveRequest](#machine.ImageServiceRemoveRequest) | [.google.protobuf.Empty](#google.protobuf.Empty) | Remove an image from the containerd. |
+| Verify | [ImageServiceVerifyRequest](#machine.ImageServiceVerifyRequest) | [ImageServiceVerifyResponse](#machine.ImageServiceVerifyResponse) | Verify an image signature. |
 
  <!-- end services -->
 
@@ -10254,6 +10318,73 @@ TrustdCertsSpec describes etcd certs secrets.
 | ----- | ---- | ----- | ----------- |
 | server | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
 | accepted_c_as | [common.PEMEncodedCertificate](#common.PEMEncodedCertificate) | repeated |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="resource/definitions/security/security.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## resource/definitions/security/security.proto
+
+
+
+<a name="talos.resource.definitions.security.ImageKeylessVerifierSpec"></a>
+
+### ImageKeylessVerifierSpec
+ImageKeylessVerifierSpec represents a signature verification provider.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| issuer | [string](#string) |  |  |
+| subject | [string](#string) |  |  |
+| subject_regex | [string](#string) |  |  |
+| rekor_url | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.security.ImagePublicKeyVerifierSpec"></a>
+
+### ImagePublicKeyVerifierSpec
+ImagePublicKeyVerifierSpec represents a signature verification provider with static public key.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| certificate | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.security.ImageVerificationRuleSpec"></a>
+
+### ImageVerificationRuleSpec
+ImageVerificationRuleSpec represents a verification rule.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| image_pattern | [string](#string) |  |  |
+| verify | [bool](#bool) |  |  |
+| keyless_verifier | [ImageKeylessVerifierSpec](#talos.resource.definitions.security.ImageKeylessVerifierSpec) |  |  |
+| public_key_verifier | [ImagePublicKeyVerifierSpec](#talos.resource.definitions.security.ImagePublicKeyVerifierSpec) |  |  |
 
 
 

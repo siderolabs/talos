@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/pkg/containers/image"
@@ -451,7 +452,19 @@ func (suite *ResolverSuite) TestRegistryHosts() {
 	suite.Assert().Equal("Basic cm9vdDpzZWNyZXQ=", req.Header.Get("Authorization"))
 }
 
+func (suite *ResolverSuite) TestResolveTag() {
+	resolver := image.NewResolver(&mockConfig{})
+
+	name, desc, err := resolver.Resolve(suite.T().Context(), "ghcr.io/siderolabs/talos:v1.12.0")
+	suite.Require().NoError(err)
+
+	suite.Assert().Equal("ghcr.io/siderolabs/talos:v1.12.0", name)
+	suite.Assert().Equal(digest.Digest("sha256:342707af87028596549bb68882654f90122cbbaf29cb2a537dfbc8b1b7770898"), desc.Digest)
+}
+
 func TestResolverSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(ResolverSuite))
 }
 

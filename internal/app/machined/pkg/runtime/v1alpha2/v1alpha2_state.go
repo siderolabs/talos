@@ -29,6 +29,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/perf"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
+	"github.com/siderolabs/talos/pkg/machinery/resources/security"
 	"github.com/siderolabs/talos/pkg/machinery/resources/siderolink"
 	"github.com/siderolabs/talos/pkg/machinery/resources/time"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
@@ -87,6 +88,7 @@ func NewState() (*State, error) {
 		{network.ConfigNamespaceName, "Networking configuration resources."},
 		{cri.NamespaceName, "CRI Seccomp resources."},
 		{secrets.NamespaceName, "Resources with secret material."},
+		{security.NamespaceName, "Security resources."},
 		{perf.NamespaceName, "Stats resources."},
 	} {
 		if err := s.namespaceRegistry.Register(ctx, ns.name, ns.description); err != nil {
@@ -247,6 +249,7 @@ func NewState() (*State, error) {
 		&secrets.MaintenanceRoot{},
 		&secrets.OSRoot{},
 		&secrets.Trustd{},
+		&security.ImageVerificationRule{},
 		&siderolink.Config{},
 		&siderolink.Status{},
 		&siderolink.Tunnel{},

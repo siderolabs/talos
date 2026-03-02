@@ -14,6 +14,7 @@ import (
 	"github.com/containerd/containerd/v2/core/images"
 	"github.com/containerd/errdefs"
 	"github.com/containerd/platforms"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -34,12 +35,14 @@ type Service struct {
 	machine.UnimplementedImageServiceServer
 
 	controller runtime.Controller
+	logger     *zap.Logger
 }
 
 // NewService creates a new ImageService.
-func NewService(controller runtime.Controller) *Service {
+func NewService(controller runtime.Controller, logger *zap.Logger) *Service {
 	return &Service{
 		controller: controller,
+		logger:     logger,
 	}
 }
 

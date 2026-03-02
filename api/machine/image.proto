@@ -20,6 +20,9 @@ service ImageService {
   rpc Import(stream ImageServiceImportRequest) returns (ImageServiceImportResponse);
   // Remove an image from the containerd.
   rpc Remove (ImageServiceRemoveRequest) returns (google.protobuf.Empty);
+  // Verify an image signature.
+  rpc Verify(ImageServiceVerifyRequest) returns (ImageServiceVerifyResponse);
+
 }
 
 message ImageServiceListRequest {
@@ -87,4 +90,38 @@ message ImageServiceRemoveRequest {
   common.ContainerdInstance containerd = 1;
   // Image reference to remove.
   string image_ref = 2;
+}
+
+message ImageServiceVerifyRequest {
+  // Image reference to verify.
+  //
+  // The image reference could be either in:
+  //  * the digest form (e.g. "docker.io/library/nginx@sha256:abc123...") to ensure that the exact image is verified.
+  //  * the tag form (e.g. "docker.io/library/nginx:latest") to verify the image currently pointed by the tag, and the resolved
+  //    digested will be returned in the response.
+  //
+  // Any other format will cause the error.
+  string image_ref = 1;
+  // Authentication credentials for the registry (if needed).
+  //
+  // By default Talos will use configured auth, but additional
+  // image pull secret can be submitted here.
+  ImageServiceCredentials credentials = 2;
+}
+
+message ImageServiceCredentials {
+  // Host of the registry (e.g. "docker.io").
+  string host = 1;
+  // Username for the registry.
+  string username = 2;
+  // Password (token) for the registry.
+  string password = 3;
+}
+
+message ImageServiceVerifyResponse {
+  // Was the image verified: if it didn't match any verify rule, false will be returned.
+  // If the image matched the rule, but the verification failed, an error will be returned.
+  bool verified = 1;
+  // Free-form verification result message, e.g. with details about the matched rule and how the image was verified.
+  string message = 2;
 }

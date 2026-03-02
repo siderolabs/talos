@@ -21,3 +21,39 @@ func (w trustedRootConfigWrapper) ExtraTrustedRootCertificates() []string {
 		return c.ExtraTrustedRootCertificates()
 	})
 }
+
+// ImageVerificationConfig specifies image signature verification policy.
+type ImageVerificationConfig interface {
+	// Rules returns the list of verification rules.
+	Rules() []ImageVerificationRule
+}
+
+// ImageVerificationRule represents a rule for image verification.
+type ImageVerificationRule interface {
+	// ImagePattern returns the image name pattern.
+	ImagePattern() string
+	// Action returns the action for matching images.
+	Verify() bool
+	// VerifierKeyless returns the keyless verifier to use for this rule (optional).
+	VerifierKeyless() ImageKeylessVerifier
+	// VerifierPublicKey returns the public key verifier to use for this rule (optional).
+	VerifierPublicKey() ImagePublicKeyVerifier
+}
+
+// ImageKeylessVerifier represents a signature verification provider with keyless verification.
+type ImageKeylessVerifier interface {
+	// Issuer returns the OIDC issuer URL.
+	Issuer() string
+	// Subject returns the expected subject (email, URI, etc).
+	Subject() string
+	// SubjectRegex returns the regex pattern for subject matching.
+	SubjectRegex() string
+	// RekorURL returns the Rekor transparency log URL.
+	RekorURL() string
+}
+
+// ImagePublicKeyVerifier represents a signature verification provider with static public key.
+type ImagePublicKeyVerifier interface {
+	// Certificate returns a public certificate in PEM format accepted for image signature verification.
+	Certificate() string
+}

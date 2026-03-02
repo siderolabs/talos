@@ -34,6 +34,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/perf"
 	runtimecontrollers "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/secrets"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/security"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/siderolink"
 	timecontrollers "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/time"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/v1alpha1"
@@ -475,6 +476,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		secrets.NewRootOSController(),
 		&secrets.TrustedRootsController{},
 		&secrets.TrustdController{},
+		&security.ImageVerificationConfigController{},
 		&siderolink.ConfigController{
 			Cmdline:      procfs.ProcCmdline(),
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
