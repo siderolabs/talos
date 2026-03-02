@@ -9,12 +9,31 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"net/netip"
 	"os"
 	"path/filepath"
 
 	"github.com/containernetworking/cni/libcni"
 	yaml "go.yaml.in/yaml/v4"
 )
+
+// LoadBalancerConfig holds configuration for restarting the load balancer.
+type LoadBalancerConfig struct {
+	BindAddress string
+	Upstreams   []string
+	Ports       []int
+}
+
+// DHCPdConfig holds configuration for restarting the DHCP server.
+type DHCPdConfig struct {
+	GatewayAddrs   []netip.Addr
+	IPXEBootScript string
+}
+
+// DNSdConfig holds configuration for restarting the DNS server.
+type DNSdConfig struct {
+	GatewayAddrs []netip.Addr
+}
 
 // StateFileName is the name of the yaml state file.
 const StateFileName = "state.yaml"
@@ -27,6 +46,15 @@ type State struct {
 	ClusterInfo ClusterInfo
 
 	VMCNIConfig *libcni.NetworkConfigList
+
+	// SelfExecutable is the path to the talosctl binary used to launch helper services.
+	SelfExecutable string
+
+	// Helper service configurations for restart support.
+	LoadBalancerConfig *LoadBalancerConfig
+	DHCPdConfig        *DHCPdConfig
+	DNSdConfig         *DNSdConfig
+	CNIConfig          *CNIConfig
 
 	statePath string
 }

@@ -23,6 +23,12 @@ import (
 // starts the talos DHCP server and then starts the apple bootp server again, which is configured such
 // that it detects existing dhcp servers on interfaces and doesn't interfare with them.
 func (p *Provisioner) CreateDHCPd(ctx context.Context, state *provision.State, clusterReq provision.ClusterRequest) error {
+	state.DHCPdConfig = &provision.DHCPdConfig{
+		GatewayAddrs:   clusterReq.Network.GatewayAddrs,
+		IPXEBootScript: clusterReq.IPXEBootScript,
+	}
+	state.SelfExecutable = clusterReq.SelfExecutable
+
 	err := waitForInterface(ctx, state.BridgeName)
 	if err != nil {
 		return err
@@ -35,7 +41,7 @@ func (p *Provisioner) CreateDHCPd(ctx context.Context, state *provision.State, c
 		return fmt.Errorf("failed to stop native dhcp server: %w", err)
 	}
 
-	err = p.startDHCPd(state, clusterReq)
+	err = p.StartDHCPd(state)
 	if err != nil {
 		return err
 	}

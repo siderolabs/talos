@@ -275,9 +275,28 @@ const (
 	dhcpLog = "dhcpd.log"
 )
 
-// startDHCPd starts the DHCPd server.
-func (p *Provisioner) startDHCPd(state *provision.State, clusterReq provision.ClusterRequest) error {
+// DestroyDHCPd destoys load balancer.
+func (p *Provisioner) DestroyDHCPd(state *provision.State) error {
 	pidPath := state.GetRelativePath(dhcpPid)
+
+	return StopProcessByPidfile(pidPath)
+}
+
+// StartDHCPd starts the DHCP server if not already running, using saved state config.
+func (p *Provisioner) StartDHCPd(state *provision.State) error {
+	pidPath := state.GetRelativePath(dhcpPid)
+
+	if IsProcessRunning(pidPath) {
+		return nil
+	}
+
+	if state.DHCPdConfig == nil {
+		return fmt.Errorf("no DHCPd config in state; cluster was created with older talosctl, please destroy and recreate")
+	}
+
+	if state.SelfExecutable == "" {
+		return fmt.Errorf("no self executable path in state; cluster was created with older talosctl, please destroy and recreate")
+	}
 
 	logFile, err := os.OpenFile(state.GetRelativePath(dhcpLog), os.O_APPEND|os.O_CREATE|os.O_RDWR, 0o666)
 	if err != nil {
@@ -291,17 +310,17 @@ func (p *Provisioner) startDHCPd(state *provision.State, clusterReq provision.Cl
 		return err
 	}
 
-	gatewayAddrs := xslices.Map(clusterReq.Network.GatewayAddrs, netip.Addr.String)
+	gatewayAddrs := xslices.Map(state.DHCPdConfig.GatewayAddrs, netip.Addr.String)
 
 	args := []string{
 		"dhcpd-launch",
 		"--state-path", statePath,
 		"--addr", strings.Join(gatewayAddrs, ","),
 		"--interface", state.BridgeName,
-		"--ipxe-next-handler", clusterReq.IPXEBootScript,
+		"--ipxe-next-handler", state.DHCPdConfig.IPXEBootScript,
 	}
 
-	cmd := exec.Command(clusterReq.SelfExecutable, args...) //nolint:noctx // runs in background
+	cmd := exec.Command(state.SelfExecutable, args...) //nolint:noctx // runs in background
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile
 	cmd.SysProcAttr = &syscall.SysProcAttr{
@@ -317,11 +336,4 @@ func (p *Provisioner) startDHCPd(state *provision.State, clusterReq provision.Cl
 	}
 
 	return nil
-}
-
-// DestroyDHCPd destoys load balancer.
-func (p *Provisioner) DestroyDHCPd(state *provision.State) error {
-	pidPath := state.GetRelativePath(dhcpPid)
-
-	return StopProcessByPidfile(pidPath)
 }

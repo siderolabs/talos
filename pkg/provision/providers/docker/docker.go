@@ -130,6 +130,11 @@ func (p *provisioner) UserDiskName(index int) string {
 	return ""
 }
 
+// Start is not supported for docker provisioner.
+func (p *provisioner) Start(ctx context.Context, cluster provision.Cluster, opts ...provision.Option) error {
+	return fmt.Errorf("start is not supported for docker provisioner")
+}
+
 // GetFirstInterface returns first network interface name.
 func (p *provisioner) GetFirstInterface() v1alpha1.IfaceSelector {
 	return v1alpha1.IfaceByName(p.GetFirstInterfaceName())

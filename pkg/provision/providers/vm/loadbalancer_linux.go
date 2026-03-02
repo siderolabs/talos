@@ -6,7 +6,7 @@ package vm
 
 import "net/netip"
 
-// getLbBindIP returns the gateway address to bind the loadbalancer to the bridge interface.
-func getLbBindIP(gateway netip.Addr) string {
+// GetLbBindIP returns the gateway address to bind the loadbalancer to the bridge interface.
+func GetLbBindIP(gateway netip.Addr) string {
 	return gateway.String()
 }
