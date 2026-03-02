@@ -361,6 +361,14 @@ func (VolumeSelector) Doc() *encoder.Doc {
 				TypeName:  "VolumeDiscoverySpec",
 				FieldName: "volumeSelector",
 			},
+			{
+				TypeName:  "LVMPhysicalVolumeV1Alpha1",
+				FieldName: "deviceSelector",
+			},
+			{
+				TypeName:  "PhysicalVolumeSpec",
+				FieldName: "volumeSelector",
+			},
 		},
 		Fields: []encoder.Doc{
 			{
@@ -525,6 +533,185 @@ func (VirtiofsMountSpec) Doc() *encoder.Doc {
 				Note:        "",
 				Description: "Selector tag for the Virtiofs mount.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Selector tag for the Virtiofs mount." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (LVMLogicalVolumeV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "LVMLogicalVolumeV1Alpha1",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "LVMLogicalVolumeV1Alpha1 represents an LVM logical volume configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "LVMLogicalVolumeV1Alpha1 represents an LVM logical volume configuration.\n\ndescription: |\nLVMLogicalVolumeConfig defines an LVM Logical Volume within a Volume Group.\nexamples:\n  - value: exampleLVMLogicalVolumeV1Alpha1()\nalias: LVMLogicalVolume\nschemaRoot: true\nschemaMeta: v1alpha1/LVMLogicalVolume\n",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the logical volume.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the logical volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "lvType",
+				Type:        "string",
+				Note:        "",
+				Description: "Type of the logical volume.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Type of the logical volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"linear",
+				},
+			},
+			{
+				Name:        "provisioning",
+				Type:        "LVMLogicalVolumeProvisioning",
+				Note:        "",
+				Description: "Provisioning describes how the logical volume is provisioned.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Provisioning describes how the logical volume is provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (LVMLogicalVolumeProvisioning) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "LVMLogicalVolumeProvisioning",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "LVMLogicalVolumeProvisioning defines provisioning settings for a logical volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "LVMLogicalVolumeProvisioning defines provisioning settings for a logical volume.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "LVMLogicalVolumeV1Alpha1",
+				FieldName: "provisioning",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "managedBy",
+				Type:        "string",
+				Note:        "",
+				Description: "Specifies who manages this logical volume.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Specifies who manages this logical volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"talos",
+					"csi",
+				},
+			},
+			{
+				Name:        "volumeGroup",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the volume group this logical volume belongs to.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the volume group this logical volume belongs to." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "minSize",
+				Type:        "ByteSize",
+				Note:        "",
+				Description: "The minimum size of the logical volume.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 100MB.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The minimum size of the logical volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "maxSize",
+				Type:        "Size",
+				Note:        "",
+				Description: "The maximum size of the logical volume.\nIf not specified, the logical volume will use 100% of the free space in the volume group.\n\nSize is specified in bytes or in percents. It can be expressed in human readable format, e.g. 100MB.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The maximum size of the logical volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[2].AddExample("", "2.5GiB")
+	doc.Fields[3].AddExample("", "50GiB")
+	doc.Fields[3].AddExample("", "80%")
+
+	return doc
+}
+
+func (LVMPhysicalVolumeV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "LVMPhysicalVolumeV1Alpha1",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "LVMPhysicalVolumeV1Alpha1 represents an LVM physical volume configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "LVMPhysicalVolumeV1Alpha1 represents an LVM physical volume configuration.\n\ndescription: |\nLVMPhysicalVolumeConfig defines an LVM Physical Volume created from a disk or partition.\nPhysical volumes are selected using a CEL expression.\nexamples:\n  - value: exampleLVMPhysicalVolumeV1Alpha1()\nalias: LVMPhysicalVolume\nschemaRoot: true\nschemaMeta: v1alpha1/LVMPhysicalVolume\n",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the physical volume.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the physical volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "deviceSelector",
+				Type:        "VolumeSelector",
+				Note:        "",
+				Description: "Selector to dynamically select a disk or partition for the physical volume.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Selector to dynamically select a disk or partition for the physical volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (LVMVolumeGroupV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "LVMVolumeGroupV1Alpha1",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "LVMVolumeGroupV1Alpha1 represents an LVM volume group configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "LVMVolumeGroupV1Alpha1 represents an LVM volume group configuration.\n\ndescription: |\nLVMVolumeGroupConfig defines an LVM Volume Group composed from one or more\nphysical volumes. Physical volumes can be selected using a CEL expression.\nexamples:\n  - value: exampleLVMVolumeGroupV1Alpha1()\nalias: LVMVolumeGroup\nschemaRoot: true\nschemaMeta: v1alpha1/LVMVolumeGroup\n",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the volume group.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the volume group." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "physicalVolumes",
+				Type:        "PhysicalVolumeSpec",
+				Note:        "",
+				Description: "Specification of physical volumes that belong to this volume group.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Specification of physical volumes that belong to this volume group." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (PhysicalVolumeSpec) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "PhysicalVolumeSpec",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "PhysicalVolumeSpec defines how physical volumes are specified." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "PhysicalVolumeSpec defines how physical volumes are specified.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "LVMVolumeGroupV1Alpha1",
+				FieldName: "physicalVolumes",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "volumeSelector",
+				Type:        "VolumeSelector",
+				Note:        "",
+				Description: "Selector to dynamically select physical volumes based on attributes.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Selector to dynamically select physical volumes based on attributes." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
@@ -960,6 +1147,11 @@ func GetFileDoc() *encoder.FileDoc {
 			ExternalVolumeConfigV1Alpha1{}.Doc(),
 			ExternalMountSpec{}.Doc(),
 			VirtiofsMountSpec{}.Doc(),
+			LVMLogicalVolumeV1Alpha1{}.Doc(),
+			LVMLogicalVolumeProvisioning{}.Doc(),
+			LVMPhysicalVolumeV1Alpha1{}.Doc(),
+			LVMVolumeGroupV1Alpha1{}.Doc(),
+			PhysicalVolumeSpec{}.Doc(),
 			RawVolumeConfigV1Alpha1{}.Doc(),
 			SwapVolumeConfigV1Alpha1{}.Doc(),
 			UserVolumeConfigV1Alpha1{}.Doc(),

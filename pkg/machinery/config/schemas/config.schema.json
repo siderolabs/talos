@@ -389,6 +389,111 @@
       "type": "object",
       "description": "FilesystemSpec configures the filesystem for the volume."
     },
+    "block.LVMLogicalVolumeProvisioning": {
+      "properties": {
+        "managedBy": {
+          "type": "string",
+          "title": "managedBy",
+          "description": "Specifies who manages this logical volume.\n",
+          "markdownDescription": "Specifies who manages this logical volume.",
+          "x-intellij-html-description": "\u003cp\u003eSpecifies who manages this logical volume.\u003c/p\u003e\n"
+        },
+        "volumeGroup": {
+          "type": "string",
+          "title": "volumeGroup",
+          "description": "Name of the volume group this logical volume belongs to.\n",
+          "markdownDescription": "Name of the volume group this logical volume belongs to.",
+          "x-intellij-html-description": "\u003cp\u003eName of the volume group this logical volume belongs to.\u003c/p\u003e\n"
+        },
+        "minSize": {
+          "type": "string",
+          "title": "minSize",
+          "description": "The minimum size of the logical volume.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 100MB.\n",
+          "markdownDescription": "The minimum size of the logical volume.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 100MB.",
+          "x-intellij-html-description": "\u003cp\u003eThe minimum size of the logical volume.\u003c/p\u003e\n\n\u003cp\u003eSize is specified in bytes, but can be expressed in human readable format, e.g. 100MB.\u003c/p\u003e\n"
+        },
+        "maxSize": {
+          "type": "string",
+          "title": "maxSize",
+          "description": "The maximum size of the logical volume.\nIf not specified, the logical volume will use 100% of the free space in the volume group.\n\nSize is specified in bytes or in percents. It can be expressed in human readable format, e.g. 100MB.\n",
+          "markdownDescription": "The maximum size of the logical volume.\nIf not specified, the logical volume will use 100% of the free space in the volume group.\n\nSize is specified in bytes or in percents. It can be expressed in human readable format, e.g. 100MB.",
+          "x-intellij-html-description": "\u003cp\u003eThe maximum size of the logical volume.\nIf not specified, the logical volume will use 100% of the free space in the volume group.\u003c/p\u003e\n\n\u003cp\u003eSize is specified in bytes or in percents. It can be expressed in human readable format, e.g. 100MB.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "LVMLogicalVolumeProvisioning defines provisioning settings for a logical volume."
+    },
+    "block.LVMLogicalVolumeV1Alpha1": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the logical volume.\n",
+          "markdownDescription": "Name of the logical volume.",
+          "x-intellij-html-description": "\u003cp\u003eName of the logical volume.\u003c/p\u003e\n"
+        },
+        "lvType": {
+          "type": "string",
+          "title": "lvType",
+          "description": "Type of the logical volume.\n",
+          "markdownDescription": "Type of the logical volume.",
+          "x-intellij-html-description": "\u003cp\u003eType of the logical volume.\u003c/p\u003e\n"
+        },
+        "provisioning": {
+          "$ref": "#/$defs/block.LVMLogicalVolumeProvisioning",
+          "title": "provisioning",
+          "description": "Provisioning describes how the logical volume is provisioned.\n",
+          "markdownDescription": "Provisioning describes how the logical volume is provisioned.",
+          "x-intellij-html-description": "\u003cp\u003eProvisioning describes how the logical volume is provisioned.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "LVMLogicalVolumeV1Alpha1 represents an LVM logical volume configuration.\\n\\ndescription: |\\nLVMLogicalVolumeConfig defines an LVM Logical Volume within a Volume Group.\\nexamples:\\n  - value: exampleLVMLogicalVolumeV1Alpha1()\\nalias: LVMLogicalVolume\\nschemaRoot: true\\nschemaMeta: v1alpha1/LVMLogicalVolume\\n"
+    },
+    "block.LVMPhysicalVolumeV1Alpha1": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the physical volume.\n",
+          "markdownDescription": "Name of the physical volume.",
+          "x-intellij-html-description": "\u003cp\u003eName of the physical volume.\u003c/p\u003e\n"
+        },
+        "deviceSelector": {
+          "$ref": "#/$defs/block.VolumeSelector",
+          "title": "deviceSelector",
+          "description": "Selector to dynamically select a disk or partition for the physical volume.\n",
+          "markdownDescription": "Selector to dynamically select a disk or partition for the physical volume.",
+          "x-intellij-html-description": "\u003cp\u003eSelector to dynamically select a disk or partition for the physical volume.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "LVMPhysicalVolumeV1Alpha1 represents an LVM physical volume configuration.\\n\\ndescription: |\\nLVMPhysicalVolumeConfig defines an LVM Physical Volume created from a disk or partition.\\nPhysical volumes are selected using a CEL expression.\\nexamples:\\n  - value: exampleLVMPhysicalVolumeV1Alpha1()\\nalias: LVMPhysicalVolume\\nschemaRoot: true\\nschemaMeta: v1alpha1/LVMPhysicalVolume\\n"
+    },
+    "block.LVMVolumeGroupV1Alpha1": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the volume group.\n",
+          "markdownDescription": "Name of the volume group.",
+          "x-intellij-html-description": "\u003cp\u003eName of the volume group.\u003c/p\u003e\n"
+        },
+        "physicalVolumes": {
+          "$ref": "#/$defs/block.PhysicalVolumeSpec",
+          "title": "physicalVolumes",
+          "description": "Specification of physical volumes that belong to this volume group.\n",
+          "markdownDescription": "Specification of physical volumes that belong to this volume group.",
+          "x-intellij-html-description": "\u003cp\u003eSpecification of physical volumes that belong to this volume group.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "LVMVolumeGroupV1Alpha1 represents an LVM volume group configuration.\\n\\ndescription: |\\nLVMVolumeGroupConfig defines an LVM Volume Group composed from one or more\\nphysical volumes. Physical volumes can be selected using a CEL expression.\\nexamples:\\n  - value: exampleLVMVolumeGroupV1Alpha1()\\nalias: LVMVolumeGroup\\nschemaRoot: true\\nschemaMeta: v1alpha1/LVMVolumeGroup\\n"
+    },
     "block.MountSpec": {
       "properties": {
         "secure": {
@@ -402,6 +507,20 @@
       "additionalProperties": false,
       "type": "object",
       "description": "MountSpec describes how the volume is mounted."
+    },
+    "block.PhysicalVolumeSpec": {
+      "properties": {
+        "volumeSelector": {
+          "$ref": "#/$defs/block.VolumeSelector",
+          "title": "volumeSelector",
+          "description": "Selector to dynamically select physical volumes based on attributes.\n",
+          "markdownDescription": "Selector to dynamically select physical volumes based on attributes.",
+          "x-intellij-html-description": "\u003cp\u003eSelector to dynamically select physical volumes based on attributes.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "PhysicalVolumeSpec defines how physical volumes are specified."
     },
     "block.ProvisioningSpec": {
       "properties": {

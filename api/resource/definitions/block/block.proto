@@ -111,6 +111,40 @@ message FilesystemSpec {
   string label = 2;
 }
 
+// LVMLogicalVolumeSpec describes an LVM Logical Volume.
+message LVMLogicalVolumeSpec {
+  string name = 1;
+  string volume_group_name = 2;
+  uint64 size = 3;
+  talos.resource.definitions.enums.BlockLVType type = 4;
+  string uuid = 7;
+  string device_path = 8;
+  string symlink = 9;
+  string state = 10;
+}
+
+// LVMPhysicalVolumeSpec describes an LVM Physical Volume.
+message LVMPhysicalVolumeSpec {
+  string device_path = 1;
+  string volume_group_name = 2;
+  uint64 size = 3;
+  string uuid = 4;
+  uint64 allocated_extents = 5;
+  uint64 total_extents = 6;
+}
+
+// LVMVolumeGroupSpec describes an LVM Volume Group.
+message LVMVolumeGroupSpec {
+  string name = 1;
+  repeated string physical_volumes = 2;
+  uint64 total_size = 3;
+  uint64 free_size = 4;
+  string uuid = 5;
+  uint64 extent_size = 6;
+  uint32 logical_volumes_count = 7;
+  uint32 physical_volumes_count = 8;
+}
+
 // LocatorSpec is the spec for volume locator.
 message LocatorSpec {
   google.api.expr.v1alpha1.CheckedExpr match = 1;
