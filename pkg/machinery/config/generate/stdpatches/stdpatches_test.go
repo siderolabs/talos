@@ -48,6 +48,22 @@ func TestPatches(t *testing.T) {
 				assert.Equal(t, "hostname-1", cfg.NetworkHostnameConfig().Hostname())
 			},
 		},
+		{
+			name: "WithTrustedRoots",
+
+			patch: func(vc *config.VersionContract) ([]byte, error) {
+				return stdpatches.WithTrustedRoots(vc, "trusted-roots-1")
+			},
+
+			versionContracts: []*config.VersionContract{
+				config.TalosVersion1_12,
+			},
+			kubernetesVersion: "1.34.0",
+
+			assertion: func(t *testing.T, cfg config.Config) {
+				assert.Len(t, cfg.TrustedRoots().ExtraTrustedRootCertificates(), 1)
+			},
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()

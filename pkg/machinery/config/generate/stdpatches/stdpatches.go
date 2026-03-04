@@ -6,6 +6,8 @@
 package stdpatches
 
 import (
+	"fmt"
+
 	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
@@ -13,6 +15,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/security"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
@@ -33,6 +36,18 @@ func WithStaticHostname(versionContract *config.VersionContract, hostname string
 			},
 		},
 	})
+}
+
+// WithTrustedRoots returns a patch that sets trusted roots in the machine configuration.
+func WithTrustedRoots(versionContract *config.VersionContract, trustedRoots string) ([]byte, error) {
+	if versionContract.MultidocNetworkConfigSupported() {
+		trustedRootsConfig := security.NewTrustedRootsConfigV1Alpha1()
+		trustedRootsConfig.Certificates = trustedRoots
+
+		return patchFromDocument(trustedRootsConfig)
+	}
+
+	return nil, fmt.Errorf("trusted roots patch is not supported for version contract %s", versionContract.String())
 }
 
 func patchFromDocument(doc configconfig.Document) ([]byte, error) {
