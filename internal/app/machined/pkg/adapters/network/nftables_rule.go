@@ -93,25 +93,36 @@ func (set NfTablesSet) KeyType() nftables.SetDatatype {
 }
 
 // SetElements returns the set elements.
+//
+//nolint:gocyclo
 func (set NfTablesSet) SetElements() []nftables.SetElement {
 	switch set.Kind {
 	case SetKindIPv4, SetKindIPv6:
 		elements := make([]nftables.SetElement, 0, len(set.Addresses)*2)
 
 		for _, r := range set.Addresses {
-			fromBin, _ := r.From().MarshalBinary()    //nolint:errcheck // doesn't fail
-			toBin, _ := r.To().Next().MarshalBinary() //nolint:errcheck // doesn't fail
+			fromBin, _ := r.From().MarshalBinary() //nolint:errcheck // doesn't fail
 
 			elements = append(elements,
 				nftables.SetElement{
 					Key:         fromBin,
 					IntervalEnd: false,
 				},
-				nftables.SetElement{
+			)
+
+			// r.To().Next() overflows for the max address (255.255.255.255 or ffff:...:ffff),
+			// returning the zero Addr whose MarshalBinary() yields nil.
+			// In that case, omit the interval-end element — nftables treats the absence
+			// of an end boundary as extending to the maximum value.
+			next := r.To().Next()
+			if next.IsValid() {
+				toBin, _ := next.MarshalBinary() //nolint:errcheck // doesn't fail
+
+				elements = append(elements, nftables.SetElement{
 					Key:         toBin,
 					IntervalEnd: true,
-				},
-			)
+				})
+			}
 		}
 
 		return elements
@@ -122,18 +133,25 @@ func (set NfTablesSet) SetElements() []nftables.SetElement {
 
 		for _, p := range ports {
 			from := binaryutil.BigEndian.PutUint16(p[0])
-			to := binaryutil.BigEndian.PutUint16(p[1] + 1)
 
 			elements = append(elements,
 				nftables.SetElement{
 					Key:         from,
 					IntervalEnd: false,
 				},
-				nftables.SetElement{
-					Key:         to,
-					IntervalEnd: true,
-				},
 			)
+
+			// handle overflow of p[1]+1 for the max port 65535, as binaryutil.BigEndian.PutUint16(65536) returns 0
+			if p[1] != 65535 {
+				to := binaryutil.BigEndian.PutUint16(p[1] + 1)
+
+				elements = append(elements,
+					nftables.SetElement{
+						Key:         to,
+						IntervalEnd: true,
+					},
+				)
+			}
 		}
 
 		return elements

@@ -812,6 +812,55 @@ func TestNftablesSet(t *testing.T) { //nolint:tparallel
 				{Key: []uint8{0x13, 0x8a}, IntervalEnd: true},
 			},
 		},
+		{
+			name: "ports with overflow",
+
+			set: network.NfTablesSet{
+				Kind: network.SetKindPort,
+				Ports: [][2]uint16{
+					{65530, 65535},
+				},
+			},
+
+			expectedKeyType:  nftables.TypeInetService,
+			expectedInterval: true,
+			expectedData: []nftables.SetElement{ // network byte order
+				{Key: []uint8{0xff, 0xfa}, IntervalEnd: false}, // 65530-inf
+			},
+		},
+		{
+			name: "regular ip range",
+
+			set: network.NfTablesSet{
+				Kind: network.SetKindIPv4,
+				Addresses: []netipx.IPRange{
+					netipx.MustParseIPRange("10.0.0.0-10.0.0.255"),
+				},
+			},
+
+			expectedKeyType:  nftables.TypeIPAddr,
+			expectedInterval: true,
+			expectedData: []nftables.SetElement{ // network byte order
+				{Key: []uint8{10, 0, 0, 0}, IntervalEnd: false},
+				{Key: []uint8{10, 0, 1, 0}, IntervalEnd: true},
+			},
+		},
+		{
+			name: "ip range with overflow",
+
+			set: network.NfTablesSet{
+				Kind: network.SetKindIPv4,
+				Addresses: []netipx.IPRange{
+					netipx.MustParseIPRange("10.0.0.0-255.255.255.255"),
+				},
+			},
+
+			expectedKeyType:  nftables.TypeIPAddr,
+			expectedInterval: true,
+			expectedData: []nftables.SetElement{ // network byte order
+				{Key: []uint8{10, 0, 0, 0}, IntervalEnd: false}, // 10.0.0.0-inf
+			},
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			assert.Equal(t, test.expectedKeyType, test.set.KeyType())

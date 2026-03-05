@@ -557,6 +557,50 @@ func (s *NfTablesChainSuite) TestL4MatchAny() {
 }`)
 }
 
+func (s *NfTablesChainSuite) TestL4MatchAnyWithHole() {
+	chain := network.NewNfTablesChain(network.NamespaceName, "test-tcp")
+	chain.TypedSpec().Type = nethelpers.ChainTypeFilter
+	chain.TypedSpec().Hook = nethelpers.ChainHookInput
+	chain.TypedSpec().Priority = nethelpers.ChainPriorityFilter
+	chain.TypedSpec().Policy = nethelpers.VerdictAccept
+	chain.TypedSpec().Rules = []network.NfTablesRule{
+		{
+			MatchSourceAddress: &network.NfTablesAddressMatch{
+				IncludeSubnets: []netip.Prefix{
+					netip.MustParsePrefix("0.0.0.0/0"),
+					netip.MustParsePrefix("::/0"),
+				},
+				ExcludeSubnets: []netip.Prefix{
+					netip.MustParsePrefix("10.1.2.3/32"),
+					netip.MustParsePrefix("fe80::1/128"),
+				},
+			},
+			MatchLayer4: &network.NfTablesLayer4Match{
+				Protocol: nethelpers.ProtocolTCP,
+				MatchDestinationPort: &network.NfTablesPortMatch{
+					Ranges: []network.PortRange{
+						{
+							Lo: 1023,
+							Hi: 1023,
+						},
+					},
+				},
+			},
+			Verdict: new(nethelpers.VerdictAccept),
+		},
+	}
+
+	s.Require().NoError(s.State().Create(s.Ctx(), chain))
+
+	s.checkNftOutput(`table inet talos-test {
+	chain test-tcp {
+		type filter hook input priority filter; policy accept;
+		ip saddr { 0.0.0.0-10.1.2.2, 10.1.2.4-255.255.255.255 } tcp dport { 1023 } accept
+		ip6 saddr { ::-fe80::, fe80::2-ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff } tcp dport { 1023 } accept
+	}
+}`)
+}
+
 func (s *NfTablesChainSuite) TestICMPTypeMatch() {
 	chain := network.NewNfTablesChain(network.NamespaceName, "test-tcp")
 	chain.TypedSpec().Type = nethelpers.ChainTypeFilter
