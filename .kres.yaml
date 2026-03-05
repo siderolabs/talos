@@ -280,6 +280,9 @@ spec:
       crons:
         - '30 7 * * *'
       steps:
+        - name: login-to-registry
+          registryLoginStep:
+            registry: ghcr.io
         - name: local-grype-scan-result
           environment:
             DEST: _out
