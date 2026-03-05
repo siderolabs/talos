@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/safe"
+	"google.golang.org/grpc/codes"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/client"
@@ -105,10 +106,21 @@ func (suite *EnvironmentSuite) TestEnvironment() {
 }
 
 func (suite *EnvironmentSuite) validateEnvironment(node string, expectedVariables []string, shouldContain bool) bool {
+	suite.ClearConnectionRefused(suite.ctx, node)
+
 	ctx := client.WithNode(suite.ctx, node)
 
 	env, err := safe.StateGetByID[*runtime.Environment](ctx, suite.Client.COSI, "machined")
-	suite.Require().NoError(err)
+	if err != nil {
+		code := client.StatusCode(err)
+
+		switch code { //nolint:exhaustive
+		case codes.Unavailable, codes.Canceled, codes.NotFound:
+			return false
+		}
+
+		suite.Require().NoError(err)
+	}
 
 	for _, v := range expectedVariables {
 		if slices.Contains(env.TypedSpec().Variables, v) != shouldContain {
