@@ -19,6 +19,7 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops"
 	"github.com/siderolabs/talos/pkg/cluster/check"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/bundle"
 	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/access"
 )
@@ -156,10 +157,10 @@ func postCreate(
 		return nil
 	}
 
-	return bootstrapCluster(ctx, clusterAccess, cOps)
+	return bootstrapCluster(ctx, clusterAccess, cOps, clusterConfigs.ConfigBundle)
 }
 
-func bootstrapCluster(ctx context.Context, clusterAccess *access.Adapter, cOps clusterops.Common) error {
+func bootstrapCluster(ctx context.Context, clusterAccess *access.Adapter, cOps clusterops.Common, configBundle *bundle.Bundle) error {
 	if !cOps.WithInitNode {
 		if err := clusterAccess.Bootstrap(ctx, os.Stdout); err != nil {
 			return fmt.Errorf("bootstrap error: %w", err)
@@ -177,6 +178,12 @@ func bootstrapCluster(ctx context.Context, clusterAccess *access.Adapter, cOps c
 	checks := check.DefaultClusterChecks()
 
 	if cOps.SkipK8sNodeReadinessCheck {
+		checks = slices.Concat(check.PreBootSequenceChecks(), check.K8sComponentsReadinessChecks())
+	}
+
+	if configBundle.ControlPlaneCfg.Cluster().Network().CNI().Name() == "none" {
+		fmt.Println("CNI is disabled in MachineConfig, only performing essential readiness checks")
+
 		checks = slices.Concat(check.PreBootSequenceChecks(), check.K8sComponentsReadinessChecks())
 	}
 
