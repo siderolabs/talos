@@ -24,7 +24,6 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/action"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/pkg/cli"
-	"github.com/siderolabs/talos/pkg/images"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/version"
@@ -33,12 +32,19 @@ import (
 var upgradeCmdFlags struct {
 	trackableActionCmdFlags
 
+	factory      string
+	schematic    string
+	version      string
+	secureBoot   bool
+	platform     string
+
 	upgradeImage string
-	rebootMode   string
-	preserve     bool
-	stage        bool
-	force        bool
-	insecure     bool
+
+	rebootMode string
+	preserve   bool
+	stage      bool
+	force      bool
+	insecure   bool
 }
 
 // upgradeCmd represents the processes command.
@@ -63,8 +69,25 @@ var upgradeCmd = &cobra.Command{
 			return fmt.Errorf("invalid reboot mode: %s", upgradeCmdFlags.rebootMode)
 		}
 
+		var imageURL string
+		var err error
+
+		if upgradeCmdFlags.upgradeImage != "" {
+			// Legacy path: use provided image
+			imageURL = upgradeCmdFlags.upgradeImage
+			if upgradeCmdFlags.factory != "factory.talos.dev" || upgradeCmdFlags.schematic != "" ||
+				upgradeCmdFlags.version != "" || cmd.Flags().Changed("secure-boot") || upgradeCmdFlags.platform != "" {
+				cli.Warning("--image flag is set, ignoring component flags (--factory, --schematic, --version, --secure-boot, --platform)")
+			}
+		} else {
+			imageURL, err = buildUpgradeImage(cmd.Context(), cmd)
+			if err != nil {
+				return fmt.Errorf("failed to build upgrade image: %w", err)
+			}
+		}
+
 		opts := []client.UpgradeOption{
-			client.WithUpgradeImage(upgradeCmdFlags.upgradeImage),
+			client.WithUpgradeImage(imageURL),
 			client.WithUpgradeRebootMode(machine.UpgradeRequest_RebootMode(rebootMode)),
 			client.WithUpgradePreserve(upgradeCmdFlags.preserve),
 			client.WithUpgradeStage(upgradeCmdFlags.stage),
@@ -146,6 +169,68 @@ func upgradeGetActorID(ctx context.Context, c *client.Client, opts []client.Upgr
 	return resp.GetMessages()[0].GetActorId(), nil
 }
 
+// buildUpgradeImage constructs the Image Factory URL from component flags.
+func buildUpgradeImage(ctx context.Context, cmd *cobra.Command) (string, error) {
+	var machineCtx *helpers.MachineContext
+	var err error
+
+	err = WithClientNoNodes(func(ctx context.Context, c *client.Client) error {
+		machineCtx, err = helpers.QueryMachineContext(ctx, c)
+		return err
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to query machine context: %w", err)
+	}
+
+	factory := upgradeCmdFlags.factory
+
+	schematic := upgradeCmdFlags.schematic
+	if schematic == "" {
+		schematic = machineCtx.Schematic
+	}
+
+	targetVersion := upgradeCmdFlags.version
+	if targetVersion == "" {
+		targetVersion = version.Tag
+		fmt.Printf("No version specified, using talosctl version: %s\n", targetVersion)
+	}
+
+	secureBoot := machineCtx.SecureBoot
+	if cmd.Flags().Changed("secure-boot") {
+		secureBoot = upgradeCmdFlags.secureBoot
+	}
+
+	platform := upgradeCmdFlags.platform
+	if platform == "" {
+		platform = machineCtx.Platform
+	}
+
+	if err := helpers.ValidateUpgradeTransition(machineCtx, schematic, secureBoot, platform, targetVersion); err != nil {
+		if !upgradeCmdFlags.force {
+			return "", err
+		}
+
+		cli.Warning("Validation failed but continuing due to --force: %v", err)
+	}
+
+	// Build Image Factory URL
+	imageURL := helpers.BuildImageFactoryURL(factory, schematic, targetVersion, platform, secureBoot)
+
+	// Print upgrade plan
+	fmt.Printf("\nUpgrade Plan:\n")
+	fmt.Printf("Version:    %s → %s\n", machineCtx.Version, targetVersion)
+	fmt.Printf("Schematic:  %s %s\n", schematic,
+		helpers.Ternary(schematic == machineCtx.Schematic, "(unchanged)", "(CHANGED)"))
+	fmt.Printf("SecureBoot: %v %s\n", secureBoot,
+		helpers.Ternary(secureBoot == machineCtx.SecureBoot, "(unchanged)", "(CHANGED)"))
+	fmt.Printf("Platform:   %s %s\n", platform,
+		helpers.Ternary(platform == machineCtx.Platform, "(unchanged)", "(CHANGED)"))
+	fmt.Printf("Factory:    %s\n", factory)
+	fmt.Printf("Image:      %s\n\n", imageURL)
+
+	return imageURL, nil
+}
+
 func init() {
 	rebootModes := maps.Keys(machine.UpgradeRequest_RebootMode_value)
 	slices.SortFunc(rebootModes, func(a, b string) int {
@@ -154,9 +239,24 @@ func init() {
 
 	rebootModes = xslices.Map(rebootModes, strings.ToLower)
 
-	upgradeCmd.Flags().StringVarP(&upgradeCmdFlags.upgradeImage, "image", "i",
-		fmt.Sprintf("%s/%s/installer:%s", images.Registry, images.Username, version.Trim(version.Tag)),
-		"the container image to use for performing the install")
+	upgradeCmd.Flags().StringVar(&upgradeCmdFlags.factory, "factory", "factory.talos.dev",
+		"Image Factory host to use for building the installer image")
+	upgradeCmd.Flags().StringVar(&upgradeCmdFlags.schematic, "schematic", "",
+		"schematic ID for system extensions (defaults to current machine schematic)")
+	upgradeCmd.Flags().StringVar(&upgradeCmdFlags.version, "version", "",
+		"Talos version to upgrade to (defaults to talosctl binary version)")
+	upgradeCmd.Flags().BoolVar(&upgradeCmdFlags.secureBoot, "secure-boot", false,
+		"enable secure boot (if not specified, defaults to current machine setting)")
+	upgradeCmd.Flags().StringVar(&upgradeCmdFlags.platform, "platform", "",
+		"platform type (defaults to current machine platform)")
+
+	upgradeCmd.Flags().StringVarP(&upgradeCmdFlags.upgradeImage, "image", "i", "",
+		"the container image to use for performing the install (legacy, use component flags instead)")
+
+	if err := upgradeCmd.Flags().MarkHidden("image"); err != nil {
+		panic(err)
+	}
+
 	upgradeCmd.Flags().StringVarP(&upgradeCmdFlags.rebootMode, "reboot-mode", "m", strings.ToLower(machine.UpgradeRequest_DEFAULT.String()),
 		fmt.Sprintf("select the reboot mode during upgrade. Mode %q bypasses kexec. Valid values are: %q.",
 			strings.ToLower(machine.UpgradeRequest_POWERCYCLE.String()),
