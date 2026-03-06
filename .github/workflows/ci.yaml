@@ -33,7 +33,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -57,13 +57,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -97,7 +97,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -121,13 +121,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -173,7 +173,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -197,13 +197,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -263,7 +263,7 @@ jobs:
           retention-days: "5"
       - name: Retrieve PR labels
         id: retrieve-pr-labels
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # version: v8.0.0
+        uses: actions/github-script@450193c5abd4cdb17ba9f3ffcfe8f635c4bb6c2a # version: v8.0.0
         with:
           retries: "3"
           script: |
@@ -291,7 +291,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -315,7 +315,7 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
@@ -360,7 +360,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -384,7 +384,7 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
@@ -428,7 +428,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -452,7 +452,7 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
@@ -499,7 +499,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -523,19 +523,19 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: login-to-registry
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # version: v3.7.0
+        uses: docker/login-action@db14339dbc0a1f0b184157be94b23a2138122354 # version: v3.7.0
         with:
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
@@ -571,7 +571,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -595,13 +595,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -695,7 +695,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -719,13 +719,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -788,7 +788,7 @@ jobs:
         run: |
           make e2e-aws-prepare
       - name: checkout contrib
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
         with:
           path: _out/contrib
           ref: main
@@ -831,7 +831,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -855,13 +855,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -915,7 +915,7 @@ jobs:
         run: |
           make image-aws
       - name: checkout extensions
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
         with:
           path: _out/extensions
           ref: main
@@ -938,7 +938,7 @@ jobs:
         run: |
           make e2e-aws-prepare
       - name: checkout contrib
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
         with:
           path: _out/contrib
           ref: main
@@ -984,7 +984,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1008,13 +1008,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -1068,7 +1068,7 @@ jobs:
         run: |
           make image-aws
       - name: checkout extensions
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
         with:
           path: _out/extensions
           ref: main
@@ -1091,7 +1091,7 @@ jobs:
         run: |
           make e2e-aws-prepare
       - name: checkout contrib
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
         with:
           path: _out/contrib
           ref: main
@@ -1137,7 +1137,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1161,13 +1161,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -1221,7 +1221,7 @@ jobs:
         run: |
           make image-aws
       - name: checkout extensions
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
         with:
           path: _out/extensions
           ref: main
@@ -1244,7 +1244,7 @@ jobs:
         run: |
           make e2e-aws-prepare
       - name: checkout contrib
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
         with:
           path: _out/contrib
           ref: main
@@ -1290,7 +1290,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1314,13 +1314,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -1374,7 +1374,7 @@ jobs:
         run: |
           make image-aws
       - name: checkout extensions
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
         with:
           path: _out/extensions
           ref: main
@@ -1397,7 +1397,7 @@ jobs:
         run: |
           make e2e-aws-prepare
       - name: checkout contrib
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
         with:
           path: _out/contrib
           ref: main
@@ -1443,7 +1443,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1467,13 +1467,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -1564,7 +1564,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1588,13 +1588,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -1651,7 +1651,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1675,13 +1675,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -1746,7 +1746,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1770,13 +1770,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -1858,7 +1858,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1882,13 +1882,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -1948,7 +1948,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -1972,13 +1972,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -2014,7 +2014,7 @@ jobs:
         run: |
           make talosctl-cni-bundle
       - name: checkout extensions
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
         with:
           path: _out/extensions
           ref: main
@@ -2073,7 +2073,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2097,13 +2097,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -2163,7 +2163,7 @@ jobs:
         run: |
           make e2e-gcp-prepare
       - name: checkout contrib
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
         with:
           path: _out/contrib
           ref: main
@@ -2206,7 +2206,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2230,13 +2230,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -2315,7 +2315,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2339,13 +2339,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -2487,7 +2487,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2511,13 +2511,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -2569,7 +2569,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2593,13 +2593,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -2704,7 +2704,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2728,13 +2728,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -2825,7 +2825,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2849,13 +2849,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -2973,7 +2973,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -2997,13 +2997,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -3137,7 +3137,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3161,13 +3161,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -3246,7 +3246,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3270,13 +3270,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -3379,7 +3379,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3403,13 +3403,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -3507,7 +3507,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3531,13 +3531,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -3662,7 +3662,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3686,13 +3686,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -3770,7 +3770,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3794,13 +3794,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -3864,7 +3864,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3888,13 +3888,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -3966,7 +3966,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -3990,13 +3990,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -4064,7 +4064,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4088,13 +4088,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -4130,7 +4130,7 @@ jobs:
         run: |
           make talosctl-cni-bundle
       - name: checkout extensions
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
         with:
           path: _out/extensions
           ref: main
@@ -4201,7 +4201,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4225,13 +4225,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -4308,7 +4308,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4332,13 +4332,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -4414,7 +4414,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4438,13 +4438,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -4513,7 +4513,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4537,13 +4537,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -4628,7 +4628,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4652,13 +4652,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -4737,7 +4737,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4761,13 +4761,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -4806,7 +4806,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4830,13 +4830,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -4923,7 +4923,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -4947,13 +4947,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -5040,7 +5040,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -5064,13 +5064,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -5084,7 +5084,7 @@ jobs:
         run: |
           make release-notes
       - name: login-to-registry
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # version: v3.7.0
+        uses: docker/login-action@db14339dbc0a1f0b184157be94b23a2138122354 # version: v3.7.0
         with:
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
@@ -5114,7 +5114,7 @@ jobs:
     steps:
       - name: gather-system-info
         id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        uses: kenchan0130/actions-system-info@3f60d5f86873e27c6169923c9741ca2ae1f431b3 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
         run: |
@@ -5138,13 +5138,13 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        uses: actions/checkout@0c366fd6a839edf440554fa01a7085ccba70ac98 # version: v6.0.2
       - name: Unshallow
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@8f54c6f8864eed1921d50086061f664945fcc305 # version: v3.12.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -5167,7 +5167,7 @@ jobs:
         run: |
           make sbom
       - name: login-to-registry
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # version: v3.7.0
+        uses: docker/login-action@db14339dbc0a1f0b184157be94b23a2138122354 # version: v3.7.0
         with:
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
@@ -5183,7 +5183,7 @@ jobs:
         run: |
           make images
       - name: Install Cosign
-        uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # version: v4.0.0
+        uses: sigstore/cosign-installer@a6fdd19182ff7fb86ae39a9329ba29eb602cbabb # version: v4.0.0
       - name: Sign artifacts
         run: |
           cosign sign-blob --bundle _out/initramfs-amd64.xz.bundle --yes _out/initramfs-amd64.xz
@@ -5223,7 +5223,7 @@ jobs:
           cosign sign-blob --bundle sha256sum.txt.bundle --yes sha256sum.txt
           cosign sign-blob --bundle sha512sum.txt.bundle --yes sha512sum.txt
       - name: release
-        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # version: v2.5.0
+        uses: softprops/action-gh-release@e798e6a1ede8d07b74ac4cdac6bdfa4cc1653907 # version: v2.5.0
         with:
           body_path: _out/RELEASE_NOTES.md
           draft: "true"
