@@ -54,4 +54,7 @@ type Config interface { //nolint:interfacebloat
 	TrustedRoots() TrustedRootsConfig
 	PCIDriverRebindConfig() PCIDriverRebindConfig
 	OOMConfig() OOMConfig
+
+	// - k8s:
+	EtcdEncryption() EtcdEncryptionConfig
 }
