@@ -43,6 +43,7 @@ type NetworkInfo struct {
 	GatewayAddrs      []netip.Addr
 	MTU               int
 	NoMasqueradeCIDRs []netip.Prefix
+	IPMasquerade      bool
 }
 
 // NodeInfo describes a node.
