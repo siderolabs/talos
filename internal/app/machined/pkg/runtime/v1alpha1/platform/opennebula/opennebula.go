@@ -36,9 +36,126 @@ func (o *OpenNebula) Name() string {
 	return "opennebula"
 }
 
+// parseRouteFields extracts the destination prefix, gateway string, and optional
+// metric string from the fields of a single route entry.
+//
+// The reference one-apps implementation (context-linux) always parses routes as:
+//
+//	rsplit=( ${route} ); dst="${rsplit[0]}"; gw="${rsplit[2]}"
+//
+// meaning token[1] is always skipped and the gateway is always at token[2].
+// The canonical format is "DEST/PREFIX via GW" where "via" occupies token[1].
+// The legacy dotted-mask format "DEST MASK GW" follows the same index layout.
+//
+// As a Talos extension, an optional bare metric may follow the gateway.
+func parseRouteFields(parts []string) (dest netip.Prefix, gwStr, metricStr string, err error) {
+	// Both CIDR ("DEST/PREFIX via GW") and legacy ("DEST MASK GW") formats
+	// require at least 3 tokens, with the gateway always at index 2.
+	if len(parts) < 3 {
+		return dest, "", "", fmt.Errorf("expected at least 3 fields (DEST/PREFIX via GW or DEST MASK GW)")
+	}
+
+	if strings.Contains(parts[0], "/") {
+		// CIDR format: "DEST/PREFIX via GW [METRIC]"
+		// parts[1] is the separator token (conventionally "via") and is skipped,
+		// matching the reference rsplit[1] which is never read.
+		dest, err = netip.ParsePrefix(parts[0])
+		if err != nil {
+			return dest, "", "", fmt.Errorf("failed to parse destination: %w", err)
+		}
+
+		dest = dest.Masked()
+	} else {
+		// Legacy format: "DEST MASK GW [METRIC]"
+		var prefix netip.Prefix
+
+		prefix, err = address.IPPrefixFrom(parts[0], parts[1])
+		if err != nil {
+			return dest, "", "", fmt.Errorf("failed to parse destination: %w", err)
+		}
+
+		dest = prefix.Masked()
+	}
+
+	gwStr = parts[2]
+
+	if len(parts) >= 4 {
+		metricStr = parts[3]
+	}
+
+	return dest, gwStr, metricStr, nil
+}
+
+// parseRouteEntry parses a single trimmed route entry into a RouteSpecSpec.
+func parseRouteEntry(entry, linkName string) (network.RouteSpecSpec, error) {
+	dest, gwStr, metricStr, err := parseRouteFields(strings.Fields(entry))
+	if err != nil {
+		return network.RouteSpecSpec{}, fmt.Errorf("route entry %q: %w", entry, err)
+	}
+
+	gw, err := netip.ParseAddr(gwStr)
+	if err != nil {
+		return network.RouteSpecSpec{}, fmt.Errorf("route entry %q: failed to parse gateway: %w", entry, err)
+	}
+
+	metric := uint32(network.DefaultRouteMetric)
+
+	if metricStr != "" {
+		m, err := strconv.ParseUint(metricStr, 10, 32)
+		if err != nil {
+			return network.RouteSpecSpec{}, fmt.Errorf("route entry %q: failed to parse metric: %w", entry, err)
+		}
+
+		metric = uint32(m)
+	}
+
+	family := nethelpers.FamilyInet4
+	if gw.Is6() {
+		family = nethelpers.FamilyInet6
+	}
+
+	route := network.RouteSpecSpec{
+		ConfigLayer: network.ConfigPlatform,
+		Destination: dest,
+		Gateway:     gw,
+		OutLinkName: linkName,
+		Table:       nethelpers.TableMain,
+		Protocol:    nethelpers.ProtocolStatic,
+		Type:        nethelpers.TypeUnicast,
+		Family:      family,
+		Priority:    metric,
+	}
+
+	route.Normalize()
+
+	return route, nil
+}
+
+// ParseRoutes parses the ETH*_ROUTES variable into RouteSpecSpec entries.
+// Multiple routes are separated by commas.
+func ParseRoutes(routesStr, linkName string) ([]network.RouteSpecSpec, error) {
+	var routes []network.RouteSpecSpec
+
+	for entry := range strings.SplitSeq(routesStr, ",") {
+		entry = strings.TrimSpace(entry)
+		if entry == "" {
+			continue
+		}
+
+		route, err := parseRouteEntry(entry, linkName)
+		if err != nil {
+			return nil, err
+		}
+
+		routes = append(routes, route)
+	}
+
+	return routes, nil
+}
+
 // ParseMetadata converts opennebula metadata to platform network config.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (o *OpenNebula) ParseMetadata(st state.State, oneContextPlain []byte) (*runtime.PlatformNetworkConfig, error) {
 	// Initialize the PlatformNetworkConfig
 	networkConfig := &runtime.PlatformNetworkConfig{}
@@ -154,6 +271,15 @@ func (o *OpenNebula) ParseMetadata(st state.State, oneContextPlain []byte) (*run
 					route.Normalize()
 
 					networkConfig.Routes = append(networkConfig.Routes, route)
+				}
+
+				if routesStr := oneContext[ifaceName+"_ROUTES"]; routesStr != "" {
+					staticRoutes, err := ParseRoutes(routesStr, ifaceNameLower)
+					if err != nil {
+						return nil, fmt.Errorf("interface %s: %w", ifaceName, err)
+					}
+
+					networkConfig.Routes = append(networkConfig.Routes, staticRoutes...)
 				}
 
 				// Parse DNS servers

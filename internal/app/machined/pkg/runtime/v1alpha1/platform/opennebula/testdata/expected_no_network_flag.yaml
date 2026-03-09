@@ -26,6 +26,30 @@ routes:
       flags: ""
       protocol: static
       layer: platform
+    - family: inet4
+      dst: 10.0.0.0/8
+      src: ""
+      gateway: 192.168.1.1
+      outLinkName: eth0
+      table: main
+      priority: 1024
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+    - family: inet4
+      dst: 172.16.0.0/16
+      src: ""
+      gateway: 192.168.1.1
+      outLinkName: eth0
+      table: main
+      priority: 500
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
 hostnames:
     - hostname: code-server
       domainname: ""
