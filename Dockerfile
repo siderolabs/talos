@@ -783,6 +783,9 @@ RUN <<END
     ln -s /etc/ssl /rootfs/usr/share/ca-certificates
     ln -s /etc/ssl /rootfs/usr/local/share/ca-certificates
     ln -s /etc/ssl /rootfs/etc/ca-certificates
+    ln -s /usr/local/bin/nvidia-smi /rootfs/usr/bin/nvidia-smi
+    ln -s ../usr/local/glibc/etc/ld.so.conf /rootfs/etc/ld.so.conf
+    ln -s ../usr/local/glibc/etc/ld.so.cache /rootfs/etc/ld.so.cache
 END
 
 FROM build AS rootfs-base-arm64
@@ -870,6 +873,9 @@ RUN <<END
     ln -s /etc/ssl /rootfs/usr/share/ca-certificates
     ln -s /etc/ssl /rootfs/usr/local/share/ca-certificates
     ln -s /etc/ssl /rootfs/etc/ca-certificates
+    ln -s /usr/local/bin/nvidia-smi /rootfs/usr/bin/nvidia-smi
+    ln -s ../usr/local/glibc/etc/ld.so.conf /rootfs/etc/ld.so.conf
+    ln -s ../usr/local/glibc/etc/ld.so.cache /rootfs/etc/ld.so.cache
 END
 
 FROM build-go AS build-sbom

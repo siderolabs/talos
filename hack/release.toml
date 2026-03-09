@@ -274,7 +274,7 @@ This change is transparent to users but standardizes the backend used for upgrad
     [notes.container_device_interface]
         title = "Container Device Interface"
         description = """\
-Talos now enables [CDI](https://github.com/cncf-tags/container-device-interface) dy default and extension/extension services can bring in dynamic
+Talos now enables [CDI](https://github.com/cncf-tags/container-device-interface) by default and extension/extension services can bring in dynamic
 CDI spec files under `/run/cdi`.
 """"
 

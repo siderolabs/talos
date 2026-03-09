@@ -203,7 +203,13 @@ func (suite *SELinuxSuite) checkFileLabels(nodes []string, expectedLabels map[st
 					return nil
 				}
 
-				suite.Require().NotNil(info.Xattrs)
+				// these are symlinks that comes from files from extensions, and we don't set xattrs for extensions yet
+				// TODO(frezbo): update the test to check for correct labels once we set xattrs for extensions
+				if info.Name == "/etc/ld.so.conf" || info.Name == "/etc/ld.so.cache" || info.Name == "/usr/bin/nvidia-smi" {
+					return nil
+				}
+
+				suite.Require().NotNil(info.Xattrs, "expected %s to have xattrs (checking %s)", info.Name, path)
 
 				found := false
 
@@ -218,7 +224,7 @@ func (suite *SELinuxSuite) checkFileLabels(nodes []string, expectedLabels map[st
 					}
 				}
 
-				suite.Require().True(found)
+				suite.Require().True(found, "expected to find security.selinux xattr for %s (checking %s)", info.Name, path)
 
 				return nil
 			})
