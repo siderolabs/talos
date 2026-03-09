@@ -174,6 +174,25 @@ func (o *OpenNebula) ParseMetadata(st state.State, oneContextPlain []byte) (*run
 		}
 	}
 
+	// Seed the merged DNS/search-domain slices with global variables (DNS,
+	// SEARCH_DOMAIN). These are applied regardless of interface, matching the
+	// reference get_nameservers()/get_searchdomains() which processes global
+	// variables before per-interface ones.
+	var allDNSIPs []netip.Addr
+
+	var allSearchDomains []string
+
+	for s := range strings.FieldsSeq(oneContext["DNS"]) {
+		ip, err := netip.ParseAddr(s)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse global DNS server %q: %w", s, err)
+		}
+
+		allDNSIPs = append(allDNSIPs, ip)
+	}
+
+	allSearchDomains = append(allSearchDomains, strings.Fields(oneContext["SEARCH_DOMAIN"])...)
+
 	// Iterate through parsed environment variables looking for ETHn_MAC keys.
 	// The presence of ETHn_MAC is the sole trigger for interface configuration,
 	// matching the behavior of the official OpenNebula guest contextualization
@@ -282,30 +301,31 @@ func (o *OpenNebula) ParseMetadata(st state.State, oneContextPlain []byte) (*run
 					networkConfig.Routes = append(networkConfig.Routes, staticRoutes...)
 				}
 
-				// Parse DNS servers
-				dnsServers := strings.Fields(oneContext[ifaceName+"_DNS"])
-
-				var dnsIPs []netip.Addr
-
-				for _, dnsServer := range dnsServers {
-					ip, err := netip.ParseAddr(dnsServer)
+				// Accumulate per-interface DNS servers and search domains into
+				// the shared slices (global values were seeded before the loop).
+				for s := range strings.FieldsSeq(oneContext[ifaceName+"_DNS"]) {
+					ip, err := netip.ParseAddr(s)
 					if err != nil {
-						return nil, fmt.Errorf("failed to parse DNS server IP: %w", err)
+						return nil, fmt.Errorf("interface %s: failed to parse DNS server %q: %w", ifaceName, s, err)
 					}
 
-					dnsIPs = append(dnsIPs, ip)
+					allDNSIPs = append(allDNSIPs, ip)
 				}
 
-				// Create ResolverSpecSpec entry with multiple DNS servers
-				networkConfig.Resolvers = append(networkConfig.Resolvers,
-					network.ResolverSpecSpec{
-						DNSServers:  dnsIPs,
-						ConfigLayer: network.ConfigPlatform,
-					},
-				)
+				allSearchDomains = append(allSearchDomains, strings.Fields(oneContext[ifaceName+"_SEARCH_DOMAIN"])...)
 			}
 		}
 	}
+	// Emit a single merged ResolverSpecSpec combining global and per-interface
+	// values, matching the reference single /etc/resolv.conf output.
+	if len(allDNSIPs) > 0 || len(allSearchDomains) > 0 {
+		networkConfig.Resolvers = append(networkConfig.Resolvers, network.ResolverSpecSpec{
+			DNSServers:    allDNSIPs,
+			SearchDomains: allSearchDomains,
+			ConfigLayer:   network.ConfigPlatform,
+		})
+	}
+
 	// Create HostnameSpecSpec entry
 	networkConfig.Hostnames = append(networkConfig.Hostnames,
 		network.HostnameSpecSpec{
