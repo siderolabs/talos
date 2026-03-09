@@ -11,6 +11,7 @@ import (
 	stderrors "errors"
 	"fmt"
 	"net/netip"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -34,6 +35,86 @@ type OpenNebula struct{}
 // Name implements the runtime.Platform interface.
 func (o *OpenNebula) Name() string {
 	return "opennebula"
+}
+
+// isDigitsOnly returns true if s is non-empty and contains only ASCII digits.
+func isDigitsOnly(s string) bool {
+	for _, c := range s {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+
+	return s != ""
+}
+
+// collectAliasNames scans oneContext for keys of the form
+// <aliasPrefix><digits>_MAC and returns the sorted list of alias base names
+// (e.g. "ETH0_ALIAS0", "ETH0_ALIAS1").
+func collectAliasNames(oneContext map[string]string, aliasPrefix string) []string {
+	seen := map[string]bool{}
+
+	var aliasNames []string
+
+	for key := range oneContext {
+		if !strings.HasPrefix(key, aliasPrefix) || !strings.HasSuffix(key, "_MAC") {
+			continue
+		}
+
+		middle := strings.TrimPrefix(strings.TrimSuffix(key, "_MAC"), aliasPrefix)
+		if !isDigitsOnly(middle) {
+			continue
+		}
+
+		aliasName := aliasPrefix + middle
+		if !seen[aliasName] {
+			seen[aliasName] = true
+			aliasNames = append(aliasNames, aliasName)
+		}
+	}
+
+	slices.Sort(aliasNames)
+
+	return aliasNames
+}
+
+// parseAliases collects ETHn_ALIASm_* address entries for a given interface.
+// An alias is skipped when DETACH is non-empty OR EXTERNAL=YES, matching the
+// reference netcfg-networkd behavior (lines 395-400).
+func parseAliases(oneContext map[string]string, ifaceName, ifaceNameLower string) ([]network.AddressSpecSpec, error) {
+	aliasNames := collectAliasNames(oneContext, ifaceName+"_ALIAS")
+
+	var addrs []network.AddressSpecSpec
+
+	for _, aliasName := range aliasNames {
+		// Skip detached aliases — reference: [ -z "${detach}" ]
+		if oneContext[aliasName+"_DETACH"] != "" {
+			continue
+		}
+
+		// Skip externally managed aliases — reference: ! is_true "${external}"
+		if strings.EqualFold(oneContext[aliasName+"_EXTERNAL"], "yes") {
+			continue
+		}
+
+		if ipStr := oneContext[aliasName+"_IP"]; ipStr != "" {
+			ipPrefix, err := address.IPPrefixFrom(ipStr, oneContext[aliasName+"_MASK"])
+			if err != nil {
+				return nil, fmt.Errorf("alias %s: failed to parse IPv4: %w", aliasName, err)
+			}
+
+			addrs = append(addrs, network.AddressSpecSpec{
+				Address:     ipPrefix,
+				LinkName:    ifaceNameLower,
+				Family:      nethelpers.FamilyInet4,
+				Scope:       nethelpers.ScopeGlobal,
+				Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+				ConfigLayer: network.ConfigPlatform,
+			})
+		}
+	}
+
+	return addrs, nil
 }
 
 // parseRouteFields extracts the destination prefix, gateway string, and optional
@@ -204,6 +285,13 @@ func (o *OpenNebula) ParseMetadata(st state.State, oneContextPlain []byte) (*run
 	for key := range oneContext {
 		if strings.HasPrefix(key, "ETH") && strings.HasSuffix(key, "_MAC") {
 			ifaceName := strings.TrimSuffix(key, "_MAC")
+			// Skip alias MAC keys (e.g. ETH0_ALIAS0_MAC); only process
+			// top-level interface keys of the form ETH<digits>_MAC,
+			// matching the reference get_context_interfaces() regex ETH[0-9]+.
+			if !isDigitsOnly(strings.TrimPrefix(ifaceName, "ETH")) {
+				continue
+			}
+
 			ifaceNameLower := strings.ToLower(ifaceName)
 
 			if oneContext[ifaceName+"_METHOD"] == "dhcp" {
@@ -314,6 +402,15 @@ func (o *OpenNebula) ParseMetadata(st state.State, oneContextPlain []byte) (*run
 
 				allSearchDomains = append(allSearchDomains, strings.Fields(oneContext[ifaceName+"_SEARCH_DOMAIN"])...)
 			}
+
+			// Process alias addresses for this interface (applies to both
+			// static and DHCP interfaces, matching the reference behavior).
+			aliasAddrs, err := parseAliases(oneContext, ifaceName, ifaceNameLower)
+			if err != nil {
+				return nil, err
+			}
+
+			networkConfig.Addresses = append(networkConfig.Addresses, aliasAddrs...)
 		}
 	}
 	// Emit a single merged ResolverSpecSpec combining global and per-interface
