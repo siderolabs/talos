@@ -765,6 +765,7 @@ talosctl images default | talosctl images cache-create --image-cache-path=/tmp/t
 			imageCacheCreateCmdFlags.imageLayerCachePath,
 			imageCacheCreateCmdFlags.imageCachePath,
 			imageCacheCreateCmdFlags.layout.String() == layoutFlat,
+			imageCacheCreateCmdFlags.cosignSignatures,
 		)
 		if err != nil {
 			return fmt.Errorf("error generating cache: %w", err)
@@ -787,8 +788,9 @@ var imageCacheCreateCmdFlags = struct {
 
 	images []string
 
-	insecure bool
-	force    bool
+	insecure         bool
+	force            bool
+	cosignSignatures bool
 }{
 	layout: flags.StringChoice(layoutOCI, layoutFlat),
 }
@@ -1020,6 +1022,7 @@ func init() {
 	imageCacheCreateCmd.MarkPersistentFlagRequired("images") //nolint:errcheck
 	imageCacheCreateCmd.PersistentFlags().BoolVar(&imageCacheCreateCmdFlags.insecure, "insecure", false, "allow insecure registries")
 	imageCacheCreateCmd.PersistentFlags().BoolVar(&imageCacheCreateCmdFlags.force, "force", false, "force overwrite of existing image cache")
+	imageCacheCreateCmd.PersistentFlags().BoolVar(&imageCacheCreateCmdFlags.cosignSignatures, "cosign-signatures", true, "pull and cache cosign signatures for images")
 
 	imageCmd.AddCommand(imageCacheServeCmd)
 	imageCacheServeCmd.PersistentFlags().StringVar(&imageCacheServeCmdFlags.imageCachePath, "image-cache-path", "", "directory to save the image cache in flat format")

@@ -313,18 +313,30 @@ func getManifestData(ctx context.Context, store content.Store, ref reference.Can
 	}
 
 	var manifest struct {
-		MediaType string `json:"mediaType"`
+		MediaType string          `json:"mediaType"`
+		Manifests json.RawMessage `json:"manifests"`
+		Layers    json.RawMessage `json:"layers"`
+		Config    json.RawMessage `json:"config"`
 	}
 
 	if err = json.Unmarshal(manifestBlob, &manifest); err != nil {
 		return "", nil, xerrors.NewTaggedf[internalErrorTag]("failed to unmarshal manifest: %w", err)
 	}
 
-	if manifest.MediaType == "" {
-		return "", nil, xerrors.NewTaggedf[internalErrorTag]("media type is empty")
+	mediaType := manifest.MediaType
+	if mediaType == "" {
+		// OCI manifests may omit the top-level mediaType field; infer from structure.
+		switch {
+		case manifest.Manifests != nil:
+			mediaType = ocispec.MediaTypeImageIndex
+		case manifest.Layers != nil || manifest.Config != nil:
+			mediaType = ocispec.MediaTypeImageManifest
+		default:
+			return "", nil, xerrors.NewTaggedf[internalErrorTag]("media type is empty and cannot be inferred")
+		}
 	}
 
-	return manifest.MediaType, manifestBlob, nil
+	return mediaType, manifestBlob, nil
 }
 
 type canonical struct {

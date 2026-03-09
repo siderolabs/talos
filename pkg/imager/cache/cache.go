@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -31,6 +32,7 @@ import (
 	"github.com/google/go-containerregistry/pkg/v1/layout"
 	"github.com/google/go-containerregistry/pkg/v1/mutate"
 	"github.com/google/go-containerregistry/pkg/v1/remote"
+	"github.com/google/go-containerregistry/pkg/v1/remote/transport"
 	"github.com/google/go-containerregistry/pkg/v1/types"
 	"github.com/siderolabs/go-retry/retry"
 
@@ -60,7 +62,7 @@ func rewriteRegistry(registryName, origRef string) string {
 // Generate generates a cache tarball from the given images.
 //
 //nolint:gocyclo,cyclop
-func Generate(images []string, platforms []string, insecure bool, imageLayerCachePath, dest string, flat bool) error {
+func Generate(images []string, platforms []string, insecure bool, imageLayerCachePath, dest string, flat bool, withCosignSignatures bool) error {
 	tmpDir, err := os.MkdirTemp("", "talos-image-cache-gen")
 	if err != nil {
 		return fmt.Errorf("creating temporary directory: %w", err)
@@ -91,23 +93,25 @@ func Generate(images []string, platforms []string, insecure bool, imageLayerCach
 
 		var nameOptions []name.Option
 
+		keychain := authn.NewMultiKeychain(
+			authn.DefaultKeychain,
+			github.Keychain,
+			google.Keychain,
+		)
+
 		craneOpts := []crane.Option{
-			crane.WithAuthFromKeychain(
-				authn.NewMultiKeychain(
-					authn.DefaultKeychain,
-					github.Keychain,
-					google.Keychain,
-				),
-			),
+			crane.WithAuthFromKeychain(keychain),
 		}
 
 		remoteOpts := []remote.Option{
-			remote.WithAuthFromKeychain(authn.NewMultiKeychain(
-				authn.DefaultKeychain,
-				github.Keychain,
-				google.Keychain,
-			)),
+			remote.WithAuthFromKeychain(keychain),
 			remote.WithPlatform(*v1Platform),
+		}
+
+		// sigRemoteOpts is used for fetching cosign signatures - no platform resolution
+		// since signatures are platform-independent and may be stored as OCI image indexes.
+		sigRemoteOpts := []remote.Option{
+			remote.WithAuthFromKeychain(keychain),
 		}
 
 		if insecure {
@@ -124,7 +128,7 @@ func Generate(images []string, platforms []string, insecure bool, imageLayerCach
 			)
 
 			err := r.Retry(func() error {
-				if err := processImage(src, tmpDir, imageLayerCachePath, nameOptions, craneOpts, remoteOpts); err != nil {
+				if err := processImage(src, tmpDir, imageLayerCachePath, nameOptions, craneOpts, remoteOpts, sigRemoteOpts, withCosignSignatures); err != nil {
 					switch {
 					case errors.Is(err, new(name.ErrBadName)):
 						return err
@@ -266,6 +270,8 @@ func processImage(
 	nameOptions []name.Option,
 	craneOpts []crane.Option,
 	remoteOpts []remote.Option,
+	sigRemoteOpts []remote.Option,
+	withCosignSignatures bool,
 ) error {
 	fmt.Fprintf(os.Stderr, "fetching image %q\n", src)
 
@@ -321,6 +327,12 @@ func processImage(
 		return err
 	}
 
+	if withCosignSignatures {
+		if err := processCosignSignature(src, rmt.Digest, tmpDir, nameOptions, craneOpts, sigRemoteOpts); err != nil {
+			return err
+		}
+	}
+
 	img, err := rmt.Image()
 	if err != nil {
 		return fmt.Errorf("converting image to index: %w", err)
@@ -367,6 +379,166 @@ func processImage(
 		if err = processLayer(layer, tmpDir); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+//nolint:gocyclo,cyclop
+func processCosignSignature(
+	src string,
+	digest v1.Hash,
+	tmpDir string,
+	nameOptions []name.Option,
+	craneOpts []crane.Option,
+	remoteOpts []remote.Option,
+) error {
+	ref, err := name.ParseReference(src, nameOptions...)
+	if err != nil {
+		return fmt.Errorf("parsing reference for cosign %q: %w", src, err)
+	}
+
+	baseTag := strings.ReplaceAll(digest.String(), "sha256:", "sha256-")
+
+	for _, sigTagStr := range []string{baseTag + ".sig", baseTag} {
+		sigRef, err := name.NewTag(ref.Context().String()+":"+sigTagStr, nameOptions...)
+		if err != nil {
+			continue
+		}
+
+		fmt.Fprintf(os.Stderr, "fetching cosign signature %q\n", sigRef.String())
+
+		sigManifest, err := crane.Manifest(sigRef.String(), craneOpts...)
+		if err != nil {
+			var transportErr *transport.Error
+			if errors.As(err, &transportErr) && transportErr.StatusCode == http.StatusNotFound {
+				continue
+			}
+
+			return fmt.Errorf("fetching cosign manifest %q: %w", sigRef.String(), err)
+		}
+
+		sigRmt, err := remote.Get(sigRef, remoteOpts...)
+		if err != nil {
+			var transportErr *transport.Error
+			if errors.As(err, &transportErr) && transportErr.StatusCode == http.StatusNotFound {
+				continue
+			}
+
+			return fmt.Errorf("fetching cosign image %q: %w", sigRef.String(), err)
+		}
+
+		referenceDir := filepath.Join(tmpDir, manifestsDir, rewriteRegistry(sigRef.Context().RegistryStr(), src), filepath.FromSlash(sigRef.Context().RepositoryStr()), "reference")
+		digestDir := filepath.Join(tmpDir, manifestsDir, rewriteRegistry(sigRef.Context().RegistryStr(), src), filepath.FromSlash(sigRef.Context().RepositoryStr()), "digest")
+
+		if err = os.MkdirAll(referenceDir, 0o755); err != nil {
+			return err
+		}
+
+		if err = os.MkdirAll(digestDir, 0o755); err != nil {
+			return err
+		}
+
+		if err := os.WriteFile(filepath.Join(referenceDir, sigTagStr), sigManifest, 0o644); err != nil {
+			return err
+		}
+
+		if err := os.WriteFile(filepath.Join(digestDir, strings.ReplaceAll(sigRmt.Digest.String(), "sha256:", "sha256-")), sigManifest, 0o644); err != nil {
+			return err
+		}
+
+		switch sigRmt.MediaType { //nolint:exhaustive
+		case types.OCIImageIndex, types.DockerManifestList:
+			// Signature is an OCI image index - process each child manifest.
+			idx, err := sigRmt.ImageIndex()
+			if err != nil {
+				return fmt.Errorf("getting cosign image index: %w", err)
+			}
+
+			idxManifest, err := idx.IndexManifest()
+			if err != nil {
+				return fmt.Errorf("getting cosign index manifest: %w", err)
+			}
+
+			for _, descriptor := range idxManifest.Manifests {
+				childImg, err := idx.Image(descriptor.Digest)
+				if err != nil {
+					return fmt.Errorf("getting cosign child image %s: %w", descriptor.Digest, err)
+				}
+
+				childManifest, err := childImg.RawManifest()
+				if err != nil {
+					return fmt.Errorf("getting cosign child manifest: %w", err)
+				}
+
+				childDigest, err := childImg.Digest()
+				if err != nil {
+					return fmt.Errorf("getting cosign child digest: %w", err)
+				}
+
+				if err := os.WriteFile(filepath.Join(digestDir, strings.ReplaceAll(childDigest.String(), "sha256:", "sha256-")), childManifest, 0o644); err != nil {
+					return err
+				}
+
+				config, err := childImg.RawConfigFile()
+				if err != nil {
+					return fmt.Errorf("getting cosign child config: %w", err)
+				}
+
+				configHash, err := childImg.ConfigName()
+				if err != nil {
+					return fmt.Errorf("getting cosign child config hash: %w", err)
+				}
+
+				if err := os.WriteFile(filepath.Join(tmpDir, blobsDir, strings.ReplaceAll(configHash.String(), "sha256:", "sha256-")), config, 0o644); err != nil {
+					return err
+				}
+
+				layers, err := childImg.Layers()
+				if err != nil {
+					return fmt.Errorf("getting cosign child layers: %w", err)
+				}
+
+				for _, layer := range layers {
+					if err = processLayer(layer, tmpDir); err != nil {
+						return err
+					}
+				}
+			}
+		default:
+			// Signature is a single image manifest.
+			img, err := sigRmt.Image()
+			if err != nil {
+				return fmt.Errorf("getting cosign image: %w", err)
+			}
+
+			config, err := img.RawConfigFile()
+			if err != nil {
+				return fmt.Errorf("getting cosign config: %w", err)
+			}
+
+			configHash, err := img.ConfigName()
+			if err != nil {
+				return fmt.Errorf("getting cosign config hash: %w", err)
+			}
+
+			if err := os.WriteFile(filepath.Join(tmpDir, blobsDir, strings.ReplaceAll(configHash.String(), "sha256:", "sha256-")), config, 0o644); err != nil {
+				return err
+			}
+
+			layers, err := img.Layers()
+			if err != nil {
+				return fmt.Errorf("getting cosign layers: %w", err)
+			}
+
+			for _, layer := range layers {
+				if err = processLayer(layer, tmpDir); err != nil {
+					return err
+				}
+			}
+		}
+
+		return nil
 	}
 
 	return nil

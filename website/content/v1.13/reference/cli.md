@@ -2174,6 +2174,7 @@ talosctl images default | talosctl images cache-create --image-cache-path=/tmp/t
 ### Options
 
 ```
+      --cosign-signatures               pull and cache cosign signatures for images (default true)
       --force                           force overwrite of existing image cache
   -h, --help                            help for cache-create
       --image-cache-path string         directory to save the image cache in OCI format

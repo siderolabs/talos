@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-03-05T15:46:00Z by kres 1dd7316.
+# Generated on 2026-03-09T16:07:37Z by kres deaca06.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -97,6 +97,7 @@ jobs:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           WITH_AIRGAPPED: http-proxy
+          WITH_CONFIG_PATCH: '@hack/test/patches/image-verification.yaml'
         run: |
           sudo -E make e2e-qemu
       - name: e2e-airgapped-secure-proxy
@@ -105,6 +106,7 @@ jobs:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           WITH_AIRGAPPED: secure-http-proxy
+          WITH_CONFIG_PATCH: '@hack/test/patches/image-verification.yaml'
         run: |
           sudo -E make e2e-qemu
       - name: e2e-airgapped-reverse-proxy
@@ -113,6 +115,7 @@ jobs:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
           WITH_AIRGAPPED: https-reverse-proxy
+          WITH_CONFIG_PATCH: '@hack/test/patches/image-verification.yaml'
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
