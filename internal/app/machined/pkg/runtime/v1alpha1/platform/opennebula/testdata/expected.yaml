@@ -5,6 +5,12 @@ addresses:
       scope: global
       flags: permanent
       layer: platform
+    - address: 192.168.1.100/24
+      linkName: eth0
+      family: inet4
+      scope: global
+      flags: permanent
+      layer: platform
 links:
     - name: eth0
       logical: false
