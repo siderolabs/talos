@@ -20,7 +20,7 @@ routes:
       gateway: 192.168.1.1
       outLinkName: eth0
       table: main
-      priority: 1024
+      priority: 100
       scope: global
       type: unicast
       flags: ""
@@ -37,7 +37,14 @@ resolvers:
         - 1.1.1.1
       layer: platform
 timeServers: []
-operators: []
+operators:
+    - operator: dhcp4
+      linkName: eth1
+      requireUp: true
+      dhcp4:
+        routeMetric: 200
+        skipHostnameRequest: true
+      layer: platform
 externalIPs: []
 metadata:
     platform: opennebula
