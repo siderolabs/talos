@@ -294,6 +294,17 @@ func (o *OpenNebula) ParseMetadata(st state.State, oneContextPlain []byte) (*run
 
 			ifaceNameLower := strings.ToLower(ifaceName)
 
+			routeMetric := uint32(network.DefaultRouteMetric)
+
+			if metricStr := oneContext[ifaceName+"_METRIC"]; metricStr != "" {
+				m, err := strconv.ParseUint(metricStr, 10, 32)
+				if err != nil {
+					return nil, fmt.Errorf("interface %s: failed to parse metric: %w", ifaceName, err)
+				}
+
+				routeMetric = uint32(m)
+			}
+
 			if oneContext[ifaceName+"_METHOD"] == "dhcp" {
 				// Create DHCP4 OperatorSpec entry
 				networkConfig.Operators = append(networkConfig.Operators,
@@ -302,7 +313,7 @@ func (o *OpenNebula) ParseMetadata(st state.State, oneContextPlain []byte) (*run
 						LinkName:  ifaceNameLower,
 						RequireUp: true,
 						DHCP4: network.DHCP4OperatorSpec{
-							RouteMetric:         1024,
+							RouteMetric:         routeMetric,
 							SkipHostnameRequest: true,
 						},
 						ConfigLayer: network.ConfigPlatform,
@@ -372,7 +383,7 @@ func (o *OpenNebula) ParseMetadata(st state.State, oneContextPlain []byte) (*run
 						Protocol:    nethelpers.ProtocolStatic,
 						Type:        nethelpers.TypeUnicast,
 						Family:      nethelpers.FamilyInet4,
-						Priority:    network.DefaultRouteMetric,
+						Priority:    routeMetric,
 					}
 
 					route.Normalize()
