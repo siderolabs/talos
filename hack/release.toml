@@ -271,6 +271,13 @@ The legacy upgrade API is deprecated; new integrations should migrate to `Lifecy
 This change is transparent to users but standardizes the backend used for upgrades.
 """
 
+    [notes.container_device_interface]
+        title = "Container Device Interface"
+        description = """\
+Talos now enables [CDI](https://github.com/cncf-tags/container-device-interface) dy default and extension/extension services can bring in dynamic
+CDI spec files under `/run/cdi`.
+""""
+
 [make_deps]
 
     [make_deps.tools]
