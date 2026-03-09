@@ -56,10 +56,14 @@ hostnames:
       layer: platform
 resolvers:
     - dnsServers:
+        - 9.9.9.9
         - 192.168.1.1
         - 8.8.8.8
         - 1.1.1.1
       layer: platform
+      searchDomains:
+        - global.example.com
+        - example.com
 timeServers: []
 operators: []
 externalIPs: []
