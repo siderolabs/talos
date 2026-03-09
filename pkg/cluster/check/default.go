@@ -9,8 +9,12 @@ import (
 	"slices"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
+
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 )
 
 // DefaultClusterChecks returns a set of default Talos cluster readiness checks.
@@ -22,6 +26,12 @@ func DefaultClusterChecks() []ClusterCheck {
 			// wait for all the nodes to report ready at k8s level
 			func(cluster ClusterInfo) conditions.Condition {
 				return conditions.PollingCondition("all k8s nodes to report ready", func(ctx context.Context) error {
+					if cniDisabled, err := cniDisabledStatus(ctx, cluster); err != nil {
+						return err
+					} else if cniDisabled {
+						return conditions.ErrSkipAssertion
+					}
+
 					return K8sAllNodesReadyAssertion(ctx, cluster)
 				}, 5*time.Second)
 			},
@@ -45,6 +55,12 @@ func DefaultClusterChecks() []ClusterCheck {
 			// wait for coredns to report ready
 			func(cluster ClusterInfo) conditions.Condition {
 				return conditions.PollingCondition("coredns to report ready", func(ctx context.Context) error {
+					if cniDisabled, err := cniDisabledStatus(ctx, cluster); err != nil {
+						return err
+					} else if cniDisabled {
+						return conditions.ErrSkipAssertion
+					}
+
 					present, replicas, err := DeploymentPresent(ctx, cluster, "kube-system", "k8s-app=kube-dns")
 					if err != nil {
 						return err
@@ -66,6 +82,20 @@ func DefaultClusterChecks() []ClusterCheck {
 			},
 		},
 	)
+}
+
+func cniDisabledStatus(ctx context.Context, cluster ClusterInfo) (bool, error) {
+	cli, err := cluster.Client()
+	if err != nil {
+		return false, err
+	}
+
+	mc, err := safe.ReaderGet[*config.MachineConfig](ctx, cli.COSI, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.ActiveID, resource.VersionUndefined))
+	if err != nil {
+		return false, err
+	}
+
+	return mc.Config().Cluster().Network().CNI().Name() == "none", nil
 }
 
 // K8sComponentsReadinessChecks returns a set of K8s cluster readiness checks which are specific to the k8s components

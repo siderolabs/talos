@@ -1938,7 +1938,6 @@ spec:
           environment:
             GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium
             SHORT_INTEGRATION_TEST: yes
-            WITH_SKIP_K8S_NODE_READINESS_CHECK: yes
             WITH_CUSTOM_CNI: cilium
             WITH_FIREWALL: accept
             WITH_CONFIG_PATCH: "@hack/test/patches/cilium-no-kubeproxy.yaml"
@@ -1949,7 +1948,6 @@ spec:
           environment:
             GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium-strict
             SHORT_INTEGRATION_TEST: yes
-            WITH_SKIP_K8S_NODE_READINESS_CHECK: yes
             WITH_CUSTOM_CNI: cilium
             WITH_FIREWALL: accept
             CILIUM_INSTALL_TYPE: strict
@@ -1961,7 +1959,6 @@ spec:
           environment:
             GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium-strict-kubespan
             SHORT_INTEGRATION_TEST: yes
-            WITH_SKIP_K8S_NODE_READINESS_CHECK: yes
             WITH_CUSTOM_CNI: cilium
             WITH_FIREWALL: accept
             WITH_KUBESPAN: true

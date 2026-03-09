@@ -162,14 +162,6 @@ case "${WITH_CONFIG_PATCH_WORKER:-false}" in
     ;;
 esac
 
-case "${WITH_SKIP_K8S_NODE_READINESS_CHECK:-false}" in
-  false)
-    ;;
-  *)
-    QEMU_FLAGS+=("--skip-k8s-node-readiness-check")
-    ;;
-esac
-
 case "${WITH_CUSTOM_CNI:-none}" in
   false)
     ;;

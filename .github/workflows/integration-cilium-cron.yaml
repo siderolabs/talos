@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-03-05T15:46:00Z by kres 1dd7316.
+# Generated on 2026-03-09T13:10:24Z by kres 1dd7316.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -85,7 +85,6 @@ jobs:
           WITH_CONFIG_PATCH: '@hack/test/patches/cilium-no-kubeproxy.yaml'
           WITH_CUSTOM_CNI: cilium
           WITH_FIREWALL: accept
-          WITH_SKIP_K8S_NODE_READINESS_CHECK: "yes"
         run: |
           sudo -E make e2e-qemu
       - name: e2e-cilium-strict
@@ -97,7 +96,6 @@ jobs:
           WITH_CONFIG_PATCH: '@hack/test/patches/cilium-kubeproxy.yaml'
           WITH_CUSTOM_CNI: cilium
           WITH_FIREWALL: accept
-          WITH_SKIP_K8S_NODE_READINESS_CHECK: "yes"
         run: |
           sudo -E make e2e-qemu
       - name: e2e-cilium-strict-kubespan
@@ -110,7 +108,6 @@ jobs:
           WITH_CUSTOM_CNI: cilium
           WITH_FIREWALL: accept
           WITH_KUBESPAN: "true"
-          WITH_SKIP_K8S_NODE_READINESS_CHECK: "yes"
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
