@@ -30,37 +30,37 @@ func TestSanitizeHostname(t *testing.T) {
 
 	for _, tc := range []struct {
 		name           string
-		nameVar        string
+		setHostname    string
 		wantHostname   string
 		wantDomainname string
 	}{
 		{
 			name:           "clean hostname passes through unchanged",
-			nameVar:        "myhost",
+			setHostname:    "myhost",
 			wantHostname:   "myhost",
 			wantDomainname: "",
 		},
 		{
 			name:           "FQDN is split on first dot",
-			nameVar:        "myhost.example.com",
+			setHostname:    "myhost.example.com",
 			wantHostname:   "myhost",
 			wantDomainname: "example.com",
 		},
 		{
 			name:           "invalid chars replaced with hyphen",
-			nameVar:        "my_host",
+			setHostname:    "my_host",
 			wantHostname:   "my-host",
 			wantDomainname: "",
 		},
 		{
 			name:           "leading and trailing hyphens stripped",
-			nameVar:        "-myhost-",
+			setHostname:    "-myhost-",
 			wantHostname:   "myhost",
 			wantDomainname: "",
 		},
 		{
 			name:           "per-label hyphen trimming",
-			nameVar:        "my-.host",
+			setHostname:    "my-.host",
 			wantHostname:   "my",
 			wantDomainname: "host",
 		},
@@ -68,7 +68,7 @@ func TestSanitizeHostname(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			ctx := minimalContext("NAME = \"" + tc.nameVar + "\"")
+			ctx := minimalContext("SET_HOSTNAME = \"" + tc.setHostname + "\"")
 
 			networkConfig, err := o.ParseMetadata(st, ctx)
 			require.NoError(t, err)
@@ -79,10 +79,10 @@ func TestSanitizeHostname(t *testing.T) {
 		})
 	}
 
-	t.Run("empty string produces no hostname entry", func(t *testing.T) {
+	t.Run("empty SET_HOSTNAME produces no hostname entry", func(t *testing.T) {
 		t.Parallel()
 
-		ctx := minimalContext("NAME = \"\"")
+		ctx := minimalContext("SET_HOSTNAME = \"\"")
 
 		networkConfig, err := o.ParseMetadata(st, ctx)
 		require.NoError(t, err)
@@ -99,38 +99,48 @@ func TestParseMetadataHostname(t *testing.T) {
 	for _, tc := range []struct {
 		name           string
 		vars           string
+		wantHostnames  int
 		wantHostname   string
 		wantDomainname string
 	}{
 		{
-			name:           "HOSTNAME takes priority",
-			vars:           "HOSTNAME = \"fromhostname\"\nSET_HOSTNAME = \"fromsethostname\"\nNAME = \"fromname\"",
-			wantHostname:   "fromhostname",
-			wantDomainname: "",
+			name:          "SET_HOSTNAME is used as hostname",
+			vars:          "SET_HOSTNAME = \"myhost\"",
+			wantHostnames: 1,
+			wantHostname:  "myhost",
 		},
 		{
-			name:           "falls back to SET_HOSTNAME when HOSTNAME is empty",
-			vars:           "SET_HOSTNAME = \"fromsethostname\"\nNAME = \"fromname\"",
-			wantHostname:   "fromsethostname",
-			wantDomainname: "",
-		},
-		{
-			name:           "falls back to NAME when both HOSTNAME and SET_HOSTNAME are empty",
-			vars:           "NAME = \"fromname\"",
-			wantHostname:   "fromname",
-			wantDomainname: "",
-		},
-		{
-			name:           "DNS_HOSTNAME=YES is not used as Domainname",
-			vars:           "NAME = \"myhost\"\nDNS_HOSTNAME = \"YES\"",
-			wantHostname:   "myhost",
-			wantDomainname: "",
-		},
-		{
-			name:           "FQDN in NAME is split into Hostname and Domainname",
-			vars:           "NAME = \"myhost.example.com\"",
+			name:           "FQDN in SET_HOSTNAME is split into Hostname and Domainname",
+			vars:           "SET_HOSTNAME = \"myhost.example.com\"",
+			wantHostnames:  1,
 			wantHostname:   "myhost",
 			wantDomainname: "example.com",
+		},
+		{
+			name:          "HOSTNAME variable is ignored",
+			vars:          "HOSTNAME = \"fromhostname\"",
+			wantHostnames: 0,
+		},
+		{
+			name:          "NAME variable is ignored",
+			vars:          "NAME = \"fromname\"",
+			wantHostnames: 0,
+		},
+		{
+			name:          "SET_HOSTNAME takes precedence over HOSTNAME and NAME",
+			vars:          "SET_HOSTNAME = \"correct\"\nHOSTNAME = \"wrong\"\nNAME = \"alsowrong\"",
+			wantHostnames: 1,
+			wantHostname:  "correct",
+		},
+		{
+			name:          "DNS_HOSTNAME=YES is not used as a hostname value",
+			vars:          "DNS_HOSTNAME = \"YES\"",
+			wantHostnames: 0,
+		},
+		{
+			name:          "absent SET_HOSTNAME produces no hostname entry",
+			vars:          "",
+			wantHostnames: 0,
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -140,10 +150,12 @@ func TestParseMetadataHostname(t *testing.T) {
 
 			networkConfig, err := o.ParseMetadata(st, ctx)
 			require.NoError(t, err)
-			require.Len(t, networkConfig.Hostnames, 1)
+			require.Len(t, networkConfig.Hostnames, tc.wantHostnames)
 
-			assert.Equal(t, tc.wantHostname, networkConfig.Hostnames[0].Hostname)
-			assert.Equal(t, tc.wantDomainname, networkConfig.Hostnames[0].Domainname)
+			if tc.wantHostnames > 0 {
+				assert.Equal(t, tc.wantHostname, networkConfig.Hostnames[0].Hostname)
+				assert.Equal(t, tc.wantDomainname, networkConfig.Hostnames[0].Domainname)
+			}
 		})
 	}
 }

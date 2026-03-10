@@ -648,21 +648,13 @@ func ethInterfaceName(key string) (string, bool) {
 	return name, true
 }
 
-// resolveHostname picks the best hostname value from the context map and
-// sanitizes it. Precedence: HOSTNAME > SET_HOSTNAME > NAME.
+// resolveHostname reads SET_HOSTNAME from the context map and sanitizes it,
+// matching the reference net-15-hostname script precedence. HOSTNAME and NAME
+// are not used — the reference never reads them for hostname configuration.
+// DNS_HOSTNAME is a server-side flag that triggers a reverse DNS lookup
+// (a live network operation) and cannot be honored inside ParseMetadata.
 func resolveHostname(oneContext map[string]string) string {
-	// HOSTNAME is checked first (deviation from the reference which tries
-	// SET_HOSTNAME before HOSTNAME) to preserve backward compatibility with
-	// existing Talos deployments that rely on the OpenNebula-injected FQDN.
-	v := oneContext["HOSTNAME"]
-	if v == "" {
-		v = oneContext["SET_HOSTNAME"]
-		if v == "" {
-			v = oneContext["NAME"]
-		}
-	}
-
-	return sanitizeHostname(v)
+	return sanitizeHostname(oneContext["SET_HOSTNAME"])
 }
 
 // ParseMetadata converts opennebula metadata to platform network config.
