@@ -123,7 +123,7 @@ func Pull(ctx context.Context, registryBuilder RegistriesBuilder, client *contai
 			containerd.WithPullUnpack,
 			containerd.WithResolver(resolver),
 			containerd.WithChildLabelMap(images.ChildGCLabelsFilterLayers),
-			containerd.WithPlatformMatcher(platforms.OnlyStrict(platforms.DefaultSpec())),
+			containerd.WithPlatformMatcher(platforms.Default()),
 		); err != nil {
 			err = fmt.Errorf("failed to pull image %q: %w", ref, err)
 			if errors.Is(err, errdefs.ErrNotFound) {
