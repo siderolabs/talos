@@ -267,11 +267,304 @@ func ParseRoutes(routesStr, linkName string) ([]network.RouteSpecSpec, error) {
 	return routes, nil
 }
 
+// parseIPv4StaticConfig handles the static addressing path for an interface:
+// address, link, gateway route, extra static routes, and per-interface DNS.
+func parseIPv4StaticConfig(
+	oneContext map[string]string, ifaceName, ifaceNameLower string, routeMetric uint32,
+	networkConfig *runtime.PlatformNetworkConfig, allDNSIPs *[]netip.Addr, allSearchDomains *[]string,
+) error {
+	ipPrefix, err := address.IPPrefixFrom(oneContext[ifaceName+"_IP"], oneContext[ifaceName+"_MASK"])
+	if err != nil {
+		return fmt.Errorf("failed to parse IP address: %w", err)
+	}
+
+	networkConfig.Addresses = append(networkConfig.Addresses,
+		network.AddressSpecSpec{
+			Address:         ipPrefix,
+			LinkName:        ifaceNameLower,
+			Family:          nethelpers.FamilyInet4,
+			Scope:           nethelpers.ScopeGlobal,
+			Flags:           nethelpers.AddressFlags(nethelpers.AddressPermanent),
+			AnnounceWithARP: false,
+			ConfigLayer:     network.ConfigPlatform,
+		},
+	)
+
+	var mtu uint32
+
+	if mtuStr := oneContext[ifaceName+"_MTU"]; mtuStr != "" {
+		mtu64, err := strconv.ParseUint(mtuStr, 10, 32)
+		if err != nil {
+			return fmt.Errorf("failed to parse MTU: %w", err)
+		}
+
+		mtu = uint32(mtu64)
+	}
+
+	networkConfig.Links = append(networkConfig.Links,
+		network.LinkSpecSpec{
+			Name:        ifaceNameLower,
+			Logical:     false,
+			Up:          true,
+			MTU:         mtu,
+			Kind:        "",
+			Type:        nethelpers.LinkEther,
+			ParentName:  "",
+			ConfigLayer: network.ConfigPlatform,
+		},
+	)
+
+	if gwStr := oneContext[ifaceName+"_GATEWAY"]; gwStr != "" {
+		gateway, err := netip.ParseAddr(gwStr)
+		if err != nil {
+			return fmt.Errorf("failed to parse gateway ip: %w", err)
+		}
+
+		route := network.RouteSpecSpec{
+			ConfigLayer: network.ConfigPlatform,
+			Gateway:     gateway,
+			OutLinkName: ifaceNameLower,
+			Table:       nethelpers.TableMain,
+			Protocol:    nethelpers.ProtocolStatic,
+			Type:        nethelpers.TypeUnicast,
+			Family:      nethelpers.FamilyInet4,
+			Priority:    routeMetric,
+		}
+
+		route.Normalize()
+
+		networkConfig.Routes = append(networkConfig.Routes, route)
+	}
+
+	if routesStr := oneContext[ifaceName+"_ROUTES"]; routesStr != "" {
+		staticRoutes, err := ParseRoutes(routesStr, ifaceNameLower)
+		if err != nil {
+			return fmt.Errorf("interface %s: %w", ifaceName, err)
+		}
+
+		networkConfig.Routes = append(networkConfig.Routes, staticRoutes...)
+	}
+
+	for s := range strings.FieldsSeq(oneContext[ifaceName+"_DNS"]) {
+		ip, err := netip.ParseAddr(s)
+		if err != nil {
+			return fmt.Errorf("interface %s: failed to parse DNS server %q: %w", ifaceName, s, err)
+		}
+
+		*allDNSIPs = append(*allDNSIPs, ip)
+	}
+
+	*allSearchDomains = append(*allSearchDomains, strings.Fields(oneContext[ifaceName+"_SEARCH_DOMAIN"])...)
+
+	return nil
+}
+
+// parseInterfaceIPv4 configures the IPv4 stack for one interface.
+// Dispatches to DHCP4 operator or static config based on ETH*_METHOD.
+func parseInterfaceIPv4(oneContext map[string]string, ifaceName, ifaceNameLower string, networkConfig *runtime.PlatformNetworkConfig, allDNSIPs *[]netip.Addr, allSearchDomains *[]string) error {
+	routeMetric := uint32(network.DefaultRouteMetric)
+
+	if metricStr := oneContext[ifaceName+"_METRIC"]; metricStr != "" {
+		m, err := strconv.ParseUint(metricStr, 10, 32)
+		if err != nil {
+			return fmt.Errorf("interface %s: failed to parse metric: %w", ifaceName, err)
+		}
+
+		routeMetric = uint32(m)
+	}
+
+	if oneContext[ifaceName+"_METHOD"] == "dhcp" {
+		networkConfig.Operators = append(networkConfig.Operators,
+			network.OperatorSpecSpec{
+				Operator:  network.OperatorDHCP4,
+				LinkName:  ifaceNameLower,
+				RequireUp: true,
+				DHCP4: network.DHCP4OperatorSpec{
+					RouteMetric:         routeMetric,
+					SkipHostnameRequest: true,
+				},
+				ConfigLayer: network.ConfigPlatform,
+			},
+		)
+
+		return nil
+	}
+
+	return parseIPv4StaticConfig(oneContext, ifaceName, ifaceNameLower, routeMetric, networkConfig, allDNSIPs, allSearchDomains)
+}
+
+// ip6PrefixFrom builds a netip.Prefix from an IPv6 address string and an
+// optional prefix-length string (default 64). The prefix is not masked so the
+// full host address is preserved on the interface.
+func ip6PrefixFrom(ipStr, prefixLenStr string) (netip.Prefix, error) {
+	ip, err := netip.ParseAddr(ipStr)
+	if err != nil {
+		return netip.Prefix{}, fmt.Errorf("failed to parse IPv6 address %q: %w", ipStr, err)
+	}
+
+	bits := 64
+
+	if prefixLenStr != "" {
+		n, err := strconv.Atoi(prefixLenStr)
+		if err != nil {
+			return netip.Prefix{}, fmt.Errorf("failed to parse IPv6 prefix length %q: %w", prefixLenStr, err)
+		}
+
+		bits = n
+	}
+
+	return netip.PrefixFrom(ip, bits), nil
+}
+
+// parseIPv6Gateway reads ETH*_IP6_GATEWAY (or legacy GATEWAY6) and emits the
+// default IPv6 route (::/0) with metric from ETH*_IP6_METRIC (default 1).
+func parseIPv6Gateway(oneContext map[string]string, ifaceName, ifaceNameLower string, networkConfig *runtime.PlatformNetworkConfig) error {
+	gwStr := oneContext[ifaceName+"_IP6_GATEWAY"]
+	if gwStr == "" {
+		gwStr = oneContext[ifaceName+"_GATEWAY6"]
+	}
+
+	if gwStr == "" {
+		return nil
+	}
+
+	gw, err := netip.ParseAddr(gwStr)
+	if err != nil {
+		return fmt.Errorf("interface %s: failed to parse IPv6 gateway %q: %w", ifaceName, gwStr, err)
+	}
+
+	metric := uint32(1)
+
+	if metricStr := oneContext[ifaceName+"_IP6_METRIC"]; metricStr != "" {
+		m, err := strconv.ParseUint(metricStr, 10, 32)
+		if err != nil {
+			return fmt.Errorf("interface %s: failed to parse IPv6 metric: %w", ifaceName, err)
+		}
+
+		metric = uint32(m)
+	}
+
+	route := network.RouteSpecSpec{
+		ConfigLayer: network.ConfigPlatform,
+		Gateway:     gw,
+		OutLinkName: ifaceNameLower,
+		Table:       nethelpers.TableMain,
+		Protocol:    nethelpers.ProtocolStatic,
+		Type:        nethelpers.TypeUnicast,
+		Family:      nethelpers.FamilyInet6,
+		Priority:    metric,
+	}
+
+	route.Normalize()
+
+	networkConfig.Routes = append(networkConfig.Routes, route)
+
+	return nil
+}
+
+// parseInterfaceIPv6 configures the static IPv6 stack for one interface.
+// Handles ETH*_IP6 (legacy: ETH*_IPV6), ETH*_IP6_PREFIX_LENGTH, ETH*_IP6_ULA,
+// ETH*_IP6_GATEWAY (legacy: ETH*_GATEWAY6), and ETH*_IP6_METRIC.
+func parseInterfaceIPv6(oneContext map[string]string, ifaceName, ifaceNameLower string, networkConfig *runtime.PlatformNetworkConfig) error {
+	ip6Str := oneContext[ifaceName+"_IP6"]
+	if ip6Str == "" {
+		ip6Str = oneContext[ifaceName+"_IPV6"]
+	}
+
+	prefixLenStr := oneContext[ifaceName+"_IP6_PREFIX_LENGTH"]
+
+	if ip6Str != "" {
+		ip6Prefix, err := ip6PrefixFrom(ip6Str, prefixLenStr)
+		if err != nil {
+			return fmt.Errorf("interface %s: %w", ifaceName, err)
+		}
+
+		networkConfig.Addresses = append(networkConfig.Addresses, network.AddressSpecSpec{
+			Address:     ip6Prefix,
+			LinkName:    ifaceNameLower,
+			Family:      nethelpers.FamilyInet6,
+			Scope:       nethelpers.ScopeGlobal,
+			Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+			ConfigLayer: network.ConfigPlatform,
+		})
+	}
+
+	if ulaStr := oneContext[ifaceName+"_IP6_ULA"]; ulaStr != "" {
+		ulaPrefix, err := ip6PrefixFrom(ulaStr, "64")
+		if err != nil {
+			return fmt.Errorf("interface %s ULA: %w", ifaceName, err)
+		}
+
+		networkConfig.Addresses = append(networkConfig.Addresses, network.AddressSpecSpec{
+			Address:     ulaPrefix,
+			LinkName:    ifaceNameLower,
+			Family:      nethelpers.FamilyInet6,
+			Scope:       nethelpers.ScopeGlobal,
+			Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+			ConfigLayer: network.ConfigPlatform,
+		})
+	}
+
+	return parseIPv6Gateway(oneContext, ifaceName, ifaceNameLower, networkConfig)
+}
+
+// parseInterface runs all per-interface configuration (IPv4, IPv6, aliases).
+func parseInterface(oneContext map[string]string, ifaceName string, networkConfig *runtime.PlatformNetworkConfig, allDNSIPs *[]netip.Addr, allSearchDomains *[]string) error {
+	ifaceNameLower := strings.ToLower(ifaceName)
+
+	if err := parseInterfaceIPv4(oneContext, ifaceName, ifaceNameLower, networkConfig, allDNSIPs, allSearchDomains); err != nil {
+		return err
+	}
+
+	if err := parseInterfaceIPv6(oneContext, ifaceName, ifaceNameLower, networkConfig); err != nil {
+		return err
+	}
+
+	aliasAddrs, err := parseAliases(oneContext, ifaceName, ifaceNameLower)
+	if err != nil {
+		return err
+	}
+
+	networkConfig.Addresses = append(networkConfig.Addresses, aliasAddrs...)
+
+	return nil
+}
+
+// ethInterfaceName returns the interface name (e.g. "ETH0") from a context map
+// key of the form ETH<digits>_MAC, or ("", false) for any other key.
+func ethInterfaceName(key string) (string, bool) {
+	if !strings.HasPrefix(key, "ETH") || !strings.HasSuffix(key, "_MAC") {
+		return "", false
+	}
+
+	name := strings.TrimSuffix(key, "_MAC")
+
+	if !isDigitsOnly(strings.TrimPrefix(name, "ETH")) {
+		return "", false
+	}
+
+	return name, true
+}
+
+// resolveHostname picks the best hostname value from the context map and
+// sanitizes it. Precedence: HOSTNAME > SET_HOSTNAME > NAME.
+func resolveHostname(oneContext map[string]string) string {
+	// HOSTNAME is checked first (deviation from the reference which tries
+	// SET_HOSTNAME before HOSTNAME) to preserve backward compatibility with
+	// existing Talos deployments that rely on the OpenNebula-injected FQDN.
+	v := oneContext["HOSTNAME"]
+	if v == "" {
+		v = oneContext["SET_HOSTNAME"]
+		if v == "" {
+			v = oneContext["NAME"]
+		}
+	}
+
+	return sanitizeHostname(v)
+}
+
 // ParseMetadata converts opennebula metadata to platform network config.
-//
-//nolint:gocyclo,cyclop
 func (o *OpenNebula) ParseMetadata(st state.State, oneContextPlain []byte) (*runtime.PlatformNetworkConfig, error) {
-	// Initialize the PlatformNetworkConfig
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
 	oneContext, err := envparse.Parse(bytes.NewReader(oneContextPlain))
@@ -279,27 +572,13 @@ func (o *OpenNebula) ParseMetadata(st state.State, oneContextPlain []byte) (*run
 		return nil, fmt.Errorf("failed to parse context file %q: %w", oneContextPlain, err)
 	}
 
-	// Create HostnameSpecSpec entry
-	// HOSTNAME is checked first (deviation from the reference which tries
-	// SET_HOSTNAME before HOSTNAME) to preserve backward compatibility with
-	// existing Talos deployments that rely on the OpenNebula-injected FQDN.
-	hostnameValue := oneContext["HOSTNAME"]
-	if hostnameValue == "" {
-		hostnameValue = oneContext["SET_HOSTNAME"]
-		if hostnameValue == "" {
-			hostnameValue = oneContext["NAME"]
-		}
-	}
-
-	hostnameValue = sanitizeHostname(hostnameValue)
+	hostnameValue := resolveHostname(oneContext)
 
 	// Seed the merged DNS/search-domain slices with global variables (DNS,
 	// SEARCH_DOMAIN). These are applied regardless of interface, matching the
 	// reference get_nameservers()/get_searchdomains() which processes global
 	// variables before per-interface ones.
 	var allDNSIPs []netip.Addr
-
-	var allSearchDomains []string
 
 	for s := range strings.FieldsSeq(oneContext["DNS"]) {
 		ip, err := netip.ParseAddr(s)
@@ -310,161 +589,24 @@ func (o *OpenNebula) ParseMetadata(st state.State, oneContextPlain []byte) (*run
 		allDNSIPs = append(allDNSIPs, ip)
 	}
 
-	allSearchDomains = append(allSearchDomains, strings.Fields(oneContext["SEARCH_DOMAIN"])...)
+	allSearchDomains := append([]string(nil), strings.Fields(oneContext["SEARCH_DOMAIN"])...)
 
-	// Iterate through parsed environment variables looking for ETHn_MAC keys.
 	// The presence of ETHn_MAC is the sole trigger for interface configuration,
 	// matching the behavior of the official OpenNebula guest contextualization
 	// scripts (one-apps/context-linux: get_context_interfaces() uses ETH*_MAC
-	// presence exclusively). The NETWORK context variable is a server-side
-	// directive that tells OpenNebula to auto-inject ETH*_ variables from NIC
-	// definitions; it is not a guest-side signal and is never read by the
-	// official scripts.
+	// presence exclusively).
 	for key := range oneContext {
-		if strings.HasPrefix(key, "ETH") && strings.HasSuffix(key, "_MAC") {
-			ifaceName := strings.TrimSuffix(key, "_MAC")
-			// Skip alias MAC keys (e.g. ETH0_ALIAS0_MAC); only process
-			// top-level interface keys of the form ETH<digits>_MAC,
-			// matching the reference get_context_interfaces() regex ETH[0-9]+.
-			if !isDigitsOnly(strings.TrimPrefix(ifaceName, "ETH")) {
-				continue
-			}
+		ifaceName, ok := ethInterfaceName(key)
+		if !ok {
+			continue
+		}
 
-			ifaceNameLower := strings.ToLower(ifaceName)
-
-			routeMetric := uint32(network.DefaultRouteMetric)
-
-			if metricStr := oneContext[ifaceName+"_METRIC"]; metricStr != "" {
-				m, err := strconv.ParseUint(metricStr, 10, 32)
-				if err != nil {
-					return nil, fmt.Errorf("interface %s: failed to parse metric: %w", ifaceName, err)
-				}
-
-				routeMetric = uint32(m)
-			}
-
-			if oneContext[ifaceName+"_METHOD"] == "dhcp" {
-				// Create DHCP4 OperatorSpec entry
-				networkConfig.Operators = append(networkConfig.Operators,
-					network.OperatorSpecSpec{
-						Operator:  network.OperatorDHCP4,
-						LinkName:  ifaceNameLower,
-						RequireUp: true,
-						DHCP4: network.DHCP4OperatorSpec{
-							RouteMetric:         routeMetric,
-							SkipHostnameRequest: true,
-						},
-						ConfigLayer: network.ConfigPlatform,
-					},
-				)
-			} else {
-				// Parse IP address and create AddressSpecSpec entry
-				ipPrefix, err := address.IPPrefixFrom(oneContext[ifaceName+"_IP"], oneContext[ifaceName+"_MASK"])
-				if err != nil {
-					return nil, fmt.Errorf("failed to parse IP address: %w", err)
-				}
-
-				networkConfig.Addresses = append(networkConfig.Addresses,
-					network.AddressSpecSpec{
-						Address:         ipPrefix,
-						LinkName:        ifaceNameLower,
-						Family:          nethelpers.FamilyInet4,
-						Scope:           nethelpers.ScopeGlobal,
-						Flags:           nethelpers.AddressFlags(nethelpers.AddressPermanent),
-						AnnounceWithARP: false,
-						ConfigLayer:     network.ConfigPlatform,
-					},
-				)
-
-				var mtu uint32
-
-				if oneContext[ifaceName+"_MTU"] == "" {
-					mtu = 0
-				} else {
-					var mtu64 uint64
-
-					mtu64, err = strconv.ParseUint(oneContext[ifaceName+"_MTU"], 10, 32)
-					// check if any error happened
-					if err != nil {
-						return nil, fmt.Errorf("failed to parse MTU: %w", err)
-					}
-
-					mtu = uint32(mtu64)
-				}
-
-				// Create LinkSpecSpec entry
-				networkConfig.Links = append(networkConfig.Links,
-					network.LinkSpecSpec{
-						Name:        ifaceNameLower,
-						Logical:     false,
-						Up:          true,
-						MTU:         mtu,
-						Kind:        "",
-						Type:        nethelpers.LinkEther,
-						ParentName:  "",
-						ConfigLayer: network.ConfigPlatform,
-					},
-				)
-
-				if oneContext[ifaceName+"_GATEWAY"] != "" {
-					// Parse gateway address and create RouteSpecSpec entry
-					gateway, err := netip.ParseAddr(oneContext[ifaceName+"_GATEWAY"])
-					if err != nil {
-						return nil, fmt.Errorf("failed to parse gateway ip: %w", err)
-					}
-
-					route := network.RouteSpecSpec{
-						ConfigLayer: network.ConfigPlatform,
-						Gateway:     gateway,
-						OutLinkName: ifaceNameLower,
-						Table:       nethelpers.TableMain,
-						Protocol:    nethelpers.ProtocolStatic,
-						Type:        nethelpers.TypeUnicast,
-						Family:      nethelpers.FamilyInet4,
-						Priority:    routeMetric,
-					}
-
-					route.Normalize()
-
-					networkConfig.Routes = append(networkConfig.Routes, route)
-				}
-
-				if routesStr := oneContext[ifaceName+"_ROUTES"]; routesStr != "" {
-					staticRoutes, err := ParseRoutes(routesStr, ifaceNameLower)
-					if err != nil {
-						return nil, fmt.Errorf("interface %s: %w", ifaceName, err)
-					}
-
-					networkConfig.Routes = append(networkConfig.Routes, staticRoutes...)
-				}
-
-				// Accumulate per-interface DNS servers and search domains into
-				// the shared slices (global values were seeded before the loop).
-				for s := range strings.FieldsSeq(oneContext[ifaceName+"_DNS"]) {
-					ip, err := netip.ParseAddr(s)
-					if err != nil {
-						return nil, fmt.Errorf("interface %s: failed to parse DNS server %q: %w", ifaceName, s, err)
-					}
-
-					allDNSIPs = append(allDNSIPs, ip)
-				}
-
-				allSearchDomains = append(allSearchDomains, strings.Fields(oneContext[ifaceName+"_SEARCH_DOMAIN"])...)
-			}
-
-			// Process alias addresses for this interface (applies to both
-			// static and DHCP interfaces, matching the reference behavior).
-			aliasAddrs, err := parseAliases(oneContext, ifaceName, ifaceNameLower)
-			if err != nil {
-				return nil, err
-			}
-
-			networkConfig.Addresses = append(networkConfig.Addresses, aliasAddrs...)
+		if err := parseInterface(oneContext, ifaceName, networkConfig, &allDNSIPs, &allSearchDomains); err != nil {
+			return nil, err
 		}
 	}
-	// Emit a single merged ResolverSpecSpec combining global and per-interface
-	// values, matching the reference single /etc/resolv.conf output.
-	if len(allDNSIPs) > 0 || len(allSearchDomains) > 0 {
+
+	if len(allDNSIPs)+len(allSearchDomains) > 0 {
 		networkConfig.Resolvers = append(networkConfig.Resolvers, network.ResolverSpecSpec{
 			DNSServers:    allDNSIPs,
 			SearchDomains: allSearchDomains,
