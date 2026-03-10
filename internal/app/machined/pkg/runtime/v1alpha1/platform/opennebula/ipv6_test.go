@@ -29,13 +29,13 @@ func ipv6Context(extra string) []byte {
 	return []byte(ipv6ContextBase + extra)
 }
 
-func TestParseIPv6Static(t *testing.T) {
+func TestParseIPv6(t *testing.T) {
 	t.Parallel()
 
 	o := &opennebula.OpenNebula{}
 	st := state.WrapCore(namespaced.NewState(inmem.Build))
 
-	defaultGWRoute := func(gw string, priority uint32) network.RouteSpecSpec {
+	gw6Route := func(gw string, priority uint32) network.RouteSpecSpec {
 		return network.RouteSpecSpec{
 			ConfigLayer: network.ConfigPlatform,
 			Gateway:     netip.MustParseAddr(gw),
@@ -49,11 +49,25 @@ func TestParseIPv6Static(t *testing.T) {
 		}
 	}
 
+	dhcp6Op := func(metric uint32) network.OperatorSpecSpec {
+		return network.OperatorSpecSpec{
+			Operator:  network.OperatorDHCP6,
+			LinkName:  "eth0",
+			RequireUp: true,
+			DHCP6: network.DHCP6OperatorSpec{
+				RouteMetric:         metric,
+				SkipHostnameRequest: true,
+			},
+			ConfigLayer: network.ConfigPlatform,
+		}
+	}
+
 	for _, tc := range []struct {
-		name       string
-		extra      string
-		wantAddrs  []netip.Prefix
-		wantRoutes []network.RouteSpecSpec
+		name          string
+		extra         string
+		wantAddrs     []netip.Prefix
+		wantRoutes    []network.RouteSpecSpec
+		wantOperators []network.OperatorSpecSpec
 	}{
 		{
 			name:      "static IPv6 address with explicit prefix length",
@@ -84,23 +98,51 @@ func TestParseIPv6Static(t *testing.T) {
 			name:       "IPv6 gateway emits default route with metric 1",
 			extra:      "ETH0_IP6 = \"2001:db8::1\"\nETH0_IP6_GATEWAY = \"2001:db8::fffe\"",
 			wantAddrs:  []netip.Prefix{netip.MustParsePrefix("2001:db8::1/64")},
-			wantRoutes: []network.RouteSpecSpec{defaultGWRoute("2001:db8::fffe", 1)},
+			wantRoutes: []network.RouteSpecSpec{gw6Route("2001:db8::fffe", 1)},
 		},
 		{
 			name:       "ETH*_GATEWAY6 legacy alias used when ETH*_IP6_GATEWAY absent",
 			extra:      "ETH0_IP6 = \"2001:db8::1\"\nETH0_GATEWAY6 = \"2001:db8::fffe\"",
 			wantAddrs:  []netip.Prefix{netip.MustParsePrefix("2001:db8::1/64")},
-			wantRoutes: []network.RouteSpecSpec{defaultGWRoute("2001:db8::fffe", 1)},
+			wantRoutes: []network.RouteSpecSpec{gw6Route("2001:db8::fffe", 1)},
 		},
 		{
 			name:       "ETH*_IP6_METRIC overrides default metric of 1",
 			extra:      "ETH0_IP6 = \"2001:db8::1\"\nETH0_IP6_GATEWAY = \"2001:db8::fffe\"\nETH0_IP6_METRIC = \"100\"",
 			wantAddrs:  []netip.Prefix{netip.MustParsePrefix("2001:db8::1/64")},
-			wantRoutes: []network.RouteSpecSpec{defaultGWRoute("2001:db8::fffe", 100)},
+			wantRoutes: []network.RouteSpecSpec{gw6Route("2001:db8::fffe", 100)},
 		},
 		{
-			name:  "no IPv6 variables — no IPv6 addresses or routes",
+			name:  "no IPv6 variables — no IPv6 output",
 			extra: "",
+		},
+		{
+			name:          "IP6_METHOD=dhcp emits OperatorDHCP6 with default metric 1",
+			extra:         "ETH0_IP6_METHOD = \"dhcp\"",
+			wantOperators: []network.OperatorSpecSpec{dhcp6Op(1)},
+		},
+		{
+			name:          "IP6_METHOD=dhcp with IP6_METRIC uses custom metric",
+			extra:         "ETH0_IP6_METHOD = \"dhcp\"\nETH0_IP6_METRIC = \"200\"",
+			wantOperators: []network.OperatorSpecSpec{dhcp6Op(200)},
+		},
+		{
+			name:  "IP6_METHOD=auto emits nothing",
+			extra: "ETH0_IP6_METHOD = \"auto\"\nETH0_IP6 = \"2001:db8::1\"",
+		},
+		{
+			name:  "IP6_METHOD=disable emits nothing even if IP6 is set",
+			extra: "ETH0_IP6_METHOD = \"disable\"\nETH0_IP6 = \"2001:db8::1\"",
+		},
+		{
+			name:      "IP6_METHOD=static with IP6 set emits address",
+			extra:     "ETH0_IP6_METHOD = \"static\"\nETH0_IP6 = \"2001:db8::1\"",
+			wantAddrs: []netip.Prefix{netip.MustParsePrefix("2001:db8::1/64")},
+		},
+		{
+			name:      "IP6_METHOD absent and IP6 set uses static path",
+			extra:     "ETH0_IP6 = \"2001:db8::1\"",
+			wantAddrs: []netip.Prefix{netip.MustParsePrefix("2001:db8::1/64")},
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -128,6 +170,16 @@ func TestParseIPv6Static(t *testing.T) {
 			}
 
 			assert.Equal(t, tc.wantRoutes, ip6Routes)
+
+			var ip6Operators []network.OperatorSpecSpec
+
+			for _, op := range networkConfig.Operators {
+				if op.Operator == network.OperatorDHCP6 {
+					ip6Operators = append(ip6Operators, op)
+				}
+			}
+
+			assert.Equal(t, tc.wantOperators, ip6Operators)
 		})
 	}
 }
