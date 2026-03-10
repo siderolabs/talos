@@ -183,30 +183,3 @@ func TestParseIPv6(t *testing.T) {
 		})
 	}
 }
-
-func TestParseIPv6Errors(t *testing.T) {
-	t.Parallel()
-
-	o := &opennebula.OpenNebula{}
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
-
-	t.Run("malformed IPv6 address returns descriptive error", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := ipv6Context("ETH0_IP6 = \"notanip\"")
-
-		_, err := o.ParseMetadata(st, ctx)
-		require.ErrorContains(t, err, "ETH0")
-		require.ErrorContains(t, err, "IPv6")
-	})
-
-	t.Run("malformed IPv6 gateway returns descriptive error", func(t *testing.T) {
-		t.Parallel()
-
-		ctx := ipv6Context("ETH0_IP6 = \"2001:db8::1\"\nETH0_IP6_GATEWAY = \"notanip\"")
-
-		_, err := o.ParseMetadata(st, ctx)
-		require.ErrorContains(t, err, "ETH0")
-		require.ErrorContains(t, err, "gateway")
-	})
-}

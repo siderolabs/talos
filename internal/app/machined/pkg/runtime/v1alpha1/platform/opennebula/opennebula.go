@@ -80,6 +80,77 @@ func collectAliasNames(oneContext map[string]string, aliasPrefix string) []strin
 	return aliasNames
 }
 
+// parseAlias parses the addresses for a single alias entry. Returns nil, nil
+// when the alias should be skipped (DETACH non-empty or EXTERNAL=YES).
+func parseAlias(oneContext map[string]string, aliasName, ifaceNameLower string) ([]network.AddressSpecSpec, error) {
+	// Skip detached aliases — reference: [ -z "${detach}" ]
+	if oneContext[aliasName+"_DETACH"] != "" {
+		return nil, nil
+	}
+
+	// Skip externally managed aliases — reference: ! is_true "${external}"
+	if strings.EqualFold(oneContext[aliasName+"_EXTERNAL"], "yes") {
+		return nil, nil
+	}
+
+	var addrs []network.AddressSpecSpec
+
+	if ipStr := oneContext[aliasName+"_IP"]; ipStr != "" {
+		ipPrefix, err := address.IPPrefixFrom(ipStr, oneContext[aliasName+"_MASK"])
+		if err != nil {
+			return nil, fmt.Errorf("alias %s: failed to parse IPv4: %w", aliasName, err)
+		}
+
+		addrs = append(addrs, network.AddressSpecSpec{
+			Address:     ipPrefix,
+			LinkName:    ifaceNameLower,
+			Family:      nethelpers.FamilyInet4,
+			Scope:       nethelpers.ScopeGlobal,
+			Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+			ConfigLayer: network.ConfigPlatform,
+		})
+	}
+
+	ip6Str := oneContext[aliasName+"_IP6"]
+	if ip6Str == "" {
+		ip6Str = oneContext[aliasName+"_IPV6"]
+	}
+
+	if ip6Str != "" {
+		ip6Prefix, err := ip6PrefixFrom(ip6Str, oneContext[aliasName+"_IP6_PREFIX_LENGTH"])
+		if err != nil {
+			return nil, fmt.Errorf("alias %s: failed to parse IPv6: %w", aliasName, err)
+		}
+
+		addrs = append(addrs, network.AddressSpecSpec{
+			Address:     ip6Prefix,
+			LinkName:    ifaceNameLower,
+			Family:      nethelpers.FamilyInet6,
+			Scope:       nethelpers.ScopeGlobal,
+			Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+			ConfigLayer: network.ConfigPlatform,
+		})
+	}
+
+	if ulaStr := oneContext[aliasName+"_IP6_ULA"]; ulaStr != "" {
+		ulaPrefix, err := ip6PrefixFrom(ulaStr, "64")
+		if err != nil {
+			return nil, fmt.Errorf("alias %s: failed to parse IPv6 ULA: %w", aliasName, err)
+		}
+
+		addrs = append(addrs, network.AddressSpecSpec{
+			Address:     ulaPrefix,
+			LinkName:    ifaceNameLower,
+			Family:      nethelpers.FamilyInet6,
+			Scope:       nethelpers.ScopeGlobal,
+			Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+			ConfigLayer: network.ConfigPlatform,
+		})
+	}
+
+	return addrs, nil
+}
+
 // parseAliases collects ETHn_ALIASm_* address entries for a given interface.
 // An alias is skipped when DETACH is non-empty OR EXTERNAL=YES, matching the
 // reference netcfg-networkd behavior (lines 395-400).
@@ -89,31 +160,12 @@ func parseAliases(oneContext map[string]string, ifaceName, ifaceNameLower string
 	var addrs []network.AddressSpecSpec
 
 	for _, aliasName := range aliasNames {
-		// Skip detached aliases — reference: [ -z "${detach}" ]
-		if oneContext[aliasName+"_DETACH"] != "" {
-			continue
+		aliasAddrs, err := parseAlias(oneContext, aliasName, ifaceNameLower)
+		if err != nil {
+			return nil, err
 		}
 
-		// Skip externally managed aliases — reference: ! is_true "${external}"
-		if strings.EqualFold(oneContext[aliasName+"_EXTERNAL"], "yes") {
-			continue
-		}
-
-		if ipStr := oneContext[aliasName+"_IP"]; ipStr != "" {
-			ipPrefix, err := address.IPPrefixFrom(ipStr, oneContext[aliasName+"_MASK"])
-			if err != nil {
-				return nil, fmt.Errorf("alias %s: failed to parse IPv4: %w", aliasName, err)
-			}
-
-			addrs = append(addrs, network.AddressSpecSpec{
-				Address:     ipPrefix,
-				LinkName:    ifaceNameLower,
-				Family:      nethelpers.FamilyInet4,
-				Scope:       nethelpers.ScopeGlobal,
-				Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
-				ConfigLayer: network.ConfigPlatform,
-			})
-		}
+		addrs = append(addrs, aliasAddrs...)
 	}
 
 	return addrs, nil
