@@ -137,7 +137,7 @@ require (
 	github.com/siderolabs/discovery-client v0.1.13
 	github.com/siderolabs/gen v0.8.6
 	github.com/siderolabs/go-api-signature v0.3.12
-	github.com/siderolabs/go-blockdevice/v2 v2.0.25
+	github.com/siderolabs/go-blockdevice/v2 v2.0.26
 	github.com/siderolabs/go-circular v0.2.3
 	github.com/siderolabs/go-cmd v0.2.0
 	github.com/siderolabs/go-copy v0.1.0
@@ -166,6 +166,7 @@ require (
 	github.com/spf13/pflag v1.0.10
 	github.com/stretchr/testify v1.11.1
 	github.com/thejerf/suture/v4 v4.0.6
+	github.com/theupdateframework/go-tuf/v2 v2.4.1
 	github.com/u-root/u-root v0.15.0
 	github.com/ulikunitz/xz v0.5.15
 	github.com/vultr/metadata v1.1.0
@@ -376,7 +377,6 @@ require (
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/thales-e-security/pool v0.0.2 // indirect
 	github.com/theupdateframework/go-tuf v0.7.0 // indirect
-	github.com/theupdateframework/go-tuf/v2 v2.4.1 // indirect
 	github.com/titanous/rocacheck v0.0.0-20171023193734-afe73141d399 // indirect
 	github.com/transparency-dev/formats v0.0.0-20251017110053-404c0d5b696c // indirect
 	github.com/transparency-dev/merkle v0.0.2 // indirect
