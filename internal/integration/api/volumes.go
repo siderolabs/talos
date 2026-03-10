@@ -93,7 +93,7 @@ func (suite *VolumesSuite) testDiscoveredVolumes(node string) {
 			Names: []string{"xfs"},
 		},
 		"EPHEMERAL": {
-			Names: []string{"xfs", ""},
+			Names: []string{"xfs"},
 		},
 	}
 
