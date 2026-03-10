@@ -16,14 +16,13 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	nodev1 "k8s.io/api/node/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 )
 
-//go:embed testdata/nvidia-device-plugin.yaml
-var nvidiaDevicePluginHelmChartValues []byte
+//go:embed testdata/nvidia-gpu-operator.yaml
+var nvidiaGPUOperatorHelmChartValues []byte
 
 // ExtensionsSuiteNVIDIA verifies Talos is securebooted.
 type ExtensionsSuiteNVIDIA struct {
@@ -79,6 +78,7 @@ func (suite *ExtensionsSuiteNVIDIA) TestExtensionsNVIDIA() {
 	for _, node := range nodes {
 		suite.AssertServicesRunning(suite.ctx, node, map[string]string{
 			"ext-nvidia-persistenced": "Running",
+			"ext-nvidia-cdi-gen":      "Finished",
 		})
 	}
 
@@ -90,24 +90,26 @@ func (suite *ExtensionsSuiteNVIDIA) TestExtensionsNVIDIA() {
 	// 	})
 	// }
 
-	_, err := suite.Clientset.NodeV1().RuntimeClasses().Create(suite.ctx, &nodev1.RuntimeClass{
+	_, err := suite.Clientset.CoreV1().Namespaces().Create(suite.ctx, &corev1.Namespace{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: "nvidia",
+			Name: "gpu-operator",
+			Labels: map[string]string{
+				"pod-security.kubernetes.io/enforce": "privileged",
+			},
 		},
-		Handler: "nvidia",
 	}, metav1.CreateOptions{})
-	defer suite.Clientset.NodeV1().RuntimeClasses().Delete(suite.ctx, "nvidia", metav1.DeleteOptions{}) //nolint:errcheck
+	defer suite.Clientset.CoreV1().Namespaces().Delete(suite.ctx, "gpu-operator", metav1.DeleteOptions{}) //nolint:errcheck
 
 	suite.Require().NoError(err)
 
 	suite.Require().NoError(suite.HelmInstall(
 		suite.ctx,
-		"kube-system",
-		"https://nvidia.github.io/k8s-device-plugin",
-		NvidiaDevicePluginChartVersion,
-		"nvidia-device-plugin",
-		"nvidia-device-plugin",
-		nvidiaDevicePluginHelmChartValues,
+		"gpu-operator",
+		"https://helm.ngc.nvidia.com/nvidia",
+		NvidiaGPUOperatorChartVersion,
+		"gpu-operator",
+		"gpu-operator",
+		nvidiaGPUOperatorHelmChartValues,
 	))
 
 	// now we can create a cuda test job

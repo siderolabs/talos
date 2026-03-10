@@ -276,7 +276,15 @@ This change is transparent to users but standardizes the backend used for upgrad
         description = """\
 Talos now enables [CDI](https://github.com/cncf-tags/container-device-interface) by default and extension/extension services can bring in dynamic
 CDI spec files under `/run/cdi`.
-""""
+"""
+
+    [notes.nvidia]
+        title = "NVIDIA GPU Support"
+        description = """\
+Talos switched to using CDI and now supports configuring NVIDIA GPU via the gpu-operator helm chart.
+See the documentation on [upgrade notes](https://docs.siderolabs.com/talos/v1.13/configure-your-talos-cluster/lifecycle-management/upgrading-talos#after-upgrade-to)
+for more details on how to configure NVIDIA GPU support in Talos.
+"""
 
 [make_deps]
 
