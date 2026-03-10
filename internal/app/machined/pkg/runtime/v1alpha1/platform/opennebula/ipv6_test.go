@@ -144,6 +144,47 @@ func TestParseIPv6(t *testing.T) {
 			extra:     "ETH0_IP6 = \"2001:db8::1\"",
 			wantAddrs: []netip.Prefix{netip.MustParsePrefix("2001:db8::1/64")},
 		},
+		{
+			name:          "METHOD=dhcp with no IP6_METHOD inherits dhcp and emits OperatorDHCP6",
+			extra:         "ETH0_METHOD = \"dhcp\"",
+			wantOperators: []network.OperatorSpecSpec{dhcp6Op(1)},
+		},
+		{
+			name:      "METHOD=dhcp with IP6_METHOD=static and IP6 set uses static IPv6",
+			extra:     "ETH0_METHOD = \"dhcp\"\nETH0_IP6_METHOD = \"static\"\nETH0_IP6 = \"2001:db8::1\"",
+			wantAddrs: []netip.Prefix{netip.MustParsePrefix("2001:db8::1/64")},
+		},
+		{
+			name:  "METHOD=dhcp with IP6_METHOD=disable emits no IPv6 config",
+			extra: "ETH0_METHOD = \"dhcp\"\nETH0_IP6_METHOD = \"disable\"",
+		},
+		{
+			name:  "METHOD=static with no IP6_METHOD and no IP6 emits no IPv6 config",
+			extra: "ETH0_METHOD = \"static\"",
+		},
+		{
+			name:       "METRIC=200 with no IP6_METRIC cascades to IPv6 gateway metric",
+			extra:      "ETH0_IP6 = \"2001:db8::1\"\nETH0_IP6_GATEWAY = \"2001:db8::fffe\"\nETH0_METRIC = \"200\"",
+			wantAddrs:  []netip.Prefix{netip.MustParsePrefix("2001:db8::1/64")},
+			wantRoutes: []network.RouteSpecSpec{gw6Route("2001:db8::fffe", 200)},
+		},
+		{
+			name:       "METRIC=200 with IP6_METRIC=50 uses explicit IP6_METRIC",
+			extra:      "ETH0_IP6 = \"2001:db8::1\"\nETH0_IP6_GATEWAY = \"2001:db8::fffe\"\nETH0_METRIC = \"200\"\nETH0_IP6_METRIC = \"50\"",
+			wantAddrs:  []netip.Prefix{netip.MustParsePrefix("2001:db8::1/64")},
+			wantRoutes: []network.RouteSpecSpec{gw6Route("2001:db8::fffe", 50)},
+		},
+		{
+			name:          "METRIC=200 with IP6_METHOD=dhcp and no IP6_METRIC cascades to DHCPv6 metric",
+			extra:         "ETH0_IP6_METHOD = \"dhcp\"\nETH0_METRIC = \"200\"",
+			wantOperators: []network.OperatorSpecSpec{dhcp6Op(200)},
+		},
+		{
+			name:       "no METRIC and no IP6_METRIC uses IPv6 default of 1",
+			extra:      "ETH0_IP6 = \"2001:db8::1\"\nETH0_IP6_GATEWAY = \"2001:db8::fffe\"",
+			wantAddrs:  []netip.Prefix{netip.MustParsePrefix("2001:db8::1/64")},
+			wantRoutes: []network.RouteSpecSpec{gw6Route("2001:db8::fffe", 1)},
+		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
