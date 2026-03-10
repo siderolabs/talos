@@ -144,12 +144,12 @@ func (o *APID) Volumes(runtime.Runtime) []string {
 //nolint:gocyclo
 func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 	// Ensure socket dir exists
-	if err := os.MkdirAll(filepath.Dir(constants.APISocketPath), 0o750); err != nil {
+	if err := os.MkdirAll(filepath.Dir(constants.APIRuntimeSocketPath), 0o750); err != nil {
 		return nil, err
 	}
 
 	// Make sure apid user owns socket directory.
-	if err := os.Chown(filepath.Dir(constants.APISocketPath), constants.ApidUserID, constants.ApidUserID); err != nil {
+	if err := os.Chown(filepath.Dir(constants.APIRuntimeSocketPath), constants.ApidUserID, constants.ApidUserID); err != nil {
 		return nil, err
 	}
 
@@ -165,7 +165,7 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: "/etc/ssl", Source: "/etc/ssl", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: filepath.Dir(constants.MachineSocketPath), Source: filepath.Dir(constants.MachineSocketPath), Options: []string{"rbind", "ro"}},
-		{Type: "bind", Destination: filepath.Dir(constants.APISocketPath), Source: filepath.Dir(constants.APISocketPath), Options: []string{"rbind", "rw"}},
+		{Type: "bind", Destination: filepath.Dir(constants.APIRuntimeSocketPath), Source: filepath.Dir(constants.APIRuntimeSocketPath), Options: []string{"rbind", "rw"}},
 	}
 
 	mounts = bindMountContainerMarker(mounts)

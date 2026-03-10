@@ -54,6 +54,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/debug"
 	"github.com/siderolabs/talos/internal/app/images"
+	"github.com/siderolabs/talos/internal/app/internal/machinehelper"
 	"github.com/siderolabs/talos/internal/app/lifecycle"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
@@ -133,17 +134,6 @@ func (s *Server) checkSupported(feature runtime.ModeCapability) error {
 	}
 
 	return nil
-}
-
-func (s *Server) checkControlplane(apiName string) error {
-	switch s.Controller.Runtime().Config().Machine().Type() { //nolint:exhaustive
-	case machinetype.TypeControlPlane:
-		fallthrough
-	case machinetype.TypeInit:
-		return nil
-	}
-
-	return status.Errorf(codes.Unimplemented, "%s is only available on control plane nodes", apiName)
 }
 
 // Register implements the factory.Registrator interface.
@@ -421,8 +411,8 @@ func (s *Server) Bootstrap(ctx context.Context, in *machine.BootstrapRequest) (r
 		return nil, status.Error(codes.FailedPrecondition, "bootstrap is not available yet")
 	}
 
-	if s.Controller.Runtime().Config().Machine().Type() == machinetype.TypeWorker {
-		return nil, status.Error(codes.FailedPrecondition, "bootstrap can only be performed on a control plane node")
+	if err := machinehelper.CheckControlplane(ctx, s.Controller.Runtime().State().V1Alpha2().Resources(), "bootstrap"); err != nil {
+		return nil, err
 	}
 
 	timeCtx, timeCtxCancel := context.WithTimeout(ctx, 5*time.Second)
@@ -1212,7 +1202,7 @@ func (s *Server) Version(ctx context.Context, in *emptypb.Empty) (reply *machine
 
 // Kubeconfig implements the machine.MachineServer interface.
 func (s *Server) Kubeconfig(empty *emptypb.Empty, obj machine.MachineService_KubeconfigServer) error {
-	if err := s.checkControlplane("kubeconfig"); err != nil {
+	if err := machinehelper.CheckControlplane(obj.Context(), s.Controller.Runtime().State().V1Alpha2().Resources(), "kubeconfig"); err != nil {
 		return err
 	}
 
@@ -1765,7 +1755,7 @@ func (s *Server) Memory(ctx context.Context, in *emptypb.Empty) (reply *machine.
 
 // EtcdMemberList implements the machine.MachineServer interface.
 func (s *Server) EtcdMemberList(ctx context.Context, in *machine.EtcdMemberListRequest) (*machine.EtcdMemberListResponse, error) {
-	if err := s.checkControlplane("member list"); err != nil {
+	if err := machinehelper.CheckControlplane(ctx, s.Controller.Runtime().State().V1Alpha2().Resources(), "member list"); err != nil {
 		return nil, err
 	}
 
@@ -1814,7 +1804,7 @@ func (s *Server) EtcdMemberList(ctx context.Context, in *machine.EtcdMemberListR
 
 // EtcdRemoveMemberByID implements the machine.MachineServer interface.
 func (s *Server) EtcdRemoveMemberByID(ctx context.Context, in *machine.EtcdRemoveMemberByIDRequest) (*machine.EtcdRemoveMemberByIDResponse, error) {
-	if err := s.checkControlplane("etcd remove member"); err != nil {
+	if err := machinehelper.CheckControlplane(ctx, s.Controller.Runtime().State().V1Alpha2().Resources(), "etcd remove member"); err != nil {
 		return nil, err
 	}
 
@@ -1844,7 +1834,7 @@ func (s *Server) EtcdRemoveMemberByID(ctx context.Context, in *machine.EtcdRemov
 
 // EtcdLeaveCluster implements the machine.MachineServer interface.
 func (s *Server) EtcdLeaveCluster(ctx context.Context, in *machine.EtcdLeaveClusterRequest) (*machine.EtcdLeaveClusterResponse, error) {
-	if err := s.checkControlplane("etcd leave"); err != nil {
+	if err := machinehelper.CheckControlplane(ctx, s.Controller.Runtime().State().V1Alpha2().Resources(), "etcd leave"); err != nil {
 		return nil, err
 	}
 
@@ -1870,7 +1860,7 @@ func (s *Server) EtcdLeaveCluster(ctx context.Context, in *machine.EtcdLeaveClus
 
 // EtcdForfeitLeadership implements the machine.MachineServer interface.
 func (s *Server) EtcdForfeitLeadership(ctx context.Context, in *machine.EtcdForfeitLeadershipRequest) (*machine.EtcdForfeitLeadershipResponse, error) {
-	if err := s.checkControlplane("etcd forfeit leadership"); err != nil {
+	if err := machinehelper.CheckControlplane(ctx, s.Controller.Runtime().State().V1Alpha2().Resources(), "etcd forfeit leadership"); err != nil {
 		return nil, err
 	}
 
@@ -1904,7 +1894,7 @@ func (s *Server) EtcdForfeitLeadership(ctx context.Context, in *machine.EtcdForf
 
 // EtcdSnapshot implements the machine.MachineServer interface.
 func (s *Server) EtcdSnapshot(in *machine.EtcdSnapshotRequest, srv machine.MachineService_EtcdSnapshotServer) error {
-	if err := s.checkControlplane("etcd snapshot"); err != nil {
+	if err := machinehelper.CheckControlplane(srv.Context(), s.Controller.Runtime().State().V1Alpha2().Resources(), "etcd snapshot"); err != nil {
 		return err
 	}
 
@@ -1951,7 +1941,7 @@ func (s *Server) EtcdRecover(srv machine.MachineService_EtcdRecoverServer) error
 		return err
 	}
 
-	if err := s.checkControlplane("etcd recover"); err != nil {
+	if err := machinehelper.CheckControlplane(srv.Context(), s.Controller.Runtime().State().V1Alpha2().Resources(), "etcd recover"); err != nil {
 		return err
 	}
 
@@ -2031,7 +2021,7 @@ func mapAlarms(alarms []*etcdserverpb.AlarmMember) []*machine.EtcdMemberAlarm {
 //
 // This method is available only on control plane nodes (which run etcd).
 func (s *Server) EtcdAlarmList(ctx context.Context, in *emptypb.Empty) (*machine.EtcdAlarmListResponse, error) {
-	if err := s.checkControlplane("etcd alarm list"); err != nil {
+	if err := machinehelper.CheckControlplane(ctx, s.Controller.Runtime().State().V1Alpha2().Resources(), "etcd alarm list"); err != nil {
 		return nil, err
 	}
 
@@ -2061,7 +2051,7 @@ func (s *Server) EtcdAlarmList(ctx context.Context, in *emptypb.Empty) (*machine
 //
 // This method is available only on control plane nodes (which run etcd).
 func (s *Server) EtcdAlarmDisarm(ctx context.Context, in *emptypb.Empty) (*machine.EtcdAlarmDisarmResponse, error) {
-	if err := s.checkControlplane("etcd alarm list"); err != nil {
+	if err := machinehelper.CheckControlplane(ctx, s.Controller.Runtime().State().V1Alpha2().Resources(), "etcd alarm disarm"); err != nil {
 		return nil, err
 	}
 
@@ -2094,7 +2084,7 @@ func (s *Server) EtcdAlarmDisarm(ctx context.Context, in *emptypb.Empty) (*machi
 //
 // This method is available only on control plane nodes (which run etcd).
 func (s *Server) EtcdDefragment(ctx context.Context, in *emptypb.Empty) (*machine.EtcdDefragmentResponse, error) {
-	if err := s.checkControlplane("etcd defragment"); err != nil {
+	if err := machinehelper.CheckControlplane(ctx, s.Controller.Runtime().State().V1Alpha2().Resources(), "etcd defragment"); err != nil {
 		return nil, err
 	}
 
@@ -2122,7 +2112,7 @@ func (s *Server) EtcdDefragment(ctx context.Context, in *emptypb.Empty) (*machin
 //
 // This method is available only on control plane nodes (which run etcd).
 func (s *Server) EtcdStatus(ctx context.Context, in *emptypb.Empty) (*machine.EtcdStatusResponse, error) {
-	if err := s.checkControlplane("etcd status"); err != nil {
+	if err := machinehelper.CheckControlplane(ctx, s.Controller.Runtime().State().V1Alpha2().Resources(), "etcd status"); err != nil {
 		return nil, err
 	}
 
@@ -2176,7 +2166,7 @@ func (s *Server) EtcdStatus(ctx context.Context, in *emptypb.Empty) (*machine.Et
 //
 // This method is available only on control plane nodes (which run etcd).
 func (s *Server) EtcdDowngradeCancel(ctx context.Context, _ *emptypb.Empty) (*machine.EtcdDowngradeCancelResponse, error) {
-	if err := s.checkControlplane("etcd downgrade cancel"); err != nil {
+	if err := machinehelper.CheckControlplane(ctx, s.Controller.Runtime().State().V1Alpha2().Resources(), "etcd downgrade cancel"); err != nil {
 		return nil, err
 	}
 
@@ -2210,7 +2200,7 @@ func (s *Server) EtcdDowngradeCancel(ctx context.Context, _ *emptypb.Empty) (*ma
 //
 //nolint:dupl
 func (s *Server) EtcdDowngradeEnable(ctx context.Context, in *machine.EtcdDowngradeEnableRequest) (*machine.EtcdDowngradeEnableResponse, error) {
-	if err := s.checkControlplane("etcd downgrade cancel"); err != nil {
+	if err := machinehelper.CheckControlplane(ctx, s.Controller.Runtime().State().V1Alpha2().Resources(), "etcd downgrade enable"); err != nil {
 		return nil, err
 	}
 
@@ -2248,7 +2238,7 @@ func (s *Server) EtcdDowngradeEnable(ctx context.Context, in *machine.EtcdDowngr
 //
 //nolint:dupl
 func (s *Server) EtcdDowngradeValidate(ctx context.Context, in *machine.EtcdDowngradeValidateRequest) (*machine.EtcdDowngradeValidateResponse, error) {
-	if err := s.checkControlplane("etcd downgrade cancel"); err != nil {
+	if err := machinehelper.CheckControlplane(ctx, s.Controller.Runtime().State().V1Alpha2().Resources(), "etcd downgrade validate"); err != nil {
 		return nil, err
 	}
 
@@ -2312,8 +2302,8 @@ func validateDowngrade(version string) error {
 
 // GenerateClientConfiguration implements the machine.MachineServer interface.
 func (s *Server) GenerateClientConfiguration(ctx context.Context, in *machine.GenerateClientConfigurationRequest) (*machine.GenerateClientConfigurationResponse, error) {
-	if s.Controller.Runtime().Config().Machine().Type() == machinetype.TypeWorker {
-		return nil, status.Error(codes.FailedPrecondition, "client configuration (talosconfig) can't be generated on worker nodes")
+	if err := machinehelper.CheckControlplane(ctx, s.Controller.Runtime().State().V1Alpha2().Resources(), "generate client configuration"); err != nil {
+		return nil, err
 	}
 
 	crtTTL := in.CrtTtl.AsDuration()

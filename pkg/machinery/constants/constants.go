@@ -570,9 +570,6 @@ const (
 	// APISocketPath is the path to file socket of apid.
 	APISocketPath = SystemRunPath + "/apid/apid.sock"
 
-	// APISocketLabel is the SELinux label for apid socket file.
-	APISocketLabel = "system_u:object_r:apid_socket_t:s0"
-
 	// APIRuntimeSocketPath is the path to file socket of runtime server for apid.
 	APIRuntimeSocketPath = SystemRunPath + "/apid/runtime.sock"
 

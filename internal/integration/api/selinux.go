@@ -94,7 +94,6 @@ func (suite *SELinuxSuite) TestFileMountLabels() {
 		"/var/run":                    constants.RunSelinuxLabel,
 		// Runtime files
 		constants.APIRuntimeSocketPath:  constants.APIRuntimeSocketLabel,
-		constants.APISocketPath:         constants.APISocketLabel,
 		constants.DBusClientSocketPath:  constants.DBusClientSocketLabel,
 		constants.UdevRulesPath:         constants.UdevRulesLabel,
 		constants.DBusServiceSocketPath: constants.DBusServiceSocketLabel,

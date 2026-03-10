@@ -15,10 +15,10 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/gen/xslices"
-	"google.golang.org/grpc/metadata"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
+	"github.com/siderolabs/talos/internal/app/internal/machinehelper"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/cluster"
 	"github.com/siderolabs/talos/pkg/cluster/check"
@@ -32,7 +32,15 @@ import (
 
 // HealthCheck implements the cluster.ClusterServer interface.
 func (s *Server) HealthCheck(in *clusterapi.HealthCheckRequest, srv clusterapi.ClusterService_HealthCheckServer) error {
-	clientProvider := &cluster.LocalClientProvider{}
+	if err := machinehelper.CheckControlplane(srv.Context(), s.Controller.Runtime().State().V1Alpha2().Resources(), "cluster health check"); err != nil {
+		return err
+	}
+
+	clientProvider := cluster.NewLocalClientProvider(
+		s.Controller.Runtime().State().V1Alpha2().Resources(),
+		// use talosconfig with same roles as incoming request for local communication
+		authz.GetRoles(srv.Context()),
+	)
 	defer clientProvider.Close() //nolint:errcheck
 
 	k8sProvider := &cluster.KubernetesClient{
@@ -43,10 +51,6 @@ func (s *Server) HealthCheck(in *clusterapi.HealthCheckRequest, srv clusterapi.C
 
 	checkCtx, checkCtxCancel := context.WithTimeout(srv.Context(), in.WaitTimeout.AsDuration())
 	defer checkCtxCancel()
-
-	md := metadata.New(nil)
-	authz.SetMetadata(md, authz.GetRoles(srv.Context()))
-	checkCtx = metadata.NewOutgoingContext(checkCtx, md)
 
 	r := s.Controller.Runtime()
 

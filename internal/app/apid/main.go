@@ -31,7 +31,6 @@ import (
 	apidbackend "github.com/siderolabs/talos/internal/app/apid/pkg/backend"
 	"github.com/siderolabs/talos/internal/app/apid/pkg/director"
 	"github.com/siderolabs/talos/internal/app/apid/pkg/provider"
-	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/grpc/factory"
 	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
 	"github.com/siderolabs/talos/pkg/grpc/proxy/backend"
@@ -152,19 +151,6 @@ func apidMain() error {
 		return fmt.Errorf("error creating listner: %w", err)
 	}
 
-	socketListener, err := factory.NewListener(
-		ctx,
-		factory.Network("unix"),
-		factory.SocketPath(constants.APISocketPath),
-	)
-	if err != nil {
-		return fmt.Errorf("error creating listner: %w", err)
-	}
-
-	if err = selinux.SetLabel(constants.APISocketPath, constants.APISocketLabel); err != nil {
-		return err
-	}
-
 	networkServer := func() *grpc.Server {
 		injector := &authz.Injector{
 			Mode: authz.Enabled,
@@ -195,41 +181,10 @@ func apidMain() error {
 		)
 	}()
 
-	socketServer := func() *grpc.Server {
-		injector := &authz.Injector{
-			Mode: authz.MetadataOnly,
-		}
-
-		if debug.Enabled {
-			injector.Logger = log.New(log.Writer(), "apid/authz/injector/unix ", log.Flags()).Printf
-		}
-
-		return factory.NewServer(
-			router,
-			factory.WithDefaultLog(),
-			factory.ServerOptions(
-				grpc.ForceServerCodecV2(proxy.Codec()),
-				grpc.UnknownServiceHandler(
-					proxy.TransparentHandler(
-						router.Director,
-						proxy.WithStreamedDetector(router.StreamedDetector),
-					),
-				),
-				grpc.MaxRecvMsgSize(constants.GRPCMaxMessageSize),
-			),
-			factory.WithUnaryInterceptor(injector.UnaryInterceptor()),
-			factory.WithStreamInterceptor(injector.StreamInterceptor()),
-		)
-	}()
-
 	errGroup, ctx := errgroup.WithContext(ctx)
 
 	errGroup.Go(func() error {
 		return networkServer.Serve(networkListener)
-	})
-
-	errGroup.Go(func() error {
-		return socketServer.Serve(socketListener)
 	})
 
 	errGroup.Go(func() error {
@@ -243,7 +198,6 @@ func apidMain() error {
 		defer shutdownCancel()
 
 		factory.ServerGracefulStop(networkServer, shutdownCtx)
-		factory.ServerGracefulStop(socketServer, shutdownCtx)
 
 		return nil
 	})
