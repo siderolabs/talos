@@ -195,7 +195,7 @@ func Pull(
 		containerdRemoteOpts := []containerd.RemoteOpt{
 			containerd.WithPullUnpack,
 			containerd.WithChildLabelMap(images.ChildGCLabelsFilterLayers),
-			containerd.WithPlatformMatcher(platforms.OnlyStrict(platforms.DefaultSpec())),
+			containerd.WithPlatformMatcher(platforms.Default()),
 			containerd.WithResolver(resolver),
 		}
 
