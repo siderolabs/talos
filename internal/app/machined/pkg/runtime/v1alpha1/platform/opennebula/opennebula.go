@@ -29,6 +29,8 @@ import (
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
+const methodSkip = "skip"
+
 // OpenNebula is the concrete type that implements the runtime.Platform interface.
 type OpenNebula struct{}
 
@@ -362,6 +364,10 @@ func parseIPv4StaticConfig(
 // parseInterfaceIPv4 configures the IPv4 stack for one interface.
 // Dispatches to DHCP4 operator or static config based on ETH*_METHOD.
 func parseInterfaceIPv4(oneContext map[string]string, ifaceName, ifaceNameLower string, networkConfig *runtime.PlatformNetworkConfig, allDNSIPs *[]netip.Addr, allSearchDomains *[]string) error {
+	if oneContext[ifaceName+"_METHOD"] == methodSkip {
+		return nil
+	}
+
 	routeMetric := uint32(network.DefaultRouteMetric)
 
 	if metricStr := oneContext[ifaceName+"_METRIC"]; metricStr != "" {
@@ -462,10 +468,49 @@ func parseIPv6Gateway(oneContext map[string]string, ifaceName, ifaceNameLower st
 	return nil
 }
 
-// parseInterfaceIPv6 configures the static IPv6 stack for one interface.
-// Handles ETH*_IP6 (legacy: ETH*_IPV6), ETH*_IP6_PREFIX_LENGTH, ETH*_IP6_ULA,
-// ETH*_IP6_GATEWAY (legacy: ETH*_GATEWAY6), and ETH*_IP6_METRIC.
+// parseIPv6DHCP emits a DHCPv6 operator for an interface, with metric from
+// ETH*_IP6_METRIC (default 1).
+func parseIPv6DHCP(oneContext map[string]string, ifaceName, ifaceNameLower string, networkConfig *runtime.PlatformNetworkConfig) error {
+	metric := uint32(1)
+
+	if metricStr := oneContext[ifaceName+"_IP6_METRIC"]; metricStr != "" {
+		m, err := strconv.ParseUint(metricStr, 10, 32)
+		if err != nil {
+			return fmt.Errorf("interface %s: failed to parse IPv6 metric: %w", ifaceName, err)
+		}
+
+		metric = uint32(m)
+	}
+
+	networkConfig.Operators = append(networkConfig.Operators, network.OperatorSpecSpec{
+		Operator:  network.OperatorDHCP6,
+		LinkName:  ifaceNameLower,
+		RequireUp: true,
+		DHCP6: network.DHCP6OperatorSpec{
+			RouteMetric:         metric,
+			SkipHostnameRequest: true,
+		},
+		ConfigLayer: network.ConfigPlatform,
+	})
+
+	return nil
+}
+
+// parseInterfaceIPv6 configures the IPv6 stack for one interface.
+// Dispatches on ETH*_IP6_METHOD: disable (skip), auto (SLAAC via kernel),
+// dhcp (DHCPv6 operator), or static/empty (Phase 2 static path).
 func parseInterfaceIPv6(oneContext map[string]string, ifaceName, ifaceNameLower string, networkConfig *runtime.PlatformNetworkConfig) error {
+	switch strings.ToLower(oneContext[ifaceName+"_IP6_METHOD"]) {
+	case "disable", methodSkip:
+		return nil
+	case "auto":
+		// SLAAC: the kernel accepts Router Advertisements by default in Talos;
+		// no operator or sysctl is required to enable address auto-configuration.
+		return nil
+	case "dhcp":
+		return parseIPv6DHCP(oneContext, ifaceName, ifaceNameLower, networkConfig)
+	}
+
 	ip6Str := oneContext[ifaceName+"_IP6"]
 	if ip6Str == "" {
 		ip6Str = oneContext[ifaceName+"_IPV6"]
@@ -511,6 +556,11 @@ func parseInterfaceIPv6(oneContext map[string]string, ifaceName, ifaceNameLower 
 // parseInterface runs all per-interface configuration (IPv4, IPv6, aliases).
 func parseInterface(oneContext map[string]string, ifaceName string, networkConfig *runtime.PlatformNetworkConfig, allDNSIPs *[]netip.Addr, allSearchDomains *[]string) error {
 	ifaceNameLower := strings.ToLower(ifaceName)
+
+	ip6Method := strings.ToLower(oneContext[ifaceName+"_IP6_METHOD"])
+	if oneContext[ifaceName+"_METHOD"] == methodSkip && (ip6Method == "" || ip6Method == "disable" || ip6Method == methodSkip) {
+		return nil
+	}
 
 	if err := parseInterfaceIPv4(oneContext, ifaceName, ifaceNameLower, networkConfig, allDNSIPs, allSearchDomains); err != nil {
 		return err
