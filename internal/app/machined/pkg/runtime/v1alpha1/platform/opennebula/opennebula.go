@@ -693,6 +693,99 @@ func resolveHostname(oneContext map[string]string) string {
 	return sanitizeHostname(oneContext["SET_HOSTNAME"])
 }
 
+// extractIPv4FromEndpoint extracts the host IPv4 address from a URL-like
+// string (e.g. "http://169.254.16.9:5030"). Returns an invalid Addr if no
+// IPv4 address can be parsed from the host portion.
+func extractIPv4FromEndpoint(endpoint string) netip.Addr {
+	s := endpoint
+
+	// Strip scheme (e.g. "http://").
+	if idx := strings.Index(s, "://"); idx >= 0 {
+		s = s[idx+3:]
+	}
+
+	// Strip path, query, and port in order to isolate the bare host.
+	for _, sep := range []string{"/", "?", ":"} {
+		if idx := strings.Index(s, sep); idx >= 0 {
+			s = s[:idx]
+		}
+	}
+
+	addr, err := netip.ParseAddr(s)
+	if err != nil {
+		return netip.Addr{}
+	}
+
+	return addr
+}
+
+// parseOnegateProxyRoute emits a /32 scope-link host route to the ONEGATE
+// endpoint when its host is a link-local IPv4 address (169.254.x.x). The
+// route is attached to outLink (the first static interface), matching the
+// reference add_onegate_proxy_route behavior.
+func parseOnegateProxyRoute(oneContext map[string]string, outLink string, networkConfig *runtime.PlatformNetworkConfig) {
+	endpoint := oneContext["ONEGATE_ENDPOINT"]
+	if endpoint == "" {
+		return
+	}
+
+	ip := extractIPv4FromEndpoint(endpoint)
+	if !ip.IsValid() || !ip.Is4() || !ip.IsLinkLocalUnicast() {
+		return
+	}
+
+	route := network.RouteSpecSpec{
+		ConfigLayer: network.ConfigPlatform,
+		Destination: netip.PrefixFrom(ip, 32),
+		OutLinkName: outLink,
+		Table:       nethelpers.TableMain,
+		Protocol:    nethelpers.ProtocolStatic,
+		Type:        nethelpers.TypeUnicast,
+		Family:      nethelpers.FamilyInet4,
+		Scope:       nethelpers.ScopeLink,
+	}
+
+	route.Normalize()
+
+	networkConfig.Routes = append(networkConfig.Routes, route)
+}
+
+// processInterfaces iterates ETHn interfaces in sorted order, configures each
+// one, and returns the name of the first static interface link (used to attach
+// the ONEGATE proxy route). Sorted order matches the reference behavior of
+// env | grep ... | sort (ETH0, ETH1, ETH2, ...).
+func processInterfaces(
+	oneContext map[string]string,
+	networkConfig *runtime.PlatformNetworkConfig,
+	allDNSIPs *[]netip.Addr,
+	allSearchDomains *[]string,
+) (firstStaticLink string, err error) {
+	var ifaceNames []string
+
+	for key := range oneContext {
+		if ifaceName, ok := ethInterfaceName(key); ok {
+			ifaceNames = append(ifaceNames, ifaceName)
+		}
+	}
+
+	slices.Sort(ifaceNames)
+
+	for _, ifaceName := range ifaceNames {
+		if err := parseInterface(oneContext, ifaceName, networkConfig, allDNSIPs, allSearchDomains); err != nil {
+			return "", err
+		}
+
+		if firstStaticLink == "" {
+			method := strings.ToLower(oneContext[ifaceName+"_METHOD"])
+			if method == "" || method == "static" {
+				firstStaticLink = strings.ToLower(ifaceName)
+			}
+		}
+	}
+
+	return firstStaticLink, nil
+}
+
 // ParseMetadata converts opennebula metadata to platform network config.
 func (o *OpenNebula) ParseMetadata(st state.State, oneContextPlain []byte) (*runtime.PlatformNetworkConfig, error) {
 	networkConfig := &runtime.PlatformNetworkConfig{}
@@ -721,19 +814,13 @@ func (o *OpenNebula) ParseMetadata(st state.State, oneContextPlain []byte) (*run
 
 	allSearchDomains := append([]string(nil), strings.Fields(oneContext["SEARCH_DOMAIN"])...)
 
-	// The presence of ETHn_MAC is the sole trigger for interface configuration,
-	// matching the behavior of the official OpenNebula guest contextualization
-	// scripts (one-apps/context-linux: get_context_interfaces() uses ETH*_MAC
-	// presence exclusively).
-	for key := range oneContext {
-		ifaceName, ok := ethInterfaceName(key)
-		if !ok {
-			continue
-		}
+	firstStaticLink, err := processInterfaces(oneContext, networkConfig, &allDNSIPs, &allSearchDomains)
+	if err != nil {
+		return nil, err
+	}
 
-		if err := parseInterface(oneContext, ifaceName, networkConfig, &allDNSIPs, &allSearchDomains); err != nil {
-			return nil, err
-		}
+	if firstStaticLink != "" {
+		parseOnegateProxyRoute(oneContext, firstStaticLink, networkConfig)
 	}
 
 	if len(allDNSIPs)+len(allSearchDomains) > 0 {
