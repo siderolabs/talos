@@ -178,6 +178,18 @@ The nameservers configuration in machine configuration now overwrites any previo
 Previously a smart merge was performed to keep IPv4/IPv6 nameservers from lower layers if the machine configuration specified only one type.
 """
 
+    [notes.kernel_preempt]
+        title = "Dynamic Linux Kernel Preemption Model"
+        description = """\
+Talos Linux now defaults to dynamic Linux kernel preemption model, the default value `none` matches
+previous version, but now with kernel argument `preempt=` the preemption model can be changed.
+
+See [Linux kernel documentation](https://docs.kernel.org/admin-guide/kernel-parameters.html) for more 
+information on supported values.
+
+This change only applies to amd64 (x86_64) architecture.
+"""
+
     [notes.probe_config]
         title = "ProbeConfig"
         description = """\
