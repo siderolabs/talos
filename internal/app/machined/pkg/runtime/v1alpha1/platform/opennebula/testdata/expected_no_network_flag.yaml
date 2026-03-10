@@ -79,6 +79,13 @@ operators:
         routeMetric: 200
         skipHostnameRequest: true
       layer: platform
+    - operator: dhcp6
+      linkName: eth1
+      requireUp: true
+      dhcp6:
+        routeMetric: 200
+        skipHostnameRequest: true
+      layer: platform
 externalIPs: []
 metadata:
     platform: opennebula

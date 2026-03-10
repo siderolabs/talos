@@ -413,22 +413,53 @@ func parseIPv4StaticConfig(
 	return nil
 }
 
+// parseIPv4Metric reads ETH*_METRIC and returns the parsed value, or 0 when
+// the variable is absent. Callers apply their own default (e.g.
+// network.DefaultRouteMetric for IPv4, 1 for IPv6 via parseIPv6Metric).
+func parseIPv4Metric(oneContext map[string]string, ifaceName string) (uint32, error) {
+	if metricStr := oneContext[ifaceName+"_METRIC"]; metricStr != "" {
+		m, err := strconv.ParseUint(metricStr, 10, 32)
+		if err != nil {
+			return 0, fmt.Errorf("interface %s: failed to parse metric: %w", ifaceName, err)
+		}
+
+		return uint32(m), nil
+	}
+
+	return 0, nil
+}
+
+// parseIPv6Metric reads ETH*_IP6_METRIC; falls back to ipv4Metric (when > 0),
+// then to 1, matching the reference [ -z "$ip6_metric" ] && ip6_metric="${metric}".
+func parseIPv6Metric(oneContext map[string]string, ifaceName string, ipv4Metric uint32) (uint32, error) {
+	if metricStr := oneContext[ifaceName+"_IP6_METRIC"]; metricStr != "" {
+		m, err := strconv.ParseUint(metricStr, 10, 32)
+		if err != nil {
+			return 0, fmt.Errorf("interface %s: failed to parse IPv6 metric: %w", ifaceName, err)
+		}
+
+		return uint32(m), nil
+	}
+
+	if ipv4Metric > 0 {
+		return ipv4Metric, nil
+	}
+
+	return 1, nil
+}
+
 // parseInterfaceIPv4 configures the IPv4 stack for one interface.
 // Dispatches to DHCP4 operator or static config based on ETH*_METHOD.
-func parseInterfaceIPv4(oneContext map[string]string, ifaceName, ifaceNameLower string, networkConfig *runtime.PlatformNetworkConfig, allDNSIPs *[]netip.Addr, allSearchDomains *[]string) error {
+func parseInterfaceIPv4(
+	oneContext map[string]string, ifaceName, ifaceNameLower string, routeMetric uint32,
+	networkConfig *runtime.PlatformNetworkConfig, allDNSIPs *[]netip.Addr, allSearchDomains *[]string,
+) error {
 	if oneContext[ifaceName+"_METHOD"] == methodSkip {
 		return nil
 	}
 
-	routeMetric := uint32(network.DefaultRouteMetric)
-
-	if metricStr := oneContext[ifaceName+"_METRIC"]; metricStr != "" {
-		m, err := strconv.ParseUint(metricStr, 10, 32)
-		if err != nil {
-			return fmt.Errorf("interface %s: failed to parse metric: %w", ifaceName, err)
-		}
-
-		routeMetric = uint32(m)
+	if routeMetric == 0 {
+		routeMetric = uint32(network.DefaultRouteMetric)
 	}
 
 	if oneContext[ifaceName+"_METHOD"] == "dhcp" {
@@ -475,8 +506,8 @@ func ip6PrefixFrom(ipStr, prefixLenStr string) (netip.Prefix, error) {
 }
 
 // parseIPv6Gateway reads ETH*_IP6_GATEWAY (or legacy GATEWAY6) and emits the
-// default IPv6 route (::/0) with metric from ETH*_IP6_METRIC (default 1).
-func parseIPv6Gateway(oneContext map[string]string, ifaceName, ifaceNameLower string, networkConfig *runtime.PlatformNetworkConfig) error {
+// default IPv6 route (::/0) with metric from parseIPv6Metric.
+func parseIPv6Gateway(oneContext map[string]string, ifaceName, ifaceNameLower string, ipv4Metric uint32, networkConfig *runtime.PlatformNetworkConfig) error {
 	gwStr := oneContext[ifaceName+"_IP6_GATEWAY"]
 	if gwStr == "" {
 		gwStr = oneContext[ifaceName+"_GATEWAY6"]
@@ -491,15 +522,9 @@ func parseIPv6Gateway(oneContext map[string]string, ifaceName, ifaceNameLower st
 		return fmt.Errorf("interface %s: failed to parse IPv6 gateway %q: %w", ifaceName, gwStr, err)
 	}
 
-	metric := uint32(1)
-
-	if metricStr := oneContext[ifaceName+"_IP6_METRIC"]; metricStr != "" {
-		m, err := strconv.ParseUint(metricStr, 10, 32)
-		if err != nil {
-			return fmt.Errorf("interface %s: failed to parse IPv6 metric: %w", ifaceName, err)
-		}
-
-		metric = uint32(m)
+	metric, err := parseIPv6Metric(oneContext, ifaceName, ipv4Metric)
+	if err != nil {
+		return err
 	}
 
 	route := network.RouteSpecSpec{
@@ -521,17 +546,11 @@ func parseIPv6Gateway(oneContext map[string]string, ifaceName, ifaceNameLower st
 }
 
 // parseIPv6DHCP emits a DHCPv6 operator for an interface, with metric from
-// ETH*_IP6_METRIC (default 1).
-func parseIPv6DHCP(oneContext map[string]string, ifaceName, ifaceNameLower string, networkConfig *runtime.PlatformNetworkConfig) error {
-	metric := uint32(1)
-
-	if metricStr := oneContext[ifaceName+"_IP6_METRIC"]; metricStr != "" {
-		m, err := strconv.ParseUint(metricStr, 10, 32)
-		if err != nil {
-			return fmt.Errorf("interface %s: failed to parse IPv6 metric: %w", ifaceName, err)
-		}
-
-		metric = uint32(m)
+// parseIPv6Metric.
+func parseIPv6DHCP(oneContext map[string]string, ifaceName, ifaceNameLower string, ipv4Metric uint32, networkConfig *runtime.PlatformNetworkConfig) error {
+	metric, err := parseIPv6Metric(oneContext, ifaceName, ipv4Metric)
+	if err != nil {
+		return err
 	}
 
 	networkConfig.Operators = append(networkConfig.Operators, network.OperatorSpecSpec{
@@ -549,10 +568,17 @@ func parseIPv6DHCP(oneContext map[string]string, ifaceName, ifaceNameLower strin
 }
 
 // parseInterfaceIPv6 configures the IPv6 stack for one interface.
-// Dispatches on ETH*_IP6_METHOD: disable (skip), auto (SLAAC via kernel),
-// dhcp (DHCPv6 operator), or static/empty (Phase 2 static path).
-func parseInterfaceIPv6(oneContext map[string]string, ifaceName, ifaceNameLower string, networkConfig *runtime.PlatformNetworkConfig) error {
-	switch strings.ToLower(oneContext[ifaceName+"_IP6_METHOD"]) {
+// Dispatches on the effective IP6_METHOD: disable/skip (no-op), auto (SLAAC),
+// dhcp (DHCPv6 operator), or static/empty (static address path).
+// When IP6_METHOD is unset, ipv4Method is used as fallback, matching the
+// reference: [ -z "$ip6_method" ] && ip6_method="${method}".
+func parseInterfaceIPv6(oneContext map[string]string, ifaceName, ifaceNameLower string, ipv4Method string, ipv4Metric uint32, networkConfig *runtime.PlatformNetworkConfig) error {
+	ip6Method := strings.ToLower(oneContext[ifaceName+"_IP6_METHOD"])
+	if ip6Method == "" {
+		ip6Method = ipv4Method
+	}
+
+	switch ip6Method {
 	case "disable", methodSkip:
 		return nil
 	case "auto":
@@ -560,7 +586,7 @@ func parseInterfaceIPv6(oneContext map[string]string, ifaceName, ifaceNameLower 
 		// no operator or sysctl is required to enable address auto-configuration.
 		return nil
 	case "dhcp":
-		return parseIPv6DHCP(oneContext, ifaceName, ifaceNameLower, networkConfig)
+		return parseIPv6DHCP(oneContext, ifaceName, ifaceNameLower, ipv4Metric, networkConfig)
 	}
 
 	ip6Str := oneContext[ifaceName+"_IP6"]
@@ -602,23 +628,33 @@ func parseInterfaceIPv6(oneContext map[string]string, ifaceName, ifaceNameLower 
 		})
 	}
 
-	return parseIPv6Gateway(oneContext, ifaceName, ifaceNameLower, networkConfig)
+	return parseIPv6Gateway(oneContext, ifaceName, ifaceNameLower, ipv4Metric, networkConfig)
 }
 
 // parseInterface runs all per-interface configuration (IPv4, IPv6, aliases).
 func parseInterface(oneContext map[string]string, ifaceName string, networkConfig *runtime.PlatformNetworkConfig, allDNSIPs *[]netip.Addr, allSearchDomains *[]string) error {
 	ifaceNameLower := strings.ToLower(ifaceName)
+	ipv4Method := strings.ToLower(oneContext[ifaceName+"_METHOD"])
 
 	ip6Method := strings.ToLower(oneContext[ifaceName+"_IP6_METHOD"])
-	if oneContext[ifaceName+"_METHOD"] == methodSkip && (ip6Method == "" || ip6Method == "disable" || ip6Method == methodSkip) {
+	if ip6Method == "" {
+		ip6Method = ipv4Method
+	}
+
+	if ipv4Method == methodSkip && (ip6Method == "" || ip6Method == methodSkip || ip6Method == "disable") {
 		return nil
 	}
 
-	if err := parseInterfaceIPv4(oneContext, ifaceName, ifaceNameLower, networkConfig, allDNSIPs, allSearchDomains); err != nil {
+	ipv4Metric, err := parseIPv4Metric(oneContext, ifaceName)
+	if err != nil {
 		return err
 	}
 
-	if err := parseInterfaceIPv6(oneContext, ifaceName, ifaceNameLower, networkConfig); err != nil {
+	if err := parseInterfaceIPv4(oneContext, ifaceName, ifaceNameLower, ipv4Metric, networkConfig, allDNSIPs, allSearchDomains); err != nil {
+		return err
+	}
+
+	if err := parseInterfaceIPv6(oneContext, ifaceName, ifaceNameLower, ipv4Method, ipv4Metric, networkConfig); err != nil {
 		return err
 	}
 
