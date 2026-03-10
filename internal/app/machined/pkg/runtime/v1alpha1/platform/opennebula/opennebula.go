@@ -117,6 +117,39 @@ func parseAliases(oneContext map[string]string, ifaceName, ifaceNameLower string
 	return addrs, nil
 }
 
+// sanitizeHostname replaces characters invalid in DNS labels with hyphens,
+// strips leading/trailing hyphens from the whole string and from each label.
+// This mirrors the reference sanitization in one-apps/context-linux:
+//
+//	sed -e 's/[^-a-zA-Z0-9\.]/-/g' -e 's/^-*//g' -e 's/-*$//g'
+//
+// Talos is intentionally stricter: it also trims hyphens per-label so every
+// label is RFC-1123-valid (no label may start or end with a hyphen).
+func sanitizeHostname(raw string) string {
+	var b strings.Builder
+
+	for _, r := range raw {
+		switch {
+		case r >= 'a' && r <= 'z',
+			r >= 'A' && r <= 'Z',
+			r >= '0' && r <= '9',
+			r == '-', r == '.':
+			b.WriteRune(r)
+		default:
+			b.WriteRune('-')
+		}
+	}
+
+	s := strings.Trim(b.String(), "-")
+
+	labels := strings.Split(s, ".")
+	for i, l := range labels {
+		labels[i] = strings.Trim(l, "-")
+	}
+
+	return strings.Join(labels, ".")
+}
+
 // parseRouteFields extracts the destination prefix, gateway string, and optional
 // metric string from the fields of a single route entry.
 //
@@ -247,6 +280,9 @@ func (o *OpenNebula) ParseMetadata(st state.State, oneContextPlain []byte) (*run
 	}
 
 	// Create HostnameSpecSpec entry
+	// HOSTNAME is checked first (deviation from the reference which tries
+	// SET_HOSTNAME before HOSTNAME) to preserve backward compatibility with
+	// existing Talos deployments that rely on the OpenNebula-injected FQDN.
 	hostnameValue := oneContext["HOSTNAME"]
 	if hostnameValue == "" {
 		hostnameValue = oneContext["SET_HOSTNAME"]
@@ -254,6 +290,8 @@ func (o *OpenNebula) ParseMetadata(st state.State, oneContextPlain []byte) (*run
 			hostnameValue = oneContext["NAME"]
 		}
 	}
+
+	hostnameValue = sanitizeHostname(hostnameValue)
 
 	// Seed the merged DNS/search-domain slices with global variables (DNS,
 	// SEARCH_DOMAIN). These are applied regardless of interface, matching the
@@ -434,19 +472,21 @@ func (o *OpenNebula) ParseMetadata(st state.State, oneContextPlain []byte) (*run
 		})
 	}
 
-	// Create HostnameSpecSpec entry
-	networkConfig.Hostnames = append(networkConfig.Hostnames,
-		network.HostnameSpecSpec{
-			Hostname:    hostnameValue,
-			Domainname:  oneContext["DNS_HOSTNAME"],
-			ConfigLayer: network.ConfigPlatform,
-		},
-	)
+	hostnameSpec := network.HostnameSpecSpec{
+		ConfigLayer: network.ConfigPlatform,
+	}
 
-	// Create Metadata entry
+	if hostnameValue != "" {
+		if err := hostnameSpec.ParseFQDN(hostnameValue); err != nil {
+			return nil, fmt.Errorf("failed to parse hostname: %w", err)
+		}
+
+		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
+	}
+
 	networkConfig.Metadata = &runtimeres.PlatformMetadataSpec{
 		Platform:   o.Name(),
-		Hostname:   hostnameValue,
+		Hostname:   hostnameSpec.Hostname,
 		InstanceID: oneContext["VMID"],
 	}
 
