@@ -866,6 +866,11 @@ func (o *OpenNebula) Configuration(ctx context.Context, r state.State) (machineC
 
 	userData, ok := oneContext["USER_DATA"]
 	if !ok {
+		// Legacy fallback: reference does USER_DATA="${USER_DATA:-${USERDATA}}".
+		userData, ok = oneContext["USERDATA"]
+	}
+
+	if !ok {
 		return nil, errors.ErrNoConfigSource
 	}
 
