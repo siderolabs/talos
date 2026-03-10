@@ -53,6 +53,8 @@ type BootstrapManifestsConfigSpec struct {
 	PodSecurityPolicyEnabled bool `yaml:"podSecurityPolicyEnabled" protobuf:"14"`
 
 	TalosAPIServiceEnabled bool `yaml:"talosAPIServiceEnabled" protobuf:"15"`
+
+	CNIName string `yaml:"cniName" protobuf:"21"`
 }
 
 // NewBootstrapManifestsConfig returns new BootstrapManifestsConfig resource.

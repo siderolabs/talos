@@ -9,12 +9,11 @@ import (
 	"slices"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
-	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
 // DefaultClusterChecks returns a set of default Talos cluster readiness checks.
@@ -90,12 +89,12 @@ func cniDisabledStatus(ctx context.Context, cluster ClusterInfo) (bool, error) {
 		return false, err
 	}
 
-	mc, err := safe.ReaderGet[*config.MachineConfig](ctx, cli.COSI, resource.NewMetadata(config.NamespaceName, config.MachineConfigType, config.ActiveID, resource.VersionUndefined))
+	bmc, err := safe.ReaderGetByID[*k8s.BootstrapManifestsConfig](ctx, cli.COSI, k8s.BootstrapManifestsConfigID)
 	if err != nil {
 		return false, err
 	}
 
-	return mc.Config().Cluster().Network().CNI().Name() == "none", nil
+	return bmc.TypedSpec().CNIName == "none", nil
 }
 
 // K8sComponentsReadinessChecks returns a set of K8s cluster readiness checks which are specific to the k8s components

@@ -362,6 +362,8 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 					FlannelKubeNetworkPoliciesImage:   images.KubeNetworkPolicies.String(),
 
 					TalosAPIServiceEnabled: cfgProvider.Machine().Features().KubernetesTalosAPIAccess().Enabled(),
+
+					CNIName: cfgProvider.Cluster().Network().CNI().Name(),
 				}
 
 				return nil

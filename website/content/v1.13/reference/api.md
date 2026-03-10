@@ -7594,6 +7594,7 @@ BootstrapManifestsConfigSpec is configuration for bootstrap manifests.
 | flannel_kube_service_port | [string](#string) |  |  |
 | flannel_kube_network_policies_enabled | [bool](#bool) |  |  |
 | flannel_kube_network_policies_image | [string](#string) |  |  |
+| cni_name | [string](#string) |  |  |
 
 
 

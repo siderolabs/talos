@@ -475,6 +475,7 @@ type BootstrapManifestsConfigSpec struct {
 	FlannelKubeServicePort            string                 `protobuf:"bytes,18,opt,name=flannel_kube_service_port,json=flannelKubeServicePort,proto3" json:"flannel_kube_service_port,omitempty"`
 	FlannelKubeNetworkPoliciesEnabled bool                   `protobuf:"varint,19,opt,name=flannel_kube_network_policies_enabled,json=flannelKubeNetworkPoliciesEnabled,proto3" json:"flannel_kube_network_policies_enabled,omitempty"`
 	FlannelKubeNetworkPoliciesImage   string                 `protobuf:"bytes,20,opt,name=flannel_kube_network_policies_image,json=flannelKubeNetworkPoliciesImage,proto3" json:"flannel_kube_network_policies_image,omitempty"`
+	CniName                           string                 `protobuf:"bytes,21,opt,name=cni_name,json=cniName,proto3" json:"cni_name,omitempty"`
 	unknownFields                     protoimpl.UnknownFields
 	sizeCache                         protoimpl.SizeCache
 }
@@ -638,6 +639,13 @@ func (x *BootstrapManifestsConfigSpec) GetFlannelKubeNetworkPoliciesEnabled() bo
 func (x *BootstrapManifestsConfigSpec) GetFlannelKubeNetworkPoliciesImage() string {
 	if x != nil {
 		return x.FlannelKubeNetworkPoliciesImage
+	}
+	return ""
+}
+
+func (x *BootstrapManifestsConfigSpec) GetCniName() string {
+	if x != nil {
+		return x.CniName
 	}
 	return ""
 }
@@ -2414,7 +2422,7 @@ const file_resource_definitions_k8s_k8s_proto_rawDesc = "" +
 	"\awebhook\x18\x03 \x01(\v2\x17.google.protobuf.StructR\awebhook\"\x85\x01\n" +
 	"\x17AuthorizationConfigSpec\x12\x14\n" +
 	"\x05image\x18\x01 \x01(\tR\x05image\x12T\n" +
-	"\x06config\x18\x02 \x03(\v2<.talos.resource.definitions.k8s.AuthorizationAuthorizersSpecR\x06config\"\x8d\a\n" +
+	"\x06config\x18\x02 \x03(\v2<.talos.resource.definitions.k8s.AuthorizationAuthorizersSpecR\x06config\"\xa8\a\n" +
 	"\x1cBootstrapManifestsConfigSpec\x12\x16\n" +
 	"\x06server\x18\x01 \x01(\tR\x06server\x12%\n" +
 	"\x0ecluster_domain\x18\x02 \x01(\tR\rclusterDomain\x12\x1c\n" +
@@ -2438,7 +2446,8 @@ const file_resource_definitions_k8s_k8s_proto_rawDesc = "" +
 	"\x19flannel_kube_service_host\x18\x11 \x01(\tR\x16flannelKubeServiceHost\x129\n" +
 	"\x19flannel_kube_service_port\x18\x12 \x01(\tR\x16flannelKubeServicePort\x12P\n" +
 	"%flannel_kube_network_policies_enabled\x18\x13 \x01(\bR!flannelKubeNetworkPoliciesEnabled\x12L\n" +
-	"#flannel_kube_network_policies_image\x18\x14 \x01(\tR\x1fflannelKubeNetworkPoliciesImage\"B\n" +
+	"#flannel_kube_network_policies_image\x18\x14 \x01(\tR\x1fflannelKubeNetworkPoliciesImage\x12\x19\n" +
+	"\bcni_name\x18\x15 \x01(\tR\acniName\"B\n" +
 	"\x10ConfigStatusSpec\x12\x14\n" +
 	"\x05ready\x18\x01 \x01(\bR\x05ready\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\tR\aversion\"\xfd\x05\n" +
