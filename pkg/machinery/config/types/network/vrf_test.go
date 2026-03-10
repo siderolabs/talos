@@ -132,7 +132,7 @@ func TestVRFValidate(t *testing.T) {
 			cfg: func() *network.VRFConfigV1Alpha1 {
 				cfg := network.NewVRFConfigV1Alpha1("vrf-red")
 				cfg.VRFLinks = []string{"eth0", "eth1"}
-				cfg.VRFTable = nethelpers.Table123
+				cfg.VRFTable = nethelpers.RoutingTable(123)
 				cfg.LinkAddresses = []network.AddressConfig{
 					{
 						AddressAddress: netip.MustParsePrefix("192.168.1.100/24"),

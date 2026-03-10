@@ -69,16 +69,7 @@ func (mock *mockWireguardClient) Close() error {
 	return nil
 }
 
-type mockRulesManager struct{}
-
-func (mock mockRulesManager) Install() error {
-	return nil
-}
-
-func (mock mockRulesManager) Cleanup() error {
-	return nil
-}
-
+//nolint:dupl
 func (suite *ManagerSuite) TestReconcile() {
 	if fipsmode.Strict() {
 		suite.T().Skip("skipping test in strict FIPS mode")
@@ -169,6 +160,51 @@ func (suite *ManagerSuite) TestReconcile() {
 			),
 		),
 		func(res *network.RouteSpec, asrt *assert.Assertions) {},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
+	)
+
+	// check routing rules (IPv4 + IPv6)
+	ctest.AssertResource(suite,
+		network.LayeredID(
+			network.ConfigOperator,
+			network.RoutingRuleID(
+				nethelpers.FamilyInet4,
+				constants.KubeSpanDefaultRulePriority,
+			),
+		),
+		func(res *network.RoutingRuleSpec, asrt *assert.Assertions) {
+			spec := res.TypedSpec()
+
+			asrt.Equal(nethelpers.FamilyInet4, spec.Family)
+			asrt.Equal(nethelpers.RoutingTable(constants.KubeSpanDefaultRoutingTable), spec.Table)
+			asrt.Equal(nethelpers.RoutingRuleActionUnicast, spec.Action)
+			asrt.Equal(uint32(constants.KubeSpanDefaultForceFirewallMark), spec.FwMark)
+			asrt.Equal(uint32(constants.KubeSpanDefaultFirewallMask), spec.FwMask)
+			asrt.Equal(uint32(constants.KubeSpanDefaultRulePriority), spec.Priority)
+			asrt.Equal(network.ConfigOperator, spec.ConfigLayer)
+		},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
+	)
+
+	ctest.AssertResource(suite,
+		network.LayeredID(
+			network.ConfigOperator,
+			network.RoutingRuleID(
+				nethelpers.FamilyInet6,
+				constants.KubeSpanDefaultRulePriority,
+			),
+		),
+		func(res *network.RoutingRuleSpec, asrt *assert.Assertions) {
+			spec := res.TypedSpec()
+
+			asrt.Equal(nethelpers.FamilyInet6, spec.Family)
+			asrt.Equal(nethelpers.RoutingTable(constants.KubeSpanDefaultRoutingTable), spec.Table)
+			asrt.Equal(nethelpers.RoutingRuleActionUnicast, spec.Action)
+			asrt.Equal(uint32(constants.KubeSpanDefaultForceFirewallMark), spec.FwMark)
+			asrt.Equal(uint32(constants.KubeSpanDefaultFirewallMask), spec.FwMask)
+			asrt.Equal(uint32(constants.KubeSpanDefaultRulePriority), spec.Priority)
+			asrt.Equal(network.ConfigOperator, spec.ConfigLayer)
+		},
 		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
 
@@ -375,6 +411,28 @@ func (suite *ManagerSuite) TestReconcile() {
 		suite,
 		"kubespan_prerouting",
 	)
+	ctest.AssertNoResource[*network.RoutingRuleSpec](
+		suite,
+		network.LayeredID(
+			network.ConfigOperator,
+			network.RoutingRuleID(
+				nethelpers.FamilyInet4,
+				constants.KubeSpanDefaultRulePriority,
+			),
+		),
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
+	)
+	ctest.AssertNoResource[*network.RoutingRuleSpec](
+		suite,
+		network.LayeredID(
+			network.ConfigOperator,
+			network.RoutingRuleID(
+				nethelpers.FamilyInet6,
+				constants.KubeSpanDefaultRulePriority,
+			),
+		),
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
+	)
 }
 
 func asUDP(addr netip.AddrPort) *net.UDPAddr {
@@ -400,9 +458,6 @@ func TestManagerSuite(t *testing.T) {
 				s.Require().NoError(s.Runtime().RegisterController(&kubespanctrl.ManagerController{
 					WireguardClientFactory: func() (kubespanctrl.WireguardClient, error) {
 						return mockWireguard, nil
-					},
-					RulesManagerFactory: func(_ uint8, _, _ uint32) kubespanctrl.RulesManager {
-						return mockRulesManager{}
 					},
 					PeerReconcileInterval: time.Second,
 				}))

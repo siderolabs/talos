@@ -327,6 +327,7 @@ description: Talos gRPC API reference.
     - [NethelpersRouteFlag](#talos.resource.definitions.enums.NethelpersRouteFlag)
     - [NethelpersRouteProtocol](#talos.resource.definitions.enums.NethelpersRouteProtocol)
     - [NethelpersRouteType](#talos.resource.definitions.enums.NethelpersRouteType)
+    - [NethelpersRoutingRuleAction](#talos.resource.definitions.enums.NethelpersRoutingRuleAction)
     - [NethelpersRoutingTable](#talos.resource.definitions.enums.NethelpersRoutingTable)
     - [NethelpersScope](#talos.resource.definitions.enums.NethelpersScope)
     - [NethelpersVLANProtocol](#talos.resource.definitions.enums.NethelpersVLANProtocol)
@@ -560,6 +561,8 @@ description: Talos gRPC API reference.
     - [ResolverStatusSpec](#talos.resource.definitions.network.ResolverStatusSpec)
     - [RouteSpecSpec](#talos.resource.definitions.network.RouteSpecSpec)
     - [RouteStatusSpec](#talos.resource.definitions.network.RouteStatusSpec)
+    - [RoutingRuleSpecSpec](#talos.resource.definitions.network.RoutingRuleSpecSpec)
+    - [RoutingRuleStatusSpec](#talos.resource.definitions.network.RoutingRuleStatusSpec)
     - [STPSpec](#talos.resource.definitions.network.STPSpec)
     - [StatusSpec](#talos.resource.definitions.network.StatusSpec)
     - [TCPProbeSpec](#talos.resource.definitions.network.TCPProbeSpec)
@@ -5660,6 +5663,21 @@ NethelpersRouteType is a route type.
 
 
 
+<a name="talos.resource.definitions.enums.NethelpersRoutingRuleAction"></a>
+
+### NethelpersRoutingRuleAction
+NethelpersRoutingRuleAction is a routing rule action.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| ROUTING_RULE_ACTION_UNSPEC | 0 |  |
+| ROUTING_RULE_ACTION_UNICAST | 1 |  |
+| ROUTING_RULE_ACTION_BLACKHOLE | 6 |  |
+| ROUTING_RULE_ACTION_UNREACHABLE | 7 |  |
+| ROUTING_RULE_ACTION_PROHIBIT | 8 |  |
+
+
+
 <a name="talos.resource.definitions.enums.NethelpersRoutingTable"></a>
 
 ### NethelpersRoutingTable
@@ -9889,6 +9907,55 @@ RouteStatusSpec describes status of rendered secrets.
 | flags | [uint32](#uint32) |  |  |
 | protocol | [talos.resource.definitions.enums.NethelpersRouteProtocol](#talos.resource.definitions.enums.NethelpersRouteProtocol) |  |  |
 | mtu | [uint32](#uint32) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.RoutingRuleSpecSpec"></a>
+
+### RoutingRuleSpecSpec
+RoutingRuleSpecSpec describes the routing rule.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| family | [talos.resource.definitions.enums.NethelpersFamily](#talos.resource.definitions.enums.NethelpersFamily) |  |  |
+| src | [common.NetIPPrefix](#common.NetIPPrefix) |  |  |
+| dst | [common.NetIPPrefix](#common.NetIPPrefix) |  |  |
+| table | [talos.resource.definitions.enums.NethelpersRoutingTable](#talos.resource.definitions.enums.NethelpersRoutingTable) |  |  |
+| priority | [uint32](#uint32) |  |  |
+| action | [talos.resource.definitions.enums.NethelpersRoutingRuleAction](#talos.resource.definitions.enums.NethelpersRoutingRuleAction) |  |  |
+| iif_name | [string](#string) |  |  |
+| oif_name | [string](#string) |  |  |
+| fw_mark | [uint32](#uint32) |  |  |
+| fw_mask | [uint32](#uint32) |  |  |
+| config_layer | [talos.resource.definitions.enums.NetworkConfigLayer](#talos.resource.definitions.enums.NetworkConfigLayer) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.RoutingRuleStatusSpec"></a>
+
+### RoutingRuleStatusSpec
+RoutingRuleStatusSpec describes the observed routing rule state.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| family | [talos.resource.definitions.enums.NethelpersFamily](#talos.resource.definitions.enums.NethelpersFamily) |  |  |
+| src | [common.NetIPPrefix](#common.NetIPPrefix) |  |  |
+| dst | [common.NetIPPrefix](#common.NetIPPrefix) |  |  |
+| table | [talos.resource.definitions.enums.NethelpersRoutingTable](#talos.resource.definitions.enums.NethelpersRoutingTable) |  |  |
+| priority | [uint32](#uint32) |  |  |
+| action | [talos.resource.definitions.enums.NethelpersRoutingRuleAction](#talos.resource.definitions.enums.NethelpersRoutingRuleAction) |  |  |
+| iif_name | [string](#string) |  |  |
+| oif_name | [string](#string) |  |  |
+| fw_mark | [uint32](#uint32) |  |  |
+| fw_mask | [uint32](#uint32) |  |  |
 
 
 

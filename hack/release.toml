@@ -298,6 +298,12 @@ See the documentation on [upgrade notes](https://docs.siderolabs.com/talos/v1.13
 for more details on how to configure NVIDIA GPU support in Talos.
 """
 
+    [notes.routing_rules]
+        title = "Routing Rules Support"
+        description = """\
+Talos now supports routing rules via the new `RoutingRuleConfig` machine config document.
+"""
+
 [make_deps]
 
     [make_deps.tools]

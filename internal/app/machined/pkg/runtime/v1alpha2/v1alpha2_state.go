@@ -200,6 +200,8 @@ func NewState() (*State, error) {
 		&network.ResolverSpec{},
 		&network.RouteStatus{},
 		&network.RouteSpec{},
+		&network.RoutingRuleSpec{},
+		&network.RoutingRuleStatus{},
 		&network.Status{},
 		&network.TimeServerStatus{},
 		&network.TimeServerSpec{},

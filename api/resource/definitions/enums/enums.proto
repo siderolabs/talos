@@ -395,6 +395,15 @@ enum NethelpersRouteType {
   TYPE_X_RESOLVE = 11;
 }
 
+// NethelpersRoutingRuleAction is a routing rule action.
+enum NethelpersRoutingRuleAction {
+  ROUTING_RULE_ACTION_UNSPEC = 0;
+  ROUTING_RULE_ACTION_UNICAST = 1;
+  ROUTING_RULE_ACTION_BLACKHOLE = 6;
+  ROUTING_RULE_ACTION_UNREACHABLE = 7;
+  ROUTING_RULE_ACTION_PROHIBIT = 8;
+}
+
 // NethelpersRoutingTable is a routing table ID.
 enum NethelpersRoutingTable {
   TABLE_UNSPEC = 0;

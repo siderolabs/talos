@@ -1,0 +1,6 @@
+apiVersion: v1alpha1
+kind: RoutingRuleConfig
+name: "1000"
+src: 10.0.0.0/8
+table: "100"
+action: unicast

@@ -400,6 +400,11 @@ func (container *Container) NetworkBlackholeRouteConfigs() []config.NetworkBlack
 	return findMatchingDocs[config.NetworkBlackholeRouteConfig](container.documents)
 }
 
+// NetworkRoutingRuleConfigs implements config.Config interface.
+func (container *Container) NetworkRoutingRuleConfigs() []config.NetworkRoutingRuleConfig {
+	return findMatchingDocs[config.NetworkRoutingRuleConfig](container.documents)
+}
+
 // RunDefaultDHCPOperators implements config.Config interface.
 //
 // The rules for this are:

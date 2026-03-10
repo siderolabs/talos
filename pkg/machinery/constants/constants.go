@@ -1000,6 +1000,21 @@ const (
 	// KubeSpanDefaultPeerKeepalive is the interval at which Wireguard Peer Keepalives should be sent.
 	KubeSpanDefaultPeerKeepalive = 25 * time.Second
 
+	// KubeSpanDefaultRulePriority is the default priority for KubeSpan IPv4 routing rules.
+	KubeSpanDefaultRulePriority = 32500
+
+	// LinuxReservedRulePriorityLocal is the priority for the local table lookup (ip rule show shows "from all lookup local").
+	// This priority is reserved by the Linux kernel and should not be used by user-defined rules.
+	LinuxReservedRulePriorityLocal = 0
+
+	// LinuxReservedRulePriorityMain is the priority for the main table lookup (ip rule show shows "from all lookup main").
+	// This priority is reserved by the Linux kernel and should not be used by user-defined rules.
+	LinuxReservedRulePriorityMain = 32766
+
+	// LinuxReservedRulePriorityDefault is the priority for the default table lookup (ip rule show shows "from all lookup default").
+	// This priority is reserved by the Linux kernel and should not be used by user-defined rules.
+	LinuxReservedRulePriorityDefault = 32767
+
 	// NetworkSelfIPsAnnotation is the node annotation used to list the (comma-separated) IP addresses of the host, as discovered by Talos tooling.
 	NetworkSelfIPsAnnotation = "networking.talos.dev/self-ips"
 

@@ -1519,6 +1519,102 @@ func (SearchDomainsConfig) Doc() *encoder.Doc {
 	return doc
 }
 
+func (RoutingRuleConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "RoutingRuleConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "RoutingRuleConfig is a config document to configure Linux policy routing rules." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "RoutingRuleConfig is a config document to configure Linux policy routing rules.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Priority of the routing rule.\nLower values are matched first.\nMust be between 1 and 32765 (excluding reserved priorities [0 32500 32501 32766 32767]).\nMust be unique across all routing rules in the configuration.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Priority of the routing rule." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "src",
+				Type:        "Prefix",
+				Note:        "",
+				Description: "Source address prefix to match.\nIf empty, matches all sources.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Source address prefix to match." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "dst",
+				Type:        "Prefix",
+				Note:        "",
+				Description: "Destination address prefix to match.\nIf empty, matches all destinations.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Destination address prefix to match." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "table",
+				Type:        "RoutingTable",
+				Note:        "",
+				Description: "The routing table to look up if the rule matches.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The routing table to look up if the rule matches." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "action",
+				Type:        "RoutingRuleAction",
+				Note:        "",
+				Description: "The action to perform when the rule matches.\nDefaults to \"unicast\" (table lookup).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The action to perform when the rule matches." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"unicast",
+					"blackhole",
+					"unreachable",
+					"prohibit",
+				},
+			},
+			{
+				Name:        "iifName",
+				Type:        "string",
+				Note:        "",
+				Description: "Match packets arriving on this interface.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Match packets arriving on this interface." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "oifName",
+				Type:        "string",
+				Note:        "",
+				Description: "Match packets going out on this interface.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Match packets going out on this interface." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "fwMark",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Match packets with this firewall mark value.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Match packets with this firewall mark value." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "fwMask",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Mask for the firewall mark comparison.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Mask for the firewall mark comparison." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleRoutingRuleConfigV1Alpha1())
+
+	doc.Fields[1].AddExample("", 1000)
+	doc.Fields[2].AddExample("", "10.0.0.0/8")
+	doc.Fields[3].AddExample("", "192.168.0.0/16")
+	doc.Fields[4].AddExample("", 100)
+	doc.Fields[6].AddExample("", "eth0")
+	doc.Fields[7].AddExample("", "eth1")
+	doc.Fields[8].AddExample("", uint32(0x100))
+	doc.Fields[9].AddExample("", uint32(0xff00))
+
+	return doc
+}
+
 func (RuleConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "NetworkRuleConfig",
@@ -2052,6 +2148,7 @@ func GetFileDoc() *encoder.FileDoc {
 			ResolverConfigV1Alpha1{}.Doc(),
 			NameserverConfig{}.Doc(),
 			SearchDomainsConfig{}.Doc(),
+			RoutingRuleConfigV1Alpha1{}.Doc(),
 			RuleConfigV1Alpha1{}.Doc(),
 			RulePortSelector{}.Doc(),
 			IngressRule{}.Doc(),

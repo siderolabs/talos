@@ -55,6 +55,11 @@ func RouteID(table nethelpers.RoutingTable, family nethelpers.Family, destinatio
 	return fmt.Sprintf("%s%s/%s/%s/%d", prefix, family, string(gw), string(dst), priority)
 }
 
+// RoutingRuleID builds ID (primary key) for the routing rule.
+func RoutingRuleID(family nethelpers.Family, priority uint32) string {
+	return fmt.Sprintf("%s/%05d", family, priority)
+}
+
 // OperatorID builds ID (primary key) for the operators.
 func OperatorID(spec OperatorSpecSpec) string {
 	switch spec.Operator {

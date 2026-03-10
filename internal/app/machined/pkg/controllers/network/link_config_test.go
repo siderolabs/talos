@@ -585,7 +585,7 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleVRF() {
 
 	vrf := networkcfg.NewVRFConfigV1Alpha1("vrf-blue")
 	vrf.VRFLinks = []string{"enp0s2", "dummy1"}
-	vrf.VRFTable = nethelpers.Table123
+	vrf.VRFTable = nethelpers.RoutingTable(123)
 
 	ctr, err := container.New(lc1, dc1, vrf)
 	suite.Require().NoError(err)
@@ -633,7 +633,7 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleVRF() {
 				asrt.True(r.TypedSpec().Logical)
 				asrt.Equal(nethelpers.LinkEther, r.TypedSpec().Type)
 				asrt.Equal(network.LinkKindVRF, r.TypedSpec().Kind)
-				asrt.Equal(nethelpers.Table123, r.TypedSpec().VRFMaster.Table)
+				asrt.Equal(nethelpers.RoutingTable(123), r.TypedSpec().VRFMaster.Table)
 			}
 		},
 	)

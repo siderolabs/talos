@@ -605,7 +605,7 @@ func (suite *NetworkConfigSuite) TestVRFConfig() {
 
 	vrf := network.NewVRFConfigV1Alpha1(vrfName)
 	vrf.VRFLinks = dummyNames
-	vrf.VRFTable = nethelpers.Table123
+	vrf.VRFTable = nethelpers.RoutingTable(123)
 	vrf.HardwareAddressConfig = nethelpers.HardwareAddr{0x02, 0x00, 0x00, 0x00, byte(rand.IntN(256)), byte(rand.IntN(256))}
 	vrf.LinkUp = new(true)
 
@@ -712,6 +712,191 @@ func (suite *NetworkConfigSuite) TestBlackholeRouteConfig() {
 	)
 
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.BlackholeRouteKind, dest)
+}
+
+// routingRuleTestCtx creates a context with a longer timeout for routing rule tests,
+// because the RoutingRuleStatusController uses 30s polling (no rtnetlink multicast group for rule changes).
+func (suite *NetworkConfigSuite) routingRuleTestCtx() (context.Context, context.CancelFunc) {
+	return context.WithTimeout(context.Background(), 2*time.Minute)
+}
+
+// TestRoutingRuleBasic tests creation of a routing rule with a numeric table ID.
+//
+//nolint:dupl
+func (suite *NetworkConfigSuite) TestRoutingRuleBasic() {
+	ctx, cancel := suite.routingRuleTestCtx()
+	defer cancel()
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(ctx, node)
+
+	suite.T().Logf("testing routing rule (basic) on node %q", node)
+
+	const rulePriority uint32 = 1000
+
+	cfg := network.NewRoutingRuleConfigV1Alpha1(rulePriority)
+	cfg.RuleSrc = network.Prefix{Prefix: netip.MustParsePrefix("10.99.0.0/16")}
+	cfg.RuleTable = nethelpers.RoutingTable(100)
+
+	suite.PatchMachineConfig(nodeCtx, cfg)
+
+	const ruleStatusID = "inet4/01000"
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, ruleStatusID,
+		func(rule *networkres.RoutingRuleStatus, asrt *assert.Assertions) {
+			asrt.Equal(nethelpers.FamilyInet4, rule.TypedSpec().Family)
+			asrt.Equal(netip.MustParsePrefix("10.99.0.0/16"), rule.TypedSpec().Src)
+			asrt.Equal(nethelpers.RoutingTable(100), rule.TypedSpec().Table)
+			asrt.Equal(uint32(1000), rule.TypedSpec().Priority)
+		},
+	)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.RoutingRuleKind, strconv.FormatUint(uint64(rulePriority), 10))
+
+	rtestutils.AssertNoResource[*networkres.RoutingRuleStatus](nodeCtx, suite.T(), suite.Client.COSI, ruleStatusID)
+}
+
+// TestRoutingRuleIPv6 tests creation of an IPv6 routing rule.
+//
+//nolint:dupl
+func (suite *NetworkConfigSuite) TestRoutingRuleIPv6() {
+	ctx, cancel := suite.routingRuleTestCtx()
+	defer cancel()
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(ctx, node)
+
+	suite.T().Logf("testing routing rule (IPv6) on node %q", node)
+
+	const rulePriority uint32 = 3000
+
+	cfg := network.NewRoutingRuleConfigV1Alpha1(rulePriority)
+	cfg.RuleSrc = network.Prefix{Prefix: netip.MustParsePrefix("fd99:1234::/48")}
+	cfg.RuleTable = nethelpers.RoutingTable(100)
+
+	suite.PatchMachineConfig(nodeCtx, cfg)
+
+	const ruleStatusID = "inet6/03000"
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, ruleStatusID,
+		func(rule *networkres.RoutingRuleStatus, asrt *assert.Assertions) {
+			asrt.Equal(nethelpers.FamilyInet6, rule.TypedSpec().Family)
+			asrt.Equal(netip.MustParsePrefix("fd99:1234::/48"), rule.TypedSpec().Src)
+			asrt.Equal(nethelpers.RoutingTable(100), rule.TypedSpec().Table)
+			asrt.Equal(uint32(3000), rule.TypedSpec().Priority)
+		},
+	)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.RoutingRuleKind, strconv.FormatUint(uint64(rulePriority), 10))
+
+	rtestutils.AssertNoResource[*networkres.RoutingRuleStatus](nodeCtx, suite.T(), suite.Client.COSI, ruleStatusID)
+}
+
+// TestRoutingRuleSrcAndDst tests creation of a routing rule with both source and destination prefixes.
+func (suite *NetworkConfigSuite) TestRoutingRuleSrcAndDst() {
+	ctx, cancel := suite.routingRuleTestCtx()
+	defer cancel()
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(ctx, node)
+
+	suite.T().Logf("testing routing rule (src+dst) on node %q", node)
+
+	const rulePriority uint32 = 4000
+
+	cfg := network.NewRoutingRuleConfigV1Alpha1(rulePriority)
+	cfg.RuleSrc = network.Prefix{Prefix: netip.MustParsePrefix("10.96.0.0/16")}
+	cfg.RuleDst = network.Prefix{Prefix: netip.MustParsePrefix("192.168.99.0/24")}
+	cfg.RuleTable = nethelpers.RoutingTable(100)
+
+	suite.PatchMachineConfig(nodeCtx, cfg)
+
+	const ruleStatusID = "inet4/04000"
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, ruleStatusID,
+		func(rule *networkres.RoutingRuleStatus, asrt *assert.Assertions) {
+			asrt.Equal(nethelpers.FamilyInet4, rule.TypedSpec().Family)
+			asrt.Equal(netip.MustParsePrefix("10.96.0.0/16"), rule.TypedSpec().Src)
+			asrt.Equal(netip.MustParsePrefix("192.168.99.0/24"), rule.TypedSpec().Dst)
+			asrt.Equal(nethelpers.RoutingTable(100), rule.TypedSpec().Table)
+			asrt.Equal(uint32(4000), rule.TypedSpec().Priority)
+		},
+	)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.RoutingRuleKind, strconv.FormatUint(uint64(rulePriority), 10))
+
+	rtestutils.AssertNoResource[*networkres.RoutingRuleStatus](nodeCtx, suite.T(), suite.Client.COSI, ruleStatusID)
+}
+
+// TestRoutingRuleBlackholeAction tests creation of a routing rule with blackhole action.
+func (suite *NetworkConfigSuite) TestRoutingRuleBlackholeAction() {
+	ctx, cancel := suite.routingRuleTestCtx()
+	defer cancel()
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(ctx, node)
+
+	suite.T().Logf("testing routing rule (blackhole action) on node %q", node)
+
+	const rulePriority uint32 = 5000
+
+	cfg := network.NewRoutingRuleConfigV1Alpha1(rulePriority)
+	cfg.RuleSrc = network.Prefix{Prefix: netip.MustParsePrefix("10.95.0.0/16")}
+	cfg.RuleTable = nethelpers.RoutingTable(100)
+	cfg.RuleAction = nethelpers.RoutingRuleActionBlackhole
+
+	suite.PatchMachineConfig(nodeCtx, cfg)
+
+	const ruleStatusID = "inet4/05000"
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, ruleStatusID,
+		func(rule *networkres.RoutingRuleStatus, asrt *assert.Assertions) {
+			asrt.Equal(nethelpers.FamilyInet4, rule.TypedSpec().Family)
+			asrt.Equal(nethelpers.RoutingRuleActionBlackhole, rule.TypedSpec().Action)
+			asrt.Equal(uint32(5000), rule.TypedSpec().Priority)
+		},
+	)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.RoutingRuleKind, strconv.FormatUint(uint64(rulePriority), 10))
+
+	rtestutils.AssertNoResource[*networkres.RoutingRuleStatus](nodeCtx, suite.T(), suite.Client.COSI, ruleStatusID)
+}
+
+// TestRoutingRuleFwMark tests creation of a routing rule with firewall mark matching.
+func (suite *NetworkConfigSuite) TestRoutingRuleFwMark() {
+	ctx, cancel := suite.routingRuleTestCtx()
+	defer cancel()
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(ctx, node)
+
+	suite.T().Logf("testing routing rule (fwmark) on node %q", node)
+
+	const rulePriority uint32 = 6000
+
+	cfg := network.NewRoutingRuleConfigV1Alpha1(rulePriority)
+	cfg.RuleSrc = network.Prefix{Prefix: netip.MustParsePrefix("10.94.0.0/16")}
+	cfg.RuleTable = nethelpers.RoutingTable(100)
+	cfg.RuleFwMark = 0x100
+	cfg.RuleFwMask = 0xff00
+
+	suite.PatchMachineConfig(nodeCtx, cfg)
+
+	const ruleStatusID = "inet4/06000"
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, ruleStatusID,
+		func(rule *networkres.RoutingRuleStatus, asrt *assert.Assertions) {
+			asrt.Equal(nethelpers.FamilyInet4, rule.TypedSpec().Family)
+			asrt.Equal(nethelpers.RoutingTable(100), rule.TypedSpec().Table)
+			asrt.Equal(uint32(6000), rule.TypedSpec().Priority)
+			asrt.Equal(uint32(0x100), rule.TypedSpec().FwMark)
+			asrt.Equal(uint32(0xff00), rule.TypedSpec().FwMask)
+		},
+	)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.RoutingRuleKind, strconv.FormatUint(uint64(rulePriority), 10))
+
+	rtestutils.AssertNoResource[*networkres.RoutingRuleStatus](nodeCtx, suite.T(), suite.Client.COSI, ruleStatusID)
 }
 
 func init() {

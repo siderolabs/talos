@@ -743,14 +743,14 @@ func (suite *LinkSpecSuite) TestVRF() {
 
 	// attempt to change the vrf table
 	ctest.UpdateWithConflicts(suite, vrf, func(r *network.LinkSpec) error {
-		r.TypedSpec().VRFMaster.Table = nethelpers.Table124
+		r.TypedSpec().VRFMaster.Table = nethelpers.RoutingTable(124)
 
 		return nil
 	})
 
 	ctest.AssertResource(suite, vrfName, func(r *network.LinkStatus, asrt *assert.Assertions) {
 		asrt.Equal(network.LinkKindVRF, r.TypedSpec().Kind)
-		asrt.Equal(nethelpers.Table124, r.TypedSpec().VRFMaster.Table)
+		asrt.Equal(nethelpers.RoutingTable(124), r.TypedSpec().VRFMaster.Table)
 	})
 
 	// unslave one of the interfaces

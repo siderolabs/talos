@@ -32,6 +32,7 @@ type Config interface { //nolint:interfacebloat
 	NetworkVirtualIPConfigs() []NetworkVirtualIPConfig
 	NetworkProbeConfigs() []NetworkCommonProbeConfig
 	NetworkBlackholeRouteConfigs() []NetworkBlackholeRouteConfig
+	NetworkRoutingRuleConfigs() []NetworkRoutingRuleConfig
 
 	// - block devices/storage:
 	Volumes() VolumesConfig

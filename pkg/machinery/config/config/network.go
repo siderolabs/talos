@@ -363,3 +363,20 @@ type NetworkBlackholeRouteConfig interface {
 	BlackholeRouteConfig()
 	Metric() optional.Optional[uint32]
 }
+
+// NetworkRoutingRuleConfig defines a policy routing rule configuration.
+//
+//nolint:interfacebloat
+type NetworkRoutingRuleConfig interface {
+	NamedDocument
+	RoutingRuleConfig()
+	Src() optional.Optional[netip.Prefix]
+	Dst() optional.Optional[netip.Prefix]
+	Table() nethelpers.RoutingTable
+	Action() nethelpers.RoutingRuleAction
+	Priority() uint32
+	IIFName() string
+	OIFName() string
+	FwMark() uint32
+	FwMask() uint32
+}

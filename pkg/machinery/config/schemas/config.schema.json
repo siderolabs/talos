@@ -2761,6 +2761,100 @@
       "type": "object",
       "description": "RouteConfig represents a network route configuration."
     },
+    "network.RoutingRuleConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "RoutingRuleConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Priority of the routing rule.\nLower values are matched first.\nMust be between 1 and 32765 (excluding reserved priorities [0 32500 32501 32766 32767]).\nMust be unique across all routing rules in the configuration.\n",
+          "markdownDescription": "Priority of the routing rule.\nLower values are matched first.\nMust be between 1 and 32765 (excluding reserved priorities [0 32500 32501 32766 32767]).\nMust be unique across all routing rules in the configuration.",
+          "x-intellij-html-description": "\u003cp\u003ePriority of the routing rule.\nLower values are matched first.\nMust be between 1 and 32765 (excluding reserved priorities [0 32500 32501 32766 32767]).\nMust be unique across all routing rules in the configuration.\u003c/p\u003e\n"
+        },
+        "src": {
+          "type": "string",
+          "title": "src",
+          "description": "Source address prefix to match.\nIf empty, matches all sources.\n",
+          "markdownDescription": "Source address prefix to match.\nIf empty, matches all sources.",
+          "x-intellij-html-description": "\u003cp\u003eSource address prefix to match.\nIf empty, matches all sources.\u003c/p\u003e\n"
+        },
+        "dst": {
+          "type": "string",
+          "title": "dst",
+          "description": "Destination address prefix to match.\nIf empty, matches all destinations.\n",
+          "markdownDescription": "Destination address prefix to match.\nIf empty, matches all destinations.",
+          "x-intellij-html-description": "\u003cp\u003eDestination address prefix to match.\nIf empty, matches all destinations.\u003c/p\u003e\n"
+        },
+        "table": {
+          "type": "string",
+          "title": "table",
+          "description": "The routing table to look up if the rule matches.\n",
+          "markdownDescription": "The routing table to look up if the rule matches.",
+          "x-intellij-html-description": "\u003cp\u003eThe routing table to look up if the rule matches.\u003c/p\u003e\n"
+        },
+        "action": {
+          "type": "integer",
+          "title": "action",
+          "description": "The action to perform when the rule matches.\nDefaults to “unicast” (table lookup).\n",
+          "markdownDescription": "The action to perform when the rule matches.\nDefaults to \"unicast\" (table lookup).",
+          "x-intellij-html-description": "\u003cp\u003eThe action to perform when the rule matches.\nDefaults to \u0026ldquo;unicast\u0026rdquo; (table lookup).\u003c/p\u003e\n"
+        },
+        "iifName": {
+          "type": "string",
+          "title": "iifName",
+          "description": "Match packets arriving on this interface.\n",
+          "markdownDescription": "Match packets arriving on this interface.",
+          "x-intellij-html-description": "\u003cp\u003eMatch packets arriving on this interface.\u003c/p\u003e\n"
+        },
+        "oifName": {
+          "type": "string",
+          "title": "oifName",
+          "description": "Match packets going out on this interface.\n",
+          "markdownDescription": "Match packets going out on this interface.",
+          "x-intellij-html-description": "\u003cp\u003eMatch packets going out on this interface.\u003c/p\u003e\n"
+        },
+        "fwMark": {
+          "type": "integer",
+          "title": "fwMark",
+          "description": "Match packets with this firewall mark value.\n",
+          "markdownDescription": "Match packets with this firewall mark value.",
+          "x-intellij-html-description": "\u003cp\u003eMatch packets with this firewall mark value.\u003c/p\u003e\n"
+        },
+        "fwMask": {
+          "type": "integer",
+          "title": "fwMask",
+          "description": "Mask for the firewall mark comparison.\n",
+          "markdownDescription": "Mask for the firewall mark comparison.",
+          "x-intellij-html-description": "\u003cp\u003eMask for the firewall mark comparison.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "name",
+        "table"
+      ],
+      "description": "RoutingRuleConfig is a config document to configure Linux policy routing rules."
+    },
     "network.RuleConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -5708,6 +5802,9 @@
     },
     {
       "$ref": "#/$defs/network.ResolverConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/network.RoutingRuleConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/network.RuleConfigV1Alpha1"

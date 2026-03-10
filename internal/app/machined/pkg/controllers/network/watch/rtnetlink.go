@@ -18,7 +18,7 @@ type rtnetlinkWatcher struct {
 }
 
 // NewRtNetlink starts rtnetlink watch over specified groups.
-func NewRtNetlink(trigger Trigger, groups uint32) (Watcher, error) {
+func NewRtNetlink(trigger Trigger, groups uint32, netlinkGroups ...uint32) (Watcher, error) {
 	watcher := &rtnetlinkWatcher{}
 
 	var err error
@@ -28,6 +28,12 @@ func NewRtNetlink(trigger Trigger, groups uint32) (Watcher, error) {
 	})
 	if err != nil {
 		return nil, fmt.Errorf("error dialing watch socket: %w", err)
+	}
+
+	for _, group := range netlinkGroups {
+		if err := watcher.conn.JoinGroup(group); err != nil {
+			return nil, fmt.Errorf("error joining group %d: %w", group, err)
+		}
 	}
 
 	watcher.wg.Go(func() {

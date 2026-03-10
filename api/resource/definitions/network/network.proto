@@ -495,6 +495,35 @@ message RouteStatusSpec {
   uint32 mtu = 13;
 }
 
+// RoutingRuleSpecSpec describes the routing rule.
+message RoutingRuleSpecSpec {
+  talos.resource.definitions.enums.NethelpersFamily family = 1;
+  common.NetIPPrefix src = 2;
+  common.NetIPPrefix dst = 3;
+  talos.resource.definitions.enums.NethelpersRoutingTable table = 4;
+  uint32 priority = 5;
+  talos.resource.definitions.enums.NethelpersRoutingRuleAction action = 6;
+  string iif_name = 7;
+  string oif_name = 8;
+  uint32 fw_mark = 9;
+  uint32 fw_mask = 10;
+  talos.resource.definitions.enums.NetworkConfigLayer config_layer = 11;
+}
+
+// RoutingRuleStatusSpec describes the observed routing rule state.
+message RoutingRuleStatusSpec {
+  talos.resource.definitions.enums.NethelpersFamily family = 1;
+  common.NetIPPrefix src = 2;
+  common.NetIPPrefix dst = 3;
+  talos.resource.definitions.enums.NethelpersRoutingTable table = 4;
+  uint32 priority = 5;
+  talos.resource.definitions.enums.NethelpersRoutingRuleAction action = 6;
+  string iif_name = 7;
+  string oif_name = 8;
+  uint32 fw_mark = 9;
+  uint32 fw_mask = 10;
+}
+
 // STPSpec describes Spanning Tree Protocol (STP) settings of a bridge.
 message STPSpec {
   bool enabled = 1;

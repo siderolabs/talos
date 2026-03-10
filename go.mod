@@ -6,6 +6,9 @@ replace (
 	// forked coredns so we don't carry caddy and other stuff into the Talos
 	github.com/coredns/coredns => github.com/siderolabs/coredns v1.14.53
 
+	// see https://github.com/jsimonetti/rtnetlink/pull/306
+	github.com/jsimonetti/rtnetlink/v2 => github.com/shanduur/rtnetlink/v2 v2.0.0-20260313131132-118a2ded4751
+
 	// forked ethtool introduces missing APIs
 	github.com/mdlayher/ethtool => github.com/siderolabs/ethtool v0.4.0-sidero
 
@@ -109,7 +112,7 @@ require (
 	github.com/mdlayher/ethtool v0.5.1
 	github.com/mdlayher/genetlink v1.3.2
 	github.com/mdlayher/kobject v0.0.0-20200520190114-19ca17470d7d
-	github.com/mdlayher/netlink v1.8.0
+	github.com/mdlayher/netlink v1.9.0
 	github.com/mdlayher/netx v0.0.0-20230430222610-7e21880baee8
 	github.com/mdp/qrterminal/v3 v3.2.1
 	github.com/miekg/dns v1.1.72
@@ -180,8 +183,8 @@ require (
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
 	golang.org/x/net v0.51.0
 	golang.org/x/oauth2 v0.35.0
-	golang.org/x/sync v0.19.0
-	golang.org/x/sys v0.41.0
+	golang.org/x/sync v0.20.0
+	golang.org/x/sys v0.42.0
 	golang.org/x/term v0.40.0
 	golang.org/x/text v0.34.0
 	golang.org/x/time v0.14.0
@@ -230,7 +233,7 @@ require (
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/chai2010/gettext-go v1.0.2 // indirect
-	github.com/cilium/ebpf v0.20.0 // indirect
+	github.com/cilium/ebpf v0.21.0 // indirect
 	github.com/cloudflare/circl v1.6.3 // indirect
 	github.com/containerd/continuity v0.4.5 // indirect
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
