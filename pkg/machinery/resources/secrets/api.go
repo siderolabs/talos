@@ -30,6 +30,9 @@ type APICertsSpec struct {
 	AcceptedCAs []*x509.PEMEncodedCertificate     `yaml:"acceptedCAs" protobuf:"4"`
 	Client      *x509.PEMEncodedCertificateAndKey `yaml:"client" protobuf:"2"`
 	Server      *x509.PEMEncodedCertificateAndKey `yaml:"server" protobuf:"3"`
+
+	// Skip verifying client certificate, to be used only with the maintenance mode operations.
+	SkipVerifyingClientCert bool `yaml:"skipVerifyingClientCert" protobuf:"5"`
 }
 
 // NewAPI initializes an API resource.

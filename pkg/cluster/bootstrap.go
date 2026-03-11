@@ -79,7 +79,8 @@ func (s *APIBootstrapper) Bootstrap(ctx context.Context, out io.Writer) error {
 				return retry.ExpectedError(err)
 			// FailedPrecondition when time is not in sync yet on the server
 			// DeadlineExceeded when the call fails in the gRPC stack either on the server or client side
-			case client.StatusCode(err) == codes.FailedPrecondition || client.StatusCode(err) == codes.DeadlineExceeded:
+			// Canceled is when apid restarts on transitioning maintenance -> ready
+			case client.StatusCode(err) == codes.FailedPrecondition || client.StatusCode(err) == codes.DeadlineExceeded || client.StatusCode(err) == codes.Canceled:
 				return retry.ExpectedError(err)
 			// connection refused, including proxied connection refused via the endpoint to the node
 			case strings.Contains(err.Error(), "connection refused"):

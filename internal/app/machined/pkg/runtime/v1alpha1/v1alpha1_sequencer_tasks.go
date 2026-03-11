@@ -346,6 +346,15 @@ func StartSyslogd(r runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string)
 	}, "startSyslogd"
 }
 
+// StartApid represents the task to start apid.
+func StartApid(r runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
+	return func(_ context.Context, _ *log.Logger, r runtime.Runtime) error {
+		system.Services(r).LoadAndStart(&services.APID{})
+
+		return nil
+	}, "startApid"
+}
+
 // StartAuditd represents the task to start auditd.
 func StartAuditd(r runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
 	return func(_ context.Context, logger *log.Logger, r runtime.Runtime) error {

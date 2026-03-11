@@ -51,7 +51,11 @@ var rules = map[string]role.Set{
 	"/machine.LifecycleService/Install": role.MakeSet(role.Admin),
 	"/machine.LifecycleService/Upgrade": role.MakeSet(role.Admin),
 
-	"/machine.MachineService/ApplyConfiguration":          role.MakeSet(role.Admin),
+	"/machine.MachineService/ApplyConfiguration": role.MakeSet(
+		role.Admin,
+		// for maintenance only, verified in the handler
+		role.Reader,
+	),
 	"/machine.MachineService/Bootstrap":                   role.MakeSet(role.Admin),
 	"/machine.MachineService/CPUInfo":                     role.MakeSet(role.Admin, role.Operator, role.Reader),
 	"/machine.MachineService/CPUFreqStats":                role.MakeSet(role.Admin, role.Operator, role.Reader),

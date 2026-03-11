@@ -24,17 +24,19 @@ type Router struct {
 	remoteBackendFactory RemoteBackendFactory
 	localAddressProvider LocalAddressProvider
 	streamedMatchers     []*regexp.Regexp
+	skipRouting          bool
 }
 
 // RemoteBackendFactory provides backend generation by address (target).
 type RemoteBackendFactory func(target string) (proxy.Backend, error)
 
 // NewRouter builds new Router.
-func NewRouter(backendFactory RemoteBackendFactory, localBackend proxy.Backend, localAddressProvider LocalAddressProvider) *Router {
+func NewRouter(backendFactory RemoteBackendFactory, localBackend proxy.Backend, localAddressProvider LocalAddressProvider, skipRouting bool) *Router {
 	return &Router{
 		localBackend:         localBackend,
 		remoteBackendFactory: backendFactory,
 		localAddressProvider: localAddressProvider,
+		skipRouting:          skipRouting,
 	}
 }
 
@@ -46,8 +48,12 @@ func (r *Router) Register(srv *grpc.Server) {
 
 // Director implements proxy.StreamDirector function.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (r *Router) Director(ctx context.Context, fullMethodName string) (proxy.Mode, []proxy.Backend, error) {
+	if r.skipRouting {
+		return proxy.One2One, []proxy.Backend{r.localBackend}, nil
+	}
+
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return proxy.One2One, []proxy.Backend{r.localBackend}, nil

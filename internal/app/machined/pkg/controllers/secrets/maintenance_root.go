@@ -13,7 +13,6 @@ import (
 	"github.com/siderolabs/crypto/x509"
 	"go.uber.org/zap"
 
-	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
 
@@ -50,13 +49,7 @@ func (ctrl *MaintenanceRootController) Run(ctx context.Context, r controller.Run
 	}
 
 	return safe.WriterModify(ctx, r, secrets.NewMaintenanceRoot(secrets.MaintenanceRootID), func(root *secrets.MaintenanceRoot) error {
-		var x509Opts []x509.Option
-
-		if fipsmode.Enabled() {
-			x509Opts = append(x509Opts, x509.ECDSA(true))
-		}
-
-		ca, err := x509.NewSelfSignedCertificateAuthority(x509Opts...)
+		ca, err := x509.NewSelfSignedCertificateAuthority()
 		if err != nil {
 			return fmt.Errorf("failed to generate self-signed CA: %w", err)
 		}
