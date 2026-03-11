@@ -19,7 +19,7 @@ preface = """
         title = "Component Updates"
         description = """\
 Linux: 6.18.16
-containerd: 2.2.1
+containerd: 2.2.2
 etcd: 3.6.8
 CoreDNS: 1.14.1
 Kubernetes: 1.36.0-alpha.2

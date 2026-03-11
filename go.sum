@@ -875,8 +875,8 @@ github.com/sigstore/timestamp-authority/v2 v2.0.4 h1:65IBa4LUeFWDQu9hiTt5lBpi/F5
 github.com/sigstore/timestamp-authority/v2 v2.0.4/go.mod h1:EXJLiMDBqRPlzC02hPiFSiYTCqSuUpU68a4vr0DFePM=
 github.com/sirupsen/logrus v1.9.4 h1:TsZE7l11zFCLZnZ+teH4Umoq5BhEIfIzfRDZ1Uzql2w=
 github.com/sirupsen/logrus v1.9.4/go.mod h1:ftWc9WdOfJ0a92nsE2jF5u5ZwH8Bv2zdeOC42RjbV2g=
-github.com/smira/containerd/v2 v2.2.2-0.20260206164215-4ccae6e909bc h1:r4TCqo9PylxNt/4J/aKL1Oe5dBBpyk1oBw6j+QEV07I=
-github.com/smira/containerd/v2 v2.2.2-0.20260206164215-4ccae6e909bc/go.mod h1:5Jhevmv6/2J+Iu/A2xXAdUIdI5Ah/hfyO7okJ4AFIdY=
+github.com/smira/containerd/v2 v2.2.3-0.20260311174942-e5fa687ba763 h1:l0WOZNJ5VG2EYm4Tnj2Pm0m1v5Tlw9W7TwhWAn/k/Sk=
+github.com/smira/containerd/v2 v2.2.3-0.20260311174942-e5fa687ba763/go.mod h1:5Jhevmv6/2J+Iu/A2xXAdUIdI5Ah/hfyO7okJ4AFIdY=
 github.com/smira/kobject v0.0.0-20240304111826-49c8d4613389 h1:f/5NRv5IGZxbjBhc5MnlbNmyuXBPxvekhBAUzyKWyLY=
 github.com/smira/kobject v0.0.0-20240304111826-49c8d4613389/go.mod h1:+SexPO1ZvdbbWUdUnyXEWv3+4NwHZjKhxOmQqHY4Pqc=
 github.com/soheilhy/cmux v0.1.5 h1:jjzc5WVemNEDTLwv9tlmemhC73tI08BNOIGwBOo10Js=
