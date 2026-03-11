@@ -9,6 +9,7 @@ package api
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"slices"
 	"testing"
 	"time"
@@ -20,10 +21,14 @@ import (
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
+	cfg "github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/role"
 )
 
 // ApidSuite verifies Discovery API.
@@ -230,6 +235,32 @@ func (suite *ApidSuite) TestBigPayload() {
 		Mode: machineapi.ApplyConfigurationRequest_NO_REBOOT,
 	})
 	suite.Require().NoError(err)
+}
+
+// TestPKIMismatch verifies that PKI mismatch is handled correctly.
+func (suite *ApidSuite) TestPKIMismatch() {
+	bundle, err := secrets.NewBundle(secrets.NewClock(), cfg.TalosVersionCurrent)
+	suite.Require().NoError(err)
+
+	cert, err := bundle.GenerateTalosAPIClientCertificate(role.MakeSet(role.Admin))
+	suite.Require().NoError(err)
+
+	suite.Require().Contains(suite.Talosconfig.Contexts, suite.Talosconfig.Context)
+
+	caCrt, err := base64.StdEncoding.DecodeString(suite.Talosconfig.Contexts[suite.Talosconfig.Context].CA)
+	suite.Require().NoError(err)
+
+	wrongConfig := clientconfig.NewConfig("wrong", []string{suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)}, caCrt, cert)
+
+	wrongClient, err := client.New(suite.ctx, client.WithConfig(wrongConfig))
+	suite.Require().NoError(err)
+
+	_, err = wrongClient.Version(suite.ctx)
+	suite.Require().Error(err)
+	suite.Assert().Equal(codes.Unavailable, client.StatusCode(err))
+	suite.Assert().ErrorContains(err, "remote error: tls: unknown certificate authority")
+
+	suite.Require().NoError(wrongClient.Close())
 }
 
 func init() {

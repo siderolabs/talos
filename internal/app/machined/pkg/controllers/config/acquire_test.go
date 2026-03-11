@@ -22,6 +22,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/klauspost/compress/zstd"
 	"github.com/siderolabs/go-procfs/procfs"
@@ -263,7 +264,19 @@ func (suite *AcquireSuite) injectViaMaintenance(cfg []byte) {
 	mCfg, err := configloader.NewFromBytes(cfg)
 	suite.Require().NoError(err)
 
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), configresource.NewMachineConfigWithID(mCfg, configresource.MaintenanceID)))
+	existingCfg, err := safe.StateGetByID[*configresource.MachineConfig](suite.Ctx(), suite.State(), configresource.ActiveID)
+	if err != nil && !state.IsNotFoundError(err) {
+		suite.Require().NoError(err)
+	}
+
+	newCfg := configresource.NewMachineConfigWithID(mCfg, configresource.ActiveID)
+
+	if existingCfg == nil {
+		suite.Create(newCfg)
+	} else {
+		newCfg.Metadata().SetVersion(existingCfg.Metadata().Version())
+		suite.Update(newCfg)
+	}
 
 	_, err = suite.State().WatchFor(suite.Ctx(), runtime.NewMaintenanceServiceRequest().Metadata(), state.WithEventTypes(state.Destroyed))
 	suite.Require().NoError(err)
@@ -384,10 +397,8 @@ func (suite *AcquireSuite) TestFromDiskToMaintenance() {
 
 	suite.Require().Equal(cfg.SideroLink().APIUrl().Host, "siderolink.api")
 
+	// no asserts here, as maintenance injects the config bypassing the controller
 	suite.injectViaMaintenance(suite.completeMachineConfig)
-
-	cfg = suite.waitForConfig(true)
-	suite.Require().Equal(cfg.Cluster().Name(), suite.clusterName)
 
 	suite.Assert().Equal(
 		[]proto.Message{
@@ -402,18 +413,25 @@ func (suite *AcquireSuite) TestFromDiskToMaintenance() {
 		},
 		suite.eventPublisher.getEvents(),
 	)
-	suite.Assert().Equal(
-		[]platform.Event{
-			{
-				Type:    platform.EventTypeActivate,
-				Message: "Talos booted into maintenance mode. Ready for user interaction.",
-			},
-			{
-				Type:    platform.EventTypeConfigLoaded,
-				Message: "Talos machine config loaded successfully.",
-			},
+
+	suite.Assert().EventuallyWithT(
+		func(collect *assert.CollectT) {
+			assert.New(collect).Equal(
+				[]platform.Event{
+					{
+						Type:    platform.EventTypeActivate,
+						Message: "Talos booted into maintenance mode. Ready for user interaction.",
+					},
+					{
+						Type:    platform.EventTypeConfigLoaded,
+						Message: "Talos machine config loaded successfully.",
+					},
+				},
+				suite.platformEvent.getEvents(),
+			)
 		},
-		suite.platformEvent.getEvents(),
+		2*time.Second,
+		10*time.Millisecond,
 	)
 }
 
@@ -557,10 +575,8 @@ func (suite *AcquireSuite) TestFromPlatformToMaintenance() {
 
 	suite.Require().Equal(cfg.SideroLink().APIUrl().Host, "siderolink.api")
 
+	// no asserts here, as maintenance injects the config bypassing the controller
 	suite.injectViaMaintenance(suite.completeMachineConfig)
-
-	cfg = suite.waitForConfig(true)
-	suite.Require().Equal(cfg.Cluster().Name(), suite.clusterName)
 
 	suite.Assert().Equal(
 		[]proto.Message{
@@ -575,18 +591,25 @@ func (suite *AcquireSuite) TestFromPlatformToMaintenance() {
 		},
 		suite.eventPublisher.getEvents(),
 	)
-	suite.Assert().Equal(
-		[]platform.Event{
-			{
-				Type:    platform.EventTypeActivate,
-				Message: "Talos booted into maintenance mode. Ready for user interaction.",
-			},
-			{
-				Type:    platform.EventTypeConfigLoaded,
-				Message: "Talos machine config loaded successfully.",
-			},
+
+	suite.Assert().EventuallyWithT(
+		func(collect *assert.CollectT) {
+			assert.New(collect).Equal(
+				[]platform.Event{
+					{
+						Type:    platform.EventTypeActivate,
+						Message: "Talos booted into maintenance mode. Ready for user interaction.",
+					},
+					{
+						Type:    platform.EventTypeConfigLoaded,
+						Message: "Talos machine config loaded successfully.",
+					},
+				},
+				suite.platformEvent.getEvents(),
+			)
 		},
-		suite.platformEvent.getEvents(),
+		2*time.Second,
+		10*time.Millisecond,
 	)
 }
 
@@ -624,10 +647,8 @@ func (suite *AcquireSuite) TestFromCmdlineLateToMaintenance() {
 
 	suite.Require().Equal(cfg.SideroLink().APIUrl().Host, "siderolink.api")
 
+	// no asserts here, as maintenance injects the config bypassing the controller
 	suite.injectViaMaintenance(suite.completeMachineConfig)
-
-	cfg = suite.waitForConfig(true)
-	suite.Require().Equal(cfg.Cluster().Name(), suite.clusterName)
 
 	suite.Assert().Equal(
 		[]proto.Message{
@@ -642,18 +663,25 @@ func (suite *AcquireSuite) TestFromCmdlineLateToMaintenance() {
 		},
 		suite.eventPublisher.getEvents(),
 	)
-	suite.Assert().Equal(
-		[]platform.Event{
-			{
-				Type:    platform.EventTypeActivate,
-				Message: "Talos booted into maintenance mode. Ready for user interaction.",
-			},
-			{
-				Type:    platform.EventTypeConfigLoaded,
-				Message: "Talos machine config loaded successfully.",
-			},
+
+	suite.Assert().EventuallyWithT(
+		func(collect *assert.CollectT) {
+			assert.New(collect).Equal(
+				[]platform.Event{
+					{
+						Type:    platform.EventTypeActivate,
+						Message: "Talos booted into maintenance mode. Ready for user interaction.",
+					},
+					{
+						Type:    platform.EventTypeConfigLoaded,
+						Message: "Talos machine config loaded successfully.",
+					},
+				},
+				suite.platformEvent.getEvents(),
+			)
 		},
-		suite.platformEvent.getEvents(),
+		2*time.Second,
+		10*time.Millisecond,
 	)
 }
 
@@ -712,10 +740,8 @@ func (suite *AcquireSuite) TestFromMaintenance() {
 	suite.noStateVolume()
 	suite.triggerAcquire()
 
+	// no asserts here, as maintenance injects the config bypassing the controller
 	suite.injectViaMaintenance(suite.completeMachineConfig)
-
-	cfg := suite.waitForConfig(true)
-	suite.Require().Equal(cfg.Cluster().Name(), suite.clusterName)
 
 	suite.Assert().Equal(
 		[]proto.Message{
@@ -730,18 +756,25 @@ func (suite *AcquireSuite) TestFromMaintenance() {
 		},
 		suite.eventPublisher.getEvents(),
 	)
-	suite.Assert().Equal(
-		[]platform.Event{
-			{
-				Type:    platform.EventTypeActivate,
-				Message: "Talos booted into maintenance mode. Ready for user interaction.",
-			},
-			{
-				Type:    platform.EventTypeConfigLoaded,
-				Message: "Talos machine config loaded successfully.",
-			},
+
+	suite.Assert().EventuallyWithT(
+		func(collect *assert.CollectT) {
+			assert.New(collect).Equal(
+				[]platform.Event{
+					{
+						Type:    platform.EventTypeActivate,
+						Message: "Talos booted into maintenance mode. Ready for user interaction.",
+					},
+					{
+						Type:    platform.EventTypeConfigLoaded,
+						Message: "Talos machine config loaded successfully.",
+					},
+				},
+				suite.platformEvent.getEvents(),
+			)
 		},
-		suite.platformEvent.getEvents(),
+		2*time.Second,
+		10*time.Millisecond,
 	)
 }
 
@@ -767,10 +800,8 @@ func (suite *AcquireSuite) TestFromEmbeddedToMaintenance() {
 
 	suite.Require().Equal(cfg.SideroLink().APIUrl().Host, "siderolink.api")
 
+	// no asserts here, as maintenance injects the config bypassing the controller
 	suite.injectViaMaintenance(suite.completeMachineConfig)
-
-	cfg = suite.waitForConfig(true)
-	suite.Require().Equal(cfg.Cluster().Name(), suite.clusterName)
 
 	suite.Assert().Equal(
 		[]proto.Message{
@@ -785,18 +816,25 @@ func (suite *AcquireSuite) TestFromEmbeddedToMaintenance() {
 		},
 		suite.eventPublisher.getEvents(),
 	)
-	suite.Assert().Equal(
-		[]platform.Event{
-			{
-				Type:    platform.EventTypeActivate,
-				Message: "Talos booted into maintenance mode. Ready for user interaction.",
-			},
-			{
-				Type:    platform.EventTypeConfigLoaded,
-				Message: "Talos machine config loaded successfully.",
-			},
+
+	suite.Assert().EventuallyWithT(
+		func(collect *assert.CollectT) {
+			assert.New(collect).Equal(
+				[]platform.Event{
+					{
+						Type:    platform.EventTypeActivate,
+						Message: "Talos booted into maintenance mode. Ready for user interaction.",
+					},
+					{
+						Type:    platform.EventTypeConfigLoaded,
+						Message: "Talos machine config loaded successfully.",
+					},
+				},
+				suite.platformEvent.getEvents(),
+			)
 		},
-		suite.platformEvent.getEvents(),
+		2*time.Second,
+		10*time.Millisecond,
 	)
 }
 

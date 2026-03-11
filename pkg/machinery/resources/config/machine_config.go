@@ -21,9 +21,6 @@ const MachineConfigType = resource.Type("MachineConfigs.config.talos.dev")
 // ActiveID is the ID of active (applied to the running OS) machine configuration.
 const ActiveID = resource.ID("v1alpha1")
 
-// MaintenanceID is the ID of the config submitted in the maintenance mode.
-const MaintenanceID = resource.ID("maintenance")
-
 // PersistentID is the ID of the config saved to the persistent storage.
 //
 // Note: PersistentID might be ahead of the "current" ID if the config was submitted in e.g. "staged" mode.

@@ -26,12 +26,13 @@ const (
 
 // APICertsSpec describes etcd certs secrets.
 type APICertsSpec struct {
-	state         protoimpl.MessageState              `protogen:"open.v1"`
-	Client        *common.PEMEncodedCertificateAndKey `protobuf:"bytes,2,opt,name=client,proto3" json:"client,omitempty"`
-	Server        *common.PEMEncodedCertificateAndKey `protobuf:"bytes,3,opt,name=server,proto3" json:"server,omitempty"`
-	AcceptedCAs   []*common.PEMEncodedCertificate     `protobuf:"bytes,4,rep,name=accepted_c_as,json=acceptedCAs,proto3" json:"accepted_c_as,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state                   protoimpl.MessageState              `protogen:"open.v1"`
+	Client                  *common.PEMEncodedCertificateAndKey `protobuf:"bytes,2,opt,name=client,proto3" json:"client,omitempty"`
+	Server                  *common.PEMEncodedCertificateAndKey `protobuf:"bytes,3,opt,name=server,proto3" json:"server,omitempty"`
+	AcceptedCAs             []*common.PEMEncodedCertificate     `protobuf:"bytes,4,rep,name=accepted_c_as,json=acceptedCAs,proto3" json:"accepted_c_as,omitempty"`
+	SkipVerifyingClientCert bool                                `protobuf:"varint,5,opt,name=skip_verifying_client_cert,json=skipVerifyingClientCert,proto3" json:"skip_verifying_client_cert,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
 }
 
 func (x *APICertsSpec) Reset() {
@@ -83,6 +84,13 @@ func (x *APICertsSpec) GetAcceptedCAs() []*common.PEMEncodedCertificate {
 		return x.AcceptedCAs
 	}
 	return nil
+}
+
+func (x *APICertsSpec) GetSkipVerifyingClientCert() bool {
+	if x != nil {
+		return x.SkipVerifyingClientCert
+	}
+	return false
 }
 
 // CertSANSpec describes fields of the cert SANs.
@@ -698,59 +706,6 @@ func (x *MaintenanceRootSpec) GetCa() *common.PEMEncodedCertificateAndKey {
 	return nil
 }
 
-// MaintenanceServiceCertsSpec describes maintenance service certs secrets.
-type MaintenanceServiceCertsSpec struct {
-	state         protoimpl.MessageState              `protogen:"open.v1"`
-	Ca            *common.PEMEncodedCertificateAndKey `protobuf:"bytes,1,opt,name=ca,proto3" json:"ca,omitempty"`
-	Server        *common.PEMEncodedCertificateAndKey `protobuf:"bytes,2,opt,name=server,proto3" json:"server,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *MaintenanceServiceCertsSpec) Reset() {
-	*x = MaintenanceServiceCertsSpec{}
-	mi := &file_resource_definitions_secrets_secrets_proto_msgTypes[10]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *MaintenanceServiceCertsSpec) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*MaintenanceServiceCertsSpec) ProtoMessage() {}
-
-func (x *MaintenanceServiceCertsSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_secrets_secrets_proto_msgTypes[10]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use MaintenanceServiceCertsSpec.ProtoReflect.Descriptor instead.
-func (*MaintenanceServiceCertsSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_secrets_secrets_proto_rawDescGZIP(), []int{10}
-}
-
-func (x *MaintenanceServiceCertsSpec) GetCa() *common.PEMEncodedCertificateAndKey {
-	if x != nil {
-		return x.Ca
-	}
-	return nil
-}
-
-func (x *MaintenanceServiceCertsSpec) GetServer() *common.PEMEncodedCertificateAndKey {
-	if x != nil {
-		return x.Server
-	}
-	return nil
-}
-
 // OSRootSpec describes operating system CA.
 type OSRootSpec struct {
 	state           protoimpl.MessageState              `protogen:"open.v1"`
@@ -765,7 +720,7 @@ type OSRootSpec struct {
 
 func (x *OSRootSpec) Reset() {
 	*x = OSRootSpec{}
-	mi := &file_resource_definitions_secrets_secrets_proto_msgTypes[11]
+	mi := &file_resource_definitions_secrets_secrets_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -777,7 +732,7 @@ func (x *OSRootSpec) String() string {
 func (*OSRootSpec) ProtoMessage() {}
 
 func (x *OSRootSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_secrets_secrets_proto_msgTypes[11]
+	mi := &file_resource_definitions_secrets_secrets_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -790,7 +745,7 @@ func (x *OSRootSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OSRootSpec.ProtoReflect.Descriptor instead.
 func (*OSRootSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_secrets_secrets_proto_rawDescGZIP(), []int{11}
+	return file_resource_definitions_secrets_secrets_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *OSRootSpec) GetIssuingCa() *common.PEMEncodedCertificateAndKey {
@@ -839,7 +794,7 @@ type TrustdCertsSpec struct {
 
 func (x *TrustdCertsSpec) Reset() {
 	*x = TrustdCertsSpec{}
-	mi := &file_resource_definitions_secrets_secrets_proto_msgTypes[12]
+	mi := &file_resource_definitions_secrets_secrets_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -851,7 +806,7 @@ func (x *TrustdCertsSpec) String() string {
 func (*TrustdCertsSpec) ProtoMessage() {}
 
 func (x *TrustdCertsSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_secrets_secrets_proto_msgTypes[12]
+	mi := &file_resource_definitions_secrets_secrets_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -864,7 +819,7 @@ func (x *TrustdCertsSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TrustdCertsSpec.ProtoReflect.Descriptor instead.
 func (*TrustdCertsSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_secrets_secrets_proto_rawDescGZIP(), []int{12}
+	return file_resource_definitions_secrets_secrets_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *TrustdCertsSpec) GetServer() *common.PEMEncodedCertificateAndKey {
@@ -885,11 +840,12 @@ var File_resource_definitions_secrets_secrets_proto protoreflect.FileDescriptor
 
 const file_resource_definitions_secrets_secrets_proto_rawDesc = "" +
 	"\n" +
-	"*resource/definitions/secrets/secrets.proto\x12\"talos.resource.definitions.secrets\x1a\x13common/common.proto\"\xcb\x01\n" +
+	"*resource/definitions/secrets/secrets.proto\x12\"talos.resource.definitions.secrets\x1a\x13common/common.proto\"\x88\x02\n" +
 	"\fAPICertsSpec\x12;\n" +
 	"\x06client\x18\x02 \x01(\v2#.common.PEMEncodedCertificateAndKeyR\x06client\x12;\n" +
 	"\x06server\x18\x03 \x01(\v2#.common.PEMEncodedCertificateAndKeyR\x06server\x12A\n" +
-	"\raccepted_c_as\x18\x04 \x03(\v2\x1d.common.PEMEncodedCertificateR\vacceptedCAs\"`\n" +
+	"\raccepted_c_as\x18\x04 \x03(\v2\x1d.common.PEMEncodedCertificateR\vacceptedCAs\x12;\n" +
+	"\x1askip_verifying_client_cert\x18\x05 \x01(\bR\x17skipVerifyingClientCert\"`\n" +
 	"\vCertSANSpec\x12 \n" +
 	"\x04i_ps\x18\x01 \x03(\v2\r.common.NetIPR\x03iPs\x12\x1b\n" +
 	"\tdns_names\x18\x02 \x03(\tR\bdnsNames\x12\x12\n" +
@@ -940,10 +896,7 @@ const file_resource_definitions_secrets_secrets_proto_rawDesc = "" +
 	"\x0eapi_server_ips\x18\x0e \x03(\v2\r.common.NetIPR\fapiServerIps\x12A\n" +
 	"\raccepted_c_as\x18\x0f \x03(\v2\x1d.common.PEMEncodedCertificateR\vacceptedCAs\"J\n" +
 	"\x13MaintenanceRootSpec\x123\n" +
-	"\x02ca\x18\x01 \x01(\v2#.common.PEMEncodedCertificateAndKeyR\x02ca\"\x8f\x01\n" +
-	"\x1bMaintenanceServiceCertsSpec\x123\n" +
-	"\x02ca\x18\x01 \x01(\v2#.common.PEMEncodedCertificateAndKeyR\x02ca\x12;\n" +
-	"\x06server\x18\x02 \x01(\v2#.common.PEMEncodedCertificateAndKeyR\x06server\"\x86\x02\n" +
+	"\x02ca\x18\x01 \x01(\v2#.common.PEMEncodedCertificateAndKeyR\x02ca\"\x86\x02\n" +
 	"\n" +
 	"OSRootSpec\x12B\n" +
 	"\n" +
@@ -970,7 +923,7 @@ func file_resource_definitions_secrets_secrets_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_secrets_secrets_proto_rawDescData
 }
 
-var file_resource_definitions_secrets_secrets_proto_msgTypes = make([]protoimpl.MessageInfo, 13)
+var file_resource_definitions_secrets_secrets_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_resource_definitions_secrets_secrets_proto_goTypes = []any{
 	(*APICertsSpec)(nil),                       // 0: talos.resource.definitions.secrets.APICertsSpec
 	(*CertSANSpec)(nil),                        // 1: talos.resource.definitions.secrets.CertSANSpec
@@ -982,50 +935,47 @@ var file_resource_definitions_secrets_secrets_proto_goTypes = []any{
 	(*KubernetesDynamicCertsSpec)(nil),         // 7: talos.resource.definitions.secrets.KubernetesDynamicCertsSpec
 	(*KubernetesRootSpec)(nil),                 // 8: talos.resource.definitions.secrets.KubernetesRootSpec
 	(*MaintenanceRootSpec)(nil),                // 9: talos.resource.definitions.secrets.MaintenanceRootSpec
-	(*MaintenanceServiceCertsSpec)(nil),        // 10: talos.resource.definitions.secrets.MaintenanceServiceCertsSpec
-	(*OSRootSpec)(nil),                         // 11: talos.resource.definitions.secrets.OSRootSpec
-	(*TrustdCertsSpec)(nil),                    // 12: talos.resource.definitions.secrets.TrustdCertsSpec
-	(*common.PEMEncodedCertificateAndKey)(nil), // 13: common.PEMEncodedCertificateAndKey
-	(*common.PEMEncodedCertificate)(nil),       // 14: common.PEMEncodedCertificate
-	(*common.NetIP)(nil),                       // 15: common.NetIP
-	(*common.URL)(nil),                         // 16: common.URL
-	(*common.PEMEncodedKey)(nil),               // 17: common.PEMEncodedKey
+	(*OSRootSpec)(nil),                         // 10: talos.resource.definitions.secrets.OSRootSpec
+	(*TrustdCertsSpec)(nil),                    // 11: talos.resource.definitions.secrets.TrustdCertsSpec
+	(*common.PEMEncodedCertificateAndKey)(nil), // 12: common.PEMEncodedCertificateAndKey
+	(*common.PEMEncodedCertificate)(nil),       // 13: common.PEMEncodedCertificate
+	(*common.NetIP)(nil),                       // 14: common.NetIP
+	(*common.URL)(nil),                         // 15: common.URL
+	(*common.PEMEncodedKey)(nil),               // 16: common.PEMEncodedKey
 }
 var file_resource_definitions_secrets_secrets_proto_depIdxs = []int32{
-	13, // 0: talos.resource.definitions.secrets.APICertsSpec.client:type_name -> common.PEMEncodedCertificateAndKey
-	13, // 1: talos.resource.definitions.secrets.APICertsSpec.server:type_name -> common.PEMEncodedCertificateAndKey
-	14, // 2: talos.resource.definitions.secrets.APICertsSpec.accepted_c_as:type_name -> common.PEMEncodedCertificate
-	15, // 3: talos.resource.definitions.secrets.CertSANSpec.i_ps:type_name -> common.NetIP
-	13, // 4: talos.resource.definitions.secrets.EtcdCertsSpec.etcd:type_name -> common.PEMEncodedCertificateAndKey
-	13, // 5: talos.resource.definitions.secrets.EtcdCertsSpec.etcd_peer:type_name -> common.PEMEncodedCertificateAndKey
-	13, // 6: talos.resource.definitions.secrets.EtcdCertsSpec.etcd_admin:type_name -> common.PEMEncodedCertificateAndKey
-	13, // 7: talos.resource.definitions.secrets.EtcdCertsSpec.etcd_api_server:type_name -> common.PEMEncodedCertificateAndKey
-	13, // 8: talos.resource.definitions.secrets.EtcdRootSpec.etcd_ca:type_name -> common.PEMEncodedCertificateAndKey
-	16, // 9: talos.resource.definitions.secrets.KubeletSpec.endpoint:type_name -> common.URL
-	14, // 10: talos.resource.definitions.secrets.KubeletSpec.accepted_c_as:type_name -> common.PEMEncodedCertificate
-	13, // 11: talos.resource.definitions.secrets.KubernetesDynamicCertsSpec.api_server:type_name -> common.PEMEncodedCertificateAndKey
-	13, // 12: talos.resource.definitions.secrets.KubernetesDynamicCertsSpec.api_server_kubelet_client:type_name -> common.PEMEncodedCertificateAndKey
-	13, // 13: talos.resource.definitions.secrets.KubernetesDynamicCertsSpec.front_proxy:type_name -> common.PEMEncodedCertificateAndKey
-	16, // 14: talos.resource.definitions.secrets.KubernetesRootSpec.endpoint:type_name -> common.URL
-	16, // 15: talos.resource.definitions.secrets.KubernetesRootSpec.local_endpoint:type_name -> common.URL
-	13, // 16: talos.resource.definitions.secrets.KubernetesRootSpec.issuing_ca:type_name -> common.PEMEncodedCertificateAndKey
-	17, // 17: talos.resource.definitions.secrets.KubernetesRootSpec.service_account:type_name -> common.PEMEncodedKey
-	13, // 18: talos.resource.definitions.secrets.KubernetesRootSpec.aggregator_ca:type_name -> common.PEMEncodedCertificateAndKey
-	15, // 19: talos.resource.definitions.secrets.KubernetesRootSpec.api_server_ips:type_name -> common.NetIP
-	14, // 20: talos.resource.definitions.secrets.KubernetesRootSpec.accepted_c_as:type_name -> common.PEMEncodedCertificate
-	13, // 21: talos.resource.definitions.secrets.MaintenanceRootSpec.ca:type_name -> common.PEMEncodedCertificateAndKey
-	13, // 22: talos.resource.definitions.secrets.MaintenanceServiceCertsSpec.ca:type_name -> common.PEMEncodedCertificateAndKey
-	13, // 23: talos.resource.definitions.secrets.MaintenanceServiceCertsSpec.server:type_name -> common.PEMEncodedCertificateAndKey
-	13, // 24: talos.resource.definitions.secrets.OSRootSpec.issuing_ca:type_name -> common.PEMEncodedCertificateAndKey
-	15, // 25: talos.resource.definitions.secrets.OSRootSpec.cert_sani_ps:type_name -> common.NetIP
-	14, // 26: talos.resource.definitions.secrets.OSRootSpec.accepted_c_as:type_name -> common.PEMEncodedCertificate
-	13, // 27: talos.resource.definitions.secrets.TrustdCertsSpec.server:type_name -> common.PEMEncodedCertificateAndKey
-	14, // 28: talos.resource.definitions.secrets.TrustdCertsSpec.accepted_c_as:type_name -> common.PEMEncodedCertificate
-	29, // [29:29] is the sub-list for method output_type
-	29, // [29:29] is the sub-list for method input_type
-	29, // [29:29] is the sub-list for extension type_name
-	29, // [29:29] is the sub-list for extension extendee
-	0,  // [0:29] is the sub-list for field type_name
+	12, // 0: talos.resource.definitions.secrets.APICertsSpec.client:type_name -> common.PEMEncodedCertificateAndKey
+	12, // 1: talos.resource.definitions.secrets.APICertsSpec.server:type_name -> common.PEMEncodedCertificateAndKey
+	13, // 2: talos.resource.definitions.secrets.APICertsSpec.accepted_c_as:type_name -> common.PEMEncodedCertificate
+	14, // 3: talos.resource.definitions.secrets.CertSANSpec.i_ps:type_name -> common.NetIP
+	12, // 4: talos.resource.definitions.secrets.EtcdCertsSpec.etcd:type_name -> common.PEMEncodedCertificateAndKey
+	12, // 5: talos.resource.definitions.secrets.EtcdCertsSpec.etcd_peer:type_name -> common.PEMEncodedCertificateAndKey
+	12, // 6: talos.resource.definitions.secrets.EtcdCertsSpec.etcd_admin:type_name -> common.PEMEncodedCertificateAndKey
+	12, // 7: talos.resource.definitions.secrets.EtcdCertsSpec.etcd_api_server:type_name -> common.PEMEncodedCertificateAndKey
+	12, // 8: talos.resource.definitions.secrets.EtcdRootSpec.etcd_ca:type_name -> common.PEMEncodedCertificateAndKey
+	15, // 9: talos.resource.definitions.secrets.KubeletSpec.endpoint:type_name -> common.URL
+	13, // 10: talos.resource.definitions.secrets.KubeletSpec.accepted_c_as:type_name -> common.PEMEncodedCertificate
+	12, // 11: talos.resource.definitions.secrets.KubernetesDynamicCertsSpec.api_server:type_name -> common.PEMEncodedCertificateAndKey
+	12, // 12: talos.resource.definitions.secrets.KubernetesDynamicCertsSpec.api_server_kubelet_client:type_name -> common.PEMEncodedCertificateAndKey
+	12, // 13: talos.resource.definitions.secrets.KubernetesDynamicCertsSpec.front_proxy:type_name -> common.PEMEncodedCertificateAndKey
+	15, // 14: talos.resource.definitions.secrets.KubernetesRootSpec.endpoint:type_name -> common.URL
+	15, // 15: talos.resource.definitions.secrets.KubernetesRootSpec.local_endpoint:type_name -> common.URL
+	12, // 16: talos.resource.definitions.secrets.KubernetesRootSpec.issuing_ca:type_name -> common.PEMEncodedCertificateAndKey
+	16, // 17: talos.resource.definitions.secrets.KubernetesRootSpec.service_account:type_name -> common.PEMEncodedKey
+	12, // 18: talos.resource.definitions.secrets.KubernetesRootSpec.aggregator_ca:type_name -> common.PEMEncodedCertificateAndKey
+	14, // 19: talos.resource.definitions.secrets.KubernetesRootSpec.api_server_ips:type_name -> common.NetIP
+	13, // 20: talos.resource.definitions.secrets.KubernetesRootSpec.accepted_c_as:type_name -> common.PEMEncodedCertificate
+	12, // 21: talos.resource.definitions.secrets.MaintenanceRootSpec.ca:type_name -> common.PEMEncodedCertificateAndKey
+	12, // 22: talos.resource.definitions.secrets.OSRootSpec.issuing_ca:type_name -> common.PEMEncodedCertificateAndKey
+	14, // 23: talos.resource.definitions.secrets.OSRootSpec.cert_sani_ps:type_name -> common.NetIP
+	13, // 24: talos.resource.definitions.secrets.OSRootSpec.accepted_c_as:type_name -> common.PEMEncodedCertificate
+	12, // 25: talos.resource.definitions.secrets.TrustdCertsSpec.server:type_name -> common.PEMEncodedCertificateAndKey
+	13, // 26: talos.resource.definitions.secrets.TrustdCertsSpec.accepted_c_as:type_name -> common.PEMEncodedCertificate
+	27, // [27:27] is the sub-list for method output_type
+	27, // [27:27] is the sub-list for method input_type
+	27, // [27:27] is the sub-list for extension type_name
+	27, // [27:27] is the sub-list for extension extendee
+	0,  // [0:27] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_secrets_secrets_proto_init() }
@@ -1039,7 +989,7 @@ func file_resource_definitions_secrets_secrets_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_secrets_secrets_proto_rawDesc), len(file_resource_definitions_secrets_secrets_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   13,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -74,6 +74,7 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 	case runtime.ModeContainer:
 		phases = phases.Append(
 			"machined",
+			StartApid,
 			StartMachined,
 			StartContainerd,
 		).Append(
@@ -88,6 +89,7 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			"earlyServices",
 			StartUdevd,
 			StartMachined,
+			StartApid,
 			StartAuditd,
 			StartSyslogd,
 			StartContainerd,

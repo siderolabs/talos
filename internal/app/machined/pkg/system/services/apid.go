@@ -37,6 +37,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
 
@@ -54,12 +55,16 @@ func (o *APID) ID(r runtime.Runtime) string {
 }
 
 // apidResourceFilter filters access to COSI state for apid.
+//
+//nolint:gocyclo
 func apidResourceFilter(_ context.Context, access state.Access) error {
 	if !access.Verb.Readonly() {
 		return errors.New("write access denied")
 	}
 
 	switch {
+	case access.ResourceNamespace == runtimeres.NamespaceName && access.ResourceType == runtimeres.APIServiceConfigType && access.ResourceID == runtimeres.APIServiceConfigID:
+		// allowed, contains apid service configuration
 	case access.ResourceNamespace == secrets.NamespaceName && access.ResourceType == secrets.APIType && access.ResourceID == secrets.APIID:
 		// allowed, contains apid certificates
 	case access.ResourceNamespace == network.NamespaceName && access.ResourceType == network.NodeAddressType:
@@ -126,7 +131,10 @@ func (o *APID) PostFunc(runtime.Runtime, events.ServiceState) (err error) {
 
 // Condition implements the Service interface.
 func (o *APID) Condition(r runtime.Runtime) conditions.Condition {
-	return secrets.NewAPIReadyCondition(r.State().V1Alpha2().Resources())
+	return conditions.WaitForAll(
+		secrets.NewAPIReadyCondition(r.State().V1Alpha2().Resources()),
+		runtimeres.NewAPIServiceConfigCondition(r.State().V1Alpha2().Resources()),
+	)
 }
 
 // DependsOn implements the Service interface.
@@ -143,16 +151,6 @@ func (o *APID) Volumes(runtime.Runtime) []string {
 //
 //nolint:gocyclo
 func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
-	// Ensure socket dir exists
-	if err := os.MkdirAll(filepath.Dir(constants.APIRuntimeSocketPath), 0o750); err != nil {
-		return nil, err
-	}
-
-	// Make sure apid user owns socket directory.
-	if err := os.Chown(filepath.Dir(constants.APIRuntimeSocketPath), constants.ApidUserID, constants.ApidUserID); err != nil {
-		return nil, err
-	}
-
 	// Set the process arguments.
 	args := runner.Args{
 		ID: o.ID(r),
@@ -200,8 +198,14 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 		env = append(env, constants.EnvFIPS140ModeStrict)
 	}
 
+	var debug bool
+
+	if r.Config() != nil {
+		debug = r.Config().Debug()
+	}
+
 	return restart.New(containerd.NewRunner(
-		r.Config().Debug(),
+		debug,
 		&args,
 		runner.WithLoggingManager(r.Logging()),
 		runner.WithContainerdAddress(constants.SystemContainerdAddress),

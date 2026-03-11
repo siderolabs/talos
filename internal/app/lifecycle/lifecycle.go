@@ -42,7 +42,17 @@ func NewService(runtime runtime.Runtime, logger *zap.Logger) *Service {
 
 // Install handles the installation of the machine.
 // It ensures that only one installation or upgrade can occur at a time by using a mutex lock.
+//
+//nolint:gocyclo
 func (s *Service) Install(req *machine.LifecycleServiceInstallRequest, ss grpc.ServerStreamingServer[machine.LifecycleServiceInstallResponse]) error {
+	if s.runtime.State().Platform().Mode().IsAgent() {
+		return status.Error(codes.Unimplemented, "API is not implemented in agent mode")
+	}
+
+	if err := s.checkSupported(runtime.Upgrade); err != nil {
+		return err
+	}
+
 	ctx := ss.Context()
 
 	if !s.lock.TryLock() {
@@ -126,7 +136,17 @@ func (s *Service) Install(req *machine.LifecycleServiceInstallRequest, ss grpc.S
 
 // Upgrade handles the upgrade of the machine.
 // It ensures that only one installation or upgrade can occur at a time by using a mutex lock.
+//
+//nolint:gocyclo
 func (s *Service) Upgrade(req *machine.LifecycleServiceUpgradeRequest, ss grpc.ServerStreamingServer[machine.LifecycleServiceUpgradeResponse]) error {
+	if s.runtime.State().Platform().Mode().IsAgent() {
+		return status.Error(codes.Unimplemented, "API is not implemented in agent mode")
+	}
+
+	if err := s.checkSupported(runtime.Upgrade); err != nil {
+		return err
+	}
+
 	ctx := ss.Context()
 
 	if !s.lock.TryLock() {
@@ -200,6 +220,16 @@ func (s *Service) Upgrade(req *machine.LifecycleServiceUpgradeRequest, ss grpc.S
 	})
 	if err != nil {
 		return status.Error(codes.Internal, fmt.Sprintf("upgrade failed: %v", err))
+	}
+
+	return nil
+}
+
+func (s *Service) checkSupported(feature runtime.ModeCapability) error {
+	mode := s.runtime.State().Platform().Mode()
+
+	if !mode.Supports(feature) {
+		return status.Errorf(codes.FailedPrecondition, "method is not supported in %s mode", mode.String())
 	}
 
 	return nil

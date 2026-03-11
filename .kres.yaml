@@ -63,6 +63,7 @@ spec:
     - integration-provision-0
     - integration-provision-1
     - integration-provision-2
+    - integration-provision-3
     - integration-airgapped
     - integration-misc-0
     - integration-misc-1
@@ -976,6 +977,56 @@ spec:
           artifactStep:
             type: upload
             artifactName: talos-logs-integration-provision-2
+            disableExecutableListGeneration: true
+            artifactPath: /tmp/logs-*.tar.gz
+            additionalArtifacts:
+              - "/tmp/support-*.zip"
+    - name: integration-provision-3
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runnerGroup: large
+      crons:
+        - '30 4 * * *'
+      triggerLabels:
+        - integration/provision
+        - integration/provision-3
+        - integration/release-gate
+      steps:
+        - name: download-artifacts
+          conditions:
+            - not-on-schedule
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
+        - name: build
+          conditions:
+            - only-on-schedule
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
+        - name: talosctl-cni-bundle
+          conditions:
+            - only-on-schedule
+        - name: provision-tests-prepare
+        - name: provision-tests-track-3
+          withSudo: true
+          environment:
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            GRPC_ENFORCE_ALPN_ENABLED: "false"
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-provision-3
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:

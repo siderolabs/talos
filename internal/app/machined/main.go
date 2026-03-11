@@ -34,7 +34,6 @@ import (
 	startuptasks "github.com/siderolabs/talos/internal/app/machined/pkg/startup"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
-	"github.com/siderolabs/talos/internal/app/maintenance"
 	"github.com/siderolabs/talos/internal/app/poweroff"
 	"github.com/siderolabs/talos/internal/app/trustd"
 	"github.com/siderolabs/talos/internal/pkg/mount/v3"
@@ -240,9 +239,6 @@ func runEntrypoint(ctx context.Context, c *v1alpha1runtime.Controller) error {
 		log.Printf("controller runtime finished")
 	})
 
-	// Inject controller into maintenance service.
-	maintenance.InjectController(c)
-
 	// Load machined service.
 	system.Services(c.Runtime()).Load(
 		&services.Machined{Controller: c},
@@ -265,11 +261,6 @@ func runEntrypoint(ctx context.Context, c *v1alpha1runtime.Controller) error {
 		if err := c.Run(ctx, runtime.SequenceInstall, nil); err != nil {
 			return err
 		}
-
-		// Start the machine API.
-		system.Services(c.Runtime()).LoadAndStart(
-			&services.APID{},
-		)
 
 		// Boot the machine.
 		if err := c.Run(ctx, runtime.SequenceBoot, nil); err != nil && !errors.Is(err, context.Canceled) {

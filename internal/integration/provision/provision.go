@@ -730,9 +730,10 @@ type clusterOptions struct {
 	SourceVersion        string
 	SourceK8sVersion     string
 
-	WithEncryption  bool
-	WithBios        bool
-	WithApplyConfig bool
+	WithEncryption          bool
+	WithBios                bool
+	WithApplyConfig         bool
+	WithSkipInjectingConfig bool
 }
 
 // setupCluster provisions source clusters and waits for health.
@@ -930,8 +931,9 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 						Size: DefaultSettings.DiskGB * 1024 * 1024 * 1024,
 					},
 				},
-				Config:           suite.configBundle.ControlPlane(),
-				SDStubKernelArgs: options.InjectExtraKernelArgs,
+				Config:              suite.configBundle.ControlPlane(),
+				SDStubKernelArgs:    options.InjectExtraKernelArgs,
+				SkipInjectingConfig: options.WithSkipInjectingConfig,
 			},
 		)
 	}
@@ -950,8 +952,9 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 						Size: DefaultSettings.DiskGB * 1024 * 1024 * 1024,
 					},
 				},
-				Config:           suite.configBundle.Worker(),
-				SDStubKernelArgs: options.InjectExtraKernelArgs,
+				Config:              suite.configBundle.Worker(),
+				SDStubKernelArgs:    options.InjectExtraKernelArgs,
+				SkipInjectingConfig: options.WithSkipInjectingConfig,
 			},
 		)
 	}
@@ -986,9 +989,11 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 
 	suite.clusterAccess = access.NewAdapter(suite.Cluster, provision.WithTalosConfig(suite.configBundle.TalosConfig()))
 
-	suite.Require().NoError(suite.clusterAccess.Bootstrap(suite.ctx, os.Stdout))
+	if !options.WithSkipInjectingConfig {
+		suite.Require().NoError(suite.clusterAccess.Bootstrap(suite.ctx, os.Stdout))
 
-	suite.waitForClusterHealth()
+		suite.waitForClusterHealth()
+	}
 }
 
 // runE2E runs e2e test on the cluster.

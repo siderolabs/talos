@@ -81,3 +81,18 @@ func (l *Local) AppendInfo(_ bool, resp []byte) ([]byte, error) {
 func (l *Local) BuildError(bool, error) ([]byte, error) {
 	return nil, nil
 }
+
+// Close the backend connection.
+func (l *Local) Close() error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	if l.conn == nil {
+		return nil
+	}
+
+	err := l.conn.Close()
+	l.conn = nil
+
+	return err
+}

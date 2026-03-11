@@ -41,8 +41,10 @@ func (r *TimeServer) Register(s *grpc.Server) {
 func (r *TimeServer) Time(ctx context.Context, in *emptypb.Empty) (reply *timeapi.TimeResponse, err error) {
 	var timeServers []string
 
-	if cfg := r.ConfigProvider.Config().NetworkTimeSyncConfig(); cfg != nil {
-		timeServers = cfg.Servers()
+	if r.ConfigProvider.Config() != nil {
+		if cfg := r.ConfigProvider.Config().NetworkTimeSyncConfig(); cfg != nil {
+			timeServers = cfg.Servers()
+		}
 	}
 
 	if len(timeServers) == 0 {

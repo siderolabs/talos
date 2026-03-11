@@ -66,6 +66,17 @@ func (r *Runtime) Config() config.Config {
 	return cfg
 }
 
+// ConfigCompleteForBoot implements the Runtime interface.
+func (r *Runtime) ConfigCompleteForBoot() bool {
+	cfg := r.configProvider()
+
+	if cfg == nil {
+		return false
+	}
+
+	return cfg.CompleteForBoot()
+}
+
 // ConfigContainer implements the Runtime interface.
 func (r *Runtime) ConfigContainer() config.Container {
 	cfg := r.configProvider()

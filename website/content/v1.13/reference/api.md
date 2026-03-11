@@ -480,6 +480,7 @@ description: Talos gRPC API reference.
     - [PeerStatusSpec](#talos.resource.definitions.kubespan.PeerStatusSpec)
   
 - [resource/definitions/runtime/runtime.proto](#resource/definitions/runtime/runtime.proto)
+    - [APIServiceConfigSpec](#talos.resource.definitions.runtime.APIServiceConfigSpec)
     - [BootedEntrySpec](#talos.resource.definitions.runtime.BootedEntrySpec)
     - [DevicesStatusSpec](#talos.resource.definitions.runtime.DevicesStatusSpec)
     - [DiagnosticSpec](#talos.resource.definitions.runtime.DiagnosticSpec)
@@ -593,7 +594,6 @@ description: Talos gRPC API reference.
     - [KubernetesDynamicCertsSpec](#talos.resource.definitions.secrets.KubernetesDynamicCertsSpec)
     - [KubernetesRootSpec](#talos.resource.definitions.secrets.KubernetesRootSpec)
     - [MaintenanceRootSpec](#talos.resource.definitions.secrets.MaintenanceRootSpec)
-    - [MaintenanceServiceCertsSpec](#talos.resource.definitions.secrets.MaintenanceServiceCertsSpec)
     - [OSRootSpec](#talos.resource.definitions.secrets.OSRootSpec)
     - [TrustdCertsSpec](#talos.resource.definitions.secrets.TrustdCertsSpec)
   
@@ -8424,6 +8424,24 @@ PeerStatusSpec describes PeerStatus state.
 
 
 
+<a name="talos.resource.definitions.runtime.APIServiceConfigSpec"></a>
+
+### APIServiceConfigSpec
+APIServiceConfigSpec describes configuration for Talos API service (apid).
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| listen_address | [string](#string) |  |  |
+| node_routing_disabled | [bool](#bool) |  |  |
+| readonly_role_mode | [bool](#bool) |  |  |
+| skip_verifying_client_cert | [bool](#bool) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.runtime.BootedEntrySpec"></a>
 
 ### BootedEntrySpec
@@ -10329,6 +10347,7 @@ APICertsSpec describes etcd certs secrets.
 | client | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
 | server | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
 | accepted_c_as | [common.PEMEncodedCertificate](#common.PEMEncodedCertificate) | repeated |  |
+| skip_verifying_client_cert | [bool](#bool) |  |  |
 
 
 
@@ -10490,22 +10509,6 @@ MaintenanceRootSpec describes maintenance service CA.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | ca | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.secrets.MaintenanceServiceCertsSpec"></a>
-
-### MaintenanceServiceCertsSpec
-MaintenanceServiceCertsSpec describes maintenance service certs secrets.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| ca | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
-| server | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
 
 
 

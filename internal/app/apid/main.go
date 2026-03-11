@@ -7,48 +7,24 @@ package apid
 
 import (
 	"context"
-	"crypto/x509"
-	"errors"
 	"flag"
 	"fmt"
 	"log"
 	"os/signal"
-	"regexp"
-	"slices"
 	"syscall"
-	"time"
 
 	"github.com/cosi-project/runtime/api/v1alpha1"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/protobuf/client"
-	"github.com/siderolabs/go-debug"
-	"github.com/siderolabs/grpc-proxy/proxy"
-	"golang.org/x/sync/errgroup"
+	"github.com/siderolabs/gen/panicsafe"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 
-	apidbackend "github.com/siderolabs/talos/internal/app/apid/pkg/backend"
-	"github.com/siderolabs/talos/internal/app/apid/pkg/director"
-	"github.com/siderolabs/talos/internal/app/apid/pkg/provider"
-	"github.com/siderolabs/talos/pkg/grpc/factory"
-	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
-	"github.com/siderolabs/talos/pkg/grpc/proxy/backend"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/startup"
 )
-
-func runDebugServer(ctx context.Context) {
-	const debugAddr = ":9981"
-
-	debugLogFunc := func(msg string) {
-		log.Print(msg)
-	}
-
-	if err := debug.ListenAndServe(ctx, debugAddr, debugLogFunc); err != nil {
-		log.Fatalf("failed to start debug server: %s", err)
-	}
-}
 
 // Main is the entrypoint of apid.
 func Main() {
@@ -57,6 +33,13 @@ func Main() {
 	}
 }
 
+// apidMain is the entrypoint of apid.
+//
+// It fetches service config as a resource and keeps watching it
+// for changes.
+//
+// If the service config changes, it shuts down the listener and starts a new one with the new configuration.
+//
 //nolint:gocyclo
 func apidMain() error {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
@@ -81,145 +64,74 @@ func apidMain() error {
 	stateClient := v1alpha1.NewStateClient(runtimeConn)
 	resources := state.WrapCore(client.NewAdapter(stateClient))
 
-	tlsConfig, err := provider.NewTLSConfig(ctx, resources)
-	if err != nil {
-		return fmt.Errorf("failed to create remote certificate provider: %w", err)
-	}
+	configWatchCh := make(chan safe.WrappedStateEvent[*runtime.APIServiceConfig])
 
-	serverTLSConfig, err := tlsConfig.ServerConfig()
-	if err != nil {
-		return fmt.Errorf("failed to create OS-level TLS configuration: %w", err)
-	}
-
-	serverTLSConfig.VerifyPeerCertificate = verifyExtKeyUsage
-
-	clientTLSConfig, err := tlsConfig.ClientConfig()
-	if err != nil {
-		return fmt.Errorf("failed to create client TLS config: %w", err)
+	if err = safe.StateWatch(ctx, resources, runtime.NewAPIServiceConfig().Metadata(), configWatchCh); err != nil {
+		return fmt.Errorf("failed to set up watch for API service config: %w", err)
 	}
 
 	var (
-		remoteFactory director.RemoteBackendFactory
-		onPKIUpdate   func()
+		serviceConfig *runtime.APIServiceConfig
+		cancelService context.CancelFunc
 	)
 
-	if clientTLSConfig != nil {
-		backendFactory := apidbackend.NewAPIDFactory(tlsConfig)
-		remoteFactory = backendFactory.Get
-		onPKIUpdate = backendFactory.Flush
-	}
+	serviceErrCh := make(chan error, 1)
 
-	localAddressProvider, err := director.NewLocalAddressProvider(resources)
-	if err != nil {
-		return fmt.Errorf("failed to create local address provider: %w", err)
-	}
+outerLoop:
+	for {
+		select {
+		case <-ctx.Done():
+			break outerLoop
+		case err = <-serviceErrCh:
+			cancelService = nil
 
-	localBackend := backend.NewLocal("machined", constants.MachineSocketPath)
-
-	router := director.NewRouter(remoteFactory, localBackend, localAddressProvider)
-
-	// all existing streaming methods
-	for _, methodName := range []string{
-		"/machine.MachineService/Copy",
-		"/machine.MachineService/DiskUsage",
-		"/machine.MachineService/Dmesg",
-		"/machine.MachineService/EtcdSnapshot",
-		"/machine.MachineService/Events",
-		"/machine.MachineService/ImageList",
-		"/machine.MachineService/Kubeconfig",
-		"/machine.MachineService/List",
-		"/machine.MachineService/DebugContainer",
-		"/machine.MachineService/Logs",
-		"/machine.MachineService/PacketCapture",
-		"/machine.MachineService/Read",
-		"/machine.LifecycleService/Install",
-		"/machine.LifecycleService/Upgrade",
-		"/os.OSService/Dmesg",
-		"/cluster.ClusterService/HealthCheck",
-	} {
-		router.RegisterStreamedRegex("^" + regexp.QuoteMeta(methodName) + "$")
-	}
-
-	// register future pattern: method should have suffix "Stream"
-	router.RegisterStreamedRegex("Stream$")
-
-	networkListener, err := factory.NewListener(
-		ctx,
-		factory.Port(constants.ApidPort),
-	)
-	if err != nil {
-		return fmt.Errorf("error creating listner: %w", err)
-	}
-
-	networkServer := func() *grpc.Server {
-		injector := &authz.Injector{
-			Mode: authz.Enabled,
+			if err != nil {
+				return fmt.Errorf("service error: %w", err)
+			}
+		case event := <-configWatchCh:
+			switch event.Type() {
+			case state.Created, state.Updated:
+				serviceConfig, err = event.Resource()
+				if err != nil {
+					return fmt.Errorf("failed to get API service config from watch event: %w", err) //nolint:govet
+				}
+			case state.Destroyed:
+				serviceConfig = nil
+			case state.Errored:
+				return fmt.Errorf("service config watch error: %w", event.Error())
+			case state.Bootstrapped, state.Noop:
+				// ignore
+				continue outerLoop
+			}
 		}
 
-		if debug.Enabled {
-			injector.Logger = log.New(log.Writer(), "apid/authz/injector/http ", log.Flags()).Printf
+		// we got a change in the service config, restart the server with the new config
+		if cancelService != nil {
+			cancelService()
+
+			cancelService = nil
+
+			// wait for the service to shut down
+			<-serviceErrCh
 		}
 
-		return factory.NewServer(
-			router,
-			factory.WithDefaultLog(),
-			factory.ServerOptions(
-				grpc.Creds(
-					credentials.NewTLS(serverTLSConfig),
-				),
-				grpc.ForceServerCodecV2(proxy.Codec()),
-				grpc.UnknownServiceHandler(
-					proxy.TransparentHandler(
-						router.Director,
-						proxy.WithStreamedDetector(router.StreamedDetector),
-					),
-				),
-				grpc.MaxRecvMsgSize(constants.GRPCMaxMessageSize),
-			),
-			factory.WithUnaryInterceptor(injector.UnaryInterceptor()),
-			factory.WithStreamInterceptor(injector.StreamInterceptor()),
-		)
-	}()
+		if serviceConfig != nil {
+			var serviceCtx context.Context
 
-	errGroup, ctx := errgroup.WithContext(ctx)
+			serviceCtx, cancelService = context.WithCancel(ctx) //nolint:govet
 
-	errGroup.Go(func() error {
-		return networkServer.Serve(networkListener)
-	})
-
-	errGroup.Go(func() error {
-		return tlsConfig.Watch(ctx, onPKIUpdate)
-	})
-
-	errGroup.Go(func() error {
-		<-ctx.Done()
-
-		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer shutdownCancel()
-
-		factory.ServerGracefulStop(networkServer, shutdownCtx)
-
-		return nil
-	})
-
-	return errGroup.Wait()
-}
-
-func verifyExtKeyUsage(_ [][]byte, verifiedChains [][]*x509.Certificate) error {
-	if len(verifiedChains) == 0 {
-		return errors.New("no verified chains")
+			go func() {
+				serviceErrCh <- panicsafe.RunErr(func() error {
+					return runService(serviceCtx, resources, serviceConfig)
+				})
+			}()
+		}
 	}
 
-	certs := verifiedChains[0]
+	if cancelService != nil {
+		cancelService()
 
-	for _, cert := range certs {
-		if cert.IsCA {
-			continue
-		}
-
-		if !slices.Equal(cert.ExtKeyUsage, []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth}) {
-			return fmt.Errorf("certificate %q is missing the client auth extended key usage", cert.Subject)
-		}
+		<-serviceErrCh
 	}
 
 	return nil

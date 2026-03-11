@@ -24,12 +24,13 @@ import (
 
 // TLSConfig provides client & server TLS configs for apid.
 type TLSConfig struct {
-	certificateProvider *certificateProvider
-	watchCh             <-chan state.Event
+	certificateProvider  *certificateProvider
+	watchCh              <-chan state.Event
+	skipClientCertVerify bool
 }
 
 // NewTLSConfig builds provider from configuration and endpoints.
-func NewTLSConfig(ctx context.Context, resources state.State) (*TLSConfig, error) {
+func NewTLSConfig(ctx context.Context, resources state.State, skipClientCertVerify bool) (*TLSConfig, error) {
 	watchCh := make(chan state.Event)
 
 	if err := resources.Watch(ctx, resource.NewMetadata(secrets.NamespaceName, secrets.APIType, secrets.APIID, resource.VersionUndefined), watchCh); err != nil {
@@ -65,8 +66,9 @@ func NewTLSConfig(ctx context.Context, resources state.State) (*TLSConfig, error
 		}
 
 		return &TLSConfig{
-			certificateProvider: provider,
-			watchCh:             watchCh,
+			certificateProvider:  provider,
+			watchCh:              watchCh,
+			skipClientCertVerify: skipClientCertVerify,
 		}, nil
 	}
 }
@@ -106,8 +108,14 @@ func (tlsConfig *TLSConfig) Watch(ctx context.Context, onUpdate func()) error {
 
 // ServerConfig generates server-side tls.Config.
 func (tlsConfig *TLSConfig) ServerConfig() (*stdlibtls.Config, error) {
+	authType := tls.Mutual
+
+	if tlsConfig.skipClientCertVerify {
+		authType = tls.ServerOnly
+	}
+
 	return tls.New(
-		tls.WithClientAuthType(tls.Mutual),
+		tls.WithClientAuthType(authType),
 		tls.WithDynamicClientCA(tlsConfig.certificateProvider),
 		tls.WithServerCertificateProvider(tlsConfig.certificateProvider),
 	)
@@ -161,8 +169,11 @@ func (p *certificateProvider) Update(apiCerts *secrets.API) error {
 	)
 
 	p.caCertPool = stdx509.NewCertPool()
-	if !p.caCertPool.AppendCertsFromPEM(p.ca) {
-		return fmt.Errorf("failed to parse CA certs into a CertPool")
+
+	if len(p.ca) > 0 {
+		if !p.caCertPool.AppendCertsFromPEM(p.ca) {
+			return fmt.Errorf("failed to parse CA certs into a CertPool")
+		}
 	}
 
 	if apiCerts.TypedSpec().Client != nil {

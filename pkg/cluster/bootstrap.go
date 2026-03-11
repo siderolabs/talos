@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/go-retry/retry"
 	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/codes"
@@ -20,6 +21,7 @@ import (
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // APIBootstrapper bootstraps cluster via Talos API.
@@ -48,7 +50,7 @@ func (s *APIBootstrapper) Bootstrap(ctx context.Context, out io.Writer) error {
 	slices.SortFunc(controlPlaneNodes, func(a, b NodeInfo) int { return strings.Compare(a.IPs[0].String(), b.IPs[0].String()) })
 
 	nodeIP := controlPlaneNodes[0].IPs[0]
-	nodeCtx := client.WithNodes(ctx, nodeIP.String())
+	nodeCtx := client.WithNode(ctx, nodeIP.String())
 
 	fmt.Fprintln(out, "waiting for Talos API (to bootstrap the cluster)")
 
@@ -58,6 +60,19 @@ func (s *APIBootstrapper) Bootstrap(ctx context.Context, out io.Writer) error {
 
 		if _, err = cli.Version(retryCtx); err != nil {
 			return retry.ExpectedError(err)
+		}
+
+		machineStatus, err := safe.ReaderGetByID[*runtime.MachineStatus](retryCtx, cli.COSI, runtime.MachineStatusID)
+		if err != nil {
+			return retry.ExpectedError(err)
+		}
+
+		switch machineStatus.TypedSpec().Stage {
+		case runtime.MachineStageBooting, runtime.MachineStageRunning:
+			return nil
+		case runtime.MachineStageUnknown, runtime.MachineStageMaintenance, runtime.MachineStageInstalling,
+			runtime.MachineStageRebooting, runtime.MachineStageShuttingDown, runtime.MachineStageResetting, runtime.MachineStageUpgrading:
+			return retry.ExpectedError(fmt.Errorf("machine in unexpected stage %s", machineStatus.TypedSpec().Stage))
 		}
 
 		return nil
@@ -79,7 +94,8 @@ func (s *APIBootstrapper) Bootstrap(ctx context.Context, out io.Writer) error {
 				return retry.ExpectedError(err)
 			// FailedPrecondition when time is not in sync yet on the server
 			// DeadlineExceeded when the call fails in the gRPC stack either on the server or client side
-			case client.StatusCode(err) == codes.FailedPrecondition || client.StatusCode(err) == codes.DeadlineExceeded:
+			// Canceled is when apid restarts on transitioning maintenance -> ready
+			case client.StatusCode(err) == codes.FailedPrecondition || client.StatusCode(err) == codes.DeadlineExceeded || client.StatusCode(err) == codes.Canceled:
 				return retry.ExpectedError(err)
 			// connection refused, including proxied connection refused via the endpoint to the node
 			case strings.Contains(err.Error(), "connection refused"):
