@@ -34,6 +34,7 @@ kernel/drivers/hid/hid-cherry.ko
 kernel/drivers/hid/hid-chicony.ko
 kernel/drivers/hid/hid-cypress.ko
 kernel/drivers/hid/hid-ezkey.ko
+kernel/drivers/hid/hid-generic.ko
 kernel/drivers/hid/hid-gyration.ko
 kernel/drivers/hid/hid-ite.ko
 kernel/drivers/hid/hid-kensington.ko
