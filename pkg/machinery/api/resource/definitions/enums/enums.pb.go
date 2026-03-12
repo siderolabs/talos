@@ -190,6 +190,59 @@ func (RuntimeFIPSState) EnumDescriptor() ([]byte, []int) {
 	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{2}
 }
 
+// RuntimeTaskState describes the task state.
+type RuntimeTaskState int32
+
+const (
+	RuntimeTaskState_TASK_STATE_CREATED   RuntimeTaskState = 0
+	RuntimeTaskState_TASK_STATE_RUNNING   RuntimeTaskState = 1
+	RuntimeTaskState_TASK_STATE_STOPPING  RuntimeTaskState = 2
+	RuntimeTaskState_TASK_STATE_COMPLETED RuntimeTaskState = 3
+)
+
+// Enum value maps for RuntimeTaskState.
+var (
+	RuntimeTaskState_name = map[int32]string{
+		0: "TASK_STATE_CREATED",
+		1: "TASK_STATE_RUNNING",
+		2: "TASK_STATE_STOPPING",
+		3: "TASK_STATE_COMPLETED",
+	}
+	RuntimeTaskState_value = map[string]int32{
+		"TASK_STATE_CREATED":   0,
+		"TASK_STATE_RUNNING":   1,
+		"TASK_STATE_STOPPING":  2,
+		"TASK_STATE_COMPLETED": 3,
+	}
+)
+
+func (x RuntimeTaskState) Enum() *RuntimeTaskState {
+	p := new(RuntimeTaskState)
+	*p = x
+	return p
+}
+
+func (x RuntimeTaskState) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (RuntimeTaskState) Descriptor() protoreflect.EnumDescriptor {
+	return file_resource_definitions_enums_enums_proto_enumTypes[3].Descriptor()
+}
+
+func (RuntimeTaskState) Type() protoreflect.EnumType {
+	return &file_resource_definitions_enums_enums_proto_enumTypes[3]
+}
+
+func (x RuntimeTaskState) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use RuntimeTaskState.Descriptor instead.
+func (RuntimeTaskState) EnumDescriptor() ([]byte, []int) {
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{3}
+}
+
 // MachineType represents a machine type.
 type MachineType int32
 
@@ -234,11 +287,11 @@ func (x MachineType) String() string {
 }
 
 func (MachineType) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[3].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[4].Descriptor()
 }
 
 func (MachineType) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[3]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[4]
 }
 
 func (x MachineType) Number() protoreflect.EnumNumber {
@@ -247,7 +300,7 @@ func (x MachineType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use MachineType.Descriptor instead.
 func (MachineType) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{3}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{4}
 }
 
 // NethelpersAddressFlag wraps IFF_* constants.
@@ -314,11 +367,11 @@ func (x NethelpersAddressFlag) String() string {
 }
 
 func (NethelpersAddressFlag) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[4].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[5].Descriptor()
 }
 
 func (NethelpersAddressFlag) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[4]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[5]
 }
 
 func (x NethelpersAddressFlag) Number() protoreflect.EnumNumber {
@@ -327,7 +380,7 @@ func (x NethelpersAddressFlag) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersAddressFlag.Descriptor instead.
 func (NethelpersAddressFlag) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{4}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{5}
 }
 
 // NethelpersAddressSortAlgorithm is an internal address sorting algorithm.
@@ -361,11 +414,11 @@ func (x NethelpersAddressSortAlgorithm) String() string {
 }
 
 func (NethelpersAddressSortAlgorithm) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[5].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[6].Descriptor()
 }
 
 func (NethelpersAddressSortAlgorithm) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[5]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[6]
 }
 
 func (x NethelpersAddressSortAlgorithm) Number() protoreflect.EnumNumber {
@@ -374,7 +427,7 @@ func (x NethelpersAddressSortAlgorithm) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersAddressSortAlgorithm.Descriptor instead.
 func (NethelpersAddressSortAlgorithm) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{5}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{6}
 }
 
 // NethelpersADLACPActive is ADLACPActive.
@@ -408,11 +461,11 @@ func (x NethelpersADLACPActive) String() string {
 }
 
 func (NethelpersADLACPActive) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[6].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[7].Descriptor()
 }
 
 func (NethelpersADLACPActive) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[6]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[7]
 }
 
 func (x NethelpersADLACPActive) Number() protoreflect.EnumNumber {
@@ -421,7 +474,7 @@ func (x NethelpersADLACPActive) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersADLACPActive.Descriptor instead.
 func (NethelpersADLACPActive) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{6}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{7}
 }
 
 // NethelpersADSelect is ADSelect.
@@ -458,11 +511,11 @@ func (x NethelpersADSelect) String() string {
 }
 
 func (NethelpersADSelect) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[7].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[8].Descriptor()
 }
 
 func (NethelpersADSelect) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[7]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[8]
 }
 
 func (x NethelpersADSelect) Number() protoreflect.EnumNumber {
@@ -471,7 +524,7 @@ func (x NethelpersADSelect) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersADSelect.Descriptor instead.
 func (NethelpersADSelect) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{7}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{8}
 }
 
 // NethelpersARPAllTargets is an ARP targets mode.
@@ -505,11 +558,11 @@ func (x NethelpersARPAllTargets) String() string {
 }
 
 func (NethelpersARPAllTargets) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[8].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[9].Descriptor()
 }
 
 func (NethelpersARPAllTargets) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[8]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[9]
 }
 
 func (x NethelpersARPAllTargets) Number() protoreflect.EnumNumber {
@@ -518,7 +571,7 @@ func (x NethelpersARPAllTargets) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersARPAllTargets.Descriptor instead.
 func (NethelpersARPAllTargets) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{8}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{9}
 }
 
 // NethelpersARPValidate is an ARP Validation mode.
@@ -567,11 +620,11 @@ func (x NethelpersARPValidate) String() string {
 }
 
 func (NethelpersARPValidate) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[9].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[10].Descriptor()
 }
 
 func (NethelpersARPValidate) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[9]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[10]
 }
 
 func (x NethelpersARPValidate) Number() protoreflect.EnumNumber {
@@ -580,7 +633,7 @@ func (x NethelpersARPValidate) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersARPValidate.Descriptor instead.
 func (NethelpersARPValidate) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{9}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{10}
 }
 
 // NethelpersAutoHostnameKind is a kind of automatically generated hostname.
@@ -617,11 +670,11 @@ func (x NethelpersAutoHostnameKind) String() string {
 }
 
 func (NethelpersAutoHostnameKind) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[10].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[11].Descriptor()
 }
 
 func (NethelpersAutoHostnameKind) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[10]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[11]
 }
 
 func (x NethelpersAutoHostnameKind) Number() protoreflect.EnumNumber {
@@ -630,7 +683,7 @@ func (x NethelpersAutoHostnameKind) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersAutoHostnameKind.Descriptor instead.
 func (NethelpersAutoHostnameKind) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{10}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{11}
 }
 
 // NethelpersBondMode is a bond mode.
@@ -679,11 +732,11 @@ func (x NethelpersBondMode) String() string {
 }
 
 func (NethelpersBondMode) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[11].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[12].Descriptor()
 }
 
 func (NethelpersBondMode) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[11]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[12]
 }
 
 func (x NethelpersBondMode) Number() protoreflect.EnumNumber {
@@ -692,7 +745,7 @@ func (x NethelpersBondMode) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersBondMode.Descriptor instead.
 func (NethelpersBondMode) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{11}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{12}
 }
 
 // NethelpersBondXmitHashPolicy is a bond hash policy.
@@ -735,11 +788,11 @@ func (x NethelpersBondXmitHashPolicy) String() string {
 }
 
 func (NethelpersBondXmitHashPolicy) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[12].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[13].Descriptor()
 }
 
 func (NethelpersBondXmitHashPolicy) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[12]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[13]
 }
 
 func (x NethelpersBondXmitHashPolicy) Number() protoreflect.EnumNumber {
@@ -748,7 +801,7 @@ func (x NethelpersBondXmitHashPolicy) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersBondXmitHashPolicy.Descriptor instead.
 func (NethelpersBondXmitHashPolicy) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{12}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{13}
 }
 
 // NethelpersClientIdentifier is a DHCP client identifier.
@@ -785,11 +838,11 @@ func (x NethelpersClientIdentifier) String() string {
 }
 
 func (NethelpersClientIdentifier) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[13].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[14].Descriptor()
 }
 
 func (NethelpersClientIdentifier) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[13]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[14]
 }
 
 func (x NethelpersClientIdentifier) Number() protoreflect.EnumNumber {
@@ -798,7 +851,7 @@ func (x NethelpersClientIdentifier) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersClientIdentifier.Descriptor instead.
 func (NethelpersClientIdentifier) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{13}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{14}
 }
 
 // NethelpersConntrackState is a conntrack state.
@@ -841,11 +894,11 @@ func (x NethelpersConntrackState) String() string {
 }
 
 func (NethelpersConntrackState) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[14].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[15].Descriptor()
 }
 
 func (NethelpersConntrackState) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[14]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[15]
 }
 
 func (x NethelpersConntrackState) Number() protoreflect.EnumNumber {
@@ -854,7 +907,7 @@ func (x NethelpersConntrackState) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersConntrackState.Descriptor instead.
 func (NethelpersConntrackState) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{14}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{15}
 }
 
 // NethelpersDuplex wraps ethtool.Duplex for YAML marshaling.
@@ -891,11 +944,11 @@ func (x NethelpersDuplex) String() string {
 }
 
 func (NethelpersDuplex) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[15].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[16].Descriptor()
 }
 
 func (NethelpersDuplex) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[15]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[16]
 }
 
 func (x NethelpersDuplex) Number() protoreflect.EnumNumber {
@@ -904,7 +957,7 @@ func (x NethelpersDuplex) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersDuplex.Descriptor instead.
 func (NethelpersDuplex) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{15}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{16}
 }
 
 // NethelpersFailOverMAC is a MAC failover mode.
@@ -941,11 +994,11 @@ func (x NethelpersFailOverMAC) String() string {
 }
 
 func (NethelpersFailOverMAC) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[16].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[17].Descriptor()
 }
 
 func (NethelpersFailOverMAC) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[16]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[17]
 }
 
 func (x NethelpersFailOverMAC) Number() protoreflect.EnumNumber {
@@ -954,7 +1007,7 @@ func (x NethelpersFailOverMAC) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersFailOverMAC.Descriptor instead.
 func (NethelpersFailOverMAC) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{16}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{17}
 }
 
 // NethelpersFamily is a network family.
@@ -991,11 +1044,11 @@ func (x NethelpersFamily) String() string {
 }
 
 func (NethelpersFamily) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[17].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[18].Descriptor()
 }
 
 func (NethelpersFamily) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[17]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[18]
 }
 
 func (x NethelpersFamily) Number() protoreflect.EnumNumber {
@@ -1004,7 +1057,7 @@ func (x NethelpersFamily) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersFamily.Descriptor instead.
 func (NethelpersFamily) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{17}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{18}
 }
 
 // NethelpersICMPType is a ICMP packet type.
@@ -1047,11 +1100,11 @@ func (x NethelpersICMPType) String() string {
 }
 
 func (NethelpersICMPType) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[18].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[19].Descriptor()
 }
 
 func (NethelpersICMPType) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[18]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[19]
 }
 
 func (x NethelpersICMPType) Number() protoreflect.EnumNumber {
@@ -1060,7 +1113,7 @@ func (x NethelpersICMPType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersICMPType.Descriptor instead.
 func (NethelpersICMPType) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{18}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{19}
 }
 
 // NethelpersLACPRate is a LACP rate.
@@ -1094,11 +1147,11 @@ func (x NethelpersLACPRate) String() string {
 }
 
 func (NethelpersLACPRate) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[19].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[20].Descriptor()
 }
 
 func (NethelpersLACPRate) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[19]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[20]
 }
 
 func (x NethelpersLACPRate) Number() protoreflect.EnumNumber {
@@ -1107,7 +1160,7 @@ func (x NethelpersLACPRate) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersLACPRate.Descriptor instead.
 func (NethelpersLACPRate) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{19}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{20}
 }
 
 // NethelpersLinkType is a link type.
@@ -1366,11 +1419,11 @@ func (x NethelpersLinkType) String() string {
 }
 
 func (NethelpersLinkType) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[20].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[21].Descriptor()
 }
 
 func (NethelpersLinkType) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[20]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[21]
 }
 
 func (x NethelpersLinkType) Number() protoreflect.EnumNumber {
@@ -1379,7 +1432,7 @@ func (x NethelpersLinkType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersLinkType.Descriptor instead.
 func (NethelpersLinkType) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{20}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{21}
 }
 
 // NethelpersMatchOperator is a netfilter match operator.
@@ -1413,11 +1466,11 @@ func (x NethelpersMatchOperator) String() string {
 }
 
 func (NethelpersMatchOperator) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[21].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[22].Descriptor()
 }
 
 func (NethelpersMatchOperator) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[21]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[22]
 }
 
 func (x NethelpersMatchOperator) Number() protoreflect.EnumNumber {
@@ -1426,7 +1479,7 @@ func (x NethelpersMatchOperator) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersMatchOperator.Descriptor instead.
 func (NethelpersMatchOperator) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{21}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{22}
 }
 
 // NethelpersNfTablesChainHook wraps nftables.ChainHook for YAML marshaling.
@@ -1469,11 +1522,11 @@ func (x NethelpersNfTablesChainHook) String() string {
 }
 
 func (NethelpersNfTablesChainHook) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[22].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[23].Descriptor()
 }
 
 func (NethelpersNfTablesChainHook) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[22]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[23]
 }
 
 func (x NethelpersNfTablesChainHook) Number() protoreflect.EnumNumber {
@@ -1482,7 +1535,7 @@ func (x NethelpersNfTablesChainHook) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersNfTablesChainHook.Descriptor instead.
 func (NethelpersNfTablesChainHook) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{22}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{23}
 }
 
 // NethelpersNfTablesChainPriority wraps nftables.ChainPriority for YAML marshaling.
@@ -1552,11 +1605,11 @@ func (x NethelpersNfTablesChainPriority) String() string {
 }
 
 func (NethelpersNfTablesChainPriority) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[23].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[24].Descriptor()
 }
 
 func (NethelpersNfTablesChainPriority) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[23]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[24]
 }
 
 func (x NethelpersNfTablesChainPriority) Number() protoreflect.EnumNumber {
@@ -1565,7 +1618,7 @@ func (x NethelpersNfTablesChainPriority) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersNfTablesChainPriority.Descriptor instead.
 func (NethelpersNfTablesChainPriority) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{23}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{24}
 }
 
 // NethelpersNfTablesVerdict wraps nftables.Verdict for YAML marshaling.
@@ -1599,11 +1652,11 @@ func (x NethelpersNfTablesVerdict) String() string {
 }
 
 func (NethelpersNfTablesVerdict) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[24].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[25].Descriptor()
 }
 
 func (NethelpersNfTablesVerdict) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[24]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[25]
 }
 
 func (x NethelpersNfTablesVerdict) Number() protoreflect.EnumNumber {
@@ -1612,7 +1665,7 @@ func (x NethelpersNfTablesVerdict) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersNfTablesVerdict.Descriptor instead.
 func (NethelpersNfTablesVerdict) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{24}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{25}
 }
 
 // NethelpersOperationalState wraps rtnetlink.OperationalState for YAML marshaling.
@@ -1661,11 +1714,11 @@ func (x NethelpersOperationalState) String() string {
 }
 
 func (NethelpersOperationalState) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[25].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[26].Descriptor()
 }
 
 func (NethelpersOperationalState) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[25]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[26]
 }
 
 func (x NethelpersOperationalState) Number() protoreflect.EnumNumber {
@@ -1674,7 +1727,7 @@ func (x NethelpersOperationalState) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersOperationalState.Descriptor instead.
 func (NethelpersOperationalState) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{25}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{26}
 }
 
 // NethelpersPort wraps ethtool.Port for YAML marshaling.
@@ -1726,11 +1779,11 @@ func (x NethelpersPort) String() string {
 }
 
 func (NethelpersPort) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[26].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[27].Descriptor()
 }
 
 func (NethelpersPort) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[26]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[27]
 }
 
 func (x NethelpersPort) Number() protoreflect.EnumNumber {
@@ -1739,7 +1792,7 @@ func (x NethelpersPort) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersPort.Descriptor instead.
 func (NethelpersPort) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{26}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{27}
 }
 
 // NethelpersPrimaryReselect is an ARP targets mode.
@@ -1776,11 +1829,11 @@ func (x NethelpersPrimaryReselect) String() string {
 }
 
 func (NethelpersPrimaryReselect) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[27].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[28].Descriptor()
 }
 
 func (NethelpersPrimaryReselect) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[27]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[28]
 }
 
 func (x NethelpersPrimaryReselect) Number() protoreflect.EnumNumber {
@@ -1789,7 +1842,7 @@ func (x NethelpersPrimaryReselect) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersPrimaryReselect.Descriptor instead.
 func (NethelpersPrimaryReselect) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{27}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{28}
 }
 
 // NethelpersProtocol is a inet protocol.
@@ -1832,11 +1885,11 @@ func (x NethelpersProtocol) String() string {
 }
 
 func (NethelpersProtocol) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[28].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[29].Descriptor()
 }
 
 func (NethelpersProtocol) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[28]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[29]
 }
 
 func (x NethelpersProtocol) Number() protoreflect.EnumNumber {
@@ -1845,7 +1898,7 @@ func (x NethelpersProtocol) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersProtocol.Descriptor instead.
 func (NethelpersProtocol) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{28}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{29}
 }
 
 // NethelpersRouteFlag wraps RTM_F_* constants.
@@ -1900,11 +1953,11 @@ func (x NethelpersRouteFlag) String() string {
 }
 
 func (NethelpersRouteFlag) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[29].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[30].Descriptor()
 }
 
 func (NethelpersRouteFlag) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[29]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[30]
 }
 
 func (x NethelpersRouteFlag) Number() protoreflect.EnumNumber {
@@ -1913,7 +1966,7 @@ func (x NethelpersRouteFlag) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersRouteFlag.Descriptor instead.
 func (NethelpersRouteFlag) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{29}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{30}
 }
 
 // NethelpersRouteProtocol is a routing protocol.
@@ -2007,11 +2060,11 @@ func (x NethelpersRouteProtocol) String() string {
 }
 
 func (NethelpersRouteProtocol) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[30].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[31].Descriptor()
 }
 
 func (NethelpersRouteProtocol) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[30]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[31]
 }
 
 func (x NethelpersRouteProtocol) Number() protoreflect.EnumNumber {
@@ -2020,7 +2073,7 @@ func (x NethelpersRouteProtocol) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersRouteProtocol.Descriptor instead.
 func (NethelpersRouteProtocol) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{30}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{31}
 }
 
 // NethelpersRouteType is a route type.
@@ -2084,11 +2137,11 @@ func (x NethelpersRouteType) String() string {
 }
 
 func (NethelpersRouteType) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[31].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[32].Descriptor()
 }
 
 func (NethelpersRouteType) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[31]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[32]
 }
 
 func (x NethelpersRouteType) Number() protoreflect.EnumNumber {
@@ -2097,7 +2150,7 @@ func (x NethelpersRouteType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersRouteType.Descriptor instead.
 func (NethelpersRouteType) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{31}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{32}
 }
 
 // NethelpersRoutingTable is a routing table ID.
@@ -2893,11 +2946,11 @@ func (x NethelpersRoutingTable) String() string {
 }
 
 func (NethelpersRoutingTable) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[32].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[33].Descriptor()
 }
 
 func (NethelpersRoutingTable) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[32]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[33]
 }
 
 func (x NethelpersRoutingTable) Number() protoreflect.EnumNumber {
@@ -2906,7 +2959,7 @@ func (x NethelpersRoutingTable) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersRoutingTable.Descriptor instead.
 func (NethelpersRoutingTable) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{32}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{33}
 }
 
 // NethelpersScope is an address scope.
@@ -2949,11 +3002,11 @@ func (x NethelpersScope) String() string {
 }
 
 func (NethelpersScope) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[33].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[34].Descriptor()
 }
 
 func (NethelpersScope) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[33]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[34]
 }
 
 func (x NethelpersScope) Number() protoreflect.EnumNumber {
@@ -2962,7 +3015,7 @@ func (x NethelpersScope) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersScope.Descriptor instead.
 func (NethelpersScope) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{33}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{34}
 }
 
 // NethelpersVLANProtocol is a VLAN protocol.
@@ -2999,11 +3052,11 @@ func (x NethelpersVLANProtocol) String() string {
 }
 
 func (NethelpersVLANProtocol) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[34].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[35].Descriptor()
 }
 
 func (NethelpersVLANProtocol) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[34]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[35]
 }
 
 func (x NethelpersVLANProtocol) Number() protoreflect.EnumNumber {
@@ -3012,7 +3065,7 @@ func (x NethelpersVLANProtocol) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersVLANProtocol.Descriptor instead.
 func (NethelpersVLANProtocol) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{34}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{35}
 }
 
 // NethelpersWOLMode wraps ethtool.WOLMode for YAML marshaling.
@@ -3064,11 +3117,11 @@ func (x NethelpersWOLMode) String() string {
 }
 
 func (NethelpersWOLMode) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[35].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[36].Descriptor()
 }
 
 func (NethelpersWOLMode) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[35]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[36]
 }
 
 func (x NethelpersWOLMode) Number() protoreflect.EnumNumber {
@@ -3077,7 +3130,7 @@ func (x NethelpersWOLMode) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NethelpersWOLMode.Descriptor instead.
 func (NethelpersWOLMode) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{35}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{36}
 }
 
 // BlockEncryptionKeyType describes encryption key type.
@@ -3117,11 +3170,11 @@ func (x BlockEncryptionKeyType) String() string {
 }
 
 func (BlockEncryptionKeyType) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[36].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[37].Descriptor()
 }
 
 func (BlockEncryptionKeyType) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[36]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[37]
 }
 
 func (x BlockEncryptionKeyType) Number() protoreflect.EnumNumber {
@@ -3130,7 +3183,7 @@ func (x BlockEncryptionKeyType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use BlockEncryptionKeyType.Descriptor instead.
 func (BlockEncryptionKeyType) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{36}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{37}
 }
 
 // BlockEncryptionProviderType describes encryption provider type.
@@ -3164,11 +3217,11 @@ func (x BlockEncryptionProviderType) String() string {
 }
 
 func (BlockEncryptionProviderType) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[37].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[38].Descriptor()
 }
 
 func (BlockEncryptionProviderType) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[37]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[38]
 }
 
 func (x BlockEncryptionProviderType) Number() protoreflect.EnumNumber {
@@ -3177,7 +3230,7 @@ func (x BlockEncryptionProviderType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use BlockEncryptionProviderType.Descriptor instead.
 func (BlockEncryptionProviderType) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{37}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{38}
 }
 
 // BlockFilesystemType describes filesystem type.
@@ -3226,11 +3279,11 @@ func (x BlockFilesystemType) String() string {
 }
 
 func (BlockFilesystemType) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[38].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[39].Descriptor()
 }
 
 func (BlockFilesystemType) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[38]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[39]
 }
 
 func (x BlockFilesystemType) Number() protoreflect.EnumNumber {
@@ -3239,7 +3292,7 @@ func (x BlockFilesystemType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use BlockFilesystemType.Descriptor instead.
 func (BlockFilesystemType) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{38}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{39}
 }
 
 // BlockFSParameterType describes Filesystem Parameter type.
@@ -3276,11 +3329,11 @@ func (x BlockFSParameterType) String() string {
 }
 
 func (BlockFSParameterType) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[39].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[40].Descriptor()
 }
 
 func (BlockFSParameterType) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[39]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[40]
 }
 
 func (x BlockFSParameterType) Number() protoreflect.EnumNumber {
@@ -3289,7 +3342,7 @@ func (x BlockFSParameterType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use BlockFSParameterType.Descriptor instead.
 func (BlockFSParameterType) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{39}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{40}
 }
 
 // BlockVolumePhase describes volume phase.
@@ -3341,11 +3394,11 @@ func (x BlockVolumePhase) String() string {
 }
 
 func (BlockVolumePhase) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[40].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[41].Descriptor()
 }
 
 func (BlockVolumePhase) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[40]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[41]
 }
 
 func (x BlockVolumePhase) Number() protoreflect.EnumNumber {
@@ -3354,7 +3407,7 @@ func (x BlockVolumePhase) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use BlockVolumePhase.Descriptor instead.
 func (BlockVolumePhase) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{40}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{41}
 }
 
 // BlockVolumeType describes volume type.
@@ -3403,11 +3456,11 @@ func (x BlockVolumeType) String() string {
 }
 
 func (BlockVolumeType) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[41].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[42].Descriptor()
 }
 
 func (BlockVolumeType) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[41]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[42]
 }
 
 func (x BlockVolumeType) Number() protoreflect.EnumNumber {
@@ -3416,7 +3469,7 @@ func (x BlockVolumeType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use BlockVolumeType.Descriptor instead.
 func (BlockVolumeType) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{41}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{42}
 }
 
 // CriImageCacheStatus describes image cache status type.
@@ -3456,11 +3509,11 @@ func (x CriImageCacheStatus) String() string {
 }
 
 func (CriImageCacheStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[42].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[43].Descriptor()
 }
 
 func (CriImageCacheStatus) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[42]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[43]
 }
 
 func (x CriImageCacheStatus) Number() protoreflect.EnumNumber {
@@ -3469,7 +3522,7 @@ func (x CriImageCacheStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use CriImageCacheStatus.Descriptor instead.
 func (CriImageCacheStatus) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{42}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{43}
 }
 
 // CriImageCacheCopyStatus describes image cache copy status type.
@@ -3509,11 +3562,11 @@ func (x CriImageCacheCopyStatus) String() string {
 }
 
 func (CriImageCacheCopyStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[43].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[44].Descriptor()
 }
 
 func (CriImageCacheCopyStatus) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[43]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[44]
 }
 
 func (x CriImageCacheCopyStatus) Number() protoreflect.EnumNumber {
@@ -3522,7 +3575,7 @@ func (x CriImageCacheCopyStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use CriImageCacheCopyStatus.Descriptor instead.
 func (CriImageCacheCopyStatus) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{43}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{44}
 }
 
 // KubespanPeerState is KubeSpan peer current state.
@@ -3559,11 +3612,11 @@ func (x KubespanPeerState) String() string {
 }
 
 func (KubespanPeerState) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[44].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[45].Descriptor()
 }
 
 func (KubespanPeerState) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[44]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[45]
 }
 
 func (x KubespanPeerState) Number() protoreflect.EnumNumber {
@@ -3572,7 +3625,7 @@ func (x KubespanPeerState) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use KubespanPeerState.Descriptor instead.
 func (KubespanPeerState) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{44}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{45}
 }
 
 // NetworkConfigLayer describes network configuration layers, with lowest priority first.
@@ -3615,11 +3668,11 @@ func (x NetworkConfigLayer) String() string {
 }
 
 func (NetworkConfigLayer) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[45].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[46].Descriptor()
 }
 
 func (NetworkConfigLayer) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[45]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[46]
 }
 
 func (x NetworkConfigLayer) Number() protoreflect.EnumNumber {
@@ -3628,7 +3681,7 @@ func (x NetworkConfigLayer) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NetworkConfigLayer.Descriptor instead.
 func (NetworkConfigLayer) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{45}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{46}
 }
 
 // NetworkOperator enumerates Talos network operators.
@@ -3665,11 +3718,11 @@ func (x NetworkOperator) String() string {
 }
 
 func (NetworkOperator) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[46].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[47].Descriptor()
 }
 
 func (NetworkOperator) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[46]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[47]
 }
 
 func (x NetworkOperator) Number() protoreflect.EnumNumber {
@@ -3678,7 +3731,7 @@ func (x NetworkOperator) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NetworkOperator.Descriptor instead.
 func (NetworkOperator) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{46}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{47}
 }
 
 var File_resource_definitions_enums_enums_proto protoreflect.FileDescriptor
@@ -3703,7 +3756,12 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x10RuntimeFIPSState\x12\x17\n" +
 	"\x13FIPS_STATE_DISABLED\x10\x00\x12\x16\n" +
 	"\x12FIPS_STATE_ENABLED\x10\x01\x12\x15\n" +
-	"\x11FIPS_STATE_STRICT\x10\x02*W\n" +
+	"\x11FIPS_STATE_STRICT\x10\x02*u\n" +
+	"\x10RuntimeTaskState\x12\x16\n" +
+	"\x12TASK_STATE_CREATED\x10\x00\x12\x16\n" +
+	"\x12TASK_STATE_RUNNING\x10\x01\x12\x17\n" +
+	"\x13TASK_STATE_STOPPING\x10\x02\x12\x18\n" +
+	"\x14TASK_STATE_COMPLETED\x10\x03*W\n" +
 	"\vMachineType\x12\x10\n" +
 	"\fTYPE_UNKNOWN\x10\x00\x12\r\n" +
 	"\tTYPE_INIT\x10\x01\x12\x16\n" +
@@ -4357,55 +4415,56 @@ func file_resource_definitions_enums_enums_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_enums_enums_proto_rawDescData
 }
 
-var file_resource_definitions_enums_enums_proto_enumTypes = make([]protoimpl.EnumInfo, 47)
+var file_resource_definitions_enums_enums_proto_enumTypes = make([]protoimpl.EnumInfo, 48)
 var file_resource_definitions_enums_enums_proto_goTypes = []any{
 	(RuntimeMachineStage)(0),             // 0: talos.resource.definitions.enums.RuntimeMachineStage
 	(RuntimeSELinuxState)(0),             // 1: talos.resource.definitions.enums.RuntimeSELinuxState
 	(RuntimeFIPSState)(0),                // 2: talos.resource.definitions.enums.RuntimeFIPSState
-	(MachineType)(0),                     // 3: talos.resource.definitions.enums.MachineType
-	(NethelpersAddressFlag)(0),           // 4: talos.resource.definitions.enums.NethelpersAddressFlag
-	(NethelpersAddressSortAlgorithm)(0),  // 5: talos.resource.definitions.enums.NethelpersAddressSortAlgorithm
-	(NethelpersADLACPActive)(0),          // 6: talos.resource.definitions.enums.NethelpersADLACPActive
-	(NethelpersADSelect)(0),              // 7: talos.resource.definitions.enums.NethelpersADSelect
-	(NethelpersARPAllTargets)(0),         // 8: talos.resource.definitions.enums.NethelpersARPAllTargets
-	(NethelpersARPValidate)(0),           // 9: talos.resource.definitions.enums.NethelpersARPValidate
-	(NethelpersAutoHostnameKind)(0),      // 10: talos.resource.definitions.enums.NethelpersAutoHostnameKind
-	(NethelpersBondMode)(0),              // 11: talos.resource.definitions.enums.NethelpersBondMode
-	(NethelpersBondXmitHashPolicy)(0),    // 12: talos.resource.definitions.enums.NethelpersBondXmitHashPolicy
-	(NethelpersClientIdentifier)(0),      // 13: talos.resource.definitions.enums.NethelpersClientIdentifier
-	(NethelpersConntrackState)(0),        // 14: talos.resource.definitions.enums.NethelpersConntrackState
-	(NethelpersDuplex)(0),                // 15: talos.resource.definitions.enums.NethelpersDuplex
-	(NethelpersFailOverMAC)(0),           // 16: talos.resource.definitions.enums.NethelpersFailOverMAC
-	(NethelpersFamily)(0),                // 17: talos.resource.definitions.enums.NethelpersFamily
-	(NethelpersICMPType)(0),              // 18: talos.resource.definitions.enums.NethelpersICMPType
-	(NethelpersLACPRate)(0),              // 19: talos.resource.definitions.enums.NethelpersLACPRate
-	(NethelpersLinkType)(0),              // 20: talos.resource.definitions.enums.NethelpersLinkType
-	(NethelpersMatchOperator)(0),         // 21: talos.resource.definitions.enums.NethelpersMatchOperator
-	(NethelpersNfTablesChainHook)(0),     // 22: talos.resource.definitions.enums.NethelpersNfTablesChainHook
-	(NethelpersNfTablesChainPriority)(0), // 23: talos.resource.definitions.enums.NethelpersNfTablesChainPriority
-	(NethelpersNfTablesVerdict)(0),       // 24: talos.resource.definitions.enums.NethelpersNfTablesVerdict
-	(NethelpersOperationalState)(0),      // 25: talos.resource.definitions.enums.NethelpersOperationalState
-	(NethelpersPort)(0),                  // 26: talos.resource.definitions.enums.NethelpersPort
-	(NethelpersPrimaryReselect)(0),       // 27: talos.resource.definitions.enums.NethelpersPrimaryReselect
-	(NethelpersProtocol)(0),              // 28: talos.resource.definitions.enums.NethelpersProtocol
-	(NethelpersRouteFlag)(0),             // 29: talos.resource.definitions.enums.NethelpersRouteFlag
-	(NethelpersRouteProtocol)(0),         // 30: talos.resource.definitions.enums.NethelpersRouteProtocol
-	(NethelpersRouteType)(0),             // 31: talos.resource.definitions.enums.NethelpersRouteType
-	(NethelpersRoutingTable)(0),          // 32: talos.resource.definitions.enums.NethelpersRoutingTable
-	(NethelpersScope)(0),                 // 33: talos.resource.definitions.enums.NethelpersScope
-	(NethelpersVLANProtocol)(0),          // 34: talos.resource.definitions.enums.NethelpersVLANProtocol
-	(NethelpersWOLMode)(0),               // 35: talos.resource.definitions.enums.NethelpersWOLMode
-	(BlockEncryptionKeyType)(0),          // 36: talos.resource.definitions.enums.BlockEncryptionKeyType
-	(BlockEncryptionProviderType)(0),     // 37: talos.resource.definitions.enums.BlockEncryptionProviderType
-	(BlockFilesystemType)(0),             // 38: talos.resource.definitions.enums.BlockFilesystemType
-	(BlockFSParameterType)(0),            // 39: talos.resource.definitions.enums.BlockFSParameterType
-	(BlockVolumePhase)(0),                // 40: talos.resource.definitions.enums.BlockVolumePhase
-	(BlockVolumeType)(0),                 // 41: talos.resource.definitions.enums.BlockVolumeType
-	(CriImageCacheStatus)(0),             // 42: talos.resource.definitions.enums.CriImageCacheStatus
-	(CriImageCacheCopyStatus)(0),         // 43: talos.resource.definitions.enums.CriImageCacheCopyStatus
-	(KubespanPeerState)(0),               // 44: talos.resource.definitions.enums.KubespanPeerState
-	(NetworkConfigLayer)(0),              // 45: talos.resource.definitions.enums.NetworkConfigLayer
-	(NetworkOperator)(0),                 // 46: talos.resource.definitions.enums.NetworkOperator
+	(RuntimeTaskState)(0),                // 3: talos.resource.definitions.enums.RuntimeTaskState
+	(MachineType)(0),                     // 4: talos.resource.definitions.enums.MachineType
+	(NethelpersAddressFlag)(0),           // 5: talos.resource.definitions.enums.NethelpersAddressFlag
+	(NethelpersAddressSortAlgorithm)(0),  // 6: talos.resource.definitions.enums.NethelpersAddressSortAlgorithm
+	(NethelpersADLACPActive)(0),          // 7: talos.resource.definitions.enums.NethelpersADLACPActive
+	(NethelpersADSelect)(0),              // 8: talos.resource.definitions.enums.NethelpersADSelect
+	(NethelpersARPAllTargets)(0),         // 9: talos.resource.definitions.enums.NethelpersARPAllTargets
+	(NethelpersARPValidate)(0),           // 10: talos.resource.definitions.enums.NethelpersARPValidate
+	(NethelpersAutoHostnameKind)(0),      // 11: talos.resource.definitions.enums.NethelpersAutoHostnameKind
+	(NethelpersBondMode)(0),              // 12: talos.resource.definitions.enums.NethelpersBondMode
+	(NethelpersBondXmitHashPolicy)(0),    // 13: talos.resource.definitions.enums.NethelpersBondXmitHashPolicy
+	(NethelpersClientIdentifier)(0),      // 14: talos.resource.definitions.enums.NethelpersClientIdentifier
+	(NethelpersConntrackState)(0),        // 15: talos.resource.definitions.enums.NethelpersConntrackState
+	(NethelpersDuplex)(0),                // 16: talos.resource.definitions.enums.NethelpersDuplex
+	(NethelpersFailOverMAC)(0),           // 17: talos.resource.definitions.enums.NethelpersFailOverMAC
+	(NethelpersFamily)(0),                // 18: talos.resource.definitions.enums.NethelpersFamily
+	(NethelpersICMPType)(0),              // 19: talos.resource.definitions.enums.NethelpersICMPType
+	(NethelpersLACPRate)(0),              // 20: talos.resource.definitions.enums.NethelpersLACPRate
+	(NethelpersLinkType)(0),              // 21: talos.resource.definitions.enums.NethelpersLinkType
+	(NethelpersMatchOperator)(0),         // 22: talos.resource.definitions.enums.NethelpersMatchOperator
+	(NethelpersNfTablesChainHook)(0),     // 23: talos.resource.definitions.enums.NethelpersNfTablesChainHook
+	(NethelpersNfTablesChainPriority)(0), // 24: talos.resource.definitions.enums.NethelpersNfTablesChainPriority
+	(NethelpersNfTablesVerdict)(0),       // 25: talos.resource.definitions.enums.NethelpersNfTablesVerdict
+	(NethelpersOperationalState)(0),      // 26: talos.resource.definitions.enums.NethelpersOperationalState
+	(NethelpersPort)(0),                  // 27: talos.resource.definitions.enums.NethelpersPort
+	(NethelpersPrimaryReselect)(0),       // 28: talos.resource.definitions.enums.NethelpersPrimaryReselect
+	(NethelpersProtocol)(0),              // 29: talos.resource.definitions.enums.NethelpersProtocol
+	(NethelpersRouteFlag)(0),             // 30: talos.resource.definitions.enums.NethelpersRouteFlag
+	(NethelpersRouteProtocol)(0),         // 31: talos.resource.definitions.enums.NethelpersRouteProtocol
+	(NethelpersRouteType)(0),             // 32: talos.resource.definitions.enums.NethelpersRouteType
+	(NethelpersRoutingTable)(0),          // 33: talos.resource.definitions.enums.NethelpersRoutingTable
+	(NethelpersScope)(0),                 // 34: talos.resource.definitions.enums.NethelpersScope
+	(NethelpersVLANProtocol)(0),          // 35: talos.resource.definitions.enums.NethelpersVLANProtocol
+	(NethelpersWOLMode)(0),               // 36: talos.resource.definitions.enums.NethelpersWOLMode
+	(BlockEncryptionKeyType)(0),          // 37: talos.resource.definitions.enums.BlockEncryptionKeyType
+	(BlockEncryptionProviderType)(0),     // 38: talos.resource.definitions.enums.BlockEncryptionProviderType
+	(BlockFilesystemType)(0),             // 39: talos.resource.definitions.enums.BlockFilesystemType
+	(BlockFSParameterType)(0),            // 40: talos.resource.definitions.enums.BlockFSParameterType
+	(BlockVolumePhase)(0),                // 41: talos.resource.definitions.enums.BlockVolumePhase
+	(BlockVolumeType)(0),                 // 42: talos.resource.definitions.enums.BlockVolumeType
+	(CriImageCacheStatus)(0),             // 43: talos.resource.definitions.enums.CriImageCacheStatus
+	(CriImageCacheCopyStatus)(0),         // 44: talos.resource.definitions.enums.CriImageCacheCopyStatus
+	(KubespanPeerState)(0),               // 45: talos.resource.definitions.enums.KubespanPeerState
+	(NetworkConfigLayer)(0),              // 46: talos.resource.definitions.enums.NetworkConfigLayer
+	(NetworkOperator)(0),                 // 47: talos.resource.definitions.enums.NetworkOperator
 }
 var file_resource_definitions_enums_enums_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
@@ -4425,7 +4484,7 @@ func file_resource_definitions_enums_enums_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_enums_enums_proto_rawDesc), len(file_resource_definitions_enums_enums_proto_rawDesc)),
-			NumEnums:      47,
+			NumEnums:      48,
 			NumMessages:   0,
 			NumExtensions: 0,
 			NumServices:   0,

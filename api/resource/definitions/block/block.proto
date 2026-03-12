@@ -6,6 +6,8 @@ option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/defi
 option java_package = "dev.talos.api.resource.definitions.block";
 
 import "google/api/expr/v1alpha1/checked.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
 import "resource/definitions/enums/enums.proto";
 
 // DeviceSpec is the spec for devices status.
@@ -103,6 +105,29 @@ message EncryptionSpec {
   uint64 key_size = 4;
   uint64 block_size = 5;
   repeated string perf_options = 6;
+}
+
+// FSScrubConfigSpec describes configuration of watchdog timer.
+message FSScrubConfigSpec {
+  string name = 1;
+  string mountpoint = 2;
+  google.protobuf.Duration period = 3;
+}
+
+// FSScrubScheduleSpec describes scheduled filesystem scrubbing jobs.
+message FSScrubScheduleSpec {
+  string mountpoint = 1;
+  google.protobuf.Duration period = 2;
+  google.protobuf.Timestamp start_time = 3;
+}
+
+// FSScrubStatusSpec describes status of filesystem scrub jobs.
+message FSScrubStatusSpec {
+  string mountpoint = 1;
+  google.protobuf.Duration period = 2;
+  google.protobuf.Timestamp time = 3;
+  google.protobuf.Duration duration = 4;
+  string status = 5;
 }
 
 // FilesystemSpec is the spec for volume filesystem.
