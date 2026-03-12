@@ -715,6 +715,11 @@ enum BlockFSParameterType {
   FS_PARAMETER_TYPE_BINARY_VALUE = 2;
 }
 
+// BlockLVType describes the type of logical volume.
+enum BlockLVType {
+  LV_TYPE_LINEAR = 0;
+}
+
 // BlockVolumePhase describes volume phase.
 enum BlockVolumePhase {
   VOLUME_PHASE_WAITING = 0;
@@ -736,6 +741,9 @@ enum BlockVolumeType {
   VOLUME_TYPE_SYMLINK = 4;
   VOLUME_TYPE_OVERLAY = 5;
   VOLUME_TYPE_EXTERNAL = 6;
+  LVM_VOLUME_TYPE_PHYSICAL_VOLUME = 7;
+  LVM_VOLUME_TYPE_VOLUME_GROUP = 8;
+  LVM_VOLUME_TYPE_LOGICAL_VOLUME = 9;
 }
 
 // CriImageCacheStatus describes image cache status type.
