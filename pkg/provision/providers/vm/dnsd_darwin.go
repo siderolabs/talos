@@ -4,14 +4,11 @@
 
 package vm
 
-import (
-	"github.com/siderolabs/talos/pkg/provision"
-)
-
-func (p *Provisioner) startDNSd(_ *State, _ provision.ClusterRequest) error {
+func (p *Provisioner) stopDNSd(_ *State) error {
 	return nil
 }
 
-func (p *Provisioner) stopDNSd(_ *State) error {
+// StartDNSd on darwin is a no-op since DNSd is not used.
+func (p *Provisioner) StartDNSd(_ *State) error {
 	return nil
 }

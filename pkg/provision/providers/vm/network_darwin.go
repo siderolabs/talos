@@ -6,6 +6,7 @@ package vm
 
 import (
 	"context"
+	"fmt"
 	"net"
 
 	"github.com/siderolabs/gen/xslices"
@@ -36,4 +37,9 @@ func (p *Provisioner) CreateNetwork(ctx context.Context, state *provision.State,
 // DestroyNetwork does nothing on darwin as the network is automatically cleaned up by qemu when the final machine of a cidr block is killed.
 func (p *Provisioner) DestroyNetwork(state *provision.State) error {
 	return nil
+}
+
+// RecreateNetwork on darwin is not supported as cluster restart requires QEMU.
+func (p *Provisioner) RecreateNetwork(ctx context.Context, state *provision.State, options provision.Options) error {
+	return fmt.Errorf("cluster restart is not supported on darwin; darwin uses vmnet which persists across restarts")
 }
