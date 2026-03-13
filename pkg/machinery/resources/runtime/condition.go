@@ -119,3 +119,37 @@ func (condition *DevicesStatusCondition) Wait(ctx context.Context) error {
 
 	return err
 }
+
+// APIServiceConfigCondition implements condition which waits for api service config to be ready.
+type APIServiceConfigCondition struct {
+	state state.State
+}
+
+// NewAPIServiceConfigCondition builds a condition which waits for api service config to be ready.
+func NewAPIServiceConfigCondition(state state.State) *APIServiceConfigCondition {
+	return &APIServiceConfigCondition{
+		state: state,
+	}
+}
+
+func (condition *APIServiceConfigCondition) String() string {
+	return "config to be ready"
+}
+
+// Wait implements condition interface.
+func (condition *APIServiceConfigCondition) Wait(ctx context.Context) error {
+	_, err := condition.state.WatchFor(
+		ctx,
+		resource.NewMetadata(NamespaceName, APIServiceConfigType, APIServiceConfigID, resource.VersionUndefined),
+		state.WithEventTypes(state.Created, state.Updated),
+		state.WithCondition(func(r resource.Resource) (bool, error) {
+			if resource.IsTombstone(r) {
+				return false, nil
+			}
+
+			return true, nil
+		}),
+	)
+
+	return err
+}

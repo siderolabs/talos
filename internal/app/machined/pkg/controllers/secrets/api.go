@@ -67,6 +67,9 @@ func (ctrl *APIController) Outputs() []controller.Output {
 	}
 }
 
+// errMachineTypeChanged is used to signal that machine type has changed, and the current reconcile loop should be aborted, and restarted with new machine type.
+var errMachineTypeChanged = errors.New("machine type changed")
+
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
@@ -84,15 +87,16 @@ func (ctrl *APIController) Run(ctx context.Context, r controller.Runtime, logger
 		}
 
 		machineTypeRes, err := safe.ReaderGet[*config.MachineType](ctx, r, resource.NewMetadata(config.NamespaceName, config.MachineTypeType, config.MachineTypeID, resource.VersionUndefined))
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				continue
-			}
-
+		if err != nil && !state.IsNotFoundError(err) {
 			return fmt.Errorf("error getting machine type: %w", err)
 		}
 
-		machineType := machineTypeRes.MachineType()
+		// Default to machine.TypeUnknown here (zero value).
+		var machineType machine.Type
+
+		if machineTypeRes != nil {
+			machineType = machineTypeRes.MachineType()
+		}
 
 		networkResource, err := safe.ReaderGet[*network.Status](ctx, r, resource.NewMetadata(network.NamespaceName, network.StatusType, network.StatusID, resource.VersionUndefined))
 		if err != nil {
@@ -105,24 +109,31 @@ func (ctrl *APIController) Run(ctx context.Context, r controller.Runtime, logger
 
 		networkStatus := networkResource.TypedSpec()
 
-		if !(networkStatus.AddressReady && networkStatus.HostnameReady) {
+		if !networkStatus.AddressReady {
 			continue
 		}
 
 		// machine type is known and network is ready, we can now proceed to one or another reconcile loop
 		switch machineType {
 		case machine.TypeInit, machine.TypeControlPlane:
-			if err = ctrl.reconcile(ctx, r, logger, true); err != nil {
-				return err
-			}
+			err = ctrl.reconcile(ctx, r, logger, true)
 		case machine.TypeWorker:
-			if err = ctrl.reconcile(ctx, r, logger, false); err != nil {
-				return err
-			}
+			err = ctrl.reconcile(ctx, r, logger, false)
 		case machine.TypeUnknown:
-			// machine configuration is not loaded yet, do nothing
+			// maintenance mode configuration, use maintenance service root CA, and skip client verification
+			err = ctrl.reconcileMaintenance(ctx, r, logger)
 		default:
 			panic(fmt.Sprintf("unexpected machine type %v", machineType))
+		}
+
+		if err != nil {
+			// this is expected error, we just need to restart the reconcile loop
+			// the teardownAll below will take care of tearing down current API secrets
+			if !errors.Is(err, errMachineTypeChanged) {
+				return err
+			}
+
+			r.QueueReconcile()
 		}
 
 		if err = ctrl.teardownAll(ctx, r); err != nil {
@@ -191,27 +202,27 @@ func (ctrl *APIController) reconcile(ctx context.Context, r controller.Runtime, 
 		}
 
 		machineTypeRes, err := safe.ReaderGet[*config.MachineType](ctx, r, resource.NewMetadata(config.NamespaceName, config.MachineTypeType, config.MachineTypeID, resource.VersionUndefined))
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				continue
-			}
-
+		if err != nil && !state.IsNotFoundError(err) {
 			return fmt.Errorf("error getting machine type: %w", err)
 		}
 
-		machineType := machineTypeRes.MachineType()
+		var machineType machine.Type
+
+		if machineTypeRes != nil {
+			machineType = machineTypeRes.MachineType()
+		}
 
 		switch machineType {
 		case machine.TypeInit, machine.TypeControlPlane:
 			if !isControlplane {
-				return errors.New("machine type changed")
+				return errMachineTypeChanged
 			}
 		case machine.TypeWorker:
 			if isControlplane {
-				return errors.New("machine type changed")
+				return errMachineTypeChanged
 			}
 		case machine.TypeUnknown:
-			return errors.New("machine type changed")
+			return errMachineTypeChanged
 		default:
 			panic(fmt.Sprintf("unexpected machine type %v", machineType))
 		}
@@ -318,6 +329,7 @@ func (ctrl *APIController) generateControlPlane(ctx context.Context, r controlle
 			apiSecrets.AcceptedCAs = rootSpec.AcceptedCAs
 			apiSecrets.Server = x509.NewCertificateAndKeyFromKeyPair(serverCert)
 			apiSecrets.Client = x509.NewCertificateAndKeyFromKeyPair(clientCert)
+			apiSecrets.SkipVerifyingClientCert = false
 
 			return nil
 		}); err != nil {
@@ -408,7 +420,9 @@ func (ctrl *APIController) generateWorker(ctx context.Context, r controller.Runt
 					Crt: ca,
 				},
 			}
+			apiSecrets.Client = nil
 			apiSecrets.Server = serverCert
+			apiSecrets.SkipVerifyingClientCert = false
 
 			return nil
 		}); err != nil {
@@ -422,6 +436,130 @@ func (ctrl *APIController) generateWorker(ctx context.Context, r controller.Runt
 	)
 
 	return nil
+}
+
+//nolint:dupl,gocyclo
+func (ctrl *APIController) reconcileMaintenance(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	inputs := []controller.Input{
+		{
+			Namespace: secrets.NamespaceName,
+			Type:      secrets.MaintenanceRootType,
+			ID:        optional.Some(secrets.MaintenanceRootID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: secrets.NamespaceName,
+			Type:      secrets.CertSANType,
+			ID:        optional.Some(secrets.CertSANMaintenanceID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineTypeType,
+			ID:        optional.Some(config.MachineTypeID),
+			Kind:      controller.InputWeak,
+		},
+		// time status isn't fetched, but the fact that it is in dependencies means
+		// that certs will be regenerated on time sync/jump (as reconcile will be triggered)
+		{
+			Namespace: v1alpha1.NamespaceName,
+			Type:      timeresource.StatusType,
+			ID:        optional.Some(timeresource.StatusID),
+			Kind:      controller.InputWeak,
+		},
+	}
+
+	if err := r.UpdateInputs(inputs); err != nil {
+		return fmt.Errorf("error updating inputs: %w", err)
+	}
+
+	r.QueueReconcile()
+
+	refreshTicker := time.NewTicker(x509.DefaultCertificateValidityDuration / 2)
+	defer refreshTicker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-r.EventCh():
+		case <-refreshTicker.C:
+		}
+
+		machineTypeRes, err := safe.ReaderGet[*config.MachineType](ctx, r, resource.NewMetadata(config.NamespaceName, config.MachineTypeType, config.MachineTypeID, resource.VersionUndefined))
+		if err != nil && !state.IsNotFoundError(err) {
+			return fmt.Errorf("error getting machine type: %w", err)
+		}
+
+		var machineType machine.Type
+
+		if machineTypeRes != nil {
+			machineType = machineTypeRes.MachineType()
+		}
+
+		if machineType != machine.TypeUnknown {
+			return errMachineTypeChanged
+		}
+
+		rootSecrets, err := safe.ReaderGetByID[*secrets.MaintenanceRoot](ctx, r, secrets.MaintenanceRootID)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return fmt.Errorf("error getting maintenance root secrets: %w", err)
+		}
+
+		certSANs, err := safe.ReaderGetByID[*secrets.CertSAN](ctx, r, secrets.CertSANMaintenanceID)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return fmt.Errorf("error getting certSANs: %w", err)
+		}
+
+		ca, err := x509.NewCertificateAuthorityFromCertificateAndKey(rootSecrets.TypedSpec().CA)
+		if err != nil {
+			return fmt.Errorf("failed to parse CA certificate: %w", err)
+		}
+
+		serverCert, err := x509.NewKeyPair(ca,
+			x509.IPAddresses(certSANs.TypedSpec().StdIPs()),
+			x509.DNSNames(certSANs.TypedSpec().DNSNames),
+			x509.CommonName(certSANs.TypedSpec().FQDN),
+			x509.NotAfter(time.Now().Add(x509.DefaultCertificateValidityDuration)),
+			x509.KeyUsage(stdlibx509.KeyUsageDigitalSignature),
+			x509.ExtKeyUsage([]stdlibx509.ExtKeyUsage{
+				stdlibx509.ExtKeyUsageServerAuth,
+			}),
+		)
+		if err != nil {
+			return fmt.Errorf("failed to generate maintenance server cert: %w", err)
+		}
+
+		if err := safe.WriterModify(ctx, r, secrets.NewAPI(),
+			func(r *secrets.API) error {
+				apiSecrets := r.TypedSpec()
+
+				apiSecrets.AcceptedCAs = nil
+				apiSecrets.Client = nil
+				apiSecrets.Server = x509.NewCertificateAndKeyFromKeyPair(serverCert)
+				apiSecrets.SkipVerifyingClientCert = true
+
+				return nil
+			}); err != nil {
+			return fmt.Errorf("error modifying resource: %w", err)
+		}
+
+		serverFingerprint, _ := x509.SPKIFingerprintFromDER(serverCert.Certificate.Certificate[0]) //nolint:errcheck
+
+		logger.Debug("generated new certificates",
+			zap.Stringer("server", serverFingerprint),
+		)
+
+		r.ResetRestartBackoff()
+	}
 }
 
 func (ctrl *APIController) teardownAll(ctx context.Context, r controller.Runtime) error {

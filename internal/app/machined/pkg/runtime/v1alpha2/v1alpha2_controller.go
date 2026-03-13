@@ -380,6 +380,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		network.NewTimeServerMergeController(),
 		&network.TimeServerSpecController{},
 		&perf.StatsController{},
+		&runtimecontrollers.APIServiceConfigController{},
 		&runtimecontrollers.BootedEntryController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
@@ -439,7 +440,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&runtimecontrollers.MaintenanceConfigController{},
-		&runtimecontrollers.MaintenanceServiceController{
+		&runtimecontrollers.MaintenanceServiceInformController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&runtimecontrollers.MachineStatusController{
@@ -468,7 +469,6 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&secrets.KubernetesCertSANsController{},
 		&secrets.KubernetesDynamicCertsController{},
 		&secrets.KubernetesController{},
-		&secrets.MaintenanceController{},
 		&secrets.MaintenanceCertSANsController{},
 		&secrets.MaintenanceRootController{},
 		secrets.NewRootEtcdController(),

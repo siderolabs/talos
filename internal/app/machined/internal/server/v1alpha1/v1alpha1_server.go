@@ -73,6 +73,7 @@ import (
 	"github.com/siderolabs/talos/pkg/archiver"
 	"github.com/siderolabs/talos/pkg/chunker"
 	"github.com/siderolabs/talos/pkg/chunker/stream"
+	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
 	"github.com/siderolabs/talos/pkg/kubeconfig"
 	"github.com/siderolabs/talos/pkg/machinery/api/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
@@ -170,6 +171,17 @@ func (m modeWrapper) RequiresInstall() bool {
 //
 //nolint:gocyclo,cyclop
 func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfigurationRequest) (*machine.ApplyConfigurationResponse, error) {
+	if s.Controller.Runtime().State().Platform().Mode().IsAgent() {
+		return nil, status.Error(codes.Unimplemented, "API is not implemented in agent mode")
+	}
+
+	roles := authz.GetRoles(ctx)
+	inMaintenance := !s.Controller.Runtime().ConfigCompleteForBoot()
+
+	if !inMaintenance && !roles.Includes(role.Admin) {
+		return nil, authz.ErrNotAuthorized
+	}
+
 	mode := in.Mode.String()
 	modeDetails := "Applied configuration with a reboot"
 	modeErr := ""
@@ -186,7 +198,7 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 	// as we are not in maintenance mode, the v1alpha1 config should be always present
 	// in the future we should allow to remove v1alpha1, but for now for better UX we deny
 	// such requests to avoid confusion
-	if cfgProvider.RawV1Alpha1() == nil {
+	if !inMaintenance && cfgProvider.RawV1Alpha1() == nil {
 		return nil, status.Error(codes.InvalidArgument, "the applied machine configuration doesn't contain v1alpha1 config, did you mean to patch the machine config instead?")
 	}
 
@@ -207,6 +219,10 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 
 	warnings = slices.Concat(warnings, warningsRuntime)
 
+	if inMaintenance && in.Mode == machine.ApplyConfigurationRequest_REBOOT {
+		in.Mode = machine.ApplyConfigurationRequest_NO_REBOOT
+	}
+
 	//nolint:exhaustive
 	switch in.Mode {
 	// --mode=try
@@ -214,7 +230,7 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 		fallthrough
 	// --mode=no-reboot
 	case machine.ApplyConfigurationRequest_NO_REBOOT:
-		if err = s.Controller.Runtime().CanApplyImmediate(cfgProvider); err != nil {
+		if err = s.Controller.Runtime().CanApplyImmediate(cfgProvider); err != nil && !inMaintenance {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
 
@@ -224,7 +240,7 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 		modeDetails = "Staged configuration to be applied after the next reboot"
 	// --mode=auto detect actual update mode
 	case machine.ApplyConfigurationRequest_AUTO:
-		if err = s.Controller.Runtime().CanApplyImmediate(cfgProvider); err != nil {
+		if err = s.Controller.Runtime().CanApplyImmediate(cfgProvider); err != nil && !inMaintenance {
 			in.Mode = machine.ApplyConfigurationRequest_REBOOT
 			modeDetails = "Applied configuration with a reboot"
 			modeErr = ": " + err.Error()
@@ -474,6 +490,10 @@ func (s *Server) Shutdown(ctx context.Context, in *machine.ShutdownRequest) (rep
 //
 //nolint:gocyclo,cyclop
 func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (*machine.UpgradeResponse, error) {
+	if s.Controller.Runtime().State().Platform().Mode().IsAgent() {
+		return nil, status.Error(codes.Unimplemented, "API is not implemented in agent mode")
+	}
+
 	actorID := uuid.New().String()
 
 	ctx = context.WithValue(ctx, runtime.ActorIDCtxKey{}, actorID)
@@ -600,6 +620,10 @@ func (opt *ResetOptions) String() string {
 //
 //nolint:gocyclo,cyclop
 func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *machine.ResetResponse, err error) {
+	if s.Controller.Runtime().State().Platform().Mode().IsAgent() {
+		return nil, status.Error(codes.Unimplemented, "API is not implemented in agent mode")
+	}
+
 	actorID := uuid.New().String()
 
 	log.Printf("reset request received. actorID: %s", actorID)

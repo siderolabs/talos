@@ -130,6 +130,36 @@ func (suite *PersistenceSuite) TestConfig() {
 	suite.Destroy(volumeLifecycle)
 }
 
+func (suite *PersistenceSuite) TestNoPersistenceWithMissingState() {
+	volumeLifecycle := block.NewVolumeLifecycle(block.NamespaceName, block.VolumeLifecycleID)
+	suite.Create(volumeLifecycle)
+
+	ctest.AssertResource(suite, block.VolumeLifecycleID, func(vl *block.VolumeLifecycle, asrt *assert.Assertions) {
+		asrt.False(vl.Metadata().Finalizers().Empty())
+	})
+
+	c1 := config.NewMachineConfigWithID(suite.cfg1, config.PersistentID)
+	suite.Create(c1)
+
+	_, err := suite.State().Teardown(suite.Ctx(), volumeLifecycle.Metadata())
+	suite.Require().NoError(err)
+
+	ctest.AssertResource(suite, block.VolumeLifecycleID, func(vl *block.VolumeLifecycle, asrt *assert.Assertions) {
+		asrt.False(vl.Metadata().Finalizers().Empty())
+	})
+
+	// simulate STATE missing
+	volumeStatus := block.NewVolumeStatus(block.NamespaceName, constants.StatePartitionLabel)
+	volumeStatus.TypedSpec().Phase = block.VolumePhaseMissing
+	suite.Create(volumeStatus)
+
+	ctest.AssertResource(suite, block.VolumeLifecycleID, func(vl *block.VolumeLifecycle, asrt *assert.Assertions) {
+		asrt.True(vl.Metadata().Finalizers().Empty())
+	})
+
+	suite.Destroy(volumeLifecycle)
+}
+
 func TestPersistenceSuite(t *testing.T) {
 	t.Parallel()
 

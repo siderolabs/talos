@@ -104,7 +104,7 @@ func (ctrl *AcquireController) Inputs() []controller.Input {
 		{
 			Namespace: configresource.NamespaceName,
 			Type:      configresource.MachineConfigType,
-			ID:        optional.Some(configresource.MaintenanceID),
+			ID:        optional.Some(configresource.ActiveID),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -732,8 +732,8 @@ func (ctrl *AcquireController) stateMaintenance(ctx context.Context, r controlle
 		return nil, nil, fmt.Errorf("failed creating maintenance service request: %w", err)
 	}
 
-	// check current maintenance config
-	cfgResource, err := safe.ReaderGetByID[*configresource.MachineConfig](ctx, r, configresource.MaintenanceID)
+	// check current config
+	cfgResource, err := safe.ReaderGetByID[*configresource.MachineConfig](ctx, r, configresource.ActiveID)
 	if err != nil {
 		if state.IsNotFoundError(err) {
 			// no config loaded, wait for it
@@ -749,11 +749,11 @@ func (ctrl *AcquireController) stateMaintenance(ctx context.Context, r controlle
 		// complete config, we are done
 		ctrl.configSourcesUsed = append(ctrl.configSourcesUsed, "maintenance")
 
-		return ctrl.stateMaintenanceLeave, cfg, nil
+		return ctrl.stateMaintenanceLeave, nil, nil
 	}
 
-	// incomplete config, keep waiting, but apply new config
-	return nil, cfg, nil
+	// incomplete config, keep waiting
+	return nil, nil, nil
 }
 
 // stateMaintenanceLeave leaves the maintenance service.

@@ -11,15 +11,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/crypto/x509"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	secretsctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/secrets"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
@@ -29,6 +28,7 @@ import (
 func TestAPISuite(t *testing.T) {
 	suite.Run(t, &APISuite{
 		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 5 * time.Second,
 			AfterSetup: func(suite *ctest.DefaultSuite) {
 				suite.Require().NoError(suite.Runtime().RegisterController(&secretsctrl.APIController{}))
 			},
@@ -60,16 +60,15 @@ func (suite *APISuite) TestReconcileControlPlane() {
 	rootSecrets.TypedSpec().CertSANDNSNames = []string{"example.com"}
 	rootSecrets.TypedSpec().CertSANIPs = []netip.Addr{netip.MustParseAddr("10.4.3.2"), netip.MustParseAddr("10.2.1.3")}
 	rootSecrets.TypedSpec().Token = "something"
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), rootSecrets))
+	suite.Create(rootSecrets)
 
 	machineType := config.NewMachineType()
 	machineType.SetMachineType(machine.TypeControlPlane)
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), machineType))
+	suite.Create(machineType)
 
 	networkStatus := network.NewStatus(network.NamespaceName, network.StatusID)
 	networkStatus.TypedSpec().AddressReady = true
-	networkStatus.TypedSpec().HostnameReady = true
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), networkStatus))
+	suite.Create(networkStatus)
 
 	certSANs := secrets.NewCertSAN(secrets.NamespaceName, secrets.CertSANAPIID)
 	certSANs.TypedSpec().Append(
@@ -82,67 +81,114 @@ func (suite *APISuite) TestReconcileControlPlane() {
 	)
 
 	certSANs.TypedSpec().FQDN = "foo.example.com"
+	suite.Create(certSANs)
 
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), certSANs))
-	suite.AssertWithin(10*time.Second, 100*time.Millisecond, func() error {
-		certs, err := ctest.Get[*secrets.API](
-			suite,
-			resource.NewMetadata(
-				secrets.NamespaceName,
-				secrets.APIType,
-				secrets.APIID,
-				resource.VersionUndefined,
-			),
-		)
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				return retry.ExpectedError(err)
+	ctest.AssertResource(suite, secrets.APIID,
+		func(certs *secrets.API, asrt *assert.Assertions) {
+			apiCerts := certs.TypedSpec()
+
+			asrt.Equal(
+				[]*x509.PEMEncodedCertificate{
+					{
+						Crt: talosCA.CrtPEM,
+					},
+				},
+				apiCerts.AcceptedCAs,
+			)
+
+			serverCert, err := apiCerts.Server.GetCert()
+			if !asrt.NoError(err) {
+				return
 			}
 
-			return err
-		}
+			asrt.Equal([]string{"example.com", "foo", "foo.example.com"}, serverCert.DNSNames)
+			asrt.Equal("[10.2.1.3 10.4.3.2 172.16.0.1]", fmt.Sprintf("%v", serverCert.IPAddresses))
 
-		apiCerts := certs.TypedSpec()
+			asrt.Equal("foo.example.com", serverCert.Subject.CommonName)
+			asrt.Empty(serverCert.Subject.Organization)
 
-		suite.Assert().Equal(
-			[]*x509.PEMEncodedCertificate{
-				{
-					Crt: talosCA.CrtPEM,
-				},
-			},
-			apiCerts.AcceptedCAs,
-		)
+			asrt.Equal(
+				stdlibx509.KeyUsageDigitalSignature,
+				serverCert.KeyUsage,
+			)
+			asrt.Equal([]stdlibx509.ExtKeyUsage{stdlibx509.ExtKeyUsageServerAuth}, serverCert.ExtKeyUsage)
 
-		serverCert, err := apiCerts.Server.GetCert()
-		suite.Require().NoError(err)
+			clientCert, err := apiCerts.Client.GetCert()
+			if !asrt.NoError(err) {
+				return
+			}
 
-		suite.Assert().Equal([]string{"example.com", "foo", "foo.example.com"}, serverCert.DNSNames)
-		suite.Assert().Equal("[10.2.1.3 10.4.3.2 172.16.0.1]", fmt.Sprintf("%v", serverCert.IPAddresses))
+			asrt.Empty(clientCert.DNSNames)
+			asrt.Empty(clientCert.IPAddresses)
 
-		suite.Assert().Equal("foo.example.com", serverCert.Subject.CommonName)
-		suite.Assert().Empty(serverCert.Subject.Organization)
+			asrt.Equal("foo.example.com", clientCert.Subject.CommonName)
+			asrt.Equal([]string{string(role.Impersonator)}, clientCert.Subject.Organization)
 
-		suite.Assert().Equal(
-			stdlibx509.KeyUsageDigitalSignature,
-			serverCert.KeyUsage,
-		)
-		suite.Assert().Equal([]stdlibx509.ExtKeyUsage{stdlibx509.ExtKeyUsageServerAuth}, serverCert.ExtKeyUsage)
+			asrt.Equal(
+				stdlibx509.KeyUsageDigitalSignature,
+				clientCert.KeyUsage,
+			)
+			asrt.Equal([]stdlibx509.ExtKeyUsage{stdlibx509.ExtKeyUsageClientAuth}, clientCert.ExtKeyUsage)
 
-		clientCert, err := apiCerts.Client.GetCert()
-		suite.Require().NoError(err)
+			asrt.False(apiCerts.SkipVerifyingClientCert)
+		},
+	)
 
-		suite.Assert().Empty(clientCert.DNSNames)
-		suite.Assert().Empty(clientCert.IPAddresses)
+	// destroy machine type, mocking transition to maintenance mode
+	suite.Destroy(machineType)
 
-		suite.Assert().Equal("foo.example.com", clientCert.Subject.CommonName)
-		suite.Assert().Equal([]string{string(role.Impersonator)}, clientCert.Subject.Organization)
+	ctest.AssertNoResource[*secrets.API](suite, secrets.APIID)
+}
 
-		suite.Assert().Equal(
-			stdlibx509.KeyUsageDigitalSignature,
-			clientCert.KeyUsage,
-		)
-		suite.Assert().Equal([]stdlibx509.ExtKeyUsage{stdlibx509.ExtKeyUsageClientAuth}, clientCert.ExtKeyUsage)
+func (suite *APISuite) TestReconcileMaintenance() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&secretsctrl.MaintenanceRootController{}))
 
-		return nil
-	})
+	networkStatus := network.NewStatus(network.NamespaceName, network.StatusID)
+	networkStatus.TypedSpec().AddressReady = true
+	suite.Create(networkStatus)
+
+	certSANs := secrets.NewCertSAN(secrets.NamespaceName, secrets.CertSANMaintenanceID)
+	certSANs.TypedSpec().Append(
+		"example.com",
+		"10.2.1.3",
+	)
+	certSANs.TypedSpec().FQDN = constants.MaintenanceServiceCommonName
+	suite.Create(certSANs)
+
+	machineType := config.NewMachineType()
+	machineType.SetMachineType(machine.TypeUnknown)
+	suite.Create(machineType)
+
+	ctest.AssertResource(suite, secrets.APIID,
+		func(certs *secrets.API, asrt *assert.Assertions) {
+			apiCerts := certs.TypedSpec()
+
+			asrt.True(apiCerts.SkipVerifyingClientCert)
+			asrt.Nil(apiCerts.Client)
+			asrt.Nil(apiCerts.AcceptedCAs)
+
+			serverCert, err := apiCerts.Server.GetCert()
+			if !asrt.NoError(err) {
+				return
+			}
+
+			asrt.Equal([]string{"example.com"}, serverCert.DNSNames)
+			asrt.Equal("[10.2.1.3]", fmt.Sprintf("%v", serverCert.IPAddresses))
+
+			asrt.Equal(constants.MaintenanceServiceCommonName, serverCert.Subject.CommonName)
+			asrt.Empty(serverCert.Subject.Organization)
+
+			asrt.Equal(
+				stdlibx509.KeyUsageDigitalSignature,
+				serverCert.KeyUsage,
+			)
+			asrt.Equal([]stdlibx509.ExtKeyUsage{stdlibx509.ExtKeyUsageServerAuth}, serverCert.ExtKeyUsage)
+		},
+	)
+
+	// create machine type, mocking transition to control plane mode
+	machineType.SetMachineType(machine.TypeControlPlane)
+	suite.Update(machineType)
+
+	ctest.AssertNoResource[*secrets.API](suite, secrets.APIID)
 }

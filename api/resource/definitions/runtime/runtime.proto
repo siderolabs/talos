@@ -9,6 +9,14 @@ import "common/common.proto";
 import "google/protobuf/duration.proto";
 import "resource/definitions/enums/enums.proto";
 
+// APIServiceConfigSpec describes configuration for Talos API service (apid).
+message APIServiceConfigSpec {
+  string listen_address = 1;
+  bool node_routing_disabled = 2;
+  bool readonly_role_mode = 3;
+  bool skip_verifying_client_cert = 4;
+}
+
 // BootedEntrySpec describes the booted entry resource properties.
 message BootedEntrySpec {
   string booted_entry = 1;
