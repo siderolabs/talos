@@ -18,16 +18,16 @@ preface = """
     [notes.updates]
         title = "Component Updates"
         description = """\
-Linux: 6.18.16
+Linux: 6.18.18
 containerd: 2.2.2
 etcd: 3.6.8
-CoreDNS: 1.14.1
+CoreDNS: 1.14.2
 Kubernetes: 1.36.0-alpha.2
 Flannel CNI plugin: v1.9.0-flannel1
 Flannel: 0.28.1
 LVM2: 2_03_38
-runc: 1.4.0
-systemd: 259.1
+runc: 1.4.1
+systemd: 259.5
 cryptsetup: 2.8.3
 Tenstorrent: 2.7.0
 iptables: 1.8.12
@@ -184,7 +184,7 @@ Previously a smart merge was performed to keep IPv4/IPv6 nameservers from lower 
 Talos Linux now defaults to dynamic Linux kernel preemption model, the default value `none` matches
 previous version, but now with kernel argument `preempt=` the preemption model can be changed.
 
-See [Linux kernel documentation](https://docs.kernel.org/admin-guide/kernel-parameters.html) for more 
+See [Linux kernel documentation](https://docs.kernel.org/admin-guide/kernel-parameters.html) for more
 information on supported values.
 
 This change only applies to amd64 (x86_64) architecture.

@@ -71,10 +71,10 @@ func (suite *CheckSuite) TestHealthChange() {
 		Timeout:      time.Millisecond,
 	}
 
-	var healthy uint32
+	var healthy atomic.Uint32
 
 	check := func(context.Context) error {
-		if atomic.LoadUint32(&healthy) == 1 {
+		if healthy.Load() == 1 {
 			return nil
 		}
 
@@ -105,7 +105,7 @@ func (suite *CheckSuite) TestHealthChange() {
 	suite.Require().False(*state.Get().Healthy)
 	suite.Require().Equal("health failed", state.Get().LastMessage)
 
-	atomic.StoreUint32(&healthy, 1)
+	healthy.Store(1)
 
 	for range 10 {
 		time.Sleep(20 * time.Millisecond)
