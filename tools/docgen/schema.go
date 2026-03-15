@@ -17,7 +17,7 @@ import (
 	"github.com/gomarkdown/markdown/html"
 	"github.com/invopop/jsonschema"
 	"github.com/microcosm-cc/bluemonday"
-	validatejsonschema "github.com/santhosh-tekuri/jsonschema/v5"
+	validatejsonschema "github.com/santhosh-tekuri/jsonschema/v6"
 	orderedmap "github.com/wk8/go-ordered-map/v2"
 )
 
@@ -348,8 +348,18 @@ func renderSchema(docs []*Doc, destinationFile, versionTagFile string) {
 
 // validateSchema validates the schema itself by compiling it.
 func validateSchema(schema, schemaURL string) {
-	_, err := validatejsonschema.CompileString(schemaURL, schema)
+	schemaJSON, err := validatejsonschema.UnmarshalJSON(strings.NewReader(schema))
 	if err != nil {
+		log.Fatalf("failed to unmarshal schema JSON: %v", err)
+	}
+
+	compiler := validatejsonschema.NewCompiler()
+
+	if err := compiler.AddResource(schemaURL, schemaJSON); err != nil {
+		log.Fatalf("failed to add schema resource: %v", err)
+	}
+
+	if _, err := compiler.Compile(schemaURL); err != nil {
 		log.Fatalf("failed to compile schema: %v", err)
 	}
 }

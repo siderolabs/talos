@@ -71,20 +71,20 @@ func (m *MockService) Volumes(runtime.Runtime) []string {
 type MockHealthcheckedService struct {
 	MockService
 
-	notHealthy uint32
+	notHealthy atomic.Uint32
 }
 
 func (m *MockHealthcheckedService) SetHealthy(healthy bool) {
 	if healthy {
-		atomic.StoreUint32(&m.notHealthy, 0)
+		m.notHealthy.Store(0)
 	} else {
-		atomic.StoreUint32(&m.notHealthy, 1)
+		m.notHealthy.Store(1)
 	}
 }
 
 func (m *MockHealthcheckedService) HealthFunc(runtime.Runtime) health.Check {
 	return func(context.Context) error {
-		if atomic.LoadUint32(&m.notHealthy) == 0 {
+		if m.notHealthy.Load() == 0 {
 			return nil
 		}
 

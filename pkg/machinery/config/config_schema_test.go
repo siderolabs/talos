@@ -11,7 +11,7 @@ import (
 	"strings"
 	"testing"
 
-	validatejsonschema "github.com/santhosh-tekuri/jsonschema/v5"
+	validatejsonschema "github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v4"
@@ -30,7 +30,14 @@ var schemaData string
 func TestSchemaValidation(t *testing.T) {
 	t.Parallel()
 
-	schema, err := validatejsonschema.CompileString("test-id", schemaData)
+	schemaJSON, err := validatejsonschema.UnmarshalJSON(strings.NewReader(schemaData))
+	require.NoError(t, err)
+
+	compiler := validatejsonschema.NewCompiler()
+	err = compiler.AddResource("test-id", schemaJSON)
+	require.NoError(t, err)
+
+	schema, err := compiler.Compile("test-id")
 	require.NoError(t, err)
 
 	for _, test := range []struct {
@@ -47,7 +54,7 @@ func TestSchemaValidation(t *testing.T) {
 			config: newV1Alpha1Config(t, func(config *v1alpha1.Config) {
 				config.ConfigVersion = "v1alpha2"
 			}, nil),
-			expectedErrorContains: `value must be "v1alpha1"`,
+			expectedErrorContains: `value must be 'v1alpha1'`,
 		},
 		{
 			name: "v1alpha1_invalid-control-plane-endpoint",
@@ -73,7 +80,7 @@ func TestSchemaValidation(t *testing.T) {
 			config: newV1Alpha1Config(t, func(config *v1alpha1.Config) {
 				config.MachineConfig.MachineType = "invalidtype"
 			}, nil),
-			expectedErrorContains: `value must be one of "controlplane", "worker"`,
+			expectedErrorContains: `value must be one of 'controlplane', 'worker'`,
 		},
 		{
 			name:   "network/RuleConfigV1Alpha1_valid",
@@ -93,7 +100,7 @@ func TestSchemaValidation(t *testing.T) {
 					},
 				}
 			}),
-			expectedErrorContains: "'/ingress/1/except' does not validate with",
+			expectedErrorContains: "'/ingress/1/except': 'invalid-except/12343' does not match pattern",
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
