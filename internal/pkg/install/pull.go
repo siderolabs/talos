@@ -40,7 +40,6 @@ func PullAndValidateInstallerImage(ctx context.Context, resources state.State, r
 
 	img, err := image.Pull(containerdctx, registryBuilder, resources, client, ref,
 		image.WithSkipIfAlreadyPulled(),
-		image.WithMaxNotFoundRetries(1),
 		image.WithProgressReporter(console.NewProgressReporter),
 	)
 	if err != nil {

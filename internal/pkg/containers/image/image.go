@@ -35,8 +35,9 @@ import (
 
 // Image pull retry settings.
 const (
-	PullTimeout       = 20 * time.Minute
-	PullRetryInterval = 5 * time.Second
+	PullTimeout        = 20 * time.Minute
+	PullAttemptTimeout = 5 * time.Minute
+	PullRetryInterval  = 5 * time.Second
 )
 
 // PullOption is an option for Pull function.
@@ -164,101 +165,102 @@ func Pull(
 
 	notFoundErrors := 0
 
-	err = retry.Exponential(PullTimeout, retry.WithUnits(PullRetryInterval), retry.WithErrorLogging(true)).RetryWithContext(ctx, func(ctx context.Context) error {
-		registriesConfig, err := registryBuilder(ctx)
-		if err != nil {
-			return fmt.Errorf("failed to get configured registries: %w", err)
-		}
-
-		resolver := NewResolver(registriesConfig)
-
-		verifyResult, err := verify.ImageSignature(ctx, zap.NewNop(), resources, resolver, ref)
-		if err != nil {
-			switch status.Code(err) { //nolint:exhaustive
-			case codes.PermissionDenied:
-				// verification denied by matched rule, no need to retry
-				return errors.New(status.Convert(err).Message())
-			case codes.NotFound:
-				// verification failed because image not found, no need to retry
-				notFoundErrors++
-
-				if notFoundErrors > opts.MaxNotFoundRetries {
-					return err
-				}
-
-				return retry.ExpectedError(err)
-			default:
-				return retry.ExpectedError(err)
+	err = retry.Exponential(PullTimeout, retry.WithAttemptTimeout(PullAttemptTimeout), retry.WithUnits(PullRetryInterval), retry.WithErrorLogging(true)).
+		RetryWithContext(ctx, func(ctx context.Context) error {
+			registriesConfig, err := registryBuilder(ctx)
+			if err != nil {
+				return fmt.Errorf("failed to get configured registries: %w", err)
 			}
-		}
 
-		containerdRemoteOpts := []containerd.RemoteOpt{
-			containerd.WithPullUnpack,
-			containerd.WithChildLabelMap(images.ChildGCLabelsFilterLayers),
-			containerd.WithPlatformMatcher(platforms.Default()),
-			containerd.WithResolver(resolver),
-		}
+			resolver := NewResolver(registriesConfig)
 
-		pullRef := ref
+			verifyResult, err := verify.ImageSignature(ctx, zap.NewNop(), resources, resolver, ref)
+			if err != nil {
+				switch status.Code(err) { //nolint:exhaustive
+				case codes.PermissionDenied:
+					// verification denied by matched rule, no need to retry
+					return errors.New(status.Convert(err).Message())
+				case codes.NotFound:
+					// verification failed because image not found, no need to retry
+					notFoundErrors++
 
-		if verifyResult.Verified {
-			containerdRemoteOpts = append(containerdRemoteOpts,
-				containerd.WithPullLabel(constants.ImageLabelVerified, verifyResult.Message),
-			)
+					if notFoundErrors > opts.MaxNotFoundRetries {
+						return err
+					}
 
-			pullRef = verifyResult.DigestedImageRef
-		}
+					return retry.ExpectedError(err)
+				default:
+					return retry.ExpectedError(err)
+				}
+			}
 
-		if opts.NewProgressReporter != nil {
-			reporter := opts.NewProgressReporter(ref)
+			containerdRemoteOpts := []containerd.RemoteOpt{
+				containerd.WithPullUnpack,
+				containerd.WithChildLabelMap(images.ChildGCLabelsFilterLayers),
+				containerd.WithPlatformMatcher(platforms.Default()),
+				containerd.WithResolver(resolver),
+			}
 
-			reporter.Start()
-			defer reporter.Stop()
+			pullRef := ref
 
-			pp := progress.NewPullProgress(
-				client.ContentStore(),
-				client.SnapshotService("overlayfs"),
-				reporter.Update,
-			)
+			if verifyResult.Verified {
+				containerdRemoteOpts = append(containerdRemoteOpts,
+					containerd.WithPullLabel(constants.ImageLabelVerified, verifyResult.Message),
+				)
 
-			finishProgress := pp.ShowProgress(ctx)
-			defer finishProgress()
+				pullRef = verifyResult.DigestedImageRef
+			}
 
-			containerdRemoteOpts = append(containerdRemoteOpts,
-				containerd.WithImageHandler(
-					images.HandlerFunc(
-						func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
-							if images.IsLayerType(desc.MediaType) {
-								pp.Add(desc)
-							}
+			if opts.NewProgressReporter != nil {
+				reporter := opts.NewProgressReporter(ref)
 
-							return nil, nil
-						},
+				reporter.Start()
+				defer reporter.Stop()
+
+				pp := progress.NewPullProgress(
+					client.ContentStore(),
+					client.SnapshotService("overlayfs"),
+					reporter.Update,
+				)
+
+				finishProgress := pp.ShowProgress(ctx)
+				defer finishProgress()
+
+				containerdRemoteOpts = append(containerdRemoteOpts,
+					containerd.WithImageHandler(
+						images.HandlerFunc(
+							func(ctx context.Context, desc ocispec.Descriptor) ([]ocispec.Descriptor, error) {
+								if images.IsLayerType(desc.MediaType) {
+									pp.Add(desc)
+								}
+
+								return nil, nil
+							},
+						),
 					),
-				),
-				containerd.WithImageHandlerWrapper(snapshotters.AppendInfoHandlerWrapper(ref)),
-			)
-		}
-
-		if img, err = client.Pull(
-			ctx,
-			pullRef,
-			containerdRemoteOpts...,
-		); err != nil {
-			err = fmt.Errorf("failed to pull image %q: %w", ref, err)
-			if errors.Is(err, errdefs.ErrNotFound) {
-				notFoundErrors++
-
-				if notFoundErrors > opts.MaxNotFoundRetries {
-					return err
-				}
+					containerd.WithImageHandlerWrapper(snapshotters.AppendInfoHandlerWrapper(ref)),
+				)
 			}
 
-			return retry.ExpectedError(err)
-		}
+			if img, err = client.Pull(
+				ctx,
+				pullRef,
+				containerdRemoteOpts...,
+			); err != nil {
+				err = fmt.Errorf("failed to pull image %q: %w", ref, err)
+				if errors.Is(err, errdefs.ErrNotFound) {
+					notFoundErrors++
 
-		return nil
-	})
+					if notFoundErrors > opts.MaxNotFoundRetries {
+						return err
+					}
+				}
+
+				return retry.ExpectedError(err)
+			}
+
+			return nil
+		})
 	if err != nil {
 		return nil, err
 	}
