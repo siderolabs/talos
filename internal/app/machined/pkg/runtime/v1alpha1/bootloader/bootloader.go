@@ -18,8 +18,8 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/sdboot"
 	"github.com/siderolabs/talos/internal/pkg/partition"
-	"github.com/siderolabs/talos/pkg/imager/profile"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/imager/imageropts"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 )
 
@@ -86,14 +86,14 @@ func NewAuto() Bootloader {
 // New returns a new bootloader based on the secureboot flag and architecture.
 func New(bootloader, talosVersion, arch string) (Bootloader, error) {
 	switch bootloader {
-	case profile.BootLoaderKindGrub.String():
+	case imageropts.BootLoaderKindGrub.String():
 		g := grub.NewConfig()
 		g.AddResetOption = quirks.New(talosVersion).SupportsResetGRUBOption()
 
 		return g, nil
-	case profile.BootLoaderKindSDBoot.String():
+	case imageropts.BootLoaderKindSDBoot.String():
 		return sdboot.New(), nil
-	case profile.BootLoaderKindDualBoot.String():
+	case imageropts.BootLoaderKindDualBoot.String():
 		return dual.New(), nil
 	default:
 		return nil, fmt.Errorf("unsupported bootloader %q", bootloader)

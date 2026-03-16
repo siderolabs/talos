@@ -11,10 +11,10 @@ import (
 	"github.com/siderolabs/go-procfs/procfs"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	"github.com/siderolabs/talos/pkg/imager/profile"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/imager/imageropts"
 	"github.com/siderolabs/talos/pkg/machinery/meta"
 )
 
@@ -104,7 +104,7 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 					return false
 				}
 
-				return r.State().Machine().Installed() && val == profile.BootLoaderKindDualBoot.String()
+				return r.State().Machine().Installed() && val == imageropts.BootLoaderKindDualBoot.String()
 			},
 			"cleanupBootloader",
 			CleanupBootloader,
