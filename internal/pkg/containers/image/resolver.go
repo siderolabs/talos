@@ -5,18 +5,22 @@
 package image
 
 import (
+	"context"
 	"encoding/base64"
 	"fmt"
+	"net"
 	"net/http"
 	"net/url"
 	"path"
 	"strings"
+	"time"
 
 	"github.com/containerd/containerd/v2/core/remotes"
 	"github.com/containerd/containerd/v2/core/remotes/docker"
 	"github.com/hashicorp/go-cleanhttp"
 	"github.com/siderolabs/gen/xslices"
 
+	"github.com/siderolabs/talos/internal/pkg/containers/image/stallguard"
 	"github.com/siderolabs/talos/pkg/httpdefaults"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cri"
@@ -199,7 +203,32 @@ func PrepareAuth(auth config.RegistryAuthConfig, host, expectedHost string) (str
 	return "", "", fmt.Errorf("invalid auth config for %q", host)
 }
 
+// PullConnIdleTimeout is the maximum time a pull connection is allowed to make
+// no progress (read no bytes) before it is considered stalled and aborted.
+//
+// This guards against connections which are silently black-holed (e.g. after a
+// network reconfiguration) and would otherwise hang until the global pull
+// timeout. It does not penalize slow-but-progressing pulls, as the deadline is
+// reset on every successful read.
+const PullConnIdleTimeout = 90 * time.Second
+
 // newTransport creates HTTP transport with default settings.
 func newTransport() *http.Transport {
-	return httpdefaults.PatchTransport(cleanhttp.DefaultTransport())
+	transport := httpdefaults.PatchTransport(cleanhttp.DefaultTransport())
+
+	baseDialContext := transport.DialContext
+	if baseDialContext == nil {
+		baseDialContext = (&net.Dialer{}).DialContext
+	}
+
+	transport.DialContext = func(ctx context.Context, network, addr string) (net.Conn, error) {
+		conn, err := baseDialContext(ctx, network, addr)
+		if err != nil {
+			return nil, err
+		}
+
+		return stallguard.NewConn(conn, PullConnIdleTimeout), nil
+	}
+
+	return transport
 }
