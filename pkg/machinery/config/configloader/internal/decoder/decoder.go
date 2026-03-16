@@ -21,6 +21,9 @@ import (
 // ErrMissingKind indicates that the manifest is missing a kind.
 var ErrMissingKind = errors.New("missing kind")
 
+// ErrMissingAPIVersion indicates that the manifest is missing an apiVersion.
+var ErrMissingAPIVersion = errors.New("missing apiVersion")
+
 const (
 	// ManifestAPIVersionKey is the string indicating a manifest's version.
 	ManifestAPIVersionKey = "apiVersion"
@@ -176,6 +179,8 @@ func decode(manifest *yaml.Node) (target config.Document, err error) {
 		target, err = registry.New("v1alpha1", "")
 	case kind == "":
 		err = ErrMissingKind
+	case version == "":
+		err = ErrMissingAPIVersion
 	default:
 		target, err = registry.New(kind, version)
 	}
