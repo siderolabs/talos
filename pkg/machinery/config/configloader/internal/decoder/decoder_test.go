@@ -322,7 +322,15 @@ config:
           - content: MONITOR ${upsmonHost} 1 remote pass foo
             mountPath: /usr/local/etc/nut/upsmon.conf
 `),
-			expectedErr: "error decoding document /ExtensionServiceConfig/ (line 2): \"ExtensionServiceConfig\" \"\": not registered",
+			expectedErr: "error decoding document /ExtensionServiceConfig/ (line 2): missing apiVersion",
+		},
+		{
+			name: "missing apiVersion",
+			source: []byte(`---
+kind: mock
+test: true
+`),
+			expectedErr: "error decoding document /mock/ (line 2): missing apiVersion",
 		},
 	}
 
