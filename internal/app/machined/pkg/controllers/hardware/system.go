@@ -90,8 +90,6 @@ func (ctrl *SystemInfoController) Run(ctx context.Context, r controller.Runtime,
 		case <-r.EventCh():
 		}
 
-		r.StartTrackingOutputs()
-
 		_, err := safe.ReaderGetByID[*runtime.MetaLoaded](ctx, r, runtime.MetaLoadedID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
@@ -111,6 +109,8 @@ func (ctrl *SystemInfoController) Run(ctx context.Context, r controller.Runtime,
 
 			ctrl.SMBIOS = s
 		}
+
+		r.StartTrackingOutputs()
 
 		if err := ctrl.reconcileSystemInformation(ctx, r, logger); err != nil {
 			return err
