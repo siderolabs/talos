@@ -145,7 +145,7 @@ require (
 	github.com/siderolabs/go-cmd v0.2.0
 	github.com/siderolabs/go-copy v0.1.0
 	github.com/siderolabs/go-debug v0.6.2
-	github.com/siderolabs/go-kmsg v0.1.4
+	github.com/siderolabs/go-kmsg v0.1.5
 	github.com/siderolabs/go-kubeconfig v0.1.1
 	github.com/siderolabs/go-kubernetes v0.2.33
 	github.com/siderolabs/go-loadbalancer v0.5.0
