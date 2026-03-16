@@ -2457,6 +2457,17 @@ spec:
             VIA_MAINTENANCE_MODE: true
             WITH_CONFIG_PATCH: '@hack/test/patches/image-cache.yaml'
             WITH_ISO: true
+        - name: e2e-image-cache-encrypted
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-image-cache-encrypted
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            REGISTRY_MIRROR_FLAGS: no
+            SHORT_INTEGRATION_TEST: yes
+            VIA_MAINTENANCE_MODE: true
+            WITH_CONFIG_PATCH: '@hack/test/patches/image-cache.yaml:@hack/test/patches/image-cache-encrypted.yaml:@hack/test/patches/image-verification.yaml'
+            WITH_ISO: true
         - name: save-talos-logs
           conditions:
             - always

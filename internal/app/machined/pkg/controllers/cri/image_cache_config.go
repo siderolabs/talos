@@ -23,6 +23,7 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
+	blockadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/block"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
 	"github.com/siderolabs/talos/internal/pkg/partition"
@@ -313,6 +314,10 @@ func (ctrl *ImageCacheConfigController) createVolumeConfigDisk(ctx context.Conte
 			volumeCfg.TypedSpec().Provisioning.PartitionSpec.Label = constants.ImageCachePartitionLabel
 			volumeCfg.TypedSpec().Provisioning.PartitionSpec.TypeUUID = partition.LinuxFilesystemData
 			volumeCfg.TypedSpec().Provisioning.FilesystemSpec.Type = block.FilesystemTypeEXT4
+
+			if err := blockadapter.VolumeConfigSpec(volumeCfg.TypedSpec()).ApplyEncryptionConfig(extraCfg.Encryption()); err != nil {
+				return fmt.Errorf("error applying encryption config: %w", err)
+			}
 		}
 
 		volumeCfg.TypedSpec().Mount = block.MountSpec{

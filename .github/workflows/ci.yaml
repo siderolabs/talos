@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-03-06T18:00:57Z by kres 1dd7316.
+# Generated on 2026-03-18T17:16:47Z by kres 3675077.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -63,7 +63,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -127,7 +127,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -203,7 +203,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -528,13 +528,13 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: login-to-registry
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # version: v3.7.0
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # version: v4.0.0
         with:
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
@@ -600,7 +600,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -724,7 +724,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -860,7 +860,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -1013,7 +1013,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -1166,7 +1166,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -1319,7 +1319,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -1472,7 +1472,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -1593,7 +1593,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -1680,7 +1680,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -1774,7 +1774,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -1886,7 +1886,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -1976,7 +1976,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -2101,7 +2101,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -2234,7 +2234,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -2286,6 +2286,17 @@ jobs:
           SHORT_INTEGRATION_TEST: "yes"
           VIA_MAINTENANCE_MODE: "true"
           WITH_CONFIG_PATCH: '@hack/test/patches/image-cache.yaml'
+          WITH_ISO: "true"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-image-cache-encrypted
+        env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-image-cache-encrypted
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          REGISTRY_MIRROR_FLAGS: "no"
+          SHORT_INTEGRATION_TEST: "yes"
+          VIA_MAINTENANCE_MODE: "true"
+          WITH_CONFIG_PATCH: '@hack/test/patches/image-cache.yaml:@hack/test/patches/image-cache-encrypted.yaml:@hack/test/patches/image-verification.yaml'
           WITH_ISO: "true"
         run: |
           sudo -E make e2e-qemu
@@ -2343,7 +2354,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -2515,7 +2526,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -2597,7 +2608,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -2723,7 +2734,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -2844,7 +2855,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -2992,7 +3003,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -3156,7 +3167,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -3265,7 +3276,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -3398,7 +3409,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -3526,7 +3537,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -3681,7 +3692,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -3789,7 +3800,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -3883,7 +3894,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -3985,7 +3996,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -4081,7 +4092,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -4218,7 +4229,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -4325,7 +4336,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -4431,7 +4442,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -4528,7 +4539,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -4642,7 +4653,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -4750,7 +4761,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -4819,7 +4830,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -4935,7 +4946,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -5052,7 +5063,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -5066,7 +5077,7 @@ jobs:
         run: |
           make release-notes
       - name: login-to-registry
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # version: v3.7.0
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # version: v4.0.0
         with:
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
@@ -5126,7 +5137,7 @@ jobs:
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # version: v3.12.0
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
@@ -5149,7 +5160,7 @@ jobs:
         run: |
           make sbom
       - name: login-to-registry
-        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # version: v3.7.0
+        uses: docker/login-action@b45d80f862d83dbcd57f89517bcf500b2ab88fb2 # version: v4.0.0
         with:
           password: ${{ secrets.GITHUB_TOKEN }}
           registry: ghcr.io
@@ -5165,7 +5176,7 @@ jobs:
         run: |
           make images
       - name: Install Cosign
-        uses: sigstore/cosign-installer@faadad0cce49287aee09b3a48701e75088a2c6ad # version: v4.0.0
+        uses: sigstore/cosign-installer@ba7bc0a3fef59531c69a25acd34668d6d3fe6f22 # version: v4.1.0
       - name: Sign artifacts
         run: |
           cosign sign-blob --bundle _out/initramfs-amd64.xz.bundle --yes _out/initramfs-amd64.xz
