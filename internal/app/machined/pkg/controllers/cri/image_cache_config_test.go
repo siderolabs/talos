@@ -290,6 +290,48 @@ func (suite *ImageCacheConfigSuite) TestReconcileWithImageCacheVolume() {
 	})
 }
 
+func (suite *ImageCacheConfigSuite) TestReconcileWithEncryptionConfig() {
+	v1alpha1Cfg := &v1alpha1.Config{
+		MachineConfig: &v1alpha1.MachineConfig{
+			MachineFeatures: &v1alpha1.FeaturesConfig{
+				ImageCacheSupport: &v1alpha1.ImageCacheConfig{
+					CacheLocalEnabled: new(true),
+				},
+			},
+		},
+	}
+
+	volumeConfig := blockcfg.NewVolumeConfigV1Alpha1()
+	volumeConfig.MetaName = constants.ImageCachePartitionLabel
+	volumeConfig.EncryptionSpec = blockcfg.EncryptionSpec{
+		EncryptionProvider: block.EncryptionProviderLUKS2,
+		EncryptionKeys: []blockcfg.EncryptionKey{
+			{
+				KeyStatic: &blockcfg.EncryptionKeyStatic{
+					KeyData: "allsecret",
+				},
+			},
+		},
+	}
+
+	container, err := container.New(v1alpha1Cfg, volumeConfig)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(container)
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
+
+	ctest.AssertResource(suite, crictrl.VolumeImageCacheDISK, func(r *block.VolumeConfig, asrt *assert.Assertions) {
+		asrt.Equal(`volume.partition_label == "IMAGECACHE"`, r.TypedSpec().Locator.Match.String())
+		asrt.Equal(`system_disk`, r.TypedSpec().Provisioning.DiskSelector.Match.String())
+		asrt.False(r.TypedSpec().Provisioning.PartitionSpec.Grow)
+		asrt.EqualValues(crictrl.MinImageCacheSize, r.TypedSpec().Provisioning.PartitionSpec.MinSize)
+		asrt.EqualValues(crictrl.MaxImageCacheSize, r.TypedSpec().Provisioning.PartitionSpec.MaxSize)
+		asrt.Equal(block.EncryptionProviderLUKS2, r.TypedSpec().Encryption.Provider)
+		asrt.Len(r.TypedSpec().Encryption.Keys, 1)
+	})
+}
+
 func TestImageCacheConfigSuite(t *testing.T) {
 	s := &ImageCacheConfigSuite{
 		DefaultSuite: ctest.DefaultSuite{

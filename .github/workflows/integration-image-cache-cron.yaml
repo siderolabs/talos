@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-03-15T13:42:44Z by kres e68c408.
+# Generated on 2026-03-16T10:48:51Z by kres e68c408.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -98,6 +98,17 @@ jobs:
           SHORT_INTEGRATION_TEST: "yes"
           VIA_MAINTENANCE_MODE: "true"
           WITH_CONFIG_PATCH: '@hack/test/patches/image-cache.yaml:@hack/test/patches/image-verification.yaml'
+          WITH_ISO: "true"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-image-cache-encrypted
+        env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-image-cache-encrypted
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          REGISTRY_MIRROR_FLAGS: "no"
+          SHORT_INTEGRATION_TEST: "yes"
+          VIA_MAINTENANCE_MODE: "true"
+          WITH_CONFIG_PATCH: '@hack/test/patches/image-cache.yaml:@hack/test/patches/image-cache-encrypted.yaml:@hack/test/patches/image-verification.yaml'
           WITH_ISO: "true"
         run: |
           sudo -E make e2e-qemu

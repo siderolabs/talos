@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	blockadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/block"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	blocktype "github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -39,42 +40,5 @@ func UnmarshalEncryptionMeta(data []byte) (config.EncryptionConfig, error) {
 // ConvertEncryptionConfiguration converts a `config.EncryptionConfig` into a
 // `block.EncryptionSpec`, and writes it into `out`.
 func ConvertEncryptionConfiguration(in config.EncryptionConfig, out *block.VolumeConfigSpec) error {
-	if in == nil {
-		out.Encryption = block.EncryptionSpec{}
-
-		return nil
-	}
-
-	out.Encryption.Provider = in.Provider()
-	out.Encryption.Cipher = in.Cipher()
-	out.Encryption.KeySize = in.KeySize()
-	out.Encryption.BlockSize = in.BlockSize()
-	out.Encryption.PerfOptions = in.Options()
-
-	out.Encryption.Keys = make([]block.EncryptionKey, len(in.Keys()))
-
-	for i, key := range in.Keys() {
-		out.Encryption.Keys[i].Slot = key.Slot()
-		out.Encryption.Keys[i].LockToSTATE = key.LockToSTATE()
-
-		switch {
-		case key.Static() != nil:
-			out.Encryption.Keys[i].Type = block.EncryptionKeyStatic
-			out.Encryption.Keys[i].StaticPassphrase = key.Static().Key()
-		case key.NodeID() != nil:
-			out.Encryption.Keys[i].Type = block.EncryptionKeyNodeID
-		case key.KMS() != nil:
-			out.Encryption.Keys[i].Type = block.EncryptionKeyKMS
-			out.Encryption.Keys[i].KMSEndpoint = key.KMS().Endpoint()
-		case key.TPM() != nil:
-			out.Encryption.Keys[i].Type = block.EncryptionKeyTPM
-			out.Encryption.Keys[i].TPMCheckSecurebootStatusOnEnroll = key.TPM().CheckSecurebootOnEnroll()
-			out.Encryption.Keys[i].TPMPCRs = key.TPM().PCRs()
-			out.Encryption.Keys[i].TPMPubKeyPCRs = key.TPM().PubKeyPCRs()
-		default:
-			return fmt.Errorf("unsupported encryption key type: slot %d", key.Slot())
-		}
-	}
-
-	return nil
+	return blockadapter.VolumeConfigSpec(out).ApplyEncryptionConfig(in)
 }
