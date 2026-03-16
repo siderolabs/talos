@@ -16,8 +16,9 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/sigstore/cosign/v3/pkg/cosign"
-	"github.com/sigstore/cosign/v3/pkg/signature"
 	"github.com/sigstore/sigstore-go/pkg/root"
+	"github.com/sigstore/sigstore/pkg/cryptoutils"
+	sigsig "github.com/sigstore/sigstore/pkg/signature"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -155,7 +156,12 @@ func cosignCheckOptsFromRule(ctx context.Context, rule *security.ImageVerificati
 			},
 		}, nil
 	case rule.PublicKeyVerifier != nil:
-		verifier, err := signature.LoadPublicKeyRaw([]byte(rule.PublicKeyVerifier.Certificate), crypto.SHA256)
+		pub, err := cryptoutils.UnmarshalPEMToPublicKey([]byte(rule.PublicKeyVerifier.Certificate))
+		if err != nil {
+			return cosign.CheckOpts{}, fmt.Errorf("failed to unmarshal public key: %w", err)
+		}
+
+		verifier, err := sigsig.LoadVerifier(pub, crypto.SHA256)
 		if err != nil {
 			return cosign.CheckOpts{}, fmt.Errorf("failed to load public key: %w", err)
 		}
