@@ -123,7 +123,8 @@ func (p *Point) Share() error {
 
 // UnmountOptions represents options for unmounting a mount point.
 type UnmountOptions struct {
-	Printer func(string, ...any)
+	Printer   func(string, ...any)
+	Recursive bool
 }
 
 // Release closes the file descriptor of the underlying mount point.
@@ -146,7 +147,7 @@ func (p *Point) Unmount(opts UnmountOptions) error {
 	}
 
 	return p.retry(func() error {
-		return SafeUnmount(context.Background(), opts.Printer, p.target)
+		return SafeUnmount(context.Background(), opts.Printer, p.target, opts.Recursive)
 	}, true)
 }
 

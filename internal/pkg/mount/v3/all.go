@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -120,4 +121,29 @@ func readMountInfo() ([]mountInfo, error) {
 	}
 
 	return mounts, scanner.Err()
+}
+
+func getSubmounts(target string) ([]string, error) {
+	mounts, err := readMountInfo()
+	if err != nil {
+		return nil, err
+	}
+
+	var submounts []string
+
+	for _, mnt := range mounts {
+		if mnt.MountPoint == target {
+			continue
+		}
+
+		if strings.HasPrefix(mnt.MountPoint, target+"/") {
+			submounts = append(submounts, mnt.MountPoint)
+		}
+	}
+
+	sort.Slice(submounts, func(i, j int) bool {
+		return len(submounts[i]) > len(submounts[j])
+	})
+
+	return submounts, nil
 }

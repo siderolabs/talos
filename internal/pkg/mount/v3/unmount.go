@@ -71,7 +71,8 @@ unmountLoop:
 // SafeUnmount unmounts the target path, first without force, then with force if the first attempt fails.
 //
 // It makes sure that unmounting has a finite operation timeout.
-func SafeUnmount(ctx context.Context, printer func(string, ...any), target string) error {
+// If recursive is true, it will first unmount all child mounts under target.
+func SafeUnmount(ctx context.Context, printer func(string, ...any), target string, recursive bool) error {
 	const (
 		unmountTimeout      = 90 * time.Second
 		unmountForceTimeout = 10 * time.Second
@@ -81,19 +82,60 @@ func SafeUnmount(ctx context.Context, printer func(string, ...any), target strin
 		printer = discard
 	}
 
+	if recursive {
+		submounts, err := getSubmounts(target)
+		if err != nil {
+			printer("failed to get submounts for %s: %v", target, err)
+		} else {
+			for _, submount := range submounts {
+				printer("recursively unmounting submount %s", submount)
+
+				if err := safeUnmountSingle(ctx, printer, submount, unmountTimeout); err != nil {
+					printer("failed to unmount submount %s: %v", submount, err)
+				}
+			}
+		}
+	}
+
 	ok, err := unmountLoop(ctx, printer, target, 0, unmountTimeout, "")
 
 	if ok {
 		return err
 	}
 
+	logSubmounts(printer, target)
+
 	printer("unmounting %s with force", target)
 
-	ok, err = unmountLoop(ctx, printer, target, unix.MNT_FORCE, unmountTimeout, " with force flag")
+	ok, err = unmountLoop(ctx, printer, target, unix.MNT_FORCE, unmountForceTimeout, " with force flag")
 
 	if ok {
 		return err
 	}
 
+	logSubmounts(printer, target)
+
 	return fmt.Errorf("unmounting %s with force flag timed out", target)
+}
+
+func safeUnmountSingle(ctx context.Context, printer func(string, ...any), target string, timeout time.Duration) error {
+	ok, err := unmountLoop(ctx, printer, target, 0, timeout, "")
+	if ok {
+		return err
+	}
+
+	return nil
+}
+
+func logSubmounts(printer func(string, ...any), target string) {
+	submounts, err := getSubmounts(target)
+	if err != nil {
+		printer("failed to get submounts for %s: %v", target, err)
+
+		return
+	}
+
+	if len(submounts) > 0 {
+		printer("submounts on %s: %v", target, submounts)
+	}
 }

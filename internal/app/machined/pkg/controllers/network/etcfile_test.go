@@ -327,7 +327,7 @@ func (suite *EtcFileConfigSuite) ExtraTearDown() {
 		if suite.etcRoot.FSType() == "os" {
 			suite.Require().NoError(os.Remove(suite.podResolvConfPath))
 		} else {
-			suite.Require().NoError(mount.SafeUnmount(context.Background(), nil, suite.podResolvConfPath))
+			suite.Require().NoError(mount.SafeUnmount(context.Background(), nil, suite.podResolvConfPath, false))
 		}
 	}
 

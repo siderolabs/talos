@@ -754,7 +754,7 @@ func UnmountPodMounts(runtime.Sequence, any) (runtime.TaskExecutionFunc, string)
 			if strings.HasPrefix(mountpoint, constants.EphemeralMountPoint+"/") {
 				logger.Printf("unmounting %s\n", mountpoint)
 
-				if err = mountv3.SafeUnmount(ctx, logger.Printf, mountpoint); err != nil {
+				if err = mountv3.SafeUnmount(ctx, logger.Printf, mountpoint, false); err != nil {
 					if errors.Is(err, syscall.EINVAL) {
 						log.Printf("ignoring unmount error %s: %v", mountpoint, err)
 					} else {
@@ -811,7 +811,7 @@ func UnmountSystemDiskBindMounts(runtime.Sequence, any) (runtime.TaskExecutionFu
 
 			logger.Printf("unmounting %s\n", mountpoint)
 
-			if err = mountv3.SafeUnmount(ctx, logger.Printf, mountpoint); err != nil {
+			if err = mountv3.SafeUnmount(ctx, logger.Printf, mountpoint, false); err != nil {
 				if errors.Is(err, syscall.EINVAL) {
 					log.Printf("ignoring unmount error %s: %v", mountpoint, err)
 				} else {

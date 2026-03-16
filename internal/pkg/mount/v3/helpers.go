@@ -55,6 +55,7 @@ func NewReadOnlyOverlay(sources []string, target string, printer func(string, ..
 	}
 
 	options = append(options,
+		WithPrinter(printer),
 		WithTarget(target),
 		WithReadOnly(),
 		WithFsopen("overlay", fsOptions...),
@@ -173,6 +174,7 @@ func Pseudo(printer func(string, ...any)) Managers {
 	return gather(
 		newManager(
 			always,
+			WithPrinter(printer),
 			WithTarget("/dev"),
 			WithKeepOpenAfterMount(),
 			WithMountAttributes(unix.MOUNT_ATTR_NOSUID),
@@ -183,6 +185,7 @@ func Pseudo(printer func(string, ...any)) Managers {
 		),
 		newManager(
 			always,
+			WithPrinter(printer),
 			WithTarget("/proc"),
 			WithKeepOpenAfterMount(),
 			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_NODEV),
@@ -190,6 +193,7 @@ func Pseudo(printer func(string, ...any)) Managers {
 		),
 		newManager(
 			always,
+			WithPrinter(printer),
 			WithTarget("/sys"),
 			WithKeepOpenAfterMount(),
 			WithFsopen("sysfs"),
@@ -202,6 +206,7 @@ func PseudoLate(printer func(string, ...any)) Managers {
 	return gather(
 		newManager(
 			always,
+			WithPrinter(printer),
 			WithTarget("/run"),
 			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_RELATIME),
 			WithSelinuxLabel(constants.RunSelinuxLabel),
@@ -212,8 +217,10 @@ func PseudoLate(printer func(string, ...any)) Managers {
 		),
 		newManager(
 			always,
+			WithPrinter(printer),
 			WithTarget("/system"),
 			WithSelinuxLabel(constants.SystemSelinuxLabel),
+			WithRecursiveUnmount(),
 			WithFsopen(
 				"tmpfs",
 				fsopen.WithStringParameter("mode", "0755"),
@@ -221,6 +228,7 @@ func PseudoLate(printer func(string, ...any)) Managers {
 		),
 		newManager(
 			always,
+			WithPrinter(printer),
 			WithTarget("/tmp"),
 			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_NODEV),
 			WithFsopen(
@@ -237,12 +245,14 @@ func PseudoSub(printer func(string, ...any)) Managers {
 	return gather(
 		newManager(
 			always,
+			WithPrinter(printer),
 			WithTarget("/dev/shm"),
 			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_NODEV|unix.MOUNT_ATTR_RELATIME),
 			WithFsopen("tmpfs"),
 		),
 		newManager(
 			always,
+			WithPrinter(printer),
 			WithTarget("/dev/pts"),
 			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC),
 			WithFsopen(
@@ -254,47 +264,55 @@ func PseudoSub(printer func(string, ...any)) Managers {
 		),
 		newManager(
 			always,
+			WithPrinter(printer),
 			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NODEV),
 			WithTarget("/dev/hugepages"),
 			WithFsopen("hugetlbfs"),
 		),
 		newManager(
 			always,
+			WithPrinter(printer),
 			WithTarget("/sys/fs/bpf"),
 			WithFsopen("bpf"),
 		),
 		newManager(
 			always,
+			WithPrinter(printer),
 			WithTarget("/sys/kernel/security"),
 			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_NODEV|unix.MOUNT_ATTR_RELATIME),
 			WithFsopen("securityfs"),
 		),
 		newManager(
 			always,
+			WithPrinter(printer),
 			WithTarget("/sys/kernel/tracing"),
 			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_NODEV),
 			WithFsopen("tracefs"),
 		),
 		newManager(
 			always,
+			WithPrinter(printer),
 			WithTarget("/sys/kernel/config"),
 			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_NODEV|unix.MOUNT_ATTR_RELATIME),
 			WithFsopen("configfs"),
 		),
 		newManager(
 			always,
+			WithPrinter(printer),
 			WithTarget("/sys/kernel/debug"),
 			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_NODEV|unix.MOUNT_ATTR_RELATIME),
 			WithFsopen("debugfs"),
 		),
 		newManager(
 			selinux.IsEnabled,
+			WithPrinter(printer),
 			WithTarget("/sys/fs/selinux"),
 			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_RELATIME),
 			WithFsopen("selinuxfs"),
 		),
 		newManager(
 			hasEFIVars,
+			WithPrinter(printer),
 			WithTarget(constants.EFIVarsMountPoint),
 			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_NODEV|unix.MOUNT_ATTR_RELATIME|unix.MOUNT_ATTR_RDONLY),
 			WithFsopen("efivarfs"),

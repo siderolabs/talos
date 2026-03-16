@@ -31,6 +31,7 @@ type Manager struct {
 	mountattr             int
 	extraDirs             []string
 	extraUnmountCallbacks []func(m *Manager)
+	recursiveUnmount      bool
 
 	point *Point
 }
@@ -109,7 +110,8 @@ func (m *Manager) Unmount() error {
 	}
 
 	opts := UnmountOptions{
-		Printer: printer,
+		Printer:   printer,
+		Recursive: m.recursiveUnmount,
 	}
 
 	for _, cb := range m.extraUnmountCallbacks {
@@ -250,6 +252,15 @@ func WithExtraUnmountCallbacks(callbacks ...func(m *Manager)) ManagerOption {
 	return ManagerOption{
 		set: func(m *Manager) {
 			m.extraUnmountCallbacks = append(m.extraUnmountCallbacks, callbacks...)
+		},
+	}
+}
+
+// WithRecursiveUnmount enables recursive unmounting of all child mounts before unmounting the target.
+func WithRecursiveUnmount() ManagerOption {
+	return ManagerOption{
+		set: func(m *Manager) {
+			m.recursiveUnmount = true
 		},
 	}
 }
