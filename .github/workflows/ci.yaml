@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-03-16T15:20:50Z by kres e68c408.
+# Generated on 2026-03-18T10:32:29Z by kres 3675077.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -921,7 +921,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
         with:
           path: _out/extensions
-          ref: main
+          ref: release-1.13
           repository: siderolabs/extensions
       - name: set variables
         run: |
@@ -1074,7 +1074,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
         with:
           path: _out/extensions
-          ref: main
+          ref: release-1.13
           repository: siderolabs/extensions
       - name: set variables
         run: |
@@ -1227,7 +1227,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
         with:
           path: _out/extensions
-          ref: main
+          ref: release-1.13
           repository: siderolabs/extensions
       - name: set variables
         run: |
@@ -1380,7 +1380,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
         with:
           path: _out/extensions
-          ref: main
+          ref: release-1.13
           repository: siderolabs/extensions
       - name: set variables
         run: |
@@ -2017,7 +2017,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
         with:
           path: _out/extensions
-          ref: main
+          ref: release-1.13
           repository: siderolabs/extensions
       - name: unshallow-extensions
         run: |
@@ -4238,7 +4238,7 @@ jobs:
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
         with:
           path: _out/extensions
-          ref: main
+          ref: release-1.13
           repository: siderolabs/extensions
       - name: set variables
         run: |
