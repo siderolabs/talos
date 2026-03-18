@@ -113,30 +113,10 @@ func Generate(images []string, platforms []string, insecure bool, imageLayerCach
 			remote.WithAuthFromKeychain(keychain),
 		}
 
-		for _, src := range images {
-			r := retry.Exponential(
-				30*time.Minute,
-				retry.WithUnits(time.Second),
-				retry.WithJitter(time.Second),
-				retry.WithErrorLogging(true),
-			)
-
-			err := r.Retry(func() error {
-				if err := processImageAllPlatforms(src, tmpDir, imageLayerCachePath, nameOptions, craneOpts, remoteOpts, sigRemoteOpts, withCosignSignatures); err != nil {
-					switch {
-					case errors.Is(err, new(name.ErrBadName)):
-						return err
-
-					default:
-						return retry.ExpectedError(err)
-					}
-				}
-
-				return nil
-			})
-			if err != nil {
-				return fmt.Errorf("failed to process image: %w", err)
-			}
+		if err := retryImages(images, func(src string) error {
+			return processImageAllPlatforms(src, tmpDir, imageLayerCachePath, nameOptions, craneOpts, remoteOpts, sigRemoteOpts, withCosignSignatures)
+		}); err != nil {
+			return err
 		}
 	} else {
 		for _, platform := range platforms {
@@ -150,30 +130,10 @@ func Generate(images []string, platforms []string, insecure bool, imageLayerCach
 				remote.WithPlatform(*v1Platform),
 			}
 
-			for _, src := range images {
-				r := retry.Exponential(
-					30*time.Minute,
-					retry.WithUnits(time.Second),
-					retry.WithJitter(time.Second),
-					retry.WithErrorLogging(true),
-				)
-
-				err := r.Retry(func() error {
-					if err := processImage(src, tmpDir, imageLayerCachePath, nameOptions, craneOpts, remoteOpts, sigRemoteOpts, withCosignSignatures); err != nil {
-						switch {
-						case errors.Is(err, new(name.ErrBadName)):
-							return err
-
-						default:
-							return retry.ExpectedError(err)
-						}
-					}
-
-					return nil
-				})
-				if err != nil {
-					return fmt.Errorf("failed to process image: %w", err)
-				}
+			if err := retryImages(images, func(src string) error {
+				return processImage(src, tmpDir, imageLayerCachePath, platform, nameOptions, craneOpts, remoteOpts, sigRemoteOpts, withCosignSignatures)
+			}); err != nil {
+				return err
 			}
 		}
 	}
@@ -301,16 +261,45 @@ func copyDir(src, dest string) error {
 	})
 }
 
+func retryImages(images []string, fn func(src string) error) error {
+	for _, src := range images {
+		r := retry.Exponential(
+			30*time.Minute,
+			retry.WithUnits(time.Second),
+			retry.WithJitter(time.Second),
+			retry.WithErrorLogging(true),
+		)
+
+		if err := r.Retry(func() error {
+			if err := fn(src); err != nil {
+				switch {
+				case errors.Is(err, new(name.ErrBadName)):
+					return err
+
+				default:
+					return retry.ExpectedError(err)
+				}
+			}
+
+			return nil
+		}); err != nil {
+			return fmt.Errorf("failed to process image: %w", err)
+		}
+	}
+
+	return nil
+}
+
 //nolint:gocyclo,cyclop
 func processImage(
-	src, tmpDir, imageLayerCachePath string,
+	src, tmpDir, imageLayerCachePath, platform string,
 	nameOptions []name.Option,
 	craneOpts []crane.Option,
 	remoteOpts []remote.Option,
 	sigRemoteOpts []remote.Option,
 	withCosignSignatures bool,
 ) error {
-	fmt.Fprintf(os.Stderr, "fetching image %q\n", src)
+	fmt.Fprintf(os.Stderr, "fetching image %q (%s)\n", src, platform)
 
 	ref, err := name.ParseReference(src, nameOptions...)
 	if err != nil {
@@ -382,6 +371,7 @@ func processImage(
 	return cacheImage(img, digestDir, tmpDir)
 }
 
+//nolint:gocyclo
 func processImageAllPlatforms(
 	src, tmpDir, imageLayerCachePath string,
 	nameOptions []name.Option,
@@ -390,8 +380,6 @@ func processImageAllPlatforms(
 	sigRemoteOpts []remote.Option,
 	withCosignSignatures bool,
 ) error {
-	fmt.Fprintf(os.Stderr, "fetching image %q (all platforms)\n", src)
-
 	ref, err := name.ParseReference(src, nameOptions...)
 	if err != nil {
 		return fmt.Errorf("parsing reference %q: %w", src, err)
@@ -403,7 +391,7 @@ func processImageAllPlatforms(
 	}
 
 	if rmt.MediaType != types.OCIImageIndex && rmt.MediaType != types.DockerManifestList {
-		return processImage(src, tmpDir, imageLayerCachePath, nameOptions, craneOpts,
+		return processImage(src, tmpDir, imageLayerCachePath, "linux/amd64", nameOptions, craneOpts,
 			append(remoteOpts, remote.WithPlatform(v1.Platform{OS: "linux", Architecture: "amd64"})),
 			sigRemoteOpts, withCosignSignatures)
 	}
@@ -428,8 +416,9 @@ func processImageAllPlatforms(
 	for _, desc := range idxManifest.Manifests {
 		if desc.Platform != nil && desc.Platform.OS != "unknown" {
 			platRemoteOpts := append(append([]remote.Option{}, remoteOpts...), remote.WithPlatform(*desc.Platform))
+			platformLabel := desc.Platform.OS + "/" + desc.Platform.Architecture
 
-			if err := processImage(src, tmpDir, imageLayerCachePath, nameOptions, craneOpts, platRemoteOpts, sigRemoteOpts, first && withCosignSignatures); err != nil {
+			if err := processImage(src, tmpDir, imageLayerCachePath, platformLabel, nameOptions, craneOpts, platRemoteOpts, sigRemoteOpts, first && withCosignSignatures); err != nil {
 				return err
 			}
 
