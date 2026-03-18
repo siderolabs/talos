@@ -250,7 +250,7 @@ func (suite *ApidSuite) TestPKIMismatch() {
 	caCrt, err := base64.StdEncoding.DecodeString(suite.Talosconfig.Contexts[suite.Talosconfig.Context].CA)
 	suite.Require().NoError(err)
 
-	wrongConfig := clientconfig.NewConfig("wrong", []string{suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)}, caCrt, cert)
+	wrongConfig := clientconfig.NewConfig("wrong", suite.Talosconfig.Contexts[suite.Talosconfig.Context].Endpoints, caCrt, cert)
 
 	wrongClient, err := client.New(suite.ctx, client.WithConfig(wrongConfig))
 	suite.Require().NoError(err)
