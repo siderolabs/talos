@@ -81,42 +81,36 @@ func Generate(images []string, platforms []string, insecure bool, imageLayerCach
 		return fmt.Errorf("must specify at least one platform")
 	}
 
-	for _, platform := range platforms {
-		v1Platform, err := v1.ParsePlatform(platform)
-		if err != nil {
-			return fmt.Errorf("parsing platform: %w", err)
-		}
+	allPlatforms := len(platforms) == 1 && platforms[0] == "all"
 
-		if err := os.MkdirAll(filepath.Join(tmpDir, blobsDir), 0o755); err != nil {
-			return err
-		}
+	if err := os.MkdirAll(filepath.Join(tmpDir, blobsDir), 0o755); err != nil {
+		return err
+	}
 
-		var nameOptions []name.Option
+	var nameOptions []name.Option
 
-		keychain := authn.NewMultiKeychain(
-			authn.DefaultKeychain,
-			github.Keychain,
-			google.Keychain,
-		)
+	keychain := authn.NewMultiKeychain(
+		authn.DefaultKeychain,
+		github.Keychain,
+		google.Keychain,
+	)
 
-		craneOpts := []crane.Option{
-			crane.WithAuthFromKeychain(keychain),
-		}
+	craneOpts := []crane.Option{
+		crane.WithAuthFromKeychain(keychain),
+	}
 
+	sigRemoteOpts := []remote.Option{
+		remote.WithAuthFromKeychain(keychain),
+	}
+
+	if insecure {
+		craneOpts = append(craneOpts, crane.Insecure)
+		nameOptions = append(nameOptions, name.Insecure)
+	}
+
+	if allPlatforms {
 		remoteOpts := []remote.Option{
 			remote.WithAuthFromKeychain(keychain),
-			remote.WithPlatform(*v1Platform),
-		}
-
-		// sigRemoteOpts is used for fetching cosign signatures - no platform resolution
-		// since signatures are platform-independent and may be stored as OCI image indexes.
-		sigRemoteOpts := []remote.Option{
-			remote.WithAuthFromKeychain(keychain),
-		}
-
-		if insecure {
-			craneOpts = append(craneOpts, crane.Insecure)
-			nameOptions = append(nameOptions, name.Insecure)
 		}
 
 		for _, src := range images {
@@ -128,7 +122,7 @@ func Generate(images []string, platforms []string, insecure bool, imageLayerCach
 			)
 
 			err := r.Retry(func() error {
-				if err := processImage(src, tmpDir, imageLayerCachePath, nameOptions, craneOpts, remoteOpts, sigRemoteOpts, withCosignSignatures); err != nil {
+				if err := processImageAllPlatforms(src, tmpDir, imageLayerCachePath, nameOptions, craneOpts, remoteOpts, sigRemoteOpts, withCosignSignatures); err != nil {
 					switch {
 					case errors.Is(err, new(name.ErrBadName)):
 						return err
@@ -141,7 +135,45 @@ func Generate(images []string, platforms []string, insecure bool, imageLayerCach
 				return nil
 			})
 			if err != nil {
-				return fmt.Errorf("failed to prcess image: %w", err)
+				return fmt.Errorf("failed to process image: %w", err)
+			}
+		}
+	} else {
+		for _, platform := range platforms {
+			v1Platform, err := v1.ParsePlatform(platform)
+			if err != nil {
+				return fmt.Errorf("parsing platform: %w", err)
+			}
+
+			remoteOpts := []remote.Option{
+				remote.WithAuthFromKeychain(keychain),
+				remote.WithPlatform(*v1Platform),
+			}
+
+			for _, src := range images {
+				r := retry.Exponential(
+					30*time.Minute,
+					retry.WithUnits(time.Second),
+					retry.WithJitter(time.Second),
+					retry.WithErrorLogging(true),
+				)
+
+				err := r.Retry(func() error {
+					if err := processImage(src, tmpDir, imageLayerCachePath, nameOptions, craneOpts, remoteOpts, sigRemoteOpts, withCosignSignatures); err != nil {
+						switch {
+						case errors.Is(err, new(name.ErrBadName)):
+							return err
+
+						default:
+							return retry.ExpectedError(err)
+						}
+					}
+
+					return nil
+				})
+				if err != nil {
+					return fmt.Errorf("failed to process image: %w", err)
+				}
 			}
 		}
 	}
@@ -179,7 +211,12 @@ func Generate(images []string, platforms []string, insecure bool, imageLayerCach
 		return fmt.Errorf("creating layout: %w", err)
 	}
 
-	imagePlatform, err := v1.ParsePlatform(platforms[0])
+	outerPlatformStr := "linux/amd64"
+	if !allPlatforms {
+		outerPlatformStr = platforms[0]
+	}
+
+	imagePlatform, err := v1.ParsePlatform(outerPlatformStr)
 	if err != nil {
 		return fmt.Errorf("parsing platform: %w", err)
 	}
@@ -342,41 +379,67 @@ func processImage(
 		img = cache.Image(img, cache.NewFilesystemCache(imageLayerCachePath))
 	}
 
-	layers, err := img.Layers()
+	return cacheImage(img, digestDir, tmpDir)
+}
+
+func processImageAllPlatforms(
+	src, tmpDir, imageLayerCachePath string,
+	nameOptions []name.Option,
+	craneOpts []crane.Option,
+	remoteOpts []remote.Option,
+	sigRemoteOpts []remote.Option,
+	withCosignSignatures bool,
+) error {
+	fmt.Fprintf(os.Stderr, "fetching image %q (all platforms)\n", src)
+
+	ref, err := name.ParseReference(src, nameOptions...)
 	if err != nil {
-		return fmt.Errorf("getting image layers: %w", err)
+		return fmt.Errorf("parsing reference %q: %w", src, err)
 	}
 
-	config, err := img.RawConfigFile()
+	rmt, err := remote.Get(ref, remoteOpts...)
 	if err != nil {
-		return fmt.Errorf("getting image config: %w", err)
+		return fmt.Errorf("fetching %q: %w", src, err)
 	}
 
-	platformManifest, err := img.RawManifest()
+	if rmt.MediaType != types.OCIImageIndex && rmt.MediaType != types.DockerManifestList {
+		return processImage(src, tmpDir, imageLayerCachePath, nameOptions, craneOpts,
+			append(remoteOpts, remote.WithPlatform(v1.Platform{OS: "linux", Architecture: "amd64"})),
+			sigRemoteOpts, withCosignSignatures)
+	}
+
+	idx, err := rmt.ImageIndex()
 	if err != nil {
-		return fmt.Errorf("getting image platform manifest: %w", err)
+		return fmt.Errorf("getting image index %q: %w", src, err)
 	}
 
-	h := sha256.New()
-	if _, err := h.Write(platformManifest); err != nil {
-		return fmt.Errorf("platform manifest hash: %w", err)
+	idxManifest, err := idx.IndexManifest()
+	if err != nil {
+		return fmt.Errorf("getting index manifest %q: %w", src, err)
 	}
 
-	if err := os.WriteFile(filepath.Join(digestDir, fmt.Sprintf("sha256-%x", h.Sum(nil))), platformManifest, 0o644); err != nil {
+	digestDir := filepath.Join(tmpDir, manifestsDir, rewriteRegistry(ref.Context().RegistryStr(), src), filepath.FromSlash(ref.Context().RepositoryStr()), "digest")
+	if err := os.MkdirAll(digestDir, 0o755); err != nil {
 		return err
 	}
 
-	configHash, err := img.ConfigName()
-	if err != nil {
-		return fmt.Errorf("getting image config hash: %w", err)
-	}
+	for _, desc := range idxManifest.Manifests {
+		if desc.Platform != nil && desc.Platform.OS != "unknown" {
+			platRemoteOpts := append(append([]remote.Option{}, remoteOpts...), remote.WithPlatform(*desc.Platform))
 
-	if err := os.WriteFile(filepath.Join(tmpDir, blobsDir, strings.ReplaceAll(configHash.String(), "sha256:", "sha256-")), config, 0o644); err != nil {
-		return err
-	}
+			if err := processImage(src, tmpDir, imageLayerCachePath, nameOptions, craneOpts, platRemoteOpts, sigRemoteOpts, false); err != nil {
+				return err
+			}
 
-	for _, layer := range layers {
-		if err = processLayer(layer, tmpDir); err != nil {
+			continue
+		}
+
+		childImg, err := idx.Image(desc.Digest)
+		if err != nil {
+			return fmt.Errorf("getting attestation image %s: %w", desc.Digest, err)
+		}
+
+		if err := cacheImage(childImg, digestDir, tmpDir); err != nil {
 			return err
 		}
 	}
@@ -449,7 +512,6 @@ func processCosignSignature(
 
 		switch sigRmt.MediaType { //nolint:exhaustive
 		case types.OCIImageIndex, types.DockerManifestList:
-			// Signature is an OCI image index - process each child manifest.
 			idx, err := sigRmt.ImageIndex()
 			if err != nil {
 				return fmt.Errorf("getting cosign image index: %w", err)
@@ -466,79 +528,65 @@ func processCosignSignature(
 					return fmt.Errorf("getting cosign child image %s: %w", descriptor.Digest, err)
 				}
 
-				childManifest, err := childImg.RawManifest()
-				if err != nil {
-					return fmt.Errorf("getting cosign child manifest: %w", err)
-				}
-
-				childDigest, err := childImg.Digest()
-				if err != nil {
-					return fmt.Errorf("getting cosign child digest: %w", err)
-				}
-
-				if err := os.WriteFile(filepath.Join(digestDir, strings.ReplaceAll(childDigest.String(), "sha256:", "sha256-")), childManifest, 0o644); err != nil {
+				if err := cacheImage(childImg, digestDir, tmpDir); err != nil {
 					return err
-				}
-
-				config, err := childImg.RawConfigFile()
-				if err != nil {
-					return fmt.Errorf("getting cosign child config: %w", err)
-				}
-
-				configHash, err := childImg.ConfigName()
-				if err != nil {
-					return fmt.Errorf("getting cosign child config hash: %w", err)
-				}
-
-				if err := os.WriteFile(filepath.Join(tmpDir, blobsDir, strings.ReplaceAll(configHash.String(), "sha256:", "sha256-")), config, 0o644); err != nil {
-					return err
-				}
-
-				layers, err := childImg.Layers()
-				if err != nil {
-					return fmt.Errorf("getting cosign child layers: %w", err)
-				}
-
-				for _, layer := range layers {
-					if err = processLayer(layer, tmpDir); err != nil {
-						return err
-					}
 				}
 			}
 		default:
-			// Signature is a single image manifest.
 			img, err := sigRmt.Image()
 			if err != nil {
 				return fmt.Errorf("getting cosign image: %w", err)
 			}
 
-			config, err := img.RawConfigFile()
-			if err != nil {
-				return fmt.Errorf("getting cosign config: %w", err)
-			}
-
-			configHash, err := img.ConfigName()
-			if err != nil {
-				return fmt.Errorf("getting cosign config hash: %w", err)
-			}
-
-			if err := os.WriteFile(filepath.Join(tmpDir, blobsDir, strings.ReplaceAll(configHash.String(), "sha256:", "sha256-")), config, 0o644); err != nil {
+			if err := cacheImage(img, digestDir, tmpDir); err != nil {
 				return err
-			}
-
-			layers, err := img.Layers()
-			if err != nil {
-				return fmt.Errorf("getting cosign layers: %w", err)
-			}
-
-			for _, layer := range layers {
-				if err = processLayer(layer, tmpDir); err != nil {
-					return err
-				}
 			}
 		}
 
 		return nil
+	}
+
+	return nil
+}
+
+func cacheImage(img v1.Image, digestDir, tmpDir string) error {
+	manifest, err := img.RawManifest()
+	if err != nil {
+		return fmt.Errorf("getting image manifest: %w", err)
+	}
+
+	h := sha256.New()
+	if _, err := h.Write(manifest); err != nil {
+		return fmt.Errorf("hashing manifest: %w", err)
+	}
+
+	if err := os.WriteFile(filepath.Join(digestDir, fmt.Sprintf("sha256-%x", h.Sum(nil))), manifest, 0o644); err != nil {
+		return err
+	}
+
+	config, err := img.RawConfigFile()
+	if err != nil {
+		return fmt.Errorf("getting image config: %w", err)
+	}
+
+	configHash, err := img.ConfigName()
+	if err != nil {
+		return fmt.Errorf("getting image config hash: %w", err)
+	}
+
+	if err := os.WriteFile(filepath.Join(tmpDir, blobsDir, strings.ReplaceAll(configHash.String(), "sha256:", "sha256-")), config, 0o644); err != nil {
+		return err
+	}
+
+	layers, err := img.Layers()
+	if err != nil {
+		return fmt.Errorf("getting image layers: %w", err)
+	}
+
+	for _, layer := range layers {
+		if err := processLayer(layer, tmpDir); err != nil {
+			return err
+		}
 	}
 
 	return nil

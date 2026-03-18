@@ -1017,7 +1017,7 @@ func init() {
 	imageCacheCreateCmd.PersistentFlags().StringVar(&imageCacheCreateCmdFlags.imageLayerCachePath, "image-layer-cache-path", "", "directory to save the image layer cache")
 	imageCacheCreateCmd.PersistentFlags().Var(imageCacheCreateCmdFlags.layout, "layout",
 		"Specifies the cache layout format: \"oci\" for an OCI image layout directory, or \"flat\" for a registry-like flat file structure")
-	imageCacheCreateCmd.PersistentFlags().StringSliceVar(&imageCacheCreateCmdFlags.platform, "platform", []string{"linux/amd64"}, "platform to use for the cache")
+	imageCacheCreateCmd.PersistentFlags().StringSliceVar(&imageCacheCreateCmdFlags.platform, "platform", []string{"linux/amd64"}, "platform(s) to cache (e.g. linux/amd64,linux/arm64), or \"all\" to cache every platform in the image index")
 	imageCacheCreateCmd.PersistentFlags().StringSliceVar(&imageCacheCreateCmdFlags.images, "images", nil, "images to cache")
 	imageCacheCreateCmd.MarkPersistentFlagRequired("images") //nolint:errcheck
 	imageCacheCreateCmd.PersistentFlags().BoolVar(&imageCacheCreateCmdFlags.insecure, "insecure", false, "allow insecure registries")
