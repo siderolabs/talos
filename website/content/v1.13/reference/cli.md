@@ -2182,7 +2182,7 @@ talosctl images default | talosctl images cache-create --image-cache-path=/tmp/t
       --images strings                  images to cache
       --insecure                        allow insecure registries
       --layout string                   Specifies the cache layout format: "oci" for an OCI image layout directory, or "flat" for a registry-like flat file structure (default "oci")
-      --platform strings                platform to use for the cache (default [linux/amd64])
+      --platform strings                platform(s) to cache (e.g. linux/amd64,linux/arm64), or "all" to cache every platform in the image index (default [linux/amd64])
 ```
 
 ### Options inherited from parent commands
