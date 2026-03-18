@@ -183,6 +183,7 @@ func (a bondMaster) Encode() ([]byte, error) {
 //
 //nolint:gocyclo,cyclop
 func (a bondMaster) Decode(data []byte) error {
+	*a.BondMasterSpec = network.BondMasterSpec{}
 	bond := a.BondMasterSpec
 
 	decoder, err := netlink.NewAttributeDecoder(data)

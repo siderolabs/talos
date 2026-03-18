@@ -5,6 +5,7 @@
 package network_test
 
 import (
+	"net/netip"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -30,4 +31,32 @@ func TestBondMasterSpec(t *testing.T) {
 	require.NoError(t, networkadapter.BondMasterSpec(&decodedSpec).Decode(b))
 
 	require.Equal(t, spec, decodedSpec)
+}
+
+func TestBondMasterSpecDecodeClearsTargets(t *testing.T) {
+	initial := network.BondMasterSpec{
+		Mode:         nethelpers.BondModeActiveBackup,
+		ARPIPTargets: []netip.Addr{netip.MustParseAddr("198.51.100.254")},
+		NSIP6Targets: []netip.Addr{netip.MustParseAddr("fd00::1")},
+	}
+
+	initialEncoded, err := networkadapter.BondMasterSpec(&initial).Encode()
+	require.NoError(t, err)
+
+	cleared := network.BondMasterSpec{
+		Mode: nethelpers.BondModeActiveBackup,
+	}
+
+	clearedEncoded, err := networkadapter.BondMasterSpec(&cleared).Encode()
+	require.NoError(t, err)
+
+	var decodedSpec network.BondMasterSpec
+
+	require.NoError(t, networkadapter.BondMasterSpec(&decodedSpec).Decode(initialEncoded))
+	require.Equal(t, initial.ARPIPTargets, decodedSpec.ARPIPTargets)
+	require.Equal(t, initial.NSIP6Targets, decodedSpec.NSIP6Targets)
+
+	require.NoError(t, networkadapter.BondMasterSpec(&decodedSpec).Decode(clearedEncoded))
+	require.Empty(t, decodedSpec.ARPIPTargets)
+	require.Empty(t, decodedSpec.NSIP6Targets)
 }
