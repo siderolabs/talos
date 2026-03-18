@@ -423,13 +423,17 @@ func processImageAllPlatforms(
 		return err
 	}
 
+	first := true
+
 	for _, desc := range idxManifest.Manifests {
 		if desc.Platform != nil && desc.Platform.OS != "unknown" {
 			platRemoteOpts := append(append([]remote.Option{}, remoteOpts...), remote.WithPlatform(*desc.Platform))
 
-			if err := processImage(src, tmpDir, imageLayerCachePath, nameOptions, craneOpts, platRemoteOpts, sigRemoteOpts, false); err != nil {
+			if err := processImage(src, tmpDir, imageLayerCachePath, nameOptions, craneOpts, platRemoteOpts, sigRemoteOpts, first && withCosignSignatures); err != nil {
 				return err
 			}
+
+			first = false
 
 			continue
 		}
