@@ -1,6 +1,6 @@
 module github.com/siderolabs/talos
 
-go 1.26.0
+go 1.26.1
 
 replace (
 	// forked coredns so we don't carry caddy and other stuff into the Talos
@@ -26,6 +26,9 @@ replace (
 // upstream PR: https://github.com/containerd/containerd/pull/12175
 // this a fork with containerd 2.2 branch + the commit from the PR above
 replace github.com/containerd/containerd/v2 => github.com/smira/containerd/v2 v2.2.3-0.20260311174942-e5fa687ba763
+
+// fix for multiple panics, see https://github.com/neticdk/go-stdlib/pull/44
+replace github.com/neticdk/go-stdlib => github.com/smira/go-stdlib v0.0.0-20260318082201-9d387eb2130d
 
 // Kubernetes dependencies sharing the same version.
 require (

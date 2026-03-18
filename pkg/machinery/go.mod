@@ -1,9 +1,12 @@
 module github.com/siderolabs/talos/pkg/machinery
 
-go 1.26.0
+go 1.26.1
 
 // forked ethtool introduces missing APIs
 replace github.com/mdlayher/ethtool => github.com/siderolabs/ethtool v0.4.0-sidero
+
+// fix for multiple panics, see https://github.com/neticdk/go-stdlib/pull/44
+replace github.com/neticdk/go-stdlib => github.com/smira/go-stdlib v0.0.0-20260318082201-9d387eb2130d
 
 require (
 	github.com/blang/semver/v4 v4.0.0

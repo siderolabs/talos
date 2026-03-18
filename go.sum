@@ -674,8 +674,6 @@ github.com/navidys/tvxwidgets v0.13.0 h1:ccGODowWhHQH7zh43lwdeML+qpZS0cMHByjS3CP
 github.com/navidys/tvxwidgets v0.13.0/go.mod h1:C+hTUXTFCOaYQkKlwqqn9K54RT0zrNqfqhI/RWwt+g4=
 github.com/nberlee/go-netstat v0.1.2 h1:wgPV1YOUo+kDFypqiKgfxMtnSs1Wb42c7ahI4qyEUJc=
 github.com/nberlee/go-netstat v0.1.2/go.mod h1:GvDCRLsUKMRN1wULkt7tpnDmjSIE6YGf5zeVq+mBO64=
-github.com/neticdk/go-stdlib v1.0.0 h1:9QCpoMpO5dBJGHJhumZrHzfJyvpVBd2Gc7ODJujfpXY=
-github.com/neticdk/go-stdlib v1.0.0/go.mod h1:rch+DEB6VtR972ZPTY6A5OyLmCrp2YlXP0WGjuDDdcw=
 github.com/nozzle/throttler v0.0.0-20180817012639-2ea982251481 h1:Up6+btDp321ZG5/zdSLo48H9Iaq0UQGthrhWC6pCxzE=
 github.com/nozzle/throttler v0.0.0-20180817012639-2ea982251481/go.mod h1:yKZQO8QE2bHlgozqWDiRVqTFlLQSj30K/6SAK8EeYFw=
 github.com/nxadm/tail v1.4.4/go.mod h1:kenIhsEOeOJmVchQTgglprH7qJGnHDVpk1VPCcaMI8A=
@@ -868,6 +866,8 @@ github.com/sirupsen/logrus v1.9.4 h1:TsZE7l11zFCLZnZ+teH4Umoq5BhEIfIzfRDZ1Uzql2w
 github.com/sirupsen/logrus v1.9.4/go.mod h1:ftWc9WdOfJ0a92nsE2jF5u5ZwH8Bv2zdeOC42RjbV2g=
 github.com/smira/containerd/v2 v2.2.3-0.20260311174942-e5fa687ba763 h1:l0WOZNJ5VG2EYm4Tnj2Pm0m1v5Tlw9W7TwhWAn/k/Sk=
 github.com/smira/containerd/v2 v2.2.3-0.20260311174942-e5fa687ba763/go.mod h1:5Jhevmv6/2J+Iu/A2xXAdUIdI5Ah/hfyO7okJ4AFIdY=
+github.com/smira/go-stdlib v0.0.0-20260318082201-9d387eb2130d h1:/A1ysgd+d93H+qhSUwosk6O6WoppaHQc45XzbLUilRU=
+github.com/smira/go-stdlib v0.0.0-20260318082201-9d387eb2130d/go.mod h1:KP9nLuDoanLbM8Wturn+hage2FtcrJaF1+1Znu+MKEw=
 github.com/smira/kobject v0.0.0-20240304111826-49c8d4613389 h1:f/5NRv5IGZxbjBhc5MnlbNmyuXBPxvekhBAUzyKWyLY=
 github.com/smira/kobject v0.0.0-20240304111826-49c8d4613389/go.mod h1:+SexPO1ZvdbbWUdUnyXEWv3+4NwHZjKhxOmQqHY4Pqc=
 github.com/soheilhy/cmux v0.1.5 h1:jjzc5WVemNEDTLwv9tlmemhC73tI08BNOIGwBOo10Js=
