@@ -1,0 +1,3 @@
+go test fuzz v1
+string("1\n\n\n\n\n\n")
+string("\n1\n\n\n\n\n\n\n\n\n\n\n0")
