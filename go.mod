@@ -27,6 +27,11 @@ replace (
 // this a fork with containerd 2.2 branch + the commit from the PR above
 replace github.com/containerd/containerd/v2 => github.com/smira/containerd/v2 v2.2.3-0.20260521103442-e05d8ca25f89
 
+// fix for multiple panics, see https://github.com/neticdk/go-stdlib/pull/44
+// this is upstream v1.0.1 (which carries the fix) with the go directive lowered to 1.25,
+// as v1.0.1 requires go 1.26 which this release branch does not build with
+replace github.com/neticdk/go-stdlib => github.com/shanduur/go-stdlib v1.0.2-0.20260805080758-f00e04894983
+
 // Kubernetes dependencies sharing the same version.
 require (
 	k8s.io/api v0.35.4

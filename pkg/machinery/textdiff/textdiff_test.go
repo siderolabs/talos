@@ -191,3 +191,14 @@ func MemoryAllocated(f func()) uint64 {
 
 	return allocs
 }
+
+func FuzzDiff(f *testing.F) {
+	f.Add("", "")
+	f.Add("line 1\nline 2\n", "line 1\nline 2\n")
+	f.Add("line 1\nline 2\n", "line 1\nline 2\nline 3\n")
+
+	f.Fuzz(func(t *testing.T, a, b string) {
+		_, err := textdiff.Diff(a, b)
+		require.NoError(t, err)
+	})
+}

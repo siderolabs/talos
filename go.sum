@@ -528,8 +528,6 @@ github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f h1:y5//uYreIhSUg3J
 github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f/go.mod h1:ZdcZmHo+o7JKHSa8/e818NopupXU1YMK5fe1lsApnBw=
 github.com/nberlee/go-netstat v0.1.2 h1:wgPV1YOUo+kDFypqiKgfxMtnSs1Wb42c7ahI4qyEUJc=
 github.com/nberlee/go-netstat v0.1.2/go.mod h1:GvDCRLsUKMRN1wULkt7tpnDmjSIE6YGf5zeVq+mBO64=
-github.com/neticdk/go-stdlib v1.0.0 h1:9QCpoMpO5dBJGHJhumZrHzfJyvpVBd2Gc7ODJujfpXY=
-github.com/neticdk/go-stdlib v1.0.0/go.mod h1:rch+DEB6VtR972ZPTY6A5OyLmCrp2YlXP0WGjuDDdcw=
 github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d h1:x3S6kxmy49zXVVyhcnrFqxvNVCBPb2KZ9hV2RBdS840=
 github.com/nsf/termbox-go v0.0.0-20190121233118-02980233997d/go.mod h1:IuKpRQcYE1Tfu+oAQqaLisqDeXgjyyltCfsaoYN18NQ=
 github.com/onsi/ginkgo/v2 v2.27.2 h1:LzwLj0b89qtIy6SSASkzlNvX6WktqurSHwkk2ipF/Ns=
@@ -608,6 +606,8 @@ github.com/scaleway/scaleway-sdk-go v1.0.0-beta.35 h1:8xfn1RzeI9yoCUuEwDy08F+No6
 github.com/scaleway/scaleway-sdk-go v1.0.0-beta.35/go.mod h1:47B1d/YXmSAxlJxUJxClzHR6b3T4M1WyCvwENPQNBWc=
 github.com/sergi/go-diff v1.2.0 h1:XU+rvMAioB0UC3q1MFrIQy4Vo5/4VsRDQQXHsEya6xQ=
 github.com/sergi/go-diff v1.2.0/go.mod h1:STckp+ISIX8hZLjrqAeVduY0gWCT9IjLuqbuNXdaHfM=
+github.com/shanduur/go-stdlib v1.0.2-0.20260805080758-f00e04894983 h1:4T96NJJyGNf9ZB5AfPcgSHxRb8/ZECPfr0h2k5ZiasE=
+github.com/shanduur/go-stdlib v1.0.2-0.20260805080758-f00e04894983/go.mod h1:22xKSaFW3FWQcj2utQc5xQbVJNGZ9wYKVWHzb3vyXb0=
 github.com/siderolabs/coredns v1.12.54 h1:TmTrcxDpseGlm4sWzdlYY0Eof7+6erY/0gYoe+OYfUA=
 github.com/siderolabs/coredns v1.12.54/go.mod h1:0fWNl9qBEgoWH3YEqyQEwG+Vm2sCMsCLEJ21NG9UWZw=
 github.com/siderolabs/crypto v0.6.4 h1:uMoe/X/mABOv6yOgvKcjmjIMdv6U8JegBXlPKtyjn3g=

@@ -5,6 +5,11 @@ go 1.25.12
 // forked ethtool introduces missing APIs
 replace github.com/mdlayher/ethtool => github.com/siderolabs/ethtool v0.4.0-sidero
 
+// fix for multiple panics, see https://github.com/neticdk/go-stdlib/pull/44
+// this is upstream v1.0.1 (which carries the fix) with the go directive lowered to 1.25,
+// as v1.0.1 requires go 1.26 which this release branch does not build with
+replace github.com/neticdk/go-stdlib => github.com/shanduur/go-stdlib v1.0.2-0.20260805080758-f00e04894983
+
 require (
 	github.com/blang/semver/v4 v4.0.0
 	github.com/containerd/go-cni v1.1.13
