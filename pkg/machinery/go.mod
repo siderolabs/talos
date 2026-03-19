@@ -22,7 +22,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/jsimonetti/rtnetlink/v2 v2.1.0
 	github.com/mdlayher/ethtool v0.4.0
-	github.com/neticdk/go-stdlib v1.0.0
+	github.com/neticdk/go-stdlib v1.0.1
 	github.com/opencontainers/runtime-spec v1.2.1
 	github.com/planetscale/vtprotobuf v0.6.1-0.20241121165744-79df5c4772f2
 	github.com/ryanuber/go-glob v1.0.0
