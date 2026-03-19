@@ -7,7 +7,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.41.4
 	github.com/aws/aws-sdk-go-v2/config v1.32.12
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.22.8
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.294.1
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.295.0
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.97.1
 	github.com/google/uuid v1.6.0
 	github.com/klauspost/compress v1.18.4
@@ -16,7 +16,7 @@ require (
 	github.com/siderolabs/go-retry v0.3.3
 	github.com/spf13/pflag v1.0.10
 	golang.org/x/sync v0.20.0
-	google.golang.org/api v0.271.0
+	google.golang.org/api v0.272.0
 )
 
 require (
