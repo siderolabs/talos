@@ -5,8 +5,6 @@ go 1.26.1
 // forked ethtool introduces missing APIs
 replace github.com/mdlayher/ethtool => github.com/siderolabs/ethtool v0.4.0-sidero
 
-// fix for multiple panics, see https://github.com/neticdk/go-stdlib/pull/44
-replace github.com/neticdk/go-stdlib => github.com/smira/go-stdlib v0.0.0-20260318082201-9d387eb2130d
 
 require (
 	github.com/blang/semver/v4 v4.0.0
@@ -20,7 +18,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/jsimonetti/rtnetlink/v2 v2.2.0
 	github.com/mdlayher/ethtool v0.5.1
-	github.com/neticdk/go-stdlib v1.0.0
+	github.com/neticdk/go-stdlib v1.0.1
 	github.com/opencontainers/runtime-spec v1.3.0
 	github.com/planetscale/vtprotobuf v0.6.1-0.20250313105119-ba97887b0a25
 	github.com/ryanuber/go-glob v1.0.0
@@ -36,7 +34,7 @@ require (
 	golang.org/x/net v0.52.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20260311181403-84a4fc48630c
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260311181403-84a4fc48630c
-	google.golang.org/grpc v1.78.0
+	google.golang.org/grpc v1.79.3
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
 	gopkg.in/yaml.v3 v3.0.1
 )

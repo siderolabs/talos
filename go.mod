@@ -27,9 +27,6 @@ replace (
 // this a fork with containerd 2.2 branch + the commit from the PR above
 replace github.com/containerd/containerd/v2 => github.com/smira/containerd/v2 v2.2.3-0.20260311174942-e5fa687ba763
 
-// fix for multiple panics, see https://github.com/neticdk/go-stdlib/pull/44
-replace github.com/neticdk/go-stdlib => github.com/smira/go-stdlib v0.0.0-20260318082201-9d387eb2130d
-
 // Kubernetes dependencies sharing the same version.
 require (
 	k8s.io/api v0.35.2
@@ -193,7 +190,7 @@ require (
 	golang.org/x/text v0.35.0
 	golang.org/x/time v0.15.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10
-	google.golang.org/grpc v1.79.2
+	google.golang.org/grpc v1.79.3
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
 	gopkg.in/typ.v4 v4.4.0
 	k8s.io/klog/v2 v2.140.0
@@ -349,7 +346,7 @@ require (
 	github.com/monochromegane/go-gitignore v0.0.0-20200626010858-205db1a8cc00 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/mxk/go-flowrate v0.0.0-20140419014527-cca7078d478f // indirect
-	github.com/neticdk/go-stdlib v1.0.0 // indirect
+	github.com/neticdk/go-stdlib v1.0.1 // indirect
 	github.com/nozzle/throttler v0.0.0-20180817012639-2ea982251481 // indirect
 	github.com/oklog/ulid/v2 v2.1.1 // indirect
 	github.com/opencontainers/selinux v1.13.1 // indirect
