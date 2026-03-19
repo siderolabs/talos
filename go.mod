@@ -7,13 +7,13 @@ replace (
 	github.com/coredns/coredns => github.com/siderolabs/coredns v1.14.53
 
 	// see https://github.com/jsimonetti/rtnetlink/pull/306
-	github.com/jsimonetti/rtnetlink/v2 => github.com/shanduur/rtnetlink/v2 v2.0.0-20260313131132-118a2ded4751
+	github.com/jsimonetti/rtnetlink/v2 => github.com/shanduur/rtnetlink/v2 a573b21e520a
 
 	// forked ethtool introduces missing APIs
 	github.com/mdlayher/ethtool => github.com/siderolabs/ethtool v0.4.0-sidero
 
 	// see https://github.com/mdlayher/kobject/pull/5
-	github.com/mdlayher/kobject => github.com/smira/kobject v0.0.0-20240304111826-49c8d4613389
+	github.com/mdlayher/kobject => github.com/smira/kobject 19ca17470d7d
 
 	// Use nested module.
 	github.com/siderolabs/talos/pkg/machinery => ./pkg/machinery
@@ -25,21 +25,21 @@ replace (
 // deadcode elimination fix replacement: https://github.com/siderolabs/talos/issues/11296
 // upstream PR: https://github.com/containerd/containerd/pull/12175
 // this a fork with containerd 2.2 branch + the commit from the PR above
-replace github.com/containerd/containerd/v2 => github.com/smira/containerd/v2 v2.2.3-0.20260311174942-e5fa687ba763
+replace github.com/containerd/containerd/v2 => github.com/smira/containerd/v2 ddf6594fbeed
 
 // Kubernetes dependencies sharing the same version.
 require (
-	k8s.io/api v0.35.2
-	k8s.io/apiextensions-apiserver v0.35.2
-	k8s.io/apimachinery v0.35.2
-	k8s.io/apiserver v0.35.2
-	k8s.io/client-go v0.35.2
-	k8s.io/component-base v0.35.2
-	k8s.io/cri-api v0.35.2
-	k8s.io/kube-scheduler v0.35.2
-	k8s.io/kubectl v0.35.2
-	k8s.io/kubelet v0.35.2
-	k8s.io/pod-security-admission v0.35.2
+	k8s.io/api v0.35.3
+	k8s.io/apiextensions-apiserver v0.35.3
+	k8s.io/apimachinery v0.35.3
+	k8s.io/apiserver v0.35.3
+	k8s.io/client-go v0.35.3
+	k8s.io/component-base v0.35.3
+	k8s.io/cri-api v0.35.3
+	k8s.io/kube-scheduler v0.35.3
+	k8s.io/kubectl v0.35.3
+	k8s.io/kubelet v0.35.3
+	k8s.io/pod-security-admission v0.35.3
 )
 
 require (
@@ -56,7 +56,7 @@ require (
 	github.com/aws/smithy-go v1.24.2
 	github.com/beevik/ntp v1.5.0
 	github.com/blang/semver/v4 v4.0.0
-	github.com/cenkalti/backoff/v4 v4.3.0
+	github.com/cenkalti/backoff/v5 v5.0.3
 	github.com/containerd/cgroups/v3 v3.1.3
 	github.com/containerd/containerd/api v1.10.0
 	github.com/containerd/containerd/v2 v2.2.2
@@ -65,7 +65,7 @@ require (
 	github.com/containerd/platforms v1.0.0-rc.2
 	github.com/containerd/typeurl/v2 v2.2.3
 	github.com/containernetworking/cni v1.3.0
-	github.com/containernetworking/plugins v1.9.0
+	github.com/containernetworking/plugins v1.9.1
 	github.com/coredns/coredns v1.14.2
 	github.com/coreos/go-iptables v0.8.0
 	github.com/cosi-project/runtime v1.14.0
@@ -81,13 +81,13 @@ require (
 	github.com/freddierice/go-losetup/v2 v2.0.1
 	github.com/fsnotify/fsnotify v1.9.0
 	github.com/g0rbe/go-chattr v1.0.1
-	github.com/gdamore/tcell/v2 v2.13.8
+	github.com/gdamore/tcell/v3 v3.1.2
 	github.com/gertd/go-pluralize v0.2.1
 	github.com/godbus/dbus/v5 v5.2.2
 	github.com/golang/mock v1.7.0-rc.1
 	github.com/google/cadvisor v0.56.2
 	github.com/google/cel-go v0.27.0
-	github.com/google/go-containerregistry v0.21.2
+	github.com/google/go-containerregistry v0.21.3
 	github.com/google/go-tpm v0.9.8
 	github.com/google/nftables v0.3.0
 	github.com/google/uuid v1.6.0
@@ -147,7 +147,7 @@ require (
 	github.com/siderolabs/go-debug v0.6.2
 	github.com/siderolabs/go-kmsg v0.1.5
 	github.com/siderolabs/go-kubeconfig v0.1.1
-	github.com/siderolabs/go-kubernetes v0.2.33
+	github.com/siderolabs/go-kubernetes v0.2.34
 	github.com/siderolabs/go-loadbalancer v0.5.0
 	github.com/siderolabs/go-pcidb v0.3.3
 	github.com/siderolabs/go-pointer v1.0.1
@@ -155,15 +155,15 @@ require (
 	github.com/siderolabs/go-retry v0.3.3
 	github.com/siderolabs/go-smbios v0.3.3
 	github.com/siderolabs/go-tail v0.1.1
-	github.com/siderolabs/go-talos-support v0.1.4
+	github.com/siderolabs/go-talos-support v0.2.0
 	github.com/siderolabs/grpc-proxy v0.5.1
 	github.com/siderolabs/kms-client v0.2.0
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/proto-codec v0.1.3
 	github.com/siderolabs/siderolink v0.3.15
-	github.com/siderolabs/talos/pkg/machinery v1.13.0-alpha.2
+	github.com/siderolabs/talos/pkg/machinery v1.13.0-beta.0
 	github.com/sigstore/cosign/v3 v3.0.5
-	github.com/sigstore/sigstore v1.10.5-0.20260304232115-b56c8664d026
+	github.com/sigstore/sigstore c90de3e0ff95
 	github.com/sigstore/sigstore-go v1.1.4
 	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/cobra v1.10.2
