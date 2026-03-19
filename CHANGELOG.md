@@ -1,3 +1,100 @@
+## [Talos 1.12.6](https://github.com/siderolabs/talos/releases/tag/v1.12.6) (2026-03-19)
+
+Welcome to the v1.12.6 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.18.18
+runc: 1.3.5
+
+Talos is built with Go 1.25.8.
+
+
+### Contributors
+
+* Mickaël Canévet
+* Andrey Smirnov
+* Dominik Pitz
+* Kai Zhang
+* Noel Georgi
+* Stanley Chan
+* Zadkiel AHARONIAN
+
+### Changes
+<details><summary>20 commits</summary>
+<p>
+
+* [`72bd570f0`](https://github.com/siderolabs/talos/commit/72bd570f0982aeea188071a731a4d1ac6b637af8) feat: update Linux to 6.18.18
+* [`9d5638f4c`](https://github.com/siderolabs/talos/commit/9d5638f4ca7c2953d1d02edf2417bcacfba1b948) fix: accept image cache volume encryption config
+* [`0f018bf80`](https://github.com/siderolabs/talos/commit/0f018bf800750687df84f82a955263919a78e457) fix: panic in hardware.SystemInfoController
+* [`c46b89807`](https://github.com/siderolabs/talos/commit/c46b89807dfa01e873a73a332f1049d98fb25623) fix: validate missing apiVersion in config document decoder
+* [`c47cad9ec`](https://github.com/siderolabs/talos/commit/c47cad9ec0a4448b110c21a9a8de98d77d13afec) fix: pull in a fix for dmesg timestamps
+* [`190336a66`](https://github.com/siderolabs/talos/commit/190336a66039fe253641506201c8ff65addaa09b) fix: prevent stale discovered volumes reads
+* [`217e9bb02`](https://github.com/siderolabs/talos/commit/217e9bb027902b648e47375e3dadfdf0c4a499d8) fix: bring in new version of go-cmd and go-blockdevice
+* [`d7779a5ba`](https://github.com/siderolabs/talos/commit/d7779a5ba193cc09325883495d69f94dd6e0a902) fix: stop pulling wrong platform for images
+* [`eb6eb664a`](https://github.com/siderolabs/talos/commit/eb6eb664a1c2b216a79eead519729326865d578a) fix(machined): support USERDATA legacy fallback in OpenNebula driver
+* [`ba20c7c12`](https://github.com/siderolabs/talos/commit/ba20c7c120e940c24ea2c26af91ccdad518af80d) feat(machined): add ONEGATE proxy route and deterministic interface iteration for OpenNebula
+* [`739f66458`](https://github.com/siderolabs/talos/commit/739f6645847d54910505f0aced5218c51053ab3c) feat(machined): inherit IP6_METHOD from METHOD in OpenNebula driver
+* [`93878c079`](https://github.com/siderolabs/talos/commit/93878c0790140ec890ffabcfdd0cfd0d61c52a79) fix(machined): align OpenNebula hostname precedence with reference
+* [`9718d737f`](https://github.com/siderolabs/talos/commit/9718d737f44d04a7b2acfdd684048d793b1c693f) feat(machined): add IPv6 alias address support for OpenNebula (ETH*_ALIAS*_IP6)
+* [`b649fb467`](https://github.com/siderolabs/talos/commit/b649fb4674b8a70d3cb78c5c24395d891fcc23b6) feat(machined): support ETH*_IP6_METHOD (static/dhcp/auto/disable) for OpenNebula
+* [`c81df6fa9`](https://github.com/siderolabs/talos/commit/c81df6fa9cfcde8a2e85a4602d77fd71b9a60439) refactor(machined): extract per-interface IPv4 helper in OpenNebula driver
+* [`501924e5a`](https://github.com/siderolabs/talos/commit/501924e5a85406cdb772190620ef261859affcfc) fix(machined): use ParseFQDN for hostname parsing in OpenNebula
+* [`e9331b271`](https://github.com/siderolabs/talos/commit/e9331b271f8ef1c2f4cda89a88c7bdea6aa1269f) feat(machined): support per-interface route metric for OpenNebula (ETH*_METRIC)
+* [`6e78afbab`](https://github.com/siderolabs/talos/commit/6e78afbabd4f66c54b3a984f334d40c67ed766ec) feat(machined): add network alias support for OpenNebula (ETH*_ALIAS*)
+* [`9f648b491`](https://github.com/siderolabs/talos/commit/9f648b491b8fc0609e98029203882d8a248ab99b) feat(machined): merge global and per-interface DNS for OpenNebula
+* [`04fba03a9`](https://github.com/siderolabs/talos/commit/04fba03a95ca5cbd706ca5bad64168a6d8d291b3) feat(machined): add static routes support via ETH*_ROUTES for OpenNebula
+</p>
+</details>
+
+### Changes from siderolabs/go-cmd
+<details><summary>2 commits</summary>
+<p>
+
+* [`5f31ba9`](https://github.com/siderolabs/go-cmd/commit/5f31ba92aa18c3f9a5c39b9f65b6beb9c55c6fac) chore: rekres and update
+* [`fff5698`](https://github.com/siderolabs/go-cmd/commit/fff56983373a4e3e37120fa159444e04a4ef580a) feat: allow capturing full output to stdout, modernize API
+</p>
+</details>
+
+### Changes from siderolabs/go-kmsg
+<details><summary>3 commits</summary>
+<p>
+
+* [`b53b36d`](https://github.com/siderolabs/go-kmsg/commit/b53b36d2537180631f4e39c8054920535b26f49b) chore: rekres and update
+* [`6f7d20b`](https://github.com/siderolabs/go-kmsg/commit/6f7d20b8223a117e3365198e8a20d254aff3241c) feat: calculate boot time correctly if the time jumps
+* [`47655ee`](https://github.com/siderolabs/go-kmsg/commit/47655eefbc8d31532c066f6d9b50a5490e5a6ad1) feat: support PRINTK_CALLER kmsg logs
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>4 commits</summary>
+<p>
+
+* [`a92bed5`](https://github.com/siderolabs/pkgs/commit/a92bed5bdd0a3f14312218dd63d6822e38e6dedd) feat: enable AMD GPU peer-to-peer DMA
+* [`09e87a9`](https://github.com/siderolabs/pkgs/commit/09e87a97777586df20614708d50b36846ee65411) feat: backportable deps update
+* [`eb965e2`](https://github.com/siderolabs/pkgs/commit/eb965e2e58477a8c1406f7296873267e7a06db3e) feat(kernel): enable CONFIG_USB_UHCI_HCD on amd64
+* [`6804ebd`](https://github.com/siderolabs/pkgs/commit/6804ebdc01b949ffdc229143d2ef750dad0096fe) feat: update Linux 6.18.16, NVIDIA, ZFS
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/google/go-containerregistry**   v0.20.6 -> v0.20.7
+* **github.com/siderolabs/go-blockdevice/v2**  v2.0.24 -> v2.0.26
+* **github.com/siderolabs/go-cmd**             v0.1.3 -> v0.2.0
+* **github.com/siderolabs/go-kmsg**            v0.1.4 -> v0.1.5
+* **github.com/siderolabs/pkgs**               v1.12.0-46-ge695c74 -> v1.12.0-50-ga92bed5
+* **github.com/spf13/cobra**                   v1.10.1 -> v1.10.2
+* **golang.org/x/sys**                         v0.41.0 -> v0.42.0
+* **google.golang.org/grpc**                   v1.78.0 -> v1.79.3
+
+Previous release can be found at [v1.12.5](https://github.com/siderolabs/talos/releases/tag/v1.12.5)
+
 ## [Talos 1.12.5](https://github.com/siderolabs/talos/releases/tag/v1.12.5) (2026-03-06)
 
 Welcome to the v1.12.5 release of Talos!
