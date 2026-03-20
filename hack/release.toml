@@ -22,7 +22,7 @@ Linux: 6.18.18
 containerd: 2.2.2
 etcd: 3.6.8
 CoreDNS: 1.14.2
-Kubernetes: 1.36.0-alpha.2
+Kubernetes: 1.36.0-beta.0
 Flannel CNI plugin: v1.9.0-flannel1
 Flannel: 0.28.1
 LVM2: 2_03_38
