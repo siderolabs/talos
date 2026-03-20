@@ -9,12 +9,16 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	stdlibruntime "runtime"
 	"sync"
 	"time"
 
+	"golang.org/x/sys/unix"
+
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 )
 
@@ -64,9 +68,21 @@ func (r *goroutineRunner) Open() error {
 }
 
 // Run implements the Runner interface.
-func (r *goroutineRunner) Run(eventSink events.Recorder) error {
+func (r *goroutineRunner) Run(eventSink events.Recorder, pidRecorder pid.Recorder) error {
 	r.wg.Add(1)
 	defer r.wg.Done()
+
+	pid := int32(unix.Getpid())
+
+	if err := pidRecorder(r.id, pid, false); err != nil {
+		return fmt.Errorf("recording pid: %w", err)
+	}
+
+	defer func() {
+		if err := pidRecorder(r.id, pid, true); err != nil {
+			log.Printf("error clearing pid: %v", err)
+		}
+	}()
 
 	eventSink(events.StateRunning, "Service started as goroutine")
 

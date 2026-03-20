@@ -40,7 +40,7 @@ func dashboardMain() error {
 	startup.LimitMaxProcs(constants.DashboardMaxProcs)
 
 	md := metadata.Pairs()
-	authz.SetMetadata(md, role.MakeSet(role.Admin))
+	authz.SetMetadata(md, role.MakeSet(role.Reader))
 
 	ctx, cancel := sigtermAwareContext(context.Background())
 	defer cancel()

@@ -45,6 +45,12 @@ func MockEventSink(state events.ServiceState, message string, args ...any) {
 	log.Printf("state %s: %s", state, fmt.Sprintf(message, args...))
 }
 
+func MockPidRecorder(id string, pid int32, clearEntry bool) error {
+	log.Printf("recording pid for %s: %d (clear: %v)", id, pid, clearEntry)
+
+	return nil
+}
+
 type ContainerdSuite struct {
 	suite.Suite
 
@@ -119,7 +125,7 @@ func (suite *ContainerdSuite) SetupSuite() {
 	suite.containerdWg.Go(func() {
 		defer suite.containerdRunner.Close() //nolint:errcheck
 
-		suite.containerdRunner.Run(MockEventSink) //nolint:errcheck
+		suite.containerdRunner.Run(MockEventSink, MockPidRecorder) //nolint:errcheck
 	})
 
 	suite.client, err = containerd.New(suite.containerdAddress)
@@ -173,7 +179,7 @@ func (suite *ContainerdSuite) TestRunSuccess() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
-	suite.Assert().NoError(r.Run(MockEventSink))
+	suite.Assert().NoError(r.Run(MockEventSink, MockPidRecorder))
 	// calling stop when Run has finished is no-op
 	suite.Assert().NoError(r.Stop())
 }
@@ -196,7 +202,7 @@ func (suite *ContainerdSuite) TestRunTwice() {
 	// running same container twice should be fine
 	// (checks that containerd state is cleaned up properly)
 	for i := range 2 {
-		suite.Assert().NoError(r.Run(MockEventSink))
+		suite.Assert().NoError(r.Run(MockEventSink, MockPidRecorder))
 		// calling stop when Run has finished is no-op
 		suite.Assert().NoError(r.Stop())
 
@@ -238,7 +244,7 @@ func (suite *ContainerdSuite) TestContainerCleanup() {
 
 	defer func() { suite.Assert().NoError(r2.Close()) }()
 
-	suite.Assert().NoError(r2.Run(MockEventSink))
+	suite.Assert().NoError(r2.Run(MockEventSink, MockPidRecorder))
 	// calling stop when Run has finished is no-op
 	suite.Assert().NoError(r2.Stop())
 }
@@ -258,7 +264,7 @@ func (suite *ContainerdSuite) TestRunLogs() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
-	suite.Assert().NoError(r.Run(MockEventSink))
+	suite.Assert().NoError(r.Run(MockEventSink, MockPidRecorder))
 
 	logFile, err := os.Open(filepath.Join(suite.tmpDir, suite.containerID+".log"))
 	suite.Assert().NoError(err)
@@ -305,7 +311,7 @@ func (suite *ContainerdSuite) TestStopFailingAndRestarting() {
 	done := make(chan error, 1)
 
 	go func() {
-		done <- r.Run(MockEventSink)
+		done <- r.Run(MockEventSink, MockPidRecorder)
 	}()
 
 	for range 10 {
@@ -376,7 +382,7 @@ func (suite *ContainerdSuite) TestStopSigKill() {
 	done := make(chan error, 1)
 
 	go func() {
-		done <- r.Run(MockEventSink)
+		done <- r.Run(MockEventSink, MockPidRecorder)
 	}()
 
 	time.Sleep(50 * time.Millisecond)
@@ -411,7 +417,7 @@ func (suite *ContainerdSuite) TestContainerStdin() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
-	suite.Assert().NoError(r.Run(MockEventSink))
+	suite.Assert().NoError(r.Run(MockEventSink, MockPidRecorder))
 
 	logFile, err := os.Open(filepath.Join(suite.tmpDir, suite.containerID+".log"))
 	suite.Assert().NoError(err)

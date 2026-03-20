@@ -19,6 +19,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -26,7 +27,7 @@ import (
 type Runner interface {
 	fmt.Stringer
 	Open() error
-	Run(events.Recorder) error
+	Run(events.Recorder, pid.Recorder) error
 	Stop() error
 	Close() error
 }

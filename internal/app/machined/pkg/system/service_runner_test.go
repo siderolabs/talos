@@ -32,9 +32,9 @@ func (suite *ServiceRunnerSuite) assertStateSequence(expectedStates []events.Ser
 }
 
 func (suite *ServiceRunnerSuite) TestFullFlow() {
-	sr := system.NewServiceRunner(system.Services(nil), &MockService{
+	sr := system.NewServiceRunner(system.Services(newRuntime(suite.T())), &MockService{
 		condition: conditions.None(),
-	}, nil)
+	}, newRuntime(suite.T()))
 
 	errCh := make(chan error)
 
@@ -77,7 +77,7 @@ func (suite *ServiceRunnerSuite) TestFullFlow() {
 }
 
 func (suite *ServiceRunnerSuite) TestFullFlowHealthy() {
-	sr := system.NewServiceRunner(system.Services(nil), &MockHealthcheckedService{}, nil)
+	sr := system.NewServiceRunner(system.Services(newRuntime(suite.T())), &MockHealthcheckedService{}, newRuntime(suite.T()))
 
 	errCh := make(chan error)
 
@@ -119,7 +119,7 @@ func (suite *ServiceRunnerSuite) TestFullFlowHealthChanges() {
 			condition: conditions.None(),
 		},
 	}
-	sr := system.NewServiceRunner(system.Services(nil), &m, nil)
+	sr := system.NewServiceRunner(system.Services(newRuntime(suite.T())), &m, newRuntime(suite.T()))
 
 	errCh := make(chan error)
 
@@ -184,9 +184,9 @@ func (suite *ServiceRunnerSuite) TestWaitingDescriptionChange() {
 
 	cond1 := NewMockCondition("cond1")
 	cond2 := NewMockCondition("cond2")
-	sr := system.NewServiceRunner(system.Services(nil), &MockService{
+	sr := system.NewServiceRunner(system.Services(newRuntime(suite.T())), &MockService{
 		condition: conditions.WaitForAll(cond1, cond2),
-	}, nil)
+	}, newRuntime(suite.T()))
 
 	errCh := make(chan error)
 
@@ -261,7 +261,7 @@ func (suite *ServiceRunnerSuite) TestPreStageFail() {
 	svc := &MockService{
 		preError: errors.New("pre failed"),
 	}
-	sr := system.NewServiceRunner(system.Services(nil), svc, nil)
+	sr := system.NewServiceRunner(system.Services(newRuntime(suite.T())), svc, newRuntime(suite.T()))
 	err := sr.Run()
 
 	suite.assertStateSequence([]events.ServiceState{
@@ -275,7 +275,7 @@ func (suite *ServiceRunnerSuite) TestRunnerStageFail() {
 	svc := &MockService{
 		runnerError: errors.New("runner failed"),
 	}
-	sr := system.NewServiceRunner(system.Services(nil), svc, nil)
+	sr := system.NewServiceRunner(system.Services(newRuntime(suite.T())), svc, newRuntime(suite.T()))
 	err := sr.Run()
 
 	suite.assertStateSequence([]events.ServiceState{
@@ -290,7 +290,7 @@ func (suite *ServiceRunnerSuite) TestRunnerStageSkipped() {
 	svc := &MockService{
 		nilRunner: true,
 	}
-	sr := system.NewServiceRunner(system.Services(nil), svc, nil)
+	sr := system.NewServiceRunner(system.Services(newRuntime(suite.T())), svc, newRuntime(suite.T()))
 	err := sr.Run()
 
 	suite.assertStateSequence([]events.ServiceState{
@@ -305,7 +305,7 @@ func (suite *ServiceRunnerSuite) TestAbortOnCondition() {
 	svc := &MockService{
 		condition: conditions.WaitForFileToExist("/doesntexistever"),
 	}
-	sr := system.NewServiceRunner(system.Services(nil), svc, nil)
+	sr := system.NewServiceRunner(system.Services(newRuntime(suite.T())), svc, newRuntime(suite.T()))
 
 	errCh := make(chan error)
 
@@ -343,7 +343,7 @@ func (suite *ServiceRunnerSuite) TestPostStateFail() {
 		condition: conditions.None(),
 		postError: errors.New("post failed"),
 	}
-	sr := system.NewServiceRunner(system.Services(nil), svc, nil)
+	sr := system.NewServiceRunner(system.Services(newRuntime(suite.T())), svc, newRuntime(suite.T()))
 
 	errCh := make(chan error)
 	runNotify := make(chan struct{})
@@ -371,7 +371,7 @@ func (suite *ServiceRunnerSuite) TestPostStateFail() {
 func (suite *ServiceRunnerSuite) TestRunFail() {
 	runner := &MockRunner{exitCh: make(chan error)}
 	svc := &MockService{runner: runner}
-	sr := system.NewServiceRunner(system.Services(nil), svc, nil)
+	sr := system.NewServiceRunner(system.Services(newRuntime(suite.T())), svc, newRuntime(suite.T()))
 
 	errCh := make(chan error)
 
@@ -392,9 +392,9 @@ func (suite *ServiceRunnerSuite) TestRunFail() {
 }
 
 func (suite *ServiceRunnerSuite) TestFullFlowRestart() {
-	sr := system.NewServiceRunner(system.Services(nil), &MockService{
+	sr := system.NewServiceRunner(system.Services(newRuntime(suite.T())), &MockService{
 		condition: conditions.None(),
-	}, nil)
+	}, newRuntime(suite.T()))
 
 	errCh := make(chan error)
 

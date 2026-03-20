@@ -83,7 +83,7 @@ func TestRestartService(t *testing.T) {
 	ctx, cancel := context.WithDeadline(t.Context(), deadline)
 	defer cancel()
 
-	services := system.NewServices(nil)
+	services := system.NewServices(newRuntime(t))
 
 	services.Load(TestService{})
 

@@ -47,6 +47,7 @@ func TestRegisterResource(t *testing.T) {
 		&runtime.PlatformMetadata{},
 		&runtime.SBOMItem{},
 		&runtime.SecurityState{},
+		&runtime.ServicePID{},
 		&runtime.UniqueMachineToken{},
 		&runtime.WatchdogTimerConfig{},
 		&runtime.WatchdogTimerStatus{},

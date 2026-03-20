@@ -13,6 +13,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/health"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/pkg/conditions"
 )
@@ -112,7 +113,7 @@ func (m *MockRunner) Close() error {
 	return nil
 }
 
-func (m *MockRunner) Run(eventSink events.Recorder) error {
+func (m *MockRunner) Run(eventSink events.Recorder, _ pid.Recorder) error {
 	eventSink(events.StateRunning, "Running")
 
 	return <-m.exitCh
