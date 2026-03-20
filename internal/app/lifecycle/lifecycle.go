@@ -16,6 +16,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
 	"github.com/siderolabs/talos/internal/pkg/install"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	blockres "github.com/siderolabs/talos/pkg/machinery/resources/block"
@@ -90,43 +91,45 @@ func (s *Service) Install(req *machine.LifecycleServiceInstallRequest, ss grpc.S
 	s.logger.Info("starting installation", zap.String("installer_image", installerImage), zap.String("disk", targetDisk))
 
 	//nolint:dupl
-	err = runInstallerContainer(ctx, &containerRunConfig{
-		containerdInst: req.GetContainerd(),
-		imageRef:       installerImage,
-		disk:           targetDisk,
-		platform:       s.runtime.State().Platform().Name(),
-		cfgContainer:   s.runtime.ConfigContainer(),
-		opts: []install.Option{
-			install.WithForce(true),
-			install.WithZero(false),
-		},
-		send: func(msg string) error {
-			s.logger.Info("installation progress", zap.String("message", msg))
+	err = runInstallerContainer(ctx,
+		pid.NewStateRecorder(s.runtime.State().V1Alpha2().Resources()).Record,
+		&containerRunConfig{
+			containerdInst: req.GetContainerd(),
+			imageRef:       installerImage,
+			disk:           targetDisk,
+			platform:       s.runtime.State().Platform().Name(),
+			cfgContainer:   s.runtime.ConfigContainer(),
+			opts: []install.Option{
+				install.WithForce(true),
+				install.WithZero(false),
+			},
+			send: func(msg string) error {
+				s.logger.Info("installation progress", zap.String("message", msg))
 
-			return ss.Send(&machine.LifecycleServiceInstallResponse{
-				Progress: &machine.LifecycleServiceInstallProgress{
-					Response: &machine.LifecycleServiceInstallProgress_Message{
-						Message: msg,
+				return ss.Send(&machine.LifecycleServiceInstallResponse{
+					Progress: &machine.LifecycleServiceInstallProgress{
+						Response: &machine.LifecycleServiceInstallProgress_Message{
+							Message: msg,
+						},
 					},
-				},
-			})
-		},
-		sendExitCode: func(exitCode int32) error {
-			if exitCode == 0 {
-				s.logger.Info("installation completed successfully", zap.Int32("exit_code", exitCode))
-			} else {
-				s.logger.Error("installation failed", zap.Int32("exit_code", exitCode))
-			}
+				})
+			},
+			sendExitCode: func(exitCode int32) error {
+				if exitCode == 0 {
+					s.logger.Info("installation completed successfully", zap.Int32("exit_code", exitCode))
+				} else {
+					s.logger.Error("installation failed", zap.Int32("exit_code", exitCode))
+				}
 
-			return ss.Send(&machine.LifecycleServiceInstallResponse{
-				Progress: &machine.LifecycleServiceInstallProgress{
-					Response: &machine.LifecycleServiceInstallProgress_ExitCode{
-						ExitCode: exitCode,
+				return ss.Send(&machine.LifecycleServiceInstallResponse{
+					Progress: &machine.LifecycleServiceInstallProgress{
+						Response: &machine.LifecycleServiceInstallProgress_ExitCode{
+							ExitCode: exitCode,
+						},
 					},
-				},
-			})
-		},
-	})
+				})
+			},
+		})
 	if err != nil {
 		return status.Error(codes.Internal, fmt.Sprintf("installation failed: %v", err))
 	}
@@ -181,43 +184,45 @@ func (s *Service) Upgrade(req *machine.LifecycleServiceUpgradeRequest, ss grpc.S
 	s.logger.Info("starting upgrade", zap.String("installer_image", installerImage), zap.String("disk", devname))
 
 	//nolint:dupl
-	err = runInstallerContainer(ctx, &containerRunConfig{
-		containerdInst: req.GetContainerd(),
-		imageRef:       installerImage,
-		disk:           devname,
-		platform:       s.runtime.State().Platform().Name(),
-		cfgContainer:   s.runtime.ConfigContainer(),
-		opts: []install.Option{
-			install.WithUpgrade(true),
-			install.WithForce(false),
-		},
-		send: func(msg string) error {
-			s.logger.Info("upgrade progress", zap.String("message", msg))
+	err = runInstallerContainer(ctx,
+		pid.NewStateRecorder(s.runtime.State().V1Alpha2().Resources()).Record,
+		&containerRunConfig{
+			containerdInst: req.GetContainerd(),
+			imageRef:       installerImage,
+			disk:           devname,
+			platform:       s.runtime.State().Platform().Name(),
+			cfgContainer:   s.runtime.ConfigContainer(),
+			opts: []install.Option{
+				install.WithUpgrade(true),
+				install.WithForce(false),
+			},
+			send: func(msg string) error {
+				s.logger.Info("upgrade progress", zap.String("message", msg))
 
-			return ss.Send(&machine.LifecycleServiceUpgradeResponse{
-				Progress: &machine.LifecycleServiceInstallProgress{
-					Response: &machine.LifecycleServiceInstallProgress_Message{
-						Message: msg,
+				return ss.Send(&machine.LifecycleServiceUpgradeResponse{
+					Progress: &machine.LifecycleServiceInstallProgress{
+						Response: &machine.LifecycleServiceInstallProgress_Message{
+							Message: msg,
+						},
 					},
-				},
-			})
-		},
-		sendExitCode: func(exitCode int32) error {
-			if exitCode == 0 {
-				s.logger.Info("upgrade completed successfully", zap.Int32("exit_code", exitCode))
-			} else {
-				s.logger.Error("upgrade failed", zap.Int32("exit_code", exitCode))
-			}
+				})
+			},
+			sendExitCode: func(exitCode int32) error {
+				if exitCode == 0 {
+					s.logger.Info("upgrade completed successfully", zap.Int32("exit_code", exitCode))
+				} else {
+					s.logger.Error("upgrade failed", zap.Int32("exit_code", exitCode))
+				}
 
-			return ss.Send(&machine.LifecycleServiceUpgradeResponse{
-				Progress: &machine.LifecycleServiceInstallProgress{
-					Response: &machine.LifecycleServiceInstallProgress_ExitCode{
-						ExitCode: exitCode,
+				return ss.Send(&machine.LifecycleServiceUpgradeResponse{
+					Progress: &machine.LifecycleServiceInstallProgress{
+						Response: &machine.LifecycleServiceInstallProgress_ExitCode{
+							ExitCode: exitCode,
+						},
 					},
-				},
-			})
-		},
-	})
+				})
+			},
+		})
 	if err != nil {
 		return status.Error(codes.Internal, fmt.Sprintf("upgrade failed: %v", err))
 	}

@@ -28,6 +28,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/internal/lastlog"
 	"github.com/siderolabs/talos/internal/pkg/cgroup"
@@ -68,10 +69,10 @@ func (p *processRunner) Open() error {
 }
 
 // Run implements the Runner interface.
-func (p *processRunner) Run(eventSink events.Recorder) error {
+func (p *processRunner) Run(eventSink events.Recorder, pidRecorder pid.Recorder) error {
 	defer close(p.stopped)
 
-	return p.run(eventSink)
+	return p.run(eventSink, pidRecorder)
 }
 
 // Stop implements the Runner interface.
@@ -414,7 +415,7 @@ func setSchedulingPolicy(p *processRunner, pid int, schedulingPolicy uint) error
 }
 
 //nolint:gocyclo
-func (p *processRunner) run(eventSink events.Recorder) error {
+func (p *processRunner) run(eventSink events.Recorder, pidRecorder pid.Recorder) error {
 	cg, err := cgroup.CreateCgroup(p.opts.CgroupPath)
 	if err != nil {
 		return fmt.Errorf("error creating cgroup: %w", err)
@@ -447,6 +448,16 @@ func (p *processRunner) run(eventSink events.Recorder) error {
 	if err != nil {
 		return fmt.Errorf("error starting process: %w", err)
 	}
+
+	if err := pidRecorder(p.args.ID, int32(pid), false); err != nil {
+		return fmt.Errorf("recording pid: %w", err)
+	}
+
+	defer func() {
+		if err := pidRecorder(p.args.ID, int32(pid), true); err != nil {
+			log.Printf("error clearing pid: %v", err)
+		}
+	}()
 
 	if err := applyProperties(p, pid); err != nil {
 		return err

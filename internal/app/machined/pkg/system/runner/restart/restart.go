@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 )
 
@@ -102,14 +103,14 @@ func (r *restarter) Open() error {
 // Run implements the Runner interface
 //
 //nolint:gocyclo
-func (r *restarter) Run(eventSink events.Recorder) error {
+func (r *restarter) Run(eventSink events.Recorder, pidRecorder pid.Recorder) error {
 	defer close(r.stopped)
 
 	for {
 		errCh := make(chan error)
 
 		go func() {
-			errCh <- r.wrappedRunner.Run(eventSink)
+			errCh <- r.wrappedRunner.Run(eventSink, pidRecorder)
 		}()
 
 		var err error

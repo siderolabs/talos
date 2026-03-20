@@ -26,6 +26,20 @@ func GetRoles(ctx context.Context) role.Set {
 	return set
 }
 
+// ReplaceRoles replaces roles in the context with the given ones.
+//
+// If there are no roles in the context, no changes are made.
+func ReplaceRoles(ctx context.Context, f func(role.Set) role.Set) context.Context {
+	set, ok := getFromContext(ctx)
+	if !ok {
+		return ctx
+	}
+
+	newSet := f(set)
+
+	return context.WithValue(ctx, ctxKey{}, newSet)
+}
+
 // HasRole returns true if the context includes the given role.
 func HasRole(ctx context.Context, r role.Role) bool {
 	return GetRoles(ctx).Includes(r)

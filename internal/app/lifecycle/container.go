@@ -24,6 +24,7 @@ import (
 	"github.com/siderolabs/go-procfs/procfs"
 
 	"github.com/siderolabs/talos/internal/app/internal/ctrhelper"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
 	containerdrunner "github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/siderolabs/talos/internal/pkg/capability"
 	"github.com/siderolabs/talos/internal/pkg/install"
@@ -65,7 +66,7 @@ type containerRunConfig struct {
 // streaming output lines back to the client via the send callback.
 //
 //nolint:gocyclo,cyclop
-func runInstallerContainer(ctx context.Context, rc *containerRunConfig) error {
+func runInstallerContainer(ctx context.Context, pidRecorder pid.Recorder, rc *containerRunConfig) error {
 	options := install.Options{Pull: true} //nolint:staticcheck
 	if err := options.Apply(rc.opts...); err != nil {
 		return fmt.Errorf("failed to apply install options: %w", err)
@@ -166,6 +167,16 @@ func runInstallerContainer(ctx context.Context, rc *containerRunConfig) error {
 
 		return fmt.Errorf("failed to start task: %w", err)
 	}
+
+	if err := pidRecorder("installer", int32(task.Pid()), false); err != nil {
+		return fmt.Errorf("failed to record installer PID: %w", err)
+	}
+
+	defer func() {
+		if err := pidRecorder("installer", 0, true); err != nil {
+			log.Printf("failed to clear installer PID record: %v", err)
+		}
+	}()
 
 	statusC, err := task.Wait(detachedCtx)
 	if err != nil {

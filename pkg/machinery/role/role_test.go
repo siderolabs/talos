@@ -31,4 +31,6 @@ func TestSet(t *testing.T) {
 	assert.False(t, roles.IncludesAny(role.MakeSet()))
 	assert.False(t, role.MakeSet().IncludesAny(roles))
 	assert.False(t, role.MakeSet().IncludesAny(role.MakeSet()))
+
+	assert.Equal(t, role.MakeSet(role.Reader), role.MakeSet(role.Admin, role.Reader).Intersect(role.MakeSet(role.Operator, role.Reader)))
 }
