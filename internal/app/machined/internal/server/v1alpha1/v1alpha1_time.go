@@ -11,6 +11,8 @@ import (
 
 	ntpclient "github.com/beevik/ntp"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
@@ -59,6 +61,10 @@ func (r *TimeServer) Time(ctx context.Context, in *emptypb.Empty) (reply *timeap
 // TimeCheck issues a query to the specified ntp server and displays the results.
 func (r *TimeServer) TimeCheck(ctx context.Context, in *timeapi.TimeRequest) (reply *timeapi.TimeResponse, err error) {
 	var t time.Time
+
+	if in.GetServer() == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "ntp server is required")
+	}
 
 	if ntp.IsPTPDevice(in.Server) {
 		ts, err := ntp.QueryPTPDevice(in.Server)

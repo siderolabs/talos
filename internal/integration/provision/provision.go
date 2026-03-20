@@ -17,11 +17,13 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/google/uuid"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/v2/encryption"
 	"github.com/siderolabs/go-kubernetes/kubernetes/ssa"
@@ -63,6 +65,7 @@ import (
 	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/access"
 	"github.com/siderolabs/talos/pkg/provision/providers/qemu"
+	"github.com/siderolabs/talos/pkg/provision/siderolinkbuilder"
 )
 
 var allSuites []suite.TestingSuite
@@ -125,6 +128,13 @@ type BaseSuite struct {
 	base.TalosSuite
 
 	provisioner provision.Provisioner
+
+	controlplaneUUIDs []uuid.UUID
+	workerUUIDs       []uuid.UUID
+
+	slb                       *siderolinkbuilder.SiderolinkBuilder
+	controlplaneSideroLinkIPs []netip.Addr
+	workerSideroLinkIPs       []netip.Addr
 
 	configBundle *bundle.Bundle
 
@@ -734,11 +744,12 @@ type clusterOptions struct {
 	WithBios                bool
 	WithApplyConfig         bool
 	WithSkipInjectingConfig bool
+	WithSideroLink          bool
 }
 
 // setupCluster provisions source clusters and waits for health.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (suite *BaseSuite) setupCluster(options clusterOptions) {
 	defaultStateDir, err := clientconfig.GetTalosDirectory()
 	suite.Require().NoError(err)
@@ -759,6 +770,18 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 	for i := range ips {
 		ips[i], err = sideronet.NthIPInNetwork(cidr, i+2)
 		suite.Require().NoError(err)
+	}
+
+	suite.controlplaneUUIDs = make([]uuid.UUID, options.ControlplaneNodes)
+
+	for i := range options.ControlplaneNodes {
+		suite.controlplaneUUIDs[i] = uuid.New()
+	}
+
+	suite.workerUUIDs = make([]uuid.UUID, options.WorkerNodes)
+
+	for i := range options.WorkerNodes {
+		suite.workerUUIDs[i] = uuid.New()
 	}
 
 	suite.T().Logf("initializing provisioner with cluster name %q, state directory %q", options.ClusterName, suite.stateDir)
@@ -894,6 +917,40 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 		}
 	}
 
+	if options.WithSideroLink {
+		suite.slb, err = siderolinkbuilder.New(suite.ctx, gatewayIP.String(), false)
+		suite.Require().NoError(err)
+
+		for uuid := range slices.Values(slices.Concat(suite.controlplaneUUIDs, suite.workerUUIDs)) {
+			suite.Require().NoError(suite.slb.DefineIPv6ForUUID(uuid))
+		}
+
+		request.SiderolinkRequest = suite.slb.SiderolinkRequest()
+
+		suite.controlplaneSideroLinkIPs = make([]netip.Addr, options.ControlplaneNodes)
+
+		for i := range suite.controlplaneSideroLinkIPs {
+			var ok bool
+
+			suite.controlplaneSideroLinkIPs[i], ok = request.SiderolinkRequest.GetAddr(&suite.controlplaneUUIDs[i])
+			suite.Require().True(ok, "failed to get siderolink IP for control plane node %d", i+1)
+		}
+
+		suite.workerSideroLinkIPs = make([]netip.Addr, options.WorkerNodes)
+
+		for i := range suite.workerSideroLinkIPs {
+			var ok bool
+
+			suite.workerSideroLinkIPs[i], ok = request.SiderolinkRequest.GetAddr(&suite.workerUUIDs[i])
+			suite.Require().True(ok, "failed to get siderolink IP for worker node %d", i+1)
+		}
+
+		extraPatches = append(
+			extraPatches,
+			configpatcher.NewStrategicMergePatch(suite.slb.ConfigDocument(false)),
+		)
+	}
+
 	suite.configBundle, err = bundle.NewBundle(
 		append([]bundle.Option{
 			bundle.WithInputOptions(
@@ -924,6 +981,7 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 				Name:     fmt.Sprintf("control-plane-%d", i+1),
 				Type:     machine.TypeControlPlane,
 				IPs:      []netip.Addr{ips[i]},
+				UUID:     &suite.controlplaneUUIDs[i],
 				Memory:   DefaultSettings.MemMB * 1024 * 1024,
 				NanoCPUs: DefaultSettings.CPUs * 1000 * 1000 * 1000,
 				Disks: []*provision.Disk{
@@ -945,6 +1003,7 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 				Name:     fmt.Sprintf("worker-%d", i),
 				Type:     machine.TypeWorker,
 				IPs:      []netip.Addr{ips[options.ControlplaneNodes+i-1]},
+				UUID:     &suite.workerUUIDs[i-1],
 				Memory:   DefaultSettings.MemMB * 1024 * 1024,
 				NanoCPUs: DefaultSettings.CPUs * 1000 * 1000 * 1000,
 				Disks: []*provision.Disk{
@@ -963,6 +1022,7 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 		provision.WithBootlader(true),
 		provision.WithUEFI(!options.WithBios),
 		provision.WithTalosConfig(suite.configBundle.TalosConfig()),
+		provision.WithSiderolinkAgent(options.WithSideroLink),
 	}
 
 	suite.Cluster, err = suite.provisioner.Create(

@@ -7,6 +7,7 @@ package lifecycle
 
 import (
 	"fmt"
+	"log"
 	"path/filepath"
 	"sync"
 
@@ -88,7 +89,7 @@ func (s *Service) Install(req *machine.LifecycleServiceInstallRequest, ss grpc.S
 		return status.Error(codes.InvalidArgument, fmt.Sprintf("invalid disk path: %v", err))
 	}
 
-	s.logger.Info("starting installation", zap.String("installer_image", installerImage), zap.String("disk", targetDisk))
+	log.Printf("starting installation: installer_image=%s, disk=%s\n", installerImage, targetDisk)
 
 	//nolint:dupl
 	err = runInstallerContainer(ctx,
@@ -116,9 +117,9 @@ func (s *Service) Install(req *machine.LifecycleServiceInstallRequest, ss grpc.S
 			},
 			sendExitCode: func(exitCode int32) error {
 				if exitCode == 0 {
-					s.logger.Info("installation completed successfully", zap.Int32("exit_code", exitCode))
+					log.Printf("installation completed successfully: exit_code=%d\n", exitCode)
 				} else {
-					s.logger.Error("installation failed", zap.Int32("exit_code", exitCode))
+					log.Printf("installation failed: exit_code=%d\n", exitCode)
 				}
 
 				return ss.Send(&machine.LifecycleServiceInstallResponse{
@@ -181,7 +182,7 @@ func (s *Service) Upgrade(req *machine.LifecycleServiceUpgradeRequest, ss grpc.S
 
 	devname := systemDisk.DevPath
 
-	s.logger.Info("starting upgrade", zap.String("installer_image", installerImage), zap.String("disk", devname))
+	log.Printf("starting upgrade: installer_image=%s, disk=%s\n", installerImage, devname)
 
 	//nolint:dupl
 	err = runInstallerContainer(ctx,
@@ -209,9 +210,9 @@ func (s *Service) Upgrade(req *machine.LifecycleServiceUpgradeRequest, ss grpc.S
 			},
 			sendExitCode: func(exitCode int32) error {
 				if exitCode == 0 {
-					s.logger.Info("upgrade completed successfully", zap.Int32("exit_code", exitCode))
+					log.Printf("upgrade completed successfully: exit_code=%d\n", exitCode)
 				} else {
-					s.logger.Error("upgrade failed", zap.Int32("exit_code", exitCode))
+					log.Printf("upgrade failed: exit_code=%d\n", exitCode)
 				}
 
 				return ss.Send(&machine.LifecycleServiceUpgradeResponse{

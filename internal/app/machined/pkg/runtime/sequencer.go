@@ -53,6 +53,7 @@ const (
 var sequenceTakeOver = map[Sequence]map[Sequence]struct{}{
 	SequenceInitialize: {
 		SequenceMaintenanceUpgrade: {},
+		SequenceReboot:             {},
 	},
 	SequenceBoot: {
 		SequenceReboot:  {},

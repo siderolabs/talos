@@ -1347,6 +1347,10 @@ func k8slogs(ctx context.Context, req *machine.LogsRequest) (chunker.Chunker, io
 }
 
 func getContainerInspector(ctx context.Context, namespace string, driver common.ContainerDriver) (containers.Inspector, error) {
+	if namespace == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "namespace can't be empty")
+	}
+
 	switch driver {
 	case common.ContainerDriver_CRI:
 		if namespace != constants.K8sContainerdNamespace {
@@ -1362,7 +1366,7 @@ func getContainerInspector(ctx context.Context, namespace string, driver common.
 
 		return taloscontainerd.NewInspector(ctx, namespace, taloscontainerd.WithContainerdAddress(addr))
 	default:
-		return nil, fmt.Errorf("unsupported driver %q", driver)
+		return nil, status.Errorf(codes.InvalidArgument, "unsupported driver %q", driver)
 	}
 }
 
@@ -2551,23 +2555,19 @@ func tryLockUpgradeMutex(ctx context.Context, etcdClient *etcd.Client) (unlock f
 
 // Netstat implements the machine.MachineServer interface.
 func (s *Server) Netstat(ctx context.Context, req *machine.NetstatRequest) (*machine.NetstatResponse, error) {
-	if req == nil {
-		req = new(machine.NetstatRequest)
-	}
-
 	features := netstat.EnableFeatures{
-		TCP:           req.L4Proto.Tcp,
-		TCP6:          req.L4Proto.Tcp6,
-		UDP:           req.L4Proto.Udp,
-		UDP6:          req.L4Proto.Udp6,
-		UDPLite:       req.L4Proto.Udplite,
-		UDPLite6:      req.L4Proto.Udplite6,
-		Raw:           req.L4Proto.Raw,
-		Raw6:          req.L4Proto.Raw6,
-		PID:           req.Feature.Pid,
-		NoHostNetwork: !req.Netns.Hostnetwork,
-		AllNetNs:      req.Netns.Allnetns,
-		NetNsName:     req.Netns.Netns,
+		TCP:           req.GetL4Proto().GetTcp(),
+		TCP6:          req.GetL4Proto().GetTcp6(),
+		UDP:           req.GetL4Proto().GetUdp(),
+		UDP6:          req.GetL4Proto().GetUdp6(),
+		UDPLite:       req.GetL4Proto().GetUdplite(),
+		UDPLite6:      req.GetL4Proto().GetUdplite6(),
+		Raw:           req.GetL4Proto().GetRaw(),
+		Raw6:          req.GetL4Proto().GetRaw6(),
+		PID:           req.GetFeature().GetPid(),
+		NoHostNetwork: !req.GetNetns().GetHostnetwork(),
+		AllNetNs:      req.GetNetns().GetAllnetns(),
+		NetNsName:     req.GetNetns().GetNetns(),
 	}
 
 	var fn netstat.AcceptFn
@@ -2583,6 +2583,8 @@ func (s *Server) Netstat(ctx context.Context, req *machine.NetstatRequest) (*mac
 		fn = func(s *netstat.SockTabEntry) bool {
 			return !s.RemoteEndpoint.IP.IsUnspecified() && s.RemoteEndpoint.Port != 0
 		}
+	default:
+		return nil, status.Errorf(codes.InvalidArgument, "invalid filter: %v", req.Filter)
 	}
 
 	netstatResp, err := netstat.Netstat(ctx, features, fn)

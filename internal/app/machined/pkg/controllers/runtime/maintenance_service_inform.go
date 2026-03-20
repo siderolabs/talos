@@ -94,6 +94,11 @@ func (ctrl *MaintenanceServiceInformController) Run(ctx context.Context, r contr
 			return fmt.Errorf("failed to get maintenance service config: %w", err)
 		}
 
+		if cfg == nil {
+			// no config, nothing to do
+			continue
+		}
+
 		cert, err := safe.ReaderGetByID[*secrets.API](ctx, r, secrets.APIID)
 		if err != nil && !state.IsNotFoundError(err) {
 			return fmt.Errorf("failed to get API secret: %w", err)

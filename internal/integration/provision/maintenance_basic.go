@@ -7,23 +7,29 @@
 package provision
 
 import (
+	"context"
 	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
-	"os"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/stretchr/testify/assert"
+	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/siderolabs/talos/pkg/images"
+	"github.com/siderolabs/talos/pkg/machinery/api"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
@@ -41,7 +47,7 @@ func (suite *MaintenanceBasicSuite) SuiteName() string {
 
 // TestAPI tests basic maintenance API operations.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (suite *MaintenanceBasicSuite) TestAPI() {
 	const (
 		maintenanceControlplanes = 1
@@ -116,6 +122,14 @@ func (suite *MaintenanceBasicSuite) TestAPI() {
 		suite.Require().Error(err)
 		suite.Require().Equal(codes.PermissionDenied, client.StatusCode(err))
 
+		// install API should not be allowed in maintenance mode
+		installClient, err := maintenanceClient.LifecycleClient.Install(suite.ctx, &machine.LifecycleServiceInstallRequest{})
+		suite.Require().NoError(err)
+
+		_, err = installClient.Recv()
+		suite.Require().Error(err)
+		suite.Require().Equal(codes.PermissionDenied, client.StatusCode(err))
+
 		// reboot should be not authorized in maintenance mode
 		err = maintenanceClient.Reboot(suite.ctx)
 		suite.Require().Error(err)
@@ -136,6 +150,79 @@ func (suite *MaintenanceBasicSuite) TestAPI() {
 			}
 
 			suite.Require().NoError(err)
+		}
+	})
+
+	suite.Run("test all APIs in maintenance mode", func() {
+		// it doesn't matter which machine to use, as they are all same in maintenance mode right now
+		conn, err := grpc.NewClient(
+			nethelpers.JoinHostPort(suite.Cluster.Info().Nodes[0].IPs[0].String(), constants.ApidPort),
+			grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{InsecureSkipVerify: true})),
+		)
+		suite.Require().NoError(err)
+
+		defer func() {
+			suite.Require().NoError(conn.Close())
+		}()
+
+		for _, service := range api.TalosAPIdAllAPIs() {
+			for i := range service.Services().Len() {
+				svc := service.Services().Get(i)
+
+				for j := range svc.Methods().Len() {
+					method := svc.Methods().Get(j)
+
+					methodName := fmt.Sprintf("/%s/%s", svc.FullName(), method.Name())
+
+					suite.Run(methodName, func() {
+						// some APIs might be blocking
+						ctx, cancel := context.WithTimeout(suite.ctx, time.Second)
+						defer cancel()
+
+						stream, err := conn.NewStream(ctx, &grpc.StreamDesc{ServerStreams: true, ClientStreams: true}, methodName)
+						suite.Require().NoError(err)
+
+						suite.Require().NoError(stream.SendMsg(&emptypb.Empty{}))
+						suite.Require().NoError(stream.CloseSend())
+
+						err = stream.RecvMsg(&emptypb.Empty{})
+
+						switch {
+						case status.Code(err) == codes.PermissionDenied:
+							// expected, okay to have APIs that are not allowed in maintenance mode
+						case status.Code(err) == codes.Unimplemented:
+							// expected, some APIs might not be implemented in maintenance mode
+						case status.Code(err) == codes.InvalidArgument:
+							// expected, we submitted empty message, so some APIs might return invalid argument error
+						case status.Code(err) == codes.DeadlineExceeded || status.Code(err) == codes.Canceled:
+							// expected, API blocked, so deadline exceeded/canceled, also okay
+						case err == nil:
+							// also okay, some APIs might work in maintenance mode
+							//
+							// drain the stream
+							for {
+								err = stream.RecvMsg(&emptypb.Empty{})
+								if errors.Is(err, io.EOF) {
+									break
+								}
+
+								if status.Code(err) == codes.Canceled || status.Code(err) == codes.DeadlineExceeded {
+									// expected, API blocked, so deadline exceeded/canceled, also okay
+									break
+								}
+
+								suite.Assert().NoError(err, "unexpected error for method on draining the stream %s", methodName)
+							}
+						case errors.Is(err, io.EOF):
+							// API done, also okay
+						default:
+							suite.Assert().NoError(err, "unexpected error for method %s", methodName)
+						}
+
+						suite.T().Logf("method %s -> %v", methodName, err)
+					})
+				}
+			}
 		}
 	})
 
@@ -164,7 +251,7 @@ func (suite *MaintenanceBasicSuite) TestAPI() {
 			suite.Require().NoError(err)
 		}
 
-		suite.Require().NoError(suite.clusterAccess.Bootstrap(suite.ctx, os.Stdout))
+		suite.Require().NoError(suite.clusterAccess.Bootstrap(suite.ctx, suite.T().Output()))
 
 		suite.waitForClusterHealth()
 	})
