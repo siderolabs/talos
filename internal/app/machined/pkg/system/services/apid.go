@@ -18,6 +18,7 @@ import (
 	"github.com/containerd/containerd/v2/pkg/cap"
 	"github.com/containerd/containerd/v2/pkg/oci"
 	"github.com/cosi-project/runtime/api/v1alpha1"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/protobuf/server"
 	specs "github.com/opencontainers/runtime-spec/specs-go"
@@ -245,11 +246,27 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 }
 
 // HealthFunc implements the HealthcheckedService interface.
-func (o *APID) HealthFunc(runtime.Runtime) health.Check {
+func (o *APID) HealthFunc(r runtime.Runtime) health.Check {
 	return func(ctx context.Context) error {
+		cfg, err := safe.ReaderGetByID[*runtimeres.APIServiceConfig](ctx, r.State().V1Alpha2().Resources(), runtimeres.APIServiceConfigID)
+		if err != nil {
+			return fmt.Errorf("failed to get API service config: %w", err)
+		}
+
+		host, port, err := net.SplitHostPort(cfg.TypedSpec().ListenAddress)
+		if err != nil {
+			return fmt.Errorf("invalid listen address in API service config: %w", err)
+		}
+
+		if host == "" {
+			host = "127.0.0.1"
+		}
+
+		endpoint := net.JoinHostPort(host, port)
+
 		var d net.Dialer
 
-		conn, err := d.DialContext(ctx, "tcp", fmt.Sprintf("%s:%d", "127.0.0.1", constants.ApidPort))
+		conn, err := d.DialContext(ctx, "tcp", endpoint)
 		if err != nil {
 			return err
 		}
