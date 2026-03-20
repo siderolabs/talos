@@ -506,6 +506,7 @@ description: Talos gRPC API reference.
     - [PlatformMetadataSpec.TagsEntry](#talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry)
     - [SBOMItemSpec](#talos.resource.definitions.runtime.SBOMItemSpec)
     - [SecurityStateSpec](#talos.resource.definitions.runtime.SecurityStateSpec)
+    - [ServicePIDSpec](#talos.resource.definitions.runtime.ServicePIDSpec)
     - [UniqueMachineTokenSpec](#talos.resource.definitions.runtime.UniqueMachineTokenSpec)
     - [UnmetCondition](#talos.resource.definitions.runtime.UnmetCondition)
     - [WatchdogTimerConfigSpec](#talos.resource.definitions.runtime.WatchdogTimerConfigSpec)
@@ -8854,6 +8855,22 @@ SecurityStateSpec describes the security state resource properties.
 | booted_with_uki | [bool](#bool) |  |  |
 | fips_state | [talos.resource.definitions.enums.RuntimeFIPSState](#talos.resource.definitions.enums.RuntimeFIPSState) |  |  |
 | module_signature_enforced | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.ServicePIDSpec"></a>
+
+### ServicePIDSpec
+ServicePIDSpec is the spec for the service PID.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pid | [int32](#int32) |  |  |
+| mount_namespace | [string](#string) |  |  |
 
 
 

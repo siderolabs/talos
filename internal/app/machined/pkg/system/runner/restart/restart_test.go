@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/restart"
 )
 
@@ -41,7 +42,7 @@ func (m *MockRunner) Close() error {
 	return nil
 }
 
-func (m *MockRunner) Run(eventSink events.Recorder) error {
+func (m *MockRunner) Run(eventSink events.Recorder, _ pid.Recorder) error {
 	defer close(m.stopped)
 
 	select {
@@ -93,7 +94,7 @@ func (suite *RestartSuite) TestRunOnce() {
 		mock.exitCh <- failed
 	}()
 
-	suite.Assert().EqualError(r.Run(MockEventSink), failed.Error())
+	suite.Assert().EqualError(r.Run(MockEventSink, nil), failed.Error())
 	suite.Assert().NoError(r.Stop())
 }
 
@@ -110,7 +111,7 @@ func (suite *RestartSuite) TestRunOnceStop() {
 	errCh := make(chan error)
 
 	go func() {
-		errCh <- r.Run(MockEventSink)
+		errCh <- r.Run(MockEventSink, nil)
 	}()
 
 	suite.Assert().NoError(r.Stop())
@@ -131,7 +132,7 @@ func (suite *RestartSuite) TestRunUntilSuccess() {
 	errCh := make(chan error)
 
 	go func() {
-		errCh <- r.Run(MockEventSink)
+		errCh <- r.Run(MockEventSink, nil)
 	}()
 
 	mock.exitCh <- failed
@@ -161,7 +162,7 @@ func (suite *RestartSuite) TestRunForever() {
 	errCh := make(chan error)
 
 	go func() {
-		errCh <- r.Run(MockEventSink)
+		errCh <- r.Run(MockEventSink, nil)
 	}()
 
 	mock.exitCh <- failed

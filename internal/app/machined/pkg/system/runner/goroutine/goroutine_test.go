@@ -31,6 +31,12 @@ func MockEventSink(state events.ServiceState, message string, args ...any) {
 	log.Printf("state %s: %s", state, fmt.Sprintf(message, args...))
 }
 
+func MockPidRecorder(id string, pid int32, clearEntry bool) error {
+	log.Printf("recording pid for %s: %d (clear: %v)", id, pid, clearEntry)
+
+	return nil
+}
+
 type GoroutineSuite struct {
 	suite.Suite
 
@@ -73,7 +79,7 @@ func (suite *GoroutineSuite) TestRunSuccess() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
-	suite.Assert().NoError(r.Run(MockEventSink))
+	suite.Assert().NoError(r.Run(MockEventSink, MockPidRecorder))
 	// calling stop when Run has finished is no-op
 	suite.Assert().NoError(r.Stop())
 }
@@ -88,7 +94,7 @@ func (suite *GoroutineSuite) TestRunFail() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
-	suite.Assert().EqualError(r.Run(MockEventSink), "service failed")
+	suite.Assert().EqualError(r.Run(MockEventSink, MockPidRecorder), "service failed")
 	// calling stop when Run has finished is no-op
 	suite.Assert().NoError(r.Stop())
 }
@@ -103,7 +109,7 @@ func (suite *GoroutineSuite) TestRunPanic() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
-	err := r.Run(MockEventSink)
+	err := r.Run(MockEventSink, MockPidRecorder)
 	suite.Assert().Error(err)
 	suite.Assert().Regexp("^panic in service: service panic.*", err.Error())
 	// calling stop when Run has finished is no-op
@@ -125,7 +131,7 @@ func (suite *GoroutineSuite) TestStop() {
 	errCh := make(chan error)
 
 	go func() {
-		errCh <- r.Run(MockEventSink)
+		errCh <- r.Run(MockEventSink, MockPidRecorder)
 	}()
 
 	time.Sleep(20 * time.Millisecond)
@@ -157,7 +163,7 @@ func (suite *GoroutineSuite) TestStuckOnStop() {
 	errCh := make(chan error)
 
 	go func() {
-		errCh <- r.Run(MockEventSink)
+		errCh <- r.Run(MockEventSink, MockPidRecorder)
 	}()
 
 	time.Sleep(20 * time.Millisecond)
@@ -185,7 +191,7 @@ func (suite *GoroutineSuite) TestRunLogs() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
-	suite.Assert().NoError(r.Run(MockEventSink))
+	suite.Assert().NoError(r.Run(MockEventSink, MockPidRecorder))
 
 	logFile, err := os.Open(filepath.Join(suite.tmpDir, "logtest.log"))
 	suite.Assert().NoError(err)

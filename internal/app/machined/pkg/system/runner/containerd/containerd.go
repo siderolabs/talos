@@ -23,6 +23,7 @@ import (
 	"github.com/containerd/errdefs"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/internal/lastlog"
 	"github.com/siderolabs/talos/internal/pkg/cgroup"
@@ -131,7 +132,7 @@ func (c *containerdRunner) Close() error {
 // Run implements runner.Runner interface
 //
 //nolint:gocyclo,cyclop
-func (c *containerdRunner) Run(eventSink events.Recorder) error {
+func (c *containerdRunner) Run(eventSink events.Recorder, pidRecorder pid.Recorder) error {
 	defer close(c.stopped)
 
 	var (
@@ -222,6 +223,16 @@ func (c *containerdRunner) Run(eventSink events.Recorder) error {
 	}
 
 	eventSink(events.StateRunning, "Started task %s (PID %d) for container %s", task.ID(), task.Pid(), c.container.ID())
+
+	if err := pidRecorder(c.args.ID, int32(task.Pid()), false); err != nil {
+		return fmt.Errorf("failed to record pid for task %q: %w", c.args.ID, err)
+	}
+
+	defer func() {
+		if err := pidRecorder(c.args.ID, int32(task.Pid()), true); err != nil {
+			log.Printf("error clearing pid: %v", err)
+		}
+	}()
 
 	statusC, err := task.Wait(c.ctx)
 	if err != nil {

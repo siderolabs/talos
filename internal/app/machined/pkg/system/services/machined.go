@@ -27,6 +27,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/grpc/factory"
+	"github.com/siderolabs/talos/pkg/grpc/middleware/auth/unix"
 	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
 	"github.com/siderolabs/talos/pkg/logging"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -44,7 +45,7 @@ var rules = map[string]role.Set{
 	"/machine.ImageService/List":   role.MakeSet(role.Admin, role.Operator, role.Reader),
 	"/machine.ImageService/Pull":   role.MakeSet(role.Admin, role.Operator),
 	"/machine.ImageService/Remove": role.MakeSet(role.Admin),
-	"/machine.ImageService/Verify": role.MakeSet(role.Admin, role.Operator, role.Reader),
+	"/machine.ImageService/Verify": role.MakeSet(role.Admin, role.Operator, role.Reader, role.ImageVerifier),
 
 	"/machine.DebugService/ContainerRun": role.MakeSet(role.Admin),
 
@@ -145,6 +146,50 @@ func (s *machinedService) Main(ctx context.Context, _ runtime.Runtime, logWriter
 		Logger:        log.New(logWriter, "machined/authz/authorizer ", log.Flags()).Printf,
 	}
 
+	pidAuthorizer := &unix.Authorizer{
+		Resources: s.c.Runtime().State().V1Alpha2().Resources(),
+		AllowedServices: []unix.AllowedService{
+			{
+				// normal network API access
+				Pattern:      "apid",
+				AllowedRoles: role.All,
+			},
+			{
+				// image verification
+				Pattern:      "containerd",
+				AllowedRoles: role.MakeSet(role.ImageVerifier),
+			},
+			{
+				// image verification
+				Pattern:      "cri",
+				AllowedRoles: role.MakeSet(role.ImageVerifier),
+			},
+			{
+				// internal dashboard
+				Pattern:      "dashboard",
+				AllowedRoles: role.MakeSet(role.Reader),
+			},
+			{
+				// installer access during installation/upgrade
+				Pattern:      "installer",
+				AllowedRoles: role.All,
+			},
+			{
+				// health checks
+				Pattern:      "machined",
+				AllowedRoles: role.Zero,
+			},
+			{
+				// extension services
+				Pattern:      "ext-*",
+				AllowedRoles: role.All,
+				// allow processes forked inside the container to access apid as well
+				AllowNamespaceMatch: true,
+			},
+		},
+		Logger: log.New(logWriter, "machined/authz/unix/authorizer ", log.Flags()).Printf,
+	}
+
 	logger := logging.ZapLogger(
 		logging.NewLogDestination(logWriter, zapcore.DebugLevel,
 			logging.WithColoredLevels(),
@@ -165,11 +210,18 @@ func (s *machinedService) Main(ctx context.Context, _ runtime.Runtime, logWriter
 
 		factory.ServerOptions(
 			grpc.MaxRecvMsgSize(constants.GRPCMaxMessageSize),
+			grpc.Creds(unix.NewServerCredentials()),
 		),
 
+		// inject/parse the roles first
 		factory.WithUnaryInterceptor(injector.UnaryInterceptor()),
 		factory.WithStreamInterceptor(injector.StreamInterceptor()), //nolint:contextcheck
 
+		// authorize based on PID, filter roles
+		factory.WithUnaryInterceptor(pidAuthorizer.UnaryInterceptor()),
+		factory.WithStreamInterceptor(pidAuthorizer.StreamInterceptor()), //nolint:contextcheck
+
+		// final authorization check based on the filtered roles
 		factory.WithUnaryInterceptor(authorizer.UnaryInterceptor()),
 		factory.WithStreamInterceptor(authorizer.StreamInterceptor()), //nolint:contextcheck
 	)

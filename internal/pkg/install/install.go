@@ -26,6 +26,7 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
 	containerdrunner "github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/siderolabs/talos/internal/pkg/capability"
 	"github.com/siderolabs/talos/internal/pkg/containers/image"
@@ -251,6 +252,14 @@ func RunInstallerContainer(
 	if err = t.Start(ctx); err != nil {
 		return fmt.Errorf("failed to start %q task: %w", "upgrade", err)
 	}
+
+	pidRecorder := pid.NewStateRecorder(resources)
+
+	if err := pidRecorder.Record("installer", int32(t.Pid()), false); err != nil {
+		return fmt.Errorf("failed to record installer PID: %w", err)
+	}
+
+	defer pidRecorder.Record("installer", 0, true) //nolint:errcheck
 
 	statusC, err := t.Wait(ctx)
 	if err != nil {

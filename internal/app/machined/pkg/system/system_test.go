@@ -6,20 +6,48 @@ package system_test
 
 import (
 	"context"
+	"log"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 )
+
+var (
+	onceRuntime    sync.Once
+	runtimeRuntime runtime.Runtime
+)
+
+func newRuntime(t *testing.T) runtime.Runtime {
+	onceRuntime.Do(func() {
+		e := v1alpha1.NewEvents(1000, 10)
+
+		t.Setenv("PLATFORM", "container")
+
+		s, err := v1alpha1.NewState()
+		require.NoError(t, err)
+
+		l := logging.NewCircularBufferLoggingManager(log.New(t.Output(), "fallback logger: ", log.Flags()))
+
+		runtimeRuntime = v1alpha1.NewRuntime(s, e, l)
+	})
+
+	return runtimeRuntime
+}
 
 type SystemServicesSuite struct {
 	suite.Suite
 }
 
 func (suite *SystemServicesSuite) TestStartShutdown() {
-	system.Services(nil).LoadAndStart(
+	system.Services(newRuntime(suite.T())).LoadAndStart(
 		&MockService{name: "containerd"},
 		&MockService{name: "trustd", dependencies: []string{"containerd"}},
 		&MockService{name: "machined", dependencies: []string{"containerd", "trustd"}},
@@ -30,7 +58,7 @@ func (suite *SystemServicesSuite) TestStartShutdown() {
 }
 
 func (suite *SystemServicesSuite) TestStartStop() {
-	system.Services(nil).LoadAndStart(
+	system.Services(newRuntime(suite.T())).LoadAndStart(
 		&MockService{name: "yolo"},
 	)
 
@@ -43,7 +71,7 @@ func (suite *SystemServicesSuite) TestStartStop() {
 }
 
 func (suite *SystemServicesSuite) TestStopWithRevDeps() {
-	system.Services(nil).LoadAndStart(
+	system.Services(newRuntime(suite.T())).LoadAndStart(
 		&MockService{name: "cri"},
 		&MockService{name: "networkd", dependencies: []string{"cri"}},
 		&MockService{name: "vland", dependencies: []string{"networkd"}},
@@ -51,7 +79,7 @@ func (suite *SystemServicesSuite) TestStopWithRevDeps() {
 	time.Sleep(10 * time.Millisecond)
 
 	// stopping cri should stop all services
-	suite.Require().NoError(system.Services(nil).StopWithRevDepenencies(context.Background(), "cri"))
+	suite.Require().NoError(system.Services(newRuntime(suite.T())).StopWithRevDepenencies(context.Background(), "cri"))
 
 	// no services should be running
 	for _, name := range []string{"cri", "networkd", "vland"} {

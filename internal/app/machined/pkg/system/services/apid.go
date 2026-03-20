@@ -34,6 +34,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/conditions"
+	"github.com/siderolabs/talos/pkg/grpc/middleware/auth/unix"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -112,8 +113,24 @@ func (o *APID) PreFunc(ctx context.Context, r runtime.Runtime) error {
 		return err
 	}
 
+	pidAuthorizer := &unix.Authorizer{
+		Resources: r.State().V1Alpha2().Resources(),
+		AllowedServices: []unix.AllowedService{
+			{
+				Pattern: o.ID(r),
+			},
+		},
+	}
+
 	o.runtimeServer = grpc.NewServer(
 		grpc.SharedWriteBuffer(true),
+		grpc.Creds(unix.NewServerCredentials()),
+		grpc.ChainUnaryInterceptor(
+			pidAuthorizer.UnaryInterceptor(),
+		),
+		grpc.ChainStreamInterceptor(
+			pidAuthorizer.StreamInterceptor(),
+		),
 	)
 	v1alpha1.RegisterStateServer(o.runtimeServer, server.NewState(resources))
 
