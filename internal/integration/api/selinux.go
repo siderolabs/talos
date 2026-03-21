@@ -204,7 +204,16 @@ func (suite *SELinuxSuite) checkFileLabels(nodes []string, expectedLabels map[st
 
 				// these are symlinks that comes from files from extensions, and we don't set xattrs for extensions yet
 				// TODO(frezbo): update the test to check for correct labels once we set xattrs for extensions
-				if info.Name == "/etc/ld.so.conf" || info.Name == "/etc/ld.so.cache" || info.Name == "/usr/bin/nvidia-smi" {
+				switch info.Name {
+				case "/etc/ld.so.conf", "/etc/ld.so.cache":
+					return nil
+				case "/usr/bin/nvidia-smi":
+					return nil
+				case "/usr/bin/nvidia-ctk":
+					return nil
+				case "/usr/bin/nvidia-cdi-hook":
+					return nil
+				case "/usr/bin/nvme":
 					return nil
 				}
 
