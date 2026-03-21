@@ -4,3 +4,7 @@ toolkit:
   enabled: false
 hostPaths:
   driverInstallDir: /usr/local/glibc/usr
+devicePlugin:
+  env:
+    - name: NVIDIA_CDI_HOOK_PATH
+      value: "/usr/local/bin/nvidia-cdi-hook"

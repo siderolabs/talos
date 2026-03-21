@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/siderolabs/talos/internal/integration/base"
@@ -171,6 +172,63 @@ func (suite *ExtensionsSuiteNVIDIA) TestExtensionsNVIDIA() {
 
 		suite.Require().Contains(logData, "Test PASSED")
 	}
+
+	// test CDI code path by requesting nvidia.com/gpu resource limits
+	_, err = suite.Clientset.BatchV1().Jobs("default").Create(suite.ctx, nvidiaCDITestJob(), metav1.CreateOptions{})
+	defer suite.Clientset.BatchV1().Jobs("default").Delete(suite.ctx, "cuda-cdi-test", metav1.DeleteOptions{}) //nolint:errcheck
+
+	suite.Require().NoError(err)
+
+	defer func() {
+		cdiPodList, listErr := suite.GetPodsWithLabel(suite.ctx, "default", "app.kubernetes.io/name=cuda-cdi-test")
+		if listErr != nil {
+			err = listErr
+		}
+
+		for _, pod := range cdiPodList.Items {
+			err = suite.Clientset.CoreV1().Pods("default").Delete(suite.ctx, pod.Name, metav1.DeleteOptions{})
+		}
+	}()
+
+	suite.Require().NoError(retry.Constant(4*time.Minute, retry.WithUnits(time.Second*10)).Retry(
+		func() error {
+			cdiPodList, listErr := suite.GetPodsWithLabel(suite.ctx, "default", "app.kubernetes.io/name=cuda-cdi-test")
+			if listErr != nil {
+				return retry.ExpectedErrorf("error getting pod: %s", listErr)
+			}
+
+			for _, pod := range cdiPodList.Items {
+				if pod.Status.Phase == corev1.PodFailed {
+					logData := suite.getPodLogs("default", pod.Name)
+
+					suite.T().Logf("pod %s logs:\n%s", pod.Name, logData)
+				}
+			}
+
+			if len(cdiPodList.Items) != 1 {
+				return retry.ExpectedErrorf("expected 1 pod, got %d", len(cdiPodList.Items))
+			}
+
+			for _, pod := range cdiPodList.Items {
+				if pod.Status.Phase != corev1.PodSucceeded {
+					return retry.ExpectedErrorf("%s is not completed yet: %s", pod.Name, pod.Status.Phase)
+				}
+			}
+
+			return nil
+		},
+	))
+
+	cdiPodList, err := suite.GetPodsWithLabel(suite.ctx, "default", "app.kubernetes.io/name=cuda-cdi-test")
+	suite.Require().NoError(err)
+
+	suite.Require().Len(cdiPodList.Items, 1)
+
+	for _, pod := range cdiPodList.Items {
+		logData := suite.getPodLogs("default", pod.Name)
+
+		suite.Require().Contains(logData, "Test PASSED")
+	}
 }
 
 func (suite *ExtensionsSuiteNVIDIA) getPodLogs(namespace, name string) string {
@@ -228,6 +286,59 @@ func nvidiaCUDATestJob() *batchv1.Job {
 						{
 							Name:  "cuda-test",
 							Image: fmt.Sprintf("nvcr.io/nvidia/k8s/cuda-sample:%s", NvidiaCUDATestImageVersion),
+						},
+					},
+					Affinity: &corev1.Affinity{
+						NodeAffinity: &corev1.NodeAffinity{
+							RequiredDuringSchedulingIgnoredDuringExecution: &corev1.NodeSelector{
+								NodeSelectorTerms: []corev1.NodeSelectorTerm{
+									{
+										MatchExpressions: []corev1.NodeSelectorRequirement{
+											{
+												Key:      "node.kubernetes.io/instance-type",
+												Operator: corev1.NodeSelectorOpIn,
+												Values:   []string{"g4dn.xlarge", "p4d.24xlarge"},
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+					RestartPolicy:    corev1.RestartPolicyNever,
+					RuntimeClassName: new("nvidia"),
+				},
+			},
+		},
+	}
+}
+
+// nvidiaCDITestJob creates a job that requests nvidia.com/gpu resource limits,
+// exercising the CDI code path (as opposed to runtimeClassName alone).
+func nvidiaCDITestJob() *batchv1.Job {
+	return &batchv1.Job{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: "cuda-cdi-test",
+		},
+		Spec: batchv1.JobSpec{
+			Completions: new(int32(1)),
+			Template: corev1.PodTemplateSpec{
+				ObjectMeta: metav1.ObjectMeta{
+					Name: "cuda-cdi-test",
+					Labels: map[string]string{
+						"app.kubernetes.io/name": "cuda-cdi-test",
+					},
+				},
+				Spec: corev1.PodSpec{
+					Containers: []corev1.Container{
+						{
+							Name:  "cuda-cdi-test",
+							Image: fmt.Sprintf("nvcr.io/nvidia/k8s/cuda-sample:%s", NvidiaCUDATestImageVersion),
+							Resources: corev1.ResourceRequirements{
+								Limits: corev1.ResourceList{
+									corev1.ResourceName("nvidia.com/gpu"): resource.MustParse("1"),
+								},
+							},
 						},
 					},
 					Affinity: &corev1.Affinity{
