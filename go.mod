@@ -140,7 +140,8 @@ require (
 	github.com/siderolabs/discovery-client v0.1.15
 	github.com/siderolabs/gen v0.8.6
 	github.com/siderolabs/go-api-signature v0.3.12
-	github.com/siderolabs/go-blockdevice/v2 v2.0.26
+	// https://github.com/siderolabs/go-blockdevice/pull/149
+	github.com/siderolabs/go-blockdevice/v2 v2.0.27-0.20260322185503-313adba6a0e5
 	github.com/siderolabs/go-circular v0.2.3
 	github.com/siderolabs/go-cmd v0.2.0
 	github.com/siderolabs/go-copy v0.1.0
