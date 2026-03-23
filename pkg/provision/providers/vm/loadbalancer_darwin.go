@@ -6,9 +6,9 @@ package vm
 
 import "net/netip"
 
-// getLbBindIP returns the 0.0.0.0 address to bind to all interfaces on macos.
+// GetLbBindIP returns the 0.0.0.0 address to bind to all interfaces on macos.
 // The bridge interface address is not used as the bridge is not yet created at this stage.
 // Multiple loadbalancers can be assigned via different ports.
-func getLbBindIP(_ netip.Addr) string {
+func GetLbBindIP(_ netip.Addr) string {
 	return "0.0.0.0"
 }

@@ -9,8 +9,11 @@ import (
 	"fmt"
 	"path/filepath"
 
+	"github.com/siderolabs/gen/xslices"
+
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
 // Create Talos cluster as a set of qemu VMs.
@@ -166,10 +169,38 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 			NoMasqueradeCIDRs: request.Network.NoMasqueradeCIDRs,
 			GatewayAddrs:      request.Network.GatewayAddrs,
 			MTU:               request.Network.MTU,
+			IPMasquerade:      !request.Network.Airgapped,
 		},
 		Nodes:              nodeInfo,
 		ExtraNodes:         pxeNodeInfo,
 		KubernetesEndpoint: p.GetExternalKubernetesControlPlaneEndpoint(request.Network, lbPort),
+	}
+
+	// Save helper service configurations for restart support.
+	state.SelfExecutable = request.SelfExecutable
+
+	controlPlaneIPs := xslices.Map(request.Nodes.ControlPlaneNodes(), func(req provision.NodeRequest) string {
+		return req.IPs[0].String()
+	})
+
+	state.LoadBalancerConfig = &provision.LoadBalancerConfig{
+		BindAddress: vm.GetLbBindIP(request.Network.GatewayAddrs[0]),
+		Upstreams:   controlPlaneIPs,
+		Ports:       request.Network.LoadBalancerPorts,
+	}
+
+	state.DHCPdConfig = &provision.DHCPdConfig{
+		GatewayAddrs:   request.Network.GatewayAddrs,
+		IPXEBootScript: request.IPXEBootScript,
+	}
+
+	state.DNSdConfig = &provision.DNSdConfig{
+		GatewayAddrs: request.Network.GatewayAddrs,
+	}
+
+	state.CNIConfig = &provision.CNIConfig{
+		BinPath:  request.Network.CNI.BinPath,
+		CacheDir: request.Network.CNI.CacheDir,
 	}
 
 	if err := state.Save(); err != nil {
