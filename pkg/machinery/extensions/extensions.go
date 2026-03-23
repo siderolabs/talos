@@ -19,6 +19,10 @@ var AllowedPaths = []string{
 	"/usr/lib/ld-linux-aarch64.so.1",
 	// /sbin/ldconfig is required by the nvidia container toolkit.
 	"/usr/bin/ldconfig",
+	// nvidia-ctk and nvidia-cdi-hook are required at /usr/bin by the
+	// gpu-operator device plugin's CDI spec hooks.
+	"/usr/bin/nvidia-ctk",
+	"/usr/bin/nvidia-cdi-hook",
 	"/usr/lib/udev/rules.d",
 	"/usr/local",
 	// glvnd, egl and vulkan are needed for OpenGL/Vulkan.
