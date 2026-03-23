@@ -248,6 +248,16 @@ func (container *Container) PCIDriverRebindConfig() config.PCIDriverRebindConfig
 	return config.WrapPCIDriverRebindConfig(findMatchingDocs[config.PCIDriverRebindConfig](container.documents)...)
 }
 
+// EtcdEncryption implements config.Config interface.
+func (container *Container) EtcdEncryption() config.EtcdEncryptionConfig {
+	matching := findMatchingDocs[config.EtcdEncryptionConfig](container.documents)
+	if len(matching) == 0 {
+		return nil
+	}
+
+	return matching[0]
+}
+
 // EthernetConfigs implements config.Config interface.
 func (container *Container) EthernetConfigs() []config.EthernetConfig {
 	return findMatchingDocs[config.EthernetConfig](container.documents)
