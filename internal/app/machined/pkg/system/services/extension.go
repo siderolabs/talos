@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/containerd/containerd/v2/core/containers"
 	"github.com/containerd/containerd/v2/pkg/oci"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
@@ -131,6 +132,13 @@ func (svc *Extension) getOCIOptions(envVars []string, mounts []specs.Mount) []oc
 		oci.WithCapabilities(capability.AllGrantableCapabilities()),
 		oci.WithAllDevicesAllowed,
 		oci.WithEnv(envVars),
+		func(_ context.Context, _ oci.Client, _ *containers.Container, spec *oci.Spec) error {
+			// clear the rlimits, allow to inherit from machined -> containerd
+			// (see https://github.com/containerd/cri/issues/515)
+			spec.Process.Rlimits = nil
+
+			return nil
+		},
 	}
 
 	if !svc.Spec.Container.Security.WriteableRootfs {
