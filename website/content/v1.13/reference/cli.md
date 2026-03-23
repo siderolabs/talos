@@ -2252,7 +2252,7 @@ talosctl image k8s-bundle [flags]
 
 ```
       --coredns-version semver                 CoreDNS semantic version (default v1.14.2)
-      --etcd-version semver                    ETCD semantic version (default v3.6.8)
+      --etcd-version semver                    ETCD semantic version (default v3.6.9)
       --flannel-version semver                 Flannel CNI semantic version (default v0.28.1)
   -h, --help                                   help for k8s-bundle
       --k8s-version semver                     Kubernetes semantic version (default v1.36.0-alpha.2)
