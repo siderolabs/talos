@@ -243,7 +243,7 @@ func (ctrl *DiscoveryServiceController) Run(ctx context.Context, r controller.Ru
 
 			client, err = discoveryclient.NewClient(discoveryclient.Options{
 				Cipher:        cipherBlock,
-				Endpoint:      discoveryConfig.TypedSpec().ServiceEndpoint,
+				Endpoint:      "passthrough:" + discoveryConfig.TypedSpec().ServiceEndpoint,
 				ClusterID:     discoveryConfig.TypedSpec().ServiceClusterID,
 				AffiliateID:   localAffiliateID,
 				TTL:           defaultDiscoveryTTL,
