@@ -179,6 +179,11 @@ message SecurityStateSpec {
   bool module_signature_enforced = 7;
 }
 
+// ServicePIDSpec is the spec for the service PID.
+message ServicePIDSpec {
+  int32 pid = 1;
+}
+
 // UniqueMachineTokenSpec is the spec for the machine unique token. Token can be empty if machine wasn't assigned any.
 message UniqueMachineTokenSpec {
   string token = 1;

@@ -40,6 +40,10 @@ const (
 func MockEventSink(state events.ServiceState, message string, args ...any) {
 }
 
+func MockPidRecorder(serviceName string, pid int32, clearEntry bool) error {
+	return nil
+}
+
 //nolint:maligned
 type ContainerdSuite struct {
 	suite.Suite
@@ -124,7 +128,7 @@ func (suite *ContainerdSuite) SetupSuite() {
 	suite.containerdWg.Go(func() {
 		defer suite.containerdRunner.Close() //nolint:errcheck
 
-		suite.containerdRunner.Run(MockEventSink) //nolint:errcheck
+		suite.containerdRunner.Run(MockEventSink, MockPidRecorder) //nolint:errcheck
 	})
 
 	suite.client, err = containerd.New(suite.containerdAddress)
@@ -171,7 +175,7 @@ func (suite *ContainerdSuite) run(runners ...runner.Runner) {
 			defer func() { runningCh <- false }()
 			defer suite.containersWg.Done()
 
-			suite.Require().NoError(r.Run(runningSink))
+			suite.Require().NoError(r.Run(runningSink, MockPidRecorder))
 		}(r)
 	}
 

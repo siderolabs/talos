@@ -18,6 +18,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/health"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/pkg/conditions"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -41,6 +42,8 @@ type ServiceRunner struct {
 	state  events.ServiceState
 	events events.ServiceEvents
 
+	pidRecorder pid.Recorder
+
 	healthState health.State
 
 	stateSubscribers map[StateEvent][]chan<- struct{}
@@ -58,6 +61,7 @@ func NewServiceRunner(instance *singleton, service Service, runtime runtime.Runt
 		state:            events.StateInitialized,
 		stateSubscribers: make(map[StateEvent][]chan<- struct{}),
 		stopCh:           make(chan struct{}, 1),
+		pidRecorder:      pid.NewStateRecorder(runtime.State().V1Alpha2().Resources()).Record,
 	}
 }
 
@@ -311,7 +315,7 @@ func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) er
 			if _, healthSupported := svcrunner.service.(HealthcheckedService); healthSupported && s != events.StateRunning {
 				svcrunner.healthState.Update(false, "service not running")
 			}
-		})
+		}, svcrunner.pidRecorder)
 	}()
 
 	if healthSvc, ok := svcrunner.service.(HealthcheckedService); ok {

@@ -35,6 +35,14 @@ func MockEventSink(t *testing.T) func(state events.ServiceState, message string,
 	}
 }
 
+func MockPidRecorder(t *testing.T) func(id string, pid int32, clearEntry bool) error {
+	return func(id string, pid int32, clearEntry bool) error {
+		t.Logf("recording pid for %s: %d (clear: %v)", id, pid, clearEntry)
+
+		return nil
+	}
+}
+
 type ProcessSuite struct {
 	suite.Suite
 
@@ -70,7 +78,7 @@ func (suite *ProcessSuite) TestRunSuccess() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
-	suite.Assert().NoError(r.Run(MockEventSink(suite.T())))
+	suite.Assert().NoError(r.Run(MockEventSink(suite.T()), MockPidRecorder(suite.T())))
 	// calling stop when Run has finished is no-op
 	suite.Assert().NoError(r.Stop())
 }
@@ -85,7 +93,7 @@ func (suite *ProcessSuite) TestRunLogs() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
-	suite.Assert().NoError(r.Run(MockEventSink(suite.T())))
+	suite.Assert().NoError(r.Run(MockEventSink(suite.T()), MockPidRecorder(suite.T())))
 
 	// the log file is written asynchronously, so we need to wait a bit
 	suite.EventuallyWithT(func(collect *assert.CollectT) {
@@ -115,7 +123,7 @@ func (suite *ProcessSuite) TestRunRestartFailed() {
 	var wg sync.WaitGroup
 
 	wg.Go(func() {
-		suite.Assert().NoError(r.Run(MockEventSink(suite.T())))
+		suite.Assert().NoError(r.Run(MockEventSink(suite.T()), MockPidRecorder(suite.T())))
 	})
 
 	fetchLog := func() []byte {
@@ -165,7 +173,7 @@ func (suite *ProcessSuite) TestStopFailingAndRestarting() {
 	done := make(chan error, 1)
 
 	go func() {
-		done <- r.Run(MockEventSink(suite.T()))
+		done <- r.Run(MockEventSink(suite.T()), MockPidRecorder(suite.T()))
 	}()
 
 	time.Sleep(40 * time.Millisecond)
@@ -212,7 +220,7 @@ func (suite *ProcessSuite) TestStopSigKill() {
 	done := make(chan error, 1)
 
 	go func() {
-		done <- r.Run(MockEventSink(suite.T()))
+		done <- r.Run(MockEventSink(suite.T()), MockPidRecorder(suite.T()))
 	}()
 
 	time.Sleep(100 * time.Millisecond)
@@ -252,7 +260,7 @@ func (suite *ProcessSuite) TestPriority() {
 	done := make(chan error, 1)
 
 	go func() {
-		done <- r.Run(MockEventSink(suite.T()))
+		done <- r.Run(MockEventSink(suite.T()), MockPidRecorder(suite.T()))
 	}()
 
 	time.Sleep(10 * time.Millisecond)
@@ -306,7 +314,7 @@ func (suite *ProcessSuite) TestIOPriority() {
 	done := make(chan error, 1)
 
 	go func() {
-		done <- r.Run(MockEventSink(suite.T()))
+		done <- r.Run(MockEventSink(suite.T()), MockPidRecorder(suite.T()))
 	}()
 
 	time.Sleep(10 * time.Millisecond)
@@ -359,7 +367,7 @@ func (suite *ProcessSuite) TestSchedulingPolicy() {
 	done := make(chan error, 1)
 
 	go func() {
-		done <- r.Run(MockEventSink(suite.T()))
+		done <- r.Run(MockEventSink(suite.T()), MockPidRecorder(suite.T()))
 	}()
 
 	time.Sleep(10 * time.Millisecond)

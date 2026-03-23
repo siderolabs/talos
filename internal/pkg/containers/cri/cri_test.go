@@ -40,6 +40,10 @@ const (
 func MockEventSink(state events.ServiceState, message string, args ...any) {
 }
 
+func MockPidRecorder(serviceName string, pid int32, clearEntry bool) error {
+	return nil
+}
+
 type CRISuite struct {
 	suite.Suite
 
@@ -118,7 +122,7 @@ func (suite *CRISuite) SetupSuite() {
 	suite.containerdWg.Go(func() {
 		defer suite.containerdRunner.Close() //nolint:errcheck
 
-		suite.containerdRunner.Run(MockEventSink) //nolint:errcheck
+		suite.containerdRunner.Run(MockEventSink, MockPidRecorder) //nolint:errcheck
 	})
 
 	suite.client, err = criclient.NewClient("unix:"+suite.containerdAddress, 30*time.Second)
