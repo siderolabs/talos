@@ -79,13 +79,9 @@ linters:
         - gopkg.in/yaml.v3
         - github.com/coredns/coredns
         - github.com/mdlayher/kobject
-        - golang.zx2c4.com/wireguard
         - golang.zx2c4.com/wireguard/wgctrl
-        - cloud.google.com/go
         - github.com/mdlayher/ethtool
         - github.com/containerd/containerd/v2
-        - github.com/jsimonetti/rtnetlink/v2
-        - github.com/neticdk/go-stdlib
       replace-local: true
       exclude-forbidden: false
       retract-allow-no-explanation: false
