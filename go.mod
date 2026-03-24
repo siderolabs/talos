@@ -6,9 +6,6 @@ replace (
 	// forked coredns so we don't carry caddy and other stuff into the Talos
 	github.com/coredns/coredns => github.com/siderolabs/coredns v1.14.53
 
-	// see https://github.com/jsimonetti/rtnetlink/pull/306
-	github.com/jsimonetti/rtnetlink/v2 => github.com/shanduur/rtnetlink/v2 v2.0.0-20260313131132-118a2ded4751
-
 	// forked ethtool introduces missing APIs
 	github.com/mdlayher/ethtool => github.com/siderolabs/ethtool v0.4.0-sidero
 
@@ -65,7 +62,7 @@ require (
 	github.com/containerd/platforms v1.0.0-rc.2
 	github.com/containerd/typeurl/v2 v2.2.3
 	github.com/containernetworking/cni v1.3.0
-	github.com/containernetworking/plugins v1.9.0
+	github.com/containernetworking/plugins v1.9.1
 	github.com/coredns/coredns v1.14.2
 	github.com/coreos/go-iptables v0.8.0
 	github.com/cosi-project/runtime v1.14.0
@@ -101,7 +98,7 @@ require (
 	github.com/hetznercloud/hcloud-go/v2 v2.36.0
 	github.com/insomniacslk/dhcp v0.0.0-20260220084031-5adc3eb26f91
 	github.com/jeromer/syslogparser v1.1.0
-	github.com/jsimonetti/rtnetlink/v2 v2.2.0
+	github.com/jsimonetti/rtnetlink/v2 v2.2.1-0.20260317095713-310581b9c6ac
 	github.com/jxskiss/base62 v1.1.0
 	github.com/klauspost/compress v1.18.4
 	github.com/klauspost/cpuid/v2 v2.3.0
