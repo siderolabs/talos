@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-03-16T15:20:50Z by kres e68c408.
+# Generated on 2026-03-24T16:35:58Z by kres 3675077.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -2686,6 +2686,8 @@ jobs:
         env:
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-flannel-netpol
           IMAGE_REGISTRY: registry.dev.siderolabs.io
+          QEMU_MEMORY_CONTROLPLANES: "4096"
+          QEMU_MEMORY_WORKERS: "4096"
           SHORT_INTEGRATION_TEST: "yes"
           TEST_MODE: network-policy
           WITH_CONFIG_PATCH: '@hack/test/patches/flannel-netpol.yaml'
