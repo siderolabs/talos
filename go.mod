@@ -24,6 +24,11 @@ replace (
 // this a fork with containerd 2.2 branch + the commit from the PR above
 replace github.com/containerd/containerd/v2 => github.com/smira/containerd/v2 v2.2.3-0.20260311174942-e5fa687ba763
 
+// downgrade the go-containerregistry to workaround the security changes in
+// https://github.com/google/go-containerregistry/pull/2227/changes: it breaks
+// our extensions
+replace github.com/google/go-containerregistry => github.com/google/go-containerregistry v0.21.2
+
 // Kubernetes dependencies sharing the same version.
 require (
 	k8s.io/api v0.35.3
