@@ -547,11 +547,13 @@ message TCPProbeSpec {
 message TimeServerSpecSpec {
   repeated string ntp_servers = 1;
   talos.resource.definitions.enums.NetworkConfigLayer config_layer = 2;
+  bool use_nts = 3;
 }
 
 // TimeServerStatusSpec describes NTP servers.
 message TimeServerStatusSpec {
   repeated string ntp_servers = 1;
+  bool use_nts = 2;
 }
 
 // VIPEquinixMetalSpec describes virtual (elastic) IP settings for Equinix Metal.

@@ -162,6 +162,7 @@ func (ctrl *TimeServerConfigController) apply(ctx context.Context, r controller.
 func (ctrl *TimeServerConfigController) getDefault() (spec network.TimeServerSpecSpec) {
 	spec.NTPServers = []string{constants.DefaultNTPServer}
 	spec.ConfigLayer = network.ConfigDefault
+	spec.UseNTS = true
 
 	return spec
 }
@@ -197,7 +198,10 @@ func (ctrl *TimeServerConfigController) parseMachineConfiguration(cfgProvider ta
 		return spec
 	}
 
-	spec.NTPServers = slices.Clone(cfgProvider.NetworkTimeSyncConfig().Servers())
+	cfg := cfgProvider.NetworkTimeSyncConfig()
+
+	spec.NTPServers = slices.Clone(cfg.Servers())
+	spec.UseNTS = cfg.UseNTS()
 	spec.ConfigLayer = network.ConfigMachineConfiguration
 
 	return spec

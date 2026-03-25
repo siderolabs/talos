@@ -37,6 +37,7 @@ func (suite *TimeServerConfigSuite) TestDefaults() {
 			"default/timeservers",
 		}, func(r *network.TimeServerSpec, asrt *assert.Assertions) {
 			asrt.Equal([]string{constants.DefaultNTPServer}, r.TypedSpec().NTPServers)
+			asrt.True(r.TypedSpec().UseNTS)
 			asrt.Equal(network.ConfigDefault, r.TypedSpec().ConfigLayer)
 		},
 		rtestutils.WithNamespace(network.ConfigNamespaceName),
@@ -58,6 +59,7 @@ func (suite *TimeServerConfigSuite) TestCmdline() {
 			"cmdline/timeservers",
 		}, func(r *network.TimeServerSpec, asrt *assert.Assertions) {
 			asrt.Equal([]string{"10.0.0.1"}, r.TypedSpec().NTPServers)
+			asrt.False(r.TypedSpec().UseNTS)
 		},
 		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
@@ -97,6 +99,7 @@ func (suite *TimeServerConfigSuite) TestMachineConfigurationLegacy() {
 			"configuration/timeservers",
 		}, func(r *network.TimeServerSpec, asrt *assert.Assertions) {
 			asrt.Equal([]string{"za.pool.ntp.org", "pool.ntp.org"}, r.TypedSpec().NTPServers)
+			asrt.False(r.TypedSpec().UseNTS)
 		},
 		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
@@ -116,6 +119,7 @@ func (suite *TimeServerConfigSuite) TestMachineConfigurationNewStyle() {
 	tsc := networkcfg.NewTimeSyncConfigV1Alpha1()
 	tsc.TimeNTP = &networkcfg.NTPConfig{
 		Servers: []string{"za.pool.ntp.org", "pool.ntp.org"},
+		UseNTS:  new(true),
 	}
 
 	ctr, err := container.New(tsc)
@@ -130,6 +134,7 @@ func (suite *TimeServerConfigSuite) TestMachineConfigurationNewStyle() {
 			"configuration/timeservers",
 		}, func(r *network.TimeServerSpec, asrt *assert.Assertions) {
 			asrt.Equal([]string{"za.pool.ntp.org", "pool.ntp.org"}, r.TypedSpec().NTPServers)
+			asrt.True(r.TypedSpec().UseNTS)
 		},
 		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)

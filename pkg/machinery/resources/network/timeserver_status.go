@@ -24,6 +24,7 @@ type TimeServerStatus = typed.Resource[TimeServerStatusSpec, TimeServerStatusExt
 //gotagsrewrite:gen
 type TimeServerStatusSpec struct {
 	NTPServers []string `yaml:"timeServers" protobuf:"1"`
+	UseNTS     bool     `yaml:"useNTS" protobuf:"2"`
 }
 
 // NewTimeServerStatus initializes a TimeServerStatus resource.
@@ -47,6 +48,10 @@ func (TimeServerStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpe
 			{
 				Name:     "Timeservers",
 				JSONPath: "{.timeServers}",
+			},
+			{
+				Name:     "UseNTS",
+				JSONPath: "{.useNTS}",
 			},
 		},
 	}

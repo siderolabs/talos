@@ -445,6 +445,78 @@ func (suite *SyncSuite) TestReconcileSyncBootTimeout() {
 	)
 }
 
+func (suite *SyncSuite) TestReconcileSyncWithNTS() {
+	suite.Require().NoError(
+		suite.runtime.RegisterController(
+			&timectrl.SyncController{
+				V1Alpha1Mode: v1alpha1runtime.ModeMetal,
+				NewNTPSyncer: suite.newMockSyncer,
+			},
+		),
+	)
+
+	suite.startRuntime()
+
+	timeServers := network.NewTimeServerStatus(network.NamespaceName, network.TimeServerID)
+	timeServers.TypedSpec().NTPServers = []string{constants.DefaultNTPServer}
+	suite.Require().NoError(suite.state.Create(suite.ctx, timeServers))
+
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertTimeStatus(
+					timeresource.StatusSpec{
+						Synced:       false,
+						Epoch:        0,
+						SyncDisabled: false,
+					},
+				)
+			},
+		),
+	)
+
+	var mockSyncer *mockSyncer
+
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				mockSyncer = suite.getMockSyncer()
+
+				if mockSyncer == nil {
+					return retry.ExpectedErrorf("syncer not created yet")
+				}
+
+				return nil
+			},
+		),
+	)
+
+	suite.Assert().False(mockSyncer.getUseNTS(), "syncer should start without NTS")
+
+	ctest.UpdateWithConflicts(suite, timeServers, func(r *network.TimeServerStatus) error {
+		r.TypedSpec().UseNTS = true
+
+		return nil
+	})
+
+	suite.Assert().NoError(
+		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				s := suite.getMockSyncer()
+				if s == nil {
+					return retry.ExpectedErrorf("syncer not created yet")
+				}
+
+				if !s.getUseNTS() {
+					return retry.ExpectedErrorf("syncer not yet recreated with NTS")
+				}
+
+				return nil
+			},
+		),
+	)
+}
+
 func (suite *SyncSuite) TearDownTest() {
 	suite.T().Log("tear down")
 
@@ -453,11 +525,11 @@ func (suite *SyncSuite) TearDownTest() {
 	suite.wg.Wait()
 }
 
-func (suite *SyncSuite) newMockSyncer(logger *zap.Logger, servers []string) timectrl.NTPSyncer {
+func (suite *SyncSuite) newMockSyncer(logger *zap.Logger, servers []string, useNTS bool) timectrl.NTPSyncer {
 	suite.syncerMu.Lock()
 	defer suite.syncerMu.Unlock()
 
-	suite.syncer = newMockSyncer(logger, servers)
+	suite.syncer = newMockSyncer(logger, servers, useNTS)
 
 	return suite.syncer
 }
@@ -477,6 +549,7 @@ type mockSyncer struct {
 	mu sync.Mutex
 
 	timeServers []string
+	useNTS      bool
 	syncedCh    chan struct{}
 	epochCh     chan struct{}
 }
@@ -500,6 +573,13 @@ func (mock *mockSyncer) getTimeServers() (servers []string) {
 	return slices.Clone(mock.timeServers)
 }
 
+func (mock *mockSyncer) getUseNTS() bool {
+	mock.mu.Lock()
+	defer mock.mu.Unlock()
+
+	return mock.useNTS
+}
+
 func (mock *mockSyncer) SetTimeServers(servers []string) {
 	mock.mu.Lock()
 	defer mock.mu.Unlock()
@@ -507,9 +587,10 @@ func (mock *mockSyncer) SetTimeServers(servers []string) {
 	mock.timeServers = slices.Clone(servers)
 }
 
-func newMockSyncer(_ *zap.Logger, servers []string) *mockSyncer {
+func newMockSyncer(_ *zap.Logger, servers []string, useNTS bool) *mockSyncer {
 	return &mockSyncer{
 		timeServers: slices.Clone(servers),
+		useNTS:      useNTS,
 		syncedCh:    make(chan struct{}, 1),
 		epochCh:     make(chan struct{}, 1),
 	}

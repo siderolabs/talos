@@ -568,6 +568,10 @@ func (o *TimeSyncConfigV1Alpha1) DeepCopy() *TimeSyncConfigV1Alpha1 {
 			cp.TimeNTP.Servers = make([]string, len(o.TimeNTP.Servers))
 			copy(cp.TimeNTP.Servers, o.TimeNTP.Servers)
 		}
+		if o.TimeNTP.UseNTS != nil {
+			cp.TimeNTP.UseNTS = new(bool)
+			*cp.TimeNTP.UseNTS = *o.TimeNTP.UseNTS
+		}
 	}
 	if o.TimePTP != nil {
 		cp.TimePTP = new(PTPConfig)

@@ -96,10 +96,11 @@ func (ctrl *TimeServerSpecController) Run(ctx context.Context, r controller.Runt
 					ntps[i] = spec.TypedSpec().NTPServers[i]
 				}
 
-				logger.Info("setting time servers", zap.Strings("addresses", ntps))
+				logger.Info("setting time servers", zap.Strings("addresses", ntps), zap.Bool("nts", spec.TypedSpec().UseNTS))
 
 				if err = safe.WriterModify(ctx, r, network.NewTimeServerStatus(network.NamespaceName, spec.Metadata().ID()), func(status *network.TimeServerStatus) error {
 					status.TypedSpec().NTPServers = spec.TypedSpec().NTPServers
+					status.TypedSpec().UseNTS = spec.TypedSpec().UseNTS
 
 					return nil
 				}); err != nil {

@@ -2621,9 +2621,16 @@
           },
           "type": "array",
           "title": "servers",
-          "description": "Specifies time (NTP) servers to use for setting the system time.\nDefaults to time.cloudflare.com.\n",
-          "markdownDescription": "Specifies time (NTP) servers to use for setting the system time.\nDefaults to `time.cloudflare.com`.",
-          "x-intellij-html-description": "\u003cp\u003eSpecifies time (NTP) servers to use for setting the system time.\nDefaults to \u003ccode\u003etime.cloudflare.com\u003c/code\u003e.\u003c/p\u003e\n"
+          "description": "Specifies time (NTP) servers to use for setting the system time.\nDefaults to time.cloudflare.com when configuration is not provided.\n",
+          "markdownDescription": "Specifies time (NTP) servers to use for setting the system time.\nDefaults to `time.cloudflare.com` when configuration is not provided.",
+          "x-intellij-html-description": "\u003cp\u003eSpecifies time (NTP) servers to use for setting the system time.\nDefaults to \u003ccode\u003etime.cloudflare.com\u003c/code\u003e when configuration is not provided.\u003c/p\u003e\n"
+        },
+        "useNTS": {
+          "type": "boolean",
+          "title": "useNTS",
+          "description": "Enables NTS (Network Time Security) for NTP queries.\nNTS provides authenticated and encrypted time synchronization using TLS.\nWhen enabled, all NTP capable servers must be specified as hostnames (not IP addresses).\nDefaults to true when configuration is not provided, using the system default server (time.cloudflare.com).\n",
+          "markdownDescription": "Enables NTS (Network Time Security) for NTP queries.\nNTS provides authenticated and encrypted time synchronization using TLS.\nWhen enabled, all NTP capable servers must be specified as hostnames (not IP addresses).\nDefaults to `true` when configuration is not provided, using the system default server (`time.cloudflare.com`).",
+          "x-intellij-html-description": "\u003cp\u003eEnables NTS (Network Time Security) for NTP queries.\nNTS provides authenticated and encrypted time synchronization using TLS.\nWhen enabled, all NTP capable servers must be specified as hostnames (not IP addresses).\nDefaults to \u003ccode\u003etrue\u003c/code\u003e when configuration is not provided, using the system default server (\u003ccode\u003etime.cloudflare.com\u003c/code\u003e).\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

@@ -62,7 +62,7 @@ type NTPSyncer interface {
 }
 
 // NewNTPSyncerFunc function allows to replace ntp.Syncer with the mock.
-type NewNTPSyncerFunc func(*zap.Logger, []string) NTPSyncer
+type NewNTPSyncerFunc func(*zap.Logger, []string, bool) NTPSyncer
 
 // Run implements controller.Controller interface.
 //
@@ -73,8 +73,8 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 	}
 
 	if ctrl.NewNTPSyncer == nil {
-		ctrl.NewNTPSyncer = func(logger *zap.Logger, timeServers []string) NTPSyncer {
-			return ntp.NewSyncer(logger, timeServers)
+		ctrl.NewNTPSyncer = func(logger *zap.Logger, timeServers []string, useNTS bool) NTPSyncer {
+			return ntp.NewSyncer(logger, timeServers, useNTS)
 		}
 	}
 
@@ -108,6 +108,7 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 
 		timeSynced bool
 		epoch      int
+		useNTS     bool
 
 		timeSyncTimeoutTimer *stdtime.Timer
 		timeSyncTimeoutCh    <-chan stdtime.Time
@@ -166,6 +167,7 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 		var syncTimeout stdtime.Duration
 
 		syncDisabled := false
+		newUseNTS := timeServersStatus.TypedSpec().UseNTS
 
 		if ctrl.V1Alpha1Mode == v1alpha1runtime.ModeContainer {
 			syncDisabled = true
@@ -212,9 +214,32 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 			syncer = nil
 			syncCh = nil
 			epochCh = nil
+		case !syncDisabled && syncer != nil && newUseNTS != useNTS:
+			// NTS setting changed, restart the syncer
+			logger.Info("NTS setting changed, restarting syncer", zap.Bool("useNTS", newUseNTS))
+
+			syncCtxCancel()
+
+			syncWg.Wait()
+
+			useNTS = newUseNTS
+
+			syncer = ctrl.NewNTPSyncer(logger, timeServers, useNTS)
+			syncCh = syncer.Synced()
+			epochCh = syncer.EpochChange()
+
+			timeSynced = false
+
+			syncCtx, syncCtxCancel = context.WithCancel(ctx) //nolint:govet,fatcontext
+
+			syncWg.Go(func() {
+				syncer.Run(syncCtx)
+			})
 		case !syncDisabled && syncer == nil:
 			// start syncing
-			syncer = ctrl.NewNTPSyncer(logger, timeServers)
+			useNTS = newUseNTS
+
+			syncer = ctrl.NewNTPSyncer(logger, timeServers, useNTS)
 			syncCh = syncer.Synced()
 			epochCh = syncer.EpochChange()
 

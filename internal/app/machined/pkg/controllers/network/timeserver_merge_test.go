@@ -33,18 +33,21 @@ func (suite *TimeServerMergeSuite) TestMerge() {
 	def := network.NewTimeServerSpec(network.ConfigNamespaceName, "default/timeservers")
 	*def.TypedSpec() = network.TimeServerSpecSpec{
 		NTPServers:  []string{constants.DefaultNTPServer},
+		UseNTS:      true,
 		ConfigLayer: network.ConfigDefault,
 	}
 
 	dhcp1 := network.NewTimeServerSpec(network.ConfigNamespaceName, "dhcp/eth0")
 	*dhcp1.TypedSpec() = network.TimeServerSpecSpec{
 		NTPServers:  []string{"ntp.eth0"},
+		UseNTS:      true,
 		ConfigLayer: network.ConfigOperator,
 	}
 
 	dhcp2 := network.NewTimeServerSpec(network.ConfigNamespaceName, "dhcp/eth1")
 	*dhcp2.TypedSpec() = network.TimeServerSpecSpec{
 		NTPServers:  []string{"ntp.eth1"},
+		UseNTS:      true,
 		ConfigLayer: network.ConfigOperator,
 	}
 
@@ -73,6 +76,26 @@ func (suite *TimeServerMergeSuite) TestMerge() {
 			"timeservers",
 		}, func(r *network.TimeServerSpec, asrt *assert.Assertions) {
 			asrt.Equal([]string{"ntp.eth0", "ntp.eth1"}, r.TypedSpec().NTPServers)
+			asrt.True(r.TypedSpec().UseNTS)
+		},
+	)
+}
+
+func (suite *TimeServerMergeSuite) TestMergeJustDefault() {
+	def := network.NewTimeServerSpec(network.ConfigNamespaceName, "default/timeservers")
+	*def.TypedSpec() = network.TimeServerSpecSpec{
+		NTPServers:  []string{constants.DefaultNTPServer},
+		UseNTS:      true,
+		ConfigLayer: network.ConfigDefault,
+	}
+
+	suite.Create(def)
+
+	suite.assertTimeServers(
+		[]string{
+			"timeservers",
+		}, func(r *network.TimeServerSpec, asrt *assert.Assertions) {
+			asrt.Equal(*def.TypedSpec(), *r.TypedSpec())
 		},
 	)
 }

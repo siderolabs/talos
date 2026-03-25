@@ -31,9 +31,10 @@ func NewTimeServerMergeController() controller.Controller {
 					continue
 				}
 
-				if spec.TypedSpec().ConfigLayer == final.ConfigLayer {
+				if spec.TypedSpec().ConfigLayer == final.ConfigLayer && final.NTPServers != nil {
 					// merge server lists on the same level
 					final.NTPServers = append(final.NTPServers, spec.TypedSpec().NTPServers...)
+					final.UseNTS = final.UseNTS && spec.TypedSpec().UseNTS
 				} else {
 					// otherwise, replace the lists
 					final = *spec.TypedSpec()

@@ -27,6 +27,7 @@ const TimeServerID resource.ID = "timeservers"
 //gotagsrewrite:gen
 type TimeServerSpecSpec struct {
 	NTPServers  []string    `yaml:"timeServers" protobuf:"1"`
+	UseNTS      bool        `yaml:"useNTS,omitempty" protobuf:"3"`
 	ConfigLayer ConfigLayer `yaml:"layer" protobuf:"2"`
 }
 
@@ -47,7 +48,16 @@ func (TimeServerSpecExtension) ResourceDefinition() meta.ResourceDefinitionSpec 
 		Type:             TimeServerSpecType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
-		PrintColumns:     []meta.PrintColumn{},
+		PrintColumns: []meta.PrintColumn{
+			{
+				Name:     "Timeservers",
+				JSONPath: "{.timeServers}",
+			},
+			{
+				Name:     "UseNTS",
+				JSONPath: "{.useNTS}",
+			},
+		},
 	}
 }
 

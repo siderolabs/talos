@@ -53,7 +53,8 @@ NTPConfig represents a NTP server configuration.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`servers` |[]string |Specifies time (NTP) servers to use for setting the system time.<br>Defaults to `time.cloudflare.com`.  | |
+|`servers` |[]string |Specifies time (NTP) servers to use for setting the system time.<br>Defaults to `time.cloudflare.com` when configuration is not provided.  | |
+|`useNTS` |bool |Enables NTS (Network Time Security) for NTP queries.<br>NTS provides authenticated and encrypted time synchronization using TLS.<br>When enabled, all NTP capable servers must be specified as hostnames (not IP addresses).<br>Defaults to `true` when configuration is not provided, using the system default server (`time.cloudflare.com`).  | |
 
 
 

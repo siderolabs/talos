@@ -31,9 +31,11 @@ import (
 type Syncer struct {
 	logger *zap.Logger
 
-	timeServersMu  sync.Mutex
-	timeServers    []string
-	lastSyncServer string
+	timeServersMu    sync.Mutex
+	timeServers      []string
+	lastSyncServer   string
+	ntsSession       NTSSession
+	ntsSessionServer string
 
 	timeSyncNotified bool
 	timeSynced       chan struct{}
@@ -52,6 +54,10 @@ type Syncer struct {
 	NTPQuery    QueryFunc
 	AdjustTime  AdjustTimeFunc
 	DisableRTC  bool
+
+	// NTS (Network Time Security) support
+	UseNTS        bool
+	NTSNewSession NTSNewSessionFunc
 }
 
 // Measurement is a struct containing correction data based on a time request.
@@ -62,7 +68,7 @@ type Measurement struct {
 }
 
 // NewSyncer creates new Syncer with default configuration.
-func NewSyncer(logger *zap.Logger, timeServers []string) *Syncer {
+func NewSyncer(logger *zap.Logger, timeServers []string, useNTS bool) *Syncer {
 	syncer := &Syncer{
 		logger: logger,
 
@@ -83,6 +89,9 @@ func NewSyncer(logger *zap.Logger, timeServers []string) *Syncer {
 		CurrentTime: time.Now,
 		NTPQuery:    ntp.Query,
 		AdjustTime:  timex.Adjtimex,
+
+		UseNTS:        useNTS,
+		NTSNewSession: DefaultNTSNewSession,
 	}
 
 	return syncer
@@ -309,9 +318,19 @@ func (syncer *Syncer) resolveServers(ctx context.Context) ([]string, error) {
 	var serverList []string
 
 	for _, server := range syncer.getTimeServers() {
-		if IsPTPDevice(server) {
+		switch {
+		case IsPTPDevice(server):
 			serverList = append(serverList, server)
-		} else {
+		case syncer.UseNTS:
+			// NTS requires hostnames for TLS SNI; skip raw IP addresses.
+			if net.ParseIP(server) != nil {
+				syncer.logger.Warn("skipping IP address for NTS (hostname required for TLS)", zap.String("server", server))
+
+				continue
+			}
+
+			serverList = append(serverList, server)
+		default:
 			ips, err := syncer.lookupIPAddrWithTimeout(ctx, server, 5*time.Second)
 			if err != nil {
 				syncer.logger.Error(fmt.Sprintf("failed looking up %q, ignored", server), zap.Error(err))
@@ -342,6 +361,10 @@ func (syncer *Syncer) lookupIPAddrWithTimeout(ctx context.Context, host string, 
 func (syncer *Syncer) queryServer(server string) (*Measurement, error) {
 	if IsPTPDevice(server) {
 		return syncer.queryPTP(server)
+	}
+
+	if syncer.UseNTS {
+		return syncer.queryNTS(server)
 	}
 
 	return syncer.queryNTP(server)
@@ -426,6 +449,87 @@ func (syncer *Syncer) queryNTP(server string) (*Measurement, error) {
 		Leap:        resp.Leap,
 		Spike:       syncer.isSpike(resp),
 	}, nil
+}
+
+func (syncer *Syncer) queryNTS(server string) (*Measurement, error) {
+	session, err := syncer.getNTSSession(server)
+	if err != nil {
+		return nil, fmt.Errorf("NTS session for %s: %w", server, err)
+	}
+
+	resp, err := session.Query()
+	if err != nil {
+		// Session may be stale (expired cookies, TLS error); drop cache and retry once.
+		syncer.logger.Warn("NTS query failed, refreshing session", zap.String("server", server), zap.Error(err))
+
+		syncer.timeServersMu.Lock()
+		syncer.ntsSession = nil
+		syncer.ntsSessionServer = ""
+		syncer.timeServersMu.Unlock()
+
+		session, err = syncer.getNTSSession(server)
+		if err != nil {
+			return nil, fmt.Errorf("NTS session refresh for %s: %w", server, err)
+		}
+
+		resp, err = session.Query()
+		if err != nil {
+			return nil, fmt.Errorf("NTS query retry for %s: %w", server, err)
+		}
+	}
+
+	syncer.logger.Debug("NTS response",
+		zap.Duration("clock_offset", resp.ClockOffset),
+		zap.Duration("rtt", resp.RTT),
+		zap.Uint8("leap", uint8(resp.Leap)),
+		zap.Uint8("stratum", resp.Stratum),
+		zap.Duration("precision", resp.Precision),
+		zap.Duration("root_delay", resp.RootDelay),
+		zap.Duration("root_dispersion", resp.RootDispersion),
+		zap.Duration("root_distance", resp.RootDistance),
+		zap.String("server", server),
+	)
+
+	validationError := resp.Validate()
+	if validationError != nil {
+		return nil, validationError
+	}
+
+	return &Measurement{
+		ClockOffset: resp.ClockOffset,
+		Leap:        resp.Leap,
+		Spike:       syncer.isSpike(resp),
+	}, nil
+}
+
+func (syncer *Syncer) getNTSSession(server string) (NTSSession, error) {
+	syncer.timeServersMu.Lock()
+	if syncer.ntsSessionServer == server && syncer.ntsSession != nil {
+		session := syncer.ntsSession
+		syncer.timeServersMu.Unlock()
+
+		return session, nil
+	}
+
+	syncer.timeServersMu.Unlock()
+
+	if syncer.NTSNewSession == nil {
+		return nil, fmt.Errorf("NTS session factory not configured")
+	}
+
+	session, err := syncer.NTSNewSession(server)
+	if err != nil {
+		return nil, err
+	}
+
+	syncer.timeServersMu.Lock()
+	syncer.ntsSession = session
+	syncer.ntsSessionServer = server
+	syncer.timeServersMu.Unlock()
+
+	syncer.logger.Info("established NTS session", zap.String("server", server))
+
+	return session, nil
 }
 
 // log2i returns 0 for v == 0 and v == 1.

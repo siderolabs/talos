@@ -25,3 +25,12 @@ type SetTimeFunc func(tv *syscall.Timeval) error
 
 // AdjustTimeFunc provides a function to adjust time.
 type AdjustTimeFunc func(buf *unix.Timex) (state timex.State, err error)
+
+// NTSSession abstracts the beevik/nts Session for testability.
+type NTSSession interface {
+	Query() (*ntp.Response, error)
+}
+
+// NTSNewSessionFunc creates an NTS session for a given server address.
+// Defaults to nts.NewSession wrapper; injectable for testing.
+type NTSNewSessionFunc func(address string) (NTSSession, error)

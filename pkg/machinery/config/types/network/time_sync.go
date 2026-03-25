@@ -8,7 +8,11 @@ package network
 
 import (
 	"errors"
+	"fmt"
+	"net"
 	"time"
+
+	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
@@ -76,8 +80,14 @@ type TimeSyncConfigV1Alpha1 struct {
 type NTPConfig struct {
 	//   description: |
 	//     Specifies time (NTP) servers to use for setting the system time.
-	//     Defaults to `time.cloudflare.com`.
+	//     Defaults to `time.cloudflare.com` when configuration is not provided.
 	Servers []string `yaml:"servers,omitempty"`
+	//   description: |
+	//     Enables NTS (Network Time Security) for NTP queries.
+	//     NTS provides authenticated and encrypted time synchronization using TLS.
+	//     When enabled, all NTP capable servers must be specified as hostnames (not IP addresses).
+	//     Defaults to `true` when configuration is not provided, using the system default server (`time.cloudflare.com`).
+	UseNTS *bool `yaml:"useNTS,omitempty"`
 }
 
 // PTPConfig represents a PTP (Precision Time Protocol) configuration.
@@ -136,6 +146,14 @@ func (s *TimeSyncConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.
 		errs = errors.Join(errs, errors.New("only one of ntp or ptp configuration can be specified"))
 	}
 
+	if s.TimeNTP != nil && s.TimeNTP.UseNTS != nil && *s.TimeNTP.UseNTS {
+		for _, server := range s.TimeNTP.Servers {
+			if net.ParseIP(server) != nil {
+				errs = errors.Join(errs, fmt.Errorf("NTS requires hostnames, not IP addresses: %q", server))
+			}
+		}
+	}
+
 	return nil, errs
 }
 
@@ -188,4 +206,9 @@ func (s *TimeSyncConfigV1Alpha1) Servers() []string {
 	}
 
 	return nil
+}
+
+// UseNTS implements config.NetworkTimeSyncConfig interface.
+func (s *TimeSyncConfigV1Alpha1) UseNTS() bool {
+	return pointer.SafeDeref(pointer.SafeDeref(s.TimeNTP).UseNTS)
 }

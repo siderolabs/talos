@@ -125,6 +125,7 @@ type NetworkTimeSyncConfig interface {
 	Disabled() bool
 	Servers() []string
 	BootTimeout() time.Duration
+	UseNTS() bool
 }
 
 // NetworkPhysicalLinkConfig defines a physical network link configuration.

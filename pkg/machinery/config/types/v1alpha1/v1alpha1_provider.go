@@ -1227,6 +1227,13 @@ func (t *TimeConfig) BootTimeout() time.Duration {
 	return t.TimeBootTimeout
 }
 
+// UseNTS implements the config.Provider interface.
+//
+// Deprecated v1alpha1 TimeConfig does not support NTS.
+func (t *TimeConfig) UseNTS() bool {
+	return false
+}
+
 // Image implements the config.Provider interface.
 func (i *InstallConfig) Image() string {
 	return i.InstallImage

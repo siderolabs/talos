@@ -10073,6 +10073,7 @@ TimeServerSpecSpec describes NTP servers.
 | ----- | ---- | ----- | ----------- |
 | ntp_servers | [string](#string) | repeated |  |
 | config_layer | [talos.resource.definitions.enums.NetworkConfigLayer](#talos.resource.definitions.enums.NetworkConfigLayer) |  |  |
+| use_nts | [bool](#bool) |  |  |
 
 
 
@@ -10088,6 +10089,7 @@ TimeServerStatusSpec describes NTP servers.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | ntp_servers | [string](#string) | repeated |  |
+| use_nts | [bool](#bool) |  |  |
 
 
 

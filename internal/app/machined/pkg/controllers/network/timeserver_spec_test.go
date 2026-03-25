@@ -26,6 +26,7 @@ func (suite *TimeServerSpecSuite) TestSpec() {
 	spec := network.NewTimeServerSpec(network.NamespaceName, "timeservers")
 	*spec.TypedSpec() = network.TimeServerSpecSpec{
 		NTPServers:  []string{constants.DefaultNTPServer},
+		UseNTS:      true,
 		ConfigLayer: network.ConfigDefault,
 	}
 
@@ -36,6 +37,7 @@ func (suite *TimeServerSpecSuite) TestSpec() {
 		"timeservers",
 		func(status *network.TimeServerStatus, asrt *assert.Assertions) {
 			asrt.Equal([]string{constants.DefaultNTPServer}, status.TypedSpec().NTPServers)
+			asrt.True(status.TypedSpec().UseNTS)
 		},
 	)
 }

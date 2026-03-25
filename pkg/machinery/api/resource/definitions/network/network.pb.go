@@ -4461,6 +4461,7 @@ type TimeServerSpecSpec struct {
 	state         protoimpl.MessageState   `protogen:"open.v1"`
 	NtpServers    []string                 `protobuf:"bytes,1,rep,name=ntp_servers,json=ntpServers,proto3" json:"ntp_servers,omitempty"`
 	ConfigLayer   enums.NetworkConfigLayer `protobuf:"varint,2,opt,name=config_layer,json=configLayer,proto3,enum=talos.resource.definitions.enums.NetworkConfigLayer" json:"config_layer,omitempty"`
+	UseNts        bool                     `protobuf:"varint,3,opt,name=use_nts,json=useNts,proto3" json:"use_nts,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4509,10 +4510,18 @@ func (x *TimeServerSpecSpec) GetConfigLayer() enums.NetworkConfigLayer {
 	return enums.NetworkConfigLayer(0)
 }
 
+func (x *TimeServerSpecSpec) GetUseNts() bool {
+	if x != nil {
+		return x.UseNts
+	}
+	return false
+}
+
 // TimeServerStatusSpec describes NTP servers.
 type TimeServerStatusSpec struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	NtpServers    []string               `protobuf:"bytes,1,rep,name=ntp_servers,json=ntpServers,proto3" json:"ntp_servers,omitempty"`
+	UseNts        bool                   `protobuf:"varint,2,opt,name=use_nts,json=useNts,proto3" json:"use_nts,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4552,6 +4561,13 @@ func (x *TimeServerStatusSpec) GetNtpServers() []string {
 		return x.NtpServers
 	}
 	return nil
+}
+
+func (x *TimeServerStatusSpec) GetUseNts() bool {
+	if x != nil {
+		return x.UseNts
+	}
+	return false
 }
 
 // VIPEquinixMetalSpec describes virtual (elastic) IP settings for Equinix Metal.
@@ -5458,14 +5474,16 @@ const file_resource_definitions_network_network_proto_rawDesc = "" +
 	"\x0fetc_files_ready\x18\x04 \x01(\bR\retcFilesReady\"_\n" +
 	"\fTCPProbeSpec\x12\x1a\n" +
 	"\bendpoint\x18\x01 \x01(\tR\bendpoint\x123\n" +
-	"\atimeout\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\atimeout\"\x8e\x01\n" +
+	"\atimeout\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\atimeout\"\xa7\x01\n" +
 	"\x12TimeServerSpecSpec\x12\x1f\n" +
 	"\vntp_servers\x18\x01 \x03(\tR\n" +
 	"ntpServers\x12W\n" +
-	"\fconfig_layer\x18\x02 \x01(\x0e24.talos.resource.definitions.enums.NetworkConfigLayerR\vconfigLayer\"7\n" +
+	"\fconfig_layer\x18\x02 \x01(\x0e24.talos.resource.definitions.enums.NetworkConfigLayerR\vconfigLayer\x12\x17\n" +
+	"\ause_nts\x18\x03 \x01(\bR\x06useNts\"P\n" +
 	"\x14TimeServerStatusSpec\x12\x1f\n" +
 	"\vntp_servers\x18\x01 \x03(\tR\n" +
-	"ntpServers\"n\n" +
+	"ntpServers\x12\x17\n" +
+	"\ause_nts\x18\x02 \x01(\bR\x06useNts\"n\n" +
 	"\x13VIPEquinixMetalSpec\x12\x1d\n" +
 	"\n" +
 	"project_id\x18\x01 \x01(\tR\tprojectId\x12\x1b\n" +
