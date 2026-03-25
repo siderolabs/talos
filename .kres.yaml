@@ -909,6 +909,16 @@ spec:
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
+        - name: installer-enforcing
+          conditions:
+            - only-on-schedule
+          command: installer
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
+            TAG_SUFFIX_OUT: -enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
         - name: provision-tests-prepare
         - name: provision-tests-track-1
           withSudo: true
@@ -956,6 +966,12 @@ spec:
             PLATFORM: linux/amd64,linux/arm64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
+        - name: iso
+          conditions:
+            - only-on-schedule
+          environment:
+            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: talosctl-cni-bundle
           conditions:
             - only-on-schedule
