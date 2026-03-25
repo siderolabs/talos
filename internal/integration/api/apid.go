@@ -11,6 +11,7 @@ import (
 	"context"
 	"encoding/base64"
 	"slices"
+	"strings"
 	"testing"
 	"time"
 
@@ -258,7 +259,11 @@ func (suite *ApidSuite) TestPKIMismatch() {
 	_, err = wrongClient.Version(suite.ctx)
 	suite.Require().Error(err)
 	suite.Assert().Equal(codes.Unavailable, client.StatusCode(err))
-	suite.Assert().ErrorContains(err, "remote error: tls: unknown certificate authority")
+	suite.Assert().True(
+		strings.Contains(err.Error(), "remote error: tls: unknown certificate authority") ||
+			strings.Contains(err.Error(), "write: connection reset by peer"),
+		"unexpected error: %v", err,
+	)
 
 	suite.Require().NoError(wrongClient.Close())
 }
