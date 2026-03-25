@@ -1,0 +1,87 @@
+addresses:
+    - address: 2a0c:6ec0:b00:c:0:1::/96
+      linkName: nic0
+      family: inet6
+      scope: global
+      flags: permanent
+      layer: platform
+    - address: 10.0.0.0/32
+      linkName: nic0
+      family: inet4
+      scope: global
+      flags: permanent
+      layer: platform
+links:
+    - name: nic0
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      layer: platform
+routes:
+    - family: inet4
+      dst: ""
+      src: ""
+      gateway: 169.254.0.1
+      outLinkName: nic0
+      table: main
+      priority: 1024
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+    - family: inet4
+      dst: 169.254.0.1/32
+      src: ""
+      gateway: ""
+      outLinkName: nic0
+      table: main
+      priority: 1024
+      scope: link
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+    - family: inet6
+      dst: ""
+      src: ""
+      gateway: fe80::1
+      outLinkName: nic0
+      table: main
+      priority: 2048
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+    - family: inet6
+      dst: fe80::1/128
+      src: ""
+      gateway: ""
+      outLinkName: nic0
+      table: main
+      priority: 1024
+      scope: link
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+hostnames:
+    - hostname: talos
+      domainname: fqdn
+      layer: platform
+resolvers:
+    - dnsServers:
+        - 1.1.1.1
+        - 2606:4700:4700::1111
+      layer: platform
+timeServers: []
+operators: []
+externalIPs: []
+metadata:
+    platform: nocloud
+    hostname: talos.fqdn
+    instanceId: "0"
+    internalDNS: talos.fqdn
