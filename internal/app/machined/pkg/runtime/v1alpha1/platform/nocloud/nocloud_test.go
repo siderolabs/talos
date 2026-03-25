@@ -40,6 +40,9 @@ var rawNetworkConfigV2CloudInit []byte
 //go:embed testdata/in-v2-serverscom.yaml
 var rawNetworkConfigV2Serverscom []byte
 
+//go:embed testdata/in-v2-nocloud-ipv6-on-link.yaml
+var rawNetworkConfigV2NocloudIPv6OnLink []byte
+
 //go:embed testdata/expected-v1.yaml
 var expectedNetworkConfigV1 string
 
@@ -51,6 +54,9 @@ var expectedNetworkConfigV2 string
 
 //go:embed testdata/expected-v2-serverscom.yaml
 var expectedNetworkConfigV2Serverscom string
+
+//go:embed testdata/expected-v2-nocloud-ipv6-on-link.yaml
+var expectedNetworkConfigV2NocloudIPv6OnLink string
 
 func TestParseNetworkConfig(t *testing.T) {
 	t.Parallel()
@@ -88,6 +94,12 @@ func TestParseNetworkConfig(t *testing.T) {
 			name:     "V2-servers.com",
 			raw:      rawNetworkConfigV2Serverscom,
 			expected: expectedNetworkConfigV2Serverscom,
+		},
+		{
+			name:                  "V2-nocloud-ipv6-on-link",
+			raw:                   rawNetworkConfigV2NocloudIPv6OnLink,
+			expected:              expectedNetworkConfigV2NocloudIPv6OnLink,
+			expectedNeedsRecocile: true,
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
