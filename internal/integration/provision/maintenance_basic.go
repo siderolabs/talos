@@ -27,6 +27,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/api"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/api/storage"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
@@ -151,6 +152,16 @@ func (suite *MaintenanceBasicSuite) TestAPI() {
 
 			suite.Require().NoError(err)
 		}
+
+		// block device wipe should be allowed in maintenance mode
+		suite.Require().NoError(maintenanceClient.BlockDeviceWipe(suite.ctx, &storage.BlockDeviceWipeRequest{
+			Devices: []*storage.BlockDeviceWipeDescriptor{
+				{
+					Device: "vda",
+					Method: storage.BlockDeviceWipeDescriptor_FAST,
+				},
+			},
+		}))
 	})
 
 	suite.Run("test all APIs in maintenance mode", func() {

@@ -24,8 +24,10 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/partition"
+	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
 	"github.com/siderolabs/talos/pkg/machinery/api/storage"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
+	"github.com/siderolabs/talos/pkg/machinery/role"
 )
 
 // Server implements storage.StorageService.
@@ -34,8 +36,7 @@ import (
 type Server struct {
 	storage.UnimplementedStorageServiceServer
 
-	Controller      runtime.Controller
-	MaintenanceMode bool
+	Controller runtime.Controller
 }
 
 // Disks implements storage.StorageService.
@@ -99,10 +100,14 @@ func (s *Server) Disks(ctx context.Context, in *emptypb.Empty) (reply *storage.D
 //
 // It allows to wipe unused block devices, for blockdevices in use (volumes), use a different method.
 func (s *Server) BlockDeviceWipe(ctx context.Context, req *storage.BlockDeviceWipeRequest) (*storage.BlockDeviceWipeResponse, error) {
-	// the storage server is included both into machined and maintenance service
-	// in apid/machined mode, the normal authz checks are used before reaching this method
-	// in maintenance mode, we allow this method to be accessible, as it only allows to wipe block devices
-	//
+	// this API is allowed for reader role only in maintenance mode.
+	roles := authz.GetRoles(ctx)
+	inMaintenance := !s.Controller.Runtime().ConfigCompleteForBoot()
+
+	if !inMaintenance && !roles.Includes(role.Admin) {
+		return nil, authz.ErrNotAuthorized
+	}
+
 	// validate the list of devices
 	for _, deviceRequest := range req.GetDevices() {
 		if err := s.validateDeviceForWipe(ctx, deviceRequest.GetDevice(), deviceRequest.GetSkipVolumeCheck(), deviceRequest.GetSkipSecondaryCheck()); err != nil {

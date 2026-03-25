@@ -33,7 +33,9 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/cri"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/meta"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // MaintenanceSideroLinkSuite ...
@@ -190,49 +192,6 @@ func (suite *MaintenanceSideroLinkSuite) TestAPI() {
 		}, time.Minute, time.Second, "machines should listen on SideroLink IPs")
 	})
 
-	suite.Run("reboot one machine", func() {
-		maintenanceClient := sideroLinkMaintenanceClients[0]
-		insecureMaintenanceClient := maintenanceClients[0]
-
-		currentBootID := suite.readBootID(maintenanceClient)
-
-		suite.Require().NoError(maintenanceClient.Reboot(suite.ctx))
-
-		// after the reboot the machine should lose SideroLink config, so we expect it to come back up on regular IP
-		suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
-			asrt := assert.New(collect)
-
-			version, err := insecureMaintenanceClient.Version(suite.ctx)
-			if !asrt.NoError(err) {
-				return
-			}
-
-			suite.Assert().Equal(DefaultSettings.CurrentVersion, version.GetMessages()[0].GetVersion().GetTag())
-		}, time.Minute, time.Second, "version API should be available after reboot")
-
-		// apply back SideroLink config
-		_, err := insecureMaintenanceClient.ApplyConfiguration(suite.ctx, &machine.ApplyConfigurationRequest{
-			Data: maintenanceConfig,
-		})
-		suite.Require().NoError(err)
-
-		// wait for the machine to come back on SideroLink IP
-		suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
-			asrt := assert.New(collect)
-
-			version, err := maintenanceClient.Version(suite.ctx)
-			if !asrt.NoError(err) {
-				return
-			}
-
-			suite.Assert().Equal(DefaultSettings.CurrentVersion, version.GetMessages()[0].GetVersion().GetTag())
-		}, time.Minute, time.Second, "API should listen on SideroLink IP after reboot")
-
-		// check that boot ID has changed after reboot
-		newBootID := suite.readBootID(maintenanceClient)
-		suite.Assert().NotEqual(currentBootID, newBootID, "boot ID should change after reboot")
-	})
-
 	suite.Run("wipe the disk", func() {
 		// we can wipe the disk, as SideroLink client has admin permissions
 		for _, maintenanceClient := range sideroLinkMaintenanceClients {
@@ -359,6 +318,68 @@ func (suite *MaintenanceSideroLinkSuite) TestAPI() {
 				},
 			)
 		}
+	})
+
+	suite.Run("write META value", func() {
+		maintenanceClient := sideroLinkMaintenanceClients[0]
+
+		suite.Require().NoError(maintenanceClient.MetaWrite(suite.ctx, meta.UserReserved1, []byte("provision")))
+	})
+
+	suite.Run("reboot one machine", func() {
+		maintenanceClient := sideroLinkMaintenanceClients[0]
+		insecureMaintenanceClient := maintenanceClients[0]
+
+		currentBootID := suite.readBootID(maintenanceClient)
+
+		suite.Require().NoError(maintenanceClient.Reboot(suite.ctx))
+
+		// after the reboot the machine should lose SideroLink config, so we expect it to come back up on regular IP
+		suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+			asrt := assert.New(collect)
+
+			version, err := insecureMaintenanceClient.Version(suite.ctx)
+			if !asrt.NoError(err) {
+				return
+			}
+
+			suite.Assert().Equal(DefaultSettings.CurrentVersion, version.GetMessages()[0].GetVersion().GetTag())
+		}, time.Minute, time.Second, "version API should be available after reboot")
+
+		// apply back SideroLink config
+		_, err := insecureMaintenanceClient.ApplyConfiguration(suite.ctx, &machine.ApplyConfigurationRequest{
+			Data: maintenanceConfig,
+		})
+		suite.Require().NoError(err)
+
+		// wait for the machine to come back on SideroLink IP
+		suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+			asrt := assert.New(collect)
+
+			version, err := maintenanceClient.Version(suite.ctx)
+			if !asrt.NoError(err) {
+				return
+			}
+
+			suite.Assert().Equal(DefaultSettings.CurrentVersion, version.GetMessages()[0].GetVersion().GetTag())
+		}, time.Minute, time.Second, "API should listen on SideroLink IP after reboot")
+
+		// check that boot ID has changed after reboot
+		newBootID := suite.readBootID(maintenanceClient)
+		suite.Assert().NotEqual(currentBootID, newBootID, "boot ID should change after reboot")
+	})
+
+	suite.Run("read back META value", func() {
+		ctx, cancel := context.WithTimeout(suite.ctx, 15*time.Second)
+		defer cancel()
+
+		maintenanceClient := sideroLinkMaintenanceClients[0]
+
+		rtestutils.AssertResource(ctx, suite.T(), maintenanceClient.COSI, runtime.MetaKeyTagToID(meta.UserReserved1),
+			func(metaValue *runtime.MetaKey, asrt *assert.Assertions) {
+				asrt.Equal("provision", metaValue.TypedSpec().Value)
+			},
+		)
 	})
 
 	suite.Run("apply config and have a cluster", func() {
