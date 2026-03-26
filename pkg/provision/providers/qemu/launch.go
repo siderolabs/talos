@@ -408,7 +408,26 @@ func launchVM(config *LaunchConfig) error {
 			return nil
 		case command := <-config.controller.CommandsCh():
 			if command == VMCommandStop {
-				fmt.Fprintf(os.Stderr, "exiting VM as stop command via API was received\n")
+				gracePeriod := config.controller.GracePeriod()
+
+				if gracePeriod > 0 {
+					fmt.Fprintf(os.Stderr, "gracefully shutting down VM via QEMU monitor (timeout %s)\n", gracePeriod)
+
+					if err := sendMonitorCommand(config.MonitorPath, "system_powerdown"); err != nil {
+						fmt.Fprintf(os.Stderr, "failed to send system_powerdown: %s, falling back to kill\n", err)
+					} else {
+						select {
+						case err := <-done:
+							if err != nil {
+								return fmt.Errorf("process exited with error %s", err)
+							}
+
+							return nil
+						case <-time.After(gracePeriod):
+							fmt.Fprintf(os.Stderr, "graceful shutdown timed out, killing VM\n")
+						}
+					}
+				}
 
 				if err := cmd.Process.Kill(); err != nil {
 					return fmt.Errorf("failed to kill process %w", err)
@@ -420,6 +439,24 @@ func launchVM(config *LaunchConfig) error {
 			}
 		}
 	}
+}
+
+func sendMonitorCommand(monitorPath, command string) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	conn, err := (&net.Dialer{}).DialContext(ctx, "unix", monitorPath)
+	if err != nil {
+		return fmt.Errorf("failed to connect to QEMU monitor: %w", err)
+	}
+
+	defer conn.Close() //nolint:errcheck
+
+	if _, err = fmt.Fprintf(conn, "%s\n", command); err != nil {
+		return fmt.Errorf("failed to send command: %w", err)
+	}
+
+	return nil
 }
 
 // Launch a control process around qemu VM manager.

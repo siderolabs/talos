@@ -4,10 +4,13 @@
 
 package vm
 
+import "time"
+
 // Controller interface should be implemented by the VM to be controlled via the API.
 type Controller interface {
 	PowerOn() error
 	PowerOff() error
+	PowerOffWithGracePeriod(gracePeriod time.Duration) error
 	Reboot() error
 	PXEBootOnce() error
 	Status() Status

@@ -6,6 +6,7 @@ package qemu
 
 import (
 	"sync"
+	"time"
 
 	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
@@ -34,6 +35,7 @@ type Controller struct {
 	state PowerState
 
 	forcePXEBoot bool
+	gracePeriod  time.Duration
 
 	commandsCh chan VMCommand
 }
@@ -66,6 +68,11 @@ func (c *Controller) PowerOn() error {
 
 // PowerOff implements vm.Controller interface.
 func (c *Controller) PowerOff() error {
+	return c.PowerOffWithGracePeriod(0)
+}
+
+// PowerOffWithGracePeriod implements vm.Controller interface.
+func (c *Controller) PowerOffWithGracePeriod(gracePeriod time.Duration) error {
 	c.mu.Lock()
 
 	if c.state == PoweredOff {
@@ -75,6 +82,7 @@ func (c *Controller) PowerOff() error {
 	}
 
 	c.state = PoweredOff
+	c.gracePeriod = gracePeriod
 	c.mu.Unlock()
 
 	c.commandsCh <- VMCommandStop
@@ -82,9 +90,19 @@ func (c *Controller) PowerOff() error {
 	return nil
 }
 
+// GracePeriod returns the grace period for the current power off operation.
+func (c *Controller) GracePeriod() time.Duration {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	return c.gracePeriod
+}
+
 // Reboot implements vm.Controller interface.
 func (c *Controller) Reboot() error {
 	c.mu.Lock()
+
+	c.gracePeriod = 0
 
 	if c.state == PoweredOff {
 		c.state = PoweredOn

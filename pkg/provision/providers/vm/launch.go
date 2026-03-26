@@ -12,9 +12,11 @@ import (
 	"io"
 	"net/http"
 	"net/netip"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/provision/internal/inmemhttp"
@@ -44,7 +46,7 @@ func ConfigureSignals() chan os.Signal {
 	return c
 }
 
-func httpPostWrapper(f func() error) http.Handler {
+func httpPostWrapper(f func(url.Values) error) http.Handler {
 	return http.HandlerFunc(
 		func(w http.ResponseWriter, req *http.Request) {
 			if req.Body != nil {
@@ -58,7 +60,7 @@ func httpPostWrapper(f func() error) http.Handler {
 				return
 			}
 
-			err := f()
+			err := f(req.URL.Query())
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 
@@ -110,23 +112,39 @@ func NewHTTPServer(ctx context.Context, gatewayAddr netip.Addr, port int, config
 	if controller != nil {
 		for _, method := range []struct {
 			pattern string
-			f       func() error
+			f       func(url.Values) error
 		}{
 			{
 				pattern: "/poweron",
-				f:       controller.PowerOn,
+				f:       func(_ url.Values) error { return controller.PowerOn() },
 			},
 			{
 				pattern: "/poweroff",
-				f:       controller.PowerOff,
+				f: func(q url.Values) error {
+					raw := q.Get("grace-period")
+					if raw == "" {
+						return controller.PowerOff()
+					}
+
+					d, err := time.ParseDuration(raw)
+					if err != nil {
+						return fmt.Errorf("invalid grace-period: %w", err)
+					}
+
+					if d < 0 {
+						return fmt.Errorf("invalid grace-period: must be non-negative")
+					}
+
+					return controller.PowerOffWithGracePeriod(d)
+				},
 			},
 			{
 				pattern: "/reboot",
-				f:       controller.Reboot,
+				f:       func(_ url.Values) error { return controller.Reboot() },
 			},
 			{
 				pattern: "/pxeboot",
-				f:       controller.PXEBootOnce,
+				f:       func(_ url.Values) error { return controller.PXEBootOnce() },
 			},
 		} {
 			httpServer.AddHandler(method.pattern, httpPostWrapper(method.f))
