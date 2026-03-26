@@ -1,0 +1,136 @@
+header:
+  schema-version: 2.1.0
+  last-updated: '2026-03-26'
+  last-reviewed: '2026-03-26'
+  url: https://github.com/siderolabs/talos
+  comment: >
+    Security Insights for Talos Linux. This file satisfies OSPS Baseline QA-04.01
+    by documenting subprojects and additional repositories.
+
+project:
+  name: Talos Linux
+  homepage: https://www.talos.dev
+  administrators:
+    - name: Andrey Smirnov
+      primary: true
+      affiliation: Sidero Labs
+    - name: Noel Georgi
+      primary: true
+      affiliation: Sidero Labs
+    - name: Artem Chernyshev
+      primary: true
+      affiliation: Sidero Labs
+  repositories:
+    # Build & Packaging
+    - name: pkgs
+      url: https://github.com/siderolabs/pkgs
+      comment: Core system packages (kernel, firmware, containerd, runc).
+    - name: tools
+      url: https://github.com/siderolabs/tools
+      comment: Build toolchain used to compile Talos system packages.
+    - name: extensions
+      url: https://github.com/siderolabs/extensions
+      comment: System extensions (drivers, services, guest agents).
+    - name: kubelet
+      url: https://github.com/siderolabs/kubelet
+      comment: Patched kubelet container image shipped with Talos.
+    - name: image-factory
+      url: https://github.com/siderolabs/image-factory
+      comment: Image builder service for generating Talos installation media.
+    - name: contrib
+      url: https://github.com/siderolabs/contrib
+      comment: Terraform modules and e2e cloud infrastructure for integration testing.
+    # Core Libraries
+    - name: crypto
+      url: https://github.com/siderolabs/crypto
+      comment: Certificate and key management library.
+    - name: go-blockdevice
+      url: https://github.com/siderolabs/go-blockdevice
+      comment: Block device management (partitioning, probing).
+    - name: siderolink
+      url: https://github.com/siderolabs/siderolink
+      comment: WireGuard tunnel for Omni connectivity.
+    - name: discovery-api
+      url: https://github.com/siderolabs/discovery-api
+      comment: Cluster discovery protocol definitions.
+    - name: discovery-client
+      url: https://github.com/siderolabs/discovery-client
+      comment: Cluster discovery client implementation.
+    - name: go-kubernetes
+      url: https://github.com/siderolabs/go-kubernetes
+      comment: Kubernetes upgrade and manifest helpers.
+    - name: go-talos-support
+      url: https://github.com/siderolabs/go-talos-support
+      comment: Support bundle collection.
+    - name: kms-client
+      url: https://github.com/siderolabs/kms-client
+      comment: KMS (Key Management Service) client.
+    - name: go-loadbalancer
+      url: https://github.com/siderolabs/go-loadbalancer
+      comment: In-process TCP load balancer (used by KubePrism).
+    - name: net
+      url: https://github.com/siderolabs/net
+      comment: Networking utilities.
+    - name: go-smbios
+      url: https://github.com/siderolabs/go-smbios
+      comment: SMBIOS/DMI hardware info parser.
+    - name: go-pcidb
+      url: https://github.com/siderolabs/go-pcidb
+      comment: PCI device database.
+    - name: grpc-proxy
+      url: https://github.com/siderolabs/grpc-proxy
+      comment: gRPC reverse proxy used by apid.
+    - name: go-api-signature
+      url: https://github.com/siderolabs/go-api-signature
+      comment: API authentication and PGP-based client auth.
+    # Forks (maintained patches)
+    - name: coredns
+      url: https://github.com/siderolabs/coredns
+      comment: Fork of coredns/coredns; removes caddy and other unneeded plugins.
+    - name: ethtool
+      url: https://github.com/siderolabs/ethtool
+      comment: Fork of mdlayher/ethtool; adds missing APIs.
+    - name: wgctrl-go
+      url: https://github.com/siderolabs/wgctrl-go
+      comment: Fork of golang.zx2c4.com/wireguard/wgctrl; Talos-specific userspace socket location.
+    # Build Infrastructure
+    - name: kres
+      url: https://github.com/siderolabs/kres
+      comment: Repository scaffolding and CI workflow generation.
+    - name: conform
+      url: https://github.com/siderolabs/conform
+      comment: Commit policy enforcement.
+    - name: go-tools
+      url: https://github.com/siderolabs/go-tools
+      comment: Image signing tools.
+  vulnerability-reporting:
+    reports-accepted: true
+    bug-bounty-available: false
+    comment: >
+      Please use the GitHub Security Advisory tab to report vulnerabilities.
+      See SECURITY.md for full details.
+    policy: https://github.com/siderolabs/talos/security/policy
+
+repository:
+  url: https://github.com/siderolabs/talos
+  status: active
+  accepts-change-request: true
+  accepts-automated-change-request: true
+  core-team:
+    - name: Andrey Smirnov
+      primary: true
+      affiliation: Sidero Labs
+    - name: Noel Georgi
+      primary: true
+      affiliation: Sidero Labs
+    - name: Artem Chernyshev
+      primary: true
+      affiliation: Sidero Labs
+  license:
+    url: https://github.com/siderolabs/talos/blob/main/LICENSE
+    expression: MPL-2.0
+  security:
+    assessments:
+      self:
+        comment: >
+          Self assessment has not yet been completed.
