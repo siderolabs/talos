@@ -96,7 +96,7 @@ Users are encouraged to use other installation methods, such as using pre-genera
     [notes.k8s_ssa]
         title = "Kubernetes server-side apply"
         description = """\
-Talos now uses inventory backed server-side apply when applying bootsrap manifests (including `extraManifests` and `inlineManifests`).
+Talos now uses inventory backed server-side apply when applying bootstrap manifests (including `extraManifests` and `inlineManifests`).
 Purging of unneeded manifests is automatically performed.
 The switch and inventory backfill is automatic and no action is needed from the user.
 """
@@ -111,7 +111,7 @@ If those are set to `false`, the command will not attempt to reach out to the co
     [notes.images_k8s_bundle]
         title = "Talosctl images k8s-bundle subcommand accepts version parameter"
         description = """\
-The `talosctl images k8s-bundle` command now accepts an optional version overrides arguments.
+The `talosctl images k8s-bundle` command now accepts an optional argument to override Talos version.
 """
 
     [notes.environment_config]
@@ -203,7 +203,7 @@ This allows to define a custom connectivity condition.
         title = "Image APIs Updated"
         description = """\
 Talos Linux provides new APIs to manage container images on the node: listing, pulling, importing and removing images.
-The new pull APIs provides pull progress notifications.
+The new pull API provides pull progress notifications.
 
 The CLI commands `talosctl image pull`, `talosctl image list` and `talosctl image remove` have been updated to interact with the new APIs.
 """
