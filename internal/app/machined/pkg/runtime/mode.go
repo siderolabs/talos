@@ -92,11 +92,13 @@ func (m Mode) capabilities() uint64 {
 	all := ^uint64(0)
 
 	return [...]uint64{
-		// metal
+		// cloud
 		all,
 		// container
 		all ^ uint64(Reboot|Shutdown|Upgrade|Rollback|MetaKV),
-		// cloud
+		// metal
+		all,
+		// metal-agent
 		all,
 	}[m]
 }
