@@ -73,6 +73,11 @@ func (ctrl *FSScrubController) Inputs() []controller.Input {
 			Type:      block.MountStatusType,
 			Kind:      controller.InputStrong,
 		},
+		{
+			Namespace: runtimeres.NamespaceName,
+			Type:      runtimeres.TaskType,
+			Kind:      controller.InputDestroyReady,
+		},
 	}
 }
 
