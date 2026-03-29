@@ -190,6 +190,7 @@ func (ctrl *FSScrubScheduleController) updateSchedule(ctx context.Context, r con
 
 		if period == nil {
 			delete(ctrl.schedule, mountpoint)
+
 			continue
 		}
 

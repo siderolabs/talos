@@ -12,8 +12,9 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"go.uber.org/zap"
+
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 type task struct {
@@ -111,10 +112,12 @@ func (ctrl *TasksController) Run(ctx context.Context, r controller.Runtime, logg
 				if task.state == runtime.TaskStateCreated {
 					// run the task
 					fmt.Println("running task", id)
+
 					task.state = runtime.TaskStateRunning
 					task.startTime = time.Now()
 					ctrl.Tasks[id] = task
 					ctrl.RunningTask = id
+
 					break
 				}
 			}

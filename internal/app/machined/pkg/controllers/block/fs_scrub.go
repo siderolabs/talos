@@ -111,7 +111,7 @@ func (ctrl *FSScrubController) Run(ctx context.Context, r controller.Runtime, lo
 		case <-ctx.Done():
 			return nil
 		case mountpoint := <-ctrl.c:
-			if err := ctrl.runScrub(ctx, mountpoint, []string{}, r, logger); err != nil {
+			if err := ctrl.runScrub(ctx, mountpoint, []string{}, r); err != nil {
 				logger.Error("error running filesystem scrub", zap.Error(err))
 			}
 		case <-r.EventCh():
@@ -215,6 +215,7 @@ func (ctrl *FSScrubController) updateSchedule(ctx context.Context, r controller.
 		firstTimeout := time.Until(scheduledTask.StartTime)
 		if firstTimeout < 0 {
 			logger.Warn("scrub schedule start time is in the past, using random timeout", zap.String("mountpoint", mountpoint))
+
 			firstTimeout = time.Duration(rand.Int64N(int64(period.Seconds()))) * time.Second
 		}
 
@@ -222,6 +223,7 @@ func (ctrl *FSScrubController) updateSchedule(ctx context.Context, r controller.
 		// After the first scrub, we use the period defined in the config.
 		cb := func() {
 			ctrl.c <- mountpoint
+
 			ctrl.schedule[mountpoint].timer.Reset(ctrl.schedule[mountpoint].period)
 		}
 
@@ -255,8 +257,10 @@ func (ctrl *FSScrubController) cancelScrub(mountpoint string) {
 	delete(ctrl.status, mountpoint)
 }
 
-func (ctrl *FSScrubController) runScrub(ctx context.Context, mountpoint string, opts []string, r controller.Runtime, logger *zap.Logger) error {
-	args := []string{"/usr/sbin/xfs_scrub", "-T", "-v"}
+//nolint:gocyclo // tasks are being factored out
+func (ctrl *FSScrubController) runScrub(ctx context.Context, mountpoint string, opts []string, r controller.Runtime) error {
+	args := make([]string, 0, 3+len(opts)+1)
+	args = append(args, "/usr/sbin/xfs_scrub", "-T", "-v")
 	args = append(args, opts...)
 	args = append(args, mountpoint)
 
@@ -278,6 +282,7 @@ func (ctrl *FSScrubController) runScrub(ctx context.Context, mountpoint string, 
 
 	task := runtimeres.NewTask()
 	fmt.Println("creating task", zap.String("task", task.Metadata().ID()), zap.String("mountpoint", mountpoint))
+
 	if err := safe.WriterModify(ctx, r, task, func(status *runtimeres.Task) error {
 		status.TypedSpec().Args = args
 		status.TypedSpec().TaskName = "fs_scrub"
@@ -294,9 +299,11 @@ func (ctrl *FSScrubController) runScrub(ctx context.Context, mountpoint string, 
 	}
 
 	var mountStatus *block.MountStatus
+
 	for entry := range mountStatuses.All() {
 		if entry.TypedSpec().Target == mountpoint {
 			mountStatus = entry
+
 			break
 		}
 	}
@@ -305,17 +312,21 @@ func (ctrl *FSScrubController) runScrub(ctx context.Context, mountpoint string, 
 		if err := r.AddFinalizer(ctx, mountStatus.Metadata(), ctrl.Name()); err != nil {
 			return fmt.Errorf("error adding finalizer: %w", err)
 		}
+
 		fmt.Println("added finalizer to mount status", zap.String("mountpoint", mountpoint), zap.String("finalizer", ctrl.Name()))
 	}
 
-	err = runner.Run(func(s events.ServiceState, msg string, args ...any) {})
+	runnerErr := runner.Run(func(s events.ServiceState, msg string, args ...any) {})
 	// delete the task
-	r.Destroy(ctx, task.Metadata())
+	if err = r.Destroy(ctx, task.Metadata()); err != nil {
+		return fmt.Errorf("error removing task: %w", err)
+	}
 
 	if mountStatus != nil {
 		if err := r.RemoveFinalizer(ctx, mountStatus.Metadata(), ctrl.Name()); err != nil {
 			return fmt.Errorf("error removing finalizer: %w", err)
 		}
+
 		fmt.Println("removed finalizer from mount status", zap.String("mountpoint", mountpoint), zap.String("finalizer", ctrl.Name()))
 	}
 
@@ -325,7 +336,7 @@ func (ctrl *FSScrubController) runScrub(ctx context.Context, mountpoint string, 
 		period:     ctrl.schedule[mountpoint].period,
 		time:       start,
 		duration:   time.Since(start),
-		result:     err,
+		result:     runnerErr,
 	}
 
 	return err

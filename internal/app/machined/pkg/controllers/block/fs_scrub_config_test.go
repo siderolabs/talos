@@ -46,7 +46,7 @@ func (suite *FSScrubConfigSuite) TestFSScrubConfigMachineConfig() {
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), config.NewMachineConfig(cfg)))
 
-	rtestutils.AssertResource[*block.FSScrubConfig](suite.Ctx(), suite.T(), suite.State(), "",
+	rtestutils.AssertResource[*block.FSScrubConfig](suite.Ctx(), suite.T(), suite.State(), "fsscrub",
 		func(cfg *block.FSScrubConfig, asrt *assert.Assertions) {
 			asrt.Equal(
 				"/var",
