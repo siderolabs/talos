@@ -95,10 +95,6 @@ func (p *provisioner) createNode(ctx context.Context, state *provision.State, cl
 		}
 	}
 
-	if opts.WithDebugShell {
-		cmdline.Append("talos.debugshell", "")
-	}
-
 	var (
 		nodeConfig   string
 		extraISOPath string
@@ -186,7 +182,6 @@ func (p *provisioner) createNode(ctx context.Context, state *provision.State, cl
 		TFTPServer:                nodeReq.TFTPServer,
 		IPXEBootFileName:          nodeReq.IPXEBootFilename,
 		APIBindAddress:            apiBind,
-		WithDebugShell:            opts.WithDebugShell,
 		IOMMUEnabled:              opts.IOMMUEnabled,
 		Network:                   getLaunchNetworkConfig(state, clusterReq, nodeReq),
 

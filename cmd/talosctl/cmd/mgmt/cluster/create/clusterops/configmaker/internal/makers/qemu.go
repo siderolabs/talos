@@ -181,7 +181,6 @@ func (m *Qemu) AddExtraProvisionOpts() error {
 		provision.WithUEFI(m.EOps.UefiEnabled),
 		provision.WithTPM1_2(m.EOps.Tpm1_2Enabled),
 		provision.WithTPM2(m.EOps.Tpm2Enabled),
-		provision.WithDebugShell(m.EOps.DebugShellEnabled),
 		provision.WithIOMMU(m.EOps.WithIOMMU),
 		provision.WithExtraUEFISearchPaths(m.EOps.ExtraUEFISearchPaths),
 		provision.WithTargetArch(m.EOps.TargetArch),

@@ -138,7 +138,6 @@ type Qemu struct {
 	DiskEncryptionKeyTypes    []string
 	WithFirewall              string
 	WithSiderolinkAgent       flags.Agent
-	DebugShellEnabled         bool
 	WithIOMMU                 bool
 	ConfigInjectionMethod     string
 	Airgapped                 bool

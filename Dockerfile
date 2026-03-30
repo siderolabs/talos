@@ -5,7 +5,6 @@
 ARG TOOLS=scratch
 ARG PKGS=scratch
 ARG INSTALLER_ARCH=scratch
-ARG DEBUG_TOOLS_SOURCE=scratch
 
 ARG PKGS_PREFIX=scratch
 ARG TOOLS_PREFIX=scratch
@@ -68,8 +67,6 @@ ARG PKG_XFSPROGS=scratch
 ARG PKG_XZ=scratch
 ARG PKG_ZLIB=scratch
 ARG PKG_ZSTD=scratch
-
-ARG DEBUG_TOOLS_SOURCE=scratch
 
 ARG EMBED_TARGET=embed
 
@@ -225,26 +222,6 @@ FROM ${PKG_ZSTD} AS pkg-zstd
 
 FROM --platform=amd64 ${TOOLS_PREFIX}:${TOOLS} AS tools-amd64
 FROM --platform=arm64 ${TOOLS_PREFIX}:${TOOLS} AS tools-arm64
-
-FROM scratch AS pkg-debug-tools-scratch-amd64
-FROM scratch AS pkg-debug-tools-scratch-arm64
-
-FROM scratch AS pkg-debug-tools-bash-minimal-amd64
-COPY --from=tools-amd64 /usr/bin/bash /bin/bash
-COPY --from=tools-amd64 /usr/lib/ld-musl-x86_64.so.1 /lib/ld-musl-x86_64.so.1
-COPY --from=tools-amd64 /usr/bin/cat /bin/cat
-COPY --from=tools-amd64 /usr/bin/ls /bin/ls
-COPY --from=tools-amd64 /usr/bin/tee /bin/tee
-
-FROM scratch AS pkg-debug-tools-bash-minimal-arm64
-COPY --from=tools-arm64 /usr/bin/bash /bin/bash
-COPY --from=tools-arm64 /usr/lib/ld-musl-aarch64.so.1 /lib/ld-musl-aarch64.so.1
-COPY --from=tools-arm64 /usr/bin/cat /bin/cat
-COPY --from=tools-arm64 /usr/bin/ls /bin/ls
-COPY --from=tools-arm64 /usr/bin/tee /bin/tee
-
-FROM pkg-debug-tools-${DEBUG_TOOLS_SOURCE}-amd64 AS pkg-debug-tools-amd64
-FROM pkg-debug-tools-${DEBUG_TOOLS_SOURCE}-arm64 AS pkg-debug-tools-arm64
 
 # Strip CNI package.
 
@@ -744,9 +721,6 @@ COPY --link --from=pkg-kmod-amd64 usr/share/spdx/kmod.spdx.json /rootfs/usr/shar
 COPY --link --from=modules-amd64 /usr/lib/modules /rootfs/usr/lib/modules
 COPY --link --from=machined-build-amd64 /machined /rootfs/usr/bin/init
 
-# this is a no-op as it copies from a scratch image when WITH_DEBUG_SHELL is not set
-COPY --link --from=pkg-debug-tools-amd64 * /rootfs/
-
 RUN <<END
     # the orderly_poweroff call by the kernel will call '/sbin/poweroff'
     ln /rootfs/usr/bin/init /rootfs/usr/bin/poweroff
@@ -836,9 +810,6 @@ COPY --link --from=pkg-kmod-arm64 /usr/bin/kmod /rootfs/usr/bin/modprobe
 COPY --link --from=pkg-kmod-arm64 /usr/share/spdx/kmod.spdx.json /rootfs/usr/share/spdx/kmod.spdx.json
 COPY --link --from=modules-arm64 /usr/lib/modules /rootfs/usr/lib/modules
 COPY --link --from=machined-build-arm64 /machined /rootfs/usr/bin/init
-
-# this is a no-op as it copies from a scratch image when WITH_DEBUG_SHELL is not set
-COPY --link --from=pkg-debug-tools-arm64 * /rootfs/
 
 RUN <<END
     # the orderly_poweroff call by the kernel will call '/sbin/poweroff'

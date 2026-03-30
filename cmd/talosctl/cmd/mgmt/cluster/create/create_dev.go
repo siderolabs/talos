@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io/fs"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/siderolabs/go-kubeconfig"
@@ -57,21 +56,6 @@ func createDevCluster(ctx context.Context, cOps clusterops.Common, qOps clustero
 	cluster, err := provisioner.Create(ctx, clusterConfigs.ClusterRequest, clusterConfigs.ProvisionOptions...)
 	if err != nil {
 		return err
-	}
-
-	if qOps.DebugShellEnabled {
-		fmt.Println("You can now connect to debug shell on any node using these commands:")
-
-		for _, node := range clusterConfigs.ClusterRequest.Nodes {
-			talosDir, err := clientconfig.GetTalosDirectory()
-			if err != nil {
-				return err
-			}
-
-			fmt.Printf("socat - UNIX-CONNECT:%s\n", filepath.Join(talosDir, "clusters", cOps.RootOps.ClusterName, node.Name+".serial"))
-		}
-
-		return nil
 	}
 
 	// Create and save the talosctl configuration file.

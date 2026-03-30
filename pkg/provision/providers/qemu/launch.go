@@ -55,7 +55,6 @@ type LaunchConfig struct {
 	NodeUUID                  uuid.UUID
 	BadRTC                    bool
 	ArchitectureData          Arch
-	WithDebugShell            bool
 	IOMMUEnabled              bool
 	SkipInjectingExtraCmdline bool
 
@@ -139,14 +138,6 @@ func launchVM(config *LaunchConfig) error {
 		"-device", "virtserialport,chardev=qga0,name=org.qemu.guest_agent.0",
 		"-device", "i6300esb,id=watchdog0",
 		"-watchdog-action", "pause",
-	}
-
-	if config.WithDebugShell {
-		args = append(
-			args,
-			"-serial",
-			fmt.Sprintf("unix:%s/%s.serial,server,nowait", config.StatePath, config.Network.Hostname),
-		)
 	}
 
 	var (

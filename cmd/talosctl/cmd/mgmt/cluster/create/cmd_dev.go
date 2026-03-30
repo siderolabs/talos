@@ -55,7 +55,6 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 		firewallFlag                  = "with-firewall"
 		tpmEnabledFlag                = "with-tpm1_2"
 		tpm2EnabledFlag               = "with-tpm2"
-		withDebugShellFlag            = "with-debug-shell"
 		withIOMMUFlag                 = "with-iommu"
 		talosconfigFlag               = "talosconfig"
 		applyConfigEnabledFlag        = "with-apply-config"
@@ -221,9 +220,7 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 		qemu.BoolVar(&qOps.UefiEnabled, uefiEnabledFlag, qOps.UefiEnabled, "enable UEFI on x86_64 architecture")
 		qemu.BoolVar(&qOps.Tpm1_2Enabled, tpmEnabledFlag, qOps.Tpm1_2Enabled, "enable TPM 1.2 emulation support using swtpm")
 		qemu.BoolVar(&qOps.Tpm2Enabled, tpm2EnabledFlag, qOps.Tpm2Enabled, "enable TPM 2.0 emulation support using swtpm")
-		qemu.BoolVar(&qOps.DebugShellEnabled, withDebugShellFlag, qOps.DebugShellEnabled, "drop talos into a maintenance shell on boot, this is for advanced debugging for developers only")
 		qemu.BoolVar(&qOps.WithIOMMU, withIOMMUFlag, qOps.WithIOMMU, "enable IOMMU support, this also add a new PCI root port and an interface attached to it")
-		qemu.MarkHidden("with-debug-shell") //nolint:errcheck
 		qemu.StringSliceVar(&qOps.ExtraUEFISearchPaths, extraUEFISearchPathsFlag, qOps.ExtraUEFISearchPaths, "additional search paths for UEFI firmware (only applies when UEFI is enabled)")
 		qemu.StringSliceVar(&qOps.NetworkNoMasqueradeCIDRs, networkNoMasqueradeCIDRsFlag, qOps.NetworkNoMasqueradeCIDRs, "list of CIDRs to exclude from NAT")
 		qemu.StringSliceVar(&qOps.Nameservers, nameserversFlag, qOps.Nameservers, "list of nameservers to use")

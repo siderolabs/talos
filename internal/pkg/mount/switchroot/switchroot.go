@@ -106,14 +106,6 @@ func Switch(prefix string, mountpoints mount.Managers) (err error) {
 		}
 	}
 
-	if val := procfs.ProcCmdline().Get("talos.debugshell"); val != nil {
-		if err = unix.Exec("/bin/bash", []string{"/bin/bash"}, envv); err != nil {
-			return fmt.Errorf("error executing /bin/bash: %w", err)
-		}
-
-		return nil
-	}
-
 	if err = unix.Exec("/sbin/init", []string{"/sbin/init"}, envv); err != nil {
 		return fmt.Errorf("error executing /sbin/init: %w", err)
 	}

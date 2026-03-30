@@ -88,15 +88,6 @@ func WithTPM2(enabled bool) Option {
 	}
 }
 
-// WithDebugShell drops into debug shell in initramfs.
-func WithDebugShell(enabled bool) Option {
-	return func(o *Options) error {
-		o.WithDebugShell = enabled
-
-		return nil
-	}
-}
-
 // WithIOMMU enables or disables IOMMU.
 func WithIOMMU(enabled bool) Option {
 	return func(o *Options) error {
@@ -225,8 +216,6 @@ type Options struct {
 	TPM1_2Enabled bool
 	// Enable TPM 2.0 emulation using swtpm.
 	TPM2Enabled bool
-	// Enable debug shell in the bootloader.
-	WithDebugShell bool
 	// Enable IOMMU for VMs and add a new PCI root controller and network interface.
 	IOMMUEnabled bool
 	// Configure additional search paths to look for UEFI firmware.
