@@ -75,6 +75,7 @@ func UserVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 					},
 					PartitionSpec: block.PartitionSpec{
 						TypeUUID: partition.LinuxFilesystemData,
+						Grow:     true,
 					},
 					FilesystemSpec: block.FilesystemSpec{
 						Type: userVolumeConfig.Filesystem().Type(),
