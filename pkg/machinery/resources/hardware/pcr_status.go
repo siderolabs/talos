@@ -75,7 +75,9 @@ func LockPCRStatus(st FinalizerState, pcr int, finalizerName string) func(contex
 
 		fnErr := fn()
 
-		if err := st.RemoveFinalizer(ctx, pcrStatus.Metadata(), finalizerName); err != nil {
+		// detach context deadline/cancellation from the finalizer removal,
+		// as we want to make sure it is removed even if the context is canceled or times out
+		if err := st.RemoveFinalizer(context.WithoutCancel(ctx), pcrStatus.Metadata(), finalizerName); err != nil {
 			fnErr = errors.Join(fnErr, fmt.Errorf("failed to unlock PCR %d: %w", pcr, err))
 		}
 

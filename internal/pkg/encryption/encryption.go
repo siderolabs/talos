@@ -26,7 +26,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
-const keyHandlerTimeout = time.Second * 10
+const keyHandlerTimeout = time.Second * 20
 
 // Helpers provides helper methods for encryption handling.
 type Helpers struct {
