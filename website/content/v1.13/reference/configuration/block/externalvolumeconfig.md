@@ -33,7 +33,7 @@ mount:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`name` |string |Name of the mount.<br><br>Name might be between 1 and 34 characters long and can only contain:<br>lowercase and uppercase ASCII letters, digits, and hyphens.  | |
-|`filesystemType` |FilesystemType |Filesystem type.  |`virtiofs`<br />`nfs`<br /> |
+|`filesystemType` |FilesystemType |Filesystem type.  |`virtiofs`<br /> |
 |`mount` |<a href="#ExternalVolumeConfig.mount">ExternalMountSpec</a> |The mount describes additional mount options.  | |
 
 

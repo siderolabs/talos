@@ -341,8 +341,7 @@
         },
         "filesystemType": {
           "enum": [
-            "virtiofs",
-            "nfs"
+            "virtiofs"
           ],
           "title": "filesystemType",
           "description": "Filesystem type.\n",

@@ -72,7 +72,6 @@ type ExternalVolumeConfigV1Alpha1 struct {
 	//     Filesystem type.
 	//   values:
 	//     - virtiofs
-	//     - nfs
 	//  schema:
 	//    type: string
 	FilesystemType FilesystemType `yaml:"filesystemType"`
@@ -235,7 +234,7 @@ func (s VirtiofsMountSpec) Source() string {
 	return s.VirtiofsTag
 }
 
-// Parameters implements config.NFSMountConfig interface.
+// Parameters implements config.ExternalVolumeMountConfigSpec interface.
 func (s VirtiofsMountSpec) Parameters() ([]block.ParameterSpec, error) {
 	return nil, nil
 }
