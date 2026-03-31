@@ -443,7 +443,6 @@ func (ExternalVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Filesystem type." /* encoder.LineComment */, "" /* encoder.FootComment */},
 				Values: []string{
 					"virtiofs",
-					"nfs",
 				},
 			},
 			{
