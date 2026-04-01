@@ -89,8 +89,8 @@ var rules = map[string]role.Set{
 	"/machine.MachineService/Logs":                        role.MakeSet(role.Admin, role.Operator, role.Reader),
 	"/machine.MachineService/LogsContainers":              role.MakeSet(role.Admin, role.Operator, role.Reader),
 	"/machine.MachineService/Memory":                      role.MakeSet(role.Admin, role.Operator, role.Reader),
-	"/machine.MachineService/MetaWrite":                   role.MakeSet(role.Admin),
-	"/machine.MachineService/MetaDelete":                  role.MakeSet(role.Admin),
+	"/machine.MachineService/MetaWrite":                   role.MakeSet(role.Admin, role.MetaWriter),
+	"/machine.MachineService/MetaDelete":                  role.MakeSet(role.Admin, role.MetaWriter),
 	"/machine.MachineService/Mounts":                      role.MakeSet(role.Admin, role.Operator, role.Reader),
 	"/machine.MachineService/NetworkDeviceStats":          role.MakeSet(role.Admin, role.Operator, role.Reader),
 	"/machine.MachineService/Netstat":                     role.MakeSet(role.Admin, role.Operator, role.Reader),
@@ -171,7 +171,7 @@ func (s *machinedService) Main(ctx context.Context, _ runtime.Runtime, logWriter
 			{
 				// internal dashboard
 				Pattern:      "dashboard",
-				AllowedRoles: role.MakeSet(role.Reader),
+				AllowedRoles: role.MakeSet(role.Reader, role.MetaWriter),
 			},
 			{
 				// installer access during installation/upgrade
