@@ -69,6 +69,8 @@ func dashboardMain() error {
 		}
 	}
 
+	screens = append(screens, dashboard.ScreenResourceExplorer)
+
 	return dashboard.Run(ctx, c, dashboard.WithAllowExitKeys(false), dashboard.WithScreens(screens...))
 }
 

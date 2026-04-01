@@ -40,7 +40,7 @@ Keyboard shortcuts:
 		return WithClient(func(ctx context.Context, c *client.Client) error {
 			return dashboard.Run(ctx, c,
 				dashboard.WithInterval(dashboardCmdFlags.interval),
-				dashboard.WithScreens(dashboard.ScreenSummary, dashboard.ScreenMonitor),
+				dashboard.WithScreens(dashboard.ScreenSummary, dashboard.ScreenMonitor, dashboard.ScreenResourceExplorer),
 				dashboard.WithAllowExitKeys(true),
 			)
 		})
