@@ -35,6 +35,9 @@ const (
 	// ImageVerifier defines Talos role that allows verifying images.
 	ImageVerifier = Role(Prefix + "image:verifier")
 
+	// MetaWriter defines Talos role that allows mutating META values (write and delete).
+	MetaWriter = Role(Prefix + "meta:writer")
+
 	// Impersonator defines Talos role for impersonating another user (and their role).
 	// Used internally, but may also be granted to the user.
 	Impersonator = Role(Prefix + "impersonator")
@@ -47,7 +50,7 @@ type Set struct {
 
 var (
 	// All roles that can be granted to users.
-	All = MakeSet(Admin, Operator, Reader, EtcdBackup, ImageVerifier, Impersonator)
+	All = MakeSet(Admin, Operator, Reader, EtcdBackup, ImageVerifier, MetaWriter, Impersonator)
 
 	// Zero is an empty set of roles.
 	Zero = MakeSet()
