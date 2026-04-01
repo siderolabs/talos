@@ -53,6 +53,9 @@ const (
 
 	// ScreenConfigURL is the config URL screen.
 	ScreenConfigURL Screen = "Config URL"
+
+	// ScreenResourceExplorer is the resource explorer screen.
+	ScreenResourceExplorer Screen = "Resources"
 )
 
 // APIDataListener is a listener which is notified when API-sourced data is updated.
@@ -208,20 +211,25 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 
 		allowNodeNavigation := dashboard.selectedScreenConfig != nil && dashboard.selectedScreenConfig.allowNodeNavigation
 
+		// When a text input field has focus, pass all printable-character keys
+		// and navigation keys through so the field can consume them. Only global
+		// shortcuts (Ctrl+Z, Ctrl+C, function-key screen switches) remain active.
+		_, focusedIsInput := dashboard.app.GetFocus().(*tview.InputField)
+
 		switch {
 		case screenOk:
 			dashboard.selectScreen(config.screen)
 
 			return nil
-		case allowNodeNavigation && (event.Key() == tcell.KeyLeft || event.Rune() == 'h'):
+		case !focusedIsInput && allowNodeNavigation && (event.Key() == tcell.KeyLeft || event.Rune() == 'h'):
 			dashboard.selectNodeByIndex(dashboard.selectedNodeIndex - 1)
 
 			return nil
-		case allowNodeNavigation && (event.Key() == tcell.KeyRight || event.Rune() == 'l'):
+		case !focusedIsInput && allowNodeNavigation && (event.Key() == tcell.KeyRight || event.Rune() == 'l'):
 			dashboard.selectNodeByIndex(dashboard.selectedNodeIndex + 1)
 
 			return nil
-		case defOptions.allowExitKeys && (event.Key() == tcell.KeyCtrlC || event.Rune() == 'q'):
+		case !focusedIsInput && defOptions.allowExitKeys && (event.Key() == tcell.KeyCtrlC || event.Rune() == 'q'):
 			dashboard.app.Stop()
 
 			return nil
@@ -308,6 +316,8 @@ func (d *Dashboard) initScreenConfigs(ctx context.Context, screens []Screen) err
 			return NewNetworkConfigGrid(ctx, d)
 		case ScreenConfigURL:
 			return NewConfigURLGrid(ctx, d)
+		case ScreenResourceExplorer:
+			return NewResourceExplorerGrid(ctx, d)
 		default:
 			return nil
 		}
