@@ -3135,10 +3135,13 @@ talosctl reboot [flags]
   -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
       --debug                      debug operation from kernel logs. --wait is set to true when this flag is set
+      --drain                      drain the Kubernetes node before rebooting (cordon + evict pods)
+      --drain-timeout duration     timeout for draining the Kubernetes node (default 5m0s)
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for reboot
-  -m, --mode string                select the reboot mode: "default", "powercycle" (skips kexec), "force" (skips graceful teardown) (default "default")
+  -m, --mode string                select the reboot mode during upgrade. Mode "powercycle" bypasses kexec. Values: [default force powercycle] (default "default")
   -n, --nodes strings              target the specified nodes
+      --progress string            output mode for upgrade progress. Values: [auto plain] (default "auto")
       --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
       --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
       --timeout duration           time to wait for the operation is complete if --debug or --wait is set (default 30m0s)
@@ -3445,6 +3448,8 @@ talosctl upgrade [flags]
   -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
       --context string             Context to be used in command
       --debug                      debug operation from kernel logs. --wait is set to true when this flag is set
+      --drain                      drain the Kubernetes node before rebooting (cordon + evict pods) (default true)
+      --drain-timeout duration     timeout for draining the Kubernetes node (default 5m0s)
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for upgrade
   -i, --image string               the container image to use for performing the install (default "ghcr.io/siderolabs/installer:v1.13.0-alpha.2")
