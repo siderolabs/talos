@@ -619,56 +619,168 @@ A collection of commands for managing local docker-based or QEMU-based clusters
 * [talosctl cluster destroy](#talosctl-cluster-destroy)	 - Destroys a local Talos kubernetes cluster
 * [talosctl cluster show](#talosctl-cluster-show)	 - Shows info about a local provisioned kubernetes cluster
 
-## talosctl completion
+## talosctl completion bash
 
-Output shell completion code for the specified shell (bash, fish or zsh)
+Generate the autocompletion script for bash
 
 ### Synopsis
 
-Output shell completion code for the specified shell (bash, fish or zsh).
-The shell code must be evaluated to provide interactive
-completion of talosctl commands.  This can be done by sourcing it from
-the .bash_profile.
+Generate the autocompletion script for the bash shell.
 
-Note for zsh users: [1] zsh completions are only supported in versions of zsh >= 5.2
+This script depends on the 'bash-completion' package.
+If it is not installed already, you can install it via your OS's package manager.
 
-```
-talosctl completion SHELL [flags]
-```
+To load completions in your current shell session:
 
-### Examples
+	source <(talosctl completion bash)
 
-```
-# Installing bash completion on macOS using homebrew
-## If running Bash 3.2 included with macOS
-	brew install bash-completion
-## or, if running Bash 4.1+
-	brew install bash-completion@2
-## If talosctl is installed via homebrew, this should start working immediately.
-## If you've installed via other means, you may need add the completion to your completion directory
+To load completions for every new session, execute once:
+
+#### Linux:
+
+	talosctl completion bash > /etc/bash_completion.d/talosctl
+
+#### macOS:
+
 	talosctl completion bash > $(brew --prefix)/etc/bash_completion.d/talosctl
 
-# Installing bash completion on Linux
-## If bash-completion is not installed on Linux, please install the 'bash-completion' package
-## via your distribution's package manager.
-## Load the talosctl completion code for bash into the current shell
-	source <(talosctl completion bash)
-## Write bash completion code to a file and source if from .bash_profile
-	talosctl completion bash > "${TALOS_HOME:-$HOME/.talos}/completion.bash.inc"
-	printf '
-		# talosctl shell completion
-		source "${TALOS_HOME:-$HOME/.talos}/completion.bash.inc"
-		' >> $HOME/.bash_profile
-	source $HOME/.bash_profile
-# Load the talosctl completion code for fish[1] into the current shell
-	talosctl completion fish | source
-# Set the talosctl completion code for fish[1] to autoload on startup
-    talosctl completion fish > ~/.config/fish/completions/talosctl.fish
-# Load the talosctl completion code for zsh[1] into the current shell
-	source <(talosctl completion zsh)
-# Set the talosctl completion code for zsh[1] to autoload on startup
-    talosctl completion zsh > "${fpath[1]}/_talosctl"
+You will need to start a new shell for this setup to take effect.
+
+
 ```
+talosctl completion bash
+```
+
+### Options
+
+```
+  -h, --help              help for bash
+      --no-descriptions   disable completion descriptions
+```
+
+### SEE ALSO
+
+* [talosctl completion](#talosctl-completion)	 - Generate the autocompletion script for the specified shell
+
+## talosctl completion fish
+
+Generate the autocompletion script for fish
+
+### Synopsis
+
+Generate the autocompletion script for the fish shell.
+
+To load completions in your current shell session:
+
+	talosctl completion fish | source
+
+To load completions for every new session, execute once:
+
+	talosctl completion fish > ~/.config/fish/completions/talosctl.fish
+
+You will need to start a new shell for this setup to take effect.
+
+
+```
+talosctl completion fish [flags]
+```
+
+### Options
+
+```
+  -h, --help              help for fish
+      --no-descriptions   disable completion descriptions
+```
+
+### SEE ALSO
+
+* [talosctl completion](#talosctl-completion)	 - Generate the autocompletion script for the specified shell
+
+## talosctl completion powershell
+
+Generate the autocompletion script for powershell
+
+### Synopsis
+
+Generate the autocompletion script for powershell.
+
+To load completions in your current shell session:
+
+	talosctl completion powershell | Out-String | Invoke-Expression
+
+To load completions for every new session, add the output of the above command
+to your powershell profile.
+
+
+```
+talosctl completion powershell [flags]
+```
+
+### Options
+
+```
+  -h, --help              help for powershell
+      --no-descriptions   disable completion descriptions
+```
+
+### SEE ALSO
+
+* [talosctl completion](#talosctl-completion)	 - Generate the autocompletion script for the specified shell
+
+## talosctl completion zsh
+
+Generate the autocompletion script for zsh
+
+### Synopsis
+
+Generate the autocompletion script for the zsh shell.
+
+If shell completion is not already enabled in your environment you will need
+to enable it.  You can execute the following once:
+
+	echo "autoload -U compinit; compinit" >> ~/.zshrc
+
+To load completions in your current shell session:
+
+	source <(talosctl completion zsh)
+
+To load completions for every new session, execute once:
+
+#### Linux:
+
+	talosctl completion zsh > "${fpath[1]}/_talosctl"
+
+#### macOS:
+
+	talosctl completion zsh > $(brew --prefix)/share/zsh/site-functions/_talosctl
+
+You will need to start a new shell for this setup to take effect.
+
+
+```
+talosctl completion zsh [flags]
+```
+
+### Options
+
+```
+  -h, --help              help for zsh
+      --no-descriptions   disable completion descriptions
+```
+
+### SEE ALSO
+
+* [talosctl completion](#talosctl-completion)	 - Generate the autocompletion script for the specified shell
+
+## talosctl completion
+
+Generate the autocompletion script for the specified shell
+
+### Synopsis
+
+Generate the autocompletion script for talosctl for the specified shell.
+See each sub-command's help for details on how to use the generated script.
+
 
 ### Options
 
@@ -679,6 +791,10 @@ talosctl completion SHELL [flags]
 ### SEE ALSO
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+* [talosctl completion bash](#talosctl-completion-bash)	 - Generate the autocompletion script for bash
+* [talosctl completion fish](#talosctl-completion-fish)	 - Generate the autocompletion script for fish
+* [talosctl completion powershell](#talosctl-completion-powershell)	 - Generate the autocompletion script for powershell
+* [talosctl completion zsh](#talosctl-completion-zsh)	 - Generate the autocompletion script for zsh
 
 ## talosctl config add
 
@@ -3548,7 +3664,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl bootstrap](#talosctl-bootstrap)	 - Bootstrap the etcd cluster on the specified node.
 * [talosctl cgroups](#talosctl-cgroups)	 - Retrieve cgroups usage information
 * [talosctl cluster](#talosctl-cluster)	 - A collection of commands for managing local docker-based or QEMU-based clusters
-* [talosctl completion](#talosctl-completion)	 - Output shell completion code for the specified shell (bash, fish or zsh)
+* [talosctl completion](#talosctl-completion)	 - Generate the autocompletion script for the specified shell
 * [talosctl config](#talosctl-config)	 - Manage the client configuration file (talosconfig)
 * [talosctl conformance](#talosctl-conformance)	 - Run conformance tests
 * [talosctl containers](#talosctl-containers)	 - List containers
