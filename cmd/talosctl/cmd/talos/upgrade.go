@@ -41,6 +41,7 @@ var upgradeCmdFlags = struct {
 	rebootMode   flags.PflagExtended[machine.RebootRequest_Mode]
 	progress     flags.PflagExtended[reporter.OutputMode]
 
+	legacy   bool
 	force    bool // Deprecated: only used for legacy upgrade path, to be removed in Talos 1.18.
 	insecure bool // Deprecated: only used for legacy upgrade path, to be removed in Talos 1.18.
 	preserve bool // Deprecated: only used for legacy upgrade path, to be removed in Talos 1.18.
@@ -80,6 +81,12 @@ var talosUpgradeAPIVersionRange = semver.MustParseRange(">1.13.0-alpha.2 <2.0.0"
 func upgradeViaLifecycleService(ctx context.Context, c *client.Client, nodes []string) error {
 	if upgradeCmdFlags.debug {
 		upgradeCmdFlags.wait = true
+	}
+
+	if upgradeCmdFlags.legacy {
+		cli.Warning("Forcing use of legacy upgrade method. This flag is deprecated and will be removed in Talos 1.18.")
+
+		return upgradeLegacy()
 	}
 
 	opts := []client.RebootMode{
@@ -325,6 +332,7 @@ func init() {
 	//
 	// Note: remove me in Talos 1.18.
 	upgradeCmdFlags.addTrackActionFlags(upgradeCmd)
+	upgradeCmd.Flags().BoolVar(&upgradeCmdFlags.legacy, "legacy", false, "force use of legacy upgrade method")
 	upgradeCmd.Flags().BoolVarP(&upgradeCmdFlags.force, "force", "f", false, "force the upgrade (skip checks on etcd health and members, might lead to data loss)")
 	upgradeCmd.Flags().BoolVar(&upgradeCmdFlags.insecure, "insecure", false, "upgrade using the insecure (encrypted with no auth) maintenance service")
 	upgradeCmd.Flags().BoolVarP(&upgradeCmdFlags.preserve, "preserve", "p", false, "preserve data")
