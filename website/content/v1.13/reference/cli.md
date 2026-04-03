@@ -586,7 +586,7 @@ talosctl cluster show [flags]
 
 ```
   -h, --help                 help for show
-      --provisioner string   Talos cluster provisioner to use (default "docker")
+      --provisioner string   cluster provisioner to use (default "docker")
 ```
 
 ### Options inherited from parent commands

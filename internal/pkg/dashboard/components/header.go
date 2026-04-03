@@ -17,12 +17,15 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/dashboard/apidata"
 	"github.com/siderolabs/talos/internal/pkg/dashboard/resourcedata"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
 const noHostname = "(no hostname)"
 
 type headerData struct {
 	hostname        string
+	name            string
 	version         string
 	uptime          string
 	cpuFreq         string
@@ -72,6 +75,18 @@ func (widget *Header) OnResourceDataChange(data resourcedata.Data) {
 			nodeData.hostname = noHostname
 		} else {
 			nodeData.hostname = res.TypedSpec().Hostname
+		}
+	case *runtime.Version:
+		if data.Deleted {
+			nodeData.name = version.Name
+			nodeData.version = notAvailable
+		} else {
+			nodeData.name = res.TypedSpec().Name
+			nodeData.version = res.TypedSpec().Version
+
+			if nodeData.name == "" {
+				nodeData.name = version.Name
+			}
 		}
 	}
 
@@ -136,9 +151,10 @@ func (widget *Header) redraw() {
 	spinnerPos := widget.spinnerPos % len(spinner)
 
 	text := fmt.Sprintf(
-		"[green]%s [yellow::b]%s[-:-:-] (%s): uptime %s, %s, %s RAM, PROCS %s, CPU %s, RAM %s",
+		"[green]%s [yellow::b]%s[-:-:-] %s (%s): uptime %s, %s, %s RAM, PROCS %s, CPU %s, RAM %s",
 		spinner[spinnerPos],
 		data.hostname,
+		data.name,
 		data.version,
 		data.uptime,
 		data.cpuFreq,
@@ -161,12 +177,6 @@ func (widget *Header) updateNodeAPIData(node string, data *apidata.Node) {
 
 	nodeData.cpuUsagePercent = fmt.Sprintf("%.1f%%", data.CPUUsageByName("usage")*100.0)
 	nodeData.memUsagePercent = fmt.Sprintf("%.1f%%", data.MemUsage()*100.0)
-
-	if data.Version != nil {
-		nodeData.version = data.Version.GetVersion().GetTag()
-	} else {
-		nodeData.version = notAvailable
-	}
 
 	if data.SystemStat != nil && data.SystemStat.BootTime != 0 {
 		uptime := time.Since(time.Unix(int64(data.SystemStat.GetBootTime()), 0))
@@ -238,6 +248,7 @@ func (widget *Header) getOrCreateNodeData(node string) *headerData {
 	if !ok {
 		data = &headerData{
 			hostname:        notAvailable,
+			name:            version.Name,
 			version:         notAvailable,
 			uptime:          notAvailable,
 			cpuFreq:         notAvailable,

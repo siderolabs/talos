@@ -509,6 +509,7 @@ description: Talos gRPC API reference.
     - [ServicePIDSpec](#talos.resource.definitions.runtime.ServicePIDSpec)
     - [UniqueMachineTokenSpec](#talos.resource.definitions.runtime.UniqueMachineTokenSpec)
     - [UnmetCondition](#talos.resource.definitions.runtime.UnmetCondition)
+    - [VersionSpec](#talos.resource.definitions.runtime.VersionSpec)
     - [WatchdogTimerConfigSpec](#talos.resource.definitions.runtime.WatchdogTimerConfigSpec)
     - [WatchdogTimerStatusSpec](#talos.resource.definitions.runtime.WatchdogTimerStatusSpec)
   
@@ -8902,6 +8903,22 @@ UnmetCondition is a failure which prevents machine from being ready at the stage
 | ----- | ---- | ----- | ----------- |
 | name | [string](#string) |  |  |
 | reason | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.VersionSpec"></a>
+
+### VersionSpec
+VersionSpec describes version of Talos.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| version | [string](#string) |  |  |
+| name | [string](#string) |  |  |
 
 
 

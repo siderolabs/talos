@@ -14,7 +14,6 @@ import (
 type Node struct {
 	// These fields are directly API responses.
 	LoadAvg       *machine.LoadAvg
-	Version       *machine.Version
 	Memory        *machine.Memory
 	SystemStat    *machine.SystemStat
 	CPUsFreqStats *machine.CPUsFreqStats

@@ -31,6 +31,11 @@ type Profile struct {
 	Platform string `yaml:"platform"`
 	// SecureBoot enables SecureBoot (only for UEFI build).
 	SecureBoot *bool `yaml:"secureboot"`
+	// Name of Talos.
+	//
+	// Defaults to version.Name if not set, but can be overridden for custom builds.
+	Name string `yaml:"name,omitempty"`
+	// Version of Talos.
 	// Version is Talos version.
 	Version string `yaml:"version"`
 	// Various customizations than can be applied to the image.
