@@ -196,6 +196,12 @@ message UnmetCondition {
   string reason = 2;
 }
 
+// VersionSpec describes version of Talos.
+message VersionSpec {
+  string version = 1;
+  string name = 2;
+}
+
 // WatchdogTimerConfigSpec describes configuration of watchdog timer.
 message WatchdogTimerConfigSpec {
   string device = 1;

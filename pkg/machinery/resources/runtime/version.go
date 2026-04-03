@@ -20,7 +20,10 @@ const VersionType = resource.Type("Versions.runtime.talos.dev")
 type Version = typed.Resource[VersionSpec, VersionExtension]
 
 // VersionSpec describes version of Talos.
+//
+//gotagsrewrite:gen
 type VersionSpec struct {
+	Name    string `yaml:"name" protobuf:"2"`
 	Version string `yaml:"version" protobuf:"1"`
 }
 
@@ -42,6 +45,10 @@ func (VersionExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		PrintColumns: []meta.PrintColumn{
+			{
+				Name:     "Name",
+				JSONPath: `{.name}`,
+			},
 			{
 				Name:     "Version",
 				JSONPath: `{.version}`,

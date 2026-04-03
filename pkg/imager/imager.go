@@ -266,6 +266,10 @@ func (i *Imager) handleProf() error {
 		i.prof.BaseProfileName = ""
 	}
 
+	if i.prof.Name == "" {
+		i.prof.Name = version.Name
+	}
+
 	if i.prof.Version == "" {
 		i.prof.Version = version.Tag
 	}
@@ -423,6 +427,7 @@ func (i *Imager) buildUKI(ctx context.Context, report *reporter.Reporter) error 
 
 	builder := uki.Builder{
 		Arch:       i.prof.Arch,
+		Name:       i.prof.Name,
 		Version:    i.prof.Version,
 		SdStubPath: i.prof.Input.SDStub.Path,
 		SdBootPath: i.prof.Input.SDBoot.Path,

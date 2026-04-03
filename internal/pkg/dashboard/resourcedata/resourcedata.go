@@ -117,6 +117,7 @@ func (source *Source) runResourceWatch(ctx context.Context, node string) error {
 		cluster.NewInfo().Metadata(),
 		network.NewStatus(network.NamespaceName, network.StatusID).Metadata(),
 		network.NewHostnameStatus(network.NamespaceName, network.HostnameID).Metadata(),
+		runtime.NewVersion().Metadata(),
 	}
 
 	for _, ptr := range watchResources {

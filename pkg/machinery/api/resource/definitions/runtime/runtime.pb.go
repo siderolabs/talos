@@ -1662,6 +1662,59 @@ func (x *UnmetCondition) GetReason() string {
 	return ""
 }
 
+// VersionSpec describes version of Talos.
+type VersionSpec struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Version       string                 `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
+	Name          string                 `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VersionSpec) Reset() {
+	*x = VersionSpec{}
+	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VersionSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VersionSpec) ProtoMessage() {}
+
+func (x *VersionSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VersionSpec.ProtoReflect.Descriptor instead.
+func (*VersionSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_runtime_runtime_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *VersionSpec) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *VersionSpec) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
 // WatchdogTimerConfigSpec describes configuration of watchdog timer.
 type WatchdogTimerConfigSpec struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -1673,7 +1726,7 @@ type WatchdogTimerConfigSpec struct {
 
 func (x *WatchdogTimerConfigSpec) Reset() {
 	*x = WatchdogTimerConfigSpec{}
-	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[28]
+	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1685,7 +1738,7 @@ func (x *WatchdogTimerConfigSpec) String() string {
 func (*WatchdogTimerConfigSpec) ProtoMessage() {}
 
 func (x *WatchdogTimerConfigSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[28]
+	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1698,7 +1751,7 @@ func (x *WatchdogTimerConfigSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WatchdogTimerConfigSpec.ProtoReflect.Descriptor instead.
 func (*WatchdogTimerConfigSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_runtime_runtime_proto_rawDescGZIP(), []int{28}
+	return file_resource_definitions_runtime_runtime_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *WatchdogTimerConfigSpec) GetDevice() string {
@@ -1727,7 +1780,7 @@ type WatchdogTimerStatusSpec struct {
 
 func (x *WatchdogTimerStatusSpec) Reset() {
 	*x = WatchdogTimerStatusSpec{}
-	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[29]
+	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1739,7 +1792,7 @@ func (x *WatchdogTimerStatusSpec) String() string {
 func (*WatchdogTimerStatusSpec) ProtoMessage() {}
 
 func (x *WatchdogTimerStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[29]
+	mi := &file_resource_definitions_runtime_runtime_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1752,7 +1805,7 @@ func (x *WatchdogTimerStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WatchdogTimerStatusSpec.ProtoReflect.Descriptor instead.
 func (*WatchdogTimerStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_runtime_runtime_proto_rawDescGZIP(), []int{29}
+	return file_resource_definitions_runtime_runtime_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *WatchdogTimerStatusSpec) GetDevice() string {
@@ -1894,7 +1947,10 @@ const file_resource_definitions_runtime_runtime_proto_rawDesc = "" +
 	"\x05token\x18\x01 \x01(\tR\x05token\"<\n" +
 	"\x0eUnmetCondition\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x16\n" +
-	"\x06reason\x18\x02 \x01(\tR\x06reason\"f\n" +
+	"\x06reason\x18\x02 \x01(\tR\x06reason\";\n" +
+	"\vVersionSpec\x12\x18\n" +
+	"\aversion\x18\x01 \x01(\tR\aversion\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\"f\n" +
 	"\x17WatchdogTimerConfigSpec\x12\x16\n" +
 	"\x06device\x18\x01 \x01(\tR\x06device\x123\n" +
 	"\atimeout\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\atimeout\"\xa6\x01\n" +
@@ -1916,7 +1972,7 @@ func file_resource_definitions_runtime_runtime_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_runtime_runtime_proto_rawDescData
 }
 
-var file_resource_definitions_runtime_runtime_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
+var file_resource_definitions_runtime_runtime_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
 var file_resource_definitions_runtime_runtime_proto_goTypes = []any{
 	(*APIServiceConfigSpec)(nil),             // 0: talos.resource.definitions.runtime.APIServiceConfigSpec
 	(*BootedEntrySpec)(nil),                  // 1: talos.resource.definitions.runtime.BootedEntrySpec
@@ -1946,29 +2002,30 @@ var file_resource_definitions_runtime_runtime_proto_goTypes = []any{
 	(*ServicePIDSpec)(nil),                   // 25: talos.resource.definitions.runtime.ServicePIDSpec
 	(*UniqueMachineTokenSpec)(nil),           // 26: talos.resource.definitions.runtime.UniqueMachineTokenSpec
 	(*UnmetCondition)(nil),                   // 27: talos.resource.definitions.runtime.UnmetCondition
-	(*WatchdogTimerConfigSpec)(nil),          // 28: talos.resource.definitions.runtime.WatchdogTimerConfigSpec
-	(*WatchdogTimerStatusSpec)(nil),          // 29: talos.resource.definitions.runtime.WatchdogTimerStatusSpec
-	nil,                                      // 30: talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry
-	(*common.URL)(nil),                       // 31: common.URL
-	(enums.RuntimeMachineStage)(0),           // 32: talos.resource.definitions.enums.RuntimeMachineStage
-	(*common.NetIP)(nil),                     // 33: common.NetIP
-	(enums.RuntimeSELinuxState)(0),           // 34: talos.resource.definitions.enums.RuntimeSELinuxState
-	(enums.RuntimeFIPSState)(0),              // 35: talos.resource.definitions.enums.RuntimeFIPSState
-	(*durationpb.Duration)(nil),              // 36: google.protobuf.Duration
+	(*VersionSpec)(nil),                      // 28: talos.resource.definitions.runtime.VersionSpec
+	(*WatchdogTimerConfigSpec)(nil),          // 29: talos.resource.definitions.runtime.WatchdogTimerConfigSpec
+	(*WatchdogTimerStatusSpec)(nil),          // 30: talos.resource.definitions.runtime.WatchdogTimerStatusSpec
+	nil,                                      // 31: talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry
+	(*common.URL)(nil),                       // 32: common.URL
+	(enums.RuntimeMachineStage)(0),           // 33: talos.resource.definitions.enums.RuntimeMachineStage
+	(*common.NetIP)(nil),                     // 34: common.NetIP
+	(enums.RuntimeSELinuxState)(0),           // 35: talos.resource.definitions.enums.RuntimeSELinuxState
+	(enums.RuntimeFIPSState)(0),              // 36: talos.resource.definitions.enums.RuntimeFIPSState
+	(*durationpb.Duration)(nil),              // 37: google.protobuf.Duration
 }
 var file_resource_definitions_runtime_runtime_proto_depIdxs = []int32{
 	6,  // 0: talos.resource.definitions.runtime.ExtensionServiceConfigSpec.files:type_name -> talos.resource.definitions.runtime.ExtensionServiceConfigFile
-	31, // 1: talos.resource.definitions.runtime.KmsgLogConfigSpec.destinations:type_name -> common.URL
-	32, // 2: talos.resource.definitions.runtime.MachineStatusSpec.stage:type_name -> talos.resource.definitions.enums.RuntimeMachineStage
+	32, // 1: talos.resource.definitions.runtime.KmsgLogConfigSpec.destinations:type_name -> common.URL
+	33, // 2: talos.resource.definitions.runtime.MachineStatusSpec.stage:type_name -> talos.resource.definitions.enums.RuntimeMachineStage
 	16, // 3: talos.resource.definitions.runtime.MachineStatusSpec.status:type_name -> talos.resource.definitions.runtime.MachineStatusStatus
 	27, // 4: talos.resource.definitions.runtime.MachineStatusStatus.unmet_conditions:type_name -> talos.resource.definitions.runtime.UnmetCondition
-	33, // 5: talos.resource.definitions.runtime.MaintenanceServiceConfigSpec.reachable_addresses:type_name -> common.NetIP
-	30, // 6: talos.resource.definitions.runtime.PlatformMetadataSpec.tags:type_name -> talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry
-	34, // 7: talos.resource.definitions.runtime.SecurityStateSpec.se_linux_state:type_name -> talos.resource.definitions.enums.RuntimeSELinuxState
-	35, // 8: talos.resource.definitions.runtime.SecurityStateSpec.fips_state:type_name -> talos.resource.definitions.enums.RuntimeFIPSState
-	36, // 9: talos.resource.definitions.runtime.WatchdogTimerConfigSpec.timeout:type_name -> google.protobuf.Duration
-	36, // 10: talos.resource.definitions.runtime.WatchdogTimerStatusSpec.timeout:type_name -> google.protobuf.Duration
-	36, // 11: talos.resource.definitions.runtime.WatchdogTimerStatusSpec.feed_interval:type_name -> google.protobuf.Duration
+	34, // 5: talos.resource.definitions.runtime.MaintenanceServiceConfigSpec.reachable_addresses:type_name -> common.NetIP
+	31, // 6: talos.resource.definitions.runtime.PlatformMetadataSpec.tags:type_name -> talos.resource.definitions.runtime.PlatformMetadataSpec.TagsEntry
+	35, // 7: talos.resource.definitions.runtime.SecurityStateSpec.se_linux_state:type_name -> talos.resource.definitions.enums.RuntimeSELinuxState
+	36, // 8: talos.resource.definitions.runtime.SecurityStateSpec.fips_state:type_name -> talos.resource.definitions.enums.RuntimeFIPSState
+	37, // 9: talos.resource.definitions.runtime.WatchdogTimerConfigSpec.timeout:type_name -> google.protobuf.Duration
+	37, // 10: talos.resource.definitions.runtime.WatchdogTimerStatusSpec.timeout:type_name -> google.protobuf.Duration
+	37, // 11: talos.resource.definitions.runtime.WatchdogTimerStatusSpec.feed_interval:type_name -> google.protobuf.Duration
 	12, // [12:12] is the sub-list for method output_type
 	12, // [12:12] is the sub-list for method input_type
 	12, // [12:12] is the sub-list for extension type_name
@@ -1987,7 +2044,7 @@ func file_resource_definitions_runtime_runtime_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_runtime_runtime_proto_rawDesc), len(file_resource_definitions_runtime_runtime_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   31,
+			NumMessages:   32,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

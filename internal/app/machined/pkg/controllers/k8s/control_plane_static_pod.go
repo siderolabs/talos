@@ -31,6 +31,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
 // systemCriticalPriority is copied from scheduling.SystemCriticalPriority in Kubernetes internals.
@@ -473,7 +474,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 					"app.kubernetes.io/name":       k8s.APIServerID,
 					"app.kubernetes.io/version":    k8sVersion.String(),
 					"app.kubernetes.io/component":  "control-plane",
-					"app.kubernetes.io/managed-by": "Talos",
+					"app.kubernetes.io/managed-by": strings.ReplaceAll(version.Name, " ", "-"),
 				},
 			},
 			Spec: v1.PodSpec{
@@ -658,7 +659,7 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 					"app.kubernetes.io/name":       k8s.ControllerManagerID,
 					"app.kubernetes.io/version":    compatibility.VersionFromImageRef(cfg.Image).String(),
 					"app.kubernetes.io/component":  "control-plane",
-					"app.kubernetes.io/managed-by": "Talos",
+					"app.kubernetes.io/managed-by": strings.ReplaceAll(version.Name, " ", "-"),
 				},
 			},
 			Spec: v1.PodSpec{
@@ -853,7 +854,7 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 					"app.kubernetes.io/name":       k8s.SchedulerID,
 					"app.kubernetes.io/version":    compatibility.VersionFromImageRef(cfg.Image).String(),
 					"app.kubernetes.io/component":  "control-plane",
-					"app.kubernetes.io/managed-by": "Talos",
+					"app.kubernetes.io/managed-by": strings.ReplaceAll(version.Name, " ", "-"),
 				},
 			},
 			Spec: v1.PodSpec{

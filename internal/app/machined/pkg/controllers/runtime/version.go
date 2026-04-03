@@ -42,6 +42,7 @@ func (ctrl *VersionController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 func (ctrl *VersionController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	if err := safe.WriterModify(ctx, r, runtime.NewVersion(), func(status *runtime.Version) error {
+		status.TypedSpec().Name = version.Name
 		status.TypedSpec().Version = version.Tag
 
 		return nil

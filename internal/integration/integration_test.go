@@ -170,7 +170,7 @@ func init() {
 	)
 	flag.StringVar(&endpoint, "talos.endpoint", "", "endpoint to use (overrides config)")
 	flag.StringVar(&k8sEndpoint, "talos.k8sendpoint", "", "Kubernetes endpoint to use (overrides kubeconfig)")
-	flag.StringVar(&provisionerName, "talos.provisioner", "", "Talos cluster provisioner to use, if not set cluster state is disabled")
+	flag.StringVar(&provisionerName, "talos.provisioner", "", "cluster provisioner to use, if not set cluster state is disabled")
 	flag.StringVar(&stateDir, "talos.state", defaultStateDir, "directory path to store cluster state")
 	flag.StringVar(&clusterName, "talos.name", "talos-default", "the name of the cluster")
 	flag.StringVar(&expectedVersion, "talos.version", version.Tag, "expected Talos version")

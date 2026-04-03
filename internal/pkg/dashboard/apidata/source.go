@@ -132,18 +132,6 @@ func (source *Source) gather() *Data {
 			return nil
 		},
 		func() error {
-			resp, err := source.MachineClient.Version(source.ctx, &emptypb.Empty{})
-			if err != nil {
-				return err
-			}
-
-			unpack(source, result.Nodes, &resultLock, resp, func(node *Node, value *machine.Version) {
-				node.Version = value
-			})
-
-			return nil
-		},
-		func() error {
 			resp, err := source.MachineClient.Memory(source.ctx, &emptypb.Empty{})
 			if err != nil {
 				return err

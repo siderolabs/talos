@@ -24,6 +24,7 @@ import (
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 	"github.com/siderolabs/talos/pkg/machinery/client/resolver"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
 // Conn returns underlying client connection.
@@ -95,7 +96,7 @@ func (c *Client) getConn(opts ...grpc.DialOption) (*grpcConnectionWrapper, error
 			UserKeyProvider:      getKeyProvider(c.options.sideroV1KeysDir),
 			ContextName:          contextName,
 			Identity:             sideroV1.Identity,
-			ClientName:           "Talos",
+			ClientName:           version.Name,
 			ServiceAccountBase64: c.options.serviceAccountBase64,
 		})
 

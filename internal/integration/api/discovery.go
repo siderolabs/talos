@@ -27,6 +27,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
 // DiscoverySuite verifies Discovery API.
@@ -73,7 +74,7 @@ func (suite *DiscoverySuite) TearDownTest() {
 func (suite *DiscoverySuite) TestMembers() {
 	nodes := suite.DiscoverNodes(suite.ctx).Nodes()
 
-	expectedTalosVersion := fmt.Sprintf("Talos (%s)", suite.Version)
+	expectedTalosVersion := fmt.Sprintf("%s (%s)", version.Name, suite.Version)
 
 	for _, node := range nodes {
 		nodeCtx := client.WithNode(suite.ctx, node.InternalIP.String())

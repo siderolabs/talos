@@ -24,7 +24,7 @@ import (
 )
 
 func (builder *Builder) generateOSRel() error {
-	osRelease, err := version.OSReleaseFor(version.Name, builder.Version)
+	osRelease, err := version.OSReleaseFor(builder.Name, builder.Version)
 	if err != nil {
 		return err
 	}

@@ -55,7 +55,7 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 		asrt.Equal("example1", spec.Hostname)
 		asrt.Equal("example1.com", spec.Nodename)
 		asrt.Equal(machine.TypeWorker, spec.MachineType)
-		asrt.Equal("Talos ("+version.Tag+")", spec.OperatingSystem)
+		asrt.Equal(version.Name+" ("+version.Tag+")", spec.OperatingSystem)
 		asrt.Equal(cluster.KubeSpanAffiliateSpec{}, spec.KubeSpan)
 	})
 
@@ -175,7 +175,7 @@ func (suite *LocalAffiliateSuite) TestCPGeneration() {
 		asrt.Equal("example1", spec.Hostname)
 		asrt.Equal("example1.com", spec.Nodename)
 		asrt.Equal(machine.TypeControlPlane, spec.MachineType)
-		asrt.Equal("Talos ("+version.Tag+")", spec.OperatingSystem)
+		asrt.Equal(version.Name+" ("+version.Tag+")", spec.OperatingSystem)
 		asrt.Equal(cluster.KubeSpanAffiliateSpec{}, spec.KubeSpan)
 		asrt.NotNil(spec.ControlPlane)
 		asrt.Equal(6445, pointer.SafeDeref(spec.ControlPlane).APIServerPort)
