@@ -8,20 +8,30 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/action"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/nodedrain"
+	"github.com/siderolabs/talos/pkg/flags"
+	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/reporter"
 )
 
-var rebootCmdFlags struct {
+var rebootCmdFlags = struct {
 	trackableActionCmdFlags
 
-	mode string
+	progress     flags.PflagExtended[reporter.OutputMode]
+	rebootMode   flags.PflagExtended[machine.RebootRequest_Mode]
+	drain        bool
+	drainTimeout time.Duration
+}{
+	rebootMode: flags.ProtoEnum(machine.RebootRequest_DEFAULT, machine.RebootRequest_Mode_value, machine.RebootRequest_Mode_name),
+	progress:   reporter.NewOutputModeFlag(),
 }
 
 // rebootCmd represents the reboot command.
@@ -35,21 +45,46 @@ var rebootCmd = &cobra.Command{
 			rebootCmdFlags.wait = true
 		}
 
-		var opts []client.RebootMode
-
-		switch rebootCmdFlags.mode {
-		// skips kexec and reboots with power cycle
-		case "powercycle":
-			opts = append(opts, client.WithPowerCycle)
-		case "force":
-			opts = append(opts, client.WithForce)
-		case "default":
-		default:
-			return fmt.Errorf("invalid reboot mode: %q", rebootCmdFlags.mode)
+		if rebootCmdFlags.drain {
+			rebootCmdFlags.wait = true
 		}
 
-		return rebootInternal(rebootCmdFlags.debug, rebootCmdFlags.debug, rebootCmdFlags.timeout, nil, opts...)
+		opts := []client.RebootMode{
+			client.WithRebootMode(rebootCmdFlags.rebootMode.Value()),
+		}
+
+		return rebootRun(opts)
 	},
+}
+
+func rebootRun(opts []client.RebootMode) error {
+	rep := reporter.New(
+		reporter.WithOutputMode(rebootCmdFlags.progress.Value()),
+	)
+
+	if !rebootCmdFlags.drain {
+		return rebootInternal(rebootCmdFlags.wait, rebootCmdFlags.debug, rebootCmdFlags.timeout, rep, opts...)
+	}
+
+	var nodeNames map[string]string
+
+	if err := WithClientAndNodes(func(ctx context.Context, c *client.Client, nodes []string) error {
+		var drainErr error
+
+		nodeNames, drainErr = drainNodes(ctx, c, nodes, rebootCmdFlags.drainTimeout, rep)
+
+		return drainErr
+	}); err != nil {
+		return err
+	}
+
+	if err := rebootInternal(rebootCmdFlags.wait, rebootCmdFlags.debug, rebootCmdFlags.timeout, rep, opts...); err != nil {
+		return err
+	}
+
+	return WithClientAndNodes(func(ctx context.Context, c *client.Client, _ []string) error {
+		return uncordonNodes(ctx, c, nodeNames, rebootCmdFlags.timeout, rep)
+	})
 }
 
 func rebootInternal(wait, debug bool, timeout time.Duration, rep *reporter.Reporter, opts ...client.RebootMode) error {
@@ -94,7 +129,16 @@ func rebootGetActorID(opts ...client.RebootMode) func(ctx context.Context, c *cl
 }
 
 func init() {
-	rebootCmd.Flags().StringVarP(&rebootCmdFlags.mode, "mode", "m", "default", "select the reboot mode: \"default\", \"powercycle\" (skips kexec), \"force\" (skips graceful teardown)")
+	rebootCmd.Flags().Var(rebootCmdFlags.progress, "progress", fmt.Sprintf("output mode for upgrade progress. Values: %v", rebootCmdFlags.progress.Options()))
+	rebootCmd.Flags().VarP(rebootCmdFlags.rebootMode, "mode", "m",
+		fmt.Sprintf(
+			"select the reboot mode during upgrade. Mode %q bypasses kexec. Values: %v",
+			strings.ToLower(machine.UpgradeRequest_POWERCYCLE.String()),
+			rebootCmdFlags.rebootMode.Options(),
+		),
+	)
+	rebootCmd.Flags().BoolVar(&rebootCmdFlags.drain, "drain", false, "drain the Kubernetes node before rebooting (cordon + evict pods)")
+	rebootCmd.Flags().DurationVar(&rebootCmdFlags.drainTimeout, "drain-timeout", nodedrain.DefaultDrainTimeout, "timeout for draining the Kubernetes node")
 	rebootCmdFlags.addTrackActionFlags(rebootCmd)
 	addCommand(rebootCmd)
 }

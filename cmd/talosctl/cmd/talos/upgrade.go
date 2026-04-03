@@ -23,6 +23,7 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos/multiplex"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/action"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/nodedrain"
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/flags"
 	"github.com/siderolabs/talos/pkg/images"
@@ -40,6 +41,9 @@ var upgradeCmdFlags = struct {
 	upgradeImage string
 	rebootMode   flags.PflagExtended[machine.RebootRequest_Mode]
 	progress     flags.PflagExtended[reporter.OutputMode]
+
+	drain        bool
+	drainTimeout time.Duration
 
 	legacy   bool
 	force    bool // Deprecated: only used for legacy upgrade path, to be removed in Talos 1.18.
@@ -62,6 +66,10 @@ var upgradeCmd = &cobra.Command{
 			upgradeCmdFlags.wait = true
 		}
 
+		if upgradeCmdFlags.drain {
+			upgradeCmdFlags.wait = true
+		}
+
 		if upgradeCmdFlags.wait && upgradeCmdFlags.insecure {
 			return errors.New("cannot use --wait and --insecure together")
 		}
@@ -78,6 +86,8 @@ var talosUpgradeAPIVersionRange = semver.MustParseRange(">1.13.0-alpha.2 <2.0.0"
 
 // upgradeViaLifecycleService tries the new LifecycleService.Upgrade streaming API.
 // If the server returns codes.Unimplemented, it falls back to the legacy MachineService.Upgrade.
+//
+//nolint:gocyclo
 func upgradeViaLifecycleService(ctx context.Context, c *client.Client, nodes []string) error {
 	if upgradeCmdFlags.debug {
 		upgradeCmdFlags.wait = true
@@ -128,9 +138,25 @@ func upgradeViaLifecycleService(ctx context.Context, c *client.Client, nodes []s
 		return fmt.Errorf("error during upgrade: %w", err)
 	}
 
+	var nodeNames map[string]string
+
+	if upgradeCmdFlags.drain {
+		nodeNames, err = drainNodes(ctx, c, nodes, upgradeCmdFlags.drainTimeout, rep)
+		if err != nil {
+			return err
+		}
+	}
+
 	err = rebootInternal(upgradeCmdFlags.wait, upgradeCmdFlags.debug, upgradeCmdFlags.timeout, rep, opts...)
 	if err != nil {
 		return fmt.Errorf("error during upgrade: %w", err)
+	}
+
+	// Phase 3: uncordon.
+	if upgradeCmdFlags.drain && len(nodeNames) > 0 {
+		if err := uncordonNodes(ctx, c, nodeNames, upgradeCmdFlags.timeout, rep); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -326,6 +352,8 @@ func init() {
 		),
 	)
 	upgradeCmd.Flags().Var(upgradeCmdFlags.progress, "progress", fmt.Sprintf("output mode for upgrade progress. Values: %v", upgradeCmdFlags.progress.Options()))
+	upgradeCmd.Flags().BoolVar(&upgradeCmdFlags.drain, "drain", true, "drain the Kubernetes node before rebooting (cordon + evict pods)")
+	upgradeCmd.Flags().DurationVar(&upgradeCmdFlags.drainTimeout, "drain-timeout", nodedrain.DefaultDrainTimeout, "timeout for draining the Kubernetes node")
 
 	// Mark legacy-only flags as deprecated. These are only used when falling back
 	// to the legacy MachineService.Upgrade unary API for older Talos versions.
