@@ -2932,7 +2932,7 @@ for e.g. Wireguard tunnels:
 
 As packet capture is transmitted over the network, it is recommended to filter out the Talos API traffic,
 e.g. by excluding packets with the port 50000.
-   
+
 ```
 
 ### Options
@@ -3332,6 +3332,7 @@ talosctl upgrade [flags]
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for upgrade
   -i, --image string               the container image to use for performing the install (default "ghcr.io/siderolabs/installer:v1.13.0-beta.1")
+      --legacy                     force use of legacy upgrade method
       --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "system")
   -n, --nodes strings              target the specified nodes
       --progress string            output mode for upgrade progress. Values: [auto plain] (default "auto")
@@ -3587,4 +3588,3 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl validate](#talosctl-validate)	 - Validate config
 * [talosctl version](#talosctl-version)	 - Prints the version
 * [talosctl wipe](#talosctl-wipe)	 - Wipe block device or volumes
-
