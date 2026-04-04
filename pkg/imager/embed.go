@@ -112,10 +112,10 @@ func BuildEmbeddedConfigExtension(machineConfig []byte) (io.Reader, error) {
 	if err = tw.WriteHeader(&tar.Header{
 		Name:     filepath.Join("rootfs", constants.EmbeddedConfigDirectory, constants.ConfigFilename),
 		Typeflag: tar.TypeReg,
-		Mode:     0o000,
+		Mode:     0o400,
 		Size:     int64(len(machineConfig)),
 		PAXRecords: map[string]string{
-			"SCHILY.xattr.security.selinux": constants.StateSelinuxLabel,
+			constants.TarPaxHeaderSELinux: constants.StateSelinuxLabel,
 		},
 	}); err != nil {
 		return nil, fmt.Errorf("failed to write embedded header: %w", err)

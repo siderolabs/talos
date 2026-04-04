@@ -1329,6 +1329,9 @@ const (
 
 	// ImageLabelVerified is the label key for the verified image label.
 	ImageLabelVerified = "talos.dev/verified"
+
+	// TarPaxHeaderSELinux is the name of the PAX header for storing SELinux labels.
+	TarPaxHeaderSELinux = "SCHILY.xattr.security.selinux"
 )
 
 // names of variable that can be substituted in the talos.config kernel parameter.

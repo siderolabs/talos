@@ -47,12 +47,16 @@ type Imager struct {
 
 	sdBootPath string
 	ukiPath    string
+
+	// xattrsMap is used to store paths and their corresponding SELinux xattr values during extraction of extensions.
+	xattrsMap map[string]string
 }
 
 // New creates a new Imager.
 func New(prof profile.Profile) (*Imager, error) {
 	return &Imager{
-		prof: prof,
+		prof:      prof,
+		xattrsMap: map[string]string{},
 	}, nil
 }
 
@@ -198,7 +202,7 @@ func (i *Imager) handleOverlay(ctx context.Context, report *reporter.Reporter) e
 		return fmt.Errorf("failed to create overlay directory: %w", err)
 	}
 
-	if err := i.prof.Overlay.Image.Extract(ctx, tempOverlayPath, runtime.GOARCH, progressPrintf(report, reporter.Update{Message: "pulling overlay...", Status: reporter.StatusRunning})); err != nil {
+	if err := i.prof.Overlay.Image.Extract(ctx, tempOverlayPath, runtime.GOARCH, progressPrintf(report, reporter.Update{Message: "pulling overlay...", Status: reporter.StatusRunning}), nil); err != nil {
 		return err
 	}
 
@@ -316,7 +320,7 @@ func (i *Imager) buildInitramfs(ctx context.Context, report *reporter.Reporter) 
 			return fmt.Errorf("failed to create extension directory: %w", err)
 		}
 
-		if err := ext.Extract(ctx, extensionDir, i.prof.Arch, printf); err != nil {
+		if err := ext.Extract(ctx, extensionDir, i.prof.Arch, printf, i.xattrsMap); err != nil {
 			return err
 		}
 	}
@@ -328,6 +332,7 @@ func (i *Imager) buildInitramfs(ctx context.Context, report *reporter.Reporter) 
 		ExtensionTreePath: extensionsCheckoutDir,
 		Printf:            printf,
 		Quirks:            quirks.New(i.prof.Version),
+		XAttrsMap:         i.xattrsMap,
 	}
 
 	if err := builder.Build(ctx); err != nil {
