@@ -42,7 +42,7 @@ const (
 type TaskStatusSpec struct {
 	ID         string        `yaml:"id" protobuf:"1"`
 	TaskStatus TaskState     `yaml:"taskState" protobuf:"2"`
-	ExitCode   int           `yaml:"exitCode" protobuf:"3"`
+	Result     string        `yaml:"exitCode" protobuf:"3"`
 	Start      time.Time     `yaml:"start" protobuf:"4"`
 	Duration   time.Duration `yaml:"duration" protobuf:"5"`
 }

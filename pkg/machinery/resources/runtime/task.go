@@ -19,9 +19,6 @@ const TaskType = resource.Type("Tasks.runtime.talos.dev")
 // Task resource holds configuration for a task.
 type Task = typed.Resource[TaskSpec, TaskExtension]
 
-// TaskID is a resource ID for Task.
-const TaskID resource.ID = "task"
-
 // TaskSpec describes a background task to be run by a schedule.
 //
 //gotagsrewrite:gen
@@ -32,9 +29,9 @@ type TaskSpec struct {
 }
 
 // NewTask initializes a Task resource.
-func NewTask() *Task {
+func NewTask(id string) *Task {
 	return typed.NewResource[TaskSpec, TaskExtension](
-		resource.NewMetadata(NamespaceName, TaskType, TaskID, resource.VersionUndefined),
+		resource.NewMetadata(NamespaceName, TaskType, id, resource.VersionUndefined),
 		TaskSpec{},
 	)
 }
