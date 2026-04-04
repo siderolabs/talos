@@ -97,7 +97,7 @@ func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Repor
 			return err
 		}
 
-		if err := i.prof.Input.ImageCache.Extract(ctx, filepath.Join(scratchSpace, "imagecache"), i.prof.Arch, printf); err != nil {
+		if err := i.prof.Input.ImageCache.Extract(ctx, filepath.Join(scratchSpace, "imagecache"), i.prof.Arch, printf, nil); err != nil {
 			return err
 		}
 	}
@@ -358,7 +358,7 @@ func (i *Imager) buildImage(ctx context.Context, path string, printf func(string
 			return err
 		}
 
-		if err := i.prof.Input.ImageCache.Extract(ctx, imageCacheDir, i.prof.Arch, printf); err != nil {
+		if err := i.prof.Input.ImageCache.Extract(ctx, imageCacheDir, i.prof.Arch, printf, nil); err != nil {
 			return err
 		}
 
@@ -540,6 +540,7 @@ func (i *Imager) outInstaller(ctx context.Context, path string, report *reporter
 			tempOverlayPath,
 			i.prof.Arch,
 			progressPrintf(report, reporter.Update{Message: "pulling overlay for installer...", Status: reporter.StatusRunning}),
+			nil,
 		); err != nil {
 			return err
 		}

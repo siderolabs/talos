@@ -30,7 +30,7 @@ func TestCompress(t *testing.T) {
 	ext := exts[0]
 
 	squashDest, initramfsDest := t.TempDir(), t.TempDir()
-	squashFile, err := ext.Compress(t.Context(), squashDest, initramfsDest, quirks.New(""))
+	squashFile, err := ext.Compress(t.Context(), squashDest, initramfsDest, quirks.New(""), nil)
 	assert.NoError(t, err)
 
 	assert.FileExists(t, squashFile)
