@@ -787,8 +787,6 @@ RUN <<END
     ln -s /usr/local/bin/nvidia-ctk /rootfs/usr/bin/nvidia-ctk
     ln -s /usr/local/bin/nvidia-cdi-hook /rootfs/usr/bin/nvidia-cdi-hook
     ln -s /usr/local/sbin/nvme /rootfs/usr/bin/nvme
-    ln -s ../usr/local/glibc/etc/ld.so.conf /rootfs/etc/ld.so.conf
-    ln -s ../usr/local/glibc/etc/ld.so.cache /rootfs/etc/ld.so.cache
 END
 
 FROM build AS rootfs-base-arm64
@@ -880,8 +878,6 @@ RUN <<END
     ln -s /usr/local/bin/nvidia-ctk /rootfs/usr/bin/nvidia-ctk
     ln -s /usr/local/bin/nvidia-cdi-hook /rootfs/usr/bin/nvidia-cdi-hook
     ln -s /usr/local/sbin/nvme /rootfs/usr/bin/nvme
-    ln -s ../usr/local/glibc/etc/ld.so.conf /rootfs/etc/ld.so.conf
-    ln -s ../usr/local/glibc/etc/ld.so.cache /rootfs/etc/ld.so.cache
 END
 
 FROM build-go AS build-sbom
