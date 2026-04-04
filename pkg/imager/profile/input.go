@@ -337,7 +337,12 @@ func (c *ContainerAsset) pullFromOCI(arch string) (v1.Image, error) {
 }
 
 // Extract the container asset to the path.
-func (c *ContainerAsset) Extract(ctx context.Context, destination, arch string, printf func(string, ...any)) error {
+func (c *ContainerAsset) Extract(
+	ctx context.Context,
+	destination, arch string,
+	printf func(string, ...any),
+	xattrsMap map[string]string,
+) error {
 	if c.TarballPath != "" {
 		in, err := os.Open(c.TarballPath)
 		if err != nil {
@@ -348,7 +353,7 @@ func (c *ContainerAsset) Extract(ctx context.Context, destination, arch string, 
 
 		printf("extracting %s...", c.TarballPath)
 
-		return archiver.Untar(ctx, in, destination)
+		return archiver.Untar(ctx, in, destination, xattrsMap)
 	}
 
 	img, err := c.Pull(ctx, arch, printf)
@@ -373,7 +378,7 @@ func (c *ContainerAsset) Extract(ctx context.Context, destination, arch string, 
 	})
 
 	eg.Go(func() error {
-		if untarErr := archiver.Untar(ctx, r, destination); untarErr != nil {
+		if untarErr := archiver.Untar(ctx, r, destination, xattrsMap); untarErr != nil {
 			r.CloseWithError(untarErr)
 
 			return untarErr

@@ -1358,6 +1358,9 @@ const (
 
 	// LogFlushPeriod is the period for flushing in-memory log buffers to the filesystem.
 	LogFlushPeriod = 15 * time.Second
+
+	// TarPaxHeaderSELinux is the name of the PAX header for storing SELinux labels.
+	TarPaxHeaderSELinux = "SCHILY.xattr.security.selinux"
 )
 
 // See https://linux.die.net/man/3/klogctl
@@ -1374,6 +1377,9 @@ const (
 
 	// Redacted is the replacement for sensitive values.
 	Redacted = "REDACTED"
+
+	// ImageLabelVerified is the label key for the verified image label.
+	ImageLabelVerified = "talos.dev/verified"
 )
 
 // names of variable that can be substituted in the talos.config kernel parameter.

@@ -29,21 +29,3 @@ func TarGz(ctx context.Context, rootPath string, output io.Writer, walkerOptions
 
 	return zw.Close()
 }
-
-// UntarGz extracts .tar.gz archive to the rootPath.
-func UntarGz(ctx context.Context, input io.Reader, rootPath string) error {
-	zr, err := gzip.NewReader(input)
-	if err != nil {
-		return err
-	}
-
-	//nolint:errcheck
-	defer zr.Close()
-
-	err = Untar(ctx, zr, rootPath)
-	if err != nil {
-		return err
-	}
-
-	return zr.Close()
-}

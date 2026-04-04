@@ -31,6 +31,8 @@ type Builder struct {
 	Printf func(format string, v ...any)
 	// Quirks for the Talos version being used.
 	Quirks quirks.Quirks
+	// XAttrsMap is used to store paths and their corresponding SELinux xattr values during extraction of extensions.
+	XAttrsMap map[string]string
 }
 
 // Build rebuilds the initramfs.xz with extensions.
@@ -122,7 +124,7 @@ func (builder *Builder) compressExtensions(ctx context.Context, extensions []*ex
 	builder.Printf("compressing system extensions")
 
 	for _, ext := range extensions {
-		path, err := ext.Compress(ctx, tempDir, tempDir, builder.Quirks)
+		path, err := ext.Compress(ctx, tempDir, tempDir, builder.Quirks, builder.XAttrsMap)
 		if err != nil {
 			return nil, fmt.Errorf("error compressing extension %q: %w", ext.Manifest.Metadata.Name, err)
 		}
