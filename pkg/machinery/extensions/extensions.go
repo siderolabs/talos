@@ -17,10 +17,15 @@ var AllowedPaths = []string{
 	// and /lib/ld-linux-aarch64.so.1 on aarch64.
 	"/usr/lib/ld-linux-x86-64.so.2",
 	"/usr/lib/ld-linux-aarch64.so.1",
-	// /sbin/ldconfig is required by the nvidia container toolkit.
 	"/usr/bin/ldconfig",
 	"/etc/ld.so.conf",
 	"/etc/ld.so.cache",
+	"/usr/bin/nvidia-modprobe",
+	"/usr/bin/nvidia-pcc",
+	"/usr/bin/nvidia-smi",
+	"/usr/bin/nvidia-ctk",
+	"/usr/bin/nvidia-cdi-hook",
+	"/usr/bin/nvme",
 	"/usr/lib/udev/rules.d",
 	"/usr/local",
 	// glvnd, egl and vulkan are needed for OpenGL/Vulkan.

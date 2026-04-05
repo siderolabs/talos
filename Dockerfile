@@ -783,10 +783,6 @@ RUN <<END
     ln -s /etc/ssl /rootfs/usr/share/ca-certificates
     ln -s /etc/ssl /rootfs/usr/local/share/ca-certificates
     ln -s /etc/ssl /rootfs/etc/ca-certificates
-    ln -s /usr/local/bin/nvidia-smi /rootfs/usr/bin/nvidia-smi
-    ln -s /usr/local/bin/nvidia-ctk /rootfs/usr/bin/nvidia-ctk
-    ln -s /usr/local/bin/nvidia-cdi-hook /rootfs/usr/bin/nvidia-cdi-hook
-    ln -s /usr/local/sbin/nvme /rootfs/usr/bin/nvme
 END
 
 FROM build AS rootfs-base-arm64
@@ -874,10 +870,6 @@ RUN <<END
     ln -s /etc/ssl /rootfs/usr/share/ca-certificates
     ln -s /etc/ssl /rootfs/usr/local/share/ca-certificates
     ln -s /etc/ssl /rootfs/etc/ca-certificates
-    ln -s /usr/local/bin/nvidia-smi /rootfs/usr/bin/nvidia-smi
-    ln -s /usr/local/bin/nvidia-ctk /rootfs/usr/bin/nvidia-ctk
-    ln -s /usr/local/bin/nvidia-cdi-hook /rootfs/usr/bin/nvidia-cdi-hook
-    ln -s /usr/local/sbin/nvme /rootfs/usr/bin/nvme
 END
 
 FROM build-go AS build-sbom
