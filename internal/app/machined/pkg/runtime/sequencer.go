@@ -35,30 +35,35 @@ const (
 	SequenceReset
 	// SequenceReboot is the reboot sequence.
 	SequenceReboot
+	// SequenceEmergencyVolumeCleanup is the emergency volume cleanup sequence.
+	SequenceEmergencyVolumeCleanup
 )
 
 const (
-	boot               = "boot"
-	initialize         = "initialize"
-	install            = "install"
-	shutdown           = "shutdown"
-	upgrade            = "upgrade"
-	stageUpgrade       = "stageUpgrade"
-	maintenanceUpgrade = "maintenanceUpgrade"
-	reset              = "reset"
-	reboot             = "reboot"
-	noop               = "noop"
+	boot                   = "boot"
+	initialize             = "initialize"
+	install                = "install"
+	shutdown               = "shutdown"
+	upgrade                = "upgrade"
+	stageUpgrade           = "stageUpgrade"
+	maintenanceUpgrade     = "maintenanceUpgrade"
+	reset                  = "reset"
+	reboot                 = "reboot"
+	emergencyVolumeCleanup = "emergencyVolumeCleanup"
+	noop                   = "noop"
 )
 
 var sequenceTakeOver = map[Sequence]map[Sequence]struct{}{
 	SequenceInitialize: {
-		SequenceMaintenanceUpgrade: {},
-		SequenceReboot:             {},
+		SequenceMaintenanceUpgrade:     {},
+		SequenceReboot:                 {},
+		SequenceEmergencyVolumeCleanup: {},
 	},
 	SequenceBoot: {
-		SequenceReboot:  {},
-		SequenceReset:   {},
-		SequenceUpgrade: {},
+		SequenceReboot:                 {},
+		SequenceReset:                  {},
+		SequenceUpgrade:                {},
+		SequenceEmergencyVolumeCleanup: {},
 	},
 	SequenceReboot: {
 		SequenceReboot: {},
@@ -70,7 +75,7 @@ var sequenceTakeOver = map[Sequence]map[Sequence]struct{}{
 
 // String returns the string representation of a `Sequence`.
 func (s Sequence) String() string {
-	return [...]string{noop, boot, initialize, install, shutdown, upgrade, stageUpgrade, maintenanceUpgrade, reset, reboot}[s]
+	return [...]string{noop, boot, initialize, install, shutdown, upgrade, stageUpgrade, maintenanceUpgrade, reset, reboot, emergencyVolumeCleanup}[s]
 }
 
 // CanTakeOver defines sequences priority.
@@ -117,6 +122,8 @@ func ParseSequence(s string) (seq Sequence, err error) {
 		seq = SequenceReset
 	case reboot:
 		seq = SequenceReboot
+	case emergencyVolumeCleanup:
+		seq = SequenceEmergencyVolumeCleanup
 	case noop:
 		seq = SequenceNoop
 	default:
@@ -154,6 +161,7 @@ type Sequencer interface {
 	StageUpgrade(Runtime, *machine.UpgradeRequest) []Phase
 	Upgrade(Runtime, *machine.UpgradeRequest) []Phase
 	MaintenanceUpgrade(Runtime, *machine.UpgradeRequest) []Phase
+	EmergencyVolumeCleanup(Runtime) []Phase
 }
 
 // EventSequenceStart represents the sequence start event.

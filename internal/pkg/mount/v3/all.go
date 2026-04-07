@@ -35,6 +35,8 @@ func unmountWithTimeout(target string, flags int, timeout time.Duration) error {
 }
 
 // UnmountAll attempts to unmount all the mounted filesystems via "self" mountinfo.
+//
+//nolint:gocyclo
 func UnmountAll() error {
 	// timeout in seconds
 	const timeout = 10
@@ -42,13 +44,15 @@ func UnmountAll() error {
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
 
-	for range timeout {
+	for iteration := range timeout {
 		mounts, err := readMountInfo()
 		if err != nil {
 			return err
 		}
 
 		failedUnmounts := 0
+
+		var failedMountPoints []string
 
 		for _, mountInfo := range mounts {
 			if mountInfo.MountPoint == "" {
@@ -63,12 +67,21 @@ func UnmountAll() error {
 					log.Printf("failed unmounting %s: %s", mountInfo.MountPoint, err)
 
 					failedUnmounts++
+
+					failedMountPoints = append(failedMountPoints, mountInfo.MountPoint)
 				}
 			}
 		}
 
 		if failedUnmounts == 0 {
 			break
+		}
+
+		// Log mount users on first and last failure to help diagnose busy mounts.
+		if iteration == 0 || iteration == timeout-1 {
+			for _, mp := range failedMountPoints {
+				logMountUsers(log.Printf, mp)
+			}
 		}
 
 		log.Printf("retrying %d unmount operations...", failedUnmounts)

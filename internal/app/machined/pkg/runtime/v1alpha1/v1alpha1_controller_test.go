@@ -68,6 +68,10 @@ func (m *mockSequencer) Upgrade(r runtime.Runtime, req *machine.UpgradeRequest) 
 	return m.phases[runtime.SequenceUpgrade]
 }
 
+func (m *mockSequencer) EmergencyVolumeCleanup(r runtime.Runtime) []runtime.Phase {
+	return m.phases[runtime.SequenceEmergencyVolumeCleanup]
+}
+
 func (m *mockSequencer) trackCall(name string, doneCh chan struct{}) func(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(seq runtime.Sequence, data any) (runtime.TaskExecutionFunc, string) {
 		return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {

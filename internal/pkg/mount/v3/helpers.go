@@ -210,6 +210,7 @@ func PseudoLate(printer func(string, ...any)) Managers {
 			WithTarget("/run"),
 			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_RELATIME),
 			WithSelinuxLabel(constants.RunSelinuxLabel),
+			WithRecursiveUnmount(),
 			WithFsopen(
 				"tmpfs",
 				fsopen.WithStringParameter("mode", "0755"),

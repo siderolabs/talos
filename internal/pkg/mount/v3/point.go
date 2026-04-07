@@ -146,9 +146,17 @@ func (p *Point) Unmount(opts UnmountOptions) error {
 		return nil
 	}
 
-	return p.retry(func() error {
+	err := p.retry(func() error {
 		return SafeUnmount(context.Background(), opts.Printer, p.target, opts.Recursive)
 	}, true)
+	if err != nil {
+		logSubmounts(opts.Printer, p.target)
+		logMountUsers(opts.Printer, p.target)
+
+		return err
+	}
+
+	return nil
 }
 
 // IsMounted checks if the mount point is mounted by checking the mount on the target.
