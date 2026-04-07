@@ -781,8 +781,8 @@ github.com/shibumi/go-pathspec v1.3.0 h1:QUyMZhFo0Md5B8zV8x2tesohbb5kfbpTi9rBnKh
 github.com/shibumi/go-pathspec v1.3.0/go.mod h1:Xutfslp817l2I1cZvgcfeMQJG5QnU2lh5tVaaMCl3jE=
 github.com/siderolabs/coredns v1.14.53 h1:rwWyicwWFcu+i8OV0WT1u2W46J/iIReqzm+pSvEPPWs=
 github.com/siderolabs/coredns v1.14.53/go.mod h1:KAGRTpTbhrScGMhiLsgnzo30OgiBBut1Y5XTuG1V+BQ=
-github.com/siderolabs/crypto v0.6.4 h1:uMoe/X/mABOv6yOgvKcjmjIMdv6U8JegBXlPKtyjn3g=
-github.com/siderolabs/crypto v0.6.4/go.mod h1:39B7Mdrd8qTfEYOjsWPQOk7gLTWrEI30isAW+YYj9nk=
+github.com/siderolabs/crypto v0.6.5 h1:Elq5tpWP2ApZ4Y+Kg+eIDiiWbmriCPI1mjYIMwvsYkw=
+github.com/siderolabs/crypto v0.6.5/go.mod h1:QjVcrdJQE1sxhjHqieCgwGdlIYq/xCP2DL53Up8nbU4=
 github.com/siderolabs/discovery-api v0.1.8 h1:Hq/Si0fFQICvdT+P/I81fRf9t5I+J6vaJNBvgehv8GE=
 github.com/siderolabs/discovery-api v0.1.8/go.mod h1:JN8aBpnsArIeLNLbqt3HIYHyFR14Qfwr4etAB2ZfygA=
 github.com/siderolabs/discovery-client v0.1.15 h1:XN2nm2U/RUtevZtKZnwYAOE+Z68VpW32Me1K19zXtHU=
