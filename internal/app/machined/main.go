@@ -99,8 +99,7 @@ func syncNonVolatileStorageBuffers() {
 func handle(ctx context.Context, err error) {
 	rebootCmd := int(emergency.RebootCmd.Load())
 
-	var rebootErr runtime.RebootError
-	if errors.As(err, &rebootErr) {
+	if rebootErr, ok := errors.AsType[runtime.RebootError](err); ok {
 		// not a failure, but wrapped reboot command
 		rebootCmd = rebootErr.Cmd
 
@@ -195,7 +194,7 @@ func run() error {
 }
 
 //nolint:gocyclo
-func runEntrypoint(ctx context.Context, c *v1alpha1runtime.Controller) error {
+func runEntrypoint(ctx context.Context, c *v1alpha1runtime.Controller) (returnErr error) {
 	errCh := make(chan error)
 
 	var controllerWaitGroup sync.WaitGroup
@@ -216,6 +215,29 @@ func runEntrypoint(ctx context.Context, c *v1alpha1runtime.Controller) error {
 	}()
 
 	go runDebugServer(ctx)
+
+	// Run emergency volume cleanup on fatal errors before canceling the context,
+	// so that the COSI controller runtime is still alive and can react to
+	// volume lifecycle teardown.
+	defer func() {
+		if returnErr == nil {
+			return
+		}
+
+		if _, ok := errors.AsType[runtime.RebootError](returnErr); ok { //nolint:errcheck
+			// successful reboot/shutdown sequences already performed volume cleanup
+			return
+		}
+
+		log.Printf("running emergency volume cleanup")
+
+		emergencyCtx, emergencyCancel := context.WithTimeout(context.Background(), constants.EmergencyCleanupTimeout)
+		defer emergencyCancel()
+
+		if e := c.Run(emergencyCtx, runtime.SequenceEmergencyVolumeCleanup, nil, runtime.WithTakeover()); e != nil {
+			log.Printf("WARNING: emergency volume cleanup failed: %s", e)
+		}
+	}()
 
 	// Schedule service shutdown on any return.
 	defer system.Services(c.Runtime()).Shutdown(ctx)

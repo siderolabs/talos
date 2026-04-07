@@ -514,6 +514,36 @@ func stopAllPhaselist(r runtime.Runtime, enableKexec bool) PhaseList {
 	return phases
 }
 
+// EmergencyVolumeCleanup is the emergency volume cleanup sequence.
+//
+// This sequence runs the essential volume cleanup phases with a short timeout
+// to properly unmount and tear down volumes before an emergency reboot.
+// It is invoked when a fatal error occurs during normal sequence execution.
+func (*Sequencer) EmergencyVolumeCleanup(r runtime.Runtime) []runtime.Phase {
+	phases := PhaseList{}
+
+	switch r.State().Platform().Mode() { //nolint:exhaustive
+	case runtime.ModeContainer:
+		// no volume cleanup needed in container mode
+	default:
+		phases = phases.Append(
+			"umount",
+			UnmountPodMounts,
+		).Append(
+			"unmountBind",
+			UnmountSystemDiskBindMounts,
+		).Append(
+			"unmountSystem",
+			UnmountEphemeralPartition,
+		).Append(
+			"volumeFinalize",
+			TeardownVolumeLifecycle,
+		)
+	}
+
+	return phases
+}
+
 func bootPartitionInTargets(targets []runtime.PartitionTarget) bool {
 	for _, target := range targets {
 		if target.GetLabel() == constants.BootPartitionLabel {

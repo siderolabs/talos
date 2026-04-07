@@ -417,6 +417,8 @@ func (c *Controller) phases(seq runtime.Sequence, data any) ([]runtime.Phase, er
 		}
 
 		phases = c.s.Reset(c.r, in)
+	case runtime.SequenceEmergencyVolumeCleanup:
+		phases = c.s.EmergencyVolumeCleanup(c.r)
 	case runtime.SequenceNoop:
 	default:
 		return nil, fmt.Errorf("sequence not implemented: %q", seq)

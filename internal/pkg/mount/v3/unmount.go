@@ -5,18 +5,31 @@
 package mount
 
 import (
+	"bufio"
 	"context"
+	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
 	"time"
 
 	"golang.org/x/sys/unix"
 )
 
-func trySyncMount(target string, printer func(string, ...any)) error {
-	// open the mountpoint directory to get an fd on the fs
+func trySyncMount(target string) error {
+	// Try the directory path first, then fall back to a file mountpoint.
 	fd, err := unix.Open(target, unix.O_RDONLY|unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
 	if err != nil {
-		return fmt.Errorf("open %q: %w", target, err)
+		if errors.Is(err, unix.ENOTDIR) {
+			fd, err = unix.Open(target, unix.O_RDONLY|unix.O_CLOEXEC, 0)
+			if err != nil {
+				return fmt.Errorf("open %q as file: %w", target, err)
+			}
+		} else {
+			return fmt.Errorf("open %q as directory: %w", target, err)
+		}
 	}
 	defer unix.Close(fd) //nolint:errcheck
 
@@ -25,8 +38,6 @@ func trySyncMount(target string, printer func(string, ...any)) error {
 		return fmt.Errorf("SYS_SYNCFS %q: %w", target, err)
 	}
 
-	printer("syncfs(%s) ok", target)
-
 	return nil
 }
 
@@ -34,7 +45,7 @@ func unmountLoop(ctx context.Context, printer func(string, ...any), target strin
 	errCh := make(chan error, 1)
 
 	// we need to try to sync fs before
-	if err := trySyncMount(target, printer); err != nil {
+	if err := trySyncMount(target); err != nil {
 		printer("sync failed: %s", err)
 	}
 
@@ -103,8 +114,6 @@ func SafeUnmount(ctx context.Context, printer func(string, ...any), target strin
 		return err
 	}
 
-	logSubmounts(printer, target)
-
 	printer("unmounting %s with force", target)
 
 	ok, err = unmountLoop(ctx, printer, target, unix.MNT_FORCE, unmountForceTimeout, " with force flag")
@@ -112,8 +121,6 @@ func SafeUnmount(ctx context.Context, printer func(string, ...any), target strin
 	if ok {
 		return err
 	}
-
-	logSubmounts(printer, target)
 
 	return fmt.Errorf("unmounting %s with force flag timed out", target)
 }
@@ -137,5 +144,111 @@ func logSubmounts(printer func(string, ...any), target string) {
 
 	if len(submounts) > 0 {
 		printer("submounts on %s: %v", target, submounts)
+	}
+}
+
+// logMountUsers scans /proc to find processes that have open file descriptors,
+// working directories, or memory-mapped files under the given mount target.
+// This helps diagnose "device or resource busy" errors during unmount.
+//
+//nolint:gocyclo,cyclop
+func logMountUsers(printer func(string, ...any), target string) {
+	entries, err := os.ReadDir("/proc")
+	if err != nil {
+		printer("failed to read /proc: %v", err)
+
+		return
+	}
+
+	targetWithSlash := target + "/"
+
+	found := false
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+
+		pid, err := strconv.Atoi(entry.Name())
+		if err != nil {
+			continue // not a PID directory
+		}
+
+		procPath := filepath.Join("/proc", entry.Name())
+
+		var offendingPaths []string
+
+		// Check cwd.
+		if cwd, err := os.Readlink(filepath.Join(procPath, "cwd")); err == nil {
+			if cwd == target || strings.HasPrefix(cwd, targetWithSlash) {
+				offendingPaths = append(offendingPaths, "cwd="+cwd)
+			}
+		}
+
+		// Check root.
+		if root, err := os.Readlink(filepath.Join(procPath, "root")); err == nil {
+			if root == target || strings.HasPrefix(root, targetWithSlash) {
+				offendingPaths = append(offendingPaths, "root="+root)
+			}
+		}
+
+		// Check open file descriptors.
+		if fds, err := os.ReadDir(filepath.Join(procPath, "fd")); err == nil {
+			for _, fd := range fds {
+				if link, err := os.Readlink(filepath.Join(procPath, "fd", fd.Name())); err == nil {
+					if link == target || strings.HasPrefix(link, targetWithSlash) {
+						offendingPaths = append(offendingPaths, "fd/"+fd.Name()+"="+link)
+					}
+				}
+			}
+		}
+
+		// Check memory-mapped files.
+		if f, err := os.Open(filepath.Join(procPath, "maps")); err == nil {
+			scanner := bufio.NewScanner(f)
+			for scanner.Scan() {
+				line := scanner.Text()
+				// maps format: address perms offset dev inode pathname
+				// pathname starts after the 5th field
+				fields := strings.Fields(line)
+				if len(fields) >= 6 {
+					mappedPath := fields[len(fields)-1]
+					if mappedPath == target || strings.HasPrefix(mappedPath, targetWithSlash) {
+						offendingPaths = append(offendingPaths, "mmap="+mappedPath)
+					}
+				}
+			}
+
+			f.Close() //nolint:errcheck
+		}
+
+		if len(offendingPaths) == 0 {
+			continue
+		}
+
+		found = true
+
+		// Read process identity.
+		comm := "<unknown>"
+
+		if data, err := os.ReadFile(filepath.Join(procPath, "comm")); err == nil {
+			comm = strings.TrimSpace(string(data))
+		}
+
+		cmdline := ""
+
+		if data, err := os.ReadFile(filepath.Join(procPath, "cmdline")); err == nil {
+			// cmdline uses null bytes as separators
+			cmdline = strings.ReplaceAll(strings.TrimRight(string(data), "\x00"), "\x00", " ")
+		}
+
+		printer("mount %s held by pid %d (%s) cmdline=[%s]: %s",
+			target, pid, comm, cmdline, strings.Join(offendingPaths, ", "))
+	}
+
+	if !found {
+		printer("mount %s is busy but no processes found holding it (may be held by kernel references)", target)
+	} else {
+		printer("if you see this message, report a bug with the above information to help us identify and fix the issue")
 	}
 }

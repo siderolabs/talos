@@ -908,6 +908,9 @@ const (
 	// BootTimeout is the timeout to run all services.
 	BootTimeout = 70 * time.Minute
 
+	// EmergencyCleanupTimeout is the timeout to wait for the volume cleanup in case of terminal failure during booting.
+	EmergencyCleanupTimeout = 30 * time.Second
+
 	// FailurePauseTimeout is the timeout for the sequencer failures which can be fixed by updating the machine config.
 	FailurePauseTimeout = 35 * time.Minute
 
