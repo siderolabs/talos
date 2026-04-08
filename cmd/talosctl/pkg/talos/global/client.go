@@ -152,7 +152,7 @@ func (c *Args) WithClientMaintenance(enforceFingerprints []string, action func(c
 				tlsConfig.VerifyConnection = x509.MatchSPKIFingerprints(fingerprints...)
 			}
 
-			c, err := client.New(ctx, client.WithTLSConfig(tlsConfig), client.WithEndpoints(c.Nodes...))
+			c, err := client.New(ctx, client.WithDefaultGRPCDialOptions(), client.WithTLSConfig(tlsConfig), client.WithEndpoints(c.Nodes...))
 			if err != nil {
 				return err
 			}
