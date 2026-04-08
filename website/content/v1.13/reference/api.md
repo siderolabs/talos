@@ -337,6 +337,7 @@ description: Talos gRPC API reference.
     - [RuntimeFIPSState](#talos.resource.definitions.enums.RuntimeFIPSState)
     - [RuntimeMachineStage](#talos.resource.definitions.enums.RuntimeMachineStage)
     - [RuntimeSELinuxState](#talos.resource.definitions.enums.RuntimeSELinuxState)
+    - [RuntimeTaskState](#talos.resource.definitions.enums.RuntimeTaskState)
   
 - [resource/definitions/block/block.proto](#resource/definitions/block/block.proto)
     - [DeviceSpec](#talos.resource.definitions.block.DeviceSpec)
@@ -347,6 +348,9 @@ description: Talos gRPC API reference.
     - [DiskSpec](#talos.resource.definitions.block.DiskSpec)
     - [EncryptionKey](#talos.resource.definitions.block.EncryptionKey)
     - [EncryptionSpec](#talos.resource.definitions.block.EncryptionSpec)
+    - [FSScrubConfigSpec](#talos.resource.definitions.block.FSScrubConfigSpec)
+    - [FSScrubScheduleSpec](#talos.resource.definitions.block.FSScrubScheduleSpec)
+    - [FSScrubStatusSpec](#talos.resource.definitions.block.FSScrubStatusSpec)
     - [FilesystemSpec](#talos.resource.definitions.block.FilesystemSpec)
     - [LocatorSpec](#talos.resource.definitions.block.LocatorSpec)
     - [MountRequestSpec](#talos.resource.definitions.block.MountRequestSpec)
@@ -507,6 +511,8 @@ description: Talos gRPC API reference.
     - [SBOMItemSpec](#talos.resource.definitions.runtime.SBOMItemSpec)
     - [SecurityStateSpec](#talos.resource.definitions.runtime.SecurityStateSpec)
     - [ServicePIDSpec](#talos.resource.definitions.runtime.ServicePIDSpec)
+    - [TaskSpec](#talos.resource.definitions.runtime.TaskSpec)
+    - [TaskStatusSpec](#talos.resource.definitions.runtime.TaskStatusSpec)
     - [UniqueMachineTokenSpec](#talos.resource.definitions.runtime.UniqueMachineTokenSpec)
     - [UnmetCondition](#talos.resource.definitions.runtime.UnmetCondition)
     - [WatchdogTimerConfigSpec](#talos.resource.definitions.runtime.WatchdogTimerConfigSpec)
@@ -6063,6 +6069,20 @@ RuntimeSELinuxState describes the current SELinux status.
 | SE_LINUX_STATE_ENFORCING | 2 |  |
 
 
+
+<a name="talos.resource.definitions.enums.RuntimeTaskState"></a>
+
+### RuntimeTaskState
+RuntimeTaskState describes the task state.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| TASK_STATE_CREATED | 0 |  |
+| TASK_STATE_RUNNING | 1 |  |
+| TASK_STATE_STOPPING | 2 |  |
+| TASK_STATE_COMPLETED | 3 |  |
+
+
  <!-- end enums -->
 
  <!-- end HasExtensions -->
@@ -6249,6 +6269,59 @@ EncryptionSpec is the spec for volume encryption.
 | key_size | [uint64](#uint64) |  |  |
 | block_size | [uint64](#uint64) |  |  |
 | perf_options | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.FSScrubConfigSpec"></a>
+
+### FSScrubConfigSpec
+FSScrubConfigSpec describes configuration of watchdog timer.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| mountpoint | [string](#string) |  |  |
+| period | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.FSScrubScheduleSpec"></a>
+
+### FSScrubScheduleSpec
+FSScrubScheduleSpec describes scheduled filesystem scrubbing jobs.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| mountpoint | [string](#string) |  |  |
+| period | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| start_time | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.FSScrubStatusSpec"></a>
+
+### FSScrubStatusSpec
+FSScrubStatusSpec describes status of filesystem scrub jobs.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| mountpoint | [string](#string) |  |  |
+| period | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| time | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
+| duration | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| status | [string](#string) |  |  |
 
 
 
@@ -8871,6 +8944,42 @@ ServicePIDSpec is the spec for the service PID.
 | ----- | ---- | ----- | ----------- |
 | pid | [int32](#int32) |  |  |
 | mount_namespace | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.TaskSpec"></a>
+
+### TaskSpec
+TaskSpec describes a background task to be run by a schedule.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| task_name | [string](#string) |  |  |
+| args | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.TaskStatusSpec"></a>
+
+### TaskStatusSpec
+TaskStatusSpec describes configuration of watchdog timer.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [string](#string) |  |  |
+| task_status | [talos.resource.definitions.enums.RuntimeTaskState](#talos.resource.definitions.enums.RuntimeTaskState) |  |  |
+| exit_code | [int64](#int64) |  |  |
+| start | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
+| duration | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
 
 
 
