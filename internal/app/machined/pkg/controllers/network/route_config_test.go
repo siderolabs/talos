@@ -274,7 +274,7 @@ func (suite *RouteConfigSuite) TestMachineConfiguration() {
 				asrt.Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
 				asrt.EqualValues(network.DefaultRouteMetric, r.TypedSpec().Priority)
 			case "configuration/inet4//10.1.3.4/32/300":
-				asrt.Equal("lo", r.TypedSpec().OutLinkName)
+				asrt.Empty(r.TypedSpec().OutLinkName)
 				asrt.Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
 				asrt.EqualValues(300, r.TypedSpec().Priority)
 				asrt.Equal(nethelpers.TypeBlackhole, r.TypedSpec().Type)

@@ -351,9 +351,11 @@ func (ctrl *RouteConfigController) processMachineConfig(linkConfigs []cfg.Networ
 		}
 
 		family := nethelpers.FamilyInet4
+		outLinkName := ""
 
 		if destination.Addr().Is6() {
 			family = nethelpers.FamilyInet6
+			outLinkName = "lo"
 		}
 
 		route := network.RouteSpecSpec{
@@ -362,7 +364,7 @@ func (ctrl *RouteConfigController) processMachineConfig(linkConfigs []cfg.Networ
 			Table:       nethelpers.TableMain,
 			Protocol:    nethelpers.ProtocolStatic,
 			Type:        nethelpers.TypeBlackhole,
-			OutLinkName: "lo",
+			OutLinkName: outLinkName,
 			ConfigLayer: network.ConfigMachineConfiguration,
 			Priority:    blackholeRouteConfig.Metric().ValueOr(network.DefaultRouteMetric),
 		}
