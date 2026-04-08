@@ -7,12 +7,15 @@
 package api
 
 import (
+	"bytes"
 	"context"
 	_ "embed"
 	"fmt"
 	"io"
+	"strings"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/go-retry/retry"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -20,6 +23,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/siderolabs/talos/internal/integration/base"
+	"github.com/siderolabs/talos/pkg/machinery/api/common"
+	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 //go:embed testdata/nvidia-gpu-operator.yaml
@@ -69,18 +76,105 @@ func (suite *ExtensionsSuiteNVIDIA) TestExtensionsNVIDIA() {
 	// if we're testing NVIDIA stuff we need to get the nodes having NVIDIA GPUs
 	// we query k8s to get the nodes having the label node.kubernetes.io/instance-type.
 	// this label is set by the cloud provider and it's value is the instance type.
-	// the nvidia e2e-aws tests creates gpu nodes one with g4dn.xlarge and another
-	// with p4d.24xlarge
-	for _, nvidiaNode := range suite.getNVIDIANodes("node.kubernetes.io/instance-type in (g4dn.xlarge, p4d.24xlarge)") {
+	for _, nvidiaNode := range suite.getNVIDIANodes("node.kubernetes.io/instance-type in (g4dn.xlarge, p4d.24xlarge, g5g.xlarge)") {
 		suite.AssertExpectedModules(suite.ctx, nvidiaNode, expectedModulesModDep)
 	}
 
-	nodes := suite.getNVIDIANodes("node.kubernetes.io/instance-type=g4dn.xlarge")
+	nodes := suite.getNVIDIANodes("node.kubernetes.io/instance-type in (g4dn.xlarge, p4d.24xlarge, g5g.xlarge)")
 	for _, node := range nodes {
 		suite.AssertServicesRunning(suite.ctx, node, map[string]string{
 			"ext-nvidia-persistenced": "Running",
 			"ext-nvidia-cdi-gen":      "Finished",
 		})
+	}
+
+	missingCDIFilesData := map[string]map[string]int{
+		"amd64": {
+			"nvidia-open-gpu-kernel-modules-production": 13,
+			"nvidia-open-gpu-kernel-modules-lts":        9,
+			"nonfree-kmod-nvidia-production":            13,
+			"nonfree-kmod-nvidia-lts":                   9,
+		},
+		"arm64": {
+			"nvidia-open-gpu-kernel-modules-production": 11,
+			"nvidia-open-gpu-kernel-modules-lts":        9,
+			"nonfree-kmod-nvidia-production":            11,
+			"nonfree-kmod-nvidia-lts":                   9,
+		},
+	}
+
+	for _, node := range nodes {
+		nodeCtx := client.WithNode(suite.ctx, node)
+
+		versionInfo, err := suite.Client.Version(nodeCtx)
+		suite.Require().NoError(err)
+
+		suite.Require().NotNil(versionInfo.GetMessages(), "version info messages should not be nil")
+
+		extInfo := missingCDIFilesData[versionInfo.GetMessages()[0].Version.Arch]
+
+		list, err := safe.StateListAll[*runtime.ExtensionStatus](nodeCtx, suite.Client.COSI)
+		suite.Require().NoError(err)
+
+		extensionsList := safe.ToSlice(list, func(info *runtime.ExtensionStatus) string {
+			return info.TypedSpec().Metadata.Name
+		})
+
+		var expectedCount int
+
+		for _, name := range extensionsList {
+			if count, exists := extInfo[name]; exists {
+				expectedCount = count
+
+				break
+			}
+		}
+
+		suite.Require().NotZero(expectedCount, "did not find any matching nvidia extension in the list of extensions: %v", extensionsList)
+
+		logsStream, err := suite.Client.Logs(
+			nodeCtx,
+			constants.SystemContainerdNamespace,
+			common.ContainerDriver_CONTAINERD,
+			"ext-nvidia-cdi-gen",
+			false,
+			-1,
+		)
+		suite.Require().NoError(err)
+
+		logReader, err := client.ReadStream(logsStream)
+		suite.Require().NoError(err)
+
+		defer logReader.Close() //nolint:errcheck
+
+		var buffer bytes.Buffer
+
+		_, err = io.Copy(&buffer, logReader)
+		suite.Require().NoError(err)
+
+		logData := buffer.String()
+
+		// we know as baseline we have different number of missing files that are not present in the extension
+		// and manually verified, if some new files are not found we want to fix the extension
+		// Adding an example of the current log message for reference:
+		// ❯ talosctl -n 172.16.15.116 logs ext-nvidia-cdi-gen | grep "Could not"
+		// msg="Could not locate libnvidia-vulkan-producer.so.580.126.20: libnvidia-vulkan-producer.so.580.126.20: not found\nlibnvidia-vulkan-producer.so.580.126.20: not found"
+		// msg="Could not locate X11/xorg.conf.d/10-nvidia.conf: X11/xorg.conf.d/10-nvidia.conf: not found"
+		// msg="Could not locate X11/xorg.conf.d/nvidia-drm-outputclass.conf: X11/xorg.conf.d/nvidia-drm-outputclass.conf: not found"
+		// msg="Could not locate vulkan/implicit_layer.d/nvidia_layers.json: vulkan/implicit_layer.d/nvidia_layers.json: not found\nvulkan/implicit_layer.d/nvidia_layers.json: not found"
+		// msg="Could not locate vulkan/icd.d/nvidia_icd.x86_64.json: vulkan/icd.d/nvidia_icd.x86_64.json: not found\nvulkan/icd.d/nvidia_icd.x86_64.json: not found"
+		// msg="Could not locate /nvidia-fabricmanager/socket: /nvidia-fabricmanager/socket: not found"
+		// msg="Could not locate /tmp/nvidia-mps: /tmp/nvidia-mps: not found"
+		// msg="Could not locate nvidia-imex: nvidia-imex: not found"
+		// msg="Could not locate nvidia-imex-ctl: nvidia-imex-ctl: not found"
+		suite.Assert().Equal(
+			expectedCount,
+			strings.Count(logData, "Could not locate"),
+			"expected exactly %d 'Could not locate' in the logs, got %d. Logs:\n%s",
+			expectedCount,
+			strings.Count(logData, "Could not"),
+			logData,
+		)
 	}
 
 	// nodes = suite.getNVIDIANodes("node.kubernetes.io/instance-type=p4d.24xlarge")
@@ -301,7 +395,7 @@ func nvidiaCUDATestJob() *batchv1.Job {
 											{
 												Key:      "node.kubernetes.io/instance-type",
 												Operator: corev1.NodeSelectorOpIn,
-												Values:   []string{"g4dn.xlarge", "p4d.24xlarge"},
+												Values:   []string{"g4dn.xlarge", "p4d.24xlarge", "g5g.xlarge"},
 											},
 										},
 									},
@@ -354,7 +448,7 @@ func nvidiaCDITestJob() *batchv1.Job {
 											{
 												Key:      "node.kubernetes.io/instance-type",
 												Operator: corev1.NodeSelectorOpIn,
-												Values:   []string{"g4dn.xlarge", "p4d.24xlarge"},
+												Values:   []string{"g4dn.xlarge", "p4d.24xlarge", "g5g.xlarge"},
 											},
 										},
 									},

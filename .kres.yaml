@@ -89,6 +89,7 @@ spec:
     - integration-image-factory
     - integration-aws
     - integration-aws-nvidia-oss-lts
+    - integration-aws-nvidia-oss-lts-arm64
     - integration-aws-nvidia-oss-production
     - integration-aws-nvidia-nonfree-lts
     - integration-aws-nvidia-nonfree-production
@@ -2865,6 +2866,100 @@ spec:
             TF_E2E_TEST_TYPE: aws
             TF_E2E_ACTION: destroy
             TF_E2E_REFRESH_ON_DESTROY: false
+    - name: integration-aws-nvidia-oss-lts-arm64
+      buildxOptions:
+        enabled: true
+      sops: true
+      depends:
+        - default
+      runnerGroup: generic # we can use generic here since the tests run against a remote talos cluster
+      crons:
+        - '30 7 * * *'
+      triggerLabels:
+        - integration/aws-nvidia-oss-lts-arm64
+        - integration/aws-nvidia-oss
+        - integration/aws-nvidia
+      steps:
+        - name: download-artifacts
+          conditions:
+            - not-on-schedule
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
+        - name: generate
+          conditions:
+            - only-on-schedule
+        - name: uki-certs
+          conditions:
+            - only-on-schedule
+          environment:
+            PLATFORM: linux/amd64
+        - name: build
+          conditions:
+            - only-on-schedule
+          command: installer-base imager _out/integration-test-linux-amd64
+          environment:
+            PLATFORM: linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
+        - name: image-aws
+          environment:
+            PLATFORM: linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: checkout extensions
+          checkoutStep:
+            repository: siderolabs/extensions
+            ref: main
+            path: _out/extensions
+        - name: set variables
+          nonMakeStep: true
+          command: cat _out/talos-metadata >> "$GITHUB_ENV"
+        - name: build extensions
+          command: nvidia-container-toolkit-lts nvidia-open-gpu-kernel-modules-lts extensions-metadata
+          arguments:
+            - -C
+            - _out/extensions
+          environment:
+            PLATFORM: linux/arm64
+            PUSH: true
+            REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-aws-prepare
+          environment:
+            EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
+            E2E_AWS_TARGET: nvidia-oss-lts
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            TARGET_ARCH: arm64
+        - name: checkout contrib
+          checkoutStep:
+            repository: siderolabs/contrib
+            ref: main
+            path: _out/contrib
+        - name: setup tf
+          terraformStep: true
+        - name: tf apply
+          command: e2e-cloud-tf
+          environment:
+            TF_SCRIPT_DIR: _out/contrib
+            TF_E2E_TEST_TYPE: aws
+            TF_E2E_ACTION: apply
+        - name: e2e-aws-nvidia-oss-lts
+          command: e2e-aws
+          environment:
+            EXTRA_TEST_ARGS: "-talos.extensions.nvidia -talos.verifyukibooted=false"
+            INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
+        - name: tf destroy
+          command: e2e-cloud-tf
+          conditions:
+            - always
+          environment:
+            TF_SCRIPT_DIR: _out/contrib
+            TF_E2E_TEST_TYPE: aws
+            TF_E2E_ACTION: destroy
+            TF_E2E_REFRESH_ON_DESTROY: false
     - name: integration-aws-nvidia-oss-production
       buildxOptions:
         enabled: true
@@ -2934,6 +3029,100 @@ spec:
             EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
             E2E_AWS_TARGET: nvidia-oss-production
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: checkout contrib
+          checkoutStep:
+            repository: siderolabs/contrib
+            ref: main
+            path: _out/contrib
+        - name: setup tf
+          terraformStep: true
+        - name: tf apply
+          command: e2e-cloud-tf
+          environment:
+            TF_SCRIPT_DIR: _out/contrib
+            TF_E2E_TEST_TYPE: aws
+            TF_E2E_ACTION: apply
+        - name: e2e-aws-nvidia-oss-production
+          command: e2e-aws
+          environment:
+            EXTRA_TEST_ARGS: "-talos.extensions.nvidia -talos.verifyukibooted=false"
+            INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
+        - name: tf destroy
+          command: e2e-cloud-tf
+          conditions:
+            - always
+          environment:
+            TF_SCRIPT_DIR: _out/contrib
+            TF_E2E_TEST_TYPE: aws
+            TF_E2E_ACTION: destroy
+            TF_E2E_REFRESH_ON_DESTROY: false
+    - name: integration-aws-nvidia-oss-production-arm64
+      buildxOptions:
+        enabled: true
+      sops: true
+      depends:
+        - default
+      runnerGroup: generic # we can use generic here since the tests run against a remote talos cluster
+      crons:
+        - '30 7 * * *'
+      triggerLabels:
+        - integration/aws-nvidia-oss-production-arm64
+        - integration/aws-nvidia-oss
+        - integration/aws-nvidia
+      steps:
+        - name: download-artifacts
+          conditions:
+            - not-on-schedule
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
+        - name: generate
+          conditions:
+            - only-on-schedule
+        - name: uki-certs
+          conditions:
+            - only-on-schedule
+          environment:
+            PLATFORM: linux/amd64
+        - name: build
+          conditions:
+            - only-on-schedule
+          command: installer-base imager _out/integration-test-linux-amd64
+          environment:
+            PLATFORM: linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
+        - name: image-aws
+          environment:
+            PLATFORM: linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: checkout extensions
+          checkoutStep:
+            repository: siderolabs/extensions
+            ref: main
+            path: _out/extensions
+        - name: set variables
+          nonMakeStep: true
+          command: cat _out/talos-metadata >> "$GITHUB_ENV"
+        - name: build extensions
+          command: nvidia-container-toolkit-production nvidia-open-gpu-kernel-modules-production extensions-metadata
+          arguments:
+            - -C
+            - _out/extensions
+          environment:
+            PLATFORM: linux/arm64
+            PUSH: true
+            REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-aws-prepare
+          environment:
+            EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
+            E2E_AWS_TARGET: nvidia-oss-production
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            TARGET_ARCH: arm64
         - name: checkout contrib
           checkoutStep:
             repository: siderolabs/contrib
@@ -3057,6 +3246,100 @@ spec:
             TF_E2E_TEST_TYPE: aws
             TF_E2E_ACTION: destroy
             TF_E2E_REFRESH_ON_DESTROY: false
+    - name: integration-aws-nvidia-nonfree-lts-arm64
+      buildxOptions:
+        enabled: true
+      sops: true
+      depends:
+        - default
+      runnerGroup: generic # we can use generic here since the tests run against a remote talos cluster
+      crons:
+        - '30 7 * * *'
+      triggerLabels:
+        - integration/aws-nvidia-nonfree-lts-arm64
+        - integration/aws-nvidia-nonfree
+        - integration/aws-nvidia
+      steps:
+        - name: download-artifacts
+          conditions:
+            - not-on-schedule
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
+        - name: generate
+          conditions:
+            - only-on-schedule
+        - name: uki-certs
+          conditions:
+            - only-on-schedule
+          environment:
+            PLATFORM: linux/amd64
+        - name: build
+          conditions:
+            - only-on-schedule
+          command: installer-base imager _out/integration-test-linux-amd64
+          environment:
+            PLATFORM: linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
+        - name: image-aws
+          environment:
+            PLATFORM: linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: checkout extensions
+          checkoutStep:
+            repository: siderolabs/extensions
+            ref: main
+            path: _out/extensions
+        - name: set variables
+          nonMakeStep: true
+          command: cat _out/talos-metadata >> "$GITHUB_ENV"
+        - name: build extensions
+          command: nvidia-container-toolkit-lts nonfree-kmod-nvidia-lts extensions-metadata
+          arguments:
+            - -C
+            - _out/extensions
+          environment:
+            PLATFORM: linux/arm64
+            PUSH: true
+            REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-aws-prepare
+          environment:
+            EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
+            E2E_AWS_TARGET: nvidia-nonfree-lts
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            TARGET_ARCH: arm64
+        - name: checkout contrib
+          checkoutStep:
+            repository: siderolabs/contrib
+            ref: main
+            path: _out/contrib
+        - name: setup tf
+          terraformStep: true
+        - name: tf apply
+          command: e2e-cloud-tf
+          environment:
+            TF_SCRIPT_DIR: _out/contrib
+            TF_E2E_TEST_TYPE: aws
+            TF_E2E_ACTION: apply
+        - name: e2e-aws-nvidia-nonfree-lts
+          command: e2e-aws
+          environment:
+            EXTRA_TEST_ARGS: "-talos.extensions.nvidia -talos.verifyukibooted=false"
+            INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
+        - name: tf destroy
+          command: e2e-cloud-tf
+          conditions:
+            - always
+          environment:
+            TF_SCRIPT_DIR: _out/contrib
+            TF_E2E_TEST_TYPE: aws
+            TF_E2E_ACTION: destroy
+            TF_E2E_REFRESH_ON_DESTROY: false
     - name: integration-aws-nvidia-nonfree-production
       buildxOptions:
         enabled: true
@@ -3143,6 +3426,100 @@ spec:
           command: e2e-aws
           environment:
             EXTRA_TEST_ARGS: -talos.extensions.nvidia
+            INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
+        - name: tf destroy
+          command: e2e-cloud-tf
+          conditions:
+            - always
+          environment:
+            TF_SCRIPT_DIR: _out/contrib
+            TF_E2E_TEST_TYPE: aws
+            TF_E2E_ACTION: destroy
+            TF_E2E_REFRESH_ON_DESTROY: false
+    - name: integration-aws-nvidia-nonfree-production-arm64
+      buildxOptions:
+        enabled: true
+      sops: true
+      depends:
+        - default
+      runnerGroup: generic # we can use generic here since the tests run against a remote talos cluster
+      crons:
+        - '30 7 * * *'
+      triggerLabels:
+        - integration/aws-nvidia-nonfree-production-arm64
+        - integration/aws-nvidia-nonfree
+        - integration/aws-nvidia
+      steps:
+        - name: download-artifacts
+          conditions:
+            - not-on-schedule
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+          conditions:
+            - not-on-schedule
+        - name: generate
+          conditions:
+            - only-on-schedule
+        - name: uki-certs
+          conditions:
+            - only-on-schedule
+          environment:
+            PLATFORM: linux/amd64
+        - name: build
+          conditions:
+            - only-on-schedule
+          command: installer-base imager _out/integration-test-linux-amd64
+          environment:
+            PLATFORM: linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
+        - name: image-aws
+          environment:
+            PLATFORM: linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: checkout extensions
+          checkoutStep:
+            repository: siderolabs/extensions
+            ref: main
+            path: _out/extensions
+        - name: set variables
+          nonMakeStep: true
+          command: cat _out/talos-metadata >> "$GITHUB_ENV"
+        - name: build extensions
+          command: nvidia-container-toolkit-production nonfree-kmod-nvidia-production extensions-metadata
+          arguments:
+            - -C
+            - _out/extensions
+          environment:
+            PLATFORM: linux/arm64
+            PUSH: true
+            REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-aws-prepare
+          environment:
+            EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
+            E2E_AWS_TARGET: nvidia-nonfree-production
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            TARGET_ARCH: arm64
+        - name: checkout contrib
+          checkoutStep:
+            repository: siderolabs/contrib
+            ref: main
+            path: _out/contrib
+        - name: setup tf
+          terraformStep: true
+        - name: tf apply
+          command: e2e-cloud-tf
+          environment:
+            TF_SCRIPT_DIR: _out/contrib
+            TF_E2E_TEST_TYPE: aws
+            TF_E2E_ACTION: apply
+        - name: e2e-aws-nvidia-oss-production
+          command: e2e-aws
+          environment:
+            EXTRA_TEST_ARGS: "-talos.extensions.nvidia -talos.verifyukibooted=false"
             INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
         - name: tf destroy
           command: e2e-cloud-tf
