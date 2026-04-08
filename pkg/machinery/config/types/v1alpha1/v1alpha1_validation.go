@@ -128,6 +128,10 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 		}
 	}
 
+	if c.Machine().Features().HostDNS().ForwardKubeDNSToHost() && !c.Machine().Features().HostDNS().Enabled() {
+		result = multierror.Append(result, errors.New("feature hostDNS.forwardKubeDNSToHost requires hostDNS.enabled to be true (.machine.features.hostDNS)"))
+	}
+
 	if t := c.Machine().Type(); t != machine.TypeUnknown && t.String() != c.MachineConfig.MachineType {
 		warnings = append(warnings, fmt.Sprintf("use %q instead of %q for machine type", t.String(), c.MachineConfig.MachineType))
 	}
