@@ -8,6 +8,7 @@
 !pkg
 !website
 !tools
+!.disvulncheck.yaml
 !.golangci.yml
 !.markdownlint.json
 !.textlintrc.json

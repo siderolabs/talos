@@ -438,7 +438,8 @@ WORKDIR /src
 # The vulncheck target runs the vulnerability check tool.
 
 FROM base AS lint-vulncheck
-RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool golang.org/x/vuln/cmd/govulncheck ./...
+COPY .disvulncheck.yaml .
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool github.com/shanduur/dis-vulncheck ./...
 
 # The lint-deadcode target runs the deadcode elimination check.
 FROM base AS lint-deadcode
