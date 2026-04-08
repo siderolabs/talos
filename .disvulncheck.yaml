@@ -1,0 +1,29 @@
+ignore_ttl: 168h # 7 days, each entry must be revalidated after this time, and either removed or renewed (with a new date)
+
+ignore:
+  - id: GO-2026-4923
+    reason: No fix available, code not reachable in production.
+    date: 2026-04-08
+
+  # fix them when updating tools package
+  - id: GO-2026-4864
+    reason: Waiting for tools package to be updated.
+    date: 2026-04-08
+  - id: GO-2026-4865
+    reason: Waiting for tools package to be updated.
+    date: 2026-04-08
+  - id: GO-2026-4866
+    reason: Waiting for tools package to be updated.
+    date: 2026-04-08
+  - id: GO-2026-4869
+    reason: Waiting for tools package to be updated.
+    date: 2026-04-08
+  - id: GO-2026-4870
+    reason: Waiting for tools package to be updated.
+    date: 2026-04-08
+  - id: GO-2026-4946
+    reason: Waiting for tools package to be updated.
+    date: 2026-04-08
+  - id: GO-2026-4947
+    reason: Waiting for tools package to be updated.
+    date: 2026-04-08
