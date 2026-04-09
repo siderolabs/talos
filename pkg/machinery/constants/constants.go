@@ -13,7 +13,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "6.18.19-talos"
+	DefaultKernelVersion = "6.18.22-talos"
 
 	// KernelParamConfig is the kernel parameter name for specifying the URL.
 	// to the config.
@@ -523,10 +523,10 @@ const (
 	TrustdUserID = 51
 
 	// DefaultContainerdVersion is the default container runtime version.
-	DefaultContainerdVersion = "2.2.2"
+	DefaultContainerdVersion = "2.2.3"
 
 	// RuncVersion is the runc version.
-	RuncVersion = "1.4.1"
+	RuncVersion = "1.4.2"
 
 	// SystemContainerdNamespace is the Containerd namespace for Talos services.
 	SystemContainerdNamespace = "system"
@@ -1102,7 +1102,7 @@ const (
 	DBusClientSocketLabel = "system_u:object_r:dbus_client_socket_t:s0"
 
 	// GoVersion is the version of Go compiler this release was built with.
-	GoVersion = "go1.26.1"
+	GoVersion = "go1.26.2"
 
 	// KubernetesTalosAPIServiceName is the name of the Kubernetes service to access Talos API.
 	KubernetesTalosAPIServiceName = "talos"
