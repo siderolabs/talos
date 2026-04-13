@@ -12,6 +12,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -269,7 +270,7 @@ func (suite *MaintenanceBasicSuite) TestAPI() {
 
 	suite.Run("reset STATE and EPHEMERAL", func() {
 		// reset starting from worker nodes
-		for idx := len(suite.Cluster.Info().Nodes) - 1; idx >= 0; idx-- {
+		for idx := range slices.Backward(suite.Cluster.Info().Nodes) {
 			node := suite.Cluster.Info().Nodes[idx].IPs[0].String()
 
 			suite.Run(fmt.Sprintf("resetting node %s", node), func() {

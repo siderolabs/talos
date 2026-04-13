@@ -250,7 +250,7 @@ func (p *PullProgress) trackPulledLayers(ctx context.Context) error {
 	if len(committedIdx) > 0 {
 		slices.Sort(committedIdx)
 
-		for i := len(committedIdx) - 1; i >= 0; i-- {
+		for i := range slices.Backward(committedIdx) {
 			if i < len(committedIdx)-1 && committedIdx[i] == committedIdx[i+1] {
 				continue
 			}

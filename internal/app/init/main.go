@@ -14,6 +14,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"syscall"
 	"time"
 
@@ -156,7 +157,7 @@ func mountRootFS() error {
 	)
 
 	// going in the inverse order as earlier layers are overlayed on top of the latter ones
-	for i := len(extensionsConfig.Layers) - 1; i >= 0; i-- {
+	for i := range slices.Backward(extensionsConfig.Layers) {
 		layers = append(layers, layer{
 			name:  fmt.Sprintf("layer%d", i),
 			image: extensionsConfig.Layers[i].Image,
