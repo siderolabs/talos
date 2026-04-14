@@ -382,6 +382,50 @@ func (suite *MaintenanceSideroLinkSuite) TestAPI() {
 		)
 	})
 
+	suite.Run("upgrade using legacy API", func() {
+		maintenanceClient := sideroLinkMaintenanceClients[0]
+		insecureMaintenanceClient := maintenanceClients[0]
+
+		currentBootID := suite.readBootID(maintenanceClient)
+
+		_, err := maintenanceClient.Upgrade(suite.ctx, sourceInstallerImage, false, false) //nolint:staticcheck // legacy API test
+		suite.Require().NoError(err)
+
+		// after the reboot the machine should lose SideroLink config, so we expect it to come back up on regular IP
+		suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+			asrt := assert.New(collect)
+
+			version, err := insecureMaintenanceClient.Version(suite.ctx)
+			if !asrt.NoError(err) {
+				return
+			}
+
+			suite.Assert().Equal(DefaultSettings.CurrentVersion, version.GetMessages()[0].GetVersion().GetTag())
+		}, time.Minute, time.Second, "version API should be available after reboot")
+
+		// apply back SideroLink config
+		_, err = insecureMaintenanceClient.ApplyConfiguration(suite.ctx, &machine.ApplyConfigurationRequest{
+			Data: maintenanceConfig,
+		})
+		suite.Require().NoError(err)
+
+		// wait for the machine to come back on SideroLink IP
+		suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+			asrt := assert.New(collect)
+
+			version, err := maintenanceClient.Version(suite.ctx)
+			if !asrt.NoError(err) {
+				return
+			}
+
+			suite.Assert().Equal(DefaultSettings.CurrentVersion, version.GetMessages()[0].GetVersion().GetTag())
+		}, time.Minute, time.Second, "API should listen on SideroLink IP after reboot")
+
+		// check that boot ID has changed after reboot
+		newBootID := suite.readBootID(maintenanceClient)
+		suite.Assert().NotEqual(currentBootID, newBootID, "boot ID should change after reboot")
+	})
+
 	suite.Run("apply config and have a cluster", func() {
 		// drop .machine.install, as the machine is already installed
 		patchRemoveInstall := map[string]any{

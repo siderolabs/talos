@@ -495,6 +495,7 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (*mach
 	}
 
 	actorID := uuid.New().String()
+	inMaintenance := !s.Controller.Runtime().ConfigCompleteForBoot()
 
 	ctx = context.WithValue(ctx, runtime.ActorIDCtxKey{}, actorID)
 
@@ -515,7 +516,7 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (*mach
 		return nil, fmt.Errorf("error validating installer image %q: %w", in.GetImage(), err)
 	}
 
-	if s.Controller.Runtime().Config().Machine().Type() != machinetype.TypeWorker && !in.GetForce() {
+	if !inMaintenance && s.Controller.Runtime().Config().Machine().Type() != machinetype.TypeWorker && !in.GetForce() {
 		etcdClient, err := etcd.NewClientFromControlPlaneIPs(ctx, s.Controller.Runtime().State().V1Alpha2().Resources())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create etcd client: %w", err)
@@ -537,7 +538,16 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (*mach
 
 	runCtx := context.WithValue(context.Background(), runtime.ActorIDCtxKey{}, actorID)
 
-	if in.GetStage() {
+	switch {
+	case inMaintenance:
+		go func() {
+			if err := s.Controller.Run(runCtx, runtime.SequenceMaintenanceUpgrade, in); err != nil {
+				if !runtime.IsRebootError(err) {
+					log.Println("upgrade failed:", err)
+				}
+			}
+		}()
+	case in.GetStage():
 		if ok, err := s.Controller.Runtime().State().Machine().Meta().SetTag(ctx, meta.StagedUpgradeImageRef, in.GetImage()); !ok || err != nil {
 			return nil, fmt.Errorf("error adding staged upgrade image ref tag: %w", err)
 		}
@@ -569,7 +579,7 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (*mach
 				}
 			}
 		}()
-	} else {
+	default:
 		go func() {
 			if err := s.Controller.Run(runCtx, runtime.SequenceUpgrade, in); err != nil {
 				if !runtime.IsRebootError(err) {
