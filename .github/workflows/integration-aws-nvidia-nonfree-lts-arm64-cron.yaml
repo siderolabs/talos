@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-04-11T06:20:55Z by kres b6d29bf.
+# Generated on 2026-04-14T18:15:42Z by kres b6d29bf-dirty.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -67,34 +67,27 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: Download artifacts
+        if: github.event_name == 'schedule'
+        uses: dawidd6/action-download-artifact@8305c0f1062bb0d184d09ef4493ecb9288447732 # version: v20
+        with:
+          event: schedule
+          if_no_artifact_found: fail
+          name: talos-artifacts-cron
+          path: _out
+          workflow: artifacts-cron-cron.yaml
+          workflow_conclusion: success
+      - name: Fix artifact permissions
+        if: github.event_name == 'schedule'
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: verify-commit-sha
+        if: github.event_name == 'schedule'
+        run: |
+          make verify-commit-sha
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: generate
-        if: github.event_name == 'schedule'
-        run: |
-          make generate
-      - name: uki-certs
-        if: github.event_name == 'schedule'
-        env:
-          PLATFORM: linux/amd64
-        run: |
-          make uki-certs
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/arm64
-          PUSH: "true"
-        run: |
-          make installer-base imager _out/integration-test-linux-amd64
-      - name: image-aws
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/arm64
-        run: |
-          make image-aws
       - name: checkout extensions
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
         with:
@@ -111,6 +104,13 @@ jobs:
           REGISTRY: registry.dev.siderolabs.io
         run: |
           make nvidia-container-toolkit-lts nonfree-kmod-nvidia-lts extensions-metadata -C _out/extensions
+      - name: image-aws
+        if: github.event_name != 'schedule'
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+        run: |
+          make image-aws
       - name: e2e-aws-prepare
         env:
           E2E_AWS_TARGET: nvidia-nonfree-lts

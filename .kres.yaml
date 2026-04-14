@@ -88,11 +88,15 @@ spec:
     - integration-image-cache
     - integration-image-factory
     - integration-aws
+    - integration-aws-arm64
     - integration-aws-nvidia-oss-lts
     - integration-aws-nvidia-oss-lts-arm64
     - integration-aws-nvidia-oss-production
+    - integration-aws-nvidia-oss-production-arm64
     - integration-aws-nvidia-nonfree-lts
+    - integration-aws-nvidia-nonfree-lts-arm64
     - integration-aws-nvidia-nonfree-production
+    - integration-aws-nvidia-nonfree-production-arm64
     - integration-gcp
 ---
 kind: common.GHWorkflow
@@ -377,6 +381,56 @@ spec:
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
               - "/tmp/support-*.zip"
+    - name: artifacts-cron
+      buildxOptions:
+        enabled: true
+      runnerGroup: large
+      crons:
+        - '0 3 * * *'
+      cronOnly: true
+      steps:
+        - name: external-artifacts
+        - name: generate
+        - name: uki-certs
+          environment:
+            PLATFORM: linux/amd64
+        - name: build
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
+        - name: talosctl-cni-bundle
+        - name: iso
+          command: iso secureboot-iso
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: images-essential
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: images-essential-enforcing
+          command: images-essential
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
+            TAG_SUFFIX_OUT: -enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
+        - name: image-aws
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-commit-sha
+        - name: save-artifacts
+          artifactStep:
+            type: upload
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+            retentionDays: 1
     - name: integration-qemu
       buildxOptions:
         enabled: true
@@ -396,20 +450,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: e2e-qemu
           withSudo: true
           environment:
@@ -451,26 +504,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
-        - name: ci-temp-release-tag
+        - name: images-essential-enforcing
           conditions:
             - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: uki-certs
-          environment:
-            PLATFORM: linux/amd64
-          conditions:
-            - only-on-schedule
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: images-essential-enforcing
           command: images-essential
           environment:
             PLATFORM: linux/amd64,linux/arm64
@@ -478,6 +514,19 @@ spec:
             TAG_SUFFIX_OUT: -enforcing
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
+        - name: ci-temp-release-tag
         - name: e2e-qemu
           withSudo: true
           environment:
@@ -568,20 +617,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: conformance-qemu
           command: e2e-qemu
           withSudo: true
@@ -620,26 +668,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
-        - name: ci-temp-release-tag
+        - name: images-essential-enforcing
           conditions:
             - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: uki-certs
-          environment:
-            PLATFORM: linux/amd64
-          conditions:
-            - only-on-schedule
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: images-essential-enforcing
           command: images-essential
           environment:
             PLATFORM: linux/amd64,linux/arm64
@@ -647,6 +678,19 @@ spec:
             TAG_SUFFIX_OUT: -enforcing
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
+        - name: ci-temp-release-tag
         - name: conformance-qemu
           command: e2e-qemu
           withSudo: true
@@ -688,39 +732,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: images-essential
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: secureboot-iso
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: integration-trusted-boot
           command: e2e-qemu
           withSudo: true
@@ -759,26 +783,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
-        - name: ci-temp-release-tag
+        - name: images-essential-enforcing
           conditions:
             - not-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: images-essential-enforcing
           command: images-essential
           environment:
             PLATFORM: linux/amd64,linux/arm64
@@ -786,6 +793,19 @@ spec:
             TAG_SUFFIX_OUT: -enforcing
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
+        - name: ci-temp-release-tag
         - name: secureboot-iso
           conditions:
             - only-on-schedule
@@ -834,32 +854,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: uki-certs
-          environment:
-            PLATFORM: linux/amd64
-          conditions:
-            - only-on-schedule
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: images-essential
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: provision-tests-prepare
         - name: provision-tests-track-0
           withSudo: true
@@ -896,20 +903,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: installer-enforcing
           conditions:
             - only-on-schedule
@@ -956,26 +962,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: iso
-          conditions:
-            - only-on-schedule
-          environment:
-            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: installer
           environment:
             PLATFORM: linux/amd64,linux/arm64
@@ -1018,20 +1017,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: provision-tests-prepare
         - name: provision-tests-track-3
           withSudo: true
@@ -1068,20 +1066,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: integration-images-list
           command: integration-images-list
           environment:
@@ -1153,20 +1150,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: image-metal-uki # needed for e2e-uki-4k
           conditions:
             - only-on-schedule
@@ -1248,20 +1244,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: e2e-no-cluster-discovery
           command: e2e-qemu
           withSudo: true
@@ -1328,26 +1323,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
-        - name: ci-temp-release-tag
+        - name: images-essential-enforcing
           conditions:
             - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: uki-certs
-          environment:
-            PLATFORM: linux/amd64
-          conditions:
-            - only-on-schedule
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: images-essential-enforcing
           command: images-essential
           environment:
             PLATFORM: linux/amd64,linux/arm64
@@ -1355,6 +1333,19 @@ spec:
             TAG_SUFFIX_OUT: -enforcing
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
+        - name: ci-temp-release-tag
         - name: e2e-no-cluster-discovery
           command: e2e-qemu
           withSudo: true
@@ -1433,38 +1424,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: iso # needed for e2e-bios-iso
-          conditions:
-            - only-on-schedule
-          command: iso
-          environment:
-            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: images-essential
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-bios
           command: e2e-qemu
           withSudo: true
@@ -1554,20 +1526,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: e2e-network-chaos
           command: e2e-qemu
           withSudo: true
@@ -1621,26 +1592,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
-        - name: ci-temp-release-tag
+        - name: images-essential-enforcing
           conditions:
             - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: uki-certs
-          environment:
-            PLATFORM: linux/amd64
-          conditions:
-            - only-on-schedule
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: images-essential-enforcing
           command: images-essential
           environment:
             PLATFORM: linux/amd64,linux/arm64
@@ -1648,6 +1602,19 @@ spec:
             TAG_SUFFIX_OUT: -enforcing
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
+        - name: ci-temp-release-tag
         - name: e2e-network-chaos
           command: e2e-qemu
           withSudo: true
@@ -1711,20 +1678,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: e2e-siderolink
           command: e2e-qemu
           withSudo: true
@@ -1798,26 +1764,9 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
-        - name: ci-temp-release-tag
+        - name: images-essential-enforcing
           conditions:
             - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: uki-certs
-          environment:
-            PLATFORM: linux/amd64
-          conditions:
-            - only-on-schedule
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: images-essential-enforcing
           command: images-essential
           environment:
             PLATFORM: linux/amd64,linux/arm64
@@ -1825,6 +1774,19 @@ spec:
             TAG_SUFFIX_OUT: -enforcing
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
+        - name: ci-temp-release-tag
         - name: e2e-siderolink
           command: e2e-qemu
           withSudo: true
@@ -1909,23 +1871,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: generate
-          conditions:
-            - only-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: checkout extensions
           checkoutStep:
             repository: siderolabs/extensions
@@ -1991,20 +1949,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: e2e-cilium
           command: e2e-qemu
           withSudo: true
@@ -2067,20 +2024,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: e2e-qemu
           withSudo: true
           environment:
@@ -2123,20 +2079,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: build-race
           command: initramfs installer-base imager installer
           environment:
@@ -2190,20 +2145,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: e2e-qemu-csi-rook-ceph
           command: e2e-qemu
           withSudo: true
@@ -2256,23 +2210,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: generate
-          conditions:
-            - only-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: checkout extensions
           checkoutStep:
             repository: siderolabs/extensions
@@ -2349,20 +2299,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: e2e-qemu-csi-openebs
           command: e2e-qemu
           withSudo: true
@@ -2414,20 +2363,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: images
           environment:
             PLATFORM: linux/amd64,linux/arm64
@@ -2451,9 +2399,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
-        - name: ci-temp-release-tag
+        - name: download-artifacts-cron
           conditions:
-            - not-on-schedule
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
+        - name: ci-temp-release-tag
         - name: reproducibility-test
           environment:
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -2474,17 +2432,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
-        - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
+        - name: download-artifacts-cron
           conditions:
             - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
+        - name: ci-temp-release-tag
         - name: images
           environment:
             PLATFORM: linux/amd64,linux/arm64
@@ -2509,25 +2469,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: image-cache
           command: cache-create
           environment:
@@ -2584,25 +2538,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: factory-1.11-iso
           command: e2e-image-factory
           withSudo: true
@@ -2714,32 +2662,22 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
+        - name: image-aws
           conditions:
             - not-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: images-essential
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: image-aws
           environment:
             PLATFORM: linux/amd64,linux/arm64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -2747,6 +2685,74 @@ spec:
           environment:
             E2E_AWS_TARGET: default
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: checkout contrib
+          checkoutStep:
+            repository: siderolabs/contrib
+            ref: main
+            path: _out/contrib
+        - name: setup tf
+          terraformStep: true
+        - name: tf apply
+          command: e2e-cloud-tf
+          environment:
+            TF_SCRIPT_DIR: _out/contrib
+            TF_E2E_TEST_TYPE: aws
+            TF_E2E_ACTION: apply
+        - name: e2e-aws
+        - name: tf destroy
+          command: e2e-cloud-tf
+          conditions:
+            - always
+          environment:
+            TF_SCRIPT_DIR: _out/contrib
+            TF_E2E_TEST_TYPE: aws
+            TF_E2E_ACTION: destroy
+            TF_E2E_REFRESH_ON_DESTROY: false
+    - name: integration-aws-arm64
+      buildxOptions:
+        enabled: true
+      sops: true
+      depends:
+        - default
+      runnerGroup: generic # we can use generic here since the tests run against a remote talos cluster
+      crons:
+        - '30 7 * * *'
+      triggerLabels:
+        - integration/aws
+        - integration/aws-arm64
+        - integration/release-gate
+      steps:
+        - name: download-artifacts
+          conditions:
+            - not-on-schedule
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
+        - name: ci-temp-release-tag
+        - name: image-aws
+          conditions:
+            - not-on-schedule
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-aws-prepare
+          environment:
+            E2E_AWS_TARGET: default
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            TARGET_ARCH: arm64
         - name: checkout contrib
           checkoutStep:
             repository: siderolabs/contrib
@@ -2791,32 +2797,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: generate
-          conditions:
-            - only-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: image-aws
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: checkout extensions
           checkoutStep:
             repository: siderolabs/extensions
@@ -2834,6 +2827,12 @@ spec:
             PLATFORM: linux/amd64
             PUSH: true
             REGISTRY: registry.dev.siderolabs.io
+        - name: image-aws
+          conditions:
+            - not-on-schedule
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-aws-prepare
           environment:
             EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
@@ -2887,29 +2886,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: generate
-          conditions:
-            - only-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: installer-base imager _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: image-aws
-          environment:
-            PLATFORM: linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: checkout extensions
           checkoutStep:
             repository: siderolabs/extensions
@@ -2927,6 +2916,12 @@ spec:
             PLATFORM: linux/arm64
             PUSH: true
             REGISTRY: registry.dev.siderolabs.io
+        - name: image-aws
+          conditions:
+            - not-on-schedule
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-aws-prepare
           environment:
             EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
@@ -2981,32 +2976,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: generate
-          conditions:
-            - only-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: image-aws
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: checkout extensions
           checkoutStep:
             repository: siderolabs/extensions
@@ -3024,6 +3006,12 @@ spec:
             PLATFORM: linux/amd64
             PUSH: true
             REGISTRY: registry.dev.siderolabs.io
+        - name: image-aws
+          conditions:
+            - not-on-schedule
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-aws-prepare
           environment:
             EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
@@ -3077,29 +3065,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: generate
-          conditions:
-            - only-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: installer-base imager _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: image-aws
-          environment:
-            PLATFORM: linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: checkout extensions
           checkoutStep:
             repository: siderolabs/extensions
@@ -3117,6 +3095,12 @@ spec:
             PLATFORM: linux/arm64
             PUSH: true
             REGISTRY: registry.dev.siderolabs.io
+        - name: image-aws
+          conditions:
+            - not-on-schedule
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-aws-prepare
           environment:
             EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
@@ -3171,32 +3155,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: generate
-          conditions:
-            - only-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: image-aws
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: checkout extensions
           checkoutStep:
             repository: siderolabs/extensions
@@ -3214,6 +3185,12 @@ spec:
             PLATFORM: linux/amd64
             PUSH: true
             REGISTRY: registry.dev.siderolabs.io
+        - name: image-aws
+          conditions:
+            - not-on-schedule
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-aws-prepare
           environment:
             EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
@@ -3267,29 +3244,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: generate
-          conditions:
-            - only-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: installer-base imager _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: image-aws
-          environment:
-            PLATFORM: linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: checkout extensions
           checkoutStep:
             repository: siderolabs/extensions
@@ -3307,6 +3274,12 @@ spec:
             PLATFORM: linux/arm64
             PUSH: true
             REGISTRY: registry.dev.siderolabs.io
+        - name: image-aws
+          conditions:
+            - not-on-schedule
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-aws-prepare
           environment:
             EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
@@ -3361,32 +3334,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: generate
-          conditions:
-            - only-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: image-aws
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: checkout extensions
           checkoutStep:
             repository: siderolabs/extensions
@@ -3404,6 +3364,12 @@ spec:
             PLATFORM: linux/amd64
             PUSH: true
             REGISTRY: registry.dev.siderolabs.io
+        - name: image-aws
+          conditions:
+            - not-on-schedule
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-aws-prepare
           environment:
             EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
@@ -3457,29 +3423,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: generate
-          conditions:
-            - only-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: installer-base imager _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: image-aws
-          environment:
-            PLATFORM: linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: checkout extensions
           checkoutStep:
             repository: siderolabs/extensions
@@ -3497,6 +3453,12 @@ spec:
             PLATFORM: linux/arm64
             PUSH: true
             REGISTRY: registry.dev.siderolabs.io
+        - name: image-aws
+          conditions:
+            - not-on-schedule
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-aws-prepare
           environment:
             EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
@@ -3550,31 +3512,19 @@ spec:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
+        - name: download-artifacts-cron
+          conditions:
+            - only-on-schedule
+          artifactStep:
+            type: workflow-download
+            workflowName: artifacts-cron-cron.yaml
+            workflowEvent: schedule
+            artifactName: talos-artifacts-cron
+            artifactPath: _out
+        - name: verify-commit-sha
+          conditions:
+            - only-on-schedule
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: images-essential
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: image-gcp
           environment:
             PLATFORM: linux/amd64,linux/arm64

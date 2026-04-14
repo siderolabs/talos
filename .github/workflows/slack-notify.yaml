@@ -1,12 +1,13 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-04-11T06:20:55Z by kres b6d29bf.
+# Generated on 2026-04-14T10:50:34Z by kres b6d29bf.
 
 "on":
   workflow_run:
     workflows:
       - default
       - grype-scan-cron
+      - artifacts-cron-cron
       - integration-qemu-cron
       - integration-qemu-enforcing-cron
       - integration-embedded-cron
@@ -39,6 +40,7 @@
       - integration-image-cache-cron
       - integration-image-factory-cron
       - integration-aws-cron
+      - integration-aws-arm64-cron
       - integration-aws-nvidia-oss-lts-cron
       - integration-aws-nvidia-oss-lts-arm64-cron
       - integration-aws-nvidia-oss-production-cron

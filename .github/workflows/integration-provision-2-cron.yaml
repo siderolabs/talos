@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-04-09T14:38:32Z by kres b6d29bf.
+# Generated on 2026-04-14T16:51:40Z by kres b6d29bf-dirty.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -61,29 +61,27 @@ jobs:
         if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: Download artifacts
+        if: github.event_name == 'schedule'
+        uses: dawidd6/action-download-artifact@8305c0f1062bb0d184d09ef4493ecb9288447732 # version: v20
+        with:
+          event: schedule
+          if_no_artifact_found: fail
+          name: talos-artifacts-cron
+          path: _out
+          workflow: artifacts-cron-cron.yaml
+          workflow_conclusion: success
+      - name: Fix artifact permissions
+        if: github.event_name == 'schedule'
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: verify-commit-sha
+        if: github.event_name == 'schedule'
+        run: |
+          make verify-commit-sha
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: iso
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
-        run: |
-          make iso
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
       - name: installer
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io

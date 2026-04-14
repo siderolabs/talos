@@ -750,3 +750,15 @@ ci-temp-release-tag: ## Generates a temporary release tag for CI run.
 		echo "TAG=$(CI_RELEASE_TAG)" >> "$${GITHUB_ENV}"; \
 		echo "ABBREV_TAG=$(CI_RELEASE_TAG)" >> "$${GITHUB_ENV}"; \
 	fi
+
+.PHONY: save-commit-sha
+save-commit-sha: $(ARTIFACTS) ## Saves the commit SHA to a file in the artifacts directory.
+	@echo "$(SHA)" > $(ARTIFACTS)/commit_sha.txt
+
+.PHONY: verify-commit-sha
+verify-commit-sha: ## Verifies that the commit SHA in the artifacts directory matches the current commit SHA.
+	@read sha < $(ARTIFACTS)/commit_sha.txt && \
+	if [ "$$sha" != "$(SHA)" ]; then \
+		echo "Commit SHA mismatch: expected $$sha, got $(SHA)"; \
+		exit 1; \
+	fi
