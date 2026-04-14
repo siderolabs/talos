@@ -60,7 +60,11 @@ func ReadPCR(t transport.TPM, pcr int) ([]byte, error) {
 		return nil, fmt.Errorf("failed to read PCR: %w", err)
 	}
 
-	return pcrValue.PCRValues.Digests[0].Buffer, nil
+	if pcrValue != nil && len(pcrValue.PCRValues.Digests) > 0 {
+		return pcrValue.PCRValues.Digests[0].Buffer, nil
+	}
+
+	return nil, fmt.Errorf("PCR value for PCR %d is not available", pcr)
 }
 
 // PCRExtend hashes the input and extends the PCR with the hash.
