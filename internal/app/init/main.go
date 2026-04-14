@@ -67,7 +67,7 @@ func run() error {
 		return fmt.Errorf("failed to extend PCR %d with enter-initrd: %v", constants.UKIPCR, err)
 	}
 
-	log.Printf("booting Talos %s", version.Tag)
+	log.Printf("booting %s %s", version.Name, version.Tag)
 
 	cpuInfo()
 
