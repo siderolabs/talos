@@ -1,53 +1,36 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-04-11T06:20:55Z by kres b6d29bf.
+# Generated on 2026-04-17T03:17:56Z by kres b6d29bf-dirty.
 
 "on":
   workflow_run:
     workflows:
       - default
       - grype-scan-cron
-      - integration-qemu-cron
-      - integration-qemu-enforcing-cron
-      - integration-embedded-cron
-      - integration-conformance-cron
-      - integration-conformance-enforcing-cron
-      - integration-trusted-boot-cron
-      - integration-trusted-boot-enforcing-cron
-      - integration-provision-0-cron
-      - integration-provision-1-cron
-      - integration-provision-2-cron
-      - integration-provision-3-cron
-      - integration-airgapped-cron
-      - integration-misc-0-cron
-      - integration-misc-1-cron
-      - integration-misc-1-enforcing-cron
-      - integration-misc-2-cron
-      - integration-misc-3-cron
-      - integration-misc-3-enforcing-cron
-      - integration-misc-4-cron
-      - integration-misc-4-enforcing-cron
-      - integration-extensions-cron
-      - integration-cilium-cron
-      - integration-qemu-encrypted-vip-cron
-      - integration-qemu-race-cron
-      - integration-qemu-csi-rook-ceph-cron
-      - integration-qemu-csi-longhorn-cron
-      - integration-qemu-csi-openebs-cron
-      - integration-images-cron
-      - integration-reproducibility-test-cron
-      - integration-image-cache-cron
-      - integration-image-factory-cron
-      - integration-aws-cron
-      - integration-aws-nvidia-oss-lts-cron
-      - integration-aws-nvidia-oss-lts-arm64-cron
-      - integration-aws-nvidia-oss-production-cron
-      - integration-aws-nvidia-oss-production-arm64-cron
-      - integration-aws-nvidia-nonfree-lts-cron
-      - integration-aws-nvidia-nonfree-lts-arm64-cron
-      - integration-aws-nvidia-nonfree-production-cron
-      - integration-aws-nvidia-nonfree-production-arm64-cron
-      - integration-gcp-cron
+      - artifacts-cron
+      - integration-qemu-triggered
+      - integration-embedded-triggered
+      - integration-conformance-triggered
+      - integration-trusted-boot-triggered
+      - integration-provision-triggered
+      - integration-airgapped-triggered
+      - integration-misc-0-triggered
+      - integration-misc-1-triggered
+      - integration-misc-2-triggered
+      - integration-misc-3-triggered
+      - integration-misc-4-triggered
+      - integration-extensions-triggered
+      - integration-cilium-triggered
+      - integration-qemu-csi-triggered
+      - integration-qemu-csi-longhorn-triggered
+      - integration-images-triggered
+      - integration-reproducibility-test-triggered
+      - integration-cloud-images-triggered
+      - integration-image-cache-triggered
+      - integration-image-factory-triggered
+      - integration-aws-triggered
+      - integration-aws-nvidia-triggered
+      - integration-gcp-triggered
     types:
       - completed
     branches:

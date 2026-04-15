@@ -1,18 +1,32 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-04-09T14:38:32Z by kres b6d29bf.
+# Generated on 2026-04-17T07:31:21Z by kres b6d29bf-dirty.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 "on":
-  schedule:
-    - cron: 30 3 * * *
-name: integration-cilium-cron
+  workflow_run:
+    workflows:
+      - artifacts-cron
+    types:
+      - completed
+name: integration-provision-triggered
 jobs:
   default:
     runs-on:
       group: large
+    if: github.event.workflow_run.conclusion == 'success'
+    strategy:
+      matrix:
+        include:
+          - track: "0"
+          - buildEnforcing: "true"
+            track: "1"
+          - buildExtraCmdline: "true"
+            track: "2"
+          - track: "3"
+      max-parallel: 2
     steps:
       - name: gather-system-info
         id: system-info
@@ -52,69 +66,50 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
+          run-id: ${{ github.event.workflow_run.id }}
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: build
-        if: github.event_name == 'schedule'
+      - name: installer-enforcing
+        if: ${{ matrix.buildEnforcing }}
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1
           PLATFORM: linux/amd64,linux/arm64
           PUSH: "true"
+          TAG_SUFFIX_OUT: -enforcing
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
-      - name: e2e-cilium
+          make installer
+      - name: installer-extra-cmdline
+        if: ${{ matrix.buildExtraCmdline }}
         env:
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          SHORT_INTEGRATION_TEST: "yes"
-          WITH_CONFIG_PATCH: '@hack/test/patches/cilium-no-kubeproxy.yaml'
-          WITH_CUSTOM_CNI: cilium
-          WITH_FIREWALL: accept
+          IMAGER_ARGS: --extra-kernel-arg=talos.extra_cmdline=extra-super-cmdline
+          PLATFORM: linux/amd64,linux/arm64
+          TAG_SUFFIX_OUT: -extra-cmdline
         run: |
-          sudo -E make e2e-qemu
-      - name: e2e-cilium-strict
+          make installer
+      - name: provision-tests-prepare
+        run: |
+          make provision-tests-prepare
+      - name: provision-tests-track
         env:
-          CILIUM_INSTALL_TYPE: strict
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium-strict
+          GRPC_ENFORCE_ALPN_ENABLED: "false"
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          SHORT_INTEGRATION_TEST: "yes"
-          WITH_CONFIG_PATCH: '@hack/test/patches/cilium-kubeproxy.yaml'
-          WITH_CUSTOM_CNI: cilium
-          WITH_FIREWALL: accept
         run: |
-          sudo -E make e2e-qemu
-      - name: e2e-cilium-strict-kubespan
-        env:
-          CILIUM_INSTALL_TYPE: strict
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium-strict-kubespan
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          SHORT_INTEGRATION_TEST: "yes"
-          WITH_CONFIG_PATCH: '@hack/test/patches/cilium-kubeproxy.yaml'
-          WITH_CUSTOM_CNI: cilium
-          WITH_FIREWALL: accept
-          WITH_KUBESPAN: "true"
-        run: |
-          sudo -E make e2e-qemu
+          sudo -E make provision-tests-track-${{ matrix.track }}
       - name: save artifacts
         if: always()
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
         with:
-          name: talos-logs-integration-cilium
+          name: talos-logs-integration-provision-${{ matrix.track }}
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip

@@ -48,52 +48,195 @@ spec:
         // This Source Code Form is subject to the terms of the Mozilla Public
         // License, v. 2.0. If a copy of the MPL was not distributed with this
         // file, You can obtain one at http://mozilla.org/MPL/2.0/.
-  enforceContexts:
-    - default
-    - base-lint
-    - base-unit-tests
-    - e2e-iso
-    - e2e-qemu-short
-    - e2e-docker-short
-    - integration-qemu
-    - integration-qemu-enforcing
-    - integration-embedded
-    - integration-trusted-boot
-    - integration-trusted-boot-enforcing
-    - integration-provision-0
-    - integration-provision-1
-    - integration-provision-2
-    - integration-provision-3
-    - integration-airgapped
-    - integration-misc-0
-    - integration-misc-1
-    - integration-misc-1-enforcing
-    - integration-misc-2
-    - integration-misc-3
-    - integration-misc-3-enforcing
-    - integration-misc-4
-    - integration-misc-4-enforcing
-    - integration-extensions
-    - integration-cilium
-    - integration-conformance
-    - integration-conformance-enforcing
-    - integration-qemu-encrypted-vip
-    - integration-qemu-race
-    - integration-qemu-csi-rook-ceph
-    - integration-qemu-csi-longhorn
-    - integration-qemu-csi-openebs
-    - integration-images
-    - integration-reproducibility-test
-    - integration-cloud-images
-    - integration-image-cache
-    - integration-image-factory
-    - integration-aws
-    - integration-aws-nvidia-oss-lts
-    - integration-aws-nvidia-oss-lts-arm64
-    - integration-aws-nvidia-oss-production
-    - integration-aws-nvidia-nonfree-lts
-    - integration-aws-nvidia-nonfree-production
-    - integration-gcp
+  protectedBranches:
+    - name: main
+      enforceContexts:
+        - default
+        - base-lint
+        - base-unit-tests
+        - e2e-iso
+        - e2e-qemu-short
+        - e2e-docker-short
+        - integration-qemu-default
+        - integration-qemu-enforcing
+        - integration-qemu-encrypted-vip
+        - integration-qemu-race
+        - integration-embedded
+        - integration-trusted-boot-default
+        - integration-trusted-boot-enforcing
+        - integration-provision-0
+        - integration-provision-1
+        - integration-provision-2
+        - integration-provision-3
+        - integration-airgapped
+        - integration-misc-0
+        - integration-misc-1-default
+        - integration-misc-2
+        - integration-misc-3-default
+        - integration-misc-3-enforcing
+        - integration-misc-4-default
+        - integration-misc-4-enforcing
+        - integration-extensions
+        - integration-cilium
+        - integration-conformance-default
+        - integration-conformance-enforcing
+        - integration-qemu-encrypted-vip
+        - integration-qemu-race
+        - integration-qemu-csi-rook-ceph
+        - integration-qemu-csi-openebs
+        - integration-qemu-csi-longhorn
+        - integration-images
+        - integration-reproducibility-test
+        - integration-cloud-images
+        - integration-image-cache
+        - integration-image-factory
+        - integration-aws-amd64
+        - integration-aws-arm64
+        - integration-aws-nvidia-oss-lts-amd64
+        - integration-aws-nvidia-oss-lts-arm64
+        - integration-aws-nvidia-oss-production-amd64
+        - integration-aws-nvidia-oss-production-arm64
+        - integration-aws-nvidia-nonfree-lts-amd64
+        - integration-aws-nvidia-nonfree-lts-arm64
+        - integration-aws-nvidia-nonfree-production-amd64
+        - integration-aws-nvidia-nonfree-production-arm64
+        - integration-gcp
+    - name: release-1.11
+      enforceContexts:
+        - default
+        - base-lint
+        - base-unit-tests
+        - e2e-iso
+        - e2e-qemu-short
+        - e2e-docker-short
+        - integration-qemu
+        - integration-qemu-enforcing
+        - integration-trusted-boot
+        - integration-trusted-boot-enforcing
+        - integration-provision-0
+        - integration-provision-1
+        - integration-provision-2
+        - integration-airgapped
+        - integration-misc-0
+        - integration-misc-1
+        - integration-misc-1-enforcing
+        - integration-misc-2
+        - integration-misc-3
+        - integration-misc-3-enforcing
+        - integration-misc-4
+        - integration-misc-4-enforcing
+        - integration-extensions
+        - integration-cilium
+        - integration-conformance
+        - integration-conformance-enforcing
+        - integration-qemu-encrypted-vip
+        - integration-qemu-race
+        - integration-qemu-csi-rook-ceph
+        - integration-qemu-csi-longhorn
+        - integration-qemu-csi-openebs
+        - integration-images
+        - integration-reproducibility-test
+        - integration-cloud-images
+        - integration-image-cache
+        - integration-image-factory
+        - integration-aws
+        - integration-aws-nvidia-oss-lts
+        - integration-aws-nvidia-oss-production
+        - integration-aws-nvidia-nonfree-lts
+        - integration-aws-nvidia-nonfree-production
+        - integration-gcp
+    - name: release-1.12
+      enforceContexts:
+        - default
+        - base-lint
+        - base-unit-tests
+        - e2e-iso
+        - e2e-qemu-short
+        - e2e-docker-short
+        - integration-qemu
+        - integration-qemu-enforcing
+        - integration-embedded
+        - integration-trusted-boot
+        - integration-trusted-boot-enforcing
+        - integration-provision-0
+        - integration-provision-1
+        - integration-provision-2
+        - integration-airgapped
+        - integration-misc-0
+        - integration-misc-1
+        - integration-misc-1-enforcing
+        - integration-misc-2
+        - integration-misc-3
+        - integration-misc-3-enforcing
+        - integration-misc-4
+        - integration-misc-4-enforcing
+        - integration-extensions
+        - integration-cilium
+        - integration-conformance
+        - integration-conformance-enforcing
+        - integration-qemu-encrypted-vip
+        - integration-qemu-race
+        - integration-qemu-csi-rook-ceph
+        - integration-qemu-csi-longhorn
+        - integration-qemu-csi-openebs
+        - integration-images
+        - integration-reproducibility-test
+        - integration-cloud-images
+        - integration-image-cache
+        - integration-image-factory
+        - integration-aws
+        - integration-aws-nvidia-oss-lts
+        - integration-aws-nvidia-oss-production
+        - integration-aws-nvidia-nonfree-lts
+        - integration-aws-nvidia-nonfree-production
+        - integration-gcp
+    - name: release-1.13
+      enforceContexts:
+        - default
+        - base-lint
+        - base-unit-tests
+        - e2e-iso
+        - e2e-qemu-short
+        - e2e-docker-short
+        - integration-qemu
+        - integration-qemu-enforcing
+        - integration-embedded
+        - integration-trusted-boot
+        - integration-trusted-boot-enforcing
+        - integration-provision-0
+        - integration-provision-1
+        - integration-provision-2
+        - integration-provision-3
+        - integration-airgapped
+        - integration-misc-0
+        - integration-misc-1
+        - integration-misc-1-enforcing
+        - integration-misc-2
+        - integration-misc-3
+        - integration-misc-3-enforcing
+        - integration-misc-4
+        - integration-misc-4-enforcing
+        - integration-extensions
+        - integration-cilium
+        - integration-conformance
+        - integration-conformance-enforcing
+        - integration-qemu-encrypted-vip
+        - integration-qemu-race
+        - integration-qemu-csi-rook-ceph
+        - integration-qemu-csi-longhorn
+        - integration-qemu-csi-openebs
+        - integration-images
+        - integration-reproducibility-test
+        - integration-cloud-images
+        - integration-image-cache
+        - integration-image-factory
+        - integration-aws
+        - integration-aws-nvidia-oss-lts
+        - integration-aws-nvidia-oss-lts-arm64
+        - integration-aws-nvidia-oss-production
+        - integration-aws-nvidia-nonfree-lts
+        - integration-aws-nvidia-nonfree-production
+        - integration-gcp
 ---
 kind: common.GHWorkflow
 spec:
@@ -377,127 +520,151 @@ spec:
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
               - "/tmp/support-*.zip"
+    - name: artifacts
+      buildxOptions:
+        enabled: true
+      runnerGroup: large
+      crons:
+        - '30 3 * * *'
+      cronOnly: true
+      steps:
+        - name: external-artifacts
+        - name: generate
+        - name: uki-certs
+          environment:
+            PLATFORM: linux/amd64
+        - name: build
+          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
+        - name: talosctl-cni-bundle
+        - name: iso
+          command: iso secureboot-iso
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: images-essential
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-artifacts
+          artifactStep:
+            type: upload
+            artifactName: talos-artifacts
+            artifactPath: _out
+            retentionDays: 1
     - name: integration-qemu
       buildxOptions:
         enabled: true
       depends:
         - default
       runnerGroup: large
-      crons:
-        - '30 3 * * *'
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
       triggerLabels:
         - integration/qemu
         - integration/release-gate
+      matrix:
+        maxParallel: 2
+        labelKeys: [variant]
+        include:
+          - variant: default
+            withUserDisk: "true"
+            userDisksMounts: "/var/mnt/extra,/var/mnt/p1,/var/mnt/p2"
+            withConfigPatch: "@hack/test/patches/image-verification.yaml"
+            withConfigPatchWorker: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
+            qemuExtraDisks: "4"
+            qemuExtraDisksDrivers: "virtiofs,ide,nvme"
+            qemuExtraDiscsTags: "disk0"
+          - variant: enforcing
+            buildEnforcing: "true"
+            tagSuffixIn: -enforcing
+            extraTestArgs: -talos.enforcing
+            withEnforcing: "true"
+            withUserDisk: "true"
+            userDisksMounts: "/var/mnt/extra,/var/mnt/p1,/var/mnt/p2"
+            withConfigPatch: "@hack/test/patches/image-verification.yaml"
+            withConfigPatchWorker: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
+            qemuExtraDisks: "3"
+            qemuExtraDisksDrivers: "ide,nvme"
+          - variant: encrypted-vip
+            withDiskEncryption: "true"
+            withVirtualIp: "true"
+            withKubespan: "true"
+            withConfigPatch: "@hack/test/patches/image-verification.yaml"
+            withConfigPatchWorker: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
+            qemuExtraDisks: "4"
+            qemuExtraDisksDrivers: "virtiofs,ide,nvme"
+            qemuExtraDiscsTags: "disk0"
+          - variant: race
+            buildRace: "true"
+            tagSuffix: -race
+            extraTestArgs: "-talos.race"
+            withConfigPatchWorker: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
+            qemuExtraDisks: "4"
+            qemuExtraDisksDrivers: "virtiofs,ide,nvme"
+            qemuExtraDiscsTags: "disk0"
+            qemuMemoryControlplanes: "4096"
+            qemuMemoryWorkers: "4096"
       steps:
         - name: download-artifacts
-          conditions:
-            - not-on-schedule
           artifactStep:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
-        - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: e2e-qemu
-          withSudo: true
-          environment:
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            QEMU_EXTRA_DISKS: "4"
-            QEMU_EXTRA_DISKS_SIZE: "10240"
-            QEMU_EXTRA_DISKS_DRIVERS: "virtiofs,ide,nvme"
-            QEMU_EXTRA_DISKS_TAGS: "disk0"
-            WITH_CONFIG_PATCH: "@hack/test/patches/image-verification.yaml"
-            WITH_CONFIG_PATCH_WORKER: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
-            WITH_USER_DISK: "true"
-            USER_DISKS_MOUNTS: "/var/mnt/extra,/var/mnt/p1,/var/mnt/p2"
-        - name: save-talos-logs
-          conditions:
-            - always
-          artifactStep:
-            type: upload
-            artifactName: talos-logs-integration-qemu
-            disableExecutableListGeneration: true
-            artifactPath: /tmp/logs-*.tar.gz
-            additionalArtifacts:
-              - "/tmp/support-*.zip"
-    - name: integration-qemu-enforcing
-      buildxOptions:
-        enabled: true
-      depends:
-        - default
-      runnerGroup: large
-      crons:
-        - '30 3 * * *'
-      triggerLabels:
-        - integration/qemu-enforcing
-        - integration/release-gate
-      steps:
-        - name: download-artifacts
-          conditions:
-            - not-on-schedule
-          artifactStep:
-            type: download
-            artifactName: talos-artifacts
-            artifactPath: _out
-        - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: uki-certs
-          environment:
-            PLATFORM: linux/amd64
-          conditions:
-            - only-on-schedule
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: images-essential-enforcing
           command: images-essential
+          conditions:
+            - matrix.buildEnforcing
           environment:
             PLATFORM: linux/amd64,linux/arm64
             IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
             TAG_SUFFIX_OUT: -enforcing
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
+        - name: ci-temp-release-tag
+        - name: build-race
+          command: initramfs installer-base imager installer
+          conditions:
+            - matrix.buildRace
+          environment:
+            PUSH: true
+            TAG_SUFFIX: ${{ matrix.tagSuffix }}
+            WITH_RACE: "1"
+            PLATFORM: linux/amd64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-qemu
           withSudo: true
           environment:
-            TAG_SUFFIX_IN: -enforcing
-            EXTRA_TEST_ARGS: -talos.enforcing
             IMAGE_REGISTRY: registry.dev.siderolabs.io
-            QEMU_EXTRA_DISKS: "3"
+            TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
+            TAG_SUFFIX: ${{ matrix.tagSuffix }}
+            EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
+            WITH_ENFORCING: ${{ matrix.withEnforcing }}
+            WITH_DISK_ENCRYPTION: ${{ matrix.withDiskEncryption }}
+            WITH_VIRTUAL_IP: ${{ matrix.withVirtualIp }}
+            WITH_KUBESPAN: ${{ matrix.withKubespan }}
+            WITH_USER_DISK: ${{ matrix.withUserDisk }}
+            USER_DISKS_MOUNTS: ${{ matrix.userDisksMounts }}
+            WITH_CONFIG_PATCH: ${{ matrix.withConfigPatch }}
+            WITH_CONFIG_PATCH_WORKER: ${{ matrix.withConfigPatchWorker }}
+            QEMU_EXTRA_DISKS: ${{ matrix.qemuExtraDisks }}
             QEMU_EXTRA_DISKS_SIZE: "10240"
-            QEMU_EXTRA_DISKS_DRIVERS: "ide,nvme"
-            WITH_CONFIG_PATCH: "@hack/test/patches/image-verification.yaml"
-            WITH_CONFIG_PATCH_WORKER: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
-            WITH_USER_DISK: "true"
-            WITH_ENFORCING: true
-            USER_DISKS_MOUNTS: "/var/mnt/extra,/var/mnt/p1,/var/mnt/p2"
+            QEMU_EXTRA_DISKS_DRIVERS: ${{ matrix.qemuExtraDisksDrivers }}
+            QEMU_EXTRA_DISKS_TAGS: ${{ matrix.qemuExtraDiscsTags }}
+            QEMU_MEMORY_CONTROLPLANES: ${{ matrix.qemuMemoryControlplanes }}
+            QEMU_MEMORY_WORKERS: ${{ matrix.qemuMemoryWorkers }}
         - name: save-talos-logs
           conditions:
             - always
           artifactStep:
             type: upload
-            artifactName: talos-logs-integration-qemu-enforcing
+            artifactName: talos-logs-integration-qemu-${{ matrix.variant }}
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
@@ -508,33 +675,19 @@ spec:
       depends:
         - default
       runnerGroup: large
-      crons:
-        - '30 3 * * *'
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
       triggerLabels:
         - integration/embedded
         - integration/release-gate
       steps:
         - name: download-artifacts
-          conditions:
-            - not-on-schedule
           artifactStep:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: e2e-embedded
           withSudo: true
           environment:
@@ -555,98 +708,44 @@ spec:
       depends:
         - default
       runnerGroup: large
-      crons:
-        - '30 4 * * *'
       triggerLabels:
         - integration/conformance
         - integration/release-gate
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
+      matrix:
+        maxParallel: 2
+        labelKeys: [variant]
+        include:
+          - variant: default
+            withConfigPatch: "@hack/test/patches/image-verification.yaml"
+            tagSuffixIn: ""
+            withEnforcing: ""
+            extraTestArgs: ""
+          - variant: enforcing
+            buildEnforcing: "true"
+            withConfigPatch: ""
+            tagSuffixIn: -enforcing
+            withEnforcing: "true"
+            extraTestArgs: -talos.enforcing
       steps:
         - name: download-artifacts
-          conditions:
-            - not-on-schedule
           artifactStep:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
-        - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: conformance-qemu
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-conformance-qemu
-            QEMU_CPUS_WORKERS: 6
-            QEMU_MEMORY_WORKERS: 4096
-            TEST_MODE: fast-conformance
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            WITH_CONFIG_PATCH: "@hack/test/patches/image-verification.yaml"
-        - name: save-talos-logs
-          conditions:
-            - always
-          artifactStep:
-            type: upload
-            artifactName: talos-logs-integration-conformance
-            disableExecutableListGeneration: true
-            artifactPath: /tmp/logs-*.tar.gz
-            additionalArtifacts:
-              - "/tmp/support-*.zip"
-    - name: integration-conformance-enforcing
-      buildxOptions:
-        enabled: true
-      depends:
-        - default
-      runnerGroup: large
-      crons:
-        - '30 4 * * *'
-      triggerLabels:
-        - integration/conformance-enforcing
-      steps:
-        - name: download-artifacts
-          conditions:
-            - not-on-schedule
-          artifactStep:
-            type: download
-            artifactName: talos-artifacts
-            artifactPath: _out
-        - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: uki-certs
-          environment:
-            PLATFORM: linux/amd64
-          conditions:
-            - only-on-schedule
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: images-essential-enforcing
           command: images-essential
+          conditions:
+            - matrix.buildEnforcing
           environment:
             PLATFORM: linux/amd64,linux/arm64
             IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
             TAG_SUFFIX_OUT: -enforcing
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
+        - name: ci-temp-release-tag
         - name: conformance-qemu
           command: e2e-qemu
           withSudo: true
@@ -655,16 +754,17 @@ spec:
             QEMU_CPUS_WORKERS: 6
             QEMU_MEMORY_WORKERS: 4096
             TEST_MODE: fast-conformance
-            TAG_SUFFIX_IN: -enforcing
-            WITH_ENFORCING: true
-            EXTRA_TEST_ARGS: -talos.enforcing
+            WITH_CONFIG_PATCH: ${{ matrix.withConfigPatch }}
+            TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
+            WITH_ENFORCING: ${{ matrix.withEnforcing }}
+            EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
           conditions:
             - always
           artifactStep:
             type: upload
-            artifactName: talos-logs-integration-conformance-enforcing
+            artifactName: talos-logs-integration-conformance-${{ matrix.variant }}
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
@@ -675,315 +775,124 @@ spec:
       depends:
         - default
       runnerGroup: large
-      crons:
-        - '30 3 * * *'
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
       triggerLabels:
         - integration/trusted-boot
         - integration/release-gate
+      matrix:
+        maxParallel: 1
+        labelKeys: [variant]
+        include:
+          - variant: default
+            withConfigPatch: "@hack/test/patches/image-verification.yaml"
+            tagSuffixIn: ""
+            withEnforcing: ""
+            extraTestArgs: "-talos.trustedboot"
+          - variant: enforcing
+            buildEnforcing: "true"
+            withConfigPatch: ""
+            tagSuffixIn: -enforcing
+            withEnforcing: "true"
+            extraTestArgs: "-talos.trustedboot -talos.enforcing"
       steps:
         - name: download-artifacts
-          conditions:
-            - not-on-schedule
           artifactStep:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
-        - name: ci-temp-release-tag
+        - name: images-essential-enforcing
+          command: images-essential
           conditions:
-            - not-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+            - matrix.buildEnforcing
           environment:
             PLATFORM: linux/amd64,linux/arm64
+            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
+            TAG_SUFFIX_OUT: -enforcing
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: images-essential
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: ci-temp-release-tag
         - name: secureboot-iso
           conditions:
-            - only-on-schedule
+            - matrix.buildEnforcing
           environment:
             PLATFORM: linux/amd64,linux/arm64
-            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
+            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: integration-trusted-boot
           command: e2e-qemu
           withSudo: true
           environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-integration-trusted-boot
+            GITHUB_STEP_NAME: ${{ github.job}}-integration-trusted-boot-${{ matrix.variant }}
             VIA_MAINTENANCE_MODE: true
             WITH_TRUSTED_BOOT_ISO: true
-            WITH_CONFIG_PATCH: "@hack/test/patches/image-verification.yaml"
-            EXTRA_TEST_ARGS: "-talos.trustedboot"
+            WITH_CONFIG_PATCH: ${{ matrix.withConfigPatch }}
+            TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
+            WITH_ENFORCING: ${{ matrix.withEnforcing }}
+            EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
           conditions:
             - always
           artifactStep:
             type: upload
-            artifactName: talos-logs-integration-trusted-boot
+            artifactName: talos-logs-integration-trusted-boot-${{ matrix.variant }}
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
               - "/tmp/support-*.zip"
-    - name: integration-trusted-boot-enforcing
+    - name: integration-provision
       buildxOptions:
         enabled: true
       depends:
         - default
       runnerGroup: large
-      crons:
-        - '30 3 * * *'
-      triggerLabels:
-        - integration/trusted-boot-enforcing
-      steps:
-        - name: download-artifacts
-          conditions:
-            - not-on-schedule
-          artifactStep:
-            type: download
-            artifactName: talos-artifacts
-            artifactPath: _out
-        - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: images-essential-enforcing
-          command: images-essential
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
-            TAG_SUFFIX_OUT: -enforcing
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: secureboot-iso
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: integration-trusted-boot-enforcing
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-integration-trusted-boot-enforcing
-            VIA_MAINTENANCE_MODE: true
-            WITH_TRUSTED_BOOT_ISO: true
-            TAG_SUFFIX_IN: -enforcing
-            WITH_ENFORCING: true
-            EXTRA_TEST_ARGS: "-talos.trustedboot -talos.enforcing"
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: save-talos-logs
-          conditions:
-            - always
-          artifactStep:
-            type: upload
-            artifactName: talos-logs-integration-trusted-boot-enforcing
-            disableExecutableListGeneration: true
-            artifactPath: /tmp/logs-*.tar.gz
-            additionalArtifacts:
-              - "/tmp/support-*.zip"
-    - name: integration-provision-0
-      buildxOptions:
-        enabled: true
-      depends:
-        - default
-      runnerGroup: large
-      crons:
-        - '30 4 * * *'
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
       triggerLabels:
         - integration/provision
-        - integration/provision-0
         - integration/release-gate
+      matrix:
+        maxParallel: 2
+        labelKeys: [track]
+        include:
+          - track: "0"
+          - track: "1"
+            buildEnforcing: "true"
+          - track: "2"
+            buildExtraCmdline: "true"
+          - track: "3"
       steps:
         - name: download-artifacts
-          conditions:
-            - not-on-schedule
           artifactStep:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: uki-certs
-          environment:
-            PLATFORM: linux/amd64
-          conditions:
-            - only-on-schedule
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: images-essential
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: provision-tests-prepare
-        - name: provision-tests-track-0
-          withSudo: true
-          environment:
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            GRPC_ENFORCE_ALPN_ENABLED: "false"
-        - name: save-talos-logs
-          conditions:
-            - always
-          artifactStep:
-            type: upload
-            artifactName: talos-logs-integration-provision-0
-            disableExecutableListGeneration: true
-            artifactPath: /tmp/logs-*.tar.gz
-            additionalArtifacts:
-              - "/tmp/support-*.zip"
-    - name: integration-provision-1
-      buildxOptions:
-        enabled: true
-      depends:
-        - default
-      runnerGroup: large
-      crons:
-        - '30 4 * * *'
-      triggerLabels:
-        - integration/provision
-        - integration/provision-1
-        - integration/release-gate
-      steps:
-        - name: download-artifacts
-          conditions:
-            - not-on-schedule
-          artifactStep:
-            type: download
-            artifactName: talos-artifacts
-            artifactPath: _out
-        - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: installer-enforcing
-          conditions:
-            - only-on-schedule
           command: installer
+          conditions:
+            - matrix.buildEnforcing
           environment:
             PLATFORM: linux/amd64,linux/arm64
             IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
             TAG_SUFFIX_OUT: -enforcing
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
-        - name: provision-tests-prepare
-        - name: provision-tests-track-1
-          withSudo: true
-          environment:
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            GRPC_ENFORCE_ALPN_ENABLED: "false"
-        - name: save-talos-logs
+        - name: installer-extra-cmdline
+          command: installer
           conditions:
-            - always
-          artifactStep:
-            type: upload
-            artifactName: talos-logs-integration-provision-1
-            disableExecutableListGeneration: true
-            artifactPath: /tmp/logs-*.tar.gz
-            additionalArtifacts:
-              - "/tmp/support-*.zip"
-    - name: integration-provision-2
-      buildxOptions:
-        enabled: true
-      depends:
-        - default
-      runnerGroup: large
-      crons:
-        - '30 4 * * *'
-      triggerLabels:
-        - integration/provision
-        - integration/provision-2
-        - integration/release-gate
-      steps:
-        - name: download-artifacts
-          conditions:
-            - not-on-schedule
-          artifactStep:
-            type: download
-            artifactName: talos-artifacts
-            artifactPath: _out
-        - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: iso
-          conditions:
-            - only-on-schedule
-          environment:
-            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: installer
+            - matrix.buildExtraCmdline
           environment:
             PLATFORM: linux/amd64,linux/arm64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             IMAGER_ARGS: "--extra-kernel-arg=talos.extra_cmdline=extra-super-cmdline"
             TAG_SUFFIX_OUT: -extra-cmdline
         - name: provision-tests-prepare
-        - name: provision-tests-track-2
+        - name: provision-tests-track
+          command: provision-tests-track-${{ matrix.track }}
           withSudo: true
           environment:
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -993,57 +902,7 @@ spec:
             - always
           artifactStep:
             type: upload
-            artifactName: talos-logs-integration-provision-2
-            disableExecutableListGeneration: true
-            artifactPath: /tmp/logs-*.tar.gz
-            additionalArtifacts:
-              - "/tmp/support-*.zip"
-    - name: integration-provision-3
-      buildxOptions:
-        enabled: true
-      depends:
-        - default
-      runnerGroup: large
-      crons:
-        - '30 4 * * *'
-      triggerLabels:
-        - integration/provision
-        - integration/provision-3
-        - integration/release-gate
-      steps:
-        - name: download-artifacts
-          conditions:
-            - not-on-schedule
-          artifactStep:
-            type: download
-            artifactName: talos-artifacts
-            artifactPath: _out
-        - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: provision-tests-prepare
-        - name: provision-tests-track-3
-          withSudo: true
-          environment:
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            GRPC_ENFORCE_ALPN_ENABLED: "false"
-        - name: save-talos-logs
-          conditions:
-            - always
-          artifactStep:
-            type: upload
-            artifactName: talos-logs-integration-provision-3
+            artifactName: talos-logs-integration-provision-${{ matrix.track }}
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
@@ -1054,34 +913,20 @@ spec:
       depends:
         - default
       runnerGroup: large
-      crons:
-        - '30 5 * * *'
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
       triggerLabels:
         - integration/misc
         - integration/airgapped
         - integration/release-gate
       steps:
         - name: download-artifacts
-          conditions:
-            - not-on-schedule
           artifactStep:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: integration-images-list
           command: integration-images-list
           environment:
@@ -1139,40 +984,20 @@ spec:
       depends:
         - default
       runnerGroup: large
-      crons:
-        - '30 5 * * *'
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
       triggerLabels:
         - integration/misc
         - integration/misc-0
         - integration/release-gate
       steps:
         - name: download-artifacts
-          conditions:
-            - not-on-schedule
           artifactStep:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: image-metal-uki # needed for e2e-uki-4k
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-firewall
           command: e2e-qemu
           withSudo: true
@@ -1234,34 +1059,43 @@ spec:
       depends:
         - default
       runnerGroup: large
-      crons:
-        - '30 5 * * *'
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
       triggerLabels:
         - integration/misc
         - integration/misc-1
         - integration/release-gate
+      matrix:
+        maxParallel: 2
+        labelKeys: [variant]
+        include:
+          - variant: default
+            tagSuffixIn: ""
+            withEnforcing: ""
+            extraTestArgs: ""
+          - variant: enforcing
+            buildEnforcing: "true"
+            tagSuffixIn: -enforcing
+            withEnforcing: "true"
+            extraTestArgs: -talos.enforcing
       steps:
         - name: download-artifacts
-          conditions:
-            - not-on-schedule
           artifactStep:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
-        - name: ci-temp-release-tag
+        - name: images-essential-enforcing
+          command: images-essential
           conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
+            - matrix.buildEnforcing
           environment:
             PLATFORM: linux/amd64,linux/arm64
+            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
+            TAG_SUFFIX_OUT: -enforcing
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
+        - name: ci-temp-release-tag
         - name: e2e-no-cluster-discovery
           command: e2e-qemu
           withSudo: true
@@ -1269,6 +1103,9 @@ spec:
             GITHUB_STEP_NAME: ${{ github.job}}-e2e-no-cluster-discovery
             SHORT_INTEGRATION_TEST: yes
             WITH_CLUSTER_DISCOVERY: false
+            TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
+            EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
+            WITH_ENFORCING: ${{ matrix.withEnforcing }}
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-kubespan
           command: e2e-qemu
@@ -1278,6 +1115,9 @@ spec:
             SHORT_INTEGRATION_TEST: yes
             WITH_CLUSTER_DISCOVERY: true
             WITH_KUBESPAN: "true"
+            TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
+            EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
+            WITH_ENFORCING: ${{ matrix.withEnforcing }}
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-default-hostname
           command: e2e-qemu
@@ -1287,6 +1127,9 @@ spec:
             SHORT_INTEGRATION_TEST: yes
             VIA_MAINTENANCE_MODE: true
             DISABLE_DHCP_HOSTNAME: true
+            TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
+            EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
+            WITH_ENFORCING: ${{ matrix.withEnforcing }}
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-min-requirements
           command: e2e-qemu
@@ -1297,118 +1140,16 @@ spec:
             QEMU_MEMORY_WORKERS: 1024
             QEMU_MEMORY_CONTROLPLANES: 2048
             QEMU_SYSTEM_DISK_SIZE: 10240
+            TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
+            EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
+            WITH_ENFORCING: ${{ matrix.withEnforcing }}
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
           conditions:
             - always
           artifactStep:
             type: upload
-            artifactName: talos-logs-integration-misc-1
-            disableExecutableListGeneration: true
-            artifactPath: /tmp/logs-*.tar.gz
-            additionalArtifacts:
-              - "/tmp/support-*.zip"
-    - name: integration-misc-1-enforcing
-      buildxOptions:
-        enabled: true
-      depends:
-        - default
-      runnerGroup: large
-      crons:
-        - '30 5 * * *'
-      triggerLabels:
-        - integration/misc-enforcing
-        - integration/misc-1-enforcing
-        - integration/release-gate
-      steps:
-        - name: download-artifacts
-          conditions:
-            - not-on-schedule
-          artifactStep:
-            type: download
-            artifactName: talos-artifacts
-            artifactPath: _out
-        - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: uki-certs
-          environment:
-            PLATFORM: linux/amd64
-          conditions:
-            - only-on-schedule
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: images-essential-enforcing
-          command: images-essential
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
-            TAG_SUFFIX_OUT: -enforcing
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: e2e-no-cluster-discovery
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-no-cluster-discovery
-            SHORT_INTEGRATION_TEST: yes
-            WITH_CLUSTER_DISCOVERY: false
-            TAG_SUFFIX_IN: -enforcing
-            EXTRA_TEST_ARGS: -talos.enforcing
-            WITH_ENFORCING: true
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-kubespan
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-kubespan
-            SHORT_INTEGRATION_TEST: yes
-            WITH_CLUSTER_DISCOVERY: true
-            WITH_KUBESPAN: true
-            TAG_SUFFIX_IN: -enforcing
-            EXTRA_TEST_ARGS: -talos.enforcing
-            WITH_ENFORCING: true
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-default-hostname
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-default-hostname
-            SHORT_INTEGRATION_TEST: yes
-            VIA_MAINTENANCE_MODE: true
-            DISABLE_DHCP_HOSTNAME: true
-            TAG_SUFFIX_IN: -enforcing
-            EXTRA_TEST_ARGS: -talos.enforcing
-            WITH_ENFORCING: true
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-min-requirements
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-min-requirements
-            SHORT_INTEGRATION_TEST: yes
-            QEMU_MEMORY_WORKERS: 1024
-            QEMU_MEMORY_CONTROLPLANES: 2048
-            QEMU_SYSTEM_DISK_SIZE: 10240
-            TAG_SUFFIX_IN: -enforcing
-            EXTRA_TEST_ARGS: -talos.enforcing
-            WITH_ENFORCING: true
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: save-talos-logs
-          conditions:
-            - always
-          artifactStep:
-            type: upload
-            artifactName: talos-logs-integration-misc-1-enforcing
+            artifactName: talos-logs-integration-misc-1-${{ matrix.variant }}
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
@@ -1419,52 +1160,20 @@ spec:
       depends:
         - default
       runnerGroup: large
-      crons:
-        - '30 5 * * *'
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
       triggerLabels:
         - integration/misc
         - integration/misc-2
         - integration/release-gate
       steps:
         - name: download-artifacts
-          conditions:
-            - not-on-schedule
           artifactStep:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: iso # needed for e2e-bios-iso
-          conditions:
-            - only-on-schedule
-          command: iso
-          environment:
-            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0"
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: images-essential
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-bios
           command: e2e-qemu
           withSudo: true
@@ -1540,114 +1249,43 @@ spec:
       depends:
         - default
       runnerGroup: large
-      crons:
-        - '30 5 * * *'
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
       triggerLabels:
         - integration/misc
         - integration/misc-3
         - integration/release-gate
+      matrix:
+        maxParallel: 2
+        labelKeys: [variant]
+        include:
+          - variant: default
+            tagSuffixIn: ""
+            withEnforcing: ""
+            extraTestArgs: ""
+          - variant: enforcing
+            buildEnforcing: "true"
+            tagSuffixIn: -enforcing
+            withEnforcing: "true"
+            extraTestArgs: -talos.enforcing
       steps:
         - name: download-artifacts
-          conditions:
-            - not-on-schedule
           artifactStep:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
-        - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: e2e-network-chaos
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-network-chaos
-            SHORT_INTEGRATION_TEST: yes
-            WITH_NETWORK_CHAOS: yes
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-metal-iso
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-metal-iso
-            SHORT_INTEGRATION_TEST: yes
-            WITH_CONFIG_INJECTION_METHOD: "metal-iso"
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-iommu-pcidriverrebind
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-iommu-pcidriverrebind
-            SHORT_INTEGRATION_TEST: yes
-            WITH_IOMMU: yes
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: save-talos-logs
-          conditions:
-            - always
-          artifactStep:
-            type: upload
-            artifactName: talos-logs-integration-misc-3
-            disableExecutableListGeneration: true
-            artifactPath: /tmp/logs-*.tar.gz
-            additionalArtifacts:
-              - "/tmp/support-*.zip"
-    - name: integration-misc-3-enforcing
-      buildxOptions:
-        enabled: true
-      depends:
-        - default
-      runnerGroup: large
-      crons:
-        - '30 5 * * *'
-      triggerLabels:
-        - integration/misc-enforcing
-        - integration/misc-3-enforcing
-      steps:
-        - name: download-artifacts
-          conditions:
-            - not-on-schedule
-          artifactStep:
-            type: download
-            artifactName: talos-artifacts
-            artifactPath: _out
-        - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: uki-certs
-          environment:
-            PLATFORM: linux/amd64
-          conditions:
-            - only-on-schedule
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: images-essential-enforcing
           command: images-essential
+          conditions:
+            - matrix.buildEnforcing
           environment:
             PLATFORM: linux/amd64,linux/arm64
             IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
             TAG_SUFFIX_OUT: -enforcing
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
+        - name: ci-temp-release-tag
         - name: e2e-network-chaos
           command: e2e-qemu
           withSudo: true
@@ -1655,9 +1293,9 @@ spec:
             GITHUB_STEP_NAME: ${{ github.job}}-e2e-network-chaos
             SHORT_INTEGRATION_TEST: yes
             WITH_NETWORK_CHAOS: yes
-            TAG_SUFFIX_IN: -enforcing
-            EXTRA_TEST_ARGS: -talos.enforcing
-            WITH_ENFORCING: true
+            TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
+            EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
+            WITH_ENFORCING: ${{ matrix.withEnforcing }}
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-metal-iso
           command: e2e-qemu
@@ -1666,9 +1304,9 @@ spec:
             GITHUB_STEP_NAME: ${{ github.job}}-e2e-metal-iso
             SHORT_INTEGRATION_TEST: yes
             WITH_CONFIG_INJECTION_METHOD: "metal-iso"
-            TAG_SUFFIX_IN: -enforcing
-            EXTRA_TEST_ARGS: -talos.enforcing
-            WITH_ENFORCING: true
+            TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
+            EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
+            WITH_ENFORCING: ${{ matrix.withEnforcing }}
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-iommu-pcidriverrebind
           command: e2e-qemu
@@ -1677,16 +1315,16 @@ spec:
             GITHUB_STEP_NAME: ${{ github.job}}-e2e-iommu-pcidriverrebind
             SHORT_INTEGRATION_TEST: yes
             WITH_IOMMU: yes
-            TAG_SUFFIX_IN: -enforcing
-            EXTRA_TEST_ARGS: -talos.enforcing
-            WITH_ENFORCING: true
+            TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
+            EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
+            WITH_ENFORCING: ${{ matrix.withEnforcing }}
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
           conditions:
             - always
           artifactStep:
             type: upload
-            artifactName: talos-logs-integration-misc-3-enforcing
+            artifactName: talos-logs-integration-misc-3-${{ matrix.variant }}
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
@@ -1697,134 +1335,43 @@ spec:
       depends:
         - default
       runnerGroup: large
-      crons:
-        - '30 5 * * *'
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
       triggerLabels:
         - integration/misc
         - integration/misc-4
         - integration/release-gate
+      matrix:
+        maxParallel: 2
+        labelKeys: [variant]
+        include:
+          - variant: default
+            tagSuffixIn: ""
+            withEnforcing: ""
+            extraTestArgs: ""
+          - variant: enforcing
+            buildEnforcing: "true"
+            tagSuffixIn: -enforcing
+            withEnforcing: "true"
+            extraTestArgs: -talos.enforcing
       steps:
         - name: download-artifacts
-          conditions:
-            - not-on-schedule
           artifactStep:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
-        - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: e2e-siderolink
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink
-            SHORT_INTEGRATION_TEST: yes
-            WITH_SIDEROLINK_AGENT: true
-            VIA_MAINTENANCE_MODE: true
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-siderolink-tunnel
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink-tunnel
-            SHORT_INTEGRATION_TEST: yes
-            WITH_SIDEROLINK_AGENT: tunnel
-            VIA_MAINTENANCE_MODE: true
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-siderolink-tls
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink-tls
-            SHORT_INTEGRATION_TEST: yes
-            WITH_SIDEROLINK_AGENT: wireguard+tls
-            VIA_MAINTENANCE_MODE: true
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-apparmor
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-apparmor
-            SHORT_INTEGRATION_TEST: yes
-            WITH_APPARMOR_LSM_ENABLED: yes
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-k8s-user-namespace
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-k8s-user-namespace
-            SHORT_INTEGRATION_TEST: yes
-            WITH_CONFIG_PATCH: "@hack/test/patches/usernamespace.yaml"
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: save-talos-logs
-          conditions:
-            - always
-          artifactStep:
-            type: upload
-            artifactName: talos-logs-integration-misc-4
-            disableExecutableListGeneration: true
-            artifactPath: /tmp/logs-*.tar.gz
-            additionalArtifacts:
-              - "/tmp/support-*.zip"
-    - name: integration-misc-4-enforcing
-      buildxOptions:
-        enabled: true
-      depends:
-        - default
-      runnerGroup: large
-      crons:
-        - '30 5 * * *'
-      triggerLabels:
-        - integration/misc-enforcing
-        - integration/misc-4-enforcing
-        - integration/release-gate
-      steps:
-        - name: download-artifacts
-          conditions:
-            - not-on-schedule
-          artifactStep:
-            type: download
-            artifactName: talos-artifacts
-            artifactPath: _out
-        - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: uki-certs
-          environment:
-            PLATFORM: linux/amd64
-          conditions:
-            - only-on-schedule
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: images-essential-enforcing
           command: images-essential
+          conditions:
+            - matrix.buildEnforcing
           environment:
             PLATFORM: linux/amd64,linux/arm64
             IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
             TAG_SUFFIX_OUT: -enforcing
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
+        - name: ci-temp-release-tag
         - name: e2e-siderolink
           command: e2e-qemu
           withSudo: true
@@ -1833,9 +1380,9 @@ spec:
             SHORT_INTEGRATION_TEST: yes
             WITH_SIDEROLINK_AGENT: true
             VIA_MAINTENANCE_MODE: true
-            TAG_SUFFIX_IN: -enforcing
-            WITH_ENFORCING: true
-            EXTRA_TEST_ARGS: -talos.enforcing
+            TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
+            EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
+            WITH_ENFORCING: ${{ matrix.withEnforcing }}
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-siderolink-tunnel
           command: e2e-qemu
@@ -1845,9 +1392,9 @@ spec:
             SHORT_INTEGRATION_TEST: yes
             WITH_SIDEROLINK_AGENT: tunnel
             VIA_MAINTENANCE_MODE: true
-            TAG_SUFFIX_IN: -enforcing
-            WITH_ENFORCING: true
-            EXTRA_TEST_ARGS: -talos.enforcing
+            TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
+            EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
+            WITH_ENFORCING: ${{ matrix.withEnforcing }}
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-siderolink-tls
           command: e2e-qemu
@@ -1857,11 +1404,11 @@ spec:
             SHORT_INTEGRATION_TEST: yes
             WITH_SIDEROLINK_AGENT: wireguard+tls
             VIA_MAINTENANCE_MODE: true
-            TAG_SUFFIX_IN: -enforcing
-            WITH_ENFORCING: true
-            EXTRA_TEST_ARGS: -talos.enforcing
+            TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
+            EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
+            WITH_ENFORCING: ${{ matrix.withEnforcing }}
             IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-apparmor
+        - name: e2e-apparmor  # intentionally no enforcing vars: apparmor runs without enforcing in both variants
           command: e2e-qemu
           withSudo: true
           environment:
@@ -1876,16 +1423,16 @@ spec:
             GITHUB_STEP_NAME: ${{ github.job}}-e2e-k8s-user-namespace
             SHORT_INTEGRATION_TEST: yes
             WITH_CONFIG_PATCH: "@hack/test/patches/usernamespace.yaml"
-            TAG_SUFFIX_IN: -enforcing
-            WITH_ENFORCING: true
-            EXTRA_TEST_ARGS: -talos.enforcing
+            TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
+            EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
+            WITH_ENFORCING: ${{ matrix.withEnforcing }}
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
           conditions:
             - always
           artifactStep:
             type: upload
-            artifactName: talos-logs-integration-misc-4-enforcing
+            artifactName: talos-logs-integration-misc-4-${{ matrix.variant }}
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
@@ -1896,36 +1443,19 @@ spec:
       depends:
         - default
       runnerGroup: large
-      crons:
-        - '30 6 * * *'
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
       triggerLabels:
         - integration/extensions
         - integration/release-gate
       steps:
         - name: download-artifacts
-          conditions:
-            - not-on-schedule
           artifactStep:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: generate
-          conditions:
-            - only-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: checkout extensions
           checkoutStep:
             repository: siderolabs/extensions
@@ -1978,33 +1508,19 @@ spec:
       depends:
         - default
       runnerGroup: large
-      crons:
-        - '30 3 * * *'
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
       triggerLabels:
         - integration/cilium
         - integration/release-gate
       steps:
         - name: download-artifacts
-          conditions:
-            - not-on-schedule
           artifactStep:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: e2e-cilium
           command: e2e-qemu
           withSudo: true
@@ -2048,180 +1564,56 @@ spec:
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
               - "/tmp/support-*.zip"
-    - name: integration-qemu-encrypted-vip
+    - name: integration-qemu-csi
       buildxOptions:
         enabled: true
       depends:
         - default
       runnerGroup: large
-      crons:
-        - '30 3 * * *'
-      triggerLabels:
-        - integration/qemu-encrypted-vip
-        - integration/release-gate
-      steps:
-        - name: download-artifacts
-          conditions:
-            - not-on-schedule
-          artifactStep:
-            type: download
-            artifactName: talos-artifacts
-            artifactPath: _out
-        - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: e2e-qemu
-          withSudo: true
-          environment:
-            WITH_DISK_ENCRYPTION: true
-            WITH_VIRTUAL_IP: true
-            WITH_KUBESPAN: true
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            QEMU_EXTRA_DISKS: "4"
-            QEMU_EXTRA_DISKS_SIZE: "10240"
-            QEMU_EXTRA_DISKS_DRIVERS: "virtiofs,ide,nvme"
-            QEMU_EXTRA_DISKS_TAGS: "disk0"
-            WITH_CONFIG_PATCH: "@hack/test/patches/image-verification.yaml"
-            WITH_CONFIG_PATCH_WORKER: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
-        - name: save-talos-logs
-          conditions:
-            - always
-          artifactStep:
-            type: upload
-            artifactName: talos-logs-integration-qemu-encrypted-vip
-            disableExecutableListGeneration: true
-            artifactPath: /tmp/logs-*.tar.gz
-            additionalArtifacts:
-              - "/tmp/support-*.zip"
-    - name: integration-qemu-race
-      buildxOptions:
-        enabled: true
-      depends:
-        - default
-      runnerGroup: large
-      crons:
-        - '30 3 * * *'
-      triggerLabels:
-        - integration/qemu-race
-        - integration/release-gate
-      steps:
-        - name: download-artifacts
-          conditions:
-            - not-on-schedule
-          artifactStep:
-            type: download
-            artifactName: talos-artifacts
-            artifactPath: _out
-        - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: build-race
-          command: initramfs installer-base imager installer
-          environment:
-            PUSH: true
-            TAG_SUFFIX: -race
-            WITH_RACE: 1
-            PLATFORM: linux/amd64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-qemu-race
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-qemu-race
-            QEMU_EXTRA_DISKS: "4"
-            QEMU_EXTRA_DISKS_SIZE: "10240"
-            QEMU_EXTRA_DISKS_DRIVERS: "virtiofs,ide,nvme"
-            QEMU_EXTRA_DISKS_TAGS: "disk0"
-            WITH_CONFIG_PATCH_WORKER: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
-            QEMU_MEMORY_CONTROLPLANES: 4096 # race-enabled Talos consumes lots of RAM
-            QEMU_MEMORY_WORKERS: 4096
-            EXTRA_TEST_ARGS: "-talos.race"
-            TAG_SUFFIX: -race
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: save-talos-logs
-          conditions:
-            - always
-          artifactStep:
-            type: upload
-            artifactName: talos-logs-integration-qemu-race
-            disableExecutableListGeneration: true
-            artifactPath: /tmp/logs-*.tar.gz
-            additionalArtifacts:
-              - "/tmp/support-*.zip"
-    - name: integration-qemu-csi-rook-ceph
-      buildxOptions:
-        enabled: true
-      depends:
-        - default
-      runnerGroup: large
-      crons:
-        - '30 3 * * *'
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
       triggerLabels:
         - integration/qemu-csi
-        - integration/qemu-csi-rook-ceph
         - integration/release-gate
+      matrix:
+        maxParallel: 2
+        labelKeys: [csi]
+        include:
+          - csi: rook-ceph
+            qemuCpusWorkers: "6"
+            withConfigPatchControlplane: "@hack/test/patches/rook-ceph.yaml"
+            withConfigPatchWorker: ""
+          - csi: openebs
+            qemuCpusWorkers: "4"
+            withConfigPatchControlplane: "@hack/test/patches/openebs-cp.yaml"
+            withConfigPatchWorker: "@hack/test/patches/openebs.yaml"
       steps:
         - name: download-artifacts
-          conditions:
-            - not-on-schedule
           artifactStep:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: e2e-qemu-csi-rook-ceph
+        - name: e2e-qemu-csi
           command: e2e-qemu
           withSudo: true
           environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-qemu-csi-rook-ceph
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-qemu-csi-${{ matrix.csi }}
             SHORT_INTEGRATION_TEST: yes
             QEMU_WORKERS: 3
-            QEMU_CPUS_WORKERS: 6
+            QEMU_CPUS_WORKERS: ${{ matrix.qemuCpusWorkers }}
             QEMU_MEMORY_WORKERS: 8192
             QEMU_EXTRA_DISKS: 1
             QEMU_EXTRA_DISKS_SIZE: 12288
-            WITH_CONFIG_PATCH_CONTROLPLANE: "@hack/test/patches/rook-ceph.yaml"
-            EXTRA_TEST_ARGS: -talos.csi=rook-ceph
+            WITH_CONFIG_PATCH_CONTROLPLANE: ${{ matrix.withConfigPatchControlplane }}
+            WITH_CONFIG_PATCH_WORKER: ${{ matrix.withConfigPatchWorker }}
+            EXTRA_TEST_ARGS: -talos.csi=${{ matrix.csi }}
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-fio-benchmark
           artifactStep:
             type: upload
-            artifactName: fio-integration-qemu-csi-rook-ceph
+            artifactName: fio-integration-qemu-csi-${{ matrix.csi }}
             disableExecutableListGeneration: true
             artifactPath: /tmp/fio-*.json
             retentionDays: "180"
@@ -2230,7 +1622,7 @@ spec:
             - always
           artifactStep:
             type: upload
-            artifactName: talos-logs-integration-qemu-csi-rook-ceph
+            artifactName: talos-logs-integration-qemu-csi-${{ matrix.csi }}
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
@@ -2241,8 +1633,9 @@ spec:
       depends:
         - default
       runnerGroup: large
-      crons:
-        - '30 3 * * *'
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
       triggerLabels:
         - integration/qemu-csi
         - integration/extensions # since iscsi is tested with longhorn
@@ -2250,29 +1643,11 @@ spec:
         - integration/release-gate
       steps:
         - name: download-artifacts
-          conditions:
-            - not-on-schedule
           artifactStep:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: generate
-          conditions:
-            - only-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: checkout extensions
           checkoutStep:
             repository: siderolabs/extensions
@@ -2330,105 +1705,25 @@ spec:
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
               - "/tmp/support-*.zip"
-    - name: integration-qemu-csi-openebs
-      buildxOptions:
-        enabled: true
-      depends:
-        - default
-      runnerGroup: large
-      crons:
-        - '30 3 * * *'
-      triggerLabels:
-        - integration/qemu-csi
-        - integration/qemu-csi-openebs
-        - integration/release-gate
-      steps:
-        - name: download-artifacts
-          conditions:
-            - not-on-schedule
-          artifactStep:
-            type: download
-            artifactName: talos-artifacts
-            artifactPath: _out
-        - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: e2e-qemu-csi-openebs
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-qemu-csi-openebs
-            SHORT_INTEGRATION_TEST: yes
-            QEMU_WORKERS: 3
-            QEMU_CPUS_WORKERS: 4
-            QEMU_MEMORY_WORKERS: 8192
-            QEMU_EXTRA_DISKS: 1
-            QEMU_EXTRA_DISKS_SIZE: 12288
-            WITH_CONFIG_PATCH_CONTROLPLANE: "@hack/test/patches/openebs-cp.yaml"
-            WITH_CONFIG_PATCH_WORKER: "@hack/test/patches/openebs.yaml"
-            EXTRA_TEST_ARGS: -talos.csi=openebs
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: save-fio-benchmark
-          artifactStep:
-            type: upload
-            artifactName: fio-integration-qemu-csi-openebs
-            disableExecutableListGeneration: true
-            artifactPath: /tmp/fio-*.json
-            retentionDays: "180"
-        - name: save-talos-logs
-          conditions:
-            - always
-          artifactStep:
-            type: upload
-            artifactName: talos-logs-integration-qemu-csi-openebs
-            disableExecutableListGeneration: true
-            artifactPath: /tmp/logs-*.tar.gz
-            additionalArtifacts:
-              - "/tmp/support-*.zip"
     - name: integration-images
       buildxOptions:
         enabled: true
       depends:
         - default
       runnerGroup: generic # this is pretty fast, so we can use generic
-      crons:
-        - '30 2 * * *'
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
       triggerLabels:
         - integration/images
         - integration/release-gate
       steps:
         - name: download-artifacts
-          conditions:
-            - not-on-schedule
           artifactStep:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: images
           environment:
             PLATFORM: linux/amd64,linux/arm64
@@ -2439,22 +1734,19 @@ spec:
       depends:
         - default
       runnerGroup: large
-      crons:
-        - '30 2 * * *'
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
       triggerLabels:
         - integration/reproducibility-test
         - integration/release-gate
       steps:
         - name: download-artifacts
-          conditions:
-            - not-on-schedule
           artifactStep:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
         - name: reproducibility-test
           environment:
             IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -2465,27 +1757,18 @@ spec:
       depends:
         - default
       runnerGroup: generic # this is not compute intensive, so we can use generic
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
       triggerLabels:
         - integration/cloud-images
       steps:
         - name: download-artifacts
-          conditions:
-            - not-on-schedule
           artifactStep:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
         - name: images
           environment:
             PLATFORM: linux/amd64,linux/arm64
@@ -2497,38 +1780,19 @@ spec:
       depends:
         - default
       runnerGroup: large
-      crons:
-        - '30 2 * * *'
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
       triggerLabels:
         - integration/image-cache
         - integration/release-gate
       steps:
         - name: download-artifacts
-          conditions:
-            - not-on-schedule
           artifactStep:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: image-cache
           command: cache-create
           environment:
@@ -2573,37 +1837,18 @@ spec:
       depends:
         - default
       runnerGroup: large
-      crons:
-        - '30 6 * * *'
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
       triggerLabels:
         - integration/image-factory
       steps:
         - name: download-artifacts
-          conditions:
-            - not-on-schedule
           artifactStep:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
         - name: factory-1.11-iso
           command: e2e-image-factory
           withSudo: true
@@ -2702,44 +1947,27 @@ spec:
       depends:
         - default
       runnerGroup: generic # we can use generic here since the tests run against a remote talos cluster
-      crons:
-        - '30 7 * * *'
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
       triggerLabels:
         - integration/aws
         - integration/release-gate
+      matrix:
+        maxParallel: 2
+        labelKeys: [arch]
+        include:
+          - arch: amd64
+            targetArch: amd64
+          - arch: arm64
+            targetArch: arm64
       steps:
         - name: download-artifacts
-          conditions:
-            - not-on-schedule
           artifactStep:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: images-essential
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: image-aws
           environment:
             PLATFORM: linux/amd64,linux/arm64
@@ -2748,6 +1976,7 @@ spec:
           environment:
             E2E_AWS_TARGET: default
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+            TARGET_ARCH: ${{ matrix.targetArch }}
         - name: checkout contrib
           checkoutStep:
             repository: siderolabs/contrib
@@ -2771,53 +2000,101 @@ spec:
             TF_E2E_TEST_TYPE: aws
             TF_E2E_ACTION: destroy
             TF_E2E_REFRESH_ON_DESTROY: false
-    - name: integration-aws-nvidia-oss-lts
+    - name: integration-aws-nvidia
       buildxOptions:
         enabled: true
       sops: true
       depends:
         - default
       runnerGroup: generic # we can use generic here since the tests run against a remote talos cluster
-      crons:
-        - '30 7 * * *'
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
       triggerLabels:
-        - integration/aws-nvidia-oss-lts
-        - integration/aws-nvidia-oss
         - integration/aws-nvidia
+      matrix:
+        maxParallel: 2
+        labelKeys: [driver, variant, arch]
+        include:
+          - driver: oss
+            variant: lts
+            arch: amd64
+            triggerLabels: [integration/aws-nvidia-oss]
+            buildTargets: nvidia-container-toolkit-lts nvidia-open-gpu-kernel-modules-lts extensions-metadata
+            buildPlatform: linux/amd64
+            targetArch: amd64
+            e2eTarget: nvidia-oss-lts
+            extraTestArgs: "-talos.extensions.nvidia -talos.verifyukibooted=false"
+          - driver: oss
+            variant: lts
+            arch: arm64
+            triggerLabels: [integration/aws-nvidia-oss]
+            buildTargets: nvidia-container-toolkit-lts nvidia-open-gpu-kernel-modules-lts extensions-metadata
+            buildPlatform: linux/arm64
+            targetArch: arm64
+            e2eTarget: nvidia-oss-lts
+            extraTestArgs: "-talos.extensions.nvidia -talos.verifyukibooted=false"
+          - driver: oss
+            variant: production
+            arch: amd64
+            triggerLabels: [integration/aws-nvidia-oss]
+            buildTargets: nvidia-container-toolkit-production nvidia-open-gpu-kernel-modules-production extensions-metadata
+            buildPlatform: linux/amd64
+            targetArch: amd64
+            e2eTarget: nvidia-oss-production
+            extraTestArgs: "-talos.extensions.nvidia -talos.verifyukibooted=false"
+          - driver: oss
+            variant: production
+            arch: arm64
+            triggerLabels: [integration/aws-nvidia-oss]
+            buildTargets: nvidia-container-toolkit-production nvidia-open-gpu-kernel-modules-production extensions-metadata
+            buildPlatform: linux/arm64
+            targetArch: arm64
+            e2eTarget: nvidia-oss-production
+            extraTestArgs: "-talos.extensions.nvidia -talos.verifyukibooted=false"
+          - driver: nonfree
+            variant: lts
+            arch: amd64
+            triggerLabels: [integration/aws-nvidia-nonfree]
+            buildTargets: nvidia-container-toolkit-lts nonfree-kmod-nvidia-lts extensions-metadata
+            buildPlatform: linux/amd64
+            targetArch: amd64
+            e2eTarget: nvidia-nonfree-lts
+            extraTestArgs: -talos.extensions.nvidia
+          - driver: nonfree
+            variant: lts
+            arch: arm64
+            triggerLabels: [integration/aws-nvidia-nonfree]
+            buildTargets: nvidia-container-toolkit-lts nonfree-kmod-nvidia-lts extensions-metadata
+            buildPlatform: linux/arm64
+            targetArch: arm64
+            e2eTarget: nvidia-nonfree-lts
+            extraTestArgs: "-talos.extensions.nvidia -talos.verifyukibooted=false"
+          - driver: nonfree
+            variant: production
+            arch: amd64
+            triggerLabels: [integration/aws-nvidia-nonfree]
+            buildTargets: nvidia-container-toolkit-production nonfree-kmod-nvidia-production extensions-metadata
+            buildPlatform: linux/amd64
+            targetArch: amd64
+            e2eTarget: nvidia-nonfree-production
+            extraTestArgs: -talos.extensions.nvidia
+          - driver: nonfree
+            variant: production
+            arch: arm64
+            triggerLabels: [integration/aws-nvidia-nonfree]
+            buildTargets: nvidia-container-toolkit-production nonfree-kmod-nvidia-production extensions-metadata
+            buildPlatform: linux/arm64
+            targetArch: arm64
+            e2eTarget: nvidia-nonfree-production
+            extraTestArgs: "-talos.extensions.nvidia -talos.verifyukibooted=false"
       steps:
         - name: download-artifacts
-          conditions:
-            - not-on-schedule
           artifactStep:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: generate
-          conditions:
-            - only-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: image-aws
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: checkout extensions
           checkoutStep:
             repository: siderolabs/extensions
@@ -2827,19 +2104,24 @@ spec:
           nonMakeStep: true
           command: cat _out/talos-metadata >> "$GITHUB_ENV"
         - name: build extensions
-          command: nvidia-container-toolkit-lts nvidia-open-gpu-kernel-modules-lts extensions-metadata
+          command: ${{ matrix.buildTargets }}
           arguments:
             - -C
             - _out/extensions
           environment:
-            PLATFORM: linux/amd64
+            PLATFORM: ${{ matrix.buildPlatform }}
             PUSH: true
             REGISTRY: registry.dev.siderolabs.io
+        - name: image-aws
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-aws-prepare
           environment:
             EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
-            E2E_AWS_TARGET: nvidia-oss-lts
+            E2E_AWS_TARGET: ${{ matrix.e2eTarget }}
             IMAGE_REGISTRY: registry.dev.siderolabs.io
+            TARGET_ARCH: ${{ matrix.targetArch }}
         - name: checkout contrib
           checkoutStep:
             repository: siderolabs/contrib
@@ -2853,674 +2135,10 @@ spec:
             TF_SCRIPT_DIR: _out/contrib
             TF_E2E_TEST_TYPE: aws
             TF_E2E_ACTION: apply
-        - name: e2e-aws-nvidia-oss-lts
+        - name: e2e-aws-nvidia
           command: e2e-aws
           environment:
-            EXTRA_TEST_ARGS: "-talos.extensions.nvidia -talos.verifyukibooted=false"
-            INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
-        - name: tf destroy
-          command: e2e-cloud-tf
-          conditions:
-            - always
-          environment:
-            TF_SCRIPT_DIR: _out/contrib
-            TF_E2E_TEST_TYPE: aws
-            TF_E2E_ACTION: destroy
-            TF_E2E_REFRESH_ON_DESTROY: false
-    - name: integration-aws-nvidia-oss-lts-arm64
-      buildxOptions:
-        enabled: true
-      sops: true
-      depends:
-        - default
-      runnerGroup: generic # we can use generic here since the tests run against a remote talos cluster
-      crons:
-        - '30 7 * * *'
-      triggerLabels:
-        - integration/aws-nvidia-oss-lts-arm64
-        - integration/aws-nvidia-oss
-        - integration/aws-nvidia
-      steps:
-        - name: download-artifacts
-          conditions:
-            - not-on-schedule
-          artifactStep:
-            type: download
-            artifactName: talos-artifacts
-            artifactPath: _out
-        - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: generate
-          conditions:
-            - only-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: installer-base imager _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: image-aws
-          environment:
-            PLATFORM: linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: checkout extensions
-          checkoutStep:
-            repository: siderolabs/extensions
-            ref: main
-            path: _out/extensions
-        - name: set variables
-          nonMakeStep: true
-          command: cat _out/talos-metadata >> "$GITHUB_ENV"
-        - name: build extensions
-          command: nvidia-container-toolkit-lts nvidia-open-gpu-kernel-modules-lts extensions-metadata
-          arguments:
-            - -C
-            - _out/extensions
-          environment:
-            PLATFORM: linux/arm64
-            PUSH: true
-            REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-aws-prepare
-          environment:
-            EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
-            E2E_AWS_TARGET: nvidia-oss-lts
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            TARGET_ARCH: arm64
-        - name: checkout contrib
-          checkoutStep:
-            repository: siderolabs/contrib
-            ref: main
-            path: _out/contrib
-        - name: setup tf
-          terraformStep: true
-        - name: tf apply
-          command: e2e-cloud-tf
-          environment:
-            TF_SCRIPT_DIR: _out/contrib
-            TF_E2E_TEST_TYPE: aws
-            TF_E2E_ACTION: apply
-        - name: e2e-aws-nvidia-oss-lts
-          command: e2e-aws
-          environment:
-            EXTRA_TEST_ARGS: "-talos.extensions.nvidia -talos.verifyukibooted=false"
-            INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
-        - name: tf destroy
-          command: e2e-cloud-tf
-          conditions:
-            - always
-          environment:
-            TF_SCRIPT_DIR: _out/contrib
-            TF_E2E_TEST_TYPE: aws
-            TF_E2E_ACTION: destroy
-            TF_E2E_REFRESH_ON_DESTROY: false
-    - name: integration-aws-nvidia-oss-production
-      buildxOptions:
-        enabled: true
-      sops: true
-      depends:
-        - default
-      runnerGroup: generic # we can use generic here since the tests run against a remote talos cluster
-      crons:
-        - '30 7 * * *'
-      triggerLabels:
-        - integration/aws-nvidia-oss-production
-        - integration/aws-nvidia-oss
-        - integration/aws-nvidia
-      steps:
-        - name: download-artifacts
-          conditions:
-            - not-on-schedule
-          artifactStep:
-            type: download
-            artifactName: talos-artifacts
-            artifactPath: _out
-        - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: generate
-          conditions:
-            - only-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: image-aws
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: checkout extensions
-          checkoutStep:
-            repository: siderolabs/extensions
-            ref: main
-            path: _out/extensions
-        - name: set variables
-          nonMakeStep: true
-          command: cat _out/talos-metadata >> "$GITHUB_ENV"
-        - name: build extensions
-          command: nvidia-container-toolkit-production nvidia-open-gpu-kernel-modules-production extensions-metadata
-          arguments:
-            - -C
-            - _out/extensions
-          environment:
-            PLATFORM: linux/amd64
-            PUSH: true
-            REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-aws-prepare
-          environment:
-            EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
-            E2E_AWS_TARGET: nvidia-oss-production
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: checkout contrib
-          checkoutStep:
-            repository: siderolabs/contrib
-            ref: main
-            path: _out/contrib
-        - name: setup tf
-          terraformStep: true
-        - name: tf apply
-          command: e2e-cloud-tf
-          environment:
-            TF_SCRIPT_DIR: _out/contrib
-            TF_E2E_TEST_TYPE: aws
-            TF_E2E_ACTION: apply
-        - name: e2e-aws-nvidia-oss-production
-          command: e2e-aws
-          environment:
-            EXTRA_TEST_ARGS: "-talos.extensions.nvidia -talos.verifyukibooted=false"
-            INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
-        - name: tf destroy
-          command: e2e-cloud-tf
-          conditions:
-            - always
-          environment:
-            TF_SCRIPT_DIR: _out/contrib
-            TF_E2E_TEST_TYPE: aws
-            TF_E2E_ACTION: destroy
-            TF_E2E_REFRESH_ON_DESTROY: false
-    - name: integration-aws-nvidia-oss-production-arm64
-      buildxOptions:
-        enabled: true
-      sops: true
-      depends:
-        - default
-      runnerGroup: generic # we can use generic here since the tests run against a remote talos cluster
-      crons:
-        - '30 7 * * *'
-      triggerLabels:
-        - integration/aws-nvidia-oss-production-arm64
-        - integration/aws-nvidia-oss
-        - integration/aws-nvidia
-      steps:
-        - name: download-artifacts
-          conditions:
-            - not-on-schedule
-          artifactStep:
-            type: download
-            artifactName: talos-artifacts
-            artifactPath: _out
-        - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: generate
-          conditions:
-            - only-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: installer-base imager _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: image-aws
-          environment:
-            PLATFORM: linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: checkout extensions
-          checkoutStep:
-            repository: siderolabs/extensions
-            ref: main
-            path: _out/extensions
-        - name: set variables
-          nonMakeStep: true
-          command: cat _out/talos-metadata >> "$GITHUB_ENV"
-        - name: build extensions
-          command: nvidia-container-toolkit-production nvidia-open-gpu-kernel-modules-production extensions-metadata
-          arguments:
-            - -C
-            - _out/extensions
-          environment:
-            PLATFORM: linux/arm64
-            PUSH: true
-            REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-aws-prepare
-          environment:
-            EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
-            E2E_AWS_TARGET: nvidia-oss-production
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            TARGET_ARCH: arm64
-        - name: checkout contrib
-          checkoutStep:
-            repository: siderolabs/contrib
-            ref: main
-            path: _out/contrib
-        - name: setup tf
-          terraformStep: true
-        - name: tf apply
-          command: e2e-cloud-tf
-          environment:
-            TF_SCRIPT_DIR: _out/contrib
-            TF_E2E_TEST_TYPE: aws
-            TF_E2E_ACTION: apply
-        - name: e2e-aws-nvidia-oss-production
-          command: e2e-aws
-          environment:
-            EXTRA_TEST_ARGS: "-talos.extensions.nvidia -talos.verifyukibooted=false"
-            INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
-        - name: tf destroy
-          command: e2e-cloud-tf
-          conditions:
-            - always
-          environment:
-            TF_SCRIPT_DIR: _out/contrib
-            TF_E2E_TEST_TYPE: aws
-            TF_E2E_ACTION: destroy
-            TF_E2E_REFRESH_ON_DESTROY: false
-    - name: integration-aws-nvidia-nonfree-lts
-      buildxOptions:
-        enabled: true
-      sops: true
-      depends:
-        - default
-      runnerGroup: generic # we can use generic here since the tests run against a remote talos cluster
-      crons:
-        - '30 7 * * *'
-      triggerLabels:
-        - integration/aws-nvidia-nonfree-lts
-        - integration/aws-nvidia-nonfree
-        - integration/aws-nvidia
-      steps:
-        - name: download-artifacts
-          conditions:
-            - not-on-schedule
-          artifactStep:
-            type: download
-            artifactName: talos-artifacts
-            artifactPath: _out
-        - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: generate
-          conditions:
-            - only-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: image-aws
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: checkout extensions
-          checkoutStep:
-            repository: siderolabs/extensions
-            ref: main
-            path: _out/extensions
-        - name: set variables
-          nonMakeStep: true
-          command: cat _out/talos-metadata >> "$GITHUB_ENV"
-        - name: build extensions
-          command: nvidia-container-toolkit-lts nonfree-kmod-nvidia-lts extensions-metadata
-          arguments:
-            - -C
-            - _out/extensions
-          environment:
-            PLATFORM: linux/amd64
-            PUSH: true
-            REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-aws-prepare
-          environment:
-            EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
-            E2E_AWS_TARGET: nvidia-nonfree-lts
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: checkout contrib
-          checkoutStep:
-            repository: siderolabs/contrib
-            ref: main
-            path: _out/contrib
-        - name: setup tf
-          terraformStep: true
-        - name: tf apply
-          command: e2e-cloud-tf
-          environment:
-            TF_SCRIPT_DIR: _out/contrib
-            TF_E2E_TEST_TYPE: aws
-            TF_E2E_ACTION: apply
-        - name: e2e-aws-nvidia-nonfree-lts
-          command: e2e-aws
-          environment:
-            EXTRA_TEST_ARGS: -talos.extensions.nvidia
-            INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
-        - name: tf destroy
-          command: e2e-cloud-tf
-          conditions:
-            - always
-          environment:
-            TF_SCRIPT_DIR: _out/contrib
-            TF_E2E_TEST_TYPE: aws
-            TF_E2E_ACTION: destroy
-            TF_E2E_REFRESH_ON_DESTROY: false
-    - name: integration-aws-nvidia-nonfree-lts-arm64
-      buildxOptions:
-        enabled: true
-      sops: true
-      depends:
-        - default
-      runnerGroup: generic # we can use generic here since the tests run against a remote talos cluster
-      crons:
-        - '30 7 * * *'
-      triggerLabels:
-        - integration/aws-nvidia-nonfree-lts-arm64
-        - integration/aws-nvidia-nonfree
-        - integration/aws-nvidia
-      steps:
-        - name: download-artifacts
-          conditions:
-            - not-on-schedule
-          artifactStep:
-            type: download
-            artifactName: talos-artifacts
-            artifactPath: _out
-        - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: generate
-          conditions:
-            - only-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: installer-base imager _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: image-aws
-          environment:
-            PLATFORM: linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: checkout extensions
-          checkoutStep:
-            repository: siderolabs/extensions
-            ref: main
-            path: _out/extensions
-        - name: set variables
-          nonMakeStep: true
-          command: cat _out/talos-metadata >> "$GITHUB_ENV"
-        - name: build extensions
-          command: nvidia-container-toolkit-lts nonfree-kmod-nvidia-lts extensions-metadata
-          arguments:
-            - -C
-            - _out/extensions
-          environment:
-            PLATFORM: linux/arm64
-            PUSH: true
-            REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-aws-prepare
-          environment:
-            EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
-            E2E_AWS_TARGET: nvidia-nonfree-lts
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            TARGET_ARCH: arm64
-        - name: checkout contrib
-          checkoutStep:
-            repository: siderolabs/contrib
-            ref: main
-            path: _out/contrib
-        - name: setup tf
-          terraformStep: true
-        - name: tf apply
-          command: e2e-cloud-tf
-          environment:
-            TF_SCRIPT_DIR: _out/contrib
-            TF_E2E_TEST_TYPE: aws
-            TF_E2E_ACTION: apply
-        - name: e2e-aws-nvidia-nonfree-lts
-          command: e2e-aws
-          environment:
-            EXTRA_TEST_ARGS: "-talos.extensions.nvidia -talos.verifyukibooted=false"
-            INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
-        - name: tf destroy
-          command: e2e-cloud-tf
-          conditions:
-            - always
-          environment:
-            TF_SCRIPT_DIR: _out/contrib
-            TF_E2E_TEST_TYPE: aws
-            TF_E2E_ACTION: destroy
-            TF_E2E_REFRESH_ON_DESTROY: false
-    - name: integration-aws-nvidia-nonfree-production
-      buildxOptions:
-        enabled: true
-      sops: true
-      depends:
-        - default
-      runnerGroup: generic # we can use generic here since the tests run against a remote talos cluster
-      crons:
-        - '30 7 * * *'
-      triggerLabels:
-        - integration/aws-nvidia-nonfree-production
-        - integration/aws-nvidia-nonfree
-        - integration/aws-nvidia
-      steps:
-        - name: download-artifacts
-          conditions:
-            - not-on-schedule
-          artifactStep:
-            type: download
-            artifactName: talos-artifacts
-            artifactPath: _out
-        - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: generate
-          conditions:
-            - only-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: image-aws
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: checkout extensions
-          checkoutStep:
-            repository: siderolabs/extensions
-            ref: main
-            path: _out/extensions
-        - name: set variables
-          nonMakeStep: true
-          command: cat _out/talos-metadata >> "$GITHUB_ENV"
-        - name: build extensions
-          command: nvidia-container-toolkit-production nonfree-kmod-nvidia-production extensions-metadata
-          arguments:
-            - -C
-            - _out/extensions
-          environment:
-            PLATFORM: linux/amd64
-            PUSH: true
-            REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-aws-prepare
-          environment:
-            EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
-            E2E_AWS_TARGET: nvidia-nonfree-production
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: checkout contrib
-          checkoutStep:
-            repository: siderolabs/contrib
-            ref: main
-            path: _out/contrib
-        - name: setup tf
-          terraformStep: true
-        - name: tf apply
-          command: e2e-cloud-tf
-          environment:
-            TF_SCRIPT_DIR: _out/contrib
-            TF_E2E_TEST_TYPE: aws
-            TF_E2E_ACTION: apply
-        - name: e2e-aws-nvidia-nonfree-production
-          command: e2e-aws
-          environment:
-            EXTRA_TEST_ARGS: -talos.extensions.nvidia
-            INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
-        - name: tf destroy
-          command: e2e-cloud-tf
-          conditions:
-            - always
-          environment:
-            TF_SCRIPT_DIR: _out/contrib
-            TF_E2E_TEST_TYPE: aws
-            TF_E2E_ACTION: destroy
-            TF_E2E_REFRESH_ON_DESTROY: false
-    - name: integration-aws-nvidia-nonfree-production-arm64
-      buildxOptions:
-        enabled: true
-      sops: true
-      depends:
-        - default
-      runnerGroup: generic # we can use generic here since the tests run against a remote talos cluster
-      crons:
-        - '30 7 * * *'
-      triggerLabels:
-        - integration/aws-nvidia-nonfree-production-arm64
-        - integration/aws-nvidia-nonfree
-        - integration/aws-nvidia
-      steps:
-        - name: download-artifacts
-          conditions:
-            - not-on-schedule
-          artifactStep:
-            type: download
-            artifactName: talos-artifacts
-            artifactPath: _out
-        - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: generate
-          conditions:
-            - only-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: installer-base imager _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: image-aws
-          environment:
-            PLATFORM: linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: checkout extensions
-          checkoutStep:
-            repository: siderolabs/extensions
-            ref: main
-            path: _out/extensions
-        - name: set variables
-          nonMakeStep: true
-          command: cat _out/talos-metadata >> "$GITHUB_ENV"
-        - name: build extensions
-          command: nvidia-container-toolkit-production nonfree-kmod-nvidia-production extensions-metadata
-          arguments:
-            - -C
-            - _out/extensions
-          environment:
-            PLATFORM: linux/arm64
-            PUSH: true
-            REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-aws-prepare
-          environment:
-            EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
-            E2E_AWS_TARGET: nvidia-nonfree-production
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            TARGET_ARCH: arm64
-        - name: checkout contrib
-          checkoutStep:
-            repository: siderolabs/contrib
-            ref: main
-            path: _out/contrib
-        - name: setup tf
-          terraformStep: true
-        - name: tf apply
-          command: e2e-cloud-tf
-          environment:
-            TF_SCRIPT_DIR: _out/contrib
-            TF_E2E_TEST_TYPE: aws
-            TF_E2E_ACTION: apply
-        - name: e2e-aws-nvidia-oss-production
-          command: e2e-aws
-          environment:
-            EXTRA_TEST_ARGS: "-talos.extensions.nvidia -talos.verifyukibooted=false"
+            EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
             INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
         - name: tf destroy
           command: e2e-cloud-tf
@@ -3538,44 +2156,19 @@ spec:
       depends:
         - default
       runnerGroup: generic # we can use generic here since the tests run against a remote talos cluster
-      crons:
-        - '30 7 * * *'
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
       triggerLabels:
         - integration/gcp
         - integration/release-gate
       steps:
         - name: download-artifacts
-          conditions:
-            - not-on-schedule
           artifactStep:
             type: download
             artifactName: talos-artifacts
             artifactPath: _out
         - name: ci-temp-release-tag
-          conditions:
-            - not-on-schedule
-        - name: uki-certs
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64
-        - name: build
-          conditions:
-            - only-on-schedule
-          command: talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
-        - name: talosctl-cni-bundle
-          conditions:
-            - only-on-schedule
-        - name: images-essential
-          conditions:
-            - only-on-schedule
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: image-gcp
           environment:
             PLATFORM: linux/amd64,linux/arm64

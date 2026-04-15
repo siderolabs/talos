@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-04-17T16:22:40Z by kres cfee956.
+# Generated on 2026-04-17T18:13:01Z by kres 15ff2fd.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -607,31 +607,16 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
       - name: integration-images-list
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -683,7 +668,7 @@ jobs:
             /tmp/support-*.zip
             /tmp/airgapped*.log
           retention-days: "5"
-  integration-aws:
+  integration-aws-amd64:
     permissions:
       actions: read
       contents: write
@@ -692,7 +677,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-amd64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -740,44 +725,16 @@ jobs:
         run: |
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: uki-certs
-        if: github.event_name == 'schedule'
-        env:
-          PLATFORM: linux/amd64
-        run: |
-          make uki-certs
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
-      - name: images-essential
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make images-essential
       - name: image-aws
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -788,6 +745,7 @@ jobs:
         env:
           E2E_AWS_TARGET: default
           IMAGE_REGISTRY: registry.dev.siderolabs.io
+          TARGET_ARCH: amd64
         run: |
           make e2e-aws-prepare
       - name: checkout contrib
@@ -819,7 +777,7 @@ jobs:
           TF_SCRIPT_DIR: _out/contrib
         run: |
           make e2e-cloud-tf
-  integration-aws-nvidia-nonfree-lts:
+  integration-aws-arm64:
     permissions:
       actions: read
       contents: write
@@ -828,7 +786,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree-lts') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-arm64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -876,68 +834,27 @@ jobs:
         run: |
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: generate
-        if: github.event_name == 'schedule'
-        run: |
-          make generate
-      - name: uki-certs
-        if: github.event_name == 'schedule'
-        env:
-          PLATFORM: linux/amd64
-        run: |
-          make uki-certs
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
       - name: image-aws
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           PLATFORM: linux/amd64,linux/arm64
         run: |
           make image-aws
-      - name: checkout extensions
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
-        with:
-          path: _out/extensions
-          ref: main
-          repository: siderolabs/extensions
-      - name: set variables
-        run: |
-          cat _out/talos-metadata >> "$GITHUB_ENV"
-      - name: build extensions
-        env:
-          PLATFORM: linux/amd64
-          PUSH: "true"
-          REGISTRY: registry.dev.siderolabs.io
-        run: |
-          make nvidia-container-toolkit-lts nonfree-kmod-nvidia-lts extensions-metadata -C _out/extensions
       - name: e2e-aws-prepare
         env:
-          E2E_AWS_TARGET: nvidia-nonfree-lts
-          EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
+          E2E_AWS_TARGET: default
           IMAGE_REGISTRY: registry.dev.siderolabs.io
+          TARGET_ARCH: arm64
         run: |
           make e2e-aws-prepare
       - name: checkout contrib
@@ -957,7 +874,133 @@ jobs:
           TF_SCRIPT_DIR: _out/contrib
         run: |
           make e2e-cloud-tf
-      - name: e2e-aws-nvidia-nonfree-lts
+      - name: e2e-aws
+        run: |
+          make e2e-aws
+      - name: tf destroy
+        if: always()
+        env:
+          TF_E2E_ACTION: destroy
+          TF_E2E_REFRESH_ON_DESTROY: "false"
+          TF_E2E_TEST_TYPE: aws
+          TF_SCRIPT_DIR: _out/contrib
+        run: |
+          make e2e-cloud-tf
+  integration-aws-nvidia-nonfree-lts-amd64:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      group: generic
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree-lts-amd64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree')
+    needs:
+      - default
+    steps:
+      - name: gather-system-info
+        id: system-info
+        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        continue-on-error: true
+      - name: print-system-info
+        run: |
+          MEMORY_GB=$((${{ steps.system-info.outputs.totalmem }}/1024/1024/1024))
+
+          OUTPUTS=(
+            "CPU Core: ${{ steps.system-info.outputs.cpu-core }}"
+            "CPU Model: ${{ steps.system-info.outputs.cpu-model }}"
+            "Hostname: ${{ steps.system-info.outputs.hostname }}"
+            "NodeName: ${NODE_NAME}"
+            "Kernel release: ${{ steps.system-info.outputs.kernel-release }}"
+            "Kernel version: ${{ steps.system-info.outputs.kernel-version }}"
+            "Name: ${{ steps.system-info.outputs.name }}"
+            "Platform: ${{ steps.system-info.outputs.platform }}"
+            "Release: ${{ steps.system-info.outputs.release }}"
+            "Total memory: ${MEMORY_GB} GB"
+          )
+
+          for OUTPUT in "${OUTPUTS[@]}";do
+            echo "${OUTPUT}"
+          done
+        continue-on-error: true
+      - name: checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Mask secrets
+        run: |
+          echo "$(sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | "::add-mask::" + .value')"
+      - name: Set secrets for job
+        run: |
+          sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
+      - name: Download artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
+        with:
+          name: talos-artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        run: |
+          make ci-temp-release-tag
+      - name: checkout extensions
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        with:
+          path: _out/extensions
+          ref: main
+          repository: siderolabs/extensions
+      - name: set variables
+        run: |
+          cat _out/talos-metadata >> "$GITHUB_ENV"
+      - name: build extensions
+        env:
+          PLATFORM: linux/amd64
+          PUSH: "true"
+          REGISTRY: registry.dev.siderolabs.io
+        run: |
+          make nvidia-container-toolkit-lts nonfree-kmod-nvidia-lts extensions-metadata -C _out/extensions
+      - name: image-aws
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+        run: |
+          make image-aws
+      - name: e2e-aws-prepare
+        env:
+          E2E_AWS_TARGET: nvidia-nonfree-lts
+          EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          TARGET_ARCH: amd64
+        run: |
+          make e2e-aws-prepare
+      - name: checkout contrib
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+        with:
+          path: _out/contrib
+          ref: main
+          repository: siderolabs/contrib
+      - name: setup tf
+        uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # version: v4.0.0
+        with:
+          terraform_wrapper: "false"
+      - name: tf apply
+        env:
+          TF_E2E_ACTION: apply
+          TF_E2E_TEST_TYPE: aws
+          TF_SCRIPT_DIR: _out/contrib
+        run: |
+          make e2e-cloud-tf
+      - name: e2e-aws-nvidia
         env:
           EXTRA_TEST_ARGS: -talos.extensions.nvidia
           INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
@@ -981,7 +1024,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree-lts-arm64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree-lts-arm64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree')
     needs:
       - default
     steps:
@@ -1029,43 +1072,16 @@ jobs:
         run: |
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: generate
-        if: github.event_name == 'schedule'
-        run: |
-          make generate
-      - name: uki-certs
-        if: github.event_name == 'schedule'
-        env:
-          PLATFORM: linux/amd64
-        run: |
-          make uki-certs
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/arm64
-          PUSH: "true"
-        run: |
-          make installer-base imager _out/integration-test-linux-amd64
-      - name: image-aws
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/arm64
-        run: |
-          make image-aws
       - name: checkout extensions
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
         with:
@@ -1082,6 +1098,12 @@ jobs:
           REGISTRY: registry.dev.siderolabs.io
         run: |
           make nvidia-container-toolkit-lts nonfree-kmod-nvidia-lts extensions-metadata -C _out/extensions
+      - name: image-aws
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+        run: |
+          make image-aws
       - name: e2e-aws-prepare
         env:
           E2E_AWS_TARGET: nvidia-nonfree-lts
@@ -1107,7 +1129,7 @@ jobs:
           TF_SCRIPT_DIR: _out/contrib
         run: |
           make e2e-cloud-tf
-      - name: e2e-aws-nvidia-nonfree-lts
+      - name: e2e-aws-nvidia
         env:
           EXTRA_TEST_ARGS: -talos.extensions.nvidia -talos.verifyukibooted=false
           INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
@@ -1122,7 +1144,7 @@ jobs:
           TF_SCRIPT_DIR: _out/contrib
         run: |
           make e2e-cloud-tf
-  integration-aws-nvidia-nonfree-production:
+  integration-aws-nvidia-nonfree-production-amd64:
     permissions:
       actions: read
       contents: write
@@ -1131,7 +1153,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree-production') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree-production-amd64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree')
     needs:
       - default
     steps:
@@ -1179,47 +1201,16 @@ jobs:
         run: |
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: generate
-        if: github.event_name == 'schedule'
-        run: |
-          make generate
-      - name: uki-certs
-        if: github.event_name == 'schedule'
-        env:
-          PLATFORM: linux/amd64
-        run: |
-          make uki-certs
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
-      - name: image-aws
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make image-aws
       - name: checkout extensions
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
         with:
@@ -1236,11 +1227,18 @@ jobs:
           REGISTRY: registry.dev.siderolabs.io
         run: |
           make nvidia-container-toolkit-production nonfree-kmod-nvidia-production extensions-metadata -C _out/extensions
+      - name: image-aws
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+        run: |
+          make image-aws
       - name: e2e-aws-prepare
         env:
           E2E_AWS_TARGET: nvidia-nonfree-production
           EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
           IMAGE_REGISTRY: registry.dev.siderolabs.io
+          TARGET_ARCH: amd64
         run: |
           make e2e-aws-prepare
       - name: checkout contrib
@@ -1260,7 +1258,7 @@ jobs:
           TF_SCRIPT_DIR: _out/contrib
         run: |
           make e2e-cloud-tf
-      - name: e2e-aws-nvidia-nonfree-production
+      - name: e2e-aws-nvidia
         env:
           EXTRA_TEST_ARGS: -talos.extensions.nvidia
           INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
@@ -1284,7 +1282,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree-production-arm64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree-production-arm64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree')
     needs:
       - default
     steps:
@@ -1332,43 +1330,16 @@ jobs:
         run: |
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: generate
-        if: github.event_name == 'schedule'
-        run: |
-          make generate
-      - name: uki-certs
-        if: github.event_name == 'schedule'
-        env:
-          PLATFORM: linux/amd64
-        run: |
-          make uki-certs
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/arm64
-          PUSH: "true"
-        run: |
-          make installer-base imager _out/integration-test-linux-amd64
-      - name: image-aws
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/arm64
-        run: |
-          make image-aws
       - name: checkout extensions
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
         with:
@@ -1385,6 +1356,12 @@ jobs:
           REGISTRY: registry.dev.siderolabs.io
         run: |
           make nvidia-container-toolkit-production nonfree-kmod-nvidia-production extensions-metadata -C _out/extensions
+      - name: image-aws
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+        run: |
+          make image-aws
       - name: e2e-aws-prepare
         env:
           E2E_AWS_TARGET: nvidia-nonfree-production
@@ -1410,7 +1387,7 @@ jobs:
           TF_SCRIPT_DIR: _out/contrib
         run: |
           make e2e-cloud-tf
-      - name: e2e-aws-nvidia-oss-production
+      - name: e2e-aws-nvidia
         env:
           EXTRA_TEST_ARGS: -talos.extensions.nvidia -talos.verifyukibooted=false
           INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
@@ -1425,7 +1402,7 @@ jobs:
           TF_SCRIPT_DIR: _out/contrib
         run: |
           make e2e-cloud-tf
-  integration-aws-nvidia-oss-lts:
+  integration-aws-nvidia-oss-lts-amd64:
     permissions:
       actions: read
       contents: write
@@ -1434,7 +1411,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss-lts') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss-lts-amd64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss')
     needs:
       - default
     steps:
@@ -1482,47 +1459,16 @@ jobs:
         run: |
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: generate
-        if: github.event_name == 'schedule'
-        run: |
-          make generate
-      - name: uki-certs
-        if: github.event_name == 'schedule'
-        env:
-          PLATFORM: linux/amd64
-        run: |
-          make uki-certs
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
-      - name: image-aws
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make image-aws
       - name: checkout extensions
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
         with:
@@ -1539,11 +1485,18 @@ jobs:
           REGISTRY: registry.dev.siderolabs.io
         run: |
           make nvidia-container-toolkit-lts nvidia-open-gpu-kernel-modules-lts extensions-metadata -C _out/extensions
+      - name: image-aws
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+        run: |
+          make image-aws
       - name: e2e-aws-prepare
         env:
           E2E_AWS_TARGET: nvidia-oss-lts
           EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
           IMAGE_REGISTRY: registry.dev.siderolabs.io
+          TARGET_ARCH: amd64
         run: |
           make e2e-aws-prepare
       - name: checkout contrib
@@ -1563,7 +1516,7 @@ jobs:
           TF_SCRIPT_DIR: _out/contrib
         run: |
           make e2e-cloud-tf
-      - name: e2e-aws-nvidia-oss-lts
+      - name: e2e-aws-nvidia
         env:
           EXTRA_TEST_ARGS: -talos.extensions.nvidia -talos.verifyukibooted=false
           INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
@@ -1587,7 +1540,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss-lts-arm64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss-lts-arm64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss')
     needs:
       - default
     steps:
@@ -1635,43 +1588,16 @@ jobs:
         run: |
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: generate
-        if: github.event_name == 'schedule'
-        run: |
-          make generate
-      - name: uki-certs
-        if: github.event_name == 'schedule'
-        env:
-          PLATFORM: linux/amd64
-        run: |
-          make uki-certs
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/arm64
-          PUSH: "true"
-        run: |
-          make installer-base imager _out/integration-test-linux-amd64
-      - name: image-aws
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/arm64
-        run: |
-          make image-aws
       - name: checkout extensions
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
         with:
@@ -1688,6 +1614,12 @@ jobs:
           REGISTRY: registry.dev.siderolabs.io
         run: |
           make nvidia-container-toolkit-lts nvidia-open-gpu-kernel-modules-lts extensions-metadata -C _out/extensions
+      - name: image-aws
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+        run: |
+          make image-aws
       - name: e2e-aws-prepare
         env:
           E2E_AWS_TARGET: nvidia-oss-lts
@@ -1713,7 +1645,7 @@ jobs:
           TF_SCRIPT_DIR: _out/contrib
         run: |
           make e2e-cloud-tf
-      - name: e2e-aws-nvidia-oss-lts
+      - name: e2e-aws-nvidia
         env:
           EXTRA_TEST_ARGS: -talos.extensions.nvidia -talos.verifyukibooted=false
           INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
@@ -1728,7 +1660,7 @@ jobs:
           TF_SCRIPT_DIR: _out/contrib
         run: |
           make e2e-cloud-tf
-  integration-aws-nvidia-oss-production:
+  integration-aws-nvidia-oss-production-amd64:
     permissions:
       actions: read
       contents: write
@@ -1737,7 +1669,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss-production') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss-production-amd64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss')
     needs:
       - default
     steps:
@@ -1785,47 +1717,16 @@ jobs:
         run: |
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: generate
-        if: github.event_name == 'schedule'
-        run: |
-          make generate
-      - name: uki-certs
-        if: github.event_name == 'schedule'
-        env:
-          PLATFORM: linux/amd64
-        run: |
-          make uki-certs
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
-      - name: image-aws
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make image-aws
       - name: checkout extensions
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
         with:
@@ -1842,11 +1743,18 @@ jobs:
           REGISTRY: registry.dev.siderolabs.io
         run: |
           make nvidia-container-toolkit-production nvidia-open-gpu-kernel-modules-production extensions-metadata -C _out/extensions
+      - name: image-aws
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+        run: |
+          make image-aws
       - name: e2e-aws-prepare
         env:
           E2E_AWS_TARGET: nvidia-oss-production
           EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata
           IMAGE_REGISTRY: registry.dev.siderolabs.io
+          TARGET_ARCH: amd64
         run: |
           make e2e-aws-prepare
       - name: checkout contrib
@@ -1866,7 +1774,7 @@ jobs:
           TF_SCRIPT_DIR: _out/contrib
         run: |
           make e2e-cloud-tf
-      - name: e2e-aws-nvidia-oss-production
+      - name: e2e-aws-nvidia
         env:
           EXTRA_TEST_ARGS: -talos.extensions.nvidia -talos.verifyukibooted=false
           INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
@@ -1890,7 +1798,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss-production-arm64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss-production-arm64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss')
     needs:
       - default
     steps:
@@ -1938,43 +1846,16 @@ jobs:
         run: |
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: generate
-        if: github.event_name == 'schedule'
-        run: |
-          make generate
-      - name: uki-certs
-        if: github.event_name == 'schedule'
-        env:
-          PLATFORM: linux/amd64
-        run: |
-          make uki-certs
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/arm64
-          PUSH: "true"
-        run: |
-          make installer-base imager _out/integration-test-linux-amd64
-      - name: image-aws
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/arm64
-        run: |
-          make image-aws
       - name: checkout extensions
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
         with:
@@ -1991,6 +1872,12 @@ jobs:
           REGISTRY: registry.dev.siderolabs.io
         run: |
           make nvidia-container-toolkit-production nvidia-open-gpu-kernel-modules-production extensions-metadata -C _out/extensions
+      - name: image-aws
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+        run: |
+          make image-aws
       - name: e2e-aws-prepare
         env:
           E2E_AWS_TARGET: nvidia-oss-production
@@ -2016,7 +1903,7 @@ jobs:
           TF_SCRIPT_DIR: _out/contrib
         run: |
           make e2e-cloud-tf
-      - name: e2e-aws-nvidia-oss-production
+      - name: e2e-aws-nvidia
         env:
           EXTRA_TEST_ARGS: -talos.extensions.nvidia -talos.verifyukibooted=false
           INTEGRATION_TEST_RUN: TestIntegration/api.ExtensionsSuiteNVIDIA
@@ -2082,31 +1969,16 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
       - name: e2e-cilium
         env:
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium
@@ -2206,27 +2078,16 @@ jobs:
         run: |
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
       - name: images
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -2236,7 +2097,7 @@ jobs:
       - name: cloud-images
         run: |
           make cloud-images
-  integration-conformance:
+  integration-conformance-default:
     permissions:
       actions: read
       contents: write
@@ -2245,7 +2106,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/conformance') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/conformance-default') || contains(fromJSON(needs.default.outputs.labels), 'integration/conformance') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -2287,31 +2148,16 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
       - name: conformance-qemu
         env:
           GITHUB_STEP_NAME: ${{ github.job}}-conformance-qemu
@@ -2326,7 +2172,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
         with:
-          name: talos-logs-integration-conformance
+          name: talos-logs-integration-conformance-default
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
@@ -2340,7 +2186,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/conformance-enforcing')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/conformance-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/conformance') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -2382,37 +2228,13 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
-      - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
-        run: |
-          make ci-temp-release-tag
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: uki-certs
-        if: github.event_name == 'schedule'
-        env:
-          PLATFORM: linux/amd64
-        run: |
-          make uki-certs
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
       - name: images-essential-enforcing
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -2422,6 +2244,9 @@ jobs:
           TAG_SUFFIX_OUT: -enforcing
         run: |
           make images-essential
+      - name: ci-temp-release-tag
+        run: |
+          make ci-temp-release-tag
       - name: conformance-qemu
         env:
           EXTRA_TEST_ARGS: -talos.enforcing
@@ -2494,31 +2319,16 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
       - name: e2e-embedded
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -2584,35 +2394,16 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: generate
-        if: github.event_name == 'schedule'
-        run: |
-          make generate
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
       - name: checkout extensions
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
         with:
@@ -2715,44 +2506,16 @@ jobs:
         run: |
           sops -d .secrets.yaml | yq -e '.secrets | to_entries[] | .key + "=" + .value' >> "$GITHUB_ENV"
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: uki-certs
-        if: github.event_name == 'schedule'
-        env:
-          PLATFORM: linux/amd64
-        run: |
-          make uki-certs
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
-      - name: images-essential
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make images-essential
       - name: image-gcp
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -2842,37 +2605,16 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: uki-certs
-        if: github.event_name == 'schedule'
-        env:
-          PLATFORM: linux/amd64
-        run: |
-          make uki-certs
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
       - name: image-cache
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -2962,37 +2704,16 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: uki-certs
-        if: github.event_name == 'schedule'
-        env:
-          PLATFORM: linux/amd64
-        run: |
-          make uki-certs
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
       - name: factory-1.11-iso
         env:
           FACTORY_BOOT_METHOD: iso
@@ -3134,31 +2855,16 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
       - name: images
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -3216,38 +2922,16 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
-      - name: image-metal-uki
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make image-metal-uki
       - name: e2e-firewall
         env:
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-firewall
@@ -3302,7 +2986,7 @@ jobs:
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
           retention-days: "5"
-  integration-misc-1:
+  integration-misc-1-default:
     permissions:
       actions: read
       contents: write
@@ -3311,7 +2995,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-1') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc-1-default') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-1') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -3353,31 +3037,16 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
       - name: e2e-no-cluster-discovery
         env:
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-no-cluster-discovery
@@ -3418,7 +3087,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
         with:
-          name: talos-logs-integration-misc-1
+          name: talos-logs-integration-misc-1-default
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
@@ -3432,7 +3101,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-1-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc-1-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-1') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -3474,37 +3143,13 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
-      - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
-        run: |
-          make ci-temp-release-tag
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: uki-certs
-        if: github.event_name == 'schedule'
-        env:
-          PLATFORM: linux/amd64
-        run: |
-          make uki-certs
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
       - name: images-essential-enforcing
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -3514,6 +3159,9 @@ jobs:
           TAG_SUFFIX_OUT: -enforcing
         run: |
           make images-essential
+      - name: ci-temp-release-tag
+        run: |
+          make ci-temp-release-tag
       - name: e2e-no-cluster-discovery
         env:
           EXTRA_TEST_ARGS: -talos.enforcing
@@ -3622,51 +3270,16 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: uki-certs
-        if: github.event_name == 'schedule'
-        env:
-          PLATFORM: linux/amd64
-        run: |
-          make uki-certs
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
-      - name: iso
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
-        run: |
-          make iso
-      - name: images-essential
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make images-essential
       - name: e2e-bios
         env:
           EXTRA_TEST_ARGS: -talos.verifyukibooted=false
@@ -3735,7 +3348,7 @@ jobs:
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
           retention-days: "5"
-  integration-misc-3:
+  integration-misc-3-default:
     permissions:
       actions: read
       contents: write
@@ -3744,7 +3357,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-3') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc-3-default') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-3') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -3786,31 +3399,16 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
       - name: e2e-network-chaos
         env:
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-network-chaos
@@ -3839,7 +3437,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
         with:
-          name: talos-logs-integration-misc-3
+          name: talos-logs-integration-misc-3-default
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
@@ -3853,7 +3451,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-3-enforcing')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc-3-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-3') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -3895,37 +3493,13 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
-      - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
-        run: |
-          make ci-temp-release-tag
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: uki-certs
-        if: github.event_name == 'schedule'
-        env:
-          PLATFORM: linux/amd64
-        run: |
-          make uki-certs
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
       - name: images-essential-enforcing
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -3935,6 +3509,9 @@ jobs:
           TAG_SUFFIX_OUT: -enforcing
         run: |
           make images-essential
+      - name: ci-temp-release-tag
+        run: |
+          make ci-temp-release-tag
       - name: e2e-network-chaos
         env:
           EXTRA_TEST_ARGS: -talos.enforcing
@@ -3977,7 +3554,7 @@ jobs:
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
           retention-days: "5"
-  integration-misc-4:
+  integration-misc-4-default:
     permissions:
       actions: read
       contents: write
@@ -3986,7 +3563,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-4') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc-4-default') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-4') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -4028,31 +3605,16 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
       - name: e2e-siderolink
         env:
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink
@@ -4100,7 +3662,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
         with:
-          name: talos-logs-integration-misc-4
+          name: talos-logs-integration-misc-4-default
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
@@ -4114,7 +3676,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-4-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc-4-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-4') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -4156,37 +3718,13 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
-      - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
-        run: |
-          make ci-temp-release-tag
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: uki-certs
-        if: github.event_name == 'schedule'
-        env:
-          PLATFORM: linux/amd64
-        run: |
-          make uki-certs
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
       - name: images-essential-enforcing
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -4196,6 +3734,9 @@ jobs:
           TAG_SUFFIX_OUT: -enforcing
         run: |
           make images-essential
+      - name: ci-temp-release-tag
+        run: |
+          make ci-temp-release-tag
       - name: e2e-siderolink
         env:
           EXTRA_TEST_ARGS: -talos.enforcing
@@ -4269,7 +3810,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision-0') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision-0') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -4311,49 +3852,20 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: uki-certs
-        if: github.event_name == 'schedule'
-        env:
-          PLATFORM: linux/amd64
-        run: |
-          make uki-certs
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
-      - name: images-essential
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make images-essential
       - name: provision-tests-prepare
         run: |
           make provision-tests-prepare
-      - name: provision-tests-track-0
+      - name: provision-tests-track
         env:
           GRPC_ENFORCE_ALPN_ENABLED: "false"
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -4377,7 +3889,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision-1') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision-1') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -4419,33 +3931,17 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
       - name: installer-enforcing
-        if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           IMAGER_ARGS: --extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1
@@ -4457,7 +3953,7 @@ jobs:
       - name: provision-tests-prepare
         run: |
           make provision-tests-prepare
-      - name: provision-tests-track-1
+      - name: provision-tests-track
         env:
           GRPC_ENFORCE_ALPN_ENABLED: "false"
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -4481,7 +3977,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision-2') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision-2') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -4523,39 +4019,17 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: iso
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
-        run: |
-          make iso
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
-      - name: installer
+      - name: installer-extra-cmdline
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           IMAGER_ARGS: --extra-kernel-arg=talos.extra_cmdline=extra-super-cmdline
@@ -4566,7 +4040,7 @@ jobs:
       - name: provision-tests-prepare
         run: |
           make provision-tests-prepare
-      - name: provision-tests-track-2
+      - name: provision-tests-track
         env:
           GRPC_ENFORCE_ALPN_ENABLED: "false"
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -4590,7 +4064,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision-3') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision-3') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -4632,35 +4106,20 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
       - name: provision-tests-prepare
         run: |
           make provision-tests-prepare
-      - name: provision-tests-track-3
+      - name: provision-tests-track
         env:
           GRPC_ENFORCE_ALPN_ENABLED: "false"
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -4671,104 +4130,6 @@ jobs:
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
         with:
           name: talos-logs-integration-provision-3
-          path: |-
-            /tmp/logs-*.tar.gz
-            /tmp/support-*.zip
-          retention-days: "5"
-  integration-qemu:
-    permissions:
-      actions: read
-      contents: write
-      issues: read
-      packages: write
-      pull-requests: read
-    runs-on:
-      group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
-    needs:
-      - default
-    steps:
-      - name: gather-system-info
-        id: system-info
-        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
-        continue-on-error: true
-      - name: print-system-info
-        run: |
-          MEMORY_GB=$((${{ steps.system-info.outputs.totalmem }}/1024/1024/1024))
-
-          OUTPUTS=(
-            "CPU Core: ${{ steps.system-info.outputs.cpu-core }}"
-            "CPU Model: ${{ steps.system-info.outputs.cpu-model }}"
-            "Hostname: ${{ steps.system-info.outputs.hostname }}"
-            "NodeName: ${NODE_NAME}"
-            "Kernel release: ${{ steps.system-info.outputs.kernel-release }}"
-            "Kernel version: ${{ steps.system-info.outputs.kernel-version }}"
-            "Name: ${{ steps.system-info.outputs.name }}"
-            "Platform: ${{ steps.system-info.outputs.platform }}"
-            "Release: ${{ steps.system-info.outputs.release }}"
-            "Total memory: ${MEMORY_GB} GB"
-          )
-
-          for OUTPUT in "${OUTPUTS[@]}";do
-            echo "${OUTPUT}"
-          done
-        continue-on-error: true
-      - name: checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
-      - name: Unshallow
-        run: |
-          git fetch --prune --unshallow
-      - name: Set up Docker Buildx
-        id: setup-buildx
-        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
-        with:
-          driver: remote
-          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
-        timeout-minutes: 10
-      - name: Download artifacts
-        if: github.event_name != 'schedule'
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
-        with:
-          name: talos-artifacts
-          path: _out
-      - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
-        run: |
-          xargs -a _out/executable-artifacts -I {} chmod +x {}
-      - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
-        run: |
-          make ci-temp-release-tag
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
-      - name: e2e-qemu
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          QEMU_EXTRA_DISKS: "4"
-          QEMU_EXTRA_DISKS_DRIVERS: virtiofs,ide,nvme
-          QEMU_EXTRA_DISKS_SIZE: "10240"
-          QEMU_EXTRA_DISKS_TAGS: disk0
-          USER_DISKS_MOUNTS: /var/mnt/extra,/var/mnt/p1,/var/mnt/p2
-          WITH_CONFIG_PATCH: '@hack/test/patches/image-verification.yaml'
-          WITH_CONFIG_PATCH_WORKER: '@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml'
-          WITH_USER_DISK: "true"
-        run: |
-          sudo -E make e2e-qemu
-      - name: save artifacts
-        if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
-        with:
-          name: talos-logs-integration-qemu
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
@@ -4824,35 +4185,16 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: generate
-        if: github.event_name == 'schedule'
-        run: |
-          make generate
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
       - name: checkout extensions
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
         with:
@@ -4920,7 +4262,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi-openebs') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi-openebs') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -4962,32 +4304,17 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
-      - name: e2e-qemu-csi-openebs
+      - name: e2e-qemu-csi
         env:
           EXTRA_TEST_ARGS: -talos.csi=openebs
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-qemu-csi-openebs
@@ -5027,7 +4354,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi-rook-ceph') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi-rook-ceph') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -5069,32 +4396,17 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
-      - name: e2e-qemu-csi-rook-ceph
+      - name: e2e-qemu-csi
         env:
           EXTRA_TEST_ARGS: -talos.csi=rook-ceph
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-qemu-csi-rook-ceph
@@ -5124,7 +4436,7 @@ jobs:
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
           retention-days: "5"
-  integration-qemu-encrypted-vip:
+  integration-qemu-default:
     permissions:
       actions: read
       contents: write
@@ -5133,7 +4445,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-encrypted-vip') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-default') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -5175,31 +4487,99 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: build
-        if: github.event_name == 'schedule'
+      - name: e2e-qemu
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
+          QEMU_EXTRA_DISKS: "4"
+          QEMU_EXTRA_DISKS_DRIVERS: virtiofs,ide,nvme
+          QEMU_EXTRA_DISKS_SIZE: "10240"
+          QEMU_EXTRA_DISKS_TAGS: disk0
+          USER_DISKS_MOUNTS: /var/mnt/extra,/var/mnt/p1,/var/mnt/p2
+          WITH_CONFIG_PATCH: '@hack/test/patches/image-verification.yaml'
+          WITH_CONFIG_PATCH_WORKER: '@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml'
+          WITH_USER_DISK: "true"
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
+          sudo -E make e2e-qemu
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        with:
+          name: talos-logs-integration-qemu-default
+          path: |-
+            /tmp/logs-*.tar.gz
+            /tmp/support-*.zip
+          retention-days: "5"
+  integration-qemu-encrypted-vip:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      group: large
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-encrypted-vip') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    needs:
+      - default
+    steps:
+      - name: gather-system-info
+        id: system-info
+        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        continue-on-error: true
+      - name: print-system-info
         run: |
-          make talosctl-cni-bundle
+          MEMORY_GB=$((${{ steps.system-info.outputs.totalmem }}/1024/1024/1024))
+
+          OUTPUTS=(
+            "CPU Core: ${{ steps.system-info.outputs.cpu-core }}"
+            "CPU Model: ${{ steps.system-info.outputs.cpu-model }}"
+            "Hostname: ${{ steps.system-info.outputs.hostname }}"
+            "NodeName: ${NODE_NAME}"
+            "Kernel release: ${{ steps.system-info.outputs.kernel-release }}"
+            "Kernel version: ${{ steps.system-info.outputs.kernel-version }}"
+            "Name: ${{ steps.system-info.outputs.name }}"
+            "Platform: ${{ steps.system-info.outputs.platform }}"
+            "Release: ${{ steps.system-info.outputs.release }}"
+            "Total memory: ${MEMORY_GB} GB"
+          )
+
+          for OUTPUT in "${OUTPUTS[@]}";do
+            echo "${OUTPUT}"
+          done
+        continue-on-error: true
+      - name: checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Download artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
+        with:
+          name: talos-artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        run: |
+          make ci-temp-release-tag
       - name: e2e-qemu
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -5232,7 +4612,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -5274,37 +4654,13 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
-      - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
-        run: |
-          make ci-temp-release-tag
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: uki-certs
-        if: github.event_name == 'schedule'
-        env:
-          PLATFORM: linux/amd64
-        run: |
-          make uki-certs
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
       - name: images-essential-enforcing
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -5314,6 +4670,9 @@ jobs:
           TAG_SUFFIX_OUT: -enforcing
         run: |
           make images-essential
+      - name: ci-temp-release-tag
+        run: |
+          make ci-temp-release-tag
       - name: e2e-qemu
         env:
           EXTRA_TEST_ARGS: -talos.enforcing
@@ -5347,7 +4706,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-race') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-race') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -5389,31 +4748,16 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
       - name: build-race
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -5423,10 +4767,9 @@ jobs:
           WITH_RACE: "1"
         run: |
           make initramfs installer-base imager installer
-      - name: e2e-qemu-race
+      - name: e2e-qemu
         env:
           EXTRA_TEST_ARGS: -talos.race
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-qemu-race
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           QEMU_EXTRA_DISKS: "4"
           QEMU_EXTRA_DISKS_DRIVERS: virtiofs,ide,nvme
@@ -5498,17 +4841,14 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
       - name: reproducibility-test
@@ -5516,7 +4856,7 @@ jobs:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
         run: |
           make reproducibility-test
-  integration-trusted-boot:
+  integration-trusted-boot-default:
     permissions:
       actions: read
       contents: write
@@ -5525,7 +4865,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/trusted-boot') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/trusted-boot-default') || contains(fromJSON(needs.default.outputs.labels), 'integration/trusted-boot') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -5567,57 +4907,20 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: uki-certs
-        if: github.event_name == 'schedule'
-        env:
-          PLATFORM: linux/amd64
-        run: |
-          make uki-certs
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
-      - name: images-essential
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make images-essential
-      - name: secureboot-iso
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make secureboot-iso
       - name: integration-trusted-boot
         env:
           EXTRA_TEST_ARGS: -talos.trustedboot
-          GITHUB_STEP_NAME: ${{ github.job}}-integration-trusted-boot
+          GITHUB_STEP_NAME: ${{ github.job}}-integration-trusted-boot-default
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           VIA_MAINTENANCE_MODE: "true"
           WITH_CONFIG_PATCH: '@hack/test/patches/image-verification.yaml'
@@ -5628,7 +4931,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
         with:
-          name: talos-logs-integration-trusted-boot
+          name: talos-logs-integration-trusted-boot-default
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
@@ -5642,7 +4945,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/trusted-boot-enforcing')
+    if: contains(fromJSON(needs.default.outputs.labels), 'integration/trusted-boot-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/trusted-boot') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -5684,37 +4987,13 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
-      - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
-        run: |
-          make ci-temp-release-tag
-      - name: uki-certs
-        if: github.event_name == 'schedule'
-        env:
-          PLATFORM: linux/amd64
-        run: |
-          make uki-certs
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
       - name: images-essential-enforcing
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -5724,15 +5003,17 @@ jobs:
           TAG_SUFFIX_OUT: -enforcing
         run: |
           make images-essential
+      - name: ci-temp-release-tag
+        run: |
+          make ci-temp-release-tag
       - name: secureboot-iso
-        if: github.event_name == 'schedule'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           IMAGER_ARGS: --extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1
           PLATFORM: linux/amd64,linux/arm64
         run: |
           make secureboot-iso
-      - name: integration-trusted-boot-enforcing
+      - name: integration-trusted-boot
         env:
           EXTRA_TEST_ARGS: -talos.trustedboot -talos.enforcing
           GITHUB_STEP_NAME: ${{ github.job}}-integration-trusted-boot-enforcing

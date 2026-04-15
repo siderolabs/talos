@@ -1,18 +1,37 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-04-09T14:38:32Z by kres b6d29bf.
+# Generated on 2026-04-17T07:31:21Z by kres b6d29bf-dirty.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 "on":
-  schedule:
-    - cron: 30 3 * * *
-name: integration-qemu-enforcing-cron
+  workflow_run:
+    workflows:
+      - artifacts-cron
+    types:
+      - completed
+name: integration-trusted-boot-triggered
 jobs:
   default:
     runs-on:
       group: large
+    if: github.event.workflow_run.conclusion == 'success'
+    strategy:
+      matrix:
+        include:
+          - extraTestArgs: -talos.trustedboot
+            tagSuffixIn: ""
+            variant: default
+            withConfigPatch: '@hack/test/patches/image-verification.yaml'
+            withEnforcing: ""
+          - buildEnforcing: "true"
+            extraTestArgs: -talos.trustedboot -talos.enforcing
+            tagSuffixIn: -enforcing
+            variant: enforcing
+            withConfigPatch: ""
+            withEnforcing: "true"
+      max-parallel: 1
     steps:
       - name: gather-system-info
         id: system-info
@@ -52,38 +71,16 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
+          run-id: ${{ github.event.workflow_run.id }}
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
-      - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
-        run: |
-          make ci-temp-release-tag
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: uki-certs
-        if: github.event_name == 'schedule'
-        env:
-          PLATFORM: linux/amd64
-        run: |
-          make uki-certs
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
       - name: images-essential-enforcing
+        if: ${{ matrix.buildEnforcing }}
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           IMAGER_ARGS: --extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1
@@ -92,26 +89,34 @@ jobs:
           TAG_SUFFIX_OUT: -enforcing
         run: |
           make images-essential
-      - name: e2e-qemu
+      - name: ci-temp-release-tag
+        run: |
+          make ci-temp-release-tag
+      - name: secureboot-iso
+        if: ${{ matrix.buildEnforcing }}
         env:
-          EXTRA_TEST_ARGS: -talos.enforcing
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          QEMU_EXTRA_DISKS: "3"
-          QEMU_EXTRA_DISKS_DRIVERS: ide,nvme
-          QEMU_EXTRA_DISKS_SIZE: "10240"
-          TAG_SUFFIX_IN: -enforcing
-          USER_DISKS_MOUNTS: /var/mnt/extra,/var/mnt/p1,/var/mnt/p2
-          WITH_CONFIG_PATCH: '@hack/test/patches/image-verification.yaml'
-          WITH_CONFIG_PATCH_WORKER: '@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml'
-          WITH_ENFORCING: "true"
-          WITH_USER_DISK: "true"
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1
+          PLATFORM: linux/amd64,linux/arm64
+        run: |
+          make secureboot-iso
+      - name: integration-trusted-boot
+        env:
+          EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
+          GITHUB_STEP_NAME: ${{ github.job}}-integration-trusted-boot-${{ matrix.variant }}
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
+          VIA_MAINTENANCE_MODE: "true"
+          WITH_CONFIG_PATCH: ${{ matrix.withConfigPatch }}
+          WITH_ENFORCING: ${{ matrix.withEnforcing }}
+          WITH_TRUSTED_BOOT_ISO: "true"
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
         with:
-          name: talos-logs-integration-qemu-enforcing
+          name: talos-logs-integration-trusted-boot-${{ matrix.variant }}
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip

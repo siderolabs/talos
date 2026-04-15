@@ -1,18 +1,22 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-04-09T14:38:32Z by kres b6d29bf.
+# Generated on 2026-04-17T03:10:27Z by kres b6d29bf-dirty.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
   cancel-in-progress: true
 "on":
-  schedule:
-    - cron: 30 3 * * *
-name: integration-trusted-boot-cron
+  workflow_run:
+    workflows:
+      - artifacts-cron
+    types:
+      - completed
+name: integration-misc-0-triggered
 jobs:
   default:
     runs-on:
       group: large
+    if: github.event.workflow_run.conclusion == 'success'
     steps:
       - name: gather-system-info
         id: system-info
@@ -52,68 +56,67 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: github.event_name != 'schedule'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
+          run-id: ${{ github.event.workflow_run.id }}
       - name: Fix artifact permissions
-        if: github.event_name != 'schedule'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: github.event_name != 'schedule'
         run: |
           make ci-temp-release-tag
-      - name: uki-certs
-        if: github.event_name == 'schedule'
+      - name: e2e-firewall
         env:
-          PLATFORM: linux/amd64
-        run: |
-          make uki-certs
-      - name: build
-        if: github.event_name == 'schedule'
-        env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-firewall
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_FIREWALL: block
         run: |
-          make talosctl-linux-amd64 kernel sd-boot sd-stub initramfs installer-base imager talos _out/integration-test-linux-amd64
-      - name: talosctl-cni-bundle
-        if: github.event_name == 'schedule'
-        run: |
-          make talosctl-cni-bundle
-      - name: images-essential
-        if: github.event_name == 'schedule'
+          sudo -E make e2e-qemu
+      - name: e2e-canal-reset
         env:
+          CUSTOM_CNI_URL: https://raw.githubusercontent.com/projectcalico/calico/v3.30.3/manifests/canal.yaml
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-canal-reset
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
-          PLATFORM: linux/amd64,linux/arm64
+          INTEGRATION_TEST_RUN: TestIntegration/api.ResetSuite/TestResetWithSpec
         run: |
-          make images-essential
-      - name: secureboot-iso
-        if: github.event_name == 'schedule'
+          sudo -E make e2e-qemu
+      - name: e2e-controlplane-port
         env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-controlplane-port
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0
-          PLATFORM: linux/amd64,linux/arm64
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_CONFIG_PATCH: '@hack/test/patches/ephemeral-min-max.yaml'
+          WITH_CONTROL_PLANE_PORT: "443"
         run: |
-          make secureboot-iso
-      - name: integration-trusted-boot
+          sudo -E make e2e-qemu
+      - name: e2e-uki-4k
         env:
-          EXTRA_TEST_ARGS: -talos.trustedboot
-          GITHUB_STEP_NAME: ${{ github.job}}-integration-trusted-boot
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-uki-4k
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          VIA_MAINTENANCE_MODE: "true"
-          WITH_CONFIG_PATCH: '@hack/test/patches/image-verification.yaml'
-          WITH_TRUSTED_BOOT_ISO: "true"
+          SHORT_INTEGRATION_TEST: "yes"
+          WITH_4K_DISK: "true"
+          WITH_UKI_BOOT: "true"
+        run: |
+          sudo -E make e2e-qemu
+      - name: e2e-flannel-netpol
+        env:
+          GITHUB_STEP_NAME: ${{ github.job}}-e2e-flannel-netpol
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          QEMU_MEMORY_CONTROLPLANES: "4096"
+          QEMU_MEMORY_WORKERS: "4096"
+          SHORT_INTEGRATION_TEST: "yes"
+          TEST_MODE: network-policy
+          WITH_CONFIG_PATCH: '@hack/test/patches/flannel-netpol.yaml'
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
         with:
-          name: talos-logs-integration-trusted-boot
+          name: talos-logs-integration-misc-0
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip

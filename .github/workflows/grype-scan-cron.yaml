@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-04-09T14:38:32Z by kres b6d29bf.
+# Generated on 2026-04-15T14:59:08Z by kres b6d29bf-dirty.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
