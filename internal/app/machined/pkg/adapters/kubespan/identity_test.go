@@ -10,20 +10,16 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 
 	kubespanadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/kubespan"
-	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
 )
 
 func TestIdentityGenerateKey(t *testing.T) {
-	if fipsmode.Strict() {
-		t.Skip("skipping test in strict FIPS mode")
-	}
-
 	var spec kubespan.IdentitySpec
 
-	assert.NoError(t, kubespanadapter.IdentitySpec(&spec).GenerateKey())
+	assert.NoError(t, kubespanadapter.IdentitySpec(&spec).GenerateKey(zap.NewNop()))
 }
 
 func TestIdentityUpdateAddress(t *testing.T) {

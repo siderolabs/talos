@@ -17,7 +17,6 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	kubespanctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/kubespan"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -134,10 +133,6 @@ publicKey: Oak2fBEWngBhwslBxDVgnRNHXs88OAp4kjroSX0uqUE=
 
 func TestIdentitySuite(t *testing.T) {
 	t.Parallel()
-
-	if fipsmode.Strict() {
-		t.Skip("skipping test in FIPS mode")
-	}
 
 	if os.Geteuid() != 0 {
 		t.Skip("skipping test that requires root privileges")

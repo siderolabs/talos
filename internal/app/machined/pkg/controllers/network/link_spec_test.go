@@ -6,6 +6,7 @@
 package network_test
 
 import (
+	"crypto/fips140"
 	"fmt"
 	"math/rand/v2"
 	"net"
@@ -28,7 +29,6 @@ import (
 	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
-	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -776,18 +776,30 @@ func (suite *LinkSpecSuite) TestVRF() {
 
 //nolint:gocyclo
 func (suite *LinkSpecSuite) TestWireguard() {
-	if fipsmode.Strict() {
-		suite.T().Skip("skipping test in strict FIPS mode")
-	}
+	var (
+		priv, priv2, pub1, pub2             wgtypes.Key
+		privPub, priv2Pub, pub1Pub, pub2Pub wgtypes.Key
+		err                                 error
+	)
 
-	priv, err := wgtypes.GeneratePrivateKey()
-	suite.Require().NoError(err)
+	fips140.WithoutEnforcement(func() {
+		priv, err = wgtypes.GeneratePrivateKey()
+		suite.Require().NoError(err)
 
-	pub1, err := wgtypes.GeneratePrivateKey()
-	suite.Require().NoError(err)
+		pub1, err = wgtypes.GeneratePrivateKey()
+		suite.Require().NoError(err)
 
-	pub2, err := wgtypes.GeneratePrivateKey()
-	suite.Require().NoError(err)
+		pub2, err = wgtypes.GeneratePrivateKey()
+		suite.Require().NoError(err)
+
+		priv2, err = wgtypes.GeneratePrivateKey()
+		suite.Require().NoError(err)
+
+		privPub = priv.PublicKey()
+		pub1Pub = pub1.PublicKey()
+		pub2Pub = pub2.PublicKey()
+		priv2Pub = priv2.PublicKey()
+	})
 
 	wgInterface := suite.uniqueDummyInterface()
 
@@ -803,14 +815,14 @@ func (suite *LinkSpecSuite) TestWireguard() {
 			FirewallMark: 1,
 			Peers: []network.WireguardPeer{
 				{
-					PublicKey: pub1.PublicKey().String(),
+					PublicKey: pub1Pub.String(),
 					Endpoint:  "10.2.0.3:20000",
 					AllowedIPs: []netip.Prefix{
 						netip.MustParsePrefix("172.24.0.0/16"),
 					},
 				},
 				{
-					PublicKey: pub2.PublicKey().String(),
+					PublicKey: pub2Pub.String(),
 					AllowedIPs: []netip.Prefix{
 						netip.MustParsePrefix("172.25.0.0/24"),
 					},
@@ -827,14 +839,11 @@ func (suite *LinkSpecSuite) TestWireguard() {
 	ctest.AssertResource(suite, wgInterface, func(r *network.LinkStatus, asrt *assert.Assertions) {
 		asrt.Equal("wireguard", r.TypedSpec().Kind)
 		asrt.Contains([]nethelpers.OperationalState{nethelpers.OperStateUp, nethelpers.OperStateUnknown}, r.TypedSpec().OperationalState)
-		asrt.Equal(priv.PublicKey().String(), r.TypedSpec().Wireguard.PublicKey)
+		asrt.Equal(privPub.String(), r.TypedSpec().Wireguard.PublicKey)
 		asrt.Len(r.TypedSpec().Wireguard.Peers, 2)
 	})
 
 	// attempt to change wireguard private key
-	priv2, err := wgtypes.GeneratePrivateKey()
-	suite.Require().NoError(err)
-
 	ctest.UpdateWithConflicts(suite, wg, func(r *network.LinkSpec) error {
 		r.TypedSpec().Wireguard.PrivateKey = priv2.String()
 
@@ -842,7 +851,7 @@ func (suite *LinkSpecSuite) TestWireguard() {
 	})
 
 	ctest.AssertResource(suite, wgInterface, func(r *network.LinkStatus, asrt *assert.Assertions) {
-		asrt.Equal(priv2.PublicKey().String(), r.TypedSpec().Wireguard.PublicKey)
+		asrt.Equal(priv2Pub.String(), r.TypedSpec().Wireguard.PublicKey)
 	})
 
 	// teardown the links
