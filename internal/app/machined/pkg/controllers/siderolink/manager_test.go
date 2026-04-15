@@ -22,7 +22,6 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	siderolinkctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/siderolink"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
@@ -33,10 +32,6 @@ import (
 
 func TestManagerSuite(t *testing.T) {
 	t.Parallel()
-
-	if fipsmode.Strict() {
-		t.Skip("skipping test in strict FIPS mode")
-	}
 
 	suite.Run(t, &ManagerSuite{})
 }

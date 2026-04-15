@@ -13,13 +13,13 @@ import (
 	"github.com/siderolabs/go-pointer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/zap"
 
 	clusteradapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/cluster"
 	kubespanadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/kubespan"
 	clusterctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cluster"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
-	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
@@ -59,16 +59,12 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 		asrt.Equal(cluster.KubeSpanAffiliateSpec{}, spec.KubeSpan)
 	})
 
-	if fipsmode.Strict() {
-		suite.T().Skip("skipping test in strict FIPS mode (Wireguard/KubeSpan)")
-	}
-
 	// enable kubespan
 	mac, err := net.ParseMAC("ea:71:1b:b2:cc:ee")
 	suite.Require().NoError(err)
 
 	ksIdentity := kubespan.NewIdentity(kubespan.NamespaceName, kubespan.LocalIdentity)
-	suite.Require().NoError(kubespanadapter.IdentitySpec(ksIdentity.TypedSpec()).GenerateKey())
+	suite.Require().NoError(kubespanadapter.IdentitySpec(ksIdentity.TypedSpec()).GenerateKey(zap.NewNop()))
 	suite.Require().NoError(kubespanadapter.IdentitySpec(ksIdentity.TypedSpec()).UpdateAddress("8XuV9TZHW08DOk3bVxQjH9ih_TBKjnh-j44tsCLSBzo=", mac))
 	suite.Require().NoError(suite.state.Create(suite.ctx, ksIdentity))
 

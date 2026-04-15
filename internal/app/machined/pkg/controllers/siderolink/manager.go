@@ -81,12 +81,6 @@ func (ctrl *ManagerController) Outputs() []controller.Output {
 //
 //nolint:gocyclo,cyclop
 func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	if fipsmode.Strict() {
-		logger.Warn("SideroLink is not supported in strict FIPS mode")
-
-		return nil
-	}
-
 	// initially, wait for the network address status to be ready
 	if err := networkutils.WaitForNetworkReady(ctx, r,
 		func(status *network.StatusSpec) bool {
@@ -133,7 +127,10 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 	if bytes.Equal(ctrl.nodeKey[:], zeroKey[:]) {
 		var err error
 
-		ctrl.nodeKey, err = wgtypes.GeneratePrivateKey()
+		fipsmode.SkipEnforcement(logger, "siderolink.GenerateKey", func() {
+			ctrl.nodeKey, err = wgtypes.GeneratePrivateKey()
+		})
+
 		if err != nil {
 			return fmt.Errorf("error generating Wireguard key: %w", err)
 		}
@@ -392,10 +389,16 @@ func (ctrl *ManagerController) provision(ctx context.Context, r controller.Runti
 			wgOverGRPC = new(true)
 		}
 
+		var publicKeyString string
+
+		fipsmode.SkipEnforcement(logger, "siderolink.GenerateKey", func() {
+			publicKeyString = ctrl.nodeKey.PublicKey().String()
+		})
+
 		sideroLinkClient := pb.NewProvisionServiceClient(conn)
 		request := &pb.ProvisionRequest{
 			NodeUuid:          nodeUUID,
-			NodePublicKey:     ctrl.nodeKey.PublicKey().String(),
+			NodePublicKey:     publicKeyString,
 			NodeUniqueToken:   new(uniqTokenRes.TypedSpec().Token),
 			TalosVersion:      new(version.Tag),
 			WireguardOverGrpc: wgOverGRPC,

@@ -12,9 +12,11 @@ import (
 
 	"github.com/mdlayher/netx/eui64"
 	"github.com/siderolabs/gen/value"
+	"go.uber.org/zap"
 	"go4.org/netipx"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
+	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
@@ -33,14 +35,25 @@ type identity struct {
 }
 
 // GenerateKey generates new Wireguard key.
-func (a identity) GenerateKey() error {
-	key, err := wgtypes.GeneratePrivateKey()
+func (a identity) GenerateKey(logger *zap.Logger) error {
+	var (
+		key wgtypes.Key
+		err error
+	)
+
+	fipsmode.SkipEnforcement(logger, "kubespan.GenerateKey", func() {
+		key, err = wgtypes.GeneratePrivateKey()
+	})
+
 	if err != nil {
 		return err
 	}
 
 	a.IdentitySpec.PrivateKey = key.String()
-	a.IdentitySpec.PublicKey = key.PublicKey().String()
+
+	fipsmode.SkipEnforcement(logger, "kubespan.GenerateKey", func() {
+		a.IdentitySpec.PublicKey = key.PublicKey().String()
+	})
 
 	return nil
 }

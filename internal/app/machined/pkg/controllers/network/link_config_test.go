@@ -6,6 +6,7 @@
 package network_test
 
 import (
+	"crypto/fips140"
 	"net/netip"
 	"net/url"
 	"testing"
@@ -22,7 +23,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	networkcfg "github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -640,20 +640,26 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleVRF() {
 }
 
 func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleNotFIPS() {
-	if fipsmode.Strict() {
-		suite.T().Skip("skipping test in strict FIPS mode")
-	}
-
 	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.LinkConfigController{}))
 
-	privKey, err := wgtypes.GeneratePrivateKey()
-	suite.Require().NoError(err)
+	var (
+		privKey, pskKey, peerKey wgtypes.Key
+		peerKeyPub               wgtypes.Key
+		err                      error
+	)
 
-	pskKey, err := wgtypes.GenerateKey()
-	suite.Require().NoError(err)
+	fips140.WithoutEnforcement(func() {
+		privKey, err = wgtypes.GeneratePrivateKey()
+		suite.Require().NoError(err)
 
-	peerKey, err := wgtypes.GenerateKey()
-	suite.Require().NoError(err)
+		pskKey, err = wgtypes.GenerateKey()
+		suite.Require().NoError(err)
+
+		peerKey, err = wgtypes.GenerateKey()
+		suite.Require().NoError(err)
+
+		peerKeyPub = peerKey.PublicKey()
+	})
 
 	wc1 := networkcfg.NewWireguardConfigV1Alpha1("wg0")
 	wc1.LinkUp = new(true)
@@ -661,7 +667,7 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleNotFIPS() {
 	wc1.WireguardListenPort = 12345
 	wc1.WireguardPeers = []networkcfg.WireguardPeer{
 		{
-			WireguardPublicKey:    peerKey.PublicKey().String(),
+			WireguardPublicKey:    peerKeyPub.String(),
 			WireguardPresharedKey: pskKey.String(),
 			WireguardAllowedIPs:   []networkcfg.Prefix{{Prefix: netip.MustParsePrefix("10.0.0.0/24")}},
 		},
@@ -690,7 +696,7 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleNotFIPS() {
 					FirewallMark: 0,
 					Peers: []network.WireguardPeer{
 						{
-							PublicKey:    peerKey.PublicKey().String(),
+							PublicKey:    peerKeyPub.String(),
 							PresharedKey: pskKey.String(),
 							AllowedIPs: []netip.Prefix{
 								netip.MustParsePrefix("10.0.0.0/24"),

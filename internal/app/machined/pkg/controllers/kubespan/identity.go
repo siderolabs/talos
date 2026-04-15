@@ -21,7 +21,6 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/automaton/blockautomaton"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
@@ -106,10 +105,6 @@ func (ctrl *IdentityController) Run(ctx context.Context, r controller.Runtime, l
 		alreadyHasIdentity := err == nil
 
 		if cfg != nil && firstMAC != nil && cfg.TypedSpec().Enabled {
-			if fipsmode.Strict() {
-				return fmt.Errorf("KubeSpan is not supported in strict FIPS mode")
-			}
-
 			if ctrl.stateMachine == nil && !alreadyHasIdentity {
 				ctrl.stateMachine = blockautomaton.NewVolumeMounter(
 					ctrl.Name(),
@@ -150,7 +145,7 @@ func (ctrl *IdentityController) establishIdentity(
 			var localIdentity kubespan.IdentitySpec
 
 			if err := controllers.LoadOrNewFromFile(root, constants.KubeSpanIdentityFilename, &localIdentity, func(v *kubespan.IdentitySpec) error {
-				return kubespanadapter.IdentitySpec(v).GenerateKey()
+				return kubespanadapter.IdentitySpec(v).GenerateKey(logger)
 			}); err != nil {
 				return fmt.Errorf("error caching kubespan identity: %w", err)
 			}

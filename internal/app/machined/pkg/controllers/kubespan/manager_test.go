@@ -14,13 +14,13 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/zap"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
 	kubespanadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/kubespan"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	kubespanctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/kubespan"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
@@ -71,10 +71,6 @@ func (mock *mockWireguardClient) Close() error {
 
 //nolint:dupl
 func (suite *ManagerSuite) TestReconcile() {
-	if fipsmode.Strict() {
-		suite.T().Skip("skipping test in strict FIPS mode")
-	}
-
 	cfg := kubespan.NewConfig(config.NamespaceName, kubespan.ConfigID)
 	cfg.TypedSpec().Enabled = true
 	cfg.TypedSpec().SharedSecret = "TPbGXrYlvuXgAl8dERpwjlA5tnEMoihPDPxlovcLtVg="
@@ -85,7 +81,7 @@ func (suite *ManagerSuite) TestReconcile() {
 	suite.Require().NoError(err)
 
 	localIdentity := kubespan.NewIdentity(kubespan.NamespaceName, kubespan.LocalIdentity)
-	suite.Require().NoError(kubespanadapter.IdentitySpec(localIdentity.TypedSpec()).GenerateKey())
+	suite.Require().NoError(kubespanadapter.IdentitySpec(localIdentity.TypedSpec()).GenerateKey(zap.NewNop()))
 	suite.Require().NoError(
 		kubespanadapter.IdentitySpec(localIdentity.TypedSpec()).UpdateAddress(
 			"v16UCWpO2iOm82n6F8dGCJ41ZXXBvDrjRDs2su7C_zs=",

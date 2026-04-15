@@ -9,6 +9,8 @@ import (
 	"crypto/fips140"
 	"crypto/sha1"
 	"sync"
+
+	"go.uber.org/zap"
 )
 
 // Enabled checks if the system is running in FIPS mode.
@@ -31,3 +33,12 @@ var Strict = sync.OnceValue(func() bool {
 
 	return strict
 })
+
+// SkipEnforcement executes the given function without FIPS enforcement.
+func SkipEnforcement(logger *zap.Logger, functionName string, f func()) {
+	if Strict() {
+		logger.Warn("skipping FIPS enforcement for the given function (because strict FIPS mode is enabled)", zap.String("function", functionName))
+	}
+
+	fips140.WithoutEnforcement(f)
+}
