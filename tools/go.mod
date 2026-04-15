@@ -36,7 +36,7 @@ replace (
 )
 
 // Changes from https://github.com/anchore/syft/pull/3932 for deterministic SBOM
-replace github.com/anchore/syft => github.com/dsseng/syft v1.42.1-0.20260219105507-8cf142cbcb79
+replace github.com/anchore/syft => github.com/dsseng/syft v1.42.4-0.20260415171054-31b9430f030f
 
 require (
 	4d63.com/gocheckcompilerdirectives v1.3.0 // indirect
@@ -228,7 +228,6 @@ require (
 	github.com/dlclark/regexp2 v1.11.5 // indirect
 	github.com/dmarkham/enumer v1.6.3 // indirect
 	github.com/docker/cli v29.4.0+incompatible // indirect
-	github.com/docker/distribution v2.8.3+incompatible // indirect
 	github.com/docker/docker v28.5.2+incompatible // indirect
 	github.com/docker/docker-credential-helpers v0.9.5 // indirect
 	github.com/docker/go-connections v0.6.0 // indirect
