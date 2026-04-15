@@ -34,7 +34,7 @@ type ConfigSpec struct {
 
 	Image string `yaml:"image" protobuf:"3"`
 
-	ExtraArgs map[string]ArgValues `yaml:"extraArgs" protobuf:"4"`
+	ExtraArgs map[string]ArgValues `yaml:"extraArgs" protobuf:"7"`
 }
 
 // ArgValues represents values for a command line argument which can be specified multiple times.

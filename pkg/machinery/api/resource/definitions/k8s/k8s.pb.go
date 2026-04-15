@@ -35,11 +35,11 @@ type APIServerConfigSpec struct {
 	EtcdServers          []string               `protobuf:"bytes,4,rep,name=etcd_servers,json=etcdServers,proto3" json:"etcd_servers,omitempty"`
 	LocalPort            int64                  `protobuf:"varint,5,opt,name=local_port,json=localPort,proto3" json:"local_port,omitempty"`
 	ServiceCidRs         []string               `protobuf:"bytes,6,rep,name=service_cid_rs,json=serviceCidRs,proto3" json:"service_cid_rs,omitempty"`
-	ExtraArgs            map[string]*ArgValues  `protobuf:"bytes,7,rep,name=extra_args,json=extraArgs,proto3" json:"extra_args,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	ExtraVolumes         []*ExtraVolume         `protobuf:"bytes,8,rep,name=extra_volumes,json=extraVolumes,proto3" json:"extra_volumes,omitempty"`
 	EnvironmentVariables map[string]string      `protobuf:"bytes,9,rep,name=environment_variables,json=environmentVariables,proto3" json:"environment_variables,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	AdvertisedAddress    string                 `protobuf:"bytes,11,opt,name=advertised_address,json=advertisedAddress,proto3" json:"advertised_address,omitempty"`
 	Resources            *Resources             `protobuf:"bytes,12,opt,name=resources,proto3" json:"resources,omitempty"`
+	ExtraArgs            map[string]*ArgValues  `protobuf:"bytes,13,rep,name=extra_args,json=extraArgs,proto3" json:"extra_args,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -116,13 +116,6 @@ func (x *APIServerConfigSpec) GetServiceCidRs() []string {
 	return nil
 }
 
-func (x *APIServerConfigSpec) GetExtraArgs() map[string]*ArgValues {
-	if x != nil {
-		return x.ExtraArgs
-	}
-	return nil
-}
-
 func (x *APIServerConfigSpec) GetExtraVolumes() []*ExtraVolume {
 	if x != nil {
 		return x.ExtraVolumes
@@ -147,6 +140,13 @@ func (x *APIServerConfigSpec) GetAdvertisedAddress() string {
 func (x *APIServerConfigSpec) GetResources() *Resources {
 	if x != nil {
 		return x.Resources
+	}
+	return nil
+}
+
+func (x *APIServerConfigSpec) GetExtraArgs() map[string]*ArgValues {
+	if x != nil {
+		return x.ExtraArgs
 	}
 	return nil
 }
@@ -711,10 +711,10 @@ type ControllerManagerConfigSpec struct {
 	CloudProvider        string                 `protobuf:"bytes,3,opt,name=cloud_provider,json=cloudProvider,proto3" json:"cloud_provider,omitempty"`
 	PodCidRs             []string               `protobuf:"bytes,4,rep,name=pod_cid_rs,json=podCidRs,proto3" json:"pod_cid_rs,omitempty"`
 	ServiceCidRs         []string               `protobuf:"bytes,5,rep,name=service_cid_rs,json=serviceCidRs,proto3" json:"service_cid_rs,omitempty"`
-	ExtraArgs            map[string]*ArgValues  `protobuf:"bytes,6,rep,name=extra_args,json=extraArgs,proto3" json:"extra_args,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	ExtraVolumes         []*ExtraVolume         `protobuf:"bytes,7,rep,name=extra_volumes,json=extraVolumes,proto3" json:"extra_volumes,omitempty"`
 	EnvironmentVariables map[string]string      `protobuf:"bytes,8,rep,name=environment_variables,json=environmentVariables,proto3" json:"environment_variables,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	Resources            *Resources             `protobuf:"bytes,9,opt,name=resources,proto3" json:"resources,omitempty"`
+	ExtraArgs            map[string]*ArgValues  `protobuf:"bytes,10,rep,name=extra_args,json=extraArgs,proto3" json:"extra_args,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -784,13 +784,6 @@ func (x *ControllerManagerConfigSpec) GetServiceCidRs() []string {
 	return nil
 }
 
-func (x *ControllerManagerConfigSpec) GetExtraArgs() map[string]*ArgValues {
-	if x != nil {
-		return x.ExtraArgs
-	}
-	return nil
-}
-
 func (x *ControllerManagerConfigSpec) GetExtraVolumes() []*ExtraVolume {
 	if x != nil {
 		return x.ExtraVolumes
@@ -808,6 +801,13 @@ func (x *ControllerManagerConfigSpec) GetEnvironmentVariables() map[string]strin
 func (x *ControllerManagerConfigSpec) GetResources() *Resources {
 	if x != nil {
 		return x.Resources
+	}
+	return nil
+}
+
+func (x *ControllerManagerConfigSpec) GetExtraArgs() map[string]*ArgValues {
+	if x != nil {
+		return x.ExtraArgs
 	}
 	return nil
 }
@@ -1274,7 +1274,6 @@ type KubeletConfigSpec struct {
 	Image                         string                 `protobuf:"bytes,1,opt,name=image,proto3" json:"image,omitempty"`
 	ClusterDns                    []string               `protobuf:"bytes,2,rep,name=cluster_dns,json=clusterDns,proto3" json:"cluster_dns,omitempty"`
 	ClusterDomain                 string                 `protobuf:"bytes,3,opt,name=cluster_domain,json=clusterDomain,proto3" json:"cluster_domain,omitempty"`
-	ExtraArgs                     map[string]*ArgValues  `protobuf:"bytes,4,rep,name=extra_args,json=extraArgs,proto3" json:"extra_args,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	ExtraMounts                   []*proto.Mount         `protobuf:"bytes,5,rep,name=extra_mounts,json=extraMounts,proto3" json:"extra_mounts,omitempty"`
 	ExtraConfig                   *structpb.Struct       `protobuf:"bytes,6,opt,name=extra_config,json=extraConfig,proto3" json:"extra_config,omitempty"`
 	CloudProviderExternal         bool                   `protobuf:"varint,7,opt,name=cloud_provider_external,json=cloudProviderExternal,proto3" json:"cloud_provider_external,omitempty"`
@@ -1285,6 +1284,7 @@ type KubeletConfigSpec struct {
 	EnableFsQuotaMonitoring       bool                   `protobuf:"varint,12,opt,name=enable_fs_quota_monitoring,json=enableFsQuotaMonitoring,proto3" json:"enable_fs_quota_monitoring,omitempty"`
 	CredentialProviderConfig      *structpb.Struct       `protobuf:"bytes,13,opt,name=credential_provider_config,json=credentialProviderConfig,proto3" json:"credential_provider_config,omitempty"`
 	AllowSchedulingOnControlPlane bool                   `protobuf:"varint,14,opt,name=allow_scheduling_on_control_plane,json=allowSchedulingOnControlPlane,proto3" json:"allow_scheduling_on_control_plane,omitempty"`
+	ExtraArgs                     map[string]*ArgValues  `protobuf:"bytes,15,rep,name=extra_args,json=extraArgs,proto3" json:"extra_args,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields                 protoimpl.UnknownFields
 	sizeCache                     protoimpl.SizeCache
 }
@@ -1338,13 +1338,6 @@ func (x *KubeletConfigSpec) GetClusterDomain() string {
 		return x.ClusterDomain
 	}
 	return ""
-}
-
-func (x *KubeletConfigSpec) GetExtraArgs() map[string]*ArgValues {
-	if x != nil {
-		return x.ExtraArgs
-	}
-	return nil
 }
 
 func (x *KubeletConfigSpec) GetExtraMounts() []*proto.Mount {
@@ -1415,6 +1408,13 @@ func (x *KubeletConfigSpec) GetAllowSchedulingOnControlPlane() bool {
 		return x.AllowSchedulingOnControlPlane
 	}
 	return false
+}
+
+func (x *KubeletConfigSpec) GetExtraArgs() map[string]*ArgValues {
+	if x != nil {
+		return x.ExtraArgs
+	}
+	return nil
 }
 
 // KubeletSpecSpec holds the source of kubelet configuration.
@@ -2061,11 +2061,11 @@ type SchedulerConfigSpec struct {
 	state                protoimpl.MessageState `protogen:"open.v1"`
 	Enabled              bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
 	Image                string                 `protobuf:"bytes,2,opt,name=image,proto3" json:"image,omitempty"`
-	ExtraArgs            map[string]*ArgValues  `protobuf:"bytes,3,rep,name=extra_args,json=extraArgs,proto3" json:"extra_args,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	ExtraVolumes         []*ExtraVolume         `protobuf:"bytes,4,rep,name=extra_volumes,json=extraVolumes,proto3" json:"extra_volumes,omitempty"`
 	EnvironmentVariables map[string]string      `protobuf:"bytes,5,rep,name=environment_variables,json=environmentVariables,proto3" json:"environment_variables,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	Resources            *Resources             `protobuf:"bytes,6,opt,name=resources,proto3" json:"resources,omitempty"`
 	Config               *structpb.Struct       `protobuf:"bytes,7,opt,name=config,proto3" json:"config,omitempty"`
+	ExtraArgs            map[string]*ArgValues  `protobuf:"bytes,8,rep,name=extra_args,json=extraArgs,proto3" json:"extra_args,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -2114,13 +2114,6 @@ func (x *SchedulerConfigSpec) GetImage() string {
 	return ""
 }
 
-func (x *SchedulerConfigSpec) GetExtraArgs() map[string]*ArgValues {
-	if x != nil {
-		return x.ExtraArgs
-	}
-	return nil
-}
-
 func (x *SchedulerConfigSpec) GetExtraVolumes() []*ExtraVolume {
 	if x != nil {
 		return x.ExtraVolumes
@@ -2145,6 +2138,13 @@ func (x *SchedulerConfigSpec) GetResources() *Resources {
 func (x *SchedulerConfigSpec) GetConfig() *structpb.Struct {
 	if x != nil {
 		return x.Config
+	}
+	return nil
+}
+
+func (x *SchedulerConfigSpec) GetExtraArgs() map[string]*ArgValues {
+	if x != nil {
+		return x.ExtraArgs
 	}
 	return nil
 }
@@ -2394,19 +2394,19 @@ const file_resource_definitions_k8s_k8s_proto_rawDesc = "" +
 	"\fetcd_servers\x18\x04 \x03(\tR\vetcdServers\x12\x1d\n" +
 	"\n" +
 	"local_port\x18\x05 \x01(\x03R\tlocalPort\x12$\n" +
-	"\x0eservice_cid_rs\x18\x06 \x03(\tR\fserviceCidRs\x12a\n" +
-	"\n" +
-	"extra_args\x18\a \x03(\v2B.talos.resource.definitions.k8s.APIServerConfigSpec.ExtraArgsEntryR\textraArgs\x12P\n" +
+	"\x0eservice_cid_rs\x18\x06 \x03(\tR\fserviceCidRs\x12P\n" +
 	"\rextra_volumes\x18\b \x03(\v2+.talos.resource.definitions.k8s.ExtraVolumeR\fextraVolumes\x12\x82\x01\n" +
 	"\x15environment_variables\x18\t \x03(\v2M.talos.resource.definitions.k8s.APIServerConfigSpec.EnvironmentVariablesEntryR\x14environmentVariables\x12-\n" +
 	"\x12advertised_address\x18\v \x01(\tR\x11advertisedAddress\x12G\n" +
-	"\tresources\x18\f \x01(\v2).talos.resource.definitions.k8s.ResourcesR\tresources\x1ag\n" +
-	"\x0eExtraArgsEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12?\n" +
-	"\x05value\x18\x02 \x01(\v2).talos.resource.definitions.k8s.ArgValuesR\x05value:\x028\x01\x1aG\n" +
+	"\tresources\x18\f \x01(\v2).talos.resource.definitions.k8s.ResourcesR\tresources\x12a\n" +
+	"\n" +
+	"extra_args\x18\r \x03(\v2B.talos.resource.definitions.k8s.APIServerConfigSpec.ExtraArgsEntryR\textraArgs\x1aG\n" +
 	"\x19EnvironmentVariablesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"i\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1ag\n" +
+	"\x0eExtraArgsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12?\n" +
+	"\x05value\x18\x02 \x01(\v2).talos.resource.definitions.k8s.ArgValuesR\x05value:\x028\x01\"i\n" +
 	"\x1aAdmissionControlConfigSpec\x12K\n" +
 	"\x06config\x18\x01 \x03(\v23.talos.resource.definitions.k8s.AdmissionPluginSpecR\x06config\"h\n" +
 	"\x13AdmissionPluginSpec\x12\x12\n" +
@@ -2457,18 +2457,19 @@ const file_resource_definitions_k8s_k8s_proto_rawDesc = "" +
 	"\x0ecloud_provider\x18\x03 \x01(\tR\rcloudProvider\x12\x1c\n" +
 	"\n" +
 	"pod_cid_rs\x18\x04 \x03(\tR\bpodCidRs\x12$\n" +
-	"\x0eservice_cid_rs\x18\x05 \x03(\tR\fserviceCidRs\x12i\n" +
-	"\n" +
-	"extra_args\x18\x06 \x03(\v2J.talos.resource.definitions.k8s.ControllerManagerConfigSpec.ExtraArgsEntryR\textraArgs\x12P\n" +
+	"\x0eservice_cid_rs\x18\x05 \x03(\tR\fserviceCidRs\x12P\n" +
 	"\rextra_volumes\x18\a \x03(\v2+.talos.resource.definitions.k8s.ExtraVolumeR\fextraVolumes\x12\x8a\x01\n" +
 	"\x15environment_variables\x18\b \x03(\v2U.talos.resource.definitions.k8s.ControllerManagerConfigSpec.EnvironmentVariablesEntryR\x14environmentVariables\x12G\n" +
-	"\tresources\x18\t \x01(\v2).talos.resource.definitions.k8s.ResourcesR\tresources\x1ag\n" +
-	"\x0eExtraArgsEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12?\n" +
-	"\x05value\x18\x02 \x01(\v2).talos.resource.definitions.k8s.ArgValuesR\x05value:\x028\x01\x1aG\n" +
+	"\tresources\x18\t \x01(\v2).talos.resource.definitions.k8s.ResourcesR\tresources\x12i\n" +
+	"\n" +
+	"extra_args\x18\n" +
+	" \x03(\v2J.talos.resource.definitions.k8s.ControllerManagerConfigSpec.ExtraArgsEntryR\textraArgs\x1aG\n" +
 	"\x19EnvironmentVariablesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"Q\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1ag\n" +
+	"\x0eExtraArgsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12?\n" +
+	"\x05value\x18\x02 \x01(\v2).talos.resource.definitions.k8s.ArgValuesR\x05value:\x028\x01\"Q\n" +
 	"\fEndpointSpec\x12+\n" +
 	"\taddresses\x18\x01 \x03(\v2\r.common.NetIPR\taddresses\x12\x14\n" +
 	"\x05hosts\x18\x02 \x03(\tR\x05hosts\"\xa1\x02\n" +
@@ -2505,9 +2506,7 @@ const file_resource_definitions_k8s_k8s_proto_rawDesc = "" +
 	"\x05image\x18\x01 \x01(\tR\x05image\x12\x1f\n" +
 	"\vcluster_dns\x18\x02 \x03(\tR\n" +
 	"clusterDns\x12%\n" +
-	"\x0ecluster_domain\x18\x03 \x01(\tR\rclusterDomain\x12_\n" +
-	"\n" +
-	"extra_args\x18\x04 \x03(\v2@.talos.resource.definitions.k8s.KubeletConfigSpec.ExtraArgsEntryR\textraArgs\x12J\n" +
+	"\x0ecluster_domain\x18\x03 \x01(\tR\rclusterDomain\x12J\n" +
 	"\fextra_mounts\x18\x05 \x03(\v2'.talos.resource.definitions.proto.MountR\vextraMounts\x12:\n" +
 	"\fextra_config\x18\x06 \x01(\v2\x17.google.protobuf.StructR\vextraConfig\x126\n" +
 	"\x17cloud_provider_external\x18\a \x01(\bR\x15cloudProviderExternal\x12E\n" +
@@ -2518,7 +2517,9 @@ const file_resource_definitions_k8s_k8s_proto_rawDesc = "" +
 	"\x1bdisable_manifests_directory\x18\v \x01(\bR\x19disableManifestsDirectory\x12;\n" +
 	"\x1aenable_fs_quota_monitoring\x18\f \x01(\bR\x17enableFsQuotaMonitoring\x12U\n" +
 	"\x1acredential_provider_config\x18\r \x01(\v2\x17.google.protobuf.StructR\x18credentialProviderConfig\x12H\n" +
-	"!allow_scheduling_on_control_plane\x18\x0e \x01(\bR\x1dallowSchedulingOnControlPlane\x1ag\n" +
+	"!allow_scheduling_on_control_plane\x18\x0e \x01(\bR\x1dallowSchedulingOnControlPlane\x12_\n" +
+	"\n" +
+	"extra_args\x18\x0f \x03(\v2@.talos.resource.definitions.k8s.KubeletConfigSpec.ExtraArgsEntryR\textraArgs\x1ag\n" +
 	"\x0eExtraArgsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12?\n" +
 	"\x05value\x18\x02 \x01(\v2).talos.resource.definitions.k8s.ArgValuesR\x05value:\x028\x01\"\xbc\x02\n" +
@@ -2579,19 +2580,19 @@ const file_resource_definitions_k8s_k8s_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xab\x05\n" +
 	"\x13SchedulerConfigSpec\x12\x18\n" +
 	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x14\n" +
-	"\x05image\x18\x02 \x01(\tR\x05image\x12a\n" +
-	"\n" +
-	"extra_args\x18\x03 \x03(\v2B.talos.resource.definitions.k8s.SchedulerConfigSpec.ExtraArgsEntryR\textraArgs\x12P\n" +
+	"\x05image\x18\x02 \x01(\tR\x05image\x12P\n" +
 	"\rextra_volumes\x18\x04 \x03(\v2+.talos.resource.definitions.k8s.ExtraVolumeR\fextraVolumes\x12\x82\x01\n" +
 	"\x15environment_variables\x18\x05 \x03(\v2M.talos.resource.definitions.k8s.SchedulerConfigSpec.EnvironmentVariablesEntryR\x14environmentVariables\x12G\n" +
 	"\tresources\x18\x06 \x01(\v2).talos.resource.definitions.k8s.ResourcesR\tresources\x12/\n" +
-	"\x06config\x18\a \x01(\v2\x17.google.protobuf.StructR\x06config\x1ag\n" +
-	"\x0eExtraArgsEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12?\n" +
-	"\x05value\x18\x02 \x01(\v2).talos.resource.definitions.k8s.ArgValuesR\x05value:\x028\x01\x1aG\n" +
+	"\x06config\x18\a \x01(\v2\x17.google.protobuf.StructR\x06config\x12a\n" +
+	"\n" +
+	"extra_args\x18\b \x03(\v2B.talos.resource.definitions.k8s.SchedulerConfigSpec.ExtraArgsEntryR\textraArgs\x1aG\n" +
 	"\x19EnvironmentVariablesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"C\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1ag\n" +
+	"\x0eExtraArgsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12?\n" +
+	"\x05value\x18\x02 \x01(\v2).talos.resource.definitions.k8s.ArgValuesR\x05value:\x028\x01\"C\n" +
 	"\x11SecretsStatusSpec\x12\x14\n" +
 	"\x05ready\x18\x01 \x01(\bR\x05ready\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\tR\aversion\"A\n" +
@@ -2656,46 +2657,46 @@ var file_resource_definitions_k8s_k8s_proto_goTypes = []any{
 	(*StaticPodServerStatusSpec)(nil),    // 33: talos.resource.definitions.k8s.StaticPodServerStatusSpec
 	(*StaticPodSpec)(nil),                // 34: talos.resource.definitions.k8s.StaticPodSpec
 	(*StaticPodStatusSpec)(nil),          // 35: talos.resource.definitions.k8s.StaticPodStatusSpec
-	nil,                                  // 36: talos.resource.definitions.k8s.APIServerConfigSpec.ExtraArgsEntry
-	nil,                                  // 37: talos.resource.definitions.k8s.APIServerConfigSpec.EnvironmentVariablesEntry
-	nil,                                  // 38: talos.resource.definitions.k8s.ControllerManagerConfigSpec.ExtraArgsEntry
-	nil,                                  // 39: talos.resource.definitions.k8s.ControllerManagerConfigSpec.EnvironmentVariablesEntry
+	nil,                                  // 36: talos.resource.definitions.k8s.APIServerConfigSpec.EnvironmentVariablesEntry
+	nil,                                  // 37: talos.resource.definitions.k8s.APIServerConfigSpec.ExtraArgsEntry
+	nil,                                  // 38: talos.resource.definitions.k8s.ControllerManagerConfigSpec.EnvironmentVariablesEntry
+	nil,                                  // 39: talos.resource.definitions.k8s.ControllerManagerConfigSpec.ExtraArgsEntry
 	nil,                                  // 40: talos.resource.definitions.k8s.ExtraManifest.ExtraHeadersEntry
 	nil,                                  // 41: talos.resource.definitions.k8s.KubeletConfigSpec.ExtraArgsEntry
 	nil,                                  // 42: talos.resource.definitions.k8s.NodeStatusSpec.LabelsEntry
 	nil,                                  // 43: talos.resource.definitions.k8s.NodeStatusSpec.AnnotationsEntry
 	nil,                                  // 44: talos.resource.definitions.k8s.Resources.RequestsEntry
 	nil,                                  // 45: talos.resource.definitions.k8s.Resources.LimitsEntry
-	nil,                                  // 46: talos.resource.definitions.k8s.SchedulerConfigSpec.ExtraArgsEntry
-	nil,                                  // 47: talos.resource.definitions.k8s.SchedulerConfigSpec.EnvironmentVariablesEntry
+	nil,                                  // 46: talos.resource.definitions.k8s.SchedulerConfigSpec.EnvironmentVariablesEntry
+	nil,                                  // 47: talos.resource.definitions.k8s.SchedulerConfigSpec.ExtraArgsEntry
 	(*structpb.Struct)(nil),              // 48: google.protobuf.Struct
 	(*common.NetIP)(nil),                 // 49: common.NetIP
 	(*proto.Mount)(nil),                  // 50: talos.resource.definitions.proto.Mount
 	(*common.NetIPPrefix)(nil),           // 51: common.NetIPPrefix
 }
 var file_resource_definitions_k8s_k8s_proto_depIdxs = []int32{
-	36, // 0: talos.resource.definitions.k8s.APIServerConfigSpec.extra_args:type_name -> talos.resource.definitions.k8s.APIServerConfigSpec.ExtraArgsEntry
-	13, // 1: talos.resource.definitions.k8s.APIServerConfigSpec.extra_volumes:type_name -> talos.resource.definitions.k8s.ExtraVolume
-	37, // 2: talos.resource.definitions.k8s.APIServerConfigSpec.environment_variables:type_name -> talos.resource.definitions.k8s.APIServerConfigSpec.EnvironmentVariablesEntry
-	29, // 3: talos.resource.definitions.k8s.APIServerConfigSpec.resources:type_name -> talos.resource.definitions.k8s.Resources
+	13, // 0: talos.resource.definitions.k8s.APIServerConfigSpec.extra_volumes:type_name -> talos.resource.definitions.k8s.ExtraVolume
+	36, // 1: talos.resource.definitions.k8s.APIServerConfigSpec.environment_variables:type_name -> talos.resource.definitions.k8s.APIServerConfigSpec.EnvironmentVariablesEntry
+	29, // 2: talos.resource.definitions.k8s.APIServerConfigSpec.resources:type_name -> talos.resource.definitions.k8s.Resources
+	37, // 3: talos.resource.definitions.k8s.APIServerConfigSpec.extra_args:type_name -> talos.resource.definitions.k8s.APIServerConfigSpec.ExtraArgsEntry
 	2,  // 4: talos.resource.definitions.k8s.AdmissionControlConfigSpec.config:type_name -> talos.resource.definitions.k8s.AdmissionPluginSpec
 	48, // 5: talos.resource.definitions.k8s.AdmissionPluginSpec.configuration:type_name -> google.protobuf.Struct
 	48, // 6: talos.resource.definitions.k8s.AuditPolicyConfigSpec.config:type_name -> google.protobuf.Struct
 	48, // 7: talos.resource.definitions.k8s.AuthorizationAuthorizersSpec.webhook:type_name -> google.protobuf.Struct
 	5,  // 8: talos.resource.definitions.k8s.AuthorizationConfigSpec.config:type_name -> talos.resource.definitions.k8s.AuthorizationAuthorizersSpec
-	38, // 9: talos.resource.definitions.k8s.ControllerManagerConfigSpec.extra_args:type_name -> talos.resource.definitions.k8s.ControllerManagerConfigSpec.ExtraArgsEntry
-	13, // 10: talos.resource.definitions.k8s.ControllerManagerConfigSpec.extra_volumes:type_name -> talos.resource.definitions.k8s.ExtraVolume
-	39, // 11: talos.resource.definitions.k8s.ControllerManagerConfigSpec.environment_variables:type_name -> talos.resource.definitions.k8s.ControllerManagerConfigSpec.EnvironmentVariablesEntry
-	29, // 12: talos.resource.definitions.k8s.ControllerManagerConfigSpec.resources:type_name -> talos.resource.definitions.k8s.Resources
+	13, // 9: talos.resource.definitions.k8s.ControllerManagerConfigSpec.extra_volumes:type_name -> talos.resource.definitions.k8s.ExtraVolume
+	38, // 10: talos.resource.definitions.k8s.ControllerManagerConfigSpec.environment_variables:type_name -> talos.resource.definitions.k8s.ControllerManagerConfigSpec.EnvironmentVariablesEntry
+	29, // 11: talos.resource.definitions.k8s.ControllerManagerConfigSpec.resources:type_name -> talos.resource.definitions.k8s.Resources
+	39, // 12: talos.resource.definitions.k8s.ControllerManagerConfigSpec.extra_args:type_name -> talos.resource.definitions.k8s.ControllerManagerConfigSpec.ExtraArgsEntry
 	49, // 13: talos.resource.definitions.k8s.EndpointSpec.addresses:type_name -> common.NetIP
 	40, // 14: talos.resource.definitions.k8s.ExtraManifest.extra_headers:type_name -> talos.resource.definitions.k8s.ExtraManifest.ExtraHeadersEntry
 	11, // 15: talos.resource.definitions.k8s.ExtraManifestsConfigSpec.extra_manifests:type_name -> talos.resource.definitions.k8s.ExtraManifest
 	15, // 16: talos.resource.definitions.k8s.KubePrismConfigSpec.endpoints:type_name -> talos.resource.definitions.k8s.KubePrismEndpoint
 	15, // 17: talos.resource.definitions.k8s.KubePrismEndpointsSpec.endpoints:type_name -> talos.resource.definitions.k8s.KubePrismEndpoint
-	41, // 18: talos.resource.definitions.k8s.KubeletConfigSpec.extra_args:type_name -> talos.resource.definitions.k8s.KubeletConfigSpec.ExtraArgsEntry
-	50, // 19: talos.resource.definitions.k8s.KubeletConfigSpec.extra_mounts:type_name -> talos.resource.definitions.proto.Mount
-	48, // 20: talos.resource.definitions.k8s.KubeletConfigSpec.extra_config:type_name -> google.protobuf.Struct
-	48, // 21: talos.resource.definitions.k8s.KubeletConfigSpec.credential_provider_config:type_name -> google.protobuf.Struct
+	50, // 18: talos.resource.definitions.k8s.KubeletConfigSpec.extra_mounts:type_name -> talos.resource.definitions.proto.Mount
+	48, // 19: talos.resource.definitions.k8s.KubeletConfigSpec.extra_config:type_name -> google.protobuf.Struct
+	48, // 20: talos.resource.definitions.k8s.KubeletConfigSpec.credential_provider_config:type_name -> google.protobuf.Struct
+	41, // 21: talos.resource.definitions.k8s.KubeletConfigSpec.extra_args:type_name -> talos.resource.definitions.k8s.KubeletConfigSpec.ExtraArgsEntry
 	50, // 22: talos.resource.definitions.k8s.KubeletSpecSpec.extra_mounts:type_name -> talos.resource.definitions.proto.Mount
 	48, // 23: talos.resource.definitions.k8s.KubeletSpecSpec.config:type_name -> google.protobuf.Struct
 	48, // 24: talos.resource.definitions.k8s.KubeletSpecSpec.credential_provider_config:type_name -> google.protobuf.Struct
@@ -2706,11 +2707,11 @@ var file_resource_definitions_k8s_k8s_proto_depIdxs = []int32{
 	51, // 29: talos.resource.definitions.k8s.NodeStatusSpec.pod_cid_rs:type_name -> common.NetIPPrefix
 	44, // 30: talos.resource.definitions.k8s.Resources.requests:type_name -> talos.resource.definitions.k8s.Resources.RequestsEntry
 	45, // 31: talos.resource.definitions.k8s.Resources.limits:type_name -> talos.resource.definitions.k8s.Resources.LimitsEntry
-	46, // 32: talos.resource.definitions.k8s.SchedulerConfigSpec.extra_args:type_name -> talos.resource.definitions.k8s.SchedulerConfigSpec.ExtraArgsEntry
-	13, // 33: talos.resource.definitions.k8s.SchedulerConfigSpec.extra_volumes:type_name -> talos.resource.definitions.k8s.ExtraVolume
-	47, // 34: talos.resource.definitions.k8s.SchedulerConfigSpec.environment_variables:type_name -> talos.resource.definitions.k8s.SchedulerConfigSpec.EnvironmentVariablesEntry
-	29, // 35: talos.resource.definitions.k8s.SchedulerConfigSpec.resources:type_name -> talos.resource.definitions.k8s.Resources
-	48, // 36: talos.resource.definitions.k8s.SchedulerConfigSpec.config:type_name -> google.protobuf.Struct
+	13, // 32: talos.resource.definitions.k8s.SchedulerConfigSpec.extra_volumes:type_name -> talos.resource.definitions.k8s.ExtraVolume
+	46, // 33: talos.resource.definitions.k8s.SchedulerConfigSpec.environment_variables:type_name -> talos.resource.definitions.k8s.SchedulerConfigSpec.EnvironmentVariablesEntry
+	29, // 34: talos.resource.definitions.k8s.SchedulerConfigSpec.resources:type_name -> talos.resource.definitions.k8s.Resources
+	48, // 35: talos.resource.definitions.k8s.SchedulerConfigSpec.config:type_name -> google.protobuf.Struct
+	47, // 36: talos.resource.definitions.k8s.SchedulerConfigSpec.extra_args:type_name -> talos.resource.definitions.k8s.SchedulerConfigSpec.ExtraArgsEntry
 	48, // 37: talos.resource.definitions.k8s.SingleManifest.object:type_name -> google.protobuf.Struct
 	48, // 38: talos.resource.definitions.k8s.StaticPodSpec.pod:type_name -> google.protobuf.Struct
 	48, // 39: talos.resource.definitions.k8s.StaticPodStatusSpec.pod_status:type_name -> google.protobuf.Struct

@@ -75,9 +75,9 @@ type ConfigSpec struct {
 	AdvertiseValidSubnets   []string               `protobuf:"bytes,1,rep,name=advertise_valid_subnets,json=advertiseValidSubnets,proto3" json:"advertise_valid_subnets,omitempty"`
 	AdvertiseExcludeSubnets []string               `protobuf:"bytes,2,rep,name=advertise_exclude_subnets,json=advertiseExcludeSubnets,proto3" json:"advertise_exclude_subnets,omitempty"`
 	Image                   string                 `protobuf:"bytes,3,opt,name=image,proto3" json:"image,omitempty"`
-	ExtraArgs               map[string]*ArgValues  `protobuf:"bytes,4,rep,name=extra_args,json=extraArgs,proto3" json:"extra_args,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	ListenValidSubnets      []string               `protobuf:"bytes,5,rep,name=listen_valid_subnets,json=listenValidSubnets,proto3" json:"listen_valid_subnets,omitempty"`
 	ListenExcludeSubnets    []string               `protobuf:"bytes,6,rep,name=listen_exclude_subnets,json=listenExcludeSubnets,proto3" json:"listen_exclude_subnets,omitempty"`
+	ExtraArgs               map[string]*ArgValues  `protobuf:"bytes,7,rep,name=extra_args,json=extraArgs,proto3" json:"extra_args,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields           protoimpl.UnknownFields
 	sizeCache               protoimpl.SizeCache
 }
@@ -133,13 +133,6 @@ func (x *ConfigSpec) GetImage() string {
 	return ""
 }
 
-func (x *ConfigSpec) GetExtraArgs() map[string]*ArgValues {
-	if x != nil {
-		return x.ExtraArgs
-	}
-	return nil
-}
-
 func (x *ConfigSpec) GetListenValidSubnets() []string {
 	if x != nil {
 		return x.ListenValidSubnets
@@ -150,6 +143,13 @@ func (x *ConfigSpec) GetListenValidSubnets() []string {
 func (x *ConfigSpec) GetListenExcludeSubnets() []string {
 	if x != nil {
 		return x.ListenExcludeSubnets
+	}
+	return nil
+}
+
+func (x *ConfigSpec) GetExtraArgs() map[string]*ArgValues {
+	if x != nil {
+		return x.ExtraArgs
 	}
 	return nil
 }
@@ -258,9 +258,9 @@ type SpecSpec struct {
 	Name                  string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	AdvertisedAddresses   []*common.NetIP        `protobuf:"bytes,2,rep,name=advertised_addresses,json=advertisedAddresses,proto3" json:"advertised_addresses,omitempty"`
 	Image                 string                 `protobuf:"bytes,3,opt,name=image,proto3" json:"image,omitempty"`
-	ExtraArgs             map[string]*ArgValues  `protobuf:"bytes,4,rep,name=extra_args,json=extraArgs,proto3" json:"extra_args,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	ListenPeerAddresses   []*common.NetIP        `protobuf:"bytes,5,rep,name=listen_peer_addresses,json=listenPeerAddresses,proto3" json:"listen_peer_addresses,omitempty"`
 	ListenClientAddresses []*common.NetIP        `protobuf:"bytes,6,rep,name=listen_client_addresses,json=listenClientAddresses,proto3" json:"listen_client_addresses,omitempty"`
+	ExtraArgs             map[string]*ArgValues  `protobuf:"bytes,7,rep,name=extra_args,json=extraArgs,proto3" json:"extra_args,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields         protoimpl.UnknownFields
 	sizeCache             protoimpl.SizeCache
 }
@@ -316,13 +316,6 @@ func (x *SpecSpec) GetImage() string {
 	return ""
 }
 
-func (x *SpecSpec) GetExtraArgs() map[string]*ArgValues {
-	if x != nil {
-		return x.ExtraArgs
-	}
-	return nil
-}
-
 func (x *SpecSpec) GetListenPeerAddresses() []*common.NetIP {
 	if x != nil {
 		return x.ListenPeerAddresses
@@ -333,6 +326,13 @@ func (x *SpecSpec) GetListenPeerAddresses() []*common.NetIP {
 func (x *SpecSpec) GetListenClientAddresses() []*common.NetIP {
 	if x != nil {
 		return x.ListenClientAddresses
+	}
+	return nil
+}
+
+func (x *SpecSpec) GetExtraArgs() map[string]*ArgValues {
+	if x != nil {
+		return x.ExtraArgs
 	}
 	return nil
 }
@@ -348,11 +348,11 @@ const file_resource_definitions_etcd_etcd_proto_rawDesc = "" +
 	"ConfigSpec\x126\n" +
 	"\x17advertise_valid_subnets\x18\x01 \x03(\tR\x15advertiseValidSubnets\x12:\n" +
 	"\x19advertise_exclude_subnets\x18\x02 \x03(\tR\x17advertiseExcludeSubnets\x12\x14\n" +
-	"\x05image\x18\x03 \x01(\tR\x05image\x12Y\n" +
-	"\n" +
-	"extra_args\x18\x04 \x03(\v2:.talos.resource.definitions.etcd.ConfigSpec.ExtraArgsEntryR\textraArgs\x120\n" +
+	"\x05image\x18\x03 \x01(\tR\x05image\x120\n" +
 	"\x14listen_valid_subnets\x18\x05 \x03(\tR\x12listenValidSubnets\x124\n" +
-	"\x16listen_exclude_subnets\x18\x06 \x03(\tR\x14listenExcludeSubnets\x1ah\n" +
+	"\x16listen_exclude_subnets\x18\x06 \x03(\tR\x14listenExcludeSubnets\x12Y\n" +
+	"\n" +
+	"extra_args\x18\a \x03(\v2:.talos.resource.definitions.etcd.ConfigSpec.ExtraArgsEntryR\textraArgs\x1ah\n" +
 	"\x0eExtraArgsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12@\n" +
 	"\x05value\x18\x02 \x01(\v2*.talos.resource.definitions.etcd.ArgValuesR\x05value:\x028\x01\")\n" +
@@ -365,11 +365,11 @@ const file_resource_definitions_etcd_etcd_proto_rawDesc = "" +
 	"\bSpecSpec\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12@\n" +
 	"\x14advertised_addresses\x18\x02 \x03(\v2\r.common.NetIPR\x13advertisedAddresses\x12\x14\n" +
-	"\x05image\x18\x03 \x01(\tR\x05image\x12W\n" +
-	"\n" +
-	"extra_args\x18\x04 \x03(\v28.talos.resource.definitions.etcd.SpecSpec.ExtraArgsEntryR\textraArgs\x12A\n" +
+	"\x05image\x18\x03 \x01(\tR\x05image\x12A\n" +
 	"\x15listen_peer_addresses\x18\x05 \x03(\v2\r.common.NetIPR\x13listenPeerAddresses\x12E\n" +
-	"\x17listen_client_addresses\x18\x06 \x03(\v2\r.common.NetIPR\x15listenClientAddresses\x1ah\n" +
+	"\x17listen_client_addresses\x18\x06 \x03(\v2\r.common.NetIPR\x15listenClientAddresses\x12W\n" +
+	"\n" +
+	"extra_args\x18\a \x03(\v28.talos.resource.definitions.etcd.SpecSpec.ExtraArgsEntryR\textraArgs\x1ah\n" +
 	"\x0eExtraArgsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12@\n" +
 	"\x05value\x18\x02 \x01(\v2*.talos.resource.definitions.etcd.ArgValuesR\x05value:\x028\x01Br\n" +
@@ -401,9 +401,9 @@ var file_resource_definitions_etcd_etcd_proto_goTypes = []any{
 var file_resource_definitions_etcd_etcd_proto_depIdxs = []int32{
 	5, // 0: talos.resource.definitions.etcd.ConfigSpec.extra_args:type_name -> talos.resource.definitions.etcd.ConfigSpec.ExtraArgsEntry
 	7, // 1: talos.resource.definitions.etcd.SpecSpec.advertised_addresses:type_name -> common.NetIP
-	6, // 2: talos.resource.definitions.etcd.SpecSpec.extra_args:type_name -> talos.resource.definitions.etcd.SpecSpec.ExtraArgsEntry
-	7, // 3: talos.resource.definitions.etcd.SpecSpec.listen_peer_addresses:type_name -> common.NetIP
-	7, // 4: talos.resource.definitions.etcd.SpecSpec.listen_client_addresses:type_name -> common.NetIP
+	7, // 2: talos.resource.definitions.etcd.SpecSpec.listen_peer_addresses:type_name -> common.NetIP
+	7, // 3: talos.resource.definitions.etcd.SpecSpec.listen_client_addresses:type_name -> common.NetIP
+	6, // 4: talos.resource.definitions.etcd.SpecSpec.extra_args:type_name -> talos.resource.definitions.etcd.SpecSpec.ExtraArgsEntry
 	0, // 5: talos.resource.definitions.etcd.ConfigSpec.ExtraArgsEntry.value:type_name -> talos.resource.definitions.etcd.ArgValues
 	0, // 6: talos.resource.definitions.etcd.SpecSpec.ExtraArgsEntry.value:type_name -> talos.resource.definitions.etcd.ArgValues
 	7, // [7:7] is the sub-list for method output_type

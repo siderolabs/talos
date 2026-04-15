@@ -17,9 +17,9 @@ message ConfigSpec {
   repeated string advertise_valid_subnets = 1;
   repeated string advertise_exclude_subnets = 2;
   string image = 3;
-  map<string, ArgValues> extra_args = 4;
   repeated string listen_valid_subnets = 5;
   repeated string listen_exclude_subnets = 6;
+  map<string, ArgValues> extra_args = 7;
 }
 
 // MemberSpec holds information about an etcd member.
@@ -38,8 +38,8 @@ message SpecSpec {
   string name = 1;
   repeated common.NetIP advertised_addresses = 2;
   string image = 3;
-  map<string, ArgValues> extra_args = 4;
   repeated common.NetIP listen_peer_addresses = 5;
   repeated common.NetIP listen_client_addresses = 6;
+  map<string, ArgValues> extra_args = 7;
 }
 

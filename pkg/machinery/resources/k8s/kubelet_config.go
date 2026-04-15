@@ -30,7 +30,7 @@ type KubeletConfigSpec struct {
 	Image                         string               `yaml:"image" protobuf:"1"`
 	ClusterDNS                    []string             `yaml:"clusterDNS" protobuf:"2"`
 	ClusterDomain                 string               `yaml:"clusterDomain" protobuf:"3"`
-	ExtraArgs                     map[string]ArgValues `yaml:"extraArgs,omitempty" protobuf:"4"`
+	ExtraArgs                     map[string]ArgValues `yaml:"extraArgs,omitempty" protobuf:"15"`
 	ExtraMounts                   []specs.Mount        `yaml:"extraMounts,omitempty" protobuf:"5"`
 	ExtraConfig                   map[string]any       `yaml:"extraConfig,omitempty" protobuf:"6"`
 	CloudProviderExternal         bool                 `yaml:"cloudProviderExternal" protobuf:"7"`

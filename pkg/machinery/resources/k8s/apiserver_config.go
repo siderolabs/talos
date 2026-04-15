@@ -51,7 +51,7 @@ type APIServerConfigSpec struct {
 	EtcdServers          []string             `yaml:"etcdServers" protobuf:"4"`
 	LocalPort            int                  `yaml:"localPort" protobuf:"5"`
 	ServiceCIDRs         []string             `yaml:"serviceCIDR" protobuf:"6"`
-	ExtraArgs            map[string]ArgValues `yaml:"extraArgs" protobuf:"7"`
+	ExtraArgs            map[string]ArgValues `yaml:"extraArgs" protobuf:"13"`
 	ExtraVolumes         []ExtraVolume        `yaml:"extraVolumes" protobuf:"8"`
 	EnvironmentVariables map[string]string    `yaml:"environmentVariables" protobuf:"9"`
 	AdvertisedAddress    string               `yaml:"advertisedAddress" protobuf:"11"`

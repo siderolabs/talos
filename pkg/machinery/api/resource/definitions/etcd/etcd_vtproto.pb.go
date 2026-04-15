@@ -94,24 +94,6 @@ func (m *ConfigSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.ListenExcludeSubnets) > 0 {
-		for iNdEx := len(m.ListenExcludeSubnets) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.ListenExcludeSubnets[iNdEx])
-			copy(dAtA[i:], m.ListenExcludeSubnets[iNdEx])
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.ListenExcludeSubnets[iNdEx])))
-			i--
-			dAtA[i] = 0x32
-		}
-	}
-	if len(m.ListenValidSubnets) > 0 {
-		for iNdEx := len(m.ListenValidSubnets) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.ListenValidSubnets[iNdEx])
-			copy(dAtA[i:], m.ListenValidSubnets[iNdEx])
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.ListenValidSubnets[iNdEx])))
-			i--
-			dAtA[i] = 0x2a
-		}
-	}
 	if len(m.ExtraArgs) > 0 {
 		for k := range m.ExtraArgs {
 			v := m.ExtraArgs[k]
@@ -131,7 +113,25 @@ func (m *ConfigSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 			dAtA[i] = 0xa
 			i = protohelpers.EncodeVarint(dAtA, i, uint64(baseI-i))
 			i--
-			dAtA[i] = 0x22
+			dAtA[i] = 0x3a
+		}
+	}
+	if len(m.ListenExcludeSubnets) > 0 {
+		for iNdEx := len(m.ListenExcludeSubnets) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.ListenExcludeSubnets[iNdEx])
+			copy(dAtA[i:], m.ListenExcludeSubnets[iNdEx])
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.ListenExcludeSubnets[iNdEx])))
+			i--
+			dAtA[i] = 0x32
+		}
+	}
+	if len(m.ListenValidSubnets) > 0 {
+		for iNdEx := len(m.ListenValidSubnets) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.ListenValidSubnets[iNdEx])
+			copy(dAtA[i:], m.ListenValidSubnets[iNdEx])
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.ListenValidSubnets[iNdEx])))
+			i--
+			dAtA[i] = 0x2a
 		}
 	}
 	if len(m.Image) > 0 {
@@ -282,6 +282,28 @@ func (m *SpecSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if len(m.ExtraArgs) > 0 {
+		for k := range m.ExtraArgs {
+			v := m.ExtraArgs[k]
+			baseI := i
+			size, err := v.MarshalToSizedBufferVT(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+			i--
+			dAtA[i] = 0x12
+			i -= len(k)
+			copy(dAtA[i:], k)
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(k)))
+			i--
+			dAtA[i] = 0xa
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(baseI-i))
+			i--
+			dAtA[i] = 0x3a
+		}
+	}
 	if len(m.ListenClientAddresses) > 0 {
 		for iNdEx := len(m.ListenClientAddresses) - 1; iNdEx >= 0; iNdEx-- {
 			if vtmsg, ok := interface{}(m.ListenClientAddresses[iNdEx]).(interface {
@@ -328,28 +350,6 @@ func (m *SpecSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 			}
 			i--
 			dAtA[i] = 0x2a
-		}
-	}
-	if len(m.ExtraArgs) > 0 {
-		for k := range m.ExtraArgs {
-			v := m.ExtraArgs[k]
-			baseI := i
-			size, err := v.MarshalToSizedBufferVT(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
-			i--
-			dAtA[i] = 0x12
-			i -= len(k)
-			copy(dAtA[i:], k)
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(k)))
-			i--
-			dAtA[i] = 0xa
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(baseI-i))
-			i--
-			dAtA[i] = 0x22
 		}
 	}
 	if len(m.Image) > 0 {
@@ -431,6 +431,18 @@ func (m *ConfigSpec) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
+	if len(m.ListenValidSubnets) > 0 {
+		for _, s := range m.ListenValidSubnets {
+			l = len(s)
+			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+		}
+	}
+	if len(m.ListenExcludeSubnets) > 0 {
+		for _, s := range m.ListenExcludeSubnets {
+			l = len(s)
+			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+		}
+	}
 	if len(m.ExtraArgs) > 0 {
 		for k, v := range m.ExtraArgs {
 			_ = k
@@ -442,18 +454,6 @@ func (m *ConfigSpec) SizeVT() (n int) {
 			l += 1 + protohelpers.SizeOfVarint(uint64(l))
 			mapEntrySize := 1 + len(k) + protohelpers.SizeOfVarint(uint64(len(k))) + l
 			n += mapEntrySize + 1 + protohelpers.SizeOfVarint(uint64(mapEntrySize))
-		}
-	}
-	if len(m.ListenValidSubnets) > 0 {
-		for _, s := range m.ListenValidSubnets {
-			l = len(s)
-			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-		}
-	}
-	if len(m.ListenExcludeSubnets) > 0 {
-		for _, s := range m.ListenExcludeSubnets {
-			l = len(s)
-			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
 	}
 	n += len(m.unknownFields)
@@ -517,19 +517,6 @@ func (m *SpecSpec) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	if len(m.ExtraArgs) > 0 {
-		for k, v := range m.ExtraArgs {
-			_ = k
-			_ = v
-			l = 0
-			if v != nil {
-				l = v.SizeVT()
-			}
-			l += 1 + protohelpers.SizeOfVarint(uint64(l))
-			mapEntrySize := 1 + len(k) + protohelpers.SizeOfVarint(uint64(len(k))) + l
-			n += mapEntrySize + 1 + protohelpers.SizeOfVarint(uint64(mapEntrySize))
-		}
-	}
 	if len(m.ListenPeerAddresses) > 0 {
 		for _, e := range m.ListenPeerAddresses {
 			if size, ok := interface{}(e).(interface {
@@ -552,6 +539,19 @@ func (m *SpecSpec) SizeVT() (n int) {
 				l = proto.Size(e)
 			}
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+		}
+	}
+	if len(m.ExtraArgs) > 0 {
+		for k, v := range m.ExtraArgs {
+			_ = k
+			_ = v
+			l = 0
+			if v != nil {
+				l = v.SizeVT()
+			}
+			l += 1 + protohelpers.SizeOfVarint(uint64(l))
+			mapEntrySize := 1 + len(k) + protohelpers.SizeOfVarint(uint64(len(k))) + l
+			n += mapEntrySize + 1 + protohelpers.SizeOfVarint(uint64(mapEntrySize))
 		}
 	}
 	n += len(m.unknownFields)
@@ -766,7 +766,71 @@ func (m *ConfigSpec) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Image = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 4:
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ListenValidSubnets", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ListenValidSubnets = append(m.ListenValidSubnets, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ListenExcludeSubnets", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ListenExcludeSubnets = append(m.ListenExcludeSubnets, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		case 7:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field ExtraArgs", wireType)
 			}
@@ -894,70 +958,6 @@ func (m *ConfigSpec) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			m.ExtraArgs[mapkey] = mapvalue
-			iNdEx = postIndex
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ListenValidSubnets", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ListenValidSubnets = append(m.ListenValidSubnets, string(dAtA[iNdEx:postIndex]))
-			iNdEx = postIndex
-		case 6:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ListenExcludeSubnets", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ListenExcludeSubnets = append(m.ListenExcludeSubnets, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -1302,7 +1302,91 @@ func (m *SpecSpec) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Image = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 4:
+		case 5:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ListenPeerAddresses", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ListenPeerAddresses = append(m.ListenPeerAddresses, &common.NetIP{})
+			if unmarshal, ok := interface{}(m.ListenPeerAddresses[len(m.ListenPeerAddresses)-1]).(interface {
+				UnmarshalVT([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.ListenPeerAddresses[len(m.ListenPeerAddresses)-1]); err != nil {
+					return err
+				}
+			}
+			iNdEx = postIndex
+		case 6:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ListenClientAddresses", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ListenClientAddresses = append(m.ListenClientAddresses, &common.NetIP{})
+			if unmarshal, ok := interface{}(m.ListenClientAddresses[len(m.ListenClientAddresses)-1]).(interface {
+				UnmarshalVT([]byte) error
+			}); ok {
+				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+					return err
+				}
+			} else {
+				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.ListenClientAddresses[len(m.ListenClientAddresses)-1]); err != nil {
+					return err
+				}
+			}
+			iNdEx = postIndex
+		case 7:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field ExtraArgs", wireType)
 			}
@@ -1430,90 +1514,6 @@ func (m *SpecSpec) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			m.ExtraArgs[mapkey] = mapvalue
-			iNdEx = postIndex
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ListenPeerAddresses", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ListenPeerAddresses = append(m.ListenPeerAddresses, &common.NetIP{})
-			if unmarshal, ok := interface{}(m.ListenPeerAddresses[len(m.ListenPeerAddresses)-1]).(interface {
-				UnmarshalVT([]byte) error
-			}); ok {
-				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-					return err
-				}
-			} else {
-				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.ListenPeerAddresses[len(m.ListenPeerAddresses)-1]); err != nil {
-					return err
-				}
-			}
-			iNdEx = postIndex
-		case 6:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field ListenClientAddresses", wireType)
-			}
-			var msglen int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				msglen |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			if msglen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.ListenClientAddresses = append(m.ListenClientAddresses, &common.NetIP{})
-			if unmarshal, ok := interface{}(m.ListenClientAddresses[len(m.ListenClientAddresses)-1]).(interface {
-				UnmarshalVT([]byte) error
-			}); ok {
-				if err := unmarshal.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-					return err
-				}
-			} else {
-				if err := proto.Unmarshal(dAtA[iNdEx:postIndex], m.ListenClientAddresses[len(m.ListenClientAddresses)-1]); err != nil {
-					return err
-				}
-			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

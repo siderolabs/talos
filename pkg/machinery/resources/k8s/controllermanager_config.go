@@ -32,7 +32,7 @@ type ControllerManagerConfigSpec struct {
 	CloudProvider        string               `yaml:"cloudProvider" protobuf:"3"`
 	PodCIDRs             []string             `yaml:"podCIDRs" protobuf:"4"`
 	ServiceCIDRs         []string             `yaml:"serviceCIDRs" protobuf:"5"`
-	ExtraArgs            map[string]ArgValues `yaml:"extraArgs" protobuf:"6"`
+	ExtraArgs            map[string]ArgValues `yaml:"extraArgs" protobuf:"10"`
 	ExtraVolumes         []ExtraVolume        `yaml:"extraVolumes" protobuf:"7"`
 	EnvironmentVariables map[string]string    `yaml:"environmentVariables" protobuf:"8"`
 	Resources            Resources            `yaml:"resources" protobuf:"9"`
