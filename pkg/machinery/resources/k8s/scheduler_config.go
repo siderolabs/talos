@@ -29,7 +29,7 @@ type SchedulerConfig = typed.Resource[SchedulerConfigSpec, SchedulerConfigExtens
 type SchedulerConfigSpec struct {
 	Enabled              bool                 `yaml:"enabled" protobuf:"1"`
 	Image                string               `yaml:"image" protobuf:"2"`
-	ExtraArgs            map[string]ArgValues `yaml:"extraArgs" protobuf:"3"`
+	ExtraArgs            map[string]ArgValues `yaml:"extraArgs" protobuf:"8"`
 	ExtraVolumes         []ExtraVolume        `yaml:"extraVolumes" protobuf:"4"`
 	EnvironmentVariables map[string]string    `yaml:"environmentVariables" protobuf:"5"`
 	Resources            Resources            `yaml:"resources" protobuf:"6"`

@@ -7005,9 +7005,9 @@ ConfigSpec describes (some) configuration settings of etcd.
 | advertise_valid_subnets | [string](#string) | repeated |  |
 | advertise_exclude_subnets | [string](#string) | repeated |  |
 | image | [string](#string) |  |  |
-| extra_args | [ConfigSpec.ExtraArgsEntry](#talos.resource.definitions.etcd.ConfigSpec.ExtraArgsEntry) | repeated |  |
 | listen_valid_subnets | [string](#string) | repeated |  |
 | listen_exclude_subnets | [string](#string) | repeated |  |
+| extra_args | [ConfigSpec.ExtraArgsEntry](#talos.resource.definitions.etcd.ConfigSpec.ExtraArgsEntry) | repeated |  |
 
 
 
@@ -7072,9 +7072,9 @@ SpecSpec describes (some) Specuration settings of etcd.
 | name | [string](#string) |  |  |
 | advertised_addresses | [common.NetIP](#common.NetIP) | repeated |  |
 | image | [string](#string) |  |  |
-| extra_args | [SpecSpec.ExtraArgsEntry](#talos.resource.definitions.etcd.SpecSpec.ExtraArgsEntry) | repeated |  |
 | listen_peer_addresses | [common.NetIP](#common.NetIP) | repeated |  |
 | listen_client_addresses | [common.NetIP](#common.NetIP) | repeated |  |
+| extra_args | [SpecSpec.ExtraArgsEntry](#talos.resource.definitions.etcd.SpecSpec.ExtraArgsEntry) | repeated |  |
 
 
 
@@ -7450,11 +7450,11 @@ APIServerConfigSpec is configuration for kube-apiserver.
 | etcd_servers | [string](#string) | repeated |  |
 | local_port | [int64](#int64) |  |  |
 | service_cid_rs | [string](#string) | repeated |  |
-| extra_args | [APIServerConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.APIServerConfigSpec.ExtraArgsEntry) | repeated |  |
 | extra_volumes | [ExtraVolume](#talos.resource.definitions.k8s.ExtraVolume) | repeated |  |
 | environment_variables | [APIServerConfigSpec.EnvironmentVariablesEntry](#talos.resource.definitions.k8s.APIServerConfigSpec.EnvironmentVariablesEntry) | repeated |  |
 | advertised_address | [string](#string) |  |  |
 | resources | [Resources](#talos.resource.definitions.k8s.Resources) |  |  |
+| extra_args | [APIServerConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.APIServerConfigSpec.ExtraArgsEntry) | repeated |  |
 
 
 
@@ -7650,10 +7650,10 @@ ControllerManagerConfigSpec is configuration for kube-controller-manager.
 | cloud_provider | [string](#string) |  |  |
 | pod_cid_rs | [string](#string) | repeated |  |
 | service_cid_rs | [string](#string) | repeated |  |
-| extra_args | [ControllerManagerConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.ControllerManagerConfigSpec.ExtraArgsEntry) | repeated |  |
 | extra_volumes | [ExtraVolume](#talos.resource.definitions.k8s.ExtraVolume) | repeated |  |
 | environment_variables | [ControllerManagerConfigSpec.EnvironmentVariablesEntry](#talos.resource.definitions.k8s.ControllerManagerConfigSpec.EnvironmentVariablesEntry) | repeated |  |
 | resources | [Resources](#talos.resource.definitions.k8s.Resources) |  |  |
+| extra_args | [ControllerManagerConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.ControllerManagerConfigSpec.ExtraArgsEntry) | repeated |  |
 
 
 
@@ -7851,7 +7851,6 @@ KubeletConfigSpec holds the source of kubelet configuration.
 | image | [string](#string) |  |  |
 | cluster_dns | [string](#string) | repeated |  |
 | cluster_domain | [string](#string) |  |  |
-| extra_args | [KubeletConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.ExtraArgsEntry) | repeated |  |
 | extra_mounts | [talos.resource.definitions.proto.Mount](#talos.resource.definitions.proto.Mount) | repeated |  |
 | extra_config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
 | cloud_provider_external | [bool](#bool) |  |  |
@@ -7862,6 +7861,7 @@ KubeletConfigSpec holds the source of kubelet configuration.
 | enable_fs_quota_monitoring | [bool](#bool) |  |  |
 | credential_provider_config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
 | allow_scheduling_on_control_plane | [bool](#bool) |  |  |
+| extra_args | [KubeletConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.ExtraArgsEntry) | repeated |  |
 
 
 
@@ -8141,11 +8141,11 @@ SchedulerConfigSpec is configuration for kube-scheduler.
 | ----- | ---- | ----- | ----------- |
 | enabled | [bool](#bool) |  |  |
 | image | [string](#string) |  |  |
-| extra_args | [SchedulerConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.SchedulerConfigSpec.ExtraArgsEntry) | repeated |  |
 | extra_volumes | [ExtraVolume](#talos.resource.definitions.k8s.ExtraVolume) | repeated |  |
 | environment_variables | [SchedulerConfigSpec.EnvironmentVariablesEntry](#talos.resource.definitions.k8s.SchedulerConfigSpec.EnvironmentVariablesEntry) | repeated |  |
 | resources | [Resources](#talos.resource.definitions.k8s.Resources) |  |  |
 | config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
+| extra_args | [SchedulerConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.SchedulerConfigSpec.ExtraArgsEntry) | repeated |  |
 
 
 
