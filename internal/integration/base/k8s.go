@@ -783,7 +783,7 @@ func (k8sSuite *K8sSuite) RunFIOTest(ctx context.Context, storageClass, size str
 		size,
 	}
 
-	cmd := exec.CommandContext(k8sSuite.T().Context(), k8sSuite.KubeStrPath, args...)
+	cmd := exec.CommandContext(ctx, k8sSuite.KubeStrPath, args...)
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
