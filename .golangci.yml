@@ -82,7 +82,6 @@ linters:
         - golang.zx2c4.com/wireguard/wgctrl
         - github.com/mdlayher/ethtool
         - github.com/containerd/containerd/v2
-        - github.com/google/go-containerregistry
       replace-local: true
       exclude-forbidden: false
       retract-allow-no-explanation: false
