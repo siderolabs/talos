@@ -25,7 +25,7 @@ CoreDNS: 1.14.2
 Kubernetes: 1.36.0-rc.1
 CNI: 1.9.1
 Flannel CNI plugin: v1.9.0-flannel1
-Flannel: 0.28.2
+Flannel: 0.28.4
 LVM2: 2_03_38
 runc: 1.4.2
 systemd: 259.5
