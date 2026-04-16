@@ -23,6 +23,7 @@ type Credentials interface {
 	credentials.PerRPCCredentials
 
 	UnaryInterceptor() grpc.UnaryServerInterceptor
+	StreamInterceptor() grpc.StreamServerInterceptor
 }
 
 // NewConnection initializes a grpc.ClientConn configured for basic
