@@ -693,7 +693,7 @@ clean: ## Cleans up all artifacts.
 
 .PHONY: image-list
 image-list: ## Prints a list of all images built by this Makefile with digests.
-	@echo -n installer installer-base talos imager talosctl talosctl-all | xargs -d ' ' -I{} sh -c 'echo $(REGISTRY_AND_USERNAME)/{}:$(IMAGE_TAG_IN)' | xargs -I{} sh -c 'echo {}@$$(crane digest {})'
+	@echo -n installer$(IMAGE_NAME_SUFFIX) installer-base$(IMAGE_NAME_SUFFIX) talos$(IMAGE_NAME_SUFFIX) imager$(IMAGE_NAME_SUFFIX) talosctl$(IMAGE_NAME_SUFFIX) talosctl-all$(IMAGE_NAME_SUFFIX) | xargs -d ' ' -I{} sh -c 'echo $(REGISTRY_AND_USERNAME)/{}:$(IMAGE_TAG_IN)' | xargs -I{} sh -c 'echo {}@$$(crane digest {})'
 
 $(ARTIFACTS)/image-signer: $(ARTIFACTS) ## Downloads image-signer binary
 	@curl -sSL https://github.com/siderolabs/go-tools/releases/download/$(IMAGE_SIGNER_RELEASE)/image-signer-$(OPERATING_SYSTEM)-$(ARCH) -o $(ARTIFACTS)/image-signer
@@ -702,7 +702,7 @@ $(ARTIFACTS)/image-signer: $(ARTIFACTS) ## Downloads image-signer binary
 
 .PHONY: sign-images
 sign-images: $(ARTIFACTS)/image-signer ## Run cosign to sign all images built by this Makefile.
-	@$(ARTIFACTS)/image-signer sign $(shell $(MAKE) --quiet image-list REGISTRY_AND_USERNAME=$(REGISTRY_AND_USERNAME) IMAGE_TAG_IN=$(IMAGE_TAG_IN))
+	@$(ARTIFACTS)/image-signer sign $(shell $(MAKE) --quiet image-list REGISTRY_AND_USERNAME=$(REGISTRY_AND_USERNAME) IMAGE_TAG_IN=$(IMAGE_TAG_IN) IMAGE_NAME_SUFFIX=$(IMAGE_NAME_SUFFIX))
 
 .PHONY: reproducibility-test
 reproducibility-test: $(ARTIFACTS)
