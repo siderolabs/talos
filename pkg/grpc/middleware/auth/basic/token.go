@@ -6,11 +6,13 @@ package basic
 
 import (
 	"context"
-	"fmt"
+	"crypto/sha256"
+	"crypto/subtle"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 )
 
 // TokenGetterFunc is the function to dynamically retrieve the token.
@@ -66,13 +68,23 @@ func (b *TokenCredentials) authenticate(ctx context.Context) error {
 		return err
 	}
 
-	if md, ok := metadata.FromIncomingContext(ctx); ok {
-		if len(md["token"]) > 0 && md["token"][0] == token {
-			return nil
-		}
+	md, ok := metadata.FromIncomingContext(ctx)
+	if !ok {
+		return status.Error(codes.Unauthenticated, "missing token")
 	}
 
-	return fmt.Errorf("%s", codes.Unauthenticated.String())
+	if len(md["token"]) == 0 {
+		return status.Error(codes.Unauthenticated, "missing token")
+	}
+
+	incomingTokenHash := sha256.Sum256([]byte(md["token"][0]))
+	expectedTokenHash := sha256.Sum256([]byte(token))
+
+	if subtle.ConstantTimeCompare(incomingTokenHash[:], expectedTokenHash[:]) != 1 {
+		return status.Error(codes.Unauthenticated, "invalid token")
+	}
+
+	return nil
 }
 
 // UnaryInterceptor sets the UnaryServerInterceptor for the server and enforces
@@ -84,5 +96,16 @@ func (b *TokenCredentials) UnaryInterceptor() grpc.UnaryServerInterceptor {
 		}
 
 		return handler(ctx, req)
+	}
+}
+
+// StreamInterceptor sets the StreamServerInterceptor for the server and enforces
+// basic authentication.
+//
+// For now, it rejects any API, as we don't have any streaming APIs in trustd component.
+// This is to prevent accidentally allowing unauthenticated access to streaming APIs in the future without realizing it.
+func (b *TokenCredentials) StreamInterceptor() grpc.StreamServerInterceptor {
+	return func(any, grpc.ServerStream, *grpc.StreamServerInfo, grpc.StreamHandler) error {
+		return status.Error(codes.Unimplemented, "streaming APIs are not supported")
 	}
 }
