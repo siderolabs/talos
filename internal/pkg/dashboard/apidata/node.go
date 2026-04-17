@@ -27,7 +27,9 @@ type Node struct {
 	SystemStatDiff  *machine.SystemStat
 	NetDevStatsDiff *machine.NetworkDeviceStats
 	DiskStatsDiff   *machine.DiskStats
-	ProcsDiff       map[int32]*machine.ProcessInfo
+	// ProcsDiff maps pid to the CPU-time delta (float64) for that interval.
+	// Using float64 avoids allocating a ProcessInfo struct per process per tick.
+	ProcsDiff map[int32]float64
 
 	// Time-series data.
 	Series map[string][]float64
@@ -116,44 +118,20 @@ func (node *Node) ProcsCreated() uint64 {
 
 // UpdateSeries builds time-series data based on previous iteration data.
 func (node *Node) UpdateSeries(old *Node) {
-	node.Series = make(map[string][]float64)
+	node.Series = make(map[string][]float64, 8)
 
 	for _, graphInfo := range []struct {
 		name string
 		f    func() float64
 	}{
-		{
-			"mem",
-			node.MemUsage,
-		},
-		{
-			"user",
-			func() float64 { return node.CPUUsageByName("user") },
-		},
-		{
-			"system",
-			func() float64 { return node.CPUUsageByName("system") },
-		},
-		{
-			"loadavg",
-			func() float64 { return node.LoadAvg.GetLoad1() },
-		},
-		{
-			"netrxbytes",
-			func() float64 { return float64(node.NetDevStatsDiff.GetTotal().GetRxBytes()) },
-		},
-		{
-			"nettxbytes",
-			func() float64 { return float64(node.NetDevStatsDiff.GetTotal().GetTxBytes()) },
-		},
-		{
-			"diskrdsectors",
-			func() float64 { return float64(node.DiskStatsDiff.GetTotal().GetReadSectors()) },
-		},
-		{
-			"diskwrsectors",
-			func() float64 { return float64(node.DiskStatsDiff.GetTotal().GetWriteSectors()) },
-		},
+		{"mem", node.MemUsage},
+		{"user", func() float64 { return node.CPUUsageByName("user") }},
+		{"system", func() float64 { return node.CPUUsageByName("system") }},
+		{"loadavg", func() float64 { return node.LoadAvg.GetLoad1() }},
+		{"netrxbytes", func() float64 { return float64(node.NetDevStatsDiff.GetTotal().GetRxBytes()) }},
+		{"nettxbytes", func() float64 { return float64(node.NetDevStatsDiff.GetTotal().GetTxBytes()) }},
+		{"diskrdsectors", func() float64 { return float64(node.DiskStatsDiff.GetTotal().GetReadSectors()) }},
+		{"diskwrsectors", func() float64 { return float64(node.DiskStatsDiff.GetTotal().GetWriteSectors()) }},
 	} {
 		oldSeries := old.Series[graphInfo.name]
 
@@ -163,11 +141,6 @@ func (node *Node) UpdateSeries(old *Node) {
 		}
 
 		node.Series[graphInfo.name] = append(oldSeries[off:], graphInfo.f())
-
-		// TODO: bug with plot widget
-		for len(node.Series[graphInfo.name]) < 2 {
-			node.Series[graphInfo.name] = append([]float64{0.0}, node.Series[graphInfo.name]...)
-		}
 	}
 }
 
@@ -201,7 +174,7 @@ func (node *Node) UpdateDiff(old *Node) {
 			return proc.Pid, proc
 		})
 
-		node.ProcsDiff = xslices.ToMap(node.Processes.GetProcesses(), func(proc *machine.ProcessInfo) (int32, *machine.ProcessInfo) {
+		node.ProcsDiff = xslices.ToMap(node.Processes.GetProcesses(), func(proc *machine.ProcessInfo) (int32, float64) {
 			return proc.Pid, procDiff(index[proc.Pid], proc)
 		})
 	}

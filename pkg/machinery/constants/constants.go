@@ -867,7 +867,7 @@ const (
 	CgroupKubeletMillicores = 1000
 
 	// CgroupDashboardMaxMemory is the hard memory limit for the dashboard process.
-	CgroupDashboardMaxMemory = 196 * 1024 * 1024
+	CgroupDashboardMaxMemory = 128 * 1024 * 1024
 
 	// CgroupDashboardMillicores is the CPU weight for the dashboard process.
 	CgroupDashboardMillicores = 200

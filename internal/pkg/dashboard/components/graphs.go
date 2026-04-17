@@ -18,15 +18,17 @@ import (
 type BaseGraph struct {
 	tview.Primitive
 
-	plot   *tvxwidgets.Plot
-	labels []string
+	plot     *tvxwidgets.Plot
+	labels   []string
+	plotData [][]float64 // pre-allocated; outer slice reused every update
 }
 
 // NewBaseGraph initializes BaseGraph.
 func NewBaseGraph(title string, labels []string) *BaseGraph {
 	widget := &BaseGraph{
-		plot:   tvxwidgets.NewPlot(),
-		labels: labels,
+		plot:     tvxwidgets.NewPlot(),
+		labels:   labels,
+		plotData: make([][]float64, len(labels)),
 	}
 
 	root := tview.NewFrame(widget.plot).
@@ -52,30 +54,26 @@ func (widget *BaseGraph) OnAPIDataChange(node string, data *apidata.Data) {
 	nodeData := data.Nodes[node]
 
 	if nodeData == nil {
-		plotData := make([][]float64, len(widget.labels))
-
 		for i := range widget.labels {
-			plotData[i] = []float64{0}
+			widget.plotData[i] = []float64{0}
 		}
 
-		widget.plot.SetData(plotData)
+		widget.plot.SetData(widget.plotData)
 
 		return
 	}
 
 	_, _, width, _ := widget.plot.GetPlotRect() //nolint:dogsled
 
-	plotData := make([][]float64, len(widget.labels))
-
 	for i, name := range widget.labels {
 		series := nodeData.Series[name]
 
 		maxPoints := min(width, len(series))
 
-		plotData[i] = slices.Clone(series[len(series)-maxPoints:])
+		widget.plotData[i] = slices.Clone(series[len(series)-maxPoints:])
 	}
 
-	widget.plot.SetData(plotData)
+	widget.plot.SetData(widget.plotData)
 }
 
 // NewCPUGraph creates CPU usage graph.
