@@ -427,8 +427,6 @@ func (d *Dashboard) startDataHandler(ctx context.Context) func() error {
 		d.logDataSource.Start(ctx)
 		defer d.logDataSource.Stop() //nolint:errcheck
 
-		lastLogTime := time.Now()
-
 		ticker := time.NewTicker(500 * time.Millisecond)
 		defer ticker.Stop()
 
@@ -437,28 +435,37 @@ func (d *Dashboard) startDataHandler(ctx context.Context) func() error {
 			case <-ctx.Done():
 				return ctx.Err()
 			case nodeLog := <-d.logDataSource.LogCh:
-				if time.Since(lastLogTime) < 50*time.Millisecond {
-					d.app.QueueUpdate(func() {
-						d.processLog(nodeLog.Node, nodeLog.Log, nodeLog.Error)
-					})
-				} else {
-					d.app.QueueUpdateDraw(func() {
-						d.processLog(nodeLog.Node, nodeLog.Log, nodeLog.Error)
-					})
+				// Drain any additional log lines that are immediately available,
+				// so a burst of logs produces one closure instead of one per line.
+				logs := []logdata.Data{nodeLog}
+
+			drainLogs:
+				for {
+					select {
+					case nl := <-d.logDataSource.LogCh:
+						logs = append(logs, nl)
+					default:
+						break drainLogs
+					}
 				}
 
-				lastLogTime = time.Now()
+				d.app.QueueUpdate(func() {
+					for _, l := range logs {
+						d.processLog(l.Node, l.Log, l.Error)
+					}
+				})
 			case d.data = <-dataCh:
-				d.app.QueueUpdateDraw(func() {
+				d.app.QueueUpdate(func() {
 					if !d.paused {
 						d.processAPIData()
 					}
 				})
 			case nodeResource := <-d.resourceDataSource.NodeResourceCh:
-				d.app.QueueUpdateDraw(func() {
+				d.app.QueueUpdate(func() {
 					d.processNodeResource(nodeResource)
 				})
 			case <-ticker.C:
+				// Only the ticker triggers a full redraw, capping redraws at 2 fps.
 				d.app.QueueUpdateDraw(func() {
 					if !d.paused {
 						d.processTick()

@@ -45,12 +45,17 @@ type Source struct {
 	LogCh chan Data
 }
 
+// logChBuffer is the capacity of LogCh. A generous buffer lets the sender
+// continue during UI-update bursts while the drain loop in the dashboard
+// handler batches the queued lines into a single QueueUpdate closure.
+const logChBuffer = 256
+
 // NewSource initializes and returns Source data source.
 func NewSource(client *client.Client, resolver resolver.Resolver) *Source {
 	return &Source{
 		client:   client,
 		resolver: resolver,
-		LogCh:    make(chan Data),
+		LogCh:    make(chan Data, logChBuffer),
 	}
 }
 

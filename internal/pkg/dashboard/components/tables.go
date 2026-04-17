@@ -23,8 +23,13 @@ import (
 type ProcessTable struct {
 	*tview.Table
 
-	lastNode string
+	lastNode     string
+	dataCells    [][processTableCols]*tview.TableCell
+	lastRowCount int
 }
+
+// processTableCols is the number of columns in the ProcessTable.
+const processTableCols = 9
 
 // NewProcessTable initializes ProcessTable.
 func NewProcessTable() *ProcessTable {
@@ -38,7 +43,22 @@ func NewProcessTable() *ProcessTable {
 	widget.SetBorderPadding(0, 0, 1, 0)
 	widget.SetSelectedStyle(tcell.StyleDefault.Attributes(tcell.AttrReverse))
 
-	widget.clear()
+	// Header cells are created once and never replaced.
+	widget.SetCell(0, 0, &tview.TableCell{Text: "[::b]PID", Align: tview.AlignRight, MaxWidth: pidWidth, NotSelectable: true})
+	widget.SetCell(0, 1, &tview.TableCell{Text: "[::b]S", Align: tview.AlignCenter, MaxWidth: stateWidth, NotSelectable: true})
+	widget.SetCell(0, 2, &tview.TableCell{Text: "[::b]CPU%", Align: tview.AlignRight, MaxWidth: cpuWidth, NotSelectable: true})
+	widget.SetCell(0, 3, &tview.TableCell{Text: "[::b]MEM%", Align: tview.AlignRight, MaxWidth: memWidth, NotSelectable: true})
+	widget.SetCell(0, 4, &tview.TableCell{Text: "[::b]VIRT", Align: tview.AlignRight, MaxWidth: virtWidth, NotSelectable: true})
+	widget.SetCell(0, 5, &tview.TableCell{Text: "[::b]RES", Align: tview.AlignRight, MaxWidth: resWidth, NotSelectable: true})
+	widget.SetCell(0, 6, &tview.TableCell{Text: "[::b]TIME+", Align: tview.AlignRight, MaxWidth: timeWidth, NotSelectable: true})
+	widget.SetCell(0, 7, &tview.TableCell{Text: "[::b]THR", Align: tview.AlignRight, MaxWidth: threadsWidth, NotSelectable: true})
+	widget.SetCell(0, 8, &tview.TableCell{Text: "[::b]COMMAND", Align: tview.AlignLeft, NotSelectable: true, Expansion: 1})
+
+	// Pre-allocate the noData placeholder in row 1.
+	widget.ensureDataRows(1)
+	widget.dataCells[0][0].Text = noData
+	widget.dataCells[0][0].Align = tview.AlignCenter
+	widget.lastRowCount = 0 // 0 means noData is displayed
 
 	return widget
 }
@@ -55,80 +75,55 @@ const (
 	threadsWidth = 4
 )
 
-func (widget *ProcessTable) clear() {
-	widget.Clear()
+// ensureDataRows grows the dataCells pool to hold at least n rows,
+// calling SetCell for any newly allocated cells.
+func (widget *ProcessTable) ensureDataRows(n int) {
+	for len(widget.dataCells) < n {
+		row := len(widget.dataCells)
 
-	widget.SetCell(0, 0, &tview.TableCell{
-		Text:          "[::b]PID",
-		Align:         tview.AlignRight,
-		MaxWidth:      pidWidth,
-		NotSelectable: true,
-	})
-	widget.SetCell(0, 1, &tview.TableCell{
-		Text:          "[::b]S",
-		Align:         tview.AlignCenter,
-		MaxWidth:      stateWidth,
-		NotSelectable: true,
-	})
-	widget.SetCell(0, 2, &tview.TableCell{
-		Text:          "[::b]CPU%",
-		Align:         tview.AlignRight,
-		MaxWidth:      cpuWidth,
-		NotSelectable: true,
-	})
-	widget.SetCell(0, 3, &tview.TableCell{
-		Text:          "[::b]MEM%",
-		Align:         tview.AlignRight,
-		MaxWidth:      memWidth,
-		NotSelectable: true,
-	})
-	widget.SetCell(0, 4, &tview.TableCell{
-		Text:          "[::b]VIRT",
-		Align:         tview.AlignRight,
-		MaxWidth:      virtWidth,
-		NotSelectable: true,
-	})
-	widget.SetCell(0, 5, &tview.TableCell{
-		Text:          "[::b]RES",
-		Align:         tview.AlignRight,
-		MaxWidth:      resWidth,
-		NotSelectable: true,
-	})
-	widget.SetCell(0, 6, &tview.TableCell{
-		Text:          "[::b]TIME+",
-		Align:         tview.AlignRight,
-		MaxWidth:      timeWidth,
-		NotSelectable: true,
-	})
-	widget.SetCell(0, 7, &tview.TableCell{
-		Text:          "[::b]THR",
-		Align:         tview.AlignRight,
-		MaxWidth:      threadsWidth,
-		NotSelectable: true,
-	})
-	widget.SetCell(0, 8, &tview.TableCell{
-		Text:          "[::b]COMMAND",
-		Align:         tview.AlignLeft,
-		NotSelectable: true,
-		Expansion:     1,
-	})
+		var cells [processTableCols]*tview.TableCell
 
-	widget.SetCell(1, 0, &tview.TableCell{
-		Text:          noData,
-		Align:         tview.AlignCenter,
-		NotSelectable: true,
-	})
+		cells[0] = &tview.TableCell{Align: tview.AlignRight, MaxWidth: pidWidth}
+		cells[1] = &tview.TableCell{Align: tview.AlignCenter, MaxWidth: stateWidth}
+		cells[2] = &tview.TableCell{Align: tview.AlignRight, MaxWidth: cpuWidth}
+		cells[3] = &tview.TableCell{Align: tview.AlignRight, MaxWidth: memWidth}
+		cells[4] = &tview.TableCell{Align: tview.AlignRight, MaxWidth: virtWidth}
+		cells[5] = &tview.TableCell{Align: tview.AlignRight, MaxWidth: resWidth}
+		cells[6] = &tview.TableCell{Align: tview.AlignRight, MaxWidth: timeWidth}
+		cells[7] = &tview.TableCell{Align: tview.AlignRight, MaxWidth: threadsWidth}
+		cells[8] = &tview.TableCell{Align: tview.AlignLeft, Expansion: 1}
+
+		widget.dataCells = append(widget.dataCells, cells)
+
+		for col, cell := range cells {
+			widget.SetCell(row+1, col, cell) // +1 because row 0 is the header
+		}
+	}
 }
 
 // OnAPIDataChange implements the APIDataListener interface.
 //
 //nolint:gocyclo
 func (widget *ProcessTable) OnAPIDataChange(node string, data *apidata.Data) {
-	widget.clear()
-
 	nodeData := data.Nodes[node]
 
-	if nodeData == nil {
+	if nodeData == nil || nodeData.Processes == nil {
+		// Show noData in first data row; blank any previously filled rows.
+		widget.ensureDataRows(1)
+		widget.dataCells[0][0].Text = noData
+		widget.dataCells[0][0].Align = tview.AlignCenter
+
+		for j := 1; j < processTableCols; j++ {
+			widget.dataCells[0][j].Text = ""
+		}
+
+		for i := 1; i < widget.lastRowCount; i++ {
+			for col := range widget.dataCells[i] {
+				widget.dataCells[i][col].Text = ""
+			}
+		}
+
+		widget.lastRowCount = 0
 		widget.Select(1, 0)
 
 		return
@@ -144,22 +139,18 @@ func (widget *ProcessTable) OnAPIDataChange(node string, data *apidata.Data) {
 		totalWeightedCPU = 1
 	}
 
-	// All downstream logic relies on nodeData.Processes to be not nil
-	// Putting a check here to reduce cyclomatic complexity
-	if nodeData.Processes == nil {
-		return
-	}
-
 	if nodeData.ProcsDiff != nil {
 		sort.Slice(nodeData.Processes.Processes, func(i, j int) bool {
-			proc1 := nodeData.Processes.Processes[i]
-			proc2 := nodeData.Processes.Processes[j]
-
-			return nodeData.ProcsDiff[proc1.Pid].CpuTime > nodeData.ProcsDiff[proc2.Pid].CpuTime
+			return nodeData.ProcsDiff[nodeData.Processes.Processes[i].Pid] > nodeData.ProcsDiff[nodeData.Processes.Processes[j].Pid]
 		})
 	}
 
+	numProcs := len(nodeData.Processes.Processes)
+	widget.ensureDataRows(numProcs)
+
 	for idx, proc := range nodeData.Processes.Processes {
+		cells := widget.dataCells[idx]
+
 		var args string
 
 		switch {
@@ -180,62 +171,30 @@ func (widget *ProcessTable) OnAPIDataChange(node string, data *apidata.Data) {
 			return r
 		}, args)
 
-		widget.SetCell(idx+1, 0, &tview.TableCell{
-			Text:     strconv.FormatInt(int64(proc.GetPid()), 10),
-			Align:    tview.AlignRight,
-			MaxWidth: pidWidth,
-		})
-
-		widget.SetCell(idx+1, 1, &tview.TableCell{
-			Text:     proc.State,
-			Align:    tview.AlignCenter,
-			MaxWidth: stateWidth,
-		})
-
-		widget.SetCell(idx+1, 2, &tview.TableCell{
-			Text:     fmt.Sprintf("%.1f", nodeData.ProcsDiff[proc.Pid].GetCpuTime()/totalWeightedCPU*100.0),
-			Align:    tview.AlignRight,
-			MaxWidth: cpuWidth,
-		})
-
-		widget.SetCell(idx+1, 3, &tview.TableCell{
-			Text:     fmt.Sprintf("%.1f", float64(proc.ResidentMemory)/float64(totalMem)*100.0),
-			Align:    tview.AlignRight,
-			MaxWidth: memWidth,
-		})
-
-		widget.SetCell(idx+1, 4, &tview.TableCell{
-			Text:     humanize.Bytes(proc.VirtualMemory),
-			Align:    tview.AlignRight,
-			MaxWidth: virtWidth,
-		})
-
-		widget.SetCell(idx+1, 5, &tview.TableCell{
-			Text:     humanize.Bytes(proc.ResidentMemory),
-			Align:    tview.AlignRight,
-			MaxWidth: resWidth,
-		})
-
-		widget.SetCell(idx+1, 6, &tview.TableCell{
-			Text:     (time.Duration(proc.CpuTime) * time.Second).String(),
-			Align:    tview.AlignRight,
-			MaxWidth: timeWidth,
-		})
-
-		widget.SetCell(idx+1, 7, &tview.TableCell{
-			Text:     strconv.FormatInt(int64(proc.Threads), 10),
-			Align:    tview.AlignRight,
-			MaxWidth: threadsWidth,
-		})
-
-		widget.SetCell(idx+1, 8, &tview.TableCell{
-			Text:  args,
-			Align: tview.AlignLeft,
-		})
+		// Restore normal alignment for the first cell (may have been used for noData).
+		cells[0].Align = tview.AlignRight
+		cells[0].Text = strconv.FormatInt(int64(proc.GetPid()), 10)
+		cells[1].Text = proc.State
+		cells[2].Text = fmt.Sprintf("%.1f", nodeData.ProcsDiff[proc.Pid]/totalWeightedCPU*100.0)
+		cells[3].Text = fmt.Sprintf("%.1f", float64(proc.ResidentMemory)/float64(totalMem)*100.0)
+		cells[4].Text = humanize.Bytes(proc.VirtualMemory)
+		cells[5].Text = humanize.Bytes(proc.ResidentMemory)
+		cells[6].Text = (time.Duration(proc.CpuTime) * time.Second).String()
+		cells[7].Text = strconv.FormatInt(int64(proc.Threads), 10)
+		cells[8].Text = args
 	}
 
+	// Blank rows that are no longer needed.
+	for i := numProcs; i < widget.lastRowCount; i++ {
+		for col := range widget.dataCells[i] {
+			widget.dataCells[i][col].Text = ""
+		}
+	}
+
+	widget.lastRowCount = numProcs
+
 	selectedRow, _ := widget.GetSelection()
-	if selectedRow > len(nodeData.Processes.Processes)+1 || widget.lastNode != node {
+	if selectedRow > numProcs+1 || widget.lastNode != node {
 		widget.Select(1, 0)
 	}
 

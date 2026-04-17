@@ -73,13 +73,11 @@ func diskStatDiff(old, next *machine.DiskStat) *machine.DiskStat {
 	}
 }
 
-func procDiff(old, next *machine.ProcessInfo) *machine.ProcessInfo {
+func procDiff(old, next *machine.ProcessInfo) float64 {
 	if old == nil || next == nil {
-		return &machine.ProcessInfo{}
+		return 0
 	}
 
 	// TODO: support wraparound
-	return &machine.ProcessInfo{
-		CpuTime: next.CpuTime - old.CpuTime,
-	}
+	return next.CpuTime - old.CpuTime
 }

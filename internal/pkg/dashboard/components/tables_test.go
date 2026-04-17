@@ -21,14 +21,14 @@ func TestUpdate(t *testing.T) {
 				Processes: &machine.Process{
 					Processes: []*machine.ProcessInfo{},
 				},
-				ProcsDiff: map[int32]*machine.ProcessInfo{
-					1: {},
+				ProcsDiff: map[int32]float64{
+					1: 0,
 				},
 				Series: map[string][]float64{},
 			},
 			"node2": {
-				ProcsDiff: map[int32]*machine.ProcessInfo{
-					1: {},
+				ProcsDiff: map[int32]float64{
+					1: 0,
 				},
 			},
 		},
