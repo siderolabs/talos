@@ -250,7 +250,7 @@ func (h *Handler) syncKeys(ctx context.Context, logger *zap.Logger, path string,
 
 				failedSyncs = append(failedSyncs, fmt.Sprintf("error removing key slot %s: %s", slot, err))
 			} else {
-				logger.Info("removed encryption key", zap.Int("slot", k.Slot))
+				logger.Info("removed encryption key", zap.Int("slot", int(s)))
 			}
 		}
 	}
