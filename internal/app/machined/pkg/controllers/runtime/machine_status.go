@@ -422,8 +422,10 @@ func (ctrl *MachineStatusController) watchEvents() {
 						newStage = runtime.MachineStageRebooting
 					}
 				case machineapi.SequenceEvent_NOOP:
-					if event.Error != nil && event.Error.Code == common.Code_FATAL {
-						// fatal errors lead to reboot
+					shuttingDown := currentSequence == v1alpha1runtime.SequenceShutdown.String()
+
+					// fatal errors lead to reboot, but do not set the stage to rebooting if we are shutting down
+					if event.Error != nil && event.Error.Code == common.Code_FATAL && !shuttingDown {
 						newStage = runtime.MachineStageRebooting
 					}
 				case machineapi.SequenceEvent_STOP:
