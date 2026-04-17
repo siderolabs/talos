@@ -503,6 +503,10 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (*mach
 		return nil, err
 	}
 
+	if !s.Controller.Runtime().State().Machine().Installed() {
+		return nil, status.Errorf(codes.FailedPrecondition, "Talos is not installed")
+	}
+
 	log.Printf("upgrade request received: staged %v, force %v, reboot mode %v", in.GetStage(), in.GetForce(), in.GetRebootMode().String())
 
 	log.Printf("validating %q", in.GetImage())
