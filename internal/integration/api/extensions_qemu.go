@@ -317,6 +317,11 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsStargz() {
 func (suite *ExtensionsSuiteQEMU) TestExtensionsMdADM() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 
+	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	nodeName := k8sNode.Name
+
 	userDisks := suite.UserDisks(suite.ctx, node)
 
 	suite.Require().GreaterOrEqual(len(userDisks), 2, "expected at least two user disks to be available")
@@ -325,6 +330,8 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsMdADM() {
 
 	mdAdmCreatePodDef, err := suite.NewPrivilegedPod("mdadm-create")
 	suite.Require().NoError(err)
+
+	mdAdmCreatePodDef.WithNodeName(nodeName)
 
 	suite.Require().NoError(mdAdmCreatePodDef.Create(suite.ctx, 5*time.Minute))
 
@@ -346,6 +353,8 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsMdADM() {
 
 		deletePodDef, err := suite.NewPrivilegedPod("mdadm-destroy")
 		suite.Require().NoError(err)
+
+		deletePodDef.WithNodeName(nodeName)
 
 		suite.Require().NoError(deletePodDef.Create(suite.ctx, 5*time.Minute))
 
@@ -403,8 +412,15 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsZFS() {
 
 	suite.Require().NotEmpty(userDisks, "expected at least one user disks to be available")
 
+	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	nodeName := k8sNode.Name
+
 	zfsPodDef, err := suite.NewPrivilegedPod("zpool-create")
 	suite.Require().NoError(err)
+
+	zfsPodDef.WithNodeName(nodeName)
 
 	suite.Require().NoError(zfsPodDef.Create(suite.ctx, 5*time.Minute))
 
@@ -432,6 +448,8 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsZFS() {
 		deletePodDef, err := suite.NewPrivilegedPod("zpool-destroy")
 		suite.Require().NoError(err)
 
+		deletePodDef.WithNodeName(nodeName)
+
 		suite.Require().NoError(deletePodDef.Create(suite.ctx, 5*time.Minute))
 
 		defer deletePodDef.Delete(suite.ctx) //nolint:errcheck
@@ -451,7 +469,7 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsZFS() {
 		}
 	}()
 
-	suite.Require().True(suite.checkZFSPoolMounted(), "expected zfs pool to be mounted")
+	suite.Require().True(suite.checkZFSPoolMounted(node), "expected zfs pool to be mounted")
 
 	// now we want to reboot the node and make sure the pool is still mounted
 	suite.AssertRebooted(
@@ -461,12 +479,10 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsZFS() {
 		suite.CleanupFailedPods,
 	)
 
-	suite.Require().True(suite.checkZFSPoolMounted(), "expected zfs pool to be mounted")
+	suite.Require().True(suite.checkZFSPoolMounted(node), "expected zfs pool to be mounted")
 }
 
-func (suite *ExtensionsSuiteQEMU) checkZFSPoolMounted() bool {
-	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
-
+func (suite *ExtensionsSuiteQEMU) checkZFSPoolMounted(node string) bool {
 	ctx := client.WithNode(suite.ctx, node)
 
 	stream, err := suite.Client.LS(ctx, &machineapi.ListRequest{
@@ -497,8 +513,17 @@ func (suite *ExtensionsSuiteQEMU) checkZFSPoolMounted() bool {
 
 // TestExtensionsUtilLinuxTools verifies util-linux-tools are working.
 func (suite *ExtensionsSuiteQEMU) TestExtensionsUtilLinuxTools() {
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	nodeName := k8sNode.Name
+
 	utilLinuxPodDef, err := suite.NewPrivilegedPod("util-linux-tools-test")
 	suite.Require().NoError(err)
+
+	utilLinuxPodDef.WithNodeName(nodeName)
 
 	suite.Require().NoError(utilLinuxPodDef.Create(suite.ctx, 5*time.Minute))
 

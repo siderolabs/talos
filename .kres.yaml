@@ -2303,7 +2303,8 @@ spec:
             GITHUB_STEP_NAME: ${{ github.job}}-e2e-qemu-csi-longhorn
             SHORT_INTEGRATION_TEST: yes
             QEMU_WORKERS: 3
-            QEMU_MEMORY_WORKERS: 8192
+            QEMU_MEMORY_WORKERS: 10240
+            QEMU_CPUS_WORKERS: 3
             QEMU_SYSTEM_DISK_SIZE: 20480
             QEMU_EXTRA_DISKS: 1
             QEMU_EXTRA_DISKS_SIZE: 12288
