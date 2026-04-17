@@ -10,6 +10,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -17,6 +18,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	runtimectrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -156,4 +158,46 @@ func (suite *MachineStatusSuite) TestReconcile() {
 	}
 
 	suite.assertMachineStatus(runtime.MachineStageRebooting, true, nil)
+
+	// Start a shutdown sequence. The shutdown task returns a RebootError at the end, which the
+	// sequencer publishes as a NOOP event with Code_FATAL. The stage should stay at "shutting down"
+	// throughout, not flip to "rebooting".
+	suite.eventCh <- v1alpha1runtime.EventInfo{
+		Event: v1alpha1runtime.Event{
+			Payload: &machineapi.SequenceEvent{
+				Sequence: v1alpha1runtime.SequenceShutdown.String(),
+				Action:   machineapi.SequenceEvent_START,
+			},
+		},
+	}
+
+	suite.assertMachineStatus(runtime.MachineStageShuttingDown, true, nil)
+
+	suite.eventCh <- v1alpha1runtime.EventInfo{
+		Event: v1alpha1runtime.Event{
+			Payload: &machineapi.SequenceEvent{
+				Sequence: v1alpha1runtime.SequenceShutdown.String(),
+				Action:   machineapi.SequenceEvent_NOOP,
+				Error: &common.Error{
+					Code:    common.Code_FATAL,
+					Message: "sequence failed: unix.Reboot(4321fedc)",
+				},
+			},
+		},
+	}
+
+	// Poll over a short window to verify the stage never flips to "rebooting" or any other stage after the NOOP event.
+	suite.Require().Never(
+		func() bool {
+			status, err := safe.StateGetByID[*runtime.MachineStatus](suite.Ctx(), suite.State(), runtime.MachineStatusID)
+			suite.NoError(err, "status should exist")
+
+			return status.TypedSpec().Stage != runtime.MachineStageShuttingDown
+		},
+		500*time.Millisecond,
+		50*time.Millisecond,
+		"machine stage should not flip to rebooting during shutdown sequence",
+	)
+
+	suite.assertMachineStatus(runtime.MachineStageShuttingDown, true, nil)
 }
