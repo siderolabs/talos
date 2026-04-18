@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-04-17T07:31:21Z by kres b6d29bf-dirty.
+# Generated on 2026-04-18T08:30:12Z by kres 2de15fc-dirty.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -14,6 +14,12 @@ concurrency:
 name: integration-qemu-csi-triggered
 jobs:
   default:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
     runs-on:
       group: large
     if: github.event.workflow_run.conclusion == 'success'

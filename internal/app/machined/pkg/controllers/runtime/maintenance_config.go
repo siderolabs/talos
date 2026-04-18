@@ -113,7 +113,7 @@ func (ctrl *MaintenanceConfigController) Run(ctx context.Context, r controller.R
 			}
 		} else {
 			// create/update config
-			if err = safe.WriterModify[*runtime.MaintenanceServiceConfig](ctx, r, runtime.NewMaintenanceServiceConfig(),
+			if err = safe.WriterModify(ctx, r, runtime.NewMaintenanceServiceConfig(),
 				func(config *runtime.MaintenanceServiceConfig) error {
 					config.TypedSpec().ListenAddress = listenAddress
 					config.TypedSpec().ReachableAddresses = reachableAddresses
