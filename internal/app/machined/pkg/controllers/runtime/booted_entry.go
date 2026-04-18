@@ -55,7 +55,7 @@ func (ctrl *BootedEntryController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo,cyclop
-func (ctrl *BootedEntryController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
+func (ctrl *BootedEntryController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	// If we're booted in Container mode, short-circuit the controller.
 	if ctrl.V1Alpha1Mode == machineruntime.ModeContainer {
 		return nil
@@ -114,10 +114,16 @@ func (ctrl *BootedEntryController) Run(ctx context.Context, r controller.Runtime
 		// Ref: https://cateee.net/lkddb/web-lkddb/EFI_BOOTLOADER_CONTROL.html
 		case loaderEntryRebootReason == "reboot" && loaderEntryOneShot == "kexec reboot":
 			if loaderEntryDefault == "" {
-				return fmt.Errorf("LoaderEntryDefault variable is empty, cannot determine booted entry")
-			}
+				logger.Warn("LoaderEntryDefault variable is empty, falling back to LoaderEntrySelected variable to determine booted entry")
 
-			bootedEntry = loaderEntryDefault
+				if loaderEntrySelected == "" {
+					return fmt.Errorf("LoaderEntrySelected variable is empty, cannot determine booted entry")
+				}
+
+				bootedEntry = loaderEntrySelected
+			} else {
+				bootedEntry = loaderEntryDefault
+			}
 		// this case is when we have a `LoaderEntryDefault` set by the installer and during a reboot the user selected
 		// a different entry, so we set the `LoaderEntrySelected` as the booted entry
 		// we can use this information later to decide which UKI's to clean up
