@@ -147,11 +147,12 @@ func (suite *NetworkConfigSuite) TestDummyLinkConfig() {
 		{
 			RouteDestination: network.Prefix{Prefix: netip.MustParsePrefix("fd13:1235::/64")},
 			RouteGateway:     network.Addr{Addr: netip.MustParseAddr("fd13:1234::ffff")},
+			RouteTable:       nethelpers.Table101,
 		},
 	}
 
 	addressID := dummyName + "/fd13:1234::1/64"
-	routeID := dummyName + "/inet6/fd13:1234::ffff/fd13:1235::/64/1024"
+	routeID := "101/" + dummyName + "/inet6/fd13:1234::ffff/fd13:1235::/64/1024"
 	addressRouteID := dummyName + "/inet6//fd13:1234::/64/100"
 
 	suite.PatchMachineConfig(nodeCtx, dummy)
@@ -174,6 +175,12 @@ func (suite *NetworkConfigSuite) TestDummyLinkConfig() {
 		[]resource.ID{routeID, addressRouteID},
 		func(route *networkres.RouteStatus, asrt *assert.Assertions) {
 			asrt.Equal(dummyName, route.TypedSpec().OutLinkName)
+
+			if route.Metadata().ID() == routeID {
+				asrt.Equal(nethelpers.Table101, route.TypedSpec().Table)
+			} else {
+				asrt.Equal(nethelpers.TableMain, route.TypedSpec().Table)
+			}
 		},
 	)
 
