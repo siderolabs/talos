@@ -245,6 +245,7 @@ func (suite *RouteConfigSuite) TestMachineConfiguration() {
 		{
 			RouteGateway: networkcfg.Addr{Addr: netip.MustParseAddr("2001:470:6d:30e:8ed2:b60c:9d2f:803b")},
 			RouteMetric:  200,
+			RouteTable:   nethelpers.Table101,
 		},
 	}
 
@@ -259,25 +260,28 @@ func (suite *RouteConfigSuite) TestMachineConfiguration() {
 	ctest.AssertResources(
 		suite,
 		[]string{
-			"configuration/enp0s3/inet6/2001:470:6d:30e:8ed2:b60c:9d2f:803b//200",
+			"configuration/101/enp0s3/inet6/2001:470:6d:30e:8ed2:b60c:9d2f:803b//200",
 			"configuration/inet4/10.12.3.1/10.12.3.0/24/1024",
 			"configuration/inet4//10.1.3.4/32/300",
 		},
 		func(r *network.RouteSpec, asrt *assert.Assertions) {
 			switch r.Metadata().ID() {
-			case "configuration/enp0s3/inet6/2001:470:6d:30e:8ed2:b60c:9d2f:803b//200":
+			case "configuration/101/enp0s3/inet6/2001:470:6d:30e:8ed2:b60c:9d2f:803b//200":
 				asrt.Equal("enp0s3", r.TypedSpec().OutLinkName)
 				asrt.Equal(nethelpers.FamilyInet6, r.TypedSpec().Family)
 				asrt.EqualValues(200, r.TypedSpec().Priority)
+				asrt.EqualValues(nethelpers.Table101, r.TypedSpec().Table)
 			case "configuration/inet4/10.12.3.1/10.12.3.0/24/1024":
 				asrt.Equal("enp0s2", r.TypedSpec().OutLinkName)
 				asrt.Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
 				asrt.EqualValues(network.DefaultRouteMetric, r.TypedSpec().Priority)
+				asrt.EqualValues(nethelpers.TableMain, r.TypedSpec().Table)
 			case "configuration/inet4//10.1.3.4/32/300":
 				asrt.Empty(r.TypedSpec().OutLinkName)
 				asrt.Equal(nethelpers.FamilyInet4, r.TypedSpec().Family)
 				asrt.EqualValues(300, r.TypedSpec().Priority)
 				asrt.Equal(nethelpers.TypeBlackhole, r.TypedSpec().Type)
+				asrt.EqualValues(nethelpers.TableMain, r.TypedSpec().Table)
 			}
 
 			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)

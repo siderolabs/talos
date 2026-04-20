@@ -328,7 +328,7 @@ func (ctrl *RouteConfigController) processMachineConfig(linkConfigs []cfg.Networ
 				route.Family = nethelpers.FamilyInet4
 			}
 
-			route.Table = nethelpers.TableMain
+			route.Table = spec.Table().ValueOr(nethelpers.TableMain)
 			route.Protocol = nethelpers.ProtocolStatic
 			route.OutLinkName = linkConfig.Name()
 			route.ConfigLayer = network.ConfigMachineConfiguration
