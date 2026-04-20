@@ -3,4 +3,4 @@ driver:
 toolkit:
   enabled: false
 hostPaths:
-  driverInstallDir: /usr/local/lib
+  driverInstallDir: /usr/local
