@@ -8,6 +8,7 @@ package nodewatch
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
@@ -20,6 +21,11 @@ import (
 	"github.com/siderolabs/talos/pkg/kubernetes"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
+
+// syncTickInterval is how often a "still waiting for initial sync" error is reported to the caller
+// while the informer hasn't yet completed its initial list. Each tick increments the caller's
+// error counter; once the caller's threshold is reached, the watcher is torn down and rebuilt.
+const syncTickInterval = 10 * time.Second
 
 // NodeWatcher defines a NodeWatcher-based node watcher.
 type NodeWatcher struct {
@@ -48,6 +54,8 @@ func (r *NodeWatcher) Get() (*corev1.Node, error) {
 }
 
 // Watch starts watching Node state and notifies on updates via notify channel.
+//
+//nolint:gocyclo
 func (r *NodeWatcher) Watch(ctx context.Context, logger *zap.Logger) (<-chan struct{}, <-chan error, func(), error) {
 	logger.Debug("starting node watcher", zap.String("nodename", r.nodename))
 
@@ -92,10 +100,15 @@ func (r *NodeWatcher) Watch(ctx context.Context, logger *zap.Logger) (<-chan str
 
 	informerFactory.Start(ctx.Done())
 
+	syncCtx, syncCancel := context.WithCancel(ctx)
+
 	go func() {
 		logger.Debug("waiting for node cache sync")
 
 		result := informerFactory.WaitForCacheSync(ctx.Done())
+
+		// stop the ticker goroutine below as soon as sync completes (or ctx is done)
+		syncCancel()
 
 		var synced bool
 
@@ -109,6 +122,29 @@ func (r *NodeWatcher) Watch(ctx context.Context, logger *zap.Logger) (<-chan str
 		select {
 		case notifyCh <- struct{}{}:
 		default:
+		}
+	}()
+
+	// While the informer is still performing its initial list/sync, periodically
+	// surface a timeout error to the caller's watchErrCh. client-go's reflector
+	// silently retries connection-refused errors during the initial list, so the
+	// WatchErrorHandler never fires in that scenario. Pushing ticks here lets the
+	// caller apply its own threshold and restart the watcher with a fresh client.
+	go func() {
+		ticker := time.NewTicker(syncTickInterval)
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-syncCtx.Done():
+				return
+			case <-ticker.C:
+				select {
+				case <-syncCtx.Done():
+					return
+				case watchErrCh <- fmt.Errorf("node cache: no sync for %s", syncTickInterval):
+				}
+			}
 		}
 	}()
 

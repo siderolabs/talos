@@ -171,6 +171,11 @@ message KubeletConfigSpec {
   map<string, ArgValues> extra_args = 15;
 }
 
+// KubeletKubeconfigSpec describes the current kubelet kubeconfig file.
+message KubeletKubeconfigSpec {
+  string hash = 1;
+}
+
 // KubeletSpecSpec holds the source of kubelet configuration.
 message KubeletSpecSpec {
   string image = 1;

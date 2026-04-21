@@ -105,18 +105,28 @@ func (ctrl *EndpointController) Run(ctx context.Context, r controller.Runtime, l
 }
 
 func (ctrl *EndpointController) watchEndpointsOnWorker(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	if err := r.UpdateInputs([]controller.Input{
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineTypeType,
+			ID:        optional.Some(config.MachineTypeID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: k8s.NamespaceName,
+			Type:      k8s.KubeletKubeconfigType,
+			ID:        optional.Some(k8s.KubeletKubeconfigID),
+			Kind:      controller.InputWeak,
+		},
+	}); err != nil {
+		return err
+	}
+
 	logger.Debug("waiting for kubelet client config", zap.String("file", constants.KubeletKubeconfig))
 
 	if err := conditions.WaitForKubeconfigReady(constants.KubeletKubeconfig).Wait(ctx); err != nil {
 		return err
 	}
-
-	client, err := kubernetes.NewClientFromKubeletKubeconfig()
-	if err != nil {
-		return fmt.Errorf("error building Kubernetes client: %w", err)
-	}
-
-	defer client.Close() //nolint:errcheck
 
 	r.QueueReconcile()
 
@@ -127,7 +137,22 @@ func (ctrl *EndpointController) watchEndpointsOnWorker(ctx context.Context, r co
 			return nil
 		}
 
-		if err = ctrl.watchKubernetesEndpointSlices(ctx, r, logger, client); err != nil {
+		// closure to capture the deferred close on client
+		watch := func() error {
+			client, err := kubernetes.NewClientFromKubeletKubeconfig()
+			if err != nil {
+				return fmt.Errorf("error building Kubernetes client: %w", err)
+			}
+
+			defer client.Close() //nolint:errcheck
+
+			if err = ctrl.watchKubernetesEndpointSlices(ctx, r, logger, client); err != nil {
+				return err
+			}
+
+			return nil
+		}
+		if err := watch(); err != nil {
 			return err
 		}
 	}
