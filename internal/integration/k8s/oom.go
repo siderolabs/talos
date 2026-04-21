@@ -112,15 +112,17 @@ func (suite *OomSuite) TestOom() {
 	suite.PatchK8sObject(ctx, "default", "apps", "Deployment", "v1", "stress-mem", patchToReplicas(suite.T(), numReplicas))
 
 	// Expect at least one OOM kill of stress-ng within 15 seconds
-	suite.Assert().True(suite.waitForOOMKilled(ctx, 15*time.Second, 2*time.Minute, "stress-ng", 1))
+	suite.Assert().True(suite.waitForOOMKilled(ctx, 15*time.Second, 2*time.Minute, "stress-ng", 1, false))
 
 	// Scale to 1, wait for deployment to scale down, proving system is operational
 	suite.PatchK8sObject(ctx, "default", "apps", "Deployment", "v1", "stress-mem", patchToReplicas(suite.T(), 1))
 	suite.Require().NoError(suite.WaitForDeploymentAvailable(ctx, time.Minute, "default", "stress-mem", 1))
 
-	// Monitor OOM kills for 15 seconds and make sure no kills other than stress-ng happen
-	// Allow 0 as well: ideally that'd be the case, but fail on anything not containing stress-ng
-	suite.Assert().True(suite.waitForOOMKilled(ctx, 15*time.Second, 2*time.Minute, "stress-ng", 0))
+	// Monitor OOM kills for 15 seconds and log any kills other than stress-ng.
+	// Allow 0 as well: ideally that'd be the case, but allow other than stress-ng kills as well,
+	// as OOM pressure doesn't go down immediately, and some other processes might get killed in the meantime.
+	// The main point is to make sure that the system is stable via AssertClusterHealthy.
+	suite.Assert().True(suite.waitForOOMKilled(ctx, 15*time.Second, 2*time.Minute, "stress-ng", 0, true))
 
 	suite.APISuite.AssertClusterHealthy(ctx)
 }
@@ -138,10 +140,15 @@ func patchToReplicas(t *testing.T, replicas int) []byte {
 	return patch
 }
 
-// Waits for a period of time and return returns whether or not OOM events containing a specified process have been observed.
+// waitForOOMKilled waits for OOM events containing the specified process substring.
+//
+// It returns true if at least n matching events are observed within the observation
+// period or before the timeout expires. If a non-matching OOM kill is observed, it
+// returns false immediately when allowNotMatchingKills is false; otherwise, such
+// events are ignored.
 //
 //nolint:gocyclo
-func (suite *OomSuite) waitForOOMKilled(ctx context.Context, timeToObserve, timeout time.Duration, substr string, n int) bool {
+func (suite *OomSuite) waitForOOMKilled(ctx context.Context, timeToObserve, timeout time.Duration, substr string, n int, allowNotMatchingKills bool) bool {
 	startTime := time.Now()
 
 	watchCh := make(chan state.Event)
@@ -198,9 +205,11 @@ func (suite *OomSuite) waitForOOMKilled(ctx context.Context, timeToObserve, time
 			}
 
 			if bailOut {
-				suite.T().Logf("observed an OOM event not containing process substring %q: %q (%d containing)", substr, res.Processes, numOOMObserved)
+				suite.T().Logf("observed an OOM event not containing process substring %q: %v (%d containing, ignoring it: %v)", substr, res.Processes, numOOMObserved, allowNotMatchingKills)
 
-				return false
+				if !allowNotMatchingKills {
+					return false
+				}
 			}
 		}
 	}
