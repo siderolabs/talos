@@ -16,6 +16,8 @@ import (
 	"go.yaml.in/yaml/v4"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/cluster/kubernetes"
@@ -122,7 +124,8 @@ func (suite *ManifestsSuite) TestSync() {
 
 	// 3. Assert that kube-proxy has the extra arg
 	pods, err := suite.Clientset.CoreV1().Pods("kube-system").List(suite.ctx, metav1.ListOptions{
-		LabelSelector: "k8s-app=kube-proxy",
+		LabelSelector: labels.Set{"k8s-app": "kube-proxy"}.String(),
+		FieldSelector: fields.OneTermEqualSelector("status.phase", "Running").String(),
 	})
 	suite.Require().NoError(err)
 	suite.Require().NotEmpty(pods.Items)
@@ -130,7 +133,7 @@ func (suite *ManifestsSuite) TestSync() {
 	for _, pod := range pods.Items {
 		suite.Require().NotEmpty(pod.Spec.Containers)
 
-		suite.Assert().Contains(pod.Spec.Containers[0].Command, "--nodeport-addresses=0.0.0.0/0")
+		suite.Assert().Contains(pod.Spec.Containers[0].Command, "--nodeport-addresses=0.0.0.0/0", "pod is %#+v", pod)
 	}
 
 	// 4. Disable kube-proxy
