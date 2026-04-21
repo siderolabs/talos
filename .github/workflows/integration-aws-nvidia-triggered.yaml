@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-04-20T11:44:35Z by kres 4b58472-dirty.
+# Generated on 2026-04-22T07:15:36Z by kres 41939c6-dirty.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -8,12 +8,13 @@ concurrency:
 "on":
   workflow_run:
     workflows:
-      - artifacts-cron
+      - integration-build-aws-image-triggered
     types:
       - completed
 name: integration-aws-nvidia-triggered
 jobs:
   default:
+    name: ${{ matrix.driver }}-${{ matrix.variant }}-${{ matrix.arch }}
     permissions:
       actions: read
     runs-on:
@@ -86,7 +87,8 @@ jobs:
             extraTestArgs: -talos.extensions.nvidia -talos.verifyukibooted=false
             targetArch: arm64
             variant: production
-      max-parallel: 2
+      fail-fast: false
+      max-parallel: 8
     steps:
       - name: gather-system-info
         id: system-info
@@ -135,7 +137,7 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          name: talos-artifacts
+          name: talos-aws-artifacts
           path: _out
           run-id: ${{ github.event.workflow_run.id }}
       - name: Fix artifact permissions
@@ -160,12 +162,6 @@ jobs:
           REGISTRY: registry.dev.siderolabs.io
         run: |
           make ${{ matrix.buildTargets }} -C _out/extensions
-      - name: image-aws
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-        run: |
-          make image-aws
       - name: e2e-aws-prepare
         env:
           E2E_AWS_TARGET: ${{ matrix.e2eTarget }}

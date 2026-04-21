@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-04-20T11:44:35Z by kres 4b58472-dirty.
+# Generated on 2026-04-21T11:29:15Z by kres 41939c6-dirty.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -14,11 +14,37 @@ concurrency:
 name: integration-misc-0-triggered
 jobs:
   default:
+    name: ${{ matrix.test }}
     permissions:
       actions: read
     runs-on:
       group: large
     if: github.event.workflow_run.conclusion == 'success'
+    strategy:
+      matrix:
+        include:
+          - shortIntegrationTest: "yes"
+            test: e2e-firewall
+            withFirewall: block
+          - customCniUrl: https://raw.githubusercontent.com/projectcalico/calico/v3.30.3/manifests/canal.yaml
+            integrationTestRun: TestIntegration/api.ResetSuite/TestResetWithSpec
+            test: e2e-canal-reset
+          - shortIntegrationTest: "yes"
+            test: e2e-controlplane-port
+            withConfigPatch: '@hack/test/patches/ephemeral-min-max.yaml'
+            withControlPlanePort: "443"
+          - shortIntegrationTest: "yes"
+            test: e2e-uki-4k
+            with4kDisk: "true"
+            withUkiBoot: "true"
+          - qemuMemoryControlplanes: "4096"
+            qemuMemoryWorkers: "4096"
+            shortIntegrationTest: "yes"
+            test: e2e-flannel-netpol
+            testMode: network-policy
+            withConfigPatch: '@hack/test/patches/flannel-netpol.yaml'
+      fail-fast: false
+      max-parallel: 2
     steps:
       - name: gather-system-info
         id: system-info
@@ -70,56 +96,28 @@ jobs:
       - name: ci-temp-release-tag
         run: |
           make ci-temp-release-tag
-      - name: e2e-firewall
+      - name: ${{ matrix.test }}
         env:
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-firewall
+          CUSTOM_CNI_URL: ${{ matrix.customCniUrl }}
+          GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.test }}
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          SHORT_INTEGRATION_TEST: "yes"
-          WITH_FIREWALL: block
-        run: |
-          sudo -E make e2e-qemu
-      - name: e2e-canal-reset
-        env:
-          CUSTOM_CNI_URL: https://raw.githubusercontent.com/projectcalico/calico/v3.30.3/manifests/canal.yaml
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-canal-reset
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          INTEGRATION_TEST_RUN: TestIntegration/api.ResetSuite/TestResetWithSpec
-        run: |
-          sudo -E make e2e-qemu
-      - name: e2e-controlplane-port
-        env:
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-controlplane-port
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          SHORT_INTEGRATION_TEST: "yes"
-          WITH_CONFIG_PATCH: '@hack/test/patches/ephemeral-min-max.yaml'
-          WITH_CONTROL_PLANE_PORT: "443"
-        run: |
-          sudo -E make e2e-qemu
-      - name: e2e-uki-4k
-        env:
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-uki-4k
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          SHORT_INTEGRATION_TEST: "yes"
-          WITH_4K_DISK: "true"
-          WITH_UKI_BOOT: "true"
-        run: |
-          sudo -E make e2e-qemu
-      - name: e2e-flannel-netpol
-        env:
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-flannel-netpol
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          QEMU_MEMORY_CONTROLPLANES: "4096"
-          QEMU_MEMORY_WORKERS: "4096"
-          SHORT_INTEGRATION_TEST: "yes"
-          TEST_MODE: network-policy
-          WITH_CONFIG_PATCH: '@hack/test/patches/flannel-netpol.yaml'
+          INTEGRATION_TEST_RUN: ${{ matrix.integrationTestRun }}
+          QEMU_MEMORY_CONTROLPLANES: ${{ matrix.qemuMemoryControlplanes }}
+          QEMU_MEMORY_WORKERS: ${{ matrix.qemuMemoryWorkers }}
+          SHORT_INTEGRATION_TEST: ${{ matrix.shortIntegrationTest }}
+          TEST_MODE: ${{ matrix.testMode }}
+          WITH_4K_DISK: ${{ matrix.with4kDisk }}
+          WITH_CONFIG_PATCH: ${{ matrix.withConfigPatch }}
+          WITH_CONTROL_PLANE_PORT: ${{ matrix.withControlPlanePort }}
+          WITH_FIREWALL: ${{ matrix.withFirewall }}
+          WITH_UKI_BOOT: ${{ matrix.withUkiBoot }}
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
         with:
-          name: talos-logs-integration-misc-0
+          name: talos-logs-integration-misc-0-${{ matrix.test }}
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip

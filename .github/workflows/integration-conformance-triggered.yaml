@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-04-20T11:44:35Z by kres 4b58472-dirty.
+# Generated on 2026-04-22T07:15:36Z by kres 41939c6-dirty.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -8,12 +8,13 @@ concurrency:
 "on":
   workflow_run:
     workflows:
-      - artifacts-cron
+      - integration-build-enforcing-triggered
     types:
       - completed
 name: integration-conformance-triggered
 jobs:
   default:
+    name: ${{ matrix.variant }}
     permissions:
       actions: read
     runs-on:
@@ -22,17 +23,14 @@ jobs:
     strategy:
       matrix:
         include:
-          - extraTestArgs: ""
-            tagSuffixIn: ""
-            variant: default
+          - variant: default
             withConfigPatch: '@hack/test/patches/image-verification.yaml'
-            withEnforcing: ""
-          - buildEnforcing: "true"
-            extraTestArgs: -talos.enforcing
+          - extraTestArgs: -talos.enforcing
             tagSuffixIn: -enforcing
             variant: enforcing
-            withConfigPatch: ""
+            withConfigPatch: '@hack/test/patches/image-verification.yaml'
             withEnforcing: "true"
+      fail-fast: false
       max-parallel: 2
     steps:
       - name: gather-system-info
@@ -76,22 +74,12 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          name: talos-artifacts
+          name: talos-enforcing-artifacts
           path: _out
           run-id: ${{ github.event.workflow_run.id }}
       - name: Fix artifact permissions
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
-      - name: images-essential-enforcing
-        if: ${{ matrix.buildEnforcing }}
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-          TAG_SUFFIX_OUT: -enforcing
-        run: |
-          make images-essential
       - name: ci-temp-release-tag
         run: |
           make ci-temp-release-tag

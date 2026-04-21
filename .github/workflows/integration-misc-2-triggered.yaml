@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-04-20T11:44:35Z by kres 4b58472-dirty.
+# Generated on 2026-04-21T11:29:15Z by kres 41939c6-dirty.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -14,11 +14,40 @@ concurrency:
 name: integration-misc-2-triggered
 jobs:
   default:
+    name: ${{ matrix.test }}
     permissions:
       actions: read
     runs-on:
       group: large
     if: github.event.workflow_run.conclusion == 'success'
+    strategy:
+      matrix:
+        include:
+          - extraTestArgs: -talos.verifyukibooted=false
+            test: e2e-bios
+            withUefi: "false"
+          - extraTestArgs: -talos.verifyukibooted=false
+            test: e2e-bios-iso
+            viaMaintenanceMode: "true"
+            withIso: "true"
+            withUefi: "false"
+          - test: e2e-disk-image
+            useDiskImage: "true"
+            viaMaintenanceMode: "true"
+            withDiskEncryption: "true"
+            withJsonLogs: "false"
+          - extraTestArgs: -talos.verifyukibooted=false
+            test: e2e-disk-image-bios
+            useDiskImage: "true"
+            viaMaintenanceMode: "true"
+            withDiskEncryption: "true"
+            withUefi: "false"
+          - test: e2e-node-address-v2
+            withConfigPatch: '@hack/test/patches/node-address-v2.yaml'
+          - test: e2e-tpm1_2
+            withTpm12: "true"
+      fail-fast: false
+      max-parallel: 2
     steps:
       - name: gather-system-info
         id: system-info
@@ -70,70 +99,27 @@ jobs:
       - name: ci-temp-release-tag
         run: |
           make ci-temp-release-tag
-      - name: e2e-bios
+      - name: ${{ matrix.test }}
         env:
-          EXTRA_TEST_ARGS: -talos.verifyukibooted=false
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-bios
+          EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
+          GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.test }}
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
-          WITH_UEFI: "false"
-        run: |
-          sudo -E make e2e-qemu
-      - name: e2e-bios-iso
-        env:
-          EXTRA_TEST_ARGS: -talos.verifyukibooted=false
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-bios-iso
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          SHORT_INTEGRATION_TEST: "yes"
-          VIA_MAINTENANCE_MODE: "true"
-          WITH_ISO: "true"
-          WITH_UEFI: "false"
-        run: |
-          sudo -E make e2e-qemu
-      - name: e2e-disk-image
-        env:
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-disk-image
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          SHORT_INTEGRATION_TEST: "yes"
-          USE_DISK_IMAGE: "true"
-          VIA_MAINTENANCE_MODE: "true"
-          WITH_DISK_ENCRYPTION: "true"
-          WITH_JSON_LOGS: "false"
-        run: |
-          sudo -E make e2e-qemu
-      - name: e2e-disk-image-bios
-        env:
-          EXTRA_TEST_ARGS: -talos.verifyukibooted=false
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-disk-image-bios
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          SHORT_INTEGRATION_TEST: "yes"
-          USE_DISK_IMAGE: "true"
-          VIA_MAINTENANCE_MODE: "true"
-          WITH_DISK_ENCRYPTION: "true"
-          WITH_UEFI: "false"
-        run: |
-          sudo -E make e2e-qemu
-      - name: e2e-node-address-v2
-        env:
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-disk-image
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          SHORT_INTEGRATION_TEST: "yes"
-          WITH_CONFIG_PATCH: '@hack/test/patches/node-address-v2.yaml'
-        run: |
-          sudo -E make e2e-qemu
-      - name: e2e-tpm1_2
-        env:
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-tpm1_2
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          SHORT_INTEGRATION_TEST: "yes"
-          WITH_TPM1_2: "true"
+          USE_DISK_IMAGE: ${{ matrix.useDiskImage }}
+          VIA_MAINTENANCE_MODE: ${{ matrix.viaMaintenanceMode }}
+          WITH_CONFIG_PATCH: ${{ matrix.withConfigPatch }}
+          WITH_DISK_ENCRYPTION: ${{ matrix.withDiskEncryption }}
+          WITH_ISO: ${{ matrix.withIso }}
+          WITH_JSON_LOGS: ${{ matrix.withJsonLogs }}
+          WITH_TPM1_2: ${{ matrix.withTpm12 }}
+          WITH_UEFI: ${{ matrix.withUefi }}
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
         with:
-          name: talos-logs-integration-misc-2
+          name: talos-logs-integration-misc-2-${{ matrix.test }}
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip

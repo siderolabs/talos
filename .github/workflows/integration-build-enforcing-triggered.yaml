@@ -8,50 +8,17 @@ concurrency:
 "on":
   workflow_run:
     workflows:
-      - integration-build-enforcing-triggered
+      - artifacts-cron
     types:
       - completed
-name: integration-misc-3-triggered
+name: integration-build-enforcing-triggered
 jobs:
   default:
-    name: ${{ matrix.test }}-${{ matrix.variant }}
     permissions:
       actions: read
     runs-on:
       group: large
     if: github.event.workflow_run.conclusion == 'success'
-    strategy:
-      matrix:
-        include:
-          - test: e2e-network-chaos
-            variant: default
-            withNetworkChaos: "yes"
-          - test: e2e-metal-iso
-            variant: default
-            withConfigInjectionMethod: metal-iso
-          - test: e2e-iommu-pcidriverrebind
-            variant: default
-            withIommu: "yes"
-          - extraTestArgs: -talos.enforcing
-            tagSuffixIn: -enforcing
-            test: e2e-network-chaos
-            variant: enforcing
-            withEnforcing: "true"
-            withNetworkChaos: "yes"
-          - extraTestArgs: -talos.enforcing
-            tagSuffixIn: -enforcing
-            test: e2e-metal-iso
-            variant: enforcing
-            withConfigInjectionMethod: metal-iso
-            withEnforcing: "true"
-          - extraTestArgs: -talos.enforcing
-            tagSuffixIn: -enforcing
-            test: e2e-iommu-pcidriverrebind
-            variant: enforcing
-            withEnforcing: "true"
-            withIommu: "yes"
-      fail-fast: false
-      max-parallel: 2
     steps:
       - name: gather-system-info
         id: system-info
@@ -94,34 +61,28 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          name: talos-enforcing-artifacts
+          name: talos-artifacts
           path: _out
           run-id: ${{ github.event.workflow_run.id }}
       - name: Fix artifact permissions
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
-      - name: ci-temp-release-tag
-        run: |
-          make ci-temp-release-tag
-      - name: ${{ matrix.test }}
+      - name: images-essential-enforcing
         env:
-          EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
-          GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.test }}-${{ matrix.variant }}
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          SHORT_INTEGRATION_TEST: "yes"
-          TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
-          WITH_CONFIG_INJECTION_METHOD: ${{ matrix.withConfigInjectionMethod }}
-          WITH_ENFORCING: ${{ matrix.withEnforcing }}
-          WITH_IOMMU: ${{ matrix.withIommu }}
-          WITH_NETWORK_CHAOS: ${{ matrix.withNetworkChaos }}
+          IMAGER_ARGS: --extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1
+          PLATFORM: linux/amd64,linux/arm64
+          PUSH: "true"
+          TAG_SUFFIX_OUT: -enforcing
         run: |
-          sudo -E make e2e-qemu
+          make images-essential
+      - name: Generate executable list
+        run: |
+          find _out -type f -executable > _out/executable-artifacts
       - name: save artifacts
-        if: always()
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
         with:
-          name: talos-logs-integration-misc-3-${{ matrix.test }}-${{ matrix.variant }}
-          path: |-
-            /tmp/logs-*.tar.gz
-            /tmp/support-*.zip
-          retention-days: "5"
+          name: talos-enforcing-artifacts
+          path: |
+            _out
+          retention-days: "1"

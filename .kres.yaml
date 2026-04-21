@@ -48,198 +48,55 @@ spec:
         // This Source Code Form is subject to the terms of the Mozilla Public
         // License, v. 2.0. If a copy of the MPL was not distributed with this
         // file, You can obtain one at http://mozilla.org/MPL/2.0/.
-  protectedBranches:
-    - name: main
-      enforceContexts:
-        - default
-        - base-lint
-        - base-unit-tests
-        - e2e-iso
-        - e2e-qemu-short
-        - e2e-docker-short
-        - integration-qemu-default
-        - integration-qemu-enforcing
-        - integration-qemu-encrypted-vip
-        - integration-qemu-race
-        - integration-embedded
-        - integration-trusted-boot-default
-        - integration-trusted-boot-enforcing
-        - integration-provision-0
-        - integration-provision-1
-        - integration-provision-2
-        - integration-provision-3
-        - integration-airgapped
-        - integration-misc-0
-        - integration-misc-1-default
-        - integration-misc-2
-        - integration-misc-3-default
-        - integration-misc-3-enforcing
-        - integration-misc-4-default
-        - integration-misc-4-enforcing
-        - integration-extensions
-        - integration-cilium
-        - integration-conformance-default
-        - integration-conformance-enforcing
-        - integration-qemu-encrypted-vip
-        - integration-qemu-race
-        - integration-qemu-csi-rook-ceph
-        - integration-qemu-csi-openebs
-        - integration-qemu-csi-longhorn
-        - integration-images
-        - integration-reproducibility-test
-        - integration-cloud-images
-        - integration-image-cache
-        - integration-image-factory
-        - integration-aws-amd64
-        - integration-aws-arm64
-        - integration-aws-nvidia-oss-lts-amd64
-        - integration-aws-nvidia-oss-lts-arm64
-        - integration-aws-nvidia-oss-production-amd64
-        - integration-aws-nvidia-oss-production-arm64
-        - integration-aws-nvidia-nonfree-lts-amd64
-        - integration-aws-nvidia-nonfree-lts-arm64
-        - integration-aws-nvidia-nonfree-production-amd64
-        - integration-aws-nvidia-nonfree-production-arm64
-        - integration-gcp
-    - name: release-1.11
-      enforceContexts:
-        - default
-        - base-lint
-        - base-unit-tests
-        - e2e-iso
-        - e2e-qemu-short
-        - e2e-docker-short
-        - integration-qemu
-        - integration-qemu-enforcing
-        - integration-trusted-boot
-        - integration-trusted-boot-enforcing
-        - integration-provision-0
-        - integration-provision-1
-        - integration-provision-2
-        - integration-airgapped
-        - integration-misc-0
-        - integration-misc-1
-        - integration-misc-1-enforcing
-        - integration-misc-2
-        - integration-misc-3
-        - integration-misc-3-enforcing
-        - integration-misc-4
-        - integration-misc-4-enforcing
-        - integration-extensions
-        - integration-cilium
-        - integration-conformance
-        - integration-conformance-enforcing
-        - integration-qemu-encrypted-vip
-        - integration-qemu-race
-        - integration-qemu-csi-rook-ceph
-        - integration-qemu-csi-longhorn
-        - integration-qemu-csi-openebs
-        - integration-images
-        - integration-reproducibility-test
-        - integration-cloud-images
-        - integration-image-cache
-        - integration-image-factory
-        - integration-aws
-        - integration-aws-nvidia-oss-lts
-        - integration-aws-nvidia-oss-production
-        - integration-aws-nvidia-nonfree-lts
-        - integration-aws-nvidia-nonfree-production
-        - integration-gcp
-    - name: release-1.12
-      enforceContexts:
-        - default
-        - base-lint
-        - base-unit-tests
-        - e2e-iso
-        - e2e-qemu-short
-        - e2e-docker-short
-        - integration-qemu
-        - integration-qemu-enforcing
-        - integration-embedded
-        - integration-trusted-boot
-        - integration-trusted-boot-enforcing
-        - integration-provision-0
-        - integration-provision-1
-        - integration-provision-2
-        - integration-airgapped
-        - integration-misc-0
-        - integration-misc-1
-        - integration-misc-1-enforcing
-        - integration-misc-2
-        - integration-misc-3
-        - integration-misc-3-enforcing
-        - integration-misc-4
-        - integration-misc-4-enforcing
-        - integration-extensions
-        - integration-cilium
-        - integration-conformance
-        - integration-conformance-enforcing
-        - integration-qemu-encrypted-vip
-        - integration-qemu-race
-        - integration-qemu-csi-rook-ceph
-        - integration-qemu-csi-longhorn
-        - integration-qemu-csi-openebs
-        - integration-images
-        - integration-reproducibility-test
-        - integration-cloud-images
-        - integration-image-cache
-        - integration-image-factory
-        - integration-aws
-        - integration-aws-nvidia-oss-lts
-        - integration-aws-nvidia-oss-production
-        - integration-aws-nvidia-nonfree-lts
-        - integration-aws-nvidia-nonfree-production
-        - integration-gcp
-    - name: release-1.13
-      enforceContexts:
-        - default
-        - base-lint
-        - base-unit-tests
-        - e2e-iso
-        - e2e-qemu-short
-        - e2e-docker-short
-        - integration-qemu
-        - integration-qemu-enforcing
-        - integration-embedded
-        - integration-trusted-boot
-        - integration-trusted-boot-enforcing
-        - integration-provision-0
-        - integration-provision-1
-        - integration-provision-2
-        - integration-provision-3
-        - integration-airgapped
-        - integration-misc-0
-        - integration-misc-1
-        - integration-misc-1-enforcing
-        - integration-misc-2
-        - integration-misc-3
-        - integration-misc-3-enforcing
-        - integration-misc-4
-        - integration-misc-4-enforcing
-        - integration-extensions
-        - integration-cilium
-        - integration-conformance
-        - integration-conformance-enforcing
-        - integration-qemu-encrypted-vip
-        - integration-qemu-race
-        - integration-qemu-csi-rook-ceph
-        - integration-qemu-csi-longhorn
-        - integration-qemu-csi-openebs
-        - integration-images
-        - integration-reproducibility-test
-        - integration-cloud-images
-        - integration-image-cache
-        - integration-image-factory
-        - integration-aws
-        - integration-aws-nvidia-oss-lts
-        - integration-aws-nvidia-oss-lts-arm64
-        - integration-aws-nvidia-oss-production
-        - integration-aws-nvidia-nonfree-lts
-        - integration-aws-nvidia-nonfree-production
-        - integration-gcp
 ---
 kind: common.GHWorkflow
 spec:
+  labelDescriptions:
+    integration/airgapped: "Run airgapped integration tests"
+    integration/aws: "Run AWS integration tests on all architectures"
+    integration/aws-amd64: "Run AWS integration tests on AMD64"
+    integration/aws-arm64: "Run AWS integration tests on ARM64"
+    integration/aws-nvidia: "Run AWS NVIDIA integration tests (all drivers, variants, architectures)"
+    integration/aws-nvidia-nonfree: "Run AWS NVIDIA integration tests with non-free drivers"
+    integration/aws-nvidia-nonfree-lts-amd64: "Run AWS NVIDIA non-free LTS driver tests on AMD64"
+    integration/aws-nvidia-nonfree-lts-arm64: "Run AWS NVIDIA non-free LTS driver tests on ARM64"
+    integration/aws-nvidia-nonfree-production-amd64: "Run AWS NVIDIA non-free production driver tests on AMD64"
+    integration/aws-nvidia-nonfree-production-arm64: "Run AWS NVIDIA non-free production driver tests on ARM64"
+    integration/aws-nvidia-oss: "Run AWS NVIDIA integration tests with OSS drivers"
+    integration/aws-nvidia-oss-lts-amd64: "Run AWS NVIDIA OSS LTS driver tests on AMD64"
+    integration/aws-nvidia-oss-lts-arm64: "Run AWS NVIDIA OSS LTS driver tests on ARM64"
+    integration/aws-nvidia-oss-production-amd64: "Run AWS NVIDIA OSS production driver tests on AMD64"
+    integration/aws-nvidia-oss-production-arm64: "Run AWS NVIDIA OSS production driver tests on ARM64"
+    integration/cilium: "Run Cilium integration tests"
+    integration/cloud-images: "Run cloud images integration tests"
+    integration/conformance: "Run Kubernetes conformance tests (all variants)"
+    integration/conformance-default: "Run Kubernetes conformance tests on default variant"
+    integration/conformance-enforcing: "Run Kubernetes conformance tests on enforcing variant"
+    integration/embedded: "Run embedded integration tests"
+    integration/extensions: "Run extensions integration tests"
+    integration/gcp: "Run GCP integration tests"
+    integration/image-cache: "Run image-cache integration tests"
+    integration/image-factory: "Run image-factory integration tests"
+    integration/images: "Run images integration tests"
+    integration/misc: "Run all misc integration tests (misc-0 through misc-4)"
+    integration/misc-0: "Run misc-0 integration tests"
+    integration/misc-1: "Run misc-1 integration tests"
+    integration/misc-2: "Run misc-2 integration tests"
+    integration/misc-3: "Run misc-3 integration tests"
+    integration/misc-4: "Run misc-4 integration tests"
+    integration/provision: "Run provision integration tests (all tracks)"
+    integration/qemu: "Run QEMU integration tests (all variants)"
+    integration/qemu-csi: "Run QEMU CSI integration tests"
+    integration/qemu-csi-longhorn: "Run QEMU CSI Longhorn integration tests"
+    integration/qemu-default: "Run QEMU integration tests on default variant"
+    integration/qemu-encrypted-vip: "Run QEMU integration tests with disk encryption and virtual IP"
+    integration/qemu-enforcing: "Run QEMU integration tests on enforcing variant"
+    integration/qemu-race: "Run QEMU integration tests with the race detector"
+    integration/release-gate: "Run all release-gate integration tests"
+    integration/reproducibility-test: "Run build reproducibility tests"
+    integration/trusted-boot: "Run trusted-boot integration tests (all variants)"
+    integration/trusted-boot-default: "Run trusted-boot integration tests on default variant"
+    integration/trusted-boot-enforcing: "Run trusted-boot integration tests on enforcing variant"
   jobs:
     - name: default
       buildxOptions:
@@ -562,9 +419,10 @@ spec:
         enabled: true
       depends:
         - default
+        - integration-build-enforcing
       runnerGroup: large
       onWorkflowRun:
-        workflows: [artifacts-cron]
+        workflows: [integration-build-enforcing-triggered]
         types: [completed]
       triggerLabels:
         - integration/qemu
@@ -582,7 +440,6 @@ spec:
             qemuExtraDisksDrivers: "virtiofs,ide,nvme"
             qemuExtraDiscsTags: "disk0"
           - variant: enforcing
-            buildEnforcing: "true"
             tagSuffixIn: -enforcing
             extraTestArgs: -talos.enforcing
             withEnforcing: "true"
@@ -615,18 +472,8 @@ spec:
         - name: download-artifacts
           artifactStep:
             type: download
-            artifactName: talos-artifacts
+            artifactName: talos-enforcing-artifacts
             artifactPath: _out
-        - name: images-essential-enforcing
-          command: images-essential
-          conditions:
-            - matrix.buildEnforcing
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
-            TAG_SUFFIX_OUT: -enforcing
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
         - name: ci-temp-release-tag
         - name: build-race
           command: initramfs installer-base imager installer
@@ -707,12 +554,13 @@ spec:
         enabled: true
       depends:
         - default
+        - integration-build-enforcing
       runnerGroup: large
       triggerLabels:
         - integration/conformance
         - integration/release-gate
       onWorkflowRun:
-        workflows: [artifacts-cron]
+        workflows: [integration-build-enforcing-triggered]
         types: [completed]
       matrix:
         maxParallel: 2
@@ -720,12 +568,8 @@ spec:
         include:
           - variant: default
             withConfigPatch: "@hack/test/patches/image-verification.yaml"
-            tagSuffixIn: ""
-            withEnforcing: ""
-            extraTestArgs: ""
           - variant: enforcing
-            buildEnforcing: "true"
-            withConfigPatch: ""
+            withConfigPatch: "@hack/test/patches/image-verification.yaml"
             tagSuffixIn: -enforcing
             withEnforcing: "true"
             extraTestArgs: -talos.enforcing
@@ -733,18 +577,8 @@ spec:
         - name: download-artifacts
           artifactStep:
             type: download
-            artifactName: talos-artifacts
+            artifactName: talos-enforcing-artifacts
             artifactPath: _out
-        - name: images-essential-enforcing
-          command: images-essential
-          conditions:
-            - matrix.buildEnforcing
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
-            TAG_SUFFIX_OUT: -enforcing
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
         - name: ci-temp-release-tag
         - name: conformance-qemu
           command: e2e-qemu
@@ -774,25 +608,23 @@ spec:
         enabled: true
       depends:
         - default
+        - integration-build-enforcing
       runnerGroup: large
       onWorkflowRun:
-        workflows: [artifacts-cron]
+        workflows: [integration-build-enforcing-triggered]
         types: [completed]
       triggerLabels:
         - integration/trusted-boot
         - integration/release-gate
       matrix:
-        maxParallel: 1
+        maxParallel: 2
         labelKeys: [variant]
         include:
           - variant: default
             withConfigPatch: "@hack/test/patches/image-verification.yaml"
-            tagSuffixIn: ""
-            withEnforcing: ""
             extraTestArgs: "-talos.trustedboot"
           - variant: enforcing
-            buildEnforcing: "true"
-            withConfigPatch: ""
+            withConfigPatch: "@hack/test/patches/image-verification.yaml"
             tagSuffixIn: -enforcing
             withEnforcing: "true"
             extraTestArgs: "-talos.trustedboot -talos.enforcing"
@@ -800,22 +632,12 @@ spec:
         - name: download-artifacts
           artifactStep:
             type: download
-            artifactName: talos-artifacts
+            artifactName: talos-enforcing-artifacts
             artifactPath: _out
-        - name: images-essential-enforcing
-          command: images-essential
-          conditions:
-            - matrix.buildEnforcing
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
-            TAG_SUFFIX_OUT: -enforcing
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
         - name: ci-temp-release-tag
         - name: secureboot-iso
           conditions:
-            - matrix.buildEnforcing
+            - matrix.withEnforcing
           environment:
             PLATFORM: linux/amd64,linux/arm64
             IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
@@ -920,6 +742,23 @@ spec:
         - integration/misc
         - integration/airgapped
         - integration/release-gate
+      matrix:
+        maxParallel: 2
+        flatJobMatrix: true
+        labelKeys: [test]
+        include:
+          - test: e2e-airgapped-no-proxy
+            withAirgapped: no-proxy
+            withClusterDiscovery: "false"
+          - test: e2e-airgapped-http-proxy
+            withAirgapped: http-proxy
+            withConfigPatch: "@hack/test/patches/image-verification.yaml"
+          - test: e2e-airgapped-secure-proxy
+            withAirgapped: secure-http-proxy
+            withConfigPatch: "@hack/test/patches/image-verification.yaml"
+          - test: e2e-airgapped-reverse-proxy
+            withAirgapped: https-reverse-proxy
+            withConfigPatch: "@hack/test/patches/image-verification.yaml"
       steps:
         - name: download-artifacts
           artifactStep:
@@ -931,53 +770,73 @@ spec:
           command: integration-images-list
           environment:
             IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-airgapped-no-proxy
+        - name: ${{ matrix.test }}
           command: e2e-qemu
           withSudo: true
           environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-no-proxy
+            GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.test }}
             SHORT_INTEGRATION_TEST: yes
-            WITH_AIRGAPPED: no-proxy
-            WITH_CLUSTER_DISCOVERY: "false"
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-airgapped-http-proxy
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-http-proxy
-            SHORT_INTEGRATION_TEST: yes
-            WITH_AIRGAPPED: http-proxy
-            WITH_CONFIG_PATCH: "@hack/test/patches/image-verification.yaml"
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-airgapped-secure-proxy
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-secure-proxy
-            SHORT_INTEGRATION_TEST: yes
-            WITH_AIRGAPPED: secure-http-proxy
-            WITH_CONFIG_PATCH: "@hack/test/patches/image-verification.yaml"
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-airgapped-reverse-proxy
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-reverse-proxy
-            SHORT_INTEGRATION_TEST: yes
-            WITH_AIRGAPPED: https-reverse-proxy
-            WITH_CONFIG_PATCH: "@hack/test/patches/image-verification.yaml"
+            WITH_AIRGAPPED: ${{ matrix.withAirgapped }}
+            WITH_CLUSTER_DISCOVERY: ${{ matrix.withClusterDiscovery }}
+            WITH_CONFIG_PATCH: ${{ matrix.withConfigPatch }}
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
           conditions:
             - always
           artifactStep:
             type: upload
-            artifactName: talos-logs-integration-airgapped
+            artifactName: talos-logs-integration-airgapped-${{ matrix.test }}
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
               - "/tmp/support-*.zip"
               - "/tmp/airgapped*.log"
+    - name: integration-build-enforcing
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runnerGroup: large
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
+      triggerLabels:
+        - integration/misc
+        - integration/misc-1
+        - integration/misc-3
+        - integration/misc-4
+        - integration/qemu
+        - integration/qemu-default
+        - integration/qemu-enforcing
+        - integration/qemu-encrypted-vip
+        - integration/qemu-race
+        - integration/conformance
+        - integration/conformance-default
+        - integration/conformance-enforcing
+        - integration/trusted-boot
+        - integration/trusted-boot-default
+        - integration/trusted-boot-enforcing
+        - integration/release-gate
+      steps:
+        - name: download-artifacts
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: images-essential-enforcing
+          command: images-essential
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
+            TAG_SUFFIX_OUT: -enforcing
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            PUSH: true
+        - name: save-enforcing-artifacts
+          artifactStep:
+            type: upload
+            artifactName: talos-enforcing-artifacts
+            artifactPath: _out
+            retentionDays: "1"
     - name: integration-misc-0
       buildxOptions:
         enabled: true
@@ -991,6 +850,31 @@ spec:
         - integration/misc
         - integration/misc-0
         - integration/release-gate
+      matrix:
+        maxParallel: 2
+        flatJobMatrix: true
+        labelKeys: [test]
+        include:
+          - test: e2e-firewall
+            shortIntegrationTest: "yes"
+            withFirewall: block
+          - test: e2e-canal-reset
+            integrationTestRun: TestIntegration/api.ResetSuite/TestResetWithSpec
+            customCniUrl: https://raw.githubusercontent.com/projectcalico/calico/v3.30.3/manifests/canal.yaml
+          - test: e2e-controlplane-port
+            shortIntegrationTest: "yes"
+            withControlPlanePort: "443"
+            withConfigPatch: "@hack/test/patches/ephemeral-min-max.yaml"
+          - test: e2e-uki-4k
+            shortIntegrationTest: "yes"
+            withUkiBoot: "true"
+            with4kDisk: "true"
+          - test: e2e-flannel-netpol
+            shortIntegrationTest: "yes"
+            qemuMemoryWorkers: "4096"
+            qemuMemoryControlplanes: "4096"
+            withConfigPatch: "@hack/test/patches/flannel-netpol.yaml"
+            testMode: network-policy
       steps:
         - name: download-artifacts
           artifactStep:
@@ -998,57 +882,29 @@ spec:
             artifactName: talos-artifacts
             artifactPath: _out
         - name: ci-temp-release-tag
-        - name: e2e-firewall
+        - name: ${{ matrix.test }}
           command: e2e-qemu
           withSudo: true
           environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-firewall
-            SHORT_INTEGRATION_TEST: yes
-            WITH_FIREWALL: block
+            GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.test }}
+            SHORT_INTEGRATION_TEST: ${{ matrix.shortIntegrationTest }}
+            WITH_FIREWALL: ${{ matrix.withFirewall }}
+            INTEGRATION_TEST_RUN: ${{ matrix.integrationTestRun }}
+            CUSTOM_CNI_URL: ${{ matrix.customCniUrl }}
+            WITH_CONTROL_PLANE_PORT: ${{ matrix.withControlPlanePort }}
+            WITH_CONFIG_PATCH: ${{ matrix.withConfigPatch }}
+            WITH_UKI_BOOT: ${{ matrix.withUkiBoot }}
+            WITH_4K_DISK: ${{ matrix.with4kDisk }}
+            QEMU_MEMORY_WORKERS: ${{ matrix.qemuMemoryWorkers }}
+            QEMU_MEMORY_CONTROLPLANES: ${{ matrix.qemuMemoryControlplanes }}
+            TEST_MODE: ${{ matrix.testMode }}
             IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-canal-reset
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-canal-reset
-            INTEGRATION_TEST_RUN: TestIntegration/api.ResetSuite/TestResetWithSpec
-            CUSTOM_CNI_URL: https://raw.githubusercontent.com/projectcalico/calico/v3.30.3/manifests/canal.yaml
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-controlplane-port
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-controlplane-port
-            SHORT_INTEGRATION_TEST: yes
-            WITH_CONTROL_PLANE_PORT: 443
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            WITH_CONFIG_PATCH: "@hack/test/patches/ephemeral-min-max.yaml"
-        - name: e2e-uki-4k
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-uki-4k
-            SHORT_INTEGRATION_TEST: yes
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            WITH_UKI_BOOT: true
-            WITH_4K_DISK: true
-        - name: e2e-flannel-netpol
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-flannel-netpol
-            SHORT_INTEGRATION_TEST: yes
-            QEMU_MEMORY_WORKERS: 4096
-            QEMU_MEMORY_CONTROLPLANES: 4096
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            WITH_CONFIG_PATCH: "@hack/test/patches/flannel-netpol.yaml"
-            TEST_MODE: network-policy
         - name: save-talos-logs
           conditions:
             - always
           artifactStep:
             type: upload
-            artifactName: talos-logs-integration-misc-0
+            artifactName: talos-logs-integration-misc-0-${{ matrix.test }}
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
@@ -1058,9 +914,10 @@ spec:
         enabled: true
       depends:
         - default
+        - integration-build-enforcing
       runnerGroup: large
       onWorkflowRun:
-        workflows: [artifacts-cron]
+        workflows: [integration-build-enforcing-triggered]
         types: [completed]
       triggerLabels:
         - integration/misc
@@ -1068,78 +925,73 @@ spec:
         - integration/release-gate
       matrix:
         maxParallel: 2
-        labelKeys: [variant]
+        flatJobMatrix: true
+        labelKeys: [test, variant]
         include:
           - variant: default
-            tagSuffixIn: ""
-            withEnforcing: ""
-            extraTestArgs: ""
+            test: e2e-no-cluster-discovery
+            withClusterDiscovery: "false"
+          - variant: default
+            test: e2e-kubespan
+            withClusterDiscovery: "true"
+            withKubespan: "true"
+          - variant: default
+            test: e2e-default-hostname
+            viaMaintenanceMode: "true"
+            disableDhcpHostname: "true"
+          - variant: default
+            test: e2e-min-requirements
+            qemuMemoryWorkers: "1024"
+            qemuMemoryControlplanes: "2048"
+            qemuSystemDiskSize: "10240"
           - variant: enforcing
-            buildEnforcing: "true"
+            test: e2e-no-cluster-discovery
             tagSuffixIn: -enforcing
             withEnforcing: "true"
             extraTestArgs: -talos.enforcing
+            withClusterDiscovery: "false"
+          - variant: enforcing
+            test: e2e-kubespan
+            tagSuffixIn: -enforcing
+            withEnforcing: "true"
+            extraTestArgs: -talos.enforcing
+            withClusterDiscovery: "true"
+            withKubespan: "true"
+          - variant: enforcing
+            test: e2e-default-hostname
+            tagSuffixIn: -enforcing
+            withEnforcing: "true"
+            extraTestArgs: -talos.enforcing
+            viaMaintenanceMode: "true"
+            disableDhcpHostname: "true"
+          - variant: enforcing
+            test: e2e-min-requirements
+            tagSuffixIn: -enforcing
+            withEnforcing: "true"
+            extraTestArgs: -talos.enforcing
+            qemuMemoryWorkers: "1024"
+            qemuMemoryControlplanes: "2048"
+            qemuSystemDiskSize: "10240"
       steps:
         - name: download-artifacts
           artifactStep:
             type: download
-            artifactName: talos-artifacts
+            artifactName: talos-enforcing-artifacts
             artifactPath: _out
-        - name: images-essential-enforcing
-          command: images-essential
-          conditions:
-            - matrix.buildEnforcing
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
-            TAG_SUFFIX_OUT: -enforcing
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
         - name: ci-temp-release-tag
-        - name: e2e-no-cluster-discovery
+        - name: ${{ matrix.test }}
           command: e2e-qemu
           withSudo: true
           environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-no-cluster-discovery
+            GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.test }}-${{ matrix.variant }}
             SHORT_INTEGRATION_TEST: yes
-            WITH_CLUSTER_DISCOVERY: false
-            TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
-            EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
-            WITH_ENFORCING: ${{ matrix.withEnforcing }}
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-kubespan
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-kubespan
-            SHORT_INTEGRATION_TEST: yes
-            WITH_CLUSTER_DISCOVERY: true
-            WITH_KUBESPAN: "true"
-            TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
-            EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
-            WITH_ENFORCING: ${{ matrix.withEnforcing }}
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-default-hostname
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-default-hostname
-            SHORT_INTEGRATION_TEST: yes
-            VIA_MAINTENANCE_MODE: true
-            DISABLE_DHCP_HOSTNAME: true
-            TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
-            EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
-            WITH_ENFORCING: ${{ matrix.withEnforcing }}
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-min-requirements
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-min-requirements
-            SHORT_INTEGRATION_TEST: yes
-            QEMU_MEMORY_WORKERS: 1024
-            QEMU_MEMORY_CONTROLPLANES: 2048
-            QEMU_SYSTEM_DISK_SIZE: 10240
+            WITH_CLUSTER_DISCOVERY: ${{ matrix.withClusterDiscovery }}
+            WITH_KUBESPAN: ${{ matrix.withKubespan }}
+            VIA_MAINTENANCE_MODE: ${{ matrix.viaMaintenanceMode }}
+            DISABLE_DHCP_HOSTNAME: ${{ matrix.disableDhcpHostname }}
+            QEMU_MEMORY_WORKERS: ${{ matrix.qemuMemoryWorkers }}
+            QEMU_MEMORY_CONTROLPLANES: ${{ matrix.qemuMemoryControlplanes }}
+            QEMU_SYSTEM_DISK_SIZE: ${{ matrix.qemuSystemDiskSize }}
             TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
             EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
             WITH_ENFORCING: ${{ matrix.withEnforcing }}
@@ -1149,7 +1001,7 @@ spec:
             - always
           artifactStep:
             type: upload
-            artifactName: talos-logs-integration-misc-1-${{ matrix.variant }}
+            artifactName: talos-logs-integration-misc-1-${{ matrix.test }}-${{ matrix.variant }}
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
@@ -1167,6 +1019,34 @@ spec:
         - integration/misc
         - integration/misc-2
         - integration/release-gate
+      matrix:
+        maxParallel: 2
+        flatJobMatrix: true
+        labelKeys: [test]
+        include:
+          - test: e2e-bios
+            withUefi: "false"
+            extraTestArgs: -talos.verifyukibooted=false
+          - test: e2e-bios-iso
+            withUefi: "false"
+            viaMaintenanceMode: "true"
+            withIso: "true"
+            extraTestArgs: -talos.verifyukibooted=false
+          - test: e2e-disk-image
+            useDiskImage: "true"
+            viaMaintenanceMode: "true"
+            withDiskEncryption: "true"
+            withJsonLogs: "false"
+          - test: e2e-disk-image-bios
+            useDiskImage: "true"
+            viaMaintenanceMode: "true"
+            withDiskEncryption: "true"
+            withUefi: "false"
+            extraTestArgs: -talos.verifyukibooted=false
+          - test: e2e-node-address-v2
+            withConfigPatch: "@hack/test/patches/node-address-v2.yaml"
+          - test: e2e-tpm1_2
+            withTpm12: "true"
       steps:
         - name: download-artifacts
           artifactStep:
@@ -1174,71 +1054,28 @@ spec:
             artifactName: talos-artifacts
             artifactPath: _out
         - name: ci-temp-release-tag
-        - name: e2e-bios
+        - name: ${{ matrix.test }}
           command: e2e-qemu
           withSudo: true
           environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-bios
+            GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.test }}
             SHORT_INTEGRATION_TEST: yes
-            WITH_UEFI: false
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            EXTRA_TEST_ARGS: "-talos.verifyukibooted=false"
-        - name: e2e-bios-iso
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-bios-iso
-            SHORT_INTEGRATION_TEST: yes
-            WITH_UEFI: false
-            VIA_MAINTENANCE_MODE: true
-            WITH_ISO: true
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            EXTRA_TEST_ARGS: "-talos.verifyukibooted=false"
-        - name: e2e-disk-image
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-disk-image
-            SHORT_INTEGRATION_TEST: yes
-            USE_DISK_IMAGE: true
-            VIA_MAINTENANCE_MODE: true
-            WITH_DISK_ENCRYPTION: true
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            WITH_JSON_LOGS: "false" # test this path as well
-        - name: e2e-disk-image-bios
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-disk-image-bios
-            SHORT_INTEGRATION_TEST: yes
-            USE_DISK_IMAGE: true
-            VIA_MAINTENANCE_MODE: true
-            WITH_DISK_ENCRYPTION: true
-            WITH_UEFI: false
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            EXTRA_TEST_ARGS: "-talos.verifyukibooted=false"
-        - name: e2e-node-address-v2
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-disk-image
-            SHORT_INTEGRATION_TEST: yes
-            WITH_CONFIG_PATCH: "@hack/test/patches/node-address-v2.yaml"
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-tpm1_2
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-tpm1_2
-            SHORT_INTEGRATION_TEST: yes
-            WITH_TPM1_2: true
+            WITH_UEFI: ${{ matrix.withUefi }}
+            VIA_MAINTENANCE_MODE: ${{ matrix.viaMaintenanceMode }}
+            WITH_ISO: ${{ matrix.withIso }}
+            USE_DISK_IMAGE: ${{ matrix.useDiskImage }}
+            WITH_DISK_ENCRYPTION: ${{ matrix.withDiskEncryption }}
+            WITH_JSON_LOGS: ${{ matrix.withJsonLogs }}
+            WITH_CONFIG_PATCH: ${{ matrix.withConfigPatch }}
+            WITH_TPM1_2: ${{ matrix.withTpm12 }}
+            EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
           conditions:
             - always
           artifactStep:
             type: upload
-            artifactName: talos-logs-integration-misc-2
+            artifactName: talos-logs-integration-misc-2-${{ matrix.test }}
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
@@ -1248,9 +1085,10 @@ spec:
         enabled: true
       depends:
         - default
+        - integration-build-enforcing
       runnerGroup: large
       onWorkflowRun:
-        workflows: [artifacts-cron]
+        workflows: [integration-build-enforcing-triggered]
         types: [completed]
       triggerLabels:
         - integration/misc
@@ -1258,63 +1096,52 @@ spec:
         - integration/release-gate
       matrix:
         maxParallel: 2
-        labelKeys: [variant]
+        flatJobMatrix: true
+        labelKeys: [test, variant]
         include:
           - variant: default
-            tagSuffixIn: ""
-            withEnforcing: ""
-            extraTestArgs: ""
+            test: e2e-network-chaos
+            withNetworkChaos: "yes"
+          - variant: default
+            test: e2e-metal-iso
+            withConfigInjectionMethod: metal-iso
+          - variant: default
+            test: e2e-iommu-pcidriverrebind
+            withIommu: "yes"
           - variant: enforcing
-            buildEnforcing: "true"
+            test: e2e-network-chaos
             tagSuffixIn: -enforcing
             withEnforcing: "true"
             extraTestArgs: -talos.enforcing
+            withNetworkChaos: "yes"
+          - variant: enforcing
+            test: e2e-metal-iso
+            tagSuffixIn: -enforcing
+            withEnforcing: "true"
+            extraTestArgs: -talos.enforcing
+            withConfigInjectionMethod: metal-iso
+          - variant: enforcing
+            test: e2e-iommu-pcidriverrebind
+            tagSuffixIn: -enforcing
+            withEnforcing: "true"
+            extraTestArgs: -talos.enforcing
+            withIommu: "yes"
       steps:
         - name: download-artifacts
           artifactStep:
             type: download
-            artifactName: talos-artifacts
+            artifactName: talos-enforcing-artifacts
             artifactPath: _out
-        - name: images-essential-enforcing
-          command: images-essential
-          conditions:
-            - matrix.buildEnforcing
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
-            TAG_SUFFIX_OUT: -enforcing
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
         - name: ci-temp-release-tag
-        - name: e2e-network-chaos
+        - name: ${{ matrix.test }}
           command: e2e-qemu
           withSudo: true
           environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-network-chaos
+            GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.test }}-${{ matrix.variant }}
             SHORT_INTEGRATION_TEST: yes
-            WITH_NETWORK_CHAOS: yes
-            TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
-            EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
-            WITH_ENFORCING: ${{ matrix.withEnforcing }}
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-metal-iso
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-metal-iso
-            SHORT_INTEGRATION_TEST: yes
-            WITH_CONFIG_INJECTION_METHOD: "metal-iso"
-            TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
-            EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
-            WITH_ENFORCING: ${{ matrix.withEnforcing }}
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-iommu-pcidriverrebind
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-iommu-pcidriverrebind
-            SHORT_INTEGRATION_TEST: yes
-            WITH_IOMMU: yes
+            WITH_NETWORK_CHAOS: ${{ matrix.withNetworkChaos }}
+            WITH_CONFIG_INJECTION_METHOD: ${{ matrix.withConfigInjectionMethod }}
+            WITH_IOMMU: ${{ matrix.withIommu }}
             TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
             EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
             WITH_ENFORCING: ${{ matrix.withEnforcing }}
@@ -1324,7 +1151,7 @@ spec:
             - always
           artifactStep:
             type: upload
-            artifactName: talos-logs-integration-misc-3-${{ matrix.variant }}
+            artifactName: talos-logs-integration-misc-3-${{ matrix.test }}-${{ matrix.variant }}
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
@@ -1334,9 +1161,10 @@ spec:
         enabled: true
       depends:
         - default
+        - integration-build-enforcing
       runnerGroup: large
       onWorkflowRun:
-        workflows: [artifacts-cron]
+        workflows: [integration-build-enforcing-triggered]
         types: [completed]
       triggerLabels:
         - integration/misc
@@ -1344,85 +1172,71 @@ spec:
         - integration/release-gate
       matrix:
         maxParallel: 2
-        labelKeys: [variant]
+        flatJobMatrix: true
+        labelKeys: [test, variant]
         include:
           - variant: default
-            tagSuffixIn: ""
-            withEnforcing: ""
-            extraTestArgs: ""
+            test: e2e-siderolink
+            withSiderolinkAgent: "true"
+            viaMaintenanceMode: "true"
+          - variant: default
+            test: e2e-siderolink-tunnel
+            withSiderolinkAgent: tunnel
+            viaMaintenanceMode: "true"
+          - variant: default
+            test: e2e-siderolink-tls
+            withSiderolinkAgent: wireguard+tls
+            viaMaintenanceMode: "true"
+          - variant: default
+            test: e2e-apparmor
+            withAppArmorLsmEnabled: "yes"
+          - variant: default
+            test: e2e-k8s-user-namespace
+            withConfigPatch: "@hack/test/patches/usernamespace.yaml"
           - variant: enforcing
-            buildEnforcing: "true"
+            test: e2e-siderolink
             tagSuffixIn: -enforcing
             withEnforcing: "true"
             extraTestArgs: -talos.enforcing
+            withSiderolinkAgent: "true"
+            viaMaintenanceMode: "true"
+          - variant: enforcing
+            test: e2e-siderolink-tunnel
+            tagSuffixIn: -enforcing
+            withEnforcing: "true"
+            extraTestArgs: -talos.enforcing
+            withSiderolinkAgent: tunnel
+            viaMaintenanceMode: "true"
+          - variant: enforcing
+            test: e2e-siderolink-tls
+            tagSuffixIn: -enforcing
+            withEnforcing: "true"
+            extraTestArgs: -talos.enforcing
+            withSiderolinkAgent: wireguard+tls
+            viaMaintenanceMode: "true"
+          - variant: enforcing
+            test: e2e-k8s-user-namespace
+            tagSuffixIn: -enforcing
+            withEnforcing: "true"
+            extraTestArgs: -talos.enforcing
+            withConfigPatch: "@hack/test/patches/usernamespace.yaml"
       steps:
         - name: download-artifacts
           artifactStep:
             type: download
-            artifactName: talos-artifacts
+            artifactName: talos-enforcing-artifacts
             artifactPath: _out
-        - name: images-essential-enforcing
-          command: images-essential
-          conditions:
-            - matrix.buildEnforcing
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGER_ARGS: "--extra-kernel-arg=console=ttyS0 --extra-kernel-arg=enforcing=1"
-            TAG_SUFFIX_OUT: -enforcing
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            PUSH: true
         - name: ci-temp-release-tag
-        - name: e2e-siderolink
+        - name: ${{ matrix.test }}
           command: e2e-qemu
           withSudo: true
           environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink
+            GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.test }}-${{ matrix.variant }}
             SHORT_INTEGRATION_TEST: yes
-            WITH_SIDEROLINK_AGENT: true
-            VIA_MAINTENANCE_MODE: true
-            TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
-            EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
-            WITH_ENFORCING: ${{ matrix.withEnforcing }}
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-siderolink-tunnel
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink-tunnel
-            SHORT_INTEGRATION_TEST: yes
-            WITH_SIDEROLINK_AGENT: tunnel
-            VIA_MAINTENANCE_MODE: true
-            TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
-            EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
-            WITH_ENFORCING: ${{ matrix.withEnforcing }}
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-siderolink-tls
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-siderolink-tls
-            SHORT_INTEGRATION_TEST: yes
-            WITH_SIDEROLINK_AGENT: wireguard+tls
-            VIA_MAINTENANCE_MODE: true
-            TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
-            EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
-            WITH_ENFORCING: ${{ matrix.withEnforcing }}
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-apparmor  # intentionally no enforcing vars: apparmor runs without enforcing in both variants
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-apparmor
-            SHORT_INTEGRATION_TEST: yes
-            WITH_APPARMOR_LSM_ENABLED: yes
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-k8s-user-namespace
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-k8s-user-namespace
-            SHORT_INTEGRATION_TEST: yes
-            WITH_CONFIG_PATCH: "@hack/test/patches/usernamespace.yaml"
+            WITH_SIDEROLINK_AGENT: ${{ matrix.withSiderolinkAgent }}
+            VIA_MAINTENANCE_MODE: ${{ matrix.viaMaintenanceMode }}
+            WITH_APPARMOR_LSM_ENABLED: ${{ matrix.withAppArmorLsmEnabled }}
+            WITH_CONFIG_PATCH: ${{ matrix.withConfigPatch }}
             TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
             EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
             WITH_ENFORCING: ${{ matrix.withEnforcing }}
@@ -1432,7 +1246,7 @@ spec:
             - always
           artifactStep:
             type: upload
-            artifactName: talos-logs-integration-misc-4-${{ matrix.variant }}
+            artifactName: talos-logs-integration-misc-4-${{ matrix.test }}-${{ matrix.variant }}
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
@@ -1940,15 +1754,57 @@ spec:
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
               - "/tmp/support-*.zip"
+    - name: integration-build-aws-image
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runnerGroup: large
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
+      triggerLabels:
+        - integration/aws
+        - integration/aws-amd64
+        - integration/aws-arm64
+        - integration/aws-nvidia
+        - integration/aws-nvidia-oss
+        - integration/aws-nvidia-nonfree
+        - integration/aws-nvidia-oss-lts-amd64
+        - integration/aws-nvidia-oss-lts-arm64
+        - integration/aws-nvidia-oss-production-amd64
+        - integration/aws-nvidia-oss-production-arm64
+        - integration/aws-nvidia-nonfree-lts-amd64
+        - integration/aws-nvidia-nonfree-lts-arm64
+        - integration/aws-nvidia-nonfree-production-amd64
+        - integration/aws-nvidia-nonfree-production-arm64
+        - integration/release-gate
+      steps:
+        - name: download-artifacts
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: image-aws
+          environment:
+            PLATFORM: linux/amd64,linux/arm64
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-aws-artifacts
+          artifactStep:
+            type: upload
+            artifactName: talos-aws-artifacts
+            artifactPath: _out
+            retentionDays: "1"
     - name: integration-aws
       buildxOptions:
         enabled: true
       sops: true
       depends:
         - default
+        - integration-build-aws-image
       runnerGroup: generic # we can use generic here since the tests run against a remote talos cluster
       onWorkflowRun:
-        workflows: [artifacts-cron]
+        workflows: [integration-build-aws-image-triggered]
         types: [completed]
       triggerLabels:
         - integration/aws
@@ -1965,13 +1821,9 @@ spec:
         - name: download-artifacts
           artifactStep:
             type: download
-            artifactName: talos-artifacts
+            artifactName: talos-aws-artifacts
             artifactPath: _out
         - name: ci-temp-release-tag
-        - name: image-aws
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-aws-prepare
           environment:
             E2E_AWS_TARGET: default
@@ -2006,14 +1858,15 @@ spec:
       sops: true
       depends:
         - default
+        - integration-build-aws-image
       runnerGroup: generic # we can use generic here since the tests run against a remote talos cluster
       onWorkflowRun:
-        workflows: [artifacts-cron]
+        workflows: [integration-build-aws-image-triggered]
         types: [completed]
       triggerLabels:
         - integration/aws-nvidia
       matrix:
-        maxParallel: 2
+        maxParallel: 8
         labelKeys: [driver, variant, arch]
         include:
           - driver: oss
@@ -2092,7 +1945,7 @@ spec:
         - name: download-artifacts
           artifactStep:
             type: download
-            artifactName: talos-artifacts
+            artifactName: talos-aws-artifacts
             artifactPath: _out
         - name: ci-temp-release-tag
         - name: checkout extensions
@@ -2112,10 +1965,6 @@ spec:
             PLATFORM: ${{ matrix.buildPlatform }}
             PUSH: true
             REGISTRY: registry.dev.siderolabs.io
-        - name: image-aws
-          environment:
-            PLATFORM: linux/amd64,linux/arm64
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: e2e-aws-prepare
           environment:
             EXTENSIONS_METADATA_FILE: _out/extensions/_out/extensions-metadata

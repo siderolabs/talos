@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-04-20T11:44:35Z by kres 4b58472-dirty.
+# Generated on 2026-04-21T07:17:30Z by kres 41939c6-dirty.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -14,6 +14,7 @@ concurrency:
 name: integration-qemu-csi-triggered
 jobs:
   default:
+    name: ${{ matrix.csi }}
     permissions:
       actions: read
     runs-on:
@@ -25,11 +26,11 @@ jobs:
           - csi: rook-ceph
             qemuCpusWorkers: "6"
             withConfigPatchControlplane: '@hack/test/patches/rook-ceph.yaml'
-            withConfigPatchWorker: ""
           - csi: openebs
             qemuCpusWorkers: "4"
             withConfigPatchControlplane: '@hack/test/patches/openebs-cp.yaml'
             withConfigPatchWorker: '@hack/test/patches/openebs.yaml'
+      fail-fast: false
       max-parallel: 2
     steps:
       - name: gather-system-info

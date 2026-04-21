@@ -573,19 +573,19 @@ $(ARTIFACTS)/$(INTEGRATION_TEST):
 $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64:
 	@$(MAKE) local-$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64 WITH_RACE=true
 
-$(ARTIFACTS)/kubectl: $(ARTIFACTS)
+$(ARTIFACTS)/kubectl: | $(ARTIFACTS)
 	@curl -L -o $(ARTIFACTS)/kubectl "$(KUBECTL_URL)"
 	@chmod +x $(ARTIFACTS)/kubectl
 
-$(ARTIFACTS)/kubestr: $(ARTIFACTS)
+$(ARTIFACTS)/kubestr: | $(ARTIFACTS)
 	@curl -L "$(KUBESTR_URL)" | tar xzf - -C $(ARTIFACTS) kubestr
 	@chmod +x $(ARTIFACTS)/kubestr
 
-$(ARTIFACTS)/helm: $(ARTIFACTS)
+$(ARTIFACTS)/helm: | $(ARTIFACTS)
 	@curl -L "$(HELM_URL)" | tar xzf - -C $(ARTIFACTS) --strip-components=1 linux-amd64/helm
 	@chmod +x $(ARTIFACTS)/helm
 
-$(ARTIFACTS)/cilium: $(ARTIFACTS)
+$(ARTIFACTS)/cilium: | $(ARTIFACTS)
 	@curl -L "$(CILIUM_CLI_URL)" | tar xzf - -C $(ARTIFACTS) cilium
 	@chmod +x $(ARTIFACTS)/cilium
 
