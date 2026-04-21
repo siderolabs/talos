@@ -163,6 +163,11 @@ message KubeletConfigSpec {
   bool allow_scheduling_on_control_plane = 14;
 }
 
+// KubeletKubeconfigSpec describes the current kubelet kubeconfig file.
+message KubeletKubeconfigSpec {
+  string hash = 1;
+}
+
 // KubeletSpecSpec holds the source of kubelet configuration.
 message KubeletSpecSpec {
   string image = 1;

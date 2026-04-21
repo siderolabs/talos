@@ -254,6 +254,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&k8s.EndpointController{},
 		&k8s.ExtraManifestController{},
 		k8s.NewKubeletConfigController(),
+		&k8s.KubeletKubeconfigController{},
 		&k8s.KubeletServiceController{
 			V1Alpha1Services: system.Services(ctrl.v1alpha1Runtime),
 			V1Alpha1Mode:     ctrl.v1alpha1Runtime.State().Platform().Mode(),

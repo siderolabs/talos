@@ -401,6 +401,7 @@ description: Talos gRPC API reference.
     - [KubePrismStatusesSpec](#talos.resource.definitions.k8s.KubePrismStatusesSpec)
     - [KubeletConfigSpec](#talos.resource.definitions.k8s.KubeletConfigSpec)
     - [KubeletConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.ExtraArgsEntry)
+    - [KubeletKubeconfigSpec](#talos.resource.definitions.k8s.KubeletKubeconfigSpec)
     - [KubeletSpecSpec](#talos.resource.definitions.k8s.KubeletSpecSpec)
     - [ManifestSpec](#talos.resource.definitions.k8s.ManifestSpec)
     - [ManifestStatusSpec](#talos.resource.definitions.k8s.ManifestStatusSpec)
@@ -7251,6 +7252,21 @@ KubeletConfigSpec holds the source of kubelet configuration.
 | ----- | ---- | ----- | ----------- |
 | key | [string](#string) |  |  |
 | value | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.KubeletKubeconfigSpec"></a>
+
+### KubeletKubeconfigSpec
+KubeletKubeconfigSpec describes the current kubelet kubeconfig file.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| hash | [string](#string) |  |  |
 
 
 

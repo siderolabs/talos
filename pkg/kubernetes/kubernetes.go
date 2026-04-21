@@ -52,6 +52,8 @@ func NewClientFromKubeletKubeconfig() (*Client, error) {
 		return nil, err
 	}
 
+	config.Timeout = 15 * time.Second
+
 	return NewForConfig(config)
 }
 
