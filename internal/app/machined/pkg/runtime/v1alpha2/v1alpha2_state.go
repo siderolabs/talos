@@ -147,6 +147,7 @@ func NewState() (*State, error) {
 		&k8s.Endpoint{},
 		&k8s.ExtraManifestsConfig{},
 		&k8s.KubeletConfig{},
+		&k8s.KubeletKubeconfig{},
 		&k8s.KubeletLifecycle{},
 		&k8s.KubeletSpec{},
 		&k8s.KubePrismConfig{},

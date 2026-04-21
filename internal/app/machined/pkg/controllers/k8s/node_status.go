@@ -45,6 +45,12 @@ func (ctrl *NodeStatusController) Inputs() []controller.Input {
 			ID:        optional.Some(k8s.NodenameID),
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: k8s.NamespaceName,
+			Type:      k8s.KubeletKubeconfigType,
+			ID:        optional.Some(k8s.KubeletKubeconfigID),
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -63,14 +69,15 @@ func (ctrl *NodeStatusController) Outputs() []controller.Output {
 //nolint:gocyclo,cyclop
 func (ctrl *NodeStatusController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	var (
-		kubernetesClient *kubernetes.Client
-		nodewatcher      *nodewatch.NodeWatcher
-		watchCtxCancel   context.CancelFunc
-		notifyCh         <-chan struct{}
-		watchErrCh       <-chan error
-		notifyCloser     func()
-		watchErrors      int
-		watchReady       bool
+		kubernetesClient     *kubernetes.Client
+		nodewatcher          *nodewatch.NodeWatcher
+		watchCtxCancel       context.CancelFunc
+		notifyCh             <-chan struct{}
+		watchErrCh           <-chan error
+		notifyCloser         func()
+		watchErrors          int
+		watchReady           bool
+		watcherKubeconfigVer string
 	)
 
 	closeWatcher := func() {
@@ -95,6 +102,7 @@ func (ctrl *NodeStatusController) Run(ctx context.Context, r controller.Runtime,
 		watchErrors = 0
 		watchReady = false
 		nodewatcher = nil
+		watcherKubeconfigVer = ""
 	}
 
 	defer closeWatcher()
@@ -140,8 +148,34 @@ func (ctrl *NodeStatusController) Run(ctx context.Context, r controller.Runtime,
 			return err
 		}
 
+		// Look up the current kubelet kubeconfig hash. If it is not yet published,
+		// the kubeconfig was read by WaitForKubeconfigReady but the
+		// KubeletKubeconfigController hasn't written its resource yet — wait for it
+		// so we never bind a watcher to a hash we haven't recorded.
+		kubeconfigRes, err := safe.ReaderGetByID[*k8s.KubeletKubeconfig](ctx, r, k8s.KubeletKubeconfigID)
+		if err != nil {
+			if !state.IsNotFoundError(err) {
+				return fmt.Errorf("error getting kubelet kubeconfig: %w", err)
+			}
+
+			continue
+		}
+
+		currentKubeconfigVer := kubeconfigRes.TypedSpec().Hash
+
 		if nodewatcher != nil && nodewatcher.Nodename() != nodename.TypedSpec().Nodename {
 			// nodename changed, so we need to reinitialize the watcher
+			closeWatcher()
+		}
+
+		if nodewatcher != nil && watcherKubeconfigVer != currentKubeconfigVer {
+			// kubelet kubeconfig on disk changed — the cached client may be pinned
+			// to a stale endpoint, so rebuild the watcher with a fresh client.
+			logger.Info("kubelet kubeconfig changed, restarting node watcher",
+				zap.String("old_hash", watcherKubeconfigVer),
+				zap.String("new_hash", currentKubeconfigVer),
+			)
+
 			closeWatcher()
 		}
 
@@ -165,6 +199,8 @@ func (ctrl *NodeStatusController) Run(ctx context.Context, r controller.Runtime,
 			if err != nil {
 				return fmt.Errorf("error setting up node watcher: %w", err) //nolint:govet
 			}
+
+			watcherKubeconfigVer = currentKubeconfigVer
 		}
 
 		if !watchReady {

@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"net"
 	"net/url"
 	"os"
 	"time"
@@ -51,6 +52,16 @@ func NewClientFromKubeletKubeconfig() (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Set an explicit dial timeout so that requests to a stale/unreachable
+	// API server endpoint fail fast instead of hanging indefinitely at the TCP
+	// layer (the default Linux tcp_syn_retries can cause connect() to block for
+	// over two minutes). This only affects establishing new TCP connections,
+	// not the lifetime of in-flight watches.
+	config.Dial = (&net.Dialer{
+		Timeout:   15 * time.Second,
+		KeepAlive: 30 * time.Second,
+	}).DialContext
 
 	return NewForConfig(config)
 }
