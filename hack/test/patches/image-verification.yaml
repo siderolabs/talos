@@ -11,3 +11,7 @@ rules:
       keyless:
         issuer: https://accounts.google.com
         subjectRegex: '(@siderolabs\.com$|^releasemgr-svc@talos-production\.iam\.gserviceaccount\.com$)'
+    - image: factory.talos.dev/*
+      keyless:
+        issuer: https://accounts.google.com
+        subject: image-factory-signing@talos-production.iam.gserviceaccount.com
