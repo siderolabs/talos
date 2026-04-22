@@ -47,7 +47,9 @@ message ProcessorSpec {
   string socket = 1;
   string manufacturer = 2;
   string product_name = 3;
+  // MaxSpeed is in megahertz (MHz).
   uint32 max_speed = 4;
+  // BootSpeed is in megahertz (MHz).
   uint32 boot_speed = 5;
   uint32 status = 6;
   string serial_number = 7;

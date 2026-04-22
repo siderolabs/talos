@@ -104,10 +104,11 @@ func pkgTypeCmp(left, right *Type) int {
 	return strings.Compare(left.Name, right.Name)
 }
 
-// FieldData is a struct which contains field name, proto num and type data.
+// FieldData is a struct which contains field name, proto num, doc comments and type data.
 type FieldData struct {
 	Name     string
 	Num      int
+	Comments []string
 	TypeData *types.Var
 }
 
@@ -146,9 +147,12 @@ func ParseDeclsData(sortedPkgs slices.Sorted[*PkgDecl], taggedStructs ast.Tagged
 					Comments: taggedStruct.Comments,
 				})
 
+				fieldInfo := taggedStruct.Fields[field.Name()]
+
 				v.Fields().Add(FieldData{
 					Name:     field.Name(),
-					Num:      taggedStruct.Fields[field.Name()],
+					Num:      fieldInfo.Num,
+					Comments: fieldInfo.Comments,
 					TypeData: field,
 				})
 			}

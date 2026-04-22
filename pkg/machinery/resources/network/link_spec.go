@@ -50,13 +50,13 @@ type LinkSpecSpec struct {
 	// ParentName indicates link parent for VLAN interfaces.
 	ParentName string `yaml:"parentName,omitempty" protobuf:"7"`
 
-	// MasterName indicates master link for enslaved bonded interfaces.
+	// BondSlave contains bond slave configuration for interfaces enslaved to a bond.
 	BondSlave BondSlave `yaml:",omitempty,inline" protobuf:"8"`
 
-	// BridgeSlave indicates master link for bridged interfaces.
+	// BridgeSlave carries bridge slave details for bridged interfaces.
 	BridgeSlave BridgeSlave `yaml:"bridgeSlave,omitempty" protobuf:"9"`
 
-	// VRFSlave indicates master link for interfaces in a vrf
+	// VRFSlave carries VRF slave details for interfaces in a VRF.
 	VRFSlave VRFSlave `yaml:"vrfSlave,omitempty" protobuf:"18"`
 
 	// These structures are present depending on "Kind" for Logical interfaces.

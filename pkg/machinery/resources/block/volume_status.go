@@ -49,7 +49,7 @@ type VolumeStatusSpec struct {
 
 	// EncryptionProvider is the provider of the encryption which was used to unlock the volume.
 	EncryptionProvider EncryptionProviderType `yaml:"encryptionProvider,omitempty" protobuf:"12"`
-	// EncryptionFailedSyncs is the list of failed syncs for the volume (per key/provider)/
+	// EncryptionFailedSyncs is the list of failed syncs for the volume (per key/provider).
 	EncryptionFailedSyncs []string `yaml:"encryptionFailedSyncs,omitempty" protobuf:"14"`
 	// ConfiguredEncryptionKeys is the list of configured encryption keys for the volume.
 	ConfiguredEncryptionKeys []string `yaml:"configuredEncryptionKeys,omitempty" protobuf:"17"`

@@ -18,17 +18,26 @@ message ConfigSpec {
 
 // StatusSpec describes Siderolink status.
 message StatusSpec {
+  // Host is the Siderolink target host.
   string host = 1;
+  // Connected is the status of the Siderolink GRPC connection.
   bool connected = 2;
+  // LinkName is the name of the interface used for the Siderolink tunnel.
   string link_name = 3;
+  // GRPCTunnel is true if the Wireguard-over-GRPC tunnel is being used.
   bool grpc_tunnel = 4;
 }
 
 // TunnelSpec describes Siderolink GRPC Tunnel configuration.
 message TunnelSpec {
+  // APIEndpoint is the Siderolink WireGuard over GRPC endpoint.
   string api_endpoint = 1;
+  // LinkName is the name to use for WireGuard tunnel.
   string link_name = 2;
+  // MTU is the maximum transmission unit for the tunnel.
   int64 mtu = 3;
+  // NodeAddress is the virtual address of our node. It's used to identify our node in the WireGuard GRPC streamer.
+  // It's not the address of the actual WireGuard interface.
   common.NetIPPort node_address = 4;
 }
 

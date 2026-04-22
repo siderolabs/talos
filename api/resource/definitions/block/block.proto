@@ -15,16 +15,24 @@ message DeviceSpec {
   int64 minor = 3;
   string partition_name = 4;
   int64 partition_number = 5;
+  // Generation is bumped every time the device might have changed and might need to be re-probed.
   int64 generation = 6;
   string device_path = 7;
+  // Parent (if set) specifies the parent device ID.
   string parent = 8;
+  // Secondaries (if set) specifies the secondary device IDs.
+  //
+  // E.g. for a LVM volume secondary is a list of blockdevices that the volume consists of.
   repeated string secondaries = 9;
 }
 
 // DiscoveredVolumeSpec is the spec for DiscoveredVolumes resource.
 message DiscoveredVolumeSpec {
+  // Overall size of the probed device (in bytes).
   uint64 size = 1;
+  // Sector size of the device (in bytes).
   uint64 sector_size = 2;
+  // Optimal I/O size for the device (in bytes).
   uint64 io_size = 3;
   string name = 4;
   string uuid = 5;
@@ -42,6 +50,7 @@ message DiscoveredVolumeSpec {
   string dev_path = 17;
   string parent_dev_path = 18;
   string pretty_size = 19;
+  // Offset of the partition/volume inside Parent device (in bytes).
   uint64 offset = 20;
 }
 
@@ -78,6 +87,10 @@ message DiskSpec {
   bool cdrom = 13;
   string dev_path = 14;
   string pretty_size = 15;
+  // SecondaryDisks (if set) specifies the secondary disk IDs.
+  //
+  // E.g. if the blockdevice secondary is vda5, the secondary disk will be set as vda.
+  // This allows to map secondaries between disks ignoring the partitions.
   repeated string secondary_disks = 16;
   string uuid = 17;
   repeated string symlinks = 18;
@@ -87,11 +100,16 @@ message DiskSpec {
 message EncryptionKey {
   int64 slot = 1;
   talos.resource.definitions.enums.BlockEncryptionKeyType type = 2;
+  // Only for Type == "static":
   bytes static_passphrase = 3;
+  // Only for Type == "kms":
   string kms_endpoint = 4;
+  // Only for Type == "tpm":
   bool tpm_check_secureboot_status_on_enroll = 5;
   bool lock_to_state = 6;
+  // Only for Type == "tpm":
   repeated int64 tpmpc_rs = 7;
+  // Only for Type == "tpm":
   repeated int64 tpm_pub_key_pc_rs = 8;
 }
 
@@ -107,13 +125,17 @@ message EncryptionSpec {
 
 // FilesystemSpec is the spec for volume filesystem.
 message FilesystemSpec {
+  // Filesystem type.
   talos.resource.definitions.enums.BlockFilesystemType type = 1;
+  // Filesystem label.
   string label = 2;
 }
 
 // LocatorSpec is the spec for volume locator.
 message LocatorSpec {
+  // Match is a volume locator match expression.
   google.api.expr.v1alpha1.CheckedExpr match = 1;
+  // DiskMatch is a disk locator match expression.
   google.api.expr.v1alpha1.CheckedExpr disk_match = 2;
 }
 
@@ -131,15 +153,25 @@ message MountRequestSpec {
 
 // MountSpec is the spec for volume mount.
 message MountSpec {
+  // Mount path for the volume.
   string target_path = 1;
+  // SELinux label for the volume.
   string selinux_label = 2;
+  // Enable project quota (xfs) for the volume.
   bool project_quota_support = 3;
+  // Parent mount request ID.
   string parent_id = 4;
+  // FileMode is the file mode for the mount target.
   uint32 file_mode = 5;
+  // UID is the user ID for the mount target.
   int64 uid = 6;
+  // GID is the group ID for the mount target.
   int64 gid = 7;
+  // RecursiveRelabel is the recursive relabel/chown flag for the mount target.
   bool recursive_relabel = 8;
+  // BindTarget is an optional path on the host to bind-mount the volume onto.
   string bind_target = 9;
+  // Parameters are additional filesystem mount options used when mounting the volume.
   repeated ParameterSpec parameters = 10;
 }
 
@@ -157,28 +189,45 @@ message MountStatusSpec {
 
 // ParameterSpec is a mount parameter.
 message ParameterSpec {
+  // Type of the parameter.
   talos.resource.definitions.enums.BlockFSParameterType type = 1;
+  // Name of the parameter.
   string name = 2;
+  // String value of the parameter.
   string string = 3;
+  // Binary value of the parameter.
   bytes binary = 5;
 }
 
 // PartitionSpec is the spec for volume partitioning.
 message PartitionSpec {
+  // Partition minimum size in bytes.
   uint64 min_size = 1;
+  // Partition maximum size in bytes, if not set, grows to the maximum size.
   uint64 max_size = 2;
+  // Grow the partition automatically to the maximum size.
   bool grow = 3;
+  // Label for the partition.
   string label = 4;
+  // Partition type UUID.
   string type_uuid = 5;
+  // Partition maximum size (relative), if not set, grows to the maximum size.
   uint64 relative_max_size = 6;
+  // NegativeMaxSize indicates that MaxSize or RelativeMaxSize represents space to be left free on the device rather than space to consume.
   bool negative_max_size = 7;
 }
 
 // ProvisioningSpec is the spec for volume provisioning.
 message ProvisioningSpec {
+  // DiskSelector selects a disk for the volume.
   DiskSelector disk_selector = 1;
+  // PartitionSpec describes how to provision the volume (partition type).
   PartitionSpec partition_spec = 2;
+  // Provisioning wave for the volume.
+  //
+  // Waves are processed sequentially - the volumes in the wave are only provisioned after the previous wave is done.
   int64 wave = 3;
+  // FilesystemSpec describes how to provision the volume (filesystem type).
   FilesystemSpec filesystem_spec = 4;
 }
 
@@ -195,7 +244,9 @@ message SwapStatusSpec {
 
 // SymlinkProvisioningSpec is the spec for volume symlink.
 message SymlinkProvisioningSpec {
+  // Symlink target path for the volume.
   string symlink_target_path = 1;
+  // Force symlink creation.
   bool force = 2;
 }
 
@@ -224,12 +275,19 @@ message UserDiskConfigStatusSpec {
 
 // VolumeConfigSpec is the spec for VolumeConfig resource.
 message VolumeConfigSpec {
+  // Parent volume ID, if set no operations on the volume continue until the parent volume is ready.
   string parent_id = 1;
+  // Volume type.
   talos.resource.definitions.enums.BlockVolumeType type = 2;
+  // Provisioning configuration (how to provision a volume).
   ProvisioningSpec provisioning = 3;
+  // How to find a volume.
   LocatorSpec locator = 4;
+  // Mount options for the volume.
   MountSpec mount = 5;
+  // Encryption configuration (how to encrypt a volume).
   EncryptionSpec encryption = 6;
+  // Symlink options for the volume.
   SymlinkProvisioningSpec symlink = 7;
 }
 
@@ -257,26 +315,38 @@ message VolumeMountStatusSpec {
 // VolumeStatusSpec is the spec for VolumeStatus resource.
 message VolumeStatusSpec {
   talos.resource.definitions.enums.BlockVolumePhase phase = 1;
+  // Location is the path to the block device (raw).
   string location = 2;
   string error_message = 3;
   string uuid = 4;
   string partition_uuid = 5;
   talos.resource.definitions.enums.BlockVolumePhase pre_fail_phase = 6;
+  // ParentLocation (if present) is the location of the parent block device for partitions.
   string parent_location = 7;
   int64 partition_index = 8;
   uint64 size = 9;
+  // Filesystem is the filesystem type.
   talos.resource.definitions.enums.BlockFilesystemType filesystem = 10;
+  // MountLocation is the location to be mounted, might be different from location.
   string mount_location = 11;
+  // EncryptionProvider is the provider of the encryption which was used to unlock the volume.
   talos.resource.definitions.enums.BlockEncryptionProviderType encryption_provider = 12;
   string pretty_size = 13;
+  // EncryptionFailedSyncs is the list of failed syncs for the volume (per key/provider).
   repeated string encryption_failed_syncs = 14;
+  // MountSpec is the mount specification.
   MountSpec mount_spec = 15;
   talos.resource.definitions.enums.BlockVolumeType type = 16;
+  // ConfiguredEncryptionKeys is the list of configured encryption keys for the volume.
   repeated string configured_encryption_keys = 17;
+  // Symlink is the symlink specification.
   SymlinkProvisioningSpec symlink_spec = 18;
   string parent_id = 19;
+  // EncryptionLockedToState indicates if the encryption is locked to STATE partition
   bool encryption_locked_to_state = 20;
+  // EncryptionSlot indicates the currently used encryption slot used for decryption.
   int64 encryption_slot = 21;
+  // TPMEncryptionOptions is the options for TPM-based encryption.
   TPMEncryptionOptionsInfo tpm_encryption_options = 22;
 }
 

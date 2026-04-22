@@ -142,8 +142,9 @@ func (x *BootedEntrySpec) GetBootedEntry() string {
 
 // DevicesStatusSpec is the spec for devices status.
 type DevicesStatusSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Ready         bool                   `protobuf:"varint,1,opt,name=ready,proto3" json:"ready,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Devices are settled down and ready to be used.
+	Ready         bool `protobuf:"varint,1,opt,name=ready,proto3" json:"ready,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -187,9 +188,11 @@ func (x *DevicesStatusSpec) GetReady() bool {
 
 // DiagnosticSpec is the spec for devices status.
 type DiagnosticSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
-	Details       []string               `protobuf:"bytes,2,rep,name=details,proto3" json:"details,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Short message describing the problem.
+	Message string `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
+	// Details about the problem.
+	Details       []string `protobuf:"bytes,2,rep,name=details,proto3" json:"details,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1513,9 +1516,11 @@ func (x *SecurityStateSpec) GetModuleSignatureEnforced() bool {
 
 // ServicePIDSpec is the spec for the service PID.
 type ServicePIDSpec struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Pid            int32                  `protobuf:"varint,1,opt,name=pid,proto3" json:"pid,omitempty"`
-	MountNamespace string                 `protobuf:"bytes,2,opt,name=mount_namespace,json=mountNamespace,proto3" json:"mount_namespace,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// PID is the host PID of the service.
+	Pid int32 `protobuf:"varint,1,opt,name=pid,proto3" json:"pid,omitempty"`
+	// MountNamespace is the mount namespace of the service.
+	MountNamespace string `protobuf:"bytes,2,opt,name=mount_namespace,json=mountNamespace,proto3" json:"mount_namespace,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }

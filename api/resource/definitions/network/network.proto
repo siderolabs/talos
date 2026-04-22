@@ -39,39 +39,74 @@ message AddressStatusSpec {
 
 // BondMasterSpec describes bond settings if Kind == "bond".
 message BondMasterSpec {
+  // Mode specifies the bonding policy
   talos.resource.definitions.enums.NethelpersBondMode mode = 1;
+  // HashPolicy selects the transmit hash policy to use for slave selection.
   talos.resource.definitions.enums.NethelpersBondXmitHashPolicy hash_policy = 2;
+  // LACPRate specifies the rate at which LACPDU frames are sent.
   talos.resource.definitions.enums.NethelpersLACPRate lacp_rate = 3;
+  // ARPValidate specifies whether or not ARP probes and replies should be validated.
   talos.resource.definitions.enums.NethelpersARPValidate arp_validate = 4;
+  // ARPAllTargets specifies whether ARP probes should be sent to any or all targets.
   talos.resource.definitions.enums.NethelpersARPAllTargets arp_all_targets = 5;
+  // PrimaryIndex is a device index specifying which slave is the primary device.
   uint32 primary_index = 6;
+  // PrimaryReselect specifies the policy under which the primary slave should be reselected.
   talos.resource.definitions.enums.NethelpersPrimaryReselect primary_reselect = 7;
+  // FailOverMac whether active-backup mode should set all slaves to the same MAC address at enslavement, when enabled, or perform special handling.
   talos.resource.definitions.enums.NethelpersFailOverMAC fail_over_mac = 8;
+  // ADSelect specifies the aggregate selection policy for 802.3ad.
   talos.resource.definitions.enums.NethelpersADSelect ad_select = 9;
+  // MIIMon is the link monitoring frequency in milliseconds.
   uint32 mii_mon = 10;
+  // UpDelay is the time, in milliseconds, to wait before enabling a slave after a link recovery has been detected.
   uint32 up_delay = 11;
+  // DownDelay is the time, in milliseconds, to wait before disabling a slave after a link failure has been detected.
   uint32 down_delay = 12;
+  // ARPInterval is the ARP link monitoring frequency in milliseconds.
   uint32 arp_interval = 13;
+  // ResendIGMP specifies the number of times IGMP packets should be resent.
   uint32 resend_igmp = 14;
+  // MinLinks specifies the minimum number of active links to assert carrier.
   uint32 min_links = 15;
+  // LPInterval specifies the number of seconds between instances where the bonding driver sends learning packets to each slave's peer switch.
   uint32 lp_interval = 16;
+  // PacketsPerSlave specifies the number of packets to transmit through a slave before moving to the next one.
   uint32 packets_per_slave = 17;
+  // NumPeerNotif specifies the number of peer notifications
+  // (gratuitous ARPs and unsolicited IPv6 Neighbor Advertisements) to be issued after a failover event.
   uint32 num_peer_notif = 18;
+  // TLBDynamicLB specifies if dynamic shuffling of flows is enabled in tlb or alb mode.
   uint32 tlb_dynamic_lb = 19;
+  // AllSlavesActive specifies that duplicate frames (received on inactive ports) should be dropped (0) or delivered (1).
   uint32 all_slaves_active = 20;
+  // UseCarrier specifies whether or not miimon should use MII or ETHTOOL.
   bool use_carrier = 21;
+  // ADActorSysPrio is the actor system priority for 802.3ad.
   uint32 ad_actor_sys_prio = 22;
+  // ADUserPortKey is the user port key (upper 10 bits) for 802.3ad.
   uint32 ad_user_port_key = 23;
+  // PeerNotifyDelay is the delay, in milliseconds, between each peer notification.
   uint32 peer_notify_delay = 24;
+  // ARPIPTargets is the list of IP addresses to use for ARP link monitoring when ARPInterval is set.
+  //
+  // Maximum of 16 targets are supported.
   repeated common.NetIP arpip_targets = 25;
+  // NSIP6Targets is the list of IPv6 addresses to use for NS link monitoring when ARPInterval is set.
+  //
+  // Maximum of 16 targets are supported.
   repeated common.NetIP nsip6_targets = 26;
+  // ADLACPActive specifies whether to send LACPDU frames periodically.
   talos.resource.definitions.enums.NethelpersADLACPActive adlacp_active = 27;
+  // MissedMax is the number of arp_interval monitor checks that must fail in order for an interface to be marked down by the ARP monitor.
   uint32 missed_max = 28;
 }
 
 // BondSlave contains a bond's master name and slave index.
 message BondSlave {
+  // MasterName indicates master link for enslaved bonded interfaces.
   string master_name = 1;
+  // SlaveIndex indicates a slave's position in bond.
   int64 slave_index = 2;
 }
 
@@ -83,6 +118,7 @@ message BridgeMasterSpec {
 
 // BridgeSlave contains the name of the master bridge of a bridged interface
 message BridgeSlave {
+  // MasterName indicates master link for enslaved bridged interfaces.
   string master_name = 1;
 }
 
@@ -126,10 +162,12 @@ message EthernetChannelsSpec {
 
 // EthernetChannelsStatus describes status of Ethernet channels.
 message EthernetChannelsStatus {
+  // Read-only settings.
   uint32 rx_max = 1;
   uint32 tx_max = 2;
   uint32 other_max = 3;
   uint32 combined_max = 4;
+  // Current settings (read-write).
   uint32 rx = 5;
   uint32 tx = 6;
   uint32 other = 7;
@@ -158,11 +196,13 @@ message EthernetRingsSpec {
 
 // EthernetRingsStatus describes status of Ethernet rings.
 message EthernetRingsStatus {
+  // Read-only settings.
   uint32 rx_max = 1;
   uint32 rx_mini_max = 2;
   uint32 rx_jumbo_max = 3;
   uint32 tx_max = 4;
   uint32 tx_push_buf_len_max = 5;
+  // Current settings (read-write).
   uint32 rx = 6;
   uint32 rx_mini = 7;
   uint32 rx_jumbo = 8;
@@ -199,7 +239,9 @@ message EthernetStatusSpec {
 
 // HardwareAddrSpec describes spec for the link.
 message HardwareAddrSpec {
+  // Name defines link name
   string name = 1;
+  // Hardware address
   bytes hardware_addr = 2;
 }
 
@@ -236,23 +278,38 @@ message LinkRefreshSpec {
 
 // LinkSpecSpec describes spec for the link.
 message LinkSpecSpec {
+  // Name defines link name
   string name = 1;
+  // Logical describes if the interface should be created on the fly if it doesn't exist.
   bool logical = 2;
+  // If Up is true, bring interface up, otherwise bring interface down.
+  //
+  // TODO: make *bool ?
   bool up = 3;
+  // Interface MTU (always applies).
   uint32 mtu = 4;
+  // Kind and Type are only required for Logical interfaces.
   string kind = 5;
   talos.resource.definitions.enums.NethelpersLinkType type = 6;
+  // ParentName indicates link parent for VLAN interfaces.
   string parent_name = 7;
+  // BondSlave contains bond slave configuration for interfaces enslaved to a bond.
   BondSlave bond_slave = 8;
+  // BridgeSlave carries bridge slave details for bridged interfaces.
   BridgeSlave bridge_slave = 9;
+  // These structures are present depending on "Kind" for Logical interfaces.
   VLANSpec vlan = 10;
   BondMasterSpec bond_master = 11;
   BridgeMasterSpec bridge_master = 12;
   WireguardSpec wireguard = 13;
+  // Configuration layer.
   talos.resource.definitions.enums.NetworkConfigLayer config_layer = 14;
+  // Override hardware (MAC) address (if supported).
   bytes hardware_address = 15;
+  // Multicast indicates whether the multicast flag should be set on the interface to the value.
   bool multicast = 16;
   VRFMasterSpec vrf_master = 17;
+  // VRFSlave carries VRF slave details for interfaces in a VRF.
   VRFSlave vrf_slave = 18;
 }
 
@@ -279,15 +336,18 @@ message LinkStatusSpec {
   string vendor_id = 19;
   string product = 20;
   string vendor = 21;
+  // Fields coming from ethtool API.
   bool link_state = 22;
   int64 speed_megabits = 23;
   talos.resource.definitions.enums.NethelpersPort port = 24;
   talos.resource.definitions.enums.NethelpersDuplex duplex = 25;
+  // Following fields are only populated with respective Kind.
   VLANSpec vlan = 26;
   BridgeMasterSpec bridge_master = 27;
   BondMasterSpec bond_master = 28;
   WireguardSpec wireguard = 29;
   bytes permanent_addr = 30;
+  // Fields coming from rtnetlink API.
   string alias = 31;
   repeated string alt_names = 32;
   VRFMasterSpec vrf_master = 33;
@@ -383,7 +443,9 @@ message NfTablesRule {
 
 // NodeAddressFilterSpec describes a filter for NodeAddresses.
 message NodeAddressFilterSpec {
+  // Address is skipped if it doesn't match any of the includeSubnets (if includeSubnets is not empty).
   repeated common.NetIPPrefix include_subnets = 1;
+  // Address is skipped if it matches any of the excludeSubnets.
   repeated common.NetIPPrefix exclude_subnets = 2;
 }
 
@@ -436,15 +498,21 @@ message PortRange {
 
 // ProbeSpecSpec describes the Probe.
 message ProbeSpecSpec {
+  // Interval between the probes.
   google.protobuf.Duration interval = 1;
+  // FailureThreshold is the number of consecutive failures for the probe to be considered failed after having succeeded.
   int64 failure_threshold = 2;
+  // One of the probe types should be specified, for now it's only TCP.
   TCPProbeSpec tcp = 3;
+  // Configuration layer.
   talos.resource.definitions.enums.NetworkConfigLayer config_layer = 4;
 }
 
 // ProbeStatusSpec describes the Probe.
 message ProbeStatusSpec {
+  // Success of the check.
   bool success = 1;
+  // Last error of the probe.
   string last_error = 2;
 }
 
@@ -539,7 +607,9 @@ message StatusSpec {
 
 // TCPProbeSpec describes the TCP Probe.
 message TCPProbeSpec {
+  // Endpoint to probe: host:port.
   string endpoint = 1;
+  // Timeout for the probe.
   google.protobuf.Duration timeout = 2;
 }
 
@@ -580,7 +650,9 @@ message VIPOperatorSpec {
 
 // VLANSpec describes VLAN settings if Kind == "vlan".
 message VLANSpec {
+  // VID is the vlan ID.
   uint32 vid = 1;
+  // Protocol is the vlan protocol.
   talos.resource.definitions.enums.NethelpersVLANProtocol protocol = 2;
 }
 
@@ -605,7 +677,9 @@ message WireguardPeer {
 
 // WireguardSpec describes Wireguard settings if Kind == "wireguard".
 message WireguardSpec {
+  // PrivateKey is used to configure the link, present only in the LinkSpec.
   string private_key = 1;
+  // PublicKey is only used in LinkStatus to show the link status.
   string public_key = 2;
   int64 listen_port = 3;
   int64 firewall_mark = 4;

@@ -173,7 +173,8 @@ type protoField struct {
 	typ  string
 	num  int
 
-	goType string
+	goType   string
+	comments []string
 }
 
 func protoFieldCmp(left, right protoField) int {
@@ -196,10 +197,18 @@ func protoFieldCmp(left, right protoField) int {
 }
 
 func (pf protoField) WriteDebug(w io.Writer) {
+	for _, comment := range pf.comments {
+		fmt.Fprintf(w, "%s\n  ", comment)
+	}
+
 	fmt.Fprintf(w, "%s %s = %d; // %s \n", pf.typ, ToSnakeCase(pf.name), pf.num, pf.goType)
 }
 
 func (pf protoField) Format(w io.Writer) {
+	for _, comment := range pf.comments {
+		fmt.Fprintf(w, "%s\n  ", comment)
+	}
+
 	fmt.Fprintf(w, "%s %s = %d;\n", pf.typ, ToSnakeCase(pf.name), pf.num)
 }
 
@@ -236,10 +245,11 @@ func PrepareProtoData(pkgsTypes slices.Sorted[*types.Type], constants consts.Con
 				}
 
 				sliceutil.AddIfNotFound(def.Fields(), protoField{
-					name:   field.Name,
-					typ:    typeName,
-					num:    field.Num,
-					goType: field.TypeData.Type().String(),
+					name:     field.Name,
+					typ:      typeName,
+					num:      field.Num,
+					goType:   field.TypeData.Type().String(),
+					comments: field.Comments,
 				})
 
 				continue
@@ -260,10 +270,11 @@ func PrepareProtoData(pkgsTypes slices.Sorted[*types.Type], constants consts.Con
 				}
 
 				sliceutil.AddIfNotFound(def.Fields(), protoField{
-					name:   field.Name,
-					typ:    typeName,
-					num:    field.Num,
-					goType: field.TypeData.Type().String(),
+					name:     field.Name,
+					typ:      typeName,
+					num:      field.Num,
+					goType:   field.TypeData.Type().String(),
+					comments: field.Comments,
 				})
 
 				continue
@@ -294,10 +305,11 @@ func PrepareProtoData(pkgsTypes slices.Sorted[*types.Type], constants consts.Con
 				}
 
 				sliceutil.AddIfNotFound(def.Fields(), protoField{
-					name:   field.Name,
-					typ:    typeName,
-					num:    field.Num,
-					goType: field.TypeData.Type().String(),
+					name:     field.Name,
+					typ:      typeName,
+					num:      field.Num,
+					goType:   field.TypeData.Type().String(),
+					comments: field.Comments,
 				})
 
 				continue
@@ -335,10 +347,11 @@ func PrepareProtoData(pkgsTypes slices.Sorted[*types.Type], constants consts.Con
 				}
 
 				sliceutil.AddIfNotFound(def.Fields(), protoField{
-					name:   field.Name,
-					typ:    typText,
-					num:    field.Num,
-					goType: field.TypeData.Type().String(),
+					name:     field.Name,
+					typ:      typText,
+					num:      field.Num,
+					goType:   field.TypeData.Type().String(),
+					comments: field.Comments,
 				})
 
 				continue

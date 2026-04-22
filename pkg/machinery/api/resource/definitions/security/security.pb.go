@@ -25,10 +25,13 @@ const (
 
 // ImageKeylessVerifierSpec represents a signature verification provider.
 type ImageKeylessVerifierSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Issuer        string                 `protobuf:"bytes,1,opt,name=issuer,proto3" json:"issuer,omitempty"`
-	Subject       string                 `protobuf:"bytes,2,opt,name=subject,proto3" json:"subject,omitempty"`
-	SubjectRegex  string                 `protobuf:"bytes,3,opt,name=subject_regex,json=subjectRegex,proto3" json:"subject_regex,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Issuer is the OIDC issuer URL.
+	Issuer string `protobuf:"bytes,1,opt,name=issuer,proto3" json:"issuer,omitempty"`
+	// Subject is the expected subject.
+	Subject string `protobuf:"bytes,2,opt,name=subject,proto3" json:"subject,omitempty"`
+	// SubjectRegex is a regex pattern for subject matching.
+	SubjectRegex  string `protobuf:"bytes,3,opt,name=subject_regex,json=subjectRegex,proto3" json:"subject_regex,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -86,8 +89,9 @@ func (x *ImageKeylessVerifierSpec) GetSubjectRegex() string {
 
 // ImagePublicKeyVerifierSpec represents a signature verification provider with static public key.
 type ImagePublicKeyVerifierSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Certificate   string                 `protobuf:"bytes,1,opt,name=certificate,proto3" json:"certificate,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Certificate is a public certificate in PEM format accepted for image signature verification.
+	Certificate   string `protobuf:"bytes,1,opt,name=certificate,proto3" json:"certificate,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -131,11 +135,16 @@ func (x *ImagePublicKeyVerifierSpec) GetCertificate() string {
 
 // ImageVerificationRuleSpec represents a verification rule.
 type ImageVerificationRuleSpec struct {
-	state             protoimpl.MessageState      `protogen:"open.v1"`
-	ImagePattern      string                      `protobuf:"bytes,2,opt,name=image_pattern,json=imagePattern,proto3" json:"image_pattern,omitempty"`
-	Skip              bool                        `protobuf:"varint,3,opt,name=skip,proto3" json:"skip,omitempty"`
-	Deny              bool                        `protobuf:"varint,4,opt,name=deny,proto3" json:"deny,omitempty"`
-	KeylessVerifier   *ImageKeylessVerifierSpec   `protobuf:"bytes,5,opt,name=keyless_verifier,json=keylessVerifier,proto3" json:"keyless_verifier,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// ImagePattern is the image name pattern.
+	ImagePattern string `protobuf:"bytes,2,opt,name=image_pattern,json=imagePattern,proto3" json:"image_pattern,omitempty"`
+	// Skip is the action for matching images.
+	Skip bool `protobuf:"varint,3,opt,name=skip,proto3" json:"skip,omitempty"`
+	// Deny is the action for matching images.
+	Deny bool `protobuf:"varint,4,opt,name=deny,proto3" json:"deny,omitempty"`
+	// KeylessVerifier is the keyless verifier configuration to use.
+	KeylessVerifier *ImageKeylessVerifierSpec `protobuf:"bytes,5,opt,name=keyless_verifier,json=keylessVerifier,proto3" json:"keyless_verifier,omitempty"`
+	// PublicKeyVerifier is the public key verifier configuration to use.
 	PublicKeyVerifier *ImagePublicKeyVerifierSpec `protobuf:"bytes,6,opt,name=public_key_verifier,json=publicKeyVerifier,proto3" json:"public_key_verifier,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
@@ -208,11 +217,13 @@ func (x *ImageVerificationRuleSpec) GetPublicKeyVerifier() *ImagePublicKeyVerifi
 
 // TUFTrustedRootSpec represents a sigstore's TUF trusted root information.
 type TUFTrustedRootSpec struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// LastRefreshTime is the last time the trusted root was refreshed.
 	LastRefreshTime *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=last_refresh_time,json=lastRefreshTime,proto3" json:"last_refresh_time,omitempty"`
-	JsonData        string                 `protobuf:"bytes,2,opt,name=json_data,json=jsonData,proto3" json:"json_data,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// JSONData is the trusted root data in JSON format.
+	JsonData      string `protobuf:"bytes,2,opt,name=json_data,json=jsonData,proto3" json:"json_data,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *TUFTrustedRootSpec) Reset() {

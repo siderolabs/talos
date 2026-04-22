@@ -33,12 +33,17 @@ type DeviceSpec struct {
 	Minor           int64                  `protobuf:"varint,3,opt,name=minor,proto3" json:"minor,omitempty"`
 	PartitionName   string                 `protobuf:"bytes,4,opt,name=partition_name,json=partitionName,proto3" json:"partition_name,omitempty"`
 	PartitionNumber int64                  `protobuf:"varint,5,opt,name=partition_number,json=partitionNumber,proto3" json:"partition_number,omitempty"`
-	Generation      int64                  `protobuf:"varint,6,opt,name=generation,proto3" json:"generation,omitempty"`
-	DevicePath      string                 `protobuf:"bytes,7,opt,name=device_path,json=devicePath,proto3" json:"device_path,omitempty"`
-	Parent          string                 `protobuf:"bytes,8,opt,name=parent,proto3" json:"parent,omitempty"`
-	Secondaries     []string               `protobuf:"bytes,9,rep,name=secondaries,proto3" json:"secondaries,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	// Generation is bumped every time the device might have changed and might need to be re-probed.
+	Generation int64  `protobuf:"varint,6,opt,name=generation,proto3" json:"generation,omitempty"`
+	DevicePath string `protobuf:"bytes,7,opt,name=device_path,json=devicePath,proto3" json:"device_path,omitempty"`
+	// Parent (if set) specifies the parent device ID.
+	Parent string `protobuf:"bytes,8,opt,name=parent,proto3" json:"parent,omitempty"`
+	// Secondaries (if set) specifies the secondary device IDs.
+	//
+	// E.g. for a LVM volume secondary is a list of blockdevices that the volume consists of.
+	Secondaries   []string `protobuf:"bytes,9,rep,name=secondaries,proto3" json:"secondaries,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *DeviceSpec) Reset() {
@@ -136,29 +141,33 @@ func (x *DeviceSpec) GetSecondaries() []string {
 
 // DiscoveredVolumeSpec is the spec for DiscoveredVolumes resource.
 type DiscoveredVolumeSpec struct {
-	state               protoimpl.MessageState `protogen:"open.v1"`
-	Size                uint64                 `protobuf:"varint,1,opt,name=size,proto3" json:"size,omitempty"`
-	SectorSize          uint64                 `protobuf:"varint,2,opt,name=sector_size,json=sectorSize,proto3" json:"sector_size,omitempty"`
-	IoSize              uint64                 `protobuf:"varint,3,opt,name=io_size,json=ioSize,proto3" json:"io_size,omitempty"`
-	Name                string                 `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
-	Uuid                string                 `protobuf:"bytes,5,opt,name=uuid,proto3" json:"uuid,omitempty"`
-	Label               string                 `protobuf:"bytes,6,opt,name=label,proto3" json:"label,omitempty"`
-	BlockSize           uint32                 `protobuf:"varint,7,opt,name=block_size,json=blockSize,proto3" json:"block_size,omitempty"`
-	FilesystemBlockSize uint32                 `protobuf:"varint,8,opt,name=filesystem_block_size,json=filesystemBlockSize,proto3" json:"filesystem_block_size,omitempty"`
-	ProbedSize          uint64                 `protobuf:"varint,9,opt,name=probed_size,json=probedSize,proto3" json:"probed_size,omitempty"`
-	PartitionUuid       string                 `protobuf:"bytes,10,opt,name=partition_uuid,json=partitionUuid,proto3" json:"partition_uuid,omitempty"`
-	PartitionType       string                 `protobuf:"bytes,11,opt,name=partition_type,json=partitionType,proto3" json:"partition_type,omitempty"`
-	PartitionLabel      string                 `protobuf:"bytes,12,opt,name=partition_label,json=partitionLabel,proto3" json:"partition_label,omitempty"`
-	PartitionIndex      uint64                 `protobuf:"varint,13,opt,name=partition_index,json=partitionIndex,proto3" json:"partition_index,omitempty"`
-	Type                string                 `protobuf:"bytes,14,opt,name=type,proto3" json:"type,omitempty"`
-	DevicePath          string                 `protobuf:"bytes,15,opt,name=device_path,json=devicePath,proto3" json:"device_path,omitempty"`
-	Parent              string                 `protobuf:"bytes,16,opt,name=parent,proto3" json:"parent,omitempty"`
-	DevPath             string                 `protobuf:"bytes,17,opt,name=dev_path,json=devPath,proto3" json:"dev_path,omitempty"`
-	ParentDevPath       string                 `protobuf:"bytes,18,opt,name=parent_dev_path,json=parentDevPath,proto3" json:"parent_dev_path,omitempty"`
-	PrettySize          string                 `protobuf:"bytes,19,opt,name=pretty_size,json=prettySize,proto3" json:"pretty_size,omitempty"`
-	Offset              uint64                 `protobuf:"varint,20,opt,name=offset,proto3" json:"offset,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Overall size of the probed device (in bytes).
+	Size uint64 `protobuf:"varint,1,opt,name=size,proto3" json:"size,omitempty"`
+	// Sector size of the device (in bytes).
+	SectorSize uint64 `protobuf:"varint,2,opt,name=sector_size,json=sectorSize,proto3" json:"sector_size,omitempty"`
+	// Optimal I/O size for the device (in bytes).
+	IoSize              uint64 `protobuf:"varint,3,opt,name=io_size,json=ioSize,proto3" json:"io_size,omitempty"`
+	Name                string `protobuf:"bytes,4,opt,name=name,proto3" json:"name,omitempty"`
+	Uuid                string `protobuf:"bytes,5,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	Label               string `protobuf:"bytes,6,opt,name=label,proto3" json:"label,omitempty"`
+	BlockSize           uint32 `protobuf:"varint,7,opt,name=block_size,json=blockSize,proto3" json:"block_size,omitempty"`
+	FilesystemBlockSize uint32 `protobuf:"varint,8,opt,name=filesystem_block_size,json=filesystemBlockSize,proto3" json:"filesystem_block_size,omitempty"`
+	ProbedSize          uint64 `protobuf:"varint,9,opt,name=probed_size,json=probedSize,proto3" json:"probed_size,omitempty"`
+	PartitionUuid       string `protobuf:"bytes,10,opt,name=partition_uuid,json=partitionUuid,proto3" json:"partition_uuid,omitempty"`
+	PartitionType       string `protobuf:"bytes,11,opt,name=partition_type,json=partitionType,proto3" json:"partition_type,omitempty"`
+	PartitionLabel      string `protobuf:"bytes,12,opt,name=partition_label,json=partitionLabel,proto3" json:"partition_label,omitempty"`
+	PartitionIndex      uint64 `protobuf:"varint,13,opt,name=partition_index,json=partitionIndex,proto3" json:"partition_index,omitempty"`
+	Type                string `protobuf:"bytes,14,opt,name=type,proto3" json:"type,omitempty"`
+	DevicePath          string `protobuf:"bytes,15,opt,name=device_path,json=devicePath,proto3" json:"device_path,omitempty"`
+	Parent              string `protobuf:"bytes,16,opt,name=parent,proto3" json:"parent,omitempty"`
+	DevPath             string `protobuf:"bytes,17,opt,name=dev_path,json=devPath,proto3" json:"dev_path,omitempty"`
+	ParentDevPath       string `protobuf:"bytes,18,opt,name=parent_dev_path,json=parentDevPath,proto3" json:"parent_dev_path,omitempty"`
+	PrettySize          string `protobuf:"bytes,19,opt,name=pretty_size,json=prettySize,proto3" json:"pretty_size,omitempty"`
+	// Offset of the partition/volume inside Parent device (in bytes).
+	Offset        uint64 `protobuf:"varint,20,opt,name=offset,proto3" json:"offset,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *DiscoveredVolumeSpec) Reset() {
@@ -476,25 +485,29 @@ func (x *DiskSelector) GetExternal() string {
 
 // DiskSpec is the spec for Disks status.
 type DiskSpec struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	Size           uint64                 `protobuf:"varint,1,opt,name=size,proto3" json:"size,omitempty"`
-	IoSize         uint64                 `protobuf:"varint,2,opt,name=io_size,json=ioSize,proto3" json:"io_size,omitempty"`
-	SectorSize     uint64                 `protobuf:"varint,3,opt,name=sector_size,json=sectorSize,proto3" json:"sector_size,omitempty"`
-	Readonly       bool                   `protobuf:"varint,4,opt,name=readonly,proto3" json:"readonly,omitempty"`
-	Model          string                 `protobuf:"bytes,5,opt,name=model,proto3" json:"model,omitempty"`
-	Serial         string                 `protobuf:"bytes,6,opt,name=serial,proto3" json:"serial,omitempty"`
-	Modalias       string                 `protobuf:"bytes,7,opt,name=modalias,proto3" json:"modalias,omitempty"`
-	Wwid           string                 `protobuf:"bytes,8,opt,name=wwid,proto3" json:"wwid,omitempty"`
-	BusPath        string                 `protobuf:"bytes,9,opt,name=bus_path,json=busPath,proto3" json:"bus_path,omitempty"`
-	SubSystem      string                 `protobuf:"bytes,10,opt,name=sub_system,json=subSystem,proto3" json:"sub_system,omitempty"`
-	Transport      string                 `protobuf:"bytes,11,opt,name=transport,proto3" json:"transport,omitempty"`
-	Rotational     bool                   `protobuf:"varint,12,opt,name=rotational,proto3" json:"rotational,omitempty"`
-	Cdrom          bool                   `protobuf:"varint,13,opt,name=cdrom,proto3" json:"cdrom,omitempty"`
-	DevPath        string                 `protobuf:"bytes,14,opt,name=dev_path,json=devPath,proto3" json:"dev_path,omitempty"`
-	PrettySize     string                 `protobuf:"bytes,15,opt,name=pretty_size,json=prettySize,proto3" json:"pretty_size,omitempty"`
-	SecondaryDisks []string               `protobuf:"bytes,16,rep,name=secondary_disks,json=secondaryDisks,proto3" json:"secondary_disks,omitempty"`
-	Uuid           string                 `protobuf:"bytes,17,opt,name=uuid,proto3" json:"uuid,omitempty"`
-	Symlinks       []string               `protobuf:"bytes,18,rep,name=symlinks,proto3" json:"symlinks,omitempty"`
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	Size       uint64                 `protobuf:"varint,1,opt,name=size,proto3" json:"size,omitempty"`
+	IoSize     uint64                 `protobuf:"varint,2,opt,name=io_size,json=ioSize,proto3" json:"io_size,omitempty"`
+	SectorSize uint64                 `protobuf:"varint,3,opt,name=sector_size,json=sectorSize,proto3" json:"sector_size,omitempty"`
+	Readonly   bool                   `protobuf:"varint,4,opt,name=readonly,proto3" json:"readonly,omitempty"`
+	Model      string                 `protobuf:"bytes,5,opt,name=model,proto3" json:"model,omitempty"`
+	Serial     string                 `protobuf:"bytes,6,opt,name=serial,proto3" json:"serial,omitempty"`
+	Modalias   string                 `protobuf:"bytes,7,opt,name=modalias,proto3" json:"modalias,omitempty"`
+	Wwid       string                 `protobuf:"bytes,8,opt,name=wwid,proto3" json:"wwid,omitempty"`
+	BusPath    string                 `protobuf:"bytes,9,opt,name=bus_path,json=busPath,proto3" json:"bus_path,omitempty"`
+	SubSystem  string                 `protobuf:"bytes,10,opt,name=sub_system,json=subSystem,proto3" json:"sub_system,omitempty"`
+	Transport  string                 `protobuf:"bytes,11,opt,name=transport,proto3" json:"transport,omitempty"`
+	Rotational bool                   `protobuf:"varint,12,opt,name=rotational,proto3" json:"rotational,omitempty"`
+	Cdrom      bool                   `protobuf:"varint,13,opt,name=cdrom,proto3" json:"cdrom,omitempty"`
+	DevPath    string                 `protobuf:"bytes,14,opt,name=dev_path,json=devPath,proto3" json:"dev_path,omitempty"`
+	PrettySize string                 `protobuf:"bytes,15,opt,name=pretty_size,json=prettySize,proto3" json:"pretty_size,omitempty"`
+	// SecondaryDisks (if set) specifies the secondary disk IDs.
+	//
+	// E.g. if the blockdevice secondary is vda5, the secondary disk will be set as vda.
+	// This allows to map secondaries between disks ignoring the partitions.
+	SecondaryDisks []string `protobuf:"bytes,16,rep,name=secondary_disks,json=secondaryDisks,proto3" json:"secondary_disks,omitempty"`
+	Uuid           string   `protobuf:"bytes,17,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	Symlinks       []string `protobuf:"bytes,18,rep,name=symlinks,proto3" json:"symlinks,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -657,17 +670,22 @@ func (x *DiskSpec) GetSymlinks() []string {
 
 // EncryptionKey is the spec for volume encryption key.
 type EncryptionKey struct {
-	state                            protoimpl.MessageState       `protogen:"open.v1"`
-	Slot                             int64                        `protobuf:"varint,1,opt,name=slot,proto3" json:"slot,omitempty"`
-	Type                             enums.BlockEncryptionKeyType `protobuf:"varint,2,opt,name=type,proto3,enum=talos.resource.definitions.enums.BlockEncryptionKeyType" json:"type,omitempty"`
-	StaticPassphrase                 []byte                       `protobuf:"bytes,3,opt,name=static_passphrase,json=staticPassphrase,proto3" json:"static_passphrase,omitempty"`
-	KmsEndpoint                      string                       `protobuf:"bytes,4,opt,name=kms_endpoint,json=kmsEndpoint,proto3" json:"kms_endpoint,omitempty"`
-	TpmCheckSecurebootStatusOnEnroll bool                         `protobuf:"varint,5,opt,name=tpm_check_secureboot_status_on_enroll,json=tpmCheckSecurebootStatusOnEnroll,proto3" json:"tpm_check_secureboot_status_on_enroll,omitempty"`
-	LockToState                      bool                         `protobuf:"varint,6,opt,name=lock_to_state,json=lockToState,proto3" json:"lock_to_state,omitempty"`
-	TpmpcRs                          []int64                      `protobuf:"varint,7,rep,packed,name=tpmpc_rs,json=tpmpcRs,proto3" json:"tpmpc_rs,omitempty"`
-	TpmPubKeyPcRs                    []int64                      `protobuf:"varint,8,rep,packed,name=tpm_pub_key_pc_rs,json=tpmPubKeyPcRs,proto3" json:"tpm_pub_key_pc_rs,omitempty"`
-	unknownFields                    protoimpl.UnknownFields
-	sizeCache                        protoimpl.SizeCache
+	state protoimpl.MessageState       `protogen:"open.v1"`
+	Slot  int64                        `protobuf:"varint,1,opt,name=slot,proto3" json:"slot,omitempty"`
+	Type  enums.BlockEncryptionKeyType `protobuf:"varint,2,opt,name=type,proto3,enum=talos.resource.definitions.enums.BlockEncryptionKeyType" json:"type,omitempty"`
+	// Only for Type == "static":
+	StaticPassphrase []byte `protobuf:"bytes,3,opt,name=static_passphrase,json=staticPassphrase,proto3" json:"static_passphrase,omitempty"`
+	// Only for Type == "kms":
+	KmsEndpoint string `protobuf:"bytes,4,opt,name=kms_endpoint,json=kmsEndpoint,proto3" json:"kms_endpoint,omitempty"`
+	// Only for Type == "tpm":
+	TpmCheckSecurebootStatusOnEnroll bool `protobuf:"varint,5,opt,name=tpm_check_secureboot_status_on_enroll,json=tpmCheckSecurebootStatusOnEnroll,proto3" json:"tpm_check_secureboot_status_on_enroll,omitempty"`
+	LockToState                      bool `protobuf:"varint,6,opt,name=lock_to_state,json=lockToState,proto3" json:"lock_to_state,omitempty"`
+	// Only for Type == "tpm":
+	TpmpcRs []int64 `protobuf:"varint,7,rep,packed,name=tpmpc_rs,json=tpmpcRs,proto3" json:"tpmpc_rs,omitempty"`
+	// Only for Type == "tpm":
+	TpmPubKeyPcRs []int64 `protobuf:"varint,8,rep,packed,name=tpm_pub_key_pc_rs,json=tpmPubKeyPcRs,proto3" json:"tpm_pub_key_pc_rs,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *EncryptionKey) Reset() {
@@ -843,9 +861,11 @@ func (x *EncryptionSpec) GetPerfOptions() []string {
 
 // FilesystemSpec is the spec for volume filesystem.
 type FilesystemSpec struct {
-	state         protoimpl.MessageState    `protogen:"open.v1"`
-	Type          enums.BlockFilesystemType `protobuf:"varint,1,opt,name=type,proto3,enum=talos.resource.definitions.enums.BlockFilesystemType" json:"type,omitempty"`
-	Label         string                    `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Filesystem type.
+	Type enums.BlockFilesystemType `protobuf:"varint,1,opt,name=type,proto3,enum=talos.resource.definitions.enums.BlockFilesystemType" json:"type,omitempty"`
+	// Filesystem label.
+	Label         string `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -896,9 +916,11 @@ func (x *FilesystemSpec) GetLabel() string {
 
 // LocatorSpec is the spec for volume locator.
 type LocatorSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Match         *v1alpha1.CheckedExpr  `protobuf:"bytes,1,opt,name=match,proto3" json:"match,omitempty"`
-	DiskMatch     *v1alpha1.CheckedExpr  `protobuf:"bytes,2,opt,name=disk_match,json=diskMatch,proto3" json:"disk_match,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Match is a volume locator match expression.
+	Match *v1alpha1.CheckedExpr `protobuf:"bytes,1,opt,name=match,proto3" json:"match,omitempty"`
+	// DiskMatch is a disk locator match expression.
+	DiskMatch     *v1alpha1.CheckedExpr `protobuf:"bytes,2,opt,name=disk_match,json=diskMatch,proto3" json:"disk_match,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1050,19 +1072,29 @@ func (x *MountRequestSpec) GetSecure() bool {
 
 // MountSpec is the spec for volume mount.
 type MountSpec struct {
-	state               protoimpl.MessageState `protogen:"open.v1"`
-	TargetPath          string                 `protobuf:"bytes,1,opt,name=target_path,json=targetPath,proto3" json:"target_path,omitempty"`
-	SelinuxLabel        string                 `protobuf:"bytes,2,opt,name=selinux_label,json=selinuxLabel,proto3" json:"selinux_label,omitempty"`
-	ProjectQuotaSupport bool                   `protobuf:"varint,3,opt,name=project_quota_support,json=projectQuotaSupport,proto3" json:"project_quota_support,omitempty"`
-	ParentId            string                 `protobuf:"bytes,4,opt,name=parent_id,json=parentId,proto3" json:"parent_id,omitempty"`
-	FileMode            uint32                 `protobuf:"varint,5,opt,name=file_mode,json=fileMode,proto3" json:"file_mode,omitempty"`
-	Uid                 int64                  `protobuf:"varint,6,opt,name=uid,proto3" json:"uid,omitempty"`
-	Gid                 int64                  `protobuf:"varint,7,opt,name=gid,proto3" json:"gid,omitempty"`
-	RecursiveRelabel    bool                   `protobuf:"varint,8,opt,name=recursive_relabel,json=recursiveRelabel,proto3" json:"recursive_relabel,omitempty"`
-	BindTarget          string                 `protobuf:"bytes,9,opt,name=bind_target,json=bindTarget,proto3" json:"bind_target,omitempty"`
-	Parameters          []*ParameterSpec       `protobuf:"bytes,10,rep,name=parameters,proto3" json:"parameters,omitempty"`
-	unknownFields       protoimpl.UnknownFields
-	sizeCache           protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Mount path for the volume.
+	TargetPath string `protobuf:"bytes,1,opt,name=target_path,json=targetPath,proto3" json:"target_path,omitempty"`
+	// SELinux label for the volume.
+	SelinuxLabel string `protobuf:"bytes,2,opt,name=selinux_label,json=selinuxLabel,proto3" json:"selinux_label,omitempty"`
+	// Enable project quota (xfs) for the volume.
+	ProjectQuotaSupport bool `protobuf:"varint,3,opt,name=project_quota_support,json=projectQuotaSupport,proto3" json:"project_quota_support,omitempty"`
+	// Parent mount request ID.
+	ParentId string `protobuf:"bytes,4,opt,name=parent_id,json=parentId,proto3" json:"parent_id,omitempty"`
+	// FileMode is the file mode for the mount target.
+	FileMode uint32 `protobuf:"varint,5,opt,name=file_mode,json=fileMode,proto3" json:"file_mode,omitempty"`
+	// UID is the user ID for the mount target.
+	Uid int64 `protobuf:"varint,6,opt,name=uid,proto3" json:"uid,omitempty"`
+	// GID is the group ID for the mount target.
+	Gid int64 `protobuf:"varint,7,opt,name=gid,proto3" json:"gid,omitempty"`
+	// RecursiveRelabel is the recursive relabel/chown flag for the mount target.
+	RecursiveRelabel bool `protobuf:"varint,8,opt,name=recursive_relabel,json=recursiveRelabel,proto3" json:"recursive_relabel,omitempty"`
+	// BindTarget is an optional path on the host to bind-mount the volume onto.
+	BindTarget string `protobuf:"bytes,9,opt,name=bind_target,json=bindTarget,proto3" json:"bind_target,omitempty"`
+	// Parameters are additional filesystem mount options used when mounting the volume.
+	Parameters    []*ParameterSpec `protobuf:"bytes,10,rep,name=parameters,proto3" json:"parameters,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *MountSpec) Reset() {
@@ -1268,11 +1300,15 @@ func (x *MountStatusSpec) GetDetached() bool {
 
 // ParameterSpec is a mount parameter.
 type ParameterSpec struct {
-	state         protoimpl.MessageState     `protogen:"open.v1"`
-	Type          enums.BlockFSParameterType `protobuf:"varint,1,opt,name=type,proto3,enum=talos.resource.definitions.enums.BlockFSParameterType" json:"type,omitempty"`
-	Name          string                     `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
-	String_       string                     `protobuf:"bytes,3,opt,name=string,proto3" json:"string,omitempty"`
-	Binary        []byte                     `protobuf:"bytes,5,opt,name=binary,proto3" json:"binary,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Type of the parameter.
+	Type enums.BlockFSParameterType `protobuf:"varint,1,opt,name=type,proto3,enum=talos.resource.definitions.enums.BlockFSParameterType" json:"type,omitempty"`
+	// Name of the parameter.
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// String value of the parameter.
+	String_ string `protobuf:"bytes,3,opt,name=string,proto3" json:"string,omitempty"`
+	// Binary value of the parameter.
+	Binary        []byte `protobuf:"bytes,5,opt,name=binary,proto3" json:"binary,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1337,14 +1373,21 @@ func (x *ParameterSpec) GetBinary() []byte {
 
 // PartitionSpec is the spec for volume partitioning.
 type PartitionSpec struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	MinSize         uint64                 `protobuf:"varint,1,opt,name=min_size,json=minSize,proto3" json:"min_size,omitempty"`
-	MaxSize         uint64                 `protobuf:"varint,2,opt,name=max_size,json=maxSize,proto3" json:"max_size,omitempty"`
-	Grow            bool                   `protobuf:"varint,3,opt,name=grow,proto3" json:"grow,omitempty"`
-	Label           string                 `protobuf:"bytes,4,opt,name=label,proto3" json:"label,omitempty"`
-	TypeUuid        string                 `protobuf:"bytes,5,opt,name=type_uuid,json=typeUuid,proto3" json:"type_uuid,omitempty"`
-	RelativeMaxSize uint64                 `protobuf:"varint,6,opt,name=relative_max_size,json=relativeMaxSize,proto3" json:"relative_max_size,omitempty"`
-	NegativeMaxSize bool                   `protobuf:"varint,7,opt,name=negative_max_size,json=negativeMaxSize,proto3" json:"negative_max_size,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Partition minimum size in bytes.
+	MinSize uint64 `protobuf:"varint,1,opt,name=min_size,json=minSize,proto3" json:"min_size,omitempty"`
+	// Partition maximum size in bytes, if not set, grows to the maximum size.
+	MaxSize uint64 `protobuf:"varint,2,opt,name=max_size,json=maxSize,proto3" json:"max_size,omitempty"`
+	// Grow the partition automatically to the maximum size.
+	Grow bool `protobuf:"varint,3,opt,name=grow,proto3" json:"grow,omitempty"`
+	// Label for the partition.
+	Label string `protobuf:"bytes,4,opt,name=label,proto3" json:"label,omitempty"`
+	// Partition type UUID.
+	TypeUuid string `protobuf:"bytes,5,opt,name=type_uuid,json=typeUuid,proto3" json:"type_uuid,omitempty"`
+	// Partition maximum size (relative), if not set, grows to the maximum size.
+	RelativeMaxSize uint64 `protobuf:"varint,6,opt,name=relative_max_size,json=relativeMaxSize,proto3" json:"relative_max_size,omitempty"`
+	// NegativeMaxSize indicates that MaxSize or RelativeMaxSize represents space to be left free on the device rather than space to consume.
+	NegativeMaxSize bool `protobuf:"varint,7,opt,name=negative_max_size,json=negativeMaxSize,proto3" json:"negative_max_size,omitempty"`
 	unknownFields   protoimpl.UnknownFields
 	sizeCache       protoimpl.SizeCache
 }
@@ -1430,11 +1473,17 @@ func (x *PartitionSpec) GetNegativeMaxSize() bool {
 
 // ProvisioningSpec is the spec for volume provisioning.
 type ProvisioningSpec struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	DiskSelector   *DiskSelector          `protobuf:"bytes,1,opt,name=disk_selector,json=diskSelector,proto3" json:"disk_selector,omitempty"`
-	PartitionSpec  *PartitionSpec         `protobuf:"bytes,2,opt,name=partition_spec,json=partitionSpec,proto3" json:"partition_spec,omitempty"`
-	Wave           int64                  `protobuf:"varint,3,opt,name=wave,proto3" json:"wave,omitempty"`
-	FilesystemSpec *FilesystemSpec        `protobuf:"bytes,4,opt,name=filesystem_spec,json=filesystemSpec,proto3" json:"filesystem_spec,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// DiskSelector selects a disk for the volume.
+	DiskSelector *DiskSelector `protobuf:"bytes,1,opt,name=disk_selector,json=diskSelector,proto3" json:"disk_selector,omitempty"`
+	// PartitionSpec describes how to provision the volume (partition type).
+	PartitionSpec *PartitionSpec `protobuf:"bytes,2,opt,name=partition_spec,json=partitionSpec,proto3" json:"partition_spec,omitempty"`
+	// Provisioning wave for the volume.
+	//
+	// Waves are processed sequentially - the volumes in the wave are only provisioned after the previous wave is done.
+	Wave int64 `protobuf:"varint,3,opt,name=wave,proto3" json:"wave,omitempty"`
+	// FilesystemSpec describes how to provision the volume (filesystem type).
+	FilesystemSpec *FilesystemSpec `protobuf:"bytes,4,opt,name=filesystem_spec,json=filesystemSpec,proto3" json:"filesystem_spec,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -1592,11 +1641,13 @@ func (x *SwapStatusSpec) GetType() string {
 
 // SymlinkProvisioningSpec is the spec for volume symlink.
 type SymlinkProvisioningSpec struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	SymlinkTargetPath string                 `protobuf:"bytes,1,opt,name=symlink_target_path,json=symlinkTargetPath,proto3" json:"symlink_target_path,omitempty"`
-	Force             bool                   `protobuf:"varint,2,opt,name=force,proto3" json:"force,omitempty"`
-	unknownFields     protoimpl.UnknownFields
-	sizeCache         protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Symlink target path for the volume.
+	SymlinkTargetPath string `protobuf:"bytes,1,opt,name=symlink_target_path,json=symlinkTargetPath,proto3" json:"symlink_target_path,omitempty"`
+	// Force symlink creation.
+	Force         bool `protobuf:"varint,2,opt,name=force,proto3" json:"force,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *SymlinkProvisioningSpec) Reset() {
@@ -1849,13 +1900,20 @@ func (x *UserDiskConfigStatusSpec) GetTornDown() bool {
 
 // VolumeConfigSpec is the spec for VolumeConfig resource.
 type VolumeConfigSpec struct {
-	state         protoimpl.MessageState   `protogen:"open.v1"`
-	ParentId      string                   `protobuf:"bytes,1,opt,name=parent_id,json=parentId,proto3" json:"parent_id,omitempty"`
-	Type          enums.BlockVolumeType    `protobuf:"varint,2,opt,name=type,proto3,enum=talos.resource.definitions.enums.BlockVolumeType" json:"type,omitempty"`
-	Provisioning  *ProvisioningSpec        `protobuf:"bytes,3,opt,name=provisioning,proto3" json:"provisioning,omitempty"`
-	Locator       *LocatorSpec             `protobuf:"bytes,4,opt,name=locator,proto3" json:"locator,omitempty"`
-	Mount         *MountSpec               `protobuf:"bytes,5,opt,name=mount,proto3" json:"mount,omitempty"`
-	Encryption    *EncryptionSpec          `protobuf:"bytes,6,opt,name=encryption,proto3" json:"encryption,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Parent volume ID, if set no operations on the volume continue until the parent volume is ready.
+	ParentId string `protobuf:"bytes,1,opt,name=parent_id,json=parentId,proto3" json:"parent_id,omitempty"`
+	// Volume type.
+	Type enums.BlockVolumeType `protobuf:"varint,2,opt,name=type,proto3,enum=talos.resource.definitions.enums.BlockVolumeType" json:"type,omitempty"`
+	// Provisioning configuration (how to provision a volume).
+	Provisioning *ProvisioningSpec `protobuf:"bytes,3,opt,name=provisioning,proto3" json:"provisioning,omitempty"`
+	// How to find a volume.
+	Locator *LocatorSpec `protobuf:"bytes,4,opt,name=locator,proto3" json:"locator,omitempty"`
+	// Mount options for the volume.
+	Mount *MountSpec `protobuf:"bytes,5,opt,name=mount,proto3" json:"mount,omitempty"`
+	// Encryption configuration (how to encrypt a volume).
+	Encryption *EncryptionSpec `protobuf:"bytes,6,opt,name=encryption,proto3" json:"encryption,omitempty"`
+	// Symlink options for the volume.
 	Symlink       *SymlinkProvisioningSpec `protobuf:"bytes,7,opt,name=symlink,proto3" json:"symlink,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2120,31 +2178,43 @@ func (x *VolumeMountStatusSpec) GetSecure() bool {
 
 // VolumeStatusSpec is the spec for VolumeStatus resource.
 type VolumeStatusSpec struct {
-	state                    protoimpl.MessageState            `protogen:"open.v1"`
-	Phase                    enums.BlockVolumePhase            `protobuf:"varint,1,opt,name=phase,proto3,enum=talos.resource.definitions.enums.BlockVolumePhase" json:"phase,omitempty"`
-	Location                 string                            `protobuf:"bytes,2,opt,name=location,proto3" json:"location,omitempty"`
-	ErrorMessage             string                            `protobuf:"bytes,3,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`
-	Uuid                     string                            `protobuf:"bytes,4,opt,name=uuid,proto3" json:"uuid,omitempty"`
-	PartitionUuid            string                            `protobuf:"bytes,5,opt,name=partition_uuid,json=partitionUuid,proto3" json:"partition_uuid,omitempty"`
-	PreFailPhase             enums.BlockVolumePhase            `protobuf:"varint,6,opt,name=pre_fail_phase,json=preFailPhase,proto3,enum=talos.resource.definitions.enums.BlockVolumePhase" json:"pre_fail_phase,omitempty"`
-	ParentLocation           string                            `protobuf:"bytes,7,opt,name=parent_location,json=parentLocation,proto3" json:"parent_location,omitempty"`
-	PartitionIndex           int64                             `protobuf:"varint,8,opt,name=partition_index,json=partitionIndex,proto3" json:"partition_index,omitempty"`
-	Size                     uint64                            `protobuf:"varint,9,opt,name=size,proto3" json:"size,omitempty"`
-	Filesystem               enums.BlockFilesystemType         `protobuf:"varint,10,opt,name=filesystem,proto3,enum=talos.resource.definitions.enums.BlockFilesystemType" json:"filesystem,omitempty"`
-	MountLocation            string                            `protobuf:"bytes,11,opt,name=mount_location,json=mountLocation,proto3" json:"mount_location,omitempty"`
-	EncryptionProvider       enums.BlockEncryptionProviderType `protobuf:"varint,12,opt,name=encryption_provider,json=encryptionProvider,proto3,enum=talos.resource.definitions.enums.BlockEncryptionProviderType" json:"encryption_provider,omitempty"`
-	PrettySize               string                            `protobuf:"bytes,13,opt,name=pretty_size,json=prettySize,proto3" json:"pretty_size,omitempty"`
-	EncryptionFailedSyncs    []string                          `protobuf:"bytes,14,rep,name=encryption_failed_syncs,json=encryptionFailedSyncs,proto3" json:"encryption_failed_syncs,omitempty"`
-	MountSpec                *MountSpec                        `protobuf:"bytes,15,opt,name=mount_spec,json=mountSpec,proto3" json:"mount_spec,omitempty"`
-	Type                     enums.BlockVolumeType             `protobuf:"varint,16,opt,name=type,proto3,enum=talos.resource.definitions.enums.BlockVolumeType" json:"type,omitempty"`
-	ConfiguredEncryptionKeys []string                          `protobuf:"bytes,17,rep,name=configured_encryption_keys,json=configuredEncryptionKeys,proto3" json:"configured_encryption_keys,omitempty"`
-	SymlinkSpec              *SymlinkProvisioningSpec          `protobuf:"bytes,18,opt,name=symlink_spec,json=symlinkSpec,proto3" json:"symlink_spec,omitempty"`
-	ParentId                 string                            `protobuf:"bytes,19,opt,name=parent_id,json=parentId,proto3" json:"parent_id,omitempty"`
-	EncryptionLockedToState  bool                              `protobuf:"varint,20,opt,name=encryption_locked_to_state,json=encryptionLockedToState,proto3" json:"encryption_locked_to_state,omitempty"`
-	EncryptionSlot           int64                             `protobuf:"varint,21,opt,name=encryption_slot,json=encryptionSlot,proto3" json:"encryption_slot,omitempty"`
-	TpmEncryptionOptions     *TPMEncryptionOptionsInfo         `protobuf:"bytes,22,opt,name=tpm_encryption_options,json=tpmEncryptionOptions,proto3" json:"tpm_encryption_options,omitempty"`
-	unknownFields            protoimpl.UnknownFields
-	sizeCache                protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Phase enums.BlockVolumePhase `protobuf:"varint,1,opt,name=phase,proto3,enum=talos.resource.definitions.enums.BlockVolumePhase" json:"phase,omitempty"`
+	// Location is the path to the block device (raw).
+	Location      string                 `protobuf:"bytes,2,opt,name=location,proto3" json:"location,omitempty"`
+	ErrorMessage  string                 `protobuf:"bytes,3,opt,name=error_message,json=errorMessage,proto3" json:"error_message,omitempty"`
+	Uuid          string                 `protobuf:"bytes,4,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	PartitionUuid string                 `protobuf:"bytes,5,opt,name=partition_uuid,json=partitionUuid,proto3" json:"partition_uuid,omitempty"`
+	PreFailPhase  enums.BlockVolumePhase `protobuf:"varint,6,opt,name=pre_fail_phase,json=preFailPhase,proto3,enum=talos.resource.definitions.enums.BlockVolumePhase" json:"pre_fail_phase,omitempty"`
+	// ParentLocation (if present) is the location of the parent block device for partitions.
+	ParentLocation string `protobuf:"bytes,7,opt,name=parent_location,json=parentLocation,proto3" json:"parent_location,omitempty"`
+	PartitionIndex int64  `protobuf:"varint,8,opt,name=partition_index,json=partitionIndex,proto3" json:"partition_index,omitempty"`
+	Size           uint64 `protobuf:"varint,9,opt,name=size,proto3" json:"size,omitempty"`
+	// Filesystem is the filesystem type.
+	Filesystem enums.BlockFilesystemType `protobuf:"varint,10,opt,name=filesystem,proto3,enum=talos.resource.definitions.enums.BlockFilesystemType" json:"filesystem,omitempty"`
+	// MountLocation is the location to be mounted, might be different from location.
+	MountLocation string `protobuf:"bytes,11,opt,name=mount_location,json=mountLocation,proto3" json:"mount_location,omitempty"`
+	// EncryptionProvider is the provider of the encryption which was used to unlock the volume.
+	EncryptionProvider enums.BlockEncryptionProviderType `protobuf:"varint,12,opt,name=encryption_provider,json=encryptionProvider,proto3,enum=talos.resource.definitions.enums.BlockEncryptionProviderType" json:"encryption_provider,omitempty"`
+	PrettySize         string                            `protobuf:"bytes,13,opt,name=pretty_size,json=prettySize,proto3" json:"pretty_size,omitempty"`
+	// EncryptionFailedSyncs is the list of failed syncs for the volume (per key/provider).
+	EncryptionFailedSyncs []string `protobuf:"bytes,14,rep,name=encryption_failed_syncs,json=encryptionFailedSyncs,proto3" json:"encryption_failed_syncs,omitempty"`
+	// MountSpec is the mount specification.
+	MountSpec *MountSpec            `protobuf:"bytes,15,opt,name=mount_spec,json=mountSpec,proto3" json:"mount_spec,omitempty"`
+	Type      enums.BlockVolumeType `protobuf:"varint,16,opt,name=type,proto3,enum=talos.resource.definitions.enums.BlockVolumeType" json:"type,omitempty"`
+	// ConfiguredEncryptionKeys is the list of configured encryption keys for the volume.
+	ConfiguredEncryptionKeys []string `protobuf:"bytes,17,rep,name=configured_encryption_keys,json=configuredEncryptionKeys,proto3" json:"configured_encryption_keys,omitempty"`
+	// Symlink is the symlink specification.
+	SymlinkSpec *SymlinkProvisioningSpec `protobuf:"bytes,18,opt,name=symlink_spec,json=symlinkSpec,proto3" json:"symlink_spec,omitempty"`
+	ParentId    string                   `protobuf:"bytes,19,opt,name=parent_id,json=parentId,proto3" json:"parent_id,omitempty"`
+	// EncryptionLockedToState indicates if the encryption is locked to STATE partition
+	EncryptionLockedToState bool `protobuf:"varint,20,opt,name=encryption_locked_to_state,json=encryptionLockedToState,proto3" json:"encryption_locked_to_state,omitempty"`
+	// EncryptionSlot indicates the currently used encryption slot used for decryption.
+	EncryptionSlot int64 `protobuf:"varint,21,opt,name=encryption_slot,json=encryptionSlot,proto3" json:"encryption_slot,omitempty"`
+	// TPMEncryptionOptions is the options for TPM-based encryption.
+	TpmEncryptionOptions *TPMEncryptionOptionsInfo `protobuf:"bytes,22,opt,name=tpm_encryption_options,json=tpmEncryptionOptions,proto3" json:"tpm_encryption_options,omitempty"`
+	unknownFields        protoimpl.UnknownFields
+	sizeCache            protoimpl.SizeCache
 }
 
 func (x *VolumeStatusSpec) Reset() {

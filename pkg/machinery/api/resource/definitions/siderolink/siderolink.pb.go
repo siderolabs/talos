@@ -103,11 +103,15 @@ func (x *ConfigSpec) GetTunnel() bool {
 
 // StatusSpec describes Siderolink status.
 type StatusSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Host          string                 `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
-	Connected     bool                   `protobuf:"varint,2,opt,name=connected,proto3" json:"connected,omitempty"`
-	LinkName      string                 `protobuf:"bytes,3,opt,name=link_name,json=linkName,proto3" json:"link_name,omitempty"`
-	GrpcTunnel    bool                   `protobuf:"varint,4,opt,name=grpc_tunnel,json=grpcTunnel,proto3" json:"grpc_tunnel,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Host is the Siderolink target host.
+	Host string `protobuf:"bytes,1,opt,name=host,proto3" json:"host,omitempty"`
+	// Connected is the status of the Siderolink GRPC connection.
+	Connected bool `protobuf:"varint,2,opt,name=connected,proto3" json:"connected,omitempty"`
+	// LinkName is the name of the interface used for the Siderolink tunnel.
+	LinkName string `protobuf:"bytes,3,opt,name=link_name,json=linkName,proto3" json:"link_name,omitempty"`
+	// GRPCTunnel is true if the Wireguard-over-GRPC tunnel is being used.
+	GrpcTunnel    bool `protobuf:"varint,4,opt,name=grpc_tunnel,json=grpcTunnel,proto3" json:"grpc_tunnel,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -172,11 +176,16 @@ func (x *StatusSpec) GetGrpcTunnel() bool {
 
 // TunnelSpec describes Siderolink GRPC Tunnel configuration.
 type TunnelSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ApiEndpoint   string                 `protobuf:"bytes,1,opt,name=api_endpoint,json=apiEndpoint,proto3" json:"api_endpoint,omitempty"`
-	LinkName      string                 `protobuf:"bytes,2,opt,name=link_name,json=linkName,proto3" json:"link_name,omitempty"`
-	Mtu           int64                  `protobuf:"varint,3,opt,name=mtu,proto3" json:"mtu,omitempty"`
-	NodeAddress   *common.NetIPPort      `protobuf:"bytes,4,opt,name=node_address,json=nodeAddress,proto3" json:"node_address,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// APIEndpoint is the Siderolink WireGuard over GRPC endpoint.
+	ApiEndpoint string `protobuf:"bytes,1,opt,name=api_endpoint,json=apiEndpoint,proto3" json:"api_endpoint,omitempty"`
+	// LinkName is the name to use for WireGuard tunnel.
+	LinkName string `protobuf:"bytes,2,opt,name=link_name,json=linkName,proto3" json:"link_name,omitempty"`
+	// MTU is the maximum transmission unit for the tunnel.
+	Mtu int64 `protobuf:"varint,3,opt,name=mtu,proto3" json:"mtu,omitempty"`
+	// NodeAddress is the virtual address of our node. It's used to identify our node in the WireGuard GRPC streamer.
+	// It's not the address of the actual WireGuard interface.
+	NodeAddress   *common.NetIPPort `protobuf:"bytes,4,opt,name=node_address,json=nodeAddress,proto3" json:"node_address,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

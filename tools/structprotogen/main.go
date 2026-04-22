@@ -44,8 +44,6 @@ func main() {
 	}
 }
 
-// TODO(DmitriyMV): get comments for fields
-
 //nolint:gocyclo
 func run(pkgPath, dst string) error {
 	loadedPkgs, err := loader.LoadPackages(pkgPath)

@@ -41,6 +41,8 @@ message ControlPlane {
 // Note: IdentitySpec is persisted on disk in the STATE partition,
 // so YAML serialization should be kept backwards compatible.
 message IdentitySpec {
+  // NodeID is a random value which is persisted across reboots,
+  // but it gets reset on wipe.
   string node_id = 1;
 }
 

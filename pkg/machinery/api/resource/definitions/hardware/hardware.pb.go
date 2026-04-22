@@ -340,19 +340,21 @@ func (x *PCIDriverRebindStatusSpec) GetTargetDriver() string {
 
 // ProcessorSpec represents a single processor.
 type ProcessorSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Socket        string                 `protobuf:"bytes,1,opt,name=socket,proto3" json:"socket,omitempty"`
-	Manufacturer  string                 `protobuf:"bytes,2,opt,name=manufacturer,proto3" json:"manufacturer,omitempty"`
-	ProductName   string                 `protobuf:"bytes,3,opt,name=product_name,json=productName,proto3" json:"product_name,omitempty"`
-	MaxSpeed      uint32                 `protobuf:"varint,4,opt,name=max_speed,json=maxSpeed,proto3" json:"max_speed,omitempty"`
-	BootSpeed     uint32                 `protobuf:"varint,5,opt,name=boot_speed,json=bootSpeed,proto3" json:"boot_speed,omitempty"`
-	Status        uint32                 `protobuf:"varint,6,opt,name=status,proto3" json:"status,omitempty"`
-	SerialNumber  string                 `protobuf:"bytes,7,opt,name=serial_number,json=serialNumber,proto3" json:"serial_number,omitempty"`
-	AssetTag      string                 `protobuf:"bytes,8,opt,name=asset_tag,json=assetTag,proto3" json:"asset_tag,omitempty"`
-	PartNumber    string                 `protobuf:"bytes,9,opt,name=part_number,json=partNumber,proto3" json:"part_number,omitempty"`
-	CoreCount     uint32                 `protobuf:"varint,10,opt,name=core_count,json=coreCount,proto3" json:"core_count,omitempty"`
-	CoreEnabled   uint32                 `protobuf:"varint,11,opt,name=core_enabled,json=coreEnabled,proto3" json:"core_enabled,omitempty"`
-	ThreadCount   uint32                 `protobuf:"varint,12,opt,name=thread_count,json=threadCount,proto3" json:"thread_count,omitempty"`
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	Socket       string                 `protobuf:"bytes,1,opt,name=socket,proto3" json:"socket,omitempty"`
+	Manufacturer string                 `protobuf:"bytes,2,opt,name=manufacturer,proto3" json:"manufacturer,omitempty"`
+	ProductName  string                 `protobuf:"bytes,3,opt,name=product_name,json=productName,proto3" json:"product_name,omitempty"`
+	// MaxSpeed is in megahertz (MHz).
+	MaxSpeed uint32 `protobuf:"varint,4,opt,name=max_speed,json=maxSpeed,proto3" json:"max_speed,omitempty"`
+	// BootSpeed is in megahertz (MHz).
+	BootSpeed     uint32 `protobuf:"varint,5,opt,name=boot_speed,json=bootSpeed,proto3" json:"boot_speed,omitempty"`
+	Status        uint32 `protobuf:"varint,6,opt,name=status,proto3" json:"status,omitempty"`
+	SerialNumber  string `protobuf:"bytes,7,opt,name=serial_number,json=serialNumber,proto3" json:"serial_number,omitempty"`
+	AssetTag      string `protobuf:"bytes,8,opt,name=asset_tag,json=assetTag,proto3" json:"asset_tag,omitempty"`
+	PartNumber    string `protobuf:"bytes,9,opt,name=part_number,json=partNumber,proto3" json:"part_number,omitempty"`
+	CoreCount     uint32 `protobuf:"varint,10,opt,name=core_count,json=coreCount,proto3" json:"core_count,omitempty"`
+	CoreEnabled   uint32 `protobuf:"varint,11,opt,name=core_enabled,json=coreEnabled,proto3" json:"core_enabled,omitempty"`
+	ThreadCount   uint32 `protobuf:"varint,12,opt,name=thread_count,json=threadCount,proto3" json:"thread_count,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

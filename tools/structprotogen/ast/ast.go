@@ -206,8 +206,14 @@ func formatComments(comment *ast.CommentGroup) []string {
 	return result
 }
 
-// Fields represents a struct field and its protobuf number.
-type Fields map[string]int
+// Fields represents a struct field and its protobuf metadata.
+type Fields map[string]FieldInfo
+
+// FieldInfo contains the protobuf number and doc comments for a struct field.
+type FieldInfo struct {
+	Num      int
+	Comments []string
+}
 
 // getStructFieldsWithTags returns all fields of the given struct with their tags.
 func getStructFieldsWithTags(structDecl *ast.TypeSpec) Fields {
@@ -242,7 +248,29 @@ func getStructFieldsWithTags(structDecl *ast.TypeSpec) Fields {
 				panic(fmt.Errorf("invalid protobuf tag: field '%s', tag '%s': %w", name, tagValue, err))
 			}
 
-			result[name.Name] = num
+			result[name.Name] = FieldInfo{
+				Num:      num,
+				Comments: fieldComments(field),
+			}
+		}
+	}
+
+	return result
+}
+
+// fieldComments collects doc and trailing line comments attached to a struct field.
+func fieldComments(field *ast.Field) []string {
+	var result []string
+
+	if field.Doc != nil {
+		for _, c := range field.Doc.List {
+			result = append(result, c.Text)
+		}
+	}
+
+	if field.Comment != nil {
+		for _, c := range field.Comment.List {
+			result = append(result, c.Text)
 		}
 	}
 

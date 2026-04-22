@@ -24,12 +24,15 @@ message BootedEntrySpec {
 
 // DevicesStatusSpec is the spec for devices status.
 message DevicesStatusSpec {
+  // Devices are settled down and ready to be used.
   bool ready = 1;
 }
 
 // DiagnosticSpec is the spec for devices status.
 message DiagnosticSpec {
+  // Short message describing the problem.
   string message = 1;
+  // Details about the problem.
   repeated string details = 2;
 }
 
@@ -181,7 +184,9 @@ message SecurityStateSpec {
 
 // ServicePIDSpec is the spec for the service PID.
 message ServicePIDSpec {
+  // PID is the host PID of the service.
   int32 pid = 1;
+  // MountNamespace is the mount namespace of the service.
   string mount_namespace = 2;
 }
 

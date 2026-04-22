@@ -28,19 +28,26 @@ const (
 
 // ConfigSpec describes KubeSpan configuration..
 type ConfigSpec struct {
-	state                       protoimpl.MessageState `protogen:"open.v1"`
-	Enabled                     bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
-	ClusterId                   string                 `protobuf:"bytes,2,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
-	SharedSecret                string                 `protobuf:"bytes,3,opt,name=shared_secret,json=sharedSecret,proto3" json:"shared_secret,omitempty"`
-	ForceRouting                bool                   `protobuf:"varint,4,opt,name=force_routing,json=forceRouting,proto3" json:"force_routing,omitempty"`
-	AdvertiseKubernetesNetworks bool                   `protobuf:"varint,5,opt,name=advertise_kubernetes_networks,json=advertiseKubernetesNetworks,proto3" json:"advertise_kubernetes_networks,omitempty"`
-	Mtu                         uint32                 `protobuf:"varint,6,opt,name=mtu,proto3" json:"mtu,omitempty"`
-	EndpointFilters             []string               `protobuf:"bytes,7,rep,name=endpoint_filters,json=endpointFilters,proto3" json:"endpoint_filters,omitempty"`
-	HarvestExtraEndpoints       bool                   `protobuf:"varint,8,opt,name=harvest_extra_endpoints,json=harvestExtraEndpoints,proto3" json:"harvest_extra_endpoints,omitempty"`
-	ExtraEndpoints              []*common.NetIPPort    `protobuf:"bytes,9,rep,name=extra_endpoints,json=extraEndpoints,proto3" json:"extra_endpoints,omitempty"`
-	ExcludeAdvertisedNetworks   []*common.NetIPPrefix  `protobuf:"bytes,10,rep,name=exclude_advertised_networks,json=excludeAdvertisedNetworks,proto3" json:"exclude_advertised_networks,omitempty"`
-	unknownFields               protoimpl.UnknownFields
-	sizeCache                   protoimpl.SizeCache
+	state        protoimpl.MessageState `protogen:"open.v1"`
+	Enabled      bool                   `protobuf:"varint,1,opt,name=enabled,proto3" json:"enabled,omitempty"`
+	ClusterId    string                 `protobuf:"bytes,2,opt,name=cluster_id,json=clusterId,proto3" json:"cluster_id,omitempty"`
+	SharedSecret string                 `protobuf:"bytes,3,opt,name=shared_secret,json=sharedSecret,proto3" json:"shared_secret,omitempty"`
+	// Force routing via KubeSpan even if the peer connection is not up.
+	ForceRouting bool `protobuf:"varint,4,opt,name=force_routing,json=forceRouting,proto3" json:"force_routing,omitempty"`
+	// Advertise Kubernetes pod networks or skip it completely.
+	AdvertiseKubernetesNetworks bool `protobuf:"varint,5,opt,name=advertise_kubernetes_networks,json=advertiseKubernetesNetworks,proto3" json:"advertise_kubernetes_networks,omitempty"`
+	// Force kubeSpan MTU size.
+	Mtu uint32 `protobuf:"varint,6,opt,name=mtu,proto3" json:"mtu,omitempty"`
+	// If not empty, filter advertised endpoints using the list of CIDRs.
+	EndpointFilters []string `protobuf:"bytes,7,rep,name=endpoint_filters,json=endpointFilters,proto3" json:"endpoint_filters,omitempty"`
+	// Harvest endpoints from the peer statuses.
+	HarvestExtraEndpoints bool `protobuf:"varint,8,opt,name=harvest_extra_endpoints,json=harvestExtraEndpoints,proto3" json:"harvest_extra_endpoints,omitempty"`
+	// Extra endpoints to announce.
+	ExtraEndpoints []*common.NetIPPort `protobuf:"bytes,9,rep,name=extra_endpoints,json=extraEndpoints,proto3" json:"extra_endpoints,omitempty"`
+	// If not empty, filter advertised networks using the list of CIDRs.
+	ExcludeAdvertisedNetworks []*common.NetIPPrefix `protobuf:"bytes,10,rep,name=exclude_advertised_networks,json=excludeAdvertisedNetworks,proto3" json:"exclude_advertised_networks,omitempty"`
+	unknownFields             protoimpl.UnknownFields
+	sizeCache                 protoimpl.SizeCache
 }
 
 func (x *ConfigSpec) Reset() {
@@ -201,11 +208,13 @@ func (x *EndpointSpec) GetEndpoint() *common.NetIPPort {
 // Note: IdentitySpec is persisted on disk in the STATE partition,
 // so YAML serialization should be kept backwards compatible.
 type IdentitySpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Address       *common.NetIPPrefix    `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
-	Subnet        *common.NetIPPrefix    `protobuf:"bytes,2,opt,name=subnet,proto3" json:"subnet,omitempty"`
-	PrivateKey    string                 `protobuf:"bytes,3,opt,name=private_key,json=privateKey,proto3" json:"private_key,omitempty"`
-	PublicKey     string                 `protobuf:"bytes,4,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Address of the node on the Wireguard network.
+	Address *common.NetIPPrefix `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
+	Subnet  *common.NetIPPrefix `protobuf:"bytes,2,opt,name=subnet,proto3" json:"subnet,omitempty"`
+	// Public and private Wireguard keys.
+	PrivateKey    string `protobuf:"bytes,3,opt,name=private_key,json=privateKey,proto3" json:"private_key,omitempty"`
+	PublicKey     string `protobuf:"bytes,4,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -339,15 +348,21 @@ func (x *PeerSpecSpec) GetLabel() string {
 
 // PeerStatusSpec describes PeerStatus state.
 type PeerStatusSpec struct {
-	state              protoimpl.MessageState  `protogen:"open.v1"`
-	Endpoint           *common.NetIPPort       `protobuf:"bytes,1,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
-	Label              string                  `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`
-	State              enums.KubespanPeerState `protobuf:"varint,3,opt,name=state,proto3,enum=talos.resource.definitions.enums.KubespanPeerState" json:"state,omitempty"`
-	ReceiveBytes       int64                   `protobuf:"varint,4,opt,name=receive_bytes,json=receiveBytes,proto3" json:"receive_bytes,omitempty"`
-	TransmitBytes      int64                   `protobuf:"varint,5,opt,name=transmit_bytes,json=transmitBytes,proto3" json:"transmit_bytes,omitempty"`
-	LastHandshakeTime  *timestamppb.Timestamp  `protobuf:"bytes,6,opt,name=last_handshake_time,json=lastHandshakeTime,proto3" json:"last_handshake_time,omitempty"`
-	LastUsedEndpoint   *common.NetIPPort       `protobuf:"bytes,7,opt,name=last_used_endpoint,json=lastUsedEndpoint,proto3" json:"last_used_endpoint,omitempty"`
-	LastEndpointChange *timestamppb.Timestamp  `protobuf:"bytes,8,opt,name=last_endpoint_change,json=lastEndpointChange,proto3" json:"last_endpoint_change,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Active endpoint as seen by the Wireguard.
+	Endpoint *common.NetIPPort `protobuf:"bytes,1,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
+	// Label derived from the peer spec.
+	Label string `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`
+	// Calculated state.
+	State enums.KubespanPeerState `protobuf:"varint,3,opt,name=state,proto3,enum=talos.resource.definitions.enums.KubespanPeerState" json:"state,omitempty"`
+	// Tx/Rx bytes.
+	ReceiveBytes  int64 `protobuf:"varint,4,opt,name=receive_bytes,json=receiveBytes,proto3" json:"receive_bytes,omitempty"`
+	TransmitBytes int64 `protobuf:"varint,5,opt,name=transmit_bytes,json=transmitBytes,proto3" json:"transmit_bytes,omitempty"`
+	// Handshake.
+	LastHandshakeTime *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=last_handshake_time,json=lastHandshakeTime,proto3" json:"last_handshake_time,omitempty"`
+	// Endpoint selection input.
+	LastUsedEndpoint   *common.NetIPPort      `protobuf:"bytes,7,opt,name=last_used_endpoint,json=lastUsedEndpoint,proto3" json:"last_used_endpoint,omitempty"`
+	LastEndpointChange *timestamppb.Timestamp `protobuf:"bytes,8,opt,name=last_endpoint_change,json=lastEndpointChange,proto3" json:"last_endpoint_change,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
 }

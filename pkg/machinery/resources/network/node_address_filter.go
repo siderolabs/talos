@@ -27,7 +27,7 @@ type NodeAddressFilter = typed.Resource[NodeAddressFilterSpec, NodeAddressFilter
 type NodeAddressFilterSpec struct {
 	// Address is skipped if it doesn't match any of the includeSubnets (if includeSubnets is not empty).
 	IncludeSubnets []netip.Prefix `yaml:"includeSubnets" protobuf:"1"`
-	// Address is skipped if it matches any of the includeSubnets.
+	// Address is skipped if it matches any of the excludeSubnets.
 	ExcludeSubnets []netip.Prefix `yaml:"excludeSubnets" protobuf:"2"`
 }
 

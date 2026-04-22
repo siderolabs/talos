@@ -21,8 +21,11 @@ message AdjtimeStatusSpec {
 
 // StatusSpec describes time sync state.
 message StatusSpec {
+  // Synced indicates whether time is in sync.
   bool synced = 1;
+  // Epoch is incremented every time clock jumps more than 15min.
   int64 epoch = 2;
+  // SyncDisabled indicates if time sync is disabled.
   bool sync_disabled = 3;
 }
 

@@ -9,28 +9,39 @@ import "google/protobuf/timestamp.proto";
 
 // ImageKeylessVerifierSpec represents a signature verification provider.
 message ImageKeylessVerifierSpec {
+  // Issuer is the OIDC issuer URL.
   string issuer = 1;
+  // Subject is the expected subject.
   string subject = 2;
+  // SubjectRegex is a regex pattern for subject matching.
   string subject_regex = 3;
 }
 
 // ImagePublicKeyVerifierSpec represents a signature verification provider with static public key.
 message ImagePublicKeyVerifierSpec {
+  // Certificate is a public certificate in PEM format accepted for image signature verification.
   string certificate = 1;
 }
 
 // ImageVerificationRuleSpec represents a verification rule.
 message ImageVerificationRuleSpec {
+  // ImagePattern is the image name pattern.
   string image_pattern = 2;
+  // Skip is the action for matching images.
   bool skip = 3;
+  // Deny is the action for matching images.
   bool deny = 4;
+  // KeylessVerifier is the keyless verifier configuration to use.
   ImageKeylessVerifierSpec keyless_verifier = 5;
+  // PublicKeyVerifier is the public key verifier configuration to use.
   ImagePublicKeyVerifierSpec public_key_verifier = 6;
 }
 
 // TUFTrustedRootSpec represents a sigstore's TUF trusted root information.
 message TUFTrustedRootSpec {
+  // LastRefreshTime is the last time the trusted root was refreshed.
   google.protobuf.Timestamp last_refresh_time = 1;
+  // JSONData is the trusted root data in JSON format.
   string json_data = 2;
 }
 

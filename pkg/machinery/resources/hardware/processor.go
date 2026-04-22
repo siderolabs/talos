@@ -26,9 +26,9 @@ type ProcessorSpec struct {
 	Socket       string `yaml:"socket,omitempty" protobuf:"1"`
 	Manufacturer string `yaml:"manufacturer,omitempty" protobuf:"2"`
 	ProductName  string `yaml:"productName,omitempty" protobuf:"3"`
-	// MaxSpeed is in megahertz (Mhz)
+	// MaxSpeed is in megahertz (MHz).
 	MaxSpeed uint32 `yaml:"maxSpeedMhz,omitempty" protobuf:"4"`
-	// Speed is in megahertz (Mhz)
+	// BootSpeed is in megahertz (MHz).
 	BootSpeed    uint32 `yaml:"bootSpeedMhz,omitempty" protobuf:"5"`
 	Status       uint32 `yaml:"status,omitempty" protobuf:"6"`
 	SerialNumber string `yaml:"serialNumber,omitempty" protobuf:"7"`

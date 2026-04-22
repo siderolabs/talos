@@ -126,10 +126,13 @@ func (x *AdjtimeStatusSpec) GetState() string {
 
 // StatusSpec describes time sync state.
 type StatusSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Synced        bool                   `protobuf:"varint,1,opt,name=synced,proto3" json:"synced,omitempty"`
-	Epoch         int64                  `protobuf:"varint,2,opt,name=epoch,proto3" json:"epoch,omitempty"`
-	SyncDisabled  bool                   `protobuf:"varint,3,opt,name=sync_disabled,json=syncDisabled,proto3" json:"sync_disabled,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Synced indicates whether time is in sync.
+	Synced bool `protobuf:"varint,1,opt,name=synced,proto3" json:"synced,omitempty"`
+	// Epoch is incremented every time clock jumps more than 15min.
+	Epoch int64 `protobuf:"varint,2,opt,name=epoch,proto3" json:"epoch,omitempty"`
+	// SyncDisabled indicates if time sync is disabled.
+	SyncDisabled  bool `protobuf:"varint,3,opt,name=sync_disabled,json=syncDisabled,proto3" json:"sync_disabled,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

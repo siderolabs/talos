@@ -255,37 +255,70 @@ func (x *AddressStatusSpec) GetPriority() uint32 {
 
 // BondMasterSpec describes bond settings if Kind == "bond".
 type BondMasterSpec struct {
-	state           protoimpl.MessageState             `protogen:"open.v1"`
-	Mode            enums.NethelpersBondMode           `protobuf:"varint,1,opt,name=mode,proto3,enum=talos.resource.definitions.enums.NethelpersBondMode" json:"mode,omitempty"`
-	HashPolicy      enums.NethelpersBondXmitHashPolicy `protobuf:"varint,2,opt,name=hash_policy,json=hashPolicy,proto3,enum=talos.resource.definitions.enums.NethelpersBondXmitHashPolicy" json:"hash_policy,omitempty"`
-	LacpRate        enums.NethelpersLACPRate           `protobuf:"varint,3,opt,name=lacp_rate,json=lacpRate,proto3,enum=talos.resource.definitions.enums.NethelpersLACPRate" json:"lacp_rate,omitempty"`
-	ArpValidate     enums.NethelpersARPValidate        `protobuf:"varint,4,opt,name=arp_validate,json=arpValidate,proto3,enum=talos.resource.definitions.enums.NethelpersARPValidate" json:"arp_validate,omitempty"`
-	ArpAllTargets   enums.NethelpersARPAllTargets      `protobuf:"varint,5,opt,name=arp_all_targets,json=arpAllTargets,proto3,enum=talos.resource.definitions.enums.NethelpersARPAllTargets" json:"arp_all_targets,omitempty"`
-	PrimaryIndex    uint32                             `protobuf:"varint,6,opt,name=primary_index,json=primaryIndex,proto3" json:"primary_index,omitempty"`
-	PrimaryReselect enums.NethelpersPrimaryReselect    `protobuf:"varint,7,opt,name=primary_reselect,json=primaryReselect,proto3,enum=talos.resource.definitions.enums.NethelpersPrimaryReselect" json:"primary_reselect,omitempty"`
-	FailOverMac     enums.NethelpersFailOverMAC        `protobuf:"varint,8,opt,name=fail_over_mac,json=failOverMac,proto3,enum=talos.resource.definitions.enums.NethelpersFailOverMAC" json:"fail_over_mac,omitempty"`
-	AdSelect        enums.NethelpersADSelect           `protobuf:"varint,9,opt,name=ad_select,json=adSelect,proto3,enum=talos.resource.definitions.enums.NethelpersADSelect" json:"ad_select,omitempty"`
-	MiiMon          uint32                             `protobuf:"varint,10,opt,name=mii_mon,json=miiMon,proto3" json:"mii_mon,omitempty"`
-	UpDelay         uint32                             `protobuf:"varint,11,opt,name=up_delay,json=upDelay,proto3" json:"up_delay,omitempty"`
-	DownDelay       uint32                             `protobuf:"varint,12,opt,name=down_delay,json=downDelay,proto3" json:"down_delay,omitempty"`
-	ArpInterval     uint32                             `protobuf:"varint,13,opt,name=arp_interval,json=arpInterval,proto3" json:"arp_interval,omitempty"`
-	ResendIgmp      uint32                             `protobuf:"varint,14,opt,name=resend_igmp,json=resendIgmp,proto3" json:"resend_igmp,omitempty"`
-	MinLinks        uint32                             `protobuf:"varint,15,opt,name=min_links,json=minLinks,proto3" json:"min_links,omitempty"`
-	LpInterval      uint32                             `protobuf:"varint,16,opt,name=lp_interval,json=lpInterval,proto3" json:"lp_interval,omitempty"`
-	PacketsPerSlave uint32                             `protobuf:"varint,17,opt,name=packets_per_slave,json=packetsPerSlave,proto3" json:"packets_per_slave,omitempty"`
-	NumPeerNotif    uint32                             `protobuf:"varint,18,opt,name=num_peer_notif,json=numPeerNotif,proto3" json:"num_peer_notif,omitempty"`
-	TlbDynamicLb    uint32                             `protobuf:"varint,19,opt,name=tlb_dynamic_lb,json=tlbDynamicLb,proto3" json:"tlb_dynamic_lb,omitempty"`
-	AllSlavesActive uint32                             `protobuf:"varint,20,opt,name=all_slaves_active,json=allSlavesActive,proto3" json:"all_slaves_active,omitempty"`
-	UseCarrier      bool                               `protobuf:"varint,21,opt,name=use_carrier,json=useCarrier,proto3" json:"use_carrier,omitempty"`
-	AdActorSysPrio  uint32                             `protobuf:"varint,22,opt,name=ad_actor_sys_prio,json=adActorSysPrio,proto3" json:"ad_actor_sys_prio,omitempty"`
-	AdUserPortKey   uint32                             `protobuf:"varint,23,opt,name=ad_user_port_key,json=adUserPortKey,proto3" json:"ad_user_port_key,omitempty"`
-	PeerNotifyDelay uint32                             `protobuf:"varint,24,opt,name=peer_notify_delay,json=peerNotifyDelay,proto3" json:"peer_notify_delay,omitempty"`
-	ArpipTargets    []*common.NetIP                    `protobuf:"bytes,25,rep,name=arpip_targets,json=arpipTargets,proto3" json:"arpip_targets,omitempty"`
-	Nsip6Targets    []*common.NetIP                    `protobuf:"bytes,26,rep,name=nsip6_targets,json=nsip6Targets,proto3" json:"nsip6_targets,omitempty"`
-	AdlacpActive    enums.NethelpersADLACPActive       `protobuf:"varint,27,opt,name=adlacp_active,json=adlacpActive,proto3,enum=talos.resource.definitions.enums.NethelpersADLACPActive" json:"adlacp_active,omitempty"`
-	MissedMax       uint32                             `protobuf:"varint,28,opt,name=missed_max,json=missedMax,proto3" json:"missed_max,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Mode specifies the bonding policy
+	Mode enums.NethelpersBondMode `protobuf:"varint,1,opt,name=mode,proto3,enum=talos.resource.definitions.enums.NethelpersBondMode" json:"mode,omitempty"`
+	// HashPolicy selects the transmit hash policy to use for slave selection.
+	HashPolicy enums.NethelpersBondXmitHashPolicy `protobuf:"varint,2,opt,name=hash_policy,json=hashPolicy,proto3,enum=talos.resource.definitions.enums.NethelpersBondXmitHashPolicy" json:"hash_policy,omitempty"`
+	// LACPRate specifies the rate at which LACPDU frames are sent.
+	LacpRate enums.NethelpersLACPRate `protobuf:"varint,3,opt,name=lacp_rate,json=lacpRate,proto3,enum=talos.resource.definitions.enums.NethelpersLACPRate" json:"lacp_rate,omitempty"`
+	// ARPValidate specifies whether or not ARP probes and replies should be validated.
+	ArpValidate enums.NethelpersARPValidate `protobuf:"varint,4,opt,name=arp_validate,json=arpValidate,proto3,enum=talos.resource.definitions.enums.NethelpersARPValidate" json:"arp_validate,omitempty"`
+	// ARPAllTargets specifies whether ARP probes should be sent to any or all targets.
+	ArpAllTargets enums.NethelpersARPAllTargets `protobuf:"varint,5,opt,name=arp_all_targets,json=arpAllTargets,proto3,enum=talos.resource.definitions.enums.NethelpersARPAllTargets" json:"arp_all_targets,omitempty"`
+	// PrimaryIndex is a device index specifying which slave is the primary device.
+	PrimaryIndex uint32 `protobuf:"varint,6,opt,name=primary_index,json=primaryIndex,proto3" json:"primary_index,omitempty"`
+	// PrimaryReselect specifies the policy under which the primary slave should be reselected.
+	PrimaryReselect enums.NethelpersPrimaryReselect `protobuf:"varint,7,opt,name=primary_reselect,json=primaryReselect,proto3,enum=talos.resource.definitions.enums.NethelpersPrimaryReselect" json:"primary_reselect,omitempty"`
+	// FailOverMac whether active-backup mode should set all slaves to the same MAC address at enslavement, when enabled, or perform special handling.
+	FailOverMac enums.NethelpersFailOverMAC `protobuf:"varint,8,opt,name=fail_over_mac,json=failOverMac,proto3,enum=talos.resource.definitions.enums.NethelpersFailOverMAC" json:"fail_over_mac,omitempty"`
+	// ADSelect specifies the aggregate selection policy for 802.3ad.
+	AdSelect enums.NethelpersADSelect `protobuf:"varint,9,opt,name=ad_select,json=adSelect,proto3,enum=talos.resource.definitions.enums.NethelpersADSelect" json:"ad_select,omitempty"`
+	// MIIMon is the link monitoring frequency in milliseconds.
+	MiiMon uint32 `protobuf:"varint,10,opt,name=mii_mon,json=miiMon,proto3" json:"mii_mon,omitempty"`
+	// UpDelay is the time, in milliseconds, to wait before enabling a slave after a link recovery has been detected.
+	UpDelay uint32 `protobuf:"varint,11,opt,name=up_delay,json=upDelay,proto3" json:"up_delay,omitempty"`
+	// DownDelay is the time, in milliseconds, to wait before disabling a slave after a link failure has been detected.
+	DownDelay uint32 `protobuf:"varint,12,opt,name=down_delay,json=downDelay,proto3" json:"down_delay,omitempty"`
+	// ARPInterval is the ARP link monitoring frequency in milliseconds.
+	ArpInterval uint32 `protobuf:"varint,13,opt,name=arp_interval,json=arpInterval,proto3" json:"arp_interval,omitempty"`
+	// ResendIGMP specifies the number of times IGMP packets should be resent.
+	ResendIgmp uint32 `protobuf:"varint,14,opt,name=resend_igmp,json=resendIgmp,proto3" json:"resend_igmp,omitempty"`
+	// MinLinks specifies the minimum number of active links to assert carrier.
+	MinLinks uint32 `protobuf:"varint,15,opt,name=min_links,json=minLinks,proto3" json:"min_links,omitempty"`
+	// LPInterval specifies the number of seconds between instances where the bonding driver sends learning packets to each slave's peer switch.
+	LpInterval uint32 `protobuf:"varint,16,opt,name=lp_interval,json=lpInterval,proto3" json:"lp_interval,omitempty"`
+	// PacketsPerSlave specifies the number of packets to transmit through a slave before moving to the next one.
+	PacketsPerSlave uint32 `protobuf:"varint,17,opt,name=packets_per_slave,json=packetsPerSlave,proto3" json:"packets_per_slave,omitempty"`
+	// NumPeerNotif specifies the number of peer notifications
+	// (gratuitous ARPs and unsolicited IPv6 Neighbor Advertisements) to be issued after a failover event.
+	NumPeerNotif uint32 `protobuf:"varint,18,opt,name=num_peer_notif,json=numPeerNotif,proto3" json:"num_peer_notif,omitempty"`
+	// TLBDynamicLB specifies if dynamic shuffling of flows is enabled in tlb or alb mode.
+	TlbDynamicLb uint32 `protobuf:"varint,19,opt,name=tlb_dynamic_lb,json=tlbDynamicLb,proto3" json:"tlb_dynamic_lb,omitempty"`
+	// AllSlavesActive specifies that duplicate frames (received on inactive ports) should be dropped (0) or delivered (1).
+	AllSlavesActive uint32 `protobuf:"varint,20,opt,name=all_slaves_active,json=allSlavesActive,proto3" json:"all_slaves_active,omitempty"`
+	// UseCarrier specifies whether or not miimon should use MII or ETHTOOL.
+	UseCarrier bool `protobuf:"varint,21,opt,name=use_carrier,json=useCarrier,proto3" json:"use_carrier,omitempty"`
+	// ADActorSysPrio is the actor system priority for 802.3ad.
+	AdActorSysPrio uint32 `protobuf:"varint,22,opt,name=ad_actor_sys_prio,json=adActorSysPrio,proto3" json:"ad_actor_sys_prio,omitempty"`
+	// ADUserPortKey is the user port key (upper 10 bits) for 802.3ad.
+	AdUserPortKey uint32 `protobuf:"varint,23,opt,name=ad_user_port_key,json=adUserPortKey,proto3" json:"ad_user_port_key,omitempty"`
+	// PeerNotifyDelay is the delay, in milliseconds, between each peer notification.
+	PeerNotifyDelay uint32 `protobuf:"varint,24,opt,name=peer_notify_delay,json=peerNotifyDelay,proto3" json:"peer_notify_delay,omitempty"`
+	// ARPIPTargets is the list of IP addresses to use for ARP link monitoring when ARPInterval is set.
+	//
+	// Maximum of 16 targets are supported.
+	ArpipTargets []*common.NetIP `protobuf:"bytes,25,rep,name=arpip_targets,json=arpipTargets,proto3" json:"arpip_targets,omitempty"`
+	// NSIP6Targets is the list of IPv6 addresses to use for NS link monitoring when ARPInterval is set.
+	//
+	// Maximum of 16 targets are supported.
+	Nsip6Targets []*common.NetIP `protobuf:"bytes,26,rep,name=nsip6_targets,json=nsip6Targets,proto3" json:"nsip6_targets,omitempty"`
+	// ADLACPActive specifies whether to send LACPDU frames periodically.
+	AdlacpActive enums.NethelpersADLACPActive `protobuf:"varint,27,opt,name=adlacp_active,json=adlacpActive,proto3,enum=talos.resource.definitions.enums.NethelpersADLACPActive" json:"adlacp_active,omitempty"`
+	// MissedMax is the number of arp_interval monitor checks that must fail in order for an interface to be marked down by the ARP monitor.
+	MissedMax     uint32 `protobuf:"varint,28,opt,name=missed_max,json=missedMax,proto3" json:"missed_max,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *BondMasterSpec) Reset() {
@@ -516,9 +549,11 @@ func (x *BondMasterSpec) GetMissedMax() uint32 {
 
 // BondSlave contains a bond's master name and slave index.
 type BondSlave struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	MasterName    string                 `protobuf:"bytes,1,opt,name=master_name,json=masterName,proto3" json:"master_name,omitempty"`
-	SlaveIndex    int64                  `protobuf:"varint,2,opt,name=slave_index,json=slaveIndex,proto3" json:"slave_index,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// MasterName indicates master link for enslaved bonded interfaces.
+	MasterName string `protobuf:"bytes,1,opt,name=master_name,json=masterName,proto3" json:"master_name,omitempty"`
+	// SlaveIndex indicates a slave's position in bond.
+	SlaveIndex    int64 `protobuf:"varint,2,opt,name=slave_index,json=slaveIndex,proto3" json:"slave_index,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -622,8 +657,9 @@ func (x *BridgeMasterSpec) GetVlan() *BridgeVLANSpec {
 
 // BridgeSlave contains the name of the master bridge of a bridged interface
 type BridgeSlave struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	MasterName    string                 `protobuf:"bytes,1,opt,name=master_name,json=masterName,proto3" json:"master_name,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// MasterName indicates master link for enslaved bridged interfaces.
+	MasterName    string `protobuf:"bytes,1,opt,name=master_name,json=masterName,proto3" json:"master_name,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1001,15 +1037,17 @@ func (x *EthernetChannelsSpec) GetCombined() uint32 {
 
 // EthernetChannelsStatus describes status of Ethernet channels.
 type EthernetChannelsStatus struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	RxMax         uint32                 `protobuf:"varint,1,opt,name=rx_max,json=rxMax,proto3" json:"rx_max,omitempty"`
-	TxMax         uint32                 `protobuf:"varint,2,opt,name=tx_max,json=txMax,proto3" json:"tx_max,omitempty"`
-	OtherMax      uint32                 `protobuf:"varint,3,opt,name=other_max,json=otherMax,proto3" json:"other_max,omitempty"`
-	CombinedMax   uint32                 `protobuf:"varint,4,opt,name=combined_max,json=combinedMax,proto3" json:"combined_max,omitempty"`
-	Rx            uint32                 `protobuf:"varint,5,opt,name=rx,proto3" json:"rx,omitempty"`
-	Tx            uint32                 `protobuf:"varint,6,opt,name=tx,proto3" json:"tx,omitempty"`
-	Other         uint32                 `protobuf:"varint,7,opt,name=other,proto3" json:"other,omitempty"`
-	Combined      uint32                 `protobuf:"varint,8,opt,name=combined,proto3" json:"combined,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Read-only settings.
+	RxMax       uint32 `protobuf:"varint,1,opt,name=rx_max,json=rxMax,proto3" json:"rx_max,omitempty"`
+	TxMax       uint32 `protobuf:"varint,2,opt,name=tx_max,json=txMax,proto3" json:"tx_max,omitempty"`
+	OtherMax    uint32 `protobuf:"varint,3,opt,name=other_max,json=otherMax,proto3" json:"other_max,omitempty"`
+	CombinedMax uint32 `protobuf:"varint,4,opt,name=combined_max,json=combinedMax,proto3" json:"combined_max,omitempty"`
+	// Current settings (read-write).
+	Rx            uint32 `protobuf:"varint,5,opt,name=rx,proto3" json:"rx,omitempty"`
+	Tx            uint32 `protobuf:"varint,6,opt,name=tx,proto3" json:"tx,omitempty"`
+	Other         uint32 `protobuf:"varint,7,opt,name=other,proto3" json:"other,omitempty"`
+	Combined      uint32 `protobuf:"varint,8,opt,name=combined,proto3" json:"combined,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1272,24 +1310,26 @@ func (x *EthernetRingsSpec) GetTcpDataSplit() bool {
 
 // EthernetRingsStatus describes status of Ethernet rings.
 type EthernetRingsStatus struct {
-	state           protoimpl.MessageState `protogen:"open.v1"`
-	RxMax           uint32                 `protobuf:"varint,1,opt,name=rx_max,json=rxMax,proto3" json:"rx_max,omitempty"`
-	RxMiniMax       uint32                 `protobuf:"varint,2,opt,name=rx_mini_max,json=rxMiniMax,proto3" json:"rx_mini_max,omitempty"`
-	RxJumboMax      uint32                 `protobuf:"varint,3,opt,name=rx_jumbo_max,json=rxJumboMax,proto3" json:"rx_jumbo_max,omitempty"`
-	TxMax           uint32                 `protobuf:"varint,4,opt,name=tx_max,json=txMax,proto3" json:"tx_max,omitempty"`
-	TxPushBufLenMax uint32                 `protobuf:"varint,5,opt,name=tx_push_buf_len_max,json=txPushBufLenMax,proto3" json:"tx_push_buf_len_max,omitempty"`
-	Rx              uint32                 `protobuf:"varint,6,opt,name=rx,proto3" json:"rx,omitempty"`
-	RxMini          uint32                 `protobuf:"varint,7,opt,name=rx_mini,json=rxMini,proto3" json:"rx_mini,omitempty"`
-	RxJumbo         uint32                 `protobuf:"varint,8,opt,name=rx_jumbo,json=rxJumbo,proto3" json:"rx_jumbo,omitempty"`
-	Tx              uint32                 `protobuf:"varint,9,opt,name=tx,proto3" json:"tx,omitempty"`
-	RxBufLen        uint32                 `protobuf:"varint,10,opt,name=rx_buf_len,json=rxBufLen,proto3" json:"rx_buf_len,omitempty"`
-	CqeSize         uint32                 `protobuf:"varint,11,opt,name=cqe_size,json=cqeSize,proto3" json:"cqe_size,omitempty"`
-	TxPush          bool                   `protobuf:"varint,12,opt,name=tx_push,json=txPush,proto3" json:"tx_push,omitempty"`
-	RxPush          bool                   `protobuf:"varint,13,opt,name=rx_push,json=rxPush,proto3" json:"rx_push,omitempty"`
-	TxPushBufLen    uint32                 `protobuf:"varint,14,opt,name=tx_push_buf_len,json=txPushBufLen,proto3" json:"tx_push_buf_len,omitempty"`
-	TcpDataSplit    bool                   `protobuf:"varint,15,opt,name=tcp_data_split,json=tcpDataSplit,proto3" json:"tcp_data_split,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Read-only settings.
+	RxMax           uint32 `protobuf:"varint,1,opt,name=rx_max,json=rxMax,proto3" json:"rx_max,omitempty"`
+	RxMiniMax       uint32 `protobuf:"varint,2,opt,name=rx_mini_max,json=rxMiniMax,proto3" json:"rx_mini_max,omitempty"`
+	RxJumboMax      uint32 `protobuf:"varint,3,opt,name=rx_jumbo_max,json=rxJumboMax,proto3" json:"rx_jumbo_max,omitempty"`
+	TxMax           uint32 `protobuf:"varint,4,opt,name=tx_max,json=txMax,proto3" json:"tx_max,omitempty"`
+	TxPushBufLenMax uint32 `protobuf:"varint,5,opt,name=tx_push_buf_len_max,json=txPushBufLenMax,proto3" json:"tx_push_buf_len_max,omitempty"`
+	// Current settings (read-write).
+	Rx            uint32 `protobuf:"varint,6,opt,name=rx,proto3" json:"rx,omitempty"`
+	RxMini        uint32 `protobuf:"varint,7,opt,name=rx_mini,json=rxMini,proto3" json:"rx_mini,omitempty"`
+	RxJumbo       uint32 `protobuf:"varint,8,opt,name=rx_jumbo,json=rxJumbo,proto3" json:"rx_jumbo,omitempty"`
+	Tx            uint32 `protobuf:"varint,9,opt,name=tx,proto3" json:"tx,omitempty"`
+	RxBufLen      uint32 `protobuf:"varint,10,opt,name=rx_buf_len,json=rxBufLen,proto3" json:"rx_buf_len,omitempty"`
+	CqeSize       uint32 `protobuf:"varint,11,opt,name=cqe_size,json=cqeSize,proto3" json:"cqe_size,omitempty"`
+	TxPush        bool   `protobuf:"varint,12,opt,name=tx_push,json=txPush,proto3" json:"tx_push,omitempty"`
+	RxPush        bool   `protobuf:"varint,13,opt,name=rx_push,json=rxPush,proto3" json:"rx_push,omitempty"`
+	TxPushBufLen  uint32 `protobuf:"varint,14,opt,name=tx_push_buf_len,json=txPushBufLen,proto3" json:"tx_push_buf_len,omitempty"`
+	TcpDataSplit  bool   `protobuf:"varint,15,opt,name=tcp_data_split,json=tcpDataSplit,proto3" json:"tcp_data_split,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *EthernetRingsStatus) Reset() {
@@ -1615,9 +1655,11 @@ func (x *EthernetStatusSpec) GetWakeOnLan() []enums.NethelpersWOLMode {
 
 // HardwareAddrSpec describes spec for the link.
 type HardwareAddrSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	HardwareAddr  []byte                 `protobuf:"bytes,2,opt,name=hardware_addr,json=hardwareAddr,proto3" json:"hardware_addr,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Name defines link name
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Hardware address
+	HardwareAddr  []byte `protobuf:"bytes,2,opt,name=hardware_addr,json=hardwareAddr,proto3" json:"hardware_addr,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1941,27 +1983,42 @@ func (x *LinkRefreshSpec) GetGeneration() int64 {
 
 // LinkSpecSpec describes spec for the link.
 type LinkSpecSpec struct {
-	state           protoimpl.MessageState   `protogen:"open.v1"`
-	Name            string                   `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Logical         bool                     `protobuf:"varint,2,opt,name=logical,proto3" json:"logical,omitempty"`
-	Up              bool                     `protobuf:"varint,3,opt,name=up,proto3" json:"up,omitempty"`
-	Mtu             uint32                   `protobuf:"varint,4,opt,name=mtu,proto3" json:"mtu,omitempty"`
-	Kind            string                   `protobuf:"bytes,5,opt,name=kind,proto3" json:"kind,omitempty"`
-	Type            enums.NethelpersLinkType `protobuf:"varint,6,opt,name=type,proto3,enum=talos.resource.definitions.enums.NethelpersLinkType" json:"type,omitempty"`
-	ParentName      string                   `protobuf:"bytes,7,opt,name=parent_name,json=parentName,proto3" json:"parent_name,omitempty"`
-	BondSlave       *BondSlave               `protobuf:"bytes,8,opt,name=bond_slave,json=bondSlave,proto3" json:"bond_slave,omitempty"`
-	BridgeSlave     *BridgeSlave             `protobuf:"bytes,9,opt,name=bridge_slave,json=bridgeSlave,proto3" json:"bridge_slave,omitempty"`
-	Vlan            *VLANSpec                `protobuf:"bytes,10,opt,name=vlan,proto3" json:"vlan,omitempty"`
-	BondMaster      *BondMasterSpec          `protobuf:"bytes,11,opt,name=bond_master,json=bondMaster,proto3" json:"bond_master,omitempty"`
-	BridgeMaster    *BridgeMasterSpec        `protobuf:"bytes,12,opt,name=bridge_master,json=bridgeMaster,proto3" json:"bridge_master,omitempty"`
-	Wireguard       *WireguardSpec           `protobuf:"bytes,13,opt,name=wireguard,proto3" json:"wireguard,omitempty"`
-	ConfigLayer     enums.NetworkConfigLayer `protobuf:"varint,14,opt,name=config_layer,json=configLayer,proto3,enum=talos.resource.definitions.enums.NetworkConfigLayer" json:"config_layer,omitempty"`
-	HardwareAddress []byte                   `protobuf:"bytes,15,opt,name=hardware_address,json=hardwareAddress,proto3" json:"hardware_address,omitempty"`
-	Multicast       bool                     `protobuf:"varint,16,opt,name=multicast,proto3" json:"multicast,omitempty"`
-	VrfMaster       *VRFMasterSpec           `protobuf:"bytes,17,opt,name=vrf_master,json=vrfMaster,proto3" json:"vrf_master,omitempty"`
-	VrfSlave        *VRFSlave                `protobuf:"bytes,18,opt,name=vrf_slave,json=vrfSlave,proto3" json:"vrf_slave,omitempty"`
-	unknownFields   protoimpl.UnknownFields
-	sizeCache       protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Name defines link name
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Logical describes if the interface should be created on the fly if it doesn't exist.
+	Logical bool `protobuf:"varint,2,opt,name=logical,proto3" json:"logical,omitempty"`
+	// If Up is true, bring interface up, otherwise bring interface down.
+	//
+	// TODO: make *bool ?
+	Up bool `protobuf:"varint,3,opt,name=up,proto3" json:"up,omitempty"`
+	// Interface MTU (always applies).
+	Mtu uint32 `protobuf:"varint,4,opt,name=mtu,proto3" json:"mtu,omitempty"`
+	// Kind and Type are only required for Logical interfaces.
+	Kind string                   `protobuf:"bytes,5,opt,name=kind,proto3" json:"kind,omitempty"`
+	Type enums.NethelpersLinkType `protobuf:"varint,6,opt,name=type,proto3,enum=talos.resource.definitions.enums.NethelpersLinkType" json:"type,omitempty"`
+	// ParentName indicates link parent for VLAN interfaces.
+	ParentName string `protobuf:"bytes,7,opt,name=parent_name,json=parentName,proto3" json:"parent_name,omitempty"`
+	// BondSlave contains bond slave configuration for interfaces enslaved to a bond.
+	BondSlave *BondSlave `protobuf:"bytes,8,opt,name=bond_slave,json=bondSlave,proto3" json:"bond_slave,omitempty"`
+	// BridgeSlave carries bridge slave details for bridged interfaces.
+	BridgeSlave *BridgeSlave `protobuf:"bytes,9,opt,name=bridge_slave,json=bridgeSlave,proto3" json:"bridge_slave,omitempty"`
+	// These structures are present depending on "Kind" for Logical interfaces.
+	Vlan         *VLANSpec         `protobuf:"bytes,10,opt,name=vlan,proto3" json:"vlan,omitempty"`
+	BondMaster   *BondMasterSpec   `protobuf:"bytes,11,opt,name=bond_master,json=bondMaster,proto3" json:"bond_master,omitempty"`
+	BridgeMaster *BridgeMasterSpec `protobuf:"bytes,12,opt,name=bridge_master,json=bridgeMaster,proto3" json:"bridge_master,omitempty"`
+	Wireguard    *WireguardSpec    `protobuf:"bytes,13,opt,name=wireguard,proto3" json:"wireguard,omitempty"`
+	// Configuration layer.
+	ConfigLayer enums.NetworkConfigLayer `protobuf:"varint,14,opt,name=config_layer,json=configLayer,proto3,enum=talos.resource.definitions.enums.NetworkConfigLayer" json:"config_layer,omitempty"`
+	// Override hardware (MAC) address (if supported).
+	HardwareAddress []byte `protobuf:"bytes,15,opt,name=hardware_address,json=hardwareAddress,proto3" json:"hardware_address,omitempty"`
+	// Multicast indicates whether the multicast flag should be set on the interface to the value.
+	Multicast bool           `protobuf:"varint,16,opt,name=multicast,proto3" json:"multicast,omitempty"`
+	VrfMaster *VRFMasterSpec `protobuf:"bytes,17,opt,name=vrf_master,json=vrfMaster,proto3" json:"vrf_master,omitempty"`
+	// VRFSlave carries VRF slave details for interfaces in a VRF.
+	VrfSlave      *VRFSlave `protobuf:"bytes,18,opt,name=vrf_slave,json=vrfSlave,proto3" json:"vrf_slave,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *LinkSpecSpec) Reset() {
@@ -2144,20 +2201,23 @@ type LinkStatusSpec struct {
 	VendorId         string                           `protobuf:"bytes,19,opt,name=vendor_id,json=vendorId,proto3" json:"vendor_id,omitempty"`
 	Product          string                           `protobuf:"bytes,20,opt,name=product,proto3" json:"product,omitempty"`
 	Vendor           string                           `protobuf:"bytes,21,opt,name=vendor,proto3" json:"vendor,omitempty"`
-	LinkState        bool                             `protobuf:"varint,22,opt,name=link_state,json=linkState,proto3" json:"link_state,omitempty"`
-	SpeedMegabits    int64                            `protobuf:"varint,23,opt,name=speed_megabits,json=speedMegabits,proto3" json:"speed_megabits,omitempty"`
-	Port             enums.NethelpersPort             `protobuf:"varint,24,opt,name=port,proto3,enum=talos.resource.definitions.enums.NethelpersPort" json:"port,omitempty"`
-	Duplex           enums.NethelpersDuplex           `protobuf:"varint,25,opt,name=duplex,proto3,enum=talos.resource.definitions.enums.NethelpersDuplex" json:"duplex,omitempty"`
-	Vlan             *VLANSpec                        `protobuf:"bytes,26,opt,name=vlan,proto3" json:"vlan,omitempty"`
-	BridgeMaster     *BridgeMasterSpec                `protobuf:"bytes,27,opt,name=bridge_master,json=bridgeMaster,proto3" json:"bridge_master,omitempty"`
-	BondMaster       *BondMasterSpec                  `protobuf:"bytes,28,opt,name=bond_master,json=bondMaster,proto3" json:"bond_master,omitempty"`
-	Wireguard        *WireguardSpec                   `protobuf:"bytes,29,opt,name=wireguard,proto3" json:"wireguard,omitempty"`
-	PermanentAddr    []byte                           `protobuf:"bytes,30,opt,name=permanent_addr,json=permanentAddr,proto3" json:"permanent_addr,omitempty"`
-	Alias            string                           `protobuf:"bytes,31,opt,name=alias,proto3" json:"alias,omitempty"`
-	AltNames         []string                         `protobuf:"bytes,32,rep,name=alt_names,json=altNames,proto3" json:"alt_names,omitempty"`
-	VrfMaster        *VRFMasterSpec                   `protobuf:"bytes,33,opt,name=vrf_master,json=vrfMaster,proto3" json:"vrf_master,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// Fields coming from ethtool API.
+	LinkState     bool                   `protobuf:"varint,22,opt,name=link_state,json=linkState,proto3" json:"link_state,omitempty"`
+	SpeedMegabits int64                  `protobuf:"varint,23,opt,name=speed_megabits,json=speedMegabits,proto3" json:"speed_megabits,omitempty"`
+	Port          enums.NethelpersPort   `protobuf:"varint,24,opt,name=port,proto3,enum=talos.resource.definitions.enums.NethelpersPort" json:"port,omitempty"`
+	Duplex        enums.NethelpersDuplex `protobuf:"varint,25,opt,name=duplex,proto3,enum=talos.resource.definitions.enums.NethelpersDuplex" json:"duplex,omitempty"`
+	// Following fields are only populated with respective Kind.
+	Vlan          *VLANSpec         `protobuf:"bytes,26,opt,name=vlan,proto3" json:"vlan,omitempty"`
+	BridgeMaster  *BridgeMasterSpec `protobuf:"bytes,27,opt,name=bridge_master,json=bridgeMaster,proto3" json:"bridge_master,omitempty"`
+	BondMaster    *BondMasterSpec   `protobuf:"bytes,28,opt,name=bond_master,json=bondMaster,proto3" json:"bond_master,omitempty"`
+	Wireguard     *WireguardSpec    `protobuf:"bytes,29,opt,name=wireguard,proto3" json:"wireguard,omitempty"`
+	PermanentAddr []byte            `protobuf:"bytes,30,opt,name=permanent_addr,json=permanentAddr,proto3" json:"permanent_addr,omitempty"`
+	// Fields coming from rtnetlink API.
+	Alias         string         `protobuf:"bytes,31,opt,name=alias,proto3" json:"alias,omitempty"`
+	AltNames      []string       `protobuf:"bytes,32,rep,name=alt_names,json=altNames,proto3" json:"alt_names,omitempty"`
+	VrfMaster     *VRFMasterSpec `protobuf:"bytes,33,opt,name=vrf_master,json=vrfMaster,proto3" json:"vrf_master,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *LinkStatusSpec) Reset() {
@@ -3112,9 +3172,11 @@ func (x *NfTablesRule) GetAnonCounter() bool {
 
 // NodeAddressFilterSpec describes a filter for NodeAddresses.
 type NodeAddressFilterSpec struct {
-	state          protoimpl.MessageState `protogen:"open.v1"`
-	IncludeSubnets []*common.NetIPPrefix  `protobuf:"bytes,1,rep,name=include_subnets,json=includeSubnets,proto3" json:"include_subnets,omitempty"`
-	ExcludeSubnets []*common.NetIPPrefix  `protobuf:"bytes,2,rep,name=exclude_subnets,json=excludeSubnets,proto3" json:"exclude_subnets,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Address is skipped if it doesn't match any of the includeSubnets (if includeSubnets is not empty).
+	IncludeSubnets []*common.NetIPPrefix `protobuf:"bytes,1,rep,name=include_subnets,json=includeSubnets,proto3" json:"include_subnets,omitempty"`
+	// Address is skipped if it matches any of the excludeSubnets.
+	ExcludeSubnets []*common.NetIPPrefix `protobuf:"bytes,2,rep,name=exclude_subnets,json=excludeSubnets,proto3" json:"exclude_subnets,omitempty"`
 	unknownFields  protoimpl.UnknownFields
 	sizeCache      protoimpl.SizeCache
 }
@@ -3531,13 +3593,17 @@ func (x *PortRange) GetHi() uint32 {
 
 // ProbeSpecSpec describes the Probe.
 type ProbeSpecSpec struct {
-	state            protoimpl.MessageState   `protogen:"open.v1"`
-	Interval         *durationpb.Duration     `protobuf:"bytes,1,opt,name=interval,proto3" json:"interval,omitempty"`
-	FailureThreshold int64                    `protobuf:"varint,2,opt,name=failure_threshold,json=failureThreshold,proto3" json:"failure_threshold,omitempty"`
-	Tcp              *TCPProbeSpec            `protobuf:"bytes,3,opt,name=tcp,proto3" json:"tcp,omitempty"`
-	ConfigLayer      enums.NetworkConfigLayer `protobuf:"varint,4,opt,name=config_layer,json=configLayer,proto3,enum=talos.resource.definitions.enums.NetworkConfigLayer" json:"config_layer,omitempty"`
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Interval between the probes.
+	Interval *durationpb.Duration `protobuf:"bytes,1,opt,name=interval,proto3" json:"interval,omitempty"`
+	// FailureThreshold is the number of consecutive failures for the probe to be considered failed after having succeeded.
+	FailureThreshold int64 `protobuf:"varint,2,opt,name=failure_threshold,json=failureThreshold,proto3" json:"failure_threshold,omitempty"`
+	// One of the probe types should be specified, for now it's only TCP.
+	Tcp *TCPProbeSpec `protobuf:"bytes,3,opt,name=tcp,proto3" json:"tcp,omitempty"`
+	// Configuration layer.
+	ConfigLayer   enums.NetworkConfigLayer `protobuf:"varint,4,opt,name=config_layer,json=configLayer,proto3,enum=talos.resource.definitions.enums.NetworkConfigLayer" json:"config_layer,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ProbeSpecSpec) Reset() {
@@ -3600,9 +3666,11 @@ func (x *ProbeSpecSpec) GetConfigLayer() enums.NetworkConfigLayer {
 
 // ProbeStatusSpec describes the Probe.
 type ProbeStatusSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
-	LastError     string                 `protobuf:"bytes,2,opt,name=last_error,json=lastError,proto3" json:"last_error,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Success of the check.
+	Success bool `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	// Last error of the probe.
+	LastError     string `protobuf:"bytes,2,opt,name=last_error,json=lastError,proto3" json:"last_error,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4405,9 +4473,11 @@ func (x *StatusSpec) GetEtcFilesReady() bool {
 
 // TCPProbeSpec describes the TCP Probe.
 type TCPProbeSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Endpoint      string                 `protobuf:"bytes,1,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
-	Timeout       *durationpb.Duration   `protobuf:"bytes,2,opt,name=timeout,proto3" json:"timeout,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Endpoint to probe: host:port.
+	Endpoint string `protobuf:"bytes,1,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
+	// Timeout for the probe.
+	Timeout       *durationpb.Duration `protobuf:"bytes,2,opt,name=timeout,proto3" json:"timeout,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4763,8 +4833,10 @@ func (x *VIPOperatorSpec) GetHCloud() *VIPHCloudSpec {
 
 // VLANSpec describes VLAN settings if Kind == "vlan".
 type VLANSpec struct {
-	state         protoimpl.MessageState       `protogen:"open.v1"`
-	Vid           uint32                       `protobuf:"varint,1,opt,name=vid,proto3" json:"vid,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// VID is the vlan ID.
+	Vid uint32 `protobuf:"varint,1,opt,name=vid,proto3" json:"vid,omitempty"`
+	// Protocol is the vlan protocol.
 	Protocol      enums.NethelpersVLANProtocol `protobuf:"varint,2,opt,name=protocol,proto3,enum=talos.resource.definitions.enums.NethelpersVLANProtocol" json:"protocol,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -4983,12 +5055,14 @@ func (x *WireguardPeer) GetAllowedIps() []*common.NetIPPrefix {
 
 // WireguardSpec describes Wireguard settings if Kind == "wireguard".
 type WireguardSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	PrivateKey    string                 `protobuf:"bytes,1,opt,name=private_key,json=privateKey,proto3" json:"private_key,omitempty"`
-	PublicKey     string                 `protobuf:"bytes,2,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
-	ListenPort    int64                  `protobuf:"varint,3,opt,name=listen_port,json=listenPort,proto3" json:"listen_port,omitempty"`
-	FirewallMark  int64                  `protobuf:"varint,4,opt,name=firewall_mark,json=firewallMark,proto3" json:"firewall_mark,omitempty"`
-	Peers         []*WireguardPeer       `protobuf:"bytes,5,rep,name=peers,proto3" json:"peers,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// PrivateKey is used to configure the link, present only in the LinkSpec.
+	PrivateKey string `protobuf:"bytes,1,opt,name=private_key,json=privateKey,proto3" json:"private_key,omitempty"`
+	// PublicKey is only used in LinkStatus to show the link status.
+	PublicKey     string           `protobuf:"bytes,2,opt,name=public_key,json=publicKey,proto3" json:"public_key,omitempty"`
+	ListenPort    int64            `protobuf:"varint,3,opt,name=listen_port,json=listenPort,proto3" json:"listen_port,omitempty"`
+	FirewallMark  int64            `protobuf:"varint,4,opt,name=firewall_mark,json=firewallMark,proto3" json:"firewall_mark,omitempty"`
+	Peers         []*WireguardPeer `protobuf:"bytes,5,rep,name=peers,proto3" json:"peers,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

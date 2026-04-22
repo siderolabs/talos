@@ -26,11 +26,12 @@ const (
 
 // APICertsSpec describes etcd certs secrets.
 type APICertsSpec struct {
-	state                   protoimpl.MessageState              `protogen:"open.v1"`
-	Client                  *common.PEMEncodedCertificateAndKey `protobuf:"bytes,2,opt,name=client,proto3" json:"client,omitempty"`
-	Server                  *common.PEMEncodedCertificateAndKey `protobuf:"bytes,3,opt,name=server,proto3" json:"server,omitempty"`
-	AcceptedCAs             []*common.PEMEncodedCertificate     `protobuf:"bytes,4,rep,name=accepted_c_as,json=acceptedCAs,proto3" json:"accepted_c_as,omitempty"`
-	SkipVerifyingClientCert bool                                `protobuf:"varint,5,opt,name=skip_verifying_client_cert,json=skipVerifyingClientCert,proto3" json:"skip_verifying_client_cert,omitempty"`
+	state       protoimpl.MessageState              `protogen:"open.v1"`
+	Client      *common.PEMEncodedCertificateAndKey `protobuf:"bytes,2,opt,name=client,proto3" json:"client,omitempty"`
+	Server      *common.PEMEncodedCertificateAndKey `protobuf:"bytes,3,opt,name=server,proto3" json:"server,omitempty"`
+	AcceptedCAs []*common.PEMEncodedCertificate     `protobuf:"bytes,4,rep,name=accepted_c_as,json=acceptedCAs,proto3" json:"accepted_c_as,omitempty"`
+	// Skip verifying client certificate, to be used only with the maintenance mode operations.
+	SkipVerifyingClientCert bool `protobuf:"varint,5,opt,name=skip_verifying_client_cert,json=skipVerifyingClientCert,proto3" json:"skip_verifying_client_cert,omitempty"`
 	unknownFields           protoimpl.UnknownFields
 	sizeCache               protoimpl.SizeCache
 }
@@ -387,10 +388,11 @@ type KubernetesCertsSpec struct {
 	state                       protoimpl.MessageState `protogen:"open.v1"`
 	SchedulerKubeconfig         string                 `protobuf:"bytes,4,opt,name=scheduler_kubeconfig,json=schedulerKubeconfig,proto3" json:"scheduler_kubeconfig,omitempty"`
 	ControllerManagerKubeconfig string                 `protobuf:"bytes,5,opt,name=controller_manager_kubeconfig,json=controllerManagerKubeconfig,proto3" json:"controller_manager_kubeconfig,omitempty"`
-	LocalhostAdminKubeconfig    string                 `protobuf:"bytes,6,opt,name=localhost_admin_kubeconfig,json=localhostAdminKubeconfig,proto3" json:"localhost_admin_kubeconfig,omitempty"`
-	AdminKubeconfig             string                 `protobuf:"bytes,7,opt,name=admin_kubeconfig,json=adminKubeconfig,proto3" json:"admin_kubeconfig,omitempty"`
-	unknownFields               protoimpl.UnknownFields
-	sizeCache                   protoimpl.SizeCache
+	// Admin-level kubeconfig with access through the localhost endpoint and cluster endpoints.
+	LocalhostAdminKubeconfig string `protobuf:"bytes,6,opt,name=localhost_admin_kubeconfig,json=localhostAdminKubeconfig,proto3" json:"localhost_admin_kubeconfig,omitempty"`
+	AdminKubeconfig          string `protobuf:"bytes,7,opt,name=admin_kubeconfig,json=adminKubeconfig,proto3" json:"admin_kubeconfig,omitempty"`
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
 }
 
 func (x *KubernetesCertsSpec) Reset() {

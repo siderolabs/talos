@@ -1419,8 +1419,11 @@ func (x *KubeletConfigSpec) GetExtraArgs() map[string]*ArgValues {
 
 // KubeletKubeconfigSpec describes the current kubelet kubeconfig file.
 type KubeletKubeconfigSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Hash          string                 `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Hash is a content digest of the kubeconfig file. It changes whenever the
+	// file contents change, which is the signal consumers use to rebuild their
+	// Kubernetes clients.
+	Hash          string `protobuf:"bytes,1,opt,name=hash,proto3" json:"hash,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

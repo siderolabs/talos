@@ -269,8 +269,10 @@ func (x *ControlPlane) GetApiServerPort() int64 {
 // Note: IdentitySpec is persisted on disk in the STATE partition,
 // so YAML serialization should be kept backwards compatible.
 type IdentitySpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	NodeId        string                 `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// NodeID is a random value which is persisted across reboots,
+	// but it gets reset on wipe.
+	NodeId        string `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

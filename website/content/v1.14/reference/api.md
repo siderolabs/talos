@@ -6093,10 +6093,10 @@ DeviceSpec is the spec for devices status.
 | minor | [int64](#int64) |  |  |
 | partition_name | [string](#string) |  |  |
 | partition_number | [int64](#int64) |  |  |
-| generation | [int64](#int64) |  |  |
+| generation | [int64](#int64) |  | Generation is bumped every time the device might have changed and might need to be re-probed. |
 | device_path | [string](#string) |  |  |
-| parent | [string](#string) |  |  |
-| secondaries | [string](#string) | repeated |  |
+| parent | [string](#string) |  | Parent (if set) specifies the parent device ID. |
+| secondaries | [string](#string) | repeated | Secondaries (if set) specifies the secondary device IDs.<br><br>E.g. for a LVM volume secondary is a list of blockdevices that the volume consists of. |
 
 
 
@@ -6111,9 +6111,9 @@ DiscoveredVolumeSpec is the spec for DiscoveredVolumes resource.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| size | [uint64](#uint64) |  |  |
-| sector_size | [uint64](#uint64) |  |  |
-| io_size | [uint64](#uint64) |  |  |
+| size | [uint64](#uint64) |  | Overall size of the probed device (in bytes). |
+| sector_size | [uint64](#uint64) |  | Sector size of the device (in bytes). |
+| io_size | [uint64](#uint64) |  | Optimal I/O size for the device (in bytes). |
 | name | [string](#string) |  |  |
 | uuid | [string](#string) |  |  |
 | label | [string](#string) |  |  |
@@ -6130,7 +6130,7 @@ DiscoveredVolumeSpec is the spec for DiscoveredVolumes resource.
 | dev_path | [string](#string) |  |  |
 | parent_dev_path | [string](#string) |  |  |
 | pretty_size | [string](#string) |  |  |
-| offset | [uint64](#uint64) |  |  |
+| offset | [uint64](#uint64) |  | Offset of the partition/volume inside Parent device (in bytes). |
 
 
 
@@ -6206,7 +6206,7 @@ DiskSpec is the spec for Disks status.
 | cdrom | [bool](#bool) |  |  |
 | dev_path | [string](#string) |  |  |
 | pretty_size | [string](#string) |  |  |
-| secondary_disks | [string](#string) | repeated |  |
+| secondary_disks | [string](#string) | repeated | SecondaryDisks (if set) specifies the secondary disk IDs.<br><br>E.g. if the blockdevice secondary is vda5, the secondary disk will be set as vda. This allows to map secondaries between disks ignoring the partitions. |
 | uuid | [string](#string) |  |  |
 | symlinks | [string](#string) | repeated |  |
 
@@ -6225,12 +6225,12 @@ EncryptionKey is the spec for volume encryption key.
 | ----- | ---- | ----- | ----------- |
 | slot | [int64](#int64) |  |  |
 | type | [talos.resource.definitions.enums.BlockEncryptionKeyType](#talos.resource.definitions.enums.BlockEncryptionKeyType) |  |  |
-| static_passphrase | [bytes](#bytes) |  |  |
-| kms_endpoint | [string](#string) |  |  |
-| tpm_check_secureboot_status_on_enroll | [bool](#bool) |  |  |
+| static_passphrase | [bytes](#bytes) |  | Only for Type == "static": |
+| kms_endpoint | [string](#string) |  | Only for Type == "kms": |
+| tpm_check_secureboot_status_on_enroll | [bool](#bool) |  | Only for Type == "tpm": |
 | lock_to_state | [bool](#bool) |  |  |
-| tpmpc_rs | [int64](#int64) | repeated |  |
-| tpm_pub_key_pc_rs | [int64](#int64) | repeated |  |
+| tpmpc_rs | [int64](#int64) | repeated | Only for Type == "tpm": |
+| tpm_pub_key_pc_rs | [int64](#int64) | repeated | Only for Type == "tpm": |
 
 
 
@@ -6265,8 +6265,8 @@ FilesystemSpec is the spec for volume filesystem.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| type | [talos.resource.definitions.enums.BlockFilesystemType](#talos.resource.definitions.enums.BlockFilesystemType) |  |  |
-| label | [string](#string) |  |  |
+| type | [talos.resource.definitions.enums.BlockFilesystemType](#talos.resource.definitions.enums.BlockFilesystemType) |  | Filesystem type. |
+| label | [string](#string) |  | Filesystem label. |
 
 
 
@@ -6281,8 +6281,8 @@ LocatorSpec is the spec for volume locator.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| match | [google.api.expr.v1alpha1.CheckedExpr](#google.api.expr.v1alpha1.CheckedExpr) |  |  |
-| disk_match | [google.api.expr.v1alpha1.CheckedExpr](#google.api.expr.v1alpha1.CheckedExpr) |  |  |
+| match | [google.api.expr.v1alpha1.CheckedExpr](#google.api.expr.v1alpha1.CheckedExpr) |  | Match is a volume locator match expression. |
+| disk_match | [google.api.expr.v1alpha1.CheckedExpr](#google.api.expr.v1alpha1.CheckedExpr) |  | DiskMatch is a disk locator match expression. |
 
 
 
@@ -6319,16 +6319,16 @@ MountSpec is the spec for volume mount.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| target_path | [string](#string) |  |  |
-| selinux_label | [string](#string) |  |  |
-| project_quota_support | [bool](#bool) |  |  |
-| parent_id | [string](#string) |  |  |
-| file_mode | [uint32](#uint32) |  |  |
-| uid | [int64](#int64) |  |  |
-| gid | [int64](#int64) |  |  |
-| recursive_relabel | [bool](#bool) |  |  |
-| bind_target | [string](#string) |  |  |
-| parameters | [ParameterSpec](#talos.resource.definitions.block.ParameterSpec) | repeated |  |
+| target_path | [string](#string) |  | Mount path for the volume. |
+| selinux_label | [string](#string) |  | SELinux label for the volume. |
+| project_quota_support | [bool](#bool) |  | Enable project quota (xfs) for the volume. |
+| parent_id | [string](#string) |  | Parent mount request ID. |
+| file_mode | [uint32](#uint32) |  | FileMode is the file mode for the mount target. |
+| uid | [int64](#int64) |  | UID is the user ID for the mount target. |
+| gid | [int64](#int64) |  | GID is the group ID for the mount target. |
+| recursive_relabel | [bool](#bool) |  | RecursiveRelabel is the recursive relabel/chown flag for the mount target. |
+| bind_target | [string](#string) |  | BindTarget is an optional path on the host to bind-mount the volume onto. |
+| parameters | [ParameterSpec](#talos.resource.definitions.block.ParameterSpec) | repeated | Parameters are additional filesystem mount options used when mounting the volume. |
 
 
 
@@ -6365,10 +6365,10 @@ ParameterSpec is a mount parameter.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| type | [talos.resource.definitions.enums.BlockFSParameterType](#talos.resource.definitions.enums.BlockFSParameterType) |  |  |
-| name | [string](#string) |  |  |
-| string | [string](#string) |  |  |
-| binary | [bytes](#bytes) |  |  |
+| type | [talos.resource.definitions.enums.BlockFSParameterType](#talos.resource.definitions.enums.BlockFSParameterType) |  | Type of the parameter. |
+| name | [string](#string) |  | Name of the parameter. |
+| string | [string](#string) |  | String value of the parameter. |
+| binary | [bytes](#bytes) |  | Binary value of the parameter. |
 
 
 
@@ -6383,13 +6383,13 @@ PartitionSpec is the spec for volume partitioning.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| min_size | [uint64](#uint64) |  |  |
-| max_size | [uint64](#uint64) |  |  |
-| grow | [bool](#bool) |  |  |
-| label | [string](#string) |  |  |
-| type_uuid | [string](#string) |  |  |
-| relative_max_size | [uint64](#uint64) |  |  |
-| negative_max_size | [bool](#bool) |  |  |
+| min_size | [uint64](#uint64) |  | Partition minimum size in bytes. |
+| max_size | [uint64](#uint64) |  | Partition maximum size in bytes, if not set, grows to the maximum size. |
+| grow | [bool](#bool) |  | Grow the partition automatically to the maximum size. |
+| label | [string](#string) |  | Label for the partition. |
+| type_uuid | [string](#string) |  | Partition type UUID. |
+| relative_max_size | [uint64](#uint64) |  | Partition maximum size (relative), if not set, grows to the maximum size. |
+| negative_max_size | [bool](#bool) |  | NegativeMaxSize indicates that MaxSize or RelativeMaxSize represents space to be left free on the device rather than space to consume. |
 
 
 
@@ -6404,10 +6404,10 @@ ProvisioningSpec is the spec for volume provisioning.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| disk_selector | [DiskSelector](#talos.resource.definitions.block.DiskSelector) |  |  |
-| partition_spec | [PartitionSpec](#talos.resource.definitions.block.PartitionSpec) |  |  |
-| wave | [int64](#int64) |  |  |
-| filesystem_spec | [FilesystemSpec](#talos.resource.definitions.block.FilesystemSpec) |  |  |
+| disk_selector | [DiskSelector](#talos.resource.definitions.block.DiskSelector) |  | DiskSelector selects a disk for the volume. |
+| partition_spec | [PartitionSpec](#talos.resource.definitions.block.PartitionSpec) |  | PartitionSpec describes how to provision the volume (partition type). |
+| wave | [int64](#int64) |  | Provisioning wave for the volume.<br><br>Waves are processed sequentially - the volumes in the wave are only provisioned after the previous wave is done. |
+| filesystem_spec | [FilesystemSpec](#talos.resource.definitions.block.FilesystemSpec) |  | FilesystemSpec describes how to provision the volume (filesystem type). |
 
 
 
@@ -6443,8 +6443,8 @@ SymlinkProvisioningSpec is the spec for volume symlink.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| symlink_target_path | [string](#string) |  |  |
-| force | [bool](#bool) |  |  |
+| symlink_target_path | [string](#string) |  | Symlink target path for the volume. |
+| force | [bool](#bool) |  | Force symlink creation. |
 
 
 
@@ -6522,13 +6522,13 @@ VolumeConfigSpec is the spec for VolumeConfig resource.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| parent_id | [string](#string) |  |  |
-| type | [talos.resource.definitions.enums.BlockVolumeType](#talos.resource.definitions.enums.BlockVolumeType) |  |  |
-| provisioning | [ProvisioningSpec](#talos.resource.definitions.block.ProvisioningSpec) |  |  |
-| locator | [LocatorSpec](#talos.resource.definitions.block.LocatorSpec) |  |  |
-| mount | [MountSpec](#talos.resource.definitions.block.MountSpec) |  |  |
-| encryption | [EncryptionSpec](#talos.resource.definitions.block.EncryptionSpec) |  |  |
-| symlink | [SymlinkProvisioningSpec](#talos.resource.definitions.block.SymlinkProvisioningSpec) |  |  |
+| parent_id | [string](#string) |  | Parent volume ID, if set no operations on the volume continue until the parent volume is ready. |
+| type | [talos.resource.definitions.enums.BlockVolumeType](#talos.resource.definitions.enums.BlockVolumeType) |  | Volume type. |
+| provisioning | [ProvisioningSpec](#talos.resource.definitions.block.ProvisioningSpec) |  | Provisioning configuration (how to provision a volume). |
+| locator | [LocatorSpec](#talos.resource.definitions.block.LocatorSpec) |  | How to find a volume. |
+| mount | [MountSpec](#talos.resource.definitions.block.MountSpec) |  | Mount options for the volume. |
+| encryption | [EncryptionSpec](#talos.resource.definitions.block.EncryptionSpec) |  | Encryption configuration (how to encrypt a volume). |
+| symlink | [SymlinkProvisioningSpec](#talos.resource.definitions.block.SymlinkProvisioningSpec) |  | Symlink options for the volume. |
 
 
 
@@ -6585,27 +6585,27 @@ VolumeStatusSpec is the spec for VolumeStatus resource.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | phase | [talos.resource.definitions.enums.BlockVolumePhase](#talos.resource.definitions.enums.BlockVolumePhase) |  |  |
-| location | [string](#string) |  |  |
+| location | [string](#string) |  | Location is the path to the block device (raw). |
 | error_message | [string](#string) |  |  |
 | uuid | [string](#string) |  |  |
 | partition_uuid | [string](#string) |  |  |
 | pre_fail_phase | [talos.resource.definitions.enums.BlockVolumePhase](#talos.resource.definitions.enums.BlockVolumePhase) |  |  |
-| parent_location | [string](#string) |  |  |
+| parent_location | [string](#string) |  | ParentLocation (if present) is the location of the parent block device for partitions. |
 | partition_index | [int64](#int64) |  |  |
 | size | [uint64](#uint64) |  |  |
-| filesystem | [talos.resource.definitions.enums.BlockFilesystemType](#talos.resource.definitions.enums.BlockFilesystemType) |  |  |
-| mount_location | [string](#string) |  |  |
-| encryption_provider | [talos.resource.definitions.enums.BlockEncryptionProviderType](#talos.resource.definitions.enums.BlockEncryptionProviderType) |  |  |
+| filesystem | [talos.resource.definitions.enums.BlockFilesystemType](#talos.resource.definitions.enums.BlockFilesystemType) |  | Filesystem is the filesystem type. |
+| mount_location | [string](#string) |  | MountLocation is the location to be mounted, might be different from location. |
+| encryption_provider | [talos.resource.definitions.enums.BlockEncryptionProviderType](#talos.resource.definitions.enums.BlockEncryptionProviderType) |  | EncryptionProvider is the provider of the encryption which was used to unlock the volume. |
 | pretty_size | [string](#string) |  |  |
-| encryption_failed_syncs | [string](#string) | repeated |  |
-| mount_spec | [MountSpec](#talos.resource.definitions.block.MountSpec) |  |  |
+| encryption_failed_syncs | [string](#string) | repeated | EncryptionFailedSyncs is the list of failed syncs for the volume (per key/provider). |
+| mount_spec | [MountSpec](#talos.resource.definitions.block.MountSpec) |  | MountSpec is the mount specification. |
 | type | [talos.resource.definitions.enums.BlockVolumeType](#talos.resource.definitions.enums.BlockVolumeType) |  |  |
-| configured_encryption_keys | [string](#string) | repeated |  |
-| symlink_spec | [SymlinkProvisioningSpec](#talos.resource.definitions.block.SymlinkProvisioningSpec) |  |  |
+| configured_encryption_keys | [string](#string) | repeated | ConfiguredEncryptionKeys is the list of configured encryption keys for the volume. |
+| symlink_spec | [SymlinkProvisioningSpec](#talos.resource.definitions.block.SymlinkProvisioningSpec) |  | Symlink is the symlink specification. |
 | parent_id | [string](#string) |  |  |
-| encryption_locked_to_state | [bool](#bool) |  |  |
-| encryption_slot | [int64](#int64) |  |  |
-| tpm_encryption_options | [TPMEncryptionOptionsInfo](#talos.resource.definitions.block.TPMEncryptionOptionsInfo) |  |  |
+| encryption_locked_to_state | [bool](#bool) |  | EncryptionLockedToState indicates if the encryption is locked to STATE partition |
+| encryption_slot | [int64](#int64) |  | EncryptionSlot indicates the currently used encryption slot used for decryption. |
+| tpm_encryption_options | [TPMEncryptionOptionsInfo](#talos.resource.definitions.block.TPMEncryptionOptionsInfo) |  | TPMEncryptionOptions is the options for TPM-based encryption. |
 
 
 
@@ -6721,7 +6721,7 @@ so YAML serialization should be kept backwards compatible.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| node_id | [string](#string) |  |  |
+| node_id | [string](#string) |  | NodeID is a random value which is persisted across reboots, but it gets reset on wipe. |
 
 
 
@@ -7332,8 +7332,8 @@ ProcessorSpec represents a single processor.
 | socket | [string](#string) |  |  |
 | manufacturer | [string](#string) |  |  |
 | product_name | [string](#string) |  |  |
-| max_speed | [uint32](#uint32) |  |  |
-| boot_speed | [uint32](#uint32) |  |  |
+| max_speed | [uint32](#uint32) |  | MaxSpeed is in megahertz (MHz). |
+| boot_speed | [uint32](#uint32) |  | BootSpeed is in megahertz (MHz). |
 | status | [uint32](#uint32) |  |  |
 | serial_number | [string](#string) |  |  |
 | asset_tag | [string](#string) |  |  |
@@ -7893,7 +7893,7 @@ KubeletKubeconfigSpec describes the current kubelet kubeconfig file.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| hash | [string](#string) |  |  |
+| hash | [string](#string) |  | Hash is a content digest of the kubeconfig file. It changes whenever the file contents change, which is the signal consumers use to rebuild their Kubernetes clients. |
 
 
 
@@ -8336,13 +8336,13 @@ ConfigSpec describes KubeSpan configuration..
 | enabled | [bool](#bool) |  |  |
 | cluster_id | [string](#string) |  |  |
 | shared_secret | [string](#string) |  |  |
-| force_routing | [bool](#bool) |  |  |
-| advertise_kubernetes_networks | [bool](#bool) |  |  |
-| mtu | [uint32](#uint32) |  |  |
-| endpoint_filters | [string](#string) | repeated |  |
-| harvest_extra_endpoints | [bool](#bool) |  |  |
-| extra_endpoints | [common.NetIPPort](#common.NetIPPort) | repeated |  |
-| exclude_advertised_networks | [common.NetIPPrefix](#common.NetIPPrefix) | repeated |  |
+| force_routing | [bool](#bool) |  | Force routing via KubeSpan even if the peer connection is not up. |
+| advertise_kubernetes_networks | [bool](#bool) |  | Advertise Kubernetes pod networks or skip it completely. |
+| mtu | [uint32](#uint32) |  | Force kubeSpan MTU size. |
+| endpoint_filters | [string](#string) | repeated | If not empty, filter advertised endpoints using the list of CIDRs. |
+| harvest_extra_endpoints | [bool](#bool) |  | Harvest endpoints from the peer statuses. |
+| extra_endpoints | [common.NetIPPort](#common.NetIPPort) | repeated | Extra endpoints to announce. |
+| exclude_advertised_networks | [common.NetIPPrefix](#common.NetIPPrefix) | repeated | If not empty, filter advertised networks using the list of CIDRs. |
 
 
 
@@ -8376,9 +8376,9 @@ so YAML serialization should be kept backwards compatible.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| address | [common.NetIPPrefix](#common.NetIPPrefix) |  |  |
+| address | [common.NetIPPrefix](#common.NetIPPrefix) |  | Address of the node on the Wireguard network. |
 | subnet | [common.NetIPPrefix](#common.NetIPPrefix) |  |  |
-| private_key | [string](#string) |  |  |
+| private_key | [string](#string) |  | Public and private Wireguard keys. |
 | public_key | [string](#string) |  |  |
 
 
@@ -8412,13 +8412,13 @@ PeerStatusSpec describes PeerStatus state.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| endpoint | [common.NetIPPort](#common.NetIPPort) |  |  |
-| label | [string](#string) |  |  |
-| state | [talos.resource.definitions.enums.KubespanPeerState](#talos.resource.definitions.enums.KubespanPeerState) |  |  |
-| receive_bytes | [int64](#int64) |  |  |
+| endpoint | [common.NetIPPort](#common.NetIPPort) |  | Active endpoint as seen by the Wireguard. |
+| label | [string](#string) |  | Label derived from the peer spec. |
+| state | [talos.resource.definitions.enums.KubespanPeerState](#talos.resource.definitions.enums.KubespanPeerState) |  | Calculated state. |
+| receive_bytes | [int64](#int64) |  | Tx/Rx bytes. |
 | transmit_bytes | [int64](#int64) |  |  |
-| last_handshake_time | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
-| last_used_endpoint | [common.NetIPPort](#common.NetIPPort) |  |  |
+| last_handshake_time | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | Handshake. |
+| last_used_endpoint | [common.NetIPPort](#common.NetIPPort) |  | Endpoint selection input. |
 | last_endpoint_change | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
 
 
@@ -8483,7 +8483,7 @@ DevicesStatusSpec is the spec for devices status.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| ready | [bool](#bool) |  |  |
+| ready | [bool](#bool) |  | Devices are settled down and ready to be used. |
 
 
 
@@ -8498,8 +8498,8 @@ DiagnosticSpec is the spec for devices status.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| message | [string](#string) |  |  |
-| details | [string](#string) | repeated |  |
+| message | [string](#string) |  | Short message describing the problem. |
+| details | [string](#string) | repeated | Details about the problem. |
 
 
 
@@ -8886,8 +8886,8 @@ ServicePIDSpec is the spec for the service PID.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| pid | [int32](#int32) |  |  |
-| mount_namespace | [string](#string) |  |  |
+| pid | [int32](#int32) |  | PID is the host PID of the service. |
+| mount_namespace | [string](#string) |  | MountNamespace is the mount namespace of the service. |
 
 
 
@@ -9045,34 +9045,34 @@ BondMasterSpec describes bond settings if Kind == "bond".
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| mode | [talos.resource.definitions.enums.NethelpersBondMode](#talos.resource.definitions.enums.NethelpersBondMode) |  |  |
-| hash_policy | [talos.resource.definitions.enums.NethelpersBondXmitHashPolicy](#talos.resource.definitions.enums.NethelpersBondXmitHashPolicy) |  |  |
-| lacp_rate | [talos.resource.definitions.enums.NethelpersLACPRate](#talos.resource.definitions.enums.NethelpersLACPRate) |  |  |
-| arp_validate | [talos.resource.definitions.enums.NethelpersARPValidate](#talos.resource.definitions.enums.NethelpersARPValidate) |  |  |
-| arp_all_targets | [talos.resource.definitions.enums.NethelpersARPAllTargets](#talos.resource.definitions.enums.NethelpersARPAllTargets) |  |  |
-| primary_index | [uint32](#uint32) |  |  |
-| primary_reselect | [talos.resource.definitions.enums.NethelpersPrimaryReselect](#talos.resource.definitions.enums.NethelpersPrimaryReselect) |  |  |
-| fail_over_mac | [talos.resource.definitions.enums.NethelpersFailOverMAC](#talos.resource.definitions.enums.NethelpersFailOverMAC) |  |  |
-| ad_select | [talos.resource.definitions.enums.NethelpersADSelect](#talos.resource.definitions.enums.NethelpersADSelect) |  |  |
-| mii_mon | [uint32](#uint32) |  |  |
-| up_delay | [uint32](#uint32) |  |  |
-| down_delay | [uint32](#uint32) |  |  |
-| arp_interval | [uint32](#uint32) |  |  |
-| resend_igmp | [uint32](#uint32) |  |  |
-| min_links | [uint32](#uint32) |  |  |
-| lp_interval | [uint32](#uint32) |  |  |
-| packets_per_slave | [uint32](#uint32) |  |  |
-| num_peer_notif | [uint32](#uint32) |  |  |
-| tlb_dynamic_lb | [uint32](#uint32) |  |  |
-| all_slaves_active | [uint32](#uint32) |  |  |
-| use_carrier | [bool](#bool) |  |  |
-| ad_actor_sys_prio | [uint32](#uint32) |  |  |
-| ad_user_port_key | [uint32](#uint32) |  |  |
-| peer_notify_delay | [uint32](#uint32) |  |  |
-| arpip_targets | [common.NetIP](#common.NetIP) | repeated |  |
-| nsip6_targets | [common.NetIP](#common.NetIP) | repeated |  |
-| adlacp_active | [talos.resource.definitions.enums.NethelpersADLACPActive](#talos.resource.definitions.enums.NethelpersADLACPActive) |  |  |
-| missed_max | [uint32](#uint32) |  |  |
+| mode | [talos.resource.definitions.enums.NethelpersBondMode](#talos.resource.definitions.enums.NethelpersBondMode) |  | Mode specifies the bonding policy |
+| hash_policy | [talos.resource.definitions.enums.NethelpersBondXmitHashPolicy](#talos.resource.definitions.enums.NethelpersBondXmitHashPolicy) |  | HashPolicy selects the transmit hash policy to use for slave selection. |
+| lacp_rate | [talos.resource.definitions.enums.NethelpersLACPRate](#talos.resource.definitions.enums.NethelpersLACPRate) |  | LACPRate specifies the rate at which LACPDU frames are sent. |
+| arp_validate | [talos.resource.definitions.enums.NethelpersARPValidate](#talos.resource.definitions.enums.NethelpersARPValidate) |  | ARPValidate specifies whether or not ARP probes and replies should be validated. |
+| arp_all_targets | [talos.resource.definitions.enums.NethelpersARPAllTargets](#talos.resource.definitions.enums.NethelpersARPAllTargets) |  | ARPAllTargets specifies whether ARP probes should be sent to any or all targets. |
+| primary_index | [uint32](#uint32) |  | PrimaryIndex is a device index specifying which slave is the primary device. |
+| primary_reselect | [talos.resource.definitions.enums.NethelpersPrimaryReselect](#talos.resource.definitions.enums.NethelpersPrimaryReselect) |  | PrimaryReselect specifies the policy under which the primary slave should be reselected. |
+| fail_over_mac | [talos.resource.definitions.enums.NethelpersFailOverMAC](#talos.resource.definitions.enums.NethelpersFailOverMAC) |  | FailOverMac whether active-backup mode should set all slaves to the same MAC address at enslavement, when enabled, or perform special handling. |
+| ad_select | [talos.resource.definitions.enums.NethelpersADSelect](#talos.resource.definitions.enums.NethelpersADSelect) |  | ADSelect specifies the aggregate selection policy for 802.3ad. |
+| mii_mon | [uint32](#uint32) |  | MIIMon is the link monitoring frequency in milliseconds. |
+| up_delay | [uint32](#uint32) |  | UpDelay is the time, in milliseconds, to wait before enabling a slave after a link recovery has been detected. |
+| down_delay | [uint32](#uint32) |  | DownDelay is the time, in milliseconds, to wait before disabling a slave after a link failure has been detected. |
+| arp_interval | [uint32](#uint32) |  | ARPInterval is the ARP link monitoring frequency in milliseconds. |
+| resend_igmp | [uint32](#uint32) |  | ResendIGMP specifies the number of times IGMP packets should be resent. |
+| min_links | [uint32](#uint32) |  | MinLinks specifies the minimum number of active links to assert carrier. |
+| lp_interval | [uint32](#uint32) |  | LPInterval specifies the number of seconds between instances where the bonding driver sends learning packets to each slave's peer switch. |
+| packets_per_slave | [uint32](#uint32) |  | PacketsPerSlave specifies the number of packets to transmit through a slave before moving to the next one. |
+| num_peer_notif | [uint32](#uint32) |  | NumPeerNotif specifies the number of peer notifications (gratuitous ARPs and unsolicited IPv6 Neighbor Advertisements) to be issued after a failover event. |
+| tlb_dynamic_lb | [uint32](#uint32) |  | TLBDynamicLB specifies if dynamic shuffling of flows is enabled in tlb or alb mode. |
+| all_slaves_active | [uint32](#uint32) |  | AllSlavesActive specifies that duplicate frames (received on inactive ports) should be dropped (0) or delivered (1). |
+| use_carrier | [bool](#bool) |  | UseCarrier specifies whether or not miimon should use MII or ETHTOOL. |
+| ad_actor_sys_prio | [uint32](#uint32) |  | ADActorSysPrio is the actor system priority for 802.3ad. |
+| ad_user_port_key | [uint32](#uint32) |  | ADUserPortKey is the user port key (upper 10 bits) for 802.3ad. |
+| peer_notify_delay | [uint32](#uint32) |  | PeerNotifyDelay is the delay, in milliseconds, between each peer notification. |
+| arpip_targets | [common.NetIP](#common.NetIP) | repeated | ARPIPTargets is the list of IP addresses to use for ARP link monitoring when ARPInterval is set.<br><br>Maximum of 16 targets are supported. |
+| nsip6_targets | [common.NetIP](#common.NetIP) | repeated | NSIP6Targets is the list of IPv6 addresses to use for NS link monitoring when ARPInterval is set.<br><br>Maximum of 16 targets are supported. |
+| adlacp_active | [talos.resource.definitions.enums.NethelpersADLACPActive](#talos.resource.definitions.enums.NethelpersADLACPActive) |  | ADLACPActive specifies whether to send LACPDU frames periodically. |
+| missed_max | [uint32](#uint32) |  | MissedMax is the number of arp_interval monitor checks that must fail in order for an interface to be marked down by the ARP monitor. |
 
 
 
@@ -9087,8 +9087,8 @@ BondSlave contains a bond's master name and slave index.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| master_name | [string](#string) |  |  |
-| slave_index | [int64](#int64) |  |  |
+| master_name | [string](#string) |  | MasterName indicates master link for enslaved bonded interfaces. |
+| slave_index | [int64](#int64) |  | SlaveIndex indicates a slave's position in bond. |
 
 
 
@@ -9119,7 +9119,7 @@ BridgeSlave contains the name of the master bridge of a bridged interface
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| master_name | [string](#string) |  |  |
+| master_name | [string](#string) |  | MasterName indicates master link for enslaved bridged interfaces. |
 
 
 
@@ -9232,11 +9232,11 @@ EthernetChannelsStatus describes status of Ethernet channels.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| rx_max | [uint32](#uint32) |  |  |
+| rx_max | [uint32](#uint32) |  | Read-only settings. |
 | tx_max | [uint32](#uint32) |  |  |
 | other_max | [uint32](#uint32) |  |  |
 | combined_max | [uint32](#uint32) |  |  |
-| rx | [uint32](#uint32) |  |  |
+| rx | [uint32](#uint32) |  | Current settings (read-write). |
 | tx | [uint32](#uint32) |  |  |
 | other | [uint32](#uint32) |  |  |
 | combined | [uint32](#uint32) |  |  |
@@ -9294,12 +9294,12 @@ EthernetRingsStatus describes status of Ethernet rings.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| rx_max | [uint32](#uint32) |  |  |
+| rx_max | [uint32](#uint32) |  | Read-only settings. |
 | rx_mini_max | [uint32](#uint32) |  |  |
 | rx_jumbo_max | [uint32](#uint32) |  |  |
 | tx_max | [uint32](#uint32) |  |  |
 | tx_push_buf_len_max | [uint32](#uint32) |  |  |
-| rx | [uint32](#uint32) |  |  |
+| rx | [uint32](#uint32) |  | Current settings (read-write). |
 | rx_mini | [uint32](#uint32) |  |  |
 | rx_jumbo | [uint32](#uint32) |  |  |
 | tx | [uint32](#uint32) |  |  |
@@ -9381,8 +9381,8 @@ HardwareAddrSpec describes spec for the link.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  |  |
-| hardware_addr | [bytes](#bytes) |  |  |
+| name | [string](#string) |  | Name defines link name |
+| hardware_addr | [bytes](#bytes) |  | Hardware address |
 
 
 
@@ -9478,24 +9478,24 @@ LinkSpecSpec describes spec for the link.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| name | [string](#string) |  |  |
-| logical | [bool](#bool) |  |  |
-| up | [bool](#bool) |  |  |
-| mtu | [uint32](#uint32) |  |  |
-| kind | [string](#string) |  |  |
+| name | [string](#string) |  | Name defines link name |
+| logical | [bool](#bool) |  | Logical describes if the interface should be created on the fly if it doesn't exist. |
+| up | [bool](#bool) |  | If Up is true, bring interface up, otherwise bring interface down.<br><br>TODO: make *bool ? |
+| mtu | [uint32](#uint32) |  | Interface MTU (always applies). |
+| kind | [string](#string) |  | Kind and Type are only required for Logical interfaces. |
 | type | [talos.resource.definitions.enums.NethelpersLinkType](#talos.resource.definitions.enums.NethelpersLinkType) |  |  |
-| parent_name | [string](#string) |  |  |
-| bond_slave | [BondSlave](#talos.resource.definitions.network.BondSlave) |  |  |
-| bridge_slave | [BridgeSlave](#talos.resource.definitions.network.BridgeSlave) |  |  |
-| vlan | [VLANSpec](#talos.resource.definitions.network.VLANSpec) |  |  |
+| parent_name | [string](#string) |  | ParentName indicates link parent for VLAN interfaces. |
+| bond_slave | [BondSlave](#talos.resource.definitions.network.BondSlave) |  | BondSlave contains bond slave configuration for interfaces enslaved to a bond. |
+| bridge_slave | [BridgeSlave](#talos.resource.definitions.network.BridgeSlave) |  | BridgeSlave carries bridge slave details for bridged interfaces. |
+| vlan | [VLANSpec](#talos.resource.definitions.network.VLANSpec) |  | These structures are present depending on "Kind" for Logical interfaces. |
 | bond_master | [BondMasterSpec](#talos.resource.definitions.network.BondMasterSpec) |  |  |
 | bridge_master | [BridgeMasterSpec](#talos.resource.definitions.network.BridgeMasterSpec) |  |  |
 | wireguard | [WireguardSpec](#talos.resource.definitions.network.WireguardSpec) |  |  |
-| config_layer | [talos.resource.definitions.enums.NetworkConfigLayer](#talos.resource.definitions.enums.NetworkConfigLayer) |  |  |
-| hardware_address | [bytes](#bytes) |  |  |
-| multicast | [bool](#bool) |  |  |
+| config_layer | [talos.resource.definitions.enums.NetworkConfigLayer](#talos.resource.definitions.enums.NetworkConfigLayer) |  | Configuration layer. |
+| hardware_address | [bytes](#bytes) |  | Override hardware (MAC) address (if supported). |
+| multicast | [bool](#bool) |  | Multicast indicates whether the multicast flag should be set on the interface to the value. |
 | vrf_master | [VRFMasterSpec](#talos.resource.definitions.network.VRFMasterSpec) |  |  |
-| vrf_slave | [VRFSlave](#talos.resource.definitions.network.VRFSlave) |  |  |
+| vrf_slave | [VRFSlave](#talos.resource.definitions.network.VRFSlave) |  | VRFSlave carries VRF slave details for interfaces in a VRF. |
 
 
 
@@ -9531,16 +9531,16 @@ LinkStatusSpec describes status of rendered secrets.
 | vendor_id | [string](#string) |  |  |
 | product | [string](#string) |  |  |
 | vendor | [string](#string) |  |  |
-| link_state | [bool](#bool) |  |  |
+| link_state | [bool](#bool) |  | Fields coming from ethtool API. |
 | speed_megabits | [int64](#int64) |  |  |
 | port | [talos.resource.definitions.enums.NethelpersPort](#talos.resource.definitions.enums.NethelpersPort) |  |  |
 | duplex | [talos.resource.definitions.enums.NethelpersDuplex](#talos.resource.definitions.enums.NethelpersDuplex) |  |  |
-| vlan | [VLANSpec](#talos.resource.definitions.network.VLANSpec) |  |  |
+| vlan | [VLANSpec](#talos.resource.definitions.network.VLANSpec) |  | Following fields are only populated with respective Kind. |
 | bridge_master | [BridgeMasterSpec](#talos.resource.definitions.network.BridgeMasterSpec) |  |  |
 | bond_master | [BondMasterSpec](#talos.resource.definitions.network.BondMasterSpec) |  |  |
 | wireguard | [WireguardSpec](#talos.resource.definitions.network.WireguardSpec) |  |  |
 | permanent_addr | [bytes](#bytes) |  |  |
-| alias | [string](#string) |  |  |
+| alias | [string](#string) |  | Fields coming from rtnetlink API. |
 | alt_names | [string](#string) | repeated |  |
 | vrf_master | [VRFMasterSpec](#talos.resource.definitions.network.VRFMasterSpec) |  |  |
 
@@ -9755,8 +9755,8 @@ NodeAddressFilterSpec describes a filter for NodeAddresses.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| include_subnets | [common.NetIPPrefix](#common.NetIPPrefix) | repeated |  |
-| exclude_subnets | [common.NetIPPrefix](#common.NetIPPrefix) | repeated |  |
+| include_subnets | [common.NetIPPrefix](#common.NetIPPrefix) | repeated | Address is skipped if it doesn't match any of the includeSubnets (if includeSubnets is not empty). |
+| exclude_subnets | [common.NetIPPrefix](#common.NetIPPrefix) | repeated | Address is skipped if it matches any of the excludeSubnets. |
 
 
 
@@ -9868,10 +9868,10 @@ ProbeSpecSpec describes the Probe.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| interval | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
-| failure_threshold | [int64](#int64) |  |  |
-| tcp | [TCPProbeSpec](#talos.resource.definitions.network.TCPProbeSpec) |  |  |
-| config_layer | [talos.resource.definitions.enums.NetworkConfigLayer](#talos.resource.definitions.enums.NetworkConfigLayer) |  |  |
+| interval | [google.protobuf.Duration](#google.protobuf.Duration) |  | Interval between the probes. |
+| failure_threshold | [int64](#int64) |  | FailureThreshold is the number of consecutive failures for the probe to be considered failed after having succeeded. |
+| tcp | [TCPProbeSpec](#talos.resource.definitions.network.TCPProbeSpec) |  | One of the probe types should be specified, for now it's only TCP. |
+| config_layer | [talos.resource.definitions.enums.NetworkConfigLayer](#talos.resource.definitions.enums.NetworkConfigLayer) |  | Configuration layer. |
 
 
 
@@ -9886,8 +9886,8 @@ ProbeStatusSpec describes the Probe.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| success | [bool](#bool) |  |  |
-| last_error | [string](#string) |  |  |
+| success | [bool](#bool) |  | Success of the check. |
+| last_error | [string](#string) |  | Last error of the probe. |
 
 
 
@@ -10071,8 +10071,8 @@ TCPProbeSpec describes the TCP Probe.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| endpoint | [string](#string) |  |  |
-| timeout | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| endpoint | [string](#string) |  | Endpoint to probe: host:port. |
+| timeout | [google.protobuf.Duration](#google.protobuf.Duration) |  | Timeout for the probe. |
 
 
 
@@ -10172,8 +10172,8 @@ VLANSpec describes VLAN settings if Kind == "vlan".
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| vid | [uint32](#uint32) |  |  |
-| protocol | [talos.resource.definitions.enums.NethelpersVLANProtocol](#talos.resource.definitions.enums.NethelpersVLANProtocol) |  |  |
+| vid | [uint32](#uint32) |  | VID is the vlan ID. |
+| protocol | [talos.resource.definitions.enums.NethelpersVLANProtocol](#talos.resource.definitions.enums.NethelpersVLANProtocol) |  | Protocol is the vlan protocol. |
 
 
 
@@ -10237,8 +10237,8 @@ WireguardSpec describes Wireguard settings if Kind == "wireguard".
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| private_key | [string](#string) |  |  |
-| public_key | [string](#string) |  |  |
+| private_key | [string](#string) |  | PrivateKey is used to configure the link, present only in the LinkSpec. |
+| public_key | [string](#string) |  | PublicKey is only used in LinkStatus to show the link status. |
 | listen_port | [int64](#int64) |  |  |
 | firewall_mark | [int64](#int64) |  |  |
 | peers | [WireguardPeer](#talos.resource.definitions.network.WireguardPeer) | repeated |  |
@@ -10399,7 +10399,7 @@ APICertsSpec describes etcd certs secrets.
 | client | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
 | server | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
 | accepted_c_as | [common.PEMEncodedCertificate](#common.PEMEncodedCertificate) | repeated |  |
-| skip_verifying_client_cert | [bool](#bool) |  |  |
+| skip_verifying_client_cert | [bool](#bool) |  | Skip verifying client certificate, to be used only with the maintenance mode operations. |
 
 
 
@@ -10499,7 +10499,7 @@ KubernetesCertsSpec describes generated Kubernetes certificates.
 | ----- | ---- | ----- | ----------- |
 | scheduler_kubeconfig | [string](#string) |  |  |
 | controller_manager_kubeconfig | [string](#string) |  |  |
-| localhost_admin_kubeconfig | [string](#string) |  |  |
+| localhost_admin_kubeconfig | [string](#string) |  | Admin-level kubeconfig with access through the localhost endpoint and cluster endpoints. |
 | admin_kubeconfig | [string](#string) |  |  |
 
 
@@ -10626,9 +10626,9 @@ ImageKeylessVerifierSpec represents a signature verification provider.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| issuer | [string](#string) |  |  |
-| subject | [string](#string) |  |  |
-| subject_regex | [string](#string) |  |  |
+| issuer | [string](#string) |  | Issuer is the OIDC issuer URL. |
+| subject | [string](#string) |  | Subject is the expected subject. |
+| subject_regex | [string](#string) |  | SubjectRegex is a regex pattern for subject matching. |
 
 
 
@@ -10643,7 +10643,7 @@ ImagePublicKeyVerifierSpec represents a signature verification provider with sta
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| certificate | [string](#string) |  |  |
+| certificate | [string](#string) |  | Certificate is a public certificate in PEM format accepted for image signature verification. |
 
 
 
@@ -10658,11 +10658,11 @@ ImageVerificationRuleSpec represents a verification rule.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| image_pattern | [string](#string) |  |  |
-| skip | [bool](#bool) |  |  |
-| deny | [bool](#bool) |  |  |
-| keyless_verifier | [ImageKeylessVerifierSpec](#talos.resource.definitions.security.ImageKeylessVerifierSpec) |  |  |
-| public_key_verifier | [ImagePublicKeyVerifierSpec](#talos.resource.definitions.security.ImagePublicKeyVerifierSpec) |  |  |
+| image_pattern | [string](#string) |  | ImagePattern is the image name pattern. |
+| skip | [bool](#bool) |  | Skip is the action for matching images. |
+| deny | [bool](#bool) |  | Deny is the action for matching images. |
+| keyless_verifier | [ImageKeylessVerifierSpec](#talos.resource.definitions.security.ImageKeylessVerifierSpec) |  | KeylessVerifier is the keyless verifier configuration to use. |
+| public_key_verifier | [ImagePublicKeyVerifierSpec](#talos.resource.definitions.security.ImagePublicKeyVerifierSpec) |  | PublicKeyVerifier is the public key verifier configuration to use. |
 
 
 
@@ -10677,8 +10677,8 @@ TUFTrustedRootSpec represents a sigstore's TUF trusted root information.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| last_refresh_time | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
-| json_data | [string](#string) |  |  |
+| last_refresh_time | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | LastRefreshTime is the last time the trusted root was refreshed. |
+| json_data | [string](#string) |  | JSONData is the trusted root data in JSON format. |
 
 
 
@@ -10728,10 +10728,10 @@ StatusSpec describes Siderolink status.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| host | [string](#string) |  |  |
-| connected | [bool](#bool) |  |  |
-| link_name | [string](#string) |  |  |
-| grpc_tunnel | [bool](#bool) |  |  |
+| host | [string](#string) |  | Host is the Siderolink target host. |
+| connected | [bool](#bool) |  | Connected is the status of the Siderolink GRPC connection. |
+| link_name | [string](#string) |  | LinkName is the name of the interface used for the Siderolink tunnel. |
+| grpc_tunnel | [bool](#bool) |  | GRPCTunnel is true if the Wireguard-over-GRPC tunnel is being used. |
 
 
 
@@ -10746,10 +10746,10 @@ TunnelSpec describes Siderolink GRPC Tunnel configuration.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| api_endpoint | [string](#string) |  |  |
-| link_name | [string](#string) |  |  |
-| mtu | [int64](#int64) |  |  |
-| node_address | [common.NetIPPort](#common.NetIPPort) |  |  |
+| api_endpoint | [string](#string) |  | APIEndpoint is the Siderolink WireGuard over GRPC endpoint. |
+| link_name | [string](#string) |  | LinkName is the name to use for WireGuard tunnel. |
+| mtu | [int64](#int64) |  | MTU is the maximum transmission unit for the tunnel. |
+| node_address | [common.NetIPPort](#common.NetIPPort) |  | NodeAddress is the virtual address of our node. It's used to identify our node in the WireGuard GRPC streamer. It's not the address of the actual WireGuard interface. |
 
 
 
@@ -10802,9 +10802,9 @@ StatusSpec describes time sync state.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| synced | [bool](#bool) |  |  |
-| epoch | [int64](#int64) |  |  |
-| sync_disabled | [bool](#bool) |  |  |
+| synced | [bool](#bool) |  | Synced indicates whether time is in sync. |
+| epoch | [int64](#int64) |  | Epoch is incremented every time clock jumps more than 15min. |
+| sync_disabled | [bool](#bool) |  | SyncDisabled indicates if time sync is disabled. |
 
 
 

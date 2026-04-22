@@ -173,6 +173,9 @@ message KubeletConfigSpec {
 
 // KubeletKubeconfigSpec describes the current kubelet kubeconfig file.
 message KubeletKubeconfigSpec {
+  // Hash is a content digest of the kubeconfig file. It changes whenever the
+  // file contents change, which is the signal consumers use to rebuild their
+  // Kubernetes clients.
   string hash = 1;
 }
 

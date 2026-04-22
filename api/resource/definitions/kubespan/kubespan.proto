@@ -14,12 +14,19 @@ message ConfigSpec {
   bool enabled = 1;
   string cluster_id = 2;
   string shared_secret = 3;
+  // Force routing via KubeSpan even if the peer connection is not up.
   bool force_routing = 4;
+  // Advertise Kubernetes pod networks or skip it completely.
   bool advertise_kubernetes_networks = 5;
+  // Force kubeSpan MTU size.
   uint32 mtu = 6;
+  // If not empty, filter advertised endpoints using the list of CIDRs.
   repeated string endpoint_filters = 7;
+  // Harvest endpoints from the peer statuses.
   bool harvest_extra_endpoints = 8;
+  // Extra endpoints to announce.
   repeated common.NetIPPort extra_endpoints = 9;
+  // If not empty, filter advertised networks using the list of CIDRs.
   repeated common.NetIPPrefix exclude_advertised_networks = 10;
 }
 
@@ -34,8 +41,10 @@ message EndpointSpec {
 // Note: IdentitySpec is persisted on disk in the STATE partition,
 // so YAML serialization should be kept backwards compatible.
 message IdentitySpec {
+  // Address of the node on the Wireguard network.
   common.NetIPPrefix address = 1;
   common.NetIPPrefix subnet = 2;
+  // Public and private Wireguard keys.
   string private_key = 3;
   string public_key = 4;
 }
@@ -50,12 +59,18 @@ message PeerSpecSpec {
 
 // PeerStatusSpec describes PeerStatus state.
 message PeerStatusSpec {
+  // Active endpoint as seen by the Wireguard.
   common.NetIPPort endpoint = 1;
+  // Label derived from the peer spec.
   string label = 2;
+  // Calculated state.
   talos.resource.definitions.enums.KubespanPeerState state = 3;
+  // Tx/Rx bytes.
   int64 receive_bytes = 4;
   int64 transmit_bytes = 5;
+  // Handshake.
   google.protobuf.Timestamp last_handshake_time = 6;
+  // Endpoint selection input.
   common.NetIPPort last_used_endpoint = 7;
   google.protobuf.Timestamp last_endpoint_change = 8;
 }
