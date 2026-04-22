@@ -1,7 +1,7 @@
 header:
-  schema-version: 2.1.0
-  last-updated: '2026-03-26'
-  last-reviewed: '2026-03-26'
+  schema-version: 2.2.0
+  last-updated: '2026-04-22'
+  last-reviewed: '2026-04-22'
   url: https://github.com/siderolabs/talos
   comment: >
     Security Insights for Talos Linux. This file satisfies OSPS Baseline QA-04.01
