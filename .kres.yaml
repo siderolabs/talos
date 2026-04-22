@@ -87,7 +87,9 @@ spec:
     integration/provision: "Run provision integration tests (all tracks)"
     integration/qemu: "Run QEMU integration tests (all variants)"
     integration/qemu-csi: "Run QEMU CSI integration tests"
+    integration/qemu-csi-openebs: "Run QEMU CSI OpenEBS integration tests"
     integration/qemu-csi-longhorn: "Run QEMU CSI Longhorn integration tests"
+    integration/qemu-csi-rook-ceph: "Run QEMU CSI Rook Ceph integration tests"
     integration/qemu-default: "Run QEMU integration tests on default variant"
     integration/qemu-encrypted-vip: "Run QEMU integration tests with disk encryption and virtual IP"
     integration/qemu-enforcing: "Run QEMU integration tests on enforcing variant"
@@ -915,6 +917,8 @@ spec:
       depends:
         - default
         - integration-build-enforcing
+      conditions:
+        - not-cancelled
       runnerGroup: large
       onWorkflowRun:
         workflows: [integration-build-enforcing-triggered]
@@ -1086,6 +1090,8 @@ spec:
       depends:
         - default
         - integration-build-enforcing
+      conditions:
+        - not-cancelled
       runnerGroup: large
       onWorkflowRun:
         workflows: [integration-build-enforcing-triggered]
@@ -1162,6 +1168,8 @@ spec:
       depends:
         - default
         - integration-build-enforcing
+      conditions:
+        - not-cancelled
       runnerGroup: large
       onWorkflowRun:
         workflows: [integration-build-enforcing-triggered]
