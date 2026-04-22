@@ -2968,7 +2968,6 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-0') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
     strategy:
       matrix:
         include:
@@ -2997,11 +2996,17 @@ jobs:
     needs:
       - default
     steps:
+      - name: check-pr-labels
+        id: check-pr-labels
+        if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-0') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+        run: 'true'
       - name: gather-system-info
+        if: steps.check-pr-labels.conclusion == 'success'
         id: system-info
         uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
+        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           MEMORY_GB=$((${{ steps.system-info.outputs.totalmem }}/1024/1024/1024))
 
@@ -3023,11 +3028,14 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
+        if: steps.check-pr-labels.conclusion == 'success'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
       - name: Unshallow
+        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
+        if: steps.check-pr-labels.conclusion == 'success'
         id: setup-buildx
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
@@ -3035,17 +3043,21 @@ jobs:
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
+        if: steps.check-pr-labels.conclusion == 'success'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
+        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
+        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           make ci-temp-release-tag
       - name: ${{ matrix.test }}
+        if: steps.check-pr-labels.conclusion == 'success'
         env:
           CUSTOM_CNI_URL: ${{ matrix.customCniUrl }}
           GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.test }}
@@ -3063,7 +3075,7 @@ jobs:
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
-        if: always()
+        if: always() && steps.check-pr-labels.conclusion == 'success'
         uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
         with:
           name: talos-logs-integration-misc-0-${{ matrix.test }}
