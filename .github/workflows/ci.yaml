@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-04-22T19:03:43Z by kres 8299790-dirty.
+# Generated on 2026-04-22T19:39:54Z by kres bf217ed.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -3108,7 +3108,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/')) && !cancelled()
+    if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/')) && !cancelled() && github.event_name == 'pull_request'
     strategy:
       matrix:
         include:
@@ -3387,7 +3387,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/')) && !cancelled()
+    if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/')) && !cancelled() && github.event_name == 'pull_request'
     strategy:
       matrix:
         include:
@@ -3517,7 +3517,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/')) && !cancelled()
+    if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/')) && !cancelled() && github.event_name == 'pull_request'
     strategy:
       matrix:
         include:

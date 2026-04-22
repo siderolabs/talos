@@ -919,6 +919,7 @@ spec:
         - integration-build-enforcing
       conditions:
         - not-cancelled
+        - on-pull-request
       runnerGroup: large
       onWorkflowRun:
         workflows: [integration-build-enforcing-triggered]
@@ -1092,6 +1093,7 @@ spec:
         - integration-build-enforcing
       conditions:
         - not-cancelled
+        - on-pull-request
       runnerGroup: large
       onWorkflowRun:
         workflows: [integration-build-enforcing-triggered]
@@ -1170,6 +1172,7 @@ spec:
         - integration-build-enforcing
       conditions:
         - not-cancelled
+        - on-pull-request
       runnerGroup: large
       onWorkflowRun:
         workflows: [integration-build-enforcing-triggered]
