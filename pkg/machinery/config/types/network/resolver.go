@@ -11,6 +11,7 @@ import (
 	"net/netip"
 	"slices"
 
+	"github.com/siderolabs/gen/value"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 
@@ -19,6 +20,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 )
 
 // ResolverKind is a ResolverConfig document kind.
@@ -38,6 +40,8 @@ func init() {
 // Check interfaces.
 var (
 	_ config.NetworkResolverConfig        = &ResolverConfigV1Alpha1{}
+	_ config.NetworkHostDNSConfig         = &ResolverConfigV1Alpha1{}
+	_ config.Validator                    = &ResolverConfigV1Alpha1{}
 	_ container.V1Alpha1ConflictValidator = &ResolverConfigV1Alpha1{}
 )
 
@@ -46,6 +50,7 @@ var (
 //	examples:
 //	  - value: exampleResolverConfigV1Alpha1()
 //	  - value: exampleResolverConfigV1Alpha2()
+//	  - value: exampleResolverConfigV1Alpha3()
 //	alias: ResolverConfig
 //	schemaRoot: true
 //	schemaMeta: v1alpha1/ResolverConfig
@@ -66,6 +71,11 @@ type ResolverConfigV1Alpha1 struct {
 	//
 	//     The default is to derive search domains from the hostname FQDN.
 	ResolverSearchDomains SearchDomainsConfig `yaml:"searchDomains,omitempty"`
+	//   description: |
+	//     Configuration for host DNS resolver.
+	//
+	//     This configures a local DNS caching resolver on the host to improve DNS resolution performance and reliability.
+	ResolverHostDNS HostDNSConfig `yaml:"hostDNS,omitempty"`
 }
 
 // NameserverConfig represents a single nameserver configuration.
@@ -99,6 +109,28 @@ type SearchDomainsConfig struct {
 	//     When set to true, the system will not derive search domains from the hostname FQDN.
 	//     This allows for a custom configuration of search domains without any defaults.
 	SearchDisableDefault *bool `yaml:"disableDefault,omitempty"`
+}
+
+// HostDNSConfig represents host DNS configuration.
+type HostDNSConfig struct {
+	//   description: |
+	//     Enable host DNS caching resolver.
+	//
+	//     When enabled, a local DNS caching resolver is deployed on the host to improve DNS resolution performance and reliability.
+	//     Upstream DNS servers for the host resolver are configured using the `nameservers` field in this config document.
+	HostDNSEnabled *bool `yaml:"enabled,omitempty"`
+	//   description: |
+	//     Use the host DNS resolver as upstream for Kubernetes CoreDNS pods.
+	//
+	//     When enabled, CoreDNS pods use host DNS server as the upstream DNS (instead of
+	//     using configured upstream DNS resolvers directly).
+	HostDNSForwardKubeDNSToHost *bool `yaml:"forwardKubeDNSToHost,omitempty"`
+	//   description: |
+	//     Resolve member hostnames using the host DNS resolver.
+	//
+	//     When enabled, cluster member hostnames and node names are resolved using the host DNS resolver.
+	//     This requires service discovery to be enabled.
+	HostDNSResolveMemberNames *bool `yaml:"resolveMemberNames,omitempty"`
 }
 
 // NewResolverConfigV1Alpha1 creates a new ResolverConfig config document.
@@ -137,6 +169,17 @@ func exampleResolverConfigV1Alpha2() *ResolverConfigV1Alpha1 {
 	return cfg
 }
 
+func exampleResolverConfigV1Alpha3() *ResolverConfigV1Alpha1 {
+	cfg := NewResolverConfigV1Alpha1()
+	cfg.ResolverHostDNS = HostDNSConfig{
+		HostDNSEnabled:              new(true),
+		HostDNSForwardKubeDNSToHost: new(true),
+		HostDNSResolveMemberNames:   new(true),
+	}
+
+	return cfg
+}
+
 // Clone implements config.Document interface.
 func (s *ResolverConfigV1Alpha1) Clone() config.Document {
 	return s.DeepCopy()
@@ -156,7 +199,32 @@ func (s *ResolverConfigV1Alpha1) V1Alpha1ConflictValidate(v1alpha1Cfg *v1alpha1.
 		return errors.New(".machine.network.disableSearchDomain is already set in v1alpha1 config")
 	}
 
+	if !value.IsZero(s.ResolverHostDNS) {
+		if v1alpha1Cfg.NetworkHostDNSConfig() != nil {
+			return errors.New(".machine.features.hostDNS is already set in v1alpha1 config")
+		}
+	}
+
 	return nil
+}
+
+// Validate implements config.Validator interface.
+func (s *ResolverConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
+	var errs error
+
+	if !value.IsZero(s.ResolverHostDNS) {
+		if !s.HostDNSEnabled() {
+			if s.ForwardKubeDNSToHost() {
+				errs = errors.Join(errs, errors.New("hostDNS.forwardKubeDNSToHost cannot be enabled when hostDNS.enabled is false"))
+			}
+
+			if s.ResolveMemberNames() {
+				errs = errors.Join(errs, errors.New("hostDNS.resolveMemberNames cannot be enabled when hostDNS.enabled is false"))
+			}
+		}
+	}
+
+	return nil, errs
 }
 
 // Resolvers implements NetworkResolverConfig interface.
@@ -174,4 +242,19 @@ func (s *ResolverConfigV1Alpha1) SearchDomains() []string {
 // DisableSearchDomain implements NetworkResolverConfig interface.
 func (s *ResolverConfigV1Alpha1) DisableSearchDomain() bool {
 	return pointer.SafeDeref(s.ResolverSearchDomains.SearchDisableDefault)
+}
+
+// HostDNSEnabled implements NetworkHostDNSConfig interface.
+func (s *ResolverConfigV1Alpha1) HostDNSEnabled() bool {
+	return pointer.SafeDeref(s.ResolverHostDNS.HostDNSEnabled)
+}
+
+// ForwardKubeDNSToHost implements NetworkHostDNSConfig interface.
+func (s *ResolverConfigV1Alpha1) ForwardKubeDNSToHost() bool {
+	return pointer.SafeDeref(s.ResolverHostDNS.HostDNSForwardKubeDNSToHost)
+}
+
+// ResolveMemberNames implements NetworkHostDNSConfig interface.
+func (s *ResolverConfigV1Alpha1) ResolveMemberNames() bool {
+	return pointer.SafeDeref(s.ResolverHostDNS.HostDNSResolveMemberNames)
 }

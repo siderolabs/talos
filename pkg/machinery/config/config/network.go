@@ -381,3 +381,10 @@ type NetworkRoutingRuleConfig interface {
 	FwMark() uint32
 	FwMask() uint32
 }
+
+// NetworkHostDNSConfig defines a host DNS configuration.
+type NetworkHostDNSConfig interface {
+	HostDNSEnabled() bool
+	ForwardKubeDNSToHost() bool
+	ResolveMemberNames() bool
+}

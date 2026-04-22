@@ -556,3 +556,141 @@ func TestKubeSpanBridging(t *testing.T) {
 		})
 	}
 }
+
+func TestHostDNSConfigBridging(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+
+		cfg func(*testing.T) config.Config
+
+		expectedHostDNSConfigExists bool
+		expectedHostDNSEnabled      bool
+	}{
+		{
+			name: "v1alpha1 empty",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{},
+				})
+			},
+
+			expectedHostDNSConfigExists: false,
+		},
+		{
+			name: "v1alpha1 hostDNS enabled",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{
+						MachineFeatures: &v1alpha1.FeaturesConfig{
+							HostDNSSupport: &v1alpha1.HostDNSConfig{ //nolint:staticcheck // testing legacy features
+								HostDNSConfigEnabled: new(true),
+							},
+						},
+					},
+				})
+			},
+
+			expectedHostDNSConfigExists: true,
+			expectedHostDNSEnabled:      true,
+		},
+		{
+			name: "resolver config hostDNS enabled",
+
+			cfg: func(*testing.T) config.Config {
+				resolverCfg := network.NewResolverConfigV1Alpha1()
+				resolverCfg.ResolverHostDNS = network.HostDNSConfig{
+					HostDNSEnabled:              new(true),
+					HostDNSForwardKubeDNSToHost: new(true),
+					HostDNSResolveMemberNames:   new(true),
+				}
+
+				c, err := container.New(
+					resolverCfg,
+				)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectedHostDNSConfigExists: true,
+			expectedHostDNSEnabled:      true,
+		},
+		{
+			name: "v1alpha1 empty and resolver config hostDNS enabled",
+
+			cfg: func(*testing.T) config.Config {
+				v1alpha1Cfg := &v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{},
+				}
+
+				resolverCfg := network.NewResolverConfigV1Alpha1()
+				resolverCfg.ResolverHostDNS = network.HostDNSConfig{
+					HostDNSEnabled:              new(true),
+					HostDNSForwardKubeDNSToHost: new(true),
+					HostDNSResolveMemberNames:   new(true),
+				}
+
+				c, err := container.New(
+					v1alpha1Cfg,
+					resolverCfg,
+				)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectedHostDNSConfigExists: true,
+			expectedHostDNSEnabled:      true,
+		},
+		{
+			name: "v1alpha1 hostDNS enabled and resolver empty",
+
+			cfg: func(*testing.T) config.Config {
+				v1alpha1Cfg := &v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{
+						MachineFeatures: &v1alpha1.FeaturesConfig{
+							HostDNSSupport: &v1alpha1.HostDNSConfig{ //nolint:staticcheck // testing legacy features
+								HostDNSConfigEnabled: new(true),
+							},
+						},
+					},
+				}
+
+				resolverCfg := network.NewResolverConfigV1Alpha1()
+
+				c, err := container.New(
+					v1alpha1Cfg,
+					resolverCfg,
+				)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectedHostDNSConfigExists: true,
+			expectedHostDNSEnabled:      true,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := test.cfg(t)
+
+			hostDNSConfig := cfg.NetworkHostDNSConfig()
+
+			if !test.expectedHostDNSConfigExists {
+				require.Nil(t, hostDNSConfig)
+
+				return
+			}
+
+			require.NotNil(t, hostDNSConfig)
+
+			assert.Equal(t, test.expectedHostDNSEnabled, hostDNSConfig.HostDNSEnabled())
+		})
+	}
+}

@@ -1450,12 +1450,21 @@ func (ResolverConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "Configuration for search domains (in /etc/resolv.conf).\n\nThe default is to derive search domains from the hostname FQDN.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Configuration for search domains (in /etc/resolv.conf)." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "hostDNS",
+				Type:        "HostDNSConfig",
+				Note:        "",
+				Description: "Configuration for host DNS resolver.\n\nThis configures a local DNS caching resolver on the host to improve DNS resolution performance and reliability.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Configuration for host DNS resolver." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
 	doc.AddExample("", exampleResolverConfigV1Alpha1())
 
 	doc.AddExample("", exampleResolverConfigV1Alpha2())
+
+	doc.AddExample("", exampleResolverConfigV1Alpha3())
 
 	return doc
 }
@@ -1512,6 +1521,45 @@ func (SearchDomainsConfig) Doc() *encoder.Doc {
 				Note:        "",
 				Description: "Disable default search domain configuration from hostname FQDN.\n\nWhen set to true, the system will not derive search domains from the hostname FQDN.\nThis allows for a custom configuration of search domains without any defaults.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Disable default search domain configuration from hostname FQDN." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (HostDNSConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "HostDNSConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "HostDNSConfig represents host DNS configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "HostDNSConfig represents host DNS configuration.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ResolverConfigV1Alpha1",
+				FieldName: "hostDNS",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "enabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable host DNS caching resolver.\n\nWhen enabled, a local DNS caching resolver is deployed on the host to improve DNS resolution performance and reliability.\nUpstream DNS servers for the host resolver are configured using the `nameservers` field in this config document.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable host DNS caching resolver." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "forwardKubeDNSToHost",
+				Type:        "bool",
+				Note:        "",
+				Description: "Use the host DNS resolver as upstream for Kubernetes CoreDNS pods.\n\nWhen enabled, CoreDNS pods use host DNS server as the upstream DNS (instead of\nusing configured upstream DNS resolvers directly).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Use the host DNS resolver as upstream for Kubernetes CoreDNS pods." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "resolveMemberNames",
+				Type:        "bool",
+				Note:        "",
+				Description: "Resolve member hostnames using the host DNS resolver.\n\nWhen enabled, cluster member hostnames and node names are resolved using the host DNS resolver.\nThis requires service discovery to be enabled.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Resolve member hostnames using the host DNS resolver." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
@@ -2155,6 +2203,7 @@ func GetFileDoc() *encoder.FileDoc {
 			ResolverConfigV1Alpha1{}.Doc(),
 			NameserverConfig{}.Doc(),
 			SearchDomainsConfig{}.Doc(),
+			HostDNSConfig{}.Doc(),
 			RoutingRuleConfigV1Alpha1{}.Doc(),
 			RuleConfigV1Alpha1{}.Doc(),
 			RulePortSelector{}.Doc(),

@@ -2394,8 +2394,9 @@ type FeaturesConfig struct {
 	//     KubePrism - local proxy/load balancer on defined port that will distribute
 	//     requests to all API servers in the cluster.
 	KubePrismSupport *KubePrism `yaml:"kubePrism,omitempty"`
-	//   description: |
-	//     Configures host DNS caching resolver.
+	// docgen:nodoc
+	//
+	// Deprecated: Use ResolverConfig document instead.
 	HostDNSSupport *HostDNSConfig `yaml:"hostDNS,omitempty"`
 	//   description: |
 	//     Enable Image Cache feature.
@@ -2441,10 +2442,14 @@ type KubernetesTalosAPIAccessConfig struct {
 }
 
 // HostDNSConfig describes the configuration for the host DNS resolver.
+//
+// Deprecated: Use ResolverConfig document instead.
+//
+// docgen:nodoc
 type HostDNSConfig struct {
 	//   description: |
 	//     Enable host DNS caching resolver.
-	HostDNSEnabled *bool `yaml:"enabled,omitempty"`
+	HostDNSConfigEnabled *bool `yaml:"enabled,omitempty"`
 	//   description: |
 	//     Use the host DNS resolver as upstream for Kubernetes CoreDNS pods.
 	//

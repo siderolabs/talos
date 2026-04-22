@@ -117,19 +117,10 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 		}
 	}
 
-	if mode.InContainer() {
-		// require that HostDNS features are enabled to passthrough container DNS to kube-dns
-		if !c.Machine().Features().HostDNS().Enabled() {
-			result = multierror.Append(result, errors.New("feature HostDNS should be enabled in container mode (.machine.features.hostDNS.enabled)"))
+	if c.NetworkHostDNSConfig() != nil {
+		if c.NetworkHostDNSConfig().ForwardKubeDNSToHost() && !c.NetworkHostDNSConfig().HostDNSEnabled() {
+			result = multierror.Append(result, errors.New("feature hostDNS.forwardKubeDNSToHost requires hostDNS.enabled to be true (.machine.features.hostDNS)"))
 		}
-
-		if !c.Machine().Features().HostDNS().ForwardKubeDNSToHost() {
-			result = multierror.Append(result, errors.New("feature HostDNS should forward kube-dns to host in container mode (.machine.features.hostDNS.forwardKubeDNSToHost)"))
-		}
-	}
-
-	if c.Machine().Features().HostDNS().ForwardKubeDNSToHost() && !c.Machine().Features().HostDNS().Enabled() {
-		result = multierror.Append(result, errors.New("feature hostDNS.forwardKubeDNSToHost requires hostDNS.enabled to be true (.machine.features.hostDNS)"))
 	}
 
 	if t := c.Machine().Type(); t != machine.TypeUnknown && t.String() != c.MachineConfig.MachineType {

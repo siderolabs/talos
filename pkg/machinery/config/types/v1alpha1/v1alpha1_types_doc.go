@@ -1880,13 +1880,7 @@ func (FeaturesConfig) Doc() *encoder.Doc {
 				Description: "KubePrism - local proxy/load balancer on defined port that will distribute\nrequests to all API servers in the cluster.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "KubePrism - local proxy/load balancer on defined port that will distribute" /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "hostDNS",
-				Type:        "HostDNSConfig",
-				Note:        "",
-				Description: "Configures host DNS caching resolver.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures host DNS caching resolver." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{
 				Name:        "imageCache",
 				Type:        "ImageCacheConfig",
@@ -2005,45 +1999,6 @@ func (KubernetesTalosAPIAccessConfig) Doc() *encoder.Doc {
 	}
 
 	doc.AddExample("", kubernetesTalosAPIAccessConfigExample())
-
-	return doc
-}
-
-func (HostDNSConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "HostDNSConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "HostDNSConfig describes the configuration for the host DNS resolver." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "HostDNSConfig describes the configuration for the host DNS resolver.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "FeaturesConfig",
-				FieldName: "hostDNS",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "enabled",
-				Type:        "bool",
-				Note:        "",
-				Description: "Enable host DNS caching resolver.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable host DNS caching resolver." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "forwardKubeDNSToHost",
-				Type:        "bool",
-				Note:        "",
-				Description: "Use the host DNS resolver as upstream for Kubernetes CoreDNS pods.\n\nWhen enabled, CoreDNS pods use host DNS server as the upstream DNS (instead of\nusing configured upstream DNS resolvers directly).",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Use the host DNS resolver as upstream for Kubernetes CoreDNS pods." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "resolveMemberNames",
-				Type:        "bool",
-				Note:        "",
-				Description: "Resolve member hostnames using the host DNS resolver.\n\nWhen enabled, cluster member hostnames and node names are resolved using the host DNS resolver.\nThis requires service discovery to be enabled.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Resolve member hostnames using the host DNS resolver." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
 
 	return doc
 }
@@ -2459,7 +2414,6 @@ func GetFileDoc() *encoder.FileDoc {
 			KubePrism{}.Doc(),
 			ImageCacheConfig{}.Doc(),
 			KubernetesTalosAPIAccessConfig{}.Doc(),
-			HostDNSConfig{}.Doc(),
 			VolumeMountConfig{}.Doc(),
 			ClusterInlineManifest{}.Doc(),
 			ClusterDiscoveryConfig{}.Doc(),

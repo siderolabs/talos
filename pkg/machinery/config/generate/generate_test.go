@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -18,6 +19,7 @@ import (
 	mc "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/cri"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/role"
 )
@@ -148,14 +150,18 @@ func TestGenerateRegistryMirrorsOrder(t *testing.T) {
 	require.NoError(t, err)
 
 	cfg, err := input.Config(machine.TypeControlPlane)
-
 	require.NoError(t, err)
 
-	named, ok := cfg.Documents()[1].(mc.NamedDocument)
+	registryConfigs := xslices.Filter(cfg.Documents(), func(doc mc.Document) bool {
+		return doc.Kind() == cri.RegistryMirrorConfig
+	})
+	require.Len(t, registryConfigs, 2)
+
+	named, ok := registryConfigs[0].(mc.NamedDocument)
 	require.True(t, ok)
 	assert.Equal(t, "a.com", named.Name())
 
-	named, ok = cfg.Documents()[2].(mc.NamedDocument)
+	named, ok = registryConfigs[1].(mc.NamedDocument)
 	require.True(t, ok)
 	assert.Equal(t, "b.com", named.Name())
 }

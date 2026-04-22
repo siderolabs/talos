@@ -21,15 +21,6 @@ func (f *FeaturesConfig) DiskQuotaSupportEnabled() bool {
 	return pointer.SafeDeref(f.DiskQuotaSupport)
 }
 
-// HostDNS implements config.Features interface.
-func (f *FeaturesConfig) HostDNS() config.HostDNS {
-	if f.HostDNSSupport == nil {
-		return &HostDNSConfig{}
-	}
-
-	return f.HostDNSSupport
-}
-
 // KubePrism implements config.Features interface.
 func (f *FeaturesConfig) KubePrism() config.KubePrism {
 	if f.KubePrismSupport == nil {
@@ -78,17 +69,17 @@ func (a *KubePrism) Port() int {
 	return a.ServerPort
 }
 
-// Enabled implements config.HostDNS.
-func (h *HostDNSConfig) Enabled() bool {
-	return pointer.SafeDeref(h.HostDNSEnabled)
+// HostDNSEnabled implements config.NetworkHostDNSConfig interface.
+func (h *HostDNSConfig) HostDNSEnabled() bool {
+	return pointer.SafeDeref(h.HostDNSConfigEnabled)
 }
 
-// ForwardKubeDNSToHost implements config.HostDNS.
+// ForwardKubeDNSToHost implements config.NetworkHostDNSConfig interface.
 func (h *HostDNSConfig) ForwardKubeDNSToHost() bool {
 	return pointer.SafeDeref(h.HostDNSForwardKubeDNSToHost)
 }
 
-// ResolveMemberNames implements config.HostDNS.
+// ResolveMemberNames implements config.NetworkHostDNSConfig interface.
 func (h *HostDNSConfig) ResolveMemberNames() bool {
 	return pointer.SafeDeref(h.HostDNSResolveMemberNames)
 }

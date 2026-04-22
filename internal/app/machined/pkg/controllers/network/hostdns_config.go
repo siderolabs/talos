@@ -17,7 +17,7 @@ import (
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 
-	talosconfig "github.com/siderolabs/talos/pkg/machinery/config"
+	cfgcfg "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -71,8 +71,6 @@ func (ctrl *HostDNSConfigController) Run(ctx context.Context, r controller.Runti
 		case <-r.EventCh():
 		}
 
-		var cfgProvider talosconfig.Config
-
 		r.StartTrackingOutputs()
 
 		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
@@ -80,8 +78,12 @@ func (ctrl *HostDNSConfigController) Run(ctx context.Context, r controller.Runti
 			if !state.IsNotFoundError(err) {
 				return fmt.Errorf("error getting config: %w", err)
 			}
-		} else if cfg.Config().Machine() != nil {
-			cfgProvider = cfg.Config()
+		}
+
+		var hostDNSConfig cfgcfg.NetworkHostDNSConfig
+
+		if cfg != nil {
+			hostDNSConfig = cfg.Config().NetworkHostDNSConfig()
 		}
 
 		newServiceAddrs := make([]netip.Addr, 0, 2)
@@ -93,21 +95,27 @@ func (ctrl *HostDNSConfigController) Run(ctx context.Context, r controller.Runti
 
 			res.TypedSpec().ServiceHostDNSAddress = netip.Addr{}
 
-			if cfgProvider == nil {
+			if hostDNSConfig == nil {
 				res.TypedSpec().Enabled = false
 
 				return nil
 			}
 
-			res.TypedSpec().Enabled = cfgProvider.Machine().Features().HostDNS().Enabled()
-			res.TypedSpec().ResolveMemberNames = cfgProvider.Machine().Features().HostDNS().ResolveMemberNames()
+			res.TypedSpec().Enabled = hostDNSConfig.HostDNSEnabled()
+			res.TypedSpec().ResolveMemberNames = hostDNSConfig.ResolveMemberNames()
 
-			if !cfgProvider.Machine().Features().HostDNS().ForwardKubeDNSToHost() {
+			if !hostDNSConfig.ForwardKubeDNSToHost() {
 				return nil
 			}
 
+			var podCIDRs []string
+
+			if cfg.Config().Cluster() != nil {
+				podCIDRs = cfg.Config().Cluster().Network().PodCIDRs()
+			}
+
 			if slices.ContainsFunc(
-				cfgProvider.Cluster().Network().PodCIDRs(),
+				podCIDRs,
 				func(cidr string) bool { return netip.MustParsePrefix(cidr).Addr().Is4() },
 			) {
 				parsed := netip.MustParseAddr(constants.HostDNSAddress)

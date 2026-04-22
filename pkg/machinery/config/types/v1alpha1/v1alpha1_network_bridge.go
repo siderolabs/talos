@@ -99,3 +99,12 @@ func (c *Config) NetworkKubeSpanConfig() config.NetworkKubeSpanConfig {
 
 	return c.MachineConfig.MachineNetwork.NetworkKubeSpan
 }
+
+// NetworkHostDNSConfig implements the config.NetworkHostDNSConfig interface.
+func (c *Config) NetworkHostDNSConfig() config.NetworkHostDNSConfig {
+	if c.MachineConfig == nil || c.MachineConfig.MachineFeatures == nil || c.MachineConfig.MachineFeatures.HostDNSSupport == nil {
+		return nil
+	}
+
+	return c.MachineConfig.MachineFeatures.HostDNSSupport
+}

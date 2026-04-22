@@ -2020,7 +2020,7 @@ func TestValidate(t *testing.T) {
 					},
 					MachineFeatures: &v1alpha1.FeaturesConfig{
 						HostDNSSupport: &v1alpha1.HostDNSConfig{
-							HostDNSEnabled:              new(false),
+							HostDNSConfigEnabled:        new(false),
 							HostDNSForwardKubeDNSToHost: new(true),
 						},
 					},

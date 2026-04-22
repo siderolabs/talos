@@ -681,7 +681,6 @@ kubernetesTalosAPIAccess:
 {{< /highlight >}}</details> | |
 |`diskQuotaSupport` |bool |Enable XFS project quota support for EPHEMERAL partition and user disks.<br>Also enables kubelet tracking of ephemeral disk usage in the kubelet via quota.  | |
 |`kubePrism` |<a href="#Config.machine.features.kubePrism">KubePrism</a> |KubePrism - local proxy/load balancer on defined port that will distribute<br>requests to all API servers in the cluster.  | |
-|`hostDNS` |<a href="#Config.machine.features.hostDNS">HostDNSConfig</a> |Configures host DNS caching resolver.  | |
 |`imageCache` |<a href="#Config.machine.features.imageCache">ImageCacheConfig</a> |Enable Image Cache feature.  | |
 |`nodeAddressSortAlgorithm` |string |Select the node address sort algorithm.<br>The 'v1' algorithm sorts addresses by the address itself.<br>The 'v2' algorithm prefers more specific prefixes.<br>If unset, defaults to 'v1'.  | |
 
@@ -730,24 +729,6 @@ KubePrism describes the configuration for the KubePrism load balancer.
 |-------|------|-------------|----------|
 |`enabled` |bool |Enable KubePrism support - will start local load balancing proxy.  | |
 |`port` |int |KubePrism port.  | |
-
-
-
-
-
-
-#### hostDNS {#Config.machine.features.hostDNS}
-
-HostDNSConfig describes the configuration for the host DNS resolver.
-
-
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`enabled` |bool |Enable host DNS caching resolver.  | |
-|`forwardKubeDNSToHost` |bool |Use the host DNS resolver as upstream for Kubernetes CoreDNS pods.<br><br>When enabled, CoreDNS pods use host DNS server as the upstream DNS (instead of<br>using configured upstream DNS resolvers directly).  | |
-|`resolveMemberNames` |bool |Resolve member hostnames using the host DNS resolver.<br><br>When enabled, cluster member hostnames and node names are resolved using the host DNS resolver.<br>This requires service discovery to be enabled.  | |
 
 
 

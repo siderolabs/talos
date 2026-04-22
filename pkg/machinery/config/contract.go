@@ -209,3 +209,8 @@ func (contract *VersionContract) GrubUseUKICmdlineDefault() bool {
 func (contract *VersionContract) KubeSpanMultidocConfig() bool {
 	return contract.Greater(TalosVersion1_12)
 }
+
+// HostDNSMultidocConfig returns true if version of Talos should use HostDNS multi-doc config.
+func (contract *VersionContract) HostDNSMultidocConfig() bool {
+	return contract.Greater(TalosVersion1_13)
+}

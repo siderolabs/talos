@@ -515,6 +515,18 @@ func (o *ResolverConfigV1Alpha1) DeepCopy() *ResolverConfigV1Alpha1 {
 		cp.ResolverSearchDomains.SearchDisableDefault = new(bool)
 		*cp.ResolverSearchDomains.SearchDisableDefault = *o.ResolverSearchDomains.SearchDisableDefault
 	}
+	if o.ResolverHostDNS.HostDNSEnabled != nil {
+		cp.ResolverHostDNS.HostDNSEnabled = new(bool)
+		*cp.ResolverHostDNS.HostDNSEnabled = *o.ResolverHostDNS.HostDNSEnabled
+	}
+	if o.ResolverHostDNS.HostDNSForwardKubeDNSToHost != nil {
+		cp.ResolverHostDNS.HostDNSForwardKubeDNSToHost = new(bool)
+		*cp.ResolverHostDNS.HostDNSForwardKubeDNSToHost = *o.ResolverHostDNS.HostDNSForwardKubeDNSToHost
+	}
+	if o.ResolverHostDNS.HostDNSResolveMemberNames != nil {
+		cp.ResolverHostDNS.HostDNSResolveMemberNames = new(bool)
+		*cp.ResolverHostDNS.HostDNSResolveMemberNames = *o.ResolverHostDNS.HostDNSResolveMemberNames
+	}
 	return &cp
 }
 

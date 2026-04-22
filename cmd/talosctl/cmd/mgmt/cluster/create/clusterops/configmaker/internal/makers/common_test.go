@@ -19,6 +19,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
+	"github.com/siderolabs/talos/pkg/machinery/version"
 	"github.com/siderolabs/talos/pkg/provision"
 )
 
@@ -150,7 +151,8 @@ func TestCommonMaker_MachineConfig(t *testing.T) {
 
 // assertConfigDefaultness makes sure the maker-generated machine configs are not different from default talos machine configs.
 func assertConfigDefaultness[ExtraOps any](t *testing.T, cOps clusterops.Common, m makers.Maker[ExtraOps], desiredExtraGenOps []generate.Option, extraPatches ...configpatcher.Patch) {
-	var versionContract *config.VersionContract
+	versionContract, err := config.ParseContractFromVersion(version.Tag)
+	require.NoError(t, err)
 
 	secretsBundle, err := secrets.NewBundle(secrets.NewClock(), versionContract)
 	require.NoError(t, err)

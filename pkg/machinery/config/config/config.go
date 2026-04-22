@@ -22,6 +22,7 @@ type Config interface { //nolint:interfacebloat
 	NetworkStaticHostConfig() []NetworkStaticHostConfig
 	NetworkHostnameConfig() NetworkHostnameConfig
 	NetworkResolverConfig() NetworkResolverConfig
+	NetworkHostDNSConfig() NetworkHostDNSConfig
 	NetworkTimeSyncConfig() NetworkTimeSyncConfig
 	NetworkKubeSpanConfig() NetworkKubeSpanConfig
 	NetworkCommonLinkConfigs() []NetworkCommonLinkConfig

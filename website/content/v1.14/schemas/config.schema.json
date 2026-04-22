@@ -2226,6 +2226,34 @@
       ],
       "description": "HCloudVIPConfig is a config document to configure virtual IP using Hetzner Cloud APIs for announcement.\\nVirtual IP configuration should be used only on controlplane nodes to provide virtual IP for Kubernetes API server.\\nAny other use cases are not supported and may lead to unexpected behavior.\\nVirtual IP will be announced from only one node at a time using Hetzner Cloud APIs.\\n"
     },
+    "network.HostDNSConfig": {
+      "properties": {
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "Enable host DNS caching resolver.\n\nWhen enabled, a local DNS caching resolver is deployed on the host to improve DNS resolution performance and reliability.\nUpstream DNS servers for the host resolver are configured using the nameservers field in this config document.\n",
+          "markdownDescription": "Enable host DNS caching resolver.\n\nWhen enabled, a local DNS caching resolver is deployed on the host to improve DNS resolution performance and reliability.\nUpstream DNS servers for the host resolver are configured using the `nameservers` field in this config document.",
+          "x-intellij-html-description": "\u003cp\u003eEnable host DNS caching resolver.\u003c/p\u003e\n\n\u003cp\u003eWhen enabled, a local DNS caching resolver is deployed on the host to improve DNS resolution performance and reliability.\nUpstream DNS servers for the host resolver are configured using the \u003ccode\u003enameservers\u003c/code\u003e field in this config document.\u003c/p\u003e\n"
+        },
+        "forwardKubeDNSToHost": {
+          "type": "boolean",
+          "title": "forwardKubeDNSToHost",
+          "description": "Use the host DNS resolver as upstream for Kubernetes CoreDNS pods.\n\nWhen enabled, CoreDNS pods use host DNS server as the upstream DNS (instead of\nusing configured upstream DNS resolvers directly).\n",
+          "markdownDescription": "Use the host DNS resolver as upstream for Kubernetes CoreDNS pods.\n\nWhen enabled, CoreDNS pods use host DNS server as the upstream DNS (instead of\nusing configured upstream DNS resolvers directly).",
+          "x-intellij-html-description": "\u003cp\u003eUse the host DNS resolver as upstream for Kubernetes CoreDNS pods.\u003c/p\u003e\n\n\u003cp\u003eWhen enabled, CoreDNS pods use host DNS server as the upstream DNS (instead of\nusing configured upstream DNS resolvers directly).\u003c/p\u003e\n"
+        },
+        "resolveMemberNames": {
+          "type": "boolean",
+          "title": "resolveMemberNames",
+          "description": "Resolve member hostnames using the host DNS resolver.\n\nWhen enabled, cluster member hostnames and node names are resolved using the host DNS resolver.\nThis requires service discovery to be enabled.\n",
+          "markdownDescription": "Resolve member hostnames using the host DNS resolver.\n\nWhen enabled, cluster member hostnames and node names are resolved using the host DNS resolver.\nThis requires service discovery to be enabled.",
+          "x-intellij-html-description": "\u003cp\u003eResolve member hostnames using the host DNS resolver.\u003c/p\u003e\n\n\u003cp\u003eWhen enabled, cluster member hostnames and node names are resolved using the host DNS resolver.\nThis requires service discovery to be enabled.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "HostDNSConfig represents host DNS configuration."
+    },
     "network.HostnameConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -2705,6 +2733,13 @@
           "description": "Configuration for search domains (in /etc/resolv.conf).\n\nThe default is to derive search domains from the hostname FQDN.\n",
           "markdownDescription": "Configuration for search domains (in /etc/resolv.conf).\n\nThe default is to derive search domains from the hostname FQDN.",
           "x-intellij-html-description": "\u003cp\u003eConfiguration for search domains (in /etc/resolv.conf).\u003c/p\u003e\n\n\u003cp\u003eThe default is to derive search domains from the hostname FQDN.\u003c/p\u003e\n"
+        },
+        "hostDNS": {
+          "$ref": "#/$defs/network.HostDNSConfig",
+          "title": "hostDNS",
+          "description": "Configuration for host DNS resolver.\n\nThis configures a local DNS caching resolver on the host to improve DNS resolution performance and reliability.\n",
+          "markdownDescription": "Configuration for host DNS resolver.\n\nThis configures a local DNS caching resolver on the host to improve DNS resolution performance and reliability.",
+          "x-intellij-html-description": "\u003cp\u003eConfiguration for host DNS resolver.\u003c/p\u003e\n\n\u003cp\u003eThis configures a local DNS caching resolver on the host to improve DNS resolution performance and reliability.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -4674,13 +4709,6 @@
           "markdownDescription": "KubePrism - local proxy/load balancer on defined port that will distribute\nrequests to all API servers in the cluster.",
           "x-intellij-html-description": "\u003cp\u003eKubePrism - local proxy/load balancer on defined port that will distribute\nrequests to all API servers in the cluster.\u003c/p\u003e\n"
         },
-        "hostDNS": {
-          "$ref": "#/$defs/v1alpha1.HostDNSConfig",
-          "title": "hostDNS",
-          "description": "Configures host DNS caching resolver.\n",
-          "markdownDescription": "Configures host DNS caching resolver.",
-          "x-intellij-html-description": "\u003cp\u003eConfigures host DNS caching resolver.\u003c/p\u003e\n"
-        },
         "imageCache": {
           "$ref": "#/$defs/v1alpha1.ImageCacheConfig",
           "title": "imageCache",
@@ -4723,34 +4751,6 @@
       "additionalProperties": false,
       "type": "object",
       "description": "FlannelCNIConfig represents the Flannel CNI configuration options."
-    },
-    "v1alpha1.HostDNSConfig": {
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "title": "enabled",
-          "description": "Enable host DNS caching resolver.\n",
-          "markdownDescription": "Enable host DNS caching resolver.",
-          "x-intellij-html-description": "\u003cp\u003eEnable host DNS caching resolver.\u003c/p\u003e\n"
-        },
-        "forwardKubeDNSToHost": {
-          "type": "boolean",
-          "title": "forwardKubeDNSToHost",
-          "description": "Use the host DNS resolver as upstream for Kubernetes CoreDNS pods.\n\nWhen enabled, CoreDNS pods use host DNS server as the upstream DNS (instead of\nusing configured upstream DNS resolvers directly).\n",
-          "markdownDescription": "Use the host DNS resolver as upstream for Kubernetes CoreDNS pods.\n\nWhen enabled, CoreDNS pods use host DNS server as the upstream DNS (instead of\nusing configured upstream DNS resolvers directly).",
-          "x-intellij-html-description": "\u003cp\u003eUse the host DNS resolver as upstream for Kubernetes CoreDNS pods.\u003c/p\u003e\n\n\u003cp\u003eWhen enabled, CoreDNS pods use host DNS server as the upstream DNS (instead of\nusing configured upstream DNS resolvers directly).\u003c/p\u003e\n"
-        },
-        "resolveMemberNames": {
-          "type": "boolean",
-          "title": "resolveMemberNames",
-          "description": "Resolve member hostnames using the host DNS resolver.\n\nWhen enabled, cluster member hostnames and node names are resolved using the host DNS resolver.\nThis requires service discovery to be enabled.\n",
-          "markdownDescription": "Resolve member hostnames using the host DNS resolver.\n\nWhen enabled, cluster member hostnames and node names are resolved using the host DNS resolver.\nThis requires service discovery to be enabled.",
-          "x-intellij-html-description": "\u003cp\u003eResolve member hostnames using the host DNS resolver.\u003c/p\u003e\n\n\u003cp\u003eWhen enabled, cluster member hostnames and node names are resolved using the host DNS resolver.\nThis requires service discovery to be enabled.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "HostDNSConfig describes the configuration for the host DNS resolver."
     },
     "v1alpha1.ImageCacheConfig": {
       "properties": {

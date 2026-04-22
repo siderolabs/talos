@@ -7,21 +7,17 @@ package container
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"fmt"
 	"slices"
 	"strings"
 
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/gen/xslices"
 
 	coreconfig "github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
-	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 )
 
 // V1Alpha1ConflictValidator is the interface implemented by config documents which conflict with legacy v1alpha1 config.
@@ -328,6 +324,23 @@ func (container *Container) NetworkResolverConfig() config.NetworkResolverConfig
 	return nil
 }
 
+// NetworkHostDNSConfig implements config.Config interface.
+func (container *Container) NetworkHostDNSConfig() config.NetworkHostDNSConfig {
+	// first check if we have a dedicated document, and it is not empty
+	// for backwards compatibility, we will fall back to v1alpha1 if the ResolverConfig document does not have hostDNS enabled
+	matching := findMatchingDocs[config.NetworkHostDNSConfig](container.documents)
+	if len(matching) > 0 && matching[0].HostDNSEnabled() {
+		return matching[0]
+	}
+
+	// fallback to v1alpha1
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.NetworkHostDNSConfig()
+	}
+
+	return nil
+}
+
 // NetworkTimeSyncConfig implements config.Config interface.
 func (container *Container) NetworkTimeSyncConfig() config.NetworkTimeSyncConfig {
 	// first check if we have a dedicated document
@@ -575,90 +588,6 @@ func docID(doc config.Document) string {
 	}
 
 	return id
-}
-
-// Validate checks configuration and returns warnings and fatal errors (as multierror).
-//
-//nolint:gocyclo
-func (container *Container) Validate(mode validation.RuntimeMode, opt ...validation.Option) ([]string, error) {
-	var (
-		warnings []string
-		err      error
-	)
-
-	if container.v1alpha1Config != nil {
-		warnings, err = container.v1alpha1Config.Validate(mode, opt...)
-		if err != nil {
-			err = fmt.Errorf("v1alpha1.Config: %w", err)
-		}
-	}
-
-	var multiErr *multierror.Error
-
-	if err != nil {
-		multiErr = multierror.Append(multiErr, err)
-	}
-
-	for _, doc := range container.documents {
-		if validatableDoc, ok := doc.(config.Validator); ok {
-			docWarnings, docErr := validatableDoc.Validate(mode, opt...)
-			if docErr != nil {
-				docErr = fmt.Errorf("%s: %w", docID(doc), docErr)
-			}
-
-			warnings = append(warnings, docWarnings...)
-			multiErr = multierror.Append(multiErr, docErr)
-		}
-	}
-
-	// now cross-validate the config
-	if container.v1alpha1Config != nil {
-		for _, doc := range container.documents {
-			if conflictValidator, ok := doc.(V1Alpha1ConflictValidator); ok {
-				err := conflictValidator.V1Alpha1ConflictValidate(container.v1alpha1Config)
-				if err != nil {
-					multiErr = multierror.Append(multiErr, err)
-				}
-			}
-		}
-	}
-
-	return warnings, multiErr.ErrorOrNil()
-}
-
-// RuntimeValidate validates the config in the runtime context.
-func (container *Container) RuntimeValidate(ctx context.Context, st state.State, mode validation.RuntimeMode, opt ...validation.Option) ([]string, error) {
-	var (
-		warnings []string
-		err      error
-	)
-
-	if container.v1alpha1Config != nil {
-		warnings, err = container.v1alpha1Config.RuntimeValidate(ctx, st, mode, opt...)
-		if err != nil {
-			err = fmt.Errorf("v1alpha1.Config: %w", err)
-		}
-	}
-
-	var multiErr *multierror.Error
-
-	if err != nil {
-		multiErr = multierror.Append(multiErr, err)
-	}
-
-	for _, doc := range container.documents {
-		if validatableDoc, ok := doc.(config.RuntimeValidator); ok {
-			docWarnings, docErr := validatableDoc.RuntimeValidate(ctx, st, mode, opt...)
-			if docErr != nil {
-				docErr = fmt.Errorf("%s: %w", docID(doc), docErr)
-			}
-
-			warnings = append(warnings, docWarnings...)
-			multiErr = multierror.Append(multiErr, docErr)
-		}
-	}
-
-	return warnings, multiErr.ErrorOrNil()
 }
 
 // RedactSecrets returns a copy of the Provider with all secrets replaced with the given string.

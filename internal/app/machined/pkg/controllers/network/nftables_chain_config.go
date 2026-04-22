@@ -207,8 +207,8 @@ func (ctrl *NfTablesChainConfigController) buildIngressChain(cfg *config.Machine
 				},
 			)
 
-			if cfg.Config().Machine() != nil && cfg.Config().Cluster() != nil {
-				if cfg.Config().Machine().Features().HostDNS().ForwardKubeDNSToHost() {
+			if hostDNSConfig := cfg.Config().NetworkHostDNSConfig(); hostDNSConfig != nil {
+				if hostDNSConfig.ForwardKubeDNSToHost() {
 					hostDNSIP := netip.MustParseAddr(constants.HostDNSAddress)
 
 					// allow traffic to host DNS

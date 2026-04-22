@@ -12,6 +12,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	v1alpha1 "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -81,9 +82,9 @@ func (in *Input) worker() ([]config.Document, error) {
 		machine.MachineKubelet.KubeletDisableManifestsDirectory = new(true)
 	}
 
-	if in.Options.VersionContract.HostDNSEnabled() {
-		machine.MachineFeatures.HostDNSSupport = &v1alpha1.HostDNSConfig{
-			HostDNSEnabled:              new(true),
+	if in.Options.VersionContract.HostDNSEnabled() && !in.Options.VersionContract.HostDNSMultidocConfig() {
+		machine.MachineFeatures.HostDNSSupport = &v1alpha1.HostDNSConfig{ //nolint:staticcheck // legacy config
+			HostDNSConfigEnabled:        new(true),
 			HostDNSForwardKubeDNSToHost: ptrOrNil(in.Options.HostDNSForwardKubeDNSToHost.ValueOrZero() || in.Options.VersionContract.HostDNSForwardKubeDNSToHost()),
 		}
 	}
@@ -142,6 +143,16 @@ func (in *Input) worker() ([]config.Document, error) {
 	v1alpha1Config.ClusterConfig = cluster
 
 	documents := []config.Document{v1alpha1Config}
+
+	if in.Options.VersionContract.HostDNSEnabled() && in.Options.VersionContract.HostDNSMultidocConfig() {
+		resolverConfig := network.NewResolverConfigV1Alpha1()
+		resolverConfig.ResolverHostDNS = network.HostDNSConfig{
+			HostDNSEnabled:              new(true),
+			HostDNSForwardKubeDNSToHost: ptrOrNil(in.Options.HostDNSForwardKubeDNSToHost.ValueOrZero() || in.Options.VersionContract.HostDNSForwardKubeDNSToHost()),
+		}
+
+		documents = append(documents, resolverConfig)
+	}
 
 	extraDocuments, err := in.generateRegistryConfigs(machine)
 	if err != nil {

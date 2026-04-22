@@ -34,9 +34,6 @@ machine:
         kubePrism:
             enabled: true
             port: 7445
-        hostDNS:
-            enabled: true
-            forwardKubeDNSToHost: true
 cluster:
     id: 0raF93qnkMvF-FZNuvyGozXNdLiT2FOWSlyBaW4PR-w=
     secret: pofHbABZq7VXuObsdLdy/bHmz6hlMHZ3p8+6WKrv1ic=
@@ -63,6 +60,12 @@ cluster:
             kubernetes:
                 disabled: true
             service: {}
+---
+apiVersion: v1alpha1
+kind: ResolverConfig
+hostDNS:
+    enabled: true
+    forwardKubeDNSToHost: true
 ---
 apiVersion: v1alpha1
 kind: RegistryMirrorConfig

@@ -47,6 +47,12 @@ Custom settings for cipher suites have been removed, as they are ignored when TL
 The default installer image has been updated to use the Image Factory.
 """
 
+    [notes.hostdnsconfig]
+        title = "Host DNS Configuration"
+        description = """\
+HostDNS configuration was moved from the v1alpha1 config `.machine.features.hostDNS` field to the new `hostDNS` in the `ResolverConfig` document.
+"""
+
 [make_deps]
 
     [make_deps.tools]
