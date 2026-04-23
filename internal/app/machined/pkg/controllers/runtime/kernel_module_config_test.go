@@ -7,11 +7,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	runtimecontrollers "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -20,13 +19,11 @@ import (
 )
 
 type KernelModuleConfigSuite struct {
-	RuntimeSuite
+	ctest.DefaultSuite
 }
 
 func (suite *KernelModuleConfigSuite) TestReconcileConfig() {
-	suite.Require().NoError(suite.runtime.RegisterController(&runtimecontrollers.KernelModuleConfigController{}))
-
-	suite.startRuntime()
+	suite.Require().NoError(suite.Runtime().RegisterController(&runtimecontrollers.KernelModuleConfigController{}))
 
 	cfg := config.NewMachineConfig(
 		container.NewV1Alpha1(
@@ -49,56 +46,31 @@ func (suite *KernelModuleConfigSuite) TestReconcileConfig() {
 		),
 	)
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, cfg))
+	suite.Create(cfg)
 
-	specMD := resource.NewMetadata(runtimeresource.NamespaceName, runtimeresource.KernelModuleSpecType, "e1000", resource.VersionUndefined)
+	for _, name := range []string{"btrfs", "e1000"} {
+		ctest.AssertResource(suite, name, func(r *runtimeresource.KernelModuleSpec, asrt *assert.Assertions) {
+			asrt.Equal(name, r.TypedSpec().Name)
+		})
+	}
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(
-			specMD,
-			func(res resource.Resource) bool {
-				return res.(*runtimeresource.KernelModuleSpec).TypedSpec().Name == "e1000"
-			},
-		),
-	))
+	ctest.UpdateWithConflicts(suite, cfg, func(r *config.MachineConfig) error {
+		r.Container().RawV1Alpha1().MachineConfig.MachineKernel = nil
 
-	old := cfg.Metadata().Version()
-	cfg = config.NewMachineConfig(
-		container.NewV1Alpha1(
-			&v1alpha1.Config{
-				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{
-					MachineKernel: nil,
-				},
-				ClusterConfig: &v1alpha1.ClusterConfig{},
-			},
-		),
-	)
+		return nil
+	})
 
-	cfg.Metadata().SetVersion(old)
-	suite.Require().NoError(suite.state.Update(suite.ctx, cfg))
-
-	var err error
-
-	// wait for the resource to be removed
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			for _, md := range []resource.Metadata{specMD} {
-				_, err = suite.state.Get(suite.ctx, md)
-				if err != nil {
-					if state.IsNotFoundError(err) {
-						return nil
-					}
-
-					return err
-				}
-			}
-
-			return retry.ExpectedErrorf("resource still exists")
-		},
-	))
+	for _, name := range []string{"btrfs", "e1000"} {
+		ctest.AssertNoResource[*runtimeresource.KernelModuleSpec](suite, name)
+	}
 }
 
 func TestKernelModuleConfigSuite(t *testing.T) {
-	suite.Run(t, new(KernelModuleConfigSuite))
+	t.Parallel()
+
+	suite.Run(t, &KernelModuleConfigSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 5 * time.Second,
+		},
+	})
 }

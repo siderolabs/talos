@@ -5,7 +5,6 @@
 package runtime_test
 
 import (
-	"context"
 	"net"
 	"net/netip"
 	"net/url"
@@ -14,15 +13,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/controller/runtime"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
-	"github.com/siderolabs/go-retry/retry"
 	"github.com/siderolabs/siderolink/pkg/logreceiver"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"go.uber.org/zap/zaptest"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	runtimectrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
 	talosruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -50,81 +46,19 @@ func (s *logHandler) getCount() int {
 }
 
 type KmsgLogDeliverySuite struct {
-	suite.Suite
+	ctest.DefaultSuite
 
-	state state.State
-
-	runtime *runtime.Runtime
 	drainer *talosruntime.Drainer
-	wg      sync.WaitGroup
-
-	ctx       context.Context //nolint:containedctx
-	ctxCancel context.CancelFunc
 
 	handler1, handler2 *logHandler
 
 	listener1, listener2 net.Listener
 	srv1, srv2           *logreceiver.Server
-}
 
-func (suite *KmsgLogDeliverySuite) SetupTest() {
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 10*time.Second)
-
-	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
-
-	logger := zaptest.NewLogger(suite.T())
-
-	var err error
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, logger)
-	suite.Require().NoError(err)
-
-	suite.handler1 = &logHandler{}
-	suite.handler2 = &logHandler{}
-
-	suite.listener1, err = (&net.ListenConfig{}).Listen(suite.ctx, "tcp", "localhost:0")
-	suite.Require().NoError(err)
-
-	suite.listener2, err = (&net.ListenConfig{}).Listen(suite.ctx, "tcp", "localhost:0")
-	suite.Require().NoError(err)
-
-	suite.srv1 = logreceiver.NewServer(logger, suite.listener1, suite.handler1.HandleLog)
-
-	suite.srv2 = logreceiver.NewServer(logger, suite.listener2, suite.handler2.HandleLog)
-
-	suite.wg.Go(func() {
-		suite.srv1.Serve() //nolint:errcheck
-	})
-
-	suite.wg.Go(func() {
-		suite.srv2.Serve() //nolint:errcheck
-	})
-
-	suite.drainer = talosruntime.NewDrainer()
-
-	suite.Require().NoError(
-		suite.runtime.RegisterController(
-			&runtimectrl.KmsgLogDeliveryController{
-				Drainer: suite.drainer,
-			},
-		),
-	)
-
-	status := network.NewStatus(network.NamespaceName, network.StatusID)
-	status.TypedSpec().AddressReady = true
-
-	suite.Require().NoError(suite.state.Create(suite.ctx, status))
-}
-
-func (suite *KmsgLogDeliverySuite) startRuntime() {
-	suite.wg.Go(func() {
-		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	})
+	serversWG sync.WaitGroup
 }
 
 func (suite *KmsgLogDeliverySuite) TestDeliverySingleDestination() {
-	suite.startRuntime()
-
 	kmsgLogConfig := runtimeres.NewKmsgLogConfig()
 	kmsgLogConfig.TypedSpec().Destinations = []*url.URL{
 		{
@@ -133,15 +67,13 @@ func (suite *KmsgLogDeliverySuite) TestDeliverySingleDestination() {
 		},
 	}
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, kmsgLogConfig))
+	suite.Create(kmsgLogConfig)
 
 	// controller should deliver some kernel logs from host's kmsg buffer
 	suite.assertLogsSeen(suite.handler1)
 }
 
 func (suite *KmsgLogDeliverySuite) TestDeliveryMultipleDestinations() {
-	suite.startRuntime()
-
 	kmsgLogConfig := runtimeres.NewKmsgLogConfig()
 	kmsgLogConfig.TypedSpec().Destinations = []*url.URL{
 		{
@@ -154,7 +86,7 @@ func (suite *KmsgLogDeliverySuite) TestDeliveryMultipleDestinations() {
 		},
 	}
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, kmsgLogConfig))
+	suite.Create(kmsgLogConfig)
 
 	// controller should deliver logs to both destinations
 	suite.assertLogsSeen(suite.handler1)
@@ -162,8 +94,6 @@ func (suite *KmsgLogDeliverySuite) TestDeliveryMultipleDestinations() {
 }
 
 func (suite *KmsgLogDeliverySuite) TestDeliveryOneDeadDestination() {
-	suite.startRuntime()
-
 	// stop one listener
 	suite.Require().NoError(suite.listener1.Close())
 
@@ -179,15 +109,13 @@ func (suite *KmsgLogDeliverySuite) TestDeliveryOneDeadDestination() {
 		},
 	}
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, kmsgLogConfig))
+	suite.Create(kmsgLogConfig)
 
 	// controller should deliver logs to live destination
 	suite.assertLogsSeen(suite.handler2)
 }
 
 func (suite *KmsgLogDeliverySuite) TestDeliveryAllDeadDestinations() {
-	suite.startRuntime()
-
 	// stop all listeners
 	suite.Require().NoError(suite.listener1.Close())
 	suite.Require().NoError(suite.listener2.Close())
@@ -204,12 +132,10 @@ func (suite *KmsgLogDeliverySuite) TestDeliveryAllDeadDestinations() {
 		},
 	}
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, kmsgLogConfig))
+	suite.Create(kmsgLogConfig)
 }
 
 func (suite *KmsgLogDeliverySuite) TestDrain() {
-	suite.startRuntime()
-
 	kmsgLogConfig := runtimeres.NewKmsgLogConfig()
 	kmsgLogConfig.TypedSpec().Destinations = []*url.URL{
 		{
@@ -218,35 +144,19 @@ func (suite *KmsgLogDeliverySuite) TestDrain() {
 		},
 	}
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, kmsgLogConfig))
+	suite.Create(kmsgLogConfig)
 
 	// wait for controller to start delivering some logs
 	suite.assertLogsSeen(suite.handler1)
 
 	// drain should be successful, i.e. controller should stop on its own before context is canceled
-	suite.Assert().NoError(suite.drainer.Drain(suite.ctx))
+	suite.Assert().NoError(suite.drainer.Drain(suite.Ctx()))
 }
 
 func (suite *KmsgLogDeliverySuite) assertLogsSeen(handler *logHandler) {
-	err := retry.Constant(time.Second*5, retry.WithUnits(time.Millisecond*100)).Retry(
-		func() error {
-			if handler.getCount() == 0 {
-				return retry.ExpectedErrorf("no logs received")
-			}
-
-			return nil
-		},
-	)
-	suite.Require().NoError(err)
-}
-
-func (suite *KmsgLogDeliverySuite) TearDownTest() {
-	suite.srv1.Stop()
-	suite.srv2.Stop()
-
-	suite.ctxCancel()
-
-	suite.wg.Wait()
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		assert.NotZero(collect, handler.getCount(), "no logs received")
+	}, 5*time.Second, 100*time.Millisecond)
 }
 
 func TestKmsgLogDeliverySuite(t *testing.T) {
@@ -254,5 +164,52 @@ func TestKmsgLogDeliverySuite(t *testing.T) {
 		t.Skip("requires root")
 	}
 
-	suite.Run(t, new(KmsgLogDeliverySuite))
+	kmsgSuite := &KmsgLogDeliverySuite{}
+	kmsgSuite.DefaultSuite = ctest.DefaultSuite{
+		Timeout: 10 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			logger := zaptest.NewLogger(s.T())
+
+			kmsgSuite.handler1 = &logHandler{}
+			kmsgSuite.handler2 = &logHandler{}
+
+			var err error
+
+			kmsgSuite.listener1, err = (&net.ListenConfig{}).Listen(s.Ctx(), "tcp", "localhost:0")
+			s.Require().NoError(err)
+
+			kmsgSuite.listener2, err = (&net.ListenConfig{}).Listen(s.Ctx(), "tcp", "localhost:0")
+			s.Require().NoError(err)
+
+			kmsgSuite.srv1 = logreceiver.NewServer(logger, kmsgSuite.listener1, kmsgSuite.handler1.HandleLog)
+			kmsgSuite.srv2 = logreceiver.NewServer(logger, kmsgSuite.listener2, kmsgSuite.handler2.HandleLog)
+
+			kmsgSuite.serversWG.Go(func() {
+				kmsgSuite.srv1.Serve() //nolint:errcheck
+			})
+
+			kmsgSuite.serversWG.Go(func() {
+				kmsgSuite.srv2.Serve() //nolint:errcheck
+			})
+
+			kmsgSuite.drainer = talosruntime.NewDrainer()
+
+			s.Require().NoError(s.Runtime().RegisterController(&runtimectrl.KmsgLogDeliveryController{
+				Drainer: kmsgSuite.drainer,
+			}))
+
+			status := network.NewStatus(network.NamespaceName, network.StatusID)
+			status.TypedSpec().AddressReady = true
+
+			s.Require().NoError(s.State().Create(s.Ctx(), status))
+		},
+		AfterTearDown: func(*ctest.DefaultSuite) {
+			kmsgSuite.srv1.Stop()
+			kmsgSuite.srv2.Stop()
+
+			kmsgSuite.serversWG.Wait()
+		},
+	}
+
+	suite.Run(t, kmsgSuite)
 }

@@ -10,11 +10,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	runtimecontrollers "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
 	krnl "github.com/siderolabs/talos/pkg/kernel"
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
@@ -22,95 +21,66 @@ import (
 )
 
 type KernelParamSpecSuite struct {
-	RuntimeSuite
+	ctest.DefaultSuite
 }
 
 func (suite *KernelParamSpecSuite) TestParamsSynced() {
-	suite.Require().NoError(suite.runtime.RegisterController(&runtimecontrollers.KernelParamSpecController{}))
+	suite.Require().NoError(suite.Runtime().RegisterController(&runtimecontrollers.KernelParamSpecController{}))
 
-	suite.startRuntime()
+	const value = "500000"
 
-	value := "500000"
-	def := ""
+	var def string
 
 	spec := runtimeresource.NewKernelParamSpec(runtimeresource.NamespaceName, procSysfsFileMax)
 	spec.TypedSpec().Value = value
 
-	param := &kernel.Param{Key: procSysfsFileMax}
+	suite.Create(spec)
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, spec))
+	ctest.AssertResource(suite, procSysfsFileMax, func(r *runtimeresource.KernelParamStatus, asrt *assert.Assertions) {
+		def = r.TypedSpec().Default
 
-	statusMD := resource.NewMetadata(runtimeresource.NamespaceName, runtimeresource.KernelParamStatusType, procSysfsFileMax, resource.VersionUndefined)
+		asrt.Equal(value, r.TypedSpec().Current)
+	})
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(
-			statusMD,
-			func(res resource.Resource) bool {
-				def = res.(*runtimeresource.KernelParamStatus).TypedSpec().Default
-
-				return res.(*runtimeresource.KernelParamStatus).TypedSpec().Current == value
-			},
-		),
-	))
-
-	prop, err := krnl.ReadParam(param)
-	suite.Assert().NoError(err)
+	prop, err := krnl.ReadParam(&kernel.Param{Key: procSysfsFileMax})
+	suite.Require().NoError(err)
 	suite.Require().Equal(value, strings.TrimSpace(string(prop)))
 
-	suite.Require().NoError(suite.state.Destroy(suite.ctx, spec.Metadata()))
+	suite.Destroy(spec)
 
-	// wait for the resource to be removed
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			for _, md := range []resource.Metadata{statusMD} {
-				_, err = suite.state.Get(suite.ctx, md)
-				if err != nil {
-					if state.IsNotFoundError(err) {
-						return nil
-					}
+	ctest.AssertNoResource[*runtimeresource.KernelParamStatus](suite, procSysfsFileMax)
 
-					return err
-				}
-			}
-
-			return retry.ExpectedErrorf("resource still exists")
-		},
-	))
-
-	prop, err = krnl.ReadParam(param)
-	suite.Assert().NoError(err)
+	prop, err = krnl.ReadParam(&kernel.Param{Key: procSysfsFileMax})
+	suite.Require().NoError(err)
 	suite.Require().Equal(def, strings.TrimSpace(string(prop)))
 }
 
 func (suite *KernelParamSpecSuite) TestParamsUnsupported() {
-	suite.Require().NoError(suite.runtime.RegisterController(&runtimecontrollers.KernelParamSpecController{}))
+	suite.Require().NoError(suite.Runtime().RegisterController(&runtimecontrollers.KernelParamSpecController{}))
 
-	suite.startRuntime()
-
-	id := "proc.sys.some.really.not.existing.sysctl"
+	const id = "proc.sys.some.really.not.existing.sysctl"
 
 	spec := runtimeresource.NewKernelParamSpec(runtimeresource.NamespaceName, id)
 	spec.TypedSpec().Value = "value"
 	spec.TypedSpec().IgnoreErrors = true
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, spec))
+	suite.Create(spec)
 
-	statusMD := resource.NewMetadata(runtimeresource.NamespaceName, runtimeresource.KernelParamStatusType, id, resource.VersionUndefined)
-
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		suite.assertResource(
-			statusMD,
-			func(res resource.Resource) bool {
-				return res.(*runtimeresource.KernelParamStatus).TypedSpec().Unsupported == true
-			},
-		),
-	))
+	ctest.AssertResource(suite, id, func(r *runtimeresource.KernelParamStatus, asrt *assert.Assertions) {
+		asrt.True(r.TypedSpec().Unsupported)
+	})
 }
 
 func TestKernelParamSpecSuite(t *testing.T) {
+	t.Parallel()
+
 	if os.Geteuid() != 0 {
 		t.Skip("skipping test because it requires root privileges")
 	}
 
-	suite.Run(t, new(KernelParamSpecSuite))
+	suite.Run(t, &KernelParamSpecSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 15 * time.Second,
+		},
+	})
 }

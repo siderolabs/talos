@@ -11,19 +11,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/controller/runtime"
 	"github.com/cosi-project/runtime/pkg/safe"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/go-retry/retry"
 	eventsapi "github.com/siderolabs/siderolink/api/events"
 	"github.com/siderolabs/siderolink/pkg/events"
 	"github.com/stretchr/testify/suite"
-	"go.uber.org/zap/zaptest"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	controllerruntime "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
 	talosruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1"
@@ -48,60 +44,23 @@ func (s *handler) HandleEvent(ctx context.Context, e events.Event) error {
 	return nil
 }
 
+func (s *handler) len() int {
+	s.eventsMu.Lock()
+	defer s.eventsMu.Unlock()
+
+	return len(s.events)
+}
+
 type EventsSinkSuite struct {
-	suite.Suite
+	ctest.DefaultSuite
 
 	events  *v1alpha1.Events
-	state   state.State
 	handler *handler
 	server  *grpc.Server
 	sink    *events.Sink
 
-	runtime *runtime.Runtime
 	drainer *talosruntime.Drainer
-	wg      sync.WaitGroup
 	eg      errgroup.Group
-
-	ctx       context.Context //nolint:containedctx
-	ctxCancel context.CancelFunc
-}
-
-func (suite *EventsSinkSuite) SetupTest() {
-	suite.events = v1alpha1.NewEvents(1000, 10)
-
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
-
-	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
-
-	var err error
-
-	suite.runtime, err = runtime.NewRuntime(suite.state, zaptest.NewLogger(suite.T()))
-	suite.Require().NoError(err)
-
-	suite.handler = &handler{}
-	suite.drainer = talosruntime.NewDrainer()
-
-	suite.Require().NoError(
-		suite.runtime.RegisterController(
-			&controllerruntime.EventsSinkController{
-				V1Alpha1Events: suite.events,
-				Drainer:        suite.drainer,
-			},
-		),
-	)
-
-	status := network.NewStatus(network.NamespaceName, network.StatusID)
-	status.TypedSpec().AddressReady = true
-
-	suite.Require().NoError(suite.state.Create(suite.ctx, status))
-
-	suite.startRuntime()
-}
-
-func (suite *EventsSinkSuite) startRuntime() {
-	suite.wg.Go(func() {
-		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
-	})
 }
 
 func (suite *EventsSinkSuite) startServer(ctx context.Context) string {
@@ -137,8 +96,20 @@ func (suite *EventsSinkSuite) startServer(ctx context.Context) string {
 	return lis.Addr().String()
 }
 
+func (suite *EventsSinkSuite) assertEventCount(expected int) {
+	suite.Require().NoError(retry.Constant(5*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+		func() error {
+			if got := suite.handler.len(); got != expected {
+				return retry.ExpectedErrorf("expected %d events, got %d", expected, got)
+			}
+
+			return nil
+		},
+	))
+}
+
 func (suite *EventsSinkSuite) TestPublish() {
-	ctx, cancel := context.WithCancel(suite.ctx)
+	ctx, cancel := context.WithCancel(suite.Ctx())
 	defer cancel()
 
 	suite.events.Publish(
@@ -156,25 +127,14 @@ func (suite *EventsSinkSuite) TestPublish() {
 		},
 	)
 
-	suite.Require().Equal(0, len(suite.handler.events))
+	suite.Require().Equal(0, suite.handler.len())
 
 	endpoint := suite.startServer(ctx)
 	config := runtimeres.NewEventSinkConfig()
 	config.TypedSpec().Endpoint = endpoint
-	suite.Require().NoError(suite.state.Create(ctx, config))
+	suite.Create(config)
 
-	suite.Require().NoError(retry.Constant(time.Second*5, retry.WithUnits(time.Millisecond*100)).Retry(
-		func() error {
-			suite.handler.eventsMu.Lock()
-			defer suite.handler.eventsMu.Unlock()
-
-			if len(suite.handler.events) != 2 {
-				return retry.ExpectedErrorf("expected 2 events, got %d", len(suite.handler.events))
-			}
-
-			return nil
-		},
-	))
+	suite.assertEventCount(2)
 
 	suite.events.Publish(
 		ctx,
@@ -184,22 +144,11 @@ func (suite *EventsSinkSuite) TestPublish() {
 		},
 	)
 
-	suite.Require().NoError(retry.Constant(time.Second*5, retry.WithUnits(time.Millisecond*100)).Retry(
-		func() error {
-			suite.handler.eventsMu.Lock()
-			defer suite.handler.eventsMu.Unlock()
-
-			if len(suite.handler.events) != 3 {
-				return retry.ExpectedErrorf("expected 3 events, got %d", len(suite.handler.events))
-			}
-
-			return nil
-		},
-	))
+	suite.assertEventCount(3)
 }
 
 func (suite *EventsSinkSuite) TestDrain() {
-	ctx, cancel := context.WithCancel(suite.ctx)
+	ctx, cancel := context.WithCancel(suite.Ctx())
 	defer cancel()
 
 	for range 10 {
@@ -219,7 +168,7 @@ func (suite *EventsSinkSuite) TestDrain() {
 		)
 	}
 
-	suite.Require().Equal(0, len(suite.handler.events))
+	suite.Require().Equal(0, suite.handler.len())
 
 	// first, publish wrong endpoint
 	badLis, err := (&net.ListenConfig{}).Listen(ctx, "tcp", "localhost:0")
@@ -230,7 +179,7 @@ func (suite *EventsSinkSuite) TestDrain() {
 
 	config := runtimeres.NewEventSinkConfig()
 	config.TypedSpec().Endpoint = badEndpoint
-	suite.Require().NoError(suite.state.Create(ctx, config))
+	suite.Create(config)
 
 	suite.T().Logf("%s starting bad server at %s", time.Now().Format(time.RFC3339), badEndpoint)
 
@@ -258,44 +207,44 @@ func (suite *EventsSinkSuite) TestDrain() {
 
 			suite.T().Logf("%s starting real server at %s", time.Now().Format(time.RFC3339), endpoint)
 
-			_, updateErr := safe.StateUpdateWithConflicts(
-				ctx, suite.state, runtimeres.NewEventSinkConfig().Metadata(),
-				func(cfg *runtimeres.EventSinkConfig) error {
-					cfg.TypedSpec().Endpoint = endpoint
+			_, err := safe.StateUpdateWithConflicts(suite.Ctx(), suite.State(), config.Metadata(), func(cfg *runtimeres.EventSinkConfig) error {
+				cfg.TypedSpec().Endpoint = endpoint
 
-					return nil
-				})
+				return nil
+			})
 
-			return updateErr
+			return err
 		},
 	)
 
-	suite.Require().NoError(retry.Constant(time.Second*5, retry.WithUnits(time.Millisecond*100)).Retry(
-		func() error {
-			suite.handler.eventsMu.Lock()
-			defer suite.handler.eventsMu.Unlock()
-
-			if len(suite.handler.events) != 20 {
-				return retry.ExpectedErrorf("expected 20 events, got %d", len(suite.handler.events))
-			}
-
-			return nil
-		},
-	))
+	suite.assertEventCount(20)
 
 	suite.Require().NoError(eg.Wait())
 }
 
-func (suite *EventsSinkSuite) TearDownTest() {
-	suite.T().Log("tear down")
-
-	suite.ctxCancel()
-
-	suite.Require().NoError(suite.eg.Wait())
-
-	suite.wg.Wait()
-}
-
 func TestEventsSinkSuite(t *testing.T) {
-	suite.Run(t, new(EventsSinkSuite))
+	sinkSuite := &EventsSinkSuite{}
+	sinkSuite.DefaultSuite = ctest.DefaultSuite{
+		Timeout: 30 * time.Second,
+		AfterSetup: func(s *ctest.DefaultSuite) {
+			sinkSuite.events = v1alpha1.NewEvents(1000, 10)
+			sinkSuite.handler = &handler{}
+			sinkSuite.drainer = talosruntime.NewDrainer()
+
+			s.Require().NoError(s.Runtime().RegisterController(&controllerruntime.EventsSinkController{
+				V1Alpha1Events: sinkSuite.events,
+				Drainer:        sinkSuite.drainer,
+			}))
+
+			status := network.NewStatus(network.NamespaceName, network.StatusID)
+			status.TypedSpec().AddressReady = true
+
+			s.Require().NoError(s.State().Create(s.Ctx(), status))
+		},
+		AfterTearDown: func(*ctest.DefaultSuite) {
+			sinkSuite.Require().NoError(sinkSuite.eg.Wait())
+		},
+	}
+
+	suite.Run(t, sinkSuite)
 }
