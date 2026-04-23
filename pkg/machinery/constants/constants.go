@@ -363,9 +363,9 @@ const (
 
 	// DefaultKubernetesVersion is the default target version of the control plane.
 	// renovate: datasource=github-releases depName=kubernetes/kubernetes
-	DefaultKubernetesVersion = "1.36.0-rc.1"
+	DefaultKubernetesVersion = "1.36.0"
 
-	// SupportedKubernetesVersions is the number of Kubernetes versions supported by Talos starting from DefaultKubernesVersion going backwards.
+	// SupportedKubernetesVersions is the number of Kubernetes versions supported by Talos starting from DefaultKubernetesVersion going backwards.
 	SupportedKubernetesVersions = 6
 
 	// DefaultControlPlanePort is the default port to use for the control plane.
