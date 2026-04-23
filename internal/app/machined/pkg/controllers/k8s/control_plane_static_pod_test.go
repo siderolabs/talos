@@ -55,7 +55,14 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileDefaults() {
 			k8s.ControllerManagerID,
 			k8s.SchedulerID,
 		},
-		func(*k8s.StaticPod, *assert.Assertions) {},
+		func(staticPod *k8s.StaticPod, asrt *assert.Assertions) {
+			pod, err := k8sadapter.StaticPod(staticPod).Pod()
+			suite.Require().NoError(err)
+
+			if staticPod.Metadata().ID() == k8s.APIServerID {
+				asrt.Contains(pod.Spec.Containers[0].Command, "--tls-min-version=VersionTLS13")
+			}
+		},
 	)
 }
 
@@ -278,6 +285,12 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraArgsK8s() {
 		{
 			args: map[string]k8s.ArgValues{
 				"proxy-client-key-file": {Values: []string{"front-proxy-client.key"}},
+			},
+			expectError: true,
+		},
+		{
+			args: map[string]k8s.ArgValues{
+				"tls-min-version": {Values: []string{"TLS1.2"}},
 			},
 			expectError: true,
 		},

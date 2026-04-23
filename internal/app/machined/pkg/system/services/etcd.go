@@ -199,8 +199,6 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		env = append(env, "ETCD_UNSUPPORTED_ARCH="+goruntime.GOARCH)
 	}
 
-	env = append(env, "ETCD_CIPHER_SUITES=TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305,TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305") //nolint:lll
-
 	if e.learnerMemberID != 0 {
 		var promoteCtx context.Context
 
@@ -406,6 +404,7 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime, spec *etcdres
 		"experimental-initial-corrupt-check": {"true"},
 		"experimental-watch-progress-notify-interval": {"5s"},
 		"experimental-compact-hash-check-enabled":     {"true"},
+		"tls-min-version": {"TLS1.3"},
 	}
 
 	extraArgs := make(argsbuilder.Args, len(spec.ExtraArgs))
@@ -486,6 +485,7 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime, spec 
 		"experimental-initial-corrupt-check": {"true"},
 		"experimental-watch-progress-notify-interval": {"5s"},
 		"experimental-compact-hash-check-enabled":     {"true"},
+		"tls-min-version": {"TLS1.3"},
 	}
 
 	extraArgs := make(argsbuilder.Args, len(spec.ExtraArgs))

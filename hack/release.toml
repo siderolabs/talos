@@ -34,6 +34,13 @@ NTS is enabled by default (without any configuration sources) for the default `t
 NTS can be enabled for custom time servers via the new `useNTS` field in the `TimeServerConfig` document.
 """
 
+    [notes.tls13]
+        title = "TLS 1.3 Minimum Version"
+        description = """\
+Talos now runs etcd and kube-apiserver with a minimum TLS version of 1.3, improving security by leveraging the latest TLS features and cipher suites.
+Custom settings for cipher suites have been removed, as they are ignored when TLS 1.3 is used, which simplifies configuration and ensures the use of modern, secure defaults.
+"""
+
 
 [make_deps]
 
