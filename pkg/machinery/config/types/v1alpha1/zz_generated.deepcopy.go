@@ -226,6 +226,13 @@ func (in *CNIConfig) DeepCopyInto(out *CNIConfig) {
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}
+	if in.CNICustomHeaders != nil {
+		in, out := &in.CNICustomHeaders, &out.CNICustomHeaders
+		*out = make(map[string]string, len(*in))
+		for key, val := range *in {
+			(*out)[key] = val
+		}
+	}
 	if in.CNIFlannel != nil {
 		in, out := &in.CNIFlannel, &out.CNIFlannel
 		*out = new(FlannelCNIConfig)

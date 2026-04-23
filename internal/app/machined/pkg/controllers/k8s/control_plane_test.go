@@ -923,6 +923,65 @@ func (suite *K8sControlPlaneSuite) TestReconcileKubeProxyModeLegacy() {
 	)
 }
 
+func (suite *K8sControlPlaneSuite) TestReconcileCNICustomHeaders() {
+	u, err := url.Parse("https://foo:6443")
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "controlplane",
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
+						},
+					},
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+						CNI: &v1alpha1.CNIConfig{
+							CNIName: "custom",
+							CNIUrls: []string{
+								"https://raw.githubusercontent.com/example/cni/main/cni.yaml",
+								"https://raw.githubusercontent.com/example/cni/main/cni-rbac.yaml",
+							},
+							CNICustomHeaders: map[string]string{
+								"Authorization": "Bearer token123",
+							},
+						},
+					},
+				},
+			},
+		),
+	)
+
+	suite.setupMachine(cfg)
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.ExtraManifestsConfigID},
+		func(extraManifests *k8s.ExtraManifestsConfig, assert *assert.Assertions) {
+			assert.Equal(
+				&k8s.ExtraManifestsConfigSpec{
+					ExtraManifests: []k8s.ExtraManifest{
+						{
+							Name:         "https://raw.githubusercontent.com/example/cni/main/cni.yaml",
+							URL:          "https://raw.githubusercontent.com/example/cni/main/cni.yaml",
+							Priority:     "05",
+							ExtraHeaders: map[string]string{"Authorization": "Bearer token123"},
+						},
+						{
+							Name:         "https://raw.githubusercontent.com/example/cni/main/cni-rbac.yaml",
+							URL:          "https://raw.githubusercontent.com/example/cni/main/cni-rbac.yaml",
+							Priority:     "05",
+							ExtraHeaders: map[string]string{"Authorization": "Bearer token123"},
+						},
+					},
+				}, extraManifests.TypedSpec())
+		},
+	)
+}
+
 func TestK8sControlPlaneSuite(t *testing.T) {
 	t.Parallel()
 

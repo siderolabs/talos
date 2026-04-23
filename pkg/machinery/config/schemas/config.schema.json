@@ -4009,6 +4009,18 @@
           "markdownDescription": "URLs containing manifests to apply for the CNI.\nShould be present for \"custom\", must be empty for \"flannel\" and \"none\".",
           "x-intellij-html-description": "\u003cp\u003eURLs containing manifests to apply for the CNI.\nShould be present for \u0026ldquo;custom\u0026rdquo;, must be empty for \u0026ldquo;flannel\u0026rdquo; and \u0026ldquo;none\u0026rdquo;.\u003c/p\u003e\n"
         },
+        "customHeaders": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "customHeaders",
+          "description": "A map of key-value pairs that will be added as HTTP headers while fetching CNI URLs.\nThis is useful for authenticated CNI manifest downloads.\n",
+          "markdownDescription": "A map of key-value pairs that will be added as HTTP headers while fetching CNI URLs.\nThis is useful for authenticated CNI manifest downloads.",
+          "x-intellij-html-description": "\u003cp\u003eA map of key-value pairs that will be added as HTTP headers while fetching CNI URLs.\nThis is useful for authenticated CNI manifest downloads.\u003c/p\u003e\n"
+        },
         "flannel": {
           "$ref": "#/$defs/v1alpha1.FlannelCNIConfig",
           "title": "flannel",

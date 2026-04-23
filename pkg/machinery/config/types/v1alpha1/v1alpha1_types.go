@@ -1555,6 +1555,16 @@ type CNIConfig struct {
 	//     Should be present for "custom", must be empty for "flannel" and "none".
 	CNIUrls []string `yaml:"urls,omitempty"`
 	//   description: |
+	//     A map of key-value pairs that will be added as HTTP headers while fetching CNI URLs.
+	//     This is useful for authenticated CNI manifest downloads.
+	//   examples:
+	//     - value: >
+	//         map[string]string{
+	//           "Authorization": "Bearer token123",
+	//           "X-Custom-Header": "value",
+	//         }
+	CNICustomHeaders map[string]string `yaml:"customHeaders,omitempty"`
+	//   description: |
 	//		Flannel configuration options.
 	CNIFlannel *FlannelCNIConfig `yaml:"flannel,omitempty"`
 }

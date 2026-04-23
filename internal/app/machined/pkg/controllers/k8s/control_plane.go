@@ -394,11 +394,14 @@ func NewControlPlaneExtraManifestsController() *ControlPlaneExtraManifestsContro
 
 				spec := k8s.ExtraManifestsConfigSpec{}
 
+				cniHeaders := cfgProvider.Cluster().Network().CNI().CustomHeaders()
+
 				for _, url := range cfgProvider.Cluster().Network().CNI().URLs() {
 					spec.ExtraManifests = append(spec.ExtraManifests, k8s.ExtraManifest{
-						Name:     url,
-						URL:      url,
-						Priority: "05", // push CNI to the top
+						Name:         url,
+						URL:          url,
+						Priority:     "05", // push CNI to the top
+						ExtraHeaders: cniHeaders,
 					})
 				}
 

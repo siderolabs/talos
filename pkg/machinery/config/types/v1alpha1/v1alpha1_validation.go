@@ -470,9 +470,19 @@ func ValidateCNI(cni config.CNI) ([]string, error) {
 			result = multierror.Append(result, err)
 		}
 
+		if len(cni.CustomHeaders()) != 0 {
+			err := fmt.Errorf(`"customHeaders" field should be empty for %q CNI`, cni.Name())
+			result = multierror.Append(result, err)
+		}
+
 	case constants.NoneCNI:
 		if len(cni.URLs()) != 0 {
 			err := fmt.Errorf(`"urls" field should be empty for %q CNI`, cni.Name())
+			result = multierror.Append(result, err)
+		}
+
+		if len(cni.CustomHeaders()) != 0 {
+			err := fmt.Errorf(`"customHeaders" field should be empty for %q CNI`, cni.Name())
 			result = multierror.Append(result, err)
 		}
 

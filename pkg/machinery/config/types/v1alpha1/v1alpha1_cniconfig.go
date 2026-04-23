@@ -20,6 +20,11 @@ func (c *CNIConfig) URLs() []string {
 	return c.CNIUrls
 }
 
+// CustomHeaders implements the config.CNI interface.
+func (c *CNIConfig) CustomHeaders() map[string]string {
+	return c.CNICustomHeaders
+}
+
 // Flannel implements the config.CNI interface.
 func (c *CNIConfig) Flannel() config.FlannelCNI {
 	return c.CNIFlannel

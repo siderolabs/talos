@@ -65,6 +65,7 @@ type ClusterNetwork interface {
 type CNI interface {
 	Name() string
 	URLs() []string
+	CustomHeaders() map[string]string
 	Flannel() FlannelCNI
 }
 

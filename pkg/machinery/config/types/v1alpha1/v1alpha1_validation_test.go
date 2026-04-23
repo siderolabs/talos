@@ -2209,6 +2209,38 @@ func TestValidateCNI(t *testing.T) {
 			},
 			expectedError: "1 error occurred:\n\t* \"flannelKubeNetworkPoliciesEnabled\" should not be enabled for \"none\" CNI\n\n",
 		},
+		{
+			name: "CustomHeaders",
+			config: &v1alpha1.CNIConfig{
+				CNIName: constants.CustomCNI,
+				CNIUrls: []string{
+					"https://host.test/quick-install.yaml",
+				},
+				CNICustomHeaders: map[string]string{
+					"Authorization": "Bearer token123",
+				},
+			},
+		},
+		{
+			name: "FlannelCustomHeaders",
+			config: &v1alpha1.CNIConfig{
+				CNIName: constants.FlannelCNI,
+				CNICustomHeaders: map[string]string{
+					"Authorization": "Bearer token123",
+				},
+			},
+			expectedError: "1 error occurred:\n\t* \"customHeaders\" field should be empty for \"flannel\" CNI\n\n",
+		},
+		{
+			name: "NoneCustomHeaders",
+			config: &v1alpha1.CNIConfig{
+				CNIName: constants.NoneCNI,
+				CNICustomHeaders: map[string]string{
+					"Authorization": "Bearer token123",
+				},
+			},
+			expectedError: "1 error occurred:\n\t* \"customHeaders\" field should be empty for \"none\" CNI\n\n",
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()

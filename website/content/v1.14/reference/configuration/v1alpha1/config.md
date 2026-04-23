@@ -973,6 +973,11 @@ cluster:
         # The CNI used.
         cni:
             name: flannel # Name of CNI to use.
+
+            # # A map of key-value pairs that will be added as HTTP headers while fetching CNI URLs.
+            # customHeaders:
+            #     Authorization: Bearer token123
+            #     X-Custom-Header: value
         dnsDomain: cluster.local # The domain used by Kubernetes DNS.
         # The pod subnet CIDR.
         podSubnets:
@@ -998,6 +1003,11 @@ network:
     # The CNI used.
     cni:
         name: flannel # Name of CNI to use.
+
+        # # A map of key-value pairs that will be added as HTTP headers while fetching CNI URLs.
+        # customHeaders:
+        #     Authorization: Bearer token123
+        #     X-Custom-Header: value
     dnsDomain: cluster.local # The domain used by Kubernetes DNS.
     # The pod subnet CIDR.
     podSubnets:
@@ -1267,6 +1277,11 @@ cluster:
         # The CNI used.
         cni:
             name: flannel # Name of CNI to use.
+
+            # # A map of key-value pairs that will be added as HTTP headers while fetching CNI URLs.
+            # customHeaders:
+            #     Authorization: Bearer token123
+            #     X-Custom-Header: value
         dnsDomain: cluster.local # The domain used by Kubernetes DNS.
         # The pod subnet CIDR.
         podSubnets:
@@ -1285,6 +1300,11 @@ cni:
     # URLs containing manifests to apply for the CNI.
     urls:
         - https://docs.projectcalico.org/archive/v3.20/manifests/canal.yaml
+
+    # # A map of key-value pairs that will be added as HTTP headers while fetching CNI URLs.
+    # customHeaders:
+    #     Authorization: Bearer token123
+    #     X-Custom-Header: value
 {{< /highlight >}}</details> | |
 |`dnsDomain` |string |The domain used by Kubernetes DNS.<br>The default is `cluster.local` <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 dnsDomain: cluster.local
@@ -1315,6 +1335,11 @@ cluster:
             # URLs containing manifests to apply for the CNI.
             urls:
                 - https://docs.projectcalico.org/archive/v3.20/manifests/canal.yaml
+
+            # # A map of key-value pairs that will be added as HTTP headers while fetching CNI URLs.
+            # customHeaders:
+            #     Authorization: Bearer token123
+            #     X-Custom-Header: value
 {{< /highlight >}}
 
 
@@ -1322,6 +1347,11 @@ cluster:
 |-------|------|-------------|----------|
 |`name` |string |Name of CNI to use.  |`flannel`<br />`custom`<br />`none`<br /> |
 |`urls` |[]string |URLs containing manifests to apply for the CNI.<br>Should be present for "custom", must be empty for "flannel" and "none".  | |
+|`customHeaders` |map[string]string |A map of key-value pairs that will be added as HTTP headers while fetching CNI URLs.<br>This is useful for authenticated CNI manifest downloads. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+customHeaders:
+    Authorization: Bearer token123
+    X-Custom-Header: value
+{{< /highlight >}}</details> | |
 |`flannel` |<a href="#Config.cluster.network.cni.flannel">FlannelCNIConfig</a> |description: |<br>Flannel configuration options.<br>  | |
 
 

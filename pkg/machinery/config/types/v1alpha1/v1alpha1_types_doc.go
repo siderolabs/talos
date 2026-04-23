@@ -1628,6 +1628,13 @@ func (CNIConfig) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "URLs containing manifests to apply for the CNI." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
+				Name:        "customHeaders",
+				Type:        "map[string]string",
+				Note:        "",
+				Description: "A map of key-value pairs that will be added as HTTP headers while fetching CNI URLs.\nThis is useful for authenticated CNI manifest downloads.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "A map of key-value pairs that will be added as HTTP headers while fetching CNI URLs." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "flannel",
 				Type:        "FlannelCNIConfig",
 				Note:        "",
@@ -1638,6 +1645,11 @@ func (CNIConfig) Doc() *encoder.Doc {
 	}
 
 	doc.AddExample("", clusterCustomCNIExample())
+
+	doc.Fields[2].AddExample("", map[string]string{
+		"Authorization":   "Bearer token123",
+		"X-Custom-Header": "value",
+	})
 
 	return doc
 }
