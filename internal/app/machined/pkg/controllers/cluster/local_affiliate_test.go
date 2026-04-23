@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/netip"
 	"testing"
+	"time"
 
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
@@ -29,19 +30,17 @@ import (
 )
 
 type LocalAffiliateSuite struct {
-	ClusterSuite
+	ctest.DefaultSuite
 }
 
 func (suite *LocalAffiliateSuite) TestGeneration() {
-	suite.startRuntime()
-
-	suite.Require().NoError(suite.runtime.RegisterController(&clusterctrl.LocalAffiliateController{}))
+	suite.Require().NoError(suite.Runtime().RegisterController(&clusterctrl.LocalAffiliateController{}))
 
 	nodeIdentity, nonK8sRoutedAddresses, nodeName, discoveryConfig := suite.createResources()
 
 	machineType := config.NewMachineType()
 	machineType.SetMachineType(machine.TypeWorker)
-	suite.Require().NoError(suite.state.Create(suite.ctx, machineType))
+	suite.Create(machineType)
 
 	ctest.AssertResource(suite, nodeIdentity.TypedSpec().NodeID, func(r *cluster.Affiliate, asrt *assert.Assertions) {
 		spec := r.TypedSpec()
@@ -66,22 +65,25 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 	ksIdentity := kubespan.NewIdentity(kubespan.NamespaceName, kubespan.LocalIdentity)
 	suite.Require().NoError(kubespanadapter.IdentitySpec(ksIdentity.TypedSpec()).GenerateKey(zap.NewNop()))
 	suite.Require().NoError(kubespanadapter.IdentitySpec(ksIdentity.TypedSpec()).UpdateAddress("8XuV9TZHW08DOk3bVxQjH9ih_TBKjnh-j44tsCLSBzo=", mac))
-	suite.Require().NoError(suite.state.Create(suite.ctx, ksIdentity))
+	suite.Create(ksIdentity)
 
 	ksConfig := kubespan.NewConfig(config.NamespaceName, kubespan.ConfigID)
 	ksConfig.TypedSpec().EndpointFilters = []string{"0.0.0.0/0", "!192.168.0.0/16", "2001::/16"}
 	ksConfig.TypedSpec().AdvertiseKubernetesNetworks = true
 	ksConfig.TypedSpec().ExtraEndpoints = []netip.AddrPort{netip.MustParseAddrPort("10.5.0.1:51820"), netip.MustParseAddrPort("1.2.3.4:5678")}
 	ksConfig.TypedSpec().ExcludeAdvertisedNetworks = []netip.Prefix{netip.MustParsePrefix("2001:123:4567::/64")}
-	suite.Require().NoError(suite.state.Create(suite.ctx, ksConfig))
+	suite.Create(ksConfig)
 
 	// add KS address to the list of node addresses, it should be ignored in the endpoints
-	nonK8sRoutedAddresses.TypedSpec().Addresses = append(nonK8sRoutedAddresses.TypedSpec().Addresses, ksIdentity.TypedSpec().Address)
-	suite.Require().NoError(suite.state.Update(suite.ctx, nonK8sRoutedAddresses))
+	ctest.UpdateWithConflicts(suite, nonK8sRoutedAddresses, func(r *network.NodeAddress) error {
+		r.TypedSpec().Addresses = append(r.TypedSpec().Addresses, ksIdentity.TypedSpec().Address)
+
+		return nil
+	})
 
 	nodeStatus := k8s.NewNodeStatus(k8s.NamespaceName, nodeName.TypedSpec().Nodename)
 	nodeStatus.TypedSpec().PodCIDRs = []netip.Prefix{netip.MustParsePrefix("10.244.1.0/24")}
-	suite.Require().NoError(suite.state.Create(suite.ctx, nodeStatus))
+	suite.Create(nodeStatus)
 
 	// add discovered public IPs
 	for _, addr := range []netip.Addr{
@@ -90,7 +92,7 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 	} {
 		discoveredAddr := network.NewAddressStatus(cluster.NamespaceName, addr.String())
 		discoveredAddr.TypedSpec().Address = netip.PrefixFrom(addr, addr.BitLen())
-		suite.Require().NoError(suite.state.Create(suite.ctx, discoveredAddr))
+		suite.Create(discoveredAddr)
 	}
 
 	ctest.AssertResource(suite, nodeIdentity.TypedSpec().NodeID, func(r *cluster.Affiliate, asrt *assert.Assertions) {
@@ -130,34 +132,38 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 	})
 
 	// disable advertising K8s addresses
-	ksConfig.TypedSpec().AdvertiseKubernetesNetworks = false
-	suite.Require().NoError(suite.state.Update(suite.ctx, ksConfig))
+	ctest.UpdateWithConflicts(suite, ksConfig, func(r *kubespan.Config) error {
+		r.TypedSpec().AdvertiseKubernetesNetworks = false
+
+		return nil
+	})
 
 	ctest.AssertResource(suite, nodeIdentity.TypedSpec().NodeID, func(r *cluster.Affiliate, asrt *assert.Assertions) {
 		asrt.Empty(r.TypedSpec().KubeSpan.AdditionalAddresses)
 	})
 
 	// disable discovery, local affiliate should be removed
-	discoveryConfig.TypedSpec().DiscoveryEnabled = false
-	suite.Require().NoError(suite.state.Update(suite.ctx, discoveryConfig))
+	ctest.UpdateWithConflicts(suite, discoveryConfig, func(r *cluster.Config) error {
+		r.TypedSpec().DiscoveryEnabled = false
+
+		return nil
+	})
 
 	ctest.AssertNoResource[*cluster.Affiliate](suite, nodeIdentity.TypedSpec().NodeID)
 }
 
 func (suite *LocalAffiliateSuite) TestCPGeneration() {
-	suite.startRuntime()
-
-	suite.Require().NoError(suite.runtime.RegisterController(&clusterctrl.LocalAffiliateController{}))
+	suite.Require().NoError(suite.Runtime().RegisterController(&clusterctrl.LocalAffiliateController{}))
 
 	nodeIdentity, _, _, discoveryConfig := suite.createResources()
 
 	machineType := config.NewMachineType()
 	machineType.SetMachineType(machine.TypeControlPlane)
-	suite.Require().NoError(suite.state.Create(suite.ctx, machineType))
+	suite.Create(machineType)
 
 	apiServerConfig := k8s.NewAPIServerConfig()
 	apiServerConfig.TypedSpec().LocalPort = 6445
-	suite.Require().NoError(suite.state.Create(suite.ctx, apiServerConfig))
+	suite.Create(apiServerConfig)
 
 	ctest.AssertResource(suite, nodeIdentity.TypedSpec().NodeID, func(r *cluster.Affiliate, asrt *assert.Assertions) {
 		spec := r.TypedSpec()
@@ -177,8 +183,11 @@ func (suite *LocalAffiliateSuite) TestCPGeneration() {
 		asrt.Equal(6445, pointer.SafeDeref(spec.ControlPlane).APIServerPort)
 	})
 
-	discoveryConfig.TypedSpec().DiscoveryEnabled = false
-	suite.Require().NoError(suite.state.Update(suite.ctx, discoveryConfig))
+	ctest.UpdateWithConflicts(suite, discoveryConfig, func(r *cluster.Config) error {
+		r.TypedSpec().DiscoveryEnabled = false
+
+		return nil
+	})
 
 	ctest.AssertNoResource[*cluster.Affiliate](suite, nodeIdentity.TypedSpec().NodeID)
 }
@@ -187,19 +196,19 @@ func (suite *LocalAffiliateSuite) createResources() (*cluster.Identity, *network
 	// regular discovery affiliate
 	discoveryConfig := cluster.NewConfig(config.NamespaceName, cluster.ConfigID)
 	discoveryConfig.TypedSpec().DiscoveryEnabled = true
-	suite.Require().NoError(suite.state.Create(suite.ctx, discoveryConfig))
+	suite.Create(discoveryConfig)
 
 	nodeIdentity := cluster.NewIdentity(cluster.NamespaceName, cluster.LocalIdentity)
 	suite.Require().NoError(clusteradapter.IdentitySpec(nodeIdentity.TypedSpec()).Generate())
-	suite.Require().NoError(suite.state.Create(suite.ctx, nodeIdentity))
+	suite.Create(nodeIdentity)
 
 	hostnameStatus := network.NewHostnameStatus(network.NamespaceName, network.HostnameID)
 	hostnameStatus.TypedSpec().Hostname = "example1"
-	suite.Require().NoError(suite.state.Create(suite.ctx, hostnameStatus))
+	suite.Create(hostnameStatus)
 
 	nodename := k8s.NewNodename(k8s.NamespaceName, k8s.NodenameID)
 	nodename.TypedSpec().Nodename = "example1.com"
-	suite.Require().NoError(suite.state.Create(suite.ctx, nodename))
+	suite.Create(nodename)
 
 	nonK8sCurrentAddresses := network.NewNodeAddress(network.NamespaceName, network.FilteredNodeAddressID(network.NodeAddressCurrentID, k8s.NodeAddressFilterNoK8s))
 	nonK8sCurrentAddresses.TypedSpec().Addresses = []netip.Prefix{
@@ -210,7 +219,7 @@ func (suite *LocalAffiliateSuite) createResources() (*cluster.Identity, *network
 		netip.MustParsePrefix("2001:123:4567::1/128"),
 		netip.MustParsePrefix("fdae:41e4:649b:9303:60be:7e36:c270:3238/128"), // SideroLink, should be ignored
 	}
-	suite.Require().NoError(suite.state.Create(suite.ctx, nonK8sCurrentAddresses))
+	suite.Create(nonK8sCurrentAddresses)
 
 	nonK8sRoutedAddresses := network.NewNodeAddress(network.NamespaceName, network.FilteredNodeAddressID(network.NodeAddressRoutedID, k8s.NodeAddressFilterNoK8s))
 	nonK8sRoutedAddresses.TypedSpec().Addresses = []netip.Prefix{ // routed node addresses don't contain SideroLink addresses
@@ -220,7 +229,7 @@ func (suite *LocalAffiliateSuite) createResources() (*cluster.Identity, *network
 		netip.MustParsePrefix("2001:123:4567::1/64"),
 		netip.MustParsePrefix("2001:123:4567::1/128"),
 	}
-	suite.Require().NoError(suite.state.Create(suite.ctx, nonK8sRoutedAddresses))
+	suite.Create(nonK8sRoutedAddresses)
 
 	return nodeIdentity, nonK8sRoutedAddresses, nodename, discoveryConfig
 }
@@ -228,5 +237,9 @@ func (suite *LocalAffiliateSuite) createResources() (*cluster.Identity, *network
 func TestLocalAffiliateSuite(t *testing.T) {
 	t.Parallel()
 
-	suite.Run(t, new(LocalAffiliateSuite))
+	suite.Run(t, &LocalAffiliateSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 5 * time.Second,
+		},
+	})
 }

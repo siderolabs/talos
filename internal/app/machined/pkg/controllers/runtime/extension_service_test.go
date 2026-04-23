@@ -15,6 +15,7 @@ import (
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	runtimecontrollers "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
@@ -22,7 +23,7 @@ import (
 )
 
 type ExtensionServiceSuite struct {
-	RuntimeSuite
+	ctest.DefaultSuite
 }
 
 type serviceMock struct {
@@ -136,24 +137,20 @@ func (suite *ExtensionServiceSuite) TestReconcile() {
 		timesStopped: map[string]int{},
 	}
 
-	suite.Require().NoError(suite.runtime.RegisterController(&runtimecontrollers.ExtensionServiceController{
+	suite.Require().NoError(suite.Runtime().RegisterController(&runtimecontrollers.ExtensionServiceController{
 		V1Alpha1Services: svcMock,
 		ConfigPath:       "testdata/extservices/",
 	}))
 
-	suite.startRuntime()
+	suite.AssertWithin(10*time.Second, 100*time.Millisecond, func() error {
+		ids := svcMock.getIDs()
 
-	suite.Assert().NoError(retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-		func() error {
-			ids := svcMock.getIDs()
+		if !slices.Equal(ids, []string{"ext-frr", "ext-hello-world"}) {
+			return retry.ExpectedErrorf("services registered: %q", ids)
+		}
 
-			if !slices.Equal(ids, []string{"ext-frr", "ext-hello-world"}) {
-				return retry.ExpectedErrorf("services registered: %q", ids)
-			}
-
-			return nil
-		},
-	))
+		return nil
+	})
 
 	helloSvc := svcMock.get("ext-hello-world")
 	suite.Require().IsType(&services.Extension{}, helloSvc)
@@ -174,20 +171,18 @@ func (suite *ExtensionServiceSuite) TestReconcile() {
 
 	helloConfig := runtime.NewExtensionServiceConfigStatusSpec(runtime.NamespaceName, "hello-world")
 	helloConfig.TypedSpec().SpecVersion = "1"
-	suite.Require().NoError(suite.state.Create(suite.ctx, helloConfig))
+	suite.Create(helloConfig)
 
 	assertTimesStartedStopped := func(expected map[string]serviceStartStopInfo) {
-		suite.Assert().NoError(retry.Constant(5*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				actual := svcMock.getTimesStartedStopped()
+		suite.AssertWithin(5*time.Second, 100*time.Millisecond, func() error {
+			actual := svcMock.getTimesStartedStopped()
 
-				if !reflect.DeepEqual(actual, expected) {
-					return retry.ExpectedErrorf("services restart status expected %v, actual %v", expected, actual)
-				}
+			if !reflect.DeepEqual(actual, expected) {
+				return retry.ExpectedErrorf("services restart status expected %v, actual %v", expected, actual)
+			}
 
-				return nil
-			},
-		))
+			return nil
+		})
 	}
 
 	// specVersion is 1, and ext-hello-world is already started, so it should not be restarted
@@ -203,7 +198,7 @@ func (suite *ExtensionServiceSuite) TestReconcile() {
 
 	unexpectedConfig := runtime.NewExtensionServiceConfigStatusSpec(runtime.NamespaceName, "unexpected")
 	unexpectedConfig.TypedSpec().SpecVersion = "1"
-	suite.Require().NoError(suite.state.Create(suite.ctx, unexpectedConfig))
+	suite.Create(unexpectedConfig)
 
 	assertTimesStartedStopped(map[string]serviceStartStopInfo{
 		"ext-hello-world": {
@@ -216,8 +211,11 @@ func (suite *ExtensionServiceSuite) TestReconcile() {
 	})
 
 	// update config for hello service
-	helloConfig.TypedSpec().SpecVersion = "2"
-	suite.Require().NoError(suite.state.Update(suite.ctx, helloConfig))
+	ctest.UpdateWithConflicts(suite, helloConfig, func(r *runtime.ExtensionServiceConfigStatus) error {
+		r.TypedSpec().SpecVersion = "2"
+
+		return nil
+	})
 
 	assertTimesStartedStopped(map[string]serviceStartStopInfo{
 		"ext-hello-world": {
@@ -230,7 +228,7 @@ func (suite *ExtensionServiceSuite) TestReconcile() {
 	})
 
 	// destroy config for hello service
-	suite.Require().NoError(suite.state.Destroy(suite.ctx, helloConfig.Metadata()))
+	suite.Destroy(helloConfig)
 
 	assertTimesStartedStopped(map[string]serviceStartStopInfo{
 		"ext-hello-world": {
@@ -244,5 +242,11 @@ func (suite *ExtensionServiceSuite) TestReconcile() {
 }
 
 func TestExtensionServiceSuite(t *testing.T) {
-	suite.Run(t, new(ExtensionServiceSuite))
+	t.Parallel()
+
+	suite.Run(t, &ExtensionServiceSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 30 * time.Second,
+		},
+	})
 }

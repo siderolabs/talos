@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/siderolabs/go-retry/retry"
 	"github.com/siderolabs/go-smbios/smbios"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -24,7 +23,7 @@ import (
 )
 
 type SystemInfoSuite struct {
-	HardwareSuite
+	ctest.DefaultSuite
 }
 
 func (suite *SystemInfoSuite) TestPopulateSystemInformation() {
@@ -37,17 +36,11 @@ func (suite *SystemInfoSuite) TestPopulateSystemInformation() {
 	s, err := smbios.Decode(stream, version)
 	suite.Require().NoError(err)
 
-	suite.Require().NoError(
-		suite.runtime.RegisterController(
-			&hardwarectrl.SystemInfoController{
-				SMBIOS: s,
-			},
-		),
-	)
+	suite.Require().NoError(suite.Runtime().RegisterController(&hardwarectrl.SystemInfoController{
+		SMBIOS: s,
+	}))
 
-	suite.startRuntime()
-
-	suite.Require().NoError(suite.state.Create(suite.ctx, runtime.NewMetaLoaded()))
+	suite.Create(runtime.NewMetaLoaded())
 
 	systemInformation := hardware.SystemInformationSpec{
 		Manufacturer: "Supermicro",
@@ -108,19 +101,19 @@ func (suite *SystemInfoSuite) TestPopulateSystemInformation() {
 		},
 	}
 
-	ctest.AssertResource(suite, hardware.SystemInformationID, func(r *hardware.SystemInformation, assertions *assert.Assertions) {
-		assertions.Equal(systemInformation, *r.TypedSpec())
+	ctest.AssertResource(suite, hardware.SystemInformationID, func(r *hardware.SystemInformation, asrt *assert.Assertions) {
+		asrt.Equal(systemInformation, *r.TypedSpec())
 	})
 
 	for k, v := range cpuSpecs {
-		ctest.AssertResource(suite, k, func(r *hardware.Processor, assertions *assert.Assertions) {
-			assertions.Equal(v, *r.TypedSpec())
+		ctest.AssertResource(suite, k, func(r *hardware.Processor, asrt *assert.Assertions) {
+			asrt.Equal(v, *r.TypedSpec())
 		})
 	}
 
 	for k, v := range memorySpecs {
-		ctest.AssertResource(suite, k, func(r *hardware.MemoryModule, assertions *assert.Assertions) {
-			assertions.Equal(v, *r.TypedSpec())
+		ctest.AssertResource(suite, k, func(r *hardware.MemoryModule, asrt *assert.Assertions) {
+			asrt.Equal(v, *r.TypedSpec())
 		})
 	}
 }
@@ -130,30 +123,16 @@ func (suite *SystemInfoSuite) TestPopulateSystemInformationEmpty() {
 	s, err := smbios.Decode(io.NewSectionReader(nil, 0, 0), version)
 	suite.Require().NoError(err)
 
-	suite.Require().NoError(
-		suite.runtime.RegisterController(
-			&hardwarectrl.SystemInfoController{
-				SMBIOS: s,
-			},
-		),
-	)
+	suite.Require().NoError(suite.Runtime().RegisterController(&hardwarectrl.SystemInfoController{
+		SMBIOS: s,
+	}))
 
-	suite.startRuntime()
+	suite.Create(runtime.NewMetaLoaded())
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, runtime.NewMetaLoaded()))
-
-	memorySpecs := map[string]hardware.MemoryModuleSpec{
-		"UNKNOWN": {
-			Manufacturer: "UNKNOWN",
-		},
-	}
-
-	for k, v := range memorySpecs {
-		ctest.AssertResource(suite, k, func(r *hardware.MemoryModule, assertions *assert.Assertions) {
-			assertions.Equal(v.DeviceLocator, r.TypedSpec().DeviceLocator)
-			assertions.NotZero(r.TypedSpec().Size)
-		})
-	}
+	ctest.AssertResource(suite, "UNKNOWN", func(r *hardware.MemoryModule, asrt *assert.Assertions) {
+		asrt.Equal("UNKNOWN", r.TypedSpec().Manufacturer)
+		asrt.NotZero(r.TypedSpec().Size)
+	})
 }
 
 func (suite *SystemInfoSuite) TestUUIDOverwrite() {
@@ -166,50 +145,38 @@ func (suite *SystemInfoSuite) TestUUIDOverwrite() {
 	s, err := smbios.Decode(stream, version)
 	suite.Require().NoError(err)
 
-	suite.Require().NoError(
-		suite.runtime.RegisterController(
-			&hardwarectrl.SystemInfoController{
-				SMBIOS: s,
-			},
-		),
-	)
+	suite.Require().NoError(suite.Runtime().RegisterController(&hardwarectrl.SystemInfoController{
+		SMBIOS: s,
+	}))
 
-	suite.startRuntime()
-
-	suite.Require().NoError(suite.state.Create(suite.ctx, runtime.NewMetaLoaded()))
+	suite.Create(runtime.NewMetaLoaded())
 
 	key := runtime.NewMetaKey(runtime.NamespaceName, runtime.MetaKeyTagToID(meta.UUIDOverride))
 	key.TypedSpec().Value = "00000000-0000-0000-0000-000000000001"
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, key))
+	suite.Create(key)
 
-	ctest.AssertResource(suite, hardware.SystemInformationID, func(r *hardware.SystemInformation, assertions *assert.Assertions) {
-		assertions.Equal("00000000-0000-0000-0000-000000000001", r.TypedSpec().UUID)
+	ctest.AssertResource(suite, hardware.SystemInformationID, func(r *hardware.SystemInformation, asrt *assert.Assertions) {
+		asrt.Equal("00000000-0000-0000-0000-000000000001", r.TypedSpec().UUID)
 	})
 }
 
 func (suite *SystemInfoSuite) TestPopulateSystemInformationIsDisabledInContainerMode() {
-	suite.Require().NoError(
-		suite.runtime.RegisterController(
-			&hardwarectrl.SystemInfoController{
-				V1Alpha1Mode: runtimetalos.ModeContainer,
-			},
-		),
-	)
+	suite.Require().NoError(suite.Runtime().RegisterController(&hardwarectrl.SystemInfoController{
+		V1Alpha1Mode: runtimetalos.ModeContainer,
+	}))
 
-	suite.startRuntime()
+	suite.Create(runtime.NewMetaLoaded())
 
-	suite.Require().NoError(suite.state.Create(suite.ctx, runtime.NewMetaLoaded()))
-
-	suite.Assert().NoError(retry.Constant(1*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(suite.assertNoResource(*hardware.NewSystemInformation("systeminformation").Metadata())))
+	ctest.AssertNoResource[*hardware.SystemInformation](suite, hardware.SystemInformationID)
 }
 
 func TestSystemInfoSyncSuite(t *testing.T) {
-	suite.Run(t, new(SystemInfoSuite))
-}
+	t.Parallel()
 
-func (suite *SystemInfoSuite) startRuntime() {
-	suite.wg.Go(func() {
-		suite.Assert().NoError(suite.runtime.Run(suite.ctx))
+	suite.Run(t, &SystemInfoSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 10 * time.Second,
+		},
 	})
 }

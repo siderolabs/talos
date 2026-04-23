@@ -7,8 +7,8 @@ package cluster_test
 import (
 	"net/netip"
 	"testing"
+	"time"
 
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -21,13 +21,11 @@ import (
 )
 
 type EndpointSuite struct {
-	ClusterSuite
+	ctest.DefaultSuite
 }
 
 func (suite *EndpointSuite) TestReconcileDefault() {
-	suite.startRuntime()
-
-	suite.Require().NoError(suite.runtime.RegisterController(&clusterctrl.EndpointController{}))
+	suite.Require().NoError(suite.Runtime().RegisterController(&clusterctrl.EndpointController{}))
 
 	member1 := cluster.NewMember(cluster.NamespaceName, "talos-default-controlplane-1")
 	*member1.TypedSpec() = cluster.MemberSpec{
@@ -56,9 +54,9 @@ func (suite *EndpointSuite) TestReconcileDefault() {
 		OperatingSystem: "Talos (v1.0.0)",
 	}
 
-	for _, r := range []resource.Resource{member1, member2, member3} {
-		suite.Require().NoError(suite.state.Create(suite.ctx, r))
-	}
+	suite.Create(member1)
+	suite.Create(member2)
+	suite.Create(member3)
 
 	// control plane members should be translated to Endpoints
 	ctest.AssertResource(suite, k8s.ControlPlaneDiscoveredEndpointsID, func(r *k8s.Endpoint, asrt *assert.Assertions) {
@@ -79,5 +77,9 @@ func (suite *EndpointSuite) TestReconcileDefault() {
 func TestEndpointSuite(t *testing.T) {
 	t.Parallel()
 
-	suite.Run(t, new(EndpointSuite))
+	suite.Run(t, &EndpointSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 5 * time.Second,
+		},
+	})
 }

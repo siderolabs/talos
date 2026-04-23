@@ -7,8 +7,8 @@ package cluster_test
 import (
 	"net/netip"
 	"testing"
+	"time"
 
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -19,13 +19,11 @@ import (
 )
 
 type MemberSuite struct {
-	ClusterSuite
+	ctest.DefaultSuite
 }
 
 func (suite *MemberSuite) TestReconcileDefault() {
-	suite.startRuntime()
-
-	suite.Require().NoError(suite.runtime.RegisterController(&clusterctrl.MemberController{}))
+	suite.Require().NoError(suite.Runtime().RegisterController(&clusterctrl.MemberController{}))
 
 	affiliate1 := cluster.NewAffiliate(cluster.NamespaceName, "7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC")
 	*affiliate1.TypedSpec() = cluster.AffiliateSpec{
@@ -60,45 +58,43 @@ func (suite *MemberSuite) TestReconcileDefault() {
 		Addresses:   []netip.Addr{netip.MustParseAddr("192.168.3.6")},
 	}
 
-	for _, r := range []resource.Resource{affiliate1, affiliate2, affiliate3} {
-		suite.Require().NoError(suite.state.Create(suite.ctx, r))
-	}
+	suite.Create(affiliate1)
+	suite.Create(affiliate2)
+	suite.Create(affiliate3)
 
 	// affiliates with non-empty Nodename should be translated to Members
-	ctest.AssertResource(
-		suite,
-		affiliate1.TypedSpec().Nodename,
-		func(r *cluster.Member, asrt *assert.Assertions) {
-			spec := r.TypedSpec()
+	ctest.AssertResource(suite, affiliate1.TypedSpec().Nodename, func(r *cluster.Member, asrt *assert.Assertions) {
+		spec := r.TypedSpec()
 
-			asrt.Equal(affiliate1.TypedSpec().NodeID, spec.NodeID)
-			asrt.Equal([]netip.Addr{netip.MustParseAddr("192.168.3.4")}, spec.Addresses)
-			asrt.Equal("foo.com", spec.Hostname)
-			asrt.Equal(machine.TypeControlPlane, spec.MachineType)
-			asrt.Equal("Talos (v1.0.0)", spec.OperatingSystem)
-			asrt.Equal(6443, spec.ControlPlane.APIServerPort)
-		},
-	)
+		asrt.Equal(affiliate1.TypedSpec().NodeID, spec.NodeID)
+		asrt.Equal([]netip.Addr{netip.MustParseAddr("192.168.3.4")}, spec.Addresses)
+		asrt.Equal("foo.com", spec.Hostname)
+		asrt.Equal(machine.TypeControlPlane, spec.MachineType)
+		asrt.Equal("Talos (v1.0.0)", spec.OperatingSystem)
+		asrt.Equal(6443, spec.ControlPlane.APIServerPort)
+	})
 
-	ctest.AssertResource(
-		suite,
-		affiliate2.TypedSpec().Nodename,
-		func(r *cluster.Member, asrt *assert.Assertions) {
-			spec := r.TypedSpec()
+	ctest.AssertResource(suite, affiliate2.TypedSpec().Nodename, func(r *cluster.Member, asrt *assert.Assertions) {
+		spec := r.TypedSpec()
 
-			asrt.Equal(affiliate2.TypedSpec().NodeID, spec.NodeID)
-			asrt.Equal([]netip.Addr{netip.MustParseAddr("192.168.3.5")}, spec.Addresses)
-			asrt.Equal("worker-1", spec.Hostname)
-			asrt.Equal(machine.TypeWorker, spec.MachineType)
-		},
-	)
+		asrt.Equal(affiliate2.TypedSpec().NodeID, spec.NodeID)
+		asrt.Equal([]netip.Addr{netip.MustParseAddr("192.168.3.5")}, spec.Addresses)
+		asrt.Equal("worker-1", spec.Hostname)
+		asrt.Equal(machine.TypeWorker, spec.MachineType)
+	})
 
 	// remove affiliate2, member information should eventually go away
-	suite.Require().NoError(suite.state.Destroy(suite.ctx, affiliate2.Metadata()))
+	suite.Destroy(affiliate2)
 
 	ctest.AssertNoResource[*cluster.Member](suite, affiliate2.TypedSpec().Nodename)
 }
 
 func TestMemberSuite(t *testing.T) {
-	suite.Run(t, new(MemberSuite))
+	t.Parallel()
+
+	suite.Run(t, &MemberSuite{
+		DefaultSuite: ctest.DefaultSuite{
+			Timeout: 5 * time.Second,
+		},
+	})
 }
