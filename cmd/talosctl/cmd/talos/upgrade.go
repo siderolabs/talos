@@ -88,7 +88,7 @@ var talosUpgradeAPIVersionRange = semver.MustParseRange(">1.13.0-alpha.2 <2.0.0"
 // If the server returns codes.Unimplemented, it falls back to the legacy MachineService.Upgrade.
 //
 //nolint:gocyclo
-func upgradeViaLifecycleService(ctx context.Context, c *client.Client, nodes []string) error {
+func upgradeViaLifecycleService(ctx context.Context, c *client.Client, nodes []string) (retErr error) {
 	if upgradeCmdFlags.debug {
 		upgradeCmdFlags.wait = true
 	}
@@ -147,16 +147,21 @@ func upgradeViaLifecycleService(ctx context.Context, c *client.Client, nodes []s
 		}
 	}
 
+	defer func() {
+		if !upgradeCmdFlags.drain {
+			return
+		}
+
+		if len(nodeNames) > 0 {
+			if uncordonErr := uncordonNodes(ctx, c, nodeNames, upgradeCmdFlags.timeout, rep); uncordonErr != nil {
+				retErr = errors.Join(retErr, uncordonErr)
+			}
+		}
+	}()
+
 	err = rebootInternal(upgradeCmdFlags.wait, upgradeCmdFlags.debug, upgradeCmdFlags.timeout, rep, opts...)
 	if err != nil {
 		return fmt.Errorf("error during upgrade: %w", err)
-	}
-
-	// Phase 3: uncordon.
-	if upgradeCmdFlags.drain && len(nodeNames) > 0 {
-		if err := uncordonNodes(ctx, c, nodeNames, upgradeCmdFlags.timeout, rep); err != nil {
-			return err
-		}
 	}
 
 	return nil

@@ -57,7 +57,7 @@ var rebootCmd = &cobra.Command{
 	},
 }
 
-func rebootRun(opts []client.RebootMode) error {
+func rebootRun(opts []client.RebootMode) (retErr error) {
 	rep := reporter.New(
 		reporter.WithOutputMode(rebootCmdFlags.progress.Value()),
 	)
@@ -78,13 +78,15 @@ func rebootRun(opts []client.RebootMode) error {
 		return err
 	}
 
-	if err := rebootInternal(rebootCmdFlags.wait, rebootCmdFlags.debug, rebootCmdFlags.timeout, rep, opts...); err != nil {
-		return err
-	}
+	defer func() {
+		if uncordonErr := WithClientAndNodes(func(ctx context.Context, c *client.Client, _ []string) error {
+			return uncordonNodes(ctx, c, nodeNames, rebootCmdFlags.timeout, rep)
+		}); uncordonErr != nil {
+			retErr = errors.Join(retErr, uncordonErr)
+		}
+	}()
 
-	return WithClientAndNodes(func(ctx context.Context, c *client.Client, _ []string) error {
-		return uncordonNodes(ctx, c, nodeNames, rebootCmdFlags.timeout, rep)
-	})
+	return rebootInternal(rebootCmdFlags.wait, rebootCmdFlags.debug, rebootCmdFlags.timeout, rep, opts...)
 }
 
 func rebootInternal(wait, debug bool, timeout time.Duration, rep *reporter.Reporter, opts ...client.RebootMode) error {
