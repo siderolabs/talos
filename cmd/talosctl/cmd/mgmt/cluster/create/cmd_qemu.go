@@ -19,9 +19,10 @@ import (
 )
 
 type presetOptions struct {
-	schematicID     string
-	imageFactoryURL string
-	presets         []string
+	schematicID      string
+	imageFactoryURL  string
+	imageFactoryAuth string
+	presets          []string
 }
 
 func init() {
@@ -40,8 +41,9 @@ func init() {
 		qemu := pflag.NewFlagSet("qemu", pflag.PanicOnError)
 
 		addDisksFlag(qemu, &qOps.Disks)
-		qemu.StringVar(&presetOptions.schematicID, "schematic-id", "", "image factory schematic id (defaults to an empty schematic)")
-		qemu.StringVar(&presetOptions.imageFactoryURL, "image-factory-url", constants.ImageFactoryURL, "image factory url")
+		qemu.StringVar(&presetOptions.schematicID, "schematic-id", "", "Image Factory schematic id (defaults to an empty schematic)")
+		qemu.StringVar(&presetOptions.imageFactoryURL, "image-factory-url", constants.ImageFactoryURL, "Image Factory url")
+		qemu.StringVar(&presetOptions.imageFactoryAuth, "image-factory-auth", "", "username:password for authenticating with the Image Factory")
 		qemu.StringSliceVar(&presetOptions.presets, "presets", []string{preset.ISO{}.Name()}, "list of presets to apply")
 
 		return qemu

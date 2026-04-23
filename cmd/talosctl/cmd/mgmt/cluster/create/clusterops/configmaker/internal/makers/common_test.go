@@ -15,6 +15,7 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops/configmaker/internal/makers"
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/bundle"
+	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
@@ -144,11 +145,11 @@ func TestCommonMaker_MachineConfig(t *testing.T) {
 	cOps := clusterops.GetCommon()
 	m := getInitializedTestMaker(t, cOps)
 
-	assertConfigDefaultness(t, cOps, m)
+	assertConfigDefaultness(t, cOps, m, nil)
 }
 
 // assertConfigDefaultness makes sure the maker-generated machine configs are not different from default talos machine configs.
-func assertConfigDefaultness[ExtraOps any](t *testing.T, cOps clusterops.Common, m makers.Maker[ExtraOps], desiredExtraGenOps ...generate.Option) {
+func assertConfigDefaultness[ExtraOps any](t *testing.T, cOps clusterops.Common, m makers.Maker[ExtraOps], desiredExtraGenOps []generate.Option, extraPatches ...configpatcher.Patch) {
 	var versionContract *config.VersionContract
 
 	secretsBundle, err := secrets.NewBundle(secrets.NewClock(), versionContract)
@@ -171,13 +172,21 @@ func assertConfigDefaultness[ExtraOps any](t *testing.T, cOps clusterops.Common,
 	require.NoError(t, err)
 
 	for _, node := range clusterCfgs.ClusterRequest.Nodes {
-		assertMachineConfig(t, in, node)
+		assertMachineConfig(t, in, node, extraPatches...)
 	}
 }
 
-func assertMachineConfig(t *testing.T, in *generate.Input, node provision.NodeRequest) {
+func assertMachineConfig(t *testing.T, in *generate.Input, node provision.NodeRequest, extraPatches ...configpatcher.Patch) {
 	cfgExpected, err := in.Config(node.Type)
 	require.NoError(t, err)
+
+	if len(extraPatches) > 0 {
+		patched, err := configpatcher.Apply(configpatcher.WithConfig(cfgExpected), extraPatches)
+		require.NoError(t, err)
+
+		cfgExpected, err = patched.Config()
+		require.NoError(t, err)
+	}
 
 	cfgGot := node.Config
 

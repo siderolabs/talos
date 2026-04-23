@@ -129,7 +129,7 @@ type Qemu struct {
 	ExtraBootKernelArgs       string
 	DHCPSkipHostname          bool
 	NetworkChaos              bool
-	Jjitter                   time.Duration
+	Jitter                    time.Duration
 	Latency                   time.Duration
 	PacketLoss                float64
 	PacketReorder             float64
@@ -146,6 +146,21 @@ type Qemu struct {
 	ImageCacheTLSCertFile     string
 	ImageCacheTLSKeyFile      string
 	ImageCachePort            uint16
+
+	// DownloadHTTPAuth is a map of endpoint hosts to basic auth credentials used for
+	// HTTP boot asset downloads and for injecting CRI registry auth into generated
+	// Talos config.
+	//
+	// The key is url.URL.Host (that is, "host[:port]", for example
+	// "example.com" or "registry.example.com:5000"), and the value is the HTTPAuth
+	// containing the username and password for that endpoint.
+	DownloadHTTPAuth map[string]HTTPAuth
+}
+
+// HTTPAuth represents basic authentication credentials for downloading boot assets.
+type HTTPAuth struct {
+	Username string
+	Password string
 }
 
 // GetCommon returns the default common options.

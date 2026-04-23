@@ -29,5 +29,5 @@ func TestDockerMaker_MachineConfig(t *testing.T) {
 		generate.WithAdditionalSubjectAltNames([]string{"talos-api-endpoint.test"}),
 	}
 
-	assertConfigDefaultness(t, cOps, *m.Maker, desiredExtraGenOps...)
+	assertConfigDefaultness(t, cOps, *m.Maker, desiredExtraGenOps)
 }
