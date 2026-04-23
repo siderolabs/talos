@@ -239,7 +239,7 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 		qemu.StringVar(&qOps.ExtraBootKernelArgs, extraBootKernelArgsFlag, qOps.ExtraBootKernelArgs, "add extra kernel args to the initial boot from vmlinuz and initramfs")
 		qemu.BoolVar(&qOps.DHCPSkipHostname, dhcpSkipHostnameFlag, qOps.DHCPSkipHostname, "skip announcing hostname via DHCP")
 		qemu.BoolVar(&qOps.NetworkChaos, networkChaosFlag, qOps.NetworkChaos, "enable to use network chaos parameters")
-		qemu.DurationVar(&qOps.Jjitter, jitterFlag, qOps.Jjitter, "specify jitter on the bridge interface")
+		qemu.DurationVar(&qOps.Jitter, jitterFlag, qOps.Jitter, "specify jitter on the bridge interface")
 		qemu.DurationVar(&qOps.Latency, latencyFlag, qOps.Latency, "specify latency on the bridge interface")
 		qemu.Float64Var(&qOps.PacketLoss, packetLossFlag, qOps.PacketLoss,
 			"specify percent of packet loss on the bridge interface. e.g. 50% = 0.50 (default: 0.0)")

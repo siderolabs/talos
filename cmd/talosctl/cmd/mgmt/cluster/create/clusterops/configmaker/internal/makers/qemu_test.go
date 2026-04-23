@@ -13,7 +13,9 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops"
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops/configmaker/internal/makers"
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/flags"
-	"github.com/siderolabs/talos/pkg/machinery/config/generate"
+	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/cri"
 	"github.com/siderolabs/talos/pkg/provision"
 )
 
@@ -28,9 +30,35 @@ func TestQemuMaker_MachineConfig(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	desiredExtraGenOps := []generate.Option{}
+	assertConfigDefaultness(t, cOps, *m.Maker, nil)
+}
 
-	assertConfigDefaultness(t, cOps, *m.Maker, desiredExtraGenOps...)
+func TestQemuMaker_RegistryAuth(t *testing.T) {
+	cOps := clusterops.GetCommon()
+	qOps := clusterops.GetQemu()
+
+	qOps.DownloadHTTPAuth = map[string]clusterops.HTTPAuth{
+		"example.com": {
+			Username: "username",
+			Password: "password",
+		},
+	}
+
+	m, err := makers.NewQemu(makers.MakerOptions[clusterops.Qemu]{
+		ExtraOps:    qOps,
+		CommonOps:   cOps,
+		Provisioner: testProvisioner{}, // use test provisioner to simplify the test case.
+	})
+	require.NoError(t, err)
+
+	registryAuthConfig := cri.NewRegistryAuthConfigV1Alpha1("example.com")
+	registryAuthConfig.RegistryUsername = "username"
+	registryAuthConfig.RegistryPassword = "password"
+
+	ctr, err := container.New(registryAuthConfig)
+	require.NoError(t, err)
+
+	assertConfigDefaultness(t, cOps, *m.Maker, nil, configpatcher.NewStrategicMergePatch(ctr))
 }
 
 func TestQemuMaker_Disks(t *testing.T) {

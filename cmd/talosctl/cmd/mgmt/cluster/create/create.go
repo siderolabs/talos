@@ -108,6 +108,10 @@ func downloadBootAssets(ctx context.Context, qOps *clusterops.Qemu) error {
 			u.RawQuery = q.Encode()
 		}
 
+		if auth, ok := qOps.DownloadHTTPAuth[u.Host]; ok && u.User == nil {
+			u.User = url.UserPassword(auth.Username, auth.Password)
+		}
+
 		_, err = client.Get(ctx, &getter.Request{
 			Src:     u.String(),
 			Dst:     filepath.Join(cacheDir, destPath),

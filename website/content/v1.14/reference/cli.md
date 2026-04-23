@@ -309,13 +309,14 @@ talosctl cluster create qemu [flags]
       --cpus-workers string                      the share of CPUs as fraction for each worker/VM (default "2.0")
       --disks disks                              list of disks to create in format "<driver1>:<size1>" (disks after the first one are added only to worker machines) (default virtio:10GiB,virtio:6GiB)
   -h, --help                                     help for qemu
-      --image-factory-url string                 image factory url (default "https://factory.talos.dev/")
+      --image-factory-auth string                username:password for authenticating with the Image Factory
+      --image-factory-url string                 Image Factory url (default "https://factory.talos.dev/")
       --kubernetes-version string                desired kubernetes version to run (default "1.36.0")
       --memory-controlplanes string(mb,gb)       the limit on memory usage for each control plane/VM (default 2.0GiB)
       --memory-workers string(mb,gb)             the limit on memory usage for each worker/VM (default 2.0GiB)
       --omni-api-endpoint string                 the Omni API endpoint (must include a scheme, a hostname and a join token, e.g. 'https://siderolink.omni.example?jointoken=foobar')
       --presets strings                          list of presets to apply (default [iso])
-      --schematic-id string                      image factory schematic id (defaults to an empty schematic)
+      --schematic-id string                      Image Factory schematic id (defaults to an empty schematic)
       --talos-version string                     the desired talos version (default "latest")
       --talosconfig-destination string           The location to save the generated Talos configuration file to. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
       --workers int                              the number of workers to create (default 1)
@@ -523,13 +524,14 @@ talosctl cluster create qemu [flags]
       --cpus-workers string                      the share of CPUs as fraction for each worker/VM (default "2.0")
       --disks disks                              list of disks to create in format "<driver1>:<size1>" (disks after the first one are added only to worker machines) (default virtio:10GiB,virtio:6GiB)
   -h, --help                                     help for qemu
-      --image-factory-url string                 image factory url (default "https://factory.talos.dev/")
+      --image-factory-auth string                username:password for authenticating with the Image Factory
+      --image-factory-url string                 Image Factory url (default "https://factory.talos.dev/")
       --kubernetes-version string                desired kubernetes version to run (default "1.36.0")
       --memory-controlplanes string(mb,gb)       the limit on memory usage for each control plane/VM (default 2.0GiB)
       --memory-workers string(mb,gb)             the limit on memory usage for each worker/VM (default 2.0GiB)
       --omni-api-endpoint string                 the Omni API endpoint (must include a scheme, a hostname and a join token, e.g. 'https://siderolink.omni.example?jointoken=foobar')
       --presets strings                          list of presets to apply (default [iso])
-      --schematic-id string                      image factory schematic id (defaults to an empty schematic)
+      --schematic-id string                      Image Factory schematic id (defaults to an empty schematic)
       --talos-version string                     the desired talos version (default "latest")
       --talosconfig-destination string           The location to save the generated Talos configuration file to. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
       --workers int                              the number of workers to create (default 1)

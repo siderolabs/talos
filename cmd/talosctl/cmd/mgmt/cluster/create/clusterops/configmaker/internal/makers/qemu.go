@@ -30,6 +30,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/cri"
 	networkcfg "github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -170,6 +171,21 @@ func (m *Qemu) AddExtraGenOps() error {
 		m.GenOps = slices.Concat(m.GenOps, []generate.Option{generate.WithAdditionalSubjectAltNames(m.Endpoints)})
 	}
 
+	for host, auth := range m.EOps.DownloadHTTPAuth {
+		registryAuthConfig := cri.NewRegistryAuthConfigV1Alpha1(host)
+		registryAuthConfig.RegistryUsername = auth.Username
+		registryAuthConfig.RegistryPassword = auth.Password
+
+		ctr, err := container.New(registryAuthConfig)
+		if err != nil {
+			return err
+		}
+
+		m.ConfigBundleOps = append(m.ConfigBundleOps,
+			bundle.WithPatch([]configpatcher.Patch{configpatcher.NewStrategicMergePatch(ctr)}),
+		)
+	}
+
 	return nil
 }
 
@@ -268,7 +284,7 @@ func (m *Qemu) ModifyClusterRequest() error {
 	m.ClusterRequest.Network.NoMasqueradeCIDRs = noMasqueradeCIDRs
 	m.ClusterRequest.Network.DHCPSkipHostname = m.EOps.DHCPSkipHostname
 	m.ClusterRequest.Network.NetworkChaos = m.EOps.NetworkChaos
-	m.ClusterRequest.Network.Jitter = m.EOps.Jjitter
+	m.ClusterRequest.Network.Jitter = m.EOps.Jitter
 	m.ClusterRequest.Network.Latency = m.EOps.Latency
 	m.ClusterRequest.Network.PacketLoss = m.EOps.PacketLoss
 	m.ClusterRequest.Network.PacketReorder = m.EOps.PacketReorder
@@ -293,7 +309,7 @@ func (m *Qemu) ModifyClusterRequest() error {
 
 func (m *Qemu) validateNetworkChaosParams() error {
 	if !m.EOps.NetworkChaos {
-		if m.EOps.Jjitter != 0 || m.EOps.Latency != 0 || m.EOps.PacketLoss != 0 || m.EOps.PacketReorder != 0 || m.EOps.PacketCorrupt != 0 || m.EOps.Bandwidth != 0 {
+		if m.EOps.Jitter != 0 || m.EOps.Latency != 0 || m.EOps.PacketLoss != 0 || m.EOps.PacketReorder != 0 || m.EOps.PacketCorrupt != 0 || m.EOps.Bandwidth != 0 {
 			return errors.New("network chaos flags can only be used with network-chaos option enabled")
 		}
 	}

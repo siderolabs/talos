@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/constants"
 	clustercmd "github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster"
@@ -65,6 +66,22 @@ func createQemuCluster(
 		}, &cOps, &qOps, presetOptions.presets)
 	if err != nil {
 		return err
+	}
+
+	if presetOptions.imageFactoryAuth != "" {
+		username, password, ok := strings.Cut(presetOptions.imageFactoryAuth, ":")
+		if !ok {
+			return fmt.Errorf("invalid Image Factory auth format: expected username:password")
+		}
+
+		if qOps.DownloadHTTPAuth == nil {
+			qOps.DownloadHTTPAuth = make(map[string]clusterops.HTTPAuth)
+		}
+
+		qOps.DownloadHTTPAuth[factoryURL.Host] = clusterops.HTTPAuth{
+			Username: username,
+			Password: password,
+		}
 	}
 
 	if err := downloadBootAssets(ctx, &qOps); err != nil {
