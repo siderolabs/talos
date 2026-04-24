@@ -324,3 +324,15 @@ func (q Quirks) ProcMemOverrideNever() bool {
 
 	return q.v.GTE(minTalosVersionProcMemOverrideNever)
 }
+
+var minTalosVersionFactoryTalosctlDownload = semver.MustParse("1.11.0-alpha.3")
+
+// SupportsFactoryTalosctlDownload returns true if the Talos version supports downloading talosctl from image factory.
+func (q Quirks) SupportsFactoryTalosctlDownload() bool {
+	// if the version doesn't parse, we assume it's latest Talos
+	if q.v == nil {
+		return true
+	}
+
+	return q.v.GTE(minTalosVersionFactoryTalosctlDownload)
+}
