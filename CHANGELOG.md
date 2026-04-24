@@ -1,3 +1,105 @@
+## [Talos 1.12.7](https://github.com/siderolabs/talos/releases/tag/v1.12.7) (2026-04-24)
+
+Welcome to the v1.12.7 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.18.24
+containerd: 2.1.7
+etcd: 3.6.9
+Kubernetes: v1.35.4
+
+Talos is built with Go 1.25.9.
+
+
+### Contributors
+
+* Noel Georgi
+* Andrey Smirnov
+* Mateusz Urbanek
+* Orzelius
+* Utku Ozdemir
+
+### Changes
+<details><summary>19 commits</summary>
+<p>
+
+* [`c2a519146`](https://github.com/siderolabs/talos/commit/c2a5191465d1f955bc57b2a84541aa753928d8e3) release(v1.12.7): prepare release
+* [`3b228caf1`](https://github.com/siderolabs/talos/commit/3b228caf1beccd3904e95bd3ca156db89f4e658c) feat: bring in apparmor profile files
+* [`1a05b4a11`](https://github.com/siderolabs/talos/commit/1a05b4a11e8056c46536afe39174bfe0f9802db2) feat: update kubernetes to v1.35.4
+* [`b796be09b`](https://github.com/siderolabs/talos/commit/b796be09be369d9cd052cbc0b293fba9bf700305) feat: bump pkgs, spdystream
+* [`a75ce6f00`](https://github.com/siderolabs/talos/commit/a75ce6f001820b4d8137c9c4719358f6527eb34b) feat: bump pkgs, tools
+* [`c1ea8dbc7`](https://github.com/siderolabs/talos/commit/c1ea8dbc7d548e41ef3656e98279da9d7736ace0) test: fix OOM test flake
+* [`d5b691b8f`](https://github.com/siderolabs/talos/commit/d5b691b8f9bfa91bb1e6c12ba41b6aaff41a127a) fix: watch kubelet's kubeconfig and time out for cache sync
+* [`27655c5bc`](https://github.com/siderolabs/talos/commit/27655c5bcf2a221017b7f9478ebc6fd7022b6844) fix: propagate route table down to the resource
+* [`fcda84bc4`](https://github.com/siderolabs/talos/commit/fcda84bc45ba8f089e3f767ad8088181a53515aa) fix: boot entry detection
+* [`330561c87`](https://github.com/siderolabs/talos/commit/330561c870a06d507ee3d2da31959371a520e1d2) fix: do not flip machine stage to rebooting during shutdown
+* [`8ef448884`](https://github.com/siderolabs/talos/commit/8ef448884139a45ba5de0c5d26dfe368aeadb996) fix: zfs extensions test
+* [`8bc593d17`](https://github.com/siderolabs/talos/commit/8bc593d170ffc17349c367a307c0ff12762819d2) fix: wrong slot of encryption key was logged
+* [`89f561593`](https://github.com/siderolabs/talos/commit/89f561593e60c4233319e8b48e30ba9db4ae45b7) fix: panic in reading PCR values
+* [`317deede0`](https://github.com/siderolabs/talos/commit/317deede0f84f3b97da7397779f4d8b95b866a56) feat: add dis-vulncheck tool
+* [`0654a7f7e`](https://github.com/siderolabs/talos/commit/0654a7f7ea5c01b22e2ff2c1b9c81e79999cad72) fix: handle ISOs with zeroes in volume labels
+* [`e16007b44`](https://github.com/siderolabs/talos/commit/e16007b449f44adfeef0592c234bb6ba7a65633a) fix: unseal with "slow" TPM
+* [`388a56b79`](https://github.com/siderolabs/talos/commit/388a56b793a518c9fab30c98a0c3c019c1981ba7) fix: incorrect route source for on-link routes
+* [`7e42474c5`](https://github.com/siderolabs/talos/commit/7e42474c5546e748883301e3c7d86417b98a5dc5) test: fix the flakes in tests with trusted roots
+* [`d52ebe21d`](https://github.com/siderolabs/talos/commit/d52ebe21dc7151b7701647a4ba9154bd65f5edea) feat: update etcd to 3.6.9
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>8 commits</summary>
+<p>
+
+* [`86d6af1`](https://github.com/siderolabs/pkgs/commit/86d6af1aaf2b8180e549109986ca9689527da7e7) fix: install apparmor parser require config files
+* [`d6b125f`](https://github.com/siderolabs/pkgs/commit/d6b125f9648039274bbc153ba591d01bca9b4123) feat: bump systemd
+* [`191632c`](https://github.com/siderolabs/pkgs/commit/191632c10b5c7aa3f26eb082fa6fb9836b8b72c1) feat: bump kernel to 6.18.24
+* [`13cbc68`](https://github.com/siderolabs/pkgs/commit/13cbc68a222fa48457ee3127c12f9f4f93f22343) feat: bump tools, toolchain and containerd
+* [`709678d`](https://github.com/siderolabs/pkgs/commit/709678d572ee12c0e748459aae5c2d75f25e5bd2) feat: update Linux to 6.18.23
+* [`34de6db`](https://github.com/siderolabs/pkgs/commit/34de6dbcd3eba54a10f7d28670b598069b9b9bcd) fix: support disabling module signature verification
+* [`e30789a`](https://github.com/siderolabs/pkgs/commit/e30789acf884177fd7fa21992e0d4f9ca3500e97) feat: update backportable dependencies
+* [`830d895`](https://github.com/siderolabs/pkgs/commit/830d895c741ee596b3a6ef35afa5e947ec788c2a) feat: update Linux to 6.18.21
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>3 commits</summary>
+<p>
+
+* [`bbd753d`](https://github.com/siderolabs/tools/commit/bbd753dc711dadf82a34e917b12cfa7cc217741b) feat: bump toolchain
+* [`61955e9`](https://github.com/siderolabs/tools/commit/61955e98b98e3b8478aa9693b26aa3420284c569) feat: bump OpenSSL to 3.6.2
+* [`23de89f`](https://github.com/siderolabs/tools/commit/23de89f6b1f4b8dfe97fc0a9eeb1c6caf4ded8d2) feat: update util-linux to 2.41.4
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/go-blockdevice/v2**    v2.0.26 -> v2.0.28
+* **github.com/siderolabs/pkgs**                 v1.12.0-50-ga92bed5 -> v1.12.0-58-g86d6af1
+* **github.com/siderolabs/talos/pkg/machinery**  v1.12.6 -> v1.12.7
+* **github.com/siderolabs/tools**                v1.12.0-7-g57916cb -> v1.12.0-10-gbbd753d
+* **go.etcd.io/etcd/api/v3**                     v3.6.6 -> v3.6.9
+* **go.etcd.io/etcd/client/pkg/v3**              v3.6.6 -> v3.6.9
+* **go.etcd.io/etcd/client/v3**                  v3.6.6 -> v3.6.9
+* **go.etcd.io/etcd/etcdutl/v3**                 v3.6.6 -> v3.6.9
+* **k8s.io/api**                                 v0.35.2 -> v0.35.4
+* **k8s.io/apiextensions-apiserver**             v0.35.2 -> v0.35.4
+* **k8s.io/apimachinery**                        v0.35.2 -> v0.35.4
+* **k8s.io/apiserver**                           v0.35.2 -> v0.35.4
+* **k8s.io/client-go**                           v0.35.2 -> v0.35.4
+* **k8s.io/component-base**                      v0.35.2 -> v0.35.4
+* **k8s.io/cri-api**                             v0.35.2 -> v0.35.4
+* **k8s.io/kube-scheduler**                      v0.35.2 -> v0.35.4
+* **k8s.io/kubectl**                             v0.35.2 -> v0.35.4
+* **k8s.io/kubelet**                             v0.35.2 -> v0.35.4
+* **k8s.io/pod-security-admission**              v0.35.2 -> v0.35.4
+
+Previous release can be found at [v1.12.6](https://github.com/siderolabs/talos/releases/tag/v1.12.6)
+
 ## [Talos 1.12.6](https://github.com/siderolabs/talos/releases/tag/v1.12.6) (2026-03-19)
 
 Welcome to the v1.12.6 release of Talos!
