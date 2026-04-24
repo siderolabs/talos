@@ -1,4 +1,5 @@
 REGISTRY ?= ghcr.io
+FACTORY ?= factory.talos.dev
 USERNAME ?= siderolabs
 SHA ?= $(shell git describe --match=none --always --abbrev=8 --dirty)
 TAG ?= $(shell git describe --tag --always --dirty --match v[0-9]\*)
@@ -242,6 +243,7 @@ COMMON_ARGS += --build-arg=PKG_ZSTD=$(PKG_ZSTD)
 COMMON_ARGS += --build-arg=PKGS_PREFIX=$(PKGS_PREFIX)
 COMMON_ARGS += --build-arg=PKGS=$(PKGS)
 COMMON_ARGS += --build-arg=REGISTRY=$(REGISTRY)
+COMMON_ARGS += --build-arg=FACTORY=$(FACTORY)
 COMMON_ARGS += --build-arg=SHA=$(SHA)
 COMMON_ARGS += --build-arg=SOURCE_DATE_EPOCH=$(SOURCE_DATE_EPOCH)
 COMMON_ARGS += --build-arg=TAG=$(TAG)

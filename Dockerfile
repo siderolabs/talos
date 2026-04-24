@@ -287,6 +287,7 @@ ARG NAME
 ARG SHA
 ARG USERNAME
 ARG REGISTRY
+ARG FACTORY
 ARG TAG
 ARG ARTIFACTS
 ARG PKGS
@@ -296,6 +297,7 @@ RUN mkdir -p pkg/machinery/gendata/data && \
     echo -n ${SHA} > pkg/machinery/gendata/data/sha && \
     echo -n ${USERNAME} > pkg/machinery/gendata/data/username && \
     echo -n ${REGISTRY} > pkg/machinery/gendata/data/registry && \
+    echo -n ${FACTORY} > pkg/machinery/gendata/data/factory && \
     echo -n ${PKGS} > pkg/machinery/gendata/data/pkgs && \
     echo -n ${TOOLS} > pkg/machinery/gendata/data/tools && \
     echo -n ${TAG} > pkg/machinery/gendata/data/tag && \

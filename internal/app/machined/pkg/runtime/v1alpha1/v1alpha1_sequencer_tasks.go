@@ -1505,7 +1505,7 @@ func Install(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 		case !r.State().Machine().Installed():
 			installerImage := r.Config().Machine().Install().Image()
 			if installerImage == "" {
-				installerImage = images.DefaultInstallerImage
+				installerImage = images.InstallerImage("metal")
 			}
 
 			logger.Printf("waiting for the image cache")

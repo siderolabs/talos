@@ -344,7 +344,7 @@ func upgradeGetActorID(ctx context.Context, c *client.Client, opts []client.Upgr
 
 func init() {
 	upgradeCmd.Flags().StringVarP(&upgradeCmdFlags.upgradeImage, "image", "i",
-		fmt.Sprintf("%s/%s/installer:%s", images.Registry, images.Username, version.Trim(version.Tag)),
+		fmt.Sprintf("%s:%s", images.InstallerImageRepository("metal"), version.Trim(version.Tag)),
 		"the container image to use for performing the install")
 	upgradeCmd.Flags().StringVar(&upgradeCmdFlags.namespace, "namespace", "system",
 		"namespace to use: \"system\" (etcd and kubelet images), \"cri\" for all Kubernetes workloads, \"inmem\" for in-memory containerd instance",

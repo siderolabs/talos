@@ -945,7 +945,7 @@ func (InstallConfig) Doc() *encoder.Doc {
 	doc.Fields[0].AddExample("", "/dev/sda")
 	doc.Fields[0].AddExample("", "/dev/nvme0")
 	doc.Fields[1].AddExample("", machineInstallDiskSelectorExample())
-	doc.Fields[3].AddExample("", "ghcr.io/siderolabs/installer:latest")
+	doc.Fields[3].AddExample("", "factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:latest")
 
 	return doc
 }

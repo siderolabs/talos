@@ -17,16 +17,27 @@ var (
 	// Registry is the default registry.
 	Registry = gendata.ImagesRegistry
 
+	// Factory is the default factory for images.
+	Factory = gendata.ImageFactory
+
+	// DefaultInstallerImageSchematic is the default (empty) image schematic for the installer.
+	DefaultInstallerImageSchematic = "376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba"
+
 	// DefaultInstallerImageName is the default container image name for
 	// the installer.
+	//
+	// Deprecated: This image is only used for legacy installer for Talos <1.11.0 and during tests.
 	DefaultInstallerImageName = Username + "/installer"
 
 	// DefaultInstallerImageRepository is the default container repository for
 	// the installer.
+	//
+	// Deprecated: This image is only used for legacy installer for Talos <1.11.0 and during tests.
 	DefaultInstallerImageRepository = Registry + "/" + DefaultInstallerImageName
 
-	// DefaultInstallerImage is the default installer image.
-	DefaultInstallerImage = DefaultInstallerImageRepository + ":" + version.Tag
+	// DefaultInstallerBaseImageRepository is the default container repository for
+	// installer-base image.
+	DefaultInstallerBaseImageRepository = Registry + "/" + Username + "/installer-base"
 
 	// DefaultTalosImageName is the default container image name for
 	// the talos image.
@@ -38,10 +49,6 @@ var (
 
 	// DefaultTalosImage is the default talos image.
 	DefaultTalosImage = DefaultTalosImageRepository + ":" + version.Tag
-
-	// DefaultInstallerBaseImageRepository is the default container repository for
-	// installer-base image.
-	DefaultInstallerBaseImageRepository = Registry + "/" + Username + "/installer-base"
 
 	// DefaultImagerImageRepository is the default container repository for
 	// imager image.
@@ -67,3 +74,13 @@ var (
 	// extensions manifest.
 	DefaultExtensionsManifestRepository = Registry + "/" + DefaultExtensionsManifestName
 )
+
+// InstallerImageRepository returns the default container repository for the installer for the given platform.
+func InstallerImageRepository(platform string) string {
+	return Factory + "/" + platform + "-installer/" + DefaultInstallerImageSchematic
+}
+
+// InstallerImage returns the default installer image for the given platform.
+func InstallerImage(platform string) string {
+	return InstallerImageRepository(platform) + ":" + version.Tag
+}

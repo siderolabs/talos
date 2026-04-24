@@ -559,7 +559,7 @@ diskSelector:
     # busPath: /pci0000:00/*
 {{< /highlight >}}</details> | |
 |`image` |string |Allows for supplying the image used to perform the installation.<br>Image reference for each Talos release can be found on<br>[GitHub releases page](https://github.com/siderolabs/talos/releases). <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-image: ghcr.io/siderolabs/installer:latest
+image: factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:latest
 {{< /highlight >}}</details> | |
 |`wipe` |bool |Indicates if the installation disk should be wiped at installation time.<br>Defaults to `true`.  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
 |`legacyBIOSSupport` |bool |Indicates if MBR partition should be marked as bootable (active).<br>Should be enabled only for the systems with legacy BIOS that doesn't support GPT partitioning scheme.  | |

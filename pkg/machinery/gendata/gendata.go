@@ -29,6 +29,9 @@ var (
 	// ImagesRegistry declares variable used by images package.
 	//go:embed data/registry
 	ImagesRegistry string
+	// ImageFactory declares variable used by images package.
+	//go:embed data/factory
+	ImageFactory string
 	// ArtifactsPath declares variable used by helpers package.
 	//go:embed data/artifacts
 	ArtifactsPath string

@@ -171,7 +171,7 @@ talosctl cluster create dev [flags]
       --image-cache-tls-key-file string          path to image cache TLS key
       --init-node-as-endpoint                    use init node as endpoint instead of any load balancer endpoint
       --initrd-path string                       initramfs image to use (default "_out/initramfs-${ARCH}.xz")
-      --install-image string                     the installer image to use (default "ghcr.io/siderolabs/installer:latest")
+      --install-image string                     the installer image to use (default "factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:latest")
       --ipv4                                     enable IPv4 network in the cluster (default true)
       --ipv6                                     enable IPv6 network in the cluster
       --ipxe-boot-script string                  iPXE boot script (URL) to use
@@ -386,7 +386,7 @@ talosctl cluster create dev [flags]
       --image-cache-tls-key-file string          path to image cache TLS key
       --init-node-as-endpoint                    use init node as endpoint instead of any load balancer endpoint
       --initrd-path string                       initramfs image to use (default "_out/initramfs-${ARCH}.xz")
-      --install-image string                     the installer image to use (default "ghcr.io/siderolabs/installer:latest")
+      --install-image string                     the installer image to use (default "factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:latest")
       --ipv4                                     enable IPv4 network in the cluster (default true)
       --ipv6                                     enable IPv6 network in the cluster
       --ipxe-boot-script string                  iPXE boot script (URL) to use
@@ -1878,7 +1878,7 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
       --dns-domain string                        the dns domain to use for cluster (default "cluster.local")
   -h, --help                                     help for config
       --install-disk string                      the disk to install to (default "/dev/sda")
-      --install-image string                     the image used to perform an installation (default "ghcr.io/siderolabs/installer:latest")
+      --install-image string                     the image used to perform an installation (default "factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:latest")
       --kubernetes-version string                desired kubernetes version to run (default "1.36.0")
   -o, --output string                            destination to output generated files. when multiple output types are specified, it must be a directory. for a single output type, it must either be a file path, or "-" for stdout
   -t, --output-types strings                     types of outputs to be generated. valid types are: ["controlplane" "worker" "talosconfig"] (default [controlplane,worker,talosconfig])
@@ -3454,7 +3454,7 @@ talosctl upgrade [flags]
       --drain-timeout duration     timeout for draining the Kubernetes node (default 5m0s)
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for upgrade
-  -i, --image string               the container image to use for performing the install (default "ghcr.io/siderolabs/installer:v1.13.0-alpha.2")
+  -i, --image string               the container image to use for performing the install (default "factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:v1.13.0-alpha.2")
       --legacy                     force use of legacy upgrade method
       --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "system")
   -n, --nodes strings              target the specified nodes

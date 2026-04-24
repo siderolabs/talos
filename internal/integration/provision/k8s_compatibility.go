@@ -153,7 +153,7 @@ func (suite *K8sCompatibilitySuite) TestAllVersions() {
 		SourceInstallerImage: fmt.Sprintf(
 			"%s/%s:%s",
 			DefaultSettings.TargetInstallImageRegistry,
-			images.DefaultInstallerImageName,
+			images.DefaultInstallerImageName, //nolint:staticcheck // legacy is only used in tests
 			DefaultSettings.CurrentVersion,
 		),
 		SourceVersion:    DefaultSettings.CurrentVersion,

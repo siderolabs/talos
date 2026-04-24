@@ -41,6 +41,11 @@ Talos now runs etcd and kube-apiserver with a minimum TLS version of 1.3, improv
 Custom settings for cipher suites have been removed, as they are ignored when TLS 1.3 is used, which simplifies configuration and ensures the use of modern, secure defaults.
 """
 
+    [notes.defaultInstaller]
+        title = "Default Installer Image"
+        description = """\
+The default installer image has been updated to use the Image Factory.
+"""
 
 [make_deps]
 

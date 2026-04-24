@@ -108,7 +108,7 @@ func upgradeStableToCurrent() upgradeSpec {
 		TargetInstallerImage: fmt.Sprintf(
 			"%s/%s:%s",
 			DefaultSettings.TargetInstallImageRegistry,
-			images.DefaultInstallerImageName,
+			images.DefaultInstallerImageName, //nolint:staticcheck // legacy is only used in tests
 			DefaultSettings.CurrentVersion,
 		),
 		TargetVersion:    DefaultSettings.CurrentVersion,
@@ -126,7 +126,7 @@ func upgradeCurrentToCurrent() upgradeSpec {
 	installerImage := fmt.Sprintf(
 		"%s/%s:%s",
 		DefaultSettings.TargetInstallImageRegistry,
-		images.DefaultInstallerImageName,
+		images.DefaultInstallerImageName, //nolint:staticcheck // legacy is only used in tests
 		DefaultSettings.CurrentVersion,
 	)
 
@@ -155,7 +155,7 @@ func upgradeCurrentToCurrentBios() upgradeSpec {
 	installerImage := fmt.Sprintf(
 		"%s/%s:%s",
 		DefaultSettings.TargetInstallImageRegistry,
-		images.DefaultInstallerImageName,
+		images.DefaultInstallerImageName, //nolint:staticcheck // legacy is only used in tests
 		DefaultSettings.CurrentVersion,
 	)
 
@@ -194,7 +194,7 @@ func upgradeStableToCurrentPreserveStage() upgradeSpec {
 		TargetInstallerImage: fmt.Sprintf(
 			"%s/%s:%s",
 			DefaultSettings.TargetInstallImageRegistry,
-			images.DefaultInstallerImageName,
+			images.DefaultInstallerImageName, //nolint:staticcheck // legacy is only used in tests
 			DefaultSettings.CurrentVersion,
 		),
 		TargetVersion:    DefaultSettings.CurrentVersion,
@@ -210,7 +210,7 @@ func upgradeCurrentToCurrentNewCmdline() upgradeSpec {
 	installerImage := fmt.Sprintf(
 		"%s/%s:%s",
 		DefaultSettings.TargetInstallImageRegistry,
-		images.DefaultInstallerImageName,
+		images.DefaultInstallerImageName, //nolint:staticcheck // legacy is only used in tests
 		DefaultSettings.CurrentVersion,
 	)
 
@@ -241,7 +241,7 @@ func upgradeCurrentToCurrentEnforcing() upgradeSpec {
 	installerImage := fmt.Sprintf(
 		"%s/%s:%s",
 		DefaultSettings.TargetInstallImageRegistry,
-		images.DefaultInstallerImageName,
+		images.DefaultInstallerImageName, //nolint:staticcheck // legacy is only used in tests
 		DefaultSettings.CurrentVersion,
 	)
 

@@ -206,7 +206,7 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 
 		qemu.BoolVar(&qOps.PreallocateDisks, preallocateDisksFlag, true, "whether disk space should be preallocated")
 		qemu.StringSliceVar(&qOps.ClusterUserVolumes, clusterUserVolumesFlag, qOps.ClusterUserVolumes, "list of user volumes to create for each VM in format: <name1>:<size1>:<name2>:<size2>")
-		qemu.StringVar(&qOps.NodeInstallImage, nodeInstallImageFlag, helpers.DefaultImage(images.DefaultInstallerImageRepository), "the installer image to use")
+		qemu.StringVar(&qOps.NodeInstallImage, nodeInstallImageFlag, helpers.DefaultImage(images.InstallerImageRepository("metal")), "the installer image to use")
 		qemu.StringVar(&qOps.NodeVmlinuzPath, nodeVmlinuzPathFlag, helpers.ArtifactPath(constants.KernelAssetWithArch), "the compressed kernel image to use")
 		qemu.StringVar(&qOps.NodeISOPath, nodeISOPathFlag, qOps.NodeISOPath, "the ISO path to use for the initial boot")
 		qemu.StringVar(&qOps.NodeUSBPath, nodeUSBPathFlag, qOps.NodeUSBPath, "the USB stick image path to use for the initial boot")

@@ -189,10 +189,10 @@ func (i *Input) FillDefaults(arch, version string, secureboot bool) {
 	}
 
 	if i.BaseInstaller == zeroContainerAsset {
-		i.BaseInstaller.ImageRef = fmt.Sprintf("%s:%s", images.DefaultInstallerImageRepository, version)
+		i.BaseInstaller.ImageRef = fmt.Sprintf("%s:%s", images.DefaultInstallerImageRepository, version) //nolint:staticcheck // required as a <1.11.0 fallback
 
 		if quirks.New(version).SupportsUnifiedInstaller() {
-			i.BaseInstaller.ImageRef = fmt.Sprintf("%s-base:%s", images.DefaultInstallerImageRepository, version)
+			i.BaseInstaller.ImageRef = fmt.Sprintf("%s:%s", images.DefaultInstallerBaseImageRepository, version)
 		}
 	}
 

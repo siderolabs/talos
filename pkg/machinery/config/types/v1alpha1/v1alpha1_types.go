@@ -900,7 +900,7 @@ type InstallConfig struct {
 	//     Image reference for each Talos release can be found on
 	//     [GitHub releases page](https://github.com/siderolabs/talos/releases).
 	//   examples:
-	//     - value: '"ghcr.io/siderolabs/installer:latest"'
+	//     - value: '"factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:latest"'
 	InstallImage string `yaml:"image,omitempty"`
 	// docgen:nodoc
 	//
