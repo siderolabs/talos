@@ -179,6 +179,15 @@ case "${WITH_TRUSTED_BOOT_ISO:-false}" in
     ;;
 esac
 
+case "${WITH_TRUSTED_BOOT_DISK_IMAGE:-false}" in
+  false)
+    ;;
+  *)
+    INSTALLER_IMAGE=${INSTALLER_IMAGE}-amd64-secureboot
+    QEMU_FLAGS+=("--disk-image-path=_out/metal-amd64-secureboot.raw.zst" "--with-tpm2" "--encrypt-ephemeral" "--encrypt-state" "--encrypt-user-volumes" "--disk-encryption-key-types=tpm")
+    ;;
+esac
+
 case "${WITH_TPM1_2:-false}" in
   false)
     ;;
@@ -297,10 +306,14 @@ esac
 function create_cluster {
   build_registry_mirrors
 
+  # Ensure a clean talosconfig is used so the cluster context is written here
+  rm -f "${TALOSCONFIG}"
+
   "${TALOSCTL}" cluster create \
     --provisioner="${PROVISIONER}" \
     --name="${CLUSTER_NAME}" \
     --kubernetes-version="${KUBERNETES_VERSION}" \
+    --talosconfig="${TALOSCONFIG}" \
     --controlplanes=3 \
     --workers="${QEMU_WORKERS:-2}" \
     --disk="${QEMU_SYSTEM_DISK_SIZE:-15360}" \
@@ -321,7 +334,7 @@ function create_cluster {
     "${REGISTRY_MIRROR_FLAGS[@]}" \
     "${QEMU_FLAGS[@]}"
 
-  "${TALOSCTL}" config node 172.20.1.2
+  "${TALOSCTL}" --talosconfig "${TALOSCONFIG}" config node 172.20.1.2
 }
 
 function destroy_cluster() {

@@ -439,11 +439,33 @@ func (c *Config) setup(opts options.InstallOptions, ukiFileName string) (*option
 }
 
 func (c *Config) generateAssets(opts options.InstallOptions, ukiFileName string) error {
-	if err := os.MkdirAll(filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "loader"), 0o755); err != nil {
+	loaderDir := filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "loader")
+
+	if err := os.MkdirAll(loaderDir, 0o755); err != nil {
 		return err
 	}
 
-	if err := os.WriteFile(filepath.Join(opts.MountPrefix, constants.EFIMountPoint, "loader", "loader.conf"), LoaderConfBytes, 0o644); err != nil {
+	loaderConf := LoaderConfBytes
+
+	if opts.SecureBootEnrollKeys != "" {
+		loaderConf = append(append([]byte{}, LoaderConfBytes...), []byte("\nsecure-boot-enroll "+opts.SecureBootEnrollKeys+"\n")...)
+
+		keysDir := filepath.Join(loaderDir, "keys", "auto")
+		if err := os.MkdirAll(keysDir, 0o755); err != nil {
+			return err
+		}
+
+		if err := utils.CopyFiles(
+			opts.Printf,
+			utils.SourceDestination(opts.PlatformKeyPath, filepath.Join(keysDir, constants.PlatformKeyAsset)),
+			utils.SourceDestination(opts.KeyExchangeKeyPath, filepath.Join(keysDir, constants.KeyExchangeKeyAsset)),
+			utils.SourceDestination(opts.SignatureKeyPath, filepath.Join(keysDir, constants.SignatureKeyAsset)),
+		); err != nil {
+			return err
+		}
+	}
+
+	if err := os.WriteFile(filepath.Join(loaderDir, "loader.conf"), loaderConf, 0o644); err != nil {
 		return err
 	}
 

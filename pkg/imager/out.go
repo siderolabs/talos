@@ -142,42 +142,11 @@ func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Repor
 
 		if i.prof.Input.SecureBoot.PlatformKeyPath == "" {
 			report.Report(reporter.Update{Message: "generating SecureBoot database...", Status: reporter.StatusRunning})
+		}
 
-			// generate the database automatically from provided values
-			enrolledPEM := pem.EncodeToMemory(&pem.Block{
-				Type:  "CERTIFICATE",
-				Bytes: signer.Certificate().Raw,
-			})
-
-			var entries []database.Entry
-
-			entries, err = database.Generate(enrolledPEM, signer, database.IncludeWellKnownCertificates(i.prof.Input.SecureBoot.IncludeWellKnownCerts))
-			if err != nil {
-				return fmt.Errorf("failed to generate database: %w", err)
-			}
-
-			for _, entry := range entries {
-				entryPath := filepath.Join(i.tempDir, entry.Name)
-
-				if err = os.WriteFile(entryPath, entry.Contents, 0o600); err != nil {
-					return err
-				}
-
-				switch entry.Name {
-				case constants.PlatformKeyAsset:
-					options.PlatformKeyPath = entryPath
-				case constants.KeyExchangeKeyAsset:
-					options.KeyExchangeKeyPath = entryPath
-				case constants.SignatureKeyAsset:
-					options.SignatureKeyPath = entryPath
-				default:
-					return fmt.Errorf("unknown database entry: %s", entry.Name)
-				}
-			}
-		} else {
-			options.PlatformKeyPath = i.prof.Input.SecureBoot.PlatformKeyPath
-			options.KeyExchangeKeyPath = i.prof.Input.SecureBoot.KeyExchangeKeyPath
-			options.SignatureKeyPath = i.prof.Input.SecureBoot.SignatureKeyPath
+		options.PlatformKeyPath, options.KeyExchangeKeyPath, options.SignatureKeyPath, err = i.prepareEnrollmentDBs(signer)
+		if err != nil {
+			return err
 		}
 
 		generator, err = options.CreateUEFI(ctx, printf)
@@ -306,6 +275,50 @@ func (i *Imager) outImage(ctx context.Context, path string, report *reporter.Rep
 	return nil
 }
 
+// prepareEnrollmentDBs returns paths to PK, KEK and db .auth files for SecureBoot
+// key auto-enrollment. If the profile supplies pre-built DBs via
+// Input.SecureBoot.PlatformKeyPath (etc.), those paths are returned as-is.
+// Otherwise, the databases are generated from the signer and written to i.tempDir.
+func (i *Imager) prepareEnrollmentDBs(signer pesign.CertificateSigner) (pkPath, kekPath, dbPath string, err error) {
+	if i.prof.Input.SecureBoot.PlatformKeyPath != "" {
+		return i.prof.Input.SecureBoot.PlatformKeyPath,
+			i.prof.Input.SecureBoot.KeyExchangeKeyPath,
+			i.prof.Input.SecureBoot.SignatureKeyPath,
+			nil
+	}
+
+	enrolledPEM := pem.EncodeToMemory(&pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: signer.Certificate().Raw,
+	})
+
+	entries, err := database.Generate(enrolledPEM, signer, database.IncludeWellKnownCertificates(i.prof.Input.SecureBoot.IncludeWellKnownCerts))
+	if err != nil {
+		return "", "", "", fmt.Errorf("failed to generate database: %w", err)
+	}
+
+	for _, entry := range entries {
+		entryPath := filepath.Join(i.tempDir, entry.Name)
+
+		if err := os.WriteFile(entryPath, entry.Contents, 0o600); err != nil {
+			return "", "", "", err
+		}
+
+		switch entry.Name {
+		case constants.PlatformKeyAsset:
+			pkPath = entryPath
+		case constants.KeyExchangeKeyAsset:
+			kekPath = entryPath
+		case constants.SignatureKeyAsset:
+			dbPath = entryPath
+		default:
+			return "", "", "", fmt.Errorf("unknown database entry: %s", entry.Name)
+		}
+	}
+
+	return pkPath, kekPath, dbPath, nil
+}
+
 //nolint:gocyclo
 func (i *Imager) buildImage(ctx context.Context, path string, printf func(string, ...any)) error {
 	var zeroContainerAsset profile.ContainerAsset
@@ -349,6 +362,23 @@ func (i *Imager) buildImage(ctx context.Context, path string, printf func(string
 		opts.OverlayInstaller = i.overlayInstaller
 		opts.ExtraOptions = i.prof.Overlay.ExtraOptions
 		opts.OverlayExtractedDir = i.tempDir
+	}
+
+	if i.prof.SecureBootEnabled() && i.prof.Output.ImageOptions.SDBootEnrollKeys != profile.SDBootEnrollKeysOff {
+		signer, err := i.prof.Input.SecureBoot.SecureBootSigner.GetSigner(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get SecureBoot signer: %w", err)
+		}
+
+		pk, kek, db, err := i.prepareEnrollmentDBs(signer)
+		if err != nil {
+			return err
+		}
+
+		opts.SecureBootEnrollKeys = i.prof.Output.ImageOptions.SDBootEnrollKeys.String()
+		opts.PlatformKeyPath = pk
+		opts.KeyExchangeKeyPath = kek
+		opts.SignatureKeyPath = db
 	}
 
 	if i.prof.Input.ImageCache != zeroContainerAsset {
