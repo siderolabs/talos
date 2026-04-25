@@ -42,6 +42,9 @@
 (allow sys_containerd_t system_container_p (process2 (nnp_transition nosuid_transition)))
 (allow sys_containerd_t system_container_p (process (transition)))
 
+; containerd_exec_t lives on rootfs squashfs (NOSUID); init_t launches it.
+(allow init_t sys_containerd_t (process2 (nosuid_transition)))
+
 ; Manage procfs & processes
 (allow sys_containerd_t system_container_p (fs_classes (rw)))
 (allow sys_containerd_t system_container_p (process_classes (full)))

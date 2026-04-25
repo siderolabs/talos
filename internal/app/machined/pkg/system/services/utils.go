@@ -10,9 +10,9 @@ import (
 	"path/filepath"
 
 	specs "github.com/opencontainers/runtime-spec/specs-go"
-	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/pkg/containermode"
+	mount "github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -30,7 +30,7 @@ func prepareRootfs(id string) error {
 		return fmt.Errorf("failed to create empty executable %q: %w", executablePath, err)
 	}
 
-	if err := unix.Mount("/sbin/init", executablePath, "", unix.MS_BIND, ""); err != nil {
+	if err := mount.BindReadonly("/sbin/init", executablePath); err != nil {
 		return fmt.Errorf("failed to create bind mount for %q: %w", executablePath, err)
 	}
 

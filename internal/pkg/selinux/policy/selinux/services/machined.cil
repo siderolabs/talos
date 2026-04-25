@@ -98,6 +98,9 @@
 (allow initramfs_t init_exec_t (file (execute)))
 (typetransition initramfs_t init_exec_t process init_t)
 (allow initramfs_t init_t (process_classes (full)))
+; init_exec_t (/usr/bin/init) lives on the rootfs squashfs which is
+; mounted NOSUID — allow the initramfs_t → init_t transition across it.
+(allow initramfs_t init_t (process2 (nosuid_transition)))
 (allow init_t initramfs_t (fd (use)))
 
 ; Direct child processes

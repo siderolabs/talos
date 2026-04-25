@@ -60,9 +60,13 @@
 
 (allow kernel_t modprobe_exec_t (file (execute)))
 (allow kernel_t udev_t (process (all))) ; including transition
+; modprobe_exec_t lives on rootfs squashfs (NOSUID)
+(allow kernel_t udev_t (process2 (nosuid_transition)))
 
 (allow init_t modprobe_exec_t (file (execute)))
 (allow init_t udev_t (process (all))) ; including transition
+; udev_exec_t / modprobe_exec_t live on rootfs squashfs (NOSUID)
+(allow init_t udev_t (process2 (nosuid_transition)))
 
 (allow kernel_t module_t (system (module_load module_request)))
 (allow udev_t module_t (fs_classes (ro)))
