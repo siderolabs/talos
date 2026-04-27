@@ -3,8 +3,8 @@ module github.com/siderolabs/talos/tools/docgen
 go 1.26.0
 
 require (
-	github.com/gomarkdown/markdown v0.0.0-20260412113850-134a5b2cce7f
-	github.com/invopop/jsonschema v0.13.0
+	github.com/gomarkdown/markdown v0.0.0-20260417124207-7d523f7318df
+	github.com/invopop/jsonschema v0.14.0
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	github.com/siderolabs/gen v0.8.6
@@ -20,6 +20,7 @@ require (
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
+	github.com/pb33f/ordered-map/v2 v2.3.1 // indirect
 	golang.org/x/net v0.46.0 // indirect
 	golang.org/x/text v0.30.0 // indirect
 	golang.org/x/tools v0.38.0 // indirect
