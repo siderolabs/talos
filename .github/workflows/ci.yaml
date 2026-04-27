@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-04-22T19:39:54Z by kres bf217ed.
+# Generated on 2026-04-27T17:59:00Z by kres e4dc583.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -255,7 +255,7 @@ jobs:
         run: |
           find _out -type f -executable > _out/executable-artifacts
       - name: save artifacts
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-artifacts
           path: |
@@ -263,7 +263,7 @@ jobs:
           retention-days: "5"
       - name: Retrieve PR labels
         id: retrieve-pr-labels
-        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # version: v8.0.0
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # version: v9.0.0
         with:
           retries: "3"
           script: |
@@ -338,7 +338,7 @@ jobs:
           make e2e-docker
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-e2e-docker-short
           path: |-
@@ -406,7 +406,7 @@ jobs:
           sudo -E make e2e-iso
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-e2e-iso
           path: |-
@@ -477,7 +477,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-e2e-qemu-short
           path: |-
@@ -550,7 +550,7 @@ jobs:
           make target-grype-validate
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-grype-scan-result
           path: |
@@ -589,7 +589,7 @@ jobs:
     steps:
       - name: check-pr-labels
         id: check-pr-labels
-        if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/airgapped') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+        if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/airgapped') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
         run: "true"
       - name: gather-system-info
         id: system-info
@@ -666,7 +666,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always() && steps.check-pr-labels.conclusion == 'success'
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-airgapped-${{ matrix.test }}
           path: |-
@@ -683,7 +683,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-amd64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-amd64') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     needs:
       - default
       - integration-build-aws-image
@@ -787,7 +787,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-arm64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-arm64') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     needs:
       - default
       - integration-build-aws-image
@@ -891,7 +891,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree-lts-amd64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia-nonfree-lts-amd64') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia-nonfree')
     needs:
       - default
       - integration-build-aws-image
@@ -1015,7 +1015,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree-lts-arm64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia-nonfree-lts-arm64') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia-nonfree')
     needs:
       - default
       - integration-build-aws-image
@@ -1139,7 +1139,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree-production-amd64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia-nonfree-production-amd64') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia-nonfree')
     needs:
       - default
       - integration-build-aws-image
@@ -1263,7 +1263,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree-production-arm64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia-nonfree-production-arm64') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia-nonfree')
     needs:
       - default
       - integration-build-aws-image
@@ -1387,7 +1387,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss-lts-amd64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia-oss-lts-amd64') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia-oss')
     needs:
       - default
       - integration-build-aws-image
@@ -1511,7 +1511,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss-lts-arm64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia-oss-lts-arm64') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia-oss')
     needs:
       - default
       - integration-build-aws-image
@@ -1635,7 +1635,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss-production-amd64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia-oss-production-amd64') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia-oss')
     needs:
       - default
       - integration-build-aws-image
@@ -1759,7 +1759,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss-production-arm64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia-oss-production-arm64') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia-oss')
     needs:
       - default
       - integration-build-aws-image
@@ -1883,7 +1883,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/aws') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-amd64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-arm64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss-lts-amd64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss-lts-arm64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss-production-amd64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-oss-production-arm64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree-lts-amd64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree-lts-arm64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree-production-amd64') || contains(fromJSON(needs.default.outputs.labels), 'integration/aws-nvidia-nonfree-production-arm64') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-amd64') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-arm64') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia-oss') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia-nonfree') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia-oss-lts-amd64') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia-oss-lts-arm64') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia-oss-production-amd64') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia-oss-production-arm64') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia-nonfree-lts-amd64') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia-nonfree-lts-arm64') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia-nonfree-production-amd64') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/aws-nvidia-nonfree-production-arm64') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -1942,7 +1942,7 @@ jobs:
         run: |
           find _out -type f -executable > _out/executable-artifacts
       - name: save artifacts
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-aws-artifacts
           path: |
@@ -1957,7 +1957,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-1') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-3') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-4') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-default') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-encrypted-vip') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-race') || contains(fromJSON(needs.default.outputs.labels), 'integration/conformance') || contains(fromJSON(needs.default.outputs.labels), 'integration/conformance-default') || contains(fromJSON(needs.default.outputs.labels), 'integration/conformance-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/trusted-boot') || contains(fromJSON(needs.default.outputs.labels), 'integration/trusted-boot-default') || contains(fromJSON(needs.default.outputs.labels), 'integration/trusted-boot-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc-1') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc-3') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc-4') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/qemu') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/qemu-default') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/qemu-enforcing') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/qemu-encrypted-vip') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/qemu-race') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/conformance') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/conformance-default') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/conformance-enforcing') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/trusted-boot') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/trusted-boot-default') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/trusted-boot-enforcing') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -2019,7 +2019,7 @@ jobs:
         run: |
           find _out -type f -executable > _out/executable-artifacts
       - name: save artifacts
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-enforcing-artifacts
           path: |
@@ -2034,7 +2034,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/cilium') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/cilium') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -2121,7 +2121,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-cilium
           path: |-
@@ -2137,7 +2137,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/cloud-images')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/cloud-images')
     needs:
       - default
     steps:
@@ -2213,7 +2213,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/conformance-default') || contains(fromJSON(needs.default.outputs.labels), 'integration/conformance') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/conformance-default') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/conformance') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     needs:
       - default
       - integration-build-enforcing
@@ -2278,7 +2278,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-conformance-default
           path: |-
@@ -2294,7 +2294,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/conformance-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/conformance') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/conformance-enforcing') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/conformance') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     needs:
       - default
       - integration-build-enforcing
@@ -2362,7 +2362,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-conformance-enforcing
           path: |-
@@ -2378,7 +2378,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/embedded') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/embedded') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -2437,7 +2437,7 @@ jobs:
           sudo -E make e2e-embedded
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-embedded
           path: |-
@@ -2453,7 +2453,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/extensions') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/extensions') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -2543,7 +2543,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-extensions
           path: |-
@@ -2559,7 +2559,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/gcp') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/gcp') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -2664,7 +2664,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/image-cache') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/image-cache') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -2747,7 +2747,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-image-cache
           path: |-
@@ -2763,7 +2763,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/image-factory')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/image-factory')
     needs:
       - default
     steps:
@@ -2898,7 +2898,7 @@ jobs:
           sudo -E make e2e-image-factory
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-image-factory
           path: |-
@@ -2914,7 +2914,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: generic
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/images') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/images') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -3013,7 +3013,7 @@ jobs:
     steps:
       - name: check-pr-labels
         id: check-pr-labels
-        if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-0') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+        if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc-0') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
         run: "true"
       - name: gather-system-info
         id: system-info
@@ -3091,7 +3091,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always() && steps.check-pr-labels.conclusion == 'success'
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-misc-0-${{ matrix.test }}
           path: |-
@@ -3164,7 +3164,7 @@ jobs:
     steps:
       - name: check-pr-labels
         id: check-pr-labels
-        if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-1') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+        if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc-1') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
         run: "true"
       - name: gather-system-info
         id: system-info
@@ -3242,7 +3242,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always() && steps.check-pr-labels.conclusion == 'success'
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-misc-1-${{ matrix.test }}-${{ matrix.variant }}
           path: |-
@@ -3293,7 +3293,7 @@ jobs:
     steps:
       - name: check-pr-labels
         id: check-pr-labels
-        if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-2') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+        if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc-2') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
         run: "true"
       - name: gather-system-info
         id: system-info
@@ -3370,7 +3370,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always() && steps.check-pr-labels.conclusion == 'success'
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-misc-2-${{ matrix.test }}
           path: |-
@@ -3426,7 +3426,7 @@ jobs:
     steps:
       - name: check-pr-labels
         id: check-pr-labels
-        if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-3') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+        if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc-3') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
         run: "true"
       - name: gather-system-info
         id: system-info
@@ -3500,7 +3500,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always() && steps.check-pr-labels.conclusion == 'success'
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-misc-3-${{ matrix.test }}-${{ matrix.variant }}
           path: |-
@@ -3574,7 +3574,7 @@ jobs:
     steps:
       - name: check-pr-labels
         id: check-pr-labels
-        if: contains(fromJSON(needs.default.outputs.labels), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels), 'integration/misc-4') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+        if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc-4') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
         run: "true"
       - name: gather-system-info
         id: system-info
@@ -3649,7 +3649,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always() && steps.check-pr-labels.conclusion == 'success'
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-misc-4-${{ matrix.test }}-${{ matrix.variant }}
           path: |-
@@ -3665,7 +3665,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision-0') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/provision-0') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -3728,7 +3728,7 @@ jobs:
           sudo -E make provision-tests-track-0
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-provision-0
           path: |-
@@ -3744,7 +3744,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision-1') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/provision-1') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -3816,7 +3816,7 @@ jobs:
           sudo -E make provision-tests-track-1
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-provision-1
           path: |-
@@ -3832,7 +3832,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision-2') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/provision-2') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -3903,7 +3903,7 @@ jobs:
           sudo -E make provision-tests-track-2
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-provision-2
           path: |-
@@ -3919,7 +3919,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/provision-3') || contains(fromJSON(needs.default.outputs.labels), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/provision-3') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/provision') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -3982,7 +3982,7 @@ jobs:
           sudo -E make provision-tests-track-3
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-provision-3
           path: |-
@@ -3998,7 +3998,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi') || contains(fromJSON(needs.default.outputs.labels), 'integration/extensions') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi-longhorn') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/qemu-csi') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/extensions') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/qemu-csi-longhorn') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -4093,7 +4093,7 @@ jobs:
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: fio-integration-qemu-csi-longhorn
           path: |
@@ -4101,7 +4101,7 @@ jobs:
           retention-days: "180"
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-qemu-csi-longhorn
           path: |-
@@ -4117,7 +4117,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi-openebs') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/qemu-csi-openebs') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/qemu-csi') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -4185,7 +4185,7 @@ jobs:
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: fio-integration-qemu-csi-openebs
           path: |
@@ -4193,7 +4193,7 @@ jobs:
           retention-days: "180"
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-qemu-csi-openebs
           path: |-
@@ -4209,7 +4209,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi-rook-ceph') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-csi') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/qemu-csi-rook-ceph') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/qemu-csi') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -4276,7 +4276,7 @@ jobs:
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: fio-integration-qemu-csi-rook-ceph
           path: |
@@ -4284,7 +4284,7 @@ jobs:
           retention-days: "180"
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-qemu-csi-rook-ceph
           path: |-
@@ -4300,7 +4300,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-default') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/qemu-default') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/qemu') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     needs:
       - default
       - integration-build-enforcing
@@ -4368,7 +4368,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-qemu-default
           path: |-
@@ -4384,7 +4384,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-encrypted-vip') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/qemu-encrypted-vip') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/qemu') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     needs:
       - default
       - integration-build-enforcing
@@ -4453,7 +4453,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-qemu-encrypted-vip
           path: |-
@@ -4469,7 +4469,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/qemu-enforcing') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/qemu') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     needs:
       - default
       - integration-build-enforcing
@@ -4539,7 +4539,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-qemu-enforcing
           path: |-
@@ -4555,7 +4555,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/qemu-race') || contains(fromJSON(needs.default.outputs.labels), 'integration/qemu') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/qemu-race') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/qemu') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     needs:
       - default
       - integration-build-enforcing
@@ -4633,7 +4633,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-qemu-race
           path: |-
@@ -4649,7 +4649,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/reproducibility-test') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/reproducibility-test') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     needs:
       - default
     steps:
@@ -4715,7 +4715,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/trusted-boot-default') || contains(fromJSON(needs.default.outputs.labels), 'integration/trusted-boot') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/trusted-boot-default') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/trusted-boot') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     needs:
       - default
       - integration-build-enforcing
@@ -4780,7 +4780,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-trusted-boot-default
           path: |-
@@ -4796,7 +4796,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: contains(fromJSON(needs.default.outputs.labels), 'integration/trusted-boot-enforcing') || contains(fromJSON(needs.default.outputs.labels), 'integration/trusted-boot') || contains(fromJSON(needs.default.outputs.labels), 'integration/release-gate')
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/trusted-boot-enforcing') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/trusted-boot') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     needs:
       - default
       - integration-build-enforcing
@@ -4870,7 +4870,7 @@ jobs:
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # version: v7.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-trusted-boot-enforcing
           path: |-
@@ -5071,7 +5071,7 @@ jobs:
           cosign sign-blob --bundle sha256sum.txt.bundle --yes sha256sum.txt
           cosign sign-blob --bundle sha512sum.txt.bundle --yes sha512sum.txt
       - name: release
-        uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe # version: v2.6.1
+        uses: softprops/action-gh-release@b4309332981a82ec1c5618f44dd2e27cc8bfbfda # version: v3.0.0
         with:
           body_path: _out/RELEASE_NOTES.md
           draft: "true"
