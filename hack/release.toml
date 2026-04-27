@@ -156,14 +156,6 @@ This includes fields such as `.cluster.apiServer.extraArgs`.
 BREAKING: If you were relying on the resources EtcdConfigs, KubeletConfigs, ControllerManagerConfigs, SchedulerConfigs or APIServerConfigs, the protobuf format has changed from `map<string,string>` to `map<string,message>`.
 """
 
-    [notes.serviceAccountIssuer]
-        title = "Service Account Issuer configuration"
-        description = """\
-In API Server, passing extra args with `service-account-issuer` will append them after default value.
-This allows easy migration, e.g. by changing `.cluster.controlPlane.endpoint` to new value, and keeping the old value in
-`.cluster.apiServer.extraArgs["service-account-issuer"]`.
-"""
-
     [notes.negativeMaxVolumeSize]
     title = "Negative Max Volume Size"
     description = """\
@@ -305,6 +297,7 @@ for more details on how to configure NVIDIA GPU support in Talos.
         description = """\
 Talos now supports routing rules via the new `RoutingRuleConfig` machine config document.
 """
+
 
 [make_deps]
 
