@@ -15,8 +15,8 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/google/cel-go v0.28.0
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/jsimonetti/rtnetlink/v2 v2.2.1-0.20260317095713-310581b9c6ac
-	github.com/mdlayher/ethtool v0.5.1
+	github.com/jsimonetti/rtnetlink/v2 v2.2.1-0.20260409134759-acf3efafdad7
+	github.com/mdlayher/ethtool v0.6.0
 	github.com/neticdk/go-stdlib v1.0.1
 	github.com/opencontainers/runtime-spec v1.3.0
 	github.com/planetscale/vtprotobuf v0.6.1-0.20250313105119-ba97887b0a25
@@ -32,8 +32,8 @@ require (
 	go.uber.org/zap v1.27.1
 	go.yaml.in/yaml/v4 v4.0.0-rc.4
 	golang.org/x/net v0.53.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20260414002931-afd174a4e478
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260414002931-afd174a4e478
+	google.golang.org/genproto/googleapis/api v0.0.0-20260427160629-7cedc36a6bc4
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260427160629-7cedc36a6bc4
 	google.golang.org/grpc v1.80.0
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
 )
