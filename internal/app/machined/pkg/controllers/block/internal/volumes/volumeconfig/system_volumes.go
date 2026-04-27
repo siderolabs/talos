@@ -185,6 +185,7 @@ func GetOverlayVolumesTransformer(inContainer bool) func(configconfig.Config) ([
 						FileMode:     0o755,
 						UID:          0,
 						GID:          0,
+						Secure:       overlay.Secure,
 					}).WriterFunc(),
 			})
 		}

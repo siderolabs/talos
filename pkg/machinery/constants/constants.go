@@ -1350,14 +1350,19 @@ const (
 type SELinuxLabeledPath struct {
 	Path  string
 	Label string
+	// Secure applies the nosuid+nodev+noexec triplet to the overlay. Set
+	// for config-only overlays (e.g. /etc/cni, /etc/kubernetes); leave
+	// false for overlays that host plugin/helper binaries (e.g. /opt,
+	// /usr/libexec/kubernetes).
+	Secure bool
 }
 
 // Overlays is the set of paths to create overlay mounts for.
 var Overlays = []SELinuxLabeledPath{
-	{"/etc/cni", CNISELinuxLabel},
-	{KubernetesConfigBaseDir, KubernetesConfigSELinuxLabel},
-	{"/usr/libexec/kubernetes", KubeletPluginsSELinuxLabel},
-	{"/opt", OptSELinuxLabel},
+	{Path: "/etc/cni", Label: CNISELinuxLabel, Secure: true},
+	{Path: KubernetesConfigBaseDir, Label: KubernetesConfigSELinuxLabel, Secure: true},
+	{Path: "/usr/libexec/kubernetes", Label: KubeletPluginsSELinuxLabel},
+	{Path: "/opt", Label: OptSELinuxLabel},
 }
 
 // DefaultDroppedCapabilities is the default set of capabilities to drop.

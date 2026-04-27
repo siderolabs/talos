@@ -217,9 +217,9 @@ func WithDisableAccessTime() ManagerOption {
 	return WithMountAttributes(unix.MOUNT_ATTR_NOATIME)
 }
 
-// WithSecure sets MOUNT_ATTR_NOSUID and MOUNT_ATTR_NODEV.
+// WithSecure sets MOUNT_ATTR_NOSUID, MOUNT_ATTR_NODEV, and MOUNT_ATTR_NOEXEC.
 func WithSecure() ManagerOption {
-	return WithMountAttributes(unix.MOUNT_ATTR_NOSUID | unix.MOUNT_ATTR_NODEV)
+	return WithMountAttributes(unix.MOUNT_ATTR_NOSUID | unix.MOUNT_ATTR_NODEV | unix.MOUNT_ATTR_NOEXEC)
 }
 
 // WithReadOnly sets the mount as read only.

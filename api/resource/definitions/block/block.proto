@@ -173,6 +173,9 @@ message MountSpec {
   string bind_target = 9;
   // Parameters are additional filesystem mount options used when mounting the volume.
   repeated ParameterSpec parameters = 10;
+  // Secure applies MOUNT_ATTR_NOSUID|NODEV|NOEXEC to the mount. Set for
+  // config-only mounts; leave false for mounts hosting executables.
+  bool secure = 11;
 }
 
 // MountStatusSpec is the spec for MountStatus.

@@ -58,6 +58,7 @@ func NewReadOnlyOverlay(sources []string, target string, printer func(string, ..
 		WithPrinter(printer),
 		WithTarget(target),
 		WithReadOnly(),
+		WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NODEV),
 		WithFsopen("overlay", fsOptions...),
 	)
 
@@ -85,9 +86,13 @@ func NewOverlayWithBasePath(sources []string, target, basePath string, printer f
 		fsOptions = append(fsOptions, fsopen.WithStringParameter("lowerdir", sources[0]))
 	}
 
+	// Default mount attributes are NOSUID|NODEV; exec is allowed by
+	// default. Callers may add additional attributes (e.g. NOEXEC) via
+	// WithMountAttributes — flags are OR'd together regardless of order.
 	options = append(options,
 		WithTarget(target),
 		WithExtraDirs(diff, workdir),
+		WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NODEV),
 		WithFsopen("overlay", fsOptions...),
 		WithPrinter(printer),
 	)
@@ -116,6 +121,7 @@ func Squashfs(target, squashfsFile string, printer func(string, ...any)) (*Manag
 		WithTarget(target),
 		WithPrinter(printer),
 		WithReadOnly(),
+		WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NODEV),
 		WithShared(),
 		WithExtraUnmountCallbacks(func(m *Manager) {
 			dev.Detach() //nolint:errcheck
@@ -196,6 +202,7 @@ func Pseudo(printer func(string, ...any)) Managers {
 			WithPrinter(printer),
 			WithTarget("/sys"),
 			WithKeepOpenAfterMount(),
+			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_NODEV),
 			WithFsopen("sysfs"),
 		),
 	)
@@ -208,7 +215,7 @@ func PseudoLate(printer func(string, ...any)) Managers {
 			always,
 			WithPrinter(printer),
 			WithTarget("/run"),
-			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_RELATIME),
+			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_NODEV|unix.MOUNT_ATTR_RELATIME),
 			WithSelinuxLabel(constants.RunSelinuxLabel),
 			WithRecursiveUnmount(),
 			WithFsopen(
@@ -220,6 +227,7 @@ func PseudoLate(printer func(string, ...any)) Managers {
 			always,
 			WithPrinter(printer),
 			WithTarget("/system"),
+			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_NODEV|unix.MOUNT_ATTR_RELATIME),
 			WithSelinuxLabel(constants.SystemSelinuxLabel),
 			WithRecursiveUnmount(),
 			WithFsopen(
@@ -274,6 +282,7 @@ func PseudoSub(printer func(string, ...any)) Managers {
 			always,
 			WithPrinter(printer),
 			WithTarget("/sys/fs/bpf"),
+			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_NODEV|unix.MOUNT_ATTR_RELATIME),
 			WithFsopen("bpf"),
 		),
 		newManager(
@@ -308,7 +317,7 @@ func PseudoSub(printer func(string, ...any)) Managers {
 			selinux.IsEnabled,
 			WithPrinter(printer),
 			WithTarget("/sys/fs/selinux"),
-			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_RELATIME),
+			WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NOEXEC|unix.MOUNT_ATTR_NODEV|unix.MOUNT_ATTR_RELATIME),
 			WithFsopen("selinuxfs"),
 		),
 		newManager(

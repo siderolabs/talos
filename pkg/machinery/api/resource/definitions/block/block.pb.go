@@ -1092,7 +1092,10 @@ type MountSpec struct {
 	// BindTarget is an optional path on the host to bind-mount the volume onto.
 	BindTarget string `protobuf:"bytes,9,opt,name=bind_target,json=bindTarget,proto3" json:"bind_target,omitempty"`
 	// Parameters are additional filesystem mount options used when mounting the volume.
-	Parameters    []*ParameterSpec `protobuf:"bytes,10,rep,name=parameters,proto3" json:"parameters,omitempty"`
+	Parameters []*ParameterSpec `protobuf:"bytes,10,rep,name=parameters,proto3" json:"parameters,omitempty"`
+	// Secure applies MOUNT_ATTR_NOSUID|NODEV|NOEXEC to the mount. Set for
+	// config-only mounts; leave false for mounts hosting executables.
+	Secure        bool `protobuf:"varint,11,opt,name=secure,proto3" json:"secure,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1195,6 +1198,13 @@ func (x *MountSpec) GetParameters() []*ParameterSpec {
 		return x.Parameters
 	}
 	return nil
+}
+
+func (x *MountSpec) GetSecure() bool {
+	if x != nil {
+		return x.Secure
+	}
+	return false
 }
 
 // MountStatusSpec is the spec for MountStatus.
@@ -2630,7 +2640,7 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\tread_only\x18\x05 \x01(\bR\breadOnly\x12\x1a\n" +
 	"\bdetached\x18\x06 \x01(\bR\bdetached\x12.\n" +
 	"\x13disable_access_time\x18\a \x01(\bR\x11disableAccessTime\x12\x16\n" +
-	"\x06secure\x18\b \x01(\bR\x06secure\"\x82\x03\n" +
+	"\x06secure\x18\b \x01(\bR\x06secure\"\x9a\x03\n" +
 	"\tMountSpec\x12\x1f\n" +
 	"\vtarget_path\x18\x01 \x01(\tR\n" +
 	"targetPath\x12#\n" +
@@ -2646,7 +2656,8 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\n" +
 	"parameters\x18\n" +
 	" \x03(\v2/.talos.resource.definitions.block.ParameterSpecR\n" +
-	"parameters\"\xbd\x03\n" +
+	"parameters\x12\x16\n" +
+	"\x06secure\x18\v \x01(\bR\x06secure\"\xbd\x03\n" +
 	"\x0fMountStatusSpec\x12F\n" +
 	"\x04spec\x18\x01 \x01(\v22.talos.resource.definitions.block.MountRequestSpecR\x04spec\x12\x16\n" +
 	"\x06target\x18\x02 \x01(\tR\x06target\x12\x16\n" +

@@ -1,6 +1,9 @@
 (type dashboard_t)
 (call service_p (dashboard_t init_exec_t))
 
+; init_exec_t lives on rootfs squashfs (NOSUID); init_t launches dashboard.
+(allow init_t dashboard_t (process2 (nosuid_transition)))
+
 ; TTY
 (allow dashboard_t device_t (fs_classes (rw)))
 ; machine ID and similar

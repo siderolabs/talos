@@ -748,11 +748,19 @@ func (ctrl *MountController) handleOverlayMountOperation(
 		return fmt.Errorf("overlay mount is not supported for %q", volumeStatus.TypedSpec().ParentID)
 	}
 
+	overlayOpts := []mount.ManagerOption{
+		mount.WithSelinuxLabel(volumeStatus.TypedSpec().MountSpec.SelinuxLabel),
+	}
+
+	if volumeStatus.TypedSpec().MountSpec.Secure {
+		overlayOpts = append(overlayOpts, mount.WithSecure())
+	}
+
 	manager := mount.NewVarOverlay(
 		[]string{mountTarget},
 		mountTarget,
 		logger.Sugar().Infof,
-		mount.WithSelinuxLabel(volumeStatus.TypedSpec().MountSpec.SelinuxLabel),
+		overlayOpts...,
 	)
 
 	mountpoint, err := manager.Mount()

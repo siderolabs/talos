@@ -6329,6 +6329,7 @@ MountSpec is the spec for volume mount.
 | recursive_relabel | [bool](#bool) |  | RecursiveRelabel is the recursive relabel/chown flag for the mount target. |
 | bind_target | [string](#string) |  | BindTarget is an optional path on the host to bind-mount the volume onto. |
 | parameters | [ParameterSpec](#talos.resource.definitions.block.ParameterSpec) | repeated | Parameters are additional filesystem mount options used when mounting the volume. |
+| secure | [bool](#bool) |  | Secure applies MOUNT_ATTR_NOSUID|NODEV|NOEXEC to the mount. Set for config-only mounts; leave false for mounts hosting executables. |
 
 
 

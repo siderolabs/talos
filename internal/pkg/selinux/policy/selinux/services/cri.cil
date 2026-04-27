@@ -27,6 +27,9 @@
 (allow pod_containerd_t pod_p (process2 (nnp_transition nosuid_transition)))
 (allow pod_containerd_t pod_p (process (transition)))
 
+; containerd_exec_t lives on rootfs squashfs (NOSUID); init_t launches CRI.
+(allow init_t pod_containerd_t (process2 (nosuid_transition)))
+
 ; Containerd storage
 (allow pod_containerd_t containerd_state_t (fs_classes (rw)))
 (allow pod_containerd_t containerd_state_t (file (entrypoint execute execute_no_trans)))

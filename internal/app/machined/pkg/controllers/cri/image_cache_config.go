@@ -384,6 +384,9 @@ func (ctrl *ImageCacheConfigController) analyzeImageCacheVolumes(ctx context.Con
 				mountRequest.TypedSpec().Requester = ctrl.Name()
 				mountRequest.TypedSpec().VolumeID = volumeID
 				mountRequest.TypedSpec().ReadOnly = !(volumeStatus.Metadata().ID() == VolumeImageCacheDISK && isoPresent)
+				// Image cache stores OCI image data only; Secure applies
+				// nosuid+nodev+noexec.
+				mountRequest.TypedSpec().Secure = true
 
 				return nil
 			},

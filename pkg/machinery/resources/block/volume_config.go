@@ -250,6 +250,9 @@ type MountSpec struct {
 	BindTarget *string `yaml:"bindTarget,omitempty" protobuf:"9"`
 	// Parameters are additional filesystem mount options used when mounting the volume.
 	Parameters []ParameterSpec `yaml:"parameters,omitempty" protobuf:"10"`
+	// Secure applies MOUNT_ATTR_NOSUID|NODEV|NOEXEC to the mount. Set for
+	// config-only mounts; leave false for mounts hosting executables.
+	Secure bool `yaml:"secure,omitempty" protobuf:"11"`
 }
 
 // SymlinkProvisioningSpec is the spec for volume symlink.

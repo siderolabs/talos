@@ -1456,11 +1456,13 @@ func MountEphemeralPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, 
 		mountRequest := blockres.NewVolumeMountRequest(blockres.NamespaceName, constants.EphemeralPartitionLabel)
 		mountRequest.TypedSpec().VolumeID = constants.EphemeralPartitionLabel
 		mountRequest.TypedSpec().Requester = "sequencer"
-
-		if cfg := r.Config(); cfg != nil {
-			vol, _ := cfg.Volumes().ByName(constants.EphemeralPartitionLabel)
-			mountRequest.TypedSpec().Secure = vol.Mount().Secure()
-		}
+		// /var hosts state only — containerd extracts layers there but
+		// container exec resolves through the overlay rootfs at
+		// /run/containerd/.../rootfs which is a separate mount with its
+		// own flags. Per-mount-flag rule means flags on /var don't
+		// propagate to overlay or bind children. Secure applies the full
+		// nosuid+nodev+noexec triplet.
+		mountRequest.TypedSpec().Secure = true
 
 		if err := r.State().V1Alpha2().Resources().Create(ctx, mountRequest); err != nil {
 			return fmt.Errorf("failed to create EPHEMERAL mount request: %w", err)
