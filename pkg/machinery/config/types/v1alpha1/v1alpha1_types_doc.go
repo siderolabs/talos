@@ -1130,6 +1130,13 @@ func (ControlPlaneConfig) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
+				Name:        "endpointIsDefaultIssuer",
+				Type:        "bool",
+				Note:        "",
+				Description: "EndpointIsDefaultIssuer indicates whether the control plane endpoint should be used as the default issuer for service account tokens.\nIf true, the API server will use the control plane endpoint as the issuer in the service account token issuer discovery document and in the `iss` claim of issued tokens.\nAll values passed to `service-account-issuer` will be appended to the issuer list, and the control plane endpoint will be used as the default if no `service-account-issuer` is specified.\nIf false, the control plane endpoint will be used as the default issuer only if no `service-account-issuer` values are specified.\nAll values passed to `service-account-issuer` will be prepended before the control plane endpoint in the issuer list.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "EndpointIsDefaultIssuer indicates whether the control plane endpoint should be used as the default issuer for service account tokens." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "localAPIServerPort",
 				Type:        "int",
 				Note:        "",

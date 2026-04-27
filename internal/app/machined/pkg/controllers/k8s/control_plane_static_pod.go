@@ -410,6 +410,11 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 
 	handleKubeAPIServerAuthorizationFlags(k8sVersion, builder, extraArgs)
 
+	var serviceAccountIssuerPolicy argsbuilder.MergePolicy = argsbuilder.MergePrepend
+	if cfg.EndpointIsDefaultIssuer {
+		serviceAccountIssuerPolicy = argsbuilder.MergeAppend
+	}
+
 	mergePolicies := argsbuilder.MergePolicies{
 		"enable-admission-plugins": argsbuilder.MergeAdditive,
 		"feature-gates":            argsbuilder.MergeAdditive,
@@ -426,7 +431,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 		"etcd-keyfile":                     argsbuilder.MergeDenied,
 		"kubelet-client-certificate":       argsbuilder.MergeDenied,
 		"kubelet-client-key":               argsbuilder.MergeDenied,
-		"service-account-issuer":           argsbuilder.MergeAppend,
+		"service-account-issuer":           serviceAccountIssuerPolicy,
 		"service-account-key-file":         argsbuilder.MergeDenied,
 		"service-account-signing-key-file": argsbuilder.MergeDenied,
 		"tls-cert-file":                    argsbuilder.MergeDenied,

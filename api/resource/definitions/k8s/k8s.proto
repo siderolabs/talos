@@ -22,6 +22,7 @@ message APIServerConfigSpec {
   string advertised_address = 11;
   Resources resources = 12;
   map<string, ArgValues> extra_args = 13;
+  bool endpoint_is_default_issuer = 14;
 }
 
 // AdmissionControlConfigSpec is configuration for kube-apiserver.

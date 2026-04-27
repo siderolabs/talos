@@ -1209,6 +1209,7 @@ endpoint: https://1.2.3.4:6443
 {{< /highlight >}}{{< highlight yaml >}}
 endpoint: https://cluster1.internal:6443
 {{< /highlight >}}</details> | |
+|`endpointIsDefaultIssuer` |bool |EndpointIsDefaultIssuer indicates whether the control plane endpoint should be used as the default issuer for service account tokens.<br>If true, the API server will use the control plane endpoint as the issuer in the service account token issuer discovery document and in the `iss` claim of issued tokens.<br>All values passed to `service-account-issuer` will be appended to the issuer list, and the control plane endpoint will be used as the default if no `service-account-issuer` is specified.<br>If false, the control plane endpoint will be used as the default issuer only if no `service-account-issuer` values are specified.<br>All values passed to `service-account-issuer` will be prepended before the control plane endpoint in the issuer list.  | |
 |`localAPIServerPort` |int |The port that the API server listens on internally.<br>This may be different than the port portion listed in the endpoint field above.<br>The default is `6443`.  | |
 
 

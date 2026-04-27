@@ -25,6 +25,7 @@ type ClusterConfig interface {
 	Proxy() Proxy
 	Scheduler() Scheduler
 	Endpoint() *url.URL
+	EndpointIsDefaultIssuer() bool
 	Token() Token
 	CertSANs() []string
 	IssuingCA() *x509.PEMEncodedCertificateAndKey

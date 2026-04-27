@@ -55,6 +55,16 @@ func (m *APIServerConfigSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.EndpointIsDefaultIssuer {
+		i--
+		if m.EndpointIsDefaultIssuer {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x70
+	}
 	if len(m.ExtraArgs) > 0 {
 		for k := range m.ExtraArgs {
 			v := m.ExtraArgs[k]
@@ -2642,6 +2652,9 @@ func (m *APIServerConfigSpec) SizeVT() (n int) {
 			n += mapEntrySize + 1 + protohelpers.SizeOfVarint(uint64(mapEntrySize))
 		}
 	}
+	if m.EndpointIsDefaultIssuer {
+		n += 2
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -4156,6 +4169,26 @@ func (m *APIServerConfigSpec) UnmarshalVT(dAtA []byte) error {
 			}
 			m.ExtraArgs[mapkey] = mapvalue
 			iNdEx = postIndex
+		case 14:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field EndpointIsDefaultIssuer", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.EndpointIsDefaultIssuer = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

@@ -194,17 +194,18 @@ func NewControlPlaneAPIServerController() *ControlPlaneAPIServerController {
 				}
 
 				*res.TypedSpec() = k8s.APIServerConfigSpec{
-					Image:                cfgProvider.Cluster().APIServer().Image(),
-					CloudProvider:        cloudProvider,
-					ControlPlaneEndpoint: cfgProvider.Cluster().Endpoint().String(),
-					EtcdServers:          []string{fmt.Sprintf("https://%s", nethelpers.JoinHostPort("127.0.0.1", constants.EtcdClientPort))},
-					LocalPort:            cfgProvider.Cluster().LocalAPIServerPort(),
-					ServiceCIDRs:         cfgProvider.Cluster().Network().ServiceCIDRs(),
-					ExtraArgs:            extraArgs,
-					ExtraVolumes:         convertVolumes(cfgProvider.Cluster().APIServer().ExtraVolumes()),
-					EnvironmentVariables: cfgProvider.Cluster().APIServer().Env(),
-					AdvertisedAddress:    advertisedAddress,
-					Resources:            convertResources(cfgProvider.Cluster().APIServer().Resources()),
+					Image:                   cfgProvider.Cluster().APIServer().Image(),
+					CloudProvider:           cloudProvider,
+					ControlPlaneEndpoint:    cfgProvider.Cluster().Endpoint().String(),
+					EndpointIsDefaultIssuer: cfgProvider.Cluster().EndpointIsDefaultIssuer(),
+					EtcdServers:             []string{fmt.Sprintf("https://%s", nethelpers.JoinHostPort("127.0.0.1", constants.EtcdClientPort))},
+					LocalPort:               cfgProvider.Cluster().LocalAPIServerPort(),
+					ServiceCIDRs:            cfgProvider.Cluster().Network().ServiceCIDRs(),
+					ExtraArgs:               extraArgs,
+					ExtraVolumes:            convertVolumes(cfgProvider.Cluster().APIServer().ExtraVolumes()),
+					EnvironmentVariables:    cfgProvider.Cluster().APIServer().Env(),
+					AdvertisedAddress:       advertisedAddress,
+					Resources:               convertResources(cfgProvider.Cluster().APIServer().Resources()),
 				}
 
 				return nil

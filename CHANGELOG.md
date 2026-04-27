@@ -163,7 +163,7 @@ Previously a smart merge was performed to keep IPv4/IPv6 nameservers from lower 
 
 ### Service Account Issuer configuration
 
-In API Server, passing extra args with `service-account-issuer` will append them after default value.
+In API Server, passing extra args with `service-account-issuer` will prepend them before default value.
 This allows easy migration, e.g. by changing `.cluster.controlPlane.endpoint` to new value, and keeping the old value in
 `.cluster.apiServer.extraArgs["service-account-issuer"]`.
 

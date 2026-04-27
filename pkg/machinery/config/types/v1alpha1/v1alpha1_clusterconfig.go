@@ -68,6 +68,15 @@ func (c *ClusterConfig) Endpoint() *url.URL {
 	return c.ControlPlane.Endpoint.URL
 }
 
+// EndpointIsDefaultIssuer implements the config.ClusterConfig interface.
+func (c *ClusterConfig) EndpointIsDefaultIssuer() bool {
+	if c.ControlPlane == nil {
+		return false
+	}
+
+	return c.ControlPlane.EndpointIsDefaultIssuer
+}
+
 // Token implements the config.ClusterConfig interface.
 func (c *ClusterConfig) Token() config.Token {
 	return clusterToken(c.BootstrapToken)

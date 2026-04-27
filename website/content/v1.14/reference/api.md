@@ -7456,6 +7456,7 @@ APIServerConfigSpec is configuration for kube-apiserver.
 | advertised_address | [string](#string) |  |  |
 | resources | [Resources](#talos.resource.definitions.k8s.Resources) |  |  |
 | extra_args | [APIServerConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.APIServerConfigSpec.ExtraArgsEntry) | repeated |  |
+| endpoint_is_default_issuer | [bool](#bool) |  |  |
 
 
 

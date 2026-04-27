@@ -28,20 +28,21 @@ const (
 
 // APIServerConfigSpec is configuration for kube-apiserver.
 type APIServerConfigSpec struct {
-	state                protoimpl.MessageState `protogen:"open.v1"`
-	Image                string                 `protobuf:"bytes,1,opt,name=image,proto3" json:"image,omitempty"`
-	CloudProvider        string                 `protobuf:"bytes,2,opt,name=cloud_provider,json=cloudProvider,proto3" json:"cloud_provider,omitempty"`
-	ControlPlaneEndpoint string                 `protobuf:"bytes,3,opt,name=control_plane_endpoint,json=controlPlaneEndpoint,proto3" json:"control_plane_endpoint,omitempty"`
-	EtcdServers          []string               `protobuf:"bytes,4,rep,name=etcd_servers,json=etcdServers,proto3" json:"etcd_servers,omitempty"`
-	LocalPort            int64                  `protobuf:"varint,5,opt,name=local_port,json=localPort,proto3" json:"local_port,omitempty"`
-	ServiceCidRs         []string               `protobuf:"bytes,6,rep,name=service_cid_rs,json=serviceCidRs,proto3" json:"service_cid_rs,omitempty"`
-	ExtraVolumes         []*ExtraVolume         `protobuf:"bytes,8,rep,name=extra_volumes,json=extraVolumes,proto3" json:"extra_volumes,omitempty"`
-	EnvironmentVariables map[string]string      `protobuf:"bytes,9,rep,name=environment_variables,json=environmentVariables,proto3" json:"environment_variables,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	AdvertisedAddress    string                 `protobuf:"bytes,11,opt,name=advertised_address,json=advertisedAddress,proto3" json:"advertised_address,omitempty"`
-	Resources            *Resources             `protobuf:"bytes,12,opt,name=resources,proto3" json:"resources,omitempty"`
-	ExtraArgs            map[string]*ArgValues  `protobuf:"bytes,13,rep,name=extra_args,json=extraArgs,proto3" json:"extra_args,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	state                   protoimpl.MessageState `protogen:"open.v1"`
+	Image                   string                 `protobuf:"bytes,1,opt,name=image,proto3" json:"image,omitempty"`
+	CloudProvider           string                 `protobuf:"bytes,2,opt,name=cloud_provider,json=cloudProvider,proto3" json:"cloud_provider,omitempty"`
+	ControlPlaneEndpoint    string                 `protobuf:"bytes,3,opt,name=control_plane_endpoint,json=controlPlaneEndpoint,proto3" json:"control_plane_endpoint,omitempty"`
+	EtcdServers             []string               `protobuf:"bytes,4,rep,name=etcd_servers,json=etcdServers,proto3" json:"etcd_servers,omitempty"`
+	LocalPort               int64                  `protobuf:"varint,5,opt,name=local_port,json=localPort,proto3" json:"local_port,omitempty"`
+	ServiceCidRs            []string               `protobuf:"bytes,6,rep,name=service_cid_rs,json=serviceCidRs,proto3" json:"service_cid_rs,omitempty"`
+	ExtraVolumes            []*ExtraVolume         `protobuf:"bytes,8,rep,name=extra_volumes,json=extraVolumes,proto3" json:"extra_volumes,omitempty"`
+	EnvironmentVariables    map[string]string      `protobuf:"bytes,9,rep,name=environment_variables,json=environmentVariables,proto3" json:"environment_variables,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	AdvertisedAddress       string                 `protobuf:"bytes,11,opt,name=advertised_address,json=advertisedAddress,proto3" json:"advertised_address,omitempty"`
+	Resources               *Resources             `protobuf:"bytes,12,opt,name=resources,proto3" json:"resources,omitempty"`
+	ExtraArgs               map[string]*ArgValues  `protobuf:"bytes,13,rep,name=extra_args,json=extraArgs,proto3" json:"extra_args,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	EndpointIsDefaultIssuer bool                   `protobuf:"varint,14,opt,name=endpoint_is_default_issuer,json=endpointIsDefaultIssuer,proto3" json:"endpoint_is_default_issuer,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
 }
 
 func (x *APIServerConfigSpec) Reset() {
@@ -149,6 +150,13 @@ func (x *APIServerConfigSpec) GetExtraArgs() map[string]*ArgValues {
 		return x.ExtraArgs
 	}
 	return nil
+}
+
+func (x *APIServerConfigSpec) GetEndpointIsDefaultIssuer() bool {
+	if x != nil {
+		return x.EndpointIsDefaultIssuer
+	}
+	return false
 }
 
 // AdmissionControlConfigSpec is configuration for kube-apiserver.
@@ -2434,7 +2442,7 @@ var File_resource_definitions_k8s_k8s_proto protoreflect.FileDescriptor
 
 const file_resource_definitions_k8s_k8s_proto_rawDesc = "" +
 	"\n" +
-	"\"resource/definitions/k8s/k8s.proto\x12\x1etalos.resource.definitions.k8s\x1a\x13common/common.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a&resource/definitions/proto/proto.proto\"\xd4\x06\n" +
+	"\"resource/definitions/k8s/k8s.proto\x12\x1etalos.resource.definitions.k8s\x1a\x13common/common.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a&resource/definitions/proto/proto.proto\"\x91\a\n" +
 	"\x13APIServerConfigSpec\x12\x14\n" +
 	"\x05image\x18\x01 \x01(\tR\x05image\x12%\n" +
 	"\x0ecloud_provider\x18\x02 \x01(\tR\rcloudProvider\x124\n" +
@@ -2448,7 +2456,8 @@ const file_resource_definitions_k8s_k8s_proto_rawDesc = "" +
 	"\x12advertised_address\x18\v \x01(\tR\x11advertisedAddress\x12G\n" +
 	"\tresources\x18\f \x01(\v2).talos.resource.definitions.k8s.ResourcesR\tresources\x12a\n" +
 	"\n" +
-	"extra_args\x18\r \x03(\v2B.talos.resource.definitions.k8s.APIServerConfigSpec.ExtraArgsEntryR\textraArgs\x1aG\n" +
+	"extra_args\x18\r \x03(\v2B.talos.resource.definitions.k8s.APIServerConfigSpec.ExtraArgsEntryR\textraArgs\x12;\n" +
+	"\x1aendpoint_is_default_issuer\x18\x0e \x01(\bR\x17endpointIsDefaultIssuer\x1aG\n" +
 	"\x19EnvironmentVariablesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1ag\n" +
