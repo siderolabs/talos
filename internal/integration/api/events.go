@@ -47,10 +47,10 @@ func (suite *EventsSuite) TearDownTest() {
 
 // TestEventsWatch verifies events watch API.
 func (suite *EventsSuite) TestEventsWatch() {
-	receiveEvents := func(opts ...client.EventsOptionFunc) []client.Event {
+	receiveEvents := func(atLeast int, timeout time.Duration, opts ...client.EventsOptionFunc) []client.Event {
 		var result []client.Event
 
-		watchCtx, watchCtxCancel := context.WithCancel(suite.nodeCtx)
+		watchCtx, watchCtxCancel := context.WithTimeout(suite.nodeCtx, timeout)
 		defer watchCtxCancel()
 
 		suite.Assert().NoError(
@@ -58,18 +58,10 @@ func (suite *EventsSuite) TestEventsWatch() {
 				watchCtx, func(ch <-chan client.Event) {
 					defer watchCtxCancel()
 
-					timer := time.NewTimer(500 * time.Millisecond)
-					defer timer.Stop()
+					for event := range ch {
+						result = append(result, event)
 
-					for {
-						select {
-						case event, ok := <-ch:
-							if !ok {
-								return
-							}
-
-							result = append(result, event)
-						case <-timer.C:
+						if atLeast > 0 && len(result) >= atLeast {
 							return
 						}
 					}
@@ -80,17 +72,17 @@ func (suite *EventsSuite) TestEventsWatch() {
 		return result
 	}
 
-	allEvents := receiveEvents(client.WithTailEvents(-1))
+	allEvents := receiveEvents(21, 5*time.Second, client.WithTailEvents(-1))
 	suite.Require().Greater(len(allEvents), 20)
 
-	suite.Assert().Len(receiveEvents(), 0)
-	suite.Assert().Len(receiveEvents(client.WithTailEvents(5)), 5)
-	suite.Assert().Len(receiveEvents(client.WithTailEvents(20)), 20)
+	suite.Assert().Len(receiveEvents(0, 500*time.Millisecond), 0)
+	suite.Assert().Len(receiveEvents(5, 5*time.Second, client.WithTailEvents(5)), 5)
+	suite.Assert().Len(receiveEvents(20, 5*time.Second, client.WithTailEvents(20)), 20)
 
 	// pick some ID of 15th event in the past; API should return at least 14 events
 	// (as check excludes that event with picked ID)
 	id := allEvents[len(allEvents)-15].ID
-	eventsSinceID := receiveEvents(client.WithTailID(id))
+	eventsSinceID := receiveEvents(14, 5*time.Second, client.WithTailID(id))
 	suite.Require().GreaterOrEqual(
 		len(eventsSinceID),
 		14,
