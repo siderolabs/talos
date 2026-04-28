@@ -534,6 +534,7 @@ description: Talos gRPC API reference.
     - [EthernetSpecSpec](#talos.resource.definitions.network.EthernetSpecSpec)
     - [EthernetSpecSpec.FeaturesEntry](#talos.resource.definitions.network.EthernetSpecSpec.FeaturesEntry)
     - [EthernetStatusSpec](#talos.resource.definitions.network.EthernetStatusSpec)
+    - [HTTPProbeSpec](#talos.resource.definitions.network.HTTPProbeSpec)
     - [HardwareAddrSpec](#talos.resource.definitions.network.HardwareAddrSpec)
     - [HostDNSConfigSpec](#talos.resource.definitions.network.HostDNSConfigSpec)
     - [HostnameSpecSpec](#talos.resource.definitions.network.HostnameSpecSpec)
@@ -9373,6 +9374,22 @@ EthernetStatusSpec describes status of rendered secrets.
 
 
 
+<a name="talos.resource.definitions.network.HTTPProbeSpec"></a>
+
+### HTTPProbeSpec
+HTTPProbeSpec describes the HTTP Probe.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| url | [common.URL](#common.URL) |  | URL to probe: http:// or https:// URL. |
+| timeout | [google.protobuf.Duration](#google.protobuf.Duration) |  | Timeout for the probe. |
+
+
+
+
+
+
 <a name="talos.resource.definitions.network.HardwareAddrSpec"></a>
 
 ### HardwareAddrSpec
@@ -9870,8 +9887,9 @@ ProbeSpecSpec describes the Probe.
 | ----- | ---- | ----- | ----------- |
 | interval | [google.protobuf.Duration](#google.protobuf.Duration) |  | Interval between the probes. |
 | failure_threshold | [int64](#int64) |  | FailureThreshold is the number of consecutive failures for the probe to be considered failed after having succeeded. |
-| tcp | [TCPProbeSpec](#talos.resource.definitions.network.TCPProbeSpec) |  | One of the probe types should be specified, for now it's only TCP. |
+| tcp | [TCPProbeSpec](#talos.resource.definitions.network.TCPProbeSpec) |  | TCP is the TCP probe spec. One of TCP or HTTP must be specified. |
 | config_layer | [talos.resource.definitions.enums.NetworkConfigLayer](#talos.resource.definitions.enums.NetworkConfigLayer) |  | Configuration layer. |
+| http | [HTTPProbeSpec](#talos.resource.definitions.network.HTTPProbeSpec) |  | HTTP is the HTTP probe spec. One of TCP or HTTP must be specified. |
 
 
 

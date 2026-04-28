@@ -8,14 +8,17 @@ package api
 
 import (
 	"context"
+	"net/url"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/siderolabs/gen/ensure"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	networkres "github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
@@ -51,7 +54,7 @@ func (suite *ProbeConfigSuite) TearDownTest() {
 }
 
 // TestProbeConfig tests that ProbeConfig documents create ProbeSpec resources.
-func (suite *ProbeConfigSuite) TestProbeConfig() {
+func (suite *ProbeConfigSuite) TestProbeConfig() { //nolint:dupl
 	node := suite.RandomDiscoveredNodeInternalIP()
 	nodeCtx := client.WithNode(suite.ctx, node)
 
@@ -67,6 +70,7 @@ func (suite *ProbeConfigSuite) TestProbeConfig() {
 	suite.PatchMachineConfig(nodeCtx, probeConfig)
 
 	// Wait for ProbeSpec resource to be created
+	//nolint:dupl
 	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, "tcp:"+googleDNS,
 		func(spec *networkres.ProbeSpec, asrt *assert.Assertions) {
 			asrt.Equal(2*time.Second, spec.TypedSpec().Interval)
@@ -193,6 +197,51 @@ func (suite *ProbeConfigSuite) TestProbeStatus() {
 	// Clean up
 	suite.RemoveMachineConfigDocuments(nodeCtx, network.TCPProbeKind)
 	rtestutils.AssertNoResource[*networkres.ProbeSpec](nodeCtx, suite.T(), suite.Client.COSI, "tcp:"+googleDNS)
+}
+
+// TestHTTPProbeConfig tests that HTTPProbeConfig documents create ProbeSpec resources.
+func (suite *ProbeConfigSuite) TestHTTPProbeConfig() { //nolint:dupl
+	node := suite.RandomDiscoveredNodeInternalIP()
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	suite.T().Logf("testing HTTPProbeConfig on node %q", node)
+
+	const probeURL = "https://example.com"
+
+	probeConfig := network.NewHTTPProbeConfigV1Alpha1("http-test-probe")
+	probeConfig.ProbeInterval = 2 * time.Second
+	probeConfig.ProbeFailureThreshold = 3
+	probeConfig.HTTPEndpoint = meta.URL{URL: ensure.Value(url.Parse(probeURL))}
+	probeConfig.HTTPTimeout = 5 * time.Second
+
+	suite.PatchMachineConfig(nodeCtx, probeConfig)
+
+	// Wait for ProbeSpec resource to be created
+	//nolint:dupl
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, "http:"+probeURL,
+		func(spec *networkres.ProbeSpec, asrt *assert.Assertions) {
+			asrt.Equal(2*time.Second, spec.TypedSpec().Interval)
+			asrt.Equal(3, spec.TypedSpec().FailureThreshold)
+			asrt.Equal(probeURL, spec.TypedSpec().HTTP.URL.String())
+			asrt.Equal(5*time.Second, spec.TypedSpec().HTTP.Timeout)
+			asrt.Equal(networkres.ConfigMachineConfiguration, spec.TypedSpec().ConfigLayer)
+		},
+	)
+
+	// Update the probe config
+	probeConfig.ProbeFailureThreshold = 5
+	suite.PatchMachineConfig(nodeCtx, probeConfig)
+
+	rtestutils.AssertResource(nodeCtx, suite.T(), suite.Client.COSI, "http:"+probeURL,
+		func(spec *networkres.ProbeSpec, asrt *assert.Assertions) {
+			asrt.Equal(5, spec.TypedSpec().FailureThreshold)
+		},
+	)
+
+	// Remove the ProbeConfig
+	suite.RemoveMachineConfigDocuments(nodeCtx, network.HTTPProbeKind)
+
+	rtestutils.AssertNoResource[*networkres.ProbeSpec](nodeCtx, suite.T(), suite.Client.COSI, "http:"+probeURL)
 }
 
 func init() {

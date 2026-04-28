@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"sync/atomic"
 	"testing"
 	"testing/synctest"
 	"time"
@@ -20,6 +21,18 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/internal/probe"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
+
+type swapHandler struct {
+	v atomic.Value // stores http.Handler
+}
+
+func (h *swapHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.v.Load().(http.Handler).ServeHTTP(w, r)
+}
+
+func (h *swapHandler) Swap(newHandler http.Handler) {
+	h.v.Store(newHandler)
+}
 
 func TestProbeHTTP(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -150,4 +163,76 @@ func TestProbeConsecutiveFailures(t *testing.T) {
 		assert.Equal(t, "consecutive-failures", notify.ID)
 		assert.False(t, notify.Status.Success)
 	})
+}
+
+func TestProbeHTTPProbe(t *testing.T) {
+	// Server returns 200 OK.
+	handler := &swapHandler{}
+	handler.Swap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	server := httptest.NewServer(handler)
+	t.Cleanup(server.Close)
+
+	probeURL, err := url.Parse(server.URL)
+	require.NoError(t, err)
+
+	p := probe.Runner{
+		ID: "http-test",
+		Spec: network.ProbeSpecSpec{
+			Interval: 10 * time.Millisecond,
+			HTTP: network.HTTPProbeSpec{
+				URL:     probeURL,
+				Timeout: time.Second,
+			},
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	t.Cleanup(cancel)
+
+	notifyCh := make(chan probe.Notification)
+
+	p.Start(ctx, notifyCh, zaptest.NewLogger(t))
+	t.Cleanup(p.Stop)
+
+	// probe should succeed — 2xx/3xx responses count as success
+	for range 3 {
+		assert.Equal(t, probe.Notification{
+			ID: "http-test",
+			Status: network.ProbeStatusSpec{
+				Success: true,
+			},
+		}, <-notifyCh)
+	}
+
+	// 4xx/5xx responses count as failure
+	handler.Swap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}))
+
+	for range 3 {
+		notification := <-notifyCh
+		assert.Equal(t, "http-test", notification.ID)
+		assert.False(t, notification.Status.Success)
+		assert.NotEmpty(t, notification.Status.LastError)
+	}
+
+	// stop the server — now the probe should fail
+	server.Close()
+
+	for {
+		notification := <-notifyCh
+
+		if notification.Status.Success {
+			continue
+		}
+
+		assert.Equal(t, "http-test", notification.ID)
+		assert.False(t, notification.Status.Success)
+		assert.NotEmpty(t, notification.Status.LastError)
+
+		break
+	}
 }

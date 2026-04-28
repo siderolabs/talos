@@ -997,6 +997,53 @@ func (HostnameConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (HTTPProbeConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "HTTPProbeConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "HTTPProbeConfig is a config document to configure network HTTP connectivity probes." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "HTTPProbeConfig is a config document to configure network HTTP connectivity probes.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the probe.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the probe." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Type:   "CommonProbeConfig",
+				Inline: true,
+			},
+			{
+				Name:        "url",
+				Type:        "URL",
+				Note:        "",
+				Description: "HTTP or HTTPS URL to probe. The probe succeeds if the server responds with a 2xx or 3xx status code.\nProbe does not follow redirects.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "HTTP or HTTPS URL to probe. The probe succeeds if the server responds with a 2xx or 3xx status code." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "timeout",
+				Type:        "Duration",
+				Note:        "",
+				Description: "Timeout for the probe.\nDefaults to 10s.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Timeout for the probe." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleHTTPProbeConfigV1Alpha1())
+
+	doc.Fields[1].AddExample("", "http-check")
+	doc.Fields[3].AddExample("", "https://example.com")
+	doc.Fields[4].AddExample("", 10*time.Second)
+
+	return doc
+}
+
 func (KubeSpanConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "KubeSpanConfig",
@@ -1865,6 +1912,10 @@ func (CommonProbeConfig) Doc() *encoder.Doc {
 		Description: "CommonProbeConfig holds fields common to all probe types.",
 		AppearsIn: []encoder.Appearance{
 			{
+				TypeName:  "HTTPProbeConfigV1Alpha1",
+				FieldName: "",
+			},
+			{
 				TypeName:  "TCPProbeConfigV1Alpha1",
 				FieldName: "",
 			},
@@ -2190,6 +2241,7 @@ func GetFileDoc() *encoder.FileDoc {
 			EthernetChannelsConfig{}.Doc(),
 			HCloudVIPConfigV1Alpha1{}.Doc(),
 			HostnameConfigV1Alpha1{}.Doc(),
+			HTTPProbeConfigV1Alpha1{}.Doc(),
 			KubeSpanConfigV1Alpha1{}.Doc(),
 			KubeSpanFiltersConfig{}.Doc(),
 			KubespanEndpointsConfigV1Alpha1{}.Doc(),

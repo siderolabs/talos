@@ -7,6 +7,7 @@ package network
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -31,21 +32,29 @@ type ProbeSpecSpec struct {
 	Interval time.Duration `yaml:"interval" protobuf:"1"`
 	// FailureThreshold is the number of consecutive failures for the probe to be considered failed after having succeeded.
 	FailureThreshold int `yaml:"failureThreshold" protobuf:"2"`
-	// One of the probe types should be specified, for now it's only TCP.
+	// TCP is the TCP probe spec. One of TCP or HTTP must be specified.
 	TCP TCPProbeSpec `yaml:"tcp,omitempty" protobuf:"3"`
 	// Configuration layer.
 	ConfigLayer ConfigLayer `yaml:"layer" protobuf:"4"`
+	// HTTP is the HTTP probe spec. One of TCP or HTTP must be specified.
+	HTTP HTTPProbeSpec `yaml:"http,omitempty" protobuf:"5"`
 }
 
 // ID returns the ID of the resource based on the spec.
 func (spec *ProbeSpecSpec) ID() (resource.ID, error) {
 	var zeroTCP TCPProbeSpec
 
-	if spec.TCP == zeroTCP {
-		return "", errors.New("no probe type specified")
+	if spec.TCP != zeroTCP {
+		return fmt.Sprintf("tcp:%s", spec.TCP.Endpoint), nil
 	}
 
-	return fmt.Sprintf("tcp:%s", spec.TCP.Endpoint), nil
+	var zeroHTTP HTTPProbeSpec
+
+	if spec.HTTP != zeroHTTP {
+		return fmt.Sprintf("http:%s", spec.HTTP.URL.String()), nil
+	}
+
+	return "", errors.New("no probe type specified")
 }
 
 // Equal returns true if the specs are equal.
@@ -59,6 +68,16 @@ func (spec ProbeSpecSpec) Equal(other ProbeSpecSpec) bool {
 type TCPProbeSpec struct {
 	// Endpoint to probe: host:port.
 	Endpoint string `yaml:"endpoint" protobuf:"1"`
+	// Timeout for the probe.
+	Timeout time.Duration `yaml:"timeout" protobuf:"2"`
+}
+
+// HTTPProbeSpec describes the HTTP Probe.
+//
+//gotagsrewrite:gen
+type HTTPProbeSpec struct {
+	// URL to probe: http:// or https:// URL.
+	URL *url.URL `yaml:"url" protobuf:"1"`
 	// Timeout for the probe.
 	Timeout time.Duration `yaml:"timeout" protobuf:"2"`
 }

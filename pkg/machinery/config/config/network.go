@@ -11,6 +11,7 @@ import (
 	"github.com/siderolabs/gen/optional"
 
 	"github.com/siderolabs/talos/pkg/machinery/cel"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
@@ -387,4 +388,11 @@ type NetworkHostDNSConfig interface {
 	HostDNSEnabled() bool
 	ForwardKubeDNSToHost() bool
 	ResolveMemberNames() bool
+}
+
+// NetworkHTTPProbeConfig defines an HTTP probe configuration.
+type NetworkHTTPProbeConfig interface {
+	NetworkCommonProbeConfig
+	URL() meta.URL
+	Timeout() time.Duration
 }

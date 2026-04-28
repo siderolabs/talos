@@ -131,6 +131,11 @@ func (ctrl *ProbeConfigController) parseMachineConfiguration(cfg *config.Machine
 				Endpoint: probeConfig.Endpoint(),
 				Timeout:  probeConfig.Timeout(),
 			}
+		case configconfig.NetworkHTTPProbeConfig:
+			spec.HTTP = network.HTTPProbeSpec{
+				URL:     probeConfig.URL().URL,
+				Timeout: probeConfig.Timeout(),
+			}
 		default:
 			panic(fmt.Sprintf("unsupported probe config type: %T", probeConfig))
 		}

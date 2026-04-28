@@ -40,6 +40,7 @@ func TestTCPProbeConfigMarshalStability(t *testing.T) {
 	assert.Equal(t, expectedTCPProbeConfigDocument, marshaled)
 }
 
+//nolint:dupl
 func TestTCPProbeConfigUnmarshal(t *testing.T) {
 	t.Parallel()
 

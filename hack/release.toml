@@ -53,6 +53,13 @@ The default installer image has been updated to use the Image Factory.
 HostDNS configuration was moved from the v1alpha1 config `.machine.features.hostDNS` field to the new `hostDNS` in the `ResolverConfig` document.
 """
 
+    [notes.httpProbe]
+        title = "HTTP Probe Support"
+        description = """\
+Talos now supports HTTP network probes, allowing for monitoring of HTTP endpoints.
+HTTP responses with status 200-399 are considered successful, while connection and transport errors are treated as failures.
+"""
+
 [make_deps]
 
     [make_deps.tools]
