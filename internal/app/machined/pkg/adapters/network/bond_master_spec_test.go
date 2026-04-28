@@ -16,24 +16,70 @@ import (
 )
 
 func TestBondMasterSpec(t *testing.T) {
-	spec := network.BondMasterSpec{
-		Mode:      nethelpers.BondModeActiveBackup,
-		MIIMon:    100,
-		UpDelay:   200,
-		DownDelay: 300,
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+		spec network.BondMasterSpec
+	}{
+		{
+			name: "active-backup",
+			spec: network.BondMasterSpec{
+				Mode:      nethelpers.BondModeActiveBackup,
+				MIIMon:    100,
+				UpDelay:   200,
+				DownDelay: 300,
+			},
+		},
+		{
+			name: "802.3ad no lacp",
+			spec: network.BondMasterSpec{
+				Mode:      nethelpers.BondMode8023AD,
+				MIIMon:    100,
+				UpDelay:   200,
+				DownDelay: 300,
+			},
+		},
+		{
+			name: "802.3ad lacp on",
+			spec: network.BondMasterSpec{
+				Mode:         nethelpers.BondMode8023AD,
+				MIIMon:       100,
+				UpDelay:      200,
+				DownDelay:    300,
+				LACPRate:     nethelpers.LACPRateFast,
+				ADLACPActive: new(nethelpers.ADLACPActiveOn),
+			},
+		},
+		{
+			name: "802.3ad lacp off",
+			spec: network.BondMasterSpec{
+				Mode:         nethelpers.BondMode8023AD,
+				MIIMon:       100,
+				UpDelay:      200,
+				DownDelay:    300,
+				ADLACPActive: new(nethelpers.ADLACPActiveOff),
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			b, err := networkadapter.BondMasterSpec(&test.spec).Encode()
+			require.NoError(t, err)
+
+			var decodedSpec network.BondMasterSpec
+
+			require.NoError(t, networkadapter.BondMasterSpec(&decodedSpec).Decode(b))
+
+			require.Equal(t, test.spec, decodedSpec)
+		})
 	}
-
-	b, err := networkadapter.BondMasterSpec(&spec).Encode()
-	require.NoError(t, err)
-
-	var decodedSpec network.BondMasterSpec
-
-	require.NoError(t, networkadapter.BondMasterSpec(&decodedSpec).Decode(b))
-
-	require.Equal(t, spec, decodedSpec)
 }
 
 func TestBondMasterSpecDecodeClearsTargets(t *testing.T) {
+	t.Parallel()
+
 	initial := network.BondMasterSpec{
 		Mode:         nethelpers.BondModeActiveBackup,
 		ARPIPTargets: []netip.Addr{netip.MustParseAddr("198.51.100.254")},

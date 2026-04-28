@@ -465,7 +465,7 @@ func (n *Nocloud) applyNetworkConfigV1(ctx context.Context, config *NetworkConfi
 			}
 
 			if mode == nethelpers.BondMode8023AD {
-				bondLink.BondMaster.ADLACPActive = nethelpers.ADLACPActiveOn
+				bondLink.BondMaster.ADLACPActive = new(nethelpers.ADLACPActiveOn)
 			}
 
 			if ntwrk.MTU != 0 {
@@ -872,7 +872,7 @@ func (n *Nocloud) applyNetworkConfigV2(ctx context.Context, config *NetworkConfi
 		}
 
 		if mode == nethelpers.BondMode8023AD {
-			bondLink.BondMaster.ADLACPActive = nethelpers.ADLACPActiveOn
+			bondLink.BondMaster.ADLACPActive = new(nethelpers.ADLACPActiveOn)
 		}
 
 		networkadapter.BondMasterSpec(&bondLink.BondMaster).FillDefaults()

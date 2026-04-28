@@ -14,6 +14,8 @@ import (
 )
 
 func TestVRFMasterSpec(t *testing.T) {
+	t.Parallel()
+
 	spec := network.VRFMasterSpec{
 		Table: 4294967295,
 	}

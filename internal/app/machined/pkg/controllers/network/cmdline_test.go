@@ -58,7 +58,6 @@ func TestCmdlineParse(t *testing.T) {
 					TLBDynamicLB:    1,
 					UseCarrier:      true,
 					PrimaryIndex:    new(uint32(0)),
-					ADLACPActive:    nethelpers.ADLACPActiveOn,
 					MissedMax:       2,
 				},
 			},
@@ -408,7 +407,6 @@ func TestCmdlineParse(t *testing.T) {
 							TLBDynamicLB:    1,
 							UseCarrier:      true,
 							PrimaryIndex:    new(uint32(0)),
-							ADLACPActive:    nethelpers.ADLACPActiveOn,
 						},
 					},
 					{

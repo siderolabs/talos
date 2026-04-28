@@ -14,6 +14,8 @@ import (
 )
 
 func TestBridgeMasterSpec(t *testing.T) {
+	t.Parallel()
+
 	spec := network.BridgeMasterSpec{
 		STP: network.STPSpec{
 			Enabled: true,

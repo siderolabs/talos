@@ -65,10 +65,6 @@ func (a bondMaster) FillDefaults() {
 			bond.MissedMax = 2
 		}
 	}
-
-	if bond.Mode != nethelpers.BondMode8023AD {
-		bond.ADLACPActive = nethelpers.ADLACPActiveOn
-	}
 }
 
 // Encode the BondMasterSpec into netlink attributes.
@@ -84,7 +80,10 @@ func (a bondMaster) Encode() ([]byte, error) {
 
 	if bond.Mode == nethelpers.BondMode8023AD {
 		encoder.Uint8(unix.IFLA_BOND_AD_LACP_RATE, uint8(bond.LACPRate))
-		encoder.Uint8(unix.IFLA_BOND_AD_LACP_ACTIVE, uint8(bond.ADLACPActive))
+
+		if bond.ADLACPActive != nil {
+			encoder.Uint8(unix.IFLA_BOND_AD_LACP_ACTIVE, uint8(*bond.ADLACPActive))
+		}
 	}
 
 	if bond.Mode != nethelpers.BondMode8023AD && bond.Mode != nethelpers.BondModeALB && bond.Mode != nethelpers.BondModeTLB {
@@ -270,7 +269,7 @@ func (a bondMaster) Decode(data []byte) error {
 		case unix.IFLA_BOND_PEER_NOTIF_DELAY:
 			bond.PeerNotifyDelay = decoder.Uint32()
 		case unix.IFLA_BOND_AD_LACP_ACTIVE:
-			bond.ADLACPActive = nethelpers.ADLACPActive(decoder.Uint8())
+			bond.ADLACPActive = new(nethelpers.ADLACPActive(decoder.Uint8()))
 		case unix.IFLA_BOND_MISSED_MAX:
 			bond.MissedMax = decoder.Uint8()
 		}

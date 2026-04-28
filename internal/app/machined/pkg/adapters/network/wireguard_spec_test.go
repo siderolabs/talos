@@ -20,6 +20,8 @@ import (
 )
 
 func TestWireguardSpecDecode(t *testing.T) {
+	t.Parallel()
+
 	fips140.WithoutEnforcement(func() {
 		priv, err := wgtypes.GeneratePrivateKey()
 		require.NoError(t, err)
@@ -105,6 +107,8 @@ func TestWireguardSpecDecode(t *testing.T) {
 }
 
 func TestWireguardSpecDecodeStatus(t *testing.T) {
+	t.Parallel()
+
 	fips140.WithoutEnforcement(func() {
 		priv, err := wgtypes.GeneratePrivateKey()
 		require.NoError(t, err)
@@ -131,6 +135,8 @@ func TestWireguardSpecDecodeStatus(t *testing.T) {
 }
 
 func TestWireguardSpecEncode(t *testing.T) {
+	t.Parallel()
+
 	fips140.WithoutEnforcement(func() {
 		priv, err := wgtypes.GeneratePrivateKey()
 		require.NoError(t, err)
