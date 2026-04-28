@@ -228,7 +228,7 @@ type BondConfigV1Alpha1 struct {
 	//       0
 	BondADUserPortKey *uint16 `yaml:"adUserPortKey,omitempty"`
 	//   description: |
-	//     Whether to send LACPDU frames periodically.
+	//     Whether to send LACPDU frames periodically, defaults to "on" if mode is 802.3ad.
 	//   examples:
 	//    - value: >
 	//       "on"
