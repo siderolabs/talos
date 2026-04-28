@@ -8,4 +8,5 @@ package sdboot
 var (
 	FindMatchingUKIFile = findMatchingUKIFile
 	GenerateNextUKIName = generateNextUKIName
+	GenerateAssets      = (*Config).generateAssets
 )

@@ -179,6 +179,15 @@ case "${WITH_TRUSTED_BOOT_ISO:-false}" in
     ;;
 esac
 
+case "${WITH_TRUSTED_BOOT_DISK_IMAGE:-false}" in
+  false)
+    ;;
+  *)
+    INSTALLER_IMAGE=${INSTALLER_IMAGE}-amd64-secureboot
+    QEMU_FLAGS+=("--disk-image-path=_out/metal-amd64-secureboot.raw.zst" "--with-tpm2" "--encrypt-ephemeral" "--encrypt-state" "--encrypt-user-volumes" "--disk-encryption-key-types=tpm")
+    ;;
+esac
+
 case "${WITH_TPM1_2:-false}" in
   false)
     ;;

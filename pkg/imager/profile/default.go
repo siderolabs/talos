@@ -147,6 +147,18 @@ var Default = map[string]Profile{
 			},
 		},
 	},
+	"secureboot-cloudstack": {
+		Platform:   "cloudstack",
+		SecureBoot: new(true),
+		Output: Output{
+			Kind:      OutKindImage,
+			OutFormat: OutFormatZSTD,
+			ImageOptions: &ImageOptions{
+				DiskSize:   DefaultRAWDiskSize,
+				DiskFormat: DiskFormatRaw,
+			},
+		},
+	},
 	"digital-ocean": {
 		Platform:   "digital-ocean",
 		SecureBoot: new(false),
@@ -208,6 +220,18 @@ var Default = map[string]Profile{
 			},
 		},
 	},
+	"secureboot-nocloud": {
+		Platform:   "nocloud",
+		SecureBoot: new(true),
+		Output: Output{
+			Kind:      OutKindImage,
+			OutFormat: OutFormatZSTD,
+			ImageOptions: &ImageOptions{
+				DiskSize:   MinRAWDiskSize,
+				DiskFormat: DiskFormatRaw,
+			},
+		},
+	},
 	"opennebula": {
 		Platform:   "opennebula",
 		SecureBoot: new(false),
@@ -220,9 +244,33 @@ var Default = map[string]Profile{
 			},
 		},
 	},
+	"secureboot-opennebula": {
+		Platform:   "opennebula",
+		SecureBoot: new(true),
+		Output: Output{
+			Kind:      OutKindImage,
+			OutFormat: OutFormatZSTD,
+			ImageOptions: &ImageOptions{
+				DiskSize:   MinRAWDiskSize,
+				DiskFormat: DiskFormatRaw,
+			},
+		},
+	},
 	"openstack": {
 		Platform:   "openstack",
 		SecureBoot: new(false),
+		Output: Output{
+			Kind:      OutKindImage,
+			OutFormat: OutFormatZSTD,
+			ImageOptions: &ImageOptions{
+				DiskSize:   MinRAWDiskSize,
+				DiskFormat: DiskFormatRaw,
+			},
+		},
+	},
+	"secureboot-openstack": {
+		Platform:   "openstack",
+		SecureBoot: new(true),
 		Output: Output{
 			Kind:      OutKindImage,
 			OutFormat: OutFormatZSTD,
@@ -272,6 +320,18 @@ var Default = map[string]Profile{
 	"vmware": {
 		Platform:   "vmware",
 		SecureBoot: new(false),
+		Output: Output{
+			Kind:      OutKindImage,
+			OutFormat: OutFormatRaw,
+			ImageOptions: &ImageOptions{
+				DiskSize:   DefaultRAWDiskSize,
+				DiskFormat: DiskFormatOVA,
+			},
+		},
+	},
+	"secureboot-vmware": {
+		Platform:   "vmware",
+		SecureBoot: new(true),
 		Output: Output{
 			Kind:      OutKindImage,
 			OutFormat: OutFormatRaw,
