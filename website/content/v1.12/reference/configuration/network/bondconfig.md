@@ -64,7 +64,7 @@ routes:
 # # Aggregate selection policy for 802.3ad.
 # adSelect: stable
 
-# # Whether to send LACPDU frames periodically.
+# # Whether to send LACPDU frames periodically, defaults to "on" if mode is 802.3ad.
 # adLACPActive: on
 
 # # Policy under which the primary slave should be reselected.
@@ -136,7 +136,7 @@ adActorSysPrio: 65535
 |`adUserPortKey` |uint16 |User port key (upper 10 bits) for 802.3ad. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 adUserPortKey: 0
 {{< /highlight >}}</details> | |
-|`adLACPActive` |ADLACPActive |Whether to send LACPDU frames periodically. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`adLACPActive` |ADLACPActive |Whether to send LACPDU frames periodically, defaults to "on" if mode is 802.3ad. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 adLACPActive: on
 {{< /highlight >}}</details> |`on`<br />`off`<br /> |
 |`primaryReselect` |PrimaryReselect |Policy under which the primary slave should be reselected. <details><summary>Show example(s)</summary>{{< highlight yaml >}}

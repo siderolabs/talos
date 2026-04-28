@@ -39,6 +39,10 @@ func (o BondMasterSpec) DeepCopy() BondMasterSpec {
 		cp.NSIP6Targets = make([]netip.Addr, len(o.NSIP6Targets))
 		copy(cp.NSIP6Targets, o.NSIP6Targets)
 	}
+	if o.ADLACPActive != nil {
+		cp.ADLACPActive = new(nethelpers.ADLACPActive)
+		*cp.ADLACPActive = *o.ADLACPActive
+	}
 	return cp
 }
 

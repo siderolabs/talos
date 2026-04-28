@@ -20,6 +20,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/maps"
+	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/siderolabs/go-retry/retry"
 
@@ -225,7 +226,7 @@ func (p *EquinixMetal) ParseMetadata(ctx context.Context, equinixMetadata *Metad
 		}
 
 		if bondMode == nethelpers.BondMode8023AD {
-			bondLink.BondMaster.ADLACPActive = nethelpers.ADLACPActiveOn
+			bondLink.BondMaster.ADLACPActive = pointer.To(nethelpers.ADLACPActiveOn)
 		}
 
 		networkadapter.BondMasterSpec(&bondLink.BondMaster).FillDefaults()

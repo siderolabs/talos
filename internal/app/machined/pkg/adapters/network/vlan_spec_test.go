@@ -15,6 +15,8 @@ import (
 )
 
 func TestVLANSpec(t *testing.T) {
+	t.Parallel()
+
 	spec := network.VLANSpec{
 		VID:      25,
 		Protocol: nethelpers.VLANProtocol8021AD,

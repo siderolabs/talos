@@ -22,6 +22,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/maps"
+	"github.com/siderolabs/go-pointer"
 	yaml "go.yaml.in/yaml/v4"
 
 	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
@@ -465,7 +466,7 @@ func (n *Nocloud) applyNetworkConfigV1(ctx context.Context, config *NetworkConfi
 			}
 
 			if mode == nethelpers.BondMode8023AD {
-				bondLink.BondMaster.ADLACPActive = nethelpers.ADLACPActiveOn
+				bondLink.BondMaster.ADLACPActive = pointer.To(nethelpers.ADLACPActiveOn)
 			}
 
 			if ntwrk.MTU != 0 {
@@ -872,7 +873,7 @@ func (n *Nocloud) applyNetworkConfigV2(ctx context.Context, config *NetworkConfi
 		}
 
 		if mode == nethelpers.BondMode8023AD {
-			bondLink.BondMaster.ADLACPActive = nethelpers.ADLACPActiveOn
+			bondLink.BondMaster.ADLACPActive = pointer.To(nethelpers.ADLACPActiveOn)
 		}
 
 		networkadapter.BondMasterSpec(&bondLink.BondMaster).FillDefaults()

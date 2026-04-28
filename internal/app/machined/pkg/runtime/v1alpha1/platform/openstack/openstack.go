@@ -17,6 +17,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
 
 	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
@@ -133,7 +134,7 @@ func (o *OpenStack) ParseMetadata(
 		}
 
 		if mode == nethelpers.BondMode8023AD {
-			bondLink.BondMaster.ADLACPActive = nethelpers.ADLACPActiveOn
+			bondLink.BondMaster.ADLACPActive = pointer.To(nethelpers.ADLACPActiveOn)
 		}
 
 		networkadapter.BondMasterSpec(&bondLink.BondMaster).FillDefaults()
