@@ -119,6 +119,12 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 		ticker  *time.Ticker
 	)
 
+	defer func() {
+		if ticker != nil {
+			ticker.Stop()
+		}
+	}()
+
 	if ctrl.WireguardClientFactory == nil {
 		ctrl.WireguardClientFactory = func() (WireguardClient, error) {
 			return wgctrl.New()
@@ -156,6 +162,7 @@ func (ctrl *ManagerController) Run(ctx context.Context, r controller.Runtime, lo
 		if cfg == nil || !cfg.TypedSpec().Enabled {
 			if ticker != nil {
 				ticker.Stop()
+				ticker = nil
 
 				tickerC = nil
 			}
