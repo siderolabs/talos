@@ -9,13 +9,16 @@ import (
 	"context"
 	"errors"
 	"net"
+	"net/http"
 	"sync"
 	"syscall"
 	"time"
 
+	"github.com/hashicorp/go-cleanhttp"
 	"github.com/siderolabs/gen/channel"
 	"go.uber.org/zap"
 
+	"github.com/siderolabs/talos/pkg/httpdefaults"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
@@ -121,11 +124,11 @@ func (runner *Runner) run(ctx context.Context, notifyCh chan<- Notification, log
 
 // probe runs a probe.
 func (runner *Runner) probe(ctx context.Context) error {
-	var zeroTCP network.TCPProbeSpec
-
 	switch {
-	case runner.Spec.TCP != zeroTCP:
+	case runner.Spec.TCP != (network.TCPProbeSpec{}):
 		return runner.probeTCP(ctx)
+	case runner.Spec.HTTP != (network.HTTPProbeSpec{}):
+		return runner.probeHTTP(ctx)
 	default:
 		return errors.New("no probe type specified")
 	}
@@ -151,4 +154,37 @@ func (runner *Runner) probeTCP(ctx context.Context) error {
 	}
 
 	return conn.Close()
+}
+
+// probeHTTP runs an HTTP probe.
+//
+// HTTP responses with status 200-399 are considered success.
+// Status 400+ and connection/transport errors are treated as failures.
+// The client honors the machine's proxy configuration via httpdefaults.PatchTransport.
+func (runner *Runner) probeHTTP(ctx context.Context) error {
+	client := &http.Client{
+		Transport: httpdefaults.PatchTransport(cleanhttp.DefaultTransport()),
+		CheckRedirect: func(*http.Request, []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(ctx, runner.Spec.HTTP.Timeout)
+	defer cancel()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, runner.Spec.HTTP.URL.String(), nil)
+	if err != nil {
+		return err
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
+		return errors.New("received non-success status code: " + resp.Status)
+	}
+
+	return resp.Body.Close()
 }

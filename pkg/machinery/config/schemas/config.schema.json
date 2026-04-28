@@ -2226,6 +2226,75 @@
       ],
       "description": "HCloudVIPConfig is a config document to configure virtual IP using Hetzner Cloud APIs for announcement.\\nVirtual IP configuration should be used only on controlplane nodes to provide virtual IP for Kubernetes API server.\\nAny other use cases are not supported and may lead to unexpected behavior.\\nVirtual IP will be announced from only one node at a time using Hetzner Cloud APIs.\\n"
     },
+    "network.HTTPProbeConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "HTTPProbeConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the probe.\n",
+          "markdownDescription": "Name of the probe.",
+          "x-intellij-html-description": "\u003cp\u003eName of the probe.\u003c/p\u003e\n"
+        },
+        "interval": {
+          "type": "string",
+          "pattern": "^[-+]?(((\\d+(\\.\\d*)?|\\d*(\\.\\d+)+)([nuµm]?s|m|h))|0)+$",
+          "title": "interval",
+          "description": "Interval between probe attempts.\nDefaults to 1s.\n",
+          "markdownDescription": "Interval between probe attempts.\nDefaults to 1s.",
+          "x-intellij-html-description": "\u003cp\u003eInterval between probe attempts.\nDefaults to 1s.\u003c/p\u003e\n"
+        },
+        "failureThreshold": {
+          "type": "integer",
+          "title": "failureThreshold",
+          "description": "Number of consecutive failures for the probe to be considered failed after having succeeded.\nDefaults to 0 (immediately fail on first failure).\n",
+          "markdownDescription": "Number of consecutive failures for the probe to be considered failed after having succeeded.\nDefaults to 0 (immediately fail on first failure).",
+          "x-intellij-html-description": "\u003cp\u003eNumber of consecutive failures for the probe to be considered failed after having succeeded.\nDefaults to 0 (immediately fail on first failure).\u003c/p\u003e\n"
+        },
+        "url": {
+          "type": "string",
+          "pattern": "^(http|https)://",
+          "title": "url",
+          "description": "HTTP or HTTPS URL to probe. The probe succeeds if the server responds with a 2xx or 3xx status code.\nProbe does not follow redirects.\n",
+          "markdownDescription": "HTTP or HTTPS URL to probe. The probe succeeds if the server responds with a 2xx or 3xx status code.\nProbe does not follow redirects.",
+          "x-intellij-html-description": "\u003cp\u003eHTTP or HTTPS URL to probe. The probe succeeds if the server responds with a 2xx or 3xx status code.\nProbe does not follow redirects.\u003c/p\u003e\n"
+        },
+        "timeout": {
+          "type": "string",
+          "pattern": "^[-+]?(((\\d+(\\.\\d*)?|\\d*(\\.\\d+)+)([nuµm]?s|m|h))|0)+$",
+          "title": "timeout",
+          "description": "Timeout for the probe.\nDefaults to 10s.\n",
+          "markdownDescription": "Timeout for the probe.\nDefaults to 10s.",
+          "x-intellij-html-description": "\u003cp\u003eTimeout for the probe.\nDefaults to 10s.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "name",
+        "url"
+      ],
+      "description": "HTTPProbeConfig is a config document to configure network HTTP connectivity probes."
+    },
     "network.HostDNSConfig": {
       "properties": {
         "enabled": {
@@ -5790,6 +5859,9 @@
     },
     {
       "$ref": "#/$defs/network.HostnameConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/network.HTTPProbeConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/network.KubeSpanConfigV1Alpha1"

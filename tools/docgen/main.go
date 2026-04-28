@@ -21,7 +21,6 @@ import (
 	"text/template"
 
 	"github.com/siderolabs/gen/xslices"
-
 	"go.yaml.in/yaml/v4"
 	"mvdan.cc/gofumpt/format"
 )

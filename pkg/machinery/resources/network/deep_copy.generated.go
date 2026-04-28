@@ -8,6 +8,7 @@ package network
 
 import (
 	"net/netip"
+	"net/url"
 
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
@@ -565,6 +566,14 @@ func (o PlatformConfigSpec) DeepCopy() PlatformConfigSpec {
 // DeepCopy generates a deep copy of ProbeSpecSpec.
 func (o ProbeSpecSpec) DeepCopy() ProbeSpecSpec {
 	var cp ProbeSpecSpec = o
+	if o.HTTP.URL != nil {
+		cp.HTTP.URL = new(url.URL)
+		*cp.HTTP.URL = *o.HTTP.URL
+		if o.HTTP.URL.User != nil {
+			cp.HTTP.URL.User = new(url.Userinfo)
+			*cp.HTTP.URL.User = *o.HTTP.URL.User
+		}
+	}
 	return cp
 }
 

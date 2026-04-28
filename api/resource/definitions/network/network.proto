@@ -237,6 +237,14 @@ message EthernetStatusSpec {
   repeated talos.resource.definitions.enums.NethelpersWOLMode wake_on_lan = 10;
 }
 
+// HTTPProbeSpec describes the HTTP Probe.
+message HTTPProbeSpec {
+  // URL to probe: http:// or https:// URL.
+  common.URL url = 1;
+  // Timeout for the probe.
+  google.protobuf.Duration timeout = 2;
+}
+
 // HardwareAddrSpec describes spec for the link.
 message HardwareAddrSpec {
   // Name defines link name
@@ -502,10 +510,12 @@ message ProbeSpecSpec {
   google.protobuf.Duration interval = 1;
   // FailureThreshold is the number of consecutive failures for the probe to be considered failed after having succeeded.
   int64 failure_threshold = 2;
-  // One of the probe types should be specified, for now it's only TCP.
+  // TCP is the TCP probe spec. One of TCP or HTTP must be specified.
   TCPProbeSpec tcp = 3;
   // Configuration layer.
   talos.resource.definitions.enums.NetworkConfigLayer config_layer = 4;
+  // HTTP is the HTTP probe spec. One of TCP or HTTP must be specified.
+  HTTPProbeSpec http = 5;
 }
 
 // ProbeStatusSpec describes the Probe.
