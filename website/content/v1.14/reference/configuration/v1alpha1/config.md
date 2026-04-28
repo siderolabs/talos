@@ -1265,7 +1265,7 @@ cni:
     name: custom # Name of CNI to use.
     # URLs containing manifests to apply for the CNI.
     urls:
-        - https://docs.projectcalico.org/archive/v3.20/manifests/canal.yaml
+        - https://raw.githubusercontent.com/projectcalico/calico/v3.31.5/manifests/canal.yaml
 {{< /highlight >}}</details> | |
 |`dnsDomain` |string |The domain used by Kubernetes DNS.<br>The default is `cluster.local` <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 dnsDomain: cluster.local
@@ -1295,7 +1295,7 @@ cluster:
             name: custom # Name of CNI to use.
             # URLs containing manifests to apply for the CNI.
             urls:
-                - https://docs.projectcalico.org/archive/v3.20/manifests/canal.yaml
+                - https://raw.githubusercontent.com/projectcalico/calico/v3.31.5/manifests/canal.yaml
 {{< /highlight >}}
 
 

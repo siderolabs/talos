@@ -353,7 +353,7 @@ func clusterCustomCNIExample() *CNIConfig {
 	return &CNIConfig{
 		CNIName: constants.CustomCNI,
 		CNIUrls: []string{
-			"https://docs.projectcalico.org/archive/v3.20/manifests/canal.yaml",
+			"https://raw.githubusercontent.com/projectcalico/calico/v3.31.5/manifests/canal.yaml",
 		},
 	}
 }
