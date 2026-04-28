@@ -43,6 +43,16 @@ type InstallOptions struct {
 
 	// Optional: blkid probe result.
 	BlkidInfo *blkid.Info
+
+	// SecureBoot key auto-enrollment (image mode only).
+	//
+	// When SecureBootEnrollKeys is non-empty, the sd-boot installer writes
+	// loader/keys/auto/{PK,KEK,db}.auth on the ESP using the provided key
+	// paths and renders loader.conf with this secure-boot-enroll mode.
+	SecureBootEnrollKeys string
+	PlatformKeyPath      string
+	KeyExchangeKeyPath   string
+	SignatureKeyPath     string
 }
 
 // InstallResult is the result of the installation.

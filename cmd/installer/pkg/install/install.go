@@ -74,6 +74,16 @@ type Options struct {
 	BootAssets          bootloaderoptions.BootAssets
 	Printf              func(string, ...any)
 	MountPrefix         string
+
+	// SecureBoot key auto-enrollment (image creation mode only).
+	//
+	// When SecureBootEnrollKeys is non-empty, the bootloader installer writes
+	// loader/keys/auto/{PK,KEK,db}.auth on the ESP and renders loader.conf with
+	// secure-boot-enroll set to this value.
+	SecureBootEnrollKeys string
+	PlatformKeyPath      string
+	KeyExchangeKeyPath   string
+	SignatureKeyPath     string
 }
 
 // Mode is the install mode.
@@ -517,6 +527,11 @@ func (i *Installer) generateBootloaderOptions(ctx context.Context, mode Mode, in
 		Printf:            i.options.Printf,
 		MountPrefix:       i.options.MountPrefix,
 		BlkidInfo:         info,
+
+		SecureBootEnrollKeys: i.options.SecureBootEnrollKeys,
+		PlatformKeyPath:      i.options.PlatformKeyPath,
+		KeyExchangeKeyPath:   i.options.KeyExchangeKeyPath,
+		SignatureKeyPath:     i.options.SignatureKeyPath,
 
 		ExtraInstallStep: func() error {
 			if i.options.OverlayInstaller != nil {
