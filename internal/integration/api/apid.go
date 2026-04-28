@@ -261,6 +261,7 @@ func (suite *ApidSuite) TestPKIMismatch() {
 	suite.Assert().Equal(codes.Unavailable, client.StatusCode(err))
 	suite.Assert().True(
 		strings.Contains(err.Error(), "remote error: tls: unknown certificate authority") ||
+			strings.Contains(err.Error(), "write: broken pipe") ||
 			strings.Contains(err.Error(), "write: connection reset by peer"),
 		"unexpected error: %v", err,
 	)

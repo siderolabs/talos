@@ -112,7 +112,7 @@ func (c *Client) EventsWatch(ctx context.Context, watchFunc func(<-chan Event), 
 	for {
 		event, err := stream.Recv()
 		if err != nil {
-			if err == io.EOF || StatusCode(err) == codes.Canceled {
+			if err == io.EOF || StatusCode(err) == codes.Canceled || StatusCode(err) == codes.DeadlineExceeded {
 				return nil
 			}
 
