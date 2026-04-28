@@ -238,8 +238,8 @@ func (BondConfigV1Alpha1) Doc() *encoder.Doc {
 				Name:        "adLACPActive",
 				Type:        "ADLACPActive",
 				Note:        "",
-				Description: "Whether to send LACPDU frames periodically.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Whether to send LACPDU frames periodically." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Whether to send LACPDU frames periodically, defaults to \"on\" if mode is 802.3ad.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Whether to send LACPDU frames periodically, defaults to \"on\" if mode is 802.3ad." /* encoder.LineComment */, "" /* encoder.FootComment */},
 				Values: []string{
 					"on",
 					"off",

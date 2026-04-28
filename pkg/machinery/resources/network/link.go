@@ -86,7 +86,7 @@ type BondMasterSpec struct {
 	// Maximum of 16 targets are supported.
 	NSIP6Targets []netip.Addr `yaml:"nsIp6Targets,omitempty" protobuf:"26"`
 	// ADLACPActive specifies whether to send LACPDU frames periodically.
-	ADLACPActive nethelpers.ADLACPActive `yaml:"adLacpActive,omitempty" protobuf:"27"`
+	ADLACPActive *nethelpers.ADLACPActive `yaml:"adLacpActive,omitempty" protobuf:"27"`
 	// MissedMax is the number of arp_interval monitor checks that must fail in order for an interface to be marked down by the ARP monitor.
 	MissedMax uint8 `yaml:"missedMax,omitempty" protobuf:"28"`
 }
@@ -211,7 +211,18 @@ func (spec *BondMasterSpec) Equal(other *BondMasterSpec) bool {
 		}
 	}
 
-	if spec.ADLACPActive != other.ADLACPActive {
+	// default value for ADLACPActive is "on" in Linux, so if both are nil or "on", consider them equal
+	specADLACPActive, otherADLACPActive := nethelpers.ADLACPActiveOn, nethelpers.ADLACPActiveOn
+
+	if spec.ADLACPActive != nil {
+		specADLACPActive = *spec.ADLACPActive
+	}
+
+	if other.ADLACPActive != nil {
+		otherADLACPActive = *other.ADLACPActive
+	}
+
+	if specADLACPActive != otherADLACPActive {
 		return false
 	}
 
@@ -254,7 +265,7 @@ func (spec *BondMasterSpec) IsZero() bool {
 		spec.PeerNotifyDelay == 0 &&
 		len(spec.ARPIPTargets) == 0 &&
 		len(spec.NSIP6Targets) == 0 &&
-		spec.ADLACPActive == 0 &&
+		spec.ADLACPActive == nil &&
 		spec.MissedMax == 0
 }
 

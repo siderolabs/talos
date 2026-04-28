@@ -1385,9 +1385,9 @@
             "off"
           ],
           "title": "adLACPActive",
-          "description": "Whether to send LACPDU frames periodically.\n",
-          "markdownDescription": "Whether to send LACPDU frames periodically.",
-          "x-intellij-html-description": "\u003cp\u003eWhether to send LACPDU frames periodically.\u003c/p\u003e\n"
+          "description": "Whether to send LACPDU frames periodically, defaults to “on” if mode is 802.3ad.\n",
+          "markdownDescription": "Whether to send LACPDU frames periodically, defaults to \"on\" if mode is 802.3ad.",
+          "x-intellij-html-description": "\u003cp\u003eWhether to send LACPDU frames periodically, defaults to \u0026ldquo;on\u0026rdquo; if mode is 802.3ad.\u003c/p\u003e\n"
         },
         "primaryReselect": {
           "enum": [
