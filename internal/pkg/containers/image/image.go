@@ -17,7 +17,6 @@ import (
 	"github.com/containerd/containerd/v2/pkg/snapshotters"
 	"github.com/containerd/errdefs"
 	"github.com/containerd/log"
-	"github.com/containerd/platforms"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/distribution/reference"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -195,7 +194,6 @@ func Pull(
 		containerdRemoteOpts := []containerd.RemoteOpt{
 			containerd.WithPullUnpack,
 			containerd.WithChildLabelMap(images.ChildGCLabelsFilterLayers),
-			containerd.WithPlatformMatcher(platforms.Default()),
 			containerd.WithResolver(resolver),
 		}
 
