@@ -1,6 +1,6 @@
 module github.com/siderolabs/talos
 
-go 1.26.1
+go 1.26.2
 
 replace (
 	// forked coredns so we don't carry caddy and other stuff into the Talos
@@ -142,8 +142,8 @@ require (
 	github.com/siderolabs/go-cmd v0.2.0
 	github.com/siderolabs/go-copy v0.1.0
 	github.com/siderolabs/go-debug v0.6.2
-	github.com/siderolabs/go-kmsg v0.1.5
-	github.com/siderolabs/go-kubeconfig v0.1.1
+	github.com/siderolabs/go-kmsg v0.1.6
+	github.com/siderolabs/go-kubeconfig v0.1.2
 	github.com/siderolabs/go-kubernetes v0.2.36
 	github.com/siderolabs/go-loadbalancer v0.5.0
 	github.com/siderolabs/go-pcidb v0.3.3
