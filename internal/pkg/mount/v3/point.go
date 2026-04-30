@@ -94,6 +94,8 @@ func (p *Point) Mount(opts Options) error {
 // FilterSelinuxLabelErrors filters out certain errors when setting the SELinux label on the mount point.
 //   - ENOTSUP is ignored for all filesystems, as it indicates that the filesystem does not support extended attributes.
 //   - EROFS is ignored for virtiofs, as it indicates that the underlying filesystem is read-only and does not support setting labels.
+//   - EPERM is ignored for virtiofs, as setting security.selinux xattrs may be blocked by the host or virtiofsd
+//     even though the mount is otherwise functional.
 func FilterSelinuxLabelErrors(target, fstype string, err error) error {
 	if err == nil {
 		return nil
@@ -103,8 +105,14 @@ func FilterSelinuxLabelErrors(target, fstype string, err error) error {
 		return nil
 	}
 
-	if fstype == "virtiofs" && errors.Is(err, unix.EROFS) {
-		return nil
+	if fstype == "virtiofs" {
+		switch {
+		case errors.Is(err, unix.EROFS):
+			return nil
+		case errors.Is(err, unix.EPERM):
+			return nil
+		default:
+		}
 	}
 
 	return fmt.Errorf("error setting selinux label on %q: %w", target, err)

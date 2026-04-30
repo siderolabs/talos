@@ -27,6 +27,14 @@ func (p *Provisioner) FindVirtiofsd() (string, error) {
 	return p.findVirtiofsd()
 }
 
+// The first rule combines what could be separate client and server rules into
+// a single all rule, matching 'security.' in either client arguments or lists
+// returned from the host. This prevents the client from seeing and/or setting
+// any 'security.' attributes on the server.
+//
+// More info: https://gitlab.com/virtio-fs/virtiofsd/-/blob/main/doc/xattr-mapping.md
+const xattrmap = `/bad/all/security./security.//ok/all///`
+
 // Virtiofsd starts virtiofsd and restarts it if it exits.
 // The restart is needed, because the virtiofsd exits when client disconnects.
 func Virtiofsd(ctx context.Context, virtiofsdBin, share, socket string) error {
@@ -43,6 +51,8 @@ func Virtiofsd(ctx context.Context, virtiofsdBin, share, socket string) error {
 		"--socket-path", socket,
 		"--announce-submounts",
 		"--inode-file-handles=mandatory",
+		"--xattr",
+		"--xattrmap=" + xattrmap,
 	}
 
 	fmt.Printf("Starting virtiofsd with restart loop: %s %s\n",
