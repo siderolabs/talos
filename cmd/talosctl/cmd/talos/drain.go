@@ -7,6 +7,7 @@ package talos
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"golang.org/x/sync/errgroup"
@@ -41,8 +42,9 @@ func drainNodes(ctx context.Context, c *client.Client, nodes []string, drainTime
 	updateCh := make(chan nodeUpdate)
 
 	// k8sNames collects Talos IP -> K8s node name mappings produced by each goroutine.
-	// Each goroutine writes to its own slot, so no mutex is needed.
 	k8sNames := make(map[string]string, len(nodes))
+
+	var mapMux sync.Mutex // protects k8sNames map during writes
 
 	var eg errgroup.Group
 
@@ -72,7 +74,9 @@ func drainNodes(ctx context.Context, c *client.Client, nodes []string, drainTime
 				return fmt.Errorf("error resolving Kubernetes node name for %s: %w", node, resolveErr)
 			}
 
+			mapMux.Lock()
 			k8sNames[node] = k8sNodeName
+			mapMux.Unlock()
 
 			// reportFn sends progress through the channel to the aggregator.
 			reportFn := func(upd reporter.Update) {
@@ -129,9 +133,7 @@ func uncordonNodes(ctx context.Context, c *client.Client, nodeNames map[string]s
 		}
 	}()
 
-	for talosIP, k8sNodeName := range nodeNames {
-		_ = talosIP // only k8sNodeName is needed for K8s API calls
-
+	for _, k8sNodeName := range nodeNames {
 		eg.Go(func() error {
 			reportFn := func(upd reporter.Update) {
 				updateCh <- nodeUpdate{node: k8sNodeName, update: upd}
