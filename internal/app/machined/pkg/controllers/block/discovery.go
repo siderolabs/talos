@@ -290,15 +290,15 @@ func (ctrl *DiscoveryController) rescan(ctx context.Context, r controller.Runtim
 		_, isFailed := failedIDs[dv.Metadata().ID()]
 
 		parentTouched := false
+		parentFailed := false
 
 		if dv.TypedSpec().Parent != "" {
-			if _, ok := touchedIDs[dv.TypedSpec().Parent]; ok {
-				parentTouched = true
-			}
+			_, parentTouched = touchedIDs[dv.TypedSpec().Parent]
+			_, parentFailed = failedIDs[dv.TypedSpec().Parent]
 		}
 
-		if isFailed || parentTouched {
-			// if the probe failed, or if the parent was touched, while this device was not, remove it
+		if isFailed || parentTouched || parentFailed {
+			// if the probe failed, or if the parent was touched/failed, while this device was not, remove it
 			if err = r.Destroy(ctx, dv.Metadata()); err != nil {
 				return nil, fmt.Errorf("failed to destroy discovered volume: %w", err)
 			}
