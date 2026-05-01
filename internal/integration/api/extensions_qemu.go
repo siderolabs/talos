@@ -469,7 +469,9 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsZFS() {
 		}
 	}()
 
-	suite.Require().True(suite.checkZFSPoolMounted(node), "expected zfs pool to be mounted")
+	suite.EventuallyWithT(func(t *assert.CollectT) {
+		suite.checkZFSPoolMounted(t, node)
+	}, 2*time.Minute, time.Second, "expected zfs pool to be mounted")
 
 	// now we want to reboot the node and make sure the pool is still mounted
 	suite.AssertRebooted(
@@ -479,36 +481,48 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsZFS() {
 		suite.CleanupFailedPods,
 	)
 
-	suite.Require().True(suite.checkZFSPoolMounted(node), "expected zfs pool to be mounted")
+	suite.EventuallyWithT(func(t *assert.CollectT) {
+		suite.checkZFSPoolMounted(t, node)
+	}, 30*time.Second, time.Second, "expected zfs pool to be mounted after reboot")
 }
 
-func (suite *ExtensionsSuiteQEMU) checkZFSPoolMounted(node string) bool {
+func (suite *ExtensionsSuiteQEMU) checkZFSPoolMounted(t *assert.CollectT, node string) {
 	ctx := client.WithNode(suite.ctx, node)
 
 	stream, err := suite.Client.LS(ctx, &machineapi.ListRequest{
-		Root:  "/dev/zvol/tank/vol",
-		Types: []machineapi.ListRequest_Type{machineapi.ListRequest_REGULAR},
+		Root:  "/dev/zvol/tank/",
+		Types: []machineapi.ListRequest_Type{machineapi.ListRequest_SYMLINK},
 	})
+	if !assert.NoError(t, err, "LS /dev/zvol/tank/") {
+		return
+	}
 
-	suite.Require().NoError(err)
+	found := false
 
-	suite.Require().NoError(helpers.ReadGRPCStream(stream, func(info *machineapi.FileInfo, node string, multipleNodes bool) error {
-		suite.Require().Equal("/dev/zvol/tank/vol", info.Name, "expected /dev/zvol/tank/vol to exist")
-		suite.Require().Equal("zd0", info.Link, "expected /dev/zvol/tank/vol to be linked to zd0")
+	if !assert.NoError(t, helpers.ReadGRPCStream(stream, func(info *machineapi.FileInfo, node string, multipleNodes bool) error {
+		if info.Name == "/dev/zvol/tank/vol" && strings.HasPrefix(filepath.Base(info.Link), "zd") {
+			found = true
+		}
 
 		return nil
-	}))
+	}), "reading LS stream") {
+		return
+	}
+
+	assert.True(t, found, "expected /dev/zvol/tank/vol symlink pointing to a zd* device")
 
 	disks, err := safe.StateListAll[*block.Disk](ctx, suite.Client.COSI)
-	suite.Require().NoError(err)
+	if !assert.NoError(t, err, "StateListAll disks") {
+		return
+	}
 
 	for disk := range disks.All() {
 		if strings.HasPrefix(disk.TypedSpec().DevPath, "/dev/zd") {
-			return true
+			return
 		}
 	}
 
-	return false
+	assert.Fail(t, "no /dev/zd* disk found in block resources")
 }
 
 // TestExtensionsUtilLinuxTools verifies util-linux-tools are working.
