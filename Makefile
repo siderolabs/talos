@@ -530,6 +530,7 @@ cache-create: installer imager integration-images-list ## Generate image cache.
 		$(TALOSCTL_EXECUTABLE) images cache-create --image-cache-path=/tmp/cache.tar --images=- --force
 	@crane push /tmp/cache.tar $(REGISTRY_AND_USERNAME)/image-cache:$(IMAGE_TAG_OUT)
 	@$(MAKE) image-iso IMAGER_ARGS="--image-cache=$(REGISTRY_AND_USERNAME)/image-cache:$(IMAGE_TAG_OUT) --extra-kernel-arg='console=ttyS0'"
+	@$(MAKE) image-metal IMAGER_ARGS="--image-cache=$(REGISTRY_AND_USERNAME)/image-cache:$(IMAGE_TAG_OUT) --extra-kernel-arg='console=ttyS0'"
 
 # Code Quality
 

@@ -5,11 +5,13 @@
 package makefs_test
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"io"
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -47,6 +49,7 @@ func TestExt4Reproducibility(t *testing.T) {
 		makefs.WithReproducible(true),
 		makefs.WithLabel("TESTLABEL"),
 		makefs.WithSourceDirectory(sourceDirectory),
+		makefs.WithPrintf(t.Logf),
 	))
 
 	fileData, err := os.Open(tempFile)
@@ -105,4 +108,70 @@ func TestExt4Resize(t *testing.T) {
 	}
 
 	assert.NoError(t, makefs.Ext4Resize(t.Context(), tempFile))
+}
+
+func TestExt4WithLargeInput(t *testing.T) {
+	t.Setenv("PATH", "/usr/bin:/bin:/usr/sbin:/sbin")
+
+	tmpDir := t.TempDir()
+	tempFile := filepath.Join(tmpDir, "ext4.img")
+
+	f, err := os.Create(tempFile)
+	require.NoError(t, err)
+	require.NoError(t, f.Truncate(512*1024*1024))
+	require.NoError(t, f.Close())
+
+	sourceDirectory := filepath.Join(tmpDir, "source")
+	require.NoError(t, os.MkdirAll(sourceDirectory, 0o755))
+	require.NoError(t, os.WriteFile(
+		filepath.Join(sourceDirectory, "data.bin"),
+		make([]byte, 1*1024*1024),
+		0o644,
+	))
+
+	done := make(chan error, 1)
+
+	go func() {
+		done <- makefs.Ext4(t.Context(), tempFile,
+			makefs.WithLabel("REPROTEST"),
+			makefs.WithForce(true),
+			makefs.WithSourceDirectory(sourceDirectory),
+		)
+	}()
+
+	select {
+	case err := <-done:
+		require.NoError(t, err)
+	case <-time.After(20 * time.Second):
+		t.Fatalf("DEADLOCK: makefs.Ext4 did not return within 20s")
+	}
+}
+
+func TestExt4Oversized(t *testing.T) {
+	t.Setenv("PATH", "/usr/bin:/bin:/usr/sbin:/sbin")
+
+	tmpDir := t.TempDir()
+	tempFile := filepath.Join(tmpDir, "ext4.img")
+
+	f, err := os.Create(tempFile)
+	require.NoError(t, err)
+	require.NoError(t, f.Truncate(50*1024*1024))
+	require.NoError(t, f.Close())
+
+	sourceDirectory := filepath.Join(tmpDir, "source")
+	require.NoError(t, os.MkdirAll(sourceDirectory, 0o755))
+	require.NoError(t, os.WriteFile(
+		filepath.Join(sourceDirectory, "data.bin"),
+		bytes.Repeat([]byte{1, 2, 3}, 100*1024*1024),
+		0o644,
+	))
+
+	err = makefs.Ext4(t.Context(), tempFile,
+		makefs.WithLabel("REPROTEST"),
+		makefs.WithForce(true),
+		makefs.WithSourceDirectory(sourceDirectory),
+	)
+	require.Error(t, err)
+	assert.ErrorContains(t, err, "failed to create ext4 filesystem")
+	assert.ErrorContains(t, err, "Could not allocate block")
 }
