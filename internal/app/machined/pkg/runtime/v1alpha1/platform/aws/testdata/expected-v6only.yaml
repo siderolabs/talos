@@ -12,21 +12,23 @@ hostnames:
     - hostname: talos
       domainname: ""
       layer: platform
-resolvers: []
+resolvers:
+    - dnsServers:
+        - fd00:ec2::253
+      layer: platform
 timeServers:
     - timeServers:
         - 169.254.169.123
         - fd00:ec2::123
       layer: platform
 operators:
-    - operator: dhcp4
+    - operator: dhcp6
       linkName: eth0
       requireUp: true
-      dhcp4:
+      dhcp6:
         routeMetric: 1024
       layer: platform
-externalIPs:
-    - 1.2.3.4
+externalIPs: []
 metadata:
     platform: aws
     hostname: talos
@@ -36,6 +38,3 @@ metadata:
     instanceId: i-0a0a0a0a0a0a0a0a0
     providerId: aws:///us-east-1a/i-0a0a0a0a0a0a0a0a0
     internalDNS: ip-10-0-0-10.ec2.internal
-    externalDNS: ec2-1-2-3-4.compute-1.amazonaws.com
-    tags:
-        cluster: mycluster
