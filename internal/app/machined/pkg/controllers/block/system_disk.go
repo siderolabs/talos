@@ -7,6 +7,7 @@ package block
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -68,6 +69,11 @@ func (ctrl *SystemDiskController) Run(ctx context.Context, r controller.Runtime,
 		)
 
 		for volume := range discoveredVolumes.All() {
+			// ignore loop devices, a disk image of Talos might be mounted there, and we don't want to consider it as a candidate for the system disk.
+			if strings.HasPrefix(volume.TypedSpec().Parent, "loop") {
+				continue
+			}
+
 			if volume.TypedSpec().PartitionLabel == constants.MetaPartitionLabel {
 				systemDiskID = volume.TypedSpec().Parent
 				systemDiskPath = volume.TypedSpec().ParentDevPath

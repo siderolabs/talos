@@ -37,11 +37,20 @@ func TestSystemDiskSuite(t *testing.T) {
 func (suite *SystemDiskSuite) TestReconcile() {
 	ctest.AssertNoResource[*block.SystemDisk](suite, block.SystemDiskID)
 
+	discoveredVolumeLoop := block.NewDiscoveredVolume(block.NamespaceName, "loop11p4")
+	discoveredVolumeLoop.TypedSpec().PartitionLabel = constants.MetaPartitionLabel
+	discoveredVolumeLoop.TypedSpec().Parent = "loop11"
+	discoveredVolumeLoop.TypedSpec().ParentDevPath = "/dev/loop11"
+	suite.Create(discoveredVolumeLoop)
+
+	// loop devices should be ignored, so the system disk should not be created.
+	ctest.AssertNoResource[*block.SystemDisk](suite, block.SystemDiskID)
+
 	discoveredVolume := block.NewDiscoveredVolume(block.NamespaceName, "vda4")
 	discoveredVolume.TypedSpec().PartitionLabel = constants.MetaPartitionLabel
 	discoveredVolume.TypedSpec().Parent = "vda"
 	discoveredVolume.TypedSpec().ParentDevPath = "/dev/vda"
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), discoveredVolume))
+	suite.Create(discoveredVolume)
 
 	ctest.AssertResource(suite, block.SystemDiskID, func(r *block.SystemDisk, asrt *assert.Assertions) {
 		asrt.Equal("vda", r.TypedSpec().DiskID)
