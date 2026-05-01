@@ -3,15 +3,12 @@
     "instance-id": "i-0a0a0a0a0a0a0a0a0",
     "instance-type": "t3.micro",
     "instance-life-cycle": "on-demand",
-    "public-ipv4": "1.2.3.4",
     "local-hostname": "ip-10-0-0-10.ec2.internal",
-    "public-hostname": "ec2-1-2-3-4.compute-1.amazonaws.com",
     "region": "us-east-1",
     "zone": "us-east-1a",
-    "tags": {"cluster": "mycluster"},
     "primary-interface": {
         "mac": "06:17:04:d7:f0:6b",
         "device-number": "0",
-        "local-ipv4s": ["10.0.0.10"]
+        "ipv6s": ["2001:db8::1"]
     }
 }

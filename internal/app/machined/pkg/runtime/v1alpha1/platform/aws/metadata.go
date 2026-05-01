@@ -23,19 +23,31 @@ type MetadataConfig struct {
 	InstanceType      string            `json:"instance-type,omitempty"`
 	InstanceLifeCycle string            `json:"instance-life-cycle,omitempty"`
 	PublicIPv4        string            `json:"public-ipv4,omitempty"`
-	PublicIPv6        string            `json:"ipv6,omitempty"`
 	InternalDNS       string            `json:"local-hostname,omitempty"`
 	ExternalDNS       string            `json:"public-hostname,omitempty"`
 	Region            string            `json:"region,omitempty"`
 	Zone              string            `json:"zone,omitempty"`
 	Tags              map[string]string `json:"tags,omitempty"`
+
+	// PrimaryInterface holds metadata for the primary network interface.
+	//
+	// Talos only supports a single NIC on AWS, so secondary interfaces are ignored.
+	PrimaryInterface *InterfaceConfig `json:"primary-interface,omitempty"`
+}
+
+// InterfaceConfig holds the IMDS metadata for a single network interface.
+type InterfaceConfig struct {
+	MAC          string   `json:"mac,omitempty"`
+	DeviceNumber string   `json:"device-number,omitempty"`
+	LocalIPv4s   []string `json:"local-ipv4s,omitempty"`
+	IPv6s        []string `json:"ipv6s,omitempty"`
 }
 
 //nolint:gocyclo
-func (a *AWS) getMetadata(ctx context.Context) (*MetadataConfig, error) {
+func (a *AWS) getMetadata(ctx context.Context, client *imds.Client) (*MetadataConfig, error) {
 	// https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/instancedata-data-retrieval.html
 	getMetadataKey := func(key string) (string, error) {
-		resp, err := a.metadataClient.GetMetadata(ctx, &imds.GetMetadataInput{
+		resp, err := client.GetMetadata(ctx, &imds.GetMetadataInput{
 			Path: key,
 		})
 		if err != nil {
@@ -77,10 +89,6 @@ func (a *AWS) getMetadata(ctx context.Context) (*MetadataConfig, error) {
 		return nil, err
 	}
 
-	if metadata.PublicIPv6, err = getMetadataKey("ipv6"); err != nil {
-		return nil, err
-	}
-
 	if metadata.InternalDNS, err = getMetadataKey("local-hostname"); err != nil {
 		return nil, err
 	}
@@ -107,7 +115,96 @@ func (a *AWS) getMetadata(ctx context.Context) (*MetadataConfig, error) {
 		}
 	}
 
+	if metadata.PrimaryInterface, err = a.getPrimaryInterface(getMetadataKey); err != nil {
+		return nil, err
+	}
+
 	return &metadata, nil
+}
+
+// getPrimaryInterface returns metadata for the primary network interface.
+//
+// IMDS lists every NIC under network/interfaces/macs/, but Talos only supports
+// the primary NIC. Pick the entry with device-number=0 — AWS guarantees this is
+// the primary — and fall back to the first listed MAC if the field is missing.
+//
+//nolint:gocyclo
+func (a *AWS) getPrimaryInterface(getMetadataKey func(string) (string, error)) (*InterfaceConfig, error) {
+	macsList, err := getMetadataKey("network/interfaces/macs/")
+	if err != nil {
+		return nil, err
+	}
+
+	var macs []string
+
+	for line := range strings.Lines(macsList) {
+		mac := strings.TrimSuffix(strings.TrimSpace(line), "/")
+		if mac == "" {
+			continue
+		}
+
+		macs = append(macs, mac)
+	}
+
+	if len(macs) == 0 {
+		return nil, nil
+	}
+
+	primaryMAC := macs[0]
+
+	for _, mac := range macs {
+		deviceNumber, err := getMetadataKey(fmt.Sprintf("network/interfaces/macs/%s/device-number", mac))
+		if err != nil {
+			return nil, err
+		}
+
+		if strings.TrimSpace(deviceNumber) == "0" {
+			primaryMAC = mac
+
+			break
+		}
+	}
+
+	iface := &InterfaceConfig{
+		MAC: primaryMAC,
+	}
+
+	if iface.DeviceNumber, err = getMetadataKey(fmt.Sprintf("network/interfaces/macs/%s/device-number", primaryMAC)); err != nil {
+		return nil, err
+	}
+
+	iface.DeviceNumber = strings.TrimSpace(iface.DeviceNumber)
+
+	if iface.LocalIPv4s, err = fetchAddressList(getMetadataKey, fmt.Sprintf("network/interfaces/macs/%s/local-ipv4s", primaryMAC)); err != nil {
+		return nil, err
+	}
+
+	if iface.IPv6s, err = fetchAddressList(getMetadataKey, fmt.Sprintf("network/interfaces/macs/%s/ipv6s", primaryMAC)); err != nil {
+		return nil, err
+	}
+
+	return iface, nil
+}
+
+// fetchAddressList reads a newline-separated list of addresses from IMDS.
+func fetchAddressList(getMetadataKey func(string) (string, error), path string) ([]string, error) {
+	raw, err := getMetadataKey(path)
+	if err != nil {
+		return nil, err
+	}
+
+	var addrs []string
+
+	for line := range strings.Lines(raw) {
+		addr := strings.TrimSpace(line)
+		if addr == "" {
+			continue
+		}
+
+		addrs = append(addrs, addr)
+	}
+
+	return addrs, nil
 }
 
 func isNotFoundError(err error) bool {

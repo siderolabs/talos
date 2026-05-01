@@ -19,21 +19,57 @@ import (
 //go:embed testdata/metadata.json
 var rawMetadata []byte
 
+//go:embed testdata/metadata-v6.json
+var rawMetadataV6 []byte
+
+//go:embed testdata/metadata-v6only.json
+var rawMetadataV6Only []byte
+
 //go:embed testdata/expected.yaml
 var expectedNetworkConfig string
 
-func TestEmpty(t *testing.T) {
-	p := &aws.AWS{}
+//go:embed testdata/expected-v6.yaml
+var expectedNetworkConfigV6 string
 
-	var metadata aws.MetadataConfig
+//go:embed testdata/expected-v6only.yaml
+var expectedNetworkConfigV6Only string
 
-	require.NoError(t, json.Unmarshal(rawMetadata, &metadata))
+func TestParseMetadata(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		raw      []byte
+		expected string
+	}{
+		{
+			name:     "IPv4 only",
+			raw:      rawMetadata,
+			expected: expectedNetworkConfig,
+		},
+		{
+			name:     "dual stack",
+			raw:      rawMetadataV6,
+			expected: expectedNetworkConfigV6,
+		},
+		{
+			name:     "IPv6 only",
+			raw:      rawMetadataV6Only,
+			expected: expectedNetworkConfigV6Only,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			p := &aws.AWS{}
 
-	networkConfig, err := p.ParseMetadata(&metadata)
-	require.NoError(t, err)
+			var metadata aws.MetadataConfig
 
-	marshaled, err := yaml.Marshal(networkConfig)
-	require.NoError(t, err)
+			require.NoError(t, json.Unmarshal(tt.raw, &metadata))
 
-	assert.Equal(t, expectedNetworkConfig, string(marshaled))
+			networkConfig, err := p.ParseMetadata(&metadata)
+			require.NoError(t, err)
+
+			marshaled, err := yaml.Marshal(networkConfig)
+			require.NoError(t, err)
+
+			assert.Equal(t, tt.expected, string(marshaled))
+		})
+	}
 }
