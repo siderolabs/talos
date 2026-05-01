@@ -1248,6 +1248,7 @@ InspectService provides auxiliary API to inspect OS internals.
 | ---- | ------ | ----------- |
 | PROFILE_UNSPECIFIED | 0 |  |
 | PROFILE_PRIVILEGED | 1 |  |
+| PROFILE_HOST_NS | 2 | PROFILE_HOST_NS forks the host mount namespace, overlays image tools at /nix, and runs the shell directly on the host rootfs without nsenter. |
 
 
  <!-- end enums -->

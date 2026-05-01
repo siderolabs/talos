@@ -8,6 +8,7 @@ package talos
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -23,6 +24,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/reporter"
 )
 
@@ -36,12 +38,16 @@ func init() {
 	debugCmd.Flags().StringSliceVar(&debugCmdFlags.args, "args", nil, "arguments to pass to the container")
 	debugCmd.Flags().StringVar(&debugCmdFlags.namespace, "namespace", "inmem", "namespace to use: `system` (CRI containerd) or `inmem` for in-memory containerd instance")
 
+	// The --host-ns flag and its examples are only registered in debug builds
+	// (sidero.debug). The server-side PROFILE_HOST_NS API is always available.
+	registerDebugHostNsFlag(debugCmd)
+
 	addCommand(debugCmd)
 }
 
 // debugCmd represents the debug command.
 var debugCmd = &cobra.Command{
-	Use:   "debug <image-tar-path|image ref> [args]",
+	Use:   "debug [<image-tar-path|image ref>]",
 	Short: "Run a debug container from an image archive or reference",
 	Example: `  # Run a debug container from a local tar archive (image will be loaded into Talos from the archive)
     talosctl debug ./debug-tools.tar --args /bin/sh
@@ -49,7 +55,7 @@ var debugCmd = &cobra.Command{
   # Run a debug container from an image reference (Talos will pull the image if not present)
     talosctl debug docker.io/library/alpine:latest --args /bin/sh`,
 
-	Args: cobra.ExactArgs(1),
+	Args: cobra.RangeArgs(0, 1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
 
@@ -72,8 +78,22 @@ var debugCmd = &cobra.Command{
 			return err
 		}
 
+		// Determine the image reference. A positional argument (tar path or image
+		// ref) always wins; otherwise host-ns falls back to the default Nix tools
+		// image, while the privileged profile requires an explicit image.
+		var imageRef string
+
+		switch {
+		case len(args) > 0:
+			imageRef = args[0]
+		case debugHostNsEnabled():
+			imageRef = constants.DebugHostNsImage
+		default:
+			return errors.New("an image tar path or reference is required")
+		}
+
 		// verify if we are sending a tarball or pulling an image
-		_, err = os.Stat(args[0])
+		_, err = os.Stat(imageRef)
 		if err != nil && !os.IsNotExist(err) {
 			return fmt.Errorf("failed to stat image argument: %w", err)
 		}
@@ -81,12 +101,12 @@ var debugCmd = &cobra.Command{
 		var imgName string
 
 		if err == nil {
-			imgName, err = imageImportInternal(ctx, c, ctrdInstance, node, args[0], rep)
+			imgName, err = imageImportInternal(ctx, c, ctrdInstance, node, imageRef, rep)
 			if err != nil {
 				return fmt.Errorf("failed to import image: %w", err)
 			}
 		} else {
-			pullResult, err := imagePullInternal(ctx, clientFactory, ctrdInstance, args[0], rep)
+			pullResult, err := imagePullInternal(ctx, clientFactory, ctrdInstance, imageRef, rep)
 			if err != nil {
 				return fmt.Errorf("failed to pull image: %w", err)
 			}
@@ -113,7 +133,12 @@ var debugCmd = &cobra.Command{
 			return fmt.Errorf("failed to create debug container stream: %w", err)
 		}
 
-		return runContainer(ctx, rep, runStream, imgName, debugCmdFlags.args, ctrdInstance)
+		profile := machine.DebugContainerRunRequestSpec_PROFILE_PRIVILEGED
+		if debugHostNsEnabled() {
+			profile = machine.DebugContainerRunRequestSpec_PROFILE_HOST_NS
+		}
+
+		return runContainer(ctx, rep, runStream, imgName, debugCmdFlags.args, ctrdInstance, profile)
 	},
 }
 
@@ -125,6 +150,7 @@ func runContainer(
 	imageName string,
 	args []string,
 	ctrdInstance *common.ContainerdInstance,
+	profile machine.DebugContainerRunRequestSpec_Profile,
 ) error { //nolint:gocyclo,cyclop
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -137,7 +163,7 @@ func runContainer(
 				Containerd: ctrdInstance,
 				ImageName:  imageName,
 				Args:       args,
-				Profile:    machine.DebugContainerRunRequestSpec_PROFILE_PRIVILEGED,
+				Profile:    profile,
 				Tty:        isTTY,
 			},
 		},

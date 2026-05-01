@@ -51,7 +51,9 @@ func (s *Service) ContainerRun(srv grpc.BidiStreamingServer[machine.DebugContain
 		return status.Errorf(codes.InvalidArgument, "expected debug container spec")
 	}
 
-	if spec.GetProfile() != machine.DebugContainerRunRequestSpec_PROFILE_PRIVILEGED {
+	switch spec.GetProfile() { //nolint:exhaustive
+	case machine.DebugContainerRunRequestSpec_PROFILE_PRIVILEGED, machine.DebugContainerRunRequestSpec_PROFILE_HOST_NS:
+	default:
 		return status.Errorf(codes.InvalidArgument, "unsupported debug container profile: %s", spec.GetProfile())
 	}
 
@@ -113,23 +115,28 @@ func (s *Service) ContainerRun(srv grpc.BidiStreamingServer[machine.DebugContain
 		cg.Delete() //nolint: errcheck
 	}()
 
+	// 4a. PROFILE_HOST_NS: namespace fork + overlay, no containerd task.
+	// Pass cgroupPath so the child is placed in the per-session cgroup rather than
+	// inheriting machined's /init cgroup with oom_score_adj=0.
+	if spec.GetProfile() == machine.DebugContainerRunRequestSpec_PROFILE_HOST_NS {
+		return runHostNsContainer(ctx, detachedContext, c8dClient, img, spec, srv, containerID, cgroupPath)
+	}
+
+	// 4b. PROFILE_PRIVILEGED: standard containerd container.
 	ctr, err := createDebugContainer(ctx, c8dClient, containerID, img, spec, cgroupPath)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("debug container: container %s created", ctr.ID())
+	log.Printf("debug: container %s created", ctr.ID())
 
 	defer func() {
 		cleanupErr := ctr.Delete(detachedContext, client.WithSnapshotCleanup)
 		if cleanupErr != nil {
-			log.Printf("debug container: failed to delete container %s: %s", ctr.ID(), cleanupErr.Error())
+			log.Printf("debug: failed to delete container %s: %s", ctr.ID(), cleanupErr.Error())
 		}
-
-		log.Printf("debug container: container %s deleted", ctr.ID())
 	}()
 
-	// 4. run and attach to the debug container
 	return runAndAttachContainer(ctx, detachedContext, spec, srv, ctr)
 }
 

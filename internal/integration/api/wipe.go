@@ -129,7 +129,7 @@ func (suite *WipeSuite) TestWipeFilesystem() {
 
 	userDisk := userDisks[0]
 
-	stdout, exitCode, err := suite.ExecInHostMountNS(suite.ctx, node, "mkfs.xfs", userDisk)
+	stdout, exitCode, err := suite.RunDebugContainer(suite.ctx, node, "mkfs.xfs", userDisk)
 	suite.Require().NoError(err)
 	suite.Require().EqualValues(0, exitCode, "mkfs.xfs failed: %s", stdout)
 

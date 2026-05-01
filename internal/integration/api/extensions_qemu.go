@@ -30,6 +30,7 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/api/storage"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
@@ -320,14 +321,14 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsZFS() {
 
 	suite.Require().NotEmpty(userDisks, "expected at least one user disks to be available")
 
-	stdout, exitCode, err := suite.ExecInHostMountNS(suite.ctx, node,
+	stdout, exitCode, err := suite.RunDebugContainer(suite.ctx, node,
 		"zpool", "create", "-m", "/var/tank", "tank", userDisks[0],
 	)
 	suite.Require().NoError(err)
 	suite.Require().EqualValues(0, exitCode, "zpool create failed: %s", stdout)
 	suite.Require().Equal("", stdout)
 
-	stdout, exitCode, err = suite.ExecInHostMountNS(suite.ctx, node,
+	stdout, exitCode, err = suite.RunDebugContainer(suite.ctx, node,
 		"zfs", "create", "-V", "1gb", "tank/vol",
 	)
 	suite.Require().NoError(err)
@@ -335,12 +336,20 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsZFS() {
 	suite.Require().Equal("", stdout)
 
 	defer func() {
-		if _, _, err := suite.ExecInHostMountNS(suite.ctx, node, "zfs", "destroy", "tank/vol"); err != nil {
+		if _, _, err := suite.RunDebugContainer(suite.ctx, node, "zfs", "destroy", "tank/vol"); err != nil {
 			suite.T().Logf("failed to remove zfs dataset tank/vol: %v", err)
 		}
 
-		if _, _, err := suite.ExecInHostMountNS(suite.ctx, node, "zpool", "destroy", "tank"); err != nil {
+		if _, _, err := suite.RunDebugContainer(suite.ctx, node, "zpool", "destroy", "tank"); err != nil {
 			suite.T().Logf("failed to remove zpool tank: %v", err)
+		}
+
+		// Wipe the disk so no zfs label lingers (otherwise the pool is re-discovered
+		// as a volume after the test).
+		if err := suite.Client.BlockDeviceWipe(client.WithNode(suite.ctx, node), &storage.BlockDeviceWipeRequest{
+			Devices: []*storage.BlockDeviceWipeDescriptor{{Device: filepath.Base(userDisks[0])}},
+		}); err != nil {
+			suite.T().Logf("failed to wipe disk %s: %v", userDisks[0], err)
 		}
 	}()
 
@@ -403,7 +412,7 @@ func (suite *ExtensionsSuiteQEMU) checkZFSPoolMounted(t *assert.CollectT, node s
 func (suite *ExtensionsSuiteQEMU) TestExtensionsUtilLinuxTools() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 
-	stdout, exitCode, err := suite.ExecInHostMountNS(suite.ctx, node,
+	stdout, exitCode, err := suite.RunDebugContainer(suite.ctx, node,
 		"/usr/local/sbin/fstrim", "--version",
 	)
 	suite.Require().NoError(err)

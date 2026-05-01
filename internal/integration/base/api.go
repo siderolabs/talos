@@ -719,6 +719,10 @@ func (apiSuite *APISuite) DumpLogs(ctx context.Context, node string, service, pa
 			apiSuite.T().Logf("%s (%s): %s", node, service, scanner.Text())
 		}
 	}
+
+	if err := scanner.Err(); err != nil {
+		apiSuite.T().Logf("error reading logs from %s (%s): %v", node, service, err)
+	}
 }
 
 // ReadFile reads file from the node.

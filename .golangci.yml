@@ -92,6 +92,7 @@ linters:
                 - "internal/app/dashboard/main.go"
                 - "internal/app/debug/container_streams.go"
                 - "internal/app/debug/debug.go"
+                - "internal/app/debug/hostns.go"
                 - "internal/app/lifecycle/container.go"
                 - "internal/app/machined/internal/server/v1alpha1/v1alpha1_cluster.go"
                 - "internal/app/machined/internal/server/v1alpha1/v1alpha1_server.go"

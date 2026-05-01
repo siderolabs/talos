@@ -1400,7 +1400,7 @@ talosctl dashboard [flags]
 Run a debug container from an image archive or reference
 
 ```
-talosctl debug <image-tar-path|image ref> [args] [flags]
+talosctl debug [<image-tar-path|image ref>] [flags]
 ```
 
 ### Examples

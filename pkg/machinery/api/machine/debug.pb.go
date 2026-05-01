@@ -29,6 +29,9 @@ type DebugContainerRunRequestSpec_Profile int32
 const (
 	DebugContainerRunRequestSpec_PROFILE_UNSPECIFIED DebugContainerRunRequestSpec_Profile = 0
 	DebugContainerRunRequestSpec_PROFILE_PRIVILEGED  DebugContainerRunRequestSpec_Profile = 1
+	// PROFILE_HOST_NS forks the host mount namespace, overlays image tools at /nix,
+	// and runs the shell directly on the host rootfs without nsenter.
+	DebugContainerRunRequestSpec_PROFILE_HOST_NS DebugContainerRunRequestSpec_Profile = 2
 )
 
 // Enum value maps for DebugContainerRunRequestSpec_Profile.
@@ -36,10 +39,12 @@ var (
 	DebugContainerRunRequestSpec_Profile_name = map[int32]string{
 		0: "PROFILE_UNSPECIFIED",
 		1: "PROFILE_PRIVILEGED",
+		2: "PROFILE_HOST_NS",
 	}
 	DebugContainerRunRequestSpec_Profile_value = map[string]int32{
 		"PROFILE_UNSPECIFIED": 0,
 		"PROFILE_PRIVILEGED":  1,
+		"PROFILE_HOST_NS":     2,
 	}
 )
 
@@ -416,7 +421,7 @@ const file_machine_debug_proto_rawDesc = "" +
 	"\x06signal\x18\x03 \x01(\x05H\x00R\x06signal\x12H\n" +
 	"\vterm_resize\x18\x04 \x01(\v2%.machine.DebugContainerTerminalResizeH\x00R\n" +
 	"termResizeB\t\n" +
-	"\arequest\"\x9e\x03\n" +
+	"\arequest\"\xb3\x03\n" +
 	"\x1cDebugContainerRunRequestSpec\x12:\n" +
 	"\n" +
 	"containerd\x18\x01 \x01(\v2\x1a.common.ContainerdInstanceR\n" +
@@ -429,10 +434,11 @@ const file_machine_debug_proto_rawDesc = "" +
 	"\x03tty\x18\x06 \x01(\bR\x03tty\x1a6\n" +
 	"\bEnvEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\":\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"O\n" +
 	"\aProfile\x12\x17\n" +
 	"\x13PROFILE_UNSPECIFIED\x10\x00\x12\x16\n" +
-	"\x12PROFILE_PRIVILEGED\x10\x01\"L\n" +
+	"\x12PROFILE_PRIVILEGED\x10\x01\x12\x13\n" +
+	"\x0fPROFILE_HOST_NS\x10\x02\"L\n" +
 	"\x1cDebugContainerTerminalResize\x12\x14\n" +
 	"\x05width\x18\x01 \x01(\x05R\x05width\x12\x16\n" +
 	"\x06height\x18\x02 \x01(\x05R\x06height\"e\n" +

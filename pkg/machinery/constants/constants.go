@@ -769,6 +769,18 @@ const (
 	// CgroupSystemDebug is the cgroup name for debug processes.
 	CgroupSystemDebug = CgroupSystem + "/debug"
 
+	// DebugHostNsImage is the default image used for PROFILE_HOST_NS debug sessions.
+	// It provides a Nix environment whose store paths are self-contained and do not
+	// conflict with the Talos host's library paths when bind-mounted into the forked
+	// mount namespace.
+	DebugHostNsImage = "docker.io/nixos/nix:latest"
+
+	// DebugHostNsWorkdirBase is the disk-backed base directory for PROFILE_HOST_NS
+	// overlay upper/work layers. It lives on the EPHEMERAL partition (/var) so that
+	// writes to the session root (nix eval cache, /tmp, /etc) and the /nix store do
+	// not pin RAM in a tmpfs — the default in-memory debug containerd roots on tmpfs.
+	DebugHostNsWorkdirBase = "/var/system/debug"
+
 	// SelinuxLabelMachined is the SELinux label for machined.
 	SelinuxLabelMachined = "system_u:system_r:init_t:s0"
 

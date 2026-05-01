@@ -669,6 +669,10 @@ func (k8sSuite *K8sSuite) LogPodLogs(ctx context.Context, namespace, podName str
 	for scanner.Scan() {
 		k8sSuite.T().Logf("%s/%s: %s", namespace, podName, scanner.Text())
 	}
+
+	if err := scanner.Err(); err != nil {
+		k8sSuite.T().Logf("failed to read pod logs: %s", err)
+	}
 }
 
 // HelmInstall installs the Helm chart with the given namespace, repository, version, release name, chart name and values.
