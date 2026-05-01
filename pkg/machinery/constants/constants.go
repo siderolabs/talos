@@ -758,6 +758,12 @@ const (
 	// CgroupSystemDebug is the cgroup name for debug processes.
 	CgroupSystemDebug = CgroupSystem + "/debug"
 
+	// DebugHostNsImage is the default image used for PROFILE_HOST_NS debug sessions.
+	// It provides a Nix environment whose store paths are self-contained and do not
+	// conflict with the Talos host's library paths when bind-mounted into the forked
+	// mount namespace.
+	DebugHostNsImage = "docker.io/nixos/nix:latest"
+
 	// SelinuxLabelMachined is the SELinux label for machined.
 	SelinuxLabelMachined = "system_u:system_r:init_t:s0"
 

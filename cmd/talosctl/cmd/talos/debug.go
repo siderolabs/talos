@@ -24,33 +24,43 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/reporter"
 )
 
 var debugCmdFlags struct {
 	imageCmdFlagsType
 
-	args []string
+	args   []string
+	hostNs bool
 }
 
 func init() {
 	debugCmd.Flags().StringSliceVar(&debugCmdFlags.args, "args", nil, "arguments to pass to the container")
 	debugCmd.Flags().StringVar(&debugCmdFlags.namespace, "namespace", "inmem", "namespace to use: `system` (CRI containerd) or `inmem` for in-memory containerd instance")
+	debugCmd.Flags().BoolVar(&debugCmdFlags.hostNs, "host-ns", false, "fork the host mount namespace and overlay image tools: run host binaries (zpool, etcdctl, …) directly without nsenter")
 
 	addCommand(debugCmd)
 }
 
 // debugCmd represents the debug command.
 var debugCmd = &cobra.Command{
-	Use:   "debug <image-tar-path|image ref> [args]",
+	Use:   "debug [<image-tar-path|image ref>]",
 	Short: "Run a debug container from an image archive or reference",
 	Example: `  # Run a debug container from a local tar archive (image will be loaded into Talos from the archive)
     talosctl debug ./debug-tools.tar --args /bin/sh
 
   # Run a debug container from an image reference (Talos will pull the image if not present)
-    talosctl debug docker.io/library/alpine:latest --args /bin/sh`,
+    talosctl debug docker.io/library/alpine:latest --args /bin/sh
 
-	Args: cobra.ExactArgs(1),
+  # Run in the host mount namespace: host binaries (zpool, etcdctl, …) work directly,
+  # Nix tools from nixos/nix are available on PATH — no nsenter needed
+    talosctl debug --host-ns
+
+  # Same, but pull a custom image for tools instead of the default nixos/nix
+    talosctl debug --host-ns ghcr.io/myorg/my-tools:latest`,
+
+	Args: cobra.RangeArgs(0, 1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return WithClientAndNodes(func(ctx context.Context, c *client.Client, nodes []string) error {
 			if len(nodes) != 1 {
@@ -66,8 +76,23 @@ var debugCmd = &cobra.Command{
 				return err
 			}
 
+			profile := machine.DebugContainerRunRequestSpec_PROFILE_PRIVILEGED
+			if debugCmdFlags.hostNs {
+				profile = machine.DebugContainerRunRequestSpec_PROFILE_HOST_NS
+			}
+
+			// resolve image: explicit arg > default host-ns image > error
+			imageArg := ""
+			if len(args) == 1 {
+				imageArg = args[0]
+			} else if debugCmdFlags.hostNs {
+				imageArg = constants.DebugHostNsImage
+			} else {
+				return fmt.Errorf("image argument is required (or use --host-ns for a default Nix-based shell)")
+			}
+
 			// verify if we are sending a tarball or pulling an image
-			_, err = os.Stat(args[0])
+			_, err = os.Stat(imageArg)
 			if err != nil && !os.IsNotExist(err) {
 				return fmt.Errorf("failed to stat image argument: %w", err)
 			}
@@ -75,12 +100,12 @@ var debugCmd = &cobra.Command{
 			var imgName string
 
 			if err == nil {
-				imgName, err = imageImportInternal(ctx, c, ctrdInstance, nodes[0], args[0], rep)
+				imgName, err = imageImportInternal(ctx, c, ctrdInstance, nodes[0], imageArg, rep)
 				if err != nil {
 					return fmt.Errorf("failed to import image: %w", err)
 				}
 			} else {
-				pullResult, err := imagePullInternal(ctx, c, ctrdInstance, nodes, args[0], rep)
+				pullResult, err := imagePullInternal(ctx, c, ctrdInstance, nodes, imageArg, rep)
 				if err != nil {
 					return fmt.Errorf("failed to pull image: %w", err)
 				}
@@ -106,7 +131,7 @@ var debugCmd = &cobra.Command{
 				return fmt.Errorf("failed to create debug container stream: %w", err)
 			}
 
-			return runContainer(ctx, rep, runStream, imgName, debugCmdFlags.args, ctrdInstance)
+			return runContainer(ctx, rep, runStream, imgName, debugCmdFlags.args, ctrdInstance, profile)
 		})
 	},
 }
@@ -119,6 +144,7 @@ func runContainer(
 	imageName string,
 	args []string,
 	ctrdInstance *common.ContainerdInstance,
+	profile machine.DebugContainerRunRequestSpec_Profile,
 ) error { //nolint:gocyclo,cyclop
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -131,7 +157,7 @@ func runContainer(
 				Containerd: ctrdInstance,
 				ImageName:  imageName,
 				Args:       args,
-				Profile:    machine.DebugContainerRunRequestSpec_PROFILE_PRIVILEGED,
+				Profile:    profile,
 				Tty:        isTTY,
 			},
 		},
