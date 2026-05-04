@@ -32,6 +32,7 @@ kernel/drivers/edac/i82975x_edac.ko
 kernel/drivers/edac/ie31200_edac.ko
 kernel/drivers/edac/igen6_edac.ko
 kernel/drivers/edac/sb_edac.ko
+kernel/drivers/edac/skx_edac_common.ko
 kernel/drivers/edac/skx_edac.ko
 kernel/drivers/edac/x38_edac.ko
 kernel/drivers/gpu/drm/display/drm_display_helper.ko

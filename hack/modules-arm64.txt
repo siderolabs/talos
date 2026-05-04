@@ -154,6 +154,7 @@ kernel/drivers/net/ethernet/stmicro/stmmac/dwmac-meson8b.ko
 kernel/drivers/net/ethernet/stmicro/stmmac/dwmac-qcom-ethqos.ko
 kernel/drivers/net/ethernet/stmicro/stmmac/dwmac-renesas-gbeth.ko
 kernel/drivers/net/ethernet/stmicro/stmmac/dwmac-rk.ko
+kernel/drivers/net/ethernet/stmicro/stmmac/dwmac-sun55i.ko
 kernel/drivers/net/ethernet/stmicro/stmmac/dwmac-sun8i.ko
 kernel/drivers/net/ethernet/stmicro/stmmac/dwmac-sunxi.ko
 kernel/drivers/net/ethernet/stmicro/stmmac/dwmac-tegra.ko
@@ -162,6 +163,7 @@ kernel/drivers/net/ethernet/stmicro/stmmac/stmmac-platform.ko
 kernel/drivers/net/ethernet/stmicro/stmmac/stmmac.ko
 kernel/drivers/net/mdio.ko
 kernel/drivers/net/pcs/pcs_xpcs.ko
+kernel/drivers/net/pcs/pcs-rzn1-miic.ko
 kernel/drivers/net/phy/dp83867.ko
 kernel/drivers/net/usb/r8152.ko
 kernel/drivers/net/vmxnet3/vmxnet3.ko
