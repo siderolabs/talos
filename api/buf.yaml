@@ -13,6 +13,7 @@ modules:
         PACKAGE_DIRECTORY_MATCH:
           - resource/definitions/
           - security/
+          - signer/
         ENUM_NO_ALLOW_ALIAS:
           - resource/definitions/enums/
   - path: vendor/

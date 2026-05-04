@@ -1,0 +1,84 @@
+syntax = "proto3";
+
+package signerapi;
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/signer";
+option java_package = "dev.talos.api.signer";
+
+import "google/protobuf/empty.proto";
+
+// SignerService is implemented by an out-of-process SecureBoot/PCR signer.
+//
+// The Talos imager opens a gRPC client connection to the signer's Unix
+// socket and calls these RPCs to fetch the signing certificate / public
+// key and to sign digests of the artifacts being built.
+//
+// A YubiKey-based example implementation is available at:
+// https://github.com/jaakkonen/talos-secureboot
+//
+// Conventions:
+//   - SecureBoot signing requires GetCertificate (the cert is embedded in
+//     the PE Authenticode signature so UEFI firmware can verify it). The
+//     public key is read from the certificate.
+//   - PCR signing requires GetPublicKey only (the public RSA key is
+//     embedded in the UKI's .pcrpkey section). GetCertificate is unused.
+//   - Sign always operates on a precomputed digest. The hash and scheme
+//     are declared in the request so the helper can route to the correct
+//     HSM primitive (RSA-PKCS1v15 / RSA-PSS).
+service SignerService {
+  // GetCertificate returns the X.509 certificate associated with the
+  // signing key, PEM-encoded.
+  rpc GetCertificate(google.protobuf.Empty) returns (CertificateResponse);
+
+  // GetPublicKey returns the public key associated with the signing key,
+  // PEM-encoded as a SubjectPublicKeyInfo (PKIX) block.
+  rpc GetPublicKey(google.protobuf.Empty) returns (PublicKeyResponse);
+
+  // Sign produces a signature over the supplied digest.
+  rpc Sign(SignRequest) returns (SignResponse);
+}
+
+// CertificateResponse is returned by GetCertificate.
+message CertificateResponse {
+  // PEM-encoded X.509 certificate.
+  bytes cert_pem = 1;
+}
+
+// PublicKeyResponse is returned by GetPublicKey.
+message PublicKeyResponse {
+  // PEM-encoded SubjectPublicKeyInfo (PKIX).
+  bytes pub_key_pem = 1;
+}
+
+// Hash identifies the digest algorithm used to produce SignRequest.digest.
+enum Hash {
+  HASH_UNSPECIFIED = 0;
+  HASH_SHA256 = 1;
+  HASH_SHA384 = 2;
+  HASH_SHA512 = 3;
+}
+
+// Scheme identifies the signature algorithm the signer should produce.
+enum Scheme {
+  SCHEME_UNSPECIFIED = 0;
+  SCHEME_RSA_PKCS1V15 = 1;
+  SCHEME_RSA_PSS = 2;
+}
+
+// SignRequest is sent for the Sign RPC.
+message SignRequest {
+  // Precomputed digest of the data to sign. Length must match `hash`.
+  bytes digest = 1;
+
+  // Hash algorithm used to produce `digest`.
+  Hash hash = 2;
+
+  // Signature scheme the signer should produce.
+  Scheme scheme = 3;
+}
+
+// SignResponse is returned by the Sign RPC.
+message SignResponse {
+  // Raw signature bytes, modulus-sized.
+  bytes signature = 1;
+}

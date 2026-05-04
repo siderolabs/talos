@@ -28,5 +28,6 @@ inputs:
       - machine/
       - resource/
       - security/
+      - signer/
       - storage/
       - time/

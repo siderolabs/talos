@@ -108,12 +108,12 @@ func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Repor
 	case i.prof.SecureBootEnabled():
 		isoOptions := pointer.SafeDeref(i.prof.Output.ISOOptions)
 
-		var signer pesign.CertificateSigner
-
-		signer, err = i.prof.Input.SecureBoot.SecureBootSigner.GetSigner(ctx)
+		signer, err := i.prof.Input.SecureBoot.SecureBootSigner.GetSigner(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to get SecureBoot signer: %w", err)
 		}
+
+		defer signer.Close() //nolint:errcheck
 
 		derCrtPath := filepath.Join(i.tempDir, "uki.der")
 
@@ -391,6 +391,8 @@ func (i *Imager) buildImage(ctx context.Context, path string, printf func(string
 		if err != nil {
 			return fmt.Errorf("failed to get SecureBoot signer: %w", err)
 		}
+
+		defer signer.Close() //nolint:errcheck
 
 		pk, kek, db, err := i.prepareEnrollmentDBs(signer)
 		if err != nil {

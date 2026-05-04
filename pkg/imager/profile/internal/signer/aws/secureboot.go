@@ -37,6 +37,9 @@ func (s *SecureBootSigner) Certificate() *x509.Certificate {
 	return s.cert
 }
 
+// Close releases signer resources.
+func (s *SecureBootSigner) Close() error { return s.keySigner.Close() }
+
 // NewSecureBootSigner creates a new SecureBootSigner.
 func NewSecureBootSigner(ctx context.Context, kmsKeyID, awsRegion, certPath string) (*SecureBootSigner, error) {
 	keySigner, err := NewPCRSigner(ctx, kmsKeyID, awsRegion)

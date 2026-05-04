@@ -35,6 +35,9 @@ func (s *SecureBootSigner) Certificate() *x509.Certificate {
 	return s.cert
 }
 
+// Close releases signer resources.
+func (s *SecureBootSigner) Close() error { return s.keySigner.Close() }
+
 // NewSecureBootSigner creates a new SecureBootSigner.
 func NewSecureBootSigner(ctx context.Context, vaultURL, certificateID, certificateVersion string) (*SecureBootSigner, error) {
 	certsClient, err := getCertsClient(vaultURL)

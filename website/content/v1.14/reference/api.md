@@ -647,6 +647,17 @@ description: Talos gRPC API reference.
   
     - [SecurityService](#securityapi.SecurityService)
   
+- [signer/signer.proto](#signer/signer.proto)
+    - [CertificateResponse](#signerapi.CertificateResponse)
+    - [PublicKeyResponse](#signerapi.PublicKeyResponse)
+    - [SignRequest](#signerapi.SignRequest)
+    - [SignResponse](#signerapi.SignResponse)
+  
+    - [Hash](#signerapi.Hash)
+    - [Scheme](#signerapi.Scheme)
+  
+    - [SignerService](#signerapi.SignerService)
+  
 - [storage/storage.proto](#storage/storage.proto)
     - [BlockDeviceWipe](#storage.BlockDeviceWipe)
     - [BlockDeviceWipeDescriptor](#storage.BlockDeviceWipeDescriptor)
@@ -11306,6 +11317,140 @@ The security service definition.
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | Certificate | [CertificateRequest](#securityapi.CertificateRequest) | [CertificateResponse](#securityapi.CertificateResponse) |  |
+
+ <!-- end services -->
+
+
+
+<a name="signer/signer.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## signer/signer.proto
+
+
+
+<a name="signerapi.CertificateResponse"></a>
+
+### CertificateResponse
+CertificateResponse is returned by GetCertificate.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| cert_pem | [bytes](#bytes) |  | PEM-encoded X.509 certificate. |
+
+
+
+
+
+
+<a name="signerapi.PublicKeyResponse"></a>
+
+### PublicKeyResponse
+PublicKeyResponse is returned by GetPublicKey.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| pub_key_pem | [bytes](#bytes) |  | PEM-encoded SubjectPublicKeyInfo (PKIX). |
+
+
+
+
+
+
+<a name="signerapi.SignRequest"></a>
+
+### SignRequest
+SignRequest is sent for the Sign RPC.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| digest | [bytes](#bytes) |  | Precomputed digest of the data to sign. Length must match `hash`. |
+| hash | [Hash](#signerapi.Hash) |  | Hash algorithm used to produce `digest`. |
+| scheme | [Scheme](#signerapi.Scheme) |  | Signature scheme the signer should produce. |
+
+
+
+
+
+
+<a name="signerapi.SignResponse"></a>
+
+### SignResponse
+SignResponse is returned by the Sign RPC.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| signature | [bytes](#bytes) |  | Raw signature bytes, modulus-sized. |
+
+
+
+
+
+ <!-- end messages -->
+
+
+<a name="signerapi.Hash"></a>
+
+### Hash
+Hash identifies the digest algorithm used to produce SignRequest.digest.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| HASH_UNSPECIFIED | 0 |  |
+| HASH_SHA256 | 1 |  |
+| HASH_SHA384 | 2 |  |
+| HASH_SHA512 | 3 |  |
+
+
+
+<a name="signerapi.Scheme"></a>
+
+### Scheme
+Scheme identifies the signature algorithm the signer should produce.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| SCHEME_UNSPECIFIED | 0 |  |
+| SCHEME_RSA_PKCS1V15 | 1 |  |
+| SCHEME_RSA_PSS | 2 |  |
+
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="signerapi.SignerService"></a>
+
+### SignerService
+SignerService is implemented by an out-of-process SecureBoot/PCR signer.
+
+The Talos imager opens a gRPC client connection to the signer's Unix
+socket and calls these RPCs to fetch the signing certificate / public
+key and to sign digests of the artifacts being built.
+
+A YubiKey-based example implementation is available at:
+https://github.com/jaakkonen/talos-secureboot
+
+Conventions:
+  - SecureBoot signing requires GetCertificate (the cert is embedded in
+    the PE Authenticode signature so UEFI firmware can verify it). The
+    public key is read from the certificate.
+  - PCR signing requires GetPublicKey only (the public RSA key is
+    embedded in the UKI's .pcrpkey section). GetCertificate is unused.
+  - Sign always operates on a precomputed digest. The hash and scheme
+    are declared in the request so the helper can route to the correct
+    HSM primitive (RSA-PKCS1v15 / RSA-PSS).
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| GetCertificate | [.google.protobuf.Empty](#google.protobuf.Empty) | [CertificateResponse](#signerapi.CertificateResponse) | GetCertificate returns the X.509 certificate associated with the signing key, PEM-encoded. |
+| GetPublicKey | [.google.protobuf.Empty](#google.protobuf.Empty) | [PublicKeyResponse](#signerapi.PublicKeyResponse) | GetPublicKey returns the public key associated with the signing key, PEM-encoded as a SubjectPublicKeyInfo (PKIX) block. |
+| Sign | [SignRequest](#signerapi.SignRequest) | [SignResponse](#signerapi.SignResponse) | Sign produces a signature over the supplied digest. |
 
  <!-- end services -->
 

@@ -47,6 +47,8 @@ var cmdFlags struct {
 	OverlayOptions        []string
 	// Only used when generating a secure boot iso without also providing a secure boot database.
 	SecurebootIncludeWellKnownCerts bool
+	SecurebootSignerAddress         string
+	PCRSignerAddress                string
 }
 
 // rootCmd represents the base command when called without any subcommands.
@@ -185,6 +187,22 @@ var rootCmd = &cobra.Command{
 				prof.Input.SecureBoot.IncludeWellKnownCerts = true
 			}
 
+			if cmdFlags.SecurebootSignerAddress != "" {
+				if prof.Input.SecureBoot == nil {
+					prof.Input.SecureBoot = &profile.SecureBootAssets{}
+				}
+
+				prof.Input.SecureBoot.SecureBootSigner.SignerAddress = cmdFlags.SecurebootSignerAddress
+			}
+
+			if cmdFlags.PCRSignerAddress != "" {
+				if prof.Input.SecureBoot == nil {
+					prof.Input.SecureBoot = &profile.SecureBootAssets{}
+				}
+
+				prof.Input.SecureBoot.PCRSigner.SignerAddress = cmdFlags.PCRSignerAddress
+			}
+
 			if cmdFlags.EmbeddedConfigPath != "" {
 				data, err := os.ReadFile(cmdFlags.EmbeddedConfigPath)
 				if err != nil {
@@ -247,5 +265,13 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.EmbeddedConfigPath, "embedded-config-path", "", "Path to a file containing the machine configuration to embed into the image")
 	rootCmd.PersistentFlags().BoolVar(
 		&cmdFlags.SecurebootIncludeWellKnownCerts, "secureboot-include-well-known-certs", false, "Include well-known (Microsoft) UEFI certificates when generating a secure boot database",
+	)
+	rootCmd.PersistentFlags().StringVar(
+		&cmdFlags.SecurebootSignerAddress, "secureboot-signer-address", "",
+		"gRPC unix:// address of a SecureBoot signer service",
+	)
+	rootCmd.PersistentFlags().StringVar(
+		&cmdFlags.PCRSignerAddress, "pcr-signer-address", "",
+		"gRPC unix:// address of a PCR signer service",
 	)
 }

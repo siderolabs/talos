@@ -41,6 +41,9 @@ func (s *PCRSigner) Sign(rand io.Reader, digest []byte, opts crypto.SignerOpts) 
 	return s.key.Sign(rand, digest, opts)
 }
 
+// Close releases signer resources.
+func (s *PCRSigner) Close() error { return nil }
+
 // NewPCRSigner creates a new PCR signer from the private key file.
 func NewPCRSigner(keyPath string) (*PCRSigner, error) {
 	keyData, err := os.ReadFile(keyPath)

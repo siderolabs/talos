@@ -35,6 +35,9 @@ func (s *SecureBootSigner) Certificate() *x509.Certificate {
 	return s.cert
 }
 
+// Close releases signer resources.
+func (s *SecureBootSigner) Close() error { return nil }
+
 // NewSecureBootSigner creates a new SecureBootSigner.
 func NewSecureBootSigner(certPath, keyPath string) (*SecureBootSigner, error) {
 	keyData, err := os.ReadFile(keyPath)

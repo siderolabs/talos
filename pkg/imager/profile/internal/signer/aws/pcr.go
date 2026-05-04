@@ -99,6 +99,9 @@ func (s *KeySigner) Sign(rand io.Reader, digest []byte, opts crypto.SignerOpts) 
 	return resp.Signature, nil
 }
 
+// Close releases signer resources.
+func (s *KeySigner) Close() error { return nil }
+
 // Verify interface.
 var _ measure.RSAKey = (*KeySigner)(nil)
 

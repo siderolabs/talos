@@ -469,10 +469,14 @@ func (i *Imager) buildUKI(ctx context.Context, report *reporter.Reporter) error 
 			return fmt.Errorf("failed to get PCR signer: %w", err)
 		}
 
+		defer pcrSigner.Close() //nolint:errcheck
+
 		securebootSigner, err := i.prof.Input.SecureBoot.SecureBootSigner.GetSigner(ctx)
 		if err != nil {
 			return fmt.Errorf("failed to get SecureBoot signer: %w", err)
 		}
+
+		defer securebootSigner.Close() //nolint:errcheck
 
 		builder.SecureBootSigner = securebootSigner
 		builder.PCRSigner = pcrSigner

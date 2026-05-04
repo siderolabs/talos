@@ -154,6 +154,8 @@ func generateSecureBootDatabase(ctx context.Context, path, enrolledCertificatePa
 		return fmt.Errorf("failed to create signer: %w", err)
 	}
 
+	defer signer.Close() //nolint:errcheck
+
 	enrolledPEM, err := os.ReadFile(enrolledCertificatePath)
 	if err != nil {
 		return err
