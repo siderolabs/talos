@@ -656,6 +656,7 @@ FROM tools AS depmod-amd64
 WORKDIR /staging
 COPY hack/modules-amd64.txt .
 COPY --from=pkg-kernel-amd64 /usr/lib/modules usr/lib/modules
+COPY --from=pkg-kernel-amd64 /boot/System.map /staging
 RUN <<EOF
 set -euo pipefail
 
@@ -663,7 +664,17 @@ KERNEL_VERSION=$(ls usr/lib/modules)
 
 xargs -a modules-amd64.txt -I {} install -D usr/lib/modules/${KERNEL_VERSION}/{} /build/usr/lib/modules/${KERNEL_VERSION}/{}
 
-depmod -b /build/usr ${KERNEL_VERSION}
+# check if the output of the command is empty, as depmod doesn't fail and just prints a warning
+DEPMOD_OUTPUT=$(depmod -b /build/usr -F /staging/System.map --errsyms -w ${KERNEL_VERSION} 2>&1)
+
+if [ -n "${DEPMOD_OUTPUT}" ]; then
+    echo "depmod output is not empty, indicating a potential issue:"
+    echo "${DEPMOD_OUTPUT}"
+    exit 1
+else
+    echo "depmod completed successfully with no warnings."
+fi
+
 EOF
 
 FROM scratch AS modules-amd64
@@ -673,6 +684,7 @@ FROM tools AS depmod-arm64
 WORKDIR /staging
 COPY hack/modules-arm64.txt .
 COPY --from=pkg-kernel-arm64 /usr/lib/modules usr/lib/modules
+COPY --from=pkg-kernel-arm64 /boot/System.map /staging
 RUN <<EOF
 set -euo pipefail
 
@@ -680,7 +692,17 @@ KERNEL_VERSION=$(ls usr/lib/modules)
 
 xargs -a modules-arm64.txt -I {} install -D usr/lib/modules/${KERNEL_VERSION}/{} /build/usr/lib/modules/${KERNEL_VERSION}/{}
 
-depmod -b /build/usr ${KERNEL_VERSION}
+# check if the output of the command is empty, as depmod doesn't fail and just prints a warning
+DEPMOD_OUTPUT=$(depmod -b /build/usr -F /staging/System.map --errsyms -w ${KERNEL_VERSION} 2>&1)
+
+if [ -n "${DEPMOD_OUTPUT}" ]; then
+    echo "depmod output is not empty, indicating a potential issue:"
+    echo "${DEPMOD_OUTPUT}"
+    exit 1
+else
+    echo "depmod completed successfully with no warnings."
+fi
+
 EOF
 
 FROM scratch AS modules-arm64
