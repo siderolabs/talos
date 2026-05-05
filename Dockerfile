@@ -1268,6 +1268,31 @@ RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=locked go tool git
 WORKDIR /src
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool github.com/siderolabs/importvet/cmd/importvet github.com/siderolabs/talos/...
 
+# The lint-golangci-lint-fmt target runs the golangci-lint formatter and fixes issues automatically.
+FROM base AS lint-golangci-lint-fmt-run
+COPY .golangci.yml .
+ENV GOGC=50
+ENV GOLANGCI_LINT_CACHE=/.cache/lint
+RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=locked go tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint fmt --config .golangci.yml
+RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=locked go tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint run --fix --issues-exit-code 0 --config .golangci.yml
+WORKDIR /src/pkg/machinery
+RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=locked go tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint fmt --config ../../.golangci.yml
+RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=locked go tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint run --fix --issues-exit-code 0 --config ../../.golangci.yml
+COPY ./hack/cloud-image-uploader /src/hack/cloud-image-uploader
+WORKDIR /src/hack/cloud-image-uploader
+RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=locked go tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint fmt --config ../../.golangci.yml
+RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=locked go tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint run --fix --issues-exit-code 0 --config ../../.golangci.yml
+WORKDIR /src
+
+# clean golangci-lint fmt output
+# exclude files populated by the `base` stage (gendata build args, generated os-release)
+# so running this target doesn't dirty the source tree with build-time values.
+FROM scratch AS lint-golangci-lint-fmt
+COPY --from=lint-golangci-lint-fmt-run \
+    --exclude=pkg/machinery/gendata/data \
+    --exclude=pkg/machinery/version/os-release \
+    /src .
+
 # The protolint target performs linting on protobuf files.
 
 FROM base AS lint-protobuf
