@@ -38,15 +38,24 @@ func NewResolverMergeController() controller.Controller {
 			for res := range list.All() {
 				spec := res.TypedSpec()
 
-				final.SearchDomains = slices.Insert(final.SearchDomains, 0, spec.SearchDomains...)
+				domainPos := 0
+
+				for _, domain := range spec.SearchDomains {
+					if !slices.Contains(final.SearchDomains, domain) {
+						final.SearchDomains = slices.Insert(final.SearchDomains, domainPos, domain)
+						domainPos++
+					}
+				}
 
 				switch spec.ConfigLayer { //nolint:exhaustive
 				case final.ConfigLayer:
 					// simply append server lists on the same layer
 					final.DNSServers = append(final.DNSServers, spec.DNSServers...)
 				case network.ConfigMachineConfiguration:
-					// machine configuration layer overrides any previous layers completely
-					final.DNSServers = slices.Clone(spec.DNSServers)
+					// machine configuration overrides previous layers, but only when DNS servers are set
+					if len(spec.DNSServers) > 0 {
+						final.DNSServers = slices.Clone(spec.DNSServers)
+					}
 				default:
 					// otherwise, do a smart merge across IPv4/IPv6
 					mergeDNSServers(&final.DNSServers, spec.DNSServers)

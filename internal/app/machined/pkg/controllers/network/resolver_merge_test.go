@@ -117,6 +117,43 @@ func (suite *ResolverMergeSuite) TestMergeIPv46() {
 	)
 }
 
+func (suite *ResolverMergeSuite) TestMergeSearchDomainsOnlyConfig() {
+	def := network.NewResolverSpec(network.ConfigNamespaceName, "default/resolvers")
+	*def.TypedSpec() = network.ResolverSpecSpec{
+		DNSServers: []netip.Addr{
+			netip.MustParseAddr(constants.DefaultPrimaryResolver),
+			netip.MustParseAddr(constants.DefaultSecondaryResolver),
+		},
+		ConfigLayer: network.ConfigDefault,
+	}
+
+	dhcp := network.NewResolverSpec(network.ConfigNamespaceName, "dhcp/eth0")
+	*dhcp.TypedSpec() = network.ResolverSpecSpec{
+		DNSServers:    []netip.Addr{netip.MustParseAddr("192.168.131.1")},
+		SearchDomains: []string{"somewhere.com", "home.lab"},
+		ConfigLayer:   network.ConfigOperator,
+	}
+
+	cfg := network.NewResolverSpec(network.ConfigNamespaceName, "configuration/resolvers")
+	*cfg.TypedSpec() = network.ResolverSpecSpec{
+		SearchDomains: []string{"home.lab", "another.lab"},
+		ConfigLayer:   network.ConfigMachineConfiguration,
+	}
+
+	for _, res := range []resource.Resource{def, dhcp, cfg} {
+		suite.Create(res)
+	}
+
+	suite.assertResolvers(
+		[]string{
+			"resolvers",
+		}, func(r *network.ResolverSpec, asrt *assert.Assertions) {
+			asrt.Equal([]netip.Addr{netip.MustParseAddr("192.168.131.1")}, r.TypedSpec().DNSServers)
+			asrt.Equal([]string{"another.lab", "somewhere.com", "home.lab"}, r.TypedSpec().SearchDomains)
+		},
+	)
+}
+
 func (suite *ResolverMergeSuite) TestMergeIPv6OnlyConfig() {
 	def := network.NewResolverSpec(network.ConfigNamespaceName, "default/resolvers")
 	*def.TypedSpec() = network.ResolverSpecSpec{
