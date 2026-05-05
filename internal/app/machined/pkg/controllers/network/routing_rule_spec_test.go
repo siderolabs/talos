@@ -440,6 +440,142 @@ func (suite *RoutingRuleSpecSuite) TestDstPrefix() {
 	)
 }
 
+// TestForeignRulePreserved verifies the controller never deletes rules it
+// did not install (rules with a Protocol other than RTPROT_STATIC), even
+// when their priority+family collides with a Talos-managed spec.
+func (suite *RoutingRuleSpecSuite) TestForeignRulePreserved() {
+	priority := uint32(31100)
+
+	conn, err := rtnetlink.Dial(nil)
+	suite.Require().NoError(err)
+
+	defer conn.Close() //nolint:errcheck
+
+	// Pre-install a foreign rule at the same priority+family with a
+	// non-Talos protocol marker (RTPROT_BOOT). The controller's match
+	// logic must ignore this rule and not delete it.
+	srcIP := net.ParseIP("10.88.0.0").To4()
+	foreignProto := uint8(unix.RTPROT_BOOT)
+	foreignTable := uint32(200)
+	foreignPriority := priority
+
+	foreignMsg := &rtnetlink.RuleMessage{
+		Family:    uint8(nethelpers.FamilyInet4),
+		Table:     uint8(200),
+		Action:    unix.FR_ACT_TO_TBL,
+		SrcLength: 16,
+		Attributes: &rtnetlink.RuleAttributes{
+			Priority: &foreignPriority,
+			Table:    &foreignTable,
+			Src:      &srcIP,
+			Protocol: &foreignProto,
+		},
+	}
+
+	suite.Require().NoError(conn.Rule.Add(foreignMsg))
+
+	defer func() {
+		_ = conn.Rule.Delete(foreignMsg) //nolint:errcheck
+	}()
+
+	// Create a Talos-owned spec at the same priority+family but a different src.
+	// Without the protocol gate the spec controller would key-match the foreign
+	// rule on (priority, family) and delete it.
+	rule := network.NewRoutingRuleSpec(network.NamespaceName, "foreign-collision-rule")
+	*rule.TypedSpec() = network.RoutingRuleSpecSpec{
+		Family:      nethelpers.FamilyInet4,
+		Src:         netip.MustParsePrefix("10.77.0.0/16"),
+		Table:       nethelpers.RoutingTable(100),
+		Priority:    priority,
+		Action:      nethelpers.RoutingRuleActionUnicast,
+		ConfigLayer: network.ConfigMachineConfiguration,
+	}
+
+	suite.Create(rule)
+
+	// Talos-owned rule must appear.
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertRule(
+					nethelpers.FamilyInet4,
+					netip.MustParsePrefix("10.77.0.0/16"),
+					netip.Prefix{},
+					priority,
+					func(rtnetlink.RuleMessage) error { return nil },
+				)
+			},
+		),
+	)
+
+	// Foreign rule must still be present.
+	rules, err := conn.Rule.List()
+	suite.Require().NoError(err)
+
+	var foreignFound bool
+
+	for _, r := range rules {
+		if r.Family != uint8(nethelpers.FamilyInet4) {
+			continue
+		}
+
+		if pointer.SafeDeref(r.Attributes.Priority) != priority {
+			continue
+		}
+
+		if pointer.SafeDeref(r.Attributes.Protocol) != unix.RTPROT_BOOT {
+			continue
+		}
+
+		foreignFound = true
+
+		break
+	}
+
+	suite.Assert().True(foreignFound, "foreign rule was deleted by the spec controller")
+
+	// Tear the Talos-owned rule down — foreign rule must still survive.
+	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), rule.Metadata()))
+
+	suite.Assert().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertNoRule(
+					nethelpers.FamilyInet4,
+					netip.MustParsePrefix("10.77.0.0/16"),
+					netip.Prefix{},
+					priority,
+				)
+			},
+		),
+	)
+
+	rules, err = conn.Rule.List()
+	suite.Require().NoError(err)
+
+	foreignFound = false
+
+	for _, r := range rules {
+		if r.Family != uint8(nethelpers.FamilyInet4) {
+			continue
+		}
+
+		if pointer.SafeDeref(r.Attributes.Priority) != priority {
+			continue
+		}
+
+		if pointer.SafeDeref(r.Attributes.Protocol) != unix.RTPROT_BOOT {
+			continue
+		}
+
+		foreignFound = true
+
+		break
+	}
+
+	suite.Assert().True(foreignFound, "foreign rule was deleted during teardown of Talos-owned rule")
+}
+
 func TestRoutingRuleSpecSuite(t *testing.T) {
 	t.Parallel()
 

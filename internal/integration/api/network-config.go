@@ -727,6 +727,41 @@ func (suite *NetworkConfigSuite) routingRuleTestCtx() (context.Context, context.
 	return context.WithTimeout(context.Background(), 2*time.Minute)
 }
 
+// kernelDefaultRoutingRules lists the rule IDs the kernel auto-installs in every
+// network namespace. These must remain present at all times - Talos must never
+// delete rules it did not create.
+var kernelDefaultRoutingRules = []struct {
+	id       string
+	priority uint32
+	table    nethelpers.RoutingTable
+}{
+	{"inet4/00000", 0, nethelpers.RoutingTable(255)},     // local
+	{"inet4/32766", 32766, nethelpers.RoutingTable(254)}, // main
+	{"inet4/32767", 32767, nethelpers.RoutingTable(253)}, // default
+	{"inet6/00000", 0, nethelpers.RoutingTable(255)},     // local
+	{"inet6/32766", 32766, nethelpers.RoutingTable(254)}, // main
+}
+
+// assertKernelDefaultRoutingRulesPresent asserts that the kernel-installed
+// default routing rules (priorities 0/32766/32767, both families) are still
+// present in RoutingRuleStatus. Every routing-rule integration test calls
+// this both before applying its config and after teardown.
+func (suite *NetworkConfigSuite) assertKernelDefaultRoutingRulesPresent(nodeCtx context.Context) {
+	suite.T().Helper()
+
+	for _, expected := range kernelDefaultRoutingRules {
+		rtestutils.AssertResource(
+			nodeCtx, suite.T(), suite.Client.COSI, expected.id,
+			func(rule *networkres.RoutingRuleStatus, asrt *assert.Assertions) {
+				asrt.Equal(expected.table, rule.TypedSpec().Table,
+					"kernel-default rule %s missing or table changed", expected.id)
+				asrt.Equal(expected.priority, rule.TypedSpec().Priority,
+					"kernel-default rule %s priority changed", expected.id)
+			},
+		)
+	}
+}
+
 // TestRoutingRuleBasic tests creation of a routing rule with a numeric table ID.
 //
 //nolint:dupl
@@ -738,6 +773,8 @@ func (suite *NetworkConfigSuite) TestRoutingRuleBasic() {
 	nodeCtx := client.WithNode(ctx, node)
 
 	suite.T().Logf("testing routing rule (basic) on node %q", node)
+
+	suite.assertKernelDefaultRoutingRulesPresent(nodeCtx)
 
 	const rulePriority uint32 = 1000
 
@@ -758,9 +795,13 @@ func (suite *NetworkConfigSuite) TestRoutingRuleBasic() {
 		},
 	)
 
+	suite.assertKernelDefaultRoutingRulesPresent(nodeCtx)
+
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.RoutingRuleKind, strconv.FormatUint(uint64(rulePriority), 10))
 
 	rtestutils.AssertNoResource[*networkres.RoutingRuleStatus](nodeCtx, suite.T(), suite.Client.COSI, ruleStatusID)
+
+	suite.assertKernelDefaultRoutingRulesPresent(nodeCtx)
 }
 
 // TestRoutingRuleIPv6 tests creation of an IPv6 routing rule.
@@ -774,6 +815,8 @@ func (suite *NetworkConfigSuite) TestRoutingRuleIPv6() {
 	nodeCtx := client.WithNode(ctx, node)
 
 	suite.T().Logf("testing routing rule (IPv6) on node %q", node)
+
+	suite.assertKernelDefaultRoutingRulesPresent(nodeCtx)
 
 	const rulePriority uint32 = 3000
 
@@ -794,9 +837,13 @@ func (suite *NetworkConfigSuite) TestRoutingRuleIPv6() {
 		},
 	)
 
+	suite.assertKernelDefaultRoutingRulesPresent(nodeCtx)
+
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.RoutingRuleKind, strconv.FormatUint(uint64(rulePriority), 10))
 
 	rtestutils.AssertNoResource[*networkres.RoutingRuleStatus](nodeCtx, suite.T(), suite.Client.COSI, ruleStatusID)
+
+	suite.assertKernelDefaultRoutingRulesPresent(nodeCtx)
 }
 
 // TestRoutingRuleSrcAndDst tests creation of a routing rule with both source and destination prefixes.
@@ -808,6 +855,8 @@ func (suite *NetworkConfigSuite) TestRoutingRuleSrcAndDst() {
 	nodeCtx := client.WithNode(ctx, node)
 
 	suite.T().Logf("testing routing rule (src+dst) on node %q", node)
+
+	suite.assertKernelDefaultRoutingRulesPresent(nodeCtx)
 
 	const rulePriority uint32 = 4000
 
@@ -830,9 +879,13 @@ func (suite *NetworkConfigSuite) TestRoutingRuleSrcAndDst() {
 		},
 	)
 
+	suite.assertKernelDefaultRoutingRulesPresent(nodeCtx)
+
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.RoutingRuleKind, strconv.FormatUint(uint64(rulePriority), 10))
 
 	rtestutils.AssertNoResource[*networkres.RoutingRuleStatus](nodeCtx, suite.T(), suite.Client.COSI, ruleStatusID)
+
+	suite.assertKernelDefaultRoutingRulesPresent(nodeCtx)
 }
 
 // TestRoutingRuleBlackholeAction tests creation of a routing rule with blackhole action.
@@ -844,6 +897,8 @@ func (suite *NetworkConfigSuite) TestRoutingRuleBlackholeAction() {
 	nodeCtx := client.WithNode(ctx, node)
 
 	suite.T().Logf("testing routing rule (blackhole action) on node %q", node)
+
+	suite.assertKernelDefaultRoutingRulesPresent(nodeCtx)
 
 	const rulePriority uint32 = 5000
 
@@ -864,9 +919,13 @@ func (suite *NetworkConfigSuite) TestRoutingRuleBlackholeAction() {
 		},
 	)
 
+	suite.assertKernelDefaultRoutingRulesPresent(nodeCtx)
+
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.RoutingRuleKind, strconv.FormatUint(uint64(rulePriority), 10))
 
 	rtestutils.AssertNoResource[*networkres.RoutingRuleStatus](nodeCtx, suite.T(), suite.Client.COSI, ruleStatusID)
+
+	suite.assertKernelDefaultRoutingRulesPresent(nodeCtx)
 }
 
 // TestRoutingRuleFwMark tests creation of a routing rule with firewall mark matching.
@@ -878,6 +937,8 @@ func (suite *NetworkConfigSuite) TestRoutingRuleFwMark() {
 	nodeCtx := client.WithNode(ctx, node)
 
 	suite.T().Logf("testing routing rule (fwmark) on node %q", node)
+
+	suite.assertKernelDefaultRoutingRulesPresent(nodeCtx)
 
 	const rulePriority uint32 = 6000
 
@@ -901,9 +962,13 @@ func (suite *NetworkConfigSuite) TestRoutingRuleFwMark() {
 		},
 	)
 
+	suite.assertKernelDefaultRoutingRulesPresent(nodeCtx)
+
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.RoutingRuleKind, strconv.FormatUint(uint64(rulePriority), 10))
 
 	rtestutils.AssertNoResource[*networkres.RoutingRuleStatus](nodeCtx, suite.T(), suite.Client.COSI, ruleStatusID)
+
+	suite.assertKernelDefaultRoutingRulesPresent(nodeCtx)
 }
 
 func init() {

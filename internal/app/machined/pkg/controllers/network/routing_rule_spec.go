@@ -22,9 +22,17 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/watch"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
+
+// reservedRulePriorities are kernel-managed routing rule priorities Talos must never touch.
+var reservedRulePriorities = map[uint32]struct{}{
+	constants.LinuxReservedRulePriorityLocal:   {},
+	constants.LinuxReservedRulePriorityMain:    {},
+	constants.LinuxReservedRulePriorityDefault: {},
+}
 
 // RoutingRuleSpecController applies network.RoutingRuleSpec to the kernel.
 type RoutingRuleSpecController struct{}
@@ -55,7 +63,8 @@ func (ctrl *RoutingRuleSpecController) Outputs() []controller.Output {
 //nolint:gocyclo
 func (ctrl *RoutingRuleSpecController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	// watch link changes as some routes might need to be re-applied if the link appears
-	watcher, err := watch.NewRtNetlink(watch.NewDefaultRateLimitedTrigger(ctx, r), unix.RTMGRP_IPV4_RULE)
+	watcher, err := watch.NewRtNetlink(watch.NewDefaultRateLimitedTrigger(ctx, r), unix.RTMGRP_IPV4_RULE,
+		unix.RTNLGRP_IPV4_RULE, unix.RTNLGRP_IPV6_RULE)
 	if err != nil {
 		return err
 	}
@@ -126,6 +135,24 @@ func (ctrl *RoutingRuleSpecController) syncRule(
 	rule *network.RoutingRuleSpec,
 ) error {
 	spec := rule.TypedSpec()
+
+	if _, reserved := reservedRulePriorities[spec.Priority]; reserved {
+		// Never operate on rules at kernel-reserved priorities, even if a spec slipped through.
+		// Still drop the finalizer on tearing-down so the resource can be destroyed.
+		if rule.Metadata().Phase() == resource.PhaseTearingDown {
+			if err := r.RemoveFinalizer(ctx, rule.Metadata(), ctrl.Name()); err != nil {
+				return fmt.Errorf("error removing finalizer: %w", err)
+			}
+		}
+
+		logger.Warn(
+			"skipping routing rule at reserved priority",
+			zap.Uint32("priority", spec.Priority),
+			zap.Stringer("family", spec.Family),
+		)
+
+		return nil
+	}
 
 	switch rule.Metadata().Phase() {
 	case resource.PhaseTearingDown:
@@ -298,6 +325,13 @@ func (ctrl *RoutingRuleSpecController) matchesPrefix(existingIP *net.IP, existin
 }
 
 func (ctrl *RoutingRuleSpecController) matchesRuleKey(existing *rtnetlink.RuleMessage, spec *network.RoutingRuleSpecSpec) bool {
+	// Only operate on rules Talos owns (RTPROT_STATIC).
+	// Kernel-installed rules (local/main/default at reserved priorities) carry RTPROT_KERNEL,
+	// other agents (Cilium, etc.) carry their own protocol markers; never touch those.
+	if pointer.SafeDeref(existing.Attributes.Protocol) != unix.RTPROT_STATIC {
+		return false
+	}
+
 	if pointer.SafeDeref(existing.Attributes.Priority) != spec.Priority {
 		return false
 	}

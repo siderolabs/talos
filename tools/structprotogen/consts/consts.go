@@ -251,7 +251,8 @@ func (b *ConstBlocks) FormatProtoFile(w io.Writer) error {
 			}
 
 			if i == 0 && constant.Value != "0" {
-				fmt.Fprintf(w,
+				fmt.Fprintf(
+					w,
 					"  %s_%s_UNSPECIFIED = 0;\n",
 					strings.ToUpper(block.TypePkg),
 					strings.ToUpper(block.TypeName),

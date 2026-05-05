@@ -17,10 +17,18 @@ import (
 	"go.uber.org/zap"
 
 	cfg "github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
+
+var reservedConfigRulePriorities = map[uint32]struct{}{
+	constants.LinuxReservedRulePriorityLocal:   {},
+	constants.KubeSpanDefaultRulePriority:      {},
+	constants.LinuxReservedRulePriorityMain:    {},
+	constants.LinuxReservedRulePriorityDefault: {},
+}
 
 // RoutingRuleConfigController manages network.RoutingRuleSpec based on machine configuration.
 type RoutingRuleConfigController struct{}
@@ -72,6 +80,7 @@ func (ctrl *RoutingRuleConfigController) Run(ctx context.Context, r controller.R
 
 		if machineConfig != nil {
 			rules := ctrl.processConfig(
+				logger,
 				machineConfig.Config().NetworkRoutingRuleConfigs(),
 			)
 
@@ -109,12 +118,24 @@ func (ctrl *RoutingRuleConfigController) apply(ctx context.Context, r controller
 }
 
 func (ctrl *RoutingRuleConfigController) processConfig(
+	logger *zap.Logger,
 	ruleConfigs []cfg.NetworkRoutingRuleConfig,
 ) []network.RoutingRuleSpecSpec {
 	rules := make([]network.RoutingRuleSpecSpec, 0, len(ruleConfigs))
 
 	for _, ruleCfg := range ruleConfigs {
 		var rule network.RoutingRuleSpecSpec
+
+		priority := ruleCfg.Priority()
+
+		if _, reserved := reservedConfigRulePriorities[priority]; reserved {
+			logger.Warn(
+				"skipping routing rule at reserved priority",
+				zap.Uint32("priority", priority),
+			)
+
+			continue
+		}
 
 		src := ruleCfg.Src().ValueOrZero()
 		dst := ruleCfg.Dst().ValueOrZero()
@@ -126,7 +147,7 @@ func (ctrl *RoutingRuleConfigController) processConfig(
 		rule.FwMark = ruleCfg.FwMark()
 		rule.FwMask = ruleCfg.FwMask()
 		rule.ConfigLayer = network.ConfigMachineConfiguration
-		rule.Priority = ruleCfg.Priority()
+		rule.Priority = priority
 
 		rule.Table = ruleCfg.Table()
 

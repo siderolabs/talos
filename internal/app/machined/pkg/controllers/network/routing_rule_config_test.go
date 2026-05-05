@@ -145,6 +145,43 @@ func (suite *RoutingRuleConfigSuite) TestMachineConfigurationWithFwMark() {
 	)
 }
 
+// TestReservedPrioritySkipped verifies that user configs at kernel-reserved
+// priorities never produce a RoutingRuleSpec, so the spec controller can
+// never tear down (and thus delete) kernel-managed rules at those priorities.
+func (suite *RoutingRuleConfigSuite) TestReservedPrioritySkipped() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.RoutingRuleConfigController{}))
+
+	// Validation rejects these priorities at apply time, but processConfig
+	// must also defensively skip them to protect against any path that
+	// bypasses validation.
+	reserved := networkcfg.NewRoutingRuleConfigV1Alpha1(0)
+	reserved.RuleTable = nethelpers.RoutingTable(100)
+	reserved.RuleSrc = networkcfg.Prefix{Prefix: netip.MustParsePrefix("10.0.0.0/8")}
+	reserved.RuleAction = nethelpers.RoutingRuleActionUnicast
+
+	allowed := networkcfg.NewRoutingRuleConfigV1Alpha1(2000)
+	allowed.RuleTable = nethelpers.RoutingTable(100)
+	allowed.RuleAction = nethelpers.RoutingRuleActionUnicast
+
+	ctr, err := container.New(reserved, allowed)
+	suite.Require().NoError(err)
+
+	suite.Create(config.NewMachineConfig(ctr))
+
+	ctest.AssertResources(
+		suite,
+		[]string{
+			"configuration/inet4/02000",
+			"configuration/inet6/02000",
+		},
+		func(*network.RoutingRuleSpec, *assert.Assertions) {},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
+	)
+
+	ctest.AssertNoResource[*network.RoutingRuleSpec](suite, "configuration/inet4/00000")
+	ctest.AssertNoResource[*network.RoutingRuleSpec](suite, "configuration/inet6/00000")
+}
+
 func TestRoutingRuleConfigSuite(t *testing.T) {
 	t.Parallel()
 
