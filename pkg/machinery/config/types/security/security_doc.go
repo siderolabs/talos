@@ -83,7 +83,7 @@ func (ImageVerificationRuleV1Alpha1) Doc() *encoder.Doc {
 				Name:        "image",
 				Type:        "string",
 				Note:        "",
-				Description: "Image reference pattern to match for this rule.\nSupports glob patterns.",
+				Description: "Image reference pattern to match for this rule.\nSupports glob patterns, matches only on the image registry and repository, not on the tag or digest.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Image reference pattern to match for this rule." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{

@@ -146,7 +146,8 @@ func TestImageVerificationConfigValidate(t *testing.T) {
 
 		cfg func() *security.ImageVerificationConfigV1Alpha1
 
-		expectedErrors string
+		expectedErrors   string
+		expectedWarnings []string
 	}{
 		{
 			name: "valid config",
@@ -160,6 +161,10 @@ func TestImageVerificationConfigValidate(t *testing.T) {
 							KeylessIssuer:       "https://token.actions.githubusercontent.com",
 							KeylessSubjectRegex: "https://github.com/myorg/.*",
 						},
+					},
+					{
+						RuleImagePattern: "localhost:3000/*",
+						RuleDeny:         new(true),
 					},
 				}
 
@@ -322,6 +327,35 @@ func TestImageVerificationConfigValidate(t *testing.T) {
 
 			expectedErrors: "rule 0: imagePattern must be specified\nrule 1: at least one verifier must be configured",
 		},
+		{
+			name: "warnings for in imagePattern",
+
+			cfg: func() *security.ImageVerificationConfigV1Alpha1 {
+				c := security.NewImageVerificationConfigV1Alpha1()
+				c.ConfigRules = []security.ImageVerificationRuleV1Alpha1{
+					{
+						RuleImagePattern: "localhost:3000/*/:latest",
+						RuleDeny:         new(true),
+					},
+					{
+						RuleImagePattern: "docker.io/my-image@*",
+						RuleSkip:         new(true),
+					},
+					{
+						RuleImagePattern: "nginx",
+						RuleSkip:         new(true),
+					},
+				}
+
+				return c
+			},
+
+			expectedWarnings: []string{
+				"rule 0: imagePattern contains ':' but matching only applies to the image registry and repository, not the tag or digest",
+				"rule 1: imagePattern contains '@' but matching only applies to the image registry and repository, not the tag or digest",
+				"rule 2: imagePattern does not contain a '/', image references like 'nginx' are matched as 'docker.io/nginx' (normalized)",
+			},
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
@@ -329,10 +363,10 @@ func TestImageVerificationConfigValidate(t *testing.T) {
 			cfg := test.cfg()
 
 			warnings, err := cfg.Validate(validationMode{})
+			assert.Equal(t, test.expectedWarnings, warnings)
 
 			if test.expectedErrors == "" {
 				require.NoError(t, err)
-				assert.Empty(t, warnings)
 			} else {
 				require.Error(t, err)
 				assert.EqualError(t, err, test.expectedErrors)

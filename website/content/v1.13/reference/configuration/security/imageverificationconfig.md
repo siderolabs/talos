@@ -54,7 +54,7 @@ ImageVerificationRuleV1Alpha1 defines a verification rule.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`image` |string |Image reference pattern to match for this rule.<br>Supports glob patterns. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`image` |string |Image reference pattern to match for this rule.<br>Supports glob patterns, matches only on the image registry and repository, not on the tag or digest. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 image: docker.io/library/nginx
 {{< /highlight >}}{{< highlight yaml >}}
 image: registry.k8s.io/*

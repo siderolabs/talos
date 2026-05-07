@@ -7,6 +7,7 @@ package security
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
@@ -94,7 +95,7 @@ func (r *ImageVerificationRules) Merge(other any) error {
 type ImageVerificationRuleV1Alpha1 struct {
 	//   description: |
 	//     Image reference pattern to match for this rule.
-	//     Supports glob patterns.
+	//     Supports glob patterns, matches only on the image registry and repository, not on the tag or digest.
 	//   examples:
 	//     - value: >
 	//         "docker.io/library/nginx"
@@ -197,7 +198,7 @@ func (s *ImageVerificationConfigV1Alpha1) Clone() config.Document {
 
 // Validate implements config.Validator interface.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (s *ImageVerificationConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
 	var (
 		errs     error
@@ -207,6 +208,23 @@ func (s *ImageVerificationConfigV1Alpha1) Validate(validation.RuntimeMode, ...va
 	for i, rule := range s.ConfigRules {
 		if rule.RuleImagePattern == "" {
 			errs = errors.Join(errs, fmt.Errorf("rule %d: imagePattern must be specified", i))
+		}
+
+		if strings.ContainsRune(rule.RuleImagePattern, '@') {
+			warnings = append(warnings, fmt.Sprintf("rule %d: imagePattern contains '@' but matching only applies to the image registry and repository, not the tag or digest", i))
+		}
+
+		// the ':' might be part of the registry (e.g. localhost:5000) so we cannot simply disallow it, but we can warn about it as it's a common mistake to include the tag in the pattern
+		// warn if the `:` is after the first `/` (if any), which means it's likely part of the repository name or tag, not the registry
+		if strings.ContainsRune(rule.RuleImagePattern, ':') {
+			_, withoutRegistry, ok := strings.Cut(rule.RuleImagePattern, "/")
+			if ok && strings.ContainsRune(withoutRegistry, ':') {
+				warnings = append(warnings, fmt.Sprintf("rule %d: imagePattern contains ':' but matching only applies to the image registry and repository, not the tag or digest", i))
+			}
+		}
+
+		if !strings.ContainsRune(rule.RuleImagePattern, '/') && rule.RuleImagePattern != "*" && rule.RuleImagePattern != "" {
+			warnings = append(warnings, fmt.Sprintf("rule %d: imagePattern does not contain a '/', image references like 'nginx' are matched as 'docker.io/nginx' (normalized)", i))
 		}
 
 		skip := pointer.SafeDeref(rule.RuleSkip)
