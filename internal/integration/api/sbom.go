@@ -52,10 +52,13 @@ func (suite *SBOMSuite) TestCommon() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	ctx := client.WithNode(suite.ctx, node)
 
-	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI,
+	versionName := strings.ToLower(strings.ReplaceAll(version.Name, " ", "-"))
+
+	rtestutils.AssertResources(
+		ctx, suite.T(), suite.Client.COSI,
 		[]resource.ID{
 			// list of common SBOM items which should be present always
-			version.Name,
+			versionName,
 			"github.com/siderolabs/go-kubernetes",
 		},
 		func(item *runtime.SBOMItem, asrt *assert.Assertions) {
@@ -65,10 +68,11 @@ func (suite *SBOMSuite) TestCommon() {
 	)
 
 	// Talos SBOM item should have a matching version.
-	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI,
-		version.Name,
+	rtestutils.AssertResource(
+		ctx, suite.T(), suite.Client.COSI,
+		versionName,
 		func(item *runtime.SBOMItem, asrt *assert.Assertions) {
-			asrt.Equal(version.Name, item.TypedSpec().Name, "SBOM item name should match Talos version name")
+			asrt.Equal(versionName, item.TypedSpec().Name, "SBOM item name should match Talos version name")
 			asrt.Equal(suite.Version, item.TypedSpec().Version, "SBOM item version should match Talos version")
 		},
 	)
