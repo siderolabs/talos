@@ -4053,6 +4053,13 @@
           "markdownDescription": "This expression defines how to rank cgroups for OOM handler.\n\nThe cgroup with the highest rank (score) will be evicted first.\nThe expression must evaluate to a double value.\n\nThis expression receives the following parameters:\n- memory_max - Optional\u003cuint\u003e - in bytes\n- memory_current - Optional\u003cuint\u003e - in bytes\n- memory_peak - Optional\u003cuint\u003e - in bytes\n- path - string, path to the cgroup\n- class - int. This represents cgroup QoS class, and matches one of the constants, which are also provided: Besteffort, Burstable, Guaranteed, Podruntime, System",
           "x-intellij-html-description": "\u003cp\u003eThis expression defines how to rank cgroups for OOM handler.\u003c/p\u003e\n\n\u003cp\u003eThe cgroup with the highest rank (score) will be evicted first.\nThe expression must evaluate to a double value.\u003c/p\u003e\n\n\u003cp\u003eThis expression receives the following parameters:\n- memory_max - Optional\u003cuint\u003e - in bytes\n- memory_current - Optional\u003cuint\u003e - in bytes\n- memory_peak - Optional\u003cuint\u003e - in bytes\n- path - string, path to the cgroup\n- class - int. This represents cgroup QoS class, and matches one of the constants, which are also provided: Besteffort, Burstable, Guaranteed, Podruntime, System\u003c/p\u003e\n"
         },
+        "strictCgroupClassOrdering": {
+          "type": "boolean",
+          "title": "strictCgroupClassOrdering",
+          "description": "Whether to enforce strict QoS class ordering when selecting an OOM victim.\n\nWhen enabled (the default), cgroups in the lowest-importance QoS class are\nkilled first, and the ranking score only breaks ties within a class.\nWhen disabled, the highest-scoring cgroup is killed regardless of class.\n",
+          "markdownDescription": "Whether to enforce strict QoS class ordering when selecting an OOM victim.\n\nWhen enabled (the default), cgroups in the lowest-importance QoS class are\nkilled first, and the ranking score only breaks ties within a class.\nWhen disabled, the highest-scoring cgroup is killed regardless of class.",
+          "x-intellij-html-description": "\u003cp\u003eWhether to enforce strict QoS class ordering when selecting an OOM victim.\u003c/p\u003e\n\n\u003cp\u003eWhen enabled (the default), cgroups in the lowest-importance QoS class are\nkilled first, and the ranking score only breaks ties within a class.\nWhen disabled, the highest-scoring cgroup is killed regardless of class.\u003c/p\u003e\n"
+        },
         "sampleInterval": {
           "type": "string",
           "pattern": "^[-+]?(((\\d+(\\.\\d*)?|\\d*(\\.\\d+)+)([nuµm]?s|m|h))|0)+$",

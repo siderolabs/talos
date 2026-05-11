@@ -84,3 +84,18 @@ func TestOOMValidate(t *testing.T) {
 		})
 	}
 }
+
+func TestOOMDefaultConfig(t *testing.T) {
+	t.Parallel()
+
+	cfg := runtime.NewOOMV1Alpha1()
+
+	// normalize expression text for comparison
+	defaultTriggerExpr := cel.MustExpression(cel.ParseBooleanExpression(constants.DefaultOOMTriggerExpression, celenv.OOMTrigger())).String()
+	defaultRankingExpr := cel.MustExpression(cel.ParseDoubleExpression(constants.DefaultOOMCgroupRankingExpression, celenv.OOMCgroupScoring())).String()
+
+	assert.Equal(t, defaultTriggerExpr, cfg.TriggerExpression().String())
+	assert.Equal(t, defaultRankingExpr, cfg.CgroupRankingExpression().String())
+	assert.Equal(t, constants.DefaultOOMSampleInterval, cfg.SampleInterval())
+	assert.Equal(t, constants.DefaultOOMStrictCgroupClassOrdering, cfg.StrictCgroupClassOrdering())
+}

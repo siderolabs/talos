@@ -11,8 +11,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/siderolabs/gen/optional"
-
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -80,6 +78,13 @@ type OOMV1Alpha1 struct {
 	//     type: string
 	OOMCgroupRankingExpression cel.Expression `yaml:"cgroupRankingExpression,omitempty"`
 	//   description: |
+	//     Whether to enforce strict QoS class ordering when selecting an OOM victim.
+	//
+	//     When enabled (the default), cgroups in the lowest-importance QoS class are
+	//     killed first, and the ranking score only breaks ties within a class.
+	//     When disabled, the highest-scoring cgroup is killed regardless of class.
+	OOMStrictCgroupClassOrdering *bool `yaml:"strictCgroupClassOrdering,omitempty"`
+	//   description: |
 	//     How often should the trigger expression be evaluated.
 	//
 	//     This interval determines how often should the OOM controller
@@ -145,28 +150,37 @@ func (s *OOMV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]
 }
 
 // TriggerExpression returns the OOM trigger expression.
-func (s *OOMV1Alpha1) TriggerExpression() optional.Optional[cel.Expression] {
+func (s *OOMV1Alpha1) TriggerExpression() cel.Expression {
 	if s.OOMCgroupRankingExpression.IsZero() {
-		return optional.None[cel.Expression]()
+		return config.DefaultOOMConfig{}.TriggerExpression()
 	}
 
-	return optional.Some(s.OOMTriggerExpression)
+	return s.OOMTriggerExpression
 }
 
 // CgroupRankingExpression returns the OOM cgroup ranking expression.
-func (s *OOMV1Alpha1) CgroupRankingExpression() optional.Optional[cel.Expression] {
+func (s *OOMV1Alpha1) CgroupRankingExpression() cel.Expression {
 	if s.OOMCgroupRankingExpression.IsZero() {
-		return optional.None[cel.Expression]()
+		return config.DefaultOOMConfig{}.CgroupRankingExpression()
 	}
 
-	return optional.Some(s.OOMCgroupRankingExpression)
+	return s.OOMCgroupRankingExpression
+}
+
+// StrictCgroupClassOrdering returns whether to enforce strict QoS class ordering.
+func (s *OOMV1Alpha1) StrictCgroupClassOrdering() bool {
+	if s.OOMStrictCgroupClassOrdering == nil {
+		return config.DefaultOOMConfig{}.StrictCgroupClassOrdering()
+	}
+
+	return *s.OOMStrictCgroupClassOrdering
 }
 
 // SampleInterval returns the OOM sampling interval.
-func (s *OOMV1Alpha1) SampleInterval() optional.Optional[time.Duration] {
+func (s *OOMV1Alpha1) SampleInterval() time.Duration {
 	if s.OOMSampleInterval == 0 {
-		return optional.None[time.Duration]()
+		return config.DefaultOOMConfig{}.SampleInterval()
 	}
 
-	return optional.Some(s.OOMSampleInterval)
+	return s.OOMSampleInterval
 }

@@ -45,6 +45,10 @@ func (o *KmsgLogV1Alpha1) DeepCopy() *KmsgLogV1Alpha1 {
 // DeepCopy generates a deep copy of *OOMV1Alpha1.
 func (o *OOMV1Alpha1) DeepCopy() *OOMV1Alpha1 {
 	var cp OOMV1Alpha1 = *o
+	if o.OOMStrictCgroupClassOrdering != nil {
+		cp.OOMStrictCgroupClassOrdering = new(bool)
+		*cp.OOMStrictCgroupClassOrdering = *o.OOMStrictCgroupClassOrdering
+	}
 	return &cp
 }
 
