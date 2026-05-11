@@ -308,7 +308,7 @@ require (
 	github.com/hashicorp/go-safetemp v1.0.0 // indirect
 	github.com/hashicorp/go-version v1.7.0 // indirect
 	github.com/in-toto/attestation v1.1.2 // indirect
-	github.com/in-toto/in-toto-golang v0.9.0 // indirect
+	github.com/in-toto/in-toto-golang v0.11.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jedisct1/go-minisign v0.0.0-20230811132847-661be99b8267 // indirect
 	github.com/jonboulle/clockwork v0.5.0 // indirect
