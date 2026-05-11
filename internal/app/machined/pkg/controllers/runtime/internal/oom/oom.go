@@ -237,7 +237,8 @@ func RankCgroups(logger *zap.Logger, root string, scoringExpr cel.Expression) ma
 			for _, prop := range []string{"memory.current", "memory.peak", "memory.max"} {
 				err := cgroups.ReadCgroupfsProperty(&node, leafDir, prop)
 				if err != nil {
-					logger.Error("cannot read property for cgroup",
+					logger.Error(
+						"cannot read property for cgroup",
 						zap.String("dir", leafDir), zap.String("propery", prop), zap.Error(err),
 					)
 
@@ -255,7 +256,8 @@ func RankCgroups(logger *zap.Logger, root string, scoringExpr cel.Expression) ma
 
 			cgroupRank, err := cgroup.CalculateScore(&scoringExpr)
 			if err != nil {
-				logger.Error("cannot calculate score for cgroup",
+				logger.Error(
+					"cannot calculate score for cgroup",
 					zap.String("dir", cgroup.Path), zap.Error(err),
 				)
 
@@ -269,6 +271,64 @@ func RankCgroups(logger *zap.Logger, root string, scoringExpr cel.Expression) ma
 	}
 
 	return ranking
+}
+
+// SelectVictim picks the cgroup to OOM-kill. With strictClassOrdering it picks the
+// lowest-importance QoS class with any eligible cgroup (score > 0), then the highest-scoring
+// cgroup within that class; otherwise it picks the highest-scoring cgroup regardless of class.
+func SelectVictim(ranking map[RankedCgroup]float64, strictClassOrdering bool) (RankedCgroup, float64, bool) {
+	if !strictClassOrdering {
+		return selectHighestScore(ranking)
+	}
+
+	const noClass = runtime.QoSCgroupClass(math.MaxInt)
+
+	minClass := noClass
+
+	for cgroup, score := range ranking {
+		if score > 0 && cgroup.Class < minClass {
+			minClass = cgroup.Class
+		}
+	}
+
+	if minClass == noClass {
+		return RankedCgroup{}, 0, false
+	}
+
+	var (
+		maxScore = math.Inf(-1)
+		victim   RankedCgroup
+	)
+
+	for cgroup, score := range ranking {
+		if cgroup.Class == minClass && score > maxScore {
+			maxScore = score
+			victim = cgroup
+		}
+	}
+
+	return victim, maxScore, true
+}
+
+// selectHighestScore picks the highest-scoring cgroup regardless of QoS class.
+func selectHighestScore(ranking map[RankedCgroup]float64) (RankedCgroup, float64, bool) {
+	if len(ranking) == 0 {
+		return RankedCgroup{}, 0, false
+	}
+
+	var (
+		maxScore = math.Inf(-1)
+		victim   RankedCgroup
+	)
+
+	for cgroup, score := range ranking {
+		if score > maxScore {
+			maxScore = score
+			victim = cgroup
+		}
+	}
+
+	return victim, maxScore, true
 }
 
 // ListCgroupProcs returns a list of process IDs for a given cgroup path.

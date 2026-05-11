@@ -44,17 +44,18 @@ func TestCalculateScore(t *testing.T) {
 			expect: 21,
 		},
 	} {
-		t.Run(test.name, func(t *testing.T) {
-			t.Parallel()
+		t.Run(
+			test.name, func(t *testing.T) {
+				t.Parallel()
 
-			parsedExpr, err := cel.ParseDoubleExpression(test.expr, celenv.OOMCgroupScoring())
-			require.NoError(t, err)
+				parsedExpr, err := cel.ParseDoubleExpression(test.expr, celenv.OOMCgroupScoring())
+				require.NoError(t, err)
 
-			score, err := test.cgroup.CalculateScore(&parsedExpr)
-			require.NoError(t, err)
+				score, err := test.cgroup.CalculateScore(&parsedExpr)
+				require.NoError(t, err)
 
-			assert.Equal(t, test.expect, score)
-		},
+				assert.Equal(t, test.expect, score)
+			},
 		)
 	}
 }
@@ -101,6 +102,112 @@ func TestRankCgroups(t *testing.T) {
 			result := oom.RankCgroups(logger, test.dir, parsedExpr)
 
 			assert.Equal(t, test.expect, result)
+		})
+	}
+}
+
+func TestSelectVictim(t *testing.T) {
+	t.Parallel()
+
+	besteffortSmall := oom.RankedCgroup{Class: runtime.QoSCgroupClassBesteffort, Path: "be-small"}
+	besteffortLarge := oom.RankedCgroup{Class: runtime.QoSCgroupClassBesteffort, Path: "be-large"}
+	burstable := oom.RankedCgroup{Class: runtime.QoSCgroupClassBurstable, Path: "bu"}
+	guaranteed := oom.RankedCgroup{Class: runtime.QoSCgroupClassGuaranteed, Path: "gu"}
+
+	for _, test := range []struct {
+		name                string
+		ranking             map[oom.RankedCgroup]float64
+		strictClassOrdering bool
+		expectOk            bool
+		expectCg            oom.RankedCgroup
+		expectScore         float64
+	}{
+		{
+			name:                "empty",
+			ranking:             map[oom.RankedCgroup]float64{},
+			strictClassOrdering: true,
+		},
+		{
+			name: "all ineligible",
+			ranking: map[oom.RankedCgroup]float64{
+				besteffortSmall: 0,
+				burstable:       0,
+			},
+			strictClassOrdering: true,
+		},
+		{
+			name: "small besteffort beats large burstable",
+			ranking: map[oom.RankedCgroup]float64{
+				besteffortSmall: 100,
+				burstable:       835,
+			},
+			strictClassOrdering: true,
+			expectOk:            true,
+			expectCg:            besteffortSmall,
+			expectScore:         100,
+		},
+		{
+			name: "largest besteffort wins within class",
+			ranking: map[oom.RankedCgroup]float64{
+				besteffortSmall: 100,
+				besteffortLarge: 500,
+				burstable:       835,
+			},
+			strictClassOrdering: true,
+			expectOk:            true,
+			expectCg:            besteffortLarge,
+			expectScore:         500,
+		},
+		{
+			name: "ineligible besteffort does not mask eligible one in same class",
+			ranking: map[oom.RankedCgroup]float64{
+				besteffortSmall: 0,
+				besteffortLarge: 500,
+			},
+			strictClassOrdering: true,
+			expectOk:            true,
+			expectCg:            besteffortLarge,
+			expectScore:         500,
+		},
+		{
+			name: "falls through to burstable when no besteffort eligible",
+			ranking: map[oom.RankedCgroup]float64{
+				besteffortSmall: 0,
+				burstable:       835,
+				guaranteed:      0,
+			},
+			strictClassOrdering: true,
+			expectOk:            true,
+			expectCg:            burstable,
+			expectScore:         835,
+		},
+		{
+			name: "non-strict picks highest score across classes",
+			ranking: map[oom.RankedCgroup]float64{
+				besteffortSmall: 100,
+				burstable:       835,
+			},
+			strictClassOrdering: false,
+			expectOk:            true,
+			expectCg:            burstable,
+			expectScore:         835,
+		},
+		{
+			name:                "non-strict empty",
+			ranking:             map[oom.RankedCgroup]float64{},
+			strictClassOrdering: false,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cg, score, ok := oom.SelectVictim(test.ranking, test.strictClassOrdering)
+			assert.Equal(t, test.expectOk, ok)
+
+			if test.expectOk {
+				assert.Equal(t, test.expectCg, cg)
+				assert.Equal(t, test.expectScore, score)
+			}
 		})
 	}
 }

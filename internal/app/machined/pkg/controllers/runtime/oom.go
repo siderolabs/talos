@@ -9,11 +9,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math"
 	"os"
 	"path/filepath"
 	"strconv"
-	"sync"
 	"syscall"
 	"time"
 
@@ -27,7 +25,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime/internal/oom"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/cel"
-	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
+	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -76,37 +74,6 @@ func (ctrl *OOMController) Outputs() []controller.Output {
 	}
 }
 
-var defaultTriggerExpr = sync.OnceValue(func() cel.Expression {
-	return cel.MustExpression(cel.ParseBooleanExpression(
-		constants.DefaultOOMTriggerExpression,
-		celenv.OOMTrigger(),
-	))
-})
-
-// Sort processes by the following hierarchy:
-// First, sort by high-level group:
-//     kubepods (workloads)
-//     podruntime (CRI, kubelet, etcd)
-//     runtime (core containerd, system services)
-//     init
-// Second, inside kubepods we have QoS groups:
-//     first priority: BestEffort
-//     second: Burstable
-//     last: Guaranteed
-// Third, look into other attributes, e.g. OOM score.
-// Fourth, look into memory max - memory current (if memory max is set).
-//
-// Sort to make the most prioritized to OOM-kill cgroup to the first place
-
-var defaultScoringExpr = sync.OnceValue(func() cel.Expression {
-	return cel.MustExpression(cel.ParseDoubleExpression(
-		constants.DefaultOOMCgroupRankingExpression,
-		celenv.OOMCgroupScoring(),
-	))
-})
-
-const defaultSampleInterval = 500 * time.Millisecond
-
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
@@ -115,9 +82,7 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 		return nil
 	}
 
-	triggerExpr := defaultTriggerExpr()
-	scoringExpr := defaultScoringExpr()
-	sampleInterval := defaultSampleInterval
+	triggerExpr, scoringExpr, sampleInterval, strictClassOrdering := ctrl.getConfig(nil)
 	ctrl.oldValues = make(map[string]float64)
 
 	ticker := time.NewTicker(sampleInterval)
@@ -139,7 +104,7 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 
 			var newInterval time.Duration
 
-			triggerExpr, scoringExpr, newInterval = ctrl.getConfig(cfg)
+			triggerExpr, scoringExpr, newInterval, strictClassOrdering = ctrl.getConfig(cfg)
 
 			if sampleInterval != newInterval {
 				ticker.Reset(newInterval)
@@ -184,7 +149,7 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 		}
 
 		if trigger {
-			score, processes := ctrl.OomAction(logger, ctrl.CgroupRoot, scoringExpr)
+			score, processes := ctrl.OomAction(logger, ctrl.CgroupRoot, scoringExpr, strictClassOrdering)
 
 			ctxString, err := json.Marshal(evalContext)
 			if err != nil {
@@ -211,60 +176,31 @@ func (ctrl *OOMController) Run(ctx context.Context, r controller.Runtime, logger
 	}
 }
 
-func (*OOMController) getConfig(cfg *config.MachineConfig) (cel.Expression, cel.Expression, time.Duration) {
-	triggerExpr := defaultTriggerExpr()
-
-	if cfg != nil {
-		if oomCfg := cfg.Config().OOMConfig(); oomCfg != nil {
-			if expr, ok := oomCfg.TriggerExpression().Get(); ok {
-				triggerExpr = expr
-			}
-		}
+func (*OOMController) getConfig(cfg *config.MachineConfig) (cel.Expression, cel.Expression, time.Duration, bool) {
+	if cfg == nil {
+		return configconfig.DefaultOOMConfig{}.TriggerExpression(),
+			configconfig.DefaultOOMConfig{}.CgroupRankingExpression(),
+			configconfig.DefaultOOMConfig{}.SampleInterval(),
+			configconfig.DefaultOOMConfig{}.StrictCgroupClassOrdering()
 	}
 
-	scoringExpr := defaultScoringExpr()
-
-	if cfg != nil {
-		if oomCfg := cfg.Config().OOMConfig(); oomCfg != nil {
-			if expr, ok := oomCfg.CgroupRankingExpression().Get(); ok {
-				scoringExpr = expr
-			}
-		}
-	}
-
-	newInterval := defaultSampleInterval
-
-	if cfg != nil {
-		if oomCfg := cfg.Config().OOMConfig(); oomCfg != nil {
-			if interval, ok := oomCfg.SampleInterval().Get(); ok {
-				newInterval = interval
-			}
-		}
-	}
-
-	return triggerExpr, scoringExpr, newInterval
+	return cfg.Config().OOMConfig().TriggerExpression(),
+		cfg.Config().OOMConfig().CgroupRankingExpression(),
+		cfg.Config().OOMConfig().SampleInterval(),
+		cfg.Config().OOMConfig().StrictCgroupClassOrdering()
 }
 
 // OomAction handles out of memory conditions by selecting and killing cgroups based on memory usage data.
-func (ctrl *OOMController) OomAction(logger *zap.Logger, root string, scoringExpr cel.Expression) (float64, []string) {
+func (ctrl *OOMController) OomAction(logger *zap.Logger, root string, scoringExpr cel.Expression, strictClassOrdering bool) (float64, []string) {
 	logger.Info("OOM controller triggered")
 
 	ranking := oom.RankCgroups(logger, root, scoringExpr)
 
-	if len(ranking) == 0 {
+	cgroupToKill, maxScore, ok := oom.SelectVictim(ranking, strictClassOrdering)
+	if !ok {
+		logger.Warn("no eligible cgroup to kill", zap.Int("ranked", len(ranking)))
+
 		return 0, []string{}
-	}
-
-	var (
-		maxScore     = math.Inf(-1)
-		cgroupToKill oom.RankedCgroup
-	)
-
-	for cgroup, score := range ranking {
-		if score > maxScore {
-			maxScore = score
-			cgroupToKill = cgroup
-		}
 	}
 
 	processes, err := reapCg(logger, cgroupToKill.Path)
