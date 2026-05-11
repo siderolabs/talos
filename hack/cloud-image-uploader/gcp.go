@@ -186,12 +186,8 @@ func (u *GCPUploder) registerImage(arch string) error {
 			return fmt.Errorf("gcp: failed to get operation: %w", err)
 		}
 
-		if op.HTTPStatusCode != http.StatusOK {
-			return fmt.Errorf("gcp: operation failed with http error message: %s", op.HttpErrorMessage)
-		}
-
-		if op.Error != nil {
-			return fmt.Errorf("gcp: operation faild with error message: %s", op.Error.Errors[0].Message)
+		if err := gcpOperationError(op); err != nil {
+			return err
 		}
 
 		if op.Status == "DONE" {
@@ -215,6 +211,22 @@ func (u *GCPUploder) registerImage(arch string) error {
 	})
 
 	return nil
+}
+
+func gcpOperationError(op *compute.Operation) error {
+	if op.HTTPStatusCode != http.StatusOK {
+		return fmt.Errorf("gcp: operation failed with http error message: %s", op.HttpErrorMessage)
+	}
+
+	if op.Error == nil {
+		return nil
+	}
+
+	if len(op.Error.Errors) == 0 {
+		return errors.New("gcp: operation failed")
+	}
+
+	return fmt.Errorf("gcp: operation failed with error message: %s", op.Error.Errors[0].Message)
 }
 
 func (u *GCPUploder) checkImageExists(imageName string) (bool, error) {
