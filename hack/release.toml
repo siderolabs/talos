@@ -18,9 +18,10 @@ preface = """
     [notes.updates]
         title = "Component Updates"
         description = """\
+Etcd: 3.6.11
 Linux: 6.18.29
 
-Talos is built with Go 1.26.2.
+Talos is built with Go 1.26.3.
 """
 
     [notes.external_volumes]
