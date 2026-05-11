@@ -322,18 +322,6 @@ func machineSeccompExample() []*MachineSeccompProfile {
 	}
 }
 
-func clusterEndpointExample1() *Endpoint {
-	return &Endpoint{
-		mustParseURL("https://1.2.3.4:6443"),
-	}
-}
-
-func clusterEndpointExample2() *Endpoint {
-	return &Endpoint{
-		mustParseURL("https://cluster1.internal:6443"),
-	}
-}
-
 func kubeletExtraMountsExample() []ExtraMount {
 	return []ExtraMount{
 		{
@@ -424,24 +412,30 @@ func kubeletCredentialProviderConfigExample() Unstructured {
 	}
 }
 
-func loggingEndpointExample1() *Endpoint {
-	return &Endpoint{
-		mustParseURL("udp://127.0.0.1:12345"),
-	}
-}
-
-func loggingEndpointExample2() *Endpoint {
-	return &Endpoint{
-		mustParseURL("tcp://1.2.3.4:12345"),
-	}
-}
-
-func machineLoggingExample() LoggingConfig {
+func machineLoggingExample1() LoggingConfig {
 	return LoggingConfig{
 		LoggingDestinations: []LoggingDestination{
 			{
-				LoggingEndpoint: loggingEndpointExample2(),
-				LoggingFormat:   constants.LoggingFormatJSONLines,
+				LoggingEndpoint: &Endpoint{
+					mustParseURL("tcp://1.2.3.4:12345"),
+				},
+				LoggingFormat: constants.LoggingFormatJSONLines,
+			},
+		},
+	}
+}
+
+func machineLoggingExample2() LoggingConfig {
+	return LoggingConfig{
+		LoggingDestinations: []LoggingDestination{
+			{
+				LoggingEndpoint: &Endpoint{
+					mustParseURL("udp://127.0.0.1:12345"),
+				},
+				LoggingFormat: constants.LoggingFormatJSONLines,
+				LoggingExtraTags: map[string]string{
+					"machine": "worker-1",
+				},
 			},
 		},
 	}

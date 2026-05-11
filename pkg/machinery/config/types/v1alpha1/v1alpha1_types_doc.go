@@ -249,7 +249,8 @@ func (MachineConfig) Doc() *encoder.Doc {
 	doc.Fields[15].AddExample("MachineSysfs usage example.", machineSysfsExample())
 	doc.Fields[18].AddExample("", machineFeaturesExample())
 	doc.Fields[19].AddExample("", machineUdevExample())
-	doc.Fields[20].AddExample("", machineLoggingExample())
+	doc.Fields[20].AddExample("", machineLoggingExample1())
+	doc.Fields[20].AddExample("", machineLoggingExample2())
 	doc.Fields[21].AddExample("", machineKernelExample())
 	doc.Fields[22].AddExample("", machineSeccompExample())
 	doc.Fields[23].AddExample("override default open file limit", machineBaseRuntimeSpecOverridesExample())
@@ -1099,14 +1100,6 @@ func (Endpoint) Doc() *encoder.Doc {
 		},
 	}
 
-	doc.AddExample("", clusterEndpointExample1())
-
-	doc.AddExample("", clusterEndpointExample2())
-
-	doc.AddExample("", loggingEndpointExample1())
-
-	doc.AddExample("", loggingEndpointExample2())
-
 	return doc
 }
 
@@ -1140,9 +1133,6 @@ func (ControlPlaneConfig) Doc() *encoder.Doc {
 	}
 
 	doc.AddExample("Setting controlplane endpoint address to 1.2.3.4 and port to 443 example.", clusterControlPlaneExample())
-
-	doc.Fields[0].AddExample("", clusterEndpointExample1())
-	doc.Fields[0].AddExample("", clusterEndpointExample2())
 
 	return doc
 }
@@ -2310,7 +2300,9 @@ func (LoggingConfig) Doc() *encoder.Doc {
 		},
 	}
 
-	doc.AddExample("", machineLoggingExample())
+	doc.AddExample("", machineLoggingExample1())
+
+	doc.AddExample("", machineLoggingExample2())
 
 	return doc
 }
@@ -2353,9 +2345,6 @@ func (LoggingDestination) Doc() *encoder.Doc {
 			},
 		},
 	}
-
-	doc.Fields[0].AddExample("", loggingEndpointExample1())
-	doc.Fields[0].AddExample("", loggingEndpointExample2())
 
 	return doc
 }

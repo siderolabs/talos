@@ -198,6 +198,15 @@ logging:
     destinations:
         - endpoint: tcp://1.2.3.4:12345 # Where to send logs. Supported protocols are "tcp" and "udp".
           format: json_lines # Logs format.
+{{< /highlight >}}{{< highlight yaml >}}
+logging:
+    # Logging destination.
+    destinations:
+        - endpoint: udp://127.0.0.1:12345 # Where to send logs. Supported protocols are "tcp" and "udp".
+          format: json_lines # Logs format.
+          # Extra tags (key-value) pairs to attach to every log message sent.
+          extraTags:
+            machine: worker-1
 {{< /highlight >}}</details> | |
 |`kernel` |<a href="#Config.machine.kernel">KernelConfig</a> |Configures the kernel. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 kernel:
@@ -811,6 +820,18 @@ machine:
               format: json_lines # Logs format.
 {{< /highlight >}}
 
+{{< highlight yaml >}}
+machine:
+    logging:
+        # Logging destination.
+        destinations:
+            - endpoint: udp://127.0.0.1:12345 # Where to send logs. Supported protocols are "tcp" and "udp".
+              format: json_lines # Logs format.
+              # Extra tags (key-value) pairs to attach to every log message sent.
+              extraTags:
+                machine: worker-1
+{{< /highlight >}}
+
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
@@ -828,11 +849,7 @@ LoggingDestination struct configures Talos logging destination.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`endpoint` |<a href="#Config.machine.logging.destinations..endpoint">Endpoint</a> |Where to send logs. Supported protocols are "tcp" and "udp". <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-endpoint: udp://127.0.0.1:12345
-{{< /highlight >}}{{< highlight yaml >}}
-endpoint: tcp://1.2.3.4:12345
-{{< /highlight >}}</details> | |
+|`endpoint` |<a href="#Config.machine.logging.destinations..endpoint">Endpoint</a> |Where to send logs. Supported protocols are "tcp" and "udp".  | |
 |`format` |string |Logs format.  |`json_lines`<br /> |
 |`extraTags` |map[string]string |Extra tags (key-value) pairs to attach to every log message sent.  | |
 
@@ -844,34 +861,6 @@ endpoint: tcp://1.2.3.4:12345
 Endpoint represents the endpoint URL parsed out of the machine config.
 
 
-
-{{< highlight yaml >}}
-machine:
-    logging:
-        destinations:
-            - endpoint: https://1.2.3.4:6443
-{{< /highlight >}}
-
-{{< highlight yaml >}}
-machine:
-    logging:
-        destinations:
-            - endpoint: https://cluster1.internal:6443
-{{< /highlight >}}
-
-{{< highlight yaml >}}
-machine:
-    logging:
-        destinations:
-            - endpoint: udp://127.0.0.1:12345
-{{< /highlight >}}
-
-{{< highlight yaml >}}
-machine:
-    logging:
-        destinations:
-            - endpoint: tcp://1.2.3.4:12345
-{{< /highlight >}}
 
 
 | Field | Type | Description | Value(s) |
@@ -1204,11 +1193,7 @@ cluster:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`endpoint` |<a href="#Config.cluster.controlPlane.endpoint">Endpoint</a> |Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.<br>It is single-valued, and may optionally include a port number. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-endpoint: https://1.2.3.4:6443
-{{< /highlight >}}{{< highlight yaml >}}
-endpoint: https://cluster1.internal:6443
-{{< /highlight >}}</details> | |
+|`endpoint` |<a href="#Config.cluster.controlPlane.endpoint">Endpoint</a> |Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.<br>It is single-valued, and may optionally include a port number.  | |
 |`localAPIServerPort` |int |The port that the API server listens on internally.<br>This may be different than the port portion listed in the endpoint field above.<br>The default is `6443`.  | |
 
 
@@ -1219,30 +1204,6 @@ endpoint: https://cluster1.internal:6443
 Endpoint represents the endpoint URL parsed out of the machine config.
 
 
-
-{{< highlight yaml >}}
-cluster:
-    controlPlane:
-        endpoint: https://1.2.3.4:6443
-{{< /highlight >}}
-
-{{< highlight yaml >}}
-cluster:
-    controlPlane:
-        endpoint: https://cluster1.internal:6443
-{{< /highlight >}}
-
-{{< highlight yaml >}}
-cluster:
-    controlPlane:
-        endpoint: udp://127.0.0.1:12345
-{{< /highlight >}}
-
-{{< highlight yaml >}}
-cluster:
-    controlPlane:
-        endpoint: tcp://1.2.3.4:12345
-{{< /highlight >}}
 
 
 | Field | Type | Description | Value(s) |
