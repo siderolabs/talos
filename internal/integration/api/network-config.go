@@ -727,39 +727,57 @@ func (suite *NetworkConfigSuite) routingRuleTestCtx() (context.Context, context.
 	return context.WithTimeout(context.Background(), 2*time.Minute)
 }
 
-// kernelDefaultRoutingRules lists the rule IDs the kernel auto-installs in every
-// network namespace. These must remain present at all times - Talos must never
-// delete rules it did not create.
-var kernelDefaultRoutingRules = []struct {
-	id       string
-	priority uint32
-	table    nethelpers.RoutingTable
-}{
-	{"inet4/00000", 0, nethelpers.RoutingTable(255)},     // local
-	{"inet4/32766", 32766, nethelpers.RoutingTable(254)}, // main
-	{"inet4/32767", 32767, nethelpers.RoutingTable(253)}, // default
-	{"inet6/00000", 0, nethelpers.RoutingTable(255)},     // local
-	{"inet6/32766", 32766, nethelpers.RoutingTable(254)}, // main
+// requiredSystemRoutingTables lists the system tables a working node must
+// reach via some routing rule, per family. Cilium (and similar CNIs) may move
+// the local lookup rule from the kernel-default priority 0 to a higher one, so
+// the test only asserts that *some* rule below `main` (32766) lookups each
+// required table - never the exact rule ID.
+var requiredSystemRoutingTables = map[nethelpers.Family][]nethelpers.RoutingTable{
+	nethelpers.FamilyInet4: {nethelpers.TableLocal, nethelpers.TableMain, nethelpers.TableDefault},
+	nethelpers.FamilyInet6: {nethelpers.TableLocal, nethelpers.TableMain},
 }
 
-// assertKernelDefaultRoutingRulesPresent asserts that the kernel-installed
-// default routing rules (priorities 0/32766/32767, both families) are still
-// present in RoutingRuleStatus. Every routing-rule integration test calls
-// this both before applying its config and after teardown.
+// assertKernelDefaultRoutingRulesPresent asserts that policy routing remains
+// functional: for every required system table (local/main/default) some
+// routing rule looks it up. This permits CNIs like Cilium to relocate the
+// local lookup from priority 0 to 100 while still catching cases where Talos
+// accidentally deletes a kernel-installed rule. Every routing-rule
+// integration test calls this both before applying its config and after
+// teardown.
 func (suite *NetworkConfigSuite) assertKernelDefaultRoutingRulesPresent(nodeCtx context.Context) {
 	suite.T().Helper()
 
-	for _, expected := range kernelDefaultRoutingRules {
-		rtestutils.AssertResource(
-			nodeCtx, suite.T(), suite.Client.COSI, expected.id,
-			func(rule *networkres.RoutingRuleStatus, asrt *assert.Assertions) {
-				asrt.Equal(expected.table, rule.TypedSpec().Table,
-					"kernel-default rule %s missing or table changed", expected.id)
-				asrt.Equal(expected.priority, rule.TypedSpec().Priority,
-					"kernel-default rule %s priority changed", expected.id)
-			},
-		)
-	}
+	suite.EventuallyWithT(
+		func(collect *assert.CollectT) {
+			asrt := assert.New(collect)
+
+			rules, err := safe.StateListAll[*networkres.RoutingRuleStatus](nodeCtx, suite.Client.COSI)
+			if !asrt.NoError(err, "listing routing rule statuses") {
+				return
+			}
+
+			seen := map[nethelpers.Family]map[nethelpers.RoutingTable]bool{}
+
+			for rule := range rules.All() {
+				spec := rule.TypedSpec()
+
+				if seen[spec.Family] == nil {
+					seen[spec.Family] = map[nethelpers.RoutingTable]bool{}
+				}
+
+				seen[spec.Family][spec.Table] = true
+			}
+
+			for family, tables := range requiredSystemRoutingTables {
+				for _, table := range tables {
+					asrt.Truef(seen[family][table],
+						"no rule looks up table %s for family %s", table, family)
+				}
+			}
+		},
+		30*time.Second, time.Second,
+		"waiting for system routing rules (local/main/default lookups) to be present",
+	)
 }
 
 // TestRoutingRuleBasic tests creation of a routing rule with a numeric table ID.
