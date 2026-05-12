@@ -1,3 +1,142 @@
+## [Talos 1.13.1](https://github.com/siderolabs/talos/releases/tag/v1.13.1) (2026-05-12)
+
+Welcome to the v1.13.1 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Etcd: 3.6.11
+Linux: 6.18.29
+
+Talos is built with Go 1.26.3.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Noel Georgi
+* Mateusz Urbanek
+* Lukasz Raczylo
+* Oguz Kilcan
+* Erwan Leboucher
+* YANG JOO WOONG
+
+### Changes
+<details><summary>26 commits</summary>
+<p>
+
+* [`09ead22a3`](https://github.com/siderolabs/talos/commit/09ead22a3cb86d977bfa17919b6f7edcb3e7101e) test: relax kernel-default routing rule assertion
+* [`817609677`](https://github.com/siderolabs/talos/commit/817609677f1e3c30abd2be56d0638fbb4fd69ef0) feat: update Go to 1.26.3
+* [`a5f32abda`](https://github.com/siderolabs/talos/commit/a5f32abda13832586ccbc1ef49584cee529f7e18) fix: normalize source name for syft consistency
+* [`f8298948a`](https://github.com/siderolabs/talos/commit/f8298948a8316c2b01147451340114925e98695e) feat: bump in-toto indirect dependency
+* [`ded9a2d78`](https://github.com/siderolabs/talos/commit/ded9a2d78340d95a9cdf8e33bd5e7c7ba876758d) feat: update kernel to 6.18.29
+* [`755628239`](https://github.com/siderolabs/talos/commit/75562823938217b092c45fecffff90c7e8200e1e) fix: handle empty GCP operation errors
+* [`e7645ba1c`](https://github.com/siderolabs/talos/commit/e7645ba1ccae5b0c22b5beab3936a4b12bd91df1) fix: clarify documentation for image verification pattern
+* [`e85d01a07`](https://github.com/siderolabs/talos/commit/e85d01a07ba91ef971735612fc33a369bb132c0d) fix: skip reserved routing rule priorities
+* [`c5a81f2cc`](https://github.com/siderolabs/talos/commit/c5a81f2cc88f6c0bf9759008fded3bb9a87c3c9c) feat: update etcd to 3.6.11
+* [`38ca2bca6`](https://github.com/siderolabs/talos/commit/38ca2bca6d20da0a34d48908d67e8e9196e4b091) fix: add missing kernel modules in rootfs
+* [`dc30ad327`](https://github.com/siderolabs/talos/commit/dc30ad327568f47767966873b37c3f26bf7fca4c) fix: preserve DHCP DNS servers
+* [`d8e32fa73`](https://github.com/siderolabs/talos/commit/d8e32fa73d1a330652b53f524cc426d7e83d22d7) fix: stale discovered volume children
+* [`80c110c87`](https://github.com/siderolabs/talos/commit/80c110c87c347d67f57a6941ada7b7fb03465e88) fix: re-enable kexec on arm64
+* [`bd9ac044e`](https://github.com/siderolabs/talos/commit/bd9ac044e2851864c3cebb9d93ae665a0e5786a0) fix: provide proper AWS platform metadata
+* [`549f3c0b4`](https://github.com/siderolabs/talos/commit/549f3c0b4c32e79246352f491ffde44e51eec0f1) fix: panic in Kubernetes manifest sync
+* [`29eb6651d`](https://github.com/siderolabs/talos/commit/29eb6651d67ebbe671c9b6e4522f7e32c708ad3d) fix(ci): zfs test
+* [`4b36fc9c2`](https://github.com/siderolabs/talos/commit/4b36fc9c260133d915ba11c2eef8608c57fb994c) fix: deadlock in the makefs ext4 with populated source
+* [`fdf4f9f6c`](https://github.com/siderolabs/talos/commit/fdf4f9f6c77f9a7fe5a691bba3419ff81d6153af) fix: do not pick up a system disk from a loop device
+* [`4ff29cc9f`](https://github.com/siderolabs/talos/commit/4ff29cc9fbd6ccdd9b25323d9a379cadd873377d) fix(talosctl): protect k8sNames map writes with mutex
+* [`ff53434c9`](https://github.com/siderolabs/talos/commit/ff53434c96a50888444edccb4ead62f219f67389) fix: mount throws EPERM on virtiofs with SELinux
+* [`16cc0a99c`](https://github.com/siderolabs/talos/commit/16cc0a99cd421fe070147775e36faad2e432c933) fix: drop explicit platform matcher
+* [`ddb631aba`](https://github.com/siderolabs/talos/commit/ddb631aba8b7deee9254d63de7594f6617c5c5c5) fix: bump go-kmsg to fix the timestamp drift
+* [`595470849`](https://github.com/siderolabs/talos/commit/595470849dae91026bb9404393ff4c276c8832ab) fix: make lacp active nilable
+* [`879e31a65`](https://github.com/siderolabs/talos/commit/879e31a65243c312edc2fb5631a2acce45b8a639) test: fix flaky tests
+* [`ef1d9ffc3`](https://github.com/siderolabs/talos/commit/ef1d9ffc36b551549e88949abe91788e18345075) fix: reset the ticker when the KubeSpan is disabled/enabled
+* [`ce89d6727`](https://github.com/siderolabs/talos/commit/ce89d672708e860a47c8023c85ef751b0a38b655) fix: replace Canal manifest with a more recent one
+</p>
+</details>
+
+### Changes from siderolabs/go-kmsg
+<details><summary>1 commit</summary>
+<p>
+
+* [`65e97cb`](https://github.com/siderolabs/go-kmsg/commit/65e97cb418de5211ac2bfdc9d4569af74fbbb9f8) fix: boot time offset calculation
+</p>
+</details>
+
+### Changes from siderolabs/go-kubeconfig
+<details><summary>2 commits</summary>
+<p>
+
+* [`d0b8f82`](https://github.com/siderolabs/go-kubeconfig/commit/d0b8f82dece7359bb005d6c32ca225c1b29401c5) chore: rekres and bump deps
+* [`c356eeb`](https://github.com/siderolabs/go-kubeconfig/commit/c356eeb33f12542c1e29e81f7246f146b847bfb6) fix: fix context conflict detection add New() constructor
+</p>
+</details>
+
+### Changes from siderolabs/go-kubernetes
+<details><summary>2 commits</summary>
+<p>
+
+* [`38c182f`](https://github.com/siderolabs/go-kubernetes/commit/38c182f7b3a25a320c867d4e8138ef40dfc2a1a7) fix: normalize the changeset to be keyed without apiVersion
+* [`ca35008`](https://github.com/siderolabs/go-kubernetes/commit/ca350083a113b49a5efec1feac6f10cd594280ef) feat: update k8s api to 0.36.0
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>11 commits</summary>
+<p>
+
+* [`969f61c`](https://github.com/siderolabs/pkgs/commit/969f61c8aca6ec6355e6a76ac6d96559979caff8) feat: bump kernel to 6.18.29
+* [`4be1aaa`](https://github.com/siderolabs/pkgs/commit/4be1aaa7e595a3260ca56bcd49ebed4918642482) feat: bump kernel 6.18.28
+* [`e49ad17`](https://github.com/siderolabs/pkgs/commit/e49ad17f93808c526543684ae64ebe19ab992cd0) feat(kernel): backport two PCI bridge realloc fixes from v6.19
+* [`27cea5f`](https://github.com/siderolabs/pkgs/commit/27cea5f429f1e2d42d54ba3ed4b5fad2246c1ccd) feat: update NVIDIA drivers
+* [`6c3007f`](https://github.com/siderolabs/pkgs/commit/6c3007f1ecf6fba1f2a5a00795a00741246236f2) feat: update Linux to 6.18.27
+* [`92bf093`](https://github.com/siderolabs/pkgs/commit/92bf093ccd5b004c214ea42df60e19e69fd89cce) feat: update Linux to 6.18.26
+* [`753307b`](https://github.com/siderolabs/pkgs/commit/753307b6728d17e611ecec33601b117e51d045c7) feat: update DRBD to 9.3.2
+* [`f6066dc`](https://github.com/siderolabs/pkgs/commit/f6066dcf0c1f63a523f9d46326335f1c2fce4a39) docs: list net macb silent TX stall fixes in kernel/build/patches/README.md
+* [`fe81e27`](https://github.com/siderolabs/pkgs/commit/fe81e27cfde73cb861f7a8236da7e01052068da3) fix: macb silent TX stall on BCM2712/RP1 (RFC patches from netdev)
+* [`dd2bd8a`](https://github.com/siderolabs/pkgs/commit/dd2bd8a612898ba3773680b466f7e280228b7700) feat: bump kernel to 6.18.25
+* [`4bad9ea`](https://github.com/siderolabs/pkgs/commit/4bad9eaf53bd18cbbe97adb753c9cc00348694e1) feat: update Go to 1.26.3
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>2 commits</summary>
+<p>
+
+* [`1fb762a`](https://github.com/siderolabs/tools/commit/1fb762acfdabba02481c7fc62af942801a7af7cc) feat: add Python wheel package
+* [`274fdf5`](https://github.com/siderolabs/tools/commit/274fdf57104e10882680de5bd2508bd9986aa31d) feat: update Go to 1.26.3
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/aws/aws-sdk-go-v2**         v1.41.4 **_new_**
+* **github.com/siderolabs/go-kmsg**        v0.1.5 -> v0.1.6
+* **github.com/siderolabs/go-kubeconfig**  v0.1.1 -> v0.1.2
+* **github.com/siderolabs/go-kubernetes**  v0.2.36 -> v0.2.37
+* **github.com/siderolabs/pkgs**           v1.13.0 -> v1.13.0-11-g969f61c
+* **github.com/siderolabs/tools**          v1.13.0 -> v1.13.0-2-g1fb762a
+* **go.etcd.io/etcd/api/v3**               v3.6.9 -> v3.6.11
+* **go.etcd.io/etcd/client/pkg/v3**        v3.6.9 -> v3.6.11
+* **go.etcd.io/etcd/client/v3**            v3.6.9 -> v3.6.11
+* **go.etcd.io/etcd/etcdutl/v3**           v3.6.9 -> v3.6.11
+* **k8s.io/api**                           v0.35.3 -> v0.36.0
+* **k8s.io/apiextensions-apiserver**       v0.35.3 -> v0.36.0
+* **k8s.io/apimachinery**                  v0.35.3 -> v0.36.0
+* **k8s.io/apiserver**                     v0.35.3 -> v0.36.0
+* **k8s.io/client-go**                     v0.35.3 -> v0.36.0
+* **k8s.io/component-base**                v0.35.3 -> v0.36.0
+* **k8s.io/cri-api**                       v0.35.3 -> v0.36.0
+* **k8s.io/kube-scheduler**                v0.35.3 -> v0.36.0
+* **k8s.io/kubectl**                       v0.35.3 -> v0.36.0
+* **k8s.io/kubelet**                       v0.35.3 -> v0.36.0
+* **k8s.io/pod-security-admission**        v0.35.3 -> v0.36.0
+
+Previous release can be found at [v1.13.0](https://github.com/siderolabs/talos/releases/tag/v1.13.0)
+
 ## [Talos 1.13.0](https://github.com/siderolabs/talos/releases/tag/v1.13.0) (2026-04-27)
 
 Welcome to the v1.13.0 release of Talos!
