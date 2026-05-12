@@ -1,3 +1,36 @@
+## [Talos 1.13.2](https://github.com/siderolabs/talos/releases/tag/v1.13.2) (2026-05-12)
+
+Welcome to the v1.13.2 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Etcd: 3.6.11
+Linux: 6.18.29
+
+Talos is built with Go 1.26.3.
+
+
+### Contributors
+
+
+### Changes
+<details><summary>0 commit</summary>
+<p>
+
+</p>
+</details>
+
+### Dependency Changes
+
+This release has no dependency changes
+
+Previous release can be found at [v1.13.1](https://github.com/siderolabs/talos/releases/tag/v1.13.1)
+
 ## [Talos 1.13.1](https://github.com/siderolabs/talos/releases/tag/v1.13.1) (2026-05-12)
 
 Welcome to the v1.13.1 release of Talos!
