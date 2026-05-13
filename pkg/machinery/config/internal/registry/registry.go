@@ -8,6 +8,7 @@ package registry
 import (
 	"errors"
 	"fmt"
+	"slices"
 	"sync"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -50,6 +51,11 @@ func New(kind, version string) (config.Document, error) {
 	return registry.New(kind, version)
 }
 
+// Kinds returns the sorted list of registered document kinds.
+func Kinds() []string {
+	return registry.Kinds()
+}
+
 // Register registers a document kind with the registry.
 func (r *Registry) Register(kind string, f NewDocumentFunc) {
 	r.m.Lock()
@@ -60,6 +66,21 @@ func (r *Registry) Register(kind string, f NewDocumentFunc) {
 	}
 
 	r.registered[kind] = f
+}
+
+// Kinds returns the sorted list of registered document kinds.
+func (r *Registry) Kinds() []string {
+	r.m.Lock()
+	defer r.m.Unlock()
+
+	kinds := make([]string, 0, len(r.registered))
+	for k := range r.registered {
+		kinds = append(kinds, k)
+	}
+
+	slices.Sort(kinds)
+
+	return kinds
 }
 
 // New creates a new instance of the requested document.

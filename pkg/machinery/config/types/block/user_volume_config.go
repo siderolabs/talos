@@ -44,6 +44,7 @@ var (
 	_ config.ConflictingDocument = &UserVolumeConfigV1Alpha1{}
 	_ config.NamedDocument       = &UserVolumeConfigV1Alpha1{}
 	_ config.Validator           = &UserVolumeConfigV1Alpha1{}
+	_ config.SecretDocument      = &UserVolumeConfigV1Alpha1{}
 )
 
 const maxUserVolumeNameLength = constants.PartitionLabelLength - len(constants.UserVolumePrefix)
@@ -199,6 +200,11 @@ func (s *UserVolumeConfigV1Alpha1) Name() string {
 // Clone implements config.Document interface.
 func (s *UserVolumeConfigV1Alpha1) Clone() config.Document {
 	return s.DeepCopy()
+}
+
+// Redact implements config.SecretDocument interface.
+func (s *UserVolumeConfigV1Alpha1) Redact(replacement string) {
+	s.EncryptionSpec.Redact(replacement)
 }
 
 // ConflictsWithKinds implements config.ConflictingDocument interface.

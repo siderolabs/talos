@@ -57,6 +57,19 @@ func TestHCloudVIPConfigUnmarshal(t *testing.T) {
 	assert.Equal(t, c, docs[0])
 }
 
+func TestHCloudVIPConfigRedact(t *testing.T) {
+	t.Parallel()
+
+	cfg := network.NewHCloudVIPConfigV1Alpha1("1.2.3.4")
+	cfg.LinkName = "net33"
+	cfg.APIToken = "s3cr3t-t0k3n"
+
+	cfg.Redact("REDACTED")
+
+	assert.Equal(t, "REDACTED", cfg.APIToken)
+	assert.Equal(t, "net33", cfg.LinkName, "non-secret fields must be untouched")
+}
+
 func TestHCloudVIPValidate(t *testing.T) {
 	t.Parallel()
 

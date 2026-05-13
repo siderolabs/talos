@@ -37,6 +37,7 @@ var (
 	_ config.ConflictingDocument    = &HCloudVIPConfigV1Alpha1{}
 	_ config.NamedDocument          = &HCloudVIPConfigV1Alpha1{}
 	_ config.Validator              = &HCloudVIPConfigV1Alpha1{}
+	_ config.SecretDocument         = &HCloudVIPConfigV1Alpha1{}
 )
 
 // HCloudVIPConfigV1Alpha1 is a config document to configure virtual IP using Hetzner Cloud APIs for announcement.
@@ -147,4 +148,11 @@ func (s *HCloudVIPConfigV1Alpha1) HCloudAPIToken() string {
 // ConflictsWithKinds implements config.ConflictingDocument interface.
 func (s *HCloudVIPConfigV1Alpha1) ConflictsWithKinds() []string {
 	return []string{Layer2VIPKind}
+}
+
+// Redact implements config.SecretDocument interface.
+func (s *HCloudVIPConfigV1Alpha1) Redact(replacement string) {
+	if s.APIToken != "" {
+		s.APIToken = replacement
+	}
 }

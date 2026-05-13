@@ -40,6 +40,7 @@ var (
 	_ config.SwapVolumeConfig = &SwapVolumeConfigV1Alpha1{}
 	_ config.NamedDocument    = &SwapVolumeConfigV1Alpha1{}
 	_ config.Validator        = &SwapVolumeConfigV1Alpha1{}
+	_ config.SecretDocument   = &SwapVolumeConfigV1Alpha1{}
 )
 
 const maxSwapVolumeNameLength = constants.PartitionLabelLength - len(constants.SwapVolumePrefix)
@@ -115,6 +116,11 @@ func (s *SwapVolumeConfigV1Alpha1) Name() string {
 // Clone implements config.Document interface.
 func (s *SwapVolumeConfigV1Alpha1) Clone() config.Document {
 	return s.DeepCopy()
+}
+
+// Redact implements config.SecretDocument interface.
+func (s *SwapVolumeConfigV1Alpha1) Redact(replacement string) {
+	s.EncryptionSpec.Redact(replacement)
 }
 
 // Validate implements config.Validator interface.

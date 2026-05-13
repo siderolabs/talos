@@ -45,6 +45,7 @@ var (
 	_ config.VolumeConfig                 = &VolumeConfigV1Alpha1{}
 	_ config.NamedDocument                = &VolumeConfigV1Alpha1{}
 	_ config.Validator                    = &VolumeConfigV1Alpha1{}
+	_ config.SecretDocument               = &VolumeConfigV1Alpha1{}
 	_ container.V1Alpha1ConflictValidator = &VolumeConfigV1Alpha1{}
 )
 
@@ -176,6 +177,11 @@ func (s *VolumeConfigV1Alpha1) Name() string {
 // Clone implements config.Document interface.
 func (s *VolumeConfigV1Alpha1) Clone() config.Document {
 	return s.DeepCopy()
+}
+
+// Redact implements config.SecretDocument interface.
+func (s *VolumeConfigV1Alpha1) Redact(replacement string) {
+	s.EncryptionSpec.Redact(replacement)
 }
 
 // Validate implements config.Validator interface.

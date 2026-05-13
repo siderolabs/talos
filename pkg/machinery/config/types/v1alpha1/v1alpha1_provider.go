@@ -120,7 +120,7 @@ func (c *Config) Cluster() config.ClusterConfig {
 
 // Redact implements the config.SecretDocument interface.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (c *Config) Redact(replacement string) {
 	if c == nil {
 		return
@@ -142,6 +142,59 @@ func (c *Config) Redact(replacement string) {
 		c.MachineConfig.MachineToken = redactStr(c.MachineConfig.MachineToken)
 		if c.MachineConfig.MachineCA != nil {
 			c.MachineConfig.MachineCA.Key = redactBytes(c.MachineConfig.MachineCA.Key)
+		}
+
+		for _, registry := range c.MachineConfig.MachineRegistries.RegistryConfig {
+			if registry == nil {
+				continue
+			}
+
+			if registry.RegistryAuth != nil {
+				registry.RegistryAuth.RegistryPassword = redactStr(registry.RegistryAuth.RegistryPassword)
+				registry.RegistryAuth.RegistryAuth = redactStr(registry.RegistryAuth.RegistryAuth)
+				registry.RegistryAuth.RegistryIdentityToken = redactStr(registry.RegistryAuth.RegistryIdentityToken)
+			}
+
+			if registry.RegistryTLS != nil && registry.RegistryTLS.TLSClientIdentity != nil {
+				registry.RegistryTLS.TLSClientIdentity.Key = redactBytes(registry.RegistryTLS.TLSClientIdentity.Key)
+			}
+		}
+
+		if c.MachineConfig.MachineNetwork != nil {
+			for _, device := range c.MachineConfig.MachineNetwork.NetworkInterfaces {
+				if device == nil {
+					continue
+				}
+
+				redactDeviceSecrets(device, redactStr)
+
+				for _, vlan := range device.DeviceVlans {
+					if vlan == nil {
+						continue
+					}
+
+					redactVIPSecrets(vlan.VlanVIP, redactStr)
+				}
+			}
+		}
+
+		if c.MachineConfig.MachineSystemDiskEncryption != nil {
+			for _, partition := range []*EncryptionConfig{
+				c.MachineConfig.MachineSystemDiskEncryption.StatePartition,
+				c.MachineConfig.MachineSystemDiskEncryption.EphemeralPartition,
+			} {
+				if partition == nil {
+					continue
+				}
+
+				for _, key := range partition.EncryptionKeys {
+					if key == nil || key.KeyStatic == nil {
+						continue
+					}
+
+					key.KeyStatic.KeyData = redactStr(key.KeyStatic.KeyData)
+				}
+			}
 		}
 	}
 
@@ -166,6 +219,28 @@ func (c *Config) Redact(replacement string) {
 		if c.ClusterConfig.EtcdConfig != nil && c.ClusterConfig.EtcdConfig.RootCA != nil {
 			c.ClusterConfig.EtcdConfig.RootCA.Key = redactBytes(c.ClusterConfig.EtcdConfig.RootCA.Key)
 		}
+	}
+}
+
+func redactDeviceSecrets(device *Device, redactStr func(string) string) {
+	if device.DeviceWireguardConfig != nil {
+		device.DeviceWireguardConfig.WireguardPrivateKey = redactStr(device.DeviceWireguardConfig.WireguardPrivateKey)
+	}
+
+	redactVIPSecrets(device.DeviceVIPConfig, redactStr)
+}
+
+func redactVIPSecrets(vip *DeviceVIPConfig, redactStr func(string) string) {
+	if vip == nil {
+		return
+	}
+
+	if vip.EquinixMetalConfig != nil {
+		vip.EquinixMetalConfig.EquinixMetalAPIToken = redactStr(vip.EquinixMetalConfig.EquinixMetalAPIToken)
+	}
+
+	if vip.HCloudConfig != nil {
+		vip.HCloudConfig.HCloudAPIToken = redactStr(vip.HCloudConfig.HCloudAPIToken)
 	}
 }
 

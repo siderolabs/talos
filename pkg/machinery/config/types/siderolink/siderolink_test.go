@@ -22,12 +22,15 @@ func TestRedact(t *testing.T) {
 
 	cfg := siderolink.NewConfigV1Alpha1()
 	cfg.APIUrlConfig.URL = ensure.Value(url.Parse("https://siderolink.api/?jointoken=secret&user=alice"))
+	cfg.UniqueTokenConfig = "unique-secret"
 
 	assert.Equal(t, "https://siderolink.api/?jointoken=secret&user=alice", cfg.SideroLink().APIUrl().String())
+	assert.Equal(t, "unique-secret", cfg.SideroLink().UniqueToken())
 
 	cfg.Redact("REDACTED")
 
 	assert.Equal(t, "https://siderolink.api/?jointoken=REDACTED&user=alice", cfg.APIUrlConfig.String())
+	assert.Equal(t, "REDACTED", cfg.SideroLink().UniqueToken())
 }
 
 //go:embed testdata/document.yaml

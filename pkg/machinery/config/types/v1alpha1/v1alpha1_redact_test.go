@@ -7,13 +7,16 @@ package v1alpha1_test
 import (
 	"testing"
 
+	"github.com/siderolabs/crypto/x509"
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
+//nolint:gocyclo
 func TestRedactSecrets(t *testing.T) {
 	input, err := generate.NewInput("test", "https://doesntmatter:6443", constants.DefaultKubernetesVersion)
 	require.NoError(t, err)
@@ -48,4 +51,106 @@ func TestRedactSecrets(t *testing.T) {
 	require.Equal(t, replacement, string(config.Cluster().IssuingCA().Key))
 	require.Equal(t, replacement, string(config.Cluster().Etcd().CA().Key))
 	require.Equal(t, replacement, string(config.Cluster().ServiceAccount().Key))
+}
+
+//nolint:gocyclo
+func TestRedactExtendedSecrets(t *testing.T) {
+	t.Parallel()
+
+	cfg := &v1alpha1.Config{
+		MachineConfig: &v1alpha1.MachineConfig{
+			MachineRegistries: v1alpha1.RegistriesConfig{
+				RegistryConfig: map[string]*v1alpha1.RegistryConfig{
+					"my-registry.local:5000": {
+						RegistryAuth: &v1alpha1.RegistryAuthConfig{
+							RegistryUsername:      "alice",
+							RegistryPassword:      "topsecret",
+							RegistryAuth:          "raw-auth",
+							RegistryIdentityToken: "id-token",
+						},
+						RegistryTLS: &v1alpha1.RegistryTLSConfig{
+							TLSClientIdentity: &x509.PEMEncodedCertificateAndKey{
+								Crt: []byte("cert"),
+								Key: []byte("private-key"),
+							},
+							TLSCA: []byte("ca-bundle"),
+						},
+					},
+					"empty-registry.local": nil,
+				},
+			},
+			MachineNetwork: &v1alpha1.NetworkConfig{
+				NetworkInterfaces: v1alpha1.NetworkDeviceList{
+					{
+						DeviceInterface: "eth0",
+						DeviceWireguardConfig: &v1alpha1.DeviceWireguardConfig{
+							WireguardPrivateKey: "wg-priv-key",
+						},
+						DeviceVIPConfig: &v1alpha1.DeviceVIPConfig{
+							EquinixMetalConfig: &v1alpha1.VIPEquinixMetalConfig{
+								EquinixMetalAPIToken: "equinix-token",
+							},
+							HCloudConfig: &v1alpha1.VIPHCloudConfig{
+								HCloudAPIToken: "hcloud-token",
+							},
+						},
+						DeviceVlans: v1alpha1.VlanList{
+							{
+								VlanID: 42,
+								VlanVIP: &v1alpha1.DeviceVIPConfig{
+									EquinixMetalConfig: &v1alpha1.VIPEquinixMetalConfig{
+										EquinixMetalAPIToken: "equinix-vlan-token",
+									},
+									HCloudConfig: &v1alpha1.VIPHCloudConfig{
+										HCloudAPIToken: "hcloud-vlan-token",
+									},
+								},
+							},
+							nil,
+						},
+					},
+					nil,
+				},
+			},
+			MachineSystemDiskEncryption: &v1alpha1.SystemDiskEncryptionConfig{
+				StatePartition: &v1alpha1.EncryptionConfig{
+					EncryptionKeys: []*v1alpha1.EncryptionKey{
+						{KeyStatic: &v1alpha1.EncryptionKeyStatic{KeyData: "state-passphrase"}},
+						{KeyNodeID: &v1alpha1.EncryptionKeyNodeID{}},
+						nil,
+					},
+				},
+				EphemeralPartition: &v1alpha1.EncryptionConfig{
+					EncryptionKeys: []*v1alpha1.EncryptionKey{
+						{KeyStatic: &v1alpha1.EncryptionKeyStatic{KeyData: "ephemeral-passphrase"}},
+					},
+				},
+			},
+		},
+	}
+
+	const replacement = "**.***"
+
+	cfg.Redact(replacement)
+
+	registry := cfg.MachineConfig.MachineRegistries.RegistryConfig["my-registry.local:5000"]
+	require.Equal(t, "alice", registry.RegistryAuth.RegistryUsername, "username is not a secret and must not be redacted")
+	require.Equal(t, replacement, registry.RegistryAuth.RegistryPassword)
+	require.Equal(t, replacement, registry.RegistryAuth.RegistryAuth)
+	require.Equal(t, replacement, registry.RegistryAuth.RegistryIdentityToken)
+	require.Equal(t, "cert", string(registry.RegistryTLS.TLSClientIdentity.Crt), "client cert is public and must not be redacted")
+	require.Equal(t, replacement, string(registry.RegistryTLS.TLSClientIdentity.Key))
+	require.Equal(t, "ca-bundle", string(registry.RegistryTLS.TLSCA), "CA bundle is public and must not be redacted")
+
+	device := cfg.MachineConfig.MachineNetwork.NetworkInterfaces[0]
+	require.Equal(t, replacement, device.DeviceWireguardConfig.WireguardPrivateKey)
+	require.Equal(t, replacement, device.DeviceVIPConfig.EquinixMetalConfig.EquinixMetalAPIToken)
+	require.Equal(t, replacement, device.DeviceVIPConfig.HCloudConfig.HCloudAPIToken)
+
+	vlan := device.DeviceVlans[0]
+	require.Equal(t, replacement, vlan.VlanVIP.EquinixMetalConfig.EquinixMetalAPIToken)
+	require.Equal(t, replacement, vlan.VlanVIP.HCloudConfig.HCloudAPIToken)
+
+	require.Equal(t, replacement, cfg.MachineConfig.MachineSystemDiskEncryption.StatePartition.EncryptionKeys[0].KeyStatic.KeyData)
+	require.Equal(t, replacement, cfg.MachineConfig.MachineSystemDiskEncryption.EphemeralPartition.EncryptionKeys[0].KeyStatic.KeyData)
 }

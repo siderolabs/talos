@@ -88,6 +88,19 @@ func (s EncryptionSpec) IsZero() bool {
 	return s.EncryptionProvider == block.EncryptionProviderNone && len(s.EncryptionKeys) == 0
 }
 
+// Redact replaces any embedded static passphrases with the given replacement.
+func (s *EncryptionSpec) Redact(replacement string) {
+	for i := range s.EncryptionKeys {
+		if s.EncryptionKeys[i].KeyStatic == nil {
+			continue
+		}
+
+		if s.EncryptionKeys[i].KeyStatic.KeyData != "" {
+			s.EncryptionKeys[i].KeyStatic.KeyData = replacement
+		}
+	}
+}
+
 // EncryptionKey represents configuration for disk encryption key.
 type EncryptionKey struct {
 	//   description: >

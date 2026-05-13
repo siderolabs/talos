@@ -185,13 +185,7 @@ func (s *RegistryTLSConfigV1Alpha1) InsecureSkipVerify() bool {
 
 // Redact implements config.SecretDocument interface.
 func (s *RegistryTLSConfigV1Alpha1) Redact(replacement string) {
-	if s.TLSClientIdentity != nil {
-		if s.TLSClientIdentity.Key != "" {
-			s.TLSClientIdentity.Key = replacement
-		}
-	}
-
-	if s.TLSCA != "" {
-		s.TLSCA = replacement
+	if s.TLSClientIdentity != nil && s.TLSClientIdentity.Key != "" {
+		s.TLSClientIdentity.Key = replacement
 	}
 }

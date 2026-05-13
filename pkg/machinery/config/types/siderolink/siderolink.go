@@ -102,6 +102,10 @@ func (s *ConfigV1Alpha1) Redact(replacement string) {
 
 		s.APIUrlConfig.RawQuery = query.Encode()
 	}
+
+	if s.UniqueTokenConfig != "" {
+		s.UniqueTokenConfig = replacement
+	}
 }
 
 // SideroLink implements config.SideroLink interface.
