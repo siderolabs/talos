@@ -39,7 +39,7 @@ jobs:
         uses: actions/checkout@v6
         with:
           repository: siderolabs/homebrew-tap
-          token: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          token: ${{ github.token }}
           path: homebrew-tap
 
       - name: Update Homebrew formula
@@ -96,7 +96,7 @@ jobs:
         if: steps.check-latest.outputs.is_latest == 'true'
         env:
           VERSION: ${{ steps.version.outputs.version }}
-          GH_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           cd homebrew-tap
 
