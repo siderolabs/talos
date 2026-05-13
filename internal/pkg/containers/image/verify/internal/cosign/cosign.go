@@ -44,6 +44,16 @@ type VerifyResult struct {
 	Message string
 }
 
+// TagFetcher fetches a manifest by its tag URL through the registry hosts that
+// back the resolver, validating the response body against expectedDigest before
+// returning it.
+//
+// It is used as a fallback when the resolver's by-digest manifest fetch returns
+// NotFound, working around CDNs (notably registry.k8s.io) where the HEAD-by-tag
+// and GET-by-digest requests can land on different regional backends with
+// inconsistent replication. When nil, the fallback is skipped.
+type TagFetcher func(ctx context.Context, repository name.Repository, tag string, expectedDigest digest.Digest) ([]byte, error)
+
 // VerifyImage verifies the given image reference and digest against the provided verification configuration.
 //
 // It checks in priority order:
@@ -52,9 +62,13 @@ type VerifyResult struct {
 //  3. The legacy .sig tag (sha256-xxx.sig) for legacy cosign signature layers.
 //
 // All registry I/O goes through the provided resolver, which handles authentication and mirror routing.
+// tagFetcher is an optional fallback invoked when the resolver's digest-based manifest fetch returns
+// NotFound (see TagFetcher).
 //
 // The verifiers are in opts, if any of the verifiers returns true for bundle verification, the image is considered verified.
-func VerifyImage(ctx context.Context, logger *zap.Logger, resolver remotes.Resolver, imageRef name.Digest, co cosign.CheckOpts) (*VerifyResult, error) {
+func VerifyImage(
+	ctx context.Context, logger *zap.Logger, resolver remotes.Resolver, tagFetcher TagFetcher, imageRef name.Digest, co cosign.CheckOpts,
+) (*VerifyResult, error) {
 	logger = logger.With(zap.Stringer("image", imageRef))
 
 	imageDigest, err := v1.NewHash(imageRef.DigestStr())
@@ -91,7 +105,7 @@ func VerifyImage(ctx context.Context, logger *zap.Logger, resolver remotes.Resol
 	// Step 2: try bundle tag (sha256-xxx) for new-style sigstore bundles stored as a tag.
 	logger.Debug("no bundle referrers found, trying bundle tag")
 
-	verified, result, bundleErr := verifyFromBundleTag(ctx, logger, resolver, imageRef, artifactPolicyOption, co)
+	verified, result, bundleErr := verifyFromBundleTag(ctx, logger, resolver, tagFetcher, imageRef, artifactPolicyOption, co)
 
 	if verified {
 		return result, bundleErr
@@ -100,7 +114,7 @@ func VerifyImage(ctx context.Context, logger *zap.Logger, resolver remotes.Resol
 	// Step 3: fall back to the legacy .sig tag (sha256-xxx.sig).
 	logger.Debug("no bundle tag found, falling back to legacy .sig tag")
 
-	result, legacyErr := verifyFromLegacySigTag(ctx, logger, resolver, imageRef, imageDigest, co)
+	result, legacyErr := verifyFromLegacySigTag(ctx, logger, resolver, tagFetcher, imageRef, imageDigest, co)
 	if legacyErr != nil {
 		return nil, fmt.Errorf("no valid signature found: %w", errors.Join(bundleErr, legacyErr))
 	}
@@ -169,7 +183,8 @@ func verifyBundleReferrers(
 //
 //nolint:gocyclo
 func verifyFromBundleTag(
-	ctx context.Context, logger *zap.Logger, resolver remotes.Resolver, imageRef name.Digest, artifactPolicyOption verify.ArtifactPolicyOption, co cosign.CheckOpts,
+	ctx context.Context, logger *zap.Logger, resolver remotes.Resolver, tagFetcher TagFetcher,
+	imageRef name.Digest, artifactPolicyOption verify.ArtifactPolicyOption, co cosign.CheckOpts,
 ) (bool, *VerifyResult, error) {
 	bundleTag := strings.ReplaceAll(imageRef.DigestStr(), ":", "-")
 
@@ -197,7 +212,7 @@ func verifyFromBundleTag(
 
 	switch desc.MediaType {
 	case ocispec.MediaTypeImageManifest:
-		manifest, err := fetchManifest(ctx, fetcher, desc)
+		manifest, err := fetchManifestWithTagFallback(ctx, logger, fetcher, tagFetcher, desc, imageRef.Repository, bundleTag)
 		if err != nil {
 			return false, nil, fmt.Errorf("failed to fetch bundle manifest: %w", err)
 		}
@@ -210,7 +225,7 @@ func verifyFromBundleTag(
 	case ocispec.MediaTypeImageIndex:
 		// The bundle tag may be an OCI image index wrapping individual bundle manifests.
 		// Walk each manifest entry and collect bundle layers from all of them.
-		index, err := fetchIndex(ctx, fetcher, desc)
+		index, err := fetchIndexWithTagFallback(ctx, logger, fetcher, tagFetcher, desc, imageRef.Repository, bundleTag)
 		if err != nil {
 			return false, nil, fmt.Errorf("failed to fetch bundle index: %w", err)
 		}
@@ -220,6 +235,8 @@ func verifyFromBundleTag(
 				continue
 			}
 
+			// Sub-manifests inside an index are addressed only by digest (no tag for fallback),
+			// so the by-digest fetcher remains the only option here.
 			manifest, err := fetchManifest(ctx, fetcher, manifestDesc)
 			if err != nil {
 				logger.Debug("failed to fetch manifest from bundle index", zap.String("digest", manifestDesc.Digest.String()), zap.Error(err))
@@ -252,7 +269,10 @@ func verifyFromBundleTag(
 
 // verifyFromLegacySigTag fetches the legacy .sig tag (sha256-xxx.sig) and verifies via legacy
 // cosign signature layers.
-func verifyFromLegacySigTag(ctx context.Context, logger *zap.Logger, resolver remotes.Resolver, imageRef name.Digest, imageDigest v1.Hash, co cosign.CheckOpts) (*VerifyResult, error) {
+func verifyFromLegacySigTag(
+	ctx context.Context, logger *zap.Logger, resolver remotes.Resolver, tagFetcher TagFetcher,
+	imageRef name.Digest, imageDigest v1.Hash, co cosign.CheckOpts,
+) (*VerifyResult, error) {
 	signatureTag := strings.ReplaceAll(imageRef.DigestStr(), ":", "-") + ".sig"
 
 	logger.Debug("resolving .sig tag", zap.String("signatureTag", signatureTag))
@@ -277,7 +297,7 @@ func verifyFromLegacySigTag(ctx context.Context, logger *zap.Logger, resolver re
 		return nil, fmt.Errorf("failed to get fetcher for .sig manifest: %w", err)
 	}
 
-	manifest, err := fetchManifest(ctx, fetcher, desc)
+	manifest, err := fetchManifestWithTagFallback(ctx, logger, fetcher, tagFetcher, desc, imageRef.Repository, signatureTag)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch .sig manifest: %w", err)
 	}
@@ -395,6 +415,74 @@ func fetchIndex(ctx context.Context, fetcher remotes.Fetcher, desc ocispec.Descr
 	var index ocispec.Index
 	if err := json.NewDecoder(io.LimitReader(rc, maxManifestSize)).Decode(&index); err != nil {
 		return ocispec.Index{}, fmt.Errorf("failed to decode index: %w", err)
+	}
+
+	return index, nil
+}
+
+// fetchManifestWithTagFallback fetches a manifest by digest via the resolver, and on
+// NotFound falls back to fetching it by tag through tagFetcher.
+//
+// See siderolabs/talos#13342: registry.k8s.io's CDN can route HEAD-by-tag and
+// GET-by-digest to different regional backends; the by-tag path can succeed while
+// the by-digest path returns 404. The tagFetcher uses the same registry hosts as
+// the resolver (auth + TLS + mirrors), so it does not bypass user configuration.
+//
+//nolint:dupl // not a duplicate of fetchIndexWithTagFallback - decodes a different type
+func fetchManifestWithTagFallback(
+	ctx context.Context, logger *zap.Logger, fetcher remotes.Fetcher, tagFetcher TagFetcher,
+	desc ocispec.Descriptor, repo name.Repository, tag string,
+) (ocispec.Manifest, error) {
+	manifest, err := fetchManifest(ctx, fetcher, desc)
+	if err == nil {
+		return manifest, nil
+	}
+
+	if tagFetcher == nil || !errdefs.IsNotFound(err) {
+		return ocispec.Manifest{}, err
+	}
+
+	logger.Debug("digest-based manifest fetch returned NotFound; falling back to tag-based fetch",
+		zap.String("tag", tag), zap.Stringer("digest", desc.Digest), zap.Error(err))
+
+	body, fbErr := tagFetcher(ctx, repo, tag, desc.Digest)
+	if fbErr != nil {
+		return ocispec.Manifest{}, fmt.Errorf("digest fetch: %w; tag fallback: %w", err, fbErr)
+	}
+
+	if jsonErr := json.Unmarshal(body, &manifest); jsonErr != nil {
+		return ocispec.Manifest{}, fmt.Errorf("failed to decode manifest from tag fallback: %w", jsonErr)
+	}
+
+	return manifest, nil
+}
+
+// fetchIndexWithTagFallback is the OCI image index counterpart to fetchManifestWithTagFallback.
+//
+//nolint:dupl // not a duplicate of fetchManifestWithTagFallback - decodes a different type
+func fetchIndexWithTagFallback(
+	ctx context.Context, logger *zap.Logger, fetcher remotes.Fetcher, tagFetcher TagFetcher,
+	desc ocispec.Descriptor, repo name.Repository, tag string,
+) (ocispec.Index, error) {
+	index, err := fetchIndex(ctx, fetcher, desc)
+	if err == nil {
+		return index, nil
+	}
+
+	if tagFetcher == nil || !errdefs.IsNotFound(err) {
+		return ocispec.Index{}, err
+	}
+
+	logger.Debug("digest-based index fetch returned NotFound; falling back to tag-based fetch",
+		zap.String("tag", tag), zap.Stringer("digest", desc.Digest), zap.Error(err))
+
+	body, fbErr := tagFetcher(ctx, repo, tag, desc.Digest)
+	if fbErr != nil {
+		return ocispec.Index{}, fmt.Errorf("digest fetch: %w; tag fallback: %w", err, fbErr)
+	}
+
+	if jsonErr := json.Unmarshal(body, &index); jsonErr != nil {
+		return ocispec.Index{}, fmt.Errorf("failed to decode index from tag fallback: %w", jsonErr)
 	}
 
 	return index, nil

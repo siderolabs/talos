@@ -37,6 +37,7 @@ func TestVerifyImage(t *testing.T) {
 	t.Parallel()
 
 	resolver := image.NewResolver(mockRegistriesConfig{})
+	tagFetcher := image.NewTagFetcher(mockRegistriesConfig{})
 	trustedRoot, err := cosign.TrustedRoot()
 	require.NoError(t, err)
 
@@ -50,6 +51,25 @@ func TestVerifyImage(t *testing.T) {
 	}{
 		{
 			imageRef: "registry.k8s.io/etcd:v3.6.8@sha256:397189418d1a00e500c0605ad18d1baf3b541a1004d768448c367e48071622e5",
+			checkOpts: cosign.CheckOpts{
+				TrustedMaterial: trustedRoot,
+				Identities: []cosign.Identity{
+					{
+						Issuer:  "https://accounts.google.com",
+						Subject: "krel-trust@k8s-releng-prod.iam.gserviceaccount.com",
+					},
+				},
+			},
+
+			expectedResultMessage: "verified via legacy signature (bundle verified true)",
+		},
+		{
+			// Regression for siderolabs/talos#13342: registry.k8s.io's CDN serves the .sig
+			// manifest by tag (e.g. us-central1) but can return 404 for the same manifest
+			// fetched by digest from another region (e.g. europe-west4). The TagFetcher
+			// fallback fetches by tag through the same RegistryHosts (auth/TLS/mirror)
+			// the resolver uses.
+			imageRef: "registry.k8s.io/etcd:v3.6.11@sha256:fbab3d2954652f592b2653cc1b9decdbe2a633de9320735e9f364b185b6b309a",
 			checkOpts: cosign.CheckOpts{
 				TrustedMaterial: trustedRoot,
 				Identities: []cosign.Identity{
@@ -128,7 +148,7 @@ func TestVerifyImage(t *testing.T) {
 			imageRef, err := name.NewDigest(test.imageRef)
 			require.NoError(t, err)
 
-			result, err := ourcosign.VerifyImage(t.Context(), logger, resolver, imageRef, test.checkOpts)
+			result, err := ourcosign.VerifyImage(t.Context(), logger, resolver, tagFetcher, imageRef, test.checkOpts)
 
 			if test.expectedError != "" {
 				require.Error(t, err)

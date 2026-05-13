@@ -170,8 +170,9 @@ func Pull(
 		}
 
 		resolver := NewResolver(registriesConfig)
+		tagFetcher := NewTagFetcher(registriesConfig)
 
-		verifyResult, err := verify.ImageSignature(ctx, zap.NewNop(), resources, resolver, ref)
+		verifyResult, err := verify.ImageSignature(ctx, zap.NewNop(), resources, resolver, tagFetcher, ref)
 		if err != nil {
 			switch status.Code(err) { //nolint:exhaustive
 			case codes.PermissionDenied:

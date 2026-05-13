@@ -45,6 +45,7 @@ func (svc *Service) Verify(ctx context.Context, req *machine.ImageServiceVerifyR
 	}
 
 	resolver := image.NewResolver(registries)
+	tagFetcher := image.NewTagFetcher(registries)
 
-	return verify.ImageSignature(ctx, svc.logger, svc.controller.Runtime().State().V1Alpha2().Resources(), resolver, req.GetImageRef())
+	return verify.ImageSignature(ctx, svc.logger, svc.controller.Runtime().State().V1Alpha2().Resources(), resolver, tagFetcher, req.GetImageRef())
 }

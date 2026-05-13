@@ -28,11 +28,18 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/security"
 )
 
+// TagFetcher is the fallback used when a resolver's digest-based manifest fetch
+// returns NotFound; see [ourcosign.TagFetcher].
+type TagFetcher = ourcosign.TagFetcher
+
 // ImageSignature verifies image signature within Talos source code.
+//
+// tagFetcher (optional) is invoked when the resolver's digest-based manifest
+// fetch returns NotFound — see [TagFetcher].
 //
 //nolint:gocyclo
 func ImageSignature(
-	ctx context.Context, logger *zap.Logger, resources state.State, resolver remotes.Resolver, imageRef string,
+	ctx context.Context, logger *zap.Logger, resources state.State, resolver remotes.Resolver, tagFetcher TagFetcher, imageRef string,
 ) (*machine.ImageServiceVerifyResponse, error) {
 	logger = logger.With(zap.String("image_ref", imageRef))
 
@@ -103,7 +110,7 @@ func ImageSignature(
 		return nil, status.Errorf(codes.Internal, "failed to convert verification rule to cosign check options: %s", err)
 	}
 
-	result, err := ourcosign.VerifyImage(ctx, logger, resolver, digestRef, checkOpts)
+	result, err := ourcosign.VerifyImage(ctx, logger, resolver, tagFetcher, digestRef, checkOpts)
 	if err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, "image verification failed: %s", err)
 	}
