@@ -161,12 +161,12 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 		{Type: "bind", Destination: constants.PodResolvConfPath, Source: constants.PodResolvConfPath, Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/etc/cni", Source: "/etc/cni", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/usr/libexec/kubernetes", Source: "/usr/libexec/kubernetes", Options: []string{"bind", "rw"}},
-		{Type: "bind", Destination: "/var/run", Source: "/run", Options: []string{"bind", "rw"}},
-		{Type: "bind", Destination: "/var/lib/containerd", Source: "/var/lib/containerd", Options: []string{"rbind", "rw"}},
-		{Type: "bind", Destination: "/var/lib/kubelet", Source: "/var/lib/kubelet", Options: []string{"bind", "rw"}},
+		{Type: "bind", Destination: "/var/run", Source: "/run", Options: []string{"rbind", "rslave", "rw"}},
+		{Type: "bind", Destination: "/var/lib/containerd", Source: "/var/lib/containerd", Options: []string{"rbind", "rslave", "rw"}},
+		{Type: "bind", Destination: "/var/lib/kubelet", Source: "/var/lib/kubelet", Options: []string{"rbind", "rshared", "rw"}},
 		{Type: "bind", Destination: "/var/log/containers", Source: "/var/log/containers", Options: []string{"bind", "rw"}},
 		{Type: "bind", Destination: "/var/log/pods", Source: "/var/log/pods", Options: []string{"bind", "rw"}},
-		{Type: "bind", Destination: constants.UserVolumeMountPoint, Source: constants.UserVolumeMountPoint, Options: []string{"rbind", "ro"}},
+		{Type: "bind", Destination: constants.UserVolumeMountPoint, Source: constants.UserVolumeMountPoint, Options: []string{"rbind", "rslave", "ro"}},
 	}
 
 	if _, err := os.Stat("/sys/kernel/security"); err == nil {
