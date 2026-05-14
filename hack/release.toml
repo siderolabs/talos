@@ -138,6 +138,14 @@ Talos now supports mounting and provisioning `btrfs` filesystem for user volumes
 Support for `btrfs` is enabled by installing `btrfs` system extension.
 """
 
+    [notes.lvm_status]
+        title = "LVM Status"
+        description = """\
+Talos now provides detailed LVM status information, allowing for better monitoring and management of LVM volumes.
+New resources `LVMPhysicalVolumeStatus`, `LVMVolumeGroupStatus`, and `LVMLogicalVolumeStatus` expose PV, VG, and LV details.
+`DiscoveredVolume` resources for logical volumes are listed by their kernel name (e.g. `dm-0`). To resolve the `<vg>/<lv>` for a given device, use the `Disks` or `BlockSymlinks` resources, which carry the udev-managed symlinks (e.g. `/dev/disk/by-id/dm-name-<vg>-<lv>`).
+"""
+
 [make_deps]
 
     [make_deps.tools]

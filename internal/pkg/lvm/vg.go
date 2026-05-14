@@ -1,0 +1,64 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+package lvm
+
+import (
+	"context"
+	"fmt"
+)
+
+// VG represents a volume group as reported by `vgs --reportformat json`.
+//
+// Field semantics mirror the columns documented in vgs(8); see the manpage
+// for the source-of-truth definitions. Numeric and tri-state columns are
+// kept as raw strings so the caller can surface the original LVM value
+// (including sentinels like "", "-1", "unknown", "unmanaged") verbatim.
+type VG struct {
+	Name             string `json:"vg_name"`
+	UUID             string `json:"vg_uuid"`
+	Format           string `json:"vg_fmt"`
+	Permissions      string `json:"vg_permissions"`
+	Extendable       string `json:"vg_extendable"`
+	Exported         string `json:"vg_exported"`
+	Partial          string `json:"vg_partial"`
+	AllocationPolicy string `json:"vg_allocation_policy"`
+	Clustered        string `json:"vg_clustered"`
+	Shared           string `json:"vg_shared"`
+	Size             string `json:"vg_size"`
+	Free             string `json:"vg_free"`
+	ExtentSize       string `json:"vg_extent_size"`
+	ExtentCount      string `json:"vg_extent_count"`
+	FreeExtentCount  string `json:"vg_free_count"`
+	MaxLV            string `json:"max_lv"`
+	MaxPV            string `json:"max_pv"`
+	LVCount          string `json:"lv_count"`
+	PVCount          string `json:"pv_count"`
+	SnapCount        string `json:"snap_count"`
+	MissingPVCount   string `json:"vg_missing_pv_count"`
+	SeqNo            string `json:"vg_seqno"`
+	LockType         string `json:"vg_lock_type"`
+	SystemID         string `json:"vg_systemid"`
+	Tags             Tags   `json:"vg_tags"`
+}
+
+// VGS runs `lvm vgs -a -o +all --reportformat json --units b --nosuffix`
+// and returns the parsed records.
+func (lvm *LVM) VGS(ctx context.Context) ([]VG, error) {
+	out, err := lvm.run(ctx, "vgs", commonReportArgs...)
+	if err != nil {
+		return nil, err
+	}
+
+	return parseVGS(out)
+}
+
+func parseVGS(out string) ([]VG, error) {
+	vgs, err := decodeReport[VG](out, "vg")
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode vgs report: %w", err)
+	}
+
+	return vgs, nil
+}

@@ -619,6 +619,13 @@ description: Talos gRPC API reference.
     - [StatusSpec](#talos.resource.definitions.siderolink.StatusSpec)
     - [TunnelSpec](#talos.resource.definitions.siderolink.TunnelSpec)
   
+- [resource/definitions/storage/storage.proto](#resource/definitions/storage/storage.proto)
+    - [LVMLogicalVolumeStatusSpec](#talos.resource.definitions.storage.LVMLogicalVolumeStatusSpec)
+    - [LVMPhysicalVolumeStatusSpec](#talos.resource.definitions.storage.LVMPhysicalVolumeStatusSpec)
+    - [LVMRefreshRequestSpec](#talos.resource.definitions.storage.LVMRefreshRequestSpec)
+    - [LVMRefreshStatusSpec](#talos.resource.definitions.storage.LVMRefreshStatusSpec)
+    - [LVMVolumeGroupStatusSpec](#talos.resource.definitions.storage.LVMVolumeGroupStatusSpec)
+  
 - [resource/definitions/time/time.proto](#resource/definitions/time/time.proto)
     - [AdjtimeStatusSpec](#talos.resource.definitions.time.AdjtimeStatusSpec)
     - [StatusSpec](#talos.resource.definitions.time.StatusSpec)
@@ -10889,6 +10896,184 @@ TunnelSpec describes Siderolink GRPC Tunnel configuration.
 | link_name | [string](#string) |  | LinkName is the name to use for WireGuard tunnel. |
 | mtu | [int64](#int64) |  | MTU is the maximum transmission unit for the tunnel. |
 | node_address | [common.NetIPPort](#common.NetIPPort) |  | NodeAddress is the virtual address of our node. It's used to identify our node in the WireGuard GRPC streamer. It's not the address of the actual WireGuard interface. |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="resource/definitions/storage/storage.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## resource/definitions/storage/storage.proto
+
+
+
+<a name="talos.resource.definitions.storage.LVMLogicalVolumeStatusSpec"></a>
+
+### LVMLogicalVolumeStatusSpec
+LVMLogicalVolumeStatusSpec is the spec for LVMLogicalVolumeStatus resource.
+
+Fields mirror selected columns of `lvs -a -o +all --reportformat json --units b --nosuffix`.
+See lvs(8) for the source-of-truth definitions of each column.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| path | [string](#string) |  | Path is the LV path (lv_path), e.g. /dev/vg0/data. Empty for hidden LVs. |
+| dm_path | [string](#string) |  | DMPath is the device-mapper path (lv_dm_path), always populated when active. |
+| name | [string](#string) |  | Name is the LV short name (lv_name). |
+| full_name | [string](#string) |  | FullName is the qualified LV name (lv_full_name), e.g. "vg0/data". |
+| vg_name | [string](#string) |  | VGName is the parent volume group name (vg_name). |
+| uuid | [string](#string) |  | UUID is the stable LV identifier (lv_uuid). |
+| layout | [string](#string) |  | Layout is the LV layout (lv_layout), e.g. "linear", "raid1", "thin,pool". |
+| role | [string](#string) |  | Role is the LV role (lv_role), e.g. "public", "private,thin,pool,data". |
+| permissions | [string](#string) |  | Permissions reflects lv_permissions. |
+| allocation_policy | [string](#string) |  | AllocationPolicy reflects lv_allocation_policy. |
+| allocation_locked | [string](#string) |  | AllocationLocked is the raw lv_allocation_locked column ("locked" / ""). |
+| fixed_minor | [string](#string) |  | FixedMinor is the raw lv_fixed_minor column ("fixed" / ""). |
+| active | [string](#string) |  | Active is the raw lv_active column ("active" / "" / "unknown"). |
+| active_locally | [string](#string) |  | ActiveLocally is the raw lv_active_locally column ("active locally" / "" / "unknown"). |
+| active_remotely | [string](#string) |  | ActiveRemotely is the raw lv_active_remotely column ("active remotely" / "" / "unknown"). |
+| active_exclusively | [string](#string) |  | ActiveExclusively is the raw lv_active_exclusively column ("active exclusively" / "" / "unknown"). |
+| suspended | [string](#string) |  | Suspended is the raw lv_suspended column ("suspended" / "" / "unknown"). |
+| device_open | [string](#string) |  | DeviceOpen is the raw lv_device_open column ("open" / "" / "unknown"). |
+| skip_activation | [string](#string) |  | SkipActivation is the raw lv_skip_activation column ("skip activation" / ""). |
+| merging | [string](#string) |  | Merging is the raw lv_merging column ("merging" / ""). |
+| converting | [string](#string) |  | Converting is the raw lv_converting column ("converting" / ""). |
+| size | [string](#string) |  | Size is the raw lv_size column in bytes. |
+| metadata_size | [string](#string) |  | MetadataSize is the raw lv_metadata_size column in bytes ("" when not applicable). |
+| read_ahead | [string](#string) |  | ReadAhead is the raw lv_read_ahead column ("auto" or a byte count). |
+| kernel_major | [string](#string) |  | KernelMajor is the raw lv_kernel_major column ("-1" when inactive, otherwise a number). |
+| kernel_minor | [string](#string) |  | KernelMinor is the raw lv_kernel_minor column ("-1" when inactive, otherwise a number). |
+| origin | [string](#string) |  | Origin is the LV name this LV is a snapshot/thin clone of (origin); empty otherwise. |
+| origin_size | [string](#string) |  | OriginSize is the raw origin_size column in bytes ("" when not applicable). |
+| pool_lv | [string](#string) |  | PoolLV is the parent thin/cache pool name (pool_lv); empty when not pool-backed. |
+| data_lv | [string](#string) |  | DataLV is the data sub-LV name (data_lv); empty when not applicable. |
+| metadata_lv | [string](#string) |  | MetadataLV is the metadata sub-LV name (metadata_lv); empty when not applicable. |
+| move_pv | [string](#string) |  | MovePV is the source PV of an in-progress pvmove (move_pv); empty otherwise. |
+| convert_lv | [string](#string) |  | ConvertLV is the target LV of an in-progress lvconvert (convert_lv); empty otherwise. |
+| when_full | [string](#string) |  | WhenFull reflects lv_when_full ("error" / "queue" / ""). |
+| tags | [string](#string) | repeated | Tags is the list of tags attached to the LV (lv_tags). |
+
+
+
+
+
+
+<a name="talos.resource.definitions.storage.LVMPhysicalVolumeStatusSpec"></a>
+
+### LVMPhysicalVolumeStatusSpec
+LVMPhysicalVolumeStatusSpec is the spec for LVMPhysicalVolumeStatus resource.
+
+Fields mirror selected columns of `pvs -a -o +all --reportformat json --units b --nosuffix`.
+Numeric / tri-state columns are exposed as raw strings so LVM's sentinels
+("", "-1") are surfaced verbatim. See pvs(8) for the source-of-truth
+definitions of each column.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| device | [string](#string) |  | Device is the block-device path backing the PV (pv_name). |
+| vg_name | [string](#string) |  | VGName is the parent volume group name; empty if the PV is not in a VG. |
+| uuid | [string](#string) |  | UUID is the stable PV identifier written to the PV label (pv_uuid). |
+| format | [string](#string) |  | Format is the on-disk metadata format (pv_fmt), e.g. "lvm2". |
+| allocatable | [string](#string) |  | Allocatable is the raw pv_allocatable column ("allocatable" / ""). |
+| exported | [string](#string) |  | Exported is the raw pv_exported column ("exported" / ""). |
+| missing | [string](#string) |  | Missing is the raw pv_missing column ("missing" / ""). |
+| in_use | [string](#string) |  | InUse is the raw pv_in_use column ("used" / ""). |
+| size | [string](#string) |  | Size is the raw pv_size column in bytes. |
+| device_size | [string](#string) |  | DeviceSize is the raw dev_size column in bytes. |
+| free | [string](#string) |  | Free is the raw pv_free column in bytes. |
+| used | [string](#string) |  | Used is the raw pv_used column in bytes. |
+| pe_count | [string](#string) |  | PECount is the raw pv_pe_count column. |
+| pe_alloc_count | [string](#string) |  | PEAllocCount is the raw pv_pe_alloc_count column. |
+| major | [string](#string) |  | Major is the raw pv_major column ("-1" for orphan PVs, otherwise the kernel major). |
+| minor | [string](#string) |  | Minor is the raw pv_minor column ("-1" for orphan PVs, otherwise the kernel minor). |
+| tags | [string](#string) | repeated | Tags is the list of tags attached to the PV (pv_tags). |
+
+
+
+
+
+
+<a name="talos.resource.definitions.storage.LVMRefreshRequestSpec"></a>
+
+### LVMRefreshRequestSpec
+LVMRefreshRequestSpec is the spec for LVMRefreshRequest.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| request | [int64](#int64) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.storage.LVMRefreshStatusSpec"></a>
+
+### LVMRefreshStatusSpec
+LVMRefreshStatusSpec is the spec for LVMRefreshStatus.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| request | [int64](#int64) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.storage.LVMVolumeGroupStatusSpec"></a>
+
+### LVMVolumeGroupStatusSpec
+LVMVolumeGroupStatusSpec is the spec for LVMVolumeGroupStatus resource.
+
+Fields mirror selected columns of `vgs -a -o +all --reportformat json --units b --nosuffix`.
+Numeric / tri-state columns are exposed as raw strings so LVM's sentinels
+("", "-1", "unknown", "unmanaged", "auto", …) are surfaced verbatim. See
+vgs(8) for the source-of-truth definitions of each column.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | Name is the volume group name (vg_name). |
+| uuid | [string](#string) |  | UUID is the stable VG identifier (vg_uuid). |
+| format | [string](#string) |  | Format is the on-disk metadata format (vg_fmt), e.g. "lvm2". |
+| permissions | [string](#string) |  | Permissions reflects vg_permissions ("writeable" / "read-only" / "unknown" / ""). |
+| extendable | [string](#string) |  | Extendable is the raw vg_extendable column ("extendable" / ""). |
+| exported | [string](#string) |  | Exported is the raw vg_exported column ("exported" / ""). |
+| partial | [string](#string) |  | Partial is the raw vg_partial column ("partial" / ""). |
+| allocation_policy | [string](#string) |  | AllocationPolicy reflects vg_allocation_policy. |
+| clustered | [string](#string) |  | Clustered is the raw vg_clustered column ("clustered" / ""). |
+| shared | [string](#string) |  | Shared is the raw vg_shared column ("shared" / ""). |
+| size | [string](#string) |  | Size is the raw vg_size column in bytes. |
+| free | [string](#string) |  | Free is the raw vg_free column in bytes. |
+| extent_size | [string](#string) |  | ExtentSize is the raw vg_extent_size column in bytes. |
+| extent_count | [string](#string) |  | ExtentCount is the raw vg_extent_count column. |
+| free_extent_count | [string](#string) |  | FreeExtentCount is the raw vg_free_count column. |
+| max_lv | [string](#string) |  | MaxLV is the raw max_lv column; "0" means no limit. |
+| max_pv | [string](#string) |  | MaxPV is the raw max_pv column; "0" means no limit. |
+| lv_count | [string](#string) |  | LVCount is the raw lv_count column. |
+| pv_count | [string](#string) |  | PVCount is the raw pv_count column. |
+| snap_count | [string](#string) |  | SnapCount is the raw snap_count column. |
+| missing_pv_count | [string](#string) |  | MissingPVCount is the raw vg_missing_pv_count column. |
+| seq_no | [string](#string) |  | SeqNo is the raw vg_seqno column. |
+| lock_type | [string](#string) |  | LockType is the raw vg_lock_type column. |
+| system_id | [string](#string) |  | SystemID is the system_id stamped into VG metadata (vg_systemid). |
+| tags | [string](#string) | repeated | Tags is the list of tags attached to the VG (vg_tags). |
 
 
 

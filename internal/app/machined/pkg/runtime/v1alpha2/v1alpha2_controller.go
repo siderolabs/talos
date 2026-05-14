@@ -36,11 +36,13 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/secrets"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/security"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/siderolink"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/storage"
 	timecontrollers "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/time"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/v1alpha1"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	runtimelogging "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
+	"github.com/siderolabs/talos/internal/pkg/lvm"
 	"github.com/siderolabs/talos/pkg/logging"
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -147,15 +149,17 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 	}
 	defer networkEtcRoot.Close() //nolint:errcheck
 
+	lvm, err := lvm.New()
+	if err != nil {
+		return fmt.Errorf("failed to initialize LVM: %w", err)
+	}
+
 	for _, c := range []controller.Controller{
 		&block.DevicesController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&block.DiscoveryController{},
 		&block.DisksController{},
-		&block.LVMActivationController{
-			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
-		},
 		&block.MountController{},
 		&block.MountRequestController{},
 		&block.MountStatusController{},
@@ -174,6 +178,12 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&block.ZswapStatusController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
+		&storage.LVMActivationController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+			LVM:          lvm,
+		},
+		&storage.LVMRefreshTriggerController{},
+		&storage.LVMScanController{LVM: lvm},
 		&cluster.AffiliateMergeController{},
 		cluster.NewConfigController(),
 		&cluster.DiscoveryServiceController{},

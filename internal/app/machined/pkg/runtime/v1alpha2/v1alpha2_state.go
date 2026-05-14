@@ -31,6 +31,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 	"github.com/siderolabs/talos/pkg/machinery/resources/security"
 	"github.com/siderolabs/talos/pkg/machinery/resources/siderolink"
+	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 	"github.com/siderolabs/talos/pkg/machinery/resources/time"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
@@ -90,6 +91,7 @@ func NewState() (*State, error) {
 		{secrets.NamespaceName, "Resources with secret material."},
 		{security.NamespaceName, "Security resources."},
 		{perf.NamespaceName, "Stats resources."},
+		{storage.NamespaceName, "Storage resources."},
 	} {
 		if err := s.namespaceRegistry.Register(ctx, ns.name, ns.description); err != nil {
 			return nil, err
@@ -261,6 +263,11 @@ func NewState() (*State, error) {
 		&siderolink.Config{},
 		&siderolink.Status{},
 		&siderolink.Tunnel{},
+		&storage.LVMRefreshRequest{},
+		&storage.LVMRefreshStatus{},
+		&storage.LVMLogicalVolumeStatus{},
+		&storage.LVMPhysicalVolumeStatus{},
+		&storage.LVMVolumeGroupStatus{},
 		&time.AdjtimeStatus{},
 		&time.Status{},
 		&v1alpha1.AcquireConfigSpec{},

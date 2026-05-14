@@ -2,30 +2,30 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package block
+package storage
 
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/gen/optional"
-	"github.com/siderolabs/go-cmd/pkg/cmd"
 	"go.uber.org/zap"
 
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/pkg/lvm"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
-// LVMActivationController activates LVM volumes when they are discovered by the block.DiscoveryController.
+// LVMActivationController activates LVM volume groups discovered by the block.DiscoveryController.
 type LVMActivationController struct {
 	V1Alpha1Mode machineruntime.Mode
+	LVM          *lvm.LVM
 
 	seenVolumes  map[string]struct{}
 	activatedVGs map[string]struct{}
@@ -33,7 +33,7 @@ type LVMActivationController struct {
 
 // Name implements controller.Controller interface.
 func (ctrl *LVMActivationController) Name() string {
-	return "block.LVMActivationController"
+	return "storage.LVMActivationController"
 }
 
 // Inputs implements controller.Controller interface.
@@ -64,6 +64,46 @@ func (ctrl *LVMActivationController) Outputs() []controller.Output {
 	return nil
 }
 
+// preconditions ensures udevd is running and the META partition is mounted
+// before scanning for LVM volume groups.
+func (ctrl *LVMActivationController) preconditions(ctx context.Context, r controller.Reader, logger *zap.Logger) (bool, error) {
+	udevdService, err := safe.ReaderGetByID[*v1alpha1.Service](ctx, r, "udevd")
+	if err != nil && !state.IsNotFoundError(err) {
+		return false, fmt.Errorf("failed to get udevd service: %w", err)
+	}
+
+	if udevdService == nil {
+		logger.Debug("udevd service not registered yet")
+
+		return false, nil
+	}
+
+	if !udevdService.TypedSpec().Running || !udevdService.TypedSpec().Healthy {
+		logger.Debug("waiting for udevd service to be running and healthy")
+
+		return false, nil
+	}
+
+	meta, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, r, constants.MetaPartitionLabel)
+	if err != nil && !state.IsNotFoundError(err) {
+		return false, fmt.Errorf("failed to get meta partition info: %w", err)
+	}
+
+	if meta == nil {
+		logger.Debug("meta partition not registered yet")
+
+		return false, nil
+	}
+
+	if meta.TypedSpec().Phase != block.VolumePhaseReady {
+		logger.Debug("meta partition not ready yet")
+
+		return false, nil
+	}
+
+	return true, nil
+}
+
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo,cyclop
@@ -88,37 +128,12 @@ func (ctrl *LVMActivationController) Run(ctx context.Context, r controller.Runti
 		case <-r.EventCh():
 		}
 
-		udevdService, err := safe.ReaderGetByID[*v1alpha1.Service](ctx, r, "udevd")
-		if err != nil && !state.IsNotFoundError(err) {
-			return fmt.Errorf("failed to get udevd service: %w", err)
+		ok, err := ctrl.preconditions(ctx, r, logger)
+		if err != nil {
+			return err
 		}
 
-		if udevdService == nil {
-			logger.Debug("udevd service not registered yet")
-
-			continue
-		}
-
-		if !udevdService.TypedSpec().Running || !udevdService.TypedSpec().Healthy {
-			logger.Debug("waiting for udevd service to be running and healthy")
-
-			continue
-		}
-
-		meta, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, r, constants.MetaPartitionLabel)
-		if err != nil && !state.IsNotFoundError(err) {
-			return fmt.Errorf("failed to get meta partition info: %w", err)
-		}
-
-		if meta == nil {
-			logger.Debug("meta partition not registered yet")
-
-			continue
-		}
-
-		if meta.TypedSpec().Phase != block.VolumePhaseReady {
-			logger.Debug("meta partition not ready yet")
-
+		if !ok {
 			continue
 		}
 
@@ -161,18 +176,7 @@ func (ctrl *LVMActivationController) Run(ctx context.Context, r controller.Runti
 
 			logger.Info("activating LVM volume", zap.String("name", vgName))
 
-			// activate the volume group
-			if _, err = cmd.RunWithOptions(
-				ctx,
-				"/sbin/lvm",
-				[]string{
-					"vgchange",
-					"-aay",
-					"--autoactivation",
-					"event",
-					vgName,
-				},
-			); err != nil {
+			if err = ctrl.LVM.VGChangeActivate(ctx, vgName); err != nil {
 				multiErr = multierror.Append(multiErr, fmt.Errorf("failed to activate LVM volume %s: %w", vgName, err))
 			} else {
 				ctrl.activatedVGs[vgName] = struct{}{}
@@ -185,43 +189,14 @@ func (ctrl *LVMActivationController) Run(ctx context.Context, r controller.Runti
 	}
 }
 
-// checkVGNeedsActivation checks if the device is part of a volume group and returns the volume group name
-// if it needs to be activated, otherwise it returns an empty string.
+// checkVGNeedsActivation checks if the device is part of a complete volume
+// group and returns that VG name when activation is needed; otherwise returns
+// an empty string. See lvmautoactivation(7).
 func (ctrl *LVMActivationController) checkVGNeedsActivation(ctx context.Context, devicePath string) (string, error) {
-	// first we check if all associated volumes are available
-	// https://man7.org/linux/man-pages/man7/lvmautoactivation.7.html
-	stdOut, err := cmd.RunWithOptions(
-		ctx,
-		"/sbin/lvm",
-		[]string{
-			"pvscan",
-			"--cache",
-			"--listvg",
-			"--checkcomplete",
-			"--vgonline",
-			"--autoactivation",
-			"event",
-			"--udevoutput",
-			devicePath,
-		},
-	)
+	udev, err := ctrl.LVM.PVScanAutoActivation(ctx, devicePath)
 	if err != nil {
 		return "", fmt.Errorf("failed to check if LVM volume backed by device %s needs activation: %w", devicePath, err)
 	}
 
-	// parse the key-value pairs from the udev output
-	for line := range strings.SplitSeq(stdOut, "\n") {
-		key, value, ok := strings.Cut(line, "=")
-		if !ok {
-			continue
-		}
-
-		value = strings.Trim(value, "'\"")
-
-		if key == "LVM_VG_NAME_COMPLETE" {
-			return value, nil
-		}
-	}
-
-	return "", nil
+	return udev[lvm.UdevKeyVGNameComplete], nil
 }
