@@ -82,6 +82,7 @@ type Common struct {
 	WireguardCIDR             string
 	WithUUIDHostnames         bool
 	NetworkIPv6               bool
+	NetworkCIDRv6             string
 	OmniAPIEndpoint           string
 }
 
