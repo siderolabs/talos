@@ -173,8 +173,8 @@ func (suite *CommonSuite) TestDNSResolver() {
 // TestDNSResolveStaticHost verifies that static host entries declared in the
 // machine configuration are answered by the host DNS server.
 func (suite *CommonSuite) TestDNSResolveStaticHost() {
-	if suite.Cluster != nil && suite.Cluster.Provisioner() == base.ProvisionerDocker {
-		suite.T().Skip("skipping test since provisioner is docker")
+	if suite.Airgapped {
+		suite.T().Skip("skipping test in airgapped mode")
 	}
 
 	const (

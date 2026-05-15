@@ -579,6 +579,9 @@ $(INTEGRATION_TEST)-darwin-arm64:
 
 $(INTEGRATION_TEST): $(INTEGRATION_TEST)-$(OPERATING_SYSTEM)-$(ARCH) ## Builds the integration test binary for the host OS/arch.
 
+$(ARTIFACTS)/$(INTEGRATION_TEST)-$(OPERATING_SYSTEM)-$(ARCH): ## This target doesn't trigger a rebuild if the binary already exists, but ensures that the integration test binary is built before running the tests.
+	@$(MAKE) $(INTEGRATION_TEST)
+
 $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64:
 	@$(MAKE) local-$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64 WITH_RACE=true
 
@@ -600,7 +603,7 @@ $(ARTIFACTS)/cilium: | $(ARTIFACTS)
 
 external-artifacts: $(ARTIFACTS)/kubectl $(ARTIFACTS)/kubestr $(ARTIFACTS)/helm $(ARTIFACTS)/cilium
 
-e2e-%: $(INTEGRATION_TEST) external-artifacts ## Runs the E2E test for the specified platform (e.g. e2e-docker).
+e2e-%: $(ARTIFACTS)/$(INTEGRATION_TEST)-$(OPERATING_SYSTEM)-$(ARCH) external-artifacts ## Runs the E2E test for the specified platform (e.g. e2e-docker).
 	@$(MAKE) hack-test-$@ \
 		PLATFORM=$* \
 		TAG=$(TAG) \
