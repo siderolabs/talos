@@ -5,8 +5,13 @@
 package config
 
 import (
+	"context"
+
+	"github.com/cosi-project/runtime/pkg/state"
+
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 )
 
 // Encoder provides the interface to encode configuration documents.
@@ -24,8 +29,28 @@ type RuntimeValidator = config.RuntimeValidator
 // validation, and other operations.
 type Container interface {
 	Encoder
-	Validator
-	RuntimeValidator
+
+	// Validate checks configuration and returns warnings and fatal errors (as multierror).
+	//
+	// Deprecated: use ValidateAsClient instead for client-side validation (outside of Talos).
+	Validate(validation.RuntimeMode, ...validation.Option) ([]string, error)
+
+	// RuntimeValidate validates the config in the runtime context.
+	//
+	// The method returns warnings and fatal errors (as multierror).
+	//
+	// Deprecated: use ValidateAtRuntime instead for runtime validation (inside Talos).
+	RuntimeValidate(context.Context, state.State, validation.RuntimeMode, ...validation.Option) ([]string, error)
+
+	// ValidateAsClient validates the config in the client context (outside of Talos).
+	//
+	// The method returns warnings and fatal errors (as multierror).
+	ValidateAsClient(validation.RuntimeMode, ...validation.Option) ([]string, error)
+
+	// ValidateAtRuntime validates the config in the runtime context (inside Talos).
+	//
+	// The method returns warnings and fatal errors (as multierror).
+	ValidateAtRuntime(context.Context, state.State, validation.RuntimeMode, ...validation.Option) ([]string, error)
 
 	Readonly() bool
 

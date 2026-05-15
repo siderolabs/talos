@@ -112,7 +112,7 @@ func (suite *GenerateSuite) TestGenerateControlPlaneSuccess() {
 	cfg, err := suite.input.Config(machine.TypeControlPlane)
 	suite.Require().NoError(err)
 
-	_, err = cfg.Validate(runtimeMode{false})
+	_, err = cfg.ValidateAsClient(runtimeMode{false})
 	suite.Require().NoError(err)
 
 	suite.NotEmpty(cfg.Machine().Security().IssuingCA())

@@ -207,17 +207,10 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 		installed: s.Controller.Runtime().State().Machine().Installed(),
 	}
 
-	warnings, err := cfgProvider.Validate(validationMode)
+	warnings, err := cfgProvider.ValidateAtRuntime(ctx, s.Controller.Runtime().State().V1Alpha2().Resources(), validationMode)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-
-	warningsRuntime, err := cfgProvider.RuntimeValidate(ctx, s.Controller.Runtime().State().V1Alpha2().Resources(), validationMode)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
-	}
-
-	warnings = slices.Concat(warnings, warningsRuntime)
 
 	if inMaintenance && in.Mode == machine.ApplyConfigurationRequest_REBOOT {
 		in.Mode = machine.ApplyConfigurationRequest_NO_REBOOT

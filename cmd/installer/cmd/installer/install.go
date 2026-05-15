@@ -60,7 +60,7 @@ func runInstallCmd(ctx context.Context) (err error) {
 	} else {
 		var warnings []string
 
-		warnings, err = config.Validate(p.Mode())
+		warnings, err = config.ValidateAsClient(p.Mode())
 		if err != nil {
 			return fmt.Errorf("machine configuration is invalid: %w", err)
 		}

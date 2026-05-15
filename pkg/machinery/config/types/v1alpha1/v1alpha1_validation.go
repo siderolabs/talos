@@ -372,6 +372,11 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 		}
 	}
 
+	// don't validate Kubernetes version in local mode, as it depends on Talos version
+	if !opts.Local {
+		result = multierror.Append(result, c.ValidateKubernetesVersions())
+	}
+
 	if opts.Strict {
 		for _, w := range warnings {
 			result = multierror.Append(result, fmt.Errorf("warning: %s", w))
@@ -963,6 +968,45 @@ func (e *EtcdConfig) Validate() error {
 	return result.ErrorOrNil()
 }
 
+// ValidateKubernetesVersions validates Kubernetes versions in the config.
+func (c *Config) ValidateKubernetesVersions() error {
+	var result *multierror.Error
+
+	if c.MachineConfig != nil {
+		if err := ValidateKubernetesImageTag(c.Machine().Kubelet().Image()); err != nil {
+			result = multierror.Append(result, fmt.Errorf("kubelet image is not valid: %w", err))
+		}
+	}
+
+	if c.ClusterConfig != nil && c.MachineConfig != nil {
+		if c.Machine().Type().IsControlPlane() {
+			for _, spec := range []struct {
+				name     string
+				imageRef string
+			}{
+				{
+					name:     "kube-apiserver",
+					imageRef: c.Cluster().APIServer().Image(),
+				},
+				{
+					name:     "kube-controller-manager",
+					imageRef: c.Cluster().ControllerManager().Image(),
+				},
+				{
+					name:     "kube-scheduler",
+					imageRef: c.Cluster().Scheduler().Image(),
+				},
+			} {
+				if err := ValidateKubernetesImageTag(spec.imageRef); err != nil {
+					result = multierror.Append(result, fmt.Errorf("%s image is not valid: %w", spec.name, err))
+				}
+			}
+		}
+	}
+
+	return result.ErrorOrNil()
+}
+
 // RuntimeValidate validates the config in runtime context.
 //
 // In runtime context, resource state is available.
@@ -1001,36 +1045,6 @@ func (c *Config) RuntimeValidate(ctx context.Context, st state.State, mode valid
 		if len(c.MachineConfig.Install().Extensions()) > 0 {
 			warnings = append(warnings, ".machine.install.extensions is deprecated, please see https://docs.siderolabs.com/talos/latest/platform-specific-installations/boot-assets")
 		}
-
-		if err := ValidateKubernetesImageTag(c.Machine().Kubelet().Image()); err != nil {
-			result = multierror.Append(result, fmt.Errorf("kubelet image is not valid: %w", err))
-		}
-	}
-
-	if c.ClusterConfig != nil && c.MachineConfig != nil {
-		if c.Machine().Type().IsControlPlane() {
-			for _, spec := range []struct {
-				name     string
-				imageRef string
-			}{
-				{
-					name:     "kube-apiserver",
-					imageRef: c.Cluster().APIServer().Image(),
-				},
-				{
-					name:     "kube-controller-manager",
-					imageRef: c.Cluster().ControllerManager().Image(),
-				},
-				{
-					name:     "kube-scheduler",
-					imageRef: c.Cluster().Scheduler().Image(),
-				},
-			} {
-				if err := ValidateKubernetesImageTag(spec.imageRef); err != nil {
-					result = multierror.Append(result, fmt.Errorf("%s image is not valid: %w", spec.name, err))
-				}
-			}
-		}
 	}
 
 	return warnings, result.ErrorOrNil()
@@ -1038,7 +1052,7 @@ func (c *Config) RuntimeValidate(ctx context.Context, st state.State, mode valid
 
 // ValidateKubernetesImageTag validates the Kubernetes image tag format.
 func ValidateKubernetesImageTag(imageRef string) error {
-	// this method is called from RuntimeValidate, so we are inside running Talos,
+	// this method is called from Validate in !Local mode, so we are inside running Talos,
 	// so the version of Talos is available, and we can check compatibility
 	currentTalosVersion, err := compatibility.ParseTalosVersion(version.NewVersion())
 	if err != nil {

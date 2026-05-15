@@ -95,7 +95,7 @@ func TestPatches(t *testing.T) {
 					patchedCfg, err := patched.Config()
 					require.NoError(t, err)
 
-					_, err = patchedCfg.Validate(mockValidationMode{}, validation.WithLocal())
+					_, err = patchedCfg.ValidateAsClient(mockValidationMode{}, validation.WithLocal())
 					require.NoError(t, err)
 
 					test.assertion(t, patchedCfg)

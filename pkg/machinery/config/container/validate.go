@@ -7,6 +7,7 @@ package container
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-multierror"
@@ -17,14 +18,48 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
-// Validate checks configuration and returns warnings and fatal errors (as multierror).
+// ValidateAsClient validates the config in the client context (outside of Talos).
+//
+// The method returns warnings and fatal errors (as multierror).
+func (container *Container) ValidateAsClient(mode validation.RuntimeMode, opt ...validation.Option) ([]string, error) {
+	return container.validate(mode, opt...)
+}
+
+// ValidateAtRuntime validates the config in the runtime context (inside Talos).
+//
+// This method performs full machine configuration validation, including validation which requires runtime context.
+//
+// The method returns warnings and fatal errors (as multierror).
+func (container *Container) ValidateAtRuntime(ctx context.Context, st state.State, mode validation.RuntimeMode, opt ...validation.Option) ([]string, error) {
+	warnings, err := container.validate(mode, opt...)
+
+	extraWarnings, extraErr := container.runtimeValidate(ctx, st, mode, opt...)
+
+	warnings = slices.Concat(warnings, extraWarnings)
+
+	var multiErr *multierror.Error
+
+	if err != nil {
+		multiErr = multierror.Append(multiErr, err)
+	}
+
+	if extraErr != nil {
+		multiErr = multierror.Append(multiErr, extraErr)
+	}
+
+	return warnings, multiErr.ErrorOrNil()
+}
+
+// validate checks configuration and returns warnings and fatal errors (as multierror).
+//
+// It performs validation which can be done client-side (outside of Talos) and is used by both ValidateAsClient and ValidateAtRuntime.
 //
 // The validation first validates each individual document, then it does conflict validation of new
 // documents with v1alpha1.Config (if it exists).
 // Finally, whole container is validated according to the mode.
 //
 //nolint:gocyclo
-func (container *Container) Validate(mode validation.RuntimeMode, opt ...validation.Option) ([]string, error) {
+func (container *Container) validate(mode validation.RuntimeMode, opt ...validation.Option) ([]string, error) {
 	var (
 		warnings []string
 		err      error
@@ -74,8 +109,10 @@ func (container *Container) Validate(mode validation.RuntimeMode, opt ...validat
 	return warnings, multiErr.ErrorOrNil()
 }
 
-// RuntimeValidate validates the config in the runtime context.
-func (container *Container) RuntimeValidate(ctx context.Context, st state.State, mode validation.RuntimeMode, opt ...validation.Option) ([]string, error) {
+// runtimeValidate validates the config in the runtime context.
+//
+// The method returns warnings and fatal errors (as multierror).
+func (container *Container) runtimeValidate(ctx context.Context, st state.State, mode validation.RuntimeMode, opt ...validation.Option) ([]string, error) {
 	var (
 		warnings []string
 		err      error
@@ -170,4 +207,18 @@ func (container *Container) validateContainer(mode validation.RuntimeMode) error
 	}
 
 	return errs
+}
+
+// Validate is the legacy validation method.
+//
+// Deprecated: use ValidateAsClient instead for client-side validation (outside of Talos).
+func (container *Container) Validate(mode validation.RuntimeMode, opt ...validation.Option) ([]string, error) {
+	return container.validate(mode, opt...)
+}
+
+// RuntimeValidate is the legacy runtime validation method.
+//
+// Deprecated: use ValidateAtRuntime instead for runtime validation (inside Talos).
+func (container *Container) RuntimeValidate(ctx context.Context, st state.State, mode validation.RuntimeMode, opt ...validation.Option) ([]string, error) {
+	return container.runtimeValidate(ctx, st, mode, opt...)
 }

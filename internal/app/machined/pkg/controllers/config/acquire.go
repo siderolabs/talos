@@ -16,7 +16,6 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -370,7 +369,7 @@ func (ctrl *AcquireController) loadConfigFromDisk(ctx context.Context, r control
 		}
 
 		// if the STATE partition is present & contains machine config, Talos is already installed
-		warnings, err := cfg.Validate(validationModeDiskConfig{})
+		warnings, err := cfg.ValidateAtRuntime(ctx, ctrl.ResourceState, validationModeDiskConfig{})
 		if err != nil {
 			return fmt.Errorf("failed to validate on-disk config: %w", err)
 		}
@@ -395,7 +394,7 @@ func (ctrl *AcquireController) loadConfigFromDisk(ctx context.Context, r control
 //	--> cmdlineEarly: config loaded from embedded, but it's incomplete, or no config: proceed to cmdlineEarly
 //	--> done: config loaded from cmdline, and it's complete
 func (ctrl *AcquireController) stateEmbedded(ctx context.Context, r controller.Runtime, logger *zap.Logger) (stateMachineFunc, config.Provider, error) {
-	cfg, err := ctrl.loadConfigFromEmbedded(logger)
+	cfg, err := ctrl.loadConfigFromEmbedded(ctx, logger)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -457,7 +456,7 @@ func (ctrl *AcquireController) processEmbeddedConfig(logger *zap.Logger) error {
 	return nil
 }
 
-func (ctrl *AcquireController) loadConfigFromEmbedded(logger *zap.Logger) (config.Provider, error) {
+func (ctrl *AcquireController) loadConfigFromEmbedded(ctx context.Context, logger *zap.Logger) (config.Provider, error) {
 	if ctrl.storedEmbeddedConfig == nil {
 		// no embedded config
 		return nil, nil
@@ -471,7 +470,7 @@ func (ctrl *AcquireController) loadConfigFromEmbedded(logger *zap.Logger) (confi
 	}
 
 	// if the STATE partition is present & contains machine config, Talos is already installed
-	warnings, err := cfg.Validate(validationModeDiskConfig{})
+	warnings, err := cfg.ValidateAtRuntime(ctx, ctrl.ResourceState, ctrl.ValidationMode)
 	if err != nil {
 		return nil, fmt.Errorf("failed to validate embedded config: %w", err)
 	}
@@ -567,17 +566,12 @@ func (ctrl *AcquireController) loadFromPlatform(ctx context.Context, logger *zap
 		return nil, fmt.Errorf("failed to load config via platform %s: %w", platformName, err)
 	}
 
-	warnings, err := cfg.Validate(ctrl.ValidationMode)
+	warnings, err := cfg.ValidateAtRuntime(ctx, ctrl.ResourceState, ctrl.ValidationMode)
 	if err != nil {
 		return nil, fmt.Errorf("failed to validate config acquired via platform %s: %w", platformName, err)
 	}
 
-	warningsRuntime, err := cfg.RuntimeValidate(ctx, ctrl.ResourceState, ctrl.ValidationMode)
-	if err != nil {
-		return nil, fmt.Errorf("failed to runtime validate config acquired via platform %s: %w", platformName, err)
-	}
-
-	for _, warning := range slices.Concat(warnings, warningsRuntime) {
+	for _, warning := range warnings {
 		logger.Warn("config validation warning", zap.String("platform", platformName), zap.String("warning", warning))
 	}
 
@@ -675,17 +669,12 @@ func (ctrl *AcquireController) loadFromCmdline(ctx context.Context, logger *zap.
 		return nil, fmt.Errorf("failed to load config via cmdline %s: %w", paramName, err)
 	}
 
-	warnings, err := cfg.Validate(ctrl.ValidationMode)
+	warnings, err := cfg.ValidateAtRuntime(ctx, ctrl.ResourceState, ctrl.ValidationMode)
 	if err != nil {
 		return nil, fmt.Errorf("failed to validate config acquired via cmdline %s: %w", paramName, err)
 	}
 
-	warningsRuntime, err := cfg.RuntimeValidate(ctx, ctrl.ResourceState, ctrl.ValidationMode)
-	if err != nil {
-		return nil, fmt.Errorf("failed to validate config acquired via cmdline %s: %w", paramName, err)
-	}
-
-	for _, warning := range slices.Concat(warnings, warningsRuntime) {
+	for _, warning := range warnings {
 		logger.Warn("config validation warning", zap.String("cmdline", paramName), zap.String("warning", warning))
 	}
 

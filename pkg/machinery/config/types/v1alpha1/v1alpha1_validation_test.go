@@ -10,8 +10,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/siderolabs/crypto/x509"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -2265,19 +2263,16 @@ func TestKubernetesVersionFromImageRef(t *testing.T) {
 	}
 }
 
-func TestRuntimeValidate(t *testing.T) {
+func TestValidateKubernetesVersions(t *testing.T) {
 	t.Parallel()
 
 	endpointURL, err := url.Parse("https://localhost:6443/")
 	require.NoError(t, err)
 
 	for _, test := range []struct {
-		name             string
-		config           *v1alpha1.Config
-		requiresInstall  bool
-		strict           bool
-		expectedWarnings []string
-		expectedError    string
+		name          string
+		config        *v1alpha1.Config
+		expectedError string
 	}{
 		{
 			name: "valid",
@@ -2367,16 +2362,7 @@ func TestRuntimeValidate(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			var opts []validation.Option
-			if test.strict {
-				opts = append(opts, validation.WithStrict())
-			}
-
-			st := state.WrapCore(inmem.NewState(""))
-
-			warnings, errors := test.config.RuntimeValidate(t.Context(), st, runtimeMode{test.requiresInstall}, opts...)
-
-			assert.Equal(t, test.expectedWarnings, warnings)
+			errors := test.config.ValidateKubernetesVersions()
 
 			currentTalosVersion, err := compatibility.ParseTalosVersion(version.NewVersion())
 			require.NoError(t, err)

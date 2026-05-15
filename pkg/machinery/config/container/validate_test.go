@@ -24,7 +24,7 @@ import (
 	blockres "github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
-func TestValidate(t *testing.T) {
+func TestValidateAsClient(t *testing.T) {
 	t.Parallel()
 
 	sideroLinkCfg := siderolink.NewConfigV1Alpha1()
@@ -94,7 +94,7 @@ func TestValidate(t *testing.T) {
 			ctr, err := container.New(tt.documents...)
 			require.NoError(t, err)
 
-			warnings, err := ctr.Validate(validationMode{})
+			warnings, err := ctr.ValidateAsClient(validationMode{})
 
 			if tt.expectedError == "" {
 				require.NoError(t, err)
@@ -202,7 +202,7 @@ func TestCrossValidateEncryption(t *testing.T) {
 			ctr, err := container.New(tt.documents...)
 			require.NoError(t, err)
 
-			warnings, err := ctr.Validate(validationMode{})
+			warnings, err := ctr.ValidateAsClient(validationMode{})
 
 			if tt.expectedError == "" {
 				require.NoError(t, err)
@@ -335,7 +335,7 @@ func TestValidateContainer(t *testing.T) {
 			ctr, err := container.New(tt.documents...)
 			require.NoError(t, err)
 
-			_, err = ctr.Validate(validationMode{inContainer: tt.inContainer})
+			_, err = ctr.ValidateAsClient(validationMode{inContainer: tt.inContainer})
 
 			if tt.expectedError == "" {
 				require.NoError(t, err)
