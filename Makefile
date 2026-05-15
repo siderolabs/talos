@@ -34,7 +34,7 @@ GENERATE_VEX ?= latest
 
 KRES_IMAGE ?= ghcr.io/siderolabs/kres:latest
 CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest
-IMAGE_SIGNER_RELEASE ?= v0.2.0
+IMAGE_SIGNER_RELEASE ?= v0.3.2
 
 PKG_APPARMOR ?= $(PKGS_PREFIX)/apparmor:$(PKGS)
 PKG_CA_CERTIFICATES ?= $(PKGS_PREFIX)/ca-certificates:$(PKGS)
@@ -706,14 +706,14 @@ clean: ## Cleans up all artifacts.
 image-list: ## Prints a list of all images built by this Makefile with digests.
 	@echo -n installer-base$(IMAGE_NAME_SUFFIX) talos$(IMAGE_NAME_SUFFIX) imager$(IMAGE_NAME_SUFFIX) talosctl$(IMAGE_NAME_SUFFIX) talosctl-all$(IMAGE_NAME_SUFFIX) | xargs -d ' ' -I{} sh -c 'echo $(REGISTRY_AND_USERNAME)/{}:$(IMAGE_TAG_IN)' | xargs -I{} sh -c 'echo {}@$$(crane digest {})'
 
-$(ARTIFACTS)/image-signer: $(ARTIFACTS) ## Downloads image-signer binary
-	@curl -sSL https://github.com/siderolabs/go-tools/releases/download/$(IMAGE_SIGNER_RELEASE)/image-signer-$(OPERATING_SYSTEM)-$(ARCH) -o $(ARTIFACTS)/image-signer
-	@chmod +x $(ARTIFACTS)/image-signer
+$(ARTIFACTS)/image-signer-$(IMAGE_SIGNER_RELEASE): | $(ARTIFACTS) ## Downloads image-signer binary
+	@curl -sSL https://github.com/siderolabs/go-tools/releases/download/$(IMAGE_SIGNER_RELEASE)/image-signer-$(OPERATING_SYSTEM)-$(ARCH) -o $(ARTIFACTS)/image-signer-$(IMAGE_SIGNER_RELEASE)
+	@chmod +x $(ARTIFACTS)/image-signer-$(IMAGE_SIGNER_RELEASE)
 
 
 .PHONY: sign-images
-sign-images: $(ARTIFACTS)/image-signer ## Run cosign to sign all images built by this Makefile.
-	@$(ARTIFACTS)/image-signer sign $(shell $(MAKE) --quiet image-list REGISTRY_AND_USERNAME=$(REGISTRY_AND_USERNAME) IMAGE_TAG_IN=$(IMAGE_TAG_IN) IMAGE_NAME_SUFFIX=$(IMAGE_NAME_SUFFIX))
+sign-images: $(ARTIFACTS)/image-signer-$(IMAGE_SIGNER_RELEASE) ## Run image-signer to sign all images built by this Makefile.
+	@$(ARTIFACTS)/image-signer-$(IMAGE_SIGNER_RELEASE) sign $(shell $(MAKE) --quiet image-list REGISTRY_AND_USERNAME=$(REGISTRY_AND_USERNAME) IMAGE_TAG_IN=$(IMAGE_TAG_IN) IMAGE_NAME_SUFFIX=$(IMAGE_NAME_SUFFIX))
 
 .PHONY: reproducibility-test
 reproducibility-test: $(ARTIFACTS)
