@@ -1,0 +1,12 @@
+apiVersion: v1alpha1
+kind: NetworkNATRuleConfig
+name: test-dnat
+type: dnat
+inputInterface:
+    interfaceNames:
+        - eth0
+destinationAddress:
+    includeSubnets:
+        - 203.0.113.1/32
+dnatAddress: 10.0.0.1
+dnatPort: 8080

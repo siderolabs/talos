@@ -748,6 +748,67 @@ func (a nftablesRule) Compile() (*NfTablesCompiled, error) {
 		)
 	}
 
+	if a.NfTablesRule.Masquerade {
+		// masquerade: replace source address with the outgoing interface address.
+		rulePost = append(rulePost, &expr.Masq{})
+	}
+
+	if a.NfTablesRule.SNAT != nil {
+		target := a.NfTablesRule.SNAT
+
+		addrBin, family, err := nfAddrInfo(target.Address)
+		if err != nil {
+			return nil, fmt.Errorf("SNAT: %w", err)
+		}
+
+		natExpr := &expr.NAT{
+			Type:       expr.NATTypeSourceNAT,
+			Family:     family,
+			RegAddrMin: 1,
+		}
+
+		rulePost = append(rulePost,
+			&expr.Immediate{Register: 1, Data: addrBin},
+		)
+
+		if target.Port != 0 {
+			natExpr.RegProtoMin = 2
+			rulePost = append(rulePost,
+				&expr.Immediate{Register: 2, Data: binaryutil.BigEndian.PutUint16(target.Port)},
+			)
+		}
+
+		rulePost = append(rulePost, natExpr)
+	}
+
+	if a.NfTablesRule.DNAT != nil {
+		target := a.NfTablesRule.DNAT
+
+		addrBin, family, err := nfAddrInfo(target.Address)
+		if err != nil {
+			return nil, fmt.Errorf("DNAT: %w", err)
+		}
+
+		natExpr := &expr.NAT{
+			Type:       expr.NATTypeDestNAT,
+			Family:     family,
+			RegAddrMin: 1,
+		}
+
+		rulePost = append(rulePost,
+			&expr.Immediate{Register: 1, Data: addrBin},
+		)
+
+		if target.Port != 0 {
+			natExpr.RegProtoMin = 2
+			rulePost = append(rulePost,
+				&expr.Immediate{Register: 2, Data: binaryutil.BigEndian.PutUint16(target.Port)},
+			)
+		}
+
+		rulePost = append(rulePost, natExpr)
+	}
+
 	// Build v4/v6 rules as requested.
 	//
 	// If there's no IPv4/IPv6 part, generate a single rule.
@@ -780,4 +841,20 @@ func ifname(name string) []byte {
 	copy(b, []byte(name))
 
 	return b
+}
+
+// nfAddrInfo returns the raw address bytes and nftables family constant for addr.
+func nfAddrInfo(addr netip.Addr) ([]byte, uint32, error) {
+	addr = addr.Unmap()
+
+	switch {
+	case addr.Is4():
+		b, _ := addr.MarshalBinary()
+		return b, unix.NFPROTO_IPV4, nil
+	case addr.Is6():
+		b, _ := addr.MarshalBinary()
+		return b, unix.NFPROTO_IPV6, nil
+	default:
+		return nil, 0, fmt.Errorf("address %s is neither IPv4 nor IPv6", addr)
+	}
 }

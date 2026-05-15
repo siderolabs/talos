@@ -28,8 +28,10 @@ import (
 
 // Chain names.
 const (
-	IngressChainName    = "ingress"
-	PreroutingChainName = "prerouting"
+	IngressChainName        = "ingress"
+	PreroutingChainName     = "prerouting"
+	PostroutingNATChainName = "postrouting-nat"
+	PreroutingNATChainName  = "prerouting-nat"
 )
 
 // NfTablesChainConfigController generates nftables rules based on machine configuration.
@@ -106,6 +108,22 @@ func (ctrl *NfTablesChainConfigController) Run(ctx context.Context, r controller
 
 			if nodeAddresses != nil {
 				if err = safe.WriterModify(ctx, r, network.NewNfTablesChain(network.NamespaceName, PreroutingChainName), ctrl.buildPreroutingChain(cfg, nodeAddresses)); err != nil {
+					return err
+				}
+			}
+		}
+
+		if cfg != nil {
+			hasPostrouting, hasDNAT := natRuleTypes(cfg)
+
+			if hasPostrouting {
+				if err = safe.WriterModify(ctx, r, network.NewNfTablesChain(network.NamespaceName, PostroutingNATChainName), ctrl.buildPostroutingNATChain(cfg)); err != nil {
+					return err
+				}
+			}
+
+			if hasDNAT {
+				if err = safe.WriterModify(ctx, r, network.NewNfTablesChain(network.NamespaceName, PreroutingNATChainName), ctrl.buildPreroutingNATChain(cfg)); err != nil {
 					return err
 				}
 			}
@@ -449,3 +467,129 @@ var (
 	hostDNSIPv4 = netip.MustParseAddr(constants.HostDNSAddress)
 	hostDNSIPv6 = netip.MustParseAddr(constants.HostDNSAddressV6)
 )
+
+// buildPostroutingNATChain builds the NAT postrouting chain for masquerade and SNAT rules.
+func (ctrl *NfTablesChainConfigController) buildPostroutingNATChain(cfg *config.MachineConfig) func(*network.NfTablesChain) error {
+	return func(chain *network.NfTablesChain) error {
+		spec := chain.TypedSpec()
+
+		spec.Type = nethelpers.ChainTypeNAT
+		spec.Hook = nethelpers.ChainHookPostrouting
+		spec.Priority = nethelpers.ChainPriorityNATSource
+		spec.Policy = nethelpers.VerdictAccept
+		spec.Rules = spec.Rules[:0]
+
+		for _, rule := range cfg.Config().NetworkNATRules().NATRules() {
+			nfRule := network.NfTablesRule{AnonCounter: true}
+
+			switch rule.NATType() {
+			case nethelpers.NATTypeMasquerade:
+				nfRule.Masquerade = true
+			case nethelpers.NATTypeSNAT:
+				addr := rule.SNATAddress()
+				if addr == nil {
+					continue
+				}
+
+				nfRule.SNAT = &network.NfTablesSNATTarget{
+					Address: *addr,
+					Port:    rule.SNATPort(),
+				}
+			default:
+				continue
+			}
+
+			if ifaces := rule.OutputInterfaces(); len(ifaces) > 0 {
+				nfRule.MatchOIfName = &network.NfTablesIfNameMatch{
+					InterfaceNames: ifaces,
+					Operator:       nethelpers.OperatorEqual,
+				}
+			}
+
+			if subnets := rule.SourceSubnets(); len(subnets) > 0 {
+				nfRule.MatchSourceAddress = &network.NfTablesAddressMatch{
+					IncludeSubnets: subnets,
+				}
+			}
+
+			if subnets := rule.DestinationSubnets(); len(subnets) > 0 {
+				nfRule.MatchDestinationAddress = &network.NfTablesAddressMatch{
+					IncludeSubnets: subnets,
+				}
+			}
+
+			spec.Rules = append(spec.Rules, nfRule)
+		}
+
+		return nil
+	}
+}
+
+// buildPreroutingNATChain builds the NAT prerouting chain for DNAT rules.
+func (ctrl *NfTablesChainConfigController) buildPreroutingNATChain(cfg *config.MachineConfig) func(*network.NfTablesChain) error {
+	return func(chain *network.NfTablesChain) error {
+		spec := chain.TypedSpec()
+
+		spec.Type = nethelpers.ChainTypeNAT
+		spec.Hook = nethelpers.ChainHookPrerouting
+		spec.Priority = nethelpers.ChainPriorityNATDest
+		spec.Policy = nethelpers.VerdictAccept
+		spec.Rules = spec.Rules[:0]
+
+		for _, rule := range cfg.Config().NetworkNATRules().NATRules() {
+			if rule.NATType() != nethelpers.NATTypeDNAT {
+				continue
+			}
+
+			addr := rule.DNATAddress()
+			if addr == nil {
+				continue
+			}
+
+			nfRule := network.NfTablesRule{
+				AnonCounter: true,
+				DNAT: &network.NfTablesDNATTarget{
+					Address: *addr,
+					Port:    rule.DNATPort(),
+				},
+			}
+
+			if ifaces := rule.InputInterfaces(); len(ifaces) > 0 {
+				nfRule.MatchIIfName = &network.NfTablesIfNameMatch{
+					InterfaceNames: ifaces,
+					Operator:       nethelpers.OperatorEqual,
+				}
+			}
+
+			if subnets := rule.SourceSubnets(); len(subnets) > 0 {
+				nfRule.MatchSourceAddress = &network.NfTablesAddressMatch{
+					IncludeSubnets: subnets,
+				}
+			}
+
+			if subnets := rule.DestinationSubnets(); len(subnets) > 0 {
+				nfRule.MatchDestinationAddress = &network.NfTablesAddressMatch{
+					IncludeSubnets: subnets,
+				}
+			}
+
+			spec.Rules = append(spec.Rules, nfRule)
+		}
+
+		return nil
+	}
+}
+
+// natRuleTypes scans the NAT rules and reports which chain types are needed.
+func natRuleTypes(cfg *config.MachineConfig) (hasPostrouting, hasDNAT bool) {
+	for _, rule := range cfg.Config().NetworkNATRules().NATRules() {
+		switch rule.NATType() {
+		case nethelpers.NATTypeMasquerade, nethelpers.NATTypeSNAT:
+			hasPostrouting = true
+		case nethelpers.NATTypeDNAT:
+			hasDNAT = true
+		}
+	}
+
+	return hasPostrouting, hasDNAT
+}

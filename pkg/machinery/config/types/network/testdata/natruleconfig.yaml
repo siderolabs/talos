@@ -1,0 +1,9 @@
+apiVersion: v1alpha1
+kind: NetworkNATRuleConfig
+name: test
+sourceAddress:
+    includeSubnets:
+        - 10.244.0.0/16
+outputInterface:
+    interfaceNames:
+        - eth0

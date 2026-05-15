@@ -51,6 +51,9 @@ type NfTablesRule struct {
 	SetMark     *NfTablesMark               `yaml:"setMark,omitempty" protobuf:"4"`
 	AnonCounter bool                        `yaml:"anonymousCounter,omitempty" protobuf:"12"`
 	Verdict     *nethelpers.NfTablesVerdict `yaml:"verdict,omitempty" protobuf:"2"`
+	Masquerade  bool                        `yaml:"masquerade,omitempty" protobuf:"13"`
+	SNAT        *NfTablesSNATTarget         `yaml:"snat,omitempty" protobuf:"14"`
+	DNAT        *NfTablesDNATTarget         `yaml:"dnat,omitempty" protobuf:"15"`
 }
 
 // NfTablesIfNameMatch describes the match on the interface name.
@@ -142,6 +145,26 @@ type NfTablesLimitMatch struct {
 //gotagsrewrite:gen
 type NfTablesConntrackStateMatch struct {
 	States []nethelpers.ConntrackState `yaml:"states" protobuf:"1"`
+}
+
+// NfTablesDNATTarget is the destination for a DNAT rule.
+//
+//gotagsrewrite:gen
+type NfTablesDNATTarget struct {
+	// Address is the address to redirect the traffic to.
+	Address netip.Addr `yaml:"address" protobuf:"1"`
+	// Port is the port to redirect the traffic to.
+	Port uint16 `yaml:"port,omitempty" protobuf:"2"`
+}
+
+// NfTablesSNATTarget is the source for an SNAT rule.
+//
+//gotagsrewrite:gen
+type NfTablesSNATTarget struct {
+	// Address is the address to translate the source to.
+	Address netip.Addr `yaml:"address" protobuf:"1"`
+	// Port is the source port to translate to.
+	Port uint16 `yaml:"port,omitempty" protobuf:"2"`
 }
 
 // NewNfTablesChain initializes a NfTablesChain resource.

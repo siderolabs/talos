@@ -456,6 +456,14 @@ func (o NfTablesChainSpec) DeepCopy() NfTablesChainSpec {
 				cp.Rules[i2].Verdict = new(nethelpers.NfTablesVerdict)
 				*cp.Rules[i2].Verdict = *o.Rules[i2].Verdict
 			}
+			if o.Rules[i2].SNAT != nil {
+				cp.Rules[i2].SNAT = new(NfTablesSNATTarget)
+				*cp.Rules[i2].SNAT = *o.Rules[i2].SNAT
+			}
+			if o.Rules[i2].DNAT != nil {
+				cp.Rules[i2].DNAT = new(NfTablesDNATTarget)
+				*cp.Rules[i2].DNAT = *o.Rules[i2].DNAT
+			}
 		}
 	}
 	return cp

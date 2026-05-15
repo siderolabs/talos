@@ -5,5 +5,5 @@
 // Package nethelpers provides types and type wrappers to support network resources.
 package nethelpers
 
-//go:generate go tool github.com/dmarkham/enumer -type=ARPAllTargets,ARPValidate,AddressFlag,AddressSortAlgorithm,ADSelect,ADLACPActive,AutoHostnameKind,BondMode,BondXmitHashPolicy,ClientIdentifier,ConntrackState,DefaultAction,DNSProtocol,Duplex,Family,LACPRate,LinkFlag,LinkType,MatchOperator,NfTablesChainHook,NfTablesChainPriority,NfTablesVerdict,OperationalState,Port,PrimaryReselect,Protocol,RouteFlag,RouteProtocol,RouteType,RoutingRuleAction,RoutingTable,Scope,Status,VLANProtocol,WOLMode -linecomment -text
+//go:generate go tool github.com/dmarkham/enumer -type=ARPAllTargets,ARPValidate,AddressFlag,AddressSortAlgorithm,ADSelect,ADLACPActive,AutoHostnameKind,BondMode,BondXmitHashPolicy,ClientIdentifier,ConntrackState,DefaultAction,DNSProtocol,Duplex,Family,LACPRate,LinkFlag,LinkType,MatchOperator,NATType,NfTablesChainHook,NfTablesChainPriority,NfTablesVerdict,OperationalState,Port,PrimaryReselect,Protocol,RouteFlag,RouteProtocol,RouteType,RoutingRuleAction,RoutingTable,Scope,Status,VLANProtocol,WOLMode -linecomment -text
 //go:generate go tool github.com/dmarkham/enumer -type=FailOverMAC -linecomment
