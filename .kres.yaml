@@ -1364,6 +1364,22 @@ spec:
       triggerLabels:
         - integration/cilium
         - integration/release-gate
+      matrix:
+        labelKeys: [test]
+        flatJobMatrix: true
+        include:
+          - test: e2e-cilium
+            ciliumConfigPatch: "@hack/test/patches/cilium-no-kubeproxy.yaml"
+            ciliumInstallType: ""
+            withKubespan: ""
+          - test: e2e-cilium-strict
+            ciliumConfigPatch: "@hack/test/patches/cilium-kubeproxy.yaml"
+            ciliumInstallType: strict
+            withKubespan: ""
+          - test: e2e-cilium-strict-kubespan
+            ciliumConfigPatch: "@hack/test/patches/cilium-kubeproxy.yaml"
+            ciliumInstallType: strict
+            withKubespan: "true"
       steps:
         - name: download-artifacts
           artifactStep:
@@ -1375,41 +1391,20 @@ spec:
           command: e2e-qemu
           withSudo: true
           environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium
+            GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.test }}
             SHORT_INTEGRATION_TEST: yes
             WITH_CUSTOM_CNI: cilium
             WITH_FIREWALL: accept
-            WITH_CONFIG_PATCH: "@hack/test/patches/cilium-no-kubeproxy.yaml"
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-cilium-strict
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium-strict
-            SHORT_INTEGRATION_TEST: yes
-            WITH_CUSTOM_CNI: cilium
-            WITH_FIREWALL: accept
-            CILIUM_INSTALL_TYPE: strict
-            WITH_CONFIG_PATCH: "@hack/test/patches/cilium-kubeproxy.yaml"
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-        - name: e2e-cilium-strict-kubespan
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium-strict-kubespan
-            SHORT_INTEGRATION_TEST: yes
-            WITH_CUSTOM_CNI: cilium
-            WITH_FIREWALL: accept
-            WITH_KUBESPAN: true
-            CILIUM_INSTALL_TYPE: strict
-            WITH_CONFIG_PATCH: "@hack/test/patches/cilium-kubeproxy.yaml"
+            CILIUM_INSTALL_TYPE: ${{ matrix.ciliumInstallType }}
+            WITH_KUBESPAN: ${{ matrix.withKubespan }}
+            WITH_CONFIG_PATCH: ${{ matrix.ciliumConfigPatch }}
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
           conditions:
             - always
           artifactStep:
             type: upload
-            artifactName: talos-logs-integration-cilium
+            artifactName: talos-logs-integration-cilium-${{ matrix.test }}
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
@@ -1642,7 +1637,7 @@ spec:
             PLATFORM: linux/amd64,linux/arm64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: cloud-images
-    - name: integration-image-cache
+    - name: integration-build-image-cache
       buildxOptions:
         enabled: true
       depends:
@@ -1667,45 +1662,66 @@ spec:
             PLATFORM: linux/amd64,linux/arm64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             PUSH: true
+        - name: save-image-cache-artifacts
+          artifactStep:
+            type: upload
+            artifactName: talos-image-cache-artifacts
+            artifactPath: _out
+            retentionDays: "1"
+    - name: integration-image-cache
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+        - integration-build-image-cache
+      runnerGroup: large
+      onWorkflowRun:
+        workflows: [integration-build-image-cache-triggered]
+        types: [completed]
+      triggerLabels:
+        - integration/image-cache
+        - integration/release-gate
+      matrix:
+        labelKeys: [test]
+        flatJobMatrix: true
+        include:
+          - test: e2e-image-cache
+            withISO: "true"
+            useDiskImage: ""
+            withConfigPatch: '@hack/test/patches/image-cache.yaml:@hack/test/patches/image-verification.yaml'
+          - test: e2e-image-cache-disk
+            withISO: ""
+            useDiskImage: "true"
+            withConfigPatch: '@hack/test/patches/image-cache.yaml:@hack/test/patches/image-verification.yaml'
+          - test: e2e-image-cache-encrypted
+            withISO: "true"
+            useDiskImage: ""
+            withConfigPatch: '@hack/test/patches/image-cache.yaml:@hack/test/patches/image-cache-encrypted.yaml:@hack/test/patches/image-verification.yaml'
+      steps:
+        - name: download-artifacts
+          artifactStep:
+            type: download
+            artifactName: talos-image-cache-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
         - name: e2e-image-cache
           command: e2e-qemu
           withSudo: true
           environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-image-cache
+            GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.test }}
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             REGISTRY_MIRROR_FLAGS: no
             SHORT_INTEGRATION_TEST: yes
+            USE_DISK_IMAGE: ${{ matrix.useDiskImage }}
             VIA_MAINTENANCE_MODE: true
-            WITH_CONFIG_PATCH: '@hack/test/patches/image-cache.yaml:@hack/test/patches/image-verification.yaml'
-            WITH_ISO: true
-        - name: e2e-image-cache-disk
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-image-cache-disk
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            REGISTRY_MIRROR_FLAGS: no
-            SHORT_INTEGRATION_TEST: yes
-            VIA_MAINTENANCE_MODE: true
-            USE_DISK_IMAGE: true
-            WITH_CONFIG_PATCH: '@hack/test/patches/image-cache.yaml:@hack/test/patches/image-verification.yaml'
-        - name: e2e-image-cache-encrypted
-          command: e2e-qemu
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-e2e-image-cache-encrypted
-            IMAGE_REGISTRY: registry.dev.siderolabs.io
-            REGISTRY_MIRROR_FLAGS: no
-            SHORT_INTEGRATION_TEST: yes
-            VIA_MAINTENANCE_MODE: true
-            WITH_CONFIG_PATCH: '@hack/test/patches/image-cache.yaml:@hack/test/patches/image-cache-encrypted.yaml:@hack/test/patches/image-verification.yaml'
-            WITH_ISO: true
+            WITH_CONFIG_PATCH: ${{ matrix.withConfigPatch }}
+            WITH_ISO: ${{ matrix.withISO }}
         - name: save-talos-logs
           conditions:
             - always
           artifactStep:
             type: upload
-            artifactName: talos-logs-integration-image-cache
+            artifactName: talos-logs-integration-image-cache-${{ matrix.test }}
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:
@@ -1721,6 +1737,66 @@ spec:
         types: [completed]
       triggerLabels:
         - integration/image-factory
+      matrix:
+        labelKeys: [test]
+        flatJobMatrix: true
+        include:
+          - test: factory-1.12-iso
+            factoryBootMethod: iso
+            factoryVersion: v1.12.5
+            factorySchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+            kubernetesVersion: 1.35.3
+            factoryUpgrade: "true"
+            factoryUpgradeSchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+            factoryUpgradeVersion: v1.12.6
+          - test: factory-1.12-image
+            factoryBootMethod: disk-image
+            factoryVersion: v1.12.5
+            factorySchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+            kubernetesVersion: 1.35.3
+            factoryUpgrade: "true"
+            factoryUpgradeSchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+            factoryUpgradeVersion: v1.12.6
+          - test: factory-1.12-pxe
+            factoryBootMethod: ipxe
+            factoryVersion: v1.12.6
+            factorySchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+            kubernetesVersion: 1.35.3
+            factoryUpgrade: ""
+            factoryUpgradeSchematic: ""
+            factoryUpgradeVersion: ""
+          - test: factory-1.12-secureboot
+            factoryBootMethod: secureboot-iso
+            factoryVersion: v1.12.5
+            factorySchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+            kubernetesVersion: 1.35.3
+            factoryUpgrade: "true"
+            factoryUpgradeSchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+            factoryUpgradeVersion: v1.12.6
+          - test: factory-1.11-secureboot
+            factoryBootMethod: secureboot-iso
+            factoryVersion: v1.11.5
+            factorySchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+            kubernetesVersion: 1.34.3
+            factoryUpgrade: "true"
+            factoryUpgradeSchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+            factoryUpgradeVersion: v1.11.6
+          - test: factory-1.11-iso
+            factoryBootMethod: iso
+            factoryVersion: v1.11.5
+            factorySchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+            kubernetesVersion: 1.34.3
+            factoryUpgrade: "true"
+            factoryUpgradeSchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+            factoryUpgradeVersion: v1.11.6
+          - test: factory-1.10-iso
+            factoryBootMethod: iso
+            factoryVersion: v1.10.8
+            factorySchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+            kubernetesVersion: 1.33.7
+            factoryUpgrade: "true"
+            factoryUpgradeSchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+            factoryUpgradeVersion: v1.10.9
       steps:
         - name: download-artifacts
           artifactStep:
@@ -1728,93 +1804,24 @@ spec:
             artifactName: talos-artifacts
             artifactPath: _out
         - name: ci-temp-release-tag
-        - name: factory-1.12-iso
+        - name: e2e-image-factory
           command: e2e-image-factory
           withSudo: true
           environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-factory-1.12-iso
-            FACTORY_BOOT_METHOD: iso
-            FACTORY_VERSION: v1.12.5
-            FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-            KUBERNETES_VERSION: 1.35.3
-            FACTORY_UPGRADE: true
-            FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-            FACTORY_UPGRADE_VERSION: v1.12.6
-        - name: factory-1.12-image
-          command: e2e-image-factory
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-factory-1.12-image
-            FACTORY_BOOT_METHOD: disk-image
-            FACTORY_VERSION: v1.12.5
-            FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-            KUBERNETES_VERSION: 1.35.3
-            FACTORY_UPGRADE: true
-            FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-            FACTORY_UPGRADE_VERSION: v1.12.6
-        - name: factory-1.12-pxe
-          command: e2e-image-factory
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-factory-1.12-pxe
-            FACTORY_BOOT_METHOD: ipxe
-            FACTORY_VERSION: v1.12.6
-            FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-            KUBERNETES_VERSION: 1.35.3
-        - name: factory-1.12-secureboot
-          command: e2e-image-factory
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-factory-1.12-secureboot
-            FACTORY_BOOT_METHOD: secureboot-iso
-            FACTORY_VERSION: v1.12.5
-            FACTORY_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-            KUBERNETES_VERSION: 1.35.3
-            FACTORY_UPGRADE: true
-            FACTORY_UPGRADE_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-            FACTORY_UPGRADE_VERSION: v1.12.6
-        - name: factory-1.11-secureboot
-          command: e2e-image-factory
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-factory-1.11-secureboot
-            FACTORY_BOOT_METHOD: secureboot-iso
-            FACTORY_VERSION: v1.11.5
-            FACTORY_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-            KUBERNETES_VERSION: 1.34.3
-            FACTORY_UPGRADE: true
-            FACTORY_UPGRADE_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-            FACTORY_UPGRADE_VERSION: v1.11.6
-        - name: factory-1.11-iso
-          command: e2e-image-factory
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-factory-1.11-iso
-            FACTORY_BOOT_METHOD: iso
-            FACTORY_VERSION: v1.11.5
-            FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-            KUBERNETES_VERSION: 1.34.3
-            FACTORY_UPGRADE: true
-            FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-            FACTORY_UPGRADE_VERSION: v1.11.6
-        - name: factory-1.10-iso
-          command: e2e-image-factory
-          withSudo: true
-          environment:
-            GITHUB_STEP_NAME: ${{ github.job}}-factory-1.10-iso
-            FACTORY_BOOT_METHOD: iso
-            FACTORY_VERSION: v1.10.8
-            FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-            KUBERNETES_VERSION: 1.33.7
-            FACTORY_UPGRADE: true
-            FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-            FACTORY_UPGRADE_VERSION: v1.10.9
+            FACTORY_BOOT_METHOD: ${{ matrix.factoryBootMethod }}
+            FACTORY_SCHEMATIC: ${{ matrix.factorySchematic }}
+            FACTORY_UPGRADE: ${{ matrix.factoryUpgrade }}
+            FACTORY_UPGRADE_SCHEMATIC: ${{ matrix.factoryUpgradeSchematic }}
+            FACTORY_UPGRADE_VERSION: ${{ matrix.factoryUpgradeVersion }}
+            FACTORY_VERSION: ${{ matrix.factoryVersion }}
+            GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.test }}
+            KUBERNETES_VERSION: ${{ matrix.kubernetesVersion }}
         - name: save-talos-logs
           conditions:
             - always
           artifactStep:
             type: upload
-            artifactName: talos-logs-integration-image-factory
+            artifactName: talos-logs-integration-image-factory-${{ matrix.test }}
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:

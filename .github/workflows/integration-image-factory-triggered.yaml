@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-04-27T17:59:00Z by kres e4dc583.
+# Generated on 2026-05-16T16:11:22Z by kres undefined.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -14,11 +14,69 @@ concurrency:
 name: integration-image-factory-triggered
 jobs:
   default:
+    name: ${{ matrix.test }}
     permissions:
       actions: read
     runs-on:
       group: large
     if: github.event.workflow_run.conclusion == 'success'
+    strategy:
+      matrix:
+        include:
+          - factoryBootMethod: iso
+            factorySchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+            factoryUpgrade: "true"
+            factoryUpgradeSchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+            factoryUpgradeVersion: v1.12.6
+            factoryVersion: v1.12.5
+            kubernetesVersion: 1.35.3
+            test: factory-1.12-iso
+          - factoryBootMethod: disk-image
+            factorySchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+            factoryUpgrade: "true"
+            factoryUpgradeSchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+            factoryUpgradeVersion: v1.12.6
+            factoryVersion: v1.12.5
+            kubernetesVersion: 1.35.3
+            test: factory-1.12-image
+          - factoryBootMethod: ipxe
+            factorySchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+            factoryVersion: v1.12.6
+            kubernetesVersion: 1.35.3
+            test: factory-1.12-pxe
+          - factoryBootMethod: secureboot-iso
+            factorySchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+            factoryUpgrade: "true"
+            factoryUpgradeSchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+            factoryUpgradeVersion: v1.12.6
+            factoryVersion: v1.12.5
+            kubernetesVersion: 1.35.3
+            test: factory-1.12-secureboot
+          - factoryBootMethod: secureboot-iso
+            factorySchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+            factoryUpgrade: "true"
+            factoryUpgradeSchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+            factoryUpgradeVersion: v1.11.6
+            factoryVersion: v1.11.5
+            kubernetesVersion: 1.34.3
+            test: factory-1.11-secureboot
+          - factoryBootMethod: iso
+            factorySchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+            factoryUpgrade: "true"
+            factoryUpgradeSchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+            factoryUpgradeVersion: v1.11.6
+            factoryVersion: v1.11.5
+            kubernetesVersion: 1.34.3
+            test: factory-1.11-iso
+          - factoryBootMethod: iso
+            factorySchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+            factoryUpgrade: "true"
+            factoryUpgradeSchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+            factoryUpgradeVersion: v1.10.9
+            factoryVersion: v1.10.8
+            kubernetesVersion: 1.33.7
+            test: factory-1.10-iso
+      fail-fast: false
     steps:
       - name: gather-system-info
         id: system-info
@@ -70,92 +128,23 @@ jobs:
       - name: ci-temp-release-tag
         run: |
           make ci-temp-release-tag
-      - name: factory-1.12-iso
+      - name: e2e-image-factory
         env:
-          FACTORY_BOOT_METHOD: iso
-          FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-          FACTORY_UPGRADE: "true"
-          FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-          FACTORY_UPGRADE_VERSION: v1.12.6
-          FACTORY_VERSION: v1.12.5
-          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.12-iso
-          KUBERNETES_VERSION: 1.35.3
-        run: |
-          sudo -E make e2e-image-factory
-      - name: factory-1.12-image
-        env:
-          FACTORY_BOOT_METHOD: disk-image
-          FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-          FACTORY_UPGRADE: "true"
-          FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-          FACTORY_UPGRADE_VERSION: v1.12.6
-          FACTORY_VERSION: v1.12.5
-          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.12-image
-          KUBERNETES_VERSION: 1.35.3
-        run: |
-          sudo -E make e2e-image-factory
-      - name: factory-1.12-pxe
-        env:
-          FACTORY_BOOT_METHOD: ipxe
-          FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-          FACTORY_VERSION: v1.12.6
-          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.12-pxe
-          KUBERNETES_VERSION: 1.35.3
-        run: |
-          sudo -E make e2e-image-factory
-      - name: factory-1.12-secureboot
-        env:
-          FACTORY_BOOT_METHOD: secureboot-iso
-          FACTORY_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-          FACTORY_UPGRADE: "true"
-          FACTORY_UPGRADE_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-          FACTORY_UPGRADE_VERSION: v1.12.6
-          FACTORY_VERSION: v1.12.5
-          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.12-secureboot
-          KUBERNETES_VERSION: 1.35.3
-        run: |
-          sudo -E make e2e-image-factory
-      - name: factory-1.11-secureboot
-        env:
-          FACTORY_BOOT_METHOD: secureboot-iso
-          FACTORY_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-          FACTORY_UPGRADE: "true"
-          FACTORY_UPGRADE_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-          FACTORY_UPGRADE_VERSION: v1.11.6
-          FACTORY_VERSION: v1.11.5
-          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.11-secureboot
-          KUBERNETES_VERSION: 1.34.3
-        run: |
-          sudo -E make e2e-image-factory
-      - name: factory-1.11-iso
-        env:
-          FACTORY_BOOT_METHOD: iso
-          FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-          FACTORY_UPGRADE: "true"
-          FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-          FACTORY_UPGRADE_VERSION: v1.11.6
-          FACTORY_VERSION: v1.11.5
-          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.11-iso
-          KUBERNETES_VERSION: 1.34.3
-        run: |
-          sudo -E make e2e-image-factory
-      - name: factory-1.10-iso
-        env:
-          FACTORY_BOOT_METHOD: iso
-          FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-          FACTORY_UPGRADE: "true"
-          FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-          FACTORY_UPGRADE_VERSION: v1.10.9
-          FACTORY_VERSION: v1.10.8
-          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.10-iso
-          KUBERNETES_VERSION: 1.33.7
+          FACTORY_BOOT_METHOD: ${{ matrix.factoryBootMethod }}
+          FACTORY_SCHEMATIC: ${{ matrix.factorySchematic }}
+          FACTORY_UPGRADE: ${{ matrix.factoryUpgrade }}
+          FACTORY_UPGRADE_SCHEMATIC: ${{ matrix.factoryUpgradeSchematic }}
+          FACTORY_UPGRADE_VERSION: ${{ matrix.factoryUpgradeVersion }}
+          FACTORY_VERSION: ${{ matrix.factoryVersion }}
+          GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.test }}
+          KUBERNETES_VERSION: ${{ matrix.kubernetesVersion }}
         run: |
           sudo -E make e2e-image-factory
       - name: save artifacts
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
-          name: talos-logs-integration-image-factory
+          name: talos-logs-integration-image-factory-${{ matrix.test }}
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip

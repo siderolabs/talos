@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-05-11T14:12:46Z by kres 1762ab2.
+# Generated on 2026-05-18T15:20:06Z by kres ec45272.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -557,7 +557,6 @@ jobs:
             _out/grype-scan.log
           retention-days: "5"
   integration-airgapped:
-    name: ${{ matrix.test }}
     permissions:
       actions: read
       contents: write
@@ -566,7 +565,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/'))
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/airgapped') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     strategy:
       matrix:
         include:
@@ -587,17 +586,11 @@ jobs:
     needs:
       - default
     steps:
-      - name: check-pr-labels
-        id: check-pr-labels
-        if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/airgapped') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
-        run: "true"
       - name: gather-system-info
         id: system-info
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           MEMORY_GB=$((${{ steps.system-info.outputs.totalmem }}/1024/1024/1024))
 
@@ -619,42 +612,34 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
       - name: Unshallow
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           make ci-temp-release-tag
       - name: integration-images-list
-        if: steps.check-pr-labels.conclusion == 'success'
         env:
           IMAGE_REGISTRY: registry.dev.siderolabs.io
         run: |
           make integration-images-list
       - name: ${{ matrix.test }}
-        if: steps.check-pr-labels.conclusion == 'success'
         env:
           GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.test }}
           IMAGE_REGISTRY: registry.dev.siderolabs.io
@@ -665,7 +650,7 @@ jobs:
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
-        if: always() && steps.check-pr-labels.conclusion == 'success'
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-airgapped-${{ matrix.test }}
@@ -756,7 +741,7 @@ jobs:
           ref: main
           repository: siderolabs/contrib
       - name: setup tf
-        uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # version: v4.0.0
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # version: v4.0.1
         with:
           terraform_wrapper: "false"
       - name: tf apply
@@ -860,7 +845,7 @@ jobs:
           ref: main
           repository: siderolabs/contrib
       - name: setup tf
-        uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # version: v4.0.0
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # version: v4.0.1
         with:
           terraform_wrapper: "false"
       - name: tf apply
@@ -981,7 +966,7 @@ jobs:
           ref: main
           repository: siderolabs/contrib
       - name: setup tf
-        uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # version: v4.0.0
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # version: v4.0.1
         with:
           terraform_wrapper: "false"
       - name: tf apply
@@ -1105,7 +1090,7 @@ jobs:
           ref: main
           repository: siderolabs/contrib
       - name: setup tf
-        uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # version: v4.0.0
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # version: v4.0.1
         with:
           terraform_wrapper: "false"
       - name: tf apply
@@ -1229,7 +1214,7 @@ jobs:
           ref: main
           repository: siderolabs/contrib
       - name: setup tf
-        uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # version: v4.0.0
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # version: v4.0.1
         with:
           terraform_wrapper: "false"
       - name: tf apply
@@ -1353,7 +1338,7 @@ jobs:
           ref: main
           repository: siderolabs/contrib
       - name: setup tf
-        uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # version: v4.0.0
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # version: v4.0.1
         with:
           terraform_wrapper: "false"
       - name: tf apply
@@ -1477,7 +1462,7 @@ jobs:
           ref: main
           repository: siderolabs/contrib
       - name: setup tf
-        uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # version: v4.0.0
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # version: v4.0.1
         with:
           terraform_wrapper: "false"
       - name: tf apply
@@ -1601,7 +1586,7 @@ jobs:
           ref: main
           repository: siderolabs/contrib
       - name: setup tf
-        uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # version: v4.0.0
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # version: v4.0.1
         with:
           terraform_wrapper: "false"
       - name: tf apply
@@ -1725,7 +1710,7 @@ jobs:
           ref: main
           repository: siderolabs/contrib
       - name: setup tf
-        uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # version: v4.0.0
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # version: v4.0.1
         with:
           terraform_wrapper: "false"
       - name: tf apply
@@ -1849,7 +1834,7 @@ jobs:
           ref: main
           repository: siderolabs/contrib
       - name: setup tf
-        uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # version: v4.0.0
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # version: v4.0.1
         with:
           terraform_wrapper: "false"
       - name: tf apply
@@ -2031,6 +2016,84 @@ jobs:
           path: |
             _out
           retention-days: "1"
+  integration-build-image-cache:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      group: large
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/image-cache') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
+    needs:
+      - default
+    steps:
+      - name: gather-system-info
+        id: system-info
+        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        continue-on-error: true
+      - name: print-system-info
+        run: |
+          MEMORY_GB=$((${{ steps.system-info.outputs.totalmem }}/1024/1024/1024))
+
+          OUTPUTS=(
+            "CPU Core: ${{ steps.system-info.outputs.cpu-core }}"
+            "CPU Model: ${{ steps.system-info.outputs.cpu-model }}"
+            "Hostname: ${{ steps.system-info.outputs.hostname }}"
+            "NodeName: ${NODE_NAME}"
+            "Kernel release: ${{ steps.system-info.outputs.kernel-release }}"
+            "Kernel version: ${{ steps.system-info.outputs.kernel-version }}"
+            "Name: ${{ steps.system-info.outputs.name }}"
+            "Platform: ${{ steps.system-info.outputs.platform }}"
+            "Release: ${{ steps.system-info.outputs.release }}"
+            "Total memory: ${MEMORY_GB} GB"
+          )
+
+          for OUTPUT in "${OUTPUTS[@]}";do
+            echo "${OUTPUT}"
+          done
+        continue-on-error: true
+      - name: checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Download artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
+        with:
+          name: talos-artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        run: |
+          make ci-temp-release-tag
+      - name: image-cache
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          PLATFORM: linux/amd64,linux/arm64
+          PUSH: "true"
+        run: |
+          make cache-create
+      - name: Generate executable list
+        run: |
+          find _out -type f -executable > _out/executable-artifacts
+      - name: save artifacts
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
+        with:
+          name: talos-image-cache-artifacts
+          path: |
+            _out
+          retention-days: "1"
   integration-cilium:
     permissions:
       actions: read
@@ -2041,6 +2104,19 @@ jobs:
     runs-on:
       group: large
     if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/cilium') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
+    strategy:
+      matrix:
+        include:
+          - ciliumConfigPatch: '@hack/test/patches/cilium-no-kubeproxy.yaml'
+            test: e2e-cilium
+          - ciliumConfigPatch: '@hack/test/patches/cilium-kubeproxy.yaml'
+            ciliumInstallType: strict
+            test: e2e-cilium-strict
+          - ciliumConfigPatch: '@hack/test/patches/cilium-kubeproxy.yaml'
+            ciliumInstallType: strict
+            test: e2e-cilium-strict-kubespan
+            withKubespan: "true"
+      fail-fast: false
     needs:
       - default
     steps:
@@ -2094,42 +2170,21 @@ jobs:
           make ci-temp-release-tag
       - name: e2e-cilium
         env:
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium
+          CILIUM_INSTALL_TYPE: ${{ matrix.ciliumInstallType }}
+          GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.test }}
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           SHORT_INTEGRATION_TEST: "yes"
-          WITH_CONFIG_PATCH: '@hack/test/patches/cilium-no-kubeproxy.yaml'
+          WITH_CONFIG_PATCH: ${{ matrix.ciliumConfigPatch }}
           WITH_CUSTOM_CNI: cilium
           WITH_FIREWALL: accept
-        run: |
-          sudo -E make e2e-qemu
-      - name: e2e-cilium-strict
-        env:
-          CILIUM_INSTALL_TYPE: strict
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium-strict
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          SHORT_INTEGRATION_TEST: "yes"
-          WITH_CONFIG_PATCH: '@hack/test/patches/cilium-kubeproxy.yaml'
-          WITH_CUSTOM_CNI: cilium
-          WITH_FIREWALL: accept
-        run: |
-          sudo -E make e2e-qemu
-      - name: e2e-cilium-strict-kubespan
-        env:
-          CILIUM_INSTALL_TYPE: strict
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-cilium-strict-kubespan
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          SHORT_INTEGRATION_TEST: "yes"
-          WITH_CONFIG_PATCH: '@hack/test/patches/cilium-kubeproxy.yaml'
-          WITH_CUSTOM_CNI: cilium
-          WITH_FIREWALL: accept
-          WITH_KUBESPAN: "true"
+          WITH_KUBESPAN: ${{ matrix.withKubespan }}
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
-          name: talos-logs-integration-cilium
+          name: talos-logs-integration-cilium-${{ matrix.test }}
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
@@ -2639,7 +2694,7 @@ jobs:
           ref: main
           repository: siderolabs/contrib
       - name: setup tf
-        uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # version: v4.0.0
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # version: v4.0.1
         with:
           terraform_wrapper: "false"
       - name: tf apply
@@ -2671,8 +2726,22 @@ jobs:
     runs-on:
       group: large
     if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/image-cache') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
+    strategy:
+      matrix:
+        include:
+          - test: e2e-image-cache
+            withConfigPatch: '@hack/test/patches/image-cache.yaml:@hack/test/patches/image-verification.yaml'
+            withISO: "true"
+          - test: e2e-image-cache-disk
+            useDiskImage: "true"
+            withConfigPatch: '@hack/test/patches/image-cache.yaml:@hack/test/patches/image-verification.yaml'
+          - test: e2e-image-cache-encrypted
+            withConfigPatch: '@hack/test/patches/image-cache.yaml:@hack/test/patches/image-cache-encrypted.yaml:@hack/test/patches/image-verification.yaml'
+            withISO: "true"
+      fail-fast: false
     needs:
       - default
+      - integration-build-image-cache
     steps:
       - name: gather-system-info
         id: system-info
@@ -2714,7 +2783,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
-          name: talos-artifacts
+          name: talos-image-cache-artifacts
           path: _out
       - name: Fix artifact permissions
         run: |
@@ -2722,51 +2791,23 @@ jobs:
       - name: ci-temp-release-tag
         run: |
           make ci-temp-release-tag
-      - name: image-cache
-        env:
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          PLATFORM: linux/amd64,linux/arm64
-          PUSH: "true"
-        run: |
-          make cache-create
       - name: e2e-image-cache
         env:
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-image-cache
+          GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.test }}
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           REGISTRY_MIRROR_FLAGS: "no"
           SHORT_INTEGRATION_TEST: "yes"
+          USE_DISK_IMAGE: ${{ matrix.useDiskImage }}
           VIA_MAINTENANCE_MODE: "true"
-          WITH_CONFIG_PATCH: '@hack/test/patches/image-cache.yaml:@hack/test/patches/image-verification.yaml'
-          WITH_ISO: "true"
-        run: |
-          sudo -E make e2e-qemu
-      - name: e2e-image-cache-disk
-        env:
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-image-cache-disk
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          REGISTRY_MIRROR_FLAGS: "no"
-          SHORT_INTEGRATION_TEST: "yes"
-          USE_DISK_IMAGE: "true"
-          VIA_MAINTENANCE_MODE: "true"
-          WITH_CONFIG_PATCH: '@hack/test/patches/image-cache.yaml:@hack/test/patches/image-verification.yaml'
-        run: |
-          sudo -E make e2e-qemu
-      - name: e2e-image-cache-encrypted
-        env:
-          GITHUB_STEP_NAME: ${{ github.job}}-e2e-image-cache-encrypted
-          IMAGE_REGISTRY: registry.dev.siderolabs.io
-          REGISTRY_MIRROR_FLAGS: "no"
-          SHORT_INTEGRATION_TEST: "yes"
-          VIA_MAINTENANCE_MODE: "true"
-          WITH_CONFIG_PATCH: '@hack/test/patches/image-cache.yaml:@hack/test/patches/image-cache-encrypted.yaml:@hack/test/patches/image-verification.yaml'
-          WITH_ISO: "true"
+          WITH_CONFIG_PATCH: ${{ matrix.withConfigPatch }}
+          WITH_ISO: ${{ matrix.withISO }}
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
-          name: talos-logs-integration-image-cache
+          name: talos-logs-integration-image-cache-${{ matrix.test }}
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
@@ -2781,6 +2822,63 @@ jobs:
     runs-on:
       group: large
     if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/image-factory')
+    strategy:
+      matrix:
+        include:
+          - factoryBootMethod: iso
+            factorySchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+            factoryUpgrade: "true"
+            factoryUpgradeSchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+            factoryUpgradeVersion: v1.12.6
+            factoryVersion: v1.12.5
+            kubernetesVersion: 1.35.3
+            test: factory-1.12-iso
+          - factoryBootMethod: disk-image
+            factorySchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+            factoryUpgrade: "true"
+            factoryUpgradeSchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+            factoryUpgradeVersion: v1.12.6
+            factoryVersion: v1.12.5
+            kubernetesVersion: 1.35.3
+            test: factory-1.12-image
+          - factoryBootMethod: ipxe
+            factorySchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+            factoryVersion: v1.12.6
+            kubernetesVersion: 1.35.3
+            test: factory-1.12-pxe
+          - factoryBootMethod: secureboot-iso
+            factorySchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+            factoryUpgrade: "true"
+            factoryUpgradeSchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+            factoryUpgradeVersion: v1.12.6
+            factoryVersion: v1.12.5
+            kubernetesVersion: 1.35.3
+            test: factory-1.12-secureboot
+          - factoryBootMethod: secureboot-iso
+            factorySchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+            factoryUpgrade: "true"
+            factoryUpgradeSchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+            factoryUpgradeVersion: v1.11.6
+            factoryVersion: v1.11.5
+            kubernetesVersion: 1.34.3
+            test: factory-1.11-secureboot
+          - factoryBootMethod: iso
+            factorySchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+            factoryUpgrade: "true"
+            factoryUpgradeSchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+            factoryUpgradeVersion: v1.11.6
+            factoryVersion: v1.11.5
+            kubernetesVersion: 1.34.3
+            test: factory-1.11-iso
+          - factoryBootMethod: iso
+            factorySchematic: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
+            factoryUpgrade: "true"
+            factoryUpgradeSchematic: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
+            factoryUpgradeVersion: v1.10.9
+            factoryVersion: v1.10.8
+            kubernetesVersion: 1.33.7
+            test: factory-1.10-iso
+      fail-fast: false
     needs:
       - default
     steps:
@@ -2832,92 +2930,23 @@ jobs:
       - name: ci-temp-release-tag
         run: |
           make ci-temp-release-tag
-      - name: factory-1.12-iso
+      - name: e2e-image-factory
         env:
-          FACTORY_BOOT_METHOD: iso
-          FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-          FACTORY_UPGRADE: "true"
-          FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-          FACTORY_UPGRADE_VERSION: v1.12.6
-          FACTORY_VERSION: v1.12.5
-          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.12-iso
-          KUBERNETES_VERSION: 1.35.3
-        run: |
-          sudo -E make e2e-image-factory
-      - name: factory-1.12-image
-        env:
-          FACTORY_BOOT_METHOD: disk-image
-          FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-          FACTORY_UPGRADE: "true"
-          FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-          FACTORY_UPGRADE_VERSION: v1.12.6
-          FACTORY_VERSION: v1.12.5
-          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.12-image
-          KUBERNETES_VERSION: 1.35.3
-        run: |
-          sudo -E make e2e-image-factory
-      - name: factory-1.12-pxe
-        env:
-          FACTORY_BOOT_METHOD: ipxe
-          FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-          FACTORY_VERSION: v1.12.6
-          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.12-pxe
-          KUBERNETES_VERSION: 1.35.3
-        run: |
-          sudo -E make e2e-image-factory
-      - name: factory-1.12-secureboot
-        env:
-          FACTORY_BOOT_METHOD: secureboot-iso
-          FACTORY_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-          FACTORY_UPGRADE: "true"
-          FACTORY_UPGRADE_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-          FACTORY_UPGRADE_VERSION: v1.12.6
-          FACTORY_VERSION: v1.12.5
-          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.12-secureboot
-          KUBERNETES_VERSION: 1.35.3
-        run: |
-          sudo -E make e2e-image-factory
-      - name: factory-1.11-secureboot
-        env:
-          FACTORY_BOOT_METHOD: secureboot-iso
-          FACTORY_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-          FACTORY_UPGRADE: "true"
-          FACTORY_UPGRADE_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-          FACTORY_UPGRADE_VERSION: v1.11.6
-          FACTORY_VERSION: v1.11.5
-          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.11-secureboot
-          KUBERNETES_VERSION: 1.34.3
-        run: |
-          sudo -E make e2e-image-factory
-      - name: factory-1.11-iso
-        env:
-          FACTORY_BOOT_METHOD: iso
-          FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-          FACTORY_UPGRADE: "true"
-          FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-          FACTORY_UPGRADE_VERSION: v1.11.6
-          FACTORY_VERSION: v1.11.5
-          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.11-iso
-          KUBERNETES_VERSION: 1.34.3
-        run: |
-          sudo -E make e2e-image-factory
-      - name: factory-1.10-iso
-        env:
-          FACTORY_BOOT_METHOD: iso
-          FACTORY_SCHEMATIC: 376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba
-          FACTORY_UPGRADE: "true"
-          FACTORY_UPGRADE_SCHEMATIC: cf9b7aab9ed7c365d5384509b4d31c02fdaa06d2b3ac6cc0bc806f28130eff1f
-          FACTORY_UPGRADE_VERSION: v1.10.9
-          FACTORY_VERSION: v1.10.8
-          GITHUB_STEP_NAME: ${{ github.job}}-factory-1.10-iso
-          KUBERNETES_VERSION: 1.33.7
+          FACTORY_BOOT_METHOD: ${{ matrix.factoryBootMethod }}
+          FACTORY_SCHEMATIC: ${{ matrix.factorySchematic }}
+          FACTORY_UPGRADE: ${{ matrix.factoryUpgrade }}
+          FACTORY_UPGRADE_SCHEMATIC: ${{ matrix.factoryUpgradeSchematic }}
+          FACTORY_UPGRADE_VERSION: ${{ matrix.factoryUpgradeVersion }}
+          FACTORY_VERSION: ${{ matrix.factoryVersion }}
+          GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.test }}
+          KUBERNETES_VERSION: ${{ matrix.kubernetesVersion }}
         run: |
           sudo -E make e2e-image-factory
       - name: save artifacts
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
-          name: talos-logs-integration-image-factory
+          name: talos-logs-integration-image-factory-${{ matrix.test }}
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip
@@ -2990,7 +3019,6 @@ jobs:
         run: |
           make images
   integration-misc-0:
-    name: ${{ matrix.test }}
     permissions:
       actions: read
       contents: write
@@ -2999,7 +3027,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/'))
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc-0') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     strategy:
       matrix:
         include:
@@ -3028,17 +3056,11 @@ jobs:
     needs:
       - default
     steps:
-      - name: check-pr-labels
-        id: check-pr-labels
-        if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc-0') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
-        run: "true"
       - name: gather-system-info
         id: system-info
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           MEMORY_GB=$((${{ steps.system-info.outputs.totalmem }}/1024/1024/1024))
 
@@ -3060,36 +3082,29 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
       - name: Unshallow
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           make ci-temp-release-tag
       - name: ${{ matrix.test }}
-        if: steps.check-pr-labels.conclusion == 'success'
         env:
           CUSTOM_CNI_URL: ${{ matrix.customCniUrl }}
           GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.test }}
@@ -3107,7 +3122,7 @@ jobs:
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
-        if: always() && steps.check-pr-labels.conclusion == 'success'
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-misc-0-${{ matrix.test }}
@@ -3116,7 +3131,6 @@ jobs:
             /tmp/support-*.zip
           retention-days: "5"
   integration-misc-1:
-    name: ${{ matrix.test }}-${{ matrix.variant }}
     permissions:
       actions: read
       contents: write
@@ -3125,7 +3139,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/')) && !cancelled()
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc-1') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     strategy:
       matrix:
         include:
@@ -3179,17 +3193,11 @@ jobs:
       - default
       - integration-build-enforcing
     steps:
-      - name: check-pr-labels
-        id: check-pr-labels
-        if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc-1') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
-        run: "true"
       - name: gather-system-info
         id: system-info
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           MEMORY_GB=$((${{ steps.system-info.outputs.totalmem }}/1024/1024/1024))
 
@@ -3211,36 +3219,29 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
       - name: Unshallow
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-enforcing-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           make ci-temp-release-tag
       - name: ${{ matrix.test }}
-        if: steps.check-pr-labels.conclusion == 'success'
         env:
           DISABLE_DHCP_HOSTNAME: ${{ matrix.disableDhcpHostname }}
           EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
@@ -3258,7 +3259,7 @@ jobs:
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
-        if: always() && steps.check-pr-labels.conclusion == 'success'
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-misc-1-${{ matrix.test }}-${{ matrix.variant }}
@@ -3267,7 +3268,6 @@ jobs:
             /tmp/support-*.zip
           retention-days: "5"
   integration-misc-2:
-    name: ${{ matrix.test }}
     permissions:
       actions: read
       contents: write
@@ -3276,7 +3276,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/'))
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc-2') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     strategy:
       matrix:
         include:
@@ -3312,17 +3312,11 @@ jobs:
     needs:
       - default
     steps:
-      - name: check-pr-labels
-        id: check-pr-labels
-        if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc-2') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
-        run: "true"
       - name: gather-system-info
         id: system-info
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           MEMORY_GB=$((${{ steps.system-info.outputs.totalmem }}/1024/1024/1024))
 
@@ -3344,36 +3338,29 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
       - name: Unshallow
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           make ci-temp-release-tag
       - name: ${{ matrix.test }}
-        if: steps.check-pr-labels.conclusion == 'success'
         env:
           EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
           GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.test }}
@@ -3390,7 +3377,7 @@ jobs:
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
-        if: always() && steps.check-pr-labels.conclusion == 'success'
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-misc-2-${{ matrix.test }}
@@ -3399,7 +3386,6 @@ jobs:
             /tmp/support-*.zip
           retention-days: "5"
   integration-misc-3:
-    name: ${{ matrix.test }}-${{ matrix.variant }}
     permissions:
       actions: read
       contents: write
@@ -3408,7 +3394,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/')) && !cancelled()
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc-3') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     strategy:
       matrix:
         include:
@@ -3445,17 +3431,11 @@ jobs:
       - default
       - integration-build-enforcing
     steps:
-      - name: check-pr-labels
-        id: check-pr-labels
-        if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc-3') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
-        run: "true"
       - name: gather-system-info
         id: system-info
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           MEMORY_GB=$((${{ steps.system-info.outputs.totalmem }}/1024/1024/1024))
 
@@ -3477,36 +3457,29 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
       - name: Unshallow
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-enforcing-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           make ci-temp-release-tag
       - name: ${{ matrix.test }}
-        if: steps.check-pr-labels.conclusion == 'success'
         env:
           EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
           GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.test }}-${{ matrix.variant }}
@@ -3520,7 +3493,7 @@ jobs:
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
-        if: always() && steps.check-pr-labels.conclusion == 'success'
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-misc-3-${{ matrix.test }}-${{ matrix.variant }}
@@ -3529,7 +3502,6 @@ jobs:
             /tmp/support-*.zip
           retention-days: "5"
   integration-misc-4:
-    name: ${{ matrix.test }}-${{ matrix.variant }}
     permissions:
       actions: read
       contents: write
@@ -3538,7 +3510,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/')) && !cancelled()
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc-4') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     strategy:
       matrix:
         include:
@@ -3593,17 +3565,11 @@ jobs:
       - default
       - integration-build-enforcing
     steps:
-      - name: check-pr-labels
-        id: check-pr-labels
-        if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/misc-4') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
-        run: "true"
       - name: gather-system-info
         id: system-info
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           MEMORY_GB=$((${{ steps.system-info.outputs.totalmem }}/1024/1024/1024))
 
@@ -3625,36 +3591,29 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
       - name: Unshallow
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-enforcing-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           make ci-temp-release-tag
       - name: ${{ matrix.test }}
-        if: steps.check-pr-labels.conclusion == 'success'
         env:
           EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
           GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.test }}-${{ matrix.variant }}
@@ -3669,7 +3628,7 @@ jobs:
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
-        if: always() && steps.check-pr-labels.conclusion == 'success'
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-misc-4-${{ matrix.test }}-${{ matrix.variant }}
@@ -4011,7 +3970,6 @@ jobs:
             /tmp/support-*.zip
           retention-days: "5"
   integration-qemu-csi-longhorn:
-    name: ${{ matrix.csi }}
     permissions:
       actions: read
       contents: write
@@ -4020,7 +3978,7 @@ jobs:
       pull-requests: read
     runs-on:
       group: large
-    if: (!startsWith(github.head_ref, 'renovate/') && !startsWith(github.head_ref, 'dependabot/'))
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/qemu-csi') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/extensions') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/qemu-csi-longhorn') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
     strategy:
       matrix:
         include:
@@ -4035,17 +3993,11 @@ jobs:
     needs:
       - default
     steps:
-      - name: check-pr-labels
-        id: check-pr-labels
-        if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/qemu-csi') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/extensions') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/qemu-csi-longhorn') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
-        run: "true"
       - name: gather-system-info
         id: system-info
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
         continue-on-error: true
       - name: print-system-info
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           MEMORY_GB=$((${{ steps.system-info.outputs.totalmem }}/1024/1024/1024))
 
@@ -4067,47 +4019,38 @@ jobs:
           done
         continue-on-error: true
       - name: checkout
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
       - name: Unshallow
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           git fetch --prune --unshallow
       - name: Set up Docker Buildx
         id: setup-buildx
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
         with:
           driver: remote
           endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
         timeout-minutes: 10
       - name: Download artifacts
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
         with:
           name: talos-artifacts
           path: _out
       - name: Fix artifact permissions
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           xargs -a _out/executable-artifacts -I {} chmod +x {}
       - name: ci-temp-release-tag
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           make ci-temp-release-tag
       - name: checkout extensions
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
         with:
           path: _out/extensions
           ref: main
           repository: siderolabs/extensions
       - name: set variables
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           cat _out/talos-metadata >> "$GITHUB_ENV"
       - name: build extensions
-        if: steps.check-pr-labels.conclusion == 'success'
         env:
           PLATFORM: linux/amd64
           PUSH: "true"
@@ -4115,18 +4058,15 @@ jobs:
         run: |
           make iscsi-tools util-linux-tools extensions-metadata -C _out/extensions
       - name: installer extensions
-        if: steps.check-pr-labels.conclusion == 'success'
         env:
           EXTENSIONS_FILTER_COMMAND: grep -E '/iscsi-tools|util-linux-tools'
           IMAGE_REGISTRY: registry.dev.siderolabs.io
         run: |
           make installer-with-extensions
       - name: kubelet-fat-patch
-        if: steps.check-pr-labels.conclusion == 'success'
         run: |
           make kubelet-fat-patch
       - name: e2e-qemu-csi-longhorn
-        if: steps.check-pr-labels.conclusion == 'success'
         env:
           EXTRA_TEST_ARGS: -talos.csi=${{ matrix.csi }} ${{ matrix.extraTestArgs }}
           GITHUB_STEP_NAME: ${{ github.job}}-e2e-qemu-csi-longhorn-${{ matrix.csi }}
@@ -4144,7 +4084,6 @@ jobs:
         run: |
           sudo -E make e2e-qemu
       - name: save artifacts
-        if: steps.check-pr-labels.conclusion == 'success'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: fio-integration-qemu-csi-longhorn-${{ matrix.csi }}
@@ -4152,7 +4091,7 @@ jobs:
             /tmp/fio-*.json
           retention-days: "180"
       - name: save artifacts
-        if: always() && steps.check-pr-labels.conclusion == 'success'
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-qemu-csi-longhorn-${{ matrix.csi }}

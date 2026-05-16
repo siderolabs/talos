@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-05-16T15:32:02Z by kres undefined.
+# Generated on 2026-05-18T15:20:06Z by kres ec45272.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -11,28 +11,14 @@ concurrency:
       - artifacts-cron
     types:
       - completed
-name: integration-cilium-triggered
+name: integration-build-image-cache-triggered
 jobs:
   default:
-    name: ${{ matrix.test }}
     permissions:
       actions: read
     runs-on:
       group: large
     if: github.event.workflow_run.conclusion == 'success'
-    strategy:
-      matrix:
-        include:
-          - ciliumConfigPatch: '@hack/test/patches/cilium-no-kubeproxy.yaml'
-            test: e2e-cilium
-          - ciliumConfigPatch: '@hack/test/patches/cilium-kubeproxy.yaml'
-            ciliumInstallType: strict
-            test: e2e-cilium-strict
-          - ciliumConfigPatch: '@hack/test/patches/cilium-kubeproxy.yaml'
-            ciliumInstallType: strict
-            test: e2e-cilium-strict-kubespan
-            withKubespan: "true"
-      fail-fast: false
     steps:
       - name: gather-system-info
         id: system-info
@@ -84,24 +70,20 @@ jobs:
       - name: ci-temp-release-tag
         run: |
           make ci-temp-release-tag
-      - name: e2e-cilium
+      - name: image-cache
         env:
-          CILIUM_INSTALL_TYPE: ${{ matrix.ciliumInstallType }}
-          GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.test }}
           IMAGE_REGISTRY: registry.dev.siderolabs.io
-          SHORT_INTEGRATION_TEST: "yes"
-          WITH_CONFIG_PATCH: ${{ matrix.ciliumConfigPatch }}
-          WITH_CUSTOM_CNI: cilium
-          WITH_FIREWALL: accept
-          WITH_KUBESPAN: ${{ matrix.withKubespan }}
+          PLATFORM: linux/amd64,linux/arm64
+          PUSH: "true"
         run: |
-          sudo -E make e2e-qemu
+          make cache-create
+      - name: Generate executable list
+        run: |
+          find _out -type f -executable > _out/executable-artifacts
       - name: save artifacts
-        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
-          name: talos-logs-integration-cilium-${{ matrix.test }}
-          path: |-
-            /tmp/logs-*.tar.gz
-            /tmp/support-*.zip
-          retention-days: "5"
+          name: talos-image-cache-artifacts
+          path: |
+            _out
+          retention-days: "1"

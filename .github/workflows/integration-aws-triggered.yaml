@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-04-22T07:15:36Z by kres 41939c6-dirty.
+# Generated on 2026-05-18T15:12:12Z by kres ec45272.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -100,7 +100,7 @@ jobs:
           ref: main
           repository: siderolabs/contrib
       - name: setup tf
-        uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # version: v4.0.0
+        uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # version: v4.0.1
         with:
           terraform_wrapper: "false"
       - name: tf apply
