@@ -135,6 +135,19 @@ var Default = map[string]Profile{
 			},
 		},
 	},
+	"secureboot-azure": {
+		Platform:   "azure",
+		SecureBoot: new(true),
+		Output: Output{
+			Kind:      OutKindImage,
+			OutFormat: OutFormatZSTD,
+			ImageOptions: &ImageOptions{
+				DiskSize:          DefaultRAWDiskSize,
+				DiskFormat:        DiskFormatVPC,
+				DiskFormatOptions: "subformat=fixed,force_size",
+			},
+		},
+	},
 	"cloudstack": {
 		Platform:   "cloudstack",
 		SecureBoot: new(false),

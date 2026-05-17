@@ -199,6 +199,7 @@ func CloudPlatforms() []Platform {
 			BootMethods: []BootMethod{
 				BootMethodDiskImage,
 			},
+			SecureBootSupported: true,
 		},
 		{
 			Name: "digital-ocean",
