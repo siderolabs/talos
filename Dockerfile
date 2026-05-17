@@ -342,9 +342,15 @@ FROM build-go AS proto-format-build
 WORKDIR /src/api
 COPY api .
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool github.com/bufbuild/buf/cmd/buf format
+# pkg/provision/api hosts the remote-provision tooling proto, kept out
+# of api/ so it isn't confused with the stable Talos node APIs.
+WORKDIR /src/pkg/provision/api
+COPY pkg/provision/api .
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool github.com/bufbuild/buf/cmd/buf format
 
 FROM --platform=${BUILDPLATFORM} scratch AS fmt-protobuf
 COPY --link --from=proto-format-build /src/api/ /api/
+COPY --link --from=proto-format-build /src/pkg/provision/api/ /pkg/provision/api/
 
 # run docgen for machinery config
 FROM build-go AS go-generate
@@ -367,16 +373,23 @@ RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool github.com/siderol
 # compile protobuf service definitions
 FROM build-go AS generate-build
 COPY --link --from=proto-format-build /src/api /src/api/
+COPY --link --from=proto-format-build /src/pkg/provision/api /src/pkg/provision/api/
 COPY --link --from=gen-proto-go /api/resource/definitions/ /src/api/resource/definitions/
 WORKDIR /src/api
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool github.com/bufbuild/buf/cmd/buf build
 RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=locked go tool github.com/bufbuild/buf/cmd/buf generate
+# pkg/provision/api is its own buf module (see plugin out: . in its
+# buf.gen.yaml); generated stubs land beside the proto.
+WORKDIR /src/pkg/provision/api
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool github.com/bufbuild/buf/cmd/buf build
+RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=locked go tool github.com/bufbuild/buf/cmd/buf generate
 # Goimports and gofumpt generated files to adjust import order
-RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool golang.org/x/tools/cmd/goimports -w -local github.com/siderolabs/talos /src/api/machinery/
-RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool mvdan.cc/gofumpt -w /src/api/machinery/
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool golang.org/x/tools/cmd/goimports -w -local github.com/siderolabs/talos /src/api/machinery/ /src/pkg/provision/api/
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool mvdan.cc/gofumpt -w /src/api/machinery/ /src/pkg/provision/api/
 
 FROM scratch AS generate-build-clean
 COPY --link --from=generate-build /src/api /api/
+COPY --link --from=generate-build /src/pkg/provision/api /pkg/provision/api/
 
 FROM tools AS selinux
 RUN --mount=type=bind,source=internal/pkg/selinux/policy/selinux,target=/selinux \
@@ -424,9 +437,11 @@ FROM --platform=${BUILDPLATFORM} scratch AS generate
 COPY --link --from=go-mod-tidy /src/go.mod /src/go.sum /
 COPY --link --from=go-mod-tidy /src/pkg/machinery/go.mod /src/pkg/machinery/go.sum /pkg/machinery/
 COPY --link --from=proto-format-build /src/api /api/
+COPY --link --from=proto-format-build /src/pkg/provision/api /pkg/provision/api/
 COPY --link --from=generate-build-clean /api/resource/definitions/ /api/resource/definitions/
 COPY --link --from=generate-build-clean /api/machinery /pkg/machinery/
 COPY --link --from=generate-build-clean /api/docs/api.md /website/content/v1.14/reference/api.md
+COPY --link --from=generate-build-clean /pkg/provision/api /pkg/provision/api/
 COPY --link --from=go-generate /src/pkg/imager/profile/ /pkg/imager/profile/
 COPY --link --from=go-generate /src/pkg/machinery/resources/ /pkg/machinery/resources/
 COPY --link --from=go-generate /src/pkg/machinery/config/schemas/ /pkg/machinery/config/schemas/
@@ -1447,6 +1462,8 @@ COPY --link --from=api-descriptors /api/lock.binpb /tmp/current.lock.binpb
 WORKDIR /src/api
 RUN --mount=type=bind,source=api,target=/src/api --mount=type=cache,target=/.cache,id=talos/.cache go tool github.com/bufbuild/buf/cmd/buf lint
 RUN --mount=type=bind,source=api,target=/src/api --mount=type=cache,target=/.cache,id=talos/.cache go tool github.com/bufbuild/buf/cmd/buf breaking /tmp/current.lock.binpb --against lock.binpb
+WORKDIR /src/pkg/provision/api
+RUN --mount=type=bind,source=pkg/provision/api,target=/src/pkg/provision/api --mount=type=cache,target=/.cache,id=talos/.cache go tool github.com/bufbuild/buf/cmd/buf lint
 
 # The markdownlint target performs linting on Markdown files.
 

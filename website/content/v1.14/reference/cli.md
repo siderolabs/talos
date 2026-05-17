@@ -227,8 +227,9 @@ talosctl cluster create dev [flags]
 ### Options inherited from parent commands
 
 ```
-      --name string    the name of the cluster (default "talos-default")
-      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
+      --name string              the name of the cluster (default "talos-default")
+      --remote-endpoint string   host:port of a talosctl remote-provision-launch server to delegate provisioning to; when set, no local QEMU is required
+      --state string             directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
 
 ### SEE ALSO
@@ -267,8 +268,9 @@ talosctl cluster create docker [flags]
 ### Options inherited from parent commands
 
 ```
-      --name string    the name of the cluster (default "talos-default")
-      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
+      --name string              the name of the cluster (default "talos-default")
+      --remote-endpoint string   host:port of a talosctl remote-provision-launch server to delegate provisioning to; when set, no local QEMU is required
+      --state string             directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
 
 ### SEE ALSO
@@ -325,8 +327,9 @@ talosctl cluster create qemu [flags]
 ### Options inherited from parent commands
 
 ```
-      --name string    the name of the cluster (default "talos-default")
-      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
+      --name string              the name of the cluster (default "talos-default")
+      --remote-endpoint string   host:port of a talosctl remote-provision-launch server to delegate provisioning to; when set, no local QEMU is required
+      --state string             directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
 
 ### SEE ALSO
@@ -442,8 +445,9 @@ talosctl cluster create dev [flags]
 ### Options inherited from parent commands
 
 ```
-      --name string    the name of the cluster (default "talos-default")
-      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
+      --name string              the name of the cluster (default "talos-default")
+      --remote-endpoint string   host:port of a talosctl remote-provision-launch server to delegate provisioning to; when set, no local QEMU is required
+      --state string             directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
 
 ### SEE ALSO
@@ -482,8 +486,9 @@ talosctl cluster create docker [flags]
 ### Options inherited from parent commands
 
 ```
-      --name string    the name of the cluster (default "talos-default")
-      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
+      --name string              the name of the cluster (default "talos-default")
+      --remote-endpoint string   host:port of a talosctl remote-provision-launch server to delegate provisioning to; when set, no local QEMU is required
+      --state string             directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
 
 ### SEE ALSO
@@ -540,8 +545,9 @@ talosctl cluster create qemu [flags]
 ### Options inherited from parent commands
 
 ```
-      --name string    the name of the cluster (default "talos-default")
-      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
+      --name string              the name of the cluster (default "talos-default")
+      --remote-endpoint string   host:port of a talosctl remote-provision-launch server to delegate provisioning to; when set, no local QEMU is required
+      --state string             directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
 
 ### SEE ALSO
@@ -568,8 +574,9 @@ talosctl cluster destroy [flags]
 ### Options inherited from parent commands
 
 ```
-      --name string    the name of the cluster (default "talos-default")
-      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
+      --name string              the name of the cluster (default "talos-default")
+      --remote-endpoint string   host:port of a talosctl remote-provision-launch server to delegate provisioning to; when set, no local QEMU is required
+      --state string             directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
 
 ### SEE ALSO
@@ -585,7 +592,8 @@ Stream QEMU console logs for cluster machines
 Streams QEMU console logs (the per-machine <machine>.log files).
 
 With no machine argument, every machine in the cluster is tailed, each line
-prefixed with its machine name.
+prefixed with its machine name. Works against a local cluster or, with
+--remote-endpoint, a remote-provision server.
 
 ```
 talosctl cluster logs [machine] [flags]
@@ -601,8 +609,9 @@ talosctl cluster logs [machine] [flags]
 ### Options inherited from parent commands
 
 ```
-      --name string    the name of the cluster (default "talos-default")
-      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
+      --name string              the name of the cluster (default "talos-default")
+      --remote-endpoint string   host:port of a talosctl remote-provision-launch server to delegate provisioning to; when set, no local QEMU is required
+      --state string             directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
 
 ### SEE ALSO
@@ -634,8 +643,9 @@ talosctl cluster reboot [flags]
 ### Options inherited from parent commands
 
 ```
-      --name string    the name of the cluster (default "talos-default")
-      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
+      --name string              the name of the cluster (default "talos-default")
+      --remote-endpoint string   host:port of a talosctl remote-provision-launch server to delegate provisioning to; when set, no local QEMU is required
+      --state string             directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
 
 ### SEE ALSO
@@ -660,8 +670,9 @@ talosctl cluster show [flags]
 ### Options inherited from parent commands
 
 ```
-      --name string    the name of the cluster (default "talos-default")
-      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
+      --name string              the name of the cluster (default "talos-default")
+      --remote-endpoint string   host:port of a talosctl remote-provision-launch server to delegate provisioning to; when set, no local QEMU is required
+      --state string             directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
 
 ### SEE ALSO
@@ -675,9 +686,10 @@ A collection of commands for managing local docker-based or QEMU-based clusters
 ### Options
 
 ```
-  -h, --help           help for cluster
-      --name string    the name of the cluster (default "talos-default")
-      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
+  -h, --help                     help for cluster
+      --name string              the name of the cluster (default "talos-default")
+      --remote-endpoint string   host:port of a talosctl remote-provision-launch server to delegate provisioning to; when set, no local QEMU is required
+      --state string             directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
 
 ### SEE ALSO
@@ -3267,6 +3279,43 @@ talosctl reboot [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl remote-provision-launch
+
+Run the remote QEMU provisioner gRPC server
+
+### Synopsis
+
+Long-running gRPC daemon that wraps the in-process QEMU provisioner
+so 'talosctl cluster create --remote-endpoint=...' can delegate to it.
+
+The host must provide the full QEMU provisioner toolchain on PATH —
+qemu-system-{amd64,arm64}, qemu-img, swtpm, virtiofsd, mkisofs — plus
+OVMF firmware and access to /dev/kvm, /dev/net/tun and /dev/vhost-net.
+
+Operators packaging their own image can layer talosctl on top of a
+toolchain base, e.g.:
+
+  FROM ghcr.io/siderolabs/build-container:<tag>
+  COPY --from=ghcr.io/siderolabs/talosctl:<tag> /talosctl /usr/local/bin/talosctl
+  ENTRYPOINT ["/usr/local/bin/talosctl", "remote-provision-launch"]
+
+
+```
+talosctl remote-provision-launch [flags]
+```
+
+### Options
+
+```
+  -h, --help               help for remote-provision-launch
+      --listen string      address to listen on for gRPC (default "0.0.0.0:50100")
+      --state-dir string   directory for per-cluster state and artifact cache (default "/var/lib/talos-remote-provision")
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+
 ## talosctl reset
 
 Reset a node
@@ -3942,6 +3991,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl processes](#talosctl-processes)	 - List running processes
 * [talosctl read](#talosctl-read)	 - Read a file on the machine
 * [talosctl reboot](#talosctl-reboot)	 - Reboot a node
+* [talosctl remote-provision-launch](#talosctl-remote-provision-launch)	 - Run the remote QEMU provisioner gRPC server
 * [talosctl reset](#talosctl-reset)	 - Reset a node
 * [talosctl restart](#talosctl-restart)	 - Restart a process
 * [talosctl rollback](#talosctl-rollback)	 - Rollback a node to the previous installation

@@ -17,6 +17,7 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/logtail"
 	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/providers"
+	"github.com/siderolabs/talos/pkg/provision/providers/remote"
 )
 
 var logsCmdFlags struct {
@@ -30,7 +31,8 @@ var logsCmd = &cobra.Command{
 	Long: `Streams QEMU console logs (the per-machine <machine>.log files).
 
 With no machine argument, every machine in the cluster is tailed, each line
-prefixed with its machine name.`,
+prefixed with its machine name. Works against a local cluster or, with
+--remote-endpoint, a remote-provision server.`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		machine := ""
@@ -38,8 +40,29 @@ prefixed with its machine name.`,
 			machine = args[0]
 		}
 
+		if PersistentFlags.RemoteEndpoint != "" {
+			return remoteClusterLogs(cmd.Context(), machine)
+		}
+
 		return localClusterLogs(cmd.Context(), machine)
 	},
+}
+
+// remoteClusterLogs streams logs from a remote-provision server.
+func remoteClusterLogs(ctx context.Context, machine string) error {
+	provisioner, err := providers.Factory(ctx, providers.RemoteProviderName, providers.WithRemoteEndpoint(PersistentFlags.RemoteEndpoint))
+	if err != nil {
+		return err
+	}
+
+	defer provisioner.Close() //nolint:errcheck
+
+	rp, ok := provisioner.(*remote.Provisioner)
+	if !ok {
+		return errors.New("remote provisioner expected")
+	}
+
+	return rp.StreamLogs(ctx, PersistentFlags.ClusterName, machine, logsCmdFlags.follow, os.Stdout)
 }
 
 // localClusterLogs tails the local state directory's console log files.

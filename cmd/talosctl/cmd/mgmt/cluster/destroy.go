@@ -32,6 +32,10 @@ var destroyCmd = &cobra.Command{
 }
 
 func destroy(ctx context.Context) error {
+	if PersistentFlags.RemoteEndpoint != "" {
+		return destroyRemote(ctx)
+	}
+
 	state, err := provision.ReadState(ctx, PersistentFlags.ClusterName, PersistentFlags.StateDir)
 	if err != nil {
 		return fmt.Errorf("failed to read cluster state: %w", err)
@@ -56,6 +60,25 @@ func destroy(ctx context.Context) error {
 		provision.WithSaveSupportArchivePath(destroyCmdFlags.saveSupportArchivePath),
 		provision.WithSaveClusterLogsArchivePath(destroyCmdFlags.saveClusterLogsArchivePath),
 	)
+}
+
+// destroyRemote drives the destroy through the remote-provision server. State
+// lives on the server, so there's no local state.yaml to read — we just
+// Reflect by name and Destroy.
+func destroyRemote(ctx context.Context) error {
+	provisioner, err := providers.Factory(ctx, providers.RemoteProviderName, providers.WithRemoteEndpoint(PersistentFlags.RemoteEndpoint))
+	if err != nil {
+		return err
+	}
+
+	defer provisioner.Close() //nolint:errcheck
+
+	cluster, err := provisioner.Reflect(ctx, PersistentFlags.ClusterName, PersistentFlags.StateDir)
+	if err != nil {
+		return err
+	}
+
+	return provisioner.Destroy(ctx, cluster)
 }
 
 func init() {

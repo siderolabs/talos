@@ -19,24 +19,49 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops"
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops/configmaker"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/provision/access"
-	"github.com/siderolabs/talos/pkg/provision/providers"
+	"github.com/siderolabs/talos/pkg/provision/providers/remote"
 )
 
 //nolint:gocyclo,cyclop
 func createDevCluster(ctx context.Context, cOps clusterops.Common, qOps clusterops.Qemu) error {
-	if err := downloadBootAssets(ctx, &qOps); err != nil {
+	provisioner, err := selectProvisioner(ctx, cOps)
+	if err != nil {
+		return err
+	}
+
+	if rp, ok := provisioner.(*remote.Provisioner); ok {
+		// Delegating to a remote-provision server: target the server's
+		// architecture (it runs the VMs), and skip the local download —
+		// boot assets are uploaded or fetched server-side.
+		arch, archErr := rp.ServerArch(ctx)
+		if archErr != nil {
+			return archErr
+		}
+
+		qOps.TargetArch = arch
+
+		// Resolve ${ARCH} now: the QEMU provisioner substitutes it
+		// server-side, but the client-side artifact upload needs real
+		// paths to read.
+		for _, p := range []*string{
+			&qOps.NodeVmlinuzPath,
+			&qOps.NodeInitramfsPath,
+			&qOps.NodeISOPath,
+			&qOps.NodeUSBPath,
+			&qOps.NodeUKIPath,
+			&qOps.NodeDiskImagePath,
+		} {
+			*p = strings.ReplaceAll(*p, constants.ArchVariable, arch)
+		}
+	} else if err := downloadBootAssets(ctx, &qOps); err != nil {
 		return err
 	}
 
 	if cOps.TalosVersion == "" {
 		parts := strings.Split(qOps.NodeInstallImage, ":")
 		cOps.TalosVersion = parts[len(parts)-1]
-	}
-
-	provisioner, err := providers.Factory(ctx, providers.QemuProviderName)
-	if err != nil {
-		return err
 	}
 
 	clusterConfigs, err := configmaker.GetQemuConfigs(configmaker.QemuOptions{
