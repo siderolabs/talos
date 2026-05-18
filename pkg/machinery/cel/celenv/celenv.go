@@ -76,6 +76,7 @@ var VolumeLocator = sync.OnceValue(func() *cel.Env {
 				cel.Types(&diskSpec),
 				cel.Variable("volume", cel.ObjectType(string(volumeSpec.ProtoReflect().Descriptor().FullName()))),
 				cel.Variable("disk", cel.ObjectType(string(diskSpec.ProtoReflect().Descriptor().FullName()))),
+				cel.Variable("system_disk", types.BoolType),
 			},
 			celUnitMultipliersConstants(),
 		)...,

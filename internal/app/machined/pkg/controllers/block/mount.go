@@ -307,6 +307,9 @@ func (ctrl *MountController) handleMountOperation(
 	case block.VolumeTypeTmpfs:
 		return fmt.Errorf("not implemented yet")
 
+	case block.VolumeTypeMemory:
+		return ctrl.handleMemoryMountOperation(logger, filepath.Join(rootPath, mountTarget), mountRequest, volumeStatus)
+
 	case block.VolumeTypeExternal:
 		return ctrl.handleDiskMountOperation(logger, mountSource, filepath.Join(rootPath, mountTarget), mountFilesystem, mountRequest, volumeStatus)
 
@@ -430,6 +433,201 @@ func (ctrl *MountController) handleBindMountOperation(
 	}
 
 	return nil
+}
+
+func (ctrl *MountController) handleMemoryMountOperation(
+	logger *zap.Logger,
+	mountTarget string,
+	mountRequest *block.MountRequest,
+	volumeStatus *block.VolumeStatus,
+) error {
+	mountCtx, ok := ctrl.activeMounts[mountRequest.Metadata().ID()]
+
+	logger = logger.With(zap.String("mount_request.id", mountRequest.Metadata().ID()))
+
+	if !ok {
+		if !hasRequiredStringParameter(volumeStatus.TypedSpec().MountSpec.Parameters, "size") {
+			return fmt.Errorf("memory volume requires size parameter")
+		}
+
+		manager := mount.NewManager(slices.Concat(
+			[]mount.ManagerOption{
+				mount.WithTarget(mountTarget),
+				mount.WithFsopen("tmpfs", buildFSOpenOptions(logger, volumeStatus.TypedSpec().MountSpec.Parameters, nil)...),
+				mount.WithPrinter(logger.Sugar().Infof),
+			},
+			buildManagerOptions(mountRequest, volumeStatus),
+		)...)
+
+		mountpoint, err := manager.Mount()
+		if err != nil {
+			return fmt.Errorf("failed to mount %q: %w", mountRequest.Metadata().ID(), err)
+		}
+
+		if !mountRequest.TypedSpec().ReadOnly && !mountRequest.TypedSpec().Detached {
+			if err = ctrl.updateTargetSettings(mountTarget, volumeStatus.TypedSpec().Filesystem, volumeStatus.TypedSpec().MountSpec); err != nil {
+				manager.Unmount() //nolint:errcheck
+
+				return fmt.Errorf("failed to update target settings %q: %w", mountRequest.Metadata().ID(), err)
+			}
+		}
+
+		logger.Info(
+			"volume mount",
+			zap.String("volume", volumeStatus.Metadata().ID()),
+			zap.String("target", mountTarget),
+			zap.String("filesystem", "tmpfs"),
+			zap.Bool("read_only", mountRequest.TypedSpec().ReadOnly),
+			zap.Bool("secure", mountRequest.TypedSpec().Secure),
+			zap.Bool("disable_access_time", mountRequest.TypedSpec().DisableAccessTime),
+			zap.Bool("detached", mountRequest.TypedSpec().Detached),
+		)
+
+		mountCtx = &mountContext{
+			point:             mountpoint,
+			readOnly:          mountRequest.TypedSpec().ReadOnly,
+			disableAccessTime: mountRequest.TypedSpec().DisableAccessTime,
+			secure:            mountRequest.TypedSpec().Secure,
+			unmounter:         manager.Unmount,
+		}
+
+		ctrl.activeMounts[mountRequest.Metadata().ID()] = mountCtx
+	}
+
+	return applyMountAttributeChanges(logger, mountCtx, mountRequest, volumeStatus)
+}
+
+func applyMountAttributeChanges(
+	logger *zap.Logger,
+	mountCtx *mountContext,
+	mountRequest *block.MountRequest,
+	volumeStatus *block.VolumeStatus,
+) error {
+	if mountCtx.readOnly != mountRequest.TypedSpec().ReadOnly {
+		var err error
+
+		switch mountRequest.TypedSpec().ReadOnly {
+		case true:
+			err = mountCtx.point.RemountReadOnly()
+		case false:
+			err = mountCtx.point.RemountReadWrite()
+		}
+
+		if err != nil {
+			return fmt.Errorf("failed to remount %q: %w", mountRequest.Metadata().ID(), err)
+		}
+
+		logger.Info(
+			"volume remounted",
+			zap.String("volume", volumeStatus.Metadata().ID()),
+			zap.String("read_only", fmt.Sprintf("%v -> %v", mountCtx.readOnly, mountRequest.TypedSpec().ReadOnly)),
+		)
+
+		mountCtx.readOnly = mountRequest.TypedSpec().ReadOnly
+	}
+
+	if mountCtx.disableAccessTime != mountRequest.TypedSpec().DisableAccessTime {
+		err := mountCtx.point.SetDisableAccessTime(mountRequest.TypedSpec().DisableAccessTime)
+		if err != nil {
+			return fmt.Errorf("failed to update disableAccessTime for %q: %w", mountRequest.Metadata().ID(), err)
+		}
+
+		logger.Info(
+			"volume mount attributes updated",
+			zap.String("volume", volumeStatus.Metadata().ID()),
+			zap.String("disable_access_time", fmt.Sprintf("%v -> %v", mountCtx.disableAccessTime, mountRequest.TypedSpec().DisableAccessTime)),
+		)
+
+		mountCtx.disableAccessTime = mountRequest.TypedSpec().DisableAccessTime
+	}
+
+	if mountCtx.secure != mountRequest.TypedSpec().Secure {
+		err := mountCtx.point.SetSecure(mountRequest.TypedSpec().Secure)
+		if err != nil {
+			return fmt.Errorf("failed to update secure for %q: %w", mountRequest.Metadata().ID(), err)
+		}
+
+		logger.Info(
+			"volume mount attributes updated",
+			zap.String("volume", volumeStatus.Metadata().ID()),
+			zap.String("secure", fmt.Sprintf("%v -> %v", mountCtx.secure, mountRequest.TypedSpec().Secure)),
+		)
+
+		mountCtx.secure = mountRequest.TypedSpec().Secure
+	}
+
+	return nil
+}
+
+func buildFSOpenOptions(logger *zap.Logger, parameters []block.ParameterSpec, base []fsopen.Option) []fsopen.Option {
+	fsOpts := append([]fsopen.Option{}, base...)
+
+	for _, param := range parameters {
+		logger.Info(
+			"adding new parameter",
+			zap.String("parameter", param.Name),
+			zap.Stringer("parameter.type", param.Type),
+			zap.String("parameter.string", pointer.SafeDeref(param.String)),
+			zap.Binary("parameter.bytes", param.Binary),
+		)
+
+		switch param.Type {
+		case block.FSParameterTypeBinaryValue:
+			if param.Binary == nil {
+				logger.Warn("skipping nil binary parameter", zap.String("parameter", param.Name))
+
+				continue
+			}
+
+			fsOpts = append(fsOpts, fsopen.WithBinaryParameters(param.Name, param.Binary))
+		case block.FSParameterTypeStringValue:
+			if param.String == nil {
+				logger.Warn("skipping nil string parameter", zap.String("parameter", param.Name))
+
+				continue
+			}
+
+			fsOpts = append(fsOpts, fsopen.WithStringParameter(param.Name, *param.String))
+		case block.FSParameterTypeBooleanValue:
+			fsOpts = append(fsOpts, fsopen.WithBoolParameter(param.Name))
+		}
+	}
+
+	return fsOpts
+}
+
+func buildManagerOptions(mountRequest *block.MountRequest, volumeStatus *block.VolumeStatus) []mount.ManagerOption {
+	opts := []mount.ManagerOption{
+		mount.WithSelinuxLabel(volumeStatus.TypedSpec().MountSpec.SelinuxLabel),
+	}
+
+	if mountRequest.TypedSpec().DisableAccessTime {
+		opts = append(opts, mount.WithDisableAccessTime())
+	}
+
+	if mountRequest.TypedSpec().Secure {
+		opts = append(opts, mount.WithSecure())
+	}
+
+	if mountRequest.TypedSpec().ReadOnly {
+		opts = append(opts, mount.WithReadOnly())
+	}
+
+	if mountRequest.TypedSpec().Detached {
+		opts = append(opts, mount.WithDetached())
+	}
+
+	return opts
+}
+
+func hasRequiredStringParameter(parameters []block.ParameterSpec, name string) bool {
+	for _, param := range parameters {
+		if param.Name == name && param.String != nil {
+			return true
+		}
+	}
+
+	return false
 }
 
 //nolint:gocyclo
@@ -574,68 +772,10 @@ func (ctrl *MountController) handleDiskMountOperation(
 
 	// mount hasn't been done yet
 	if !ok {
-		var (
-			opts   []mount.ManagerOption
-			fsOpts []fsopen.Option
-		)
-
-		fsOpts = append(
-			fsOpts,
+		fsOpts := buildFSOpenOptions(logger, volumeStatus.TypedSpec().MountSpec.Parameters, []fsopen.Option{
 			fsopen.WithSource(mountSource),
 			fsopen.WithProjectQuota(volumeStatus.TypedSpec().MountSpec.ProjectQuotaSupport),
-		)
-
-		for _, param := range volumeStatus.TypedSpec().MountSpec.Parameters {
-			logger.Info(
-				"adding new parameter",
-				zap.String("parameter", param.Name),
-				zap.String("parameter.type", param.Type.String()),
-				zap.String("parameter.string", pointer.SafeDeref(param.String)),
-				zap.Binary("parameter.bytes", param.Binary),
-			)
-
-			switch param.Type {
-			case block.FSParameterTypeBinaryValue:
-				if param.Binary == nil {
-					logger.Warn("skipping nil binary parameter", zap.String("parameter", param.Name))
-
-					continue
-				}
-
-				fsOpts = append(fsOpts, fsopen.WithBinaryParameters(param.Name, param.Binary))
-			case block.FSParameterTypeStringValue:
-				if param.String == nil {
-					logger.Warn("skipping nil string parameter", zap.String("parameter", param.Name))
-
-					continue
-				}
-
-				fsOpts = append(fsOpts, fsopen.WithStringParameter(param.Name, *param.String))
-			case block.FSParameterTypeBooleanValue:
-				fsOpts = append(fsOpts, fsopen.WithBoolParameter(param.Name))
-			}
-		}
-
-		opts = append(
-			opts,
-			mount.WithSelinuxLabel(volumeStatus.TypedSpec().MountSpec.SelinuxLabel),
-		)
-
-		if mountRequest.TypedSpec().DisableAccessTime {
-			opts = append(opts, mount.WithDisableAccessTime())
-		}
-
-		if mountRequest.TypedSpec().Secure {
-			opts = append(opts, mount.WithSecure())
-		}
-
-		if mountRequest.TypedSpec().ReadOnly {
-			opts = append(opts, mount.WithReadOnly())
-		}
-
-		if mountRequest.TypedSpec().Detached {
-			opts = append(opts, mount.WithDetached())
-		}
+		})
 
 		manager := mount.NewManager(slices.Concat(
 			[]mount.ManagerOption{
@@ -646,7 +786,7 @@ func (ctrl *MountController) handleDiskMountOperation(
 				),
 				mount.WithPrinter(logger.Sugar().Infof),
 			},
-			opts,
+			buildManagerOptions(mountRequest, volumeStatus),
 		)...)
 
 		mountpoint, err := manager.Mount()
@@ -684,62 +824,7 @@ func (ctrl *MountController) handleDiskMountOperation(
 		ctrl.activeMounts[mountRequest.Metadata().ID()] = mountCtx
 	}
 
-	if mountCtx.readOnly != mountRequest.TypedSpec().ReadOnly { // remount if needed
-		var err error
-
-		switch mountRequest.TypedSpec().ReadOnly {
-		case true:
-			err = mountCtx.point.RemountReadOnly()
-		case false:
-			err = mountCtx.point.RemountReadWrite()
-		}
-
-		if err != nil {
-			return fmt.Errorf("failed to remount %q: %w", mountRequest.Metadata().ID(), err)
-		}
-
-		logger.Info(
-			"volume remounted",
-			zap.String("volume", volumeStatus.Metadata().ID()),
-			zap.String("read_only", fmt.Sprintf("%v -> %v", mountCtx.readOnly, mountRequest.TypedSpec().ReadOnly)),
-		)
-
-		mountCtx.readOnly = mountRequest.TypedSpec().ReadOnly
-	}
-
-	//nolint:dupl
-	if mountCtx.disableAccessTime != mountRequest.TypedSpec().DisableAccessTime {
-		err := mountCtx.point.SetDisableAccessTime(mountRequest.TypedSpec().DisableAccessTime)
-		if err != nil {
-			return fmt.Errorf("failed to update disableAccessTime for %q: %w", mountRequest.Metadata().ID(), err)
-		}
-
-		logger.Info(
-			"volume mount attributes updated",
-			zap.String("volume", volumeStatus.Metadata().ID()),
-			zap.String("disable_access_time", fmt.Sprintf("%v -> %v", mountCtx.disableAccessTime, mountRequest.TypedSpec().DisableAccessTime)),
-		)
-
-		mountCtx.disableAccessTime = mountRequest.TypedSpec().DisableAccessTime
-	}
-
-	//nolint:dupl
-	if mountCtx.secure != mountRequest.TypedSpec().Secure {
-		err := mountCtx.point.SetSecure(mountRequest.TypedSpec().Secure)
-		if err != nil {
-			return fmt.Errorf("failed to update secure for %q: %w", mountRequest.Metadata().ID(), err)
-		}
-
-		logger.Info(
-			"volume mount attributes updated",
-			zap.String("volume", volumeStatus.Metadata().ID()),
-			zap.String("secure", fmt.Sprintf("%v -> %v", mountCtx.secure, mountRequest.TypedSpec().Secure)),
-		)
-
-		mountCtx.secure = mountRequest.TypedSpec().Secure
-	}
-
-	return nil
+	return applyMountAttributeChanges(logger, mountCtx, mountRequest, volumeStatus)
 }
 
 func (ctrl *MountController) handleOverlayMountOperation(
@@ -837,6 +922,9 @@ func (ctrl *MountController) handleUnmountOperation(
 	case block.VolumeTypeTmpfs:
 		return fmt.Errorf("not implemented yet")
 
+	case block.VolumeTypeMemory:
+		return ctrl.handleMemoryUnmountOperation(logger, mountRequest, volumeStatus)
+
 	case block.VolumeTypeExternal:
 		return ctrl.handleDiskUnmountOperation(logger, mountRequest, volumeStatus)
 
@@ -906,6 +994,14 @@ func (ctrl *MountController) handleDirectoryUnmountOperation(
 	)
 
 	return nil
+}
+
+func (ctrl *MountController) handleMemoryUnmountOperation(
+	logger *zap.Logger,
+	mountRequest *block.MountRequest,
+	_ *block.VolumeStatus,
+) error {
+	return ctrl.handleDiskUnmountOperation(logger, mountRequest, nil)
 }
 
 func (ctrl *MountController) handleSymlinkUmountOperation(

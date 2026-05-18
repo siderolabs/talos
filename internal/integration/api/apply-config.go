@@ -74,6 +74,11 @@ func (suite *ApplyConfigSuite) SuiteName() string {
 
 // SetupTest ...
 func (suite *ApplyConfigSuite) SetupTest() {
+	if suite.EphemeralNode {
+		// Config persistence is by-design impossible on ephemeral nodes.
+		suite.T().Skip("skipping: ApplyConfigSuite asserts cross-reboot config persistence, which is incompatible with ephemeral nodes")
+	}
+
 	// make sure we abort at some point in time, but give enough room for Recovers
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 30*time.Minute)
 }

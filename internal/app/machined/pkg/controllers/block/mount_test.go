@@ -150,3 +150,28 @@ func (suite *MountSuite) TestSymlinkDirectory() {
 	suite.Require().NoError(err)
 	suite.Assert().Equal("/run", path)
 }
+
+func (suite *MountSuite) TestMemoryMountRequiresSize() {
+	dir := suite.T().TempDir()
+	targetPath := filepath.Join(dir, "memory-target")
+
+	volumeStatus := block.NewVolumeStatus(block.NamespaceName, "memory-volume")
+	volumeStatus.TypedSpec().Type = block.VolumeTypeMemory
+	volumeStatus.TypedSpec().MountSpec = block.MountSpec{
+		TargetPath: targetPath,
+	}
+	volumeStatus.TypedSpec().Phase = block.VolumePhaseReady
+	suite.Create(volumeStatus)
+
+	mountRequest := block.NewMountRequest(block.NamespaceName, "memory-volume")
+	mountRequest.TypedSpec().RequesterIDs = []string{"requester1/memory-volume"}
+	mountRequest.TypedSpec().Requesters = []string{"requester1"}
+	mountRequest.TypedSpec().VolumeID = "memory-volume"
+	suite.Create(mountRequest)
+
+	ctest.AssertNoResource[*block.MountStatus](suite, "memory-volume")
+
+	_, err := os.Stat(targetPath)
+	suite.Require().Error(err)
+	suite.Require().True(os.IsNotExist(err))
+}

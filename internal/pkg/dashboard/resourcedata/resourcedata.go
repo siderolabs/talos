@@ -20,6 +20,8 @@ import (
 
 	"github.com/siderolabs/talos/internal/pkg/dashboard/util"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
@@ -114,6 +116,8 @@ func (source *Source) runResourceWatch(ctx context.Context, node string) error {
 		network.NewResolverStatus(network.NamespaceName, network.ResolverID).Metadata(),
 		network.NewTimeServerStatus(network.NamespaceName, network.TimeServerID).Metadata(),
 		hardware.NewSystemInformation(hardware.SystemInformationID).Metadata(),
+		block.NewVolumeStatus(block.NamespaceName, constants.StatePartitionLabel).Metadata(),
+		block.NewVolumeStatus(block.NamespaceName, constants.EphemeralPartitionLabel).Metadata(),
 		cluster.NewInfo().Metadata(),
 		network.NewStatus(network.NamespaceName, network.StatusID).Metadata(),
 		network.NewHostnameStatus(network.NamespaceName, network.HostnameID).Metadata(),

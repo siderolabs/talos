@@ -117,6 +117,52 @@ Talos now supports a new `ImageCacheConfig` document for configuring the Image C
 Old configuration is still supported for backwards compatibility.
 """
 
+    [notes.ephemeralNode]
+        title = "Ephemeral Talos Node (tmpfs STATE and EPHEMERAL)"
+        description = """\
+Both the `STATE` and `EPHEMERAL` system volumes can now be backed by `tmpfs` instead of a disk
+partition, turning a node into a fully ephemeral machine that loses **all** machine state,
+including the machine configuration itself, on every reboot.
+
+Enable per volume with a `VolumeConfig` document:
+
+```yaml
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: STATE
+volumeType: memory
+---
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: EPHEMERAL
+volumeType: memory
+provisioning:
+  minSize: 3GiB
+```
+
+Semantics and constraints:
+
+- `STATE: memory` uses a fixed 100 MiB tmpfs; no `provisioning` or `encryption` may be configured.
+- `EPHEMERAL: memory` requires `provisioning.minSize` (minimum 2 GiB, taken straight out of RAM)
+  and rejects `diskSelector`, `grow`, `maxSize`, and `encryption`.
+- Machine configuration must be supplied on every boot via kernel cmdline, platform metadata,
+  or the maintenance API — nothing is persisted to disk. `talosctl apply-config --mode=no-reboot`
+  is accepted; `--mode=reboot` and `--mode=staged` succeed but the staged config is lost when
+  the node reboots.
+- The node joins the cluster with a freshly generated identity each boot; this is intended for
+  workers and single-node clusters where ephemerality is the goal. Production multi-node control
+  planes should keep `STATE` on disk.
+- Sizing: every byte of `EPHEMERAL` comes out of RAM. Plan for `minSize` + workload RAM +
+  ~512 MiB of kernel/system overhead. A 4 GiB node with a 3 GiB ephemeral volume will OOM
+  under load; for the integration test suite the QEMU controlplane VM is provisioned with 6 GiB.
+- `META` is **not yet** supported on tmpfs; it stays on disk. A fully diskless node is not yet
+  supported in this release.
+- The `talosctl dashboard` Talos info pane now reports the ephemeral mode of each node.
+
+A dedicated CI variant `integration-qemu-ephemeral` runs a single-node cluster end-to-end with
+both STATE and EPHEMERAL on tmpfs.
+"""
+
 [make_deps]
 
     [make_deps.tools]

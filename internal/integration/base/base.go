@@ -69,6 +69,10 @@ type TalosSuite struct {
 	// SkipEphemeralPolicy disables MountsSuite's nosuid/nodev/noexec assertions
 	// for the EPHEMERAL (/var) mount point.
 	SkipEphemeralPolicy bool
+	// EphemeralNode marks the cluster as fully ephemeral (STATE + EPHEMERAL backed by tmpfs).
+	// Tests sensitive to persistent state should skip when this is true; the dedicated
+	// ephemeral test suite uses this to gate its assertions.
+	EphemeralNode bool
 
 	discoveredNodes cluster.Info
 }

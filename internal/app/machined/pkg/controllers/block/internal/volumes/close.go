@@ -18,7 +18,7 @@ import (
 // Close the encrypted volumes.
 func Close(ctx context.Context, logger *zap.Logger, volumeContext ManagerContext) error {
 	switch volumeContext.Cfg.TypedSpec().Type {
-	case block.VolumeTypeTmpfs, block.VolumeTypeDirectory, block.VolumeTypeSymlink, block.VolumeTypeOverlay, block.VolumeTypeExternal:
+	case block.VolumeTypeTmpfs, block.VolumeTypeDirectory, block.VolumeTypeSymlink, block.VolumeTypeOverlay, block.VolumeTypeExternal, block.VolumeTypeMemory:
 		// volume types can be always closed
 		volumeContext.Status.Phase = block.VolumePhaseClosed
 

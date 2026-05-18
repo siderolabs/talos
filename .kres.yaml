@@ -93,6 +93,7 @@ spec:
     integration/qemu-default: "Run QEMU integration tests on default variant"
     integration/qemu-encrypted-vip: "Run QEMU integration tests with disk encryption and virtual IP"
     integration/qemu-enforcing: "Run QEMU integration tests on enforcing variant"
+    integration/qemu-ephemeral: "Run QEMU integration tests for a fully ephemeral single-node cluster"
     integration/qemu-race: "Run QEMU integration tests with the race detector"
     integration/release-gate: "Run all release-gate integration tests"
     integration/reproducibility-test: "Run build reproducibility tests"
@@ -523,6 +524,41 @@ spec:
           artifactStep:
             type: upload
             artifactName: talos-logs-integration-qemu-${{ matrix.variant }}
+            disableExecutableListGeneration: true
+            artifactPath: /tmp/logs-*.tar.gz
+            additionalArtifacts:
+              - "/tmp/support-*.zip"
+    - name: integration-qemu-ephemeral
+      buildxOptions:
+        enabled: true
+      depends:
+        - default
+      runnerGroup: large
+      onWorkflowRun:
+        workflows: [default]
+        types: [completed]
+      triggerLabels:
+        - integration/qemu-ephemeral
+        - integration/release-gate
+      steps:
+        - name: download-artifacts
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+        - name: e2e-qemu
+          withSudo: true
+          environment:
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+            WITH_EPHEMERAL_NODE: "true"
+            QEMU_MEMORY_CONTROLPLANES: "6144"
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-qemu-ephemeral
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:

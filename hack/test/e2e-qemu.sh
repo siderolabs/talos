@@ -239,6 +239,20 @@ case "${WITH_4K_DISK:-false}" in
     ;;
 esac
 
+case "${WITH_EPHEMERAL_NODE:-false}" in
+  false)
+    ;;
+  *)
+    # Fully ephemeral node: STATE and EPHEMERAL on tmpfs. Forced single-node cluster.
+    QEMU_FLAGS+=("--config-patch=@hack/test/patches/ephemeral-memory.yaml")
+    QEMU_CONTROLPLANES=1
+    QEMU_WORKERS=0
+    QEMU_MEMORY_CONTROLPLANES="${QEMU_MEMORY_CONTROLPLANES:-6144}"
+    EXTRA_TEST_ARGS="${EXTRA_TEST_ARGS:-} -talos.ephemeral-node"
+    export EXTRA_TEST_ARGS
+    ;;
+esac
+
 case "${WITH_UKI_BOOT:-false}" in
   false)
     ;;
@@ -310,7 +324,7 @@ function create_cluster {
     --provisioner="${PROVISIONER}" \
     --name="${CLUSTER_NAME}" \
     --kubernetes-version="${KUBERNETES_VERSION}" \
-    --controlplanes=3 \
+    --controlplanes="${QEMU_CONTROLPLANES:-3}" \
     --workers="${QEMU_WORKERS:-2}" \
     --disk="${QEMU_SYSTEM_DISK_SIZE:-15360}" \
     --extra-disks="${QEMU_EXTRA_DISKS:-0}" \

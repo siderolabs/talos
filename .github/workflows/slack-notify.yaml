@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-04-27T17:59:00Z by kres e4dc583.
+# Generated on 2026-05-15T14:40:33Z by kres 1762ab2.
 
 "on":
   workflow_run:
@@ -9,6 +9,7 @@
       - grype-scan-cron
       - artifacts-cron
       - integration-qemu-triggered
+      - integration-qemu-ephemeral-triggered
       - integration-embedded-triggered
       - integration-conformance-triggered
       - integration-trusted-boot-triggered

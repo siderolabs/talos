@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-05-11T14:12:46Z by kres 1762ab2.
+# Generated on 2026-05-15T14:40:33Z by kres 1762ab2.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -4594,6 +4594,83 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
         with:
           name: talos-logs-integration-qemu-enforcing
+          path: |-
+            /tmp/logs-*.tar.gz
+            /tmp/support-*.zip
+          retention-days: "5"
+  integration-qemu-ephemeral:
+    permissions:
+      actions: read
+      contents: write
+      issues: read
+      packages: write
+      pull-requests: read
+    runs-on:
+      group: large
+    if: contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/qemu-ephemeral') || contains(fromJSON(needs.default.outputs.labels || '[]'), 'integration/release-gate')
+    needs:
+      - default
+    steps:
+      - name: gather-system-info
+        id: system-info
+        uses: kenchan0130/actions-system-info@59699597e84e80085a750998045983daa49274c4 # version: v1.4.0
+        continue-on-error: true
+      - name: print-system-info
+        run: |
+          MEMORY_GB=$((${{ steps.system-info.outputs.totalmem }}/1024/1024/1024))
+
+          OUTPUTS=(
+            "CPU Core: ${{ steps.system-info.outputs.cpu-core }}"
+            "CPU Model: ${{ steps.system-info.outputs.cpu-model }}"
+            "Hostname: ${{ steps.system-info.outputs.hostname }}"
+            "NodeName: ${NODE_NAME}"
+            "Kernel release: ${{ steps.system-info.outputs.kernel-release }}"
+            "Kernel version: ${{ steps.system-info.outputs.kernel-version }}"
+            "Name: ${{ steps.system-info.outputs.name }}"
+            "Platform: ${{ steps.system-info.outputs.platform }}"
+            "Release: ${{ steps.system-info.outputs.release }}"
+            "Total memory: ${MEMORY_GB} GB"
+          )
+
+          for OUTPUT in "${OUTPUTS[@]}";do
+            echo "${OUTPUT}"
+          done
+        continue-on-error: true
+      - name: checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # version: v6.0.2
+      - name: Unshallow
+        run: |
+          git fetch --prune --unshallow
+      - name: Set up Docker Buildx
+        id: setup-buildx
+        uses: docker/setup-buildx-action@4d04d5d9486b7bd6fa91e7baf45bbb4f8b9deedd # version: v4.0.0
+        with:
+          driver: remote
+          endpoint: tcp://buildkit-amd64.ci.svc.cluster.local:1234
+        timeout-minutes: 10
+      - name: Download artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # version: v8.0.1
+        with:
+          name: talos-artifacts
+          path: _out
+      - name: Fix artifact permissions
+        run: |
+          xargs -a _out/executable-artifacts -I {} chmod +x {}
+      - name: ci-temp-release-tag
+        run: |
+          make ci-temp-release-tag
+      - name: e2e-qemu
+        env:
+          IMAGE_REGISTRY: registry.dev.siderolabs.io
+          QEMU_MEMORY_CONTROLPLANES: "6144"
+          WITH_EPHEMERAL_NODE: "true"
+        run: |
+          sudo -E make e2e-qemu
+      - name: save artifacts
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # version: v7.0.1
+        with:
+          name: talos-logs-integration-qemu-ephemeral
           path: |-
             /tmp/logs-*.tar.gz
             /tmp/support-*.zip

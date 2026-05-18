@@ -44,6 +44,7 @@ var (
 	virtiofsd           bool
 	race                bool
 	skipEphemeralPolicy bool
+	ephemeralNode       bool
 
 	talosConfig       string
 	endpoint          string
@@ -124,6 +125,7 @@ func TestIntegration(t *testing.T) {
 				Virtiofsd:           virtiofsd,
 				Race:                race,
 				SkipEphemeralPolicy: skipEphemeralPolicy,
+				EphemeralNode:       ephemeralNode,
 			})
 		}
 
@@ -189,6 +191,8 @@ func init() {
 	flag.BoolVar(&virtiofsd, "talos.virtiofsd", false, "Marker to skip tests that should not be run without virtiofsd")
 	flag.BoolVar(&skipEphemeralPolicy, "talos.skip-ephemeral-policy", false,
 		"Skip MountsSuite assertions for /var (EPHEMERAL); set when the cluster was deployed with VolumeConfig EPHEMERAL mount.secure=false")
+	flag.BoolVar(&ephemeralNode, "talos.ephemeral-node", false,
+		"Cluster runs in fully ephemeral mode: STATE and EPHEMERAL are tmpfs and node state is wiped on every reboot")
 
 	flag.StringVar(&provision_test.DefaultSettings.CIDR, "talos.provision.cidr", provision_test.DefaultSettings.CIDR, "CIDR to use to provision clusters (provision tests only)")
 	flag.Var(&provision_test.DefaultSettings.RegistryMirrors, "talos.provision.registry-mirror", "registry mirrors to use (provision tests only)")
