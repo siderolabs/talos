@@ -23,6 +23,7 @@ data:
   net-conf.json: |-
     {
       "Network": "10.96.0.0/12",
+      "EnableNFTables": true,
       "Backend": {
         "Type": "vxlan",
         "Port": 4789

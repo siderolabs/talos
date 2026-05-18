@@ -117,6 +117,12 @@ Talos now supports a new `ImageCacheConfig` document for configuring the Image C
 Old configuration is still supported for backwards compatibility.
 """
 
+    [notes.flannel]
+        title = "Flannel CNI"
+        description = """\
+Talos now configures Flannel with the `EnableNFTables` option enabled, which uses nftables native backend instead of `iptables-nft` compatibility layer.
+"""
+
 [make_deps]
 
     [make_deps.tools]

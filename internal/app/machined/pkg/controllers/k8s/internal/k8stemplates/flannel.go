@@ -139,16 +139,18 @@ func FlannelConfigMapTemplate(spec *k8s.BootstrapManifestsConfigSpec) runtime.Ob
 	}
 
 	var netConf struct {
-		Network     string `json:"Network,omitempty"`
-		IPv6Network string `json:"IPv6Network,omitempty"`
-		EnableIPv6  *bool  `json:"EnableIPv6,omitempty"`
-		EnableIPv4  *bool  `json:"EnableIPv4,omitempty"`
-		Backend     struct {
+		Network        string `json:"Network,omitempty"`
+		IPv6Network    string `json:"IPv6Network,omitempty"`
+		EnableIPv6     *bool  `json:"EnableIPv6,omitempty"`
+		EnableIPv4     *bool  `json:"EnableIPv4,omitempty"`
+		EnableNFTables *bool  `json:"EnableNFTables,omitempty"`
+		Backend        struct {
 			Type string `json:"Type"`
 			Port int    `json:"Port"`
 		} `json:"Backend"`
 	}
 
+	netConf.EnableNFTables = new(true)
 	netConf.Backend.Type = "vxlan"
 	netConf.Backend.Port = 4789
 

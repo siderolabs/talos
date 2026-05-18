@@ -25,6 +25,7 @@ data:
       "IPv6Network": "fd00::/112",
       "EnableIPv6": true,
       "EnableIPv4": false,
+      "EnableNFTables": true,
       "Backend": {
         "Type": "vxlan",
         "Port": 4789
