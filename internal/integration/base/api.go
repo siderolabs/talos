@@ -14,7 +14,6 @@ import (
 	"fmt"
 	"io"
 	"math/rand/v2"
-	"path/filepath"
 	"slices"
 	"strings"
 	"time"
@@ -509,47 +508,18 @@ func (apiSuite *APISuite) AssertServicesRunning(ctx context.Context, node string
 	}
 }
 
-// AssertExpectedModules verifies that expected kernel modules are loaded on the node.
-func (apiSuite *APISuite) AssertExpectedModules(ctx context.Context, node string, expectedModules map[string]string) {
+// AssertExpectedModules verifies that expected kernel modules are loaded on the node as dynamic type and active state.
+func (apiSuite *APISuite) AssertExpectedModules(ctx context.Context, node string, expectedModules []string) {
 	nodeCtx := client.WithNode(ctx, node)
 
-	fileReader, err := apiSuite.Client.Read(nodeCtx, "/proc/modules")
-	apiSuite.Require().NoError(err)
+	for _, moduleName := range expectedModules {
+		status, getErr := safe.StateGetByID[*runtimeres.KernelModuleStatus](nodeCtx, apiSuite.Client.COSI, moduleName)
+		apiSuite.Require().NoError(getErr, "expected kernel module %q to be present", moduleName)
 
-	defer func() {
-		apiSuite.Require().NoError(fileReader.Close())
-	}()
-
-	scanner := bufio.NewScanner(fileReader)
-
-	var loadedModules []string
-
-	for scanner.Scan() {
-		loadedModules = append(loadedModules, strings.Split(scanner.Text(), " ")[0])
-	}
-
-	apiSuite.Require().NoError(scanner.Err())
-
-	fileReader, err = apiSuite.Client.Read(nodeCtx, fmt.Sprintf("/usr/lib/modules/%s/modules.dep", constants.DefaultKernelVersion))
-	apiSuite.Require().NoError(err)
-
-	defer func() {
-		apiSuite.Require().NoError(fileReader.Close())
-	}()
-
-	scanner = bufio.NewScanner(fileReader)
-
-	var modulesDep []string
-
-	for scanner.Scan() {
-		modulesDep = append(modulesDep, filepath.Base(strings.Split(scanner.Text(), ":")[0]))
-	}
-
-	apiSuite.Require().NoError(scanner.Err())
-
-	for module, moduleDep := range expectedModules {
-		apiSuite.Require().Contains(loadedModules, module, "expected %s to be loaded", module)
-		apiSuite.Require().Contains(modulesDep, moduleDep, "expected %s to be in modules.dep", moduleDep)
+		apiSuite.Assert().Equal(runtimeres.KernelModuleTypeDynamic, status.TypedSpec().Type,
+			"expected kernel module %q to be of dynamic type", moduleName)
+		apiSuite.Assert().Equal(runtimeres.KernelModuleStateActive, status.TypedSpec().State,
+			"expected kernel module %q to be in active state (Live)", moduleName)
 	}
 }
 

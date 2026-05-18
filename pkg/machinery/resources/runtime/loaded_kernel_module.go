@@ -16,10 +16,12 @@ import (
 // LoadedKernelModuleType is type of LoadedKernelModule resource.
 const LoadedKernelModuleType = resource.Type("LoadedKernelModules.runtime.talos.dev")
 
-// LoadedKernelModule resource holds information about Linux kernel module to load.
+// LoadedKernelModule resource holds information about loaded Linux kernel modules.
+//
+// Note: this resource is superseded by KernelModuleStatus.
 type LoadedKernelModule = typed.Resource[LoadedKernelModuleSpec, LoadedKernelModuleExtension]
 
-// LoadedKernelModuleSpec describes Linux kernel module to load.
+// LoadedKernelModuleSpec describes loaded Linux kernel modules.
 //
 //gotagsrewrite:gen
 type LoadedKernelModuleSpec struct {
@@ -45,7 +47,6 @@ type LoadedKernelModuleExtension struct{}
 func (LoadedKernelModuleExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             LoadedKernelModuleType,
-		Aliases:          []resource.Type{"module", "modules"},
 		DefaultNamespace: NamespaceName,
 		PrintColumns: []meta.PrintColumn{
 			{

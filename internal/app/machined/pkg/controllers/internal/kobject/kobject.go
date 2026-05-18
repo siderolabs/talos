@@ -30,15 +30,22 @@ const (
 	ActionUnbind  = kobject.Unbind
 )
 
-// Watcher is a kobject uvent watcher.
-type Watcher struct {
-	wg sync.WaitGroup
+type receiver interface {
+	Receive() (*kobject.Event, error)
+	Close() error
+}
 
-	cli *kobject.Client
+// Watcher is a kobject uevent watcher.
+type Watcher struct {
+	wg     sync.WaitGroup
+	cli    receiver
+	logger *zap.Logger
+	errCh  chan error
 }
 
 // NewWatcher creates a new kobject watcher.
-func NewWatcher() (*Watcher, error) {
+// subsystem is used to filter events by subsystem.
+func NewWatcher(logger *zap.Logger) (*Watcher, error) {
 	cli, err := kobject.New()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create kobject client: %w", err)
@@ -48,9 +55,16 @@ func NewWatcher() (*Watcher, error) {
 		return nil, err
 	}
 
+	return NewWatcherFromReceiver(cli, logger), nil
+}
+
+// NewWatcherFromReceiver creates a new kobject watcher from a custom receiver.
+func NewWatcherFromReceiver(r receiver, logger *zap.Logger) *Watcher {
 	return &Watcher{
-		cli: cli,
-	}, nil
+		cli:    r,
+		logger: logger,
+		errCh:  make(chan error, 1),
+	}
 }
 
 // Close the watcher.
@@ -65,7 +79,8 @@ func (w *Watcher) Close() error {
 }
 
 // Run the watcher, returns the channel of events.
-func (w *Watcher) Run(logger *zap.Logger) <-chan *Event {
+// subsystem is used to filter events by subsystem.
+func (w *Watcher) Run(subsystem string) <-chan *Event {
 	ch := make(chan *kobject.Event, 128)
 
 	w.wg.Go(func() {
@@ -75,10 +90,19 @@ func (w *Watcher) Run(logger *zap.Logger) <-chan *Event {
 			ev, err := w.cli.Receive()
 			if err != nil {
 				if err.Error() != "use of closed file" { // unfortunately not an exported error, just errors.New()
-					logger.Error("failed to receive kobject event", zap.Error(err))
+					w.logger.Error("failed to receive kobject event", zap.Error(err))
+
+					select {
+					case w.errCh <- err:
+					default:
+					}
 				}
 
 				return
+			}
+
+			if ev.Subsystem != subsystem {
+				continue
 			}
 
 			ch <- ev
@@ -86,4 +110,9 @@ func (w *Watcher) Run(logger *zap.Logger) <-chan *Event {
 	})
 
 	return ch
+}
+
+// ErrCh returns a channel that receives the first fatal error from the watcher goroutine.
+func (w *Watcher) ErrCh() <-chan error {
+	return w.errCh
 }

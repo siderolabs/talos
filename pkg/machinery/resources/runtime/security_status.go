@@ -22,8 +22,6 @@ const SecurityStateID = resource.ID("securitystate")
 // SecurityState is the security state resource.
 type SecurityState = typed.Resource[SecurityStateSpec, SecurityStateExtension]
 
-//go:generate go tool github.com/dmarkham/enumer -type FIPSState -type=SELinuxState -linecomment -text
-
 // SELinuxState describes the current SELinux status.
 type SELinuxState int
 

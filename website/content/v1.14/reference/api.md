@@ -336,6 +336,8 @@ description: Talos gRPC API reference.
     - [NetworkConfigLayer](#talos.resource.definitions.enums.NetworkConfigLayer)
     - [NetworkOperator](#talos.resource.definitions.enums.NetworkOperator)
     - [RuntimeFIPSState](#talos.resource.definitions.enums.RuntimeFIPSState)
+    - [RuntimeKernelModuleState](#talos.resource.definitions.enums.RuntimeKernelModuleState)
+    - [RuntimeKernelModuleType](#talos.resource.definitions.enums.RuntimeKernelModuleType)
     - [RuntimeMachineStage](#talos.resource.definitions.enums.RuntimeMachineStage)
     - [RuntimeSELinuxState](#talos.resource.definitions.enums.RuntimeSELinuxState)
   
@@ -494,6 +496,7 @@ description: Talos gRPC API reference.
     - [ExtensionServiceConfigStatusSpec](#talos.resource.definitions.runtime.ExtensionServiceConfigStatusSpec)
     - [KernelCmdlineSpec](#talos.resource.definitions.runtime.KernelCmdlineSpec)
     - [KernelModuleSpecSpec](#talos.resource.definitions.runtime.KernelModuleSpecSpec)
+    - [KernelModuleStatusSpec](#talos.resource.definitions.runtime.KernelModuleStatusSpec)
     - [KernelParamSpecSpec](#talos.resource.definitions.runtime.KernelParamSpecSpec)
     - [KernelParamStatusSpec](#talos.resource.definitions.runtime.KernelParamStatusSpec)
     - [KmsgLogConfigSpec](#talos.resource.definitions.runtime.KmsgLogConfigSpec)
@@ -6052,6 +6055,33 @@ RuntimeFIPSState describes the current FIPS status.
 
 
 
+<a name="talos.resource.definitions.enums.RuntimeKernelModuleState"></a>
+
+### RuntimeKernelModuleState
+RuntimeKernelModuleState represents the operational state of a dynamically loaded kernel module.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| KERNEL_MODULE_STATE_INACTIVE | 0 |  |
+| KERNEL_MODULE_STATE_ACTIVE | 1 |  |
+| KERNEL_MODULE_STATE_LOADING | 2 |  |
+| KERNEL_MODULE_STATE_UNLOADING | 3 |  |
+
+
+
+<a name="talos.resource.definitions.enums.RuntimeKernelModuleType"></a>
+
+### RuntimeKernelModuleType
+RuntimeKernelModuleType represents whether a kernel module is built into the kernel or dynamically loaded.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| KERNEL_MODULE_TYPE_UNKNOWN | 0 |  |
+| KERNEL_MODULE_TYPE_BUILTIN | 1 |  |
+| KERNEL_MODULE_TYPE_DYNAMIC | 2 |  |
+
+
+
 <a name="talos.resource.definitions.enums.RuntimeMachineStage"></a>
 
 ### RuntimeMachineStage
@@ -8648,6 +8678,26 @@ KernelModuleSpecSpec describes Linux kernel module to load.
 
 
 
+<a name="talos.resource.definitions.runtime.KernelModuleStatusSpec"></a>
+
+### KernelModuleStatusSpec
+KernelModuleStatusSpec represents the status of a Linux kernel module.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| type | [talos.resource.definitions.enums.RuntimeKernelModuleType](#talos.resource.definitions.enums.RuntimeKernelModuleType) |  | Type indicates whether the kernel module is built-in or dynamically loaded. |
+| size | [int64](#int64) |  | Size is the size of the kernel module in bytes. |
+| reference_count | [int64](#int64) |  | ReferenceCount is the number of references to this kernel module. |
+| dependencies | [string](#string) | repeated | Dependencies lists the names of kernel modules that this module depends on. |
+| state | [talos.resource.definitions.enums.RuntimeKernelModuleState](#talos.resource.definitions.enums.RuntimeKernelModuleState) |  | State is the operational state of the kernel module. |
+| address | [string](#string) |  | Address is the memory address where the kernel module is loaded (if applicable). |
+
+
+
+
+
+
 <a name="talos.resource.definitions.runtime.KernelParamSpecSpec"></a>
 
 ### KernelParamSpecSpec
@@ -8699,7 +8749,7 @@ KmsgLogConfigSpec describes configuration for kmsg log streaming.
 <a name="talos.resource.definitions.runtime.LoadedKernelModuleSpec"></a>
 
 ### LoadedKernelModuleSpec
-LoadedKernelModuleSpec describes Linux kernel module to load.
+LoadedKernelModuleSpec describes loaded Linux kernel modules.
 
 
 | Field | Type | Label | Description |

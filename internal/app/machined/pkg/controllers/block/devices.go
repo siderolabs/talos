@@ -18,8 +18,8 @@ import (
 	"golang.org/x/sys/unix"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/inotify"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/kobject"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/sysblock"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/internal/kobject"
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
@@ -59,14 +59,14 @@ func (ctrl *DevicesController) Run(ctx context.Context, r controller.Runtime, lo
 	}
 
 	// start the watcher first
-	watcher, err := kobject.NewWatcher()
+	watcher, err := kobject.NewWatcher(logger)
 	if err != nil {
 		return fmt.Errorf("failed to create kobject watcher: %w", err)
 	}
 
 	defer watcher.Close() //nolint:errcheck
 
-	watchCh := watcher.Run(logger)
+	watchCh := watcher.Run("block")
 
 	// start the inotify watcher
 	inotifyWatcher, err := inotify.NewWatcher()
@@ -92,10 +92,6 @@ func (ctrl *DevicesController) Run(ctx context.Context, r controller.Runtime, lo
 	for {
 		select {
 		case ev := <-watchCh:
-			if ev.Subsystem != "block" {
-				continue
-			}
-
 			ev.DevicePath = filepath.Join("/sys", ev.DevicePath)
 
 			if err = ctrl.processEvent(ctx, r, logger, inotifyWatcher, ev); err != nil {

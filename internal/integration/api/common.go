@@ -55,11 +55,11 @@ func (suite *CommonSuite) TestVirtioModulesLoaded() {
 		suite.T().Skip("skipping virtio test since provisioner is not qemu")
 	}
 
-	expectedVirtIOModules := map[string]string{
-		"virtio_balloon":        "virtio_balloon.ko",
-		"virtio_pci":            "virtio_pci.ko",
-		"virtio_pci_legacy_dev": "virtio_pci_legacy_dev.ko",
-		"virtio_pci_modern_dev": "virtio_pci_modern_dev.ko",
+	expectedVirtIOModules := []string{
+		"virtio_balloon",
+		"virtio_pci",
+		"virtio_pci_legacy_dev",
+		"virtio_pci_modern_dev",
 	}
 
 	node := suite.RandomDiscoveredNodeInternalIP()

@@ -16,6 +16,7 @@ import (
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/internal/trigger"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/watch"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -49,7 +50,7 @@ func (ctrl *RoutingRuleStatusController) Outputs() []controller.Output {
 //nolint:gocyclo
 func (ctrl *RoutingRuleStatusController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	// watch link changes as some routes might need to be re-applied if the link appears
-	watcher, err := watch.NewRtNetlink(watch.NewDefaultRateLimitedTrigger(ctx, r), unix.RTMGRP_IPV4_RULE,
+	watcher, err := watch.NewRtNetlink(trigger.NewDefaultRateLimitedTrigger(ctx, r), unix.RTMGRP_IPV4_RULE,
 		unix.RTNLGRP_IPV4_RULE, unix.RTNLGRP_IPV6_RULE)
 	if err != nil {
 		return err

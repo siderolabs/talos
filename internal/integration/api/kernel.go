@@ -12,6 +12,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/siderolabs/talos/internal/integration/base"
@@ -61,6 +62,19 @@ func (suite *KernelSuite) TestCmdline() {
 			asrt.NotEmpty(res.TypedSpec().Cmdline, "kernel cmdline should not be empty")
 		},
 	)
+}
+
+// TestKernelModuleStatus tests the runtime.KernelModuleStatus controller.
+func (suite *KernelSuite) TestKernelModuleStatus() {
+	node := suite.RandomDiscoveredNodeInternalIP()
+	ctx := client.WithNode(suite.ctx, node)
+
+	suite.T().Logf("using node %s", node)
+
+	list, err := safe.StateListAll[*runtime.KernelModuleStatus](ctx, suite.Client.COSI)
+	suite.Require().NoError(err)
+
+	suite.Require().NotEmpty(list, "kernel module status list should not be empty")
 }
 
 func init() {

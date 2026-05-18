@@ -1101,6 +1101,18 @@ const (
 	// DBusClientSocketLabel is the SELinux label for the D-Bus socket for the kubelet to connect to.
 	DBusClientSocketLabel = "system_u:object_r:dbus_client_socket_t:s0"
 
+	// LibModulesPath is the path to the system's lib modules directory.
+	LibModulesPath = "/usr/lib/modules"
+
+	// ModulesBuiltinPath is the path to the modules.builtin file.
+	ModulesBuiltinPath = LibModulesPath + "/" + DefaultKernelVersion + "/modules.builtin"
+
+	// ProcModulesPath is the path to /proc/modules.
+	ProcModulesPath = "/proc/modules"
+
+	// SysModulePath is the path to /sys/module.
+	SysModulePath = "/sys/module"
+
 	// GoVersion is the version of Go compiler this release was built with.
 	GoVersion = "go1.26.3"
 

@@ -203,3 +203,59 @@ func AssertNoResource[R rtestutils.ResourceWithRD](
 		opts...,
 	)
 }
+
+// AssertNoResources asserts that none of the given resources exist.
+func AssertNoResources[R rtestutils.ResourceWithRD](
+	suiter Suiter,
+	ids []string,
+	opts ...rtestutils.Option,
+) {
+	ctx, cancel := context.WithTimeout(suiter.Ctx(), 10*time.Second)
+	defer cancel()
+
+	for _, id := range ids {
+		rtestutils.AssertNoResource[R](
+			ctx,
+			suiter.T(),
+			suiter.State(),
+			id,
+			opts...,
+		)
+	}
+}
+
+// AssertNotEmpty asserts that a resource list is not empty.
+func AssertNotEmpty[R rtestutils.ResourceWithRD](
+	suiter Suiter,
+) {
+	require := require.New(suiter.T())
+
+	var r R
+
+	rds := r.ResourceDefinition()
+
+	ctx, cancel := context.WithCancel(suiter.Ctx())
+	defer cancel()
+
+	watchCh := make(chan state.Event)
+	namespace := rds.DefaultNamespace
+
+	require.NoError(suiter.State().WatchKind(ctx, resource.NewMetadata(namespace, rds.Type, "", resource.VersionUndefined), watchCh, state.WithBootstrapContents(true)))
+
+	for {
+		select {
+		case <-ctx.Done():
+			require.FailNow("timeout", "resource list is still empty")
+		case ev := <-watchCh:
+			switch ev.Type {
+			case state.Created:
+				// any resource observed, consider not empty
+				return
+			case state.Updated, state.Destroyed, state.Bootstrapped, state.Noop:
+				// ignore
+			case state.Errored:
+				require.NoError(ev.Error, "error watching resources")
+			}
+		}
+	}
+}

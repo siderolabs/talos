@@ -2,13 +2,19 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package watch
+// Package trigger provides rate-limited reconcile trigger utilities.
+package trigger
 
 import (
 	"context"
 
 	"golang.org/x/time/rate"
 )
+
+// Trigger is used by watcher to trigger reconcile loops.
+type Trigger interface {
+	QueueReconcile()
+}
 
 // RateLimitedTrigger wraps a Trigger with rate limiting.
 type RateLimitedTrigger struct {

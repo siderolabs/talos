@@ -4,8 +4,6 @@
 
 package runtime
 
-//go:generate go tool github.com/dmarkham/enumer -type=MachineStage -linecomment -text
-
 // MachineStage describes the stage of the machine boot/run process.
 type MachineStage int
 

@@ -808,7 +808,7 @@ type NetworkConfig struct {
 	Searches []string `yaml:"searchDomains,omitempty"`
 	// docgen:nodoc
 	//
-	// Deprecated: Use `StatisHostConfig` instead.
+	// Deprecated: Use `StaticHostConfig` instead.
 	ExtraHostEntries []*ExtraHost `yaml:"extraHostEntries,omitempty"`
 	// docgen:nodoc
 	//

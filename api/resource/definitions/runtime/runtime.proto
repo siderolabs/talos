@@ -74,6 +74,22 @@ message KernelModuleSpecSpec {
   repeated string parameters = 2;
 }
 
+// KernelModuleStatusSpec represents the status of a Linux kernel module.
+message KernelModuleStatusSpec {
+  // Type indicates whether the kernel module is built-in or dynamically loaded.
+  talos.resource.definitions.enums.RuntimeKernelModuleType type = 1;
+  // Size is the size of the kernel module in bytes.
+  int64 size = 2;
+  // ReferenceCount is the number of references to this kernel module.
+  int64 reference_count = 3;
+  // Dependencies lists the names of kernel modules that this module depends on.
+  repeated string dependencies = 4;
+  // State is the operational state of the kernel module.
+  talos.resource.definitions.enums.RuntimeKernelModuleState state = 5;
+  // Address is the memory address where the kernel module is loaded (if applicable).
+  string address = 6;
+}
+
 // KernelParamSpecSpec describes status of the defined sysctls.
 message KernelParamSpecSpec {
   string value = 1;
@@ -92,7 +108,7 @@ message KmsgLogConfigSpec {
   repeated common.URL destinations = 1;
 }
 
-// LoadedKernelModuleSpec describes Linux kernel module to load.
+// LoadedKernelModuleSpec describes loaded Linux kernel modules.
 message LoadedKernelModuleSpec {
   int64 size = 1;
   int64 reference_count = 2;

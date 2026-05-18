@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package watch_test
+package trigger_test
 
 import (
 	"context"
@@ -12,7 +12,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/watch"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/internal/trigger"
 )
 
 type mockTrigger struct {
@@ -33,12 +33,12 @@ func TestRateLimitedTrigger(t *testing.T) {
 	ctx, cancel := context.WithCancel(t.Context())
 	t.Cleanup(cancel)
 
-	trigger := watch.NewRateLimitedTrigger(ctx, mock, 10, 5)
+	trig := trigger.NewRateLimitedTrigger(ctx, mock, 10, 5)
 
 	start := time.Now()
 
 	for time.Since(start) < time.Second {
-		trigger.QueueReconcile()
+		trig.QueueReconcile()
 	}
 
 	assert.InDelta(t, int64(14), mock.Get(), 5)

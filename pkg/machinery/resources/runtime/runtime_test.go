@@ -31,6 +31,7 @@ func TestRegisterResource(t *testing.T) {
 		&runtime.EventSinkConfig{},
 		&runtime.ExtensionStatus{},
 		&runtime.KernelCmdline{},
+		&runtime.KernelModuleStatus{},
 		&runtime.KernelModuleSpec{},
 		&runtime.KernelParamSpec{},
 		&runtime.KernelParamStatus{},
