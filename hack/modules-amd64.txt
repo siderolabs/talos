@@ -101,13 +101,18 @@ kernel/drivers/hwmon/nct6775.ko
 kernel/drivers/i2c/algos/i2c-algo-bit.ko
 kernel/drivers/i2c/busses/i2c-i801.ko
 kernel/drivers/i2c/i2c-smbus.ko
+kernel/drivers/infiniband/core/ib_cm.ko
+kernel/drivers/infiniband/core/ib_core.ko
 kernel/drivers/infiniband/core/ib_umad.ko
 kernel/drivers/infiniband/core/ib_uverbs.ko
+kernel/drivers/infiniband/core/iw_cm.ko
+kernel/drivers/infiniband/core/rdma_cm.ko
 kernel/drivers/infiniband/core/rdma_ucm.ko
 kernel/drivers/infiniband/hw/irdma/irdma.ko
 kernel/drivers/infiniband/hw/mlx4/mlx4_ib.ko
 kernel/drivers/infiniband/hw/mlx5/mlx5_ib.ko
 kernel/drivers/infiniband/sw/rxe/rdma_rxe.ko
+kernel/drivers/infiniband/ulp/ipoib/ib_ipoib.ko
 kernel/drivers/input/misc/xen-kbdfront.ko
 kernel/drivers/input/mouse/psmouse.ko
 kernel/drivers/input/serio/hyperv-keyboard.ko
@@ -131,6 +136,8 @@ kernel/drivers/message/fusion/mptspi.ko
 kernel/drivers/mfd/lpc_ich.ko
 kernel/drivers/mfd/mfd-core.ko
 kernel/drivers/misc/hpilo.ko
+kernel/drivers/misc/vmw_balloon.ko
+kernel/drivers/misc/vmw_vmci/vmw_vmci.ko
 kernel/drivers/mmc/host/sdhci_f_sdh30.ko
 kernel/drivers/mmc/host/sdhci-acpi.ko
 kernel/drivers/mmc/host/sdhci-pci.ko
@@ -207,6 +214,7 @@ kernel/drivers/nvme/target/nvmet-rdma.ko
 kernel/drivers/nvme/target/nvmet-tcp.ko
 kernel/drivers/nvme/target/nvmet.ko
 kernel/drivers/pci/controller/pci-hyperv.ko
+kernel/drivers/pci/controller/vmd.ko
 kernel/drivers/pci/xen-pcifront.ko
 kernel/drivers/platform/x86/eeepc-laptop.ko
 kernel/drivers/platform/x86/intel/intel-vsec.ko
@@ -270,6 +278,7 @@ kernel/drivers/vhost/vhost_vdpa.ko
 kernel/drivers/vhost/vringh.ko
 kernel/drivers/virt/coco/guest/tsm_report.ko
 kernel/drivers/virt/coco/sev-guest/sev-guest.ko
+kernel/drivers/virt/vmgenid.ko
 kernel/drivers/virtio/virtio_balloon.ko
 kernel/drivers/virtio/virtio_dma_buf.ko
 kernel/drivers/virtio/virtio_mem.ko
@@ -293,9 +302,11 @@ kernel/lib/raid6/raid6_pq.ko
 kernel/net/ipv4/ip_gre.ko
 kernel/net/ipv6/ip6_gre.ko
 kernel/net/openvswitch/vport-gre.ko
+kernel/net/sunrpc/xprtrdma/rpcrdma.ko
 kernel/net/tls/tls.ko
 kernel/net/vmw_vsock/hv_sock.ko
 kernel/net/vmw_vsock/vmw_vsock_virtio_transport.ko
+kernel/net/vmw_vsock/vmw_vsock_vmci_transport.ko
 modules.builtin
 modules.builtin.modinfo
 modules.order
