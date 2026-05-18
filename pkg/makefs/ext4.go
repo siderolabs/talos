@@ -44,6 +44,10 @@ func Ext4(ctx context.Context, partname string, setters ...Option) error {
 		args = append(args, "-F")
 	}
 
+	if opts.SectorSize > 0 {
+		args = append(args, "-b", strconv.FormatUint(uint64(opts.SectorSize), 10))
+	}
+
 	if opts.Reproducible {
 		if opts.Label == "" {
 			return errors.New("label must be set for reproducible ext4 filesystem")

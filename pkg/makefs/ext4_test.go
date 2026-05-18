@@ -9,6 +9,7 @@ import (
 	"crypto/sha256"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 	"time"
@@ -82,6 +83,31 @@ func TestExt4Reproducibility(t *testing.T) {
 	require.NoError(t, fileData.Close())
 
 	assert.Equal(t, sum1.Sum(nil), sum2.Sum(nil), "ext4 filesystem is not reproducible")
+}
+
+// TestExt4CustomSectorSize verifies that WithSectorSize sets the ext4 block
+// size. Uses 1024 (non-default for the test image size) so a missing flag
+// would be detectable.
+func TestExt4CustomSectorSize(t *testing.T) {
+	t.Setenv("PATH", "/usr/bin:/bin:/usr/sbin:/sbin")
+
+	tmpDir := t.TempDir()
+	tempFile := filepath.Join(tmpDir, "ext4.img")
+
+	f, err := os.Create(tempFile)
+	require.NoError(t, err)
+	require.NoError(t, f.Truncate(32*1024*1024))
+	require.NoError(t, f.Close())
+
+	require.NoError(t, makefs.Ext4(t.Context(), tempFile, makefs.WithForce(true), makefs.WithSectorSize(1024)))
+
+	var stdout bytes.Buffer
+
+	cmd := exec.CommandContext(t.Context(), "tune2fs", "-l", tempFile)
+	cmd.Stdout = &stdout
+	require.NoError(t, cmd.Run())
+
+	assert.Regexp(t, `(?m)^Block size:\s+1024$`, stdout.String())
 }
 
 // TestExt4Resize tests that the ext4 filesystem can be resized.

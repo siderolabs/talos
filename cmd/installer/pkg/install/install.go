@@ -70,10 +70,12 @@ type Options struct {
 	// Options specific for the image creation mode.
 	ImageSecureboot     bool
 	DiskImageBootloader string
-	Version             string
-	BootAssets          bootloaderoptions.BootAssets
-	Printf              func(string, ...any)
-	MountPrefix         string
+	ImageSectorSize     uint
+
+	Version     string
+	BootAssets  bootloaderoptions.BootAssets
+	Printf      func(string, ...any)
+	MountPrefix string
 
 	// SecureBoot key auto-enrollment (image creation mode only).
 	//
@@ -307,7 +309,15 @@ func (i *Installer) blockDeviceData(mode Mode) (*block.Device, *blkid.Info, erro
 
 		return bd, info, nil
 	case ModeImage:
-		info, err := blkid.ProbePath(i.options.DiskPath, blkid.WithSkipLocking(true))
+		blkidProbeOptions := []blkid.ProbeOption{
+			blkid.WithSkipLocking(true),
+		}
+
+		if i.options.ImageSectorSize > 0 {
+			blkidProbeOptions = append(blkidProbeOptions, blkid.WithSectorSize(i.options.ImageSectorSize))
+		}
+
+		info, err := blkid.ProbePath(i.options.DiskPath, blkidProbeOptions...)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to probe blockdevice %s: %w", i.options.DiskPath, err)
 		}
@@ -374,7 +384,15 @@ func (i *Installer) Install(ctx context.Context, mode Mode) (err error) {
 	}
 
 	// re-probe the device to get updated partition information
-	info, err = blkid.ProbePath(i.options.DiskPath, blkid.WithSkipLocking(true))
+	blkidProbeOptions := []blkid.ProbeOption{
+		blkid.WithSkipLocking(true),
+	}
+
+	if mode == ModeImage && i.options.ImageSectorSize > 0 {
+		blkidProbeOptions = append(blkidProbeOptions, blkid.WithSectorSize(i.options.ImageSectorSize))
+	}
+
+	info, err = blkid.ProbePath(i.options.DiskPath, blkidProbeOptions...)
 	if err != nil {
 		return fmt.Errorf("failed to probe blockdevice %s: %w", i.options.DiskPath, err)
 	}
@@ -443,7 +461,13 @@ func (i *Installer) handleMeta(ctx context.Context, mode Mode, previousLabel str
 
 		defer f.Close() //nolint:errcheck
 
-		gptdev, err := gpt.DeviceFromFile(f)
+		var gptFileOptions []gpt.FileOption
+
+		if i.options.ImageSectorSize != 0 {
+			gptFileOptions = append(gptFileOptions, gpt.WithFileSectorSize(i.options.ImageSectorSize))
+		}
+
+		gptdev, err := gpt.DeviceFromFile(f, gptFileOptions...)
 		if err != nil {
 			return fmt.Errorf("failed to initialize GPT device from image file %s: %w", i.options.DiskPath, err)
 		}
@@ -617,7 +641,13 @@ func (i *Installer) createPartitions(ctx context.Context, mode Mode, bd *block.D
 
 		defer f.Close() //nolint:errcheck
 
-		gptdev, err = gpt.DeviceFromFile(f)
+		var gptFileOptions []gpt.FileOption
+
+		if i.options.ImageSectorSize != 0 {
+			gptFileOptions = append(gptFileOptions, gpt.WithFileSectorSize(i.options.ImageSectorSize))
+		}
+
+		gptdev, err = gpt.DeviceFromFile(f, gptFileOptions...)
 		if err != nil {
 			return nil, fmt.Errorf("failed to initialize GPT device from image file %s: %w", i.options.DiskPath, err)
 		}
@@ -691,7 +721,13 @@ func (i *Installer) formatPartitions(ctx context.Context, mode Mode, parts []par
 
 		defer f.Close() //nolint:errcheck
 
-		gptdev, err := gpt.DeviceFromFile(f)
+		var gptFileOptions []gpt.FileOption
+
+		if i.options.ImageSectorSize != 0 {
+			gptFileOptions = append(gptFileOptions, gpt.WithFileSectorSize(i.options.ImageSectorSize))
+		}
+
+		gptdev, err := gpt.DeviceFromFile(f, gptFileOptions...)
 		if err != nil {
 			return fmt.Errorf("failed to initialize GPT device from image file %s: %w", i.options.DiskPath, err)
 		}
@@ -957,6 +993,13 @@ func (i *Installer) getPartitionOptions(ctx context.Context, mode Mode, hostTalo
 
 			// Generate deterministic partition GUID from label for reproducible images
 			p.PartitionOpts = append(p.PartitionOpts, gpt.WithUniqueGUID(partitionGUID))
+
+			return p
+		})
+
+		// push down sector size for the image
+		partitions = xslices.Map(partitions, func(p partition.Options) partition.Options {
+			p.SectorSize = i.options.ImageSectorSize
 
 			return p
 		})

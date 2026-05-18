@@ -19,6 +19,7 @@ type Options struct {
 	Label               string
 	ConfigFile          string
 	SourceDirectory     string
+	SectorSize          uint
 	Force               bool
 	Reproducible        bool
 	UnsupportedFSOption bool
@@ -66,6 +67,18 @@ func WithConfigFile(configFile string) Option {
 func WithSourceDirectory(sourceDir string) Option {
 	return func(o *Options) {
 		o.SourceDirectory = sourceDir
+	}
+}
+
+// WithSectorSize overrides the sector size used by mkfs. This should only be
+// used with disk images where the underlying sector size cannot be detected
+// automatically; on real block devices mkfs auto-detection is preferred.
+//
+// For ext4, this sets the filesystem block size (-b) since ext4 has no
+// separate sector size concept.
+func WithSectorSize(sectorSize uint) Option {
+	return func(o *Options) {
+		o.SectorSize = sectorSize
 	}
 }
 

@@ -42,6 +42,10 @@ type ImageOptions struct {
 	DiskFormat DiskFormat `yaml:"diskFormat,omitempty"`
 	// DiskFormatOptions are additional options for the disk format
 	DiskFormatOptions string `yaml:"diskFormatOptions,omitempty"`
+	// DiskSectorSize is the sector size for the disk image (bytes).
+	//
+	// If not set, it defaults to 512 bytes.
+	DiskSectorSize uint `yaml:"diskSectorSize,omitempty"`
 	// Bootloader is the bootloader to use for the disk image.
 	// If not set, it defaults to dual-boot.
 	Bootloader BootloaderKind `yaml:"bootloader,omitempty"`

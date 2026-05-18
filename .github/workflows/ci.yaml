@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-05-18T15:20:06Z by kres ec45272.
+# Generated on 2026-05-18T17:58:52Z by kres ec45272.
 
 concurrency:
   group: ${{ github.head_ref || github.run_id }}
@@ -3045,6 +3045,10 @@ jobs:
             test: e2e-uki-4k
             with4kDisk: "true"
             withUkiBoot: "true"
+          - shortIntegrationTest: "yes"
+            test: e2e-disk-image-4k
+            with4kDisk: "true"
+            with4kDiskImage: "true"
           - qemuMemoryControlplanes: "4096"
             qemuMemoryWorkers: "4096"
             shortIntegrationTest: "yes"
@@ -3115,6 +3119,7 @@ jobs:
           SHORT_INTEGRATION_TEST: ${{ matrix.shortIntegrationTest }}
           TEST_MODE: ${{ matrix.testMode }}
           WITH_4K_DISK: ${{ matrix.with4kDisk }}
+          WITH_4K_DISK_IMAGE: ${{ matrix.with4kDiskImage }}
           WITH_CONFIG_PATCH: ${{ matrix.withConfigPatch }}
           WITH_CONTROL_PLANE_PORT: ${{ matrix.withControlPlanePort }}
           WITH_FIREWALL: ${{ matrix.withFirewall }}

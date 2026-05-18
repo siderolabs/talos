@@ -239,6 +239,17 @@ case "${WITH_4K_DISK:-false}" in
     ;;
 esac
 
+case "${WITH_4K_DISK_IMAGE:-false}" in
+  false)
+    ;;
+  *)
+    # build a disk image with 4K sector size
+    make image-metal-4k PLATFORM=linux/amd64
+
+    QEMU_FLAGS+=("--disk-image-path=_out/metal-amd64.raw.zst" "--skip-injecting-config" "--with-apply-config")
+    ;;
+esac
+
 case "${WITH_UKI_BOOT:-false}" in
   false)
     ;;

@@ -70,6 +70,10 @@ func XFS(ctx context.Context, partname string, setters ...Option) error {
 		args = append(args, "--unsupported")
 	}
 
+	if opts.SectorSize > 0 {
+		args = append(args, "-s", fmt.Sprintf("size=%d", opts.SectorSize))
+	}
+
 	if opts.SourceDirectory != "" {
 		r, err := GenerateProtofile(opts.SourceDirectory)
 		if err != nil {

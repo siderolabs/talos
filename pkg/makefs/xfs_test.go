@@ -116,6 +116,27 @@ realtime =none                   extsz=4096   blocks=0, rtextents=0
 	}
 }
 
+func TestXFSCustomSectorSize(t *testing.T) {
+	t.Setenv("PATH", "/usr/bin:/bin:/usr/sbin:/sbin")
+
+	tmpDir := t.TempDir()
+
+	tempFile := filepath.Join(tmpDir, "xfs.img")
+
+	require.NoError(t, os.WriteFile(tempFile, nil, 0o644))
+	require.NoError(t, os.Truncate(tempFile, 1024*1024*1024))
+
+	require.NoError(t, makefs.XFS(t.Context(), tempFile, makefs.WithSectorSize(4096)))
+
+	var stdout bytes.Buffer
+
+	cmd := exec.CommandContext(t.Context(), "xfs_db", "-p", "xfs_info", "-c", "info", tempFile)
+	cmd.Stdout = &stdout
+	require.NoError(t, cmd.Run())
+
+	assert.Contains(t, stdout.String(), "sectsz=4096")
+}
+
 func TestXFSReproducibility(t *testing.T) {
 	t.Setenv("SOURCE_DATE_EPOCH", "1732109929")
 	t.Setenv("DETERMINISTIC_SEED", "1")

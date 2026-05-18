@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/siderolabs/go-cmd/pkg/cmd"
 )
@@ -30,6 +31,10 @@ func VFAT(ctx context.Context, partname string, setters ...Option) error {
 
 	if opts.Reproducible {
 		args = append(args, "--invariant")
+	}
+
+	if opts.SectorSize > 0 {
+		args = append(args, "-S", strconv.FormatUint(uint64(opts.SectorSize), 10))
 	}
 
 	args = append(args, partname)

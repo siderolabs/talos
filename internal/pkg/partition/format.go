@@ -20,6 +20,7 @@ import (
 type FormatOptions struct {
 	Label               string
 	SourceDirectory     string
+	SectorSize          uint
 	FileSystemType      FileSystemType
 	Force               bool
 	UnsupportedFSOption bool
@@ -100,6 +101,10 @@ func Format(ctx context.Context, devname string, t *FormatOptions, talosVersion 
 
 	if t.Reproducible {
 		opts = append(opts, makefs.WithReproducible(true))
+	}
+
+	if t.SectorSize > 0 {
+		opts = append(opts, makefs.WithSectorSize(t.SectorSize))
 	}
 
 	printf("formatting the partition %q as %q with label %q\n", devname, t.FileSystemType, t.Label)

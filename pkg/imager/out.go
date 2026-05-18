@@ -368,6 +368,7 @@ func (i *Imager) buildImage(ctx context.Context, path string, printf func(string
 
 		ImageSecureboot:     i.prof.SecureBootEnabled(),
 		DiskImageBootloader: i.prof.Output.ImageOptions.Bootloader.String(),
+		ImageSectorSize:     i.prof.Output.ImageOptions.DiskSectorSize,
 		Version:             i.prof.Version,
 		BootAssets: options.BootAssets{
 			KernelPath:    i.prof.Input.Kernel.Path,

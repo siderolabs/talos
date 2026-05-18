@@ -53,6 +53,19 @@ var Default = map[string]Profile{
 			},
 		},
 	},
+	"metal-4k": {
+		Platform:   constants.PlatformMetal,
+		SecureBoot: new(false),
+		Output: Output{
+			Kind:      OutKindImage,
+			OutFormat: OutFormatZSTD,
+			ImageOptions: &ImageOptions{
+				DiskSize:       MinRAWDiskSize,
+				DiskFormat:     DiskFormatRaw,
+				DiskSectorSize: 4096,
+			},
+		},
+	},
 	"metal-uki": {
 		Platform:   constants.PlatformMetal,
 		SecureBoot: new(false),
