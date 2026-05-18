@@ -336,3 +336,15 @@ func (q Quirks) SupportsFactoryTalosctlDownload() bool {
 
 	return q.v.GTE(minTalosVersionFactoryTalosctlDownload)
 }
+
+var minVersionRegistryAuthConfig = semver.MustParse("1.12.0")
+
+// SupportsRegistryAuthConfig reports whether the given Talos version supports the
+// RegistryAuthConfig multi-doc config document.
+func (q Quirks) SupportsRegistryAuthConfig() bool {
+	if q.v == nil {
+		return true
+	}
+
+	return q.v.GTE(minVersionRegistryAuthConfig)
+}

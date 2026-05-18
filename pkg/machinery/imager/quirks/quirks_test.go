@@ -253,3 +253,31 @@ func TestPartitionSizes(t *testing.T) {
 		})
 	}
 }
+
+func TestSupportsRegistryAuthConfig(t *testing.T) {
+	for _, test := range []struct {
+		version string
+
+		expected bool
+	}{
+		{
+			version:  "1.11.0",
+			expected: false,
+		},
+		{
+			version:  "1.12.0-beta.0",
+			expected: true,
+		},
+		{
+			version:  "1.12.0",
+			expected: true,
+		},
+		{
+			expected: true,
+		},
+	} {
+		t.Run(test.version, func(t *testing.T) {
+			assert.Equal(t, test.expected, quirks.New(test.version).SupportsRegistryAuthConfig())
+		})
+	}
+}
