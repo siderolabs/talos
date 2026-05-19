@@ -218,7 +218,7 @@ spec:
             generateChecksums: true
             generateSignatures: true
             releaseNotes: RELEASE_NOTES.md
-    - name: cloud-images
+    - name: publish-cloud-images
       dispatchable: true
       sops: true
       runnerGroup: generic # this is not compute intensive - we are pulling images from factory

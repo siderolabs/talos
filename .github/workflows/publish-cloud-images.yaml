@@ -1,6 +1,6 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
 #
-# Generated on 2026-04-15T14:59:08Z by kres b6d29bf-dirty.
+# Generated on 2026-05-19T09:13:36Z by kres ec45272-dirty.
 
 "on":
   workflow_dispatch:
@@ -13,9 +13,9 @@
         description: ""
         type: string
         required: false
-name: dispatch
+name: publish-cloud-images
 jobs:
-  cloud-images:
+  publish-cloud-images:
     permissions:
       actions: read
       contents: write
