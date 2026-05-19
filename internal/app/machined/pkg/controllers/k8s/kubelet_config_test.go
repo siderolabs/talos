@@ -49,8 +49,8 @@ func (suite *KubeletConfigSuite) TestReconcile() {
 					MachineKubelet: &v1alpha1.KubeletConfig{
 						KubeletImage:      "kubelet",
 						KubeletClusterDNS: []string{"10.0.0.1"},
-						KubeletExtraArgs: v1alpha1.Args{
-							"enable-feature": v1alpha1.NewArgValue("foo", nil),
+						KubeletExtraArgs: meta.Args{
+							"enable-feature": meta.NewArgValue("foo", nil),
 						},
 						KubeletExtraMounts: []v1alpha1.ExtraMount{
 							{

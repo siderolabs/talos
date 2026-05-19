@@ -8,6 +8,7 @@ package v1alpha1
 
 import (
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -820,11 +821,11 @@ func (KubeletConfig) Doc() *encoder.Doc {
 
 	doc.Fields[0].AddExample("", kubeletImageExample())
 	doc.Fields[1].AddExample("", []string{"10.96.0.10", "169.254.2.53"})
-	doc.Fields[2].AddExample("", Args{
-		"key": ArgValue{strValue: "value"},
+	doc.Fields[2].AddExample("", meta.Args{
+		"key": meta.NewArgValue("value", nil),
 	})
-	doc.Fields[2].AddExample("", Args{
-		"key": ArgValue{listValue: []string{"value1", "value2"}},
+	doc.Fields[2].AddExample("", meta.Args{
+		"key": meta.NewArgValue("", []string{"value1", "value2"}),
 	})
 	doc.Fields[3].AddExample("", kubeletExtraMountsExample())
 	doc.Fields[4].AddExample("", kubeletExtraConfigExample())

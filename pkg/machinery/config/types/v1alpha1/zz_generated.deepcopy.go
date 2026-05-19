@@ -20,7 +20,7 @@ func (in *APIServerConfig) DeepCopyInto(out *APIServerConfig) {
 	*out = *in
 	if in.ExtraArgsConfig != nil {
 		in, out := &in.ExtraArgsConfig, &out.ExtraArgsConfig
-		*out = make(Args, len(*in))
+		*out = make(meta.Args, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
 		}
@@ -516,7 +516,7 @@ func (in *ControllerManagerConfig) DeepCopyInto(out *ControllerManagerConfig) {
 	*out = *in
 	if in.ExtraArgsConfig != nil {
 		in, out := &in.ExtraArgsConfig, &out.ExtraArgsConfig
-		*out = make(Args, len(*in))
+		*out = make(meta.Args, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
 		}
@@ -935,7 +935,7 @@ func (in *EtcdConfig) DeepCopyInto(out *EtcdConfig) {
 	}
 	if in.EtcdExtraArgs != nil {
 		in, out := &in.EtcdExtraArgs, &out.EtcdExtraArgs
-		*out = make(Args, len(*in))
+		*out = make(meta.Args, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
 		}
@@ -1386,7 +1386,7 @@ func (in *KubeletConfig) DeepCopyInto(out *KubeletConfig) {
 	}
 	if in.KubeletExtraArgs != nil {
 		in, out := &in.KubeletExtraArgs, &out.KubeletExtraArgs
-		*out = make(Args, len(*in))
+		*out = make(meta.Args, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
 		}
@@ -2017,7 +2017,7 @@ func (in *ProxyConfig) DeepCopyInto(out *ProxyConfig) {
 	}
 	if in.ExtraArgsConfig != nil {
 		in, out := &in.ExtraArgsConfig, &out.ExtraArgsConfig
-		*out = make(Args, len(*in))
+		*out = make(meta.Args, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
 		}
@@ -2281,7 +2281,7 @@ func (in *SchedulerConfig) DeepCopyInto(out *SchedulerConfig) {
 	*out = *in
 	if in.ExtraArgsConfig != nil {
 		in, out := &in.ExtraArgsConfig, &out.ExtraArgsConfig
-		*out = make(Args, len(*in))
+		*out = make(meta.Args, len(*in))
 		for key, val := range *in {
 			(*out)[key] = val
 		}

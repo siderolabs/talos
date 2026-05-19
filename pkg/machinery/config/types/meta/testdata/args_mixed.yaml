@@ -1,0 +1,8 @@
+advertise-address: 10.0.0.1
+api-audiences:
+    - kubernetes.default.svc
+    - api.cluster.local
+feature-gates: ServerSideApply=true
+runtime-config:
+    - api/all=true
+    - api/beta=false

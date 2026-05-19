@@ -76,8 +76,8 @@ func machineControlplaneExample() *MachineControlPlaneConfig {
 func machineKubeletExample() *KubeletConfig {
 	return &KubeletConfig{
 		KubeletImage: (&KubeletConfig{}).Image(),
-		KubeletExtraArgs: Args{
-			"feature-gates": ArgValue{strValue: "ServerSideApply=true"},
+		KubeletExtraArgs: meta.Args{
+			"feature-gates": meta.NewArgValue("ServerSideApply=true", nil),
 		},
 	}
 }
@@ -215,9 +215,9 @@ func resourcesConfigLimitsExample() meta.Unstructured {
 func clusterAPIServerExample() *APIServerConfig {
 	return &APIServerConfig{
 		ContainerImage: (&APIServerConfig{}).Image(),
-		ExtraArgsConfig: Args{
-			"feature-gates":                    ArgValue{strValue: "ServerSideApply=true"},
-			"http2-max-streams-per-connection": ArgValue{strValue: "32"},
+		ExtraArgsConfig: meta.Args{
+			"feature-gates":                    meta.NewArgValue("ServerSideApply=true", nil),
+			"http2-max-streams-per-connection": meta.NewArgValue("32", nil),
 		},
 		CertSANs: []string{
 			"1.2.3.4",
@@ -233,8 +233,8 @@ func clusterAPIServerImageExample() string {
 func clusterControllerManagerExample() *ControllerManagerConfig {
 	return &ControllerManagerConfig{
 		ContainerImage: (&ControllerManagerConfig{}).Image(),
-		ExtraArgsConfig: Args{
-			"feature-gates": ArgValue{strValue: "ServerSideApply=true"},
+		ExtraArgsConfig: meta.Args{
+			"feature-gates": meta.NewArgValue("ServerSideApply=true", nil),
 		},
 	}
 }
@@ -246,8 +246,8 @@ func clusterControllerManagerImageExample() string {
 func clusterProxyExample() *ProxyConfig {
 	return &ProxyConfig{
 		ContainerImage: (&ProxyConfig{}).Image(),
-		ExtraArgsConfig: Args{
-			"proxy-mode": ArgValue{strValue: "iptables"},
+		ExtraArgsConfig: meta.Args{
+			"proxy-mode": meta.NewArgValue("iptables", nil),
 		},
 		ModeConfig: "ipvs",
 	}
@@ -260,8 +260,8 @@ func clusterProxyImageExample() string {
 func clusterSchedulerExample() *SchedulerConfig {
 	return &SchedulerConfig{
 		ContainerImage: (&SchedulerConfig{}).Image(),
-		ExtraArgsConfig: Args{
-			"feature-gates": ArgValue{strValue: "AllBeta=true"},
+		ExtraArgsConfig: meta.Args{
+			"feature-gates": meta.NewArgValue("AllBeta=true", nil),
 		},
 	}
 }
@@ -273,8 +273,8 @@ func clusterSchedulerImageExample() string {
 func clusterEtcdExample() *EtcdConfig {
 	return &EtcdConfig{
 		ContainerImage: (&EtcdConfig{}).Image(),
-		EtcdExtraArgs: Args{
-			"election-timeout": ArgValue{strValue: "5000"},
+		EtcdExtraArgs: meta.Args{
+			"election-timeout": meta.NewArgValue("5000", nil),
 		},
 		RootCA: pemEncodedCertificateExample(),
 	}

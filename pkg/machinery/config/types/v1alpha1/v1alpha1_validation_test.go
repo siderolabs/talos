@@ -1915,8 +1915,8 @@ func TestValidate(t *testing.T) {
 					},
 					APIServerConfig: &v1alpha1.APIServerConfig{
 						AuthorizationConfigConfig: []*v1alpha1.AuthorizationConfigAuthorizerConfig{},
-						ExtraArgsConfig: v1alpha1.Args{
-							"authorization-mode": v1alpha1.NewArgValue("Node", nil),
+						ExtraArgsConfig: meta.Args{
+							"authorization-mode": meta.NewArgValue("Node", nil),
 						},
 					},
 				},
@@ -1942,8 +1942,8 @@ func TestValidate(t *testing.T) {
 					},
 					APIServerConfig: &v1alpha1.APIServerConfig{
 						AuthorizationConfigConfig: []*v1alpha1.AuthorizationConfigAuthorizerConfig{},
-						ExtraArgsConfig: v1alpha1.Args{
-							"authorization-webhook-version": v1alpha1.NewArgValue("v1", nil),
+						ExtraArgsConfig: meta.Args{
+							"authorization-webhook-version": meta.NewArgValue("v1", nil),
 						},
 					},
 				},

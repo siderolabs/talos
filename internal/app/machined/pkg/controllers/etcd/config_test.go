@@ -18,6 +18,7 @@ import (
 	etcdctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/etcd"
 	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -64,8 +65,8 @@ func (suite *ConfigSuite) TestReconcile() {
 			name: "extra args config",
 			etcdConfig: &v1alpha1.EtcdConfig{
 				ContainerImage: "foo/bar:v1.0.0",
-				EtcdExtraArgs: v1alpha1.Args{
-					"foo": v1alpha1.NewArgValue("", []string{"bar", "baz"}),
+				EtcdExtraArgs: meta.Args{
+					"foo": meta.NewArgValue("", []string{"bar", "baz"}),
 				},
 			},
 			expectedConfig: etcd.ConfigSpec{
@@ -81,8 +82,8 @@ func (suite *ConfigSuite) TestReconcile() {
 			name: "legacy subnet",
 			etcdConfig: &v1alpha1.EtcdConfig{
 				ContainerImage: "foo/bar:v1.0.0",
-				EtcdExtraArgs: v1alpha1.Args{
-					"arg": v1alpha1.NewArgValue("value", nil),
+				EtcdExtraArgs: meta.Args{
+					"arg": meta.NewArgValue("value", nil),
 				},
 				EtcdSubnet: "10.0.0.0/8",
 			},

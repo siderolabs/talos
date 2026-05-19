@@ -1,0 +1,2 @@
+feature-gates: ServerSideApply=true
+http2-max-streams-per-connection: "32"
