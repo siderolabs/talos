@@ -98,10 +98,15 @@ func Unseal(sealed SealedResponse) ([]byte, error) {
 		return nil, err
 	}
 
+	h, err := tpm2.TPMAlgSHA256.Hash()
+	if err != nil {
+		return nil, err
+	}
+
 	policySess, policyCloseFunc, err := tpm2.PolicySession(
 		t,
 		tpm2.TPMAlgSHA256,
-		20,
+		h.Size(),
 		tpm2.Salted(createPrimaryResponse.ObjectHandle, *outPub),
 	)
 	if err != nil {
@@ -254,7 +259,7 @@ func Unseal(sealed SealedResponse) ([]byte, error) {
 
 	unsealResponse, err := unsealOp.Execute(t, tpm2.HMAC(
 		tpm2.TPMAlgSHA256,
-		20,
+		h.Size(),
 		tpm2.Salted(createPrimaryResponse.ObjectHandle, *outPub),
 		tpm2.AESEncryption(128, tpm2.EncryptOut),
 		tpm2.Bound(loadResponse.ObjectHandle, loadResponse.Name, nil),

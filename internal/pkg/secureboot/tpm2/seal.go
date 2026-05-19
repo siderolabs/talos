@@ -64,13 +64,18 @@ func Seal(key []byte, tpmPCRs []int) (*SealedResponse, error) {
 		return nil, err
 	}
 
+	h, err := tpm2.TPMAlgSHA256.Hash()
+	if err != nil {
+		return nil, err
+	}
+
 	create := tpm2.Create{
 		ParentHandle: tpm2.AuthHandle{
 			Handle: createPrimaryResponse.ObjectHandle,
 			Name:   createPrimaryResponse.Name,
 			Auth: tpm2.HMAC(
 				tpm2.TPMAlgSHA256,
-				20,
+				h.Size(),
 				tpm2.Salted(createPrimaryResponse.ObjectHandle, *outPub),
 				tpm2.AESEncryption(128, tpm2.EncryptInOut),
 			),
