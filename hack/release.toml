@@ -7,7 +7,7 @@ match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
 ignore_deps = ["github.com/coredns/coredns"]
 
 # previous release
-previous = "v1.12.6"
+previous = "v1.12.7"
 
 pre_release = false
 
@@ -18,13 +18,19 @@ preface = """
     [notes.updates]
         title = "Component Updates"
         description = """\
-Linux: 6.18.24
+Linux: 6.18.32
 etcd: 3.6.11
 CoreDNS: 1.14.3
+containerd: 2.2.4
 
-Talos is built with Go 1.25.9.
+Talos is built with Go 1.25.10.
 """
 
+    [notes.containerd]
+        title = "Containerd Update"
+        description = """\
+This release includes an update to containerd v2.2.4 due to v2.1.x releases being EOL and affected by CVE-2026-46680.
+"""
 
 [make_deps]
 

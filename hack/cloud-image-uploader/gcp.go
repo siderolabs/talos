@@ -58,12 +58,12 @@ func NewGCPUploder(options Options) (*GCPUploder, error) {
 
 	var err error
 
-	gcpUploader.storageClient, err = storage.NewClient(context.Background(), option.WithCredentialsJSON([]byte(credentials)))
+	gcpUploader.storageClient, err = storage.NewClient(context.Background(), option.WithCredentialsJSON([]byte(credentials))) //nolint:staticcheck
 	if err != nil {
 		return nil, fmt.Errorf("gcp: failed to create google storage client: %w", err)
 	}
 
-	gcpUploader.computeService, err = compute.NewService(context.Background(), option.WithCredentialsJSON([]byte(credentials)))
+	gcpUploader.computeService, err = compute.NewService(context.Background(), option.WithCredentialsJSON([]byte(credentials))) //nolint:staticcheck
 	if err != nil {
 		return nil, fmt.Errorf("gcp: failed to create google compute service: %w", err)
 	}

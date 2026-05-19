@@ -52,7 +52,7 @@ func (managers Managers) Mount() (func() error, error) {
 
 // Unmount all mount points managed by managers.
 func (managers Managers) Unmount() error {
-	for i := len(managers) - 1; i >= 0; i-- {
+	for i := range slices.Backward(managers) {
 		if err := managers[i].Unmount(); err != nil {
 			return err
 		}
