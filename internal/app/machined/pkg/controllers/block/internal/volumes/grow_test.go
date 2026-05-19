@@ -31,7 +31,8 @@ func TestGrow(t *testing.T) {
 		volumeConfig block.VolumeConfigSpec
 		volumeStatus block.VolumeStatusSpec
 
-		expectedSize uint64
+		expectedGrew    bool
+		expectedNewSize uint64
 	}{
 		{
 			name: "grow at the end of the disk",
@@ -63,7 +64,8 @@ func TestGrow(t *testing.T) {
 				PartitionIndex: 1,
 			},
 
-			expectedSize: 1<<23 - 2*(1<<20),
+			expectedGrew:    true,
+			expectedNewSize: 1<<23 - 2*(1<<20),
 		},
 		{
 			name: "grow to max size",
@@ -96,7 +98,8 @@ func TestGrow(t *testing.T) {
 				PartitionIndex: 1,
 			},
 
-			expectedSize: 1 << 22,
+			expectedGrew:    true,
+			expectedNewSize: 1 << 22,
 		},
 		{
 			name: "doesn't grow at max size",
@@ -129,7 +132,8 @@ func TestGrow(t *testing.T) {
 				PartitionIndex: 1,
 			},
 
-			expectedSize: 1 << 21,
+			expectedGrew:    false,
+			expectedNewSize: 0,
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
@@ -144,15 +148,21 @@ func TestGrow(t *testing.T) {
 			volumeStatus := test.volumeStatus
 			volumeStatus.ParentLocation = test.diskSetup(t)
 
+			originalSize := volumeStatus.Size
+
 			managerContext := volumes.ManagerContext{
 				Cfg:    volumeCfg,
 				Status: &volumeStatus,
 			}
 
-			var err error
+			var (
+				grew    bool
+				newSize uint64
+				err     error
+			)
 
 			for range 10 {
-				err = volumes.Grow(ctx, logger, managerContext)
+				grew, newSize, err = volumes.Grow(ctx, logger, managerContext)
 				if err != nil && xerrors.TagIs[volumes.Retryable](err) {
 					// retry various disk locked and other retryable errors
 					time.Sleep(10 * time.Millisecond)
@@ -165,8 +175,12 @@ func TestGrow(t *testing.T) {
 
 			require.NoError(t, err)
 
-			assert.Equal(t, block.VolumePhaseProvisioned, volumeStatus.Phase)
-			assert.Equal(t, test.expectedSize, volumeStatus.Size)
+			assert.Equal(t, test.expectedGrew, grew, "unexpected grew value")
+			assert.Equal(t, test.expectedNewSize, newSize, "unexpected newSize value")
+
+			// Grow() must not modify Phase or Size; those are the caller's responsibility.
+			assert.Equal(t, block.VolumePhaseWaiting, volumeStatus.Phase, "Grow() must not modify Phase")
+			assert.Equal(t, originalSize, volumeStatus.Size, "Grow() must not modify Status.Size")
 		})
 	}
 }

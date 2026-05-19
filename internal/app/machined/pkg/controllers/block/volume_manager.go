@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"math"
 	"slices"
-	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -19,7 +18,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/value"
-	"github.com/siderolabs/gen/xerrors"
 	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 
@@ -33,6 +31,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
+	"github.com/siderolabs/talos/pkg/makefs"
 )
 
 // VolumeManagerController manages volumes in the system, converting VolumeConfig resources to VolumeStatuses.
@@ -132,22 +131,11 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 		deviceReadyRequest  int
 	)
 
-	retryTicker := time.NewTicker(30 * time.Second)
-	defer retryTicker.Stop()
-
-	shouldRetry := false
-
 	for {
 		select {
 		case <-r.EventCh():
 		case <-ctx.Done():
 			return nil
-		case <-retryTicker.C:
-			if !shouldRetry {
-				continue
-			}
-
-			shouldRetry = false
 		}
 
 		// if devices are not ready, we can't provision and locate most volumes
@@ -402,9 +390,6 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 				volumeStatus.TypedSpec().Phase = block.VolumePhaseFailed
 
 				volumeStatus.TypedSpec().ErrorMessage = err.Error()
-				if xerrors.TagIs[volumes.Retryable](err) {
-					shouldRetry = true
-				}
 			} else {
 				volumeStatus.TypedSpec().ErrorMessage = ""
 				volumeStatus.TypedSpec().PreFailPhase = block.VolumePhase(0)
@@ -540,7 +525,36 @@ func (ctrl *VolumeManagerController) processVolumeConfig(ctx context.Context, lo
 			// normal state machine
 			switch volumeContext.Status.Phase {
 			case block.VolumePhaseReady:
-				// nothing to do, ready
+				grew, newSize, err := volumes.Grow(ctx, logger, volumeContext)
+				if err != nil {
+					return err
+				}
+
+				if grew {
+					sizeUpdated := true
+
+					if !value.IsZero(volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec) &&
+						volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Type == block.FilesystemTypeXFS {
+						// The filesystem is already mounted at TargetPath; call XFSGrow
+						// directly rather than going through GrowFilesystem which would
+						// redundantly mount the device a second time via a tmpdir.
+						if mountPath := volumeContext.Status.MountSpec.TargetPath; mountPath != "" {
+							logger.Info("growing XFS filesystem inline", zap.String("mountpoint", mountPath))
+
+							if err = makefs.XFSGrow(ctx, mountPath); err != nil {
+								logger.Error("failed to grow XFS filesystem inline", zap.Error(err))
+
+								sizeUpdated = false
+							}
+						}
+					}
+
+					if sizeUpdated {
+						volumeContext.Status.SetSize(newSize)
+						logger.Info("volume grew live", zap.Uint64("newSize", newSize))
+					}
+				}
+
 				return nil
 			case block.VolumePhaseWaiting, block.VolumePhaseMissing:
 				if err := volumes.LocateAndProvision(ctx, logger, volumeContext); err != nil {
@@ -548,9 +562,16 @@ func (ctrl *VolumeManagerController) processVolumeConfig(ctx context.Context, lo
 				}
 			case block.VolumePhaseLocated:
 				// grow the partition if needed
-				if err := volumes.Grow(ctx, logger, volumeContext); err != nil {
+				grew, newSize, err := volumes.Grow(ctx, logger, volumeContext)
+				if err != nil {
 					return err
 				}
+
+				if grew {
+					volumeContext.Status.SetSize(newSize)
+				}
+
+				volumeContext.Status.Phase = block.VolumePhaseProvisioned
 			case block.VolumePhaseProvisioned:
 				// decrypt/encrypt the volume
 				if err := volumes.HandleEncryption(ctx, logger, volumeContext); err != nil {

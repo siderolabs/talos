@@ -17,56 +17,50 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
-// Grow grows a volume.
+// Grow grows a volume partition if there is space available and the Grow flag is set.
+// Returns (true, newSize, nil) if the partition was enlarged; (false, 0, nil) if no growth was needed.
+// The caller is responsible for calling SetSize and advancing Status.Phase.
 //
 //nolint:gocyclo
-func Grow(ctx context.Context, logger *zap.Logger, volumeContext ManagerContext) error {
+func Grow(ctx context.Context, logger *zap.Logger, volumeContext ManagerContext) (bool, uint64, error) {
 	if !(volumeContext.Cfg.TypedSpec().Type == block.VolumeTypePartition && volumeContext.Cfg.TypedSpec().Provisioning.PartitionSpec.Grow) {
-		// nothing to do
-		volumeContext.Status.Phase = block.VolumePhaseProvisioned
-
-		return nil
+		return false, 0, nil
 	}
 
 	if volumeContext.Cfg.TypedSpec().Provisioning.PartitionSpec.MaxSize > 0 && volumeContext.Status.Size >= volumeContext.Cfg.TypedSpec().Provisioning.PartitionSpec.MaxSize {
-		// nowhere to grow
-		volumeContext.Status.Phase = block.VolumePhaseProvisioned
-
-		return nil
+		return false, 0, nil
 	}
 
 	dev, err := blockdev.NewFromPath(volumeContext.Status.ParentLocation, blockdev.OpenForWrite())
 	if err != nil {
-		return xerrors.NewTaggedf[Retryable]("error opening disk: %w", err)
+		return false, 0, xerrors.NewTaggedf[Retryable]("error opening disk: %w", err)
 	}
 
 	defer dev.Close() //nolint:errcheck
 
 	if err = dev.RetryLockWithTimeout(ctx, true, 10*time.Second); err != nil {
-		return xerrors.NewTaggedf[Retryable]("error locking disk: %w", err)
+		return false, 0, xerrors.NewTaggedf[Retryable]("error locking disk: %w", err)
 	}
 
 	defer dev.Unlock() //nolint:errcheck
 
 	gptdev, err := gpt.DeviceFromBlockDevice(dev)
 	if err != nil {
-		return fmt.Errorf("error getting GPT device: %w", err)
+		return false, 0, fmt.Errorf("error getting GPT device: %w", err)
 	}
 
 	pt, err := gpt.Read(gptdev)
 	if err != nil {
-		return fmt.Errorf("error initializing GPT: %w", err)
+		return false, 0, fmt.Errorf("error initializing GPT: %w", err)
 	}
 
 	availableGrowth, err := pt.AvailablePartitionGrowth(volumeContext.Status.PartitionIndex - 1)
 	if err != nil {
-		return fmt.Errorf("error getting available partition growth: %w", err)
+		return false, 0, fmt.Errorf("error getting available partition growth: %w", err)
 	}
 
-	if availableGrowth <= 1024*1024 { // don't grow by less than 1MiB
-		volumeContext.Status.Phase = block.VolumePhaseProvisioned
-
-		return nil
+	if availableGrowth <= 1024*1024 { // don't grow by less than 1 MiB
+		return false, 0, nil
 	}
 
 	if volumeContext.Cfg.TypedSpec().Provisioning.PartitionSpec.MaxSize > 0 && availableGrowth > volumeContext.Cfg.TypedSpec().Provisioning.PartitionSpec.MaxSize-volumeContext.Status.Size {
@@ -76,15 +70,14 @@ func Grow(ctx context.Context, logger *zap.Logger, volumeContext ManagerContext)
 	logger.Debug("growing partition", zap.String("disk", volumeContext.Status.ParentLocation), zap.Int("partition", volumeContext.Status.PartitionIndex), zap.Uint64("size", availableGrowth))
 
 	if err = pt.GrowPartition(volumeContext.Status.PartitionIndex-1, availableGrowth); err != nil {
-		return fmt.Errorf("error growing partition: %w", err)
+		return false, 0, fmt.Errorf("error growing partition: %w", err)
 	}
 
+	// pt.Write() → syncKernelIncremental() uses BLKPG_RESIZE_PARTITION for
+	// mounted (EBUSY) partitions, safe in both boot and live contexts.
 	if err = pt.Write(); err != nil {
-		return fmt.Errorf("error writing GPT: %w", err)
+		return false, 0, fmt.Errorf("error writing GPT: %w", err)
 	}
 
-	volumeContext.Status.Phase = block.VolumePhaseProvisioned
-	volumeContext.Status.SetSize(volumeContext.Status.Size + availableGrowth)
-
-	return nil
+	return true, volumeContext.Status.Size + availableGrowth, nil
 }
