@@ -144,9 +144,6 @@ type MachineConfig struct {
 	MachineCertSANs []string `yaml:"certSANs"`
 	//   description: |
 	//     Provides machine specific control plane configuration options.
-	//   examples:
-	//     - name: ControlPlane definition example.
-	//       value: machineControlplaneExample()
 	MachineControlPlane *MachineControlPlaneConfig `yaml:"controlPlane,omitempty"`
 	//   description: |
 	//     Used to provide additional options to the kubelet.
@@ -417,10 +414,9 @@ type ClusterConfig struct {
 	//   examples:
 	//     - value: clusterProxyExample()
 	ProxyConfig *ProxyConfig `yaml:"proxy,omitempty"`
-	//   description: |
-	//     Scheduler server specific configuration options.
-	//   examples:
-	//     - value: clusterSchedulerExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeSchedulerConfig` instead.
 	SchedulerConfig *SchedulerConfig `yaml:"scheduler,omitempty"`
 	//   description: |
 	//     Configures cluster member discovery.
@@ -538,8 +534,9 @@ type MachineControlPlaneConfig struct {
 	//   description: |
 	//     Controller manager machine specific configuration options.
 	MachineControllerManager *MachineControllerManagerConfig `yaml:"controllerManager,omitempty"`
-	//   description: |
-	//     Scheduler machine specific configuration options.
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeSchedulerConfig` instead.
 	MachineScheduler *MachineSchedulerConfig `yaml:"scheduler,omitempty"`
 }
 
@@ -551,6 +548,10 @@ type MachineControllerManagerConfig struct {
 }
 
 // MachineSchedulerConfig represents the machine specific Scheduler config values.
+//
+// Deprecated: Use `KubeSchedulerConfig` instead.
+//
+// docgen:nodoc
 type MachineSchedulerConfig struct {
 	//   description: |
 	//     Disable kube-scheduler on the node.
@@ -1258,9 +1259,9 @@ type ProxyConfig struct {
 	ExtraArgsConfig meta.Args `yaml:"extraArgs,omitempty"`
 }
 
-var _ config.Scheduler = (*SchedulerConfig)(nil)
-
 // SchedulerConfig represents the kube scheduler configuration options.
+//
+// docgen:nodoc
 type SchedulerConfig struct {
 	//   description: |
 	//     The container image used in the scheduler manifest.

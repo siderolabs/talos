@@ -5,8 +5,11 @@
 package generate
 
 import (
+	"fmt"
+
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/k8s"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 func (in *Input) generateKubernetesControlplaneConfigs() []config.Document {
@@ -37,7 +40,11 @@ func (in *Input) generateKubernetesControlplaneConfigs() []config.Document {
 		},
 	}
 
+	schedulerConfig := k8s.NewKubeSchedulerConfigV1Alpha1()
+	schedulerConfig.PodImage = fmt.Sprintf("%s:v%s", constants.KubernetesSchedulerImage, in.KubernetesVersion)
+
 	return []config.Document{
 		etcdEncryptionConfig,
+		schedulerConfig,
 	}
 }

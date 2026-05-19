@@ -10,6 +10,41 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 )
 
+func (ResourcesConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "ResourcesConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "ResourcesConfig represents the pod resources." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "ResourcesConfig represents the pod resources.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "KubeSchedulerConfigV1Alpha1",
+				FieldName: "resources",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "requests",
+				Type:        "Unstructured",
+				Note:        "",
+				Description: "Requests configures the reserved cpu/memory resources.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Requests configures the reserved cpu/memory resources." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "limits",
+				Type:        "Unstructured",
+				Note:        "",
+				Description: "Limits configures the maximum cpu/memory limits a pod can use.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Limits configures the maximum cpu/memory limits a pod can use." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("resources requests.", resourcesConfigRequestsExample())
+	doc.Fields[1].AddExample("resources limits.", resourcesConfigLimitsExample())
+
+	return doc
+}
+
 func (KubeEtcdEncryptionConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "KubeEtcdEncryptionConfig",
@@ -35,13 +70,75 @@ func (KubeEtcdEncryptionConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (KubeSchedulerConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeSchedulerConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeSchedulerConfig configures kube-scheduler controlplane static pod." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeSchedulerConfig configures kube-scheduler controlplane static pod.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "enabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "By default, kube-scheduler static pod is enabled.\nSet to false to disable the kube-scheduler (assuming it runs on other controlplane node).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "By default, kube-scheduler static pod is enabled." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "image",
+				Type:        "string",
+				Note:        "",
+				Description: "The container image used to run the kube-scheduler component.\n\nThe image reference should contain the tag, even if it is pinned by digest.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The container image used to run the kube-scheduler component." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "config",
+				Type:        "Unstructured",
+				Note:        "",
+				Description: "Provide configuration for the kube-scheduler static pod.\n\nThere is no need  to specify kind and apiVersion fields (they will be set automatically),\nbut the rest of the configuration should be provided as is.\n\nSee https://kubernetes.io/docs/reference/scheduling/config/ for the details of the configuration schema.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Provide configuration for the kube-scheduler static pod." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "extraArgs",
+				Type:        "Args",
+				Note:        "",
+				Description: "Extra command line arguments to supply to the kube-scheduler.\n\nIt is preferable to use `config` field to provide configuration overrides.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra command line arguments to supply to the kube-scheduler." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "env",
+				Type:        "map[string]string",
+				Note:        "",
+				Description: "The `env` field allows for the addition of environment variables for the kube-scheduler.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The `env` field allows for the addition of environment variables for the kube-scheduler." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "resources",
+				Type:        "ResourcesConfig",
+				Note:        "",
+				Description: "Configure the kube-scheduler resources.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure the kube-scheduler resources." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeSchedulerConfigV1Alpha1())
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file k8s_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
 		Name:        "k8s",
 		Description: "",
 		Structs: []*encoder.Doc{
+			ResourcesConfig{}.Doc(),
 			KubeEtcdEncryptionConfigV1Alpha1{}.Doc(),
+			KubeSchedulerConfigV1Alpha1{}.Doc(),
 		},
 	}
 }

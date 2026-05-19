@@ -296,15 +296,6 @@ func (m *MachineControlPlaneConfig) ControllerManager() config.MachineController
 	return m.MachineControllerManager
 }
 
-// Scheduler implements the config.Provider interface.
-func (m *MachineControlPlaneConfig) Scheduler() config.MachineScheduler {
-	if m.MachineScheduler == nil {
-		return &MachineSchedulerConfig{}
-	}
-
-	return m.MachineScheduler
-}
-
 // Disabled implements the config.Provider interface.
 func (m *MachineControllerManagerConfig) Disabled() bool {
 	return pointer.SafeDeref(m.MachineControllerManagerDisabled)

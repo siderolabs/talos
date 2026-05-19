@@ -34,8 +34,10 @@ import (
 	"github.com/siderolabs/talos/pkg/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
+	"github.com/siderolabs/talos/pkg/machinery/config/generate/stdpatches"
 	machinetype "github.com/siderolabs/talos/pkg/machinery/config/machine"
-	v1alpha1config "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
@@ -241,25 +243,17 @@ func upgradeKubeProxy(ctx context.Context, cluster UpgradeProvider, options Upgr
 	return nil
 }
 
-func patchKubeProxy(options UpgradeOptions) func(config *v1alpha1config.Config) error {
-	return func(config *v1alpha1config.Config) error {
+func patchKubeProxy(
+	options UpgradeOptions,
+) func(config.Container) (configpatcher.Patch, error) {
+	return func(cfg config.Container) (configpatcher.Patch, error) {
 		if options.DryRun {
 			options.Log(" > skipped in dry-run")
 
-			return nil
+			return nil, nil
 		}
 
-		if config.ClusterConfig == nil {
-			config.ClusterConfig = &v1alpha1config.ClusterConfig{}
-		}
-
-		if config.ClusterConfig.ProxyConfig == nil {
-			config.ClusterConfig.ProxyConfig = &v1alpha1config.ProxyConfig{}
-		}
-
-		config.ClusterConfig.ProxyConfig.ContainerImage = fmt.Sprintf("%s:v%s", options.ProxyImage, options.Path.ToVersion())
-
-		return nil
+		return stdpatches.PreparePatch(stdpatches.WithKubeProxyImage(stdpatches.GuessVersionContractKubeProxy(cfg), fmt.Sprintf("%s:v%s", options.ProxyImage, options.Path.ToVersion())))
 	}
 }
 
@@ -355,10 +349,10 @@ func upgradeStaticPodOnNode(ctx context.Context, cluster UpgradeProvider, option
 
 var errUpdateSkipped = errors.New("update skipped")
 
-func staticPodImage(logUpdate func(oldImage string), imageName, containerImage, configImage string, options UpgradeOptions) (string, error) {
+func staticPodImage(logUpdate func(oldImage string), imageName, containerImage string, options UpgradeOptions) (string, error) {
 	image := fmt.Sprintf("%s:v%s", imageName, options.Path.ToVersion())
 
-	if containerImage == image || configImage == image {
+	if containerImage == image {
 		return "", errUpdateSkipped
 	}
 
@@ -372,12 +366,10 @@ func staticPodImage(logUpdate func(oldImage string), imageName, containerImage, 
 }
 
 //nolint:gocyclo
-func upgradeStaticPodPatcher(options UpgradeOptions, service string, configResource resource.Resource) func(config *v1alpha1config.Config) error {
-	return func(config *v1alpha1config.Config) error {
-		if config.ClusterConfig == nil {
-			config.ClusterConfig = &v1alpha1config.ClusterConfig{}
-		}
-
+func upgradeStaticPodPatcher(
+	options UpgradeOptions, service string, configResource resource.Resource,
+) func(config.Container) (configpatcher.Patch, error) {
+	return func(cfg config.Container) (configpatcher.Patch, error) {
 		var configImage string
 
 		switch r := configResource.(type) {
@@ -388,7 +380,7 @@ func upgradeStaticPodPatcher(options UpgradeOptions, service string, configResou
 		case *k8s.SchedulerConfig:
 			configImage = r.TypedSpec().Image
 		default:
-			return fmt.Errorf("unsupported service config %T", configResource)
+			return nil, fmt.Errorf("unsupported service config %T", configResource)
 		}
 
 		logUpdate := func(oldImage string) {
@@ -408,55 +400,38 @@ func upgradeStaticPodPatcher(options UpgradeOptions, service string, configResou
 
 		switch service {
 		case kubeAPIServer:
-			if config.ClusterConfig.APIServerConfig == nil {
-				config.ClusterConfig.APIServerConfig = &v1alpha1config.APIServerConfig{}
-			}
-
 			image, err := staticPodImage(logUpdate,
 				options.APIServerImage,
-				config.ClusterConfig.APIServerConfig.ContainerImage,
 				configImage,
 				options)
 			if err != nil {
-				return err
+				return nil, err
 			}
 
-			config.ClusterConfig.APIServerConfig.ContainerImage = image
+			return stdpatches.PreparePatch(stdpatches.WithKubeAPIServerImage(stdpatches.GuessVersionContractKubeAPIServer(cfg), image))
 		case kubeControllerManager:
-			if config.ClusterConfig.ControllerManagerConfig == nil {
-				config.ClusterConfig.ControllerManagerConfig = &v1alpha1config.ControllerManagerConfig{}
-			}
-
 			image, err := staticPodImage(logUpdate,
 				options.ControllerManagerImage,
-				config.ClusterConfig.ControllerManagerConfig.ContainerImage,
 				configImage,
 				options)
 			if err != nil {
-				return err
+				return nil, err
 			}
 
-			config.ClusterConfig.ControllerManagerConfig.ContainerImage = image
+			return stdpatches.PreparePatch(stdpatches.WithKubeControllerManagerImage(stdpatches.GuessVersionContractKubeControllerManager(cfg), image))
 		case kubeScheduler:
-			if config.ClusterConfig.SchedulerConfig == nil {
-				config.ClusterConfig.SchedulerConfig = &v1alpha1config.SchedulerConfig{}
-			}
-
 			image, err := staticPodImage(logUpdate,
 				options.SchedulerImage,
-				config.ClusterConfig.SchedulerConfig.ContainerImage,
 				configImage,
 				options)
 			if err != nil {
-				return err
+				return nil, err
 			}
 
-			config.ClusterConfig.SchedulerConfig.ContainerImage = image
+			return stdpatches.PreparePatch(stdpatches.WithKubeSchedulerImage(stdpatches.GuessVersionContractKubeScheduler(cfg), image))
 		default:
-			return fmt.Errorf("unsupported service %q", service)
+			return nil, fmt.Errorf("unsupported service %q", service)
 		}
-
-		return nil
 	}
 }
 

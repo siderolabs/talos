@@ -8226,6 +8226,7 @@ SchedulerConfigSpec is configuration for kube-scheduler.
 | resources | [Resources](#talos.resource.definitions.k8s.Resources) |  |  |
 | config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
 | extra_args | [SchedulerConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.SchedulerConfigSpec.ExtraArgsEntry) | repeated |  |
+| args | [string](#string) | repeated |  |
 
 
 

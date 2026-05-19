@@ -15,6 +15,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/go-kubernetes/kubernetes/compatibility"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -22,7 +23,6 @@ import (
 	k8sjson "k8s.io/apimachinery/pkg/runtime/serializer/json"
 	apiserverv1 "k8s.io/apiserver/pkg/apis/apiserver/v1"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
-	schedulerv1 "k8s.io/kube-scheduler/config/v1"
 
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -58,6 +58,7 @@ func (ctrl *RenderConfigsStaticPodController) Inputs() []controller.Input {
 		{
 			Namespace: k8s.ControlPlaneNamespaceName,
 			Type:      k8s.SchedulerConfigType,
+			ID:        optional.Some(k8s.FinalSchedulerConfigID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -119,7 +120,7 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 
 		kubeAPIServerVersion := compatibility.VersionFromImageRef(authorizerConfig.Image)
 
-		kubeSchedulerRes, err := safe.ReaderGetByID[*k8s.SchedulerConfig](ctx, r, k8s.SchedulerConfigID)
+		kubeSchedulerRes, err := safe.ReaderGetByID[*k8s.SchedulerConfig](ctx, r, k8s.FinalSchedulerConfigID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
@@ -278,32 +279,7 @@ func auditPolicyConfig(spec *k8s.AuditPolicyConfigSpec) func() (runtime.Object, 
 
 func schedulerConfig(spec *k8s.SchedulerConfigSpec) func() (runtime.Object, error) {
 	return func() (runtime.Object, error) {
-		// Validate against the typed schema, but emit the user-provided map so
-		// fields the user didn't set don't leak into the YAML as zero values —
-		// older Kubernetes releases reject keys they don't know about.
-		var cfg schedulerv1.KubeSchedulerConfiguration
-
-		if err := runtime.DefaultUnstructuredConverter.FromUnstructuredWithValidation(spec.Config, &cfg, false); err != nil {
-			return nil, fmt.Errorf("error unmarshaling scheduler configuration: %w", err)
-		}
-
-		out := runtime.DeepCopyJSON(spec.Config)
-		if out == nil {
-			out = map[string]any{}
-		}
-
-		out["apiVersion"] = "kubescheduler.config.k8s.io/v1"
-		out["kind"] = "KubeSchedulerConfiguration"
-
-		clientConn, _ := out["clientConnection"].(map[string]any)
-		if clientConn == nil {
-			clientConn = map[string]any{}
-			out["clientConnection"] = clientConn
-		}
-
-		clientConn["kubeconfig"] = filepath.Join(constants.KubernetesSchedulerSecretsDir, "kubeconfig")
-
-		return &unstructured.Unstructured{Object: out}, nil
+		return &unstructured.Unstructured{Object: spec.Config}, nil
 	}
 }
 

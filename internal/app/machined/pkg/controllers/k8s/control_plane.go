@@ -37,7 +37,7 @@ import (
 // * machine config is there
 // * it has cluster & machine parts
 // * machine is controlplane one.
-func controlplaneMapFunc[Output generic.ResourceWithRD](output Output) func(cfg *config.MachineConfig) optional.Optional[Output] {
+func controlplaneMapFunc[Output generic.ResourceWithRD](output Output, extraChecks ...func(*config.MachineConfig) bool) func(cfg *config.MachineConfig) optional.Optional[Output] {
 	return func(cfg *config.MachineConfig) optional.Optional[Output] {
 		if cfg.Metadata().ID() != config.ActiveID {
 			return optional.None[Output]()
@@ -49,6 +49,12 @@ func controlplaneMapFunc[Output generic.ResourceWithRD](output Output) func(cfg 
 
 		if !cfg.Config().Machine().Type().IsControlPlane() {
 			return optional.None[Output]()
+		}
+
+		for _, check := range extraChecks {
+			if !check(cfg) {
+				return optional.None[Output]()
+			}
 		}
 
 		return optional.Some(output)
@@ -262,29 +268,35 @@ type ControlPlaneSchedulerController = transform.Controller[*config.MachineConfi
 func NewControlPlaneSchedulerController() *ControlPlaneSchedulerController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *k8s.SchedulerConfig]{
-			Name:                    "k8s.ControlPlaneSchedulerController",
-			MapMetadataOptionalFunc: controlplaneMapFunc(k8s.NewSchedulerConfig()),
+			Name: "k8s.ControlPlaneSchedulerController",
+			MapMetadataOptionalFunc: controlplaneMapFunc(
+				k8s.NewSchedulerConfig(k8s.SchedulerConfigID),
+				func(machineConfig *config.MachineConfig) bool {
+					return machineConfig.Config().K8sSchedulerConfig() != nil
+				},
+			),
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, machineConfig *config.MachineConfig, res *k8s.SchedulerConfig) error {
-				cfgProvider := machineConfig.Config()
+				schedulerConfig := machineConfig.Config().K8sSchedulerConfig()
 
-				extraArgs := make(map[string]k8s.ArgValues, len(cfgProvider.Cluster().Scheduler().ExtraArgs()))
-				for k, v := range cfgProvider.Cluster().Scheduler().ExtraArgs() {
+				extraArgs := make(map[string]k8s.ArgValues, len(schedulerConfig.ExtraArgs()))
+				for k, v := range schedulerConfig.ExtraArgs() {
 					extraArgs[k] = k8s.ArgValues{Values: v}
 				}
 
 				*res.TypedSpec() = k8s.SchedulerConfigSpec{
-					Enabled:              !cfgProvider.Machine().Controlplane().Scheduler().Disabled(),
-					Image:                cfgProvider.Cluster().Scheduler().Image(),
+					Enabled:              schedulerConfig.Enabled(),
+					Image:                schedulerConfig.Image(),
 					ExtraArgs:            extraArgs,
-					ExtraVolumes:         convertVolumes(cfgProvider.Cluster().Scheduler().ExtraVolumes()),
-					EnvironmentVariables: cfgProvider.Cluster().Scheduler().Env(),
-					Resources:            convertResources(cfgProvider.Cluster().Scheduler().Resources()),
-					Config:               cfgProvider.Cluster().Scheduler().Config(),
+					ExtraVolumes:         convertVolumes(schedulerConfig.ExtraVolumes()),
+					EnvironmentVariables: schedulerConfig.Env(),
+					Resources:            convertResources(schedulerConfig.Resources()),
+					Config:               schedulerConfig.Config(),
 				}
 
 				return nil
 			},
 		},
+		transform.WithOutputKind(controller.OutputShared),
 	)
 }
 

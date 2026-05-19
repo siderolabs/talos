@@ -72,15 +72,7 @@ certSANs:
     - 172.16.0.10
     - 192.168.0.10
 {{< /highlight >}}</details> | |
-|`controlPlane` |<a href="#Config.machine.controlPlane">MachineControlPlaneConfig</a> |Provides machine specific control plane configuration options. <details><summary>Show example(s)</summary>ControlPlane definition example.:{{< highlight yaml >}}
-controlPlane:
-    # Controller manager machine specific configuration options.
-    controllerManager:
-        disabled: false # Disable kube-controller-manager on the node.
-    # Scheduler machine specific configuration options.
-    scheduler:
-        disabled: true # Disable kube-scheduler on the node.
-{{< /highlight >}}</details> | |
+|`controlPlane` |<a href="#Config.machine.controlPlane">MachineControlPlaneConfig</a> |Provides machine specific control plane configuration options.  | |
 |`kubelet` |<a href="#Config.machine.kubelet">KubeletConfig</a> |Used to provide additional options to the kubelet. <details><summary>Show example(s)</summary>Kubelet definition example.:{{< highlight yaml >}}
 kubelet:
     image: ghcr.io/siderolabs/kubelet:v1.36.1 # The `image` field is an optional reference to an alternative kubelet image.
@@ -251,22 +243,10 @@ MachineControlPlaneConfig machine specific configuration options.
 
 
 
-{{< highlight yaml >}}
-machine:
-    controlPlane:
-        # Controller manager machine specific configuration options.
-        controllerManager:
-            disabled: false # Disable kube-controller-manager on the node.
-        # Scheduler machine specific configuration options.
-        scheduler:
-            disabled: true # Disable kube-scheduler on the node.
-{{< /highlight >}}
-
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`controllerManager` |<a href="#Config.machine.controlPlane.controllerManager">MachineControllerManagerConfig</a> |Controller manager machine specific configuration options.  | |
-|`scheduler` |<a href="#Config.machine.controlPlane.scheduler">MachineSchedulerConfig</a> |Scheduler machine specific configuration options.  | |
 
 
 
@@ -281,22 +261,6 @@ MachineControllerManagerConfig represents the machine specific ControllerManager
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`disabled` |bool |Disable kube-controller-manager on the node.  | |
-
-
-
-
-
-
-#### scheduler {#Config.machine.controlPlane.scheduler}
-
-MachineSchedulerConfig represents the machine specific Scheduler config values.
-
-
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`disabled` |bool |Disable kube-scheduler on the node.  | |
 
 
 
@@ -1060,13 +1024,6 @@ proxy:
     # # Disable kube-proxy deployment on cluster bootstrap.
     # disabled: false
 {{< /highlight >}}</details> | |
-|`scheduler` |<a href="#Config.cluster.scheduler">SchedulerConfig</a> |Scheduler server specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-scheduler:
-    image: registry.k8s.io/kube-scheduler:v1.36.1 # The container image used in the scheduler manifest.
-    # Extra arguments to supply to the scheduler.
-    extraArgs:
-        feature-gates: AllBeta=true
-{{< /highlight >}}</details> | |
 |`discovery` |<a href="#Config.cluster.discovery">ClusterDiscoveryConfig</a> |Configures cluster member discovery. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 discovery:
     enabled: true # Enable the cluster membership discovery feature.
@@ -1659,87 +1616,6 @@ image: registry.k8s.io/kube-proxy:v1.36.1
 {{< /highlight >}}</details> | |
 |`mode` |string |proxy mode of kube-proxy.<br>The default is 'iptables'.  | |
 |`extraArgs` |Args |Extra arguments to supply to kube-proxy.  | |
-
-
-
-
-
-
-### scheduler {#Config.cluster.scheduler}
-
-SchedulerConfig represents the kube scheduler configuration options.
-
-
-
-{{< highlight yaml >}}
-cluster:
-    scheduler:
-        image: registry.k8s.io/kube-scheduler:v1.36.1 # The container image used in the scheduler manifest.
-        # Extra arguments to supply to the scheduler.
-        extraArgs:
-            feature-gates: AllBeta=true
-{{< /highlight >}}
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`image` |string |The container image used in the scheduler manifest. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-image: registry.k8s.io/kube-scheduler:v1.36.1
-{{< /highlight >}}</details> | |
-|`extraArgs` |Args |Extra arguments to supply to the scheduler.  | |
-|`extraVolumes` |<a href="#Config.cluster.scheduler.extraVolumes.">[]VolumeMountConfig</a> |Extra volumes to mount to the scheduler static pod.  | |
-|`env` |Env |The `env` field allows for the addition of environment variables for the control plane component.  | |
-|`resources` |<a href="#Config.cluster.scheduler.resources">ResourcesConfig</a> |Configure the scheduler resources.  | |
-|`config` |Unstructured |Specify custom kube-scheduler configuration.  | |
-
-
-
-
-#### extraVolumes[] {#Config.cluster.scheduler.extraVolumes.}
-
-VolumeMountConfig struct describes extra volume mount for the static pods.
-
-
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`hostPath` |string |Path on the host. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-hostPath: /var/lib/auth
-{{< /highlight >}}</details> | |
-|`mountPath` |string |Path in the container. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-mountPath: /etc/kubernetes/auth
-{{< /highlight >}}</details> | |
-|`readonly` |bool |Mount the volume read only. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-readonly: true
-{{< /highlight >}}</details> | |
-
-
-
-
-
-
-#### resources {#Config.cluster.scheduler.resources}
-
-ResourcesConfig represents the pod resources.
-
-
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`requests` |Unstructured |Requests configures the reserved cpu/memory resources. <details><summary>Show example(s)</summary>resources requests.:{{< highlight yaml >}}
-requests:
-    cpu: 1
-    memory: 1Gi
-{{< /highlight >}}</details> | |
-|`limits` |Unstructured |Limits configures the maximum cpu/memory resources a container can use. <details><summary>Show example(s)</summary>resources requests.:{{< highlight yaml >}}
-limits:
-    cpu: 2
-    memory: 2500Mi
-{{< /highlight >}}</details> | |
-
-
 
 
 

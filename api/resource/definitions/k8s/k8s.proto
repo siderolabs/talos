@@ -266,6 +266,7 @@ message SchedulerConfigSpec {
   Resources resources = 6;
   google.protobuf.Struct config = 7;
   map<string, ArgValues> extra_args = 8;
+  repeated string args = 9;
 }
 
 // SecretsStatusSpec describes status of rendered secrets.

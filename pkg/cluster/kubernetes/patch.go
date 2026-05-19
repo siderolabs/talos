@@ -12,13 +12,14 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	cfg "github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
-	v1alpha1config "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 )
 
 // patchNodeConfig updates node configuration by means of patch function.
-func patchNodeConfig(ctx context.Context, cluster UpgradeProvider, node string, encoderOpt encoder.Option, patchFunc func(config *v1alpha1config.Config) error) error {
+func patchNodeConfig(ctx context.Context, cluster UpgradeProvider, node string, encoderOpt encoder.Option, patchFunc func(cfg cfg.Container) (configpatcher.Patch, error)) error {
 	c, err := cluster.Client()
 	if err != nil {
 		return fmt.Errorf("error building Talos API client: %w", err)
@@ -33,12 +34,22 @@ func patchNodeConfig(ctx context.Context, cluster UpgradeProvider, node string, 
 
 	provider := mc.Provider()
 
-	newProvider, err := provider.PatchV1Alpha1(patchFunc)
+	patch, err := patchFunc(provider)
 	if err != nil {
-		return fmt.Errorf("error patching config: %w", err)
+		return fmt.Errorf("error generating patch: %w", err)
 	}
 
-	cfgBytes, err := newProvider.EncodeBytes(encoderOpt)
+	patched, err := configpatcher.Apply(configpatcher.WithConfig(provider), []configpatcher.Patch{patch})
+	if err != nil {
+		return fmt.Errorf("error applying patch: %w", err)
+	}
+
+	newCfg, err := patched.Config()
+	if err != nil {
+		return fmt.Errorf("error converting patched config: %w", err)
+	}
+
+	cfgBytes, err := newCfg.EncodeBytes(encoderOpt)
 	if err != nil {
 		return fmt.Errorf("error serializing config: %w", err)
 	}

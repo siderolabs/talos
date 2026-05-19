@@ -29,3 +29,6 @@ const ControllerManagerID = "kube-controller-manager"
 
 // SchedulerID is a generic ID for resources related to kube-scheduler.
 const SchedulerID = "kube-scheduler"
+
+// FinalPrefix is a prefix for final config produced for the configuration of the component.
+const FinalPrefix = "final-"

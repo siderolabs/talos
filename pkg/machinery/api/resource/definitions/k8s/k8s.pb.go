@@ -2159,6 +2159,7 @@ type SchedulerConfigSpec struct {
 	Resources            *Resources             `protobuf:"bytes,6,opt,name=resources,proto3" json:"resources,omitempty"`
 	Config               *structpb.Struct       `protobuf:"bytes,7,opt,name=config,proto3" json:"config,omitempty"`
 	ExtraArgs            map[string]*ArgValues  `protobuf:"bytes,8,rep,name=extra_args,json=extraArgs,proto3" json:"extra_args,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Args                 []string               `protobuf:"bytes,9,rep,name=args,proto3" json:"args,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -2238,6 +2239,13 @@ func (x *SchedulerConfigSpec) GetConfig() *structpb.Struct {
 func (x *SchedulerConfigSpec) GetExtraArgs() map[string]*ArgValues {
 	if x != nil {
 		return x.ExtraArgs
+	}
+	return nil
+}
+
+func (x *SchedulerConfigSpec) GetArgs() []string {
+	if x != nil {
+		return x.Args
 	}
 	return nil
 }
@@ -2674,7 +2682,7 @@ const file_resource_definitions_k8s_k8s_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a9\n" +
 	"\vLimitsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xab\x05\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xbf\x05\n" +
 	"\x13SchedulerConfigSpec\x12\x18\n" +
 	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x14\n" +
 	"\x05image\x18\x02 \x01(\tR\x05image\x12P\n" +
@@ -2683,7 +2691,8 @@ const file_resource_definitions_k8s_k8s_proto_rawDesc = "" +
 	"\tresources\x18\x06 \x01(\v2).talos.resource.definitions.k8s.ResourcesR\tresources\x12/\n" +
 	"\x06config\x18\a \x01(\v2\x17.google.protobuf.StructR\x06config\x12a\n" +
 	"\n" +
-	"extra_args\x18\b \x03(\v2B.talos.resource.definitions.k8s.SchedulerConfigSpec.ExtraArgsEntryR\textraArgs\x1aG\n" +
+	"extra_args\x18\b \x03(\v2B.talos.resource.definitions.k8s.SchedulerConfigSpec.ExtraArgsEntryR\textraArgs\x12\x12\n" +
+	"\x04args\x18\t \x03(\tR\x04args\x1aG\n" +
 	"\x19EnvironmentVariablesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1ag\n" +

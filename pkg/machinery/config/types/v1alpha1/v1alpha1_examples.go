@@ -62,17 +62,6 @@ func pemEncodedKeyExample() *x509.PEMEncodedKey {
 	}
 }
 
-func machineControlplaneExample() *MachineControlPlaneConfig {
-	return &MachineControlPlaneConfig{
-		MachineControllerManager: &MachineControllerManagerConfig{
-			MachineControllerManagerDisabled: new(false),
-		},
-		MachineScheduler: &MachineSchedulerConfig{
-			MachineSchedulerDisabled: new(true),
-		},
-	}
-}
-
 func machineKubeletExample() *KubeletConfig {
 	return &KubeletConfig{
 		KubeletImage: (&KubeletConfig{}).Image(),
@@ -255,19 +244,6 @@ func clusterProxyExample() *ProxyConfig {
 
 func clusterProxyImageExample() string {
 	return (&ProxyConfig{}).Image()
-}
-
-func clusterSchedulerExample() *SchedulerConfig {
-	return &SchedulerConfig{
-		ContainerImage: (&SchedulerConfig{}).Image(),
-		ExtraArgsConfig: meta.Args{
-			"feature-gates": meta.NewArgValue("AllBeta=true", nil),
-		},
-	}
-}
-
-func clusterSchedulerImageExample() string {
-	return (&SchedulerConfig{}).Image()
 }
 
 func clusterEtcdExample() *EtcdConfig {

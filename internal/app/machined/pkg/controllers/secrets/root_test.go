@@ -43,7 +43,7 @@ type RootSuite struct {
 }
 
 func (suite *RootSuite) genConfig(controlplane bool) talosconfig.Config {
-	input, err := generate.NewInput("test-cluster", "http://localhost:6443", "")
+	input, err := generate.NewInput("test-cluster", "http://localhost:6443", "1.28.0")
 	suite.Require().NoError(err)
 
 	var cfg talosconfig.Provider

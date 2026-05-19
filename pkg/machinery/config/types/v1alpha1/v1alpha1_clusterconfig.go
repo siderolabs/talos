@@ -55,7 +55,7 @@ func (c *ClusterConfig) Proxy() config.Proxy {
 }
 
 // Scheduler implements the config.ClusterConfig interface.
-func (c *ClusterConfig) Scheduler() config.Scheduler {
+func (c *ClusterConfig) Scheduler() *SchedulerConfig {
 	if c.SchedulerConfig == nil {
 		return &SchedulerConfig{}
 	}

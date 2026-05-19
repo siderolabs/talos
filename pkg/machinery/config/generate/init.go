@@ -27,7 +27,7 @@ func (in *Input) init() ([]config.Document, error) {
 	machine := &v1alpha1.MachineConfig{
 		MachineType: machine.TypeInit.String(),
 		MachineKubelet: &v1alpha1.KubeletConfig{
-			KubeletImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubeletImage, in.KubernetesVersion), in.KubernetesVersion),
+			KubeletImage: fmt.Sprintf("%s:v%s", constants.KubeletImage, in.KubernetesVersion),
 		},
 		MachineCA:       in.Options.SecretsBundle.Certs.OS,
 		MachineCertSANs: in.AdditionalMachineCertSANs,
@@ -149,19 +149,19 @@ func (in *Input) init() ([]config.Document, error) {
 		},
 		APIServerConfig: &v1alpha1.APIServerConfig{
 			CertSANs:               certSANs,
-			ContainerImage:         emptyIf(fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, in.KubernetesVersion), in.KubernetesVersion),
+			ContainerImage:         fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, in.KubernetesVersion),
 			AdmissionControlConfig: admissionControlConfig,
 			AuditPolicyConfig:      auditPolicyConfig,
 		},
 		ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{
-			ContainerImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubernetesControllerManagerImage, in.KubernetesVersion), in.KubernetesVersion),
+			ContainerImage: fmt.Sprintf("%s:v%s", constants.KubernetesControllerManagerImage, in.KubernetesVersion),
 		},
 		ProxyConfig: &v1alpha1.ProxyConfig{
-			ContainerImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubeProxyImage, in.KubernetesVersion), in.KubernetesVersion),
+			ContainerImage: fmt.Sprintf("%s:v%s", constants.KubeProxyImage, in.KubernetesVersion),
 		},
-		SchedulerConfig: &v1alpha1.SchedulerConfig{
-			ContainerImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubernetesSchedulerImage, in.KubernetesVersion), in.KubernetesVersion),
-		},
+		SchedulerConfig: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.SchedulerConfig{
+			ContainerImage: fmt.Sprintf("%s:v%s", constants.KubernetesSchedulerImage, in.KubernetesVersion),
+		}),
 		EtcdConfig: &v1alpha1.EtcdConfig{
 			RootCA: in.Options.SecretsBundle.Certs.Etcd,
 		},
@@ -252,4 +252,12 @@ func ptrOrNil(b bool) *bool {
 	}
 
 	return nil
+}
+
+func nilIf[T any](condition bool, value *T) *T {
+	if condition {
+		return nil
+	}
+
+	return value
 }

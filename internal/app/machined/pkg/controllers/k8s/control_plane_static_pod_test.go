@@ -37,7 +37,7 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileDefaults() {
 	configAPIServer := k8s.NewAPIServerConfig()
 	configControllerManager := k8s.NewControllerManagerConfig()
 	configControllerManager.TypedSpec().Enabled = true
-	configScheduler := k8s.NewSchedulerConfig()
+	configScheduler := k8s.NewSchedulerConfig(k8s.FinalSchedulerConfigID)
 	configScheduler.TypedSpec().Enabled = true
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), configStatus))
@@ -83,7 +83,7 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraMounts() {
 
 	configControllerManager := k8s.NewControllerManagerConfig()
 	configControllerManager.TypedSpec().Enabled = true
-	configScheduler := k8s.NewSchedulerConfig()
+	configScheduler := k8s.NewSchedulerConfig(k8s.FinalSchedulerConfigID)
 	configScheduler.TypedSpec().Enabled = true
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), configStatus))
@@ -470,7 +470,7 @@ func (suite *ControlPlaneStaticPodSuite) TestControlPlaneStaticPodsExceptSchedul
 	configAPIServer := k8s.NewAPIServerConfig()
 	configControllerManager := k8s.NewControllerManagerConfig()
 	configControllerManager.TypedSpec().Enabled = true
-	configScheduler := k8s.NewSchedulerConfig()
+	configScheduler := k8s.NewSchedulerConfig(k8s.FinalSchedulerConfigID)
 	configScheduler.TypedSpec().Enabled = true
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), configStatus))
@@ -513,7 +513,7 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileStaticPodResources() {
 	configAPIServer := k8s.NewAPIServerConfig()
 	configControllerManager := k8s.NewControllerManagerConfig()
 	configControllerManager.TypedSpec().Enabled = true
-	configScheduler := k8s.NewSchedulerConfig()
+	configScheduler := k8s.NewSchedulerConfig(k8s.FinalSchedulerConfigID)
 	configScheduler.TypedSpec().Enabled = true
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), configStatus))

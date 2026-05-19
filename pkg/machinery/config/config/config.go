@@ -37,6 +37,7 @@ type Config interface { //nolint:interfacebloat
 
 	// - k8s:
 	K8sEtcdEncryptionConfig() K8sEtcdEncryptionConfig
+	K8sSchedulerConfig() K8sSchedulerConfig
 
 	// - block devices/storage:
 	Volumes() VolumesConfig

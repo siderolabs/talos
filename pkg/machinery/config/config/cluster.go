@@ -23,7 +23,6 @@ type ClusterConfig interface {
 	APIServer() APIServer
 	ControllerManager() ControllerManager
 	Proxy() Proxy
-	Scheduler() Scheduler
 	Endpoint() *url.URL
 	Token() Token
 	CertSANs() []string
@@ -122,17 +121,6 @@ type Proxy interface {
 
 	// ExtraArgs describe an additional set of arguments to be supplied to the execution of `kube-proxy`
 	ExtraArgs() map[string][]string
-}
-
-// Scheduler defines the requirements for a config that pertains to scheduler related
-// options.
-type Scheduler interface {
-	Image() string
-	ExtraArgs() map[string][]string
-	ExtraVolumes() []VolumeMount
-	Env() Env
-	Resources() Resources
-	Config() map[string]any
 }
 
 // Etcd defines the requirements for a config that pertains to etcd related

@@ -118,7 +118,6 @@ type Security interface {
 // related options.
 type MachineControlPlane interface {
 	ControllerManager() MachineControllerManager
-	Scheduler() MachineScheduler
 }
 
 // MachineControllerManager defines the requirements for a config that pertains to ControllerManager
@@ -126,14 +125,6 @@ type MachineControlPlane interface {
 //
 //nolint:iface
 type MachineControllerManager interface {
-	Disabled() bool
-}
-
-// MachineScheduler defines the requirements for a config that pertains to Scheduler
-// related options.
-//
-//nolint:iface
-type MachineScheduler interface {
 	Disabled() bool
 }
 

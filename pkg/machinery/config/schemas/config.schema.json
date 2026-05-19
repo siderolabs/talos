@@ -1195,6 +1195,95 @@
       ],
       "description": "KubeEtcdEncryptionConfig configures kube-apiserver etcd encryption rules."
     },
+    "k8s.KubeSchedulerConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "KubeSchedulerConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "By default, kube-scheduler static pod is enabled.\nSet to false to disable the kube-scheduler (assuming it runs on other controlplane node).\n",
+          "markdownDescription": "By default, kube-scheduler static pod is enabled.\nSet to false to disable the kube-scheduler (assuming it runs on other controlplane node).",
+          "x-intellij-html-description": "\u003cp\u003eBy default, kube-scheduler static pod is enabled.\nSet to false to disable the kube-scheduler (assuming it runs on other controlplane node).\u003c/p\u003e\n"
+        },
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "The container image used to run the kube-scheduler component.\n\nThe image reference should contain the tag, even if it is pinned by digest.\n",
+          "markdownDescription": "The container image used to run the kube-scheduler component.\n\nThe image reference should contain the tag, even if it is pinned by digest.",
+          "x-intellij-html-description": "\u003cp\u003eThe container image used to run the kube-scheduler component.\u003c/p\u003e\n\n\u003cp\u003eThe image reference should contain the tag, even if it is pinned by digest.\u003c/p\u003e\n"
+        },
+        "config": {
+          "type": "object",
+          "title": "config",
+          "description": "Provide configuration for the kube-scheduler static pod.\n\nThere is no need  to specify kind and apiVersion fields (they will be set automatically),\nbut the rest of the configuration should be provided as is.\n\nSee https://kubernetes.io/docs/reference/scheduling/config/ for the details of the configuration schema.\n",
+          "markdownDescription": "Provide configuration for the kube-scheduler static pod.\n\nThere is no need  to specify kind and apiVersion fields (they will be set automatically),\nbut the rest of the configuration should be provided as is.\n\nSee https://kubernetes.io/docs/reference/scheduling/config/ for the details of the configuration schema.",
+          "x-intellij-html-description": "\u003cp\u003eProvide configuration for the kube-scheduler static pod.\u003c/p\u003e\n\n\u003cp\u003eThere is no need  to specify kind and apiVersion fields (they will be set automatically),\nbut the rest of the configuration should be provided as is.\u003c/p\u003e\n\n\u003cp\u003eSee \u003ca href=\"https://kubernetes.io/docs/reference/scheduling/config/\" target=\"_blank\"\u003ehttps://kubernetes.io/docs/reference/scheduling/config/\u003c/a\u003e for the details of the configuration schema.\u003c/p\u003e\n"
+        },
+        "extraArgs": {
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "type": "object",
+          "title": "extraArgs",
+          "description": "Extra command line arguments to supply to the kube-scheduler.\n\nIt is preferable to use config field to provide configuration overrides.\n",
+          "markdownDescription": "Extra command line arguments to supply to the kube-scheduler.\n\nIt is preferable to use `config` field to provide configuration overrides.",
+          "x-intellij-html-description": "\u003cp\u003eExtra command line arguments to supply to the kube-scheduler.\u003c/p\u003e\n\n\u003cp\u003eIt is preferable to use \u003ccode\u003econfig\u003c/code\u003e field to provide configuration overrides.\u003c/p\u003e\n"
+        },
+        "env": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "env",
+          "description": "The env field allows for the addition of environment variables for the kube-scheduler.\n",
+          "markdownDescription": "The `env` field allows for the addition of environment variables for the kube-scheduler.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eenv\u003c/code\u003e field allows for the addition of environment variables for the kube-scheduler.\u003c/p\u003e\n"
+        },
+        "resources": {
+          "type": "object",
+          "title": "resources",
+          "description": "Configure the kube-scheduler resources.\n",
+          "markdownDescription": "Configure the kube-scheduler resources.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure the kube-scheduler resources.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "KubeSchedulerConfig configures kube-scheduler controlplane static pod."
+    },
     "network.AddressConfig": {
       "properties": {
         "address": {
@@ -4353,13 +4442,6 @@
           "markdownDescription": "Kube-proxy server-specific configuration options",
           "x-intellij-html-description": "\u003cp\u003eKube-proxy server-specific configuration options\u003c/p\u003e\n"
         },
-        "scheduler": {
-          "$ref": "#/$defs/v1alpha1.SchedulerConfig",
-          "title": "scheduler",
-          "description": "Scheduler server specific configuration options.\n",
-          "markdownDescription": "Scheduler server specific configuration options.",
-          "x-intellij-html-description": "\u003cp\u003eScheduler server specific configuration options.\u003c/p\u003e\n"
-        },
         "discovery": {
           "$ref": "#/$defs/v1alpha1.ClusterDiscoveryConfig",
           "title": "discovery",
@@ -5541,13 +5623,6 @@
           "description": "Controller manager machine specific configuration options.\n",
           "markdownDescription": "Controller manager machine specific configuration options.",
           "x-intellij-html-description": "\u003cp\u003eController manager machine specific configuration options.\u003c/p\u003e\n"
-        },
-        "scheduler": {
-          "$ref": "#/$defs/v1alpha1.MachineSchedulerConfig",
-          "title": "scheduler",
-          "description": "Scheduler machine specific configuration options.\n",
-          "markdownDescription": "Scheduler machine specific configuration options.",
-          "x-intellij-html-description": "\u003cp\u003eScheduler machine specific configuration options.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -5606,20 +5681,6 @@
       "additionalProperties": false,
       "type": "object",
       "description": "MachineFile represents a file to write to disk."
-    },
-    "v1alpha1.MachineSchedulerConfig": {
-      "properties": {
-        "disabled": {
-          "type": "boolean",
-          "title": "disabled",
-          "description": "Disable kube-scheduler on the node.\n",
-          "markdownDescription": "Disable kube-scheduler on the node.",
-          "x-intellij-html-description": "\u003cp\u003eDisable kube-scheduler on the node.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "MachineSchedulerConfig represents the machine specific Scheduler config values."
     },
     "v1alpha1.MachineSeccompProfile": {
       "properties": {
@@ -5746,76 +5807,6 @@
       "type": "object",
       "description": "ResourcesConfig represents the pod resources."
     },
-    "v1alpha1.SchedulerConfig": {
-      "properties": {
-        "image": {
-          "type": "string",
-          "title": "image",
-          "description": "The container image used in the scheduler manifest.\n",
-          "markdownDescription": "The container image used in the scheduler manifest.",
-          "x-intellij-html-description": "\u003cp\u003eThe container image used in the scheduler manifest.\u003c/p\u003e\n"
-        },
-        "extraArgs": {
-          "additionalProperties": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              }
-            ]
-          },
-          "type": "object",
-          "title": "extraArgs",
-          "description": "Extra arguments to supply to the scheduler.\n",
-          "markdownDescription": "Extra arguments to supply to the scheduler.",
-          "x-intellij-html-description": "\u003cp\u003eExtra arguments to supply to the scheduler.\u003c/p\u003e\n"
-        },
-        "extraVolumes": {
-          "items": {
-            "$ref": "#/$defs/v1alpha1.VolumeMountConfig"
-          },
-          "type": "array",
-          "title": "extraVolumes",
-          "description": "Extra volumes to mount to the scheduler static pod.\n",
-          "markdownDescription": "Extra volumes to mount to the scheduler static pod.",
-          "x-intellij-html-description": "\u003cp\u003eExtra volumes to mount to the scheduler static pod.\u003c/p\u003e\n"
-        },
-        "env": {
-          "patternProperties": {
-            ".*": {
-              "type": "string"
-            }
-          },
-          "type": "object",
-          "title": "env",
-          "description": "The env field allows for the addition of environment variables for the control plane component.\n",
-          "markdownDescription": "The `env` field allows for the addition of environment variables for the control plane component.",
-          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eenv\u003c/code\u003e field allows for the addition of environment variables for the control plane component.\u003c/p\u003e\n"
-        },
-        "resources": {
-          "type": "object",
-          "title": "resources",
-          "description": "Configure the scheduler resources.\n",
-          "markdownDescription": "Configure the scheduler resources.",
-          "x-intellij-html-description": "\u003cp\u003eConfigure the scheduler resources.\u003c/p\u003e\n"
-        },
-        "config": {
-          "type": "object",
-          "title": "config",
-          "description": "Specify custom kube-scheduler configuration.\n",
-          "markdownDescription": "Specify custom kube-scheduler configuration.",
-          "x-intellij-html-description": "\u003cp\u003eSpecify custom kube-scheduler configuration.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "SchedulerConfig represents the kube scheduler configuration options."
-    },
     "v1alpha1.UdevConfig": {
       "properties": {
         "rules": {
@@ -5904,6 +5895,9 @@
     },
     {
       "$ref": "#/$defs/k8s.KubeEtcdEncryptionConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/k8s.KubeSchedulerConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/network.BlackholeRouteConfigV1Alpha1"

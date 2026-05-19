@@ -2235,34 +2235,6 @@ func TestValidateCNI(t *testing.T) {
 	}
 }
 
-func TestKubernetesVersionFromImageRef(t *testing.T) {
-	t.Parallel()
-
-	for _, test := range []struct {
-		imageRef string
-
-		expectedVersion string
-	}{
-		{
-			imageRef:        "ghcr.io/siderolabs/kubelet:v1.32.2",
-			expectedVersion: "1.32.2",
-		},
-		{
-			imageRef:        "ghcr.io/siderolabs/kubelet:v1.32.2@sha256:123456",
-			expectedVersion: "1.32.2",
-		},
-	} {
-		t.Run(test.imageRef, func(t *testing.T) {
-			t.Parallel()
-
-			version, err := v1alpha1.KubernetesVersionFromImageRef(test.imageRef)
-			require.NoError(t, err)
-
-			assert.Equal(t, test.expectedVersion, version.String())
-		})
-	}
-}
-
 func TestValidateKubernetesVersions(t *testing.T) {
 	t.Parallel()
 

@@ -252,6 +252,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		k8s.NewControlPlaneBootstrapManifestsController(),
 		k8s.NewControlPlaneControllerManagerController(),
 		k8s.NewControlPlaneExtraManifestsController(),
+		k8s.NewControlPlaneSchedulerFinalController(),
 		k8s.NewControlPlaneSchedulerController(),
 		&k8s.ControlPlaneStaticPodController{},
 		&k8s.EndpointController{},

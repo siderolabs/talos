@@ -35,7 +35,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/labels"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/role"
-	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
 var (
@@ -973,7 +972,7 @@ func (c *Config) ValidateKubernetesVersions() error {
 	var result *multierror.Error
 
 	if c.MachineConfig != nil {
-		if err := ValidateKubernetesImageTag(c.Machine().Kubelet().Image()); err != nil {
+		if err := compatibility.ValidateKubernetesImageTag(c.Machine().Kubelet().Image()); err != nil {
 			result = multierror.Append(result, fmt.Errorf("kubelet image is not valid: %w", err))
 		}
 	}
@@ -994,10 +993,10 @@ func (c *Config) ValidateKubernetesVersions() error {
 				},
 				{
 					name:     "kube-scheduler",
-					imageRef: c.Cluster().Scheduler().Image(),
+					imageRef: c.ClusterConfig.Scheduler().Image(),
 				},
 			} {
-				if err := ValidateKubernetesImageTag(spec.imageRef); err != nil {
+				if err := compatibility.ValidateKubernetesImageTag(spec.imageRef); err != nil {
 					result = multierror.Append(result, fmt.Errorf("%s image is not valid: %w", spec.name, err))
 				}
 			}
@@ -1048,37 +1047,4 @@ func (c *Config) RuntimeValidate(ctx context.Context, st state.State, mode valid
 	}
 
 	return warnings, result.ErrorOrNil()
-}
-
-// ValidateKubernetesImageTag validates the Kubernetes image tag format.
-func ValidateKubernetesImageTag(imageRef string) error {
-	// this method is called from Validate in !Local mode, so we are inside running Talos,
-	// so the version of Talos is available, and we can check compatibility
-	currentTalosVersion, err := compatibility.ParseTalosVersion(version.NewVersion())
-	if err != nil {
-		return fmt.Errorf("failed to parse Talos version: %w", err)
-	}
-
-	k8sVersion, err := KubernetesVersionFromImageRef(imageRef)
-	if err != nil {
-		return fmt.Errorf("failed to parse Kubernetes version from image reference %q: %w", imageRef, err)
-	}
-
-	return k8sVersion.SupportedWith(currentTalosVersion)
-}
-
-// KubernetesVersionFromImageRef parses the Kubernetes version from the image reference.
-func KubernetesVersionFromImageRef(ref string) (*compatibility.KubernetesVersion, error) {
-	idx := strings.LastIndex(ref, ":v")
-	if idx == -1 {
-		return nil, fmt.Errorf("invalid image reference: %q", ref)
-	}
-
-	versionPart := ref[idx+2:]
-
-	if shaIndex := strings.Index(versionPart, "@"); shaIndex != -1 {
-		versionPart = versionPart[:shaIndex]
-	}
-
-	return compatibility.ParseKubernetesVersion(versionPart)
 }

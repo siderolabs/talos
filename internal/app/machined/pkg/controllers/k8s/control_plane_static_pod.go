@@ -64,6 +64,7 @@ func (ctrl *ControlPlaneStaticPodController) Inputs() []controller.Input {
 		{
 			Namespace: k8s.ControlPlaneNamespaceName,
 			Type:      k8s.SchedulerConfigType,
+			ID:        optional.Some(k8s.FinalSchedulerConfigID),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -172,7 +173,7 @@ func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controll
 			},
 			{
 				f:  ctrl.manageScheduler,
-				md: k8s.NewSchedulerConfig().Metadata(),
+				md: k8s.NewSchedulerConfig(k8s.FinalSchedulerConfigID).Metadata(),
 			},
 		} {
 			res, err := r.Get(ctx, pod.md)
@@ -755,39 +756,6 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 		return "", nil
 	}
 
-	args := []string{ //nolint:prealloc // very dynamic length
-		"/usr/local/bin/kube-scheduler",
-	}
-
-	builder := argsbuilder.Args{
-		"config":                                 {filepath.Join(constants.KubernetesSchedulerConfigDir, "scheduler-config.yaml")},
-		"authentication-tolerate-lookup-failure": {"false"},
-		"authentication-kubeconfig":              {filepath.Join(constants.KubernetesSchedulerSecretsDir, "kubeconfig")},
-		"authorization-kubeconfig":               {filepath.Join(constants.KubernetesSchedulerSecretsDir, "kubeconfig")},
-		"bind-address":                           {"127.0.0.1"},
-		"leader-elect":                           {"true"},
-		"profiling":                              {"false"},
-		"tls-min-version":                        {"VersionTLS13"},
-	}
-
-	mergePolicies := argsbuilder.MergePolicies{
-		"kubeconfig":                argsbuilder.MergeDenied,
-		"authentication-kubeconfig": argsbuilder.MergeDenied,
-		"authorization-kubeconfig":  argsbuilder.MergeDenied,
-		"config":                    argsbuilder.MergeDenied,
-	}
-
-	extraArgs := make(argsbuilder.Args, len(cfg.ExtraArgs))
-	for k, v := range cfg.ExtraArgs {
-		extraArgs[k] = v.Values
-	}
-
-	if err := builder.Merge(extraArgs, argsbuilder.WithMergePolicies(mergePolicies)); err != nil {
-		return "", err
-	}
-
-	args = append(args, builder.Args()...)
-
 	resources, err := resources(cfg.Resources, "10m", "64Mi")
 	if err != nil {
 		return "", err
@@ -863,7 +831,7 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 					{
 						Name:    k8s.SchedulerID,
 						Image:   cfg.Image,
-						Command: args,
+						Command: cfg.Args,
 						Env: append(
 							[]v1.EnvVar{
 								{

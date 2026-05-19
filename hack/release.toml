@@ -70,7 +70,8 @@ Talos still supports the old v1alpha1 config for backwards compatibility, but ne
 
 List of changes:
 
-- `.cluster.secretboxEncryptionSecret` field was removed from the v1alpha1 config, and full etcd encryption configuration is available with `KubeEtcdEncryptionConfig`.
+- `.cluster.secretboxEncryptionSecret` field was deprecated in the v1alpha1 config, and full etcd encryption configuration is available in `KubeEtcdEncryptionConfig` document.
+- `.cluster.scheduler` field was deprecated in the v1alpha1 config, and kube-scheduler configuration is available in `KubeSchedulerConfig` document
 """
 
     [notes.dhcpsearchdomains]

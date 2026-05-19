@@ -22,7 +22,9 @@ import (
 
 	"github.com/siderolabs/talos/pkg/kubernetes"
 	"github.com/siderolabs/talos/pkg/machinery/client"
-	v1alpha1config "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
+	"github.com/siderolabs/talos/pkg/machinery/config/generate/stdpatches"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
@@ -180,16 +182,8 @@ func extractKubeletVersionSuffix(imageRef string) string {
 func upgradeKubeletPatcher(
 	options UpgradeOptions,
 	kubeletSpec *k8s.KubeletSpec,
-) func(config *v1alpha1config.Config) error {
-	return func(config *v1alpha1config.Config) error {
-		if config.MachineConfig == nil {
-			config.MachineConfig = &v1alpha1config.MachineConfig{}
-		}
-
-		if config.MachineConfig.MachineKubelet == nil {
-			config.MachineConfig.MachineKubelet = &v1alpha1config.KubeletConfig{}
-		}
-
+) func(config.Container) (configpatcher.Patch, error) {
+	return func(cfg config.Container) (configpatcher.Patch, error) {
 		oldImage := kubeletSpec.TypedSpec().Image
 		oldImage, _, _ = strings.Cut(oldImage, "@") // ignore digest if present
 
@@ -214,18 +208,16 @@ func upgradeKubeletPatcher(
 		image := fmt.Sprintf("%s:v%s", options.KubeletImage, newVersion)
 
 		if oldImage == image {
-			return errUpdateSkipped
+			return nil, errUpdateSkipped
 		}
 
 		logUpdate(oldImage)
 
 		if options.DryRun {
-			return errUpdateSkipped
+			return nil, errUpdateSkipped
 		}
 
-		config.MachineConfig.MachineKubelet.KubeletImage = image
-
-		return nil
+		return stdpatches.PreparePatch(stdpatches.WithKubeletImage(stdpatches.GuessVersionContractKubelet(cfg), image))
 	}
 }
 

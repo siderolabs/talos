@@ -30,7 +30,7 @@ func (in *Input) worker() ([]config.Document, error) {
 		MachineToken:    in.Options.SecretsBundle.TrustdInfo.Token,
 		MachineCertSANs: in.AdditionalMachineCertSANs,
 		MachineKubelet: &v1alpha1.KubeletConfig{
-			KubeletImage: emptyIf(fmt.Sprintf("%s:v%s", constants.KubeletImage, in.KubernetesVersion), in.KubernetesVersion),
+			KubeletImage: fmt.Sprintf("%s:v%s", constants.KubeletImage, in.KubernetesVersion),
 		},
 		MachineCA: &x509.PEMEncodedCertificateAndKey{Crt: in.Options.SecretsBundle.Certs.OS.Crt},
 		MachineInstall: &v1alpha1.InstallConfig{

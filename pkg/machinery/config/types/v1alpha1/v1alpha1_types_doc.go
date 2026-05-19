@@ -241,7 +241,6 @@ func (MachineConfig) Doc() *encoder.Doc {
 	doc.Fields[1].AddExample("example token", "328hom.uqjzh6jnn2eie9oi")
 	doc.Fields[2].AddExample("machine CA example", pemEncodedCertificateExample())
 	doc.Fields[4].AddExample("Uncomment this to enable SANs.", []string{"10.0.0.10", "172.16.0.10", "192.168.0.10"})
-	doc.Fields[5].AddExample("ControlPlane definition example.", machineControlplaneExample())
 	doc.Fields[6].AddExample("Kubelet definition example.", machineKubeletExample())
 	doc.Fields[7].AddExample("nginx static pod.", machinePodsExample())
 	doc.Fields[10].AddExample("MachineInstall config usage example.", machineInstallExample())
@@ -401,13 +400,7 @@ func (ClusterConfig) Doc() *encoder.Doc {
 				Description: "Kube-proxy server-specific configuration options",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Kube-proxy server-specific configuration options" /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "scheduler",
-				Type:        "SchedulerConfig",
-				Note:        "",
-				Description: "Scheduler server specific configuration options.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Scheduler server specific configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{
 				Name:        "discovery",
 				Type:        "ClusterDiscoveryConfig",
@@ -492,7 +485,6 @@ func (ClusterConfig) Doc() *encoder.Doc {
 	doc.Fields[12].AddExample("", clusterAPIServerExample())
 	doc.Fields[13].AddExample("", clusterControllerManagerExample())
 	doc.Fields[14].AddExample("", clusterProxyExample())
-	doc.Fields[15].AddExample("", clusterSchedulerExample())
 	doc.Fields[16].AddExample("", clusterDiscoveryExample())
 	doc.Fields[17].AddExample("", clusterEtcdExample())
 	doc.Fields[18].AddExample("", clusterCoreDNSExample())
@@ -636,17 +628,9 @@ func (MachineControlPlaneConfig) Doc() *encoder.Doc {
 				Description: "Controller manager machine specific configuration options.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Controller manager machine specific configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "scheduler",
-				Type:        "MachineSchedulerConfig",
-				Note:        "",
-				Description: "Scheduler machine specific configuration options.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Scheduler machine specific configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 		},
 	}
-
-	doc.AddExample("ControlPlane definition example.", machineControlplaneExample())
 
 	return doc
 }
@@ -669,31 +653,6 @@ func (MachineControllerManagerConfig) Doc() *encoder.Doc {
 				Note:        "",
 				Description: "Disable kube-controller-manager on the node.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Disable kube-controller-manager on the node." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	return doc
-}
-
-func (MachineSchedulerConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "MachineSchedulerConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "MachineSchedulerConfig represents the machine specific Scheduler config values." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "MachineSchedulerConfig represents the machine specific Scheduler config values.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "MachineControlPlaneConfig",
-				FieldName: "scheduler",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "disabled",
-				Type:        "bool",
-				Note:        "",
-				Description: "Disable kube-scheduler on the node.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disable kube-scheduler on the node." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
@@ -1396,70 +1355,6 @@ func (ProxyConfig) Doc() *encoder.Doc {
 	return doc
 }
 
-func (SchedulerConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "SchedulerConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "SchedulerConfig represents the kube scheduler configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "SchedulerConfig represents the kube scheduler configuration options.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "ClusterConfig",
-				FieldName: "scheduler",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "image",
-				Type:        "string",
-				Note:        "",
-				Description: "The container image used in the scheduler manifest.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The container image used in the scheduler manifest." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "extraArgs",
-				Type:        "Args",
-				Note:        "",
-				Description: "Extra arguments to supply to the scheduler.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra arguments to supply to the scheduler." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "extraVolumes",
-				Type:        "[]VolumeMountConfig",
-				Note:        "",
-				Description: "Extra volumes to mount to the scheduler static pod.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra volumes to mount to the scheduler static pod." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "env",
-				Type:        "Env",
-				Note:        "",
-				Description: "The `env` field allows for the addition of environment variables for the control plane component.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `env` field allows for the addition of environment variables for the control plane component." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "resources",
-				Type:        "ResourcesConfig",
-				Note:        "",
-				Description: "Configure the scheduler resources.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure the scheduler resources." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "config",
-				Type:        "Unstructured",
-				Note:        "",
-				Description: "Specify custom kube-scheduler configuration.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Specify custom kube-scheduler configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", clusterSchedulerExample())
-
-	doc.Fields[0].AddExample("", clusterSchedulerImageExample())
-
-	return doc
-}
-
 func (EtcdConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "EtcdConfig",
@@ -1739,10 +1634,6 @@ func (ResourcesConfig) Doc() *encoder.Doc {
 				TypeName:  "ControllerManagerConfig",
 				FieldName: "resources",
 			},
-			{
-				TypeName:  "SchedulerConfig",
-				FieldName: "resources",
-			},
 		},
 		Fields: []encoder.Doc{
 			{
@@ -1961,10 +1852,6 @@ func (VolumeMountConfig) Doc() *encoder.Doc {
 			},
 			{
 				TypeName:  "ControllerManagerConfig",
-				FieldName: "extraVolumes",
-			},
-			{
-				TypeName:  "SchedulerConfig",
 				FieldName: "extraVolumes",
 			},
 		},
@@ -2333,7 +2220,6 @@ func GetFileDoc() *encoder.FileDoc {
 			ExtraMount{}.Doc(),
 			MachineControlPlaneConfig{}.Doc(),
 			MachineControllerManagerConfig{}.Doc(),
-			MachineSchedulerConfig{}.Doc(),
 			KubeletConfig{}.Doc(),
 			KubeletNodeIPConfig{}.Doc(),
 			InstallConfig{}.Doc(),
@@ -2346,7 +2232,6 @@ func GetFileDoc() *encoder.FileDoc {
 			AuthorizationConfigAuthorizerConfig{}.Doc(),
 			ControllerManagerConfig{}.Doc(),
 			ProxyConfig{}.Doc(),
-			SchedulerConfig{}.Doc(),
 			EtcdConfig{}.Doc(),
 			ClusterNetworkConfig{}.Doc(),
 			CNIConfig{}.Doc(),

@@ -181,7 +181,7 @@ func TestAcquireSuite(t *testing.T) {
 		}
 
 		s.clusterName = fmt.Sprintf("cluster-%d", rand.Int32())
-		input, err := generate.NewInput(s.clusterName, "https://localhost:6443", "")
+		input, err := generate.NewInput(s.clusterName, "https://localhost:6443", constants.DefaultKubernetesVersion)
 		s.Require().NoError(err)
 
 		cfg, err := input.Config(machine.TypeControlPlane)

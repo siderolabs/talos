@@ -102,7 +102,10 @@ func NewInput(clustername, endpoint, kubernetesVersion string, opts ...Option) (
 	input.PodNet = []string{podNet}
 	input.ServiceNet = []string{serviceNet}
 	input.ControlPlaneEndpoint = endpoint
-	input.KubernetesVersion = kubernetesVersion
+
+	if input.KubernetesVersion == "" {
+		return nil, errors.New("kubernetes version must be specified")
+	}
 
 	return input, nil
 }
@@ -132,13 +135,4 @@ func (in *Input) Config(t machine.Type) (coreconfig.Provider, error) {
 	}
 
 	return container.New(documents...)
-}
-
-// emptyIf returns empty string if the 2nd argument is empty string, otherwise returns the first argument.
-func emptyIf(str, check string) string {
-	if check == "" {
-		return ""
-	}
-
-	return str
 }

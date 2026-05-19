@@ -17,6 +17,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/stdpatches"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 func TestPatches(t *testing.T) {
@@ -62,6 +63,86 @@ func TestPatches(t *testing.T) {
 
 			assertion: func(t *testing.T, cfg config.Config) {
 				assert.Len(t, cfg.TrustedRoots().ExtraTrustedRootCertificates(), 1)
+			},
+		},
+		{
+			name: "WithKubeletImage",
+
+			patch: func(vc *config.VersionContract) ([]byte, error) {
+				return stdpatches.WithKubeletImage(vc, constants.KubeletImage+":v1.35.0")
+			},
+			versionContracts: []*config.VersionContract{
+				config.TalosVersion1_13,
+				config.TalosVersion1_14,
+			},
+			kubernetesVersion: "1.34.0",
+
+			assertion: func(t *testing.T, cfg config.Config) {
+				assert.Equal(t, constants.KubeletImage+":v1.35.0", cfg.Machine().Kubelet().Image())
+			},
+		},
+		{
+			name: "WithKubeApiServerImage",
+
+			patch: func(vc *config.VersionContract) ([]byte, error) {
+				return stdpatches.WithKubeAPIServerImage(vc, constants.KubernetesAPIServerImage+":v1.35.0")
+			},
+			versionContracts: []*config.VersionContract{
+				config.TalosVersion1_13,
+				config.TalosVersion1_14,
+			},
+			kubernetesVersion: "1.34.0",
+
+			assertion: func(t *testing.T, cfg config.Config) {
+				assert.Equal(t, constants.KubernetesAPIServerImage+":v1.35.0", cfg.Cluster().APIServer().Image())
+			},
+		},
+		{
+			name: "WithKubeControllerManagerImage",
+
+			patch: func(vc *config.VersionContract) ([]byte, error) {
+				return stdpatches.WithKubeControllerManagerImage(vc, constants.KubernetesControllerManagerImage+":v1.35.0")
+			},
+			versionContracts: []*config.VersionContract{
+				config.TalosVersion1_13,
+				config.TalosVersion1_14,
+			},
+			kubernetesVersion: "1.34.0",
+
+			assertion: func(t *testing.T, cfg config.Config) {
+				assert.Equal(t, constants.KubernetesControllerManagerImage+":v1.35.0", cfg.Cluster().ControllerManager().Image())
+			},
+		},
+		{
+			name: "WithKubeSchedulerImage",
+
+			patch: func(vc *config.VersionContract) ([]byte, error) {
+				return stdpatches.WithKubeSchedulerImage(vc, constants.KubernetesSchedulerImage+":v1.35.0")
+			},
+			versionContracts: []*config.VersionContract{
+				config.TalosVersion1_13,
+				config.TalosVersion1_14,
+			},
+			kubernetesVersion: "1.34.0",
+
+			assertion: func(t *testing.T, cfg config.Config) {
+				assert.Equal(t, constants.KubernetesSchedulerImage+":v1.35.0", cfg.K8sSchedulerConfig().Image())
+			},
+		},
+		{
+			name: "WithKubeProxyImage",
+
+			patch: func(vc *config.VersionContract) ([]byte, error) {
+				return stdpatches.WithKubeProxyImage(vc, constants.KubeProxyImage+":v1.35.0")
+			},
+			versionContracts: []*config.VersionContract{
+				config.TalosVersion1_13,
+				config.TalosVersion1_14,
+			},
+			kubernetesVersion: "1.34.0",
+
+			assertion: func(t *testing.T, cfg config.Config) {
+				assert.Equal(t, constants.KubeProxyImage+":v1.35.0", cfg.Cluster().Proxy().Image())
 			},
 		},
 	} {

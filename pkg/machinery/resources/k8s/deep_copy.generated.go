@@ -463,6 +463,16 @@ func (o SchedulerConfigSpec) DeepCopy() SchedulerConfigSpec {
 			cp.ExtraArgs[k2] = cp_ExtraArgs_v2
 		}
 	}
+	if o.Args != nil {
+		cp.Args = make([]string, len(o.Args))
+		copy(cp.Args, o.Args)
+	}
+	if o.Config != nil {
+		cp.Config = make(map[string]any, len(o.Config))
+		for k2, v2 := range o.Config {
+			cp.Config[k2] = v2
+		}
+	}
 	if o.ExtraVolumes != nil {
 		cp.ExtraVolumes = make([]ExtraVolume, len(o.ExtraVolumes))
 		copy(cp.ExtraVolumes, o.ExtraVolumes)
@@ -483,12 +493,6 @@ func (o SchedulerConfigSpec) DeepCopy() SchedulerConfigSpec {
 		cp.Resources.Limits = make(map[string]string, len(o.Resources.Limits))
 		for k3, v3 := range o.Resources.Limits {
 			cp.Resources.Limits[k3] = v3
-		}
-	}
-	if o.Config != nil {
-		cp.Config = make(map[string]any, len(o.Config))
-		for k2, v2 := range o.Config {
-			cp.Config[k2] = v2
 		}
 	}
 	return cp
