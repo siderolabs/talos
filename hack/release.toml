@@ -19,7 +19,7 @@ preface = """
         title = "Component Updates"
         description = """\
 Linux: 6.18.32
-Kubernetes: 1.36.0
+Kubernetes: 1.36.1
 containerd: 2.3.0
 
 Talos is built with Go 1.26.3.
