@@ -13,6 +13,7 @@ ARG GENERATE_VEX_PREFIX=scratch
 ARG GENERATE_VEX=scratch
 
 ARG PKG_APPARMOR=scratch
+ARG PKG_BTRFSPROGS=scratch
 ARG PKG_CA_CERTIFICATES=scratch
 ARG PKG_CNI=scratch
 ARG PKG_CONTAINERD=scratch
@@ -74,6 +75,9 @@ ARG EMBED_TARGET=embed
 
 FROM ${PKG_FHS} AS pkg-fhs
 FROM ${PKG_CA_CERTIFICATES} AS pkg-ca-certificates
+
+ # used only for the unit-tests environment
+FROM ${PKG_BTRFSPROGS} AS pkg-btrfsprogs
 
 FROM --platform=amd64 ${PKG_APPARMOR} AS pkg-apparmor-amd64
 FROM --platform=arm64 ${PKG_APPARMOR} AS pkg-apparmor-arm64
@@ -191,9 +195,14 @@ FROM ${PKG_PIGZ} AS pkg-pigz
 FROM --platform=arm64 ${PKG_PIGZ} AS pkg-pigz-arm64
 
 FROM ${PKG_ZLIB} AS pkg-zlib
+FROM --platform=amd64 ${PKG_ZLIB} AS pkg-zlib-amd64
 FROM --platform=arm64 ${PKG_ZLIB} AS pkg-zlib-arm64
 
 FROM --platform=amd64 ${PKG_IGZIP} AS pkg-igzip-amd64
+
+FROM ${PKG_ZSTD} AS pkg-zstd
+FROM --platform=amd64 ${PKG_ZSTD} AS pkg-zstd-amd64
+FROM --platform=arm64 ${PKG_ZSTD} AS pkg-zstd-arm64
 
 FROM ${PKG_CPIO} AS pkg-cpio
 FROM ${PKG_DOSFSTOOLS} AS pkg-dosfstools
@@ -218,7 +227,6 @@ FROM ${PKG_SQUASHFS_TOOLS} AS pkg-squashfs-tools
 FROM ${PKG_TAR} AS pkg-tar
 FROM ${PKG_XFSPROGS} AS pkg-xfsprogs
 FROM ${PKG_XZ} AS pkg-xz
-FROM ${PKG_ZSTD} AS pkg-zstd
 
 FROM --platform=amd64 ${TOOLS_PREFIX}:${TOOLS} AS tools-amd64
 FROM --platform=arm64 ${TOOLS_PREFIX}:${TOOLS} AS tools-arm64
@@ -734,6 +742,10 @@ COPY --link --from=pkg-libpopt-amd64 / /rootfs
 COPY --link --from=pkg-liburcu-amd64 / /rootfs
 COPY --link --from=pkg-libsepol-amd64 / /rootfs
 COPY --link --from=pkg-libselinux-amd64 / /rootfs
+COPY --link --from=pkg-zstd-amd64 /usr/share/spdx /rootfs/usr/share/spdx
+COPY --link --from=pkg-zstd-amd64 /usr/lib /rootfs/usr/lib
+COPY --link --from=pkg-zlib-amd64 /usr/share/spdx /rootfs/usr/share/spdx
+COPY --link --from=pkg-zlib-amd64 /usr/lib /rootfs/usr/lib
 # NOTE: amd64 ships igzip, but arm64 ships pigz (see https://github.com/siderolabs/extensions/discussions/931)
 COPY --link --exclude=usr/lib/pkgconfig --exclude=usr/include --from=pkg-igzip-amd64 / /rootfs
 COPY --link --from=pkg-pcre2-amd64 / /rootfs
@@ -827,8 +839,11 @@ COPY --link --from=pkg-musl-arm64 / /rootfs
 COPY --link --from=pkg-nftables-arm64 / /rootfs
 COPY --link --from=pkg-runc-arm64 / /rootfs
 COPY --link --from=pkg-xfsprogs-arm64 / /rootfs
+COPY --link --from=pkg-zstd-arm64 /usr/share/spdx /rootfs/usr/share/spdx
+COPY --link --from=pkg-zstd-arm64 /usr/lib /rootfs/usr/lib
+COPY --link --from=pkg-zlib-arm64 /usr/share/spdx /rootfs/usr/share/spdx
+COPY --link --from=pkg-zlib-arm64 /usr/lib /rootfs/usr/lib
 # NOTE: amd64 ships igzip, but arm64 ships pigz (see https://github.com/siderolabs/extensions/discussions/931)
-COPY --link --from=pkg-zlib-arm64 / /rootfs
 COPY --link --from=pkg-pigz-arm64 / /rootfs
 COPY --link --from=pkg-util-linux-arm64 /usr/lib/libblkid.* /rootfs/usr/lib/
 COPY --link --from=pkg-util-linux-arm64 /usr/lib/libuuid.* /rootfs/usr/lib/
@@ -1206,6 +1221,7 @@ FROM --platform=${BUILDPLATFORM} iso-${TARGETARCH} AS iso
 FROM base AS unit-tests-runner
 COPY --link --from=rootfs / /
 COPY --link --from=pkg-ca-certificates / /
+COPY --link --from=pkg-btrfsprogs / /
 ARG TESTPKGS
 ENV PLATFORM=container
 ARG GO_LDFLAGS
@@ -1220,6 +1236,7 @@ COPY --link --from=unit-tests-runner /src/coverage.txt /coverage.txt
 FROM base AS unit-tests-race
 COPY --link --from=rootfs / /
 COPY --link --from=pkg-ca-certificates / /
+COPY --link --from=pkg-btrfsprogs / /
 ARG TESTPKGS
 ENV PLATFORM=container
 ENV CGO_ENABLED=1
@@ -1232,6 +1249,7 @@ RUN --security=insecure --mount=type=cache,id=testspace,target=/tmp --mount=type
 FROM base AS unit-tests-fips
 COPY --link --from=rootfs / /
 COPY --link --from=pkg-ca-certificates / /
+COPY --link --from=pkg-btrfsprogs / /
 ARG TESTPKGS
 ENV PLATFORM=container
 ENV GOFIPS140=latest

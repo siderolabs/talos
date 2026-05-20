@@ -18,4 +18,5 @@ const (
 	FilesystemTypeISO9660                        // iso9660
 	FilesystemTypeSwap                           // swapi
 	FilesystemTypeVirtiofs                       // virtiofs
+	FilesystemTypeBtrfs                          // btrfs
 )

@@ -5067,6 +5067,7 @@ BlockFilesystemType describes filesystem type.
 | FILESYSTEM_TYPE_ISO9660 | 4 |  |
 | FILESYSTEM_TYPE_SWAP | 5 |  |
 | FILESYSTEM_TYPE_VIRTIOFS | 6 |  |
+| FILESYSTEM_TYPE_BTRFS | 7 |  |
 
 
 

@@ -28,7 +28,7 @@ EMBED_TARGET ?= embed
 TOOLS_PREFIX ?= ghcr.io/siderolabs/tools
 TOOLS ?= v1.14.0-alpha.0-10-g808f34f
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.14.0-alpha.0-63-gc0ec8f3
+PKGS ?= v1.14.0-alpha.0-64-gc542950
 GENERATE_VEX_PREFIX ?= ghcr.io/siderolabs/generate-vex
 GENERATE_VEX ?= latest
 
@@ -37,6 +37,7 @@ CONFORMANCE_IMAGE ?= ghcr.io/siderolabs/conform:latest
 IMAGE_SIGNER_RELEASE ?= v0.3.2
 
 PKG_APPARMOR ?= $(PKGS_PREFIX)/apparmor:$(PKGS)
+PKG_BTRFSPROGS ?= $(PKGS_PREFIX)/btrfsprogs:$(PKGS)
 PKG_CA_CERTIFICATES ?= $(PKGS_PREFIX)/ca-certificates:$(PKGS)
 PKG_CNI ?= $(PKGS_PREFIX)/cni:$(PKGS)
 PKG_CONTAINERD ?= $(PKGS_PREFIX)/containerd:$(PKGS)
@@ -183,6 +184,7 @@ COMMON_ARGS += --build-arg=MARKDOWNLINTCLI_VERSION=$(MARKDOWNLINTCLI_VERSION)
 COMMON_ARGS += --build-arg=MICROSOFT_SECUREBOOT_RELEASE=$(MICROSOFT_SECUREBOOT_RELEASE)
 COMMON_ARGS += --build-arg=NAME="$(NAME)"
 COMMON_ARGS += --build-arg=PKG_APPARMOR=$(PKG_APPARMOR)
+COMMON_ARGS += --build-arg=PKG_BTRFSPROGS=$(PKG_BTRFSPROGS)
 COMMON_ARGS += --build-arg=PKG_CA_CERTIFICATES=$(PKG_CA_CERTIFICATES)
 COMMON_ARGS += --build-arg=PKG_CNI=$(PKG_CNI)
 COMMON_ARGS += --build-arg=PKG_CONTAINERD=$(PKG_CONTAINERD)

@@ -166,6 +166,9 @@ func (fs *FS) Repair(ctx context.Context) error {
 		repairFunc = makefs.Ext4Repair
 	case makefs.FilesystemTypeXFS:
 		repairFunc = makefs.XFSRepair
+	case makefs.FilesystemTypeBTRFS:
+		// disable repair for btrfs, as it is dangerous and can make things worse
+		fallthrough
 	default:
 		return fmt.Errorf("%w: %s", ErrRepairUnsupported, fs.fstype)
 	}

@@ -130,6 +130,14 @@ Talos now configures Flannel with the `EnableNFTables` option enabled, which use
 Talos is now compatible with etcd v3.6.x only (the default version was etcd 3.6.x since Talos v1.11).
 """
 
+    [notes.btrfs]
+        title = "Btrfs Support"
+        description = """\
+Talos now supports mounting and provisioning `btrfs` filesystem for user volumes and existing volumes.
+
+Support for `btrfs` is enabled by installing `btrfs` system extension.
+"""
+
 [make_deps]
 
     [make_deps.tools]

@@ -36,6 +36,7 @@ import (
 	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // VolumesSuite ...
@@ -689,6 +690,189 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 	for _, userVolumeID := range userVolumeIDs {
 		rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, userVolumeID)
 	}
+
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		// a little retry loop, as the device might be considered busy for a little while after unmounting
+		asrt := assert.New(collect)
+
+		asrt.NoError(suite.Client.BlockDeviceWipe(ctx, &storage.BlockDeviceWipeRequest{
+			Devices: []*storage.BlockDeviceWipeDescriptor{
+				{
+					Device: filepath.Base(userDisks[0]),
+					Method: storage.BlockDeviceWipeDescriptor_FAST,
+				},
+			},
+		}))
+	}, time.Minute, time.Second, "failed to wipe disk %s", userDisks[0])
+
+	// wait for the discovered volume reflect wiped status
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, filepath.Base(userDisks[0]),
+		func(dv *block.DiscoveredVolume, asrt *assert.Assertions) {
+			asrt.Empty(dv.TypedSpec().Name, "expected discovered volume %s to be wiped", dv.Metadata().ID())
+		})
+}
+
+// TestUserVolumeBTRFS verifies a user volume with BTRFS filesystem.
+//
+// The test only runs if the btrfs extension is loaded.
+func (suite *VolumesSuite) TestUserVolumeBTRFS() {
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping test for non-qemu provisioner")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	ctx := client.WithNode(suite.ctx, node)
+
+	extensions, err := safe.StateListAll[*runtime.ExtensionStatus](ctx, suite.Client.COSI)
+	suite.Require().NoError(err)
+
+	extensionFound := false
+
+	for ext := range extensions.All() {
+		if ext.TypedSpec().Metadata.Name == "btrfs" {
+			extensionFound = true
+
+			break
+		}
+	}
+
+	if !extensionFound {
+		suite.T().Skip("skipping test, btrfs extension is not loaded")
+	}
+
+	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	nodeName := k8sNode.Name
+
+	userDisks := suite.UserDisks(suite.ctx, node)
+
+	if len(userDisks) < 1 {
+		suite.T().Skipf("skipping test, not enough user disks available on node %s/%s: %q", node, nodeName, userDisks)
+	}
+
+	suite.T().Logf("verifying btrfs user volumes on node %s/%s with disk %s", node, nodeName, userDisks[0])
+
+	loadModuleDoc := map[string]any{
+		"machine": map[string]any{
+			"kernel": map[string]any{
+				"modules": []any{
+					map[string]any{
+						"name": "btrfs",
+					},
+				},
+			},
+		},
+	}
+
+	suite.PatchMachineConfig(ctx, loadModuleDoc)
+
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, "btrfs", func(*runtime.KernelModuleStatus, *assert.Assertions) {})
+
+	disk, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.COSI, filepath.Base(userDisks[0]))
+	suite.Require().NoError(err)
+
+	volumeID := fmt.Sprintf("%04x", rand.Int31())
+	userVolumeID := constants.UserVolumePrefix + volumeID
+
+	doc := blockcfg.NewUserVolumeConfigV1Alpha1()
+	doc.MetaName = volumeID
+	doc.ProvisioningSpec.DiskSelectorSpec.Match = cel.MustExpression(
+		cel.ParseBooleanExpression(fmt.Sprintf("'%s' in disk.symlinks", disk.TypedSpec().Symlinks[0]), celenv.DiskLocator()),
+	)
+	doc.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("100MiB")
+	doc.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("1GiB")
+	doc.FilesystemSpec.FilesystemType = block.FilesystemTypeBtrfs
+
+	// create user volume
+	suite.PatchMachineConfig(ctx, doc)
+
+	rtestutils.AssertResource(
+		ctx, suite.T(), suite.Client.COSI, userVolumeID,
+		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+			asrt.Equalf(block.VolumePhaseReady, vs.TypedSpec().Phase, "Expected %q, but got %q (%s)", block.VolumePhaseReady, vs.TypedSpec().Phase, vs.Metadata().ID())
+		},
+	)
+
+	// check that the volumes are mounted
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, userVolumeID,
+		func(vs *block.MountStatus, _ *assert.Assertions) {})
+
+	// create a pod using user volumes
+	podDef, err := suite.NewPod("user-volume-test")
+	suite.Require().NoError(err)
+
+	// using subdirectory here to test that the hostPath mount is properly propagated into the kubelet
+	podDef = podDef.WithNodeName(nodeName).
+		WithNamespace("kube-system").
+		WithHostVolumeMount(filepath.Join(constants.UserVolumeMountPoint, volumeID, "data"), "/mnt/data")
+
+	suite.Require().NoError(podDef.Create(suite.ctx, 1*time.Minute))
+
+	_, _, err = podDef.Exec(suite.ctx, "mkdir -p /mnt/data/test")
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(podDef.Delete(suite.ctx))
+
+	// verify that directory exists
+	expectedPath := filepath.Join(constants.UserVolumeMountPoint, volumeID, "data", "test")
+
+	stream, err := suite.Client.LS(ctx, &machineapi.ListRequest{
+		Root:  expectedPath,
+		Types: []machineapi.ListRequest_Type{machineapi.ListRequest_DIRECTORY},
+	})
+
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(helpers.ReadGRPCStream(stream, func(info *machineapi.FileInfo, _ string, _ bool) error {
+		suite.T().Logf("found %s on node %s", info.Name, node)
+		suite.Require().Equal(expectedPath, info.Name, "expected %s to exist", expectedPath)
+
+		return nil
+	}))
+
+	// verify that volume labels are set properly
+	dvs, err := safe.StateListAll[*block.DiscoveredVolume](ctx, suite.Client.COSI)
+	suite.Require().NoError(err)
+
+	found := false
+	volumeSize := uint64(0)
+
+	for dv := range dvs.All() {
+		if dv.TypedSpec().PartitionLabel == userVolumeID {
+			found = true
+			volumeSize = dv.TypedSpec().Size
+
+			suite.Assert().Equal("btrfs", dv.TypedSpec().Name, "expected filesystem type to be btrfs for %s", dv.Metadata().ID())
+		}
+	}
+
+	suite.Require().True(found, "expected to find discovered volume with label %s", userVolumeID)
+
+	// now unmount the volume, set it to grow, re-mount and re-check
+	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.UserVolumeConfigKind, volumeID)
+	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, userVolumeID)
+
+	doc.ProvisioningSpec.ProvisioningMaxSize = blockcfg.Size{}
+	doc.ProvisioningSpec.ProvisioningGrow = new(true)
+	suite.PatchMachineConfig(ctx, doc)
+
+	rtestutils.AssertResource(
+		ctx, suite.T(), suite.Client.COSI, userVolumeID,
+		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+			asrt.Equalf(block.VolumePhaseReady, vs.TypedSpec().Phase, "Expected %q, but got %q (%s)", block.VolumePhaseReady, vs.TypedSpec().Phase, vs.Metadata().ID())
+			asrt.Greater(vs.TypedSpec().Size, volumeSize, "volume should grow")
+		},
+	)
+
+	// check that the volumes are mounted
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, userVolumeID,
+		func(vs *block.MountStatus, _ *assert.Assertions) {})
+
+	// clean up
+	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.UserVolumeConfigKind, volumeID)
+
+	rtestutils.AssertNoResource[*block.VolumeStatus](ctx, suite.T(), suite.Client.COSI, userVolumeID)
 
 	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
 		// a little retry loop, as the device might be considered busy for a little while after unmounting

@@ -369,7 +369,8 @@
         "type": {
           "enum": [
             "ext4",
-            "xfs"
+            "xfs",
+            "btrfs"
           ],
           "title": "type",
           "description": "Filesystem type. Default is xfs.\n",

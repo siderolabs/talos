@@ -269,7 +269,7 @@ func externalVolumeSource(ext configconfig.ExternalVolumeConfig) string {
 			return ext.Mount().Virtiofs().ValueOrZero().Source()
 		}
 
-	case block.FilesystemTypeNone, block.FilesystemTypeXFS, block.FilesystemTypeVFAT, block.FilesystemTypeEXT4, block.FilesystemTypeISO9660, block.FilesystemTypeSwap:
+	case block.FilesystemTypeNone, block.FilesystemTypeXFS, block.FilesystemTypeVFAT, block.FilesystemTypeEXT4, block.FilesystemTypeISO9660, block.FilesystemTypeSwap, block.FilesystemTypeBtrfs:
 		fallthrough
 
 	default:
@@ -288,7 +288,7 @@ func externalVolumeParameters(ext configconfig.ExternalVolumeConfig) ([]block.Pa
 
 		return nil, errors.New("virtiofs mount specification is required for Virtiofs external volume")
 
-	case block.FilesystemTypeNone, block.FilesystemTypeXFS, block.FilesystemTypeVFAT, block.FilesystemTypeEXT4, block.FilesystemTypeISO9660, block.FilesystemTypeSwap:
+	case block.FilesystemTypeNone, block.FilesystemTypeXFS, block.FilesystemTypeVFAT, block.FilesystemTypeEXT4, block.FilesystemTypeISO9660, block.FilesystemTypeSwap, block.FilesystemTypeBtrfs:
 		fallthrough
 
 	default:

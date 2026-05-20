@@ -128,6 +128,16 @@ func Format(ctx context.Context, logger *zap.Logger, volumeContext ManagerContex
 		if err = makefs.Ext4(ctx, volumeContext.Status.MountLocation, makefsOptions...); err != nil {
 			return xerrors.NewTaggedf[Retryable]("error formatting ext4: %w", err)
 		}
+	case block.FilesystemTypeBtrfs:
+		var makefsOptions []makefs.Option
+
+		if volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Label != "" {
+			makefsOptions = append(makefsOptions, makefs.WithLabel(volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Label))
+		}
+
+		if err = makefs.BTRFS(ctx, volumeContext.Status.MountLocation, makefsOptions...); err != nil {
+			return xerrors.NewTaggedf[Retryable]("error formatting btrfs: %w", err)
+		}
 	case block.FilesystemTypeSwap:
 		if err = swap.Format(volumeContext.Status.MountLocation, swap.FormatOptions{
 			Label: volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Label,
@@ -145,36 +155,42 @@ func Format(ctx context.Context, logger *zap.Logger, volumeContext ManagerContex
 	return nil
 }
 
+func withTemporaryMount(logger *zap.Logger, volumeContext ManagerContext, fn func(mountPoint string) error) error {
+	tmpDir, err := os.MkdirTemp("", "talos-growfs-")
+	if err != nil {
+		return fmt.Errorf("error creating temporary directory: %w", err)
+	}
+
+	defer os.Remove(tmpDir) //nolint:errcheck
+
+	manager := mountv3.NewManager(
+		mountv3.WithPrinter(logger.Sugar().Infof),
+		mountv3.WithTarget(tmpDir),
+		mountv3.WithFsopen(
+			volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Type.String(),
+			fsopen.WithSource(volumeContext.Status.MountLocation),
+		),
+	)
+
+	if _, err := manager.Mount(); err != nil {
+		return fmt.Errorf("error mounting partition: %w", err)
+	}
+
+	defer manager.Unmount() //nolint:errcheck
+
+	return fn(tmpDir)
+}
+
 // GrowFilesystem grows the filesystem on the block device.
 func GrowFilesystem(ctx context.Context, logger *zap.Logger, volumeContext ManagerContext) error {
 	switch volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Type { //nolint:exhaustive
 	case block.FilesystemTypeXFS:
 		// XFS requires partition to be mounted to grow
-		tmpDir, err := os.MkdirTemp("", "talos-growfs-")
-		if err != nil {
-			return fmt.Errorf("error creating temporary directory: %w", err)
-		}
-
-		defer os.Remove(tmpDir) //nolint:errcheck
-
-		manager := mountv3.NewManager(
-			mountv3.WithPrinter(logger.Sugar().Infof),
-			mountv3.WithTarget(tmpDir),
-			mountv3.WithFsopen(
-				volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Type.String(),
-				fsopen.WithSource(volumeContext.Status.MountLocation),
-			),
-		)
-
-		if _, err := manager.Mount(); err != nil {
-			return fmt.Errorf("error mounting partition: %w", err)
-		}
-
-		defer manager.Unmount() //nolint:errcheck
-
 		logger.Info("growing XFS filesystem", zap.String("device", volumeContext.Status.MountLocation))
 
-		if err = makefs.XFSGrow(ctx, tmpDir); err != nil {
+		if err := withTemporaryMount(logger, volumeContext, func(tmpMountPoint string) error {
+			return makefs.XFSGrow(ctx, tmpMountPoint)
+		}); err != nil {
 			return fmt.Errorf("error growing XFS: %w", err)
 		}
 
@@ -184,6 +200,17 @@ func GrowFilesystem(ctx context.Context, logger *zap.Logger, volumeContext Manag
 
 		if err := makefs.Ext4Resize(ctx, volumeContext.Status.MountLocation); err != nil {
 			return fmt.Errorf("error growing ext4: %w", err)
+		}
+
+		return nil
+	case block.FilesystemTypeBtrfs:
+		// btrfs requires partition to be mounted to grow
+		logger.Info("growing btrfs filesystem", zap.String("device", volumeContext.Status.MountLocation))
+
+		if err := withTemporaryMount(logger, volumeContext, func(tmpMountPoint string) error {
+			return makefs.BTRFSGrow(ctx, tmpMountPoint)
+		}); err != nil {
+			return fmt.Errorf("error growing btrfs: %w", err)
 		}
 
 		return nil

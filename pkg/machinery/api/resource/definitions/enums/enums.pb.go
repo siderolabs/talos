@@ -3400,6 +3400,7 @@ const (
 	BlockFilesystemType_FILESYSTEM_TYPE_ISO9660  BlockFilesystemType = 4
 	BlockFilesystemType_FILESYSTEM_TYPE_SWAP     BlockFilesystemType = 5
 	BlockFilesystemType_FILESYSTEM_TYPE_VIRTIOFS BlockFilesystemType = 6
+	BlockFilesystemType_FILESYSTEM_TYPE_BTRFS    BlockFilesystemType = 7
 )
 
 // Enum value maps for BlockFilesystemType.
@@ -3412,6 +3413,7 @@ var (
 		4: "FILESYSTEM_TYPE_ISO9660",
 		5: "FILESYSTEM_TYPE_SWAP",
 		6: "FILESYSTEM_TYPE_VIRTIOFS",
+		7: "FILESYSTEM_TYPE_BTRFS",
 	}
 	BlockFilesystemType_value = map[string]int32{
 		"FILESYSTEM_TYPE_NONE":     0,
@@ -3421,6 +3423,7 @@ var (
 		"FILESYSTEM_TYPE_ISO9660":  4,
 		"FILESYSTEM_TYPE_SWAP":     5,
 		"FILESYSTEM_TYPE_VIRTIOFS": 6,
+		"FILESYSTEM_TYPE_BTRFS":    7,
 	}
 )
 
@@ -4517,7 +4520,7 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x12ENCRYPTION_KEY_TPM\x10\x03*Z\n" +
 	"\x1bBlockEncryptionProviderType\x12\x1c\n" +
 	"\x18ENCRYPTION_PROVIDER_NONE\x10\x00\x12\x1d\n" +
-	"\x19ENCRYPTION_PROVIDER_LUKS2\x10\x01*\xd1\x01\n" +
+	"\x19ENCRYPTION_PROVIDER_LUKS2\x10\x01*\xec\x01\n" +
 	"\x13BlockFilesystemType\x12\x18\n" +
 	"\x14FILESYSTEM_TYPE_NONE\x10\x00\x12\x17\n" +
 	"\x13FILESYSTEM_TYPE_XFS\x10\x01\x12\x18\n" +
@@ -4525,7 +4528,8 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x14FILESYSTEM_TYPE_EXT4\x10\x03\x12\x1b\n" +
 	"\x17FILESYSTEM_TYPE_ISO9660\x10\x04\x12\x18\n" +
 	"\x14FILESYSTEM_TYPE_SWAP\x10\x05\x12\x1c\n" +
-	"\x18FILESYSTEM_TYPE_VIRTIOFS\x10\x06*\x83\x01\n" +
+	"\x18FILESYSTEM_TYPE_VIRTIOFS\x10\x06\x12\x19\n" +
+	"\x15FILESYSTEM_TYPE_BTRFS\x10\a*\x83\x01\n" +
 	"\x14BlockFSParameterType\x12\"\n" +
 	"\x1eFS_PARAMETER_TYPE_STRING_VALUE\x10\x00\x12#\n" +
 	"\x1fFS_PARAMETER_TYPE_BOOLEAN_VALUE\x10\x01\x12\"\n" +

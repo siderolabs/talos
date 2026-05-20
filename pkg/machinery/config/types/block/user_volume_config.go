@@ -350,6 +350,7 @@ type FilesystemSpec struct {
 	//   values:
 	//     - ext4
 	//     - xfs
+	//     - btrfs
 	FilesystemType block.FilesystemType `yaml:"type,omitempty"`
 	//   description: |
 	//     Enables project quota support, valid only for 'xfs' filesystem.
@@ -383,6 +384,7 @@ func (s FilesystemSpec) Validate() ([]string, error) {
 	case block.FilesystemTypeNone:
 	case block.FilesystemTypeXFS:
 	case block.FilesystemTypeEXT4:
+	case block.FilesystemTypeBtrfs:
 	default:
 		return nil, fmt.Errorf("unsupported filesystem type: %s", s.FilesystemType)
 	}

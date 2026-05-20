@@ -731,6 +731,7 @@ func (FilesystemSpec) Doc() *encoder.Doc {
 				Values: []string{
 					"ext4",
 					"xfs",
+					"btrfs",
 				},
 			},
 			{
