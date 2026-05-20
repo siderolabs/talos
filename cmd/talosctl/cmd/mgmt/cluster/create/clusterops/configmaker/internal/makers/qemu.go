@@ -194,7 +194,7 @@ func (m *Qemu) AddExtraGenOps() error {
 // AddExtraProvisionOpts implements ExtraOptionsProvider.
 func (m *Qemu) AddExtraProvisionOpts() error {
 	m.ProvisionOps = slices.Concat(m.ProvisionOps, []provision.Option{
-		provision.WithBootlader(m.EOps.BootloaderEnabled),
+		provision.WithBootloader(m.EOps.BootloaderEnabled),
 		provision.WithSkipInjectingExtraCmdline(m.EOps.SkipInjectingExtraCmdline),
 		provision.WithUEFI(m.EOps.UefiEnabled),
 		provision.WithTPM1_2(m.EOps.Tpm1_2Enabled),

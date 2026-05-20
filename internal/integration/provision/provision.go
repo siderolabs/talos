@@ -167,7 +167,18 @@ func (suite *BaseSuite) TearDownSuite() {
 	}
 
 	if suite.Cluster != nil {
-		suite.Assert().NoError(suite.provisioner.Destroy(suite.ctx, suite.Cluster))
+		// Save logs and support archives under /tmp/{logs,support}-<cluster>.{tar.gz,zip}
+		// so the kres save-talos-logs step (artifactPath: /tmp/logs-*.tar.gz,
+		// additionalArtifacts: /tmp/support-*.zip) can upload them on failure.
+		clusterName := suite.Cluster.Info().ClusterName
+
+		suite.Assert().NoError(
+			suite.provisioner.Destroy(
+				suite.ctx, suite.Cluster,
+				provision.WithSaveClusterLogsArchivePath(fmt.Sprintf("/tmp/logs-%s.tar.gz", clusterName)),
+				provision.WithSaveSupportArchivePath(fmt.Sprintf("/tmp/support-%s.zip", clusterName)),
+			),
+		)
 	}
 
 	suite.ctxCancel()
@@ -743,6 +754,7 @@ type clusterOptions struct {
 	SourceK8sVersion     string
 
 	WithEncryption          bool
+	WithTrustedBoot         bool
 	WithBios                bool
 	WithApplyConfig         bool
 	WithSkipInjectingConfig bool
@@ -855,26 +867,39 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 	if options.WithEncryption {
 		if versionContract.VolumeConfigEncryptionSupported() {
 			// use modern encryption config
+			stateKey := block.EncryptionKey{
+				KeySlot:   0,
+				KeyNodeID: &block.EncryptionKeyNodeID{},
+			}
+
+			ephemeralKey := block.EncryptionKey{
+				KeySlot:        0,
+				KeyNodeID:      &block.EncryptionKeyNodeID{},
+				KeyLockToSTATE: new(true),
+			}
+
+			if options.WithTrustedBoot {
+				stateKey = block.EncryptionKey{
+					KeySlot: 0,
+					KeyTPM:  &block.EncryptionKeyTPM{},
+				}
+
+				ephemeralKey = block.EncryptionKey{
+					KeySlot:        0,
+					KeyTPM:         &block.EncryptionKeyTPM{},
+					KeyLockToSTATE: new(true),
+				}
+			}
+
 			stateCfg := block.NewVolumeConfigV1Alpha1()
 			stateCfg.MetaName = constants.StatePartitionLabel
 			stateCfg.EncryptionSpec.EncryptionProvider = blockres.EncryptionProviderLUKS2
-			stateCfg.EncryptionSpec.EncryptionKeys = []block.EncryptionKey{
-				{
-					KeySlot:   0,
-					KeyNodeID: &block.EncryptionKeyNodeID{},
-				},
-			}
+			stateCfg.EncryptionSpec.EncryptionKeys = []block.EncryptionKey{stateKey}
 
 			ephemeralCfg := block.NewVolumeConfigV1Alpha1()
 			ephemeralCfg.MetaName = constants.EphemeralPartitionLabel
 			ephemeralCfg.EncryptionSpec.EncryptionProvider = blockres.EncryptionProviderLUKS2
-			ephemeralCfg.EncryptionSpec.EncryptionKeys = []block.EncryptionKey{
-				{
-					KeySlot:        0,
-					KeyNodeID:      &block.EncryptionKeyNodeID{},
-					KeyLockToSTATE: new(true),
-				},
-			}
+			ephemeralCfg.EncryptionSpec.EncryptionKeys = []block.EncryptionKey{ephemeralKey}
 
 			ctr, err := container.New(stateCfg, ephemeralCfg)
 			suite.Require().NoError(err)
@@ -1022,8 +1047,9 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 	}
 
 	provisionerOptions := []provision.Option{
-		provision.WithBootlader(true),
+		provision.WithBootloader(true),
 		provision.WithUEFI(!options.WithBios),
+		provision.WithTPM2(options.WithTrustedBoot),
 		provision.WithTalosConfig(suite.configBundle.TalosConfig()),
 		provision.WithSiderolinkAgent(options.WithSideroLink),
 	}
@@ -1052,7 +1078,11 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 
 	suite.clusterAccess = access.NewAdapter(suite.Cluster, provision.WithTalosConfig(suite.configBundle.TalosConfig()))
 
-	if !options.WithSkipInjectingConfig {
+	// Bootstrap and wait for health whenever the machine config has reached the
+	// nodes — either injected at boot, or applied via the API (WithApplyConfig).
+	// The maintenance suites skip both injection and WithApplyConfig because they
+	// drive apply-config + bootstrap themselves.
+	if !options.WithSkipInjectingConfig || options.WithApplyConfig {
 		suite.Require().NoError(suite.clusterAccess.Bootstrap(suite.ctx, os.Stdout))
 
 		suite.waitForClusterHealth()

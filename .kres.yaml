@@ -716,6 +716,7 @@ spec:
         labelKeys: [track]
         include:
           - track: "0"
+            buildTrustedBootStableArtifacts: "true"
           - track: "1"
             buildEnforcing: "true"
           - track: "2"
@@ -747,6 +748,11 @@ spec:
             IMAGE_REGISTRY: registry.dev.siderolabs.io
             IMAGER_ARGS: "--extra-kernel-arg=talos.extra_cmdline=extra-super-cmdline"
             TAG_SUFFIX_OUT: -extra-cmdline
+        - name: secureboot-stable-artifacts
+          conditions:
+            - matrix.buildTrustedBootStableArtifacts
+          environment:
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: provision-tests-prepare
         - name: provision-tests-track
           command: provision-tests-track-${{ matrix.track }}

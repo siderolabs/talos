@@ -52,8 +52,8 @@ func WithTalosClient(client *client.Client) Option {
 	}
 }
 
-// WithBootlader enables or disables bootloader (bootloader is enabled by default).
-func WithBootlader(enabled bool) Option {
+// WithBootloader enables or disables bootloader (bootloader is enabled by default).
+func WithBootloader(enabled bool) Option {
 	return func(o *Options) error {
 		o.BootloaderEnabled = enabled
 

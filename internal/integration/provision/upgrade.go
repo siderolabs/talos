@@ -48,11 +48,13 @@ type upgradeSpec struct {
 
 	// Deprecated: staged upgrades are not supported by the new LifecycleService API.
 	// Use the legacy MachineService.Upgrade path instead.
-	UpgradeStage    bool
-	WithEncryption  bool
-	WithBios        bool
-	WithApplyConfig bool
-	WithEnforcing   bool
+	UpgradeStage            bool
+	WithEncryption          bool
+	WithTrustedBoot         bool
+	WithBios                bool
+	WithApplyConfig         bool
+	WithSkipInjectingConfig bool
+	WithEnforcing           bool
 }
 
 const (
@@ -269,6 +271,62 @@ func upgradeCurrentToCurrentEnforcing() upgradeSpec {
 	}
 }
 
+// upgradeStableToCurrentTrustedBoot upgrades the stable Talos release to the current version
+// with TPM-backed disk encryption (trustedboot). Both the source ISO and the source
+// installer are produced from the upstream-tagged imager at the stable release, signed with
+// the local secureboot/PCR keys; the target installer is the current-version secureboot
+// installer (built locally) signed with the same keys, so the on-disk TPM token enrolled
+// under the stable UKI can be unsealed under the current UKI after the upgrade.
+//
+// Pre-installed secureboot disk images with auto-enrolled SecureBoot keys only landed in
+// the current development branch, not in 1.13.x — so the source uses ISO boot + maintenance
+// install rather than a pre-installed disk image.
+//
+// Flow: ISO boots → maintenance mode → apply-config + install (pulls SourceInstallerImage,
+// lays down stable UKI signed with local key) → reboot → stable Talos boots from disk →
+// enrollment seals LUKS key under stable UKI's PCR pubkey (= local key K) → cluster
+// healthy → talosctl upgrade replaces on-disk UKI with current (also signed with K) →
+// reboot → current Talos unseals the blob enrolled by stable.
+func upgradeStableToCurrentTrustedBoot() upgradeSpec {
+	return upgradeSpec{
+		// Short prefix is intentional: the cluster name becomes part of the swtpm
+		// AF_UNIX socket path (~/.talos/clusters/<name>/<node>-tpm/swtpm.sock),
+		// which has a 108-byte Linux limit. "trustedboot-v1.13.0-..." exceeds it.
+		ShortName: fmt.Sprintf("tb-%s", DefaultSettings.CurrentVersion),
+
+		SourceISOPath: helpers.ArtifactPath(filepath.Join(stableRelease, "metal-amd64-secureboot.iso")),
+		// The stable secureboot installer is built locally with the test signing
+		// keys. The `-stable-secureboot` tag distinguishes it from the real
+		// <stable>-amd64-secureboot release image in the shared dev registry.
+		// Must match the tag pushed by `make secureboot-stable-artifacts`.
+		SourceInstallerImage: fmt.Sprintf(
+			"%s/%s:%s-stable-secureboot",
+			DefaultSettings.TargetInstallImageRegistry,
+			images.DefaultInstallerImageName, //nolint:staticcheck // legacy is only used in tests
+			stableRelease,
+		),
+		SourceVersion:    stableRelease,
+		SourceK8sVersion: stableK8sVersion,
+
+		TargetInstallerImage: fmt.Sprintf(
+			"%s/%s:%s-amd64-secureboot",
+			DefaultSettings.TargetInstallImageRegistry,
+			images.DefaultInstallerImageName, //nolint:staticcheck // legacy is only used in tests
+			DefaultSettings.CurrentVersion,
+		),
+		TargetVersion:    DefaultSettings.CurrentVersion,
+		TargetK8sVersion: currentK8sVersion,
+
+		ControlplaneNodes: 1,
+		WorkerNodes:       0,
+
+		WithEncryption:          true,
+		WithTrustedBoot:         true,
+		WithApplyConfig:         true,
+		WithSkipInjectingConfig: true,
+	}
+}
+
 // UpgradeSuite ...
 type UpgradeSuite struct {
 	BaseSuite
@@ -317,9 +375,11 @@ func (suite *UpgradeSuite) TestRolling() {
 		SourceVersion:        suite.spec.SourceVersion,
 		SourceK8sVersion:     suite.spec.SourceK8sVersion,
 
-		WithEncryption:  suite.spec.WithEncryption,
-		WithBios:        suite.spec.WithBios,
-		WithApplyConfig: suite.spec.WithApplyConfig,
+		WithEncryption:          suite.spec.WithEncryption,
+		WithTrustedBoot:         suite.spec.WithTrustedBoot,
+		WithBios:                suite.spec.WithBios,
+		WithApplyConfig:         suite.spec.WithApplyConfig,
+		WithSkipInjectingConfig: suite.spec.WithSkipInjectingConfig,
 	})
 
 	client, err := suite.clusterAccess.Client()
@@ -407,5 +467,6 @@ func init() {
 		&UpgradeSuite{specGen: upgradeStableToCurrentPreserveStage, track: 1},
 		&UpgradeSuite{specGen: upgradeCurrentToCurrentNewCmdline, track: 2},
 		&UpgradeSuite{specGen: upgradeCurrentToCurrentEnforcing, track: 1},
+		&UpgradeSuite{specGen: upgradeStableToCurrentTrustedBoot, track: 0},
 	)
 }

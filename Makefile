@@ -672,6 +672,22 @@ release-artifacts:
 		$(MAKE) $(ARTIFACTS)/$$release TALOS_RELEASE=$$release; \
 	done
 
+
+.PHONY: secureboot-stable-artifacts
+secureboot-stable-artifacts: ## Builds the stable-release secureboot ISO and installer using the upstream-tagged imager with local signing keys; pushes the installer to the test registry. Source artifacts for the trustedboot upgrade provision test. Pre-installed secureboot disk images with auto-enrolled keys only landed in main, not in 1.13.x — hence ISO boot + maintenance install.
+	@$(MAKE) image-secureboot-iso \
+		IMAGE_REGISTRY=ghcr.io USERNAME=siderolabs IMAGE_NAME_SUFFIX= \
+		IMAGE_TAG_IN=$(lastword $(RELEASES)) PLATFORM=linux/amd64
+	@mkdir -p $(ARTIFACTS)/$(lastword $(RELEASES))
+	@mv $(ARTIFACTS)/metal-amd64-secureboot.iso $(ARTIFACTS)/$(lastword $(RELEASES))/metal-amd64-secureboot.iso
+	@$(MAKE) image-secureboot-installer \
+		IMAGE_REGISTRY=ghcr.io USERNAME=siderolabs IMAGE_NAME_SUFFIX= \
+		IMAGE_TAG_IN=$(lastword $(RELEASES)) PLATFORM=linux/amd64 \
+		IMAGER_ARGS="--base-installer-image ghcr.io/siderolabs/installer-base:$(lastword $(RELEASES))"
+	@crane push $(ARTIFACTS)/installer-amd64-secureboot.tar \
+		$(REGISTRY_AND_USERNAME)/installer$(IMAGE_NAME_SUFFIX):$(lastword $(RELEASES))-stable-secureboot
+	@rm -f $(ARTIFACTS)/installer-amd64-secureboot.tar
+
 # Utilities
 
 .PHONY: rekres
