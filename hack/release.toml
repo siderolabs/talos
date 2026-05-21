@@ -124,6 +124,12 @@ Old configuration is still supported for backwards compatibility.
 Talos now configures Flannel with the `EnableNFTables` option enabled, which uses nftables native backend instead of `iptables-nft` compatibility layer.
 """
 
+    [notes.etcd]
+        title = "etcd"
+        description = """\
+Talos is now compatible with etcd v3.6.x only (the default version was etcd 3.6.x since Talos v1.11).
+"""
+
 [make_deps]
 
     [make_deps.tools]
