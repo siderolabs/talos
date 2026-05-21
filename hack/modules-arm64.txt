@@ -54,6 +54,7 @@ kernel/drivers/i2c/i2c-mux.ko
 kernel/drivers/infiniband/core/ib_umad.ko
 kernel/drivers/infiniband/core/ib_uverbs.ko
 kernel/drivers/infiniband/core/rdma_ucm.ko
+kernel/drivers/infiniband/hw/bnxt_re/bnxt_re.ko
 kernel/drivers/infiniband/hw/hns/hns-roce-hw-v2.ko
 kernel/drivers/infiniband/hw/irdma/irdma.ko
 kernel/drivers/infiniband/hw/mlx4/mlx4_ib.ko
