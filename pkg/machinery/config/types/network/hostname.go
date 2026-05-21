@@ -115,7 +115,7 @@ func (s *HostnameConfigV1Alpha1) Clone() config.Document {
 func (s *HostnameConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
 	var errs error
 
-	if pointer.SafeDeref(s.ConfigAuto) == nethelpers.AutoHostnameKindOff && s.ConfigHostname == "" {
+	if s.ConfigAuto == nil && s.ConfigHostname == "" {
 		errs = errors.Join(errs, errors.New("either 'auto' or 'hostname' must be set"))
 	}
 
