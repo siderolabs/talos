@@ -219,19 +219,6 @@ func clusterAPIServerImageExample() string {
 	return (&APIServerConfig{}).Image()
 }
 
-func clusterControllerManagerExample() *ControllerManagerConfig {
-	return &ControllerManagerConfig{
-		ContainerImage: (&ControllerManagerConfig{}).Image(),
-		ExtraArgsConfig: meta.Args{
-			"feature-gates": meta.NewArgValue("ServerSideApply=true", nil),
-		},
-	}
-}
-
-func clusterControllerManagerImageExample() string {
-	return (&ControllerManagerConfig{}).Image()
-}
-
 func clusterProxyExample() *ProxyConfig {
 	return &ProxyConfig{
 		ContainerImage: (&ProxyConfig{}).Image(),

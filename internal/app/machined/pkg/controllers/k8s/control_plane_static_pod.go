@@ -59,6 +59,7 @@ func (ctrl *ControlPlaneStaticPodController) Inputs() []controller.Input {
 		{
 			Namespace: k8s.ControlPlaneNamespaceName,
 			Type:      k8s.ControllerManagerConfigType,
+			ID:        optional.Some(k8s.FinalControllerManagerConfigID),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -169,7 +170,7 @@ func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controll
 			},
 			{
 				f:  ctrl.manageControllerManager,
-				md: k8s.NewControllerManagerConfig().Metadata(),
+				md: k8s.NewControllerManagerConfig(k8s.FinalControllerManagerConfigID).Metadata(),
 			},
 			{
 				f:  ctrl.manageScheduler,
@@ -575,59 +576,6 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 		return "", nil
 	}
 
-	args := []string{ //nolint:prealloc // very dynamic length
-		"/usr/local/bin/kube-controller-manager",
-		"--use-service-account-credentials",
-	}
-
-	builder := argsbuilder.Args{
-		"allocate-node-cidrs":              {"true"},
-		"bind-address":                     {"127.0.0.1"},
-		"cluster-cidr":                     {strings.Join(cfg.PodCIDRs, ",")},
-		"service-cluster-ip-range":         {strings.Join(cfg.ServiceCIDRs, ",")},
-		"cluster-signing-cert-file":        {filepath.Join(constants.KubernetesControllerManagerSecretsDir, "ca.crt")},
-		"cluster-signing-key-file":         {filepath.Join(constants.KubernetesControllerManagerSecretsDir, "ca.key")},
-		"controllers":                      {"*,tokencleaner"},
-		"configure-cloud-routes":           {"false"},
-		"kubeconfig":                       {filepath.Join(constants.KubernetesControllerManagerSecretsDir, "kubeconfig")},
-		"authentication-kubeconfig":        {filepath.Join(constants.KubernetesControllerManagerSecretsDir, "kubeconfig")},
-		"authorization-kubeconfig":         {filepath.Join(constants.KubernetesControllerManagerSecretsDir, "kubeconfig")},
-		"leader-elect":                     {"true"},
-		"root-ca-file":                     {filepath.Join(constants.KubernetesControllerManagerSecretsDir, "ca.crt")},
-		"service-account-private-key-file": {filepath.Join(constants.KubernetesControllerManagerSecretsDir, "service-account.key")},
-		"profiling":                        {"false"},
-		"tls-min-version":                  {"VersionTLS13"},
-	}
-
-	k8sVersion := compatibility.VersionFromImageRef(cfg.Image)
-
-	if cfg.CloudProvider != "" && !k8sVersion.CloudProviderFlagRemoved() {
-		builder.Set("cloud-provider", argsbuilder.Value{cfg.CloudProvider})
-	}
-
-	mergePolicies := argsbuilder.MergePolicies{
-		"service-cluster-ip-range": argsbuilder.MergeAdditive,
-		"controllers":              argsbuilder.MergeAdditive,
-
-		"cluster-signing-cert-file":        argsbuilder.MergeDenied,
-		"cluster-signing-key-file":         argsbuilder.MergeDenied,
-		"authentication-kubeconfig":        argsbuilder.MergeDenied,
-		"authorization-kubeconfig":         argsbuilder.MergeDenied,
-		"root-ca-file":                     argsbuilder.MergeDenied,
-		"service-account-private-key-file": argsbuilder.MergeDenied,
-	}
-
-	extraArgs := make(argsbuilder.Args, len(cfg.ExtraArgs))
-	for k, v := range cfg.ExtraArgs {
-		extraArgs[k] = v.Values
-	}
-
-	if err := builder.Merge(extraArgs, argsbuilder.WithMergePolicies(mergePolicies)); err != nil {
-		return "", err
-	}
-
-	args = append(args, builder.Args()...)
-
 	resources, err := resources(cfg.Resources, "50m", "256Mi")
 	if err != nil {
 		return "", err
@@ -668,7 +616,7 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 					{
 						Name:    k8s.ControllerManagerID,
 						Image:   cfg.Image,
-						Command: args,
+						Command: cfg.Args,
 						Env: append(
 							[]v1.EnvVar{
 								{

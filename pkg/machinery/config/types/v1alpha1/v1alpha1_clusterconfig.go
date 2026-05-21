@@ -37,7 +37,7 @@ func (c *ClusterConfig) APIServer() config.APIServer {
 }
 
 // ControllerManager implements the config.ClusterConfig interface.
-func (c *ClusterConfig) ControllerManager() config.ControllerManager {
+func (c *ClusterConfig) ControllerManager() *ControllerManagerConfig {
 	if c.ControllerManagerConfig == nil {
 		return &ControllerManagerConfig{}
 	}

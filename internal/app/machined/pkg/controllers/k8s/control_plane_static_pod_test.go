@@ -35,7 +35,7 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileDefaults() {
 	secretStatus := k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID)
 	configStatus := k8s.NewConfigStatus(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusStaticPodID)
 	configAPIServer := k8s.NewAPIServerConfig()
-	configControllerManager := k8s.NewControllerManagerConfig()
+	configControllerManager := k8s.NewControllerManagerConfig(k8s.FinalControllerManagerConfigID)
 	configControllerManager.TypedSpec().Enabled = true
 	configScheduler := k8s.NewSchedulerConfig(k8s.FinalSchedulerConfigID)
 	configScheduler.TypedSpec().Enabled = true
@@ -81,7 +81,7 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraMounts() {
 		},
 	}
 
-	configControllerManager := k8s.NewControllerManagerConfig()
+	configControllerManager := k8s.NewControllerManagerConfig(k8s.FinalControllerManagerConfigID)
 	configControllerManager.TypedSpec().Enabled = true
 	configScheduler := k8s.NewSchedulerConfig(k8s.FinalSchedulerConfigID)
 	configScheduler.TypedSpec().Enabled = true
@@ -468,7 +468,7 @@ func (suite *ControlPlaneStaticPodSuite) TestControlPlaneStaticPodsExceptSchedul
 	configStatus := k8s.NewConfigStatus(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusStaticPodID)
 	secretStatus := k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID)
 	configAPIServer := k8s.NewAPIServerConfig()
-	configControllerManager := k8s.NewControllerManagerConfig()
+	configControllerManager := k8s.NewControllerManagerConfig(k8s.FinalControllerManagerConfigID)
 	configControllerManager.TypedSpec().Enabled = true
 	configScheduler := k8s.NewSchedulerConfig(k8s.FinalSchedulerConfigID)
 	configScheduler.TypedSpec().Enabled = true
@@ -511,7 +511,7 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileStaticPodResources() {
 	secretStatus := k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID)
 
 	configAPIServer := k8s.NewAPIServerConfig()
-	configControllerManager := k8s.NewControllerManagerConfig()
+	configControllerManager := k8s.NewControllerManagerConfig(k8s.FinalControllerManagerConfigID)
 	configControllerManager.TypedSpec().Enabled = true
 	configScheduler := k8s.NewSchedulerConfig(k8s.FinalSchedulerConfigID)
 	configScheduler.TypedSpec().Enabled = true

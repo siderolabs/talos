@@ -20,6 +20,9 @@ const ControllerManagerConfigType = resource.Type("ControllerManagerConfigs.kube
 // ControllerManagerConfigID is a singleton resource ID for ControllerManagerConfig.
 const ControllerManagerConfigID = resource.ID(ControllerManagerID)
 
+// FinalControllerManagerConfigID is a singleton resource ID for the final ControllerManagerConfig.
+const FinalControllerManagerConfigID = resource.ID(FinalPrefix + ControllerManagerID)
+
 // ControllerManagerConfig represents configuration for kube-controller-manager.
 type ControllerManagerConfig = typed.Resource[ControllerManagerConfigSpec, ControllerManagerConfigExtension]
 
@@ -32,16 +35,17 @@ type ControllerManagerConfigSpec struct {
 	CloudProvider        string               `yaml:"cloudProvider" protobuf:"3"`
 	PodCIDRs             []string             `yaml:"podCIDRs" protobuf:"4"`
 	ServiceCIDRs         []string             `yaml:"serviceCIDRs" protobuf:"5"`
-	ExtraArgs            map[string]ArgValues `yaml:"extraArgs" protobuf:"10"`
+	ExtraArgs            map[string]ArgValues `yaml:"extraArgs,omitempty" protobuf:"10"`
+	Args                 []string             `yaml:"args,omitempty" protobuf:"11"`
 	ExtraVolumes         []ExtraVolume        `yaml:"extraVolumes" protobuf:"7"`
 	EnvironmentVariables map[string]string    `yaml:"environmentVariables" protobuf:"8"`
 	Resources            Resources            `yaml:"resources" protobuf:"9"`
 }
 
 // NewControllerManagerConfig returns new ControllerManagerConfig resource.
-func NewControllerManagerConfig() *ControllerManagerConfig {
+func NewControllerManagerConfig(id resource.ID) *ControllerManagerConfig {
 	return typed.NewResource[ControllerManagerConfigSpec, ControllerManagerConfigExtension](
-		resource.NewMetadata(ControlPlaneNamespaceName, ControllerManagerConfigType, ControllerManagerConfigID, resource.VersionUndefined),
+		resource.NewMetadata(ControlPlaneNamespaceName, ControllerManagerConfigType, id, resource.VersionUndefined),
 		ControllerManagerConfigSpec{},
 	)
 }

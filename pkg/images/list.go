@@ -44,7 +44,7 @@ func List(config config.Config) Versions {
 	images.Flannel = mustParseTag(fmt.Sprintf("ghcr.io/siderolabs/flannel:%s", constants.FlannelVersion)) // mirrored from docker.io/flannelcni/flannel
 	images.Kubelet = mustParseTag(config.Machine().Kubelet().Image())
 	images.KubeAPIServer = mustParseTag(config.Cluster().APIServer().Image())
-	images.KubeControllerManager = mustParseTag(config.Cluster().ControllerManager().Image())
+	images.KubeControllerManager = mustParseTag(config.K8sControllerManagerConfig().Image())
 	images.KubeNetworkPolicies = mustParseTag(fmt.Sprintf("registry.k8s.io/networking/kube-network-policies:%s", constants.KubeNetworkPoliciesVersion))
 	images.KubeProxy = mustParseTag(config.Cluster().Proxy().Image())
 	images.KubeScheduler = mustParseTag(config.K8sSchedulerConfig().Image())

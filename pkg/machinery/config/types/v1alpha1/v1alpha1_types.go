@@ -142,8 +142,9 @@ type MachineConfig struct {
 	//     - name: Uncomment this to enable SANs.
 	//       value: '[]string{"10.0.0.10", "172.16.0.10", "192.168.0.10"}'
 	MachineCertSANs []string `yaml:"certSANs"`
-	//   description: |
-	//     Provides machine specific control plane configuration options.
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeControllerManagerConfig`/`KubeSchedulerConfig` instead.
 	MachineControlPlane *MachineControlPlaneConfig `yaml:"controlPlane,omitempty"`
 	//   description: |
 	//     Used to provide additional options to the kubelet.
@@ -404,10 +405,9 @@ type ClusterConfig struct {
 	//   examples:
 	//     - value: clusterAPIServerExample()
 	APIServerConfig *APIServerConfig `yaml:"apiServer,omitempty"`
-	//   description: |
-	//     Controller manager server specific configuration options.
-	//   examples:
-	//     - value: clusterControllerManagerExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeControllerManagerConfig` instead.
 	ControllerManagerConfig *ControllerManagerConfig `yaml:"controllerManager,omitempty"`
 	//   description: |
 	//     Kube-proxy server-specific configuration options
@@ -530,9 +530,12 @@ type ExtraMount struct {
 }
 
 // MachineControlPlaneConfig machine specific configuration options.
+//
+// docgen:nodoc
 type MachineControlPlaneConfig struct {
-	//   description: |
-	//     Controller manager machine specific configuration options.
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeControllerManagerConfig` instead.
 	MachineControllerManager *MachineControllerManagerConfig `yaml:"controllerManager,omitempty"`
 	// docgen:nodoc
 	//
@@ -541,6 +544,10 @@ type MachineControlPlaneConfig struct {
 }
 
 // MachineControllerManagerConfig represents the machine specific ControllerManager config values.
+//
+// Deprecated: Use `KubeControllerManagerConfig` instead.
+//
+// docgen:nodoc
 type MachineControllerManagerConfig struct {
 	//   description: |
 	//     Disable kube-controller-manager on the node.
@@ -1192,14 +1199,14 @@ type AuthorizationConfigAuthorizerConfig struct {
 	AuthorizerWebhook meta.Unstructured `yaml:"webhook,omitempty"`
 }
 
-var _ config.ControllerManager = (*ControllerManagerConfig)(nil)
-
 // ControllerManagerConfig represents the kube controller manager configuration options.
+//
+// Deprecated: Use `KubeControllerManagerConfig` instead.
+//
+// docgen:nodoc
 type ControllerManagerConfig struct {
 	//   description: |
 	//     The container image used in the controller manager manifest.
-	//   examples:
-	//     - value: clusterControllerManagerImageExample()
 	ContainerImage string `yaml:"image,omitempty"`
 	//   description: |
 	//     Extra arguments to supply to the controller manager.
@@ -1261,12 +1268,12 @@ type ProxyConfig struct {
 
 // SchedulerConfig represents the kube scheduler configuration options.
 //
+// Deprecated: Use `KubeSchedulerConfig` instead.
+//
 // docgen:nodoc
 type SchedulerConfig struct {
 	//   description: |
 	//     The container image used in the scheduler manifest.
-	//   examples:
-	//     - value: clusterSchedulerImageExample()
 	ContainerImage string `yaml:"image,omitempty"`
 	//   description: |
 	//     Extra arguments to supply to the scheduler.

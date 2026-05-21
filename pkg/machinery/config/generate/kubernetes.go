@@ -40,11 +40,15 @@ func (in *Input) generateKubernetesControlplaneConfigs() []config.Document {
 		},
 	}
 
+	controllerManagerConfig := k8s.NewKubeControllerManagerConfigV1Alpha1()
+	controllerManagerConfig.PodImage = fmt.Sprintf("%s:v%s", constants.KubernetesControllerManagerImage, in.KubernetesVersion)
+
 	schedulerConfig := k8s.NewKubeSchedulerConfigV1Alpha1()
 	schedulerConfig.PodImage = fmt.Sprintf("%s:v%s", constants.KubernetesSchedulerImage, in.KubernetesVersion)
 
 	return []config.Document{
 		etcdEncryptionConfig,
+		controllerManagerConfig,
 		schedulerConfig,
 	}
 }

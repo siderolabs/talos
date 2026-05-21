@@ -648,7 +648,7 @@ func (suite *K8sControlPlaneSuite) TestReconcileResources() {
 							},
 						},
 					},
-					ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{
+					ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{ //nolint:staticcheck // legacy config
 						ResourcesConfig: &v1alpha1.ResourcesConfig{
 							Requests: meta.Unstructured{
 								Object: map[string]any{
@@ -664,7 +664,7 @@ func (suite *K8sControlPlaneSuite) TestReconcileResources() {
 							},
 						},
 					},
-					SchedulerConfig: &v1alpha1.SchedulerConfig{
+					SchedulerConfig: &v1alpha1.SchedulerConfig{ //nolint:staticcheck // legacy config
 						ResourcesConfig: &v1alpha1.ResourcesConfig{
 							Requests: meta.Unstructured{
 								Object: map[string]any{

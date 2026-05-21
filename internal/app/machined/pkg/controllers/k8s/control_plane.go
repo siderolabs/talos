@@ -227,37 +227,43 @@ type ControlPlaneControllerManagerController = transform.Controller[*config.Mach
 func NewControlPlaneControllerManagerController() *ControlPlaneControllerManagerController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *k8s.ControllerManagerConfig]{
-			Name:                    "k8s.ControlPlaneControllerManagerController",
-			MapMetadataOptionalFunc: controlplaneMapFunc(k8s.NewControllerManagerConfig()),
+			Name: "k8s.ControlPlaneControllerManagerController",
+			MapMetadataOptionalFunc: controlplaneMapFunc(
+				k8s.NewControllerManagerConfig(k8s.ControllerManagerConfigID),
+				func(machineConfig *config.MachineConfig) bool {
+					return machineConfig.Config().K8sControllerManagerConfig() != nil
+				},
+			),
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, machineConfig *config.MachineConfig, res *k8s.ControllerManagerConfig) error {
-				cfgProvider := machineConfig.Config()
+				controllerManagerConfig := machineConfig.Config().K8sControllerManagerConfig()
 
 				var cloudProvider string
 
-				if cfgProvider.Cluster().ExternalCloudProvider().Enabled() {
+				if machineConfig.Config().Cluster().ExternalCloudProvider().Enabled() {
 					cloudProvider = CloudProviderExternal
 				}
 
-				extraArgs := make(map[string]k8s.ArgValues, len(cfgProvider.Cluster().ControllerManager().ExtraArgs()))
-				for k, v := range cfgProvider.Cluster().ControllerManager().ExtraArgs() {
+				extraArgs := make(map[string]k8s.ArgValues, len(controllerManagerConfig.ExtraArgs()))
+				for k, v := range controllerManagerConfig.ExtraArgs() {
 					extraArgs[k] = k8s.ArgValues{Values: v}
 				}
 
 				*res.TypedSpec() = k8s.ControllerManagerConfigSpec{
-					Enabled:              !cfgProvider.Machine().Controlplane().ControllerManager().Disabled(),
-					Image:                cfgProvider.Cluster().ControllerManager().Image(),
+					Enabled:              controllerManagerConfig.Enabled(),
+					Image:                controllerManagerConfig.Image(),
 					CloudProvider:        cloudProvider,
-					PodCIDRs:             cfgProvider.Cluster().Network().PodCIDRs(),
-					ServiceCIDRs:         cfgProvider.Cluster().Network().ServiceCIDRs(),
+					PodCIDRs:             machineConfig.Config().Cluster().Network().PodCIDRs(),
+					ServiceCIDRs:         machineConfig.Config().Cluster().Network().ServiceCIDRs(),
 					ExtraArgs:            extraArgs,
-					ExtraVolumes:         convertVolumes(cfgProvider.Cluster().ControllerManager().ExtraVolumes()),
-					EnvironmentVariables: cfgProvider.Cluster().ControllerManager().Env(),
-					Resources:            convertResources(cfgProvider.Cluster().ControllerManager().Resources()),
+					ExtraVolumes:         convertVolumes(controllerManagerConfig.ExtraVolumes()),
+					EnvironmentVariables: controllerManagerConfig.Env(),
+					Resources:            convertResources(controllerManagerConfig.Resources()),
 				}
 
 				return nil
 			},
 		},
+		transform.WithOutputKind(controller.OutputShared),
 	)
 }
 

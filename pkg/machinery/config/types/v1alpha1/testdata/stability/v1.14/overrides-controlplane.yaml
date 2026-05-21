@@ -89,8 +89,6 @@ cluster:
             kind: Policy
             rules:
                 - level: Metadata
-    controllerManager:
-        image: registry.k8s.io/kube-controller-manager:v1.28.0
     proxy:
         image: registry.k8s.io/kube-proxy:v1.28.0
     discovery:
@@ -132,6 +130,10 @@ config:
                       secret: 45yd2Ke+sytiICojDf8aibTfgt99nzJmO53cjDqrCto=
           resources:
             - secrets
+---
+apiVersion: v1alpha1
+kind: KubeControllerManagerConfig
+image: registry.k8s.io/kube-controller-manager:v1.28.0
 ---
 apiVersion: v1alpha1
 kind: KubeSchedulerConfig

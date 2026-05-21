@@ -72,7 +72,6 @@ certSANs:
     - 172.16.0.10
     - 192.168.0.10
 {{< /highlight >}}</details> | |
-|`controlPlane` |<a href="#Config.machine.controlPlane">MachineControlPlaneConfig</a> |Provides machine specific control plane configuration options.  | |
 |`kubelet` |<a href="#Config.machine.kubelet">KubeletConfig</a> |Used to provide additional options to the kubelet. <details><summary>Show example(s)</summary>Kubelet definition example.:{{< highlight yaml >}}
 kubelet:
     image: ghcr.io/siderolabs/kubelet:v1.36.1 # The `image` field is an optional reference to an alternative kubelet image.
@@ -233,38 +232,6 @@ nodeAnnotations:
 nodeTaints:
     exampleTaint: exampleTaintValue:NoSchedule
 {{< /highlight >}}</details> | |
-
-
-
-
-### controlPlane {#Config.machine.controlPlane}
-
-MachineControlPlaneConfig machine specific configuration options.
-
-
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`controllerManager` |<a href="#Config.machine.controlPlane.controllerManager">MachineControllerManagerConfig</a> |Controller manager machine specific configuration options.  | |
-
-
-
-
-#### controllerManager {#Config.machine.controlPlane.controllerManager}
-
-MachineControllerManagerConfig represents the machine specific ControllerManager config values.
-
-
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`disabled` |bool |Disable kube-controller-manager on the node.  | |
-
-
-
-
 
 
 
@@ -1006,13 +973,6 @@ apiServer:
     #         subjectAccessReviewVersion: v1
     #         timeout: 3s
 {{< /highlight >}}</details> | |
-|`controllerManager` |<a href="#Config.cluster.controllerManager">ControllerManagerConfig</a> |Controller manager server specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-controllerManager:
-    image: registry.k8s.io/kube-controller-manager:v1.36.1 # The container image used in the controller manager manifest.
-    # Extra arguments to supply to the controller manager.
-    extraArgs:
-        feature-gates: ServerSideApply=true
-{{< /highlight >}}</details> | |
 |`proxy` |<a href="#Config.cluster.proxy">ProxyConfig</a> |Kube-proxy server-specific configuration options <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 proxy:
     image: registry.k8s.io/kube-proxy:v1.36.1 # The container image used in the kube-proxy manifest.
@@ -1498,86 +1458,6 @@ cluster:
 |`type` |string |Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`.  | |
 |`name` |string |Name is used to describe the authorizer.  | |
 |`webhook` |Unstructured |webhook is the configuration for the webhook authorizer.  | |
-
-
-
-
-
-
-
-
-### controllerManager {#Config.cluster.controllerManager}
-
-ControllerManagerConfig represents the kube controller manager configuration options.
-
-
-
-{{< highlight yaml >}}
-cluster:
-    controllerManager:
-        image: registry.k8s.io/kube-controller-manager:v1.36.1 # The container image used in the controller manager manifest.
-        # Extra arguments to supply to the controller manager.
-        extraArgs:
-            feature-gates: ServerSideApply=true
-{{< /highlight >}}
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`image` |string |The container image used in the controller manager manifest. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-image: registry.k8s.io/kube-controller-manager:v1.36.1
-{{< /highlight >}}</details> | |
-|`extraArgs` |Args |Extra arguments to supply to the controller manager.  | |
-|`extraVolumes` |<a href="#Config.cluster.controllerManager.extraVolumes.">[]VolumeMountConfig</a> |Extra volumes to mount to the controller manager static pod.  | |
-|`env` |Env |The `env` field allows for the addition of environment variables for the control plane component.  | |
-|`resources` |<a href="#Config.cluster.controllerManager.resources">ResourcesConfig</a> |Configure the controller manager resources.  | |
-
-
-
-
-#### extraVolumes[] {#Config.cluster.controllerManager.extraVolumes.}
-
-VolumeMountConfig struct describes extra volume mount for the static pods.
-
-
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`hostPath` |string |Path on the host. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-hostPath: /var/lib/auth
-{{< /highlight >}}</details> | |
-|`mountPath` |string |Path in the container. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-mountPath: /etc/kubernetes/auth
-{{< /highlight >}}</details> | |
-|`readonly` |bool |Mount the volume read only. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-readonly: true
-{{< /highlight >}}</details> | |
-
-
-
-
-
-
-#### resources {#Config.cluster.controllerManager.resources}
-
-ResourcesConfig represents the pod resources.
-
-
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`requests` |Unstructured |Requests configures the reserved cpu/memory resources. <details><summary>Show example(s)</summary>resources requests.:{{< highlight yaml >}}
-requests:
-    cpu: 1
-    memory: 1Gi
-{{< /highlight >}}</details> | |
-|`limits` |Unstructured |Limits configures the maximum cpu/memory resources a container can use. <details><summary>Show example(s)</summary>resources requests.:{{< highlight yaml >}}
-limits:
-    cpu: 2
-    memory: 2500Mi
-{{< /highlight >}}</details> | |
 
 
 

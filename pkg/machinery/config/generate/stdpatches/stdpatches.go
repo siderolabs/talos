@@ -75,6 +75,13 @@ func WithKubeAPIServerImage(versionContract *config.VersionContract, kubeAPIServ
 
 // WithKubeControllerManagerImage returns a patch that updates the kube-controller-manager image in the machine configuration.
 func WithKubeControllerManagerImage(versionContract *config.VersionContract, kubeControllerManagerImage string) ([]byte, error) {
+	if versionContract.MultidocKubernetesConfigSupported() {
+		controllerManagerConfig := k8s.NewKubeControllerManagerConfigV1Alpha1()
+		controllerManagerConfig.PodImage = kubeControllerManagerImage
+
+		return patchFromDocument(controllerManagerConfig)
+	}
+
 	return patchFromV1Alpha1(map[string]any{
 		"cluster": map[string]any{
 			"controllerManager": map[string]any{

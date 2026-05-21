@@ -493,8 +493,8 @@ var imageK8sBundleCmd = &cobra.Command{
 					ClusterConfig: &v1alpha1.ClusterConfig{
 						EtcdConfig:              &v1alpha1.EtcdConfig{},
 						APIServerConfig:         &v1alpha1.APIServerConfig{},
-						ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{},
-						SchedulerConfig:         &v1alpha1.SchedulerConfig{},
+						ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{}, //nolint:staticcheck // legacy config
+						SchedulerConfig:         &v1alpha1.SchedulerConfig{},         //nolint:staticcheck // legacy config
 						CoreDNSConfig:           &v1alpha1.CoreDNS{},
 						ProxyConfig:             &v1alpha1.ProxyConfig{},
 					},
@@ -661,8 +661,8 @@ var imageIntegrationCmd = &cobra.Command{
 			ClusterConfig: &v1alpha1.ClusterConfig{
 				EtcdConfig:              &v1alpha1.EtcdConfig{},
 				APIServerConfig:         &v1alpha1.APIServerConfig{},
-				ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{},
-				SchedulerConfig:         &v1alpha1.SchedulerConfig{},
+				ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{}, //nolint:staticcheck
+				SchedulerConfig:         &v1alpha1.SchedulerConfig{},         //nolint:staticcheck
 				CoreDNSConfig:           &v1alpha1.CoreDNS{},
 				ProxyConfig:             &v1alpha1.ProxyConfig{},
 			},

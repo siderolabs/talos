@@ -7712,6 +7712,7 @@ ControllerManagerConfigSpec is configuration for kube-controller-manager.
 | environment_variables | [ControllerManagerConfigSpec.EnvironmentVariablesEntry](#talos.resource.definitions.k8s.ControllerManagerConfigSpec.EnvironmentVariablesEntry) | repeated |  |
 | resources | [Resources](#talos.resource.definitions.k8s.Resources) |  |  |
 | extra_args | [ControllerManagerConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.ControllerManagerConfigSpec.ExtraArgsEntry) | repeated |  |
+| args | [string](#string) | repeated |  |
 
 
 

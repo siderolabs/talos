@@ -47,3 +47,41 @@ func (s schedulerConfigShim) Enabled() bool {
 
 	return true
 }
+
+// K8sControllerManagerConfig implements the config.Config interface.
+func (c *Config) K8sControllerManagerConfig() config.K8sControllerManagerConfig {
+	clusterConfig := c.ClusterConfig
+	if clusterConfig == nil {
+		clusterConfig = &ClusterConfig{}
+	}
+
+	return struct {
+		*ControllerManagerConfig
+		controllerManagerConfigShim
+	}{
+		ControllerManagerConfig:     clusterConfig.ControllerManager(),
+		controllerManagerConfigShim: controllerManagerConfigShim{c: c},
+	}
+}
+
+type controllerManagerConfigShim struct {
+	c *Config
+}
+
+// K8sControllerManagerConfigSignal implements the config.K8sControllerManagerConfig interface.
+func (s controllerManagerConfigShim) K8sControllerManagerConfigSignal() {}
+
+// Enabled implements the config.K8sControllerManagerConfig interface.
+func (s controllerManagerConfigShim) Enabled() bool {
+	if s.c.MachineConfig == nil || s.c.MachineConfig.MachineControlPlane == nil {
+		return true
+	}
+
+	mcp := s.c.MachineConfig.MachineControlPlane
+
+	if mcp.MachineControllerManager != nil {
+		return !pointer.SafeDeref(mcp.MachineControllerManager.MachineControllerManagerDisabled)
+	}
+
+	return true
+}

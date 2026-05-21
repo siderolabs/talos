@@ -1160,6 +1160,88 @@
       ],
       "description": "PCIDriverRebindConfig allows to configure PCI driver rebinds."
     },
+    "k8s.KubeControllerManagerConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "KubeControllerManagerConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "By default, kube-controller-manager static pod is enabled.\nSet to false to disable the kube-controller-manager (assuming it runs on other controlplane node).\n",
+          "markdownDescription": "By default, kube-controller-manager static pod is enabled.\nSet to false to disable the kube-controller-manager (assuming it runs on other controlplane node).",
+          "x-intellij-html-description": "\u003cp\u003eBy default, kube-controller-manager static pod is enabled.\nSet to false to disable the kube-controller-manager (assuming it runs on other controlplane node).\u003c/p\u003e\n"
+        },
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "The container image used to run the kube-controller-manager component.\n\nThe image reference should contain the tag, even if it is pinned by digest.\n",
+          "markdownDescription": "The container image used to run the kube-controller-manager component.\n\nThe image reference should contain the tag, even if it is pinned by digest.",
+          "x-intellij-html-description": "\u003cp\u003eThe container image used to run the kube-controller-manager component.\u003c/p\u003e\n\n\u003cp\u003eThe image reference should contain the tag, even if it is pinned by digest.\u003c/p\u003e\n"
+        },
+        "extraArgs": {
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "type": "object",
+          "title": "extraArgs",
+          "description": "Extra command line arguments to supply to the kube-controller-manager.\n",
+          "markdownDescription": "Extra command line arguments to supply to the kube-controller-manager.",
+          "x-intellij-html-description": "\u003cp\u003eExtra command line arguments to supply to the kube-controller-manager.\u003c/p\u003e\n"
+        },
+        "env": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "env",
+          "description": "The env field allows for the addition of environment variables for the kube-controller-manager.\n",
+          "markdownDescription": "The `env` field allows for the addition of environment variables for the kube-controller-manager.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eenv\u003c/code\u003e field allows for the addition of environment variables for the kube-controller-manager.\u003c/p\u003e\n"
+        },
+        "resources": {
+          "type": "object",
+          "title": "resources",
+          "description": "Configure the kube-controller-manager resources.\n",
+          "markdownDescription": "Configure the kube-controller-manager resources.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure the kube-controller-manager resources.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "KubeControllerManagerConfig configures kube-controller-manager controlplane static pod."
+    },
     "k8s.KubeEtcdEncryptionConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -4429,13 +4511,6 @@
           "markdownDescription": "API server specific configuration options.",
           "x-intellij-html-description": "\u003cp\u003eAPI server specific configuration options.\u003c/p\u003e\n"
         },
-        "controllerManager": {
-          "$ref": "#/$defs/v1alpha1.ControllerManagerConfig",
-          "title": "controllerManager",
-          "description": "Controller manager server specific configuration options.\n",
-          "markdownDescription": "Controller manager server specific configuration options.",
-          "x-intellij-html-description": "\u003cp\u003eController manager server specific configuration options.\u003c/p\u003e\n"
-        },
         "proxy": {
           "$ref": "#/$defs/v1alpha1.ProxyConfig",
           "title": "proxy",
@@ -4664,69 +4739,6 @@
       "additionalProperties": false,
       "type": "object",
       "description": "ControlPlaneConfig represents the control plane configuration options."
-    },
-    "v1alpha1.ControllerManagerConfig": {
-      "properties": {
-        "image": {
-          "type": "string",
-          "title": "image",
-          "description": "The container image used in the controller manager manifest.\n",
-          "markdownDescription": "The container image used in the controller manager manifest.",
-          "x-intellij-html-description": "\u003cp\u003eThe container image used in the controller manager manifest.\u003c/p\u003e\n"
-        },
-        "extraArgs": {
-          "additionalProperties": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              }
-            ]
-          },
-          "type": "object",
-          "title": "extraArgs",
-          "description": "Extra arguments to supply to the controller manager.\n",
-          "markdownDescription": "Extra arguments to supply to the controller manager.",
-          "x-intellij-html-description": "\u003cp\u003eExtra arguments to supply to the controller manager.\u003c/p\u003e\n"
-        },
-        "extraVolumes": {
-          "items": {
-            "$ref": "#/$defs/v1alpha1.VolumeMountConfig"
-          },
-          "type": "array",
-          "title": "extraVolumes",
-          "description": "Extra volumes to mount to the controller manager static pod.\n",
-          "markdownDescription": "Extra volumes to mount to the controller manager static pod.",
-          "x-intellij-html-description": "\u003cp\u003eExtra volumes to mount to the controller manager static pod.\u003c/p\u003e\n"
-        },
-        "env": {
-          "patternProperties": {
-            ".*": {
-              "type": "string"
-            }
-          },
-          "type": "object",
-          "title": "env",
-          "description": "The env field allows for the addition of environment variables for the control plane component.\n",
-          "markdownDescription": "The `env` field allows for the addition of environment variables for the control plane component.",
-          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eenv\u003c/code\u003e field allows for the addition of environment variables for the control plane component.\u003c/p\u003e\n"
-        },
-        "resources": {
-          "type": "object",
-          "title": "resources",
-          "description": "Configure the controller manager resources.\n",
-          "markdownDescription": "Configure the controller manager resources.",
-          "x-intellij-html-description": "\u003cp\u003eConfigure the controller manager resources.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "ControllerManagerConfig represents the kube controller manager configuration options."
     },
     "v1alpha1.CoreDNS": {
       "properties": {
@@ -5465,13 +5477,6 @@
           "markdownDescription": "Extra certificate subject alternative names for the machine's certificate.\nBy default, all non-loopback interface IPs are automatically added to the certificate's SANs.",
           "x-intellij-html-description": "\u003cp\u003eExtra certificate subject alternative names for the machine\u0026rsquo;s certificate.\nBy default, all non-loopback interface IPs are automatically added to the certificate\u0026rsquo;s SANs.\u003c/p\u003e\n"
         },
-        "controlPlane": {
-          "$ref": "#/$defs/v1alpha1.MachineControlPlaneConfig",
-          "title": "controlPlane",
-          "description": "Provides machine specific control plane configuration options.\n",
-          "markdownDescription": "Provides machine specific control plane configuration options.",
-          "x-intellij-html-description": "\u003cp\u003eProvides machine specific control plane configuration options.\u003c/p\u003e\n"
-        },
         "kubelet": {
           "$ref": "#/$defs/v1alpha1.KubeletConfig",
           "title": "kubelet",
@@ -5615,34 +5620,6 @@
       "additionalProperties": false,
       "type": "object",
       "description": "MachineConfig represents the machine-specific config values."
-    },
-    "v1alpha1.MachineControlPlaneConfig": {
-      "properties": {
-        "controllerManager": {
-          "$ref": "#/$defs/v1alpha1.MachineControllerManagerConfig",
-          "title": "controllerManager",
-          "description": "Controller manager machine specific configuration options.\n",
-          "markdownDescription": "Controller manager machine specific configuration options.",
-          "x-intellij-html-description": "\u003cp\u003eController manager machine specific configuration options.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "MachineControlPlaneConfig machine specific configuration options."
-    },
-    "v1alpha1.MachineControllerManagerConfig": {
-      "properties": {
-        "disabled": {
-          "type": "boolean",
-          "title": "disabled",
-          "description": "Disable kube-controller-manager on the node.\n",
-          "markdownDescription": "Disable kube-controller-manager on the node.",
-          "x-intellij-html-description": "\u003cp\u003eDisable kube-controller-manager on the node.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "MachineControllerManagerConfig represents the machine specific ControllerManager config values."
     },
     "v1alpha1.MachineFile": {
       "properties": {
@@ -5893,6 +5870,9 @@
     },
     {
       "$ref": "#/$defs/hardware.PCIDriverRebindConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/k8s.KubeControllerManagerConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/k8s.KubeEtcdEncryptionConfigV1Alpha1"

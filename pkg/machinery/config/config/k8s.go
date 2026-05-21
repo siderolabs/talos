@@ -4,6 +4,17 @@
 
 package config
 
+// K8sControllerManagerConfig defines configuration options for the kube-controller-manager static pod.
+type K8sControllerManagerConfig interface {
+	K8sControllerManagerConfigSignal()
+	Enabled() bool
+	Image() string
+	ExtraArgs() map[string][]string
+	ExtraVolumes() []VolumeMount
+	Env() Env
+	Resources() Resources
+}
+
 // K8sSchedulerConfig defines configuration options for the kube-scheduler static pod.
 type K8sSchedulerConfig interface {
 	K8sSchedulerConfigSignal()

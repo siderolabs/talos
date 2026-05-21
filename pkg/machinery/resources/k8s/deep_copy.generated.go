@@ -153,6 +153,10 @@ func (o ControllerManagerConfigSpec) DeepCopy() ControllerManagerConfigSpec {
 			cp.ExtraArgs[k2] = cp_ExtraArgs_v2
 		}
 	}
+	if o.Args != nil {
+		cp.Args = make([]string, len(o.Args))
+		copy(cp.Args, o.Args)
+	}
 	if o.ExtraVolumes != nil {
 		cp.ExtraVolumes = make([]ExtraVolume, len(o.ExtraVolumes))
 		copy(cp.ExtraVolumes, o.ExtraVolumes)

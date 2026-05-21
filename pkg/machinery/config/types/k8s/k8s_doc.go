@@ -17,6 +17,10 @@ func (ResourcesConfig) Doc() *encoder.Doc {
 		Description: "ResourcesConfig represents the pod resources.",
 		AppearsIn: []encoder.Appearance{
 			{
+				TypeName:  "KubeControllerManagerConfigV1Alpha1",
+				FieldName: "resources",
+			},
+			{
 				TypeName:  "KubeSchedulerConfigV1Alpha1",
 				FieldName: "resources",
 			},
@@ -41,6 +45,59 @@ func (ResourcesConfig) Doc() *encoder.Doc {
 
 	doc.Fields[0].AddExample("resources requests.", resourcesConfigRequestsExample())
 	doc.Fields[1].AddExample("resources limits.", resourcesConfigLimitsExample())
+
+	return doc
+}
+
+func (KubeControllerManagerConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeControllerManagerConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeControllerManagerConfig configures kube-controller-manager controlplane static pod." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeControllerManagerConfig configures kube-controller-manager controlplane static pod.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "enabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "By default, kube-controller-manager static pod is enabled.\nSet to false to disable the kube-controller-manager (assuming it runs on other controlplane node).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "By default, kube-controller-manager static pod is enabled." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "image",
+				Type:        "string",
+				Note:        "",
+				Description: "The container image used to run the kube-controller-manager component.\n\nThe image reference should contain the tag, even if it is pinned by digest.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The container image used to run the kube-controller-manager component." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "extraArgs",
+				Type:        "Args",
+				Note:        "",
+				Description: "Extra command line arguments to supply to the kube-controller-manager.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra command line arguments to supply to the kube-controller-manager." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "env",
+				Type:        "map[string]string",
+				Note:        "",
+				Description: "The `env` field allows for the addition of environment variables for the kube-controller-manager.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The `env` field allows for the addition of environment variables for the kube-controller-manager." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "resources",
+				Type:        "ResourcesConfig",
+				Note:        "",
+				Description: "Configure the kube-controller-manager resources.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure the kube-controller-manager resources." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeControllerManagerConfigV1Alpha1())
 
 	return doc
 }
@@ -137,6 +194,7 @@ func GetFileDoc() *encoder.FileDoc {
 		Description: "",
 		Structs: []*encoder.Doc{
 			ResourcesConfig{}.Doc(),
+			KubeControllerManagerConfigV1Alpha1{}.Doc(),
 			KubeEtcdEncryptionConfigV1Alpha1{}.Doc(),
 			KubeSchedulerConfigV1Alpha1{}.Doc(),
 		},

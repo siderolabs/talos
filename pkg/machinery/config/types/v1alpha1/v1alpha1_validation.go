@@ -989,7 +989,7 @@ func (c *Config) ValidateKubernetesVersions() error {
 				},
 				{
 					name:     "kube-controller-manager",
-					imageRef: c.Cluster().ControllerManager().Image(),
+					imageRef: c.ClusterConfig.ControllerManager().Image(),
 				},
 				{
 					name:     "kube-scheduler",

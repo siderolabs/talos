@@ -99,6 +99,7 @@ message ControllerManagerConfigSpec {
   map<string, string> environment_variables = 8;
   Resources resources = 9;
   map<string, ArgValues> extra_args = 10;
+  repeated string args = 11;
 }
 
 // EndpointSpec describes a list of endpoints to connect to.

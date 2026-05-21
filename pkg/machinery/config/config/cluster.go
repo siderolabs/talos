@@ -21,7 +21,6 @@ type ClusterConfig interface {
 	Name() string
 	Secret() string
 	APIServer() APIServer
-	ControllerManager() ControllerManager
 	Proxy() Proxy
 	Endpoint() *url.URL
 	Token() Token
@@ -97,16 +96,6 @@ type AuthorizationConfigAuthorizer interface {
 	Type() string
 	Name() string
 	Webhook() map[string]any
-}
-
-// ControllerManager defines the requirements for a config that pertains to controller manager related
-// options.
-type ControllerManager interface {
-	Image() string
-	ExtraArgs() map[string][]string
-	ExtraVolumes() []VolumeMount
-	Env() Env
-	Resources() Resources
 }
 
 // Proxy defines the requirements for a config that pertains to the kube-proxy

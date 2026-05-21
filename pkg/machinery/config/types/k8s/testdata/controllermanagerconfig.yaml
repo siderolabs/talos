@@ -1,0 +1,11 @@
+apiVersion: v1alpha1
+kind: KubeControllerManagerConfig
+image: registry.k8s.io/kube-controller-manager:v1.36.0
+extraArgs:
+    feature-gates: AllBeta=true
+env:
+    HTTPS_PROXY: http://proxy:8080
+resources:
+    requests:
+        cpu: 2
+        memory: 2Gi

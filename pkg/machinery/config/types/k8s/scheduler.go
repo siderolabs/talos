@@ -141,6 +141,8 @@ func (s *KubeSchedulerConfigV1Alpha1) Clone() config.Document {
 }
 
 // Validate implements config.Validator interface.
+//
+//nolint:dupl
 func (s *KubeSchedulerConfigV1Alpha1) Validate(_ validation.RuntimeMode, opts ...validation.Option) ([]string, error) {
 	var (
 		errs     error
@@ -179,7 +181,7 @@ func (s *KubeSchedulerConfigV1Alpha1) V1Alpha1ConflictValidate(v1alpha1Cfg *v1al
 		return errors.New("kube-scheduler config is already set in v1alpha1 config (.cluster.scheduler)")
 	}
 
-	if v1alpha1Cfg.MachineConfig != nil && v1alpha1Cfg.MachineConfig.MachineControlPlane != nil &&
+	if v1alpha1Cfg.MachineConfig != nil && v1alpha1Cfg.MachineConfig.MachineControlPlane != nil && // nolint:staticcheck // testing deprecated field
 		v1alpha1Cfg.MachineConfig.MachineControlPlane.MachineScheduler != nil { //nolint:staticcheck // testing deprecated field
 		return errors.New("kube-scheduler config is already set in v1alpha1 config (.machine.controlplane.scheduler)")
 	}

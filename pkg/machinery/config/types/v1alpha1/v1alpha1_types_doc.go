@@ -115,13 +115,7 @@ func (MachineConfig) Doc() *encoder.Doc {
 				Description: "Extra certificate subject alternative names for the machine's certificate.\nBy default, all non-loopback interface IPs are automatically added to the certificate's SANs.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra certificate subject alternative names for the machine's certificate." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "controlPlane",
-				Type:        "MachineControlPlaneConfig",
-				Note:        "",
-				Description: "Provides machine specific control plane configuration options.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Provides machine specific control plane configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{
 				Name:        "kubelet",
 				Type:        "KubeletConfig",
@@ -386,13 +380,7 @@ func (ClusterConfig) Doc() *encoder.Doc {
 				Description: "API server specific configuration options.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "API server specific configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "controllerManager",
-				Type:        "ControllerManagerConfig",
-				Note:        "",
-				Description: "Controller manager server specific configuration options.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Controller manager server specific configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{
 				Name:        "proxy",
 				Type:        "ProxyConfig",
@@ -483,7 +471,6 @@ func (ClusterConfig) Doc() *encoder.Doc {
 	doc.Fields[10].AddExample("AggregatorCA example.", pemEncodedCertificateExample())
 	doc.Fields[11].AddExample("AggregatorCA example.", pemEncodedKeyExample())
 	doc.Fields[12].AddExample("", clusterAPIServerExample())
-	doc.Fields[13].AddExample("", clusterControllerManagerExample())
 	doc.Fields[14].AddExample("", clusterProxyExample())
 	doc.Fields[16].AddExample("", clusterDiscoveryExample())
 	doc.Fields[17].AddExample("", clusterEtcdExample())
@@ -605,57 +592,6 @@ func (ExtraMount) Doc() *encoder.Doc {
 	}
 
 	doc.AddExample("", kubeletExtraMountsExample())
-
-	return doc
-}
-
-func (MachineControlPlaneConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "MachineControlPlaneConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "MachineControlPlaneConfig machine specific configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "MachineControlPlaneConfig machine specific configuration options.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "MachineConfig",
-				FieldName: "controlPlane",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "controllerManager",
-				Type:        "MachineControllerManagerConfig",
-				Note:        "",
-				Description: "Controller manager machine specific configuration options.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Controller manager machine specific configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{},
-		},
-	}
-
-	return doc
-}
-
-func (MachineControllerManagerConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "MachineControllerManagerConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "MachineControllerManagerConfig represents the machine specific ControllerManager config values." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "MachineControllerManagerConfig represents the machine specific ControllerManager config values.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "MachineControlPlaneConfig",
-				FieldName: "controllerManager",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "disabled",
-				Type:        "bool",
-				Note:        "",
-				Description: "Disable kube-controller-manager on the node.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disable kube-controller-manager on the node." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
 
 	return doc
 }
@@ -1247,63 +1183,6 @@ func (AuthorizationConfigAuthorizerConfig) Doc() *encoder.Doc {
 	return doc
 }
 
-func (ControllerManagerConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "ControllerManagerConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "ControllerManagerConfig represents the kube controller manager configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ControllerManagerConfig represents the kube controller manager configuration options.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "ClusterConfig",
-				FieldName: "controllerManager",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "image",
-				Type:        "string",
-				Note:        "",
-				Description: "The container image used in the controller manager manifest.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The container image used in the controller manager manifest." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "extraArgs",
-				Type:        "Args",
-				Note:        "",
-				Description: "Extra arguments to supply to the controller manager.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra arguments to supply to the controller manager." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "extraVolumes",
-				Type:        "[]VolumeMountConfig",
-				Note:        "",
-				Description: "Extra volumes to mount to the controller manager static pod.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra volumes to mount to the controller manager static pod." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "env",
-				Type:        "Env",
-				Note:        "",
-				Description: "The `env` field allows for the addition of environment variables for the control plane component.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `env` field allows for the addition of environment variables for the control plane component." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "resources",
-				Type:        "ResourcesConfig",
-				Note:        "",
-				Description: "Configure the controller manager resources.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure the controller manager resources." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", clusterControllerManagerExample())
-
-	doc.Fields[0].AddExample("", clusterControllerManagerImageExample())
-
-	return doc
-}
-
 func (ProxyConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ProxyConfig",
@@ -1630,10 +1509,6 @@ func (ResourcesConfig) Doc() *encoder.Doc {
 				TypeName:  "APIServerConfig",
 				FieldName: "resources",
 			},
-			{
-				TypeName:  "ControllerManagerConfig",
-				FieldName: "resources",
-			},
 		},
 		Fields: []encoder.Doc{
 			{
@@ -1848,10 +1723,6 @@ func (VolumeMountConfig) Doc() *encoder.Doc {
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "APIServerConfig",
-				FieldName: "extraVolumes",
-			},
-			{
-				TypeName:  "ControllerManagerConfig",
 				FieldName: "extraVolumes",
 			},
 		},
@@ -2218,8 +2089,6 @@ func GetFileDoc() *encoder.FileDoc {
 			ClusterConfig{}.Doc(),
 			LinuxIDMapping{}.Doc(),
 			ExtraMount{}.Doc(),
-			MachineControlPlaneConfig{}.Doc(),
-			MachineControllerManagerConfig{}.Doc(),
 			KubeletConfig{}.Doc(),
 			KubeletNodeIPConfig{}.Doc(),
 			InstallConfig{}.Doc(),
@@ -2230,7 +2099,6 @@ func GetFileDoc() *encoder.FileDoc {
 			APIServerConfig{}.Doc(),
 			AdmissionPluginConfig{}.Doc(),
 			AuthorizationConfigAuthorizerConfig{}.Doc(),
-			ControllerManagerConfig{}.Doc(),
 			ProxyConfig{}.Doc(),
 			EtcdConfig{}.Doc(),
 			ClusterNetworkConfig{}.Doc(),

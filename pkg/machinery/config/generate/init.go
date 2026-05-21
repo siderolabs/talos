@@ -153,13 +153,13 @@ func (in *Input) init() ([]config.Document, error) {
 			AdmissionControlConfig: admissionControlConfig,
 			AuditPolicyConfig:      auditPolicyConfig,
 		},
-		ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{
+		ControllerManagerConfig: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.ControllerManagerConfig{ //nolint:staticcheck // legacy configuration
 			ContainerImage: fmt.Sprintf("%s:v%s", constants.KubernetesControllerManagerImage, in.KubernetesVersion),
-		},
+		}),
 		ProxyConfig: &v1alpha1.ProxyConfig{
 			ContainerImage: fmt.Sprintf("%s:v%s", constants.KubeProxyImage, in.KubernetesVersion),
 		},
-		SchedulerConfig: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.SchedulerConfig{
+		SchedulerConfig: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.SchedulerConfig{ //nolint:staticcheck // legacy configuration
 			ContainerImage: fmt.Sprintf("%s:v%s", constants.KubernetesSchedulerImage, in.KubernetesVersion),
 		}),
 		EtcdConfig: &v1alpha1.EtcdConfig{

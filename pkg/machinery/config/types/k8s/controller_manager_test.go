@@ -20,37 +20,25 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
-//go:embed testdata/schedulerconfig.yaml
-var expectedKubeSchedulerConfigDocument []byte
+//go:embed testdata/controllermanagerconfig.yaml
+var expectedKubeControllerManagerConfigDocument []byte
 
-func TestKubeSchedulerConfigMarshalStability(t *testing.T) {
+func TestKubeControllerManagerConfigMarshalStability(t *testing.T) {
 	t.Parallel()
 
-	cfg := k8s.NewKubeSchedulerConfigV1Alpha1()
-	cfg.PodImage = constants.KubernetesSchedulerImage + ":v1.35.3"
+	cfg := k8s.NewKubeControllerManagerConfigV1Alpha1()
+	cfg.PodImage = constants.KubernetesControllerManagerImage + ":v1.36.0"
 	cfg.PodArgs = meta.Args{
 		"feature-gates": meta.NewArgValue("AllBeta=true", nil),
 	}
-	cfg.PodConfig = meta.Unstructured{
-		Object: map[string]any{
-			"profiles": []any{},
-		},
-	}
-	cfg.PodEnabled = new(true)
 	cfg.PodEnv = map[string]string{
-		"HTTP_PROXY": "http://proxy:8080",
+		"HTTPS_PROXY": "http://proxy:8080",
 	}
 	cfg.PodResources = k8s.ResourcesConfig{
 		Requests: meta.Unstructured{
 			Object: map[string]any{
-				"cpu":    1,
-				"memory": "1Gi",
-			},
-		},
-		Limits: meta.Unstructured{
-			Object: map[string]any{
 				"cpu":    2,
-				"memory": "2500Mi",
+				"memory": "2Gi",
 			},
 		},
 	}
@@ -60,47 +48,35 @@ func TestKubeSchedulerConfigMarshalStability(t *testing.T) {
 
 	t.Log(string(marshaled))
 
-	assert.Equal(t, expectedKubeSchedulerConfigDocument, marshaled)
+	assert.Equal(t, expectedKubeControllerManagerConfigDocument, marshaled)
 }
 
-func TestKubeSchedulerConfigUnmarshal(t *testing.T) {
+func TestKubeControllerManagerConfigUnmarshal(t *testing.T) {
 	t.Parallel()
 
-	provider, err := configloader.NewFromBytes(expectedKubeSchedulerConfigDocument)
+	provider, err := configloader.NewFromBytes(expectedKubeControllerManagerConfigDocument)
 	require.NoError(t, err)
 
 	docs := provider.Documents()
 	require.Len(t, docs, 1)
 
-	assert.Equal(t, &k8s.KubeSchedulerConfigV1Alpha1{
+	assert.Equal(t, &k8s.KubeControllerManagerConfigV1Alpha1{
 		Meta: meta.Meta{
 			MetaAPIVersion: "v1alpha1",
-			MetaKind:       k8s.KubeSchedulerConfig,
+			MetaKind:       k8s.KubeControllerManagerConfig,
 		},
-		PodImage: constants.KubernetesSchedulerImage + ":v1.35.3",
+		PodImage: constants.KubernetesControllerManagerImage + ":v1.36.0",
 		PodArgs: meta.Args{
 			"feature-gates": meta.NewArgValue("AllBeta=true", nil),
 		},
-		PodConfig: meta.Unstructured{
-			Object: map[string]any{
-				"profiles": []any{},
-			},
-		},
-		PodEnabled: new(true),
 		PodEnv: map[string]string{
-			"HTTP_PROXY": "http://proxy:8080",
+			"HTTPS_PROXY": "http://proxy:8080",
 		},
 		PodResources: k8s.ResourcesConfig{
 			Requests: meta.Unstructured{
 				Object: map[string]any{
-					"cpu":    1,
-					"memory": "1Gi",
-				},
-			},
-			Limits: meta.Unstructured{
-				Object: map[string]any{
 					"cpu":    2,
-					"memory": "2500Mi",
+					"memory": "2Gi",
 				},
 			},
 		},
@@ -108,12 +84,12 @@ func TestKubeSchedulerConfigUnmarshal(t *testing.T) {
 }
 
 //nolint:dupl
-func TestKubeSchedulerConfigValidate(t *testing.T) {
+func TestKubeControllerManagerConfigValidate(t *testing.T) {
 	t.Parallel()
 
 	for _, test := range []struct {
 		name          string
-		cfg           func() *k8s.KubeSchedulerConfigV1Alpha1
+		cfg           func() *k8s.KubeControllerManagerConfigV1Alpha1
 		onMachineMode bool
 
 		expectedError    string
@@ -121,14 +97,14 @@ func TestKubeSchedulerConfigValidate(t *testing.T) {
 	}{
 		{
 			name: "empty",
-			cfg:  k8s.NewKubeSchedulerConfigV1Alpha1,
+			cfg:  k8s.NewKubeControllerManagerConfigV1Alpha1,
 
-			expectedError: "scheduler image cannot be empty",
+			expectedError: "kube-controller-manager image cannot be empty",
 		},
 		{
 			name: "disabled",
-			cfg: func() *k8s.KubeSchedulerConfigV1Alpha1 {
-				cfg := k8s.NewKubeSchedulerConfigV1Alpha1()
+			cfg: func() *k8s.KubeControllerManagerConfigV1Alpha1 {
+				cfg := k8s.NewKubeControllerManagerConfigV1Alpha1()
 				cfg.PodEnabled = new(false)
 
 				return cfg
@@ -136,8 +112,8 @@ func TestKubeSchedulerConfigValidate(t *testing.T) {
 		},
 		{
 			name: "invalid image, !local",
-			cfg: func() *k8s.KubeSchedulerConfigV1Alpha1 {
-				cfg := k8s.NewKubeSchedulerConfigV1Alpha1()
+			cfg: func() *k8s.KubeControllerManagerConfigV1Alpha1 {
+				cfg := k8s.NewKubeControllerManagerConfigV1Alpha1()
 				cfg.PodImage = "invalid-image"
 
 				return cfg
@@ -145,21 +121,21 @@ func TestKubeSchedulerConfigValidate(t *testing.T) {
 		},
 		{
 			name: "invalid image, local",
-			cfg: func() *k8s.KubeSchedulerConfigV1Alpha1 {
-				cfg := k8s.NewKubeSchedulerConfigV1Alpha1()
+			cfg: func() *k8s.KubeControllerManagerConfigV1Alpha1 {
+				cfg := k8s.NewKubeControllerManagerConfigV1Alpha1()
 				cfg.PodImage = "invalid-image"
 
 				return cfg
 			},
 			onMachineMode: true,
 
-			expectedError: `scheduler image is not valid: failed to parse Kubernetes version from image reference "invalid-image": invalid image reference: "invalid-image"`,
+			expectedError: `kube-controller-manager image is not valid: failed to parse Kubernetes version from image reference "invalid-image": invalid image reference: "invalid-image"`,
 		},
 		{
 			name: "invalid resources",
-			cfg: func() *k8s.KubeSchedulerConfigV1Alpha1 {
-				cfg := k8s.NewKubeSchedulerConfigV1Alpha1()
-				cfg.PodImage = constants.KubernetesSchedulerImage + ":v1.35.3"
+			cfg: func() *k8s.KubeControllerManagerConfigV1Alpha1 {
+				cfg := k8s.NewKubeControllerManagerConfigV1Alpha1()
+				cfg.PodImage = constants.KubernetesControllerManagerImage + ":v1.35.3"
 				cfg.PodResources = k8s.ResourcesConfig{
 					Requests: meta.Unstructured{
 						Object: map[string]any{
@@ -175,9 +151,9 @@ func TestKubeSchedulerConfigValidate(t *testing.T) {
 		},
 		{
 			name: "valid image, local",
-			cfg: func() *k8s.KubeSchedulerConfigV1Alpha1 {
-				cfg := k8s.NewKubeSchedulerConfigV1Alpha1()
-				cfg.PodImage = constants.KubernetesSchedulerImage + ":v" + constants.DefaultKubernetesVersion
+			cfg: func() *k8s.KubeControllerManagerConfigV1Alpha1 {
+				cfg := k8s.NewKubeControllerManagerConfigV1Alpha1()
+				cfg.PodImage = constants.KubernetesControllerManagerImage + ":v" + constants.DefaultKubernetesVersion
 
 				return cfg
 			},
@@ -185,9 +161,9 @@ func TestKubeSchedulerConfigValidate(t *testing.T) {
 		},
 		{
 			name: "valid",
-			cfg: func() *k8s.KubeSchedulerConfigV1Alpha1 {
-				cfg := k8s.NewKubeSchedulerConfigV1Alpha1()
-				cfg.PodImage = constants.KubernetesSchedulerImage + ":v" + constants.DefaultKubernetesVersion
+			cfg: func() *k8s.KubeControllerManagerConfigV1Alpha1 {
+				cfg := k8s.NewKubeControllerManagerConfigV1Alpha1()
+				cfg.PodImage = constants.KubernetesControllerManagerImage + ":v" + constants.DefaultKubernetesVersion
 				cfg.PodArgs = meta.Args{
 					"feature-gates": meta.NewArgValue("AllBeta=true", nil),
 				}
@@ -237,7 +213,7 @@ func TestKubeSchedulerConfigValidate(t *testing.T) {
 }
 
 //nolint:dupl
-func TestKubeSchedulerConfigV1Alpha1Validate(t *testing.T) {
+func TestKubeControllerManagerConfigV1Alpha1Validate(t *testing.T) {
 	t.Parallel()
 
 	for _, test := range []struct {
@@ -251,32 +227,32 @@ func TestKubeSchedulerConfigV1Alpha1Validate(t *testing.T) {
 			v1alpha1Cfg: &v1alpha1.Config{},
 		},
 		{
-			name: "v1alpha1 with cluster scheduler config set",
+			name: "v1alpha1 with cluster ControllerManager config set",
 			v1alpha1Cfg: &v1alpha1.Config{
 				ClusterConfig: &v1alpha1.ClusterConfig{
-					SchedulerConfig: &v1alpha1.SchedulerConfig{}, //nolint:staticcheck // testing deprecated field
+					ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{}, //nolint:staticcheck // testing deprecated field
 				},
 			},
 
-			expectedError: "kube-scheduler config is already set in v1alpha1 config (.cluster.scheduler)",
+			expectedError: "kube-controller-manager config is already set in v1alpha1 config (.cluster.controllerManager)",
 		},
 		{
-			name: "v1alpha1 with machine control plane scheduler config set",
+			name: "v1alpha1 with machine control plane ControllerManager config set",
 			v1alpha1Cfg: &v1alpha1.Config{
 				MachineConfig: &v1alpha1.MachineConfig{
 					MachineControlPlane: &v1alpha1.MachineControlPlaneConfig{
-						MachineScheduler: &v1alpha1.MachineSchedulerConfig{}, //nolint:staticcheck // testing deprecated field
+						MachineControllerManager: &v1alpha1.MachineControllerManagerConfig{}, //nolint:staticcheck // testing deprecated field
 					},
 				},
 			},
 
-			expectedError: "kube-scheduler config is already set in v1alpha1 config (.machine.controlplane.scheduler)",
+			expectedError: "kube-controller-manager config is already set in v1alpha1 config (.machine.controlplane.controllerManager)",
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := k8s.NewKubeSchedulerConfigV1Alpha1().V1Alpha1ConflictValidate(test.v1alpha1Cfg)
+			err := k8s.NewKubeControllerManagerConfigV1Alpha1().V1Alpha1ConflictValidate(test.v1alpha1Cfg)
 			if test.expectedError != "" {
 				assert.EqualError(t, err, test.expectedError)
 			} else {

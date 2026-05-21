@@ -438,6 +438,20 @@ func (container *Container) K8sEtcdEncryptionConfig() config.K8sEtcdEncryptionCo
 	return matching[0]
 }
 
+// K8sControllerManagerConfig implements config.Config interface.
+func (container *Container) K8sControllerManagerConfig() config.K8sControllerManagerConfig {
+	matching := findMatchingDocs[config.K8sControllerManagerConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sControllerManagerConfig()
+	}
+
+	return nil
+}
+
 // K8sSchedulerConfig implements config.Config interface.
 func (container *Container) K8sSchedulerConfig() config.K8sSchedulerConfig {
 	matching := findMatchingDocs[config.K8sSchedulerConfig](container.documents)

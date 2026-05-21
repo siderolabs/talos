@@ -5,6 +5,6 @@
 // Package k8s provides Kubernetes-related config documents.
 package k8s
 
-//go:generate go tool github.com/siderolabs/talos/tools/docgen -output k8s_doc.go common.go etcd_encryption.go scheduler.go
+//go:generate go tool github.com/siderolabs/talos/tools/docgen -output k8s_doc.go common.go controller_manager.go etcd_encryption.go scheduler.go
 
-//go:generate go tool github.com/siderolabs/deep-copy -type KubeEtcdEncryptionConfigV1Alpha1 -type KubeSchedulerConfigV1Alpha1 -pointer-receiver -header-file ../../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate go tool github.com/siderolabs/deep-copy -type KubeControllerManagerConfigV1Alpha1 -type KubeEtcdEncryptionConfigV1Alpha1 -type KubeSchedulerConfigV1Alpha1 -pointer-receiver -header-file ../../../../../hack/boilerplate.txt -o deep_copy.generated.go .
