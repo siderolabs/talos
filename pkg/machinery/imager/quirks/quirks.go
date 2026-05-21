@@ -336,3 +336,27 @@ func (q Quirks) SupportsFactoryTalosctlDownload() bool {
 
 	return q.v.GTE(minTalosVersionFactoryTalosctlDownload)
 }
+
+var minTalosVersionSBOM = semver.MustParse("1.11.0")
+
+// SupportsSBOM returns true if the Talos version supports SBOMS from image factory.
+func (q Quirks) SupportsSBOM() bool {
+	// if the version doesn't parse, we assume it's latest Talos
+	if q.v == nil {
+		return true
+	}
+
+	return q.v.GTE(minTalosVersionSBOM)
+}
+
+var minTalosVersionVEX = semver.MustParse("1.13.0")
+
+// SupportsVEX returns true if the Talos version supports VEX from image factory.
+func (q Quirks) SupportsVEX() bool {
+	// if the version doesn't parse, we assume it's latest Talos
+	if q.v == nil {
+		return true
+	}
+
+	return q.v.GTE(minTalosVersionVEX)
+}
