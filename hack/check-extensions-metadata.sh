@@ -5,13 +5,6 @@
 
 set -euo pipefail
 
-PR_TITLE="${PR_TITLE:-}"
-
-if [[ ! "$PR_TITLE" =~ ^release\( ]]; then
-	echo "Not a release PR, skipping extensions metadata check."
-	exit 0
-fi
-
 TALOS_PKGS=$(cat pkg/machinery/gendata/data/pkgs)
 TALOS_TOOLS=$(cat pkg/machinery/gendata/data/tools)
 TAG=$(cat pkg/machinery/gendata/data/tag)

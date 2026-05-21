@@ -58,13 +58,17 @@ spec:
     integration/aws-arm64: "Run AWS integration tests on ARM64"
     integration/aws-nvidia: "Run AWS NVIDIA integration tests (all drivers, variants, architectures)"
     integration/aws-nvidia-nonfree: "Run AWS NVIDIA integration tests with non-free drivers"
+    integration/aws-nvidia-nonfree-lts: "Run AWS NVIDIA non-free LTS driver tests (all architectures)"
     integration/aws-nvidia-nonfree-lts-amd64: "Run AWS NVIDIA non-free LTS driver tests on AMD64"
     integration/aws-nvidia-nonfree-lts-arm64: "Run AWS NVIDIA non-free LTS driver tests on ARM64"
+    integration/aws-nvidia-nonfree-production: "Run AWS NVIDIA non-free production driver tests (all architectures)"
     integration/aws-nvidia-nonfree-production-amd64: "Run AWS NVIDIA non-free production driver tests on AMD64"
     integration/aws-nvidia-nonfree-production-arm64: "Run AWS NVIDIA non-free production driver tests on ARM64"
     integration/aws-nvidia-oss: "Run AWS NVIDIA integration tests with OSS drivers"
+    integration/aws-nvidia-oss-lts: "Run AWS NVIDIA OSS LTS driver tests (all architectures)"
     integration/aws-nvidia-oss-lts-amd64: "Run AWS NVIDIA OSS LTS driver tests on AMD64"
     integration/aws-nvidia-oss-lts-arm64: "Run AWS NVIDIA OSS LTS driver tests on ARM64"
+    integration/aws-nvidia-oss-production: "Run AWS NVIDIA OSS production driver tests (all architectures)"
     integration/aws-nvidia-oss-production-amd64: "Run AWS NVIDIA OSS production driver tests on AMD64"
     integration/aws-nvidia-oss-production-arm64: "Run AWS NVIDIA OSS production driver tests on ARM64"
     integration/cilium: "Run Cilium integration tests"
@@ -84,7 +88,12 @@ spec:
     integration/misc-2: "Run misc-2 integration tests"
     integration/misc-3: "Run misc-3 integration tests"
     integration/misc-4: "Run misc-4 integration tests"
+    integration/misc-4-enforcing: "Run misc-4 integration for enforcing variant"
     integration/provision: "Run provision integration tests (all tracks)"
+    integration/provision-0: "Run provision integration tests for track 0 (previous→stable, BIOS, trustedboot upgrade)"
+    integration/provision-1: "Run provision integration tests for track 1 (stable→current, preserve+stage, enforcing)"
+    integration/provision-2: "Run provision integration tests for track 2 (current→current, extra-cmdline)"
+    integration/provision-3: "Run provision integration tests for track 3 (maintenance API basic, maintenance API + SideroLink)"
     integration/qemu: "Run QEMU integration tests (all variants)"
     integration/qemu-csi: "Run QEMU CSI integration tests"
     integration/qemu-csi-openebs: "Run QEMU CSI OpenEBS integration tests"
@@ -98,6 +107,7 @@ spec:
     integration/reproducibility-test: "Run build reproducibility tests"
     integration/trusted-boot: "Run trusted-boot integration tests (all variants)"
     integration/trusted-boot-default: "Run trusted-boot integration tests on default variant"
+    integration/trusted-boot-disk-image: "Run trusted-boot integration tests on disk-image variant"
     integration/trusted-boot-enforcing: "Run trusted-boot integration tests on enforcing variant"
   jobs:
     - name: default
@@ -279,11 +289,11 @@ spec:
       runnerGroup: generic
       conditions:
         - on-pull-request
+        - "raw:startsWith(github.event.pull_request.title, 'release(')"
       steps:
         - name: release-metadata-check
           environment:
             GH_TOKEN: ${{ github.token }}
-            PR_TITLE: ${{ github.event.pull_request.title }}
     - name: grype-scan
       buildxOptions:
         enabled: true
@@ -1236,6 +1246,7 @@ spec:
             withConfigPatch: "@hack/test/patches/usernamespace.yaml"
           - variant: enforcing
             test: e2e-siderolink
+            triggerLabels: [integration/misc-4-enforcing]
             tagSuffixIn: -enforcing
             withEnforcing: "true"
             extraTestArgs: -talos.enforcing
@@ -1243,6 +1254,7 @@ spec:
             viaMaintenanceMode: "true"
           - variant: enforcing
             test: e2e-siderolink-tunnel
+            triggerLabels: [integration/misc-4-enforcing]
             tagSuffixIn: -enforcing
             withEnforcing: "true"
             extraTestArgs: -talos.enforcing
@@ -1250,6 +1262,7 @@ spec:
             viaMaintenanceMode: "true"
           - variant: enforcing
             test: e2e-siderolink-tls
+            triggerLabels: [integration/misc-4-enforcing]
             tagSuffixIn: -enforcing
             withEnforcing: "true"
             extraTestArgs: -talos.enforcing
@@ -1257,6 +1270,7 @@ spec:
             viaMaintenanceMode: "true"
           - variant: enforcing
             test: e2e-k8s-user-namespace
+            triggerLabels: [integration/misc-4-enforcing]
             tagSuffixIn: -enforcing
             withEnforcing: "true"
             extraTestArgs: -talos.enforcing
@@ -1950,7 +1964,7 @@ spec:
           - driver: oss
             variant: lts
             arch: amd64
-            triggerLabels: [integration/aws-nvidia-oss]
+            triggerLabels: [integration/aws-nvidia-oss, integration/aws-nvidia-oss-lts]
             buildTargets: nvidia-container-toolkit-lts nvidia-open-gpu-kernel-modules-lts extensions-metadata
             buildPlatform: linux/amd64
             targetArch: amd64
@@ -1959,7 +1973,7 @@ spec:
           - driver: oss
             variant: lts
             arch: arm64
-            triggerLabels: [integration/aws-nvidia-oss]
+            triggerLabels: [integration/aws-nvidia-oss, integration/aws-nvidia-oss-lts]
             buildTargets: nvidia-container-toolkit-lts nvidia-open-gpu-kernel-modules-lts extensions-metadata
             buildPlatform: linux/arm64
             targetArch: arm64
@@ -1968,7 +1982,7 @@ spec:
           - driver: oss
             variant: production
             arch: amd64
-            triggerLabels: [integration/aws-nvidia-oss]
+            triggerLabels: [integration/aws-nvidia-oss, integration/aws-nvidia-oss-production]
             buildTargets: nvidia-container-toolkit-production nvidia-open-gpu-kernel-modules-production extensions-metadata
             buildPlatform: linux/amd64
             targetArch: amd64
@@ -1977,7 +1991,7 @@ spec:
           - driver: oss
             variant: production
             arch: arm64
-            triggerLabels: [integration/aws-nvidia-oss]
+            triggerLabels: [integration/aws-nvidia-oss, integration/aws-nvidia-oss-production]
             buildTargets: nvidia-container-toolkit-production nvidia-open-gpu-kernel-modules-production extensions-metadata
             buildPlatform: linux/arm64
             targetArch: arm64
@@ -1986,7 +2000,7 @@ spec:
           - driver: nonfree
             variant: lts
             arch: amd64
-            triggerLabels: [integration/aws-nvidia-nonfree]
+            triggerLabels: [integration/aws-nvidia-nonfree, integration/aws-nvidia-nonfree-lts]
             buildTargets: nvidia-container-toolkit-lts nonfree-kmod-nvidia-lts extensions-metadata
             buildPlatform: linux/amd64
             targetArch: amd64
@@ -1995,7 +2009,7 @@ spec:
           - driver: nonfree
             variant: lts
             arch: arm64
-            triggerLabels: [integration/aws-nvidia-nonfree]
+            triggerLabels: [integration/aws-nvidia-nonfree, integration/aws-nvidia-nonfree-lts]
             buildTargets: nvidia-container-toolkit-lts nonfree-kmod-nvidia-lts extensions-metadata
             buildPlatform: linux/arm64
             targetArch: arm64
@@ -2004,7 +2018,7 @@ spec:
           - driver: nonfree
             variant: production
             arch: amd64
-            triggerLabels: [integration/aws-nvidia-nonfree]
+            triggerLabels: [integration/aws-nvidia-nonfree, integration/aws-nvidia-nonfree-production]
             buildTargets: nvidia-container-toolkit-production nonfree-kmod-nvidia-production extensions-metadata
             buildPlatform: linux/amd64
             targetArch: amd64
@@ -2013,7 +2027,7 @@ spec:
           - driver: nonfree
             variant: production
             arch: arm64
-            triggerLabels: [integration/aws-nvidia-nonfree]
+            triggerLabels: [integration/aws-nvidia-nonfree, integration/aws-nvidia-nonfree-production]
             buildTargets: nvidia-container-toolkit-production nonfree-kmod-nvidia-production extensions-metadata
             buildPlatform: linux/arm64
             targetArch: arm64
