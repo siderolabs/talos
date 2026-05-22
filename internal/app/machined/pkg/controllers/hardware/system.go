@@ -178,8 +178,15 @@ func (ctrl *SystemInfoController) reconcileProcessors(ctx context.Context, r con
 
 func (ctrl *SystemInfoController) reconcileMemoryModules(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for _, m := range ctrl.SMBIOS.MemoryDevices {
-		// replaces `SIMM 0` with `SIMM-0`
-		id := strings.ReplaceAll(m.DeviceLocator, " ", "-")
+		// the device locator alone is not always unique (e.g. some boards report
+		// two `DIMM 0` modules on different banks), so suffix it with the bank
+		// locator when present: `DIMM 0` + `P0 CHANNEL A` -> `DIMM-0-P0-CHANNEL-A`
+		locator := m.DeviceLocator
+		if m.BankLocator != "" {
+			locator = m.DeviceLocator + " " + m.BankLocator
+		}
+
+		id := strings.ReplaceAll(locator, " ", "-")
 
 		if err := safe.WriterModify(ctx, r, hardware.NewMemoryModuleInfo(id), func(res *hardware.MemoryModule) error {
 			hwadapter.MemoryModule(res).Update(&m)
