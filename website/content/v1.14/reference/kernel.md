@@ -16,11 +16,6 @@ Several of these are enforced by the Kernel Self Protection Project [KSPP](https
 * `slab_nomerge`: required by KSPP
 * `pti=on`: required by KSPP
 
-**Recommended** parameters:
-
-* `init_on_alloc=1`: advised by KSPP, enabled by default in kernel config
-* `init_on_free=1`: advised by KSPP, enabled by default in kernel config
-
 ### Available Talos-specific parameters
 
 #### `ip`

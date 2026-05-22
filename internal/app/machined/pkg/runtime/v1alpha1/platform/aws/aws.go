@@ -318,11 +318,22 @@ func (a *AWS) Mode() runtime.Mode {
 }
 
 // KernelArgs implements the runtime.Platform interface.
-func (a *AWS) KernelArgs(string, quirks.Quirks) procfs.Parameters {
-	return []*procfs.Parameter{
+func (a *AWS) KernelArgs(_ string, q quirks.Quirks) procfs.Parameters {
+	result := []*procfs.Parameter{
 		procfs.NewParameter("console").Append("tty1").Append("ttyS0"),
 		procfs.NewParameter(constants.KernelParamNetIfnames).Append("0"),
 	}
+
+	if q.NvmeCoreIoTimeoutAWSOnly() {
+		// AWS recommends setting the nvme_core.io_timeout to the highest value possible.
+		// See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvme-ebs-volumes.html.
+		result = append(
+			result,
+			procfs.NewParameter("nvme_core.io_timeout").Append("4294967295"),
+		)
+	}
+
+	return result
 }
 
 // NetworkConfiguration implements the runtime.Platform interface.

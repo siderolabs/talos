@@ -17,8 +17,10 @@ import (
 // RequiredKSPPKernelParameters is the set of kernel parameters required to
 // satisfy the KSPP.
 var RequiredKSPPKernelParameters = procfs.Parameters{
-	// init_on_alloc and init_on_free are not enforced, as they default to '1' in kernel config
-	// this way they can be overridden via installer extra args in case of severe performance issues
+	// init_on_alloc and init_on_free are not enforced, as:
+	// - init_on_alloc is enabled by default in the kernel config, but can be disabled with init_on_alloc=0 for performance reasons;
+	// - init_on_free is disabled by default in the kernel config, as it has a significant performance impact, and is not required for security when init_on_alloc=1 is enabled.
+	//
 	// procfs.NewParameter("init_on_alloc").Append("1"),
 	// procfs.NewParameter("init_on_free").Append("1"),
 	procfs.NewParameter("slab_nomerge").Append(""),

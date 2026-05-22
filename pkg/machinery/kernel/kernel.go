@@ -22,17 +22,36 @@ const (
 
 // DefaultArgs returns the Talos default kernel commandline options.
 func DefaultArgs(quirks quirks.Quirks) []string {
-	result := []string{
-		"init_on_alloc=1",
+	var result []string
+
+	if !quirks.DropInitOnAllocInArgs() {
+		result = append(
+			result,
+			"init_on_alloc=1",
+		)
+	}
+
+	result = append(
+		result,
 		"slab_nomerge=",
 		"pti=on",
 		"consoleblank=0",
+	)
+
+	if !quirks.NvmeCoreIoTimeoutAWSOnly() {
 		// AWS recommends setting the nvme_core.io_timeout to the highest value possible.
 		// See https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/nvme-ebs-volumes.html.
-		"nvme_core.io_timeout=4294967295",
-		// Disable rate limited printk
-		"printk.devkmsg=on",
+		result = append(
+			result,
+			"nvme_core.io_timeout=4294967295",
+		)
 	}
+
+	// Disable rate limited printk
+	result = append(
+		result,
+		"printk.devkmsg=on",
+	)
 
 	if quirks.SupportsIMA() {
 		// Enable IMAs for integrity measurement

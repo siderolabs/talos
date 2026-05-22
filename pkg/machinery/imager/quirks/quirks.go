@@ -336,3 +336,27 @@ func (q Quirks) SupportsFactoryTalosctlDownload() bool {
 
 	return q.v.GTE(minTalosVersionFactoryTalosctlDownload)
 }
+
+var minTalosVersionDropInitOnAllocInArgs = semver.MustParse("1.14.0")
+
+// DropInitOnAllocInArgs returns true if the Talos version should have no init_on_alloc=1 by default.
+func (q Quirks) DropInitOnAllocInArgs() bool {
+	// if the version doesn't parse, we assume it's latest Talos
+	if q.v == nil {
+		return true
+	}
+
+	return q.v.GTE(minTalosVersionDropInitOnAllocInArgs)
+}
+
+var minTalosVersionNvmeCoreIoTimeoutAWSOnly = semver.MustParse("1.14.0")
+
+// NvmeCoreIoTimeoutAWSOnly returns true if the Talos version should have nvme_core.io_timeout=4294967295 only for AWS.
+func (q Quirks) NvmeCoreIoTimeoutAWSOnly() bool {
+	// if the version doesn't parse, we assume it's latest Talos
+	if q.v == nil {
+		return true
+	}
+
+	return q.v.GTE(minTalosVersionNvmeCoreIoTimeoutAWSOnly)
+}

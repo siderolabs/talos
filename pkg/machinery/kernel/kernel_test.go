@@ -83,11 +83,9 @@ func TestDefaultKernelArgs(t *testing.T) {
 			name: "latest",
 
 			expected: []string{
-				"init_on_alloc=1",
 				"slab_nomerge=",
 				"pti=on",
 				"consoleblank=0",
-				"nvme_core.io_timeout=4294967295",
 				"printk.devkmsg=on",
 				"selinux=1",
 				"module.sig_enforce=1",
@@ -138,6 +136,21 @@ func TestDefaultKernelArgs(t *testing.T) {
 				"pti=on",
 				"consoleblank=0",
 				"nvme_core.io_timeout=4294967295",
+				"printk.devkmsg=on",
+				"selinux=1",
+				"module.sig_enforce=1",
+				"proc_mem.force_override=never",
+			},
+		},
+		{
+			name: "v1.14",
+
+			quirks: quirks.New("v1.14.0"),
+
+			expected: []string{
+				"slab_nomerge=",
+				"pti=on",
+				"consoleblank=0",
 				"printk.devkmsg=on",
 				"selinux=1",
 				"module.sig_enforce=1",

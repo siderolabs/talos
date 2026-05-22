@@ -13,6 +13,8 @@ import (
 )
 
 func TestSupportsResetOption(t *testing.T) {
+	t.Parallel()
+
 	for _, test := range []struct {
 		version string
 
@@ -31,12 +33,16 @@ func TestSupportsResetOption(t *testing.T) {
 		},
 	} {
 		t.Run(test.version, func(t *testing.T) {
+			t.Parallel()
+
 			assert.Equal(t, test.expected, quirks.New(test.version).SupportsResetGRUBOption())
 		})
 	}
 }
 
 func TestSupportsCompressedEncodedMETA(t *testing.T) {
+	t.Parallel()
+
 	for _, test := range []struct {
 		version string
 
@@ -59,12 +65,16 @@ func TestSupportsCompressedEncodedMETA(t *testing.T) {
 		},
 	} {
 		t.Run(test.version, func(t *testing.T) {
+			t.Parallel()
+
 			assert.Equal(t, test.expected, quirks.New(test.version).SupportsCompressedEncodedMETA())
 		})
 	}
 }
 
 func TestSupportsOverlay(t *testing.T) {
+	t.Parallel()
+
 	for _, test := range []struct {
 		version string
 
@@ -95,12 +105,16 @@ func TestSupportsOverlay(t *testing.T) {
 		},
 	} {
 		t.Run(test.version, func(t *testing.T) {
+			t.Parallel()
+
 			assert.Equal(t, test.expected, quirks.New(test.version).SupportsOverlay())
 		})
 	}
 }
 
 func TestSupportsZstd(t *testing.T) {
+	t.Parallel()
+
 	for _, test := range []struct {
 		version string
 
@@ -127,12 +141,16 @@ func TestSupportsZstd(t *testing.T) {
 		},
 	} {
 		t.Run(test.version, func(t *testing.T) {
+			t.Parallel()
+
 			assert.Equal(t, test.expected, quirks.New(test.version).UseZSTDCompression())
 		})
 	}
 }
 
 func TestXFSMkfsConfigFile(t *testing.T) {
+	t.Parallel()
+
 	for _, test := range []struct {
 		version string
 
@@ -176,12 +194,16 @@ func TestXFSMkfsConfigFile(t *testing.T) {
 		},
 	} {
 		t.Run(test.version, func(t *testing.T) {
+			t.Parallel()
+
 			assert.Equal(t, test.expected, quirks.New(test.version).XFSMkfsConfig())
 		})
 	}
 }
 
 func TestPartitionSizes(t *testing.T) {
+	t.Parallel()
+
 	const (
 		MiB = 1024 * 1024
 		GiB = 1024 * MiB
@@ -241,6 +263,8 @@ func TestPartitionSizes(t *testing.T) {
 		},
 	} {
 		t.Run(test.version, func(t *testing.T) {
+			t.Parallel()
+
 			ps := quirks.New(test.version).PartitionSizes()
 
 			assert.Equal(t, test.grubEFISize, ps.GrubEFISize())
@@ -250,6 +274,56 @@ func TestPartitionSizes(t *testing.T) {
 			assert.Equal(t, test.metaSize, ps.METASize())
 			assert.Equal(t, test.stateSize, ps.StateSize())
 			assert.Equal(t, test.ephemeralMinSize, ps.EphemeralMinSize())
+		})
+	}
+}
+
+func TestDropInitOnAllocInArgs(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		version string
+
+		expected bool
+	}{
+		{
+			version:  "1.13.0",
+			expected: false,
+		},
+		{
+			version:  "1.14.0-alpha.1",
+			expected: true,
+		},
+	} {
+		t.Run(test.version, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, quirks.New(test.version).DropInitOnAllocInArgs())
+		})
+	}
+}
+
+func TestNvmeCoreIoTimeoutAWSOnly(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		version string
+
+		expected bool
+	}{
+		{
+			version:  "1.13.0",
+			expected: false,
+		},
+		{
+			version:  "1.14.0-alpha.1",
+			expected: true,
+		},
+	} {
+		t.Run(test.version, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, quirks.New(test.version).NvmeCoreIoTimeoutAWSOnly())
 		})
 	}
 }
