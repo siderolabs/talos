@@ -17,32 +17,94 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/akamai"
 )
 
-//go:embed testdata/instance.json
-var rawMetadata []byte
+//go:embed testdata/instance-no-tags.json
+var rawInstanceNoTags []byte
+
+//go:embed testdata/instance-with-tags.json
+var rawInstanceWithTags []byte
 
 //go:embed testdata/network.json
-
 var rawNetwork []byte
 
-//go:embed testdata/expected.yaml
-var expectedNetworkConfig string
+//go:embed testdata/expected-no-tags.yaml
+var expectedNoTags string
+
+//go:embed testdata/expected-with-tags.yaml
+var expectedWithTags string
 
 func TestParseMetadata(t *testing.T) {
-	p := &akamai.Akamai{}
+	for _, tt := range []struct {
+		name     string
+		instance []byte
+		expected string
+	}{
+		{
+			name:     "no tags",
+			instance: rawInstanceNoTags,
+			expected: expectedNoTags,
+		},
+		{
+			name:     "with tags",
+			instance: rawInstanceWithTags,
+			expected: expectedWithTags,
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			p := &akamai.Akamai{}
 
-	var metadata akametadata.InstanceData
+			var metadata akametadata.InstanceData
 
-	var interfaceConfig akametadata.NetworkData
+			var interfaceConfig akametadata.NetworkData
 
-	require.NoError(t, json.Unmarshal(rawMetadata, &metadata))
+			require.NoError(t, json.Unmarshal(tt.instance, &metadata))
+			require.NoError(t, json.Unmarshal(rawNetwork, &interfaceConfig))
 
-	require.NoError(t, json.Unmarshal(rawNetwork, &interfaceConfig))
+			networkConfig, err := p.ParseMetadata(&metadata, &interfaceConfig)
+			require.NoError(t, err)
 
-	networkConfig, err := p.ParseMetadata(&metadata, &interfaceConfig)
-	require.NoError(t, err)
+			marshaled, err := yaml.Marshal(networkConfig)
+			require.NoError(t, err)
 
-	marshaled, err := yaml.Marshal(networkConfig)
-	require.NoError(t, err)
+			assert.Equal(t, tt.expected, string(marshaled))
+		})
+	}
+}
 
-	assert.Equal(t, expectedNetworkConfig, string(marshaled))
+func TestConvertTagsFromAkamai(t *testing.T) {
+	for _, tt := range []struct {
+		name     string
+		input    []string
+		expected map[string]string
+	}{
+		{
+			name:     "nil input",
+			input:    nil,
+			expected: nil,
+		},
+		{
+			name:     "empty slice",
+			input:    []string{},
+			expected: nil,
+		},
+		{
+			name:  "single tag",
+			input: []string{"tag1"},
+			expected: map[string]string{
+				"tag1": "",
+			},
+		},
+		{
+			name:  "multiple tags",
+			input: []string{"tag1", "tag2", "tag3"},
+			expected: map[string]string{
+				"tag1": "",
+				"tag2": "",
+				"tag3": "",
+			},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.expected, akamai.ConvertTagsFromAkamai(tt.input))
+		})
+	}
 }
