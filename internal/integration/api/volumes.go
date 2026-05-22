@@ -9,7 +9,10 @@ package api
 import (
 	"context"
 	"fmt"
+	"io"
 	"math/rand"
+	"net"
+	"os"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -36,6 +39,7 @@ import (
 	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
+	"github.com/siderolabs/talos/pkg/provision"
 )
 
 // VolumesSuite ...
@@ -1702,6 +1706,334 @@ func (suite *VolumesSuite) TestZswapStatus() {
 			)
 		})
 	}
+}
+
+// TestLiveDiskResize verifies that enlarging the underlying block device of a running node
+// causes Talos to automatically grow the EPHEMERAL partition and filesystem without a reboot.
+func (suite *VolumesSuite) TestLiveDiskResize() {
+	if testing.Short() {
+		suite.T().Skip("skipping test in short mode.")
+	}
+
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping test for non-qemu provisioner")
+	}
+
+	// Override the default 2-minute context: stability wait (10 min) + grow wait (5 min).
+	suite.ctxCancel()
+	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 20*time.Minute)
+
+	// Use a single control plane node — etcd lives on EPHEMERAL there.
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
+	ctx := client.WithNode(suite.ctx, node)
+
+	suite.T().Logf("target node: %s", node)
+
+	// --- Step 1: record baseline ---
+	//
+	// Confirm EPHEMERAL is Ready and capture its current size.
+	var initialSize uint64
+
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI,
+		constants.EphemeralPartitionLabel,
+		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+			asrt.Equal(block.VolumePhaseReady, vs.TypedSpec().Phase)
+			initialSize = vs.TypedSpec().Size
+		})
+
+	suite.Require().NotZero(initialSize, "EPHEMERAL size must be non-zero before resize")
+	suite.T().Logf("initial EPHEMERAL size: %d bytes", initialSize)
+
+	// --- Step 1b: wait for post-kexec stability ---
+	//
+	// In QEMU tests, Talos boots from the initramfs, installs to disk, then
+	// kexec's to the installed system. Wait for EPHEMERAL to remain in
+	// VolumePhaseReady without interruption for 60 s before triggering
+	// the resize, to avoid racing with volume lifecycle transitions.
+	suite.T().Log("waiting for EPHEMERAL stability before resizing disk...")
+
+	stableUntil := time.Now().Add(60 * time.Second)
+
+	suite.Require().Eventually(func() bool {
+		vs, vsErr := safe.StateGetByID[*block.VolumeStatus](
+			ctx, suite.Client.COSI, constants.EphemeralPartitionLabel,
+		)
+		if vsErr != nil || vs.TypedSpec().Phase != block.VolumePhaseReady {
+			stableUntil = time.Now().Add(60 * time.Second)
+
+			return false
+		}
+
+		return time.Now().After(stableUntil)
+	}, 10*time.Minute, 3*time.Second,
+		"EPHEMERAL did not reach stable Ready state within 10 minutes")
+
+	suite.T().Log("EPHEMERAL stable, proceeding with disk resize")
+
+	// --- Step 2: locate the QEMU disk file and monitor socket ---
+
+	stateDir, err := suite.Cluster.StatePath()
+	suite.Require().NoError(err)
+
+	nodeInfo, ok := findProvisionNodeByIP(suite.Cluster.Info().Nodes, node)
+	suite.Require().True(ok, "node %s not found in cluster info", node)
+
+	// System disk is always index 0 → "<nodeName>-0.disk"
+	// Monitor socket is "<nodeName>.monitor"
+	// (matches pkg/provision/providers/vm/disk.go and qemu/node.go naming)
+	diskPath := filepath.Join(stateDir, nodeInfo.Name+"-0.disk")
+	monitorPath := filepath.Join(stateDir, nodeInfo.Name+".monitor")
+
+	diskStat, err := os.Stat(diskPath)
+	suite.Require().NoError(err, "disk file not found: %s", diskPath)
+
+	currentDiskSize := uint64(diskStat.Size())
+	newDiskSize := currentDiskSize + 1*1024*1024*1024 // +1 GiB
+
+	suite.T().Logf("expanding disk %s: %d → %d bytes", diskPath, currentDiskSize, newDiskSize)
+
+	logQEMUProcessLimits(suite.T(), monitorPath)
+
+	// --- Step 3: trigger the resize ---
+	//
+	// resizeQEMUDisk truncates the backing file directly (guaranteed) then sends
+	// block_resize via the QEMU HMP monitor to trigger the virtio-blk config-change
+	// interrupt so the guest kernel updates /sys/block/vda/size.
+	// resizeQEMUDisk errors are non-fatal here: the function always truncates the
+	// backing file first, so the disk is at the new size even if the QEMU monitor
+	// notification fails. Step 4 asserts the file size; step 5 asserts Talos grew.
+	if resizeErr := resizeQEMUDisk(suite.ctx, diskPath, monitorPath, newDiskSize); resizeErr != nil {
+		suite.T().Logf("disk resize error: %v", resizeErr)
+	}
+
+	suite.T().Logf("resizeQEMUDisk completed")
+
+	// --- Step 4: confirm the QEMU block_resize command worked ---
+	//
+	// Verify the backing file on the host was actually truncated to the new size.
+	// This is a host-side check (os.Stat) so it doesn't depend on the in-VM
+	// virtio event chain, which can be slow under load. The virtio notification
+	// to the guest kernel will happen asynchronously; step 5 captures whether
+	// Talos reacts to it.
+	diskStatAfter, err := os.Stat(diskPath)
+	suite.Require().NoError(err)
+	suite.Require().GreaterOrEqual(uint64(diskStatAfter.Size()), newDiskSize,
+		"QEMU block_resize did not resize the backing file")
+
+	// --- Step 4b: confirm the kernel inside the VM saw the new disk size ---
+	//
+	// DisksController publishes Disk.Size from /sys/block/<dev>/size (ioctl BLKGETSIZE64).
+	// If this never updates, the virtio notification didn't reach the kernel and
+	// our Grow() code can't find available partition space.
+	suite.Require().Eventually(func() bool {
+		return anyDiskReachedSize(ctx, suite.Client.COSI, newDiskSize)
+	}, 60*time.Second, 500*time.Millisecond,
+		"kernel did not detect disk resize within 60s — virtio notification did not reach the guest; VolumeManagerController cannot grow without a Disk size change event")
+
+	suite.T().Log("kernel detected disk resize (virtio notification OK) — waiting for Talos to grow EPHEMERAL")
+
+	// --- Step 5: assert EPHEMERAL grew ---
+	//
+	// DisksController updates Disk.Size when the kernel reports the new size via
+	// udev; VolumeManagerController reacts to that COSI event, calls Grow() on
+	// the ready volume, expands the partition via BLKPG_RESIZE_PARTITION, then
+	// runs XFSGrow on the live filesystem. VolumeStatus.Size is updated.
+	suite.Require().Eventually(func() bool {
+		vs, err := safe.StateGetByID[*block.VolumeStatus](
+			ctx, suite.Client.COSI, constants.EphemeralPartitionLabel,
+		)
+		if err != nil {
+			return false
+		}
+
+		return vs.TypedSpec().Size > initialSize
+	}, 5*time.Minute, 500*time.Millisecond,
+		"EPHEMERAL did not grow after live disk resize (expected size > %d)", initialSize)
+
+	grownSize := uint64(0)
+
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI,
+		constants.EphemeralPartitionLabel,
+		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+			asrt.Equal(block.VolumePhaseReady, vs.TypedSpec().Phase,
+				"volume must remain Ready after live grow")
+			asrt.Greater(vs.TypedSpec().Size, initialSize,
+				"volume size must have increased")
+			grownSize = vs.TypedSpec().Size
+		})
+
+	suite.T().Logf("EPHEMERAL grew: %d → %d bytes (+%d MiB)",
+		initialSize, grownSize, (grownSize-initialSize)/(1024*1024))
+}
+
+// resizeQEMUDisk resizes the VM's backing disk file and attempts to notify the
+// guest kernel via the QEMU HMP monitor's block_resize command.
+//
+// The file is extended first — this always succeeds when there is enough host
+// disk space. sendHMPBlockResize is then called to trigger the virtio-blk
+// config-change interrupt so the guest kernel updates /sys/block/vda/size.
+//
+// If sendHMPBlockResize fails, the function returns an error; the caller
+// treats this as non-fatal because the file is already at the new size.
+// In that case the guest kernel will NOT detect the resize and step 5 of
+// the test will time out.
+func resizeQEMUDisk(ctx context.Context, diskPath, monitorPath string, newSizeBytes uint64) error {
+	// Step 1: extend the backing file by writing a real byte at the new end
+	// position. Using os.Truncate creates a SPARSE file extension which QEMU
+	// does not see after a process restart (it falls back to the last allocated
+	// block). Writing an actual byte ensures the file has the correct st_size
+	// AND that QEMU's new process sees 17 GiB when it opens the file fresh.
+	f, err := os.OpenFile(diskPath, os.O_RDWR, 0)
+	if err != nil {
+		return fmt.Errorf("open disk file: %w", err)
+	}
+
+	if _, err = f.Seek(int64(newSizeBytes)-1, io.SeekStart); err != nil {
+		f.Close() //nolint:errcheck
+
+		return fmt.Errorf("seek disk file: %w", err)
+	}
+
+	if _, err = f.Write([]byte{0}); err != nil {
+		f.Close() //nolint:errcheck
+
+		return fmt.Errorf("write disk file end: %w", err)
+	}
+
+	if err = f.Sync(); err != nil {
+		f.Close() //nolint:errcheck
+
+		return fmt.Errorf("sync disk file: %w", err)
+	}
+
+	f.Close() //nolint:errcheck
+
+	// Verify the file is at the new size.
+	stat, statErr := os.Stat(diskPath)
+	if statErr != nil {
+		return fmt.Errorf("stat disk file after resize: %w", statErr)
+	}
+
+	if uint64(stat.Size()) < newSizeBytes {
+		return fmt.Errorf("disk file size %d < expected %d after resize", stat.Size(), newSizeBytes)
+	}
+
+	// Step 2: notify QEMU so it updates the virtio config and sends the
+	// config-change interrupt to the guest kernel.
+	// Drive ID "virtio0" matches `-drive id=virtio0,...` in qemu/launch.go.
+	if err := sendHMPBlockResize(ctx, monitorPath, "virtio0", newSizeBytes); err != nil {
+		// Return as diagnostic info — the file is already at the new size.
+		return fmt.Errorf("file resized but QEMU notification failed: %w", err)
+	}
+
+	return nil
+}
+
+// sendHMPBlockResize connects to the QEMU HMP monitor socket and sends a
+// block_resize command for the given drive ID.
+// It reads the banner and each response by looping until the "(qemu) " prompt.
+// Returns nil on success, error with full QEMU response on failure.
+func sendHMPBlockResize(ctx context.Context, monitorPath, driveID string, newSizeBytes uint64) error { //nolint:cyclop
+	conn, err := (&net.Dialer{Timeout: 5 * time.Second}).DialContext(ctx, "unix", monitorPath)
+	if err != nil {
+		return fmt.Errorf("connect to monitor: %w", err)
+	}
+
+	defer conn.Close() //nolint:errcheck
+
+	// readUntilPrompt reads bytes until "(qemu) " appears, with a timeout.
+	readUntilPrompt := func(timeout time.Duration) (string, error) {
+		conn.SetDeadline(time.Now().Add(timeout)) //nolint:errcheck
+
+		var buf strings.Builder
+
+		tmp := make([]byte, 256)
+
+		for {
+			n, readErr := conn.Read(tmp)
+			if n > 0 {
+				buf.Write(tmp[:n])
+
+				if strings.Contains(buf.String(), "(qemu) ") {
+					return buf.String(), nil
+				}
+			}
+
+			if readErr != nil {
+				return buf.String(), readErr
+			}
+		}
+	}
+
+	// Consume the welcome banner.
+	if _, err = readUntilPrompt(5 * time.Second); err != nil {
+		return fmt.Errorf("read banner: %w", err)
+	}
+
+	// Send the resize command directly without pausing the VM.
+	// Using stop/cont caused the virtio interrupt to be delayed by minutes
+	// because the VM was left paused; this made step 5 always time out.
+	cmd := fmt.Sprintf("block_resize %s %dB\n", driveID, newSizeBytes)
+	if _, err = fmt.Fprint(conn, cmd); err != nil {
+		return fmt.Errorf("send block_resize: %w", err)
+	}
+
+	resp, readErr := readUntilPrompt(5 * time.Second)
+
+	if strings.Contains(resp, "Error") || strings.Contains(resp, "error") {
+		return fmt.Errorf("block_resize rejected (drive=%s size=%d resp=%q)",
+			driveID, newSizeBytes, strings.TrimSpace(resp))
+	}
+
+	return readErr
+}
+
+// logQEMUProcessLimits logs the process resource limits of the QEMU process for the given monitor socket.
+func logQEMUProcessLimits(t testing.TB, monitorPath string) {
+	pidBytes, pidErr := os.ReadFile(strings.TrimSuffix(monitorPath, ".monitor") + ".pid")
+	if pidErr != nil {
+		return
+	}
+
+	limits, limErr := os.ReadFile(fmt.Sprintf("/proc/%s/limits", strings.TrimSpace(string(pidBytes))))
+	if limErr != nil {
+		return
+	}
+
+	for line := range strings.SplitSeq(string(limits), "\n") {
+		if strings.Contains(line, "file size") || strings.Contains(line, "Max file") {
+			t.Logf("QEMU process limits: %s", strings.TrimSpace(line))
+		}
+	}
+}
+
+// anyDiskReachedSize returns true if any Disk resource in COSI has a size >= minSize.
+func anyDiskReachedSize(ctx context.Context, cosi state.State, minSize uint64) bool {
+	disks, err := safe.StateListAll[*block.Disk](ctx, cosi)
+	if err != nil {
+		return false
+	}
+
+	for disk := range disks.All() {
+		if disk.TypedSpec().Size >= minSize {
+			return true
+		}
+	}
+
+	return false
+}
+
+// findProvisionNodeByIP returns the provision.NodeInfo whose IPs contain the given address.
+func findProvisionNodeByIP(nodes []provision.NodeInfo, ip string) (provision.NodeInfo, bool) {
+	for _, n := range nodes {
+		for _, addr := range n.IPs {
+			if addr.String() == ip {
+				return n, true
+			}
+		}
+	}
+
+	return provision.NodeInfo{}, false
 }
 
 func init() {
