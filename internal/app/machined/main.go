@@ -22,6 +22,7 @@ import (
 	"github.com/siderolabs/go-cmd/pkg/cmd/proc"
 	"github.com/siderolabs/go-cmd/pkg/cmd/proc/reaper"
 	debug "github.com/siderolabs/go-debug"
+	"github.com/siderolabs/go-kmsg"
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
@@ -36,6 +37,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
 	"github.com/siderolabs/talos/internal/app/poweroff"
 	"github.com/siderolabs/talos/internal/app/trustd"
+	"github.com/siderolabs/talos/internal/pkg/containermode"
 	"github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/pkg/httpdefaults"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
@@ -344,7 +346,17 @@ func main() {
 		dashboard.Main()
 
 		return
+	case "init", "machined":
+		// fall through to the main machined entrypoint
 	default:
+		// unknown name
+		if !containermode.InContainer() {
+			kmsg.SetupLogger(nil, "machined", nil) //nolint:errcheck // best effort logging to kmsg
+		}
+
+		log.Printf("unknown executable name %q (args %v)", os.Args[0], os.Args[1:])
+
+		os.Exit(1) //nolint:gocritic // we don't care about defering context cancellation in this case
 	}
 
 	// Setup panic handler.
