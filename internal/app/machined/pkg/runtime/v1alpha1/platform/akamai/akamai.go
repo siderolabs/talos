@@ -35,7 +35,10 @@ func (a *Akamai) Name() string {
 }
 
 // ParseMetadata converts Akamai platform metadata into platform network config.
-func (a *Akamai) ParseMetadata(metadata *akametadata.InstanceData, interfaceAddresses *akametadata.NetworkData) (*runtime.PlatformNetworkConfig, error) {
+func (a *Akamai) ParseMetadata(
+	metadata *akametadata.InstanceData,
+	interfaceAddresses *akametadata.NetworkData,
+) (*runtime.PlatformNetworkConfig, error) {
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
 	if metadata.Label != "" {
@@ -50,7 +53,11 @@ func (a *Akamai) ParseMetadata(metadata *akametadata.InstanceData, interfaceAddr
 		networkConfig.Hostnames = append(networkConfig.Hostnames, hostnameSpec)
 	}
 
-	publicIPs := make([]string, 0, len(interfaceAddresses.IPv4.Public)+len(interfaceAddresses.IPv6.Ranges))
+	publicIPs := make(
+		[]string,
+		0,
+		len(interfaceAddresses.IPv4.Public)+len(interfaceAddresses.IPv6.Ranges),
+	)
 
 	// external IP
 	for _, iface := range interfaceAddresses.IPv4.Public {
@@ -105,7 +112,9 @@ func (a *Akamai) ParseMetadata(metadata *akametadata.InstanceData, interfaceAddr
 		},
 	)
 
-	ipv6gw, err := netip.ParseAddr(strings.Split(interfaceAddresses.IPv6.LinkLocal.String(), ":")[0] + "::1")
+	ipv6gw, err := netip.ParseAddr(
+		strings.Split(interfaceAddresses.IPv6.LinkLocal.String(), ":")[0] + "::1",
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -139,6 +148,7 @@ func (a *Akamai) ParseMetadata(metadata *akametadata.InstanceData, interfaceAddr
 		InstanceType: metadata.Type,
 		InstanceID:   strconv.Itoa(metadata.ID),
 		ProviderID:   fmt.Sprintf("linode://%d", metadata.ID),
+		Tags:         convertTagsFromAkamai(metadata.Tags),
 	}
 
 	return networkConfig, nil
@@ -181,7 +191,11 @@ func (a *Akamai) KernelArgs(string, quirks.Quirks) procfs.Parameters {
 }
 
 // NetworkConfiguration implements the runtime.Platform interface.
-func (a *Akamai) NetworkConfiguration(ctx context.Context, _ state.State, ch chan<- *runtime.PlatformNetworkConfig) error {
+func (a *Akamai) NetworkConfiguration(
+	ctx context.Context,
+	_ state.State,
+	ch chan<- *runtime.PlatformNetworkConfig,
+) error {
 	metadataClient, err := akametadata.NewClient(ctx)
 	if err != nil {
 		return fmt.Errorf("new metadata client: %w", err)
@@ -209,4 +223,17 @@ func (a *Akamai) NetworkConfiguration(ctx context.Context, _ state.State, ch cha
 	}
 
 	return nil
+}
+
+// convertTagsFromAkamai converts Akamai instance tags into the format expected by PlatformMetadata.
+func convertTagsFromAkamai(akamaiTags []string) map[string]string {
+	var platformMetadataTags map[string]string
+	if len(akamaiTags) > 0 {
+		platformMetadataTags = make(map[string]string, len(akamaiTags))
+		for _, key := range akamaiTags {
+			platformMetadataTags[key] = ""
+		}
+	}
+
+	return platformMetadataTags
 }
