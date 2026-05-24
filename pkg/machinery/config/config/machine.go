@@ -384,6 +384,7 @@ type KubernetesTalosAPIAccess interface {
 type KubePrism interface {
 	Enabled() bool
 	Port() int
+	TLSServerName() string
 }
 
 // UdevConfig describes configuration for udev.

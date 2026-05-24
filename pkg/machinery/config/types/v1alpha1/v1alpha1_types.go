@@ -2293,6 +2293,22 @@ type KubePrism struct {
 	//   description: |
 	//     KubePrism port.
 	ServerPort int `yaml:"port,omitempty"`
+	//   description: |
+	//     Override the TLS server name (SNI) used by the kubelet when connecting to
+	//     the KubePrism endpoint.
+	//
+	//     KubePrism still listens on `127.0.0.1:<port>` and the kubelet still dials
+	//     that address, but the generated kubelet kubeconfig will carry
+	//     `clusters[0].cluster.tls-server-name` set to this value, so the kubelet
+	//     uses it for SNI and certificate hostname verification.
+	//
+	//     This is useful when KubePrism's upstream apiserver is reached through an
+	//     SNI-routing L4 proxy (for example nginx-ingress in ssl-passthrough mode in
+	//     front of a Kamaji-hosted apiserver), where SNI=127.0.0.1 doesn't match any
+	//     route and the proxy serves a fallback certificate.
+	//
+	//     When empty (default), no `tls-server-name` is set and behavior is unchanged.
+	ServerTLSServerName string `yaml:"tlsServerName,omitempty"`
 }
 
 // ImageCacheConfig describes the configuration for the Image Cache feature.

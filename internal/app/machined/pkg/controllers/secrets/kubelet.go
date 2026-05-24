@@ -43,6 +43,8 @@ func NewKubeletController() *KubeletController {
 				cfgProvider := cfg.Config()
 				kubeletSecrets := res.TypedSpec()
 
+				kubeletSecrets.EndpointTLSServerName = ""
+
 				switch {
 				case cfgProvider.Machine().Features().KubePrism().Enabled():
 					// use cluster endpoint for controlplane nodes with loadbalancer support
@@ -52,6 +54,7 @@ func NewKubeletController() *KubeletController {
 					}
 
 					kubeletSecrets.Endpoint = localEndpoint
+					kubeletSecrets.EndpointTLSServerName = cfgProvider.Machine().Features().KubePrism().TLSServerName()
 				case cfgProvider.Machine().Type().IsControlPlane():
 					// use localhost endpoint for controlplane nodes
 					localEndpoint, err := url.Parse(fmt.Sprintf("https://localhost:%d", cfgProvider.Cluster().LocalAPIServerPort()))

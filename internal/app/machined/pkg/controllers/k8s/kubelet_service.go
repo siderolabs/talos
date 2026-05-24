@@ -208,7 +208,7 @@ func (ctrl *KubeletServiceController) Run(ctx context.Context, r controller.Runt
 			return err
 		}
 
-		if err = ctrl.updateKubeconfig(secretSpec.Endpoint, secretSpec.AcceptedCAs, logger); err != nil {
+		if err = ctrl.updateKubeconfig(secretSpec.Endpoint, secretSpec.EndpointTLSServerName, secretSpec.AcceptedCAs, logger); err != nil {
 			return err
 		}
 
@@ -306,6 +306,7 @@ func (ctrl *KubeletServiceController) writePKI(secretSpec *secrets.KubeletSpec) 
 		Clusters: map[string]*clientcmdapi.Cluster{
 			"local": {
 				Server:                   secretSpec.Endpoint.String(),
+				TLSServerName:            secretSpec.EndpointTLSServerName,
 				CertificateAuthorityData: acceptedCAs,
 			},
 		},
@@ -394,7 +395,7 @@ func (ctrl *KubeletServiceController) writeKubeletCredentialProviderConfig(cfgSp
 }
 
 // updateKubeconfig updates the kubeconfig of kubelet with the given endpoint if it exists.
-func (ctrl *KubeletServiceController) updateKubeconfig(newEndpoint *url.URL, acceptedCAs []*talosx509.PEMEncodedCertificate, logger *zap.Logger) error {
+func (ctrl *KubeletServiceController) updateKubeconfig(newEndpoint *url.URL, newTLSServerName string, acceptedCAs []*talosx509.PEMEncodedCertificate, logger *zap.Logger) error {
 	config, err := clientcmd.LoadFromFile(constants.KubeletKubeconfig)
 	if errors.Is(err, os.ErrNotExist) {
 		return nil
@@ -422,6 +423,7 @@ func (ctrl *KubeletServiceController) updateKubeconfig(newEndpoint *url.URL, acc
 	}
 
 	cluster.Server = newEndpoint.String()
+	cluster.TLSServerName = newTLSServerName
 	cluster.CertificateAuthorityData = bytes.Join(xslices.Map(acceptedCAs, func(ca *talosx509.PEMEncodedCertificate) []byte { return ca.Crt }), nil)
 
 	return clientcmd.WriteToFile(*config, constants.KubeletKubeconfig)

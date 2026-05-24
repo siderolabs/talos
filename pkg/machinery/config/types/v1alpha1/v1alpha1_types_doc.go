@@ -1793,6 +1793,13 @@ func (KubePrism) Doc() *encoder.Doc {
 				Description: "KubePrism port.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "KubePrism port." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "tlsServerName",
+				Type:        "string",
+				Note:        "",
+				Description: "Override the TLS server name (SNI) used by the kubelet when connecting to\nthe KubePrism endpoint.\n\nKubePrism still listens on `127.0.0.1:<port>` and the kubelet still dials\nthat address, but the generated kubelet kubeconfig will carry\n`clusters[0].cluster.tls-server-name` set to this value, so the kubelet\nuses it for SNI and certificate hostname verification.\n\nThis is useful when KubePrism's upstream apiserver is reached through an\nSNI-routing L4 proxy (for example nginx-ingress in ssl-passthrough mode in\nfront of a Kamaji-hosted apiserver), where SNI=127.0.0.1 doesn't match any\nroute and the proxy serves a fallback certificate.\n\nWhen empty (default), no `tls-server-name` is set and behavior is unchanged.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Override the TLS server name (SNI) used by the kubelet when connecting to" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
