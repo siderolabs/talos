@@ -22,6 +22,8 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -125,6 +127,9 @@ type Server struct {
 	Logger *zap.Logger
 
 	server *grpc.Server
+
+	applyConfigMu       sync.Mutex
+	applyConfigRebooted atomic.Bool
 }
 
 func (s *Server) checkSupported(feature runtime.ModeCapability) error {
@@ -173,6 +178,15 @@ func (m modeWrapper) RequiresInstall() bool {
 func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfigurationRequest) (*machine.ApplyConfigurationResponse, error) {
 	if s.Controller.Runtime().State().Platform().Mode().IsAgent() {
 		return nil, status.Error(codes.Unimplemented, "API is not implemented in agent mode")
+	}
+
+	if !s.applyConfigMu.TryLock() {
+		return nil, status.Error(codes.FailedPrecondition, "another apply configuration is already in progress")
+	}
+	defer s.applyConfigMu.Unlock()
+
+	if s.applyConfigRebooted.Load() {
+		return nil, status.Error(codes.FailedPrecondition, "configuration was already applied and node is rebooting, cannot apply more configuration changes until next reboot")
 	}
 
 	roles := authz.GetRoles(ctx)
@@ -302,6 +316,8 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 		if err := s.Controller.Runtime().SetPersistedConfig(cfgProvider); err != nil {
 			return nil, err
 		}
+
+		s.applyConfigRebooted.Store(true)
 
 		go func() {
 			if err := s.Controller.Run(context.Background(), runtime.SequenceReboot, nil, runtime.WithTakeover()); err != nil {
