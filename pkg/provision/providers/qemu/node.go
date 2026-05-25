@@ -37,13 +37,18 @@ func (p *provisioner) createNode(ctx context.Context, state *provision.State, cl
 	arch := Arch(opts.TargetArch)
 	pidPath := state.GetRelativePath(fmt.Sprintf("%s.pid", nodeReq.Name))
 
-	var pflashImages []string
+	var (
+		pflashImages []string
+		pflashSpec   []PFlash
+	)
 
-	if pflashSpec := arch.PFlash(opts.UEFIEnabled, opts.ExtraUEFISearchPaths); pflashSpec != nil {
+	if spec := arch.PFlash(opts.UEFIEnabled, opts.ExtraUEFISearchPaths); spec != nil {
 		var err error
-		if pflashImages, err = p.createPFlashImages(state, nodeReq.Name, pflashSpec); err != nil {
+		if pflashImages, err = p.createPFlashImages(state, nodeReq.Name, spec); err != nil {
 			return provision.NodeInfo{}, fmt.Errorf("error creating flash images: %w", err)
 		}
+
+		pflashSpec = spec
 	}
 
 	vcpuCount := int64(math.RoundToEven(float64(nodeReq.NanoCPUs) / 1000 / 1000 / 1000))
@@ -172,6 +177,7 @@ func (p *provisioner) createNode(ctx context.Context, state *provision.State, cl
 		KernelArgs:                cmdline.String(),
 		ExtraISOPath:              extraISOPath,
 		PFlashImages:              pflashImages,
+		PFlashSpec:                pflashSpec,
 		MonitorPath:               state.GetRelativePath(fmt.Sprintf("%s.monitor", nodeReq.Name)),
 		BadRTC:                    nodeReq.BadRTC,
 		DefaultBootOrder:          defaultBootOrder,

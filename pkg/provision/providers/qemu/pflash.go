@@ -14,59 +14,65 @@ import (
 	"github.com/siderolabs/talos/pkg/provision"
 )
 
-//nolint:gocyclo
 func (p *provisioner) createPFlashImages(state *provision.State, nodeName string, pflashSpec []PFlash) ([]string, error) {
-	var images []string
+	images := make([]string, 0, len(pflashSpec))
 
 	for i, pflash := range pflashSpec {
-		if err := func(i int, pflash PFlash) error {
-			path := state.GetRelativePath(fmt.Sprintf("%s-flash%d.img", nodeName, i))
+		path := state.GetRelativePath(fmt.Sprintf("%s-flash%d.img", nodeName, i))
 
-			f, err := os.Create(path)
-			if err != nil {
-				return err
-			}
-
-			defer f.Close() //nolint:errcheck
-
-			if err = f.Truncate(pflash.Size); err != nil {
-				return err
-			}
-
-			if pflash.SourcePaths != nil {
-				for _, sourcePath := range pflash.SourcePaths {
-					var src *os.File
-
-					src, err = os.Open(sourcePath)
-					if err != nil {
-						if errors.Is(err, fs.ErrNotExist) {
-							continue
-						}
-
-						return err
-					}
-
-					defer src.Close() //nolint:errcheck
-
-					if _, err = io.Copy(f, src); err != nil {
-						return err
-					}
-
-					break
-				}
-
-				if err != nil {
-					return err
-				}
-			}
-
-			images = append(images, path)
-
-			return nil
-		}(i, pflash); err != nil {
-			return nil, err
+		if err := writePFlashImage(path, pflash); err != nil {
+			return nil, fmt.Errorf("failed to write pflash image %s: %w", path, err)
 		}
+
+		images = append(images, path)
 	}
 
 	return images, nil
+}
+
+// writePFlashImage materializes a single pflash image at path from the first
+// readable source in pflash.SourcePaths.
+func writePFlashImage(path string, pflash PFlash) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+
+	defer f.Close() //nolint:errcheck
+
+	if err = f.Truncate(pflash.Size); err != nil {
+		return err
+	}
+
+	if len(pflash.SourcePaths) == 0 {
+		return nil
+	}
+
+	for _, sourcePath := range pflash.SourcePaths {
+		src, err := os.Open(sourcePath)
+		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				continue
+			}
+
+			return err
+		}
+
+		var r io.Reader = src
+		if pflash.Size > 0 {
+			r = io.LimitReader(src, pflash.Size)
+		}
+
+		_, copyErr := io.Copy(f, r)
+
+		src.Close() //nolint:errcheck
+
+		if copyErr != nil {
+			return copyErr
+		}
+
+		return nil
+	}
+
+	return fmt.Errorf("no readable pflash source found in %v", pflash.SourcePaths)
 }
