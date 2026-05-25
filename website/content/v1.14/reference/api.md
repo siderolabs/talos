@@ -6066,14 +6066,14 @@ RuntimeFIPSState describes the current FIPS status.
 <a name="talos.resource.definitions.enums.RuntimeKernelModuleState"></a>
 
 ### RuntimeKernelModuleState
-RuntimeKernelModuleState represents the operational state of a dynamically loaded kernel module.
+RuntimeKernelModuleState represents the operational state of a kernel module.
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
-| KERNEL_MODULE_STATE_INACTIVE | 0 |  |
-| KERNEL_MODULE_STATE_ACTIVE | 1 |  |
-| KERNEL_MODULE_STATE_LOADING | 2 |  |
-| KERNEL_MODULE_STATE_UNLOADING | 3 |  |
+| KERNEL_MODULE_STATE_LIVE | 0 |  |
+| KERNEL_MODULE_STATE_LOADING | 1 |  |
+| KERNEL_MODULE_STATE_UNLOADING | 2 |  |
+| KERNEL_MODULE_STATE_BUILTIN | 3 |  |
 
 
 

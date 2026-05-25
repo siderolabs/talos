@@ -1110,9 +1110,6 @@ const (
 	// ProcModulesPath is the path to /proc/modules.
 	ProcModulesPath = "/proc/modules"
 
-	// SysModulePath is the path to /sys/module.
-	SysModulePath = "/sys/module"
-
 	// GoVersion is the version of Go compiler this release was built with.
 	GoVersion = "go1.26.3"
 

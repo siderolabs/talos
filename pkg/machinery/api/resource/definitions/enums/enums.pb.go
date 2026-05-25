@@ -22,29 +22,29 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// RuntimeKernelModuleState represents the operational state of a dynamically loaded kernel module.
+// RuntimeKernelModuleState represents the operational state of a kernel module.
 type RuntimeKernelModuleState int32
 
 const (
-	RuntimeKernelModuleState_KERNEL_MODULE_STATE_INACTIVE  RuntimeKernelModuleState = 0
-	RuntimeKernelModuleState_KERNEL_MODULE_STATE_ACTIVE    RuntimeKernelModuleState = 1
-	RuntimeKernelModuleState_KERNEL_MODULE_STATE_LOADING   RuntimeKernelModuleState = 2
-	RuntimeKernelModuleState_KERNEL_MODULE_STATE_UNLOADING RuntimeKernelModuleState = 3
+	RuntimeKernelModuleState_KERNEL_MODULE_STATE_LIVE      RuntimeKernelModuleState = 0
+	RuntimeKernelModuleState_KERNEL_MODULE_STATE_LOADING   RuntimeKernelModuleState = 1
+	RuntimeKernelModuleState_KERNEL_MODULE_STATE_UNLOADING RuntimeKernelModuleState = 2
+	RuntimeKernelModuleState_KERNEL_MODULE_STATE_BUILTIN   RuntimeKernelModuleState = 3
 )
 
 // Enum value maps for RuntimeKernelModuleState.
 var (
 	RuntimeKernelModuleState_name = map[int32]string{
-		0: "KERNEL_MODULE_STATE_INACTIVE",
-		1: "KERNEL_MODULE_STATE_ACTIVE",
-		2: "KERNEL_MODULE_STATE_LOADING",
-		3: "KERNEL_MODULE_STATE_UNLOADING",
+		0: "KERNEL_MODULE_STATE_LIVE",
+		1: "KERNEL_MODULE_STATE_LOADING",
+		2: "KERNEL_MODULE_STATE_UNLOADING",
+		3: "KERNEL_MODULE_STATE_BUILTIN",
 	}
 	RuntimeKernelModuleState_value = map[string]int32{
-		"KERNEL_MODULE_STATE_INACTIVE":  0,
-		"KERNEL_MODULE_STATE_ACTIVE":    1,
-		"KERNEL_MODULE_STATE_LOADING":   2,
-		"KERNEL_MODULE_STATE_UNLOADING": 3,
+		"KERNEL_MODULE_STATE_LIVE":      0,
+		"KERNEL_MODULE_STATE_LOADING":   1,
+		"KERNEL_MODULE_STATE_UNLOADING": 2,
+		"KERNEL_MODULE_STATE_BUILTIN":   3,
 	}
 )
 
@@ -3897,12 +3897,12 @@ var File_resource_definitions_enums_enums_proto protoreflect.FileDescriptor
 
 const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\n" +
-	"&resource/definitions/enums/enums.proto\x12 talos.resource.definitions.enums*\xa0\x01\n" +
-	"\x18RuntimeKernelModuleState\x12 \n" +
-	"\x1cKERNEL_MODULE_STATE_INACTIVE\x10\x00\x12\x1e\n" +
-	"\x1aKERNEL_MODULE_STATE_ACTIVE\x10\x01\x12\x1f\n" +
-	"\x1bKERNEL_MODULE_STATE_LOADING\x10\x02\x12!\n" +
-	"\x1dKERNEL_MODULE_STATE_UNLOADING\x10\x03*y\n" +
+	"&resource/definitions/enums/enums.proto\x12 talos.resource.definitions.enums*\x9d\x01\n" +
+	"\x18RuntimeKernelModuleState\x12\x1c\n" +
+	"\x18KERNEL_MODULE_STATE_LIVE\x10\x00\x12\x1f\n" +
+	"\x1bKERNEL_MODULE_STATE_LOADING\x10\x01\x12!\n" +
+	"\x1dKERNEL_MODULE_STATE_UNLOADING\x10\x02\x12\x1f\n" +
+	"\x1bKERNEL_MODULE_STATE_BUILTIN\x10\x03*y\n" +
 	"\x17RuntimeKernelModuleType\x12\x1e\n" +
 	"\x1aKERNEL_MODULE_TYPE_UNKNOWN\x10\x00\x12\x1e\n" +
 	"\x1aKERNEL_MODULE_TYPE_BUILTIN\x10\x01\x12\x1e\n" +

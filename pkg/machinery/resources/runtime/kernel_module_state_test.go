@@ -16,17 +16,22 @@ func TestParseDynamicModuleState(t *testing.T) {
 	for _, tt := range []struct {
 		input    string
 		expected runtime.KernelModuleState
+		wantErr  bool
 	}{
-		{"Live", runtime.KernelModuleStateActive},
-		{"Loading", runtime.KernelModuleStateLoading},
-		{"Unloading", runtime.KernelModuleStateUnloading},
-		{"", runtime.KernelModuleStateInactive},
-		{"unknown", runtime.KernelModuleStateInactive},
+		{"Live", runtime.KernelModuleStateLive, false},
+		{"Loading", runtime.KernelModuleStateLoading, false},
+		{"Unloading", runtime.KernelModuleStateUnloading, false},
+		{"", 0, true},
+		{"unknown", 0, true},
 	} {
 		t.Run(tt.input, func(t *testing.T) {
-			result := runtime.ParseDynamicModuleState(tt.input)
-			assert.NotNil(t, result)
-			assert.Equal(t, tt.expected, result)
+			result, err := runtime.ParseDynamicModuleState(tt.input)
+			if tt.wantErr {
+				assert.Error(t, err)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expected, result)
+			}
 		})
 	}
 }

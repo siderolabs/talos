@@ -508,7 +508,7 @@ func (apiSuite *APISuite) AssertServicesRunning(ctx context.Context, node string
 	}
 }
 
-// AssertExpectedModules verifies that expected kernel modules are loaded on the node as dynamic type and active state.
+// AssertExpectedModules verifies that expected kernel modules are loaded on the node as dynamic type and live state.
 func (apiSuite *APISuite) AssertExpectedModules(ctx context.Context, node string, expectedModules []string) {
 	nodeCtx := client.WithNode(ctx, node)
 
@@ -518,8 +518,8 @@ func (apiSuite *APISuite) AssertExpectedModules(ctx context.Context, node string
 
 		apiSuite.Assert().Equal(runtimeres.KernelModuleTypeDynamic, status.TypedSpec().Type,
 			"expected kernel module %q to be of dynamic type", moduleName)
-		apiSuite.Assert().Equal(runtimeres.KernelModuleStateActive, status.TypedSpec().State,
-			"expected kernel module %q to be in active state (Live)", moduleName)
+		apiSuite.Assert().Equal(runtimeres.KernelModuleStateLive, status.TypedSpec().State,
+			"expected kernel module %q to be in live state", moduleName)
 	}
 }
 

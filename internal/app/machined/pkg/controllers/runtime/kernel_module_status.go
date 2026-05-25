@@ -7,7 +7,6 @@ package runtime
 import (
 	"bufio"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -34,7 +33,6 @@ type KernelModuleStatusController struct {
 
 	ProcModulesPath        string
 	ModulesBuiltinFilePath string
-	SysModulePath          string
 
 	// This never changes during the lifetime of the controller, so we can cache it here to avoid re-reading modules.builtin on every reconcile loop.
 	BuiltinModuleNames []string
@@ -80,10 +78,6 @@ func (ctrl *KernelModuleStatusController) Run(ctx context.Context, r controller.
 
 	if ctrl.ModulesBuiltinFilePath == "" {
 		ctrl.ModulesBuiltinFilePath = constants.ModulesBuiltinPath
-	}
-
-	if ctrl.SysModulePath == "" {
-		ctrl.SysModulePath = constants.SysModulePath
 	}
 
 	// Pre-load built-in modules first
@@ -165,23 +159,12 @@ func (ctrl *KernelModuleStatusController) reconcile(ctx context.Context, r contr
 
 func (ctrl *KernelModuleStatusController) reconcileBuiltinModules(ctx context.Context, r controller.Runtime) error {
 	for _, name := range ctrl.BuiltinModuleNames {
-		var state runtime.KernelModuleState
-
-		if _, err := os.Stat(ctrl.SysModulePath + "/" + name); err == nil {
-			// module_init() must've been called for this built-in module, so we can consider it active.
-			state = runtime.KernelModuleStateActive
-		} else if errors.Is(err, os.ErrNotExist) {
-			state = runtime.KernelModuleStateInactive
-		} else {
-			return fmt.Errorf("error checking if built-in module %s is active: %w", name, err)
-		}
-
 		if err := safe.WriterModify(
 			ctx, r,
 			runtime.NewKernelModuleStatus(runtime.NamespaceName, name),
 			func(res *runtime.KernelModuleStatus) error {
 				res.TypedSpec().Type = runtime.KernelModuleTypeBuiltin
-				res.TypedSpec().State = state
+				res.TypedSpec().State = runtime.KernelModuleStateBuiltin
 
 				return nil
 			},
@@ -228,11 +211,16 @@ func (ctrl *KernelModuleStatusController) reconcileDynamicModules(ctx context.Co
 			ctx, r,
 			runtime.NewKernelModuleStatus(runtime.NamespaceName, module.Name),
 			func(res *runtime.KernelModuleStatus) error {
+				state, err := runtime.ParseDynamicModuleState(module.State)
+				if err != nil {
+					return fmt.Errorf("error parsing dynamic module state for module %q from raw state %q: %w", module.Name, module.State, err)
+				}
+
 				res.TypedSpec().Type = runtime.KernelModuleTypeDynamic
 				res.TypedSpec().Size = module.Size
 				res.TypedSpec().ReferenceCount = module.ReferenceCount
 				res.TypedSpec().Dependencies = module.Dependencies
-				res.TypedSpec().State = runtime.ParseDynamicModuleState(module.State)
+				res.TypedSpec().State = state
 				res.TypedSpec().Address = module.Address
 
 				return nil

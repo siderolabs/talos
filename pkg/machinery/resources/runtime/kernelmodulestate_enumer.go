@@ -7,11 +7,11 @@ import (
 	"strings"
 )
 
-const _KernelModuleStateName = "inactiveactiveloadingunloading"
+const _KernelModuleStateName = "liveloadingunloadingbuilt-in"
 
-var _KernelModuleStateIndex = [...]uint8{0, 8, 14, 21, 30}
+var _KernelModuleStateIndex = [...]uint8{0, 4, 11, 20, 28}
 
-const _KernelModuleStateLowerName = "inactiveactiveloadingunloading"
+const _KernelModuleStateLowerName = "liveloadingunloadingbuilt-in"
 
 func (i KernelModuleState) String() string {
 	if i < 0 || i >= KernelModuleState(len(_KernelModuleStateIndex)-1) {
@@ -24,30 +24,30 @@ func (i KernelModuleState) String() string {
 // Re-run the stringer command to generate them again.
 func _KernelModuleStateNoOp() {
 	var x [1]struct{}
-	_ = x[KernelModuleStateInactive-(0)]
-	_ = x[KernelModuleStateActive-(1)]
-	_ = x[KernelModuleStateLoading-(2)]
-	_ = x[KernelModuleStateUnloading-(3)]
+	_ = x[KernelModuleStateLive-(0)]
+	_ = x[KernelModuleStateLoading-(1)]
+	_ = x[KernelModuleStateUnloading-(2)]
+	_ = x[KernelModuleStateBuiltin-(3)]
 }
 
-var _KernelModuleStateValues = []KernelModuleState{KernelModuleStateInactive, KernelModuleStateActive, KernelModuleStateLoading, KernelModuleStateUnloading}
+var _KernelModuleStateValues = []KernelModuleState{KernelModuleStateLive, KernelModuleStateLoading, KernelModuleStateUnloading, KernelModuleStateBuiltin}
 
 var _KernelModuleStateNameToValueMap = map[string]KernelModuleState{
-	_KernelModuleStateName[0:8]:        KernelModuleStateInactive,
-	_KernelModuleStateLowerName[0:8]:   KernelModuleStateInactive,
-	_KernelModuleStateName[8:14]:       KernelModuleStateActive,
-	_KernelModuleStateLowerName[8:14]:  KernelModuleStateActive,
-	_KernelModuleStateName[14:21]:      KernelModuleStateLoading,
-	_KernelModuleStateLowerName[14:21]: KernelModuleStateLoading,
-	_KernelModuleStateName[21:30]:      KernelModuleStateUnloading,
-	_KernelModuleStateLowerName[21:30]: KernelModuleStateUnloading,
+	_KernelModuleStateName[0:4]:        KernelModuleStateLive,
+	_KernelModuleStateLowerName[0:4]:   KernelModuleStateLive,
+	_KernelModuleStateName[4:11]:       KernelModuleStateLoading,
+	_KernelModuleStateLowerName[4:11]:  KernelModuleStateLoading,
+	_KernelModuleStateName[11:20]:      KernelModuleStateUnloading,
+	_KernelModuleStateLowerName[11:20]: KernelModuleStateUnloading,
+	_KernelModuleStateName[20:28]:      KernelModuleStateBuiltin,
+	_KernelModuleStateLowerName[20:28]: KernelModuleStateBuiltin,
 }
 
 var _KernelModuleStateNames = []string{
-	_KernelModuleStateName[0:8],
-	_KernelModuleStateName[8:14],
-	_KernelModuleStateName[14:21],
-	_KernelModuleStateName[21:30],
+	_KernelModuleStateName[0:4],
+	_KernelModuleStateName[4:11],
+	_KernelModuleStateName[11:20],
+	_KernelModuleStateName[20:28],
 }
 
 // KernelModuleStateString retrieves an enum value from the enum constants string name.

@@ -50,7 +50,6 @@ func (suite *KernelModuleStatusSuite) TestParseMock() {
 		&runtimectrl.KernelModuleStatusController{
 			ProcModulesPath:        "testdata/kernel-modules/proc-modules.txt",
 			ModulesBuiltinFilePath: "testdata/kernel-modules/modules-builtin.txt",
-			SysModulePath:          suite.T().TempDir(),
 		},
 	))
 
@@ -62,43 +61,12 @@ func (suite *KernelModuleStatusSuite) TestParseMock() {
 		"ext4",
 	}, func(module *runtime.KernelModuleStatus, asrt *assert.Assertions) {
 		asrt.Equal(runtime.KernelModuleTypeBuiltin, module.TypedSpec().Type)
-		asrt.Equal(runtime.KernelModuleStateInactive, module.TypedSpec().State)
+		asrt.Equal(runtime.KernelModuleStateBuiltin, module.TypedSpec().State)
 	})
 
 	malformedEntryNames := []string{"firstmalformed", "secondmalformed"}
 	ctest.AssertNoResources[*runtime.LoadedKernelModule](suite, malformedEntryNames)
 	ctest.AssertNoResources[*runtime.KernelModuleStatus](suite, malformedEntryNames)
-}
-
-func (suite *KernelModuleStatusSuite) TestBuiltinModuleStates() {
-	sysModulePath := suite.T().TempDir()
-
-	// Create a /sys/module/loopback directory to mark loopback as active.
-	suite.Require().NoError(os.MkdirAll(filepath.Join(sysModulePath, "loopback"), 0o755))
-
-	modulesBuiltinPath := filepath.Join(suite.T().TempDir(), "modules-builtin.txt")
-	suite.Require().NoError(os.WriteFile(modulesBuiltinPath, []byte(
-		"kernel/drivers/net/loopback.ko\n"+
-			"kernel/crypto/aes_generic.ko\n",
-	), 0o644))
-
-	suite.Require().NoError(suite.Runtime().RegisterController(
-		&runtimectrl.KernelModuleStatusController{
-			ProcModulesPath:        "testdata/kernel-modules/proc-modules.txt",
-			ModulesBuiltinFilePath: modulesBuiltinPath,
-			SysModulePath:          sysModulePath,
-		},
-	))
-
-	ctest.AssertResource(suite, "loopback", func(res *runtime.KernelModuleStatus, asrt *assert.Assertions) {
-		asrt.Equal(runtime.KernelModuleTypeBuiltin, res.TypedSpec().Type)
-		asrt.Equal(runtime.KernelModuleStateActive, res.TypedSpec().State)
-	})
-
-	ctest.AssertResource(suite, "aes_generic", func(res *runtime.KernelModuleStatus, asrt *assert.Assertions) {
-		asrt.Equal(runtime.KernelModuleTypeBuiltin, res.TypedSpec().Type)
-		asrt.Equal(runtime.KernelModuleStateInactive, res.TypedSpec().State)
-	})
 }
 
 func (suite *KernelModuleStatusSuite) TestLoadedKernelModuleFields() {
@@ -143,7 +111,7 @@ func (suite *KernelModuleStatusSuite) TestKernelModuleStatusFields() {
 		asrt.Equal(114688, res.TypedSpec().Size)
 		asrt.Equal(0, res.TypedSpec().ReferenceCount)
 		asrt.Equal([]string{}, res.TypedSpec().Dependencies)
-		asrt.Equal(runtime.KernelModuleStateActive, res.TypedSpec().State)
+		asrt.Equal(runtime.KernelModuleStateLive, res.TypedSpec().State)
 		asrt.Equal("0x0000000000000000", res.TypedSpec().Address)
 	})
 }
@@ -164,6 +132,11 @@ func (suite *KernelModuleStatusSuite) TestDynamicModuleStateVariants() {
 	ctest.AssertResource(suite, "modunloading", func(res *runtime.KernelModuleStatus, asrt *assert.Assertions) {
 		asrt.Equal(runtime.KernelModuleTypeDynamic, res.TypedSpec().Type)
 		asrt.Equal(runtime.KernelModuleStateUnloading, res.TypedSpec().State)
+	})
+
+	ctest.AssertResource(suite, "wireguard", func(res *runtime.KernelModuleStatus, asrt *assert.Assertions) {
+		asrt.Equal(runtime.KernelModuleTypeDynamic, res.TypedSpec().Type)
+		asrt.Equal(runtime.KernelModuleStateLive, res.TypedSpec().State)
 	})
 }
 

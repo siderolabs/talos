@@ -4,34 +4,33 @@
 
 package runtime
 
-// KernelModuleState represents the operational state of a dynamically loaded kernel module.
+import "fmt"
+
+// KernelModuleState represents the operational state of a kernel module.
 type KernelModuleState int
 
 // KernelModuleState constants.
 //
 //structprotogen:gen_enum
 const (
-	KernelModuleStateInactive  KernelModuleState = iota // inactive
-	KernelModuleStateActive                             // active
+	KernelModuleStateLive      KernelModuleState = iota // live
 	KernelModuleStateLoading                            // loading
 	KernelModuleStateUnloading                          // unloading
+	KernelModuleStateBuiltin                            // built-in
 )
 
 // ParseDynamicModuleState converts a string representation of a kernel module state into
 // its corresponding KernelModuleState constant.
-func ParseDynamicModuleState(s string) KernelModuleState {
-	var state KernelModuleState
-
+// 'Builtin' is intentionally omitted as it is not a valid state for dynamically loaded modules.
+func ParseDynamicModuleState(s string) (KernelModuleState, error) {
 	switch s {
 	case "Live":
-		state = KernelModuleStateActive
+		return KernelModuleStateLive, nil
 	case "Loading":
-		state = KernelModuleStateLoading
+		return KernelModuleStateLoading, nil
 	case "Unloading":
-		state = KernelModuleStateUnloading
+		return KernelModuleStateUnloading, nil
 	default:
-		state = KernelModuleStateInactive
+		return 0, fmt.Errorf("unknown kernel module state %q", s)
 	}
-
-	return state
 }
