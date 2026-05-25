@@ -253,13 +253,17 @@ func RankCgroups(logger *zap.Logger, root string, scoringExpr cel.Expression) ma
 				MemoryMax:     node.MemoryMax,
 			}
 
-			ranking[cgroup], err = cgroup.CalculateScore(&scoringExpr)
+			cgroupRank, err := cgroup.CalculateScore(&scoringExpr)
 			if err != nil {
 				logger.Error("cannot calculate score for cgroup",
 					zap.String("dir", cgroup.Path), zap.Error(err),
 				)
 
 				continue
+			}
+
+			if cgroupRank > 0 {
+				ranking[cgroup] = cgroupRank
 			}
 		}
 	}

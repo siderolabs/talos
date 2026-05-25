@@ -76,7 +76,7 @@ func TestDNS(t *testing.T) {
 			// The first one will return SERVFAIL and the second will return REFUSED. We should try both.
 			name:         `should return "refused"`,
 			hostname:     "dnssec-failed.org",
-			nameservers:  []string{"1.1.1.1", "ns-1098.awsdns-09.org."},
+			nameservers:  []string{"1.1.1.1", "ns1.google.com."},
 			expectedCode: dnssrv.RcodeRefused,
 			errCheck:     check.NoError(),
 		},
