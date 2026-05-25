@@ -277,7 +277,7 @@ func launchVM(config *LaunchConfig) error {
 		return err
 	}
 
-	if !diskBootable {
+	if !diskBootable && config.TPMConfig.NodeName == "" {
 		// When the guest disk has been wiped externally we will re-attach
 		// boot media (ISO/USB/UKI/kernel) below - but UEFI keeps the
 		// previous Talos install's Boot#### entries in the variable store
@@ -285,6 +285,9 @@ func launchVM(config *LaunchConfig) error {
 		// reset, UEFI tries those entries first, fails, and never falls
 		// through to the freshly-attached boot media. Convention: pflash
 		// index 1 is the variable store, index 0 is the firmware code.
+		//
+		// Skip wiping if TPM is enabled - vars contain SecureBoot state,
+		// so we can't wipe them without losing SecureBoot state.
 		if len(config.PFlashSpec) >= 2 && len(config.PFlashImages) >= 2 {
 			if err := writePFlashImage(config.PFlashImages[1], config.PFlashSpec[1]); err != nil {
 				return fmt.Errorf("reset UEFI variable store: %w", err)
