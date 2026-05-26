@@ -1,3 +1,6 @@
+SHELL := bash
+.SHELLFLAGS := -o errexit -o pipefail -c
+
 REGISTRY ?= ghcr.io
 FACTORY ?= factory.talos.dev
 USERNAME ?= siderolabs
@@ -462,12 +465,13 @@ IMAGES_LIST :=
 installer: ## Builds the installer and outputs it to the artifact directory.
 	@$(MAKE) image-installer IMAGER_ARGS="--base-installer-image $(REGISTRY_AND_USERNAME)/installer-base$(IMAGE_NAME_SUFFIX):$(IMAGE_TAG_IN) $(IMAGER_ARGS)"
 
-	@crane_args=""
-	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
-		arch=$$(basename "$${platform}") && \
-		image=$$(crane push $(ARTIFACTS)/installer-$${arch}.tar $(REGISTRY_AND_USERNAME)/installer$(IMAGE_NAME_SUFFIX):$(IMAGE_TAG_OUT)-$${arch}) && \
-		crane_args="$${crane_args} -m $${image}" && \
-		rm -f $(ARTIFACTS)/installer-$${arch}.tar ; \
+	@set -e; \
+	crane_args=""; \
+	for platform in $(subst $(,),$(space),$(PLATFORM)); do \
+		arch=$$(basename "$${platform}"); \
+		image=$$(crane push $(ARTIFACTS)/installer-$${arch}.tar $(REGISTRY_AND_USERNAME)/installer$(IMAGE_NAME_SUFFIX):$(IMAGE_TAG_OUT)-$${arch}); \
+		crane_args="$${crane_args} -m $${image}"; \
+		rm -f $(ARTIFACTS)/installer-$${arch}.tar; \
 	done; \
 	crane index append -t "${REGISTRY_AND_USERNAME}/installer$(IMAGE_NAME_SUFFIX):${IMAGE_TAG_OUT}" $${crane_args}
 	@echo "${REGISTRY_AND_USERNAME}/installer$(IMAGE_NAME_SUFFIX):${IMAGE_TAG_OUT}" > $(ARTIFACTS)/installer_image
@@ -476,10 +480,11 @@ installer: ## Builds the installer and outputs it to the artifact directory.
 .PHONY: secureboot-installer
 secureboot-installer: ## Builds UEFI only installer which uses UKI and push it to the registry.
 	@$(MAKE) image-secureboot-installer IMAGER_ARGS="--base-installer-image $(REGISTRY_AND_USERNAME)/installer-base$(IMAGE_NAME_SUFFIX):$(IMAGE_TAG_IN) $(IMAGER_ARGS)"
-	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
-		arch=$$(basename "$${platform}") && \
-		crane push $(ARTIFACTS)/installer-$${arch}-secureboot.tar $(REGISTRY_AND_USERNAME)/installer$(IMAGE_NAME_SUFFIX):$(IMAGE_TAG_OUT)-$${arch}-secureboot && \
-		rm -f $(ARTIFACTS)/installer-$${arch}-secureboot.tar ; \
+	@set -e; \
+	for platform in $(subst $(,),$(space),$(PLATFORM)); do \
+		arch=$$(basename "$${platform}"); \
+		crane push $(ARTIFACTS)/installer-$${arch}-secureboot.tar $(REGISTRY_AND_USERNAME)/installer$(IMAGE_NAME_SUFFIX):$(IMAGE_TAG_OUT)-$${arch}-secureboot; \
+		rm -f $(ARTIFACTS)/installer-$${arch}-secureboot.tar; \
 	done
 
 .PHONY: talosctl-cni-bundle
@@ -722,7 +727,7 @@ clean: ## Cleans up all artifacts.
 
 .PHONY: image-list
 image-list: ## Prints a list of all images built by this Makefile with digests.
-	@echo -n installer-base$(IMAGE_NAME_SUFFIX) talos$(IMAGE_NAME_SUFFIX) imager$(IMAGE_NAME_SUFFIX) talosctl$(IMAGE_NAME_SUFFIX) talosctl-all$(IMAGE_NAME_SUFFIX) | xargs -d ' ' -I{} sh -c 'echo $(REGISTRY_AND_USERNAME)/{}:$(IMAGE_TAG_IN)' | xargs -I{} sh -c 'echo {}@$$(crane digest {})'
+	@echo -n installer-base$(IMAGE_NAME_SUFFIX) talos$(IMAGE_NAME_SUFFIX) imager$(IMAGE_NAME_SUFFIX) talosctl$(IMAGE_NAME_SUFFIX) talosctl-all$(IMAGE_NAME_SUFFIX) | xargs -d ' ' -I{} sh -c 'echo $(REGISTRY_AND_USERNAME)/{}:$(IMAGE_TAG_IN)' | xargs -I{} sh -ec 'digest=$$(crane digest {}); echo {}@$$digest'
 
 $(ARTIFACTS)/image-signer-$(IMAGE_SIGNER_RELEASE): | $(ARTIFACTS) ## Downloads image-signer binary
 	@curl -sSL https://github.com/siderolabs/go-tools/releases/download/$(IMAGE_SIGNER_RELEASE)/image-signer-$(OPERATING_SYSTEM)-$(ARCH) -o $(ARTIFACTS)/image-signer-$(IMAGE_SIGNER_RELEASE)
@@ -731,7 +736,8 @@ $(ARTIFACTS)/image-signer-$(IMAGE_SIGNER_RELEASE): | $(ARTIFACTS) ## Downloads i
 
 .PHONY: sign-images
 sign-images: $(ARTIFACTS)/image-signer-$(IMAGE_SIGNER_RELEASE) ## Run image-signer to sign all images built by this Makefile.
-	@$(ARTIFACTS)/image-signer-$(IMAGE_SIGNER_RELEASE) sign $(shell $(MAKE) --quiet image-list REGISTRY_AND_USERNAME=$(REGISTRY_AND_USERNAME) IMAGE_TAG_IN=$(IMAGE_TAG_IN) IMAGE_NAME_SUFFIX=$(IMAGE_NAME_SUFFIX))
+	@images="$$($(MAKE) --quiet image-list REGISTRY_AND_USERNAME=$(REGISTRY_AND_USERNAME) IMAGE_TAG_IN=$(IMAGE_TAG_IN) IMAGE_NAME_SUFFIX=$(IMAGE_NAME_SUFFIX))" || exit 1; \
+		$(ARTIFACTS)/image-signer-$(IMAGE_SIGNER_RELEASE) sign $$images
 
 .PHONY: reproducibility-test
 reproducibility-test: $(ARTIFACTS)
