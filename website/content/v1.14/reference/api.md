@@ -84,6 +84,13 @@ description: Talos gRPC API reference.
   
     - [LifecycleService](#machine.LifecycleService)
   
+- [machine/lvm.proto](#machine/lvm.proto)
+    - [LVMServiceLogicalVolumeRemoveRequest](#machine.LVMServiceLogicalVolumeRemoveRequest)
+    - [LVMServicePhysicalVolumeRemoveRequest](#machine.LVMServicePhysicalVolumeRemoveRequest)
+    - [LVMServiceVolumeGroupRemoveRequest](#machine.LVMServiceVolumeGroupRemoveRequest)
+  
+    - [LVMService](#machine.LVMService)
+  
 - [machine/machine.proto](#machine/machine.proto)
     - [AddressEvent](#machine.AddressEvent)
     - [ApplyConfiguration](#machine.ApplyConfiguration)
@@ -1634,6 +1641,80 @@ The LifecycleService handles installation and upgrade operations.
 | ----------- | ------------ | ------------- | ------------|
 | Install | [LifecycleServiceInstallRequest](#machine.LifecycleServiceInstallRequest) | [LifecycleServiceInstallResponse](#machine.LifecycleServiceInstallResponse) stream | Install Talos to disk. The RPC should fail if the Talos is already installed on the target disk. |
 | Upgrade | [LifecycleServiceUpgradeRequest](#machine.LifecycleServiceUpgradeRequest) | [LifecycleServiceUpgradeResponse](#machine.LifecycleServiceUpgradeResponse) stream | Upgrade Talos to a new version. The RPC should fail if Talos is not already installed on the target disk. |
+
+ <!-- end services -->
+
+
+
+<a name="machine/lvm.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## machine/lvm.proto
+
+
+
+<a name="machine.LVMServiceLogicalVolumeRemoveRequest"></a>
+
+### LVMServiceLogicalVolumeRemoveRequest
+LVMServiceLogicalVolumeRemoveRequest identifies a single LV to remove.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| volume_group | [string](#string) |  | VolumeGroup is the name of the parent VG (e.g. "vg0"). |
+| logical_volume | [string](#string) |  | LogicalVolume is the name of the LV to remove (e.g. "lv0"). |
+
+
+
+
+
+
+<a name="machine.LVMServicePhysicalVolumeRemoveRequest"></a>
+
+### LVMServicePhysicalVolumeRemoveRequest
+LVMServicePhysicalVolumeRemoveRequest identifies a single PV label to wipe.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| device | [string](#string) |  | Device is the block device path of the PV (e.g. "/dev/sda1"). |
+
+
+
+
+
+
+<a name="machine.LVMServiceVolumeGroupRemoveRequest"></a>
+
+### LVMServiceVolumeGroupRemoveRequest
+LVMServiceVolumeGroupRemoveRequest identifies a single VG to remove.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| volume_group | [string](#string) |  | VolumeGroup is the name of the VG to remove (e.g. "vg0"). |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="machine.LVMService"></a>
+
+### LVMService
+LVMService manages LVM resources on a Talos node.
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| LogicalVolumeRemove | [LVMServiceLogicalVolumeRemoveRequest](#machine.LVMServiceLogicalVolumeRemoveRequest) | [.google.protobuf.Empty](#google.protobuf.Empty) | LogicalVolumeRemove removes an LVM logical volume.<br><br>The LV must not be open (e.g. mounted or in use by another device). |
+| VolumeGroupRemove | [LVMServiceVolumeGroupRemoveRequest](#machine.LVMServiceVolumeGroupRemoveRequest) | [.google.protobuf.Empty](#google.protobuf.Empty) | VolumeGroupRemove removes an LVM volume group.<br><br>WARNING: this cascades. Every logical volume inside the group is removed first, then the VG metadata itself. Callers that want fine-grained control should invoke LogicalVolumeRemove per LV before this RPC. The underlying physical volumes keep their LVM labels and must be cleared separately with PhysicalVolumeRemove. |
+| PhysicalVolumeRemove | [LVMServicePhysicalVolumeRemoveRequest](#machine.LVMServicePhysicalVolumeRemoveRequest) | [.google.protobuf.Empty](#google.protobuf.Empty) | PhysicalVolumeRemove wipes the LVM label and metadata from a block device.<br><br>The PV must not be part of an active volume group; remove the VG first with VolumeGroupRemove. |
 
  <!-- end services -->
 

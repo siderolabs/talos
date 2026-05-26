@@ -58,6 +58,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/images"
 	"github.com/siderolabs/talos/internal/app/internal/machinehelper"
 	"github.com/siderolabs/talos/internal/app/lifecycle"
+	"github.com/siderolabs/talos/internal/app/lvmd"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
@@ -158,6 +159,7 @@ func (s *Server) Register(obj *grpc.Server) {
 	cosiv1alpha1.RegisterStateServer(obj, server.NewState(resourceState))
 	inspect.RegisterInspectServiceServer(obj, &InspectServer{server: s})
 	storage.RegisterStorageServiceServer(obj, &storaged.Server{Controller: s.Controller})
+	machine.RegisterLVMServiceServer(obj, lvmd.NewService(s.Controller, s.Logger))
 	timeapi.RegisterTimeServiceServer(obj, &TimeServer{ConfigProvider: s.Controller.Runtime()})
 }
 

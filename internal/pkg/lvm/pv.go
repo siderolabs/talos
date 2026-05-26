@@ -54,3 +54,25 @@ func parsePVS(out string) ([]PV, error) {
 
 	return pvs, nil
 }
+
+// PVRemove runs `lvm pvremove --yes <device>` to wipe the LVM label/metadata
+// from a physical volume.
+//
+// The PV must not be part of an active VG; remove the VG first with VGRemove.
+//
+// --reportformat=json is intentionally NOT passed here: with that flag set,
+// LVM redirects log_error() messages into the JSON `log` array on stdout
+// (lib/log/log.c:640) instead of stderr, leaving stderr empty and breaking
+// classifyError's stderr matchers.
+//
+// Errors propagate through (*LVM).run which normalises them to the sentinels
+// declared in errors.go (ErrNotFound, ErrInUse, ...).
+func (lvm *LVM) PVRemove(ctx context.Context, device string) error {
+	if device == "" {
+		return fmt.Errorf("device must be non-empty")
+	}
+
+	_, err := lvm.run(ctx, "pvremove", "--yes", device)
+
+	return err
+}

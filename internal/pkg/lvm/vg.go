@@ -62,3 +62,28 @@ func parseVGS(out string) ([]VG, error) {
 
 	return vgs, nil
 }
+
+// VGRemove runs `lvm vgremove --yes <vg>` to remove a volume group.
+//
+// CASCADE: --yes (DONT_PROMPT in lvm2 terms; see tools/vgremove.c:42) makes
+// vgremove iterate every LV in the group through lvremove_single before
+// dropping the VG. Callers that need per-LV control must invoke LVRemove
+// first. The underlying PVs keep their LVM labels and require a separate
+// PVRemove to be fully wiped.
+//
+// --reportformat=json is intentionally NOT passed here: with that flag set,
+// LVM redirects log_error() messages into the JSON `log` array on stdout
+// (lib/log/log.c:640) instead of stderr, leaving stderr empty and breaking
+// classifyError's stderr matchers.
+//
+// Errors propagate through (*LVM).run which normalises them to the sentinels
+// declared in errors.go (ErrNotFound, ErrNotEmpty, ...).
+func (lvm *LVM) VGRemove(ctx context.Context, vg string) error {
+	if vg == "" {
+		return fmt.Errorf("vg must be non-empty")
+	}
+
+	_, err := lvm.run(ctx, "vgremove", "--yes", vg)
+
+	return err
+}

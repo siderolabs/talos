@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package machine;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/machine";
+option java_package = "dev.talos.api.machine";
+
+// LVMService manages LVM resources on a Talos node.
+service LVMService {
+  // LogicalVolumeRemove removes an LVM logical volume.
+  //
+  // The LV must not be open (e.g. mounted or in use by another device).
+  rpc LogicalVolumeRemove(LVMServiceLogicalVolumeRemoveRequest) returns (google.protobuf.Empty);
+  // VolumeGroupRemove removes an LVM volume group.
+  //
+  // WARNING: this cascades. Every logical volume inside the group is
+  // removed first, then the VG metadata itself. Callers that want
+  // fine-grained control should invoke LogicalVolumeRemove per LV before
+  // this RPC. The underlying physical volumes keep their LVM labels and
+  // must be cleared separately with PhysicalVolumeRemove.
+  rpc VolumeGroupRemove(LVMServiceVolumeGroupRemoveRequest) returns (google.protobuf.Empty);
+  // PhysicalVolumeRemove wipes the LVM label and metadata from a block device.
+  //
+  // The PV must not be part of an active volume group; remove the VG first
+  // with VolumeGroupRemove.
+  rpc PhysicalVolumeRemove(LVMServicePhysicalVolumeRemoveRequest) returns (google.protobuf.Empty);
+}
+
+// LVMServiceLogicalVolumeRemoveRequest identifies a single LV to remove.
+message LVMServiceLogicalVolumeRemoveRequest {
+  // VolumeGroup is the name of the parent VG (e.g. "vg0").
+  string volume_group = 1;
+  // LogicalVolume is the name of the LV to remove (e.g. "lv0").
+  string logical_volume = 2;
+}
+
+// LVMServiceVolumeGroupRemoveRequest identifies a single VG to remove.
+message LVMServiceVolumeGroupRemoveRequest {
+  // VolumeGroup is the name of the VG to remove (e.g. "vg0").
+  string volume_group = 1;
+}
+
+// LVMServicePhysicalVolumeRemoveRequest identifies a single PV label to wipe.
+message LVMServicePhysicalVolumeRemoveRequest {
+  // Device is the block device path of the PV (e.g. "/dev/sda1").
+  string device = 1;
+}

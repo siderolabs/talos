@@ -156,6 +156,15 @@ New resources `LVMPhysicalVolumeStatus`, `LVMVolumeGroupStatus`, and `LVMLogical
 `DiscoveredVolume` resources for logical volumes are listed by their kernel name (e.g. `dm-0`). To resolve the `<vg>/<lv>` for a given device, use the `Disks` or `BlockSymlinks` resources, which carry the udev-managed symlinks (e.g. `/dev/disk/by-id/dm-name-<vg>-<lv>`).
 """
 
+    [notes.lvm_wipe]
+        title = "LVM Wipe"
+        description = """\
+Talos now provides the ability to securely wipe LVM metadata from logical volumes, volume groups, and physical volumes.
+This feature allows for selective wiping of logical volumes, volume groups, and physical volumes.
+
+With `talosctl wipe lv/vg/pv <name>`, users can wipe LVM metadata from a specific logical volume, volume group, or physical volume.
+"""
+
 [make_deps]
 
     [make_deps.tools]

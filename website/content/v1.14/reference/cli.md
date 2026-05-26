@@ -3629,6 +3629,119 @@ talosctl wipe disk <device names>... [flags]
 
 * [talosctl wipe](#talosctl-wipe)	 - Wipe block device or volumes
 
+## talosctl wipe lv
+
+Remove an LVM logical volume
+
+### Synopsis
+
+Remove an LVM logical volume.
+
+The argument is the qualified logical-volume name, e.g. vg0/lv0.
+
+```
+talosctl wipe lv <vg/lv> [flags]
+```
+
+### Options
+
+```
+  -h, --help       help for lv
+  -i, --insecure   use Talos maintenance mode API
+```
+
+### Options inherited from parent commands
+
+```
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
+      --context string             Context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
+      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl wipe](#talosctl-wipe)	 - Wipe block device or volumes
+
+## talosctl wipe pv
+
+Remove an LVM physical volume label
+
+### Synopsis
+
+Wipe LVM metadata from a block device.
+
+The PV must not be part of an active volume group; remove the VG first with "talosctl wipe vg".
+
+The argument is a full device path, e.g. /dev/sda1.
+
+```
+talosctl wipe pv <device> [flags]
+```
+
+### Options
+
+```
+  -h, --help       help for pv
+  -i, --insecure   use Talos maintenance mode API
+```
+
+### Options inherited from parent commands
+
+```
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
+      --context string             Context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
+      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl wipe](#talosctl-wipe)	 - Wipe block device or volumes
+
+## talosctl wipe vg
+
+Remove an LVM volume group (cascades to its LVs)
+
+### Synopsis
+
+Remove an LVM volume group.
+
+WARNING: this is destructive. Every logical volume inside the group is
+removed first, then the volume group itself. There is no separate
+confirmation per LV. The underlying physical volumes keep their LVM
+labels and remain claimable until you run "talosctl wipe pv".
+
+```
+talosctl wipe vg <name> [flags]
+```
+
+### Options
+
+```
+  -h, --help       help for vg
+  -i, --insecure   use Talos maintenance mode API
+```
+
+### Options inherited from parent commands
+
+```
+  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
+      --context string             Context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
+      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+```
+
+### SEE ALSO
+
+* [talosctl wipe](#talosctl-wipe)	 - Wipe block device or volumes
+
 ## talosctl wipe
 
 Wipe block device or volumes
@@ -3649,6 +3762,9 @@ Wipe block device or volumes
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl wipe disk](#talosctl-wipe-disk)	 - Wipe a block device (disk or partition) which is not used as a volume
+* [talosctl wipe lv](#talosctl-wipe-lv)	 - Remove an LVM logical volume
+* [talosctl wipe pv](#talosctl-wipe-pv)	 - Remove an LVM physical volume label
+* [talosctl wipe vg](#talosctl-wipe-vg)	 - Remove an LVM volume group (cascades to its LVs)
 
 ## talosctl
 

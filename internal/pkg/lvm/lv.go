@@ -72,3 +72,22 @@ func parseLVS(out string) ([]LV, error) {
 
 	return lvs, nil
 }
+
+// LVRemove runs `lvm lvremove --yes <vg>/<lv>` to remove a logical volume.
+//
+// --reportformat=json is intentionally NOT passed here: with that flag set,
+// LVM redirects log_error() messages into the JSON `log` array on stdout
+// (lib/log/log.c:640) instead of stderr, leaving stderr empty and breaking
+// classifyError's stderr matchers.
+//
+// Errors propagate through (*LVM).run which normalises them to the sentinels
+// declared in errors.go (ErrNotFound, ErrOpen, ...).
+func (lvm *LVM) LVRemove(ctx context.Context, vg, lv string) error {
+	if vg == "" || lv == "" {
+		return fmt.Errorf("vg and lv must be non-empty")
+	}
+
+	_, err := lvm.run(ctx, "lvremove", "--yes", fmt.Sprintf("%s/%s", vg, lv))
+
+	return err
+}

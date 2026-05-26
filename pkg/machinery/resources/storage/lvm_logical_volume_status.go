@@ -113,7 +113,7 @@ type LVMLogicalVolumeStatusExtension struct{}
 func (LVMLogicalVolumeStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             LVMLogicalVolumeStatusType,
-		Aliases:          []resource.Type{"lv"},
+		Aliases:          []resource.Type{"lvs"},
 		DefaultNamespace: NamespaceName,
 		PrintColumns: []meta.PrintColumn{
 			{Name: "Path", JSONPath: "{.path}"},

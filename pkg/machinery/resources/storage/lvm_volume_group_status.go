@@ -95,7 +95,7 @@ type LVMVolumeGroupStatusExtension struct{}
 func (LVMVolumeGroupStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             LVMVolumeGroupStatusType,
-		Aliases:          []resource.Type{"vg"},
+		Aliases:          []resource.Type{"vgs"},
 		DefaultNamespace: NamespaceName,
 		PrintColumns: []meta.PrintColumn{
 			{Name: "Name", JSONPath: "{.name}"},

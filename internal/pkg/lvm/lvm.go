@@ -83,6 +83,12 @@ func (lvm *LVM) init() error {
 // Full stdout capture is required because the JSON report for a node with
 // many LVs/PVs can easily exceed the 4 KiB circular buffer used by
 // RunWithOptions by default.
+//
+// Errors are normalised through classifyError so every caller sees the same
+// sentinel set (ErrNotFound, ErrInUse, ErrNotEmpty, ErrOpen,
+// ErrInvalidCommand, ErrInitFailed, ErrCommand). The raw lvm stderr is kept
+// out of the returned error chain — only the sentinel is wrapped — so it
+// will not be surfaced to API clients by mistake.
 func (lvm *LVM) run(ctx context.Context, subcommand string, args ...string) (string, error) {
 	out, err := cmd.RunWithOptions(
 		ctx,
@@ -91,7 +97,7 @@ func (lvm *LVM) run(ctx context.Context, subcommand string, args ...string) (str
 		cmd.WithFullStdoutCapture(),
 	)
 	if err != nil {
-		return "", fmt.Errorf("lvm %s failed: %w", subcommand, err)
+		return "", fmt.Errorf("lvm %s failed: %w", subcommand, classifyError(err))
 	}
 
 	return out, nil

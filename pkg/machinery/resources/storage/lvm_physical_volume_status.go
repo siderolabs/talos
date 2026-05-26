@@ -79,7 +79,7 @@ type LVMPhysicalVolumeStatusExtension struct{}
 func (LVMPhysicalVolumeStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
 		Type:             LVMPhysicalVolumeStatusType,
-		Aliases:          []resource.Type{"pv"},
+		Aliases:          []resource.Type{"pvs"},
 		DefaultNamespace: NamespaceName,
 		PrintColumns: []meta.PrintColumn{
 			{Name: "Device", JSONPath: "{.device}"},

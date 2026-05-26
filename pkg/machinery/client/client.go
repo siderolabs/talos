@@ -43,6 +43,7 @@ type Client struct {
 	TimeClient      timeapi.TimeServiceClient
 	ClusterClient   clusterapi.ClusterServiceClient
 	StorageClient   storageapi.StorageServiceClient
+	LVMClient       machineapi.LVMServiceClient
 	InspectClient   inspectapi.InspectServiceClient
 	ImageClient     machineapi.ImageServiceClient
 	DebugClient     machineapi.DebugServiceClient
@@ -171,6 +172,7 @@ func New(_ context.Context, opts ...OptionFunc) (c *Client, err error) {
 	c.TimeClient = timeapi.NewTimeServiceClient(c.conn)
 	c.ClusterClient = clusterapi.NewClusterServiceClient(c.conn)
 	c.StorageClient = storageapi.NewStorageServiceClient(c.conn)
+	c.LVMClient = machineapi.NewLVMServiceClient(c.conn)
 	c.InspectClient = inspectapi.NewInspectServiceClient(c.conn)
 	c.ImageClient = machineapi.NewImageServiceClient(c.conn)
 	c.DebugClient = machineapi.NewDebugServiceClient(c.conn)
@@ -1046,6 +1048,34 @@ func (c *Client) BlockDeviceWipe(ctx context.Context, req *storageapi.BlockDevic
 	resp, err := c.StorageClient.BlockDeviceWipe(ctx, req, callOptions...)
 
 	_, err = FilterMessages(resp, err)
+
+	return err
+}
+
+// LogicalVolumeRemove removes a single LVM logical volume via LVMService.
+//
+// Multi-node fan-out is the caller's responsibility: dispatch one call per
+// node with client.WithNode (see talosctl/multiplex.Unary), because
+// google.protobuf.Empty cannot be augmented with per-node metadata by apid's
+// one-to-many proxy path.
+func (c *Client) LogicalVolumeRemove(ctx context.Context, req *machineapi.LVMServiceLogicalVolumeRemoveRequest, callOptions ...grpc.CallOption) error {
+	_, err := c.LVMClient.LogicalVolumeRemove(ctx, req, callOptions...)
+
+	return err
+}
+
+// VolumeGroupRemove removes a single LVM volume group via LVMService.
+// See LogicalVolumeRemove for multi-node fan-out semantics.
+func (c *Client) VolumeGroupRemove(ctx context.Context, req *machineapi.LVMServiceVolumeGroupRemoveRequest, callOptions ...grpc.CallOption) error {
+	_, err := c.LVMClient.VolumeGroupRemove(ctx, req, callOptions...)
+
+	return err
+}
+
+// PhysicalVolumeRemove wipes LVM metadata from a single physical volume via LVMService.
+// See LogicalVolumeRemove for multi-node fan-out semantics.
+func (c *Client) PhysicalVolumeRemove(ctx context.Context, req *machineapi.LVMServicePhysicalVolumeRemoveRequest, callOptions ...grpc.CallOption) error {
+	_, err := c.LVMClient.PhysicalVolumeRemove(ctx, req, callOptions...)
 
 	return err
 }

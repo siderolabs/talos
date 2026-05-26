@@ -127,6 +127,21 @@ var rules = map[string]role.Set{
 		// for maintenance only, verified in the handler
 		role.Reader,
 	),
+	"/machine.LVMService/LogicalVolumeRemove": role.MakeSet(
+		role.Admin,
+		// for maintenance only, verified in the handler
+		role.Reader,
+	),
+	"/machine.LVMService/VolumeGroupRemove": role.MakeSet(
+		role.Admin,
+		// for maintenance only, verified in the handler
+		role.Reader,
+	),
+	"/machine.LVMService/PhysicalVolumeRemove": role.MakeSet(
+		role.Admin,
+		// for maintenance only, verified in the handler
+		role.Reader,
+	),
 
 	"/time.TimeService/Time":      role.MakeSet(role.Admin, role.Operator, role.Reader),
 	"/time.TimeService/TimeCheck": role.MakeSet(role.Admin, role.Operator, role.Reader),

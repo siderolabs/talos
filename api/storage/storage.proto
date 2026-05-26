@@ -2,11 +2,11 @@ syntax = "proto3";
 
 package storage;
 
-option go_package = "github.com/siderolabs/talos/pkg/machinery/api/storage";
-option java_package = "dev.talos.api.storage";
-
 import "common/common.proto";
 import "google/protobuf/empty.proto";
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/storage";
+option java_package = "dev.talos.api.storage";
 
 // StorageService represents the storage service.
 service StorageService {
@@ -106,3 +106,4 @@ message BlockDeviceWipeResponse {
 message BlockDeviceWipe {
   common.Metadata metadata = 1;
 }
+
