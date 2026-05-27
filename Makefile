@@ -1,6 +1,3 @@
-SHELL := bash
-.SHELLFLAGS := -o errexit -o pipefail -c
-
 REGISTRY ?= ghcr.io
 FACTORY ?= factory.talos.dev
 USERNAME ?= siderolabs
@@ -488,11 +485,12 @@ secureboot-installer: ## Builds UEFI only installer which uses UKI and push it t
 	done
 
 .PHONY: talosctl-cni-bundle
-talosctl-cni-bundle: ## Creates a compressed tarball that includes CNI bundle for talosctl.
+talosctl-cni-bundle: | $(ARTIFACTS) ## Creates a compressed tarball that includes CNI bundle for talosctl.
 	@$(MAKE) local-$@ DEST=$(ARTIFACTS)
-	@for platform in $(subst $(,),$(space),$(PLATFORM)); do \
-		arch=`basename "$${platform}"` ; \
-		tar  -C $(ARTIFACTS)/talosctl-cni-bundle-$${arch} -czf $(ARTIFACTS)/talosctl-cni-bundle-$${arch}.tar.gz . ; \
+	@set -e; \
+	for platform in $(subst $(,),$(space),$(PLATFORM)); do \
+		arch=`basename "$${platform}"`; \
+		tar -C $(ARTIFACTS)/talosctl-cni-bundle-$${arch} -czf $(ARTIFACTS)/talosctl-cni-bundle-$${arch}.tar.gz .; \
 	done
 	@rm -rf $(ARTIFACTS)/talosctl-cni-bundle-*/
 
@@ -512,10 +510,11 @@ uki-certs: talosctl ## Generate test certificates for SecureBoot/PCR Signing
 	@$(TALOSCTL_EXECUTABLE) gen secureboot database
 
 .PHONY: integration-images-list
-integration-images-list: ## Generate list of integration images.
-	@docker run --entrypoint /usr/local/bin/e2e.test registry.k8s.io/conformance:$(KUBECTL_VERSION) --list-images | \
-		$(TALOSCTL_EXECUTABLE) images integration --installer-tag=$(IMAGE_TAG_IN) --registry-and-user=$(REGISTRY_AND_USERNAME) \
-		> $(ARTIFACTS)/integration-images.txt
+integration-images-list: | $(ARTIFACTS) ## Generate list of integration images.
+	@docker run --entrypoint /usr/local/bin/e2e.test registry.k8s.io/conformance:$(KUBECTL_VERSION) --list-images > $(ARTIFACTS)/integration-images-raw.txt
+	@$(TALOSCTL_EXECUTABLE) images integration --installer-tag=$(IMAGE_TAG_IN) --registry-and-user=$(REGISTRY_AND_USERNAME) \
+		< $(ARTIFACTS)/integration-images-raw.txt > $(ARTIFACTS)/integration-images.txt
+	@rm -f $(ARTIFACTS)/integration-images-raw.txt
 
 IGNORE_CACHE_IMAGES ?= registry.k8s.io/e2e-test-images/node-perf/pytorch-wide-deep
 # Convert space-separated list into grep-compatible regex (img1|img2|img3)
@@ -527,8 +526,9 @@ empty :=
 
 .PHONY: cache-create
 cache-create: installer imager integration-images-list ## Generate image cache.
-	@grep -vE "$(IGNORE_CACHE_IMAGES_RE)" $(ARTIFACTS)/integration-images.txt | \
-		$(TALOSCTL_EXECUTABLE) images cache-create --image-cache-path=/tmp/cache.tar --images=- --force
+	@grep -vE "$(IGNORE_CACHE_IMAGES_RE)" $(ARTIFACTS)/integration-images.txt > $(ARTIFACTS)/integration-images.filtered.txt
+	@$(TALOSCTL_EXECUTABLE) images cache-create --image-cache-path=/tmp/cache.tar --images=- --force < $(ARTIFACTS)/integration-images.filtered.txt
+	@rm -f $(ARTIFACTS)/integration-images.filtered.txt
 	@crane push /tmp/cache.tar $(REGISTRY_AND_USERNAME)/image-cache:$(IMAGE_TAG_OUT)
 	@$(MAKE) image-iso IMAGER_ARGS="--image-cache=$(REGISTRY_AND_USERNAME)/image-cache:$(IMAGE_TAG_OUT) --extra-kernel-arg='console=ttyS0'"
 	@$(MAKE) image-metal IMAGER_ARGS="--image-cache=$(REGISTRY_AND_USERNAME)/image-cache:$(IMAGE_TAG_OUT) --extra-kernel-arg='console=ttyS0'"
@@ -593,19 +593,25 @@ $(ARTIFACTS)/$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET)-amd64:
 	@$(MAKE) local-$(INTEGRATION_TEST_PROVISION_DEFAULT_TARGET) DEST=$(ARTIFACTS) PLATFORM=linux/amd64 WITH_RACE=true
 
 $(ARTIFACTS)/kubectl: | $(ARTIFACTS)
-	@curl -L -o $(ARTIFACTS)/kubectl "$(KUBECTL_URL)"
+	@curl --fail -L -o $(ARTIFACTS)/kubectl "$(KUBECTL_URL)"
 	@chmod +x $(ARTIFACTS)/kubectl
 
 $(ARTIFACTS)/kubestr: | $(ARTIFACTS)
-	@curl -L "$(KUBESTR_URL)" | tar xzf - -C $(ARTIFACTS) kubestr
+	@curl --fail -L -o $(ARTIFACTS)/kubestr.tar.gz "$(KUBESTR_URL)"
+	@tar xzf $(ARTIFACTS)/kubestr.tar.gz -C $(ARTIFACTS) kubestr
+	@rm -f $(ARTIFACTS)/kubestr.tar.gz
 	@chmod +x $(ARTIFACTS)/kubestr
 
 $(ARTIFACTS)/helm: | $(ARTIFACTS)
-	@curl -L "$(HELM_URL)" | tar xzf - -C $(ARTIFACTS) --strip-components=1 linux-amd64/helm
+	@curl --fail -L -o $(ARTIFACTS)/helm.tar.gz "$(HELM_URL)"
+	@tar xzf $(ARTIFACTS)/helm.tar.gz -C $(ARTIFACTS) --strip-components=1 linux-amd64/helm
+	@rm -f $(ARTIFACTS)/helm.tar.gz
 	@chmod +x $(ARTIFACTS)/helm
 
 $(ARTIFACTS)/cilium: | $(ARTIFACTS)
-	@curl -L "$(CILIUM_CLI_URL)" | tar xzf - -C $(ARTIFACTS) cilium
+	@curl --fail -L -o $(ARTIFACTS)/cilium.tar.gz "$(CILIUM_CLI_URL)"
+	@tar xzf $(ARTIFACTS)/cilium.tar.gz -C $(ARTIFACTS) cilium
+	@rm -f $(ARTIFACTS)/cilium.tar.gz
 	@chmod +x $(ARTIFACTS)/cilium
 
 external-artifacts: $(ARTIFACTS)/kubectl $(ARTIFACTS)/kubestr $(ARTIFACTS)/helm $(ARTIFACTS)/cilium
@@ -662,20 +668,21 @@ kubelet-fat-patch:
 $(ARTIFACTS)/$(TALOS_RELEASE): $(ARTIFACTS)/$(TALOS_RELEASE)/vmlinuz $(ARTIFACTS)/$(TALOS_RELEASE)/initramfs.xz
 
 # download release artifacts for specific version
-$(ARTIFACTS)/$(TALOS_RELEASE)/%:
+$(ARTIFACTS)/$(TALOS_RELEASE)/%: | $(ARTIFACTS)
 	@mkdir -p $(ARTIFACTS)/$(TALOS_RELEASE)/
 	@case "$*" in \
 		vmlinuz) \
-			curl -L -o "$(ARTIFACTS)/$(TALOS_RELEASE)/$*" "https://github.com/siderolabs/talos/releases/download/$(TALOS_RELEASE)/vmlinuz-amd64" \
+			curl --fail -L -o "$(ARTIFACTS)/$(TALOS_RELEASE)/$*" "https://github.com/siderolabs/talos/releases/download/$(TALOS_RELEASE)/vmlinuz-amd64" \
 			;; \
 		initramfs.xz) \
-			curl -L -o "$(ARTIFACTS)/$(TALOS_RELEASE)/$*" "https://github.com/siderolabs/talos/releases/download/$(TALOS_RELEASE)/initramfs-amd64.xz" \
+			curl --fail -L -o "$(ARTIFACTS)/$(TALOS_RELEASE)/$*" "https://github.com/siderolabs/talos/releases/download/$(TALOS_RELEASE)/initramfs-amd64.xz" \
 			;; \
 	esac
 
 .PHONY: release-artifacts
-release-artifacts:
-	@for release in $(RELEASES); do \
+release-artifacts: | $(ARTIFACTS)
+	@set -e; \
+	for release in $(RELEASES); do \
 		$(MAKE) $(ARTIFACTS)/$$release TALOS_RELEASE=$$release; \
 	done
 
@@ -727,7 +734,7 @@ clean: ## Cleans up all artifacts.
 
 .PHONY: image-list
 image-list: ## Prints a list of all images built by this Makefile with digests.
-	@echo -n installer-base$(IMAGE_NAME_SUFFIX) talos$(IMAGE_NAME_SUFFIX) imager$(IMAGE_NAME_SUFFIX) talosctl$(IMAGE_NAME_SUFFIX) talosctl-all$(IMAGE_NAME_SUFFIX) | xargs -d ' ' -I{} sh -c 'echo $(REGISTRY_AND_USERNAME)/{}:$(IMAGE_TAG_IN)' | xargs -I{} sh -ec 'digest=$$(crane digest {}); echo {}@$$digest'
+	@echo -n installer-base$(IMAGE_NAME_SUFFIX) talos$(IMAGE_NAME_SUFFIX) imager$(IMAGE_NAME_SUFFIX) talosctl$(IMAGE_NAME_SUFFIX) talosctl-all$(IMAGE_NAME_SUFFIX) | xargs -d ' ' -I{} sh -c 'echo $(REGISTRY_AND_USERNAME)/{}:$(IMAGE_TAG_IN)' | xargs -I{} sh -ec 'digest=$$(crane digest {}) || exit 1; echo {}@$$digest'
 
 $(ARTIFACTS)/image-signer-$(IMAGE_SIGNER_RELEASE): | $(ARTIFACTS) ## Downloads image-signer binary
 	@curl -sSL https://github.com/siderolabs/go-tools/releases/download/$(IMAGE_SIGNER_RELEASE)/image-signer-$(OPERATING_SYSTEM)-$(ARCH) -o $(ARTIFACTS)/image-signer-$(IMAGE_SIGNER_RELEASE)
