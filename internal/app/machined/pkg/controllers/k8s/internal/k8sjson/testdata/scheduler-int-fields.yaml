@@ -1,0 +1,8 @@
+apiVersion: kubescheduler.config.k8s.io/v1
+kind: KubeSchedulerConfiguration
+parallelism: 16
+percentageOfNodesToScore: 50
+clientConnection:
+  burst: 200
+  qps: 100.5
+  kubeconfig: /system/secrets/kubernetes/kube-scheduler/kubeconfig

@@ -19,11 +19,12 @@ import (
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
-	k8sjson "k8s.io/apimachinery/pkg/runtime/serializer/json"
+	k8sjsonserializer "k8s.io/apimachinery/pkg/runtime/serializer/json"
 	apiserverv1 "k8s.io/apiserver/pkg/apis/apiserver/v1"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
 	schedulerv1 "k8s.io/kube-scheduler/config/v1"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s/internal/k8sjson"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
@@ -135,9 +136,9 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 			f        func() (runtime.Object, error)
 		}
 
-		serializer := k8sjson.NewSerializerWithOptions(
-			k8sjson.DefaultMetaFactory, nil, nil,
-			k8sjson.SerializerOptions{
+		serializer := k8sjsonserializer.NewSerializerWithOptions(
+			k8sjsonserializer.DefaultMetaFactory, nil, nil,
+			k8sjsonserializer.SerializerOptions{
 				Yaml:   true,
 				Pretty: true,
 				Strict: true,
@@ -249,7 +250,8 @@ func admissionControlConfig(spec *k8s.AdmissionControlConfigSpec) func() (runtim
 				return nil, fmt.Errorf("error marshaling configuration for plugin %q: %w", plugin.Name, err)
 			}
 
-			cfg.Plugins = append(cfg.Plugins,
+			cfg.Plugins = append(
+				cfg.Plugins,
 				apiserverv1.AdmissionPluginConfiguration{
 					Name: plugin.Name,
 					Configuration: &runtime.Unknown{
@@ -286,8 +288,8 @@ func schedulerConfig(spec *k8s.SchedulerConfigSpec) func() (runtime.Object, erro
 			return nil, fmt.Errorf("error unmarshaling scheduler configuration: %w", err)
 		}
 
-		out := runtime.DeepCopyJSON(spec.Config)
-		if out == nil {
+		out, ok := k8sjson.DeepCopyToJSON(spec.Config).(map[string]any)
+		if !ok || out == nil {
 			out = map[string]any{}
 		}
 
