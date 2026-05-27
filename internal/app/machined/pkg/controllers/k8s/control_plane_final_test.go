@@ -111,6 +111,69 @@ func (suite *ControlPlaneSchedulerFinalSuite) TestTransform() {
 			},
 		},
 		{
+			// Regression for siderolabs/talos#13445: the YAML parser emits Go
+			// ints for integers, and runtime.DeepCopyJSON panics on those.
+			name: "go int values in config are normalized to int64",
+			input: k8s.SchedulerConfigSpec{
+				Enabled: true,
+				Image:   "registry.k8s.io/kube-scheduler:v1.32.0",
+				Config: map[string]any{
+					"profiles": []any{
+						map[string]any{
+							"schedulerName": "default-scheduler",
+							"pluginConfig": []any{
+								map[string]any{
+									"name": "PodTopologySpread",
+									"args": map[string]any{
+										"defaultingType": "List",
+										"defaultConstraints": []any{
+											map[string]any{
+												"maxSkew":           int(1),
+												"topologyKey":       "kubernetes.io/hostname",
+												"whenUnsatisfiable": "ScheduleAnyway",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: k8s.SchedulerConfigSpec{
+				Enabled: true,
+				Image:   "registry.k8s.io/kube-scheduler:v1.32.0",
+				Args:    defaultArgs,
+				Config: map[string]any{
+					"apiVersion": "kubescheduler.config.k8s.io/v1",
+					"kind":       "KubeSchedulerConfiguration",
+					"clientConnection": map[string]any{
+						"kubeconfig": kubeconfigPath,
+					},
+					"profiles": []any{
+						map[string]any{
+							"schedulerName": "default-scheduler",
+							"pluginConfig": []any{
+								map[string]any{
+									"name": "PodTopologySpread",
+									"args": map[string]any{
+										"defaultingType": "List",
+										"defaultConstraints": []any{
+											map[string]any{
+												"maxSkew":           int64(1),
+												"topologyKey":       "kubernetes.io/hostname",
+												"whenUnsatisfiable": "ScheduleAnyway",
+											},
+										},
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name: "pass-through fields and config preserved alongside injected keys",
 			input: k8s.SchedulerConfigSpec{
 				Enabled: true,

@@ -19,6 +19,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	schedulerv1 "k8s.io/kube-scheduler/config/v1"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s/internal/k8sjson"
 	"github.com/siderolabs/talos/pkg/argsbuilder"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
@@ -186,8 +187,8 @@ func NewControlPlaneSchedulerFinalController() *ControlPlaneSchedulerFinalContro
 					return fmt.Errorf("error unmarshaling scheduler configuration: %w", err)
 				}
 
-				outCfg := runtime.DeepCopyJSON(in.TypedSpec().Config)
-				if outCfg == nil {
+				outCfg, ok := k8sjson.DeepCopyToJSON(in.TypedSpec().Config).(map[string]any)
+				if !ok || outCfg == nil {
 					outCfg = map[string]any{}
 				}
 
