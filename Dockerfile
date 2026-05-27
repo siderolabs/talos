@@ -1005,17 +1005,20 @@ RUN --mount=type=cache,target=/.cache,id=talos/.cache go tool \
     --vex /talos.vex.json -vv --fail-on negligible --config /talos.grype.yaml
 
 FROM rootfs-base-${TARGETARCH} AS rootfs-base
-ARG SOURCE_DATE_EPOCH
 RUN rm -rf /rootfs/usr/share/spdx/*
 COPY --link --from=sbom-container-target / /rootfs/usr/share/spdx/
 RUN echo "true" > /rootfs/usr/etc/in-container
 RUN rm -rf /rootfs/usr/lib/modules/*
+ARG SOURCE_DATE_EPOCH
 RUN find /rootfs -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 
 FROM rootfs-base-arm64 AS rootfs-squashfs-arm64
 RUN rm -rf /rootfs/usr/share/spdx/*
 COPY --link --from=sbom-arm64 / /rootfs/usr/share/spdx/
+ARG SOURCE_DATE_EPOCH
+RUN find /rootfs -print0 \
+    | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 ARG ZSTD_COMPRESSION_LEVEL
 COPY --link --from=selinux-generate /policy/file_contexts /file_contexts
 RUN --mount=from=labeled-squashfs-build,source=/labeled-squashfs,target=/usr/local/bin/labeled-squashfs \
@@ -1024,6 +1027,9 @@ RUN --mount=from=labeled-squashfs-build,source=/labeled-squashfs,target=/usr/loc
 FROM rootfs-base-amd64 AS rootfs-squashfs-amd64
 RUN rm -rf /rootfs/usr/share/spdx/*
 COPY --link --from=sbom-amd64 / /rootfs/usr/share/spdx/
+ARG SOURCE_DATE_EPOCH
+RUN find /rootfs -print0 \
+    | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 ARG ZSTD_COMPRESSION_LEVEL
 COPY --link --from=selinux-generate /policy/file_contexts /file_contexts
 RUN --mount=from=labeled-squashfs-build,source=/labeled-squashfs,target=/usr/local/bin/labeled-squashfs \
