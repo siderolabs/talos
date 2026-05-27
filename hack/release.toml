@@ -139,6 +139,15 @@ Talos now supports mounting and provisioning `btrfs` filesystem for user volumes
 Support for `btrfs` is enabled by installing `btrfs` system extension.
 """
 
+    [notes.sendRedirects]
+        title = "ICMP send_redirects Disabled by Default"
+        description = """\
+Talos now sets `net.ipv4.conf.all.send_redirects=0` and `net.ipv4.conf.default.send_redirects=0` by default,
+preventing the node from emitting ICMP redirect messages. This aligns with CIS Benchmark recommendations and
+does not affect normal Kubernetes pod or service traffic. Nodes that deliberately act as L3 gateways relying
+on ICMP redirects can override this via `machine.sysctls`.
+"""
+
     [notes.lvm_status]
         title = "LVM Status"
         description = """\

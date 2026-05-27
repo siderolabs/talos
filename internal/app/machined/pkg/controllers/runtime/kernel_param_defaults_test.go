@@ -52,6 +52,14 @@ func getParams(mode runtime.Mode) []*kernel.Param {
 			Key:   "proc.sys.net.ipv4.ip_local_reserved_ports",
 			Value: "50000,50001",
 		},
+		{
+			Key:   "proc.sys.net.ipv4.conf.all.send_redirects",
+			Value: "0",
+		},
+		{
+			Key:   "proc.sys.net.ipv4.conf.default.send_redirects",
+			Value: "0",
+		},
 	}
 
 	if mode != runtime.ModeContainer {
