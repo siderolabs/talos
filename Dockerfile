@@ -960,12 +960,16 @@ RUN rm -rf /rootfs/usr/share/spdx/*
 COPY --from=sbom-container-target / /rootfs/usr/share/spdx/
 RUN echo "true" > /rootfs/usr/etc/in-container
 RUN rm -rf /rootfs/usr/lib/modules/*
+ARG SOURCE_DATE_EPOCH
 RUN find /rootfs -print0 \
     | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 
 FROM rootfs-base-arm64 AS rootfs-squashfs-arm64
 RUN rm -rf /rootfs/usr/share/spdx/*
-COPY --from=sbom-arm64 / /rootfs/usr/share/spdx/
+COPY --link --from=sbom-arm64 / /rootfs/usr/share/spdx/
+ARG SOURCE_DATE_EPOCH
+RUN find /rootfs -print0 \
+    | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 ARG ZSTD_COMPRESSION_LEVEL
 COPY --from=selinux-generate /policy/file_contexts /file_contexts
 COPY ./hack/labeled-squashfs.sh /
@@ -973,7 +977,10 @@ RUN fakeroot /labeled-squashfs.sh /rootfs /rootfs.sqsh /file_contexts ${ZSTD_COM
 
 FROM rootfs-base-amd64 AS rootfs-squashfs-amd64
 RUN rm -rf /rootfs/usr/share/spdx/*
-COPY --from=sbom-amd64 / /rootfs/usr/share/spdx/
+COPY --link --from=sbom-amd64 / /rootfs/usr/share/spdx/
+ARG SOURCE_DATE_EPOCH
+RUN find /rootfs -print0 \
+    | xargs -0r touch --no-dereference --date="@${SOURCE_DATE_EPOCH}"
 ARG ZSTD_COMPRESSION_LEVEL
 COPY --from=selinux-generate /policy/file_contexts /file_contexts
 COPY ./hack/labeled-squashfs.sh /
