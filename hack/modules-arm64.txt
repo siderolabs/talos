@@ -86,7 +86,6 @@ kernel/drivers/infiniband/ulp/ipoib/ib_ipoib.ko
 kernel/drivers/input/misc/xen-kbdfront.ko
 kernel/drivers/input/mouse/psmouse.ko
 kernel/drivers/input/serio/hyperv-keyboard.ko
-kernel/drivers/irqchip/irq-bcm2712-mip.ko
 kernel/drivers/irqchip/irq-imx-mu-msi.ko
 kernel/drivers/leds/led-class-multicolor.ko
 kernel/drivers/mailbox/bcm-flexrm-mailbox.ko
