@@ -15,12 +15,11 @@ import (
 func Status(err error) *status.Status {
 	type grpcStatus interface {
 		GRPCStatus() *status.Status
+		error
 	}
 
 	// Don't use FromError to avoid allocation of OK status.
-	var st grpcStatus
-
-	if errors.As(err, &st) {
+	if st, ok := errors.AsType[grpcStatus](err); ok {
 		return st.GRPCStatus()
 	}
 

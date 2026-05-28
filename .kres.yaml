@@ -1866,13 +1866,17 @@ spec:
         - integration/aws-arm64
         - integration/aws-nvidia
         - integration/aws-nvidia-oss
-        - integration/aws-nvidia-nonfree
+        - integration/aws-nvidia-oss-lts
         - integration/aws-nvidia-oss-lts-amd64
         - integration/aws-nvidia-oss-lts-arm64
+        - integration/aws-nvidia-oss-production
         - integration/aws-nvidia-oss-production-amd64
         - integration/aws-nvidia-oss-production-arm64
+        - integration/aws-nvidia-nonfree
+        - integration/aws-nvidia-nonfree-lts
         - integration/aws-nvidia-nonfree-lts-amd64
         - integration/aws-nvidia-nonfree-lts-arm64
+        - integration/aws-nvidia-nonfree-production
         - integration/aws-nvidia-nonfree-production-amd64
         - integration/aws-nvidia-nonfree-production-arm64
         - integration/release-gate
@@ -1970,7 +1974,7 @@ spec:
           - driver: oss
             variant: lts
             arch: amd64
-            triggerLabels: [integration/aws-nvidia-oss, integration/aws-nvidia-oss-lts]
+            triggerLabels: [integration/aws-nvidia-oss, integration/aws-nvidia-oss-lts, integration/aws-nvidia-oss-lts-amd64]
             buildTargets: nvidia-container-toolkit-lts nvidia-open-gpu-kernel-modules-lts extensions-metadata
             buildPlatform: linux/amd64
             targetArch: amd64
@@ -1979,7 +1983,7 @@ spec:
           - driver: oss
             variant: lts
             arch: arm64
-            triggerLabels: [integration/aws-nvidia-oss, integration/aws-nvidia-oss-lts]
+            triggerLabels: [integration/aws-nvidia-oss, integration/aws-nvidia-oss-lts, integration/aws-nvidia-oss-lts-arm64]
             buildTargets: nvidia-container-toolkit-lts nvidia-open-gpu-kernel-modules-lts extensions-metadata
             buildPlatform: linux/arm64
             targetArch: arm64
@@ -1988,7 +1992,7 @@ spec:
           - driver: oss
             variant: production
             arch: amd64
-            triggerLabels: [integration/aws-nvidia-oss, integration/aws-nvidia-oss-production]
+            triggerLabels: [integration/aws-nvidia-oss, integration/aws-nvidia-oss-production, integration/aws-nvidia-oss-production-amd64]
             buildTargets: nvidia-container-toolkit-production nvidia-open-gpu-kernel-modules-production extensions-metadata
             buildPlatform: linux/amd64
             targetArch: amd64
@@ -1997,7 +2001,7 @@ spec:
           - driver: oss
             variant: production
             arch: arm64
-            triggerLabels: [integration/aws-nvidia-oss, integration/aws-nvidia-oss-production]
+            triggerLabels: [integration/aws-nvidia-oss, integration/aws-nvidia-oss-production, integration/aws-nvidia-oss-production-arm64]
             buildTargets: nvidia-container-toolkit-production nvidia-open-gpu-kernel-modules-production extensions-metadata
             buildPlatform: linux/arm64
             targetArch: arm64
@@ -2006,7 +2010,7 @@ spec:
           - driver: nonfree
             variant: lts
             arch: amd64
-            triggerLabels: [integration/aws-nvidia-nonfree, integration/aws-nvidia-nonfree-lts]
+            triggerLabels: [integration/aws-nvidia-nonfree, integration/aws-nvidia-nonfree-lts, integration/aws-nvidia-nonfree-lts-amd64]
             buildTargets: nvidia-container-toolkit-lts nonfree-kmod-nvidia-lts extensions-metadata
             buildPlatform: linux/amd64
             targetArch: amd64
@@ -2015,7 +2019,7 @@ spec:
           - driver: nonfree
             variant: lts
             arch: arm64
-            triggerLabels: [integration/aws-nvidia-nonfree, integration/aws-nvidia-nonfree-lts]
+            triggerLabels: [integration/aws-nvidia-nonfree, integration/aws-nvidia-nonfree-lts, integration/aws-nvidia-nonfree-lts-arm64]
             buildTargets: nvidia-container-toolkit-lts nonfree-kmod-nvidia-lts extensions-metadata
             buildPlatform: linux/arm64
             targetArch: arm64
@@ -2024,7 +2028,7 @@ spec:
           - driver: nonfree
             variant: production
             arch: amd64
-            triggerLabels: [integration/aws-nvidia-nonfree, integration/aws-nvidia-nonfree-production]
+            triggerLabels: [integration/aws-nvidia-nonfree, integration/aws-nvidia-nonfree-production, integration/aws-nvidia-nonfree-production-amd64]
             buildTargets: nvidia-container-toolkit-production nonfree-kmod-nvidia-production extensions-metadata
             buildPlatform: linux/amd64
             targetArch: amd64
@@ -2033,7 +2037,7 @@ spec:
           - driver: nonfree
             variant: production
             arch: arm64
-            triggerLabels: [integration/aws-nvidia-nonfree, integration/aws-nvidia-nonfree-production]
+            triggerLabels: [integration/aws-nvidia-nonfree, integration/aws-nvidia-nonfree-production, integration/aws-nvidia-nonfree-production-arm64]
             buildTargets: nvidia-container-toolkit-production nonfree-kmod-nvidia-production extensions-metadata
             buildPlatform: linux/arm64
             targetArch: arm64

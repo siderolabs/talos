@@ -63,8 +63,7 @@ func ReadGRPCStream[S Stream[T], T Message](stream S, handler func(T, string, bo
 		}
 
 		if err = handler(info, node, multipleNodes); err != nil {
-			var errNonFatal *ErrNonFatalError
-			if errors.As(err, &errNonFatal) {
+			if _, ok := errors.AsType[*ErrNonFatalError](err); ok { //nolint:errcheck // wrong linter error
 				streamErrs = AppendErrors(streamErrs, err)
 
 				continue

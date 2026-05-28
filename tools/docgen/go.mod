@@ -18,7 +18,7 @@ require (
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/buger/jsonparser v1.1.2 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
-	golang.org/x/net v0.53.0 // indirect
-	golang.org/x/text v0.36.0 // indirect
-	golang.org/x/tools v0.44.0 // indirect
+	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/text v0.37.0 // indirect
+	golang.org/x/tools v0.45.0 // indirect
 )

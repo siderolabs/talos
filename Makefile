@@ -26,9 +26,9 @@ ARTIFACTS := _out
 EMBED_TARGET ?= embed
 
 TOOLS_PREFIX ?= ghcr.io/siderolabs/tools
-TOOLS ?= v1.14.0-alpha.0-12-gf9f37df
+TOOLS ?= v1.14.0-alpha.0-13-g206a4c0
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.14.0-alpha.0-69-gf9134e5
+PKGS ?= v1.14.0-alpha.0-70-g0870a4b
 GENERATE_VEX_PREFIX ?= ghcr.io/siderolabs/generate-vex
 GENERATE_VEX ?= latest
 
@@ -108,9 +108,9 @@ KUBECTL_VERSION ?= v1.36.1
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.49
 # renovate: datasource=github-releases depName=helm/helm
-HELM_VERSION ?= v4.1.4
+HELM_VERSION ?= v4.2.0
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.19.2
+CILIUM_CLI_VERSION ?= v0.19.4
 # renovate: datasource=github-releases depName=microsoft/secureboot_objects
 MICROSOFT_SECUREBOOT_RELEASE ?= v1.1.3
 

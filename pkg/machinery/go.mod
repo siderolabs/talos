@@ -13,7 +13,7 @@ require (
 	github.com/emicklei/dot v1.11.0
 	github.com/evanphx/json-patch v5.9.11+incompatible
 	github.com/ghodss/yaml v1.0.0
-	github.com/google/cel-go v0.28.0
+	github.com/google/cel-go v0.28.1
 	github.com/hashicorp/go-multierror v1.1.1
 	github.com/jsimonetti/rtnetlink/v2 v2.2.1-0.20260317095713-310581b9c6ac
 	github.com/mdlayher/ethtool v0.6.0
@@ -32,9 +32,9 @@ require (
 	go.uber.org/zap v1.28.0
 	go.yaml.in/yaml/v4 v4.0.0-rc.4
 	golang.org/x/net v0.55.0
-	google.golang.org/genproto/googleapis/api v0.0.0-20260504160031-60b97b32f348
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260504160031-60b97b32f348
-	google.golang.org/grpc v1.81.0
+	google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa
+	google.golang.org/grpc v1.81.1
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
 )
 
@@ -62,6 +62,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sasha-s/go-deadlock v0.3.5 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
+	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.52.0 // indirect
 	golang.org/x/exp v0.0.0-20250128182459-e0ece0dbea4c // indirect
 	golang.org/x/sync v0.20.0 // indirect
