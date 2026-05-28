@@ -13,12 +13,10 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/peer"
 
-	"github.com/siderolabs/talos/pkg/cli"
 	timeapi "github.com/siderolabs/talos/pkg/machinery/api/time"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 )
 
 var timeCmdFlags struct {
@@ -32,56 +30,65 @@ var timeCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClient(cmd.Context(), func(ctx context.Context, c *client.Client) error {
-			var (
-				resp       *timeapi.TimeResponse
-				remotePeer peer.Peer
-				err        error
+		return WithClientAndNodes(cmd.Context(), func(ctx context.Context, c *client.Client, nodes []string) error {
+			ctx, cancel := context.WithCancel(ctx)
+			defer cancel()
+
+			responseChan := multiplex.Unary(
+				ctx, nodes,
+				func(ctx context.Context) (*timeapi.TimeResponse, error) {
+					if timeCmdFlags.ntpServer == "" {
+						return c.Time(ctx)
+					}
+
+					return c.TimeCheck(ctx, timeCmdFlags.ntpServer)
+				},
 			)
-
-			if timeCmdFlags.ntpServer == "" {
-				resp, err = c.Time(ctx, grpc.Peer(&remotePeer))
-			} else {
-				resp, err = c.TimeCheck(ctx, timeCmdFlags.ntpServer, grpc.Peer(&remotePeer))
-			}
-
-			if err != nil {
-				if resp == nil {
-					return fmt.Errorf("error fetching time: %w", err)
-				}
-
-				cli.Warning("%s", err)
-			}
 
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 			fmt.Fprintln(w, "NODE\tNTP-SERVER\tNODE-TIME\tNTP-SERVER-TIME")
 
-			defaultNode := client.AddrFromPeer(&remotePeer)
+			flushTimer := time.NewTimer(outputFlushInterval)
+			defer flushTimer.Stop()
 
-			var localtime, remotetime time.Time
+			flushTimer.Stop()
 
-			for _, msg := range resp.Messages {
-				node := defaultNode
+			var errs error
 
-				if msg.Metadata != nil {
-					node = msg.Metadata.Hostname //nolint:staticcheck // to be refactored next
+			for {
+				select {
+				case resp, ok := <-responseChan:
+					if !ok {
+						return errors.Join(errs, w.Flush())
+					}
+
+					if resp.Err != nil {
+						errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+					} else {
+						for _, msg := range resp.Payload.Messages {
+							if !msg.Localtime.IsValid() {
+								errs = errors.Join(errs, fmt.Errorf("node %s: error parsing local time", resp.Node))
+
+								continue
+							}
+
+							if !msg.Remotetime.IsValid() {
+								errs = errors.Join(errs, fmt.Errorf("node %s: error parsing remote time", resp.Node))
+
+								continue
+							}
+
+							fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", resp.Node, msg.Server, msg.Localtime.AsTime().String(), msg.Remotetime.AsTime().String())
+						}
+					}
+
+					flushTimer.Reset(outputFlushInterval)
+				case <-flushTimer.C:
+					if err := w.Flush(); err != nil {
+						errs = errors.Join(errs, fmt.Errorf("error flushing output: %w", err))
+					}
 				}
-
-				if !msg.Localtime.IsValid() {
-					return errors.New("error parsing local time")
-				}
-
-				if !msg.Remotetime.IsValid() {
-					return errors.New("error parsing remote time")
-				}
-
-				localtime = msg.Localtime.AsTime()
-				remotetime = msg.Remotetime.AsTime()
-
-				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", node, msg.Server, localtime.String(), remotetime.String())
 			}
-
-			return w.Flush()
 		})
 	},
 }

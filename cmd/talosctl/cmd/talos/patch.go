@@ -148,7 +148,7 @@ var patchCmd = &cobra.Command{
 				return err
 			}
 
-			if err := helpers.ClientVersionCheck(ctx, c); err != nil {
+			if err := helpers.ClientVersionCheckLegacy(ctx, c); err != nil { //nolint:staticcheck // to be refactored next
 				return err
 			}
 

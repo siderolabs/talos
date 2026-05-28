@@ -21,7 +21,6 @@ import (
 	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos/cgroupsprinter"
-	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/internal/pkg/cgroups"
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
@@ -57,11 +56,7 @@ To see schema examples, refer to https://github.com/siderolabs/talos/tree/main/c
 `,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClient(cmd.Context(), func(ctx context.Context, c *client.Client) error {
-			if err := helpers.FailIfMultiNodes(ctx, "cgroups"); err != nil {
-				return err
-			}
-
+		return WithClientAndSingleNode(cmd.Context(), "cgroups", func(ctx context.Context, c *client.Client, _ string) error {
 			var schema cgroupsprinter.Schema
 
 			switch {

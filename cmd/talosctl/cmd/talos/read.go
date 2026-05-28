@@ -12,7 +12,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
@@ -31,11 +30,7 @@ var readCmd = &cobra.Command{
 		return completePathFromNode(cmd.Context(), toComplete), cobra.ShellCompDirectiveNoFileComp
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClient(cmd.Context(), func(ctx context.Context, c *client.Client) error {
-			if err := helpers.FailIfMultiNodes(ctx, "read"); err != nil {
-				return err
-			}
-
+		return WithClientAndSingleNode(cmd.Context(), "read", func(ctx context.Context, c *client.Client, _ string) error {
 			r, err := c.Read(ctx, args[0])
 			if err != nil {
 				return fmt.Errorf("error reading file: %w", err)

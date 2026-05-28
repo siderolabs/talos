@@ -35,6 +35,11 @@ var GlobalArgs global.Args
 
 const pathAutoCompleteLimit = 500
 
+// outputFlushInterval is the quiet period after the last multiplexed response
+// before flushing the tabwriter, so partial results appear without thrashing
+// column widths while responses are still arriving.
+const outputFlushInterval = formatters.FlushInterval
+
 // WithClientNoNodes wraps common code to initialize Talos client and provide cancellable context.
 //
 // WithClientNoNodes doesn't set any node information on the request context.
@@ -50,6 +55,11 @@ func WithClient(ctx context.Context, action func(context.Context, *client.Client
 // WithClientAndNodes builds upon WithClientNoNodes to pass a list of nodes via command function.
 func WithClientAndNodes(ctx context.Context, action func(context.Context, *client.Client, []string) error, dialOptions ...grpc.DialOption) error {
 	return GlobalArgs.WithClientAndNodes(ctx, action, dialOptions...)
+}
+
+// WithClientAndSingleNode builds upon WithClientAndNodes to provide a helper which enforces a single node in the list, and uses client.WithNode.
+func WithClientAndSingleNode(ctx context.Context, commandName string, action func(context.Context, *client.Client, string) error, dialOptions ...grpc.DialOption) error {
+	return GlobalArgs.WithClientAndSingleNode(ctx, commandName, action, dialOptions...)
 }
 
 // WithClientMaintenance wraps common code to initialize Talos client in maintenance (insecure mode).

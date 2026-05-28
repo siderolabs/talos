@@ -42,11 +42,7 @@ Otherwise, kubeconfig will be written to PWD or [local-path] if specified.
 If merge flag is false and [local-path] is "-", config will be written to stdout.`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClient(cmd.Context(), func(ctx context.Context, c *client.Client) error {
-			if err := helpers.FailIfMultiNodes(ctx, "kubeconfig"); err != nil {
-				return err
-			}
-
+		return WithClientAndSingleNode(cmd.Context(), "kubeconfig", func(ctx context.Context, c *client.Client, _ string) error {
 			var localPath string
 
 			if len(args) == 0 {

@@ -6,15 +6,13 @@ package talos
 
 import (
 	"context"
-	"fmt"
 	"os"
 
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/peer"
 
-	"github.com/siderolabs/talos/pkg/cli"
+	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 	"github.com/siderolabs/talos/pkg/machinery/formatters"
 )
 
@@ -26,19 +24,18 @@ var mountsCmd = &cobra.Command{
 	Long:    ``,
 	Args:    cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClient(cmd.Context(), func(ctx context.Context, c *client.Client) error {
-			var remotePeer peer.Peer
+		return WithClientAndNodes(cmd.Context(), func(ctx context.Context, c *client.Client, nodes []string) error {
+			ctx, cancel := context.WithCancel(ctx)
+			defer cancel()
 
-			resp, err := c.Mounts(ctx, grpc.Peer(&remotePeer))
-			if err != nil {
-				if resp == nil {
-					return fmt.Errorf("error getting mount information: %s", err)
-				}
+			responseChan := multiplex.Unary(
+				ctx, nodes,
+				func(ctx context.Context) (*machineapi.MountsResponse, error) {
+					return c.Mounts(ctx)
+				},
+			)
 
-				cli.Warning("%s", err)
-			}
-
-			return formatters.RenderMounts(resp, os.Stdout, &remotePeer)
+			return formatters.RenderMountsStream(os.Stdout, responseChan)
 		})
 	},
 }

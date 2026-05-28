@@ -112,8 +112,8 @@ func upgradeViaLifecycleService(ctx context.Context, c *client.Client, nodes []s
 		reporter.WithOutputMode(upgradeCmdFlags.progress.Value()),
 	)
 
-	err = WithClient(ctx, func(ctx context.Context, c *client.Client) error {
-		return helpers.TalosVersionCheck(ctx, c, talosUpgradeAPIVersionRange)
+	err = WithClientAndNodes(ctx, func(ctx context.Context, c *client.Client, nodes []string) error {
+		return helpers.TalosVersionCheck(ctx, c, talosUpgradeAPIVersionRange, nodes)
 	})
 	if err != nil {
 		if xerrors.TagIs[helpers.VersionOutsideRangeError](err) {
@@ -291,7 +291,7 @@ func runUpgradeLegacyNoWaitWithOpts(ctx context.Context, opts []client.UpgradeOp
 //
 // Note: remove me in Talos 1.18.
 func doUpgradeLegacy(ctx context.Context, c *client.Client, opts []client.UpgradeOption) error {
-	if err := helpers.ClientVersionCheck(ctx, c); err != nil {
+	if err := helpers.ClientVersionCheckLegacy(ctx, c); err != nil { //nolint:staticcheck // to be refactored next
 		return err
 	}
 

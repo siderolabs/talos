@@ -16,7 +16,6 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
 
-	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/pkg/cluster"
 	"github.com/siderolabs/talos/pkg/cluster/check"
 	"github.com/siderolabs/talos/pkg/cluster/hydrophone"
@@ -110,7 +109,7 @@ var healthCmd = &cobra.Command{
 
 func runHealth(ctx context.Context) error {
 	if healthCmdFlags.runOnServer {
-		return WithClient(ctx, healthOnServer)
+		return WithClientAndSingleNode(ctx, "health", healthOnServer)
 	}
 
 	return WithClientNoNodes(ctx, healthOnClient)
@@ -147,11 +146,7 @@ func healthOnClient(ctx context.Context, c *client.Client) error {
 	return check.Wait(checkCtx, &state, append(check.DefaultClusterChecks(), check.ExtraClusterChecks()...), check.StderrReporter())
 }
 
-func healthOnServer(ctx context.Context, c *client.Client) error {
-	if err := helpers.FailIfMultiNodes(ctx, "health"); err != nil {
-		return err
-	}
-
+func healthOnServer(ctx context.Context, c *client.Client, _ string) error {
 	controlPlaneNodes := healthCmdFlags.clusterState.ControlPlaneNodes
 	if healthCmdFlags.clusterState.InitNode != "" {
 		controlPlaneNodes = append(controlPlaneNodes, healthCmdFlags.clusterState.InitNode)
@@ -180,16 +175,12 @@ func healthOnServer(ctx context.Context, c *client.Client) error {
 			return err
 		}
 
-		if msg.GetMetadata().GetError() != "" { //nolint:staticcheck // to be refactored next
-			return fmt.Errorf("healthcheck error: %s", msg.GetMetadata().GetError()) //nolint:staticcheck // to be refactored next
-		}
-
 		fmt.Fprintln(os.Stderr, msg.GetMessage())
 	}
 }
 
 func runE2E(ctx context.Context) error {
-	return WithClient(ctx, func(ctx context.Context, c *client.Client) error {
+	return WithClientAndSingleNode(ctx, "health", func(ctx context.Context, c *client.Client, _ string) error {
 		clientProvider := &cluster.ConfigClientProvider{
 			DefaultClient: c,
 		}

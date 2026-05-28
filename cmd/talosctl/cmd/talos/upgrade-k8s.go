@@ -28,7 +28,7 @@ var upgradeK8sCmd = &cobra.Command{
 	Long:  `Command runs upgrade of Kubernetes control plane components between specified versions.`,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClient(cmd.Context(), upgradeKubernetes)
+		return WithClientAndSingleNode(cmd.Context(), "upgrade-k8s", upgradeKubernetes)
 	},
 }
 
@@ -70,12 +70,8 @@ func init() {
 	addCommand(upgradeK8sCmd)
 }
 
-func upgradeKubernetes(ctx context.Context, c *client.Client) error {
-	if err := helpers.FailIfMultiNodes(ctx, "upgrade-k8s"); err != nil {
-		return err
-	}
-
-	if err := helpers.ClientVersionCheck(ctx, c); err != nil {
+func upgradeKubernetes(ctx context.Context, c *client.Client, node string) error {
+	if err := helpers.ClientVersionCheck(ctx, c, []string{node}); err != nil {
 		return err
 	}
 

@@ -63,7 +63,7 @@ To get a list of all available resource definitions, issue 'talosctl get rd'`,
 //nolint:gocyclo,cyclop
 func getResources(args []string) func(ctx context.Context, c *client.Client) error {
 	return func(ctx context.Context, c *client.Client) error {
-		if err := helpers.ClientVersionCheck(ctx, c); err != nil {
+		if err := helpers.ClientVersionCheckLegacy(ctx, c); err != nil { //nolint:staticcheck // to be refactored next
 			return err
 		}
 

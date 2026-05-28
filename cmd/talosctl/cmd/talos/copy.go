@@ -44,11 +44,7 @@ captures ownership and permission bits.`,
 		return nil, cobra.ShellCompDirectiveError | cobra.ShellCompDirectiveNoFileComp
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClient(cmd.Context(), func(ctx context.Context, c *client.Client) error {
-			if err := helpers.FailIfMultiNodes(ctx, "copy"); err != nil {
-				return err
-			}
-
+		return WithClientAndSingleNode(cmd.Context(), "copy", func(ctx context.Context, c *client.Client, _ string) error {
 			r, err := c.Copy(ctx, args[0])
 			if err != nil {
 				return fmt.Errorf("error copying: %w", err)

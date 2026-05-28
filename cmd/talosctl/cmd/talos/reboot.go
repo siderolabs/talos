@@ -92,7 +92,7 @@ func rebootRun(ctx context.Context, opts []client.RebootMode) (retErr error) {
 func rebootInternal(ctx context.Context, wait, debug bool, timeout time.Duration, rep *reporter.Reporter, opts ...client.RebootMode) error {
 	if !wait {
 		return WithClient(ctx, func(ctx context.Context, c *client.Client) error {
-			if err := helpers.ClientVersionCheck(ctx, c); err != nil {
+			if err := helpers.ClientVersionCheckLegacy(ctx, c); err != nil { //nolint:staticcheck // to be refactored next
 				return err
 			}
 

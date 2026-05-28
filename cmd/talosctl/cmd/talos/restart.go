@@ -6,12 +6,14 @@ package talos
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -29,7 +31,10 @@ var restartCmd = &cobra.Command{
 		return getContainersFromNode(cmd.Context(), kubernetesFlag), cobra.ShellCompDirectiveNoFileComp
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClient(cmd.Context(), func(ctx context.Context, c *client.Client) error {
+		return WithClientAndNodes(cmd.Context(), func(ctx context.Context, c *client.Client, nodes []string) error {
+			ctx, cancel := context.WithCancel(ctx)
+			defer cancel()
+
 			var (
 				namespace string
 				driver    common.ContainerDriver
@@ -43,11 +48,22 @@ var restartCmd = &cobra.Command{
 				driver = common.ContainerDriver_CONTAINERD
 			}
 
-			if err := c.Restart(ctx, namespace, driver, args[0]); err != nil {
-				return fmt.Errorf("error restarting process: %s", err)
+			responseChan := multiplex.Unary(
+				ctx, nodes,
+				func(ctx context.Context) (struct{}, error) {
+					return struct{}{}, c.Restart(ctx, namespace, driver, args[0])
+				},
+			)
+
+			var errs error
+
+			for resp := range responseChan {
+				if resp.Err != nil {
+					errs = errors.Join(errs, fmt.Errorf("error restarting process on node %s: %w", resp.Node, resp.Err))
+				}
 			}
 
-			return nil
+			return errs
 		})
 	},
 }

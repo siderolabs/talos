@@ -33,7 +33,7 @@ func (suite *ReadSuite) TestMultiNodeFail() {
 	suite.RunCLI([]string{"read", "--nodes", "127.0.0.1", "--nodes", "127.0.0.1", "/etc/os-release"},
 		base.ShouldFail(),
 		base.StdoutEmpty(),
-		base.StderrShouldMatch(regexp.MustCompile(`is not supported with multiple nodes`)))
+		base.StderrShouldMatch(regexp.MustCompile(`requires exactly one node \(got 2\)`)))
 }
 
 func init() {

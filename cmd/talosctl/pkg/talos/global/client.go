@@ -126,6 +126,21 @@ func (args *Args) WithClientAndNodes(ctx context.Context, action func(context.Co
 	)
 }
 
+// WithClientAndSingleNode builds upon WithClientAndNodes to provide a helper which enforces a single node in the list, and uses client.WithNode.
+func (args *Args) WithClientAndSingleNode(ctx context.Context, commandName string, action func(context.Context, *client.Client, string) error, dialOptions ...grpc.DialOption) error {
+	return args.WithClientAndNodes(
+		ctx,
+		func(ctx context.Context, cli *client.Client, nodes []string) error {
+			if len(nodes) != 1 {
+				return fmt.Errorf("command %q requires exactly one node (got %d)", commandName, len(nodes))
+			}
+
+			return action(client.WithNode(ctx, nodes[0]), cli, nodes[0])
+		},
+		dialOptions...,
+	)
+}
+
 // WithClientMaintenance wraps common code to initialize Talos client in maintenance (insecure mode).
 func (args *Args) WithClientMaintenance(ctx context.Context, enforceFingerprints []string, action func(context.Context, *client.Client) error) error {
 	tlsConfig := &tls.Config{

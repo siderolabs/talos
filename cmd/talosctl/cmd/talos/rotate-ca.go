@@ -49,11 +49,11 @@ PKI can be rotated by applying machine config changes to the controlplane nodes.
 			return err
 		}
 
-		return WithClient(cmd.Context(), rotateCA)
+		return WithClientAndSingleNode(cmd.Context(), "rotate-ca", rotateCA)
 	},
 }
 
-func rotateCA(ctx context.Context, c *client.Client) error {
+func rotateCA(ctx context.Context, c *client.Client, _ string) error {
 	commentsFlags := encoder.CommentsDisabled
 	if rotateCACmdFlags.withDocs {
 		commentsFlags |= encoder.CommentsDocs

@@ -20,7 +20,6 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc/codes"
 
-	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
@@ -65,11 +64,7 @@ e.g. by excluding packets with the port 50000.
    `,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClient(cmd.Context(), func(ctx context.Context, c *client.Client) error {
-			if err := helpers.FailIfMultiNodes(ctx, "pcap"); err != nil {
-				return err
-			}
-
+		return WithClientAndSingleNode(cmd.Context(), "pcap", func(ctx context.Context, c *client.Client, node string) error {
 			if pcapCmdFlags.duration > 0 {
 				var cancel context.CancelFunc
 

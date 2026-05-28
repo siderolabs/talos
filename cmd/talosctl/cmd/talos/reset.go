@@ -98,7 +98,7 @@ var resetCmd = &cobra.Command{
 
 		if !resetCmdFlags.wait {
 			resetNoWait := func(ctx context.Context, c *client.Client) error {
-				if err := helpers.ClientVersionCheck(ctx, c); err != nil {
+				if err := helpers.ClientVersionCheckLegacy(ctx, c); err != nil { //nolint:staticcheck // to be refactored next
 					return err
 				}
 

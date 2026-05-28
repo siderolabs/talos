@@ -227,8 +227,8 @@ func (suite *RebootSuite) TestRebootAllNodes() {
 		suite.Require().NoError(<-errCh)
 	}
 
-	respCh := multiplex.Unary(suite.ctx, nodes, func(ctx context.Context) (*struct{}, error) {
-		return &struct{}{}, base.IgnoreGRPCUnavailable(suite.Client.Reboot(ctx))
+	respCh := multiplex.Unary(suite.ctx, nodes, func(ctx context.Context) (struct{}, error) {
+		return struct{}{}, base.IgnoreGRPCUnavailable(suite.Client.Reboot(ctx))
 	})
 
 	for resp := range respCh {

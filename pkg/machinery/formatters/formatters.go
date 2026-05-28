@@ -7,6 +7,7 @@ package formatters
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"math"
@@ -23,9 +24,17 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/api/inspect"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 )
 
+// FlushInterval is the quiet period after the last multiplexed response
+// before flushing the tabwriter, so partial results appear without thrashing
+// column widths while responses are still arriving.
+const FlushInterval = 500 * time.Millisecond
+
 // RenderMounts renders mounts output.
+//
+// Deprecated: use [RenderMountsStream] which handles multi-node responses via [multiplex.Unary].
 func RenderMounts(resp *machine.MountsResponse, output io.Writer, remotePeer *peer.Peer) error {
 	w := tabwriter.NewWriter(output, 0, 0, 3, ' ', 0)
 	parts := []string{"FILESYSTEM", "SIZE(GB)", "USED(GB)", "AVAILABLE(GB)", "PERCENT USED", "MOUNTED ON"}
@@ -50,7 +59,7 @@ func RenderMounts(resp *machine.MountsResponse, output io.Writer, remotePeer *pe
 			node := defaultNode
 
 			if msg.Metadata != nil {
-				node = msg.Metadata.Hostname //nolint:staticcheck // to be refactored next
+				node = msg.Metadata.Hostname //nolint:staticcheck // deprecated path, kept for backwards compatibility
 			}
 
 			format := "%s\t%.02f\t%.02f\t%.02f\t%.02f%%\t%s\n"
@@ -67,6 +76,59 @@ func RenderMounts(resp *machine.MountsResponse, output io.Writer, remotePeer *pe
 	}
 
 	return w.Flush()
+}
+
+// RenderMountsStream renders the mounts output for a stream of multiplexed responses.
+func RenderMountsStream(output io.Writer, responseChan <-chan multiplex.Response[*machine.MountsResponse]) error {
+	w := tabwriter.NewWriter(output, 0, 0, 3, ' ', 0)
+	fmt.Fprintln(w, "NODE\tFILESYSTEM\tSIZE(GB)\tUSED(GB)\tAVAILABLE(GB)\tPERCENT USED\tMOUNTED ON")
+
+	flushTimer := time.NewTimer(FlushInterval)
+	defer flushTimer.Stop()
+
+	flushTimer.Stop()
+
+	var errs error
+
+	for {
+		select {
+		case resp, ok := <-responseChan:
+			if !ok {
+				return errors.Join(errs, w.Flush())
+			}
+
+			if resp.Err != nil {
+				errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+			} else {
+				for _, msg := range resp.Payload.Messages {
+					for _, r := range msg.Stats {
+						percentAvailable := 100.0 - 100.0*(float64(r.Available)/float64(r.Size))
+
+						if math.IsNaN(percentAvailable) {
+							continue
+						}
+
+						fmt.Fprintf(
+							w, "%s\t%s\t%.02f\t%.02f\t%.02f\t%.02f%%\t%s\n",
+							resp.Node,
+							r.Filesystem,
+							float64(r.Size)*1e-9,
+							float64(r.Size-r.Available)*1e-9,
+							float64(r.Available)*1e-9,
+							percentAvailable,
+							r.MountedOn,
+						)
+					}
+				}
+			}
+
+			flushTimer.Reset(FlushInterval)
+		case <-flushTimer.C:
+			if err := w.Flush(); err != nil {
+				errs = errors.Join(errs, fmt.Errorf("error flushing output: %w", err))
+			}
+		}
+	}
 }
 
 // RenderGraph renders inspect controller runtime graph.

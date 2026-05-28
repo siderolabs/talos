@@ -73,7 +73,7 @@ func (suite *KubeconfigSuite) TestMultiNodeFail() {
 	suite.RunCLI([]string{"kubeconfig", "--merge=false", "--nodes", "127.0.0.1", "--nodes", "127.0.0.1", "."},
 		base.ShouldFail(),
 		base.StdoutEmpty(),
-		base.StderrShouldMatch(regexp.MustCompile(`is not supported with multiple nodes`)))
+		base.StderrShouldMatch(regexp.MustCompile(`requires exactly one node \(got 2\)`)))
 }
 
 // TestMergeRename tests merge config into existing kubeconfig with default rename conflict resolution.

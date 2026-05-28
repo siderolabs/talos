@@ -5,12 +5,9 @@
 package talos
 
 import (
-	"context"
 	"errors"
 
 	"github.com/spf13/cobra"
-
-	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
 // routesCmd represents the net routes command.
@@ -22,9 +19,7 @@ var routesCmd = &cobra.Command{
 	Args:    cobra.NoArgs,
 	Hidden:  true,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClient(cmd.Context(), func(ctx context.Context, c *client.Client) error {
-			return errors.New("`talosctl routes` is deprecated, please use `talosctl get routes` instead")
-		})
+		return errors.New("`talosctl routes` is deprecated, please use `talosctl get routes` instead")
 	},
 }
 

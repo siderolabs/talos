@@ -161,7 +161,7 @@ func NewTracker(
 
 // ClientExecutor is the interface for the client executor.
 type ClientExecutor interface {
-	WithClient(ctx context.Context, action func(context.Context, *client.Client) error, dialOptions ...grpc.DialOption) error
+	WithClientNoNodes(ctx context.Context, action func(context.Context, *client.Client) error, dialOptions ...grpc.DialOption) error
 	NodeList() []string
 }
 
@@ -174,11 +174,11 @@ func (a *Tracker) Run(ctx context.Context) error {
 
 	var eg errgroup.Group
 
-	err := a.clientExecutor.WithClient(ctx, func(ctx context.Context, c *client.Client) error {
+	err := a.clientExecutor.WithClientNoNodes(ctx, func(ctx context.Context, c *client.Client) error {
 		ctx, cancel := context.WithTimeout(ctx, a.timeout)
 		defer cancel()
 
-		if err := helpers.ClientVersionCheck(ctx, c); err != nil {
+		if err := helpers.ClientVersionCheck(ctx, c, a.clientExecutor.NodeList()); err != nil {
 			return err
 		}
 

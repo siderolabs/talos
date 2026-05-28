@@ -6,20 +6,20 @@ package talos
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"slices"
 	"strings"
 	"text/tabwriter"
+	"time"
 
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/peer"
 
-	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -31,7 +31,10 @@ var containersCmd = &cobra.Command{
 	Long:    ``,
 	Args:    cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClient(cmd.Context(), func(ctx context.Context, c *client.Client) error {
+		return WithClientAndNodes(cmd.Context(), func(ctx context.Context, c *client.Client, nodes []string) error {
+			ctx, cancel := context.WithCancel(ctx)
+			defer cancel()
+
 			var (
 				namespace string
 				driver    common.ContainerDriver
@@ -45,49 +48,57 @@ var containersCmd = &cobra.Command{
 				driver = common.ContainerDriver_CONTAINERD
 			}
 
-			var remotePeer peer.Peer
+			responseChan := multiplex.Unary(
+				ctx, nodes,
+				func(ctx context.Context) (*machineapi.ContainersResponse, error) {
+					return c.Containers(ctx, namespace, driver)
+				},
+			)
 
-			resp, err := c.Containers(ctx, namespace, driver, grpc.Peer(&remotePeer))
-			if err != nil {
-				if resp == nil {
-					return fmt.Errorf("error getting container list: %s", err)
+			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+			fmt.Fprintln(w, "NODE\tNAMESPACE\tID\tIMAGE\tPID\tSTATUS")
+
+			flushTimer := time.NewTimer(outputFlushInterval)
+			defer flushTimer.Stop()
+
+			flushTimer.Stop()
+
+			var errs error
+
+			for {
+				select {
+				case resp, ok := <-responseChan:
+					if !ok {
+						return errors.Join(errs, w.Flush())
+					}
+
+					if resp.Err != nil {
+						errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+					} else {
+						for _, msg := range resp.Payload.Messages {
+							slices.SortFunc(msg.Containers, func(a, b *machineapi.ContainerInfo) int { return strings.Compare(a.Id, b.Id) })
+
+							for _, p := range msg.Containers {
+								display := p.Id
+								if p.Id != p.PodId {
+									// container in a sandbox
+									display = "└─ " + display
+								}
+
+								fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%d\t%s\n", resp.Node, p.Namespace, display, p.Image, p.Pid, p.Status)
+							}
+						}
+					}
+
+					flushTimer.Reset(outputFlushInterval)
+				case <-flushTimer.C:
+					if err := w.Flush(); err != nil {
+						errs = errors.Join(errs, fmt.Errorf("error flushing output: %w", err))
+					}
 				}
-
-				cli.Warning("%s", err)
 			}
-
-			return containerRender(&remotePeer, resp)
 		})
 	},
-}
-
-func containerRender(remotePeer *peer.Peer, resp *machineapi.ContainersResponse) error {
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	fmt.Fprintln(w, "NODE\tNAMESPACE\tID\tIMAGE\tPID\tSTATUS")
-
-	defaultNode := client.AddrFromPeer(remotePeer)
-
-	for _, msg := range resp.Messages {
-		slices.SortFunc(msg.Containers, func(a, b *machineapi.ContainerInfo) int { return strings.Compare(a.Id, b.Id) })
-
-		for _, p := range msg.Containers {
-			display := p.Id
-			if p.Id != p.PodId {
-				// container in a sandbox
-				display = "└─ " + display
-			}
-
-			node := defaultNode
-
-			if msg.Metadata != nil {
-				node = msg.Metadata.Hostname //nolint:staticcheck // to be refactored next
-			}
-
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%d\t%s\n", node, p.Namespace, display, p.Image, p.Pid, p.Status)
-		}
-	}
-
-	return w.Flush()
 }
 
 func init() {

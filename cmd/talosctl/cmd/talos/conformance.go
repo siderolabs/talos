@@ -33,7 +33,7 @@ var conformanceKubernetesCmd = &cobra.Command{
 	Long:    ``,
 	Args:    cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClient(cmd.Context(), func(ctx context.Context, c *client.Client) error {
+		return WithClientAndSingleNode(cmd.Context(), "conformance", func(ctx context.Context, c *client.Client, _ string) error {
 			clientProvider := &cluster.ConfigClientProvider{
 				DefaultClient: c,
 			}

@@ -6,20 +6,20 @@ package talos
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"slices"
 	"strings"
 	"text/tabwriter"
+	"time"
 
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/peer"
 
-	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -30,7 +30,10 @@ var statsCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClient(cmd.Context(), func(ctx context.Context, c *client.Client) error {
+		return WithClientAndNodes(cmd.Context(), func(ctx context.Context, c *client.Client, nodes []string) error {
+			ctx, cancel := context.WithCancel(ctx)
+			defer cancel()
+
 			var (
 				namespace string
 				driver    common.ContainerDriver
@@ -44,50 +47,57 @@ var statsCmd = &cobra.Command{
 				driver = common.ContainerDriver_CONTAINERD
 			}
 
-			var remotePeer peer.Peer
+			responseChan := multiplex.Unary(
+				ctx, nodes,
+				func(ctx context.Context) (*machineapi.StatsResponse, error) {
+					return c.Stats(ctx, namespace, driver)
+				},
+			)
 
-			resp, err := c.Stats(ctx, namespace, driver, grpc.Peer(&remotePeer))
-			if err != nil {
-				if resp == nil {
-					return fmt.Errorf("error getting stats: %s", err)
+			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+			fmt.Fprintln(w, "NODE\tNAMESPACE\tID\tMEMORY(MB)\tCPU")
+
+			flushTimer := time.NewTimer(outputFlushInterval)
+			defer flushTimer.Stop()
+
+			flushTimer.Stop()
+
+			var errs error
+
+			for {
+				select {
+				case resp, ok := <-responseChan:
+					if !ok {
+						return errors.Join(errs, w.Flush())
+					}
+
+					if resp.Err != nil {
+						errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+					} else {
+						for _, msg := range resp.Payload.Messages {
+							slices.SortFunc(msg.Stats, func(a, b *machineapi.Stat) int { return strings.Compare(a.Id, b.Id) })
+
+							for _, s := range msg.Stats {
+								display := s.Id
+								if s.Id != s.PodId {
+									// container in a sandbox
+									display = "└─ " + display
+								}
+
+								fmt.Fprintf(w, "%s\t%s\t%s\t%.2f\t%d\n", resp.Node, s.Namespace, display, float64(s.MemoryUsage)*1e-6, s.CpuUsage)
+							}
+						}
+					}
+
+					flushTimer.Reset(outputFlushInterval)
+				case <-flushTimer.C:
+					if err := w.Flush(); err != nil {
+						errs = errors.Join(errs, fmt.Errorf("error flushing output: %w", err))
+					}
 				}
-
-				cli.Warning("%s", err)
 			}
-
-			return statsRender(&remotePeer, resp)
 		})
 	},
-}
-
-func statsRender(remotePeer *peer.Peer, resp *machineapi.StatsResponse) error {
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-
-	fmt.Fprintln(w, "NODE\tNAMESPACE\tID\tMEMORY(MB)\tCPU")
-
-	defaultNode := client.AddrFromPeer(remotePeer)
-
-	for _, msg := range resp.Messages {
-		slices.SortFunc(msg.Stats, func(a, b *machineapi.Stat) int { return strings.Compare(a.Id, b.Id) })
-
-		for _, s := range msg.Stats {
-			display := s.Id
-			if s.Id != s.PodId {
-				// container in a sandbox
-				display = "└─ " + display
-			}
-
-			node := defaultNode
-
-			if msg.Metadata != nil {
-				node = msg.Metadata.Hostname //nolint:staticcheck // to be refactored next
-			}
-
-			fmt.Fprintf(w, "%s\t%s\t%s\t%.2f\t%d\n", node, s.Namespace, display, float64(s.MemoryUsage)*1e-6, s.CpuUsage)
-		}
-	}
-
-	return w.Flush()
 }
 
 func init() {

@@ -414,11 +414,7 @@ var configNewCmd = &cobra.Command{
 
 		path := args[0]
 
-		return WithClient(cmd.Context(), func(ctx context.Context, c *client.Client) error {
-			if err := helpers.FailIfMultiNodes(ctx, "talosconfig"); err != nil {
-				return err
-			}
-
+		return WithClientAndSingleNode(cmd.Context(), "config new", func(ctx context.Context, c *client.Client, _ string) error {
 			roles, unknownRoles := role.Parse(configNewCmdFlags.roles)
 			if len(unknownRoles) != 0 {
 				return fmt.Errorf("unknown roles: %s", strings.Join(unknownRoles, ", "))

@@ -40,7 +40,7 @@ func (suite *CopySuite) TestMultiNodeFail() {
 	suite.RunCLI([]string{"copy", "--nodes", "127.0.0.1", "--nodes", "127.0.0.1", "/etc/os-release", "."},
 		base.ShouldFail(),
 		base.StdoutEmpty(),
-		base.StderrShouldMatch(regexp.MustCompile(`is not supported with multiple nodes`)))
+		base.StderrShouldMatch(regexp.MustCompile(`requires exactly one node \(got 2\)`)))
 }
 
 func init() {

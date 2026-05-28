@@ -6,11 +6,13 @@ package talos
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 )
 
 // rollbackCmd represents the rollback command.
@@ -19,12 +21,26 @@ var rollbackCmd = &cobra.Command{
 	Short: "Rollback a node to the previous installation",
 	Long:  ``,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClient(cmd.Context(), func(ctx context.Context, c *client.Client) error {
-			if err := c.Rollback(ctx); err != nil {
-				return fmt.Errorf("error executing rollback: %s", err)
+		return WithClientAndNodes(cmd.Context(), func(ctx context.Context, c *client.Client, nodes []string) error {
+			ctx, cancel := context.WithCancel(ctx)
+			defer cancel()
+
+			responseChan := multiplex.Unary(
+				ctx, nodes,
+				func(ctx context.Context) (struct{}, error) {
+					return struct{}{}, c.Rollback(ctx)
+				},
+			)
+
+			var errs error
+
+			for resp := range responseChan {
+				if resp.Err != nil {
+					errs = errors.Join(errs, fmt.Errorf("error executing rollback on node %s: %w", resp.Node, resp.Err))
+				}
 			}
 
-			return nil
+			return errs
 		})
 	},
 }

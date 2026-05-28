@@ -39,7 +39,7 @@ var shutdownCmd = &cobra.Command{
 
 		if !shutdownCmdFlags.wait {
 			return WithClient(cmd.Context(), func(ctx context.Context, c *client.Client) error {
-				if err := helpers.ClientVersionCheck(ctx, c); err != nil {
+				if err := helpers.ClientVersionCheckLegacy(ctx, c); err != nil { //nolint:staticcheck // to be refactored next
 					return err
 				}
 
