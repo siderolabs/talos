@@ -4993,6 +4993,13 @@
           "description": "Deploys kube-network-policies along with Flannel.\n\nThis enables Kubernetes Network Policies support in the cluster.\n",
           "markdownDescription": "Deploys kube-network-policies along with Flannel.\n\nThis enables Kubernetes Network Policies support in the cluster.",
           "x-intellij-html-description": "\u003cp\u003eDeploys kube-network-policies along with Flannel.\u003c/p\u003e\n\n\u003cp\u003eThis enables Kubernetes Network Policies support in the cluster.\u003c/p\u003e\n"
+        },
+        "mtu": {
+          "type": "integer",
+          "title": "mtu",
+          "description": "Override the underlay MTU Flannel should use, rendered as Backend.MTU\nin flannel’s net-conf.json. Flannel internally subtracts the VXLAN\nheader overhead (50 bytes) from this when creating the flannel.1\ninterface (i.e. flannel.1 ends up at mtu - 50).\n\nWhen KubeSpan is enabled and this value is not set, Talos defaults\nit to the KubeSpan link MTU, so the encapsulated VXLAN traffic fits\nwithin the WireGuard tunnel without permanent fragmentation.\n",
+          "markdownDescription": "Override the underlay MTU Flannel should use, rendered as `Backend.MTU`\nin flannel's `net-conf.json`. Flannel internally subtracts the VXLAN\nheader overhead (50 bytes) from this when creating the `flannel.1`\ninterface (i.e. `flannel.1` ends up at `mtu - 50`).\n\nWhen KubeSpan is enabled and this value is not set, Talos defaults\nit to the KubeSpan link MTU, so the encapsulated VXLAN traffic fits\nwithin the WireGuard tunnel without permanent fragmentation.",
+          "x-intellij-html-description": "\u003cp\u003eOverride the underlay MTU Flannel should use, rendered as \u003ccode\u003eBackend.MTU\u003c/code\u003e\nin flannel\u0026rsquo;s \u003ccode\u003enet-conf.json\u003c/code\u003e. Flannel internally subtracts the VXLAN\nheader overhead (50 bytes) from this when creating the \u003ccode\u003eflannel.1\u003c/code\u003e\ninterface (i.e. \u003ccode\u003eflannel.1\u003c/code\u003e ends up at \u003ccode\u003emtu - 50\u003c/code\u003e).\u003c/p\u003e\n\n\u003cp\u003eWhen KubeSpan is enabled and this value is not set, Talos defaults\nit to the KubeSpan link MTU, so the encapsulated VXLAN traffic fits\nwithin the WireGuard tunnel without permanent fragmentation.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

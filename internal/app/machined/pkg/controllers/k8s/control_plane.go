@@ -306,6 +306,25 @@ func NewControlPlaneSchedulerController() *ControlPlaneSchedulerController {
 	)
 }
 
+// resolveFlannelMTU returns the underlay MTU flannel should advertise as
+// Backend.MTU in its net-conf.json. Explicit user override wins; otherwise,
+// if KubeSpan is enabled, default to the KubeSpan link MTU so that the
+// encapsulated VXLAN traffic fits within the WireGuard tunnel without
+// permanent fragmentation. Returns 0 when no override applies, which omits
+// the field from net-conf.json (flannel then auto-detects from the external
+// interface as it does today).
+func resolveFlannelMTU(cfgProvider talosconfig.Config) uint32 {
+	if mtu := cfgProvider.Cluster().Network().CNI().Flannel().MTU(); mtu != 0 {
+		return mtu
+	}
+
+	if ks := cfgProvider.NetworkKubeSpanConfig(); ks != nil && ks.Enabled() {
+		return ks.MTU()
+	}
+
+	return 0
+}
+
 // ControlPlaneBootstrapManifestsController manages k8s.BootstrapManifestsConfig based on configuration.
 type ControlPlaneBootstrapManifestsController = transform.Controller[*config.MachineConfig, *k8s.BootstrapManifestsConfig]
 
@@ -379,6 +398,7 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 					FlannelKubeServicePort:            flannelKubeServicePort,
 					FlannelKubeNetworkPoliciesEnabled: cfgProvider.Cluster().Network().CNI().Flannel().KubeNetworkPoliciesEnabled(),
 					FlannelKubeNetworkPoliciesImage:   images.KubeNetworkPolicies.String(),
+					FlannelMTU:                        resolveFlannelMTU(cfgProvider),
 
 					TalosAPIServiceEnabled: cfgProvider.Machine().Features().KubernetesTalosAPIAccess().Enabled(),
 

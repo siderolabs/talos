@@ -1454,6 +1454,16 @@ type FlannelCNIConfig struct {
 	//
 	//     This enables Kubernetes Network Policies support in the cluster.
 	FlannelKubeNetworkPoliciesEnabled *bool `yaml:"kubeNetworkPoliciesEnabled,omitempty"`
+	//   description: |
+	//     Override the underlay MTU Flannel should use, rendered as `Backend.MTU`
+	//     in flannel's `net-conf.json`. Flannel internally subtracts the VXLAN
+	//     header overhead (50 bytes) from this when creating the `flannel.1`
+	//     interface (i.e. `flannel.1` ends up at `mtu - 50`).
+	//
+	//     When KubeSpan is enabled and this value is not set, Talos defaults
+	//     it to the KubeSpan link MTU, so the encapsulated VXLAN traffic fits
+	//     within the WireGuard tunnel without permanent fragmentation.
+	FlannelMTU *uint32 `yaml:"mtu,omitempty"`
 }
 
 var _ config.ExternalCloudProvider = (*ExternalCloudProviderConfig)(nil)

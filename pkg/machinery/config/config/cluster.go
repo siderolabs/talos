@@ -70,6 +70,7 @@ type CNI interface {
 type FlannelCNI interface {
 	ExtraArgs() []string
 	KubeNetworkPoliciesEnabled() bool
+	MTU() uint32
 }
 
 // APIServer defines the requirements for a config that pertains to apiserver related

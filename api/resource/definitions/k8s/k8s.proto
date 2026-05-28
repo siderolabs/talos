@@ -80,6 +80,7 @@ message BootstrapManifestsConfigSpec {
   bool flannel_kube_network_policies_enabled = 19;
   string flannel_kube_network_policies_image = 20;
   string cni_name = 21;
+  uint32 flannel_mtu = 22;
 }
 
 // ConfigStatusSpec describes status of rendered secrets.

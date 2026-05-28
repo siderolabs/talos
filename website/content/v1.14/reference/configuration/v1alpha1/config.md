@@ -1177,6 +1177,7 @@ extraArgs:
     - --iface-can-reach=192.168.1.1
 {{< /highlight >}}</details> | |
 |`kubeNetworkPoliciesEnabled` |bool |Deploys kube-network-policies along with Flannel.<br><br>This enables Kubernetes Network Policies support in the cluster.  | |
+|`mtu` |uint32 |Override the underlay MTU Flannel should use, rendered as `Backend.MTU`<br>in flannel's `net-conf.json`. Flannel internally subtracts the VXLAN<br>header overhead (50 bytes) from this when creating the `flannel.1`<br>interface (i.e. `flannel.1` ends up at `mtu - 50`).<br><br>When KubeSpan is enabled and this value is not set, Talos defaults<br>it to the KubeSpan link MTU, so the encapsulated VXLAN traffic fits<br>within the WireGuard tunnel without permanent fragmentation.  | |
 
 
 

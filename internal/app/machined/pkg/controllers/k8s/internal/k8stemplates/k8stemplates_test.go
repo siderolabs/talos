@@ -275,6 +275,15 @@ func TestTemplates(t *testing.T) {
 				})
 			},
 		},
+		{
+			name: "flannel-configmap-with-mtu",
+			obj: func() runtime.Object {
+				return k8stemplates.FlannelConfigMapTemplate(&k8s.BootstrapManifestsConfigSpec{
+					PodCIDRs:   []string{"10.96.0.0/12"},
+					FlannelMTU: 1420,
+				})
+			},
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()

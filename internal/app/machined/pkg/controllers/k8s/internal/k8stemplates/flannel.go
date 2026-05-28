@@ -147,12 +147,14 @@ func FlannelConfigMapTemplate(spec *k8s.BootstrapManifestsConfigSpec) runtime.Ob
 		Backend        struct {
 			Type string `json:"Type"`
 			Port int    `json:"Port"`
+			MTU  uint32 `json:"MTU,omitempty"`
 		} `json:"Backend"`
 	}
 
 	netConf.EnableNFTables = new(true)
 	netConf.Backend.Type = "vxlan"
 	netConf.Backend.Port = 4789
+	netConf.Backend.MTU = spec.FlannelMTU
 
 	hasIPv4 := false
 

@@ -1419,6 +1419,13 @@ func (FlannelCNIConfig) Doc() *encoder.Doc {
 				Description: "Deploys kube-network-policies along with Flannel.\n\nThis enables Kubernetes Network Policies support in the cluster.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Deploys kube-network-policies along with Flannel." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "mtu",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Override the underlay MTU Flannel should use, rendered as `Backend.MTU`\nin flannel's `net-conf.json`. Flannel internally subtracts the VXLAN\nheader overhead (50 bytes) from this when creating the `flannel.1`\ninterface (i.e. `flannel.1` ends up at `mtu - 50`).\n\nWhen KubeSpan is enabled and this value is not set, Talos defaults\nit to the KubeSpan link MTU, so the encapsulated VXLAN traffic fits\nwithin the WireGuard tunnel without permanent fragmentation.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Override the underlay MTU Flannel should use, rendered as `Backend.MTU`" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 

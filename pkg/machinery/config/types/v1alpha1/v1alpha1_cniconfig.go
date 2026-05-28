@@ -42,3 +42,12 @@ func (c *FlannelCNIConfig) KubeNetworkPoliciesEnabled() bool {
 
 	return pointer.SafeDeref(c.FlannelKubeNetworkPoliciesEnabled)
 }
+
+// MTU implements the config.FlannelCNI interface.
+func (c *FlannelCNIConfig) MTU() uint32 {
+	if c == nil {
+		return 0
+	}
+
+	return pointer.SafeDeref(c.FlannelMTU)
+}

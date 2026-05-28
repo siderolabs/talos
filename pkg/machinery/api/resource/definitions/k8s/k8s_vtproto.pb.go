@@ -491,6 +491,13 @@ func (m *BootstrapManifestsConfigSpec) MarshalToSizedBufferVT(dAtA []byte) (int,
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.FlannelMtu != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.FlannelMtu))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xb0
+	}
 	if len(m.CniName) > 0 {
 		i -= len(m.CniName)
 		copy(dAtA[i:], m.CniName)
@@ -2895,6 +2902,9 @@ func (m *BootstrapManifestsConfigSpec) SizeVT() (n int) {
 	l = len(m.CniName)
 	if l > 0 {
 		n += 2 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	if m.FlannelMtu != 0 {
+		n += 2 + protohelpers.SizeOfVarint(uint64(m.FlannelMtu))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -5501,6 +5511,25 @@ func (m *BootstrapManifestsConfigSpec) UnmarshalVT(dAtA []byte) error {
 			}
 			m.CniName = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 22:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FlannelMtu", wireType)
+			}
+			m.FlannelMtu = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.FlannelMtu |= uint32(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
