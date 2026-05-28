@@ -8,5 +8,6 @@ use (
 	./tools/docgen
 	./tools/gotagsrewrite
 	./tools/labeled-squashfs
+	./tools/sbom-builder
 	./tools/structprotogen
 )

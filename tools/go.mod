@@ -20,6 +20,7 @@ tool (
 	github.com/siderolabs/talos/tools/docgen
 	github.com/siderolabs/talos/tools/gotagsrewrite
 	github.com/siderolabs/talos/tools/labeled-squashfs
+	github.com/siderolabs/talos/tools/sbom-builder
 	github.com/siderolabs/talos/tools/structprotogen
 	golang.org/x/tools/cmd/goimports
 	golang.org/x/tools/cmd/stringer
@@ -36,11 +37,9 @@ replace (
 	github.com/siderolabs/talos/tools/docgen => ./docgen
 	github.com/siderolabs/talos/tools/gotagsrewrite => ./gotagsrewrite
 	github.com/siderolabs/talos/tools/labeled-squashfs => ./labeled-squashfs
+	github.com/siderolabs/talos/tools/sbom-builder => ./sbom-builder
 	github.com/siderolabs/talos/tools/structprotogen => ./structprotogen
 )
-
-// Changes from https://github.com/anchore/syft/pull/3932 for deterministic SBOM
-replace github.com/anchore/syft => github.com/dsseng/syft v1.42.4-0.20260415171054-31b9430f030f
 
 require (
 	4d63.com/gocheckcompilerdirectives v1.3.0 // indirect
@@ -480,11 +479,12 @@ require (
 	github.com/siderolabs/go-pointer v1.0.1 // indirect
 	github.com/siderolabs/go-retry v0.3.3 // indirect
 	github.com/siderolabs/importvet v0.2.0 // indirect
-	github.com/siderolabs/talos/tools/cloud-image-uploader v0.0.0-20260528160626-b50ee396f6c6 // indirect
-	github.com/siderolabs/talos/tools/docgen v0.0.0-20260528160626-b50ee396f6c6 // indirect
-	github.com/siderolabs/talos/tools/gotagsrewrite v0.0.0-20260528160626-b50ee396f6c6 // indirect
-	github.com/siderolabs/talos/tools/labeled-squashfs v0.0.0-20260528160626-b50ee396f6c6 // indirect
-	github.com/siderolabs/talos/tools/structprotogen v0.0.0-20260528160626-b50ee396f6c6 // indirect
+	github.com/siderolabs/talos/tools/cloud-image-uploader v0.0.0-00010101000000-000000000000 // indirect
+	github.com/siderolabs/talos/tools/docgen v0.0.0-20260507165959-087bc4c188e2 // indirect
+	github.com/siderolabs/talos/tools/gotagsrewrite v0.0.0-20260507165959-087bc4c188e2 // indirect
+	github.com/siderolabs/talos/tools/labeled-squashfs v0.0.0-20260507165959-087bc4c188e2 // indirect
+	github.com/siderolabs/talos/tools/sbom-builder v0.0.0-00010101000000-000000000000 // indirect
+	github.com/siderolabs/talos/tools/structprotogen v0.0.0-20260507165959-087bc4c188e2 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
 	github.com/sivchari/containedctx v1.0.3 // indirect
 	github.com/skeema/knownhosts v1.3.2 // indirect
@@ -592,10 +592,10 @@ require (
 	k8s.io/code-generator v0.36.1 // indirect
 	k8s.io/gengo/v2 v2.0.0-20251215205346-5ee0d033ba5b // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
-	modernc.org/libc v1.70.0 // indirect
+	modernc.org/libc v1.72.3 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
-	modernc.org/sqlite v1.46.2 // indirect
+	modernc.org/sqlite v1.50.1 // indirect
 	mvdan.cc/gofumpt v0.10.0 // indirect
 	mvdan.cc/unparam v0.0.0-20251027182757-5beb8c8f8f15 // indirect
 	mvdan.cc/xurls/v2 v2.6.0 // indirect

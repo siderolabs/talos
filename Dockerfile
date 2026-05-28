@@ -896,20 +896,23 @@ END
 
 FROM build-go AS build-sbom
 ARG SOURCE_DATE_EPOCH
-ENV SYFT_FORMAT_SPDX_JSON_CREATED_TIME=${SOURCE_DATE_EPOCH}
 ARG NAME
 ARG TAG
 
 FROM build-sbom AS sbom-container-arm64-generate
 RUN --mount=type=tmpfs,target=/tmp/sbom-src \
     --mount=type=bind,from=rootfs-base-arm64,source=/rootfs/usr/share/spdx,target=/mnt/spdx \
-    --mount=type=bind,source=hack/sbom.sh,target=/usr/bin/sbom.sh \
     --mount=type=cache,target=/.cache,id=talos/.cache <<EOF
 set -euo pipefail
 mkdir -p /rootfs/usr/share/spdx
 cp -r /mnt/spdx/. /tmp/sbom-src/
 cp go.mod go.sum /tmp/sbom-src/
-sbom.sh /tmp/sbom-src/ talos-container-arm64.spdx.json
+go tool github.com/siderolabs/talos/tools/sbom-builder \
+    --source-dir /tmp/sbom-src/ \
+    --source-name "$NAME" \
+    --source-version "$TAG" \
+    --source-date-epoch "${SOURCE_DATE_EPOCH:-0}" \
+    --output /rootfs/usr/share/spdx/talos-container-arm64.spdx.json
 EOF
 
 FROM scratch AS sbom-container-arm64
@@ -918,13 +921,17 @@ COPY --link --from=sbom-container-arm64-generate /rootfs/usr/share/spdx/talos-co
 FROM build-sbom AS sbom-container-amd64-generate
 RUN --mount=type=tmpfs,target=/tmp/sbom-src \
     --mount=type=bind,from=rootfs-base-amd64,source=/rootfs/usr/share/spdx,target=/mnt/spdx \
-    --mount=type=bind,source=hack/sbom.sh,target=/usr/bin/sbom.sh \
     --mount=type=cache,target=/.cache,id=talos/.cache <<EOF
 set -euo pipefail
 mkdir -p /rootfs/usr/share/spdx
 cp -r /mnt/spdx/. /tmp/sbom-src/
 cp go.mod go.sum /tmp/sbom-src/
-sbom.sh /tmp/sbom-src/ talos-container-amd64.spdx.json
+go tool github.com/siderolabs/talos/tools/sbom-builder \
+    --source-dir /tmp/sbom-src/ \
+    --source-name "$NAME" \
+    --source-version "$TAG" \
+    --source-date-epoch "${SOURCE_DATE_EPOCH:-0}" \
+    --output /rootfs/usr/share/spdx/talos-container-amd64.spdx.json
 EOF
 
 FROM scratch AS sbom-container-amd64
@@ -934,14 +941,18 @@ FROM build-sbom AS sbom-arm64-generate
 RUN --mount=type=tmpfs,target=/tmp/sbom-src \
     --mount=type=bind,from=rootfs-base-arm64,source=/rootfs/usr/share/spdx,target=/mnt/spdx \
     --mount=type=bind,from=pkg-kernel-arm64,source=/usr/share/spdx/kernel.spdx.json,target=/mnt/kernel.spdx.json \
-    --mount=type=bind,source=hack/sbom.sh,target=/usr/bin/sbom.sh \
     --mount=type=cache,target=/.cache,id=talos/.cache <<EOF
 set -euo pipefail
 mkdir -p /rootfs/usr/share/spdx
 cp -r /mnt/spdx/. /tmp/sbom-src/
 cp /mnt/kernel.spdx.json /tmp/sbom-src/
 cp go.mod go.sum /tmp/sbom-src/
-sbom.sh /tmp/sbom-src/ talos-arm64.spdx.json
+go tool github.com/siderolabs/talos/tools/sbom-builder \
+    --source-dir /tmp/sbom-src/ \
+    --source-name "$NAME" \
+    --source-version "$TAG" \
+    --source-date-epoch "${SOURCE_DATE_EPOCH:-0}" \
+    --output /rootfs/usr/share/spdx/talos-arm64.spdx.json
 EOF
 
 FROM scratch AS sbom-arm64
@@ -951,14 +962,18 @@ FROM build-sbom AS sbom-amd64-generate
 RUN --mount=type=tmpfs,target=/tmp/sbom-src \
     --mount=type=bind,from=rootfs-base-amd64,source=/rootfs/usr/share/spdx,target=/mnt/spdx \
     --mount=type=bind,from=pkg-kernel-amd64,source=/usr/share/spdx/kernel.spdx.json,target=/mnt/kernel.spdx.json \
-    --mount=type=bind,source=hack/sbom.sh,target=/usr/bin/sbom.sh \
     --mount=type=cache,target=/.cache,id=talos/.cache <<EOF
 set -euo pipefail
 mkdir -p /rootfs/usr/share/spdx
 cp -r /mnt/spdx/. /tmp/sbom-src/
 cp /mnt/kernel.spdx.json /tmp/sbom-src/
 cp go.mod go.sum /tmp/sbom-src/
-sbom.sh /tmp/sbom-src/ talos-amd64.spdx.json
+go tool github.com/siderolabs/talos/tools/sbom-builder \
+    --source-dir /tmp/sbom-src/ \
+    --source-name "$NAME" \
+    --source-version "$TAG" \
+    --source-date-epoch "${SOURCE_DATE_EPOCH:-0}" \
+    --output /rootfs/usr/share/spdx/talos-amd64.spdx.json
 EOF
 
 FROM scratch AS sbom-amd64
