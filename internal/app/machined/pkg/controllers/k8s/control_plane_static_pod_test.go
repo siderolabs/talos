@@ -22,6 +22,7 @@ import (
 	k8sadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/k8s"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	k8sctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s/internal/k8stemplates"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
@@ -564,7 +565,7 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileStaticPodResources() {
 			},
 			expectedEnv: v1.EnvVar{
 				Name:  "GOMEMLIMIT",
-				Value: strconv.FormatInt(1024*1024*1024*k8sctrl.GoGCMemLimitPercentage/100, 10),
+				Value: strconv.FormatInt(1024*1024*1024*k8stemplates.GoGCMemLimitPercentage/100, 10),
 			},
 		},
 	}

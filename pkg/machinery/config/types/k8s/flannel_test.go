@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 //go:embed testdata/flannelconfig.yaml
@@ -25,6 +26,9 @@ func TestKubeFlannelCNIConfigMarshalStability(t *testing.T) {
 	t.Parallel()
 
 	cfg := k8s.NewKubeFlannelCNIConfigV1Alpha1()
+	cfg.FlannelBackendType = constants.FlannelDefaultBackend
+	cfg.FlannelBackendPort = constants.FlannelDefaultBackendPort
+	cfg.FlannelBackendMTU = 1420
 	cfg.FlannelExtraArgs = []string{"--iface-can-reach=10.0.0.1"}
 	cfg.FlannelKubeNetworkPoliciesEnabled = new(true)
 
@@ -50,6 +54,9 @@ func TestKubeFlannelCNIConfigUnmarshal(t *testing.T) {
 			MetaAPIVersion: "v1alpha1",
 			MetaKind:       k8s.KubeFlannelCNIConfig,
 		},
+		FlannelBackendType:                constants.FlannelDefaultBackend,
+		FlannelBackendPort:                constants.FlannelDefaultBackendPort,
+		FlannelBackendMTU:                 1420,
 		FlannelExtraArgs:                  []string{"--iface-can-reach=10.0.0.1"},
 		FlannelKubeNetworkPoliciesEnabled: new(true),
 	}, docs[0])
@@ -68,6 +75,36 @@ func TestKubeFlannelCNIConfigValidate(t *testing.T) {
 		{
 			name: "empty",
 			cfg:  k8s.NewKubeFlannelCNIConfigV1Alpha1,
+
+			expectedError: "flannel backend type must be specified",
+		},
+		{
+			name: "invalid resources",
+			cfg: func() *k8s.KubeFlannelCNIConfigV1Alpha1 {
+				cfg := k8s.NewKubeFlannelCNIConfigV1Alpha1()
+				cfg.FlannelBackendType = constants.FlannelDefaultBackend
+				cfg.FlannelResources = k8s.ResourcesConfig{
+					Requests: meta.Unstructured{
+						Object: map[string]any{
+							"invalid": "1",
+						},
+					},
+				}
+
+				return cfg
+			},
+
+			expectedError: "unsupported pod resource \"invalid\"",
+		},
+		{
+			name: "valid config",
+			cfg: func() *k8s.KubeFlannelCNIConfigV1Alpha1 {
+				cfg := k8s.NewKubeFlannelCNIConfigV1Alpha1()
+				cfg.FlannelBackendType = constants.FlannelDefaultBackend
+				cfg.FlannelBackendPort = constants.FlannelDefaultBackendPort
+
+				return cfg
+			},
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {

@@ -1,5 +1,8 @@
 apiVersion: v1alpha1
 kind: KubeFlannelCNIConfig
+backendType: vxlan
+backendPort: 4789
+backendMTU: 1420
 extraArgs:
     - --iface-can-reach=10.0.0.1
 kubeNetworkPoliciesEnabled: true

@@ -21,7 +21,7 @@ import (
 // NodeIPConfigController configures k8s.NodeIP based on machine config.
 type NodeIPConfigController = transform.Controller[*config.MachineConfig, *k8s.NodeIPConfig]
 
-// NewNodeIPConfigController instanciates the controller.
+// NewNodeIPConfigController instantiates the controller.
 //
 //nolint:gocyclo
 func NewNodeIPConfigController() *NodeIPConfigController {

@@ -22,11 +22,11 @@ import (
 	"github.com/siderolabs/go-kubernetes/kubernetes/compatibility"
 	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
-	apiresource "k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
 	k8sadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/k8s"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s/internal/k8stemplates"
 	"github.com/siderolabs/talos/pkg/argsbuilder"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
@@ -36,9 +36,6 @@ import (
 
 // systemCriticalPriority is copied from scheduling.SystemCriticalPriority in Kubernetes internals.
 const systemCriticalPriority int32 = 2000000000
-
-// GoGCMemLimitPercentage set the percentage of memorylimit to use for the golang garbage collection target limit.
-const GoGCMemLimitPercentage = 95
 
 // ControlPlaneStaticPodController manages k8s.StaticPod based on control plane configuration.
 type ControlPlaneStaticPodController struct{}
@@ -282,67 +279,6 @@ func envVars(environment map[string]string) []v1.EnvVar {
 	})
 }
 
-func resources(resourcesConfig k8s.Resources, defaultCPU, defaultMemory string) (v1.ResourceRequirements, error) {
-	resources := v1.ResourceRequirements{
-		Requests: v1.ResourceList{
-			v1.ResourceCPU:    apiresource.MustParse(defaultCPU),
-			v1.ResourceMemory: apiresource.MustParse(defaultMemory),
-		},
-		Limits: v1.ResourceList{},
-	}
-
-	if cpu := resourcesConfig.Requests[string(v1.ResourceCPU)]; cpu != "" {
-		parsedCPU, err := apiresource.ParseQuantity(cpu)
-		if err != nil {
-			return v1.ResourceRequirements{}, fmt.Errorf("error parsing CPU request: %w", err)
-		}
-
-		resources.Requests[v1.ResourceCPU] = parsedCPU
-	}
-
-	if memory := resourcesConfig.Requests[string(v1.ResourceMemory)]; memory != "" {
-		parsedMemory, err := apiresource.ParseQuantity(memory)
-		if err != nil {
-			return v1.ResourceRequirements{}, fmt.Errorf("error parsing memory request: %w", err)
-		}
-
-		resources.Requests[v1.ResourceMemory] = parsedMemory
-	}
-
-	if cpu := resourcesConfig.Limits[string(v1.ResourceCPU)]; cpu != "" {
-		parsedCPU, err := apiresource.ParseQuantity(cpu)
-		if err != nil {
-			return v1.ResourceRequirements{}, fmt.Errorf("error parsing CPU limit: %w", err)
-		}
-
-		resources.Limits[v1.ResourceCPU] = parsedCPU
-	}
-
-	if memory := resourcesConfig.Limits[string(v1.ResourceMemory)]; memory != "" {
-		parsedMemory, err := apiresource.ParseQuantity(memory)
-		if err != nil {
-			return v1.ResourceRequirements{}, fmt.Errorf("error parsing memory limit: %w", err)
-		}
-
-		resources.Limits[v1.ResourceMemory] = parsedMemory
-	}
-
-	return resources, nil
-}
-
-func goGCEnvFromResources(resources v1.ResourceRequirements) (envVar v1.EnvVar) {
-	memoryLimit := resources.Limits[v1.ResourceMemory]
-	if memoryLimit.Value() > 0 {
-		gcMemLimit := memoryLimit.Value() * GoGCMemLimitPercentage / 100
-		envVar = v1.EnvVar{
-			Name:  "GOMEMLIMIT",
-			Value: strconv.FormatInt(gcMemLimit, 10),
-		}
-	}
-
-	return envVar
-}
-
 func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context, r controller.Runtime, _ *zap.Logger,
 	configResource resource.Resource, secretsVersion, configVersion string,
 ) (string, error) {
@@ -442,13 +378,13 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 
 	args = append(args, builder.Args()...)
 
-	resources, err := resources(cfg.Resources, "200m", "512Mi")
+	resources, err := k8stemplates.Resources(cfg.Resources, "200m", "512Mi")
 	if err != nil {
 		return "", err
 	}
 
 	env := envVars(cfg.EnvironmentVariables)
-	if goGCEnv := goGCEnvFromResources(resources); goGCEnv.Name != "" {
+	if goGCEnv := k8stemplates.GoGCEnvFromResources(resources); goGCEnv.Name != "" {
 		env = append(env, goGCEnv)
 	}
 
@@ -576,13 +512,13 @@ func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context
 		return "", nil
 	}
 
-	resources, err := resources(cfg.Resources, "50m", "256Mi")
+	resources, err := k8stemplates.Resources(cfg.Resources, "50m", "256Mi")
 	if err != nil {
 		return "", err
 	}
 
 	env := envVars(cfg.EnvironmentVariables)
-	if goGCEnv := goGCEnvFromResources(resources); goGCEnv.Name != "" {
+	if goGCEnv := k8stemplates.GoGCEnvFromResources(resources); goGCEnv.Name != "" {
 		env = append(env, goGCEnv)
 	}
 
@@ -704,13 +640,13 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 		return "", nil
 	}
 
-	resources, err := resources(cfg.Resources, "10m", "64Mi")
+	resources, err := k8stemplates.Resources(cfg.Resources, "10m", "64Mi")
 	if err != nil {
 		return "", err
 	}
 
 	env := envVars(cfg.EnvironmentVariables)
-	if goGCEnv := goGCEnvFromResources(resources); goGCEnv.Name != "" {
+	if goGCEnv := k8stemplates.GoGCEnvFromResources(resources); goGCEnv.Name != "" {
 		env = append(env, goGCEnv)
 	}
 

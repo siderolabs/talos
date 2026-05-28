@@ -27,8 +27,8 @@ data:
       "EnableIPv4": false,
       "EnableNFTables": true,
       "Backend": {
-        "Type": "vxlan",
-        "Port": 4789
+        "Port": 4789,
+        "Type": "vxlan"
       }
     }
 kind: ConfigMap

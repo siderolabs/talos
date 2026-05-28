@@ -65,7 +65,7 @@ func controlplaneMapFunc[Output generic.ResourceWithRD](output Output, extraChec
 // ControlPlaneAdmissionControlController manages k8s.AdmissionControlConfig based on configuration.
 type ControlPlaneAdmissionControlController = transform.Controller[*config.MachineConfig, *k8s.AdmissionControlConfig]
 
-// NewControlPlaneAdmissionControlController instanciates the controller.
+// NewControlPlaneAdmissionControlController instantiates the controller.
 func NewControlPlaneAdmissionControlController() *ControlPlaneAdmissionControlController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *k8s.AdmissionControlConfig]{
@@ -95,7 +95,7 @@ func NewControlPlaneAdmissionControlController() *ControlPlaneAdmissionControlCo
 // ControlPlaneAuditPolicyController manages k8s.AuditPolicyConfig based on configuration.
 type ControlPlaneAuditPolicyController = transform.Controller[*config.MachineConfig, *k8s.AuditPolicyConfig]
 
-// NewControlPlaneAuditPolicyController instanciates the controller.
+// NewControlPlaneAuditPolicyController instantiates the controller.
 func NewControlPlaneAuditPolicyController() *ControlPlaneAuditPolicyController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *k8s.AuditPolicyConfig]{
@@ -115,7 +115,7 @@ func NewControlPlaneAuditPolicyController() *ControlPlaneAuditPolicyController {
 // ControlPlaneAuthorizationController manages k8s.AuthorizationConfig based on configuration.
 type ControlPlaneAuthorizationController = transform.Controller[*config.MachineConfig, *k8s.AuthorizationConfig]
 
-// NewControlPlaneAuthorizationController instanciates the controller.
+// NewControlPlaneAuthorizationController instantiates the controller.
 func NewControlPlaneAuthorizationController() *ControlPlaneAuthorizationController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *k8s.AuthorizationConfig]{
@@ -177,7 +177,7 @@ func NewControlPlaneAuthorizationController() *ControlPlaneAuthorizationControll
 // ControlPlaneAPIServerController manages k8s.APIServerConfig based on configuration.
 type ControlPlaneAPIServerController = transform.Controller[*config.MachineConfig, *k8s.APIServerConfig]
 
-// NewControlPlaneAPIServerController instanciates the controller.
+// NewControlPlaneAPIServerController instantiates the controller.
 func NewControlPlaneAPIServerController() *ControlPlaneAPIServerController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *k8s.APIServerConfig]{
@@ -229,7 +229,7 @@ func NewControlPlaneAPIServerController() *ControlPlaneAPIServerController {
 // ControlPlaneControllerManagerController manages k8s.ControllerManagerConfig based on configuration.
 type ControlPlaneControllerManagerController = transform.Controller[*config.MachineConfig, *k8s.ControllerManagerConfig]
 
-// NewControlPlaneControllerManagerController instanciates the controller.
+// NewControlPlaneControllerManagerController instantiates the controller.
 func NewControlPlaneControllerManagerController() *ControlPlaneControllerManagerController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *k8s.ControllerManagerConfig]{
@@ -279,7 +279,7 @@ func NewControlPlaneControllerManagerController() *ControlPlaneControllerManager
 // ControlPlaneSchedulerController manages k8s.SchedulerConfig based on configuration.
 type ControlPlaneSchedulerController = transform.Controller[*config.MachineConfig, *k8s.SchedulerConfig]
 
-// NewControlPlaneSchedulerController instanciates the controller.
+// NewControlPlaneSchedulerController instantiates the controller.
 func NewControlPlaneSchedulerController() *ControlPlaneSchedulerController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *k8s.SchedulerConfig]{
@@ -318,7 +318,9 @@ func NewControlPlaneSchedulerController() *ControlPlaneSchedulerController {
 // ControlPlaneBootstrapManifestsController manages k8s.BootstrapManifestsConfig based on configuration.
 type ControlPlaneBootstrapManifestsController = transform.Controller[*config.MachineConfig, *k8s.BootstrapManifestsConfig]
 
-// NewControlPlaneBootstrapManifestsController instanciates the controller.
+// NewControlPlaneBootstrapManifestsController instantiates the controller.
+//
+//nolint:gocyclo
 func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifestsController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *k8s.BootstrapManifestsConfig]{
@@ -389,6 +391,21 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 				if k8sFlannelCNIConfig := cfgProvider.K8sFlannelCNIConfig(); k8sFlannelCNIConfig != nil {
 					res.TypedSpec().FlannelEnabled = true
 					res.TypedSpec().FlannelImage = images.Flannel.String()
+					res.TypedSpec().FlannelBackendType = k8sFlannelCNIConfig.BackendType()
+					res.TypedSpec().FlannelBackendPort = k8sFlannelCNIConfig.BackendPort().ValueOrZero()
+
+					configuredMTU := k8sFlannelCNIConfig.BackendMTU()
+
+					// default Flannel MTU to KubeSpan MTU if KubeSpan is enabled
+					if !configuredMTU.IsPresent() {
+						if kubespanConfig := cfgProvider.NetworkKubeSpanConfig(); kubespanConfig != nil && kubespanConfig.Enabled() {
+							configuredMTU = optional.Some(kubespanConfig.MTU())
+						}
+					}
+
+					res.TypedSpec().FlannelBackendMTU = configuredMTU.ValueOrZero()
+					res.TypedSpec().FlannelBackendExtraConfig = k8sFlannelCNIConfig.BackendExtraConfig()
+					res.TypedSpec().FlannelResources = convertResources(k8sFlannelCNIConfig.Resources())
 					res.TypedSpec().FlannelExtraArgs = k8sFlannelCNIConfig.ExtraArgs()
 					res.TypedSpec().FlannelKubeServiceHost = flannelKubeServiceHost
 					res.TypedSpec().FlannelKubeServicePort = flannelKubeServicePort
@@ -398,6 +415,11 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 				} else {
 					res.TypedSpec().FlannelEnabled = false
 					res.TypedSpec().FlannelImage = ""
+					res.TypedSpec().FlannelBackendType = ""
+					res.TypedSpec().FlannelBackendPort = 0
+					res.TypedSpec().FlannelBackendMTU = 0
+					res.TypedSpec().FlannelBackendExtraConfig = nil
+					res.TypedSpec().FlannelResources = k8s.Resources{}
 					res.TypedSpec().FlannelExtraArgs = nil
 					res.TypedSpec().FlannelKubeServiceHost = ""
 					res.TypedSpec().FlannelKubeServicePort = ""
@@ -423,7 +445,7 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 // ControlPlaneExtraManifestsController manages k8s.ExtraManifestsConfig based on configuration.
 type ControlPlaneExtraManifestsController = transform.Controller[*config.MachineConfig, *k8s.ExtraManifestsConfig]
 
-// NewControlPlaneExtraManifestsController instanciates the controller.
+// NewControlPlaneExtraManifestsController instantiates the controller.
 func NewControlPlaneExtraManifestsController() *ControlPlaneExtraManifestsController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *k8s.ExtraManifestsConfig]{

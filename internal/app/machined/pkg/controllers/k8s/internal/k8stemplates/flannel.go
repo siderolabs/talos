@@ -7,6 +7,7 @@ package k8stemplates
 import (
 	"encoding/json"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
 
@@ -139,20 +140,28 @@ func FlannelConfigMapTemplate(spec *k8s.BootstrapManifestsConfigSpec) runtime.Ob
 	}
 
 	var netConf struct {
-		Network        string `json:"Network,omitempty"`
-		IPv6Network    string `json:"IPv6Network,omitempty"`
-		EnableIPv6     *bool  `json:"EnableIPv6,omitempty"`
-		EnableIPv4     *bool  `json:"EnableIPv4,omitempty"`
-		EnableNFTables *bool  `json:"EnableNFTables,omitempty"`
-		Backend        struct {
-			Type string `json:"Type"`
-			Port int    `json:"Port"`
-		} `json:"Backend"`
+		Network        string         `json:"Network,omitempty"`
+		IPv6Network    string         `json:"IPv6Network,omitempty"`
+		EnableIPv6     *bool          `json:"EnableIPv6,omitempty"`
+		EnableIPv4     *bool          `json:"EnableIPv4,omitempty"`
+		EnableNFTables *bool          `json:"EnableNFTables,omitempty"`
+		Backend        map[string]any `json:"Backend"`
 	}
 
 	netConf.EnableNFTables = new(true)
-	netConf.Backend.Type = "vxlan"
-	netConf.Backend.Port = 4789
+	netConf.Backend = make(map[string]any)
+	netConf.Backend["Type"] = spec.FlannelBackendType
+
+	if spec.FlannelBackendPort != 0 {
+		netConf.Backend["Port"] = spec.FlannelBackendPort
+	}
+
+	if spec.FlannelBackendMTU != 0 {
+		netConf.Backend["MTU"] = spec.FlannelBackendMTU
+	}
+
+	// merge in user overrides
+	maps.Copy(netConf.Backend, spec.FlannelBackendExtraConfig)
 
 	hasIPv4 := false
 
@@ -197,7 +206,7 @@ func FlannelConfigMapTemplate(spec *k8s.BootstrapManifestsConfigSpec) runtime.Ob
 
 // FlannelDaemonSetTemplate returns the template of the DaemonSet
 // for the flannel CNI plugin.
-func FlannelDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) runtime.Object {
+func FlannelDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) (runtime.Object, error) {
 	envVars := []corev1.EnvVar{
 		{
 			Name: "POD_NAME",
@@ -256,42 +265,49 @@ func FlannelDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) runtime.Ob
 		})
 	}
 
-	containers := []corev1.Container{
-		{
-			Name:    "kube-flannel",
-			Image:   spec.FlannelImage,
-			Command: []string{"/opt/bin/flanneld"},
-			Args: slices.Concat(
-				[]string{
-					"--ip-masq",
-					"--kube-subnet-mgr",
-				},
-				spec.FlannelExtraArgs,
-			),
-			Env: envVars,
-			Resources: corev1.ResourceRequirements{
-				Requests: corev1.ResourceList{
-					corev1.ResourceCPU:    resource.MustParse("100m"),
-					corev1.ResourceMemory: resource.MustParse("50Mi"),
-				},
+	flanneldContainer := corev1.Container{
+		Name:    "kube-flannel",
+		Image:   spec.FlannelImage,
+		Command: []string{"/opt/bin/flanneld"},
+		Args: slices.Concat(
+			[]string{
+				"--ip-masq",
+				"--kube-subnet-mgr",
 			},
-			SecurityContext: &corev1.SecurityContext{
-				Capabilities: &corev1.Capabilities{
-					Add: []corev1.Capability{"NET_ADMIN", "NET_RAW"},
-				},
-				Privileged: new(false),
+			spec.FlannelExtraArgs,
+		),
+		Env: envVars,
+		SecurityContext: &corev1.SecurityContext{
+			Capabilities: &corev1.Capabilities{
+				Add: []corev1.Capability{"NET_ADMIN", "NET_RAW"},
 			},
-			VolumeMounts: []corev1.VolumeMount{
-				{
-					Name:      "run",
-					MountPath: "/run/flannel",
-				},
-				{
-					Name:      "flannel-cfg",
-					MountPath: "/etc/kube-flannel/",
-				},
+			Privileged: new(false),
+		},
+		VolumeMounts: []corev1.VolumeMount{
+			{
+				Name:      "run",
+				MountPath: "/run/flannel",
+			},
+			{
+				Name:      "flannel-cfg",
+				MountPath: "/etc/kube-flannel/",
 			},
 		},
+	}
+
+	var err error
+
+	flanneldContainer.Resources, err = Resources(spec.FlannelResources, "100m", "50Mi")
+	if err != nil {
+		return nil, fmt.Errorf("invalid flannel resource requirements: %w", err)
+	}
+
+	if gcEnv := GoGCEnvFromResources(flanneldContainer.Resources); gcEnv.Name != "" {
+		flanneldContainer.Env = append(flanneldContainer.Env, gcEnv)
+	}
+
+	containers := []corev1.Container{
+		flanneldContainer,
 	}
 
 	if spec.FlannelKubeNetworkPoliciesEnabled {
@@ -404,5 +420,5 @@ func FlannelDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) runtime.Ob
 				},
 			},
 		},
-	}
+	}, nil
 }

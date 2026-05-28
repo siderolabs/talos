@@ -6,6 +6,7 @@ package k8s
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -148,6 +149,14 @@ type renderedManifest struct {
 }
 
 func (ctrl *ManifestController) render(cfg k8s.BootstrapManifestsConfigSpec, scrt *secrets.KubernetesRootSpec) ([]renderedManifest, error) {
+	var errs error
+
+	aggregateManifestError := func(obj runtime.Object, err error) runtime.Object {
+		errs = errors.Join(errs, err)
+
+		return obj
+	}
+
 	manifests := []renderedManifest{
 		{
 			"00-kubelet-bootstrapping-token",
@@ -220,7 +229,7 @@ func (ctrl *ManifestController) render(cfg k8s.BootstrapManifestsConfigSpec, scr
 					k8stemplates.FlannelClusterRoleBindingTemplate(),
 					k8stemplates.FlannelServiceAccountTemplate(),
 					k8stemplates.FlannelConfigMapTemplate(&cfg),
-					k8stemplates.FlannelDaemonSetTemplate(&cfg),
+					aggregateManifestError(k8stemplates.FlannelDaemonSetTemplate(&cfg)),
 				},
 			},
 		)
@@ -241,7 +250,7 @@ func (ctrl *ManifestController) render(cfg k8s.BootstrapManifestsConfigSpec, scr
 	}
 
 	if cfg.PodSecurityPolicyEnabled {
-		return nil, fmt.Errorf("pod security policies are not supported anymore, please remove the flag from the configuration")
+		errs = errors.Join(errs, errors.New("pod security policies are not supported anymore, please remove the flag from the configuration"))
 	}
 
 	if cfg.TalosAPIServiceEnabled {
@@ -256,7 +265,7 @@ func (ctrl *ManifestController) render(cfg k8s.BootstrapManifestsConfigSpec, scr
 		)
 	}
 
-	return manifests, nil
+	return manifests, errs
 }
 
 //nolint:dupl

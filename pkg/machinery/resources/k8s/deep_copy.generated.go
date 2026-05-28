@@ -122,6 +122,24 @@ func (o BootstrapManifestsConfigSpec) DeepCopy() BootstrapManifestsConfigSpec {
 		cp.FlannelExtraArgs = make([]string, len(o.FlannelExtraArgs))
 		copy(cp.FlannelExtraArgs, o.FlannelExtraArgs)
 	}
+	if o.FlannelBackendExtraConfig != nil {
+		cp.FlannelBackendExtraConfig = make(map[string]any, len(o.FlannelBackendExtraConfig))
+		for k2, v2 := range o.FlannelBackendExtraConfig {
+			cp.FlannelBackendExtraConfig[k2] = v2
+		}
+	}
+	if o.FlannelResources.Requests != nil {
+		cp.FlannelResources.Requests = make(map[string]string, len(o.FlannelResources.Requests))
+		for k3, v3 := range o.FlannelResources.Requests {
+			cp.FlannelResources.Requests[k3] = v3
+		}
+	}
+	if o.FlannelResources.Limits != nil {
+		cp.FlannelResources.Limits = make(map[string]string, len(o.FlannelResources.Limits))
+		for k3, v3 := range o.FlannelResources.Limits {
+			cp.FlannelResources.Limits[k3] = v3
+		}
+	}
 	return cp
 }
 

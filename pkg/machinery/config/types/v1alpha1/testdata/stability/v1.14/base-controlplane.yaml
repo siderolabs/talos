@@ -115,3 +115,5 @@ config: {}
 ---
 apiVersion: v1alpha1
 kind: KubeFlannelCNIConfig
+backendType: vxlan
+backendPort: 4789

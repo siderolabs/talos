@@ -23,7 +23,7 @@ import (
 // KubeletController manages secrets.Kubelet based on configuration.
 type KubeletController = transform.Controller[*config.MachineConfig, *secrets.Kubelet]
 
-// NewKubeletController instanciates the controller.
+// NewKubeletController instantiates the controller.
 func NewKubeletController() *KubeletController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *secrets.Kubelet]{

@@ -4,7 +4,11 @@
 
 package config
 
-import "net/netip"
+import (
+	"net/netip"
+
+	"github.com/siderolabs/gen/optional"
+)
 
 // K8sControllerManagerConfig defines configuration options for the kube-controller-manager static pod.
 type K8sControllerManagerConfig interface {
@@ -44,6 +48,11 @@ type K8sNetworkConfig interface {
 
 // K8sFlannelCNIConfig defines the configuration options for the Flannel CNI in Kubernetes.
 type K8sFlannelCNIConfig interface {
+	BackendType() string
+	BackendPort() optional.Optional[uint16]
+	BackendMTU() optional.Optional[uint32]
+	BackendExtraConfig() map[string]any
+	Resources() Resources
 	ExtraArgs() []string
 	KubeNetworkPoliciesEnabled() bool
 }

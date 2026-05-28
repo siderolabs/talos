@@ -19,7 +19,7 @@ import (
 // ConfigController watches v1alpha1.Config, updates etcd config.
 type ConfigController = transform.Controller[*config.MachineConfig, *etcd.Config]
 
-// NewConfigController instanciates the config controller.
+// NewConfigController instantiates the config controller.
 //
 //nolint:gocyclo
 func NewConfigController() *ConfigController {

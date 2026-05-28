@@ -19,7 +19,7 @@ import (
 // ConfigController watches v1alpha1.Config, updates Talos API access config.
 type ConfigController = transform.Controller[*config.MachineConfig, *kubeaccess.Config]
 
-// NewConfigController instanciates the config controller.
+// NewConfigController instantiates the config controller.
 func NewConfigController() *ConfigController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *kubeaccess.Config]{

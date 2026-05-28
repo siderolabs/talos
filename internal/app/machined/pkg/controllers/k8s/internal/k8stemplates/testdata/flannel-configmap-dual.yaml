@@ -27,8 +27,9 @@ data:
       "EnableIPv6": true,
       "EnableNFTables": true,
       "Backend": {
+        "Port": 4789,
         "Type": "vxlan",
-        "Port": 4789
+        "VNI": 4096
       }
     }
 kind: ConfigMap

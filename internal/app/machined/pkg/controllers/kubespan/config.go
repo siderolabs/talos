@@ -19,7 +19,7 @@ import (
 // ConfigController watches v1alpha1.Config, updates KubeSpan config.
 type ConfigController = transform.Controller[*config.MachineConfig, *kubespan.Config]
 
-// NewConfigController instanciates the config controller.
+// NewConfigController instantiates the config controller.
 func NewConfigController() *ConfigController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *kubespan.Config]{

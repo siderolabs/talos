@@ -19,7 +19,7 @@ import (
 // InfoController looks up control plane infos.
 type InfoController = transform.Controller[*config.MachineConfig, *cluster.Info]
 
-// NewInfoController instanciates the cluster info controller.
+// NewInfoController instantiates the cluster info controller.
 func NewInfoController() *InfoController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *cluster.Info]{

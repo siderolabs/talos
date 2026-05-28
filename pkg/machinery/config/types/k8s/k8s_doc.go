@@ -21,6 +21,10 @@ func (ResourcesConfig) Doc() *encoder.Doc {
 				FieldName: "resources",
 			},
 			{
+				TypeName:  "KubeFlannelCNIConfigV1Alpha1",
+				FieldName: "resources",
+			},
+			{
 				TypeName:  "KubeSchedulerConfigV1Alpha1",
 				FieldName: "resources",
 			},
@@ -138,6 +142,41 @@ func (KubeFlannelCNIConfigV1Alpha1) Doc() *encoder.Doc {
 				Inline: true,
 			},
 			{
+				Name:        "backendType",
+				Type:        "string",
+				Note:        "",
+				Description: "Type of the Flannel backend to use.\n\nSee Flannel documentation for supported backend types.\nThe default value in generated machine configuration is \"vxlan\".",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Type of the Flannel backend to use." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "backendPort",
+				Type:        "uint16",
+				Note:        "",
+				Description: "UDP port used by Flannel for encapsulating traffic (if the backend type requires encapsulation).\n\nThe default value in generated machine configuration is 4789.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "UDP port used by Flannel for encapsulating traffic (if the backend type requires encapsulation)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "backendMTU",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Transport MTU to be used for the pod network.\n\nFlannel will subtract encapsulation overhead from this MTU to calculate\nthe MTU of the pod interface.\nIf not set, the default is auto-detection of MTU by Flannel.\nIf KubeSpan is enabled, and the value is not set, defaults to KubeSpan MTU.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Transport MTU to be used for the pod network." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "backendExtraConfig",
+				Type:        "Unstructured",
+				Note:        "",
+				Description: "Extra configuration for Flannel backend.\n\nThe content of this field depends on the backend type used.\nThe value of this field will be patched into Flannel configuration 'Backend' section as-is.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra configuration for Flannel backend." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "resources",
+				Type:        "ResourcesConfig",
+				Note:        "",
+				Description: "Resources configuration for Flannel main container.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Resources configuration for Flannel main container." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "extraArgs",
 				Type:        "[]string",
 				Note:        "",
@@ -156,7 +195,7 @@ func (KubeFlannelCNIConfigV1Alpha1) Doc() *encoder.Doc {
 
 	doc.AddExample("", exampleKubeFlannelCNIConfigV1Alpha1())
 
-	doc.Fields[1].AddExample("", []string{"--iface-can-reach=192.168.1.1"})
+	doc.Fields[6].AddExample("", []string{"--iface-can-reach=192.168.1.1"})
 
 	return doc
 }

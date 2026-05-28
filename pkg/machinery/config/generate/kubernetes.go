@@ -25,6 +25,8 @@ func (in *Input) generateKubernetesControlplaneConfigs() []config.Document {
 
 	if in.Options.CNICustomURL == "" {
 		flannelConfig = k8s.NewKubeFlannelCNIConfigV1Alpha1()
+		flannelConfig.FlannelBackendType = constants.FlannelDefaultBackend
+		flannelConfig.FlannelBackendPort = constants.FlannelDefaultBackendPort
 	}
 
 	etcdEncryptionConfig := k8s.NewKubeEtcdEncryptionConfigV1Alpha1()

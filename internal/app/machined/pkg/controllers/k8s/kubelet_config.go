@@ -24,7 +24,7 @@ import (
 // KubeletConfigController renders kubelet configuration based on machine config.
 type KubeletConfigController = transform.Controller[*config.MachineConfig, *k8s.KubeletConfig]
 
-// NewKubeletConfigController instanciates the config controller.
+// NewKubeletConfigController instantiates the config controller.
 func NewKubeletConfigController() *KubeletConfigController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *k8s.KubeletConfig]{

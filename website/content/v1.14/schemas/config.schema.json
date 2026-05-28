@@ -1304,6 +1304,41 @@
           "markdownDescription": "kind is the kind of the resource.",
           "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
         },
+        "backendType": {
+          "type": "string",
+          "title": "backendType",
+          "description": "Type of the Flannel backend to use.\n\nSee Flannel documentation for supported backend types.\nThe default value in generated machine configuration is “vxlan”.\n",
+          "markdownDescription": "Type of the Flannel backend to use.\n\nSee Flannel documentation for supported backend types.\nThe default value in generated machine configuration is \"vxlan\".",
+          "x-intellij-html-description": "\u003cp\u003eType of the Flannel backend to use.\u003c/p\u003e\n\n\u003cp\u003eSee Flannel documentation for supported backend types.\nThe default value in generated machine configuration is \u0026ldquo;vxlan\u0026rdquo;.\u003c/p\u003e\n"
+        },
+        "backendPort": {
+          "type": "integer",
+          "title": "backendPort",
+          "description": "UDP port used by Flannel for encapsulating traffic (if the backend type requires encapsulation).\n\nThe default value in generated machine configuration is 4789.\n",
+          "markdownDescription": "UDP port used by Flannel for encapsulating traffic (if the backend type requires encapsulation).\n\nThe default value in generated machine configuration is 4789.",
+          "x-intellij-html-description": "\u003cp\u003eUDP port used by Flannel for encapsulating traffic (if the backend type requires encapsulation).\u003c/p\u003e\n\n\u003cp\u003eThe default value in generated machine configuration is 4789.\u003c/p\u003e\n"
+        },
+        "backendMTU": {
+          "type": "integer",
+          "title": "backendMTU",
+          "description": "Transport MTU to be used for the pod network.\n\nFlannel will subtract encapsulation overhead from this MTU to calculate\nthe MTU of the pod interface.\nIf not set, the default is auto-detection of MTU by Flannel.\nIf KubeSpan is enabled, and the value is not set, defaults to KubeSpan MTU.\n",
+          "markdownDescription": "Transport MTU to be used for the pod network.\n\nFlannel will subtract encapsulation overhead from this MTU to calculate\nthe MTU of the pod interface.\nIf not set, the default is auto-detection of MTU by Flannel.\nIf KubeSpan is enabled, and the value is not set, defaults to KubeSpan MTU.",
+          "x-intellij-html-description": "\u003cp\u003eTransport MTU to be used for the pod network.\u003c/p\u003e\n\n\u003cp\u003eFlannel will subtract encapsulation overhead from this MTU to calculate\nthe MTU of the pod interface.\nIf not set, the default is auto-detection of MTU by Flannel.\nIf KubeSpan is enabled, and the value is not set, defaults to KubeSpan MTU.\u003c/p\u003e\n"
+        },
+        "backendExtraConfig": {
+          "type": "object",
+          "title": "backendExtraConfig",
+          "description": "Extra configuration for Flannel backend.\n\nThe content of this field depends on the backend type used.\nThe value of this field will be patched into Flannel configuration ‘Backend’ section as-is.\n",
+          "markdownDescription": "Extra configuration for Flannel backend.\n\nThe content of this field depends on the backend type used.\nThe value of this field will be patched into Flannel configuration 'Backend' section as-is.",
+          "x-intellij-html-description": "\u003cp\u003eExtra configuration for Flannel backend.\u003c/p\u003e\n\n\u003cp\u003eThe content of this field depends on the backend type used.\nThe value of this field will be patched into Flannel configuration \u0026lsquo;Backend\u0026rsquo; section as-is.\u003c/p\u003e\n"
+        },
+        "resources": {
+          "type": "object",
+          "title": "resources",
+          "description": "Resources configuration for Flannel main container.\n",
+          "markdownDescription": "Resources configuration for Flannel main container.",
+          "x-intellij-html-description": "\u003cp\u003eResources configuration for Flannel main container.\u003c/p\u003e\n"
+        },
         "extraArgs": {
           "items": {
             "type": "string"

@@ -23,7 +23,7 @@ import (
 // KubePrismConfigController creates config for KubePrism.
 type KubePrismConfigController = transform.Controller[*config.MachineConfig, *k8s.KubePrismConfig]
 
-// NewKubePrismConfigController instanciates the controller.
+// NewKubePrismConfigController instantiates the controller.
 func NewKubePrismConfigController() *KubePrismConfigController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *k8s.KubePrismConfig]{

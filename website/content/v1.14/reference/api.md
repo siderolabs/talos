@@ -7752,6 +7752,11 @@ BootstrapManifestsConfigSpec is configuration for bootstrap manifests.
 | flannel_kube_network_policies_enabled | [bool](#bool) |  |  |
 | flannel_kube_network_policies_image | [string](#string) |  |  |
 | cni_name | [string](#string) |  |  |
+| flannel_backend_mtu | [uint32](#uint32) |  |  |
+| flannel_backend_type | [string](#string) |  |  |
+| flannel_backend_port | [uint32](#uint32) |  |  |
+| flannel_resources | [Resources](#talos.resource.definitions.k8s.Resources) |  |  |
+| flannel_backend_extra_config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
 
 
 

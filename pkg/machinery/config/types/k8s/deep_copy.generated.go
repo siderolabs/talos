@@ -53,6 +53,18 @@ func (o *KubeEtcdEncryptionConfigV1Alpha1) DeepCopy() *KubeEtcdEncryptionConfigV
 // DeepCopy generates a deep copy of *KubeFlannelCNIConfigV1Alpha1.
 func (o *KubeFlannelCNIConfigV1Alpha1) DeepCopy() *KubeFlannelCNIConfigV1Alpha1 {
 	var cp KubeFlannelCNIConfigV1Alpha1 = *o
+	{
+		retV := o.FlannelBackendExtraConfig.DeepCopy()
+		cp.FlannelBackendExtraConfig = *retV
+	}
+	{
+		retV := o.FlannelResources.Requests.DeepCopy()
+		cp.FlannelResources.Requests = *retV
+	}
+	{
+		retV := o.FlannelResources.Limits.DeepCopy()
+		cp.FlannelResources.Limits = *retV
+	}
 	if o.FlannelExtraArgs != nil {
 		cp.FlannelExtraArgs = make([]string, len(o.FlannelExtraArgs))
 		copy(cp.FlannelExtraArgs, o.FlannelExtraArgs)

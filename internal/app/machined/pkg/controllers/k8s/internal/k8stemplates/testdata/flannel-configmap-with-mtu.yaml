@@ -25,6 +25,7 @@ data:
       "Network": "10.96.0.0/12",
       "EnableNFTables": true,
       "Backend": {
+        "MTU": 1420,
         "Port": 4789,
         "Type": "vxlan"
       }

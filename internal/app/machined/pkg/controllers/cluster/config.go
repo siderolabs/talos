@@ -22,7 +22,7 @@ import (
 // ConfigController watches v1alpha1.Config, updates discovery config.
 type ConfigController = transform.Controller[*config.MachineConfig, *cluster.Config]
 
-// NewConfigController instanciates the config controller.
+// NewConfigController instantiates the config controller.
 func NewConfigController() *ConfigController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *cluster.Config]{

@@ -46,9 +46,14 @@ spec:
           value: "5000"
         - name: CONT_WHEN_CACHE_NOT_READY
           value: "false"
+        - name: GOMEMLIMIT
+          value: "99614720"
         image: quay.io/coreos/flannel:v0.14.0
         name: kube-flannel
         resources:
+          limits:
+            cpu: 200m
+            memory: 100Mi
           requests:
             cpu: 100m
             memory: 50Mi

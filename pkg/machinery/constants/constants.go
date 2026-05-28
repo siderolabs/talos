@@ -1194,6 +1194,12 @@ const (
 	// renovate: datasource=github-releases depName=flannel-io/flannel
 	FlannelVersion = "v0.28.5"
 
+	// FlannelDefaultBackend is the default backend for flannel.
+	FlannelDefaultBackend = "vxlan"
+
+	// FlannelDefaultBackendPort is the default port for flannel vxlan backend.
+	FlannelDefaultBackendPort = 4789
+
 	// KubeNetworkPoliciesVersion is the version of kube-network-policies when network policies are enabled for flannel.
 	//
 	// renovate: datasource=docker depName=registry.k8s.io/networking/kube-network-policies

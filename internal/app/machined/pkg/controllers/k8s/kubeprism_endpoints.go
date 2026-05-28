@@ -22,7 +22,7 @@ import (
 // KubePrismEndpointsController creates a list of API server endpoints.
 type KubePrismEndpointsController = transform.Controller[*config.MachineConfig, *k8s.KubePrismEndpoints]
 
-// NewKubePrismEndpointsController instanciates the controller.
+// NewKubePrismEndpointsController instantiates the controller.
 //
 //nolint:gocyclo
 func NewKubePrismEndpointsController() *KubePrismEndpointsController {

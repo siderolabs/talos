@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s/internal/k8stemplates"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
@@ -235,7 +236,9 @@ func TestTemplates(t *testing.T) {
 			name: "flannel-configmap-v4",
 			obj: func() runtime.Object {
 				return k8stemplates.FlannelConfigMapTemplate(&k8s.BootstrapManifestsConfigSpec{
-					PodCIDRs: []string{"10.96.0.0/12"},
+					PodCIDRs:           []string{"10.96.0.0/12"},
+					FlannelBackendType: constants.FlannelDefaultBackend,
+					FlannelBackendPort: constants.FlannelDefaultBackendPort,
 				})
 			},
 		},
@@ -243,7 +246,9 @@ func TestTemplates(t *testing.T) {
 			name: "flannel-configmap-v6",
 			obj: func() runtime.Object {
 				return k8stemplates.FlannelConfigMapTemplate(&k8s.BootstrapManifestsConfigSpec{
-					PodCIDRs: []string{"fd00::/112"},
+					PodCIDRs:           []string{"fd00::/112"},
+					FlannelBackendType: constants.FlannelDefaultBackend,
+					FlannelBackendPort: constants.FlannelDefaultBackendPort,
 				})
 			},
 		},
@@ -251,28 +256,60 @@ func TestTemplates(t *testing.T) {
 			name: "flannel-configmap-dual",
 			obj: func() runtime.Object {
 				return k8stemplates.FlannelConfigMapTemplate(&k8s.BootstrapManifestsConfigSpec{
-					PodCIDRs: []string{"10.96.0.0/12", "fd00::/112"},
+					PodCIDRs:           []string{"10.96.0.0/12", "fd00::/112"},
+					FlannelBackendType: constants.FlannelDefaultBackend,
+					FlannelBackendPort: constants.FlannelDefaultBackendPort,
+					FlannelBackendExtraConfig: map[string]any{
+						"VNI": 4096,
+					},
+				})
+			},
+		},
+		{
+			name: "flannel-configmap-with-mtu",
+			obj: func() runtime.Object {
+				return k8stemplates.FlannelConfigMapTemplate(&k8s.BootstrapManifestsConfigSpec{
+					PodCIDRs:           []string{"10.96.0.0/12"},
+					FlannelBackendType: constants.FlannelDefaultBackend,
+					FlannelBackendPort: constants.FlannelDefaultBackendPort,
+					FlannelBackendMTU:  1420,
 				})
 			},
 		},
 		{
 			name: "flannel-daemonset",
 			obj: func() runtime.Object {
-				return k8stemplates.FlannelDaemonSetTemplate(&k8s.BootstrapManifestsConfigSpec{
+				spec, err := k8stemplates.FlannelDaemonSetTemplate(&k8s.BootstrapManifestsConfigSpec{
 					FlannelImage:     "quay.io/coreos/flannel:v0.14.0",
 					FlannelExtraArgs: []string{"--foo=bar"},
 				})
+				require.NoError(t, err)
+
+				return spec
 			},
 		},
 		{
 			name: "flannel-daemonset-with-network-policies",
 			obj: func() runtime.Object {
-				return k8stemplates.FlannelDaemonSetTemplate(&k8s.BootstrapManifestsConfigSpec{
-					FlannelImage:                      "quay.io/coreos/flannel:v0.14.0",
-					FlannelExtraArgs:                  []string{"--foo=bar"},
+				spec, err := k8stemplates.FlannelDaemonSetTemplate(&k8s.BootstrapManifestsConfigSpec{
+					FlannelImage:     "quay.io/coreos/flannel:v0.14.0",
+					FlannelExtraArgs: []string{"--foo=bar"},
+					FlannelResources: k8s.Resources{
+						Requests: map[string]string{
+							"cpu":    "100m",
+							"memory": "50Mi",
+						},
+						Limits: map[string]string{
+							"cpu":    "200m",
+							"memory": "100Mi",
+						},
+					},
 					FlannelKubeNetworkPoliciesEnabled: true,
 					FlannelKubeNetworkPoliciesImage:   "registry.k8s.io/networking/kube-network-policies:v0.7.0",
 				})
+				require.NoError(t, err)
+
+				return spec
 			},
 		},
 	} {

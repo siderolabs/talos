@@ -45,7 +45,7 @@ func rootMapFunc[Output generic.ResourceWithRD](output Output, requireControlPla
 // RootEtcdController manages secrets.EtcdRoot based on configuration.
 type RootEtcdController = transform.Controller[*config.MachineConfig, *secrets.EtcdRoot]
 
-// NewRootEtcdController instanciates the controller.
+// NewRootEtcdController instantiates the controller.
 func NewRootEtcdController() *RootEtcdController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *secrets.EtcdRoot]{
@@ -70,7 +70,7 @@ func NewRootEtcdController() *RootEtcdController {
 // RootKubernetesController manages secrets.KubernetesRoot based on configuration.
 type RootKubernetesController = transform.Controller[*config.MachineConfig, *secrets.KubernetesRoot]
 
-// NewRootKubernetesController instanciates the controller.
+// NewRootKubernetesController instantiates the controller.
 func NewRootKubernetesController() *RootKubernetesController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *secrets.KubernetesRoot]{
@@ -157,7 +157,7 @@ func NewRootKubernetesController() *RootKubernetesController {
 // RootOSController manages secrets.OSRoot based on configuration.
 type RootOSController = transform.Controller[*config.MachineConfig, *secrets.OSRoot]
 
-// NewRootOSController instanciates the controller.
+// NewRootOSController instantiates the controller.
 func NewRootOSController() *RootOSController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *secrets.OSRoot]{
