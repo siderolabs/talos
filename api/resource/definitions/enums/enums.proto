@@ -714,6 +714,22 @@ enum NethelpersWOLMode {
   WOL_MODE_FILTER = 128;
 }
 
+// BlockDiskHealthSource describes the source of disk health information.
+enum BlockDiskHealthSource {
+  DISK_HEALTH_SOURCE_UNKNOWN = 0;
+  DISK_HEALTH_SOURCE_NV_ME = 1;
+  DISK_HEALTH_SOURCE_ATA = 2;
+  DISK_HEALTH_SOURCE_UNSUPPORTED = 3;
+}
+
+// BlockDiskHealthStatusValue describes the normalized health status of a disk.
+enum BlockDiskHealthStatusValue {
+  DISK_HEALTH_STATUS_VALUE_UNKNOWN = 0;
+  DISK_HEALTH_STATUS_VALUE_HEALTHY = 1;
+  DISK_HEALTH_STATUS_VALUE_WARNING = 2;
+  DISK_HEALTH_STATUS_VALUE_CRITICAL = 3;
+}
+
 // BlockEncryptionKeyType describes encryption key type.
 enum BlockEncryptionKeyType {
   ENCRYPTION_KEY_STATIC = 0;

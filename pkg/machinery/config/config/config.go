@@ -48,6 +48,7 @@ type Config interface { //nolint:interfacebloat
 	ExternalVolumeConfigs() []ExternalVolumeConfig
 	SwapVolumeConfigs() []SwapVolumeConfig
 	ZswapConfig() ZswapConfig
+	DiskHealthMonitoringConfig() DiskHealthMonitoringConfig
 
 	// - cri:
 	RegistryMirrorConfigs() map[string]RegistryMirrorConfig

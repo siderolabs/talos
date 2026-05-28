@@ -2,6 +2,49 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://talos.dev/v1.14/schemas/config.schema.json",
   "$defs": {
+    "block.DiskHealthMonitoringConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "DiskHealthMonitoringConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "Enable or disable disk health monitoring.\n",
+          "markdownDescription": "Enable or disable disk health monitoring.",
+          "x-intellij-html-description": "\u003cp\u003eEnable or disable disk health monitoring.\u003c/p\u003e\n"
+        },
+        "interval": {
+          "type": "string",
+          "title": "interval",
+          "description": "Polling interval for disk health checks.\nMust be a valid Go duration string (e.g. “5m”, “30s”, “1h”).\n",
+          "markdownDescription": "Polling interval for disk health checks.\nMust be a valid Go duration string (e.g. \"5m\", \"30s\", \"1h\").",
+          "x-intellij-html-description": "\u003cp\u003ePolling interval for disk health checks.\nMust be a valid Go duration string (e.g. \u0026ldquo;5m\u0026rdquo;, \u0026ldquo;30s\u0026rdquo;, \u0026ldquo;1h\u0026rdquo;).\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "DiskHealthMonitoringConfig is a disk health monitoring configuration document.\\nConfigures periodic disk health monitoring. When enabled, Talos collects\\npassive health information from NVMe and ATA disks and publishes\\nDiskHealthStatus resources.\\n"
+    },
     "block.DiskSelector": {
       "properties": {
         "match": {
@@ -5832,6 +5875,9 @@
     }
   },
   "oneOf": [
+    {
+      "$ref": "#/$defs/block.DiskHealthMonitoringConfigV1Alpha1"
+    },
     {
       "$ref": "#/$defs/block.ExistingVolumeConfigV1Alpha1"
     },

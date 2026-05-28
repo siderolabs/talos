@@ -14,6 +14,7 @@ import (
 	v1alpha1 "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 
 	enums "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/enums"
 )
@@ -430,6 +431,322 @@ func (x *DiscoveryRefreshStatusSpec) GetRequest() int64 {
 	return 0
 }
 
+// DiskHealthATADetails contains ATA SMART-specific health information.
+type DiskHealthATADetails struct {
+	state                       protoimpl.MessageState `protogen:"open.v1"`
+	ReallocatedSectorCount      uint64                 `protobuf:"varint,1,opt,name=reallocated_sector_count,json=reallocatedSectorCount,proto3" json:"reallocated_sector_count,omitempty"`
+	CurrentPendingSectorCount   uint64                 `protobuf:"varint,2,opt,name=current_pending_sector_count,json=currentPendingSectorCount,proto3" json:"current_pending_sector_count,omitempty"`
+	OfflineUncorrectableCount   uint64                 `protobuf:"varint,3,opt,name=offline_uncorrectable_count,json=offlineUncorrectableCount,proto3" json:"offline_uncorrectable_count,omitempty"`
+	ReportedUncorrectableErrors uint64                 `protobuf:"varint,4,opt,name=reported_uncorrectable_errors,json=reportedUncorrectableErrors,proto3" json:"reported_uncorrectable_errors,omitempty"`
+	WearLevelingCount           uint64                 `protobuf:"varint,5,opt,name=wear_leveling_count,json=wearLevelingCount,proto3" json:"wear_leveling_count,omitempty"`
+	unknownFields               protoimpl.UnknownFields
+	sizeCache                   protoimpl.SizeCache
+}
+
+func (x *DiskHealthATADetails) Reset() {
+	*x = DiskHealthATADetails{}
+	mi := &file_resource_definitions_block_block_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DiskHealthATADetails) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DiskHealthATADetails) ProtoMessage() {}
+
+func (x *DiskHealthATADetails) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_block_block_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DiskHealthATADetails.ProtoReflect.Descriptor instead.
+func (*DiskHealthATADetails) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *DiskHealthATADetails) GetReallocatedSectorCount() uint64 {
+	if x != nil {
+		return x.ReallocatedSectorCount
+	}
+	return 0
+}
+
+func (x *DiskHealthATADetails) GetCurrentPendingSectorCount() uint64 {
+	if x != nil {
+		return x.CurrentPendingSectorCount
+	}
+	return 0
+}
+
+func (x *DiskHealthATADetails) GetOfflineUncorrectableCount() uint64 {
+	if x != nil {
+		return x.OfflineUncorrectableCount
+	}
+	return 0
+}
+
+func (x *DiskHealthATADetails) GetReportedUncorrectableErrors() uint64 {
+	if x != nil {
+		return x.ReportedUncorrectableErrors
+	}
+	return 0
+}
+
+func (x *DiskHealthATADetails) GetWearLevelingCount() uint64 {
+	if x != nil {
+		return x.WearLevelingCount
+	}
+	return 0
+}
+
+// DiskHealthDetails contains backend-specific health details.
+type DiskHealthDetails struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	NvMe          *DiskHealthNVMeDetails `protobuf:"bytes,1,opt,name=nv_me,json=nvMe,proto3" json:"nv_me,omitempty"`
+	Ata           *DiskHealthATADetails  `protobuf:"bytes,2,opt,name=ata,proto3" json:"ata,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DiskHealthDetails) Reset() {
+	*x = DiskHealthDetails{}
+	mi := &file_resource_definitions_block_block_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DiskHealthDetails) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DiskHealthDetails) ProtoMessage() {}
+
+func (x *DiskHealthDetails) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_block_block_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DiskHealthDetails.ProtoReflect.Descriptor instead.
+func (*DiskHealthDetails) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *DiskHealthDetails) GetNvMe() *DiskHealthNVMeDetails {
+	if x != nil {
+		return x.NvMe
+	}
+	return nil
+}
+
+func (x *DiskHealthDetails) GetAta() *DiskHealthATADetails {
+	if x != nil {
+		return x.Ata
+	}
+	return nil
+}
+
+// DiskHealthNVMeDetails contains NVMe-specific health information.
+type DiskHealthNVMeDetails struct {
+	state                       protoimpl.MessageState `protogen:"open.v1"`
+	CriticalWarning             uint32                 `protobuf:"varint,1,opt,name=critical_warning,json=criticalWarning,proto3" json:"critical_warning,omitempty"`
+	PercentageUsed              uint32                 `protobuf:"varint,2,opt,name=percentage_used,json=percentageUsed,proto3" json:"percentage_used,omitempty"`
+	UnsafeShutdowns             uint64                 `protobuf:"varint,3,opt,name=unsafe_shutdowns,json=unsafeShutdowns,proto3" json:"unsafe_shutdowns,omitempty"`
+	MediaAndDataIntegrityErrors uint64                 `protobuf:"varint,4,opt,name=media_and_data_integrity_errors,json=mediaAndDataIntegrityErrors,proto3" json:"media_and_data_integrity_errors,omitempty"`
+	unknownFields               protoimpl.UnknownFields
+	sizeCache                   protoimpl.SizeCache
+}
+
+func (x *DiskHealthNVMeDetails) Reset() {
+	*x = DiskHealthNVMeDetails{}
+	mi := &file_resource_definitions_block_block_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DiskHealthNVMeDetails) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DiskHealthNVMeDetails) ProtoMessage() {}
+
+func (x *DiskHealthNVMeDetails) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_block_block_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DiskHealthNVMeDetails.ProtoReflect.Descriptor instead.
+func (*DiskHealthNVMeDetails) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *DiskHealthNVMeDetails) GetCriticalWarning() uint32 {
+	if x != nil {
+		return x.CriticalWarning
+	}
+	return 0
+}
+
+func (x *DiskHealthNVMeDetails) GetPercentageUsed() uint32 {
+	if x != nil {
+		return x.PercentageUsed
+	}
+	return 0
+}
+
+func (x *DiskHealthNVMeDetails) GetUnsafeShutdowns() uint64 {
+	if x != nil {
+		return x.UnsafeShutdowns
+	}
+	return 0
+}
+
+func (x *DiskHealthNVMeDetails) GetMediaAndDataIntegrityErrors() uint64 {
+	if x != nil {
+		return x.MediaAndDataIntegrityErrors
+	}
+	return 0
+}
+
+// DiskHealthStatusSpec is the spec for DiskHealthStatus resource.
+type DiskHealthStatusSpec struct {
+	state              protoimpl.MessageState           `protogen:"open.v1"`
+	DiskId             string                           `protobuf:"bytes,1,opt,name=disk_id,json=diskId,proto3" json:"disk_id,omitempty"`
+	Device             string                           `protobuf:"bytes,2,opt,name=device,proto3" json:"device,omitempty"`
+	HealthSource       enums.BlockDiskHealthSource      `protobuf:"varint,3,opt,name=health_source,json=healthSource,proto3,enum=talos.resource.definitions.enums.BlockDiskHealthSource" json:"health_source,omitempty"`
+	Status             enums.BlockDiskHealthStatusValue `protobuf:"varint,4,opt,name=status,proto3,enum=talos.resource.definitions.enums.BlockDiskHealthStatusValue" json:"status,omitempty"`
+	TemperatureCelsius int32                            `protobuf:"varint,5,opt,name=temperature_celsius,json=temperatureCelsius,proto3" json:"temperature_celsius,omitempty"`
+	PowerOnHours       uint64                           `protobuf:"varint,6,opt,name=power_on_hours,json=powerOnHours,proto3" json:"power_on_hours,omitempty"`
+	PowerCycles        uint64                           `protobuf:"varint,7,opt,name=power_cycles,json=powerCycles,proto3" json:"power_cycles,omitempty"`
+	LastChecked        *timestamppb.Timestamp           `protobuf:"bytes,8,opt,name=last_checked,json=lastChecked,proto3" json:"last_checked,omitempty"`
+	Error              string                           `protobuf:"bytes,9,opt,name=error,proto3" json:"error,omitempty"`
+	Details            *DiskHealthDetails               `protobuf:"bytes,10,opt,name=details,proto3" json:"details,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *DiskHealthStatusSpec) Reset() {
+	*x = DiskHealthStatusSpec{}
+	mi := &file_resource_definitions_block_block_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DiskHealthStatusSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DiskHealthStatusSpec) ProtoMessage() {}
+
+func (x *DiskHealthStatusSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_block_block_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DiskHealthStatusSpec.ProtoReflect.Descriptor instead.
+func (*DiskHealthStatusSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *DiskHealthStatusSpec) GetDiskId() string {
+	if x != nil {
+		return x.DiskId
+	}
+	return ""
+}
+
+func (x *DiskHealthStatusSpec) GetDevice() string {
+	if x != nil {
+		return x.Device
+	}
+	return ""
+}
+
+func (x *DiskHealthStatusSpec) GetHealthSource() enums.BlockDiskHealthSource {
+	if x != nil {
+		return x.HealthSource
+	}
+	return enums.BlockDiskHealthSource(0)
+}
+
+func (x *DiskHealthStatusSpec) GetStatus() enums.BlockDiskHealthStatusValue {
+	if x != nil {
+		return x.Status
+	}
+	return enums.BlockDiskHealthStatusValue(0)
+}
+
+func (x *DiskHealthStatusSpec) GetTemperatureCelsius() int32 {
+	if x != nil {
+		return x.TemperatureCelsius
+	}
+	return 0
+}
+
+func (x *DiskHealthStatusSpec) GetPowerOnHours() uint64 {
+	if x != nil {
+		return x.PowerOnHours
+	}
+	return 0
+}
+
+func (x *DiskHealthStatusSpec) GetPowerCycles() uint64 {
+	if x != nil {
+		return x.PowerCycles
+	}
+	return 0
+}
+
+func (x *DiskHealthStatusSpec) GetLastChecked() *timestamppb.Timestamp {
+	if x != nil {
+		return x.LastChecked
+	}
+	return nil
+}
+
+func (x *DiskHealthStatusSpec) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+func (x *DiskHealthStatusSpec) GetDetails() *DiskHealthDetails {
+	if x != nil {
+		return x.Details
+	}
+	return nil
+}
+
 // DiskSelector selects a disk for the volume.
 type DiskSelector struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -441,7 +758,7 @@ type DiskSelector struct {
 
 func (x *DiskSelector) Reset() {
 	*x = DiskSelector{}
-	mi := &file_resource_definitions_block_block_proto_msgTypes[4]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -453,7 +770,7 @@ func (x *DiskSelector) String() string {
 func (*DiskSelector) ProtoMessage() {}
 
 func (x *DiskSelector) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_block_block_proto_msgTypes[4]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -466,7 +783,7 @@ func (x *DiskSelector) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DiskSelector.ProtoReflect.Descriptor instead.
 func (*DiskSelector) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{4}
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *DiskSelector) GetMatch() *v1alpha1.CheckedExpr {
@@ -514,7 +831,7 @@ type DiskSpec struct {
 
 func (x *DiskSpec) Reset() {
 	*x = DiskSpec{}
-	mi := &file_resource_definitions_block_block_proto_msgTypes[5]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -526,7 +843,7 @@ func (x *DiskSpec) String() string {
 func (*DiskSpec) ProtoMessage() {}
 
 func (x *DiskSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_block_block_proto_msgTypes[5]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -539,7 +856,7 @@ func (x *DiskSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DiskSpec.ProtoReflect.Descriptor instead.
 func (*DiskSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{5}
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *DiskSpec) GetSize() uint64 {
@@ -690,7 +1007,7 @@ type EncryptionKey struct {
 
 func (x *EncryptionKey) Reset() {
 	*x = EncryptionKey{}
-	mi := &file_resource_definitions_block_block_proto_msgTypes[6]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -702,7 +1019,7 @@ func (x *EncryptionKey) String() string {
 func (*EncryptionKey) ProtoMessage() {}
 
 func (x *EncryptionKey) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_block_block_proto_msgTypes[6]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -715,7 +1032,7 @@ func (x *EncryptionKey) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EncryptionKey.ProtoReflect.Descriptor instead.
 func (*EncryptionKey) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{6}
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *EncryptionKey) GetSlot() int64 {
@@ -789,7 +1106,7 @@ type EncryptionSpec struct {
 
 func (x *EncryptionSpec) Reset() {
 	*x = EncryptionSpec{}
-	mi := &file_resource_definitions_block_block_proto_msgTypes[7]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -801,7 +1118,7 @@ func (x *EncryptionSpec) String() string {
 func (*EncryptionSpec) ProtoMessage() {}
 
 func (x *EncryptionSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_block_block_proto_msgTypes[7]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -814,7 +1131,7 @@ func (x *EncryptionSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EncryptionSpec.ProtoReflect.Descriptor instead.
 func (*EncryptionSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{7}
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *EncryptionSpec) GetProvider() enums.BlockEncryptionProviderType {
@@ -872,7 +1189,7 @@ type FilesystemSpec struct {
 
 func (x *FilesystemSpec) Reset() {
 	*x = FilesystemSpec{}
-	mi := &file_resource_definitions_block_block_proto_msgTypes[8]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -884,7 +1201,7 @@ func (x *FilesystemSpec) String() string {
 func (*FilesystemSpec) ProtoMessage() {}
 
 func (x *FilesystemSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_block_block_proto_msgTypes[8]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -897,7 +1214,7 @@ func (x *FilesystemSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use FilesystemSpec.ProtoReflect.Descriptor instead.
 func (*FilesystemSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{8}
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *FilesystemSpec) GetType() enums.BlockFilesystemType {
@@ -927,7 +1244,7 @@ type LocatorSpec struct {
 
 func (x *LocatorSpec) Reset() {
 	*x = LocatorSpec{}
-	mi := &file_resource_definitions_block_block_proto_msgTypes[9]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -939,7 +1256,7 @@ func (x *LocatorSpec) String() string {
 func (*LocatorSpec) ProtoMessage() {}
 
 func (x *LocatorSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_block_block_proto_msgTypes[9]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -952,7 +1269,7 @@ func (x *LocatorSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LocatorSpec.ProtoReflect.Descriptor instead.
 func (*LocatorSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{9}
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *LocatorSpec) GetMatch() *v1alpha1.CheckedExpr {
@@ -986,7 +1303,7 @@ type MountRequestSpec struct {
 
 func (x *MountRequestSpec) Reset() {
 	*x = MountRequestSpec{}
-	mi := &file_resource_definitions_block_block_proto_msgTypes[10]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -998,7 +1315,7 @@ func (x *MountRequestSpec) String() string {
 func (*MountRequestSpec) ProtoMessage() {}
 
 func (x *MountRequestSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_block_block_proto_msgTypes[10]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1011,7 +1328,7 @@ func (x *MountRequestSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MountRequestSpec.ProtoReflect.Descriptor instead.
 func (*MountRequestSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{10}
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *MountRequestSpec) GetVolumeId() string {
@@ -1102,7 +1419,7 @@ type MountSpec struct {
 
 func (x *MountSpec) Reset() {
 	*x = MountSpec{}
-	mi := &file_resource_definitions_block_block_proto_msgTypes[11]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1114,7 +1431,7 @@ func (x *MountSpec) String() string {
 func (*MountSpec) ProtoMessage() {}
 
 func (x *MountSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_block_block_proto_msgTypes[11]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1127,7 +1444,7 @@ func (x *MountSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MountSpec.ProtoReflect.Descriptor instead.
 func (*MountSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{11}
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *MountSpec) GetTargetPath() string {
@@ -1224,7 +1541,7 @@ type MountStatusSpec struct {
 
 func (x *MountStatusSpec) Reset() {
 	*x = MountStatusSpec{}
-	mi := &file_resource_definitions_block_block_proto_msgTypes[12]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1236,7 +1553,7 @@ func (x *MountStatusSpec) String() string {
 func (*MountStatusSpec) ProtoMessage() {}
 
 func (x *MountStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_block_block_proto_msgTypes[12]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1249,7 +1566,7 @@ func (x *MountStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MountStatusSpec.ProtoReflect.Descriptor instead.
 func (*MountStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{12}
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *MountStatusSpec) GetSpec() *MountRequestSpec {
@@ -1325,7 +1642,7 @@ type ParameterSpec struct {
 
 func (x *ParameterSpec) Reset() {
 	*x = ParameterSpec{}
-	mi := &file_resource_definitions_block_block_proto_msgTypes[13]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1337,7 +1654,7 @@ func (x *ParameterSpec) String() string {
 func (*ParameterSpec) ProtoMessage() {}
 
 func (x *ParameterSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_block_block_proto_msgTypes[13]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1350,7 +1667,7 @@ func (x *ParameterSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ParameterSpec.ProtoReflect.Descriptor instead.
 func (*ParameterSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{13}
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ParameterSpec) GetType() enums.BlockFSParameterType {
@@ -1404,7 +1721,7 @@ type PartitionSpec struct {
 
 func (x *PartitionSpec) Reset() {
 	*x = PartitionSpec{}
-	mi := &file_resource_definitions_block_block_proto_msgTypes[14]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1416,7 +1733,7 @@ func (x *PartitionSpec) String() string {
 func (*PartitionSpec) ProtoMessage() {}
 
 func (x *PartitionSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_block_block_proto_msgTypes[14]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1429,7 +1746,7 @@ func (x *PartitionSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PartitionSpec.ProtoReflect.Descriptor instead.
 func (*PartitionSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{14}
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *PartitionSpec) GetMinSize() uint64 {
@@ -1500,7 +1817,7 @@ type ProvisioningSpec struct {
 
 func (x *ProvisioningSpec) Reset() {
 	*x = ProvisioningSpec{}
-	mi := &file_resource_definitions_block_block_proto_msgTypes[15]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1512,7 +1829,7 @@ func (x *ProvisioningSpec) String() string {
 func (*ProvisioningSpec) ProtoMessage() {}
 
 func (x *ProvisioningSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_block_block_proto_msgTypes[15]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1525,7 +1842,7 @@ func (x *ProvisioningSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProvisioningSpec.ProtoReflect.Descriptor instead.
 func (*ProvisioningSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{15}
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *ProvisioningSpec) GetDiskSelector() *DiskSelector {
@@ -1572,7 +1889,7 @@ type SwapStatusSpec struct {
 
 func (x *SwapStatusSpec) Reset() {
 	*x = SwapStatusSpec{}
-	mi := &file_resource_definitions_block_block_proto_msgTypes[16]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1584,7 +1901,7 @@ func (x *SwapStatusSpec) String() string {
 func (*SwapStatusSpec) ProtoMessage() {}
 
 func (x *SwapStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_block_block_proto_msgTypes[16]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1597,7 +1914,7 @@ func (x *SwapStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SwapStatusSpec.ProtoReflect.Descriptor instead.
 func (*SwapStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{16}
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *SwapStatusSpec) GetDevice() string {
@@ -1662,7 +1979,7 @@ type SymlinkProvisioningSpec struct {
 
 func (x *SymlinkProvisioningSpec) Reset() {
 	*x = SymlinkProvisioningSpec{}
-	mi := &file_resource_definitions_block_block_proto_msgTypes[17]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1674,7 +1991,7 @@ func (x *SymlinkProvisioningSpec) String() string {
 func (*SymlinkProvisioningSpec) ProtoMessage() {}
 
 func (x *SymlinkProvisioningSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_block_block_proto_msgTypes[17]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1687,7 +2004,7 @@ func (x *SymlinkProvisioningSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SymlinkProvisioningSpec.ProtoReflect.Descriptor instead.
 func (*SymlinkProvisioningSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{17}
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *SymlinkProvisioningSpec) GetSymlinkTargetPath() string {
@@ -1714,7 +2031,7 @@ type SymlinkSpec struct {
 
 func (x *SymlinkSpec) Reset() {
 	*x = SymlinkSpec{}
-	mi := &file_resource_definitions_block_block_proto_msgTypes[18]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1726,7 +2043,7 @@ func (x *SymlinkSpec) String() string {
 func (*SymlinkSpec) ProtoMessage() {}
 
 func (x *SymlinkSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_block_block_proto_msgTypes[18]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1739,7 +2056,7 @@ func (x *SymlinkSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SymlinkSpec.ProtoReflect.Descriptor instead.
 func (*SymlinkSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{18}
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *SymlinkSpec) GetPaths() []string {
@@ -1760,7 +2077,7 @@ type SystemDiskSpec struct {
 
 func (x *SystemDiskSpec) Reset() {
 	*x = SystemDiskSpec{}
-	mi := &file_resource_definitions_block_block_proto_msgTypes[19]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1772,7 +2089,7 @@ func (x *SystemDiskSpec) String() string {
 func (*SystemDiskSpec) ProtoMessage() {}
 
 func (x *SystemDiskSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_block_block_proto_msgTypes[19]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1785,7 +2102,7 @@ func (x *SystemDiskSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SystemDiskSpec.ProtoReflect.Descriptor instead.
 func (*SystemDiskSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{19}
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *SystemDiskSpec) GetDiskId() string {
@@ -1813,7 +2130,7 @@ type TPMEncryptionOptionsInfo struct {
 
 func (x *TPMEncryptionOptionsInfo) Reset() {
 	*x = TPMEncryptionOptionsInfo{}
-	mi := &file_resource_definitions_block_block_proto_msgTypes[20]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1825,7 +2142,7 @@ func (x *TPMEncryptionOptionsInfo) String() string {
 func (*TPMEncryptionOptionsInfo) ProtoMessage() {}
 
 func (x *TPMEncryptionOptionsInfo) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_block_block_proto_msgTypes[20]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1838,7 +2155,7 @@ func (x *TPMEncryptionOptionsInfo) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TPMEncryptionOptionsInfo.ProtoReflect.Descriptor instead.
 func (*TPMEncryptionOptionsInfo) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{20}
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *TPMEncryptionOptionsInfo) GetPcRs() []int64 {
@@ -1866,7 +2183,7 @@ type UserDiskConfigStatusSpec struct {
 
 func (x *UserDiskConfigStatusSpec) Reset() {
 	*x = UserDiskConfigStatusSpec{}
-	mi := &file_resource_definitions_block_block_proto_msgTypes[21]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1878,7 +2195,7 @@ func (x *UserDiskConfigStatusSpec) String() string {
 func (*UserDiskConfigStatusSpec) ProtoMessage() {}
 
 func (x *UserDiskConfigStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_block_block_proto_msgTypes[21]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1891,7 +2208,7 @@ func (x *UserDiskConfigStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UserDiskConfigStatusSpec.ProtoReflect.Descriptor instead.
 func (*UserDiskConfigStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{21}
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *UserDiskConfigStatusSpec) GetReady() bool {
@@ -1931,7 +2248,7 @@ type VolumeConfigSpec struct {
 
 func (x *VolumeConfigSpec) Reset() {
 	*x = VolumeConfigSpec{}
-	mi := &file_resource_definitions_block_block_proto_msgTypes[22]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1943,7 +2260,7 @@ func (x *VolumeConfigSpec) String() string {
 func (*VolumeConfigSpec) ProtoMessage() {}
 
 func (x *VolumeConfigSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_block_block_proto_msgTypes[22]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1956,7 +2273,7 @@ func (x *VolumeConfigSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VolumeConfigSpec.ProtoReflect.Descriptor instead.
 func (*VolumeConfigSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{22}
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *VolumeConfigSpec) GetParentId() string {
@@ -2023,7 +2340,7 @@ type VolumeMountRequestSpec struct {
 
 func (x *VolumeMountRequestSpec) Reset() {
 	*x = VolumeMountRequestSpec{}
-	mi := &file_resource_definitions_block_block_proto_msgTypes[23]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2035,7 +2352,7 @@ func (x *VolumeMountRequestSpec) String() string {
 func (*VolumeMountRequestSpec) ProtoMessage() {}
 
 func (x *VolumeMountRequestSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_block_block_proto_msgTypes[23]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2048,7 +2365,7 @@ func (x *VolumeMountRequestSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VolumeMountRequestSpec.ProtoReflect.Descriptor instead.
 func (*VolumeMountRequestSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{23}
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *VolumeMountRequestSpec) GetVolumeId() string {
@@ -2109,7 +2426,7 @@ type VolumeMountStatusSpec struct {
 
 func (x *VolumeMountStatusSpec) Reset() {
 	*x = VolumeMountStatusSpec{}
-	mi := &file_resource_definitions_block_block_proto_msgTypes[24]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2121,7 +2438,7 @@ func (x *VolumeMountStatusSpec) String() string {
 func (*VolumeMountStatusSpec) ProtoMessage() {}
 
 func (x *VolumeMountStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_block_block_proto_msgTypes[24]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2134,7 +2451,7 @@ func (x *VolumeMountStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VolumeMountStatusSpec.ProtoReflect.Descriptor instead.
 func (*VolumeMountStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{24}
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *VolumeMountStatusSpec) GetVolumeId() string {
@@ -2229,7 +2546,7 @@ type VolumeStatusSpec struct {
 
 func (x *VolumeStatusSpec) Reset() {
 	*x = VolumeStatusSpec{}
-	mi := &file_resource_definitions_block_block_proto_msgTypes[25]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2241,7 +2558,7 @@ func (x *VolumeStatusSpec) String() string {
 func (*VolumeStatusSpec) ProtoMessage() {}
 
 func (x *VolumeStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_block_block_proto_msgTypes[25]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2254,7 +2571,7 @@ func (x *VolumeStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VolumeStatusSpec.ProtoReflect.Descriptor instead.
 func (*VolumeStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{25}
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *VolumeStatusSpec) GetPhase() enums.BlockVolumePhase {
@@ -2430,7 +2747,7 @@ type ZswapStatusSpec struct {
 
 func (x *ZswapStatusSpec) Reset() {
 	*x = ZswapStatusSpec{}
-	mi := &file_resource_definitions_block_block_proto_msgTypes[26]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2442,7 +2759,7 @@ func (x *ZswapStatusSpec) String() string {
 func (*ZswapStatusSpec) ProtoMessage() {}
 
 func (x *ZswapStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_block_block_proto_msgTypes[26]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2455,7 +2772,7 @@ func (x *ZswapStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ZswapStatusSpec.ProtoReflect.Descriptor instead.
 func (*ZswapStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{26}
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *ZswapStatusSpec) GetTotalSizeBytes() uint64 {
@@ -2532,7 +2849,7 @@ var File_resource_definitions_block_block_proto protoreflect.FileDescriptor
 
 const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\n" +
-	"&resource/definitions/block/block.proto\x12 talos.resource.definitions.block\x1a&google/api/expr/v1alpha1/checked.proto\x1a&resource/definitions/enums/enums.proto\"\x99\x02\n" +
+	"&resource/definitions/block/block.proto\x12 talos.resource.definitions.block\x1a&google/api/expr/v1alpha1/checked.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a&resource/definitions/enums/enums.proto\"\x99\x02\n" +
 	"\n" +
 	"DeviceSpec\x12\x12\n" +
 	"\x04type\x18\x01 \x01(\tR\x04type\x12\x14\n" +
@@ -2577,7 +2894,33 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\x1bDiscoveryRefreshRequestSpec\x12\x18\n" +
 	"\arequest\x18\x01 \x01(\x03R\arequest\"6\n" +
 	"\x1aDiscoveryRefreshStatusSpec\x12\x18\n" +
-	"\arequest\x18\x01 \x01(\x03R\arequest\"g\n" +
+	"\arequest\x18\x01 \x01(\x03R\arequest\"\xc5\x02\n" +
+	"\x14DiskHealthATADetails\x128\n" +
+	"\x18reallocated_sector_count\x18\x01 \x01(\x04R\x16reallocatedSectorCount\x12?\n" +
+	"\x1ccurrent_pending_sector_count\x18\x02 \x01(\x04R\x19currentPendingSectorCount\x12>\n" +
+	"\x1boffline_uncorrectable_count\x18\x03 \x01(\x04R\x19offlineUncorrectableCount\x12B\n" +
+	"\x1dreported_uncorrectable_errors\x18\x04 \x01(\x04R\x1breportedUncorrectableErrors\x12.\n" +
+	"\x13wear_leveling_count\x18\x05 \x01(\x04R\x11wearLevelingCount\"\xab\x01\n" +
+	"\x11DiskHealthDetails\x12L\n" +
+	"\x05nv_me\x18\x01 \x01(\v27.talos.resource.definitions.block.DiskHealthNVMeDetailsR\x04nvMe\x12H\n" +
+	"\x03ata\x18\x02 \x01(\v26.talos.resource.definitions.block.DiskHealthATADetailsR\x03ata\"\xdc\x01\n" +
+	"\x15DiskHealthNVMeDetails\x12)\n" +
+	"\x10critical_warning\x18\x01 \x01(\rR\x0fcriticalWarning\x12'\n" +
+	"\x0fpercentage_used\x18\x02 \x01(\rR\x0epercentageUsed\x12)\n" +
+	"\x10unsafe_shutdowns\x18\x03 \x01(\x04R\x0funsafeShutdowns\x12D\n" +
+	"\x1fmedia_and_data_integrity_errors\x18\x04 \x01(\x04R\x1bmediaAndDataIntegrityErrors\"\x99\x04\n" +
+	"\x14DiskHealthStatusSpec\x12\x17\n" +
+	"\adisk_id\x18\x01 \x01(\tR\x06diskId\x12\x16\n" +
+	"\x06device\x18\x02 \x01(\tR\x06device\x12\\\n" +
+	"\rhealth_source\x18\x03 \x01(\x0e27.talos.resource.definitions.enums.BlockDiskHealthSourceR\fhealthSource\x12T\n" +
+	"\x06status\x18\x04 \x01(\x0e2<.talos.resource.definitions.enums.BlockDiskHealthStatusValueR\x06status\x12/\n" +
+	"\x13temperature_celsius\x18\x05 \x01(\x05R\x12temperatureCelsius\x12$\n" +
+	"\x0epower_on_hours\x18\x06 \x01(\x04R\fpowerOnHours\x12!\n" +
+	"\fpower_cycles\x18\a \x01(\x04R\vpowerCycles\x12=\n" +
+	"\flast_checked\x18\b \x01(\v2\x1a.google.protobuf.TimestampR\vlastChecked\x12\x14\n" +
+	"\x05error\x18\t \x01(\tR\x05error\x12M\n" +
+	"\adetails\x18\n" +
+	" \x01(\v23.talos.resource.definitions.block.DiskHealthDetailsR\adetails\"g\n" +
 	"\fDiskSelector\x12;\n" +
 	"\x05match\x18\x01 \x01(\v2%.google.api.expr.v1alpha1.CheckedExprR\x05match\x12\x1a\n" +
 	"\bexternal\x18\x02 \x01(\tR\bexternal\"\xf5\x03\n" +
@@ -2794,78 +3137,91 @@ func file_resource_definitions_block_block_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_block_block_proto_rawDescData
 }
 
-var file_resource_definitions_block_block_proto_msgTypes = make([]protoimpl.MessageInfo, 27)
+var file_resource_definitions_block_block_proto_msgTypes = make([]protoimpl.MessageInfo, 31)
 var file_resource_definitions_block_block_proto_goTypes = []any{
 	(*DeviceSpec)(nil),                     // 0: talos.resource.definitions.block.DeviceSpec
 	(*DiscoveredVolumeSpec)(nil),           // 1: talos.resource.definitions.block.DiscoveredVolumeSpec
 	(*DiscoveryRefreshRequestSpec)(nil),    // 2: talos.resource.definitions.block.DiscoveryRefreshRequestSpec
 	(*DiscoveryRefreshStatusSpec)(nil),     // 3: talos.resource.definitions.block.DiscoveryRefreshStatusSpec
-	(*DiskSelector)(nil),                   // 4: talos.resource.definitions.block.DiskSelector
-	(*DiskSpec)(nil),                       // 5: talos.resource.definitions.block.DiskSpec
-	(*EncryptionKey)(nil),                  // 6: talos.resource.definitions.block.EncryptionKey
-	(*EncryptionSpec)(nil),                 // 7: talos.resource.definitions.block.EncryptionSpec
-	(*FilesystemSpec)(nil),                 // 8: talos.resource.definitions.block.FilesystemSpec
-	(*LocatorSpec)(nil),                    // 9: talos.resource.definitions.block.LocatorSpec
-	(*MountRequestSpec)(nil),               // 10: talos.resource.definitions.block.MountRequestSpec
-	(*MountSpec)(nil),                      // 11: talos.resource.definitions.block.MountSpec
-	(*MountStatusSpec)(nil),                // 12: talos.resource.definitions.block.MountStatusSpec
-	(*ParameterSpec)(nil),                  // 13: talos.resource.definitions.block.ParameterSpec
-	(*PartitionSpec)(nil),                  // 14: talos.resource.definitions.block.PartitionSpec
-	(*ProvisioningSpec)(nil),               // 15: talos.resource.definitions.block.ProvisioningSpec
-	(*SwapStatusSpec)(nil),                 // 16: talos.resource.definitions.block.SwapStatusSpec
-	(*SymlinkProvisioningSpec)(nil),        // 17: talos.resource.definitions.block.SymlinkProvisioningSpec
-	(*SymlinkSpec)(nil),                    // 18: talos.resource.definitions.block.SymlinkSpec
-	(*SystemDiskSpec)(nil),                 // 19: talos.resource.definitions.block.SystemDiskSpec
-	(*TPMEncryptionOptionsInfo)(nil),       // 20: talos.resource.definitions.block.TPMEncryptionOptionsInfo
-	(*UserDiskConfigStatusSpec)(nil),       // 21: talos.resource.definitions.block.UserDiskConfigStatusSpec
-	(*VolumeConfigSpec)(nil),               // 22: talos.resource.definitions.block.VolumeConfigSpec
-	(*VolumeMountRequestSpec)(nil),         // 23: talos.resource.definitions.block.VolumeMountRequestSpec
-	(*VolumeMountStatusSpec)(nil),          // 24: talos.resource.definitions.block.VolumeMountStatusSpec
-	(*VolumeStatusSpec)(nil),               // 25: talos.resource.definitions.block.VolumeStatusSpec
-	(*ZswapStatusSpec)(nil),                // 26: talos.resource.definitions.block.ZswapStatusSpec
-	(*v1alpha1.CheckedExpr)(nil),           // 27: google.api.expr.v1alpha1.CheckedExpr
-	(enums.BlockEncryptionKeyType)(0),      // 28: talos.resource.definitions.enums.BlockEncryptionKeyType
-	(enums.BlockEncryptionProviderType)(0), // 29: talos.resource.definitions.enums.BlockEncryptionProviderType
-	(enums.BlockFilesystemType)(0),         // 30: talos.resource.definitions.enums.BlockFilesystemType
-	(enums.BlockFSParameterType)(0),        // 31: talos.resource.definitions.enums.BlockFSParameterType
-	(enums.BlockVolumeType)(0),             // 32: talos.resource.definitions.enums.BlockVolumeType
-	(enums.BlockVolumePhase)(0),            // 33: talos.resource.definitions.enums.BlockVolumePhase
+	(*DiskHealthATADetails)(nil),           // 4: talos.resource.definitions.block.DiskHealthATADetails
+	(*DiskHealthDetails)(nil),              // 5: talos.resource.definitions.block.DiskHealthDetails
+	(*DiskHealthNVMeDetails)(nil),          // 6: talos.resource.definitions.block.DiskHealthNVMeDetails
+	(*DiskHealthStatusSpec)(nil),           // 7: talos.resource.definitions.block.DiskHealthStatusSpec
+	(*DiskSelector)(nil),                   // 8: talos.resource.definitions.block.DiskSelector
+	(*DiskSpec)(nil),                       // 9: talos.resource.definitions.block.DiskSpec
+	(*EncryptionKey)(nil),                  // 10: talos.resource.definitions.block.EncryptionKey
+	(*EncryptionSpec)(nil),                 // 11: talos.resource.definitions.block.EncryptionSpec
+	(*FilesystemSpec)(nil),                 // 12: talos.resource.definitions.block.FilesystemSpec
+	(*LocatorSpec)(nil),                    // 13: talos.resource.definitions.block.LocatorSpec
+	(*MountRequestSpec)(nil),               // 14: talos.resource.definitions.block.MountRequestSpec
+	(*MountSpec)(nil),                      // 15: talos.resource.definitions.block.MountSpec
+	(*MountStatusSpec)(nil),                // 16: talos.resource.definitions.block.MountStatusSpec
+	(*ParameterSpec)(nil),                  // 17: talos.resource.definitions.block.ParameterSpec
+	(*PartitionSpec)(nil),                  // 18: talos.resource.definitions.block.PartitionSpec
+	(*ProvisioningSpec)(nil),               // 19: talos.resource.definitions.block.ProvisioningSpec
+	(*SwapStatusSpec)(nil),                 // 20: talos.resource.definitions.block.SwapStatusSpec
+	(*SymlinkProvisioningSpec)(nil),        // 21: talos.resource.definitions.block.SymlinkProvisioningSpec
+	(*SymlinkSpec)(nil),                    // 22: talos.resource.definitions.block.SymlinkSpec
+	(*SystemDiskSpec)(nil),                 // 23: talos.resource.definitions.block.SystemDiskSpec
+	(*TPMEncryptionOptionsInfo)(nil),       // 24: talos.resource.definitions.block.TPMEncryptionOptionsInfo
+	(*UserDiskConfigStatusSpec)(nil),       // 25: talos.resource.definitions.block.UserDiskConfigStatusSpec
+	(*VolumeConfigSpec)(nil),               // 26: talos.resource.definitions.block.VolumeConfigSpec
+	(*VolumeMountRequestSpec)(nil),         // 27: talos.resource.definitions.block.VolumeMountRequestSpec
+	(*VolumeMountStatusSpec)(nil),          // 28: talos.resource.definitions.block.VolumeMountStatusSpec
+	(*VolumeStatusSpec)(nil),               // 29: talos.resource.definitions.block.VolumeStatusSpec
+	(*ZswapStatusSpec)(nil),                // 30: talos.resource.definitions.block.ZswapStatusSpec
+	(enums.BlockDiskHealthSource)(0),       // 31: talos.resource.definitions.enums.BlockDiskHealthSource
+	(enums.BlockDiskHealthStatusValue)(0),  // 32: talos.resource.definitions.enums.BlockDiskHealthStatusValue
+	(*timestamppb.Timestamp)(nil),          // 33: google.protobuf.Timestamp
+	(*v1alpha1.CheckedExpr)(nil),           // 34: google.api.expr.v1alpha1.CheckedExpr
+	(enums.BlockEncryptionKeyType)(0),      // 35: talos.resource.definitions.enums.BlockEncryptionKeyType
+	(enums.BlockEncryptionProviderType)(0), // 36: talos.resource.definitions.enums.BlockEncryptionProviderType
+	(enums.BlockFilesystemType)(0),         // 37: talos.resource.definitions.enums.BlockFilesystemType
+	(enums.BlockFSParameterType)(0),        // 38: talos.resource.definitions.enums.BlockFSParameterType
+	(enums.BlockVolumeType)(0),             // 39: talos.resource.definitions.enums.BlockVolumeType
+	(enums.BlockVolumePhase)(0),            // 40: talos.resource.definitions.enums.BlockVolumePhase
 }
 var file_resource_definitions_block_block_proto_depIdxs = []int32{
-	27, // 0: talos.resource.definitions.block.DiskSelector.match:type_name -> google.api.expr.v1alpha1.CheckedExpr
-	28, // 1: talos.resource.definitions.block.EncryptionKey.type:type_name -> talos.resource.definitions.enums.BlockEncryptionKeyType
-	29, // 2: talos.resource.definitions.block.EncryptionSpec.provider:type_name -> talos.resource.definitions.enums.BlockEncryptionProviderType
-	6,  // 3: talos.resource.definitions.block.EncryptionSpec.keys:type_name -> talos.resource.definitions.block.EncryptionKey
-	30, // 4: talos.resource.definitions.block.FilesystemSpec.type:type_name -> talos.resource.definitions.enums.BlockFilesystemType
-	27, // 5: talos.resource.definitions.block.LocatorSpec.match:type_name -> google.api.expr.v1alpha1.CheckedExpr
-	27, // 6: talos.resource.definitions.block.LocatorSpec.disk_match:type_name -> google.api.expr.v1alpha1.CheckedExpr
-	13, // 7: talos.resource.definitions.block.MountSpec.parameters:type_name -> talos.resource.definitions.block.ParameterSpec
-	10, // 8: talos.resource.definitions.block.MountStatusSpec.spec:type_name -> talos.resource.definitions.block.MountRequestSpec
-	30, // 9: talos.resource.definitions.block.MountStatusSpec.filesystem:type_name -> talos.resource.definitions.enums.BlockFilesystemType
-	29, // 10: talos.resource.definitions.block.MountStatusSpec.encryption_provider:type_name -> talos.resource.definitions.enums.BlockEncryptionProviderType
-	31, // 11: talos.resource.definitions.block.ParameterSpec.type:type_name -> talos.resource.definitions.enums.BlockFSParameterType
-	4,  // 12: talos.resource.definitions.block.ProvisioningSpec.disk_selector:type_name -> talos.resource.definitions.block.DiskSelector
-	14, // 13: talos.resource.definitions.block.ProvisioningSpec.partition_spec:type_name -> talos.resource.definitions.block.PartitionSpec
-	8,  // 14: talos.resource.definitions.block.ProvisioningSpec.filesystem_spec:type_name -> talos.resource.definitions.block.FilesystemSpec
-	32, // 15: talos.resource.definitions.block.VolumeConfigSpec.type:type_name -> talos.resource.definitions.enums.BlockVolumeType
-	15, // 16: talos.resource.definitions.block.VolumeConfigSpec.provisioning:type_name -> talos.resource.definitions.block.ProvisioningSpec
-	9,  // 17: talos.resource.definitions.block.VolumeConfigSpec.locator:type_name -> talos.resource.definitions.block.LocatorSpec
-	11, // 18: talos.resource.definitions.block.VolumeConfigSpec.mount:type_name -> talos.resource.definitions.block.MountSpec
-	7,  // 19: talos.resource.definitions.block.VolumeConfigSpec.encryption:type_name -> talos.resource.definitions.block.EncryptionSpec
-	17, // 20: talos.resource.definitions.block.VolumeConfigSpec.symlink:type_name -> talos.resource.definitions.block.SymlinkProvisioningSpec
-	33, // 21: talos.resource.definitions.block.VolumeStatusSpec.phase:type_name -> talos.resource.definitions.enums.BlockVolumePhase
-	33, // 22: talos.resource.definitions.block.VolumeStatusSpec.pre_fail_phase:type_name -> talos.resource.definitions.enums.BlockVolumePhase
-	30, // 23: talos.resource.definitions.block.VolumeStatusSpec.filesystem:type_name -> talos.resource.definitions.enums.BlockFilesystemType
-	29, // 24: talos.resource.definitions.block.VolumeStatusSpec.encryption_provider:type_name -> talos.resource.definitions.enums.BlockEncryptionProviderType
-	11, // 25: talos.resource.definitions.block.VolumeStatusSpec.mount_spec:type_name -> talos.resource.definitions.block.MountSpec
-	32, // 26: talos.resource.definitions.block.VolumeStatusSpec.type:type_name -> talos.resource.definitions.enums.BlockVolumeType
-	17, // 27: talos.resource.definitions.block.VolumeStatusSpec.symlink_spec:type_name -> talos.resource.definitions.block.SymlinkProvisioningSpec
-	20, // 28: talos.resource.definitions.block.VolumeStatusSpec.tpm_encryption_options:type_name -> talos.resource.definitions.block.TPMEncryptionOptionsInfo
-	29, // [29:29] is the sub-list for method output_type
-	29, // [29:29] is the sub-list for method input_type
-	29, // [29:29] is the sub-list for extension type_name
-	29, // [29:29] is the sub-list for extension extendee
-	0,  // [0:29] is the sub-list for field type_name
+	6,  // 0: talos.resource.definitions.block.DiskHealthDetails.nv_me:type_name -> talos.resource.definitions.block.DiskHealthNVMeDetails
+	4,  // 1: talos.resource.definitions.block.DiskHealthDetails.ata:type_name -> talos.resource.definitions.block.DiskHealthATADetails
+	31, // 2: talos.resource.definitions.block.DiskHealthStatusSpec.health_source:type_name -> talos.resource.definitions.enums.BlockDiskHealthSource
+	32, // 3: talos.resource.definitions.block.DiskHealthStatusSpec.status:type_name -> talos.resource.definitions.enums.BlockDiskHealthStatusValue
+	33, // 4: talos.resource.definitions.block.DiskHealthStatusSpec.last_checked:type_name -> google.protobuf.Timestamp
+	5,  // 5: talos.resource.definitions.block.DiskHealthStatusSpec.details:type_name -> talos.resource.definitions.block.DiskHealthDetails
+	34, // 6: talos.resource.definitions.block.DiskSelector.match:type_name -> google.api.expr.v1alpha1.CheckedExpr
+	35, // 7: talos.resource.definitions.block.EncryptionKey.type:type_name -> talos.resource.definitions.enums.BlockEncryptionKeyType
+	36, // 8: talos.resource.definitions.block.EncryptionSpec.provider:type_name -> talos.resource.definitions.enums.BlockEncryptionProviderType
+	10, // 9: talos.resource.definitions.block.EncryptionSpec.keys:type_name -> talos.resource.definitions.block.EncryptionKey
+	37, // 10: talos.resource.definitions.block.FilesystemSpec.type:type_name -> talos.resource.definitions.enums.BlockFilesystemType
+	34, // 11: talos.resource.definitions.block.LocatorSpec.match:type_name -> google.api.expr.v1alpha1.CheckedExpr
+	34, // 12: talos.resource.definitions.block.LocatorSpec.disk_match:type_name -> google.api.expr.v1alpha1.CheckedExpr
+	17, // 13: talos.resource.definitions.block.MountSpec.parameters:type_name -> talos.resource.definitions.block.ParameterSpec
+	14, // 14: talos.resource.definitions.block.MountStatusSpec.spec:type_name -> talos.resource.definitions.block.MountRequestSpec
+	37, // 15: talos.resource.definitions.block.MountStatusSpec.filesystem:type_name -> talos.resource.definitions.enums.BlockFilesystemType
+	36, // 16: talos.resource.definitions.block.MountStatusSpec.encryption_provider:type_name -> talos.resource.definitions.enums.BlockEncryptionProviderType
+	38, // 17: talos.resource.definitions.block.ParameterSpec.type:type_name -> talos.resource.definitions.enums.BlockFSParameterType
+	8,  // 18: talos.resource.definitions.block.ProvisioningSpec.disk_selector:type_name -> talos.resource.definitions.block.DiskSelector
+	18, // 19: talos.resource.definitions.block.ProvisioningSpec.partition_spec:type_name -> talos.resource.definitions.block.PartitionSpec
+	12, // 20: talos.resource.definitions.block.ProvisioningSpec.filesystem_spec:type_name -> talos.resource.definitions.block.FilesystemSpec
+	39, // 21: talos.resource.definitions.block.VolumeConfigSpec.type:type_name -> talos.resource.definitions.enums.BlockVolumeType
+	19, // 22: talos.resource.definitions.block.VolumeConfigSpec.provisioning:type_name -> talos.resource.definitions.block.ProvisioningSpec
+	13, // 23: talos.resource.definitions.block.VolumeConfigSpec.locator:type_name -> talos.resource.definitions.block.LocatorSpec
+	15, // 24: talos.resource.definitions.block.VolumeConfigSpec.mount:type_name -> talos.resource.definitions.block.MountSpec
+	11, // 25: talos.resource.definitions.block.VolumeConfigSpec.encryption:type_name -> talos.resource.definitions.block.EncryptionSpec
+	21, // 26: talos.resource.definitions.block.VolumeConfigSpec.symlink:type_name -> talos.resource.definitions.block.SymlinkProvisioningSpec
+	40, // 27: talos.resource.definitions.block.VolumeStatusSpec.phase:type_name -> talos.resource.definitions.enums.BlockVolumePhase
+	40, // 28: talos.resource.definitions.block.VolumeStatusSpec.pre_fail_phase:type_name -> talos.resource.definitions.enums.BlockVolumePhase
+	37, // 29: talos.resource.definitions.block.VolumeStatusSpec.filesystem:type_name -> talos.resource.definitions.enums.BlockFilesystemType
+	36, // 30: talos.resource.definitions.block.VolumeStatusSpec.encryption_provider:type_name -> talos.resource.definitions.enums.BlockEncryptionProviderType
+	15, // 31: talos.resource.definitions.block.VolumeStatusSpec.mount_spec:type_name -> talos.resource.definitions.block.MountSpec
+	39, // 32: talos.resource.definitions.block.VolumeStatusSpec.type:type_name -> talos.resource.definitions.enums.BlockVolumeType
+	21, // 33: talos.resource.definitions.block.VolumeStatusSpec.symlink_spec:type_name -> talos.resource.definitions.block.SymlinkProvisioningSpec
+	24, // 34: talos.resource.definitions.block.VolumeStatusSpec.tpm_encryption_options:type_name -> talos.resource.definitions.block.TPMEncryptionOptionsInfo
+	35, // [35:35] is the sub-list for method output_type
+	35, // [35:35] is the sub-list for method input_type
+	35, // [35:35] is the sub-list for extension type_name
+	35, // [35:35] is the sub-list for extension extendee
+	0,  // [0:35] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_block_block_proto_init() }
@@ -2879,7 +3235,7 @@ func file_resource_definitions_block_block_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_block_block_proto_rawDesc), len(file_resource_definitions_block_block_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   27,
+			NumMessages:   31,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

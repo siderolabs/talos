@@ -6,6 +6,7 @@ option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/defi
 option java_package = "dev.talos.api.resource.definitions.block";
 
 import "google/api/expr/v1alpha1/checked.proto";
+import "google/protobuf/timestamp.proto";
 import "resource/definitions/enums/enums.proto";
 
 // DeviceSpec is the spec for devices status.
@@ -62,6 +63,43 @@ message DiscoveryRefreshRequestSpec {
 // DiscoveryRefreshStatusSpec is the spec for DiscoveryRefreshStatus status.
 message DiscoveryRefreshStatusSpec {
   int64 request = 1;
+}
+
+// DiskHealthATADetails contains ATA SMART-specific health information.
+message DiskHealthATADetails {
+  uint64 reallocated_sector_count = 1;
+  uint64 current_pending_sector_count = 2;
+  uint64 offline_uncorrectable_count = 3;
+  uint64 reported_uncorrectable_errors = 4;
+  uint64 wear_leveling_count = 5;
+}
+
+// DiskHealthDetails contains backend-specific health details.
+message DiskHealthDetails {
+  DiskHealthNVMeDetails nv_me = 1;
+  DiskHealthATADetails ata = 2;
+}
+
+// DiskHealthNVMeDetails contains NVMe-specific health information.
+message DiskHealthNVMeDetails {
+  uint32 critical_warning = 1;
+  uint32 percentage_used = 2;
+  uint64 unsafe_shutdowns = 3;
+  uint64 media_and_data_integrity_errors = 4;
+}
+
+// DiskHealthStatusSpec is the spec for DiskHealthStatus resource.
+message DiskHealthStatusSpec {
+  string disk_id = 1;
+  string device = 2;
+  talos.resource.definitions.enums.BlockDiskHealthSource health_source = 3;
+  talos.resource.definitions.enums.BlockDiskHealthStatusValue status = 4;
+  int32 temperature_celsius = 5;
+  uint64 power_on_hours = 6;
+  uint64 power_cycles = 7;
+  google.protobuf.Timestamp last_checked = 8;
+  string error = 9;
+  DiskHealthDetails details = 10;
 }
 
 // DiskSelector selects a disk for the volume.

@@ -284,6 +284,16 @@ func (container *Container) ZswapConfig() config.ZswapConfig {
 	return matching[0]
 }
 
+// DiskHealthMonitoringConfig implements config.Config interface.
+func (container *Container) DiskHealthMonitoringConfig() config.DiskHealthMonitoringConfig {
+	matching := findMatchingDocs[config.DiskHealthMonitoringConfig](container.documents)
+	if len(matching) == 0 {
+		return nil
+	}
+
+	return matching[0]
+}
+
 // NetworkStaticHostConfig implements config.Config interface.
 func (container *Container) NetworkStaticHostConfig() []config.NetworkStaticHostConfig {
 	return slices.Concat(

@@ -5,6 +5,8 @@
 package config
 
 import (
+	"time"
+
 	"github.com/siderolabs/gen/optional"
 
 	"github.com/siderolabs/talos/pkg/machinery/cel"
@@ -200,4 +202,11 @@ type ZswapConfig interface {
 	ZswapConfigSignal()
 	MaxPoolPercent() int
 	ShrinkerEnabled() bool
+}
+
+// DiskHealthMonitoringConfig defines the interface to access disk health monitoring configuration.
+type DiskHealthMonitoringConfig interface {
+	DiskHealthMonitoringConfigSignal()
+	DiskHealthMonitoringEnabled() bool
+	DiskHealthMonitoringInterval() time.Duration
 }

@@ -296,6 +296,8 @@ description: Talos gRPC API reference.
     - [MachineType](#resource.config.MachineType)
   
 - [resource/definitions/enums/enums.proto](#resource/definitions/enums/enums.proto)
+    - [BlockDiskHealthSource](#talos.resource.definitions.enums.BlockDiskHealthSource)
+    - [BlockDiskHealthStatusValue](#talos.resource.definitions.enums.BlockDiskHealthStatusValue)
     - [BlockEncryptionKeyType](#talos.resource.definitions.enums.BlockEncryptionKeyType)
     - [BlockEncryptionProviderType](#talos.resource.definitions.enums.BlockEncryptionProviderType)
     - [BlockFSParameterType](#talos.resource.definitions.enums.BlockFSParameterType)
@@ -353,6 +355,10 @@ description: Talos gRPC API reference.
     - [DiscoveredVolumeSpec](#talos.resource.definitions.block.DiscoveredVolumeSpec)
     - [DiscoveryRefreshRequestSpec](#talos.resource.definitions.block.DiscoveryRefreshRequestSpec)
     - [DiscoveryRefreshStatusSpec](#talos.resource.definitions.block.DiscoveryRefreshStatusSpec)
+    - [DiskHealthATADetails](#talos.resource.definitions.block.DiskHealthATADetails)
+    - [DiskHealthDetails](#talos.resource.definitions.block.DiskHealthDetails)
+    - [DiskHealthNVMeDetails](#talos.resource.definitions.block.DiskHealthNVMeDetails)
+    - [DiskHealthStatusSpec](#talos.resource.definitions.block.DiskHealthStatusSpec)
     - [DiskSelector](#talos.resource.definitions.block.DiskSelector)
     - [DiskSpec](#talos.resource.definitions.block.DiskSpec)
     - [EncryptionKey](#talos.resource.definitions.block.EncryptionKey)
@@ -5102,6 +5108,34 @@ MachineType matches machine.Type constants.
  <!-- end messages -->
 
 
+<a name="talos.resource.definitions.enums.BlockDiskHealthSource"></a>
+
+### BlockDiskHealthSource
+BlockDiskHealthSource describes the source of disk health information.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| DISK_HEALTH_SOURCE_UNKNOWN | 0 |  |
+| DISK_HEALTH_SOURCE_NV_ME | 1 |  |
+| DISK_HEALTH_SOURCE_ATA | 2 |  |
+| DISK_HEALTH_SOURCE_UNSUPPORTED | 3 |  |
+
+
+
+<a name="talos.resource.definitions.enums.BlockDiskHealthStatusValue"></a>
+
+### BlockDiskHealthStatusValue
+BlockDiskHealthStatusValue describes the normalized health status of a disk.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| DISK_HEALTH_STATUS_VALUE_UNKNOWN | 0 |  |
+| DISK_HEALTH_STATUS_VALUE_HEALTHY | 1 |  |
+| DISK_HEALTH_STATUS_VALUE_WARNING | 2 |  |
+| DISK_HEALTH_STATUS_VALUE_CRITICAL | 3 |  |
+
+
+
 <a name="talos.resource.definitions.enums.BlockEncryptionKeyType"></a>
 
 ### BlockEncryptionKeyType
@@ -6298,6 +6332,83 @@ DiscoveryRefreshStatusSpec is the spec for DiscoveryRefreshStatus status.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | request | [int64](#int64) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.DiskHealthATADetails"></a>
+
+### DiskHealthATADetails
+DiskHealthATADetails contains ATA SMART-specific health information.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| reallocated_sector_count | [uint64](#uint64) |  |  |
+| current_pending_sector_count | [uint64](#uint64) |  |  |
+| offline_uncorrectable_count | [uint64](#uint64) |  |  |
+| reported_uncorrectable_errors | [uint64](#uint64) |  |  |
+| wear_leveling_count | [uint64](#uint64) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.DiskHealthDetails"></a>
+
+### DiskHealthDetails
+DiskHealthDetails contains backend-specific health details.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| nv_me | [DiskHealthNVMeDetails](#talos.resource.definitions.block.DiskHealthNVMeDetails) |  |  |
+| ata | [DiskHealthATADetails](#talos.resource.definitions.block.DiskHealthATADetails) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.DiskHealthNVMeDetails"></a>
+
+### DiskHealthNVMeDetails
+DiskHealthNVMeDetails contains NVMe-specific health information.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| critical_warning | [uint32](#uint32) |  |  |
+| percentage_used | [uint32](#uint32) |  |  |
+| unsafe_shutdowns | [uint64](#uint64) |  |  |
+| media_and_data_integrity_errors | [uint64](#uint64) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.DiskHealthStatusSpec"></a>
+
+### DiskHealthStatusSpec
+DiskHealthStatusSpec is the spec for DiskHealthStatus resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| disk_id | [string](#string) |  |  |
+| device | [string](#string) |  |  |
+| health_source | [talos.resource.definitions.enums.BlockDiskHealthSource](#talos.resource.definitions.enums.BlockDiskHealthSource) |  |  |
+| status | [talos.resource.definitions.enums.BlockDiskHealthStatusValue](#talos.resource.definitions.enums.BlockDiskHealthStatusValue) |  |  |
+| temperature_celsius | [int32](#int32) |  |  |
+| power_on_hours | [uint64](#uint64) |  |  |
+| power_cycles | [uint64](#uint64) |  |  |
+| last_checked | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
+| error | [string](#string) |  |  |
+| details | [DiskHealthDetails](#talos.resource.definitions.block.DiskHealthDetails) |  |  |
 
 
 

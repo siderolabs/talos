@@ -10,6 +10,42 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 )
 
+func (DiskHealthMonitoringConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "DiskHealthMonitoringConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "DiskHealthMonitoringConfig is a disk health monitoring configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "DiskHealthMonitoringConfig is a disk health monitoring configuration document.\nConfigures periodic disk health monitoring. When enabled, Talos collects\npassive health information from NVMe and ATA disks and publishes\nDiskHealthStatus resources.\n",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "enabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable or disable disk health monitoring.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable or disable disk health monitoring." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"true",
+					"false",
+				},
+			},
+			{
+				Name:        "interval",
+				Type:        "string",
+				Note:        "",
+				Description: "Polling interval for disk health checks.\nMust be a valid Go duration string (e.g. \"5m\", \"30s\", \"1h\").",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Polling interval for disk health checks." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleDiskHealthMonitoringConfigV1Alpha1())
+
+	return doc
+}
+
 func (EncryptionSpec) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "EncryptionSpec",
@@ -946,6 +982,7 @@ func GetFileDoc() *encoder.FileDoc {
 		Name:        "block",
 		Description: "Package block provides block device and volume configuration documents.\n",
 		Structs: []*encoder.Doc{
+			DiskHealthMonitoringConfigV1Alpha1{}.Doc(),
 			EncryptionSpec{}.Doc(),
 			EncryptionKey{}.Doc(),
 			EncryptionKeyStatic{}.Doc(),
