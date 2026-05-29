@@ -20,6 +20,7 @@ tool (
 	github.com/siderolabs/talos/tools/docgen
 	github.com/siderolabs/talos/tools/gotagsrewrite
 	github.com/siderolabs/talos/tools/labeled-squashfs
+	github.com/siderolabs/talos/tools/loglinter
 	github.com/siderolabs/talos/tools/sbom-builder
 	github.com/siderolabs/talos/tools/structprotogen
 	golang.org/x/tools/cmd/goimports
@@ -37,6 +38,7 @@ replace (
 	github.com/siderolabs/talos/tools/docgen => ./docgen
 	github.com/siderolabs/talos/tools/gotagsrewrite => ./gotagsrewrite
 	github.com/siderolabs/talos/tools/labeled-squashfs => ./labeled-squashfs
+	github.com/siderolabs/talos/tools/loglinter => ./loglinter
 	github.com/siderolabs/talos/tools/sbom-builder => ./sbom-builder
 	github.com/siderolabs/talos/tools/structprotogen => ./structprotogen
 )
@@ -479,12 +481,13 @@ require (
 	github.com/siderolabs/go-pointer v1.0.1 // indirect
 	github.com/siderolabs/go-retry v0.3.3 // indirect
 	github.com/siderolabs/importvet v0.2.0 // indirect
-	github.com/siderolabs/talos/tools/cloud-image-uploader v0.0.0-00010101000000-000000000000 // indirect
-	github.com/siderolabs/talos/tools/docgen v0.0.0-20260507165959-087bc4c188e2 // indirect
-	github.com/siderolabs/talos/tools/gotagsrewrite v0.0.0-20260507165959-087bc4c188e2 // indirect
-	github.com/siderolabs/talos/tools/labeled-squashfs v0.0.0-20260507165959-087bc4c188e2 // indirect
+	github.com/siderolabs/talos/tools/cloud-image-uploader v0.0.0-20260528160626-b50ee396f6c6 // indirect
+	github.com/siderolabs/talos/tools/docgen v0.0.0-20260528160626-b50ee396f6c6 // indirect
+	github.com/siderolabs/talos/tools/gotagsrewrite v0.0.0-20260528160626-b50ee396f6c6 // indirect
+	github.com/siderolabs/talos/tools/labeled-squashfs v0.0.0-20260528160626-b50ee396f6c6 // indirect
+	github.com/siderolabs/talos/tools/loglinter v0.0.0-00010101000000-000000000000 // indirect
 	github.com/siderolabs/talos/tools/sbom-builder v0.0.0-00010101000000-000000000000 // indirect
-	github.com/siderolabs/talos/tools/structprotogen v0.0.0-20260507165959-087bc4c188e2 // indirect
+	github.com/siderolabs/talos/tools/structprotogen v0.0.0-20260528160626-b50ee396f6c6 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
 	github.com/sivchari/containedctx v1.0.3 // indirect
 	github.com/skeema/knownhosts v1.3.2 // indirect

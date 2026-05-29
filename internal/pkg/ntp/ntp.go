@@ -262,7 +262,7 @@ func (syncer *Syncer) query(ctx context.Context) (lastSyncServer string, measure
 	if lastSyncServer != "" {
 		measurement, err = syncer.queryServer(lastSyncServer)
 		if err != nil {
-			syncer.logger.Error(fmt.Sprintf("time query error with server %q", lastSyncServer), zap.Error(err))
+			syncer.logger.Error("time query error", zap.String("server", lastSyncServer), zap.Error(err))
 
 			failedServer = lastSyncServer
 			lastSyncServer = ""
@@ -296,7 +296,7 @@ func (syncer *Syncer) query(ctx context.Context) (lastSyncServer string, measure
 
 			measurement, err = syncer.queryServer(server)
 			if err != nil {
-				syncer.logger.Error(fmt.Sprintf("time query error with server %q", server), zap.Error(err))
+				syncer.logger.Error("time query error", zap.String("server", server), zap.Error(err))
 				err = nil
 			} else {
 				syncer.setLastSyncServer(server)
@@ -334,7 +334,7 @@ func (syncer *Syncer) resolveServers(ctx context.Context) ([]string, error) {
 		default:
 			ips, err := syncer.lookupIPAddrWithTimeout(ctx, server, 5*time.Second)
 			if err != nil {
-				syncer.logger.Error(fmt.Sprintf("failed looking up %q, ignored", server), zap.Error(err))
+				syncer.logger.Error("failed looking up server, ignored", zap.String("server", server), zap.Error(err))
 			}
 
 			for _, ip := range ips {

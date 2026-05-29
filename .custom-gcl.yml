@@ -1,0 +1,5 @@
+version: v2.12.2
+plugins:
+  - module: github.com/siderolabs/talos/tools/loglinter
+    import: github.com/siderolabs/talos/tools/loglinter/plugin
+    path: ./tools/loglinter

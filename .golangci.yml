@@ -17,6 +17,8 @@ output:
       colors: false
 linters:
   default: all
+  enable:
+    - loglinter
   disable:
     - contextcheck
     - depguard
@@ -59,6 +61,86 @@ linters:
     - wrapcheck
     - wsl # replaced by wsl_v5
   settings:
+    custom:
+      loglinter:
+        type: module
+        description: checks logging conventions
+        original-url: github.com/siderolabs/talos/tools/loglinter
+        settings:
+          exclude:
+            - "**/*_test.go"
+            - "vendor/**"
+          rules:
+            stdlib_log_calls:
+              allow:
+                # early boot / legacy runtime paths
+                - "internal/app/init/**/*.go"
+                - "internal/app/machined/pkg/runtime/v1alpha1/**/*.go"
+                - "internal/app/machined/revert.go"
+                - "internal/app/poweroff/**/*.go"
+
+                # CLI / installer
+                - "cmd/installer/**/*.go"
+                - "cmd/talosctl/**/*.go"
+
+                # current service compatibility exceptions
+                - "internal/app/apid/debug.go"
+                - "internal/app/apid/main.go"
+                - "internal/app/apid/service.go"
+                - "internal/app/dashboard/debug.go"
+                - "internal/app/dashboard/main.go"
+                - "internal/app/debug/container_streams.go"
+                - "internal/app/debug/debug.go"
+                - "internal/app/lifecycle/container.go"
+                - "internal/app/machined/internal/server/v1alpha1/v1alpha1_cluster.go"
+                - "internal/app/machined/internal/server/v1alpha1/v1alpha1_server.go"
+                - "internal/app/machined/main.go"
+                - "internal/app/machined/pkg/system/runner/containerd/containerd.go"
+                - "internal/app/machined/pkg/system/runner/goroutine/goroutine.go"
+                - "internal/app/machined/pkg/system/runner/process/process.go"
+                - "internal/app/machined/pkg/system/service_runner.go"
+                - "internal/app/machined/pkg/system/services/etcd.go"
+                - "internal/app/machined/pkg/system/system.go"
+                - "internal/app/storaged/server.go"
+                - "internal/app/trustd/internal/provider/provider.go"
+                - "internal/app/trustd/internal/reg/reg.go"
+                - "internal/app/trustd/main.go"
+
+                # internal compatibility / low-level package boundaries
+                - "internal/pkg/containers/image/console/progress.go"
+                - "internal/pkg/containers/image/progress/pull_progress.go"
+                - "internal/pkg/cri/pods.go"
+                - "internal/pkg/etcd/etcd.go"
+                - "internal/pkg/extensions/kernel_modules.go"
+                - "internal/pkg/install/install.go"
+                - "internal/pkg/logind/broker.go"
+                - "internal/pkg/mount/switchroot/switchroot.go"
+                - "internal/pkg/mount/v3/all.go"
+                - "internal/pkg/rng/tpm.go"
+                - "internal/pkg/secureboot/tpm2/pcr.go"
+                - "internal/pkg/selinux/selinux.go"
+                - "internal/pkg/uki/uki.go"
+
+                # package-specific exceptions
+                - "pkg/archiver/tar.go"
+                - "pkg/kubernetes/kubernetes.go"
+                - "pkg/logging/zap.go"
+                - "pkg/machinery/client/events.go"
+                - "pkg/provision/providers/qemu/launch.go"
+                - "pkg/provision/providers/qemu/launch_linux.go"
+                - "pkg/provision/providers/vm/dhcpd.go"
+                - "pkg/provision/providers/vm/internal/ipxe/ipxe.go"
+                - "pkg/startup/maxprocs.go"
+
+                # tooling
+                - "tools/**/*.go"
+            slog_imports:
+              allow:
+                - "internal/app/machined/pkg/runtime/v1alpha1/platform/vmware/vmware_supported.go"
+                - "pkg/provision/providers/vm/dnsd.go"
+            zap_root_component:
+              allow:
+                - "pkg/logging/zap.go"
     cyclop:
       max-complexity: 20
     dupl:

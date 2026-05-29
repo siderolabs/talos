@@ -77,7 +77,7 @@ func MountCgroups(ctx context.Context, log *zap.Logger, rt runtime.Runtime, next
 	}
 
 	if pointer.SafeDeref(procfs.ProcCmdline().Get(constants.KernelParamCGroups).First()) == "0" {
-		log.Warn(fmt.Sprintf("kernel argument %v is no longer supported", constants.KernelParamCGroups))
+		log.Warn("kernel argument is no longer supported", zap.String("argument", constants.KernelParamCGroups))
 	}
 
 	cgroup := mount.NewCgroup2()

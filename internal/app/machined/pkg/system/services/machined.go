@@ -216,7 +216,7 @@ func (s *machinedService) Main(ctx context.Context, _ runtime.Runtime, logWriter
 			logWriter, zapcore.DebugLevel,
 			logging.WithColoredLevels(),
 		),
-	)
+	).With(logging.Component("machined"))
 
 	// Start the API server.
 	server := factory.NewServer( //nolint:contextcheck

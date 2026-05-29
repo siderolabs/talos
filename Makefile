@@ -556,6 +556,10 @@ lint: ## Runs linters on go, vulncheck, deadcode, protobuf, and markdown file ty
 lint-fmt: ## Run all linter formatters and fix up the source tree.
 	@$(MAKE) local-lint-golangci-lint-fmt DEST=./ PLATFORM=linux/$(ARCH)
 
+.PHONY: golangci-lint-custom
+golangci-lint-custom: ## Builds the custom golangci-lint binary with the loglinter plugin and outputs it to the artifact directory.
+	@$(MAKE) local-$@ DEST=$(ARTIFACTS) PLATFORM=linux/$(ARCH) PUSH=false
+
 check-dirty: ## Verifies that source tree is not dirty
 	@if test -n "`git status --porcelain`"; then echo "Source tree is dirty"; git status; git diff; exit 1 ; fi
 

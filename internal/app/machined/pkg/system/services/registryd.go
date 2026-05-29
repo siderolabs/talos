@@ -51,7 +51,7 @@ func (r *registryD) Runner(rt runtime.Runtime) (runner.Runner, error) {
 	return goroutine.NewRunner(rt, "registryd", func(ctx context.Context, r runtime.Runtime, logOutput io.Writer) error {
 		logger := logging.ZapLogger(
 			logging.NewLogDestination(logOutput, zapcore.DebugLevel, logging.WithColoredLevels()),
-		)
+		).With(logging.Component("registryd"))
 
 		st := r.State().V1Alpha2().Resources()
 		it := func(yield func(string) bool) {

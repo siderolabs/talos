@@ -9,5 +9,6 @@ use (
 	./tools/gotagsrewrite
 	./tools/labeled-squashfs
 	./tools/sbom-builder
+	./tools/loglinter
 	./tools/structprotogen
 )

@@ -278,7 +278,7 @@ WORKDIR /src
 # The build-go target creates a container to build Go code with Go modules downloaded and verified.
 
 FROM build AS build-go
-COPY ./go.mod ./go.sum ./go.work ./
+COPY ./go.mod ./go.sum ./go.work ./.custom-gcl.yml ./
 COPY ./pkg/machinery/go.mod ./pkg/machinery/go.sum ./pkg/machinery/
 COPY ./tools ./tools
 WORKDIR /src
@@ -1337,31 +1337,42 @@ COPY --link --from=integration-test-provision-linux-build /src/integration.test 
 # All depend on lint-go-config (gating) by bind-mounting /verified from it.
 # Cache mounts: Go cache shared (concurrency-safe), lint cache locked (golangci-lint corruption protection).
 
+FROM base AS lint-golangci-lint-custom
+RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=shared \
+    go tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint custom
+
+FROM scratch AS golangci-lint-custom
+COPY --link --from=lint-golangci-lint-custom /src/custom-gcl /custom-gcl
+
 FROM base AS lint-go-config
+COPY --link --from=lint-golangci-lint-custom /src/custom-gcl /usr/local/bin/custom-gcl
 RUN --mount=type=bind,source=.golangci.yml,target=/src/.golangci.yml \
     --mount=type=cache,target=/.cache,id=talos/.cache,sharing=shared \
     --mount=type=cache,target=/.cache/lint,id=talos/.cache/lint,sharing=locked \
-    GOGC=50 GOLANGCI_LINT_CACHE=/.cache/lint go tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint config verify --config .golangci.yml \
+    GOGC=50 GOLANGCI_LINT_CACHE=/.cache/lint custom-gcl config verify --config .golangci.yml \
     && touch /verified
 
 FROM base AS lint-go-talos
+COPY --link --from=lint-golangci-lint-custom /src/custom-gcl /usr/local/bin/custom-gcl
 RUN --mount=type=bind,from=lint-go-config,source=/verified,target=/tmp/.config-verified \
     --mount=type=bind,source=.golangci.yml,target=/src/.golangci.yml \
     --mount=type=cache,target=/.cache,id=talos/.cache,sharing=shared \
     --mount=type=cache,target=/.cache/lint,id=talos/.cache/lint,sharing=locked \
-    GOGC=50 GOLANGCI_LINT_CACHE=/.cache/lint go tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint run --config .golangci.yml \
+    GOGC=50 GOLANGCI_LINT_CACHE=/.cache/lint custom-gcl run --config .golangci.yml \
     && touch /verified
 
 FROM base AS lint-go-machinery
+COPY --link --from=lint-golangci-lint-custom /src/custom-gcl /usr/local/bin/custom-gcl
 WORKDIR /src/pkg/machinery
 RUN --mount=type=bind,from=lint-go-config,source=/verified,target=/tmp/.config-verified \
     --mount=type=bind,source=.golangci.yml,target=/src/.golangci.yml \
     --mount=type=cache,target=/.cache,id=talos/.cache,sharing=shared \
     --mount=type=cache,target=/.cache/lint,id=talos/.cache/lint,sharing=locked \
-    GOGC=50 GOLANGCI_LINT_CACHE=/.cache/lint go tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint run --config ../../.golangci.yml \
+    GOGC=50 GOLANGCI_LINT_CACHE=/.cache/lint custom-gcl run --config ../../.golangci.yml \
     && touch /verified
 
 FROM base AS lint-go-tools
+COPY --link --from=lint-golangci-lint-custom /src/custom-gcl /usr/local/bin/custom-gcl
 RUN --mount=type=bind,from=lint-go-config,source=/verified,target=/tmp/.config-verified \
     --mount=type=bind,source=.golangci.yml,target=/src/.golangci.yml \
     --mount=type=cache,target=/.cache,id=talos/.cache,sharing=shared \
@@ -1371,7 +1382,7 @@ for d in /src/tools/*/; do
     [ -f "$d/go.mod" ] || continue
     echo "::: linting $d"
     cd "$d"
-    GOGC=50 GOLANGCI_LINT_CACHE=/.cache/lint go tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint run --config /src/.golangci.yml
+    GOGC=50 GOLANGCI_LINT_CACHE=/.cache/lint custom-gcl run --config /src/.golangci.yml
 done
 touch /verified
 EOF
@@ -1390,22 +1401,23 @@ COPY --link --from=lint-go-importvet /verified /lint-go-importvet
 
 # The lint-golangci-lint-fmt target runs the golangci-lint formatter and fixes issues automatically.
 FROM base AS lint-golangci-lint-fmt-run
+COPY --link --from=lint-golangci-lint-custom /src/custom-gcl /usr/local/bin/custom-gcl
 COPY .golangci.yml .
 ENV GOGC=50
 ENV GOLANGCI_LINT_CACHE=/.cache/lint
-RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=shared --mount=type=cache,target=/.cache/lint,id=talos/.cache/lint,sharing=locked go tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint fmt --config .golangci.yml
-RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=shared --mount=type=cache,target=/.cache/lint,id=talos/.cache/lint,sharing=locked go tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint run --fix --issues-exit-code 0 --config .golangci.yml
+RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=shared --mount=type=cache,target=/.cache/lint,id=talos/.cache/lint,sharing=locked custom-gcl fmt --config .golangci.yml
+RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=shared --mount=type=cache,target=/.cache/lint,id=talos/.cache/lint,sharing=locked custom-gcl run --fix --issues-exit-code 0 --config .golangci.yml
 WORKDIR /src/pkg/machinery
-RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=shared --mount=type=cache,target=/.cache/lint,id=talos/.cache/lint,sharing=locked go tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint fmt --config ../../.golangci.yml
-RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=shared --mount=type=cache,target=/.cache/lint,id=talos/.cache/lint,sharing=locked go tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint run --fix --issues-exit-code 0 --config ../../.golangci.yml
+RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=shared --mount=type=cache,target=/.cache/lint,id=talos/.cache/lint,sharing=locked custom-gcl fmt --config ../../.golangci.yml
+RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=shared --mount=type=cache,target=/.cache/lint,id=talos/.cache/lint,sharing=locked custom-gcl run --fix --issues-exit-code 0 --config ../../.golangci.yml
 RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=shared \
     --mount=type=cache,target=/.cache/lint,id=talos/.cache/lint,sharing=locked <<EOF
 set -euo pipefail
 for d in /src/tools/*/; do
     [ -f "$d/go.mod" ] || continue
     cd "$d"
-    go tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint fmt --config /src/.golangci.yml
-    go tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint run --fix --issues-exit-code 0 --config /src/.golangci.yml
+    custom-gcl fmt --config /src/.golangci.yml
+    custom-gcl run --fix --issues-exit-code 0 --config /src/.golangci.yml
 done
 EOF
 WORKDIR /src
