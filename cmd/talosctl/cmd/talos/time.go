@@ -64,7 +64,7 @@ var timeCmd = &cobra.Command{
 				node := defaultNode
 
 				if msg.Metadata != nil {
-					node = msg.Metadata.Hostname
+					node = msg.Metadata.Hostname //nolint:staticcheck // to be refactored next
 				}
 
 				if !msg.Localtime.IsValid() {

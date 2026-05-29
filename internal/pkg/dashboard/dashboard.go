@@ -566,7 +566,7 @@ func collectNodeIPsToNodeAliases(ctx context.Context, c *client.Client) (map[str
 
 	nodes := nodeAliasesInContext(ctx)
 	for _, node := range nodes {
-		ctx = client.WithNodes(ctx, node) //nolint:fatcontext // do not replace this with "WithNode" - it would not return the IP in the response metadata
+		ctx = client.WithNodes(ctx, node) //nolint:fatcontext,staticcheck // do not replace this with "WithNode" - it would not return the IP in the response metadata
 
 		resp, err := c.Version(ctx)
 		if err != nil {
@@ -577,7 +577,7 @@ func collectNodeIPsToNodeAliases(ctx context.Context, c *client.Client) (map[str
 			return nil, fmt.Errorf("node %q returned no messages in version response", node)
 		}
 
-		nodeIP := resp.GetMessages()[0].GetMetadata().GetHostname()
+		nodeIP := resp.GetMessages()[0].GetMetadata().GetHostname() //nolint:staticcheck // legacy behavior
 		if nodeIP == "" {
 			return nil, fmt.Errorf("node %q returned no IP in version response", node)
 		}

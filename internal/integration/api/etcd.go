@@ -8,13 +8,11 @@ package api
 
 import (
 	"context"
-	"io"
 	"testing"
 	"time"
 
 	"github.com/blang/semver/v4"
 	"github.com/cosi-project/runtime/pkg/safe"
-	"google.golang.org/grpc/codes"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -67,7 +65,7 @@ func (suite *EtcdSuite) TestForfeitLeadership() {
 
 	for _, node := range nodes {
 		resp, err := suite.Client.EtcdForfeitLeadership(
-			client.WithNodes(suite.ctx, node),
+			client.WithNode(suite.ctx, node),
 			&machineapi.EtcdForfeitLeadershipRequest{},
 		)
 		suite.Require().NoError(err)
@@ -108,7 +106,7 @@ func (suite *EtcdSuite) TestLeaveCluster() {
 
 	suite.T().Log("Removing etcd member", node)
 
-	nodeCtx := client.WithNodes(suite.ctx, node)
+	nodeCtx := client.WithNode(suite.ctx, node)
 
 	_, err := suite.Client.EtcdForfeitLeadership(nodeCtx, &machineapi.EtcdForfeitLeadershipRequest{})
 	suite.Require().NoError(err)
@@ -128,21 +126,13 @@ func (suite *EtcdSuite) TestLeaveCluster() {
 	stream, err := suite.Client.MachineClient.List(nodeCtx, &machineapi.ListRequest{Root: constants.EtcdDataPath})
 	suite.Require().NoError(err)
 
-	for {
-		var info *machineapi.FileInfo
+	_, err = stream.Recv()
+	suite.Require().Error(err)
 
-		info, err = stream.Recv()
-		if err != nil {
-			if err == io.EOF || client.StatusCode(err) == codes.Canceled {
-				break
-			}
-		}
-
-		suite.Assert().Equal(
-			"rpc error: code = Unknown desc = lstat /var/lib/etcd: no such file or directory",
-			info.Metadata.Error,
-		)
-	}
+	suite.Assert().EqualError(
+		err,
+		"rpc error: code = Unknown desc = lstat /var/lib/etcd: no such file or directory",
+	)
 
 	// NB: Reboot the node so that it can rejoin the etcd cluster. This allows us
 	// to check the cluster health and catch any issues in rejoining.
@@ -311,7 +301,7 @@ func (suite *EtcdSuite) TestDowngrade() {
 
 	// test the downgrade validate API
 	validateResp, err := suite.Client.EtcdDowngradeValidate(
-		client.WithNodes(suite.ctx, node),
+		client.WithNode(suite.ctx, node),
 		&machineapi.EtcdDowngradeValidateRequest{Version: downgradeTo},
 	)
 	suite.Require().NoError(err)
@@ -322,7 +312,7 @@ func (suite *EtcdSuite) TestDowngrade() {
 
 	// test the downgrade enable API
 	enableResp, err := suite.Client.EtcdDowngradeEnable(
-		client.WithNodes(suite.ctx, node),
+		client.WithNode(suite.ctx, node),
 		&machineapi.EtcdDowngradeEnableRequest{Version: downgradeTo},
 	)
 	suite.Require().NoError(err)
@@ -333,7 +323,7 @@ func (suite *EtcdSuite) TestDowngrade() {
 
 	// test the downgrade cancel API
 	cancelResp, err := suite.Client.EtcdDowngradeCancel(
-		client.WithNodes(suite.ctx, node),
+		client.WithNode(suite.ctx, node),
 	)
 	suite.Require().NoError(err)
 

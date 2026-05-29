@@ -14,8 +14,8 @@ import (
 )
 
 // Unary initiates a multiplexed unary gRPC client call to multiple nodes.
-func Unary[ResponseT any](ctx context.Context, nodes []string, initiate func(context.Context) (*ResponseT, error)) <-chan Response[*ResponseT] {
-	responseCh := make(chan Response[*ResponseT])
+func Unary[ResponseT any](ctx context.Context, nodes []string, initiate func(context.Context) (ResponseT, error)) <-chan Response[ResponseT] {
+	responseCh := make(chan Response[ResponseT])
 
 	var wg sync.WaitGroup
 
@@ -25,7 +25,7 @@ func Unary[ResponseT any](ctx context.Context, nodes []string, initiate func(con
 			if err != nil {
 				channel.SendWithContext(
 					ctx, responseCh,
-					Response[*ResponseT]{
+					Response[ResponseT]{
 						Node: node,
 						Err:  err,
 					},
@@ -36,7 +36,7 @@ func Unary[ResponseT any](ctx context.Context, nodes []string, initiate func(con
 
 			channel.SendWithContext(
 				ctx, responseCh,
-				Response[*ResponseT]{
+				Response[ResponseT]{
 					Node:    node,
 					Payload: response,
 				},

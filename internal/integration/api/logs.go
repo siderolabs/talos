@@ -46,7 +46,7 @@ func (suite *LogsSuite) SetupTest() {
 	// make sure API calls have timeout
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 2*time.Minute)
 
-	suite.nodeCtx = client.WithNodes(suite.ctx, suite.RandomDiscoveredNodeInternalIP())
+	suite.nodeCtx = client.WithNode(suite.ctx, suite.RandomDiscoveredNodeInternalIP())
 }
 
 // TearDownTest ...
@@ -207,10 +207,9 @@ func (suite *LogsSuite) TestServiceNotFound() {
 
 	suite.Require().NoError(logsStream.CloseSend())
 
-	msg, err := logsStream.Recv()
-	suite.Require().NoError(err)
-
-	suite.Require().Regexp(`.+log "nosuchservice" was not registered$`, msg.Metadata.Error)
+	_, err = logsStream.Recv()
+	suite.Require().Error(err)
+	suite.Require().Regexp(`.+log "nosuchservice" was not registered$`, err.Error())
 }
 
 // TestStreaming verifies that logs are streamed in real-time.

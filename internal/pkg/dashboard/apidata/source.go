@@ -101,7 +101,7 @@ func unpack[T helpers.Message](source *Source, nodes map[string]*Node, resultLoc
 			nodes[node] = &Node{}
 		}
 
-		if msg.GetMetadata().GetError() != "" {
+		if msg.GetMetadata().GetError() != "" { //nolint:staticcheck // legacy behavior
 			continue
 		}
 
@@ -244,7 +244,7 @@ func (source *Source) gather() *Data {
 }
 
 func (source *Source) node(msg helpers.Message) string {
-	hostname := msg.GetMetadata().GetHostname()
+	hostname := msg.GetMetadata().GetHostname() //nolint:staticcheck // legacy behavior
 
 	return source.Resolver.Resolve(hostname)
 }

@@ -180,8 +180,8 @@ func healthOnServer(ctx context.Context, c *client.Client) error {
 			return err
 		}
 
-		if msg.GetMetadata().GetError() != "" {
-			return fmt.Errorf("healthcheck error: %s", msg.GetMetadata().GetError())
+		if msg.GetMetadata().GetError() != "" { //nolint:staticcheck // to be refactored next
+			return fmt.Errorf("healthcheck error: %s", msg.GetMetadata().GetError()) //nolint:staticcheck // to be refactored next
 		}
 
 		fmt.Fprintln(os.Stderr, msg.GetMessage())

@@ -35,6 +35,8 @@ func FailIfMultiNodes(ctx context.Context, command string) error {
 }
 
 // CheckErrors goes through the returned message list and checks if any messages have errors set.
+//
+//nolint:staticcheck // to be refactored next
 func CheckErrors[T interface{ GetMetadata() *common.Metadata }](messages ...T) error {
 	var err error
 
@@ -61,7 +63,7 @@ func TalosVersionCheck(ctx context.Context, c *client.Client, desired semver.Ran
 	var errs error
 
 	for _, msg := range serverVersions.GetMessages() {
-		node := msg.GetMetadata().GetHostname()
+		node := msg.GetMetadata().GetHostname() //nolint:staticcheck // to be refactored next
 
 		serverVersion, err := semver.ParseTolerant(msg.GetVersion().Tag)
 		if err != nil {
@@ -89,7 +91,7 @@ func ClientVersionCheck(ctx context.Context, c *client.Client) error {
 	var warnings []string
 
 	for _, msg := range serverVersions.GetMessages() {
-		node := msg.GetMetadata().GetHostname()
+		node := msg.GetMetadata().GetHostname() //nolint:staticcheck // to be refactored next
 
 		serverVersion, err := semver.ParseTolerant(msg.GetVersion().Tag)
 		if err != nil {

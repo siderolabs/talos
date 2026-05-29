@@ -16,7 +16,9 @@ import (
 	"google.golang.org/grpc/codes"
 
 	"github.com/siderolabs/talos/pkg/conditions"
+	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
@@ -32,11 +34,9 @@ func AllNodesMemorySizes(ctx context.Context, cluster ClusterInfo) error {
 	}
 
 	nodesIP, err := getNonContainerNodes(
-		client.WithNodes(
-			ctx,
-			mapIPsToStrings(mapNodeInfosToInternalIPs(cluster.Nodes()))...,
-		),
+		ctx,
 		cl,
+		mapIPsToStrings(mapNodeInfosToInternalIPs(cluster.Nodes())),
 	)
 	if err != nil {
 		return err
@@ -46,21 +46,25 @@ func AllNodesMemorySizes(ctx context.Context, cluster ClusterInfo) error {
 		return nil
 	}
 
-	resp, err := cl.Memory(client.WithNodes(ctx, nodesIP...))
-	if err != nil {
-		return fmt.Errorf("error getting nodes memory: %w", err)
-	}
+	respCh := multiplex.Unary(
+		ctx, nodesIP,
+		func(ctx context.Context) (*machineapi.MemoryResponse, error) {
+			return cl.Memory(ctx)
+		},
+	)
 
 	var resultErr error
 
 	nodeToType := getNodesTypes(cluster, machine.TypeInit, machine.TypeControlPlane, machine.TypeWorker)
 
-	for _, msg := range resp.Messages {
-		if msg.Metadata == nil {
-			return errors.New("no metadata in the response")
-		}
+	for resp := range respCh {
+		hostname := resp.Node
 
-		hostname := msg.Metadata.Hostname
+		if resp.Err != nil {
+			resultErr = multierror.Append(resultErr, fmt.Errorf("error getting memory info for node %q: %w", hostname, resp.Err))
+
+			continue
+		}
 
 		typ, ok := nodeToType[hostname]
 		if !ok {
@@ -73,6 +77,8 @@ func AllNodesMemorySizes(ctx context.Context, cluster ClusterInfo) error {
 
 			continue
 		}
+
+		msg := resp.Payload.GetMessages()[0]
 
 		if totalMemory := msg.Meminfo.Memtotal * humanize.KiByte; totalMemory < minimum {
 			resultErr = multierror.Append(
@@ -112,11 +118,9 @@ func AllNodesDiskSizes(ctx context.Context, cluster ClusterInfo) error {
 	}
 
 	nodesIP, err := getNonContainerNodes(
-		client.WithNodes(
-			ctx,
-			mapIPsToStrings(mapNodeInfosToInternalIPs(cluster.Nodes()))...,
-		),
+		ctx,
 		cl,
+		mapIPsToStrings(mapNodeInfosToInternalIPs(cluster.Nodes())),
 	)
 	if err != nil {
 		return err
@@ -163,25 +167,31 @@ func AllNodesDiskSizes(ctx context.Context, cluster ClusterInfo) error {
 	return resultErr
 }
 
-func getNonContainerNodes(ctx context.Context, cl *client.Client) ([]string, error) {
-	resp, err := cl.Version(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("error getting version: %w", err)
-	}
+func getNonContainerNodes(ctx context.Context, cl *client.Client, nodes []string) ([]string, error) {
+	respCh := multiplex.Unary(
+		ctx, nodes,
+		func(ctx context.Context) (*machineapi.VersionResponse, error) {
+			return cl.Version(ctx)
+		},
+	)
 
-	result := make([]string, 0, len(resp.Messages))
+	var errs error
 
-	for _, msg := range resp.Messages {
-		if msg.Metadata == nil {
-			return nil, errors.New("got empty metadata")
-		}
+	result := make([]string, 0, len(nodes))
 
-		if msg.Platform.Mode == "container" {
+	for resp := range respCh {
+		if resp.Err != nil {
+			errs = errors.Join(errs, fmt.Errorf("error getting version from node %q: %w", resp.Node, resp.Err))
+
 			continue
 		}
 
-		result = append(result, msg.Metadata.Hostname)
+		if resp.Payload.GetMessages()[0].GetPlatform().GetMode() == "container" {
+			continue
+		}
+
+		result = append(result, resp.Node)
 	}
 
-	return result, nil
+	return result, errs
 }

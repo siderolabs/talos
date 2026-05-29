@@ -11,11 +11,12 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/safe"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 	configmachine "github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
@@ -69,29 +70,31 @@ func (suite *VersionSuite) TestSameVersionCluster() {
 	nodes := suite.DiscoverNodeInternalIPs(suite.ctx)
 	suite.Require().NotEmpty(nodes)
 
-	ctx := client.WithNodes(suite.ctx, nodes...)
+	suite.Assert().EventuallyWithT(func(collect *assert.CollectT) {
+		asrt := assert.New(collect)
 
-	var v *machine.VersionResponse
+		respCh := multiplex.Unary(suite.ctx, nodes, func(ctx context.Context) (*machine.VersionResponse, error) {
+			return suite.Client.Version(ctx)
+		})
 
-	err := retry.Constant(
-		time.Minute,
-	).Retry(func() error {
-		var e error
+		var firstVersion string
 
-		v, e = suite.Client.Version(ctx)
+		for resp := range respCh {
+			if !asrt.NoError(resp.Err) {
+				continue
+			}
 
-		return retry.ExpectedError(e)
-	})
+			if !asrt.NotEmpty(resp.Payload.Messages) {
+				continue
+			}
 
-	suite.Require().NoError(err)
-
-	suite.Require().Len(v.Messages, len(nodes))
-
-	expectedVersion := v.Messages[0].Version.Tag
-
-	for _, version := range v.Messages {
-		suite.Assert().Equal(expectedVersion, version.Version.Tag)
-	}
+			if firstVersion == "" {
+				firstVersion = resp.Payload.Messages[0].Version.Tag
+			} else {
+				asrt.Equal(firstVersion, resp.Payload.Messages[0].Version.Tag)
+			}
+		}
+	}, time.Minute, time.Second)
 }
 
 func init() {

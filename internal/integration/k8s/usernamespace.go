@@ -50,7 +50,7 @@ func (suite *UserNamespaceSuite) TestUserNamespace() {
 
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 
-	nodeCtx := client.WithNodes(ctx, node)
+	nodeCtx := client.WithNode(ctx, node)
 
 	reader, err := suite.Client.Read(nodeCtx, "/proc/sys/user/max_user_namespaces")
 	suite.Require().NoError(err)

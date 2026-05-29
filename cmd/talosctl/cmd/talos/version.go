@@ -77,7 +77,7 @@ func cmdVersion(ctx context.Context, c *client.Client) error {
 		node := defaultNode
 
 		if msg.Metadata != nil {
-			node = msg.Metadata.Hostname
+			node = msg.Metadata.Hostname //nolint:staticcheck // to be refactored next
 		}
 
 		if !versionCmdFlags.json {

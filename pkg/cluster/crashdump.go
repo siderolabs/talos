@@ -49,8 +49,6 @@ func Crashdump(ctx context.Context, cluster provision.Cluster, logWriter io.Writ
 		return nodeInfo.IPs[0].String()
 	})
 
-	controlplane := nodes[0]
-
 	opts := []bundle.Option{
 		bundle.WithArchiveOutput(supportFile),
 		bundle.WithTalosClient(c),
@@ -59,7 +57,7 @@ func Crashdump(ctx context.Context, cluster provision.Cluster, logWriter io.Writ
 		bundle.WithLogOutput(io.Discard),
 	}
 
-	kubeclient, err := getKubernetesClient(ctx, c, controlplane)
+	kubeclient, err := getKubernetesClient(ctx, c)
 	// ignore error if we can't get a k8s client
 	if err == nil {
 		opts = append(opts, bundle.WithKubernetesClient(kubeclient))
@@ -81,8 +79,8 @@ func Crashdump(ctx context.Context, cluster provision.Cluster, logWriter io.Writ
 	}
 }
 
-func getKubernetesClient(ctx context.Context, c *client.Client, endpoint string) (*k8s.Clientset, error) {
-	kubeconfig, err := c.Kubeconfig(client.WithNodes(ctx, endpoint))
+func getKubernetesClient(ctx context.Context, c *client.Client) (*k8s.Clientset, error) {
+	kubeconfig, err := c.Kubeconfig(client.ClearNode(ctx))
 	if err != nil {
 		return nil, err
 	}

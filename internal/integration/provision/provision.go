@@ -31,6 +31,7 @@ import (
 	"github.com/siderolabs/go-procfs/procfs"
 	"github.com/siderolabs/go-retry/retry"
 	sideronet "github.com/siderolabs/net"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"go.yaml.in/yaml/v4"
 	"google.golang.org/grpc"
@@ -49,6 +50,7 @@ import (
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	talosclient "github.com/siderolabs/talos/pkg/machinery/client"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/bundle"
 	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
@@ -261,29 +263,27 @@ func (suite *BaseSuite) untaint(name string) {
 
 func (suite *BaseSuite) assertSameVersionCluster(client *talosclient.Client, expectedVersion string) {
 	nodes := xslices.Map(suite.Cluster.Info().Nodes, func(node provision.NodeInfo) string { return node.IPs[0].String() })
-	ctx := talosclient.WithNodes(suite.ctx, nodes...)
 
-	var v *machineapi.VersionResponse
+	suite.Assert().EventuallyWithT(
+		func(collect *assert.CollectT) {
+			asrt := assert.New(collect)
 
-	err := retry.Constant(
-		time.Minute,
-	).Retry(
-		func() error {
-			var e error
+			respCh := multiplex.Unary(
+				suite.ctx, nodes,
+				func(ctx context.Context) (*machineapi.VersionResponse, error) {
+					return client.Version(ctx)
+				},
+			)
 
-			v, e = client.Version(ctx)
-
-			return retry.ExpectedError(e)
+			for resp := range respCh {
+				if asrt.NoError(resp.Err, "error getting version from node %s: %v", resp.Node, resp.Err) {
+					asrt.Equal(expectedVersion, resp.Payload.Messages[0].Version.Tag, "unexpected version from node %s", resp.Node)
+				}
+			}
 		},
+		time.Minute,
+		time.Second,
 	)
-
-	suite.Require().NoError(err)
-
-	suite.Require().Len(v.Messages, len(nodes))
-
-	for _, version := range v.Messages {
-		suite.Assert().Equal(expectedVersion, version.Version.Tag)
-	}
 }
 
 func (suite *BaseSuite) assertCmdlineContains(client *talosclient.Client, node string, expectedCmdlineContains string) {
@@ -328,7 +328,7 @@ func (suite *BaseSuite) upgradeNode(client *talosclient.Client, node provision.N
 	ctx, cancel := context.WithCancel(suite.ctx)
 	defer cancel()
 
-	nodeCtx := talosclient.WithNodes(ctx, node.IPs[0].String())
+	nodeCtx := talosclient.WithNode(ctx, node.IPs[0].String())
 
 	// Staged upgrades are not supported by the new LifecycleService API,
 	// so skip straight to the legacy path.

@@ -80,7 +80,7 @@ func containerRender(remotePeer *peer.Peer, resp *machineapi.ContainersResponse)
 			node := defaultNode
 
 			if msg.Metadata != nil {
-				node = msg.Metadata.Hostname
+				node = msg.Metadata.Hostname //nolint:staticcheck // to be refactored next
 			}
 
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%d\t%s\n", node, p.Namespace, display, p.Image, p.Pid, p.Status)

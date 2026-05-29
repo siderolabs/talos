@@ -94,9 +94,9 @@ var duCmd = &cobra.Command{
 					size, info.RelativeName,
 				}
 
-				if info.Metadata != nil && info.Metadata.Hostname != "" {
+				if info.Metadata != nil && info.Metadata.Hostname != "" { //nolint:staticcheck // to be refactored next
 					multipleNodes = true
-					node = info.Metadata.Hostname
+					node = info.Metadata.Hostname //nolint:staticcheck // to be refactored next
 				}
 
 				if !addedHeader {

@@ -80,7 +80,7 @@ func statsRender(remotePeer *peer.Peer, resp *machineapi.StatsResponse) error {
 			node := defaultNode
 
 			if msg.Metadata != nil {
-				node = msg.Metadata.Hostname
+				node = msg.Metadata.Hostname //nolint:staticcheck // to be refactored next
 			}
 
 			fmt.Fprintf(w, "%s\t%s\t%s\t%.2f\t%d\n", node, s.Namespace, display, float64(s.MemoryUsage)*1e-6, s.CpuUsage)

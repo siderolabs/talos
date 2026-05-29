@@ -36,6 +36,7 @@ func (suite *DirectorSuite) SetupSuite() {
 			},
 		},
 		false,
+		suite.T().Logf,
 	)
 }
 
@@ -114,6 +115,7 @@ func (suite *DirectorSuite) TestDirectorNoRemoteBackend() {
 			},
 		},
 		false,
+		suite.T().Logf,
 	)
 
 	ctx := context.Background()
@@ -167,6 +169,7 @@ func (suite *DirectorSuite) TestDirectorNoRouting() {
 			},
 		},
 		true,
+		suite.T().Logf,
 	)
 
 	ctx := context.Background()

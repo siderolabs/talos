@@ -849,16 +849,7 @@ func (s *Server) Copy(req *machine.CopyRequest, obj machine.MachineService_CopyS
 		}
 	}
 
-	archiveErr := <-errCh
-	if archiveErr != nil {
-		return obj.SendMsg(&common.Data{
-			Metadata: &common.Metadata{
-				Error: archiveErr.Error(),
-			},
-		})
-	}
-
-	return nil
+	return <-errCh
 }
 
 // List implements the machine.MachineServer interface.
@@ -1680,18 +1671,14 @@ func (s *Server) Dmesg(req *machine.DmesgRequest, srv machine.MachineService_Dme
 			}
 
 			if packet.Err != nil {
-				err = srv.Send(&common.Data{
-					Metadata: &common.Metadata{
-						Error: packet.Err.Error(),
-					},
-				})
-			} else {
-				msg := packet.Message
-				err = srv.Send(&common.Data{
-					Bytes: fmt.Appendf(nil, "%s: %7s: [%s]: %s", msg.Facility, msg.Priority, msg.Timestamp.Format(time.RFC3339Nano), msg.Message),
-				})
+				return packet.Err
 			}
 
+			msg := packet.Message
+
+			err = srv.Send(&common.Data{
+				Bytes: fmt.Appendf(nil, "%s: %7s: [%s]: %s", msg.Facility, msg.Priority, msg.Timestamp.Format(time.RFC3339Nano), msg.Message),
+			})
 			if err != nil {
 				return err
 			}

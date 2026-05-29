@@ -46,7 +46,7 @@ func (suite *ApparmorSuite) TestApparmor() {
 
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 
-	nodeCtx := client.WithNodes(ctx, node)
+	nodeCtx := client.WithNode(ctx, node)
 
 	reader, err := suite.Client.Read(nodeCtx, "/sys/kernel/security/lsm")
 	suite.Require().NoError(err)

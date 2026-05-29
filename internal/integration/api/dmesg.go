@@ -13,7 +13,9 @@ import (
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
+	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 )
 
 // DmesgSuite verifies Dmesg API.
@@ -121,31 +123,20 @@ func (suite *DmesgSuite) TestClusterHasDmesg() {
 	nodes := suite.DiscoverNodeInternalIPs(suite.ctx)
 	suite.Require().NotEmpty(nodes)
 
-	ctx := client.WithNodes(suite.ctx, nodes...)
-
-	dmesgStream, err := suite.Client.Dmesg(
-		ctx,
-		false,
-		false,
-	)
-	suite.Require().NoError(err)
+	respCh := multiplex.Streaming(suite.ctx, nodes, func(ctx context.Context) (machine.MachineService_DmesgClient, error) {
+		return suite.Client.Dmesg(
+			ctx,
+			false,
+			false,
+		)
+	})
 
 	sizeByNode := map[string]int{}
 
-	for {
-		msg, err := dmesgStream.Recv()
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
+	for resp := range respCh {
+		suite.Require().NoError(resp.Err, "error calling Dmesg for node %q", resp.Node)
 
-			suite.Require().NoError(err)
-		}
-
-		suite.Require().NotNil(msg.Metadata)
-		suite.Assert().Empty(msg.Metadata.Error)
-
-		sizeByNode[msg.Metadata.Hostname] += len(msg.Bytes)
+		sizeByNode[resp.Node] += len(resp.Payload.Bytes)
 	}
 
 	for _, node := range nodes {

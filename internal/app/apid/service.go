@@ -79,7 +79,11 @@ func runService(ctx context.Context, resources state.State, config *runtime.APIS
 	localBackend := backend.NewLocal("machined", constants.MachineSocketPath)
 	defer localBackend.Close() //nolint:errcheck
 
-	router := director.NewRouter(remoteFactory, localBackend, localAddressProvider, config.TypedSpec().NodeRoutingDisabled)
+	router := director.NewRouter(
+		remoteFactory, localBackend, localAddressProvider,
+		config.TypedSpec().NodeRoutingDisabled,
+		log.New(log.Writer(), "apid/director ", log.Flags()).Printf,
+	)
 
 	// all existing streaming methods
 	for _, methodName := range []string{

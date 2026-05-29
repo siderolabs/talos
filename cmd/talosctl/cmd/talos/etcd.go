@@ -43,7 +43,7 @@ var etcdAlarmCmd = &cobra.Command{
 }
 
 type alarmMessage interface {
-	GetMetadata() *common.Metadata
+	GetMetadata() *common.Metadata //nolint:staticcheck // to be refactored next
 	GetMemberAlarms() []*machine.EtcdMemberAlarm
 }
 
@@ -54,8 +54,8 @@ func displayAlarms(messages []alarmMessage) error {
 	header := "MEMBER\tALARM"
 
 	for i, message := range messages {
-		if message.GetMetadata() != nil && message.GetMetadata().GetHostname() != "" {
-			node = message.GetMetadata().GetHostname()
+		if message.GetMetadata() != nil && message.GetMetadata().GetHostname() != "" { //nolint:staticcheck // to be refactored next
+			node = message.GetMetadata().GetHostname() //nolint:staticcheck // to be refactored next
 		}
 
 		for j, alarm := range message.GetMemberAlarms() {
@@ -225,8 +225,8 @@ var etcdMemberListCmd = &cobra.Command{
 			pattern := "%s\t%s\t%s\t%s\t%v\n"
 
 			for i, message := range response.Messages {
-				if message.Metadata != nil && message.Metadata.Hostname != "" {
-					node = message.Metadata.Hostname
+				if message.Metadata != nil && message.Metadata.Hostname != "" { //nolint:staticcheck // to be refactored next
+					node = message.Metadata.Hostname //nolint:staticcheck // to be refactored next
 				}
 
 				if len(message.Members) == 0 {
@@ -286,8 +286,8 @@ var etcdStatusCmd = &cobra.Command{
 			header := "MEMBER\tDB SIZE\tIN USE\tLEADER\tRAFT INDEX\tRAFT TERM\tRAFT APPLIED INDEX\tLEARNER\tPROTOCOL\tSTORAGE\tERRORS"
 
 			for i, message := range response.Messages {
-				if message.Metadata != nil && message.Metadata.Hostname != "" {
-					node = message.Metadata.Hostname
+				if message.Metadata != nil && message.Metadata.Hostname != "" { //nolint:staticcheck // to be refactored next
+					node = message.Metadata.Hostname //nolint:staticcheck // to be refactored next
 				}
 
 				if i == 0 {
@@ -435,8 +435,8 @@ var etcdDowngradeValidateCmd = &cobra.Command{
 			header := etcdDowngradeHeader
 
 			for i, message := range r.Messages {
-				if message.Metadata != nil && message.Metadata.Hostname != "" {
-					node = message.Metadata.Hostname
+				if message.Metadata != nil && message.Metadata.Hostname != "" { //nolint:staticcheck // to be refactored next
+					node = message.Metadata.Hostname //nolint:staticcheck // to be refactored next
 				}
 
 				if i == 0 {
@@ -490,8 +490,8 @@ var etcdDowngradeEnableCmd = &cobra.Command{
 			header := etcdDowngradeHeader
 
 			for i, message := range r.Messages {
-				if message.Metadata != nil && message.Metadata.Hostname != "" {
-					node = message.Metadata.Hostname
+				if message.Metadata != nil && message.Metadata.Hostname != "" { //nolint:staticcheck // to be refactored next
+					node = message.Metadata.Hostname //nolint:staticcheck // to be refactored next
 				}
 
 				if i == 0 {
@@ -543,8 +543,8 @@ var etcdDowngradeCancelCmd = &cobra.Command{
 			header := etcdDowngradeHeader
 
 			for i, message := range r.Messages {
-				if message.Metadata != nil && message.Metadata.Hostname != "" {
-					node = message.Metadata.Hostname
+				if message.Metadata != nil && message.Metadata.Hostname != "" { //nolint:staticcheck // to be refactored next
+					node = message.Metadata.Hostname //nolint:staticcheck // to be refactored next
 				}
 
 				if i == 0 {

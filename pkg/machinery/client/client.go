@@ -619,7 +619,7 @@ func (c *Client) ServiceList(ctx context.Context, callOptions ...grpc.CallOption
 
 // ServiceInfo provides info about a service and node metadata.
 type ServiceInfo struct {
-	Metadata *common.Metadata
+	Metadata *common.Metadata //nolint:staticcheck // legacy API
 	Service  *machineapi.ServiceInfo
 }
 
@@ -930,7 +930,7 @@ func ReadStream(stream MachineStream) (io.ReadCloser, error) {
 		for {
 			data, err := stream.Recv()
 			if err != nil {
-				if errors.Is(err, io.EOF) || StatusCode(err) == codes.Canceled || StatusCode(err) == codes.DeadlineExceeded {
+				if errors.Is(err, io.EOF) {
 					return
 				}
 
@@ -946,7 +946,7 @@ func ReadStream(stream MachineStream) (io.ReadCloser, error) {
 				}
 			}
 
-			if data.Metadata != nil && data.Metadata.Error != "" {
+			if data.Metadata != nil && data.Metadata.Error != "" { //nolint:staticcheck // legacy behavior
 				pw.CloseWithError(metaToErr(data.Metadata))
 
 				return
@@ -957,6 +957,7 @@ func ReadStream(stream MachineStream) (io.ReadCloser, error) {
 	return pr, stream.CloseSend()
 }
 
+//nolint:staticcheck
 func metaToErr(md *common.Metadata) error {
 	if md.Status == nil {
 		return errors.New(md.Error)

@@ -14,10 +14,10 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/emptypb"
 
-	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos/multiplex"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/api/storage"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 )
 
 // wipeCmd represents the wipe command.

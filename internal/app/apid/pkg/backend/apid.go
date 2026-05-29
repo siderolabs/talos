@@ -172,7 +172,7 @@ func (a *APID) GetConnection(ctx context.Context, _ string) (context.Context, *g
 // for new length of some response, and add back new field header.
 func (a *APID) AppendInfo(streaming bool, resp []byte) ([]byte, error) {
 	payload, err := proto.Marshal(&common.Empty{
-		Metadata: &common.Metadata{
+		Metadata: &common.Metadata{ //nolint:staticcheck // legacy behavior
 			Hostname: a.target,
 		},
 	})
@@ -238,7 +238,7 @@ func (a *APID) AppendInfo(streaming bool, resp []byte) ([]byte, error) {
 // message.
 func (a *APID) BuildError(streaming bool, err error) ([]byte, error) {
 	var resp proto.Message = &common.Empty{
-		Metadata: &common.Metadata{
+		Metadata: &common.Metadata{ //nolint:staticcheck // legacy behavior
 			Hostname: a.target,
 			Error:    err.Error(),
 			Status:   status.Convert(err).Proto(),

@@ -145,7 +145,7 @@ func getPathFromNode(ctx context.Context, path, filter string) map[string]struct
 					return fmt.Errorf("error streaming results: %s", err)
 				}
 
-				if resp.Metadata != nil && resp.Metadata.Error != "" {
+				if resp.Metadata != nil && resp.Metadata.Error != "" { //nolint:staticcheck // to be refactored next
 					continue
 				}
 

@@ -66,7 +66,7 @@ func briefRender(remotePeer *peer.Peer, resp *machineapi.MemoryResponse) error {
 		node := defaultNode
 
 		if msg.Metadata != nil {
-			node = msg.Metadata.Hostname
+			node = msg.Metadata.Hostname //nolint:staticcheck // to be refactored next
 		}
 
 		// Default to displaying output as MB
@@ -94,7 +94,7 @@ func verboseRender(remotePeer *peer.Peer, resp *machineapi.MemoryResponse) {
 		node := defaultNode
 
 		if msg.Metadata != nil {
-			node = msg.Metadata.Hostname
+			node = msg.Metadata.Hostname //nolint:staticcheck // to be refactored next
 		}
 
 		fmt.Printf("%s: %s\n", "NODE", node)

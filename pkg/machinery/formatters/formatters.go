@@ -50,7 +50,7 @@ func RenderMounts(resp *machine.MountsResponse, output io.Writer, remotePeer *pe
 			node := defaultNode
 
 			if msg.Metadata != nil {
-				node = msg.Metadata.Hostname
+				node = msg.Metadata.Hostname //nolint:staticcheck // to be refactored next
 			}
 
 			format := "%s\t%.02f\t%.02f\t%.02f\t%.02f%%\t%s\n"
@@ -212,7 +212,7 @@ func RenderServicesInfo(services []client.ServiceInfo, output io.Writer, default
 
 	for _, s := range services {
 		if s.Metadata != nil {
-			node = s.Metadata.Hostname
+			node = s.Metadata.Hostname //nolint:staticcheck // to be refactored next
 		}
 
 		if withNodeInfo {

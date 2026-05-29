@@ -230,14 +230,22 @@ func (x *Error) GetDetails() []*anypb.Any {
 }
 
 // Common metadata message nested in all reply message types
+//
+// Deprecated: Marked as deprecated in common/common.proto.
 type Metadata struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// hostname of the server response comes from (injected by proxy)
+	//
+	// Deprecated: Marked as deprecated in common/common.proto.
 	Hostname string `protobuf:"bytes,1,opt,name=hostname,proto3" json:"hostname,omitempty"`
 	// error is set if request failed to the upstream (rest of response is
 	// undefined)
+	//
+	// Deprecated: Marked as deprecated in common/common.proto.
 	Error string `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
 	// error as gRPC Status
+	//
+	// Deprecated: Marked as deprecated in common/common.proto.
 	Status        *status.Status `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -273,6 +281,7 @@ func (*Metadata) Descriptor() ([]byte, []int) {
 	return file_common_common_proto_rawDescGZIP(), []int{1}
 }
 
+// Deprecated: Marked as deprecated in common/common.proto.
 func (x *Metadata) GetHostname() string {
 	if x != nil {
 		return x.Hostname
@@ -280,6 +289,7 @@ func (x *Metadata) GetHostname() string {
 	return ""
 }
 
+// Deprecated: Marked as deprecated in common/common.proto.
 func (x *Metadata) GetError() string {
 	if x != nil {
 		return x.Error
@@ -287,6 +297,7 @@ func (x *Metadata) GetError() string {
 	return ""
 }
 
+// Deprecated: Marked as deprecated in common/common.proto.
 func (x *Metadata) GetStatus() *status.Status {
 	if x != nil {
 		return x.Status
@@ -971,11 +982,11 @@ const file_common_common_proto_rawDesc = "" +
 	"\x05Error\x12 \n" +
 	"\x04code\x18\x01 \x01(\x0e2\f.common.CodeR\x04code\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12.\n" +
-	"\adetails\x18\x03 \x03(\v2\x14.google.protobuf.AnyR\adetails\"h\n" +
-	"\bMetadata\x12\x1a\n" +
-	"\bhostname\x18\x01 \x01(\tR\bhostname\x12\x14\n" +
-	"\x05error\x18\x02 \x01(\tR\x05error\x12*\n" +
-	"\x06status\x18\x03 \x01(\v2\x12.google.rpc.StatusR\x06status\"J\n" +
+	"\adetails\x18\x03 \x03(\v2\x14.google.protobuf.AnyR\adetails\"x\n" +
+	"\bMetadata\x12\x1e\n" +
+	"\bhostname\x18\x01 \x01(\tB\x02\x18\x01R\bhostname\x12\x18\n" +
+	"\x05error\x18\x02 \x01(\tB\x02\x18\x01R\x05error\x12.\n" +
+	"\x06status\x18\x03 \x01(\v2\x12.google.rpc.StatusB\x02\x18\x01R\x06status:\x02\x18\x01\"J\n" +
 	"\x04Data\x12,\n" +
 	"\bmetadata\x18\x01 \x01(\v2\x10.common.MetadataR\bmetadata\x12\x14\n" +
 	"\x05bytes\x18\x02 \x01(\fR\x05bytes\"8\n" +

@@ -20,13 +20,13 @@ func TestFilterMessages(t *testing.T) {
 	reply := &common.DataResponse{
 		Messages: []*common.Data{
 			{
-				Metadata: &common.Metadata{
+				Metadata: &common.Metadata{ //nolint:staticcheck // testing legacy behavior
 					Hostname: "host1",
 				},
 				Bytes: []byte("abc"),
 			},
 			{
-				Metadata: &common.Metadata{
+				Metadata: &common.Metadata{ //nolint:staticcheck // testing legacy behavior
 					Hostname: "host2",
 					Error:    "something wrong",
 				},
@@ -35,7 +35,7 @@ func TestFilterMessages(t *testing.T) {
 				Bytes: []byte("def"),
 			},
 			{
-				Metadata: &common.Metadata{
+				Metadata: &common.Metadata{ //nolint:staticcheck // testing legacy behavior
 					Hostname: "host4",
 					Error:    "even more wrong",
 				},
@@ -49,7 +49,7 @@ func TestFilterMessages(t *testing.T) {
 		&common.DataResponse{
 			Messages: []*common.Data{
 				{
-					Metadata: &common.Metadata{
+					Metadata: &common.Metadata{ //nolint:staticcheck // testing legacy behavior
 						Hostname: "host1",
 					},
 					Bytes: []byte("abc"),
@@ -73,13 +73,13 @@ func TestFilterMessagesOnlyErrors(t *testing.T) {
 	reply := &common.DataResponse{
 		Messages: []*common.Data{
 			{
-				Metadata: &common.Metadata{
+				Metadata: &common.Metadata{ //nolint:staticcheck // testing legacy behavior
 					Hostname: "host2",
 					Error:    "something wrong",
 				},
 			},
 			{
-				Metadata: &common.Metadata{
+				Metadata: &common.Metadata{ //nolint:staticcheck // testing legacy behavior
 					Hostname: "host4",
 					Error:    "even more wrong",
 				},
@@ -96,7 +96,7 @@ func TestFilterMessagesGRPCStatus(t *testing.T) {
 	reply := &common.DataResponse{
 		Messages: []*common.Data{
 			{
-				Metadata: &common.Metadata{
+				Metadata: &common.Metadata{ //nolint:staticcheck // testing legacy behavior
 					Hostname: "host2",
 					Error:    "should be ignored",
 					Status: &status.Status{
@@ -106,7 +106,7 @@ func TestFilterMessagesGRPCStatus(t *testing.T) {
 				},
 			},
 			{
-				Metadata: &common.Metadata{
+				Metadata: &common.Metadata{ //nolint:staticcheck // testing legacy behavior
 					Hostname: "host4",
 					Error:    "should be ignored",
 					Status: &status.Status{

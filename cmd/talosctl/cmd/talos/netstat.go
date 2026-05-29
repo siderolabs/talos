@@ -228,11 +228,11 @@ func (n *netstat) getPodNetNsFromNode(ctx context.Context) (err error) {
 				continue
 			}
 
-			if n.NodeNetNSPods[msg.Metadata.Hostname] == nil {
-				n.NodeNetNSPods[msg.Metadata.Hostname] = make(map[string]string)
+			if n.NodeNetNSPods[msg.Metadata.Hostname] == nil { //nolint:staticcheck // to be refactored next
+				n.NodeNetNSPods[msg.Metadata.Hostname] = make(map[string]string) //nolint:staticcheck // to be refactored next
 			}
 
-			n.NodeNetNSPods[msg.Metadata.Hostname][p.NetworkNamespace] = p.Id
+			n.NodeNetNSPods[msg.Metadata.Hostname][p.NetworkNamespace] = p.Id //nolint:staticcheck // to be refactored next
 		}
 	}
 
@@ -262,8 +262,8 @@ func (n *netstat) printNetstat(response *machine.NetstatResponse) error {
 	node := ""
 
 	for i, message := range response.Messages {
-		if message.Metadata != nil && message.Metadata.Hostname != "" {
-			node = message.Metadata.Hostname
+		if message.Metadata != nil && message.Metadata.Hostname != "" { //nolint:staticcheck // to be refactored next
+			node = message.Metadata.Hostname //nolint:staticcheck // to be refactored next
 		}
 
 		if len(message.Connectrecord) == 0 {

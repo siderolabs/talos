@@ -25,7 +25,7 @@ type Stream[T proto.Message] interface {
 
 // Message defines the contract for the grpc message.
 type Message interface {
-	GetMetadata() *common.Metadata
+	GetMetadata() *common.Metadata //nolint:staticcheck // to be refactored next
 	proto.Message
 }
 
@@ -50,13 +50,13 @@ func ReadGRPCStream[S Stream[T], T Message](stream S, handler func(T, string, bo
 		node := defaultNode
 
 		if info.GetMetadata() != nil {
-			if info.GetMetadata().Hostname != "" {
+			if info.GetMetadata().Hostname != "" { //nolint:staticcheck // to be refactored next
 				multipleNodes = true
-				node = info.GetMetadata().Hostname
+				node = info.GetMetadata().Hostname //nolint:staticcheck // to be refactored next
 			}
 
-			if info.GetMetadata().Error != "" {
-				streamErrs = AppendErrors(streamErrs, errors.New(info.GetMetadata().Error))
+			if info.GetMetadata().Error != "" { //nolint:staticcheck // to be refactored next
+				streamErrs = AppendErrors(streamErrs, errors.New(info.GetMetadata().Error)) //nolint:staticcheck // to be refactored next
 
 				continue
 			}

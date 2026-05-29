@@ -73,8 +73,8 @@ var logsCmd = &cobra.Command{
 			var gotErrors bool
 
 			for data := range respCh {
-				if data.Metadata != nil && data.Metadata.Error != "" {
-					_, err = fmt.Fprintf(os.Stderr, "ERROR: %s\n", data.Metadata.Error)
+				if data.Metadata != nil && data.Metadata.Error != "" { //nolint:staticcheck // to be refactored next
+					_, err = fmt.Fprintf(os.Stderr, "ERROR: %s\n", data.Metadata.Error) //nolint:staticcheck // to be refactored next
 					if err != nil {
 						return err
 					}
@@ -85,8 +85,8 @@ var logsCmd = &cobra.Command{
 				}
 
 				node := defaultNode
-				if data.Metadata != nil && data.Metadata.Hostname != "" {
-					node = data.Metadata.Hostname
+				if data.Metadata != nil && data.Metadata.Hostname != "" { //nolint:staticcheck // to be refactored next
+					node = data.Metadata.Hostname //nolint:staticcheck // to be refactored next
 				}
 
 				_, err = fmt.Printf("%s: %s\n", node, data.Bytes)
@@ -139,7 +139,7 @@ func (slicer *lineSlicer) chopper(r io.Reader, hostname string) {
 		line = xslices.CopyN(line, len(line))
 
 		slicer.respCh <- &common.Data{
-			Metadata: &common.Metadata{
+			Metadata: &common.Metadata{ //nolint:staticcheck // to be refactored next
 				Hostname: hostname,
 			},
 			Bytes: line,
@@ -190,7 +190,7 @@ func (slicer *lineSlicer) run(stream machine.MachineService_LogsClient) {
 			return
 		}
 
-		if data.Metadata != nil && data.Metadata.Error != "" {
+		if data.Metadata != nil && data.Metadata.Error != "" { //nolint:staticcheck // to be refactored next
 			// errors are delivered OOB
 			slicer.respCh <- data
 
@@ -200,7 +200,7 @@ func (slicer *lineSlicer) run(stream machine.MachineService_LogsClient) {
 		node := ""
 
 		if data.Metadata != nil {
-			node = data.Metadata.Hostname
+			node = data.Metadata.Hostname //nolint:staticcheck // to be refactored next
 		}
 
 		_, err = slicer.getPipe(node).Write(data.Bytes)

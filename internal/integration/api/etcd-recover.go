@@ -128,7 +128,7 @@ func (suite *EtcdRecoverSuite) TestSnapshotRecover() {
 }
 
 func (suite *EtcdRecoverSuite) snapshotEtcd(snapshotNode string, dest io.Writer) error {
-	ctx := client.WithNodes(suite.ctx, snapshotNode)
+	ctx := client.WithNode(suite.ctx, snapshotNode)
 
 	r, err := suite.Client.EtcdSnapshot(ctx, &machineapi.EtcdSnapshotRequest{})
 	if err != nil {
@@ -143,7 +143,7 @@ func (suite *EtcdRecoverSuite) snapshotEtcd(snapshotNode string, dest io.Writer)
 }
 
 func (suite *EtcdRecoverSuite) recoverEtcd(recoverNode string, src io.ReadSeeker) error {
-	ctx := client.WithNodes(suite.ctx, recoverNode)
+	ctx := client.WithNode(suite.ctx, recoverNode)
 
 	suite.T().Log("uploading the snapshot")
 

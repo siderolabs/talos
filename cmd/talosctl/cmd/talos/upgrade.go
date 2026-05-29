@@ -20,7 +20,6 @@ import (
 	"google.golang.org/grpc/peer"
 
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos/lifecycle"
-	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos/multiplex"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/action"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/nodedrain"
@@ -30,6 +29,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 	"github.com/siderolabs/talos/pkg/reporter"
 )
@@ -318,7 +318,7 @@ func doUpgradeLegacy(ctx context.Context, c *client.Client, opts []client.Upgrad
 		node := defaultNode
 
 		if msg.Metadata != nil {
-			node = msg.Metadata.Hostname
+			node = msg.Metadata.Hostname //nolint:staticcheck // to be refactored next
 		}
 
 		fmt.Fprintf(w, "%s\t%s\t%s\t\n", node, msg.Ack, time.Now())

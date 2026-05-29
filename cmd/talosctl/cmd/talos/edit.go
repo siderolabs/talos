@@ -202,7 +202,7 @@ or 'notepad' for Windows.`,
 			}
 
 			for _, node := range GlobalArgs.Nodes {
-				nodeCtx := client.WithNodes(ctx, node)
+				nodeCtx := client.WithNodes(ctx, node) //nolint:staticcheck // to be refactored next
 				if err := helpers.ForEachResource(nodeCtx, c, nil, editFn(c), editCmdFlags.namespace, args...); err != nil {
 					return err
 				}

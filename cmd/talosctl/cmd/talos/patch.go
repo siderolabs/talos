@@ -153,7 +153,7 @@ var patchCmd = &cobra.Command{
 			}
 
 			for _, node := range GlobalArgs.Nodes {
-				nodeCtx := client.WithNodes(ctx, node)
+				nodeCtx := client.WithNodes(ctx, node) //nolint:staticcheck // to be refactored next
 				if err := helpers.ForEachResource(nodeCtx, c, nil, patchFn(c, patches), patchCmdFlags.namespace, args...); err != nil {
 					return err
 				}

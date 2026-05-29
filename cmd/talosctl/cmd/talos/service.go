@@ -95,7 +95,7 @@ func serviceList(ctx context.Context, c *client.Client) error {
 			node := defaultNode
 
 			if msg.Metadata != nil {
-				node = msg.Metadata.Hostname
+				node = msg.Metadata.Hostname //nolint:staticcheck // to be refactored next
 			}
 
 			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s ago\t%s\n", node, svc.Id, svc.State, svc.HealthStatus(), svc.LastUpdated(), svc.LastEvent())
@@ -147,7 +147,7 @@ func serviceStart(ctx context.Context, c *client.Client, id string) error {
 		node := defaultNode
 
 		if msg.Metadata != nil {
-			node = msg.Metadata.Hostname
+			node = msg.Metadata.Hostname //nolint:staticcheck // to be refactored next
 		}
 
 		fmt.Fprintf(w, "%s\t%s\n", node, msg.Resp)
@@ -177,7 +177,7 @@ func serviceStop(ctx context.Context, c *client.Client, id string) error {
 		node := defaultNode
 
 		if msg.Metadata != nil {
-			node = msg.Metadata.Hostname
+			node = msg.Metadata.Hostname //nolint:staticcheck // to be refactored next
 		}
 
 		fmt.Fprintf(w, "%s\t%s\n", node, msg.Resp)
@@ -207,7 +207,7 @@ func serviceRestart(ctx context.Context, c *client.Client, id string) error {
 		node := defaultNode
 
 		if msg.Metadata != nil {
-			node = msg.Metadata.Hostname
+			node = msg.Metadata.Hostname //nolint:staticcheck // to be refactored next
 		}
 
 		fmt.Fprintf(w, "%s\t%s\n", node, msg.Resp)

@@ -8,66 +8,16 @@ package check
 import (
 	"cmp"
 	"context"
-	"errors"
 	"fmt"
 	"slices"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/client"
-	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 )
-
-// ErrServiceNotFound is an error that indicates that a service was not found.
-var ErrServiceNotFound = errors.New("service not found")
-
-// ServiceStateAssertion checks whether service reached some specified state.
-func ServiceStateAssertion(ctx context.Context, cl ClusterInfo, service string, states ...string) error {
-	cli, err := cl.Client()
-	if err != nil {
-		return err
-	}
-
-	// by default, we check all control plane nodes. if some nodes don't have that service running,
-	// it won't be returned in the response
-	nodes := append(cl.NodesByType(machine.TypeInit), cl.NodesByType(machine.TypeControlPlane)...)
-
-	nodesCtx := client.WithNodes(ctx, mapIPsToStrings(mapNodeInfosToInternalIPs(nodes))...)
-
-	servicesInfo, err := cli.ServiceInfo(nodesCtx, service)
-	if err != nil {
-		return err
-	}
-
-	if len(servicesInfo) == 0 {
-		return ErrServiceNotFound
-	}
-
-	acceptedStates := map[string]struct{}{}
-	for _, state := range states {
-		acceptedStates[state] = struct{}{}
-	}
-
-	var multiErr *multierror.Error
-
-	for _, serviceInfo := range servicesInfo {
-		node := serviceInfo.Metadata.GetHostname()
-
-		if len(serviceInfo.Service.Events.Events) == 0 {
-			multiErr = multierror.Append(multiErr, fmt.Errorf("%s: no events recorded yet for service %q", node, service))
-
-			continue
-		}
-
-		lastEvent := serviceInfo.Service.Events.Events[len(serviceInfo.Service.Events.Events)-1]
-		if _, ok := acceptedStates[lastEvent.State]; !ok {
-			multiErr = multierror.Append(multiErr, fmt.Errorf("%s: service %q not in expected state %q: current state [%s] %s", node, service, states, lastEvent.State, lastEvent.Msg))
-		}
-	}
-
-	return multiErr.ErrorOrNil()
-}
 
 // ServiceHealthAssertion checks whether service reached some specified state.
 //
@@ -98,11 +48,38 @@ func ServiceHealthAssertion(ctx context.Context, cl ClusterInfo, service string,
 
 	count := len(nodes)
 
-	nodesCtx := client.WithNodes(ctx, mapIPsToStrings(mapNodeInfosToInternalIPs(nodes))...)
+	type serviceInfoWithNode struct {
+		client.ServiceInfo
 
-	servicesInfo, err := cli.ServiceInfo(nodesCtx, service)
-	if err != nil {
-		return err
+		node string
+	}
+
+	var servicesInfo []serviceInfoWithNode
+
+	respCh := multiplex.Unary(
+		ctx, mapIPsToStrings(mapNodeInfosToInternalIPs(nodes)),
+		func(ctx context.Context) ([]client.ServiceInfo, error) {
+			return cli.ServiceInfo(ctx, service)
+		},
+	)
+
+	for resp := range respCh {
+		if resp.Err != nil {
+			return fmt.Errorf("error getting service info for service %q from node %q: %w", service, resp.Node, resp.Err)
+		}
+
+		servicesInfo = append(
+			servicesInfo,
+			xslices.Map(
+				resp.Payload,
+				func(info client.ServiceInfo) serviceInfoWithNode {
+					return serviceInfoWithNode{
+						ServiceInfo: info,
+						node:        resp.Node,
+					}
+				},
+			)...,
+		)
 	}
 
 	if len(servicesInfo) != count {
@@ -112,12 +89,12 @@ func ServiceHealthAssertion(ctx context.Context, cl ClusterInfo, service string,
 	var multiErr *multierror.Error
 
 	// sort service info list so that errors returned are consistent
-	slices.SortFunc(servicesInfo, func(a, b client.ServiceInfo) int {
-		return cmp.Compare(a.Metadata.GetHostname(), b.Metadata.GetHostname())
+	slices.SortFunc(servicesInfo, func(a, b serviceInfoWithNode) int {
+		return cmp.Compare(a.node, b.node)
 	})
 
 	for _, serviceInfo := range servicesInfo {
-		node := serviceInfo.Metadata.GetHostname()
+		node := serviceInfo.node
 
 		if len(serviceInfo.Service.Events.Events) == 0 {
 			multiErr = multierror.Append(multiErr, fmt.Errorf("%s: no events recorded yet for service %q", node, service))

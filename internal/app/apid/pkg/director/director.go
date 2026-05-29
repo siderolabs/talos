@@ -24,6 +24,7 @@ type Router struct {
 	remoteBackendFactory RemoteBackendFactory
 	localAddressProvider LocalAddressProvider
 	streamedMatchers     []*regexp.Regexp
+	logger               func(format string, args ...any)
 	skipRouting          bool
 }
 
@@ -31,12 +32,19 @@ type Router struct {
 type RemoteBackendFactory func(target string) (proxy.Backend, error)
 
 // NewRouter builds new Router.
-func NewRouter(backendFactory RemoteBackendFactory, localBackend proxy.Backend, localAddressProvider LocalAddressProvider, skipRouting bool) *Router {
+func NewRouter(
+	backendFactory RemoteBackendFactory,
+	localBackend proxy.Backend,
+	localAddressProvider LocalAddressProvider,
+	skipRouting bool,
+	logger func(format string, args ...any),
+) *Router {
 	return &Router{
 		localBackend:         localBackend,
 		remoteBackendFactory: backendFactory,
 		localAddressProvider: localAddressProvider,
 		skipRouting:          skipRouting,
+		logger:               logger,
 	}
 }
 
@@ -68,6 +76,10 @@ func (r *Router) Director(ctx context.Context, fullMethodName string) (proxy.Mod
 
 	if okNode && len(node) != 1 {
 		return proxy.One2One, nil, status.Error(codes.InvalidArgument, "node metadata must be single-valued")
+	}
+
+	if okNodes {
+		r.logger("request for method %s using deprecated nodes proxying: %v", fullMethodName, nodes)
 	}
 
 	// special handling for cases when a single node is requested, but forwarding is disabled

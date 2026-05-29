@@ -140,7 +140,7 @@ func processesOutput(ctx context.Context, c *client.Client) (output string, err 
 			node := defaultNode
 
 			if msg.Metadata != nil {
-				node = msg.Metadata.Hostname
+				node = msg.Metadata.Hostname //nolint:staticcheck // to be refactored next
 			}
 
 			s = append(s,

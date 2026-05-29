@@ -83,13 +83,13 @@ func (suite *ApidSuite) TestControlPlaneRouting() {
 			defer cli.Close() //nolint:errcheck
 
 			// try with multiple nodes
-			resp, err := cli.Version(client.WithNodes(suite.ctx, nodes...))
+			resp, err := cli.Version(client.WithNodes(suite.ctx, nodes...)) //nolint:staticcheck // testing deprecated method for backward compatibility
 			suite.Require().NoError(err)
 			suite.Assert().Len(resp.Messages, len(nodes))
 
 			// try with 'nodes' but a single node at a time
 			for _, node := range nodes {
-				resp, err = cli.Version(client.WithNodes(suite.ctx, node))
+				resp, err = cli.Version(client.WithNodes(suite.ctx, node)) //nolint:staticcheck // testing deprecated method for backward compatibility
 				suite.Require().NoError(err)
 				suite.Assert().Len(resp.Messages, 1)
 			}
@@ -150,7 +150,7 @@ func (suite *ApidSuite) TestWorkerNoRouting() {
 				}
 
 				// 'nodes'
-				_, err = cli.Version(client.WithNodes(suite.ctx, node))
+				_, err = cli.Version(client.WithNodes(suite.ctx, node)) //nolint:staticcheck // testing deprecated method for backward compatibility
 				suite.Require().Error(err)
 				suite.Assert().Equal(codes.PermissionDenied, client.StatusCode(err))
 
@@ -161,7 +161,7 @@ func (suite *ApidSuite) TestWorkerNoRouting() {
 			}
 
 			// try with 'nodes' but a single node (node itself)
-			resp, err := cli.Version(client.WithNodes(suite.ctx, endpoint))
+			resp, err := cli.Version(client.WithNodes(suite.ctx, endpoint)) //nolint:staticcheck // testing deprecated method for backward compatibility
 			suite.Require().NoError(err)
 			suite.Assert().Len(resp.Messages, 1)
 

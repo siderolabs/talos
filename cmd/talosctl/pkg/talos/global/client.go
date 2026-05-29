@@ -102,7 +102,7 @@ func (args *Args) WithClient(ctx context.Context, action func(context.Context, *
 				return err
 			}
 
-			ctx = client.WithNodes(ctx, nodes...)
+			ctx = client.WithNodes(ctx, nodes...) //nolint:staticcheck // to be refactored next
 
 			return action(ctx, cli)
 		},

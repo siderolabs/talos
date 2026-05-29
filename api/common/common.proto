@@ -58,13 +58,15 @@ message Error {
 
 // Common metadata message nested in all reply message types
 message Metadata {
+  // Multi-node proxying is deprecated.
+  option deprecated = true;
   // hostname of the server response comes from (injected by proxy)
-  string hostname = 1;
+  string hostname = 1 [deprecated = true];
   // error is set if request failed to the upstream (rest of response is
   // undefined)
-  string error = 2;
+  string error = 2 [deprecated = true];
   // error as gRPC Status
-  google.rpc.Status status = 3;
+  google.rpc.Status status = 3 [deprecated = true];
 }
 
 message Data {

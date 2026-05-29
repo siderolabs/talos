@@ -38,7 +38,7 @@ func (suite *DiskUsageSuite) SetupTest() {
 	// make sure API calls have timeout
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 2*time.Minute)
 
-	suite.nodeCtx = client.WithNodes(suite.ctx, suite.RandomDiscoveredNodeInternalIP())
+	suite.nodeCtx = client.WithNode(suite.ctx, suite.RandomDiscoveredNodeInternalIP())
 }
 
 // TearDownTest ...

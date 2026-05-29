@@ -7,7 +7,6 @@ package check
 import (
 	"cmp"
 	"context"
-	"errors"
 	"fmt"
 	"net/url"
 	"slices"
@@ -15,33 +14,54 @@ import (
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/xslices"
 
-	"github.com/siderolabs/talos/pkg/cluster"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
-	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 )
 
 // EtcdConsistentAssertion checks that etcd membership is consistent across nodes.
+//
+//nolint:gocyclo
 func EtcdConsistentAssertion(ctx context.Context, cl ClusterInfo) error {
 	cli, err := cl.Client()
 	if err != nil {
 		return err
 	}
 
-	var nodes []cluster.NodeInfo //nolint:prealloc // dynamic
-
 	initNodes := cl.NodesByType(machine.TypeInit)
-	nodes = append(nodes, initNodes...)
 	controlPlaneNodes := cl.NodesByType(machine.TypeControlPlane)
+	nodes := slices.Concat(initNodes, controlPlaneNodes)
 
-	nodes = append(nodes, controlPlaneNodes...)
+	respCh := multiplex.Unary(
+		ctx, mapIPsToStrings(mapNodeInfosToInternalIPs(nodes)),
+		func(ctx context.Context) (*machineapi.EtcdMemberListResponse, error) {
+			return cli.EtcdMemberList(ctx, &machineapi.EtcdMemberListRequest{})
+		},
+	)
 
-	nodesCtx := client.WithNodes(ctx, mapIPsToStrings(mapNodeInfosToInternalIPs(nodes))...)
+	type memberResponse struct {
+		*machineapi.EtcdMembers
 
-	resp, err := cli.EtcdMemberList(nodesCtx, &machineapi.EtcdMemberListRequest{})
-	if err != nil {
-		return err
+		node string
 	}
+
+	memberResponses := make([]memberResponse, 0, len(nodes))
+
+	for resp := range respCh {
+		if resp.Err != nil {
+			return fmt.Errorf("error getting etcd member list from node %q: %w", resp.Node, resp.Err)
+		}
+
+		if len(resp.Payload.GetMessages()) == 0 {
+			return fmt.Errorf("node %q: no messages returned", resp.Node)
+		}
+
+		memberResponses = append(memberResponses, memberResponse{node: resp.Node, EtcdMembers: resp.Payload.GetMessages()[0]})
+	}
+
+	slices.SortFunc(memberResponses, func(a, b memberResponse) int {
+		return cmp.Compare(a.node, b.node)
+	})
 
 	type data struct {
 		hostname  string
@@ -51,16 +71,7 @@ func EtcdConsistentAssertion(ctx context.Context, cl ClusterInfo) error {
 
 	knownMembers := map[data]struct{}{}
 
-	messages := resp.GetMessages()
-	if len(messages) == 0 {
-		return errors.New("no messages returned")
-	}
-
-	slices.SortFunc(messages, func(a, b *machineapi.EtcdMembers) int {
-		return cmp.Compare(a.GetMetadata().GetHostname(), b.GetMetadata().GetHostname())
-	})
-
-	for i, message := range messages {
+	for i, message := range memberResponses {
 		if i == 0 {
 			// Fill data using first message
 			for _, member := range message.Members {
@@ -70,19 +81,17 @@ func EtcdConsistentAssertion(ctx context.Context, cl ClusterInfo) error {
 			continue
 		}
 
-		node := message.Metadata.GetHostname()
-
 		if len(message.Members) != len(knownMembers) {
 			expected := maps.ToSlice(knownMembers, func(k data, v struct{}) string { return k.hostname })
 			actual := xslices.Map(message.Members, (*machineapi.EtcdMember).GetHostname)
 
-			return fmt.Errorf("%s: expected to have %v members, got %v", node, expected, actual)
+			return fmt.Errorf("%s: expected to have %v members, got %v", message.node, expected, actual)
 		}
 
 		// check that member list is the same on all nodes
 		for _, member := range message.Members {
 			if _, found := knownMembers[data{member.Hostname, member.Id, member.IsLearner}]; !found {
-				return fmt.Errorf("%s: found unexpected etcd member %s", node, member.Hostname)
+				return fmt.Errorf("%s: found unexpected etcd member %s", message.node, member.Hostname)
 			}
 		}
 	}

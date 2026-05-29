@@ -18,10 +18,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"go.yaml.in/yaml/v4"
 	"google.golang.org/grpc/backoff"
@@ -309,9 +311,11 @@ func (apiSuite *APISuite) AssertRebootedNoChecks(ctx context.Context, node strin
 
 	apiSuite.Assert().NotEmpty(bootIDBefore, "boot_id should not be empty")
 
-	apiSuite.Assert().NoError(rebootFunc(nodeCtx))
+	apiSuite.Require().NoError(rebootFunc(nodeCtx))
 
 	apiSuite.AssertBootIDChanged(nodeCtx, bootIDBefore, node, timeout)
+
+	apiSuite.ClearConnectionRefused(ctx, node)
 }
 
 // AssertBootIDChanged waits until node boot id changes.
@@ -326,6 +330,11 @@ func (apiSuite *APISuite) AssertBootIDChanged(nodeCtx context.Context, bootIDBef
 			return retry.ExpectedError(err)
 		}
 
+		if bootIDAfter == "" {
+			// bootID should not be empty
+			return retry.ExpectedErrorf("bootID is empty for node %q", node)
+		}
+
 		if bootIDAfter == bootIDBefore {
 			// bootID should be different after reboot
 			return retry.ExpectedErrorf("bootID didn't change for node %q: before %s, after %s", node, bootIDBefore, bootIDAfter)
@@ -337,50 +346,19 @@ func (apiSuite *APISuite) AssertBootIDChanged(nodeCtx context.Context, bootIDBef
 
 // WaitForBootDone waits for boot phase done event.
 func (apiSuite *APISuite) WaitForBootDone(ctx context.Context) {
-	apiSuite.WaitForSequenceDone(
-		ctx,
-		runtime.SequenceBoot,
-		apiSuite.DiscoverNodeInternalIPs(ctx)...,
-	)
-}
+	apiSuite.ClearConnectionRefused(ctx, apiSuite.DiscoverNodeInternalIPs(ctx)...)
 
-// WaitForSequenceDone waits for sequence done event.
-func (apiSuite *APISuite) WaitForSequenceDone(ctx context.Context, sequence runtime.Sequence, nodes ...string) {
-	nodesNotDone := make(map[string]struct{})
-
-	for _, node := range nodes {
-		nodesNotDone[node] = struct{}{}
+	for _, node := range apiSuite.DiscoverNodeInternalIPs(ctx) {
+		rtestutils.AssertResource(
+			client.WithNode(ctx, node),
+			apiSuite.T(),
+			apiSuite.Client.COSI,
+			runtimeres.MachineStatusID,
+			func(machineStatus *runtimeres.MachineStatus, asrt *assert.Assertions) {
+				asrt.Equal(runtimeres.MachineStageRunning, machineStatus.TypedSpec().Stage)
+			},
+		)
 	}
-
-	apiSuite.Require().NoError(retry.Constant(5*time.Minute, retry.WithUnits(time.Second*10)).Retry(func() error {
-		eventsCtx, cancel := context.WithTimeout(client.WithNodes(ctx, nodes...), 5*time.Second)
-		defer cancel()
-
-		err := apiSuite.Client.EventsWatch(eventsCtx, func(ch <-chan client.Event) {
-			defer cancel()
-
-			for event := range ch {
-				if msg, ok := event.Payload.(*machineapi.SequenceEvent); ok {
-					if msg.GetAction() == machineapi.SequenceEvent_STOP && msg.GetSequence() == sequence.String() {
-						delete(nodesNotDone, event.Node)
-
-						if len(nodesNotDone) == 0 {
-							return
-						}
-					}
-				}
-			}
-		}, client.WithTailEvents(-1))
-		if err != nil {
-			return retry.ExpectedError(err)
-		}
-
-		if len(nodesNotDone) > 0 {
-			return retry.ExpectedErrorf("nodes %#v sequence %s is not completed", nodesNotDone, sequence.String())
-		}
-
-		return nil
-	}))
 }
 
 // ClearConnectionRefused clears cached connection refused errors which might be left after node reboot.
@@ -400,22 +378,24 @@ func (apiSuite *APISuite) ClearConnectionRefused(ctx context.Context, nodes ...s
 
 	apiSuite.Require().NoError(retry.Constant(backoff.DefaultConfig.MaxDelay, retry.WithUnits(time.Second)).Retry(func() error {
 		for range numMasterNodes * 5 {
-			_, err := apiSuite.Client.Version(client.WithNodes(ctx, nodes...))
-			if err == nil {
-				continue
+			for _, node := range nodes {
+				_, err := apiSuite.Client.Version(client.WithNode(ctx, node))
+				if err == nil {
+					continue
+				}
+
+				apiSuite.T().Log(err.Error())
+
+				if client.StatusCode(err) == codes.Unavailable || client.StatusCode(err) == codes.Canceled {
+					return retry.ExpectedError(err)
+				}
+
+				if strings.Contains(err.Error(), "connection refused") || strings.Contains(err.Error(), "connection reset by peer") {
+					return retry.ExpectedError(err)
+				}
+
+				return err
 			}
-
-			apiSuite.T().Log(err.Error())
-
-			if client.StatusCode(err) == codes.Unavailable || client.StatusCode(err) == codes.Canceled {
-				return retry.ExpectedError(err)
-			}
-
-			if strings.Contains(err.Error(), "connection refused") || strings.Contains(err.Error(), "connection reset by peer") {
-				return retry.ExpectedError(err)
-			}
-
-			return err
 		}
 
 		return nil
@@ -429,7 +409,7 @@ func (apiSuite *APISuite) HashKubeletCert(ctx context.Context, node string) (str
 	reqCtx, reqCtxCancel := context.WithTimeout(ctx, 10*time.Second)
 	defer reqCtxCancel()
 
-	reqCtx = client.WithNodes(reqCtx, node)
+	reqCtx = client.WithNode(reqCtx, node)
 
 	reader, err := apiSuite.Client.Read(reqCtx, "/var/lib/kubelet/pki/kubelet-client-current.pem")
 	if err != nil {

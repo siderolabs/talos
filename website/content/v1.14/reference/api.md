@@ -783,9 +783,9 @@ Common metadata message nested in all reply message types
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| hostname | [string](#string) |  | hostname of the server response comes from (injected by proxy) |
-| error | [string](#string) |  | error is set if request failed to the upstream (rest of response is undefined) |
-| status | [google.rpc.Status](#google.rpc.Status) |  | error as gRPC Status |
+| hostname | [string](#string) |  | **Deprecated.** hostname of the server response comes from (injected by proxy) |
+| error | [string](#string) |  | **Deprecated.** error is set if request failed to the upstream (rest of response is undefined) |
+| status | [google.rpc.Status](#google.rpc.Status) |  | **Deprecated.** error as gRPC Status |
 
 
 

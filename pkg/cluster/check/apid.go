@@ -7,8 +7,11 @@ package check
 
 import (
 	"context"
+	"errors"
+	"fmt"
 
-	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 )
 
 // ApidReadyAssertion checks whether apid is responsive on all the nodes.
@@ -18,12 +21,20 @@ func ApidReadyAssertion(ctx context.Context, cluster ClusterInfo) error {
 		return err
 	}
 
-	nodes := cluster.Nodes()
+	respCh := multiplex.Unary(
+		ctx, mapIPsToStrings(mapNodeInfosToInternalIPs(cluster.Nodes())),
+		func(ctx context.Context) (*machine.VersionResponse, error) {
+			return cli.Version(ctx)
+		},
+	)
 
-	nodeIPs := mapIPsToStrings(mapNodeInfosToInternalIPs(nodes))
-	nodesCtx := client.WithNodes(ctx, nodeIPs...)
+	var errs error
 
-	_, err = cli.Version(nodesCtx)
+	for resp := range respCh {
+		if resp.Err != nil {
+			errs = errors.Join(errs, fmt.Errorf("error getting version from node %q: %w", resp.Node, resp.Err))
+		}
+	}
 
-	return err
+	return errs
 }

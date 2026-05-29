@@ -237,7 +237,7 @@ func (suite *ResetSuite) TestResetWithSpecStateAndUserDisks() {
 // TestResetDuringBoot resets the node while it is in boot sequence.
 func (suite *ResetSuite) TestResetDuringBoot() {
 	node := suite.RandomDiscoveredNodeInternalIP()
-	nodeCtx := client.WithNodes(suite.ctx, node)
+	nodeCtx := client.WithNode(suite.ctx, node)
 
 	suite.T().Log("rebooting node", node)
 
