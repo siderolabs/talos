@@ -55,7 +55,7 @@ func (s *Service) ContainerRun(srv grpc.BidiStreamingServer[machine.DebugContain
 		return status.Errorf(codes.InvalidArgument, "unsupported debug container profile: %s", spec.GetProfile())
 	}
 
-	log.Printf("debug container request received: image=%s args=%v env=%v profile=%s", spec.GetImageName(), spec.GetArgs(), spec.GetEnv(), spec.GetProfile())
+	log.Printf("debug container request received: image=%s arg_count=%d env_count=%d profile=%s", spec.GetImageName(), len(spec.GetArgs()), len(spec.GetEnv()), spec.GetProfile())
 
 	// 2. connect to containerd with a lease
 	ctx, detachedContext, c8dClient, err := ctrhelper.ContainerdInstanceHelper(ctx, spec.GetContainerd())

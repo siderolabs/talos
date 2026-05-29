@@ -235,7 +235,7 @@ func (ctrl *AddressConfigController) processDevicesConfiguration(logger *zap.Log
 		for _, cidr := range device.Addresses() {
 			ipPrefix, err := parseIPOrIPPrefix(cidr)
 			if err != nil {
-				logger.Info(fmt.Sprintf("skipping address %q on interface %q", cidr, device.Interface()), zap.Error(err))
+				logger.Info("skipping address", zap.String("address", cidr), zap.String("interface", device.Interface()), zap.Error(err))
 
 				continue
 			}
@@ -261,7 +261,7 @@ func (ctrl *AddressConfigController) processDevicesConfiguration(logger *zap.Log
 			for _, cidr := range vlan.Addresses() {
 				ipPrefix, err := netip.ParsePrefix(cidr)
 				if err != nil {
-					logger.Info(fmt.Sprintf("skipping address %q on interface %q vlan %d", cidr, device.Interface(), vlan.ID()), zap.Error(err))
+					logger.Info("skipping address", zap.String("address", cidr), zap.String("interface", device.Interface()), zap.Uint16("vlan", vlan.ID()), zap.Error(err))
 
 					continue
 				}
