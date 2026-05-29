@@ -589,9 +589,17 @@ var imageTalosBundleCmd = &cobra.Command{
 			tag = args[0]
 		}
 
+		semTag, err := semver.ParseTolerant(tag)
+		if err != nil {
+			return fmt.Errorf("invalid tag %q: %w", tag, err)
+		}
+
 		sources := images.ListSourcesFor(tag)
 
-		fmt.Printf("%s\n", sources.Installer)
+		if semTag.LT(talosLegacyInstallerMaximumVersion) {
+			fmt.Printf("%s\n", sources.Installer)
+		}
+
 		fmt.Printf("%s\n", sources.InstallerBase)
 		fmt.Printf("%s\n", sources.Imager)
 		fmt.Printf("%s\n", sources.Talos)
@@ -633,7 +641,13 @@ var imageTalosBundleCmd = &cobra.Command{
 	},
 }
 
-var talosBundleMinimumVersion = semver.MustParse("1.11.0-alpha.0")
+var (
+	// talosBundleMinimumVersion is the minimum version for which the talos-bundle command is supported.
+	talosBundleMinimumVersion = semver.MustParse("1.11.0-alpha.0")
+
+	// talosLegacyInstallerMaximumVersion is the maximum version for which the legacy installer image is included in the talos-bundle output.
+	talosLegacyInstallerMaximumVersion = semver.MustParse("1.14.0-alpha.0")
+)
 
 // imageIntegrationCmd represents the integration image command.
 var imageIntegrationCmd = &cobra.Command{
