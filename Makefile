@@ -737,7 +737,7 @@ image-list: ## Prints a list of all images built by this Makefile with digests.
 	@echo -n installer-base$(IMAGE_NAME_SUFFIX) talos$(IMAGE_NAME_SUFFIX) imager$(IMAGE_NAME_SUFFIX) talosctl$(IMAGE_NAME_SUFFIX) talosctl-all$(IMAGE_NAME_SUFFIX) | xargs -d ' ' -I{} sh -c 'echo $(REGISTRY_AND_USERNAME)/{}:$(IMAGE_TAG_IN)' | xargs -I{} sh -ec 'digest=$$(crane digest {}) || exit 1; echo {}@$$digest'
 
 $(ARTIFACTS)/image-signer-$(IMAGE_SIGNER_RELEASE): | $(ARTIFACTS) ## Downloads image-signer binary
-	@curl -sSL https://github.com/siderolabs/go-tools/releases/download/$(IMAGE_SIGNER_RELEASE)/image-signer-$(OPERATING_SYSTEM)-$(ARCH) -o $(ARTIFACTS)/image-signer-$(IMAGE_SIGNER_RELEASE)
+	@curl --fail -sSL https://github.com/siderolabs/go-tools/releases/download/$(IMAGE_SIGNER_RELEASE)/image-signer-$(OPERATING_SYSTEM)-$(ARCH) -o $(ARTIFACTS)/image-signer-$(IMAGE_SIGNER_RELEASE)
 	@chmod +x $(ARTIFACTS)/image-signer-$(IMAGE_SIGNER_RELEASE)
 
 

@@ -130,7 +130,7 @@ func (ctrl *WatchdogTimerController) Run(ctx context.Context, r controller.Runti
 			if wd == nil {
 				wd, err = os.OpenFile(cfg.TypedSpec().Device, syscall.O_RDWR, 0o600)
 				if err != nil {
-					return fmt.Errorf("failed to open watchdog device: %s", err)
+					return fmt.Errorf("failed to open watchdog device: %w", err)
 				}
 
 				logger.Info("opened hardware watchdog", zap.String("path", cfg.TypedSpec().Device))
