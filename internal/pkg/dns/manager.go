@@ -98,11 +98,23 @@ func (m *Manager) RunAll(pairs iter.Seq[AddressPair], forwardEnabled bool) iter.
 				continue
 			}
 
+			// Bind the sockets up front so a construction failure (e.g. an
+			// unsupported address family, or an address already in use) is
+			// reported synchronously here, exactly as before: the caller can
+			// then surface it, ignore IPv6-only failures, or retry.
 			opts, err := newDNSRunnerOpts(cfg, m.rootHandler, forwardEnabled)
 			if err != nil {
 				err = fmt.Errorf("%w: %w", ErrCreatingRunner, err)
 			} else {
-				m.runners[cfg] = m.s.Add(NewRunner(opts, m.logger))
+				// A dns.Server and its listeners are single-use, so the runner
+				// must rebuild them on every (re)start. The first start reuses
+				// the opts bound just above; subsequent restarts call
+				// newDNSRunnerOpts again to bind fresh, restartable instances.
+				newOpts := reuseFirst(opts, func() (RunnerOptions, error) {
+					return newDNSRunnerOpts(cfg, m.rootHandler, forwardEnabled)
+				})
+
+				m.runners[cfg] = m.s.Add(NewRunner(newOpts, m.logger))
 			}
 
 			if !yield(makeResult(cfg, StatusNew), err) {
@@ -239,6 +251,28 @@ func fqdnMatch(what, where string) bool {
 // MemberReader is an interface to read members.
 type MemberReader interface {
 	ReadMembers(ctx context.Context) (iter.Seq[*cluster.Member], error)
+}
+
+// reuseFirst returns a [Runner] opts factory that yields prebuilt on its first
+// call and calls build (binding fresh sockets) on every subsequent call. This
+// lets the initial bind happen eagerly in RunAll — so failures are reported
+// synchronously — while still handing the runner a factory that rebuilds the
+// single-use dns.Server and listeners on each supervisor restart.
+//
+// suture invokes a service's Serve (and therefore this factory) serially, so no
+// synchronization is required.
+func reuseFirst(prebuilt RunnerOptions, build func() (RunnerOptions, error)) func() (RunnerOptions, error) {
+	used := false
+
+	return func() (RunnerOptions, error) {
+		if !used {
+			used = true
+
+			return prebuilt, nil
+		}
+
+		return build()
+	}
 }
 
 func newDNSRunnerOpts(cfg AddressPair, rootHandler dnssrv.Handler, forwardEnabled bool) (RunnerOptions, error) {
