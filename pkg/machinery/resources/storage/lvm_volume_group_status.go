@@ -19,12 +19,8 @@ const LVMVolumeGroupStatusType = resource.Type("LVMVolumeGroupStatuses.storage.t
 // LVMVolumeGroupStatus resource contains information about the LVM volume group status.
 type LVMVolumeGroupStatus = typed.Resource[LVMVolumeGroupStatusSpec, LVMVolumeGroupStatusExtension]
 
-// LVMVolumeGroupStatusSpec is the spec for LVMVolumeGroupStatus resource.
-//
-// Fields mirror selected columns of `vgs -a -o +all --reportformat json --units b --nosuffix`.
-// Numeric / tri-state columns are exposed as raw strings so LVM's sentinels
-// ("", "-1", "unknown", "unmanaged", "auto", …) are surfaced verbatim. See
-// vgs(8) for the source-of-truth definitions of each column.
+// LVMVolumeGroupStatusSpec mirrors selected `vgs` columns.
+// Raw strings preserve LVM sentinel values.
 //
 //gotagsrewrite:gen
 type LVMVolumeGroupStatusSpec struct {

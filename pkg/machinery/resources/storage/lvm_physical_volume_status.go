@@ -19,12 +19,8 @@ const LVMPhysicalVolumeStatusType = resource.Type("LVMPhysicalVolumeStatuses.sto
 // LVMPhysicalVolumeStatus resource contains information about the LVM physical volume status.
 type LVMPhysicalVolumeStatus = typed.Resource[LVMPhysicalVolumeStatusSpec, LVMPhysicalVolumeStatusExtension]
 
-// LVMPhysicalVolumeStatusSpec is the spec for LVMPhysicalVolumeStatus resource.
-//
-// Fields mirror selected columns of `pvs -a -o +all --reportformat json --units b --nosuffix`.
-// Numeric / tri-state columns are exposed as raw strings so LVM's sentinels
-// ("", "-1") are surfaced verbatim. See pvs(8) for the source-of-truth
-// definitions of each column.
+// LVMPhysicalVolumeStatusSpec mirrors selected `pvs` columns.
+// Raw strings preserve LVM sentinel values.
 //
 //gotagsrewrite:gen
 type LVMPhysicalVolumeStatusSpec struct {

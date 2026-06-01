@@ -18,16 +18,10 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
 
-// refreshDebounce is the quiet window the trigger waits for after the last
-// observed block-layer event before emitting a fresh LVMRefreshRequest.
+// refreshDebounce is the quiet window before a refresh bump.
 const refreshDebounce = 250 * time.Millisecond
 
-// refreshMaxWait caps the time the trigger will keep deferring a bump
-// under a sustained event stream. Without it, a continuous flow of
-// block-layer events (e.g. a controller actively reshaping disks) would
-// keep resetting the debounce timer indefinitely and the scan controller
-// would never see updated state. With it, the trigger is guaranteed to
-// emit at least one bump every refreshMaxWait while events keep arriving.
+// refreshMaxWait guarantees bumps under sustained event flow.
 const refreshMaxWait = 2 * time.Second
 
 // LVMRefreshTriggerController bumps storage.LVMRefreshRequest whenever any
@@ -79,10 +73,7 @@ func (ctrl *LVMRefreshTriggerController) Outputs() []controller.Output {
 //
 //nolint:gocyclo
 func (ctrl *LVMRefreshTriggerController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
-	// Timer is created in stopped state - it is armed only when an event
-	// arrives. nextFire holds the scheduled wall-clock fire time so we
-	// can decide whether an event should advance the timer or whether the
-	// max-wait deadline has already been hit.
+	// Timer stays stopped until first event. nextFire tracks scheduled fire time.
 	timer := time.NewTimer(refreshDebounce)
 	defer timer.Stop()
 
@@ -121,10 +112,7 @@ func (ctrl *LVMRefreshTriggerController) Run(ctx context.Context, r controller.R
 				firstPending = now
 			}
 
-			// Trailing-edge debounce, capped by refreshMaxWait. Each event
-			// extends the quiet window by refreshDebounce, but never past
-			// the firstPending + refreshMaxWait deadline - that bounds the
-			// worst-case delay under a sustained event flow.
+			// Trailing-edge debounce, capped by refreshMaxWait.
 			deadline := firstPending.Add(refreshMaxWait)
 
 			target := now.Add(refreshDebounce)
@@ -155,10 +143,7 @@ func (ctrl *LVMRefreshTriggerController) Run(ctx context.Context, r controller.R
 			observed = status.TypedSpec().Request
 		}
 
-		// Echo gate: if a previous bump has not been echoed by the scan
-		// controller yet, defer this bump and re-arm the timer. The scan
-		// controller will publish LVMRefreshStatus when it finishes; that
-		// arrives as an EventCh wake-up and the quiet window starts again.
+		// Wait until previous bump is echoed by scan controller.
 		if requested != 0 && observed < requested {
 			rearm(refreshDebounce)
 

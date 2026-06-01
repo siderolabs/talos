@@ -28,6 +28,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime/extensions"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/security"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/storage"
 	v1alpha1 "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 
@@ -150,6 +151,10 @@ var docsCmd = &cobra.Command{
 				{
 					name:    "kubernetes",
 					fileDoc: k8s.GetFileDoc(),
+				},
+				{
+					name:    "storage",
+					fileDoc: storage.GetFileDoc(),
 				},
 			} {
 				path := filepath.Join(dir, pkg.name)

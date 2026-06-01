@@ -20,17 +20,21 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
 
-// LVMScanController owns the storage.LVMVolumeGroupStatus /
-// LVMPhysicalVolumeStatus / LVMLogicalVolumeStatus resources.
+// LVMScanner is the subset of internal/pkg/lvm.LVM used by LVMScanController.
+// Splitting it out lets tests inject a fake without touching /sbin/lvm.
+type LVMScanner interface {
+	VGS(ctx context.Context) ([]lvm.VG, error)
+	PVS(ctx context.Context) ([]lvm.PV, error)
+	LVS(ctx context.Context) ([]lvm.LV, error)
+}
+
+// LVMScanController owns LVMVolumeGroupStatus / LVMPhysicalVolumeStatus /
+// LVMLogicalVolumeStatus.
 //
-// It is driven exclusively by storage.LVMRefreshRequest — there is no
-// periodic poll. The trigger controller bumps the request counter in
-// response to block-layer events; this controller runs vgs/pvs/lvs once
-// per observed counter increment and echoes the value back in
-// storage.LVMRefreshStatus so other controllers can wait for a known
-// refresh to land.
+// Driven by LVMRefreshRequest (no poll). Runs vgs/pvs/lvs once per counter
+// increment and echoes observed value into LVMRefreshStatus.
 type LVMScanController struct {
-	LVM *lvm.LVM
+	LVM LVMScanner
 }
 
 // Name implements controller.Controller interface.

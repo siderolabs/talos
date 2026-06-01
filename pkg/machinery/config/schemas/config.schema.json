@@ -4209,6 +4209,77 @@
       ],
       "description": "SideroLinkConfig is a SideroLink connection machine configuration document."
     },
+    "storage.LVMPhysicalVolumesSpec": {
+      "properties": {
+        "volumeSelector": {
+          "$ref": "#/$defs/storage.LVMVolumeSelectorSpec",
+          "title": "volumeSelector",
+          "description": "Matches disks to initialize as physical volumes.\n",
+          "markdownDescription": "Matches disks to initialize as physical volumes.",
+          "x-intellij-html-description": "\u003cp\u003eMatches disks to initialize as physical volumes.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "LVMPhysicalVolumesSpec selects backing disks."
+    },
+    "storage.LVMVolumeGroupConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "LVMVolumeGroupConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Volume group name.\n\nMust be 1-63 chars: ASCII letters, digits, hyphens, underscores.\n",
+          "markdownDescription": "Volume group name.\n\nMust be 1-63 chars: ASCII letters, digits, hyphens, underscores.",
+          "x-intellij-html-description": "\u003cp\u003eVolume group name.\u003c/p\u003e\n\n\u003cp\u003eMust be 1-63 chars: ASCII letters, digits, hyphens, underscores.\u003c/p\u003e\n"
+        },
+        "physicalVolumes": {
+          "$ref": "#/$defs/storage.LVMPhysicalVolumesSpec",
+          "title": "physicalVolumes",
+          "description": "Selects backing disks.\n",
+          "markdownDescription": "Selects backing disks.",
+          "x-intellij-html-description": "\u003cp\u003eSelects backing disks.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "LVMVolumeGroupConfig is an LVM volume group config document.\\nDefines volume group and selector for backing disks.\\n"
+    },
+    "storage.LVMVolumeSelectorSpec": {
+      "properties": {
+        "match": {
+          "type": "string",
+          "title": "match",
+          "description": "CEL expression matching a disk or partition to use as a physical volume.\n\nThe expression is evaluated against each discovered volume with the\nvolume variable (the discovered volume) and, for whole disks, the\ndisk variable. Partitions (e.g. raw volumes) can be matched by their\npartition label via volume.partition_label.\n",
+          "markdownDescription": "CEL expression matching a disk or partition to use as a physical volume.\n\nThe expression is evaluated against each discovered volume with the\n`volume` variable (the discovered volume) and, for whole disks, the\n`disk` variable. Partitions (e.g. raw volumes) can be matched by their\npartition label via `volume.partition_label`.",
+          "x-intellij-html-description": "\u003cp\u003eCEL expression matching a disk or partition to use as a physical volume.\u003c/p\u003e\n\n\u003cp\u003eThe expression is evaluated against each discovered volume with the\n\u003ccode\u003evolume\u003c/code\u003e variable (the discovered volume) and, for whole disks, the\n\u003ccode\u003edisk\u003c/code\u003e variable. Partitions (e.g. raw volumes) can be matched by their\npartition label via \u003ccode\u003evolume.partition_label\u003c/code\u003e.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "LVMVolumeSelectorSpec matches disks with CEL."
+    },
     "v1alpha1.APIServerConfig": {
       "properties": {
         "image": {
@@ -5982,6 +6053,9 @@
     },
     {
       "$ref": "#/$defs/siderolink.ConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/storage.LVMVolumeGroupConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/v1alpha1.Config"

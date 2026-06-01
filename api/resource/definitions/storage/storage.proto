@@ -5,10 +5,7 @@ package talos.resource.definitions.storage;
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/storage";
 option java_package = "dev.talos.api.resource.definitions.storage";
 
-// LVMLogicalVolumeStatusSpec is the spec for LVMLogicalVolumeStatus resource.
-//
-// Fields mirror selected columns of `lvs -a -o +all --reportformat json --units b --nosuffix`.
-// See lvs(8) for the source-of-truth definitions of each column.
+// LVMLogicalVolumeStatusSpec mirrors selected `lvs` columns.
 message LVMLogicalVolumeStatusSpec {
   // Path is the LV path (lv_path), e.g. /dev/vg0/data. Empty for hidden LVs.
   string path = 1;
@@ -82,12 +79,16 @@ message LVMLogicalVolumeStatusSpec {
   repeated string tags = 35;
 }
 
-// LVMPhysicalVolumeStatusSpec is the spec for LVMPhysicalVolumeStatus resource.
-//
-// Fields mirror selected columns of `pvs -a -o +all --reportformat json --units b --nosuffix`.
-// Numeric / tri-state columns are exposed as raw strings so LVM's sentinels
-// ("", "-1") are surfaced verbatim. See pvs(8) for the source-of-truth
-// definitions of each column.
+// LVMPhysicalVolumeSpecSpec is the spec for LVMPhysicalVolumeSpec resource.
+message LVMPhysicalVolumeSpecSpec {
+  // Device is the block-device path to initialize as a PV.
+  string device = 1;
+  // VGName is the target volume group name.
+  string vg_name = 2;
+}
+
+// LVMPhysicalVolumeStatusSpec mirrors selected `pvs` columns.
+// Raw strings preserve LVM sentinel values.
 message LVMPhysicalVolumeStatusSpec {
   // Device is the block-device path backing the PV (pv_name).
   string device = 1;
@@ -135,12 +136,24 @@ message LVMRefreshStatusSpec {
   int64 request = 1;
 }
 
-// LVMVolumeGroupStatusSpec is the spec for LVMVolumeGroupStatus resource.
-//
-// Fields mirror selected columns of `vgs -a -o +all --reportformat json --units b --nosuffix`.
-// Numeric / tri-state columns are exposed as raw strings so LVM's sentinels
-// ("", "-1", "unknown", "unmanaged", "auto", …) are surfaced verbatim. See
-// vgs(8) for the source-of-truth definitions of each column.
+// LVMValidationErrorSpec is the spec for LVMValidationError resource.
+message LVMValidationErrorSpec {
+  // VGName is the volume group the error relates to.
+  string vg_name = 1;
+  // Message describes the validation error.
+  string message = 2;
+}
+
+// LVMVolumeGroupSpecSpec is the spec for LVMVolumeGroupSpec resource.
+message LVMVolumeGroupSpecSpec {
+  // Name is the volume group name.
+  string name = 1;
+  // PhysicalVolumes is the list of PV device paths.
+  repeated string physical_volumes = 2;
+}
+
+// LVMVolumeGroupStatusSpec mirrors selected `vgs` columns.
+// Raw strings preserve LVM sentinel values.
 message LVMVolumeGroupStatusSpec {
   // Name is the volume group name (vg_name).
   string name = 1;

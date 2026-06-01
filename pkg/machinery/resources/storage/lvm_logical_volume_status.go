@@ -19,10 +19,7 @@ const LVMLogicalVolumeStatusType = resource.Type("LVMLogicalVolumeStatuses.stora
 // LVMLogicalVolumeStatus resource contains information about the LVM logical volume status.
 type LVMLogicalVolumeStatus = typed.Resource[LVMLogicalVolumeStatusSpec, LVMLogicalVolumeStatusExtension]
 
-// LVMLogicalVolumeStatusSpec is the spec for LVMLogicalVolumeStatus resource.
-//
-// Fields mirror selected columns of `lvs -a -o +all --reportformat json --units b --nosuffix`.
-// See lvs(8) for the source-of-truth definitions of each column.
+// LVMLogicalVolumeStatusSpec mirrors selected `lvs` columns.
 //
 //gotagsrewrite:gen
 type LVMLogicalVolumeStatusSpec struct {

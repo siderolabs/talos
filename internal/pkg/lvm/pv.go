@@ -55,6 +55,32 @@ func parsePVS(out string) ([]PV, error) {
 	return pvs, nil
 }
 
+// PVCreate runs `lvm pvcreate <device>` to initialize a block device as an
+// LVM physical volume.
+//
+// --yes is intentionally NOT passed. Per lib/device/dev-type.c the prompt
+// branch (lines 1172-1186) takes existing filesystem/RAID/swap signatures and
+// either prompts the operator or, with --yes, wipes them silently. Talos runs
+// pvcreate non-interactively, so omitting --yes means a device with a stale
+// signature aborts the call with an error instead of being clobbered. Callers
+// that knowingly want to overwrite the device must wipe it first via the
+// explicit BlockDeviceWipe RPC.
+//
+// --reportformat=json is intentionally NOT passed here for the same reason
+// documented on PVRemove.
+//
+// Errors propagate through (*LVM).run which normalises them to the sentinels
+// declared in errors.go (ErrInUse, ErrInvalidCommand, ...).
+func (lvm *LVM) PVCreate(ctx context.Context, device string) error {
+	if device == "" {
+		return fmt.Errorf("device must be non-empty")
+	}
+
+	_, err := lvm.run(ctx, "pvcreate", device)
+
+	return err
+}
+
 // PVRemove runs `lvm pvremove --yes <device>` to wipe the LVM label/metadata
 // from a physical volume.
 //

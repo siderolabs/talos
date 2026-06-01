@@ -63,6 +63,89 @@ func parseVGS(out string) ([]VG, error) {
 	return vgs, nil
 }
 
+// VGCreate runs `lvm vgcreate --yes <vg> <pvs...>` to create a new volume
+// group spanning the supplied physical volumes.
+//
+// All listed devices must already be initialized as PVs (see PVCreate) and
+// must not belong to another VG; pvcreate is NOT bundled here so the
+// controller can manage initialisation order explicitly.
+//
+// --reportformat=json is intentionally NOT passed here for the same reason
+// documented on VGRemove.
+//
+// Errors propagate through (*LVM).run which normalises them to the sentinels
+// declared in errors.go.
+func (lvm *LVM) VGCreate(ctx context.Context, vg string, pvs ...string) error {
+	if vg == "" {
+		return fmt.Errorf("vg must be non-empty")
+	}
+
+	if len(pvs) == 0 {
+		return fmt.Errorf("at least one physical volume is required")
+	}
+
+	args := append([]string{"--yes", vg}, pvs...)
+
+	_, err := lvm.run(ctx, "vgcreate", args...)
+
+	return err
+}
+
+// VGExtend runs `lvm vgextend --yes <vg> <pvs...>` to add already-initialized
+// physical volumes to an existing volume group.
+//
+// All listed devices must already be initialized as PVs (see PVCreate).
+//
+// --reportformat=json is intentionally NOT passed here for the same reason
+// documented on VGRemove.
+//
+// Errors propagate through (*LVM).run which normalises them to the sentinels
+// declared in errors.go.
+func (lvm *LVM) VGExtend(ctx context.Context, vg string, pvs ...string) error {
+	if vg == "" {
+		return fmt.Errorf("vg must be non-empty")
+	}
+
+	if len(pvs) == 0 {
+		return fmt.Errorf("at least one physical volume is required")
+	}
+
+	args := append([]string{"--yes", vg}, pvs...)
+
+	_, err := lvm.run(ctx, "vgextend", args...)
+
+	return err
+}
+
+// VGReduce runs `lvm vgreduce --yes <vg> <pvs...>` to detach physical volumes
+// from a volume group. The PVs keep their LVM labels and may be re-used; pass
+// them to PVRemove if they should be fully wiped.
+//
+// vgreduce refuses to remove a PV that still holds allocated extents; the
+// caller must lvremove / pvmove first. This is intentional: silent data loss
+// is the worst possible failure mode for the storage controller.
+//
+// --reportformat=json is intentionally NOT passed here for the same reason
+// documented on VGRemove.
+//
+// Errors propagate through (*LVM).run which normalises them to the sentinels
+// declared in errors.go.
+func (lvm *LVM) VGReduce(ctx context.Context, vg string, pvs ...string) error {
+	if vg == "" {
+		return fmt.Errorf("vg must be non-empty")
+	}
+
+	if len(pvs) == 0 {
+		return fmt.Errorf("at least one physical volume is required")
+	}
+
+	args := append([]string{"--yes", vg}, pvs...)
+
+	_, err := lvm.run(ctx, "vgreduce", args...)
+
+	return err
+}
+
 // VGRemove runs `lvm vgremove --yes <vg>` to remove a volume group.
 //
 // CASCADE: --yes (DONT_PROMPT in lvm2 terms; see tools/vgremove.c:42) makes

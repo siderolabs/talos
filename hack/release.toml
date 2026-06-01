@@ -194,6 +194,17 @@ The `talosctl support` command now encrypts support bundles using the age encryp
 The default set of recipients includes the 'siderolabs' GitHub organization members, but it can be overridden with custom recipients.
 """
 
+    [notes.lvm_volume_group]
+        title = "LVM Volume Group Creation"
+        description = """\
+Talos can now create and grow LVM Volume Groups declaratively through a new `LVMVolumeGroupConfig` multi-doc
+config kind. Each document names a Volume Group and a CEL `volumeSelector` over the disk inventory; matched
+disks are initialised as Physical Volumes (`pvcreate`) and aggregated into the requested VG (`vgcreate`).
+Newly matched disks added to an existing VG are attached via `vgextend`.
+
+Reconciliation is strictly additive and safe-by-default.
+"""
+
 [make_deps]
 
     [make_deps.tools]

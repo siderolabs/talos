@@ -626,9 +626,12 @@ description: Talos gRPC API reference.
   
 - [resource/definitions/storage/storage.proto](#resource/definitions/storage/storage.proto)
     - [LVMLogicalVolumeStatusSpec](#talos.resource.definitions.storage.LVMLogicalVolumeStatusSpec)
+    - [LVMPhysicalVolumeSpecSpec](#talos.resource.definitions.storage.LVMPhysicalVolumeSpecSpec)
     - [LVMPhysicalVolumeStatusSpec](#talos.resource.definitions.storage.LVMPhysicalVolumeStatusSpec)
     - [LVMRefreshRequestSpec](#talos.resource.definitions.storage.LVMRefreshRequestSpec)
     - [LVMRefreshStatusSpec](#talos.resource.definitions.storage.LVMRefreshStatusSpec)
+    - [LVMValidationErrorSpec](#talos.resource.definitions.storage.LVMValidationErrorSpec)
+    - [LVMVolumeGroupSpecSpec](#talos.resource.definitions.storage.LVMVolumeGroupSpecSpec)
     - [LVMVolumeGroupStatusSpec](#talos.resource.definitions.storage.LVMVolumeGroupStatusSpec)
   
 - [resource/definitions/time/time.proto](#resource/definitions/time/time.proto)
@@ -10978,10 +10981,7 @@ TunnelSpec describes Siderolink GRPC Tunnel configuration.
 <a name="talos.resource.definitions.storage.LVMLogicalVolumeStatusSpec"></a>
 
 ### LVMLogicalVolumeStatusSpec
-LVMLogicalVolumeStatusSpec is the spec for LVMLogicalVolumeStatus resource.
-
-Fields mirror selected columns of `lvs -a -o +all --reportformat json --units b --nosuffix`.
-See lvs(8) for the source-of-truth definitions of each column.
+LVMLogicalVolumeStatusSpec mirrors selected `lvs` columns.
 
 
 | Field | Type | Label | Description |
@@ -11027,15 +11027,27 @@ See lvs(8) for the source-of-truth definitions of each column.
 
 
 
+<a name="talos.resource.definitions.storage.LVMPhysicalVolumeSpecSpec"></a>
+
+### LVMPhysicalVolumeSpecSpec
+LVMPhysicalVolumeSpecSpec is the spec for LVMPhysicalVolumeSpec resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| device | [string](#string) |  | Device is the block-device path to initialize as a PV. |
+| vg_name | [string](#string) |  | VGName is the target volume group name. |
+
+
+
+
+
+
 <a name="talos.resource.definitions.storage.LVMPhysicalVolumeStatusSpec"></a>
 
 ### LVMPhysicalVolumeStatusSpec
-LVMPhysicalVolumeStatusSpec is the spec for LVMPhysicalVolumeStatus resource.
-
-Fields mirror selected columns of `pvs -a -o +all --reportformat json --units b --nosuffix`.
-Numeric / tri-state columns are exposed as raw strings so LVM's sentinels
-("", "-1") are surfaced verbatim. See pvs(8) for the source-of-truth
-definitions of each column.
+LVMPhysicalVolumeStatusSpec mirrors selected `pvs` columns.
+Raw strings preserve LVM sentinel values.
 
 
 | Field | Type | Label | Description |
@@ -11093,15 +11105,43 @@ LVMRefreshStatusSpec is the spec for LVMRefreshStatus.
 
 
 
+<a name="talos.resource.definitions.storage.LVMValidationErrorSpec"></a>
+
+### LVMValidationErrorSpec
+LVMValidationErrorSpec is the spec for LVMValidationError resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| vg_name | [string](#string) |  | VGName is the volume group the error relates to. |
+| message | [string](#string) |  | Message describes the validation error. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.storage.LVMVolumeGroupSpecSpec"></a>
+
+### LVMVolumeGroupSpecSpec
+LVMVolumeGroupSpecSpec is the spec for LVMVolumeGroupSpec resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  | Name is the volume group name. |
+| physical_volumes | [string](#string) | repeated | PhysicalVolumes is the list of PV device paths. |
+
+
+
+
+
+
 <a name="talos.resource.definitions.storage.LVMVolumeGroupStatusSpec"></a>
 
 ### LVMVolumeGroupStatusSpec
-LVMVolumeGroupStatusSpec is the spec for LVMVolumeGroupStatus resource.
-
-Fields mirror selected columns of `vgs -a -o +all --reportformat json --units b --nosuffix`.
-Numeric / tri-state columns are exposed as raw strings so LVM's sentinels
-("", "-1", "unknown", "unmanaged", "auto", …) are surfaced verbatim. See
-vgs(8) for the source-of-truth definitions of each column.
+LVMVolumeGroupStatusSpec mirrors selected `vgs` columns.
+Raw strings preserve LVM sentinel values.
 
 
 | Field | Type | Label | Description |

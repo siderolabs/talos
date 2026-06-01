@@ -22,7 +22,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
-// LVMActivationController activates LVM volume groups discovered by the block.DiscoveryController.
+// LVMActivationController activates discovered LVM volume groups.
 type LVMActivationController struct {
 	V1Alpha1Mode machineruntime.Mode
 	LVM          *lvm.LVM
@@ -64,8 +64,7 @@ func (ctrl *LVMActivationController) Outputs() []controller.Output {
 	return nil
 }
 
-// preconditions ensures udevd is running and the META partition is mounted
-// before scanning for LVM volume groups.
+// preconditions wait for udevd and META.
 func (ctrl *LVMActivationController) preconditions(ctx context.Context, r controller.Reader, logger *zap.Logger) (bool, error) {
 	udevdService, err := safe.ReaderGetByID[*v1alpha1.Service](ctx, r, "udevd")
 	if err != nil && !state.IsNotFoundError(err) {
@@ -146,8 +145,7 @@ func (ctrl *LVMActivationController) Run(ctx context.Context, r controller.Runti
 
 		for dv := range discoveredVolumes.All() {
 			if dv.TypedSpec().Name != "lvm2-pv" {
-				// if the volume is not an LVM volume the moment we saw it, we can skip it
-				// we need to activate the volumes only on reboot, not when they are first formatted
+				// Only activate pre-existing LVM volumes, not ones just formatted.
 				ctrl.seenVolumes[dv.Metadata().ID()] = struct{}{}
 
 				continue
@@ -189,9 +187,7 @@ func (ctrl *LVMActivationController) Run(ctx context.Context, r controller.Runti
 	}
 }
 
-// checkVGNeedsActivation checks if the device is part of a complete volume
-// group and returns that VG name when activation is needed; otherwise returns
-// an empty string. See lvmautoactivation(7).
+// checkVGNeedsActivation returns VG name if auto-activation is needed.
 func (ctrl *LVMActivationController) checkVGNeedsActivation(ctx context.Context, devicePath string) (string, error) {
 	udev, err := ctrl.LVM.PVScanAutoActivation(ctx, devicePath)
 	if err != nil {

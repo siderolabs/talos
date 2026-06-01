@@ -9,7 +9,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 )
 
-//go:generate go tool github.com/siderolabs/deep-copy -type LVMLogicalVolumeStatusSpec -type LVMPhysicalVolumeStatusSpec -type LVMRefreshRequestSpec -type LVMRefreshStatusSpec -type LVMVolumeGroupStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate go tool github.com/siderolabs/deep-copy -type LVMLogicalVolumeStatusSpec -type LVMPhysicalVolumeSpecSpec -type LVMPhysicalVolumeStatusSpec -type LVMRefreshRequestSpec -type LVMRefreshStatusSpec -type LVMValidationErrorSpec -type LVMVolumeGroupSpecSpec -type LVMVolumeGroupStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
 // NamespaceName contains storage resources.
 const NamespaceName resource.Namespace = "storage"
