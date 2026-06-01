@@ -831,6 +831,10 @@ func (x *KmsgLogConfigSpec) GetDestinations() []*common.URL {
 }
 
 // LoadedKernelModuleSpec describes loaded Linux kernel modules.
+//
+// Deprecated: use KernelModuleStatus instead.
+//
+// Deprecated: Marked as deprecated in resource/definitions/runtime/runtime.proto.
 type LoadedKernelModuleSpec struct {
 	state          protoimpl.MessageState `protogen:"open.v1"`
 	Size           int64                  `protobuf:"varint,1,opt,name=size,proto3" json:"size,omitempty"`
@@ -1977,13 +1981,13 @@ const file_resource_definitions_runtime_runtime_proto_rawDesc = "" +
 	"\adefault\x18\x02 \x01(\tR\adefault\x12 \n" +
 	"\vunsupported\x18\x03 \x01(\bR\vunsupported\"D\n" +
 	"\x11KmsgLogConfigSpec\x12/\n" +
-	"\fdestinations\x18\x01 \x03(\v2\v.common.URLR\fdestinations\"\xa9\x01\n" +
+	"\fdestinations\x18\x01 \x03(\v2\v.common.URLR\fdestinations\"\xad\x01\n" +
 	"\x16LoadedKernelModuleSpec\x12\x12\n" +
 	"\x04size\x18\x01 \x01(\x03R\x04size\x12'\n" +
 	"\x0freference_count\x18\x02 \x01(\x03R\x0ereferenceCount\x12\"\n" +
 	"\fdependencies\x18\x03 \x03(\tR\fdependencies\x12\x14\n" +
 	"\x05state\x18\x04 \x01(\tR\x05state\x12\x18\n" +
-	"\aaddress\x18\x05 \x01(\tR\aaddress\"\xb1\x01\n" +
+	"\aaddress\x18\x05 \x01(\tR\aaddress:\x02\x18\x01\"\xb1\x01\n" +
 	"\x11MachineStatusSpec\x12K\n" +
 	"\x05stage\x18\x01 \x01(\x0e25.talos.resource.definitions.enums.RuntimeMachineStageR\x05stage\x12O\n" +
 	"\x06status\x18\x02 \x01(\v27.talos.resource.definitions.runtime.MachineStatusStatusR\x06status\"\x8a\x01\n" +

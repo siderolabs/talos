@@ -12,7 +12,6 @@ description: Talos gRPC API reference.
     - [Empty](#common.Empty)
     - [EmptyResponse](#common.EmptyResponse)
     - [Error](#common.Error)
-    - [Metadata](#common.Metadata)
     - [NetIP](#common.NetIP)
     - [NetIPPort](#common.NetIPPort)
     - [NetIPPrefix](#common.NetIPPrefix)
@@ -507,7 +506,6 @@ description: Talos gRPC API reference.
     - [KernelParamSpecSpec](#talos.resource.definitions.runtime.KernelParamSpecSpec)
     - [KernelParamStatusSpec](#talos.resource.definitions.runtime.KernelParamStatusSpec)
     - [KmsgLogConfigSpec](#talos.resource.definitions.runtime.KmsgLogConfigSpec)
-    - [LoadedKernelModuleSpec](#talos.resource.definitions.runtime.LoadedKernelModuleSpec)
     - [MachineStatusSpec](#talos.resource.definitions.runtime.MachineStatusSpec)
     - [MachineStatusStatus](#talos.resource.definitions.runtime.MachineStatusStatus)
     - [MaintenanceServiceConfigSpec](#talos.resource.definitions.runtime.MaintenanceServiceConfigSpec)
@@ -770,22 +768,6 @@ description: Talos gRPC API reference.
 | message | [string](#string) |  |  |
 | details | [google.protobuf.Any](#google.protobuf.Any) | repeated |  |
 
-
-
-
-
-
-<a name="common.Metadata"></a>
-
-### Metadata
-Common metadata message nested in all reply message types
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| hostname | [string](#string) |  | **Deprecated.** hostname of the server response comes from (injected by proxy) |
-| error | [string](#string) |  | **Deprecated.** error is set if request failed to the upstream (rest of response is undefined) |
-| status | [google.rpc.Status](#google.rpc.Status) |  | **Deprecated.** error as gRPC Status |
 
 
 
@@ -8832,24 +8814,6 @@ KmsgLogConfigSpec describes configuration for kmsg log streaming.
 | ----- | ---- | ----- | ----------- |
 | destinations | [common.URL](#common.URL) | repeated |  |
 
-
-
-
-
-
-<a name="talos.resource.definitions.runtime.LoadedKernelModuleSpec"></a>
-
-### LoadedKernelModuleSpec
-LoadedKernelModuleSpec describes loaded Linux kernel modules.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| size | [int64](#int64) |  |  |
-| reference_count | [int64](#int64) |  |  |
-| dependencies | [string](#string) | repeated |  |
-| state | [string](#string) |  |  |
-| address | [string](#string) |  |  |
 
 
 

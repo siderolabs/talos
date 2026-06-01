@@ -114,8 +114,9 @@ func (p *Pkg) Format(w io.Writer) {
 type protoDef struct {
 	name string
 
-	goPkg    string
-	comments []string
+	goPkg      string
+	comments   []string
+	deprecated bool
 
 	isInit bool
 	fields slices.Sorted[protoField]
@@ -145,6 +146,10 @@ func (p *protoDef) WriteDebug(w io.Writer) {
 
 	fmt.Fprintf(w, "message %s { //%s.%s\n", p.name, p.goPkg, p.name)
 
+	if p.deprecated {
+		fmt.Fprintln(w, "  option deprecated = true;")
+	}
+
 	for i := range p.fields.Len() {
 		fmt.Fprintf(w, "  ")
 		p.fields.Get(i).WriteDebug(w)
@@ -159,6 +164,10 @@ func (p *protoDef) Format(w io.Writer) {
 	}
 
 	fmt.Fprintf(w, "message %s {\n", p.name)
+
+	if p.deprecated {
+		fmt.Fprintln(w, "  option deprecated = true;")
+	}
 
 	for i := range p.fields.Len() {
 		fmt.Fprintf(w, "  ")
@@ -212,6 +221,18 @@ func (pf protoField) Format(w io.Writer) {
 	fmt.Fprintf(w, "%s %s = %d;\n", pf.typ, ToSnakeCase(pf.name), pf.num)
 }
 
+// isDeprecated reports whether the type's doc comment carries a Go-style `// Deprecated: ...` marker. Such types are
+// annotated with `option deprecated = true;` in the generated proto, which in turn excludes them from the API docs.
+func isDeprecated(comments []string) bool {
+	for _, c := range comments {
+		if strings.HasPrefix(strings.TrimSpace(strings.TrimPrefix(c, "//")), "Deprecated:") {
+			return true
+		}
+	}
+
+	return false
+}
+
 // PrepareProtoData prepares the data for the protobuf generation.
 //
 //nolint:gocyclo,cyclop
@@ -227,9 +248,10 @@ func PrepareProtoData(pkgsTypes slices.Sorted[*types.Type], constants consts.Con
 		})
 
 		def := sliceutil.GetOrAdd(protoPkg.Defs(), &protoDef{
-			name:     pkgType.Name,
-			goPkg:    pkgType.Pkg,
-			comments: pkgType.Comments,
+			name:       pkgType.Name,
+			goPkg:      pkgType.Pkg,
+			comments:   pkgType.Comments,
+			deprecated: isDeprecated(pkgType.Comments),
 		})
 
 		for j := range pkgType.Fields().Len() {

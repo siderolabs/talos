@@ -109,7 +109,10 @@ message KmsgLogConfigSpec {
 }
 
 // LoadedKernelModuleSpec describes loaded Linux kernel modules.
+//
+// Deprecated: use KernelModuleStatus instead.
 message LoadedKernelModuleSpec {
+  option deprecated = true;
   int64 size = 1;
   int64 reference_count = 2;
   repeated string dependencies = 3;

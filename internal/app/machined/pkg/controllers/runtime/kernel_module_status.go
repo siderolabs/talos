@@ -55,7 +55,7 @@ func (ctrl *KernelModuleStatusController) Inputs() []controller.Input {
 func (ctrl *KernelModuleStatusController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
-			Type: runtime.LoadedKernelModuleType,
+			Type: runtime.LoadedKernelModuleType, //nolint:staticcheck
 			Kind: controller.OutputExclusive,
 		},
 		{
@@ -152,7 +152,7 @@ func (ctrl *KernelModuleStatusController) reconcile(ctx context.Context, r contr
 
 	return r.CleanupOutputs(
 		ctx,
-		resource.NewMetadata(runtime.NamespaceName, runtime.LoadedKernelModuleType, "", resource.VersionUndefined),
+		resource.NewMetadata(runtime.NamespaceName, runtime.LoadedKernelModuleType, "", resource.VersionUndefined), //nolint:staticcheck
 		resource.NewMetadata(runtime.NamespaceName, runtime.KernelModuleStatusType, "", resource.VersionUndefined),
 	)
 }
@@ -193,8 +193,8 @@ func (ctrl *KernelModuleStatusController) reconcileDynamicModules(ctx context.Co
 	for _, module := range rawModules {
 		if err := safe.WriterModify(
 			ctx, r,
-			runtime.NewLoadedKernelModule(runtime.NamespaceName, module.Name),
-			func(res *runtime.LoadedKernelModule) error {
+			runtime.NewLoadedKernelModule(runtime.NamespaceName, module.Name), //nolint:staticcheck
+			func(res *runtime.LoadedKernelModule) error { //nolint:staticcheck
 				res.TypedSpec().Size = module.Size
 				res.TypedSpec().ReferenceCount = module.ReferenceCount
 				res.TypedSpec().Dependencies = module.Dependencies
