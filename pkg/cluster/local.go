@@ -15,7 +15,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 	secretsgen "github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
-	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 	"github.com/siderolabs/talos/pkg/machinery/role"
 )
@@ -54,17 +53,8 @@ func (c *LocalClientProvider) Client(endpoints ...string) (*client.Client, error
 		return nil, fmt.Errorf("failed to get OS root secrets: %w", err)
 	}
 
-	nodeAddress, err := safe.StateGetByID[*network.NodeAddress](ctx, c.resources, network.NodeAddressDefaultID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get node address: %w", err)
-	}
-
-	if len(nodeAddress.TypedSpec().IPs()) == 0 {
-		return nil, fmt.Errorf("no node IPs found in node address")
-	}
-
 	if len(endpoints) == 0 {
-		endpoints = []string{nodeAddress.TypedSpec().IPs()[0].String()}
+		endpoints = []string{"127.0.0.1"}
 	}
 
 	// use a short-lived certificate, as we need to connect once
