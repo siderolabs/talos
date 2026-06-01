@@ -18,6 +18,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/dashboard/resourcedata"
+	"github.com/siderolabs/talos/internal/pkg/dashboard/utils"
 	"github.com/siderolabs/talos/pkg/machinery/meta"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -418,7 +419,7 @@ func (widget *NetworkConfigGrid) save(ctx context.Context) {
 		return
 	}
 
-	ctx = nodeContext(ctx, widget.selectedNode)
+	ctx = utils.NodeContext(ctx, widget.selectedNode)
 
 	if err = widget.dashboard.cli.MetaWrite(ctx, meta.MetalNetworkPlatformConfig, configBytes); err != nil {
 		widget.infoView.SetText(fmt.Sprintf("[red]Error: %v[-]", err))

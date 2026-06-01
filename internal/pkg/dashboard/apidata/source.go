@@ -6,6 +6,8 @@ package apidata
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -13,16 +15,16 @@ import (
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
-	"github.com/siderolabs/talos/internal/pkg/dashboard/resolver"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 )
 
 // Source is a data source that gathers information about a Talos node using Talos API.
 type Source struct {
 	*client.Client
 
-	Resolver resolver.Resolver
+	Nodes []string
 
 	Interval time.Duration
 
@@ -90,23 +92,62 @@ type protoMsg[T any] interface {
 	GetMessages() []T
 }
 
-func unpack[T helpers.Message](source *Source, nodes map[string]*Node, resultLock *sync.Mutex, resp protoMsg[T], setter func(node *Node, value T)) {
+func unpack[T helpers.Message](nodes map[string]*Node, resultLock *sync.Mutex, nodeName string, msg T, setter func(node *Node, value T)) {
 	resultLock.Lock()
 	defer resultLock.Unlock()
 
-	for _, msg := range resp.GetMessages() {
-		node := source.node(msg)
+	if _, ok := nodes[nodeName]; !ok {
+		nodes[nodeName] = &Node{}
+	}
 
-		if _, ok := nodes[node]; !ok {
-			nodes[node] = &Node{}
+	setter(nodes[nodeName], msg)
+}
+
+func runGather[t helpers.Message](
+	source *Source,
+	nodes map[string]*Node,
+	resultLock *sync.Mutex,
+	gatherFunc func(context.Context) (protoMsg[t], error),
+	setter func(node *Node, value t),
+) error {
+	var (
+		resp protoMsg[t]
+		err  error
+	)
+
+	if len(source.Nodes) == 1 && source.Nodes[0] == "" {
+		// local gather case, no need to multiplex by node
+		resp, err = gatherFunc(source.ctx)
+		if err != nil {
+			return err
 		}
 
-		if msg.GetMetadata().GetError() != "" { //nolint:staticcheck // legacy behavior
+		for _, msg := range resp.GetMessages() {
+			unpack(nodes, resultLock, "", msg, setter)
+		}
+
+		return nil
+	}
+
+	respCh := multiplex.Unary(source.ctx, source.Nodes, func(ctx context.Context) (protoMsg[t], error) {
+		return gatherFunc(ctx)
+	})
+
+	var errs error
+
+	for msg := range respCh {
+		if msg.Err != nil {
+			errs = errors.Join(errs, fmt.Errorf("error gathering data from node %q: %w", msg.Node, msg.Err))
+
 			continue
 		}
 
-		setter(nodes[node], msg)
+		for _, m := range msg.Payload.GetMessages() {
+			unpack(nodes, resultLock, msg.Node, m, setter)
+		}
 	}
+
+	return errs
 }
 
 //nolint:gocyclo
@@ -120,112 +161,103 @@ func (source *Source) gather() *Data {
 
 	gatherFuncs := []func() error{
 		func() error {
-			resp, err := source.MachineClient.LoadAvg(source.ctx, &emptypb.Empty{})
-			if err != nil {
-				return err
-			}
-
-			unpack(source, result.Nodes, &resultLock, resp, func(node *Node, value *machine.LoadAvg) {
-				node.LoadAvg = value
-			})
-
-			return nil
+			return runGather(
+				source, result.Nodes, &resultLock,
+				func(ctx context.Context) (protoMsg[*machine.LoadAvg], error) {
+					return source.MachineClient.LoadAvg(ctx, &emptypb.Empty{})
+				},
+				func(node *Node, value *machine.LoadAvg) {
+					node.LoadAvg = value
+				},
+			)
 		},
 		func() error {
-			resp, err := source.MachineClient.Memory(source.ctx, &emptypb.Empty{})
-			if err != nil {
-				return err
-			}
-
-			unpack(source, result.Nodes, &resultLock, resp, func(node *Node, value *machine.Memory) {
-				node.Memory = value
-			})
-
-			return nil
+			return runGather(
+				source, result.Nodes, &resultLock,
+				func(ctx context.Context) (protoMsg[*machine.Memory], error) {
+					return source.MachineClient.Memory(ctx, &emptypb.Empty{})
+				},
+				func(node *Node, value *machine.Memory) {
+					node.Memory = value
+				},
+			)
 		},
 		func() error {
-			resp, err := source.MachineClient.SystemStat(source.ctx, &emptypb.Empty{})
-			if err != nil {
-				return err
-			}
-
-			unpack(source, result.Nodes, &resultLock, resp, func(node *Node, value *machine.SystemStat) {
-				node.SystemStat = value
-			})
-
-			return nil
+			return runGather(
+				source, result.Nodes, &resultLock,
+				func(ctx context.Context) (protoMsg[*machine.SystemStat], error) {
+					return source.MachineClient.SystemStat(ctx, &emptypb.Empty{})
+				},
+				func(node *Node, value *machine.SystemStat) {
+					node.SystemStat = value
+				},
+			)
 		},
 		func() error {
-			resp, err := source.MachineClient.CPUFreqStats(source.ctx, &emptypb.Empty{})
-			if err != nil {
-				return err
-			}
-
-			unpack(source, result.Nodes, &resultLock, resp, func(node *Node, value *machine.CPUsFreqStats) {
-				node.CPUsFreqStats = value
-			})
-
-			return nil
+			return runGather(
+				source, result.Nodes, &resultLock,
+				func(ctx context.Context) (protoMsg[*machine.CPUsFreqStats], error) {
+					return source.MachineClient.CPUFreqStats(ctx, &emptypb.Empty{})
+				},
+				func(node *Node, value *machine.CPUsFreqStats) {
+					node.CPUsFreqStats = value
+				},
+			)
 		},
 		func() error {
-			resp, err := source.MachineClient.CPUInfo(source.ctx, &emptypb.Empty{})
-			if err != nil {
-				return err
-			}
-
-			unpack(source, result.Nodes, &resultLock, resp, func(node *Node, value *machine.CPUsInfo) {
-				node.CPUsInfo = value
-			})
-
-			return nil
+			return runGather(
+				source, result.Nodes, &resultLock,
+				func(ctx context.Context) (protoMsg[*machine.CPUsInfo], error) {
+					return source.MachineClient.CPUInfo(ctx, &emptypb.Empty{})
+				},
+				func(node *Node, value *machine.CPUsInfo) {
+					node.CPUsInfo = value
+				},
+			)
 		},
 		func() error {
-			resp, err := source.MachineClient.NetworkDeviceStats(source.ctx, &emptypb.Empty{})
-			if err != nil {
-				return err
-			}
-
-			unpack(source, result.Nodes, &resultLock, resp, func(node *Node, value *machine.NetworkDeviceStats) {
-				node.NetDevStats = value
-			})
-
-			return nil
+			return runGather(
+				source, result.Nodes, &resultLock,
+				func(ctx context.Context) (protoMsg[*machine.NetworkDeviceStats], error) {
+					return source.MachineClient.NetworkDeviceStats(ctx, &emptypb.Empty{})
+				},
+				func(node *Node, value *machine.NetworkDeviceStats) {
+					node.NetDevStats = value
+				},
+			)
 		},
 		func() error {
-			resp, err := source.MachineClient.DiskStats(source.ctx, &emptypb.Empty{})
-			if err != nil {
-				return err
-			}
-
-			unpack(source, result.Nodes, &resultLock, resp, func(node *Node, value *machine.DiskStats) {
-				node.DiskStats = value
-			})
-
-			return nil
+			return runGather(
+				source, result.Nodes, &resultLock,
+				func(ctx context.Context) (protoMsg[*machine.DiskStats], error) {
+					return source.MachineClient.DiskStats(ctx, &emptypb.Empty{})
+				},
+				func(node *Node, value *machine.DiskStats) {
+					node.DiskStats = value
+				},
+			)
 		},
 		func() error {
-			resp, err := source.MachineClient.Processes(source.ctx, &emptypb.Empty{})
-			if err != nil {
-				return err
-			}
-
-			unpack(source, result.Nodes, &resultLock, resp, func(node *Node, value *machine.Process) {
-				node.Processes = value
-			})
-
-			return nil
+			return runGather(
+				source, result.Nodes, &resultLock,
+				func(ctx context.Context) (protoMsg[*machine.Process], error) {
+					return source.MachineClient.Processes(ctx, &emptypb.Empty{})
+				},
+				func(node *Node, value *machine.Process) {
+					node.Processes = value
+				},
+			)
 		},
 		func() error {
-			resp, err := source.MachineClient.ServiceList(source.ctx, &emptypb.Empty{})
-			if err != nil {
-				return err
-			}
-
-			unpack(source, result.Nodes, &resultLock, resp, func(node *Node, value *machine.ServiceList) {
-				node.ServiceList = value
-			})
-
-			return nil
+			return runGather(
+				source, result.Nodes, &resultLock,
+				func(ctx context.Context) (protoMsg[*machine.ServiceList], error) {
+					return source.MachineClient.ServiceList(ctx, &emptypb.Empty{})
+				},
+				func(node *Node, value *machine.ServiceList) {
+					node.ServiceList = value
+				},
+			)
 		},
 	}
 
@@ -241,10 +273,4 @@ func (source *Source) gather() *Data {
 	}
 
 	return result
-}
-
-func (source *Source) node(msg helpers.Message) string {
-	hostname := msg.GetMetadata().GetHostname() //nolint:staticcheck // legacy behavior
-
-	return source.Resolver.Resolve(hostname)
 }

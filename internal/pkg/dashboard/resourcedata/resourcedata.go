@@ -18,7 +18,7 @@ import (
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc/codes"
 
-	"github.com/siderolabs/talos/internal/pkg/dashboard/util"
+	"github.com/siderolabs/talos/internal/pkg/dashboard/utils"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -44,7 +44,8 @@ type Source struct {
 	eg   errgroup.Group
 	once sync.Once
 
-	COSI state.State
+	COSI  state.State
+	Nodes []string
 
 	ch             chan Data
 	NodeResourceCh <-chan Data
@@ -71,9 +72,9 @@ func (source *Source) run(ctx context.Context) {
 
 	source.NodeResourceCh = source.ch
 
-	for _, nodeContext := range util.NodeContexts(ctx) {
+	for _, node := range source.Nodes {
 		source.eg.Go(func() error {
-			source.runResourceWatchWithRetries(nodeContext.Ctx, nodeContext.Node)
+			source.runResourceWatchWithRetries(utils.NodeContext(ctx, node), node)
 
 			return nil
 		})

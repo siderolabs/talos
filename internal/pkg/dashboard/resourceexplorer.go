@@ -21,6 +21,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"k8s.io/client-go/util/jsonpath"
 
+	"github.com/siderolabs/talos/internal/pkg/dashboard/utils"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
@@ -289,7 +290,7 @@ func (widget *ResourceExplorerGrid) loadResourceTypes() {
 		NotSelectable: true,
 	})
 
-	ctx := nodeContext(widget.ctx, widget.selectedNode)
+	ctx := utils.NodeContext(widget.ctx, widget.selectedNode)
 
 	go func() {
 		list, err := safe.StateListAll[*meta.ResourceDefinition](ctx, widget.dashboard.cli.COSI)
@@ -570,7 +571,7 @@ func (widget *ResourceExplorerGrid) stopResourceWatch() {
 //
 //nolint:gocyclo
 func (widget *ResourceExplorerGrid) runResourceWatch(ctx context.Context, rd *meta.ResourceDefinition) {
-	nodeCtx := nodeContext(ctx, widget.selectedNode)
+	nodeCtx := utils.NodeContext(ctx, widget.selectedNode)
 
 	spec := rd.TypedSpec()
 

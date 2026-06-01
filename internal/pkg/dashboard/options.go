@@ -5,6 +5,7 @@
 package dashboard
 
 import (
+	"slices"
 	"time"
 )
 
@@ -12,6 +13,7 @@ type options struct {
 	interval      time.Duration
 	allowExitKeys bool
 	screens       []Screen
+	nodes         []string
 }
 
 func defaultOptions() *options {
@@ -23,6 +25,7 @@ func defaultOptions() *options {
 			ScreenMonitor,
 			ScreenNetworkConfig,
 		},
+		nodes: []string{""}, // use "local" node by default
 	}
 }
 
@@ -48,5 +51,12 @@ func WithAllowExitKeys(allowExitKeys bool) Option {
 func WithScreens(screens ...Screen) Option {
 	return func(o *options) {
 		o.screens = screens
+	}
+}
+
+// WithNodes sets the nodes to display.
+func WithNodes(nodes ...string) Option {
+	return func(o *options) {
+		o.nodes = slices.Clone(nodes)
 	}
 }
