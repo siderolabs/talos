@@ -1,0 +1,7 @@
+apiVersion: v1alpha1
+kind: DHCPv4Config
+name: enp0s3
+routeMetric: 512
+ignoreHostname: true
+clientIdentifier: duid
+duidRaw: 00:01:00:01:23:45:67:89:ab:cd:ef:01:23:45

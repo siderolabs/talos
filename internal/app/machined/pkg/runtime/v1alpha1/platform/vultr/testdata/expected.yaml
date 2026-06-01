@@ -1,0 +1,56 @@
+addresses:
+    - address: 95.111.222.111/23
+      linkName: eth0
+      family: inet4
+      scope: global
+      flags: permanent
+      layer: platform
+    - address: 10.7.96.3/20
+      linkName: eth1
+      family: inet4
+      scope: global
+      flags: permanent
+      layer: platform
+links:
+    - name: eth0
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      layer: platform
+    - name: eth1
+      logical: false
+      up: true
+      mtu: 1450
+      kind: ""
+      type: netrom
+      layer: platform
+routes:
+    - family: inet4
+      dst: ""
+      src: ""
+      gateway: 95.111.222.1
+      outLinkName: eth0
+      table: main
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+hostnames:
+    - hostname: talos
+      domainname: ""
+      layer: platform
+resolvers: []
+timeServers: []
+operators: []
+externalIPs:
+    - 95.111.222.111
+    - 2001:19f0:5001:2095:1111:2222:3333:4444
+metadata:
+    platform: vultr
+    hostname: talos
+    region: AMS
+    instanceId: 91b07056-af72-4551-b15b-d57d34071be9
+    providerId: vultr://91b07056-af72-4551-b15b-d57d34071be9

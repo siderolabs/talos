@@ -1,0 +1,17 @@
+cluster:
+  inlineManifests:
+    - name: cilium
+      contents: | # the empty newline below is important
+
+        ---
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: cilium
+          namespace: kube-system
+        ---
+        apiVersion: v1
+        kind: ServiceAccount
+        metadata:
+          name: cilium-operator
+          namespace: kube-system

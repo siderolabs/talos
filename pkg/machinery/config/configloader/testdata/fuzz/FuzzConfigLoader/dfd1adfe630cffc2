@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("apiVersion: v1alpha1\nkind: SideroLinkConfig")

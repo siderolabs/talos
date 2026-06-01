@@ -1,0 +1,4 @@
+- op: add
+  path: /machine/network/interfaces/0/addresses
+  value:
+     - 10.1.2.3/24

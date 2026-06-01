@@ -1,0 +1,6 @@
+[metrics]
+  address = "0.0.0.0:11234"
+
+[plugins]
+   [plugins."io.containerd.grpc.v1.cri"]
+    sandbox_image = "registry.k8s.io/pause:3.8"

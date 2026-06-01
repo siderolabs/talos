@@ -1,0 +1,22 @@
+arch: amd64
+platform: gcp
+secureboot: false
+version: 1.9.0
+input:
+  kernel:
+    path: /usr/install/amd64/vmlinuz
+  initramfs:
+    path: /usr/install/amd64/initramfs.xz
+  sdStub:
+    path: /usr/install/amd64/systemd-stub.efi
+  sdBoot:
+    path: /usr/install/amd64/systemd-boot.efi
+  baseInstaller:
+    imageRef: ghcr.io/siderolabs/installer:1.9.0
+output:
+  kind: image
+  imageOptions:
+    diskSize: 8589934592
+    diskFormat: raw
+    bootloader: grub
+  outFormat: .tar.gz

@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Question
+    url: https://github.com/siderolabs/talos/discussions
+    about: Ask a question about Talos Linux.
+  - name: Community
+    url: https://taloscommunity.slack.com
+    about: Join the community. (Not an official support channel.) Get your invite by visiting https://inviter.co/sidero-labs-community.
+  - name: Get Enterprise Support
+    url: https://www.siderolabs.com/support/
+    about: Get commercial support from the Sidero Labs team, with SLAs for every issue.

@@ -1,0 +1,18 @@
+addresses: []
+links: []
+routes: []
+hostnames:
+    - hostname: talos
+      domainname: fqdn
+      layer: platform
+resolvers: []
+timeServers: []
+operators: []
+externalIPs:
+    - 1.2.3.4
+metadata:
+    platform: exoscale
+    hostname: talos.fqdn
+    instanceType: standard.tiny
+    instanceId: 3085c764-b270-45b0-b974-68c55a9c2d53
+    providerId: exoscale://3085c764-b270-45b0-b974-68c55a9c2d53

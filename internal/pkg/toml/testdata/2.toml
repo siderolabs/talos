@@ -1,0 +1,5 @@
+[plugins]
+  [plugins."io.containerd.grpc.v1.cri"]
+    [plugins."io.containerd.grpc.v1.cri".registry]
+      config_path = "/etc/cri/conf.d/hosts"
+      [plugins."io.containerd.grpc.v1.cri".registry.configs]

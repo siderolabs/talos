@@ -1,0 +1,405 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+package config
+
+import (
+	"net/netip"
+	"time"
+
+	"github.com/siderolabs/gen/optional"
+
+	"github.com/siderolabs/talos/pkg/machinery/cel"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+)
+
+// NetworkRuleConfig defines the interface to access network firewall configuration.
+type NetworkRuleConfig interface {
+	NetworkRuleConfigRules
+	NetworkRuleConfigDefaultAction
+}
+
+// NetworkRuleConfigRules defines the interface to access network firewall configuration.
+type NetworkRuleConfigRules interface {
+	Rules() []NetworkRule
+}
+
+// NetworkRuleConfigDefaultAction defines the interface to access network firewall configuration.
+type NetworkRuleConfigDefaultAction interface {
+	DefaultAction() nethelpers.DefaultAction
+}
+
+// NetworkRuleConfigSignal is used to signal documents which implement either of the NetworkRuleConfig interfaces.
+type NetworkRuleConfigSignal interface {
+	NetworkRuleConfigSignal()
+}
+
+// NetworkRule defines a network firewall rule.
+type NetworkRule interface {
+	Protocol() nethelpers.Protocol
+	PortRanges() [][2]uint16
+	Subnets() []netip.Prefix
+	ExceptSubnets() []netip.Prefix
+}
+
+// WrapNetworkRuleConfigList wraps a list of NetworkConfig into a single NetworkConfig aggregating the results.
+func WrapNetworkRuleConfigList(configs ...NetworkRuleConfigSignal) NetworkRuleConfig {
+	return networkRuleConfigWrapper(configs)
+}
+
+type networkRuleConfigWrapper []NetworkRuleConfigSignal
+
+func (w networkRuleConfigWrapper) DefaultAction() nethelpers.DefaultAction {
+	// DefaultAction zero value is 'accept' which is the default config value as well.
+	return findFirstValue(
+		filterDocuments[NetworkRuleConfigDefaultAction](w),
+		func(c NetworkRuleConfigDefaultAction) nethelpers.DefaultAction {
+			return c.DefaultAction()
+		},
+	)
+}
+
+func (w networkRuleConfigWrapper) Rules() []NetworkRule {
+	return aggregateValues(
+		filterDocuments[NetworkRuleConfigRules](w),
+		func(c NetworkRuleConfigRules) []NetworkRule {
+			return c.Rules()
+		},
+	)
+}
+
+// EthernetConfig defines a network interface configuration.
+type EthernetConfig interface {
+	NamedDocument
+	Rings() EthernetRingsConfig
+	Channels() EthernetChannelsConfig
+	Features() map[string]bool
+	WakeOnLAN() []nethelpers.WOLMode
+}
+
+// EthernetRingsConfig defines a configuration for Ethernet link rings.
+type EthernetRingsConfig struct {
+	RX           *uint32
+	TX           *uint32
+	RXMini       *uint32
+	RXJumbo      *uint32
+	RXBufLen     *uint32
+	CQESize      *uint32
+	TXPush       *bool
+	RXPush       *bool
+	TXPushBufLen *uint32
+	TCPDataSplit *bool
+}
+
+// EthernetChannelsConfig defines a configuration for Ethernet link channels.
+type EthernetChannelsConfig struct {
+	RX       *uint32
+	TX       *uint32
+	Other    *uint32
+	Combined *uint32
+}
+
+// NetworkStaticHostConfig defines a static host configuration.
+type NetworkStaticHostConfig interface {
+	IP() string
+	Aliases() []string
+}
+
+// NetworkHostnameConfig defines a hostname configuration.
+type NetworkHostnameConfig interface {
+	Hostname() string
+	AutoHostname() nethelpers.AutoHostnameKind
+}
+
+// NetworkResolver is a single instance of a DNS resolver configuration.
+type NetworkResolver struct {
+	Addr          netip.Addr
+	Protocol      nethelpers.DNSProtocol
+	TLSServerName string
+}
+
+// NetworkResolverConfig defines a resolver configuration.
+type NetworkResolverConfig interface {
+	Resolvers() []NetworkResolver
+	SearchDomains() []string
+	DisableSearchDomain() bool
+}
+
+// NetworkTimeSyncConfig defines the requirements for a config that pertains to time related
+// options.
+type NetworkTimeSyncConfig interface {
+	Disabled() bool
+	Servers() []string
+	BootTimeout() time.Duration
+	UseNTS() bool
+}
+
+// NetworkPhysicalLinkConfig defines a physical network link configuration.
+type NetworkPhysicalLinkConfig interface {
+	PhysicalLinkConfig()
+	NetworkCommonLinkConfig
+}
+
+// NetworkDummyLinkConfig defines a dummy network link configuration.
+type NetworkDummyLinkConfig interface {
+	DummyLinkConfig()
+	NetworkHardwareAddressConfig
+	NetworkCommonLinkConfig
+}
+
+// NetworkHardwareAddressConfig defines a hardware (MAC) address configuration.
+type NetworkHardwareAddressConfig interface {
+	HardwareAddress() optional.Optional[nethelpers.HardwareAddr]
+}
+
+// NetworkCommonLinkConfig defines common configuration for network links.
+type NetworkCommonLinkConfig interface {
+	NamedDocument
+	Up() optional.Optional[bool]
+	MTU() optional.Optional[uint32]
+	Addresses() []NetworkAddressConfig
+	Routes() []NetworkRouteConfig
+	Multicast() optional.Optional[bool]
+}
+
+// NetworkAddressConfig defines a network address configuration.
+type NetworkAddressConfig interface {
+	Address() netip.Prefix
+	RoutePriority() optional.Optional[uint32]
+}
+
+// NetworkRouteConfig defines a network route configuration.
+type NetworkRouteConfig interface {
+	Destination() optional.Optional[netip.Prefix]
+	Gateway() optional.Optional[netip.Addr]
+	Source() optional.Optional[netip.Addr]
+	MTU() optional.Optional[uint32]
+	Metric() optional.Optional[uint32]
+	Table() optional.Optional[nethelpers.RoutingTable]
+}
+
+// NetworkLinkAliasConfig defines a network link alias configuration.
+type NetworkLinkAliasConfig interface {
+	NamedDocument
+	LinkSelector() cel.Expression
+	IsPatternAlias() bool
+}
+
+// NetworkDHCPConfig defines a DHCP configuration for a network link.
+type NetworkDHCPConfig interface {
+	NamedDocument
+	NetworkDHCPConfig()
+}
+
+// NetworkDHCPv4Config defines a DHCPv4 configuration for a network link.
+type NetworkDHCPv4Config interface {
+	NamedDocument
+	NetworkDHCPConfig
+	NetworkDHCPv4Config() // signal method
+	RouteMetric() optional.Optional[uint32]
+	IgnoreHostname() optional.Optional[bool]
+	ClientIdentifier() nethelpers.ClientIdentifier
+	DUIDRaw() optional.Optional[nethelpers.HardwareAddr]
+}
+
+// NetworkDHCPv6Config defines a DHCPv6 configuration for a network link.
+type NetworkDHCPv6Config interface {
+	NamedDocument
+	NetworkDHCPConfig
+	NetworkDHCPv6Config() // signal method
+	RouteMetric() optional.Optional[uint32]
+	IgnoreHostname() optional.Optional[bool]
+	ClientIdentifier() nethelpers.ClientIdentifier
+	DUIDRaw() optional.Optional[nethelpers.HardwareAddr]
+}
+
+// NetworkVirtualIPConfig defines a common virtual IP configuration.
+//
+//nolint:iface
+type NetworkVirtualIPConfig interface {
+	NamedDocument
+	Link() string
+	VIP() netip.Addr
+}
+
+// NetworkLayer2VIPConfig defines a Layer 2 VIP configuration.
+//
+//nolint:iface
+type NetworkLayer2VIPConfig interface {
+	NetworkVirtualIPConfig
+}
+
+// NetworkHCloudVIPConfig defines a Hetzner Cloud VIP configuration.
+type NetworkHCloudVIPConfig interface {
+	NetworkVirtualIPConfig
+	HCloudAPIToken() string
+}
+
+// NetworkVLANConfig defines a VLAN link configuration.
+type NetworkVLANConfig interface {
+	NamedDocument
+	NetworkCommonLinkConfig
+	VLANConfig()
+	VLANID() uint16
+	ParentLink() string
+	VLANMode() optional.Optional[nethelpers.VLANProtocol]
+}
+
+// NetworkBondConfig defines a bond link configuration.
+//
+//nolint:interfacebloat
+type NetworkBondConfig interface {
+	NamedDocument
+	NetworkCommonLinkConfig
+	NetworkHardwareAddressConfig
+	BondConfig()
+	Links() []string
+	Mode() nethelpers.BondMode
+	MIIMon() optional.Optional[uint32]
+	UpDelay() optional.Optional[uint32]
+	DownDelay() optional.Optional[uint32]
+	UseCarrier() optional.Optional[bool]
+	XmitHashPolicy() optional.Optional[nethelpers.BondXmitHashPolicy]
+	ARPInterval() optional.Optional[uint32]
+	ARPIPTargets() []netip.Addr
+	NSIP6Targets() []netip.Addr
+	ARPValidate() optional.Optional[nethelpers.ARPValidate]
+	ARPAllTargets() optional.Optional[nethelpers.ARPAllTargets]
+	LACPRate() optional.Optional[nethelpers.LACPRate]
+	FailOverMAC() optional.Optional[nethelpers.FailOverMAC]
+	ADSelect() optional.Optional[nethelpers.ADSelect]
+	ADActorSysPrio() optional.Optional[uint16]
+	ADUserPortKey() optional.Optional[uint16]
+	ADLACPActive() optional.Optional[nethelpers.ADLACPActive]
+	PrimaryReselect() optional.Optional[nethelpers.PrimaryReselect]
+	ResendIGMP() optional.Optional[uint32]
+	MinLinks() optional.Optional[uint32]
+	LPInterval() optional.Optional[uint32]
+	PacketsPerSlave() optional.Optional[uint32]
+	NumPeerNotif() optional.Optional[uint8]
+	TLBDynamicLB() optional.Optional[uint8]
+	AllSlavesActive() optional.Optional[uint8]
+	PeerNotifyDelay() optional.Optional[uint32]
+	MissedMax() optional.Optional[uint8]
+}
+
+// NetworkBridgeConfig defines a bridge link configuration.
+type NetworkBridgeConfig interface {
+	NamedDocument
+	NetworkCommonLinkConfig
+	NetworkHardwareAddressConfig
+	BridgeConfig()
+	Links() []string
+	STP() BridgeSTPConfig
+	VLAN() BridgeVLANConfig
+}
+
+// BridgeSTPConfig is a bridge STP (Spanning Tree Protocol) configuration.
+type BridgeSTPConfig interface {
+	Enabled() optional.Optional[bool]
+}
+
+// BridgeVLANConfig is a bridge VLAN configuration.
+type BridgeVLANConfig interface {
+	FilteringEnabled() optional.Optional[bool]
+}
+
+// NetworkVRFConfig defines a vrf link configuration.
+type NetworkVRFConfig interface {
+	NamedDocument
+	NetworkCommonLinkConfig
+	NetworkHardwareAddressConfig
+	VRFConfig()
+	Links() []string
+	Table() nethelpers.RoutingTable
+}
+
+// NetworkWireguardConfig defines a Wireguard link configuration.
+type NetworkWireguardConfig interface {
+	NamedDocument
+	NetworkCommonLinkConfig
+	WireguardConfig()
+	PrivateKey() string
+	ListenPort() optional.Optional[int]
+	FirewallMark() optional.Optional[int]
+	Peers() []NetworkWireguardPeerConfig
+}
+
+// NetworkWireguardPeerConfig defines a Wireguard peer configuration.
+type NetworkWireguardPeerConfig interface {
+	PublicKey() string
+	PresharedKey() optional.Optional[string]
+	Endpoint() optional.Optional[string]
+	AllowedIPs() []netip.Prefix
+	PersistentKeepalive() optional.Optional[time.Duration]
+}
+
+// NetworkKubeSpanConfig configures KubeSpan feature.
+type NetworkKubeSpanConfig interface {
+	Enabled() bool
+	ForceRouting() bool
+	AdvertiseKubernetesNetworks() bool
+	HarvestExtraEndpoints() bool
+	MTU() uint32
+	Filters() NetworkKubeSpanFilters
+}
+
+// NetworkKubeSpanFilters configures KubeSpan filters.
+type NetworkKubeSpanFilters interface {
+	Endpoints() []string
+	ExcludeAdvertisedNetworks() []netip.Prefix
+}
+
+// NetworkCommonProbeConfig defines a network connectivity probe configuration.
+type NetworkCommonProbeConfig interface {
+	NamedDocument
+	Interval() time.Duration
+	FailureThreshold() int
+}
+
+// NetworkTCPProbeConfig defines a TCP probe configuration.
+type NetworkTCPProbeConfig interface {
+	NetworkCommonProbeConfig
+	Endpoint() string
+	Timeout() time.Duration
+}
+
+// NetworkBlackholeRouteConfig defines a blackhole route configuration.
+type NetworkBlackholeRouteConfig interface {
+	NamedDocument
+	BlackholeRouteConfig()
+	Metric() optional.Optional[uint32]
+}
+
+// NetworkRoutingRuleConfig defines a policy routing rule configuration.
+//
+//nolint:interfacebloat
+type NetworkRoutingRuleConfig interface {
+	NamedDocument
+	RoutingRuleConfig()
+	Src() optional.Optional[netip.Prefix]
+	Dst() optional.Optional[netip.Prefix]
+	Table() nethelpers.RoutingTable
+	Action() nethelpers.RoutingRuleAction
+	Priority() uint32
+	IIFName() string
+	OIFName() string
+	FwMark() uint32
+	FwMask() uint32
+}
+
+// NetworkHostDNSConfig defines a host DNS configuration.
+type NetworkHostDNSConfig interface {
+	HostDNSEnabled() bool
+	ForwardKubeDNSToHost() bool
+	ResolveMemberNames() bool
+}
+
+// NetworkHTTPProbeConfig defines an HTTP probe configuration.
+type NetworkHTTPProbeConfig interface {
+	NetworkCommonProbeConfig
+	URL() meta.URL
+	Timeout() time.Duration
+}

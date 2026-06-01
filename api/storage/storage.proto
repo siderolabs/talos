@@ -1,0 +1,109 @@
+syntax = "proto3";
+
+package storage;
+
+import "common/common.proto";
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/storage";
+option java_package = "dev.talos.api.storage";
+
+// StorageService represents the storage service.
+service StorageService {
+  rpc Disks(google.protobuf.Empty) returns (DisksResponse);
+  // BlockDeviceWipe performs a wipe of the blockdevice (partition or disk).
+  //
+  // The method doesn't require a reboot, and it can only wipe blockdevices which are not
+  // being used as volumes at the moment.
+  // Wiping of volumes requires a different API.
+  rpc BlockDeviceWipe(BlockDeviceWipeRequest) returns (BlockDeviceWipeResponse);
+}
+
+// Disk represents a disk.
+message Disk {
+  // Size indicates the disk size in bytes.
+  uint64 size = 1;
+  // Model idicates the disk model.
+  string model = 2;
+  // DeviceName indicates the disk name (e.g. `sda`).
+  string device_name = 3;
+  // Name as in `/sys/block/<dev>/device/name`.
+  string name = 4;
+  // Serial as in `/sys/block/<dev>/device/serial`.
+  string serial = 5;
+  // Modalias as in `/sys/block/<dev>/device/modalias`.
+  string modalias = 6;
+  // Uuid as in `/sys/block/<dev>/device/uuid`.
+  string uuid = 7;
+  // Wwid as in `/sys/block/<dev>/device/wwid`.
+  string wwid = 8;
+  enum DiskType {
+    UNKNOWN = 0;
+    SSD = 1;
+    HDD = 2;
+    NVME = 3;
+    SD = 4;
+    CD = 5;
+  }
+  // Type is a type of the disk: nvme, ssd, hdd, sd card.
+  DiskType type = 9;
+  // BusPath is the bus path of the disk.
+  string bus_path = 10;
+  // SystemDisk indicates that the disk is used as Talos system disk.
+  bool system_disk = 11;
+  // Subsystem is the symlink path in the `/sys/block/<dev>/subsystem`.
+  string subsystem = 12;
+  // Readonly specifies if the disk is read only.
+  bool readonly = 13;
+}
+
+// DisksResponse represents the response of the `Disks` RPC.
+message Disks {
+  common.Metadata metadata = 1;
+  repeated Disk disks = 2;
+}
+
+message DisksResponse {
+  repeated Disks messages = 1;
+}
+
+// rpc BlockDeviceWipe
+
+message BlockDeviceWipeRequest {
+  repeated BlockDeviceWipeDescriptor devices = 1;
+}
+
+// BlockDeviceWipeDescriptor represents a single block device to be wiped.
+//
+// The device can be either a full disk (e.g. vda) or a partition (vda5).
+// The device should not be used in any of active volumes.
+// The device should not be used as a secondary (e.g. part of LVM).
+message BlockDeviceWipeDescriptor {
+  enum Method {
+    // Fast wipe - wipe only filesystem signatures.
+    FAST = 0;
+    // Zeroes wipe - wipe by overwriting with zeroes (might be slow depending on the disk size and available hardware features).
+    ZEROES = 1;
+  }
+  // Device name to wipe (e.g. sda or sda5).
+  //
+  // The name should be submitted without `/dev/` prefix.
+  string device = 1;
+  // Wipe method to use.
+  Method method = 2;
+  // Skip the volume in use check.
+  bool skip_volume_check = 3;
+  // Skip the secondary disk check (e.g. underlying disk for RAID or LVM).
+  bool skip_secondary_check = 5;
+  // Drop the partition (only applies if the device is a partition).
+  bool drop_partition = 4;
+}
+
+message BlockDeviceWipeResponse {
+  repeated BlockDeviceWipe messages = 1;
+}
+
+message BlockDeviceWipe {
+  common.Metadata metadata = 1;
+}
+

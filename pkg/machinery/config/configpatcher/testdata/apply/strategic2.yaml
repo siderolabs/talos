@@ -1,0 +1,10 @@
+machine:
+  network:
+    interfaces:
+      - interface: eth0
+        vip:
+          ip: 10.3.5.6
+      - interface: eth1
+        vlans:
+          - vlanId: 100
+            addresses: [10.3.4.5]

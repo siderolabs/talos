@@ -1,0 +1,14 @@
+machine:
+  network:
+    interfaces:
+      - interface: eth1
+        addresses:
+          - "192.168.0.1/24"
+      - interface: eth0
+        vip:
+          ip: 10.3.5.7
+      - deviceSelector:
+          driver: macvtap
+        routes:
+          - network: 10.3.4.0/24
+            gateway: 10.3.4.1

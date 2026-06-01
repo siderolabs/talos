@@ -1,0 +1,88 @@
+(allow sys_containerd_t init_exec_t (file (execute)))
+(allow sys_containerd_t init_exec_t (fs_classes (ro)))
+
+; apid
+(type apid_t)
+(call system_container_p (apid_t))
+(allow apid_t init_exec_t (file (entrypoint execute)))
+
+(type apid_socket_t)
+(call system_socket_f (apid_socket_t))
+(type apid_runtime_socket_t)
+(call system_socket_f (apid_runtime_socket_t))
+
+; create the socket
+(allow apid_t system_t (fs_classes (rw)))
+(allow apid_t system_t (sock_file (relabelfrom)))
+(allow apid_t system_run_t (fs_classes (rw)))
+(allow apid_t system_run_t (sock_file (relabelfrom)))
+(allow apid_t apid_socket_t (sock_file (relabelto)))
+(allow apid_t apid_socket_t (fs_classes (rw)))
+(allow apid_t apid_runtime_socket_t (sock_file (relabelto)))
+(allow apid_t apid_runtime_socket_t (fs_classes (rw)))
+
+; Talk to machined
+(allow apid_t machine_socket_t (fs_classes (rw)))
+(allow apid_t init_t (unix_stream_socket (connectto)))
+
+; trustd
+(type trustd_t)
+(call system_container_p (trustd_t))
+(allow trustd_t init_exec_t (file (entrypoint execute)))
+
+(type trustd_runtime_socket_t)
+(call system_socket_f (trustd_runtime_socket_t))
+(allow trustd_t trustd_runtime_socket_t (sock_file (write)))
+; Trustd socket is created and owned by machined
+(allow trustd_t init_t (unix_stream_socket (connectto)))
+
+; Talos installer
+(type installer_t)
+(call system_container_p (installer_t))
+(allow sys_containerd_t system_var_t (file (execute)))
+(allow installer_t system_var_t (file (entrypoint execute execute_no_trans)))
+(allow installer_t system_var_t (fs_classes (rw)))
+
+; /boot(/EFI)
+(allow installer_t foreign_fs_t (fs_classes (rw)))
+(allow installer_t unlabeled_t (fs_classes (rw)))
+(allow installer_t fs_t (filesystem (unmount mount)))
+
+; efibootmgr used for installing in UEFI mode
+(allow installer_t efivarfs_t (fs_classes (rw)))
+
+; Talk to machined
+(allow installer_t machine_socket_t (sock_file (write)))
+(allow installer_t init_t (unix_stream_socket (connectto)))
+
+; talosctl debug container, automatically transition to it
+(type debug_t)
+(call system_container_p (debug_t))
+(typetransition sys_containerd_t system_var_t process debug_t)
+(allow debug_t system_var_t (file (entrypoint execute execute_no_trans)))
+(allow debug_t system_var_t (fs_classes (rw)))
+(allow debug_t log_f (fs_classes (rw)))
+(allow debug_t ephemeral_t (fs_classes (rw)))
+(allow debug_t devpts_t (fs_classes (rw)))
+(allow debug_t cni_conf_t (fs_classes (rw)))
+(allow debug_t module_t (fs_classes (ro)))
+(allow debug_t kubelet_state_t (fs_classes (rw)))
+(allow debug_t fs_t (filesystem (
+    getattr
+    mount
+    quotaget
+    quotamod
+    remount
+    unmount
+    watch
+)))
+(allow debug_t cgroup_t (fs_classes (rw)))
+(allow debug_t nsfs_t (fs_classes (ro)))
+(allow debug_t self (key (all)))
+(allow debug_t self (capability2 (syslog)))
+(allow debug_t kernel_t (system (syslog_read)))
+(allow debug_t sys_module_t (fs_classes (ro)))
+
+; Navigate procfs and monitor processes
+(allow debug_t any_p (fs_classes (ro)))
+(allow debug_t kernel_t (fs_classes (ro)))

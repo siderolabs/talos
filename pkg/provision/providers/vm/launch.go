@@ -1,0 +1,163 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+package vm
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"net/http"
+	"net/netip"
+	"net/url"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/provision/internal/inmemhttp"
+)
+
+// ReadConfig loads configuration from stdin.
+func ReadConfig(config any) error {
+	d := json.NewDecoder(os.Stdin)
+	if err := d.Decode(config); err != nil {
+		return fmt.Errorf("error decoding config from stdin: %w", err)
+	}
+
+	if d.More() {
+		return errors.New("extra unexpected input on stdin")
+	}
+
+	return os.Stdin.Close()
+}
+
+// ConfigureSignals configures signal handling for the process.
+func ConfigureSignals() chan os.Signal {
+	signal.Ignore(syscall.SIGHUP)
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
+
+	return c
+}
+
+func httpPostWrapper(f func(url.Values) error) http.Handler {
+	return http.HandlerFunc(
+		func(w http.ResponseWriter, req *http.Request) {
+			if req.Body != nil {
+				_, _ = io.Copy(io.Discard, req.Body) //nolint:errcheck
+				req.Body.Close()                     //nolint:errcheck
+			}
+
+			if req.Method != http.MethodPost {
+				w.WriteHeader(http.StatusNotImplemented)
+
+				return
+			}
+
+			err := f(req.URL.Query())
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+
+				fmt.Fprint(w, err.Error())
+
+				return
+			}
+
+			w.WriteHeader(http.StatusOK)
+		},
+	)
+}
+
+func httpGetWrapper(f func(w io.Writer)) http.Handler {
+	return http.HandlerFunc(
+		func(w http.ResponseWriter, req *http.Request) {
+			if req.Body != nil {
+				_, _ = io.Copy(io.Discard, req.Body) //nolint:errcheck
+				req.Body.Close()                     //nolint:errcheck
+			}
+
+			switch req.Method {
+			case http.MethodHead:
+				w.Header().Add("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+			case http.MethodGet:
+				w.Header().Add("Content-Type", "application/json")
+				w.WriteHeader(http.StatusOK)
+
+				f(w)
+			default:
+				w.WriteHeader(http.StatusNotImplemented)
+			}
+		},
+	)
+}
+
+// NewHTTPServer creates new inmemhttp.Server and mounts config file into it.
+func NewHTTPServer(ctx context.Context, gatewayAddr netip.Addr, port int, config []byte, controller Controller) (inmemhttp.Server, error) {
+	httpServer, err := inmemhttp.NewServer(ctx, nethelpers.JoinHostPort(gatewayAddr.String(), port))
+	if err != nil {
+		return nil, fmt.Errorf("error launching in-memory HTTP server: %w", err)
+	}
+
+	if err = httpServer.AddFile("config.yaml", config); err != nil {
+		return nil, err
+	}
+
+	if controller != nil {
+		for _, method := range []struct {
+			pattern string
+			f       func(url.Values) error
+		}{
+			{
+				pattern: "/poweron",
+				f:       func(_ url.Values) error { return controller.PowerOn() },
+			},
+			{
+				pattern: "/poweroff",
+				f: func(q url.Values) error {
+					raw := q.Get("grace-period")
+					if raw == "" {
+						return controller.PowerOff()
+					}
+
+					d, err := time.ParseDuration(raw)
+					if err != nil {
+						return fmt.Errorf("invalid grace-period: %w", err)
+					}
+
+					if d < 0 {
+						return fmt.Errorf("invalid grace-period: must be non-negative")
+					}
+
+					return controller.PowerOffWithGracePeriod(d)
+				},
+			},
+			{
+				pattern: "/reboot",
+				f:       func(_ url.Values) error { return controller.Reboot() },
+			},
+			{
+				pattern: "/pxeboot",
+				f:       func(_ url.Values) error { return controller.PXEBootOnce() },
+			},
+		} {
+			httpServer.AddHandler(method.pattern, httpPostWrapper(method.f))
+		}
+
+		httpServer.AddHandler(
+			"/status", httpGetWrapper(
+				func(w io.Writer) {
+					json.NewEncoder(w).Encode(controller.Status()) //nolint:errcheck
+				},
+			),
+		)
+	}
+
+	return httpServer, nil
+}

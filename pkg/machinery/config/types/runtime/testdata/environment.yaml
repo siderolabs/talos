@@ -1,0 +1,4 @@
+apiVersion: v1alpha1
+kind: EnvironmentConfig
+variables:
+    HTTP_PROXY: http://proxy.example.com:8080

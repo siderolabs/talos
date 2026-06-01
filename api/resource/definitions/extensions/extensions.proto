@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package talos.resource.definitions.extensions;
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/extensions";
+option java_package = "dev.talos.api.resource.definitions.extensions";
+
+// Compatibility describes extension compatibility.
+message Compatibility {
+  Constraint talos = 1;
+}
+
+// Constraint describes compatibility constraint.
+message Constraint {
+  string version = 1;
+}
+
+// Layer defines overlay mount layer.
+message Layer {
+  string image = 1;
+  Metadata metadata = 2;
+}
+
+// Metadata describes base extension metadata.
+message Metadata {
+  string name = 1;
+  string version = 2;
+  string author = 3;
+  string description = 4;
+  Compatibility compatibility = 5;
+  string extra_info = 6;
+}
+

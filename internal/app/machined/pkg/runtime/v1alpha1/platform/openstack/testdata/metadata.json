@@ -1,0 +1,11 @@
+{
+    "availability_zone": "nova",
+    "devices": [],
+    "hostname": "talos",
+    "keys": [],
+    "launch_index": 0,
+    "name": "talos",
+    "project_id": "39073b0a-1234-1234-1234-5e76a4bd64b2",
+    "public_keys": {},
+    "uuid": "39073b0a-1234-1234-1234-5e76a4bd64b2"
+}

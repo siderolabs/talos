@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package resource.network;
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/network";
+option java_package = "dev.talos.api.resource.network";
+
+// DeviceConfigSpecSpec is the spec for the network.DeviceConfigSpec resource.
+message DeviceConfigSpecSpec {
+  // Contains YAML marshalled device config (as part of the machine config).
+  bytes yaml_marshalled = 1;
+}

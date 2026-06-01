@@ -1,0 +1,21 @@
+version: 2
+ethernets:
+  nic0:
+    match:
+      macaddress: "02:xx:xx:xx:xx:xx"
+    dhcp4: false
+    dhcp6: false
+    addresses:
+      - 2a0c:6ec0:b00:c:0:1::/96
+      - 10.0.0.0/32
+    routes:
+      - to: 0.0.0.0/0
+        via: 169.254.0.1
+        on-link: true
+      - to: ::/0
+        via: fe80::1
+        on-link: true
+    nameservers:
+      addresses:
+        - 1.1.1.1
+        - 2606:4700:4700::1111

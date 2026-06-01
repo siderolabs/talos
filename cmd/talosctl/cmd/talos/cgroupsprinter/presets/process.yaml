@@ -1,0 +1,13 @@
+columns:
+  - name: PidsCurrent
+    template: '{{ .PidsCurrent | printf "%8s" }}'
+  - name: PidsPeak
+    template: '{{ .PidsPeak | printf "%8s" }}'
+  - name: PidsMax
+    template: '{{ .PidsMax | printf "%8s" }}'
+  - name: Procs
+    template: '{{ .CgroupProcs | len | printf "%7d" }}'
+  - name: Threads
+    template: '{{ .CgroupThreads | len | printf "%7d" }}'
+  - name: Processes
+    template: '{{ if .Parent }}{{ .CgroupProcsResolved | printf "%s" | printf "%.50s"  }}{{ end }}'

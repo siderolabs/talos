@@ -1,0 +1,10 @@
+version: v1alpha1
+metadata:
+  name: gvisor
+  version: 20220117.0-v1.0.0
+  author: Andrew Rynhard
+  description: >
+    This system extension provides gVisor using containerd's runtime handler.
+  compatibility:
+    talos:
+      version: ">= v1.0.0"

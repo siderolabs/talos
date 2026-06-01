@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package talos.resource.definitions.v1alpha1;
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/v1alpha1";
+option java_package = "dev.talos.api.resource.definitions.v1alpha1";
+
+// ServiceSpec describe service state.
+message ServiceSpec {
+  bool running = 1;
+  bool healthy = 2;
+  bool unknown = 3;
+}
+

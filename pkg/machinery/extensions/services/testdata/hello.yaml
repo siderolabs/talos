@@ -1,0 +1,19 @@
+name: hello
+container:
+  entrypoint: hello-world
+  args:
+    - --development
+    - --log=debug
+  mounts:
+    - source: /var/lib/example
+      destination: /var/lib/example
+      type: bind
+      options:
+        - rbind
+        - ro
+depends:
+  - service: cri
+  - path: /system/run/machined/machined.sock
+  - network:
+    - addresses
+restart: never

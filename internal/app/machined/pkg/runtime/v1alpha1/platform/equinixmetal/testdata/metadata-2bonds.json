@@ -1,0 +1,146 @@
+{
+    "id": "b45359b0-5a13-454b-82eb-d4959924f9f0",
+    "hostname": "devcluster-38uvi6",
+    "iqn": "iqn.2024-05.net.packet:device.b45359b0",
+    "operating_system": {
+      "slug": "custom_ipxe",
+      "version": "1",
+      "distro": "custom_ipxe",
+      "license_activation": { "state": "unlicensed" },
+      "image_tag": null
+    },
+    "plan": "n2.xlarge.x86",
+    "reserved": false,
+    "class": "n2.xlarge.x86",
+    "facility": "dc13",
+    "metro": "dc",
+    "private_subnets": ["10.0.0.0/8"],
+    "tags": [],
+    "ssh_keys": [
+    ],
+    "customdata": {},
+    "specs": {
+      "cpus": [
+        { "count": 2, "type": "Intel(R) Xeon(R) Gold 5218 CPU @ 2.30GHz" }
+      ],
+      "memory": { "total": "384GB" },
+      "drives": [
+        { "count": 2, "size": "120GB", "type": "SSD", "category": "boot" },
+        { "count": 1, "size": "3.8TB", "type": "NVME", "category": "storage" }
+      ],
+      "nics": [{ "count": 4, "type": "10Gbps" }],
+      "features": { "uefi": false }
+    },
+    "switch_short_id": "5b2b2148",
+    "state": "active",
+    "storage_source": "default",
+    "storage": {
+      "disks": [
+        {
+          "device": "/dev/sda",
+          "wipeTable": true,
+          "partitions": [
+            { "label": "BIOS", "number": 1, "size": 4096 },
+            { "label": "SWAP", "number": 2, "size": "3993600" },
+            { "label": "ROOT", "number": 3, "size": 0 }
+          ]
+        }
+      ],
+      "filesystems": [
+        {
+          "mount": {
+            "device": "/dev/sda3",
+            "format": "ext4",
+            "point": "/",
+            "create": { "options": ["-L", "ROOT"] }
+          }
+        },
+        {
+          "mount": {
+            "device": "/dev/sda2",
+            "format": "swap",
+            "point": "none",
+            "create": { "options": ["-L", "SWAP"] }
+          }
+        }
+      ]
+    },
+    "volumes": [],
+    "boot_drive_hint": "DELLBOSS VD",
+    "network": {
+      "bonding": {
+        "mode": 4,
+        "link_aggregation": "mlag_ha",
+        "mac": "e4:43:4b:d0:7b:50"
+      },
+      "interfaces": [
+        { "name": "eth0", "mac": "e4:43:4b:d0:7b:50", "bond": "bond0" },
+        { "name": "eth1", "mac": "e4:43:4b:d0:7b:51", "bond": "bond1" },
+        { "name": "eth2", "mac": "e4:43:4b:d0:7b:52", "bond": "bond0" },
+        { "name": "eth3", "mac": "e4:43:4b:d0:7b:53", "bond": "bond1" }
+      ],
+      "addresses": [
+        {
+          "id": "e5e5c1db-ef6d-4461-958e-50b88a96833e",
+          "address_family": 4,
+          "netmask": "255.255.255.254",
+          "created_at": "2024-05-22T17:59:09Z",
+          "public": true,
+          "cidr": 31,
+          "management": true,
+          "enabled": true,
+          "network": "147.28.162.182",
+          "address": "147.28.162.183",
+          "gateway": "147.28.162.182",
+          "parent_block": {
+            "network": "147.28.162.182",
+            "netmask": "255.255.255.254",
+            "cidr": 31,
+            "href": "/ips/909dbc49-1640-4b0a-b9c4-20e4cef044e8"
+          }
+        },
+        {
+          "id": "1cc68fbc-c0d3-42e2-a186-a73923e65bec",
+          "address_family": 6,
+          "netmask": "ffff:ffff:ffff:ffff:ffff:ffff:ffff:fffe",
+          "created_at": "2024-05-22T17:59:09Z",
+          "public": true,
+          "cidr": 127,
+          "management": true,
+          "enabled": true,
+          "network": "2604:1380:45f2:6f00::",
+          "address": "2604:1380:45f2:6f00::1",
+          "gateway": "2604:1380:45f2:6f00::",
+          "parent_block": {
+            "network": "2604:1380:45f2:6f00:0000:0000:0000:0000",
+            "netmask": "ffff:ffff:ffff:ff00:0000:0000:0000:0000",
+            "cidr": 56,
+            "href": "/ips/77b6f5dd-11e9-47bd-9c5c-6db6ec29fe42"
+          }
+        },
+        {
+          "id": "8d4d7e88-730c-409e-97b6-99b2f69aeede",
+          "address_family": 4,
+          "netmask": "255.255.255.254",
+          "created_at": "2024-05-22T17:59:09Z",
+          "public": false,
+          "cidr": 31,
+          "management": true,
+          "enabled": true,
+          "network": "10.68.217.0",
+          "address": "10.68.217.1",
+          "gateway": "10.68.217.0",
+          "parent_block": {
+            "network": "10.68.217.0",
+            "netmask": "255.255.255.128",
+            "cidr": 25,
+            "href": "/ips/6258119f-c7c4-4158-a54a-fb317263a3ce"
+          }
+        }
+      ],
+      "metal_gateways": []
+    },
+    "api_url": "https://metadata.packet.net",
+    "phone_home_url": "http://tinkerbell.dc13.packet.net/phone-home",
+    "user_state_url": "http://tinkerbell.dc13.packet.net/events"
+  }

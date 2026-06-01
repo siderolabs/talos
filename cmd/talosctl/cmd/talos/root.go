@@ -1,0 +1,271 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+package talos
+
+import (
+	"context"
+	"fmt"
+	"io"
+	"path/filepath"
+	"slices"
+	"strings"
+
+	"github.com/siderolabs/gen/maps"
+	_ "github.com/siderolabs/proto-codec/codec" // register codec v2
+	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/peer"
+
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
+	"github.com/siderolabs/talos/pkg/cli"
+	"github.com/siderolabs/talos/pkg/machinery/api/common"
+	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/formatters"
+)
+
+var kubernetesFlag bool
+
+// GlobalArgs is the common arguments for the root command.
+var GlobalArgs global.Args
+
+const pathAutoCompleteLimit = 500
+
+// WithClientNoNodes wraps common code to initialize Talos client and provide cancellable context.
+//
+// WithClientNoNodes doesn't set any node information on the request context.
+func WithClientNoNodes(ctx context.Context, action func(context.Context, *client.Client) error, dialOptions ...grpc.DialOption) error {
+	return GlobalArgs.WithClientNoNodes(ctx, action, dialOptions...)
+}
+
+// WithClient builds upon WithClientNoNodes to provide set of nodes on request context based on config & flags.
+func WithClient(ctx context.Context, action func(context.Context, *client.Client) error, dialOptions ...grpc.DialOption) error {
+	return GlobalArgs.WithClient(ctx, action, dialOptions...)
+}
+
+// WithClientAndNodes builds upon WithClientNoNodes to pass a list of nodes via command function.
+func WithClientAndNodes(ctx context.Context, action func(context.Context, *client.Client, []string) error, dialOptions ...grpc.DialOption) error {
+	return GlobalArgs.WithClientAndNodes(ctx, action, dialOptions...)
+}
+
+// WithClientMaintenance wraps common code to initialize Talos client in maintenance (insecure mode).
+func WithClientMaintenance(ctx context.Context, enforceFingerprints []string, action func(context.Context, *client.Client) error) error {
+	return GlobalArgs.WithClientMaintenance(ctx, enforceFingerprints, action)
+}
+
+// Commands is a list of commands published by the package.
+var Commands []*cobra.Command
+
+func addCommand(cmd *cobra.Command) {
+	cmd.PersistentFlags().StringVar(
+		&GlobalArgs.Talosconfig,
+		"talosconfig",
+		"",
+		fmt.Sprintf(
+			"The path to the Talos configuration file. Defaults to '%s' env variable if set, otherwise '%s' and '%s' in order.",
+			constants.TalosConfigEnvVar,
+			filepath.Join("$HOME", constants.TalosDir, constants.TalosconfigFilename),
+			filepath.Join(constants.ServiceAccountMountPath, constants.TalosconfigFilename),
+		),
+	)
+	cmd.PersistentFlags().StringSliceVarP(&GlobalArgs.Nodes, "nodes", "n", []string{}, "target the specified nodes")
+	cmd.PersistentFlags().StringSliceVarP(&GlobalArgs.Endpoints, "endpoints", "e", []string{}, "override default endpoints in Talos configuration")
+	cli.Should(cmd.RegisterFlagCompletionFunc("nodes", CompleteNodes))
+	cmd.PersistentFlags().StringVarP(&GlobalArgs.Cluster, "cluster", "c", "", "Cluster to connect to if a proxy endpoint is used.")
+	cmd.PersistentFlags().StringVar(&GlobalArgs.CmdContext, "context", "", "Context to be used in command")
+	cmd.PersistentFlags().StringVar(
+		&GlobalArgs.SideroV1KeysDir,
+		"siderov1-keys-dir",
+		"",
+		fmt.Sprintf(
+			"The path to the SideroV1 auth PGP keys directory. Defaults to '%s' env variable if set, otherwise '%s'. Only valid for Contexts that use SideroV1 auth.",
+			constants.SideroV1KeysDirEnvVar,
+			filepath.Join("$HOME", constants.TalosDir, constants.SideroV1KeysDir),
+		),
+	)
+	cli.Should(cmd.RegisterFlagCompletionFunc("context", CompleteConfigContext))
+
+	Commands = append(Commands, cmd)
+}
+
+// completePathFromNode represents tab complete options for `ls` and `ls *` commands.
+func completePathFromNode(ctx context.Context, inputPath string) []string {
+	pathToSearch := inputPath
+
+	// If the pathToSearch is empty, use root '/'
+	if pathToSearch == "" {
+		pathToSearch = "/"
+	}
+
+	var paths map[string]struct{}
+
+	// search up one level to find possible completions
+	if pathToSearch != "/" && !strings.HasSuffix(pathToSearch, "/") {
+		index := strings.LastIndex(pathToSearch, "/")
+		// we need a trailing slash to search for items in a directory
+		pathToSearch = pathToSearch[:index] + "/"
+	}
+
+	paths = getPathFromNode(ctx, pathToSearch, inputPath)
+
+	return maps.Keys(paths)
+}
+
+//nolint:gocyclo
+func getPathFromNode(ctx context.Context, path, filter string) map[string]struct{} {
+	paths := make(map[string]struct{})
+
+	//nolint:errcheck
+	GlobalArgs.WithClient(
+		ctx,
+		func(ctx context.Context, c *client.Client) error {
+			ctx, cancel := context.WithCancel(ctx)
+			defer cancel()
+
+			stream, err := c.LS(
+				ctx, &machineapi.ListRequest{
+					Root: path,
+				},
+			)
+			if err != nil {
+				return err
+			}
+
+			for {
+				resp, err := stream.Recv()
+				if err != nil {
+					if err == io.EOF || client.StatusCode(err) == codes.Canceled {
+						return nil
+					}
+
+					return fmt.Errorf("error streaming results: %s", err)
+				}
+
+				if resp.Metadata != nil && resp.Metadata.Error != "" {
+					continue
+				}
+
+				if resp.Error != "" {
+					continue
+				}
+
+				// skip reference to the same directory
+				if resp.RelativeName == "." {
+					continue
+				}
+
+				// limit the results to a reasonable amount
+				if len(paths) > pathAutoCompleteLimit {
+					return nil
+				}
+
+				// directories have a trailing slash
+				if resp.IsDir {
+					fullPath := path + resp.RelativeName + "/"
+
+					if relativeTo(fullPath, filter) {
+						paths[fullPath] = struct{}{}
+					}
+				} else {
+					fullPath := path + resp.RelativeName
+
+					if relativeTo(fullPath, filter) {
+						paths[fullPath] = struct{}{}
+					}
+				}
+			}
+		},
+	)
+
+	return paths
+}
+
+func getServiceFromNode(ctx context.Context) []string {
+	var svcIDs []string
+
+	//nolint:errcheck
+	GlobalArgs.WithClient(
+		ctx,
+		func(ctx context.Context, c *client.Client) error {
+			var remotePeer peer.Peer
+
+			resp, err := c.ServiceList(ctx, grpc.Peer(&remotePeer))
+			if err != nil {
+				return err
+			}
+
+			for _, msg := range resp.Messages {
+				for _, s := range msg.Services {
+					svc := formatters.ServiceInfoWrapper{ServiceInfo: s}
+					svcIDs = append(svcIDs, svc.Id)
+				}
+			}
+
+			return nil
+		},
+	)
+
+	return svcIDs
+}
+
+func getContainersFromNode(ctx context.Context, kubernetes bool) []string {
+	var containerIDs []string
+
+	//nolint:errcheck
+	GlobalArgs.WithClient(
+		ctx,
+		func(ctx context.Context, c *client.Client) error {
+			var (
+				namespace string
+				driver    common.ContainerDriver
+			)
+
+			if kubernetes {
+				namespace = constants.K8sContainerdNamespace
+				driver = common.ContainerDriver_CRI
+			} else {
+				namespace = constants.SystemContainerdNamespace
+				driver = common.ContainerDriver_CONTAINERD
+			}
+
+			resp, err := c.Containers(ctx, namespace, driver)
+			if err != nil {
+				return err
+			}
+
+			for _, msg := range resp.Messages {
+				for _, p := range msg.Containers {
+					if p.Pid == 0 {
+						continue
+					}
+
+					if kubernetes && p.Id == p.PodId {
+						continue
+					}
+
+					containerIDs = append(containerIDs, p.Id)
+				}
+			}
+
+			return nil
+		},
+	)
+
+	return containerIDs
+}
+
+func mergeSuggestions(s ...[]string) []string {
+	merged := slices.Concat(s...)
+
+	slices.Sort(merged)
+
+	return slices.Compact(merged)
+}
+
+func relativeTo(fullPath string, filter string) bool {
+	return strings.HasPrefix(fullPath, filter)
+}

@@ -1,0 +1,28 @@
+version = 3
+
+disabled_plugins = [
+    "io.containerd.cri.v1.images",
+    "io.containerd.cri.v1.runtime",
+    "io.containerd.differ.v1.erofs",
+    "io.containerd.grpc.v1.cri",
+    "io.containerd.grpc.v1.sandbox-controllers",
+    "io.containerd.grpc.v1.sandboxes",
+    "io.containerd.internal.v1.opt",
+    "io.containerd.internal.v1.tracing",
+    "io.containerd.monitor.container.v1.restart",
+    "io.containerd.nri.v1.nri",
+    "io.containerd.podsandbox.controller.v1.podsandbox",
+    "io.containerd.sandbox.controller.v1.podsandbox",
+    "io.containerd.sandbox.controller.v1.shim",
+    "io.containerd.sandbox.controller.v1",
+    "io.containerd.sandbox.store.v1.local",
+    "io.containerd.sandbox.store.v1",
+    "io.containerd.snapshotter.v1.blockfile",
+    "io.containerd.snapshotter.v1.erofs",
+    "io.containerd.ttrpc.v1.otelttrpc",
+    "io.containerd.tracing.processor.v1.otlp",
+]
+
+[debug]
+level = "info"
+format = "json"

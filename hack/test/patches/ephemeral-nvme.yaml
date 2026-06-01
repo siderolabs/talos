@@ -1,0 +1,28 @@
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: EPHEMERAL
+provisioning:
+  diskSelector:
+    match: disk.transport == 'nvme'
+  minSize: 3GB
+  maxSize: 5GB
+---
+apiVersion: v1alpha1
+kind: SwapVolumeConfig
+name: swap1
+provisioning:
+  diskSelector:
+    match: disk.transport == 'nvme'
+  minSize: 500MB
+  maxSize: 500MB
+---
+machine:
+  kubelet:
+    extraConfig:
+      memorySwap:
+        swapBehavior: LimitedSwap
+---
+apiVersion: v1alpha1
+kind: ZswapConfig
+maxPoolPercent: 25
+shrinkerEnabled: true

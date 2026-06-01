@@ -1,0 +1,8 @@
+apiVersion: v1alpha1
+kind: SwapVolumeConfig
+name: big
+provisioning:
+    diskSelector:
+        match: disk.transport == "nvme" && !system_disk
+    minSize: 10GiB
+    maxSize: 100GiB

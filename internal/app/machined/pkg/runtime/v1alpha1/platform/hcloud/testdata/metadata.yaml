@@ -1,0 +1,17 @@
+config:
+- mac_address: 96:00:00:1:2:3
+  name: eth0
+  subnets:
+  - ipv4: true
+    type: dhcp
+  - address: 2a01:4f8:1:2::1/64
+    gateway: fe80::1
+    ipv6: true
+    type: static
+  type: physical
+- address:
+  - 185.12.64.2
+  - 185.12.64.1
+  interface: eth0
+  type: nameserver
+version: 1

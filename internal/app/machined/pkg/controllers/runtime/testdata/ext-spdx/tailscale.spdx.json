@@ -1,0 +1,87 @@
+{
+ "spdxVersion": "SPDX-2.3",
+ "dataLicense": "CC0-1.0",
+ "SPDXID": "SPDXRef-DOCUMENT",
+ "name": "sidero-pkgs-tailscale",
+ "documentNamespace": "https://anchore.com/bldr/dir/sidero-pkgs-tailscale-945fd1b5-e1c4-5ceb-8c4e-7de776c0983c",
+ "creationInfo": {
+  "licenseListVersion": "3.25",
+  "creators": [
+   "Organization: Anchore, Inc",
+   "Tool: bldr-v0.5.1"
+  ],
+  "created": "2022-01-20T18:35:52Z"
+ },
+ "packages": [
+  {
+   "name": "tailscale",
+   "SPDXID": "SPDXRef-Package-bldr-package-tailscale-bc56a5bc00e5302c",
+   "versionInfo": "1.84.2",
+   "supplier": "NOASSERTION",
+   "downloadLocation": "NOASSERTION",
+   "filesAnalyzed": false,
+   "sourceInfo": "acquired package info from the following paths: /Pkgfile",
+   "licenseConcluded": "NOASSERTION",
+   "licenseDeclared": "BSD-3-Clause",
+   "copyrightText": "NOASSERTION",
+   "externalRefs": [
+    {
+     "referenceCategory": "SECURITY",
+     "referenceType": "cpe23Type",
+     "referenceLocator": "cpe:2.3:a:tailscale:tailscale:1.84.2:*:*:*:*:*:*:*"
+    }
+   ]
+  },
+  {
+   "name": "sidero-pkgs-tailscale",
+   "SPDXID": "SPDXRef-DocumentRoot-Directory-sidero-pkgs-tailscale",
+   "versionInfo": "1.84.2",
+   "supplier": "NOASSERTION",
+   "downloadLocation": "NOASSERTION",
+   "filesAnalyzed": false,
+   "licenseConcluded": "NOASSERTION",
+   "licenseDeclared": "NOASSERTION",
+   "copyrightText": "NOASSERTION",
+   "primaryPackagePurpose": "FILE"
+  }
+ ],
+ "files": [
+  {
+   "fileName": "https://github.com/tailscale/tailscale/archive/refs/tags/v1.84.2.tar.gz",
+   "SPDXID": "SPDXRef-File-...archive-refs-tags-v1.84.2.tar.gz-c5546c6b96afad2e",
+   "checksums": [
+    {
+     "algorithm": "SHA256",
+     "checksumValue": "32673e5552e1176f1028a6a90a4c892d2475c92d1e952ca16156dc523d14d914"
+    },
+    {
+     "algorithm": "SHA512",
+     "checksumValue": "f4baaa9070a2ad4f4ddef9bac89fc5333dc1a74db68a976c30a20a7359ebc51d14905ef0098b1046493fb99a829b9b10502e03b12799e94ef543ebffc6018553"
+    }
+   ],
+   "licenseConcluded": "NOASSERTION",
+   "licenseInfoInFiles": [
+    "NOASSERTION"
+   ],
+   "copyrightText": "NOASSERTION",
+   "comment": "layerID: bldr sources"
+  }
+ ],
+ "relationships": [
+  {
+   "spdxElementId": "SPDXRef-Package-bldr-package-tailscale-",
+   "relatedSpdxElement": "SPDXRef-File-...archive-refs-tags-v1.84.2.tar.gz-c5546c6b96afad2e",
+   "relationshipType": "CONTAINS"
+  },
+  {
+   "spdxElementId": "SPDXRef-DocumentRoot-Directory-sidero-pkgs-tailscale",
+   "relatedSpdxElement": "SPDXRef-Package-bldr-package-tailscale-bc56a5bc00e5302c",
+   "relationshipType": "CONTAINS"
+  },
+  {
+   "spdxElementId": "SPDXRef-DOCUMENT",
+   "relatedSpdxElement": "SPDXRef-DocumentRoot-Directory-sidero-pkgs-tailscale",
+   "relationshipType": "DESCRIBES"
+  }
+ ]
+}

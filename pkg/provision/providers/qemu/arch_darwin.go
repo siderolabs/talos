@@ -1,0 +1,14 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+package qemu
+
+import "runtime"
+
+const accelerator = "hvf"
+
+func (arch Arch) acceleratorAvailable() bool {
+	// hvf only supports emulating native architectures
+	return string(arch) == runtime.GOARCH
+}

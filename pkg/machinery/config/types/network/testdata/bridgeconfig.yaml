@@ -1,0 +1,13 @@
+apiVersion: v1alpha1
+kind: BridgeConfig
+name: bridge.1
+links:
+    - eno1
+    - eno5
+stp:
+    enabled: true
+vlan:
+    filtering: false
+up: true
+addresses:
+    - address: 1.2.3.5/32

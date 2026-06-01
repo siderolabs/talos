@@ -1,0 +1,11 @@
+columns:
+  - name: Bytes Read/Written
+    template: '{{ range $disk, $v := .IOStat }}{{ if $v }}{{ $disk }}: {{ $v.rbytes.HumanizeIBytes }}/{{ $v.wbytes.HumanizeIBytes }} {{ end }}{{ end }}'
+  - name: ios Read/Write
+    template: '{{ if .Parent }}{{ range $disk, $v := .IOStat }}{{ $disk }}: {{ $v.rios }}/{{ $v.wios }} {{ end }}{{ end }}'
+  - name: PressAvg10
+    template: '{{ .IOPressure.some.avg10 | printf "%6s" }}'
+  - name: PressAvg60
+    template: '{{ .IOPressure.some.avg60 | printf "%6s" }}'
+  - name: PressTotal
+    template: '{{ .IOPressure.some.total.UsecToDuration | printf "%12s" }}'

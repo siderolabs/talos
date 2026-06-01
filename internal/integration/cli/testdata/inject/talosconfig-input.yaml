@@ -1,0 +1,159 @@
+---
+apiVersion: talos.dev/v1alpha1
+kind: ServiceAccount
+metadata:
+  name: donottouch
+spec:
+  roles:
+    - os:reader
+    - os:admin
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test1
+spec:
+  volumes:
+    - name: vol1
+      emptyDir: {}
+  initContainers:
+    - name: init1
+      image: busybox
+      volumeMounts:
+        - name: vol1
+          mountPath: /tmp/hello
+    - name: init2
+      image: busybox
+      volumeMounts:
+        - name: vol1
+          mountPath: /tmp/hello
+  containers:
+    - name: container1
+      image: alpine:3
+      env:
+        - name: TEST
+          value: test
+      volumeMounts:
+        - name: vol1
+          mountPath: /mnt/vol1
+    - name: container2
+      image: alpine:3
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test1
+spec:
+  selector:
+    matchLabels:
+      app: test
+  template:
+    metadata:
+      labels:
+        app: test
+    spec:
+      volumes:
+        - name: vol1
+          emptyDir: {}
+      containers:
+        - name: container1
+          image: alpine:3
+          volumeMounts:
+            - name: vol1
+              mountPath: /mnt/vol1
+        - name: container2
+          image: alpine:3
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: test2
+spec:
+  selector:
+    matchLabels:
+      app: test
+  template:
+    metadata:
+      labels:
+        app: test
+    spec:
+      volumes:
+        - name: vol1
+          emptyDir: {}
+      containers:
+        - name: container1
+          image: alpine:3
+          volumeMounts:
+            - name: vol1
+              mountPath: /mnt/vol1
+        - name: container2
+          image: alpine:3
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: test3
+spec:
+  serviceName: test
+  selector:
+    matchLabels:
+      app: test
+  template:
+    metadata:
+      labels:
+        app: test
+    spec:
+      volumes:
+        - name: vol1
+          emptyDir: {}
+      containers:
+        - name: container1
+          image: alpine:3
+          volumeMounts:
+            - name: vol1
+              mountPath: /mnt/vol1
+        - name: container2
+          image: alpine:3
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: test4
+  namespace: testns
+spec:
+  schedule: "*/1 * * * *"
+  jobTemplate:
+    metadata:
+      labels:
+        app: test
+    spec:
+      template:
+        metadata:
+          labels:
+            app: test
+        spec:
+          containers:
+            - name: container1
+              image: alpine:3
+              volumeMounts:
+                - name: vol1
+                  mountPath: /mnt/vol1
+            - name: container2
+              image: alpine:3
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+    name: test5
+    namespace: testns2
+spec:
+  template:
+    spec:
+      containers:
+        - name: container1
+          image: alpine:3
+          volumeMounts:
+            - name: vol1
+              mountPath: /mnt/vol1
+        - name: container2
+          image: alpine:3

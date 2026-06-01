@@ -1,0 +1,176 @@
+# commit to be tagged for new release
+commit = "HEAD"
+
+project_name = "Talos"
+github_repo = "siderolabs/talos"
+match_deps = "^github.com/((talos-systems|siderolabs)/[a-zA-Z0-9-]+)$"
+ignore_deps = ["github.com/coredns/coredns"]
+
+# previous release
+previous = "v1.13.0"
+
+pre_release = true
+
+preface = """
+"""
+
+[notes]
+    [notes.updates]
+        title = "Component Updates"
+        description = """\
+Linux: 6.18.33
+Kubernetes: 1.36.1
+containerd: 2.3.1
+
+Talos is built with Go 1.26.3.
+"""
+
+    [notes.nts]
+        title = "NTS for Time Synchronization"
+        description = """\
+Talos now supports Network Time Security (NTS) for secure time synchronization.
+This feature enhances the security of NTP by providing cryptographic authentication of time sources.
+
+NTS is enabled by default (without any configuration sources) for the default `time.cloudflare.com` time server
+NTS can be enabled for custom time servers via the new `useNTS` field in the `TimeServerConfig` document.
+"""
+
+    [notes.tls13]
+        title = "TLS 1.3 Minimum Version"
+        description = """\
+Talos now runs etcd and kube-apiserver with a minimum TLS version of 1.3, improving security by leveraging the latest TLS features and cipher suites.
+Custom settings for cipher suites have been removed, as they are ignored when TLS 1.3 is used, which simplifies configuration and ensures the use of modern, secure defaults.
+"""
+
+    [notes.defaultInstaller]
+        title = "Default Installer Image"
+        description = """\
+The default installer image has been updated to use the Image Factory.
+The `ghcr.io/siderolabs/installer` image is no longer published with releases; use the Image Factory installer image instead.
+"""
+
+    [notes.hostdnsconfig]
+        title = "Host DNS Configuration"
+        description = """\
+HostDNS configuration was moved from the v1alpha1 config `.machine.features.hostDNS` field to the new `hostDNS` in the `ResolverConfig` document.
+"""
+
+    [notes.httpProbe]
+        title = "HTTP Probe Support"
+        description = """\
+Talos now supports HTTP network probes, allowing for monitoring of HTTP endpoints.
+HTTP responses with status 200-399 are considered successful, while connection and transport errors are treated as failures.
+"""
+
+    [notes.kubernetesmulti]
+        title = "Kubernetes Multi-document Configuration"
+        description = """\
+Talos introduces new multi-document Kubernetes configuration, which allows for more flexible and modular configuration of Kubernetes components.
+Talos still supports the old v1alpha1 config for backwards compatibility, but new features and fields will only be available in the new multi-document format.
+
+List of changes:
+
+- Deprecated `.cluster.secretboxEncryptionSecret` in the v1alpha1 config; use the `KubeEtcdEncryptionConfig` document for full etcd encryption configuration.
+- Deprecated `.cluster.controllerManager` in the v1alpha1 config; use the `KubeControllerManagerConfig` document for kube-controller-manager configuration.
+- Deprecated `.cluster.scheduler` in the v1alpha1 config; use the `KubeSchedulerConfig` document for kube-scheduler configuration.
+"""
+
+    [notes.dhcpsearchdomains]
+        title = "DHCP Search Domains"
+        description = """\
+DHCPv4 search domains are now applied to the resolver configuration.
+"""
+
+[notes.EPHEMERAL]
+        title = "noexec on EPHEMERAL (/var)"
+        description = """\
+The EPHEMERAL volume (`/var`) is now mounted with `noexec` in addition to the existing `nosuid` and `nodev`,
+blocking binary execution from `/var`.
+
+Workloads that exec binaries placed under `/var` will break.
+For example, Longhorn v1's `instance-manager` exec's engine binaries the `engine-image` DaemonSet drops under `/var/lib/longhorn/engine-binaries/`,
+which now fails with `permission denied`. Affected users can opt out via a `VolumeConfig` document:
+
+```yaml
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: EPHEMERAL
+mount:
+  secure: false
+```
+
+> NOTE: Setting `secure: false` will also disable `nosuid` and `nodev`, which may have security implications. Use with caution.
+
+Upgrade note: apply this `VolumeConfig` patch *before* upgrading, otherwise affected workloads will fail after the next reboot. Longhorn v2 (SPDK data engine) runs the data plane inside the instance manager process and is not affected.
+"""
+
+    [notes.DoT]
+        title = "DNS over TLS (DoT) and DNS over HTTPS (DoH) Support"
+        description = """\
+Talos now supports DNS over TLS (DoT) and DNS over HTTPS (DoH) for secure DNS resolution.
+These features allow Talos to encrypt DNS queries and responses, enhancing privacy and security for DNS traffic.
+The DNS protocol can be configured on a per-name server basis in the `ResolverConfig` document, allowing for flexible configuration of DNS resolution.
+"""
+
+    [notes.imagecache]
+        title = "Image Cache Configuration"
+        description = """\
+Talos now supports a new `ImageCacheConfig` document for configuring the Image Cache feature, replacing the old `machine.features.imageCache` field in the v1alpha1 config.
+Old configuration is still supported for backwards compatibility.
+"""
+
+    [notes.flannel]
+        title = "Flannel CNI"
+        description = """\
+Talos now configures Flannel with the `EnableNFTables` option enabled, which uses nftables native backend instead of `iptables-nft` compatibility layer.
+"""
+
+    [notes.etcd]
+        title = "etcd"
+        description = """\
+Talos is now compatible with etcd v3.6.x only (the default version was etcd 3.6.x since Talos v1.11).
+"""
+
+    [notes.btrfs]
+        title = "Btrfs Support"
+        description = """\
+Talos now supports mounting and provisioning `btrfs` filesystem for user volumes and existing volumes.
+
+Support for `btrfs` is enabled by installing `btrfs` system extension.
+"""
+
+    [notes.sendRedirects]
+        title = "ICMP send_redirects Disabled by Default"
+        description = """\
+Talos now sets `net.ipv4.conf.all.send_redirects=0` and `net.ipv4.conf.default.send_redirects=0` by default,
+preventing the node from emitting ICMP redirect messages. This aligns with CIS Benchmark recommendations and
+does not affect normal Kubernetes pod or service traffic. Nodes that deliberately act as L3 gateways relying
+on ICMP redirects can override this via `machine.sysctls`.
+"""
+
+    [notes.lvm_status]
+        title = "LVM Status"
+        description = """\
+Talos now provides detailed LVM status information, allowing for better monitoring and management of LVM volumes.
+New resources `LVMPhysicalVolumeStatus`, `LVMVolumeGroupStatus`, and `LVMLogicalVolumeStatus` expose PV, VG, and LV details.
+`DiscoveredVolume` resources for logical volumes are listed by their kernel name (e.g. `dm-0`). To resolve the `<vg>/<lv>` for a given device, use the `Disks` or `BlockSymlinks` resources, which carry the udev-managed symlinks (e.g. `/dev/disk/by-id/dm-name-<vg>-<lv>`).
+"""
+
+    [notes.lvm_wipe]
+        title = "LVM Wipe"
+        description = """\
+Talos now provides the ability to securely wipe LVM metadata from logical volumes, volume groups, and physical volumes.
+This feature allows for selective wiping of logical volumes, volume groups, and physical volumes.
+
+With `talosctl wipe lv/vg/pv <name>`, users can wipe LVM metadata from a specific logical volume, volume group, or physical volume.
+"""
+
+[make_deps]
+
+    [make_deps.tools]
+        variable = "TOOLS"
+        repository = "github.com/siderolabs/tools"
+
+    [make_deps.pkgs]
+        variable = "PKGS"
+        repository = "github.com/siderolabs/pkgs"

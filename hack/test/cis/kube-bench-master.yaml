@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kube-bench-master
+spec:
+  template:
+    spec:
+      hostPID: true
+      nodeSelector:
+        node-role.kubernetes.io/master: ''
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      containers:
+      - name: kube-bench
+        image: aquasec/kube-bench:latest
+        args:
+        - master
+        - --version=1.13
+        volumeMounts:
+        - name: etc-kubernetes
+          mountPath: /etc/kubernetes
+      volumes:
+      - name: etc-kubernetes
+        hostPath:
+          path: /etc/kubernetes
+          type: Directory
+      restartPolicy: Never
+  backoffLimit: 0

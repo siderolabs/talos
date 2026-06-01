@@ -1,0 +1,97 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+package profile_test
+
+import (
+	"errors"
+	"io/fs"
+	"os"
+	"sort"
+	"strings"
+	"testing"
+
+	"github.com/blang/semver/v4"
+	"github.com/siderolabs/gen/maps"
+	"github.com/stretchr/testify/require"
+
+	"github.com/siderolabs/talos/pkg/imager/profile"
+	"github.com/siderolabs/talos/pkg/machinery/version"
+)
+
+func TestFillDefaults(t *testing.T) {
+	t.Parallel()
+
+	arches := []string{"amd64", "arm64"}
+	versions := []string{"1.9.0", "1.10.0", "1.11.0", "1.12.0", "1.13.0", "1.14.0"}
+
+	lastVersion := semver.MustParse(versions[len(versions)-1])
+
+	currentVersion, err := semver.ParseTolerant(version.Tag)
+	require.NoError(t, err)
+
+	currentVersion.Patch = 0
+	currentVersion.Pre = nil
+
+	require.True(t, lastVersion.GTE(currentVersion), "last version %s should be greater or equal to current version %s", lastVersion, currentVersion)
+
+	profiles := maps.Keys(profile.Default)
+
+	sort.Strings(profiles)
+
+	// flip this to true to generate missing testdata files
+	const recordMissing = false
+
+	if recordMissing {
+		t.Logf("recording missing testdata files, failing the test")
+		t.Fail()
+	}
+
+	for _, prof := range profiles {
+		t.Run(prof, func(t *testing.T) {
+			t.Parallel()
+
+			var secureBoot bool
+
+			if strings.HasPrefix(prof, "secureboot") {
+				secureBoot = true
+			}
+
+			for _, arch := range arches {
+				t.Run(arch, func(t *testing.T) {
+					t.Parallel()
+
+					for _, version := range versions {
+						t.Run(version, func(t *testing.T) {
+							t.Parallel()
+
+							p := profile.Default[prof].DeepCopy()
+
+							p.Arch = arch
+							p.Version = version
+
+							p.Input.FillDefaults(arch, version, secureBoot)
+							p.Output.FillDefaults(arch, version, secureBoot)
+
+							require.NoError(t, p.Validate())
+
+							var profileData strings.Builder
+
+							require.NoError(t, p.Dump(&profileData))
+
+							expectedData, err := os.ReadFile("testdata/" + prof + "-" + arch + "-" + version + ".yaml")
+							if errors.Is(err, fs.ErrNotExist) && recordMissing {
+								require.NoError(t, os.WriteFile("testdata/"+prof+"-"+arch+"-"+version+".yaml", []byte(profileData.String()), 0o644))
+							} else {
+								require.NoError(t, err)
+
+								require.Equal(t, string(expectedData), profileData.String(), "profile: %s, platform: %s, version: %s", prof, arch, version)
+							}
+						})
+					}
+				})
+			}
+		})
+	}
+}

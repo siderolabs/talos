@@ -1,0 +1,124 @@
+version: v1alpha1
+debug: false
+persist: true
+machine:
+  type: controlplane
+  certSANs:
+    - 10.0.1.101
+    - 10.0.1.100
+  kubelet:
+    image: ghcr.io/siderolabs/kubelet:v1.31.1
+    extraArgs:
+      cloud-provider: external
+      rotate-server-certificates: "true"
+    defaultRuntimeSeccompProfileEnabled: true
+    nodeIP:
+      validSubnets:
+        - 10.0.1.0/24
+    disableManifestsDirectory: true
+  network:
+    hostname: controlplane-001
+    interfaces:
+      - interface: eth0
+        dhcp: true
+    kubespan:
+      enabled: false
+  install:
+    disk: /dev/sda
+    extraKernelArgs:
+      - ipv6.disable=1
+    image: ghcr.io/siderolabs/installer:v1.8.0
+    wipe: false
+  sysctls:
+    net.core.netdev_max_backlog: "4096"
+    net.core.somaxconn: "65535"
+  features:
+    rbac: true
+    stableHostname: true
+    kubernetesTalosAPIAccess:
+      enabled: true
+      allowedRoles:
+        - os:reader
+      allowedKubernetesNamespaces:
+        - kube-system
+    apidCheckExtKeyUsage: true
+    diskQuotaSupport: true
+    kubePrism:
+      enabled: true
+      port: 7445
+    hostDNS:
+      enabled: true
+      forwardKubeDNSToHost: true
+      resolveMemberNames: true
+  kernel: {}
+  nodeLabels:
+    node.kubernetes.io/exclude-from-external-load-balancers: ""
+cluster:
+  controlPlane:
+    endpoint: https://10.0.1.100:6443
+  clusterName: test-cluster
+  network:
+    cni:
+      name: none
+    dnsDomain: cluster.local
+    podSubnets:
+      - 10.0.16.0/20
+    serviceSubnets:
+      - 10.0.8.0/21
+  apiServer:
+    image: registry.k8s.io/kube-apiserver:v1.31.1
+    certSANs:
+      - 10.0.1.100
+      - 10.0.1.101
+      - 10.0.1.100
+    disablePodSecurityPolicy: true
+    admissionControl:
+      - name: PodSecurity
+        configuration:
+          apiVersion: pod-security.admission.config.k8s.io/v1alpha1
+          defaults:
+            audit: restricted
+            audit-version: latest
+            enforce: baseline
+            enforce-version: latest
+            warn: restricted
+            warn-version: latest
+          exemptions:
+            namespaces:
+              - kube-system
+            runtimeClasses: []
+            usernames: []
+          kind: PodSecurityConfiguration
+    auditPolicy:
+      apiVersion: audit.k8s.io/v1
+      kind: Policy
+      rules:
+        - level: Metadata
+  controllerManager:
+    image: registry.k8s.io/kube-controller-manager:v1.31.1
+    extraArgs:
+      bind-address: 0.0.0.0
+      cloud-provider: external
+      node-cidr-mask-size-ipv4: "24"
+  proxy:
+    disabled: true
+    image: registry.k8s.io/kube-proxy:v1.31.1
+  scheduler:
+    image: registry.k8s.io/kube-scheduler:v1.31.1
+    extraArgs:
+      bind-address: 0.0.0.0
+  discovery:
+    enabled: true
+    registries:
+      kubernetes:
+        disabled: true
+      service: {}
+  etcd:
+    extraArgs:
+      listen-metrics-urls: http://0.0.0.0:2381
+    advertisedSubnets:
+      - 10.0.1.0/24
+  coreDNS:
+    disabled: false
+  externalCloudProvider:
+    enabled: true

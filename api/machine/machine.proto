@@ -1,0 +1,1420 @@
+syntax = "proto3";
+
+package machine;
+
+import "common/common.proto";
+import "google/protobuf/any.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/machine";
+option java_package = "dev.talos.api.machine";
+
+// The machine service definition.
+service MachineService {
+  rpc ApplyConfiguration(ApplyConfigurationRequest) returns (ApplyConfigurationResponse);
+  // Bootstrap method makes control plane node enter etcd bootstrap mode.
+  // Node aborts etcd join sequence and creates single-node etcd cluster.
+  // If recover_etcd argument is specified, etcd is recovered from a snapshot
+  // uploaded with EtcdRecover.
+  rpc Bootstrap(BootstrapRequest) returns (BootstrapResponse);
+  rpc Containers(ContainersRequest) returns (ContainersResponse);
+  rpc Copy(CopyRequest) returns (stream common.Data);
+  rpc CPUFreqStats(google.protobuf.Empty) returns (CPUFreqStatsResponse);
+  rpc CPUInfo(google.protobuf.Empty) returns (CPUInfoResponse);
+  rpc DiskStats(google.protobuf.Empty) returns (DiskStatsResponse);
+  rpc Dmesg(DmesgRequest) returns (stream common.Data);
+  rpc Events(EventsRequest) returns (stream Event);
+  rpc EtcdMemberList(EtcdMemberListRequest) returns (EtcdMemberListResponse);
+  // EtcdRemoveMemberByID removes a member from the etcd cluster identified by member ID.
+  // This API should be used to remove members which don't have an associated Talos node anymore.
+  // To remove a member with a running Talos node, use EtcdLeaveCluster API on the node to be removed.
+  rpc EtcdRemoveMemberByID(EtcdRemoveMemberByIDRequest) returns (EtcdRemoveMemberByIDResponse);
+  rpc EtcdLeaveCluster(EtcdLeaveClusterRequest) returns (EtcdLeaveClusterResponse);
+  rpc EtcdForfeitLeadership(EtcdForfeitLeadershipRequest) returns (EtcdForfeitLeadershipResponse);
+  // EtcdRecover method uploads etcd data snapshot created with EtcdSnapshot
+  // to the node.
+  // Snapshot can be later used to recover the cluster via Bootstrap method.
+  rpc EtcdRecover(stream common.Data) returns (EtcdRecoverResponse);
+  // EtcdSnapshot method creates etcd data snapshot (backup) from the local etcd instance
+  // and streams it back to the client.
+  // This method is available only on control plane nodes (which run etcd).
+  rpc EtcdSnapshot(EtcdSnapshotRequest) returns (stream common.Data);
+  // EtcdAlarmList lists etcd alarms for the current node.
+  // This method is available only on control plane nodes (which run etcd).
+  rpc EtcdAlarmList(google.protobuf.Empty) returns (EtcdAlarmListResponse);
+  // EtcdAlarmDisarm disarms etcd alarms for the current node.
+  // This method is available only on control plane nodes (which run etcd).
+  rpc EtcdAlarmDisarm(google.protobuf.Empty) returns (EtcdAlarmDisarmResponse);
+  // EtcdDefragment defragments etcd data directory for the current node.
+  // Defragmentation is a resource-heavy operation, so it should only run on a specific
+  // node.
+  // This method is available only on control plane nodes (which run etcd).
+  rpc EtcdDefragment(google.protobuf.Empty) returns (EtcdDefragmentResponse);
+  // EtcdStatus returns etcd status for the current member.
+  // This method is available only on control plane nodes (which run etcd).
+  rpc EtcdStatus(google.protobuf.Empty) returns (EtcdStatusResponse);
+  // EtcdDowngradeValidate validates etcd cluster for downgrade to a specific version.
+  // This method is available only on control plane nodes (which run etcd).
+  rpc EtcdDowngradeValidate(EtcdDowngradeValidateRequest) returns (EtcdDowngradeValidateResponse);
+  // EtcdDowngradeEnable enables etcd cluster downgrade to a specific version.
+  // This method is available only on control plane nodes (which run etcd).
+  rpc EtcdDowngradeEnable(EtcdDowngradeEnableRequest) returns (EtcdDowngradeEnableResponse);
+  // EtcdDowngradeCancel cancels etcd cluster downgrade that is in progress.
+  // This method is available only on control plane nodes (which run etcd).
+  rpc EtcdDowngradeCancel(google.protobuf.Empty) returns (EtcdDowngradeCancelResponse);
+  rpc Hostname(google.protobuf.Empty) returns (HostnameResponse);
+  rpc Kubeconfig(google.protobuf.Empty) returns (stream common.Data);
+  rpc List(ListRequest) returns (stream FileInfo);
+  rpc DiskUsage(DiskUsageRequest) returns (stream DiskUsageInfo);
+  rpc LoadAvg(google.protobuf.Empty) returns (LoadAvgResponse);
+  rpc Logs(LogsRequest) returns (stream common.Data);
+  rpc LogsContainers(google.protobuf.Empty) returns (LogsContainersResponse);
+  rpc Memory(google.protobuf.Empty) returns (MemoryResponse);
+  rpc Mounts(google.protobuf.Empty) returns (MountsResponse);
+  rpc NetworkDeviceStats(google.protobuf.Empty) returns (NetworkDeviceStatsResponse);
+  rpc Processes(google.protobuf.Empty) returns (ProcessesResponse);
+  rpc Read(ReadRequest) returns (stream common.Data);
+  rpc Reboot(RebootRequest) returns (RebootResponse);
+  rpc Restart(RestartRequest) returns (RestartResponse);
+  rpc Rollback(RollbackRequest) returns (RollbackResponse);
+  rpc Reset(ResetRequest) returns (ResetResponse);
+  rpc ServiceList(google.protobuf.Empty) returns (ServiceListResponse);
+  rpc ServiceRestart(ServiceRestartRequest) returns (ServiceRestartResponse);
+  rpc ServiceStart(ServiceStartRequest) returns (ServiceStartResponse);
+  rpc ServiceStop(ServiceStopRequest) returns (ServiceStopResponse);
+  rpc Shutdown(ShutdownRequest) returns (ShutdownResponse);
+  rpc Stats(StatsRequest) returns (StatsResponse);
+  rpc SystemStat(google.protobuf.Empty) returns (SystemStatResponse);
+  // Upgrade initiates the upgrade of the node to a new version of Talos.
+  //
+  // Use LifecycleService Upgrade RPC instead.
+  rpc Upgrade(UpgradeRequest) returns (UpgradeResponse) {
+    option (common.remove_deprecated_method) = "v1.18";
+    option deprecated = true;
+  }
+  rpc Version(google.protobuf.Empty) returns (VersionResponse);
+  // GenerateClientConfiguration generates talosctl client configuration (talosconfig).
+  rpc GenerateClientConfiguration(GenerateClientConfigurationRequest) returns (GenerateClientConfigurationResponse);
+  // PacketCapture performs packet capture and streams back pcap file.
+  rpc PacketCapture(PacketCaptureRequest) returns (stream common.Data);
+  // Netstat provides information about network connections.
+  rpc Netstat(NetstatRequest) returns (NetstatResponse);
+  // MetaWrite writes a META key-value pair.
+  rpc MetaWrite(MetaWriteRequest) returns (MetaWriteResponse);
+  // MetaDelete deletes a META key.
+  rpc MetaDelete(MetaDeleteRequest) returns (MetaDeleteResponse);
+  // ImageList lists images in the CRI.
+  //
+  // Use ImageService List RPC instead.
+  rpc ImageList(ImageListRequest) returns (stream ImageListResponse) {
+    option (common.remove_deprecated_method) = "v1.18";
+    option deprecated = true;
+  }
+  // ImagePull pulls an image into the CRI.
+  //
+  // Use ImageService Pull RPC instead.
+  rpc ImagePull(ImagePullRequest) returns (ImagePullResponse) {
+    option (common.remove_deprecated_method) = "v1.18";
+    option deprecated = true;
+  }
+}
+
+// rpc applyConfiguration
+// ApplyConfiguration describes a request to assert a new configuration upon a
+// node.
+message ApplyConfigurationRequest {
+  enum Mode {
+    REBOOT = 0;
+    AUTO = 1;
+    NO_REBOOT = 2;
+    STAGED = 3;
+    TRY = 4;
+  }
+  bytes data = 1;
+  Mode mode = 4;
+  bool dry_run = 5;
+  google.protobuf.Duration try_mode_timeout = 6;
+}
+
+// ApplyConfigurationResponse describes the response to a configuration request.
+message ApplyConfiguration {
+  common.Metadata metadata = 1;
+  // Configuration validation warnings.
+  repeated string warnings = 2;
+  // States which mode was actually chosen.
+  ApplyConfigurationRequest.Mode mode = 3;
+  // Human-readable message explaining the result of the apply configuration call.
+  string mode_details = 4;
+}
+
+message ApplyConfigurationResponse {
+  repeated ApplyConfiguration messages = 1;
+}
+
+// rpc reboot
+message RebootRequest {
+  enum Mode {
+    DEFAULT = 0;
+    POWERCYCLE = 1;
+    FORCE = 2;
+  }
+  Mode mode = 1;
+}
+
+// The reboot message containing the reboot status.
+message Reboot {
+  common.Metadata metadata = 1;
+  string actor_id = 2;
+}
+
+message RebootResponse {
+  repeated Reboot messages = 1;
+}
+
+// rpc Bootstrap
+message BootstrapRequest {
+  // Enable etcd recovery from the snapshot.
+  // Snapshot should be uploaded before this call via EtcdRecover RPC.
+  bool recover_etcd = 1;
+  // Skip hash check on the snapshot (etcd).
+  // Enable this when recovering from data directory copy to skip integrity check.
+  bool recover_skip_hash_check = 2;
+}
+
+// The bootstrap message containing the bootstrap status.
+message Bootstrap {
+  common.Metadata metadata = 1;
+}
+
+message BootstrapResponse {
+  repeated Bootstrap messages = 1;
+}
+
+// rpc events
+message SequenceEvent {
+  string sequence = 1;
+  enum Action {
+    NOOP = 0;
+    START = 1;
+    STOP = 2;
+  }
+  Action action = 2;
+  common.Error error = 3;
+}
+
+message PhaseEvent {
+  string phase = 1;
+  enum Action {
+    START = 0;
+    STOP = 1;
+  }
+  Action action = 2;
+}
+
+message TaskEvent {
+  string task = 1;
+  enum Action {
+    START = 0;
+    STOP = 1;
+  }
+  Action action = 2;
+}
+
+message ServiceStateEvent {
+  string service = 1;
+  enum Action {
+    INITIALIZED = 0;
+    PREPARING = 1;
+    WAITING = 2;
+    RUNNING = 3;
+    STOPPING = 4;
+    FINISHED = 5;
+    FAILED = 6;
+    SKIPPED = 7;
+    STARTING = 8;
+  }
+  Action action = 2;
+  string message = 3;
+  ServiceHealth health = 4;
+}
+
+message RestartEvent {
+  int64 cmd = 1;
+}
+
+// ConfigLoadErrorEvent is reported when the config loading has failed.
+message ConfigLoadErrorEvent {
+  string error = 1;
+}
+
+// ConfigValidationErrorEvent is reported when config validation has failed.
+message ConfigValidationErrorEvent {
+  string error = 1;
+}
+
+// AddressEvent reports node endpoints aggregated from k8s.Endpoints and network.Hostname.
+message AddressEvent {
+  string hostname = 1;
+  repeated string addresses = 2;
+}
+
+// MachineStatusEvent reports changes to the MachineStatus resource.
+message MachineStatusEvent {
+  message MachineStatus {
+    message UnmetCondition {
+      string name = 1;
+      string reason = 2;
+    }
+    bool ready = 1;
+    repeated UnmetCondition unmet_conditions = 2;
+  }
+  enum MachineStage {
+    UNKNOWN = 0;
+    BOOTING = 1;
+    INSTALLING = 2;
+    MAINTENANCE = 3;
+    RUNNING = 4;
+    REBOOTING = 5;
+    SHUTTING_DOWN = 6;
+    RESETTING = 7;
+    UPGRADING = 8;
+  }
+  MachineStage stage = 1;
+  MachineStatus status = 2;
+}
+
+message EventsRequest {
+  int32 tail_events = 1;
+  string tail_id = 2;
+  int32 tail_seconds = 3;
+  string with_actor_id = 4;
+}
+
+message Event {
+  common.Metadata metadata = 1;
+  google.protobuf.Any data = 2;
+  string id = 3;
+  string actor_id = 4;
+}
+
+// rpc reset
+message ResetPartitionSpec {
+  string label = 1;
+  bool wipe = 2;
+}
+
+message ResetRequest {
+  enum WipeMode {
+    ALL = 0;
+    SYSTEM_DISK = 1;
+    USER_DISKS = 2;
+  }
+  // Graceful indicates whether node should leave etcd before the upgrade, it also
+  // enforces etcd checks before leaving.
+  bool graceful = 1;
+  // Reboot indicates whether node should reboot or halt after resetting.
+  bool reboot = 2;
+  // System_partitions_to_wipe lists specific system disk partitions to be reset (wiped).
+  // If system_partitions_to_wipe is empty, all the partitions are erased.
+  repeated ResetPartitionSpec system_partitions_to_wipe = 3;
+  // UserDisksToWipe lists specific connected block devices to be reset (wiped).
+  repeated string user_disks_to_wipe = 4;
+  // WipeMode defines which devices should be wiped.
+  WipeMode mode = 5;
+}
+
+// The reset message containing the restart status.
+message Reset {
+  common.Metadata metadata = 1;
+  string actor_id = 2;
+}
+
+message ResetResponse {
+  repeated Reset messages = 1;
+}
+
+// rpc shutdown
+// The messages message containing the shutdown status.
+message Shutdown {
+  common.Metadata metadata = 1;
+  string actor_id = 2;
+}
+
+message ShutdownRequest {
+  // Force indicates whether node should shutdown without first cordening and draining
+  bool force = 1;
+}
+
+message ShutdownResponse {
+  repeated Shutdown messages = 1;
+}
+
+// rpc upgrade
+message UpgradeRequest {
+  enum RebootMode {
+    DEFAULT = 0;
+    POWERCYCLE = 1;
+  }
+  string image = 1;
+  bool preserve = 2;
+  bool stage = 3;
+  bool force = 4;
+  RebootMode reboot_mode = 5;
+}
+
+message Upgrade {
+  common.Metadata metadata = 1;
+  string ack = 2;
+  string actor_id = 3;
+}
+
+message UpgradeResponse {
+  repeated Upgrade messages = 1;
+}
+
+// rpc servicelist
+message ServiceList {
+  common.Metadata metadata = 1;
+  repeated ServiceInfo services = 2;
+}
+
+message ServiceListResponse {
+  repeated ServiceList messages = 1;
+}
+
+message ServiceInfo {
+  string id = 1;
+  string state = 2;
+  ServiceEvents events = 3;
+  ServiceHealth health = 4;
+}
+
+message ServiceEvents {
+  repeated ServiceEvent events = 1;
+}
+
+message ServiceEvent {
+  string msg = 1;
+  string state = 2;
+  google.protobuf.Timestamp ts = 3;
+}
+
+message ServiceHealth {
+  bool unknown = 1;
+  bool healthy = 2;
+  string last_message = 3;
+  google.protobuf.Timestamp last_change = 4;
+}
+
+// rpc servicestart
+message ServiceStartRequest {
+  string id = 1;
+}
+
+message ServiceStart {
+  common.Metadata metadata = 1;
+  string resp = 2;
+}
+
+message ServiceStartResponse {
+  repeated ServiceStart messages = 1;
+}
+
+message ServiceStopRequest {
+  string id = 1;
+}
+
+message ServiceStop {
+  common.Metadata metadata = 1;
+  string resp = 2;
+}
+
+message ServiceStopResponse {
+  repeated ServiceStop messages = 1;
+}
+
+message ServiceRestartRequest {
+  string id = 1;
+}
+
+message ServiceRestart {
+  common.Metadata metadata = 1;
+  string resp = 2;
+}
+
+message ServiceRestartResponse {
+  repeated ServiceRestart messages = 1;
+}
+
+// CopyRequest describes a request to copy data out of Talos node
+//
+// Copy produces .tar.gz archive which is streamed back to the caller
+message CopyRequest {
+  // Root path to start copying data out, it might be either a file or directory
+  string root_path = 1;
+}
+
+// ListRequest describes a request to list the contents of a directory.
+message ListRequest {
+  // Root indicates the root directory for the list. If not indicated, '/' is
+  // presumed.
+  string root = 1;
+  // Recurse indicates that subdirectories should be recursed.
+  bool recurse = 2;
+  // RecursionDepth indicates how many levels of subdirectories should be
+  // recursed. The default (0) indicates that no limit should be enforced.
+  int32 recursion_depth = 3;
+  // File type.
+  enum Type {
+    // Regular file (not directory, symlink, etc).
+    REGULAR = 0;
+    // Directory.
+    DIRECTORY = 1;
+    // Symbolic link.
+    SYMLINK = 2;
+  }
+  // Types indicates what file type should be returned. If not indicated,
+  // all files will be returned.
+  repeated Type types = 4;
+  // Report xattrs
+  bool report_xattrs = 5;
+}
+
+// DiskUsageRequest describes a request to list disk usage of directories and regular files
+message DiskUsageRequest {
+  // RecursionDepth indicates how many levels of subdirectories should be
+  // recursed. The default (0) indicates that no limit should be enforced.
+  int32 recursion_depth = 1;
+  // All write sizes for all files, not just directories.
+  bool all = 2;
+  // Threshold exclude entries smaller than SIZE if positive,
+  // or entries greater than SIZE if negative.
+  int64 threshold = 3;
+  // DiskUsagePaths is the list of directories to calculate disk usage for.
+  repeated string paths = 4;
+}
+
+// FileInfo describes a file or directory's information
+message FileInfo {
+  common.Metadata metadata = 1;
+  // Name is the name (including prefixed path) of the file or directory
+  string name = 2;
+  // Size indicates the number of bytes contained within the file
+  int64 size = 3;
+  // Mode is the bitmap of UNIX mode/permission flags of the file
+  uint32 mode = 4;
+  // Modified indicates the UNIX timestamp at which the file was last modified
+  int64 modified = 5;
+  // IsDir indicates that the file is a directory
+  bool is_dir = 6;
+  // Error describes any error encountered while trying to read the file
+  // information.
+  string error = 7;
+  // Link is filled with symlink target
+  string link = 8;
+  // RelativeName is the name of the file or directory relative to the RootPath
+  string relative_name = 9;
+  // Owner uid
+  uint32 uid = 10;
+  // Owner gid
+  uint32 gid = 11;
+  // Extended attributes (if present and requested)
+  repeated Xattr xattrs = 12;
+}
+
+message Xattr {
+  string name = 1;
+  bytes data = 2;
+}
+
+// DiskUsageInfo describes a file or directory's information for du command
+message DiskUsageInfo {
+  common.Metadata metadata = 1;
+  // Name is the name (including prefixed path) of the file or directory
+  string name = 2;
+  // Size indicates the number of bytes contained within the file
+  int64 size = 3;
+  // Error describes any error encountered while trying to read the file
+  // information.
+  string error = 4;
+  // RelativeName is the name of the file or directory relative to the RootPath
+  string relative_name = 5;
+}
+
+// The messages message containing the requested df stats.
+message Mounts {
+  common.Metadata metadata = 1;
+  repeated MountStat stats = 2;
+}
+
+message MountsResponse {
+  repeated Mounts messages = 1;
+}
+
+// The messages message containing the requested processes.
+message MountStat {
+  string filesystem = 1;
+  uint64 size = 2;
+  uint64 available = 3;
+  string mounted_on = 4;
+}
+
+message Version {
+  common.Metadata metadata = 1;
+  VersionInfo version = 2;
+  PlatformInfo platform = 3;
+  // Features describe individual Talos features that can be switched on or off.
+  FeaturesInfo features = 4;
+}
+
+message VersionResponse {
+  repeated Version messages = 1;
+}
+
+message VersionInfo {
+  string tag = 1;
+  string sha = 2;
+  string built = 3;
+  string go_version = 4;
+  string os = 5;
+  string arch = 6;
+}
+
+message PlatformInfo {
+  string name = 1;
+  string mode = 2;
+}
+
+// FeaturesInfo describes individual Talos features that can be switched on or off.
+message FeaturesInfo {
+  // RBAC is true if role-based access control is enabled.
+  bool rbac = 1;
+}
+
+// rpc logs
+// The request message containing the process name.
+message LogsRequest {
+  string namespace = 1;
+  string id = 2;
+  // driver might be default "containerd" or "cri"
+  common.ContainerDriver driver = 3;
+  bool follow = 4;
+  int32 tail_lines = 5;
+}
+
+message ReadRequest {
+  string path = 1;
+}
+
+// LogsContainer describes all available registered log containers.
+message LogsContainer {
+  common.Metadata metadata = 1;
+  repeated string ids = 2;
+}
+
+message LogsContainersResponse {
+  repeated LogsContainer messages = 1;
+}
+
+// rpc rollback
+message RollbackRequest {}
+
+message Rollback {
+  common.Metadata metadata = 1;
+}
+
+message RollbackResponse {
+  repeated Rollback messages = 1;
+}
+
+// rpc Containers
+
+message ContainersRequest {
+  string namespace = 1;
+  // driver might be default "containerd" or "cri"
+  common.ContainerDriver driver = 2;
+}
+
+// The messages message containing the requested containers.
+message ContainerInfo {
+  string namespace = 1;
+  string id = 2;
+  string uid = 10;
+  string internal_id = 9;
+  string image = 3;
+  uint32 pid = 4;
+  string status = 5;
+  string pod_id = 6;
+  string name = 7;
+  string network_namespace = 8;
+}
+
+// The messages message containing the requested containers.
+message Container {
+  common.Metadata metadata = 1;
+  repeated ContainerInfo containers = 2;
+}
+
+message ContainersResponse {
+  repeated Container messages = 1;
+}
+
+// dmesg
+message DmesgRequest {
+  bool follow = 1;
+  bool tail = 2;
+}
+
+// rpc processes
+message ProcessesResponse {
+  repeated Process messages = 1;
+}
+
+message Process {
+  common.Metadata metadata = 1;
+  repeated ProcessInfo processes = 2;
+}
+
+message ProcessInfo {
+  int32 pid = 1;
+  int32 ppid = 2;
+  string state = 3;
+  int32 threads = 4;
+  double cpu_time = 5;
+  uint64 virtual_memory = 6;
+  uint64 resident_memory = 7;
+  string command = 8;
+  string executable = 9;
+  string args = 10;
+  string label = 11;
+}
+
+// rpc restart
+// The request message containing the process to restart.
+message RestartRequest {
+  string namespace = 1;
+  string id = 2;
+  // driver might be default "containerd" or "cri"
+  common.ContainerDriver driver = 3;
+}
+
+message Restart {
+  common.Metadata metadata = 1;
+}
+
+// The messages message containing the restart status.
+message RestartResponse {
+  repeated Restart messages = 1;
+}
+
+// rpc stats
+
+// The request message containing the containerd namespace.
+message StatsRequest {
+  string namespace = 1;
+  // driver might be default "containerd" or "cri"
+  common.ContainerDriver driver = 2;
+}
+
+// The messages message containing the requested stats.
+message Stats {
+  common.Metadata metadata = 1;
+  repeated Stat stats = 2;
+}
+
+message StatsResponse {
+  repeated Stats messages = 1;
+}
+
+// The messages message containing the requested stat.
+message Stat {
+  string namespace = 1;
+  string id = 2;
+  uint64 memory_usage = 4;
+  uint64 cpu_usage = 5;
+  string pod_id = 6;
+  string name = 7;
+}
+
+message Memory {
+  common.Metadata metadata = 1;
+  MemInfo meminfo = 2;
+}
+
+message MemoryResponse {
+  repeated Memory messages = 1;
+}
+
+message MemInfo {
+  uint64 memtotal = 1;
+  uint64 memfree = 2;
+  uint64 memavailable = 3;
+  uint64 buffers = 4;
+  uint64 cached = 5;
+  uint64 swapcached = 6;
+  uint64 active = 7;
+  uint64 inactive = 8;
+  uint64 activeanon = 9;
+  uint64 inactiveanon = 10;
+  uint64 activefile = 11;
+  uint64 inactivefile = 12;
+  uint64 unevictable = 13;
+  uint64 mlocked = 14;
+  uint64 swaptotal = 15;
+  uint64 swapfree = 16;
+  uint64 dirty = 17;
+  uint64 writeback = 18;
+  uint64 anonpages = 19;
+  uint64 mapped = 20;
+  uint64 shmem = 21;
+  uint64 slab = 22;
+  uint64 sreclaimable = 23;
+  uint64 sunreclaim = 24;
+  uint64 kernelstack = 25;
+  uint64 pagetables = 26;
+  uint64 nfsunstable = 27;
+  uint64 bounce = 28;
+  uint64 writebacktmp = 29;
+  uint64 commitlimit = 30;
+  uint64 committedas = 31;
+  uint64 vmalloctotal = 32;
+  uint64 vmallocused = 33;
+  uint64 vmallocchunk = 34;
+  uint64 hardwarecorrupted = 35;
+  uint64 anonhugepages = 36;
+  uint64 shmemhugepages = 37;
+  uint64 shmempmdmapped = 38;
+  uint64 cmatotal = 39;
+  uint64 cmafree = 40;
+  uint64 hugepagestotal = 41;
+  uint64 hugepagesfree = 42;
+  uint64 hugepagesrsvd = 43;
+  uint64 hugepagessurp = 44;
+  uint64 hugepagesize = 45;
+  uint64 directmap4k = 46;
+  uint64 directmap2m = 47;
+  uint64 directmap1g = 48;
+}
+
+// rpc Hostname
+
+message HostnameResponse {
+  repeated Hostname messages = 1;
+}
+
+message Hostname {
+  common.Metadata metadata = 1;
+  string hostname = 2;
+}
+
+// rpc LoadAvg
+
+message LoadAvgResponse {
+  repeated LoadAvg messages = 1;
+}
+
+message LoadAvg {
+  common.Metadata metadata = 1;
+  double load1 = 2;
+  double load5 = 3;
+  double load15 = 4;
+}
+
+// rpc SystemStat
+
+message SystemStatResponse {
+  repeated SystemStat messages = 1;
+}
+
+message SystemStat {
+  common.Metadata metadata = 1;
+  uint64 boot_time = 2;
+  CPUStat cpu_total = 3;
+  repeated CPUStat cpu = 4;
+  uint64 irq_total = 5;
+  repeated uint64 irq = 6;
+  uint64 context_switches = 7;
+  uint64 process_created = 8;
+  uint64 process_running = 9;
+  uint64 process_blocked = 10;
+  uint64 soft_irq_total = 11;
+  SoftIRQStat soft_irq = 12;
+}
+
+message CPUStat {
+  double user = 1;
+  double nice = 2;
+  double system = 3;
+  double idle = 4;
+  double iowait = 5;
+  double irq = 6;
+  double soft_irq = 7;
+  double steal = 8;
+  double guest = 9;
+  double guest_nice = 10;
+}
+
+message SoftIRQStat {
+  uint64 hi = 1;
+  uint64 timer = 2;
+  uint64 net_tx = 3;
+  uint64 net_rx = 4;
+  uint64 block = 5;
+  uint64 block_io_poll = 6;
+  uint64 tasklet = 7;
+  uint64 sched = 8;
+  uint64 hrtimer = 9;
+  uint64 rcu = 10;
+}
+
+// rpc CPUFreqStats
+
+message CPUFreqStatsResponse {
+  repeated CPUsFreqStats messages = 1;
+}
+
+message CPUsFreqStats {
+  common.Metadata metadata = 1;
+  repeated CPUFreqStats cpu_freq_stats = 2;
+}
+
+message CPUFreqStats {
+  uint64 current_frequency = 1;
+  uint64 minimum_frequency = 2;
+  uint64 maximum_frequency = 3;
+  string governor = 4;
+}
+
+// rpc CPUInfo
+
+message CPUInfoResponse {
+  repeated CPUsInfo messages = 1;
+}
+
+message CPUsInfo {
+  common.Metadata metadata = 1;
+  repeated CPUInfo cpu_info = 2;
+}
+
+message CPUInfo {
+  uint32 processor = 1;
+  string vendor_id = 2;
+  string cpu_family = 3;
+  string model = 4;
+  string model_name = 5;
+  string stepping = 6;
+  string microcode = 7;
+  double cpu_mhz = 8;
+  string cache_size = 9;
+  string physical_id = 10;
+  uint32 siblings = 11;
+  string core_id = 12;
+  uint32 cpu_cores = 13;
+  string apic_id = 14;
+  string initial_apic_id = 15;
+  string fpu = 16;
+  string fpu_exception = 17;
+  uint32 cpu_id_level = 18;
+  string wp = 19;
+  repeated string flags = 20;
+  repeated string bugs = 21;
+  double bogo_mips = 22;
+  uint32 cl_flush_size = 23;
+  uint32 cache_alignment = 24;
+  string address_sizes = 25;
+  string power_management = 26;
+}
+
+// rpc NetworkDeviceStats
+
+message NetworkDeviceStatsResponse {
+  repeated NetworkDeviceStats messages = 1;
+}
+
+message NetworkDeviceStats {
+  common.Metadata metadata = 1;
+  NetDev total = 2;
+  repeated NetDev devices = 3;
+}
+
+message NetDev {
+  string name = 1;
+  uint64 rx_bytes = 2;
+  uint64 rx_packets = 3;
+  uint64 rx_errors = 4;
+  uint64 rx_dropped = 5;
+  uint64 rx_fifo = 6;
+  uint64 rx_frame = 7;
+  uint64 rx_compressed = 8;
+  uint64 rx_multicast = 9;
+  uint64 tx_bytes = 10;
+  uint64 tx_packets = 11;
+  uint64 tx_errors = 12;
+  uint64 tx_dropped = 13;
+  uint64 tx_fifo = 14;
+  uint64 tx_collisions = 15;
+  uint64 tx_carrier = 16;
+  uint64 tx_compressed = 17;
+}
+
+// rpc DiskStats
+
+message DiskStatsResponse {
+  repeated DiskStats messages = 1;
+}
+
+message DiskStats {
+  common.Metadata metadata = 1;
+  DiskStat total = 2;
+  repeated DiskStat devices = 3;
+}
+
+message DiskStat {
+  string name = 1;
+  uint64 read_completed = 2;
+  uint64 read_merged = 3;
+  uint64 read_sectors = 4;
+  uint64 read_time_ms = 5;
+  uint64 write_completed = 6;
+  uint64 write_merged = 7;
+  uint64 write_sectors = 8;
+  uint64 write_time_ms = 9;
+  uint64 io_in_progress = 10;
+  uint64 io_time_ms = 11;
+  uint64 io_time_weighted_ms = 12;
+  uint64 discard_completed = 13;
+  uint64 discard_merged = 14;
+  uint64 discard_sectors = 15;
+  uint64 discard_time_ms = 16;
+}
+
+message EtcdLeaveClusterRequest {}
+
+message EtcdLeaveCluster {
+  common.Metadata metadata = 1;
+}
+
+message EtcdLeaveClusterResponse {
+  repeated EtcdLeaveCluster messages = 1;
+}
+
+message EtcdRemoveMemberRequest {
+  string member = 1;
+}
+
+message EtcdRemoveMember {
+  common.Metadata metadata = 1;
+}
+
+message EtcdRemoveMemberResponse {
+  repeated EtcdRemoveMember messages = 1;
+}
+
+message EtcdRemoveMemberByIDRequest {
+  uint64 member_id = 1;
+}
+
+message EtcdRemoveMemberByID {
+  common.Metadata metadata = 1;
+}
+
+message EtcdRemoveMemberByIDResponse {
+  repeated EtcdRemoveMemberByID messages = 1;
+}
+
+message EtcdForfeitLeadershipRequest {}
+
+message EtcdForfeitLeadership {
+  common.Metadata metadata = 1;
+  string member = 2;
+}
+
+message EtcdForfeitLeadershipResponse {
+  repeated EtcdForfeitLeadership messages = 1;
+}
+
+message EtcdMemberListRequest {
+  bool query_local = 1;
+}
+
+// EtcdMember describes a single etcd member.
+message EtcdMember {
+  // member ID.
+  uint64 id = 2;
+  // human-readable name of the member.
+  string hostname = 3;
+  // the list of URLs the member exposes to clients for communication.
+  repeated string peer_urls = 4;
+  // the list of URLs the member exposes to the cluster for communication.
+  repeated string client_urls = 5;
+  // learner flag
+  bool is_learner = 6;
+}
+
+// EtcdMembers contains the list of members registered on the host.
+message EtcdMembers {
+  common.Metadata metadata = 1;
+  // list of member hostnames.
+  repeated string legacy_members = 2;
+  // the list of etcd members registered on the node.
+  repeated EtcdMember members = 3;
+}
+
+message EtcdMemberListResponse {
+  repeated EtcdMembers messages = 1;
+}
+
+message EtcdSnapshotRequest {}
+
+message EtcdRecover {
+  common.Metadata metadata = 1;
+}
+
+message EtcdRecoverResponse {
+  repeated EtcdRecover messages = 1;
+}
+
+message EtcdAlarmListResponse {
+  repeated EtcdAlarm messages = 1;
+}
+
+message EtcdAlarm {
+  common.Metadata metadata = 1;
+  repeated EtcdMemberAlarm member_alarms = 2;
+}
+
+message EtcdMemberAlarm {
+  enum AlarmType {
+    NONE = 0;
+    NOSPACE = 1;
+    CORRUPT = 2;
+  }
+  uint64 member_id = 1;
+  AlarmType alarm = 2;
+}
+
+message EtcdAlarmDisarmResponse {
+  repeated EtcdAlarmDisarm messages = 1;
+}
+
+message EtcdAlarmDisarm {
+  common.Metadata metadata = 1;
+  repeated EtcdMemberAlarm member_alarms = 2;
+}
+
+message EtcdDefragmentResponse {
+  repeated EtcdDefragment messages = 1;
+}
+
+message EtcdDefragment {
+  common.Metadata metadata = 1;
+}
+
+message EtcdStatusResponse {
+  repeated EtcdStatus messages = 1;
+}
+
+message EtcdStatus {
+  common.Metadata metadata = 1;
+  EtcdMemberStatus member_status = 2;
+}
+
+message EtcdMemberStatus {
+  string storage_version = 11;
+  uint64 member_id = 10;
+  string protocol_version = 1;
+  int64 db_size = 2;
+  int64 db_size_in_use = 3;
+  uint64 leader = 4;
+  uint64 raft_index = 5;
+  uint64 raft_term = 6;
+  uint64 raft_applied_index = 7;
+  repeated string errors = 8;
+  bool is_learner = 9;
+}
+
+message EtcdDowngradeValidateRequest {
+  string version = 1;
+}
+
+message EtcdDowngradeValidateResponse {
+  repeated EtcdDowngradeValidate messages = 1;
+}
+
+message EtcdDowngradeValidate {
+  common.Metadata metadata = 1;
+  EtcdClusterDowngrade cluster_downgrade = 2;
+}
+
+message EtcdDowngradeEnableRequest {
+  string version = 1;
+}
+
+message EtcdDowngradeEnableResponse {
+  repeated EtcdDowngradeEnable messages = 1;
+}
+
+message EtcdDowngradeEnable {
+  common.Metadata metadata = 1;
+  EtcdClusterDowngrade cluster_downgrade = 2;
+}
+
+message EtcdDowngradeCancelResponse {
+  repeated EtcdDowngradeCancel messages = 1;
+}
+
+message EtcdDowngradeCancel {
+  common.Metadata metadata = 1;
+  EtcdClusterDowngrade cluster_downgrade = 2;
+}
+
+message EtcdClusterDowngrade {
+  string cluster_version = 1;
+}
+
+// rpc generateConfiguration
+
+message RouteConfig {
+  string network = 1;
+  string gateway = 2;
+  uint32 metric = 3;
+}
+
+message DHCPOptionsConfig {
+  uint32 route_metric = 1;
+}
+
+message NetworkDeviceConfig {
+  string interface = 1;
+  string cidr = 2;
+  int32 mtu = 3;
+  bool dhcp = 4;
+  bool ignore = 5;
+  DHCPOptionsConfig dhcp_options = 6;
+  repeated RouteConfig routes = 7;
+}
+
+message NetworkConfig {
+  string hostname = 1;
+  repeated NetworkDeviceConfig interfaces = 2;
+}
+
+message InstallConfig {
+  string install_disk = 1;
+  string install_image = 2;
+}
+
+message MachineConfig {
+  enum MachineType {
+    TYPE_UNKNOWN = 0;
+    TYPE_INIT = 1;
+    TYPE_CONTROL_PLANE = 2;
+    TYPE_WORKER = 3;
+  }
+  MachineType type = 1;
+  InstallConfig install_config = 2;
+  NetworkConfig network_config = 3;
+  string kubernetes_version = 4;
+}
+
+message ControlPlaneConfig {
+  string endpoint = 1;
+}
+
+message CNIConfig {
+  string name = 1;
+  repeated string urls = 2;
+}
+
+message ClusterNetworkConfig {
+  string dns_domain = 1;
+  CNIConfig cni_config = 2;
+}
+
+message ClusterConfig {
+  string name = 1;
+  ControlPlaneConfig control_plane = 2;
+  ClusterNetworkConfig cluster_network = 3;
+  bool allow_scheduling_on_control_planes = 4;
+}
+
+message GenerateClientConfigurationRequest {
+  // Roles in the generated client certificate.
+  repeated string roles = 1;
+  // Client certificate TTL.
+  google.protobuf.Duration crt_ttl = 2;
+}
+
+message GenerateClientConfiguration {
+  common.Metadata metadata = 1;
+  // PEM-encoded CA certificate.
+  bytes ca = 2;
+  // PEM-encoded generated client certificate.
+  bytes crt = 3;
+  // PEM-encoded generated client key.
+  bytes key = 4;
+  // Client configuration (talosconfig) file content.
+  bytes talosconfig = 5;
+}
+
+message GenerateClientConfigurationResponse {
+  repeated GenerateClientConfiguration messages = 1;
+}
+
+message PacketCaptureRequest {
+  // Interface name to perform packet capture on.
+  string interface = 1;
+  // Enable promiscuous mode.
+  bool promiscuous = 2;
+  // Snap length in bytes.
+  uint32 snap_len = 3;
+  // BPF filter.
+  repeated BPFInstruction bpf_filter = 4;
+}
+
+message BPFInstruction {
+  uint32 op = 1;
+  uint32 jt = 2;
+  uint32 jf = 3;
+  uint32 k = 4;
+}
+
+message NetstatRequest {
+  enum Filter {
+    ALL = 0;
+    CONNECTED = 1;
+    LISTENING = 2;
+  }
+  Filter filter = 1;
+  message Feature {
+    bool pid = 1;
+  }
+  Feature feature = 2;
+  message L4proto {
+    bool tcp = 1;
+    bool tcp6 = 2;
+    bool udp = 3;
+    bool udp6 = 4;
+    bool udplite = 5;
+    bool udplite6 = 6;
+    bool raw = 7;
+    bool raw6 = 8;
+  }
+  L4proto l4proto = 3;
+  message NetNS {
+    bool hostnetwork = 1;
+    repeated string netns = 2;
+    bool allnetns = 3;
+  }
+  NetNS netns = 4;
+}
+
+message ConnectRecord {
+  string l4proto = 1;
+  string localip = 2;
+  uint32 localport = 3;
+  string remoteip = 4;
+  uint32 remoteport = 5;
+  enum State {
+    RESERVED = 0;
+    ESTABLISHED = 1;
+    SYN_SENT = 2;
+    SYN_RECV = 3;
+    FIN_WAIT1 = 4;
+    FIN_WAIT2 = 5;
+    TIME_WAIT = 6;
+    CLOSE = 7;
+    CLOSEWAIT = 8;
+    LASTACK = 9;
+    LISTEN = 10;
+    CLOSING = 11;
+  }
+  State state = 6;
+  uint64 txqueue = 7;
+  uint64 rxqueue = 8;
+  enum TimerActive {
+    OFF = 0;
+    ON = 1;
+    KEEPALIVE = 2;
+    TIMEWAIT = 3;
+    PROBE = 4;
+  }
+  TimerActive tr = 9;
+  uint64 timerwhen = 10;
+  uint64 retrnsmt = 11;
+  uint32 uid = 12;
+  uint64 timeout = 13;
+  uint64 inode = 14;
+  uint64 ref = 15;
+  uint64 pointer = 16;
+  message Process {
+    uint32 pid = 1;
+    string name = 2;
+  }
+  Process process = 17;
+  string netns = 18;
+}
+
+message Netstat {
+  common.Metadata metadata = 1;
+  repeated ConnectRecord connectrecord = 2;
+}
+
+message NetstatResponse {
+  repeated Netstat messages = 1;
+}
+
+message MetaWriteRequest {
+  uint32 key = 1;
+  bytes value = 2;
+}
+
+message MetaWrite {
+  common.Metadata metadata = 1;
+}
+
+message MetaWriteResponse {
+  repeated MetaWrite messages = 1;
+}
+
+message MetaDeleteRequest {
+  uint32 key = 1;
+}
+
+message MetaDelete {
+  common.Metadata metadata = 1;
+}
+
+message MetaDeleteResponse {
+  repeated MetaDelete messages = 1;
+}
+
+message ImageListRequest {
+  // Containerd namespace to use.
+  common.ContainerdNamespace namespace = 1;
+}
+
+message ImageListResponse {
+  common.Metadata metadata = 1;
+  string name = 2;
+  string digest = 3;
+  int64 size = 4;
+  google.protobuf.Timestamp created_at = 5;
+}
+
+message ImagePullRequest {
+  // Containerd namespace to use.
+  common.ContainerdNamespace namespace = 1;
+  // Image reference to pull.
+  string reference = 2;
+}
+
+message ImagePull {
+  common.Metadata metadata = 1;
+}
+
+message ImagePullResponse {
+  repeated ImagePull messages = 1;
+}

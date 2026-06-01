@@ -1,0 +1,41 @@
+.env
+.envrc
+bin
+_out
+.vscode
+.idea
+*.code-workspace
+init.yaml
+controlplane.yaml
+join.yaml
+worker.yaml
+machineconfig.yaml
+talosconfig
+/kubeconfig
+hack/test/libvirt/matchbox/assets/*
+!hack/test/libvirt/matchbox/assets/.gitkeep
+
+# vim Swap
+[._]*.s[a-v][a-z]
+[._]*.sw[a-p]
+[._]s[a-rt-v][a-z]
+[._]ss[a-gi-z]
+[._]sw[a-p]
+
+# Go
+.artifacts/
+go.work.sum
+
+sha256sum.txt
+sha512sum.txt
+
+**/packet-cluster.yaml
+
+# Local Netlify folder
+.netlify
+
+*.lock
+node_modules
+website/resources
+website/public
+website/.hugo_build.lock

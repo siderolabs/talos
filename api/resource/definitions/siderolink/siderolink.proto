@@ -1,0 +1,43 @@
+syntax = "proto3";
+
+package talos.resource.definitions.siderolink;
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/siderolink";
+option java_package = "dev.talos.api.resource.definitions.siderolink";
+
+import "common/common.proto";
+
+// ConfigSpec describes Siderolink configuration.
+message ConfigSpec {
+  string api_endpoint = 1;
+  string host = 2;
+  string join_token = 3;
+  bool insecure = 4;
+  bool tunnel = 5;
+}
+
+// StatusSpec describes Siderolink status.
+message StatusSpec {
+  // Host is the Siderolink target host.
+  string host = 1;
+  // Connected is the status of the Siderolink GRPC connection.
+  bool connected = 2;
+  // LinkName is the name of the interface used for the Siderolink tunnel.
+  string link_name = 3;
+  // GRPCTunnel is true if the Wireguard-over-GRPC tunnel is being used.
+  bool grpc_tunnel = 4;
+}
+
+// TunnelSpec describes Siderolink GRPC Tunnel configuration.
+message TunnelSpec {
+  // APIEndpoint is the Siderolink WireGuard over GRPC endpoint.
+  string api_endpoint = 1;
+  // LinkName is the name to use for WireGuard tunnel.
+  string link_name = 2;
+  // MTU is the maximum transmission unit for the tunnel.
+  int64 mtu = 3;
+  // NodeAddress is the virtual address of our node. It's used to identify our node in the WireGuard GRPC streamer.
+  // It's not the address of the actual WireGuard interface.
+  common.NetIPPort node_address = 4;
+}
+

@@ -1,0 +1,8 @@
+{
+  "rules": {
+    "one-sentence-per-line": true
+  },
+  "filters": {
+    "comments": true
+  }
+}

@@ -1,0 +1,27 @@
+[
+    {
+        "ipv4": {
+            "ipAddress": [
+                {
+                    "privateIpAddress": "172.18.1.10",
+                    "publicIpAddress": "1.2.3.4"
+                }
+            ],
+            "subnet": [
+                {
+                    "address": "172.18.1.0",
+                    "prefix": "24"
+                }
+            ]
+        },
+        "ipv6": {
+            "ipAddress": [
+                {
+                    "privateIpAddress": "fd00::10",
+                    "publicIpAddress": ""
+                }
+            ]
+        },
+        "macAddress": "000D3AD631EE"
+    }
+]

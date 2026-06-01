@@ -1,0 +1,47 @@
+addresses: []
+links: []
+routes:
+    - family: inet6
+      dst: ""
+      src: ""
+      gateway: fe80::a:b:c:d
+      outLinkName: eth0
+      table: main
+      priority: 2048
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+hostnames:
+    - hostname: talos
+      domainname: ""
+      layer: platform
+resolvers:
+    - dnsServers:
+        - 169.254.169.254
+      nameServers:
+        - addr: 169.254.169.254
+          protocol: Do53
+          tlsServerName: ""
+      layer: platform
+timeServers:
+    - timeServers:
+        - 169.254.169.254
+      layer: platform
+operators:
+    - operator: dhcp6
+      linkName: eth0
+      requireUp: true
+      dhcp6:
+        routeMetric: 1024
+      layer: platform
+externalIPs: []
+metadata:
+    platform: oracle
+    hostname: talos
+    region: phx
+    zone: PHX-AD-1
+    instanceType: VM.Standard.E3.Flex
+    instanceId: ocid1.instance.oc1.phx.exampleuniqueID
+    providerId: oci://ocid1.instance.oc1.phx.exampleuniqueID

@@ -1,0 +1,4 @@
+apiVersion: v1alpha1
+kind: Layer2VIPConfig
+name: 1.2.3.4
+link: net0

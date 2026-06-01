@@ -1,0 +1,38 @@
+{
+  "apiVersion": "kubescheduler.config.k8s.io/v1",
+  "kind": "KubeSchedulerConfiguration",
+  "leaderElection": {
+    "leaderElect": true,
+    "leaseDuration": "15s"
+  },
+  "percentageOfNodesToScore": 0,
+  "profiles": [
+    {
+      "schedulerName": "default-scheduler",
+      "pluginConfig": [
+        {
+          "name": "NodeResourcesFit",
+          "args": {
+            "scoringStrategy": {
+              "type": "LeastAllocated",
+              "resources": [
+                { "name": "cpu", "weight": 1 },
+                { "name": "memory", "weight": 2 }
+              ]
+            }
+          }
+        },
+        {
+          "name": "VolumeBinding",
+          "args": {
+            "bindTimeoutSeconds": 600,
+            "shape": [
+              { "utilization": 0, "score": 0 },
+              { "utilization": 100, "score": 10 }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

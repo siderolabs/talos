@@ -1,0 +1,942 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+package block
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"io/fs"
+	"os"
+	"path/filepath"
+	"slices"
+	"syscall"
+
+	"github.com/cosi-project/runtime/pkg/controller"
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/xslices"
+	"github.com/siderolabs/go-blockdevice/v2/swap"
+	"github.com/siderolabs/go-pointer"
+	"go.uber.org/zap"
+
+	"github.com/siderolabs/talos/internal/pkg/mount/v3"
+	"github.com/siderolabs/talos/internal/pkg/selinux"
+	"github.com/siderolabs/talos/pkg/filetree"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
+	"github.com/siderolabs/talos/pkg/xfs"
+	"github.com/siderolabs/talos/pkg/xfs/fsopen"
+)
+
+type mountContext struct {
+	point             *mount.Point
+	readOnly          bool
+	disableAccessTime bool
+	secure            bool
+	unmounter         func() error
+}
+
+// MountController performs actual mount/unmount operations based on the MountRequests.
+type MountController struct {
+	activeMounts map[string]*mountContext
+}
+
+// Name implements controller.Controller interface.
+func (ctrl *MountController) Name() string {
+	return "block.MountController"
+}
+
+// Inputs implements controller.Controller interface.
+func (ctrl *MountController) Inputs() []controller.Input {
+	return []controller.Input{
+		{
+			Namespace: block.NamespaceName,
+			Type:      block.MountRequestType,
+			Kind:      controller.InputStrong,
+		},
+		{
+			Namespace: block.NamespaceName,
+			Type:      block.VolumeStatusType,
+			Kind:      controller.InputStrong,
+		},
+		{
+			Namespace: block.NamespaceName,
+			Type:      block.MountStatusType,
+			Kind:      controller.InputStrong,
+		},
+	}
+}
+
+// Outputs implements controller.Controller interface.
+func (ctrl *MountController) Outputs() []controller.Output {
+	return []controller.Output{
+		{
+			Type: block.MountStatusType,
+			Kind: controller.OutputExclusive,
+		},
+	}
+}
+
+// Run implements controller.Controller interface.
+//
+//nolint:gocyclo,cyclop
+func (ctrl *MountController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	if ctrl.activeMounts == nil {
+		ctrl.activeMounts = map[string]*mountContext{}
+	}
+
+	for {
+		select {
+		case <-r.EventCh():
+		case <-ctx.Done():
+			return nil
+		}
+
+		volumeStatuses, err := safe.ReaderListAll[*block.VolumeStatus](ctx, r)
+		if err != nil {
+			return fmt.Errorf("failed to read volume statuses: %w", err)
+		}
+
+		volumeStatusMap := xslices.ToMap(
+			safe.ToSlice(
+				volumeStatuses,
+				identity,
+			),
+			func(v *block.VolumeStatus) (string, *block.VolumeStatus) {
+				return v.Metadata().ID(), v
+			},
+		)
+
+		mountStatuses, err := safe.ReaderListAll[*block.MountStatus](ctx, r)
+		if err != nil {
+			return fmt.Errorf("failed to read mount statuses: %w", err)
+		}
+
+		mountStatusMap := xslices.ToMap(
+			safe.ToSlice(
+				mountStatuses,
+				identity,
+			),
+			func(v *block.MountStatus) (string, *block.MountStatus) {
+				return v.Metadata().ID(), v
+			},
+		)
+
+		mountRequests, err := safe.ReaderListAll[*block.MountRequest](ctx, r)
+		if err != nil {
+			return fmt.Errorf("failed to read mount requests: %w", err)
+		}
+
+		for mountRequest := range mountRequests.All() {
+			volumeStatus := volumeStatusMap[mountRequest.TypedSpec().VolumeID]
+			volumeNotReady := volumeStatus == nil || volumeStatus.TypedSpec().Phase != block.VolumePhaseReady || volumeStatus.Metadata().Phase() != resource.PhaseRunning
+
+			mountRequestTearingDown := mountRequest.Metadata().Phase() == resource.PhaseTearingDown
+
+			mountStatus := mountStatusMap[mountRequest.Metadata().ID()]
+			mountStatusTearingDown := mountStatus != nil && mountStatus.Metadata().Phase() == resource.PhaseTearingDown
+
+			mountHasParent := mountRequest.TypedSpec().ParentMountID != ""
+			mountParentStatus := mountStatusMap[mountRequest.TypedSpec().ParentMountID] // this might be nil
+			mountParentReady := !mountHasParent || (mountParentStatus != nil && mountParentStatus.Metadata().Phase() == resource.PhaseRunning)
+			mountParentTearingDown := mountHasParent && mountParentStatus != nil && mountParentStatus.Metadata().Phase() == resource.PhaseTearingDown
+
+			parentFinalizerName := ctrl.Name() + "-" + mountRequest.Metadata().ID()
+
+			if volumeNotReady || mountRequestTearingDown || mountStatusTearingDown || mountParentTearingDown {
+				// we should tear down the mount in the following sequence:
+				// 1. tear down & destroy MountStatus
+				// 2. perform actual unmount
+				// 3. remove finalizer from VolumeStatus
+				// 4. remove finalizer from parent MountStatus (if any)
+				// 5. remove finalizer from MountRequest
+				mountStatusTornDown, err := ctrl.tearDownMountStatus(ctx, r, logger, mountRequest)
+				if err != nil {
+					return fmt.Errorf("error tearing down mount status %q: %w", mountRequest.Metadata().ID(), err)
+				}
+
+				if !mountStatusTornDown {
+					continue
+				}
+
+				if volumeStatus != nil {
+					if err = ctrl.handleUnmountOperation(logger, mountRequest, volumeStatus); err != nil {
+						return err
+					}
+				}
+
+				if volumeStatus != nil && volumeStatus.Metadata().Finalizers().Has(ctrl.Name()) {
+					if err = r.RemoveFinalizer(ctx, volumeStatus.Metadata(), ctrl.Name()); err != nil {
+						return fmt.Errorf("failed to remove finalizer from volume status %q: %w", volumeStatus.Metadata().ID(), err)
+					}
+				}
+
+				if mountParentStatus != nil && mountParentStatus.Metadata().Finalizers().Has(parentFinalizerName) {
+					if err = r.RemoveFinalizer(ctx, mountParentStatus.Metadata(), parentFinalizerName); err != nil {
+						return fmt.Errorf("failed to remove finalizer from parent mount status %q: %w", mountParentStatus.Metadata().ID(), err)
+					}
+				}
+
+				if mountRequest.Metadata().Finalizers().Has(ctrl.Name()) {
+					if err = r.RemoveFinalizer(ctx, mountRequest.Metadata(), ctrl.Name()); err != nil {
+						return fmt.Errorf("failed to remove finalizer from mount request %q: %w", mountRequest.Metadata().ID(), err)
+					}
+				}
+			}
+
+			if !(volumeNotReady || mountRequestTearingDown) && mountParentReady {
+				// we should perform mount operation in the following sequence:
+				// 1. add finalizer on MountRequest
+				// 2. add finalizer on parent MountStatus (if any)
+				// 3. add finalizer on VolumeStatus
+				// 4. perform actual mount
+				// 5. create MountStatus
+				if !mountRequest.Metadata().Finalizers().Has(ctrl.Name()) {
+					if err = r.AddFinalizer(ctx, mountRequest.Metadata(), ctrl.Name()); err != nil {
+						return fmt.Errorf("failed to add finalizer to mount request %q: %w", mountRequest.Metadata().ID(), err)
+					}
+				}
+
+				if mountHasParent && !mountParentStatus.Metadata().Finalizers().Has(parentFinalizerName) && mountParentStatus.Metadata().Phase() == resource.PhaseRunning {
+					if err = r.AddFinalizer(ctx, mountParentStatus.Metadata(), parentFinalizerName); err != nil {
+						return fmt.Errorf("failed to add finalizer to parent mount status %q: %w", mountParentStatus.Metadata().ID(), err)
+					}
+				}
+
+				if !volumeStatus.Metadata().Finalizers().Has(ctrl.Name()) {
+					if err = r.AddFinalizer(ctx, volumeStatus.Metadata(), ctrl.Name()); err != nil {
+						return fmt.Errorf("failed to add finalizer to volume status %q: %w", volumeStatus.Metadata().ID(), err)
+					}
+				}
+
+				mountSource := volumeStatus.TypedSpec().MountLocation
+				mountTarget := volumeStatus.TypedSpec().MountSpec.TargetPath
+				mountFilesystem := volumeStatus.TypedSpec().Filesystem
+
+				rootPath := "/"
+
+				if mountHasParent {
+					rootPath = mountParentStatus.TypedSpec().Target
+				}
+
+				if err = ctrl.handleMountOperation(logger, rootPath, mountSource, mountTarget, mountFilesystem, mountRequest, volumeStatus); err != nil {
+					return err
+				}
+
+				if err = safe.WriterModify(
+					ctx, r, block.NewMountStatus(block.NamespaceName, mountRequest.Metadata().ID()),
+					func(mountStatus *block.MountStatus) error {
+						mountStatus.TypedSpec().Spec = *mountRequest.TypedSpec()
+						mountStatus.TypedSpec().Source = mountSource
+						mountStatus.TypedSpec().Target = filepath.Join(rootPath, mountTarget)
+						mountStatus.TypedSpec().Filesystem = mountFilesystem
+						mountStatus.TypedSpec().EncryptionProvider = volumeStatus.TypedSpec().EncryptionProvider
+						mountStatus.TypedSpec().ReadOnly = mountRequest.TypedSpec().ReadOnly
+						mountStatus.TypedSpec().ProjectQuotaSupport = volumeStatus.TypedSpec().MountSpec.ProjectQuotaSupport
+						mountStatus.TypedSpec().Detached = mountRequest.TypedSpec().Detached
+
+						// This needs to be set through accessor, and is not guaranteed to resolve to a valid root.
+						mount, ok := ctrl.activeMounts[mountRequest.Metadata().ID()]
+						if ok && mount.point != nil {
+							mountStatus.TypedSpec().SetRoot(mount.point.Root())
+						} else {
+							mountStatus.TypedSpec().SetRoot(&xfs.OSRoot{Shadow: filepath.Join(rootPath, mountTarget)})
+						}
+
+						return nil
+					},
+				); err != nil {
+					return fmt.Errorf("failed to create mount status %q: %w", mountRequest.Metadata().ID(), err)
+				}
+			}
+		}
+
+		r.ResetRestartBackoff()
+	}
+}
+
+func (ctrl *MountController) tearDownMountStatus(ctx context.Context, r controller.Runtime, logger *zap.Logger, mountRequest *block.MountRequest) (bool, error) {
+	logger = logger.With(zap.String("mount_request", mountRequest.Metadata().ID()))
+
+	okToDestroy, err := r.Teardown(ctx, block.NewMountStatus(block.NamespaceName, mountRequest.Metadata().ID()).Metadata())
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			// no mount status, we are done
+			return true, nil
+		}
+
+		return false, fmt.Errorf("failed to teardown mount status %q: %w", mountRequest.Metadata().ID(), err)
+	}
+
+	if !okToDestroy {
+		logger.Debug("waiting for mount status to be torn down")
+
+		return false, nil
+	}
+
+	err = r.Destroy(ctx, block.NewMountStatus(block.NamespaceName, mountRequest.Metadata().ID()).Metadata())
+	if err != nil {
+		return false, fmt.Errorf("failed to destroy mount status %q: %w", mountRequest.Metadata().ID(), err)
+	}
+
+	return true, nil
+}
+
+func (ctrl *MountController) handleMountOperation(
+	logger *zap.Logger,
+	rootPath string,
+	mountSource, mountTarget string,
+	mountFilesystem block.FilesystemType,
+	mountRequest *block.MountRequest,
+	volumeStatus *block.VolumeStatus,
+) error {
+	switch volumeStatus.TypedSpec().Type {
+	case block.VolumeTypeDirectory:
+		return ctrl.handleDirectoryMountOperation(logger, rootPath, mountTarget, mountRequest, volumeStatus)
+
+	case block.VolumeTypeOverlay:
+		return ctrl.handleOverlayMountOperation(logger, filepath.Join(rootPath, mountTarget), mountRequest, volumeStatus)
+
+	case block.VolumeTypeSymlink:
+		return ctrl.handleSymlinkMountOperation(logger, rootPath, mountTarget, mountRequest, volumeStatus)
+
+	case block.VolumeTypeTmpfs:
+		return fmt.Errorf("not implemented yet")
+
+	case block.VolumeTypeExternal:
+		return ctrl.handleDiskMountOperation(logger, mountSource, filepath.Join(rootPath, mountTarget), mountFilesystem, mountRequest, volumeStatus)
+
+	case block.VolumeTypeDisk, block.VolumeTypePartition:
+		if mountFilesystem == block.FilesystemTypeSwap {
+			return ctrl.handleSwapMountOperation(logger, mountSource, mountRequest, volumeStatus)
+		}
+
+		return ctrl.handleDiskMountOperation(logger, mountSource, filepath.Join(rootPath, mountTarget), mountFilesystem, mountRequest, volumeStatus)
+
+	default:
+		return fmt.Errorf("unsupported volume type %q", volumeStatus.TypedSpec().Type)
+	}
+}
+
+func (ctrl *MountController) handleDirectoryMountOperation(
+	logger *zap.Logger,
+	rootPath string,
+	target string,
+	mountRequest *block.MountRequest,
+	volumeStatus *block.VolumeStatus,
+) error {
+	targetPath := filepath.Join(rootPath, target)
+
+	if err := os.Mkdir(targetPath, volumeStatus.TypedSpec().MountSpec.FileMode); err != nil {
+		if !os.IsExist(err) {
+			return fmt.Errorf("failed to create target path: %w", err)
+		}
+
+		st, err := os.Stat(targetPath)
+		if err != nil {
+			return fmt.Errorf("failed to stat target path: %w", err)
+		}
+
+		if !st.IsDir() {
+			return fmt.Errorf("target path %q is not a directory", targetPath)
+		}
+	}
+
+	if volumeStatus.TypedSpec().MountSpec.BindTarget != nil {
+		if err := ctrl.handleBindMountOperation(
+			logger,
+			rootPath, target, *volumeStatus.TypedSpec().MountSpec.BindTarget,
+			mountRequest, volumeStatus,
+		); err != nil {
+			return fmt.Errorf("target path %q is not a directory", targetPath)
+		}
+	}
+
+	return ctrl.updateTargetSettings(targetPath, volumeStatus.TypedSpec().Filesystem, volumeStatus.TypedSpec().MountSpec)
+}
+
+func (ctrl *MountController) handleBindMountOperation(
+	logger *zap.Logger,
+	rootPath string,
+	source string,
+	bindTarget string,
+	mountRequest *block.MountRequest,
+	volumeStatus *block.VolumeStatus,
+) error {
+	_, ok := ctrl.activeMounts[mountRequest.Metadata().ID()]
+
+	// mount hasn't been done yet
+	if !ok {
+		mountSource := filepath.Join(rootPath, source)
+		mountTarget := filepath.Join(rootPath, bindTarget)
+
+		if err := os.Mkdir(mountTarget, volumeStatus.TypedSpec().MountSpec.FileMode); err != nil {
+			if !os.IsExist(err) {
+				return fmt.Errorf("failed to create target path: %w", err)
+			}
+
+			st, err := os.Stat(mountTarget)
+			if err != nil {
+				return fmt.Errorf("failed to stat target path: %w", err)
+			}
+
+			if !st.IsDir() {
+				return fmt.Errorf("target path %q is not a directory", mountTarget)
+			}
+		}
+
+		opts := []mount.ManagerOption{
+			mount.WithSelinuxLabel(volumeStatus.TypedSpec().MountSpec.SelinuxLabel),
+		}
+
+		manager := mount.NewManager(slices.Concat(
+			[]mount.ManagerOption{
+				mount.WithTarget(mountTarget),
+				mount.WithOpentreeFromPath(mountSource),
+				mount.WithPrinter(logger.Sugar().Infof),
+			},
+			opts,
+		)...)
+
+		mountpoint, err := manager.Mount()
+		if err != nil {
+			return fmt.Errorf("failed to mount %q: %w", mountRequest.Metadata().ID(), err)
+		}
+
+		if !mountRequest.TypedSpec().ReadOnly && !mountRequest.TypedSpec().Detached {
+			if err = ctrl.updateTargetSettings(mountTarget, volumeStatus.TypedSpec().Filesystem, volumeStatus.TypedSpec().MountSpec); err != nil {
+				manager.Unmount() //nolint:errcheck
+
+				return fmt.Errorf("failed to update target settings %q: %w", mountRequest.Metadata().ID(), err)
+			}
+		}
+
+		logger.Info(
+			"bind mount",
+			zap.String("volume", volumeStatus.Metadata().ID()),
+			zap.String("source", mountSource),
+			zap.String("target", mountTarget),
+		)
+
+		ctrl.activeMounts[mountRequest.Metadata().ID()] = &mountContext{
+			point:     mountpoint,
+			readOnly:  mountRequest.TypedSpec().ReadOnly,
+			unmounter: manager.Unmount,
+		}
+	}
+
+	return nil
+}
+
+//nolint:gocyclo
+func (ctrl *MountController) handleSymlinkMountOperation(
+	logger *zap.Logger,
+	rootPath string,
+	target string,
+	mountRequest *block.MountRequest,
+	volumeStatus *block.VolumeStatus,
+) error {
+	_, ok := ctrl.activeMounts[mountRequest.Metadata().ID()]
+	if ok {
+		return nil
+	}
+
+	targetPath := filepath.Join(rootPath, target)
+
+	st, err := os.Lstat(targetPath)
+	if err != nil && !errors.Is(err, fs.ErrNotExist) {
+		return fmt.Errorf("failed to stat target path: %w", err)
+	}
+
+	if st == nil {
+		// create the symlink
+		if err := os.Symlink(volumeStatus.TypedSpec().SymlinkSpec.SymlinkTargetPath, targetPath); err != nil {
+			return fmt.Errorf("failed to create symlink %q: %w", targetPath, err)
+		}
+
+		ctrl.activeMounts[mountRequest.Metadata().ID()] = &mountContext{}
+
+		return nil
+	}
+
+	if st.Mode()&os.ModeSymlink != 0 {
+		// if it's already a symlink, check if it points to the right target
+		symlinkTarget, err := os.Readlink(targetPath)
+		if err != nil {
+			return fmt.Errorf("failed to read symlink target: %w", err)
+		}
+
+		if symlinkTarget == volumeStatus.TypedSpec().SymlinkSpec.SymlinkTargetPath {
+			return nil
+		}
+	}
+
+	if !volumeStatus.TypedSpec().SymlinkSpec.Force {
+		return fmt.Errorf("target path %q is not a symlink to %q", targetPath, volumeStatus.TypedSpec().SymlinkSpec.SymlinkTargetPath)
+	}
+
+	// try to remove forcefully
+	if err := os.RemoveAll(targetPath); err != nil {
+		if !st.Mode().IsDir() {
+			return fmt.Errorf("failed to remove target path, and target is not a directory %s: %w", st.Mode(), err)
+		}
+
+		// try to remove all entries if it's a directory
+		entries, err := os.ReadDir(targetPath)
+		if err != nil {
+			return fmt.Errorf("failed to read target path: %w", err)
+		}
+
+		for _, entry := range entries {
+			if err := os.RemoveAll(filepath.Join(targetPath, entry.Name())); err != nil {
+				logger.Warn("failed to remove target path entry", zap.String("entry", entry.Name()), zap.Error(err))
+			}
+		}
+
+		ctrl.activeMounts[mountRequest.Metadata().ID()] = &mountContext{}
+
+		// return early, i.e. keep this as a directory
+		return nil
+	}
+
+	if err := os.Symlink(volumeStatus.TypedSpec().SymlinkSpec.SymlinkTargetPath, targetPath); err != nil {
+		return fmt.Errorf("failed to create symlink %q: %w", targetPath, err)
+	}
+
+	ctrl.activeMounts[mountRequest.Metadata().ID()] = &mountContext{}
+
+	return nil
+}
+
+//nolint:gocyclo
+func (ctrl *MountController) updateTargetSettings(
+	targetPath string,
+	fstype block.FilesystemType,
+	mountSpec block.MountSpec,
+) error {
+	if err := os.Chmod(targetPath, mountSpec.FileMode); err != nil {
+		return fmt.Errorf("failed to chmod %q: %w", targetPath, err)
+	}
+
+	st, err := os.Stat(targetPath)
+	if err != nil {
+		return fmt.Errorf("failed to stat %q: %w", targetPath, err)
+	}
+
+	sysStat := st.Sys().(*syscall.Stat_t)
+
+	if sysStat.Uid != uint32(mountSpec.UID) || sysStat.Gid != uint32(mountSpec.GID) {
+		if mountSpec.RecursiveRelabel {
+			err = filetree.ChownRecursive(targetPath, uint32(mountSpec.UID), uint32(mountSpec.GID))
+		} else {
+			err = os.Chown(targetPath, mountSpec.UID, mountSpec.GID)
+		}
+
+		if err != nil {
+			return fmt.Errorf("failed to chown %q: %w", targetPath, err)
+		}
+	}
+
+	currentLabel, err := selinux.GetLabel(targetPath)
+	if err != nil {
+		return fmt.Errorf("failed to get current label %q: %w", targetPath, err)
+	}
+
+	if currentLabel == mountSpec.SelinuxLabel {
+		// nothing to do
+		return nil
+	}
+
+	if mountSpec.RecursiveRelabel {
+		err = selinux.SetLabelRecursive(targetPath, mountSpec.SelinuxLabel)
+	} else {
+		err = selinux.SetLabel(targetPath, mountSpec.SelinuxLabel)
+	}
+
+	return mount.FilterSelinuxLabelErrors(targetPath, fstype.String(), err)
+}
+
+//nolint:gocyclo,cyclop
+func (ctrl *MountController) handleDiskMountOperation(
+	logger *zap.Logger,
+	mountSource, mountTarget string,
+	mountFilesystem block.FilesystemType,
+	mountRequest *block.MountRequest,
+	volumeStatus *block.VolumeStatus,
+) error {
+	mountCtx, ok := ctrl.activeMounts[mountRequest.Metadata().ID()]
+
+	logger = logger.With(zap.String("mount_request.id", mountRequest.Metadata().ID()))
+
+	// mount hasn't been done yet
+	if !ok {
+		var (
+			opts   []mount.ManagerOption
+			fsOpts []fsopen.Option
+		)
+
+		fsOpts = append(
+			fsOpts,
+			fsopen.WithSource(mountSource),
+			fsopen.WithProjectQuota(volumeStatus.TypedSpec().MountSpec.ProjectQuotaSupport),
+		)
+
+		for _, param := range volumeStatus.TypedSpec().MountSpec.Parameters {
+			logger.Info(
+				"adding new parameter",
+				zap.String("parameter", param.Name),
+				zap.String("parameter.type", param.Type.String()),
+				zap.String("parameter.string", pointer.SafeDeref(param.String)),
+				zap.Binary("parameter.bytes", param.Binary),
+			)
+
+			switch param.Type {
+			case block.FSParameterTypeBinaryValue:
+				if param.Binary == nil {
+					logger.Warn("skipping nil binary parameter", zap.String("parameter", param.Name))
+
+					continue
+				}
+
+				fsOpts = append(fsOpts, fsopen.WithBinaryParameters(param.Name, param.Binary))
+			case block.FSParameterTypeStringValue:
+				if param.String == nil {
+					logger.Warn("skipping nil string parameter", zap.String("parameter", param.Name))
+
+					continue
+				}
+
+				fsOpts = append(fsOpts, fsopen.WithStringParameter(param.Name, *param.String))
+			case block.FSParameterTypeBooleanValue:
+				fsOpts = append(fsOpts, fsopen.WithBoolParameter(param.Name))
+			}
+		}
+
+		opts = append(
+			opts,
+			mount.WithSelinuxLabel(volumeStatus.TypedSpec().MountSpec.SelinuxLabel),
+		)
+
+		if mountRequest.TypedSpec().DisableAccessTime {
+			opts = append(opts, mount.WithDisableAccessTime())
+		}
+
+		if mountRequest.TypedSpec().Secure {
+			opts = append(opts, mount.WithSecure())
+		}
+
+		if mountRequest.TypedSpec().ReadOnly {
+			opts = append(opts, mount.WithReadOnly())
+		}
+
+		if mountRequest.TypedSpec().Detached {
+			opts = append(opts, mount.WithDetached())
+		}
+
+		manager := mount.NewManager(slices.Concat(
+			[]mount.ManagerOption{
+				mount.WithTarget(mountTarget),
+				mount.WithFsopen(
+					mountFilesystem.String(),
+					fsOpts...,
+				),
+				mount.WithPrinter(logger.Sugar().Infof),
+			},
+			opts,
+		)...)
+
+		mountpoint, err := manager.Mount()
+		if err != nil {
+			return fmt.Errorf("failed to mount %q: %w", mountRequest.Metadata().ID(), err)
+		}
+
+		if !mountRequest.TypedSpec().ReadOnly && !mountRequest.TypedSpec().Detached {
+			if err = ctrl.updateTargetSettings(mountTarget, volumeStatus.TypedSpec().Filesystem, volumeStatus.TypedSpec().MountSpec); err != nil {
+				manager.Unmount() //nolint:errcheck
+
+				return fmt.Errorf("failed to update target settings %q: %w", mountRequest.Metadata().ID(), err)
+			}
+		}
+
+		logger.Info(
+			"volume mount",
+			zap.String("volume", volumeStatus.Metadata().ID()),
+			zap.String("source", mountSource),
+			zap.String("target", mountTarget),
+			zap.Stringer("filesystem", mountFilesystem),
+			zap.Bool("read_only", mountRequest.TypedSpec().ReadOnly),
+			zap.Bool("secure", mountRequest.TypedSpec().Secure),
+			zap.Bool("disable_access_time", mountRequest.TypedSpec().DisableAccessTime),
+			zap.Bool("detached", mountRequest.TypedSpec().Detached),
+		)
+
+		mountCtx = &mountContext{
+			point:             mountpoint,
+			readOnly:          mountRequest.TypedSpec().ReadOnly,
+			disableAccessTime: mountRequest.TypedSpec().DisableAccessTime,
+			secure:            mountRequest.TypedSpec().Secure,
+			unmounter:         manager.Unmount,
+		}
+		ctrl.activeMounts[mountRequest.Metadata().ID()] = mountCtx
+	}
+
+	if mountCtx.readOnly != mountRequest.TypedSpec().ReadOnly { // remount if needed
+		var err error
+
+		switch mountRequest.TypedSpec().ReadOnly {
+		case true:
+			err = mountCtx.point.RemountReadOnly()
+		case false:
+			err = mountCtx.point.RemountReadWrite()
+		}
+
+		if err != nil {
+			return fmt.Errorf("failed to remount %q: %w", mountRequest.Metadata().ID(), err)
+		}
+
+		logger.Info(
+			"volume remounted",
+			zap.String("volume", volumeStatus.Metadata().ID()),
+			zap.String("read_only", fmt.Sprintf("%v -> %v", mountCtx.readOnly, mountRequest.TypedSpec().ReadOnly)),
+		)
+
+		mountCtx.readOnly = mountRequest.TypedSpec().ReadOnly
+	}
+
+	//nolint:dupl
+	if mountCtx.disableAccessTime != mountRequest.TypedSpec().DisableAccessTime {
+		err := mountCtx.point.SetDisableAccessTime(mountRequest.TypedSpec().DisableAccessTime)
+		if err != nil {
+			return fmt.Errorf("failed to update disableAccessTime for %q: %w", mountRequest.Metadata().ID(), err)
+		}
+
+		logger.Info(
+			"volume mount attributes updated",
+			zap.String("volume", volumeStatus.Metadata().ID()),
+			zap.String("disable_access_time", fmt.Sprintf("%v -> %v", mountCtx.disableAccessTime, mountRequest.TypedSpec().DisableAccessTime)),
+		)
+
+		mountCtx.disableAccessTime = mountRequest.TypedSpec().DisableAccessTime
+	}
+
+	//nolint:dupl
+	if mountCtx.secure != mountRequest.TypedSpec().Secure {
+		err := mountCtx.point.SetSecure(mountRequest.TypedSpec().Secure)
+		if err != nil {
+			return fmt.Errorf("failed to update secure for %q: %w", mountRequest.Metadata().ID(), err)
+		}
+
+		logger.Info(
+			"volume mount attributes updated",
+			zap.String("volume", volumeStatus.Metadata().ID()),
+			zap.String("secure", fmt.Sprintf("%v -> %v", mountCtx.secure, mountRequest.TypedSpec().Secure)),
+		)
+
+		mountCtx.secure = mountRequest.TypedSpec().Secure
+	}
+
+	return nil
+}
+
+func (ctrl *MountController) handleOverlayMountOperation(
+	logger *zap.Logger,
+	mountTarget string,
+	mountRequest *block.MountRequest,
+	volumeStatus *block.VolumeStatus,
+) error {
+	if _, ok := ctrl.activeMounts[mountRequest.Metadata().ID()]; ok {
+		return nil
+	}
+
+	if volumeStatus.TypedSpec().ParentID != constants.EphemeralPartitionLabel {
+		return fmt.Errorf("overlay mount is not supported for %q", volumeStatus.TypedSpec().ParentID)
+	}
+
+	overlayOpts := []mount.ManagerOption{
+		mount.WithSelinuxLabel(volumeStatus.TypedSpec().MountSpec.SelinuxLabel),
+	}
+
+	if volumeStatus.TypedSpec().MountSpec.Secure {
+		overlayOpts = append(overlayOpts, mount.WithSecure())
+	}
+
+	manager := mount.NewVarOverlay(
+		[]string{mountTarget},
+		mountTarget,
+		logger.Sugar().Infof,
+		overlayOpts...,
+	)
+
+	mountpoint, err := manager.Mount()
+	if err != nil {
+		return fmt.Errorf("failed to mount %q: %w", mountRequest.Metadata().ID(), err)
+	}
+
+	if err = ctrl.updateTargetSettings(mountTarget, volumeStatus.TypedSpec().Filesystem, volumeStatus.TypedSpec().MountSpec); err != nil {
+		manager.Unmount() //nolint:errcheck
+
+		return fmt.Errorf("failed to update target settings %q: %w", mountRequest.Metadata().ID(), err)
+	}
+
+	logger.Info(
+		"overlay mount",
+		zap.String("volume", volumeStatus.Metadata().ID()),
+		zap.String("target", mountTarget),
+		zap.String("parent", volumeStatus.TypedSpec().ParentID),
+	)
+
+	ctrl.activeMounts[mountRequest.Metadata().ID()] = &mountContext{
+		point:     mountpoint,
+		unmounter: manager.Unmount,
+	}
+
+	return nil
+}
+
+func (ctrl *MountController) handleSwapMountOperation(
+	logger *zap.Logger,
+	mountSource string,
+	mountRequest *block.MountRequest,
+	volumeStatus *block.VolumeStatus,
+) error {
+	_, ok := ctrl.activeMounts[mountRequest.Metadata().ID()]
+	if ok {
+		return nil
+	}
+
+	if err := swap.On(mountSource, swap.FLAG_DISCARD_ONCE); err != nil {
+		return fmt.Errorf("failed to enable swap on %q: %w", mountSource, err)
+	}
+
+	ctrl.activeMounts[mountRequest.Metadata().ID()] = &mountContext{
+		point: mount.NewPoint(mountSource, 0, "", 0, "swap"),
+	}
+
+	logger.Info(
+		"swap enabled",
+		zap.String("volume", volumeStatus.Metadata().ID()),
+		zap.String("source", mountSource),
+	)
+
+	return nil
+}
+
+func (ctrl *MountController) handleUnmountOperation(
+	logger *zap.Logger,
+	mountRequest *block.MountRequest,
+	volumeStatus *block.VolumeStatus,
+) error {
+	switch volumeStatus.TypedSpec().Type {
+	case block.VolumeTypeDirectory:
+		return ctrl.handleDirectoryUnmountOperation(logger, mountRequest, volumeStatus)
+
+	case block.VolumeTypeTmpfs:
+		return fmt.Errorf("not implemented yet")
+
+	case block.VolumeTypeExternal:
+		return ctrl.handleDiskUnmountOperation(logger, mountRequest, volumeStatus)
+
+	case block.VolumeTypeDisk, block.VolumeTypePartition, block.VolumeTypeOverlay:
+		if volumeStatus.TypedSpec().Filesystem == block.FilesystemTypeSwap {
+			return ctrl.handleSwapUmountOperation(logger, mountRequest, volumeStatus)
+		}
+
+		return ctrl.handleDiskUnmountOperation(logger, mountRequest, volumeStatus)
+
+	case block.VolumeTypeSymlink:
+		return ctrl.handleSymlinkUmountOperation(mountRequest)
+
+	default:
+		return fmt.Errorf("unsupported volume type %q", volumeStatus.TypedSpec().Type)
+	}
+}
+
+func (ctrl *MountController) handleDiskUnmountOperation(
+	logger *zap.Logger,
+	mountRequest *block.MountRequest,
+	_ *block.VolumeStatus,
+) error {
+	mountCtx, ok := ctrl.activeMounts[mountRequest.Metadata().ID()]
+	if !ok {
+		return nil
+	}
+
+	if err := mountCtx.unmounter(); err != nil {
+		return fmt.Errorf("failed to unmount %q: %w", mountRequest.Metadata().ID(), err)
+	}
+
+	delete(ctrl.activeMounts, mountRequest.Metadata().ID())
+
+	logger.Info(
+		"volume unmount",
+		zap.String("volume", mountRequest.Metadata().ID()),
+		zap.String("source", mountCtx.point.Source()),
+		zap.String("target", mountCtx.point.Target()),
+		zap.String("filesystem", mountCtx.point.FSType()),
+	)
+
+	return nil
+}
+
+func (ctrl *MountController) handleDirectoryUnmountOperation(
+	logger *zap.Logger,
+	mountRequest *block.MountRequest,
+	_ *block.VolumeStatus,
+) error {
+	mountCtx, ok := ctrl.activeMounts[mountRequest.Metadata().ID()]
+	if !ok {
+		return nil
+	}
+
+	if err := mountCtx.unmounter(); err != nil {
+		return fmt.Errorf("failed to unmount %q: %w", mountRequest.Metadata().ID(), err)
+	}
+
+	delete(ctrl.activeMounts, mountRequest.Metadata().ID())
+
+	logger.Info(
+		"volume unmount",
+		zap.String("volume", mountRequest.Metadata().ID()),
+		zap.String("source", mountCtx.point.Source()),
+		zap.String("target", mountCtx.point.Target()),
+	)
+
+	return nil
+}
+
+func (ctrl *MountController) handleSymlinkUmountOperation(
+	mountRequest *block.MountRequest,
+) error {
+	delete(ctrl.activeMounts, mountRequest.Metadata().ID())
+
+	return nil
+}
+
+func (ctrl *MountController) handleSwapUmountOperation(
+	logger *zap.Logger,
+	mountRequest *block.MountRequest,
+	volumeStatus *block.VolumeStatus,
+) error {
+	mountCtx, ok := ctrl.activeMounts[mountRequest.Metadata().ID()]
+	if !ok {
+		return nil
+	}
+
+	if err := swap.Off(mountCtx.point.Source()); err != nil {
+		return fmt.Errorf("failed to disable swap on %q: %w", mountCtx.point.Source(), err)
+	}
+
+	delete(ctrl.activeMounts, mountRequest.Metadata().ID())
+
+	logger.Info(
+		"swap disabled",
+		zap.String("volume", volumeStatus.Metadata().ID()),
+		zap.String("source", mountCtx.point.Source()),
+	)
+
+	return nil
+}

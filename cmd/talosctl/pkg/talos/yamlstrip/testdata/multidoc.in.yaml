@@ -1,0 +1,18 @@
+# siderolink config
+apiVersion: v1alpha1
+kind: SideroLinkConfig # kind of the document
+# apiUrl is the URL of the SideroLink API endpoint
+apiUrl: grpc://172.20.0.1:4000/?jointoken=foo
+---
+apiVersion: v1alpha1
+kind: KmsgLogConfig
+name: apiSink # named document
+url: tcp://[fdae:41e4:649b:9303::1]:4001/
+options: # options are optional
+  # more options
+  foo: bar # this option
+---
+apiVersion: v1alpha1
+kind: EventSinkConfig
+endpoint: "[fdae:41e4:649b:9303::1]:8080"
+# end of document

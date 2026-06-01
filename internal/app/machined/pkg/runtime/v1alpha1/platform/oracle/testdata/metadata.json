@@ -1,0 +1,53 @@
+{
+    "availabilityDomain": "EMIr:PHX-AD-1",
+    "faultDomain": "FAULT-DOMAIN-3",
+    "compartmentId": "ocid1.tenancy.oc1..exampleuniqueID",
+    "displayName": "talos-instance",
+    "hostname": "talos",
+    "id": "ocid1.instance.oc1.phx.exampleuniqueID",
+    "image": "ocid1.image.oc1.phx.exampleuniqueID",
+    "metadata": {},
+    "region": "phx",
+    "canonicalRegionName": "us-phoenix-1",
+    "ociAdName": "phx-ad-1",
+    "regionInfo": {
+        "realmKey": "oc1",
+        "realmDomainComponent": "oraclecloud.com",
+        "regionKey": "PHX",
+        "regionIdentifier": "us-phoenix-1"
+    },
+    "shape": "VM.Standard.E3.Flex",
+    "state": "Running",
+    "timeCreated": 1600381928581,
+    "agentConfig": {
+        "monitoringDisabled": false,
+        "managementDisabled": false,
+        "allPluginsDisabled": false,
+        "pluginsConfig": [
+            {
+                "name": "OS Management Service Agent",
+                "desiredState": "ENABLED"
+            },
+            {
+                "name": "Custom Logs Monitoring",
+                "desiredState": "ENABLED"
+            },
+            {
+                "name": "Compute Instance Run Command",
+                "desiredState": "ENABLED"
+            },
+            {
+                "name": "Compute Instance Monitoring",
+                "desiredState": "ENABLED"
+            }
+        ]
+    },
+    "freeformTags": {
+        "Department": "Finance"
+    },
+    "definedTags": {
+        "Operations": {
+            "CostCenter": "42"
+        }
+    }
+}

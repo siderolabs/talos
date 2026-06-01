@@ -1,0 +1,30 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+package cli
+
+import (
+	"fmt"
+	"os"
+	"strings"
+)
+
+// Fatalf prints formatted message to stderr and aborts execution.
+func Fatalf(message string, args ...any) {
+	if !strings.HasSuffix(message, "\n") {
+		message += "\n"
+	}
+
+	fmt.Fprintf(os.Stderr, message, args...)
+	os.Exit(1)
+}
+
+// Warning prints formatted message to stderr.
+func Warning(message string, args ...any) {
+	if !strings.HasSuffix(message, "\n") {
+		message += "\n"
+	}
+
+	fmt.Fprintf(os.Stderr, "WARNING: "+message, args...)
+}

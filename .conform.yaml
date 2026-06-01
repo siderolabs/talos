@@ -1,0 +1,60 @@
+# THIS FILE WAS AUTOMATICALLY GENERATED, PLEASE DO NOT EDIT.
+#
+# Generated on 2026-04-29T10:44:07Z by kres 980313d.
+
+policies:
+  - type: commit
+    spec:
+      dco: true
+      gpg:
+        required: true
+        identity:
+          gitHubOrganization: siderolabs
+      spellcheck:
+        locale: US
+      maximumOfOneCommit: false
+      header:
+        length: 89
+        imperative: true
+        case: lower
+        invalidLastCharacters: .
+      body:
+        required: true
+      conventional:
+        types:
+          - chore
+          - docs
+          - perf
+          - refactor
+          - style
+          - test
+          - release
+        scopes:
+          - apid
+          - machined
+          - networkd
+          - talosctl
+          - trustd
+          - talosctl
+          - kernel
+          - security
+          - ci
+          - ^v1.14
+  - type: license
+    spec:
+      skipPaths:
+        - .git/
+        - testdata/
+      includeSuffixes:
+        - .go
+      excludeSuffixes:
+        - .pb.go
+        - .pb.gw.go
+        - _string.go
+        - _enumer.go
+        - _string_linux.go
+        - zz_generated.deepcopy.go
+      header: |
+        // This Source Code Form is subject to the terms of the Mozilla Public
+        // License, v. 2.0. If a copy of the MPL was not distributed with this
+        // file, You can obtain one at http://mozilla.org/MPL/2.0/.

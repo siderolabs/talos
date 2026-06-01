@@ -1,0 +1,9 @@
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: IMAGECACHE
+encryption:
+    provider: luks2
+    keys:
+        - slot: 0
+          static:
+            passphrase: imagesecret

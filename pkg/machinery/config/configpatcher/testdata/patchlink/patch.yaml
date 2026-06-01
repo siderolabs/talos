@@ -1,0 +1,7 @@
+apiVersion: v1alpha1
+kind: LinkConfig
+name: eth0
+addresses:
+  - address: 10.0.42.136/24
+    $patch: delete
+  - address: 10.0.42.137/24

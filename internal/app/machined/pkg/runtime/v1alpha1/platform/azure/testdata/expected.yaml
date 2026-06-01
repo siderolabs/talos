@@ -1,0 +1,51 @@
+addresses: []
+links:
+    - name: eth0
+      logical: false
+      up: true
+      mtu: 1400
+      kind: ""
+      type: netrom
+      layer: platform
+routes:
+    - family: inet6
+      dst: ""
+      src: ""
+      gateway: fe80::1234:5678:9abc
+      outLinkName: eth0
+      table: main
+      priority: 4096
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+hostnames:
+    - hostname: some
+      domainname: fqdn
+      layer: platform
+resolvers: []
+timeServers: []
+operators:
+    - operator: dhcp6
+      linkName: eth0
+      requireUp: true
+      dhcp6:
+        routeMetric: 2048
+      layer: platform
+    - operator: dhcp4
+      linkName: eth0
+      requireUp: true
+      layer: platform
+externalIPs:
+    - 1.2.3.4
+    - 2603:1020:10:5::34
+    - 20.10.5.34
+metadata:
+    platform: azure
+    hostname: examplevmname
+    region: centralus
+    zone: "0"
+    instanceType: Standard_DS2
+    instanceId: /subscriptions/xxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx/resourceGroups/Test/providers/Microsoft.Compute/virtualMachines/examplevmname
+    providerId: azure:///subscriptions/xxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxx/resourceGroups/test/providers/Microsoft.Compute/virtualMachines/examplevmname

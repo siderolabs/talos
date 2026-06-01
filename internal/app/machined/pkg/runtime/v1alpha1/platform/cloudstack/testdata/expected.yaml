@@ -1,0 +1,18 @@
+addresses: []
+links: []
+routes: []
+hostnames:
+    - hostname: talos
+      domainname: fqdn
+      layer: platform
+resolvers: []
+timeServers: []
+operators: []
+externalIPs:
+    - 1.2.3.4
+metadata:
+    platform: cloudstack
+    hostname: talos.fqdn
+    instanceType: standard.tiny
+    instanceId: 3fe6b28a-669e-4eb2-bffd-4180c572c410
+    providerId: cloudstack://3fe6b28a-669e-4eb2-bffd-4180c572c410

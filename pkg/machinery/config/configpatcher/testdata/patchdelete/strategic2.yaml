@@ -1,0 +1,10 @@
+version: v1alpha1
+cluster:
+  apiServer:
+    admissionControl:
+    - name: PodSecurity
+      $patch: delete
+machine:
+  nodeLabels:
+    node.kubernetes.io/exclude-from-external-load-balancers:
+      $patch: delete

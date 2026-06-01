@@ -1,0 +1,7 @@
+apiVersion: v1alpha1
+kind: HTTPProbeConfig
+name: http-check
+interval: 1s
+failureThreshold: 3
+url: https://example.com
+timeout: 10s

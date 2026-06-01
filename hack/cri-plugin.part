@@ -1,0 +1,15 @@
+version = 3
+
+[plugins."io.containerd.cri.v1.images"]
+  discard_unpacked_layers = true
+  use_local_image_pull = true
+
+[plugins."io.containerd.cri.v1.runtime"]
+  enable_cdi = true
+  cdi_spec_dirs = ["/run/cdi"]
+
+[plugins."io.containerd.cri.v1.runtime".containerd.runtimes.runc]
+  base_runtime_spec = "/etc/cri/conf.d/base-spec.json"
+
+[plugins."io.containerd.nri.v1.nri"]
+  disable = true

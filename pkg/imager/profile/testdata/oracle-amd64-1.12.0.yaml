@@ -1,0 +1,23 @@
+arch: amd64
+platform: oracle
+secureboot: false
+version: 1.12.0
+input:
+  kernel:
+    path: /usr/install/amd64/vmlinuz
+  initramfs:
+    path: /usr/install/amd64/initramfs.xz
+  sdStub:
+    path: /usr/install/amd64/systemd-stub.efi
+  sdBoot:
+    path: /usr/install/amd64/systemd-boot.efi
+  baseInstaller:
+    imageRef: ghcr.io/siderolabs/installer-base:1.12.0
+output:
+  kind: image
+  imageOptions:
+    diskSize: 11736711168
+    diskFormat: qcow2
+    diskFormatOptions: cluster_size=8k
+    bootloader: dual-boot
+  outFormat: .zst

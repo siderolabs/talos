@@ -1,0 +1,8 @@
+apiVersion: v1alpha1
+kind: RegistryMirrorConfig
+name: ghcr.io
+endpoints:
+    - url: https://my-private-registry.local:5000
+    - url: http://my-harbor/v2/registry-k8s.io/
+      overridePath: true
+skipFallback: true

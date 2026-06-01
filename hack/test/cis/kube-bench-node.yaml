@@ -1,0 +1,24 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: kube-bench-node
+spec:
+  template:
+    spec:
+      hostPID: true
+      containers:
+      - name: kube-bench
+        image: aquasec/kube-bench:latest
+        args:
+        - node
+        - --version=1.13
+        volumeMounts:
+        - name: etc-kubernetes
+          mountPath: /etc/kubernetes
+      volumes:
+      - name: etc-kubernetes
+        hostPath:
+          path: /etc/kubernetes
+          type: Directory
+      restartPolicy: Never
+  backoffLimit: 0

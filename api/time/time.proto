@@ -1,0 +1,33 @@
+syntax = "proto3";
+
+package time;
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/time";
+option java_package = "dev.talos.api.time";
+
+import "common/common.proto";
+import "google/protobuf/empty.proto";
+import "google/protobuf/timestamp.proto";
+
+// The time service definition.
+service TimeService {
+  rpc Time(google.protobuf.Empty) returns (TimeResponse);
+  rpc TimeCheck(TimeRequest) returns (TimeResponse);
+}
+
+// The response message containing the ntp server
+message TimeRequest {
+  string server = 1;
+}
+
+message Time {
+  common.Metadata metadata = 1;
+  string server = 2;
+  google.protobuf.Timestamp localtime = 3;
+  google.protobuf.Timestamp remotetime = 4;
+}
+
+// The response message containing the ntp server, time, and offset
+message TimeResponse {
+  repeated Time messages = 1;
+}

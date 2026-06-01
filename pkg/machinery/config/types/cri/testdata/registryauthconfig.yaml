@@ -1,0 +1,5 @@
+apiVersion: v1alpha1
+kind: RegistryAuthConfig
+name: my-private-registry.io
+username: agent007
+password: topsecret

@@ -1,0 +1,9 @@
+apiVersion: v1alpha1
+kind: ResolverConfig
+nameservers:
+    - address: 1.1.1.1
+      protocol: DoH
+      tlsServerName: cloudflare-dns.com
+    - address: 8.8.8.8
+      protocol: DoH
+      tlsServerName: dns.google

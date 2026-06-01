@@ -1,0 +1,14 @@
+apiVersion: v1alpha1
+kind: ExtensionServiceConfig
+name: foo
+configFiles:
+    - content: hello2
+      mountPath: /etc/foo2
+---
+version: v1alpha1
+machine:
+    network:
+        - interface: eth1
+          addresses: [10.3.5.5/32]
+        - interface: eth0
+          dhcp6: true

@@ -1,0 +1,31 @@
+{
+    "loadbalancer": {
+        "publicIpAddresses": [
+            {
+                "frontendIpAddress": "[2603:1020:10:5::34]",
+                "privateIpAddress": "[fd00::10]"
+            },
+            {
+                "frontendIpAddress": "20.10.5.34",
+                "privateIpAddress": "172.18.1.10"
+            }
+        ],
+        "inboundRules": [
+            {
+                "frontendIpAddress": "[fd60:172:16:88::5]",
+                "protocol": "Tcp",
+                "frontendPort": 6443,
+                "backendPort": 6443,
+                "privateIpAddress": "[fd00::10]"
+            },
+            {
+                "frontendIpAddress": "172.16.136.5",
+                "protocol": "Tcp",
+                "frontendPort": 6443,
+                "backendPort": 6443,
+                "privateIpAddress": "172.18.1.10"
+            }
+        ],
+        "outboundRules": []
+    }
+}

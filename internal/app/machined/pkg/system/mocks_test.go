@@ -1,0 +1,155 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+package system_test
+
+import (
+	"context"
+	"errors"
+	"sync/atomic"
+	"time"
+
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/health"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
+	"github.com/siderolabs/talos/pkg/conditions"
+)
+
+type MockService struct {
+	name         string
+	preError     error
+	runnerError  error
+	nilRunner    bool
+	runner       runner.Runner
+	condition    conditions.Condition
+	postError    error
+	dependencies []string
+}
+
+func (m *MockService) ID(runtime.Runtime) string {
+	if m.name != "" {
+		return m.name
+	}
+
+	return "MockRunner"
+}
+
+func (m *MockService) PreFunc(context.Context, runtime.Runtime) error {
+	return m.preError
+}
+
+func (m *MockService) Runner(runtime.Runtime) (runner.Runner, error) {
+	if m.runner != nil {
+		return m.runner, m.runnerError
+	}
+
+	if m.nilRunner {
+		return nil, nil
+	}
+
+	return &MockRunner{exitCh: make(chan error)}, m.runnerError
+}
+
+func (m *MockService) PostFunc(runtime.Runtime, events.ServiceState) error {
+	return m.postError
+}
+
+func (m *MockService) Condition(runtime.Runtime) conditions.Condition {
+	return m.condition
+}
+
+func (m *MockService) DependsOn(runtime.Runtime) []string {
+	return m.dependencies
+}
+
+func (m *MockService) Volumes(runtime.Runtime) []string {
+	return nil
+}
+
+type MockHealthcheckedService struct {
+	MockService
+
+	notHealthy atomic.Uint32
+}
+
+func (m *MockHealthcheckedService) SetHealthy(healthy bool) {
+	if healthy {
+		m.notHealthy.Store(0)
+	} else {
+		m.notHealthy.Store(1)
+	}
+}
+
+func (m *MockHealthcheckedService) HealthFunc(runtime.Runtime) health.Check {
+	return func(context.Context) error {
+		if m.notHealthy.Load() == 0 {
+			return nil
+		}
+
+		return errors.New("not healthy")
+	}
+}
+
+func (m *MockHealthcheckedService) HealthSettings(runtime.Runtime) *health.Settings {
+	return &health.Settings{
+		InitialDelay: time.Millisecond,
+		Timeout:      time.Second,
+		Period:       time.Millisecond,
+	}
+}
+
+type MockRunner struct {
+	exitCh chan error
+}
+
+func (m *MockRunner) Open() error {
+	return nil
+}
+
+func (m *MockRunner) Close() error {
+	return nil
+}
+
+func (m *MockRunner) Run(eventSink events.Recorder, _ pid.Recorder) error {
+	eventSink(events.StateRunning, "Running")
+
+	return <-m.exitCh
+}
+
+func (m *MockRunner) Stop() error {
+	close(m.exitCh)
+
+	return nil
+}
+
+func (m *MockRunner) String() string {
+	return "MockRunner()"
+}
+
+type MockCondition struct {
+	done chan struct{}
+	desc string
+}
+
+func NewMockCondition(desc string) *MockCondition {
+	return &MockCondition{
+		done: make(chan struct{}),
+		desc: desc,
+	}
+}
+
+func (m *MockCondition) String() string {
+	return m.desc
+}
+
+func (m *MockCondition) Wait(ctx context.Context) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-m.done:
+		return nil
+	}
+}

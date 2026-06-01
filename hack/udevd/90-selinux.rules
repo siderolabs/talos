@@ -1,0 +1,9 @@
+SUBSYSTEM=="rtc",SECLABEL{selinux}="system_u:object_r:rtc_device_t:s0"
+SUBSYSTEM=="mtd",SECLABEL{selinux}="system_u:object_r:mtd_device_t:s0"
+SUBSYSTEM=="tpm",SECLABEL{selinux}="system_u:object_r:tpm_device_t:s0"
+SUBSYSTEM=="tpmrm",SECLABEL{selinux}="system_u:object_r:tpm_device_t:s0"
+
+KERNEL=="watchdog",SECLABEL{selinux}="system_u:object_r:wdt_device_t:s0"
+KERNEL=="watchdog*",SECLABEL{selinux}="system_u:object_r:wdt_device_t:s0"
+KERNEL=="null",SECLABEL{selinux}="system_u:object_r:null_device_t:s0"
+KERNEL=="zero",SECLABEL{selinux}="system_u:object_r:null_device_t:s0"

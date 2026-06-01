@@ -1,0 +1,166 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+//go:build integration_cli
+
+package base
+
+import (
+	"context"
+	"fmt"
+	"math/rand/v2"
+	"os/exec"
+	"path/filepath"
+	"regexp"
+	"slices"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/siderolabs/go-cmd/pkg/cmd"
+	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/suite"
+
+	"github.com/siderolabs/talos/pkg/cluster"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+)
+
+// CLISuite is a base suite for CLI tests.
+type CLISuite struct {
+	suite.Suite
+	TalosSuite
+}
+
+// DiscoverNodes provides list of Talos nodes in the cluster.
+//
+// As there's no way to provide this functionality via Talos CLI, it relies on cluster info.
+func (cliSuite *CLISuite) DiscoverNodes(ctx context.Context) cluster.Info {
+	discoveredNodes := cliSuite.TalosSuite.DiscoverNodes(ctx)
+	if discoveredNodes != nil {
+		return discoveredNodes
+	}
+
+	return cliSuite.discoverKubectl()
+}
+
+// DiscoverNodeInternalIPs provides list of Talos node internal IPs in the cluster.
+func (cliSuite *CLISuite) DiscoverNodeInternalIPs(ctx context.Context) []string {
+	nodes := cliSuite.DiscoverNodes(ctx)
+
+	return mapNodeInfosToInternalIPs(nodes.Nodes())
+}
+
+// DiscoverNodeInternalIPsByType provides list of Talos node internal IPs in the cluster for given machine type.
+func (cliSuite *CLISuite) DiscoverNodeInternalIPsByType(ctx context.Context, machineType machine.Type) []string {
+	nodesByType := cliSuite.DiscoverNodes(ctx).NodesByType(machineType)
+
+	return mapNodeInfosToInternalIPs(nodesByType)
+}
+
+// RandomDiscoveredNodeInternalIP returns the internal IP a random node of the specified type (or any type if no types are specified).
+func (cliSuite *CLISuite) RandomDiscoveredNodeInternalIP(types ...machine.Type) string {
+	nodeInfo := cliSuite.DiscoverNodes(context.TODO())
+
+	var nodes []cluster.NodeInfo
+
+	if len(types) == 0 {
+		nodes = nodeInfo.Nodes()
+	} else {
+		for _, t := range types {
+			nodes = append(nodes, nodeInfo.NodesByType(t)...)
+		}
+	}
+
+	cliSuite.Require().NotEmpty(nodes)
+
+	return nodes[rand.IntN(len(nodes))].InternalIP.String()
+}
+
+func (cliSuite *CLISuite) discoverKubectl() cluster.Info {
+	// pull down kubeconfig into temporary directory
+	tempDir := cliSuite.T().TempDir()
+
+	// rely on `nodes:` being set in talosconfig
+	cliSuite.RunCLI([]string{"kubeconfig", tempDir}, StdoutEmpty())
+
+	masterNodes, err := cmd.RunWithOptions(cliSuite.T().Context(), cliSuite.KubectlPath,
+		[]string{
+			"--kubeconfig", filepath.Join(tempDir, "kubeconfig"), "get", "nodes",
+			"-o", "jsonpath={.items[*].status.addresses[?(@.type==\"InternalIP\")].address}", fmt.Sprintf("--selector=%s", constants.LabelNodeRoleControlPlane),
+		})
+	cliSuite.Require().NoError(err)
+
+	workerNodes, err := cmd.RunWithOptions(cliSuite.T().Context(), cliSuite.KubectlPath,
+		[]string{
+			"--kubeconfig", filepath.Join(tempDir, "kubeconfig"), "get", "nodes",
+			"-o", "jsonpath={.items[*].status.addresses[?(@.type==\"InternalIP\")].address}", fmt.Sprintf("--selector=!%s", constants.LabelNodeRoleControlPlane),
+		})
+	cliSuite.Require().NoError(err)
+
+	nodeInfo, err := newNodeInfo(
+		strings.Fields(strings.TrimSpace(masterNodes)),
+		strings.Fields(strings.TrimSpace(workerNodes)),
+	)
+	cliSuite.Require().NoError(err)
+
+	return nodeInfo
+}
+
+// RunCLI runs talosctl binary with the options provided.
+func (cliSuite *CLISuite) RunCLI(args []string, options ...RunOption) (stdout, stderr string) {
+	return run(cliSuite.T(), cliSuite.MakeCMDFn(args), options...)
+}
+
+// MakeCMDFn returns a function that creates a new exec.Cmd with the provided args.
+// TalosSuite flags are added at the beginning so they can be overridden by args.
+func (cliSuite *CLISuite) MakeCMDFn(args []string) func() *exec.Cmd {
+	if cliSuite.Endpoint != "" {
+		args = append([]string{"--endpoints", cliSuite.Endpoint}, args...)
+	}
+
+	var firstArg string
+
+	for _, arg := range args {
+		if strings.HasPrefix(arg, "--") {
+			// this is a flag, skip it
+			continue
+		}
+
+		firstArg = arg
+
+		break
+	}
+
+	mgmtCommand := slices.Contains([]string{"completion", "gen", "inject", "machineconfig", "validate"}, firstArg)
+
+	if !mgmtCommand {
+		args = append([]string{"--talosconfig", cliSuite.TalosConfig}, args...)
+	}
+
+	path := cliSuite.TalosctlPath
+
+	return func() *exec.Cmd { return exec.CommandContext(cliSuite.T().Context(), path, args...) }
+}
+
+// RunCLI runs talosctl binary with the options provided.
+func RunCLI(t *testing.T, f func() *exec.Cmd, options ...RunOption) (stdout, stderr string) {
+	return run(t, f, options...)
+}
+
+// RunAndWaitForMatch retries command until output matches.
+func (cliSuite *CLISuite) RunAndWaitForMatch(args []string, regex *regexp.Regexp, duration time.Duration, options ...retry.Option) {
+	cliSuite.Assert().NoError(retry.Constant(duration, options...).Retry(func() error {
+		stdout, _, err := runAndWait(cliSuite.Suite.T(), cliSuite.MakeCMDFn(args)(), nil)
+		if err != nil {
+			return err
+		}
+
+		if !regex.MatchString(stdout.String()) {
+			return retry.ExpectedErrorf("stdout doesn't match: %q", stdout)
+		}
+
+		return nil
+	}))
+}

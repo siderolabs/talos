@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package talos.resource.definitions.kubeaccess;
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/kubeaccess";
+option java_package = "dev.talos.api.resource.definitions.kubeaccess";
+
+// ConfigSpec describes KubeSpan configuration..
+message ConfigSpec {
+  bool enabled = 1;
+  repeated string allowed_api_roles = 2;
+  repeated string allowed_kubernetes_namespaces = 3;
+}
+

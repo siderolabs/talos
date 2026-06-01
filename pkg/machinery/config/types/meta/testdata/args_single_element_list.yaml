@@ -1,0 +1,2 @@
+enable-admission-plugins:
+    - PodSecurity

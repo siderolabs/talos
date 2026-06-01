@@ -1,0 +1,18 @@
+# Basic CPU metrics
+columns:
+  - name: CpuWeight
+    template: '{{ .CPUWeight | printf "%6s" }}'
+  - name: CpuNice
+    template: '{{ .CPUWeightNice | printf "%6s" }}'
+  - name: CpuMax
+    template: '{{ .CPUMax | printf "%6s" }}'
+  - name: CpuUser
+    template: '{{ .CPUStat.user_usec.UsecToDuration | printf "%12s" }}'
+  - name: User/%
+    template: '{{ if .Parent }}{{ .CPUStat.user_usec.DivideBy .Parent.CPUStat.user_usec | printf "%6s" }}%{{ else }}-{{ end }}'
+  - name: CpuSystem
+    template: '{{ .CPUStat.system_usec.UsecToDuration | printf "%12s" }}'
+  - name: System/%
+    template: '{{ if .Parent }}{{ .CPUStat.system_usec.DivideBy .Parent.CPUStat.system_usec | printf "%6s" }}%{{ else }}-{{ end }}'
+  - name: Throttled
+    template: '{{ .CPUStat.throttled_usec.UsecToDuration | printf "%12s" }}'

@@ -1,0 +1,24 @@
+syntax = "proto3";
+
+package talos.resource.definitions.proto;
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/proto";
+option java_package = "dev.talos.api.resource.definitions.proto";
+
+// LinuxIDMapping specifies UID/GID mappings.
+message LinuxIDMapping {
+  uint32 container_id = 1;
+  uint32 host_id = 2;
+  uint32 size = 3;
+}
+
+// Mount specifies a mount for a container.
+message Mount {
+  string destination = 1;
+  string type = 2;
+  string source = 3;
+  repeated string options = 4;
+  repeated LinuxIDMapping uid_mappings = 5;
+  repeated LinuxIDMapping gid_mappings = 6;
+}
+

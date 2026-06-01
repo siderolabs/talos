@@ -1,0 +1,19 @@
+{
+    "id": 123456,
+    "label": "talos",
+    "region": "us-east",
+    "type": "g6-standard-1",
+    "specs": {
+        "vcpus": 1,
+        "memory": 2048,
+        "gpus": 0,
+        "transfer": 2000,
+        "disk": 51200
+    },
+    "backups": {
+        "enabled": false,
+        "status": null
+    },
+    "host_uuid": "0c2897331ea446f483f754852b18a67c",
+    "tags": []
+}

@@ -1,0 +1,85 @@
+syntax = "proto3";
+
+package talos.resource.definitions.perf;
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/perf";
+option java_package = "dev.talos.api.resource.definitions.perf";
+
+// CPUSpec represents the last CPU stats snapshot.
+message CPUSpec {
+  repeated CPUStat cpu = 1;
+  CPUStat cpu_total = 2;
+  uint64 irq_total = 3;
+  uint64 context_switches = 4;
+  uint64 process_created = 5;
+  uint64 process_running = 6;
+  uint64 process_blocked = 7;
+  uint64 soft_irq_total = 8;
+}
+
+// CPUStat represents a single cpu stat.
+message CPUStat {
+  double user = 1;
+  double nice = 2;
+  double system = 3;
+  double idle = 4;
+  double iowait = 5;
+  double irq = 6;
+  double soft_irq = 7;
+  double steal = 8;
+  double guest = 9;
+  double guest_nice = 10;
+}
+
+// MemorySpec represents the last Memory stats snapshot.
+message MemorySpec {
+  uint64 mem_total = 1;
+  uint64 mem_used = 2;
+  uint64 mem_available = 3;
+  uint64 buffers = 4;
+  uint64 cached = 5;
+  uint64 swap_cached = 6;
+  uint64 active = 7;
+  uint64 inactive = 8;
+  uint64 active_anon = 9;
+  uint64 inactive_anon = 10;
+  uint64 active_file = 11;
+  uint64 inactive_file = 12;
+  uint64 unevictable = 13;
+  uint64 mlocked = 14;
+  uint64 swap_total = 15;
+  uint64 swap_free = 16;
+  uint64 dirty = 17;
+  uint64 writeback = 18;
+  uint64 anon_pages = 19;
+  uint64 mapped = 20;
+  uint64 shmem = 21;
+  uint64 slab = 22;
+  uint64 s_reclaimable = 23;
+  uint64 s_unreclaim = 24;
+  uint64 kernel_stack = 25;
+  uint64 page_tables = 26;
+  uint64 nf_sunstable = 27;
+  uint64 bounce = 28;
+  uint64 writeback_tmp = 29;
+  uint64 commit_limit = 30;
+  uint64 committed_as = 31;
+  uint64 vmalloc_total = 32;
+  uint64 vmalloc_used = 33;
+  uint64 vmalloc_chunk = 34;
+  uint64 hardware_corrupted = 35;
+  uint64 anon_huge_pages = 36;
+  uint64 shmem_huge_pages = 37;
+  uint64 shmem_pmd_mapped = 38;
+  uint64 cma_total = 39;
+  uint64 cma_free = 40;
+  uint64 huge_pages_total = 41;
+  uint64 huge_pages_free = 42;
+  uint64 huge_pages_rsvd = 43;
+  uint64 huge_pages_surp = 44;
+  uint64 hugepagesize = 45;
+  uint64 direct_map4k = 46;
+  uint64 direct_map2m = 47;
+  uint64 direct_map1g = 48;
+}
+

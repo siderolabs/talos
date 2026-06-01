@@ -1,0 +1,12 @@
+apiVersion: v1alpha1
+kind: KubeEtcdEncryptionConfig
+config:
+    resources:
+        - providers:
+            - aescbc:
+                keys:
+                    - name: key2
+                      secret: w=
+            - identity: {}
+          resources:
+            - secrets

@@ -1,0 +1,9 @@
+apiVersion: v1alpha1
+kind: VLANConfig
+name: enp0s3.2
+vlanID: 2
+vlanMode: 802.1q
+parent: enp0s3
+up: true
+addresses:
+    - address: 192.168.1.100/32

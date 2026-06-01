@@ -1,0 +1,3 @@
+- op: replace
+  path: /machine/network/hostname
+  value: foo

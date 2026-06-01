@@ -1,0 +1,9 @@
+columns:
+  - name: CpuSet
+    template: '{{ .CPUSetCPUs | printf "%12s" }}'
+  - name: CpuSet(Eff)
+    template: '{{ .CPUSetCPUsEffective | printf "%12s" }}'
+  - name: Mems
+    template: '{{ .CPUSetMems | printf "%12s" }}'
+  - name: Mems(Eff)
+    template: '{{ .CPUSetMemsEffective | printf "%12s" }}'

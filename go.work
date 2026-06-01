@@ -1,0 +1,12 @@
+go 1.26.3
+
+use (
+	.
+	./pkg/machinery
+	./tools
+	./tools/cloud-image-uploader
+	./tools/docgen
+	./tools/gotagsrewrite
+	./tools/labeled-squashfs
+	./tools/structprotogen
+)

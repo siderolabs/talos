@@ -1,0 +1,228 @@
+addresses:
+    - address: 2000:0:100::/56
+      linkName: eth0
+      family: inet6
+      scope: global
+      flags: permanent
+      layer: platform
+    - address: 10.184.0.244/20
+      linkName: eth1
+      family: inet4
+      scope: global
+      flags: permanent
+      layer: platform
+    - address: 2001:db8::3257:9652/64
+      linkName: eth1
+      family: inet6
+      scope: global
+      flags: permanent
+      layer: platform
+    - address: fd60:172:16:84:f816:3eff:fe73:5901/64
+      linkName: eth2
+      family: inet6
+      scope: global
+      flags: permanent
+      layer: platform
+    - address: 94.156.45.48/24
+      linkName: bond0
+      family: inet4
+      scope: global
+      flags: permanent
+      layer: platform
+links:
+    - name: bond0
+      logical: true
+      up: true
+      mtu: 1500
+      kind: bond
+      type: ether
+      hardwareAddr: 4c:d9:8f:b3:34:f7
+      bondMaster:
+        mode: 802.3ad
+        xmitHashPolicy: layer2+3
+        lacpRate: fast
+        arpValidate: none
+        arpAllTargets: any
+        primaryReselect: always
+        failOverMac: none
+        miimon: 100
+        updelay: 200
+        downdelay: 200
+        resendIgmp: 1
+        lpInterval: 1
+        packetsPerSlave: 1
+        numPeerNotif: 1
+        tlbLogicalLb: 1
+        useCarrier: true
+        adActorSysPrio: 65535
+        adLacpActive: "on"
+      layer: platform
+    - name: eth0
+      logical: false
+      up: true
+      mtu: 1450
+      kind: ""
+      type: netrom
+      layer: platform
+    - name: eth1
+      logical: false
+      up: true
+      mtu: 9000
+      kind: ""
+      type: netrom
+      layer: platform
+    - name: eth2
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      layer: platform
+    - name: eth3
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      masterName: bond0
+      layer: platform
+    - name: eth4
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      masterName: bond0
+      slaveIndex: 1
+      layer: platform
+    - name: bond0.100
+      logical: true
+      up: true
+      mtu: 1400
+      kind: vlan
+      type: ether
+      parentName: bond0
+      vlan:
+        vlanID: 100
+        vlanProtocol: 802.1q
+      layer: platform
+routes:
+    - family: inet6
+      dst: ""
+      src: ""
+      gateway: 2000:0:100:2fff:ff:ff:ff:ff
+      outLinkName: eth0
+      table: main
+      priority: 2048
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+    - family: inet6
+      dst: 2000:0:100:2f00::/58
+      src: ""
+      gateway: 2000:0:100:2fff:ff:ff:ff:f0
+      outLinkName: eth0
+      table: main
+      priority: 1024
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+    - family: inet4
+      dst: 192.168.0.0/16
+      src: ""
+      gateway: 10.184.0.1
+      outLinkName: eth1
+      table: main
+      priority: 1024
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+    - family: inet4
+      dst: ""
+      src: ""
+      gateway: 10.184.0.1
+      outLinkName: eth1
+      table: main
+      priority: 1024
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+    - family: inet6
+      dst: ""
+      src: ""
+      gateway: fd00::1
+      outLinkName: eth1
+      table: main
+      priority: 2048
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+    - family: inet4
+      dst: ""
+      src: ""
+      gateway: 94.156.45.1
+      outLinkName: bond0
+      table: main
+      priority: 1024
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+hostnames:
+    - hostname: talos
+      domainname: ""
+      layer: platform
+resolvers:
+    - dnsServers:
+        - 8.8.8.8
+        - 1.1.1.1
+      nameServers:
+        - addr: 8.8.8.8
+          protocol: Do53
+          tlsServerName: ""
+        - addr: 1.1.1.1
+          protocol: Do53
+          tlsServerName: ""
+      layer: platform
+timeServers: []
+operators:
+    - operator: dhcp4
+      linkName: eth0
+      requireUp: true
+      dhcp4:
+        routeMetric: 1024
+        skipHostnameRequest: true
+      layer: platform
+    - operator: dhcp6
+      linkName: eth2
+      requireUp: true
+      dhcp6:
+        routeMetric: 2048
+        skipHostnameRequest: true
+      layer: platform
+    - operator: dhcp4
+      linkName: bond0.100
+      requireUp: true
+      dhcp4:
+        routeMetric: 1024
+        skipHostnameRequest: true
+      layer: platform
+externalIPs:
+    - 1.2.3.4
+metadata:
+    platform: openstack
+    hostname: talos
+    zone: nova
+    instanceId: 39073b0a-1234-1234-1234-5e76a4bd64b2
+    providerId: openstack:///39073b0a-1234-1234-1234-5e76a4bd64b2

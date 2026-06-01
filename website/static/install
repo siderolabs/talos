@@ -1,0 +1,142 @@
+#!/usr/bin/env sh
+
+set -eu
+
+INSTALLPATH=${INSTALLPATH:-/usr/local/bin}
+
+happyexit() {
+  echo "Installed version:"
+  echo "$(talosctl version 2>/dev/null )"
+  echo ""
+  echo "Now run:"
+  echo ""
+  echo "  talosctl cluster create                  # install a local test cluster"
+  echo "  talosctl dashboard                       # If you have created a cluster, launch the dashboard"
+  echo ""
+  echo "Looking for more? Visit https://talos.dev/latest"
+  echo ""
+  exit 0
+}
+
+validate_checksum() {
+  filename=$1
+  url="https://github.com/siderolabs/talos/releases/latest/download/sha256sum.txt"
+  SHA=$(curl --proto '=https' --tlsv1.2 -sSfL "${url}" | grep "${filename}" | awk '{print $1 }')
+  echo ""
+  echo "Validating checksum..."
+
+  case $checksumbin in
+    *openssl)
+      checksum=$($checksumbin dgst -sha256 "${filename}" | sed -e 's/^.* //')
+      ;;
+    *shasum)
+      checksum=$($checksumbin -a256 "${filename}" | sed -e 's/ .*$//')
+      ;;
+  esac
+
+  if [ "$checksum" != "$SHA" ]; then
+    echo "Checksum validation failed." >&2
+    return 1
+  fi
+  echo "Checksum valid."
+  return 0
+}
+
+OS=$(uname -s)
+arch=$(uname -m)
+cli_arch=""
+case $OS in
+  CYGWIN* | MINGW64*)
+    OS=windows-amd64.exe
+    ;;
+  Darwin | Linux | FreeBSD)
+    case $arch in
+      x86_64)
+        cli_arch=amd64
+        ;;
+      armv8*)
+        cli_arch=arm64
+        ;;
+      aarch64*)
+        cli_arch=arm64
+        ;;
+      amd64|arm64)
+        cli_arch=$arch
+        ;;
+      *)
+        echo "There is no talosctl $OS support for $arch. Please open an issue with your platform details."
+        exit 1
+        ;;
+    esac
+    ;;
+  *)
+    echo "There is no talosctl support for $OS/$arch. Please open an issue with your platform details."
+    exit 1
+    ;;
+esac
+OS=$(echo $OS | tr '[:upper:]' '[:lower:]')
+
+dstfile="${INSTALLPATH}/talosctl"
+
+checksumbin=$(command -v openssl) || checksumbin=$(command -v shasum) || {
+  echo "Failed to find checksum binary. Please install openssl or shasum."
+  echo ""
+  echo "You can also elect to just download/install https://github.com/siderolabs/talos/releases/latest/download/${srcfile}"
+  echo "into ${dstfile}"
+  exit 1
+}
+
+if [ -e "${dstfile}" ]; then
+    echo ""
+    echo "talosctl was already downloaded;  🎉"
+    echo ""
+    echo "To force re-downloading, delete '${dstfile}' then run me again."
+    happyexit
+fi
+
+tmpdir=$(mktemp -d /tmp/talosctl.XXXXXX)
+srcfile="talosctl-${OS}"
+if [ -n "${cli_arch}" ]; then
+  srcfile="${srcfile}-${cli_arch}"
+fi
+
+url="https://github.com/siderolabs/talos/releases/latest/download/${srcfile}"
+
+(
+  cd "$tmpdir"
+
+  echo "Downloading ${srcfile}..."
+  curl --proto '=https' --tlsv1.2 -fLO "${url}"
+  echo "Download complete!"
+
+  if ! validate_checksum "${srcfile}"; then
+    exit 1
+  fi
+  echo ""
+  exit
+)
+
+(
+  super=''
+  if [ ! -w "${INSTALLPATH}" ]; then
+    if $(command -v sudo > /dev/null 2>&1); then
+      super='sudo -E sh -c'
+    elif $(command -v  su > /dev/null 2>&1); then
+      super='su -c'
+    fi
+  fi
+
+  if [ -z "${super}" ]; then
+    mv "${tmpdir}"/"${srcfile}" "${dstfile}"
+    chmod +x "${dstfile}"
+  else
+    ${super} 'mv "'${tmpdir}/${srcfile}'" "'${dstfile}'"'
+    ${super} 'chmod +x "'${dstfile}'"'
+  fi
+)
+
+rm -r "$tmpdir"
+
+echo "talosctl was successfully installed 🎉"
+echo ""
+happyexit

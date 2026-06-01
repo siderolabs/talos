@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package resource.config;
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/config";
+option java_package = "dev.talos.api.resource.config";
+
+// MessageConfigSpec is the spec for the config.MachineConfig resource.
+message MachineConfigSpec {
+  // Contains YAML marshalled machine configuration.
+  //
+  // Byte representation is preserved as the machine configuration was submitted to the node.
+  bytes yaml_marshalled = 1;
+}
+
+// MachineType matches machine.Type constants.
+enum MachineType {
+  UNKNOWN = 0;
+  INIT = 1;
+  CONTROL_PLANE = 2;
+  WORKER = 3;
+}
+
+// MachineTypeSpec is the spec for the config.MachineType resource.
+message MachineTypeSpec {
+  MachineType machine_type = 1;
+}

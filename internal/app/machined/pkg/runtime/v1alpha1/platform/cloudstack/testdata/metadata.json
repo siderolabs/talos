@@ -1,0 +1,6 @@
+{
+    "local-hostname": "talos.fqdn",
+    "instance-id": "3fe6b28a-669e-4eb2-bffd-4180c572c410",
+    "public-ipv4": "1.2.3.4",
+    "service-offering": "standard.tiny"
+}

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: EncryptionConfig
+resources:
+- providers:
+  - secretbox:
+      keys:
+      - name: key2
+        secret: /FYehPLp5F8POCNQRVDEUb7Hmt+KkV44e+fQL4HMexs=
+  - aescbc:
+      keys:
+      - name: key1
+        secret: /sFYehPLp5F8POCNQRVDEUb7Hmt+KkV44e+fQL4HMexs=
+  resources:
+  - secrets

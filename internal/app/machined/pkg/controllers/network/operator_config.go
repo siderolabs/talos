@@ -1,0 +1,376 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+package network
+
+import (
+	"context"
+	"encoding/hex"
+	"fmt"
+
+	"github.com/cosi-project/runtime/pkg/controller"
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/hashicorp/go-multierror"
+	"github.com/siderolabs/gen/optional"
+	"github.com/siderolabs/gen/xslices"
+	"github.com/siderolabs/go-procfs/procfs"
+	"go.uber.org/zap"
+
+	talosconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+)
+
+// OperatorConfigController manages network.OperatorSpec based on machine configuration, kernel cmdline.
+type OperatorConfigController struct {
+	Cmdline *procfs.Cmdline
+}
+
+// Name implements controller.Controller interface.
+func (ctrl *OperatorConfigController) Name() string {
+	return "network.OperatorConfigController"
+}
+
+// Inputs implements controller.Controller interface.
+func (ctrl *OperatorConfigController) Inputs() []controller.Input {
+	return []controller.Input{
+		{
+			Namespace: network.NamespaceName,
+			Type:      network.DeviceConfigSpecType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: network.NamespaceName,
+			Type:      network.LinkStatusType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: network.ConfigNamespaceName,
+			Type:      network.LinkSpecType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: config.NamespaceName,
+			Type:      config.MachineConfigType,
+			ID:        optional.Some(config.ActiveID),
+			Kind:      controller.InputWeak,
+		},
+	}
+}
+
+// Outputs implements controller.Controller interface.
+func (ctrl *OperatorConfigController) Outputs() []controller.Output {
+	return []controller.Output{
+		{
+			Type: network.OperatorSpecType,
+			Kind: controller.OutputShared,
+		},
+	}
+}
+
+// Run implements controller.Controller interface.
+//
+//nolint:gocyclo,cyclop
+func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-r.EventCh():
+		}
+
+		r.StartTrackingOutputs()
+
+		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
+		if err != nil {
+			if !state.IsNotFoundError(err) {
+				return fmt.Errorf("error getting machine config: %w", err)
+			}
+		}
+
+		linkStatuses, err := safe.ReaderListAll[*network.LinkStatus](ctx, r)
+		if err != nil {
+			return fmt.Errorf("error listing link statuses: %w", err)
+		}
+
+		linkNameResolver := network.NewLinkResolver(linkStatuses.All)
+
+		var (
+			specs      []network.OperatorSpecSpec
+			specErrors *multierror.Error
+		)
+
+		ignoredInterfaces := map[string]struct{}{}
+
+		if ctrl.Cmdline != nil {
+			var settings CmdlineNetworking
+
+			settings, err = ParseCmdlineNetwork(ctrl.Cmdline, linkNameResolver)
+			if err != nil {
+				logger.Warn("ignored cmdline parse failure", zap.Error(err))
+			}
+
+			for _, link := range settings.IgnoreInterfaces {
+				ignoredInterfaces[link] = struct{}{}
+			}
+
+			for _, linkConfig := range settings.LinkConfigs {
+				if !linkConfig.DHCP {
+					continue
+				}
+
+				specs = append(specs, network.OperatorSpecSpec{
+					Operator:  network.OperatorDHCP4,
+					LinkName:  linkNameResolver.Resolve(linkConfig.LinkName),
+					RequireUp: true,
+					DHCP4: network.DHCP4OperatorSpec{
+						RouteMetric: network.DefaultRouteMetric,
+					},
+					ConfigLayer: network.ConfigCmdline,
+				})
+			}
+		}
+
+		items, err := r.List(ctx, resource.NewMetadata(network.NamespaceName, network.DeviceConfigSpecType, "", resource.VersionUndefined))
+		if err != nil {
+			if !state.IsNotFoundError(err) {
+				return fmt.Errorf("error getting config: %w", err)
+			}
+		}
+
+		devices := xslices.Map(items.Items, func(item resource.Resource) talosconfig.Device {
+			return item.(*network.DeviceConfigSpec).TypedSpec().Device
+		})
+
+		// operators from the config
+		if len(devices) > 0 {
+			for _, device := range devices {
+				if device.Ignore() {
+					ignoredInterfaces[linkNameResolver.Resolve(device.Interface())] = struct{}{}
+				}
+
+				if _, ignore := ignoredInterfaces[linkNameResolver.Resolve(device.Interface())]; ignore {
+					continue
+				}
+
+				if device.DHCP() && device.DHCPOptions().IPv4() {
+					routeMetric := device.DHCPOptions().RouteMetric()
+					if routeMetric == 0 {
+						routeMetric = network.DefaultRouteMetric
+					}
+
+					specs = append(specs, network.OperatorSpecSpec{
+						Operator:  network.OperatorDHCP4,
+						LinkName:  linkNameResolver.Resolve(device.Interface()),
+						RequireUp: true,
+						DHCP4: network.DHCP4OperatorSpec{
+							RouteMetric: routeMetric,
+						},
+						ConfigLayer: network.ConfigMachineConfiguration,
+					})
+				}
+
+				if device.DHCP() && device.DHCPOptions().IPv6() {
+					routeMetric := device.DHCPOptions().RouteMetric()
+					if routeMetric == 0 {
+						routeMetric = network.DefaultRouteMetric
+					}
+
+					clientIdentifier := network.ClientIdentifierSpec{}
+					if duid := device.DHCPOptions().DUIDv6(); len(duid) > 0 {
+						clientIdentifier = network.ClientIdentifierSpec{
+							ClientIdentifier: nethelpers.ClientIdentifierDUID,
+							DUIDRawHex:       duid,
+						}
+					}
+
+					specs = append(specs, network.OperatorSpecSpec{
+						Operator:  network.OperatorDHCP6,
+						LinkName:  linkNameResolver.Resolve(device.Interface()),
+						RequireUp: true,
+						DHCP6: network.DHCP6OperatorSpec{
+							RouteMetric:      routeMetric,
+							ClientIdentifier: clientIdentifier,
+						},
+						ConfigLayer: network.ConfigMachineConfiguration,
+					})
+				}
+
+				for _, vlan := range device.Vlans() {
+					if vlan.DHCP() && vlan.DHCPOptions().IPv4() {
+						routeMetric := vlan.DHCPOptions().RouteMetric()
+						if routeMetric == 0 {
+							routeMetric = network.DefaultRouteMetric
+						}
+
+						specs = append(specs, network.OperatorSpecSpec{
+							Operator:  network.OperatorDHCP4,
+							LinkName:  nethelpers.VLANLinkName(device.Interface(), vlan.ID()),
+							RequireUp: true,
+							DHCP4: network.DHCP4OperatorSpec{
+								RouteMetric: routeMetric,
+							},
+							ConfigLayer: network.ConfigMachineConfiguration,
+						})
+					}
+
+					if vlan.DHCP() && vlan.DHCPOptions().IPv6() {
+						routeMetric := vlan.DHCPOptions().RouteMetric()
+						if routeMetric == 0 {
+							routeMetric = network.DefaultRouteMetric
+						}
+
+						clientIdentifier := network.ClientIdentifierSpec{}
+						if duid := vlan.DHCPOptions().DUIDv6(); len(duid) > 0 {
+							clientIdentifier = network.ClientIdentifierSpec{
+								ClientIdentifier: nethelpers.ClientIdentifierDUID,
+								DUIDRawHex:       duid,
+							}
+						}
+
+						specs = append(specs, network.OperatorSpecSpec{
+							Operator:  network.OperatorDHCP6,
+							LinkName:  nethelpers.VLANLinkName(device.Interface(), vlan.ID()),
+							RequireUp: true,
+							DHCP6: network.DHCP6OperatorSpec{
+								RouteMetric:      routeMetric,
+								ClientIdentifier: clientIdentifier,
+							},
+							ConfigLayer: network.ConfigMachineConfiguration,
+						})
+					}
+				}
+			}
+		}
+
+		// operator configs from machine config (new-style)
+		if cfg != nil {
+			for _, dhcp4 := range cfg.Config().NetworkDHCPv4Configs() {
+				specs = append(specs, network.OperatorSpecSpec{
+					Operator:  network.OperatorDHCP4,
+					LinkName:  linkNameResolver.Resolve(dhcp4.Name()),
+					RequireUp: true,
+					DHCP4: network.DHCP4OperatorSpec{
+						RouteMetric:         dhcp4.RouteMetric().ValueOr(network.DefaultRouteMetric),
+						SkipHostnameRequest: dhcp4.IgnoreHostname().ValueOrZero(),
+						ClientIdentifier: network.ClientIdentifierSpec{
+							ClientIdentifier: dhcp4.ClientIdentifier(),
+							DUIDRawHex:       hex.EncodeToString(dhcp4.DUIDRaw().ValueOrZero()),
+						},
+					},
+					ConfigLayer: network.ConfigMachineConfiguration,
+				})
+			}
+
+			for _, dhcp6 := range cfg.Config().NetworkDHCPv6Configs() {
+				specs = append(specs, network.OperatorSpecSpec{
+					Operator:  network.OperatorDHCP6,
+					LinkName:  linkNameResolver.Resolve(dhcp6.Name()),
+					RequireUp: true,
+					DHCP6: network.DHCP6OperatorSpec{
+						RouteMetric:         dhcp6.RouteMetric().ValueOr(network.DefaultRouteMetric),
+						SkipHostnameRequest: dhcp6.IgnoreHostname().ValueOrZero(),
+						ClientIdentifier: network.ClientIdentifierSpec{
+							ClientIdentifier: dhcp6.ClientIdentifier(),
+							DUIDRawHex:       hex.EncodeToString(dhcp6.DUIDRaw().ValueOrZero()),
+						},
+					},
+					ConfigLayer: network.ConfigMachineConfiguration,
+				})
+			}
+		}
+
+		// run default DHCP operators if enabled
+		shouldRunDefaultDHCPOperators := cfg == nil || cfg.Config().RunDefaultDHCPOperators()
+
+		if shouldRunDefaultDHCPOperators {
+			// build configuredInterfaces from linkSpecs in `network-config` namespace
+			// any link which has any configuration derived from the machine configuration or platform configuration should be ignored
+			configuredInterfaces := map[string]struct{}{}
+
+			linkSpecs, err := safe.ReaderList[*network.LinkSpec](ctx, r, resource.NewMetadata(network.ConfigNamespaceName, network.LinkSpecType, "", resource.VersionUndefined))
+			if err != nil {
+				return fmt.Errorf("error listing link specs: %w", err)
+			}
+
+			for link := range linkSpecs.All() {
+				linkSpec := link.TypedSpec()
+
+				switch linkSpec.ConfigLayer {
+				case network.ConfigDefault:
+					// ignore default link specs
+				case network.ConfigOperator:
+					// specs produced by operators, ignore
+				case network.ConfigCmdline, network.ConfigMachineConfiguration, network.ConfigPlatform:
+					// interface is configured explicitly, don't run default dhcp4
+					configuredInterfaces[linkNameResolver.Resolve(linkSpec.Name)] = struct{}{}
+				}
+			}
+
+			// operators from defaults
+			for linkStatus := range linkStatuses.All() {
+				if linkStatus.TypedSpec().Physical() {
+					if _, configured := configuredInterfaces[linkStatus.Metadata().ID()]; !configured {
+						if _, ignored := ignoredInterfaces[linkStatus.Metadata().ID()]; !ignored {
+							// enable DHCPv4 operator on physical interfaces which don't have any explicit configuration and are not ignored
+							specs = append(specs, network.OperatorSpecSpec{
+								Operator:  network.OperatorDHCP4,
+								LinkName:  linkStatus.Metadata().ID(),
+								RequireUp: true,
+								DHCP4: network.DHCP4OperatorSpec{
+									RouteMetric: network.DefaultRouteMetric,
+									ClientIdentifier: network.ClientIdentifierSpec{
+										ClientIdentifier: nethelpers.ClientIdentifierMAC,
+									},
+								},
+								ConfigLayer: network.ConfigDefault,
+							})
+						}
+					}
+				}
+			}
+		}
+
+		if err = ctrl.apply(ctx, r, specs); err != nil {
+			return fmt.Errorf("error applying operator specs: %w", err)
+		}
+
+		// list specs for cleanup
+		if err = r.CleanupOutputs(ctx, resource.NewMetadata(network.ConfigNamespaceName, network.OperatorSpecType, "", resource.VersionUndefined)); err != nil {
+			return fmt.Errorf("error cleaning up operator specs: %w", err)
+		}
+
+		// last, check if some specs failed to build; fail last so that other operator specs are applied successfully
+		if err = specErrors.ErrorOrNil(); err != nil {
+			return err
+		}
+
+		r.ResetRestartBackoff()
+	}
+}
+
+//nolint:dupl
+func (ctrl *OperatorConfigController) apply(ctx context.Context, r controller.Runtime, specs []network.OperatorSpecSpec) error {
+	for _, spec := range specs {
+		id := network.LayeredID(spec.ConfigLayer, network.OperatorID(spec))
+
+		if err := safe.WriterModify(
+			ctx,
+			r,
+			network.NewOperatorSpec(network.ConfigNamespaceName, id),
+			func(r *network.OperatorSpec) error {
+				*r.TypedSpec() = spec
+
+				return nil
+			},
+		); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}

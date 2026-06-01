@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package securityapi;
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/security";
+option java_package = "dev.talos.api.security";
+
+// The security service definition.
+service SecurityService {
+  rpc Certificate(CertificateRequest) returns (CertificateResponse);
+}
+
+// The request message containing the certificate signing request.
+message CertificateRequest {
+  // Certificate Signing Request in PEM format.
+  bytes csr = 1;
+}
+
+// The response message containing signed certificate.
+message CertificateResponse {
+  // Certificate of the CA that signed the requested certificate in PEM format.
+  bytes ca = 1;
+  // Signed X.509 requested certificate in PEM format.
+  bytes crt = 2;
+}

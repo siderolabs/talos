@@ -1,0 +1,29 @@
+version: 1
+config:
+  - type: physical
+    name: eth0
+    mac_address: '68:05:ca:b8:f1:f7'
+    subnets:
+    - type: static
+      address: '192.168.1.11'
+      netmask: '255.255.255.0'
+      gateway: '192.168.1.1'
+    - type: static6
+      address: '2001:2:3:4:5:6:7:f7/64'
+      gateway: 'fe80::1'
+  - type: physical
+    name: eth1
+    mac_address: '68:05:ca:b8:f1:f9'
+    subnets:
+    - type: static
+      address: '192.168.2.11'
+      netmask: '255.255.255.0'
+      gateway: '192.168.2.1'
+    - type: static6
+      address: '2001:2:3:4:5:6:7:f9/64'
+      gateway: 'fe80::2'
+  - type: nameserver
+    address:
+    - '192.168.1.1'
+    search:
+    - 'lan'

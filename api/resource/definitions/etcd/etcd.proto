@@ -1,0 +1,45 @@
+syntax = "proto3";
+
+package talos.resource.definitions.etcd;
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/etcd";
+option java_package = "dev.talos.api.resource.definitions.etcd";
+
+import "common/common.proto";
+
+// ArgValues represents values for a command line argument which can be specified multiple times.
+message ArgValues {
+  repeated string values = 1;
+}
+
+// ConfigSpec describes (some) configuration settings of etcd.
+message ConfigSpec {
+  repeated string advertise_valid_subnets = 1;
+  repeated string advertise_exclude_subnets = 2;
+  string image = 3;
+  repeated string listen_valid_subnets = 5;
+  repeated string listen_exclude_subnets = 6;
+  map<string, ArgValues> extra_args = 7;
+}
+
+// MemberSpec holds information about an etcd member.
+message MemberSpec {
+  string member_id = 1;
+}
+
+// PKIStatusSpec describes status of rendered secrets.
+message PKIStatusSpec {
+  bool ready = 1;
+  string version = 2;
+}
+
+// SpecSpec describes (some) Specuration settings of etcd.
+message SpecSpec {
+  string name = 1;
+  repeated common.NetIP advertised_addresses = 2;
+  string image = 3;
+  repeated common.NetIP listen_peer_addresses = 5;
+  repeated common.NetIP listen_client_addresses = 6;
+  map<string, ArgValues> extra_args = 7;
+}
+

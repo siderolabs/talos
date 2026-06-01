@@ -1,0 +1,12 @@
+  {
+      "report": [
+          {
+              "vg": [
+                  {"vg_name":"vgdata", "pv_count":"3", "lv_count":"1", "snap_count":"0", "vg_attr":"wz--n--", "vg_size":"32199671808", "vg_free":"0", "vg_fmt":"lvm2", "vg_uuid":"3vd0QP-LDvZ-2CU7-6iwx-wCUR-opYk-zphuYg", "vg_name":"vgdata", "vg_attr":"wz--n--", "vg_permissions":"writeable", "vg_extendable":"extendable", "vg_exported":"", "vg_autoactivation":"enabled", "vg_partial":"", "vg_allocation_policy":"normal", "vg_clustered":"", "vg_shared":"", "vg_size":"32199671808", "vg_free":"0", "vg_sysid":"", "vg_systemid":"", "vg_lock_type":"", "vg_lock_args":"", "vg_persist":"", "vg_pr":"", "vg_extent_size":"4194304", "vg_extent_count":"7677", "vg_free_count":"0", "max_lv":"0", "max_pv":"0", "pv_count":"3", "vg_missing_pv_count":"0", "lv_count":"1", "snap_count":"0", "vg_seqno":"2", "vg_tags":"", "vg_profile":"", "vg_mda_count":"3", "vg_mda_used_count":"3", "vg_mda_free":"519680", "vg_mda_size":"1044480", "vg_mda_copies":"unmanaged"}
+              ]
+          }
+      ]
+      ,
+      "log": [
+      ]
+  }

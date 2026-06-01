@@ -1,0 +1,265 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+package components
+
+import (
+	"fmt"
+	"math"
+	"sort"
+	"strconv"
+	"time"
+
+	"github.com/dustin/go-humanize"
+	"github.com/rivo/tview"
+
+	"github.com/siderolabs/talos/internal/pkg/dashboard/apidata"
+	"github.com/siderolabs/talos/internal/pkg/dashboard/resourcedata"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/version"
+)
+
+const noHostname = "(no hostname)"
+
+type headerData struct {
+	hostname        string
+	name            string
+	version         string
+	uptime          string
+	cpuFreq         string
+	totalMem        string
+	numProcesses    string
+	cpuUsagePercent string
+	memUsagePercent string
+}
+
+// Header represents the top bar with host info.
+type Header struct {
+	tview.TextView
+
+	selectedNode string
+	nodeMap      map[string]*headerData
+	spinnerPos   int
+}
+
+// NewHeader initializes Header.
+func NewHeader() *Header {
+	header := &Header{
+		TextView: *tview.NewTextView(),
+		nodeMap:  make(map[string]*headerData),
+	}
+
+	header.SetDynamicColors(true).SetText(noData)
+
+	return header
+}
+
+// OnNodeSelect implements the NodeSelectListener interface.
+func (widget *Header) OnNodeSelect(node string) {
+	if node != widget.selectedNode {
+		widget.selectedNode = node
+
+		widget.redraw()
+	}
+}
+
+// OnResourceDataChange implements the ResourceDataListener interface.
+func (widget *Header) OnResourceDataChange(data resourcedata.Data) {
+	nodeData := widget.getOrCreateNodeData(data.Node)
+
+	switch res := data.Resource.(type) { //nolint:gocritic
+	case *network.HostnameStatus:
+		if data.Deleted {
+			nodeData.hostname = noHostname
+		} else {
+			nodeData.hostname = res.TypedSpec().Hostname
+		}
+	case *runtime.Version:
+		if data.Deleted {
+			nodeData.name = version.Name
+			nodeData.version = notAvailable
+		} else {
+			nodeData.name = res.TypedSpec().Name
+			nodeData.version = res.TypedSpec().Version
+
+			if nodeData.name == "" {
+				nodeData.name = version.Name
+			}
+		}
+	}
+
+	if data.Node == widget.selectedNode {
+		widget.redraw()
+	}
+}
+
+// OnAPIDataChange implements the APIDataListener interface.
+func (widget *Header) OnAPIDataChange(node string, data *apidata.Data) {
+	for node, nodeData := range data.Nodes {
+		widget.updateNodeAPIData(node, nodeData)
+	}
+
+	if node == widget.selectedNode {
+		widget.redraw()
+	}
+}
+
+// OnTick implements the TickerListener interface.
+func (widget *Header) OnTick() {
+	widget.spinnerPos++
+
+	widget.redraw()
+}
+
+func (widget *Header) humanizeCPUFrequency(mhz float64) string {
+	value := math.Round(mhz)
+	unit := "MHz"
+
+	if mhz >= 1000 {
+		ghz := value / 1000
+		value = math.Round(ghz*100) / 100
+		unit = "GHz"
+	}
+
+	return fmt.Sprintf("%s%s", humanize.Ftoa(value), unit)
+}
+
+// formatUptime returns a duration in a human readable form.
+//
+// If d>24h returns format "23d72h3m5s", otherwise "72h3m5s".
+func formatUptime(d time.Duration) string {
+	const day = 24 * time.Hour
+
+	d = d.Round(time.Second)
+	if d >= day {
+		uptimeDays := d / day
+		uptimeRest := d % day
+
+		return fmt.Sprintf("%dd%s", uptimeDays, uptimeRest)
+	}
+
+	return d.String()
+}
+
+// Spinner is a set of characters compatible with Linux virtual console CP437.
+var spinner = []string{"\u2510", "\u2518", "\u2514", "\u250C"}
+
+func (widget *Header) redraw() {
+	data := widget.getOrCreateNodeData(widget.selectedNode)
+	spinnerPos := widget.spinnerPos % len(spinner)
+
+	text := fmt.Sprintf(
+		"[green]%s [yellow::b]%s[-:-:-] %s (%s): uptime %s, %s, %s RAM, PROCS %s, CPU %s, RAM %s",
+		spinner[spinnerPos],
+		data.hostname,
+		data.name,
+		data.version,
+		data.uptime,
+		data.cpuFreq,
+		data.totalMem,
+		data.numProcesses,
+		data.cpuUsagePercent,
+		data.memUsagePercent,
+	)
+
+	widget.SetText(text)
+}
+
+//nolint:gocyclo
+func (widget *Header) updateNodeAPIData(node string, data *apidata.Node) {
+	nodeData := widget.getOrCreateNodeData(node)
+
+	if data == nil {
+		return
+	}
+
+	nodeData.cpuUsagePercent = fmt.Sprintf("%.1f%%", data.CPUUsageByName("usage")*100.0)
+	nodeData.memUsagePercent = fmt.Sprintf("%.1f%%", data.MemUsage()*100.0)
+
+	if data.SystemStat != nil && data.SystemStat.BootTime != 0 {
+		uptime := time.Since(time.Unix(int64(data.SystemStat.GetBootTime()), 0))
+		nodeData.uptime = formatUptime(uptime)
+	} else {
+		nodeData.uptime = notAvailable
+	}
+
+	if data.CPUsInfo != nil {
+		numCPUs := len(data.CPUsInfo.GetCpuInfo())
+
+		if numCPUs > 0 {
+			nodeData.cpuFreq = fmt.Sprintf("%dx%s", numCPUs, widget.humanizeCPUFrequency(data.CPUsInfo.GetCpuInfo()[0].GetCpuMhz()))
+		}
+	} else {
+		nodeData.cpuFreq = notAvailable
+	}
+
+	if data.CPUsFreqStats != nil && data.CPUsFreqStats.CpuFreqStats != nil {
+		numCPUs := len(data.CPUsFreqStats.CpuFreqStats)
+		uniqMhz := make(map[uint64]int, numCPUs)
+
+		for _, cpuFreqStat := range data.CPUsFreqStats.CpuFreqStats {
+			uniqMhz[cpuFreqStat.CurrentFrequency]++
+		}
+
+		keys := make([]uint64, 0, len(uniqMhz))
+
+		for mhz := range uniqMhz {
+			if mhz == 0 {
+				continue
+			}
+
+			keys = append(keys, mhz)
+		}
+
+		if len(keys) > 0 {
+			sort.Slice(keys, func(i, j int) bool { return keys[i] > keys[j] })
+
+			nodeData.cpuFreq = ""
+		}
+
+		for i, mhz := range keys {
+			if i > 0 {
+				nodeData.cpuFreq += " "
+			}
+
+			nodeData.cpuFreq += fmt.Sprintf("%dx%s", uniqMhz[mhz], widget.humanizeCPUFrequency(float64(mhz)/1000.0))
+		}
+	} else {
+		nodeData.cpuFreq = notAvailable
+	}
+
+	if data.Processes != nil {
+		nodeData.numProcesses = strconv.Itoa(len(data.Processes.GetProcesses()))
+	} else {
+		nodeData.numProcesses = notAvailable
+	}
+
+	if data.Memory != nil {
+		nodeData.totalMem = humanize.IBytes(data.Memory.GetMeminfo().GetMemtotal() << 10)
+	} else {
+		nodeData.totalMem = notAvailable
+	}
+}
+
+func (widget *Header) getOrCreateNodeData(node string) *headerData {
+	data, ok := widget.nodeMap[node]
+	if !ok {
+		data = &headerData{
+			hostname:        notAvailable,
+			name:            version.Name,
+			version:         notAvailable,
+			uptime:          notAvailable,
+			cpuFreq:         notAvailable,
+			totalMem:        notAvailable,
+			numProcesses:    notAvailable,
+			cpuUsagePercent: notAvailable,
+			memUsagePercent: notAvailable,
+		}
+
+		widget.nodeMap[node] = data
+	}
+
+	return data
+}

@@ -1,0 +1,56 @@
+addresses:
+    - address: 172.1.2.3/32
+      linkName: eth0
+      family: inet4
+      scope: global
+      flags: permanent
+      layer: platform
+    - address: 192.1.2.3/32
+      linkName: eth0
+      family: inet4
+      scope: global
+      flags: permanent
+      layer: platform
+    - address: 2600:3c05:d011:797::/64
+      linkName: eth0
+      family: inet6
+      scope: global
+      flags: mngmtmpaddr
+      layer: platform
+    - address: fe80::f03c:93ff:fe6e:5cd9/128
+      linkName: eth0
+      family: inet6
+      scope: link
+      flags: ""
+      layer: platform
+links: []
+routes:
+    - family: inet6
+      dst: fe80::f03c:93ff:fe6e:5cd9/128
+      src: ""
+      gateway: fe80::1
+      outLinkName: eth0
+      table: main
+      priority: 1024
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+hostnames:
+    - hostname: talos
+      domainname: ""
+      layer: platform
+resolvers: []
+timeServers: []
+operators: []
+externalIPs:
+    - 172.1.2.3
+    - '2600:3c05:d011:797::'
+metadata:
+    platform: akamai
+    hostname: talos
+    region: us-east
+    instanceType: g6-standard-1
+    instanceId: "123456"
+    providerId: linode://123456

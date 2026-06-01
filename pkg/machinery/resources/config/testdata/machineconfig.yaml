@@ -1,0 +1,17 @@
+metadata:
+    namespace: config
+    type: MachineConfigs.config.talos.dev
+    id: v1alpha1
+    version: undefined
+    owner:
+    phase: running
+    created: <redacted>
+    updated: <redacted>
+    annotations:
+        talos.dev/yaml-spec: 1
+spec: |
+    version: v1alpha1
+    persist: true # foo
+    debug: false
+    machine:
+      type: controlplane

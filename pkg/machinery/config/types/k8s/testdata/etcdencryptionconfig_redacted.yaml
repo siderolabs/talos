@@ -1,0 +1,17 @@
+apiVersion: v1alpha1
+kind: KubeEtcdEncryptionConfig
+config:
+    resources:
+        - providers:
+            - aescbc:
+                keys:
+                    - name: key2
+                      secret: REDACTED
+            - secretbox:
+                keys:
+                    - name: key1
+                      secret: REDACTED
+                    - name: key3
+                      secret: REDACTED
+          resources:
+            - secrets

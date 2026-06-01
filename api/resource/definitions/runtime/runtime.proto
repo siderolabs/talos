@@ -1,0 +1,238 @@
+syntax = "proto3";
+
+package talos.resource.definitions.runtime;
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/runtime";
+option java_package = "dev.talos.api.resource.definitions.runtime";
+
+import "common/common.proto";
+import "google/protobuf/duration.proto";
+import "resource/definitions/enums/enums.proto";
+
+// APIServiceConfigSpec describes configuration for Talos API service (apid).
+message APIServiceConfigSpec {
+  string listen_address = 1;
+  bool node_routing_disabled = 2;
+  bool readonly_role_mode = 3;
+  bool skip_verifying_client_cert = 4;
+}
+
+// BootedEntrySpec describes the booted entry resource properties.
+message BootedEntrySpec {
+  string booted_entry = 1;
+}
+
+// DevicesStatusSpec is the spec for devices status.
+message DevicesStatusSpec {
+  // Devices are settled down and ready to be used.
+  bool ready = 1;
+}
+
+// DiagnosticSpec is the spec for devices status.
+message DiagnosticSpec {
+  // Short message describing the problem.
+  string message = 1;
+  // Details about the problem.
+  repeated string details = 2;
+}
+
+// EnvironmentSpec describes the specification of Environment resource.
+message EnvironmentSpec {
+  repeated string variables = 1;
+}
+
+// EventSinkConfigSpec describes configuration of Talos event log streaming.
+message EventSinkConfigSpec {
+  string endpoint = 1;
+}
+
+// ExtensionServiceConfigFile describes extensions service config files.
+message ExtensionServiceConfigFile {
+  string content = 1;
+  string mount_path = 2;
+}
+
+// ExtensionServiceConfigSpec describes status of rendered extensions service config files.
+message ExtensionServiceConfigSpec {
+  repeated ExtensionServiceConfigFile files = 1;
+  repeated string environment = 2;
+}
+
+// ExtensionServiceConfigStatusSpec describes status of rendered extensions service config files.
+message ExtensionServiceConfigStatusSpec {
+  string spec_version = 1;
+}
+
+// KernelCmdlineSpec presents kernel command line (contents of /proc/cmdline).
+message KernelCmdlineSpec {
+  string cmdline = 1;
+}
+
+// KernelModuleSpecSpec describes Linux kernel module to load.
+message KernelModuleSpecSpec {
+  string name = 1;
+  repeated string parameters = 2;
+}
+
+// KernelModuleStatusSpec represents the status of a Linux kernel module.
+message KernelModuleStatusSpec {
+  // Type indicates whether the kernel module is built-in or dynamically loaded.
+  talos.resource.definitions.enums.RuntimeKernelModuleType type = 1;
+  // Size is the size of the kernel module in bytes.
+  int64 size = 2;
+  // ReferenceCount is the number of references to this kernel module.
+  int64 reference_count = 3;
+  // Dependencies lists the names of kernel modules that this module depends on.
+  repeated string dependencies = 4;
+  // State is the operational state of the kernel module.
+  talos.resource.definitions.enums.RuntimeKernelModuleState state = 5;
+  // Address is the memory address where the kernel module is loaded (if applicable).
+  string address = 6;
+}
+
+// KernelParamSpecSpec describes status of the defined sysctls.
+message KernelParamSpecSpec {
+  string value = 1;
+  bool ignore_errors = 2;
+}
+
+// KernelParamStatusSpec describes status of the defined sysctls.
+message KernelParamStatusSpec {
+  string current = 1;
+  string default = 2;
+  bool unsupported = 3;
+}
+
+// KmsgLogConfigSpec describes configuration for kmsg log streaming.
+message KmsgLogConfigSpec {
+  repeated common.URL destinations = 1;
+}
+
+// LoadedKernelModuleSpec describes loaded Linux kernel modules.
+message LoadedKernelModuleSpec {
+  int64 size = 1;
+  int64 reference_count = 2;
+  repeated string dependencies = 3;
+  string state = 4;
+  string address = 5;
+}
+
+// MachineStatusSpec describes status of the defined sysctls.
+message MachineStatusSpec {
+  talos.resource.definitions.enums.RuntimeMachineStage stage = 1;
+  MachineStatusStatus status = 2;
+}
+
+// MachineStatusStatus describes machine current status at the stage.
+message MachineStatusStatus {
+  bool ready = 1;
+  repeated UnmetCondition unmet_conditions = 2;
+}
+
+// MaintenanceServiceConfigSpec describes configuration for maintenance service API.
+message MaintenanceServiceConfigSpec {
+  string listen_address = 1;
+  repeated common.NetIP reachable_addresses = 2;
+}
+
+// MetaKeySpec describes status of the defined sysctls.
+message MetaKeySpec {
+  string value = 1;
+}
+
+// MetaLoadedSpec is the spec for meta loaded. The Done field is always true when resource exists.
+message MetaLoadedSpec {
+  bool done = 1;
+}
+
+// MountStatusSpec describes status of the defined sysctls.
+message MountStatusSpec {
+  string source = 1;
+  string target = 2;
+  string filesystem_type = 3;
+  repeated string options = 4;
+  bool encrypted = 5;
+  repeated string encryption_providers = 6;
+}
+
+// OOMActionSpec describes the OOM action record resource properties.
+message OOMActionSpec {
+  string trigger_context = 1;
+  double score = 2;
+  repeated string processes = 3;
+}
+
+// PlatformMetadataSpec describes platform metadata properties.
+message PlatformMetadataSpec {
+  string platform = 1;
+  string hostname = 2;
+  string region = 3;
+  string zone = 4;
+  string instance_type = 5;
+  string instance_id = 6;
+  string provider_id = 7;
+  bool spot = 8;
+  string internal_dns = 9;
+  string external_dns = 10;
+  map<string, string> tags = 11;
+}
+
+// SBOMItemSpec describes the SBOM item resource properties.
+message SBOMItemSpec {
+  string name = 1;
+  string version = 2;
+  string license = 3;
+  repeated string cp_es = 4;
+  repeated string pur_ls = 5;
+  bool extension = 6;
+}
+
+// SecurityStateSpec describes the security state resource properties.
+message SecurityStateSpec {
+  bool secure_boot = 1;
+  string uki_signing_key_fingerprint = 2;
+  string pcr_signing_key_fingerprint = 3;
+  talos.resource.definitions.enums.RuntimeSELinuxState se_linux_state = 4;
+  bool booted_with_uki = 5;
+  talos.resource.definitions.enums.RuntimeFIPSState fips_state = 6;
+  bool module_signature_enforced = 7;
+}
+
+// ServicePIDSpec is the spec for the service PID.
+message ServicePIDSpec {
+  // PID is the host PID of the service.
+  int32 pid = 1;
+  // MountNamespace is the mount namespace of the service.
+  string mount_namespace = 2;
+}
+
+// UniqueMachineTokenSpec is the spec for the machine unique token. Token can be empty if machine wasn't assigned any.
+message UniqueMachineTokenSpec {
+  string token = 1;
+}
+
+// UnmetCondition is a failure which prevents machine from being ready at the stage.
+message UnmetCondition {
+  string name = 1;
+  string reason = 2;
+}
+
+// VersionSpec describes version of Talos.
+message VersionSpec {
+  string version = 1;
+  string name = 2;
+}
+
+// WatchdogTimerConfigSpec describes configuration of watchdog timer.
+message WatchdogTimerConfigSpec {
+  string device = 1;
+  google.protobuf.Duration timeout = 2;
+}
+
+// WatchdogTimerStatusSpec describes configuration of watchdog timer.
+message WatchdogTimerStatusSpec {
+  string device = 1;
+  google.protobuf.Duration timeout = 2;
+  google.protobuf.Duration feed_interval = 3;
+}
+

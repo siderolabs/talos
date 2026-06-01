@@ -1,0 +1,238 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+package probe_test
+
+import (
+	"context"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
+	"sync/atomic"
+	"testing"
+	"testing/synctest"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.uber.org/zap/zaptest"
+
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/internal/probe"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+)
+
+type swapHandler struct {
+	v atomic.Value // stores http.Handler
+}
+
+func (h *swapHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+	h.v.Load().(http.Handler).ServeHTTP(w, r)
+}
+
+func (h *swapHandler) Swap(newHandler http.Handler) {
+	h.v.Store(newHandler)
+}
+
+func TestProbeHTTP(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	t.Cleanup(server.Close)
+
+	u, err := url.Parse(server.URL)
+	require.NoError(t, err)
+
+	p := probe.Runner{
+		ID: "test",
+		Spec: network.ProbeSpecSpec{
+			Interval: 10 * time.Millisecond,
+			TCP: network.TCPProbeSpec{
+				Endpoint: u.Host,
+				Timeout:  time.Second,
+			},
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	t.Cleanup(cancel)
+
+	notifyCh := make(chan probe.Notification)
+
+	p.Start(ctx, notifyCh, zaptest.NewLogger(t))
+	t.Cleanup(p.Stop)
+
+	// probe should always succeed
+	for range 3 {
+		assert.Equal(t, probe.Notification{
+			ID: "test",
+			Status: network.ProbeStatusSpec{
+				Success: true,
+			},
+		}, <-notifyCh)
+	}
+
+	// stop the test server, probe should fail
+	server.Close()
+
+	for {
+		notification := <-notifyCh
+
+		if notification.Status.Success {
+			continue
+		}
+
+		assert.Equal(t, "test", notification.ID)
+		assert.False(t, notification.Status.Success)
+		assert.Contains(t, notification.Status.LastError, "connection refused")
+
+		break
+	}
+}
+
+func TestProbeConsecutiveFailures(t *testing.T) {
+	// Use synctest.Test to run the test in a controlled time bubble.
+	// This allows us to test time-dependent behavior without actual delays,
+	// making the test both faster and more deterministic.
+	synctest.Test(t, func(t *testing.T) {
+		server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+		}))
+		defer server.Close()
+
+		u, err := url.Parse(server.URL)
+		require.NoError(t, err)
+
+		p := probe.Runner{
+			ID: "consecutive-failures",
+			Spec: network.ProbeSpecSpec{
+				Interval:         10 * time.Millisecond,
+				FailureThreshold: 3,
+				TCP: network.TCPProbeSpec{
+					Endpoint: u.Host,
+					Timeout:  time.Second,
+				},
+			},
+		}
+
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+
+		notifyCh := make(chan probe.Notification)
+
+		p.Start(ctx, notifyCh, zaptest.NewLogger(t))
+		defer p.Stop()
+
+		// first iteration should succeed
+		assert.Equal(t, probe.Notification{
+			ID: "consecutive-failures",
+			Status: network.ProbeStatusSpec{
+				Success: true,
+			},
+		}, <-notifyCh)
+
+		// stop the test server, probe should fail
+		server.Close()
+
+		for range p.Spec.FailureThreshold - 1 {
+			// probe should fail, but no notification should be sent yet (failure threshold not reached)
+			// synctest.Wait() waits until all goroutines in the bubble are durably blocked,
+			// which happens when the ticker in the probe runner is waiting for the next interval
+			synctest.Wait()
+
+			select {
+			case ev := <-notifyCh:
+				require.Fail(t, "unexpected notification", "got: %v", ev)
+			default:
+				// Expected: no notification yet
+			}
+		}
+
+		// wait for next interval to trigger failure notification
+		synctest.Wait()
+
+		notify := <-notifyCh
+		assert.Equal(t, "consecutive-failures", notify.ID)
+		assert.False(t, notify.Status.Success)
+		assert.Contains(t, notify.Status.LastError, "connection refused")
+
+		// wait for next interval to trigger another failure notification
+		synctest.Wait()
+
+		notify = <-notifyCh
+		assert.Equal(t, "consecutive-failures", notify.ID)
+		assert.False(t, notify.Status.Success)
+	})
+}
+
+func TestProbeHTTPProbe(t *testing.T) {
+	// Server returns 200 OK.
+	handler := &swapHandler{}
+	handler.Swap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+
+	server := httptest.NewServer(handler)
+	t.Cleanup(server.Close)
+
+	probeURL, err := url.Parse(server.URL)
+	require.NoError(t, err)
+
+	p := probe.Runner{
+		ID: "http-test",
+		Spec: network.ProbeSpecSpec{
+			Interval: 10 * time.Millisecond,
+			HTTP: network.HTTPProbeSpec{
+				URL:     probeURL,
+				Timeout: time.Second,
+			},
+		},
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	t.Cleanup(cancel)
+
+	notifyCh := make(chan probe.Notification)
+
+	p.Start(ctx, notifyCh, zaptest.NewLogger(t))
+	t.Cleanup(p.Stop)
+
+	// probe should succeed — 2xx/3xx responses count as success
+	for range 3 {
+		assert.Equal(t, probe.Notification{
+			ID: "http-test",
+			Status: network.ProbeStatusSpec{
+				Success: true,
+			},
+		}, <-notifyCh)
+	}
+
+	// 4xx/5xx responses count as failure
+	handler.Swap(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusServiceUnavailable)
+	}))
+
+	for range 3 {
+		notification := <-notifyCh
+		assert.Equal(t, "http-test", notification.ID)
+		assert.False(t, notification.Status.Success)
+		assert.NotEmpty(t, notification.Status.LastError)
+	}
+
+	// stop the server — now the probe should fail
+	server.Close()
+
+	for {
+		notification := <-notifyCh
+
+		if notification.Status.Success {
+			continue
+		}
+
+		assert.Equal(t, "http-test", notification.ID)
+		assert.False(t, notification.Status.Success)
+		assert.NotEmpty(t, notification.Status.LastError)
+
+		break
+	}
+}

@@ -1,0 +1,69 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+package cluster
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/spf13/cobra"
+
+	"github.com/siderolabs/talos/pkg/cli"
+	"github.com/siderolabs/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision/providers"
+)
+
+var destroyCmdFlags struct {
+	forceDelete                bool
+	saveSupportArchivePath     string
+	saveClusterLogsArchivePath string
+}
+
+// destroyCmd represents the cluster destroy command.
+var destroyCmd = &cobra.Command{
+	Use:   "destroy",
+	Short: "Destroys a local Talos kubernetes cluster",
+	Args:  cobra.NoArgs,
+	RunE: func(cmd *cobra.Command, args []string) error {
+		return destroy(cmd.Context())
+	},
+}
+
+func destroy(ctx context.Context) error {
+	state, err := provision.ReadState(ctx, PersistentFlags.ClusterName, PersistentFlags.StateDir)
+	if err != nil {
+		return fmt.Errorf("failed to read cluster state: %w", err)
+	}
+
+	provisioner, err := providers.Factory(ctx, state.ProvisionerName)
+	if err != nil {
+		return err
+	}
+
+	defer provisioner.Close() //nolint:errcheck
+
+	cluster, err := provisioner.Reflect(ctx, PersistentFlags.ClusterName, PersistentFlags.StateDir)
+	if err != nil {
+		return err
+	}
+
+	return provisioner.Destroy(
+		ctx,
+		cluster,
+		provision.WithDeleteOnErr(destroyCmdFlags.forceDelete),
+		provision.WithSaveSupportArchivePath(destroyCmdFlags.saveSupportArchivePath),
+		provision.WithSaveClusterLogsArchivePath(destroyCmdFlags.saveClusterLogsArchivePath),
+	)
+}
+
+func init() {
+	destroyCmd.PersistentFlags().BoolVarP(&destroyCmdFlags.forceDelete, "force", "f", false, "force deletion of cluster directory if there were errors")
+	destroyCmd.PersistentFlags().StringVarP(&destroyCmdFlags.saveSupportArchivePath, "save-support-archive-path", "", "", "save support archive to the specified file on destroy")
+	destroyCmd.PersistentFlags().StringVarP(&destroyCmdFlags.saveClusterLogsArchivePath, "save-cluster-logs-archive-path", "", "", "save cluster logs archive to the specified file on destroy")
+	AddProvisionerFlag(destroyCmd)
+	cli.Should(destroyCmd.Flags().MarkDeprecated(ProvisionerFlagName, "the provisioner is inferred automatically"))
+
+	Cmd.AddCommand(destroyCmd)
+}

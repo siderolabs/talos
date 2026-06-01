@@ -1,0 +1,17 @@
+apiVersion: v1alpha1
+kind: KubeSchedulerConfig
+enabled: true
+image: registry.k8s.io/kube-scheduler:v1.35.3
+config:
+    profiles: []
+extraArgs:
+    feature-gates: AllBeta=true
+env:
+    HTTP_PROXY: http://proxy:8080
+resources:
+    requests:
+        cpu: 1
+        memory: 1Gi
+    limits:
+        cpu: 2
+        memory: 2500Mi

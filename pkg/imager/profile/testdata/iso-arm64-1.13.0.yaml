@@ -1,0 +1,21 @@
+arch: arm64
+platform: metal
+secureboot: false
+version: 1.13.0
+input:
+  kernel:
+    path: /usr/install/arm64/vmlinuz
+  initramfs:
+    path: /usr/install/arm64/initramfs.xz
+  sdStub:
+    path: /usr/install/arm64/systemd-stub.efi
+  sdBoot:
+    path: /usr/install/arm64/systemd-boot.efi
+  baseInstaller:
+    imageRef: ghcr.io/siderolabs/installer-base:1.13.0
+output:
+  kind: iso
+  isoOptions:
+    sdBootEnrollKeys: if-safe
+    bootloader: sd-boot
+  outFormat: raw

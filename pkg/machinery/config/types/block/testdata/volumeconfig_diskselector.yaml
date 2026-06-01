@@ -1,0 +1,6 @@
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: EPHEMERAL
+provisioning:
+    diskSelector:
+        match: disk.transport == "nvme" && !system_disk

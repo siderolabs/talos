@@ -1,0 +1,5 @@
+api-audiences:
+    - kubernetes.default.svc
+    - test.local
+oidc-groups-claim:
+    - groups

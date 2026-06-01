@@ -1,0 +1,7 @@
+apiVersion: v1alpha1
+kind: TimeSyncConfig
+enabled: true
+bootTimeout: 1m0s
+ntp:
+    servers:
+        - time.cloudflare.com

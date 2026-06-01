@@ -1,0 +1,323 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+package platforms
+
+import (
+	"github.com/blang/semver/v4"
+)
+
+// SBC describes a Single Board Computer configuration.
+type SBC struct {
+	Name string
+
+	// For Talos 1.7+
+	OverlayName  string
+	OverlayImage string
+
+	Label         string
+	Documentation string
+
+	MinVersion semver.Version
+}
+
+// DiskImagePath returns the path to the disk image for the SBC.
+func (s SBC) DiskImagePath(talosVersion string) string {
+	return "metal-arm64.raw.xz"
+}
+
+// SBCs returns a list of supported Single Board Computers.
+func SBCs() []SBC {
+	return []SBC{
+		{
+			Name: "rpi_5",
+
+			OverlayName:  "rpi_5",
+			OverlayImage: "siderolabs/sbc-raspberrypi",
+
+			Label: "Raspberry Pi 5",
+
+			MinVersion: semver.MustParse("1.12.3"),
+		},
+		{
+			Name: "rpi_generic",
+
+			OverlayName:  "rpi_generic",
+			OverlayImage: "siderolabs/sbc-raspberrypi",
+
+			Label:         "Raspberry Pi Series",
+			Documentation: "/platform-specific-installations/single-board-computers/rpi_generic",
+		},
+		{
+			Name: "revpi_generic",
+
+			OverlayName:  "revpi_generic",
+			OverlayImage: "siderolabs/sbc-raspberrypi",
+
+			Label: "Revolution Pi Series",
+
+			MinVersion: semver.MustParse("1.10.0-beta.0"),
+		},
+		{
+			Name: "bananapi_m64",
+
+			OverlayName:  "bananapi_m64",
+			OverlayImage: "siderolabs/sbc-allwinner",
+
+			Label:         "Banana Pi M64",
+			Documentation: "/platform-specific-installations/single-board-computers/bananapi_m64",
+		},
+		{
+			Name: "nanopi_r4s",
+
+			OverlayName:  "nanopi-r4s",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label:         "Friendlyelec Nano PI R4S",
+			Documentation: "/platform-specific-installations/single-board-computers/nanopi_r4s",
+
+			MinVersion: semver.MustParse("1.3.0"),
+		},
+		{
+			Name: "nanopi_r5s",
+
+			OverlayName:  "nanopi-r5s",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label: "Friendlyelec Nano PI R5S",
+
+			MinVersion: semver.MustParse("1.8.0-alpha.2"),
+		},
+		{
+			Name: "jetson_nano",
+
+			OverlayName:  "jetson_nano",
+			OverlayImage: "siderolabs/sbc-jetson",
+
+			Label:         "Jetson Nano",
+			Documentation: "/platform-specific-installations/single-board-computers/jetson_nano",
+		},
+		{
+			Name: "libretech_all_h3_cc_h5",
+
+			OverlayName:  "libretech_all_h3_cc_h5",
+			OverlayImage: "siderolabs/sbc-allwinner",
+
+			Label:         "Libre Computer Board ALL-H3-CC",
+			Documentation: "/platform-specific-installations/single-board-computers/libretech_all_h3_cc_h5",
+		},
+		{
+			Name: "orangepi_r1_plus_lts",
+
+			OverlayName:  "orangepi-r1-plus-lts",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label:         "Orange Pi R1 Plus LTS",
+			Documentation: "/platform-specific-installations/single-board-computers/orangepi_r1_plus_lts",
+
+			MinVersion: semver.MustParse("1.7.0"),
+		},
+		{
+			Name: "pine64",
+
+			OverlayName:  "pine64",
+			OverlayImage: "siderolabs/sbc-allwinner",
+
+			Label:         "Pine64",
+			Documentation: "/platform-specific-installations/single-board-computers/pine64",
+		},
+		{
+			Name: "rock64",
+
+			OverlayName:  "rock64",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label:         "Pine64 Rock64",
+			Documentation: "/platform-specific-installations/single-board-computers/rock64",
+		},
+		{
+			Name: "rock4cplus",
+
+			OverlayName:  "rock4cplus",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label:         "Radxa ROCK 4C Plus",
+			Documentation: "/platform-specific-installations/single-board-computers/rock4cplus",
+
+			MinVersion: semver.MustParse("1.7.0"),
+		},
+		{
+			Name: "rock4se",
+
+			OverlayName:  "rock4se",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label: "Radxa ROCK 4SE",
+
+			MinVersion: semver.MustParse("1.8.0-alpha.1"),
+		},
+		{
+			Name: "rock5a",
+
+			OverlayName:  "rock5a",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label:         "Radxa ROCK 5A",
+			Documentation: "/platform-specific-installations/single-board-computers/rock5b",
+
+			MinVersion: semver.MustParse("1.10.0-beta.0"),
+		},
+		{
+			Name: "rock5b",
+
+			OverlayName:  "rock5b",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label:         "Radxa ROCK 5B",
+			Documentation: "/platform-specific-installations/single-board-computers/rock5b",
+
+			MinVersion: semver.MustParse("1.9.2"),
+		},
+		{
+			Name: "rockpi_4",
+
+			OverlayName:  "rockpi4",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label:         "Radxa ROCK PI 4",
+			Documentation: "/platform-specific-installations/single-board-computers/rockpi_4",
+		},
+		{
+			Name: "rockpi_4c",
+
+			OverlayName:  "rockpi4c",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label:         "Radxa ROCK PI 4C",
+			Documentation: "/platform-specific-installations/single-board-computers/rockpi_4c",
+		},
+		{
+			Name: "helios64",
+
+			OverlayName:  "helios64",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label: "Kobol Helios64",
+
+			MinVersion: semver.MustParse("1.8.0-alpha.2"),
+		},
+		{
+			Name: "turingrk1",
+
+			OverlayName:  "turingrk1",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label:         "Turing RK1",
+			Documentation: "/platform-specific-installations/single-board-computers/turing_rk1",
+
+			MinVersion: semver.MustParse("1.9.0-beta.0"),
+		},
+		{
+			Name: "orangepi-5",
+
+			OverlayName:  "orangepi-5",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label:         "Orange Pi 5",
+			Documentation: "/platform-specific-installations/single-board-computers/orangepi_5",
+
+			MinVersion: semver.MustParse("1.9.2"),
+		},
+		{
+			Name: "orangepi-5-plus",
+
+			OverlayName:  "orangepi-5-plus",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label: "Orange Pi 5 Plus",
+
+			MinVersion: semver.MustParse("1.10.0-beta.0"),
+		},
+		{
+			Name: "rockpro64",
+
+			OverlayName:  "rockpro64",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label: "Pine64 RockPro64",
+
+			MinVersion: semver.MustParse("1.10.0-beta.0"),
+		},
+		{
+			Name: "odroid-m1",
+
+			OverlayName:  "odroid-m1",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label: "Odroid M1",
+
+			MinVersion: semver.MustParse("1.12.0-beta.0"),
+		},
+		{
+			Name: "radxa-zero-3e",
+
+			OverlayName:  "radxa-zero-3e",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label: "Radxa Zero 3E",
+
+			MinVersion: semver.MustParse("1.12.0-beta.0"),
+		},
+		{
+			Name: "rock3b",
+
+			OverlayName:  "rock3b",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label: "Rock 3B",
+
+			MinVersion: semver.MustParse("1.12.0-beta.0"),
+		},
+		{
+			Name: "orangepi-5-max",
+
+			OverlayName:  "orangepi-5-max",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label: "Orange Pi 5 Max",
+
+			MinVersion: semver.MustParse("1.12.0-beta.0"),
+		},
+		{
+			Name: "rock5t",
+
+			OverlayName:  "rock5t",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label: "Rock 5T",
+
+			MinVersion: semver.MustParse("1.12.0-beta.0"),
+		},
+		{
+			Name: "friendlyelec-cm3588-nas",
+
+			OverlayName:  "friendlyelec-cm3588-nas",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label: "FriendlyELEC CM3588 NAS",
+
+			MinVersion: semver.MustParse("1.13.0-alpha.1"),
+		},
+		{
+			Name: "rock5b-plus",
+
+			OverlayName:  "rock5b-plus",
+			OverlayImage: "siderolabs/sbc-rockchip",
+
+			Label: "Rock 5B Plus",
+
+			MinVersion: semver.MustParse("1.13.0-alpha.1"),
+		},
+	}
+}

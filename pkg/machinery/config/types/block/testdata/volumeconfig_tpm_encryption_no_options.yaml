@@ -1,0 +1,7 @@
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: STATE
+encryption:
+    provider: luks2
+    keys:
+        - tpm: {}

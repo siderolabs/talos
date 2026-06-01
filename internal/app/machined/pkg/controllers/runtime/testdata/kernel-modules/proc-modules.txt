@@ -1,0 +1,8 @@
+cpuid 12288 0 - Live 0x0000000000000000
+firstmalformed is a malformed_field
+wireguard 114688 0 - Live 0x0000000000000000
+secondmalformed controller should ignore this
+curve25519_x86_64 36864 1 wireguard, Live 0x0000000000000000
+libcurve25519_generic 45056 2 wireguard,curve25519_x86_64, Live 0x0000000000000000
+modloading 4096 0 - Loading 0x0000000000000001
+modunloading 4096 0 - Unloading 0x0000000000000002
