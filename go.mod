@@ -129,7 +129,6 @@ require (
 	github.com/prometheus/procfs v0.20.1
 	github.com/rivo/tview v0.42.0
 	github.com/rs/xid v1.6.0
-	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/safchain/ethtool v0.7.0
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.36
@@ -172,10 +171,10 @@ require (
 	github.com/u-root/u-root v0.16.0
 	github.com/ulikunitz/xz v0.5.15
 	github.com/vultr/metadata v1.1.0
-	go.etcd.io/etcd/api/v3 v3.6.11
-	go.etcd.io/etcd/client/pkg/v3 v3.6.11
-	go.etcd.io/etcd/client/v3 v3.6.11
-	go.etcd.io/etcd/etcdutl/v3 v3.6.11
+	go.etcd.io/etcd/api/v3 v3.6.12
+	go.etcd.io/etcd/client/pkg/v3 v3.6.12
+	go.etcd.io/etcd/client/v3 v3.6.12
+	go.etcd.io/etcd/etcdutl/v3 v3.6.12
 	go.uber.org/goleak v1.3.0
 	go.uber.org/zap v1.27.1
 	go.yaml.in/yaml/v4 v4.0.0-rc.4
@@ -382,8 +381,8 @@ require (
 	github.com/xlab/treeprint v1.2.0 // indirect
 	github.com/zalando/go-keyring v0.2.6 // indirect
 	go.etcd.io/bbolt v1.4.3 // indirect
-	go.etcd.io/etcd/pkg/v3 v3.6.11 // indirect
-	go.etcd.io/etcd/server/v3 v3.6.11 // indirect
+	go.etcd.io/etcd/pkg/v3 v3.6.12 // indirect
+	go.etcd.io/etcd/server/v3 v3.6.12 // indirect
 	go.etcd.io/raft/v3 v3.6.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
