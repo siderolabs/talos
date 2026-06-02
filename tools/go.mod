@@ -479,13 +479,13 @@ require (
 	github.com/siderolabs/go-pointer v1.0.1 // indirect
 	github.com/siderolabs/go-retry v0.3.3 // indirect
 	github.com/siderolabs/importvet v0.2.0 // indirect
-	github.com/siderolabs/talos/tools/cloud-image-uploader v0.0.0-20260602111613-f9ad63a35a40 // indirect
-	github.com/siderolabs/talos/tools/docgen v0.0.0-20260602111613-f9ad63a35a40 // indirect
-	github.com/siderolabs/talos/tools/gotagsrewrite v0.0.0-20260602111613-f9ad63a35a40 // indirect
-	github.com/siderolabs/talos/tools/labeled-squashfs v0.0.0-20260602111613-f9ad63a35a40 // indirect
-	github.com/siderolabs/talos/tools/loglinter v0.0.0-20260602111613-f9ad63a35a40 // indirect
-	github.com/siderolabs/talos/tools/sbom-builder v0.0.0-20260602111613-f9ad63a35a40 // indirect
-	github.com/siderolabs/talos/tools/structprotogen v0.0.0-20260602111613-f9ad63a35a40 // indirect
+	github.com/siderolabs/talos/tools/cloud-image-uploader v0.0.0-20260602162949-26a25a0736c3 // indirect
+	github.com/siderolabs/talos/tools/docgen v0.0.0-20260602162949-26a25a0736c3 // indirect
+	github.com/siderolabs/talos/tools/gotagsrewrite v0.0.0-20260602162949-26a25a0736c3 // indirect
+	github.com/siderolabs/talos/tools/labeled-squashfs v0.0.0-20260602162949-26a25a0736c3 // indirect
+	github.com/siderolabs/talos/tools/loglinter v0.0.0-20260602162949-26a25a0736c3 // indirect
+	github.com/siderolabs/talos/tools/sbom-builder v0.0.0-20260602162949-26a25a0736c3 // indirect
+	github.com/siderolabs/talos/tools/structprotogen v0.0.0-20260602162949-26a25a0736c3 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
 	github.com/sivchari/containedctx v1.0.3 // indirect
 	github.com/skeema/knownhosts v1.3.2 // indirect
