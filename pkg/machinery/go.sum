@@ -65,8 +65,8 @@ github.com/hashicorp/errwrap v1.1.0 h1:OxrOeh75EUXMY8TBjag2fzXGZ40LB6IKw45YeGUDY
 github.com/hashicorp/errwrap v1.1.0/go.mod h1:YH+1FKiLXxHSkmPseP+kNlulaMuP3n2brvKWEqk/Jc4=
 github.com/hashicorp/go-multierror v1.1.1 h1:H5DkEtf6CXdFp0N0Em5UCwQpXMWke8IA0+lD48awMYo=
 github.com/hashicorp/go-multierror v1.1.1/go.mod h1:iw975J/qwKPdAO1clOe2L8331t/9/fmwbPZ6JB6eMoM=
-github.com/jsimonetti/rtnetlink/v2 v2.2.1-0.20260317095713-310581b9c6ac h1:UfziP9RaDM6D+f+yNdL3T/N1DztwltLDGBkpybF/fYs=
-github.com/jsimonetti/rtnetlink/v2 v2.2.1-0.20260317095713-310581b9c6ac/go.mod h1:A/gqt1BEMJcvzGQJXQ3SnsDOQL7QRNhxTiC3eb++608=
+github.com/jsimonetti/rtnetlink/v2 v2.2.1-0.20260602060932-e82ffd7ecc01 h1:QzYyLebu3Jk0cx6i3MNlsNxa0tHYGWOxL+ssg7bA/ZY=
+github.com/jsimonetti/rtnetlink/v2 v2.2.1-0.20260602060932-e82ffd7ecc01/go.mod h1:u+1sEUL+ljjqvMS4iYO9y4xueUtOMRKtrndVN4SrEVw=
 github.com/kr/pretty v0.3.1 h1:flRD4NNwYAUpkphVc1HcthR4KEIFJ65n8Mw5qdRn3LE=
 github.com/kr/pretty v0.3.1/go.mod h1:hoEshYVHaxMs3cyo3Yncou5ZscifuDolrwPKZanG3xk=
 github.com/kr/text v0.2.0 h1:5Nx0Ya0ZqY2ygV366QzturHI13Jq95ApcVaJBhpS+AY=

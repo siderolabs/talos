@@ -15,7 +15,7 @@ require (
 	github.com/ghodss/yaml v1.0.0
 	github.com/google/cel-go v0.28.1
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/jsimonetti/rtnetlink/v2 v2.2.1-0.20260317095713-310581b9c6ac
+	github.com/jsimonetti/rtnetlink/v2 v2.2.1-0.20260602060932-e82ffd7ecc01
 	github.com/mdlayher/ethtool v0.6.0
 	github.com/neticdk/go-stdlib v1.0.1
 	github.com/opencontainers/runtime-spec v1.3.0
