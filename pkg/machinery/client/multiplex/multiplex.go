@@ -5,9 +5,21 @@
 // Package multiplex implements client-side multiplexing helpers.
 package multiplex
 
+import (
+	"context"
+
+	"github.com/siderolabs/talos/pkg/machinery/client"
+)
+
 // Response represents a multiplexed response from a specific node.
 type Response[ResponseT any] struct {
 	Node    string
 	Payload ResponseT
 	Err     error
+}
+
+// ClientFactory is an interface of a client provider.
+type ClientFactory interface {
+	BuildClient(ctx context.Context, node string) (context.Context, *client.Client, error)
+	Nodes() []string
 }

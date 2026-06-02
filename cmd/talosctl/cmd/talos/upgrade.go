@@ -47,7 +47,6 @@ var upgradeCmdFlags = struct {
 
 	legacy   bool
 	force    bool // Deprecated: only used for legacy upgrade path, to be removed in Talos 1.18.
-	insecure bool // Deprecated: only used for legacy upgrade path, to be removed in Talos 1.18.
 	preserve bool // Deprecated: only used for legacy upgrade path, to be removed in Talos 1.18.
 	stage    bool // Deprecated: only used for legacy upgrade path, to be removed in Talos 1.18.
 }{
@@ -68,10 +67,6 @@ var upgradeCmd = &cobra.Command{
 
 		if upgradeCmdFlags.drain {
 			upgradeCmdFlags.wait = true
-		}
-
-		if upgradeCmdFlags.wait && upgradeCmdFlags.insecure {
-			return errors.New("cannot use --wait and --insecure together")
 		}
 
 		return upgradeRun(cmd.Context())
@@ -276,12 +271,6 @@ func upgradeLegacy(ctx context.Context) error {
 //
 // Note: remove me in Talos 1.18.
 func runUpgradeLegacyNoWaitWithOpts(ctx context.Context, opts []client.UpgradeOption) error {
-	if upgradeCmdFlags.insecure {
-		return WithClientMaintenance(ctx, nil, func(ctx context.Context, c *client.Client) error {
-			return doUpgradeLegacy(ctx, c, opts)
-		})
-	}
-
 	return WithClient(ctx, func(ctx context.Context, c *client.Client) error {
 		return doUpgradeLegacy(ctx, c, opts)
 	})
@@ -370,7 +359,6 @@ func init() {
 	upgradeCmdFlags.addTrackActionFlags(upgradeCmd)
 	upgradeCmd.Flags().BoolVar(&upgradeCmdFlags.legacy, "legacy", false, "force use of legacy upgrade method")
 	upgradeCmd.Flags().BoolVarP(&upgradeCmdFlags.force, "force", "f", false, "force the upgrade (skip checks on etcd health and members, might lead to data loss)")
-	upgradeCmd.Flags().BoolVar(&upgradeCmdFlags.insecure, "insecure", false, "upgrade using the insecure (encrypted with no auth) maintenance service")
 	upgradeCmd.Flags().BoolVarP(&upgradeCmdFlags.preserve, "preserve", "p", false, "preserve data")
 	upgradeCmd.Flags().BoolVarP(&upgradeCmdFlags.stage, "stage", "s", false, "stage the upgrade to perform it after a reboot")
 

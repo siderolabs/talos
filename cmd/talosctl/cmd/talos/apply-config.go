@@ -15,20 +15,21 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/durationpb"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 var applyConfigCmdFlags struct {
 	helpers.Mode
+	global.InsecureFlags
 
-	certFingerprints []string
 	patches          []string
 	filename         string
-	insecure         bool
 	dryRun           bool
 	configTryTimeout time.Duration
 }
@@ -93,37 +94,48 @@ var applyConfigCmd = &cobra.Command{
 			}
 		}
 
-		withClient := func(f func(context.Context, *client.Client) error) error {
-			if applyConfigCmdFlags.insecure {
-				return WithClientMaintenance(cmd.Context(), applyConfigCmdFlags.certFingerprints, f)
-			}
+		ctx := cmd.Context()
 
-			return WithClient(cmd.Context(), f)
+		clientFactory, err := NewClientFactory(ctx, &applyConfigCmdFlags)
+		if err != nil {
+			return err
 		}
 
-		return withClient(func(ctx context.Context, c *client.Client) error {
-			resp, err := c.ApplyConfiguration(ctx, &machineapi.ApplyConfigurationRequest{
-				Data:           cfgBytes,
-				Mode:           applyConfigCmdFlags.Mode.Mode,
-				DryRun:         applyConfigCmdFlags.dryRun,
-				TryModeTimeout: durationpb.New(applyConfigCmdFlags.configTryTimeout),
-			})
-			if err != nil {
-				return fmt.Errorf("error applying new configuration: %s", err)
+		defer clientFactory.Close() //nolint:errcheck
+
+		respCh := multiplex.UnaryViaFactory(
+			ctx,
+			clientFactory,
+			func(ctx context.Context, c *client.Client) (*machineapi.ApplyConfigurationResponse, error) {
+				return c.ApplyConfiguration(ctx, &machineapi.ApplyConfigurationRequest{
+					Data:           cfgBytes,
+					Mode:           applyConfigCmdFlags.Mode.Mode,
+					DryRun:         applyConfigCmdFlags.dryRun,
+					TryModeTimeout: durationpb.New(applyConfigCmdFlags.configTryTimeout),
+				})
+			},
+		)
+
+		var errs error
+
+		for resp := range respCh {
+			if resp.Err != nil {
+				errs = errors.Join(errs, fmt.Errorf("%s: error applying configuration: %w", resp.Node, resp.Err))
+
+				continue
 			}
 
-			helpers.PrintApplyResults(resp)
+			helpers.PrintApplyResults(resp.Payload)
+		}
 
-			return nil
-		})
+		return errs
 	},
 }
 
 func init() {
+	applyConfigCmdFlags.InsecureFlags.AddFlags(applyConfigCmd)
 	applyConfigCmd.Flags().StringVarP(&applyConfigCmdFlags.filename, "file", "f", "", "the filename of the updated configuration")
-	applyConfigCmd.Flags().BoolVarP(&applyConfigCmdFlags.insecure, "insecure", "i", false, "apply the config using the insecure (encrypted with no auth) maintenance service")
 	applyConfigCmd.Flags().BoolVar(&applyConfigCmdFlags.dryRun, "dry-run", false, "check how the config change will be applied in dry-run mode")
-	applyConfigCmd.Flags().StringSliceVar(&applyConfigCmdFlags.certFingerprints, "cert-fingerprint", nil, "list of server certificate fingeprints to accept (defaults to no check)")
 	applyConfigCmd.Flags().StringArrayVarP(&applyConfigCmdFlags.patches, "config-patch", "p", nil, "the list of config patches to apply to the local config file before sending it to the node")
 	applyConfigCmd.Flags().DurationVar(&applyConfigCmdFlags.configTryTimeout, "timeout", constants.ConfigTryTimeout, "the config will be rolled back after specified timeout (if try mode is selected)")
 	helpers.AddModeFlags(&applyConfigCmdFlags.Mode, applyConfigCmd)

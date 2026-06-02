@@ -5,13 +5,11 @@
 package talos
 
 import (
-	"context"
 	"time"
 
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/internal/pkg/dashboard"
-	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
 var dashboardCmdFlags struct {
@@ -37,15 +35,27 @@ Keyboard shortcuts:
 `,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClientAndNodes(cmd.Context(), func(ctx context.Context, c *client.Client, nodes []string) error {
-			return dashboard.Run(
-				ctx, c,
-				dashboard.WithInterval(dashboardCmdFlags.interval),
-				dashboard.WithScreens(dashboard.ScreenSummary, dashboard.ScreenMonitor, dashboard.ScreenResourceExplorer),
-				dashboard.WithAllowExitKeys(true),
-				dashboard.WithNodes(nodes...),
-			)
-		})
+		ctx := cmd.Context()
+
+		clientFactory, err := NewClientFactory(ctx, nil)
+		if err != nil {
+			return err
+		}
+
+		defer clientFactory.Close() //nolint:errcheck
+
+		c, err := clientFactory.BuildRandomEndpointClient(ctx)
+		if err != nil {
+			return err
+		}
+
+		return dashboard.Run(
+			ctx, c,
+			dashboard.WithInterval(dashboardCmdFlags.interval),
+			dashboard.WithScreens(dashboard.ScreenSummary, dashboard.ScreenMonitor, dashboard.ScreenResourceExplorer),
+			dashboard.WithAllowExitKeys(true),
+			dashboard.WithNodes(clientFactory.Nodes()...),
+		)
 	},
 }
 

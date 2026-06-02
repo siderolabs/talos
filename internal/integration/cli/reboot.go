@@ -72,7 +72,10 @@ func (suite *RebootSuite) TestReboot() {
 	suite.T().Logf("running the cluster health check")
 
 	// run the health check to make sure cluster is fully healthy after a node reboot
-	args := []string{"--server=false"}
+	args := []string{
+		"--server=false",
+		"--nodes", controlPlaneNode,
+	}
 
 	if suite.K8sEndpoint != "" {
 		args = append(args, "--k8s-endpoint", strings.Split(suite.K8sEndpoint, ":")[0])
@@ -92,6 +95,7 @@ func (suite *RebootSuite) TestRebootWithDrain() {
 		suite.T().Skip("skipping in short mode")
 	}
 
+	controlPlaneNode := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
 	workerNode := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 
 	suite.T().Logf("rebooting node %s with --drain via the CLI", workerNode)
@@ -151,7 +155,10 @@ func (suite *RebootSuite) TestRebootWithDrain() {
 
 	suite.T().Logf("running the cluster health check")
 
-	args := []string{"--server=false"}
+	args := []string{
+		"--server=false",
+		"--nodes", controlPlaneNode,
+	}
 
 	if suite.K8sEndpoint != "" {
 		args = append(args, "--k8s-endpoint", strings.Split(suite.K8sEndpoint, ":")[0])
@@ -171,6 +178,7 @@ func (suite *RebootSuite) TestRebootWithDrainForcesWait() {
 		suite.T().Skip("skipping in short mode")
 	}
 
+	controlPlaneNode := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
 	workerNode := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 
 	suite.T().Logf("rebooting node %s with --drain --wait=false via the CLI", workerNode)
@@ -225,7 +233,10 @@ func (suite *RebootSuite) TestRebootWithDrainForcesWait() {
 
 	suite.T().Logf("running the cluster health check")
 
-	args := []string{"--server=false"}
+	args := []string{
+		"--server=false",
+		"--nodes", controlPlaneNode,
+	}
 
 	if suite.K8sEndpoint != "" {
 		args = append(args, "--k8s-endpoint", strings.Split(suite.K8sEndpoint, ":")[0])

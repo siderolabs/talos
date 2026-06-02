@@ -28,6 +28,7 @@ import (
 	k8s "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	clusterresource "github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 )
@@ -72,9 +73,14 @@ Default encryption recipients can be removed by setting --encryption-no-default-
 `,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if len(GlobalArgs.Nodes) == 0 {
-			return errors.New("please provide at least a single node to gather the debug information from")
+		ctx := cmd.Context()
+
+		clientFactory, err := NewClientFactory(ctx, &supportCmdFlags)
+		if err != nil {
+			return err
 		}
+
+		defer clientFactory.Close() //nolint:errcheck
 
 		if supportCmdFlags.noEncryption && (len(supportCmdFlags.encryptionRecipients) > 0 || supportCmdFlags.encryptionNoDefaultRecipients) {
 			return errors.New("--encryption-recipients and --encryption-no-default-recipients cannot be used with --no-encryption")
@@ -97,7 +103,7 @@ Default encryption recipients can be removed by setting --encryption-no-default-
 			}
 		}
 
-		f, err := openArchive(cmd.Context())
+		f, err := openArchive(ctx, clientFactory)
 		if err != nil {
 			return err
 		}
@@ -137,7 +143,7 @@ Default encryption recipients can be removed by setting --encryption-no-default-
 			return nil
 		})
 
-		collectErr := collectData(cmd.Context(), archiveOutput, progress)
+		collectErr := collectData(ctx, archiveOutput, progress, clientFactory)
 
 		close(progress)
 
@@ -162,35 +168,38 @@ Default encryption recipients can be removed by setting --encryption-no-default-
 	},
 }
 
-func collectData(ctx context.Context, dest io.Writer, progress chan bundle.Progress) error {
-	return WithClientNoNodes(ctx, func(ctx context.Context, c *client.Client) error {
-		clientset, err := getKubernetesClient(ctx, c)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to create kubernetes client %s\n", err)
-		}
+func collectData(ctx context.Context, dest io.Writer, progress chan bundle.Progress, clientFactory *global.ClientFactory) error {
+	nodeCtx, c, err := clientFactory.BuildClientFirstNode(ctx)
+	if err != nil {
+		return err
+	}
 
-		opts := []bundle.Option{
-			bundle.WithArchiveOutput(dest),
-			bundle.WithKubernetesClient(clientset),
-			bundle.WithTalosClient(c),
-			bundle.WithNodes(GlobalArgs.Nodes...),
-			bundle.WithNumWorkers(supportCmdFlags.numWorkers),
-			bundle.WithProgressChan(progress),
-		}
+	clientset, err := getKubernetesClient(nodeCtx, c)
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "failed to create kubernetes client %s\n", err)
+	}
 
-		if !supportCmdFlags.verbose {
-			opts = append(opts, bundle.WithLogOutput(io.Discard))
-		}
+	opts := []bundle.Option{
+		bundle.WithArchiveOutput(dest),
+		bundle.WithKubernetesClient(clientset),
+		bundle.WithTalosClient(c),
+		bundle.WithNodes(clientFactory.Nodes()...),
+		bundle.WithNumWorkers(supportCmdFlags.numWorkers),
+		bundle.WithProgressChan(progress),
+	}
 
-		options := bundle.NewOptions(opts...)
+	if !supportCmdFlags.verbose {
+		opts = append(opts, bundle.WithLogOutput(io.Discard))
+	}
 
-		collectors, err := collectors.GetForOptions(ctx, options)
-		if err != nil {
-			return err
-		}
+	options := bundle.NewOptions(opts...)
 
-		return support.CreateSupportBundle(ctx, options, collectors...)
-	})
+	collectors, err := collectors.GetForOptions(ctx, options)
+	if err != nil {
+		return err
+	}
+
+	return support.CreateSupportBundle(ctx, options, collectors...)
 }
 
 func getKubernetesClient(ctx context.Context, c *client.Client) (*k8s.Clientset, error) {
@@ -223,24 +232,17 @@ func getKubernetesClient(ctx context.Context, c *client.Client) (*k8s.Clientset,
 	return clientset, nil
 }
 
-func getClusterInfo(ctx context.Context) (*clusterresource.Info, error) {
-	var info *clusterresource.Info
-
-	if e := WithClientNoNodes(ctx, func(ctx context.Context, c *client.Client) error {
-		var err error
-
-		info, err = safe.StateGetByID[*clusterresource.Info](
-			ctx,
-			c.COSI,
-			clusterresource.InfoID,
-		)
-
-		return err
-	}); e != nil {
-		return nil, e
+func getClusterInfo(ctx context.Context, clientFactory *global.ClientFactory) (*clusterresource.Info, error) {
+	ctx, c, err := clientFactory.BuildClientFirstNode(ctx)
+	if err != nil {
+		return nil, err
 	}
 
-	return info, nil
+	return safe.StateGetByID[*clusterresource.Info](
+		ctx,
+		c.COSI,
+		clusterresource.InfoID,
+	)
 }
 
 // buildEncryptionOptions builds the age encryption options based on the command
@@ -279,11 +281,11 @@ func buildEncryptionOptions() ([]encryption.Option, []string, error) {
 	return opts, recipients, nil
 }
 
-func openArchive(ctx context.Context) (*os.File, error) {
+func openArchive(ctx context.Context, clientFactory *global.ClientFactory) (*os.File, error) {
 	if supportCmdFlags.output == "" {
 		supportCmdFlags.output = "support"
 
-		if info, err := getClusterInfo(ctx); err == nil && info.TypedSpec().ClusterName != "" {
+		if info, err := getClusterInfo(ctx, clientFactory); err == nil && info.TypedSpec().ClusterName != "" {
 			supportCmdFlags.output += "-" + info.TypedSpec().ClusterName
 		}
 

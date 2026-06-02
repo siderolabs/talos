@@ -14,6 +14,7 @@ import (
 	"github.com/blang/semver/v4"
 	"github.com/siderolabs/gen/xerrors"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
@@ -76,10 +77,10 @@ func TalosVersionCheck(ctx context.Context, c *client.Client, desired semver.Ran
 }
 
 // ClientVersionCheck verifies that client is not outdated vs. Talos version.
-func ClientVersionCheck(ctx context.Context, c *client.Client, nodes []string) error {
-	respCh := multiplex.Unary(
-		ctx, nodes,
-		func(ctx context.Context) (*machine.VersionResponse, error) {
+func ClientVersionCheck(ctx context.Context, clientFactory *global.ClientFactory) error {
+	respCh := multiplex.UnaryViaFactory(
+		ctx, clientFactory,
+		func(ctx context.Context, c *client.Client) (*machine.VersionResponse, error) {
 			return c.Version(ctx)
 		},
 	)

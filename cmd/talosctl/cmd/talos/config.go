@@ -6,7 +6,6 @@ package talos
 
 import (
 	"bytes"
-	"context"
 	"crypto/x509"
 	"encoding/base64"
 	"encoding/json"
@@ -29,7 +28,6 @@ import (
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
-	"github.com/siderolabs/talos/pkg/machinery/client"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/role"
@@ -150,7 +148,7 @@ var configContextCmd = &cobra.Command{
 
 		return nil
 	},
-	ValidArgsFunction: CompleteConfigContext,
+	ValidArgsFunction: completeConfigContext,
 }
 
 // configAddCmdFlags represents the `config add` command flags.
@@ -280,7 +278,7 @@ var configRemoveCmd = &cobra.Command{
 
 		return nil
 	},
-	ValidArgsFunction: CompleteConfigContext,
+	ValidArgsFunction: completeConfigContext,
 }
 
 func sortInPlace(slc []string) []string {
@@ -414,38 +412,50 @@ var configNewCmd = &cobra.Command{
 
 		path := args[0]
 
-		return WithClientAndSingleNode(cmd.Context(), "config new", func(ctx context.Context, c *client.Client, _ string) error {
-			roles, unknownRoles := role.Parse(configNewCmdFlags.roles)
-			if len(unknownRoles) != 0 {
-				return fmt.Errorf("unknown roles: %s", strings.Join(unknownRoles, ", "))
-			}
+		ctx := cmd.Context()
 
-			if _, err := os.Stat(path); err == nil {
-				return fmt.Errorf("talosconfig file already exists: %q", path)
-			}
+		clientFactory, err := NewClientFactory(ctx, &configNewCmdFlags)
+		if err != nil {
+			return err
+		}
 
-			resp, err := c.GenerateClientConfiguration(ctx, &machineapi.GenerateClientConfigurationRequest{
-				Roles:  roles.Strings(),
-				CrtTtl: durationpb.New(configNewCmdFlags.crtTTL),
-			})
-			if err != nil {
-				return err
-			}
+		defer clientFactory.Close() //nolint:errcheck
 
-			if l := len(resp.Messages); l != 1 {
-				panic(fmt.Sprintf("expected 1 message, got %d", l))
-			}
+		ctx, c, _, err := clientFactory.BuildClientEnforceSingleNode(ctx, "config new")
+		if err != nil {
+			return err
+		}
 
-			config, err := clientconfig.FromBytes(resp.Messages[0].Talosconfig)
-			if err != nil {
-				return err
-			}
+		roles, unknownRoles := role.Parse(configNewCmdFlags.roles)
+		if len(unknownRoles) != 0 {
+			return fmt.Errorf("unknown roles: %s", strings.Join(unknownRoles, ", "))
+		}
 
-			// make the new config immediately useful
-			config.Contexts[config.Context].Endpoints = c.GetEndpoints()
+		if _, err := os.Stat(path); err == nil {
+			return fmt.Errorf("talosconfig file already exists: %q", path)
+		}
 
-			return config.Save(path)
+		resp, err := c.GenerateClientConfiguration(ctx, &machineapi.GenerateClientConfigurationRequest{
+			Roles:  roles.Strings(),
+			CrtTtl: durationpb.New(configNewCmdFlags.crtTTL),
 		})
+		if err != nil {
+			return err
+		}
+
+		if l := len(resp.Messages); l != 1 {
+			panic(fmt.Sprintf("expected 1 message, got %d", l))
+		}
+
+		config, err := clientconfig.FromBytes(resp.Messages[0].Talosconfig)
+		if err != nil {
+			return err
+		}
+
+		// make the new config immediately useful
+		config.Contexts[config.Context].Endpoints = c.GetEndpoints()
+
+		return config.Save(path)
 	},
 }
 
@@ -582,11 +592,13 @@ var configInfoCmd = &cobra.Command{
 	},
 }
 
-// CompleteConfigContext represents tab completion for `--context`
+// completeConfigContext represents tab completion for `--context`
 // argument and `config [context|remove]` command.
-func CompleteConfigContext(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
+func completeConfigContext(*cobra.Command, []string, string) ([]string, cobra.ShellCompDirective) {
 	c, err := clientconfig.Open(GlobalArgs.Talosconfig)
 	if err != nil {
+		cobra.CompError(fmt.Sprintf("error reading config: %v", err))
+
 		return nil, cobra.ShellCompDirectiveError
 	}
 

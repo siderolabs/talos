@@ -6,25 +6,28 @@ package talos
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/peer"
 	"google.golang.org/protobuf/encoding/protojson"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
 	"github.com/siderolabs/talos/pkg/cli"
+	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
 // versionCmdFlags represents the `talosctl version` command's flags.
 var versionCmdFlags struct {
+	global.InsecureFlags
+
 	clientOnly   bool
 	shortVersion bool
 	json         bool
-	insecure     bool
 }
 
 // versionCmd represents the `talosctl version` command.
@@ -51,35 +54,40 @@ var versionCmd = &cobra.Command{
 			fmt.Println("Server:")
 		}
 
-		if versionCmdFlags.insecure {
-			return WithClientMaintenance(cmd.Context(), nil, cmdVersion)
+		ctx := cmd.Context()
+
+		clientFactory, err := NewClientFactory(ctx, &versionCmdFlags)
+		if err != nil {
+			return err
 		}
 
-		return WithClient(cmd.Context(), cmdVersion)
+		defer clientFactory.Close() //nolint:errcheck
+
+		respCh := multiplex.UnaryViaFactory(
+			ctx, clientFactory,
+			func(ctx context.Context, c *client.Client) (*machine.VersionResponse, error) {
+				return c.Version(ctx)
+			},
+		)
+
+		var errs error
+
+		for resp := range respCh {
+			if resp.Err != nil {
+				errs = errors.Join(errs, fmt.Errorf("error getting version from node %s: %w", resp.Node, resp.Err))
+
+				continue
+			}
+
+			errs = errors.Join(errs, printVersionResponse(resp.Node, resp.Payload))
+		}
+
+		return errs
 	},
 }
 
-func cmdVersion(ctx context.Context, c *client.Client) error {
-	var remotePeer peer.Peer
-
-	resp, err := c.Version(ctx, grpc.Peer(&remotePeer))
-	if err != nil {
-		if resp == nil {
-			return fmt.Errorf("error getting version: %s", err)
-		}
-
-		cli.Warning("%s", err)
-	}
-
-	defaultNode := client.AddrFromPeer(&remotePeer)
-
+func printVersionResponse(node string, resp *machine.VersionResponse) error {
 	for _, msg := range resp.Messages {
-		node := defaultNode
-
-		if msg.Metadata != nil {
-			node = msg.Metadata.Hostname //nolint:staticcheck // to be refactored next
-		}
-
 		if !versionCmdFlags.json {
 			fmt.Printf("\t%s:        %s\n", "NODE", node)
 
@@ -107,9 +115,9 @@ func cmdVersion(ctx context.Context, c *client.Client) error {
 }
 
 func init() {
+	versionCmdFlags.InsecureFlags.AddFlags(versionCmd)
 	versionCmd.Flags().BoolVar(&versionCmdFlags.shortVersion, "short", false, "Print the short version")
 	versionCmd.Flags().BoolVar(&versionCmdFlags.clientOnly, "client", false, "Print client version only")
-	versionCmd.Flags().BoolVarP(&versionCmdFlags.insecure, "insecure", "i", false, "use Talos maintenance mode API")
 
 	// TODO remove when https://github.com/siderolabs/talos/issues/907 is implemented
 	versionCmd.Flags().BoolVar(&versionCmdFlags.json, "json", false, "")

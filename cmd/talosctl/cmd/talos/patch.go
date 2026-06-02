@@ -24,7 +24,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 )
 
 var patchCmdFlags struct {
@@ -70,20 +69,8 @@ func extractMachineConfigBody(mc resource.Resource) ([]byte, error) {
 	return []byte(bodyStr), nil
 }
 
-func patchFn(c *client.Client, patches []configpatcher.Patch) func(context.Context, string, resource.Resource, error) error {
-	return func(ctx context.Context, node string, mc resource.Resource, callError error) error {
-		if callError != nil {
-			return fmt.Errorf("%s: %w", node, callError)
-		}
-
-		if mc.Metadata().Type() != config.MachineConfigType {
-			return fmt.Errorf("%s: unsupported resource type: %s", node, mc.Metadata().Type())
-		}
-
-		if mc.Metadata().ID() != config.ActiveID {
-			return nil
-		}
-
+func patchFn(patches []configpatcher.Patch) func(context.Context, *client.Client, string, resource.Resource) error {
+	return func(ctx context.Context, c *client.Client, node string, mc resource.Resource) error {
 		body, err := extractMachineConfigBody(mc)
 		if err != nil {
 			return err
@@ -134,33 +121,33 @@ var patchCmd = &cobra.Command{
 	Short: "Patch machine configuration of a Talos node with a local patch.",
 	Args:  cobra.RangeArgs(1, 2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClient(cmd.Context(), func(ctx context.Context, c *client.Client) error {
-			if patchCmdFlags.patchFile != "" {
-				patchCmdFlags.patch = append(patchCmdFlags.patch, "@"+patchCmdFlags.patchFile)
-			}
+		if patchCmdFlags.patchFile != "" {
+			patchCmdFlags.patch = append(patchCmdFlags.patch, "@"+patchCmdFlags.patchFile)
+		}
 
-			if len(patchCmdFlags.patch) == 0 {
-				return errors.New("either --patch or --patch-file should be defined")
-			}
+		if len(patchCmdFlags.patch) == 0 {
+			return errors.New("either --patch or --patch-file should be defined")
+		}
 
-			patches, err := configpatcher.LoadPatches(patchCmdFlags.patch)
-			if err != nil {
-				return err
-			}
+		patches, err := configpatcher.LoadPatches(patchCmdFlags.patch)
+		if err != nil {
+			return err
+		}
 
-			if err := helpers.ClientVersionCheckLegacy(ctx, c); err != nil { //nolint:staticcheck // to be refactored next
-				return err
-			}
+		ctx := cmd.Context()
 
-			for _, node := range GlobalArgs.Nodes {
-				nodeCtx := client.WithNodes(ctx, node) //nolint:staticcheck // to be refactored next
-				if err := helpers.ForEachResource(nodeCtx, c, nil, patchFn(c, patches), patchCmdFlags.namespace, args...); err != nil {
-					return err
-				}
-			}
+		clientFactory, err := NewClientFactory(ctx, &patchCmdFlags)
+		if err != nil {
+			return err
+		}
 
-			return nil
-		})
+		defer clientFactory.Close() //nolint:errcheck
+
+		if err := helpers.ClientVersionCheck(ctx, clientFactory); err != nil {
+			return err
+		}
+
+		return helpers.MachineConfigUpdater(ctx, clientFactory, patchFn(patches), args)
 	},
 }
 

@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/protobuf/types/known/emptypb"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/api/storage"
 	"github.com/siderolabs/talos/pkg/machinery/client"
@@ -28,11 +29,12 @@ var wipeCmd = &cobra.Command{
 }
 
 var wipeDiskCmdFlags struct {
+	global.InsecureFlags
+
 	wipeMethod         string
 	skipVolumeCheck    bool
 	skipSecondaryCheck bool
 	dropPartition      bool
-	insecure           bool
 }
 
 // wipeDiskCmd represents the wipe disk command.
@@ -44,33 +46,53 @@ var wipeDiskCmd = &cobra.Command{
 Use device names as arguments, for example: vda or sda5.`,
 	Args: cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if wipeDiskCmdFlags.insecure {
-			return WithClientMaintenance(cmd.Context(), nil, cmdWipe(args))
-		}
-
-		return WithClient(cmd.Context(), cmdWipe(args))
+		return cmdWipe(cmd.Context(), args)
 	},
 }
 
-func cmdWipe(args []string) func(ctx context.Context, c *client.Client) error {
-	return func(ctx context.Context, c *client.Client) error {
-		method, ok := storage.BlockDeviceWipeDescriptor_Method_value[wipeDiskCmdFlags.wipeMethod]
-		if !ok {
-			return fmt.Errorf("invalid wipe method %q", wipeDiskCmdFlags.wipeMethod)
-		}
-
-		return c.BlockDeviceWipe(ctx, &storage.BlockDeviceWipeRequest{
-			Devices: xslices.Map(args, func(devName string) *storage.BlockDeviceWipeDescriptor {
-				return &storage.BlockDeviceWipeDescriptor{
-					Device:             devName,
-					Method:             storage.BlockDeviceWipeDescriptor_Method(method),
-					SkipVolumeCheck:    wipeDiskCmdFlags.skipVolumeCheck,
-					SkipSecondaryCheck: wipeDiskCmdFlags.skipSecondaryCheck,
-					DropPartition:      wipeDiskCmdFlags.dropPartition,
-				}
-			}),
-		})
+func cmdWipe(ctx context.Context, args []string) error {
+	clientFactory, err := NewClientFactory(ctx, &wipeDiskCmdFlags)
+	if err != nil {
+		return err
 	}
+
+	defer clientFactory.Close() //nolint:errcheck
+
+	method, ok := storage.BlockDeviceWipeDescriptor_Method_value[wipeDiskCmdFlags.wipeMethod]
+	if !ok {
+		return fmt.Errorf("invalid wipe method %q", wipeDiskCmdFlags.wipeMethod)
+	}
+
+	respCh := multiplex.UnaryViaFactory(
+		ctx, clientFactory,
+		func(ctx context.Context, c *client.Client) (struct{}, error) {
+			return struct{}{}, c.BlockDeviceWipe(
+				ctx, &storage.BlockDeviceWipeRequest{
+					Devices: xslices.Map(
+						args, func(devName string) *storage.BlockDeviceWipeDescriptor {
+							return &storage.BlockDeviceWipeDescriptor{
+								Device:             devName,
+								Method:             storage.BlockDeviceWipeDescriptor_Method(method),
+								SkipVolumeCheck:    wipeDiskCmdFlags.skipVolumeCheck,
+								SkipSecondaryCheck: wipeDiskCmdFlags.skipSecondaryCheck,
+								DropPartition:      wipeDiskCmdFlags.dropPartition,
+							}
+						},
+					),
+				},
+			)
+		},
+	)
+
+	var errs error
+
+	for resp := range respCh {
+		if resp.Err != nil {
+			errs = errors.Join(errs, fmt.Errorf("error wiping device on node %s: %w", resp.Node, resp.Err))
+		}
+	}
+
+	return errs
 }
 
 func wipeMethodValues() []string {
@@ -86,7 +108,7 @@ func wipeMethodValues() []string {
 }
 
 var wipeLVMCmdFlags struct {
-	insecure bool
+	global.InsecureFlags
 }
 
 // wipeLVCmd removes a single LVM logical volume.
@@ -103,38 +125,34 @@ The argument is the qualified logical-volume name, e.g. vg0/lv0.`,
 			return fmt.Errorf("invalid logical volume %q, expected <vg>/<lv>", args[0])
 		}
 
-		if wipeLVMCmdFlags.insecure {
-			return WithClientMaintenance(cmd.Context(), nil, func(ctx context.Context, c *client.Client) error {
-				_, err := c.LVMClient.LogicalVolumeRemove(ctx, &machine.LVMServiceLogicalVolumeRemoveRequest{
+		ctx := cmd.Context()
+
+		clientFactory, err := NewClientFactory(ctx, &wipeLVMCmdFlags)
+		if err != nil {
+			return err
+		}
+
+		defer clientFactory.Close() //nolint:errcheck
+
+		responseChan := multiplex.UnaryViaFactory(
+			ctx, clientFactory,
+			func(ctx context.Context, c *client.Client) (*emptypb.Empty, error) {
+				return c.LVMClient.LogicalVolumeRemove(ctx, &machine.LVMServiceLogicalVolumeRemoveRequest{
 					VolumeGroup:   vg,
 					LogicalVolume: lv,
 				})
+			},
+		)
 
-				return err
-			})
+		var errs error
+
+		for resp := range responseChan {
+			if resp.Err != nil {
+				errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+			}
 		}
 
-		return WithClientAndNodes(cmd.Context(), func(ctx context.Context, c *client.Client, nodes []string) error {
-			responseChan := multiplex.Unary(
-				ctx, nodes,
-				func(ctx context.Context) (*emptypb.Empty, error) {
-					return c.LVMClient.LogicalVolumeRemove(ctx, &machine.LVMServiceLogicalVolumeRemoveRequest{
-						VolumeGroup:   vg,
-						LogicalVolume: lv,
-					})
-				},
-			)
-
-			var errs error
-
-			for resp := range responseChan {
-				if resp.Err != nil {
-					errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
-				}
-			}
-
-			return errs
-		})
+		return errs
 	},
 }
 
@@ -152,36 +170,33 @@ labels and remain claimable until you run "talosctl wipe pv".`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		vg := args[0]
 
-		if wipeLVMCmdFlags.insecure {
-			return WithClientMaintenance(cmd.Context(), nil, func(ctx context.Context, c *client.Client) error {
-				_, err := c.LVMClient.VolumeGroupRemove(ctx, &machine.LVMServiceVolumeGroupRemoveRequest{
-					VolumeGroup: vg,
-				})
+		ctx := cmd.Context()
 
-				return err
-			})
+		clientFactory, err := NewClientFactory(ctx, &wipeLVMCmdFlags)
+		if err != nil {
+			return err
 		}
 
-		return WithClientAndNodes(cmd.Context(), func(ctx context.Context, c *client.Client, nodes []string) error {
-			responseChan := multiplex.Unary(
-				ctx, nodes,
-				func(ctx context.Context) (*emptypb.Empty, error) {
-					return c.LVMClient.VolumeGroupRemove(ctx, &machine.LVMServiceVolumeGroupRemoveRequest{
-						VolumeGroup: vg,
-					})
-				},
-			)
+		defer clientFactory.Close() //nolint:errcheck
 
-			var errs error
+		responseChan := multiplex.UnaryViaFactory(
+			ctx, clientFactory,
+			func(ctx context.Context, c *client.Client) (*emptypb.Empty, error) {
+				return c.LVMClient.VolumeGroupRemove(ctx, &machine.LVMServiceVolumeGroupRemoveRequest{
+					VolumeGroup: vg,
+				})
+			},
+		)
 
-			for resp := range responseChan {
-				if resp.Err != nil {
-					errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
-				}
+		var errs error
+
+		for resp := range responseChan {
+			if resp.Err != nil {
+				errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
 			}
+		}
 
-			return errs
-		})
+		return errs
 	},
 }
 
@@ -198,36 +213,33 @@ The argument is a full device path, e.g. /dev/sda1.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		device := args[0]
 
-		if wipeLVMCmdFlags.insecure {
-			return WithClientMaintenance(cmd.Context(), nil, func(ctx context.Context, c *client.Client) error {
-				_, err := c.LVMClient.PhysicalVolumeRemove(ctx, &machine.LVMServicePhysicalVolumeRemoveRequest{
-					Device: device,
-				})
+		ctx := cmd.Context()
 
-				return err
-			})
+		clientFactory, err := NewClientFactory(ctx, &wipeLVMCmdFlags)
+		if err != nil {
+			return err
 		}
 
-		return WithClientAndNodes(cmd.Context(), func(ctx context.Context, c *client.Client, nodes []string) error {
-			responseChan := multiplex.Unary(
-				ctx, nodes,
-				func(ctx context.Context) (*emptypb.Empty, error) {
-					return c.LVMClient.PhysicalVolumeRemove(ctx, &machine.LVMServicePhysicalVolumeRemoveRequest{
-						Device: device,
-					})
-				},
-			)
+		defer clientFactory.Close() //nolint:errcheck
 
-			var errs error
+		responseChan := multiplex.UnaryViaFactory(
+			ctx, clientFactory,
+			func(ctx context.Context, c *client.Client) (*emptypb.Empty, error) {
+				return c.LVMClient.PhysicalVolumeRemove(ctx, &machine.LVMServicePhysicalVolumeRemoveRequest{
+					Device: device,
+				})
+			},
+		)
 
-			for resp := range responseChan {
-				if resp.Err != nil {
-					errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
-				}
+		var errs error
+
+		for resp := range responseChan {
+			if resp.Err != nil {
+				errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
 			}
+		}
 
-			return errs
-		})
+		return errs
 	},
 }
 
@@ -240,10 +252,10 @@ func init() {
 	wipeDiskCmd.Flags().BoolVar(&wipeDiskCmdFlags.dropPartition, "drop-partition", false, "drop partition after wipe (if applicable)")
 	wipeDiskCmd.Flags().MarkHidden("skip-volume-check")    //nolint:errcheck
 	wipeDiskCmd.Flags().MarkHidden("skip-secondary-check") //nolint:errcheck
-	wipeDiskCmd.Flags().BoolVarP(&wipeDiskCmdFlags.insecure, "insecure", "i", false, "use Talos maintenance mode API")
+	wipeDiskCmdFlags.InsecureFlags.AddFlags(wipeDiskCmd)
 
 	for _, c := range []*cobra.Command{wipeLVCmd, wipeVGCmd, wipePVCmd} {
-		c.Flags().BoolVarP(&wipeLVMCmdFlags.insecure, "insecure", "i", false, "use Talos maintenance mode API")
+		wipeLVMCmdFlags.InsecureFlags.AddFlags(c)
 	}
 
 	wipeCmd.AddCommand(wipeDiskCmd, wipeLVCmd, wipeVGCmd, wipePVCmd)

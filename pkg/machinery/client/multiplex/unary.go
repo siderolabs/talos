@@ -51,3 +51,55 @@ func Unary[ResponseT any](ctx context.Context, nodes []string, initiate func(con
 
 	return responseCh
 }
+
+// UnaryViaFactory is a helper which performs unary multiplexing using a ClientFactory to create clients for each node.
+func UnaryViaFactory[ResponseT any](ctx context.Context, factory ClientFactory, initiate func(context.Context, *client.Client) (ResponseT, error)) <-chan Response[ResponseT] {
+	responseCh := make(chan Response[ResponseT])
+
+	var wg sync.WaitGroup
+
+	for _, node := range factory.Nodes() {
+		wg.Go(func() {
+			ctx, client, err := factory.BuildClient(ctx, node)
+			if err != nil {
+				channel.SendWithContext(
+					ctx, responseCh,
+					Response[ResponseT]{
+						Node: node,
+						Err:  err,
+					},
+				)
+
+				return
+			}
+
+			response, err := initiate(ctx, client)
+			if err != nil {
+				channel.SendWithContext(
+					ctx, responseCh,
+					Response[ResponseT]{
+						Node: node,
+						Err:  err,
+					},
+				)
+
+				return
+			}
+
+			channel.SendWithContext(
+				ctx, responseCh,
+				Response[ResponseT]{
+					Node:    node,
+					Payload: response,
+				},
+			)
+		})
+	}
+
+	go func() {
+		wg.Wait()
+		close(responseCh)
+	}()
+
+	return responseCh
+}

@@ -31,40 +31,44 @@ var restartCmd = &cobra.Command{
 		return getContainersFromNode(cmd.Context(), kubernetesFlag), cobra.ShellCompDirectiveNoFileComp
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClientAndNodes(cmd.Context(), func(ctx context.Context, c *client.Client, nodes []string) error {
-			ctx, cancel := context.WithCancel(ctx)
-			defer cancel()
+		ctx := cmd.Context()
 
-			var (
-				namespace string
-				driver    common.ContainerDriver
-			)
+		clientFactory, err := NewClientFactory(ctx, nil)
+		if err != nil {
+			return err
+		}
 
-			if kubernetesFlag {
-				namespace = constants.K8sContainerdNamespace
-				driver = common.ContainerDriver_CRI
-			} else {
-				namespace = constants.SystemContainerdNamespace
-				driver = common.ContainerDriver_CONTAINERD
+		defer clientFactory.Close() //nolint:errcheck
+
+		var (
+			namespace string
+			driver    common.ContainerDriver
+		)
+
+		if kubernetesFlag {
+			namespace = constants.K8sContainerdNamespace
+			driver = common.ContainerDriver_CRI
+		} else {
+			namespace = constants.SystemContainerdNamespace
+			driver = common.ContainerDriver_CONTAINERD
+		}
+
+		responseChan := multiplex.UnaryViaFactory(
+			ctx, clientFactory,
+			func(ctx context.Context, c *client.Client) (struct{}, error) {
+				return struct{}{}, c.Restart(ctx, namespace, driver, args[0])
+			},
+		)
+
+		var errs error
+
+		for resp := range responseChan {
+			if resp.Err != nil {
+				errs = errors.Join(errs, fmt.Errorf("error restarting process on node %s: %w", resp.Node, resp.Err))
 			}
+		}
 
-			responseChan := multiplex.Unary(
-				ctx, nodes,
-				func(ctx context.Context) (struct{}, error) {
-					return struct{}{}, c.Restart(ctx, namespace, driver, args[0])
-				},
-			)
-
-			var errs error
-
-			for resp := range responseChan {
-				if resp.Err != nil {
-					errs = errors.Join(errs, fmt.Errorf("error restarting process on node %s: %w", resp.Node, resp.Err))
-				}
-			}
-
-			return errs
-		})
+		return errs
 	},
 }
 

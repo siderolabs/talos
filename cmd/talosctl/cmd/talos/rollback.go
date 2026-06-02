@@ -21,27 +21,31 @@ var rollbackCmd = &cobra.Command{
 	Short: "Rollback a node to the previous installation",
 	Long:  ``,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClientAndNodes(cmd.Context(), func(ctx context.Context, c *client.Client, nodes []string) error {
-			ctx, cancel := context.WithCancel(ctx)
-			defer cancel()
+		ctx := cmd.Context()
 
-			responseChan := multiplex.Unary(
-				ctx, nodes,
-				func(ctx context.Context) (struct{}, error) {
-					return struct{}{}, c.Rollback(ctx)
-				},
-			)
+		clientFactory, err := NewClientFactory(ctx, nil)
+		if err != nil {
+			return err
+		}
 
-			var errs error
+		defer clientFactory.Close() //nolint:errcheck
 
-			for resp := range responseChan {
-				if resp.Err != nil {
-					errs = errors.Join(errs, fmt.Errorf("error executing rollback on node %s: %w", resp.Node, resp.Err))
-				}
+		responseChan := multiplex.UnaryViaFactory(
+			ctx, clientFactory,
+			func(ctx context.Context, c *client.Client) (struct{}, error) {
+				return struct{}{}, c.Rollback(ctx)
+			},
+		)
+
+		var errs error
+
+		for resp := range responseChan {
+			if resp.Err != nil {
+				errs = errors.Join(errs, fmt.Errorf("error executing rollback on node %s: %w", resp.Node, resp.Err))
 			}
+		}
 
-			return errs
-		})
+		return errs
 	},
 }
 

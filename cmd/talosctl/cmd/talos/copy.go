@@ -5,7 +5,6 @@
 package talos
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -16,7 +15,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
-	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
 // cpCmd represents the cp command.
@@ -44,39 +42,51 @@ captures ownership and permission bits.`,
 		return nil, cobra.ShellCompDirectiveError | cobra.ShellCompDirectiveNoFileComp
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClientAndSingleNode(cmd.Context(), "copy", func(ctx context.Context, c *client.Client, _ string) error {
-			r, err := c.Copy(ctx, args[0])
-			if err != nil {
-				return fmt.Errorf("error copying: %w", err)
+		ctx := cmd.Context()
+
+		clientFactory, err := NewClientFactory(ctx, nil)
+		if err != nil {
+			return err
+		}
+
+		defer clientFactory.Close() //nolint:errcheck
+
+		ctx, c, _, err := clientFactory.BuildClientEnforceSingleNode(ctx, "copy")
+		if err != nil {
+			return err
+		}
+
+		r, err := c.Copy(ctx, args[0])
+		if err != nil {
+			return fmt.Errorf("error copying: %w", err)
+		}
+
+		localPath := args[1]
+
+		if localPath == "-" {
+			_, err = io.Copy(os.Stdout, r)
+
+			return err
+		}
+
+		localPath = filepath.Clean(localPath)
+
+		fi, err := os.Stat(localPath)
+		if err == nil && !fi.IsDir() {
+			return fmt.Errorf("local path %q should be a directory", args[1])
+		}
+
+		if err != nil {
+			if !errors.Is(err, fs.ErrNotExist) {
+				return fmt.Errorf("failed to stat local path: %w", err)
 			}
 
-			localPath := args[1]
-
-			if localPath == "-" {
-				_, err = io.Copy(os.Stdout, r)
-
-				return err
+			if err = os.MkdirAll(localPath, 0o777); err != nil {
+				return fmt.Errorf("error creating local path %q: %w", localPath, err)
 			}
+		}
 
-			localPath = filepath.Clean(localPath)
-
-			fi, err := os.Stat(localPath)
-			if err == nil && !fi.IsDir() {
-				return fmt.Errorf("local path %q should be a directory", args[1])
-			}
-
-			if err != nil {
-				if !errors.Is(err, fs.ErrNotExist) {
-					return fmt.Errorf("failed to stat local path: %w", err)
-				}
-
-				if err = os.MkdirAll(localPath, 0o777); err != nil {
-					return fmt.Errorf("error creating local path %q: %w", localPath, err)
-				}
-			}
-
-			return helpers.ExtractTarGz(localPath, r)
-		})
+		return helpers.ExtractTarGz(localPath, r)
 	},
 }
 

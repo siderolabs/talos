@@ -23,7 +23,9 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 )
 
-var sortMethod string
+var processesCmdFlags struct {
+	sortMethod string
+}
 
 // processesCmd represents the processes command.
 var processesCmd = &cobra.Command{
@@ -33,66 +35,70 @@ var processesCmd = &cobra.Command{
 	Long:    ``,
 	Args:    cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClientAndNodes(cmd.Context(), func(ctx context.Context, c *client.Client, nodes []string) error {
-			ctx, cancel := context.WithCancel(ctx)
-			defer cancel()
+		ctx := cmd.Context()
 
-			responseChan := multiplex.Unary(
-				ctx, nodes,
-				func(ctx context.Context) (*machineapi.ProcessesResponse, error) {
-					return c.Processes(ctx)
-				},
-			)
+		clientFactory, err := NewClientFactory(ctx, nil)
+		if err != nil {
+			return err
+		}
 
-			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-			fmt.Fprintln(w, "NODE\tPID\tSTATE\tTHREADS\tCPU-TIME\tVIRTMEM\tRESMEM\tLABEL\tCOMMAND")
+		defer clientFactory.Close() //nolint:errcheck
 
-			flushTimer := time.NewTimer(outputFlushInterval)
-			defer flushTimer.Stop()
+		responseChan := multiplex.UnaryViaFactory(
+			ctx, clientFactory,
+			func(ctx context.Context, c *client.Client) (*machineapi.ProcessesResponse, error) {
+				return c.Processes(ctx)
+			},
+		)
 
-			flushTimer.Stop()
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		fmt.Fprintln(w, "NODE\tPID\tSTATE\tTHREADS\tCPU-TIME\tVIRTMEM\tRESMEM\tLABEL\tCOMMAND")
 
-			var errs error
+		flushTimer := time.NewTimer(outputFlushInterval)
+		defer flushTimer.Stop()
 
-			for {
-				select {
-				case resp, ok := <-responseChan:
-					if !ok {
-						return errors.Join(errs, w.Flush())
-					}
+		flushTimer.Stop()
 
-					if resp.Err != nil {
-						errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
-					} else {
-						for _, msg := range resp.Payload.Messages {
-							procs := msg.Processes
+		var errs error
 
-							switch sortMethod {
-							case "cpu":
-								by(cpu).sort(procs)
-							default:
-								by(rss).sort(procs)
-							}
+		for {
+			select {
+			case resp, ok := <-responseChan:
+				if !ok {
+					return errors.Join(errs, w.Flush())
+				}
 
-							for _, p := range procs {
-								fmt.Fprintf(
-									w, "%s\t%d\t%s\t%d\t%.2f\t%s\t%s\t%s\t%s\n",
-									resp.Node, p.Pid, p.State, p.Threads, p.CpuTime,
-									humanize.Bytes(p.VirtualMemory), humanize.Bytes(p.ResidentMemory),
-									p.Label, processArgs(p),
-								)
-							}
+				if resp.Err != nil {
+					errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+				} else {
+					for _, msg := range resp.Payload.Messages {
+						procs := msg.Processes
+
+						switch processesCmdFlags.sortMethod {
+						case "cpu":
+							by(cpu).sort(procs)
+						default:
+							by(rss).sort(procs)
+						}
+
+						for _, p := range procs {
+							fmt.Fprintf(
+								w, "%s\t%d\t%s\t%d\t%.2f\t%s\t%s\t%s\t%s\n",
+								resp.Node, p.Pid, p.State, p.Threads, p.CpuTime,
+								humanize.Bytes(p.VirtualMemory), humanize.Bytes(p.ResidentMemory),
+								p.Label, processArgs(p),
+							)
 						}
 					}
+				}
 
-					flushTimer.Reset(outputFlushInterval)
-				case <-flushTimer.C:
-					if err := w.Flush(); err != nil {
-						errs = errors.Join(errs, fmt.Errorf("error flushing output: %w", err))
-					}
+				flushTimer.Reset(outputFlushInterval)
+			case <-flushTimer.C:
+				if err := w.Flush(); err != nil {
+					errs = errors.Join(errs, fmt.Errorf("error flushing output: %w", err))
 				}
 			}
-		})
+		}
 	},
 }
 
@@ -119,7 +125,7 @@ func processArgs(p *machineapi.ProcessInfo) string {
 }
 
 func init() {
-	processesCmd.Flags().StringVarP(&sortMethod, "sort", "s", "rss", "Column to sort output by. [rss|cpu]")
+	processesCmd.Flags().StringVarP(&processesCmdFlags.sortMethod, "sort", "s", "rss", "Column to sort output by. [rss|cpu]")
 	addCommand(processesCmd)
 }
 

@@ -31,73 +31,77 @@ var containersCmd = &cobra.Command{
 	Long:    ``,
 	Args:    cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClientAndNodes(cmd.Context(), func(ctx context.Context, c *client.Client, nodes []string) error {
-			ctx, cancel := context.WithCancel(ctx)
-			defer cancel()
+		ctx := cmd.Context()
 
-			var (
-				namespace string
-				driver    common.ContainerDriver
-			)
+		clientFactory, err := NewClientFactory(ctx, nil)
+		if err != nil {
+			return err
+		}
 
-			if kubernetesFlag {
-				namespace = constants.K8sContainerdNamespace
-				driver = common.ContainerDriver_CRI
-			} else {
-				namespace = constants.SystemContainerdNamespace
-				driver = common.ContainerDriver_CONTAINERD
-			}
+		defer clientFactory.Close() //nolint:errcheck
 
-			responseChan := multiplex.Unary(
-				ctx, nodes,
-				func(ctx context.Context) (*machineapi.ContainersResponse, error) {
-					return c.Containers(ctx, namespace, driver)
-				},
-			)
+		var (
+			namespace string
+			driver    common.ContainerDriver
+		)
 
-			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-			fmt.Fprintln(w, "NODE\tNAMESPACE\tID\tIMAGE\tPID\tSTATUS")
+		if kubernetesFlag {
+			namespace = constants.K8sContainerdNamespace
+			driver = common.ContainerDriver_CRI
+		} else {
+			namespace = constants.SystemContainerdNamespace
+			driver = common.ContainerDriver_CONTAINERD
+		}
 
-			flushTimer := time.NewTimer(outputFlushInterval)
-			defer flushTimer.Stop()
+		responseChan := multiplex.UnaryViaFactory(
+			ctx, clientFactory,
+			func(ctx context.Context, c *client.Client) (*machineapi.ContainersResponse, error) {
+				return c.Containers(ctx, namespace, driver)
+			},
+		)
 
-			flushTimer.Stop()
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		fmt.Fprintln(w, "NODE\tNAMESPACE\tID\tIMAGE\tPID\tSTATUS")
 
-			var errs error
+		flushTimer := time.NewTimer(outputFlushInterval)
+		defer flushTimer.Stop()
 
-			for {
-				select {
-				case resp, ok := <-responseChan:
-					if !ok {
-						return errors.Join(errs, w.Flush())
-					}
+		flushTimer.Stop()
 
-					if resp.Err != nil {
-						errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
-					} else {
-						for _, msg := range resp.Payload.Messages {
-							slices.SortFunc(msg.Containers, func(a, b *machineapi.ContainerInfo) int { return strings.Compare(a.Id, b.Id) })
+		var errs error
 
-							for _, p := range msg.Containers {
-								display := p.Id
-								if p.Id != p.PodId {
-									// container in a sandbox
-									display = "└─ " + display
-								}
+		for {
+			select {
+			case resp, ok := <-responseChan:
+				if !ok {
+					return errors.Join(errs, w.Flush())
+				}
 
-								fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%d\t%s\n", resp.Node, p.Namespace, display, p.Image, p.Pid, p.Status)
+				if resp.Err != nil {
+					errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+				} else {
+					for _, msg := range resp.Payload.Messages {
+						slices.SortFunc(msg.Containers, func(a, b *machineapi.ContainerInfo) int { return strings.Compare(a.Id, b.Id) })
+
+						for _, p := range msg.Containers {
+							display := p.Id
+							if p.Id != p.PodId {
+								// container in a sandbox
+								display = "└─ " + display
 							}
+
+							fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%d\t%s\n", resp.Node, p.Namespace, display, p.Image, p.Pid, p.Status)
 						}
 					}
+				}
 
-					flushTimer.Reset(outputFlushInterval)
-				case <-flushTimer.C:
-					if err := w.Flush(); err != nil {
-						errs = errors.Join(errs, fmt.Errorf("error flushing output: %w", err))
-					}
+				flushTimer.Reset(outputFlushInterval)
+			case <-flushTimer.C:
+				if err := w.Flush(); err != nil {
+					errs = errors.Join(errs, fmt.Errorf("error flushing output: %w", err))
 				}
 			}
-		})
+		}
 	},
 }
 

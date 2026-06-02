@@ -16,19 +16,19 @@ talosctl apply-config [flags]
 ### Options
 
 ```
-      --cert-fingerprint strings                    list of server certificate fingeprints to accept (defaults to no check)
-  -c, --cluster string                              Cluster to connect to if a proxy endpoint is used.
+      --cert-fingerprint strings                    list of server certificate fingerprints to accept (defaults to no check, only used with --insecure flag)
+  -c, --cluster string                              cluster to connect to if a proxy endpoint is used
   -p, --config-patch stringArray                    the list of config patches to apply to the local config file before sending it to the node
-      --context string                              Context to be used in command
+      --context string                              context to be used in command
       --dry-run                                     check how the config change will be applied in dry-run mode
   -e, --endpoints strings                           override default endpoints in Talos configuration
   -f, --file string                                 the filename of the updated configuration
   -h, --help                                        help for apply-config
-  -i, --insecure                                    apply the config using the insecure (encrypted with no auth) maintenance service
+  -i, --insecure                                    use the insecure (encrypted with no auth) maintenance service
   -m, --mode auto, no-reboot, reboot, staged, try   apply config mode (default auto)
   -n, --nodes strings                               target the specified nodes
-      --siderov1-keys-dir string                    The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string                          The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string                    the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string                          the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
       --timeout duration                            the config will be rolled back after specified timeout (if try mode is selected) (default 1m0s)
 ```
 
@@ -58,15 +58,15 @@ talosctl bootstrap [flags]
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for bootstrap
   -n, --nodes strings              target the specified nodes
       --recover-from string        recover etcd cluster from the snapshot
       --recover-skip-hash-check    skip integrity check when recovering etcd (use when recovering from data directory copy)
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -102,16 +102,16 @@ talosctl cgroups [flags]
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for cgroups
   -n, --nodes strings              target the specified nodes
       --preset string              preset name (one of: [cpu cpuset io memory process psi swap])
       --schema-file string         path to the columns schema file
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --skip-cri-resolve           do not resolve cgroup names via a request to CRI
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -818,12 +818,12 @@ talosctl config add <context> [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -847,12 +847,12 @@ talosctl config context <context> [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -876,12 +876,12 @@ talosctl config contexts [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -905,12 +905,12 @@ talosctl config endpoint <endpoint>... [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -935,12 +935,12 @@ talosctl config info [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -968,12 +968,12 @@ talosctl config merge <from> [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -999,12 +999,12 @@ talosctl config new [<path>] [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -1028,12 +1028,12 @@ talosctl config node <endpoint>... [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -1059,12 +1059,12 @@ talosctl config remove <context> [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -1078,13 +1078,13 @@ Manage the client configuration file (talosconfig)
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for config
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -1118,12 +1118,12 @@ talosctl conformance kubernetes [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -1137,13 +1137,13 @@ Run conformance tests
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for conformance
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -1162,14 +1162,14 @@ talosctl containers [flags]
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for containers
   -k, --kubernetes                 use the k8s.io containerd namespace
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -1198,13 +1198,13 @@ talosctl copy <src-path> -|<local-path> [flags]
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for copy
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -1238,13 +1238,13 @@ talosctl dashboard [flags]
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for dashboard
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
   -d, --update-interval duration   interval between updates (default 3s)
 ```
 
@@ -1274,14 +1274,14 @@ talosctl debug <image-tar-path|image ref> [args] [flags]
 
 ```
       --args strings               arguments to pass to the container
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for debug
       --namespace system           namespace to use: system (CRI containerd) or `inmem` for in-memory containerd instance (default "inmem")
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -1299,15 +1299,15 @@ talosctl dmesg [flags]
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -f, --follow                     specify if the kernel log should be streamed
   -h, --help                       help for dmesg
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --tail                       specify if only new messages should be sent (makes sense only when combined with --follow)
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -1334,16 +1334,16 @@ talosctl edit machineconfig [flags]
 ### Options
 
 ```
-  -c, --cluster string                              Cluster to connect to if a proxy endpoint is used.
-      --context string                              Context to be used in command
+  -c, --cluster string                              cluster to connect to if a proxy endpoint is used
+      --context string                              context to be used in command
       --dry-run                                     do not apply the change after editing and print the change summary instead
   -e, --endpoints strings                           override default endpoints in Talos configuration
   -h, --help                                        help for edit
   -m, --mode auto, no-reboot, reboot, staged, try   apply config mode (default auto)
       --namespace string                            resource namespace (default is to use default namespace per resource)
   -n, --nodes strings                               target the specified nodes
-      --siderov1-keys-dir string                    The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string                          The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string                    the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string                          the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
       --timeout duration                            the config will be rolled back after specified timeout (if try mode is selected) (default 1m0s)
 ```
 
@@ -1368,12 +1368,12 @@ talosctl etcd alarm disarm [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -1397,12 +1397,12 @@ talosctl etcd alarm list [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -1422,12 +1422,12 @@ Manage etcd alarms
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -1458,12 +1458,12 @@ talosctl etcd defrag [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -1487,12 +1487,12 @@ talosctl etcd downgrade cancel [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -1516,12 +1516,12 @@ talosctl etcd downgrade enable <version> [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -1545,12 +1545,12 @@ talosctl etcd downgrade validate <version> [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -1570,12 +1570,12 @@ Manage etcd storage system downgrades
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -1602,12 +1602,12 @@ talosctl etcd forfeit-leadership [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -1631,12 +1631,12 @@ talosctl etcd leave [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -1660,12 +1660,12 @@ talosctl etcd members [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -1695,12 +1695,12 @@ talosctl etcd remove-member <member ID> [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -1724,12 +1724,12 @@ talosctl etcd snapshot <path> [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -1757,12 +1757,12 @@ talosctl etcd status [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -1776,13 +1776,13 @@ Manage etcd
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for etcd
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -1810,16 +1810,16 @@ talosctl events [flags]
 
 ```
       --actor-id string            filter events by the specified actor ID (default is no filter)
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
       --duration duration          show events for the past duration interval (one second resolution, default is to show no history)
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for events
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --since string               show events after the specified event ID (default is to show no history)
       --tail int32                 show specified number of past events (use -1 to show full history, default is to show no history)
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -2180,16 +2180,17 @@ talosctl get <type> [<id>] [flags]
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+      --cert-fingerprint strings   list of server certificate fingerprints to accept (defaults to no check, only used with --insecure flag)
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for get
-  -i, --insecure                   get resources using the insecure (encrypted with no auth) maintenance service
+  -i, --insecure                   use the insecure (encrypted with no auth) maintenance service
       --namespace string           resource namespace (default is to use default namespace per resource)
   -n, --nodes strings              target the specified nodes
   -o, --output string              output mode (json, table, yaml, jsonpath) (default "table")
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
   -w, --watch                      watch resource changes
 ```
 
@@ -2208,8 +2209,8 @@ talosctl health [flags]
 ### Options
 
 ```
-  -c, --cluster string                Cluster to connect to if a proxy endpoint is used.
-      --context string                Context to be used in command
+  -c, --cluster string                cluster to connect to if a proxy endpoint is used
+      --context string                context to be used in command
       --control-plane-nodes strings   specify IPs of control plane nodes
   -e, --endpoints strings             override default endpoints in Talos configuration
   -h, --help                          help for health
@@ -2218,8 +2219,8 @@ talosctl health [flags]
   -n, --nodes strings                 target the specified nodes
       --run-e2e                       run Kubernetes e2e test
       --server                        run server-side check (default true)
-      --siderov1-keys-dir string      The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string            The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string      the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string            the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
       --wait-timeout duration         timeout to wait for the cluster to be ready (default 20m0s)
       --worker-nodes strings          specify IPs of worker nodes
 ```
@@ -2254,13 +2255,13 @@ talosctl image cache-cert-gen [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
       --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "cri")
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -2306,13 +2307,13 @@ talosctl images default | talosctl images cache-create --image-cache-path=/tmp/t
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
       --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "cri")
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -2345,13 +2346,13 @@ talosctl image cache-serve [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
       --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "cri")
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -2380,13 +2381,13 @@ talosctl image k8s-bundle [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
       --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "cri")
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -2410,13 +2411,13 @@ talosctl image list [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
       --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "cri")
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -2440,13 +2441,13 @@ talosctl image pull <image> [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
       --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "cri")
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -2470,13 +2471,13 @@ talosctl image remove <image> [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
       --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "cri")
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -2502,13 +2503,13 @@ talosctl image talos-bundle [talos-version] [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
       --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "cri")
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -2522,14 +2523,14 @@ Manage container images
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for image
       --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "cri")
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -2617,12 +2618,12 @@ talosctl inspect dependencies [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -2636,13 +2637,13 @@ Inspect internals of Talos
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for inspect
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -2669,16 +2670,16 @@ talosctl kubeconfig [local-path] [flags]
 ### Options
 
 ```
-  -c, --cluster string              Cluster to connect to if a proxy endpoint is used.
-      --context string              Context to be used in command
+  -c, --cluster string              cluster to connect to if a proxy endpoint is used
+      --context string              context to be used in command
   -e, --endpoints strings           override default endpoints in Talos configuration
   -f, --force                       Force overwrite of kubeconfig if already present, force overwrite on kubeconfig merge
       --force-context-name string   Force context name for kubeconfig merge
   -h, --help                        help for kubeconfig
   -m, --merge                       Merge with existing kubeconfig (default true)
   -n, --nodes strings               target the specified nodes
-      --siderov1-keys-dir string    The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string          The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string    the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string          the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -2696,8 +2697,8 @@ talosctl list [path] [flags]
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -d, --depth int32                maximum recursion depth (default 1)
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for list
@@ -2705,8 +2706,8 @@ talosctl list [path] [flags]
   -l, --long                       display additional file details
   -n, --nodes strings              target the specified nodes
   -r, --recurse                    recurse into subdirectories
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
   -t, --type strings               filter by specified types:
                                    f	regular file
                                    d	directory
@@ -2728,16 +2729,16 @@ talosctl logs <service name> [flags]
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -f, --follow                     specify if the logs should be streamed
   -h, --help                       help for logs
   -k, --kubernetes                 use the k8s.io containerd namespace
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --tail int32                 lines of log file to display (default is to show from the beginning) (default -1)
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -2816,13 +2817,13 @@ talosctl memory [flags]
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for memory
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
   -v, --verbose                    display extended memory statistics
 ```
 
@@ -2847,13 +2848,12 @@ talosctl meta delete key [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
-  -i, --insecure                   write|delete meta using the insecure (encrypted with no auth) maintenance service
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -2877,13 +2877,12 @@ talosctl meta write key value [flags]
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
-  -i, --insecure                   write|delete meta using the insecure (encrypted with no auth) maintenance service
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -2897,14 +2896,15 @@ Write and delete keys in the META partition
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+      --cert-fingerprint strings   list of server certificate fingerprints to accept (defaults to no check, only used with --insecure flag)
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for meta
-  -i, --insecure                   write|delete meta using the insecure (encrypted with no auth) maintenance service
+  -i, --insecure                   use the insecure (encrypted with no auth) maintenance service
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -2924,13 +2924,13 @@ talosctl mounts [flags]
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for mounts
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -2958,8 +2958,8 @@ talosctl netstat [flags]
 
 ```
   -a, --all                        display all sockets states (default: connected)
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -x, --extend                     show detailed socket information
   -h, --help                       help for netstat
@@ -2970,8 +2970,8 @@ talosctl netstat [flags]
   -k, --pods                       show sockets used by Kubernetes pods
   -p, --programs                   show process using socket
   -w, --raw                        display only RAW sockets
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
   -t, --tcp                        display only TCP sockets
   -o, --timers                     display timers
   -u, --udp                        display only UDP sockets
@@ -2994,8 +2994,8 @@ talosctl patch machineconfig [flags]
 ### Options
 
 ```
-  -c, --cluster string                              Cluster to connect to if a proxy endpoint is used.
-      --context string                              Context to be used in command
+  -c, --cluster string                              cluster to connect to if a proxy endpoint is used
+      --context string                              context to be used in command
       --dry-run                                     print the change summary and patch preview without applying the changes
   -e, --endpoints strings                           override default endpoints in Talos configuration
   -h, --help                                        help for patch
@@ -3004,8 +3004,8 @@ talosctl patch machineconfig [flags]
   -n, --nodes strings                               target the specified nodes
   -p, --patch stringArray                           the patch to be applied to the resource file, use @file to read a patch from file.
       --patch-file string                           a file containing a patch to be applied to the resource.
-      --siderov1-keys-dir string                    The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string                          The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string                    the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string                          the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
       --timeout duration                            the config will be rolled back after specified timeout (if try mode is selected) (default 1m0s)
 ```
 
@@ -3057,8 +3057,8 @@ e.g. by excluding packets with the port 50000.
 
 ```
       --bpf-filter string          bpf filter to apply, tcpdump -dd format
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
       --duration duration          duration of the capture
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for pcap
@@ -3066,8 +3066,8 @@ e.g. by excluding packets with the port 50000.
   -n, --nodes strings              target the specified nodes
   -o, --output string              if not set, decode packets to stdout; if set write raw pcap data to a file, use '-' for stdout
       --promiscuous                put interface into promiscuous mode
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -3085,14 +3085,14 @@ talosctl processes [flags]
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for processes
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
   -s, --sort string                Column to sort output by. [rss|cpu] (default "rss")
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -3110,13 +3110,13 @@ talosctl read <path> [flags]
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for read
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -3134,8 +3134,8 @@ talosctl reboot [flags]
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
       --debug                      debug operation from kernel logs. --wait is set to true when this flag is set
       --drain                      drain the Kubernetes node before rebooting (cordon + evict pods)
       --drain-timeout duration     timeout for draining the Kubernetes node (default 5m0s)
@@ -3144,8 +3144,8 @@ talosctl reboot [flags]
   -m, --mode string                select the reboot mode during upgrade. Mode "powercycle" bypasses kexec. Values: [default force powercycle] (default "default")
   -n, --nodes strings              target the specified nodes
       --progress string            output mode for upgrade progress. Values: [auto plain] (default "auto")
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
       --timeout duration           time to wait for the operation is complete if --debug or --wait is set (default 30m0s)
       --wait                       wait for the operation to complete, tracking its progress. always set to true when --debug is set (default true)
 ```
@@ -3165,18 +3165,17 @@ talosctl reset [flags]
 ### Options
 
 ```
-  -c, --cluster string                           Cluster to connect to if a proxy endpoint is used.
-      --context string                           Context to be used in command
+  -c, --cluster string                           cluster to connect to if a proxy endpoint is used
+      --context string                           context to be used in command
       --debug                                    debug operation from kernel logs. --wait is set to true when this flag is set
   -e, --endpoints strings                        override default endpoints in Talos configuration
       --graceful                                 if true, attempt to cordon/drain node and leave etcd (if applicable) (default true)
   -h, --help                                     help for reset
-      --insecure                                 reset using the insecure (encrypted with no auth) maintenance service
   -n, --nodes strings                            target the specified nodes
       --reboot                                   if true, reboot the node after resetting instead of shutting down
-      --siderov1-keys-dir string                 The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
+      --siderov1-keys-dir string                 the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --system-labels-to-wipe strings            if set, just wipe selected system disk partitions by label but keep other partitions intact
-      --talosconfig string                       The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --talosconfig string                       the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
       --timeout duration                         time to wait for the operation is complete if --debug or --wait is set (default 30m0s)
       --user-disks-to-wipe strings               if set, wipes defined devices in the list
       --wait                                     wait for the operation to complete, tracking its progress. always set to true when --debug is set (default true)
@@ -3198,14 +3197,14 @@ talosctl restart <id> [flags]
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for restart
   -k, --kubernetes                 use the k8s.io containerd namespace
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -3223,13 +3222,13 @@ talosctl rollback [flags]
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for rollback
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -3256,8 +3255,8 @@ talosctl rotate-ca [flags]
 ### Options
 
 ```
-  -c, --cluster string                Cluster to connect to if a proxy endpoint is used.
-      --context string                Context to be used in command
+  -c, --cluster string                cluster to connect to if a proxy endpoint is used
+      --context string                context to be used in command
       --control-plane-nodes strings   specify IPs of control plane nodes
       --dry-run                       dry-run mode (no changes to the cluster) (default true)
   -e, --endpoints strings             override default endpoints in Talos configuration
@@ -3267,9 +3266,9 @@ talosctl rotate-ca [flags]
       --kubernetes                    rotate Kubernetes API CA (default true)
   -n, --nodes strings                 target the specified nodes
   -o, --output talosconfig            path to the output new talosconfig (default "talosconfig")
-      --siderov1-keys-dir string      The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
+      --siderov1-keys-dir string      the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --talos                         rotate Talos API CA (default true)
-      --talosconfig string            The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --talosconfig string            the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
       --with-docs                     patch all machine configs adding the documentation for each field (default true)
       --with-examples                 patch all machine configs with the commented examples (default true)
       --worker-nodes strings          specify IPs of worker nodes
@@ -3296,13 +3295,13 @@ talosctl service [<id> [start|stop|restart|status]] [flags]
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for service
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -3320,15 +3319,15 @@ talosctl shutdown [flags]
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
       --debug                      debug operation from kernel logs. --wait is set to true when this flag is set
   -e, --endpoints strings          override default endpoints in Talos configuration
       --force                      if true, force a node to shutdown without a cordon/drain
   -h, --help                       help for shutdown
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
       --timeout duration           time to wait for the operation is complete if --debug or --wait is set (default 30m0s)
       --wait                       wait for the operation to complete, tracking its progress. always set to true when --debug is set (default true)
 ```
@@ -3348,14 +3347,14 @@ talosctl stats [flags]
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for stats
   -k, --kubernetes                 use the k8s.io containerd namespace
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -3401,8 +3400,8 @@ talosctl support [flags]
 ### Options
 
 ```
-  -c, --cluster string                      Cluster to connect to if a proxy endpoint is used.
-      --context string                      Context to be used in command
+  -c, --cluster string                      cluster to connect to if a proxy endpoint is used
+      --context string                      context to be used in command
       --encryption-no-default-recipients    do not encrypt to the default recipients, only to the ones provided via --encryption-recipients
       --encryption-recipients stringArray   additional age recipients (SSH or age public keys) to encrypt the support bundle to (can be specified multiple times)
   -e, --endpoints strings                   override default endpoints in Talos configuration
@@ -3411,8 +3410,8 @@ talosctl support [flags]
   -n, --nodes strings                       target the specified nodes
   -w, --num-workers int                     number of workers per node (default 1)
   -O, --output string                       output file to write support archive to
-      --siderov1-keys-dir string            The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string                  The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string            the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string                  the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
   -v, --verbose                             verbose output
 ```
 
@@ -3432,13 +3431,13 @@ talosctl time [--check server] [flags]
 
 ```
       --check string               checks server time against specified ntp server
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for time
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -3456,8 +3455,8 @@ talosctl upgrade [flags]
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
       --debug                      debug operation from kernel logs. --wait is set to true when this flag is set
       --drain                      drain the Kubernetes node before rebooting (cordon + evict pods) (default true)
       --drain-timeout duration     timeout for draining the Kubernetes node (default 5m0s)
@@ -3469,8 +3468,8 @@ talosctl upgrade [flags]
   -n, --nodes strings              target the specified nodes
       --progress string            output mode for upgrade progress. Values: [auto plain] (default "auto")
   -m, --reboot-mode string         select the reboot mode during upgrade. Mode "powercycle" bypasses kexec. Values: [default force powercycle] (default "default")
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
       --timeout duration           time to wait for the operation is complete if --debug or --wait is set (default 30m0s)
       --wait                       wait for the operation to complete, tracking its progress. always set to true when --debug is set (default true)
 ```
@@ -3495,8 +3494,8 @@ talosctl upgrade-k8s [flags]
 
 ```
       --apiserver-image string                 kube-apiserver image to use (default "registry.k8s.io/kube-apiserver")
-  -c, --cluster string                         Cluster to connect to if a proxy endpoint is used.
-      --context string                         Context to be used in command
+  -c, --cluster string                         cluster to connect to if a proxy endpoint is used
+      --context string                         context to be used in command
       --controller-manager-image string        kube-controller-manager image to use (default "registry.k8s.io/kube-controller-manager")
       --dry-run                                skip the actual upgrade and show the upgrade plan instead
       --endpoint string                        the cluster control plane endpoint
@@ -3512,8 +3511,8 @@ talosctl upgrade-k8s [flags]
       --pre-pull-images                        pre-pull images before upgrade (default true)
       --proxy-image string                     kube-proxy image to use (default "registry.k8s.io/kube-proxy")
       --scheduler-image string                 kube-scheduler image to use (default "registry.k8s.io/kube-scheduler")
-      --siderov1-keys-dir string               The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string                     The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string               the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string                     the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
       --to string                              the Kubernetes control plane version to upgrade to (default "1.36.1")
       --upgrade-kubelet                        upgrade kubelet service (default true)
       --with-docs                              patch all machine configs adding the documentation for each field (default true)
@@ -3536,15 +3535,15 @@ talosctl usage [path1] [path2] ... [pathN] [flags]
 
 ```
   -a, --all                        write counts for all files, not just directories
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -d, --depth int32                maximum recursion depth
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for usage
   -H, --humanize                   humanize size and time in the output
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
   -t, --threshold int              threshold exclude entries smaller than SIZE if positive, or entries greater than SIZE if negative
 ```
 
@@ -3584,16 +3583,17 @@ talosctl version [flags]
 ### Options
 
 ```
+      --cert-fingerprint strings   list of server certificate fingerprints to accept (defaults to no check, only used with --insecure flag)
       --client                     Print client version only
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for version
-  -i, --insecure                   use Talos maintenance mode API
+  -i, --insecure                   use the insecure (encrypted with no auth) maintenance service
   -n, --nodes strings              target the specified nodes
       --short                      Print the short version
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -3617,21 +3617,22 @@ talosctl wipe disk <device names>... [flags]
 ### Options
 
 ```
-      --drop-partition   drop partition after wipe (if applicable)
-  -h, --help             help for disk
-  -i, --insecure         use Talos maintenance mode API
-      --method string    wipe method to use [FAST ZEROES] (default "FAST")
+      --cert-fingerprint strings   list of server certificate fingerprints to accept (defaults to no check, only used with --insecure flag)
+      --drop-partition             drop partition after wipe (if applicable)
+  -h, --help                       help for disk
+  -i, --insecure                   use the insecure (encrypted with no auth) maintenance service
+      --method string              wipe method to use [FAST ZEROES] (default "FAST")
 ```
 
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -3655,19 +3656,20 @@ talosctl wipe lv <vg/lv> [flags]
 ### Options
 
 ```
-  -h, --help       help for lv
-  -i, --insecure   use Talos maintenance mode API
+      --cert-fingerprint strings   list of server certificate fingerprints to accept (defaults to no check, only used with --insecure flag)
+  -h, --help                       help for lv
+  -i, --insecure                   use the insecure (encrypted with no auth) maintenance service
 ```
 
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -3693,19 +3695,20 @@ talosctl wipe pv <device> [flags]
 ### Options
 
 ```
-  -h, --help       help for pv
-  -i, --insecure   use Talos maintenance mode API
+      --cert-fingerprint strings   list of server certificate fingerprints to accept (defaults to no check, only used with --insecure flag)
+  -h, --help                       help for pv
+  -i, --insecure                   use the insecure (encrypted with no auth) maintenance service
 ```
 
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -3732,19 +3735,20 @@ talosctl wipe vg <name> [flags]
 ### Options
 
 ```
-  -h, --help       help for vg
-  -i, --insecure   use Talos maintenance mode API
+      --cert-fingerprint strings   list of server certificate fingerprints to accept (defaults to no check, only used with --insecure flag)
+  -h, --help                       help for vg
+  -i, --insecure                   use the insecure (encrypted with no auth) maintenance service
 ```
 
 ### Options inherited from parent commands
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO
@@ -3758,13 +3762,13 @@ Wipe block device or volumes
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for wipe
   -n, --nodes strings              target the specified nodes
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
 ```
 
 ### SEE ALSO

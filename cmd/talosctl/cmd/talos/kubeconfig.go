@@ -6,7 +6,6 @@ package talos
 
 import (
 	"bufio"
-	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -20,7 +19,6 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
-	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
 const stdoutOutput = "-"
@@ -42,81 +40,93 @@ Otherwise, kubeconfig will be written to PWD or [local-path] if specified.
 If merge flag is false and [local-path] is "-", config will be written to stdout.`,
 	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClientAndSingleNode(cmd.Context(), "kubeconfig", func(ctx context.Context, c *client.Client, _ string) error {
-			var localPath string
+		ctx := cmd.Context()
 
-			if len(args) == 0 {
-				// no path given, use defaults
-				var err error
+		clientFactory, err := NewClientFactory(ctx, &kubeconfigFlags)
+		if err != nil {
+			return err
+		}
 
-				if kubeconfigFlags.merge {
-					localPath, err = kubeconfig.SinglePath()
-					if err != nil {
-						return err
-					}
-				} else {
-					localPath, err = os.Getwd()
-					if err != nil {
-						return fmt.Errorf("error getting current working directory: %s", err)
-					}
-				}
-			} else {
-				localPath = args[0]
-			}
+		defer clientFactory.Close() //nolint:errcheck
 
-			localPath = filepath.Clean(localPath)
+		ctx, c, _, err := clientFactory.BuildClientEnforceSingleNode(ctx, "kubeconfig")
+		if err != nil {
+			return err
+		}
 
-			st, err := os.Stat(localPath)
-			if err != nil {
-				if !errors.Is(err, fs.ErrNotExist) {
-					return fmt.Errorf("error checking path %q: %w", localPath, err)
-				}
+		var localPath string
 
-				err = os.MkdirAll(filepath.Dir(localPath), 0o755)
+		if len(args) == 0 {
+			// no path given, use defaults
+			var err error
+
+			if kubeconfigFlags.merge {
+				localPath, err = kubeconfig.SinglePath()
 				if err != nil {
 					return err
 				}
-			} else if st.IsDir() {
-				// only dir name was given, append `kubeconfig` by default
-				localPath = filepath.Join(localPath, "kubeconfig")
-			}
-
-			_, err = os.Stat(localPath)
-			if err == nil && !(kubeconfigFlags.force || kubeconfigFlags.merge) {
-				return fmt.Errorf("kubeconfig file already exists, use --force to overwrite: %q", localPath)
-			} else if err != nil {
-				if errors.Is(err, fs.ErrNotExist) {
-					// merge doesn't make sense if target path doesn't exist
-					kubeconfigFlags.merge = false
-				} else {
-					return fmt.Errorf("error checking path %q: %w", localPath, err)
+			} else {
+				localPath, err = os.Getwd()
+				if err != nil {
+					return fmt.Errorf("error getting current working directory: %s", err)
 				}
 			}
+		} else {
+			localPath = args[0]
+		}
 
-			r, err := c.KubeconfigRaw(ctx)
-			if err != nil {
-				return fmt.Errorf("error copying: %w", err)
+		localPath = filepath.Clean(localPath)
+
+		st, err := os.Stat(localPath)
+		if err != nil {
+			if !errors.Is(err, fs.ErrNotExist) {
+				return fmt.Errorf("error checking path %q: %w", localPath, err)
 			}
 
-			defer r.Close() //nolint:errcheck
-
-			data, err := helpers.ExtractFileFromTarGz("kubeconfig", r)
+			err = os.MkdirAll(filepath.Dir(localPath), 0o755)
 			if err != nil {
 				return err
 			}
+		} else if st.IsDir() {
+			// only dir name was given, append `kubeconfig` by default
+			localPath = filepath.Join(localPath, "kubeconfig")
+		}
 
-			if kubeconfigFlags.merge {
-				return extractAndMerge(data, localPath)
+		_, err = os.Stat(localPath)
+		if err == nil && !(kubeconfigFlags.force || kubeconfigFlags.merge) {
+			return fmt.Errorf("kubeconfig file already exists, use --force to overwrite: %q", localPath)
+		} else if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				// merge doesn't make sense if target path doesn't exist
+				kubeconfigFlags.merge = false
+			} else {
+				return fmt.Errorf("error checking path %q: %w", localPath, err)
 			}
+		}
 
-			if localPath == stdoutOutput {
-				_, err = os.Stdout.Write(data)
+		r, err := c.KubeconfigRaw(ctx)
+		if err != nil {
+			return fmt.Errorf("error copying: %w", err)
+		}
 
-				return err
-			}
+		defer r.Close() //nolint:errcheck
 
-			return os.WriteFile(localPath, data, 0o600)
-		})
+		data, err := helpers.ExtractFileFromTarGz("kubeconfig", r)
+		if err != nil {
+			return err
+		}
+
+		if kubeconfigFlags.merge {
+			return extractAndMerge(data, localPath)
+		}
+
+		if localPath == stdoutOutput {
+			_, err = os.Stdout.Write(data)
+
+			return err
+		}
+
+		return os.WriteFile(localPath, data, 0o600)
 	},
 }
 

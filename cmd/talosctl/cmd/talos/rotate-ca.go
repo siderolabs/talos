@@ -49,11 +49,25 @@ PKI can be rotated by applying machine config changes to the controlplane nodes.
 			return err
 		}
 
-		return WithClientAndSingleNode(cmd.Context(), "rotate-ca", rotateCA)
+		ctx := cmd.Context()
+
+		clientFactory, err := NewClientFactory(ctx, &rotateCACmdFlags)
+		if err != nil {
+			return err
+		}
+
+		defer clientFactory.Close() //nolint:errcheck
+
+		ctx, c, _, err := clientFactory.BuildClientEnforceSingleNode(ctx, "rotate-ca")
+		if err != nil {
+			return err
+		}
+
+		return rotateCA(ctx, c)
 	},
 }
 
-func rotateCA(ctx context.Context, c *client.Client, _ string) error {
+func rotateCA(ctx context.Context, c *client.Client) error {
 	commentsFlags := encoder.CommentsDisabled
 	if rotateCACmdFlags.withDocs {
 		commentsFlags |= encoder.CommentsDocs
@@ -65,7 +79,7 @@ func rotateCA(ctx context.Context, c *client.Client, _ string) error {
 
 	encoderOpt := encoder.WithComments(commentsFlags)
 
-	clusterInfo, err := buildClusterInfo(ctx, rotateCACmdFlags.clusterState)
+	clusterInfo, err := buildClusterInfo(ctx, c, rotateCACmdFlags.clusterState)
 	if err != nil {
 		return err
 	}

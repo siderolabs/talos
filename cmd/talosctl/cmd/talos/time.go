@@ -30,66 +30,70 @@ var timeCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClientAndNodes(cmd.Context(), func(ctx context.Context, c *client.Client, nodes []string) error {
-			ctx, cancel := context.WithCancel(ctx)
-			defer cancel()
+		ctx := cmd.Context()
 
-			responseChan := multiplex.Unary(
-				ctx, nodes,
-				func(ctx context.Context) (*timeapi.TimeResponse, error) {
-					if timeCmdFlags.ntpServer == "" {
-						return c.Time(ctx)
-					}
+		clientFactory, err := NewClientFactory(ctx, &timeCmdFlags)
+		if err != nil {
+			return err
+		}
 
-					return c.TimeCheck(ctx, timeCmdFlags.ntpServer)
-				},
-			)
+		defer clientFactory.Close() //nolint:errcheck
 
-			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-			fmt.Fprintln(w, "NODE\tNTP-SERVER\tNODE-TIME\tNTP-SERVER-TIME")
+		responseChan := multiplex.UnaryViaFactory(
+			ctx, clientFactory,
+			func(ctx context.Context, c *client.Client) (*timeapi.TimeResponse, error) {
+				if timeCmdFlags.ntpServer == "" {
+					return c.Time(ctx)
+				}
 
-			flushTimer := time.NewTimer(outputFlushInterval)
-			defer flushTimer.Stop()
+				return c.TimeCheck(ctx, timeCmdFlags.ntpServer)
+			},
+		)
 
-			flushTimer.Stop()
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		fmt.Fprintln(w, "NODE\tNTP-SERVER\tNODE-TIME\tNTP-SERVER-TIME")
 
-			var errs error
+		flushTimer := time.NewTimer(outputFlushInterval)
+		defer flushTimer.Stop()
 
-			for {
-				select {
-				case resp, ok := <-responseChan:
-					if !ok {
-						return errors.Join(errs, w.Flush())
-					}
+		flushTimer.Stop()
 
-					if resp.Err != nil {
-						errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
-					} else {
-						for _, msg := range resp.Payload.Messages {
-							if !msg.Localtime.IsValid() {
-								errs = errors.Join(errs, fmt.Errorf("node %s: error parsing local time", resp.Node))
+		var errs error
 
-								continue
-							}
+		for {
+			select {
+			case resp, ok := <-responseChan:
+				if !ok {
+					return errors.Join(errs, w.Flush())
+				}
 
-							if !msg.Remotetime.IsValid() {
-								errs = errors.Join(errs, fmt.Errorf("node %s: error parsing remote time", resp.Node))
+				if resp.Err != nil {
+					errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+				} else {
+					for _, msg := range resp.Payload.Messages {
+						if !msg.Localtime.IsValid() {
+							errs = errors.Join(errs, fmt.Errorf("node %s: error parsing local time", resp.Node))
 
-								continue
-							}
-
-							fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", resp.Node, msg.Server, msg.Localtime.AsTime().String(), msg.Remotetime.AsTime().String())
+							continue
 						}
-					}
 
-					flushTimer.Reset(outputFlushInterval)
-				case <-flushTimer.C:
-					if err := w.Flush(); err != nil {
-						errs = errors.Join(errs, fmt.Errorf("error flushing output: %w", err))
+						if !msg.Remotetime.IsValid() {
+							errs = errors.Join(errs, fmt.Errorf("node %s: error parsing remote time", resp.Node))
+
+							continue
+						}
+
+						fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", resp.Node, msg.Server, msg.Localtime.AsTime().String(), msg.Remotetime.AsTime().String())
 					}
 				}
+
+				flushTimer.Reset(outputFlushInterval)
+			case <-flushTimer.C:
+				if err := w.Flush(); err != nil {
+					errs = errors.Join(errs, fmt.Errorf("error flushing output: %w", err))
+				}
 			}
-		})
+		}
 	},
 }
 

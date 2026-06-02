@@ -5,14 +5,12 @@
 package talos
 
 import (
-	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/pkg/cluster"
 	"github.com/siderolabs/talos/pkg/cluster/hydrophone"
-	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
 // conformanceCmd represents the conformance command.
@@ -33,32 +31,44 @@ var conformanceKubernetesCmd = &cobra.Command{
 	Long:    ``,
 	Args:    cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClientAndSingleNode(cmd.Context(), "conformance", func(ctx context.Context, c *client.Client, _ string) error {
-			clientProvider := &cluster.ConfigClientProvider{
-				DefaultClient: c,
-			}
-			defer clientProvider.Close() //nolint:errcheck
+		ctx := cmd.Context()
 
-			state := struct {
-				cluster.K8sProvider
-			}{
-				K8sProvider: &cluster.KubernetesClient{
-					ClientProvider: clientProvider,
-					ForceEndpoint:  healthCmdFlags.forceEndpoint,
-				},
-			}
+		clientFactory, err := NewClientFactory(ctx, &conformanceKubernetesCmdFlags)
+		if err != nil {
+			return err
+		}
 
-			switch conformanceKubernetesCmdFlags.mode {
-			case "fast":
-				return hydrophone.FastConformance(ctx, &state)
-			case "certified":
-				return hydrophone.CertifiedConformance(ctx, &state)
-			case "network-policy":
-				return hydrophone.NetworkPolicies(ctx, &state)
-			default:
-				return fmt.Errorf("unsupported conformance mode %v", conformanceKubernetesCmdFlags.mode)
-			}
-		})
+		defer clientFactory.Close() //nolint:errcheck
+
+		ctx, c, _, err := clientFactory.BuildClientEnforceSingleNode(ctx, "conformance")
+		if err != nil {
+			return err
+		}
+
+		clientProvider := &cluster.ConfigClientProvider{
+			DefaultClient: c,
+		}
+		defer clientProvider.Close() //nolint:errcheck
+
+		state := struct {
+			cluster.K8sProvider
+		}{
+			K8sProvider: &cluster.KubernetesClient{
+				ClientProvider: clientProvider,
+				ForceEndpoint:  healthCmdFlags.forceEndpoint,
+			},
+		}
+
+		switch conformanceKubernetesCmdFlags.mode {
+		case "fast":
+			return hydrophone.FastConformance(ctx, &state)
+		case "certified":
+			return hydrophone.CertifiedConformance(ctx, &state)
+		case "network-policy":
+			return hydrophone.NetworkPolicies(ctx, &state)
+		default:
+			return fmt.Errorf("unsupported conformance mode %v", conformanceKubernetesCmdFlags.mode)
+		}
 	},
 }
 

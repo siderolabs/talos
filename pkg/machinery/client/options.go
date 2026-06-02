@@ -8,6 +8,7 @@ import (
 	"crypto/tls"
 	"fmt"
 
+	"github.com/siderolabs/crypto/x509"
 	"google.golang.org/grpc"
 
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
@@ -165,6 +166,37 @@ func WithSideroV1KeysDir(keysDir string) OptionFunc {
 func WithServiceAccount(serviceAccountBase64 string) OptionFunc {
 	return func(o *Options) error {
 		o.serviceAccountBase64 = serviceAccountBase64
+
+		return nil
+	}
+}
+
+// WithMaintenanceMode creates a Client which connects to Talos API in maintenance mode.
+//
+// In this mode, the certificate fingerprints might be verified if the list supplied
+// is not empty.
+func WithMaintenanceMode(node string, enforceFingerprints []string) OptionFunc {
+	return func(o *Options) error {
+		o.tlsConfig = &tls.Config{
+			InsecureSkipVerify: true,
+		}
+
+		if len(enforceFingerprints) > 0 {
+			fingerprints := make([]x509.Fingerprint, len(enforceFingerprints))
+
+			for i, stringFingerprint := range enforceFingerprints {
+				var err error
+
+				fingerprints[i], err = x509.ParseFingerprint(stringFingerprint)
+				if err != nil {
+					return fmt.Errorf("error parsing certificate fingerprint %q: %w", stringFingerprint, err)
+				}
+			}
+
+			o.tlsConfig.VerifyConnection = x509.MatchSPKIFingerprints(fingerprints...)
+		}
+
+		o.endpointsOverride = []string{node}
 
 		return nil
 	}

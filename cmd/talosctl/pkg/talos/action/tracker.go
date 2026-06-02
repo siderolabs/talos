@@ -27,7 +27,6 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/common"
-	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/reporter"
@@ -58,7 +57,7 @@ var (
 	}
 
 	// BootIDChangedPostCheckFn is a post check function that returns nil if the boot ID has changed.
-	BootIDChangedPostCheckFn = func(ctx context.Context, c *client.Client, preActionBootID string) error {
+	BootIDChangedPostCheckFn = func(ctx context.Context, c *client.Client, _, preActionBootID string) error {
 		if preActionBootID == unauthorizedBootIDFallback {
 			return nil
 		}
@@ -85,7 +84,7 @@ type nodeUpdate struct {
 type Tracker struct {
 	expectedEventFn          func(event client.EventResult) bool
 	actionFn                 func(ctx context.Context, c *client.Client) (string, error)
-	postCheckFn              func(ctx context.Context, c *client.Client, preActionBootID string) error
+	postCheckFn              func(ctx context.Context, c *client.Client, node, preActionBootID string) error
 	reporter                 *reporter.Reporter
 	nodeToLatestStatusUpdate map[string]reporter.Update
 	reportCh                 chan nodeUpdate
@@ -115,7 +114,7 @@ func WithTimeout(timeout time.Duration) TrackerOption {
 }
 
 // WithPostCheck sets the post check function.
-func WithPostCheck(postCheckFn func(ctx context.Context, c *client.Client, preActionBootID string) error) TrackerOption {
+func WithPostCheck(postCheckFn func(ctx context.Context, c *client.Client, node, preActionBootID string) error) TrackerOption {
 	return func(t *Tracker) {
 		t.postCheckFn = postCheckFn
 	}
@@ -178,9 +177,10 @@ func (a *Tracker) Run(ctx context.Context) error {
 		ctx, cancel := context.WithTimeout(ctx, a.timeout)
 		defer cancel()
 
-		if err := helpers.ClientVersionCheck(ctx, c, a.clientExecutor.NodeList()); err != nil {
-			return err
-		}
+		// TODO: refactor this with Tracker refactor to use client factory
+		// if err := helpers.ClientVersionCheck(ctx, c, a.clientExecutor.NodeList()); err != nil {
+		// 	return err
+		// }
 
 		eg.Go(func() error {
 			return a.runReporter(ctx)

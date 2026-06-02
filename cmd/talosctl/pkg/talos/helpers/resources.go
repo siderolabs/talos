@@ -7,24 +7,23 @@ package helpers
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/state"
-	"google.golang.org/grpc/metadata"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 )
 
-// ForEachResource gets resources from the controller runtime and runs a callback for each resource.
+// MachineConfigUpdater gets resources from the controller runtime and runs a callback for each resource.
 //
 //nolint:gocyclo
-func ForEachResource(ctx context.Context,
-	c *client.Client,
-	callbackRD func(rd *meta.ResourceDefinition) error,
-	callback func(ctx context.Context, hostname string, r resource.Resource, callError error) error,
-	namespace string,
-	args ...string,
+func MachineConfigUpdater(ctx context.Context,
+	clientFactory *global.ClientFactory,
+	callback func(ctx context.Context, client *client.Client, node string, mc resource.Resource) error,
+	args []string,
 ) error {
 	if len(args) == 0 {
 		return errors.New("not enough arguments: at least 1 is expected")
@@ -32,70 +31,50 @@ func ForEachResource(ctx context.Context,
 
 	resourceType := args[0]
 
-	var resourceID string
+	// ignore args[1], always patch in current machine config resource ID
+	resourceID := config.ActiveID
 
-	if len(args) > 1 {
-		resourceID = args[1]
+	// resolve resource type, we don't support anything but machineconfig now
+	if len(clientFactory.Nodes()) == 0 {
+		return nil
 	}
 
-	md, _ := metadata.FromOutgoingContext(ctx)
-	nodes := md.Get("nodes")
-
-	if len(nodes) == 0 {
-		nodes = []string{""}
-	}
-
-	// fetch the RD from the first node (it doesn't matter which one to use, so we'll use the first one)
-	rd, err := c.ResolveResourceKind(client.WithNode(ctx, nodes[0]), &namespace, resourceType)
+	// resolve resource kind
+	firstCtx, firstC, err := clientFactory.BuildClient(ctx, clientFactory.Nodes()[0])
 	if err != nil {
 		return err
 	}
 
-	if callbackRD != nil {
-		if err = callbackRD(rd); err != nil {
-			return err
-		}
+	var namespace string
+
+	rd, err := firstC.ResolveResourceKind(firstCtx, &namespace, resourceType)
+	if err != nil {
+		return err
+	}
+
+	if rd.TypedSpec().Type != config.MachineConfigType {
+		return errors.New("only machineconfig resource type is supported")
 	}
 
 	resourceType = rd.TypedSpec().Type
 
-	for _, node := range nodes {
-		var nodeCtx context.Context
-
-		if node == "" {
-			nodeCtx = ctx
-		} else {
-			nodeCtx = client.WithNode(ctx, node)
+	for _, node := range clientFactory.Nodes() {
+		nodeCtx, nodeClient, err := clientFactory.BuildClient(ctx, node)
+		if err != nil {
+			return fmt.Errorf("error building client for node %s: %w", node, err)
 		}
 
-		if resourceID != "" {
-			r, callErr := c.COSI.Get(
-				nodeCtx,
-				resource.NewMetadata(namespace, rd.TypedSpec().Type, resourceID, resource.VersionUndefined),
-				state.WithGetUnmarshalOptions(state.WithSkipProtobufUnmarshal()),
-			)
-			if err = callback(ctx, node, r, callErr); err != nil {
-				return err
-			}
-		} else {
-			items, callErr := c.COSI.List(
-				nodeCtx,
-				resource.NewMetadata(namespace, resourceType, "", resource.VersionUndefined),
-				state.WithListUnmarshalOptions(state.WithSkipProtobufUnmarshal()),
-			)
-			if callErr != nil {
-				if err = callback(ctx, node, nil, callErr); err != nil {
-					return err
-				}
+		r, err := nodeClient.COSI.Get(
+			nodeCtx,
+			resource.NewMetadata(namespace, resourceType, resourceID, resource.VersionUndefined),
+			state.WithGetUnmarshalOptions(state.WithSkipProtobufUnmarshal()),
+		)
+		if err != nil {
+			return fmt.Errorf("error getting resource on node %s: %w", node, err)
+		}
 
-				continue
-			}
-
-			for _, r := range items.Items {
-				if err = callback(ctx, node, r, nil); err != nil {
-					return err
-				}
-			}
+		if err = callback(nodeCtx, nodeClient, node, r); err != nil {
+			return err
 		}
 	}
 

@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/siderolabs/gen/maps"
 	_ "github.com/siderolabs/proto-codec/codec" // register codec v2
@@ -38,14 +39,7 @@ const pathAutoCompleteLimit = 500
 // outputFlushInterval is the quiet period after the last multiplexed response
 // before flushing the tabwriter, so partial results appear without thrashing
 // column widths while responses are still arriving.
-const outputFlushInterval = formatters.FlushInterval
-
-// WithClientNoNodes wraps common code to initialize Talos client and provide cancellable context.
-//
-// WithClientNoNodes doesn't set any node information on the request context.
-func WithClientNoNodes(ctx context.Context, action func(context.Context, *client.Client) error, dialOptions ...grpc.DialOption) error {
-	return GlobalArgs.WithClientNoNodes(ctx, action, dialOptions...)
-}
+const outputFlushInterval = 500 * time.Millisecond
 
 // WithClient builds upon WithClientNoNodes to provide set of nodes on request context based on config & flags.
 func WithClient(ctx context.Context, action func(context.Context, *client.Client) error, dialOptions ...grpc.DialOption) error {
@@ -57,14 +51,9 @@ func WithClientAndNodes(ctx context.Context, action func(context.Context, *clien
 	return GlobalArgs.WithClientAndNodes(ctx, action, dialOptions...)
 }
 
-// WithClientAndSingleNode builds upon WithClientAndNodes to provide a helper which enforces a single node in the list, and uses client.WithNode.
-func WithClientAndSingleNode(ctx context.Context, commandName string, action func(context.Context, *client.Client, string) error, dialOptions ...grpc.DialOption) error {
-	return GlobalArgs.WithClientAndSingleNode(ctx, commandName, action, dialOptions...)
-}
-
-// WithClientMaintenance wraps common code to initialize Talos client in maintenance (insecure mode).
-func WithClientMaintenance(ctx context.Context, enforceFingerprints []string, action func(context.Context, *client.Client) error) error {
-	return GlobalArgs.WithClientMaintenance(ctx, enforceFingerprints, action)
+// NewClientFactory creates a new ClientFactory.
+func NewClientFactory(ctx context.Context, flags any) (*global.ClientFactory, error) {
+	return global.NewClientFactory(ctx, &GlobalArgs, flags)
 }
 
 // Commands is a list of commands published by the package.
@@ -76,7 +65,7 @@ func addCommand(cmd *cobra.Command) {
 		"talosconfig",
 		"",
 		fmt.Sprintf(
-			"The path to the Talos configuration file. Defaults to '%s' env variable if set, otherwise '%s' and '%s' in order.",
+			"the path to the Talos configuration file, defaults to '%s' env variable if set, otherwise '%s' and '%s' in order",
 			constants.TalosConfigEnvVar,
 			filepath.Join("$HOME", constants.TalosDir, constants.TalosconfigFilename),
 			filepath.Join(constants.ServiceAccountMountPath, constants.TalosconfigFilename),
@@ -84,20 +73,20 @@ func addCommand(cmd *cobra.Command) {
 	)
 	cmd.PersistentFlags().StringSliceVarP(&GlobalArgs.Nodes, "nodes", "n", []string{}, "target the specified nodes")
 	cmd.PersistentFlags().StringSliceVarP(&GlobalArgs.Endpoints, "endpoints", "e", []string{}, "override default endpoints in Talos configuration")
-	cli.Should(cmd.RegisterFlagCompletionFunc("nodes", CompleteNodes))
-	cmd.PersistentFlags().StringVarP(&GlobalArgs.Cluster, "cluster", "c", "", "Cluster to connect to if a proxy endpoint is used.")
-	cmd.PersistentFlags().StringVar(&GlobalArgs.CmdContext, "context", "", "Context to be used in command")
+	cli.Should(cmd.RegisterFlagCompletionFunc("nodes", completeNodes))
+	cmd.PersistentFlags().StringVarP(&GlobalArgs.Cluster, "cluster", "c", "", "cluster to connect to if a proxy endpoint is used")
+	cmd.PersistentFlags().StringVar(&GlobalArgs.CmdContext, "context", "", "context to be used in command")
 	cmd.PersistentFlags().StringVar(
 		&GlobalArgs.SideroV1KeysDir,
 		"siderov1-keys-dir",
 		"",
 		fmt.Sprintf(
-			"The path to the SideroV1 auth PGP keys directory. Defaults to '%s' env variable if set, otherwise '%s'. Only valid for Contexts that use SideroV1 auth.",
+			"the path to the SideroV1 auth PGP keys directory, defaults to '%s' env variable if set, otherwise '%s'; only valid for Contexts that use SideroV1 auth",
 			constants.SideroV1KeysDirEnvVar,
 			filepath.Join("$HOME", constants.TalosDir, constants.SideroV1KeysDir),
 		),
 	)
-	cli.Should(cmd.RegisterFlagCompletionFunc("context", CompleteConfigContext))
+	cli.Should(cmd.RegisterFlagCompletionFunc("context", completeConfigContext))
 
 	Commands = append(Commands, cmd)
 }
@@ -129,67 +118,77 @@ func completePathFromNode(ctx context.Context, inputPath string) []string {
 func getPathFromNode(ctx context.Context, path, filter string) map[string]struct{} {
 	paths := make(map[string]struct{})
 
-	//nolint:errcheck
-	GlobalArgs.WithClient(
-		ctx,
-		func(ctx context.Context, c *client.Client) error {
-			ctx, cancel := context.WithCancel(ctx)
-			defer cancel()
+	clientFactory, err := NewClientFactory(ctx, &GlobalArgs)
+	if err != nil {
+		cobra.CompError(fmt.Sprintf("error creating client factory: %v", err))
 
-			stream, err := c.LS(
-				ctx, &machineapi.ListRequest{
-					Root: path,
-				},
-			)
-			if err != nil {
-				return err
-			}
+		return paths
+	}
 
-			for {
-				resp, err := stream.Recv()
-				if err != nil {
-					if err == io.EOF || client.StatusCode(err) == codes.Canceled {
-						return nil
-					}
+	defer clientFactory.Close() //nolint:errcheck
 
-					return fmt.Errorf("error streaming results: %s", err)
-				}
+	ctx, c, err := clientFactory.BuildClientFirstNode(ctx)
+	if err != nil {
+		cobra.CompError(fmt.Sprintf("error building client: %v", err))
 
-				if resp.Metadata != nil && resp.Metadata.Error != "" { //nolint:staticcheck // to be refactored next
-					continue
-				}
+		return paths
+	}
 
-				if resp.Error != "" {
-					continue
-				}
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
-				// skip reference to the same directory
-				if resp.RelativeName == "." {
-					continue
-				}
-
-				// limit the results to a reasonable amount
-				if len(paths) > pathAutoCompleteLimit {
-					return nil
-				}
-
-				// directories have a trailing slash
-				if resp.IsDir {
-					fullPath := path + resp.RelativeName + "/"
-
-					if relativeTo(fullPath, filter) {
-						paths[fullPath] = struct{}{}
-					}
-				} else {
-					fullPath := path + resp.RelativeName
-
-					if relativeTo(fullPath, filter) {
-						paths[fullPath] = struct{}{}
-					}
-				}
-			}
+	stream, err := c.LS(
+		ctx, &machineapi.ListRequest{
+			Root: path,
 		},
 	)
+	if err != nil {
+		cobra.CompError(fmt.Sprintf("error listing path: %v", err))
+
+		return paths
+	}
+
+	for {
+		resp, err := stream.Recv()
+		if err != nil {
+			if err == io.EOF || client.StatusCode(err) == codes.Canceled {
+				break
+			}
+
+			cobra.CompError(fmt.Sprintf("error streaming results: %s", err))
+
+			break
+		}
+
+		if resp.Error != "" {
+			continue
+		}
+
+		// skip reference to the same directory
+		if resp.RelativeName == "." {
+			continue
+		}
+
+		// limit the results to a reasonable amount
+		if len(paths) > pathAutoCompleteLimit {
+			return nil
+		}
+
+		// directories have a trailing slash
+		if resp.IsDir {
+			fullPath := path + resp.RelativeName + "/"
+
+			if relativeTo(fullPath, filter) {
+				paths[fullPath] = struct{}{}
+			}
+		} else {
+			fullPath := path + resp.RelativeName
+
+			if relativeTo(fullPath, filter) {
+				paths[fullPath] = struct{}{}
+			}
+		}
+	}
 
 	return paths
 }

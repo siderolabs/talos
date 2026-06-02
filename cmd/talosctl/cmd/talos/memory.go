@@ -19,7 +19,9 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 )
 
-var verbose bool
+var memoryCmdFlags struct {
+	verbose bool
+}
 
 // memoryCmd represents the processes command.
 var memoryCmd = &cobra.Command{
@@ -29,23 +31,27 @@ var memoryCmd = &cobra.Command{
 	Long:    ``,
 	Args:    cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClientAndNodes(cmd.Context(), func(ctx context.Context, c *client.Client, nodes []string) error {
-			ctx, cancel := context.WithCancel(ctx)
-			defer cancel()
+		ctx := cmd.Context()
 
-			responseChan := multiplex.Unary(
-				ctx, nodes,
-				func(ctx context.Context) (*machineapi.MemoryResponse, error) {
-					return c.Memory(ctx)
-				},
-			)
+		clientFactory, err := NewClientFactory(ctx, &memoryCmdFlags)
+		if err != nil {
+			return err
+		}
 
-			if verbose {
-				return renderVerbose(responseChan)
-			}
+		defer clientFactory.Close() //nolint:errcheck
 
-			return renderBrief(responseChan)
-		})
+		responseChan := multiplex.UnaryViaFactory(
+			ctx, clientFactory,
+			func(ctx context.Context, c *client.Client) (*machineapi.MemoryResponse, error) {
+				return c.Memory(ctx)
+			},
+		)
+
+		if memoryCmdFlags.verbose {
+			return renderVerbose(responseChan)
+		}
+
+		return renderBrief(responseChan)
 	},
 }
 
@@ -163,6 +169,6 @@ func renderVerbose(responseChan <-chan multiplex.Response[*machineapi.MemoryResp
 }
 
 func init() {
-	memoryCmd.Flags().BoolVarP(&verbose, "verbose", "v", false, "display extended memory statistics")
+	memoryCmd.Flags().BoolVarP(&memoryCmdFlags.verbose, "verbose", "v", false, "display extended memory statistics")
 	addCommand(memoryCmd)
 }

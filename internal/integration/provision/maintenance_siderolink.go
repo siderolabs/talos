@@ -8,7 +8,6 @@ package provision
 
 import (
 	"context"
-	"crypto/tls"
 	"errors"
 	"fmt"
 	"io"
@@ -89,8 +88,7 @@ func (suite *MaintenanceSideroLinkSuite) TestAPI() {
 
 		maintenanceClients[i], err = client.New(
 			suite.ctx,
-			client.WithTLSConfig(&tls.Config{InsecureSkipVerify: true}),
-			client.WithEndpoints(machine.IPs[0].String()),
+			client.WithMaintenanceMode(machine.IPs[0].String(), nil),
 		)
 		suite.Require().NoError(err)
 	}
@@ -166,8 +164,7 @@ func (suite *MaintenanceSideroLinkSuite) TestAPI() {
 
 		sideroLinkMaintenanceClients[i], err = client.New(
 			suite.ctx,
-			client.WithTLSConfig(&tls.Config{InsecureSkipVerify: true}),
-			client.WithEndpoints(sideroLinkIP.String()),
+			client.WithMaintenanceMode(sideroLinkIP.String(), nil),
 		)
 		suite.Require().NoError(err)
 	}

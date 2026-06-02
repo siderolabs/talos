@@ -6,15 +6,19 @@ package talos
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"strconv"
 
 	"github.com/spf13/cobra"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 )
 
 var metaCmdFlags struct {
-	insecure bool
+	global.InsecureFlags
 }
 
 var metaCmd = &cobra.Command{
@@ -30,20 +34,36 @@ var metaWriteCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fn := func(ctx context.Context, c *client.Client) error {
-			key, err := strconv.ParseUint(args[0], 0, 8)
-			if err != nil {
-				return err
+		key, err := strconv.ParseUint(args[0], 0, 8)
+		if err != nil {
+			return err
+		}
+
+		ctx := cmd.Context()
+
+		clientFactory, err := NewClientFactory(ctx, &metaCmdFlags)
+		if err != nil {
+			return err
+		}
+
+		defer clientFactory.Close() //nolint:errcheck
+
+		respCh := multiplex.UnaryViaFactory(
+			ctx, clientFactory,
+			func(ctx context.Context, c *client.Client) (struct{}, error) {
+				return struct{}{}, c.MetaWrite(ctx, uint8(key), []byte(args[1]))
+			},
+		)
+
+		var errs error
+
+		for resp := range respCh {
+			if resp.Err != nil {
+				errs = errors.Join(errs, fmt.Errorf("error writing meta to node %s: %w", resp.Node, resp.Err))
 			}
-
-			return c.MetaWrite(ctx, uint8(key), []byte(args[1]))
 		}
 
-		if metaCmdFlags.insecure {
-			return WithClientMaintenance(cmd.Context(), nil, fn)
-		}
-
-		return WithClient(cmd.Context(), fn)
+		return errs
 	},
 }
 
@@ -53,25 +73,41 @@ var metaDeleteCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fn := func(ctx context.Context, c *client.Client) error {
-			key, err := strconv.ParseUint(args[0], 0, 8)
-			if err != nil {
-				return err
+		key, err := strconv.ParseUint(args[0], 0, 8)
+		if err != nil {
+			return err
+		}
+
+		ctx := cmd.Context()
+
+		clientFactory, err := NewClientFactory(ctx, &metaCmdFlags)
+		if err != nil {
+			return err
+		}
+
+		defer clientFactory.Close() //nolint:errcheck
+
+		respCh := multiplex.UnaryViaFactory(
+			ctx, clientFactory,
+			func(ctx context.Context, c *client.Client) (struct{}, error) {
+				return struct{}{}, c.MetaDelete(ctx, uint8(key))
+			},
+		)
+
+		var errs error
+
+		for resp := range respCh {
+			if resp.Err != nil {
+				errs = errors.Join(errs, fmt.Errorf("error deleting meta from node %s: %w", resp.Node, resp.Err))
 			}
-
-			return c.MetaDelete(ctx, uint8(key))
 		}
 
-		if metaCmdFlags.insecure {
-			return WithClientMaintenance(cmd.Context(), nil, fn)
-		}
-
-		return WithClient(cmd.Context(), fn)
+		return errs
 	},
 }
 
 func init() {
-	metaCmd.PersistentFlags().BoolVarP(&metaCmdFlags.insecure, "insecure", "i", false, "write|delete meta using the insecure (encrypted with no auth) maintenance service")
+	metaCmdFlags.InsecureFlags.AddFlags(metaCmd)
 
 	metaCmd.AddCommand(metaWriteCmd)
 	metaCmd.AddCommand(metaDeleteCmd)

@@ -28,7 +28,25 @@ var upgradeK8sCmd = &cobra.Command{
 	Long:  `Command runs upgrade of Kubernetes control plane components between specified versions.`,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClientAndSingleNode(cmd.Context(), "upgrade-k8s", upgradeKubernetes)
+		ctx := cmd.Context()
+
+		clientFactory, err := NewClientFactory(ctx, &upgradeK8sCmdFlags)
+		if err != nil {
+			return err
+		}
+
+		defer clientFactory.Close() //nolint:errcheck
+
+		if err := helpers.ClientVersionCheck(ctx, clientFactory); err != nil {
+			return err
+		}
+
+		ctx, c, _, err := clientFactory.BuildClientEnforceSingleNode(ctx, "upgrade-k8s")
+		if err != nil {
+			return err
+		}
+
+		return upgradeKubernetes(ctx, c)
 	},
 }
 
@@ -70,11 +88,7 @@ func init() {
 	addCommand(upgradeK8sCmd)
 }
 
-func upgradeKubernetes(ctx context.Context, c *client.Client, node string) error {
-	if err := helpers.ClientVersionCheck(ctx, c, []string{node}); err != nil {
-		return err
-	}
-
+func upgradeKubernetes(ctx context.Context, c *client.Client) error {
 	clientProvider := &cluster.ConfigClientProvider{
 		DefaultClient: c,
 	}

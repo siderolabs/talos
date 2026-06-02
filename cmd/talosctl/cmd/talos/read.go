@@ -5,14 +5,11 @@
 package talos
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"os"
 
 	"github.com/spf13/cobra"
-
-	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
 // readCmd represents the read command.
@@ -30,21 +27,33 @@ var readCmd = &cobra.Command{
 		return completePathFromNode(cmd.Context(), toComplete), cobra.ShellCompDirectiveNoFileComp
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClientAndSingleNode(cmd.Context(), "read", func(ctx context.Context, c *client.Client, _ string) error {
-			r, err := c.Read(ctx, args[0])
-			if err != nil {
-				return fmt.Errorf("error reading file: %w", err)
-			}
+		ctx := cmd.Context()
 
-			defer r.Close() //nolint:errcheck
+		clientFactory, err := NewClientFactory(ctx, nil)
+		if err != nil {
+			return err
+		}
 
-			_, err = io.Copy(os.Stdout, r)
-			if err != nil {
-				return fmt.Errorf("error reading: %w", err)
-			}
+		defer clientFactory.Close() //nolint:errcheck
 
-			return r.Close()
-		})
+		ctx, c, _, err := clientFactory.BuildClientEnforceSingleNode(ctx, "read")
+		if err != nil {
+			return err
+		}
+
+		r, err := c.Read(ctx, args[0])
+		if err != nil {
+			return fmt.Errorf("error reading file: %w", err)
+		}
+
+		defer r.Close() //nolint:errcheck
+
+		_, err = io.Copy(os.Stdout, r)
+		if err != nil {
+			return fmt.Errorf("error reading: %w", err)
+		}
+
+		return r.Close()
 	},
 }
 

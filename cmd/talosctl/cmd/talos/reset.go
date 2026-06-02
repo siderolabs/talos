@@ -73,7 +73,6 @@ var resetCmdFlags struct {
 
 	graceful           bool
 	reboot             bool
-	insecure           bool
 	wipeMode           WipeMode
 	userDisksToWipe    []string
 	systemLabelsToWipe []string
@@ -92,10 +91,6 @@ var resetCmd = &cobra.Command{
 
 		resetRequest := buildResetRequest()
 
-		if resetCmdFlags.wait && resetCmdFlags.insecure {
-			return errors.New("cannot use --wait and --insecure together")
-		}
-
 		if !resetCmdFlags.wait {
 			resetNoWait := func(ctx context.Context, c *client.Client) error {
 				if err := helpers.ClientVersionCheckLegacy(ctx, c); err != nil { //nolint:staticcheck // to be refactored next
@@ -109,10 +104,6 @@ var resetCmd = &cobra.Command{
 				return nil
 			}
 
-			if resetCmdFlags.insecure {
-				return WithClientMaintenance(cmd.Context(), nil, resetNoWait)
-			}
-
 			return WithClient(cmd.Context(), resetNoWait)
 		}
 
@@ -120,16 +111,21 @@ var resetCmd = &cobra.Command{
 			return resetGetActorID(ctx, c, resetRequest)
 		}
 
-		var postCheckFn func(context.Context, *client.Client, string) error
+		var postCheckFn func(context.Context, *client.Client, string, string) error
 
 		if resetCmdFlags.reboot {
-			postCheckFn = func(ctx context.Context, c *client.Client, preActionBootID string) error {
-				err := WithClientMaintenance(ctx, nil,
-					func(ctx context.Context, cli *client.Client) error {
-						_, err := cli.Disks(ctx)
+			postCheckFn = func(ctx context.Context, c *client.Client, node, preActionBootID string) error {
+				maintenanceCli, err := client.New(ctx,
+					client.WithDefaultGRPCDialOptions(),
+					client.WithMaintenanceMode(node, nil),
+				)
+				if err != nil {
+					return err
+				}
 
-						return err
-					})
+				defer maintenanceCli.Close() //nolint:errcheck
+
+				_, err = maintenanceCli.Disks(ctx)
 
 				// if we can get into maintenance mode, reset has succeeded
 				if err == nil {
@@ -137,7 +133,7 @@ var resetCmd = &cobra.Command{
 				}
 
 				// try to get the boot ID in the normal mode to see if the node has rebooted
-				return action.BootIDChangedPostCheckFn(ctx, c, preActionBootID)
+				return action.BootIDChangedPostCheckFn(ctx, c, node, preActionBootID)
 			}
 		}
 
@@ -187,7 +183,6 @@ func resetGetActorID(ctx context.Context, c *client.Client, req *machineapi.Rese
 func init() {
 	resetCmd.Flags().BoolVar(&resetCmdFlags.graceful, "graceful", true, "if true, attempt to cordon/drain node and leave etcd (if applicable)")
 	resetCmd.Flags().BoolVar(&resetCmdFlags.reboot, "reboot", false, "if true, reboot the node after resetting instead of shutting down")
-	resetCmd.Flags().BoolVar(&resetCmdFlags.insecure, "insecure", false, "reset using the insecure (encrypted with no auth) maintenance service")
 	resetCmd.Flags().Var(&resetCmdFlags.wipeMode, "wipe-mode", "disk reset mode")
 	resetCmd.Flags().StringSliceVar(&resetCmdFlags.userDisksToWipe, "user-disks-to-wipe", nil, "if set, wipes defined devices in the list")
 	resetCmd.Flags().StringSliceVar(&resetCmdFlags.systemLabelsToWipe, "system-labels-to-wipe", nil, "if set, just wipe selected system disk partitions by label but keep other partitions intact")

@@ -47,60 +47,64 @@ var etcdAlarmListCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClientAndNodes(cmd.Context(), func(ctx context.Context, c *client.Client, nodes []string) error {
-			ctx, cancel := context.WithCancel(ctx)
-			defer cancel()
+		ctx := cmd.Context()
 
-			responseChan := multiplex.Unary(
-				ctx, nodes,
-				func(ctx context.Context) (*machine.EtcdAlarmListResponse, error) {
-					return c.EtcdAlarmList(ctx)
-				},
-			)
+		clientFactory, err := NewClientFactory(ctx, nil)
+		if err != nil {
+			return err
+		}
 
-			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		defer clientFactory.Close() //nolint:errcheck
 
-			flushTimer := time.NewTimer(outputFlushInterval)
-			defer flushTimer.Stop()
+		responseChan := multiplex.UnaryViaFactory(
+			ctx, clientFactory,
+			func(ctx context.Context, c *client.Client) (*machine.EtcdAlarmListResponse, error) {
+				return c.EtcdAlarmList(ctx)
+			},
+		)
 
-			flushTimer.Stop()
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 
-			var (
-				errs          error
-				headerPrinted bool
-			)
+		flushTimer := time.NewTimer(outputFlushInterval)
+		defer flushTimer.Stop()
 
-			for {
-				select {
-				case resp, ok := <-responseChan:
-					if !ok {
-						return errors.Join(errs, w.Flush())
-					}
+		flushTimer.Stop()
 
-					if resp.Err != nil {
-						errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
-					} else {
-						for _, msg := range resp.Payload.Messages {
-							for _, alarm := range msg.GetMemberAlarms() {
-								if !headerPrinted {
-									fmt.Fprintln(w, "NODE\tMEMBER\tALARM")
+		var (
+			errs          error
+			headerPrinted bool
+		)
 
-									headerPrinted = true
-								}
+		for {
+			select {
+			case resp, ok := <-responseChan:
+				if !ok {
+					return errors.Join(errs, w.Flush())
+				}
 
-								fmt.Fprintf(w, "%s\t%s\t%s\n", resp.Node, etcdresource.FormatMemberID(alarm.GetMemberId()), alarm.GetAlarm().String())
+				if resp.Err != nil {
+					errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+				} else {
+					for _, msg := range resp.Payload.Messages {
+						for _, alarm := range msg.GetMemberAlarms() {
+							if !headerPrinted {
+								fmt.Fprintln(w, "NODE\tMEMBER\tALARM")
+
+								headerPrinted = true
 							}
+
+							fmt.Fprintf(w, "%s\t%s\t%s\n", resp.Node, etcdresource.FormatMemberID(alarm.GetMemberId()), alarm.GetAlarm().String())
 						}
 					}
+				}
 
-					flushTimer.Reset(outputFlushInterval)
-				case <-flushTimer.C:
-					if err := w.Flush(); err != nil {
-						errs = errors.Join(errs, fmt.Errorf("error flushing output: %w", err))
-					}
+				flushTimer.Reset(outputFlushInterval)
+			case <-flushTimer.C:
+				if err := w.Flush(); err != nil {
+					errs = errors.Join(errs, fmt.Errorf("error flushing output: %w", err))
 				}
 			}
-		})
+		}
 	},
 }
 
@@ -111,60 +115,64 @@ var etcdAlarmDisarmCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClientAndNodes(cmd.Context(), func(ctx context.Context, c *client.Client, nodes []string) error {
-			ctx, cancel := context.WithCancel(ctx)
-			defer cancel()
+		ctx := cmd.Context()
 
-			responseChan := multiplex.Unary(
-				ctx, nodes,
-				func(ctx context.Context) (*machine.EtcdAlarmDisarmResponse, error) {
-					return c.EtcdAlarmDisarm(ctx)
-				},
-			)
+		clientFactory, err := NewClientFactory(ctx, nil)
+		if err != nil {
+			return err
+		}
 
-			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		defer clientFactory.Close() //nolint:errcheck
 
-			flushTimer := time.NewTimer(outputFlushInterval)
-			defer flushTimer.Stop()
+		responseChan := multiplex.UnaryViaFactory(
+			ctx, clientFactory,
+			func(ctx context.Context, c *client.Client) (*machine.EtcdAlarmDisarmResponse, error) {
+				return c.EtcdAlarmDisarm(ctx)
+			},
+		)
 
-			flushTimer.Stop()
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 
-			var (
-				errs          error
-				headerPrinted bool
-			)
+		flushTimer := time.NewTimer(outputFlushInterval)
+		defer flushTimer.Stop()
 
-			for {
-				select {
-				case resp, ok := <-responseChan:
-					if !ok {
-						return errors.Join(errs, w.Flush())
-					}
+		flushTimer.Stop()
 
-					if resp.Err != nil {
-						errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
-					} else {
-						for _, msg := range resp.Payload.Messages {
-							for _, alarm := range msg.GetMemberAlarms() {
-								if !headerPrinted {
-									fmt.Fprintln(w, "NODE\tMEMBER\tALARM")
+		var (
+			errs          error
+			headerPrinted bool
+		)
 
-									headerPrinted = true
-								}
+		for {
+			select {
+			case resp, ok := <-responseChan:
+				if !ok {
+					return errors.Join(errs, w.Flush())
+				}
 
-								fmt.Fprintf(w, "%s\t%s\t%s\n", resp.Node, etcdresource.FormatMemberID(alarm.GetMemberId()), alarm.GetAlarm().String())
+				if resp.Err != nil {
+					errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+				} else {
+					for _, msg := range resp.Payload.Messages {
+						for _, alarm := range msg.GetMemberAlarms() {
+							if !headerPrinted {
+								fmt.Fprintln(w, "NODE\tMEMBER\tALARM")
+
+								headerPrinted = true
 							}
+
+							fmt.Fprintf(w, "%s\t%s\t%s\n", resp.Node, etcdresource.FormatMemberID(alarm.GetMemberId()), alarm.GetAlarm().String())
 						}
 					}
+				}
 
-					flushTimer.Reset(outputFlushInterval)
-				case <-flushTimer.C:
-					if err := w.Flush(); err != nil {
-						errs = errors.Join(errs, fmt.Errorf("error flushing output: %w", err))
-					}
+				flushTimer.Reset(outputFlushInterval)
+			case <-flushTimer.C:
+				if err := w.Flush(); err != nil {
+					errs = errors.Join(errs, fmt.Errorf("error flushing output: %w", err))
 				}
 			}
-		})
+		}
 	},
 }
 
@@ -176,11 +184,23 @@ var etcdDefragCmd = &cobra.Command{
 Defragmentation is a resource heavy operation and should be performed only when necessary on a single node at a time.`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClientAndSingleNode(cmd.Context(), "etcd defrag", func(ctx context.Context, c *client.Client, _ string) error {
-			_, err := c.EtcdDefragment(ctx)
+		ctx := cmd.Context()
 
+		clientFactory, err := NewClientFactory(ctx, nil)
+		if err != nil {
 			return err
-		})
+		}
+
+		defer clientFactory.Close() //nolint:errcheck
+
+		ctx, c, _, err := clientFactory.BuildClientEnforceSingleNode(ctx, "etcd defrag")
+		if err != nil {
+			return err
+		}
+
+		_, err = c.EtcdDefragment(ctx)
+
+		return err
 	},
 }
 
@@ -190,9 +210,21 @@ var etcdLeaveCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClientAndSingleNode(cmd.Context(), "etcd leave", func(ctx context.Context, c *client.Client, _ string) error {
-			return c.EtcdLeaveCluster(ctx, &machine.EtcdLeaveClusterRequest{})
-		})
+		ctx := cmd.Context()
+
+		clientFactory, err := NewClientFactory(ctx, nil)
+		if err != nil {
+			return err
+		}
+
+		defer clientFactory.Close() //nolint:errcheck
+
+		ctx, c, _, err := clientFactory.BuildClientEnforceSingleNode(ctx, "etcd leave")
+		if err != nil {
+			return err
+		}
+
+		return c.EtcdLeaveCluster(ctx, &machine.EtcdLeaveClusterRequest{})
 	},
 }
 
@@ -204,34 +236,38 @@ If there is no access to the node, or the node can't access etcd to call etcd le
 Always prefer etcd leave over this command.`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClientAndNodes(cmd.Context(), func(ctx context.Context, c *client.Client, nodes []string) error {
-			ctx, cancel := context.WithCancel(ctx)
-			defer cancel()
+		ctx := cmd.Context()
 
-			memberID, err := etcdresource.ParseMemberID(args[0])
-			if err != nil {
-				return fmt.Errorf("error parsing member ID: %w", err)
+		clientFactory, err := NewClientFactory(ctx, nil)
+		if err != nil {
+			return err
+		}
+
+		defer clientFactory.Close() //nolint:errcheck
+
+		memberID, err := etcdresource.ParseMemberID(args[0])
+		if err != nil {
+			return fmt.Errorf("error parsing member ID: %w", err)
+		}
+
+		responseChan := multiplex.UnaryViaFactory(
+			ctx, clientFactory,
+			func(ctx context.Context, c *client.Client) (struct{}, error) {
+				return struct{}{}, c.EtcdRemoveMemberByID(ctx, &machine.EtcdRemoveMemberByIDRequest{
+					MemberId: memberID,
+				})
+			},
+		)
+
+		var errs error
+
+		for resp := range responseChan {
+			if resp.Err != nil {
+				errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
 			}
+		}
 
-			responseChan := multiplex.Unary(
-				ctx, nodes,
-				func(ctx context.Context) (struct{}, error) {
-					return struct{}{}, c.EtcdRemoveMemberByID(ctx, &machine.EtcdRemoveMemberByIDRequest{
-						MemberId: memberID,
-					})
-				},
-			)
-
-			var errs error
-
-			for resp := range responseChan {
-				if resp.Err != nil {
-					errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
-				}
-			}
-
-			return errs
-		})
+		return errs
 	},
 }
 
@@ -241,29 +277,33 @@ var etcdForfeitLeadershipCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClientAndNodes(cmd.Context(), func(ctx context.Context, c *client.Client, nodes []string) error {
-			ctx, cancel := context.WithCancel(ctx)
-			defer cancel()
+		ctx := cmd.Context()
 
-			responseChan := multiplex.Unary(
-				ctx, nodes,
-				func(ctx context.Context) (struct{}, error) {
-					_, err := c.EtcdForfeitLeadership(ctx, &machine.EtcdForfeitLeadershipRequest{})
+		clientFactory, err := NewClientFactory(ctx, nil)
+		if err != nil {
+			return err
+		}
 
-					return struct{}{}, err
-				},
-			)
+		defer clientFactory.Close() //nolint:errcheck
 
-			var errs error
+		responseChan := multiplex.UnaryViaFactory(
+			ctx, clientFactory,
+			func(ctx context.Context, c *client.Client) (struct{}, error) {
+				_, err := c.EtcdForfeitLeadership(ctx, &machine.EtcdForfeitLeadershipRequest{})
 
-			for resp := range responseChan {
-				if resp.Err != nil {
-					errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
-				}
+				return struct{}{}, err
+			},
+		)
+
+		var errs error
+
+		for resp := range responseChan {
+			if resp.Err != nil {
+				errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
 			}
+		}
 
-			return errs
-		})
+		return errs
 	},
 }
 
@@ -273,62 +313,66 @@ var etcdMemberListCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClientAndNodes(cmd.Context(), func(ctx context.Context, c *client.Client, nodes []string) error {
-			ctx, cancel := context.WithCancel(ctx)
-			defer cancel()
+		ctx := cmd.Context()
 
-			responseChan := multiplex.Unary(
-				ctx, nodes,
-				func(ctx context.Context) (*machine.EtcdMemberListResponse, error) {
-					return c.EtcdMemberList(ctx, &machine.EtcdMemberListRequest{
-						QueryLocal: true,
-					})
-				},
-			)
+		clientFactory, err := NewClientFactory(ctx, nil)
+		if err != nil {
+			return err
+		}
 
-			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-			fmt.Fprintln(w, "NODE\tID\tHOSTNAME\tPEER URLS\tCLIENT URLS\tLEARNER")
+		defer clientFactory.Close() //nolint:errcheck
 
-			flushTimer := time.NewTimer(outputFlushInterval)
-			defer flushTimer.Stop()
+		responseChan := multiplex.UnaryViaFactory(
+			ctx, clientFactory,
+			func(ctx context.Context, c *client.Client) (*machine.EtcdMemberListResponse, error) {
+				return c.EtcdMemberList(ctx, &machine.EtcdMemberListRequest{
+					QueryLocal: true,
+				})
+			},
+		)
 
-			flushTimer.Stop()
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		fmt.Fprintln(w, "NODE\tID\tHOSTNAME\tPEER URLS\tCLIENT URLS\tLEARNER")
 
-			var errs error
+		flushTimer := time.NewTimer(outputFlushInterval)
+		defer flushTimer.Stop()
 
-			for {
-				select {
-				case resp, ok := <-responseChan:
-					if !ok {
-						return errors.Join(errs, w.Flush())
-					}
+		flushTimer.Stop()
 
-					if resp.Err != nil {
-						errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
-					} else {
-						for _, message := range resp.Payload.Messages {
-							for _, member := range message.Members {
-								fmt.Fprintf(
-									w, "%s\t%s\t%s\t%s\t%s\t%v\n",
-									resp.Node,
-									etcdresource.FormatMemberID(member.Id),
-									member.Hostname,
-									strings.Join(member.PeerUrls, ","),
-									strings.Join(member.ClientUrls, ","),
-									member.IsLearner,
-								)
-							}
+		var errs error
+
+		for {
+			select {
+			case resp, ok := <-responseChan:
+				if !ok {
+					return errors.Join(errs, w.Flush())
+				}
+
+				if resp.Err != nil {
+					errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+				} else {
+					for _, message := range resp.Payload.Messages {
+						for _, member := range message.Members {
+							fmt.Fprintf(
+								w, "%s\t%s\t%s\t%s\t%s\t%v\n",
+								resp.Node,
+								etcdresource.FormatMemberID(member.Id),
+								member.Hostname,
+								strings.Join(member.PeerUrls, ","),
+								strings.Join(member.ClientUrls, ","),
+								member.IsLearner,
+							)
 						}
 					}
+				}
 
-					flushTimer.Reset(outputFlushInterval)
-				case <-flushTimer.C:
-					if err := w.Flush(); err != nil {
-						errs = errors.Join(errs, fmt.Errorf("error flushing output: %w", err))
-					}
+				flushTimer.Reset(outputFlushInterval)
+			case <-flushTimer.C:
+				if err := w.Flush(); err != nil {
+					errs = errors.Join(errs, fmt.Errorf("error flushing output: %w", err))
 				}
 			}
-		})
+		}
 	},
 }
 
@@ -338,71 +382,75 @@ var etcdStatusCmd = &cobra.Command{
 	Long:  `Returns the status of etcd member on the node, use multiple nodes to get status of all members.`,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClientAndNodes(cmd.Context(), func(ctx context.Context, c *client.Client, nodes []string) error {
-			ctx, cancel := context.WithCancel(ctx)
-			defer cancel()
+		ctx := cmd.Context()
 
-			responseChan := multiplex.Unary(
-				ctx, nodes,
-				func(ctx context.Context) (*machine.EtcdStatusResponse, error) {
-					return c.EtcdStatus(ctx)
-				},
-			)
+		clientFactory, err := NewClientFactory(ctx, nil)
+		if err != nil {
+			return err
+		}
 
-			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-			fmt.Fprintln(w, "NODE\tMEMBER\tDB SIZE\tIN USE\tLEADER\tRAFT INDEX\tRAFT TERM\tRAFT APPLIED INDEX\tLEARNER\tPROTOCOL\tSTORAGE\tERRORS")
+		defer clientFactory.Close() //nolint:errcheck
 
-			flushTimer := time.NewTimer(outputFlushInterval)
-			defer flushTimer.Stop()
+		responseChan := multiplex.UnaryViaFactory(
+			ctx, clientFactory,
+			func(ctx context.Context, c *client.Client) (*machine.EtcdStatusResponse, error) {
+				return c.EtcdStatus(ctx)
+			},
+		)
 
-			flushTimer.Stop()
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		fmt.Fprintln(w, "NODE\tMEMBER\tDB SIZE\tIN USE\tLEADER\tRAFT INDEX\tRAFT TERM\tRAFT APPLIED INDEX\tLEARNER\tPROTOCOL\tSTORAGE\tERRORS")
 
-			var errs error
+		flushTimer := time.NewTimer(outputFlushInterval)
+		defer flushTimer.Stop()
 
-			for {
-				select {
-				case resp, ok := <-responseChan:
-					if !ok {
-						return errors.Join(errs, w.Flush())
-					}
+		flushTimer.Stop()
 
-					if resp.Err != nil {
-						errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
-					} else {
-						for _, message := range resp.Payload.Messages {
-							var ratio float64
+		var errs error
 
-							if message.GetMemberStatus().GetDbSize() > 0 {
-								ratio = float64(message.GetMemberStatus().GetDbSizeInUse()) / float64(message.GetMemberStatus().GetDbSize()) * 100.0
-							}
+		for {
+			select {
+			case resp, ok := <-responseChan:
+				if !ok {
+					return errors.Join(errs, w.Flush())
+				}
 
-							fmt.Fprintf(
-								w, "%s\t%s\t%s\t%s (%.2f%%)\t%s\t%d\t%d\t%d\t%v\t%s\t%s\t%s\n",
-								resp.Node,
-								etcdresource.FormatMemberID(message.GetMemberStatus().GetMemberId()),
-								humanize.Bytes(uint64(message.GetMemberStatus().GetDbSize())),
-								humanize.Bytes(uint64(message.GetMemberStatus().GetDbSizeInUse())),
-								ratio,
-								etcdresource.FormatMemberID(message.GetMemberStatus().GetLeader()),
-								message.GetMemberStatus().GetRaftIndex(),
-								message.GetMemberStatus().GetRaftTerm(),
-								message.GetMemberStatus().GetRaftAppliedIndex(),
-								message.GetMemberStatus().GetIsLearner(),
-								message.GetMemberStatus().GetProtocolVersion(),
-								message.GetMemberStatus().GetStorageVersion(),
-								strings.Join(message.GetMemberStatus().GetErrors(), ", "),
-							)
+				if resp.Err != nil {
+					errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+				} else {
+					for _, message := range resp.Payload.Messages {
+						var ratio float64
+
+						if message.GetMemberStatus().GetDbSize() > 0 {
+							ratio = float64(message.GetMemberStatus().GetDbSizeInUse()) / float64(message.GetMemberStatus().GetDbSize()) * 100.0
 						}
-					}
 
-					flushTimer.Reset(outputFlushInterval)
-				case <-flushTimer.C:
-					if err := w.Flush(); err != nil {
-						errs = errors.Join(errs, fmt.Errorf("error flushing output: %w", err))
+						fmt.Fprintf(
+							w, "%s\t%s\t%s\t%s (%.2f%%)\t%s\t%d\t%d\t%d\t%v\t%s\t%s\t%s\n",
+							resp.Node,
+							etcdresource.FormatMemberID(message.GetMemberStatus().GetMemberId()),
+							humanize.Bytes(uint64(message.GetMemberStatus().GetDbSize())),
+							humanize.Bytes(uint64(message.GetMemberStatus().GetDbSizeInUse())),
+							ratio,
+							etcdresource.FormatMemberID(message.GetMemberStatus().GetLeader()),
+							message.GetMemberStatus().GetRaftIndex(),
+							message.GetMemberStatus().GetRaftTerm(),
+							message.GetMemberStatus().GetRaftAppliedIndex(),
+							message.GetMemberStatus().GetIsLearner(),
+							message.GetMemberStatus().GetProtocolVersion(),
+							message.GetMemberStatus().GetStorageVersion(),
+							strings.Join(message.GetMemberStatus().GetErrors(), ", "),
+						)
 					}
 				}
+
+				flushTimer.Reset(outputFlushInterval)
+			case <-flushTimer.C:
+				if err := w.Flush(); err != nil {
+					errs = errors.Join(errs, fmt.Errorf("error flushing output: %w", err))
+				}
 			}
-		})
+		}
 	},
 }
 
@@ -412,62 +460,74 @@ var etcdSnapshotCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClientAndSingleNode(cmd.Context(), "etcd snapshot", func(ctx context.Context, c *client.Client, _ string) error {
-			dbPath := args[0]
-			partPath := dbPath + ".part"
+		ctx := cmd.Context()
 
-			defer os.RemoveAll(partPath) //nolint:errcheck
+		clientFactory, err := NewClientFactory(ctx, nil)
+		if err != nil {
+			return err
+		}
 
-			dest, err := os.OpenFile(partPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
-			if err != nil {
-				return fmt.Errorf("error creating temporary file: %w", err)
-			}
+		defer clientFactory.Close() //nolint:errcheck
 
-			defer dest.Close() //nolint:errcheck
+		ctx, c, _, err := clientFactory.BuildClientEnforceSingleNode(ctx, "etcd snapshot")
+		if err != nil {
+			return err
+		}
 
-			r, err := c.EtcdSnapshot(ctx, &machine.EtcdSnapshotRequest{})
-			if err != nil {
-				return fmt.Errorf("error reading file: %w", err)
-			}
+		dbPath := args[0]
+		partPath := dbPath + ".part"
 
-			defer r.Close() //nolint:errcheck
+		defer os.RemoveAll(partPath) //nolint:errcheck
 
-			size, err := io.Copy(dest, r)
-			if err != nil {
-				return fmt.Errorf("error reading: %w", err)
-			}
+		dest, err := os.OpenFile(partPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
+		if err != nil {
+			return fmt.Errorf("error creating temporary file: %w", err)
+		}
 
-			if err = dest.Sync(); err != nil {
-				return fmt.Errorf("failed to fsync: %w", err)
-			}
+		defer dest.Close() //nolint:errcheck
 
-			// this check is from https://github.com/etcd-io/etcd/blob/client/v3.5.0-alpha.0/client/v3/snapshot/v3_snapshot.go#L46
-			if (size % 512) != sha256.Size {
-				return fmt.Errorf("sha256 checksum not found (size %d)", size)
-			}
+		r, err := c.EtcdSnapshot(ctx, &machine.EtcdSnapshotRequest{})
+		if err != nil {
+			return fmt.Errorf("error reading file: %w", err)
+		}
 
-			if err = dest.Close(); err != nil {
-				return fmt.Errorf("failed to close: %w", err)
-			}
+		defer r.Close() //nolint:errcheck
 
-			if err = os.Rename(partPath, dbPath); err != nil {
-				return fmt.Errorf("error renaming to final location: %w", err)
-			}
+		size, err := io.Copy(dest, r)
+		if err != nil {
+			return fmt.Errorf("error reading: %w", err)
+		}
 
-			fmt.Printf("etcd snapshot saved to %q (%d bytes)\n", dbPath, size)
+		if err = dest.Sync(); err != nil {
+			return fmt.Errorf("failed to fsync: %w", err)
+		}
 
-			manager := snapshot.NewV3(logging.Wrap(os.Stderr))
+		// this check is from https://github.com/etcd-io/etcd/blob/client/v3.5.0-alpha.0/client/v3/snapshot/v3_snapshot.go#L46
+		if (size % 512) != sha256.Size {
+			return fmt.Errorf("sha256 checksum not found (size %d)", size)
+		}
 
-			status, err := manager.Status(dbPath)
-			if err != nil {
-				return err
-			}
+		if err = dest.Close(); err != nil {
+			return fmt.Errorf("failed to close: %w", err)
+		}
 
-			fmt.Printf("snapshot info: hash %08x, revision %d, total keys %d, total size %d\n",
-				status.Hash, status.Revision, status.TotalKey, status.TotalSize)
+		if err = os.Rename(partPath, dbPath); err != nil {
+			return fmt.Errorf("error renaming to final location: %w", err)
+		}
 
-			return nil
-		})
+		fmt.Printf("etcd snapshot saved to %q (%d bytes)\n", dbPath, size)
+
+		manager := snapshot.NewV3(logging.Wrap(os.Stderr))
+
+		status, err := manager.Status(dbPath)
+		if err != nil {
+			return err
+		}
+
+		fmt.Printf("snapshot info: hash %08x, revision %d, total keys %d, total size %d\n",
+			status.Hash, status.Revision, status.TotalKey, status.TotalSize)
+
+		return nil
 	},
 }
 
@@ -488,34 +548,46 @@ var etcdDowngradeValidateCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClientAndSingleNode(cmd.Context(), "etcd downgrade validate", func(ctx context.Context, c *client.Client, node string) error {
-			version := args[0]
+		ctx := cmd.Context()
 
-			r, err := c.EtcdDowngradeValidate(ctx, &machine.EtcdDowngradeValidateRequest{Version: version})
-			if err != nil {
-				return err
+		clientFactory, err := NewClientFactory(ctx, nil)
+		if err != nil {
+			return err
+		}
+
+		defer clientFactory.Close() //nolint:errcheck
+
+		ctx, c, node, err := clientFactory.BuildClientEnforceSingleNode(ctx, "etcd downgrade validate")
+		if err != nil {
+			return err
+		}
+
+		version := args[0]
+
+		r, err := c.EtcdDowngradeValidate(ctx, &machine.EtcdDowngradeValidateRequest{Version: version})
+		if err != nil {
+			return err
+		}
+
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		pattern := etcdDowngradePattern
+		header := etcdDowngradeHeader
+
+		for i, message := range r.Messages {
+			if i == 0 {
+				fmt.Fprintln(w, header)
 			}
 
-			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-			pattern := etcdDowngradePattern
-			header := etcdDowngradeHeader
+			fmt.Fprintf(
+				w, pattern, node,
+				fmt.Sprintf(
+					"downgrade validate success, cluster version %s",
+					message.GetClusterDowngrade().GetClusterVersion(),
+				),
+			)
+		}
 
-			for i, message := range r.Messages {
-				if i == 0 {
-					fmt.Fprintln(w, header)
-				}
-
-				fmt.Fprintf(
-					w, pattern, node,
-					fmt.Sprintf(
-						"downgrade validate success, cluster version %s",
-						message.GetClusterDowngrade().GetClusterVersion(),
-					),
-				)
-			}
-
-			return w.Flush()
-		})
+		return w.Flush()
 	},
 }
 
@@ -525,35 +597,47 @@ var etcdDowngradeEnableCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClientAndSingleNode(cmd.Context(), "etcd downgrade enable", func(ctx context.Context, c *client.Client, node string) error {
-			version := args[0]
+		ctx := cmd.Context()
 
-			r, err := c.EtcdDowngradeEnable(ctx, &machine.EtcdDowngradeEnableRequest{Version: version})
-			if err != nil {
-				return err
+		clientFactory, err := NewClientFactory(ctx, nil)
+		if err != nil {
+			return err
+		}
+
+		defer clientFactory.Close() //nolint:errcheck
+
+		ctx, c, node, err := clientFactory.BuildClientEnforceSingleNode(ctx, "etcd downgrade enable")
+		if err != nil {
+			return err
+		}
+
+		version := args[0]
+
+		r, err := c.EtcdDowngradeEnable(ctx, &machine.EtcdDowngradeEnableRequest{Version: version})
+		if err != nil {
+			return err
+		}
+
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		pattern := etcdDowngradePattern
+		header := etcdDowngradeHeader
+
+		for i, message := range r.Messages {
+			if i == 0 {
+				fmt.Fprintln(w, header)
 			}
 
-			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-			pattern := etcdDowngradePattern
-			header := etcdDowngradeHeader
+			fmt.Fprintf(
+				w, pattern,
+				node,
+				fmt.Sprintf(
+					"downgrade enable success, cluster version %s",
+					message.GetClusterDowngrade().GetClusterVersion(),
+				),
+			)
+		}
 
-			for i, message := range r.Messages {
-				if i == 0 {
-					fmt.Fprintln(w, header)
-				}
-
-				fmt.Fprintf(
-					w, pattern,
-					node,
-					fmt.Sprintf(
-						"downgrade enable success, cluster version %s",
-						message.GetClusterDowngrade().GetClusterVersion(),
-					),
-				)
-			}
-
-			return w.Flush()
-		})
+		return w.Flush()
 	},
 }
 
@@ -563,32 +647,44 @@ var etcdDowngradeCancelCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClientAndSingleNode(cmd.Context(), "etcd downgrade cancel", func(ctx context.Context, c *client.Client, node string) error {
-			r, err := c.EtcdDowngradeCancel(ctx)
-			if err != nil {
-				return err
+		ctx := cmd.Context()
+
+		clientFactory, err := NewClientFactory(ctx, nil)
+		if err != nil {
+			return err
+		}
+
+		defer clientFactory.Close() //nolint:errcheck
+
+		ctx, c, node, err := clientFactory.BuildClientEnforceSingleNode(ctx, "etcd downgrade cancel")
+		if err != nil {
+			return err
+		}
+
+		r, err := c.EtcdDowngradeCancel(ctx)
+		if err != nil {
+			return err
+		}
+
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		pattern := etcdDowngradePattern
+		header := etcdDowngradeHeader
+
+		for i, message := range r.Messages {
+			if i == 0 {
+				fmt.Fprintln(w, header)
 			}
 
-			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-			pattern := etcdDowngradePattern
-			header := etcdDowngradeHeader
+			fmt.Fprintf(
+				w, pattern, node,
+				fmt.Sprintf(
+					"downgrade cancel success, cluster version %s",
+					message.GetClusterDowngrade().GetClusterVersion(),
+				),
+			)
+		}
 
-			for i, message := range r.Messages {
-				if i == 0 {
-					fmt.Fprintln(w, header)
-				}
-
-				fmt.Fprintf(
-					w, pattern, node,
-					fmt.Sprintf(
-						"downgrade cancel success, cluster version %s",
-						message.GetClusterDowngrade().GetClusterVersion(),
-					),
-				)
-			}
-
-			return w.Flush()
-		})
+		return w.Flush()
 	},
 }
 
