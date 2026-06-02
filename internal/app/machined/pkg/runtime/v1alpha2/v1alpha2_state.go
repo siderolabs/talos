@@ -222,6 +222,7 @@ func NewState() (*State, error) {
 		&runtime.ExtensionServiceConfig{},
 		&runtime.ExtensionServiceConfigStatus{},
 		&runtime.ExtensionStatus{},
+		&runtime.ImageFactorySchematic{},
 		&runtime.KernelCmdline{},
 		&runtime.KernelModuleStatus{},
 		&runtime.KernelModuleSpec{},

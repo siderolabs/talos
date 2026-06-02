@@ -500,6 +500,7 @@ description: Talos gRPC API reference.
     - [ExtensionServiceConfigFile](#talos.resource.definitions.runtime.ExtensionServiceConfigFile)
     - [ExtensionServiceConfigSpec](#talos.resource.definitions.runtime.ExtensionServiceConfigSpec)
     - [ExtensionServiceConfigStatusSpec](#talos.resource.definitions.runtime.ExtensionServiceConfigStatusSpec)
+    - [ImageFactorySchematicSpec](#talos.resource.definitions.runtime.ImageFactorySchematicSpec)
     - [KernelCmdlineSpec](#talos.resource.definitions.runtime.KernelCmdlineSpec)
     - [KernelModuleSpecSpec](#talos.resource.definitions.runtime.KernelModuleSpecSpec)
     - [KernelModuleStatusSpec](#talos.resource.definitions.runtime.KernelModuleStatusSpec)
@@ -8735,6 +8736,23 @@ ExtensionServiceConfigStatusSpec describes status of rendered extensions service
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | spec_version | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.ImageFactorySchematicSpec"></a>
+
+### ImageFactorySchematicSpec
+ImageFactorySchematicSpec describes Image Factory schematic information.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| schematic_id | [string](#string) |  |  |
+| flavor | [string](#string) |  |  |
+| apiurl | [string](#string) |  |  |
 
 
 

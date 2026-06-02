@@ -143,6 +143,10 @@ const (
 	// ExtensionsRuntimeConfigFile extensions layers configuration file name in the rootfs.
 	ExtensionsRuntimeConfigFile = "/etc/extensions.yaml"
 
+	// ImageFactorySchematicExtensionName is the name of the virtual extension injected by Image Factory
+	// to carry schematic information.
+	ImageFactorySchematicExtensionName = "schematic"
+
 	// EFIPartitionLabel is the label of the partition to use for mounting at
 	// the boot path.
 	EFIPartitionLabel = "EFI"

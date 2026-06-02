@@ -63,6 +63,13 @@ message ExtensionServiceConfigStatusSpec {
   string spec_version = 1;
 }
 
+// ImageFactorySchematicSpec describes Image Factory schematic information.
+message ImageFactorySchematicSpec {
+  string schematic_id = 1;
+  string flavor = 2;
+  string apiurl = 3;
+}
+
 // KernelCmdlineSpec presents kernel command line (contents of /proc/cmdline).
 message KernelCmdlineSpec {
   string cmdline = 1;
