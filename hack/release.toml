@@ -186,6 +186,13 @@ This feature allows for selective wiping of logical volumes, volume groups, and 
 With `talosctl wipe lv/vg/pv <name>`, users can wipe LVM metadata from a specific logical volume, volume group, or physical volume.
 """
 
+    [notes.support_bundle]
+        title = "Support Bundle Encryption"
+        description = """\
+The `talosctl support` command now encrypts support bundles using the age encryption tool, enhancing the security of support data.
+The default set of recipients includes the 'siderolabs' GitHub organization members, but it can be overridden with custom recipients.
+"""
+
 [make_deps]
 
     [make_deps.tools]

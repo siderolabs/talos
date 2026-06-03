@@ -9,6 +9,7 @@ package cli
 import (
 	"archive/zip"
 	"fmt"
+	"os"
 	"path/filepath"
 	"strings"
 
@@ -26,8 +27,10 @@ func (suite *SupportSuite) SuiteName() string {
 	return "cli.SupportSuite"
 }
 
-// TestSupport does successful support run.
-func (suite *SupportSuite) TestSupport() {
+// TestSupportNoEncryption does successful support run without encryption.
+//
+// Encryption is disabled to verify support bundled contents.
+func (suite *SupportSuite) TestSupportNoEncryption() {
 	tempDir := suite.T().TempDir()
 
 	output := filepath.Join(tempDir, "support.zip")
@@ -35,7 +38,7 @@ func (suite *SupportSuite) TestSupport() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
 
 	suite.RunCLI(
-		[]string{"support", "--nodes", node, "-w", "5", "-O", output},
+		[]string{"support", "--nodes", node, "-w", "5", "-O", output, "--no-encryption"},
 		base.StderrNotEmpty(),
 	)
 
@@ -97,6 +100,29 @@ func (suite *SupportSuite) TestSupport() {
 	} {
 		suite.Require().Contains(files, name, "File %s doesn't exist in the support bundle", name)
 	}
+}
+
+// TestSupportWithEncryption does successful support run with encryption.
+//
+// Support bundle contents are not verified as they are encrypted.
+func (suite *SupportSuite) TestSupportWithEncryption() {
+	tempDir := suite.T().TempDir()
+
+	output := filepath.Join(tempDir, "support.zip.age")
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
+
+	suite.RunCLI(
+		[]string{"support", "--nodes", node, "-w", "5", "-O", output},
+		base.StderrNotEmpty(),
+	)
+
+	suite.Require().FileExists(output)
+
+	st, err := os.Stat(output)
+	suite.Require().NoError(err)
+
+	suite.Require().Greater(st.Size(), int64(1024))
 }
 
 func init() {

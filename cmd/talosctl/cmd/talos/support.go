@@ -15,12 +15,12 @@ import (
 	"sync"
 	"text/tabwriter"
 
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/fatih/color"
 	"github.com/gosuri/uiprogress"
 	"github.com/siderolabs/go-talos-support/support"
 	"github.com/siderolabs/go-talos-support/support/bundle"
+	"github.com/siderolabs/go-talos-support/support/bundle/encryption"
 	"github.com/siderolabs/go-talos-support/support/collectors"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
@@ -33,9 +33,12 @@ import (
 )
 
 var supportCmdFlags struct {
-	output     string
-	numWorkers int
-	verbose    bool
+	output                        string
+	numWorkers                    int
+	verbose                       bool
+	noEncryption                  bool
+	encryptionRecipients          []string
+	encryptionNoDefaultRecipients bool
 }
 
 // supportCmd represents the support command.
@@ -60,11 +63,38 @@ var supportCmd = &cobra.Command{
 - For the cluster:
 
 	- Kubernetes nodes and kube-system pods manifests.
+
+By default, the generated bundle is encrypted using age encryption to the list of recipients
+set by the members of the 'siderolabs' GitHub organization. The encrypted bundle by default will
+only be decryptable by the Sidero Labs team, but you can also specify additional recipients using the
+--encryption-recipients flag, or disable encryption completely using the --no-encryption flag.
+Default encryption recipients can be removed by setting --encryption-no-default-recipients flag.
 `,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		if len(GlobalArgs.Nodes) == 0 {
 			return errors.New("please provide at least a single node to gather the debug information from")
+		}
+
+		if supportCmdFlags.noEncryption && (len(supportCmdFlags.encryptionRecipients) > 0 || supportCmdFlags.encryptionNoDefaultRecipients) {
+			return errors.New("--encryption-recipients and --encryption-no-default-recipients cannot be used with --no-encryption")
+		}
+
+		var encryptionOpts []encryption.Option
+
+		if !supportCmdFlags.noEncryption {
+			opts, recipients, err := buildEncryptionOptions()
+			if err != nil {
+				return err
+			}
+
+			encryptionOpts = opts
+
+			fmt.Fprintln(os.Stderr, "Encrypting support bundle to the following recipients:")
+
+			for _, r := range recipients {
+				fmt.Fprintf(os.Stderr, "  - %s\n", r)
+			}
 		}
 
 		f, err := openArchive(cmd.Context())
@@ -73,6 +103,20 @@ var supportCmd = &cobra.Command{
 		}
 
 		defer f.Close() //nolint:errcheck
+
+		var (
+			archiveOutput io.Writer = f
+			encWriter     io.WriteCloser
+		)
+
+		if !supportCmdFlags.noEncryption {
+			encWriter, err = encryption.Encrypt(f, encryptionOpts...)
+			if err != nil {
+				return err
+			}
+
+			archiveOutput = encWriter
+		}
 
 		progress := make(chan bundle.Progress)
 
@@ -93,12 +137,19 @@ var supportCmd = &cobra.Command{
 			return nil
 		})
 
-		collectErr := collectData(cmd.Context(), f, progress)
+		collectErr := collectData(cmd.Context(), archiveOutput, progress)
 
 		close(progress)
 
 		if e := eg.Wait(); e != nil {
 			return e
+		}
+
+		// flush the age encryption layer before reporting success.
+		if encWriter != nil {
+			if err = encWriter.Close(); err != nil {
+				return err
+			}
 		}
 
 		if err = errors.print(); err != nil {
@@ -111,7 +162,7 @@ var supportCmd = &cobra.Command{
 	},
 }
 
-func collectData(ctx context.Context, dest *os.File, progress chan bundle.Progress) error {
+func collectData(ctx context.Context, dest io.Writer, progress chan bundle.Progress) error {
 	return WithClientNoNodes(ctx, func(ctx context.Context, c *client.Client) error {
 		clientset, err := getKubernetesClient(ctx, c)
 		if err != nil {
@@ -172,16 +223,16 @@ func getKubernetesClient(ctx context.Context, c *client.Client) (*k8s.Clientset,
 	return clientset, nil
 }
 
-func getDiscoveryConfig(ctx context.Context) (*clusterresource.Config, error) {
-	var config *clusterresource.Config
+func getClusterInfo(ctx context.Context) (*clusterresource.Info, error) {
+	var info *clusterresource.Info
 
-	if e := WithClient(ctx, func(ctx context.Context, c *client.Client) error {
+	if e := WithClientNoNodes(ctx, func(ctx context.Context, c *client.Client) error {
 		var err error
 
-		config, err = safe.StateGet[*clusterresource.Config](
+		info, err = safe.StateGetByID[*clusterresource.Info](
 			ctx,
 			c.COSI,
-			resource.NewMetadata(clusterresource.NamespaceName, clusterresource.IdentityType, clusterresource.LocalIdentity, resource.VersionUndefined),
+			clusterresource.InfoID,
 		)
 
 		return err
@@ -189,18 +240,58 @@ func getDiscoveryConfig(ctx context.Context) (*clusterresource.Config, error) {
 		return nil, e
 	}
 
-	return config, nil
+	return info, nil
+}
+
+// buildEncryptionOptions builds the age encryption options based on the command
+// flags and returns the list of recipients (for display) the bundle is encrypted to.
+func buildEncryptionOptions() ([]encryption.Option, []string, error) {
+	var (
+		opts       []encryption.Option
+		recipients []string
+	)
+
+	if supportCmdFlags.encryptionNoDefaultRecipients {
+		if len(supportCmdFlags.encryptionRecipients) == 0 {
+			return nil, nil, errors.New("no recipients to encrypt to: --encryption-no-default-recipients is set but no --encryption-recipients provided")
+		}
+
+		opts = append(opts, encryption.WithRecipients(supportCmdFlags.encryptionRecipients...))
+		recipients = append(recipients, supportCmdFlags.encryptionRecipients...)
+
+		return opts, recipients, nil
+	}
+
+	defaults, err := encryption.DefaultRecipients()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	for _, r := range defaults {
+		recipients = append(recipients, r.String())
+	}
+
+	if len(supportCmdFlags.encryptionRecipients) > 0 {
+		opts = append(opts, encryption.WithAdditionalRecipients(supportCmdFlags.encryptionRecipients...))
+		recipients = append(recipients, supportCmdFlags.encryptionRecipients...)
+	}
+
+	return opts, recipients, nil
 }
 
 func openArchive(ctx context.Context) (*os.File, error) {
 	if supportCmdFlags.output == "" {
 		supportCmdFlags.output = "support"
 
-		if config, err := getDiscoveryConfig(ctx); err == nil && config.TypedSpec().DiscoveryEnabled {
-			supportCmdFlags.output += "-" + config.TypedSpec().ServiceClusterID
+		if info, err := getClusterInfo(ctx); err == nil && info.TypedSpec().ClusterName != "" {
+			supportCmdFlags.output += "-" + info.TypedSpec().ClusterName
 		}
 
 		supportCmdFlags.output += ".zip"
+
+		if !supportCmdFlags.noEncryption {
+			supportCmdFlags.output += ".age"
+		}
 	}
 
 	if _, err := os.Stat(supportCmdFlags.output); err != nil {
@@ -340,4 +431,16 @@ func init() {
 	supportCmd.Flags().StringVarP(&supportCmdFlags.output, "output", "O", "", "output file to write support archive to")
 	supportCmd.Flags().IntVarP(&supportCmdFlags.numWorkers, "num-workers", "w", 1, "number of workers per node")
 	supportCmd.Flags().BoolVarP(&supportCmdFlags.verbose, "verbose", "v", false, "verbose output")
+	supportCmd.Flags().BoolVar(
+		&supportCmdFlags.noEncryption, "no-encryption", false,
+		"do not encrypt the support bundle (output is written as-is)",
+	)
+	supportCmd.Flags().StringArrayVar(
+		&supportCmdFlags.encryptionRecipients, "encryption-recipients", nil,
+		"additional age recipients (SSH or age public keys) to encrypt the support bundle to (can be specified multiple times)",
+	)
+	supportCmd.Flags().BoolVar(
+		&supportCmdFlags.encryptionNoDefaultRecipients, "encryption-no-default-recipients", false,
+		"do not encrypt to the default recipients, only to the ones provided via --encryption-recipients",
+	)
 }

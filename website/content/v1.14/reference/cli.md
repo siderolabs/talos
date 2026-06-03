@@ -3387,6 +3387,12 @@ Generated bundle contains the following debug information:
 
 	- Kubernetes nodes and kube-system pods manifests.
 
+By default, the generated bundle is encrypted using age encryption to the list of recipients
+set by the members of the 'siderolabs' GitHub organization. The encrypted bundle by default will
+only be decryptable by the Sidero Labs team, but you can also specify additional recipients using the
+--encryption-recipients flag, or disable encryption completely using the --no-encryption flag.
+Default encryption recipients can be removed by setting --encryption-no-default-recipients flag.
+
 
 ```
 talosctl support [flags]
@@ -3395,16 +3401,19 @@ talosctl support [flags]
 ### Options
 
 ```
-  -c, --cluster string             Cluster to connect to if a proxy endpoint is used.
-      --context string             Context to be used in command
-  -e, --endpoints strings          override default endpoints in Talos configuration
-  -h, --help                       help for support
-  -n, --nodes strings              target the specified nodes
-  -w, --num-workers int            number of workers per node (default 1)
-  -O, --output string              output file to write support archive to
-      --siderov1-keys-dir string   The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
-      --talosconfig string         The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
-  -v, --verbose                    verbose output
+  -c, --cluster string                      Cluster to connect to if a proxy endpoint is used.
+      --context string                      Context to be used in command
+      --encryption-no-default-recipients    do not encrypt to the default recipients, only to the ones provided via --encryption-recipients
+      --encryption-recipients stringArray   additional age recipients (SSH or age public keys) to encrypt the support bundle to (can be specified multiple times)
+  -e, --endpoints strings                   override default endpoints in Talos configuration
+  -h, --help                                help for support
+      --no-encryption                       do not encrypt the support bundle (output is written as-is)
+  -n, --nodes strings                       target the specified nodes
+  -w, --num-workers int                     number of workers per node (default 1)
+  -O, --output string                       output file to write support archive to
+      --siderov1-keys-dir string            The path to the SideroV1 auth PGP keys directory. Defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'. Only valid for Contexts that use SideroV1 auth.
+      --talosconfig string                  The path to the Talos configuration file. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
+  -v, --verbose                             verbose output
 ```
 
 ### SEE ALSO
