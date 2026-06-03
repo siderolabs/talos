@@ -7,13 +7,16 @@ package imager
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"runtime"
 	"strconv"
 	"strings"
 
+	"github.com/siderolabs/gen/xerrors"
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.yaml.in/yaml/v4"
 
@@ -52,6 +55,17 @@ type Imager struct {
 	xattrsMap map[string]string
 }
 
+// Exit-code tags for imager failures.
+//
+//nolint:revive
+type (
+	InvalidInputTag struct{}
+	UnsupportedTag  struct{}
+	DependencyTag   struct{}
+	IOTag           struct{}
+	InstallTag      struct{}
+)
+
 // New creates a new Imager.
 func New(prof profile.Profile) (*Imager, error) {
 	return &Imager{
@@ -66,14 +80,14 @@ func New(prof profile.Profile) (*Imager, error) {
 func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporter.Reporter) (outputAssetPath string, err error) {
 	i.tempDir, err = os.MkdirTemp("", "imager")
 	if err != nil {
-		return "", fmt.Errorf("failed to create temporary directory: %w", err)
+		return "", xerrors.NewTagged[IOTag](fmt.Errorf("failed to create temporary directory: %w", err))
 	}
 
 	defer os.RemoveAll(i.tempDir) //nolint:errcheck
 
 	// 0. Handle overlays first
 	if err = i.handleOverlay(ctx, report); err != nil {
-		return "", err
+		return "", tagPathOrPass(err, DependencyTag{})
 	}
 
 	if err = i.handleProf(); err != nil {
@@ -81,7 +95,7 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 	}
 
 	if err = i.handleEmbeddedConfig(); err != nil {
-		return "", err
+		return "", tagPathOrPass(err, IOTag{})
 	}
 
 	report.Report(reporter.Update{
@@ -91,7 +105,7 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 
 	// 1. Dump the profile.
 	if err = i.prof.Dump(os.Stderr); err != nil {
-		return "", err
+		return "", xerrors.NewTagged[IOTag](err)
 	}
 
 	// 2. Transform `initramfs.xz` with system extensions
@@ -115,7 +129,7 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 	switch i.prof.Output.Kind {
 	case profile.OutKindUKI:
 		if !needBuildUKI {
-			return "", fmt.Errorf("UKI output is not supported in this Talos version")
+			return "", xerrors.NewTagged[UnsupportedTag](fmt.Errorf("UKI output is not supported in this Talos version"))
 		}
 	case profile.OutKindISO, profile.OutKindInstaller, profile.OutKindImage:
 		needBuildUKI = needBuildUKI || quirks.New(i.prof.Version).UseSDBootForUEFI()
@@ -124,7 +138,7 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 	case profile.OutKindUnknown:
 		fallthrough
 	default:
-		return "", fmt.Errorf("unknown output kind: %s", i.prof.Output.Kind)
+		return "", xerrors.NewTagged[InvalidInputTag](fmt.Errorf("unknown output kind: %s", i.prof.Output.Kind))
 	}
 
 	if needBuildUKI {
@@ -182,7 +196,7 @@ func (i *Imager) Execute(ctx context.Context, outputPath string, report *reporte
 	case profile.OutFormatUnknown:
 		fallthrough
 	default:
-		return "", fmt.Errorf("unknown output format: %s", i.prof.Output.OutFormat)
+		return "", xerrors.NewTagged[InvalidInputTag](fmt.Errorf("unknown output format: %s", i.prof.Output.OutFormat))
 	}
 }
 
@@ -199,17 +213,17 @@ func (i *Imager) handleOverlay(ctx context.Context, report *reporter.Reporter) e
 	tempOverlayPath := filepath.Join(i.tempDir, constants.ImagerOverlayBasePath)
 
 	if err := os.MkdirAll(tempOverlayPath, 0o755); err != nil {
-		return fmt.Errorf("failed to create overlay directory: %w", err)
+		return xerrors.NewTagged[IOTag](fmt.Errorf("failed to create overlay directory: %w", err))
 	}
 
 	if err := i.prof.Overlay.Image.Extract(ctx, tempOverlayPath, runtime.GOARCH, progressPrintf(report, reporter.Update{Message: "pulling overlay...", Status: reporter.StatusRunning}), nil); err != nil {
-		return err
+		return xerrors.NewTagged[DependencyTag](err)
 	}
 
 	// find all *.yaml files in the overlay/profiles/ directory
 	profileYAMLs, err := filepath.Glob(filepath.Join(i.tempDir, constants.ImagerOverlayProfilesPath, "*.yaml"))
 	if err != nil {
-		return fmt.Errorf("failed to find profiles: %w", err)
+		return xerrors.NewTagged[IOTag](fmt.Errorf("failed to find profiles: %w", err))
 	}
 
 	if i.prof.Overlay.Name == "" {
@@ -229,11 +243,11 @@ func (i *Imager) handleOverlay(ctx context.Context, report *reporter.Reporter) e
 
 		profileDataBytes, err := os.ReadFile(profilePath)
 		if err != nil {
-			return fmt.Errorf("failed to read profile: %w", err)
+			return xerrors.NewTagged[IOTag](fmt.Errorf("failed to read profile: %w", err))
 		}
 
 		if err := yaml.Unmarshal(profileDataBytes, &overlayProfile); err != nil {
-			return fmt.Errorf("failed to unmarshal profile: %w", err)
+			return xerrors.NewTagged[InvalidInputTag](fmt.Errorf("failed to unmarshal profile: %w", err))
 		}
 
 		i.extraProfiles[profileName] = overlayProfile
@@ -252,14 +266,14 @@ func (i *Imager) handleProf() error {
 		}
 
 		if !ok {
-			return fmt.Errorf("unknown base profile: %s", i.prof.BaseProfileName)
+			return xerrors.NewTagged[InvalidInputTag](fmt.Errorf("unknown base profile: %s", i.prof.BaseProfileName))
 		}
 
 		baseProfile = baseProfile.DeepCopy()
 
 		// merge the profiles
 		if err := merge.Merge(&baseProfile, &i.prof); err != nil {
-			return err
+			return xerrors.NewTagged[InvalidInputTag](err)
 		}
 
 		i.prof = baseProfile
@@ -278,7 +292,7 @@ func (i *Imager) handleProf() error {
 	i.prof.Output.FillDefaults(i.prof.Arch, i.prof.Version, i.prof.SecureBootEnabled())
 
 	if err := i.prof.Validate(); err != nil {
-		return fmt.Errorf("profile is invalid: %w", err)
+		return xerrors.NewTagged[InvalidInputTag](fmt.Errorf("profile is invalid: %w", err))
 	}
 
 	return nil
@@ -309,7 +323,7 @@ func (i *Imager) buildInitramfs(ctx context.Context, report *reporter.Reporter) 
 	tempInitramfsPath := filepath.Join(i.tempDir, "initramfs.xz")
 
 	if err := utils.CopyFiles(printf, utils.SourceDestination(i.prof.Input.Initramfs.Path, tempInitramfsPath)); err != nil {
-		return fmt.Errorf("failed to copy initramfs: %w", err)
+		return xerrors.NewTagged[IOTag](fmt.Errorf("failed to copy initramfs: %w", err))
 	}
 
 	i.initramfsPath = tempInitramfsPath
@@ -321,11 +335,11 @@ func (i *Imager) buildInitramfs(ctx context.Context, report *reporter.Reporter) 
 		extensionDir := filepath.Join(extensionsCheckoutDir, strconv.Itoa(j))
 
 		if err := os.MkdirAll(extensionDir, 0o755); err != nil {
-			return fmt.Errorf("failed to create extension directory: %w", err)
+			return xerrors.NewTagged[IOTag](fmt.Errorf("failed to create extension directory: %w", err))
 		}
 
 		if err := ext.Extract(ctx, extensionDir, i.prof.Arch, printf, i.xattrsMap); err != nil {
-			return err
+			return xerrors.NewTagged[DependencyTag](err)
 		}
 	}
 
@@ -340,7 +354,7 @@ func (i *Imager) buildInitramfs(ctx context.Context, report *reporter.Reporter) 
 	}
 
 	if err := builder.Build(ctx); err != nil {
-		return err
+		return xerrors.NewTagged[DependencyTag](err)
 	}
 
 	report.Report(reporter.Update{
@@ -357,7 +371,7 @@ func (i *Imager) buildInitramfs(ctx context.Context, report *reporter.Reporter) 
 func (i *Imager) buildCmdline(ctx context.Context) error {
 	p, err := platform.NewPlatform(i.prof.Platform)
 	if err != nil {
-		return err
+		return xerrors.NewTagged[InvalidInputTag](err)
 	}
 
 	q := quirks.New(i.prof.Version)
@@ -377,7 +391,7 @@ func (i *Imager) buildCmdline(ctx context.Context) error {
 	if i.overlayInstaller != nil {
 		options, optsErr := i.overlayInstaller.GetOptions(ctx, i.prof.Overlay.ExtraOptions)
 		if optsErr != nil {
-			return optsErr
+			return xerrors.NewTagged[DependencyTag](optsErr)
 		}
 
 		cmdline.SetAll(options.KernelArgs)
@@ -385,12 +399,12 @@ func (i *Imager) buildCmdline(ctx context.Context) error {
 
 	// first defaults, then extra kernel args to allow extra kernel args to override defaults
 	if err = cmdline.AppendAll(kernel.DefaultArgs(q)); err != nil {
-		return err
+		return xerrors.NewTagged[InvalidInputTag](err)
 	}
 
 	if i.prof.SecureBootEnabled() {
 		if err = cmdline.AppendAll(kernel.SecureBootArgs(q)); err != nil {
-			return err
+			return xerrors.NewTagged[InvalidInputTag](err)
 		}
 	}
 
@@ -410,7 +424,7 @@ func (i *Imager) buildCmdline(ctx context.Context) error {
 		procfs.WithOverwriteArgs(constants.KernelParamPlatform),
 		procfs.WithDeleteNegatedArgs(),
 	); err != nil {
-		return err
+		return xerrors.NewTagged[InvalidInputTag](err)
 	}
 
 	i.cmdline = cmdline.String()
@@ -466,14 +480,14 @@ func (i *Imager) buildUKI(ctx context.Context, report *reporter.Reporter) error 
 
 		pcrSigner, err := i.prof.Input.SecureBoot.PCRSigner.GetSigner(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to get PCR signer: %w", err)
+			return xerrors.NewTagged[DependencyTag](fmt.Errorf("failed to get PCR signer: %w", err))
 		}
 
 		defer pcrSigner.Close() //nolint:errcheck
 
 		securebootSigner, err := i.prof.Input.SecureBoot.SecureBootSigner.GetSigner(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to get SecureBoot signer: %w", err)
+			return xerrors.NewTagged[DependencyTag](fmt.Errorf("failed to get SecureBoot signer: %w", err))
 		}
 
 		defer securebootSigner.Close() //nolint:errcheck
@@ -485,7 +499,7 @@ func (i *Imager) buildUKI(ctx context.Context, report *reporter.Reporter) error 
 	}
 
 	if err := buildFunc(printf); err != nil {
-		return err
+		return xerrors.NewTagged[DependencyTag](err)
 	}
 
 	report.Report(reporter.Update{
@@ -494,4 +508,18 @@ func (i *Imager) buildUKI(ctx context.Context, report *reporter.Reporter) error 
 	})
 
 	return nil
+}
+
+func tagPathOrPass[T xerrors.Tag](err error, _ T) error {
+	if err == nil || xerrors.TagIs[T](err) {
+		return err
+	}
+
+	var pathErr *fs.PathError
+
+	if errors.As(err, &pathErr) || os.IsNotExist(err) || os.IsExist(err) || os.IsPermission(err) {
+		return xerrors.NewTagged[T](err)
+	}
+
+	return err
 }

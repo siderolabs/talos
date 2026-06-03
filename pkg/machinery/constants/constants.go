@@ -1413,3 +1413,32 @@ BUG_REPORT_URL="https://github.com/siderolabs/talos/issues"
 VENDOR_NAME="Sidero Labs"
 VENDOR_URL="https://www.siderolabs.com/"
 `
+
+// Installer/imager exit codes.
+//
+// These values are part of Talos public CLI API for the `installer` and
+// `imager` binaries. Their semantic meaning is stable across releases and may
+// be relied on by automation.
+const (
+	// ExitSuccess indicates successful completion.
+	ExitSuccess = 0
+	// ExitUnknownError is used when no known error category matches.
+	ExitUnknownError = 1
+	// ExitInvalidInput indicates invalid CLI input, profile/config content, or
+	// other user-supplied values rejected before execution can proceed.
+	ExitInvalidInput = 2
+	// ExitUnsupported indicates a requested operation is known but unsupported
+	// for the selected version/output/feature combination.
+	ExitUnsupported = 3
+	// ExitEnvironment indicates host runtime prerequisites are missing or
+	// unavailable.
+	ExitEnvironment = 4
+	// ExitDependency indicates failure in an external dependency such as image
+	// pulls, signer backends, or post-processing tooling.
+	ExitDependency = 5
+	// ExitIO indicates local filesystem or generic I/O failures.
+	ExitIO = 6
+	// ExitInstall indicates installation or image assembly failed after runtime
+	// execution began.
+	ExitInstall = 7
+)

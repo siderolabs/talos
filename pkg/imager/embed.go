@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/siderolabs/gen/xerrors"
 	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/pkg/imager/profile"
@@ -29,19 +30,19 @@ func (i *Imager) handleEmbeddedConfig() error {
 
 	contents, err := BuildEmbeddedConfigExtension([]byte(i.prof.Customization.EmbeddedMachineConfiguration))
 	if err != nil {
-		return fmt.Errorf("failed to build embedded config extension: %w", err)
+		return xerrors.NewTaggedf[InvalidInputTag]("failed to build embedded config extension: %w", err)
 	}
 
 	tmpPath := filepath.Join(i.tempDir, "embedded-config.tar")
 
 	f, err := os.Create(tmpPath)
 	if err != nil {
-		return fmt.Errorf("failed to create temporary file: %w", err)
+		return xerrors.NewTaggedf[IOTag]("failed to create temporary file: %w", err)
 	}
 	defer f.Close() //nolint:errcheck
 
 	if _, err := io.Copy(f, contents); err != nil {
-		return fmt.Errorf("failed to write embedded config to temporary file: %w", err)
+		return xerrors.NewTaggedf[IOTag]("failed to write embedded config to temporary file: %w", err)
 	}
 
 	i.prof.Input.SystemExtensions = append(

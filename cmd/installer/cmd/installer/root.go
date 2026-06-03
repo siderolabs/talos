@@ -10,9 +10,11 @@ import (
 	"os"
 	"runtime"
 
+	"github.com/siderolabs/gen/xerrors"
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/cmd/installer/pkg/install"
+	installerexitcode "github.com/siderolabs/talos/pkg/installer/exitcode"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -26,7 +28,7 @@ var rootCmd = &cobra.Command{
 func setFlagsFromEnvironment() error {
 	if metaEnvBase64 := os.Getenv(constants.MetaValuesEnvVar); metaEnvBase64 != "" {
 		if err := options.MetaValues.Decode(metaEnvBase64); err != nil {
-			return err
+			return xerrors.NewTaggedf[install.InvalidInputTag]("%w", err)
 		}
 	}
 
@@ -36,21 +38,26 @@ func setFlagsFromEnvironment() error {
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	// Set defaults for flags from the environment variables.
-	if err := setFlagsFromEnvironment(); err != nil {
+	if err := execute(); err != nil {
 		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+		os.Exit(installerexitcode.Resolve(err))
+	}
+}
+
+func execute() error {
+	if err := setFlagsFromEnvironment(); err != nil {
+		return err
 	}
 
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
-	}
+	return rootCmd.Execute()
 }
 
 var options = &install.Options{}
 
 func init() {
+	rootCmd.SilenceErrors = true
+	rootCmd.SilenceUsage = true
+
 	rootCmd.PersistentFlags().StringVar(&options.ConfigSource, "config", "", "The value of "+constants.KernelParamConfig)
 	rootCmd.PersistentFlags().StringVar(&options.DiskPath, "disk", "", "The path to the disk to install to")
 	rootCmd.PersistentFlags().StringVar(&options.Platform, "platform", "", "The value of "+constants.KernelParamPlatform)

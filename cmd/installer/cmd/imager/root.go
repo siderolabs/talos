@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/google/go-containerregistry/pkg/name"
+	"github.com/siderolabs/gen/xerrors"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/spf13/cobra"
 	"go.yaml.in/yaml/v4"
@@ -23,6 +24,7 @@ import (
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/imager"
 	"github.com/siderolabs/talos/pkg/imager/profile"
+	installerexitcode "github.com/siderolabs/talos/pkg/installer/exitcode"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/overlay"
 	"github.com/siderolabs/talos/pkg/reporter"
@@ -73,7 +75,7 @@ var rootCmd = &cobra.Command{
 
 		if baseProfile == "-" {
 			if err := yaml.NewDecoder(os.Stdin).Decode(&prof); err != nil {
-				return err
+				return xerrors.NewTaggedf[profile.InvalidInputTag]("%w", err)
 			}
 		} else {
 			prof = profile.Profile{
@@ -92,14 +94,14 @@ var rootCmd = &cobra.Command{
 				if strings.HasPrefix(option, "@") {
 					data, err := os.ReadFile(option[1:])
 					if err != nil {
-						return err
+						return xerrors.NewTaggedf[imager.IOTag]("%w", err)
 					}
 
 					decoder := yaml.NewDecoder(bytes.NewReader(data))
 					decoder.KnownFields(true)
 
 					if err := decoder.Decode(&extraOverlayOptions); err != nil {
-						return err
+						return xerrors.NewTaggedf[profile.InvalidInputTag]("%w", err)
 					}
 
 					continue
@@ -110,7 +112,7 @@ var rootCmd = &cobra.Command{
 				if strings.HasPrefix(v, "@") {
 					data, err := os.ReadFile(v[1:])
 					if err != nil {
-						return err
+						return xerrors.NewTaggedf[imager.IOTag]("%w", err)
 					}
 
 					v = string(data)
@@ -144,7 +146,7 @@ var rootCmd = &cobra.Command{
 			if cmdFlags.OutputKind != "" {
 				outKind, err := profile.OutputKindString(cmdFlags.OutputKind)
 				if err != nil {
-					return err
+					return xerrors.NewTaggedf[profile.InvalidInputTag]("%w", err)
 				}
 
 				prof.Output.Kind = outKind
@@ -206,7 +208,7 @@ var rootCmd = &cobra.Command{
 			if cmdFlags.EmbeddedConfigPath != "" {
 				data, err := os.ReadFile(cmdFlags.EmbeddedConfigPath)
 				if err != nil {
-					return fmt.Errorf("error reading embedded config file: %w", err)
+					return xerrors.NewTaggedf[imager.IOTag]("error reading embedded config file: %w", err)
 				}
 
 				prof.Customization.EmbeddedMachineConfiguration = string(data)
@@ -214,15 +216,15 @@ var rootCmd = &cobra.Command{
 		}
 
 		if err := os.MkdirAll(cmdFlags.OutputPath, 0o755); err != nil {
-			return err
+			return xerrors.NewTaggedf[imager.IOTag]("%w", err)
 		}
 
-		imager, err := imager.New(prof)
+		imgr, err := imager.New(prof)
 		if err != nil {
 			return err
 		}
 
-		if _, err = imager.Execute(ctx, cmdFlags.OutputPath, report); err != nil {
+		if _, err = imgr.Execute(ctx, cmdFlags.OutputPath, report); err != nil {
 			report.Report(reporter.Update{
 				Message: err.Error(),
 				Status:  reporter.StatusError,
@@ -232,7 +234,9 @@ var rootCmd = &cobra.Command{
 		}
 
 		if cmdFlags.TarToStdout {
-			return archiver.TarGz(ctx, cmdFlags.OutputPath, os.Stdout)
+			if err := archiver.TarGz(ctx, cmdFlags.OutputPath, os.Stdout); err != nil {
+				return xerrors.NewTaggedf[imager.IOTag]("%w", err)
+			}
 		}
 
 		return nil
@@ -242,12 +246,20 @@ var rootCmd = &cobra.Command{
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	if _, err := cli.WithContextC(context.Background(), rootCmd.ExecuteContextC); err != nil {
-		os.Exit(1)
+	if err := execute(); err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(installerexitcode.Resolve(err))
 	}
 }
 
+func execute() error {
+	_, err := cli.WithContextC(context.Background(), rootCmd.ExecuteContextC)
+
+	return err
+}
+
 func init() {
+	rootCmd.SilenceErrors = true
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.Platform, "platform", "", "The value of "+constants.KernelParamPlatform)
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.Arch, "arch", runtime.GOARCH, "The target architecture")
 	rootCmd.PersistentFlags().StringVar(&cmdFlags.BaseInstallerImage, "base-installer-image", "", "Base installer image to use")

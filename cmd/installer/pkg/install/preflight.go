@@ -6,10 +6,10 @@ package install
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 
+	"github.com/siderolabs/gen/xerrors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
@@ -19,6 +19,16 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/role"
 	"github.com/siderolabs/talos/pkg/machinery/version"
+)
+
+// Exit-code tags for installer runtime failures.
+//
+//nolint:revive
+type (
+	InvalidInputTag struct{}
+	EnvironmentTag  struct{}
+	DependencyTag   struct{}
+	InstallTag      struct{}
 )
 
 // PreflightChecks runs the preflight checks.
@@ -46,7 +56,7 @@ func NewPreflightChecks(ctx context.Context) (*PreflightChecks, error) {
 		),
 	)
 	if err != nil {
-		return nil, fmt.Errorf("error connecting to the machine service: %w", err)
+		return nil, xerrors.NewTaggedf[EnvironmentTag]("error connecting to the machine service: %w", err)
 	}
 
 	return &PreflightChecks{
@@ -78,7 +88,7 @@ func (checks *PreflightChecks) Run(ctx context.Context) error {
 		checks.talosVersion,
 	} {
 		if err := check(ctx); err != nil {
-			return fmt.Errorf("pre-flight checks failed: %w", err)
+			return xerrors.NewTaggedf[EnvironmentTag]("pre-flight checks failed: %w", err)
 		}
 	}
 
@@ -90,7 +100,7 @@ func (checks *PreflightChecks) Run(ctx context.Context) error {
 func (checks *PreflightChecks) talosVersion(ctx context.Context) error {
 	resp, err := checks.client.Version(ctx)
 	if err != nil {
-		return fmt.Errorf("error getting Talos version: %w", err)
+		return xerrors.NewTaggedf[EnvironmentTag]("error getting Talos version: %w", err)
 	}
 
 	hostVersion := unpack(resp.Messages)
@@ -99,15 +109,19 @@ func (checks *PreflightChecks) talosVersion(ctx context.Context) error {
 
 	checks.hostTalosVersion, err = compatibility.ParseTalosVersion(hostVersion.Version)
 	if err != nil {
-		return fmt.Errorf("error parsing host Talos version: %w", err)
+		return xerrors.NewTaggedf[EnvironmentTag]("error parsing host Talos version: %w", err)
 	}
 
 	checks.installerTalosVersion, err = compatibility.ParseTalosVersion(version.NewVersion())
 	if err != nil {
-		return fmt.Errorf("error parsing installer Talos version: %w", err)
+		return xerrors.NewTaggedf[EnvironmentTag]("error parsing installer Talos version: %w", err)
 	}
 
-	return checks.installerTalosVersion.UpgradeableFrom(checks.hostTalosVersion)
+	if err := checks.installerTalosVersion.UpgradeableFrom(checks.hostTalosVersion); err != nil {
+		return xerrors.NewTagged[EnvironmentTag](err)
+	}
+
+	return nil
 }
 
 func unpack[T any](s []T) T {

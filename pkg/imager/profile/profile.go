@@ -7,9 +7,9 @@ package profile
 
 import (
 	"errors"
-	"fmt"
 	"io"
 
+	"github.com/siderolabs/gen/xerrors"
 	"github.com/siderolabs/go-pointer"
 	"go.yaml.in/yaml/v4"
 
@@ -49,6 +49,14 @@ type Profile struct {
 	Output Output `yaml:"output"`
 }
 
+// Exit-code tags for profile validation failures.
+//
+//nolint:revive
+type (
+	InvalidInputTag struct{}
+	UnsupportedTag  struct{}
+)
+
 // OverlayOptions describes overlay options for image generation.
 type OverlayOptions struct {
 	// Name of the overlay installer, defaults to `default` if not set.
@@ -69,25 +77,25 @@ func (p *Profile) SecureBootEnabled() bool {
 //nolint:gocyclo,cyclop
 func (p *Profile) Validate() error {
 	if p.Arch != amd64 && p.Arch != arm64 {
-		return fmt.Errorf("invalid arch %q", p.Arch)
+		return xerrors.NewTaggedf[InvalidInputTag]("invalid arch %q", p.Arch)
 	}
 
 	if p.Platform == "" {
-		return errors.New("platform is required")
+		return xerrors.NewTagged[InvalidInputTag](errors.New("platform is required"))
 	}
 
 	if p.SecureBootEnabled() && !quirks.New(p.Version).SupportsUKI() {
-		return fmt.Errorf("secureboot is not supported for Talos version %q", p.Version)
+		return xerrors.NewTaggedf[UnsupportedTag]("secureboot is not supported for Talos version %q", p.Version)
 	}
 
 	switch p.Output.Kind {
 	case OutKindUnknown:
-		return errors.New("unknown output kind")
+		return xerrors.NewTagged[InvalidInputTag](errors.New("unknown output kind"))
 	case OutKindISO:
 		// ISO supports all kinds of customization
 		if quirks.New(p.Version).ISOSupportsSettingBootloader() {
 			if p.Output.ISOOptions != nil && p.Output.ISOOptions.Bootloader == BootLoaderKindNone {
-				return errors.New("bootloader cannot be 'none' for ISO output")
+				return xerrors.NewTagged[InvalidInputTag](errors.New("bootloader cannot be 'none' for ISO output"))
 			}
 		}
 	case OutKindCmdline:
@@ -95,31 +103,31 @@ func (p *Profile) Validate() error {
 	case OutKindImage:
 		// Image supports all kinds of customization
 		if p.Output.ImageOptions == nil {
-			return errors.New("image options are required for image output")
+			return xerrors.NewTagged[InvalidInputTag](errors.New("image options are required for image output"))
 		}
 
 		if p.Output.ImageOptions.DiskSize == 0 {
-			return errors.New("disk size is required for image output")
+			return xerrors.NewTagged[InvalidInputTag](errors.New("disk size is required for image output"))
 		}
 
 		if p.Output.ImageOptions.Bootloader == BootLoaderKindNone {
-			return errors.New("bootloader cannot be 'none' for disk image output")
+			return xerrors.NewTagged[InvalidInputTag](errors.New("bootloader cannot be 'none' for disk image output"))
 		}
 	case OutKindInstaller:
 		if len(p.Customization.MetaContents) > 0 {
-			return fmt.Errorf("customization of meta partition is not supported for %s output", p.Output.Kind)
+			return xerrors.NewTaggedf[UnsupportedTag]("customization of meta partition is not supported for %s output", p.Output.Kind)
 		}
 	case OutKindKernel, OutKindInitramfs:
 		if p.SecureBootEnabled() {
-			return fmt.Errorf("secureboot is not supported for %s output", p.Output.Kind)
+			return xerrors.NewTaggedf[UnsupportedTag]("secureboot is not supported for %s output", p.Output.Kind)
 		}
 
 		if len(p.Customization.ExtraKernelArgs) > 0 {
-			return fmt.Errorf("customization of kernel args is not supported for %s output", p.Output.Kind)
+			return xerrors.NewTaggedf[UnsupportedTag]("customization of kernel args is not supported for %s output", p.Output.Kind)
 		}
 
 		if len(p.Customization.MetaContents) > 0 {
-			return fmt.Errorf("customization of meta partition is not supported for %s output", p.Output.Kind)
+			return xerrors.NewTaggedf[UnsupportedTag]("customization of meta partition is not supported for %s output", p.Output.Kind)
 		}
 	case OutKindUKI:
 	}

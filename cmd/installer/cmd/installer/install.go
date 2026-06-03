@@ -7,9 +7,9 @@ package installer
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 
+	"github.com/siderolabs/gen/xerrors"
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/cmd/installer/pkg/install"
@@ -44,7 +44,7 @@ func runInstallCmd(ctx context.Context) (err error) {
 
 	p, err := platform.NewPlatform(options.Platform)
 	if err != nil {
-		return err
+		return xerrors.NewTaggedf[install.InvalidInputTag]("%w", err)
 	}
 
 	config, err := configloader.NewFromStdin()
@@ -55,14 +55,14 @@ func runInstallCmd(ctx context.Context) (err error) {
 			// machine configuration can be only missing while running an upgrade in maintenance mode, assume that we should follow GrubUseUKICmdline
 			options.GrubUseUKICmdline = true
 		} else {
-			return fmt.Errorf("error loading machine configuration: %w", err)
+			return xerrors.NewTaggedf[install.InvalidInputTag]("error loading machine configuration: %w", err)
 		}
 	} else {
 		var warnings []string
 
 		warnings, err = config.ValidateAsClient(p.Mode())
 		if err != nil {
-			return fmt.Errorf("machine configuration is invalid: %w", err)
+			return xerrors.NewTaggedf[install.InvalidInputTag]("machine configuration is invalid: %w", err)
 		}
 
 		if len(warnings) > 0 {
