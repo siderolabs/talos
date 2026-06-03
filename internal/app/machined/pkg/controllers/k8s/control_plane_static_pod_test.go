@@ -23,6 +23,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	k8sctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s/internal/k8stemplates"
+	"github.com/siderolabs/talos/pkg/argsbuilder"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
@@ -61,7 +62,33 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileDefaults() {
 			suite.Require().NoError(err)
 
 			if staticPod.Metadata().ID() == k8s.APIServerID {
-				asrt.Contains(pod.Spec.Containers[0].Command, "--tls-min-version=VersionTLS13")
+				container := pod.Spec.Containers[0]
+
+				asrt.Contains(container.Command, "--tls-min-version=VersionTLS13")
+
+				// the default (latest) kube-apiserver version supports configurable anonymous auth endpoints,
+				// so anonymous access is restricted to the health endpoints via the authentication config file
+				// and the unauthenticated probes are wired up.
+				asrt.Contains(container.Command, "--authentication-config="+filepath.Join(constants.KubernetesAPIServerConfigDir, "authentication-config.yaml"))
+
+				for _, command := range container.Command {
+					asrt.NotContains(command, "--anonymous-auth")
+				}
+
+				if asrt.NotNil(container.StartupProbe) {
+					asrt.Equal("/livez", container.StartupProbe.HTTPGet.Path)
+					asrt.Equal(v1.URISchemeHTTPS, container.StartupProbe.HTTPGet.Scheme)
+				}
+
+				if asrt.NotNil(container.LivenessProbe) {
+					asrt.Equal("/livez", container.LivenessProbe.HTTPGet.Path)
+					asrt.Equal(v1.URISchemeHTTPS, container.LivenessProbe.HTTPGet.Scheme)
+				}
+
+				if asrt.NotNil(container.ReadinessProbe) {
+					asrt.Equal("/readyz", container.ReadinessProbe.HTTPGet.Path)
+					asrt.Equal(v1.URISchemeHTTPS, container.ReadinessProbe.HTTPGet.Scheme)
+				}
 			}
 		},
 	)
@@ -286,6 +313,28 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraArgsK8s() {
 			},
 		},
 		{
+			k8sVersion: "v1.32.0",
+			args: map[string]k8s.ArgValues{
+				"bind-address": {Values: []string{"127.0.0.1"}},
+			},
+			expected: map[string][]string{
+				"bind-address":          {"127.0.0.1"},
+				"authentication-config": {filepath.Join(constants.KubernetesAPIServerConfigDir, "authentication-config.yaml")},
+			},
+		},
+		{
+			k8sVersion: "v1.32.0", // user provided oidc-* flags conflict with the authentication config file, fall back to anonymous-auth=false
+			args: map[string]k8s.ArgValues{
+				"bind-address":    {Values: []string{"127.0.0.1"}},
+				"oidc-issuer-url": {Values: []string{"https://example.com"}},
+			},
+			expected: map[string][]string{
+				"bind-address":    {"127.0.0.1"},
+				"anonymous-auth":  {"false"},
+				"oidc-issuer-url": {"https://example.com"},
+			},
+		},
+		{
 			args: map[string]k8s.ArgValues{
 				"proxy-client-key-file": {Values: []string{"front-proxy-client.key"}},
 			},
@@ -357,6 +406,87 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileExtraArgsK8s() {
 			for k, v := range test.expected {
 				assertArg(k, v)
 			}
+		})
+	}
+}
+
+func (suite *ControlPlaneStaticPodSuite) TestReconcileAPIServerProbes() {
+	configStatus := k8s.NewConfigStatus(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusStaticPodID)
+	secretStatus := k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID)
+	configAPIServer := k8s.NewAPIServerConfig()
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), configStatus))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), secretStatus))
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), configAPIServer))
+
+	tests := []struct {
+		name         string
+		args         map[string]k8s.ArgValues
+		expectProbes bool
+	}{
+		{
+			// anonymous access is restricted to the health endpoints via the authentication config file, so the
+			// unauthenticated probes can reach them and are wired up.
+			name:         "default",
+			expectProbes: true,
+		},
+		{
+			// user provided oidc-* flags conflict with the authentication config file, anonymous auth is fully
+			// disabled, so the unauthenticated probes would be rejected and are not wired up.
+			name: "conflicting oidc args",
+			args: map[string]k8s.ArgValues{
+				"oidc-issuer-url": {Values: []string{"https://example.com"}},
+			},
+			expectProbes: false,
+		},
+		{
+			// user explicitly set anonymous-auth, which conflicts with the authentication config file, so the
+			// probes are not wired up.
+			name: "conflicting anonymous-auth arg",
+			args: map[string]k8s.ArgValues{
+				"anonymous-auth": {Values: []string{"true"}},
+			},
+			expectProbes: false,
+		},
+	}
+
+	for _, test := range tests {
+		suite.Run(test.name, func() {
+			configAPIServer.TypedSpec().ExtraArgs = test.args
+
+			suite.Require().NoError(suite.State().Update(suite.Ctx(), configAPIServer))
+
+			rtestutils.AssertResource(suite.Ctx(), suite.T(), suite.State(), k8s.APIServerID, func(staticPod *k8s.StaticPod, assert *assert.Assertions) {
+				apiServerPod, err := k8sadapter.StaticPod(staticPod).Pod()
+				suite.Require().NoError(err)
+
+				assert.NotEmpty(apiServerPod.Spec.Containers)
+
+				container := apiServerPod.Spec.Containers[0]
+
+				if !test.expectProbes {
+					assert.Nil(container.StartupProbe)
+					assert.Nil(container.LivenessProbe)
+					assert.Nil(container.ReadinessProbe)
+
+					return
+				}
+
+				if assert.NotNil(container.StartupProbe) {
+					assert.Equal("/livez", container.StartupProbe.HTTPGet.Path)
+					assert.Equal(v1.URISchemeHTTPS, container.StartupProbe.HTTPGet.Scheme)
+				}
+
+				if assert.NotNil(container.LivenessProbe) {
+					assert.Equal("/livez", container.LivenessProbe.HTTPGet.Path)
+					assert.Equal(v1.URISchemeHTTPS, container.LivenessProbe.HTTPGet.Scheme)
+				}
+
+				if assert.NotNil(container.ReadinessProbe) {
+					assert.Equal("/readyz", container.ReadinessProbe.HTTPGet.Path)
+					assert.Equal(v1.URISchemeHTTPS, container.ReadinessProbe.HTTPGet.Scheme)
+				}
+			})
 		})
 	}
 }
@@ -622,5 +752,82 @@ func TestControlPlaneStaticPodSuite(t *testing.T) {
 				suite.Require().NoError(suite.State().Destroy(suite.Ctx(), v1alpha1.NewService("etcd").Metadata()))
 			},
 		},
+	})
+}
+
+func TestKubeAPIServerExtraArgsConflictWithAuthenticationConfig(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name             string
+		extraArgs        map[string][]string
+		conflictExpected bool
+	}{
+		{
+			name:             "empty",
+			extraArgs:        nil,
+			conflictExpected: false,
+		},
+		{
+			name:             "unrelated args",
+			extraArgs:        map[string][]string{"bind-address": {"127.0.0.1"}, "authorization-mode": {"Webhook"}},
+			conflictExpected: false,
+		},
+		{
+			name:             "anonymous-auth",
+			extraArgs:        map[string][]string{"anonymous-auth": {"true"}},
+			conflictExpected: true,
+		},
+		{
+			name:             "authentication-config",
+			extraArgs:        map[string][]string{"authentication-config": {"/etc/foo.yaml"}},
+			conflictExpected: true,
+		},
+		{
+			name:             "oidc-issuer-url",
+			extraArgs:        map[string][]string{"oidc-issuer-url": {"https://example.com"}},
+			conflictExpected: true,
+		},
+		{
+			name:             "oidc-client-id alongside unrelated args",
+			extraArgs:        map[string][]string{"bind-address": {"127.0.0.1"}, "oidc-client-id": {"talos"}},
+			conflictExpected: true,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.conflictExpected, k8sctrl.KubeAPIServerExtraArgsConflictWithAuthenticationConfig(test.extraArgs))
+		})
+	}
+}
+
+func TestHandleKubeAPIServerAnonymousAuthFlags(t *testing.T) {
+	t.Parallel()
+
+	authenticationConfigPath := filepath.Join(constants.KubernetesAPIServerConfigDir, "authentication-config.yaml")
+
+	t.Run("no conflict uses authentication config", func(t *testing.T) {
+		t.Parallel()
+
+		builder := argsbuilder.Args{}
+
+		useAuthenticationConfig := k8sctrl.HandleKubeAPIServerAnonymousAuthFlags(builder, map[string][]string{"bind-address": {"127.0.0.1"}})
+
+		assert.True(t, useAuthenticationConfig)
+		assert.Equal(t, argsbuilder.Value{authenticationConfigPath}, builder.Get("authentication-config"))
+		assert.False(t, builder.Contains("anonymous-auth"))
+	})
+
+	t.Run("conflicting args disable anonymous auth", func(t *testing.T) {
+		t.Parallel()
+
+		builder := argsbuilder.Args{}
+
+		useAuthenticationConfig := k8sctrl.HandleKubeAPIServerAnonymousAuthFlags(builder, map[string][]string{"oidc-issuer-url": {"https://example.com"}})
+
+		assert.False(t, useAuthenticationConfig)
+		assert.Equal(t, argsbuilder.Value{"false"}, builder.Get("anonymous-auth"))
+		assert.False(t, builder.Contains("authentication-config"))
 	})
 }

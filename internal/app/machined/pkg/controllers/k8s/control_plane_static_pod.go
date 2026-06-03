@@ -291,10 +291,8 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 	}
 
 	builder := argsbuilder.Args{
-		"admission-control-config-file": {filepath.Join(constants.KubernetesAPIServerConfigDir, "admission-control-config.yaml")},
-		"allow-privileged":              {"true"},
-		// Do not accept anonymous requests by default. Otherwise the kube-apiserver will set the request's group to system:unauthenticated exposing endpoints like /version etc.
-		"anonymous-auth":                     {"false"},
+		"admission-control-config-file":      {filepath.Join(constants.KubernetesAPIServerConfigDir, "admission-control-config.yaml")},
+		"allow-privileged":                   {"true"},
 		"api-audiences":                      {cfg.ControlPlaneEndpoint},
 		"bind-address":                       {"0.0.0.0"},
 		"client-ca-file":                     {filepath.Join(constants.KubernetesAPIServerSecretsDir, "ca.crt")},
@@ -348,6 +346,13 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 
 	handleKubeAPIServerAuthorizationFlags(k8sVersion, builder, extraArgs)
 
+	// Anonymous requests are not accepted by default, otherwise the kube-apiserver would set the request's
+	// group to system:unauthenticated, exposing endpoints like /version etc. Anonymous access is instead
+	// restricted to the health endpoints only (via the authentication config file), so the kubelet HTTP
+	// liveness probe can reach /livez without credentials while every other endpoint keeps rejecting anonymous
+	// requests.
+	useAuthenticationConfig := HandleKubeAPIServerAnonymousAuthFlags(builder, extraArgs)
+
 	mergePolicies := argsbuilder.MergePolicies{
 		"enable-admission-plugins": argsbuilder.MergeAdditive,
 		"feature-gates":            argsbuilder.MergeAdditive,
@@ -370,6 +375,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 		"tls-min-version":                  argsbuilder.MergeDenied,
 		"tls-private-key-file":             argsbuilder.MergeDenied,
 		"authorization-config":             argsbuilder.MergeDenied,
+		"authentication-config":            argsbuilder.MergeDenied,
 	}
 
 	if err := builder.Merge(extraArgs, argsbuilder.WithMergePolicies(mergePolicies)); err != nil {
@@ -386,6 +392,62 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 	env := envVars(cfg.EnvironmentVariables)
 	if goGCEnv := k8stemplates.GoGCEnvFromResources(resources); goGCEnv.Name != "" {
 		env = append(env, goGCEnv)
+	}
+
+	// The probes are unauthenticated requests, so they can only be used when anonymous access to the health
+	// endpoints is allowed via the authentication config file, otherwise they would be rejected with a 401.
+	var (
+		startupProbe   *v1.Probe
+		livenessProbe  *v1.Probe
+		readinessProbe *v1.Probe
+	)
+
+	if useAuthenticationConfig {
+		// Probe configuration follows kubeadm defaults.
+		startupProbe = &v1.Probe{
+			ProbeHandler: v1.ProbeHandler{
+				HTTPGet: &v1.HTTPGetAction{
+					Path:   "/livez",
+					Host:   "localhost",
+					Port:   intstr.FromInt(cfg.LocalPort),
+					Scheme: v1.URISchemeHTTPS,
+				},
+			},
+			InitialDelaySeconds: 10,
+			PeriodSeconds:       10,
+			TimeoutSeconds:      15,
+			FailureThreshold:    24,
+		}
+
+		readinessProbe = &v1.Probe{
+			ProbeHandler: v1.ProbeHandler{
+				HTTPGet: &v1.HTTPGetAction{
+					Path:   "/readyz",
+					Host:   "localhost",
+					Port:   intstr.FromInt(cfg.LocalPort),
+					Scheme: v1.URISchemeHTTPS,
+				},
+			},
+			InitialDelaySeconds: 0,
+			PeriodSeconds:       1,
+			TimeoutSeconds:      15,
+			FailureThreshold:    3,
+		}
+
+		livenessProbe = &v1.Probe{
+			ProbeHandler: v1.ProbeHandler{
+				HTTPGet: &v1.HTTPGetAction{
+					Path:   "/livez",
+					Host:   "localhost",
+					Port:   intstr.FromInt(cfg.LocalPort),
+					Scheme: v1.URISchemeHTTPS,
+				},
+			},
+			InitialDelaySeconds: 10,
+			PeriodSeconds:       10,
+			TimeoutSeconds:      15,
+			FailureThreshold:    8,
+		}
 	}
 
 	return k8s.APIServerID, safe.WriterModify(ctx, r, k8s.NewStaticPod(k8s.NamespaceName, k8s.APIServerID), func(r *k8s.StaticPod) error {
@@ -450,7 +512,10 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 								ReadOnly:  false,
 							},
 						}, volumeMounts(cfg.ExtraVolumes)...),
-						Resources: resources,
+						StartupProbe:   startupProbe,
+						LivenessProbe:  livenessProbe,
+						ReadinessProbe: readinessProbe,
+						Resources:      resources,
 						SecurityContext: &v1.SecurityContext{
 							AllowPrivilegeEscalation: new(false),
 							Capabilities: &v1.Capabilities{
@@ -785,7 +850,7 @@ func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context
 	})
 }
 
-func kubeAPIServerExtraArgsHasAuthorizationWebhooFlags(extraArgs map[string][]string) bool {
+func kubeAPIServerExtraArgsHasAuthorizationWebhookFlags(extraArgs map[string][]string) bool {
 	return slices.ContainsFunc(maps.Keys(extraArgs), func(arg string) bool {
 		return strings.HasPrefix(arg, "authorization-webhook-")
 	})
@@ -807,7 +872,7 @@ func handleKubeAPIServerAuthorizationFlags(kubeVersion compatibility.Version, ar
 	}
 
 	// 2. user has set `authorization-webhook-*` flags, we'll just merge our default `authorization-mode` flag
-	if kubeAPIServerExtraArgsHasAuthorizationWebhooFlags(extraArgs) {
+	if kubeAPIServerExtraArgsHasAuthorizationWebhookFlags(extraArgs) {
 		argBuilder.Set("authorization-mode", argsbuilder.Value{"Node,RBAC"})
 
 		return
@@ -828,4 +893,31 @@ func handleKubeAPIServerAuthorizationFlags(kubeVersion compatibility.Version, ar
 	}
 
 	argBuilder.Set("authorization-config", argsbuilder.Value{filepath.Join(constants.KubernetesAPIServerConfigDir, "authorization-config.yaml")})
+}
+
+// KubeAPIServerExtraArgsConflictWithAuthenticationConfig returns true if user-provided extra args conflict with
+// the structured authentication config file, which is mutually exclusive with the --anonymous-auth and --oidc-* flags.
+func KubeAPIServerExtraArgsConflictWithAuthenticationConfig(extraArgs map[string][]string) bool {
+	return slices.ContainsFunc(maps.Keys(extraArgs), func(arg string) bool {
+		return arg == "anonymous-auth" || arg == "authentication-config" || strings.HasPrefix(arg, "oidc-")
+	})
+}
+
+// HandleKubeAPIServerAnonymousAuthFlags configures anonymous authentication for the kube-apiserver.
+//
+// It returns true if anonymous auth is managed via the structured authentication config file
+// (--authentication-config), which restricts anonymous access to the health endpoints only. Otherwise anonymous
+// auth is fully disabled via --anonymous-auth=false and the caller must not rely on unauthenticated probes.
+func HandleKubeAPIServerAnonymousAuthFlags(argBuilder argsbuilder.Args, extraArgs map[string][]string) bool {
+	// --authentication-config is mutually exclusive with the --anonymous-auth and --oidc-* flags, so when the
+	// user provides any of those via extra args, fall back to fully disabling anonymous auth.
+	if KubeAPIServerExtraArgsConflictWithAuthenticationConfig(extraArgs) {
+		argBuilder.Set("anonymous-auth", argsbuilder.Value{"false"})
+
+		return false
+	}
+
+	argBuilder.Set("authentication-config", argsbuilder.Value{filepath.Join(constants.KubernetesAPIServerConfigDir, "authentication-config.yaml")})
+
+	return true
 }

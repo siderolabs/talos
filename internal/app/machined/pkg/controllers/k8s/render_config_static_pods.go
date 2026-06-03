@@ -22,6 +22,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	k8sjson "k8s.io/apimachinery/pkg/runtime/serializer/json"
 	apiserverv1 "k8s.io/apiserver/pkg/apis/apiserver/v1"
+	apiserverv1beta1 "k8s.io/apiserver/pkg/apis/apiserver/v1beta1"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
 
 	"github.com/siderolabs/talos/internal/pkg/selinux"
@@ -136,6 +137,27 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 			f        func() (runtime.Object, error)
 		}
 
+		apiServerConfigFiles := []configFile{
+			{
+				filename: "admission-control-config.yaml",
+				f:        admissionControlConfig(admissionConfig),
+			},
+			{
+				filename: "auditpolicy.yaml",
+				f:        auditPolicyConfig(auditConfig),
+			},
+			{
+				filename: "authorization-config.yaml",
+				f:        authorizationConfig(authorizerConfig, kubeAPIServerVersion),
+			},
+			// Anonymous access is restricted to the health endpoints only via the authentication config file
+			// (see ControlPlaneStaticPodController).
+			{
+				filename: "authentication-config.yaml",
+				f:        authenticationConfig(),
+			},
+		}
+
 		serializer := k8sjson.NewSerializerWithOptions(
 			k8sjson.DefaultMetaFactory, nil, nil,
 			k8sjson.SerializerOptions{
@@ -159,20 +181,7 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 				selinuxLabel: constants.KubernetesAPIServerConfigDirSELinuxLabel,
 				uid:          constants.KubernetesAPIServerRunUser,
 				gid:          constants.KubernetesAPIServerRunGroup,
-				configs: []configFile{
-					{
-						filename: "admission-control-config.yaml",
-						f:        admissionControlConfig(admissionConfig),
-					},
-					{
-						filename: "auditpolicy.yaml",
-						f:        auditPolicyConfig(auditConfig),
-					},
-					{
-						filename: "authorization-config.yaml",
-						f:        authorizationConfig(authorizerConfig, kubeAPIServerVersion),
-					},
-				},
+				configs:      apiServerConfigFiles,
 			},
 			{
 				name:         "kube-scheduler",
@@ -311,5 +320,30 @@ func authorizationConfig(spec *k8s.AuthorizationConfigSpec, kubeAPIServerVersion
 		}
 
 		return &cfg, nil
+	}
+}
+
+// authenticationConfig renders the kube-apiserver authentication configuration.
+//
+// It enables anonymous authentication only for the health endpoints, so unauthenticated probes can reach them
+// while every other endpoint keeps rejecting anonymous requests.
+func authenticationConfig() func() (runtime.Object, error) {
+	return func() (runtime.Object, error) {
+		cfg := &apiserverv1beta1.AuthenticationConfiguration{
+			JWT: []apiserverv1beta1.JWTAuthenticator{},
+			Anonymous: &apiserverv1beta1.AnonymousAuthConfig{
+				Enabled: true,
+				Conditions: []apiserverv1beta1.AnonymousAuthCondition{
+					{Path: "/livez"},
+					{Path: "/readyz"},
+					{Path: "/healthz"},
+				},
+			},
+		}
+
+		cfg.APIVersion = "apiserver.config.k8s.io/v1beta1"
+		cfg.Kind = "AuthenticationConfiguration"
+
+		return cfg, nil
 	}
 }
