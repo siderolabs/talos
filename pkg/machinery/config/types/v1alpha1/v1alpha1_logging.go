@@ -33,7 +33,7 @@ func (lc *LoggingConfig) Validate() error {
 				errs = multierror.Append(errs, errors.New("empty logging endpoint's host"))
 			}
 
-			if endpoint.Scheme != "tcp" && endpoint.Scheme != "udp" {
+			if endpoint.Scheme != "tcp" && endpoint.Scheme != "udp" && endpoint.Scheme != "unix" {
 				errs = multierror.Append(errs, fmt.Errorf("unexpected logging endpoint scheme %q", endpoint.Scheme))
 			}
 		}

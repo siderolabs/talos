@@ -72,7 +72,7 @@ func (j *jsonLinesSender) Send(ctx context.Context, e *runtime.LogEvent) error {
 		return fmt.Errorf("%w: %s", runtime.ErrDontRetry, err)
 	}
 
-	if j.endpoint.Scheme == "tcp" {
+	if j.endpoint.Scheme == "tcp" || j.endpoint.Scheme == "unix" {
 		b = append(b, '\n')
 	}
 
@@ -85,7 +85,12 @@ func (j *jsonLinesSender) Send(ctx context.Context, e *runtime.LogEvent) error {
 
 	// Connect (or "connect" for UDP) if no connection is established already.
 	if j.conn == nil {
-		conn, err := new(net.Dialer).DialContext(ctx, j.endpoint.Scheme, j.endpoint.Host)
+		host := j.endpoint.Host
+		if j.endpoint.Scheme == "unix" {
+			host = j.endpoint.Path
+		}
+
+		conn, err := new(net.Dialer).DialContext(ctx, j.endpoint.Scheme, host)
 		if err != nil {
 			return err
 		}

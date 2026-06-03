@@ -8,6 +8,8 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
+	"fmt"
+	"math/rand/v2"
 	"net"
 	"net/url"
 	"sync"
@@ -69,19 +71,13 @@ func tcpHandler(ctx context.Context, t *testing.T, conn net.Listener, sendCh cha
 		default:
 		}
 
-		if err := conn.(*net.TCPListener).SetDeadline(time.Now().Add(10 * time.Millisecond)); err != nil {
-			t.Logf("failed to set accept deadline: %v", err)
-
-			return
-		}
-
 		c, err := conn.Accept()
 		if err != nil {
 			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
 				continue
 			}
 
-			t.Logf("failed to accept UDP connection: %v", err)
+			t.Logf("failed to accept TCP connection: %v", err)
 
 			return
 		}
@@ -134,8 +130,16 @@ func TestSenderJSONLines(t *testing.T) { //nolint:tparallel
 		require.NoError(t, lisTCP.Close())
 	})
 
+	lisUNIX, err := (&net.ListenConfig{}).Listen(t.Context(), "unix", fmt.Sprintf("/tmp/logs-%04x.sock", rand.Int32()))
+	require.NoError(t, err)
+
+	t.Cleanup(func() {
+		require.NoError(t, lisUNIX.Close())
+	})
+
 	udpEndpoint := lisUDP.LocalAddr().String()
 	tcpEndpoint := lisTCP.Addr().String()
+	unixEndpoint := lisUNIX.Addr().String()
 
 	ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)
 	t.Cleanup(cancel)
@@ -149,7 +153,23 @@ func TestSenderJSONLines(t *testing.T) { //nolint:tparallel
 	})
 
 	wg.Go(func() {
+		if err := (lisTCP.(*net.TCPListener)).SetDeadline(time.Now().Add(10 * time.Millisecond)); err != nil {
+			t.Logf("failed to set accept deadline: %v", err)
+
+			return
+		}
+
 		tcpHandler(ctx, t, lisTCP, sendCh)
+	})
+
+	wg.Go(func() {
+		if err := (lisUNIX.(*net.UnixListener)).SetDeadline(time.Now().Add(10 * time.Millisecond)); err != nil {
+			t.Logf("failed to set accept deadline: %v", err)
+
+			return
+		}
+
+		tcpHandler(ctx, t, lisUNIX, sendCh)
 	})
 
 	t.Cleanup(wg.Wait)
@@ -268,6 +288,60 @@ func TestSenderJSONLines(t *testing.T) { //nolint:tparallel
 			name: "TCP with extra tags",
 
 			endpoint: ensure.Value(url.Parse("tcp://" + tcpEndpoint)),
+			extraTags: map[string]string{
+				"extra1": "value1",
+			},
+
+			messages: []*runtime.LogEvent{
+				{
+					Msg:   "hello",
+					Time:  ensure.Value(time.Parse(time.RFC3339Nano, "2021-01-01T00:00:00Z")),
+					Level: zapcore.InfoLevel,
+					Fields: map[string]any{
+						"field1": "value1",
+					},
+				},
+			},
+
+			expected: []map[string]any{
+				{
+					"field1":      "value1",
+					"extra1":      "value1",
+					"msg":         "hello",
+					"talos-level": "info",
+					"talos-time":  "2021-01-01T00:00:00Z",
+				},
+			},
+		},
+		{
+			name: "UNIX",
+
+			endpoint: ensure.Value(url.Parse("unix://" + unixEndpoint)),
+
+			messages: []*runtime.LogEvent{
+				{
+					Msg:   "hello",
+					Time:  ensure.Value(time.Parse(time.RFC3339Nano, "2021-01-01T00:00:00Z")),
+					Level: zapcore.InfoLevel,
+					Fields: map[string]any{
+						"field1": "value1",
+					},
+				},
+			},
+
+			expected: []map[string]any{
+				{
+					"field1":      "value1",
+					"msg":         "hello",
+					"talos-level": "info",
+					"talos-time":  "2021-01-01T00:00:00Z",
+				},
+			},
+		},
+		{
+			name: "UNIX with extra tags",
+
+			endpoint: ensure.Value(url.Parse("unix://" + unixEndpoint)),
 			extraTags: map[string]string{
 				"extra1": "value1",
 			},
