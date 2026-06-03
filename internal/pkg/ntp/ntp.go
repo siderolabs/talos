@@ -8,6 +8,8 @@ package ntp
 import (
 	"bytes"
 	"context"
+	"crypto/x509"
+	"errors"
 	"fmt"
 	"math/bits"
 	"net"
@@ -58,6 +60,13 @@ type Syncer struct {
 	// NTS (Network Time Security) support
 	UseNTS        bool
 	NTSNewSession NTSNewSessionFunc
+
+	// NTSBootstrapAttempts is the number of initial NTS session establishment
+	// attempts during which a TLS certificate validity-period failure is tolerated
+	// by retrying with a verifier that ignores certificate time constraints.
+	NTSBootstrapAttempts int
+
+	ntsBootstrapUsed int
 }
 
 // Measurement is a struct containing correction data based on a time request.
@@ -92,6 +101,8 @@ func NewSyncer(logger *zap.Logger, timeServers []string, useNTS bool) *Syncer {
 
 		UseNTS:        useNTS,
 		NTSNewSession: DefaultNTSNewSession,
+
+		NTSBootstrapAttempts: NTSBootstrapAttempts,
 	}
 
 	return syncer
@@ -521,7 +532,7 @@ func (syncer *Syncer) getNTSSession(server string) (NTSSession, error) {
 		return nil, fmt.Errorf("NTS session factory not configured")
 	}
 
-	session, err := syncer.NTSNewSession(server)
+	session, err := syncer.newNTSSession(server)
 	if err != nil {
 		return nil, err
 	}
@@ -534,6 +545,51 @@ func (syncer *Syncer) getNTSSession(server string) (NTSSession, error) {
 	syncer.logger.Info("established NTS session", zap.String("server", server))
 
 	return session, nil
+}
+
+// newNTSSession establishes an NTS session, applying the boot-time bootstrap
+// workaround for the TLS certificate time check.
+//
+// It first attempts strict validation. If that fails with a certificate
+// validity-period error and the bootstrap budget is not yet exhausted (and time
+// has not been synced yet), it retries with the certificate time check disabled
+// while still validating the chain and hostname. After NTSBootstrapAttempts such
+// retries, or once time is synced, validation is always strict.
+func (syncer *Syncer) newNTSSession(server string) (NTSSession, error) {
+	session, err := syncer.NTSNewSession(server, false)
+	if err == nil {
+		return session, nil
+	}
+
+	if syncer.timeSyncNotified || syncer.ntsBootstrapUsed >= syncer.NTSBootstrapAttempts || !isCertTimeError(err) {
+		return nil, err
+	}
+
+	syncer.ntsBootstrapUsed++
+
+	syncer.logger.Warn(
+		"NTS certificate time validation failed, retrying while ignoring certificate time constraints (system clock may not be set yet)",
+		zap.String("server", server),
+		zap.Int("bootstrap_attempts_used", syncer.ntsBootstrapUsed),
+		zap.Int("bootstrap_attempts_limit", syncer.NTSBootstrapAttempts),
+		zap.Error(err),
+	)
+
+	return syncer.NTSNewSession(server, true)
+}
+
+// isCertTimeError reports whether err is a TLS certificate validation failure
+// caused by the certificate validity period (expired or not yet valid).
+//
+// Other certificate failures (unknown authority, hostname mismatch, etc.) are
+// deliberately excluded: those are genuine trust failures which must not be
+// bypassed even during bootstrap.
+func isCertTimeError(err error) bool {
+	if certErr, ok := errors.AsType[x509.CertificateInvalidError](err); ok {
+		return certErr.Reason == x509.Expired
+	}
+
+	return false
 }
 
 // log2i returns 0 for v == 0 and v == 1.

@@ -35,6 +35,12 @@ case "${WITH_UEFI:-none}" in
     ;;
 esac
 
+case "${WITH_BAD_RTC:-none}" in
+  true)
+    QEMU_FLAGS+=("--bad-rtc")
+    ;;
+esac
+
 case "${WITH_VIRTUAL_IP:-false}" in
   true)
     QEMU_FLAGS+=("--use-vip")

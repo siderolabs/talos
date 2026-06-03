@@ -22,4 +22,14 @@ const (
 	EpochLimit = 15 * time.Minute
 	// ExpectedAccuracy is the expected time sync accuracy, used to adjust poll interval.
 	ExpectedAccuracy = 200 * time.Millisecond
+	// NTSBootstrapAttempts is the number of initial NTS session establishment attempts
+	// during which a TLS certificate validity-period (time) failure is tolerated by
+	// falling back to a verifier which validates the chain and hostname but ignores
+	// the certificate notBefore/notAfter.
+	//
+	// This works around the boot-time chicken-and-egg problem: NTS key exchange runs
+	// over TLS, but the system clock used to validate the certificate may not be set
+	// yet. After this many attempts (or once time has been synced), certificate
+	// validation is always strict.
+	NTSBootstrapAttempts = 5
 )

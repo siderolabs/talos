@@ -6,6 +6,7 @@ package ntp_test
 
 import (
 	"context"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"sync"
@@ -563,7 +564,7 @@ func (suite *NTPSuite) TestNTSQueryBasic() {
 		},
 	}
 
-	syncer.NTSNewSession = func(address string) (ntp.NTSSession, error) {
+	syncer.NTSNewSession = func(address string, skipCertTimeCheck bool) (ntp.NTSSession, error) {
 		suite.Assert().Equal("time.cloudflare.com", address)
 
 		return mockSession, nil
@@ -611,7 +612,7 @@ func (suite *NTPSuite) TestNTSQuerySessionRefresh() {
 		RTT:           time.Millisecond / 2,
 	}
 
-	syncer.NTSNewSession = func(address string) (ntp.NTSSession, error) {
+	syncer.NTSNewSession = func(address string, skipCertTimeCheck bool) (ntp.NTSSession, error) {
 		sessionCreateCount++
 
 		if sessionCreateCount == 1 {
@@ -659,7 +660,7 @@ func (suite *NTPSuite) TestNTSSkipsIPAddresses() {
 
 	queriedServer := ""
 
-	syncer.NTSNewSession = func(address string) (ntp.NTSSession, error) {
+	syncer.NTSNewSession = func(address string, skipCertTimeCheck bool) (ntp.NTSSession, error) {
 		queriedServer = address
 
 		return &mockNTSSession{
@@ -716,7 +717,7 @@ func (suite *NTPSuite) TestNTSSessionCacheCleanup() {
 		RTT:           time.Millisecond / 2,
 	}
 
-	syncer.NTSNewSession = func(address string) (ntp.NTSSession, error) {
+	syncer.NTSNewSession = func(address string, skipCertTimeCheck bool) (ntp.NTSSession, error) {
 		sessionCreateCount.Add(1)
 
 		return &mockNTSSession{resp: goodResp}, nil
@@ -753,4 +754,157 @@ func (suite *NTPSuite) TestNTSSessionCacheCleanup() {
 	cancel()
 
 	wg.Wait()
+}
+
+func (suite *NTPSuite) TestNTSBootstrapCertTimeFallback() {
+	// Simulate a boot-time clock that makes the server certificate look expired:
+	// strict validation fails, but the bootstrap fallback (ignoring the cert time
+	// constraint) succeeds.
+	syncer := ntp.NewSyncer(zaptest.NewLogger(suite.T()).With(zap.String("controller", "ntp")), []string{"time.cloudflare.com"}, true)
+
+	syncer.AdjustTime = suite.adjustSystemClock
+	syncer.CurrentTime = suite.getSystemClock
+	syncer.DisableRTC = true
+
+	var (
+		strictAttempts  atomic.Int32
+		relaxedAttempts atomic.Int32
+	)
+
+	goodResp := &beevikntp.Response{
+		Stratum:       1,
+		Time:          suite.systemClock,
+		ReferenceTime: suite.systemClock,
+		ClockOffset:   time.Millisecond,
+		RTT:           time.Millisecond / 2,
+	}
+
+	syncer.NTSNewSession = func(address string, skipCertTimeCheck bool) (ntp.NTSSession, error) {
+		if !skipCertTimeCheck {
+			strictAttempts.Add(1)
+
+			return nil, x509.CertificateInvalidError{Reason: x509.Expired}
+		}
+
+		relaxedAttempts.Add(1)
+
+		return &mockNTSSession{resp: goodResp}, nil
+	}
+
+	syncer.MinPoll = time.Second
+	syncer.MaxPoll = time.Second
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var wg sync.WaitGroup
+
+	wg.Go(func() {
+		syncer.Run(ctx)
+	})
+
+	select {
+	case <-syncer.Synced():
+	case <-time.After(10 * time.Second):
+		suite.Assert().Fail("NTS time sync timeout during bootstrap fallback")
+	}
+
+	cancel()
+
+	wg.Wait()
+
+	suite.Assert().Positive(strictAttempts.Load(), "expected a strict validation attempt first")
+	suite.Assert().Positive(relaxedAttempts.Load(), "expected a relaxed bootstrap attempt")
+}
+
+func (suite *NTPSuite) TestNTSBootstrapBudgetExhausted() {
+	// A persistent certificate time error should be tolerated only for the
+	// configured number of bootstrap attempts, after which validation is strict
+	// and the relaxed path is no longer used.
+	syncer := ntp.NewSyncer(zaptest.NewLogger(suite.T()).With(zap.String("controller", "ntp")), []string{"time.cloudflare.com"}, true)
+
+	syncer.AdjustTime = suite.adjustSystemClock
+	syncer.CurrentTime = suite.getSystemClock
+	syncer.DisableRTC = true
+	syncer.NTSBootstrapAttempts = 2
+
+	var relaxedAttempts atomic.Int32
+
+	syncer.NTSNewSession = func(address string, skipCertTimeCheck bool) (ntp.NTSSession, error) {
+		if skipCertTimeCheck {
+			relaxedAttempts.Add(1)
+		}
+
+		// Always fail with a cert time error, regardless of mode.
+		return nil, x509.CertificateInvalidError{Reason: x509.Expired}
+	}
+
+	syncer.MinPoll = time.Second
+	syncer.MaxPoll = time.Second
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var wg sync.WaitGroup
+
+	wg.Go(func() {
+		syncer.Run(ctx)
+	})
+
+	// Never syncs; let it spin through more than the budget of attempts.
+	select {
+	case <-syncer.Synced():
+		suite.Assert().Fail("unexpected sync with persistently invalid certificate")
+	case <-time.After(3 * time.Second):
+	}
+
+	cancel()
+
+	wg.Wait()
+
+	suite.Assert().LessOrEqual(relaxedAttempts.Load(), int32(2), "relaxed attempts must not exceed the bootstrap budget")
+}
+
+func (suite *NTPSuite) TestNTSBootstrapDoesNotBypassUntrustedCert() {
+	// A non-time certificate failure (e.g. unknown authority) must never trigger
+	// the relaxed bootstrap path.
+	syncer := ntp.NewSyncer(zaptest.NewLogger(suite.T()).With(zap.String("controller", "ntp")), []string{"time.cloudflare.com"}, true)
+
+	syncer.AdjustTime = suite.adjustSystemClock
+	syncer.CurrentTime = suite.getSystemClock
+	syncer.DisableRTC = true
+
+	var relaxedAttempts atomic.Int32
+
+	syncer.NTSNewSession = func(address string, skipCertTimeCheck bool) (ntp.NTSSession, error) {
+		if skipCertTimeCheck {
+			relaxedAttempts.Add(1)
+		}
+
+		return nil, x509.UnknownAuthorityError{}
+	}
+
+	syncer.MinPoll = time.Second
+	syncer.MaxPoll = time.Second
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	var wg sync.WaitGroup
+
+	wg.Go(func() {
+		syncer.Run(ctx)
+	})
+
+	select {
+	case <-syncer.Synced():
+		suite.Assert().Fail("unexpected sync with untrusted certificate")
+	case <-time.After(2 * time.Second):
+	}
+
+	cancel()
+
+	wg.Wait()
+
+	suite.Assert().Zero(relaxedAttempts.Load(), "untrusted certificate must not trigger relaxed validation")
 }

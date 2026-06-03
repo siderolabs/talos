@@ -1250,6 +1250,9 @@ spec:
           - variant: default
             test: e2e-k8s-user-namespace
             withConfigPatch: "@hack/test/patches/usernamespace.yaml"
+          - variant: default
+            test: e2e-bad-rtc
+            withBadRtc: "true"
           - variant: enforcing
             test: e2e-siderolink
             triggerLabels: [integration/misc-4-enforcing]
@@ -1281,6 +1284,13 @@ spec:
             withEnforcing: "true"
             extraTestArgs: -talos.enforcing
             withConfigPatch: "@hack/test/patches/usernamespace.yaml"
+          - variant: enforcing
+            test: e2e-bad-rtc
+            triggerLabels: [integration/misc-4-enforcing]
+            tagSuffixIn: -enforcing
+            withEnforcing: "true"
+            extraTestArgs: -talos.enforcing
+            withBadRtc: "true"
       steps:
         - name: download-artifacts
           artifactStep:
@@ -1299,6 +1309,7 @@ spec:
             WITH_APPARMOR_LSM_ENABLED: ${{ matrix.withAppArmorLsmEnabled }}
             WITH_CONFIG_PATCH: ${{ matrix.withConfigPatch }}
             TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
+            WITH_BAD_RTC: ${{ matrix.withBadRtc }}
             EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
             WITH_ENFORCING: ${{ matrix.withEnforcing }}
             IMAGE_REGISTRY: registry.dev.siderolabs.io
