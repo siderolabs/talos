@@ -26,6 +26,26 @@ etcd: v2.6.12
 Talos is built with Go 1.26.4.
 """
 
+    [notes.cri-nri]
+        title = "Containerd NRI"
+        description = """\
+Talos no longer disables NRI (Node Resource Interface) for the CRI containerd instance by default, so NRI is available
+to use without any machine config patches.
+
+To bring back the old behavior of NRI disabled by default, use the following machine config patch:
+
+```yaml
+machine:
+  files:
+    - content: |
+        [plugins]
+          [plugins."io.containerd.nri.v1.nri"]
+             disable = true
+      path: /etc/cri/conf.d/20-customization.part
+      op: create
+```
+"""
+
     [notes.nts]
         title = "NTS for Time Synchronization"
         description = """\
