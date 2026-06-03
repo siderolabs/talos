@@ -145,6 +145,8 @@ func validateMemberHealth(ctx context.Context, memberURIs []string) (err error) 
 		return fmt.Errorf("failed to create client to member: %w", err)
 	}
 
+	defer c.Close() //nolint:errcheck
+
 	return c.ValidateQuorum(ctx)
 }
 
