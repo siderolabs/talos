@@ -531,11 +531,13 @@ func (s *Server) Upgrade(ctx context.Context, in *machine.UpgradeRequest) (*mach
 		return nil, fmt.Errorf("error validating installer image %q: %w", in.GetImage(), err)
 	}
 
-	if !inMaintenance && s.Controller.Runtime().Config().Machine().Type() != machinetype.TypeWorker && !in.GetForce() {
+	if !inMaintenance && s.Controller.Runtime().Config().Machine().Type() != machinetype.TypeWorker && !in.GetForce() && !in.GetPreserve() {
 		etcdClient, err := etcd.NewClientFromControlPlaneIPs(ctx, s.Controller.Runtime().State().V1Alpha2().Resources())
 		if err != nil {
 			return nil, fmt.Errorf("failed to create etcd client: %w", err)
 		}
+
+		defer etcdClient.Close() //nolint:errcheck
 
 		// acquire the upgrade mutex
 		unlocker, err := tryLockUpgradeMutex(ctx, etcdClient)
