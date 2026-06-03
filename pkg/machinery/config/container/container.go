@@ -219,6 +219,44 @@ func (container *Container) Environment() config.EnvironmentConfig {
 	return config.WrapEnvironmentConfigList(findMatchingDocs[config.EnvironmentConfig](container.documents)...)
 }
 
+// SysctlConfig implements config.Config interface.
+//
+// The deprecated v1alpha1 values are merged with the multi-doc documents,
+// with the multi-doc documents taking precedence on key conflicts.
+func (container *Container) SysctlConfig() map[string]string {
+	var configs []config.SysctlConfig
+
+	// v1alpha1 has the lowest priority
+	if container.v1alpha1Config != nil {
+		configs = append(configs, container.v1alpha1Config.Machine())
+	}
+
+	// dedicated documents take precedence over v1alpha1
+	configs = append(configs, findMatchingDocs[config.SysctlConfig](container.documents)...)
+
+	// Config order matters, last one wins during merge.
+	return config.WrapSysctlConfigList(configs...)
+}
+
+// SysfsConfig implements config.Config interface.
+//
+// The deprecated v1alpha1 values are merged with the multi-doc documents,
+// with the multi-doc documents taking precedence on key conflicts.
+func (container *Container) SysfsConfig() map[string]string {
+	var configs []config.SysfsConfig
+
+	// v1alpha1 has the lowest priority
+	if container.v1alpha1Config != nil {
+		configs = append(configs, container.v1alpha1Config.Machine())
+	}
+
+	// dedicated documents take precedence over v1alpha1
+	configs = append(configs, findMatchingDocs[config.SysfsConfig](container.documents)...)
+
+	// Config order matters, last one wins during merge.
+	return config.WrapSysfsConfigList(configs...)
+}
+
 // NetworkRules implements config.Config interface.
 func (container *Container) NetworkRules() config.NetworkRuleConfig {
 	return config.WrapNetworkRuleConfigList(findMatchingDocs[config.NetworkRuleConfigSignal](container.documents)...)

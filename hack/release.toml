@@ -214,6 +214,20 @@ Talos now reports the status of both dynamically loaded, and built-in kernel mod
 The `LoadedKernelModule` resource has been deprecated and superseded by the new `KernelModuleStatus` resource.
 """
 
+    [notes.kernel_config]
+        title = "Kernel Multi-document Configuration"
+        description = """\
+Talos introduces new multi-document configuration for kernel parameters (sysctl and sysfs settings), replacing the old v1alpha1 config fields.
+The old configuration is still supported for backwards compatibility, but new deployments should use the new documents.
+
+If both old and new configuration sources are used, the new multi-document configuration takes precedence over the old v1alpha1 config on conflicting fields.
+
+List of changes:
+
+- Deprecated `.machine.sysctls` in the v1alpha1 config; use the `SysctlConfig` document for kernel sysctl configuration.
+- Deprecated `.machine.sysfs` in the v1alpha1 config; use the `SysfsConfig` document for sysfs configuration.
+"""
+
 [make_deps]
 
     [make_deps.tools]

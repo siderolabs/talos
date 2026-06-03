@@ -122,20 +122,6 @@ func machineFilesExample() []*MachineFile {
 	}
 }
 
-func machineSysctlsExample() map[string]string {
-	return map[string]string{
-		"kernel.domainname":                   "talos.dev",
-		"net.ipv4.ip_forward":                 "0",
-		"net/ipv6/conf/eth0.100/disable_ipv6": "1",
-	}
-}
-
-func machineSysfsExample() map[string]string {
-	return map[string]string{
-		"devices.system.cpu.cpu0.cpufreq.scaling_governor": "performance",
-	}
-}
-
 func machineFeaturesExample() *FeaturesConfig {
 	return &FeaturesConfig{
 		DiskQuotaSupport: new(true),

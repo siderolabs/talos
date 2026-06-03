@@ -1,0 +1,4 @@
+apiVersion: v1alpha1
+kind: SysfsConfig
+params:
+    devices.system.cpu.cpu0.cpufreq.scaling_governor: performance

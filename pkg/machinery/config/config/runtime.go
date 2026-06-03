@@ -40,6 +40,32 @@ func (w environmentConfigWrapper) Variables() map[string]string {
 	})
 }
 
+// SysctlConfig defines the interface to access Talos sysctl configuration.
+type SysctlConfig interface {
+	Sysctls() map[string]string
+}
+
+// WrapSysctlConfigList merges a list of SysctlConfig into a single map,
+// with later entries taking precedence on key conflicts.
+func WrapSysctlConfigList(configs ...SysctlConfig) map[string]string {
+	return mergeMaps(configs, func(c SysctlConfig) iter.Seq2[string, string] {
+		return maps.All(c.Sysctls())
+	})
+}
+
+// SysfsConfig defines the interface to access Talos sysfs configuration.
+type SysfsConfig interface {
+	Sysfs() map[string]string
+}
+
+// WrapSysfsConfigList merges a list of SysfsConfig into a single map,
+// with later entries taking precedence on key conflicts.
+func WrapSysfsConfigList(configs ...SysfsConfig) map[string]string {
+	return mergeMaps(configs, func(c SysfsConfig) iter.Seq2[string, string] {
+		return maps.All(c.Sysfs())
+	})
+}
+
 // WatchdogTimerConfig defines the interface to access Talos watchdog timer configuration.
 type WatchdogTimerConfig interface {
 	Device() string

@@ -4189,6 +4189,88 @@
       ],
       "description": "OOMConfig is a Out of Memory handler config document."
     },
+    "runtime.SysctlConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "SysctlConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "params": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "params",
+          "description": "Used to configure the machine’s sysctls (kernel parameters under /proc/sys).\nValues from this document are merged with the deprecated v1alpha1 machine.sysctls values (if set),\nwith this document taking precedence on key conflicts.\n",
+          "markdownDescription": "Used to configure the machine's sysctls (kernel parameters under `/proc/sys`).\nValues from this document are merged with the deprecated v1alpha1 machine.sysctls values (if set),\nwith this document taking precedence on key conflicts.",
+          "x-intellij-html-description": "\u003cp\u003eUsed to configure the machine\u0026rsquo;s sysctls (kernel parameters under \u003ccode\u003e/proc/sys\u003c/code\u003e).\nValues from this document are merged with the deprecated v1alpha1 machine.sysctls values (if set),\nwith this document taking precedence on key conflicts.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "SysctlConfig configures Linux kernel sysctl values."
+    },
+    "runtime.SysfsConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "SysfsConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "params": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "params",
+          "description": "Used to configure the machine’s sysfs (kernel attributes under /sys).\nValues from this document are merged with the deprecated v1alpha1 machine.sysfs values (if set),\nwith this document taking precedence on key conflicts.\n",
+          "markdownDescription": "Used to configure the machine's sysfs (kernel attributes under `/sys`).\nValues from this document are merged with the deprecated v1alpha1 machine.sysfs values (if set),\nwith this document taking precedence on key conflicts.",
+          "x-intellij-html-description": "\u003cp\u003eUsed to configure the machine\u0026rsquo;s sysfs (kernel attributes under \u003ccode\u003e/sys\u003c/code\u003e).\nValues from this document are merged with the deprecated v1alpha1 machine.sysfs values (if set),\nwith this document taking precedence on key conflicts.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "SysfsConfig configures Linux kernel sysfs values."
+    },
     "runtime.WatchdogTimerV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -5594,30 +5676,6 @@
           "markdownDescription": "Allows the addition of user specified files.\nThe value of `op` can be `create`, `overwrite`, or `append`.\nIn the case of `create`, `path` must not exist.\nIn the case of `overwrite`, and `append`, `path` must be a valid file.\nIf an `op` value of `append` is used, the existing file will be appended.\nNote that the file contents are not required to be base64 encoded.",
           "x-intellij-html-description": "\u003cp\u003eAllows the addition of user specified files.\nThe value of \u003ccode\u003eop\u003c/code\u003e can be \u003ccode\u003ecreate\u003c/code\u003e, \u003ccode\u003eoverwrite\u003c/code\u003e, or \u003ccode\u003eappend\u003c/code\u003e.\nIn the case of \u003ccode\u003ecreate\u003c/code\u003e, \u003ccode\u003epath\u003c/code\u003e must not exist.\nIn the case of \u003ccode\u003eoverwrite\u003c/code\u003e, and \u003ccode\u003eappend\u003c/code\u003e, \u003ccode\u003epath\u003c/code\u003e must be a valid file.\nIf an \u003ccode\u003eop\u003c/code\u003e value of \u003ccode\u003eappend\u003c/code\u003e is used, the existing file will be appended.\nNote that the file contents are not required to be base64 encoded.\u003c/p\u003e\n"
         },
-        "sysctls": {
-          "patternProperties": {
-            ".*": {
-              "type": "string"
-            }
-          },
-          "type": "object",
-          "title": "sysctls",
-          "description": "Used to configure the machine’s sysctls.\n",
-          "markdownDescription": "Used to configure the machine's sysctls.",
-          "x-intellij-html-description": "\u003cp\u003eUsed to configure the machine\u0026rsquo;s sysctls.\u003c/p\u003e\n"
-        },
-        "sysfs": {
-          "patternProperties": {
-            ".*": {
-              "type": "string"
-            }
-          },
-          "type": "object",
-          "title": "sysfs",
-          "description": "Used to configure the machine’s sysfs.\n",
-          "markdownDescription": "Used to configure the machine's sysfs.",
-          "x-intellij-html-description": "\u003cp\u003eUsed to configure the machine\u0026rsquo;s sysfs.\u003c/p\u003e\n"
-        },
         "features": {
           "$ref": "#/$defs/v1alpha1.FeaturesConfig",
           "title": "features",
@@ -6055,6 +6113,12 @@
     },
     {
       "$ref": "#/$defs/runtime.OOMV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/runtime.SysctlConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/runtime.SysfsConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/runtime.WatchdogTimerV1Alpha1"

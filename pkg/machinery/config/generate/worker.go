@@ -40,7 +40,7 @@ func (in *Input) worker() ([]config.Document, error) {
 			InstallExtraKernelArgs: in.Options.InstallExtraKernelArgs,
 		},
 		MachineDisks:    in.Options.MachineDisks,
-		MachineSysctls:  in.Options.Sysctls,
+		MachineSysctls:  in.Options.Sysctls, //nolint:staticcheck // legacy configuration
 		MachineFeatures: &v1alpha1.FeaturesConfig{},
 	}
 

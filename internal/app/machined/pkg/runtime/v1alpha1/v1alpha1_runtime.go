@@ -182,8 +182,8 @@ func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
 		newConfig.MachineConfig.MachineCertSANs = currentConfig.MachineConfig.MachineCertSANs
 		newConfig.MachineConfig.MachineInstall = currentConfig.MachineConfig.MachineInstall
 		newConfig.MachineConfig.MachineNetwork = currentConfig.MachineConfig.MachineNetwork //nolint:staticcheck
-		newConfig.MachineConfig.MachineSysfs = currentConfig.MachineConfig.MachineSysfs
-		newConfig.MachineConfig.MachineSysctls = currentConfig.MachineConfig.MachineSysctls
+		newConfig.MachineConfig.MachineSysfs = currentConfig.MachineConfig.MachineSysfs     //nolint:staticcheck
+		newConfig.MachineConfig.MachineSysctls = currentConfig.MachineConfig.MachineSysctls //nolint:staticcheck
 		newConfig.MachineConfig.MachineLogging = currentConfig.MachineConfig.MachineLogging
 		newConfig.MachineConfig.MachineControlPlane = currentConfig.MachineConfig.MachineControlPlane //nolint:staticcheck
 		newConfig.MachineConfig.MachineKubelet = currentConfig.MachineConfig.MachineKubelet

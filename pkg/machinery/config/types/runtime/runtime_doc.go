@@ -153,6 +153,60 @@ func (OOMV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (SysctlConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "SysctlConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "SysctlConfig configures Linux kernel sysctl values." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "SysctlConfig configures Linux kernel sysctl values.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "params",
+				Type:        "map[string]string",
+				Note:        "",
+				Description: "Used to configure the machine's sysctls (kernel parameters under `/proc/sys`).\nValues from this document are merged with the deprecated v1alpha1 machine.sysctls values (if set),\nwith this document taking precedence on key conflicts.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Used to configure the machine's sysctls (kernel parameters under `/proc/sys`)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleSysctlConfigV1Alpha1())
+
+	doc.Fields[1].AddExample("SysctlConfig usage example.", exampleSysctlParams())
+
+	return doc
+}
+
+func (SysfsConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "SysfsConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "SysfsConfig configures Linux kernel sysfs values." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "SysfsConfig configures Linux kernel sysfs values.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "params",
+				Type:        "map[string]string",
+				Note:        "",
+				Description: "Used to configure the machine's sysfs (kernel attributes under `/sys`).\nValues from this document are merged with the deprecated v1alpha1 machine.sysfs values (if set),\nwith this document taking precedence on key conflicts.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Used to configure the machine's sysfs (kernel attributes under `/sys`)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleSysfsConfigV1Alpha1())
+
+	doc.Fields[1].AddExample("SysfsConfig usage example.", exampleSysfsParams())
+
+	return doc
+}
+
 func (WatchdogTimerV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "WatchdogTimerConfig",
@@ -197,6 +251,8 @@ func GetFileDoc() *encoder.FileDoc {
 			EventSinkV1Alpha1{}.Doc(),
 			EnvironmentV1Alpha1{}.Doc(),
 			OOMV1Alpha1{}.Doc(),
+			SysctlConfigV1Alpha1{}.Doc(),
+			SysfsConfigV1Alpha1{}.Doc(),
 			WatchdogTimerV1Alpha1{}.Doc(),
 		},
 	}

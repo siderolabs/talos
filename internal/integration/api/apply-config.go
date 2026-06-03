@@ -39,6 +39,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	mc "github.com/siderolabs/talos/pkg/machinery/resources/config"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // Sysctl to use for testing config changes.
@@ -52,6 +53,17 @@ import (
 const applyConfigTestSysctl = "net.ipv6.conf.all.accept_ra_mtu"
 
 const applyConfigTestSysctlVal = "1"
+
+// applyConfigTestSysctlConflict is set through both the deprecated v1alpha1 .machine.sysctls
+// and the new SysctlConfig document to verify that the document value wins on conflict.
+//
+// It has the same properties as applyConfigTestSysctl (see above).
+const applyConfigTestSysctlConflict = "net.ipv6.conf.default.accept_ra_mtu"
+
+const (
+	applyConfigTestSysctlConflictV1Alpha1Val = "1"
+	applyConfigTestSysctlConflictDocVal      = "2"
+)
 
 const applyConfigNoRebootTestSysctl = "fs.file-max"
 
@@ -105,13 +117,32 @@ func (suite *ApplyConfigSuite) TestApply() {
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Require().NoErrorf(err, "failed to read existing config from node %q", node)
 
-	cfgDataOut := suite.PatchV1Alpha1Config(provider, func(cfg *v1alpha1.Config) {
-		if cfg.MachineConfig.MachineSysctls == nil {
-			cfg.MachineConfig.MachineSysctls = make(map[string]string)
+	// Configure sysctls through two paths simultaneously:
+	//   - applyConfigTestSysctl: set only through the deprecated v1alpha1 .machine.sysctls;
+	//   - applyConfigTestSysctlConflict: set through both v1alpha1 and the new SysctlConfig document,
+	//     where the SysctlConfig value is expected to win.
+	patched, err := provider.PatchV1Alpha1(func(cfg *v1alpha1.Config) error {
+		if cfg.MachineConfig.MachineSysctls == nil { //nolint:staticcheck // testing deprecated field
+			cfg.MachineConfig.MachineSysctls = make(map[string]string) //nolint:staticcheck // testing deprecated field
 		}
 
-		cfg.MachineConfig.MachineSysctls[applyConfigTestSysctl] = applyConfigTestSysctlVal
+		cfg.MachineConfig.MachineSysctls[applyConfigTestSysctl] = applyConfigTestSysctlVal                         //nolint:staticcheck // testing deprecated field
+		cfg.MachineConfig.MachineSysctls[applyConfigTestSysctlConflict] = applyConfigTestSysctlConflictV1Alpha1Val //nolint:staticcheck // testing deprecated field
+
+		return nil
 	})
+	suite.Require().NoErrorf(err, "failed to patch v1alpha1 config for node %q", node)
+
+	sysctlDoc := runtime.NewSysctlConfigV1Alpha1()
+	sysctlDoc.Params = map[string]string{
+		applyConfigTestSysctlConflict: applyConfigTestSysctlConflictDocVal,
+	}
+
+	cont, err := container.New(slices.Concat(patched.Documents(), []configconfig.Document{sysctlDoc})...)
+	suite.Require().NoErrorf(err, "failed to build config container for node %q", node)
+
+	cfgDataOut, err := cont.Bytes()
+	suite.Require().NoErrorf(err, "failed to marshal config for node %q", node)
 
 	suite.AssertRebooted(
 		suite.ctx, node, func(nodeCtx context.Context) error {
@@ -146,11 +177,41 @@ func (suite *ApplyConfigSuite) TestApply() {
 		), "failed to read updated configuration from node %q", node,
 	)
 
+	// the deprecated v1alpha1 field round-trips as-is
 	suite.Assert().Equal(
-		newProvider.Machine().Sysctls()[applyConfigTestSysctl],
 		applyConfigTestSysctlVal,
-		"expected sysctl %s to be set to %s, got %s on node %q",
-		applyConfigTestSysctl, applyConfigTestSysctlVal, newProvider.Machine().Sysctls()[applyConfigTestSysctl], node,
+		newProvider.Machine().Sysctls()[applyConfigTestSysctl], //nolint:staticcheck // testing deprecated field
+		"expected v1alpha1 sysctl %s to be set to %s on node %q",
+		applyConfigTestSysctl, applyConfigTestSysctlVal, node,
+	)
+
+	// the merged view exposes both paths, with the SysctlConfig document winning on conflict
+	mergedSysctls := newProvider.SysctlConfig()
+	suite.Assert().Equal(
+		applyConfigTestSysctlVal,
+		mergedSysctls[applyConfigTestSysctl],
+		"expected merged sysctl %s to be set to %s on node %q",
+		applyConfigTestSysctl, applyConfigTestSysctlVal, node,
+	)
+	suite.Assert().Equal(
+		applyConfigTestSysctlConflictDocVal,
+		mergedSysctls[applyConfigTestSysctlConflict],
+		"expected SysctlConfig document to win for sysctl %s (got %s) on node %q",
+		applyConfigTestSysctlConflict, mergedSysctls[applyConfigTestSysctlConflict], node,
+	)
+
+	// finally, verify the values actually applied to the running kernel
+	rtestutils.AssertResource(
+		nodeCtx, suite.T(), suite.Client.COSI, "proc.sys."+applyConfigTestSysctl,
+		func(r *runtimeres.KernelParamStatus, asrt *assert.Assertions) {
+			asrt.Equal(applyConfigTestSysctlVal, r.TypedSpec().Current)
+		},
+	)
+	rtestutils.AssertResource(
+		nodeCtx, suite.T(), suite.Client.COSI, "proc.sys."+applyConfigTestSysctlConflict,
+		func(r *runtimeres.KernelParamStatus, asrt *assert.Assertions) {
+			asrt.Equal(applyConfigTestSysctlConflictDocVal, r.TypedSpec().Current)
+		},
 	)
 }
 
@@ -253,11 +314,11 @@ func (suite *ApplyConfigSuite) TestApplyWithoutReboot() {
 		suite.Require().NoError(err, "failed to read existing config from node %q", node)
 
 		cfgDataOut := suite.PatchV1Alpha1Config(provider, func(cfg *v1alpha1.Config) {
-			if cfg.MachineConfig.MachineSysctls == nil {
-				cfg.MachineConfig.MachineSysctls = make(map[string]string)
+			if cfg.MachineConfig.MachineSysctls == nil { //nolint:staticcheck // testing deprecated field
+				cfg.MachineConfig.MachineSysctls = make(map[string]string) //nolint:staticcheck // testing deprecated field
 			}
 
-			cfg.MachineConfig.MachineSysctls[applyConfigNoRebootTestSysctl] = applyConfigNoRebootTestSysctlVal
+			cfg.MachineConfig.MachineSysctls[applyConfigNoRebootTestSysctl] = applyConfigNoRebootTestSysctlVal //nolint:staticcheck // testing deprecated field
 		})
 
 		_, err = suite.Client.ApplyConfiguration(
@@ -286,7 +347,7 @@ func (suite *ApplyConfigSuite) TestApplyWithoutReboot() {
 
 		cfgDataOut = suite.PatchV1Alpha1Config(provider, func(cfg *v1alpha1.Config) {
 			// revert back
-			delete(cfg.MachineConfig.MachineSysctls, applyConfigNoRebootTestSysctl)
+			delete(cfg.MachineConfig.MachineSysctls, applyConfigNoRebootTestSysctl) //nolint:staticcheck // testing deprecated field
 		})
 
 		_, err = suite.Client.ApplyConfiguration(

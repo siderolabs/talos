@@ -148,20 +148,8 @@ func (MachineConfig) Doc() *encoder.Doc {
 			},
 			{},
 			{},
-			{
-				Name:        "sysctls",
-				Type:        "map[string]string",
-				Note:        "",
-				Description: "Used to configure the machine's sysctls.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Used to configure the machine's sysctls." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "sysfs",
-				Type:        "map[string]string",
-				Note:        "",
-				Description: "Used to configure the machine's sysfs.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Used to configure the machine's sysfs." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
+			{},
 			{},
 			{},
 			{
@@ -239,8 +227,6 @@ func (MachineConfig) Doc() *encoder.Doc {
 	doc.Fields[7].AddExample("nginx static pod.", machinePodsExample())
 	doc.Fields[10].AddExample("MachineInstall config usage example.", machineInstallExample())
 	doc.Fields[11].AddExample("MachineFiles usage example.", machineFilesExample())
-	doc.Fields[14].AddExample("MachineSysctls usage example.", machineSysctlsExample())
-	doc.Fields[15].AddExample("MachineSysfs usage example.", machineSysfsExample())
 	doc.Fields[18].AddExample("", machineFeaturesExample())
 	doc.Fields[19].AddExample("", machineUdevExample())
 	doc.Fields[20].AddExample("", machineLoggingExample1())

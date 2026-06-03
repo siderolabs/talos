@@ -1,0 +1,4 @@
+apiVersion: v1alpha1
+kind: SysctlConfig
+params:
+    net.ipv4.ip_forward: "1"

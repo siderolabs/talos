@@ -153,16 +153,6 @@ files:
       path: /tmp/file.txt # The path of the file.
       op: append # The operation to use
 {{< /highlight >}}</details> | |
-|`sysctls` |map[string]string |Used to configure the machine's sysctls. <details><summary>Show example(s)</summary>MachineSysctls usage example.:{{< highlight yaml >}}
-sysctls:
-    kernel.domainname: talos.dev
-    net.ipv4.ip_forward: "0"
-    net/ipv6/conf/eth0.100/disable_ipv6: "1"
-{{< /highlight >}}</details> | |
-|`sysfs` |map[string]string |Used to configure the machine's sysfs. <details><summary>Show example(s)</summary>MachineSysfs usage example.:{{< highlight yaml >}}
-sysfs:
-    devices.system.cpu.cpu0.cpufreq.scaling_governor: performance
-{{< /highlight >}}</details> | |
 |`features` |<a href="#Config.machine.features">FeaturesConfig</a> |Features describe individual Talos features that can be switched on or off. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 features:
     diskQuotaSupport: true # Enable XFS project quota support for EPHEMERAL partition and user disks.

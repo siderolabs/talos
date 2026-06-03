@@ -1,6 +1,4 @@
 machine:
-  sysctls:
-    user.max_user_namespaces: "11255"
   kernel:
     modules:
       - name: asix
@@ -69,3 +67,8 @@ configFiles:
       log stderr all;
       router id 6.6.6.6;
       protocol device {}
+---
+apiVersion: v1alpha1
+kind: SysctlConfig
+params:
+  user.max_user_namespaces: "11255"

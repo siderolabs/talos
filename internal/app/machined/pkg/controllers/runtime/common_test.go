@@ -8,4 +8,7 @@ const (
 	fsFileMax        = "fs.file-max"
 	procSysfsFileMax = "proc.sys.fs.file-max"
 	sysfsFileMax     = "sys.fs.file-max"
+
+	vmMaxMapCount     = "vm.max_map_count"
+	procVMMaxMapCount = "proc.sys.vm.max_map_count"
 )

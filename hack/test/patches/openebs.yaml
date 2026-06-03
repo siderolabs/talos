@@ -1,7 +1,5 @@
 ---
 machine:
-  sysctls:
-    vm.nr_hugepages: "1024"
   nodeLabels:
     openebs.io/engine: "mayastor"
   kubelet:
@@ -13,3 +11,8 @@ machine:
           - bind
           - rshared
           - rw
+---
+apiVersion: v1alpha1
+kind: SysctlConfig
+params:
+  vm.nr_hugepages: "1024"

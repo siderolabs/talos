@@ -66,4 +66,6 @@ type Config interface { //nolint:interfacebloat
 	PCIDriverRebindConfig() PCIDriverRebindConfig
 	OOMConfig() OOMConfig
 	ImageVerificationConfig() ImageVerificationConfig
+	SysctlConfig() map[string]string
+	SysfsConfig() map[string]string
 }

@@ -51,7 +51,11 @@ func (ctrl *KernelParamConfigController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo
-func (ctrl *KernelParamConfigController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
+func (ctrl *KernelParamConfigController) Run(
+	ctx context.Context,
+	r controller.Runtime,
+	_ *zap.Logger,
+) error {
 	for {
 		select {
 		case <-ctx.Done():
@@ -78,14 +82,16 @@ func (ctrl *KernelParamConfigController) Run(ctx context.Context, r controller.R
 			})
 		}
 
-		if cfg != nil && cfg.Config().Machine() != nil {
-			for key, value := range cfg.Config().Machine().Sysctls() {
+		if cfg != nil {
+			// SysctlConfig/SysfsConfig values are merged from the deprecated v1alpha1 fields and the dedicated documents,
+			// with the dedicated documents taking precedence on key conflicts.
+			for key, value := range cfg.Config().SysctlConfig() {
 				if err = setKernelParam(kernel.Sysctl, key, value); err != nil {
 					return err
 				}
 			}
 
-			for key, value := range cfg.Config().Machine().Sysfs() {
+			for key, value := range cfg.Config().SysfsConfig() {
 				if err = setKernelParam(kernel.Sysfs, key, value); err != nil {
 					return err
 				}

@@ -205,17 +205,13 @@ type MachineConfig struct {
 	//
 	// Deprecated: Use 'TimeSyncConfig' instead.
 	MachineTime *TimeConfig `yaml:"time,omitempty"`
-	//   description: |
-	//     Used to configure the machine's sysctls.
-	//   examples:
-	//     - name: MachineSysctls usage example.
-	//       value: machineSysctlsExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use 'SysctlConfig' instead.
 	MachineSysctls map[string]string `yaml:"sysctls,omitempty"`
-	//   description: |
-	//     Used to configure the machine's sysfs.
-	//   examples:
-	//     - name: MachineSysfs usage example.
-	//       value: machineSysfsExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use 'SysfsConfig' instead.
 	MachineSysfs map[string]string `yaml:"sysfs,omitempty"`
 	// docgen:nodoc
 	//
@@ -835,7 +831,10 @@ func (m *InstallDiskSizeMatcher) UnmarshalYAML(unmarshal func(any) error) error 
 
 	parts := re.FindStringSubmatch(m.condition)
 	if len(parts) < 2 {
-		return fmt.Errorf("failed to parse the condition: expected [>=|<=|>|<|==]<size>[units], got %s", m.condition)
+		return fmt.Errorf(
+			"failed to parse the condition: expected [>=|<=|>|<|==]<size>[units], got %s",
+			m.condition,
+		)
 	}
 
 	var op string
@@ -2385,7 +2384,10 @@ func (manifests *ClusterInlineManifests) UnmarshalYAML(value *yaml.Node) error {
 	}
 
 	for i := range result {
-		result[i].InlineManifestContents = strings.TrimLeft(result[i].InlineManifestContents, "\t\n\v\f\r")
+		result[i].InlineManifestContents = strings.TrimLeft(
+			result[i].InlineManifestContents,
+			"\t\n\v\f\r",
+		)
 	}
 
 	*manifests = result
