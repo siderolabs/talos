@@ -23,7 +23,7 @@ Kubernetes: 1.36.1
 containerd: 2.3.1
 etcd: v2.6.12
 
-Talos is built with Go 1.26.3.
+Talos is built with Go 1.26.4.
 """
 
     [notes.nts]

@@ -1111,7 +1111,7 @@ const (
 	ProcModulesPath = "/proc/modules"
 
 	// GoVersion is the version of Go compiler this release was built with.
-	GoVersion = "go1.26.3"
+	GoVersion = "go1.26.4"
 
 	// KubernetesTalosAPIServiceName is the name of the Kubernetes service to access Talos API.
 	KubernetesTalosAPIServiceName = "talos"
