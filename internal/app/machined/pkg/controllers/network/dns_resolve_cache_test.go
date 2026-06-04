@@ -58,7 +58,8 @@ func (suite *DNSServer) TestResolving() {
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), resolverSpec))
 
-	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(),
+	rtestutils.AssertResources(
+		suite.Ctx(), suite.T(), suite.State(),
 		expectedDNSRunners(port),
 		func(r *network.DNSResolveCache, assert *assert.Assertions) {
 			assert.Equal("running", r.TypedSpec().Status)
@@ -188,7 +189,8 @@ func (suite *DNSServer) TestResolveMembers() {
 	cfg.TypedSpec().ResolveMemberNames = true
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
 
-	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(),
+	rtestutils.AssertResources(
+		suite.Ctx(), suite.T(), suite.State(),
 		expectedDNSRunners(port),
 		func(r *network.DNSResolveCache, assert *assert.Assertions) {
 			assert.Equal("running", r.TypedSpec().Status)
@@ -268,7 +270,7 @@ func TestDNSServer(t *testing.T) {
 func getDynamicPort(t *testing.T) string {
 	t.Helper()
 
-	l, err := (&net.ListenConfig{}).Listen(t.Context(), "tcp", "127.0.0.1:0")
+	l, err := (&net.ListenConfig{}).Listen(t.Context(), "tcp", net.JoinHostPort("127.0.0.53", "0"))
 	require.NoError(t, err)
 
 	addr := l.Addr().String()
