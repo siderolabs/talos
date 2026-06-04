@@ -135,26 +135,26 @@ type RouteConfig struct {
 	//    If not specified, a default route will be created for the address family of the gateway.
 	//   examples:
 	//    - value: >
-	//       Prefix{netip.MustParsePrefix("10.0.0.0/8")}
+	//       meta.Prefix{netip.MustParsePrefix("10.0.0.0/8")}
 	//   schema:
 	//     type: string
 	//     pattern: ^[0-9a-f.:]+/\d{1,3}$
-	RouteDestination Prefix `yaml:"destination,omitempty"`
+	RouteDestination meta.Prefix `yaml:"destination,omitempty"`
 	//   description: |
 	//     The route's gateway (if empty, creates link scope route).
 	//   examples:
 	//    - value: >
-	//       Addr{netip.MustParseAddr("10.0.0.1")}
+	//       meta.Addr{netip.MustParseAddr("10.0.0.1")}
 	//   schema:
 	//     type: string
 	//     pattern: ^[0-9a-f.:]+$
-	RouteGateway Addr `yaml:"gateway,omitempty"`
+	RouteGateway meta.Addr `yaml:"gateway,omitempty"`
 	//   description: |
 	//     The route's source address (optional).
 	//   schema:
 	//     type: string
 	//     pattern: ^[0-9a-f.:]+$
-	RouteSource Addr `yaml:"source,omitempty"`
+	RouteSource meta.Addr `yaml:"source,omitempty"`
 	//   description: |
 	//     The optional metric for the route.
 	RouteMetric uint32 `yaml:"metric,omitempty"`
@@ -195,11 +195,11 @@ func exampleLinkConfigV1Alpha1() *LinkConfigV1Alpha1 {
 	}
 	cfg.LinkRoutes = []RouteConfig{
 		{
-			RouteDestination: Prefix{netip.MustParsePrefix("10.0.0.0/8")},
-			RouteGateway:     Addr{netip.MustParseAddr("10.0.0.1")},
+			RouteDestination: meta.Prefix{Prefix: netip.MustParsePrefix("10.0.0.0/8")},
+			RouteGateway:     meta.Addr{Addr: netip.MustParseAddr("10.0.0.1")},
 		},
 		{
-			RouteGateway: Addr{netip.MustParseAddr("fe80::1")},
+			RouteGateway: meta.Addr{Addr: netip.MustParseAddr("fe80::1")},
 		},
 	}
 
@@ -262,15 +262,15 @@ func (s *CommonLinkConfig) Validate() ([]string, error) {
 	}
 
 	for i, route := range s.LinkRoutes {
-		if route.RouteDestination != (Prefix{}) && (!route.RouteDestination.IsValid() || route.RouteDestination.Addr().IsUnspecified()) {
+		if route.RouteDestination != (meta.Prefix{}) && (!route.RouteDestination.IsValid() || route.RouteDestination.Addr().IsUnspecified()) {
 			errs = errors.Join(errs, fmt.Errorf("route %d destination must be a valid IP prefix", i))
 		}
 
-		if route.RouteGateway != (Addr{}) && (!route.RouteGateway.IsValid() || route.RouteGateway.IsUnspecified()) {
+		if route.RouteGateway != (meta.Addr{}) && (!route.RouteGateway.IsValid() || route.RouteGateway.IsUnspecified()) {
 			errs = errors.Join(errs, fmt.Errorf("route %d gateway must be a valid IP address", i))
 		}
 
-		if route.RouteSource != (Addr{}) && (!route.RouteSource.IsValid() || route.RouteSource.IsUnspecified()) {
+		if route.RouteSource != (meta.Addr{}) && (!route.RouteSource.IsValid() || route.RouteSource.IsUnspecified()) {
 			errs = errors.Join(errs, fmt.Errorf("route %d source must be a valid IP address", i))
 		}
 	}
@@ -335,7 +335,7 @@ func (a AddressConfig) RoutePriority() optional.Optional[uint32] {
 
 // Destination implements NetworkRouteConfig interface.
 func (r RouteConfig) Destination() optional.Optional[netip.Prefix] {
-	if r.RouteDestination == (Prefix{}) {
+	if r.RouteDestination == (meta.Prefix{}) {
 		return optional.None[netip.Prefix]()
 	}
 
@@ -344,7 +344,7 @@ func (r RouteConfig) Destination() optional.Optional[netip.Prefix] {
 
 // Gateway implements NetworkRouteConfig interface.
 func (r RouteConfig) Gateway() optional.Optional[netip.Addr] {
-	if r.RouteGateway == (Addr{}) {
+	if r.RouteGateway == (meta.Addr{}) {
 		return optional.None[netip.Addr]()
 	}
 
@@ -353,7 +353,7 @@ func (r RouteConfig) Gateway() optional.Optional[netip.Addr] {
 
 // Source implements NetworkRouteConfig interface.
 func (r RouteConfig) Source() optional.Optional[netip.Addr] {
-	if r.RouteSource == (Addr{}) {
+	if r.RouteSource == (meta.Addr{}) {
 		return optional.None[netip.Addr]()
 	}
 

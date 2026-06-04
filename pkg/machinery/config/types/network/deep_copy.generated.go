@@ -10,6 +10,7 @@ import (
 	"net/netip"
 	"net/url"
 
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
@@ -458,7 +459,7 @@ func (o *KubeSpanConfigV1Alpha1) DeepCopy() *KubeSpanConfigV1Alpha1 {
 			copy(cp.ConfigFilters.ConfigEndpoints, o.ConfigFilters.ConfigEndpoints)
 		}
 		if o.ConfigFilters.ConfigExcludeAdvertisedNetworks != nil {
-			cp.ConfigFilters.ConfigExcludeAdvertisedNetworks = make([]Prefix, len(o.ConfigFilters.ConfigExcludeAdvertisedNetworks))
+			cp.ConfigFilters.ConfigExcludeAdvertisedNetworks = make([]meta.Prefix, len(o.ConfigFilters.ConfigExcludeAdvertisedNetworks))
 			copy(cp.ConfigFilters.ConfigExcludeAdvertisedNetworks, o.ConfigFilters.ConfigExcludeAdvertisedNetworks)
 		}
 	}
@@ -651,7 +652,7 @@ func (o *WireguardConfigV1Alpha1) DeepCopy() *WireguardConfigV1Alpha1 {
 		copy(cp.WireguardPeers, o.WireguardPeers)
 		for i2 := range o.WireguardPeers {
 			if o.WireguardPeers[i2].WireguardAllowedIPs != nil {
-				cp.WireguardPeers[i2].WireguardAllowedIPs = make([]Prefix, len(o.WireguardPeers[i2].WireguardAllowedIPs))
+				cp.WireguardPeers[i2].WireguardAllowedIPs = make([]meta.Prefix, len(o.WireguardPeers[i2].WireguardAllowedIPs))
 				copy(cp.WireguardPeers[i2].WireguardAllowedIPs, o.WireguardPeers[i2].WireguardAllowedIPs)
 			}
 		}

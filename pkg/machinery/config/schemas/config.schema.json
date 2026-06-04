@@ -1278,6 +1278,112 @@
       ],
       "description": "KubeEtcdEncryptionConfig configures kube-apiserver etcd encryption rules."
     },
+    "k8s.KubeFlannelCNIConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "KubeFlannelCNIConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "extraArgs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "extraArgs",
+          "description": "Extra arguments for ‘flanneld’.\n",
+          "markdownDescription": "Extra arguments for 'flanneld'.",
+          "x-intellij-html-description": "\u003cp\u003eExtra arguments for \u0026lsquo;flanneld\u0026rsquo;.\u003c/p\u003e\n"
+        },
+        "kubeNetworkPoliciesEnabled": {
+          "type": "boolean",
+          "title": "kubeNetworkPoliciesEnabled",
+          "description": "Deploys kube-network-policies along with Flannel.\n\nThis enables Kubernetes Network Policies support in the cluster.\n",
+          "markdownDescription": "Deploys kube-network-policies along with Flannel.\n\nThis enables Kubernetes Network Policies support in the cluster.",
+          "x-intellij-html-description": "\u003cp\u003eDeploys kube-network-policies along with Flannel.\u003c/p\u003e\n\n\u003cp\u003eThis enables Kubernetes Network Policies support in the cluster.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "KubeFlannelCNIConfig deploys Flannel CNI to the cluster."
+    },
+    "k8s.KubeNetworkConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "KubeNetworkConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "dnsDomain": {
+          "type": "string",
+          "title": "dnsDomain",
+          "description": "The domain used by Kubernetes DNS.\nThe default is cluster.local\n",
+          "markdownDescription": "The domain used by Kubernetes DNS.\nThe default is `cluster.local`",
+          "x-intellij-html-description": "\u003cp\u003eThe domain used by Kubernetes DNS.\nThe default is \u003ccode\u003ecluster.local\u003c/code\u003e\u003c/p\u003e\n"
+        },
+        "podSubnets": {
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f.:]+/\\d{1,3}$"
+          },
+          "type": "array",
+          "title": "podSubnets",
+          "description": "The pod subnet (CIDR), this can be a single value or two values for dual-stack clusters.\n",
+          "markdownDescription": "The pod subnet (CIDR), this can be a single value or two values for dual-stack clusters.",
+          "x-intellij-html-description": "\u003cp\u003eThe pod subnet (CIDR), this can be a single value or two values for dual-stack clusters.\u003c/p\u003e\n"
+        },
+        "serviceSubnets": {
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f.:]+/\\d{1,3}$"
+          },
+          "type": "array",
+          "title": "serviceSubnets",
+          "description": "The service subnet (CIDR), this can be a single value or two values for dual-stack clusters.\n",
+          "markdownDescription": "The service subnet (CIDR), this can be a single value or two values for dual-stack clusters.",
+          "x-intellij-html-description": "\u003cp\u003eThe service subnet (CIDR), this can be a single value or two values for dual-stack clusters.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "podSubnets",
+        "serviceSubnets"
+      ],
+      "description": "KubeNetworkConfig configures Kubernetes base network settings."
+    },
     "k8s.KubeSchedulerConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -4444,41 +4550,6 @@
       "type": "object",
       "description": "AuthorizationConfigAuthorizerConfig represents the API server authorization config authorizer configuration."
     },
-    "v1alpha1.CNIConfig": {
-      "properties": {
-        "name": {
-          "enum": [
-            "flannel",
-            "custom",
-            "none"
-          ],
-          "title": "name",
-          "description": "Name of CNI to use.\n",
-          "markdownDescription": "Name of CNI to use.",
-          "x-intellij-html-description": "\u003cp\u003eName of CNI to use.\u003c/p\u003e\n"
-        },
-        "urls": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "title": "urls",
-          "description": "URLs containing manifests to apply for the CNI.\nShould be present for “custom”, must be empty for “flannel” and “none”.\n",
-          "markdownDescription": "URLs containing manifests to apply for the CNI.\nShould be present for \"custom\", must be empty for \"flannel\" and \"none\".",
-          "x-intellij-html-description": "\u003cp\u003eURLs containing manifests to apply for the CNI.\nShould be present for \u0026ldquo;custom\u0026rdquo;, must be empty for \u0026ldquo;flannel\u0026rdquo; and \u0026ldquo;none\u0026rdquo;.\u003c/p\u003e\n"
-        },
-        "flannel": {
-          "$ref": "#/$defs/v1alpha1.FlannelCNIConfig",
-          "title": "flannel",
-          "description": "description: |\nFlannel configuration options.\n",
-          "markdownDescription": "description: |\nFlannel configuration options.",
-          "x-intellij-html-description": "\u003cp\u003edescription: |\nFlannel configuration options.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "CNIConfig represents the CNI configuration options."
-    },
     "v1alpha1.ClusterConfig": {
       "properties": {
         "id": {
@@ -4508,13 +4579,6 @@
           "description": "Configures the cluster’s name.\n",
           "markdownDescription": "Configures the cluster's name.",
           "x-intellij-html-description": "\u003cp\u003eConfigures the cluster\u0026rsquo;s name.\u003c/p\u003e\n"
-        },
-        "network": {
-          "$ref": "#/$defs/v1alpha1.ClusterNetworkConfig",
-          "title": "network",
-          "description": "Provides cluster specific network configuration options.\n",
-          "markdownDescription": "Provides cluster specific network configuration options.",
-          "x-intellij-html-description": "\u003cp\u003eProvides cluster specific network configuration options.\u003c/p\u003e\n"
         },
         "token": {
           "type": "string",
@@ -4716,47 +4780,6 @@
       "additionalProperties": false,
       "type": "object",
       "description": "ClusterInlineManifest struct describes inline bootstrap manifests for the user."
-    },
-    "v1alpha1.ClusterNetworkConfig": {
-      "properties": {
-        "cni": {
-          "$ref": "#/$defs/v1alpha1.CNIConfig",
-          "title": "cni",
-          "description": "The CNI used.\nComposed of “name” and “urls”.\nThe “name” key supports the following options: “flannel”, “custom”, and “none”.\n“flannel” uses Talos-managed Flannel CNI, and that’s the default option.\n“custom” uses custom manifests that should be provided in “urls”.\n“none” indicates that Talos will not manage any CNI installation.\n",
-          "markdownDescription": "The CNI used.\nComposed of \"name\" and \"urls\".\nThe \"name\" key supports the following options: \"flannel\", \"custom\", and \"none\".\n\"flannel\" uses Talos-managed Flannel CNI, and that's the default option.\n\"custom\" uses custom manifests that should be provided in \"urls\".\n\"none\" indicates that Talos will not manage any CNI installation.",
-          "x-intellij-html-description": "\u003cp\u003eThe CNI used.\nComposed of \u0026ldquo;name\u0026rdquo; and \u0026ldquo;urls\u0026rdquo;.\nThe \u0026ldquo;name\u0026rdquo; key supports the following options: \u0026ldquo;flannel\u0026rdquo;, \u0026ldquo;custom\u0026rdquo;, and \u0026ldquo;none\u0026rdquo;.\n\u0026ldquo;flannel\u0026rdquo; uses Talos-managed Flannel CNI, and that\u0026rsquo;s the default option.\n\u0026ldquo;custom\u0026rdquo; uses custom manifests that should be provided in \u0026ldquo;urls\u0026rdquo;.\n\u0026ldquo;none\u0026rdquo; indicates that Talos will not manage any CNI installation.\u003c/p\u003e\n"
-        },
-        "dnsDomain": {
-          "type": "string",
-          "title": "dnsDomain",
-          "description": "The domain used by Kubernetes DNS.\nThe default is cluster.local\n",
-          "markdownDescription": "The domain used by Kubernetes DNS.\nThe default is `cluster.local`",
-          "x-intellij-html-description": "\u003cp\u003eThe domain used by Kubernetes DNS.\nThe default is \u003ccode\u003ecluster.local\u003c/code\u003e\u003c/p\u003e\n"
-        },
-        "podSubnets": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "title": "podSubnets",
-          "description": "The pod subnet CIDR.\n",
-          "markdownDescription": "The pod subnet CIDR.",
-          "x-intellij-html-description": "\u003cp\u003eThe pod subnet CIDR.\u003c/p\u003e\n"
-        },
-        "serviceSubnets": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "title": "serviceSubnets",
-          "description": "The service subnet CIDR.\n",
-          "markdownDescription": "The service subnet CIDR.",
-          "x-intellij-html-description": "\u003cp\u003eThe service subnet CIDR.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "ClusterNetworkConfig represents kube networking configuration options."
     },
     "v1alpha1.Config": {
       "properties": {
@@ -5052,30 +5075,6 @@
       "additionalProperties": false,
       "type": "object",
       "description": "FeaturesConfig describes individual Talos features that can be switched on or off."
-    },
-    "v1alpha1.FlannelCNIConfig": {
-      "properties": {
-        "extraArgs": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "title": "extraArgs",
-          "description": "Extra arguments for ‘flanneld’.\n",
-          "markdownDescription": "Extra arguments for 'flanneld'.",
-          "x-intellij-html-description": "\u003cp\u003eExtra arguments for \u0026lsquo;flanneld\u0026rsquo;.\u003c/p\u003e\n"
-        },
-        "kubeNetworkPoliciesEnabled": {
-          "type": "boolean",
-          "title": "kubeNetworkPoliciesEnabled",
-          "description": "Deploys kube-network-policies along with Flannel.\n\nThis enables Kubernetes Network Policies support in the cluster.\n",
-          "markdownDescription": "Deploys kube-network-policies along with Flannel.\n\nThis enables Kubernetes Network Policies support in the cluster.",
-          "x-intellij-html-description": "\u003cp\u003eDeploys kube-network-policies along with Flannel.\u003c/p\u003e\n\n\u003cp\u003eThis enables Kubernetes Network Policies support in the cluster.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "FlannelCNIConfig represents the Flannel CNI configuration options."
     },
     "v1alpha1.InstallConfig": {
       "properties": {
@@ -5954,6 +5953,12 @@
     },
     {
       "$ref": "#/$defs/k8s.KubeEtcdEncryptionConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/k8s.KubeFlannelCNIConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/k8s.KubeNetworkConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/k8s.KubeSchedulerConfigV1Alpha1"

@@ -103,7 +103,7 @@ type WireguardPeer struct {
 	//   schema:
 	//     type: string
 	//     pattern: ^([0-9a-f.:]+|\[[0-9a-f:.]+\]):\d{1,5}$
-	WireguardEndpoint AddrPort `yaml:"endpoint,omitempty"`
+	WireguardEndpoint meta.AddrPort `yaml:"endpoint,omitempty"`
 	//   description: |
 	//     Specifies the persistent keepalive interval for this peer.
 	//     Field format accepts any Go time.Duration format ('1h' for one hour, '10m' for ten minutes).
@@ -119,7 +119,7 @@ type WireguardPeer struct {
 	//     items:
 	//       type: string
 	//       pattern: ^[0-9a-f.:]+/\d{1,3}$
-	WireguardAllowedIPs []Prefix `yaml:"allowedIPs,omitempty"`
+	WireguardAllowedIPs []meta.Prefix `yaml:"allowedIPs,omitempty"`
 }
 
 // NewWireguardConfigV1Alpha1 creates a new WireguardConfig config document.
@@ -140,13 +140,13 @@ func exampleWireguardConfigV1Alpha1() *WireguardConfigV1Alpha1 {
 	cfg.WireguardPeers = []WireguardPeer{
 		{
 			WireguardPublicKey:  "fP+xJZvUA5n1Pi/f5wcPiV6tZ6fHwqcGaXe98NfEgkE=",
-			WireguardAllowedIPs: []Prefix{{netip.MustParsePrefix("192.168.2.0/24")}},
-			WireguardEndpoint:   AddrPort{netip.MustParseAddrPort("10.0.0.1:5180")},
+			WireguardAllowedIPs: []meta.Prefix{{Prefix: netip.MustParsePrefix("192.168.2.0/24")}},
+			WireguardEndpoint:   meta.AddrPort{AddrPort: netip.MustParseAddrPort("10.0.0.1:5180")},
 		},
 		{
 			WireguardPublicKey:    "TDd25Cwq6tMZANIKUaqred+Zt+09HtCqwFeOLtKQ9Cs=",
 			WireguardPresharedKey: "UpH8htYK7yJBPg5+q4M/Tx0o5ipHbeSZtI/h/mHxOeU=",
-			WireguardAllowedIPs:   []Prefix{{netip.MustParsePrefix("192.168.3.0/24")}},
+			WireguardAllowedIPs:   []meta.Prefix{{Prefix: netip.MustParsePrefix("192.168.3.0/24")}},
 		},
 	}
 	cfg.LinkAddresses = []AddressConfig{
@@ -293,7 +293,7 @@ func (p WireguardPeer) Endpoint() optional.Optional[string] {
 
 // AllowedIPs implements NetworkWireguardPeerConfig interface.
 func (p WireguardPeer) AllowedIPs() []netip.Prefix {
-	return xslices.Map(p.WireguardAllowedIPs, func(pr Prefix) netip.Prefix {
+	return xslices.Map(p.WireguardAllowedIPs, func(pr meta.Prefix) netip.Prefix {
 		return pr.Prefix
 	})
 }

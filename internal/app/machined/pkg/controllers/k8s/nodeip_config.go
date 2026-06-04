@@ -6,12 +6,12 @@ package k8s
 
 import (
 	"context"
-	"fmt"
 	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/controller/generic/transform"
 	"github.com/siderolabs/gen/optional"
+	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -28,12 +28,16 @@ func NewNodeIPConfigController() *NodeIPConfigController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *k8s.NodeIPConfig]{
 			Name: "k8s.NodeIPConfigController",
-			MapMetadataOptionalFunc: func(cfg *config.MachineConfig) optional.Optional[*k8s.NodeIPConfig] {
+			MapMetadataOptionalFunc: func(cfg *config.MachineConfig) optional.Optional[*k8s.NodeIPConfig] { //nolint:dupl
 				if cfg.Metadata().ID() != config.ActiveID {
 					return optional.None[*k8s.NodeIPConfig]()
 				}
 
 				if cfg.Config().Machine() == nil || cfg.Config().Cluster() == nil {
+					return optional.None[*k8s.NodeIPConfig]()
+				}
+
+				if cfg.Config().K8sNetworkConfig() == nil {
 					return optional.None[*k8s.NodeIPConfig]()
 				}
 
@@ -47,12 +51,7 @@ func NewNodeIPConfigController() *NodeIPConfigController {
 
 				if len(spec.ValidSubnets) == 0 {
 					// automatically deduce validsubnets from ServiceCIDRs
-					var err error
-
-					spec.ValidSubnets, err = ipSubnetsFromServiceCIDRs(cfgProvider.Cluster().Network().ServiceCIDRs())
-					if err != nil {
-						return fmt.Errorf("error building valid subnets: %w", err)
-					}
+					spec.ValidSubnets = ipSubnetsFromServiceCIDRs(cfgProvider.K8sNetworkConfig().ServiceCIDRs())
 				}
 
 				spec.ExcludeSubnets = nil
@@ -61,9 +60,9 @@ func NewNodeIPConfigController() *NodeIPConfigController {
 				spec.ExcludeSubnets = append(
 					append(
 						spec.ExcludeSubnets,
-						cfgProvider.Cluster().Network().PodCIDRs()...,
+						xslices.Map(cfgProvider.K8sNetworkConfig().PodCIDRs(), netip.Prefix.String)...,
 					),
-					cfgProvider.Cluster().Network().ServiceCIDRs()...,
+					xslices.Map(cfgProvider.K8sNetworkConfig().ServiceCIDRs(), netip.Prefix.String)...,
 				)
 
 				// filter out any virtual IPs, they can't be node IPs either
@@ -89,17 +88,12 @@ func NewNodeIPConfigController() *NodeIPConfigController {
 	)
 }
 
-func ipSubnetsFromServiceCIDRs(serviceCIDRs []string) ([]string, error) {
+func ipSubnetsFromServiceCIDRs(serviceCIDRs []netip.Prefix) []string {
 	// automatically configure valid IP subnets based on service CIDRs
 	// if the primary service CIDR is IPv4, primary kubelet node IP should be IPv4 as well, and so on
 	result := make([]string, 0, len(serviceCIDRs))
 
-	for _, cidr := range serviceCIDRs {
-		network, err := netip.ParsePrefix(cidr)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse subnet: %w", err)
-		}
-
+	for _, network := range serviceCIDRs {
 		if network.Addr().Is6() {
 			result = append(result, "::/0")
 		} else {
@@ -107,5 +101,5 @@ func ipSubnetsFromServiceCIDRs(serviceCIDRs []string) ([]string, error) {
 		}
 	}
 
-	return result, nil
+	return result
 }

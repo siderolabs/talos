@@ -128,13 +128,13 @@ type KubeSpanFiltersConfig struct {
 	//     Default value: no filtering.
 	//   examples:
 	//     - name: Exclude private networks from being advertised.
-	//       value: '[]Prefix{{netip.MustParsePrefix("192.168.1.0/24")}}'
+	//       value: '[]meta.Prefix{{netip.MustParsePrefix("192.168.1.0/24")}}'
 	//   schema:
 	//     type: array
 	//     items:
 	//       type: string
 	//       pattern: ^[0-9a-f.:]+/\d{1,3}$
-	ConfigExcludeAdvertisedNetworks []Prefix `yaml:"excludeAdvertisedNetworks,omitempty"`
+	ConfigExcludeAdvertisedNetworks []meta.Prefix `yaml:"excludeAdvertisedNetworks,omitempty"`
 }
 
 // NewKubeSpanV1Alpha1 creates a new KubeSpanConfig config document.
@@ -156,7 +156,7 @@ func exampleKubeSpanV1Alpha1() *KubeSpanConfigV1Alpha1 {
 	cfg.ConfigMTU = new(uint32(1420))
 	cfg.ConfigFilters = &KubeSpanFiltersConfig{
 		ConfigEndpoints:                 []string{"0.0.0.0/0", "::/0"},
-		ConfigExcludeAdvertisedNetworks: []Prefix{{netip.MustParsePrefix("192.168.1.0/24")}, {netip.MustParsePrefix("2003::/16")}},
+		ConfigExcludeAdvertisedNetworks: []meta.Prefix{{Prefix: netip.MustParsePrefix("192.168.1.0/24")}, {Prefix: netip.MustParsePrefix("2003::/16")}},
 	}
 
 	return cfg
@@ -244,5 +244,5 @@ func (f *KubeSpanFiltersConfig) Endpoints() []string {
 
 // ExcludeAdvertisedNetworks implements config.NetworkKubeSpanFilters interface.
 func (f *KubeSpanFiltersConfig) ExcludeAdvertisedNetworks() []netip.Prefix {
-	return xslices.Map(f.ConfigExcludeAdvertisedNetworks, func(p Prefix) netip.Prefix { return p.Prefix })
+	return xslices.Map(f.ConfigExcludeAdvertisedNetworks, func(p meta.Prefix) netip.Prefix { return p.Prefix })
 }

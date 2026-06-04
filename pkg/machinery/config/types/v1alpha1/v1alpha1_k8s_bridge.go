@@ -8,6 +8,7 @@ import (
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // K8sSchedulerConfig implements the config.Config interface.
@@ -84,4 +85,31 @@ func (s controllerManagerConfigShim) Enabled() bool {
 	}
 
 	return true
+}
+
+// K8sNetworkConfig implements the config.Config interface.
+func (c *Config) K8sNetworkConfig() config.K8sNetworkConfig {
+	// if the section is missing, assume it's not set (multi-doc should provide it)
+	if c.ClusterConfig == nil || c.ClusterConfig.ClusterNetwork == nil {
+		return nil
+	}
+
+	return c.ClusterConfig
+}
+
+// K8sFlannelCNIConfig implements the config.Config interface.
+func (c *Config) K8sFlannelCNIConfig() config.K8sFlannelCNIConfig {
+	// if the section is missing, assume it's not set (multi-doc should provide it)
+	if c.ClusterConfig == nil || c.ClusterConfig.ClusterNetwork == nil {
+		return nil
+	}
+
+	cniConfig := c.ClusterConfig.CNI()
+
+	// if CNI is not Flannel, assume it is disabled
+	if cniConfig.CNIName != constants.FlannelCNI {
+		return nil
+	}
+
+	return cniConfig.Flannel()
 }

@@ -150,10 +150,10 @@ func WithDebug(enable bool) Option {
 	}
 }
 
-// WithClusterCNIConfig specifies custom cluster CNI config.
-func WithClusterCNIConfig(config *v1alpha1.CNIConfig) Option {
+// WithCustomCNIUrl specifies custom cluster CNI config.
+func WithCustomCNIUrl(manifestURL string) Option {
 	return func(o *Options) error {
-		o.CNIConfig = config
+		o.CNICustomURL = manifestURL
 
 		return nil
 	}
@@ -277,7 +277,7 @@ type Options struct {
 
 	// Cluster settings.
 	DNSDomain                      string
-	CNIConfig                      *v1alpha1.CNIConfig
+	CNICustomURL                   string
 	AllowSchedulingOnControlPlanes bool
 	LocalAPIServerPort             int
 	AdditionalSubjectAltNames      []string

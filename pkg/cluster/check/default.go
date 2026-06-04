@@ -13,6 +13,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
@@ -94,7 +95,7 @@ func cniDisabledStatus(ctx context.Context, cluster ClusterInfo) (bool, error) {
 		return false, err
 	}
 
-	return bmc.TypedSpec().CNIName == "none", nil
+	return bmc.TypedSpec().CNIName == constants.NoneCNI, nil
 }
 
 // K8sComponentsReadinessChecks returns a set of K8s cluster readiness checks which are specific to the k8s components

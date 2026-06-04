@@ -7,6 +7,7 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"net/netip"
 	"slices"
 	"strconv"
 	"strings"
@@ -180,8 +181,13 @@ type ControlPlaneAPIServerController = transform.Controller[*config.MachineConfi
 func NewControlPlaneAPIServerController() *ControlPlaneAPIServerController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *k8s.APIServerConfig]{
-			Name:                    "k8s.ControlPlaneAPIServerController",
-			MapMetadataOptionalFunc: controlplaneMapFunc(k8s.NewAPIServerConfig()),
+			Name: "k8s.ControlPlaneAPIServerController",
+			MapMetadataOptionalFunc: controlplaneMapFunc(
+				k8s.NewAPIServerConfig(),
+				func(machineConfig *config.MachineConfig) bool {
+					return machineConfig.Config().K8sNetworkConfig() != nil
+				},
+			),
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, machineConfig *config.MachineConfig, res *k8s.APIServerConfig) error {
 				cfgProvider := machineConfig.Config()
 
@@ -206,7 +212,7 @@ func NewControlPlaneAPIServerController() *ControlPlaneAPIServerController {
 					ControlPlaneEndpoint: cfgProvider.Cluster().Endpoint().String(),
 					EtcdServers:          []string{fmt.Sprintf("https://%s", nethelpers.JoinHostPort("127.0.0.1", constants.EtcdClientPort))},
 					LocalPort:            cfgProvider.Cluster().LocalAPIServerPort(),
-					ServiceCIDRs:         cfgProvider.Cluster().Network().ServiceCIDRs(),
+					ServiceCIDRs:         xslices.Map(cfgProvider.K8sNetworkConfig().ServiceCIDRs(), netip.Prefix.String),
 					ExtraArgs:            extraArgs,
 					ExtraVolumes:         convertVolumes(cfgProvider.Cluster().APIServer().ExtraVolumes()),
 					EnvironmentVariables: cfgProvider.Cluster().APIServer().Env(),
@@ -233,6 +239,9 @@ func NewControlPlaneControllerManagerController() *ControlPlaneControllerManager
 				func(machineConfig *config.MachineConfig) bool {
 					return machineConfig.Config().K8sControllerManagerConfig() != nil
 				},
+				func(machineConfig *config.MachineConfig) bool {
+					return machineConfig.Config().K8sNetworkConfig() != nil
+				},
 			),
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, machineConfig *config.MachineConfig, res *k8s.ControllerManagerConfig) error {
 				controllerManagerConfig := machineConfig.Config().K8sControllerManagerConfig()
@@ -252,8 +261,8 @@ func NewControlPlaneControllerManagerController() *ControlPlaneControllerManager
 					Enabled:              controllerManagerConfig.Enabled(),
 					Image:                controllerManagerConfig.Image(),
 					CloudProvider:        cloudProvider,
-					PodCIDRs:             machineConfig.Config().Cluster().Network().PodCIDRs(),
-					ServiceCIDRs:         machineConfig.Config().Cluster().Network().ServiceCIDRs(),
+					PodCIDRs:             xslices.Map(machineConfig.Config().K8sNetworkConfig().PodCIDRs(), netip.Prefix.String),
+					ServiceCIDRs:         xslices.Map(machineConfig.Config().K8sNetworkConfig().ServiceCIDRs(), netip.Prefix.String),
 					ExtraArgs:            extraArgs,
 					ExtraVolumes:         convertVolumes(controllerManagerConfig.ExtraVolumes()),
 					EnvironmentVariables: controllerManagerConfig.Env(),
@@ -313,15 +322,17 @@ type ControlPlaneBootstrapManifestsController = transform.Controller[*config.Mac
 func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifestsController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *k8s.BootstrapManifestsConfig]{
-			Name:                    "k8s.ControlPlaneBootstrapManifestsController",
-			MapMetadataOptionalFunc: controlplaneMapFunc(k8s.NewBootstrapManifestsConfig()),
+			Name: "k8s.ControlPlaneBootstrapManifestsController",
+			MapMetadataOptionalFunc: controlplaneMapFunc(
+				k8s.NewBootstrapManifestsConfig(),
+				func(machineConfig *config.MachineConfig) bool {
+					return machineConfig.Config().K8sNetworkConfig() != nil
+				},
+			),
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, machineConfig *config.MachineConfig, res *k8s.BootstrapManifestsConfig) error {
 				cfgProvider := machineConfig.Config()
 
-				dnsServiceIPs, err := cfgProvider.Cluster().Network().DNSServiceIPs()
-				if err != nil {
-					return fmt.Errorf("error calculating DNS service IPs: %w", err)
-				}
+				dnsServiceIPs := k8s.DNSServiceAddrs(cfgProvider.K8sNetworkConfig().ServiceCIDRs())
 
 				dnsServiceIP := ""
 				dnsServiceIPv6 := ""
@@ -358,9 +369,9 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 
 				*res.TypedSpec() = k8s.BootstrapManifestsConfigSpec{
 					Server:        server,
-					ClusterDomain: cfgProvider.Cluster().Network().DNSDomain(),
+					ClusterDomain: cfgProvider.K8sNetworkConfig().DNSDomain(),
 
-					PodCIDRs: cfgProvider.Cluster().Network().PodCIDRs(),
+					PodCIDRs: xslices.Map(cfgProvider.K8sNetworkConfig().PodCIDRs(), netip.Prefix.String),
 
 					ProxyEnabled: cfgProvider.Cluster().Proxy().Enabled(),
 					ProxyImage:   cfgProvider.Cluster().Proxy().Image(),
@@ -372,17 +383,27 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 					DNSServiceIP:   dnsServiceIP,
 					DNSServiceIPv6: dnsServiceIPv6,
 
-					FlannelEnabled:                    cfgProvider.Cluster().Network().CNI().Name() == constants.FlannelCNI,
-					FlannelImage:                      images.Flannel.String(),
-					FlannelExtraArgs:                  cfgProvider.Cluster().Network().CNI().Flannel().ExtraArgs(),
-					FlannelKubeServiceHost:            flannelKubeServiceHost,
-					FlannelKubeServicePort:            flannelKubeServicePort,
-					FlannelKubeNetworkPoliciesEnabled: cfgProvider.Cluster().Network().CNI().Flannel().KubeNetworkPoliciesEnabled(),
-					FlannelKubeNetworkPoliciesImage:   images.KubeNetworkPolicies.String(),
-
 					TalosAPIServiceEnabled: cfgProvider.Machine().Features().KubernetesTalosAPIAccess().Enabled(),
+				}
 
-					CNIName: cfgProvider.Cluster().Network().CNI().Name(),
+				if k8sFlannelCNIConfig := cfgProvider.K8sFlannelCNIConfig(); k8sFlannelCNIConfig != nil {
+					res.TypedSpec().FlannelEnabled = true
+					res.TypedSpec().FlannelImage = images.Flannel.String()
+					res.TypedSpec().FlannelExtraArgs = k8sFlannelCNIConfig.ExtraArgs()
+					res.TypedSpec().FlannelKubeServiceHost = flannelKubeServiceHost
+					res.TypedSpec().FlannelKubeServicePort = flannelKubeServicePort
+					res.TypedSpec().FlannelKubeNetworkPoliciesEnabled = k8sFlannelCNIConfig.KubeNetworkPoliciesEnabled()
+					res.TypedSpec().FlannelKubeNetworkPoliciesImage = images.KubeNetworkPolicies.String()
+					res.TypedSpec().CNIName = constants.FlannelCNI
+				} else {
+					res.TypedSpec().FlannelEnabled = false
+					res.TypedSpec().FlannelImage = ""
+					res.TypedSpec().FlannelExtraArgs = nil
+					res.TypedSpec().FlannelKubeServiceHost = ""
+					res.TypedSpec().FlannelKubeServicePort = ""
+					res.TypedSpec().FlannelKubeNetworkPoliciesEnabled = false
+					res.TypedSpec().FlannelKubeNetworkPoliciesImage = ""
+					res.TypedSpec().CNIName = constants.NoneCNI
 				}
 
 				return nil
@@ -412,14 +433,6 @@ func NewControlPlaneExtraManifestsController() *ControlPlaneExtraManifestsContro
 				cfgProvider := machineConfig.Config()
 
 				spec := k8s.ExtraManifestsConfigSpec{}
-
-				for _, url := range cfgProvider.Cluster().Network().CNI().URLs() {
-					spec.ExtraManifests = append(spec.ExtraManifests, k8s.ExtraManifest{
-						Name:     url,
-						URL:      url,
-						Priority: "05", // push CNI to the top
-					})
-				}
 
 				for _, url := range cfgProvider.Cluster().ExternalCloudProvider().ManifestURLs() {
 					spec.ExtraManifests = append(spec.ExtraManifests, k8s.ExtraManifest{
@@ -493,7 +506,7 @@ func convertResources(resources talosconfig.Resources) k8s.Resources {
 }
 
 func getProxyArgs(cfgProvider talosconfig.Config) ([]string, error) {
-	clusterCidr := strings.Join(cfgProvider.Cluster().Network().PodCIDRs(), ",")
+	clusterCidr := strings.Join(xslices.Map(cfgProvider.K8sNetworkConfig().PodCIDRs(), netip.Prefix.String), ",")
 
 	proxyMode := cfgProvider.Cluster().Proxy().Mode()
 

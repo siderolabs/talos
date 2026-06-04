@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -248,7 +249,7 @@ func TestValidateContainer(t *testing.T) {
 	resolverConfig := network.NewResolverConfigV1Alpha1()
 	resolverConfig.ResolverNameservers = []network.NameserverConfig{
 		{
-			Address: network.Addr{Addr: netip.MustParseAddr("1.1.1.1")},
+			Address: meta.Addr{Addr: netip.MustParseAddr("1.1.1.1")},
 		},
 	}
 
@@ -261,7 +262,7 @@ func TestValidateContainer(t *testing.T) {
 	resolverConfigDoT := network.NewResolverConfigV1Alpha1()
 	resolverConfigDoT.ResolverNameservers = []network.NameserverConfig{
 		{
-			Address: network.Addr{
+			Address: meta.Addr{
 				Addr: netip.MustParseAddr("1.1.1.1"),
 			},
 			Protocol:      nethelpers.DNSProtocolDNSOverTLS,

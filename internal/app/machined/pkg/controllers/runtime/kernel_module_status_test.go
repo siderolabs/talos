@@ -39,6 +39,10 @@ func (suite *KernelModuleStatusSuite) TestParseFromLiveKernel() {
 		suite.T().Skip("test not supported under buildkit, as modules are not propagated from the host kernel into the buildkit sandbox")
 	}
 
+	if os.Geteuid() != 0 {
+		suite.T().Skip("skipping in non-root mode")
+	}
+
 	suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrl.KernelModuleStatusController{}))
 
 	ctest.AssertNotEmpty[*runtime.LoadedKernelModule](suite) //nolint:staticcheck

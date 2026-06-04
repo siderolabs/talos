@@ -5,7 +5,12 @@
 // Package k8s provides resources which interface with Kubernetes.
 package k8s
 
-import "github.com/cosi-project/runtime/pkg/resource"
+import (
+	"net/netip"
+
+	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/siderolabs/gen/xslices"
+)
 
 //go:generate go tool github.com/siderolabs/deep-copy -type AdmissionControlConfigSpec -type APIServerConfigSpec -type AuditPolicyConfigSpec -type AuthorizationConfigSpec -type BootstrapManifestsConfigSpec -type ConfigStatusSpec -type ControllerManagerConfigSpec -type EndpointSpec -type EtcdEncryptionConfigSpec -type ExtraManifestsConfigSpec -type KubeletKubeconfigSpec -type KubeletLifecycleSpec -type KubePrismConfigSpec -type KubePrismEndpointsSpec -type KubePrismStatusesSpec -type KubeletSpecSpec -type ManifestSpec -type ManifestStatusSpec -type NodeAnnotationSpecSpec -type NodeCordonedSpecSpec -type NodeLabelSpecSpec -type NodeTaintSpecSpec -type KubeletConfigSpec -type NodeIPSpec -type NodeIPConfigSpec -type NodeStatusSpec -type NodenameSpec -type SchedulerConfigSpec -type SecretsStatusSpec -type StaticPodSpec -type StaticPodStatusSpec -type StaticPodServerStatusSpec  -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
@@ -32,3 +37,29 @@ const SchedulerID = "kube-scheduler"
 
 // FinalPrefix is a prefix for final config produced for the configuration of the component.
 const FinalPrefix = "final-"
+
+// APIServerServiceAddrs returns the list of kube-apiserver IPs based on the service CIDRs of the cluster.
+func APIServerServiceAddrs(serviceSubnets []netip.Prefix) []netip.Addr {
+	return xslices.Map(
+		serviceSubnets,
+		func(cidr netip.Prefix) netip.Addr {
+			return cidr.Addr().Next()
+		},
+	)
+}
+
+// DNSServiceAddrs returns the list of kube-dns service IPs based on the service CIDRs of the cluster.
+func DNSServiceAddrs(serviceSubnets []netip.Prefix) []netip.Addr {
+	return xslices.Map(
+		serviceSubnets,
+		func(cidr netip.Prefix) netip.Addr {
+			addr := cidr.Addr()
+
+			for range 10 {
+				addr = addr.Next()
+			}
+
+			return addr
+		},
+	)
+}

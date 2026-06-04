@@ -5,8 +5,10 @@
 package v1alpha1_test
 
 import (
+	"net/netip"
 	"testing"
 
+	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -215,6 +217,156 @@ func TestKubeControllerManagerBridge(t *testing.T) {
 			assert.True(t, kubeControllerManager.Enabled())
 			assert.Equal(t, "controller-manager:v1", kubeControllerManager.Image())
 			assert.Equal(t, map[string][]string{"features": {"all"}}, kubeControllerManager.ExtraArgs())
+		})
+	}
+}
+
+func TestKubeNetworkBridge(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+
+		cfg func(*testing.T) config.Config
+
+		expectHasNetworkConfig bool
+		expectHasFlannelConfig bool
+
+		expectFlannelKubeNetworkPoliciesEnabled bool
+		expectPodCIDRs                          []string
+	}{
+		{
+			name: "v1alpha1 only",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					ClusterConfig: &v1alpha1.ClusterConfig{
+						ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+							PodSubnet: []string{"10.0.0.0/8"},
+							CNI: &v1alpha1.CNIConfig{
+								CNIName: "flannel",
+								CNIFlannel: &v1alpha1.FlannelCNIConfig{
+									FlannelKubeNetworkPoliciesEnabled: new(true),
+								},
+							},
+						},
+					},
+				})
+			},
+
+			expectHasNetworkConfig:                  true,
+			expectHasFlannelConfig:                  true,
+			expectFlannelKubeNetworkPoliciesEnabled: true,
+			expectPodCIDRs:                          []string{"10.0.0.0/8"},
+		},
+		{
+			name: "new style",
+
+			cfg: func(*testing.T) config.Config {
+				cn := k8s.NewKubeNetworkConfigV1Alpha1()
+				cn.NetworkPodSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix("10.0.0.0/8")},
+				}
+
+				cf := k8s.NewKubeFlannelCNIConfigV1Alpha1()
+				cf.FlannelKubeNetworkPoliciesEnabled = new(true)
+
+				c, err := container.New(
+					cn,
+					cf,
+				)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectHasNetworkConfig:                  true,
+			expectHasFlannelConfig:                  true,
+			expectFlannelKubeNetworkPoliciesEnabled: true,
+			expectPodCIDRs:                          []string{"10.0.0.0/8"},
+		},
+		{
+			name: "v1alpha1 default flannel config",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					ClusterConfig: &v1alpha1.ClusterConfig{
+						ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+							PodSubnet: []string{"10.0.0.0/8"},
+						},
+					},
+				})
+			},
+
+			expectHasNetworkConfig:                  true,
+			expectHasFlannelConfig:                  true,
+			expectFlannelKubeNetworkPoliciesEnabled: false,
+			expectPodCIDRs:                          []string{"10.0.0.0/8"},
+		},
+		{
+			name: "v1alpha1 no flannel",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					ClusterConfig: &v1alpha1.ClusterConfig{
+						ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
+							PodSubnet: []string{"10.0.0.0/8"},
+							CNI: &v1alpha1.CNIConfig{
+								CNIName: "custom",
+							},
+						},
+					},
+				})
+			},
+
+			expectHasNetworkConfig: true,
+			expectHasFlannelConfig: false,
+			expectPodCIDRs:         []string{"10.0.0.0/8"},
+		},
+		{
+			name: "new style no flannel",
+
+			cfg: func(*testing.T) config.Config {
+				cn := k8s.NewKubeNetworkConfigV1Alpha1()
+				cn.NetworkPodSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix("10.0.0.0/8")},
+				}
+
+				c, err := container.New(
+					cn,
+				)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectHasNetworkConfig: true,
+			expectHasFlannelConfig: false,
+			expectPodCIDRs:         []string{"10.0.0.0/8"},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := test.cfg(t)
+
+			kubeNetwork := cfg.K8sNetworkConfig()
+
+			if test.expectHasNetworkConfig {
+				require.NotNil(t, kubeNetwork)
+				assert.Equal(t, test.expectPodCIDRs, xslices.Map(kubeNetwork.PodCIDRs(), netip.Prefix.String))
+			} else {
+				require.Nil(t, kubeNetwork)
+			}
+
+			kubeFlannel := cfg.K8sFlannelCNIConfig()
+
+			if test.expectHasFlannelConfig {
+				require.NotNil(t, kubeFlannel)
+				assert.Equal(t, test.expectFlannelKubeNetworkPoliciesEnabled, kubeFlannel.KubeNetworkPoliciesEnabled())
+			} else {
+				require.Nil(t, kubeFlannel)
+			}
 		})
 	}
 }

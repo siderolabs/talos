@@ -127,6 +127,83 @@ func (KubeEtcdEncryptionConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (KubeFlannelCNIConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeFlannelCNIConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeFlannelCNIConfig deploys Flannel CNI to the cluster." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeFlannelCNIConfig deploys Flannel CNI to the cluster.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "extraArgs",
+				Type:        "[]string",
+				Note:        "",
+				Description: "Extra arguments for 'flanneld'.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra arguments for 'flanneld'." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "kubeNetworkPoliciesEnabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "Deploys kube-network-policies along with Flannel.\n\nThis enables Kubernetes Network Policies support in the cluster.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Deploys kube-network-policies along with Flannel." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeFlannelCNIConfigV1Alpha1())
+
+	doc.Fields[1].AddExample("", []string{"--iface-can-reach=192.168.1.1"})
+
+	return doc
+}
+
+func (KubeNetworkConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeNetworkConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeNetworkConfig configures Kubernetes base network settings." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeNetworkConfig configures Kubernetes base network settings.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "dnsDomain",
+				Type:        "string",
+				Note:        "",
+				Description: "The domain used by Kubernetes DNS.\nThe default is `cluster.local`",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The domain used by Kubernetes DNS." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "podSubnets",
+				Type:        "[]Prefix",
+				Note:        "",
+				Description: "The pod subnet (CIDR), this can be a single value or two values for dual-stack clusters.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The pod subnet (CIDR), this can be a single value or two values for dual-stack clusters." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "serviceSubnets",
+				Type:        "[]Prefix",
+				Note:        "",
+				Description: "The service subnet (CIDR), this can be a single value or two values for dual-stack clusters.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The service subnet (CIDR), this can be a single value or two values for dual-stack clusters." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeNetworkConfig1V1Alpha1())
+
+	doc.AddExample("", exampleKubeNetworkConfig2V1Alpha1())
+
+	doc.AddExample("", exampleKubeNetworkConfig3V1Alpha1())
+
+	return doc
+}
+
 func (KubeSchedulerConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "KubeSchedulerConfig",
@@ -196,6 +273,8 @@ func GetFileDoc() *encoder.FileDoc {
 			ResourcesConfig{}.Doc(),
 			KubeControllerManagerConfigV1Alpha1{}.Doc(),
 			KubeEtcdEncryptionConfigV1Alpha1{}.Doc(),
+			KubeFlannelCNIConfigV1Alpha1{}.Doc(),
+			KubeNetworkConfigV1Alpha1{}.Doc(),
 			KubeSchedulerConfigV1Alpha1{}.Doc(),
 		},
 	}

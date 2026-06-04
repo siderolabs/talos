@@ -88,11 +88,11 @@ type NameserverConfig struct {
 	//     The IP address of the nameserver.
 	//   examples:
 	//    - value: >
-	//       Addr{netip.MustParseAddr("10.0.0.1")}
+	//       meta.Addr{netip.MustParseAddr("10.0.0.1")}
 	//   schema:
 	//     type: string
 	//     pattern: ^[0-9a-f.:]+$
-	Address Addr `yaml:"address"`
+	Address meta.Addr `yaml:"address"`
 	//   description: |
 	//     A DNS protocol to use.
 	//
@@ -182,10 +182,10 @@ func exampleResolverConfigV1Alpha1() *ResolverConfigV1Alpha1 {
 	cfg := NewResolverConfigV1Alpha1()
 	cfg.ResolverNameservers = []NameserverConfig{
 		{
-			Address: Addr{netip.MustParseAddr("1.1.1.1")},
+			Address: meta.Addr{Addr: netip.MustParseAddr("1.1.1.1")},
 		},
 		{
-			Address: Addr{netip.MustParseAddr("ff08::1")},
+			Address: meta.Addr{Addr: netip.MustParseAddr("ff08::1")},
 		},
 	}
 	cfg.ResolverSearchDomains = SearchDomainsConfig{
@@ -219,12 +219,12 @@ func exampleResolverConfigV1Alpha4() *ResolverConfigV1Alpha1 {
 	cfg := NewResolverConfigV1Alpha1()
 	cfg.ResolverNameservers = []NameserverConfig{
 		{
-			Address:       Addr{netip.MustParseAddr("9.9.9.9")},
+			Address:       meta.Addr{Addr: netip.MustParseAddr("9.9.9.9")},
 			Protocol:      nethelpers.DNSProtocolDNSOverTLS,
 			TLSServerName: "dns.quad9.net",
 		},
 		{
-			Address:       Addr{netip.MustParseAddr("2620:fe::fe")},
+			Address:       meta.Addr{Addr: netip.MustParseAddr("2620:fe::fe")},
 			Protocol:      nethelpers.DNSProtocolDNSOverTLS,
 			TLSServerName: "dns.quad9.net",
 		},
@@ -237,12 +237,12 @@ func exampleResolverConfigV1Alpha5() *ResolverConfigV1Alpha1 {
 	cfg := NewResolverConfigV1Alpha1()
 	cfg.ResolverNameservers = []NameserverConfig{
 		{
-			Address:       Addr{netip.MustParseAddr("1.1.1.1")},
+			Address:       meta.Addr{Addr: netip.MustParseAddr("1.1.1.1")},
 			Protocol:      nethelpers.DNSProtocolDNSOverHTTP,
 			TLSServerName: "cloudflare-dns.com",
 		},
 		{
-			Address:       Addr{netip.MustParseAddr("2606:4700:4700::1111")},
+			Address:       meta.Addr{Addr: netip.MustParseAddr("2606:4700:4700::1111")},
 			Protocol:      nethelpers.DNSProtocolDNSOverHTTP,
 			TLSServerName: "cloudflare-dns.com",
 		},

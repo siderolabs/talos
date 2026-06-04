@@ -21,6 +21,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	networkcfg "github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
@@ -669,7 +670,7 @@ func (suite *LinkConfigSuite) TestMachineConfigurationNewStyleNotFIPS() {
 		{
 			WireguardPublicKey:    peerKeyPub.String(),
 			WireguardPresharedKey: pskKey.String(),
-			WireguardAllowedIPs:   []networkcfg.Prefix{{Prefix: netip.MustParsePrefix("10.0.0.0/24")}},
+			WireguardAllowedIPs:   []meta.Prefix{{Prefix: netip.MustParsePrefix("10.0.0.0/24")}},
 		},
 	}
 

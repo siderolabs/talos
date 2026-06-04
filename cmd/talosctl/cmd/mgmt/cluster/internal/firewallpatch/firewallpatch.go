@@ -12,6 +12,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
@@ -25,7 +26,7 @@ func ingressRuleWithinCluster(cidrs []netip.Prefix, gateways []netip.Addr) []net
 			rules,
 			network.IngressRule{
 				Subnet: cidrs[i],
-				Except: network.Prefix{Prefix: netip.PrefixFrom(gateways[i], gateways[i].BitLen())},
+				Except: meta.Prefix{Prefix: netip.PrefixFrom(gateways[i], gateways[i].BitLen())},
 			},
 		)
 	}

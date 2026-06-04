@@ -329,13 +329,7 @@ func (ClusterConfig) Doc() *encoder.Doc {
 				Description: "Configures the cluster's name.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the cluster's name." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "network",
-				Type:        "ClusterNetworkConfig",
-				Note:        "",
-				Description: "Provides cluster specific network configuration options.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Provides cluster specific network configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{
 				Name:        "token",
 				Type:        "string",
@@ -465,7 +459,6 @@ func (ClusterConfig) Doc() *encoder.Doc {
 	doc.AddExample("", clusterConfigExample())
 
 	doc.Fields[2].AddExample("Setting controlplane endpoint address to 1.2.3.4 and port to 443 example.", clusterControlPlaneExample())
-	doc.Fields[4].AddExample("Configuring with flannel CNI and setting up subnets.", clusterNetworkExample())
 	doc.Fields[5].AddExample("Bootstrap token example (do not use in production!).", "wlzjyw.bei2zfylhs2by0wd")
 	doc.Fields[8].AddExample("ClusterCA example.", pemEncodedCertificateExample())
 	doc.Fields[10].AddExample("AggregatorCA example.", pemEncodedCertificateExample())
@@ -1294,139 +1287,6 @@ func (EtcdConfig) Doc() *encoder.Doc {
 	return doc
 }
 
-func (ClusterNetworkConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "ClusterNetworkConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "ClusterNetworkConfig represents kube networking configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ClusterNetworkConfig represents kube networking configuration options.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "ClusterConfig",
-				FieldName: "network",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "cni",
-				Type:        "CNIConfig",
-				Note:        "",
-				Description: "The CNI used.\nComposed of \"name\" and \"urls\".\nThe \"name\" key supports the following options: \"flannel\", \"custom\", and \"none\".\n\"flannel\" uses Talos-managed Flannel CNI, and that's the default option.\n\"custom\" uses custom manifests that should be provided in \"urls\".\n\"none\" indicates that Talos will not manage any CNI installation.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The CNI used." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "dnsDomain",
-				Type:        "string",
-				Note:        "",
-				Description: "The domain used by Kubernetes DNS.\nThe default is `cluster.local`",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The domain used by Kubernetes DNS." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "podSubnets",
-				Type:        "[]string",
-				Note:        "",
-				Description: "The pod subnet CIDR.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The pod subnet CIDR." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "serviceSubnets",
-				Type:        "[]string",
-				Note:        "",
-				Description: "The service subnet CIDR.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The service subnet CIDR." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("Configuring with flannel CNI and setting up subnets.", clusterNetworkExample())
-
-	doc.Fields[0].AddExample("", clusterCustomCNIExample())
-	doc.Fields[1].AddExample("", "cluster.local")
-	doc.Fields[2].AddExample("", []string{"10.244.0.0/16"})
-	doc.Fields[3].AddExample("", []string{"10.96.0.0/12"})
-
-	return doc
-}
-
-func (CNIConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "CNIConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "CNIConfig represents the CNI configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "CNIConfig represents the CNI configuration options.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "ClusterNetworkConfig",
-				FieldName: "cni",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "name",
-				Type:        "string",
-				Note:        "",
-				Description: "Name of CNI to use.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of CNI to use." /* encoder.LineComment */, "" /* encoder.FootComment */},
-				Values: []string{
-					"flannel",
-					"custom",
-					"none",
-				},
-			},
-			{
-				Name:        "urls",
-				Type:        "[]string",
-				Note:        "",
-				Description: "URLs containing manifests to apply for the CNI.\nShould be present for \"custom\", must be empty for \"flannel\" and \"none\".",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "URLs containing manifests to apply for the CNI." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "flannel",
-				Type:        "FlannelCNIConfig",
-				Note:        "",
-				Description: "description: |\nFlannel configuration options.\n",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "description: |" /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", clusterCustomCNIExample())
-
-	return doc
-}
-
-func (FlannelCNIConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "FlannelCNIConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "FlannelCNIConfig represents the Flannel CNI configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "FlannelCNIConfig represents the Flannel CNI configuration options.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "CNIConfig",
-				FieldName: "flannel",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "extraArgs",
-				Type:        "[]string",
-				Note:        "",
-				Description: "Extra arguments for 'flanneld'.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra arguments for 'flanneld'." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "kubeNetworkPoliciesEnabled",
-				Type:        "bool",
-				Note:        "",
-				Description: "Deploys kube-network-policies along with Flannel.\n\nThis enables Kubernetes Network Policies support in the cluster.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Deploys kube-network-policies along with Flannel." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.Fields[0].AddExample("", []string{"--iface-can-reach=192.168.1.1"})
-
-	return doc
-}
-
 func (ExternalCloudProviderConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ExternalCloudProviderConfig",
@@ -2101,9 +1961,6 @@ func GetFileDoc() *encoder.FileDoc {
 			AuthorizationConfigAuthorizerConfig{}.Doc(),
 			ProxyConfig{}.Doc(),
 			EtcdConfig{}.Doc(),
-			ClusterNetworkConfig{}.Doc(),
-			CNIConfig{}.Doc(),
-			FlannelCNIConfig{}.Doc(),
 			ExternalCloudProviderConfig{}.Doc(),
 			AdminKubeconfigConfig{}.Doc(),
 			ResourcesConfig{}.Doc(),

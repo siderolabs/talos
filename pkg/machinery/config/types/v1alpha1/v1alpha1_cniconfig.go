@@ -21,24 +21,20 @@ func (c *CNIConfig) URLs() []string {
 }
 
 // Flannel implements the config.CNI interface.
-func (c *CNIConfig) Flannel() config.FlannelCNI {
+func (c *CNIConfig) Flannel() config.K8sFlannelCNIConfig {
+	if c.CNIFlannel == nil {
+		return &FlannelCNIConfig{}
+	}
+
 	return c.CNIFlannel
 }
 
 // ExtraArgs implements the config.FlannelCNI interface.
 func (c *FlannelCNIConfig) ExtraArgs() []string {
-	if c == nil {
-		return nil
-	}
-
 	return c.FlanneldExtraArgs
 }
 
 // KubeNetworkPoliciesEnabled implements the config.FlannelCNI interface.
 func (c *FlannelCNIConfig) KubeNetworkPoliciesEnabled() bool {
-	if c == nil {
-		return false
-	}
-
 	return pointer.SafeDeref(c.FlannelKubeNetworkPoliciesEnabled)
 }

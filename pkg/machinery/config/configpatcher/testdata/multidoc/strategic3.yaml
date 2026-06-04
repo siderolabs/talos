@@ -1,3 +1,4 @@
+# this document doesn't exist in the base config
 apiVersion: v1alpha1
 kind: KubeFlannelCNIConfig
 $patch: delete

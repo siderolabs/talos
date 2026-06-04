@@ -75,7 +75,7 @@ type RoutingRuleConfigV1Alpha1 struct {
 	//       "10.0.0.0/8"
 	//   schema:
 	//     type: string
-	RuleSrc Prefix `yaml:"src,omitempty"`
+	RuleSrc meta.Prefix `yaml:"src,omitempty"`
 	//   description: |
 	//     Destination address prefix to match.
 	//     If empty, matches all destinations.
@@ -85,7 +85,7 @@ type RoutingRuleConfigV1Alpha1 struct {
 	//       "192.168.0.0/16"
 	//   schema:
 	//     type: string
-	RuleDst Prefix `yaml:"dst,omitempty"`
+	RuleDst meta.Prefix `yaml:"dst,omitempty"`
 	//   description: |
 	//     The routing table to look up if the rule matches.
 	//
@@ -158,7 +158,7 @@ func NewRoutingRuleConfigV1Alpha1(priority uint32) *RoutingRuleConfigV1Alpha1 {
 
 func exampleRoutingRuleConfigV1Alpha1() *RoutingRuleConfigV1Alpha1 {
 	cfg := NewRoutingRuleConfigV1Alpha1(1000)
-	cfg.RuleSrc = Prefix{netip.MustParsePrefix("10.0.0.0/8")}
+	cfg.RuleSrc = meta.Prefix{Prefix: netip.MustParsePrefix("10.0.0.0/8")}
 	cfg.RuleTable = nethelpers.RoutingTable(100)
 	cfg.RuleAction = nethelpers.RoutingRuleActionUnicast
 
@@ -218,7 +218,7 @@ func (s *RoutingRuleConfigV1Alpha1) Validate(validation.RuntimeMode, ...validati
 
 // Src implements NetworkRoutingRuleConfig interface.
 func (s *RoutingRuleConfigV1Alpha1) Src() optional.Optional[netip.Prefix] {
-	if s.RuleSrc == (Prefix{}) {
+	if s.RuleSrc == (meta.Prefix{}) {
 		return optional.None[netip.Prefix]()
 	}
 
@@ -227,7 +227,7 @@ func (s *RoutingRuleConfigV1Alpha1) Src() optional.Optional[netip.Prefix] {
 
 // Dst implements NetworkRoutingRuleConfig interface.
 func (s *RoutingRuleConfigV1Alpha1) Dst() optional.Optional[netip.Prefix] {
-	if s.RuleDst == (Prefix{}) {
+	if s.RuleDst == (meta.Prefix{}) {
 		return optional.None[netip.Prefix]()
 	}
 

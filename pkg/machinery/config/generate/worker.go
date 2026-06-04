@@ -102,12 +102,21 @@ func (in *Input) worker() ([]config.Document, error) {
 		ControlPlane: &v1alpha1.ControlPlaneConfig{
 			Endpoint: &v1alpha1.Endpoint{URL: controlPlaneURL},
 		},
-		ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
-			DNSDomain:     in.Options.DNSDomain,
-			PodSubnet:     in.PodNet,
-			ServiceSubnet: in.ServiceNet,
-			CNI:           in.Options.CNIConfig,
-		},
+		ClusterNetwork: nilIf(
+			in.Options.VersionContract.MultidocKubernetesConfigSupported(),
+			&v1alpha1.ClusterNetworkConfig{
+				DNSDomain:     in.Options.DNSDomain,
+				PodSubnet:     in.PodNet,
+				ServiceSubnet: in.ServiceNet,
+			},
+		),
+	}
+
+	if !in.Options.VersionContract.MultidocKubernetesConfigSupported() && in.Options.CNICustomURL != "" {
+		cluster.ClusterNetwork.CNI = &v1alpha1.CNIConfig{ //nolint:staticcheck // legacy configuration
+			CNIName: constants.CustomCNI,
+			CNIUrls: []string{in.Options.CNICustomURL},
+		}
 	}
 
 	if in.Options.DiscoveryEnabled != nil {
@@ -165,6 +174,10 @@ func (in *Input) worker() ([]config.Document, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate network configs: %w", err)
 	}
+
+	documents = append(documents, extraDocuments...)
+
+	extraDocuments = in.generateKubernetesUniversalConfigs()
 
 	documents = append(documents, extraDocuments...)
 

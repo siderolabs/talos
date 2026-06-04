@@ -1,0 +1,5 @@
+apiVersion: v1alpha1
+kind: KubeFlannelCNIConfig
+extraArgs:
+    - --iface-can-reach=10.0.0.1
+kubeNetworkPoliciesEnabled: true

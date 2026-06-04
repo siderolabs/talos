@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
@@ -1134,7 +1135,7 @@ func (KubeSpanFiltersConfig) Doc() *encoder.Doc {
 	}
 
 	doc.Fields[0].AddExample("Exclude addresses in 192.168.0.0/16 subnet.", []string{"0.0.0.0/0", "!192.168.0.0/16", "::/0"})
-	doc.Fields[1].AddExample("Exclude private networks from being advertised.", []Prefix{{netip.MustParsePrefix("192.168.1.0/24")}})
+	doc.Fields[1].AddExample("Exclude private networks from being advertised.", []meta.Prefix{{netip.MustParsePrefix("192.168.1.0/24")}})
 
 	return doc
 }
@@ -1400,8 +1401,8 @@ func (RouteConfig) Doc() *encoder.Doc {
 		},
 	}
 
-	doc.Fields[0].AddExample("", Prefix{netip.MustParsePrefix("10.0.0.0/8")})
-	doc.Fields[1].AddExample("", Addr{netip.MustParseAddr("10.0.0.1")})
+	doc.Fields[0].AddExample("", meta.Prefix{netip.MustParsePrefix("10.0.0.0/8")})
+	doc.Fields[1].AddExample("", meta.Addr{netip.MustParseAddr("10.0.0.1")})
 
 	return doc
 }
@@ -1561,7 +1562,7 @@ func (NameserverConfig) Doc() *encoder.Doc {
 		},
 	}
 
-	doc.Fields[0].AddExample("", Addr{netip.MustParseAddr("10.0.0.1")})
+	doc.Fields[0].AddExample("", meta.Addr{netip.MustParseAddr("10.0.0.1")})
 	doc.Fields[2].AddExample("", "dns1.example.com")
 
 	return doc

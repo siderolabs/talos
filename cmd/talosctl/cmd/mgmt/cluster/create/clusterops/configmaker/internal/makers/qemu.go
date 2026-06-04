@@ -129,10 +129,12 @@ func (m *Qemu) AddExtraGenOps() error {
 	m.GenOps = slices.Concat(m.GenOps, []generate.Option{generate.WithInstallImage(m.EOps.NodeInstallImage)})
 
 	if m.Ops.CustomCNIUrl != "" {
-		m.GenOps = slices.Concat(m.GenOps, []generate.Option{generate.WithClusterCNIConfig(&v1alpha1.CNIConfig{
-			CNIName: constants.CustomCNI,
-			CNIUrls: []string{m.Ops.CustomCNIUrl},
-		})})
+		m.GenOps = slices.Concat(
+			m.GenOps,
+			[]generate.Option{
+				generate.WithCustomCNIUrl(m.Ops.CustomCNIUrl),
+			},
+		)
 	}
 
 	if m.EOps.UseVIP {

@@ -18,6 +18,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -181,7 +182,7 @@ func newRuleConfigV1Alpha1(t *testing.T, modifications func(config *network.Rule
 	config.Ingress = network.IngressConfig{
 		{
 			Subnet: netip.MustParsePrefix("10.42.0.0/16"),
-			Except: network.Prefix{Prefix: netip.MustParsePrefix("10.42.43.0/24")},
+			Except: meta.Prefix{Prefix: netip.MustParsePrefix("10.42.43.0/24")},
 		},
 	}
 

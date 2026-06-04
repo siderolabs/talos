@@ -22,7 +22,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/gendata"
 )
 
@@ -87,10 +86,7 @@ func TestConfigEncodingStability(t *testing.T) {
 					generate.WithInstallExtraKernelArgs([]string{"foo=bar", "bar=baz"}),
 					generate.WithLocalAPIServerPort(5443),
 					generate.WithSysctls(map[string]string{"foo": "bar"}),
-					generate.WithClusterCNIConfig(&v1alpha1.CNIConfig{
-						CNIName: "custom",
-						CNIUrls: []string{"https://example.com/cni.yaml"},
-					}),
+					generate.WithCustomCNIUrl("https://example.com/cni.yaml"),
 					generate.WithRegistryMirror("ghcr.io", "https://ghcr.io.my-mirror.com"),
 				)
 				require.NoError(t, err)

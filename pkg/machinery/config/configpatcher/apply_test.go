@@ -103,6 +103,7 @@ func TestApplyMultiDoc(t *testing.T) {
 	patches, err := configpatcher.LoadPatches([]string{
 		"@testdata/multidoc/strategic1.yaml",
 		"@testdata/multidoc/strategic2.yaml",
+		"@testdata/multidoc/strategic3.yaml",
 	})
 	require.NoError(t, err)
 

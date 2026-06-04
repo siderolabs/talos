@@ -29,6 +29,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	networkres "github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -145,8 +146,8 @@ func (suite *NetworkConfigSuite) TestDummyLinkConfig() {
 	}
 	dummy.LinkRoutes = []network.RouteConfig{
 		{
-			RouteDestination: network.Prefix{Prefix: netip.MustParsePrefix("fd13:1235::/64")},
-			RouteGateway:     network.Addr{Addr: netip.MustParseAddr("fd13:1234::ffff")},
+			RouteDestination: meta.Prefix{Prefix: netip.MustParsePrefix("fd13:1235::/64")},
+			RouteGateway:     meta.Addr{Addr: netip.MustParseAddr("fd13:1234::ffff")},
 			RouteTable:       nethelpers.Table101,
 		},
 	}
@@ -396,8 +397,8 @@ func (suite *NetworkConfigSuite) TestVLANConfig() {
 	}
 	vlan.LinkRoutes = []network.RouteConfig{
 		{
-			RouteDestination: network.Prefix{Prefix: netip.MustParsePrefix("fd13:1235::/64")},
-			RouteGateway:     network.Addr{Addr: netip.MustParseAddr("fd13:1234::ffff")},
+			RouteDestination: meta.Prefix{Prefix: netip.MustParsePrefix("fd13:1235::/64")},
+			RouteGateway:     meta.Addr{Addr: netip.MustParseAddr("fd13:1234::ffff")},
 		},
 	}
 
@@ -493,8 +494,8 @@ func (suite *NetworkConfigSuite) TestBondConfig() {
 	}
 	bond.LinkRoutes = []network.RouteConfig{
 		{
-			RouteDestination: network.Prefix{Prefix: netip.MustParsePrefix("fd13:1236::/64")},
-			RouteGateway:     network.Addr{Addr: netip.MustParseAddr("fd13:1235::ffff")},
+			RouteDestination: meta.Prefix{Prefix: netip.MustParsePrefix("fd13:1236::/64")},
+			RouteGateway:     meta.Addr{Addr: netip.MustParseAddr("fd13:1235::ffff")},
 		},
 	}
 
@@ -688,7 +689,7 @@ func (suite *NetworkConfigSuite) TestWireguardConfig() {
 	wg.WireguardPeers = []network.WireguardPeer{
 		{
 			WireguardPublicKey: peerKey.PublicKey().String(),
-			WireguardAllowedIPs: []network.Prefix{
+			WireguardAllowedIPs: []meta.Prefix{
 				{
 					Prefix: netip.MustParsePrefix("192.168.2.0/24"),
 				},
@@ -819,7 +820,7 @@ func (suite *NetworkConfigSuite) TestRoutingRuleBasic() {
 	const rulePriority uint32 = 1000
 
 	cfg := network.NewRoutingRuleConfigV1Alpha1(rulePriority)
-	cfg.RuleSrc = network.Prefix{Prefix: netip.MustParsePrefix("10.99.0.0/16")}
+	cfg.RuleSrc = meta.Prefix{Prefix: netip.MustParsePrefix("10.99.0.0/16")}
 	cfg.RuleTable = nethelpers.RoutingTable(100)
 
 	suite.PatchMachineConfig(nodeCtx, cfg)
@@ -862,7 +863,7 @@ func (suite *NetworkConfigSuite) TestRoutingRuleIPv6() {
 	const rulePriority uint32 = 3000
 
 	cfg := network.NewRoutingRuleConfigV1Alpha1(rulePriority)
-	cfg.RuleSrc = network.Prefix{Prefix: netip.MustParsePrefix("fd99:1234::/48")}
+	cfg.RuleSrc = meta.Prefix{Prefix: netip.MustParsePrefix("fd99:1234::/48")}
 	cfg.RuleTable = nethelpers.RoutingTable(100)
 
 	suite.PatchMachineConfig(nodeCtx, cfg)
@@ -903,8 +904,8 @@ func (suite *NetworkConfigSuite) TestRoutingRuleSrcAndDst() {
 	const rulePriority uint32 = 4000
 
 	cfg := network.NewRoutingRuleConfigV1Alpha1(rulePriority)
-	cfg.RuleSrc = network.Prefix{Prefix: netip.MustParsePrefix("10.96.0.0/16")}
-	cfg.RuleDst = network.Prefix{Prefix: netip.MustParsePrefix("192.168.99.0/24")}
+	cfg.RuleSrc = meta.Prefix{Prefix: netip.MustParsePrefix("10.96.0.0/16")}
+	cfg.RuleDst = meta.Prefix{Prefix: netip.MustParsePrefix("192.168.99.0/24")}
 	cfg.RuleTable = nethelpers.RoutingTable(100)
 
 	suite.PatchMachineConfig(nodeCtx, cfg)
@@ -946,7 +947,7 @@ func (suite *NetworkConfigSuite) TestRoutingRuleBlackholeAction() {
 	const rulePriority uint32 = 5000
 
 	cfg := network.NewRoutingRuleConfigV1Alpha1(rulePriority)
-	cfg.RuleSrc = network.Prefix{Prefix: netip.MustParsePrefix("10.95.0.0/16")}
+	cfg.RuleSrc = meta.Prefix{Prefix: netip.MustParsePrefix("10.95.0.0/16")}
 	cfg.RuleTable = nethelpers.RoutingTable(100)
 	cfg.RuleAction = nethelpers.RoutingRuleActionBlackhole
 
@@ -987,7 +988,7 @@ func (suite *NetworkConfigSuite) TestRoutingRuleFwMark() {
 	const rulePriority uint32 = 6000
 
 	cfg := network.NewRoutingRuleConfigV1Alpha1(rulePriority)
-	cfg.RuleSrc = network.Prefix{Prefix: netip.MustParsePrefix("10.94.0.0/16")}
+	cfg.RuleSrc = meta.Prefix{Prefix: netip.MustParsePrefix("10.94.0.0/16")}
 	cfg.RuleTable = nethelpers.RoutingTable(100)
 	cfg.RuleFwMark = 0x100
 	cfg.RuleFwMask = 0xff00

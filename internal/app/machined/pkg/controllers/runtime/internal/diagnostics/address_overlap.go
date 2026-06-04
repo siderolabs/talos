@@ -55,9 +55,9 @@ func AddressOverlapCheck(ctx context.Context, r controller.Reader, logger *zap.L
 			fmt.Sprintf("host routed addresses: %q", xslices.Map(hostAddresses.TypedSpec().Addresses, netip.Prefix.String)),
 		}
 
-		if cfg.Config().Cluster() != nil {
-			details = append(details, fmt.Sprintf("Kubernetes pod CIDRs: %q", cfg.Config().Cluster().Network().PodCIDRs()))
-			details = append(details, fmt.Sprintf("Kubernetes service CIDRs: %q", cfg.Config().Cluster().Network().ServiceCIDRs()))
+		if k8sNetwork := cfg.Config().K8sNetworkConfig(); k8sNetwork != nil {
+			details = append(details, fmt.Sprintf("Kubernetes pod CIDRs: %q", k8sNetwork.PodCIDRs()))
+			details = append(details, fmt.Sprintf("Kubernetes service CIDRs: %q", k8sNetwork.ServiceCIDRs()))
 		}
 
 		return &runtime.DiagnosticSpec{

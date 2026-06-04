@@ -852,18 +852,6 @@ cluster:
         endpoint: https://1.2.3.4 # Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.
         localAPIServerPort: 443 # The port that the API server listens on internally.
     clusterName: talos.local
-    # ClusterNetworkConfig represents kube networking configuration options.
-    network:
-        # The CNI used.
-        cni:
-            name: flannel # Name of CNI to use.
-        dnsDomain: cluster.local # The domain used by Kubernetes DNS.
-        # The pod subnet CIDR.
-        podSubnets:
-            - 10.244.0.0/16
-        # The service subnet CIDR.
-        serviceSubnets:
-            - 10.96.0.0/12
 {{< /highlight >}}
 
 
@@ -877,19 +865,6 @@ controlPlane:
     localAPIServerPort: 443 # The port that the API server listens on internally.
 {{< /highlight >}}</details> | |
 |`clusterName` |string |Configures the cluster's name.  | |
-|`network` |<a href="#Config.cluster.network">ClusterNetworkConfig</a> |Provides cluster specific network configuration options. <details><summary>Show example(s)</summary>Configuring with flannel CNI and setting up subnets.:{{< highlight yaml >}}
-network:
-    # The CNI used.
-    cni:
-        name: flannel # Name of CNI to use.
-    dnsDomain: cluster.local # The domain used by Kubernetes DNS.
-    # The pod subnet CIDR.
-    podSubnets:
-        - 10.244.0.0/16
-    # The service subnet CIDR.
-    serviceSubnets:
-        - 10.96.0.0/12
-{{< /highlight >}}</details> | |
 |`token` |string |The [bootstrap token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/) used to join the cluster. <details><summary>Show example(s)</summary>Bootstrap token example (do not use in production!).:{{< highlight yaml >}}
 token: wlzjyw.bei2zfylhs2by0wd
 {{< /highlight >}}</details> | |
@@ -1083,102 +1058,6 @@ Endpoint represents the endpoint URL parsed out of the machine config.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-
-
-
-
-
-
-
-
-### network {#Config.cluster.network}
-
-ClusterNetworkConfig represents kube networking configuration options.
-
-
-
-{{< highlight yaml >}}
-cluster:
-    network:
-        # The CNI used.
-        cni:
-            name: flannel # Name of CNI to use.
-        dnsDomain: cluster.local # The domain used by Kubernetes DNS.
-        # The pod subnet CIDR.
-        podSubnets:
-            - 10.244.0.0/16
-        # The service subnet CIDR.
-        serviceSubnets:
-            - 10.96.0.0/12
-{{< /highlight >}}
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`cni` |<a href="#Config.cluster.network.cni">CNIConfig</a> |The CNI used.<br>Composed of "name" and "urls".<br>The "name" key supports the following options: "flannel", "custom", and "none".<br>"flannel" uses Talos-managed Flannel CNI, and that's the default option.<br>"custom" uses custom manifests that should be provided in "urls".<br>"none" indicates that Talos will not manage any CNI installation. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-cni:
-    name: custom # Name of CNI to use.
-    # URLs containing manifests to apply for the CNI.
-    urls:
-        - https://raw.githubusercontent.com/projectcalico/calico/v3.31.5/manifests/canal.yaml
-{{< /highlight >}}</details> | |
-|`dnsDomain` |string |The domain used by Kubernetes DNS.<br>The default is `cluster.local` <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-dnsDomain: cluster.local
-{{< /highlight >}}</details> | |
-|`podSubnets` |[]string |The pod subnet CIDR. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-podSubnets:
-    - 10.244.0.0/16
-{{< /highlight >}}</details> | |
-|`serviceSubnets` |[]string |The service subnet CIDR. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-serviceSubnets:
-    - 10.96.0.0/12
-{{< /highlight >}}</details> | |
-
-
-
-
-#### cni {#Config.cluster.network.cni}
-
-CNIConfig represents the CNI configuration options.
-
-
-
-{{< highlight yaml >}}
-cluster:
-    network:
-        cni:
-            name: custom # Name of CNI to use.
-            # URLs containing manifests to apply for the CNI.
-            urls:
-                - https://raw.githubusercontent.com/projectcalico/calico/v3.31.5/manifests/canal.yaml
-{{< /highlight >}}
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`name` |string |Name of CNI to use.  |`flannel`<br />`custom`<br />`none`<br /> |
-|`urls` |[]string |URLs containing manifests to apply for the CNI.<br>Should be present for "custom", must be empty for "flannel" and "none".  | |
-|`flannel` |<a href="#Config.cluster.network.cni.flannel">FlannelCNIConfig</a> |description: |<br>Flannel configuration options.<br>  | |
-
-
-
-
-##### flannel {#Config.cluster.network.cni.flannel}
-
-FlannelCNIConfig represents the Flannel CNI configuration options.
-
-
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`extraArgs` |[]string |Extra arguments for 'flanneld'. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-extraArgs:
-    - --iface-can-reach=192.168.1.1
-{{< /highlight >}}</details> | |
-|`kubeNetworkPoliciesEnabled` |bool |Deploys kube-network-policies along with Flannel.<br><br>This enables Kubernetes Network Policies support in the cluster.  | |
-
-
 
 
 

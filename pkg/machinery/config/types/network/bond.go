@@ -316,8 +316,8 @@ func exampleBondConfigV1Alpha1() *BondConfigV1Alpha1 {
 	}
 	cfg.LinkRoutes = []RouteConfig{
 		{
-			RouteDestination: Prefix{netip.MustParsePrefix("10.0.0.0/8")},
-			RouteGateway:     Addr{netip.MustParseAddr("10.15.0.1")},
+			RouteDestination: meta.Prefix{Prefix: netip.MustParsePrefix("10.0.0.0/8")},
+			RouteGateway:     meta.Addr{Addr: netip.MustParseAddr("10.15.0.1")},
 		},
 	}
 

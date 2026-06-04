@@ -150,13 +150,11 @@ func machineUdevExample() *UdevConfig {
 
 func clusterConfigExample() any {
 	return struct {
-		ControlPlane *ControlPlaneConfig   `yaml:"controlPlane"`
-		ClusterName  string                `yaml:"clusterName"`
-		Network      *ClusterNetworkConfig `yaml:"network"`
+		ControlPlane *ControlPlaneConfig `yaml:"controlPlane"`
+		ClusterName  string              `yaml:"clusterName"`
 	}{
 		ControlPlane: clusterControlPlaneExample(),
 		ClusterName:  "talos.local",
-		Network:      clusterNetworkExample(),
 	}
 }
 
@@ -169,17 +167,6 @@ func clusterControlPlaneExample() *ControlPlaneConfig {
 			},
 		},
 		LocalAPIServerPort: 443,
-	}
-}
-
-func clusterNetworkExample() *ClusterNetworkConfig {
-	return &ClusterNetworkConfig{
-		CNI: &CNIConfig{
-			CNIName: constants.FlannelCNI,
-		},
-		DNSDomain:     "cluster.local",
-		PodSubnet:     []string{"10.244.0.0/16"},
-		ServiceSubnet: []string{"10.96.0.0/12"},
 	}
 }
 
@@ -297,15 +284,6 @@ func kubeletExtraMountsExample() []ExtraMount {
 				"rshared",
 				"rw",
 			},
-		},
-	}
-}
-
-func clusterCustomCNIExample() *CNIConfig {
-	return &CNIConfig{
-		CNIName: constants.CustomCNI,
-		CNIUrls: []string{
-			"https://raw.githubusercontent.com/projectcalico/calico/v3.31.5/manifests/canal.yaml",
 		},
 	}
 }

@@ -4,6 +4,8 @@
 
 package config
 
+import "net/netip"
+
 // K8sControllerManagerConfig defines configuration options for the kube-controller-manager static pod.
 type K8sControllerManagerConfig interface {
 	K8sControllerManagerConfigSignal()
@@ -31,4 +33,17 @@ type K8sSchedulerConfig interface {
 type K8sEtcdEncryptionConfig interface {
 	// EtcdEncryptionConfig returns the exact contents of the configuration file, excluding the apiVersion and kind fields.
 	EtcdEncryptionConfig() map[string]any
+}
+
+// K8sNetworkConfig defines Kubernetes network configuration options.
+type K8sNetworkConfig interface {
+	PodCIDRs() []netip.Prefix
+	ServiceCIDRs() []netip.Prefix
+	DNSDomain() string
+}
+
+// K8sFlannelCNIConfig defines the configuration options for the Flannel CNI in Kubernetes.
+type K8sFlannelCNIConfig interface {
+	ExtraArgs() []string
+	KubeNetworkPoliciesEnabled() bool
 }

@@ -26,7 +26,6 @@ import (
 	sideronet "github.com/siderolabs/net"
 
 	"github.com/siderolabs/talos/pkg/machinery/compatibility"
-	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block/blockhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
@@ -132,9 +131,11 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 
 	switch c.Machine().Type() {
 	case machine.TypeInit, machine.TypeControlPlane:
-		warn, err := ValidateCNI(c.Cluster().Network().CNI())
-		warnings = append(warnings, warn...)
-		result = multierror.Append(result, err)
+		if c.ClusterConfig != nil && c.ClusterConfig.ClusterNetwork != nil {
+			warn, err := ValidateCNI(c.ClusterConfig.CNI())
+			warnings = append(warnings, warn...)
+			result = multierror.Append(result, err)
+		}
 
 		if c.Machine().Security().IssuingCA() == nil {
 			result = multierror.Append(result, errors.New("issuing CA is required (.machine.ca)"))
@@ -452,7 +453,7 @@ func (c *ClusterConfig) Validate(isControlPlane bool) error {
 // ValidateCNI validates CNI config.
 //
 //nolint:gocyclo
-func ValidateCNI(cni config.CNI) ([]string, error) {
+func ValidateCNI(cni *CNIConfig) ([]string, error) {
 	var (
 		warnings []string
 		result   *multierror.Error

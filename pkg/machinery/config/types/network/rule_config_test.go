@@ -39,7 +39,7 @@ func TestRuleConfigMarshalStability(t *testing.T) {
 	cfg.Ingress = network.IngressConfig{
 		{
 			Subnet: netip.MustParsePrefix("192.168.0.0/16"),
-			Except: network.Prefix{netip.MustParsePrefix("192.168.0.3/32")},
+			Except: meta.Prefix{Prefix: netip.MustParsePrefix("192.168.0.3/32")},
 		},
 		{
 			Subnet: netip.MustParsePrefix("2001::/16"),
@@ -79,7 +79,7 @@ func TestRuleConfigUnmarshal(t *testing.T) {
 		Ingress: network.IngressConfig{
 			{
 				Subnet: netip.MustParsePrefix("192.168.0.0/16"),
-				Except: network.Prefix{netip.MustParsePrefix("192.168.0.3/32")},
+				Except: meta.Prefix{Prefix: netip.MustParsePrefix("192.168.0.3/32")},
 			},
 			{
 				Subnet: netip.MustParsePrefix("2001::/16"),
@@ -159,7 +159,7 @@ func TestRuleConfigValidate(t *testing.T) {
 				cfg.Ingress = network.IngressConfig{
 					{
 						Subnet: netip.MustParsePrefix("192.168.0.0/16"),
-						Except: network.Prefix{netip.MustParsePrefix("192.168.3.0/24")},
+						Except: meta.Prefix{Prefix: netip.MustParsePrefix("192.168.3.0/24")},
 					},
 					{
 						Subnet: netip.MustParsePrefix("2001::/16"),

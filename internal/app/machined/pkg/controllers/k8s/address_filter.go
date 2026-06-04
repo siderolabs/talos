@@ -7,7 +7,6 @@ package k8s
 import (
 	"context"
 	"fmt"
-	"net/netip"
 	"slices"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -94,35 +93,14 @@ func (ctrl *AddressFilterController) Run(ctx context.Context, r controller.Runti
 
 		r.StartTrackingOutputs()
 
-		if cfg != nil && cfg.Config().Cluster() != nil {
-			cfgProvider := cfg.Config()
+		if cfg != nil && cfg.Config().K8sNetworkConfig() != nil {
+			k8sNetwork := cfg.Config().K8sNetworkConfig()
 
-			var podCIDRs, serviceCIDRs []netip.Prefix
-
-			for _, cidr := range cfgProvider.Cluster().Network().PodCIDRs() {
-				var ipPrefix netip.Prefix
-
-				ipPrefix, err = netip.ParsePrefix(cidr)
-				if err != nil {
-					return fmt.Errorf("error parsing podCIDR: %w", err)
-				}
-
-				podCIDRs = append(podCIDRs, ipPrefix)
-			}
+			podCIDRs := k8sNetwork.PodCIDRs()
+			serviceCIDRs := k8sNetwork.ServiceCIDRs()
 
 			if nodeStatus != nil {
 				podCIDRs = append(podCIDRs, nodeStatus.TypedSpec().PodCIDRs...)
-			}
-
-			for _, cidr := range cfgProvider.Cluster().Network().ServiceCIDRs() {
-				var ipPrefix netip.Prefix
-
-				ipPrefix, err = netip.ParsePrefix(cidr)
-				if err != nil {
-					return fmt.Errorf("error parsing serviceCIDR: %w", err)
-				}
-
-				serviceCIDRs = append(serviceCIDRs, ipPrefix)
 			}
 
 			if err = safe.WriterModify(ctx, r, network.NewNodeAddressFilter(network.NamespaceName, k8s.NodeAddressFilterNoK8s), func(r *network.NodeAddressFilter) error {

@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/cri"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
@@ -293,10 +294,10 @@ func TestResolverBridging(t *testing.T) {
 				rc := network.NewResolverConfigV1Alpha1()
 				rc.ResolverNameservers = []network.NameserverConfig{
 					{
-						Address: network.Addr{Addr: netip.MustParseAddr("2.2.2.2")},
+						Address: meta.Addr{Addr: netip.MustParseAddr("2.2.2.2")},
 					},
 					{
-						Address: network.Addr{Addr: netip.MustParseAddr("3.3.3.3")},
+						Address: meta.Addr{Addr: netip.MustParseAddr("3.3.3.3")},
 					},
 				}
 				rc.ResolverSearchDomains = network.SearchDomainsConfig{
@@ -323,10 +324,10 @@ func TestResolverBridging(t *testing.T) {
 				rc := network.NewResolverConfigV1Alpha1()
 				rc.ResolverNameservers = []network.NameserverConfig{
 					{
-						Address: network.Addr{Addr: netip.MustParseAddr("2.2.2.2")},
+						Address: meta.Addr{Addr: netip.MustParseAddr("2.2.2.2")},
 					},
 					{
-						Address: network.Addr{Addr: netip.MustParseAddr("3.3.3.3")},
+						Address: meta.Addr{Addr: netip.MustParseAddr("3.3.3.3")},
 					},
 				}
 

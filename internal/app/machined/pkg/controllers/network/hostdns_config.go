@@ -109,15 +109,15 @@ func (ctrl *HostDNSConfigController) Run(ctx context.Context, r controller.Runti
 				return nil
 			}
 
-			var podCIDRs []string
+			var podCIDRs []netip.Prefix
 
-			if cfg.Config().Cluster() != nil {
-				podCIDRs = cfg.Config().Cluster().Network().PodCIDRs()
+			if k8sNetwork := cfg.Config().K8sNetworkConfig(); k8sNetwork != nil {
+				podCIDRs = k8sNetwork.PodCIDRs()
 			}
 
 			if slices.ContainsFunc(
 				podCIDRs,
-				func(cidr string) bool { return netip.MustParsePrefix(cidr).Addr().Is4() },
+				func(cidr netip.Prefix) bool { return cidr.Addr().Is4() },
 			) {
 				parsed := netip.MustParseAddr(constants.HostDNSAddress)
 				newServiceAddrs = append(newServiceAddrs, parsed)
@@ -128,7 +128,7 @@ func (ctrl *HostDNSConfigController) Run(ctx context.Context, r controller.Runti
 
 			if slices.ContainsFunc(
 				podCIDRs,
-				func(cidr string) bool { return netip.MustParsePrefix(cidr).Addr().Is6() },
+				func(cidr netip.Prefix) bool { return cidr.Addr().Is6() },
 			) {
 				parsed := netip.MustParseAddr(constants.HostDNSAddressV6)
 				newServiceAddrs = append(newServiceAddrs, parsed)

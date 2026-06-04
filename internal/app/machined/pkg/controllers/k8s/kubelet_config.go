@@ -6,7 +6,6 @@ package k8s
 
 import (
 	"context"
-	"fmt"
 	"net/netip"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -30,12 +29,16 @@ func NewKubeletConfigController() *KubeletConfigController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *k8s.KubeletConfig]{
 			Name: "k8s.KubeletConfigController",
-			MapMetadataOptionalFunc: func(cfg *config.MachineConfig) optional.Optional[*k8s.KubeletConfig] {
+			MapMetadataOptionalFunc: func(cfg *config.MachineConfig) optional.Optional[*k8s.KubeletConfig] { //nolint:dupl
 				if cfg.Metadata().ID() != config.ActiveID {
 					return optional.None[*k8s.KubeletConfig]()
 				}
 
 				if cfg.Config().Cluster() == nil || cfg.Config().Machine() == nil {
+					return optional.None[*k8s.KubeletConfig]()
+				}
+
+				if cfg.Config().K8sNetworkConfig() == nil {
 					return optional.None[*k8s.KubeletConfig]()
 				}
 
@@ -59,10 +62,7 @@ func NewKubeletConfigController() *KubeletConfigController {
 				kubeletConfig.ClusterDNS = cfgProvider.Machine().Kubelet().ClusterDNS()
 
 				if len(kubeletConfig.ClusterDNS) == 0 {
-					addrs, err := cfgProvider.Cluster().Network().DNSServiceIPs()
-					if err != nil {
-						return fmt.Errorf("error building DNS service IPs: %w", err)
-					}
+					addrs := k8s.DNSServiceAddrs(cfgProvider.K8sNetworkConfig().ServiceCIDRs())
 
 					kubeletConfig.ClusterDNS = xslices.Map(addrs, netip.Addr.String)
 				}
@@ -72,7 +72,7 @@ func NewKubeletConfigController() *KubeletConfigController {
 					extraArgs[k] = k8s.ArgValues{Values: v}
 				}
 
-				kubeletConfig.ClusterDomain = cfgProvider.Cluster().Network().DNSDomain()
+				kubeletConfig.ClusterDomain = cfgProvider.K8sNetworkConfig().DNSDomain()
 				kubeletConfig.ExtraArgs = extraArgs
 				kubeletConfig.ExtraMounts = cfgProvider.Machine().Kubelet().ExtraMounts()
 				kubeletConfig.ExtraConfig = cfgProvider.Machine().Kubelet().ExtraConfig()

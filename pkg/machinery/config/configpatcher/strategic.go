@@ -70,7 +70,9 @@ func StrategicMerge(cfg coreconfig.Provider, patch StrategicMergePatch) (corecon
 				idx := slices.Index(left, leftDoc)
 				left = slices.Delete(left, idx, idx+1)
 			}
-		} else {
+		} else if _, isSel := rightDoc.(configloader.Selector); !isSel {
+			// only append documents which are not delete selectors;
+			// a delete selector for a non-existent document is silently skipped
 			left = append(left, rightDoc)
 		}
 	}

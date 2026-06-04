@@ -98,8 +98,6 @@ type Settings struct {
 	TargetInstallImageRegistry string
 	// Current version of the cluster (built in the CI pass)
 	CurrentVersion string
-	// Custom CNI URL to use.
-	CustomCNIURL string
 	// CNI bundle for QEMU provisioner.
 	CNIBundleURL string
 }
@@ -849,17 +847,6 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 	controlplaneEndpoints := make([]string, options.ControlplaneNodes)
 	for i := range controlplaneEndpoints {
 		controlplaneEndpoints[i] = ips[i].String()
-	}
-
-	if DefaultSettings.CustomCNIURL != "" {
-		genOptions = append(
-			genOptions, generate.WithClusterCNIConfig(
-				&v1alpha1.CNIConfig{
-					CNIName: constants.CustomCNI,
-					CNIUrls: []string{DefaultSettings.CustomCNIURL},
-				},
-			),
-		)
 	}
 
 	var extraPatches []configpatcher.Patch

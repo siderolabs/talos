@@ -471,6 +471,34 @@ func (container *Container) K8sSchedulerConfig() config.K8sSchedulerConfig {
 	return nil
 }
 
+// K8sNetworkConfig implements config.Config interface.
+func (container *Container) K8sNetworkConfig() config.K8sNetworkConfig {
+	matching := findMatchingDocs[config.K8sNetworkConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sNetworkConfig()
+	}
+
+	return nil
+}
+
+// K8sFlannelCNIConfig implements config.Config interface.
+func (container *Container) K8sFlannelCNIConfig() config.K8sFlannelCNIConfig {
+	matching := findMatchingDocs[config.K8sFlannelCNIConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sFlannelCNIConfig()
+	}
+
+	return nil
+}
+
 // OOMConfig implements config.Config interface.
 func (container *Container) OOMConfig() config.OOMConfig {
 	matching := findMatchingDocs[config.OOMConfig](container.documents)

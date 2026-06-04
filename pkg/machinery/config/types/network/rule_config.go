@@ -117,7 +117,7 @@ type IngressRule struct {
 	//   schema:
 	//     type: string
 	//     pattern: ^[0-9a-f.:]+/\d{1,3}$
-	Except Prefix `yaml:"except,omitempty"`
+	Except meta.Prefix `yaml:"except,omitempty"`
 }
 
 // NewRuleConfigV1Alpha1 creates a new RuleConfig config document.

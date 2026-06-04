@@ -153,11 +153,11 @@ func TestVLANValidate(t *testing.T) {
 				}
 				cfg.LinkRoutes = []network.RouteConfig{
 					{
-						RouteDestination: network.Prefix{netip.MustParsePrefix("10.3.5.0/24")},
-						RouteGateway:     network.Addr{netip.MustParseAddr("10.3.5.1")},
+						RouteDestination: meta.Prefix{Prefix: netip.MustParsePrefix("10.3.5.0/24")},
+						RouteGateway:     meta.Addr{Addr: netip.MustParseAddr("10.3.5.1")},
 					},
 					{
-						RouteGateway: network.Addr{netip.MustParseAddr("fe80::1")},
+						RouteGateway: meta.Addr{Addr: netip.MustParseAddr("fe80::1")},
 					},
 				}
 

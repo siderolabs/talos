@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
@@ -29,7 +30,7 @@ func TestKubeSpanConfigMarshalStability(t *testing.T) {
 	cfg.ConfigAllowDownPeerBypass = new(false)
 	cfg.ConfigMTU = new(uint32(1420))
 	cfg.ConfigFilters = &network.KubeSpanFiltersConfig{
-		ConfigExcludeAdvertisedNetworks: []network.Prefix{{netip.MustParsePrefix("2007::/64")}},
+		ConfigExcludeAdvertisedNetworks: []meta.Prefix{{Prefix: netip.MustParsePrefix("2007::/64")}},
 	}
 
 	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
@@ -48,7 +49,7 @@ func TestKubeSpanConfigUnmarshal(t *testing.T) {
 	cfg.ConfigMTU = new(uint32(1500))
 	cfg.ConfigFilters = &network.KubeSpanFiltersConfig{
 		ConfigEndpoints:                 []string{"0.0.0.0/0", "!192.168.0.0/16"},
-		ConfigExcludeAdvertisedNetworks: []network.Prefix{{netip.MustParsePrefix("2007::/64")}},
+		ConfigExcludeAdvertisedNetworks: []meta.Prefix{{Prefix: netip.MustParsePrefix("2007::/64")}},
 	}
 
 	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
@@ -240,7 +241,7 @@ func TestKubeSpanConfigInterface(t *testing.T) {
 	cfg.ConfigMTU = new(uint32(1380))
 	cfg.ConfigFilters = &network.KubeSpanFiltersConfig{
 		ConfigEndpoints:                 []string{"192.168.0.0/16"},
-		ConfigExcludeAdvertisedNetworks: []network.Prefix{{netip.MustParsePrefix("0.0.0.0/0")}},
+		ConfigExcludeAdvertisedNetworks: []meta.Prefix{{Prefix: netip.MustParsePrefix("0.0.0.0/0")}},
 	}
 
 	// Test interface methods

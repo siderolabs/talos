@@ -302,9 +302,8 @@ type MachineSeccompProfile struct {
 }
 
 var (
-	_ config.ClusterConfig  = (*ClusterConfig)(nil)
-	_ config.ClusterNetwork = (*ClusterConfig)(nil)
-	_ config.Token          = (*ClusterConfig)(nil)
+	_ config.ClusterConfig = (*ClusterConfig)(nil)
+	_ config.Token         = (*ClusterConfig)(nil)
 )
 
 // ClusterConfig represents the cluster-wide config values.
@@ -328,11 +327,9 @@ type ClusterConfig struct {
 	//   description: |
 	//     Configures the cluster's name.
 	ClusterName string `yaml:"clusterName,omitempty"`
-	//   description: |
-	//     Provides cluster specific network configuration options.
-	//   examples:
-	//     - name: Configuring with flannel CNI and setting up subnets.
-	//       value:  clusterNetworkExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeNetworkConfig` and `KubeFlannelCNIConfig` instead.
 	ClusterNetwork *ClusterNetworkConfig `yaml:"network,omitempty"`
 	//   description: |
 	//     The [bootstrap token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/) used to join the cluster.
@@ -1392,6 +1389,8 @@ type EtcdConfig struct {
 }
 
 // ClusterNetworkConfig represents kube networking configuration options.
+//
+// docgen:nodoc
 type ClusterNetworkConfig struct {
 	//   description: |
 	//     The CNI used.
@@ -1424,6 +1423,8 @@ type ClusterNetworkConfig struct {
 }
 
 // CNIConfig represents the CNI configuration options.
+//
+// docgen:nodoc
 type CNIConfig struct {
 	//   description: |
 	//     Name of CNI to use.
@@ -1442,6 +1443,8 @@ type CNIConfig struct {
 }
 
 // FlannelCNIConfig represents the Flannel CNI configuration options.
+//
+// docgen:nodoc
 type FlannelCNIConfig struct {
 	//   description: |
 	//     Extra arguments for 'flanneld'.

@@ -211,52 +211,51 @@ func (ctrl *NfTablesChainConfigController) buildIngressChain(cfg *config.Machine
 
 			if hostDNSConfig := cfg.Config().NetworkHostDNSConfig(); hostDNSConfig != nil {
 				if hostDNSConfig.ForwardKubeDNSToHost() {
-					// allow traffic to host DNS
-					for _, protocol := range []nethelpers.Protocol{nethelpers.ProtocolUDP, nethelpers.ProtocolTCP} {
-						spec.Rules = append(
-							spec.Rules,
-							network.NfTablesRule{
-								MatchSourceAddress: &network.NfTablesAddressMatch{
-									IncludeSubnets: xslices.Map(
-										slices.Concat(
-											cfg.Config().Cluster().Network().PodCIDRs(),
-											cfg.Config().Cluster().Network().ServiceCIDRs(),
+					if k8sNetwork := cfg.Config().K8sNetworkConfig(); k8sNetwork != nil {
+						// allow traffic to host DNS
+						for _, protocol := range []nethelpers.Protocol{nethelpers.ProtocolUDP, nethelpers.ProtocolTCP} {
+							spec.Rules = append(
+								spec.Rules,
+								network.NfTablesRule{
+									MatchSourceAddress: &network.NfTablesAddressMatch{
+										IncludeSubnets: slices.Concat(
+											k8sNetwork.PodCIDRs(),
+											k8sNetwork.ServiceCIDRs(),
 										),
-										netip.MustParsePrefix,
-									),
-								},
-								MatchDestinationAddress: &network.NfTablesAddressMatch{
-									IncludeSubnets: hostDNSSubnets(cfg.Config().Cluster().Network()),
-								},
-								MatchLayer4: &network.NfTablesLayer4Match{
-									Protocol: protocol,
-									MatchDestinationPort: &network.NfTablesPortMatch{
-										Ranges: []network.PortRange{{Lo: 53, Hi: 53}},
 									},
+									MatchDestinationAddress: &network.NfTablesAddressMatch{
+										IncludeSubnets: hostDNSSubnets(k8sNetwork),
+									},
+									MatchLayer4: &network.NfTablesLayer4Match{
+										Protocol: protocol,
+										MatchDestinationPort: &network.NfTablesPortMatch{
+											Ranges: []network.PortRange{{Lo: 53, Hi: 53}},
+										},
+									},
+									AnonCounter: true,
+									Verdict:     new(nethelpers.VerdictAccept),
 								},
-								AnonCounter: true,
-								Verdict:     new(nethelpers.VerdictAccept),
-							},
-						)
+							)
+						}
 					}
 				}
 			}
 
-			if cfg.Config().Cluster() != nil {
+			if k8sNetwork := cfg.Config().K8sNetworkConfig(); k8sNetwork != nil {
 				spec.Rules = append(
 					spec.Rules,
 					// allow Kubernetes pod/service traffic
 					network.NfTablesRule{
 						MatchSourceAddress: &network.NfTablesAddressMatch{
-							IncludeSubnets: xslices.Map(
-								slices.Concat(cfg.Config().Cluster().Network().PodCIDRs(), cfg.Config().Cluster().Network().ServiceCIDRs()),
-								netip.MustParsePrefix,
+							IncludeSubnets: slices.Concat(
+								k8sNetwork.PodCIDRs(),
+								k8sNetwork.ServiceCIDRs(),
 							),
 						},
 						MatchDestinationAddress: &network.NfTablesAddressMatch{
-							IncludeSubnets: xslices.Map(
-								slices.Concat(cfg.Config().Cluster().Network().PodCIDRs(), cfg.Config().Cluster().Network().ServiceCIDRs()),
-								netip.MustParsePrefix,
+							IncludeSubnets: slices.Concat(
+								k8sNetwork.PodCIDRs(),
+								k8sNetwork.ServiceCIDRs(),
 							),
 						},
 						AnonCounter: true,
@@ -433,11 +432,11 @@ func (ctrl *NfTablesChainConfigController) buildPreroutingChain(cfg *config.Mach
 	}
 }
 
-func hostDNSSubnets(clusterNetwork cfg.ClusterNetwork) []netip.Prefix {
+func hostDNSSubnets(k8sNetwork cfg.K8sNetworkConfig) []netip.Prefix {
 	result := []netip.Addr{hostDNSIPv4}
 
-	for _, podCIDR := range clusterNetwork.PodCIDRs() {
-		if netip.MustParsePrefix(podCIDR).Addr().Is6() {
+	for _, podCIDR := range k8sNetwork.PodCIDRs() {
+		if podCIDR.Addr().Is6() {
 			result = append(result, hostDNSIPv6)
 		}
 	}

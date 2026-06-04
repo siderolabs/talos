@@ -114,8 +114,8 @@ func exampleVLANConfigV1Alpha1() *VLANConfigV1Alpha1 {
 	}
 	cfg.LinkRoutes = []RouteConfig{
 		{
-			RouteDestination: Prefix{netip.MustParsePrefix("192.168.0.0/16")},
-			RouteGateway:     Addr{netip.MustParseAddr("192.168.1.1")},
+			RouteDestination: meta.Prefix{Prefix: netip.MustParsePrefix("192.168.0.0/16")},
+			RouteGateway:     meta.Addr{Addr: netip.MustParseAddr("192.168.1.1")},
 		},
 	}
 

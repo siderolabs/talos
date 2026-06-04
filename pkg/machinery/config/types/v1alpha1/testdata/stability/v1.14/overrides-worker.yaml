@@ -40,16 +40,6 @@ cluster:
     controlPlane:
         endpoint: https://base:6443
     clusterName: base
-    network:
-        cni:
-            name: custom
-            urls:
-                - https://example.com/cni.yaml
-        dnsDomain: example.com
-        podSubnets:
-            - 10.244.0.0/16
-        serviceSubnets:
-            - 10.96.0.0/12
     token: inn7ol.u4ehnti8qyls9ymo
     ca:
         crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJpVENDQVMrZ0F3SUJBZ0lRYm1hNDNPalRwR0I5TjVxOVFEc3RFekFLQmdncWhrak9QUVFEQWpBVk1STXcKRVFZRFZRUUtFd3ByZFdKbGNtNWxkR1Z6TUI0WERUSXpNVEF4TWpFd05EWXdPVm9YRFRNek1UQXdPVEV3TkRZdwpPVm93RlRFVE1CRUdBMVVFQ2hNS2EzVmlaWEp1WlhSbGN6QlpNQk1HQnlxR1NNNDlBZ0VHQ0NxR1NNNDlBd0VICkEwSUFCTXNhRWZ5R3lFb0xyK0p1Wk91dkVVaXVNMStIQjZvZGtSdVV3ZEJ0ODdacDd1SkVoaEFsZitxNFFjT3gKcFRpZnBIRHJBOEFURjNCWUlFRmFXZ0xPTld1allUQmZNQTRHQTFVZER3RUIvd1FFQXdJQ2hEQWRCZ05WSFNVRQpGakFVQmdnckJnRUZCUWNEQVFZSUt3WUJCUVVIQXdJd0R3WURWUjBUQVFIL0JBVXdBd0VCL3pBZEJnTlZIUTRFCkZnUVU0ZEVkM1RoVzRKWlVWcXR1OEFZNWx1NUhQeGN3Q2dZSUtvWkl6ajBFQXdJRFNBQXdSUUloQUpJbkFMb0EKY1VhRUp4VlJ5dkhQenFQcTBvaGJOY2oyT3N2d3VKUFMzSktVQWlCSmhwNGFWMG9zUURRSGJnbjdXUWFYaHZFTwo5bWxTbVRURTAyOXBWb0YyWkE9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
@@ -76,3 +66,11 @@ endpoints:
 apiVersion: v1alpha1
 kind: HostnameConfig
 auto: stable
+---
+apiVersion: v1alpha1
+kind: KubeNetworkConfig
+dnsDomain: example.com
+podSubnets:
+    - 10.244.0.0/16
+serviceSubnets:
+    - 10.96.0.0/12

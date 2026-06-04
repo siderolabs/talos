@@ -32,10 +32,10 @@ func TestResolverConfigMarshalStability(t *testing.T) {
 	cfg := network.NewResolverConfigV1Alpha1()
 	cfg.ResolverNameservers = []network.NameserverConfig{
 		{
-			Address: network.Addr{Addr: netip.MustParseAddr("10.0.0.1")},
+			Address: meta.Addr{Addr: netip.MustParseAddr("10.0.0.1")},
 		},
 		{
-			Address:       network.Addr{Addr: netip.MustParseAddr("2001:4860:4860::8888")},
+			Address:       meta.Addr{Addr: netip.MustParseAddr("2001:4860:4860::8888")},
 			Protocol:      nethelpers.DNSProtocolDNSOverTLS,
 			TLSServerName: "dns.google",
 		},
@@ -59,7 +59,7 @@ func TestResolverConfigMarshalStabilityWithHostDNS(t *testing.T) {
 	cfg := network.NewResolverConfigV1Alpha1()
 	cfg.ResolverNameservers = []network.NameserverConfig{
 		{
-			Address: network.Addr{Addr: netip.MustParseAddr("10.0.0.1")},
+			Address: meta.Addr{Addr: netip.MustParseAddr("10.0.0.1")},
 		},
 	}
 	cfg.ResolverHostDNS = network.HostDNSConfig{
@@ -92,10 +92,10 @@ func TestResolverConfigUnmarshal(t *testing.T) {
 		},
 		ResolverNameservers: []network.NameserverConfig{
 			{
-				Address: network.Addr{Addr: netip.MustParseAddr("10.0.0.1")},
+				Address: meta.Addr{Addr: netip.MustParseAddr("10.0.0.1")},
 			},
 			{
-				Address:       network.Addr{Addr: netip.MustParseAddr("2001:4860:4860::8888")},
+				Address:       meta.Addr{Addr: netip.MustParseAddr("2001:4860:4860::8888")},
 				Protocol:      nethelpers.DNSProtocolDNSOverTLS,
 				TLSServerName: "dns.google",
 			},
@@ -291,12 +291,12 @@ func TestResolverV1Alpha1Validate(t *testing.T) {
 				cfg := network.NewResolverConfigV1Alpha1()
 				cfg.ResolverNameservers = []network.NameserverConfig{
 					{
-						Address:       network.Addr{Addr: netip.MustParseAddr("9.9.9.9")},
+						Address:       meta.Addr{Addr: netip.MustParseAddr("9.9.9.9")},
 						Protocol:      nethelpers.DNSProtocolDNSOverTLS,
 						TLSServerName: "dns.quad9.net",
 					},
 					{
-						Address: network.Addr{Addr: netip.MustParseAddr("8.8.8.8")},
+						Address: meta.Addr{Addr: netip.MustParseAddr("8.8.8.8")},
 					},
 				}
 
@@ -309,12 +309,12 @@ func TestResolverV1Alpha1Validate(t *testing.T) {
 				cfg := network.NewResolverConfigV1Alpha1()
 				cfg.ResolverNameservers = []network.NameserverConfig{
 					{
-						Address:       network.Addr{Addr: netip.MustParseAddr("9.9.9.9")},
+						Address:       meta.Addr{Addr: netip.MustParseAddr("9.9.9.9")},
 						Protocol:      nethelpers.DNSProtocolDNSOverTLS,
 						TLSServerName: "dns.quad9.net",
 					},
 					{
-						Address:       network.Addr{Addr: netip.MustParseAddr("1.1.1.1")},
+						Address:       meta.Addr{Addr: netip.MustParseAddr("1.1.1.1")},
 						Protocol:      nethelpers.DNSProtocolDNSOverTLS,
 						TLSServerName: "cloudflare-dns.com",
 					},
@@ -344,7 +344,7 @@ func TestResolverV1Alpha1Validate(t *testing.T) {
 				cfg := network.NewResolverConfigV1Alpha1()
 				cfg.ResolverNameservers = []network.NameserverConfig{
 					{
-						Address:  network.Addr{Addr: netip.MustParseAddr("9.9.9.9")},
+						Address:  meta.Addr{Addr: netip.MustParseAddr("9.9.9.9")},
 						Protocol: nethelpers.DNSProtocolDNSOverTLS,
 					},
 				}
@@ -360,7 +360,7 @@ func TestResolverV1Alpha1Validate(t *testing.T) {
 				cfg := network.NewResolverConfigV1Alpha1()
 				cfg.ResolverNameservers = []network.NameserverConfig{
 					{
-						Address:       network.Addr{Addr: netip.MustParseAddr("8.8.8.8")},
+						Address:       meta.Addr{Addr: netip.MustParseAddr("8.8.8.8")},
 						Protocol:      nethelpers.DNSProtocolDefault,
 						TLSServerName: "dns.google",
 					},
@@ -376,12 +376,12 @@ func TestResolverV1Alpha1Validate(t *testing.T) {
 				cfg := network.NewResolverConfigV1Alpha1()
 				cfg.ResolverNameservers = []network.NameserverConfig{
 					{
-						Address:       network.Addr{Addr: netip.MustParseAddr("1.1.1.1")},
+						Address:       meta.Addr{Addr: netip.MustParseAddr("1.1.1.1")},
 						Protocol:      nethelpers.DNSProtocolDNSOverHTTP,
 						TLSServerName: "cloudflare-dns.com",
 					},
 					{
-						Address: network.Addr{Addr: netip.MustParseAddr("8.8.8.8")},
+						Address: meta.Addr{Addr: netip.MustParseAddr("8.8.8.8")},
 					},
 				}
 
@@ -394,7 +394,7 @@ func TestResolverV1Alpha1Validate(t *testing.T) {
 				cfg := network.NewResolverConfigV1Alpha1()
 				cfg.ResolverNameservers = []network.NameserverConfig{
 					{
-						Address:  network.Addr{Addr: netip.MustParseAddr("1.1.1.1")},
+						Address:  meta.Addr{Addr: netip.MustParseAddr("1.1.1.1")},
 						Protocol: nethelpers.DNSProtocolDNSOverHTTP,
 					},
 				}
@@ -410,12 +410,12 @@ func TestResolverV1Alpha1Validate(t *testing.T) {
 				cfg := network.NewResolverConfigV1Alpha1()
 				cfg.ResolverNameservers = []network.NameserverConfig{
 					{
-						Address:       network.Addr{Addr: netip.MustParseAddr("9.9.9.9")},
+						Address:       meta.Addr{Addr: netip.MustParseAddr("9.9.9.9")},
 						Protocol:      nethelpers.DNSProtocolDNSOverTLS,
 						TLSServerName: "dns.quad9.net",
 					},
 					{
-						Address:       network.Addr{Addr: netip.MustParseAddr("1.1.1.1")},
+						Address:       meta.Addr{Addr: netip.MustParseAddr("1.1.1.1")},
 						Protocol:      nethelpers.DNSProtocolDNSOverHTTP,
 						TLSServerName: "cloudflare-dns.com",
 					},

@@ -17,6 +17,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	networkcfg "github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -32,16 +33,16 @@ func (suite *RoutingRuleConfigSuite) TestMachineConfiguration() {
 	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.RoutingRuleConfigController{}))
 
 	rc1 := networkcfg.NewRoutingRuleConfigV1Alpha1(1100)
-	rc1.RuleSrc = networkcfg.Prefix{Prefix: netip.MustParsePrefix("10.0.0.0/8")}
+	rc1.RuleSrc = meta.Prefix{Prefix: netip.MustParsePrefix("10.0.0.0/8")}
 	rc1.RuleTable = nethelpers.RoutingTable(100)
 	rc1.RuleAction = nethelpers.RoutingRuleActionUnicast
 
 	rc2 := networkcfg.NewRoutingRuleConfigV1Alpha1(1200)
-	rc2.RuleDst = networkcfg.Prefix{Prefix: netip.MustParsePrefix("192.168.0.0/16")}
+	rc2.RuleDst = meta.Prefix{Prefix: netip.MustParsePrefix("192.168.0.0/16")}
 	rc2.RuleTable = nethelpers.RoutingTable(200)
 
 	rc3 := networkcfg.NewRoutingRuleConfigV1Alpha1(1300)
-	rc3.RuleSrc = networkcfg.Prefix{Prefix: netip.MustParsePrefix("2001:db8::/32")}
+	rc3.RuleSrc = meta.Prefix{Prefix: netip.MustParsePrefix("2001:db8::/32")}
 	rc3.RuleTable = nethelpers.RoutingTable(100)
 
 	rc4 := networkcfg.NewRoutingRuleConfigV1Alpha1(1400)
@@ -156,7 +157,7 @@ func (suite *RoutingRuleConfigSuite) TestReservedPrioritySkipped() {
 	// bypasses validation.
 	reserved := networkcfg.NewRoutingRuleConfigV1Alpha1(0)
 	reserved.RuleTable = nethelpers.RoutingTable(100)
-	reserved.RuleSrc = networkcfg.Prefix{Prefix: netip.MustParsePrefix("10.0.0.0/8")}
+	reserved.RuleSrc = meta.Prefix{Prefix: netip.MustParsePrefix("10.0.0.0/8")}
 	reserved.RuleAction = nethelpers.RoutingRuleActionUnicast
 
 	allowed := networkcfg.NewRoutingRuleConfigV1Alpha1(2000)

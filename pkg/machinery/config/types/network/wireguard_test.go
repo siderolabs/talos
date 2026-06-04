@@ -34,12 +34,12 @@ func TestWireguardConfigMarshalStability(t *testing.T) {
 	cfg.WireguardPeers = []network.WireguardPeer{
 		{
 			WireguardPublicKey:  "735jkJdcVDninU5PzLJ/S+bfN6Q3QOk6svWrVLMJQAk=",
-			WireguardAllowedIPs: []network.Prefix{{netip.MustParsePrefix("192.168.1.0/24")}},
+			WireguardAllowedIPs: []meta.Prefix{{Prefix: netip.MustParsePrefix("192.168.1.0/24")}},
 		},
 		{
 			WireguardPublicKey:    "uvdlJNva1X8/OCOZM+0gGT4Yu9x20odd3AWbbQUF7nM=",
 			WireguardPresharedKey: "6j4UMxwszrHVZZUjY8/SFsZMjgaHkxV7yp9Tz05btho=",
-			WireguardEndpoint:     network.AddrPort{netip.MustParseAddrPort("10.3.4.3:2222")},
+			WireguardEndpoint:     meta.AddrPort{AddrPort: netip.MustParseAddrPort("10.3.4.3:2222")},
 		},
 	}
 	cfg.LinkUp = new(true)
@@ -94,12 +94,12 @@ func TestWireguardConfigUnmarshal(t *testing.T) {
 		WireguardPeers: []network.WireguardPeer{
 			{
 				WireguardPublicKey:  "735jkJdcVDninU5PzLJ/S+bfN6Q3QOk6svWrVLMJQAk=",
-				WireguardAllowedIPs: []network.Prefix{{netip.MustParsePrefix("192.168.1.0/24")}},
+				WireguardAllowedIPs: []meta.Prefix{{Prefix: netip.MustParsePrefix("192.168.1.0/24")}},
 			},
 			{
 				WireguardPublicKey:    "uvdlJNva1X8/OCOZM+0gGT4Yu9x20odd3AWbbQUF7nM=",
 				WireguardPresharedKey: "6j4UMxwszrHVZZUjY8/SFsZMjgaHkxV7yp9Tz05btho=",
-				WireguardEndpoint:     network.AddrPort{netip.MustParseAddrPort("10.3.4.3:2222")},
+				WireguardEndpoint:     meta.AddrPort{AddrPort: netip.MustParseAddrPort("10.3.4.3:2222")},
 			},
 		},
 		CommonLinkConfig: network.CommonLinkConfig{
@@ -185,21 +185,21 @@ func TestWireguardValidate(t *testing.T) {
 				cfg.WireguardPeers = []network.WireguardPeer{
 					{
 						WireguardPublicKey:  "735jkJdcVDninU5PzLJ/S+bfN6Q3QOk6svWrVLMJQAk=",
-						WireguardAllowedIPs: []network.Prefix{{netip.MustParsePrefix("192.168.1.0/24")}},
+						WireguardAllowedIPs: []meta.Prefix{{Prefix: netip.MustParsePrefix("192.168.1.0/24")}},
 					},
 					{
 						WireguardPublicKey:    "uvdlJNva1X8/OCOZM+0gGT4Yu9x20odd3AWbbQUF7nM=",
 						WireguardPresharedKey: "6j4UMxwszrHVZZUjY8/SFsZMjgaHkxV7yp9Tz05btho=",
-						WireguardEndpoint:     network.AddrPort{netip.MustParseAddrPort("10.3.4.3:2222")},
+						WireguardEndpoint:     meta.AddrPort{AddrPort: netip.MustParseAddrPort("10.3.4.3:2222")},
 					},
 				}
 				cfg.LinkRoutes = []network.RouteConfig{
 					{
-						RouteDestination: network.Prefix{netip.MustParsePrefix("10.3.5.0/24")},
-						RouteGateway:     network.Addr{netip.MustParseAddr("10.3.5.1")},
+						RouteDestination: meta.Prefix{Prefix: netip.MustParsePrefix("10.3.5.0/24")},
+						RouteGateway:     meta.Addr{Addr: netip.MustParseAddr("10.3.5.1")},
 					},
 					{
-						RouteGateway: network.Addr{netip.MustParseAddr("fe80::1")},
+						RouteGateway: meta.Addr{Addr: netip.MustParseAddr("fe80::1")},
 					},
 				}
 

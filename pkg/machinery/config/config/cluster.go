@@ -5,7 +5,6 @@
 package config
 
 import (
-	"net/netip"
 	"net/url"
 	"time"
 
@@ -32,7 +31,6 @@ type ClusterConfig interface {
 	AESCBCEncryptionSecret() string
 	SecretboxEncryptionSecret() string
 	Etcd() Etcd
-	Network() ClusterNetwork
 	LocalAPIServerPort() int
 	CoreDNS() CoreDNS
 	// ExternalCloudProvider returns external cloud provider settings.
@@ -43,33 +41,6 @@ type ClusterConfig interface {
 	AdminKubeconfig() AdminKubeconfig
 	ScheduleOnControlPlanes() bool
 	Discovery() Discovery
-}
-
-// ClusterNetwork defines the requirements for a config that pertains to cluster
-// network options.
-type ClusterNetwork interface {
-	CNI() CNI
-	PodCIDRs() []string
-	ServiceCIDRs() []string
-	DNSDomain() string
-	// APIServerIPs returns kube-apiserver IPs in the ServiceCIDR.
-	APIServerIPs() ([]netip.Addr, error)
-	// DNSServiceIPs returns DNS service IPs in the ServiceCIDR.
-	DNSServiceIPs() ([]netip.Addr, error)
-}
-
-// CNI defines the requirements for a config that pertains to Kubernetes
-// cni.
-type CNI interface {
-	Name() string
-	URLs() []string
-	Flannel() FlannelCNI
-}
-
-// FlannelCNI defines the requirements for a config that pertains to configure Flannel.
-type FlannelCNI interface {
-	ExtraArgs() []string
-	KubeNetworkPoliciesEnabled() bool
 }
 
 // APIServer defines the requirements for a config that pertains to apiserver related

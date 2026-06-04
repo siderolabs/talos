@@ -20,6 +20,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
 
@@ -100,11 +101,13 @@ func NewRootKubernetesController() *RootKubernetesController {
 				k8sSecrets.Endpoint = cfgProvider.Cluster().Endpoint()
 				k8sSecrets.LocalEndpoint = localEndpoint
 				k8sSecrets.CertSANs = cfgProvider.Cluster().CertSANs()
-				k8sSecrets.DNSDomain = cfgProvider.Cluster().Network().DNSDomain()
 
-				k8sSecrets.APIServerIPs, err = cfgProvider.Cluster().Network().APIServerIPs()
-				if err != nil {
-					return fmt.Errorf("error building API service IPs: %w", err)
+				if k8sNetwork := cfgProvider.K8sNetworkConfig(); k8sNetwork != nil {
+					k8sSecrets.DNSDomain = k8sNetwork.DNSDomain()
+					k8sSecrets.APIServerIPs = k8s.APIServerServiceAddrs(k8sNetwork.ServiceCIDRs())
+				} else {
+					k8sSecrets.DNSDomain = ""
+					k8sSecrets.APIServerIPs = nil
 				}
 
 				k8sSecrets.AggregatorCA = cfgProvider.Cluster().AggregatorCA()

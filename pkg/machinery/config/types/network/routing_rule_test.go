@@ -27,7 +27,7 @@ func TestRoutingRuleConfigMarshalStability(t *testing.T) {
 	t.Parallel()
 
 	cfg := network.NewRoutingRuleConfigV1Alpha1(1000)
-	cfg.RuleSrc = network.Prefix{netip.MustParsePrefix("10.0.0.0/8")}
+	cfg.RuleSrc = meta.Prefix{Prefix: netip.MustParsePrefix("10.0.0.0/8")}
 	cfg.RuleTable = nethelpers.RoutingTable(100)
 	cfg.RuleAction = nethelpers.RoutingRuleActionUnicast
 
@@ -55,7 +55,7 @@ func TestRoutingRuleConfigUnmarshal(t *testing.T) {
 			MetaKind:       network.RoutingRuleKind,
 		},
 		RulePriority: "1000",
-		RuleSrc:      network.Prefix{netip.MustParsePrefix("10.0.0.0/8")},
+		RuleSrc:      meta.Prefix{Prefix: netip.MustParsePrefix("10.0.0.0/8")},
 		RuleTable:    nethelpers.RoutingTable(100),
 		RuleAction:   nethelpers.RoutingRuleActionUnicast,
 	}, docs[0])
@@ -96,7 +96,7 @@ func TestRoutingRuleConfigValidate(t *testing.T) {
 			name: "missing name",
 			cfg: func() *network.RoutingRuleConfigV1Alpha1 {
 				cfg := &network.RoutingRuleConfigV1Alpha1{}
-				cfg.RuleSrc = network.Prefix{netip.MustParsePrefix("10.0.0.0/8")}
+				cfg.RuleSrc = meta.Prefix{Prefix: netip.MustParsePrefix("10.0.0.0/8")}
 				cfg.RuleTable = nethelpers.RoutingTable(100)
 
 				return cfg
@@ -108,7 +108,7 @@ func TestRoutingRuleConfigValidate(t *testing.T) {
 			name: "reserved priority 32766",
 			cfg: func() *network.RoutingRuleConfigV1Alpha1 {
 				cfg := network.NewRoutingRuleConfigV1Alpha1(32766)
-				cfg.RuleSrc = network.Prefix{netip.MustParsePrefix("10.0.0.0/8")}
+				cfg.RuleSrc = meta.Prefix{Prefix: netip.MustParsePrefix("10.0.0.0/8")}
 				cfg.RuleTable = nethelpers.RoutingTable(100)
 
 				return cfg
@@ -120,7 +120,7 @@ func TestRoutingRuleConfigValidate(t *testing.T) {
 			name: "reserved priority 32767",
 			cfg: func() *network.RoutingRuleConfigV1Alpha1 {
 				cfg := network.NewRoutingRuleConfigV1Alpha1(32767)
-				cfg.RuleSrc = network.Prefix{netip.MustParsePrefix("10.0.0.0/8")}
+				cfg.RuleSrc = meta.Prefix{Prefix: netip.MustParsePrefix("10.0.0.0/8")}
 				cfg.RuleTable = nethelpers.RoutingTable(100)
 
 				return cfg
@@ -132,7 +132,7 @@ func TestRoutingRuleConfigValidate(t *testing.T) {
 			name: "valid priority 1",
 			cfg: func() *network.RoutingRuleConfigV1Alpha1 {
 				cfg := network.NewRoutingRuleConfigV1Alpha1(1)
-				cfg.RuleSrc = network.Prefix{netip.MustParsePrefix("10.0.0.0/8")}
+				cfg.RuleSrc = meta.Prefix{Prefix: netip.MustParsePrefix("10.0.0.0/8")}
 				cfg.RuleTable = nethelpers.RoutingTable(100)
 
 				return cfg
@@ -142,7 +142,7 @@ func TestRoutingRuleConfigValidate(t *testing.T) {
 			name: "valid priority 32765",
 			cfg: func() *network.RoutingRuleConfigV1Alpha1 {
 				cfg := network.NewRoutingRuleConfigV1Alpha1(32765)
-				cfg.RuleSrc = network.Prefix{netip.MustParsePrefix("10.0.0.0/8")}
+				cfg.RuleSrc = meta.Prefix{Prefix: netip.MustParsePrefix("10.0.0.0/8")}
 				cfg.RuleTable = nethelpers.RoutingTable(100)
 
 				return cfg
@@ -162,7 +162,7 @@ func TestRoutingRuleConfigValidate(t *testing.T) {
 			name: "valid with table only",
 			cfg: func() *network.RoutingRuleConfigV1Alpha1 {
 				cfg := network.NewRoutingRuleConfigV1Alpha1(1000)
-				cfg.RuleSrc = network.Prefix{netip.MustParsePrefix("10.0.0.0/8")}
+				cfg.RuleSrc = meta.Prefix{Prefix: netip.MustParsePrefix("10.0.0.0/8")}
 				cfg.RuleTable = nethelpers.RoutingTable(100)
 
 				return cfg
@@ -172,7 +172,7 @@ func TestRoutingRuleConfigValidate(t *testing.T) {
 			name: "valid with blackhole action",
 			cfg: func() *network.RoutingRuleConfigV1Alpha1 {
 				cfg := network.NewRoutingRuleConfigV1Alpha1(1000)
-				cfg.RuleSrc = network.Prefix{netip.MustParsePrefix("10.0.0.0/8")}
+				cfg.RuleSrc = meta.Prefix{Prefix: netip.MustParsePrefix("10.0.0.0/8")}
 				cfg.RuleAction = nethelpers.RoutingRuleActionBlackhole
 
 				return cfg
@@ -182,8 +182,8 @@ func TestRoutingRuleConfigValidate(t *testing.T) {
 			name: "valid with all fields",
 			cfg: func() *network.RoutingRuleConfigV1Alpha1 {
 				cfg := network.NewRoutingRuleConfigV1Alpha1(1000)
-				cfg.RuleSrc = network.Prefix{netip.MustParsePrefix("10.0.0.0/8")}
-				cfg.RuleDst = network.Prefix{netip.MustParsePrefix("192.168.0.0/16")}
+				cfg.RuleSrc = meta.Prefix{Prefix: netip.MustParsePrefix("10.0.0.0/8")}
+				cfg.RuleDst = meta.Prefix{Prefix: netip.MustParsePrefix("192.168.0.0/16")}
 				cfg.RuleTable = nethelpers.RoutingTable(100)
 				cfg.RuleAction = nethelpers.RoutingRuleActionUnicast
 				cfg.RuleIIFName = "eth0"

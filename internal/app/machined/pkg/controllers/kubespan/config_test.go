@@ -15,6 +15,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	kubespanctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/kubespan"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -93,7 +94,7 @@ func (suite *ConfigSuite) TestReconcileMultiDoc() {
 	kubeSpanCfg.ConfigMTU = new(uint32(1380))
 	kubeSpanCfg.ConfigFilters = &network.KubeSpanFiltersConfig{
 		ConfigEndpoints:                 []string{"0.0.0.0/0", "::/0"},
-		ConfigExcludeAdvertisedNetworks: []network.Prefix{{Prefix: netip.MustParsePrefix("10.0.0.0/8")}},
+		ConfigExcludeAdvertisedNetworks: []meta.Prefix{{Prefix: netip.MustParsePrefix("10.0.0.0/8")}},
 	}
 
 	ctr, err := container.New(

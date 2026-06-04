@@ -165,18 +165,32 @@ func (in *Input) init() ([]config.Document, error) {
 		EtcdConfig: &v1alpha1.EtcdConfig{
 			RootCA: in.Options.SecretsBundle.Certs.Etcd,
 		},
-		ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
-			DNSDomain:     in.Options.DNSDomain,
-			PodSubnet:     in.PodNet,
-			ServiceSubnet: in.ServiceNet,
-			CNI:           in.Options.CNIConfig,
-		},
+		ClusterNetwork: nilIf(
+			in.Options.VersionContract.MultidocKubernetesConfigSupported(),
+			&v1alpha1.ClusterNetworkConfig{
+				DNSDomain:     in.Options.DNSDomain,
+				PodSubnet:     in.PodNet,
+				ServiceSubnet: in.ServiceNet,
+			},
+		),
 		ClusterCA:              in.Options.SecretsBundle.Certs.K8s,
 		ClusterAggregatorCA:    in.Options.SecretsBundle.Certs.K8sAggregator,
 		ClusterServiceAccount:  in.Options.SecretsBundle.Certs.K8sServiceAccount,
 		BootstrapToken:         in.Options.SecretsBundle.Secrets.BootstrapToken,
 		ExtraManifests:         []string{},
 		ClusterInlineManifests: v1alpha1.ClusterInlineManifests{},
+	}
+
+	if in.Options.CNICustomURL != "" {
+		if !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
+			cluster.ClusterNetwork.CNI = &v1alpha1.CNIConfig{ //nolint:staticcheck // legacy configuration
+				CNIName: constants.CustomCNI,
+				CNIUrls: []string{in.Options.CNICustomURL},
+			}
+		} else {
+			// we don't have extra manifests as multi-doc yet, so put it in the legacy field for now
+			cluster.ExtraManifests = append(cluster.ExtraManifests, in.Options.CNICustomURL)
+		}
 	}
 
 	if in.Options.AllowSchedulingOnControlPlanes {
@@ -236,6 +250,10 @@ func (in *Input) init() ([]config.Document, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate network configs: %w", err)
 	}
+
+	documents = append(documents, extraDocuments...)
+
+	extraDocuments = in.generateKubernetesUniversalConfigs()
 
 	documents = append(documents, extraDocuments...)
 

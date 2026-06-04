@@ -95,6 +95,7 @@ List of changes:
 - Deprecated `.cluster.secretboxEncryptionSecret` in the v1alpha1 config; use the `KubeEtcdEncryptionConfig` document for full etcd encryption configuration.
 - Deprecated `.cluster.controllerManager` in the v1alpha1 config; use the `KubeControllerManagerConfig` document for kube-controller-manager configuration.
 - Deprecated `.cluster.scheduler` in the v1alpha1 config; use the `KubeSchedulerConfig` document for kube-scheduler configuration.
+- Deprecated `.cluster.network` in the v1alpha1 config; use the `KubeNetworkConfig` document for Kubernetes network configuration; Flannel can be configured using the `KubeFlannelCNIConfig` document.
 """
 
     [notes.dhcpsearchdomains]

@@ -5,6 +5,7 @@
 package k8s_test
 
 import (
+	"net/netip"
 	"net/url"
 	"slices"
 	"strings"
@@ -19,6 +20,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	k8sctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	k8scfg "github.com/siderolabs/talos/pkg/machinery/config/types/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -49,23 +51,32 @@ func (suite *K8sControlPlaneSuite) TestReconcileDefaults() {
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
 
-	cfg := config.NewMachineConfig(
-		container.NewV1Alpha1(
-			&v1alpha1.Config{
-				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{
-					MachineType: "controlplane",
-				},
-				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
-						Endpoint: &v1alpha1.Endpoint{
-							URL: u,
-						},
-					},
+	v1alpha1Cfg := &v1alpha1.Config{
+		ConfigVersion: "v1alpha1",
+		MachineConfig: &v1alpha1.MachineConfig{
+			MachineType: "controlplane",
+		},
+		ClusterConfig: &v1alpha1.ClusterConfig{
+			ControlPlane: &v1alpha1.ControlPlaneConfig{
+				Endpoint: &v1alpha1.Endpoint{
+					URL: u,
 				},
 			},
-		),
-	)
+		},
+	}
+
+	cn := k8scfg.NewKubeNetworkConfigV1Alpha1()
+	cn.NetworkPodSubnets = []meta.Prefix{
+		{Prefix: netip.MustParsePrefix(constants.DefaultIPv4PodNet)},
+	}
+	cn.NetworkServiceSubnets = []meta.Prefix{
+		{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceNet)},
+	}
+
+	ctr, err := container.New(v1alpha1Cfg, cn)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
 
 	suite.setupMachine(cfg)
 
@@ -113,6 +124,7 @@ func (suite *K8sControlPlaneSuite) TestReconcileEmptyAuthorizationConfigForK8sLe
 					MachineType: "controlplane",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{},
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
@@ -148,6 +160,7 @@ func (suite *K8sControlPlaneSuite) TestReconcileEmptyAuthorizationConfigAuthoriz
 					MachineType: "controlplane",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{},
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
@@ -183,6 +196,7 @@ func (suite *K8sControlPlaneSuite) TestReconcileAdditionalAuthorizationConfigAut
 					MachineType: "controlplane",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{},
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
@@ -250,6 +264,7 @@ func (suite *K8sControlPlaneSuite) TestReconcileAdditionalAuthorizationConfigAut
 					MachineType: "controlplane",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{},
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
@@ -333,6 +348,7 @@ func (suite *K8sControlPlaneSuite) TestReconcileAdditionalAuthorizationConfigAut
 					MachineType: "controlplane",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{},
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
@@ -412,6 +428,7 @@ func (suite *K8sControlPlaneSuite) TestReconcileTransitionWorker() {
 					MachineType: "controlplane",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{},
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
@@ -523,6 +540,7 @@ func (suite *K8sControlPlaneSuite) TestReconcileExtraVolumes() {
 					MachineType: "controlplane",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{},
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
@@ -584,6 +602,7 @@ func (suite *K8sControlPlaneSuite) TestReconcileEnvironment() {
 					MachineType: "controlplane",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{},
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
@@ -627,6 +646,7 @@ func (suite *K8sControlPlaneSuite) TestReconcileResources() {
 					MachineType: "controlplane",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{},
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
@@ -760,6 +780,7 @@ func (suite *K8sControlPlaneSuite) TestReconcileExternalCloudProvider() {
 					MachineType: "controlplane",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{},
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
@@ -830,6 +851,7 @@ func (suite *K8sControlPlaneSuite) TestReconcileInlineManifests() {
 					MachineType: "controlplane",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{},
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
@@ -886,6 +908,7 @@ func (suite *K8sControlPlaneSuite) TestReconcileKubeProxyMode() {
 					MachineType: "controlplane",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{},
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
@@ -921,6 +944,7 @@ func (suite *K8sControlPlaneSuite) TestReconcileKubeProxyModeLegacy() {
 					MachineType: "controlplane",
 				},
 				ClusterConfig: &v1alpha1.ClusterConfig{
+					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{},
 					ControlPlane: &v1alpha1.ControlPlaneConfig{
 						Endpoint: &v1alpha1.Endpoint{
 							URL: u,
