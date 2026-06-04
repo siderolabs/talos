@@ -91,15 +91,15 @@ func (suite *ExtensionsSuiteNVIDIA) TestExtensionsNVIDIA() {
 	missingCDIFilesData := map[string]map[string]int{
 		"amd64": {
 			"nvidia-open-gpu-kernel-modules-production": 13,
-			"nvidia-open-gpu-kernel-modules-lts":        9,
+			"nvidia-open-gpu-kernel-modules-lts":        11,
 			"nonfree-kmod-nvidia-production":            13,
-			"nonfree-kmod-nvidia-lts":                   9,
+			"nonfree-kmod-nvidia-lts":                   11,
 		},
 		"arm64": {
 			"nvidia-open-gpu-kernel-modules-production": 11,
-			"nvidia-open-gpu-kernel-modules-lts":        9,
+			"nvidia-open-gpu-kernel-modules-lts":        11,
 			"nonfree-kmod-nvidia-production":            11,
-			"nonfree-kmod-nvidia-lts":                   9,
+			"nonfree-kmod-nvidia-lts":                   11,
 		},
 	}
 
