@@ -1183,7 +1183,7 @@ const (
 	// And sign the image using image-signer.
 	//
 	// renovate: datasource=github-releases depName=flannel-io/flannel
-	FlannelVersion = "v0.28.4"
+	FlannelVersion = "v0.28.5"
 
 	// KubeNetworkPoliciesVersion is the version of kube-network-policies when network policies are enabled for flannel.
 	//
