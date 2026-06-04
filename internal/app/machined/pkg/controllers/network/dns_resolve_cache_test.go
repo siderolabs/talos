@@ -331,7 +331,7 @@ func TestDNSServer(t *testing.T) {
 func getDynamicPort(t *testing.T) string {
 	t.Helper()
 
-	l, err := (&net.ListenConfig{}).Listen(t.Context(), "tcp", "127.0.0.1:0")
+	l, err := (&net.ListenConfig{}).Listen(t.Context(), "tcp", net.JoinHostPort("127.0.0.53", "0"))
 	require.NoError(t, err)
 
 	addr := l.Addr().String()
