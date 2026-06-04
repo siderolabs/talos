@@ -31,10 +31,10 @@ import (
 // provision) host state — currently the LVM PV/VG/LV status controllers.
 //
 // Talos has no first-class LVM provisioning API, so tests in this suite drive
-// LVM state from a privileged pod via `nsenter --mount=/proc/1/ns/mnt --` in
-// the same style as TestLVMActivation in the VolumesSuite.
+// LVM state in the host mount namespace via the DebugService
+// (`nsenter --mount=/proc/1/ns/mnt --`) using ExecInHostMountNS.
 type StorageSuite struct {
-	base.K8sSuite
+	base.APISuite
 
 	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
@@ -82,52 +82,37 @@ func (suite *StorageSuite) TestLVMStatus() {
 
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 
-	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
-	suite.Require().NoError(err)
-
-	nodeName := k8sNode.Name
-
 	userDisks := suite.UserDisks(suite.ctx, node)
 
 	if len(userDisks) < 2 {
-		suite.T().Skipf("skipping test, not enough user disks available on node %s/%s: %q", node, nodeName, userDisks)
+		suite.T().Skipf("skipping test, not enough user disks available on node %s: %q", node, userDisks)
 	}
 
 	pvDisks := userDisks[:2]
-	pvDisksJoined := strings.Join(pvDisks, " ")
 
-	suite.T().Logf("creating LVM volume group on node %s/%s with disks %s", node, nodeName, pvDisksJoined)
+	suite.T().Logf("creating LVM volume group on node %s with disks %v", node, pvDisks)
 
-	podDef, err := suite.NewPrivilegedPod("lvm-status")
-	suite.Require().NoError(err)
-
-	podDef = podDef.WithNodeName(nodeName)
-
-	suite.Require().NoError(podDef.Create(suite.ctx, 5*time.Minute))
-
-	defer podDef.Delete(suite.ctx) //nolint:errcheck
-
-	stdout, _, err := podDef.Exec(
-		suite.ctx,
-		fmt.Sprintf("nsenter --mount=/proc/1/ns/mnt -- vgcreate --nolocking vg0 %s", pvDisksJoined),
+	stdout, exitCode, err := suite.ExecInHostMountNS(suite.ctx, node,
+		append([]string{"vgcreate", "--nolocking", "vg0"}, pvDisks...)...,
 	)
 	suite.Require().NoError(err)
+	suite.Require().EqualValues(0, exitCode, "vgcreate failed: %s", stdout)
 	suite.Require().Contains(stdout, "Volume group \"vg0\" successfully created")
 
-	defer suite.deleteLVMVolumes(node, nodeName, pvDisks)
+	defer suite.deleteLVMVolumes(node, pvDisks)
 
-	stdout, _, err = podDef.Exec(
-		suite.ctx,
-		"nsenter --mount=/proc/1/ns/mnt -- lvcreate -n lv0 -L 64M vg0",
+	stdout, exitCode, err = suite.ExecInHostMountNS(suite.ctx, node,
+		"lvcreate", "-n", "lv0", "-L", "64M", "vg0",
 	)
 	suite.Require().NoError(err)
+	suite.Require().EqualValues(0, exitCode, "lvcreate lv0 failed: %s", stdout)
 	suite.Require().Contains(stdout, "Logical volume \"lv0\" created.")
 
-	stdout, _, err = podDef.Exec(
-		suite.ctx,
-		"nsenter --mount=/proc/1/ns/mnt -- lvcreate -n lv1 -L 64M vg0",
+	stdout, exitCode, err = suite.ExecInHostMountNS(suite.ctx, node,
+		"lvcreate", "-n", "lv1", "-L", "64M", "vg0",
 	)
 	suite.Require().NoError(err)
+	suite.Require().EqualValues(0, exitCode, "lvcreate lv1 failed: %s", stdout)
 	suite.Require().Contains(stdout, "Logical volume \"lv1\" created.")
 
 	ctx := client.WithNode(suite.ctx, node)
@@ -139,7 +124,7 @@ func (suite *StorageSuite) TestLVMStatus() {
 		assertInterval = 2 * time.Second
 	)
 
-	suite.T().Logf("waiting for VG status on %s/%s", node, nodeName)
+	suite.T().Logf("waiting for VG status on %s", node)
 
 	suite.Require().Eventually(func() bool {
 		vg, err := safe.StateGetByID[*storageres.LVMVolumeGroupStatus](ctx, suite.Client.COSI, "vg0")
@@ -158,7 +143,7 @@ func (suite *StorageSuite) TestLVMStatus() {
 		return spec.Name == "vg0" && spec.PVCount == "2" && spec.LVCount == "2" && spec.Size != "" && spec.Size != "0" && spec.UUID != ""
 	}, assertTimeout, assertInterval, "VG status not reported")
 
-	suite.T().Logf("waiting for PV status on %s/%s", node, nodeName)
+	suite.T().Logf("waiting for PV status on %s", node)
 
 	expectedPVIDs := xslices.ToSet(xslices.Map(pvDisks, func(d string) string {
 		return strings.TrimPrefix(strings.ReplaceAll(d, "/", "-"), "-dev-")
@@ -191,7 +176,7 @@ func (suite *StorageSuite) TestLVMStatus() {
 		return len(found) == len(expectedPVIDs)
 	}, assertTimeout, assertInterval, "PV statuses not reported for disks %v", pvDisks)
 
-	suite.T().Logf("waiting for LV status on %s/%s", node, nodeName)
+	suite.T().Logf("waiting for LV status on %s", node)
 
 	expectedLVPaths := xslices.ToSet([]string{"/dev/vg0/lv0", "/dev/vg0/lv1"})
 
@@ -225,7 +210,7 @@ func (suite *StorageSuite) TestLVMStatus() {
 	// that the LV status controller drops the resources while the pod is still
 	// alive and reachable. Drives the LVMService LogicalVolumeRemove RPC so
 	// this test doubles as coverage for the LV remove API path.
-	suite.T().Logf("removing LVs and verifying status cleanup on %s/%s", node, nodeName)
+	suite.T().Logf("removing LVs and verifying status cleanup on %s", node)
 
 	for _, lvName := range []string{"lv0", "lv1"} {
 		suite.Require().NoError(suite.Client.LogicalVolumeRemove(ctx, &machineapi.LVMServiceLogicalVolumeRemoveRequest{
@@ -266,68 +251,49 @@ func (suite *StorageSuite) TestLVMActivation() {
 
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 
-	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
-	suite.Require().NoError(err)
-
-	nodeName := k8sNode.Name
-
 	userDisks := suite.UserDisks(suite.ctx, node)
 
 	if len(userDisks) < 2 {
-		suite.T().Skipf("skipping test, not enough user disks available on node %s/%s: %q", node, nodeName, userDisks)
+		suite.T().Skipf("skipping test, not enough user disks available on node %s: %q", node, userDisks)
 	}
 
 	pvDisks := userDisks[:2]
-	userDisksJoined := strings.Join(pvDisks, " ")
 
-	suite.T().Logf("creating LVM volume group on node %s/%s with disks %s", node, nodeName, userDisksJoined)
+	suite.T().Logf("creating LVM volume group on node %s with disks %v", node, pvDisks)
 
-	podDef, err := suite.NewPrivilegedPod("pv-create")
-	suite.Require().NoError(err)
-
-	podDef = podDef.WithNodeName(nodeName)
-
-	suite.Require().NoError(podDef.Create(suite.ctx, 5*time.Minute))
-
-	defer podDef.Delete(suite.ctx) //nolint:errcheck
-
-	stdout, _, err := podDef.Exec(
-		suite.ctx,
-		fmt.Sprintf("nsenter --mount=/proc/1/ns/mnt -- vgcreate --nolocking vg0 %s", userDisksJoined),
+	stdout, exitCode, err := suite.ExecInHostMountNS(suite.ctx, node,
+		append([]string{"vgcreate", "--nolocking", "vg0"}, pvDisks...)...,
 	)
 	suite.Require().NoError(err)
-
+	suite.Require().EqualValues(0, exitCode, "vgcreate failed: %s", stdout)
 	suite.Require().Contains(stdout, "Volume group \"vg0\" successfully created")
 
-	stdout, _, err = podDef.Exec(
-		suite.ctx,
-		"nsenter --mount=/proc/1/ns/mnt -- lvcreate --mirrors=1 --type=raid1 --nosync -n lv0 -L 1G vg0",
+	stdout, exitCode, err = suite.ExecInHostMountNS(suite.ctx, node,
+		"lvcreate", "--mirrors=1", "--type=raid1", "--nosync", "-n", "lv0", "-L", "1G", "vg0",
 	)
 	suite.Require().NoError(err)
-
+	suite.Require().EqualValues(0, exitCode, "lvcreate lv0 failed: %s", stdout)
 	suite.Require().Contains(stdout, "Logical volume \"lv0\" created.")
 
-	stdout, _, err = podDef.Exec(
-		suite.ctx,
-		"nsenter --mount=/proc/1/ns/mnt -- lvcreate -n lv1 -L 1G vg0",
+	stdout, exitCode, err = suite.ExecInHostMountNS(suite.ctx, node,
+		"lvcreate", "-n", "lv1", "-L", "1G", "vg0",
 	)
 	suite.Require().NoError(err)
-
+	suite.Require().EqualValues(0, exitCode, "lvcreate lv1 failed: %s", stdout)
 	suite.Require().Contains(stdout, "Logical volume \"lv1\" created.")
 
-	defer suite.deleteLVMVolumes(node, nodeName, pvDisks)
+	defer suite.deleteLVMVolumes(node, pvDisks)
 
-	suite.T().Logf("rebooting node %s/%s", node, nodeName)
+	suite.T().Logf("rebooting node %s", node)
 
 	// reboot and confirm that LVs come back online
 	suite.AssertRebooted(
 		suite.ctx, node, func(nodeCtx context.Context) error {
 			return base.IgnoreGRPCUnavailable(suite.Client.Reboot(nodeCtx))
 		}, 5*time.Minute,
-		suite.CleanupFailedPods,
 	)
 
-	suite.T().Logf("verifying LVM activation %s/%s", node, nodeName)
+	suite.T().Logf("verifying LVM activation %s", node)
 
 	suite.Require().Eventually(func() bool {
 		return suite.lvmVolumeExists(node, []string{"lv0", "lv1"})
@@ -356,49 +322,34 @@ func (suite *StorageSuite) TestLVMRemove() {
 
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 
-	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
-	suite.Require().NoError(err)
-
-	nodeName := k8sNode.Name
-
 	userDisks := suite.UserDisks(suite.ctx, node)
 
 	if len(userDisks) < 2 {
-		suite.T().Skipf("skipping test, not enough user disks available on node %s/%s: %q", node, nodeName, userDisks)
+		suite.T().Skipf("skipping test, not enough user disks available on node %s: %q", node, userDisks)
 	}
 
 	pvDisks := userDisks[:2]
-	pvDisksJoined := strings.Join(pvDisks, " ")
 
-	suite.T().Logf("provisioning LVM on node %s/%s with disks %s", node, nodeName, pvDisksJoined)
-
-	podDef, err := suite.NewPrivilegedPod("lvm-remove")
-	suite.Require().NoError(err)
-
-	podDef = podDef.WithNodeName(nodeName)
-
-	suite.Require().NoError(podDef.Create(suite.ctx, 5*time.Minute))
-
-	defer podDef.Delete(suite.ctx) //nolint:errcheck
+	suite.T().Logf("provisioning LVM on node %s with disks %v", node, pvDisks)
 
 	// Last-resort cleanup. If the RPC path fails partway through, fall back to
 	// the same nsenter-based teardown the other LVM tests use so the disks come
 	// back clean for subsequent runs.
-	defer suite.deleteLVMVolumes(node, nodeName, pvDisks)
+	defer suite.deleteLVMVolumes(node, pvDisks)
 
-	stdout, _, err := podDef.Exec(
-		suite.ctx,
-		fmt.Sprintf("nsenter --mount=/proc/1/ns/mnt -- vgcreate --nolocking vg0 %s", pvDisksJoined),
+	stdout, exitCode, err := suite.ExecInHostMountNS(suite.ctx, node,
+		append([]string{"vgcreate", "--nolocking", "vg0"}, pvDisks...)...,
 	)
 	suite.Require().NoError(err)
+	suite.Require().EqualValues(0, exitCode, "vgcreate failed: %s", stdout)
 	suite.Require().Contains(stdout, "Volume group \"vg0\" successfully created")
 
 	for _, lvName := range []string{"lv0", "lv1"} {
-		stdout, _, err = podDef.Exec(
-			suite.ctx,
-			fmt.Sprintf("nsenter --mount=/proc/1/ns/mnt -- lvcreate -n %s -L 64M vg0", lvName),
+		stdout, exitCode, err = suite.ExecInHostMountNS(suite.ctx, node,
+			"lvcreate", "-n", lvName, "-L", "64M", "vg0",
 		)
 		suite.Require().NoError(err)
+		suite.Require().EqualValues(0, exitCode, "lvcreate %s failed: %s", lvName, stdout)
 		suite.Require().Contains(stdout, fmt.Sprintf("Logical volume %q created.", lvName))
 	}
 
@@ -413,7 +364,7 @@ func (suite *StorageSuite) TestLVMRemove() {
 
 	// Wait for the scan to observe the freshly created LVs so we know the
 	// follow-up removal is being validated against a real reconciled state.
-	suite.T().Logf("waiting for LV status on %s/%s", node, nodeName)
+	suite.T().Logf("waiting for LV status on %s", node)
 
 	suite.Require().Eventually(func() bool {
 		lvs, err := safe.StateListAll[*storageres.LVMLogicalVolumeStatus](ctx, suite.Client.COSI)
@@ -521,8 +472,8 @@ func isAlreadyGone(err error) bool {
 // already removed vg0 / the PVs via the API before this deferred cleanup
 // fires. Falling back to nsenter (which spins up a privileged pod) for
 // "already gone" would just be cluster-wide pod churn.
-func (suite *StorageSuite) deleteLVMVolumes(node, nodeName string, pvDisks []string) {
-	suite.T().Logf("removing LVM volumes %s/%s", node, nodeName)
+func (suite *StorageSuite) deleteLVMVolumes(node string, pvDisks []string) {
+	suite.T().Logf("removing LVM volumes %s", node)
 
 	ctx := client.WithNode(suite.ctx, node)
 
@@ -555,29 +506,16 @@ func (suite *StorageSuite) deleteLVMVolumes(node, nodeName string, pvDisks []str
 		return
 	}
 
-	pvDisksJoined := strings.Join(pvDisks, " ")
-
-	deletePodDef, err := suite.NewPrivilegedPod("pv-destroy")
-	suite.Require().NoError(err)
-
-	deletePodDef = deletePodDef.WithNodeName(nodeName)
-
-	suite.Require().NoError(deletePodDef.Create(suite.ctx, 5*time.Minute))
-
-	defer deletePodDef.Delete(suite.ctx) //nolint:errcheck
-
-	if _, _, err := deletePodDef.Exec(
-		suite.ctx,
-		"nsenter --mount=/proc/1/ns/mnt -- vgremove --nolocking --yes vg0",
+	if _, _, err := suite.ExecInHostMountNS(suite.ctx, node,
+		"vgremove", "--nolocking", "--yes", "vg0",
 	); err != nil {
 		suite.T().Logf("failed to remove vg0: %v", err)
 	}
 
-	if _, _, err := deletePodDef.Exec(
-		suite.ctx,
-		fmt.Sprintf("nsenter --mount=/proc/1/ns/mnt -- pvremove --nolocking --yes %s", pvDisksJoined),
+	if _, _, err := suite.ExecInHostMountNS(suite.ctx, node,
+		append([]string{"pvremove", "--nolocking", "--yes"}, pvDisks...)...,
 	); err != nil {
-		suite.T().Logf("failed to remove pv backed by volumes %s: %v", pvDisksJoined, err)
+		suite.T().Logf("failed to remove pv backed by volumes %v: %v", pvDisks, err)
 	}
 }
 
