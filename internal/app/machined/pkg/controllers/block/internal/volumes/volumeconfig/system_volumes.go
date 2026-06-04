@@ -135,6 +135,7 @@ func GetEphemeralVolumeTransformer(inContainer bool) volumeConfigTransformer {
 						GID:                 0,
 						ProjectQuotaSupport: cfg.Machine().Features().DiskQuotaSupportEnabled(),
 						Secure:              extraVolumeConfig.Mount().Secure(),
+						DisableAccessTime:   extraVolumeConfig.Mount().DisableAccessTime(),
 					}).
 					WithLocator(labelVolumeMatch(constants.EphemeralPartitionLabel)).
 					WithFunc(func(vcs *block.VolumeConfigSpec) error {
