@@ -53,6 +53,7 @@ func (AuthorizationConfigExtension) ResourceDefinition() meta.ResourceDefinition
 	return meta.ResourceDefinitionSpec{
 		Type:             AuthorizationConfigType,
 		DefaultNamespace: ControlPlaneNamespaceName,
+		Sensitivity:      meta.Sensitive,
 	}
 }
 

@@ -49,6 +49,7 @@ func (KubeletSpecExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 		Type:             KubeletSpecType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
+		Sensitivity:      meta.Sensitive,
 	}
 }
 
