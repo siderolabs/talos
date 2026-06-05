@@ -73,6 +73,7 @@ func (APIServerConfigExtension) ResourceDefinition() meta.ResourceDefinitionSpec
 	return meta.ResourceDefinitionSpec{
 		Type:             APIServerConfigType,
 		DefaultNamespace: ControlPlaneNamespaceName,
+		Sensitivity:      meta.Sensitive,
 	}
 }
 
