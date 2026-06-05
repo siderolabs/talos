@@ -83,13 +83,12 @@ func runAndCheck(t *testing.T, expectedSeparators int, cmdFn func() *exec.Cmd, f
 
 	lines := strings.Split(strings.TrimSpace(stdout), "\n")
 	assert.Greater(t, len(lines), 2)
-	assert.Equal(t, []string{"NODE", "NAME"}, strings.Fields(lines[0]))
-	assert.Equal(t, []string{"."}, strings.Fields(lines[1])[1:])
+	assert.Equal(t, ".", lines[0])
 
 	var maxActualSeparators int
 
-	for _, line := range lines[2:] {
-		actualSeparators := strings.Count(strings.Fields(line)[1], string(os.PathSeparator))
+	for _, line := range lines[1:] {
+		actualSeparators := strings.Count(line, string(os.PathSeparator))
 
 		if expectedSeparators >= 0 && !assert.LessOrEqual(
 			t,

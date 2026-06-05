@@ -17,10 +17,10 @@ import (
 	"github.com/siderolabs/gen/xerrors"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/peer"
 
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos/lifecycle"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/action"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/nodedrain"
 	"github.com/siderolabs/talos/pkg/cli"
@@ -271,49 +271,60 @@ func upgradeLegacy(ctx context.Context) error {
 //
 // Note: remove me in Talos 1.18.
 func runUpgradeLegacyNoWaitWithOpts(ctx context.Context, opts []client.UpgradeOption) error {
-	return WithClient(ctx, func(ctx context.Context, c *client.Client) error {
-		return doUpgradeLegacy(ctx, c, opts)
-	})
-}
-
-// doUpgradeLegacy performs the legacy MachineService.Upgrade call on an existing client.
-//
-// Note: remove me in Talos 1.18.
-func doUpgradeLegacy(ctx context.Context, c *client.Client, opts []client.UpgradeOption) error {
-	if err := helpers.ClientVersionCheckLegacy(ctx, c); err != nil { //nolint:staticcheck // to be refactored next
+	clientFactory, err := NewClientFactory(ctx, &upgradeCmdFlags)
+	if err != nil {
 		return err
 	}
 
-	var remotePeer peer.Peer
+	defer clientFactory.Close() //nolint:errcheck
 
-	opts = append(opts, client.WithUpgradeGRPCCallOptions(grpc.Peer(&remotePeer)))
+	return doUpgradeLegacy(ctx, clientFactory, opts)
+}
 
-	// TODO: See if we can validate version and prevent starting upgrades to an unknown version
-	resp, err := c.UpgradeWithOptions(ctx, opts...) //nolint:staticcheck // legacy talosctl methods, to be removed in Talos 1.18
-	if err != nil {
-		if resp == nil {
-			return fmt.Errorf("error performing upgrade: %s", err)
-		}
-
-		cli.Warning("%s", err)
+// doUpgradeLegacy performs the legacy MachineService.Upgrade call across all nodes.
+//
+// Note: remove me in Talos 1.18.
+func doUpgradeLegacy(ctx context.Context, clientFactory *global.ClientFactory, opts []client.UpgradeOption) error {
+	if err := helpers.ClientVersionCheck(ctx, clientFactory); err != nil {
+		return err
 	}
+
+	responseChan := multiplex.UnaryViaFactory(
+		ctx, clientFactory,
+		func(ctx context.Context, c *client.Client) (*machine.UpgradeResponse, error) {
+			// TODO: See if we can validate version and prevent starting upgrades to an unknown version
+			resp, err := c.UpgradeWithOptions(ctx, opts...) //nolint:staticcheck // legacy talosctl methods, to be removed in Talos 1.18
+			if err != nil {
+				if resp == nil {
+					return nil, fmt.Errorf("error performing upgrade: %w", err)
+				}
+
+				// partial success: the upgrade was acknowledged but some non-fatal error occurred
+				cli.Warning("%s", err)
+			}
+
+			return resp, nil
+		},
+	)
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tACK\tSTARTED")
 
-	defaultNode := client.AddrFromPeer(&remotePeer)
+	var errs error
 
-	for _, msg := range resp.Messages {
-		node := defaultNode
+	for resp := range responseChan {
+		if resp.Err != nil {
+			errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
 
-		if msg.Metadata != nil {
-			node = msg.Metadata.Hostname //nolint:staticcheck // to be refactored next
+			continue
 		}
 
-		fmt.Fprintf(w, "%s\t%s\t%s\t\n", node, msg.Ack, time.Now())
+		for _, msg := range resp.Payload.Messages {
+			fmt.Fprintf(w, "%s\t%s\t%s\t\n", resp.Node, msg.Ack, time.Now())
+		}
 	}
 
-	return w.Flush()
+	return errors.Join(errs, w.Flush())
 }
 
 // upgradeGetActorID is used by the legacy action tracker path.

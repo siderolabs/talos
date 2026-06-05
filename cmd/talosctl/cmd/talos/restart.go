@@ -17,6 +17,10 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
+var restartCmdFlags struct {
+	kubernetesNamespaceFlag
+}
+
 // restartCmd represents the restart command.
 var restartCmd = &cobra.Command{
 	Use:   "restart <id>",
@@ -28,12 +32,12 @@ var restartCmd = &cobra.Command{
 			return nil, cobra.ShellCompDirectiveError | cobra.ShellCompDirectiveNoFileComp
 		}
 
-		return getContainersFromNode(cmd.Context(), kubernetesFlag), cobra.ShellCompDirectiveNoFileComp
+		return getContainersFromNode(cmd.Context(), &restartCmdFlags), cobra.ShellCompDirectiveNoFileComp
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
 
-		clientFactory, err := NewClientFactory(ctx, nil)
+		clientFactory, err := NewClientFactory(ctx, &restartCmdFlags)
 		if err != nil {
 			return err
 		}
@@ -45,7 +49,7 @@ var restartCmd = &cobra.Command{
 			driver    common.ContainerDriver
 		)
 
-		if kubernetesFlag {
+		if restartCmdFlags.kubernetes {
 			namespace = constants.K8sContainerdNamespace
 			driver = common.ContainerDriver_CRI
 		} else {
@@ -73,7 +77,7 @@ var restartCmd = &cobra.Command{
 }
 
 func init() {
-	restartCmd.Flags().BoolVarP(&kubernetesFlag, "kubernetes", "k", false, "use the k8s.io containerd namespace")
+	restartCmd.Flags().BoolVarP(&restartCmdFlags.kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
 
 	restartCmd.Flags().Bool("use-cri", false, "use the CRI driver")
 	restartCmd.Flags().MarkHidden("use-cri") //nolint:errcheck

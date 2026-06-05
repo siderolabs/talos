@@ -34,7 +34,7 @@ captures ownership and permission bits.`,
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		switch len(args) {
 		case 0:
-			return completePathFromNode(cmd.Context(), toComplete), cobra.ShellCompDirectiveNoFileComp
+			return completePathFromNode(cmd.Context(), nil, toComplete), cobra.ShellCompDirectiveNoFileComp
 		case 1:
 			return nil, cobra.ShellCompDirectiveDefault
 		}

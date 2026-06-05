@@ -18,6 +18,7 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 )
 
 var wipeOptions = map[string]machineapi.ResetRequest_WipeMode{
@@ -92,19 +93,35 @@ var resetCmd = &cobra.Command{
 		resetRequest := buildResetRequest()
 
 		if !resetCmdFlags.wait {
-			resetNoWait := func(ctx context.Context, c *client.Client) error {
-				if err := helpers.ClientVersionCheckLegacy(ctx, c); err != nil { //nolint:staticcheck // to be refactored next
-					return err
-				}
+			ctx := cmd.Context()
 
-				if err := c.ResetGeneric(ctx, resetRequest); err != nil {
-					return fmt.Errorf("error executing reset: %s", err)
-				}
-
-				return nil
+			clientFactory, err := NewClientFactory(ctx, &resetCmdFlags)
+			if err != nil {
+				return err
 			}
 
-			return WithClient(cmd.Context(), resetNoWait)
+			defer clientFactory.Close() //nolint:errcheck
+
+			if err := helpers.ClientVersionCheck(ctx, clientFactory); err != nil {
+				return err
+			}
+
+			responseChan := multiplex.UnaryViaFactory(
+				ctx, clientFactory,
+				func(ctx context.Context, c *client.Client) (struct{}, error) {
+					return struct{}{}, c.ResetGeneric(ctx, resetRequest)
+				},
+			)
+
+			var errs error
+
+			for resp := range responseChan {
+				if resp.Err != nil {
+					errs = errors.Join(errs, fmt.Errorf("error executing reset on node %s: %w", resp.Node, resp.Err))
+				}
+			}
+
+			return errs
 		}
 
 		actionFn := func(ctx context.Context, c *client.Client) (string, error) {

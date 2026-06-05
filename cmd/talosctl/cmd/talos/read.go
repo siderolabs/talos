@@ -24,7 +24,7 @@ var readCmd = &cobra.Command{
 			return nil, cobra.ShellCompDirectiveError | cobra.ShellCompDirectiveNoFileComp
 		}
 
-		return completePathFromNode(cmd.Context(), toComplete), cobra.ShellCompDirectiveNoFileComp
+		return completePathFromNode(cmd.Context(), nil, toComplete), cobra.ShellCompDirectiveNoFileComp
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()

@@ -176,37 +176,48 @@ func imageList(ctx context.Context) error {
 //
 // Note: remove me in Talos 1.15.
 func imageListLegacy(ctx context.Context) error {
-	return WithClient(ctx, func(ctx context.Context, c *client.Client) error {
-		ns, err := imageCmdFlags.apiNamespace()
-		if err != nil {
-			return err
+	clientFactory, err := NewClientFactory(ctx, &imageCmdFlags)
+	if err != nil {
+		return err
+	}
+
+	defer clientFactory.Close() //nolint:errcheck
+
+	ns, err := imageCmdFlags.apiNamespace()
+	if err != nil {
+		return err
+	}
+
+	responseChan := multiplex.StreamingViaFactory(
+		ctx, clientFactory,
+		func(ctx context.Context, c *client.Client) (machine.MachineService_ImageListClient, error) {
+			return c.ImageList(ctx, ns) //nolint:staticcheck // legacy talosctl methods, to be removed in Talos 1.15
+		},
+	)
+
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	fmt.Fprintln(w, "NODE\tIMAGE\tDIGEST\tSIZE\tCREATED")
+
+	var errs error
+
+	for resp := range responseChan {
+		if resp.Err != nil {
+			errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+
+			continue
 		}
 
-		rcv, err := c.ImageList(ctx, ns) //nolint:staticcheck // legacy talosctl methods, to be removed in Talos 1.15
-		if err != nil {
-			return fmt.Errorf("error listing images: %w", err)
-		}
+		fmt.Fprintf(
+			w, "%s\t%s\t%s\t%s\t%s\n",
+			resp.Node,
+			resp.Payload.Name,
+			resp.Payload.Digest,
+			humanize.Bytes(uint64(resp.Payload.Size)),
+			resp.Payload.CreatedAt.AsTime().Format(time.RFC3339),
+		)
+	}
 
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-		fmt.Fprintln(w, "NODE\tIMAGE\tDIGEST\tSIZE\tCREATED")
-
-		if err = helpers.ReadGRPCStream(rcv, func(msg *machine.ImageListResponse, node string, multipleNodes bool) error {
-			fmt.Fprintf(
-				w, "%s\t%s\t%s\t%s\t%s\n",
-				node,
-				msg.Name,
-				msg.Digest,
-				humanize.Bytes(uint64(msg.Size)),
-				msg.CreatedAt.AsTime().Format(time.RFC3339),
-			)
-
-			return nil
-		}); err != nil {
-			return err
-		}
-
-		return w.Flush()
-	})
+	return errors.Join(errs, w.Flush())
 }
 
 // imagePullCmd represents the image pull command.
@@ -314,19 +325,34 @@ func imagePullInternal(
 //
 // Note: remove me in Talos 1.15.
 func imagePullLegacy(ctx context.Context, imageRef string) error {
-	return WithClient(ctx, func(ctx context.Context, c *client.Client) error {
-		ns, err := imageCmdFlags.apiNamespace()
-		if err != nil {
-			return err
-		}
+	clientFactory, err := NewClientFactory(ctx, &imageCmdFlags)
+	if err != nil {
+		return err
+	}
 
-		err = c.ImagePull(ctx, ns, imageRef) //nolint:staticcheck // legacy talosctl methods, to be removed in Talos 1.15
-		if err != nil {
-			return fmt.Errorf("error pulling image: %w", err)
-		}
+	defer clientFactory.Close() //nolint:errcheck
 
-		return nil
-	})
+	ns, err := imageCmdFlags.apiNamespace()
+	if err != nil {
+		return err
+	}
+
+	responseChan := multiplex.UnaryViaFactory(
+		ctx, clientFactory,
+		func(ctx context.Context, c *client.Client) (struct{}, error) {
+			return struct{}{}, c.ImagePull(ctx, ns, imageRef) //nolint:staticcheck // legacy talosctl methods, to be removed in Talos 1.15
+		},
+	)
+
+	var errs error
+
+	for resp := range responseChan {
+		if resp.Err != nil {
+			errs = errors.Join(errs, fmt.Errorf("error pulling image on node %s: %w", resp.Node, resp.Err))
+		}
+	}
+
+	return errs
 }
 
 // imageImportInternal imports an image from a tarball.

@@ -18,20 +18,20 @@ import (
 	humanize "github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
 
-	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 )
 
 const sixMonths = 6 * time.Hour * 24 * 30
 
-var (
-	long           bool
-	recurse        bool
-	recursionDepth int32
-	humanizeFlag   bool
-	types          []string
-)
+var lsCmdFlags struct {
+	long     bool
+	recurse  bool
+	depth    int32
+	humanize bool
+	types    []string
+}
 
 // lsCmd represents the ls command.
 var lsCmd = &cobra.Command{
@@ -45,140 +45,193 @@ var lsCmd = &cobra.Command{
 			return nil, cobra.ShellCompDirectiveError | cobra.ShellCompDirectiveNoFileComp
 		}
 
-		return completePathFromNode(cmd.Context(), toComplete), cobra.ShellCompDirectiveNoFileComp
+		return completePathFromNode(cmd.Context(), &lsCmdFlags, toComplete), cobra.ShellCompDirectiveNoFileComp
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if recurse && recursionDepth != 1 {
+		if lsCmdFlags.recurse && lsCmdFlags.depth != 1 {
 			return errors.New("only one of flags --recurse and --depth can be specified at the same time")
 		}
 
-		return WithClient(cmd.Context(), func(ctx context.Context, c *client.Client) error {
-			rootDir := "/"
+		ctx := cmd.Context()
 
-			if len(args) > 0 {
-				rootDir = args[0]
-			}
+		clientFactory, err := NewClientFactory(ctx, &lsCmdFlags)
+		if err != nil {
+			return err
+		}
 
-			// handle all variants: --type=f,l; -tfl; etc
-			var reqTypes []machineapi.ListRequest_Type
+		defer clientFactory.Close() //nolint:errcheck
 
-			for _, typ := range types {
-				for _, t := range typ {
-					// handle both `find -type X` and os.FileMode.String() designations
-					switch t {
-					case 'f':
-						reqTypes = append(reqTypes, machineapi.ListRequest_REGULAR)
-					case 'd':
-						reqTypes = append(reqTypes, machineapi.ListRequest_DIRECTORY)
-					case 'l', 'L':
-						reqTypes = append(reqTypes, machineapi.ListRequest_SYMLINK)
-					default:
-						return fmt.Errorf("invalid file type: %s", string(t))
-					}
+		rootDir := "/"
+
+		if len(args) > 0 {
+			rootDir = args[0]
+		}
+
+		// handle all variants: --type=f,l; -tfl; etc
+		var reqTypes []machineapi.ListRequest_Type
+
+		for _, typ := range lsCmdFlags.types {
+			for _, t := range typ {
+				// handle both `find -type X` and os.FileMode.String() designations
+				switch t {
+				case 'f':
+					reqTypes = append(reqTypes, machineapi.ListRequest_REGULAR)
+				case 'd':
+					reqTypes = append(reqTypes, machineapi.ListRequest_DIRECTORY)
+				case 'l', 'L':
+					reqTypes = append(reqTypes, machineapi.ListRequest_SYMLINK)
+				default:
+					return fmt.Errorf("invalid file type: %s", string(t))
 				}
 			}
+		}
 
-			if recurse {
-				recursionDepth = -1
-			}
+		recursionDepth := lsCmdFlags.depth
 
-			stream, err := c.LS(ctx, &machineapi.ListRequest{
-				Root:           rootDir,
-				Recurse:        recursionDepth > 1 || recurse,
-				RecursionDepth: recursionDepth,
-				Types:          reqTypes,
-				ReportXattrs:   long,
-			})
-			if err != nil {
-				return fmt.Errorf("error fetching logs: %s", err)
-			}
+		if lsCmdFlags.recurse {
+			recursionDepth = -1
+		}
 
-			if !long {
-				w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-				fmt.Fprintln(w, "NODE\tNAME")
+		multipleNodes := len(clientFactory.Nodes()) > 1
 
-				defer w.Flush() //nolint:errcheck
-
-				return helpers.ReadGRPCStream(stream, func(info *machineapi.FileInfo, node string, multipleNodes bool) error {
-					if info.Error != "" {
-						return helpers.NonFatalError(fmt.Errorf("%s: error reading file %s: %s", node, info.Name, info.Error))
-					}
-
-					if !multipleNodes {
-						fmt.Println(info.RelativeName)
-					} else {
-						fmt.Fprintf(
-							w, "%s\t%s\n",
-							node,
-							info.RelativeName,
-						)
-					}
-
-					return nil
+		responseChan := multiplex.StreamingViaFactory(
+			ctx, clientFactory,
+			func(ctx context.Context, c *client.Client) (machineapi.MachineService_ListClient, error) {
+				return c.LS(ctx, &machineapi.ListRequest{
+					Root:           rootDir,
+					Recurse:        recursionDepth > 1 || lsCmdFlags.recurse,
+					RecursionDepth: recursionDepth,
+					Types:          reqTypes,
+					ReportXattrs:   lsCmdFlags.long,
 				})
-			}
+			},
+		)
 
+		if !lsCmdFlags.long {
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 			defer w.Flush() //nolint:errcheck
 
-			fmt.Fprintln(w, "NODE\tMODE\tUID\tGID\tSIZE(B)\tLASTMOD\tLABEL\tNAME")
+			var (
+				errs          error
+				headerWritten bool
+			)
 
-			return helpers.ReadGRPCStream(stream, func(info *machineapi.FileInfo, node string, multipleNodes bool) error {
+			for resp := range responseChan {
+				if resp.Err != nil {
+					errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+
+					continue
+				}
+
+				info := resp.Payload
+
 				if info.Error != "" {
-					return helpers.NonFatalError(fmt.Errorf("%s: error reading file %s: %s", node, info.Name, info.Error))
+					errs = errors.Join(errs, fmt.Errorf("%s: error reading file %s: %s", resp.Node, info.Name, info.Error))
+
+					continue
 				}
 
-				display := info.RelativeName
-				if info.Link != "" {
-					display += " -> " + info.Link
+				if !multipleNodes {
+					fmt.Println(info.RelativeName)
+
+					continue
 				}
 
-				size := strconv.FormatInt(info.Size, 10)
+				if !headerWritten {
+					fmt.Fprintln(w, "NODE\tNAME")
 
-				if humanizeFlag {
-					size = humanize.Bytes(uint64(info.Size))
-				}
-
-				timestamp := time.Unix(info.Modified, 0)
-				timestampFormatted := ""
-
-				if humanizeFlag {
-					timestampFormatted = humanize.Time(timestamp)
-				} else {
-					if time.Since(timestamp) < sixMonths {
-						timestampFormatted = timestamp.Format("Jan _2 15:04:05")
-					} else {
-						timestampFormatted = timestamp.Format("Jan _2 2006 15:04")
-					}
-				}
-
-				label := ""
-
-				if info.Xattrs != nil {
-					for _, l := range info.Xattrs {
-						if l.Name == "security.selinux" {
-							label = string(bytes.Trim(l.Data, "\x00\n"))
-
-							break
-						}
-					}
+					headerWritten = true
 				}
 
 				fmt.Fprintf(
-					w, "%s\t%s\t%d\t%d\t%s\t%s\t%s\t%s\n",
-					node,
-					os.FileMode(info.Mode).String(),
-					info.Uid,
-					info.Gid,
-					size,
-					timestampFormatted,
-					label,
-					display,
+					w, "%s\t%s\n",
+					resp.Node,
+					info.RelativeName,
 				)
+			}
 
-				return nil
-			})
-		})
+			return errs
+		}
+
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		defer w.Flush() //nolint:errcheck
+
+		var (
+			errs          error
+			headerWritten bool
+		)
+
+		for resp := range responseChan {
+			if resp.Err != nil {
+				errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+
+				continue
+			}
+
+			info := resp.Payload
+
+			if info.Error != "" {
+				errs = errors.Join(errs, fmt.Errorf("%s: error reading file %s: %s", resp.Node, info.Name, info.Error))
+
+				continue
+			}
+
+			if !headerWritten {
+				fmt.Fprintln(w, "NODE\tMODE\tUID\tGID\tSIZE(B)\tLASTMOD\tLABEL\tNAME")
+
+				headerWritten = true
+			}
+
+			display := info.RelativeName
+			if info.Link != "" {
+				display += " -> " + info.Link
+			}
+
+			size := strconv.FormatInt(info.Size, 10)
+
+			if lsCmdFlags.humanize {
+				size = humanize.Bytes(uint64(info.Size))
+			}
+
+			timestamp := time.Unix(info.Modified, 0)
+			timestampFormatted := ""
+
+			if lsCmdFlags.humanize {
+				timestampFormatted = humanize.Time(timestamp)
+			} else {
+				if time.Since(timestamp) < sixMonths {
+					timestampFormatted = timestamp.Format("Jan _2 15:04:05")
+				} else {
+					timestampFormatted = timestamp.Format("Jan _2 2006 15:04")
+				}
+			}
+
+			label := ""
+
+			if info.Xattrs != nil {
+				for _, l := range info.Xattrs {
+					if l.Name == "security.selinux" {
+						label = string(bytes.Trim(l.Data, "\x00\n"))
+
+						break
+					}
+				}
+			}
+
+			fmt.Fprintf(
+				w, "%s\t%s\t%d\t%d\t%s\t%s\t%s\t%s\n",
+				resp.Node,
+				os.FileMode(info.Mode).String(),
+				info.Uid,
+				info.Gid,
+				size,
+				timestampFormatted,
+				label,
+				display,
+			)
+		}
+
+		return errs
 	},
 }
 
@@ -190,10 +243,10 @@ func init() {
 		"l, L" + "\t" + "symbolic link",
 	}, "\n")
 
-	lsCmd.Flags().BoolVarP(&long, "long", "l", false, "display additional file details")
-	lsCmd.Flags().BoolVarP(&recurse, "recurse", "r", false, "recurse into subdirectories")
-	lsCmd.Flags().BoolVarP(&humanizeFlag, "humanize", "H", false, "humanize size and time in the output")
-	lsCmd.Flags().Int32VarP(&recursionDepth, "depth", "d", 1, "maximum recursion depth")
-	lsCmd.Flags().StringSliceVarP(&types, "type", "t", nil, typesHelp)
+	lsCmd.Flags().BoolVarP(&lsCmdFlags.long, "long", "l", false, "display additional file details")
+	lsCmd.Flags().BoolVarP(&lsCmdFlags.recurse, "recurse", "r", false, "recurse into subdirectories")
+	lsCmd.Flags().BoolVarP(&lsCmdFlags.humanize, "humanize", "H", false, "humanize size and time in the output")
+	lsCmd.Flags().Int32VarP(&lsCmdFlags.depth, "depth", "d", 1, "maximum recursion depth")
+	lsCmd.Flags().StringSliceVarP(&lsCmdFlags.types, "type", "t", nil, typesHelp)
 	addCommand(lsCmd)
 }

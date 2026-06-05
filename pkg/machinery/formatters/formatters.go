@@ -207,6 +207,9 @@ func RenderGraph(ctx context.Context, c *client.Client, resp *inspect.Controller
 }
 
 // RenderServicesInfo writes human readable service information to the io.Writer.
+//
+// Deprecated: this relies on the legacy per-message node metadata; new code should
+// format the node explicitly from the multiplexed response (see the `service` command).
 func RenderServicesInfo(services []client.ServiceInfo, output io.Writer, defaultNode string, withNodeInfo bool) error {
 	w := tabwriter.NewWriter(output, 0, 0, 3, ' ', 0)
 
@@ -245,6 +248,9 @@ func RenderServicesInfo(services []client.ServiceInfo, output io.Writer, default
 }
 
 // ServiceInfoWrapper helper that allows generating rich service information.
+//
+// Deprecated: new code should format service information from the multiplexed
+// response with the node attached explicitly (see the `service` command).
 type ServiceInfoWrapper struct {
 	*machine.ServiceInfo
 }

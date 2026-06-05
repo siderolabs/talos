@@ -16,9 +16,9 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"github.com/spf13/cobra"
 
-	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 )
 
 var eventsCmdFlags struct {
@@ -34,89 +34,112 @@ var eventsCmd = &cobra.Command{
 	Short: "Stream runtime events",
 	Long:  ``,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClient(cmd.Context(), func(ctx context.Context, c *client.Client) error {
-			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-			fmt.Fprintln(w, "NODE\tID\tEVENT\tACTOR\tSOURCE\tMESSAGE")
+		ctx := cmd.Context()
 
-			var opts []client.EventsOptionFunc
+		clientFactory, err := NewClientFactory(ctx, &eventsCmdFlags)
+		if err != nil {
+			return err
+		}
 
-			if eventsCmdFlags.tailEvents != 0 {
-				opts = append(opts, client.WithTailEvents(eventsCmdFlags.tailEvents))
+		defer clientFactory.Close() //nolint:errcheck
+
+		var opts []client.EventsOptionFunc
+
+		if eventsCmdFlags.tailEvents != 0 {
+			opts = append(opts, client.WithTailEvents(eventsCmdFlags.tailEvents))
+		}
+
+		if eventsCmdFlags.tailDuration != 0 {
+			opts = append(opts, client.WithTailDuration(eventsCmdFlags.tailDuration))
+		}
+
+		if eventsCmdFlags.tailID != "" {
+			opts = append(opts, client.WithTailID(eventsCmdFlags.tailID))
+		}
+
+		if eventsCmdFlags.actorID != "" {
+			opts = append(opts, client.WithActorID(eventsCmdFlags.actorID))
+		}
+
+		responseChan := multiplex.StreamingViaFactory(
+			ctx, clientFactory,
+			func(ctx context.Context, c *client.Client) (machine.MachineService_EventsClient, error) {
+				return c.Events(ctx, opts...)
+			},
+		)
+
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		fmt.Fprintln(w, "NODE\tID\tEVENT\tACTOR\tSOURCE\tMESSAGE")
+
+		const format = "%s\t%s\t%s\n%s\t%s\t%s\n"
+
+		var errs error
+
+		for resp := range responseChan {
+			if resp.Err != nil {
+				errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+
+				continue
 			}
 
-			if eventsCmdFlags.tailDuration != 0 {
-				opts = append(opts, client.WithTailDuration(eventsCmdFlags.tailDuration))
-			}
-
-			if eventsCmdFlags.tailID != "" {
-				opts = append(opts, client.WithTailID(eventsCmdFlags.tailID))
-			}
-
-			if eventsCmdFlags.actorID != "" {
-				opts = append(opts, client.WithActorID(eventsCmdFlags.actorID))
-			}
-
-			events, err := c.Events(ctx, opts...)
+			event, err := client.UnmarshalEvent(resp.Payload)
 			if err != nil {
-				return err
+				if _, ok := errors.AsType[client.EventNotSupportedError](err); ok { //nolint:errcheck // wrong linter error
+					continue
+				}
+
+				errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, err))
+
+				continue
 			}
 
-			return helpers.ReadGRPCStream(events, func(ev *machine.Event, node string, multipleNodes bool) error {
-				format := "%s\t%s\t%s\n%s\t%s\t%s\n"
+			var eventArgs []any
 
-				event, err := client.UnmarshalEvent(ev)
-				if err != nil {
-					if _, ok := errors.AsType[client.EventNotSupportedError](err); ok { //nolint:errcheck // wrong linter error
-						return nil
-					}
-
-					return err
+			switch msg := event.Payload.(type) {
+			case *machine.SequenceEvent:
+				eventArgs = []any{msg.GetSequence()}
+				if msg.Error != nil {
+					eventArgs = append(eventArgs, "error:"+" "+msg.GetError().GetMessage())
+				} else {
+					eventArgs = append(eventArgs, msg.GetAction().String())
 				}
-
-				var args []any
-
-				switch msg := event.Payload.(type) {
-				case *machine.SequenceEvent:
-					args = []any{msg.GetSequence()}
-					if msg.Error != nil {
-						args = append(args, "error:"+" "+msg.GetError().GetMessage())
-					} else {
-						args = append(args, msg.GetAction().String())
-					}
-				case *machine.PhaseEvent:
-					args = []any{msg.GetPhase(), msg.GetAction().String()}
-				case *machine.TaskEvent:
-					args = []any{msg.GetTask(), msg.GetAction().String()}
-				case *machine.ServiceStateEvent:
-					args = []any{msg.GetService(), fmt.Sprintf("%s: %s", msg.GetAction(), msg.GetMessage())}
-				case *machine.ConfigLoadErrorEvent:
-					args = []any{"error", msg.GetError()}
-				case *machine.ConfigValidationErrorEvent:
-					args = []any{"error", msg.GetError()}
-				case *machine.AddressEvent:
-					args = []any{msg.GetHostname(), fmt.Sprintf("ADDRESSES: %s", strings.Join(msg.GetAddresses(), ","))}
-				case *machine.MachineStatusEvent:
-					args = []any{
-						msg.GetStage().String(),
-						fmt.Sprintf(
-							"ready: %v, unmet conditions: %v",
-							msg.GetStatus().Ready,
-							xslices.Map(
-								msg.GetStatus().GetUnmetConditions(),
-								func(c *machine.MachineStatusEvent_MachineStatus_UnmetCondition) string {
-									return c.Name
-								},
-							),
+			case *machine.PhaseEvent:
+				eventArgs = []any{msg.GetPhase(), msg.GetAction().String()}
+			case *machine.TaskEvent:
+				eventArgs = []any{msg.GetTask(), msg.GetAction().String()}
+			case *machine.ServiceStateEvent:
+				eventArgs = []any{msg.GetService(), fmt.Sprintf("%s: %s", msg.GetAction(), msg.GetMessage())}
+			case *machine.ConfigLoadErrorEvent:
+				eventArgs = []any{"error", msg.GetError()}
+			case *machine.ConfigValidationErrorEvent:
+				eventArgs = []any{"error", msg.GetError()}
+			case *machine.AddressEvent:
+				eventArgs = []any{msg.GetHostname(), fmt.Sprintf("ADDRESSES: %s", strings.Join(msg.GetAddresses(), ","))}
+			case *machine.MachineStatusEvent:
+				eventArgs = []any{
+					msg.GetStage().String(),
+					fmt.Sprintf(
+						"ready: %v, unmet conditions: %v",
+						msg.GetStatus().Ready,
+						xslices.Map(
+							msg.GetStatus().GetUnmetConditions(),
+							func(c *machine.MachineStatusEvent_MachineStatus_UnmetCondition) string {
+								return c.Name
+							},
 						),
-					}
+					),
 				}
+			}
 
-				args = append([]any{event.Node, event.ID, event.TypeURL, event.ActorID}, args...)
-				fmt.Fprintf(w, format, args...)
+			eventArgs = append([]any{resp.Node, event.ID, event.TypeURL, event.ActorID}, eventArgs...)
+			fmt.Fprintf(w, format, eventArgs...)
 
-				return w.Flush()
-			})
-		})
+			if err := w.Flush(); err != nil {
+				errs = errors.Join(errs, fmt.Errorf("error flushing output: %w", err))
+			}
+		}
+
+		return errs
 	},
 }
 

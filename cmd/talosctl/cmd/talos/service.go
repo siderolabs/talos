@@ -6,17 +6,19 @@ package talos
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"text/tabwriter"
+	"time"
 
+	"github.com/siderolabs/gen/xslices"
 	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/peer"
 
-	"github.com/siderolabs/talos/pkg/cli"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
+	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
-	"github.com/siderolabs/talos/pkg/machinery/formatters"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 )
 
 // serviceCmd represents the service command.
@@ -31,7 +33,7 @@ With actions 'start', 'stop', 'restart', service state is updated respectively.`
 	ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 		switch len(args) {
 		case 0:
-			return getServiceFromNode(cmd.Context()), cobra.ShellCompDirectiveNoFileComp
+			return getServiceFromNode(cmd.Context(), nil), cobra.ShellCompDirectiveNoFileComp
 		case 1:
 			return []string{"start", "stop", "restart", "status"}, cobra.ShellCompDirectiveNoFileComp
 		}
@@ -50,170 +52,231 @@ With actions 'start', 'stop', 'restart', service state is updated respectively.`
 			action = args[1]
 		}
 
-		return WithClient(cmd.Context(), func(ctx context.Context, c *client.Client) error {
-			switch action {
-			case "status":
-				if serviceID == "" {
-					return serviceList(ctx, c)
-				}
+		ctx := cmd.Context()
 
-				return serviceInfo(ctx, c, serviceID)
-			case "start":
-				return serviceStart(ctx, c, serviceID)
-			case "stop":
-				return serviceStop(ctx, c, serviceID)
-			case "restart":
-				return serviceRestart(ctx, c, serviceID)
-			default:
-				return fmt.Errorf("unsupported service action: %q", action)
+		clientFactory, err := NewClientFactory(ctx, nil)
+		if err != nil {
+			return err
+		}
+
+		defer clientFactory.Close() //nolint:errcheck
+
+		switch action {
+		case "status":
+			if serviceID == "" {
+				return serviceList(ctx, clientFactory)
 			}
-		})
+
+			return serviceInfo(ctx, clientFactory, serviceID)
+		case "start":
+			return serviceStart(ctx, clientFactory, serviceID)
+		case "stop":
+			return serviceStop(ctx, clientFactory, serviceID)
+		case "restart":
+			return serviceRestart(ctx, clientFactory, serviceID)
+		default:
+			return fmt.Errorf("unsupported service action: %q", action)
+		}
 	},
 }
 
-func serviceList(ctx context.Context, c *client.Client) error {
-	var remotePeer peer.Peer
-
-	resp, err := c.ServiceList(ctx, grpc.Peer(&remotePeer))
-	if err != nil {
-		if resp == nil {
-			return fmt.Errorf("error listing services: %w", err)
-		}
-
-		cli.Warning("%s", err)
-	}
+func serviceList(ctx context.Context, clientFactory *global.ClientFactory) error {
+	responseChan := multiplex.UnaryViaFactory(
+		ctx, clientFactory,
+		func(ctx context.Context, c *client.Client) (*machineapi.ServiceListResponse, error) {
+			return c.ServiceList(ctx)
+		},
+	)
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tSERVICE\tSTATE\tHEALTH\tLAST CHANGE\tLAST EVENT")
 
-	defaultNode := client.AddrFromPeer(&remotePeer)
+	var errs error
 
-	for _, msg := range resp.Messages {
-		for _, s := range msg.Services {
-			svc := formatters.ServiceInfoWrapper{ServiceInfo: s}
+	for resp := range responseChan {
+		if resp.Err != nil {
+			errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
 
-			node := defaultNode
+			continue
+		}
 
-			if msg.Metadata != nil {
-				node = msg.Metadata.Hostname //nolint:staticcheck // to be refactored next
+		for _, msg := range resp.Payload.Messages {
+			for _, s := range msg.Services {
+				svc := serviceInfoWrapper{s}
+
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s ago\t%s\n", resp.Node, svc.Id, svc.State, svc.healthStatus(), svc.lastUpdated(), svc.lastEvent())
 			}
-
-			fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s ago\t%s\n", node, svc.Id, svc.State, svc.HealthStatus(), svc.LastUpdated(), svc.LastEvent())
 		}
 	}
 
-	return w.Flush()
+	return errors.Join(errs, w.Flush())
 }
 
-func serviceInfo(ctx context.Context, c *client.Client, id string) error {
-	var remotePeer peer.Peer
+func serviceInfo(ctx context.Context, clientFactory *global.ClientFactory, id string) error {
+	responseChan := multiplex.UnaryViaFactory(
+		ctx, clientFactory,
+		func(ctx context.Context, c *client.Client) ([]client.ServiceInfo, error) {
+			return c.ServiceInfo(ctx, id)
+		},
+	)
 
-	services, err := c.ServiceInfo(ctx, id, grpc.Peer(&remotePeer))
-	if err != nil {
-		if services == nil {
-			return fmt.Errorf("error listing services: %w", err)
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+
+	var (
+		errs  error
+		found bool
+	)
+
+	for resp := range responseChan {
+		if resp.Err != nil {
+			errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+
+			continue
 		}
 
-		cli.Warning("%s", err)
+		for _, s := range resp.Payload {
+			found = true
+
+			renderServiceInfo(w, resp.Node, s.Service)
+		}
 	}
 
-	defaultNode := client.AddrFromPeer(&remotePeer)
+	if err := w.Flush(); err != nil {
+		errs = errors.Join(errs, err)
+	}
 
-	if len(services) == 0 {
+	if !found && errs == nil {
 		return fmt.Errorf("service %q is not registered on any nodes", id)
 	}
 
-	return formatters.RenderServicesInfo(services, os.Stdout, defaultNode, true)
+	return errs
 }
 
-func serviceStart(ctx context.Context, c *client.Client, id string) error {
-	var remotePeer peer.Peer
+// renderServiceInfo writes detailed human readable service information for a single node.
+func renderServiceInfo(w *tabwriter.Writer, node string, s *machineapi.ServiceInfo) {
+	svc := serviceInfoWrapper{s}
 
-	resp, err := c.ServiceStart(ctx, id, grpc.Peer(&remotePeer))
-	if err != nil {
-		if resp == nil {
-			return fmt.Errorf("error starting service: %w", err)
-		}
+	fmt.Fprintf(w, "NODE\t%s\n", node)
+	fmt.Fprintf(w, "ID\t%s\n", svc.Id)
+	fmt.Fprintf(w, "STATE\t%s\n", svc.State)
+	fmt.Fprintf(w, "HEALTH\t%s\n", svc.healthStatus())
 
-		cli.Warning("%s", err)
+	if svc.Health.LastMessage != "" {
+		fmt.Fprintf(w, "LAST HEALTH MESSAGE\t%s\n", svc.Health.LastMessage)
 	}
 
-	defaultNode := client.AddrFromPeer(&remotePeer)
+	label := "EVENTS"
+
+	for i := range svc.Events.Events {
+		event := svc.Events.Events[len(svc.Events.Events)-1-i]
+
+		ts := event.Ts.AsTime()
+		fmt.Fprintf(w, "%s\t[%s]: %s (%s ago)\n", label, event.State, event.Msg, time.Since(ts).Round(time.Second))
+		label = ""
+	}
+}
+
+func serviceStart(ctx context.Context, clientFactory *global.ClientFactory, id string) error {
+	return serviceActionRun(
+		ctx, clientFactory,
+		func(ctx context.Context, c *client.Client) (*machineapi.ServiceStartResponse, error) {
+			return c.ServiceStart(ctx, id)
+		},
+		func(resp *machineapi.ServiceStartResponse) []string {
+			return xslices.Map(resp.Messages, (*machineapi.ServiceStart).GetResp)
+		},
+	)
+}
+
+func serviceStop(ctx context.Context, clientFactory *global.ClientFactory, id string) error {
+	return serviceActionRun(
+		ctx, clientFactory,
+		func(ctx context.Context, c *client.Client) (*machineapi.ServiceStopResponse, error) {
+			return c.ServiceStop(ctx, id)
+		},
+		func(resp *machineapi.ServiceStopResponse) []string {
+			return xslices.Map(resp.Messages, (*machineapi.ServiceStop).GetResp)
+		},
+	)
+}
+
+func serviceRestart(ctx context.Context, clientFactory *global.ClientFactory, id string) error {
+	return serviceActionRun(
+		ctx, clientFactory,
+		func(ctx context.Context, c *client.Client) (*machineapi.ServiceRestartResponse, error) {
+			return c.ServiceRestart(ctx, id)
+		},
+		func(resp *machineapi.ServiceRestartResponse) []string {
+			return xslices.Map(resp.Messages, (*machineapi.ServiceRestart).GetResp)
+		},
+	)
+}
+
+// serviceActionRun runs a service control action across all nodes and renders the per-node responses.
+func serviceActionRun[RespT any](
+	ctx context.Context,
+	clientFactory *global.ClientFactory,
+	call func(context.Context, *client.Client) (RespT, error),
+	responses func(RespT) []string,
+) error {
+	responseChan := multiplex.UnaryViaFactory(ctx, clientFactory, call)
 
 	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
 	fmt.Fprintln(w, "NODE\tRESPONSE")
 
-	for _, msg := range resp.Messages {
-		node := defaultNode
+	var errs error
 
-		if msg.Metadata != nil {
-			node = msg.Metadata.Hostname //nolint:staticcheck // to be refactored next
+	for resp := range responseChan {
+		if resp.Err != nil {
+			errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+
+			continue
 		}
 
-		fmt.Fprintf(w, "%s\t%s\n", node, msg.Resp)
+		for _, r := range responses(resp.Payload) {
+			fmt.Fprintf(w, "%s\t%s\n", resp.Node, r)
+		}
 	}
 
-	return w.Flush()
+	return errors.Join(errs, w.Flush())
 }
 
-func serviceStop(ctx context.Context, c *client.Client, id string) error {
-	var remotePeer peer.Peer
-
-	resp, err := c.ServiceStop(ctx, id, grpc.Peer(&remotePeer))
-	if err != nil {
-		if resp == nil {
-			return fmt.Errorf("error starting service: %w", err)
-		}
-
-		cli.Warning("%s", err)
-	}
-
-	defaultNode := client.AddrFromPeer(&remotePeer)
-
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	fmt.Fprintln(w, "NODE\tRESPONSE")
-
-	for _, msg := range resp.Messages {
-		node := defaultNode
-
-		if msg.Metadata != nil {
-			node = msg.Metadata.Hostname //nolint:staticcheck // to be refactored next
-		}
-
-		fmt.Fprintf(w, "%s\t%s\n", node, msg.Resp)
-	}
-
-	return w.Flush()
+// serviceInfoWrapper helper that allows generating rich service information.
+type serviceInfoWrapper struct {
+	*machineapi.ServiceInfo
 }
 
-func serviceRestart(ctx context.Context, c *client.Client, id string) error {
-	var remotePeer peer.Peer
-
-	resp, err := c.ServiceRestart(ctx, id, grpc.Peer(&remotePeer))
-	if err != nil {
-		if resp == nil {
-			return fmt.Errorf("error starting service: %w", err)
-		}
-
-		cli.Warning("%s", err)
+// lastUpdated derives last updated time from the events stream.
+func (svc serviceInfoWrapper) lastUpdated() string {
+	if len(svc.Events.Events) == 0 {
+		return ""
 	}
 
-	defaultNode := client.AddrFromPeer(&remotePeer)
+	ts := svc.Events.Events[len(svc.Events.Events)-1].Ts.AsTime()
 
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	fmt.Fprintln(w, "NODE\tRESPONSE")
+	return time.Since(ts).Round(time.Second).String()
+}
 
-	for _, msg := range resp.Messages {
-		node := defaultNode
-
-		if msg.Metadata != nil {
-			node = msg.Metadata.Hostname //nolint:staticcheck // to be refactored next
-		}
-
-		fmt.Fprintf(w, "%s\t%s\n", node, msg.Resp)
+// lastEvent returns the last service event.
+func (svc serviceInfoWrapper) lastEvent() string {
+	if len(svc.Events.Events) == 0 {
+		return "<none>"
 	}
 
-	return w.Flush()
+	return svc.Events.Events[len(svc.Events.Events)-1].Msg
+}
+
+// healthStatus returns the service health status.
+func (svc serviceInfoWrapper) healthStatus() string {
+	if svc.Health.Unknown {
+		return "?"
+	}
+
+	if svc.Health.Healthy {
+		return "OK"
+	}
+
+	return "Fail"
 }
 
 func init() {

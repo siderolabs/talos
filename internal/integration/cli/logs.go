@@ -55,7 +55,7 @@ func (suite *LogsSuite) TestServiceNotFound() {
 		[]string{"logs", "--nodes", suite.RandomDiscoveredNodeInternalIP(), "servicenotfound"},
 		base.StdoutEmpty(),
 		base.StderrNotEmpty(),
-		base.StderrShouldMatch(regexp.MustCompile(`ERROR:.+ log "servicenotfound" was not registered`)),
+		base.StderrShouldMatch(regexp.MustCompile(`error.+ log "servicenotfound" was not registered`)),
 		base.ShouldFail(),
 	)
 }

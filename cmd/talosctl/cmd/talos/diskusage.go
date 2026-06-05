@@ -16,15 +16,17 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/spf13/cobra"
 
-	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 )
 
-var (
+var duCmdFlags struct {
+	humanize  bool
 	all       bool
 	threshold int64
-)
+	depth     int32
+}
 
 // duCmd represents the du command.
 var duCmd = &cobra.Command{
@@ -39,7 +41,7 @@ var duCmd = &cobra.Command{
 
 		var completeOnlyPaths []string
 
-		for _, path := range completePathFromNode(cmd.Context(), toComplete) {
+		for _, path := range completePathFromNode(cmd.Context(), &duCmdFlags, toComplete) {
 			if path[len(path)-1:] == "/" {
 				completeOnlyPaths = append(completeOnlyPaths, path)
 			}
@@ -48,84 +50,100 @@ var duCmd = &cobra.Command{
 		return completeOnlyPaths, cobra.ShellCompDirectiveNoFileComp
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClient(cmd.Context(), func(ctx context.Context, c *client.Client) error {
-			var paths []string
+		ctx := cmd.Context()
 
-			if len(args) == 0 {
-				paths = []string{"/"}
-			} else {
-				paths = args
+		clientFactory, err := NewClientFactory(ctx, &duCmdFlags)
+		if err != nil {
+			return err
+		}
+
+		defer clientFactory.Close() //nolint:errcheck
+
+		var paths []string
+
+		if len(args) == 0 {
+			paths = []string{"/"}
+		} else {
+			paths = args
+		}
+
+		multipleNodes := len(clientFactory.Nodes()) > 1
+
+		responseChan := multiplex.StreamingViaFactory(
+			ctx, clientFactory,
+			func(ctx context.Context, c *client.Client) (machineapi.MachineService_DiskUsageClient, error) {
+				return c.DiskUsage(ctx, &machineapi.DiskUsageRequest{
+					RecursionDepth: duCmdFlags.depth + 1,
+					All:            duCmdFlags.all,
+					Threshold:      duCmdFlags.threshold,
+					Paths:          paths,
+				})
+			},
+		)
+
+		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+		defer w.Flush() //nolint:errcheck
+
+		stringifySize := func(s int64) string {
+			if duCmdFlags.humanize {
+				return humanize.Bytes(uint64(s))
 			}
 
-			stream, err := c.DiskUsage(ctx, &machineapi.DiskUsageRequest{
-				RecursionDepth: recursionDepth + 1,
-				All:            all,
-				Threshold:      threshold,
-				Paths:          paths,
-			})
-			if err != nil {
-				return fmt.Errorf("error fetching disk usage: %s", err)
+			return strconv.FormatInt(s, 10)
+		}
+
+		var (
+			errs          error
+			headerWritten bool
+		)
+
+		for resp := range responseChan {
+			if resp.Err != nil {
+				errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+
+				continue
 			}
 
-			addedHeader := false
+			info := resp.Payload
 
-			w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+			if info.Error != "" {
+				errs = errors.Join(errs, fmt.Errorf("error from node %s: %s", resp.Node, info.Error))
 
-			stringifySize := func(s int64) string {
-				if humanizeFlag {
-					return humanize.Bytes(uint64(s))
-				}
-
-				return strconv.FormatInt(s, 10)
+				continue
 			}
 
-			defer w.Flush() //nolint:errcheck
-
-			return helpers.ReadGRPCStream(stream, func(info *machineapi.DiskUsageInfo, node string, multipleNodes bool) error {
-				if info.Error != "" {
-					return helpers.NonFatalError(errors.New(info.Error))
-				}
-
-				pattern := "%s\t%s\n"
-
-				size := stringifySize(info.Size)
-
-				args := []any{
-					size, info.RelativeName,
-				}
-
-				if info.Metadata != nil && info.Metadata.Hostname != "" { //nolint:staticcheck // to be refactored next
-					multipleNodes = true
-					node = info.Metadata.Hostname //nolint:staticcheck // to be refactored next
-				}
-
-				if !addedHeader {
-					if multipleNodes {
-						fmt.Fprintln(w, "NODE\tSIZE\tNAME")
-					} else {
-						fmt.Fprintln(w, "SIZE\tNAME")
-					}
-
-					addedHeader = true
-				}
-
+			if !headerWritten {
 				if multipleNodes {
-					pattern = "%s\t%s\t%s\n"
-					args = slices.Insert(args, 0, any(node))
+					fmt.Fprintln(w, "NODE\tSIZE\tNAME")
+				} else {
+					fmt.Fprintln(w, "SIZE\tNAME")
 				}
 
-				fmt.Fprintf(w, pattern, args...)
+				headerWritten = true
+			}
 
-				return nil
-			})
-		})
+			pattern := "%s\t%s\n"
+
+			outputArgs := []any{
+				stringifySize(info.Size), info.RelativeName,
+			}
+
+			if multipleNodes {
+				pattern = "%s\t%s\t%s\n"
+				outputArgs = slices.Insert(outputArgs, 0, any(resp.Node))
+			}
+
+			fmt.Fprintf(w, pattern, outputArgs...)
+		}
+
+		return errs
 	},
 }
 
 func init() {
-	duCmd.Flags().BoolVarP(&humanizeFlag, "humanize", "H", false, "humanize size and time in the output")
-	duCmd.Flags().BoolVarP(&all, "all", "a", false, "write counts for all files, not just directories")
-	duCmd.Flags().Int64VarP(&threshold, "threshold", "t", 0, "threshold exclude entries smaller than SIZE if positive, or entries greater than SIZE if negative")
-	duCmd.Flags().Int32VarP(&recursionDepth, "depth", "d", 0, "maximum recursion depth")
+	duCmd.Flags().BoolVarP(&duCmdFlags.humanize, "humanize", "H", false, "humanize size and time in the output")
+	duCmd.Flags().BoolVarP(&duCmdFlags.all, "all", "a", false, "write counts for all files, not just directories")
+	duCmd.Flags().Int64VarP(&duCmdFlags.threshold, "threshold", "t", 0, "threshold exclude entries smaller than SIZE if positive, or entries greater than SIZE if negative")
+	duCmd.Flags().Int32VarP(&duCmdFlags.depth, "depth", "d", 0, "maximum recursion depth")
 	addCommand(duCmd)
 }

@@ -53,25 +53,6 @@ func (args *Args) WithClientNoNodes(ctx context.Context, action func(context.Con
 	return action(ctx, c)
 }
 
-// WithClient builds upon WithClientNoNodes to provide set of nodes on request context based on config & flags.
-func (args *Args) WithClient(ctx context.Context, action func(context.Context, *client.Client) error, dialOptions ...grpc.DialOption) error {
-	factory, err := NewClientFactory(ctx, args, nil, dialOptions...)
-	if err != nil {
-		return err
-	}
-
-	defer factory.Close() //nolint:errcheck
-
-	_, c, err := factory.BuildClient(ctx, "")
-	if err != nil {
-		return err
-	}
-
-	ctx = client.WithNodes(ctx, factory.Nodes()...) //nolint:staticcheck // to be refactored next
-
-	return action(ctx, c)
-}
-
 // WithClientAndNodes builds upon WithClientNoNodes to provide a list of nodes to the function.
 func (args *Args) WithClientAndNodes(ctx context.Context, action func(context.Context, *client.Client, []string) error, dialOptions ...grpc.DialOption) error {
 	factory, err := NewClientFactory(ctx, args, nil, dialOptions...)

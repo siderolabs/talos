@@ -18,21 +18,35 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/peer"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/formatters"
 )
-
-var kubernetesFlag bool
 
 // GlobalArgs is the common arguments for the root command.
 var GlobalArgs global.Args
+
+// kubernetesNamespaceFlag is embedded into command flag structs that select between
+// the system and Kubernetes containerd namespaces via the --kubernetes flag.
+type kubernetesNamespaceFlag struct {
+	kubernetes bool
+}
+
+// useKubernetesNamespace reports whether the Kubernetes containerd namespace is selected.
+func (f kubernetesNamespaceFlag) useKubernetesNamespace() bool {
+	return f.kubernetes
+}
+
+// containerNamespaceFlags is implemented by command flag structs carrying the
+// --kubernetes namespace selector; used by the container completion helpers.
+type containerNamespaceFlags interface {
+	useKubernetesNamespace() bool
+}
 
 const pathAutoCompleteLimit = 500
 
@@ -40,11 +54,6 @@ const pathAutoCompleteLimit = 500
 // before flushing the tabwriter, so partial results appear without thrashing
 // column widths while responses are still arriving.
 const outputFlushInterval = 500 * time.Millisecond
-
-// WithClient builds upon WithClientNoNodes to provide set of nodes on request context based on config & flags.
-func WithClient(ctx context.Context, action func(context.Context, *client.Client) error, dialOptions ...grpc.DialOption) error {
-	return GlobalArgs.WithClient(ctx, action, dialOptions...)
-}
 
 // WithClientAndNodes builds upon WithClientNoNodes to pass a list of nodes via command function.
 func WithClientAndNodes(ctx context.Context, action func(context.Context, *client.Client, []string) error, dialOptions ...grpc.DialOption) error {
@@ -92,7 +101,7 @@ func addCommand(cmd *cobra.Command) {
 }
 
 // completePathFromNode represents tab complete options for `ls` and `ls *` commands.
-func completePathFromNode(ctx context.Context, inputPath string) []string {
+func completePathFromNode(ctx context.Context, flags any, inputPath string) []string {
 	pathToSearch := inputPath
 
 	// If the pathToSearch is empty, use root '/'
@@ -109,16 +118,16 @@ func completePathFromNode(ctx context.Context, inputPath string) []string {
 		pathToSearch = pathToSearch[:index] + "/"
 	}
 
-	paths = getPathFromNode(ctx, pathToSearch, inputPath)
+	paths = getPathFromNode(ctx, flags, pathToSearch, inputPath)
 
 	return maps.Keys(paths)
 }
 
 //nolint:gocyclo
-func getPathFromNode(ctx context.Context, path, filter string) map[string]struct{} {
+func getPathFromNode(ctx context.Context, flags any, path, filter string) map[string]struct{} {
 	paths := make(map[string]struct{})
 
-	clientFactory, err := NewClientFactory(ctx, &GlobalArgs)
+	clientFactory, err := NewClientFactory(ctx, flags)
 	if err != nil {
 		cobra.CompError(fmt.Sprintf("error creating client factory: %v", err))
 
@@ -193,76 +202,97 @@ func getPathFromNode(ctx context.Context, path, filter string) map[string]struct
 	return paths
 }
 
-func getServiceFromNode(ctx context.Context) []string {
-	var svcIDs []string
+func getServiceFromNode(ctx context.Context, flags any) []string {
+	clientFactory, err := NewClientFactory(ctx, flags)
+	if err != nil {
+		cobra.CompError(fmt.Sprintf("error creating client factory: %v", err))
 
-	//nolint:errcheck
-	GlobalArgs.WithClient(
-		ctx,
-		func(ctx context.Context, c *client.Client) error {
-			var remotePeer peer.Peer
+		return nil
+	}
 
-			resp, err := c.ServiceList(ctx, grpc.Peer(&remotePeer))
-			if err != nil {
-				return err
-			}
+	defer clientFactory.Close() //nolint:errcheck
 
-			for _, msg := range resp.Messages {
-				for _, s := range msg.Services {
-					svc := formatters.ServiceInfoWrapper{ServiceInfo: s}
-					svcIDs = append(svcIDs, svc.Id)
-				}
-			}
-
-			return nil
+	responseChan := multiplex.UnaryViaFactory(
+		ctx, clientFactory,
+		func(ctx context.Context, c *client.Client) (*machineapi.ServiceListResponse, error) {
+			return c.ServiceList(ctx)
 		},
 	)
+
+	var svcIDs []string
+
+	for resp := range responseChan {
+		if resp.Err != nil {
+			cobra.CompError(fmt.Sprintf("error from node %s: %v", resp.Node, resp.Err))
+
+			continue
+		}
+
+		for _, msg := range resp.Payload.Messages {
+			for _, s := range msg.Services {
+				svcIDs = append(svcIDs, s.Id)
+			}
+		}
+	}
 
 	return svcIDs
 }
 
-func getContainersFromNode(ctx context.Context, kubernetes bool) []string {
-	var containerIDs []string
+func getContainersFromNode(ctx context.Context, flags containerNamespaceFlags) []string {
+	clientFactory, err := NewClientFactory(ctx, flags)
+	if err != nil {
+		cobra.CompError(fmt.Sprintf("error creating client factory: %v", err))
 
-	//nolint:errcheck
-	GlobalArgs.WithClient(
-		ctx,
-		func(ctx context.Context, c *client.Client) error {
-			var (
-				namespace string
-				driver    common.ContainerDriver
-			)
+		return nil
+	}
 
-			if kubernetes {
-				namespace = constants.K8sContainerdNamespace
-				driver = common.ContainerDriver_CRI
-			} else {
-				namespace = constants.SystemContainerdNamespace
-				driver = common.ContainerDriver_CONTAINERD
-			}
+	defer clientFactory.Close() //nolint:errcheck
 
-			resp, err := c.Containers(ctx, namespace, driver)
-			if err != nil {
-				return err
-			}
+	kubernetes := flags.useKubernetesNamespace()
 
-			for _, msg := range resp.Messages {
-				for _, p := range msg.Containers {
-					if p.Pid == 0 {
-						continue
-					}
+	var (
+		namespace string
+		driver    common.ContainerDriver
+	)
 
-					if kubernetes && p.Id == p.PodId {
-						continue
-					}
+	if kubernetes {
+		namespace = constants.K8sContainerdNamespace
+		driver = common.ContainerDriver_CRI
+	} else {
+		namespace = constants.SystemContainerdNamespace
+		driver = common.ContainerDriver_CONTAINERD
+	}
 
-					containerIDs = append(containerIDs, p.Id)
-				}
-			}
-
-			return nil
+	responseChan := multiplex.UnaryViaFactory(
+		ctx, clientFactory,
+		func(ctx context.Context, c *client.Client) (*machineapi.ContainersResponse, error) {
+			return c.Containers(ctx, namespace, driver)
 		},
 	)
+
+	var containerIDs []string
+
+	for resp := range responseChan {
+		if resp.Err != nil {
+			cobra.CompError(fmt.Sprintf("error from node %s: %v", resp.Node, resp.Err))
+
+			continue
+		}
+
+		for _, msg := range resp.Payload.Messages {
+			for _, p := range msg.Containers {
+				if p.Pid == 0 {
+					continue
+				}
+
+				if kubernetes && p.Id == p.PodId {
+					continue
+				}
+
+				containerIDs = append(containerIDs, p.Id)
+			}
+		}
+	}
 
 	return containerIDs
 }

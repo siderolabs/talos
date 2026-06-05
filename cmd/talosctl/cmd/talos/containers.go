@@ -23,6 +23,10 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
+var containersCmdFlags struct {
+	kubernetesNamespaceFlag
+}
+
 // containersCmd represents the processes command.
 var containersCmd = &cobra.Command{
 	Use:     "containers",
@@ -33,7 +37,7 @@ var containersCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		ctx := cmd.Context()
 
-		clientFactory, err := NewClientFactory(ctx, nil)
+		clientFactory, err := NewClientFactory(ctx, &containersCmdFlags)
 		if err != nil {
 			return err
 		}
@@ -45,7 +49,7 @@ var containersCmd = &cobra.Command{
 			driver    common.ContainerDriver
 		)
 
-		if kubernetesFlag {
+		if containersCmdFlags.kubernetes {
 			namespace = constants.K8sContainerdNamespace
 			driver = common.ContainerDriver_CRI
 		} else {
@@ -106,7 +110,7 @@ var containersCmd = &cobra.Command{
 }
 
 func init() {
-	containersCmd.Flags().BoolVarP(&kubernetesFlag, "kubernetes", "k", false, "use the k8s.io containerd namespace")
+	containersCmd.Flags().BoolVarP(&containersCmdFlags.kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
 
 	containersCmd.Flags().Bool("use-cri", false, "use the CRI driver")
 	containersCmd.Flags().MarkHidden("use-cri") //nolint:errcheck

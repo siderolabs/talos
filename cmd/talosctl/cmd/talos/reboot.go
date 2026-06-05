@@ -19,6 +19,7 @@ import (
 	"github.com/siderolabs/talos/pkg/flags"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 	"github.com/siderolabs/talos/pkg/reporter"
 )
 
@@ -91,17 +92,33 @@ func rebootRun(ctx context.Context, opts []client.RebootMode) (retErr error) {
 
 func rebootInternal(ctx context.Context, wait, debug bool, timeout time.Duration, rep *reporter.Reporter, opts ...client.RebootMode) error {
 	if !wait {
-		return WithClient(ctx, func(ctx context.Context, c *client.Client) error {
-			if err := helpers.ClientVersionCheckLegacy(ctx, c); err != nil { //nolint:staticcheck // to be refactored next
-				return err
-			}
+		clientFactory, err := NewClientFactory(ctx, &rebootCmdFlags)
+		if err != nil {
+			return err
+		}
 
-			if err := c.Reboot(ctx, opts...); err != nil {
-				return fmt.Errorf("error executing reboot: %s", err)
-			}
+		defer clientFactory.Close() //nolint:errcheck
 
-			return nil
-		})
+		if err := helpers.ClientVersionCheck(ctx, clientFactory); err != nil {
+			return err
+		}
+
+		responseChan := multiplex.UnaryViaFactory(
+			ctx, clientFactory,
+			func(ctx context.Context, c *client.Client) (struct{}, error) {
+				return struct{}{}, c.Reboot(ctx, opts...)
+			},
+		)
+
+		var errs error
+
+		for resp := range responseChan {
+			if resp.Err != nil {
+				errs = errors.Join(errs, fmt.Errorf("error executing reboot on node %s: %w", resp.Node, resp.Err))
+			}
+		}
+
+		return errs
 	}
 
 	return action.NewTracker(

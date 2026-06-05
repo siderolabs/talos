@@ -6,16 +6,20 @@ package talos
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/spf13/cobra"
 
-	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
-	"github.com/siderolabs/talos/pkg/machinery/api/common"
+	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 )
 
-var dmesgTail bool
+var dmesgCmdFlags struct {
+	follow bool
+	tail   bool
+}
 
 // dmesgCmd represents the dmesg command.
 var dmesgCmd = &cobra.Command{
@@ -24,25 +28,42 @@ var dmesgCmd = &cobra.Command{
 	Long:  ``,
 	Args:  cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClient(cmd.Context(), func(ctx context.Context, c *client.Client) error {
-			stream, err := c.Dmesg(ctx, follow, dmesgTail)
-			if err != nil {
-				return fmt.Errorf("error getting dmesg: %w", err)
+		ctx := cmd.Context()
+
+		clientFactory, err := NewClientFactory(ctx, &dmesgCmdFlags)
+		if err != nil {
+			return err
+		}
+
+		defer clientFactory.Close() //nolint:errcheck
+
+		responseChan := multiplex.StreamingViaFactory(
+			ctx, clientFactory,
+			func(ctx context.Context, c *client.Client) (machineapi.MachineService_DmesgClient, error) {
+				return c.Dmesg(ctx, dmesgCmdFlags.follow, dmesgCmdFlags.tail)
+			},
+		)
+
+		var errs error
+
+		for resp := range responseChan {
+			if resp.Err != nil {
+				errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+
+				continue
 			}
 
-			return helpers.ReadGRPCStream(stream, func(data *common.Data, node string, multipleNodes bool) error {
-				if data.Bytes != nil {
-					fmt.Printf("%s: %s", node, data.Bytes)
-				}
+			if resp.Payload.Bytes != nil {
+				fmt.Printf("%s: %s", resp.Node, resp.Payload.Bytes)
+			}
+		}
 
-				return nil
-			})
-		})
+		return errs
 	},
 }
 
 func init() {
 	addCommand(dmesgCmd)
-	dmesgCmd.Flags().BoolVarP(&follow, "follow", "f", false, "specify if the kernel log should be streamed")
-	dmesgCmd.Flags().BoolVarP(&dmesgTail, "tail", "", false, "specify if only new messages should be sent (makes sense only when combined with --follow)")
+	dmesgCmd.Flags().BoolVarP(&dmesgCmdFlags.follow, "follow", "f", false, "specify if the kernel log should be streamed")
+	dmesgCmd.Flags().BoolVarP(&dmesgCmdFlags.tail, "tail", "", false, "specify if only new messages should be sent (makes sense only when combined with --follow)")
 }

@@ -15,10 +15,12 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
 	"github.com/siderolabs/talos/pkg/cli"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -38,9 +40,12 @@ var netstatCmdFlags struct {
 	ipv6      bool
 }
 
-type netstat struct {
-	client        *client.Client
-	NodeNetNSPods map[string]map[string]string
+// netstatPrinter renders netstat responses, attaching the node explicitly and
+// resolving pod names from the per-node network namespace map.
+type netstatPrinter struct {
+	w             *tabwriter.Writer
+	nodeNetNSPods map[string]map[string]string
+	headerWritten bool
 }
 
 // netstatCmd represents the netstat command.
@@ -60,68 +65,81 @@ If you don't pass an argument, the command will show host connections.`,
 			return nil, cobra.ShellCompDirectiveError | cobra.ShellCompDirectiveNoFileComp
 		}
 
+		ctx := cmd.Context()
+
+		clientFactory, err := NewClientFactory(ctx, &netstatCmdFlags)
+		if err != nil {
+			cobra.CompError(fmt.Sprintf("error creating client factory: %v", err))
+
+			return nil, cobra.ShellCompDirectiveError | cobra.ShellCompDirectiveNoFileComp
+		}
+
+		defer clientFactory.Close() //nolint:errcheck
+
+		nodeNetNSPods, err := getPodNetNs(ctx, clientFactory)
+		if err != nil {
+			cobra.CompError(fmt.Sprintf("error getting pod network namespaces: %v", err))
+
+			return nil, cobra.ShellCompDirectiveError | cobra.ShellCompDirectiveNoFileComp
+		}
+
 		var podList []string
 
-		if WithClient(cmd.Context(), func(ctx context.Context, c *client.Client) error {
-			n := netstat{
-				NodeNetNSPods: make(map[string]map[string]string),
-				client:        c,
+		for _, netNsPods := range nodeNetNSPods {
+			for _, podName := range netNsPods {
+				podList = append(podList, podName)
 			}
-
-			err := n.getPodNetNsFromNode(ctx)
-			if err != nil {
-				return err
-			}
-
-			for _, netNsPods := range n.NodeNetNSPods {
-				for _, podName := range netNsPods {
-					podList = append(podList, podName)
-				}
-			}
-
-			return nil
-		}) != nil {
-			return nil, cobra.ShellCompDirectiveError | cobra.ShellCompDirectiveNoFileComp
 		}
 
 		return podList, cobra.ShellCompDirectiveNoFileComp
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if netstatCmdFlags.pods && len(args) > 0 {
+			return errors.New("cannot use --pods and specify a pod")
+		}
+
 		req := netstatFlagsToRequest()
 
-		return WithClient(cmd.Context(), func(ctx context.Context, c *client.Client) (err error) {
-			if netstatCmdFlags.pods && len(args) > 0 {
-				return errors.New("cannot use --pods and specify a pod")
+		ctx := cmd.Context()
+
+		clientFactory, err := NewClientFactory(ctx, &netstatCmdFlags)
+		if err != nil {
+			return err
+		}
+
+		defer clientFactory.Close() //nolint:errcheck
+
+		findThePod := len(args) > 0
+
+		var nodeNetNSPods map[string]map[string]string
+
+		if findThePod || netstatCmdFlags.pods {
+			nodeNetNSPods, err = getPodNetNs(ctx, clientFactory)
+			if err != nil {
+				return err
+			}
+		}
+
+		printer := &netstatPrinter{
+			w:             tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0),
+			nodeNetNSPods: nodeNetNSPods,
+		}
+
+		// Finding a specific pod changes the flow: instead of multiplexing across all
+		// nodes, we locate the single node hosting the pod and query only that node.
+		if findThePod {
+			foundNode, foundNetNs := findPodNetNs(nodeNetNSPods, args[0])
+
+			if foundNetNs == "" {
+				cli.Fatalf("pod %s not found", args[0])
 			}
 
-			findThePod := len(args) > 0
+			req.Netns.Netns = []string{foundNetNs}
+			req.Netns.Hostnetwork = false
 
-			n := netstat{
-				client: c,
-			}
-
-			n.NodeNetNSPods = make(map[string]map[string]string)
-
-			if findThePod || netstatCmdFlags.pods {
-				err = n.getPodNetNsFromNode(ctx)
-				if err != nil {
-					return err
-				}
-			}
-
-			if findThePod {
-				var foundNode, foundNetNs string
-
-				foundNode, foundNetNs = n.findPodNetNs(args[0])
-
-				if foundNetNs == "" {
-					cli.Fatalf("pod %s not found", args[0])
-				}
-
-				ctx = client.WithNode(ctx, foundNode)
-
-				req.Netns.Netns = []string{foundNetNs}
-				req.Netns.Hostnetwork = false
+			ctx, c, err := clientFactory.BuildClient(ctx, foundNode)
+			if err != nil {
+				return err
 			}
 
 			response, err := c.Netstat(ctx, req)
@@ -133,10 +151,31 @@ If you don't pass an argument, the command will show host connections.`,
 				cli.Warning("%s", err)
 			}
 
-			err = n.printNetstat(response)
+			printer.printResponse(foundNode, response)
 
-			return err
-		})
+			return printer.flush()
+		}
+
+		responseChan := multiplex.UnaryViaFactory(
+			ctx, clientFactory,
+			func(ctx context.Context, c *client.Client) (*machine.NetstatResponse, error) {
+				return c.Netstat(ctx, req)
+			},
+		)
+
+		var errs error
+
+		for resp := range responseChan {
+			if resp.Err != nil {
+				errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+
+				continue
+			}
+
+			printer.printResponse(resp.Node, resp.Payload)
+		}
+
+		return errors.Join(errs, printer.flush())
 	},
 }
 
@@ -206,43 +245,56 @@ func netstatFlagsToRequest() *machine.NetstatRequest {
 	return &req
 }
 
-func (n *netstat) getPodNetNsFromNode(ctx context.Context) (err error) {
-	resp, err := n.client.Containers(ctx, constants.K8sContainerdNamespace, common.ContainerDriver_CRI)
-	if err != nil {
-		cli.Warning("error getting containers: %v", err)
+// getPodNetNs builds a per-node map of network namespace -> pod ID across all nodes.
+func getPodNetNs(ctx context.Context, clientFactory *global.ClientFactory) (map[string]map[string]string, error) {
+	responseChan := multiplex.UnaryViaFactory(
+		ctx, clientFactory,
+		func(ctx context.Context, c *client.Client) (*machine.ContainersResponse, error) {
+			return c.Containers(ctx, constants.K8sContainerdNamespace, common.ContainerDriver_CRI)
+		},
+	)
 
-		return err
-	}
+	nodeNetNSPods := map[string]map[string]string{}
 
-	for _, msg := range resp.Messages {
-		for _, p := range msg.Containers {
-			if p.NetworkNamespace == "" {
-				continue
+	var errs error
+
+	for resp := range responseChan {
+		if resp.Err != nil {
+			errs = errors.Join(errs, fmt.Errorf("error getting containers from node %s: %w", resp.Node, resp.Err))
+
+			continue
+		}
+
+		for _, msg := range resp.Payload.Messages {
+			for _, p := range msg.Containers {
+				if p.NetworkNamespace == "" {
+					continue
+				}
+
+				if p.Pid == 0 {
+					continue
+				}
+
+				if p.Id != p.PodId {
+					continue
+				}
+
+				if nodeNetNSPods[resp.Node] == nil {
+					nodeNetNSPods[resp.Node] = make(map[string]string)
+				}
+
+				nodeNetNSPods[resp.Node][p.NetworkNamespace] = p.Id
 			}
-
-			if p.Pid == 0 {
-				continue
-			}
-
-			if p.Id != p.PodId {
-				continue
-			}
-
-			if n.NodeNetNSPods[msg.Metadata.Hostname] == nil { //nolint:staticcheck // to be refactored next
-				n.NodeNetNSPods[msg.Metadata.Hostname] = make(map[string]string) //nolint:staticcheck // to be refactored next
-			}
-
-			n.NodeNetNSPods[msg.Metadata.Hostname][p.NetworkNamespace] = p.Id //nolint:staticcheck // to be refactored next
 		}
 	}
 
-	return nil
+	return nodeNetNSPods, errs
 }
 
-func (n *netstat) findPodNetNs(findNamespaceAndPod string) (string, string) {
+func findPodNetNs(nodeNetNSPods map[string]map[string]string, findNamespaceAndPod string) (string, string) {
 	var foundNetNs, foundNode string
 
-	for node, netNSPods := range n.NodeNetNSPods {
+	for node, netNSPods := range nodeNetNSPods {
 		for NetNs, podName := range netNSPods {
 			if podName == strings.ToLower(findNamespaceAndPod) {
 				foundNetNs = NetNs
@@ -257,35 +309,20 @@ func (n *netstat) findPodNetNs(findNamespaceAndPod string) (string, string) {
 }
 
 //nolint:gocyclo
-func (n *netstat) printNetstat(response *machine.NetstatResponse) error {
-	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-	node := ""
-
-	for i, message := range response.Messages {
-		if message.Metadata != nil && message.Metadata.Hostname != "" { //nolint:staticcheck // to be refactored next
-			node = message.Metadata.Hostname //nolint:staticcheck // to be refactored next
-		}
-
+func (p *netstatPrinter) printResponse(node string, response *machine.NetstatResponse) {
+	for _, message := range response.Messages {
 		if len(message.Connectrecord) == 0 {
 			continue
 		}
 
-		for j, record := range message.Connectrecord {
-			if i == 0 && j == 0 {
-				labels := netstatSummaryLabels()
+		for _, record := range message.Connectrecord {
+			if !p.headerWritten {
+				fmt.Fprintln(p.w, "NODE\t"+netstatSummaryLabels())
 
-				if node != "" {
-					fmt.Fprintln(w, "NODE\t"+labels)
-				} else {
-					fmt.Fprintln(w, labels)
-				}
+				p.headerWritten = true
 			}
 
-			var args []any
-
-			if node != "" {
-				args = append(args, node)
-			}
+			args := []any{node}
 
 			state := ""
 			if record.State != 7 {
@@ -321,13 +358,13 @@ func (n *netstat) printNetstat(response *machine.NetstatResponse) error {
 			}
 
 			if netstatCmdFlags.pods {
-				if record.Netns == "" || node == "" || n.NodeNetNSPods[node] == nil {
+				if record.Netns == "" || p.nodeNetNSPods[node] == nil {
 					args = append(args, []any{
 						"-",
 					}...)
 				} else {
 					args = append(args, []any{
-						n.NodeNetNSPods[node][record.Netns],
+						p.nodeNetNSPods[node][record.Netns],
 					}...)
 				}
 			}
@@ -343,11 +380,13 @@ func (n *netstat) printNetstat(response *machine.NetstatResponse) error {
 			pattern := strings.Repeat("%s\t", len(args))
 			pattern = strings.TrimSpace(pattern) + "\n"
 
-			fmt.Fprintf(w, pattern, args...)
+			fmt.Fprintf(p.w, pattern, args...)
 		}
 	}
+}
 
-	return w.Flush()
+func (p *netstatPrinter) flush() error {
+	return p.w.Flush()
 }
 
 func netstatSummaryLabels() (labels string) {
