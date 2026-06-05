@@ -7,6 +7,7 @@ option java_package = "dev.talos.api.resource.definitions.runtime";
 
 import "common/common.proto";
 import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
 import "resource/definitions/enums/enums.proto";
 
 // APIServiceConfigSpec describes configuration for Talos API service (apid).
@@ -207,6 +208,24 @@ message ServicePIDSpec {
   int32 pid = 1;
   // MountNamespace is the mount namespace of the service.
   string mount_namespace = 2;
+}
+
+// TaskSpec describes a background task to be run by a schedule.
+message TaskSpec {
+  string id = 1;
+  string owner = 2;
+  repeated string args = 3;
+  string selinux_label = 4;
+}
+
+// TaskStatusSpec describes status of a background task.
+message TaskStatusSpec {
+  string id = 1;
+  talos.resource.definitions.enums.RuntimeTaskState task_state = 2;
+  string result = 3;
+  google.protobuf.Timestamp start = 4;
+  google.protobuf.Duration duration = 5;
+  string owner = 6;
 }
 
 // UniqueMachineTokenSpec is the spec for the machine unique token. Token can be empty if machine wasn't assigned any.
