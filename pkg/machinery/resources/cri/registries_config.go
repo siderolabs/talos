@@ -207,6 +207,7 @@ func (RegistriesConfigExtension) ResourceDefinition() meta.ResourceDefinitionSpe
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		PrintColumns:     []meta.PrintColumn{},
+		Sensitivity:      meta.Sensitive,
 	}
 }
 

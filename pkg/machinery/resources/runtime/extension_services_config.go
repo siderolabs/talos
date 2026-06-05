@@ -53,6 +53,7 @@ func (ExtensionServiceConfigExtension) ResourceDefinition() meta.ResourceDefinit
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		PrintColumns:     []meta.PrintColumn{},
+		Sensitivity:      meta.Sensitive,
 	}
 }
 
