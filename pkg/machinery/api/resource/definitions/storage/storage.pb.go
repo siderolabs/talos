@@ -13,6 +13,8 @@ import (
 
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+
+	enums "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/enums"
 )
 
 const (
@@ -21,6 +23,107 @@ const (
 	// Verify that runtime/protoimpl is sufficiently up-to-date.
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
+
+// LVMLogicalVolumeSpecSpec is the spec for LVMLogicalVolumeSpec resource.
+type LVMLogicalVolumeSpecSpec struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// VGName is the parent volume group name.
+	VgName string `protobuf:"bytes,1,opt,name=vg_name,json=vgName,proto3" json:"vg_name,omitempty"`
+	// Name is the logical volume name.
+	Name string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	// Type is the LV layout.
+	Type enums.StorageLVMLogicalVolumeType `protobuf:"varint,3,opt,name=type,proto3,enum=talos.resource.definitions.enums.StorageLVMLogicalVolumeType" json:"type,omitempty"`
+	// SizeBytes is the absolute LV size in bytes; used when SizePercentVG is zero.
+	SizeBytes uint64 `protobuf:"varint,4,opt,name=size_bytes,json=sizeBytes,proto3" json:"size_bytes,omitempty"`
+	// SizePercentVG, when non-zero, sizes the LV as a percentage of the VG.
+	SizePercentVg uint32 `protobuf:"varint,5,opt,name=size_percent_vg,json=sizePercentVg,proto3" json:"size_percent_vg,omitempty"`
+	// Mirrors is the mirror count for raid1/raid10 layouts.
+	Mirrors uint32 `protobuf:"varint,6,opt,name=mirrors,proto3" json:"mirrors,omitempty"`
+	// Stripes is the stripe count for raid0/raid10 layouts; 0 means "all PVs",
+	// resolved by the reconcile controller.
+	Stripes       uint32 `protobuf:"varint,7,opt,name=stripes,proto3" json:"stripes,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LVMLogicalVolumeSpecSpec) Reset() {
+	*x = LVMLogicalVolumeSpecSpec{}
+	mi := &file_resource_definitions_storage_storage_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LVMLogicalVolumeSpecSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LVMLogicalVolumeSpecSpec) ProtoMessage() {}
+
+func (x *LVMLogicalVolumeSpecSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_storage_storage_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LVMLogicalVolumeSpecSpec.ProtoReflect.Descriptor instead.
+func (*LVMLogicalVolumeSpecSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_storage_storage_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *LVMLogicalVolumeSpecSpec) GetVgName() string {
+	if x != nil {
+		return x.VgName
+	}
+	return ""
+}
+
+func (x *LVMLogicalVolumeSpecSpec) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *LVMLogicalVolumeSpecSpec) GetType() enums.StorageLVMLogicalVolumeType {
+	if x != nil {
+		return x.Type
+	}
+	return enums.StorageLVMLogicalVolumeType(0)
+}
+
+func (x *LVMLogicalVolumeSpecSpec) GetSizeBytes() uint64 {
+	if x != nil {
+		return x.SizeBytes
+	}
+	return 0
+}
+
+func (x *LVMLogicalVolumeSpecSpec) GetSizePercentVg() uint32 {
+	if x != nil {
+		return x.SizePercentVg
+	}
+	return 0
+}
+
+func (x *LVMLogicalVolumeSpecSpec) GetMirrors() uint32 {
+	if x != nil {
+		return x.Mirrors
+	}
+	return 0
+}
+
+func (x *LVMLogicalVolumeSpecSpec) GetStripes() uint32 {
+	if x != nil {
+		return x.Stripes
+	}
+	return 0
+}
 
 // LVMLogicalVolumeStatusSpec mirrors selected `lvs` columns.
 type LVMLogicalVolumeStatusSpec struct {
@@ -101,7 +204,7 @@ type LVMLogicalVolumeStatusSpec struct {
 
 func (x *LVMLogicalVolumeStatusSpec) Reset() {
 	*x = LVMLogicalVolumeStatusSpec{}
-	mi := &file_resource_definitions_storage_storage_proto_msgTypes[0]
+	mi := &file_resource_definitions_storage_storage_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -113,7 +216,7 @@ func (x *LVMLogicalVolumeStatusSpec) String() string {
 func (*LVMLogicalVolumeStatusSpec) ProtoMessage() {}
 
 func (x *LVMLogicalVolumeStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_storage_storage_proto_msgTypes[0]
+	mi := &file_resource_definitions_storage_storage_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -126,7 +229,7 @@ func (x *LVMLogicalVolumeStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LVMLogicalVolumeStatusSpec.ProtoReflect.Descriptor instead.
 func (*LVMLogicalVolumeStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_storage_storage_proto_rawDescGZIP(), []int{0}
+	return file_resource_definitions_storage_storage_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *LVMLogicalVolumeStatusSpec) GetPath() string {
@@ -387,7 +490,7 @@ type LVMPhysicalVolumeSpecSpec struct {
 
 func (x *LVMPhysicalVolumeSpecSpec) Reset() {
 	*x = LVMPhysicalVolumeSpecSpec{}
-	mi := &file_resource_definitions_storage_storage_proto_msgTypes[1]
+	mi := &file_resource_definitions_storage_storage_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -399,7 +502,7 @@ func (x *LVMPhysicalVolumeSpecSpec) String() string {
 func (*LVMPhysicalVolumeSpecSpec) ProtoMessage() {}
 
 func (x *LVMPhysicalVolumeSpecSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_storage_storage_proto_msgTypes[1]
+	mi := &file_resource_definitions_storage_storage_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -412,7 +515,7 @@ func (x *LVMPhysicalVolumeSpecSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LVMPhysicalVolumeSpecSpec.ProtoReflect.Descriptor instead.
 func (*LVMPhysicalVolumeSpecSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_storage_storage_proto_rawDescGZIP(), []int{1}
+	return file_resource_definitions_storage_storage_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *LVMPhysicalVolumeSpecSpec) GetDevice() string {
@@ -473,7 +576,7 @@ type LVMPhysicalVolumeStatusSpec struct {
 
 func (x *LVMPhysicalVolumeStatusSpec) Reset() {
 	*x = LVMPhysicalVolumeStatusSpec{}
-	mi := &file_resource_definitions_storage_storage_proto_msgTypes[2]
+	mi := &file_resource_definitions_storage_storage_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -485,7 +588,7 @@ func (x *LVMPhysicalVolumeStatusSpec) String() string {
 func (*LVMPhysicalVolumeStatusSpec) ProtoMessage() {}
 
 func (x *LVMPhysicalVolumeStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_storage_storage_proto_msgTypes[2]
+	mi := &file_resource_definitions_storage_storage_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -498,7 +601,7 @@ func (x *LVMPhysicalVolumeStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LVMPhysicalVolumeStatusSpec.ProtoReflect.Descriptor instead.
 func (*LVMPhysicalVolumeStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_storage_storage_proto_rawDescGZIP(), []int{2}
+	return file_resource_definitions_storage_storage_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *LVMPhysicalVolumeStatusSpec) GetDevice() string {
@@ -630,7 +733,7 @@ type LVMRefreshRequestSpec struct {
 
 func (x *LVMRefreshRequestSpec) Reset() {
 	*x = LVMRefreshRequestSpec{}
-	mi := &file_resource_definitions_storage_storage_proto_msgTypes[3]
+	mi := &file_resource_definitions_storage_storage_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -642,7 +745,7 @@ func (x *LVMRefreshRequestSpec) String() string {
 func (*LVMRefreshRequestSpec) ProtoMessage() {}
 
 func (x *LVMRefreshRequestSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_storage_storage_proto_msgTypes[3]
+	mi := &file_resource_definitions_storage_storage_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -655,55 +758,10 @@ func (x *LVMRefreshRequestSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LVMRefreshRequestSpec.ProtoReflect.Descriptor instead.
 func (*LVMRefreshRequestSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_storage_storage_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *LVMRefreshRequestSpec) GetRequest() int64 {
-	if x != nil {
-		return x.Request
-	}
-	return 0
-}
-
-// LVMRefreshStatusSpec is the spec for LVMRefreshStatus.
-type LVMRefreshStatusSpec struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Request       int64                  `protobuf:"varint,1,opt,name=request,proto3" json:"request,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *LVMRefreshStatusSpec) Reset() {
-	*x = LVMRefreshStatusSpec{}
-	mi := &file_resource_definitions_storage_storage_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *LVMRefreshStatusSpec) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*LVMRefreshStatusSpec) ProtoMessage() {}
-
-func (x *LVMRefreshStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_storage_storage_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use LVMRefreshStatusSpec.ProtoReflect.Descriptor instead.
-func (*LVMRefreshStatusSpec) Descriptor() ([]byte, []int) {
 	return file_resource_definitions_storage_storage_proto_rawDescGZIP(), []int{4}
 }
 
-func (x *LVMRefreshStatusSpec) GetRequest() int64 {
+func (x *LVMRefreshRequestSpec) GetRequest() int64 {
 	if x != nil {
 		return x.Request
 	}
@@ -1087,7 +1145,16 @@ var File_resource_definitions_storage_storage_proto protoreflect.FileDescriptor
 
 const file_resource_definitions_storage_storage_proto_rawDesc = "" +
 	"\n" +
-	"*resource/definitions/storage/storage.proto\x12\"talos.resource.definitions.storage\"\xbc\b\n" +
+	"*resource/definitions/storage/storage.proto\x12\"talos.resource.definitions.storage\x1a&resource/definitions/enums/enums.proto\"\x95\x02\n" +
+	"\x18LVMLogicalVolumeSpecSpec\x12\x17\n" +
+	"\avg_name\x18\x01 \x01(\tR\x06vgName\x12\x12\n" +
+	"\x04name\x18\x02 \x01(\tR\x04name\x12Q\n" +
+	"\x04type\x18\x03 \x01(\x0e2=.talos.resource.definitions.enums.StorageLVMLogicalVolumeTypeR\x04type\x12\x1d\n" +
+	"\n" +
+	"size_bytes\x18\x04 \x01(\x04R\tsizeBytes\x12&\n" +
+	"\x0fsize_percent_vg\x18\x05 \x01(\rR\rsizePercentVg\x12\x18\n" +
+	"\amirrors\x18\x06 \x01(\rR\amirrors\x12\x18\n" +
+	"\astripes\x18\a \x01(\rR\astripes\"\xbc\b\n" +
 	"\x1aLVMLogicalVolumeStatusSpec\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12\x17\n" +
 	"\adm_path\x18\x02 \x01(\tR\x06dmPath\x12\x12\n" +
@@ -1157,8 +1224,6 @@ const file_resource_definitions_storage_storage_proto_rawDesc = "" +
 	"\x05minor\x18\x10 \x01(\tR\x05minor\x12\x12\n" +
 	"\x04tags\x18\x11 \x03(\tR\x04tags\"1\n" +
 	"\x15LVMRefreshRequestSpec\x12\x18\n" +
-	"\arequest\x18\x01 \x01(\x03R\arequest\"0\n" +
-	"\x14LVMRefreshStatusSpec\x12\x18\n" +
 	"\arequest\x18\x01 \x01(\x03R\arequest\"K\n" +
 	"\x16LVMValidationErrorSpec\x12\x17\n" +
 	"\avg_name\x18\x01 \x01(\tR\x06vgName\x12\x18\n" +
@@ -1213,21 +1278,23 @@ func file_resource_definitions_storage_storage_proto_rawDescGZIP() []byte {
 
 var file_resource_definitions_storage_storage_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_resource_definitions_storage_storage_proto_goTypes = []any{
-	(*LVMLogicalVolumeStatusSpec)(nil),  // 0: talos.resource.definitions.storage.LVMLogicalVolumeStatusSpec
-	(*LVMPhysicalVolumeSpecSpec)(nil),   // 1: talos.resource.definitions.storage.LVMPhysicalVolumeSpecSpec
-	(*LVMPhysicalVolumeStatusSpec)(nil), // 2: talos.resource.definitions.storage.LVMPhysicalVolumeStatusSpec
-	(*LVMRefreshRequestSpec)(nil),       // 3: talos.resource.definitions.storage.LVMRefreshRequestSpec
-	(*LVMRefreshStatusSpec)(nil),        // 4: talos.resource.definitions.storage.LVMRefreshStatusSpec
-	(*LVMValidationErrorSpec)(nil),      // 5: talos.resource.definitions.storage.LVMValidationErrorSpec
-	(*LVMVolumeGroupSpecSpec)(nil),      // 6: talos.resource.definitions.storage.LVMVolumeGroupSpecSpec
-	(*LVMVolumeGroupStatusSpec)(nil),    // 7: talos.resource.definitions.storage.LVMVolumeGroupStatusSpec
+	(*LVMLogicalVolumeSpecSpec)(nil),       // 0: talos.resource.definitions.storage.LVMLogicalVolumeSpecSpec
+	(*LVMLogicalVolumeStatusSpec)(nil),     // 1: talos.resource.definitions.storage.LVMLogicalVolumeStatusSpec
+	(*LVMPhysicalVolumeSpecSpec)(nil),      // 2: talos.resource.definitions.storage.LVMPhysicalVolumeSpecSpec
+	(*LVMPhysicalVolumeStatusSpec)(nil),    // 3: talos.resource.definitions.storage.LVMPhysicalVolumeStatusSpec
+	(*LVMRefreshRequestSpec)(nil),          // 4: talos.resource.definitions.storage.LVMRefreshRequestSpec
+	(*LVMValidationErrorSpec)(nil),         // 5: talos.resource.definitions.storage.LVMValidationErrorSpec
+	(*LVMVolumeGroupSpecSpec)(nil),         // 6: talos.resource.definitions.storage.LVMVolumeGroupSpecSpec
+	(*LVMVolumeGroupStatusSpec)(nil),       // 7: talos.resource.definitions.storage.LVMVolumeGroupStatusSpec
+	(enums.StorageLVMLogicalVolumeType)(0), // 8: talos.resource.definitions.enums.StorageLVMLogicalVolumeType
 }
 var file_resource_definitions_storage_storage_proto_depIdxs = []int32{
-	0, // [0:0] is the sub-list for method output_type
-	0, // [0:0] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	8, // 0: talos.resource.definitions.storage.LVMLogicalVolumeSpecSpec.type:type_name -> talos.resource.definitions.enums.StorageLVMLogicalVolumeType
+	1, // [1:1] is the sub-list for method output_type
+	1, // [1:1] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_storage_storage_proto_init() }

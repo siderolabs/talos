@@ -10,6 +10,7 @@ import (
 	"context"
 	"fmt"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -18,6 +19,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	grpcstatus "google.golang.org/grpc/status"
 
@@ -140,14 +142,71 @@ func (suite *StorageSuite) provisionVGViaConfig(nodeCtx context.Context, node, n
 	}, assertTimeout, assertInterval, "VG status not reported")
 }
 
-// TestLVMStatus tests declarative VG provisioning + LV status surfacing.
+// assertLVStatus waits until the logical volume vg/lv surfaces in
+// LVMLogicalVolumeStatus with a non-zero size.
+//
+//nolint:unparam
+func (suite *StorageSuite) assertLVStatus(nodeCtx context.Context, vg, lv string) {
+	fullName := vg + "/" + lv
+
+	suite.Require().Eventually(func() bool {
+		lvs, err := safe.StateListAll[*storageres.LVMLogicalVolumeStatus](nodeCtx, suite.Client.COSI)
+		if err != nil {
+			return false
+		}
+
+		for lvStatus := range lvs.All() {
+			spec := lvStatus.TypedSpec()
+			if spec.FullName == fullName && spec.VGName == vg && spec.Size != "" && spec.Size != "0" {
+				return true
+			}
+		}
+
+		return false
+	}, 90*time.Second, 2*time.Second, "logical volume %q not created", fullName)
+}
+
+// lvDiskSymlink waits for the logical volume vg/lv to surface as a
+// device-mapper block.Disk and returns one of its udev symlinks (e.g.
+// /dev/mapper/<vg>-<lv>), usable in a UserVolume disk selector.
+func (suite *StorageSuite) lvDiskSymlink(nodeCtx context.Context, vg, lv string) string {
+	marker := vg + "-" + lv
+
+	var symlink string
+
+	suite.Require().Eventually(func() bool {
+		disks, err := safe.StateListAll[*block.Disk](nodeCtx, suite.Client.COSI)
+		if err != nil {
+			return false
+		}
+
+		for disk := range disks.All() {
+			if !strings.HasPrefix(disk.TypedSpec().DevPath, "/dev/dm") {
+				continue
+			}
+
+			for _, s := range disk.TypedSpec().Symlinks {
+				if strings.Contains(s, marker) {
+					symlink = s
+
+					return true
+				}
+			}
+		}
+
+		return false
+	}, 90*time.Second, 2*time.Second, "logical volume %q/%q did not surface as a disk", vg, lv)
+
+	return symlink
+}
+
+// TestLVMUserVolumeOnLogicalVolume provisions a VG spanning three PVs, a linear
+// logical volume that occupies the whole VG (and therefore spans all three
+// PVs), then a UserVolume of type=disk backed by that logical volume. All steps
+// are driven purely through Talos config + resources (no privileged pods).
 //
 //nolint:gocyclo,cyclop
-func (suite *StorageSuite) TestLVMStatus() {
-	if suite.SelinuxEnforcing {
-		suite.T().Skip("skipping tests with nsenter in SELinux enforcing mode")
-	}
-
+func (suite *StorageSuite) TestLVMUserVolumeOnLogicalVolume() {
 	if testing.Short() {
 		suite.T().Skip("skipping test in short mode.")
 	}
@@ -165,103 +224,110 @@ func (suite *StorageSuite) TestLVMStatus() {
 
 	userDisks := suite.UserDisks(suite.ctx, node)
 
-	if len(userDisks) < 2 {
+	if len(userDisks) < 3 {
 		suite.T().Skipf("not enough user disks on %s/%s: %q", node, nodeName, userDisks)
 	}
 
-	pvDisks := userDisks[:2]
+	pvDisks := userDisks[:3]
 
 	nodeCtx := client.WithNode(suite.ctx, node)
 
+	const (
+		lvName  = "lvspan"
+		userVol = "lvmuser"
+	)
+
+	// VG over all three disks.
 	suite.provisionVGViaConfig(nodeCtx, node, nodeName, pvDisks)
 
 	defer suite.deleteLVMVolumes(node, pvDisks)
 
-	// LV creation not declarative yet; use lvcreate via privileged pod.
-	podDef, err := suite.NewPrivilegedPod("lvm-status")
-	suite.Require().NoError(err)
+	// Linear LV occupying the whole VG -> spans all three PVs.
+	suite.PatchMachineConfig(nodeCtx, lvDoc(suite.T(), lvName, vgName, "linear", "100%"))
 
-	podDef = podDef.WithNodeName(nodeName)
+	defer suite.RemoveMachineConfigDocumentsByName(nodeCtx, storagecfg.LVMLogicalVolumeConfigKind, lvName)
 
-	suite.Require().NoError(podDef.Create(suite.ctx, 5*time.Minute))
+	suite.assertLVStatus(nodeCtx, vgName, lvName)
 
-	defer podDef.Delete(suite.ctx) //nolint:errcheck
+	// The LV must be larger than any single PV, proving it spans more than one.
+	suite.assertLVSpansDisk(nodeCtx, vgName, lvName, pvDisks[0])
 
-	stdout, _, err := podDef.Exec(
-		suite.ctx,
-		"nsenter --mount=/proc/1/ns/mnt -- lvcreate -n lv0 -L 64M vg0",
+	symlink := suite.lvDiskSymlink(nodeCtx, vgName, lvName)
+
+	suite.T().Logf("provisioning UserVolume %q on logical volume %s/%s (%s)", userVol, vgName, lvName, symlink)
+
+	uv := blockcfg.NewUserVolumeConfigV1Alpha1()
+	uv.MetaName = userVol
+	uv.VolumeType = new(block.VolumeTypeDisk)
+	uv.ProvisioningSpec.DiskSelectorSpec.Match = cel.MustExpression(
+		cel.ParseBooleanExpression(fmt.Sprintf("'%s' in disk.symlinks", symlink), celenv.DiskLocator()),
 	)
-	suite.Require().NoError(err)
-	suite.Require().Contains(stdout, "Logical volume \"lv0\" created.")
+	uv.FilesystemSpec.FilesystemType = block.FilesystemTypeXFS
 
-	stdout, _, err = podDef.Exec(
-		suite.ctx,
-		"nsenter --mount=/proc/1/ns/mnt -- lvcreate -n lv1 -L 64M vg0",
-	)
-	suite.Require().NoError(err)
-	suite.Require().Contains(stdout, "Logical volume \"lv1\" created.")
+	suite.PatchMachineConfig(nodeCtx, uv)
+
+	defer suite.RemoveMachineConfigDocumentsByName(nodeCtx, blockcfg.UserVolumeConfigKind, userVol)
+
+	userVolumeID := constants.UserVolumePrefix + userVol
 
 	const (
 		assertTimeout  = 90 * time.Second
 		assertInterval = 2 * time.Second
 	)
 
-	expectedLVPaths := xslices.ToSet([]string{"/dev/vg0/lv0", "/dev/vg0/lv1"})
-
 	suite.Require().Eventually(func() bool {
-		lvs, err := safe.StateListAll[*storageres.LVMLogicalVolumeStatus](nodeCtx, suite.Client.COSI)
+		vs, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.COSI, userVolumeID)
 		if err != nil {
 			return false
 		}
 
-		found := map[string]struct{}{}
-
-		for lv := range lvs.All() {
-			spec := lv.TypedSpec()
-			if _, ok := expectedLVPaths[spec.Path]; !ok {
-				continue
-			}
-
-			if spec.VGName != vgName || spec.Size == "" || spec.Size == "0" {
-				continue
-			}
-
-			found[spec.Path] = struct{}{}
-		}
-
-		return len(found) == len(expectedLVPaths)
-	}, assertTimeout, assertInterval, "LV statuses not reported")
-
-	// Drive LogicalVolumeRemove + verify status cleanup.
-	for _, lvName := range []string{"lv0", "lv1"} {
-		suite.Require().NoError(suite.Client.LogicalVolumeRemove(nodeCtx, &machineapi.LVMServiceLogicalVolumeRemoveRequest{
-			VolumeGroup:   vgName,
-			LogicalVolume: lvName,
-		}))
-	}
+		return vs.TypedSpec().Phase == block.VolumePhaseReady
+	}, assertTimeout, assertInterval, "user volume %q not ready", userVolumeID)
 
 	suite.Require().Eventually(func() bool {
-		lvs, err := safe.StateListAll[*storageres.LVMLogicalVolumeStatus](nodeCtx, suite.Client.COSI)
-		if err != nil {
-			return false
-		}
+		_, err := safe.StateGetByID[*block.MountStatus](nodeCtx, suite.Client.COSI, userVolumeID)
 
-		for lv := range lvs.All() {
-			if _, ok := expectedLVPaths[lv.TypedSpec().Path]; ok {
-				return false
-			}
-		}
-
-		return true
-	}, assertTimeout, assertInterval, "LV statuses were not cleaned up")
+		return err == nil
+	}, assertTimeout, assertInterval, "user volume %q not mounted", userVolumeID)
 }
 
-// TestLVMActivation reboots a node and verifies the LVs are reactivated.
-func (suite *StorageSuite) TestLVMActivation() {
-	if suite.SelinuxEnforcing {
-		suite.T().Skip("skipping tests with nsenter in SELinux enforcing mode")
-	}
+// assertLVSpansDisk asserts the logical volume vg/lv is larger than the single
+// disk, which (for a linear 100%VG volume) demonstrates it spans multiple PVs.
+func (suite *StorageSuite) assertLVSpansDisk(nodeCtx context.Context, vg, lv, disk string) {
+	fullName := vg + "/" + lv
 
+	diskRes, err := safe.StateGetByID[*block.Disk](nodeCtx, suite.Client.COSI, filepath.Base(disk))
+	suite.Require().NoError(err)
+
+	diskSize := diskRes.TypedSpec().Size
+
+	suite.Require().Eventually(func() bool {
+		lvs, err := safe.StateListAll[*storageres.LVMLogicalVolumeStatus](nodeCtx, suite.Client.COSI)
+		if err != nil {
+			return false
+		}
+
+		for lvStatus := range lvs.All() {
+			spec := lvStatus.TypedSpec()
+			if spec.FullName != fullName {
+				continue
+			}
+
+			lvSize, perr := strconv.ParseUint(spec.Size, 10, 64)
+			if perr != nil {
+				return false
+			}
+
+			return lvSize > diskSize
+		}
+
+		return false
+	}, 90*time.Second, 2*time.Second, "logical volume %q did not span more than one PV (disk size %d)", fullName, diskSize)
+}
+
+// TestLVMActivation provisions a VG + LV declaratively, reboots the node, and
+// verifies the logical volume is reactivated.
+func (suite *StorageSuite) TestLVMActivation() {
 	if testing.Short() {
 		suite.T().Skip("skipping test in short mode.")
 	}
@@ -287,32 +353,17 @@ func (suite *StorageSuite) TestLVMActivation() {
 
 	nodeCtx := client.WithNode(suite.ctx, node)
 
+	const lvName = "lvdata"
+
 	suite.provisionVGViaConfig(nodeCtx, node, nodeName, pvDisks)
 
 	defer suite.deleteLVMVolumes(node, pvDisks)
 
-	podDef, err := suite.NewPrivilegedPod("pv-create")
-	suite.Require().NoError(err)
+	suite.PatchMachineConfig(nodeCtx, lvDoc(suite.T(), lvName, vgName, "linear", "1GiB"))
 
-	podDef = podDef.WithNodeName(nodeName)
+	defer suite.RemoveMachineConfigDocumentsByName(nodeCtx, storagecfg.LVMLogicalVolumeConfigKind, lvName)
 
-	suite.Require().NoError(podDef.Create(suite.ctx, 5*time.Minute))
-
-	defer podDef.Delete(suite.ctx) //nolint:errcheck
-
-	stdout, _, err := podDef.Exec(
-		suite.ctx,
-		"nsenter --mount=/proc/1/ns/mnt -- lvcreate --mirrors=1 --type=raid1 --nosync -n lv0 -L 1G vg0",
-	)
-	suite.Require().NoError(err)
-	suite.Require().Contains(stdout, "Logical volume \"lv0\" created.")
-
-	stdout, _, err = podDef.Exec(
-		suite.ctx,
-		"nsenter --mount=/proc/1/ns/mnt -- lvcreate -n lv1 -L 1G vg0",
-	)
-	suite.Require().NoError(err)
-	suite.Require().Contains(stdout, "Logical volume \"lv1\" created.")
+	suite.assertLVStatus(nodeCtx, vgName, lvName)
 
 	suite.T().Logf("rebooting %s/%s", node, nodeName)
 
@@ -324,18 +375,13 @@ func (suite *StorageSuite) TestLVMActivation() {
 	)
 
 	suite.Require().Eventually(func() bool {
-		return suite.lvmVolumeExists(node, []string{"lv0", "lv1"})
-	}, 5*time.Second, 1*time.Second, "LVs were not activated after reboot")
+		return suite.lvmVolumeExists(node, []string{lvName})
+	}, 60*time.Second, 2*time.Second, "LV not activated after reboot")
 }
 
-// TestLVMRemove tests LV/VG/PV remove RPCs against a declarative VG.
-//
-//nolint:gocyclo,cyclop
-func (suite *StorageSuite) TestLVMRemove() {
-	if suite.SelinuxEnforcing {
-		suite.T().Skip("skipping tests with nsenter in SELinux enforcing mode")
-	}
-
+// TestLVMRaid1LogicalVolume provisions a VG over two PVs and a raid1 (mirrored)
+// logical volume, then verifies the LV surfaces with a raid1 layout.
+func (suite *StorageSuite) TestLVMRaid1LogicalVolume() {
 	if testing.Short() {
 		suite.T().Skip("skipping test in short mode.")
 	}
@@ -361,112 +407,210 @@ func (suite *StorageSuite) TestLVMRemove() {
 
 	nodeCtx := client.WithNode(suite.ctx, node)
 
+	const lvName = "lvmirror"
+
+	// raid1 mirrors across two PVs.
 	suite.provisionVGViaConfig(nodeCtx, node, nodeName, pvDisks)
 
 	defer suite.deleteLVMVolumes(node, pvDisks)
 
-	podDef, err := suite.NewPrivilegedPod("lvm-remove")
+	suite.PatchMachineConfig(nodeCtx, lvDoc(suite.T(), lvName, vgName, "raid1", "1GiB"))
+
+	defer suite.RemoveMachineConfigDocumentsByName(nodeCtx, storagecfg.LVMLogicalVolumeConfigKind, lvName)
+
+	suite.assertLVStatus(nodeCtx, vgName, lvName)
+	suite.assertLVLayout(nodeCtx, vgName, lvName, "raid1")
+}
+
+// assertLVLayout waits until the logical volume vg/lv reports a layout string
+// containing want (e.g. "linear", "raid0", "raid1", "raid10").
+func (suite *StorageSuite) assertLVLayout(nodeCtx context.Context, vg, lv, want string) {
+	fullName := vg + "/" + lv
+
+	suite.Require().Eventually(func() bool {
+		lvs, err := safe.StateListAll[*storageres.LVMLogicalVolumeStatus](nodeCtx, suite.Client.COSI)
+		if err != nil {
+			return false
+		}
+
+		for lvStatus := range lvs.All() {
+			spec := lvStatus.TypedSpec()
+			if spec.FullName == fullName && strings.Contains(spec.Layout, want) {
+				return true
+			}
+		}
+
+		return false
+	}, 90*time.Second, 2*time.Second, "logical volume %q did not report %q layout", fullName, want)
+}
+
+// provisionLVOfType provisions a VG over the first pvCount user disks and a
+// logical volume of the given type, asserting the LV surfaces with the expected
+// layout. Skips when the node has too few user disks. Returns once verified;
+// teardown is registered via t.Cleanup-style defers by the caller.
+func (suite *StorageSuite) runLVTypeTest(lvType, wantLayout string, pvCount int) {
+	if testing.Short() {
+		suite.T().Skip("skipping test in short mode.")
+	}
+
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping test for non-qemu provisioner")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
 	suite.Require().NoError(err)
 
-	podDef = podDef.WithNodeName(nodeName)
+	nodeName := k8sNode.Name
 
-	suite.Require().NoError(podDef.Create(suite.ctx, 5*time.Minute))
+	userDisks := suite.UserDisks(suite.ctx, node)
 
-	defer podDef.Delete(suite.ctx) //nolint:errcheck
-
-	for _, lvName := range []string{"lv0", "lv1"} {
-		stdout, _, err := podDef.Exec(
-			suite.ctx,
-			fmt.Sprintf("nsenter --mount=/proc/1/ns/mnt -- lvcreate -n %s -L 64M vg0", lvName),
-		)
-		suite.Require().NoError(err)
-		suite.Require().Contains(stdout, fmt.Sprintf("Logical volume %q created.", lvName))
+	if len(userDisks) < pvCount {
+		suite.T().Skipf("not enough user disks on %s/%s for %s (need %d): %q", node, nodeName, lvType, pvCount, userDisks)
 	}
+
+	pvDisks := userDisks[:pvCount]
+
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	const lvName = "lvtyped"
+
+	suite.provisionVGViaConfig(nodeCtx, node, nodeName, pvDisks)
+
+	defer suite.deleteLVMVolumes(node, pvDisks)
+
+	suite.PatchMachineConfig(nodeCtx, lvDoc(suite.T(), lvName, vgName, lvType, "1GiB"))
+
+	defer suite.RemoveMachineConfigDocumentsByName(nodeCtx, storagecfg.LVMLogicalVolumeConfigKind, lvName)
+
+	suite.assertLVStatus(nodeCtx, vgName, lvName)
+	suite.assertLVLayout(nodeCtx, vgName, lvName, wantLayout)
+}
+
+// TestLVMLinearLogicalVolume provisions a linear LV and checks its layout.
+func (suite *StorageSuite) TestLVMLinearLogicalVolume() {
+	suite.runLVTypeTest("linear", "linear", 1)
+}
+
+// TestLVMRaid0LogicalVolume provisions a raid0 (striped) LV across two PVs.
+func (suite *StorageSuite) TestLVMRaid0LogicalVolume() {
+	suite.runLVTypeTest("raid0", "raid0", 2)
+}
+
+// TestLVMRaid10LogicalVolume provisions a raid10 (striped mirror) LV; with the
+// default mirror count of 1 and auto stripes this needs at least four PVs.
+func (suite *StorageSuite) TestLVMRaid10LogicalVolume() {
+	suite.runLVTypeTest("raid10", "raid10", 4)
+}
+
+// lvObservedSize returns the observed size in bytes of the logical volume
+// vg/lv, or 0 if it is not (yet) reported.
+//
+//nolint:unparam
+func (suite *StorageSuite) lvObservedSize(nodeCtx context.Context, vg, lv string) uint64 {
+	fullName := vg + "/" + lv
+
+	lvs, err := safe.StateListAll[*storageres.LVMLogicalVolumeStatus](nodeCtx, suite.Client.COSI)
+	suite.Require().NoError(err)
+
+	for lvStatus := range lvs.All() {
+		spec := lvStatus.TypedSpec()
+		if spec.FullName != fullName {
+			continue
+		}
+
+		size, perr := strconv.ParseUint(spec.Size, 10, 64)
+		if perr != nil {
+			return 0
+		}
+
+		return size
+	}
+
+	return 0
+}
+
+// TestLVMGrowLogicalVolume verifies that raising the size of an
+// LVMLogicalVolumeConfig grows the existing LV, both for an absolute (bytes)
+// size and a percentage-of-VG size. Shrinking never happens, so a successful
+// grow is observed as a strictly larger LV size.
+//
+//nolint:gocyclo
+func (suite *StorageSuite) TestLVMGrowLogicalVolume() {
+	if testing.Short() {
+		suite.T().Skip("skipping test in short mode.")
+	}
+
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping test for non-qemu provisioner")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	nodeName := k8sNode.Name
+
+	userDisks := suite.UserDisks(suite.ctx, node)
+
+	if len(userDisks) < 2 {
+		suite.T().Skipf("not enough user disks on %s/%s: %q", node, nodeName, userDisks)
+	}
+
+	pvDisks := userDisks[:2]
+
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	const (
+		lvBytes   = "lvbytes"
+		lvPercent = "lvpercent"
+	)
+
+	suite.provisionVGViaConfig(nodeCtx, node, nodeName, pvDisks)
+
+	defer suite.deleteLVMVolumes(node, pvDisks)
+
+	// One byte-sized LV and one percent-sized LV, both small to start.
+	suite.PatchMachineConfig(
+		nodeCtx,
+		lvDoc(suite.T(), lvBytes, vgName, "linear", "1GiB"),
+		lvDoc(suite.T(), lvPercent, vgName, "linear", "10%"),
+	)
+
+	defer suite.RemoveMachineConfigDocumentsByName(nodeCtx, storagecfg.LVMLogicalVolumeConfigKind, lvBytes, lvPercent)
+
+	suite.assertLVStatus(nodeCtx, vgName, lvBytes)
+	suite.assertLVStatus(nodeCtx, vgName, lvPercent)
+
+	bytesBefore := suite.lvObservedSize(nodeCtx, vgName, lvBytes)
+	percentBefore := suite.lvObservedSize(nodeCtx, vgName, lvPercent)
+
+	suite.Require().NotZero(bytesBefore)
+	suite.Require().NotZero(percentBefore)
+
+	suite.T().Logf("growing %s 1GiB->3GiB, %s 10%%->40%%", lvBytes, lvPercent)
+
+	// Raise both sizes.
+	suite.PatchMachineConfig(
+		nodeCtx,
+		lvDoc(suite.T(), lvBytes, vgName, "linear", "3GiB"),
+		lvDoc(suite.T(), lvPercent, vgName, "linear", "40%"),
+	)
 
 	const (
 		assertTimeout  = 90 * time.Second
 		assertInterval = 2 * time.Second
 	)
 
-	expectedLVPaths := xslices.ToSet([]string{"/dev/vg0/lv0", "/dev/vg0/lv1"})
-
-	// Wait for scan to observe LVs before removal.
 	suite.Require().Eventually(func() bool {
-		lvs, err := safe.StateListAll[*storageres.LVMLogicalVolumeStatus](nodeCtx, suite.Client.COSI)
-		if err != nil {
-			return false
-		}
-
-		found := map[string]struct{}{}
-
-		for lv := range lvs.All() {
-			if _, ok := expectedLVPaths[lv.TypedSpec().Path]; ok {
-				found[lv.TypedSpec().Path] = struct{}{}
-			}
-		}
-
-		return len(found) == len(expectedLVPaths)
-	}, assertTimeout, assertInterval, "LV statuses not reported")
-
-	for _, lvName := range []string{"lv0", "lv1"} {
-		suite.Require().NoError(suite.Client.LogicalVolumeRemove(nodeCtx, &machineapi.LVMServiceLogicalVolumeRemoveRequest{
-			VolumeGroup:   vgName,
-			LogicalVolume: lvName,
-		}))
-	}
+		return suite.lvObservedSize(nodeCtx, vgName, lvBytes) > bytesBefore
+	}, assertTimeout, assertInterval, "byte-sized LV did not grow")
 
 	suite.Require().Eventually(func() bool {
-		lvs, err := safe.StateListAll[*storageres.LVMLogicalVolumeStatus](nodeCtx, suite.Client.COSI)
-		if err != nil {
-			return false
-		}
-
-		for lv := range lvs.All() {
-			if _, ok := expectedLVPaths[lv.TypedSpec().Path]; ok {
-				return false
-			}
-		}
-
-		return true
-	}, assertTimeout, assertInterval, "LV statuses were not cleaned up after LogicalVolumeRemove")
-
-	// Stop the reconciler from re-creating the VG before destructive RPCs.
-	suite.RemoveMachineConfigDocumentsByName(nodeCtx, storagecfg.LVMVolumeGroupConfigKind, vgName)
-
-	suite.Require().NoError(suite.Client.VolumeGroupRemove(nodeCtx, &machineapi.LVMServiceVolumeGroupRemoveRequest{
-		VolumeGroup: vgName,
-	}))
-
-	suite.Require().Eventually(func() bool {
-		_, err := safe.StateGetByID[*storageres.LVMVolumeGroupStatus](nodeCtx, suite.Client.COSI, vgName)
-
-		return state.IsNotFoundError(err)
-	}, assertTimeout, assertInterval, "VG status was not cleaned up after VolumeGroupRemove")
-
-	for _, dev := range pvDisks {
-		suite.Require().NoError(suite.Client.PhysicalVolumeRemove(nodeCtx, &machineapi.LVMServicePhysicalVolumeRemoveRequest{
-			Device: dev,
-		}))
-	}
-
-	expectedPVIDs := xslices.ToSet(xslices.Map(pvDisks, func(d string) string {
-		return strings.TrimPrefix(strings.ReplaceAll(d, "/", "-"), "-dev-")
-	}))
-
-	suite.Require().Eventually(func() bool {
-		pvs, err := safe.StateListAll[*storageres.LVMPhysicalVolumeStatus](nodeCtx, suite.Client.COSI)
-		if err != nil {
-			return false
-		}
-
-		for pv := range pvs.All() {
-			if _, ok := expectedPVIDs[pv.Metadata().ID()]; ok {
-				return false
-			}
-		}
-
-		return true
-	}, assertTimeout, assertInterval, "PV statuses were not cleaned up after PhysicalVolumeRemove")
+		return suite.lvObservedSize(nodeCtx, vgName, lvPercent) > percentBefore
+	}, assertTimeout, assertInterval, "percent-sized LV did not grow")
 }
 
 // vgDocSelector builds an LVMVolumeGroupConfig doc with an arbitrary
@@ -678,10 +822,6 @@ func (suite *StorageSuite) provisionRawVolumes(nodeCtx context.Context, diskMatc
 //
 //nolint:gocyclo
 func (suite *StorageSuite) TestLVMOnRawVolumes() {
-	if suite.SelinuxEnforcing {
-		suite.T().Skip("skipping tests with nsenter in SELinux enforcing mode")
-	}
-
 	if testing.Short() {
 		suite.T().Skip("skipping test in short mode.")
 	}
@@ -731,10 +871,6 @@ func (suite *StorageSuite) TestLVMOnRawVolumes() {
 // TestLVMOnSpecificPVs provisions a VG on specific whole disks selected by
 // device path.
 func (suite *StorageSuite) TestLVMOnSpecificPVs() {
-	if suite.SelinuxEnforcing {
-		suite.T().Skip("skipping tests with nsenter in SELinux enforcing mode")
-	}
-
 	if testing.Short() {
 		suite.T().Skip("skipping test in short mode.")
 	}
@@ -773,16 +909,110 @@ func (suite *StorageSuite) TestLVMOnSpecificPVs() {
 	suite.assertPVAndVGStatus(nodeCtx, vgSpecific, pvDisks)
 }
 
+// lvDoc builds an LVMLogicalVolumeConfig in the given VG.
+func lvDoc(t *testing.T, name, vg, lvType, maxSize string) *storagecfg.LVMLogicalVolumeConfigV1Alpha1 {
+	t.Helper()
+
+	parsedType, err := storageres.LVMLogicalVolumeTypeString(lvType)
+	require.NoError(t, err)
+
+	doc := storagecfg.NewLVMLogicalVolumeConfigV1Alpha1()
+	doc.MetaName = name
+	doc.LVType = parsedType
+	doc.Provisioning.VolumeGroup = vg
+	doc.Provisioning.ProvisioningMaxSize = blockcfg.MustSize(maxSize)
+
+	return doc
+}
+
+// TestLVMLogicalVolume provisions a VG and a logical volume inside it
+// declaratively, then verifies the LV status surfaces and tears everything
+// down via the LVMService RPCs.
+//
+//nolint:gocyclo
+func (suite *StorageSuite) TestLVMLogicalVolume() {
+	if testing.Short() {
+		suite.T().Skip("skipping test in short mode.")
+	}
+
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping test for non-qemu provisioner")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	nodeName := k8sNode.Name
+
+	userDisks := suite.UserDisks(suite.ctx, node)
+
+	if len(userDisks) < 1 {
+		suite.T().Skipf("not enough user disks on %s/%s: %q", node, nodeName, userDisks)
+	}
+
+	pvDisks := userDisks[:1]
+
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	const (
+		vgName = "vglv"
+		lvName = "lv-data"
+	)
+
+	match := fmt.Sprintf(`disk.dev_path == "%s"`, pvDisks[0])
+
+	suite.PatchMachineConfig(nodeCtx, vgDocSelector(vgName, match))
+
+	defer suite.teardownVG(nodeCtx, vgName, pvDisks)
+
+	suite.assertPVAndVGStatus(nodeCtx, vgName, pvDisks)
+
+	// Now declare a logical volume inside the VG.
+	suite.PatchMachineConfig(nodeCtx, lvDoc(suite.T(), lvName, vgName, "linear", "1GiB"))
+
+	defer func() {
+		suite.RemoveMachineConfigDocumentsByName(nodeCtx, storagecfg.LVMLogicalVolumeConfigKind, lvName)
+
+		if err := suite.Client.LogicalVolumeRemove(nodeCtx, &machineapi.LVMServiceLogicalVolumeRemoveRequest{
+			VolumeGroup:   vgName,
+			LogicalVolume: lvName,
+		}); !isAlreadyGone(err) {
+			suite.T().Logf("LogicalVolumeRemove %s/%s failed: %v", vgName, lvName, err)
+		}
+	}()
+
+	fullName := vgName + "/" + lvName
+
+	const (
+		assertTimeout  = 90 * time.Second
+		assertInterval = 2 * time.Second
+	)
+
+	suite.Require().Eventually(func() bool {
+		lvs, err := safe.StateListAll[*storageres.LVMLogicalVolumeStatus](nodeCtx, suite.Client.COSI)
+		if err != nil {
+			return false
+		}
+
+		for lv := range lvs.All() {
+			spec := lv.TypedSpec()
+			if spec.FullName == fullName && spec.VGName == vgName && spec.Size != "" && spec.Size != "0" {
+				return true
+			}
+		}
+
+		return false
+	}, assertTimeout, assertInterval, "logical volume %q not created", fullName)
+}
+
 // TestLVMOverlapConflict applies two VGs whose selectors overlap and verifies
 // the conflict is surfaced as an LVMValidationError while only one VG claims
 // the shared device.
 //
 //nolint:gocyclo
 func (suite *StorageSuite) TestLVMOverlapConflict() {
-	if suite.SelinuxEnforcing {
-		suite.T().Skip("skipping tests with nsenter in SELinux enforcing mode")
-	}
-
 	if testing.Short() {
 		suite.T().Skip("skipping test in short mode.")
 	}
@@ -865,10 +1095,6 @@ func (suite *StorageSuite) TestLVMOverlapConflict() {
 //
 //nolint:gocyclo
 func (suite *StorageSuite) TestLVMRawVolumeRemoveInUse() {
-	if suite.SelinuxEnforcing {
-		suite.T().Skip("skipping tests with nsenter in SELinux enforcing mode")
-	}
-
 	if testing.Short() {
 		suite.T().Skip("skipping test in short mode.")
 	}

@@ -770,6 +770,14 @@ enum BlockVolumeType {
   VOLUME_TYPE_EXTERNAL = 6;
 }
 
+// StorageLVMLogicalVolumeType describes the layout of an LVM logical volume.
+enum StorageLVMLogicalVolumeType {
+  LVM_LOGICAL_VOLUME_TYPE_LINEAR = 0;
+  LVM_LOGICAL_VOLUME_TYPE_RAID1 = 1;
+  LVM_LOGICAL_VOLUME_TYPE_RAID0 = 2;
+  LVM_LOGICAL_VOLUME_TYPE_RAID10 = 3;
+}
+
 // CriImageCacheStatus describes image cache status type.
 enum CriImageCacheStatus {
   IMAGE_CACHE_STATUS_UNKNOWN = 0;

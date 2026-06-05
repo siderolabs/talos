@@ -346,6 +346,7 @@ description: Talos gRPC API reference.
     - [RuntimeKernelModuleType](#talos.resource.definitions.enums.RuntimeKernelModuleType)
     - [RuntimeMachineStage](#talos.resource.definitions.enums.RuntimeMachineStage)
     - [RuntimeSELinuxState](#talos.resource.definitions.enums.RuntimeSELinuxState)
+    - [StorageLVMLogicalVolumeType](#talos.resource.definitions.enums.StorageLVMLogicalVolumeType)
   
 - [resource/definitions/block/block.proto](#resource/definitions/block/block.proto)
     - [DeviceSpec](#talos.resource.definitions.block.DeviceSpec)
@@ -627,11 +628,11 @@ description: Talos gRPC API reference.
     - [TunnelSpec](#talos.resource.definitions.siderolink.TunnelSpec)
   
 - [resource/definitions/storage/storage.proto](#resource/definitions/storage/storage.proto)
+    - [LVMLogicalVolumeSpecSpec](#talos.resource.definitions.storage.LVMLogicalVolumeSpecSpec)
     - [LVMLogicalVolumeStatusSpec](#talos.resource.definitions.storage.LVMLogicalVolumeStatusSpec)
     - [LVMPhysicalVolumeSpecSpec](#talos.resource.definitions.storage.LVMPhysicalVolumeSpecSpec)
     - [LVMPhysicalVolumeStatusSpec](#talos.resource.definitions.storage.LVMPhysicalVolumeStatusSpec)
     - [LVMRefreshRequestSpec](#talos.resource.definitions.storage.LVMRefreshRequestSpec)
-    - [LVMRefreshStatusSpec](#talos.resource.definitions.storage.LVMRefreshStatusSpec)
     - [LVMValidationErrorSpec](#talos.resource.definitions.storage.LVMValidationErrorSpec)
     - [LVMVolumeGroupSpecSpec](#talos.resource.definitions.storage.LVMVolumeGroupSpecSpec)
     - [LVMVolumeGroupStatusSpec](#talos.resource.definitions.storage.LVMVolumeGroupStatusSpec)
@@ -6200,6 +6201,20 @@ RuntimeSELinuxState describes the current SELinux status.
 | SE_LINUX_STATE_ENFORCING | 2 |  |
 
 
+
+<a name="talos.resource.definitions.enums.StorageLVMLogicalVolumeType"></a>
+
+### StorageLVMLogicalVolumeType
+StorageLVMLogicalVolumeType describes the layout of an LVM logical volume.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| LVM_LOGICAL_VOLUME_TYPE_LINEAR | 0 |  |
+| LVM_LOGICAL_VOLUME_TYPE_RAID1 | 1 |  |
+| LVM_LOGICAL_VOLUME_TYPE_RAID0 | 2 |  |
+| LVM_LOGICAL_VOLUME_TYPE_RAID10 | 3 |  |
+
+
  <!-- end enums -->
 
  <!-- end HasExtensions -->
@@ -11034,6 +11049,27 @@ TunnelSpec describes Siderolink GRPC Tunnel configuration.
 
 
 
+<a name="talos.resource.definitions.storage.LVMLogicalVolumeSpecSpec"></a>
+
+### LVMLogicalVolumeSpecSpec
+LVMLogicalVolumeSpecSpec is the spec for LVMLogicalVolumeSpec resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| vg_name | [string](#string) |  | VGName is the parent volume group name. |
+| name | [string](#string) |  | Name is the logical volume name. |
+| type | [talos.resource.definitions.enums.StorageLVMLogicalVolumeType](#talos.resource.definitions.enums.StorageLVMLogicalVolumeType) |  | Type is the LV layout. |
+| size_bytes | [uint64](#uint64) |  | SizeBytes is the absolute LV size in bytes; used when SizePercentVG is zero. |
+| size_percent_vg | [uint32](#uint32) |  | SizePercentVG, when non-zero, sizes the LV as a percentage of the VG. |
+| mirrors | [uint32](#uint32) |  | Mirrors is the mirror count for raid1/raid10 layouts. |
+| stripes | [uint32](#uint32) |  | Stripes is the stripe count for raid0/raid10 layouts; 0 means "all PVs", resolved by the reconcile controller. |
+
+
+
+
+
+
 <a name="talos.resource.definitions.storage.LVMLogicalVolumeStatusSpec"></a>
 
 ### LVMLogicalVolumeStatusSpec
@@ -11135,21 +11171,6 @@ Raw strings preserve LVM sentinel values.
 
 ### LVMRefreshRequestSpec
 LVMRefreshRequestSpec is the spec for LVMRefreshRequest.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| request | [int64](#int64) |  |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.storage.LVMRefreshStatusSpec"></a>
-
-### LVMRefreshStatusSpec
-LVMRefreshStatusSpec is the spec for LVMRefreshStatus.
 
 
 | Field | Type | Label | Description |

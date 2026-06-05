@@ -5,6 +5,27 @@ package talos.resource.definitions.storage;
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/storage";
 option java_package = "dev.talos.api.resource.definitions.storage";
 
+import "resource/definitions/enums/enums.proto";
+
+// LVMLogicalVolumeSpecSpec is the spec for LVMLogicalVolumeSpec resource.
+message LVMLogicalVolumeSpecSpec {
+  // VGName is the parent volume group name.
+  string vg_name = 1;
+  // Name is the logical volume name.
+  string name = 2;
+  // Type is the LV layout.
+  talos.resource.definitions.enums.StorageLVMLogicalVolumeType type = 3;
+  // SizeBytes is the absolute LV size in bytes; used when SizePercentVG is zero.
+  uint64 size_bytes = 4;
+  // SizePercentVG, when non-zero, sizes the LV as a percentage of the VG.
+  uint32 size_percent_vg = 5;
+  // Mirrors is the mirror count for raid1/raid10 layouts.
+  uint32 mirrors = 6;
+  // Stripes is the stripe count for raid0/raid10 layouts; 0 means "all PVs",
+  // resolved by the reconcile controller.
+  uint32 stripes = 7;
+}
+
 // LVMLogicalVolumeStatusSpec mirrors selected `lvs` columns.
 message LVMLogicalVolumeStatusSpec {
   // Path is the LV path (lv_path), e.g. /dev/vg0/data. Empty for hidden LVs.
@@ -128,11 +149,6 @@ message LVMPhysicalVolumeStatusSpec {
 
 // LVMRefreshRequestSpec is the spec for LVMRefreshRequest.
 message LVMRefreshRequestSpec {
-  int64 request = 1;
-}
-
-// LVMRefreshStatusSpec is the spec for LVMRefreshStatus.
-message LVMRefreshStatusSpec {
   int64 request = 1;
 }
 

@@ -48,7 +48,7 @@ func (LVMValidationErrorExtension) ResourceDefinition() meta.ResourceDefinitionS
 		Type:             LVMValidationErrorType,
 		DefaultNamespace: NamespaceName,
 		PrintColumns: []meta.PrintColumn{
-			{Name: "VG", JSONPath: "{.vgName}"},
+			{Name: "VG", JSONPath: "{.vgName}"}, //nolint:goconst
 			{Name: "Message", JSONPath: "{.message}"},
 		},
 	}

@@ -179,6 +179,13 @@ New resources `LVMPhysicalVolumeStatus`, `LVMVolumeGroupStatus`, and `LVMLogical
 `DiscoveredVolume` resources for logical volumes are listed by their kernel name (e.g. `dm-0`). To resolve the `<vg>/<lv>` for a given device, use the `Disks` or `BlockSymlinks` resources, which carry the udev-managed symlinks (e.g. `/dev/disk/by-id/dm-name-<vg>-<lv>`).
 """
 
+    [notes.support_bundle]
+        title = "Support Bundle Encryption"
+        description = """\
+The `talosctl support` command now encrypts support bundles using the age encryption tool, enhancing the security of support data.
+The default set of recipients includes the 'siderolabs' GitHub organization members, but it can be overridden with custom recipients.
+"""
+
     [notes.lvm_wipe]
         title = "LVM Wipe"
         description = """\
@@ -186,13 +193,6 @@ Talos now provides the ability to securely wipe LVM metadata from logical volume
 This feature allows for selective wiping of logical volumes, volume groups, and physical volumes.
 
 With `talosctl wipe lv/vg/pv <name>`, users can wipe LVM metadata from a specific logical volume, volume group, or physical volume.
-"""
-
-    [notes.support_bundle]
-        title = "Support Bundle Encryption"
-        description = """\
-The `talosctl support` command now encrypts support bundles using the age encryption tool, enhancing the security of support data.
-The default set of recipients includes the 'siderolabs' GitHub organization members, but it can be overridden with custom recipients.
 """
 
     [notes.lvm_volume_group]
@@ -204,6 +204,21 @@ disks are initialised as Physical Volumes (`pvcreate`) and aggregated into the r
 Newly matched disks added to an existing VG are attached via `vgextend`.
 
 Reconciliation is strictly additive and safe-by-default.
+"""
+
+    [notes.lvm_logical_volume]
+        title = "LVM Logical Volume Creation"
+        description = """\
+Logical volumes can now be declared with a new `LVMLogicalVolumeConfig` multi-doc config kind. Each document
+names a logical volume, its parent `volumeGroup`, a `type` (`linear`, `raid0`, `raid1` or `raid10`) and a
+`maxSize` (absolute, e.g. `50GiB`, or a percentage of the volume group, e.g. `80%`). RAID layouts accept
+optional `mirrors` (raid1/raid10, default 1) and `stripes` (raid0/raid10, default: all available physical
+volumes) fields. Once the volume group is assembled the logical volume is created via `lvcreate`.
+
+Raising `maxSize` grows an existing logical volume via `lvextend`; percentage-sized volumes also grow when
+their volume group is extended. Shrinking is never performed (it risks data loss) - a request to reduce the
+size surfaces an `LVMValidationError` instead. Removal stays an explicit operation via the LVMService LV
+remove RPC (`talosctl wipe lv`).
 """
 
     [notes.kernel_module_status]

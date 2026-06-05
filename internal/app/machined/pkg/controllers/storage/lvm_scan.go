@@ -16,6 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 
+	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/lvm"
 	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
@@ -34,7 +35,8 @@ type LVMScanner interface {
 // Driven by LVMRefreshRequest (no poll). Runs vgs/pvs/lvs once per counter
 // increment and echoes observed value into LVMRefreshStatus.
 type LVMScanController struct {
-	LVM LVMScanner
+	V1Alpha1Mode machineruntime.Mode
+	LVM          LVMScanner
 }
 
 // Name implements controller.Controller interface.
@@ -68,15 +70,16 @@ func (ctrl *LVMScanController) Outputs() []controller.Output {
 			Type: storage.LVMLogicalVolumeStatusType,
 			Kind: controller.OutputExclusive,
 		},
-		{
-			Type: storage.LVMRefreshStatusType,
-			Kind: controller.OutputExclusive,
-		},
 	}
 }
 
 // Run implements controller.Controller interface.
 func (ctrl *LVMScanController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	// in container mode, no devices, nothing to scan
+	if ctrl.V1Alpha1Mode == machineruntime.ModeContainer {
+		return nil
+	}
+
 	var lastObserved int
 
 	for {
@@ -91,6 +94,7 @@ func (ctrl *LVMScanController) Run(ctx context.Context, r controller.Runtime, lo
 			return fmt.Errorf("get LVM refresh request: %w", err)
 		}
 
+		// Coalesce: skip when the counter hasn't advanced since the last scan.
 		if req == nil || req.TypedSpec().Request == lastObserved {
 			continue
 		}
@@ -99,18 +103,6 @@ func (ctrl *LVMScanController) Run(ctx context.Context, r controller.Runtime, lo
 
 		if err := ctrl.scan(ctx, r, logger); err != nil {
 			return err
-		}
-
-		if err := safe.WriterModify(
-			ctx, r,
-			storage.NewLVMRefreshStatus(storage.NamespaceName, storage.RefreshID),
-			func(s *storage.LVMRefreshStatus) error {
-				s.TypedSpec().Request = observed
-
-				return nil
-			},
-		); err != nil {
-			return fmt.Errorf("write LVM refresh status: %w", err)
 		}
 
 		lastObserved = observed

@@ -11,6 +11,7 @@ import (
 	storagecfg "github.com/siderolabs/talos/pkg/machinery/config/types/storage"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	storageres "github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
 
 // createDisk inserts a block.Disk plus a matching whole-disk
@@ -66,11 +67,31 @@ func applyMachineConfig(suite *ctest.DefaultSuite, docs ...*storagecfg.LVMVolume
 		cfgDocs = append(cfgDocs, d)
 	}
 
-	ctr, err := container.New(cfgDocs...)
+	return applyMachineConfigDocs(suite, cfgDocs...)
+}
+
+// applyMachineConfigDocs creates a MachineConfig resource carrying arbitrary
+// config documents and returns it so tests can later destroy it.
+func applyMachineConfigDocs(suite *ctest.DefaultSuite, docs ...configconfig.Document) *config.MachineConfig {
+	ctr, err := container.New(docs...)
 	suite.Require().NoError(err)
 
 	cfg := config.NewMachineConfig(ctr)
 	suite.Create(cfg)
 
 	return cfg
+}
+
+// newLVDoc builds a minimal v1alpha1 LVMLogicalVolumeConfig doc.
+func newLVDoc(name, vg string, lvType storageres.LVMLogicalVolumeType, maxSize string) *storagecfg.LVMLogicalVolumeConfigV1Alpha1 {
+	doc := storagecfg.NewLVMLogicalVolumeConfigV1Alpha1()
+	doc.MetaName = name
+	doc.LVType = lvType
+	doc.Provisioning.VolumeGroup = vg
+
+	if err := doc.Provisioning.ProvisioningMaxSize.UnmarshalText([]byte(maxSize)); err != nil {
+		panic(err)
+	}
+
+	return doc
 }

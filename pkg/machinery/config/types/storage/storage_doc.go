@@ -94,6 +94,104 @@ func (LVMVolumeSelectorSpec) Doc() *encoder.Doc {
 	return doc
 }
 
+func (LVMLogicalVolumeConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "LVMLogicalVolumeConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "LVMLogicalVolumeConfig is an LVM logical volume config document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "LVMLogicalVolumeConfig is an LVM logical volume config document.\nDefines a logical volume provisioned inside a volume group.\n",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Logical volume name.\n\nMust be 1-63 chars: ASCII letters, digits, hyphens, underscores.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Logical volume name." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "type",
+				Type:        "LVMLogicalVolumeType",
+				Note:        "",
+				Description: "Logical volume layout.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Logical volume layout." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"linear",
+					"raid0",
+					"raid1",
+					"raid10",
+				},
+			},
+			{
+				Name:        "mirrors",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Number of mirror copies for `raid1` / `raid10` layouts.\n\nDefaults to 1 (a two-way mirror) when unset. Not valid for `linear`\nor `raid0`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Number of mirror copies for `raid1` / `raid10` layouts." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "stripes",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Number of stripes for `raid0` / `raid10` layouts.\n\nDefaults to all available physical volumes when unset. Must be at\nleast 2. Not valid for `linear` or `raid1`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Number of stripes for `raid0` / `raid10` layouts." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "provisioning",
+				Type:        "LVMLogicalVolumeProvisioningSpec",
+				Note:        "",
+				Description: "Describes how the logical volume is provisioned.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Describes how the logical volume is provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleLVMLogicalVolumeConfigV1Alpha1())
+
+	return doc
+}
+
+func (LVMLogicalVolumeProvisioningSpec) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "LVMLogicalVolumeProvisioningSpec",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "LVMLogicalVolumeProvisioningSpec describes how an LV is provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "LVMLogicalVolumeProvisioningSpec describes how an LV is provisioned.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "LVMLogicalVolumeConfigV1Alpha1",
+				FieldName: "provisioning",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "volumeGroup",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the volume group that backs the logical volume.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the volume group that backs the logical volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "minSize",
+				Type:        "ByteSize",
+				Note:        "",
+				Description: "The minimum size of the volume.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 100MB.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The minimum size of the volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "maxSize",
+				Type:        "Size",
+				Note:        "",
+				Description: "The maximum size of the volume.\n\nSize is specified in bytes or in percents of the volume group.\nIt can be expressed in human readable format, e.g. 100MB or 80%.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The maximum size of the volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file storage_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -103,6 +201,8 @@ func GetFileDoc() *encoder.FileDoc {
 			LVMVolumeGroupConfigV1Alpha1{}.Doc(),
 			LVMPhysicalVolumesSpec{}.Doc(),
 			LVMVolumeSelectorSpec{}.Doc(),
+			LVMLogicalVolumeConfigV1Alpha1{}.Doc(),
+			LVMLogicalVolumeProvisioningSpec{}.Doc(),
 		},
 	}
 }

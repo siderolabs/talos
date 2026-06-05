@@ -51,6 +51,7 @@ type Config interface { //nolint:interfacebloat
 	SwapVolumeConfigs() []SwapVolumeConfig
 	ZswapConfig() ZswapConfig
 	LVMVolumeGroupConfigs() []LVMVolumeGroupConfig
+	LVMLogicalVolumeConfigs() []LVMLogicalVolumeConfig
 
 	// - cri:
 	RegistryMirrorConfigs() map[string]RegistryMirrorConfig

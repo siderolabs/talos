@@ -79,7 +79,7 @@ func (LVMPhysicalVolumeStatusExtension) ResourceDefinition() meta.ResourceDefini
 		DefaultNamespace: NamespaceName,
 		PrintColumns: []meta.PrintColumn{
 			{Name: "Device", JSONPath: "{.device}"},
-			{Name: "VG", JSONPath: "{.vgName}"},
+			{Name: "VG", JSONPath: "{.vgName}"}, //nolint:goconst
 			{Name: "Size", JSONPath: "{.size}"},
 			{Name: "Free", JSONPath: "{.free}"},
 			{Name: "Allocatable", JSONPath: "{.allocatable}"},

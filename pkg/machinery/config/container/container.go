@@ -317,6 +317,11 @@ func (container *Container) LVMVolumeGroupConfigs() []config.LVMVolumeGroupConfi
 	return findMatchingDocs[config.LVMVolumeGroupConfig](container.documents)
 }
 
+// LVMLogicalVolumeConfigs implements config.Config interface.
+func (container *Container) LVMLogicalVolumeConfigs() []config.LVMLogicalVolumeConfig {
+	return findMatchingDocs[config.LVMLogicalVolumeConfig](container.documents)
+}
+
 // ZswapConfig implements config.Config interface.
 func (container *Container) ZswapConfig() config.ZswapConfig {
 	matching := findMatchingDocs[config.ZswapConfig](container.documents)

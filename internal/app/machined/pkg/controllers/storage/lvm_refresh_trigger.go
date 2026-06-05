@@ -11,9 +11,9 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
-	"github.com/cosi-project/runtime/pkg/state"
 	"go.uber.org/zap"
 
+	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
@@ -26,7 +26,9 @@ const refreshMaxWait = 2 * time.Second
 
 // LVMRefreshTriggerController bumps storage.LVMRefreshRequest whenever any
 // block-layer event suggests LVM state may have changed.
-type LVMRefreshTriggerController struct{}
+type LVMRefreshTriggerController struct {
+	V1Alpha1Mode machineruntime.Mode
+}
 
 // Name implements controller.Controller interface.
 func (ctrl *LVMRefreshTriggerController) Name() string {
@@ -51,11 +53,6 @@ func (ctrl *LVMRefreshTriggerController) Inputs() []controller.Input {
 			Type:      block.DiscoveredVolumeType,
 			Kind:      controller.InputWeak,
 		},
-		{
-			Namespace: storage.NamespaceName,
-			Type:      storage.LVMRefreshStatusType,
-			Kind:      controller.InputWeak,
-		},
 	}
 }
 
@@ -73,6 +70,11 @@ func (ctrl *LVMRefreshTriggerController) Outputs() []controller.Output {
 //
 //nolint:gocyclo
 func (ctrl *LVMRefreshTriggerController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
+	// in container mode, no devices, nothing to scan
+	if ctrl.V1Alpha1Mode == machineruntime.ModeContainer {
+		return nil
+	}
+
 	// Timer stays stopped until first event. nextFire tracks scheduled fire time.
 	timer := time.NewTimer(refreshDebounce)
 	defer timer.Stop()
@@ -82,7 +84,6 @@ func (ctrl *LVMRefreshTriggerController) Run(ctx context.Context, r controller.R
 	}
 
 	var (
-		requested    int       // counter value of the last bump we wrote
 		pending      bool      // events arrived since the last bump landed
 		firstPending time.Time // when the current pending burst began
 		nextFire     time.Time // when the timer is currently scheduled to fire
@@ -133,29 +134,11 @@ func (ctrl *LVMRefreshTriggerController) Run(ctx context.Context, r controller.R
 			continue
 		}
 
-		status, err := safe.ReaderGetByID[*storage.LVMRefreshStatus](ctx, r, storage.RefreshID)
-		if err != nil && !state.IsNotFoundError(err) {
-			return fmt.Errorf("read LVM refresh status: %w", err)
-		}
-
-		var observed int
-		if status != nil {
-			observed = status.TypedSpec().Request
-		}
-
-		// Wait until previous bump is echoed by scan controller.
-		if requested != 0 && observed < requested {
-			rearm(refreshDebounce)
-
-			continue
-		}
-
 		if err := safe.WriterModify(
 			ctx, r,
 			storage.NewLVMRefreshRequest(storage.NamespaceName, storage.RefreshID),
 			func(rr *storage.LVMRefreshRequest) error {
 				rr.TypedSpec().Request++
-				requested = rr.TypedSpec().Request
 
 				return nil
 			},

@@ -82,3 +82,63 @@ func TestVGReduceRejectsNoPVs(t *testing.T) {
 	require.Error(t, err)
 	require.Contains(t, err.Error(), "at least one physical volume is required")
 }
+
+func TestLVCreateRejectsEmptyVGorLV(t *testing.T) {
+	l := newLVM(t)
+
+	err := l.LVCreate(context.Background(), "", "lv0", lvm.LVCreateOptions{SizeBytes: 1})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "vg and lv must be non-empty")
+
+	err = l.LVCreate(context.Background(), "vg0", "", lvm.LVCreateOptions{SizeBytes: 1})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "vg and lv must be non-empty")
+}
+
+func TestLVCreateRejectsUnknownType(t *testing.T) {
+	l := newLVM(t)
+
+	err := l.LVCreate(context.Background(), "vg0", "lv0", lvm.LVCreateOptions{Type: "thin", SizeBytes: 1})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "unsupported logical volume type")
+}
+
+func TestLVCreateRejectsNoSize(t *testing.T) {
+	l := newLVM(t)
+
+	err := l.LVCreate(context.Background(), "vg0", "lv0", lvm.LVCreateOptions{Type: "linear"})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "either SizeBytes or SizePercentVG must be set")
+}
+
+func TestLVCreateRejectsBadRAIDParams(t *testing.T) {
+	l := newLVM(t)
+
+	err := l.LVCreate(context.Background(), "vg0", "lv0", lvm.LVCreateOptions{Type: "raid0", Stripes: 1, SizeBytes: 1})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "raid0 requires at least 2 stripes")
+
+	err = l.LVCreate(context.Background(), "vg0", "lv0", lvm.LVCreateOptions{Type: "raid1", SizeBytes: 1})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "raid1 requires at least 1 mirror")
+
+	err = l.LVCreate(context.Background(), "vg0", "lv0", lvm.LVCreateOptions{Type: "raid10", Mirrors: 1, Stripes: 1, SizeBytes: 1})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "raid10 requires at least 2 stripes")
+}
+
+func TestLVExtendRejectsEmptyVGorLV(t *testing.T) {
+	l := newLVM(t)
+
+	err := l.LVExtend(context.Background(), "", "lv0", lvm.LVExtendOptions{SizeBytes: 1})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "vg and lv must be non-empty")
+}
+
+func TestLVExtendRejectsNoSize(t *testing.T) {
+	l := newLVM(t)
+
+	err := l.LVExtend(context.Background(), "vg0", "lv0", lvm.LVExtendOptions{})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "either SizeBytes or SizePercentVG must be set")
+}

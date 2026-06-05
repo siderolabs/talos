@@ -48,7 +48,7 @@ func (LVMPhysicalVolumeSpecExtension) ResourceDefinition() meta.ResourceDefiniti
 		DefaultNamespace: NamespaceName,
 		PrintColumns: []meta.PrintColumn{
 			{Name: "Device", JSONPath: "{.device}"},
-			{Name: "VG", JSONPath: "{.vgName}"},
+			{Name: "VG", JSONPath: "{.vgName}"}, //nolint:goconst
 		},
 	}
 }

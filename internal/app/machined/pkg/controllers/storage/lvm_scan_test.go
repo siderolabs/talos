@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -138,24 +137,6 @@ func (suite *LVMScanSuite) TestFiltersOrphanPVsWithEmptyUUID() {
 	})
 
 	ctest.AssertNoResource[*storageres.LVMPhysicalVolumeStatus](suite, "sda")
-}
-
-func (suite *LVMScanSuite) TestEchoesRefreshCounter() {
-	suite.bumpRefresh(7)
-
-	suite.AssertWithin(2*time.Second, 50*time.Millisecond, func() error {
-		status, err := ctest.Get[*storageres.LVMRefreshStatus](suite,
-			storageres.NewLVMRefreshStatus(storageres.NamespaceName, storageres.RefreshID).Metadata())
-		if err != nil {
-			return retry.ExpectedError(err)
-		}
-
-		if status.TypedSpec().Request != 7 {
-			return retry.ExpectedErrorf("counter not yet echoed; got %d", status.TypedSpec().Request)
-		}
-
-		return nil
-	})
 }
 
 func (suite *LVMScanSuite) TestStaleResourcesAreCleanedUp() {

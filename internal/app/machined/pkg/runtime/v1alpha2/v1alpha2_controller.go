@@ -182,10 +182,23 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 			LVM:          lvm,
 		},
+		&storage.LVMLogicalVolumeReconcileController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+			LVM:          lvm,
+		},
+		&storage.LVMLogicalVolumeSpecController{},
 		&storage.LVMPhysicalVolumeSpecController{},
-		&storage.LVMRefreshTriggerController{},
-		&storage.LVMScanController{LVM: lvm},
-		&storage.LVMVolumeGroupReconcileController{LVM: lvm},
+		&storage.LVMRefreshTriggerController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
+		&storage.LVMScanController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+			LVM:          lvm,
+		},
+		&storage.LVMVolumeGroupReconcileController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+			LVM:          lvm,
+		},
 		&storage.LVMVolumeGroupSpecController{},
 		&cluster.AffiliateMergeController{},
 		cluster.NewConfigController(),

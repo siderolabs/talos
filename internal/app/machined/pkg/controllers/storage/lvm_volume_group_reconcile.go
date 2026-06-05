@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/go-multierror"
 	"go.uber.org/zap"
 
+	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
 
@@ -29,7 +30,8 @@ type LVMProvisioner interface {
 //
 // Additive only. Destructive ops go through LVMService wipe RPCs.
 type LVMVolumeGroupReconcileController struct {
-	LVM LVMProvisioner
+	V1Alpha1Mode machineruntime.Mode
+	LVM          LVMProvisioner
 }
 
 // Name implements controller.Controller interface.
@@ -67,6 +69,11 @@ func (ctrl *LVMVolumeGroupReconcileController) Outputs() []controller.Output {
 //
 //nolint:gocyclo,cyclop
 func (ctrl *LVMVolumeGroupReconcileController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	// in container mode, no devices, nothing to provision
+	if ctrl.V1Alpha1Mode == machineruntime.ModeContainer {
+		return nil
+	}
+
 	if ctrl.LVM == nil {
 		return errors.New("LVM provisioner not configured")
 	}

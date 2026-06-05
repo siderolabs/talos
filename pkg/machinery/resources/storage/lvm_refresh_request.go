@@ -16,15 +16,14 @@ import (
 // LVMRefreshRequestType is the type of LVMRefreshRequest resource.
 const LVMRefreshRequestType = resource.Type("LVMRefreshRequests.storage.talos.dev")
 
-// RefreshID is the ID of the singleton LVM refresh request/status pair.
+// RefreshID is the ID of the singleton LVM refresh request.
 const RefreshID resource.ID = "refresh"
 
 // LVMRefreshRequest signals the LVM scan controller to re-run vgs/pvs/lvs.
 //
-// Mirrors the block.DiscoveryRefreshRequest pattern: a monotonically
-// increasing counter is bumped by event sources (trigger controller), and
-// the scan controller echoes the observed value in LVMRefreshStatus once
-// the corresponding scan has completed.
+// A monotonically increasing counter is bumped by event sources (the trigger
+// controller); the scan controller coalesces work by tracking the last value
+// it scanned.
 type LVMRefreshRequest = typed.Resource[LVMRefreshRequestSpec, LVMRefreshRequestExtension]
 
 // LVMRefreshRequestSpec is the spec for LVMRefreshRequest.

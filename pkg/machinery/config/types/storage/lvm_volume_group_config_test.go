@@ -19,6 +19,7 @@ import (
 	storagecfg "github.com/siderolabs/talos/pkg/machinery/config/types/storage"
 )
 
+//nolint:dupl
 func TestLVMVolumeGroupConfigMarshalUnmarshal(t *testing.T) {
 	t.Parallel()
 

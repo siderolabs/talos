@@ -66,7 +66,7 @@ func (ctrl *LVMPhysicalVolumeSpecController) Outputs() []controller.Output {
 		},
 		{
 			Type: storage.LVMValidationErrorType,
-			Kind: controller.OutputExclusive,
+			Kind: controller.OutputShared,
 		},
 	}
 }

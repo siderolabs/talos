@@ -1,0 +1,7 @@
+apiVersion: v1alpha1
+kind: LVMLogicalVolumeConfig
+name: lv-data
+type: linear
+provisioning:
+    volumeGroup: vg-pool
+    maxSize: 50GiB

@@ -114,7 +114,7 @@ func (LVMLogicalVolumeStatusExtension) ResourceDefinition() meta.ResourceDefinit
 		DefaultNamespace: NamespaceName,
 		PrintColumns: []meta.PrintColumn{
 			{Name: "Path", JSONPath: "{.path}"},
-			{Name: "VG", JSONPath: "{.vgName}"},
+			{Name: "VG", JSONPath: "{.vgName}"}, //nolint:goconst
 			{Name: "Layout", JSONPath: "{.layout}"},
 			{Name: "Size", JSONPath: "{.size}"},
 			{Name: "Active", JSONPath: "{.active}"},
