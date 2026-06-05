@@ -65,7 +65,6 @@ func TestAddOSPackage_AddsSiblingWithRefs(t *testing.T) {
 	osPkg := findPackage(doc, "Package-os-talos")
 	if osPkg == nil {
 		t.Fatalf("expected Package-os-talos to be added, got: %v", packageIDs(doc))
-
 		return
 	}
 
@@ -105,7 +104,6 @@ func TestAddGoModulePackage(t *testing.T) {
 	goPkg := findPackage(doc, "Package-go-siderolabs-talos")
 	if goPkg == nil {
 		t.Fatalf("expected Package-go-siderolabs-talos to be added, got: %v", packageIDs(doc))
-
 		return
 	}
 
