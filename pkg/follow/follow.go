@@ -162,7 +162,7 @@ func (r *Reader) notify() {
 				case r.notifyCh <- nil:
 				default:
 				}
-			case fsnotify.Remove:
+			case fsnotify.Remove, fsnotify.Rename:
 				select {
 				case r.notifyCh <- errors.New("file was removed while watching"):
 				case <-r.ctx.Done():
