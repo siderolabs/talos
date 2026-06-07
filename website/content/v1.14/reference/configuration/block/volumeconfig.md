@@ -279,7 +279,8 @@ MountSpec describes how the volume is mounted.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`secure` |bool |Enable secure mount options (nosuid, nodev).<br><br>Defaults to true for better security.  | |
+|`secure` |bool |Enable secure mount options (nosuid, nodev).<br><br>Defaults to true for better security.<br>Supported only for EPHEMERAL volume.  | |
+|`disableAccessTime` |bool |If true, disable file access time updates.<br><br>Supported only for EPHEMERAL volume.  | |
 
 
 

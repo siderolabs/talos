@@ -399,6 +399,10 @@ func (o *VolumeConfigV1Alpha1) DeepCopy() *VolumeConfigV1Alpha1 {
 		cp.MountSpec.MountSecure = new(bool)
 		*cp.MountSpec.MountSecure = *o.MountSpec.MountSecure
 	}
+	if o.MountSpec.MountDisableAccessTime != nil {
+		cp.MountSpec.MountDisableAccessTime = new(bool)
+		*cp.MountSpec.MountDisableAccessTime = *o.MountSpec.MountDisableAccessTime
+	}
 	return &cp
 }
 

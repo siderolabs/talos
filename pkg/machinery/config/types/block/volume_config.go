@@ -81,7 +81,13 @@ type MountSpec struct {
 	//     Enable secure mount options (nosuid, nodev).
 	//
 	//     Defaults to true for better security.
+	//     Supported only for EPHEMERAL volume.
 	MountSecure *bool `yaml:"secure,omitempty"`
+	//   description: |
+	//     If true, disable file access time updates.
+	//
+	//     Supported only for EPHEMERAL volume.
+	MountDisableAccessTime *bool `yaml:"disableAccessTime,omitempty"`
 }
 
 // ProvisioningSpec describes how the volume is provisioned.
@@ -201,7 +207,8 @@ func (s *VolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Op
 		validationErrors error
 	)
 
-	if s.MetaName == constants.StatePartitionLabel {
+	switch s.MetaName {
+	case constants.StatePartitionLabel:
 		// no provisioning config is allowed for the state partition.
 		if !s.ProvisioningSpec.IsZero() {
 			validationErrors = errors.Join(validationErrors, fmt.Errorf("provisioning config is not allowed for the %q volume", s.MetaName))
@@ -212,6 +219,14 @@ func (s *VolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Op
 				// state-locked keys are not allowed
 				validationErrors = errors.Join(validationErrors, fmt.Errorf("state-locked key is not allowed for the %q volume", s.MetaName))
 			}
+		}
+
+		if s.MountSpec != (MountSpec{}) {
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("mount config is not allowed for the %q volume", s.MetaName))
+		}
+	case constants.ImageCachePartitionLabel:
+		if s.MountSpec != (MountSpec{}) {
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("mount config is not allowed for the %q volume", s.MetaName))
 		}
 	}
 
@@ -360,4 +375,9 @@ func (s MountSpec) Secure() bool {
 	}
 
 	return *s.MountSecure
+}
+
+// DisableAccessTime implements config.VolumeMountConfig interface.
+func (s MountSpec) DisableAccessTime() bool {
+	return pointer.SafeDeref(s.MountDisableAccessTime)
 }

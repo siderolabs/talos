@@ -339,7 +339,7 @@ func (s *UserVolumeConfigV1Alpha1) Encryption() config.EncryptionConfig {
 }
 
 // Mount implements config.UserVolumeConfig interface.
-func (s *UserVolumeConfigV1Alpha1) Mount() config.UserVolumeMountConfig {
+func (s *UserVolumeConfigV1Alpha1) Mount() config.VolumeMountConfig {
 	return s.MountSpec
 }
 

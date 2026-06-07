@@ -6,6 +6,8 @@ provisioning:
     match: disk.transport == 'nvme'
   minSize: 3GB
   maxSize: 5GB
+mount:
+  disableAccessTime: true
 ---
 apiVersion: v1alpha1
 kind: SwapVolumeConfig

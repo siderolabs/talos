@@ -1462,6 +1462,7 @@ func MountEphemeralPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, 
 
 		vol, _ := r.Config().Volumes().ByName(constants.EphemeralPartitionLabel)
 		mountRequest.TypedSpec().Secure = vol.Mount().Secure()
+		mountRequest.TypedSpec().DisableAccessTime = vol.Mount().DisableAccessTime()
 
 		if err := r.State().V1Alpha2().Resources().Create(ctx, mountRequest); err != nil {
 			return fmt.Errorf("failed to create EPHEMERAL mount request: %w", err)

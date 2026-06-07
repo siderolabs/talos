@@ -271,6 +271,38 @@ func TestVolumeConfigValidate(t *testing.T) {
 			expectedErrors: "TPM PCR 24 is out of range (0-23)\nTPM PCR 25 is out of range (0-23)",
 		},
 		{
+			name: "mount spec for STATE volume",
+
+			cfg: func(t *testing.T) *block.VolumeConfigV1Alpha1 {
+				c := block.NewVolumeConfigV1Alpha1()
+				c.MetaName = constants.StatePartitionLabel
+
+				c.MountSpec = block.MountSpec{
+					MountDisableAccessTime: new(true),
+				}
+
+				return c
+			},
+
+			expectedErrors: "mount config is not allowed for the \"STATE\" volume",
+		},
+		{
+			name: "mount spec for IMAGECACHE volume",
+
+			cfg: func(t *testing.T) *block.VolumeConfigV1Alpha1 {
+				c := block.NewVolumeConfigV1Alpha1()
+				c.MetaName = constants.ImageCachePartitionLabel
+
+				c.MountSpec = block.MountSpec{
+					MountSecure: new(true),
+				}
+
+				return c
+			},
+
+			expectedErrors: "mount config is not allowed for the \"IMAGECACHE\" volume",
+		},
+		{
 			name: "valid",
 
 			cfg: func(t *testing.T) *block.VolumeConfigV1Alpha1 {

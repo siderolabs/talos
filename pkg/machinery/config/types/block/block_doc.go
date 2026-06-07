@@ -804,8 +804,15 @@ func (MountSpec) Doc() *encoder.Doc {
 				Name:        "secure",
 				Type:        "bool",
 				Note:        "",
-				Description: "Enable secure mount options (nosuid, nodev).\n\nDefaults to true for better security.",
+				Description: "Enable secure mount options (nosuid, nodev).\n\nDefaults to true for better security.\nSupported only for EPHEMERAL volume.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable secure mount options (nosuid, nodev)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "disableAccessTime",
+				Type:        "bool",
+				Note:        "",
+				Description: "If true, disable file access time updates.\n\nSupported only for EPHEMERAL volume.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "If true, disable file access time updates." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}

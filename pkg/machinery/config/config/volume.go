@@ -153,13 +153,11 @@ type VolumeDiscoveryConfig interface {
 // VolumeMountConfig defines the interface to access volume mount configuration.
 type VolumeMountConfig interface {
 	Secure() bool
+	DisableAccessTime() bool
 }
 
 // UserVolumeMountConfig defines the interface to access volume mount configuration.
-type UserVolumeMountConfig interface {
-	VolumeMountConfig
-	DisableAccessTime() bool
-}
+type UserVolumeMountConfig = VolumeMountConfig
 
 // ExistingVolumeMountConfig defines the interface to access volume mount configuration.
 type ExistingVolumeMountConfig interface {
