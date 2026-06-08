@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/action"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/nodedrain"
 	"github.com/siderolabs/talos/pkg/flags"
@@ -59,46 +60,40 @@ var rebootCmd = &cobra.Command{
 }
 
 func rebootRun(ctx context.Context, opts []client.RebootMode) (retErr error) {
+	clientFactory, err := NewClientFactory(ctx, &rebootCmdFlags, action.GRPCDialOptions()...)
+	if err != nil {
+		return err
+	}
+
+	defer clientFactory.Close() //nolint:errcheck
+
 	rep := reporter.New(
 		reporter.WithOutputMode(rebootCmdFlags.progress.Value()),
 	)
 
 	if !rebootCmdFlags.drain {
-		return rebootInternal(ctx, rebootCmdFlags.wait, rebootCmdFlags.debug, rebootCmdFlags.timeout, rep, opts...)
+		return rebootInternal(ctx, clientFactory, rebootCmdFlags.wait, rebootCmdFlags.debug, rebootCmdFlags.timeout, rep, opts...)
 	}
 
-	var nodeNames map[string]string
-
-	if err := WithClientAndNodes(ctx, func(ctx context.Context, c *client.Client, nodes []string) error {
-		var drainErr error
-
-		nodeNames, drainErr = drainNodes(ctx, c, nodes, rebootCmdFlags.drainTimeout, rep)
-
-		return drainErr
-	}); err != nil {
-		return err
+	nodeNames, err := drainNodes(ctx, clientFactory, rebootCmdFlags.drainTimeout, rep)
+	if err != nil {
+		return fmt.Errorf("error draining nodes: %w", err)
 	}
 
 	defer func() {
-		if uncordonErr := WithClientAndNodes(ctx, func(ctx context.Context, c *client.Client, _ []string) error {
-			return uncordonNodes(ctx, c, nodeNames, rebootCmdFlags.timeout, rep)
-		}); uncordonErr != nil {
+		if uncordonErr := uncordonNodes(ctx, clientFactory, nodeNames, rebootCmdFlags.timeout, rep); uncordonErr != nil {
 			retErr = errors.Join(retErr, uncordonErr)
 		}
 	}()
 
-	return rebootInternal(ctx, rebootCmdFlags.wait, rebootCmdFlags.debug, rebootCmdFlags.timeout, rep, opts...)
+	return rebootInternal(ctx, clientFactory, rebootCmdFlags.wait, rebootCmdFlags.debug, rebootCmdFlags.timeout, rep, opts...)
 }
 
-func rebootInternal(ctx context.Context, wait, debug bool, timeout time.Duration, rep *reporter.Reporter, opts ...client.RebootMode) error {
+func rebootInternal(
+	ctx context.Context, clientFactory *global.ClientFactory,
+	wait, debug bool, timeout time.Duration, rep *reporter.Reporter, opts ...client.RebootMode,
+) error {
 	if !wait {
-		clientFactory, err := NewClientFactory(ctx, &rebootCmdFlags)
-		if err != nil {
-			return err
-		}
-
-		defer clientFactory.Close() //nolint:errcheck
-
 		if err := helpers.ClientVersionCheck(ctx, clientFactory); err != nil {
 			return err
 		}
@@ -122,7 +117,7 @@ func rebootInternal(ctx context.Context, wait, debug bool, timeout time.Duration
 	}
 
 	return action.NewTracker(
-		&GlobalArgs,
+		clientFactory,
 		action.MachineReadyEventFn,
 		rebootGetActorID(opts...),
 		action.WithPostCheck(action.BootIDChangedPostCheckFn),

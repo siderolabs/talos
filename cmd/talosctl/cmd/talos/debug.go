@@ -23,7 +23,6 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
-	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/reporter"
 )
 
@@ -52,63 +51,69 @@ var debugCmd = &cobra.Command{
 
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return WithClientAndNodes(cmd.Context(), func(ctx context.Context, c *client.Client, nodes []string) error {
-			if len(nodes) != 1 {
-				return fmt.Errorf("expected exactly one node, got %v", nodes)
-			}
+		ctx := cmd.Context()
 
-			ctx = client.WithNode(ctx, nodes[0])
+		clientFactory, err := NewClientFactory(ctx, nil)
+		if err != nil {
+			return err
+		}
 
-			rep := reporter.New()
+		defer clientFactory.Close() //nolint:errcheck
 
-			ctrdInstance, err := debugCmdFlags.containerdInstance()
+		ctx, c, node, err := clientFactory.BuildClientEnforceSingleNode(ctx, "debug")
+		if err != nil {
+			return err
+		}
+
+		rep := reporter.New()
+
+		ctrdInstance, err := debugCmdFlags.containerdInstance()
+		if err != nil {
+			return err
+		}
+
+		// verify if we are sending a tarball or pulling an image
+		_, err = os.Stat(args[0])
+		if err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("failed to stat image argument: %w", err)
+		}
+
+		var imgName string
+
+		if err == nil {
+			imgName, err = imageImportInternal(ctx, c, ctrdInstance, node, args[0], rep)
 			if err != nil {
-				return err
+				return fmt.Errorf("failed to import image: %w", err)
 			}
-
-			// verify if we are sending a tarball or pulling an image
-			_, err = os.Stat(args[0])
-			if err != nil && !os.IsNotExist(err) {
-				return fmt.Errorf("failed to stat image argument: %w", err)
-			}
-
-			var imgName string
-
-			if err == nil {
-				imgName, err = imageImportInternal(ctx, c, ctrdInstance, nodes[0], args[0], rep)
-				if err != nil {
-					return fmt.Errorf("failed to import image: %w", err)
-				}
-			} else {
-				pullResult, err := imagePullInternal(ctx, c, ctrdInstance, nodes, args[0], rep)
-				if err != nil {
-					return fmt.Errorf("failed to pull image: %w", err)
-				}
-
-				imgName = pullResult[nodes[0]]
-			}
-
-			// no easy way to disable hooking up signal handling to the command context,
-			// so instead save this context and use a new one from here on out.
-			//
-			// new context so that SIGINT/similar won't immediately cancel streaming
-			// and instead allow us to forward the signal to the container
-			ctx = context.WithoutCancel(ctx)
-
-			ctx, cancel := context.WithCancel(ctx)
-			defer cancel()
-
-			runStream, err := c.DebugClient.ContainerRun(
-				ctx,
-				grpc.MaxCallRecvMsgSize(4*1024*1024), // 4 MiB
-				grpc.MaxCallSendMsgSize(4*1024*1024),
-			)
+		} else {
+			pullResult, err := imagePullInternal(ctx, clientFactory, ctrdInstance, args[0], rep)
 			if err != nil {
-				return fmt.Errorf("failed to create debug container stream: %w", err)
+				return fmt.Errorf("failed to pull image: %w", err)
 			}
 
-			return runContainer(ctx, rep, runStream, imgName, debugCmdFlags.args, ctrdInstance)
-		})
+			imgName = pullResult[node]
+		}
+
+		// no easy way to disable hooking up signal handling to the command context,
+		// so instead save this context and use a new one from here on out.
+		//
+		// new context so that SIGINT/similar won't immediately cancel streaming
+		// and instead allow us to forward the signal to the container
+		ctx = context.WithoutCancel(ctx)
+
+		ctx, cancel := context.WithCancel(ctx)
+		defer cancel()
+
+		runStream, err := c.DebugClient.ContainerRun(
+			ctx,
+			grpc.MaxCallRecvMsgSize(4*1024*1024), // 4 MiB
+			grpc.MaxCallSendMsgSize(4*1024*1024),
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create debug container stream: %w", err)
+		}
+
+		return runContainer(ctx, rep, runStream, imgName, debugCmdFlags.args, ctrdInstance)
 	},
 }
 

@@ -80,7 +80,7 @@ func Crashdump(ctx context.Context, cluster provision.Cluster, logWriter io.Writ
 }
 
 func getKubernetesClient(ctx context.Context, c *client.Client) (*k8s.Clientset, error) {
-	kubeconfig, err := c.Kubeconfig(client.ClearNode(ctx))
+	kubeconfig, err := c.Kubeconfig(ctx)
 	if err != nil {
 		return nil, err
 	}

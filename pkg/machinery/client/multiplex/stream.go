@@ -78,7 +78,7 @@ func Streaming[ResponseT any](ctx context.Context, nodes []string, initiate func
 
 // StreamingViaFactory is a helper which performs streaming multiplexing using a ClientFactory to create clients for each node.
 func StreamingViaFactory[ResponseT any](
-	ctx context.Context, factory ClientFactory, initiate func(context.Context, *client.Client) (grpc.ServerStreamingClient[ResponseT], error),
+	origCtx context.Context, factory ClientFactory, initiate func(context.Context, *client.Client) (grpc.ServerStreamingClient[ResponseT], error),
 ) <-chan Response[*ResponseT] {
 	responseCh := make(chan Response[*ResponseT])
 
@@ -86,10 +86,10 @@ func StreamingViaFactory[ResponseT any](
 
 	for _, node := range factory.Nodes() {
 		wg.Go(func() {
-			ctx, client, err := factory.BuildClient(ctx, node)
+			ctx, client, err := factory.BuildClient(origCtx, node)
 			if err != nil {
 				channel.SendWithContext(
-					ctx, responseCh,
+					origCtx, responseCh,
 					Response[*ResponseT]{
 						Node: node,
 						Err:  err,

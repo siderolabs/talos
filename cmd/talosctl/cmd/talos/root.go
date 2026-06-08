@@ -55,14 +55,9 @@ const pathAutoCompleteLimit = 500
 // column widths while responses are still arriving.
 const outputFlushInterval = 500 * time.Millisecond
 
-// WithClientAndNodes builds upon WithClientNoNodes to pass a list of nodes via command function.
-func WithClientAndNodes(ctx context.Context, action func(context.Context, *client.Client, []string) error, dialOptions ...grpc.DialOption) error {
-	return GlobalArgs.WithClientAndNodes(ctx, action, dialOptions...)
-}
-
 // NewClientFactory creates a new ClientFactory.
-func NewClientFactory(ctx context.Context, flags any) (*global.ClientFactory, error) {
-	return global.NewClientFactory(ctx, &GlobalArgs, flags)
+func NewClientFactory(ctx context.Context, flags any, dialOptions ...grpc.DialOption) (*global.ClientFactory, error) {
+	return global.NewClientFactory(ctx, &GlobalArgs, flags, dialOptions...)
 }
 
 // Commands is a list of commands published by the package.

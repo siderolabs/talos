@@ -26,18 +26,6 @@ func WithNodes(ctx context.Context, nodes ...string) context.Context {
 	return metadata.NewOutgoingContext(ctx, md)
 }
 
-// ClearNode removes any node metadata from the context, so that the request will be processed by the endpoint as usual.
-func ClearNode(ctx context.Context) context.Context {
-	md, _ := metadata.FromOutgoingContext(ctx)
-
-	// overwrite any previous nodes in the context metadata with new value
-	md = md.Copy()
-	md.Delete("node")
-	md.Delete("nodes")
-
-	return metadata.NewOutgoingContext(ctx, md)
-}
-
 // WithNode wraps the context with metadata to send request to a single node.
 //
 // Request will be proxied by the endpoint to the specified node without any further processing.

@@ -58,9 +58,6 @@ func NewClientFactory(ctx context.Context, args *Args, flags any, dialOptions ..
 
 		factory.nodes = configContext.Nodes
 		factory.client = c
-
-		// TODO: this is a temporary hack, remove it once global tracker refactoring is done
-		args.Nodes = factory.nodes
 	}
 
 	if len(factory.nodes) < 1 {

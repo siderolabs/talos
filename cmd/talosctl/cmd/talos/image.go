@@ -34,6 +34,7 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/talos/pull"
 	mgmthelpers "github.com/siderolabs/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/artifacts"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services/registry"
 	"github.com/siderolabs/talos/pkg/flags"
@@ -116,73 +117,71 @@ var imageListCmd = &cobra.Command{
 }
 
 func imageList(ctx context.Context) error {
-	return WithClientAndNodes(ctx, func(ctx context.Context, c *client.Client, nodes []string) error {
-		ctx, cancel := context.WithCancel(ctx)
-		defer cancel()
-
-		containerdInstance, err := imageCmdFlags.containerdInstance()
-		if err != nil {
-			return err
-		}
-
-		responseChan := multiplex.Streaming(
-			ctx, nodes,
-			func(ctx context.Context) (grpc.ServerStreamingClient[machine.ImageServiceListResponse], error) {
-				return c.ImageClient.List(ctx, &machine.ImageServiceListRequest{
-					Containerd: containerdInstance,
-				})
-			},
-		)
-
-		w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
-		headerWritten := false
-
-		var errs error
-
-		for resp := range responseChan {
-			if resp.Err != nil {
-				if status.Code(resp.Err) == codes.Unimplemented {
-					// fallback to legacy API for older Talos
-					return imageListLegacy(ctx)
-				}
-
-				errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
-
-				continue
-			}
-
-			if !headerWritten {
-				headerWritten = true
-
-				fmt.Fprintln(w, "NODE\tIMAGE\tDIGEST\tSIZE\tLABELS\tCREATED")
-			}
-
-			fmt.Fprintf(
-				w, "%s\t%s\t%s\t%s\t%s\t%s\n",
-				resp.Node,
-				resp.Payload.GetName(),
-				resp.Payload.GetDigest(),
-				humanize.Bytes(uint64(resp.Payload.GetSize())),
-				helpers.FormatLabels(resp.Payload.GetLabels()),
-				resp.Payload.GetCreatedAt().AsTime().Format(time.RFC3339),
-			)
-		}
-
-		return errors.Join(errs, w.Flush())
-	})
-}
-
-// imageListLegacy lists images using the legacy ImageList API.
-//
-// Note: remove me in Talos 1.15.
-func imageListLegacy(ctx context.Context) error {
-	clientFactory, err := NewClientFactory(ctx, &imageCmdFlags)
+	clientFactory, err := NewClientFactory(ctx, nil)
 	if err != nil {
 		return err
 	}
 
 	defer clientFactory.Close() //nolint:errcheck
 
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	containerdInstance, err := imageCmdFlags.containerdInstance()
+	if err != nil {
+		return err
+	}
+
+	responseChan := multiplex.StreamingViaFactory(
+		ctx, clientFactory,
+		func(ctx context.Context, c *client.Client) (grpc.ServerStreamingClient[machine.ImageServiceListResponse], error) {
+			return c.ImageClient.List(ctx, &machine.ImageServiceListRequest{
+				Containerd: containerdInstance,
+			})
+		},
+	)
+
+	w := tabwriter.NewWriter(os.Stdout, 0, 0, 3, ' ', 0)
+	headerWritten := false
+
+	var errs error
+
+	for resp := range responseChan {
+		if resp.Err != nil {
+			if status.Code(resp.Err) == codes.Unimplemented {
+				// fallback to legacy API for older Talos
+				return imageListLegacy(ctx, clientFactory)
+			}
+
+			errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+
+			continue
+		}
+
+		if !headerWritten {
+			headerWritten = true
+
+			fmt.Fprintln(w, "NODE\tIMAGE\tDIGEST\tSIZE\tLABELS\tCREATED")
+		}
+
+		fmt.Fprintf(
+			w, "%s\t%s\t%s\t%s\t%s\t%s\n",
+			resp.Node,
+			resp.Payload.GetName(),
+			resp.Payload.GetDigest(),
+			humanize.Bytes(uint64(resp.Payload.GetSize())),
+			helpers.FormatLabels(resp.Payload.GetLabels()),
+			resp.Payload.GetCreatedAt().AsTime().Format(time.RFC3339),
+		)
+	}
+
+	return errors.Join(errs, w.Flush())
+}
+
+// imageListLegacy lists images using the legacy ImageList API.
+//
+// Note: remove me in Talos 1.15.
+func imageListLegacy(ctx context.Context, clientFactory *global.ClientFactory) error {
 	ns, err := imageCmdFlags.apiNamespace()
 	if err != nil {
 		return err
@@ -234,34 +233,38 @@ var imagePullCmd = &cobra.Command{
 
 // imagePull pulls an image using modern API and showing progress.
 func imagePull(ctx context.Context, imageRef string) error {
-	return WithClientAndNodes(ctx, func(ctx context.Context, c *client.Client, nodes []string) error {
-		rep := reporter.New()
-
-		containerdInstance, err := imageCmdFlags.containerdInstance()
-		if err != nil {
-			return err
-		}
-
-		_, err = imagePullInternal(ctx, c, containerdInstance, nodes, imageRef, rep)
-
+	clientFactory, err := NewClientFactory(ctx, nil)
+	if err != nil {
 		return err
-	})
+	}
+
+	defer clientFactory.Close() //nolint:errcheck
+
+	rep := reporter.New()
+
+	containerdInstance, err := imageCmdFlags.containerdInstance()
+	if err != nil {
+		return err
+	}
+
+	_, err = imagePullInternal(ctx, clientFactory, containerdInstance, imageRef, rep)
+
+	return err
 }
 
 func imagePullInternal(
 	ctx context.Context,
-	c *client.Client,
+	clientFactory *global.ClientFactory,
 	containerdInstance *common.ContainerdInstance,
-	nodes []string,
 	imageRef string,
 	rep *reporter.Reporter,
 ) (map[string]string, error) {
-	ctx, cancel := context.WithCancel(ctx)
+	streamCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	responseChan := multiplex.Streaming(
-		ctx, nodes,
-		func(ctx context.Context) (grpc.ServerStreamingClient[machine.ImageServicePullResponse], error) {
+	responseChan := multiplex.StreamingViaFactory(
+		streamCtx, clientFactory,
+		func(ctx context.Context, c *client.Client) (grpc.ServerStreamingClient[machine.ImageServicePullResponse], error) {
 			return c.ImageClient.Pull(ctx, &machine.ImageServicePullRequest{
 				Containerd: containerdInstance,
 				ImageRef:   imageRef,
@@ -375,8 +378,6 @@ func imageImportInternal(
 
 	defer in.Close() //nolint:errcheck
 
-	ctx = client.WithNode(ctx, node)
-
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -458,35 +459,40 @@ var imageRemoveCmd = &cobra.Command{
 
 // imageRemove removes an image using modern API.
 func imageRemove(ctx context.Context, imageRef string) error {
-	return WithClientAndNodes(ctx, func(ctx context.Context, c *client.Client, nodes []string) error {
-		ctx, cancel := context.WithCancel(ctx)
-		defer cancel()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
-		containerdInstance, err := imageCmdFlags.containerdInstance()
-		if err != nil {
-			return err
+	clientFactory, err := NewClientFactory(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	defer clientFactory.Close() //nolint:errcheck
+
+	containerdInstance, err := imageCmdFlags.containerdInstance()
+	if err != nil {
+		return err
+	}
+
+	responseChan := multiplex.UnaryViaFactory(
+		ctx, clientFactory,
+		func(ctx context.Context, c *client.Client) (*emptypb.Empty, error) {
+			return c.ImageClient.Remove(ctx, &machine.ImageServiceRemoveRequest{
+				Containerd: containerdInstance,
+				ImageRef:   imageRef,
+			})
+		},
+	)
+
+	var errs error
+
+	for resp := range responseChan {
+		if resp.Err != nil {
+			errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
 		}
+	}
 
-		responseChan := multiplex.Unary(
-			ctx, nodes,
-			func(ctx context.Context) (*emptypb.Empty, error) {
-				return c.ImageClient.Remove(ctx, &machine.ImageServiceRemoveRequest{
-					Containerd: containerdInstance,
-					ImageRef:   imageRef,
-				})
-			},
-		)
-
-		var errs error
-
-		for resp := range responseChan {
-			if resp.Err != nil {
-				errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
-			}
-		}
-
-		return errs
-	})
+	return errs
 }
 
 var imageK8sBundleCmdFlags = struct {

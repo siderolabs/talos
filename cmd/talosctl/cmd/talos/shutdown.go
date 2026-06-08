@@ -38,16 +38,16 @@ var shutdownCmd = &cobra.Command{
 			client.WithShutdownForce(shutdownCmdFlags.force),
 		}
 
+		ctx := cmd.Context()
+
+		clientFactory, err := NewClientFactory(ctx, &shutdownCmdFlags, action.GRPCDialOptions()...)
+		if err != nil {
+			return err
+		}
+
+		defer clientFactory.Close() //nolint:errcheck
+
 		if !shutdownCmdFlags.wait {
-			ctx := cmd.Context()
-
-			clientFactory, err := NewClientFactory(ctx, &shutdownCmdFlags)
-			if err != nil {
-				return err
-			}
-
-			defer clientFactory.Close() //nolint:errcheck
-
 			if err := helpers.ClientVersionCheck(ctx, clientFactory); err != nil {
 				return err
 			}
@@ -71,12 +71,12 @@ var shutdownCmd = &cobra.Command{
 		}
 
 		return action.NewTracker(
-			&GlobalArgs,
+			clientFactory,
 			action.StopAllServicesEventFn,
 			shutdownGetActorID,
 			action.WithDebug(shutdownCmdFlags.debug),
 			action.WithTimeout(shutdownCmdFlags.timeout),
-		).Run(cmd.Context())
+		).Run(ctx)
 	},
 }
 

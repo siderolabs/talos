@@ -12,7 +12,6 @@ import (
 	"io"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -50,10 +49,10 @@ type Options struct {
 // The context must target a single node (via client.WithNode) because COSI
 // State/Get does not support one-to-many proxying.
 func GetKubernetesNodeName(ctx context.Context, c *client.Client) (string, error) {
-	nodenameRes, err := safe.StateGet[*k8s.Nodename](
+	nodenameRes, err := safe.StateGetByID[*k8s.Nodename](
 		ctx,
 		c.COSI,
-		resource.NewMetadata(k8s.NamespaceName, k8s.NodenameType, k8s.NodenameID, resource.VersionUndefined),
+		k8s.NodenameID,
 	)
 	if err != nil {
 		return "", fmt.Errorf("error getting Kubernetes node name from Talos API: %w", err)

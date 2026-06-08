@@ -92,16 +92,16 @@ var resetCmd = &cobra.Command{
 
 		resetRequest := buildResetRequest()
 
+		ctx := cmd.Context()
+
+		clientFactory, err := NewClientFactory(ctx, &resetCmdFlags, action.GRPCDialOptions()...)
+		if err != nil {
+			return err
+		}
+
+		defer clientFactory.Close() //nolint:errcheck
+
 		if !resetCmdFlags.wait {
-			ctx := cmd.Context()
-
-			clientFactory, err := NewClientFactory(ctx, &resetCmdFlags)
-			if err != nil {
-				return err
-			}
-
-			defer clientFactory.Close() //nolint:errcheck
-
 			if err := helpers.ClientVersionCheck(ctx, clientFactory); err != nil {
 				return err
 			}
@@ -155,7 +155,7 @@ var resetCmd = &cobra.Command{
 		}
 
 		return action.NewTracker(
-			&GlobalArgs,
+			clientFactory,
 			action.StopAllServicesEventFn,
 			actionFn,
 			action.WithPostCheck(postCheckFn),

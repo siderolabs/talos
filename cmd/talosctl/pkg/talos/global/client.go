@@ -6,12 +6,7 @@
 package global
 
 import (
-	"context"
 	"errors"
-
-	"google.golang.org/grpc"
-
-	"github.com/siderolabs/talos/pkg/machinery/client"
 )
 
 // ErrConfigContext is returned when config context cannot be resolved.
@@ -25,47 +20,4 @@ type Args struct {
 	Nodes           []string
 	Endpoints       []string
 	SideroV1KeysDir string
-}
-
-// NodeList returns the list of nodes to run the command against.
-//
-// Deprecated: returns wrong information.
-func (args *Args) NodeList() []string {
-	return args.Nodes
-}
-
-// WithClientNoNodes wraps common code to initialize Talos client and provide cancellable context.
-//
-// WithClientNoNodes doesn't set any node information on the request context.
-func (args *Args) WithClientNoNodes(ctx context.Context, action func(context.Context, *client.Client) error, dialOptions ...grpc.DialOption) error {
-	factory, err := NewClientFactory(ctx, args, nil, dialOptions...)
-	if err != nil {
-		return err
-	}
-
-	defer factory.Close() //nolint:errcheck
-
-	_, c, err := factory.BuildClient(ctx, "")
-	if err != nil {
-		return err
-	}
-
-	return action(ctx, c)
-}
-
-// WithClientAndNodes builds upon WithClientNoNodes to provide a list of nodes to the function.
-func (args *Args) WithClientAndNodes(ctx context.Context, action func(context.Context, *client.Client, []string) error, dialOptions ...grpc.DialOption) error {
-	factory, err := NewClientFactory(ctx, args, nil, dialOptions...)
-	if err != nil {
-		return err
-	}
-
-	defer factory.Close() //nolint:errcheck
-
-	_, c, err := factory.BuildClient(ctx, "")
-	if err != nil {
-		return err
-	}
-
-	return action(ctx, c, factory.Nodes())
 }

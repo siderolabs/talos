@@ -74,7 +74,14 @@ var upgradeCmd = &cobra.Command{
 }
 
 func upgradeRun(ctx context.Context) error {
-	return WithClientAndNodes(ctx, upgradeViaLifecycleService)
+	clientFactory, err := NewClientFactory(ctx, &upgradeCmdFlags, action.GRPCDialOptions()...)
+	if err != nil {
+		return err
+	}
+
+	defer clientFactory.Close() //nolint:errcheck
+
+	return upgradeViaLifecycleService(ctx, clientFactory)
 }
 
 var talosUpgradeAPIVersionRange = semver.MustParseRange(">1.13.0-alpha.2 <2.0.0")
@@ -83,7 +90,7 @@ var talosUpgradeAPIVersionRange = semver.MustParseRange(">1.13.0-alpha.2 <2.0.0"
 // If the server returns codes.Unimplemented, it falls back to the legacy MachineService.Upgrade.
 //
 //nolint:gocyclo
-func upgradeViaLifecycleService(ctx context.Context, c *client.Client, nodes []string) (retErr error) {
+func upgradeViaLifecycleService(ctx context.Context, clientFactory *global.ClientFactory) (retErr error) {
 	if upgradeCmdFlags.debug {
 		upgradeCmdFlags.wait = true
 	}
@@ -91,7 +98,7 @@ func upgradeViaLifecycleService(ctx context.Context, c *client.Client, nodes []s
 	if upgradeCmdFlags.legacy {
 		cli.Warning("Forcing use of legacy upgrade method. This flag is deprecated and will be removed in Talos 1.18.")
 
-		return upgradeLegacy(ctx)
+		return upgradeLegacy(ctx, clientFactory)
 	}
 
 	opts := []client.RebootMode{
@@ -107,28 +114,25 @@ func upgradeViaLifecycleService(ctx context.Context, c *client.Client, nodes []s
 		reporter.WithOutputMode(upgradeCmdFlags.progress.Value()),
 	)
 
-	err = WithClientAndNodes(ctx, func(ctx context.Context, c *client.Client, nodes []string) error {
-		return helpers.TalosVersionCheck(ctx, c, talosUpgradeAPIVersionRange, nodes)
-	})
-	if err != nil {
+	if err = helpers.TalosVersionCheck(ctx, clientFactory, talosUpgradeAPIVersionRange); err != nil {
 		if xerrors.TagIs[helpers.VersionOutsideRangeError](err) {
 			rep.Report(reporter.Update{
 				Status:  reporter.StatusError,
 				Message: "New upgrade API is not available, falling back to legacy",
 			})
 
-			return upgradeLegacy(ctx)
+			return upgradeLegacy(ctx, clientFactory)
 		}
 
 		return fmt.Errorf("error checking Talos version compatibility: %w", err)
 	}
 
-	_, err = imagePullInternal(ctx, c, containerdInstance, nodes, upgradeCmdFlags.upgradeImage, rep)
+	_, err = imagePullInternal(ctx, clientFactory, containerdInstance, upgradeCmdFlags.upgradeImage, rep)
 	if err != nil {
 		return fmt.Errorf("error pulling upgrade image: %w", err)
 	}
 
-	_, err = upgradeInternal(ctx, c, containerdInstance, nodes, upgradeCmdFlags.upgradeImage, rep)
+	_, err = upgradeInternal(ctx, clientFactory, containerdInstance, upgradeCmdFlags.upgradeImage, rep)
 	if err != nil {
 		return fmt.Errorf("error during upgrade: %w", err)
 	}
@@ -136,7 +140,7 @@ func upgradeViaLifecycleService(ctx context.Context, c *client.Client, nodes []s
 	var nodeNames map[string]string
 
 	if upgradeCmdFlags.drain {
-		nodeNames, err = drainNodes(ctx, c, nodes, upgradeCmdFlags.drainTimeout, rep)
+		nodeNames, err = drainNodes(ctx, clientFactory, upgradeCmdFlags.drainTimeout, rep)
 		if err != nil {
 			return err
 		}
@@ -148,13 +152,13 @@ func upgradeViaLifecycleService(ctx context.Context, c *client.Client, nodes []s
 		}
 
 		if len(nodeNames) > 0 {
-			if uncordonErr := uncordonNodes(ctx, c, nodeNames, upgradeCmdFlags.timeout, rep); uncordonErr != nil {
+			if uncordonErr := uncordonNodes(ctx, clientFactory, nodeNames, upgradeCmdFlags.timeout, rep); uncordonErr != nil {
 				retErr = errors.Join(retErr, uncordonErr)
 			}
 		}
 	}()
 
-	err = rebootInternal(ctx, upgradeCmdFlags.wait, upgradeCmdFlags.debug, upgradeCmdFlags.timeout, rep, opts...)
+	err = rebootInternal(ctx, clientFactory, upgradeCmdFlags.wait, upgradeCmdFlags.debug, upgradeCmdFlags.timeout, rep, opts...)
 	if err != nil {
 		return fmt.Errorf("error during upgrade: %w", err)
 	}
@@ -162,7 +166,7 @@ func upgradeViaLifecycleService(ctx context.Context, c *client.Client, nodes []s
 	return nil
 }
 
-func upgradeInternal(ctx context.Context, c *client.Client, containerdInstance *common.ContainerdInstance, nodes []string, imageRef string, rep *reporter.Reporter) (map[string]int32, error) {
+func upgradeInternal(ctx context.Context, clientFactory *global.ClientFactory, containerdInstance *common.ContainerdInstance, imageRef string, rep *reporter.Reporter) (map[string]int32, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -173,9 +177,9 @@ func upgradeInternal(ctx context.Context, c *client.Client, containerdInstance *
 
 	finishedUpgrades := map[string]int32{}
 
-	responseChan := multiplex.Streaming(
-		ctx, nodes,
-		func(ctx context.Context) (grpc.ServerStreamingClient[machine.LifecycleServiceUpgradeResponse], error) {
+	responseChan := multiplex.StreamingViaFactory(
+		ctx, clientFactory,
+		func(ctx context.Context, c *client.Client) (grpc.ServerStreamingClient[machine.LifecycleServiceUpgradeResponse], error) {
 			return c.LifecycleClient.Upgrade(ctx, &machine.LifecycleServiceUpgradeRequest{
 				Containerd: containerdInstance,
 				Source: &machine.InstallArtifactsSource{
@@ -235,7 +239,7 @@ func upgradeInternal(ctx context.Context, c *client.Client, containerdInstance *
 // upgradeLegacy dispatches to the legacy upgrade path, respecting --wait.
 //
 // Note: remove me in Talos 1.18.
-func upgradeLegacy(ctx context.Context) error {
+func upgradeLegacy(ctx context.Context, clientFactory *global.ClientFactory) error {
 	rebootModeStr := strings.ToUpper(upgradeCmdFlags.rebootMode.String())
 
 	rebootMode, ok := machine.UpgradeRequest_RebootMode_value[rebootModeStr]
@@ -256,7 +260,7 @@ func upgradeLegacy(ctx context.Context) error {
 	}
 
 	return action.NewTracker(
-		&GlobalArgs,
+		clientFactory,
 		action.MachineReadyEventFn,
 		func(ctx context.Context, c *client.Client) (string, error) {
 			return upgradeGetActorID(ctx, c, opts)

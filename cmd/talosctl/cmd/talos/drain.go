@@ -13,9 +13,9 @@ import (
 	"golang.org/x/sync/errgroup"
 
 	drainpkg "github.com/siderolabs/talos/cmd/talosctl/cmd/talos/drain"
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/kubeclient"
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/nodedrain"
-	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/reporter"
 )
 
@@ -30,8 +30,13 @@ type nodeUpdate struct {
 // and performs cordon + drain on all of them in parallel.
 //
 // It returns a map of talosIP -> k8sNodeName for use in the uncordon phase.
-// The context must NOT have "nodes" metadata set (use WithClientAndNodes).
-func drainNodes(ctx context.Context, c *client.Client, nodes []string, drainTimeout time.Duration, rep *reporter.Reporter) (map[string]string, error) {
+func drainNodes(ctx context.Context, clientFactory *global.ClientFactory, drainTimeout time.Duration, rep *reporter.Reporter) (map[string]string, error) {
+	// For kubeconfig - build a random endpoint client (to go to the controlplane).
+	c, err := clientFactory.BuildRandomEndpointClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	// Fetch kubeconfig once - it is cluster-global, not node-specific.
 	clientset, err := kubeclient.FromTalosClient(ctx, c)
 	if err != nil {
@@ -42,7 +47,7 @@ func drainNodes(ctx context.Context, c *client.Client, nodes []string, drainTime
 	updateCh := make(chan nodeUpdate)
 
 	// k8sNames collects Talos IP -> K8s node name mappings produced by each goroutine.
-	k8sNames := make(map[string]string, len(nodes))
+	k8sNames := make(map[string]string, len(clientFactory.Nodes()))
 
 	var mapMux sync.Mutex // protects k8sNames map during writes
 
@@ -64,12 +69,14 @@ func drainNodes(ctx context.Context, c *client.Client, nodes []string, drainTime
 	}()
 
 	// Launch a goroutine per node.
-	for _, node := range nodes {
+	for _, node := range clientFactory.Nodes() {
 		eg.Go(func() error {
-			// Use client.WithNode for single-node COSI routing (avoids one-to-many proxy error).
-			nodeCtx := client.WithNode(ctx, node)
+			ctx, c, err := clientFactory.BuildClient(ctx, node)
+			if err != nil {
+				return fmt.Errorf("error building client for node %s: %w", node, err)
+			}
 
-			k8sNodeName, resolveErr := nodedrain.GetKubernetesNodeName(nodeCtx, c)
+			k8sNodeName, resolveErr := nodedrain.GetKubernetesNodeName(ctx, c)
 			if resolveErr != nil {
 				return fmt.Errorf("error resolving Kubernetes node name for %s: %w", node, resolveErr)
 			}
@@ -106,8 +113,13 @@ func drainNodes(ctx context.Context, c *client.Client, nodes []string, drainTime
 // then uncordons all of them in parallel.
 //
 // nodeNames maps talosIP -> k8sNodeName (produced by drainNodes).
-// The context must NOT have "nodes" metadata set (use WithClientAndNodes).
-func uncordonNodes(ctx context.Context, c *client.Client, nodeNames map[string]string, timeout time.Duration, rep *reporter.Reporter) error {
+func uncordonNodes(ctx context.Context, clientFactory *global.ClientFactory, nodeNames map[string]string, timeout time.Duration, rep *reporter.Reporter) error {
+	// For kubeconfig - build a random endpoint client (to go to the controlplane).
+	c, err := clientFactory.BuildRandomEndpointClient(ctx)
+	if err != nil {
+		return err
+	}
+
 	// Fetch a fresh kubeconfig (the previous connection may be stale after reboot).
 	// The context has no "nodes" metadata (called from WithClientAndNodes), so the
 	// request routes to the endpoint which is a control-plane node by convention.

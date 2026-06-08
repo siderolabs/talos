@@ -17,7 +17,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/emicklei/dot"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/peer"
 
 	"github.com/siderolabs/talos/pkg/machinery/api/inspect"
@@ -88,15 +87,6 @@ func RenderGraph(ctx context.Context, c *client.Client, resp *inspect.Controller
 	if withResources {
 		resources := map[string][]resource.Resource{}
 
-		md, _ := metadata.FromOutgoingContext(ctx)
-		nodes := md["nodes"]
-
-		nodeCtx := ctx
-
-		if len(nodes) > 0 {
-			nodeCtx = client.WithNode(ctx, nodes[0])
-		}
-
 		for _, msg := range resp.GetMessages() {
 			for _, edge := range msg.GetEdges() {
 				resourceType := resourceTypeID(edge)
@@ -107,12 +97,12 @@ func RenderGraph(ctx context.Context, c *client.Client, resp *inspect.Controller
 
 				namespace := edge.GetResourceNamespace()
 
-				rd, err := c.ResolveResourceKind(nodeCtx, &namespace, edge.GetResourceType())
+				rd, err := c.ResolveResourceKind(ctx, &namespace, edge.GetResourceType())
 				if err != nil {
 					return err
 				}
 
-				items, err := c.COSI.List(nodeCtx, resource.NewMetadata(namespace, rd.TypedSpec().Type, "", resource.VersionUndefined))
+				items, err := c.COSI.List(ctx, resource.NewMetadata(namespace, rd.TypedSpec().Type, "", resource.VersionUndefined))
 				if err != nil {
 					// ignore errors here
 					continue
