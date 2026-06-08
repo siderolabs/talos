@@ -42,7 +42,8 @@ type AuthorizationAuthorizersSpec struct {
 func NewAuthorizationConfig() *AuthorizationConfig {
 	return typed.NewResource[AuthorizationConfigSpec, AuthorizationConfigExtension](
 		resource.NewMetadata(ControlPlaneNamespaceName, AuthorizationConfigType, AuthorizationConfigID, resource.VersionUndefined),
-		AuthorizationConfigSpec{})
+		AuthorizationConfigSpec{},
+	)
 }
 
 // AuthorizationConfigExtension defines AuthorizationConfig resource definition.

@@ -42,7 +42,8 @@ type AdmissionPluginSpec struct {
 func NewAdmissionControlConfig() *AdmissionControlConfig {
 	return typed.NewResource[AdmissionControlConfigSpec, AdmissionControlConfigExtension](
 		resource.NewMetadata(ControlPlaneNamespaceName, AdmissionControlConfigType, AdmissionControlConfigID, resource.VersionUndefined),
-		AdmissionControlConfigSpec{})
+		AdmissionControlConfigSpec{},
+	)
 }
 
 // AdmissionControlConfigExtension defines AdmissionControlConfig resource definition.

@@ -69,7 +69,8 @@ type ArgValues struct {
 func NewAPIServerConfig() *APIServerConfig {
 	return typed.NewResource[APIServerConfigSpec, APIServerConfigExtension](
 		resource.NewMetadata(ControlPlaneNamespaceName, APIServerConfigType, APIServerConfigID, resource.VersionUndefined),
-		APIServerConfigSpec{})
+		APIServerConfigSpec{},
+	)
 }
 
 // APIServerConfigExtension defines APIServerConfig resource definition.

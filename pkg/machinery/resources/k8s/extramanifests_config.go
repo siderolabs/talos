@@ -45,7 +45,8 @@ type ExtraManifest struct {
 func NewExtraManifestsConfig() *ExtraManifestsConfig {
 	return typed.NewResource[ExtraManifestsConfigSpec, ExtraManifestsConfigExtension](
 		resource.NewMetadata(ControlPlaneNamespaceName, ExtraManifestsConfigType, ExtraManifestsConfigID, resource.VersionUndefined),
-		ExtraManifestsConfigSpec{})
+		ExtraManifestsConfigSpec{},
+	)
 }
 
 // ExtraManifestsConfigExtension defines ExtraManifestsConfig resource definition.

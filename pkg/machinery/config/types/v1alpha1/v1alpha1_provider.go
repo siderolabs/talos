@@ -1336,7 +1336,8 @@ func (i *InstallConfig) DiskMatchExpression() (*cel.Expression, error) {
 			op = "=="
 		}
 
-		exprs = append(exprs, // disk.size op value
+		exprs = append(
+			exprs, // disk.size op value
 			builder.NewCall(
 				builder.NextID(),
 				"_"+op+"_",
@@ -1405,7 +1406,8 @@ func (i *InstallConfig) DiskMatchExpression() (*cel.Expression, error) {
 	}
 
 	// disk.transport != "" (otherwise it might select e.g. DM devices)
-	exprs = append(exprs,
+	exprs = append(
+		exprs,
 		builder.NewCall(
 			builder.NextID(),
 			operators.NotEquals,
@@ -1431,7 +1433,8 @@ func (i *InstallConfig) DiskMatchExpression() (*cel.Expression, error) {
 				"rotational",
 			))
 		case "ssd": // !disk.rotational
-			exprs = append(exprs,
+			exprs = append(
+				exprs,
 				builder.NewCall(
 					builder.NextID(),
 					operators.LogicalNot,

@@ -40,7 +40,8 @@ type SchedulerConfigSpec struct {
 func NewSchedulerConfig() *SchedulerConfig {
 	return typed.NewResource[SchedulerConfigSpec, SchedulerConfigExtension](
 		resource.NewMetadata(ControlPlaneNamespaceName, SchedulerConfigType, SchedulerConfigID, resource.VersionUndefined),
-		SchedulerConfigSpec{})
+		SchedulerConfigSpec{},
+	)
 }
 
 // SchedulerConfigExtension defines SchedulerConfig resource definition.

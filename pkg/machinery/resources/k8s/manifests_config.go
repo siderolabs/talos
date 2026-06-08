@@ -61,7 +61,8 @@ type BootstrapManifestsConfigSpec struct {
 func NewBootstrapManifestsConfig() *BootstrapManifestsConfig {
 	return typed.NewResource[BootstrapManifestsConfigSpec, BootstrapManifestsConfigExtension](
 		resource.NewMetadata(ControlPlaneNamespaceName, BootstrapManifestsConfigType, BootstrapManifestsConfigID, resource.VersionUndefined),
-		BootstrapManifestsConfigSpec{})
+		BootstrapManifestsConfigSpec{},
+	)
 }
 
 // BootstrapManifestsConfigExtension defines BootstrapManifestsConfig resource definition.

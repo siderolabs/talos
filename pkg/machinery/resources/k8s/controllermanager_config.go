@@ -42,7 +42,8 @@ type ControllerManagerConfigSpec struct {
 func NewControllerManagerConfig() *ControllerManagerConfig {
 	return typed.NewResource[ControllerManagerConfigSpec, ControllerManagerConfigExtension](
 		resource.NewMetadata(ControlPlaneNamespaceName, ControllerManagerConfigType, ControllerManagerConfigID, resource.VersionUndefined),
-		ControllerManagerConfigSpec{})
+		ControllerManagerConfigSpec{},
+	)
 }
 
 // ControllerManagerConfigExtension defines ControllerManagerConfig resource definition.

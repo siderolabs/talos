@@ -55,7 +55,8 @@ func TestExtensionServiceConfigMerge(t *testing.T) {
 	cfgRight := cfgLeft.DeepCopy()
 	cfgRight.ServiceConfigFiles[0].ConfigFileContent = "hello world"
 
-	cfgRight.ServiceConfigFiles = append(cfgRight.ServiceConfigFiles,
+	cfgRight.ServiceConfigFiles = append(
+		cfgRight.ServiceConfigFiles,
 		extensions.ConfigFile{
 			ConfigFileContent:   "bar",
 			ConfigFileMountPath: "/etc/bar",

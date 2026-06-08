@@ -62,7 +62,8 @@ func TestConfigEncodingStability(t *testing.T) {
 			t.Run("base", func(t *testing.T) {
 				t.Parallel()
 
-				in, err := generate.NewInput("base", "https://base:6443", "1.28.0",
+				in, err := generate.NewInput(
+					"base", "https://base:6443", "1.28.0",
 					generate.WithSecretsBundle(secretsBundle),
 					generate.WithVersionContract(versionContract),
 				)
@@ -74,7 +75,8 @@ func TestConfigEncodingStability(t *testing.T) {
 			t.Run("with overrides", func(t *testing.T) {
 				t.Parallel()
 
-				in, err := generate.NewInput("base", "https://base:6443", "1.28.0",
+				in, err := generate.NewInput(
+					"base", "https://base:6443", "1.28.0",
 					generate.WithSecretsBundle(secretsBundle),
 					generate.WithVersionContract(versionContract),
 					generate.WithAdditionalSubjectAltNames([]string{"foo", "bar"}),

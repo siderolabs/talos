@@ -52,7 +52,8 @@ const PlatformLabel = "talos.dev/platform"
 
 // WaitForVolumePhase waits for the volume to reach the expected phase(s).
 func WaitForVolumePhase(ctx context.Context, st state.State, volumeID string, expectedPhases ...VolumePhase) (*VolumeStatus, error) {
-	volumeStatus, err := st.WatchFor(ctx,
+	volumeStatus, err := st.WatchFor(
+		ctx,
 		NewVolumeStatus(NamespaceName, volumeID).Metadata(),
 		state.WithCondition(func(r resource.Resource) (bool, error) {
 			volumeStatus, ok := r.(*VolumeStatus)

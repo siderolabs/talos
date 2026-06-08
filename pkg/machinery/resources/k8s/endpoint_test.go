@@ -64,7 +64,8 @@ func TestEndpointListWithHosts(t *testing.T) {
 	l = l.Merge(e1)
 	l = l.Merge(e2)
 
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		[]string{
 			"172.20.0.2",
 			"172.20.0.3",

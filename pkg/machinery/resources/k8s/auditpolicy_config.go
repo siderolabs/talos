@@ -34,7 +34,8 @@ type AuditPolicyConfigSpec struct {
 func NewAuditPolicyConfig() *AuditPolicyConfig {
 	return typed.NewResource[AuditPolicyConfigSpec, AuditPolicyConfigExtension](
 		resource.NewMetadata(ControlPlaneNamespaceName, AuditPolicyConfigType, AuditPolicyConfigID, resource.VersionUndefined),
-		AuditPolicyConfigSpec{})
+		AuditPolicyConfigSpec{},
+	)
 }
 
 // AuditPolicyConfigExtension defines AuditPolicyConfig resource definition.

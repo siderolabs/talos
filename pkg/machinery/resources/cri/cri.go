@@ -58,7 +58,8 @@ func RegistryBuilder(st state.State, opts ...func(*RegistriesConfigSpec)) func(c
 
 // WaitForImageCache waits for the image cache config to be either disabled or ready.
 func WaitForImageCache(ctx context.Context, st state.State) error {
-	_, err := st.WatchFor(ctx, NewImageCacheConfig().Metadata(),
+	_, err := st.WatchFor(
+		ctx, NewImageCacheConfig().Metadata(),
 		state.WithEventTypes(state.Created, state.Updated),
 		state.WithCondition(func(r resource.Resource) (bool, error) {
 			imageCacheConfig, ok := r.(*ImageCacheConfig)
@@ -77,7 +78,8 @@ func WaitForImageCache(ctx context.Context, st state.State) error {
 
 // WaitForImageCacheCopy waits for the image cache copy to be done (or skipped).
 func WaitForImageCacheCopy(ctx context.Context, st state.State) error {
-	_, err := st.WatchFor(ctx, NewImageCacheConfig().Metadata(),
+	_, err := st.WatchFor(
+		ctx, NewImageCacheConfig().Metadata(),
 		state.WithEventTypes(state.Created, state.Updated),
 		state.WithCondition(func(r resource.Resource) (bool, error) {
 			imageCacheConfig, ok := r.(*ImageCacheConfig)
