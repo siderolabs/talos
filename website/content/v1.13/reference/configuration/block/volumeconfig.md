@@ -158,7 +158,7 @@ blockSize: 4096
 options:
     - no_read_workqueue
     - no_write_workqueue
-{{< /highlight >}}</details> |`no_read_workqueue`<br />`no_write_workqueue`<br />`same_cpu_crypt`<br /> |
+{{< /highlight >}}</details> | |
 
 
 

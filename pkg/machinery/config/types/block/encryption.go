@@ -51,10 +51,6 @@ type EncryptionSpec struct {
 	EncryptionBlockSize uint64 `yaml:"blockSize,omitempty"`
 	//   description: >
 	//     Additional --perf parameters for the LUKS2 encryption.
-	//   values:
-	//     - no_read_workqueue
-	//     - no_write_workqueue
-	//     - same_cpu_crypt
 	//   examples:
 	//     -  value: >
 	//          []string{"no_read_workqueue","no_write_workqueue"}

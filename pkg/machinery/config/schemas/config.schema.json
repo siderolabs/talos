@@ -184,11 +184,10 @@
           "x-intellij-html-description": "\u003cp\u003eDefines the encryption sector size.\u003c/p\u003e\n"
         },
         "options": {
-          "enum": [
-            "no_read_workqueue",
-            "no_write_workqueue",
-            "same_cpu_crypt"
-          ],
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
           "title": "options",
           "description": "Additional –perf parameters for the LUKS2 encryption.\n",
           "markdownDescription": "Additional --perf parameters for the LUKS2 encryption.",
