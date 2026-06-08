@@ -201,7 +201,6 @@ func GetQemu() Qemu {
 		PreallocateDisks:  false,
 		BootloaderEnabled: true,
 		UefiEnabled:       true,
-		Nameservers:       defaultNameservers,
 		DiskBlockSize:     512,
 		TargetArch:        runtime.GOARCH,
 		CniBinPath:        []string{filepath.Join(clustercmd.DefaultCNIDir, "bin")},
