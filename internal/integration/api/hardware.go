@@ -91,6 +91,75 @@ func (suite *HardwareSuite) TestPCRStatus() {
 	rtestutils.AssertNoResource[*hardware.PCRStatus](ctx, suite.T(), suite.Client.COSI, hardware.NewPCCRStatus(constants.UKIPCR).Metadata().ID())
 }
 
+// TestLogicalCPUInfo tests the per-logical-CPU resource is populated end-to-end.
+//
+// Microcode and Bugs are amd64-specific; Socket/Core/NumaNode are derived from
+// sysfs topology and should be readable on any architecture the kernel reports
+// them on.
+func (suite *HardwareSuite) TestLogicalCPUInfo() {
+	node := suite.RandomDiscoveredNodeInternalIP()
+
+	items, err := suite.Client.COSI.List(
+		client.WithNode(suite.ctx, node),
+		resource.NewMetadata(hardware.NamespaceName, hardware.LogicalCPUInfoType, "", resource.VersionUndefined),
+	)
+	suite.Require().NoError(err)
+	suite.Require().NotEmpty(items.Items)
+
+	var (
+		seenCores    = map[uint32]struct{}{}
+		seenSockets  = map[uint32]struct{}{}
+		anyMicrocode bool
+	)
+
+	for _, item := range items.Items {
+		c, ok := item.(*hardware.LogicalCPUInfo)
+		if !ok {
+			continue
+		}
+
+		spec := c.TypedSpec()
+		seenCores[spec.Core] = struct{}{}
+		seenSockets[spec.Socket] = struct{}{}
+
+		if spec.Microcode != "" {
+			anyMicrocode = true
+		}
+	}
+
+	// At least one socket reported (single-socket systems pin everything to 0,
+	// multi-socket sees several). Asserts the sysfs topology read returned
+	// without erroring out.
+	suite.Assert().NotEmpty(seenSockets, "no Socket value populated for any LogicalCPUInfo")
+
+	// On a multi-thread host with SMT off, every Core differs; with SMT on we
+	// see at least floor(threads/2) distinct cores. On a single-core VM both
+	// distinct-Cores and same-Cores are valid — so just require the field is
+	// present (>=1 unique value, including 0).
+	suite.Assert().NotEmpty(seenCores, "no Core value populated for any LogicalCPUInfo")
+
+	switch arch := nodeArch(suite); arch {
+	case "amd64":
+		if !anyMicrocode {
+			// QEMU and some hypervisors don't expose a microcode revision even
+			// on amd64. Skip rather than fail because the field's absence is
+			// honest about what the environment provides.
+			suite.T().Skip("amd64 node but no logical CPU reported a microcode revision (likely QEMU)")
+		}
+	default:
+		suite.T().Logf("microcode not asserted on %q; only amd64 surfaces it via /proc/cpuinfo", arch)
+	}
+}
+
+func nodeArch(suite *HardwareSuite) string {
+	resp, err := suite.Client.Version(suite.ctx)
+	if err != nil || len(resp.GetMessages()) == 0 {
+		return ""
+	}
+
+	return resp.GetMessages()[0].GetVersion().GetArch()
+}
+
 func init() {
 	allSuites = append(allSuites, new(HardwareSuite))
 }

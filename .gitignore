@@ -27,6 +27,9 @@ hack/test/libvirt/matchbox/assets/*
 custom-gcl
 go.work.sum
 
+# Local AI assistant config
+.claude/
+
 sha256sum.txt
 sha512sum.txt
 

@@ -5,6 +5,22 @@ package talos.resource.definitions.hardware;
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/hardware";
 option java_package = "dev.talos.api.resource.definitions.hardware";
 
+// LogicalCPUInfoSpec represents a single logical CPU.
+message LogicalCPUInfoSpec {
+  // Microcode revision (x86-only; empty elsewhere).
+  string microcode = 1;
+  // Socket from /sys/devices/system/cpu/cpuN/topology/physical_package_id.
+  uint32 socket = 2;
+  // Core from /sys/devices/system/cpu/cpuN/topology/core_id. SMT threads on
+  // the same physical core share this value.
+  uint32 core = 3;
+  // Bugs lists hardware vulnerabilities reported by the kernel (x86-only).
+  repeated string bugs = 4;
+  // NumaNode resolved from /sys/devices/system/cpu/cpuN/node<N>. Distinct
+  // from Socket on sub-NUMA-clustered systems (e.g. AMD NPS2/NPS4, Intel SNC).
+  uint32 numa_node = 5;
+}
+
 // MemoryModuleSpec represents a single Memory.
 message MemoryModuleSpec {
   uint32 size = 1;

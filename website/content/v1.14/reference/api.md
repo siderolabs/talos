@@ -417,6 +417,7 @@ description: Talos gRPC API reference.
     - [EtcFileStatusSpec](#talos.resource.definitions.files.EtcFileStatusSpec)
   
 - [resource/definitions/hardware/hardware.proto](#resource/definitions/hardware/hardware.proto)
+    - [LogicalCPUInfoSpec](#talos.resource.definitions.hardware.LogicalCPUInfoSpec)
     - [MemoryModuleSpec](#talos.resource.definitions.hardware.MemoryModuleSpec)
     - [PCIDeviceSpec](#talos.resource.definitions.hardware.PCIDeviceSpec)
     - [PCIDriverRebindConfigSpec](#talos.resource.definitions.hardware.PCIDriverRebindConfigSpec)
@@ -7372,6 +7373,25 @@ EtcFileStatusSpec describes status of rendered secrets.
 <p align="right"><a href="#top">Top</a></p>
 
 ## resource/definitions/hardware/hardware.proto
+
+
+
+<a name="talos.resource.definitions.hardware.LogicalCPUInfoSpec"></a>
+
+### LogicalCPUInfoSpec
+LogicalCPUInfoSpec represents a single logical CPU.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| microcode | [string](#string) |  | Microcode revision (x86-only; empty elsewhere). |
+| socket | [uint32](#uint32) |  | Socket from /sys/devices/system/cpu/cpuN/topology/physical_package_id. |
+| core | [uint32](#uint32) |  | Core from /sys/devices/system/cpu/cpuN/topology/core_id. SMT threads on the same physical core share this value. |
+| bugs | [string](#string) | repeated | Bugs lists hardware vulnerabilities reported by the kernel (x86-only). |
+| numa_node | [uint32](#uint32) |  | NumaNode resolved from /sys/devices/system/cpu/cpuN/node<N>. Distinct from Socket on sub-NUMA-clustered systems (e.g. AMD NPS2/NPS4, Intel SNC). |
+
+
+
 
 
 
