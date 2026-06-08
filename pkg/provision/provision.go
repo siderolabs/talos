@@ -36,3 +36,10 @@ type Provisioner interface {
 
 	UserDiskName(index int) string
 }
+
+// RebootProvisioner is an optional interface implemented by provisioners that support
+// forcefully rebooting individual cluster nodes.
+type RebootProvisioner interface {
+	// RebootNode forcefully reboots a single cluster node.
+	RebootNode(ctx context.Context, cluster Cluster, node NodeInfo) error
+}

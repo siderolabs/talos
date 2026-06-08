@@ -576,6 +576,39 @@ talosctl cluster destroy [flags]
 
 * [talosctl cluster](#talosctl-cluster)	 - A collection of commands for managing local docker-based or QEMU-based clusters
 
+## talosctl cluster reboot
+
+Forcefully reboots cluster nodes
+
+### Synopsis
+
+Forcefully reboots cluster nodes by restarting the underlying VMs.
+
+By default all nodes are rebooted; pass --node (repeatable) to reboot only specific
+nodes, matched by name or IP address. Only QEMU-based clusters are supported.
+
+```
+talosctl cluster reboot [flags]
+```
+
+### Options
+
+```
+  -h, --help           help for reboot
+      --node strings   node name or IP to reboot, can be repeated (default: all nodes)
+```
+
+### Options inherited from parent commands
+
+```
+      --name string    the name of the cluster (default "talos-default")
+      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
+```
+
+### SEE ALSO
+
+* [talosctl cluster](#talosctl-cluster)	 - A collection of commands for managing local docker-based or QEMU-based clusters
+
 ## talosctl cluster show
 
 Shows info about a local provisioned kubernetes cluster
@@ -619,6 +652,7 @@ A collection of commands for managing local docker-based or QEMU-based clusters
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl cluster create](#talosctl-cluster-create)	 - Create a local Talos cluster.
 * [talosctl cluster destroy](#talosctl-cluster-destroy)	 - Destroys a local Talos kubernetes cluster
+* [talosctl cluster reboot](#talosctl-cluster-reboot)	 - Forcefully reboots cluster nodes
 * [talosctl cluster show](#talosctl-cluster-show)	 - Shows info about a local provisioned kubernetes cluster
 
 ## talosctl completion bash
