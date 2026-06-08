@@ -83,11 +83,6 @@ func (EncryptionSpec) Doc() *encoder.Doc {
 				Note:        "",
 				Description: "Additional --perf parameters for the LUKS2 encryption.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Additional --perf parameters for the LUKS2 encryption." /* encoder.LineComment */, "" /* encoder.FootComment */},
-				Values: []string{
-					"no_read_workqueue",
-					"no_write_workqueue",
-					"same_cpu_crypt",
-				},
 			},
 		},
 	}
