@@ -206,6 +206,14 @@ Newly matched disks added to an existing VG are attached via `vgextend`.
 Reconciliation is strictly additive and safe-by-default.
 """
 
+    [notes.kernel_module_status]
+        title = "Kernel Module Status"
+        description = """\
+Talos now reports the status of both dynamically loaded, and built-in kernel modules.
+
+The `LoadedKernelModule` resource has been deprecated and superseded by the new `KernelModuleStatus` resource.
+"""
+
 [make_deps]
 
     [make_deps.tools]
