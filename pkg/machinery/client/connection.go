@@ -22,6 +22,7 @@ import (
 	"google.golang.org/grpc/credentials"
 
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
+	"github.com/siderolabs/talos/pkg/machinery/client/dialer"
 	"github.com/siderolabs/talos/pkg/machinery/client/resolver"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/version"
@@ -75,6 +76,10 @@ func (c *Client) getConn(opts ...grpc.DialOption) (*grpcConnectionWrapper, error
 
 	if err := c.resolveConfigContext(); err != nil {
 		return nil, fmt.Errorf("failed to resolve configuration context: %w", err)
+	}
+
+	if proxyURL := c.options.configContext.ProxyURL; proxyURL != "" {
+		dialOpts = append(dialOpts, grpc.WithContextDialer(dialer.ForProxyURL(proxyURL)))
 	}
 
 	basicAuth := c.options.configContext.Auth.Basic

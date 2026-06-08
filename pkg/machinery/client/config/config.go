@@ -58,6 +58,7 @@ type Context struct {
 	Key              string   `yaml:"key,omitempty"`
 	Auth             Auth     `yaml:"auth,omitempty"`
 	Cluster          string   `yaml:"cluster,omitempty"`
+	ProxyURL         string   `yaml:"proxy-url,omitempty"`
 }
 
 // Auth may hold credentials for an authentication method such as Basic Auth.

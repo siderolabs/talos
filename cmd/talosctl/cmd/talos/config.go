@@ -125,6 +125,44 @@ var configNodeCmd = &cobra.Command{
 	},
 }
 
+// configProxyURLCmd represents the `config proxy-url` command.
+var configProxyURLCmd = &cobra.Command{
+	Use:   "proxy-url [url]",
+	Short: "Set the proxy URL for the current context",
+	Long: `Set the proxy URL for the current context.
+
+Supported schemes: socks5, http, https.
+Use "direct" to explicitly bypass any proxy, including environment variable proxies.
+Pass an empty string to clear the proxy URL.
+Omit the argument to display the current proxy URL.`,
+	Args: cobra.MaximumNArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		c, err := openConfigAndContext("")
+		if err != nil {
+			return err
+		}
+
+		ctxData, err := getContextData(c)
+		if err != nil {
+			return err
+		}
+
+		if len(args) == 0 {
+			cmd.Println(ctxData.ProxyURL)
+
+			return nil
+		}
+
+		ctxData.ProxyURL = strings.TrimSpace(args[0])
+
+		if err := c.Save(GlobalArgs.Talosconfig); err != nil {
+			return fmt.Errorf("error writing config: %w", err)
+		}
+
+		return nil
+	},
+}
+
 // configContextCmd represents the `config context` command.
 var configContextCmd = &cobra.Command{
 	Use:     "context <context>",
@@ -612,6 +650,7 @@ func init() {
 	configCmd.AddCommand(
 		configEndpointCmd,
 		configNodeCmd,
+		configProxyURLCmd,
 		configContextCmd,
 		configAddCmd,
 		configRemoveCmd,

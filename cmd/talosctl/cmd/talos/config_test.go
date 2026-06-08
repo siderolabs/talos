@@ -5,6 +5,10 @@
 package talos //nolint:testpackage // to test unexported function
 
 import (
+	"bytes"
+	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -101,4 +105,61 @@ Certificate expires: 10 years from now (2031-07-03)
 			assert.Equal(t, tc.expected, actual)
 		})
 	}
+}
+
+func TestConfigProxyURLCmd(t *testing.T) {
+	const talosconfigYAML = `
+context: test
+contexts:
+  test:
+    endpoints:
+      - 192.168.1.1:50000
+`
+
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "talosconfig")
+
+	require.NoError(t, os.WriteFile(cfgPath, []byte(talosconfigYAML), 0o600))
+
+	origCfg := GlobalArgs.Talosconfig
+	GlobalArgs.Talosconfig = cfgPath
+
+	t.Cleanup(func() { GlobalArgs.Talosconfig = origCfg })
+
+	t.Run("GetEmpty", func(t *testing.T) {
+		var buf bytes.Buffer
+
+		origOut := configProxyURLCmd.OutOrStdout()
+		configProxyURLCmd.SetOut(&buf)
+		t.Cleanup(func() { configProxyURLCmd.SetOut(origOut) })
+
+		require.NoError(t, configProxyURLCmd.RunE(configProxyURLCmd, nil))
+		assert.Equal(t, "\n", buf.String())
+	})
+
+	t.Run("Set", func(t *testing.T) {
+		require.NoError(t, configProxyURLCmd.RunE(configProxyURLCmd, []string{"socks5://localhost:1080"}))
+
+		cfg, err := clientconfig.Open(cfgPath)
+		require.NoError(t, err)
+		assert.Equal(t, "socks5://localhost:1080", cfg.Contexts["test"].ProxyURL)
+	})
+
+	t.Run("GetAfterSet", func(t *testing.T) {
+		var buf bytes.Buffer
+
+		configProxyURLCmd.SetOut(&buf)
+		t.Cleanup(func() { configProxyURLCmd.SetOut(nil) })
+
+		require.NoError(t, configProxyURLCmd.RunE(configProxyURLCmd, nil))
+		assert.Equal(t, fmt.Sprintf("%s\n", "socks5://localhost:1080"), buf.String())
+	})
+
+	t.Run("Clear", func(t *testing.T) {
+		require.NoError(t, configProxyURLCmd.RunE(configProxyURLCmd, []string{""}))
+
+		cfg, err := clientconfig.Open(cfgPath)
+		require.NoError(t, err)
+		assert.Equal(t, "", cfg.Contexts["test"].ProxyURL)
+	})
 }

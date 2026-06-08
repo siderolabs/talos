@@ -5,12 +5,65 @@
 package config_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 )
+
+func TestProxyURLRoundTrip(t *testing.T) {
+	yaml := `
+context: test
+contexts:
+  test:
+    endpoints:
+      - 192.168.1.1:50000
+    proxy-url: socks5://localhost:1080
+`
+
+	cfg, err := clientconfig.FromString(yaml)
+	if err != nil {
+		t.Fatalf("unexpected parse error: %v", err)
+	}
+
+	ctx := cfg.Contexts["test"]
+	if ctx == nil {
+		t.Fatal("context 'test' not found")
+	}
+
+	if ctx.ProxyURL != "socks5://localhost:1080" {
+		t.Fatalf("expected proxy-url %q, got %q", "socks5://localhost:1080", ctx.ProxyURL)
+	}
+
+	// Round-trip through marshal/unmarshal
+	b, err := cfg.Bytes()
+	if err != nil {
+		t.Fatalf("unexpected marshal error: %v", err)
+	}
+
+	cfg2, err := clientconfig.FromBytes(b)
+	if err != nil {
+		t.Fatalf("unexpected parse error after marshal: %v", err)
+	}
+
+	if cfg2.Contexts["test"].ProxyURL != "socks5://localhost:1080" {
+		t.Fatalf("proxy-url not preserved after round-trip: got %q", cfg2.Contexts["test"].ProxyURL)
+	}
+
+	// Empty proxy-url must be omitted from YAML output
+	ctx.ProxyURL = ""
+
+	b, err = cfg.Bytes()
+	if err != nil {
+		t.Fatalf("unexpected marshal error: %v", err)
+	}
+
+	if strings.Contains(string(b), "proxy-url") {
+		t.Fatalf("proxy-url should be absent from YAML when empty, got:\n%s", b)
+	}
+}
 
 func TestConfigMerge(t *testing.T) {
 	context1 := &clientconfig.Context{}

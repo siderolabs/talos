@@ -90,6 +90,10 @@ func DynamicProxyDialerWithTLSConfig(tlsConfigFunc func() *tls.Config) func(ctx 
 				return nil, err
 			}
 
+			if cd, ok := socks5Dialer.(proxy.ContextDialer); ok {
+				return cd.DialContext(ctx, "tcp", addr)
+			}
+
 			return socks5Dialer.Dial("tcp", addr)
 		}
 
@@ -123,6 +127,57 @@ func mapAddress(address string) (*url.URL, error) {
 	}
 
 	return httpproxy.FromEnvironment().ProxyFunc()(req.URL)
+}
+
+// ForProxyURL returns a context dialer that routes connections through the given proxy URL.
+// Use "direct" to explicitly bypass any proxy (including env vars).
+// Supported schemes: socks5, http, https.
+func ForProxyURL(rawURL string) func(ctx context.Context, addr string) (net.Conn, error) {
+	if rawURL == "direct" {
+		return func(ctx context.Context, addr string) (net.Conn, error) {
+			return NetDialerWithTCPKeepalive().DialContext(ctx, "tcp", addr)
+		}
+	}
+
+	return func(ctx context.Context, addr string) (net.Conn, error) {
+		proxyURL, err := url.Parse(rawURL)
+		if err != nil {
+			return nil, fmt.Errorf("invalid proxy URL: %w", err)
+		}
+
+		switch proxyURL.Scheme {
+		case "socks5":
+			socks5Dialer, err := proxySocksFromURL(proxyURL)
+			if err != nil {
+				return nil, err
+			}
+
+			if cd, ok := socks5Dialer.(proxy.ContextDialer); ok {
+				return cd.DialContext(ctx, "tcp", addr)
+			}
+
+			return socks5Dialer.Dial("tcp", addr)
+		case "http":
+			conn, err := NetDialerWithTCPKeepalive().DialContext(ctx, "tcp", proxyURL.Host)
+			if err != nil {
+				return nil, err
+			}
+
+			return doHTTPConnectHandshake(ctx, conn, addr, proxyURL, grpcUA)
+		case "https":
+			conn, err := (&tls.Dialer{
+				NetDialer: NetDialerWithTCPKeepalive(),
+				Config:    &tls.Config{},
+			}).DialContext(ctx, "tcp", proxyURL.Host)
+			if err != nil {
+				return nil, err
+			}
+
+			return doHTTPConnectHandshake(ctx, conn, addr, proxyURL, grpcUA)
+		default:
+			return nil, fmt.Errorf("unsupported proxy scheme %q", proxyURL.Scheme)
+		}
+	}
 }
 
 // To read a response from a net.Conn, http.ReadResponse() takes a bufio.Reader.

@@ -1040,6 +1040,44 @@ talosctl config node <endpoint>... [flags]
 
 * [talosctl config](#talosctl-config)	 - Manage the client configuration file (talosconfig)
 
+## talosctl config proxy-url
+
+Set the proxy URL for the current context
+
+### Synopsis
+
+Set the proxy URL for the current context.
+
+Supported schemes: socks5, http, https.
+Use "direct" to explicitly bypass any proxy, including environment variable proxies.
+Pass an empty string to clear the proxy URL.
+Omit the argument to display the current proxy URL.
+
+```
+talosctl config proxy-url [url] [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for proxy-url
+```
+
+### Options inherited from parent commands
+
+```
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
+```
+
+### SEE ALSO
+
+* [talosctl config](#talosctl-config)	 - Manage the client configuration file (talosconfig)
+
 ## talosctl config remove
 
 Remove contexts
@@ -1098,6 +1136,7 @@ Manage the client configuration file (talosconfig)
 * [talosctl config merge](#talosctl-config-merge)	 - Merge additional contexts from another client configuration file
 * [talosctl config new](#talosctl-config-new)	 - Generate a new client configuration file
 * [talosctl config node](#talosctl-config-node)	 - Set the node(s) for the current context
+* [talosctl config proxy-url](#talosctl-config-proxy-url)	 - Set the proxy URL for the current context
 * [talosctl config remove](#talosctl-config-remove)	 - Remove contexts
 
 ## talosctl conformance kubernetes
