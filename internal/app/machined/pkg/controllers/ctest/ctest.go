@@ -50,7 +50,13 @@ func (suite *DefaultSuite) SetupTest() {
 
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), suite.Timeout)
 
-	suite.state = state.WrapCore(namespaced.NewState(inmem.Build))
+	suite.state = state.WrapCore(namespaced.NewState(
+		func(ns resource.Namespace) state.CoreState {
+			return inmem.NewStateWithOptions(
+				inmem.WithHistoryMaxCapacity(1000),
+			)(ns)
+		},
+	))
 
 	var err error
 
