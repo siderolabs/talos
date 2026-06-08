@@ -11,6 +11,7 @@ import (
 
 	"github.com/spdx/tools-golang/spdx/v2/common"
 	v2_3 "github.com/spdx/tools-golang/spdx/v2/v2_3"
+	"github.com/stretchr/testify/assert"
 )
 
 // skipIfFIPS skips tests that exercise documentUUID, which derives a UUIDv5 via
@@ -63,9 +64,7 @@ func TestAddOSPackage_AddsSiblingWithRefs(t *testing.T) {
 	)
 
 	osPkg := findPackage(doc, "Package-os-talos")
-	if osPkg == nil {
-		t.Fatalf("expected Package-os-talos to be added, got: %v", packageIDs(doc))
-	}
+	assert.NotNil(t, "expected Package-os-talos to be added, got: %v", packageIDs(doc))
 
 	if osPkg.PrimaryPackagePurpose != "OPERATING-SYSTEM" {
 		t.Errorf("PrimaryPackagePurpose = %q, want OPERATING-SYSTEM", osPkg.PrimaryPackagePurpose)
