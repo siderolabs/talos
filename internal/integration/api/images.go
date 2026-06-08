@@ -150,12 +150,7 @@ func (suite *ImagesSuite) TestImportRemove() {
 	suite.T().Logf("using node %s", node)
 
 	// we can only import the image if it matches Talos architecture
-	versionResp, err := suite.Client.Version(ctx)
-	suite.Require().NoError(err)
-	suite.Require().Len(versionResp.GetMessages(), 1)
-
-	arch := versionResp.GetMessages()[0].GetVersion().GetArch()
-	if arch != "amd64" {
+	if arch := suite.ReadMachineArch(ctx); arch != "amd64" {
 		suite.T().Skipf("skipping import test on unsupported architecture %q", arch)
 	}
 

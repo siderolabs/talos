@@ -6342,6 +6342,7 @@ DiskSpec is the spec for Disks status.
 | secondary_disks | [string](#string) | repeated | SecondaryDisks (if set) specifies the secondary disk IDs.<br><br>E.g. if the blockdevice secondary is vda5, the secondary disk will be set as vda. This allows to map secondaries between disks ignoring the partitions. |
 | uuid | [string](#string) |  |  |
 | symlinks | [string](#string) | repeated |  |
+| firmware_version | [string](#string) |  |  |
 
 
 
@@ -7496,6 +7497,7 @@ SystemInformationSpec represents the system information obtained from smbios.
 | uuid | [string](#string) |  |  |
 | wake_up_type | [string](#string) |  |  |
 | sku_number | [string](#string) |  |  |
+| bios_version | [string](#string) |  |  |
 
 
 

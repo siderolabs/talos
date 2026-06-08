@@ -483,6 +483,7 @@ type SystemInformationSpec struct {
 	Uuid          string                 `protobuf:"bytes,5,opt,name=uuid,proto3" json:"uuid,omitempty"`
 	WakeUpType    string                 `protobuf:"bytes,6,opt,name=wake_up_type,json=wakeUpType,proto3" json:"wake_up_type,omitempty"`
 	SkuNumber     string                 `protobuf:"bytes,7,opt,name=sku_number,json=skuNumber,proto3" json:"sku_number,omitempty"`
+	BiosVersion   string                 `protobuf:"bytes,8,opt,name=bios_version,json=biosVersion,proto3" json:"bios_version,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -566,6 +567,13 @@ func (x *SystemInformationSpec) GetSkuNumber() string {
 	return ""
 }
 
+func (x *SystemInformationSpec) GetBiosVersion() string {
+	if x != nil {
+		return x.BiosVersion
+	}
+	return ""
+}
+
 var File_resource_definitions_hardware_hardware_proto protoreflect.FileDescriptor
 
 const file_resource_definitions_hardware_hardware_proto_rawDesc = "" +
@@ -614,7 +622,7 @@ const file_resource_definitions_hardware_hardware_proto_rawDesc = "" +
 	"core_count\x18\n" +
 	" \x01(\rR\tcoreCount\x12!\n" +
 	"\fcore_enabled\x18\v \x01(\rR\vcoreEnabled\x12!\n" +
-	"\fthread_count\x18\f \x01(\rR\vthreadCount\"\xf2\x01\n" +
+	"\fthread_count\x18\f \x01(\rR\vthreadCount\"\x95\x02\n" +
 	"\x15SystemInformationSpec\x12\"\n" +
 	"\fmanufacturer\x18\x01 \x01(\tR\fmanufacturer\x12!\n" +
 	"\fproduct_name\x18\x02 \x01(\tR\vproductName\x12\x18\n" +
@@ -624,7 +632,8 @@ const file_resource_definitions_hardware_hardware_proto_rawDesc = "" +
 	"\fwake_up_type\x18\x06 \x01(\tR\n" +
 	"wakeUpType\x12\x1d\n" +
 	"\n" +
-	"sku_number\x18\a \x01(\tR\tskuNumberBz\n" +
+	"sku_number\x18\a \x01(\tR\tskuNumber\x12!\n" +
+	"\fbios_version\x18\b \x01(\tR\vbiosVersionBz\n" +
 	"+dev.talos.api.resource.definitions.hardwareZKgithub.com/siderolabs/talos/pkg/machinery/api/resource/definitions/hardwareb\x06proto3"
 
 var (

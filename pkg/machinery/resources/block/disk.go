@@ -34,15 +34,16 @@ type DiskSpec struct {
 	Readonly bool `yaml:"readonly" protobuf:"4"`
 	CDROM    bool `yaml:"cdrom" protobuf:"13"`
 
-	Model      string `yaml:"model,omitempty" protobuf:"5"`
-	Serial     string `yaml:"serial,omitempty" protobuf:"6"`
-	Modalias   string `yaml:"modalias,omitempty" protobuf:"7"`
-	WWID       string `yaml:"wwid,omitempty" protobuf:"8"`
-	UUID       string `yaml:"uuid,omitempty" protobuf:"17"`
-	BusPath    string `yaml:"bus_path,omitempty" protobuf:"9"`
-	SubSystem  string `yaml:"sub_system,omitempty" protobuf:"10"`
-	Transport  string `yaml:"transport,omitempty" protobuf:"11"`
-	Rotational bool   `yaml:"rotational,omitempty" protobuf:"12"`
+	Model           string `yaml:"model,omitempty" protobuf:"5"`
+	FirmwareVersion string `yaml:"firmware_version,omitempty" protobuf:"19"`
+	Serial          string `yaml:"serial,omitempty" protobuf:"6"`
+	Modalias        string `yaml:"modalias,omitempty" protobuf:"7"`
+	WWID            string `yaml:"wwid,omitempty" protobuf:"8"`
+	UUID            string `yaml:"uuid,omitempty" protobuf:"17"`
+	BusPath         string `yaml:"bus_path,omitempty" protobuf:"9"`
+	SubSystem       string `yaml:"sub_system,omitempty" protobuf:"10"`
+	Transport       string `yaml:"transport,omitempty" protobuf:"11"`
+	Rotational      bool   `yaml:"rotational,omitempty" protobuf:"12"`
 
 	// SecondaryDisks (if set) specifies the secondary disk IDs.
 	//

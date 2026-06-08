@@ -17,7 +17,9 @@ import (
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 )
 
@@ -89,6 +91,55 @@ func (suite *HardwareSuite) TestPCRStatus() {
 	ctx := client.WithNode(suite.ctx, node)
 
 	rtestutils.AssertNoResource[*hardware.PCRStatus](ctx, suite.T(), suite.Client.COSI, hardware.NewPCCRStatus(constants.UKIPCR).Metadata().ID())
+}
+
+// TestBIOSVersion tests that SystemInformation.BIOSVersion is populated.
+//
+// BIOSVersion comes from SMBIOS. SMBIOS is essentially always present on
+// amd64, so we require non-empty there. On other architectures (most embedded
+// arm64 hardware exposes no SMBIOS) we accept empty.
+func (suite *HardwareSuite) TestBIOSVersion() {
+	node := suite.RandomDiscoveredNodeInternalIP()
+	ctx := client.WithNode(suite.ctx, node)
+
+	sysInfo, err := safe.StateGetByID[*hardware.SystemInformation](
+		ctx, suite.Client.COSI, hardware.SystemInformationID,
+	)
+	suite.Require().NoError(err)
+
+	if arch := suite.ReadMachineArch(ctx); arch != "amd64" {
+		suite.T().Skipf("skipping BIOS version check on arch %q", arch)
+	}
+
+	suite.Assert().NotEmpty(sysInfo.TypedSpec().BIOSVersion, "amd64 node reported no BIOSVersion")
+}
+
+// TestDiskFirmwareVersion tests that Disk.FirmwareVersion is populated for NVMe disks.
+func (suite *HardwareSuite) TestDiskFirmwareVersion() {
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	ctx := client.WithNode(suite.ctx, node)
+
+	items, err := safe.StateListAll[*block.Disk](
+		ctx,
+		suite.Client.COSI,
+	)
+	suite.Require().NoError(err)
+
+	var nvmeChecked int
+
+	for disk := range items.All() {
+		if disk.TypedSpec().Transport != "nvme" {
+			continue
+		}
+
+		nvmeChecked++
+
+		suite.Assert().NotEmpty(disk.TypedSpec().FirmwareVersion)
+	}
+
+	if nvmeChecked == 0 {
+		suite.T().Skip("no NVMe disks discovered")
+	}
 }
 
 func init() {

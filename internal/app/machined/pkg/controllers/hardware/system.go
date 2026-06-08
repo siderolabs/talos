@@ -151,6 +151,7 @@ func (ctrl *SystemInfoController) reconcileSystemInformation(ctx context.Context
 
 	if err := safe.WriterModify(ctx, r, hardware.NewSystemInformation(hardware.SystemInformationID), func(res *hardware.SystemInformation) error {
 		hwadapter.SystemInformation(res).Update(&ctrl.SMBIOS.SystemInformation, uuidRewrite)
+		res.TypedSpec().BIOSVersion = ctrl.SMBIOS.BIOSInformation.Version
 
 		return nil
 	}); err != nil {

@@ -29,6 +29,7 @@ type SystemInformationSpec struct {
 	Manufacturer string `yaml:"manufacturer,omitempty" protobuf:"1"`
 	ProductName  string `yaml:"productName,omitempty" protobuf:"2"`
 	Version      string `yaml:"version,omitempty" protobuf:"3"`
+	BIOSVersion  string `yaml:"biosVersion,omitempty" protobuf:"8"`
 	SerialNumber string `yaml:"serialnumber,omitempty" protobuf:"4"`
 	UUID         string `yaml:"uuid,omitempty" protobuf:"5"`
 	WakeUpType   string `yaml:"wakeUpType,omitempty" protobuf:"6"`

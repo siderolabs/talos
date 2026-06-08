@@ -50,6 +50,7 @@ func (suite *SystemInfoSuite) TestPopulateSystemInformation() {
 		UUID:         "00000000-0000-0000-0000-002590eb9628",
 		WakeUpType:   "Power Switch",
 		SKUNumber:    "",
+		BIOSVersion:  "3.0c",
 	}
 
 	cpuSpecs := map[string]hardware.ProcessorSpec{

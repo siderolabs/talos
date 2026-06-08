@@ -258,6 +258,8 @@ func (ctrl *DisksController) analyzeBlockDevice(
 			d.TypedSpec().Symlinks = nil
 		}
 
+		d.TypedSpec().FirmwareVersion = props.FirmwareRevision
+
 		return nil
 	})
 }

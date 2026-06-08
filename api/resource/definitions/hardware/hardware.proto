@@ -69,5 +69,6 @@ message SystemInformationSpec {
   string uuid = 5;
   string wake_up_type = 6;
   string sku_number = 7;
+  string bios_version = 8;
 }
 

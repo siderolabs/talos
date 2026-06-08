@@ -94,6 +94,7 @@ message DiskSpec {
   repeated string secondary_disks = 16;
   string uuid = 17;
   repeated string symlinks = 18;
+  string firmware_version = 19;
 }
 
 // EncryptionKey is the spec for volume encryption key.

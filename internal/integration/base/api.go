@@ -760,6 +760,15 @@ func (apiSuite *APISuite) ReadCmdline(nodeCtx context.Context) string {
 	return apiSuite.ReadFile(nodeCtx, "/proc/cmdline")
 }
 
+// ReadMachineArch reads machine architecture from the node.
+func (apiSuite *APISuite) ReadMachineArch(nodeCtx context.Context) string {
+	versionResp, err := apiSuite.Client.Version(nodeCtx)
+	apiSuite.Require().NoError(err)
+	apiSuite.Require().Len(versionResp.GetMessages(), 1)
+
+	return versionResp.GetMessages()[0].GetVersion().GetArch()
+}
+
 // TearDownSuite closes Talos API client.
 func (apiSuite *APISuite) TearDownSuite() {
 	if apiSuite.Client != nil {

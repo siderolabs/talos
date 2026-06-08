@@ -505,11 +505,12 @@ type DiskSpec struct {
 	//
 	// E.g. if the blockdevice secondary is vda5, the secondary disk will be set as vda.
 	// This allows to map secondaries between disks ignoring the partitions.
-	SecondaryDisks []string `protobuf:"bytes,16,rep,name=secondary_disks,json=secondaryDisks,proto3" json:"secondary_disks,omitempty"`
-	Uuid           string   `protobuf:"bytes,17,opt,name=uuid,proto3" json:"uuid,omitempty"`
-	Symlinks       []string `protobuf:"bytes,18,rep,name=symlinks,proto3" json:"symlinks,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	SecondaryDisks  []string `protobuf:"bytes,16,rep,name=secondary_disks,json=secondaryDisks,proto3" json:"secondary_disks,omitempty"`
+	Uuid            string   `protobuf:"bytes,17,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	Symlinks        []string `protobuf:"bytes,18,rep,name=symlinks,proto3" json:"symlinks,omitempty"`
+	FirmwareVersion string   `protobuf:"bytes,19,opt,name=firmware_version,json=firmwareVersion,proto3" json:"firmware_version,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
 func (x *DiskSpec) Reset() {
@@ -666,6 +667,13 @@ func (x *DiskSpec) GetSymlinks() []string {
 		return x.Symlinks
 	}
 	return nil
+}
+
+func (x *DiskSpec) GetFirmwareVersion() string {
+	if x != nil {
+		return x.FirmwareVersion
+	}
+	return ""
 }
 
 // EncryptionKey is the spec for volume encryption key.
@@ -2580,7 +2588,7 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\arequest\x18\x01 \x01(\x03R\arequest\"g\n" +
 	"\fDiskSelector\x12;\n" +
 	"\x05match\x18\x01 \x01(\v2%.google.api.expr.v1alpha1.CheckedExprR\x05match\x12\x1a\n" +
-	"\bexternal\x18\x02 \x01(\tR\bexternal\"\xf5\x03\n" +
+	"\bexternal\x18\x02 \x01(\tR\bexternal\"\xa0\x04\n" +
 	"\bDiskSpec\x12\x12\n" +
 	"\x04size\x18\x01 \x01(\x04R\x04size\x12\x17\n" +
 	"\aio_size\x18\x02 \x01(\x04R\x06ioSize\x12\x1f\n" +
@@ -2605,7 +2613,8 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"prettySize\x12'\n" +
 	"\x0fsecondary_disks\x18\x10 \x03(\tR\x0esecondaryDisks\x12\x12\n" +
 	"\x04uuid\x18\x11 \x01(\tR\x04uuid\x12\x1a\n" +
-	"\bsymlinks\x18\x12 \x03(\tR\bsymlinks\"\xfb\x02\n" +
+	"\bsymlinks\x18\x12 \x03(\tR\bsymlinks\x12)\n" +
+	"\x10firmware_version\x18\x13 \x01(\tR\x0ffirmwareVersion\"\xfb\x02\n" +
 	"\rEncryptionKey\x12\x12\n" +
 	"\x04slot\x18\x01 \x01(\x03R\x04slot\x12L\n" +
 	"\x04type\x18\x02 \x01(\x0e28.talos.resource.definitions.enums.BlockEncryptionKeyTypeR\x04type\x12+\n" +
