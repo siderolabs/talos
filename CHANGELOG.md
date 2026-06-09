@@ -1,3 +1,96 @@
+## [Talos 1.13.4](https://github.com/siderolabs/talos/releases/tag/v1.13.4) (2026-06-09)
+
+Welcome to the v1.13.4 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.18.34
+etcd: v2.6.12
+Flannel: v0.28.5
+
+Talos is built with Go 1.26.4.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Noel Georgi
+* Mateusz Urbanek
+* Orzelius
+* Erwan Leboucher
+* Jonny
+* Rokoucha
+* appkins
+
+### Changes
+<details><summary>16 commits</summary>
+<p>
+
+* [`27d7a1985`](https://github.com/siderolabs/talos/commit/27d7a1985c4fff351846432c314373cf54d60340) fix: handle cluster-scoped resources with a namespace correctly
+* [`fe74e00fb`](https://github.com/siderolabs/talos/commit/fe74e00fb46d96ac8a9348e09491d3aeb4ea8e16) chore: update deps
+* [`f44cafbcd`](https://github.com/siderolabs/talos/commit/f44cafbcd2ca614373c7051874f1167f190a0e3d) fix: recreate dns server and listeners on host DNS runner restart
+* [`5ed296b76`](https://github.com/siderolabs/talos/commit/5ed296b76eb035428db70f20bfa605bfbe068bd5) fix: marshal kube-scheduler config correctly with int types
+* [`5992015b0`](https://github.com/siderolabs/talos/commit/5992015b0e119743696724a4d112da3396cee195) fix: machine configuration schemas
+* [`b8dfda7ee`](https://github.com/siderolabs/talos/commit/b8dfda7ee4d88be4e552a55ca180dd0d55902185) fix: mark more resources as sensitive
+* [`aad841b7f`](https://github.com/siderolabs/talos/commit/aad841b7f3041404b0984c71235a78e093ea8591) feat: update Flannel to v0.28.5
+* [`7c0900b85`](https://github.com/siderolabs/talos/commit/7c0900b856b3d6276c3cb90443fd54d9e4cff1f3) fix(ci): aws nvidia tests
+* [`9f5122db7`](https://github.com/siderolabs/talos/commit/9f5122db76c7d1528fcf5186b56d60eb93e8fa6d) fix: flaky test
+* [`cf62af3e2`](https://github.com/siderolabs/talos/commit/cf62af3e27b68d18a031339cb49055d8ecdc1139) fix: etcd client leak in the (legacy) Upgrade API
+* [`d5c3136e0`](https://github.com/siderolabs/talos/commit/d5c3136e07994497f28a94f657501b89ccf52911) feat: enforce strict QoS ordering in OOM victim selection
+* [`b5ad39e65`](https://github.com/siderolabs/talos/commit/b5ad39e657777e3147d7018614e903bf8d7e99ad) feat: update etcd to v3.6.12
+* [`c83dad3c5`](https://github.com/siderolabs/talos/commit/c83dad3c55502ba5268086be947e92164842b771) fix: health request server-side
+* [`577cc6f6c`](https://github.com/siderolabs/talos/commit/577cc6f6c305b9328060d0e8e01f03723e4c491e) fix: bring in a change to BCM2712_MIP
+* [`29da68ae2`](https://github.com/siderolabs/talos/commit/29da68ae288920360ef2547370bdb5390c9f26cb) fix: touch rootfs files with SOURCE_DATE_EPOCH
+* [`b19a03bc2`](https://github.com/siderolabs/talos/commit/b19a03bc2c8faabda6c92d5b70d703a4f7333d31) fix: ignore cgroups with zero rank in OOM handler
+</p>
+</details>
+
+### Changes from siderolabs/go-kubernetes
+<details><summary>1 commit</summary>
+<p>
+
+* [`131a2bd`](https://github.com/siderolabs/go-kubernetes/commit/131a2bd641eb725630ce3c49576a360f69e7ab66) fix: handle cluster-scoped resources with a ns correctly
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>5 commits</summary>
+<p>
+
+* [`54ec9fc`](https://github.com/siderolabs/pkgs/commit/54ec9fc3b3890196c4202bca5845f4f12fb651b2) fix: disable PAGE_TABLE_CHECK_ENFORCED in kernel config
+* [`0d5985a`](https://github.com/siderolabs/pkgs/commit/0d5985a7c4a5d4b43670d317210281bc92985054) feat: enable USB hiddev for apcupsd support
+* [`593e34c`](https://github.com/siderolabs/pkgs/commit/593e34ce2c2c77657c0d86c7887c1f0096ae1c6e) feat: bump kernel to 6.18.34
+* [`366f575`](https://github.com/siderolabs/pkgs/commit/366f575acc1d927d9858222c9374fc94072c4fab) fix: enable CONFIG_BCM2712_MIP as built-in in arm64 kernel config
+* [`b45e84c`](https://github.com/siderolabs/pkgs/commit/b45e84ccb056057e3b2f41b0b18bf328704a067d) feat: bump Go to 1.26.4
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>2 commits</summary>
+<p>
+
+* [`a06bb31`](https://github.com/siderolabs/tools/commit/a06bb3153a95fe04625573972c0cd99a89fdf828) feat: bump go to 1.26.4
+* [`9bb7abe`](https://github.com/siderolabs/tools/commit/9bb7abe3f5e50c03beea9ab8b5e7787f9b88a374) feat: update libcap to 2.78
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/go-kubernetes**  v0.2.37 -> v0.2.38
+* **github.com/siderolabs/pkgs**           v1.13.0-23-g8c18616 -> v1.13.0-28-g54ec9fc
+* **github.com/siderolabs/tools**          v1.13.0-2-g1fb762a -> v1.13.0-4-ga06bb31
+* **go.etcd.io/etcd/api/v3**               v3.6.11 -> v3.6.12
+* **go.etcd.io/etcd/client/pkg/v3**        v3.6.11 -> v3.6.12
+* **go.etcd.io/etcd/client/v3**            v3.6.11 -> v3.6.12
+* **go.etcd.io/etcd/etcdutl/v3**           v3.6.11 -> v3.6.12
+
+Previous release can be found at [v1.13.3](https://github.com/siderolabs/talos/releases/tag/v1.13.3)
+
 ## [Talos 1.13.3](https://github.com/siderolabs/talos/releases/tag/v1.13.3) (2026-05-25)
 
 Welcome to the v1.13.3 release of Talos!
