@@ -18,6 +18,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/time/internal/clock"
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/ntp"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -27,8 +28,9 @@ import (
 
 // SyncController manages v1alpha1.TimeSync based on configuration and NTP sync process.
 type SyncController struct {
-	V1Alpha1Mode v1alpha1runtime.Mode
-	NewNTPSyncer NewNTPSyncerFunc
+	V1Alpha1Mode         v1alpha1runtime.Mode
+	NewNTPSyncer         NewNTPSyncerFunc
+	NewClockJumpDetector NewClockJumpDetectorFunc
 
 	bootTime stdtime.Time
 }
@@ -64,6 +66,14 @@ type NTPSyncer interface {
 // NewNTPSyncerFunc function allows to replace ntp.Syncer with the mock.
 type NewNTPSyncerFunc func(*zap.Logger, []string, bool) NTPSyncer
 
+// ClockJumpDetector detects wall clock jumps, interface for mocking.
+type ClockJumpDetector interface {
+	Run(ctx context.Context) <-chan struct{}
+}
+
+// NewClockJumpDetectorFunc function allows to replace clock jump detector with the mock.
+type NewClockJumpDetectorFunc func(interval, threshold stdtime.Duration) ClockJumpDetector
+
 // Run implements controller.Controller interface.
 //
 //nolint:gocyclo,cyclop
@@ -75,6 +85,12 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 	if ctrl.NewNTPSyncer == nil {
 		ctrl.NewNTPSyncer = func(logger *zap.Logger, timeServers []string, useNTS bool) NTPSyncer {
 			return ntp.NewSyncer(logger, timeServers, useNTS)
+		}
+	}
+
+	if ctrl.NewClockJumpDetector == nil {
+		ctrl.NewClockJumpDetector = func(interval, threshold stdtime.Duration) ClockJumpDetector {
+			return clock.NewWallClockJumpDetector(interval, threshold)
 		}
 	}
 
@@ -115,6 +131,9 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 		timeSyncTimeoutCh    <-chan stdtime.Time
 	)
 
+	wallClockJumpDetector := ctrl.NewClockJumpDetector(clock.DefaultJumpDetectionInterval, ntp.EpochLimit)
+	wallClockJumpCh := wallClockJumpDetector.Run(ctx)
+
 	defer func() {
 		if syncer != nil {
 			syncCtxCancel()
@@ -128,6 +147,8 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 	}()
 
 	for {
+		var wallClockJumpDetected bool
+
 		select {
 		case <-ctx.Done():
 			return nil
@@ -140,6 +161,8 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 		case <-timeSyncTimeoutCh:
 			timeSynced = true
 			timeSyncTimeoutTimer = nil
+		case <-wallClockJumpCh:
+			wallClockJumpDetected = true
 		}
 
 		timeServersStatus, err := safe.ReaderGet[*network.TimeServerStatus](
@@ -180,6 +203,15 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 			}
 
 			syncTimeout = cfg.Config().NetworkTimeSyncConfig().BootTimeout()
+		}
+
+		if wallClockJumpDetected && syncDisabled {
+			epoch++
+
+			logger.Info(
+				"detected wall-clock jump while time synchronization is disabled, incrementing time epoch",
+				zap.Duration("threshold", ntp.EpochLimit),
+			)
 		}
 
 		if !timeSynced {
