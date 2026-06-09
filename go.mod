@@ -134,7 +134,7 @@ require (
 	github.com/siderolabs/discovery-client v0.1.15
 	github.com/siderolabs/gen v0.8.6
 	github.com/siderolabs/go-adv v1.0.0
-	github.com/siderolabs/go-blockdevice/v2 v2.0.29
+	github.com/siderolabs/go-blockdevice/v2 v2.0.30
 	github.com/siderolabs/go-circular v0.2.3
 	github.com/siderolabs/go-cmd v0.2.0
 	github.com/siderolabs/go-copy v0.1.0
