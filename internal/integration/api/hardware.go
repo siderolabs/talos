@@ -70,6 +70,7 @@ func (suite *HardwareSuite) TestHardwareInfo() {
 	resourceList := []resource.Type{
 		hardware.MemoryModuleType,
 		hardware.ProcessorType,
+		hardware.CPUCoreType,
 	}
 
 	if suite.Cluster != nil {

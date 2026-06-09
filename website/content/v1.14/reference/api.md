@@ -417,6 +417,7 @@ description: Talos gRPC API reference.
     - [EtcFileStatusSpec](#talos.resource.definitions.files.EtcFileStatusSpec)
   
 - [resource/definitions/hardware/hardware.proto](#resource/definitions/hardware/hardware.proto)
+    - [CPUCoreSpec](#talos.resource.definitions.hardware.CPUCoreSpec)
     - [MemoryModuleSpec](#talos.resource.definitions.hardware.MemoryModuleSpec)
     - [PCIDeviceSpec](#talos.resource.definitions.hardware.PCIDeviceSpec)
     - [PCIDriverRebindConfigSpec](#talos.resource.definitions.hardware.PCIDriverRebindConfigSpec)
@@ -7377,6 +7378,36 @@ EtcFileStatusSpec describes status of rendered secrets.
 <p align="right"><a href="#top">Top</a></p>
 
 ## resource/definitions/hardware/hardware.proto
+
+
+
+<a name="talos.resource.definitions.hardware.CPUCoreSpec"></a>
+
+### CPUCoreSpec
+CPUCoreSpec represents a single CPU core as seen by the Linux kernel.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| socket | [string](#string) |  | Socket is the physical package (socket) identifier the core belongs to. |
+| core_id | [string](#string) |  | CoreID is the core identifier within the socket. |
+| logical_cp_us | [uint32](#uint32) | repeated | LogicalCPUs is the sorted list of logical CPU (hardware thread) numbers belonging to this core. |
+| vendor_id | [string](#string) |  | VendorID is the CPU vendor identifier (e.g. `GenuineIntel`, `AuthenticAMD`). |
+| cpu_family | [string](#string) |  | CPUFamily is the CPU family. |
+| model | [string](#string) |  | Model is the CPU model number. |
+| model_name | [string](#string) |  | ModelName is the human-readable CPU model name. |
+| stepping | [string](#string) |  | Stepping is the CPU stepping. |
+| microcode | [string](#string) |  | Microcode is the microcode revision. |
+| cache_size | [string](#string) |  | CacheSize is the CPU cache size as reported by the kernel (e.g. `512 KB`). |
+| cores_per_socket | [uint32](#uint32) |  | CoresPerSocket is the number of cores in the socket this core belongs to. |
+| threads_per_socket | [uint32](#uint32) |  | ThreadsPerSocket is the number of logical CPUs (siblings) in the socket this core belongs to. |
+| flags | [string](#string) | repeated | Flags is the list of CPU feature flags. |
+| bugs | [string](#string) | repeated | Bugs is the list of known CPU bugs. |
+| bogo_mips | [double](#double) |  | BogoMips is the kernel BogoMips measurement for the core. |
+| address_sizes | [string](#string) |  | AddressSizes describes the physical and virtual address sizes. |
+
+
+
 
 
 

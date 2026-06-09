@@ -132,6 +132,7 @@ func NewState() (*State, error) {
 		&etcd.Member{},
 		&files.EtcFileSpec{},
 		&files.EtcFileStatus{},
+		&hardware.CPUCore{},
 		&hardware.MemoryModule{},
 		&hardware.PCIDevice{},
 		&hardware.PCIDriverRebindConfig{},

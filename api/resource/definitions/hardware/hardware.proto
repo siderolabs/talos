@@ -5,6 +5,42 @@ package talos.resource.definitions.hardware;
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/hardware";
 option java_package = "dev.talos.api.resource.definitions.hardware";
 
+// CPUCoreSpec represents a single CPU core as seen by the Linux kernel.
+message CPUCoreSpec {
+  // Socket is the physical package (socket) identifier the core belongs to.
+  string socket = 1;
+  // CoreID is the core identifier within the socket.
+  string core_id = 2;
+  // LogicalCPUs is the sorted list of logical CPU (hardware thread) numbers belonging to this core.
+  repeated uint32 logical_cp_us = 3;
+  // VendorID is the CPU vendor identifier (e.g. `GenuineIntel`, `AuthenticAMD`).
+  string vendor_id = 4;
+  // CPUFamily is the CPU family.
+  string cpu_family = 5;
+  // Model is the CPU model number.
+  string model = 6;
+  // ModelName is the human-readable CPU model name.
+  string model_name = 7;
+  // Stepping is the CPU stepping.
+  string stepping = 8;
+  // Microcode is the microcode revision.
+  string microcode = 9;
+  // CacheSize is the CPU cache size as reported by the kernel (e.g. `512 KB`).
+  string cache_size = 10;
+  // CoresPerSocket is the number of cores in the socket this core belongs to.
+  uint32 cores_per_socket = 11;
+  // ThreadsPerSocket is the number of logical CPUs (siblings) in the socket this core belongs to.
+  uint32 threads_per_socket = 12;
+  // Flags is the list of CPU feature flags.
+  repeated string flags = 13;
+  // Bugs is the list of known CPU bugs.
+  repeated string bugs = 14;
+  // BogoMips is the kernel BogoMips measurement for the core.
+  double bogo_mips = 15;
+  // AddressSizes describes the physical and virtual address sizes.
+  string address_sizes = 16;
+}
+
 // MemoryModuleSpec represents a single Memory.
 message MemoryModuleSpec {
   uint32 size = 1;
