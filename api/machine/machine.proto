@@ -126,7 +126,7 @@ service MachineService {
 // node.
 message ApplyConfigurationRequest {
   enum Mode {
-    REBOOT = 0;
+    REBOOT = 0 [deprecated = true, (common.remove_deprecated_enum_value) = "v2.0"]; // Deprecated: use AUTO or NO_REBOOT instead
     AUTO = 1;
     NO_REBOOT = 2;
     STAGED = 3;

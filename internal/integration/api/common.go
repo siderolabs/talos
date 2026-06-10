@@ -248,30 +248,31 @@ func (suite *CommonSuite) TestBaseOCISpec() {
 	suite.Require().NoError(err)
 
 	nodeName := k8sNode.Name
+	nodeCtx := client.WithNode(suite.ctx, node)
 
 	suite.T().Logf("adjusting base OCI specs on %s/%s", node, nodeName)
 
-	suite.AssertRebooted(
-		suite.ctx, node, func(nodeCtx context.Context) error {
-			suite.PatchMachineConfig(nodeCtx, &v1alpha1.Config{
-				MachineConfig: &v1alpha1.MachineConfig{
-					MachineBaseRuntimeSpecOverrides: meta.Unstructured{
-						Object: map[string]any{
-							"process": map[string]any{
-								"rlimits": []map[string]any{
-									{
-										"type": "RLIMIT_NOFILE",
-										"hard": 1024,
-										"soft": 1024,
-									},
-								},
+	suite.PatchMachineConfig(nodeCtx, &v1alpha1.Config{
+		MachineConfig: &v1alpha1.MachineConfig{
+			MachineBaseRuntimeSpecOverrides: meta.Unstructured{
+				Object: map[string]any{
+					"process": map[string]any{
+						"rlimits": []map[string]any{
+							{
+								"type": "RLIMIT_NOFILE",
+								"hard": 1024,
+								"soft": 1024,
 							},
 						},
 					},
 				},
-			})
+			},
+		},
+	})
 
-			return nil
+	suite.AssertRebooted(
+		suite.ctx, node, func(nodeCtx context.Context) error {
+			return base.IgnoreGRPCUnavailable(suite.Client.Reboot(nodeCtx))
 		}, assertRebootedRebootTimeout,
 		suite.CleanupFailedPods,
 	)
@@ -300,17 +301,17 @@ func (suite *CommonSuite) TestBaseOCISpec() {
 	suite.Assert().NoError(ociUlimits1PodDef.Delete(suite.ctx))
 
 	// revert the patch
+	suite.PatchMachineConfig(nodeCtx, map[string]any{
+		"machine": map[string]any{
+			"baseRuntimeSpecOverrides": map[string]any{
+				"$patch": "delete",
+			},
+		},
+	})
+
 	suite.AssertRebooted(
 		suite.ctx, node, func(nodeCtx context.Context) error {
-			suite.PatchMachineConfig(nodeCtx, map[string]any{
-				"machine": map[string]any{
-					"baseRuntimeSpecOverrides": map[string]any{
-						"$patch": "delete",
-					},
-				},
-			})
-
-			return nil
+			return base.IgnoreGRPCUnavailable(suite.Client.Reboot(nodeCtx))
 		}, assertRebootedRebootTimeout,
 		suite.CleanupFailedPods,
 	)

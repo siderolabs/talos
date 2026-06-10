@@ -982,11 +982,15 @@ const file_common_common_proto_rawDesc = "" +
 	"\x05Error\x12 \n" +
 	"\x04code\x18\x01 \x01(\x0e2\f.common.CodeR\x04code\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12.\n" +
-	"\adetails\x18\x03 \x03(\v2\x14.google.protobuf.AnyR\adetails\"x\n" +
-	"\bMetadata\x12\x1e\n" +
-	"\bhostname\x18\x01 \x01(\tB\x02\x18\x01R\bhostname\x12\x18\n" +
-	"\x05error\x18\x02 \x01(\tB\x02\x18\x01R\x05error\x12.\n" +
-	"\x06status\x18\x03 \x01(\v2\x12.google.rpc.StatusB\x02\x18\x01R\x06status:\x02\x18\x01\"J\n" +
+	"\adetails\x18\x03 \x03(\v2\x14.google.protobuf.AnyR\adetails\"\x98\x01\n" +
+	"\bMetadata\x12&\n" +
+	"\bhostname\x18\x01 \x01(\tB\n" +
+	"\xea\xbb-\x04v2.0\x18\x01R\bhostname\x12 \n" +
+	"\x05error\x18\x02 \x01(\tB\n" +
+	"\xea\xbb-\x04v2.0\x18\x01R\x05error\x126\n" +
+	"\x06status\x18\x03 \x01(\v2\x12.google.rpc.StatusB\n" +
+	"\xea\xbb-\x04v2.0\x18\x01R\x06status:\n" +
+	"\xea\xbb-\x04v2.0\x18\x01\"J\n" +
 	"\x04Data\x12,\n" +
 	"\bmetadata\x18\x01 \x01(\v2\x10.common.MetadataR\bmetadata\x12\x14\n" +
 	"\x05bytes\x18\x02 \x01(\fR\x05bytes\"8\n" +

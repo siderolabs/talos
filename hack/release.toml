@@ -256,6 +256,13 @@ List of changes:
 - Deprecated `.machine.sysfs` in the v1alpha1 config; use the `SysfsConfig` document for sysfs configuration.
 """
 
+    [notes.apply_config]
+        title = "Apply Configuration Modes"
+        description = """\
+The '--mode=reboot' option has been removed from the `talosctl apply-config` command; by default, configuration is applied without a reboot.
+Most configuration changes don't require a reboot; the documentation lists the changes that do.
+"""
+
 [make_deps]
 
     [make_deps.tools]

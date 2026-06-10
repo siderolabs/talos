@@ -24,15 +24,13 @@ type Mode struct {
 }
 
 func (m Mode) String() string {
-	switch m.Mode {
+	switch m.Mode { //nolint:exhaustive
 	case machine.ApplyConfigurationRequest_TRY:
 		return modeTry
 	case machine.ApplyConfigurationRequest_AUTO:
 		return modeAuto
 	case machine.ApplyConfigurationRequest_NO_REBOOT:
 		return modeNoReboot
-	case machine.ApplyConfigurationRequest_REBOOT:
-		return modeReboot
 	case machine.ApplyConfigurationRequest_STAGED:
 		return modeStaged
 	default:
@@ -63,7 +61,6 @@ func (m *Mode) Type() string {
 const (
 	modeAuto     = "auto"
 	modeNoReboot = "no-reboot"
-	modeReboot   = "reboot"
 	modeStaged   = "staged"
 	modeTry      = "try"
 )
@@ -73,7 +70,6 @@ func AddModeFlags(mode *Mode, command *cobra.Command) {
 	modes := map[string]machine.ApplyConfigurationRequest_Mode{
 		modeAuto:     machine.ApplyConfigurationRequest_AUTO,
 		modeNoReboot: machine.ApplyConfigurationRequest_NO_REBOOT,
-		modeReboot:   machine.ApplyConfigurationRequest_REBOOT,
 		modeStaged:   machine.ApplyConfigurationRequest_STAGED,
 		modeTry:      machine.ApplyConfigurationRequest_TRY,
 	}

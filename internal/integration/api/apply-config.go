@@ -9,7 +9,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"net/url"
 	"os"
 	"slices"
@@ -144,19 +143,17 @@ func (suite *ApplyConfigSuite) TestApply() {
 	cfgDataOut, err := cont.Bytes()
 	suite.Require().NoErrorf(err, "failed to marshal config for node %q", node)
 
+	_, err = suite.Client.ApplyConfiguration(
+		nodeCtx, &machineapi.ApplyConfigurationRequest{
+			Data: cfgDataOut,
+			Mode: machineapi.ApplyConfigurationRequest_AUTO,
+		},
+	)
+	suite.Require().NoErrorf(err, "failed to apply configuration (node %q): %s", node, err)
+
 	suite.AssertRebooted(
 		suite.ctx, node, func(nodeCtx context.Context) error {
-			_, err = suite.Client.ApplyConfiguration(
-				nodeCtx, &machineapi.ApplyConfigurationRequest{
-					Data: cfgDataOut,
-					Mode: machineapi.ApplyConfigurationRequest_REBOOT,
-				},
-			)
-			if err != nil {
-				return fmt.Errorf("failed to apply configuration (node %q): %w", node, err)
-			}
-
-			return nil
+			return base.IgnoreGRPCUnavailable(suite.Client.Reboot(nodeCtx))
 		}, assertRebootedRebootTimeout,
 		suite.CleanupFailedPods,
 	)
@@ -253,17 +250,17 @@ func (suite *ApplyConfigSuite) TestApplyNoOpCRIPatch() {
 		)
 	})
 
+	_, err = suite.Client.ApplyConfiguration(
+		nodeCtx, &machineapi.ApplyConfigurationRequest{
+			Data: cfgDataOut,
+			Mode: machineapi.ApplyConfigurationRequest_AUTO,
+		},
+	)
+	suite.Require().NoErrorf(err, "failed to apply configuration (node %q)", node)
+
 	suite.AssertRebooted(
 		suite.ctx, node, func(nodeCtx context.Context) error {
-			_, err = suite.Client.ApplyConfiguration(
-				nodeCtx, &machineapi.ApplyConfigurationRequest{
-					Data: cfgDataOut,
-					Mode: machineapi.ApplyConfigurationRequest_REBOOT,
-				},
-			)
-			suite.Assert().NoErrorf(err, "failed to apply configuration (node %q)", node)
-
-			return nil
+			return base.IgnoreGRPCUnavailable(suite.Client.Reboot(nodeCtx))
 		}, assertRebootedRebootTimeout,
 		suite.CleanupFailedPods,
 	)
@@ -281,17 +278,17 @@ func (suite *ApplyConfigSuite) TestApplyNoOpCRIPatch() {
 		})
 	})
 
+	_, err = suite.Client.ApplyConfiguration(
+		nodeCtx, &machineapi.ApplyConfigurationRequest{
+			Data: cfgDataOut,
+			Mode: machineapi.ApplyConfigurationRequest_AUTO,
+		},
+	)
+	suite.Require().NoErrorf(err, "failed to apply configuration (node %q)", node)
+
 	suite.AssertRebooted(
 		suite.ctx, node, func(nodeCtx context.Context) error {
-			_, err = suite.Client.ApplyConfiguration(
-				nodeCtx, &machineapi.ApplyConfigurationRequest{
-					Data: cfgDataOut,
-					Mode: machineapi.ApplyConfigurationRequest_REBOOT,
-				},
-			)
-			suite.Assert().NoErrorf(err, "failed to apply configuration (node %q)", node)
-
-			return nil
+			return base.IgnoreGRPCUnavailable(suite.Client.Reboot(nodeCtx))
 		}, assertRebootedRebootTimeout,
 		suite.CleanupFailedPods,
 	)

@@ -6,10 +6,8 @@ package v1alpha1
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"log"
-	"reflect"
 	"sync"
 	"time"
 
@@ -20,8 +18,6 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
 	"github.com/siderolabs/talos/pkg/machinery/config"
-	"github.com/siderolabs/talos/pkg/machinery/config/configdiff"
-	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	machineconfig "github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
@@ -124,96 +120,6 @@ func (r *Runtime) SetConfig(cfg config.Provider) error {
 // SetPersistedConfig implements the Runtime interface.
 func (r *Runtime) SetPersistedConfig(cfg config.Provider) error {
 	return r.s.V1Alpha2().SetConfig(context.TODO(), machineconfig.PersistentID, cfg)
-}
-
-// CanApplyImmediate implements the Runtime interface.
-func (r *Runtime) CanApplyImmediate(cfg config.Provider) error {
-	cfgProv := r.configProvider()
-	if cfgProv == nil {
-		return errors.New("no current config")
-	}
-
-	currentConfig := cfgProv.RawV1Alpha1()
-	if currentConfig == nil {
-		return errors.New("current config is not v1alpha1")
-	}
-
-	newConfig := cfg.RawV1Alpha1()
-	if newConfig == nil {
-		return errors.New("new config is not v1alpha1")
-	}
-
-	// copy the config as we're going to modify it
-	newConfig = newConfig.DeepCopy()
-
-	// the config changes allowed to be applied immediately are:
-	// * .debug
-	// * .cluster
-	// * .machine.ca
-	// * .machine.acceptedCAs
-	// * .machine.time
-	// * .machine.certCANs
-	// * .machine.install
-	// * .machine.network
-	// * .machine.sysfs
-	// * .machine.sysctls
-	// * .machine.logging
-	// * .machine.controlplane
-	// * .machine.kubelet
-	// * .machine.kernel
-	// * .machine.registries (note that auth is not applied immediately, containerd limitation)
-	// * .machine.pods
-	// * .machine.seccompProfiles
-	// * .machine.nodeAnnotations
-	// * .machine.nodeLabels
-	// * .machine.nodeTaints
-	// * .machine.features.kubernetesTalosAPIAccess
-	// * .machine.features.kubePrism
-	// * .machine.features.hostDNS
-	// * .machine.features.imageCache
-	// * .machine.features.nodeAddressSortAlgorithm
-	newConfig.ConfigDebug = currentConfig.ConfigDebug
-	newConfig.ClusterConfig = currentConfig.ClusterConfig
-
-	if newConfig.MachineConfig != nil && currentConfig.MachineConfig != nil {
-		newConfig.MachineConfig.MachineCA = currentConfig.MachineConfig.MachineCA
-		newConfig.MachineConfig.MachineAcceptedCAs = currentConfig.MachineConfig.MachineAcceptedCAs
-		newConfig.MachineConfig.MachineTime = currentConfig.MachineConfig.MachineTime //nolint:staticcheck
-		newConfig.MachineConfig.MachineCertSANs = currentConfig.MachineConfig.MachineCertSANs
-		newConfig.MachineConfig.MachineInstall = currentConfig.MachineConfig.MachineInstall
-		newConfig.MachineConfig.MachineNetwork = currentConfig.MachineConfig.MachineNetwork //nolint:staticcheck
-		newConfig.MachineConfig.MachineSysfs = currentConfig.MachineConfig.MachineSysfs     //nolint:staticcheck
-		newConfig.MachineConfig.MachineSysctls = currentConfig.MachineConfig.MachineSysctls //nolint:staticcheck
-		newConfig.MachineConfig.MachineLogging = currentConfig.MachineConfig.MachineLogging
-		newConfig.MachineConfig.MachineControlPlane = currentConfig.MachineConfig.MachineControlPlane //nolint:staticcheck
-		newConfig.MachineConfig.MachineKubelet = currentConfig.MachineConfig.MachineKubelet
-		newConfig.MachineConfig.MachineKernel = currentConfig.MachineConfig.MachineKernel
-		newConfig.MachineConfig.MachineRegistries = currentConfig.MachineConfig.MachineRegistries //nolint:staticcheck // backwards compatibility
-		newConfig.MachineConfig.MachinePods = currentConfig.MachineConfig.MachinePods
-		newConfig.MachineConfig.MachineSeccompProfiles = currentConfig.MachineConfig.MachineSeccompProfiles
-		newConfig.MachineConfig.MachineNodeAnnotations = currentConfig.MachineConfig.MachineNodeAnnotations
-		newConfig.MachineConfig.MachineNodeLabels = currentConfig.MachineConfig.MachineNodeLabels
-		newConfig.MachineConfig.MachineNodeTaints = currentConfig.MachineConfig.MachineNodeTaints
-
-		if newConfig.MachineConfig.MachineFeatures != nil && currentConfig.MachineConfig.MachineFeatures != nil {
-			newConfig.MachineConfig.MachineFeatures.KubernetesTalosAPIAccessConfig = currentConfig.MachineConfig.MachineFeatures.KubernetesTalosAPIAccessConfig
-			newConfig.MachineConfig.MachineFeatures.KubePrismSupport = currentConfig.MachineConfig.MachineFeatures.KubePrismSupport
-			newConfig.MachineConfig.MachineFeatures.HostDNSSupport = currentConfig.MachineConfig.MachineFeatures.HostDNSSupport       //nolint:staticcheck // backwards compatibility
-			newConfig.MachineConfig.MachineFeatures.ImageCacheSupport = currentConfig.MachineConfig.MachineFeatures.ImageCacheSupport //nolint:staticcheck // backwards compatibility
-			newConfig.MachineConfig.MachineFeatures.FeatureNodeAddressSortAlgorithm = currentConfig.MachineConfig.MachineFeatures.FeatureNodeAddressSortAlgorithm
-		}
-	}
-
-	if !reflect.DeepEqual(currentConfig, newConfig) {
-		diff, err := configdiff.DiffConfigs(container.NewV1Alpha1(currentConfig), container.NewV1Alpha1(newConfig))
-		if err != nil {
-			return fmt.Errorf("error calculating diff: %w", err)
-		}
-
-		return fmt.Errorf("this config change can't be applied in immediate mode\ndiff:\n%s", diff)
-	}
-
-	return nil
 }
 
 // State implements the Runtime interface.

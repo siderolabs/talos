@@ -4751,7 +4751,7 @@ rpc upgrade
 
 | Name | Number | Description |
 | ---- | ------ | ----------- |
-| REBOOT | 0 |  |
+| REBOOT | 0 | Deprecated: use AUTO or NO_REBOOT instead |
 | AUTO | 1 |  |
 | NO_REBOOT | 2 |  |
 | STAGED | 3 |  |

@@ -16,20 +16,20 @@ talosctl apply-config [flags]
 ### Options
 
 ```
-      --cert-fingerprint strings                    list of server certificate fingerprints to accept (defaults to no check, only used with --insecure flag)
-  -c, --cluster string                              cluster to connect to if a proxy endpoint is used
-  -p, --config-patch stringArray                    the list of config patches to apply to the local config file before sending it to the node
-      --context string                              context to be used in command
-      --dry-run                                     check how the config change will be applied in dry-run mode
-  -e, --endpoints strings                           override default endpoints in Talos configuration
-  -f, --file string                                 the filename of the updated configuration
-  -h, --help                                        help for apply-config
-  -i, --insecure                                    use the insecure (encrypted with no auth) maintenance service
-  -m, --mode auto, no-reboot, reboot, staged, try   apply config mode (default auto)
-  -n, --nodes strings                               target the specified nodes
-      --siderov1-keys-dir string                    the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
-      --talosconfig string                          the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
-      --timeout duration                            the config will be rolled back after specified timeout (if try mode is selected) (default 1m0s)
+      --cert-fingerprint strings            list of server certificate fingerprints to accept (defaults to no check, only used with --insecure flag)
+  -c, --cluster string                      cluster to connect to if a proxy endpoint is used
+  -p, --config-patch stringArray            the list of config patches to apply to the local config file before sending it to the node
+      --context string                      context to be used in command
+      --dry-run                             check how the config change will be applied in dry-run mode
+  -e, --endpoints strings                   override default endpoints in Talos configuration
+  -f, --file string                         the filename of the updated configuration
+  -h, --help                                help for apply-config
+  -i, --insecure                            use the insecure (encrypted with no auth) maintenance service
+  -m, --mode auto, no-reboot, staged, try   apply config mode (default auto)
+  -n, --nodes strings                       target the specified nodes
+      --siderov1-keys-dir string            the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string                  the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
+      --timeout duration                    the config will be rolled back after specified timeout (if try mode is selected) (default 1m0s)
 ```
 
 ### SEE ALSO
@@ -1443,17 +1443,17 @@ talosctl edit machineconfig [flags]
 ### Options
 
 ```
-  -c, --cluster string                              cluster to connect to if a proxy endpoint is used
-      --context string                              context to be used in command
-      --dry-run                                     do not apply the change after editing and print the change summary instead
-  -e, --endpoints strings                           override default endpoints in Talos configuration
-  -h, --help                                        help for edit
-  -m, --mode auto, no-reboot, reboot, staged, try   apply config mode (default auto)
-      --namespace string                            resource namespace (default is to use default namespace per resource)
-  -n, --nodes strings                               target the specified nodes
-      --siderov1-keys-dir string                    the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
-      --talosconfig string                          the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
-      --timeout duration                            the config will be rolled back after specified timeout (if try mode is selected) (default 1m0s)
+  -c, --cluster string                      cluster to connect to if a proxy endpoint is used
+      --context string                      context to be used in command
+      --dry-run                             do not apply the change after editing and print the change summary instead
+  -e, --endpoints strings                   override default endpoints in Talos configuration
+  -h, --help                                help for edit
+  -m, --mode auto, no-reboot, staged, try   apply config mode (default auto)
+      --namespace string                    resource namespace (default is to use default namespace per resource)
+  -n, --nodes strings                       target the specified nodes
+      --siderov1-keys-dir string            the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string                  the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
+      --timeout duration                    the config will be rolled back after specified timeout (if try mode is selected) (default 1m0s)
 ```
 
 ### SEE ALSO
@@ -3107,19 +3107,19 @@ talosctl patch machineconfig [flags]
 ### Options
 
 ```
-  -c, --cluster string                              cluster to connect to if a proxy endpoint is used
-      --context string                              context to be used in command
-      --dry-run                                     print the change summary and patch preview without applying the changes
-  -e, --endpoints strings                           override default endpoints in Talos configuration
-  -h, --help                                        help for patch
-  -m, --mode auto, no-reboot, reboot, staged, try   apply config mode (default auto)
-      --namespace string                            resource namespace (default is to use default namespace per resource)
-  -n, --nodes strings                               target the specified nodes
-  -p, --patch stringArray                           the patch to be applied to the resource file, use @file to read a patch from file.
-      --patch-file string                           a file containing a patch to be applied to the resource.
-      --siderov1-keys-dir string                    the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
-      --talosconfig string                          the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
-      --timeout duration                            the config will be rolled back after specified timeout (if try mode is selected) (default 1m0s)
+  -c, --cluster string                      cluster to connect to if a proxy endpoint is used
+      --context string                      context to be used in command
+      --dry-run                             print the change summary and patch preview without applying the changes
+  -e, --endpoints strings                   override default endpoints in Talos configuration
+  -h, --help                                help for patch
+  -m, --mode auto, no-reboot, staged, try   apply config mode (default auto)
+      --namespace string                    resource namespace (default is to use default namespace per resource)
+  -n, --nodes strings                       target the specified nodes
+  -p, --patch stringArray                   the patch to be applied to the resource file, use @file to read a patch from file.
+      --patch-file string                   a file containing a patch to be applied to the resource.
+      --siderov1-keys-dir string            the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string                  the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
+      --timeout duration                    the config will be rolled back after specified timeout (if try mode is selected) (default 1m0s)
 ```
 
 ### SEE ALSO

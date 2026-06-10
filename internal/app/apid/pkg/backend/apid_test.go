@@ -329,11 +329,6 @@ func testEnum(t *testing.T, enum protoreflect.EnumDescriptor, currentVersion *co
 }
 
 func testMessage(t *testing.T, message protoreflect.MessageDescriptor, currentVersion *config.VersionContract) {
-	// skip explicitly common.Metadata, which is legacy & deprecated, but not scheduled to be removed
-	if message.FullName() == "common.Metadata" {
-		return
-	}
-
 	testDeprecated(t, message, currentVersion)
 
 	fields := message.Fields()

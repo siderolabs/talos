@@ -21,7 +21,6 @@ type Runtime interface { //nolint:interfacebloat
 	CancelConfigRollbackTimeout()
 	SetConfig(config.Provider) error
 	SetPersistedConfig(config.Provider) error
-	CanApplyImmediate(config.Provider) error
 	State() State
 	Events() EventStream
 	Logging() LoggingManager

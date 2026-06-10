@@ -60,13 +60,14 @@ message Error {
 message Metadata {
   // Multi-node proxying is deprecated.
   option deprecated = true;
+  option (remove_deprecated_message) = "v2.0";
   // hostname of the server response comes from (injected by proxy)
-  string hostname = 1 [deprecated = true];
+  string hostname = 1 [deprecated = true, (remove_deprecated_field) = "v2.0"];
   // error is set if request failed to the upstream (rest of response is
   // undefined)
-  string error = 2 [deprecated = true];
+  string error = 2 [deprecated = true, (remove_deprecated_field) = "v2.0"];
   // error as gRPC Status
-  google.rpc.Status status = 3 [deprecated = true];
+  google.rpc.Status status = 3 [deprecated = true, (remove_deprecated_field) = "v2.0"];
 }
 
 message Data {

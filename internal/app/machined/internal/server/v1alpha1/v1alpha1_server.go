@@ -23,7 +23,6 @@ import (
 	"strconv"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -129,8 +128,7 @@ type Server struct {
 
 	server *grpc.Server
 
-	applyConfigMu       sync.Mutex
-	applyConfigRebooted atomic.Bool
+	applyConfigMu sync.Mutex
 }
 
 func (s *Server) checkSupported(feature runtime.ModeCapability) error {
@@ -187,10 +185,6 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 	}
 	defer s.applyConfigMu.Unlock()
 
-	if s.applyConfigRebooted.Load() {
-		return nil, status.Error(codes.FailedPrecondition, "configuration was already applied and node is rebooting, cannot apply more configuration changes until next reboot")
-	}
-
 	roles := authz.GetRoles(ctx)
 	inMaintenance := !s.Controller.Runtime().ConfigCompleteForBoot()
 
@@ -199,8 +193,8 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 	}
 
 	mode := in.Mode.String()
-	modeDetails := "Applied configuration with a reboot"
-	modeErr := ""
+
+	var modeDetails string
 
 	if in.Mode != machine.ApplyConfigurationRequest_TRY {
 		s.Controller.Runtime().CancelConfigRollbackTimeout()
@@ -218,6 +212,14 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 		return nil, status.Error(codes.InvalidArgument, "the applied machine configuration doesn't contain v1alpha1 config, did you mean to patch the machine config instead?")
 	}
 
+	if in.Mode == machine.ApplyConfigurationRequest_REBOOT { //nolint:staticcheck // backwards compatibility
+		if inMaintenance {
+			in.Mode = machine.ApplyConfigurationRequest_NO_REBOOT
+		} else {
+			return nil, status.Error(codes.Unimplemented, "the REBOOT mode is not supported, please use AUTO or NO_REBOOT modes instead")
+		}
+	}
+
 	validationMode := modeWrapper{
 		Mode:      s.Controller.Runtime().State().Platform().Mode(),
 		installed: s.Controller.Runtime().State().Machine().Installed(),
@@ -228,37 +230,25 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	if inMaintenance && in.Mode == machine.ApplyConfigurationRequest_REBOOT {
-		in.Mode = machine.ApplyConfigurationRequest_NO_REBOOT
-	}
-
 	//nolint:exhaustive
 	switch in.Mode {
+	// --mode=auto
+	case machine.ApplyConfigurationRequest_AUTO:
+		in.Mode = machine.ApplyConfigurationRequest_NO_REBOOT
+		mode = fmt.Sprintf("%s(%s)", mode, in.Mode)
+
+		fallthrough
 	// --mode=try
 	case machine.ApplyConfigurationRequest_TRY:
 		fallthrough
 	// --mode=no-reboot
 	case machine.ApplyConfigurationRequest_NO_REBOOT:
-		if err = s.Controller.Runtime().CanApplyImmediate(cfgProvider); err != nil && !inMaintenance {
-			return nil, status.Error(codes.InvalidArgument, err.Error())
-		}
-
 		modeDetails = "Applied configuration without a reboot"
 	// --mode=staged
 	case machine.ApplyConfigurationRequest_STAGED:
 		modeDetails = "Staged configuration to be applied after the next reboot"
-	// --mode=auto detect actual update mode
-	case machine.ApplyConfigurationRequest_AUTO:
-		if err = s.Controller.Runtime().CanApplyImmediate(cfgProvider); err != nil && !inMaintenance {
-			in.Mode = machine.ApplyConfigurationRequest_REBOOT
-			modeDetails = "Applied configuration with a reboot"
-			modeErr = ": " + err.Error()
-		} else {
-			in.Mode = machine.ApplyConfigurationRequest_NO_REBOOT
-			modeDetails = "Applied configuration without a reboot"
-		}
-
-		mode = fmt.Sprintf("%s(%s)", mode, in.Mode)
+	default:
+		return nil, status.Errorf(codes.InvalidArgument, "incorrect mode '%s' specified for the apply config call", in.Mode.String())
 	}
 
 	if in.DryRun {
@@ -313,23 +303,6 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 		if err := s.Controller.Runtime().SetPersistedConfig(cfgProvider); err != nil {
 			return nil, err
 		}
-	// --mode=reboot
-	case machine.ApplyConfigurationRequest_REBOOT:
-		if err := s.Controller.Runtime().SetPersistedConfig(cfgProvider); err != nil {
-			return nil, err
-		}
-
-		s.applyConfigRebooted.Store(true)
-
-		go func() {
-			if err := s.Controller.Run(context.Background(), runtime.SequenceReboot, nil, runtime.WithTakeover()); err != nil {
-				if !runtime.IsRebootError(err) {
-					log.Println("apply configuration failed:", err)
-				}
-			}
-		}()
-	default:
-		return nil, fmt.Errorf("incorrect mode '%s' specified for the apply config call", in.Mode.String())
 	}
 
 	return &machine.ApplyConfigurationResponse{
@@ -337,7 +310,7 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 			{
 				Mode:        in.Mode,
 				Warnings:    warnings,
-				ModeDetails: modeDetails + modeErr,
+				ModeDetails: modeDetails,
 			},
 		},
 	}, nil

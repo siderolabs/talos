@@ -31,7 +31,8 @@ const (
 type ApplyConfigurationRequest_Mode int32
 
 const (
-	ApplyConfigurationRequest_REBOOT    ApplyConfigurationRequest_Mode = 0
+	// Deprecated: Marked as deprecated in machine/machine.proto.
+	ApplyConfigurationRequest_REBOOT    ApplyConfigurationRequest_Mode = 0 // Deprecated: use AUTO or NO_REBOOT instead
 	ApplyConfigurationRequest_AUTO      ApplyConfigurationRequest_Mode = 1
 	ApplyConfigurationRequest_NO_REBOOT ApplyConfigurationRequest_Mode = 2
 	ApplyConfigurationRequest_STAGED    ApplyConfigurationRequest_Mode = 3
@@ -11631,15 +11632,15 @@ var File_machine_machine_proto protoreflect.FileDescriptor
 
 const file_machine_machine_proto_rawDesc = "" +
 	"\n" +
-	"\x15machine/machine.proto\x12\amachine\x1a\x13common/common.proto\x1a\x19google/protobuf/any.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x8c\x02\n" +
+	"\x15machine/machine.proto\x12\amachine\x1a\x13common/common.proto\x1a\x19google/protobuf/any.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1bgoogle/protobuf/empty.proto\x1a\x1fgoogle/protobuf/timestamp.proto\"\x98\x02\n" +
 	"\x19ApplyConfigurationRequest\x12\x12\n" +
 	"\x04data\x18\x01 \x01(\fR\x04data\x12;\n" +
 	"\x04mode\x18\x04 \x01(\x0e2'.machine.ApplyConfigurationRequest.ModeR\x04mode\x12\x17\n" +
 	"\adry_run\x18\x05 \x01(\bR\x06dryRun\x12C\n" +
-	"\x10try_mode_timeout\x18\x06 \x01(\v2\x19.google.protobuf.DurationR\x0etryModeTimeout\"@\n" +
-	"\x04Mode\x12\n" +
-	"\n" +
-	"\x06REBOOT\x10\x00\x12\b\n" +
+	"\x10try_mode_timeout\x18\x06 \x01(\v2\x19.google.protobuf.DurationR\x0etryModeTimeout\"L\n" +
+	"\x04Mode\x12\x16\n" +
+	"\x06REBOOT\x10\x00\x1a\n" +
+	"\xea\xbb-\x04v2.0\b\x01\x12\b\n" +
 	"\x04AUTO\x10\x01\x12\r\n" +
 	"\tNO_REBOOT\x10\x02\x12\n" +
 	"\n" +
