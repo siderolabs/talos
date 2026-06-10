@@ -415,25 +415,6 @@ FROM scratch AS microsoft-db-keys
 COPY --from=microsoft-secureboot-database /DB/Certificates/MicCor*.der /db/
 COPY --from=microsoft-secureboot-database /DB/Certificates/microsoft*.der /db/
 
-FROM --platform=${BUILDPLATFORM} scratch AS generate
-COPY --from=proto-format-build /src/api /api/
-COPY --from=generate-build-clean /api/resource/definitions/ /api/resource/definitions/
-COPY --from=generate-build-clean /api/machinery /pkg/machinery/
-COPY --from=go-generate /src/pkg/imager/profile/ /pkg/imager/profile/
-COPY --from=go-generate /src/pkg/machinery/resources/ /pkg/machinery/resources/
-COPY --from=go-generate /src/pkg/machinery/config/schemas/ /pkg/machinery/config/schemas/
-COPY --from=go-generate /src/pkg/machinery/config/types/ /pkg/machinery/config/types/
-COPY --from=go-generate /src/pkg/machinery/imager/imageropts/ /pkg/machinery/imager/imageropts/
-COPY --from=go-generate /src/pkg/machinery/nethelpers/ /pkg/machinery/nethelpers/
-COPY --from=go-generate /src/pkg/machinery/extensions/ /pkg/machinery/extensions/
-COPY --from=go-generate /src/pkg/machinery/version/os-release /pkg/machinery/version/os-release
-COPY --from=ipxe-generate / /pkg/provision/providers/vm/internal/ipxe/data/ipxe/
-COPY --from=selinux-generate / /internal/pkg/selinux/
-COPY --from=embed-abbrev / /
-COPY --from=pkg-ca-certificates /etc/ssl/certs/ca-certificates /internal/app/machined/pkg/controllers/secrets/data/
-COPY --from=microsoft-key-keys / /internal/pkg/secureboot/database/certs/
-COPY --from=microsoft-db-keys / /internal/pkg/secureboot/database/certs/
-
 # The base target provides a container that can be used to build all Talos
 # assets.
 
@@ -441,12 +422,40 @@ FROM build-go AS base
 COPY ./cmd ./cmd
 COPY ./pkg ./pkg
 COPY ./internal ./internal
-COPY --from=embed / ./
+COPY --link --from=embed / ./
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go list all >/dev/null
 WORKDIR /src/pkg/machinery
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go list all >/dev/null
 RUN --mount=type=cache,target=/.cache,id=talos/.cache go generate -v ./version
 WORKDIR /src
+
+FROM base AS go-mod-tidy
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go mod tidy
+WORKDIR /src/pkg/machinery
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go mod tidy
+WORKDIR /src
+
+FROM --platform=${BUILDPLATFORM} scratch AS generate
+COPY --link --from=go-mod-tidy /src/go.mod /src/go.sum /
+COPY --link --from=go-mod-tidy /src/pkg/machinery/go.mod /src/pkg/machinery/go.sum /pkg/machinery/
+COPY --link --from=proto-format-build /src/api /api/
+COPY --link --from=generate-build-clean /api/resource/definitions/ /api/resource/definitions/
+COPY --link --from=generate-build-clean /api/machinery /pkg/machinery/
+COPY --link --from=generate-build-clean /api/docs/api.md /website/content/v1.13/reference/api.md
+COPY --link --from=go-generate /src/pkg/imager/profile/ /pkg/imager/profile/
+COPY --link --from=go-generate /src/pkg/machinery/resources/ /pkg/machinery/resources/
+COPY --link --from=go-generate /src/pkg/machinery/config/schemas/ /pkg/machinery/config/schemas/
+COPY --link --from=go-generate /src/pkg/machinery/config/types/ /pkg/machinery/config/types/
+COPY --link --from=go-generate /src/pkg/machinery/imager/imageropts/ /pkg/machinery/imager/imageropts/
+COPY --link --from=go-generate /src/pkg/machinery/nethelpers/ /pkg/machinery/nethelpers/
+COPY --link --from=go-generate /src/pkg/machinery/extensions/ /pkg/machinery/extensions/
+COPY --link --from=go-generate /src/pkg/machinery/version/os-release /pkg/machinery/version/os-release
+COPY --link --from=ipxe-generate / /pkg/provision/providers/vm/internal/ipxe/data/ipxe/
+COPY --link --from=selinux-generate / /internal/pkg/selinux/
+COPY --link --from=embed-abbrev / /
+COPY --link --from=pkg-ca-certificates /etc/ssl/certs/ca-certificates /internal/app/machined/pkg/controllers/secrets/data/
+COPY --link --from=microsoft-key-keys / /internal/pkg/secureboot/database/certs/
+COPY --link --from=microsoft-db-keys / /internal/pkg/secureboot/database/certs/
 
 # The vulncheck target runs the vulnerability check tool.
 
