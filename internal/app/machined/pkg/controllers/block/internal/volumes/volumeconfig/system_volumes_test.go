@@ -63,7 +63,6 @@ func TestGetSystemVolumeTransformers(t *testing.T) {
 		constants.EphemeralPartitionLabel,
 		"/var/run",
 		"/var/log",
-		"/etc/cni",
 	} {
 		assert.Condition(t, func() bool {
 			for _, r := range allResources {

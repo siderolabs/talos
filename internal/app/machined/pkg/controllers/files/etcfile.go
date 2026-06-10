@@ -16,9 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"go.uber.org/zap"
-	"golang.org/x/sys/unix"
 
-	"github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/xfs"
@@ -26,13 +24,8 @@ import (
 
 // EtcFileController watches EtcFileSpecs, creates/updates files.
 type EtcFileController struct {
-	// Path to /etc directory, read-only filesystem.
-	EtcPath string
 	// EtcRoot is the root for /etc filesystem operations.
 	EtcRoot xfs.Root
-
-	// Cache of bind mounts created.
-	bindMounts map[string]any
 }
 
 // Name implements controller.Controller interface.
@@ -63,12 +56,8 @@ func (ctrl *EtcFileController) Outputs() []controller.Output {
 
 // Run implements controller.Controller interface.
 //
-//nolint:gocyclo,cyclop
+//nolint:gocyclo
 func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	if ctrl.bindMounts == nil {
-		ctrl.bindMounts = make(map[string]any)
-	}
-
 	for {
 		select {
 		case <-ctx.Done():
@@ -96,56 +85,24 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 
 		for spec := range list.All() {
 			filename := spec.Metadata().ID()
-			_, mountExists := ctrl.bindMounts[filename]
-
-			dst := filepath.Join(ctrl.EtcPath, filename)
-			src := filename
 
 			switch spec.Metadata().Phase() {
 			case resource.PhaseTearingDown:
-				if mountExists {
-					logger.Debug("removing bind mount", zap.String("src", src), zap.String("dst", dst))
+				logger.Debug("removing file", zap.String("name", filename))
 
-					if err = unix.Unmount(dst, 0); err != nil && !errors.Is(err, os.ErrNotExist) {
-						return fmt.Errorf("failed to unmount bind mount %q: %w", dst, err)
-					}
-
-					delete(ctrl.bindMounts, filename)
+				if err = xfs.Remove(ctrl.EtcRoot, filename); err != nil && !errors.Is(err, os.ErrNotExist) {
+					return fmt.Errorf("failed to remove %q: %w", filename, err)
 				}
 
-				logger.Debug("removing file", zap.String("src", src))
-
-				if err = xfs.Remove(ctrl.EtcRoot, src); err != nil && !errors.Is(err, os.ErrNotExist) {
-					return fmt.Errorf("failed to remove %q: %w", src, err)
-				}
-
-				// now remove finalizer as the link was deleted
+				// now remove finalizer as the file was deleted
 				if err = r.RemoveFinalizer(ctx, spec.Metadata(), ctrl.Name()); err != nil {
 					return fmt.Errorf("error removing finalizer: %w", err)
 				}
 			case resource.PhaseRunning:
-				if !mountExists {
-					logger.Debug("creating bind mount", zap.String("src", src), zap.String("dst", dst))
+				logger.Debug("writing file contents", zap.String("name", filename), zap.Stringer("version", spec.Metadata().Version()))
 
-					if ctrl.EtcRoot.FSType() == "os" {
-						shadow := filepath.Join(ctrl.EtcRoot.Source(), src)
-
-						if err = createBindMountFile(shadow, dst, spec.TypedSpec().Mode); err != nil {
-							return fmt.Errorf("failed to create shadow bind mount %q -> %q (mode: os): %w", shadow, dst, err)
-						}
-					} else {
-						if err = createBindMountFileFd(ctrl.EtcRoot, src, dst, spec.TypedSpec().Mode); err != nil {
-							return fmt.Errorf("failed to create shadow bind mount %q -> %q (mode: fd): %w", src, dst, err)
-						}
-					}
-
-					ctrl.bindMounts[filename] = struct{}{}
-				}
-
-				logger.Debug("writing file contents", zap.String("src", src), zap.Stringer("version", spec.Metadata().Version()))
-
-				if err = UpdateFile(ctrl.EtcRoot, src, spec.TypedSpec().Contents, spec.TypedSpec().Mode, spec.TypedSpec().SelinuxLabel); err != nil {
-					return fmt.Errorf("error updating %q: %w", src, err)
+				if err = UpdateFile(ctrl.EtcRoot, filename, spec.TypedSpec().Contents, spec.TypedSpec().Mode, spec.TypedSpec().SelinuxLabel); err != nil {
+					return fmt.Errorf("error updating %q: %w", filename, err)
 				}
 
 				if err = safe.WriterModify(ctx, r, files.NewEtcFileStatus(files.NamespaceName, filename), func(r *files.EtcFileStatus) error {
@@ -176,73 +133,6 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 
 		r.ResetRestartBackoff()
 	}
-}
-
-// createBindMountFile creates a common way to create a writable source file with a
-// bind mounted destination. This is most commonly used for well known files
-// under /etc that need to be adjusted during startup.
-func createBindMountFile(src, dst string, mode os.FileMode) (err error) {
-	if err = os.MkdirAll(filepath.Dir(src), 0o755); err != nil {
-		return fmt.Errorf("mkdir all failed: %w", err)
-	}
-
-	var f *os.File
-
-	if f, err = os.OpenFile(src, os.O_WRONLY|os.O_CREATE, mode); err != nil {
-		return fmt.Errorf("open file failed: %w", err)
-	}
-
-	if err = f.Close(); err != nil {
-		return fmt.Errorf("close file failed: %w", err)
-	}
-
-	return mount.BindReadonly(src, dst)
-}
-
-// createBindMountDir creates a common way to create a writable source dir with a
-// bind mounted destination. This is most commonly used for well known directories
-// under /etc that need to be adjusted during startup.
-func createBindMountDir(src, dst string) (err error) {
-	if err = os.MkdirAll(src, 0o755); err != nil {
-		return err
-	}
-
-	return mount.BindReadonly(src, dst)
-}
-
-// createBindMountFileFd creates a common way to create a writable source file with a
-// bind mounted destination. This is most commonly used for well known files
-// under /etc that need to be adjusted during startup.
-func createBindMountFileFd(root xfs.Root, src, dst string, mode os.FileMode) (err error) {
-	if err = xfs.MkdirAll(root, filepath.Dir(src), 0o755); err != nil {
-		return err
-	}
-
-	fsrc, err := xfs.OpenFile(root, src, os.O_WRONLY|os.O_CREATE, mode)
-	if err != nil {
-		return err
-	}
-	defer fsrc.Close() //nolint:errcheck
-
-	return mount.BindReadonlyFd(int(fsrc.Fd()), dst)
-}
-
-// createBindMountDirFd creates a common way to create a writable source dir with a
-// bind mounted destination. This is most commonly used for well known directories
-// under /etc that need to be adjusted during startup.
-func createBindMountDirFd(root xfs.Root, src, dst string) (err error) {
-	if err = xfs.MkdirAll(root, src, 0o755); err != nil {
-		return fmt.Errorf("mkdir all failed: %w", err)
-	}
-
-	f, err := xfs.OpenFile(root, src, os.O_RDONLY, 0)
-	if err != nil {
-		return fmt.Errorf("open file failed: %w", err)
-	}
-
-	defer f.Close() //nolint:errcheck
-
-	return mount.BindReadonlyFd(int(f.Fd()), dst)
 }
 
 // UpdateFile is like `os.WriteFile`, but it will only update the file if the

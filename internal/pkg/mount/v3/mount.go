@@ -14,7 +14,7 @@ import (
 // bindHardenAttr is the baseline attribute set every read-only bind mount
 // inherits: read-only, no setuid escalation, no device nodes (per
 // siderolabs/talos#11946 — device nodes belong only in /dev and /dev/pts).
-const bindHardenAttr = unix.MOUNT_ATTR_RDONLY | unix.MOUNT_ATTR_NOSUID | unix.MOUNT_ATTR_NODEV
+const bindHardenAttr = unix.MOUNT_ATTR_RDONLY | unix.MOUNT_ATTR_NOSUID | unix.MOUNT_ATTR_NOEXEC | unix.MOUNT_ATTR_NODEV
 
 // BindReadonly creates a common way to create a readonly bind mounted destination.
 func BindReadonly(src, dst string) error {

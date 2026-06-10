@@ -19,6 +19,9 @@
 (call system_f (etc_t))
 (allow etc_t fs_t (filesystem (associate)))
 (allow etc_t tmpfs_t (filesystem (associate)))
+; The managed /etc tmpfs is mounted with context=etc_t, which labels its superblock etc_t
+; too, so etc_t inodes must be allowed to associate with an etc_t-labeled filesystem.
+(allow etc_t etc_t (filesystem (associate)))
 (context etc_t (system_u object_r etc_t (systemLow systemLow)))
 (filecon "/etc(/.*)?" any etc_t)
 (filecon "/usr/share/zoneinfo(/.*)?" any etc_t)

@@ -1413,8 +1413,6 @@ type SELinuxLabeledPath struct {
 
 // Overlays is the set of paths to create overlay mounts for.
 var Overlays = []SELinuxLabeledPath{
-	{Path: "/etc/cni", Label: CNISELinuxLabel, Secure: true},
-	{Path: KubernetesConfigBaseDir, Label: KubernetesConfigSELinuxLabel, Secure: true},
 	{Path: "/usr/libexec/kubernetes", Label: KubeletPluginsSELinuxLabel},
 	{Path: "/opt", Label: OptSELinuxLabel},
 }

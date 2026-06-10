@@ -6,6 +6,9 @@
 (type k8s_conf_t)
 (call system_f (k8s_conf_t))
 (filecon "/etc/kubernetes(/.*)?" any (system_u object_r k8s_conf_t (systemLow systemLow)))
+; /etc/kubernetes is a tmpfs mounted with context=k8s_conf_t (its superblock is k8s_conf_t
+; too), so k8s_conf_t inodes must be allowed to associate with a k8s_conf_t filesystem.
+(allow k8s_conf_t k8s_conf_t (filesystem (associate)))
 
 (type k8s_plugin_t)
 (call system_f (k8s_plugin_t))

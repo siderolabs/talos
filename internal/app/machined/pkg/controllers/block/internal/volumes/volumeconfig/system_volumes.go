@@ -175,6 +175,7 @@ func GetOverlayVolumesTransformer(inContainer bool) func(configconfig.Config) ([
 		}
 
 		var resources []VolumeResource
+
 		for _, overlay := range constants.Overlays {
 			resources = append(resources, VolumeResource{
 				VolumeID: overlay.Path,

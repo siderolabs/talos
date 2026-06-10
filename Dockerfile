@@ -804,8 +804,8 @@ END
 # symlinks to avoid accidentally cleaning them up.
 RUN --mount=type=bind,source=hack/cleanup.sh,target=/usr/bin/cleanup.sh <<END
     cleanup.sh /rootfs
-    mkdir -pv /rootfs/{boot/EFI,etc/{iscsi,nvme,cri/conf.d/hosts},usr/lib/firmware,usr/etc,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt,.extra}
-    mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,etc/ssl/certs,usr/libexec/kubernetes,/usr/local/lib/kubelet/credentialproviders,etc/selinux/targeted/contexts/files}
+    mkdir -pv /rootfs/{boot/EFI,/etc/cri/conf.d/hosts,usr/lib/firmware,usr/etc,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt,.extra}
+    mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.ds,etc/ssl/certs,usr/libexec/kubernetes,/usr/local/lib/kubelet/credentialproviders,etc/selinux/targeted/contexts/files}
     mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
     # Go standard library is shipped with Talos, thus it must be tracked in SBOM
     install -D /usr/share/spdx/golang.spdx.json /rootfs/usr/share/spdx/golang.spdx.json
@@ -821,7 +821,7 @@ COPY --chmod=0644 hack/lvm.conf /rootfs/etc/lvm/lvm.conf
 COPY --link --chmod=0644 --from=base /src/pkg/machinery/version/os-release /rootfs/etc/os-release
 RUN <<END
     ln -s /usr/share/zoneinfo/Etc/UTC /rootfs/etc/localtime
-    touch /rootfs/etc/{extensions.yaml,resolv.conf,hosts,machine-id,cri/conf.d/cri.toml,cri/conf.d/01-registries.part,cri/conf.d/20-customization.part,cri/conf.d/base-spec.json,ssl/certs/ca-certificates.crt,selinux/targeted/contexts/files/file_contexts,iscsi/initiatorname.iscsi,nvme/{hostid,hostnqn}}
+    touch /rootfs/etc/{extensions.yaml,selinux/targeted/contexts/files/file_contexts}
     ln -s ca-certificates.crt /rootfs/etc/ssl/certs/ca-certificates
     ln -s /etc/ssl /rootfs/etc/pki
     ln -s /etc/ssl /rootfs/usr/share/ca-certificates
@@ -893,7 +893,7 @@ END
 # symlinks to avoid accidentally cleaning them up.
 RUN --mount=type=bind,source=hack/cleanup.sh,target=/usr/bin/cleanup.sh <<END
     cleanup.sh /rootfs
-    mkdir -pv /rootfs/{boot/EFI,etc/{iscsi,nvme,cri/conf.d/hosts},usr/lib/firmware,usr/etc,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt,.extra}
+    mkdir -pv /rootfs/{boot/EFI,/etc/cri/conf.d/hosts,usr/lib/firmware,usr/etc,usr/local/share,usr/share/zoneinfo/Etc,mnt,system,opt,.extra}
     mkdir -pv /rootfs/{etc/kubernetes/manifests,etc/cni/net.d,etc/ssl/certs,usr/libexec/kubernetes,/usr/local/lib/kubelet/credentialproviders,etc/selinux/targeted/contexts/files}
     mkdir -pv /rootfs/opt/{containerd/bin,containerd/lib}
     # Go standard library is shipped with Talos, thus it must be tracked in SBOM
@@ -910,7 +910,7 @@ COPY --chmod=0644 hack/lvm.conf /rootfs/etc/lvm/lvm.conf
 COPY --link --chmod=0644 --from=base /src/pkg/machinery/version/os-release /rootfs/etc/os-release
 RUN <<END
     ln -s /usr/share/zoneinfo/Etc/UTC /rootfs/etc/localtime
-    touch /rootfs/etc/{extensions.yaml,resolv.conf,hosts,machine-id,cri/conf.d/cri.toml,cri/conf.d/01-registries.part,cri/conf.d/20-customization.part,cri/conf.d/base-spec.json,ssl/certs/ca-certificates.crt,selinux/targeted/contexts/files/file_contexts,iscsi/initiatorname.iscsi,nvme/{hostid,hostnqn}}
+    touch /rootfs/etc/{extensions.yaml,selinux/targeted/contexts/files/file_contexts}
     ln -s ca-certificates.crt /rootfs/etc/ssl/certs/ca-certificates
     ln -s /etc/ssl /rootfs/etc/pki
     ln -s /etc/ssl /rootfs/usr/share/ca-certificates

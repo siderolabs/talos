@@ -70,6 +70,15 @@ func (suite *TinkSuite) TestDeploy() {
 		suite.T().Skip("without full cluster state reaching out to the node IP is not reliable")
 	}
 
+	if suite.SelinuxEnforcing {
+		// The in-container Talos composes /etc as a writable overlay; writing a managed file into a
+		// lower-provided subdir (e.g. cri/conf.d) triggers an overlayfs copy-up that propagates the
+		// pod rootfs's containerd_state_t label onto the tmpfs upper. Creating a containerd_state_t
+		// inode on tmpfs_t is denied (associate), and the pod runs pod_t with no way to relabel, so
+		// the inner Talos cannot write /etc. Skip until the host policy permits this copy-up.
+		suite.T().Skip("skipping in SELinux enforcing mode: in-container /etc overlay copy-up is denied")
+	}
+
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
 	suite.T().Cleanup(cancel)
 

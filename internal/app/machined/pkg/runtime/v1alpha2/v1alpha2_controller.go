@@ -43,6 +43,7 @@ import (
 	runtimelogging "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/pkg/lvm"
+	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/logging"
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -92,21 +93,17 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		return err
 	}
 
-	var (
-		etcRoot                xfs.Root
-		networkEtcRoot         xfs.Root
-		networkBindMountTarget string
-	)
-
-	etcRoot = &xfs.UnixRoot{
-		FS: fsopen.New(
-			"tmpfs",
-			fsopen.WithStringParameter("mode", "0755"),
-			fsopen.WithStringParameter("size", "8M"),
-		),
+	etcFSOpts := []fsopen.Option{
+		fsopen.WithStringParameter("mode", "0755"),
+		fsopen.WithStringParameter("size", "8M"),
 	}
 
-	networkEtcRoot = &xfs.UnixRoot{
+	// make the tmpfs selinux context match the /etc label
+	if selinux.IsEnabled() {
+		etcFSOpts = append(etcFSOpts, fsopen.WithStringParameter("context", constants.EtcSelinuxLabel))
+	}
+
+	var networkEtcRoot xfs.Root = &xfs.UnixRoot{
 		FS: fsopen.New(
 			"tmpfs",
 			fsopen.WithStringParameter("mode", "0755"),
@@ -114,40 +111,23 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		),
 	}
 
-	networkBindMountTarget = constants.SystemResolvedPath
-
-	// While running in container, we don't have control over kernel version
-	// shipped with the machine. If the kernel does not support open_tree syscall
-	// on anonymous filesystem file descriptors, we need to fallback to the classic,
-	// less secure mode. This capability was added in kernel 6.15.0.
-	if ctrl.v1alpha1Runtime.State().Platform().Mode().InContainer() {
-		opentreeOnAnonymous, err := runtime.KernelCapabilities().OpentreeOnAnonymousFS()
-		if err != nil {
-			return err
-		}
-
-		if !opentreeOnAnonymous {
-			etcRoot = &xfs.OSRoot{
-				Shadow: constants.SystemEtcPath,
-			}
-
-			networkEtcRoot = &xfs.OSRoot{
-				Shadow: constants.SystemResolvedPath,
-			}
-
-			networkBindMountTarget = ""
-		}
-	}
-
-	if err := etcRoot.OpenFS(); err != nil {
-		return fmt.Errorf("failed to open etc root: %w", err)
-	}
-	defer etcRoot.Close() //nolint:errcheck
+	networkBindMountTarget := constants.SystemResolvedPath
 
 	if err := networkEtcRoot.OpenFS(); err != nil {
 		return fmt.Errorf("failed to open network etc root: %w", err)
 	}
 	defer networkEtcRoot.Close() //nolint:errcheck
+
+	// /etc is a writable overlay (upper = a managed tmpfs labeled via etcFSOpts, lower = the
+	// static rootfs /etc) bind-mounted read-only at /etc. etcRoot is the detached writable overlay
+	// mount that controllers write managed files through; the read-only bind keeps /etc read-only
+	// at the path level.
+	etcRoot, etcOverlayUnmount, err := setupEtcOverlay(etcRootPath, etcFSOpts, ctrl.logger)
+	if err != nil {
+		return fmt.Errorf("failed to set up /etc overlay: %w", err)
+	}
+
+	defer etcOverlayUnmount() //nolint:errcheck
 
 	lvm, err := lvm.New()
 	if err != nil {
@@ -249,11 +229,9 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&files.CRIConfigPartsController{},
 		&files.CRIRegistryConfigController{
 			EtcRoot: etcRoot,
-			EtcPath: "/etc",
 		},
 		&files.EtcFileController{
 			EtcRoot: etcRoot,
-			EtcPath: "/etc",
 		},
 		&files.IQNController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),

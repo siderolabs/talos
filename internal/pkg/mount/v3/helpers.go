@@ -16,6 +16,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/xfs"
 	"github.com/siderolabs/talos/pkg/xfs/fsopen"
 )
 
@@ -95,6 +96,91 @@ func NewOverlayWithBasePath(sources []string, target, basePath string, printer f
 		WithMountAttributes(unix.MOUNT_ATTR_NOSUID|unix.MOUNT_ATTR_NODEV),
 		WithFsopen("overlay", fsOptions...),
 		WithPrinter(printer),
+	)
+
+	return NewManager(options...)
+}
+
+// NewSecureWritableOverlay composes a WRITABLE overlay over the given lower layers and returns its
+// detached mount — a pathless writable handle — as an xfs.Root.
+//
+// The upperdir ("diff") and workdir ("work") live on an anonymous tmpfs created from upperFSOpts
+// (e.g. mode/size and a SELinux context=), which is released as soon as the overlay is composed -
+// overlayfs keeps its own reference (see TestNewSecureWritableOverlay). lowerFDs are the lower
+// layers (highest-priority first) and may be closed after this returns. The handle is "secure" in
+// that it is never attached to a path.
+func NewSecureWritableOverlay(lowerFDs []int, upperFSOpts []fsopen.Option, printer func(string, ...any)) (xfs.Root, error) {
+	// Anonymous tmpfs backing the overlay upper/work; released once the overlay is composed.
+	base, err := NewManager(WithDetached(), WithFsopen("tmpfs", upperFSOpts...)).Mount()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create overlay base tmpfs: %w", err)
+	}
+
+	defer base.Root().Close() //nolint:errcheck
+
+	baseFD, err := base.Root().Fd()
+	if err != nil {
+		return nil, err
+	}
+
+	for _, dir := range []string{"diff", "work"} {
+		if err := unix.Mkdirat(baseFD, dir, 0o755); err != nil && !errors.Is(err, unix.EEXIST) {
+			return nil, fmt.Errorf("failed to create overlay %q dir: %w", dir, err)
+		}
+	}
+
+	upperFD, err := unix.Openat(baseFD, "diff", unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open overlay upperdir: %w", err)
+	}
+
+	defer unix.Close(upperFD) //nolint:errcheck
+
+	workFD, err := unix.Openat(baseFD, "work", unix.O_DIRECTORY|unix.O_CLOEXEC, 0)
+	if err != nil {
+		return nil, fmt.Errorf("failed to open overlay workdir: %w", err)
+	}
+
+	defer unix.Close(workFD) //nolint:errcheck
+
+	fsOptions := make([]fsopen.Option, 0, len(lowerFDs)+2)
+	for _, fd := range lowerFDs {
+		fsOptions = append(fsOptions, fsopen.WithFdParameter("lowerdir+", fd))
+	}
+
+	fsOptions = append(fsOptions,
+		fsopen.WithFdParameter("upperdir", upperFD),
+		fsopen.WithFdParameter("workdir", workFD),
+	)
+
+	point, err := NewManager(
+		WithPrinter(printer),
+		WithDetached(),
+		WithFsopen("overlay", fsOptions...),
+	).Mount()
+	if err != nil {
+		return nil, fmt.Errorf("failed to compose writable overlay: %w", err)
+	}
+
+	return point.Root(), nil
+}
+
+// NewSecureTmpfs returns a Manager for a  writable tmpfs at target with the given mode.
+func NewSecureTmpfs(target, mode, label string, printer func(string, ...any), options ...ManagerOption) *Manager {
+	fsOpts := []fsopen.Option{
+		fsopen.WithStringParameter("mode", mode),
+	}
+
+	if label != "" && selinux.IsEnabled() {
+		fsOpts = append(fsOpts, fsopen.WithStringParameter("context", label))
+	}
+
+	options = append(
+		options,
+		WithTarget(target),
+		WithSecure(),
+		WithPrinter(printer),
+		WithFsopen("tmpfs", fsOpts...),
 	)
 
 	return NewManager(options...)
