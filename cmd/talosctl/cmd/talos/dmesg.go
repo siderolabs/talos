@@ -11,12 +11,15 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 )
 
 var dmesgCmdFlags struct {
+	global.InsecureFlags
+
 	follow bool
 	tail   bool
 }
@@ -66,4 +69,5 @@ func init() {
 	addCommand(dmesgCmd)
 	dmesgCmd.Flags().BoolVarP(&dmesgCmdFlags.follow, "follow", "f", false, "specify if the kernel log should be streamed")
 	dmesgCmd.Flags().BoolVarP(&dmesgCmdFlags.tail, "tail", "", false, "specify if only new messages should be sent (makes sense only when combined with --follow)")
+	dmesgCmdFlags.InsecureFlags.AddFlags(dmesgCmd)
 }

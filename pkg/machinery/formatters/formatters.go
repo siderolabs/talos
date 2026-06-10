@@ -9,66 +9,13 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"math"
-	"slices"
-	"strings"
-	"text/tabwriter"
-	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/emicklei/dot"
-	"google.golang.org/grpc/peer"
 
 	"github.com/siderolabs/talos/pkg/machinery/api/inspect"
-	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 )
-
-// RenderMounts renders mounts output.
-//
-// Deprecated: use [RenderMountsStream] which handles multi-node responses via [multiplex.Unary].
-func RenderMounts(resp *machine.MountsResponse, output io.Writer, remotePeer *peer.Peer) error {
-	w := tabwriter.NewWriter(output, 0, 0, 3, ' ', 0)
-	parts := []string{"FILESYSTEM", "SIZE(GB)", "USED(GB)", "AVAILABLE(GB)", "PERCENT USED", "MOUNTED ON"}
-
-	var defaultNode string
-
-	if remotePeer != nil {
-		parts = append([]string{"NODE"}, parts...)
-		defaultNode = client.AddrFromPeer(remotePeer)
-	}
-
-	fmt.Fprintln(w, strings.Join(parts, "\t"))
-
-	for _, msg := range resp.Messages {
-		for _, r := range msg.Stats {
-			percentAvailable := 100.0 - 100.0*(float64(r.Available)/float64(r.Size))
-
-			if math.IsNaN(percentAvailable) {
-				continue
-			}
-
-			node := defaultNode
-
-			if msg.Metadata != nil {
-				node = msg.Metadata.Hostname //nolint:staticcheck // deprecated path, kept for backwards compatibility
-			}
-
-			format := "%s\t%.02f\t%.02f\t%.02f\t%.02f%%\t%s\n"
-			args := []any{r.Filesystem, float64(r.Size) * 1e-9, float64(r.Size-r.Available) * 1e-9, float64(r.Available) * 1e-9, percentAvailable, r.MountedOn}
-
-			if defaultNode != "" {
-				format = "%s\t" + format
-
-				args = slices.Insert(args, 0, any(node))
-			}
-
-			fmt.Fprintf(w, format, args...)
-		}
-	}
-
-	return w.Flush()
-}
 
 // RenderGraph renders inspect controller runtime graph.
 //
@@ -194,86 +141,4 @@ func RenderGraph(ctx context.Context, c *client.Client, resp *inspect.Controller
 	graph.Write(output)
 
 	return nil
-}
-
-// RenderServicesInfo writes human readable service information to the io.Writer.
-//
-// Deprecated: this relies on the legacy per-message node metadata; new code should
-// format the node explicitly from the multiplexed response (see the `service` command).
-func RenderServicesInfo(services []client.ServiceInfo, output io.Writer, defaultNode string, withNodeInfo bool) error {
-	w := tabwriter.NewWriter(output, 0, 0, 3, ' ', 0)
-
-	node := defaultNode
-
-	for _, s := range services {
-		if s.Metadata != nil {
-			node = s.Metadata.Hostname //nolint:staticcheck // to be refactored next
-		}
-
-		if withNodeInfo {
-			fmt.Fprintf(w, "NODE\t%s\n", node)
-		}
-
-		svc := ServiceInfoWrapper{s.Service}
-		fmt.Fprintf(w, "ID\t%s\n", svc.Id)
-		fmt.Fprintf(w, "STATE\t%s\n", svc.State)
-		fmt.Fprintf(w, "HEALTH\t%s\n", svc.HealthStatus())
-
-		if svc.Health.LastMessage != "" {
-			fmt.Fprintf(w, "LAST HEALTH MESSAGE\t%s\n", svc.Health.LastMessage)
-		}
-
-		label := "EVENTS"
-
-		for i := range svc.Events.Events {
-			event := svc.Events.Events[len(svc.Events.Events)-1-i]
-
-			ts := event.Ts.AsTime()
-			fmt.Fprintf(w, "%s\t[%s]: %s (%s ago)\n", label, event.State, event.Msg, time.Since(ts).Round(time.Second))
-			label = ""
-		}
-	}
-
-	return w.Flush()
-}
-
-// ServiceInfoWrapper helper that allows generating rich service information.
-//
-// Deprecated: new code should format service information from the multiplexed
-// response with the node attached explicitly (see the `service` command).
-type ServiceInfoWrapper struct {
-	*machine.ServiceInfo
-}
-
-// LastUpdated derive last updated time from events stream.
-func (svc ServiceInfoWrapper) LastUpdated() string {
-	if len(svc.Events.Events) == 0 {
-		return ""
-	}
-
-	ts := svc.Events.Events[len(svc.Events.Events)-1].Ts.AsTime()
-
-	return time.Since(ts).Round(time.Second).String()
-}
-
-// LastEvent return last service event.
-func (svc ServiceInfoWrapper) LastEvent() string {
-	if len(svc.Events.Events) == 0 {
-		return "<none>"
-	}
-
-	return svc.Events.Events[len(svc.Events.Events)-1].Msg
-}
-
-// HealthStatus service health status.
-func (svc ServiceInfoWrapper) HealthStatus() string {
-	if svc.Health.Unknown {
-		return "?"
-	}
-
-	if svc.Health.Healthy {
-		return "OK"
-	}
-
-	return "Fail"
 }

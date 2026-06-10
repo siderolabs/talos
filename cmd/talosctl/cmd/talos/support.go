@@ -34,6 +34,8 @@ import (
 )
 
 var supportCmdFlags struct {
+	global.InsecureFlags
+
 	output                        string
 	numWorkers                    int
 	verbose                       bool
@@ -169,6 +171,8 @@ Default encryption recipients can be removed by setting --encryption-no-default-
 }
 
 func collectData(ctx context.Context, dest io.Writer, progress chan bundle.Progress, clientFactory *global.ClientFactory) error {
+	var errs error
+
 	nodeCtx, c, err := clientFactory.BuildClientFirstNode(ctx)
 	if err != nil {
 		return err
@@ -176,13 +180,13 @@ func collectData(ctx context.Context, dest io.Writer, progress chan bundle.Progr
 
 	clientset, err := getKubernetesClient(nodeCtx, c)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to create kubernetes client %s\n", err)
+		errs = errors.Join(errs, fmt.Errorf("failed to create kubernetes client: %w", err))
 	}
 
 	opts := []bundle.Option{
 		bundle.WithArchiveOutput(dest),
 		bundle.WithKubernetesClient(clientset),
-		bundle.WithTalosClient(c),
+		bundle.WithTalosClientProvider(clientFactory.BuildClient),
 		bundle.WithNodes(clientFactory.Nodes()...),
 		bundle.WithNumWorkers(supportCmdFlags.numWorkers),
 		bundle.WithProgressChan(progress),
@@ -196,10 +200,10 @@ func collectData(ctx context.Context, dest io.Writer, progress chan bundle.Progr
 
 	collectors, err := collectors.GetForOptions(ctx, options)
 	if err != nil {
-		return err
+		errs = errors.Join(errs, fmt.Errorf("failed to create collectors: %w", err))
 	}
 
-	return support.CreateSupportBundle(ctx, options, collectors...)
+	return errors.Join(errs, support.CreateSupportBundle(ctx, options, collectors...))
 }
 
 func getKubernetesClient(ctx context.Context, c *client.Client) (*k8s.Clientset, error) {
@@ -445,4 +449,5 @@ func init() {
 		&supportCmdFlags.encryptionNoDefaultRecipients, "encryption-no-default-recipients", false,
 		"do not encrypt to the default recipients, only to the ones provided via --encryption-recipients",
 	)
+	supportCmdFlags.InsecureFlags.AddFlags(supportCmd)
 }

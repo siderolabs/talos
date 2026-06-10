@@ -21,6 +21,10 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 )
 
+var serviceCmdFlags struct {
+	global.InsecureFlags
+}
+
 // serviceCmd represents the service command.
 var serviceCmd = &cobra.Command{
 	Use:     "service [<id> [start|stop|restart|status]]",
@@ -54,7 +58,7 @@ With actions 'start', 'stop', 'restart', service state is updated respectively.`
 
 		ctx := cmd.Context()
 
-		clientFactory, err := NewClientFactory(ctx, nil)
+		clientFactory, err := NewClientFactory(ctx, &serviceCmdFlags)
 		if err != nil {
 			return err
 		}
@@ -281,4 +285,5 @@ func (svc serviceInfoWrapper) healthStatus() string {
 
 func init() {
 	addCommand(serviceCmd)
+	serviceCmdFlags.InsecureFlags.AddFlags(serviceCmd)
 }

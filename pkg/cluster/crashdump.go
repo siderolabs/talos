@@ -51,7 +51,9 @@ func Crashdump(ctx context.Context, cluster provision.Cluster, logWriter io.Writ
 
 	opts := []bundle.Option{
 		bundle.WithArchiveOutput(supportFile),
-		bundle.WithTalosClient(c),
+		bundle.WithTalosClientProvider(func(ctx context.Context, node string) (context.Context, *client.Client, error) {
+			return client.WithNode(ctx, node), c, nil
+		}),
 		bundle.WithNodes(nodes...),
 		bundle.WithNumWorkers(4),
 		bundle.WithLogOutput(io.Discard),

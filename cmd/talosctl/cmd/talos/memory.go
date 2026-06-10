@@ -14,12 +14,15 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/global"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
 )
 
 var memoryCmdFlags struct {
+	global.InsecureFlags
+
 	verbose bool
 }
 
@@ -170,5 +173,6 @@ func renderVerbose(responseChan <-chan multiplex.Response[*machineapi.MemoryResp
 
 func init() {
 	memoryCmd.Flags().BoolVarP(&memoryCmdFlags.verbose, "verbose", "v", false, "display extended memory statistics")
+	memoryCmdFlags.InsecureFlags.AddFlags(memoryCmd)
 	addCommand(memoryCmd)
 }

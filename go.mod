@@ -149,7 +149,7 @@ require (
 	github.com/siderolabs/go-retry v0.3.3
 	github.com/siderolabs/go-smbios v0.3.4
 	github.com/siderolabs/go-tail v0.1.1
-	github.com/siderolabs/go-talos-support v0.2.2
+	github.com/siderolabs/go-talos-support v0.3.0
 	github.com/siderolabs/grpc-proxy v0.5.2
 	github.com/siderolabs/kms-client v0.2.0
 	github.com/siderolabs/net v0.4.0

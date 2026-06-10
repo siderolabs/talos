@@ -1338,11 +1338,13 @@ talosctl dmesg [flags]
 ### Options
 
 ```
+      --cert-fingerprint strings   list of server certificate fingerprints to accept (defaults to no check, only used with --insecure flag)
   -c, --cluster string             cluster to connect to if a proxy endpoint is used
       --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -f, --follow                     specify if the kernel log should be streamed
   -h, --help                       help for dmesg
+  -i, --insecure                   use the insecure (encrypted with no auth) maintenance service
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --tail                       specify if only new messages should be sent (makes sense only when combined with --follow)
@@ -2858,10 +2860,12 @@ talosctl memory [flags]
 ### Options
 
 ```
+      --cert-fingerprint strings   list of server certificate fingerprints to accept (defaults to no check, only used with --insecure flag)
   -c, --cluster string             cluster to connect to if a proxy endpoint is used
       --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for memory
+  -i, --insecure                   use the insecure (encrypted with no auth) maintenance service
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
@@ -3336,10 +3340,12 @@ talosctl service [<id> [start|stop|restart|status]] [flags]
 ### Options
 
 ```
+      --cert-fingerprint strings   list of server certificate fingerprints to accept (defaults to no check, only used with --insecure flag)
   -c, --cluster string             cluster to connect to if a proxy endpoint is used
       --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for service
+  -i, --insecure                   use the insecure (encrypted with no auth) maintenance service
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
@@ -3441,12 +3447,14 @@ talosctl support [flags]
 ### Options
 
 ```
+      --cert-fingerprint strings            list of server certificate fingerprints to accept (defaults to no check, only used with --insecure flag)
   -c, --cluster string                      cluster to connect to if a proxy endpoint is used
       --context string                      context to be used in command
       --encryption-no-default-recipients    do not encrypt to the default recipients, only to the ones provided via --encryption-recipients
       --encryption-recipients stringArray   additional age recipients (SSH or age public keys) to encrypt the support bundle to (can be specified multiple times)
   -e, --endpoints strings                   override default endpoints in Talos configuration
   -h, --help                                help for support
+  -i, --insecure                            use the insecure (encrypted with no auth) maintenance service
       --no-encryption                       do not encrypt the support bundle (output is written as-is)
   -n, --nodes strings                       target the specified nodes
   -w, --num-workers int                     number of workers per node (default 1)
