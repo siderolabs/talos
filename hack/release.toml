@@ -21,7 +21,7 @@ preface = """
 Linux: 6.18.35
 Kubernetes: 1.36.1
 containerd: 2.3.1
-etcd: v2.6.12
+etcd: v3.7.0-rc.0
 Flannel: v0.28.5
 
 Talos is built with Go 1.26.4.
@@ -151,7 +151,20 @@ Talos now configures Flannel with the `EnableNFTables` option enabled, which use
     [notes.etcd]
         title = "etcd"
         description = """\
-Talos is now compatible with etcd v3.6.x only (the default version was etcd 3.6.x since Talos v1.11).
+Talos is now compatible with etcd v3.6.x only (the default etcd version was 3.6.x since Talos v1.11).
+The default version is 3.7.0+ now.
+
+etcd now serves its HTTP-only endpoints (`/metrics`, `/health`, the gRPC-gateway JSON API) on a dedicated
+listener on port `2383`, while the client port `2379` serves gRPC only. This keeps gRPC off Go's `net/http`
+HTTP/2 server, avoiding watch-stream starvation under TLS (see etcd-io/etcd#15402, golang/go#58804,
+etcd-io/etcd#21605).
+
+Upgrade note: etcd metrics and the HTTP health endpoint are no longer reachable on `2379`; scrape them on
+port `2383` instead (same client mTLS as before). etcd gRPC clients and the Talos health check are unaffected.
+
+Firewall might need to be adjusted to block the port `2383` if previously `2379` was blocked.
+
+If `--listen-metrics-urls` was customized, the metrics should not move.
 """
 
     [notes.btrfs]

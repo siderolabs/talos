@@ -297,7 +297,7 @@ func (suite *EtcdSuite) TestDowngrade() {
 
 	nodes := suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeControlPlane)
 	node := nodes[0]
-	downgradeTo := "3.5"
+	downgradeTo := "3.6"
 
 	// test the downgrade validate API
 	validateResp, err := suite.Client.EtcdDowngradeValidate(

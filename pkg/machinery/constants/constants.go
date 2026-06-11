@@ -254,6 +254,13 @@ const (
 	// EtcdPeerPort defines the port etcd listens on for peer traffic.
 	EtcdPeerPort = 2380
 
+	// EtcdClientHTTPPort defines the port etcd listens on for client HTTP (metrics, health) traffic.
+	//
+	// Serving HTTP on a dedicated listener keeps the gRPC client port (EtcdClientPort) gRPC-only,
+	// which avoids serving gRPC through Go's net/http HTTP/2 server (subject to watch-stream
+	// starvation, see etcd-io/etcd#15402 / golang/go#58804) when TLS is enabled.
+	EtcdClientHTTPPort = 2383
+
 	// KubernetesAdminCertCommonName defines CN property of Kubernetes admin certificate.
 	KubernetesAdminCertCommonName = "admin"
 
@@ -429,7 +436,7 @@ const (
 
 	// DefaultEtcdVersion is the default target version of etcd.
 	// renovate: datasource=docker depName=registry.k8s.io/etcd
-	DefaultEtcdVersion = "v3.6.12"
+	DefaultEtcdVersion = "v3.7.0-rc.0"
 
 	// EtcdRootTalosKey is the root etcd key for Talos-specific storage.
 	EtcdRootTalosKey = "talos:v1"
