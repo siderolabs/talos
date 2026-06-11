@@ -118,9 +118,21 @@ func (suite *ProxyURLSuite) TestProxyURL() {
 
 	node := suite.RandomDiscoveredNodeInternalIP()
 
+	// The proxy runs on the test runner, so it must be able to reach the gRPC
+	// endpoint it tunnels to. In cloud environments the node internal IP is not
+	// routable from the runner, so use the suite-configured endpoint (or the
+	// talosconfig context endpoints) which is reachable, and keep the node
+	// internal IP only for the per-node routing header below.
+	endpoint := suite.Endpoint
+	if endpoint == "" {
+		suite.Require().NotEmpty(currentCtx.Endpoints, "no endpoints configured for the current context")
+
+		endpoint = currentCtx.Endpoints[0]
+	}
+
 	c, err := client.New(suite.ctx,
 		client.WithConfigContext(&ctxWithProxy),
-		client.WithEndpoints(node),
+		client.WithEndpoints(endpoint),
 	)
 	suite.Require().NoError(err)
 
