@@ -9,6 +9,7 @@ import (
 
 	"github.com/siderolabs/go-pointer"
 
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -37,3 +38,21 @@ func (p *ProxyConfig) Mode() string {
 func (p *ProxyConfig) ExtraArgs() map[string][]string {
 	return p.ExtraArgsConfig.ToMap()
 }
+
+// Resources implements the config.Proxy interface.
+func (p *ProxyConfig) Resources() config.Resources {
+	return &ResourcesConfig{}
+}
+
+// Config implements the config.Proxy interface.
+func (p *ProxyConfig) Config() map[string]any {
+	return nil
+}
+
+// UseConfigFile implements the config.Proxy interface.
+func (p *ProxyConfig) UseConfigFile() bool {
+	return false
+}
+
+// K8sProxyConfigSignal implements the config.K8sProxyConfig interface.
+func (p *ProxyConfig) K8sProxyConfigSignal() {}

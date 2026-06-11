@@ -111,6 +111,13 @@ func WithKubeSchedulerImage(versionContract *config.VersionContract, kubeSchedul
 
 // WithKubeProxyImage returns a patch that updates the kube-proxy image in the machine configuration.
 func WithKubeProxyImage(versionContract *config.VersionContract, kubeProxyImage string) ([]byte, error) {
+	if versionContract.MultidocKubernetesConfigSupported() {
+		proxyConfig := k8s.NewKubeProxyConfigV1Alpha1()
+		proxyConfig.ProxyImage = kubeProxyImage
+
+		return patchFromDocument(proxyConfig)
+	}
+
 	return patchFromV1Alpha1(map[string]any{
 		"cluster": map[string]any{
 			"proxy": map[string]any{

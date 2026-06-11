@@ -16,7 +16,6 @@ import (
 	"go.yaml.in/yaml/v4"
 	appsv1 "k8s.io/api/apps/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/labels"
 
 	"github.com/siderolabs/talos/internal/integration/base"
@@ -74,7 +73,7 @@ func (suite *ManifestsSuite) TestSync() {
 	suite.Require().NoError(err)
 
 	// some tests creates cluster without kube-proxy, skip in this case
-	if !config.Cluster().Proxy().Enabled() {
+	if !config.K8sProxyConfig().Enabled() {
 		suite.T().Skip("skip when kube-proxy is disabled")
 	}
 
@@ -82,14 +81,14 @@ func (suite *ManifestsSuite) TestSync() {
 	defer clusterAccess.Close() //nolint:errcheck
 
 	// 1. Patch all controlplane nodes with extra arg for kube-proxy
-	suite.T().Log("adding extra arg to kube-proxy")
+	suite.T().Log("adding extra config field to kube-proxy")
 
 	extraArgPatch := map[string]any{
-		"cluster": map[string]any{
-			"proxy": map[string]any{
-				"extraArgs": map[string]any{
-					"nodeport-addresses": "0.0.0.0/0",
-				},
+		"apiVersion": "v1alpha1",
+		"kind":       "KubeProxyConfig",
+		"config": map[string]any{
+			"nodeportAddresses": []any{
+				"0.0.0.0/0",
 			},
 		},
 	}
@@ -107,7 +106,7 @@ func (suite *ManifestsSuite) TestSync() {
 				marshaled, err := yaml.Marshal(manifest.TypedSpec())
 				suite.Require().NoError(err)
 
-				asrt.Contains(string(marshaled), "nodeport-addresses=0.0.0.0/0")
+				asrt.Contains(string(marshaled), "nodeportAddresses:\n        - 0.0.0.0/0")
 			},
 		)
 	}
@@ -119,33 +118,34 @@ func (suite *ManifestsSuite) TestSync() {
 		true,
 		kubernetes.UpgradeOptions{
 			LogOutput:        manifestSyncWriter{t: suite.T()},
-			ReconcileTimeout: 30 * time.Second,
+			ReconcileTimeout: 60 * time.Second,
 		},
 	))
 
-	// 3. Assert that kube-proxy has the extra arg
-	pods, err := suite.Clientset.CoreV1().Pods("kube-system").List(suite.ctx, metav1.ListOptions{
-		LabelSelector: labels.Set{"k8s-app": "kube-proxy"}.String(),
-		FieldSelector: fields.OneTermEqualSelector("status.phase", "Running").String(),
-	})
+	// 3. Assert that kube-proxy configmap was updated
+	configMaps, err := suite.Clientset.CoreV1().ConfigMaps("kube-system").List(
+		suite.ctx,
+		metav1.ListOptions{
+			LabelSelector: labels.SelectorFromSet(map[string]string{
+				"k8s-app": "kube-proxy",
+			}).String(),
+		},
+	)
 	suite.Require().NoError(err)
-	suite.Require().NotEmpty(pods.Items)
 
-	for _, pod := range pods.Items {
-		suite.Require().NotEmpty(pod.Spec.Containers)
+	suite.Require().Len(configMaps.Items, 1)
 
-		suite.Assert().Contains(pod.Spec.Containers[0].Command, "--nodeport-addresses=0.0.0.0/0", "pod is %#+v", pod)
-	}
+	configMap := configMaps.Items[0]
+
+	suite.Assert().Contains(configMap.Data["config.conf"], "nodeportAddresses:\n- 0.0.0.0/0")
 
 	// 4. Disable kube-proxy
 	suite.T().Log("disabling kube-proxy")
 
 	disablePatch := map[string]any{
-		"cluster": map[string]any{
-			"proxy": map[string]any{
-				"disabled": true,
-			},
-		},
+		"apiVersion": "v1alpha1",
+		"kind":       "KubeProxyConfig",
+		"enabled":    false,
 	}
 
 	for _, node := range suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeControlPlane) {
@@ -166,7 +166,8 @@ func (suite *ManifestsSuite) TestSync() {
 		clusterAccess,
 		true,
 		kubernetes.UpgradeOptions{
-			LogOutput: manifestSyncWriter{t: suite.T()},
+			LogOutput:        manifestSyncWriter{t: suite.T()},
+			ReconcileTimeout: 60 * time.Second,
 		},
 	))
 
@@ -177,14 +178,14 @@ func (suite *ManifestsSuite) TestSync() {
 	suite.T().Log("enabling kube-proxy")
 
 	enablePatch := map[string]any{
-		"cluster": map[string]any{
-			"proxy": map[string]any{
-				"disabled": map[string]any{
-					"$patch": "delete",
-				},
-				"extraArgs": map[string]any{
-					"$patch": "delete",
-				},
+		"apiVersion": "v1alpha1",
+		"kind":       "KubeProxyConfig",
+		"enabled": map[string]any{
+			"$patch": "delete",
+		},
+		"config": map[string]any{
+			"nodeportAddresses": map[string]any{
+				"$patch": "delete",
 			},
 		},
 	}

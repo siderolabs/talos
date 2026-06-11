@@ -7806,6 +7806,9 @@ BootstrapManifestsConfigSpec is configuration for bootstrap manifests.
 | flannel_backend_port | [uint32](#uint32) |  |  |
 | flannel_resources | [Resources](#talos.resource.definitions.k8s.Resources) |  |  |
 | flannel_backend_extra_config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
+| proxy_config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
+| proxy_resources | [Resources](#talos.resource.definitions.k8s.Resources) |  |  |
+| proxy_config_checksum | [string](#string) |  |  |
 
 
 

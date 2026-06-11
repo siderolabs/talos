@@ -33,6 +33,18 @@ type K8sSchedulerConfig interface {
 	Config() map[string]any
 }
 
+// K8sProxyConfig defines the configuration options for the kube-proxy.
+type K8sProxyConfig interface {
+	K8sProxyConfigSignal()
+	Enabled() bool
+	Image() string
+	Mode() string
+	ExtraArgs() map[string][]string
+	Resources() Resources
+	Config() map[string]any
+	UseConfigFile() bool
+}
+
 // K8sEtcdEncryptionConfig defines the interface to access Kubernetes API server encryption of secret data at rest configuration.
 type K8sEtcdEncryptionConfig interface {
 	// EtcdEncryptionConfig returns the exact contents of the configuration file, excluding the apiVersion and kind fields.

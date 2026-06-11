@@ -25,6 +25,10 @@ func (ResourcesConfig) Doc() *encoder.Doc {
 				FieldName: "resources",
 			},
 			{
+				TypeName:  "KubeProxyConfigV1Alpha1",
+				FieldName: "resources",
+			},
+			{
 				TypeName:  "KubeSchedulerConfigV1Alpha1",
 				FieldName: "resources",
 			},
@@ -243,6 +247,66 @@ func (KubeNetworkConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (KubeProxyConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeProxyConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeProxyConfig deploys Flannel CNI to the cluster." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeProxyConfig deploys Flannel CNI to the cluster.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "enabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable or disable kube-proxy deployment on cluster bootstrap.\n\nDefault is enabled.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable or disable kube-proxy deployment on cluster bootstrap." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "image",
+				Type:        "string",
+				Note:        "",
+				Description: "The container image used in the kube-proxy manifest.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The container image used in the kube-proxy manifest." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "mode",
+				Type:        "string",
+				Note:        "",
+				Description: "description: |\n    Proxy mode of kube-proxy.\n\n   The default value is 'nftables'.\n   It is not recommended to use any other value.\n values:\n   - iptables\n   - ipvs\n   - nftables\n",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "description: |" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "config",
+				Type:        "Unstructured",
+				Note:        "",
+				Description: "Provide configuration for the kube-proxy.\n\nThere is no need  to specify kind and apiVersion fields (they will be set automatically),\nbut the rest of the configuration should be provided as is.\n\nSee https://kubernetes.io/docs/reference/config-api/kube-proxy-config.v1alpha1/ for the details of the configuration schema.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Provide configuration for the kube-proxy." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "extraArgs",
+				Type:        "Args",
+				Note:        "",
+				Description: "Extra arguments to supply to kube-proxy.\n\nPlease note that kube-proxy is configured with a configuration file,\nso most flags have no effect.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra arguments to supply to kube-proxy." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "resources",
+				Type:        "ResourcesConfig",
+				Note:        "",
+				Description: "Configure the kube-proxy resources.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure the kube-proxy resources." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeProxyConfigV1Alpha1())
+
+	return doc
+}
+
 func (KubeSchedulerConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "KubeSchedulerConfig",
@@ -314,6 +378,7 @@ func GetFileDoc() *encoder.FileDoc {
 			KubeEtcdEncryptionConfigV1Alpha1{}.Doc(),
 			KubeFlannelCNIConfigV1Alpha1{}.Doc(),
 			KubeNetworkConfigV1Alpha1{}.Doc(),
+			KubeProxyConfigV1Alpha1{}.Doc(),
 			KubeSchedulerConfigV1Alpha1{}.Doc(),
 		},
 	}

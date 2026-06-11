@@ -514,6 +514,20 @@ func (container *Container) K8sSchedulerConfig() config.K8sSchedulerConfig {
 	return nil
 }
 
+// K8sProxyConfig implements config.Config interface.
+func (container *Container) K8sProxyConfig() config.K8sProxyConfig {
+	matching := findMatchingDocs[config.K8sProxyConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sProxyConfig()
+	}
+
+	return nil
+}
+
 // K8sNetworkConfig implements config.Config interface.
 func (container *Container) K8sNetworkConfig() config.K8sNetworkConfig {
 	matching := findMatchingDocs[config.K8sNetworkConfig](container.documents)

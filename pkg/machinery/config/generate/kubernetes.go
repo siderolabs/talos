@@ -58,10 +58,14 @@ func (in *Input) generateKubernetesControlplaneConfigs() []config.Document {
 	schedulerConfig := k8s.NewKubeSchedulerConfigV1Alpha1()
 	schedulerConfig.PodImage = fmt.Sprintf("%s:v%s", constants.KubernetesSchedulerImage, in.KubernetesVersion)
 
+	proxyConfig := k8s.NewKubeProxyConfigV1Alpha1()
+	proxyConfig.ProxyImage = fmt.Sprintf("%s:v%s", constants.KubeProxyImage, in.KubernetesVersion)
+
 	result := []config.Document{
 		etcdEncryptionConfig,
 		controllerManagerConfig,
 		schedulerConfig,
+		proxyConfig,
 	}
 
 	if flannelConfig != nil {

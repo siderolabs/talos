@@ -263,10 +263,64 @@ func TestTemplates(t *testing.T) {
 		{
 			name: "kube-proxy-daemonset",
 			obj: func() runtime.Object {
-				return k8stemplates.KubeProxyDaemonSetTemplate(&k8s.BootstrapManifestsConfigSpec{
+				spec, err := k8stemplates.KubeProxyDaemonSetTemplate(&k8s.BootstrapManifestsConfigSpec{
 					ProxyImage: "k8s.gcr.io/kube-proxy:v1.27.0",
 					ProxyArgs:  []string{"--proxy-mode=iptables"},
 				})
+				require.NoError(t, err)
+
+				return spec
+			},
+		},
+		{
+			name: "kube-proxy-daemonset-with-config",
+			obj: func() runtime.Object {
+				spec, err := k8stemplates.KubeProxyDaemonSetTemplate(&k8s.BootstrapManifestsConfigSpec{
+					ProxyImage: "k8s.gcr.io/kube-proxy:v1.27.0",
+					ProxyArgs:  []string{"--config=/var/lib/kube-proxy/config.conf", "--hostname-override=$(NODE_NAME)"},
+					ProxyConfig: map[string]any{
+						"apiVersion": "kubeproxy.config.k8s.io/v1alpha1",
+						"kind":       "KubeProxyConfiguration",
+						"mode":       "nftables",
+					},
+					ProxyResources: k8s.Resources{
+						Requests: map[string]string{
+							"cpu":    "150m",
+							"memory": "64Mi",
+						},
+						Limits: map[string]string{
+							"cpu":    "300m",
+							"memory": "128Mi",
+						},
+					},
+					ProxyConfigChecksum: "abc123",
+				})
+				require.NoError(t, err)
+
+				return spec
+			},
+		},
+		{
+			name: "kube-proxy-configmap",
+			obj: func() runtime.Object {
+				spec, err := k8stemplates.KubeProxyConfigMapTemplate(&k8s.BootstrapManifestsConfigSpec{
+					ProxyConfig: map[string]any{
+						"apiVersion":  "kubeproxy.config.k8s.io/v1alpha1",
+						"kind":        "KubeProxyConfiguration",
+						"mode":        "nftables",
+						"clusterCIDR": "10.244.0.0/16",
+						"clientConnection": map[string]any{
+							"kubeconfig": "/etc/kubernetes/kubeconfig",
+						},
+						"conntrack": map[string]any{
+							"maxPerCore": int32(0),
+						},
+					},
+					ProxyConfigChecksum: "abc123",
+				})
+				require.NoError(t, err)
+
+				return spec
 			},
 		},
 		{

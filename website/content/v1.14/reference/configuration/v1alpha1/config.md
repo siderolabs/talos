@@ -938,17 +938,6 @@ apiServer:
     #         subjectAccessReviewVersion: v1
     #         timeout: 3s
 {{< /highlight >}}</details> | |
-|`proxy` |<a href="#Config.cluster.proxy">ProxyConfig</a> |Kube-proxy server-specific configuration options <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-proxy:
-    image: registry.k8s.io/kube-proxy:v1.36.1 # The container image used in the kube-proxy manifest.
-    mode: ipvs # proxy mode of kube-proxy.
-    # Extra arguments to supply to kube-proxy.
-    extraArgs:
-        proxy-mode: iptables
-
-    # # Disable kube-proxy deployment on cluster bootstrap.
-    # disabled: false
-{{< /highlight >}}</details> | |
 |`discovery` |<a href="#Config.cluster.discovery">ClusterDiscoveryConfig</a> |Configures cluster member discovery. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 discovery:
     enabled: true # Enable the cluster membership discovery feature.
@@ -1329,42 +1318,6 @@ cluster:
 |`webhook` |Unstructured |webhook is the configuration for the webhook authorizer.  | |
 
 
-
-
-
-
-
-
-### proxy {#Config.cluster.proxy}
-
-ProxyConfig represents the kube proxy configuration options.
-
-
-
-{{< highlight yaml >}}
-cluster:
-    proxy:
-        image: registry.k8s.io/kube-proxy:v1.36.1 # The container image used in the kube-proxy manifest.
-        mode: ipvs # proxy mode of kube-proxy.
-        # Extra arguments to supply to kube-proxy.
-        extraArgs:
-            proxy-mode: iptables
-
-        # # Disable kube-proxy deployment on cluster bootstrap.
-        # disabled: false
-{{< /highlight >}}
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`disabled` |bool |Disable kube-proxy deployment on cluster bootstrap. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-disabled: false
-{{< /highlight >}}</details> | |
-|`image` |string |The container image used in the kube-proxy manifest. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-image: registry.k8s.io/kube-proxy:v1.36.1
-{{< /highlight >}}</details> | |
-|`mode` |string |proxy mode of kube-proxy.<br>The default is 'iptables'.  | |
-|`extraArgs` |Args |Extra arguments to supply to kube-proxy.  | |
 
 
 

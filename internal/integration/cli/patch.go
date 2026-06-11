@@ -29,12 +29,11 @@ func (suite *PatchSuite) SuiteName() string {
 func (suite *PatchSuite) TestSuccess() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
 
+	// this should be a no-op patch to verify that the command runs, but it should not change the config
 	patch := map[string]any{
-		"cluster": map[string]any{
-			"proxy": map[string]any{
-				"image": fmt.Sprintf("%s:v%s", constants.KubeProxyImage, constants.DefaultKubernetesVersion),
-			},
-		},
+		"apiVersion": "v1alpha1",
+		"kind":       "KubeSchedulerConfig",
+		"image":      fmt.Sprintf("%s:v%s", constants.KubernetesSchedulerImage, constants.DefaultKubernetesVersion),
 	}
 
 	data, err := json.Marshal(patch)

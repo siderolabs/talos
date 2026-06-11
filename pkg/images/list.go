@@ -46,7 +46,7 @@ func List(config config.Config) Versions {
 	images.KubeAPIServer = mustParseTag(config.Cluster().APIServer().Image())
 	images.KubeControllerManager = mustParseTag(config.K8sControllerManagerConfig().Image())
 	images.KubeNetworkPolicies = mustParseTag(fmt.Sprintf("registry.k8s.io/networking/kube-network-policies:%s", constants.KubeNetworkPoliciesVersion))
-	images.KubeProxy = mustParseTag(config.Cluster().Proxy().Image())
+	images.KubeProxy = mustParseTag(config.K8sProxyConfig().Image())
 	images.KubeScheduler = mustParseTag(config.K8sSchedulerConfig().Image())
 
 	images.Pause = mustParseTag(DefaultSandboxImage)

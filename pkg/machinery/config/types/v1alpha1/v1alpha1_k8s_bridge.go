@@ -87,6 +87,16 @@ func (s controllerManagerConfigShim) Enabled() bool {
 	return true
 }
 
+// K8sProxyConfig implements the config.Config interface.
+func (c *Config) K8sProxyConfig() config.K8sProxyConfig {
+	clusterConfig := c.ClusterConfig
+	if clusterConfig == nil {
+		clusterConfig = &ClusterConfig{}
+	}
+
+	return clusterConfig.Proxy()
+}
+
 // K8sNetworkConfig implements the config.Config interface.
 func (c *Config) K8sNetworkConfig() config.K8sNetworkConfig {
 	// if the section is missing, assume it's not set (multi-doc should provide it)

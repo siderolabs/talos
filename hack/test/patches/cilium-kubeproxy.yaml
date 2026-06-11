@@ -1,6 +1,6 @@
-cluster:
-  proxy:
-    disabled: true
+apiVersion: v1alpha1
+kind: KubeProxyConfig
+enabled: false
 ---
 apiVersion: v1alpha1
 kind: KubeFlannelCNIConfig

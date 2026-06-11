@@ -1432,6 +1432,90 @@
       ],
       "description": "KubeNetworkConfig configures Kubernetes base network settings."
     },
+    "k8s.KubeProxyConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "KubeProxyConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "Enable or disable kube-proxy deployment on cluster bootstrap.\n\nDefault is enabled.\n",
+          "markdownDescription": "Enable or disable kube-proxy deployment on cluster bootstrap.\n\nDefault is enabled.",
+          "x-intellij-html-description": "\u003cp\u003eEnable or disable kube-proxy deployment on cluster bootstrap.\u003c/p\u003e\n\n\u003cp\u003eDefault is enabled.\u003c/p\u003e\n"
+        },
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "The container image used in the kube-proxy manifest.\n",
+          "markdownDescription": "The container image used in the kube-proxy manifest.",
+          "x-intellij-html-description": "\u003cp\u003eThe container image used in the kube-proxy manifest.\u003c/p\u003e\n"
+        },
+        "mode": {
+          "type": "string",
+          "title": "mode",
+          "description": "description: |\n    Proxy mode of kube-proxy.\n\nThe default value is ‘nftables’.\n   It is not recommended to use any other value.\n values:\n   - iptables\n   - ipvs\n   - nftables\n",
+          "markdownDescription": "description: |\n    Proxy mode of kube-proxy.\n\n   The default value is 'nftables'.\n   It is not recommended to use any other value.\n values:\n   - iptables\n   - ipvs\n   - nftables",
+          "x-intellij-html-description": "\u003cp\u003edescription: |\n    Proxy mode of kube-proxy.\u003c/p\u003e\n\n\u003cp\u003eThe default value is \u0026lsquo;nftables\u0026rsquo;.\n   It is not recommended to use any other value.\n values:\n   - iptables\n   - ipvs\n   - nftables\u003c/p\u003e\n"
+        },
+        "config": {
+          "type": "object",
+          "title": "config",
+          "description": "Provide configuration for the kube-proxy.\n\nThere is no need  to specify kind and apiVersion fields (they will be set automatically),\nbut the rest of the configuration should be provided as is.\n\nSee https://kubernetes.io/docs/reference/config-api/kube-proxy-config.v1alpha1/ for the details of the configuration schema.\n",
+          "markdownDescription": "Provide configuration for the kube-proxy.\n\nThere is no need  to specify kind and apiVersion fields (they will be set automatically),\nbut the rest of the configuration should be provided as is.\n\nSee https://kubernetes.io/docs/reference/config-api/kube-proxy-config.v1alpha1/ for the details of the configuration schema.",
+          "x-intellij-html-description": "\u003cp\u003eProvide configuration for the kube-proxy.\u003c/p\u003e\n\n\u003cp\u003eThere is no need  to specify kind and apiVersion fields (they will be set automatically),\nbut the rest of the configuration should be provided as is.\u003c/p\u003e\n\n\u003cp\u003eSee \u003ca href=\"https://kubernetes.io/docs/reference/config-api/kube-proxy-config.v1alpha1/\" target=\"_blank\"\u003ehttps://kubernetes.io/docs/reference/config-api/kube-proxy-config.v1alpha1/\u003c/a\u003e for the details of the configuration schema.\u003c/p\u003e\n"
+        },
+        "extraArgs": {
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "type": "object",
+          "title": "extraArgs",
+          "description": "Extra arguments to supply to kube-proxy.\n\nPlease note that kube-proxy is configured with a configuration file,\nso most flags have no effect.\n",
+          "markdownDescription": "Extra arguments to supply to kube-proxy.\n\nPlease note that kube-proxy is configured with a configuration file,\nso most flags have no effect.",
+          "x-intellij-html-description": "\u003cp\u003eExtra arguments to supply to kube-proxy.\u003c/p\u003e\n\n\u003cp\u003ePlease note that kube-proxy is configured with a configuration file,\nso most flags have no effect.\u003c/p\u003e\n"
+        },
+        "resources": {
+          "type": "object",
+          "title": "resources",
+          "description": "Configure the kube-proxy resources.\n",
+          "markdownDescription": "Configure the kube-proxy resources.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure the kube-proxy resources.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "KubeProxyConfig deploys Flannel CNI to the cluster."
+    },
     "k8s.KubeSchedulerConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -4875,13 +4959,6 @@
           "markdownDescription": "API server specific configuration options.",
           "x-intellij-html-description": "\u003cp\u003eAPI server specific configuration options.\u003c/p\u003e\n"
         },
-        "proxy": {
-          "$ref": "#/$defs/v1alpha1.ProxyConfig",
-          "title": "proxy",
-          "description": "Kube-proxy server-specific configuration options\n",
-          "markdownDescription": "Kube-proxy server-specific configuration options",
-          "x-intellij-html-description": "\u003cp\u003eKube-proxy server-specific configuration options\u003c/p\u003e\n"
-        },
         "discovery": {
           "$ref": "#/$defs/v1alpha1.ClusterDiscoveryConfig",
           "title": "discovery",
@@ -5956,54 +6033,6 @@
       "type": "object",
       "description": "MachineSeccompProfile defines seccomp profiles for the machine."
     },
-    "v1alpha1.ProxyConfig": {
-      "properties": {
-        "disabled": {
-          "type": "boolean",
-          "title": "disabled",
-          "description": "Disable kube-proxy deployment on cluster bootstrap.\n",
-          "markdownDescription": "Disable kube-proxy deployment on cluster bootstrap.",
-          "x-intellij-html-description": "\u003cp\u003eDisable kube-proxy deployment on cluster bootstrap.\u003c/p\u003e\n"
-        },
-        "image": {
-          "type": "string",
-          "title": "image",
-          "description": "The container image used in the kube-proxy manifest.\n",
-          "markdownDescription": "The container image used in the kube-proxy manifest.",
-          "x-intellij-html-description": "\u003cp\u003eThe container image used in the kube-proxy manifest.\u003c/p\u003e\n"
-        },
-        "mode": {
-          "type": "string",
-          "title": "mode",
-          "description": "proxy mode of kube-proxy.\nThe default is ‘iptables’.\n",
-          "markdownDescription": "proxy mode of kube-proxy.\nThe default is 'iptables'.",
-          "x-intellij-html-description": "\u003cp\u003eproxy mode of kube-proxy.\nThe default is \u0026lsquo;iptables\u0026rsquo;.\u003c/p\u003e\n"
-        },
-        "extraArgs": {
-          "additionalProperties": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              }
-            ]
-          },
-          "type": "object",
-          "title": "extraArgs",
-          "description": "Extra arguments to supply to kube-proxy.\n",
-          "markdownDescription": "Extra arguments to supply to kube-proxy.",
-          "x-intellij-html-description": "\u003cp\u003eExtra arguments to supply to kube-proxy.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "ProxyConfig represents the kube proxy configuration options."
-    },
     "v1alpha1.RegistryKubernetesConfig": {
       "properties": {
         "disabled": {
@@ -6157,6 +6186,9 @@
     },
     {
       "$ref": "#/$defs/k8s.KubeNetworkConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/k8s.KubeProxyConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/k8s.KubeSchedulerConfigV1Alpha1"

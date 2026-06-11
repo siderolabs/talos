@@ -118,6 +118,24 @@ func (o BootstrapManifestsConfigSpec) DeepCopy() BootstrapManifestsConfigSpec {
 		cp.ProxyArgs = make([]string, len(o.ProxyArgs))
 		copy(cp.ProxyArgs, o.ProxyArgs)
 	}
+	if o.ProxyConfig != nil {
+		cp.ProxyConfig = make(map[string]any, len(o.ProxyConfig))
+		for k2, v2 := range o.ProxyConfig {
+			cp.ProxyConfig[k2] = v2
+		}
+	}
+	if o.ProxyResources.Requests != nil {
+		cp.ProxyResources.Requests = make(map[string]string, len(o.ProxyResources.Requests))
+		for k3, v3 := range o.ProxyResources.Requests {
+			cp.ProxyResources.Requests[k3] = v3
+		}
+	}
+	if o.ProxyResources.Limits != nil {
+		cp.ProxyResources.Limits = make(map[string]string, len(o.ProxyResources.Limits))
+		for k3, v3 := range o.ProxyResources.Limits {
+			cp.ProxyResources.Limits[k3] = v3
+		}
+	}
 	if o.FlannelExtraArgs != nil {
 		cp.FlannelExtraArgs = make([]string, len(o.FlannelExtraArgs))
 		copy(cp.FlannelExtraArgs, o.FlannelExtraArgs)

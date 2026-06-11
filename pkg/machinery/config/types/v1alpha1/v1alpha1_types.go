@@ -402,10 +402,9 @@ type ClusterConfig struct {
 	//
 	// Deprecated: Use `KubeControllerManagerConfig` instead.
 	ControllerManagerConfig *ControllerManagerConfig `yaml:"controllerManager,omitempty"`
-	//   description: |
-	//     Kube-proxy server-specific configuration options
-	//   examples:
-	//     - value: clusterProxyExample()
+	// docgen:nodoc
+	//
+	// Deprecated: use `KubeProxyConfig` instead.
 	ProxyConfig *ProxyConfig `yaml:"proxy,omitempty"`
 	// docgen:nodoc
 	//
@@ -1234,6 +1233,10 @@ type ControllerManagerConfig struct {
 }
 
 // ProxyConfig represents the kube proxy configuration options.
+//
+// Deprecated: use KubeProxyConfig instead.
+//
+// docgen:nodoc
 type ProxyConfig struct {
 	//   description: |
 	//     Disable kube-proxy deployment on cluster bootstrap.

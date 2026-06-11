@@ -62,6 +62,7 @@ func TestKubeFlannelCNIConfigUnmarshal(t *testing.T) {
 	}, docs[0])
 }
 
+//nolint:dupl
 func TestKubeFlannelCNIConfigValidate(t *testing.T) {
 	t.Parallel()
 

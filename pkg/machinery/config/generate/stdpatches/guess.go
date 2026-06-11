@@ -41,7 +41,12 @@ func GuessVersionContractKubeScheduler(cfg config.Container) *config.VersionCont
 
 // GuessVersionContractKubeProxy attempts to guess the version contract for kube-proxy configuration based on the provided machine configuration.
 func GuessVersionContractKubeProxy(cfg config.Container) *config.VersionContract {
-	return config.TalosVersionCurrent
+	if hasDocument(k8s.KubeProxyConfig, cfg) {
+		return config.TalosVersionCurrent
+	}
+
+	// the last before multi-doc k8s config
+	return config.TalosVersion1_13
 }
 
 func hasDocument(kind string, cfg config.Container) bool {

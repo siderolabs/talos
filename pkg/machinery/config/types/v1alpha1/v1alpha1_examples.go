@@ -192,20 +192,6 @@ func clusterAPIServerImageExample() string {
 	return (&APIServerConfig{}).Image()
 }
 
-func clusterProxyExample() *ProxyConfig {
-	return &ProxyConfig{
-		ContainerImage: (&ProxyConfig{}).Image(),
-		ExtraArgsConfig: meta.Args{
-			"proxy-mode": meta.NewArgValue("iptables", nil),
-		},
-		ModeConfig: "ipvs",
-	}
-}
-
-func clusterProxyImageExample() string {
-	return (&ProxyConfig{}).Image()
-}
-
 func clusterEtcdExample() *EtcdConfig {
 	return &EtcdConfig{
 		ContainerImage: (&EtcdConfig{}).Image(),

@@ -28,6 +28,7 @@ require (
 	k8s.io/client-go v0.36.1
 	k8s.io/component-base v0.36.1
 	k8s.io/cri-api v0.36.1
+	k8s.io/kube-proxy v0.36.1
 	k8s.io/kube-scheduler v0.36.1
 	k8s.io/kubectl v0.36.1
 	k8s.io/kubelet v0.36.1
@@ -191,6 +192,7 @@ require (
 	k8s.io/klog/v2 v2.140.0
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.78
 	sigs.k8s.io/hydrophone v0.7.0
+	sigs.k8s.io/yaml v1.6.0
 )
 
 require (
@@ -417,7 +419,6 @@ require (
 	sigs.k8s.io/kustomize/kyaml v0.21.1 // indirect
 	sigs.k8s.io/randfill v1.0.0 // indirect
 	sigs.k8s.io/structured-merge-diff/v6 v6.3.2 // indirect
-	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
 exclude github.com/containerd/containerd v1.7.0

@@ -20,7 +20,8 @@ spec:
       containers:
       - command:
         - /usr/local/bin/kube-proxy
-        - --proxy-mode=iptables
+        - --config=/var/lib/kube-proxy/config.conf
+        - --hostname-override=$(NODE_NAME)
         env:
         - name: NODE_NAME
           valueFrom:
@@ -30,12 +31,17 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: status.podIP
+        - name: GOMEMLIMIT
+          value: "127506841"
         image: k8s.gcr.io/kube-proxy:v1.27.0
         name: kube-proxy
         resources:
+          limits:
+            cpu: 300m
+            memory: 128Mi
           requests:
-            cpu: 100m
-            memory: 50Mi
+            cpu: 150m
+            memory: 64Mi
         securityContext:
           privileged: true
         volumeMounts:
@@ -47,6 +53,9 @@ spec:
           readOnly: true
         - mountPath: /etc/kubernetes
           name: kubeconfig
+          readOnly: true
+        - mountPath: /var/lib/kube-proxy
+          name: config
           readOnly: true
       hostNetwork: true
       priorityClassName: system-cluster-critical
@@ -66,6 +75,9 @@ spec:
       - configMap:
           name: kubeconfig-in-cluster
         name: kubeconfig
+      - configMap:
+          name: kube-proxy-config-abc123
+        name: config
   updateStrategy:
     rollingUpdate:
       maxUnavailable: 1

@@ -221,6 +221,107 @@ func TestKubeControllerManagerBridge(t *testing.T) {
 	}
 }
 
+func TestKubeProxyBridge(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+
+		cfg func(*testing.T) config.Config
+
+		expectDisabled bool
+	}{
+		{
+			name: "v1alpha1 only, disabled",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					ClusterConfig: &v1alpha1.ClusterConfig{
+						ProxyConfig: &v1alpha1.ProxyConfig{
+							Disabled: new(true),
+						},
+					},
+				})
+			},
+
+			expectDisabled: true,
+		},
+		{
+			name: "new style disabled",
+
+			cfg: func(*testing.T) config.Config {
+				p := k8s.NewKubeProxyConfigV1Alpha1()
+				p.ProxyEnabled = new(false)
+
+				c, err := container.New(
+					p,
+				)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectDisabled: true,
+		},
+		{
+			name: "v1alpha1 only",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					ClusterConfig: &v1alpha1.ClusterConfig{
+						ProxyConfig: &v1alpha1.ProxyConfig{ //nolint:staticcheck // testing deprecated field
+							ContainerImage: "proxy:v1",
+							ModeConfig:     "ipvs",
+							ExtraArgsConfig: meta.Args{
+								"features": meta.NewArgValue("all", nil),
+							},
+						},
+					},
+				})
+			},
+		},
+		{
+			name: "new style enabled",
+
+			cfg: func(*testing.T) config.Config {
+				p := k8s.NewKubeProxyConfigV1Alpha1()
+				p.ProxyImage = "proxy:v1"
+				p.ProxyMode = "ipvs"
+				p.ProxyExtraArgs = meta.Args{
+					"features": meta.NewArgValue("all", nil),
+				}
+
+				c, err := container.New(
+					p,
+				)
+				require.NoError(t, err)
+
+				return c
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := test.cfg(t)
+
+			kubeProxy := cfg.K8sProxyConfig()
+			require.NotNil(t, kubeProxy)
+
+			if test.expectDisabled {
+				assert.False(t, kubeProxy.Enabled())
+
+				return
+			}
+
+			assert.True(t, kubeProxy.Enabled())
+			assert.Equal(t, "proxy:v1", kubeProxy.Image())
+			assert.Equal(t, "ipvs", kubeProxy.Mode())
+			assert.Equal(t, map[string][]string{"features": {"all"}}, kubeProxy.ExtraArgs())
+		})
+	}
+}
+
 func TestKubeNetworkBridge(t *testing.T) {
 	t.Parallel()
 

@@ -156,9 +156,9 @@ func (in *Input) init() ([]config.Document, error) {
 		ControllerManagerConfig: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.ControllerManagerConfig{ //nolint:staticcheck // legacy configuration
 			ContainerImage: fmt.Sprintf("%s:v%s", constants.KubernetesControllerManagerImage, in.KubernetesVersion),
 		}),
-		ProxyConfig: &v1alpha1.ProxyConfig{
+		ProxyConfig: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.ProxyConfig{ //nolint:staticcheck // legacy configuration
 			ContainerImage: fmt.Sprintf("%s:v%s", constants.KubeProxyImage, in.KubernetesVersion),
-		},
+		}),
 		SchedulerConfig: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.SchedulerConfig{ //nolint:staticcheck // legacy configuration
 			ContainerImage: fmt.Sprintf("%s:v%s", constants.KubernetesSchedulerImage, in.KubernetesVersion),
 		}),

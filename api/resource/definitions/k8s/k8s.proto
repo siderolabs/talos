@@ -85,6 +85,9 @@ message BootstrapManifestsConfigSpec {
   uint32 flannel_backend_port = 24;
   Resources flannel_resources = 25;
   google.protobuf.Struct flannel_backend_extra_config = 26;
+  google.protobuf.Struct proxy_config = 27;
+  Resources proxy_resources = 28;
+  string proxy_config_checksum = 29;
 }
 
 // ConfigStatusSpec describes status of rendered secrets.

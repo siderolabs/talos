@@ -6,13 +6,14 @@ package k8s
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"net/netip"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
 
-	"github.com/blang/semver/v4"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/controller/generic"
 	"github.com/cosi-project/runtime/pkg/controller/generic/transform"
@@ -21,10 +22,13 @@ import (
 	"github.com/siderolabs/go-kubernetes/kubernetes/compatibility"
 	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	proxyv1alpha1 "k8s.io/kube-proxy/config/v1alpha1"
+	"sigs.k8s.io/yaml"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s/internal/k8sjson"
 	"github.com/siderolabs/talos/pkg/argsbuilder"
 	"github.com/siderolabs/talos/pkg/images"
-	"github.com/siderolabs/talos/pkg/kubernetes"
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -351,11 +355,6 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 
 				images := images.List(cfgProvider)
 
-				proxyArgs, err := getProxyArgs(cfgProvider)
-				if err != nil {
-					return err
-				}
-
 				var (
 					server                                         string
 					flannelKubeServiceHost, flannelKubeServicePort string
@@ -375,10 +374,6 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 
 					PodCIDRs: xslices.Map(cfgProvider.K8sNetworkConfig().PodCIDRs(), netip.Prefix.String),
 
-					ProxyEnabled: cfgProvider.Cluster().Proxy().Enabled(),
-					ProxyImage:   cfgProvider.Cluster().Proxy().Image(),
-					ProxyArgs:    proxyArgs,
-
 					CoreDNSEnabled: cfgProvider.Cluster().CoreDNS().Enabled(),
 					CoreDNSImage:   cfgProvider.Cluster().CoreDNS().Image(),
 
@@ -386,6 +381,16 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 					DNSServiceIPv6: dnsServiceIPv6,
 
 					TalosAPIServiceEnabled: cfgProvider.Machine().Features().KubernetesTalosAPIAccess().Enabled(),
+				}
+
+				if k8sProxyConfig := cfgProvider.K8sProxyConfig(); k8sProxyConfig != nil {
+					res.TypedSpec().ProxyEnabled = k8sProxyConfig.Enabled()
+					res.TypedSpec().ProxyImage = k8sProxyConfig.Image()
+					res.TypedSpec().ProxyResources = convertResources(k8sProxyConfig.Resources())
+
+					if err := manageProxyConfigArgs(res, k8sProxyConfig, cfgProvider.K8sNetworkConfig()); err != nil {
+						return fmt.Errorf("managing proxy config args: %w", err)
+					}
 				}
 
 				if k8sFlannelCNIConfig := cfgProvider.K8sFlannelCNIConfig(); k8sFlannelCNIConfig != nil {
@@ -527,35 +532,111 @@ func convertResources(resources talosconfig.Resources) k8s.Resources {
 	}
 }
 
-func getProxyArgs(cfgProvider talosconfig.Config) ([]string, error) {
-	clusterCidr := strings.Join(xslices.Map(cfgProvider.K8sNetworkConfig().PodCIDRs(), netip.Prefix.String), ",")
+//nolint:gocyclo
+func manageProxyConfigArgs(res *k8s.BootstrapManifestsConfig, cfg talosconfig.K8sProxyConfig, networkConfig talosconfig.K8sNetworkConfig) error {
+	clusterCidr := strings.Join(xslices.Map(networkConfig.PodCIDRs(), netip.Prefix.String), ",")
 
-	proxyMode := cfgProvider.Cluster().Proxy().Mode()
+	proxyMode := cfg.Mode()
 
 	if proxyMode == "" {
-		// determine proxy mode based on kube-proxy version via the image, use 'nftables' for Kubernetes >= 1.31
-		if kubernetes.VersionGTE(cfgProvider.Cluster().Proxy().Image(), semver.MustParse("1.31.0")) {
-			proxyMode = "nftables"
-		} else {
-			proxyMode = "iptables"
+		// Kubernetes >= 1.31 supports 'nftables' mode, and we don't support Kubernetes < 1.31
+		proxyMode = "nftables"
+	}
+
+	if cfg.UseConfigFile() {
+		builder := argsbuilder.Args{
+			// the path must match the ConfigMap mount in the kube-proxy DaemonSet template
+			"config":            {"/var/lib/kube-proxy/config.conf"},
+			"hostname-override": {"$(NODE_NAME)"},
 		}
+
+		policies := argsbuilder.MergePolicies{
+			"config": argsbuilder.MergeDenied,
+		}
+
+		if err := builder.Merge(cfg.ExtraArgs(), argsbuilder.WithMergePolicies(policies)); err != nil {
+			return err
+		}
+
+		res.TypedSpec().ProxyArgs = builder.Args()
+
+		// Validate against the typed schema, but emit the user-provided map so
+		// fields the user didn't set don't leak into the YAML as zero values —
+		// older Kubernetes releases reject keys they don't know about.
+		var proxyCfg proxyv1alpha1.KubeProxyConfiguration
+
+		if err := runtime.DefaultUnstructuredConverter.FromUnstructuredWithValidation(cfg.Config(), &proxyCfg, false); err != nil {
+			return fmt.Errorf("error unmarshaling proxy configuration: %w", err)
+		}
+
+		outCfg, ok := k8sjson.DeepCopyToJSON(cfg.Config()).(map[string]any)
+		if !ok || outCfg == nil {
+			outCfg = map[string]any{}
+		}
+
+		outCfg["apiVersion"] = "kubeproxy.config.k8s.io/v1alpha1"
+		outCfg["kind"] = "KubeProxyConfiguration"
+
+		clientConn, _ := outCfg["clientConnection"].(map[string]any)
+		if clientConn == nil {
+			clientConn = map[string]any{}
+			outCfg["clientConnection"] = clientConn
+		}
+
+		clientConn["kubeconfig"] = filepath.Join(constants.KubernetesConfigBaseDir, "kubeconfig")
+
+		// Migrate the settings which are otherwise passed as command-line flags in the
+		// legacy (non-config-file) mode into the configuration, but only when the user
+		// didn't already set them explicitly so we don't override their intent.
+		if _, ok := outCfg["clusterCIDR"]; !ok {
+			outCfg["clusterCIDR"] = clusterCidr
+		}
+
+		if _, ok := outCfg["mode"]; !ok {
+			outCfg["mode"] = proxyMode
+		}
+
+		conntrack, _ := outCfg["conntrack"].(map[string]any)
+		if conntrack == nil {
+			conntrack = map[string]any{}
+			outCfg["conntrack"] = conntrack
+		}
+
+		if _, ok := conntrack["maxPerCore"]; !ok {
+			conntrack["maxPerCore"] = int32(0)
+		}
+
+		res.TypedSpec().ProxyConfig = outCfg
+
+		// Compute a checksum of the rendered configuration so the kube-proxy DaemonSet
+		// can be rolled when the config changes (a ConfigMap update alone doesn't restart pods).
+		configYAML, err := yaml.Marshal(outCfg)
+		if err != nil {
+			return fmt.Errorf("error marshaling proxy configuration: %w", err)
+		}
+
+		res.TypedSpec().ProxyConfigChecksum = fmt.Sprintf("%x", sha256.Sum256(configYAML))
+	} else {
+		builder := argsbuilder.Args{
+			"cluster-cidr":           {clusterCidr},
+			"hostname-override":      {"$(NODE_NAME)"},
+			"kubeconfig":             {"/etc/kubernetes/kubeconfig"},
+			"proxy-mode":             {proxyMode},
+			"conntrack-max-per-core": {"0"},
+		}
+
+		policies := argsbuilder.MergePolicies{
+			"kubeconfig": argsbuilder.MergeDenied,
+		}
+
+		if err := builder.Merge(cfg.ExtraArgs(), argsbuilder.WithMergePolicies(policies)); err != nil {
+			return err
+		}
+
+		res.TypedSpec().ProxyArgs = builder.Args()
+		res.TypedSpec().ProxyConfig = nil
+		res.TypedSpec().ProxyConfigChecksum = ""
 	}
 
-	builder := argsbuilder.Args{
-		"cluster-cidr":           {clusterCidr},
-		"hostname-override":      {"$(NODE_NAME)"},
-		"kubeconfig":             {"/etc/kubernetes/kubeconfig"},
-		"proxy-mode":             {proxyMode},
-		"conntrack-max-per-core": {"0"},
-	}
-
-	policies := argsbuilder.MergePolicies{
-		"kubeconfig": argsbuilder.MergeDenied,
-	}
-
-	if err := builder.Merge(cfgProvider.Cluster().Proxy().ExtraArgs(), argsbuilder.WithMergePolicies(policies)); err != nil {
-		return nil, err
-	}
-
-	return builder.Args(), nil
+	return nil
 }

@@ -361,13 +361,7 @@ func (ClusterConfig) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "API server specific configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{},
-			{
-				Name:        "proxy",
-				Type:        "ProxyConfig",
-				Note:        "",
-				Description: "Kube-proxy server-specific configuration options",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Kube-proxy server-specific configuration options" /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{},
 			{
 				Name:        "discovery",
@@ -450,7 +444,6 @@ func (ClusterConfig) Doc() *encoder.Doc {
 	doc.Fields[10].AddExample("AggregatorCA example.", pemEncodedCertificateExample())
 	doc.Fields[11].AddExample("AggregatorCA example.", pemEncodedKeyExample())
 	doc.Fields[12].AddExample("", clusterAPIServerExample())
-	doc.Fields[14].AddExample("", clusterProxyExample())
 	doc.Fields[16].AddExample("", clusterDiscoveryExample())
 	doc.Fields[17].AddExample("", clusterEtcdExample())
 	doc.Fields[18].AddExample("", clusterCoreDNSExample())
@@ -1158,57 +1151,6 @@ func (AuthorizationConfigAuthorizerConfig) Doc() *encoder.Doc {
 	}
 
 	doc.AddExample("", authorizationConfigExample())
-
-	return doc
-}
-
-func (ProxyConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "ProxyConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "ProxyConfig represents the kube proxy configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ProxyConfig represents the kube proxy configuration options.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "ClusterConfig",
-				FieldName: "proxy",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "disabled",
-				Type:        "bool",
-				Note:        "",
-				Description: "Disable kube-proxy deployment on cluster bootstrap.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disable kube-proxy deployment on cluster bootstrap." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "image",
-				Type:        "string",
-				Note:        "",
-				Description: "The container image used in the kube-proxy manifest.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The container image used in the kube-proxy manifest." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "mode",
-				Type:        "string",
-				Note:        "",
-				Description: "proxy mode of kube-proxy.\nThe default is 'iptables'.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "proxy mode of kube-proxy." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "extraArgs",
-				Type:        "Args",
-				Note:        "",
-				Description: "Extra arguments to supply to kube-proxy.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra arguments to supply to kube-proxy." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", clusterProxyExample())
-
-	doc.Fields[0].AddExample("", new(false))
-	doc.Fields[1].AddExample("", clusterProxyImageExample())
 
 	return doc
 }
@@ -1945,7 +1887,6 @@ func GetFileDoc() *encoder.FileDoc {
 			APIServerConfig{}.Doc(),
 			AdmissionPluginConfig{}.Doc(),
 			AuthorizationConfigAuthorizerConfig{}.Doc(),
-			ProxyConfig{}.Doc(),
 			EtcdConfig{}.Doc(),
 			ExternalCloudProviderConfig{}.Doc(),
 			AdminKubeconfigConfig{}.Doc(),

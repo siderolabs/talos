@@ -20,7 +20,6 @@ type ClusterConfig interface {
 	Name() string
 	Secret() string
 	APIServer() APIServer
-	Proxy() Proxy
 	Endpoint() *url.URL
 	Token() Token
 	CertSANs() []string
@@ -67,20 +66,6 @@ type AuthorizationConfigAuthorizer interface {
 	Type() string
 	Name() string
 	Webhook() map[string]any
-}
-
-// Proxy defines the requirements for a config that pertains to the kube-proxy
-// options.
-type Proxy interface {
-	Enabled() bool
-
-	Image() string
-
-	// Mode indicates the proxy mode for kube-proxy.  By default, this is `iptables`.  Other options include `ipvs`.
-	Mode() string
-
-	// ExtraArgs describe an additional set of arguments to be supplied to the execution of `kube-proxy`
-	ExtraArgs() map[string][]string
 }
 
 // Etcd defines the requirements for a config that pertains to etcd related

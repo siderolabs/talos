@@ -1,0 +1,16 @@
+apiVersion: v1alpha1
+kind: KubeProxyConfig
+enabled: true
+image: registry.k8s.io/kube-proxy:v1.35.3
+mode: nftables
+config:
+    bindAddressHardFail: true
+extraArgs:
+    proxy-mode: nftables
+resources:
+    requests:
+        cpu: 1
+        memory: 1Gi
+    limits:
+        cpu: 2
+        memory: 2500Mi

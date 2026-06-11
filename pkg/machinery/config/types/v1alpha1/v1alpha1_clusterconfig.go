@@ -44,7 +44,7 @@ func (c *ClusterConfig) ControllerManager() *ControllerManagerConfig {
 }
 
 // Proxy implements the config.ClusterConfig interface.
-func (c *ClusterConfig) Proxy() config.Proxy {
+func (c *ClusterConfig) Proxy() *ProxyConfig {
 	if c.ProxyConfig == nil {
 		return &ProxyConfig{}
 	}
