@@ -75,13 +75,13 @@ func ControllerManagerPod(configResource *k8s.ControllerManagerConfig, secretsVe
 						},
 						env...,
 					),
-					VolumeMounts: append([]v1.VolumeMount{
+					VolumeMounts: append(append([]v1.VolumeMount{
 						{
 							Name:      "secrets",
 							MountPath: constants.KubernetesControllerManagerSecretsDir,
 							ReadOnly:  true,
 						},
-					}, VolumeMounts(cfg.ExtraVolumes)...),
+					}, EphemeralWritableMounts()...), VolumeMounts(cfg.ExtraVolumes)...),
 					StartupProbe: &v1.Probe{
 						ProbeHandler: v1.ProbeHandler{
 							HTTPGet: &v1.HTTPGetAction{
@@ -94,6 +94,7 @@ func ControllerManagerPod(configResource *k8s.ControllerManagerConfig, secretsVe
 						// Give 60 seconds for the container to start up
 						PeriodSeconds:                 5,
 						FailureThreshold:              12,
+						TimeoutSeconds:                15,
 						TerminationGracePeriodSeconds: nil,
 					},
 					LivenessProbe: &v1.Probe{
@@ -110,6 +111,7 @@ func ControllerManagerPod(configResource *k8s.ControllerManagerConfig, secretsVe
 					Resources: resources,
 					SecurityContext: &v1.SecurityContext{
 						AllowPrivilegeEscalation: new(false),
+						ReadOnlyRootFilesystem:   new(true),
 						Capabilities: &v1.Capabilities{
 							Drop: []v1.Capability{"ALL"},
 						},
@@ -125,7 +127,7 @@ func ControllerManagerPod(configResource *k8s.ControllerManagerConfig, secretsVe
 				RunAsUser:    new(int64(constants.KubernetesControllerManagerRunUser)),
 				RunAsGroup:   new(int64(constants.KubernetesControllerManagerRunGroup)),
 			},
-			Volumes: append([]v1.Volume{
+			Volumes: append(append([]v1.Volume{
 				{
 					Name: "secrets",
 					VolumeSource: v1.VolumeSource{
@@ -134,7 +136,7 @@ func ControllerManagerPod(configResource *k8s.ControllerManagerConfig, secretsVe
 						},
 					},
 				},
-			}, Volumes(cfg.ExtraVolumes)...),
+			}, EphemeralWritableVolumes()...), Volumes(cfg.ExtraVolumes)...),
 		},
 	}, nil
 }

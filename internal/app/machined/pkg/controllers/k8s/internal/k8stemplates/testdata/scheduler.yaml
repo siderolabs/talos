@@ -40,6 +40,7 @@ spec:
         path: /livez
         port: 10259
         scheme: HTTPS
+      timeoutSeconds: 15
     name: kube-scheduler
     readinessProbe:
       httpGet:
@@ -47,6 +48,7 @@ spec:
         path: /readyz
         port: 10259
         scheme: HTTPS
+      timeoutSeconds: 15
     resources:
       requests:
         cpu: 50m
@@ -56,14 +58,18 @@ spec:
       capabilities:
         drop:
         - ALL
+      readOnlyRootFilesystem: true
       seccompProfile:
         type: RuntimeDefault
     startupProbe:
+      failureThreshold: 12
       httpGet:
         host: localhost
         path: /livez
         port: 10259
         scheme: HTTPS
+      periodSeconds: 5
+      timeoutSeconds: 15
     volumeMounts:
     - mountPath: /system/secrets/kubernetes/kube-scheduler
       name: secrets
@@ -71,6 +77,10 @@ spec:
     - mountPath: /system/config/kubernetes/kube-scheduler
       name: config
       readOnly: true
+    - mountPath: /tmp
+      name: tmp
+    - mountPath: /var/run/kubernetes
+      name: run
   hostNetwork: true
   priority: 2000000000
   priorityClassName: system-cluster-critical
@@ -85,4 +95,10 @@ spec:
   - hostPath:
       path: /system/config/kubernetes/kube-scheduler
     name: config
+  - emptyDir:
+      medium: Memory
+    name: tmp
+  - emptyDir:
+      medium: Memory
+    name: run
 status: {}

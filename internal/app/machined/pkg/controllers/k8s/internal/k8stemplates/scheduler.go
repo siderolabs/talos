@@ -43,6 +43,7 @@ func SchedulerPod(configResource *k8s.SchedulerConfig, secretsVersion string) (r
 				Scheme: v1.URISchemeHTTPS,
 			},
 		},
+		TimeoutSeconds: 15,
 	}
 
 	readinessProbe := &v1.Probe{
@@ -54,6 +55,7 @@ func SchedulerPod(configResource *k8s.SchedulerConfig, secretsVersion string) (r
 				Scheme: v1.URISchemeHTTPS,
 			},
 		},
+		TimeoutSeconds: 15,
 	}
 
 	startupProbe := &v1.Probe{
@@ -65,6 +67,10 @@ func SchedulerPod(configResource *k8s.SchedulerConfig, secretsVersion string) (r
 				Scheme: v1.URISchemeHTTPS,
 			},
 		},
+		// Give 60 seconds for the container to start up
+		PeriodSeconds:    5,
+		FailureThreshold: 12,
+		TimeoutSeconds:   15,
 	}
 
 	return &v1.Pod{
@@ -110,7 +116,7 @@ func SchedulerPod(configResource *k8s.SchedulerConfig, secretsVersion string) (r
 						},
 						env...,
 					),
-					VolumeMounts: append([]v1.VolumeMount{
+					VolumeMounts: append(append([]v1.VolumeMount{
 						{
 							Name:      "secrets",
 							MountPath: constants.KubernetesSchedulerSecretsDir,
@@ -121,13 +127,14 @@ func SchedulerPod(configResource *k8s.SchedulerConfig, secretsVersion string) (r
 							MountPath: constants.KubernetesSchedulerConfigDir,
 							ReadOnly:  true,
 						},
-					}, VolumeMounts(cfg.ExtraVolumes)...),
+					}, EphemeralWritableMounts()...), VolumeMounts(cfg.ExtraVolumes)...),
 					StartupProbe:   startupProbe,
 					LivenessProbe:  livenessProbe,
 					ReadinessProbe: readinessProbe,
 					Resources:      resources,
 					SecurityContext: &v1.SecurityContext{
 						AllowPrivilegeEscalation: new(false),
+						ReadOnlyRootFilesystem:   new(true),
 						Capabilities: &v1.Capabilities{
 							Drop: []v1.Capability{"ALL"},
 						},
@@ -143,7 +150,7 @@ func SchedulerPod(configResource *k8s.SchedulerConfig, secretsVersion string) (r
 				RunAsUser:    new(int64(constants.KubernetesSchedulerRunUser)),
 				RunAsGroup:   new(int64(constants.KubernetesSchedulerRunGroup)),
 			},
-			Volumes: append([]v1.Volume{
+			Volumes: append(append([]v1.Volume{
 				{
 					Name: "secrets",
 					VolumeSource: v1.VolumeSource{
@@ -160,7 +167,7 @@ func SchedulerPod(configResource *k8s.SchedulerConfig, secretsVersion string) (r
 						},
 					},
 				},
-			}, Volumes(cfg.ExtraVolumes)...),
+			}, EphemeralWritableVolumes()...), Volumes(cfg.ExtraVolumes)...),
 		},
 	}, nil
 }

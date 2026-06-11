@@ -50,6 +50,7 @@ spec:
       capabilities:
         drop:
         - ALL
+      readOnlyRootFilesystem: true
       seccompProfile:
         type: RuntimeDefault
     startupProbe:
@@ -60,10 +61,15 @@ spec:
         port: 10257
         scheme: HTTPS
       periodSeconds: 5
+      timeoutSeconds: 15
     volumeMounts:
     - mountPath: /system/secrets/kubernetes/kube-controller-manager
       name: secrets
       readOnly: true
+    - mountPath: /tmp
+      name: tmp
+    - mountPath: /var/run/kubernetes
+      name: run
   hostNetwork: true
   priority: 2000000000
   priorityClassName: system-cluster-critical
@@ -75,4 +81,10 @@ spec:
   - hostPath:
       path: /system/secrets/kubernetes/kube-controller-manager
     name: secrets
+  - emptyDir:
+      medium: Memory
+    name: tmp
+  - emptyDir:
+      medium: Memory
+    name: run
 status: {}

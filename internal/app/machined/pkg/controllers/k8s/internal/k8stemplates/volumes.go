@@ -22,6 +22,46 @@ func VolumeMounts(volumes []k8s.ExtraVolume) []v1.VolumeMount {
 	})
 }
 
+// EphemeralWritableMounts returns the volume mounts for the scratch directories that
+// control plane components need to write to even when running with a read-only root
+// filesystem: self-signed serving certificates land in /var/run/kubernetes (the default
+// --cert-dir), and the Go runtime and the binaries use /tmp for temporary files.
+func EphemeralWritableMounts() []v1.VolumeMount {
+	return []v1.VolumeMount{
+		{
+			Name:      "tmp",
+			MountPath: "/tmp",
+		},
+		{
+			Name:      "run",
+			MountPath: "/var/run/kubernetes",
+		},
+	}
+}
+
+// EphemeralWritableVolumes returns the tmpfs-backed emptyDir volumes that back
+// EphemeralWritableMounts.
+func EphemeralWritableVolumes() []v1.Volume {
+	return []v1.Volume{
+		{
+			Name: "tmp",
+			VolumeSource: v1.VolumeSource{
+				EmptyDir: &v1.EmptyDirVolumeSource{
+					Medium: v1.StorageMediumMemory,
+				},
+			},
+		},
+		{
+			Name: "run",
+			VolumeSource: v1.VolumeSource{
+				EmptyDir: &v1.EmptyDirVolumeSource{
+					Medium: v1.StorageMediumMemory,
+				},
+			},
+		},
+	}
+}
+
 // Volumes translates definition into K8s volume specs.
 func Volumes(volumes []k8s.ExtraVolume) []v1.Volume {
 	return xslices.Map(volumes, func(vol k8s.ExtraVolume) v1.Volume {
