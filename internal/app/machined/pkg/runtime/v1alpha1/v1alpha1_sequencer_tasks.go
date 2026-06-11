@@ -1921,7 +1921,7 @@ func pauseOnFailure(callback func(runtime.Sequence, any) (runtime.TaskExecutionF
 			if err != nil {
 				logger.Printf("%s failed, rebooting in %.0f minutes. You can use talosctl apply-config or talosctl edit mc to fix the issues, error:\n%s", name, timeout.Minutes(), err)
 
-				timer := time.NewTimer(time.Minute * 5)
+				timer := time.NewTimer(timeout)
 				defer timer.Stop()
 
 				select {
