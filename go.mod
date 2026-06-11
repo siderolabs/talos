@@ -129,6 +129,7 @@ require (
 	github.com/prometheus/procfs v0.20.1
 	github.com/rivo/tview v0.42.0
 	github.com/rs/xid v1.6.0
+	github.com/ryanuber/columnize v2.1.2+incompatible
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/safchain/ethtool v0.7.0
 	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.36
