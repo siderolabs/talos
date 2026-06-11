@@ -94,6 +94,77 @@ func TestTemplates(t *testing.T) {
 			},
 		},
 		{
+			name: "controller-manager",
+			obj: func() runtime.Object {
+				cfg := k8s.NewControllerManagerConfig(k8s.FinalControllerManagerConfigID)
+				*cfg.TypedSpec() = k8s.ControllerManagerConfigSpec{
+					Enabled:       true,
+					Image:         "registry.k8s.io/controller-manager:v1.36.0",
+					CloudProvider: "external",
+					PodCIDRs:      []string{"10.96.0.0/12"},
+					ServiceCIDRs:  []string{"10.224.0.0/16"},
+					Args: []string{
+						"/usr/local/bin/kube-controller-manager",
+						"--use-service-account-credentials",
+						"--allocate-node-cidrs=true",
+					},
+					EnvironmentVariables: map[string]string{
+						"HTTP_PROXY": "http://127.0.0.1:443",
+					},
+					Resources: k8s.Resources{
+						Requests: map[string]string{
+							"cpu":    "50m",
+							"memory": "500Mi",
+						},
+						Limits: map[string]string{
+							"cpu":    "1",
+							"memory": "1000Mi",
+						},
+					},
+				}
+
+				obj, err := k8stemplates.ControllerManagerPod(cfg, "111")
+				require.NoError(t, err)
+
+				return obj
+			},
+		},
+		{
+			name: "scheduler",
+			obj: func() runtime.Object {
+				cfg := k8s.NewSchedulerConfig(k8s.FinalSchedulerConfigID)
+				*cfg.TypedSpec() = k8s.SchedulerConfigSpec{
+					Enabled: true,
+					Image:   "registry.k8s.io/scheduler:v1.36.0",
+					Args: []string{
+						"/usr/local/bin/kube-scheduler",
+						"--authentication-kubeconfig=",
+						"--authentication-tolerate-lookup-failure=false",
+						"--authorization-kubeconfig=",
+						"--bind-address=127.0.0.1",
+						"--config=",
+						"--leader-elect=true",
+						"--profiling=false",
+						"--tls-min-version=VersionTLS13",
+					},
+					EnvironmentVariables: map[string]string{
+						"HTTP_PROXY": "http://127.0.0.1:443",
+					},
+					Resources: k8s.Resources{
+						Requests: map[string]string{
+							"cpu":    "50m",
+							"memory": "500Mi",
+						},
+					},
+				}
+
+				obj, err := k8stemplates.SchedulerPod(cfg, "222")
+				require.NoError(t, err)
+
+				return obj
+			},
+		},
+		{
 			name: "coredns-service-ipv4",
 			obj: func() runtime.Object {
 				return k8stemplates.CoreDNSService(&k8s.BootstrapManifestsConfigSpec{

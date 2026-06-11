@@ -15,6 +15,9 @@ import (
 	k8sjson "k8s.io/apimachinery/pkg/runtime/serializer/json"
 )
 
+// SystemCriticalPriority is copied from scheduling.SystemCriticalPriority in Kubernetes internals.
+const SystemCriticalPriority int32 = 2000000000
+
 var serializer = sync.OnceValue(func() *k8sjson.Serializer {
 	return k8sjson.NewSerializerWithOptions(
 		k8sjson.DefaultMetaFactory, nil, nil,

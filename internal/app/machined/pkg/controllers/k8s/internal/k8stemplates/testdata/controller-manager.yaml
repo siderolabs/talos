@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    talos.dev/config-version: undefined
+    talos.dev/secrets-version: "111"
+  labels:
+    app.kubernetes.io/component: control-plane
+    app.kubernetes.io/managed-by: Talos
+    app.kubernetes.io/name: kube-controller-manager
+    app.kubernetes.io/version: 1.36.0
+    component: kube-controller-manager
+    k8s-app: kube-controller-manager
+    tier: control-plane
+  name: kube-controller-manager
+  namespace: kube-system
+spec:
+  containers:
+  - command:
+    - /usr/local/bin/kube-controller-manager
+    - --use-service-account-credentials
+    - --allocate-node-cidrs=true
+    env:
+    - name: POD_IP
+      valueFrom:
+        fieldRef:
+          fieldPath: status.podIP
+    - name: HTTP_PROXY
+      value: http://127.0.0.1:443
+    - name: GOMEMLIMIT
+      value: "996147200"
+    image: registry.k8s.io/controller-manager:v1.36.0
+    livenessProbe:
+      httpGet:
+        host: localhost
+        path: /healthz
+        port: 10257
+        scheme: HTTPS
+      timeoutSeconds: 15
+    name: kube-controller-manager
+    resources:
+      limits:
+        cpu: "1"
+        memory: 1000Mi
+      requests:
+        cpu: 50m
+        memory: 500Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      seccompProfile:
+        type: RuntimeDefault
+    startupProbe:
+      failureThreshold: 12
+      httpGet:
+        host: localhost
+        path: /healthz
+        port: 10257
+        scheme: HTTPS
+      periodSeconds: 5
+    volumeMounts:
+    - mountPath: /system/secrets/kubernetes/kube-controller-manager
+      name: secrets
+      readOnly: true
+  hostNetwork: true
+  priority: 2000000000
+  priorityClassName: system-cluster-critical
+  securityContext:
+    runAsGroup: 65535
+    runAsNonRoot: true
+    runAsUser: 65535
+  volumes:
+  - hostPath:
+      path: /system/secrets/kubernetes/kube-controller-manager
+    name: secrets
+status: {}

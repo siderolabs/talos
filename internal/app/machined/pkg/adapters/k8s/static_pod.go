@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
@@ -40,7 +41,7 @@ func (a staticPod) Pod() (*v1.Pod, error) {
 }
 
 // SetPod sets spec from native Kubernetes resource.
-func (a staticPod) SetPod(podSpec *v1.Pod) error {
+func (a staticPod) SetPod(podSpec runtime.Object) error {
 	jsonSerialized, err := json.Marshal(podSpec)
 	if err != nil {
 		return err

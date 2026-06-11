@@ -1,0 +1,88 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    talos.dev/config-version: undefined
+    talos.dev/secrets-version: "222"
+  labels:
+    app.kubernetes.io/component: control-plane
+    app.kubernetes.io/managed-by: Talos
+    app.kubernetes.io/name: kube-scheduler
+    app.kubernetes.io/version: 1.36.0
+    component: kube-scheduler
+    k8s-app: kube-scheduler
+    tier: control-plane
+  name: kube-scheduler
+  namespace: kube-system
+spec:
+  containers:
+  - command:
+    - /usr/local/bin/kube-scheduler
+    - --authentication-kubeconfig=
+    - --authentication-tolerate-lookup-failure=false
+    - --authorization-kubeconfig=
+    - --bind-address=127.0.0.1
+    - --config=
+    - --leader-elect=true
+    - --profiling=false
+    - --tls-min-version=VersionTLS13
+    env:
+    - name: POD_IP
+      valueFrom:
+        fieldRef:
+          fieldPath: status.podIP
+    - name: HTTP_PROXY
+      value: http://127.0.0.1:443
+    image: registry.k8s.io/scheduler:v1.36.0
+    livenessProbe:
+      httpGet:
+        host: localhost
+        path: /livez
+        port: 10259
+        scheme: HTTPS
+    name: kube-scheduler
+    readinessProbe:
+      httpGet:
+        host: localhost
+        path: /readyz
+        port: 10259
+        scheme: HTTPS
+    resources:
+      requests:
+        cpu: 50m
+        memory: 500Mi
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities:
+        drop:
+        - ALL
+      seccompProfile:
+        type: RuntimeDefault
+    startupProbe:
+      httpGet:
+        host: localhost
+        path: /livez
+        port: 10259
+        scheme: HTTPS
+    volumeMounts:
+    - mountPath: /system/secrets/kubernetes/kube-scheduler
+      name: secrets
+      readOnly: true
+    - mountPath: /system/config/kubernetes/kube-scheduler
+      name: config
+      readOnly: true
+  hostNetwork: true
+  priority: 2000000000
+  priorityClassName: system-cluster-critical
+  securityContext:
+    runAsGroup: 65536
+    runAsNonRoot: true
+    runAsUser: 65536
+  volumes:
+  - hostPath:
+      path: /system/secrets/kubernetes/kube-scheduler
+    name: secrets
+  - hostPath:
+      path: /system/config/kubernetes/kube-scheduler
+    name: config
+status: {}

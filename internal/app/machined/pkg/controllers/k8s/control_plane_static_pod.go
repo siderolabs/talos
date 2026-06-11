@@ -13,12 +13,10 @@ import (
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
-	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/optional"
-	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-kubernetes/kubernetes/compatibility"
 	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
@@ -33,9 +31,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 )
-
-// systemCriticalPriority is copied from scheduling.SystemCriticalPriority in Kubernetes internals.
-const systemCriticalPriority int32 = 2000000000
 
 // ControlPlaneStaticPodController manages k8s.StaticPod based on control plane configuration.
 type ControlPlaneStaticPodController struct{}
@@ -109,180 +104,60 @@ func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controll
 
 		// wait for etcd to be healthy as kube-apiserver is using local etcd instance
 		etcdResource, err := safe.ReaderGetByID[*v1alpha1.Service](ctx, r, "etcd")
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				if err = ctrl.teardownAll(ctx, r); err != nil {
-					return fmt.Errorf("error tearing down: %w", err)
-				}
-
-				continue
-			}
-
-			return err
-		}
-
-		if !etcdResource.TypedSpec().Healthy {
-			continue
+		if err != nil && !state.IsNotFoundError(err) {
+			return fmt.Errorf("failed to get etcd service status: %w", err)
 		}
 
 		secretsStatusResource, err := safe.ReaderGetByID[*k8s.SecretsStatus](ctx, r, k8s.StaticPodSecretsStaticPodID)
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				if err = ctrl.teardownAll(ctx, r); err != nil {
-					return fmt.Errorf("error tearing down: %w", err)
-				}
-
-				continue
-			}
-
-			return err
+		if err != nil && !state.IsNotFoundError(err) {
+			return fmt.Errorf("failed to get secrets status resource: %w", err)
 		}
-
-		secretsVersion := secretsStatusResource.TypedSpec().Version
 
 		configStatusResource, err := safe.ReaderGetByID[*k8s.ConfigStatus](ctx, r, k8s.ConfigStatusStaticPodID)
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				if err = ctrl.teardownAll(ctx, r); err != nil {
-					return fmt.Errorf("error tearing down: %w", err)
-				}
-
-				continue
-			}
-
-			return err
+		if err != nil && !state.IsNotFoundError(err) {
+			return fmt.Errorf("failed to get config status resource: %w", err)
 		}
 
-		configVersion := configStatusResource.TypedSpec().Version
+		r.StartTrackingOutputs()
 
-		touchedIDs := map[string]struct{}{}
+		// pre-condition to produce static pods
+		if etcdResource != nil && etcdResource.TypedSpec().Healthy && configStatusResource != nil && secretsStatusResource != nil {
+			configVersion := configStatusResource.TypedSpec().Version
+			secretsVersion := secretsStatusResource.TypedSpec().Version
 
-		for _, pod := range []struct {
-			f  func(context.Context, controller.Runtime, *zap.Logger, resource.Resource, string, string) (string, error)
-			md *resource.Metadata
-		}{
-			{
-				f:  ctrl.manageAPIServer,
-				md: k8s.NewAPIServerConfig().Metadata(),
-			},
-			{
-				f:  ctrl.manageControllerManager,
-				md: k8s.NewControllerManagerConfig(k8s.FinalControllerManagerConfigID).Metadata(),
-			},
-			{
-				f:  ctrl.manageScheduler,
-				md: k8s.NewSchedulerConfig(k8s.FinalSchedulerConfigID).Metadata(),
-			},
-		} {
-			res, err := r.Get(ctx, pod.md)
-			if err != nil {
-				if state.IsNotFoundError(err) {
-					continue
-				}
-
-				return fmt.Errorf("error getting control plane config: %w", err)
-			}
-
-			var podID string
-
-			if podID, err = pod.f(ctx, r, logger, res, secretsVersion, configVersion); err != nil {
-				return fmt.Errorf("error updating static pod for %q: %w", pod.md.Type(), err)
-			}
-
-			if podID != "" {
-				touchedIDs[podID] = struct{}{}
-			}
-		}
-
-		// clean up static pods which haven't been touched
-		{
-			list, err := r.List(ctx, resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "", resource.VersionUndefined))
-			if err != nil {
-				return err
-			}
-
-			for _, res := range list.Items {
-				if _, ok := touchedIDs[res.Metadata().ID()]; ok {
-					continue
-				}
-
-				if res.Metadata().Owner() != ctrl.Name() {
-					continue
-				}
-
-				if err = r.Destroy(ctx, res.Metadata()); err != nil {
+			for _, manageFunc := range []func(context.Context, controller.Runtime, *zap.Logger, string, string) error{
+				ctrl.manageAPIServer,
+				ctrl.manageControllerManager,
+				ctrl.manageScheduler,
+			} {
+				if err = manageFunc(ctx, r, logger, secretsVersion, configVersion); err != nil {
 					return err
 				}
 			}
 		}
 
-		r.ResetRestartBackoff()
-	}
-}
-
-func (ctrl *ControlPlaneStaticPodController) teardownAll(ctx context.Context, r controller.Runtime) error {
-	list, err := r.List(ctx, resource.NewMetadata(k8s.NamespaceName, k8s.StaticPodType, "", resource.VersionUndefined))
-	if err != nil {
-		return err
-	}
-
-	for _, res := range list.Items {
-		if res.Metadata().Owner() != ctrl.Name() {
-			continue
-		}
-
-		if err = r.Destroy(ctx, res.Metadata()); err != nil {
-			return err
+		// clean up static pods which haven't been touched
+		if err := safe.CleanupOutputs[*k8s.StaticPod](ctx, r); err != nil {
+			return fmt.Errorf("failed to cleanup outputs: %w", err)
 		}
 	}
-
-	return nil
 }
 
-func volumeMounts(volumes []k8s.ExtraVolume) []v1.VolumeMount {
-	return xslices.Map(volumes, func(vol k8s.ExtraVolume) v1.VolumeMount {
-		return v1.VolumeMount{
-			Name:      vol.Name,
-			MountPath: vol.MountPath,
-			ReadOnly:  vol.ReadOnly,
-		}
-	})
-}
-
-func volumes(volumes []k8s.ExtraVolume) []v1.Volume {
-	return xslices.Map(volumes, func(vol k8s.ExtraVolume) v1.Volume {
-		return v1.Volume{
-			Name: vol.Name,
-			VolumeSource: v1.VolumeSource{
-				HostPath: &v1.HostPathVolumeSource{
-					Path: vol.HostPath,
-				},
-			},
-		}
-	})
-}
-
-func envVars(environment map[string]string) []v1.EnvVar {
-	if len(environment) == 0 {
-		return nil
-	}
-
-	keys := maps.Keys(environment)
-	slices.Sort(keys)
-
-	return xslices.Map(keys, func(key string) v1.EnvVar {
-		// Kubernetes supports variable references in variable values, so escape '$' to prevent that.
-		return v1.EnvVar{
-			Name:  key,
-			Value: strings.ReplaceAll(environment[key], "$", "$$"),
-		}
-	})
-}
-
+//nolint:gocyclo
 func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context, r controller.Runtime, _ *zap.Logger,
-	configResource resource.Resource, secretsVersion, configVersion string,
-) (string, error) {
-	cfg := configResource.(*k8s.APIServerConfig).TypedSpec()
+	secretsVersion, configVersion string,
+) error {
+	configResource, err := safe.ReaderGetByID[*k8s.APIServerConfig](ctx, r, k8s.APIServerConfigID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			// no config => no pod
+			return nil
+		}
+
+		return fmt.Errorf("failed to get apiserver config: %w", err)
+	}
+
+	cfg := configResource.TypedSpec()
 
 	enabledAdmissionPlugins := []string{"NodeRestriction"}
 
@@ -379,17 +254,17 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 	}
 
 	if err := builder.Merge(extraArgs, argsbuilder.WithMergePolicies(mergePolicies)); err != nil {
-		return "", err
+		return err
 	}
 
 	args = append(args, builder.Args()...)
 
 	resources, err := k8stemplates.Resources(cfg.Resources, "200m", "512Mi")
 	if err != nil {
-		return "", err
+		return err
 	}
 
-	env := envVars(cfg.EnvironmentVariables)
+	env := k8stemplates.EnvVars(cfg.EnvironmentVariables)
 	if goGCEnv := k8stemplates.GoGCEnvFromResources(resources); goGCEnv.Name != "" {
 		env = append(env, goGCEnv)
 	}
@@ -450,7 +325,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 		}
 	}
 
-	return k8s.APIServerID, safe.WriterModify(ctx, r, k8s.NewStaticPod(k8s.NamespaceName, k8s.APIServerID), func(r *k8s.StaticPod) error {
+	return safe.WriterModify(ctx, r, k8s.NewStaticPod(k8s.NamespaceName, k8s.APIServerID), func(r *k8s.StaticPod) error {
 		return k8sadapter.StaticPod(r).SetPod(&v1.Pod{
 			TypeMeta: metav1.TypeMeta{
 				APIVersion: "v1",
@@ -475,7 +350,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 				},
 			},
 			Spec: v1.PodSpec{
-				Priority:          new(systemCriticalPriority),
+				Priority:          new(k8stemplates.SystemCriticalPriority),
 				PriorityClassName: "system-cluster-critical",
 				Containers: []v1.Container{
 					{
@@ -511,7 +386,7 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 								MountPath: constants.KubernetesAuditLogDir,
 								ReadOnly:  false,
 							},
-						}, volumeMounts(cfg.ExtraVolumes)...),
+						}, k8stemplates.VolumeMounts(cfg.ExtraVolumes)...),
 						StartupProbe:   startupProbe,
 						LivenessProbe:  livenessProbe,
 						ReadinessProbe: readinessProbe,
@@ -562,291 +437,65 @@ func (ctrl *ControlPlaneStaticPodController) manageAPIServer(ctx context.Context
 							},
 						},
 					},
-				}, volumes(cfg.ExtraVolumes)...),
+				}, k8stemplates.Volumes(cfg.ExtraVolumes)...),
 			},
 		})
 	})
 }
 
 func (ctrl *ControlPlaneStaticPodController) manageControllerManager(ctx context.Context, r controller.Runtime,
-	_ *zap.Logger, configResource resource.Resource, secretsVersion, _ string,
-) (string, error) {
-	cfg := configResource.(*k8s.ControllerManagerConfig).TypedSpec()
-
-	if !cfg.Enabled {
-		return "", nil
-	}
-
-	resources, err := k8stemplates.Resources(cfg.Resources, "50m", "256Mi")
+	_ *zap.Logger, secretsVersion, _ string,
+) error {
+	configResource, err := safe.ReaderGetByID[*k8s.ControllerManagerConfig](ctx, r, k8s.FinalControllerManagerConfigID)
 	if err != nil {
-		return "", err
+		if state.IsNotFoundError(err) {
+			// no config => no pod
+			return nil
+		}
+
+		return fmt.Errorf("failed to get controller-manager config: %w", err)
 	}
 
-	env := envVars(cfg.EnvironmentVariables)
-	if goGCEnv := k8stemplates.GoGCEnvFromResources(resources); goGCEnv.Name != "" {
-		env = append(env, goGCEnv)
+	if !configResource.TypedSpec().Enabled {
+		return nil
 	}
 
-	return k8s.ControllerManagerID, safe.WriterModify(ctx, r, k8s.NewStaticPod(k8s.NamespaceName, k8s.ControllerManagerID), func(r *k8s.StaticPod) error {
-		return k8sadapter.StaticPod(r).SetPod(&v1.Pod{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: "v1",
-				Kind:       "Pod",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      k8s.ControllerManagerID,
-				Namespace: "kube-system",
-				Annotations: map[string]string{
-					constants.AnnotationStaticPodSecretsVersion: secretsVersion,
-					constants.AnnotationStaticPodConfigVersion:  configResource.Metadata().Version().String(),
-				},
-				Labels: map[string]string{
-					"tier":                         "control-plane",
-					"k8s-app":                      k8s.ControllerManagerID,
-					"component":                    k8s.ControllerManagerID,
-					"app.kubernetes.io/name":       k8s.ControllerManagerID,
-					"app.kubernetes.io/version":    compatibility.VersionFromImageRef(cfg.Image).String(),
-					"app.kubernetes.io/component":  "control-plane",
-					"app.kubernetes.io/managed-by": strings.ReplaceAll(version.Name, " ", "-"),
-				},
-			},
-			Spec: v1.PodSpec{
-				Priority:          new(systemCriticalPriority),
-				PriorityClassName: "system-cluster-critical",
-				Containers: []v1.Container{
-					{
-						Name:    k8s.ControllerManagerID,
-						Image:   cfg.Image,
-						Command: cfg.Args,
-						Env: append(
-							[]v1.EnvVar{
-								{
-									Name: "POD_IP",
-									ValueFrom: &v1.EnvVarSource{
-										FieldRef: &v1.ObjectFieldSelector{
-											FieldPath: "status.podIP",
-										},
-									},
-								},
-							},
-							env...,
-						),
-						VolumeMounts: append([]v1.VolumeMount{
-							{
-								Name:      "secrets",
-								MountPath: constants.KubernetesControllerManagerSecretsDir,
-								ReadOnly:  true,
-							},
-						}, volumeMounts(cfg.ExtraVolumes)...),
-						StartupProbe: &v1.Probe{
-							ProbeHandler: v1.ProbeHandler{
-								HTTPGet: &v1.HTTPGetAction{
-									Path:   "/healthz",
-									Host:   "localhost",
-									Port:   intstr.FromInt(10257),
-									Scheme: v1.URISchemeHTTPS,
-								},
-							},
-							// Give 60 seconds for the container to start up
-							PeriodSeconds:                 5,
-							FailureThreshold:              12,
-							TerminationGracePeriodSeconds: nil,
-						},
-						LivenessProbe: &v1.Probe{
-							ProbeHandler: v1.ProbeHandler{
-								HTTPGet: &v1.HTTPGetAction{
-									Path:   "/healthz",
-									Host:   "localhost",
-									Port:   intstr.FromInt(10257),
-									Scheme: v1.URISchemeHTTPS,
-								},
-							},
-							TimeoutSeconds: 15,
-						},
-						Resources: resources,
-						SecurityContext: &v1.SecurityContext{
-							AllowPrivilegeEscalation: new(false),
-							Capabilities: &v1.Capabilities{
-								Drop: []v1.Capability{"ALL"},
-							},
-							SeccompProfile: &v1.SeccompProfile{
-								Type: v1.SeccompProfileTypeRuntimeDefault,
-							},
-						},
-					},
-				},
-				HostNetwork: true,
-				SecurityContext: &v1.PodSecurityContext{
-					RunAsNonRoot: new(true),
-					RunAsUser:    new(int64(constants.KubernetesControllerManagerRunUser)),
-					RunAsGroup:   new(int64(constants.KubernetesControllerManagerRunGroup)),
-				},
-				Volumes: append([]v1.Volume{
-					{
-						Name: "secrets",
-						VolumeSource: v1.VolumeSource{
-							HostPath: &v1.HostPathVolumeSource{
-								Path: constants.KubernetesControllerManagerSecretsDir,
-							},
-						},
-					},
-				}, volumes(cfg.ExtraVolumes)...),
-			},
-		})
+	pod, err := k8stemplates.ControllerManagerPod(configResource, secretsVersion)
+	if err != nil {
+		return fmt.Errorf("error building controller-manager pod: %w", err)
+	}
+
+	return safe.WriterModify(ctx, r, k8s.NewStaticPod(k8s.NamespaceName, k8s.ControllerManagerID), func(r *k8s.StaticPod) error {
+		return k8sadapter.StaticPod(r).SetPod(pod)
 	})
 }
 
 func (ctrl *ControlPlaneStaticPodController) manageScheduler(ctx context.Context, r controller.Runtime,
-	_ *zap.Logger, configResource resource.Resource, secretsVersion, _ string,
-) (string, error) {
-	cfg := configResource.(*k8s.SchedulerConfig).TypedSpec()
+	_ *zap.Logger, secretsVersion, _ string,
+) error {
+	configResource, err := safe.ReaderGetByID[*k8s.SchedulerConfig](ctx, r, k8s.FinalSchedulerConfigID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			// no config => no pod
+			return nil
+		}
+
+		return fmt.Errorf("failed to get scheduler config: %w", err)
+	}
+
+	cfg := configResource.TypedSpec()
 
 	if !cfg.Enabled {
-		return "", nil
+		return nil
 	}
 
-	resources, err := k8stemplates.Resources(cfg.Resources, "10m", "64Mi")
+	obj, err := k8stemplates.SchedulerPod(configResource, secretsVersion)
 	if err != nil {
-		return "", err
+		return fmt.Errorf("error building kube-scheduler pod: %w", err)
 	}
 
-	env := envVars(cfg.EnvironmentVariables)
-	if goGCEnv := k8stemplates.GoGCEnvFromResources(resources); goGCEnv.Name != "" {
-		env = append(env, goGCEnv)
-	}
-
-	kubeSchedulerVersion := compatibility.VersionFromImageRef(cfg.Image)
-
-	livenessProbe := &v1.Probe{
-		ProbeHandler: v1.ProbeHandler{
-			HTTPGet: &v1.HTTPGetAction{
-				Path:   kubeSchedulerVersion.KubeSchedulerHealthLivenessEndpoint(),
-				Host:   "localhost",
-				Port:   intstr.FromInt(10259),
-				Scheme: v1.URISchemeHTTPS,
-			},
-		},
-	}
-
-	readinessProbe := &v1.Probe{
-		ProbeHandler: v1.ProbeHandler{
-			HTTPGet: &v1.HTTPGetAction{
-				Path:   kubeSchedulerVersion.KubeSchedulerHealthReadinessEndpoint(),
-				Host:   "localhost",
-				Port:   intstr.FromInt(10259),
-				Scheme: v1.URISchemeHTTPS,
-			},
-		},
-	}
-
-	startupProbe := &v1.Probe{
-		ProbeHandler: v1.ProbeHandler{
-			HTTPGet: &v1.HTTPGetAction{
-				Path:   kubeSchedulerVersion.KubeSchedulerHealthStartupEndpoint(),
-				Host:   "localhost",
-				Port:   intstr.FromInt(10259),
-				Scheme: v1.URISchemeHTTPS,
-			},
-		},
-	}
-
-	return k8s.SchedulerID, safe.WriterModify(ctx, r, k8s.NewStaticPod(k8s.NamespaceName, k8s.SchedulerID), func(r *k8s.StaticPod) error {
-		return k8sadapter.StaticPod(r).SetPod(&v1.Pod{
-			TypeMeta: metav1.TypeMeta{
-				APIVersion: "v1",
-				Kind:       "Pod",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      k8s.SchedulerID,
-				Namespace: "kube-system",
-				Annotations: map[string]string{
-					constants.AnnotationStaticPodSecretsVersion: secretsVersion,
-					constants.AnnotationStaticPodConfigVersion:  configResource.Metadata().Version().String(),
-				},
-				Labels: map[string]string{
-					"tier":                         "control-plane",
-					"k8s-app":                      k8s.SchedulerID,
-					"component":                    k8s.SchedulerID,
-					"app.kubernetes.io/name":       k8s.SchedulerID,
-					"app.kubernetes.io/version":    compatibility.VersionFromImageRef(cfg.Image).String(),
-					"app.kubernetes.io/component":  "control-plane",
-					"app.kubernetes.io/managed-by": strings.ReplaceAll(version.Name, " ", "-"),
-				},
-			},
-			Spec: v1.PodSpec{
-				Priority:          new(systemCriticalPriority),
-				PriorityClassName: "system-cluster-critical",
-				Containers: []v1.Container{
-					{
-						Name:    k8s.SchedulerID,
-						Image:   cfg.Image,
-						Command: cfg.Args,
-						Env: append(
-							[]v1.EnvVar{
-								{
-									Name: "POD_IP",
-									ValueFrom: &v1.EnvVarSource{
-										FieldRef: &v1.ObjectFieldSelector{
-											FieldPath: "status.podIP",
-										},
-									},
-								},
-							},
-							env...,
-						),
-						VolumeMounts: append([]v1.VolumeMount{
-							{
-								Name:      "secrets",
-								MountPath: constants.KubernetesSchedulerSecretsDir,
-								ReadOnly:  true,
-							},
-							{
-								Name:      "config",
-								MountPath: constants.KubernetesSchedulerConfigDir,
-								ReadOnly:  true,
-							},
-						}, volumeMounts(cfg.ExtraVolumes)...),
-						StartupProbe:   startupProbe,
-						LivenessProbe:  livenessProbe,
-						ReadinessProbe: readinessProbe,
-						Resources:      resources,
-						SecurityContext: &v1.SecurityContext{
-							AllowPrivilegeEscalation: new(false),
-							Capabilities: &v1.Capabilities{
-								Drop: []v1.Capability{"ALL"},
-							},
-							SeccompProfile: &v1.SeccompProfile{
-								Type: v1.SeccompProfileTypeRuntimeDefault,
-							},
-						},
-					},
-				},
-				HostNetwork: true,
-				SecurityContext: &v1.PodSecurityContext{
-					RunAsNonRoot: new(true),
-					RunAsUser:    new(int64(constants.KubernetesSchedulerRunUser)),
-					RunAsGroup:   new(int64(constants.KubernetesSchedulerRunGroup)),
-				},
-				Volumes: append([]v1.Volume{
-					{
-						Name: "secrets",
-						VolumeSource: v1.VolumeSource{
-							HostPath: &v1.HostPathVolumeSource{
-								Path: constants.KubernetesSchedulerSecretsDir,
-							},
-						},
-					},
-					{
-						Name: "config",
-						VolumeSource: v1.VolumeSource{
-							HostPath: &v1.HostPathVolumeSource{
-								Path: constants.KubernetesSchedulerConfigDir,
-							},
-						},
-					},
-				}, volumes(cfg.ExtraVolumes)...),
-			},
-		})
+	return safe.WriterModify(ctx, r, k8s.NewStaticPod(k8s.NamespaceName, k8s.SchedulerID), func(r *k8s.StaticPod) error {
+		return k8sadapter.StaticPod(r).SetPod(obj)
 	})
 }
 
