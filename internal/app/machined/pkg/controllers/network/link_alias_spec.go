@@ -107,8 +107,13 @@ func (ctrl *LinkAliasSpecController) Run(ctx context.Context, r controller.Runti
 				continue
 			}
 
-			if link.Attributes.Info != nil || nethelpers.LinkType(link.Type) != nethelpers.LinkEther {
-				// skip non-physical links
+			if nethelpers.LinkType(link.Type) != nethelpers.LinkEther {
+				// skip non-physical links: physical links have type==ether && kind == ""
+				continue
+			}
+
+			if linkKind := pointer.SafeDeref(link.Attributes.Info).Kind; linkKind != "" {
+				// skip non-physical links, check for kind
 				continue
 			}
 
