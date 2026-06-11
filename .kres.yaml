@@ -919,7 +919,7 @@ spec:
             shortIntegrationTest: "yes"
             qemuMemoryWorkers: "4096"
             qemuMemoryControlplanes: "4096"
-            withConfigPatch: "@hack/test/patches/flannel-netpol.yaml"
+            withConfigPatchControlplane: "@hack/test/patches/flannel-netpol.yaml"
             testMode: network-policy
       steps:
         - name: download-artifacts
@@ -939,6 +939,7 @@ spec:
             CUSTOM_CNI_URL: ${{ matrix.customCniUrl }}
             WITH_CONTROL_PLANE_PORT: ${{ matrix.withControlPlanePort }}
             WITH_CONFIG_PATCH: ${{ matrix.withConfigPatch }}
+            WITH_CONFIG_PATCH_CONTROLPLANE: ${{ matrix.withConfigPatchControlplane }}
             WITH_UKI_BOOT: ${{ matrix.withUkiBoot }}
             WITH_4K_DISK: ${{ matrix.with4kDisk }}
             WITH_4K_DISK_IMAGE: ${{ matrix.with4kDiskImage }}
