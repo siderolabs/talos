@@ -39,6 +39,14 @@ var (
 	// ErrInUse is returned when a PV is still claimed by a VG, or an LV
 	// has active holders / a mounted filesystem.
 	ErrInUse = errors.New("lvm: resource in use")
+	// ErrDevicePartitioned is returned when pvcreate is asked to initialize a
+	// whole disk that carries a partition table. The disk's partitions should
+	// be used as PVs instead.
+	ErrDevicePartitioned = errors.New("lvm: device is partitioned")
+	// ErrExists is returned when a create operation targets an object that
+	// already exists (VG/LV already present, device already a PV). Callers
+	// reconciling towards desired state can treat this as success.
+	ErrExists = errors.New("lvm: resource already exists")
 	// ErrNotEmpty is returned when a VG still contains logical volumes.
 	ErrNotEmpty = errors.New("lvm: resource not empty")
 	// ErrOpen is returned when the LV is open (mounted, snapshot origin,
@@ -73,6 +81,21 @@ var (
 	// vgreduce: "Physical volume \"%s\" still in use"
 	//   lib/metadata/vg.c:724
 	pvInUseRE = regexp.MustCompile(`(is used by VG|still in use)`)
+
+	// pvcreate against a whole disk with a partition table:
+	//   "Cannot use %s: device is partitioned"
+	//   reason string: lib/cache/lvmcache.c (DEV_FILTERED_PARTITIONED branch)
+	//   flag set by:   lib/filters/filter-partitioned.c
+	devicePartitionedRE = regexp.MustCompile(`device is partitioned`)
+
+	// create-against-existing family (idempotent from a reconciler's view).
+	// Verified against the lvm2 source tree:
+	//   "A volume group called %s already exists."                       tools/vgcreate.c:93
+	//   "Logical volume %s already exists in Volume group %s."           tools/lvcreate.c:1585
+	//   "Physical volume '%s' is already in volume group '%s'"           tools/toollib.c:5177, lib/metadata/metadata.c:334
+	//   "Can't initialize PV '%s' without -ff."                          tools/toollib.c:5173
+	//   "Can't initialize physical volume \"%s\" of volume group ...     tools/toollib.c:5175
+	alreadyExistsRE = regexp.MustCompile(`(already exists|is already in volume group|Can't initialize (physical volume|PV) )`)
 
 	// lvremove path (lib/activate/activate.c:982,1006):
 	//   "Logical volume %s contains a filesystem in use."
@@ -163,6 +186,10 @@ func sentinelFor(exit *cmd.ExitError) error {
 // or nil if no narrow pattern fits.
 func matchStderr(out []byte) error {
 	switch {
+	case alreadyExistsRE.Match(out):
+		return ErrExists
+	case devicePartitionedRE.Match(out):
+		return ErrDevicePartitioned
 	case vgNotEmptyRE.Match(out):
 		return ErrNotEmpty
 	case pvInUseRE.Match(out):

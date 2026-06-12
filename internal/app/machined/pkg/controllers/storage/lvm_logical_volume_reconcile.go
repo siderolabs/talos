@@ -21,6 +21,10 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
 
+// msgTooFewPVs is surfaced as an LVMValidationError when a VG does not have
+// enough physical volumes for the requested RAID layout.
+const msgTooFewPVs = "volume group has too few physical volumes for the requested layout"
+
 // parseSizeBytes parses an LVM raw byte-size column, returning 0 when the value
 // is empty or unparseable (treated as "unknown", which never triggers a grow).
 func parseSizeBytes(raw string) uint64 {
@@ -247,14 +251,14 @@ func (ctrl *LVMLogicalVolumeReconcileController) reconcileLV(
 	mirrors, stripes, ok := resolveRAIDParams(spec, pvCount)
 	if !ok {
 		logger.Warn(
-			"skipping logical volume: volume group has too few physical volumes for the requested layout",
+			"skipping logical volume: too few physical volumes for the requested layout",
 			zap.String("vg", spec.VGName),
 			zap.String("lv", spec.Name),
 			zap.Stringer("type", spec.Type),
 			zap.Int("pv_count", pvCount),
 		)
 
-		return "", nil
+		return msgTooFewPVs, nil
 	}
 
 	logger.Info(
@@ -276,6 +280,11 @@ func (ctrl *LVMLogicalVolumeReconcileController) reconcileLV(
 		if errors.Is(err, exec.ErrNotFound) {
 			logger.Warn("lvm binary not found; skipping LVM provisioning")
 
+			return "", nil
+		}
+
+		// Idempotent: the LV may already exist (status scan lag).
+		if errors.Is(err, lvm.ErrExists) {
 			return "", nil
 		}
 

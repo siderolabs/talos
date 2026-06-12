@@ -103,11 +103,38 @@ func (suite *LVMPhysicalVolumeSpecSuite) TestSelectsPartitionsByLabelPrefix() {
 	ctest.AssertNoResource[*storageres.LVMPhysicalVolumeSpec](suite, "vdb")
 }
 
+func (suite *LVMPhysicalVolumeSpecSuite) TestSkipsPartitionedDisk() {
+	// A whole disk that carries partitions cannot be a PV; pvcreate rejects it.
+	// The selector matches the whole disk (by transport) and a raw-volume
+	// partition (by label); only the partition must yield a PV spec.
+	createDisk(&suite.DefaultSuite, "vdb", "/dev/vdb", "virtio")
+	createPartition(&suite.DefaultSuite, "vdb1", "/dev/vdb1", "/dev/vdb", "r-data0")
+	// A whole, unpartitioned disk that should still be used directly.
+	createDisk(&suite.DefaultSuite, "vdd", "/dev/vdd", "virtio")
+
+	applyMachineConfig(&suite.DefaultSuite,
+		newVGDoc("vg-pool", `disk.transport == "virtio" || volume.partition_label.startsWith("r-data")`),
+	)
+
+	ctest.AssertResources(
+		suite,
+		[]string{"vdb1", "vdd"},
+		func(pv *storageres.LVMPhysicalVolumeSpec, asrt *assert.Assertions) {
+			asrt.Equal("vg-pool", pv.TypedSpec().VGName)
+		},
+	)
+
+	// The partitioned whole disk must not become a PV.
+	ctest.AssertNoResource[*storageres.LVMPhysicalVolumeSpec](suite, "vdb")
+}
+
 func (suite *LVMPhysicalVolumeSpecSuite) TestDiskSelectorMatchesWholeDiskOnly() {
 	// A disk-level predicate matches only the whole disk, never its partitions:
 	// partitions get an empty disk in the CEL context so disk.* evaluates false.
+	// vdb is whole and unpartitioned; vdc carries a partition vdc1.
 	createDisk(&suite.DefaultSuite, "vdb", "/dev/vdb", "virtio")
-	createPartition(&suite.DefaultSuite, "vdb1", "/dev/vdb1", "/dev/vdb", "r-lvmpv0")
+	createDisk(&suite.DefaultSuite, "vdc", "/dev/vdc", "virtio")
+	createPartition(&suite.DefaultSuite, "vdc1", "/dev/vdc1", "/dev/vdc", "r-lvmpv0")
 
 	applyMachineConfig(&suite.DefaultSuite, newVGDoc("vg-pool", `disk.dev_path == "/dev/vdb"`))
 
@@ -115,8 +142,8 @@ func (suite *LVMPhysicalVolumeSpecSuite) TestDiskSelectorMatchesWholeDiskOnly() 
 		asrt.Equal("vg-pool", pv.TypedSpec().VGName)
 	})
 
-	// The partition must not be claimed by a disk-level selector.
-	ctest.AssertNoResource[*storageres.LVMPhysicalVolumeSpec](suite, "vdb1")
+	// A partition is never claimed by a disk-level selector.
+	ctest.AssertNoResource[*storageres.LVMPhysicalVolumeSpec](suite, "vdc1")
 }
 
 func (suite *LVMPhysicalVolumeSpecSuite) TestOverlappingVGsSurfaceValidationError() {

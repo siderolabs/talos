@@ -77,6 +77,10 @@ func lvmStatus(err error) error {
 		return status.Error(codes.NotFound, lvm.ErrNotFound.Error())
 	case errors.Is(err, lvm.ErrInUse):
 		return status.Error(codes.FailedPrecondition, lvm.ErrInUse.Error())
+	case errors.Is(err, lvm.ErrDevicePartitioned):
+		return status.Error(codes.FailedPrecondition, lvm.ErrDevicePartitioned.Error())
+	case errors.Is(err, lvm.ErrExists):
+		return status.Error(codes.AlreadyExists, lvm.ErrExists.Error())
 	case errors.Is(err, lvm.ErrNotEmpty):
 		return status.Error(codes.FailedPrecondition, lvm.ErrNotEmpty.Error())
 	case errors.Is(err, lvm.ErrOpen):

@@ -296,7 +296,10 @@ func (suite *LVMLogicalVolumeReconcileSuite) TestRaid0SkipsWhenTooFewPVs() {
 	suite.createPVStatus("sda1", "/dev/sda1", "vg-pool")
 	suite.createRAIDLVSpec("vg-pool", "lv-stripe", storageres.LVMLogicalVolumeTypeRAID0, 0, 2)
 
-	time.Sleep(250 * time.Millisecond)
+	// No lvcreate, and the too-few-PVs condition is surfaced as a validation error.
+	ctest.AssertResource(suite, "vg-pool/lv-stripe", func(e *storageres.LVMValidationError, asrt *assert.Assertions) {
+		asrt.Contains(e.TypedSpec().Message, "too few physical volumes")
+	})
 
 	suite.Assert().Zero(suite.provisioner.count())
 }

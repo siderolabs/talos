@@ -180,6 +180,19 @@ func (ctrl *LVMPhysicalVolumeSpecController) matchVolumesToVG(
 			continue
 		}
 
+		// A partitioned whole disk can't be a PV; its partitions are matched
+		// separately. Skip it so the reconciler doesn't try pvcreate on a
+		// device that lvm rejects ("device is partitioned").
+		if vol.partitioned {
+			logger.Debug(
+				"skipping partitioned disk as PV candidate; its partitions are preferred",
+				zap.String("device", vol.devPath),
+				zap.String("vg", doc.Name()),
+			)
+
+			continue
+		}
+
 		if prev, ok := claimedBy[vol.devPath]; ok && prev != doc.Name() {
 			conflicts[doc.Name()] = fmt.Sprintf("device %q already claimed by volume group %q", vol.devPath, prev)
 
@@ -243,8 +256,9 @@ func (ctrl *LVMPhysicalVolumeSpecController) writeValidationError(ctx context.Co
 
 // volumeProto is a discovered volume prepared for CEL selector evaluation.
 type volumeProto struct {
-	devPath    string
-	celContext map[string]any
+	devPath     string
+	celContext  map[string]any
+	partitioned bool
 }
 
 // buildVolumeProtos lists discovered volumes and prepares the CEL evaluation
@@ -254,6 +268,8 @@ type volumeProto struct {
 // evaluate to false against them rather than spanning the disk and all its
 // partitions. Partitions are therefore selectable only via `volume.*`
 // predicates (e.g. volume.partition_label), matching the documented contract.
+//
+//nolint:gocyclo
 func buildVolumeProtos(ctx context.Context, r controller.Runtime) ([]volumeProto, error) {
 	disks, err := safe.ReaderListAll[*block.Disk](ctx, r)
 	if err != nil {
@@ -277,6 +293,16 @@ func buildVolumeProtos(ctx context.Context, r controller.Runtime) ([]volumeProto
 		return nil, fmt.Errorf("list discovered volumes: %w", err)
 	}
 
+	// Devices that are parents of at least one partition. A partitioned
+	// whole disk cannot back a PV directly.
+	hasPartitions := map[string]struct{}{}
+
+	for v := range volumes.All() {
+		if parent := v.TypedSpec().ParentDevPath; parent != "" {
+			hasPartitions[parent] = struct{}{}
+		}
+	}
+
 	out := make([]volumeProto, 0, volumes.Len())
 
 	for v := range volumes.All() {
@@ -294,11 +320,14 @@ func buildVolumeProtos(ctx context.Context, r controller.Runtime) ([]volumeProto
 		// and disks without a Disk resource get an empty DiskSpec so disk-level
 		// predicates evaluate false instead of erroring on an unbound variable.
 		disk := &blockpb.DiskSpec{}
+		partitioned := false
 
 		if spec.ParentDevPath == "" {
 			if d, ok := diskByDevPath[spec.DevPath]; ok {
 				disk = d
 			}
+
+			_, partitioned = hasPartitions[spec.DevPath]
 		}
 
 		celCtx := map[string]any{
@@ -306,7 +335,7 @@ func buildVolumeProtos(ctx context.Context, r controller.Runtime) ([]volumeProto
 			"disk":   disk,
 		}
 
-		out = append(out, volumeProto{devPath: spec.DevPath, celContext: celCtx})
+		out = append(out, volumeProto{devPath: spec.DevPath, celContext: celCtx, partitioned: partitioned})
 	}
 
 	// Stable order for deterministic downstream iteration.

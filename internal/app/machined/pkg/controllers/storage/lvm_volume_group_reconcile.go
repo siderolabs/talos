@@ -16,6 +16,7 @@ import (
 	"go.uber.org/zap"
 
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/pkg/lvm"
 	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
 
@@ -133,6 +134,8 @@ func (ctrl *LVMVolumeGroupReconcileController) Run(ctx context.Context, r contro
 }
 
 // reconcileVG converges one VG.
+//
+//nolint:gocyclo
 func (ctrl *LVMVolumeGroupReconcileController) reconcileVG(
 	ctx context.Context,
 	logger *zap.Logger,
@@ -158,6 +161,11 @@ func (ctrl *LVMVolumeGroupReconcileController) reconcileVG(
 				return nil
 			}
 
+			// Idempotent: the device may already be a PV (status scan lag).
+			if errors.Is(err, lvm.ErrExists) {
+				continue
+			}
+
 			return fmt.Errorf("pvcreate %q: %w", device, err)
 		}
 	}
@@ -171,7 +179,7 @@ func (ctrl *LVMVolumeGroupReconcileController) reconcileVG(
 			zap.Strings("devices", spec.PhysicalVolumes),
 		)
 
-		if err := ctrl.LVM.VGCreate(ctx, spec.Name, spec.PhysicalVolumes...); err != nil {
+		if err := ctrl.LVM.VGCreate(ctx, spec.Name, spec.PhysicalVolumes...); err != nil && !errors.Is(err, lvm.ErrExists) {
 			return fmt.Errorf("vgcreate %q: %w", spec.Name, err)
 		}
 
@@ -189,7 +197,7 @@ func (ctrl *LVMVolumeGroupReconcileController) reconcileVG(
 		zap.Strings("devices", missing),
 	)
 
-	if err := ctrl.LVM.VGExtend(ctx, spec.Name, missing...); err != nil {
+	if err := ctrl.LVM.VGExtend(ctx, spec.Name, missing...); err != nil && !errors.Is(err, lvm.ErrExists) {
 		return fmt.Errorf("vgextend %q: %w", spec.Name, err)
 	}
 
