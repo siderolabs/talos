@@ -20,6 +20,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/cri"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/k8s"
@@ -155,6 +156,10 @@ var docsCmd = &cobra.Command{
 				{
 					name:    "storage",
 					fileDoc: storage.GetFileDoc(),
+				},
+				{
+					name:    "cluster",
+					fileDoc: cluster.GetFileDoc(),
 				},
 			} {
 				path := filepath.Join(dir, pkg.name)

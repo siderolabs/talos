@@ -9,9 +9,11 @@ import (
 	"net/url"
 
 	"github.com/siderolabs/crypto/x509"
+	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	clustertypes "github.com/siderolabs/talos/pkg/machinery/config/types/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	v1alpha1 "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -123,13 +125,13 @@ func (in *Input) worker() ([]config.Document, error) {
 		}
 	}
 
-	if in.Options.DiscoveryEnabled != nil {
-		cluster.ClusterDiscoveryConfig = &v1alpha1.ClusterDiscoveryConfig{
+	if in.Options.DiscoveryEnabled != nil && !in.Options.VersionContract.DiscoveryServiceMultidocConfig() {
+		cluster.ClusterDiscoveryConfig = &v1alpha1.ClusterDiscoveryConfig{ //nolint:staticcheck // legacy configuration
 			DiscoveryEnabled: new(*in.Options.DiscoveryEnabled),
 		}
 
 		if in.Options.VersionContract.KubernetesDiscoveryBackendDisabled() {
-			cluster.ClusterDiscoveryConfig.DiscoveryRegistries.RegistryKubernetes.RegistryDisabled = new(true)
+			cluster.ClusterDiscoveryConfig.DiscoveryRegistries.RegistryKubernetes.RegistryDisabled = new(true) //nolint:staticcheck // legacy configuration
 		}
 	}
 
@@ -156,6 +158,15 @@ func (in *Input) worker() ([]config.Document, error) {
 	v1alpha1Config.ClusterConfig = cluster
 
 	documents := []config.Document{v1alpha1Config}
+
+	if pointer.SafeDeref(in.Options.DiscoveryEnabled) && in.Options.VersionContract.DiscoveryServiceMultidocConfig() {
+		endpointURL, err := url.Parse(constants.DefaultDiscoveryServiceEndpoint)
+		if err != nil {
+			return nil, err
+		}
+
+		documents = append(documents, clustertypes.NewDiscoveryServiceConfigV1Alpha1("default", endpointURL))
+	}
 
 	if in.Options.VersionContract.HostDNSEnabled() && in.Options.VersionContract.HostDNSMultidocConfig() {
 		resolverConfig := network.NewResolverConfigV1Alpha1()

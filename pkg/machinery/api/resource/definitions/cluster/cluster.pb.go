@@ -126,18 +126,23 @@ func (x *AffiliateSpec) GetControlPlane() *ControlPlane {
 	return nil
 }
 
-// ConfigSpec describes KubeSpan configuration.
+// ConfigSpec describes Discovery configuration.
 type ConfigSpec struct {
-	state                     protoimpl.MessageState `protogen:"open.v1"`
-	DiscoveryEnabled          bool                   `protobuf:"varint,1,opt,name=discovery_enabled,json=discoveryEnabled,proto3" json:"discovery_enabled,omitempty"`
-	RegistryKubernetesEnabled bool                   `protobuf:"varint,2,opt,name=registry_kubernetes_enabled,json=registryKubernetesEnabled,proto3" json:"registry_kubernetes_enabled,omitempty"`
-	RegistryServiceEnabled    bool                   `protobuf:"varint,3,opt,name=registry_service_enabled,json=registryServiceEnabled,proto3" json:"registry_service_enabled,omitempty"`
-	ServiceEndpoint           string                 `protobuf:"bytes,4,opt,name=service_endpoint,json=serviceEndpoint,proto3" json:"service_endpoint,omitempty"`
-	ServiceEndpointInsecure   bool                   `protobuf:"varint,5,opt,name=service_endpoint_insecure,json=serviceEndpointInsecure,proto3" json:"service_endpoint_insecure,omitempty"`
-	ServiceEncryptionKey      []byte                 `protobuf:"bytes,6,opt,name=service_encryption_key,json=serviceEncryptionKey,proto3" json:"service_encryption_key,omitempty"`
-	ServiceClusterId          string                 `protobuf:"bytes,7,opt,name=service_cluster_id,json=serviceClusterId,proto3" json:"service_cluster_id,omitempty"`
-	unknownFields             protoimpl.UnknownFields
-	sizeCache                 protoimpl.SizeCache
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Deprecated: use ServiceEndpoints instead (configured via DiscoveryServiceConfig documents)
+	DiscoveryEnabled          bool `protobuf:"varint,1,opt,name=discovery_enabled,json=discoveryEnabled,proto3" json:"discovery_enabled,omitempty"`
+	RegistryKubernetesEnabled bool `protobuf:"varint,2,opt,name=registry_kubernetes_enabled,json=registryKubernetesEnabled,proto3" json:"registry_kubernetes_enabled,omitempty"`
+	// Deprecated: enabled via DiscoveryServiceConfig documents instead.
+	RegistryServiceEnabled bool `protobuf:"varint,3,opt,name=registry_service_enabled,json=registryServiceEnabled,proto3" json:"registry_service_enabled,omitempty"`
+	// Deprecated: use ServiceEndpoints instead
+	ServiceEndpoint string `protobuf:"bytes,4,opt,name=service_endpoint,json=serviceEndpoint,proto3" json:"service_endpoint,omitempty"`
+	// Deprecated: use ServiceEndpoints instead
+	ServiceEndpointInsecure bool               `protobuf:"varint,5,opt,name=service_endpoint_insecure,json=serviceEndpointInsecure,proto3" json:"service_endpoint_insecure,omitempty"`
+	ServiceEncryptionKey    []byte             `protobuf:"bytes,6,opt,name=service_encryption_key,json=serviceEncryptionKey,proto3" json:"service_encryption_key,omitempty"`
+	ServiceClusterId        string             `protobuf:"bytes,7,opt,name=service_cluster_id,json=serviceClusterId,proto3" json:"service_cluster_id,omitempty"`
+	ServiceEndpoints        []*ServiceEndpoint `protobuf:"bytes,8,rep,name=service_endpoints,json=serviceEndpoints,proto3" json:"service_endpoints,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
 }
 
 func (x *ConfigSpec) Reset() {
@@ -217,6 +222,13 @@ func (x *ConfigSpec) GetServiceClusterId() string {
 		return x.ServiceClusterId
 	}
 	return ""
+}
+
+func (x *ConfigSpec) GetServiceEndpoints() []*ServiceEndpoint {
+	if x != nil {
+		return x.ServiceEndpoints
+	}
+	return nil
 }
 
 // ControlPlane describes ControlPlane data if any.
@@ -529,6 +541,67 @@ func (x *MemberSpec) GetControlPlane() *ControlPlane {
 	return nil
 }
 
+// ServiceEndpoint describes a service endpoint for discovery.
+type ServiceEndpoint struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Endpoint      string                 `protobuf:"bytes,2,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
+	Insecure      bool                   `protobuf:"varint,3,opt,name=insecure,proto3" json:"insecure,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ServiceEndpoint) Reset() {
+	*x = ServiceEndpoint{}
+	mi := &file_resource_definitions_cluster_cluster_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ServiceEndpoint) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ServiceEndpoint) ProtoMessage() {}
+
+func (x *ServiceEndpoint) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_cluster_cluster_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ServiceEndpoint.ProtoReflect.Descriptor instead.
+func (*ServiceEndpoint) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_cluster_cluster_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *ServiceEndpoint) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *ServiceEndpoint) GetEndpoint() string {
+	if x != nil {
+		return x.Endpoint
+	}
+	return ""
+}
+
+func (x *ServiceEndpoint) GetInsecure() bool {
+	if x != nil {
+		return x.Insecure
+	}
+	return false
+}
+
 var File_resource_definitions_cluster_cluster_proto protoreflect.FileDescriptor
 
 const file_resource_definitions_cluster_cluster_proto_rawDesc = "" +
@@ -542,7 +615,7 @@ const file_resource_definitions_cluster_cluster_proto_rawDesc = "" +
 	"\x10operating_system\x18\x05 \x01(\tR\x0foperatingSystem\x12P\n" +
 	"\fmachine_type\x18\x06 \x01(\x0e2-.talos.resource.definitions.enums.MachineTypeR\vmachineType\x12V\n" +
 	"\tkube_span\x18\a \x01(\v29.talos.resource.definitions.cluster.KubeSpanAffiliateSpecR\bkubeSpan\x12U\n" +
-	"\rcontrol_plane\x18\b \x01(\v20.talos.resource.definitions.cluster.ControlPlaneR\fcontrolPlane\"\xfe\x02\n" +
+	"\rcontrol_plane\x18\b \x01(\v20.talos.resource.definitions.cluster.ControlPlaneR\fcontrolPlane\"\xe0\x03\n" +
 	"\n" +
 	"ConfigSpec\x12+\n" +
 	"\x11discovery_enabled\x18\x01 \x01(\bR\x10discoveryEnabled\x12>\n" +
@@ -551,7 +624,8 @@ const file_resource_definitions_cluster_cluster_proto_rawDesc = "" +
 	"\x10service_endpoint\x18\x04 \x01(\tR\x0fserviceEndpoint\x12:\n" +
 	"\x19service_endpoint_insecure\x18\x05 \x01(\bR\x17serviceEndpointInsecure\x124\n" +
 	"\x16service_encryption_key\x18\x06 \x01(\fR\x14serviceEncryptionKey\x12,\n" +
-	"\x12service_cluster_id\x18\a \x01(\tR\x10serviceClusterId\"6\n" +
+	"\x12service_cluster_id\x18\a \x01(\tR\x10serviceClusterId\x12`\n" +
+	"\x11service_endpoints\x18\b \x03(\v23.talos.resource.definitions.cluster.ServiceEndpointR\x10serviceEndpoints\"6\n" +
 	"\fControlPlane\x12&\n" +
 	"\x0fapi_server_port\x18\x01 \x01(\x03R\rapiServerPort\"'\n" +
 	"\fIdentitySpec\x12\x17\n" +
@@ -574,7 +648,11 @@ const file_resource_definitions_cluster_cluster_proto_rawDesc = "" +
 	"\bhostname\x18\x03 \x01(\tR\bhostname\x12P\n" +
 	"\fmachine_type\x18\x04 \x01(\x0e2-.talos.resource.definitions.enums.MachineTypeR\vmachineType\x12)\n" +
 	"\x10operating_system\x18\x05 \x01(\tR\x0foperatingSystem\x12U\n" +
-	"\rcontrol_plane\x18\x06 \x01(\v20.talos.resource.definitions.cluster.ControlPlaneR\fcontrolPlaneBx\n" +
+	"\rcontrol_plane\x18\x06 \x01(\v20.talos.resource.definitions.cluster.ControlPlaneR\fcontrolPlane\"]\n" +
+	"\x0fServiceEndpoint\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x1a\n" +
+	"\bendpoint\x18\x02 \x01(\tR\bendpoint\x12\x1a\n" +
+	"\binsecure\x18\x03 \x01(\bR\binsecureBx\n" +
 	"*dev.talos.api.resource.definitions.clusterZJgithub.com/siderolabs/talos/pkg/machinery/api/resource/definitions/clusterb\x06proto3"
 
 var (
@@ -589,7 +667,7 @@ func file_resource_definitions_cluster_cluster_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_cluster_cluster_proto_rawDescData
 }
 
-var file_resource_definitions_cluster_cluster_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_resource_definitions_cluster_cluster_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_resource_definitions_cluster_cluster_proto_goTypes = []any{
 	(*AffiliateSpec)(nil),         // 0: talos.resource.definitions.cluster.AffiliateSpec
 	(*ConfigSpec)(nil),            // 1: talos.resource.definitions.cluster.ConfigSpec
@@ -598,28 +676,30 @@ var file_resource_definitions_cluster_cluster_proto_goTypes = []any{
 	(*InfoSpec)(nil),              // 4: talos.resource.definitions.cluster.InfoSpec
 	(*KubeSpanAffiliateSpec)(nil), // 5: talos.resource.definitions.cluster.KubeSpanAffiliateSpec
 	(*MemberSpec)(nil),            // 6: talos.resource.definitions.cluster.MemberSpec
-	(*common.NetIP)(nil),          // 7: common.NetIP
-	(enums.MachineType)(0),        // 8: talos.resource.definitions.enums.MachineType
-	(*common.NetIPPrefix)(nil),    // 9: common.NetIPPrefix
-	(*common.NetIPPort)(nil),      // 10: common.NetIPPort
+	(*ServiceEndpoint)(nil),       // 7: talos.resource.definitions.cluster.ServiceEndpoint
+	(*common.NetIP)(nil),          // 8: common.NetIP
+	(enums.MachineType)(0),        // 9: talos.resource.definitions.enums.MachineType
+	(*common.NetIPPrefix)(nil),    // 10: common.NetIPPrefix
+	(*common.NetIPPort)(nil),      // 11: common.NetIPPort
 }
 var file_resource_definitions_cluster_cluster_proto_depIdxs = []int32{
-	7,  // 0: talos.resource.definitions.cluster.AffiliateSpec.addresses:type_name -> common.NetIP
-	8,  // 1: talos.resource.definitions.cluster.AffiliateSpec.machine_type:type_name -> talos.resource.definitions.enums.MachineType
+	8,  // 0: talos.resource.definitions.cluster.AffiliateSpec.addresses:type_name -> common.NetIP
+	9,  // 1: talos.resource.definitions.cluster.AffiliateSpec.machine_type:type_name -> talos.resource.definitions.enums.MachineType
 	5,  // 2: talos.resource.definitions.cluster.AffiliateSpec.kube_span:type_name -> talos.resource.definitions.cluster.KubeSpanAffiliateSpec
 	2,  // 3: talos.resource.definitions.cluster.AffiliateSpec.control_plane:type_name -> talos.resource.definitions.cluster.ControlPlane
-	7,  // 4: talos.resource.definitions.cluster.KubeSpanAffiliateSpec.address:type_name -> common.NetIP
-	9,  // 5: talos.resource.definitions.cluster.KubeSpanAffiliateSpec.additional_addresses:type_name -> common.NetIPPrefix
-	10, // 6: talos.resource.definitions.cluster.KubeSpanAffiliateSpec.endpoints:type_name -> common.NetIPPort
-	9,  // 7: talos.resource.definitions.cluster.KubeSpanAffiliateSpec.exclude_advertised_networks:type_name -> common.NetIPPrefix
-	7,  // 8: talos.resource.definitions.cluster.MemberSpec.addresses:type_name -> common.NetIP
-	8,  // 9: talos.resource.definitions.cluster.MemberSpec.machine_type:type_name -> talos.resource.definitions.enums.MachineType
-	2,  // 10: talos.resource.definitions.cluster.MemberSpec.control_plane:type_name -> talos.resource.definitions.cluster.ControlPlane
-	11, // [11:11] is the sub-list for method output_type
-	11, // [11:11] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	7,  // 4: talos.resource.definitions.cluster.ConfigSpec.service_endpoints:type_name -> talos.resource.definitions.cluster.ServiceEndpoint
+	8,  // 5: talos.resource.definitions.cluster.KubeSpanAffiliateSpec.address:type_name -> common.NetIP
+	10, // 6: talos.resource.definitions.cluster.KubeSpanAffiliateSpec.additional_addresses:type_name -> common.NetIPPrefix
+	11, // 7: talos.resource.definitions.cluster.KubeSpanAffiliateSpec.endpoints:type_name -> common.NetIPPort
+	10, // 8: talos.resource.definitions.cluster.KubeSpanAffiliateSpec.exclude_advertised_networks:type_name -> common.NetIPPrefix
+	8,  // 9: talos.resource.definitions.cluster.MemberSpec.addresses:type_name -> common.NetIP
+	9,  // 10: talos.resource.definitions.cluster.MemberSpec.machine_type:type_name -> talos.resource.definitions.enums.MachineType
+	2,  // 11: talos.resource.definitions.cluster.MemberSpec.control_plane:type_name -> talos.resource.definitions.cluster.ControlPlane
+	12, // [12:12] is the sub-list for method output_type
+	12, // [12:12] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_cluster_cluster_proto_init() }
@@ -633,7 +713,7 @@ func file_resource_definitions_cluster_cluster_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_cluster_cluster_proto_rawDesc), len(file_resource_definitions_cluster_cluster_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

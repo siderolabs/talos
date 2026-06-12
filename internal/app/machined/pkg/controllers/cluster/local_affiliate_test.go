@@ -144,7 +144,7 @@ func (suite *LocalAffiliateSuite) TestGeneration() {
 
 	// disable discovery, local affiliate should be removed
 	ctest.UpdateWithConflicts(suite, discoveryConfig, func(r *cluster.Config) error {
-		r.TypedSpec().DiscoveryEnabled = false
+		r.TypedSpec().RegistryKubernetesEnabled = false
 
 		return nil
 	})
@@ -184,7 +184,7 @@ func (suite *LocalAffiliateSuite) TestCPGeneration() {
 	})
 
 	ctest.UpdateWithConflicts(suite, discoveryConfig, func(r *cluster.Config) error {
-		r.TypedSpec().DiscoveryEnabled = false
+		r.TypedSpec().RegistryKubernetesEnabled = false
 
 		return nil
 	})
@@ -195,7 +195,7 @@ func (suite *LocalAffiliateSuite) TestCPGeneration() {
 func (suite *LocalAffiliateSuite) createResources() (*cluster.Identity, *network.NodeAddress, *k8s.Nodename, *cluster.Config) {
 	// regular discovery affiliate
 	discoveryConfig := cluster.NewConfig(config.NamespaceName, cluster.ConfigID)
-	discoveryConfig.TypedSpec().DiscoveryEnabled = true
+	discoveryConfig.TypedSpec().RegistryKubernetesEnabled = true
 	suite.Create(discoveryConfig)
 
 	nodeIdentity := cluster.NewIdentity(cluster.NamespaceName, cluster.LocalIdentity)

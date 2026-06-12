@@ -237,17 +237,6 @@ metadata:
 	}
 }
 
-func clusterDiscoveryExample() ClusterDiscoveryConfig {
-	return ClusterDiscoveryConfig{
-		DiscoveryEnabled: new(true),
-		DiscoveryRegistries: DiscoveryRegistriesConfig{
-			RegistryService: RegistryServiceConfig{
-				RegistryEndpoint: constants.DefaultDiscoveryServiceEndpoint,
-			},
-		},
-	}
-}
-
 func kubeletNodeIPExample() *KubeletNodeIPConfig {
 	return &KubeletNodeIPConfig{
 		KubeletNodeIPValidSubnets: []string{

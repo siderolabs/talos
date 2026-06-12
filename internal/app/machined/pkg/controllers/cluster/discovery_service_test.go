@@ -11,7 +11,6 @@ import (
 	"encoding/base64"
 	"io"
 	"net/netip"
-	"net/url"
 	"testing"
 	"time"
 
@@ -41,12 +40,8 @@ type DiscoveryServiceSuite struct {
 }
 
 func (suite *DiscoveryServiceSuite) TestReconcile() {
-	serviceEndpoint, err := url.Parse(constants.DefaultDiscoveryServiceEndpoint)
+	normalizedEndpoint, isInsecure, err := clusterctrl.NormalizeDiscoveryEndpoint(constants.DefaultDiscoveryServiceEndpoint)
 	suite.Require().NoError(err)
-
-	if serviceEndpoint.Port() == "" {
-		serviceEndpoint.Host += ":443"
-	}
 
 	clusterIDRaw := make([]byte, constants.DefaultClusterIDSize)
 	_, err = io.ReadFull(rand.Reader, clusterIDRaw)
@@ -58,14 +53,24 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 	_, err = io.ReadFull(rand.Reader, encryptionKey)
 	suite.Require().NoError(err)
 
-	// regular discovery affiliate
-	discoveryConfig := cluster.NewConfig(config.NamespaceName, cluster.ConfigID)
-	discoveryConfig.TypedSpec().DiscoveryEnabled = true
-	discoveryConfig.TypedSpec().RegistryServiceEnabled = true
-	discoveryConfig.TypedSpec().ServiceEndpoint = serviceEndpoint.Host
-	discoveryConfig.TypedSpec().ServiceClusterID = clusterID
-	discoveryConfig.TypedSpec().ServiceEncryptionKey = encryptionKey
-	suite.Create(discoveryConfig)
+	// regular discovery affiliate, registered against two discovery service endpoints
+	// (both pointing at the same service, sharing the cluster ID and encryption key)
+	clusterConf := cluster.NewConfig(config.NamespaceName, cluster.ConfigID)
+	clusterConf.TypedSpec().ServiceEndpoints = []cluster.ServiceEndpoint{
+		{
+			Name:     "default",
+			Endpoint: normalizedEndpoint,
+			Insecure: isInsecure,
+		},
+		{
+			Name:     "secondary",
+			Endpoint: normalizedEndpoint,
+			Insecure: isInsecure,
+		},
+	}
+	clusterConf.TypedSpec().ServiceClusterID = clusterID
+	clusterConf.TypedSpec().ServiceEncryptionKey = encryptionKey
+	suite.Create(clusterConf)
 
 	nodeIdentity := cluster.NewIdentity(cluster.NamespaceName, cluster.LocalIdentity)
 	suite.Require().NoError(clusteradapter.IdentitySpec(nodeIdentity.TypedSpec()).Generate())
@@ -90,13 +95,13 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 	suite.Create(localAffiliate)
 
 	// create a test client connected to the same cluster but under different affiliate ID
-	cipher, err := aes.NewCipher(discoveryConfig.TypedSpec().ServiceEncryptionKey)
+	cipher, err := aes.NewCipher(clusterConf.TypedSpec().ServiceEncryptionKey)
 	suite.Require().NoError(err)
 
 	cli, err := client.NewClient(client.Options{
 		Cipher:      cipher,
-		Endpoint:    serviceEndpoint.Host,
-		ClusterID:   discoveryConfig.TypedSpec().ServiceClusterID,
+		Endpoint:    normalizedEndpoint,
+		ClusterID:   clusterConf.TypedSpec().ServiceClusterID,
 		AffiliateID: "7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC",
 		TTL:         5 * time.Minute,
 	})
@@ -241,6 +246,24 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 		}, spec.KubeSpan.Endpoints)
 	}, rtestutils.WithNamespace(cluster.RawNamespaceName))
 
+	// drop the "secondary" endpoint: the controller should gracefully stop that client while the
+	// "default" client keeps running and the discovered affiliate remains published.
+	ctest.UpdateWithConflicts(suite, clusterConf, func(r *cluster.Config) error {
+		r.TypedSpec().ServiceEndpoints = []cluster.ServiceEndpoint{
+			{
+				Name:     "default",
+				Endpoint: normalizedEndpoint,
+				Insecure: isInsecure,
+			},
+		}
+
+		return nil
+	})
+
+	ctest.AssertResource(suite, "service/7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC", func(r *cluster.Affiliate, asrt *assert.Assertions) {
+		asrt.Equal("7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC", r.TypedSpec().NodeID)
+	}, rtestutils.WithNamespace(cluster.RawNamespaceName))
+
 	// pretend that machine is being reset
 	suite.Create(runtime.NewMachineResetSignal())
 
@@ -261,12 +284,8 @@ func (suite *DiscoveryServiceSuite) TestReconcile() {
 }
 
 func (suite *DiscoveryServiceSuite) TestDisable() {
-	serviceEndpoint, err := url.Parse(constants.DefaultDiscoveryServiceEndpoint)
+	normalizedEndpoint, isInsecure, err := clusterctrl.NormalizeDiscoveryEndpoint(constants.DefaultDiscoveryServiceEndpoint)
 	suite.Require().NoError(err)
-
-	if serviceEndpoint.Port() == "" {
-		serviceEndpoint.Host += ":443"
-	}
 
 	clusterIDRaw := make([]byte, constants.DefaultClusterIDSize)
 	_, err = io.ReadFull(rand.Reader, clusterIDRaw)
@@ -280,9 +299,13 @@ func (suite *DiscoveryServiceSuite) TestDisable() {
 
 	// regular discovery affiliate
 	discoveryConfig := cluster.NewConfig(config.NamespaceName, cluster.ConfigID)
-	discoveryConfig.TypedSpec().DiscoveryEnabled = true
-	discoveryConfig.TypedSpec().RegistryServiceEnabled = true
-	discoveryConfig.TypedSpec().ServiceEndpoint = serviceEndpoint.Host
+	discoveryConfig.TypedSpec().ServiceEndpoints = []cluster.ServiceEndpoint{
+		{
+			Name:     "default",
+			Endpoint: normalizedEndpoint,
+			Insecure: isInsecure,
+		},
+	}
 	discoveryConfig.TypedSpec().ServiceClusterID = clusterID
 	discoveryConfig.TypedSpec().ServiceEncryptionKey = encryptionKey
 	suite.Create(discoveryConfig)
@@ -307,7 +330,8 @@ func (suite *DiscoveryServiceSuite) TestDisable() {
 
 	cli, err := client.NewClient(client.Options{
 		Cipher:      cipher,
-		Endpoint:    serviceEndpoint.Host,
+		Endpoint:    normalizedEndpoint,
+		Insecure:    isInsecure,
 		ClusterID:   discoveryConfig.TypedSpec().ServiceClusterID,
 		AffiliateID: "7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC",
 		TTL:         5 * time.Minute,
@@ -337,7 +361,7 @@ func (suite *DiscoveryServiceSuite) TestDisable() {
 
 	// now disable the service registry
 	ctest.UpdateWithConflicts(suite, discoveryConfig, func(r *cluster.Config) error {
-		r.TypedSpec().RegistryServiceEnabled = false
+		r.TypedSpec().ServiceEndpoints = nil
 
 		return nil
 	})
@@ -346,6 +370,252 @@ func (suite *DiscoveryServiceSuite) TestDisable() {
 
 	cliCtxCancel()
 	suite.Assert().NoError(<-errCh)
+}
+
+// TestEndpointChange verifies that changing a configured endpoint's value gracefully recreates the
+// client against the new endpoint.
+//
+// There is no in-process discovery service to point a second endpoint at, and a registration only
+// disappears from the real service after its TTL (30m), so this drives the observable direction:
+// the endpoint starts unreachable (controller can't register anywhere), then flips to the real
+// service, and we assert the affiliate shows up — which only happens if the recreated client
+// connected to the new endpoint.
+func (suite *DiscoveryServiceSuite) TestEndpointChange() {
+	normalizedEndpoint, isInsecure, err := clusterctrl.NormalizeDiscoveryEndpoint(constants.DefaultDiscoveryServiceEndpoint)
+	suite.Require().NoError(err)
+
+	clusterIDRaw := make([]byte, constants.DefaultClusterIDSize)
+	_, err = io.ReadFull(rand.Reader, clusterIDRaw)
+	suite.Require().NoError(err)
+
+	clusterID := base64.StdEncoding.EncodeToString(clusterIDRaw)
+
+	encryptionKey := make([]byte, constants.DefaultClusterSecretSize)
+	_, err = io.ReadFull(rand.Reader, encryptionKey)
+	suite.Require().NoError(err)
+
+	// start with a single endpoint pointing at an unreachable address: the controller cannot register
+	// its affiliate anywhere until the endpoint is changed.
+	endpointUnreachable := cluster.ServiceEndpoint{
+		Name:     "default",
+		Endpoint: "127.0.0.1:1",
+		Insecure: true,
+	}
+	discoveryConfig := cluster.NewConfig(config.NamespaceName, cluster.ConfigID)
+	discoveryConfig.TypedSpec().ServiceEndpoints = []cluster.ServiceEndpoint{endpointUnreachable}
+	discoveryConfig.TypedSpec().ServiceClusterID = clusterID
+	discoveryConfig.TypedSpec().ServiceEncryptionKey = encryptionKey
+	suite.Create(discoveryConfig)
+
+	nodeIdentity := cluster.NewIdentity(cluster.NamespaceName, cluster.LocalIdentity)
+	suite.Require().NoError(clusteradapter.IdentitySpec(nodeIdentity.TypedSpec()).Generate())
+	suite.Create(nodeIdentity)
+
+	localAffiliate := cluster.NewAffiliate(cluster.NamespaceName, nodeIdentity.TypedSpec().NodeID)
+	*localAffiliate.TypedSpec() = cluster.AffiliateSpec{
+		NodeID:      nodeIdentity.TypedSpec().NodeID,
+		Hostname:    "foo.com",
+		Nodename:    "bar",
+		MachineType: machine.TypeControlPlane,
+		Addresses:   []netip.Addr{netip.MustParseAddr("192.168.3.4")},
+	}
+	suite.Create(localAffiliate)
+
+	// create a test client connected to the real service under a different affiliate ID
+	cipher, err := aes.NewCipher(discoveryConfig.TypedSpec().ServiceEncryptionKey)
+	suite.Require().NoError(err)
+
+	cli, err := client.NewClient(client.Options{
+		Cipher:      cipher,
+		Endpoint:    normalizedEndpoint,
+		Insecure:    isInsecure,
+		ClusterID:   discoveryConfig.TypedSpec().ServiceClusterID,
+		AffiliateID: "7x1SuC8Ege5BGXdAfTEff5iQnlWZLfv9h1LGMxA2pYkC",
+		TTL:         5 * time.Minute,
+	})
+	suite.Require().NoError(err)
+
+	errCh := make(chan error, 1)
+	notifyCh := make(chan struct{}, 1)
+
+	cliCtx, cliCtxCancel := context.WithCancel(suite.Ctx())
+	defer cliCtxCancel()
+
+	go func() {
+		errCh <- cli.Run(cliCtx, zaptest.NewLogger(suite.T()), notifyCh)
+	}()
+
+	// while the controller's only endpoint is unreachable, it cannot register: the test client (on the
+	// real service) should not discover the local affiliate. Best-effort negative check.
+	time.Sleep(2 * time.Second)
+	suite.Assert().Empty(cli.GetAffiliates())
+
+	// change the endpoint to the real service: the controller should recreate the client against it.
+	ctest.UpdateWithConflicts(suite, discoveryConfig, func(r *cluster.Config) error {
+		r.TypedSpec().ServiceEndpoints = []cluster.ServiceEndpoint{
+			{
+				Name:     "default",
+				Endpoint: normalizedEndpoint,
+				Insecure: isInsecure,
+			},
+		}
+
+		return nil
+	})
+
+	suite.AssertWithin(10*time.Second, 100*time.Millisecond, func() error {
+		// the recreated client connects to the new endpoint and registers, so we should see it discovered
+		affiliates := cli.GetAffiliates()
+
+		if len(affiliates) != 1 {
+			return retry.ExpectedErrorf("affiliates len %d != 1", len(affiliates))
+		}
+
+		if affiliates[0].Affiliate.NodeId != nodeIdentity.TypedSpec().NodeID {
+			return retry.ExpectedErrorf("unexpected node ID %q", affiliates[0].Affiliate.NodeId)
+		}
+
+		return nil
+	})
+
+	cliCtxCancel()
+	suite.Assert().NoError(<-errCh)
+}
+
+func TestNormalizeDiscoveryEndpoint(t *testing.T) {
+	tests := []struct {
+		name           string
+		endpoint       string
+		expectErr      bool
+		expectAddr     string
+		expectInsecure bool
+	}{
+		{
+			name:           "HTTPS with explicit port",
+			endpoint:       "https://discovery.example.com:6443",
+			expectErr:      false,
+			expectAddr:     "discovery.example.com:6443",
+			expectInsecure: false,
+		},
+		{
+			name:           "HTTPS without port defaults to 443",
+			endpoint:       "https://discovery.example.com",
+			expectErr:      false,
+			expectAddr:     "discovery.example.com:443",
+			expectInsecure: false,
+		},
+		{
+			name:           "HTTP with explicit port",
+			endpoint:       "http://discovery.example.com:8080",
+			expectErr:      false,
+			expectAddr:     "discovery.example.com:8080",
+			expectInsecure: true,
+		},
+		{
+			name:           "HTTP without port defaults to 80",
+			endpoint:       "http://discovery.example.com",
+			expectErr:      false,
+			expectAddr:     "discovery.example.com:80",
+			expectInsecure: true,
+		},
+		{
+			name:           "HTTPS without port defaults to 443",
+			endpoint:       "https://discovery.example.com",
+			expectErr:      false,
+			expectAddr:     "discovery.example.com:443",
+			expectInsecure: false,
+		},
+		{
+			name:           "HTTPS with IPv4 and port",
+			endpoint:       "https://192.168.1.1:6443",
+			expectErr:      false,
+			expectAddr:     "192.168.1.1:6443",
+			expectInsecure: false,
+		},
+		{
+			name:           "HTTP with IPv4 defaults to port 80",
+			endpoint:       "http://192.168.1.1",
+			expectErr:      false,
+			expectAddr:     "192.168.1.1:80",
+			expectInsecure: true,
+		},
+		{
+			name:           "HTTPS with IPv6 and port",
+			endpoint:       "https://[::1]:6443",
+			expectErr:      false,
+			expectAddr:     "[::1]:6443",
+			expectInsecure: false,
+		},
+		{
+			name:           "HTTP with IPv6 defaults to port 80",
+			endpoint:       "http://[::1]",
+			expectErr:      false,
+			expectAddr:     "[::1]:80",
+			expectInsecure: true,
+		},
+		{
+			name:           "HTTPS with path is stripped",
+			endpoint:       "https://discovery.example.com:6443/api/v1",
+			expectErr:      false,
+			expectAddr:     "discovery.example.com:6443",
+			expectInsecure: false,
+		},
+		{
+			name:           "HTTPS with query string is stripped",
+			endpoint:       "https://discovery.example.com:6443?key=value",
+			expectErr:      false,
+			expectAddr:     "discovery.example.com:6443",
+			expectInsecure: false,
+		},
+		{
+			name:           "Invalid URL returns error",
+			endpoint:       "not a valid url://[",
+			expectErr:      true,
+			expectAddr:     "",
+			expectInsecure: false,
+		},
+		{
+			name:      "Empty URL returns error",
+			endpoint:  "",
+			expectErr: true,
+		},
+		{
+			name:      "Scheme-less URL returns error",
+			endpoint:  "discovery.example.com",
+			expectErr: true,
+		},
+		{
+			name:      "Unsupported scheme returns error",
+			endpoint:  "ftp://discovery.example.com",
+			expectErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			addr, insecure, err := clusterctrl.NormalizeDiscoveryEndpoint(tt.endpoint)
+
+			if tt.expectErr {
+				if err == nil {
+					t.Errorf("expected error, got nil")
+				}
+
+				return
+			}
+
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+
+			if addr != tt.expectAddr {
+				t.Errorf("expected addr %q, got %q", tt.expectAddr, addr)
+			}
+
+			if insecure != tt.expectInsecure {
+				t.Errorf("expected insecure %v, got %v", tt.expectInsecure, insecure)
+			}
+		})
+	}
 }
 
 func TestDiscoveryServiceSuite(t *testing.T) {

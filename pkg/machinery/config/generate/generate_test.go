@@ -167,6 +167,84 @@ func TestGenerateRegistryMirrorsOrder(t *testing.T) {
 	assert.Equal(t, "b.com", named.Name())
 }
 
+// TestGenerateDiscoveryServiceConfig verifies that discovery config generation is gated on the version contract:
+// 1.14+ emits a multi-doc DiscoveryServiceConfig, older versions emit the legacy .cluster.discovery block,
+// and disabling discovery emits neither.
+func TestGenerateDiscoveryServiceConfig(t *testing.T) {
+	t.Parallel()
+
+	for _, machineType := range []machine.Type{machine.TypeControlPlane, machine.TypeWorker} {
+		for _, test := range []struct {
+			name       string
+			genOptions []generate.Option
+
+			// expectMultidoc: a DiscoveryServiceConfig document named "default" is emitted
+			expectMultidoc bool
+			// expectLegacy: the deprecated .cluster.discovery block is populated
+			expectLegacy bool
+			// expectEndpoint: endpoint surfaced via the DiscoveryServiceConfigs() accessor (empty means none)
+			expectEndpoint string
+		}{
+			{
+				name:           "1.14 discovery enabled by default",
+				genOptions:     []generate.Option{generate.WithVersionContract(config.TalosVersion1_14)},
+				expectMultidoc: true,
+				expectEndpoint: constants.DefaultDiscoveryServiceEndpoint,
+			},
+			{
+				name:           "1.13 discovery enabled uses legacy block",
+				genOptions:     []generate.Option{generate.WithVersionContract(config.TalosVersion1_13)},
+				expectLegacy:   true,
+				expectEndpoint: constants.DefaultDiscoveryServiceEndpoint,
+			},
+			{
+				name:           "1.14 discovery disabled emits nothing",
+				genOptions:     []generate.Option{generate.WithVersionContract(config.TalosVersion1_14), generate.WithClusterDiscovery(false)},
+				expectLegacy:   false,
+				expectEndpoint: "",
+			},
+			{
+				name:         "1.13 discovery disabled uses legacy block",
+				genOptions:   []generate.Option{generate.WithVersionContract(config.TalosVersion1_13), generate.WithClusterDiscovery(false)},
+				expectLegacy: true,
+			},
+		} {
+			t.Run(fmt.Sprintf("%s/%s", machineType, test.name), func(t *testing.T) {
+				t.Parallel()
+
+				input, err := generate.NewInput("test", "https://10.0.1.5:6443", constants.DefaultKubernetesVersion, test.genOptions...)
+				require.NoError(t, err)
+
+				cfg, err := input.Config(machineType)
+				require.NoError(t, err)
+
+				multidocCount := len(xslices.Filter(cfg.Documents(), func(doc mc.Document) bool {
+					return doc.Kind() == "DiscoveryServiceConfig"
+				}))
+
+				if test.expectMultidoc {
+					assert.Equal(t, 1, multidocCount)
+				} else {
+					assert.Equal(t, 0, multidocCount)
+				}
+
+				assert.Equal(t, test.expectLegacy, cfg.RawV1Alpha1().ClusterConfig.ClusterDiscoveryConfig != nil) //nolint:staticcheck // verifying legacy config presence
+
+				discoveryConfigs := cfg.DiscoveryServiceConfigs()
+
+				if test.expectEndpoint == "" {
+					assert.Empty(t, discoveryConfigs)
+
+					return
+				}
+
+				require.Len(t, discoveryConfigs, 1)
+				assert.Equal(t, test.expectEndpoint, discoveryConfigs[0].Endpoint().String())
+			})
+		}
+	}
+}
+
 type runtimeMode struct {
 	requiresInstall bool
 }

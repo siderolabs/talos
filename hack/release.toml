@@ -91,6 +91,8 @@ HTTP responses with status 200-399 are considered successful, while connection a
         description = """\
 Talos introduces new multi-document Kubernetes configuration, which allows for more flexible and modular configuration of Kubernetes components.
 Talos still supports the old v1alpha1 config for backwards compatibility, but new features and fields will only be available in the new multi-document format.
+Talos introduces support for configuring multiple discovery service endpoints.
+The `kube-proxy` is now using configuration to manage its settings instead of command line arguments (with new `KubeProxyConfig` document).
 
 List of changes:
 
@@ -100,8 +102,7 @@ List of changes:
 - Deprecated `.cluster.scheduler` in the v1alpha1 config; use the `KubeSchedulerConfig` document for kube-scheduler configuration.
 - Deprecated `.cluster.proxy` in the v1alpha1 config; use the `KubeProxyConfig` document for kube-proxy configuration.
 - Deprecated `.cluster.network` in the v1alpha1 config; use the `KubeNetworkConfig` document for Kubernetes network configuration; Flannel can be configured using the `KubeFlannelCNIConfig` document.
-
-The `kube-proxy` is now using configuration to manage its settings instead of command line arguments (with new `KubeProxyConfig` document).
+- Deprecated `.cluster.discovery` in the v1alpha1 config; use the `DiscoveryServiceConfig` document for discovery service configuration. The v1alpha1 config and `DiscoveryServiceConfig` are mutually exclusive.
 """
 
     [notes.dhcpsearchdomains]

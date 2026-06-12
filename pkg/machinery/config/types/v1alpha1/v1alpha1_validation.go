@@ -559,8 +559,8 @@ func (c *ClusterDiscoveryConfig) Validate(clusterCfg *ClusterConfig) error {
 		return nil
 	}
 
-	if c.Registries().Service().Enabled() {
-		url, err := url.ParseRequestURI(c.Registries().Service().Endpoint())
+	if c.DiscoveryRegistries.Service().Enabled() {
+		url, err := url.ParseRequestURI(c.DiscoveryRegistries.Service().Endpoint())
 		if err != nil {
 			result = multierror.Append(result, fmt.Errorf("cluster discovery service registry endpoint is invalid: %w", err))
 		} else if url.Path != "" && url.Path != "/" {

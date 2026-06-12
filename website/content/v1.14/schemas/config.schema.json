@@ -869,6 +869,52 @@
       ],
       "description": "ZswapConfig is a zswap (compressed memory) configuration document.\\nWhen zswap is enabled, Linux kernel compresses pages that would otherwise be swapped out to disk.\\nThe compressed pages are stored in a memory pool, which is used to avoid writing to disk\\nwhen the system is under memory pressure.\\n"
     },
+    "cluster.DiscoveryServiceConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "DiscoveryServiceConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the discovery service configuration.\n",
+          "markdownDescription": "Name of the discovery service configuration.",
+          "x-intellij-html-description": "\u003cp\u003eName of the discovery service configuration.\u003c/p\u003e\n"
+        },
+        "endpoint": {
+          "type": "string",
+          "pattern": "^(http|https|grpc)://",
+          "title": "endpoint",
+          "description": "Discovery service endpoint to use.\n",
+          "markdownDescription": "Discovery service endpoint to use.",
+          "x-intellij-html-description": "\u003cp\u003eDiscovery service endpoint to use.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "endpoint",
+        "kind",
+        "name"
+      ],
+      "description": "DiscoveryServiceConfig is a config document to configure a discovery service."
+    },
     "cri.ImageCacheConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -5151,13 +5197,6 @@
           "markdownDescription": "The base64 encoded private key for service account token generation.",
           "x-intellij-html-description": "\u003cp\u003eThe base64 encoded private key for service account token generation.\u003c/p\u003e\n"
         },
-        "discovery": {
-          "$ref": "#/$defs/v1alpha1.ClusterDiscoveryConfig",
-          "title": "discovery",
-          "description": "Configures cluster member discovery.\n",
-          "markdownDescription": "Configures cluster member discovery.",
-          "x-intellij-html-description": "\u003cp\u003eConfigures cluster member discovery.\u003c/p\u003e\n"
-        },
         "etcd": {
           "$ref": "#/$defs/v1alpha1.EtcdConfig",
           "title": "etcd",
@@ -5229,27 +5268,6 @@
       "additionalProperties": false,
       "type": "object",
       "description": "ClusterConfig represents the cluster-wide config values."
-    },
-    "v1alpha1.ClusterDiscoveryConfig": {
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "title": "enabled",
-          "description": "Enable the cluster membership discovery feature.\nCluster discovery is based on individual registries which are configured under the registries field.\n",
-          "markdownDescription": "Enable the cluster membership discovery feature.\nCluster discovery is based on individual registries which are configured under the registries field.",
-          "x-intellij-html-description": "\u003cp\u003eEnable the cluster membership discovery feature.\nCluster discovery is based on individual registries which are configured under the registries field.\u003c/p\u003e\n"
-        },
-        "registries": {
-          "$ref": "#/$defs/v1alpha1.DiscoveryRegistriesConfig",
-          "title": "registries",
-          "description": "Configure registries used for cluster member discovery.\n",
-          "markdownDescription": "Configure registries used for cluster member discovery.",
-          "x-intellij-html-description": "\u003cp\u003eConfigure registries used for cluster member discovery.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "ClusterDiscoveryConfig struct configures cluster membership discovery.\\n"
     },
     "v1alpha1.ClusterInlineManifest": {
       "properties": {
@@ -5345,27 +5363,6 @@
       "additionalProperties": false,
       "type": "object",
       "description": "CoreDNS represents the CoreDNS config values.\\n"
-    },
-    "v1alpha1.DiscoveryRegistriesConfig": {
-      "properties": {
-        "kubernetes": {
-          "$ref": "#/$defs/v1alpha1.RegistryKubernetesConfig",
-          "title": "kubernetes",
-          "description": "Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information\nas annotations on the Node resources.\n\nThis feature is deprecated as it is not compatible with Kubernetes 1.32+.\nSee https://github.com/siderolabs/talos/issues/9980 for more information.\n",
-          "markdownDescription": "Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information\nas annotations on the Node resources.\n\nThis feature is deprecated as it is not compatible with Kubernetes 1.32+.\nSee https://github.com/siderolabs/talos/issues/9980 for more information.",
-          "x-intellij-html-description": "\u003cp\u003eKubernetes registry uses Kubernetes API server to discover cluster members and stores additional information\nas annotations on the Node resources.\u003c/p\u003e\n\n\u003cp\u003eThis feature is deprecated as it is not compatible with Kubernetes 1.32+.\nSee \u003ca href=\"https://github.com/siderolabs/talos/issues/9980\" target=\"_blank\"\u003ehttps://github.com/siderolabs/talos/issues/9980\u003c/a\u003e for more information.\u003c/p\u003e\n"
-        },
-        "service": {
-          "$ref": "#/$defs/v1alpha1.RegistryServiceConfig",
-          "title": "service",
-          "description": "Service registry is using an external service to push and pull information about cluster members.\n",
-          "markdownDescription": "Service registry is using an external service to push and pull information about cluster members.",
-          "x-intellij-html-description": "\u003cp\u003eService registry is using an external service to push and pull information about cluster members.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "DiscoveryRegistriesConfig struct configures cluster membership discovery.\\n"
     },
     "v1alpha1.Endpoint": {
       "properties": {},
@@ -6218,41 +6215,6 @@
       "type": "object",
       "description": "MachineSeccompProfile defines seccomp profiles for the machine.\\n"
     },
-    "v1alpha1.RegistryKubernetesConfig": {
-      "properties": {
-        "disabled": {
-          "type": "boolean",
-          "title": "disabled",
-          "description": "Disable Kubernetes discovery registry.\n",
-          "markdownDescription": "Disable Kubernetes discovery registry.",
-          "x-intellij-html-description": "\u003cp\u003eDisable Kubernetes discovery registry.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "RegistryKubernetesConfig struct configures Kubernetes discovery registry.\\n"
-    },
-    "v1alpha1.RegistryServiceConfig": {
-      "properties": {
-        "disabled": {
-          "type": "boolean",
-          "title": "disabled",
-          "description": "Disable external service discovery registry.\n",
-          "markdownDescription": "Disable external service discovery registry.",
-          "x-intellij-html-description": "\u003cp\u003eDisable external service discovery registry.\u003c/p\u003e\n"
-        },
-        "endpoint": {
-          "type": "string",
-          "title": "endpoint",
-          "description": "External service endpoint.\n",
-          "markdownDescription": "External service endpoint.",
-          "x-intellij-html-description": "\u003cp\u003eExternal service endpoint.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "RegistryServiceConfig struct configures Kubernetes discovery registry.\\n"
-    },
     "v1alpha1.UdevConfig": {
       "properties": {
         "rules": {
@@ -6295,6 +6257,9 @@
     },
     {
       "$ref": "#/$defs/block.ZswapConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/cluster.DiscoveryServiceConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/cri.ImageCacheConfigV1Alpha1"

@@ -889,17 +889,6 @@ aggregatorCA:
 serviceAccount:
     key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
 {{< /highlight >}}</details> | |
-|`discovery` |<a href="#Config.cluster.discovery">ClusterDiscoveryConfig</a> |Configures cluster member discovery. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-discovery:
-    enabled: true # Enable the cluster membership discovery feature.
-    # Configure registries used for cluster member discovery.
-    registries:
-        # Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information
-        kubernetes: {}
-        # Service registry is using an external service to push and pull information about cluster members.
-        service:
-            endpoint: https://discovery.talos.dev/ # External service endpoint.
-{{< /highlight >}}</details> | |
 |`etcd` |<a href="#Config.cluster.etcd">EtcdConfig</a> |Etcd specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 etcd:
     image: registry.k8s.io/etcd:3.7.0-rc.0-0 # The container image used to create the etcd service.
@@ -988,92 +977,6 @@ Endpoint represents the endpoint URL parsed out of the machine config.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-
-
-
-
-
-
-
-
-### discovery {#Config.cluster.discovery}
-
-ClusterDiscoveryConfig struct configures cluster membership discovery.
-
-
-
-
-{{< highlight yaml >}}
-cluster:
-    discovery:
-        enabled: true # Enable the cluster membership discovery feature.
-        # Configure registries used for cluster member discovery.
-        registries:
-            # Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information
-            kubernetes: {}
-            # Service registry is using an external service to push and pull information about cluster members.
-            service:
-                endpoint: https://discovery.talos.dev/ # External service endpoint.
-{{< /highlight >}}
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`enabled` |bool |Enable the cluster membership discovery feature.<br>Cluster discovery is based on individual registries which are configured under the registries field.  | |
-|`registries` |<a href="#Config.cluster.discovery.registries">DiscoveryRegistriesConfig</a> |Configure registries used for cluster member discovery.  | |
-
-
-
-
-#### registries {#Config.cluster.discovery.registries}
-
-DiscoveryRegistriesConfig struct configures cluster membership discovery.
-
-
-
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`kubernetes` |<a href="#Config.cluster.discovery.registries.kubernetes">RegistryKubernetesConfig</a> |Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information<br>as annotations on the Node resources.<br><br>This feature is deprecated as it is not compatible with Kubernetes 1.32+.<br>See https://github.com/siderolabs/talos/issues/9980 for more information.  | |
-|`service` |<a href="#Config.cluster.discovery.registries.service">RegistryServiceConfig</a> |Service registry is using an external service to push and pull information about cluster members.  | |
-
-
-
-
-##### kubernetes {#Config.cluster.discovery.registries.kubernetes}
-
-RegistryKubernetesConfig struct configures Kubernetes discovery registry.
-
-
-
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`disabled` |bool |Disable Kubernetes discovery registry.  | |
-
-
-
-
-
-
-##### service {#Config.cluster.discovery.registries.service}
-
-RegistryServiceConfig struct configures Kubernetes discovery registry.
-
-
-
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`disabled` |bool |Disable external service discovery registry.  | |
-|`endpoint` |string |External service endpoint. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-endpoint: https://discovery.talos.dev/
-{{< /highlight >}}</details> | |
-
-
 
 
 

@@ -413,6 +413,9 @@ type ClusterConfig struct {
 	//     Configures cluster member discovery.
 	//   examples:
 	//     - value: clusterDiscoveryExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use 'DiscoveryServiceConfig' instead
 	ClusterDiscoveryConfig *ClusterDiscoveryConfig `yaml:"discovery,omitempty"`
 	//   description: |
 	//     Etcd specific configuration options.
@@ -2507,17 +2510,33 @@ type NetworkDeviceSelector struct {
 }
 
 // ClusterDiscoveryConfig struct configures cluster membership discovery.
+//
+// docgen:nodoc
+//
+// Deprecated: Use 'DiscoveryServiceConfig' document instead.
 type ClusterDiscoveryConfig struct {
 	// description: |
 	//   Enable the cluster membership discovery feature.
 	//   Cluster discovery is based on individual registries which are configured under the registries field.
+	//
+	// docgen:nodoc
+	//
+	// Deprecated: Use 'DiscoveryServiceConfig' document instead.
 	DiscoveryEnabled *bool `yaml:"enabled,omitempty"`
 	// description: |
 	//   Configure registries used for cluster member discovery.
+	//
+	// docgen:nodoc
+	//
+	// Deprecated: Use 'DiscoveryServiceConfig' document instead.
 	DiscoveryRegistries DiscoveryRegistriesConfig `yaml:"registries"`
 }
 
 // DiscoveryRegistriesConfig struct configures cluster membership discovery.
+//
+// docgen:nodoc
+//
+// Deprecated: Use 'DiscoveryServiceConfig' document instead.
 type DiscoveryRegistriesConfig struct {
 	// description: |
 	//   Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information
@@ -2525,13 +2544,25 @@ type DiscoveryRegistriesConfig struct {
 	//
 	//   This feature is deprecated as it is not compatible with Kubernetes 1.32+.
 	//   See https://github.com/siderolabs/talos/issues/9980 for more information.
+	//
+	// docgen:nodoc
+	//
+	// Deprecated: Use 'DiscoveryServiceConfig' document instead.
 	RegistryKubernetes RegistryKubernetesConfig `yaml:"kubernetes"`
 	// description: |
 	//   Service registry is using an external service to push and pull information about cluster members.
+	//
+	// docgen:nodoc
+	//
+	// Deprecated: Use 'DiscoveryServiceConfig' document instead.
 	RegistryService RegistryServiceConfig `yaml:"service"`
 }
 
 // RegistryKubernetesConfig struct configures Kubernetes discovery registry.
+//
+// docgen:nodoc
+//
+// Deprecated: Use 'DiscoveryServiceConfig' document instead.
 type RegistryKubernetesConfig struct {
 	// description: |
 	//   Disable Kubernetes discovery registry.
@@ -2539,14 +2570,26 @@ type RegistryKubernetesConfig struct {
 }
 
 // RegistryServiceConfig struct configures Kubernetes discovery registry.
+//
+// docgen:nodoc
+//
+// Deprecated: Use 'DiscoveryServiceConfig' document instead.
 type RegistryServiceConfig struct {
 	// description: |
 	//   Disable external service discovery registry.
+	//
+	// docgen:nodoc
+	//
+	// Deprecated: Use 'DiscoveryServiceConfig' document instead.
 	RegistryDisabled *bool `yaml:"disabled,omitempty"`
 	// description: |
 	//   External service endpoint.
 	// examples:
 	//   - value: constants.DefaultDiscoveryServiceEndpoint
+	//
+	// docgen:nodoc
+	//
+	// Deprecated: Use 'DiscoveryServiceConfig' document instead.
 	RegistryEndpoint string `yaml:"endpoint,omitempty"`
 }
 

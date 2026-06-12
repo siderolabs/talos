@@ -16,6 +16,7 @@ type Config interface { //nolint:interfacebloat
 	//  - network
 	SideroLink() SideroLinkConfig
 	NetworkRules() NetworkRuleConfig
+	DiscoveryServiceConfigs() []DiscoveryServiceConfig
 	KubespanConfig() KubespanConfig
 	EthernetConfigs() []EthernetConfig
 	RunDefaultDHCPOperators() bool

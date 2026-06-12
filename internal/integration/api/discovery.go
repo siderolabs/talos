@@ -22,10 +22,15 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 
+	clusterctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cluster"
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config"
+	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
+	clustertypes "github.com/siderolabs/talos/pkg/machinery/config/types/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
+	resourcesconfig "github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/kubespan"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 )
@@ -56,9 +61,22 @@ func (suite *DiscoverySuite) SetupTest() {
 	provider, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Require().NoError(err)
 
-	if !provider.Cluster().Discovery().Enabled() {
+	if !discoveryServiceEnabled(provider) && !kubernetesRegistryEnabled(provider) {
 		suite.T().Skip("cluster discovery is disabled")
 	}
+}
+
+// discoveryServiceEnabled reports whether the discovery service registry is active,
+// covering both the legacy cluster.discovery block and the new DiscoveryServiceConfig documents.
+func discoveryServiceEnabled(provider config.Provider) bool {
+	return len(provider.DiscoveryServiceConfigs()) > 0
+}
+
+// kubernetesRegistryEnabled reports whether the legacy Kubernetes discovery registry is active.
+// The Kubernetes registry only exists in the legacy v1alpha1 config path.
+func kubernetesRegistryEnabled(provider config.Provider) bool {
+	return provider.Cluster().Discovery().Enabled() &&
+		provider.Cluster().Discovery().Registries().Kubernetes().Enabled()
 }
 
 // TearDownTest ...
@@ -181,11 +199,11 @@ func (suite *DiscoverySuite) TestRegistries() {
 
 	var registries []string
 
-	if provider.Cluster().Discovery().Registries().Kubernetes().Enabled() {
+	if kubernetesRegistryEnabled(provider) {
 		registries = append(registries, "k8s/")
 	}
 
-	if provider.Cluster().Discovery().Registries().Service().Enabled() {
+	if discoveryServiceEnabled(provider) {
 		registries = append(registries, "service/")
 	}
 
@@ -243,6 +261,135 @@ func (suite *DiscoverySuite) TestRegistries() {
 			}
 		}
 	}
+}
+
+// TestServiceEndpoints verifies that the cluster Config resource's ServiceEndpoints map reflects the
+// configured discovery services, covering both the legacy cluster.discovery block (surfaced as a single
+// "legacy" entry) and the new multi-doc DiscoveryServiceConfig documents.
+func (suite *DiscoverySuite) TestServiceEndpoints() {
+	node := suite.RandomDiscoveredNodeInternalIP()
+	suite.ClearConnectionRefused(suite.ctx, node)
+
+	nodeCtx := client.WithNode(suite.ctx, node)
+	provider, err := suite.ReadConfigFromNode(nodeCtx)
+	suite.Require().NoError(err)
+
+	if !discoveryServiceEnabled(provider) {
+		suite.T().Skip("discovery service is disabled")
+	}
+
+	expected := xslices.Map(provider.DiscoveryServiceConfigs(), func(c configconfig.DiscoveryServiceConfig) cluster.ServiceEndpoint {
+		addr, insecure, err := clusterctrl.NormalizeDiscoveryEndpoint(c.Endpoint().String())
+		suite.Require().NoError(err)
+
+		return cluster.ServiceEndpoint{Name: c.Name(), Endpoint: addr, Insecure: insecure}
+	})
+
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{cluster.ConfigID},
+		func(cfg *cluster.Config, asrt *assert.Assertions) {
+			asrt.ElementsMatch(expected, cfg.TypedSpec().ServiceEndpoints)
+		},
+		rtestutils.WithNamespace(resourcesconfig.NamespaceName),
+	)
+}
+
+// TestDiscoveryServiceConfigDocument verifies that an additional multi-doc DiscoveryServiceConfig is
+// picked up by the discovery service controller and that discovery keeps working with multiple endpoints.
+//
+// The new DiscoveryServiceConfig document is mutually exclusive with the legacy cluster.discovery block
+// (enforced by V1Alpha1ConflictValidate), so this scenario only applies to clusters using the new config.
+func (suite *DiscoverySuite) TestDiscoveryServiceConfigDocument() {
+	node := suite.RandomDiscoveredNodeInternalIP()
+	suite.ClearConnectionRefused(suite.ctx, node)
+
+	nodeCtx := client.WithNode(suite.ctx, node)
+	provider, err := suite.ReadConfigFromNode(nodeCtx)
+	suite.Require().NoError(err)
+
+	if provider.Cluster().Discovery().Enabled() {
+		suite.T().Skip("cluster uses the legacy v1alpha1 discovery config")
+	}
+
+	discoveryServiceConfigs := provider.DiscoveryServiceConfigs()
+	if len(discoveryServiceConfigs) == 0 {
+		suite.T().Skip("discovery service is disabled")
+	}
+
+	const extraName = "integration-extra"
+
+	// reuse an existing endpoint so the extra discovery client connects to a real service;
+	// multiple documents pointing at the same endpoint are allowed as long as their names differ
+	cfgDocument := clustertypes.NewDiscoveryServiceConfigV1Alpha1(extraName, discoveryServiceConfigs[0].Endpoint())
+
+	suite.T().Logf("injecting extra discovery service %q on node %s", extraName, node)
+	suite.PatchMachineConfig(nodeCtx, cfgDocument)
+
+	// the cluster Config resource should now include the extra named endpoint
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{cluster.ConfigID},
+		func(cfg *cluster.Config, asrt *assert.Assertions) {
+			asrt.Contains(xslices.Map(cfg.TypedSpec().ServiceEndpoints, func(ep cluster.ServiceEndpoint) string { return ep.Name }), extraName)
+		},
+		rtestutils.WithNamespace(resourcesconfig.NamespaceName),
+	)
+
+	// discovery should still work with multiple endpoints: all other nodes remain discovered as members
+	nodes := suite.DiscoverNodeInternalIPs(suite.ctx)
+	suite.Assert().Len(suite.getMembers(nodeCtx), len(nodes))
+
+	suite.T().Logf("removing extra discovery service %q from node %s", extraName, node)
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, clustertypes.DiscoveryServiceKind, extraName)
+
+	// after removal, the extra endpoint disappears from the resource
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{cluster.ConfigID},
+		func(cfg *cluster.Config, asrt *assert.Assertions) {
+			asrt.NotContains(xslices.Map(cfg.TypedSpec().ServiceEndpoints, func(ep cluster.ServiceEndpoint) string { return ep.Name }), extraName)
+		},
+		rtestutils.WithNamespace(resourcesconfig.NamespaceName),
+	)
+
+	// removing one of several endpoints must not disrupt discovery: all nodes remain members
+	rtestutils.AssertLength[*cluster.Member](nodeCtx, suite.T(), suite.Client.COSI, len(suite.DiscoverNodeInternalIPs(suite.ctx)))
+
+	// Removing all discovery service configs disables discovery on this node entirely. On a KubeSpan
+	// cluster the WireGuard peer set is populated from discovery, so disabling it drops all peers and
+	// partitions the node from the cluster (on a control plane node this collapses etcd and the API VIP).
+	// Skip the destructive check there; the multi-endpoint behavior above is the feature under test.
+	if kubeSpan := provider.NetworkKubeSpanConfig(); kubeSpan != nil && kubeSpan.Enabled() {
+		return
+	}
+
+	// guarantee the original configuration is restored even if an assertion below fails partway
+	// through; re-applying the same documents is idempotent, so the explicit restore at the end of
+	// the happy path is harmless.
+	originalDocuments := xslices.Map(discoveryServiceConfigs, func(c configconfig.DiscoveryServiceConfig) any {
+		return clustertypes.NewDiscoveryServiceConfigV1Alpha1(c.Name(), c.Endpoint())
+	})
+
+	defer func() {
+		suite.T().Logf("ensuring original discovery service configuration is restored on node %s", node)
+		suite.PatchMachineConfig(nodeCtx, originalDocuments...)
+	}()
+
+	suite.T().Logf("removing all discovery service configs from node %s", node)
+	suite.RemoveMachineConfigDocuments(nodeCtx, clustertypes.DiscoveryServiceKind)
+
+	// the cluster Config resource should no longer carry any service endpoints
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{cluster.ConfigID},
+		func(cfg *cluster.Config, asrt *assert.Assertions) {
+			asrt.Empty(cfg.TypedSpec().ServiceEndpoints)
+		},
+		rtestutils.WithNamespace(resourcesconfig.NamespaceName),
+	)
+
+	// with discovery disabled, no members should be discovered.
+	rtestutils.AssertLength[*cluster.Member](nodeCtx, suite.T(), suite.Client.COSI, 0)
+
+	// restore the original configuration and verify discovery reconverges: all other nodes are
+	// discovered as members again.
+	suite.T().Logf("restoring original discovery service configuration on node %s", node)
+	suite.PatchMachineConfig(nodeCtx, originalDocuments...)
+
+	rtestutils.AssertLength[*cluster.Member](nodeCtx, suite.T(), suite.Client.COSI, len(suite.DiscoverNodeInternalIPs(suite.ctx)))
 }
 
 // TestKubeSpanPeers verifies that KubeSpan peer specs are populated, and that peer statuses are available.

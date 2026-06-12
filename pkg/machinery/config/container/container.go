@@ -277,6 +277,22 @@ func (container *Container) KubespanConfig() config.KubespanConfig {
 	return config.WrapKubespanConfig(findMatchingDocs[config.KubespanConfig](container.documents)...)
 }
 
+// DiscoveryServiceConfigs implements config.Config interface.
+//
+// Dedicated documents and the deprecated v1alpha1 discovery config are mutually exclusive
+// (enforced by DiscoveryServiceConfigV1Alpha1.V1Alpha1ConflictValidate); the v1alpha1 config takes priority.
+func (container *Container) DiscoveryServiceConfigs() []config.DiscoveryServiceConfig {
+	// v1alpha1 discovery takes priority when it yields a config
+	if container.v1alpha1Config != nil {
+		if legacy := container.v1alpha1Config.DiscoveryServiceConfigs(); len(legacy) > 0 {
+			return legacy
+		}
+	}
+
+	// fallback to dedicated documents
+	return findMatchingDocs[config.DiscoveryServiceConfig](container.documents)
+}
+
 // PCIDriverRebindConfig implements config.Config interface.
 func (container *Container) PCIDriverRebindConfig() config.PCIDriverRebindConfig {
 	return config.WrapPCIDriverRebindConfig(findMatchingDocs[config.PCIDriverRebindConfig](container.documents)...)

@@ -109,7 +109,6 @@ type Discovery interface {
 // DiscoveryRegistries describes discovery methods.
 type DiscoveryRegistries interface {
 	Kubernetes() KubernetesRegistry
-	Service() ServiceRegistry
 }
 
 // KubernetesRegistry describes Kubernetes discovery registry.
@@ -117,10 +116,4 @@ type DiscoveryRegistries interface {
 //nolint:iface
 type KubernetesRegistry interface {
 	Enabled() bool
-}
-
-// ServiceRegistry describes external service discovery registry.
-type ServiceRegistry interface {
-	Enabled() bool
-	Endpoint() string
 }

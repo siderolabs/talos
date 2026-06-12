@@ -386,6 +386,7 @@ description: Talos gRPC API reference.
     - [InfoSpec](#talos.resource.definitions.cluster.InfoSpec)
     - [KubeSpanAffiliateSpec](#talos.resource.definitions.cluster.KubeSpanAffiliateSpec)
     - [MemberSpec](#talos.resource.definitions.cluster.MemberSpec)
+    - [ServiceEndpoint](#talos.resource.definitions.cluster.ServiceEndpoint)
   
 - [resource/definitions/cri/cri.proto](#resource/definitions/cri/cri.proto)
     - [ImageCacheConfigSpec](#talos.resource.definitions.cri.ImageCacheConfigSpec)
@@ -6855,18 +6856,19 @@ AffiliateSpec describes Affiliate state.
 <a name="talos.resource.definitions.cluster.ConfigSpec"></a>
 
 ### ConfigSpec
-ConfigSpec describes KubeSpan configuration.
+ConfigSpec describes Discovery configuration.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| discovery_enabled | [bool](#bool) |  |  |
+| discovery_enabled | [bool](#bool) |  | Deprecated: use ServiceEndpoints instead (configured via DiscoveryServiceConfig documents) |
 | registry_kubernetes_enabled | [bool](#bool) |  |  |
-| registry_service_enabled | [bool](#bool) |  |  |
-| service_endpoint | [string](#string) |  |  |
-| service_endpoint_insecure | [bool](#bool) |  |  |
+| registry_service_enabled | [bool](#bool) |  | Deprecated: enabled via DiscoveryServiceConfig documents instead. |
+| service_endpoint | [string](#string) |  | Deprecated: use ServiceEndpoints instead |
+| service_endpoint_insecure | [bool](#bool) |  | Deprecated: use ServiceEndpoints instead |
 | service_encryption_key | [bytes](#bytes) |  |  |
 | service_cluster_id | [string](#string) |  |  |
+| service_endpoints | [ServiceEndpoint](#talos.resource.definitions.cluster.ServiceEndpoint) | repeated |  |
 
 
 
@@ -6955,6 +6957,23 @@ MemberSpec describes Member state.
 | machine_type | [talos.resource.definitions.enums.MachineType](#talos.resource.definitions.enums.MachineType) |  |  |
 | operating_system | [string](#string) |  |  |
 | control_plane | [ControlPlane](#talos.resource.definitions.cluster.ControlPlane) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.cluster.ServiceEndpoint"></a>
+
+### ServiceEndpoint
+ServiceEndpoint describes a service endpoint for discovery.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| endpoint | [string](#string) |  |  |
+| insecure | [bool](#bool) |  |  |
 
 
 

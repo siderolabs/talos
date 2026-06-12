@@ -111,7 +111,7 @@ func (suite *HealthSuite) isDiscoveryEnabled() (bool, error) {
 		return false, err
 	}
 
-	return temp.Spec.DiscoveryEnabled, nil
+	return temp.Spec.RegistryKubernetesEnabled || len(temp.Spec.ServiceEndpoints) > 0, nil
 }
 
 func init() {

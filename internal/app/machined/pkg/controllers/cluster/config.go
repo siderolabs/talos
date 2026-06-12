@@ -15,6 +15,7 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
+	clustertypes "github.com/siderolabs/talos/pkg/machinery/config/types/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 )
@@ -38,56 +39,88 @@ func NewConfigController() *ConfigController {
 
 				return optional.Some(cluster.NewConfig(config.NamespaceName, cluster.ConfigID))
 			},
-			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, cfg *config.MachineConfig, res *cluster.Config) error {
-				c := cfg.Config()
+			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, machineConfig *config.MachineConfig, res *cluster.Config) error {
+				var err error
 
-				res.TypedSpec().DiscoveryEnabled = c.Cluster().Discovery().Enabled()
+				cfg := machineConfig.Config()
 
-				if c.Cluster().Discovery().Enabled() {
-					res.TypedSpec().RegistryKubernetesEnabled = c.Cluster().Discovery().Registries().Kubernetes().Enabled()
-					res.TypedSpec().RegistryServiceEnabled = c.Cluster().Discovery().Registries().Service().Enabled()
+				// Both the legacy v1alpha1 service endpoint, and the new multi-doc DiscoveryServiceConfig(s) get
+				// surfaced via the .DiscoveryServiceConfigs() interface. By now the configs have been validated.
+				discoveryServiceConfigs := cfg.DiscoveryServiceConfigs()
 
-					if c.Cluster().Discovery().Registries().Service().Enabled() {
-						var u *url.URL
+				if len(discoveryServiceConfigs) > 0 {
+					res.TypedSpec().ServiceEndpoints = []cluster.ServiceEndpoint{}
 
-						u, err := url.ParseRequestURI(c.Cluster().Discovery().Registries().Service().Endpoint())
+					for _, discoveryServiceConfig := range discoveryServiceConfigs {
+						normalizedEndpoint, insecure, err := NormalizeDiscoveryEndpoint(discoveryServiceConfig.Endpoint().String())
 						if err != nil {
 							return err
 						}
 
-						host := u.Hostname()
-						port := u.Port()
-
-						if port == "" {
-							if u.Scheme == "http" {
-								port = "80"
-							} else {
-								port = "443" // use default https port for everything else
-							}
-						}
-
-						res.TypedSpec().ServiceEndpoint = net.JoinHostPort(host, port)
-						res.TypedSpec().ServiceEndpointInsecure = u.Scheme == "http"
-
-						res.TypedSpec().ServiceEncryptionKey, err = base64.StdEncoding.DecodeString(c.Cluster().Secret())
-						if err != nil {
-							return err
-						}
-
-						res.TypedSpec().ServiceClusterID = c.Cluster().ID()
-					} else {
-						res.TypedSpec().ServiceEndpoint = ""
-						res.TypedSpec().ServiceEndpointInsecure = false
-						res.TypedSpec().ServiceEncryptionKey = nil
-						res.TypedSpec().ServiceClusterID = ""
+						res.TypedSpec().ServiceEndpoints = append(res.TypedSpec().ServiceEndpoints, cluster.ServiceEndpoint{
+							Name:     discoveryServiceConfig.Name(),
+							Endpoint: normalizedEndpoint,
+							Insecure: insecure,
+						})
 					}
+
+					res.TypedSpec().ServiceEncryptionKey, err = base64.StdEncoding.DecodeString(cfg.Cluster().Secret())
+					if err != nil {
+						return err
+					}
+
+					res.TypedSpec().ServiceClusterID = cfg.Cluster().ID()
+
+					// Legacy field support for Omni backwards compatibility.
+					// We don't actually use these fields anymore in the discovery service controller.
+					res.TypedSpec().RegistryServiceEnabled = true //nolint:staticcheck // legacy config
+					// Just use the first one off the top. We can't use all of them until Omni supports multiple discovery services.
+					// This is the normalized endpoint (just port:host) and insecure flag, not the raw URL.
+					res.TypedSpec().ServiceEndpoint = res.TypedSpec().ServiceEndpoints[0].Endpoint         //nolint:staticcheck // legacy config
+					res.TypedSpec().ServiceEndpointInsecure = res.TypedSpec().ServiceEndpoints[0].Insecure //nolint:staticcheck // legacy config
+				} else {
+					res.TypedSpec().ServiceEncryptionKey = nil
+					res.TypedSpec().ServiceClusterID = ""
+					res.TypedSpec().ServiceEndpoints = nil
+
+					// Legacy field support for Omni backwards compatibility.
+					res.TypedSpec().RegistryServiceEnabled = false  //nolint:staticcheck // legacy config
+					res.TypedSpec().ServiceEndpoint = ""            //nolint:staticcheck // legacy config
+					res.TypedSpec().ServiceEndpointInsecure = false //nolint:staticcheck // legacy config
+				}
+
+				// Legacy support for Kubernetes discovery (not discovery service)
+				if cfg.Cluster().Discovery().Enabled() {
+					res.TypedSpec().RegistryKubernetesEnabled = cfg.Cluster().Discovery().Registries().Kubernetes().Enabled()
 				} else {
 					res.TypedSpec().RegistryKubernetesEnabled = false
-					res.TypedSpec().RegistryServiceEnabled = false
 				}
 
 				return nil
 			},
 		},
 	)
+}
+
+// NormalizeDiscoveryEndpoint normalizes a discovery service endpoint URL into a host:port address plus insecure flag.
+func NormalizeDiscoveryEndpoint(rawEndpoint string) (addr string, insecure bool, err error) {
+	u, err := url.Parse(rawEndpoint)
+	if err != nil {
+		return "", false, err
+	}
+
+	if err := clustertypes.ValidateDiscoveryServiceEndpoint(u); err != nil {
+		return "", false, err
+	}
+
+	port := u.Port()
+	if port == "" {
+		if u.Scheme == "http" {
+			port = "80"
+		} else {
+			port = "443"
+		}
+	}
+
+	return net.JoinHostPort(u.Hostname(), port), u.Scheme == "http", nil
 }

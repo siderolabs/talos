@@ -9,7 +9,6 @@ package v1alpha1
 import (
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 func (Config) Doc() *encoder.Doc {
@@ -357,13 +356,7 @@ func (ClusterConfig) Doc() *encoder.Doc {
 			{},
 			{},
 			{},
-			{
-				Name:        "discovery",
-				Type:        "ClusterDiscoveryConfig",
-				Note:        "",
-				Description: "Configures cluster member discovery.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures cluster member discovery." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{
 				Name:        "etcd",
 				Type:        "EtcdConfig",
@@ -437,7 +430,6 @@ func (ClusterConfig) Doc() *encoder.Doc {
 	doc.Fields[8].AddExample("ClusterCA example.", pemEncodedCertificateExample())
 	doc.Fields[10].AddExample("AggregatorCA example.", pemEncodedCertificateExample())
 	doc.Fields[11].AddExample("AggregatorCA example.", pemEncodedKeyExample())
-	doc.Fields[16].AddExample("", clusterDiscoveryExample())
 	doc.Fields[17].AddExample("", clusterEtcdExample())
 	doc.Fields[18].AddExample("", clusterCoreDNSExample())
 	doc.Fields[19].AddExample("", clusterExternalCloudProviderConfigExample())
@@ -1328,131 +1320,6 @@ func (ClusterInlineManifest) Doc() *encoder.Doc {
 	return doc
 }
 
-func (ClusterDiscoveryConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "ClusterDiscoveryConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "ClusterDiscoveryConfig struct configures cluster membership discovery." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ClusterDiscoveryConfig struct configures cluster membership discovery.\n",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "ClusterConfig",
-				FieldName: "discovery",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "enabled",
-				Type:        "bool",
-				Note:        "",
-				Description: "Enable the cluster membership discovery feature.\nCluster discovery is based on individual registries which are configured under the registries field.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable the cluster membership discovery feature." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "registries",
-				Type:        "DiscoveryRegistriesConfig",
-				Note:        "",
-				Description: "Configure registries used for cluster member discovery.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure registries used for cluster member discovery." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", clusterDiscoveryExample())
-
-	return doc
-}
-
-func (DiscoveryRegistriesConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "DiscoveryRegistriesConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "DiscoveryRegistriesConfig struct configures cluster membership discovery." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "DiscoveryRegistriesConfig struct configures cluster membership discovery.\n",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "ClusterDiscoveryConfig",
-				FieldName: "registries",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "kubernetes",
-				Type:        "RegistryKubernetesConfig",
-				Note:        "",
-				Description: "Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information\nas annotations on the Node resources.\n\nThis feature is deprecated as it is not compatible with Kubernetes 1.32+.\nSee https://github.com/siderolabs/talos/issues/9980 for more information.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information" /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "service",
-				Type:        "RegistryServiceConfig",
-				Note:        "",
-				Description: "Service registry is using an external service to push and pull information about cluster members.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Service registry is using an external service to push and pull information about cluster members." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	return doc
-}
-
-func (RegistryKubernetesConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "RegistryKubernetesConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "RegistryKubernetesConfig struct configures Kubernetes discovery registry." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "RegistryKubernetesConfig struct configures Kubernetes discovery registry.\n",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "DiscoveryRegistriesConfig",
-				FieldName: "kubernetes",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "disabled",
-				Type:        "bool",
-				Note:        "",
-				Description: "Disable Kubernetes discovery registry.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disable Kubernetes discovery registry." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	return doc
-}
-
-func (RegistryServiceConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "RegistryServiceConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "RegistryServiceConfig struct configures Kubernetes discovery registry." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "RegistryServiceConfig struct configures Kubernetes discovery registry.\n",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "DiscoveryRegistriesConfig",
-				FieldName: "service",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "disabled",
-				Type:        "bool",
-				Note:        "",
-				Description: "Disable external service discovery registry.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disable external service discovery registry." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "endpoint",
-				Type:        "string",
-				Note:        "",
-				Description: "External service endpoint.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "External service endpoint." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.Fields[1].AddExample("", constants.DefaultDiscoveryServiceEndpoint)
-
-	return doc
-}
-
 func (UdevConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "UdevConfig",
@@ -1637,10 +1504,6 @@ func GetFileDoc() *encoder.FileDoc {
 			KubePrism{}.Doc(),
 			KubernetesTalosAPIAccessConfig{}.Doc(),
 			ClusterInlineManifest{}.Doc(),
-			ClusterDiscoveryConfig{}.Doc(),
-			DiscoveryRegistriesConfig{}.Doc(),
-			RegistryKubernetesConfig{}.Doc(),
-			RegistryServiceConfig{}.Doc(),
 			UdevConfig{}.Doc(),
 			LoggingConfig{}.Doc(),
 			LoggingDestination{}.Doc(),

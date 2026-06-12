@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/gen/xtesting/must"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,6 +18,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
+	clustertypes "github.com/siderolabs/talos/pkg/machinery/config/types/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime/extensions"
@@ -148,6 +150,109 @@ func TestPatchV1Alpha1(t *testing.T) {
 
 	assert.Equal(t, "https://siderolink.api/?jointoken=secret&user=alice", cfg.SideroLink().APIUrl().String())
 	assert.Equal(t, "https://siderolink.api/?jointoken=secret&user=alice", patchedCfg.SideroLink().APIUrl().String())
+}
+
+func TestDiscoveryServiceConfigs(t *testing.T) {
+	t.Parallel()
+
+	// legacy v1alpha1 cluster discovery config, surfaces as a single config named "legacy"
+	legacyEnabled := &v1alpha1.Config{
+		ClusterConfig: &v1alpha1.ClusterConfig{
+			ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{ //nolint:staticcheck // legacy config
+				DiscoveryEnabled: new(true),
+				DiscoveryRegistries: v1alpha1.DiscoveryRegistriesConfig{ //nolint:staticcheck // legacy config
+					RegistryService: v1alpha1.RegistryServiceConfig{ //nolint:staticcheck // legacy config
+						RegistryEndpoint: "https://legacy.discovery.test/",
+					},
+				},
+			},
+		},
+	}
+
+	// legacy cluster discovery disabled, surfaces no config
+	legacyDisabled := &v1alpha1.Config{
+		ClusterConfig: &v1alpha1.ClusterConfig{
+			ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{ //nolint:staticcheck // legacy config
+				DiscoveryEnabled: new(false),
+			},
+		},
+	}
+
+	primaryDoc := clustertypes.NewDiscoveryServiceConfigV1Alpha1("primary", must.Value(url.Parse("https://primary.discovery.test/"))(t))
+	secondaryDoc := clustertypes.NewDiscoveryServiceConfigV1Alpha1("secondary", must.Value(url.Parse("grpc://secondary.discovery.test/"))(t))
+
+	for _, tt := range []struct {
+		name      string
+		documents []config.Document
+
+		// expected (name -> endpoint) of the returned configs
+		expected map[string]string
+	}{
+		{
+			name:      "no configs at all",
+			documents: []config.Document{&v1alpha1.Config{}},
+			expected:  map[string]string{},
+		},
+		{
+			// v1alpha1 with a cluster config but no discovery block must not panic
+			name:      "v1alpha1 without discovery block",
+			documents: []config.Document{&v1alpha1.Config{ClusterConfig: &v1alpha1.ClusterConfig{}}},
+			expected:  map[string]string{},
+		},
+		{
+			name:      "only legacy",
+			documents: []config.Document{legacyEnabled},
+			expected:  map[string]string{"legacy": "https://legacy.discovery.test/"},
+		},
+		{
+			name:      "legacy disabled",
+			documents: []config.Document{legacyDisabled},
+			expected:  map[string]string{},
+		},
+		{
+			name:      "only multi-doc, no v1alpha1 config present",
+			documents: []config.Document{primaryDoc, secondaryDoc},
+			expected: map[string]string{
+				"primary":   "https://primary.discovery.test/",
+				"secondary": "grpc://secondary.discovery.test/",
+			},
+		},
+		{
+			name:      "legacy disabled with multi-doc",
+			documents: []config.Document{legacyDisabled, primaryDoc},
+			expected: map[string]string{
+				"primary": "https://primary.discovery.test/",
+			},
+		},
+		{
+			// such a config is rejected by validation, but the accessor still prefers the v1alpha1 config
+			name:      "legacy takes precedence over documents",
+			documents: []config.Document{legacyEnabled, primaryDoc, secondaryDoc},
+			expected: map[string]string{
+				"legacy": "https://legacy.discovery.test/",
+			},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctr, err := container.New(tt.documents...)
+			require.NoError(t, err)
+
+			got := ctr.DiscoveryServiceConfigs()
+
+			// len check also guards against duplicate names collapsing in the map below
+			assert.Len(t, got, len(tt.expected), "returned configs should not contain duplicate names")
+
+			actual := xslices.ToMap(got, func(c config.DiscoveryServiceConfig) (string, string) {
+				return c.Name(), c.Endpoint().String()
+			})
+
+			for name, endpoint := range tt.expected {
+				assert.Equal(t, endpoint, actual[name], "discovery service config %q", name)
+			}
+		})
+	}
 }
 
 func TestRunDefaultDHCPOperators(t *testing.T) {
