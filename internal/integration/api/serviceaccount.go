@@ -256,6 +256,7 @@ func (suite *ServiceAccountSuite) creteTestJob(ns, name, serviceAccount, node st
 				"name": name,
 			},
 			"spec": map[string]any{
+				"backoffLimit": int64(2),
 				"template": map[string]any{
 					"spec": map[string]any{
 						"restartPolicy": "Never",
@@ -290,6 +291,7 @@ func (suite *ServiceAccountSuite) creteTestJob(ns, name, serviceAccount, node st
 	}, metav1.CreateOptions{})
 }
 
+//nolint:gocyclo
 func (suite *ServiceAccountSuite) waitForJobReady(duration time.Duration, ns, name string) error {
 	cli := suite.DynamicClient.Resource(jobGVR).Namespace(ns)
 
@@ -306,6 +308,24 @@ func (suite *ServiceAccountSuite) waitForJobReady(duration time.Duration, ns, na
 		}
 
 		status := job.Object["status"].(map[string]any)
+
+		// check if the job has been marked Failed (all backoff retries exhausted)
+		if conditions, ok := status["conditions"].([]any); ok {
+			for _, c := range conditions {
+				cond, ok := c.(map[string]any)
+				if !ok {
+					continue
+				}
+
+				if cond["type"] == "Failed" && cond["status"] == "True" {
+					failed, _ := status["failed"].(int64)
+					podLogs := suite.getJobPodLogs(ctx, ns, name)
+
+					return fmt.Errorf("job %s/%s exhausted retries (failed=%d)%s", ns, name, failed, podLogs)
+				}
+			}
+		}
+
 		if status["succeeded"] == nil || status["succeeded"].(int64) == 0 {
 			return retry.ExpectedError(fmt.Errorf("job %s/%s is not ready yet", ns, name))
 		}
@@ -314,7 +334,44 @@ func (suite *ServiceAccountSuite) waitForJobReady(duration time.Duration, ns, na
 	})
 }
 
+func (suite *ServiceAccountSuite) getJobPodLogs(ctx context.Context, ns, jobName string) string {
+	pods, err := suite.Clientset.CoreV1().Pods(ns).List(ctx, metav1.ListOptions{
+		LabelSelector: "job-name=" + jobName,
+	})
+	if err != nil {
+		return fmt.Sprintf(": (failed to list pods: %v)", err)
+	}
+
+	if len(pods.Items) == 0 {
+		return ": (no pods found)"
+	}
+
+	// pick the most recently created pod
+	newest := pods.Items[0]
+
+	for _, p := range pods.Items[1:] {
+		if p.CreationTimestamp.After(newest.CreationTimestamp.Time) {
+			newest = p
+		}
+	}
+
+	tailLines := int64(50)
+
+	req := suite.Clientset.CoreV1().Pods(ns).GetLogs(newest.Name, &corev1.PodLogOptions{
+		TailLines: &tailLines,
+	})
+
+	logs, err := req.DoRaw(ctx)
+	if err != nil {
+		return fmt.Sprintf(": pod %s (no logs: %v)", newest.Name, err)
+	}
+
+	return fmt.Sprintf(": pod %s logs:\n%s", newest.Name, string(logs))
+}
+
 // configureAPIAccess configures the API access feature on all control plane nodes.
+//
+//nolint:gocyclo
 func (suite *ServiceAccountSuite) configureAPIAccess(
 	enabled bool,
 	allowedRoles []string,
@@ -349,7 +406,7 @@ func (suite *ServiceAccountSuite) configureAPIAccess(
 		}
 	}
 
-	if enabled { // wait for CRD and the Talos endpoint to be created
+	if enabled { // wait for CRD, Talos endpoint service, and at least one ready endpoint
 		return retry.Constant(30*time.Second).RetryWithContext(suite.ctx, func(ctx context.Context) error {
 			_, err := suite.getCRD()
 			if err != nil {
@@ -358,12 +415,30 @@ func (suite *ServiceAccountSuite) configureAPIAccess(
 
 			_, err = suite.Clientset.CoreV1().
 				Services(constants.KubernetesTalosAPIServiceNamespace).
-				Get(suite.ctx, constants.KubernetesTalosAPIServiceName, metav1.GetOptions{})
+				Get(ctx, constants.KubernetesTalosAPIServiceName, metav1.GetOptions{})
 			if err != nil {
 				return retry.ExpectedError(err)
 			}
 
-			return nil
+			slices, err := suite.Clientset.DiscoveryV1().
+				EndpointSlices(constants.KubernetesTalosAPIServiceNamespace).
+				List(ctx, metav1.ListOptions{
+					LabelSelector: "kubernetes.io/service-name=" + constants.KubernetesTalosAPIServiceName,
+				})
+			if err != nil {
+				return retry.ExpectedError(err)
+			}
+
+			for _, slice := range slices.Items {
+				for _, ep := range slice.Endpoints {
+					if len(ep.Addresses) > 0 && (ep.Conditions.Ready == nil || *ep.Conditions.Ready) {
+						return nil
+					}
+				}
+			}
+
+			return retry.ExpectedError(fmt.Errorf("service %s/%s has no ready endpoints",
+				constants.KubernetesTalosAPIServiceNamespace, constants.KubernetesTalosAPIServiceName))
 		})
 	}
 
