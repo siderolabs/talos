@@ -51,6 +51,7 @@ var cmdFlags struct {
 	SecurebootIncludeWellKnownCerts bool
 	SecurebootSignerAddress         string
 	PCRSignerAddress                string
+	SecurebootEnrollKeys            string
 }
 
 // rootCmd represents the base command when called without any subcommands.
@@ -205,6 +206,10 @@ var rootCmd = &cobra.Command{
 				prof.Input.SecureBoot.PCRSigner.SignerAddress = cmdFlags.PCRSignerAddress
 			}
 
+			if err := applySDBootEnrollKeys(cmdFlags.SecurebootEnrollKeys, &prof.Output); err != nil {
+				return err
+			}
+
 			if cmdFlags.EmbeddedConfigPath != "" {
 				data, err := os.ReadFile(cmdFlags.EmbeddedConfigPath)
 				if err != nil {
@@ -241,6 +246,36 @@ var rootCmd = &cobra.Command{
 
 		return nil
 	},
+}
+
+// applySDBootEnrollKeys applies the --secureboot-enroll-keys flag value to the output profile.
+//
+// The value is set on both the image and ISO options so it applies regardless of the base
+// profile's output kind; the unused options struct is ignored downstream. An empty value is
+// a no-op, leaving the base profile's default (if-safe) in place.
+func applySDBootEnrollKeys(value string, output *profile.Output) error {
+	if value == "" {
+		return nil
+	}
+
+	enrollKeys, err := profile.SDBootEnrollKeysString(value)
+	if err != nil {
+		return xerrors.NewTaggedf[profile.InvalidInputTag]("invalid --secureboot-enroll-keys value: %w", err)
+	}
+
+	if output.ImageOptions == nil {
+		output.ImageOptions = &profile.ImageOptions{}
+	}
+
+	output.ImageOptions.SDBootEnrollKeys = enrollKeys
+
+	if output.ISOOptions == nil {
+		output.ISOOptions = &profile.ISOOptions{}
+	}
+
+	output.ISOOptions.SDBootEnrollKeys = enrollKeys
+
+	return nil
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -285,5 +320,13 @@ func init() {
 	rootCmd.PersistentFlags().StringVar(
 		&cmdFlags.PCRSignerAddress, "pcr-signer-address", "",
 		"gRPC unix:// address of a PCR signer service",
+	)
+	rootCmd.PersistentFlags().StringVar(
+		&cmdFlags.SecurebootEnrollKeys, "secureboot-enroll-keys", "",
+		fmt.Sprintf(
+			"how systemd-boot enrolls SecureBoot keys on first boot (loader.conf secure-boot-enroll), one of: %s. "+
+				"Defaults to if-safe (auto-enrolls only in a VM); use force for unattended bare-metal enrollment when the firmware is in setup mode",
+			strings.Join(profile.SDBootEnrollKeysStrings(), ", "),
+		),
 	)
 }

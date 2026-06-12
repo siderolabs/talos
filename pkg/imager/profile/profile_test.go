@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/pkg/imager/profile"
+	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
@@ -94,4 +95,40 @@ func TestFillDefaults(t *testing.T) {
 			}
 		})
 	}
+}
+
+// TestSDBootEnrollKeysMergePreservesImageOptions ensures that the override profile built by the
+// imager's --secureboot-enroll-keys flag (carrying only the enroll mode) merges onto a base
+// profile without wiping the other image options such as disk size and format.
+func TestSDBootEnrollKeysMergePreservesImageOptions(t *testing.T) {
+	t.Parallel()
+
+	base := profile.Default["secureboot-metal"].DeepCopy()
+
+	require.NotNil(t, base.Output.ImageOptions)
+
+	origDiskSize := base.Output.ImageOptions.DiskSize
+	origDiskFormat := base.Output.ImageOptions.DiskFormat
+
+	require.NotZero(t, origDiskSize, "precondition: secureboot-metal base profile should have a non-zero disk size")
+
+	// Mirror what the imager CLI builds: an override carrying only the enroll mode on both
+	// image and ISO options.
+	override := profile.Profile{
+		Output: profile.Output{
+			ImageOptions: &profile.ImageOptions{SDBootEnrollKeys: profile.SDBootEnrollKeysForce},
+			ISOOptions:   &profile.ISOOptions{SDBootEnrollKeys: profile.SDBootEnrollKeysForce},
+		},
+	}
+
+	require.NoError(t, merge.Merge(&base, &override))
+
+	// The enroll mode is applied...
+	require.Equal(t, profile.SDBootEnrollKeysForce, base.Output.ImageOptions.SDBootEnrollKeys)
+	require.NotNil(t, base.Output.ISOOptions)
+	require.Equal(t, profile.SDBootEnrollKeysForce, base.Output.ISOOptions.SDBootEnrollKeys)
+
+	// ...without clobbering the other image options inherited from the base profile.
+	require.Equal(t, origDiskSize, base.Output.ImageOptions.DiskSize)
+	require.Equal(t, origDiskFormat, base.Output.ImageOptions.DiskFormat)
 }
