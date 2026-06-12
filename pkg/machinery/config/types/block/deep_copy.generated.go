@@ -105,6 +105,10 @@ func (o *RawVolumeConfigV1Alpha1) DeepCopy() *RawVolumeConfigV1Alpha1 {
 		cp.EncryptionSpec.EncryptionPerfOptions = make([]string, len(o.EncryptionSpec.EncryptionPerfOptions))
 		copy(cp.EncryptionSpec.EncryptionPerfOptions, o.EncryptionSpec.EncryptionPerfOptions)
 	}
+	if o.EncryptionSpec.EncryptionAllowDiscards != nil {
+		cp.EncryptionSpec.EncryptionAllowDiscards = new(bool)
+		*cp.EncryptionSpec.EncryptionAllowDiscards = *o.EncryptionSpec.EncryptionAllowDiscards
+	}
 	return &cp
 }
 
@@ -188,6 +192,10 @@ func (o *SwapVolumeConfigV1Alpha1) DeepCopy() *SwapVolumeConfigV1Alpha1 {
 	if o.EncryptionSpec.EncryptionPerfOptions != nil {
 		cp.EncryptionSpec.EncryptionPerfOptions = make([]string, len(o.EncryptionSpec.EncryptionPerfOptions))
 		copy(cp.EncryptionSpec.EncryptionPerfOptions, o.EncryptionSpec.EncryptionPerfOptions)
+	}
+	if o.EncryptionSpec.EncryptionAllowDiscards != nil {
+		cp.EncryptionSpec.EncryptionAllowDiscards = new(bool)
+		*cp.EncryptionSpec.EncryptionAllowDiscards = *o.EncryptionSpec.EncryptionAllowDiscards
 	}
 	return &cp
 }
@@ -280,6 +288,10 @@ func (o *UserVolumeConfigV1Alpha1) DeepCopy() *UserVolumeConfigV1Alpha1 {
 	if o.EncryptionSpec.EncryptionPerfOptions != nil {
 		cp.EncryptionSpec.EncryptionPerfOptions = make([]string, len(o.EncryptionSpec.EncryptionPerfOptions))
 		copy(cp.EncryptionSpec.EncryptionPerfOptions, o.EncryptionSpec.EncryptionPerfOptions)
+	}
+	if o.EncryptionSpec.EncryptionAllowDiscards != nil {
+		cp.EncryptionSpec.EncryptionAllowDiscards = new(bool)
+		*cp.EncryptionSpec.EncryptionAllowDiscards = *o.EncryptionSpec.EncryptionAllowDiscards
 	}
 	if o.MountSpec.MountDisableAccessTime != nil {
 		cp.MountSpec.MountDisableAccessTime = new(bool)
@@ -394,6 +406,10 @@ func (o *VolumeConfigV1Alpha1) DeepCopy() *VolumeConfigV1Alpha1 {
 	if o.EncryptionSpec.EncryptionPerfOptions != nil {
 		cp.EncryptionSpec.EncryptionPerfOptions = make([]string, len(o.EncryptionSpec.EncryptionPerfOptions))
 		copy(cp.EncryptionSpec.EncryptionPerfOptions, o.EncryptionSpec.EncryptionPerfOptions)
+	}
+	if o.EncryptionSpec.EncryptionAllowDiscards != nil {
+		cp.EncryptionSpec.EncryptionAllowDiscards = new(bool)
+		*cp.EncryptionSpec.EncryptionAllowDiscards = *o.EncryptionSpec.EncryptionAllowDiscards
 	}
 	if o.MountSpec.MountSecure != nil {
 		cp.MountSpec.MountSecure = new(bool)

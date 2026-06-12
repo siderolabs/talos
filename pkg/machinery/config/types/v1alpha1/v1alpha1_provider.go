@@ -1635,6 +1635,12 @@ func (e *EncryptionConfig) Options() []string {
 	return e.EncryptionPerfOptions
 }
 
+// AllowDiscards implements the config.Provider interface.
+func (e *EncryptionConfig) AllowDiscards() bool {
+	// not supported in v1alpha1
+	return false
+}
+
 // Keys implements the config.Provider interface.
 func (e *EncryptionConfig) Keys() []config.EncryptionKey {
 	return xslices.Map(e.EncryptionKeys, func(k *EncryptionKey) config.EncryptionKey { return k })

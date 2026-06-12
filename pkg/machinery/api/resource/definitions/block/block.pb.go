@@ -791,6 +791,7 @@ type EncryptionSpec struct {
 	KeySize       uint64                            `protobuf:"varint,4,opt,name=key_size,json=keySize,proto3" json:"key_size,omitempty"`
 	BlockSize     uint64                            `protobuf:"varint,5,opt,name=block_size,json=blockSize,proto3" json:"block_size,omitempty"`
 	PerfOptions   []string                          `protobuf:"bytes,6,rep,name=perf_options,json=perfOptions,proto3" json:"perf_options,omitempty"`
+	AllowDiscards bool                              `protobuf:"varint,7,opt,name=allow_discards,json=allowDiscards,proto3" json:"allow_discards,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -865,6 +866,13 @@ func (x *EncryptionSpec) GetPerfOptions() []string {
 		return x.PerfOptions
 	}
 	return nil
+}
+
+func (x *EncryptionSpec) GetAllowDiscards() bool {
+	if x != nil {
+		return x.AllowDiscards
+	}
+	return false
 }
 
 // FilesystemSpec is the spec for volume filesystem.
@@ -2623,7 +2631,7 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"%tpm_check_secureboot_status_on_enroll\x18\x05 \x01(\bR tpmCheckSecurebootStatusOnEnroll\x12\"\n" +
 	"\rlock_to_state\x18\x06 \x01(\bR\vlockToState\x12\x19\n" +
 	"\btpmpc_rs\x18\a \x03(\x03R\atpmpcRs\x12(\n" +
-	"\x11tpm_pub_key_pc_rs\x18\b \x03(\x03R\rtpmPubKeyPcRs\"\xa5\x02\n" +
+	"\x11tpm_pub_key_pc_rs\x18\b \x03(\x03R\rtpmPubKeyPcRs\"\xcc\x02\n" +
 	"\x0eEncryptionSpec\x12Y\n" +
 	"\bprovider\x18\x01 \x01(\x0e2=.talos.resource.definitions.enums.BlockEncryptionProviderTypeR\bprovider\x12C\n" +
 	"\x04keys\x18\x02 \x03(\v2/.talos.resource.definitions.block.EncryptionKeyR\x04keys\x12\x16\n" +
@@ -2631,7 +2639,8 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\bkey_size\x18\x04 \x01(\x04R\akeySize\x12\x1d\n" +
 	"\n" +
 	"block_size\x18\x05 \x01(\x04R\tblockSize\x12!\n" +
-	"\fperf_options\x18\x06 \x03(\tR\vperfOptions\"q\n" +
+	"\fperf_options\x18\x06 \x03(\tR\vperfOptions\x12%\n" +
+	"\x0eallow_discards\x18\a \x01(\bR\rallowDiscards\"q\n" +
 	"\x0eFilesystemSpec\x12I\n" +
 	"\x04type\x18\x01 \x01(\x0e25.talos.resource.definitions.enums.BlockFilesystemTypeR\x04type\x12\x14\n" +
 	"\x05label\x18\x02 \x01(\tR\x05label\"\x90\x01\n" +

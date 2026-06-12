@@ -62,6 +62,10 @@ func NewHandler(encryptionConfig block.EncryptionSpec, volumeID string, helpers 
 		opts = append(opts, luks.WithPerfOptions(encryptionConfig.PerfOptions...))
 	}
 
+	if encryptionConfig.AllowDiscards {
+		opts = append(opts, luks.WithAllowDiscards())
+	}
+
 	keyHandlers := make([]keys.Handler, 0, len(encryptionConfig.Keys))
 
 	for _, cfg := range encryptionConfig.Keys {

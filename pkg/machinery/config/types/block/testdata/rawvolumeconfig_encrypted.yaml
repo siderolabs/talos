@@ -14,3 +14,4 @@ encryption:
           static:
             passphrase: topsecret
     cipher: aes-xts-plain64
+    allowDiscards: true

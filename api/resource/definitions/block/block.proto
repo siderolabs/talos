@@ -122,6 +122,7 @@ message EncryptionSpec {
   uint64 key_size = 4;
   uint64 block_size = 5;
   repeated string perf_options = 6;
+  bool allow_discards = 7;
 }
 
 // FilesystemSpec is the spec for volume filesystem.

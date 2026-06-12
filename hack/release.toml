@@ -263,6 +263,15 @@ The '--mode=reboot' option has been removed from the `talosctl apply-config` com
 Most configuration changes don't require a reboot; the documentation lists the changes that do.
 """
 
+    [notes.encryption_allow_discards]
+        title = "Encryption Discards"
+        description = """\
+Volume encryption now supports an `allowDiscards` option (disabled by default) which passes TRIM/discard requests
+through to the underlying device when the encrypted volume is opened.
+
+This only enables passing discards through to the underlying device; Talos does not perform any fstrim/discard operation by itself.
+"""
+
 [make_deps]
 
     [make_deps.tools]

@@ -6402,6 +6402,7 @@ EncryptionSpec is the spec for volume encryption.
 | key_size | [uint64](#uint64) |  |  |
 | block_size | [uint64](#uint64) |  |  |
 | perf_options | [string](#string) | repeated |  |
+| allow_discards | [bool](#bool) |  |  |
 
 
 

@@ -156,12 +156,13 @@ type FilesystemSpec struct {
 //
 //gotagsrewrite:gen
 type EncryptionSpec struct {
-	Provider    EncryptionProviderType `yaml:"provider" protobuf:"1"`
-	Keys        []EncryptionKey        `yaml:"keys" protobuf:"2"`
-	Cipher      string                 `yaml:"cipher,omitempty" protobuf:"3"`
-	KeySize     uint                   `yaml:"keySize,omitempty" protobuf:"4"`
-	BlockSize   uint64                 `yaml:"blockSize,omitempty" protobuf:"5"`
-	PerfOptions []string               `yaml:"perfOptions,omitempty" protobuf:"6"`
+	Provider      EncryptionProviderType `yaml:"provider" protobuf:"1"`
+	Keys          []EncryptionKey        `yaml:"keys" protobuf:"2"`
+	Cipher        string                 `yaml:"cipher,omitempty" protobuf:"3"`
+	KeySize       uint                   `yaml:"keySize,omitempty" protobuf:"4"`
+	BlockSize     uint64                 `yaml:"blockSize,omitempty" protobuf:"5"`
+	PerfOptions   []string               `yaml:"perfOptions,omitempty" protobuf:"6"`
+	AllowDiscards bool                   `yaml:"allowDiscards,omitempty" protobuf:"7"`
 }
 
 // EncryptionKey is the spec for volume encryption key.

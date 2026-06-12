@@ -55,6 +55,7 @@ func TestRawVolumeConfigMarshalUnmarshal(t *testing.T) {
 				c.ProvisioningSpec.ProvisioningMinSize = block.MustByteSize("10GiB")
 				c.EncryptionSpec.EncryptionProvider = blockres.EncryptionProviderLUKS2
 				c.EncryptionSpec.EncryptionCipher = "aes-xts-plain64"
+				c.EncryptionSpec.EncryptionAllowDiscards = new(true)
 				c.EncryptionSpec.EncryptionKeys = []block.EncryptionKey{
 					{
 						KeySlot: 0,

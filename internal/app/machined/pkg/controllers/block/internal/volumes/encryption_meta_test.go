@@ -77,7 +77,7 @@ func assertEqualEncryptionConfigs(t *testing.T, a, b config.EncryptionConfig) {
 //nolint:lll
 const (
 	legacyMarshalled = `{"EncryptionProvider":"","EncryptionKeys":[{"KeyStatic":{"KeyData":"secret"},"KeyNodeID":null,"KeyKMS":null,"KeySlot":0,"KeyTPM":null},{"KeyStatic":null,"KeyNodeID":{},"KeyKMS":null,"KeySlot":0,"KeyTPM":null}],"EncryptionCipher":"aes-xts-plain64","EncryptionKeySize":0,"EncryptionBlockSize":0,"EncryptionPerfOptions":null}`
-	modernMarshalled = `{"EncryptionProvider":"luks2","EncryptionKeys":[{"KeySlot":0,"KeyStatic":{"KeyData":"secret"},"KeyNodeID":null,"KeyKMS":null,"KeyTPM":null,"KeyLockToSTATE":null},{"KeySlot":0,"KeyStatic":null,"KeyNodeID":{},"KeyKMS":null,"KeyTPM":null,"KeyLockToSTATE":null}],"EncryptionCipher":"aes-xts-plain64","EncryptionKeySize":0,"EncryptionBlockSize":0,"EncryptionPerfOptions":null}`
+	modernMarshalled = `{"EncryptionProvider":"luks2","EncryptionKeys":[{"KeySlot":0,"KeyStatic":{"KeyData":"secret"},"KeyNodeID":null,"KeyKMS":null,"KeyTPM":null,"KeyLockToSTATE":null},{"KeySlot":0,"KeyStatic":null,"KeyNodeID":{},"KeyKMS":null,"KeyTPM":null,"KeyLockToSTATE":null}],"EncryptionCipher":"aes-xts-plain64","EncryptionKeySize":0,"EncryptionBlockSize":0,"EncryptionPerfOptions":null,"EncryptionAllowDiscards":null}`
 )
 
 func TestMarshalEncryptionMeta(t *testing.T) {

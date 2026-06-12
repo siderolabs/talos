@@ -192,6 +192,13 @@
           "description": "Additional –perf parameters for the LUKS2 encryption.\n",
           "markdownDescription": "Additional --perf parameters for the LUKS2 encryption.",
           "x-intellij-html-description": "\u003cp\u003eAdditional \u0026ndash;perf parameters for the LUKS2 encryption.\u003c/p\u003e\n"
+        },
+        "allowDiscards": {
+          "type": "boolean",
+          "title": "allowDiscards",
+          "description": "Allow TRIM/discard requests to be passed through to the underlying device when the encrypted volume is opened.\nDefaults to false.\n",
+          "markdownDescription": "Allow TRIM/discard requests to be passed through to the underlying device when the encrypted volume is opened.\nDefaults to false.",
+          "x-intellij-html-description": "\u003cp\u003eAllow TRIM/discard requests to be passed through to the underlying device when the encrypted volume is opened.\nDefaults to false.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

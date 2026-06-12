@@ -358,6 +358,7 @@ type EncryptionConfig interface {
 	BlockSize() uint64
 	Options() []string
 	Keys() []EncryptionKey
+	AllowDiscards() bool
 }
 
 // SystemDiskEncryption accumulates settings for all system partitions encryption.

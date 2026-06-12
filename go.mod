@@ -134,7 +134,7 @@ require (
 	github.com/siderolabs/discovery-client v0.1.15
 	github.com/siderolabs/gen v0.8.6
 	github.com/siderolabs/go-adv v1.0.0
-	github.com/siderolabs/go-blockdevice/v2 v2.0.30
+	github.com/siderolabs/go-blockdevice/v2 v2.0.31
 	github.com/siderolabs/go-circular v0.2.3
 	github.com/siderolabs/go-cmd v0.2.0
 	github.com/siderolabs/go-copy v0.1.0
@@ -179,7 +179,7 @@ require (
 	golang.org/x/net v0.55.0
 	golang.org/x/oauth2 v0.36.0
 	golang.org/x/sync v0.20.0
-	golang.org/x/sys v0.45.0
+	golang.org/x/sys v0.46.0
 	golang.org/x/term v0.43.0
 	golang.org/x/text v0.37.0
 	golang.org/x/time v0.15.0

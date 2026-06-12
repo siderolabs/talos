@@ -84,6 +84,13 @@ func (EncryptionSpec) Doc() *encoder.Doc {
 				Description: "Additional --perf parameters for the LUKS2 encryption.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Additional --perf parameters for the LUKS2 encryption." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "allowDiscards",
+				Type:        "bool",
+				Note:        "",
+				Description: "Allow TRIM/discard requests to be passed through to the underlying device when the encrypted volume is opened.\nDefaults to false.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Allow TRIM/discard requests to be passed through to the underlying device when the encrypted volume is opened." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 

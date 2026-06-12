@@ -159,6 +159,7 @@ options:
     - no_read_workqueue
     - no_write_workqueue
 {{< /highlight >}}</details> | |
+|`allowDiscards` |bool |Allow TRIM/discard requests to be passed through to the underlying device when the encrypted volume is opened.<br>Defaults to false.  | |
 
 
 
