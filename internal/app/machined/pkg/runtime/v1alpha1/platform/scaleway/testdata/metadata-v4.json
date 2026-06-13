@@ -1,0 +1,43 @@
+{
+    "id": "44444444-4444-4444-4444-444444444444",
+    "name": "scw-talos-v4",
+    "commercial_type": "DEV1-M",
+    "hostname": "scw-talos-v4",
+    "tags": [],
+    "state_detail": "running",
+    "public_ip": {
+        "id": "44444444-4444-4444-4444-444444444444",
+        "address": "2001:bc8:1234:5678:dc00:1ff:fe14:a73b",
+        "dynamic": false,
+        "family": "inet6",
+        "gateway": "fe80::dc00:ff:fe12:3456",
+        "netmask": "64",
+        "provisioning_mode": "slaac"
+    },
+    "public_ips_v4": [
+        {
+            "address": "51.158.100.1",
+            "dynamic": false,
+            "family": "inet",
+            "gateway": "62.210.0.1",
+            "netmask": "32",
+            "provisioning_mode": "dhcp"
+        }
+    ],
+    "public_ips_v6": [
+        {
+            "address": "2001:bc8:1234:5678:dc00:1ff:fe14:a73b",
+            "dynamic": false,
+            "family": "inet6",
+            "gateway": "fe80::dc00:ff:fe12:3456",
+            "netmask": "64",
+            "provisioning_mode": "slaac"
+        }
+    ],
+    "routed_ip_enabled": true,
+    "ipv6": null,
+    "private_ip": null,
+    "location": {
+        "zone_id": "fr-par-1"
+    }
+}
