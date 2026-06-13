@@ -26,6 +26,9 @@ var rawMetadataV2 []byte
 //go:embed testdata/metadata-v3.json
 var rawMetadataV3 []byte
 
+//go:embed testdata/metadata-v4.json
+var rawMetadataV4 []byte
+
 //go:embed testdata/expected-v1.yaml
 var expectedNetworkConfigV1 string
 
@@ -34,6 +37,9 @@ var expectedNetworkConfigV2 string
 
 //go:embed testdata/expected-v3.yaml
 var expectedNetworkConfigV3 string
+
+//go:embed testdata/expected-v4.yaml
+var expectedNetworkConfigV4 string
 
 func TestParseMetadata(t *testing.T) {
 	p := &scaleway.Scaleway{}
@@ -57,6 +63,11 @@ func TestParseMetadata(t *testing.T) {
 			name:     "V3",
 			raw:      rawMetadataV3,
 			expected: expectedNetworkConfigV3,
+		},
+		{
+			name:     "V4",
+			raw:      rawMetadataV4,
+			expected: expectedNetworkConfigV4,
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
