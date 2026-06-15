@@ -181,6 +181,13 @@ func (c *Controller) Runtime() runtime.Runtime {
 	return c.r
 }
 
+// SetSandbox publishes (or clears, with a nil launcher) the sandbox namespace
+// client. The sandboxd runner calls it each time the namespace is (re)created or
+// torn down, so it may be invoked repeatedly over the node's lifetime.
+func (c *Controller) SetSandbox(launcher runtime.SandboxLauncher) {
+	c.r.SetSandbox(launcher)
+}
+
 // Sequencer implements the controller interface.
 func (c *Controller) Sequencer() runtime.Sequencer {
 	return c.s

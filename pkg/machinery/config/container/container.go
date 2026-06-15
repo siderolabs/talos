@@ -443,6 +443,16 @@ func (container *Container) FilesystemTrimConfig() config.FilesystemTrimConfig {
 	return matching[0]
 }
 
+// SecurityProfileConfig implements config.Config interface.
+func (container *Container) SecurityProfileConfig() config.SecurityProfileConfig {
+	matching := findMatchingDocs[config.SecurityProfileConfig](container.documents)
+	if len(matching) == 0 {
+		return nil
+	}
+
+	return matching[0]
+}
+
 // NetworkStaticHostConfig implements config.Config interface.
 func (container *Container) NetworkStaticHostConfig() []config.NetworkStaticHostConfig {
 	return slices.Concat(

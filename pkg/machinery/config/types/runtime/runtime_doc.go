@@ -472,6 +472,31 @@ func (KernelModuleConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (SecurityProfileConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "SecurityProfileConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "SecurityProfileConfig is a node security profile configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "SecurityProfileConfig is a node security profile configuration document.\nThe security profile groups node-level security hardening features. Additional hardening options\nwill be added to this document over time.\n\nCurrently it controls workload isolation: running the container runtime plane (CRI containerd, the\nkubelet, and all pods) inside a dedicated PID and mount namespace anchored by the `sandboxd` service,\nisolating them from `machined` (PID 1) and its file descriptors.\n\n`talosctl gen config` emits this document with `workloadIsolation: true` for Talos 1.14+, so new\nclusters are isolated by default; clusters upgraded from older versions do not have the document and\nkeep the old (non-isolated) behavior unless it is added.\n\nNote: with workload isolation enabled, the deprecated in-tree Kubernetes iSCSI volume plugin does not\nwork (the kubelet cannot reach the host iscsid across the sandbox); use a CSI driver instead.\n",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "workloadIsolation",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable workload isolation (run the container plane inside the sandbox namespace).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable workload isolation (run the container plane inside the sandbox namespace)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleSecurityProfileConfigV1Alpha1())
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file runtime_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -492,6 +517,7 @@ func GetFileDoc() *encoder.FileDoc {
 			DiskSelectorSpec{}.Doc(),
 			WatchdogTimerV1Alpha1{}.Doc(),
 			KernelModuleConfigV1Alpha1{}.Doc(),
+			SecurityProfileConfigV1Alpha1{}.Doc(),
 		},
 	}
 }

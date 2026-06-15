@@ -5180,6 +5180,42 @@
       "type": "object",
       "description": "ProvisioningSpec describes how the Physical Volumes are provisioned.\\n"
     },
+    "runtime.SecurityProfileConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "SecurityProfileConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "workloadIsolation": {
+          "type": "boolean",
+          "title": "workloadIsolation",
+          "description": "Enable workload isolation (run the container plane inside the sandbox namespace).\n",
+          "markdownDescription": "Enable workload isolation (run the container plane inside the sandbox namespace).",
+          "x-intellij-html-description": "\u003cp\u003eEnable workload isolation (run the container plane inside the sandbox namespace).\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "SecurityProfileConfig is a node security profile configuration document.\\nThe security profile groups node-level security hardening features. Additional hardening options\\nwill be added to this document over time.\\n\\nCurrently it controls workload isolation: running the container runtime plane (CRI containerd, the\\nkubelet, and all pods) inside a dedicated PID and mount namespace anchored by the `sandboxd` service,\\nisolating them from `machined` (PID 1) and its file descriptors.\\n\\n`talosctl gen config` emits this document with `workloadIsolation: true` for Talos 1.14+, so new\\nclusters are isolated by default; clusters upgraded from older versions do not have the document and\\nkeep the old (non-isolated) behavior unless it is added.\\n\\nNote: with workload isolation enabled, the deprecated in-tree Kubernetes iSCSI volume plugin does not\\nwork (the kubelet cannot reach the host iscsid across the sandbox); use a CSI driver instead.\\n"
+    },
     "runtime.SysctlConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -6765,6 +6801,9 @@
     },
     {
       "$ref": "#/$defs/runtime.OOMV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/runtime.SecurityProfileConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/runtime.SysctlConfigV1Alpha1"

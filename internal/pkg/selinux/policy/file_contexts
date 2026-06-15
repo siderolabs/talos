@@ -27,6 +27,7 @@
 /usr/bin/reboot	system_u:object_r:init_exec_t:s0
 /usr/bin/udevadm	--	system_u:object_r:udev_exec_t:s0
 /usr/bin/poweroff	system_u:object_r:init_exec_t:s0
+/usr/bin/sandboxd	system_u:object_r:init_exec_t:s0
 /usr/bin/shutdown	system_u:object_r:init_exec_t:s0
 /usr/bin/modprobe	--	system_u:object_r:modprobe_exec_t:s0
 /usr/bin/dashboard	system_u:object_r:init_exec_t:s0

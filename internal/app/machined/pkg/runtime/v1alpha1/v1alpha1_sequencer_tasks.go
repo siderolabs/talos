@@ -44,6 +44,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/sdboot"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/sandboxd"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
@@ -369,9 +370,16 @@ func StartAllServices(runtime.Sequence, any) (runtime.TaskExecutionFunc, string)
 			&services.Kubelet{},
 		)
 
-		serviceList := []system.Service{
-			&services.CRI{},
+		serviceList := []system.Service{}
+
+		// When workload isolation is enabled (SecurityProfileConfig), the sandbox
+		// PID+mount namespace must be up before CRI (which DependsOn it and runs
+		// inside it). Skipped in container mode or when isolation is disabled/absent.
+		if sandboxd.Enabled(r) {
+			serviceList = append(serviceList, &services.Sandboxd{})
 		}
+
+		serviceList = append(serviceList, &services.CRI{})
 
 		switch t := r.Config().Machine().Type(); t {
 		case machine.TypeInit:

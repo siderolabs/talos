@@ -241,6 +241,12 @@ func (contract *VersionContract) FilesystemTrimEnabledByDefault() bool {
 	return contract.Greater(TalosVersion1_13)
 }
 
+// WorkloadIsolationEnabledByDefault returns true if version of Talos should have workload isolation (sandboxd)
+// enabled by default (emitted as a SecurityProfileConfig document with workloadIsolation set by config generation).
+func (contract *VersionContract) WorkloadIsolationEnabledByDefault() bool {
+	return contract.Greater(TalosVersion1_13)
+}
+
 // MultidocSysctlConfigSupported returns true if version of Talos should use multi-doc Sysctl config.
 func (contract *VersionContract) MultidocSysctlConfigSupported() bool {
 	return contract.Greater(TalosVersion1_13)

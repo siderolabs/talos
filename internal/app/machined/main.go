@@ -32,6 +32,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/emergency"
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/sandboxd"
 	startuptasks "github.com/siderolabs/talos/internal/app/machined/pkg/startup"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
@@ -331,6 +332,12 @@ func main() {
 	switch filepath.Base(os.Args[0]) {
 	case "apid":
 		apid.Main()
+
+		return
+	case "sandboxd":
+		// PID 1 of the sandbox PID+mount namespace: forks the container-plane
+		// services (cri, kubelet, pods) and walls them off from machined.
+		sandboxd.Main()
 
 		return
 	case "trustd":

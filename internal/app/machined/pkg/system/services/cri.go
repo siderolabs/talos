@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/health/grpc_health_v1"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/sandboxd"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/health"
@@ -91,8 +92,13 @@ func (c *CRI) Condition(r runtime.Runtime) conditions.Condition {
 }
 
 // DependsOn implements the Service interface.
-func (c *CRI) DependsOn(runtime.Runtime) []string {
-	return nil
+func (c *CRI) DependsOn(r runtime.Runtime) []string {
+	if !sandboxd.Enabled(r) {
+		return nil
+	}
+
+	// CRI runs inside the sandbox namespace, which the sandboxd service owns.
+	return []string{sandboxd.ServiceID}
 }
 
 // Volumes implements the Service interface.
@@ -131,20 +137,28 @@ func (c *CRI) Runner(r runtime.Runtime) (runner.Runner, error) {
 		},
 	}
 
+	opts := []runner.Option{
+		runner.WithLoggingManager(r.Logging()),
+		runner.WithEnv(append(
+			environment.Get(r.Config()),
+			constants.EnvXDGRuntimeDir,
+		)),
+		runner.WithOOMScoreAdj(-500),
+		runner.WithCgroupPath(constants.CgroupPodRuntime),
+		runner.WithSelinuxLabel(constants.SelinuxLabelPodRuntime),
+		runner.WithDroppedCapabilities(constants.DefaultDroppedCapabilities),
+	}
+
+	// When workload isolation is enabled, run CRI inside the shared sandbox
+	// PID+mount namespace. The launcher is resolved per launch (getter), so if
+	// sandboxd is recreated, CRI's restart re-enters the new namespace. When
+	// isolation is disabled/absent (or in container mode) CRI runs on the host.
+	if sandboxd.Enabled(r) {
+		opts = append(opts, runner.WithSandbox(r.Sandbox))
+	}
+
 	return restart.New(
-		process.NewRunner(
-			r.Config().Debug(),
-			args,
-			runner.WithLoggingManager(r.Logging()),
-			runner.WithEnv(append(
-				environment.Get(r.Config()),
-				constants.EnvXDGRuntimeDir,
-			)),
-			runner.WithOOMScoreAdj(-500),
-			runner.WithCgroupPath(constants.CgroupPodRuntime),
-			runner.WithSelinuxLabel(constants.SelinuxLabelPodRuntime),
-			runner.WithDroppedCapabilities(constants.DefaultDroppedCapabilities),
-		),
+		process.NewRunner(r.Config().Debug(), args, opts...),
 		restart.WithType(restart.Forever),
 	), nil
 }

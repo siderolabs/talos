@@ -210,6 +210,8 @@ func (in *Input) worker() ([]config.Document, error) {
 
 	documents = append(documents, in.generateBlockConfigs()...)
 
+	documents = append(documents, in.generateSecurityProfileConfigs()...)
+
 	extraDocuments, err := in.generateRegistryConfigs(machine)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate registry configs: %w", err)

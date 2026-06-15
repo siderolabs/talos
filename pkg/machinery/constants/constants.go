@@ -835,6 +835,10 @@ const (
 	// SelinuxLabelDashboard is the SELinux label for dashboard process.
 	SelinuxLabelDashboard = "system_u:system_r:dashboard_t:s0"
 
+	// SelinuxLabelSandboxd is the SELinux label for the sandboxd process (PID 1 of
+	// the sandbox PID+mount namespace that launches the container-plane services).
+	SelinuxLabelSandboxd = "system_u:system_r:sandboxd_t:s0"
+
 	// CgroupPodRuntimeRoot is the cgroup containing Kubernetes runtime components.
 	CgroupPodRuntimeRoot = "podruntime"
 

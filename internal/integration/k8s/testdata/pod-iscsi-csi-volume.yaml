@@ -1,0 +1,58 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: iscsipd-csi-pv
+  labels:
+    name: iscsipd-csi
+spec:
+  storageClassName: manual
+  accessModes:
+    - ReadWriteOnce
+  capacity:
+    storage: 1Gi
+  csi:
+    driver: iscsi.csi.k8s.io
+    volumeHandle: iscsipd-csi
+    volumeAttributes:
+      targetPortal: "{{ .TargetPortal }}"
+      portals: "[]"
+      iqn: "{{ .IQN }}"
+      lun: "1"
+      iscsiInterface: "default"
+      discovery: "true"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: iscsipd-csi-pvc
+  namespace: default
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: manual
+  selector:
+    matchLabels:
+      name: iscsipd-csi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: iscsipd
+  namespace: default
+spec:
+  containers:
+    - name: iscsipd-rw
+      image: alpine
+      command: ["/bin/sh", "-c", "--"]
+      args: ["trap : TERM INT; (sleep 1000) & wait"]
+      volumeMounts:
+        - mountPath: "/mnt/iscsipd"
+          name: iscsipd-rw
+  volumes:
+    - name: iscsipd-rw
+      persistentVolumeClaim:
+        claimName: iscsipd-csi-pvc

@@ -95,6 +95,13 @@ type WatchdogTimerConfig interface {
 	Timeout() time.Duration
 }
 
+// SecurityProfileConfig defines the interface to access Talos node security profile configuration.
+type SecurityProfileConfig interface {
+	SecurityProfileConfigSignal()
+	// WorkloadIsolation reports whether the container plane should run inside the sandbox namespace.
+	WorkloadIsolation() bool
+}
+
 // WrapRuntimeConfigList wraps a list of RuntimeConfig into a single RuntimeConfig aggregating the results.
 func WrapRuntimeConfigList(configs ...RuntimeConfig) RuntimeConfig {
 	return runtimeConfigWrapper(configs)

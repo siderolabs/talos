@@ -25,7 +25,10 @@ var (
 	//go:embed testdata/longhorn-volumeattachment.yaml
 	longHornISCSIVolumeAttachmentManifestTemplate []byte
 
-	//go:embed testdata/pod-iscsi-volume.yaml
+	//go:embed testdata/csi-driver-iscsi.yaml
+	csiDriverISCSIManifest []byte
+
+	//go:embed testdata/pod-iscsi-csi-volume.yaml
 	podWithISCSIVolumeTemplate []byte
 )
 
@@ -45,8 +48,7 @@ func (suite *LongHornV1Suite) SuiteName() string {
 	return "k8s.LongHornV1Suite"
 }
 
-// TestDeploy tests deploying Longhorn (v1 data engine) and running fio + an
-// in-tree Kubernetes iscsi volume against a v1 iscsi-frontend Longhorn volume.
+// TestDeploy tests deploying Longhorn (v1 data engine) and iscsi in Talos.
 func (suite *LongHornV1Suite) TestDeploy() {
 	if suite.Cluster == nil {
 		suite.T().Skip("without full cluster state reaching out to the node IP is not reliable")
@@ -162,9 +164,6 @@ func (suite *LongHornV1Suite) testDeployISCSI(ctx context.Context) {
 		}
 	}
 
-	tmpl, err = template.New("pod-iscsi-volume").Parse(string(podWithISCSIVolumeTemplate))
-	suite.Require().NoError(err)
-
 	// endpoint is of the form `iscsi://10.244.0.5:3260/iqn.2019-10.io.longhorn:iscsi/1`
 	// trim the iscsi:// prefix
 	endpointData = strings.TrimPrefix(endpointData, "iscsi://")
@@ -176,14 +175,29 @@ func (suite *LongHornV1Suite) testDeployISCSI(ctx context.Context) {
 		suite.T().Fatalf("failed to parse endpoint data from %s", endpointData)
 	}
 
+	// Deploy the iSCSI CSI driver (kubernetes-csi/csi-driver-iscsi) to consume the
+	// target. Its node plugin logs in via its own privileged hostNetwork pod, not
+	// kubelet's iscsiadm wrapper, so it works with kubelet inside the sandbox.
+	csiDriverUnstructured := suite.ParseManifests(csiDriverISCSIManifest)
+
+	defer func() {
+		cleanUpCtx, cleanupCancel := context.WithTimeout(context.Background(), time.Minute)
+		defer cleanupCancel()
+
+		suite.DeleteManifests(cleanUpCtx, csiDriverUnstructured)
+	}()
+
+	suite.ApplyManifests(ctx, csiDriverUnstructured)
+
+	tmpl, err = template.New("pod-iscsi-csi-volume").Parse(string(podWithISCSIVolumeTemplate))
+	suite.Require().NoError(err)
+
 	var podWithISCSIVolume bytes.Buffer
 
 	if err := tmpl.Execute(&podWithISCSIVolume, struct {
-		NodeName     string
 		TargetPortal string
 		IQN          string
 	}{
-		NodeName:     nodeInfo.Name,
 		TargetPortal: targetPortal,
 		IQN:          IQN,
 	}); err != nil {
@@ -201,7 +215,7 @@ func (suite *LongHornV1Suite) testDeployISCSI(ctx context.Context) {
 
 	suite.ApplyManifests(ctx, podWithISCSIVolumeUnstructured)
 
-	suite.Require().NoError(suite.WaitForPodToBeRunning(ctx, 3*time.Minute, "default", "iscsipd"))
+	suite.Require().NoError(suite.WaitForPodToBeRunning(ctx, 5*time.Minute, "default", "iscsipd"))
 }
 
 func init() {

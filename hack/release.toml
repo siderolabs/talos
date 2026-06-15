@@ -389,6 +389,47 @@ When the `UnattendedInstall` document is present, the install is driven by the n
 The `.machine.install` field remains supported for backwards compatibility and is still used for older version contracts.
 """
 
+    [notes.sandboxd]
+        title = "Workload Isolation (sandboxd)"
+        description = """\
+The container runtime plane — CRI containerd, the kubelet, and all pods — now runs inside a dedicated PID and
+mount namespace anchored by a new `sandboxd` service, instead of sharing `machined`'s namespaces.
+
+`sandboxd` runs in its own least-privilege SELinux domain (`sandboxd_t`). if it dies the kernel tears down the
+namespace and Talos recreates it — relaunching CRI, the kubelet, and pods — without rebooting the node.
+Its logs are available via `talosctl logs sandboxd`.
+
+Workload isolation is controlled by the `workloadIsolation` field of the new `SecurityProfileConfig` document.
+`talosctl gen config` emits it with `workloadIsolation: true` for Talos 1.14+, so **new clusters are isolated by
+default**. Clusters **upgraded** from older versions do not have this document and therefore keep the previous
+(non-isolated) behavior until it is added — upgrades change nothing on their own. To enable on an existing
+cluster, add the document:
+
+```yaml
+apiVersion: v1alpha1
+kind: SecurityProfileConfig
+workloadIsolation: true
+```
+
+> NOTE: With workload isolation enabled, the deprecated in-tree Kubernetes iSCSI volume plugin does not work
+> (the kubelet cannot reach the host `iscsid` across the sandbox); use a CSI driver instead. See the in-tree
+> volume plugin deprecation note.
+"""
+
+    [notes.kubelet]
+        title = "In-tree Volume Plugins Deprecated"
+        description = """\
+Because the kubelet now runs inside the sandbox namespace (see the workload isolation note), the in-tree
+Kubernetes volume plugins that require the kubelet to reach host-level daemons no longer work. In particular
+the in-tree `iscsi` volume plugin, which drives the kubelet's `iscsiadm` wrapper to talk to the host `iscsid`,
+can no longer locate it across the sandbox PID namespace boundary.
+
+Use CSI drivers instead — a CSI node plugin performs the attach/mount itself in its own privileged pod and is
+unaffected by the sandbox. For iSCSI, `kubernetes-csi/csi-driver-iscsi` (or `democratic-csi`) consumes a
+target the same way. All in-tree (non-CSI) volume plugins are deprecated for the kubelet and support for them
+may be removed in a later release.
+"""
+
 [make_deps]
 
     [make_deps.tools]
