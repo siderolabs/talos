@@ -197,7 +197,10 @@ type LVMLogicalVolumeStatusSpec struct {
 	// WhenFull reflects lv_when_full ("error" / "queue" / "").
 	WhenFull string `protobuf:"bytes,34,opt,name=when_full,json=whenFull,proto3" json:"when_full,omitempty"`
 	// Tags is the list of tags attached to the LV (lv_tags).
-	Tags          []string `protobuf:"bytes,35,rep,name=tags,proto3" json:"tags,omitempty"`
+	Tags []string `protobuf:"bytes,35,rep,name=tags,proto3" json:"tags,omitempty"`
+	// PrettySize is the human-readable rendering of Size; empty when Size is
+	// not a byte count.
+	PrettySize    string `protobuf:"bytes,36,opt,name=pretty_size,json=prettySize,proto3" json:"pretty_size,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -477,6 +480,13 @@ func (x *LVMLogicalVolumeStatusSpec) GetTags() []string {
 	return nil
 }
 
+func (x *LVMLogicalVolumeStatusSpec) GetPrettySize() string {
+	if x != nil {
+		return x.PrettySize
+	}
+	return ""
+}
+
 // LVMPhysicalVolumeSpecSpec is the spec for LVMPhysicalVolumeSpec resource.
 type LVMPhysicalVolumeSpecSpec struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -569,7 +579,13 @@ type LVMPhysicalVolumeStatusSpec struct {
 	// Minor is the raw pv_minor column ("-1" for orphan PVs, otherwise the kernel minor).
 	Minor string `protobuf:"bytes,16,opt,name=minor,proto3" json:"minor,omitempty"`
 	// Tags is the list of tags attached to the PV (pv_tags).
-	Tags          []string `protobuf:"bytes,17,rep,name=tags,proto3" json:"tags,omitempty"`
+	Tags []string `protobuf:"bytes,17,rep,name=tags,proto3" json:"tags,omitempty"`
+	// PrettySize is the human-readable rendering of Size.
+	PrettySize string `protobuf:"bytes,18,opt,name=pretty_size,json=prettySize,proto3" json:"pretty_size,omitempty"`
+	// PrettyDeviceSize is the human-readable rendering of DeviceSize.
+	PrettyDeviceSize string `protobuf:"bytes,19,opt,name=pretty_device_size,json=prettyDeviceSize,proto3" json:"pretty_device_size,omitempty"`
+	// PrettyFree is the human-readable rendering of Free.
+	PrettyFree    string `protobuf:"bytes,20,opt,name=pretty_free,json=prettyFree,proto3" json:"pretty_free,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -721,6 +737,27 @@ func (x *LVMPhysicalVolumeStatusSpec) GetTags() []string {
 		return x.Tags
 	}
 	return nil
+}
+
+func (x *LVMPhysicalVolumeStatusSpec) GetPrettySize() string {
+	if x != nil {
+		return x.PrettySize
+	}
+	return ""
+}
+
+func (x *LVMPhysicalVolumeStatusSpec) GetPrettyDeviceSize() string {
+	if x != nil {
+		return x.PrettyDeviceSize
+	}
+	return ""
+}
+
+func (x *LVMPhysicalVolumeStatusSpec) GetPrettyFree() string {
+	if x != nil {
+		return x.PrettyFree
+	}
+	return ""
 }
 
 // LVMRefreshRequestSpec is the spec for LVMRefreshRequest.
@@ -931,7 +968,11 @@ type LVMVolumeGroupStatusSpec struct {
 	// SystemID is the system_id stamped into VG metadata (vg_systemid).
 	SystemId string `protobuf:"bytes,24,opt,name=system_id,json=systemId,proto3" json:"system_id,omitempty"`
 	// Tags is the list of tags attached to the VG (vg_tags).
-	Tags          []string `protobuf:"bytes,25,rep,name=tags,proto3" json:"tags,omitempty"`
+	Tags []string `protobuf:"bytes,25,rep,name=tags,proto3" json:"tags,omitempty"`
+	// PrettySize is the human-readable rendering of Size.
+	PrettySize string `protobuf:"bytes,26,opt,name=pretty_size,json=prettySize,proto3" json:"pretty_size,omitempty"`
+	// PrettyFree is the human-readable rendering of Free.
+	PrettyFree    string `protobuf:"bytes,27,opt,name=pretty_free,json=prettyFree,proto3" json:"pretty_free,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1141,6 +1182,20 @@ func (x *LVMVolumeGroupStatusSpec) GetTags() []string {
 	return nil
 }
 
+func (x *LVMVolumeGroupStatusSpec) GetPrettySize() string {
+	if x != nil {
+		return x.PrettySize
+	}
+	return ""
+}
+
+func (x *LVMVolumeGroupStatusSpec) GetPrettyFree() string {
+	if x != nil {
+		return x.PrettyFree
+	}
+	return ""
+}
+
 var File_resource_definitions_storage_storage_proto protoreflect.FileDescriptor
 
 const file_resource_definitions_storage_storage_proto_rawDesc = "" +
@@ -1154,7 +1209,7 @@ const file_resource_definitions_storage_storage_proto_rawDesc = "" +
 	"size_bytes\x18\x04 \x01(\x04R\tsizeBytes\x12&\n" +
 	"\x0fsize_percent_vg\x18\x05 \x01(\rR\rsizePercentVg\x12\x18\n" +
 	"\amirrors\x18\x06 \x01(\rR\amirrors\x12\x18\n" +
-	"\astripes\x18\a \x01(\rR\astripes\"\xbc\b\n" +
+	"\astripes\x18\a \x01(\rR\astripes\"\xdd\b\n" +
 	"\x1aLVMLogicalVolumeStatusSpec\x12\x12\n" +
 	"\x04path\x18\x01 \x01(\tR\x04path\x12\x17\n" +
 	"\adm_path\x18\x02 \x01(\tR\x06dmPath\x12\x12\n" +
@@ -1199,10 +1254,12 @@ const file_resource_definitions_storage_storage_proto_rawDesc = "" +
 	"\n" +
 	"convert_lv\x18! \x01(\tR\tconvertLv\x12\x1b\n" +
 	"\twhen_full\x18\" \x01(\tR\bwhenFull\x12\x12\n" +
-	"\x04tags\x18# \x03(\tR\x04tags\"L\n" +
+	"\x04tags\x18# \x03(\tR\x04tags\x12\x1f\n" +
+	"\vpretty_size\x18$ \x01(\tR\n" +
+	"prettySize\"L\n" +
 	"\x19LVMPhysicalVolumeSpecSpec\x12\x16\n" +
 	"\x06device\x18\x01 \x01(\tR\x06device\x12\x17\n" +
-	"\avg_name\x18\x02 \x01(\tR\x06vgName\"\xc7\x03\n" +
+	"\avg_name\x18\x02 \x01(\tR\x06vgName\"\xb7\x04\n" +
 	"\x1bLVMPhysicalVolumeStatusSpec\x12\x16\n" +
 	"\x06device\x18\x01 \x01(\tR\x06device\x12\x17\n" +
 	"\avg_name\x18\x02 \x01(\tR\x06vgName\x12\x12\n" +
@@ -1222,7 +1279,12 @@ const file_resource_definitions_storage_storage_proto_rawDesc = "" +
 	"\x0epe_alloc_count\x18\x0e \x01(\tR\fpeAllocCount\x12\x14\n" +
 	"\x05major\x18\x0f \x01(\tR\x05major\x12\x14\n" +
 	"\x05minor\x18\x10 \x01(\tR\x05minor\x12\x12\n" +
-	"\x04tags\x18\x11 \x03(\tR\x04tags\"1\n" +
+	"\x04tags\x18\x11 \x03(\tR\x04tags\x12\x1f\n" +
+	"\vpretty_size\x18\x12 \x01(\tR\n" +
+	"prettySize\x12,\n" +
+	"\x12pretty_device_size\x18\x13 \x01(\tR\x10prettyDeviceSize\x12\x1f\n" +
+	"\vpretty_free\x18\x14 \x01(\tR\n" +
+	"prettyFree\"1\n" +
 	"\x15LVMRefreshRequestSpec\x12\x18\n" +
 	"\arequest\x18\x01 \x01(\x03R\arequest\"K\n" +
 	"\x16LVMValidationErrorSpec\x12\x17\n" +
@@ -1230,7 +1292,7 @@ const file_resource_definitions_storage_storage_proto_rawDesc = "" +
 	"\amessage\x18\x02 \x01(\tR\amessage\"W\n" +
 	"\x16LVMVolumeGroupSpecSpec\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12)\n" +
-	"\x10physical_volumes\x18\x02 \x03(\tR\x0fphysicalVolumes\"\xdf\x05\n" +
+	"\x10physical_volumes\x18\x02 \x03(\tR\x0fphysicalVolumes\"\xa1\x06\n" +
 	"\x18LVMVolumeGroupStatusSpec\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
 	"\x04uuid\x18\x02 \x01(\tR\x04uuid\x12\x16\n" +
@@ -1261,7 +1323,11 @@ const file_resource_definitions_storage_storage_proto_rawDesc = "" +
 	"\x06seq_no\x18\x16 \x01(\tR\x05seqNo\x12\x1b\n" +
 	"\tlock_type\x18\x17 \x01(\tR\blockType\x12\x1b\n" +
 	"\tsystem_id\x18\x18 \x01(\tR\bsystemId\x12\x12\n" +
-	"\x04tags\x18\x19 \x03(\tR\x04tagsBx\n" +
+	"\x04tags\x18\x19 \x03(\tR\x04tags\x12\x1f\n" +
+	"\vpretty_size\x18\x1a \x01(\tR\n" +
+	"prettySize\x12\x1f\n" +
+	"\vpretty_free\x18\x1b \x01(\tR\n" +
+	"prettyFreeBx\n" +
 	"*dev.talos.api.resource.definitions.storageZJgithub.com/siderolabs/talos/pkg/machinery/api/resource/definitions/storageb\x06proto3"
 
 var (

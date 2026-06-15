@@ -78,7 +78,7 @@ func newVGConfig(pvDisks []string) *storagecfg.LVMVolumeGroupConfigV1Alpha1 {
 	})
 	expr := strings.Join(clauses, " || ")
 
-	doc.PhysicalVolumes.VolumeSelector.Match = cel.MustExpression(
+	doc.ProvisioningSpec.VolumeSelector.Match = cel.MustExpression(
 		cel.ParseBooleanExpression(expr, celenv.DiskLocator()),
 	)
 
@@ -618,7 +618,7 @@ func (suite *StorageSuite) TestLVMGrowLogicalVolume() {
 func vgDocSelector(name, match string) *storagecfg.LVMVolumeGroupConfigV1Alpha1 {
 	doc := storagecfg.NewLVMVolumeGroupConfigV1Alpha1()
 	doc.MetaName = name
-	doc.PhysicalVolumes.VolumeSelector.Match = cel.MustExpression(
+	doc.ProvisioningSpec.VolumeSelector.Match = cel.MustExpression(
 		cel.ParseBooleanExpression(match, celenv.VolumeLocator()),
 	)
 

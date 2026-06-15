@@ -28,11 +28,11 @@ func (LVMVolumeGroupConfigV1Alpha1) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Volume group name." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
-				Name:        "physicalVolumes",
-				Type:        "LVMPhysicalVolumesSpec",
+				Name:        "provisioning",
+				Type:        "ProvisioningSpec",
 				Note:        "",
-				Description: "Selects backing disks.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Selects backing disks." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "The provisioning describes how the Physical Volumes are provisioned.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The provisioning describes how the Physical Volumes are provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
@@ -42,15 +42,15 @@ func (LVMVolumeGroupConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
-func (LVMPhysicalVolumesSpec) Doc() *encoder.Doc {
+func (ProvisioningSpec) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
-		Type:        "LVMPhysicalVolumesSpec",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "LVMPhysicalVolumesSpec selects backing disks." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "LVMPhysicalVolumesSpec selects backing disks.",
+		Type:        "ProvisioningSpec",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "ProvisioningSpec describes how the Physical Volumes are provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "ProvisioningSpec describes how the Physical Volumes are provisioned.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "LVMVolumeGroupConfigV1Alpha1",
-				FieldName: "physicalVolumes",
+				FieldName: "provisioning",
 			},
 		},
 		Fields: []encoder.Doc{
@@ -74,7 +74,7 @@ func (LVMVolumeSelectorSpec) Doc() *encoder.Doc {
 		Description: "LVMVolumeSelectorSpec matches disks with CEL.",
 		AppearsIn: []encoder.Appearance{
 			{
-				TypeName:  "LVMPhysicalVolumesSpec",
+				TypeName:  "ProvisioningSpec",
 				FieldName: "volumeSelector",
 			},
 		},
@@ -199,7 +199,7 @@ func GetFileDoc() *encoder.FileDoc {
 		Description: "Package storage provides storage virtualization configuration documents.\n",
 		Structs: []*encoder.Doc{
 			LVMVolumeGroupConfigV1Alpha1{}.Doc(),
-			LVMPhysicalVolumesSpec{}.Doc(),
+			ProvisioningSpec{}.Doc(),
 			LVMVolumeSelectorSpec{}.Doc(),
 			LVMLogicalVolumeConfigV1Alpha1{}.Doc(),
 			LVMLogicalVolumeProvisioningSpec{}.Doc(),

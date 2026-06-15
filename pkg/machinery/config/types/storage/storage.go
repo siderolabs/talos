@@ -7,4 +7,4 @@ package storage
 
 //go:generate go tool github.com/siderolabs/talos/tools/docgen -output storage_doc.go storage.go lvm_volume_group_config.go lvm_logical_volume_config.go
 
-//go:generate go tool github.com/siderolabs/deep-copy -type LVMVolumeGroupConfigV1Alpha1 -type LVMPhysicalVolumesSpec -type LVMVolumeSelectorSpec -type LVMLogicalVolumeConfigV1Alpha1 -type LVMLogicalVolumeProvisioningSpec -pointer-receiver -header-file ../../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate go tool github.com/siderolabs/deep-copy -type LVMVolumeGroupConfigV1Alpha1 -type LVMLogicalVolumeConfigV1Alpha1 -pointer-receiver -header-file ../../../../../hack/boilerplate.txt -o deep_copy.generated.go .

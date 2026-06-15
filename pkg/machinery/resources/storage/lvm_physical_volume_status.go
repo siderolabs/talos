@@ -58,6 +58,13 @@ type LVMPhysicalVolumeStatusSpec struct {
 	Minor string `yaml:"minor" protobuf:"16"`
 	// Tags is the list of tags attached to the PV (pv_tags).
 	Tags []string `yaml:"tags" protobuf:"17"`
+
+	// PrettySize is the human-readable rendering of Size.
+	PrettySize string `yaml:"prettySize,omitempty" protobuf:"18"`
+	// PrettyDeviceSize is the human-readable rendering of DeviceSize.
+	PrettyDeviceSize string `yaml:"prettyDeviceSize,omitempty" protobuf:"19"`
+	// PrettyFree is the human-readable rendering of Free.
+	PrettyFree string `yaml:"prettyFree,omitempty" protobuf:"20"`
 }
 
 // NewLVMPhysicalVolumeStatus initializes a LVMPhysicalVolumeStatus resource.
@@ -80,8 +87,8 @@ func (LVMPhysicalVolumeStatusExtension) ResourceDefinition() meta.ResourceDefini
 		PrintColumns: []meta.PrintColumn{
 			{Name: "Device", JSONPath: "{.device}"},
 			{Name: "VG", JSONPath: "{.vgName}"}, //nolint:goconst
-			{Name: "Size", JSONPath: "{.size}"},
-			{Name: "Free", JSONPath: "{.free}"},
+			{Name: "Size", JSONPath: "{.prettySize}"},
+			{Name: "Free", JSONPath: "{.prettyFree}"},
 			{Name: "Allocatable", JSONPath: "{.allocatable}"},
 		},
 	}

@@ -4537,20 +4537,6 @@
       "type": "object",
       "description": "LVMLogicalVolumeProvisioningSpec describes how an LV is provisioned."
     },
-    "storage.LVMPhysicalVolumesSpec": {
-      "properties": {
-        "volumeSelector": {
-          "$ref": "#/$defs/storage.LVMVolumeSelectorSpec",
-          "title": "volumeSelector",
-          "description": "Matches disks to initialize as physical volumes.\n",
-          "markdownDescription": "Matches disks to initialize as physical volumes.",
-          "x-intellij-html-description": "\u003cp\u003eMatches disks to initialize as physical volumes.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "LVMPhysicalVolumesSpec selects backing disks."
-    },
     "storage.LVMVolumeGroupConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -4578,12 +4564,12 @@
           "markdownDescription": "Volume group name.\n\nMust be 1-63 chars: ASCII letters, digits, hyphens, underscores.",
           "x-intellij-html-description": "\u003cp\u003eVolume group name.\u003c/p\u003e\n\n\u003cp\u003eMust be 1-63 chars: ASCII letters, digits, hyphens, underscores.\u003c/p\u003e\n"
         },
-        "physicalVolumes": {
-          "$ref": "#/$defs/storage.LVMPhysicalVolumesSpec",
-          "title": "physicalVolumes",
-          "description": "Selects backing disks.\n",
-          "markdownDescription": "Selects backing disks.",
-          "x-intellij-html-description": "\u003cp\u003eSelects backing disks.\u003c/p\u003e\n"
+        "provisioning": {
+          "$ref": "#/$defs/storage.ProvisioningSpec",
+          "title": "provisioning",
+          "description": "The provisioning describes how the Physical Volumes are provisioned.\n",
+          "markdownDescription": "The provisioning describes how the Physical Volumes are provisioned.",
+          "x-intellij-html-description": "\u003cp\u003eThe provisioning describes how the Physical Volumes are provisioned.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -4607,6 +4593,20 @@
       "additionalProperties": false,
       "type": "object",
       "description": "LVMVolumeSelectorSpec matches disks with CEL."
+    },
+    "storage.ProvisioningSpec": {
+      "properties": {
+        "volumeSelector": {
+          "$ref": "#/$defs/storage.LVMVolumeSelectorSpec",
+          "title": "volumeSelector",
+          "description": "Matches disks to initialize as physical volumes.\n",
+          "markdownDescription": "Matches disks to initialize as physical volumes.",
+          "x-intellij-html-description": "\u003cp\u003eMatches disks to initialize as physical volumes.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "ProvisioningSpec describes how the Physical Volumes are provisioned."
     },
     "v1alpha1.APIServerConfig": {
       "properties": {

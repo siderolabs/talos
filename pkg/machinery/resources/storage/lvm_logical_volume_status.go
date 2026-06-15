@@ -93,6 +93,10 @@ type LVMLogicalVolumeStatusSpec struct {
 	WhenFull string `yaml:"whenFull" protobuf:"34"`
 	// Tags is the list of tags attached to the LV (lv_tags).
 	Tags []string `yaml:"tags" protobuf:"35"`
+
+	// PrettySize is the human-readable rendering of Size; empty when Size is
+	// not a byte count.
+	PrettySize string `yaml:"prettySize,omitempty" protobuf:"36"`
 }
 
 // NewLVMLogicalVolumeStatus initializes a LVMLogicalVolumeStatus resource.
@@ -116,7 +120,7 @@ func (LVMLogicalVolumeStatusExtension) ResourceDefinition() meta.ResourceDefinit
 			{Name: "Path", JSONPath: "{.path}"},
 			{Name: "VG", JSONPath: "{.vgName}"}, //nolint:goconst
 			{Name: "Layout", JSONPath: "{.layout}"},
-			{Name: "Size", JSONPath: "{.size}"},
+			{Name: "Size", JSONPath: "{.prettySize}"},
 			{Name: "Active", JSONPath: "{.active}"},
 		},
 	}

@@ -9,17 +9,33 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"strconv"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/dustin/go-humanize"
 	"go.uber.org/zap"
 
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/lvm"
 	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
+
+// prettySize renders an LVM raw byte-size column (reported with `--units b
+// --nosuffix`, so a base-10 integer string) as a human-readable size. LVM may
+// emit non-numeric values for size-typed columns ("" when not applicable,
+// "auto" for read-ahead, etc.); those yield an empty string so the raw field
+// remains the source of truth.
+func prettySize(raw string) string {
+	v, err := strconv.ParseUint(raw, 10, 64)
+	if err != nil {
+		return ""
+	}
+
+	return humanize.Bytes(v)
+}
 
 // LVMScanner is the subset of internal/pkg/lvm.LVM used by LVMScanController.
 // Splitting it out lets tests inject a fake without touching /sbin/lvm.
@@ -166,7 +182,9 @@ func (ctrl *LVMScanController) applyVGs(ctx context.Context, r controller.Runtim
 				spec.Clustered = vg.Clustered
 				spec.Shared = vg.Shared
 				spec.Size = vg.Size
+				spec.PrettySize = prettySize(vg.Size)
 				spec.Free = vg.Free
+				spec.PrettyFree = prettySize(vg.Free)
 				spec.ExtentSize = vg.ExtentSize
 				spec.ExtentCount = vg.ExtentCount
 				spec.FreeExtentCount = vg.FreeExtentCount
@@ -220,8 +238,11 @@ func (ctrl *LVMScanController) applyPVs(ctx context.Context, r controller.Runtim
 				spec.Missing = pv.Missing
 				spec.InUse = pv.InUse
 				spec.Size = pv.Size
+				spec.PrettySize = prettySize(pv.Size)
 				spec.DeviceSize = pv.DeviceSize
+				spec.PrettyDeviceSize = prettySize(pv.DeviceSize)
 				spec.Free = pv.Free
+				spec.PrettyFree = prettySize(pv.Free)
 				spec.Used = pv.Used
 				spec.PECount = pv.PECount
 				spec.PEAllocCount = pv.PEAllocCount
@@ -279,6 +300,7 @@ func (ctrl *LVMScanController) applyLVs(ctx context.Context, r controller.Runtim
 				spec.Merging = lv.Merging
 				spec.Converting = lv.Converting
 				spec.Size = lv.Size
+				spec.PrettySize = prettySize(lv.Size)
 				spec.MetadataSize = lv.MetadataSize
 				spec.ReadAhead = lv.ReadAhead
 				spec.KernelMajor = lv.KernelMajor

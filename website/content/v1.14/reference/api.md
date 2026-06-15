@@ -11114,6 +11114,7 @@ LVMLogicalVolumeStatusSpec mirrors selected `lvs` columns.
 | convert_lv | [string](#string) |  | ConvertLV is the target LV of an in-progress lvconvert (convert_lv); empty otherwise. |
 | when_full | [string](#string) |  | WhenFull reflects lv_when_full ("error" / "queue" / ""). |
 | tags | [string](#string) | repeated | Tags is the list of tags attached to the LV (lv_tags). |
+| pretty_size | [string](#string) |  | PrettySize is the human-readable rendering of Size; empty when Size is not a byte count. |
 
 
 
@@ -11162,6 +11163,9 @@ Raw strings preserve LVM sentinel values.
 | major | [string](#string) |  | Major is the raw pv_major column ("-1" for orphan PVs, otherwise the kernel major). |
 | minor | [string](#string) |  | Minor is the raw pv_minor column ("-1" for orphan PVs, otherwise the kernel minor). |
 | tags | [string](#string) | repeated | Tags is the list of tags attached to the PV (pv_tags). |
+| pretty_size | [string](#string) |  | PrettySize is the human-readable rendering of Size. |
+| pretty_device_size | [string](#string) |  | PrettyDeviceSize is the human-readable rendering of DeviceSize. |
+| pretty_free | [string](#string) |  | PrettyFree is the human-readable rendering of Free. |
 
 
 
@@ -11249,6 +11253,8 @@ Raw strings preserve LVM sentinel values.
 | lock_type | [string](#string) |  | LockType is the raw vg_lock_type column. |
 | system_id | [string](#string) |  | SystemID is the system_id stamped into VG metadata (vg_systemid). |
 | tags | [string](#string) | repeated | Tags is the list of tags attached to the VG (vg_tags). |
+| pretty_size | [string](#string) |  | PrettySize is the human-readable rendering of Size. |
+| pretty_free | [string](#string) |  | PrettyFree is the human-readable rendering of Free. |
 
 
 

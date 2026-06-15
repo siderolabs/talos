@@ -98,6 +98,9 @@ message LVMLogicalVolumeStatusSpec {
   string when_full = 34;
   // Tags is the list of tags attached to the LV (lv_tags).
   repeated string tags = 35;
+  // PrettySize is the human-readable rendering of Size; empty when Size is
+  // not a byte count.
+  string pretty_size = 36;
 }
 
 // LVMPhysicalVolumeSpecSpec is the spec for LVMPhysicalVolumeSpec resource.
@@ -145,6 +148,12 @@ message LVMPhysicalVolumeStatusSpec {
   string minor = 16;
   // Tags is the list of tags attached to the PV (pv_tags).
   repeated string tags = 17;
+  // PrettySize is the human-readable rendering of Size.
+  string pretty_size = 18;
+  // PrettyDeviceSize is the human-readable rendering of DeviceSize.
+  string pretty_device_size = 19;
+  // PrettyFree is the human-readable rendering of Free.
+  string pretty_free = 20;
 }
 
 // LVMRefreshRequestSpec is the spec for LVMRefreshRequest.
@@ -221,5 +230,9 @@ message LVMVolumeGroupStatusSpec {
   string system_id = 24;
   // Tags is the list of tags attached to the VG (vg_tags).
   repeated string tags = 25;
+  // PrettySize is the human-readable rendering of Size.
+  string pretty_size = 26;
+  // PrettyFree is the human-readable rendering of Free.
+  string pretty_free = 27;
 }
 

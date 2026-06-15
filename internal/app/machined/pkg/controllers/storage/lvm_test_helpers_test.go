@@ -51,7 +51,7 @@ func newVGDoc(name, match string) *storagecfg.LVMVolumeGroupConfigV1Alpha1 {
 	doc := storagecfg.NewLVMVolumeGroupConfigV1Alpha1()
 	doc.MetaName = name
 
-	if err := doc.PhysicalVolumes.VolumeSelector.Match.UnmarshalText([]byte(match)); err != nil {
+	if err := doc.ProvisioningSpec.VolumeSelector.Match.UnmarshalText([]byte(match)); err != nil {
 		panic(err)
 	}
 
