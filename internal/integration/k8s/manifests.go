@@ -114,7 +114,7 @@ func (suite *ManifestsSuite) TestSync() {
 
 	// 2. Roll out manifests
 	suite.Require().NoError(kubernetes.PerformManifestsSync(
-		suite.ctx,
+		nodeCtx,
 		clusterAccess,
 		true,
 		kubernetes.UpgradeOptions{
@@ -162,7 +162,7 @@ func (suite *ManifestsSuite) TestSync() {
 
 	// 5. Roll out manifests
 	suite.Require().NoError(kubernetes.PerformManifestsSync(
-		suite.ctx,
+		nodeCtx,
 		clusterAccess,
 		true,
 		kubernetes.UpgradeOptions{

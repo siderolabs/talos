@@ -23,7 +23,6 @@ import (
 	ssacli "github.com/siderolabs/go-kubernetes/kubernetes/ssa/cli"
 	"github.com/siderolabs/go-kubernetes/kubernetes/upgrade"
 	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -164,7 +163,7 @@ func Upgrade(ctx context.Context, cluster UpgradeProvider, options UpgradeOption
 
 	useSSA := minTalosVersion.SupportsSSAManifestSync()
 
-	return PerformManifestsSync(ctx, cluster, useSSA, options)
+	return PerformManifestsSync(client.WithNode(ctx, options.controlPlaneNodes[0]), cluster, useSSA, options)
 }
 
 func prePullImages(ctx context.Context, talosClient *client.Client, options UpgradeOptions) error {
@@ -436,6 +435,8 @@ func upgradeStaticPodPatcher(
 }
 
 // PerformManifestsSync performs manifests sync from Talos manifest list to Kubernetes.
+//
+// The context passed should be tied to a single Talos controlplane node.
 func PerformManifestsSync(
 	ctx context.Context,
 	cluster UpgradeProvider,
@@ -462,11 +463,6 @@ func getManifests(ctx context.Context, cluster UpgradeProvider) ([]*unstructured
 	}
 
 	defer cluster.Close() //nolint:errcheck
-
-	md, _ := metadata.FromOutgoingContext(ctx)
-	if nodes := md["nodes"]; len(nodes) > 0 {
-		ctx = client.WithNode(ctx, nodes[0])
-	}
 
 	return manifests.GetBootstrapManifests(ctx, talosclient.COSI, nil)
 }
