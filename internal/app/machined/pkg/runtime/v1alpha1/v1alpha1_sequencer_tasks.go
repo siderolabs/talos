@@ -369,9 +369,15 @@ func StartAllServices(runtime.Sequence, any) (runtime.TaskExecutionFunc, string)
 			&services.Kubelet{},
 		)
 
-		serviceList := []system.Service{
-			&services.CRI{},
+		serviceList := []system.Service{}
+
+		// On bare-metal/VM, the sandbox PID+mount namespace must be up before
+		// CRI (which DependsOn it and runs inside it). In container mode it is skipped.
+		if !r.State().Platform().Mode().InContainer() {
+			serviceList = append(serviceList, &services.Sandboxd{})
 		}
+
+		serviceList = append(serviceList, &services.CRI{})
 
 		switch t := r.Config().Machine().Type(); t {
 		case machine.TypeInit:

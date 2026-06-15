@@ -5,6 +5,7 @@
 (filecon "/usr/bin/poweroff" any init_exec_t)
 (filecon "/usr/bin/shutdown" any init_exec_t)
 (filecon "/usr/bin/dashboard" any init_exec_t)
+(filecon "/usr/bin/sandboxd" any init_exec_t)
 
 (type init_t)
 (roletype system_r init_t)

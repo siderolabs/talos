@@ -809,6 +809,9 @@ RUN <<END
     chmod +x /rootfs/usr/bin/shutdown
     ln /rootfs/usr/bin/init /rootfs/usr/bin/dashboard
     chmod +x /rootfs/usr/bin/dashboard
+    # sandboxd is PID 1 of the sandbox PID+mount namespace, re-exec'd by machined
+    ln /rootfs/usr/bin/init /rootfs/usr/bin/sandboxd
+    chmod +x /rootfs/usr/bin/sandboxd
 END
 # NB: We run the cleanup step before creating extra directories, files, and
 # symlinks to avoid accidentally cleaning them up.
@@ -900,6 +903,9 @@ RUN <<END
     chmod +x /rootfs/usr/bin/shutdown
     ln /rootfs/usr/bin/init /rootfs/usr/bin/dashboard
     chmod +x /rootfs/usr/bin/dashboard
+    # sandboxd is PID 1 of the sandbox PID+mount namespace, re-exec'd by machined
+    ln /rootfs/usr/bin/init /rootfs/usr/bin/sandboxd
+    chmod +x /rootfs/usr/bin/sandboxd
 END
 # NB: We run the cleanup step before creating extra directories, files, and
 # symlinks to avoid accidentally cleaning them up.

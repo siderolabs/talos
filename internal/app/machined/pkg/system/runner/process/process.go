@@ -437,6 +437,10 @@ func (p *processRunner) run(eventSink events.Recorder, pidRecorder pid.Recorder)
 
 	defer cmdWrapper.afterStart()
 
+	if p.opts.Sandbox != nil {
+		return p.runInSandbox(eventSink, pidRecorder, &cmdWrapper, &lastLog)
+	}
+
 	notifyCh := make(chan reaper.ProcessInfo, 8)
 
 	usingReaper := reaper.Notify(notifyCh)
@@ -514,4 +518,97 @@ func (p *processRunner) run(eventSink events.Recorder, pidRecorder pid.Recorder)
 
 func (p *processRunner) String() string {
 	return fmt.Sprintf("Process(%q)", p.args.ProcessArgs)
+}
+
+// runInSandbox launches the service inside the shared sandbox PID+mount
+// namespace via the sandboxd subprocess, then waits for it to exit.
+//
+//nolint:gocyclo
+func (p *processRunner) runInSandbox(
+	eventSink events.Recorder,
+	pidRecorder pid.Recorder,
+	cmdWrapper *commandWrapper,
+	lastLog *lastlog.Writer,
+) error {
+	// Resolve the launcher fresh on every (re)launch so that a recreated sandbox
+	// namespace is picked up after the previous one was torn down.
+	wns := p.opts.Sandbox()
+	if wns == nil {
+		return fmt.Errorf("sandbox namespace not available yet")
+	}
+
+	env := slices.Concat([]string{constants.EnvPath}, p.opts.Env, os.Environ())
+
+	cfg := runtime.LaunchConfig{
+		Args:                p.args.ProcessArgs,
+		Env:                 env,
+		DroppedCapabilities: p.opts.DroppedCapabilities,
+		SelinuxLabel:        p.opts.SelinuxLabel,
+		Stdin:               cmdWrapper.stdin,
+		Stdout:              cmdWrapper.stdout,
+		Stderr:              cmdWrapper.stderr,
+	}
+
+	handle, err := wns.Launch(cfg)
+	if err != nil {
+		return fmt.Errorf("error starting process in sandbox ns: %w", err)
+	}
+
+	defer handle.Close() //nolint:errcheck
+
+	hostPID := handle.HostPID()
+
+	if err := pidRecorder(p.args.ID, int32(hostPID), false); err != nil {
+		return fmt.Errorf("recording pid: %w", err)
+	}
+
+	defer func() {
+		if err := pidRecorder(p.args.ID, int32(hostPID), true); err != nil {
+			log.Printf("error clearing pid: %v", err)
+		}
+	}()
+
+	if err := applyProperties(p, hostPID); err != nil {
+		return err
+	}
+
+	// Close machined's copies of the log pipe write-ends (child has them now).
+	cmdWrapper.afterStart()
+
+	eventSink(events.StateRunning, "Process %s started with PID %d", p, hostPID)
+
+	waitCh := make(chan error)
+
+	go func() {
+		_, waitErr := handle.Wait()
+		waitCh <- waitErr
+	}()
+
+	select {
+	case err = <-waitCh:
+		if err != nil {
+			err = fmt.Errorf("%w (last log %q)", err, lastLog.GetLastLog())
+		}
+
+		return err
+	case <-p.stop:
+		eventSink(events.StateStopping, "Sending SIGTERM to %s", p)
+
+		//nolint:errcheck
+		_ = handle.Signal(syscall.SIGTERM)
+	}
+
+	select {
+	case <-waitCh:
+		return nil
+	case <-time.After(p.opts.GracefulShutdownTimeout):
+		eventSink(events.StateStopping, "Sending SIGKILL to %s", p)
+
+		//nolint:errcheck
+		_ = handle.Signal(syscall.SIGKILL)
+	}
+
+	<-waitCh
+
+	return nil
 }
