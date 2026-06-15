@@ -5,6 +5,8 @@
 package config
 
 import (
+	"time"
+
 	"github.com/siderolabs/gen/optional"
 
 	"github.com/siderolabs/talos/pkg/machinery/cel"
@@ -25,6 +27,7 @@ type VolumeConfig interface {
 	Provisioning() VolumeProvisioningConfig
 	Encryption() EncryptionConfig
 	Mount() VolumeMountConfig
+	VolumeTrimConfigProvider
 }
 
 // VolumeProvisioningConfig defines the interface to access volume provisioning configuration.
@@ -96,6 +99,10 @@ func (emptyVolumeConfig) Mount() VolumeMountConfig {
 	return emptyVolumeMountConfig{}
 }
 
+func (emptyVolumeConfig) Trim() VolumeTrimConfig {
+	return nil
+}
+
 type emptyVolumeMountConfig struct{}
 
 func (emptyVolumeMountConfig) DisableAccessTime() bool {
@@ -119,6 +126,7 @@ type UserVolumeConfig interface {
 	Filesystem() FilesystemConfig
 	Encryption() EncryptionConfig
 	Mount() UserVolumeMountConfig
+	VolumeTrimConfigProvider
 }
 
 // RawVolumeConfig defines the interface to access raw volume configuration.
@@ -135,6 +143,7 @@ type ExistingVolumeConfig interface {
 	ExistingVolumeConfigSignal()
 	VolumeDiscovery() VolumeDiscoveryConfig
 	Mount() ExistingVolumeMountConfig
+	VolumeTrimConfigProvider
 }
 
 // ExternalVolumeConfig defines the interface to access external volume configuration.
@@ -198,4 +207,27 @@ type ZswapConfig interface {
 	ZswapConfigSignal()
 	MaxPoolPercent() int
 	ShrinkerEnabled() bool
+}
+
+// FilesystemTrimConfig defines the interface to access global filesystem trim configuration.
+type FilesystemTrimConfig interface {
+	FilesystemTrimConfigSignal()
+	// Interval returns the global trim interval for filesystems which support trimming.
+	Interval() time.Duration
+}
+
+// VolumeTrimConfigProvider defines the interface to access per-volume trim configuration.
+type VolumeTrimConfigProvider interface {
+	// Trim returns the per-volume trim configuration, or nil if not set.
+	Trim() VolumeTrimConfig
+}
+
+// VolumeTrimConfig defines the interface to access per-volume filesystem trim configuration.
+//
+// It overrides the global filesystem trim configuration for the volume.
+type VolumeTrimConfig interface {
+	// Enabled returns whether trimming is enabled for the volume (if explicitly set).
+	Enabled() optional.Optional[bool]
+	// Interval returns the trim interval for the volume (if explicitly set), overriding the global interval.
+	Interval() optional.Optional[time.Duration]
 }

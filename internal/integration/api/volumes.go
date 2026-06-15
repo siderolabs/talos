@@ -402,6 +402,10 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 		doc.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("100MiB")
 		doc.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("-60%")
 
+		doc.TrimSpec = &blockcfg.TrimConfig{
+			TrimInterval: time.Hour,
+		}
+
 		return doc
 	})...)
 
@@ -413,6 +417,10 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 		)
 		doc.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("100MiB")
 		doc.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("20%")
+
+		doc.TrimSpec = &blockcfg.TrimConfig{
+			TrimEnabled: new(false),
+		}
 
 		return doc
 	})...)
@@ -432,6 +440,23 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 	// check that the volumes are mounted
 	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, userVolumeIDs,
 		func(vs *block.MountStatus, _ *assert.Assertions) {})
+
+	// the volumes have a bit different trim settings, let's verify that the trim schedule is updated accordingly
+	//
+	// the third volume has trim disabled, so it should not have a schedule at all
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, userVolumeIDs[:1],
+		func(vs *block.VolumeTrimSchedule, asrt *assert.Assertions) {
+			expectedInterval := constants.DefaultFilesystemTrimInterval
+
+			if vs.Metadata().ID() == userVolumeIDs[1] {
+				expectedInterval = time.Hour
+			}
+
+			asrt.Equal(expectedInterval, vs.TypedSpec().Interval)
+		},
+	)
+
+	rtestutils.AssertNoResource[*block.VolumeTrimSchedule](ctx, suite.T(), suite.Client.COSI, userVolumeIDs[2])
 
 	// create a pod using user volumes
 	podDef, err := suite.NewPod("user-volume-test")
@@ -1748,6 +1773,43 @@ func (suite *VolumesSuite) TestZswapStatus() {
 					suite.T().Logf("zswap total size %s, stored pages %d", vs.TypedSpec().TotalSizeHuman, vs.TypedSpec().StoredPages)
 				},
 			)
+		})
+	}
+}
+
+// TestFSTrimDefaultSchedule verifies that the default schedule for filesystem trimming is applied.
+func (suite *VolumesSuite) TestFSTrimDefaultSchedule() {
+	for _, node := range suite.DiscoverNodeInternalIPs(suite.ctx) {
+		suite.Run(node, func() {
+			ctx := client.WithNode(suite.ctx, node)
+
+			var shouldHaveSchedule, shouldNotHaveSchedule []string
+
+			for _, name := range []string{constants.EphemeralPartitionLabel, constants.StatePartitionLabel} {
+				vs, err := safe.StateGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, name)
+				suite.Require().NoError(err)
+
+				if vs.TypedSpec().EncryptionProvider == block.EncryptionProviderLUKS2 && !vs.TypedSpec().EncryptionAllowDiscards {
+					shouldNotHaveSchedule = append(shouldNotHaveSchedule, name)
+				} else {
+					shouldHaveSchedule = append(shouldHaveSchedule, name)
+				}
+			}
+
+			if len(shouldHaveSchedule) > 0 {
+				rtestutils.AssertResources(
+					ctx, suite.T(), suite.Client.COSI,
+					shouldHaveSchedule,
+					func(schedule *block.VolumeTrimSchedule, asrt *assert.Assertions) {
+						asrt.Equal(constants.DefaultFilesystemTrimInterval, schedule.TypedSpec().Interval)
+						asrt.NotZero(schedule.TypedSpec().NextTrim)
+					},
+				)
+			}
+
+			for _, name := range shouldNotHaveSchedule {
+				rtestutils.AssertNoResource[*block.VolumeTrimSchedule](ctx, suite.T(), suite.Client.COSI, name)
+			}
 		})
 	}
 }

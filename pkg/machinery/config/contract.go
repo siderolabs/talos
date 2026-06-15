@@ -219,3 +219,8 @@ func (contract *VersionContract) HostDNSMultidocConfig() bool {
 func (contract *VersionContract) MultidocKubernetesConfigSupported() bool {
 	return contract.Greater(TalosVersion1_13)
 }
+
+// FilesystemTrimEnabledByDefault returns true if version of Talos should have filesystem trim enabled by default.
+func (contract *VersionContract) FilesystemTrimEnabledByDefault() bool {
+	return contract.Greater(TalosVersion1_13)
+}

@@ -100,6 +100,10 @@ hostDNS:
     forwardKubeDNSToHost: true
 ---
 apiVersion: v1alpha1
+kind: FilesystemTrimConfig
+interval: 168h0m0s
+---
+apiVersion: v1alpha1
 kind: RegistryMirrorConfig
 name: ghcr.io
 endpoints:

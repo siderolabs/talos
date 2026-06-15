@@ -73,6 +73,9 @@ type VolumeConfigV1Alpha1 struct {
 	//   description: |
 	//     The mount describes additional mount options.
 	MountSpec MountSpec `yaml:"mount,omitempty"`
+	//   description: |
+	//     The trim describes the per-volume filesystem trim (fstrim) configuration.
+	TrimSpec *TrimConfig `yaml:"trim,omitempty"`
 }
 
 // MountSpec describes how the volume is mounted.
@@ -238,6 +241,10 @@ func (s *VolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Op
 	warnings = append(warnings, extraWarnings...)
 	validationErrors = errors.Join(validationErrors, extraErrors)
 
+	if err := s.TrimSpec.Validate(); err != nil {
+		validationErrors = errors.Join(validationErrors, err)
+	}
+
 	return warnings, validationErrors
 }
 
@@ -258,6 +265,15 @@ func (s *VolumeConfigV1Alpha1) Encryption() config.EncryptionConfig {
 // Mount implements config.VolumeConfig interface.
 func (s *VolumeConfigV1Alpha1) Mount() config.VolumeMountConfig {
 	return s.MountSpec
+}
+
+// Trim implements config.VolumeConfig interface.
+func (s *VolumeConfigV1Alpha1) Trim() config.VolumeTrimConfig {
+	if s.TrimSpec == nil {
+		return nil
+	}
+
+	return s.TrimSpec
 }
 
 // Validate the provisioning spec.

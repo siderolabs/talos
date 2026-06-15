@@ -137,6 +137,7 @@ func GetEphemeralVolumeTransformer(inContainer bool) volumeConfigTransformer {
 						Secure:              extraVolumeConfig.Mount().Secure(),
 					}).
 					WithLocator(labelVolumeMatch(constants.EphemeralPartitionLabel)).
+					WithTrim(cfg, extraVolumeConfig).
 					WithFunc(func(vcs *block.VolumeConfigSpec) error {
 						encryptionConfig := extraVolumeConfig.Encryption()
 						if encryptionConfig == nil {
@@ -270,6 +271,7 @@ func manageStateConfigPresent(cfg configconfig.Config) func(vc *block.VolumeConf
 					Label: constants.StatePartitionLabel,
 				},
 			}).
+			WithTrim(cfg, extraVolumeConfig).
 			WithLocator(labelVolumeMatch(constants.StatePartitionLabel)).
 			WithConvertEncryptionConfiguration(encryptionConfig).
 			Apply(vc.TypedSpec())

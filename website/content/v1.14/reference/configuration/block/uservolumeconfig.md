@@ -160,6 +160,7 @@ encryption:
 |`filesystem` |<a href="#UserVolumeConfig.filesystem">FilesystemSpec</a> |The filesystem describes how the volume is formatted.  | |
 |`encryption` |<a href="#UserVolumeConfig.encryption">EncryptionSpec</a> |The encryption describes how the volume is encrypted.  | |
 |`mount` |<a href="#UserVolumeConfig.mount">UserMountSpec</a> |The mount describes additional mount options.  | |
+|`trim` |<a href="#UserVolumeConfig.trim">TrimConfig</a> |The trim describes the per-volume filesystem trim (fstrim) configuration.  | |
 
 
 
@@ -398,6 +399,26 @@ UserMountSpec describes how the volume is mounted.
 |-------|------|-------------|----------|
 |`disableAccessTime` |bool |If true, disable file access time updates.  | |
 |`secure` |bool |Enable secure mount options (nosuid, nodev).<br><br>Defaults to true for better security.  | |
+
+
+
+
+
+
+## trim {#UserVolumeConfig.trim}
+
+TrimConfig describes per-volume filesystem trim (fstrim) configuration.
+
+It overrides the global FilesystemTrimConfig for the volume.
+
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`enabled` |bool |Enable or disable trimming for this volume.<br><br>If not set, trimming is enabled when the global FilesystemTrimConfig is present.  | |
+|`interval` |Duration |The interval at which the volume is trimmed, overriding the global trim interval.  | |
 
 
 

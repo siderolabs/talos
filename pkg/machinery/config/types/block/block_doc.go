@@ -320,6 +320,13 @@ func (ExistingVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "The mount describes additional mount options.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The mount describes additional mount options." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "trim",
+				Type:        "TrimConfig",
+				Note:        "",
+				Description: "The trim describes the per-volume filesystem trim (fstrim) configuration.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The trim describes the per-volume filesystem trim (fstrim) configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
@@ -533,6 +540,31 @@ func (VirtiofsMountSpec) Doc() *encoder.Doc {
 	return doc
 }
 
+func (FilesystemTrimConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "FilesystemTrimConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "FilesystemTrimConfig is a filesystem trim (fstrim) configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "FilesystemTrimConfig is a filesystem trim (fstrim) configuration document.\nFilesystem trim (the equivalent of the `fstrim` command) periodically discards unused blocks\nof mounted filesystems which support trimming.\n\nWhen this document is present, Talos builds a stable per-node, per-volume schedule and trims\neligible volumes at the configured interval. If the document is absent, no automatic trimming\nis performed (unless enabled explicitly on a per-volume basis).\n",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "interval",
+				Type:        "Duration",
+				Note:        "",
+				Description: "The interval at which the filesystems are trimmed.\n\nThe trim is performed at a stable, hash-derived time within the interval, which is different\nfor each volume and each node, so that trims are spread out over time.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The interval at which the filesystems are trimmed." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleFilesystemTrimConfigV1Alpha1())
+
+	return doc
+}
+
 func (RawVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "RawVolumeConfig",
@@ -611,6 +643,46 @@ func (SwapVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (TrimConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "TrimConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "TrimConfig describes per-volume filesystem trim (fstrim) configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "TrimConfig describes per-volume filesystem trim (fstrim) configuration.\n\nIt overrides the global FilesystemTrimConfig for the volume.\n",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ExistingVolumeConfigV1Alpha1",
+				FieldName: "trim",
+			},
+			{
+				TypeName:  "UserVolumeConfigV1Alpha1",
+				FieldName: "trim",
+			},
+			{
+				TypeName:  "VolumeConfigV1Alpha1",
+				FieldName: "trim",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "enabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable or disable trimming for this volume.\n\nIf not set, trimming is enabled when the global FilesystemTrimConfig is present.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable or disable trimming for this volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "interval",
+				Type:        "Duration",
+				Note:        "",
+				Description: "The interval at which the volume is trimmed, overriding the global trim interval.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The interval at which the volume is trimmed, overriding the global trim interval." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
 func (UserVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "UserVolumeConfig",
@@ -667,6 +739,13 @@ func (UserVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 				Note:        "",
 				Description: "The mount describes additional mount options.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The mount describes additional mount options." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "trim",
+				Type:        "TrimConfig",
+				Note:        "",
+				Description: "The trim describes the per-volume filesystem trim (fstrim) configuration.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The trim describes the per-volume filesystem trim (fstrim) configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
@@ -786,6 +865,13 @@ func (VolumeConfigV1Alpha1) Doc() *encoder.Doc {
 				Note:        "",
 				Description: "The mount describes additional mount options.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The mount describes additional mount options." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "trim",
+				Type:        "TrimConfig",
+				Note:        "",
+				Description: "The trim describes the per-volume filesystem trim (fstrim) configuration.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The trim describes the per-volume filesystem trim (fstrim) configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
@@ -969,8 +1055,10 @@ func GetFileDoc() *encoder.FileDoc {
 			ExternalVolumeConfigV1Alpha1{}.Doc(),
 			ExternalMountSpec{}.Doc(),
 			VirtiofsMountSpec{}.Doc(),
+			FilesystemTrimConfigV1Alpha1{}.Doc(),
 			RawVolumeConfigV1Alpha1{}.Doc(),
 			SwapVolumeConfigV1Alpha1{}.Doc(),
+			TrimConfig{}.Doc(),
 			UserVolumeConfigV1Alpha1{}.Doc(),
 			UserMountSpec{}.Doc(),
 			FilesystemSpec{}.Doc(),

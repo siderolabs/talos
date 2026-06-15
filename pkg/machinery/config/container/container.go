@@ -332,6 +332,16 @@ func (container *Container) ZswapConfig() config.ZswapConfig {
 	return matching[0]
 }
 
+// FilesystemTrimConfig implements config.Config interface.
+func (container *Container) FilesystemTrimConfig() config.FilesystemTrimConfig {
+	matching := findMatchingDocs[config.FilesystemTrimConfig](container.documents)
+	if len(matching) == 0 {
+		return nil
+	}
+
+	return matching[0]
+}
+
 // NetworkStaticHostConfig implements config.Config interface.
 func (container *Container) NetworkStaticHostConfig() []config.NetworkStaticHostConfig {
 	return slices.Concat(

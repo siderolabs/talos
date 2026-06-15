@@ -1372,6 +1372,11 @@ const (
 
 	// TarPaxHeaderSELinux is the name of the PAX header for storing SELinux labels.
 	TarPaxHeaderSELinux = "SCHILY.xattr.security.selinux"
+
+	// DefaultFilesystemTrimInterval is the default interval for trimming filesystems.
+	//
+	// The default value is 1 week.
+	DefaultFilesystemTrimInterval = 7 * 24 * time.Hour
 )
 
 // names of variable that can be substituted in the talos.config kernel parameter.

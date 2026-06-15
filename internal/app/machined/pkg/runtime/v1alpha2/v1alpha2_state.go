@@ -116,6 +116,7 @@ func NewState() (*State, error) {
 		&block.VolumeMountRequest{},
 		&block.VolumeMountStatus{},
 		&block.VolumeStatus{},
+		&block.VolumeTrimSchedule{},
 		&block.ZswapStatus{},
 		&cluster.Affiliate{},
 		&cluster.Config{},

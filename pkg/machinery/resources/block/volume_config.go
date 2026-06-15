@@ -7,6 +7,7 @@ package block
 import (
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
@@ -48,6 +49,11 @@ type VolumeConfigSpec struct {
 
 	// Symlink options for the volume.
 	Symlink SymlinkProvisioningSpec `yaml:"symlink,omitempty" protobuf:"7"`
+
+	// TrimEnabled indicates whether the volume should be trimmed (fstrim) on a schedule.
+	TrimEnabled bool `yaml:"trimEnabled,omitempty" protobuf:"8"`
+	// TrimInterval is the resolved interval at which the volume should be trimmed.
+	TrimInterval time.Duration `yaml:"trimInterval,omitempty" protobuf:"9"`
 }
 
 // Wave constants.

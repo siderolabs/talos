@@ -6,6 +6,8 @@ option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/defi
 option java_package = "dev.talos.api.resource.definitions.block";
 
 import "google/api/expr/v1alpha1/checked.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
 import "resource/definitions/enums/enums.proto";
 
 // DeviceSpec is the spec for devices status.
@@ -294,6 +296,10 @@ message VolumeConfigSpec {
   EncryptionSpec encryption = 6;
   // Symlink options for the volume.
   SymlinkProvisioningSpec symlink = 7;
+  // TrimEnabled indicates whether the volume should be trimmed (fstrim) on a schedule.
+  bool trim_enabled = 8;
+  // TrimInterval is the resolved interval at which the volume should be trimmed.
+  google.protobuf.Duration trim_interval = 9;
 }
 
 // VolumeMountRequestSpec is the spec for VolumeMountRequest.
@@ -353,6 +359,22 @@ message VolumeStatusSpec {
   int64 encryption_slot = 21;
   // TPMEncryptionOptions is the options for TPM-based encryption.
   TPMEncryptionOptionsInfo tpm_encryption_options = 22;
+  // EncryptionAllowDiscards indicates whether the encrypted volume passes discards to the underlying device.
+  bool encryption_allow_discards = 23;
+  // TrimEnabled indicates whether the volume should be trimmed (fstrim) on a schedule.
+  bool trim_enabled = 24;
+  // TrimInterval is the resolved interval at which the volume should be trimmed.
+  google.protobuf.Duration trim_interval = 25;
+}
+
+// VolumeTrimScheduleSpec is the spec for VolumeTrimSchedule resource.
+message VolumeTrimScheduleSpec {
+  // Filesystem is the filesystem type of the volume to be trimmed.
+  talos.resource.definitions.enums.BlockFilesystemType filesystem = 1;
+  // Interval is the trim interval for the volume.
+  google.protobuf.Duration interval = 2;
+  // NextTrim is the next scheduled trim time for the volume.
+  google.protobuf.Timestamp next_trim = 3;
 }
 
 // ZswapStatusSpec is the spec for ZswapStatus resource.

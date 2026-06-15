@@ -95,6 +95,9 @@ type UserVolumeConfigV1Alpha1 struct {
 	//   description: |
 	//     The mount describes additional mount options.
 	MountSpec UserMountSpec `yaml:"mount,omitempty"`
+	//   description: |
+	//     The trim describes the per-volume filesystem trim (fstrim) configuration.
+	TrimSpec *TrimConfig `yaml:"trim,omitempty"`
 }
 
 // UserMountSpec describes how the volume is mounted.
@@ -304,6 +307,10 @@ func (s *UserVolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validatio
 		validationErrors = errors.Join(validationErrors, fmt.Errorf("unsupported volume type %q", vtype))
 	}
 
+	if err := s.TrimSpec.Validate(); err != nil {
+		validationErrors = errors.Join(validationErrors, err)
+	}
+
 	return warnings, validationErrors
 }
 
@@ -341,6 +348,15 @@ func (s *UserVolumeConfigV1Alpha1) Encryption() config.EncryptionConfig {
 // Mount implements config.UserVolumeConfig interface.
 func (s *UserVolumeConfigV1Alpha1) Mount() config.VolumeMountConfig {
 	return s.MountSpec
+}
+
+// Trim implements config.UserVolumeConfig interface.
+func (s *UserVolumeConfigV1Alpha1) Trim() config.VolumeTrimConfig {
+	if s.TrimSpec == nil {
+		return nil
+	}
+
+	return s.TrimSpec
 }
 
 // FilesystemSpec configures the filesystem for the volume.

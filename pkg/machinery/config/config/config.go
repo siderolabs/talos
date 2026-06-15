@@ -51,6 +51,7 @@ type Config interface { //nolint:interfacebloat
 	ExternalVolumeConfigs() []ExternalVolumeConfig
 	SwapVolumeConfigs() []SwapVolumeConfig
 	ZswapConfig() ZswapConfig
+	FilesystemTrimConfig() FilesystemTrimConfig
 	LVMVolumeGroupConfigs() []LVMVolumeGroupConfig
 	LVMLogicalVolumeConfigs() []LVMLogicalVolumeConfig
 

@@ -61,6 +61,7 @@ provisioning:
 |`provisioning` |<a href="#VolumeConfig.provisioning">ProvisioningSpec</a> |The provisioning describes how the volume is provisioned.  | |
 |`encryption` |<a href="#VolumeConfig.encryption">EncryptionSpec</a> |The encryption describes how the volume is encrypted.  | |
 |`mount` |<a href="#VolumeConfig.mount">MountSpec</a> |The mount describes additional mount options.  | |
+|`trim` |<a href="#VolumeConfig.trim">TrimConfig</a> |The trim describes the per-volume filesystem trim (fstrim) configuration.  | |
 
 
 
@@ -282,6 +283,26 @@ MountSpec describes how the volume is mounted.
 |-------|------|-------------|----------|
 |`secure` |bool |Enable secure mount options (nosuid, nodev).<br><br>Defaults to true for better security.<br>Supported only for EPHEMERAL volume.  | |
 |`disableAccessTime` |bool |If true, disable file access time updates.<br><br>Supported only for EPHEMERAL volume.  | |
+
+
+
+
+
+
+## trim {#VolumeConfig.trim}
+
+TrimConfig describes per-volume filesystem trim (fstrim) configuration.
+
+It overrides the global FilesystemTrimConfig for the volume.
+
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`enabled` |bool |Enable or disable trimming for this volume.<br><br>If not set, trimming is enabled when the global FilesystemTrimConfig is present.  | |
+|`interval` |Duration |The interval at which the volume is trimmed, overriding the global trim interval.  | |
 
 
 

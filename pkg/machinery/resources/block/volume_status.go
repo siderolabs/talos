@@ -5,6 +5,8 @@
 package block
 
 import (
+	"time"
+
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
@@ -59,6 +61,13 @@ type VolumeStatusSpec struct {
 	EncryptionSlot *int `yaml:"encryptionSlot,omitempty" protobuf:"21"`
 	// TPMEncryptionOptions is the options for TPM-based encryption.
 	TPMEncryptionOptions TPMEncryptionOptionsInfo `yaml:"tpmEncryptionOptions,omitempty" protobuf:"22"`
+	// EncryptionAllowDiscards indicates whether the encrypted volume passes discards to the underlying device.
+	EncryptionAllowDiscards bool `yaml:"encryptionAllowDiscards,omitempty" protobuf:"23"`
+
+	// TrimEnabled indicates whether the volume should be trimmed (fstrim) on a schedule.
+	TrimEnabled bool `yaml:"trimEnabled,omitempty" protobuf:"24"`
+	// TrimInterval is the resolved interval at which the volume should be trimmed.
+	TrimInterval time.Duration `yaml:"trimInterval,omitempty" protobuf:"25"`
 
 	// MountSpec is the mount specification.
 	MountSpec MountSpec `yaml:"mountSpec,omitempty" protobuf:"15"`

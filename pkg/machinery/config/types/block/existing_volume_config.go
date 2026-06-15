@@ -69,6 +69,9 @@ type ExistingVolumeConfigV1Alpha1 struct {
 	//   description: |
 	//     The mount describes additional mount options.
 	MountSpec ExistingMountSpec `yaml:"mount,omitempty"`
+	//   description: |
+	//     The trim describes the per-volume filesystem trim (fstrim) configuration.
+	TrimSpec *TrimConfig `yaml:"trim,omitempty"`
 }
 
 // VolumeDiscoverySpec describes how the volume is discovered.
@@ -189,6 +192,10 @@ func (s *ExistingVolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...valid
 	warnings = append(warnings, extraWarnings...)
 	validationErrors = errors.Join(validationErrors, extraErrors)
 
+	if err := s.TrimSpec.Validate(); err != nil {
+		validationErrors = errors.Join(validationErrors, err)
+	}
+
 	return warnings, validationErrors
 }
 
@@ -203,6 +210,15 @@ func (s *ExistingVolumeConfigV1Alpha1) VolumeDiscovery() config.VolumeDiscoveryC
 // Mount implements config.ExistingVolumeConfig interface.
 func (s *ExistingVolumeConfigV1Alpha1) Mount() config.ExistingVolumeMountConfig {
 	return s.MountSpec
+}
+
+// Trim implements config.ExistingVolumeConfig interface.
+func (s *ExistingVolumeConfigV1Alpha1) Trim() config.VolumeTrimConfig {
+	if s.TrimSpec == nil {
+		return nil
+	}
+
+	return s.TrimSpec
 }
 
 // Validate the provisioning spec.

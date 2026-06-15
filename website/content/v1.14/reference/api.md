@@ -375,6 +375,7 @@ description: Talos gRPC API reference.
     - [VolumeMountRequestSpec](#talos.resource.definitions.block.VolumeMountRequestSpec)
     - [VolumeMountStatusSpec](#talos.resource.definitions.block.VolumeMountStatusSpec)
     - [VolumeStatusSpec](#talos.resource.definitions.block.VolumeStatusSpec)
+    - [VolumeTrimScheduleSpec](#talos.resource.definitions.block.VolumeTrimScheduleSpec)
     - [ZswapStatusSpec](#talos.resource.definitions.block.ZswapStatusSpec)
   
 - [resource/definitions/cluster/cluster.proto](#resource/definitions/cluster/cluster.proto)
@@ -6683,6 +6684,8 @@ VolumeConfigSpec is the spec for VolumeConfig resource.
 | mount | [MountSpec](#talos.resource.definitions.block.MountSpec) |  | Mount options for the volume. |
 | encryption | [EncryptionSpec](#talos.resource.definitions.block.EncryptionSpec) |  | Encryption configuration (how to encrypt a volume). |
 | symlink | [SymlinkProvisioningSpec](#talos.resource.definitions.block.SymlinkProvisioningSpec) |  | Symlink options for the volume. |
+| trim_enabled | [bool](#bool) |  | TrimEnabled indicates whether the volume should be trimmed (fstrim) on a schedule. |
+| trim_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  | TrimInterval is the resolved interval at which the volume should be trimmed. |
 
 
 
@@ -6760,6 +6763,26 @@ VolumeStatusSpec is the spec for VolumeStatus resource.
 | encryption_locked_to_state | [bool](#bool) |  | EncryptionLockedToState indicates if the encryption is locked to STATE partition |
 | encryption_slot | [int64](#int64) |  | EncryptionSlot indicates the currently used encryption slot used for decryption. |
 | tpm_encryption_options | [TPMEncryptionOptionsInfo](#talos.resource.definitions.block.TPMEncryptionOptionsInfo) |  | TPMEncryptionOptions is the options for TPM-based encryption. |
+| encryption_allow_discards | [bool](#bool) |  | EncryptionAllowDiscards indicates whether the encrypted volume passes discards to the underlying device. |
+| trim_enabled | [bool](#bool) |  | TrimEnabled indicates whether the volume should be trimmed (fstrim) on a schedule. |
+| trim_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  | TrimInterval is the resolved interval at which the volume should be trimmed. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.VolumeTrimScheduleSpec"></a>
+
+### VolumeTrimScheduleSpec
+VolumeTrimScheduleSpec is the spec for VolumeTrimSchedule resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| filesystem | [talos.resource.definitions.enums.BlockFilesystemType](#talos.resource.definitions.enums.BlockFilesystemType) |  | Filesystem is the filesystem type of the volume to be trimmed. |
+| interval | [google.protobuf.Duration](#google.protobuf.Duration) |  | Interval is the trim interval for the volume. |
+| next_trim | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | NextTrim is the next scheduled trim time for the volume. |
 
 
 
