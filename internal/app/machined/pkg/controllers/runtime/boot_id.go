@@ -19,35 +19,35 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
-// KernelCmdlineController presents /proc/cmdline as a resource.
-type KernelCmdlineController struct {
+// BootIDController presents /proc/sys/kernel/random/boot_id as a resource.
+type BootIDController struct {
 	V1Alpha1Mode machineruntime.Mode
 }
 
 // Name implements controller.Controller interface.
-func (ctrl *KernelCmdlineController) Name() string {
-	return "runtime.KernelCmdlineController"
+func (ctrl *BootIDController) Name() string {
+	return "runtime.BootIDController"
 }
 
 // Inputs implements controller.Controller interface.
-func (ctrl *KernelCmdlineController) Inputs() []controller.Input {
+func (ctrl *BootIDController) Inputs() []controller.Input {
 	return nil
 }
 
 // Outputs implements controller.Controller interface.
-func (ctrl *KernelCmdlineController) Outputs() []controller.Output {
+func (ctrl *BootIDController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
-			Type: runtime.KernelCmdlineType,
+			Type: runtime.BootIDType,
 			Kind: controller.OutputExclusive,
 		},
 	}
 }
 
 // Run implements controller.Controller interface.
-func (ctrl *KernelCmdlineController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
+func (ctrl *BootIDController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	if ctrl.V1Alpha1Mode.InContainer() {
-		// no cmdline in containers
+		// no boot_id in containers
 		return nil
 	}
 
@@ -57,21 +57,21 @@ func (ctrl *KernelCmdlineController) Run(ctx context.Context, r controller.Runti
 	case <-r.EventCh():
 	}
 
-	contents, err := os.ReadFile("/proc/cmdline")
+	contents, err := os.ReadFile("/proc/sys/kernel/random/boot_id")
 	if err != nil {
-		return fmt.Errorf("error reading /proc/cmdline: %w", err)
+		return fmt.Errorf("error reading boot_id: %w", err)
 	}
 
 	if err := safe.WriterModify(
 		ctx, r,
-		runtime.NewKernelCmdline(),
-		func(res *runtime.KernelCmdline) error {
-			res.TypedSpec().Cmdline = strings.TrimSpace(string(contents))
+		runtime.NewBootID(),
+		func(res *runtime.BootID) error {
+			res.TypedSpec().BootID = strings.TrimSpace(string(contents))
 
 			return nil
 		},
 	); err != nil {
-		return fmt.Errorf("error updating KernelCmdline resource: %w", err)
+		return fmt.Errorf("error updating BootID resource: %w", err)
 	}
 
 	return nil

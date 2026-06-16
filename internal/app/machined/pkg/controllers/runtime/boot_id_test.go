@@ -17,25 +17,25 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
-func TestKernelCmdlineSuite(t *testing.T) {
+func TestBootIDSuite(t *testing.T) {
 	t.Parallel()
 
-	suite.Run(t, &KernelCmdlineSuite{
+	suite.Run(t, &BootIDSuite{
 		DefaultSuite: ctest.DefaultSuite{
 			Timeout: 5 * time.Second,
 			AfterSetup: func(suite *ctest.DefaultSuite) {
-				suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrl.KernelCmdlineController{}))
+				suite.Require().NoError(suite.Runtime().RegisterController(&runtimectrl.BootIDController{}))
 			},
 		},
 	})
 }
 
-type KernelCmdlineSuite struct {
+type BootIDSuite struct {
 	ctest.DefaultSuite
 }
 
-func (suite *KernelCmdlineSuite) TestKernelCmdline() {
-	ctest.AssertResource(suite, runtime.KernelCmdlineID, func(res *runtime.KernelCmdline, asrt *assert.Assertions) {
-		asrt.NotEmpty(res.TypedSpec().Cmdline)
+func (suite *BootIDSuite) TestBootID() {
+	ctest.AssertResource(suite, runtime.BootIDID, func(res *runtime.BootID, asrt *assert.Assertions) {
+		asrt.NotEmpty(res.TypedSpec().BootID)
 	})
 }

@@ -494,6 +494,7 @@ description: Talos gRPC API reference.
   
 - [resource/definitions/runtime/runtime.proto](#resource/definitions/runtime/runtime.proto)
     - [APIServiceConfigSpec](#talos.resource.definitions.runtime.APIServiceConfigSpec)
+    - [BootIDSpec](#talos.resource.definitions.runtime.BootIDSpec)
     - [BootedEntrySpec](#talos.resource.definitions.runtime.BootedEntrySpec)
     - [DevicesStatusSpec](#talos.resource.definitions.runtime.DevicesStatusSpec)
     - [DiagnosticSpec](#talos.resource.definitions.runtime.DiagnosticSpec)
@@ -8660,6 +8661,21 @@ APIServiceConfigSpec describes configuration for Talos API service (apid).
 | node_routing_disabled | [bool](#bool) |  |  |
 | readonly_role_mode | [bool](#bool) |  |  |
 | skip_verifying_client_cert | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.BootIDSpec"></a>
+
+### BootIDSpec
+BootIDSpec presents the kernel boot ID (contents of /proc/sys/kernel/random/boot_id).
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| boot_id | [string](#string) |  |  |
 
 
 

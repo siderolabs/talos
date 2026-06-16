@@ -17,6 +17,11 @@ message APIServiceConfigSpec {
   bool skip_verifying_client_cert = 4;
 }
 
+// BootIDSpec presents the kernel boot ID (contents of /proc/sys/kernel/random/boot_id).
+message BootIDSpec {
+  string boot_id = 1;
+}
+
 // BootedEntrySpec describes the booted entry resource properties.
 message BootedEntrySpec {
   string booted_entry = 1;

@@ -450,6 +450,9 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		},
 		&runtimecontrollers.ExtensionStatusController{},
 		&runtimecontrollers.ImageFactorySchematicController{},
+		&runtimecontrollers.BootIDController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
 		&runtimecontrollers.KernelCmdlineController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},

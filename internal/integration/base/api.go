@@ -230,26 +230,12 @@ func (apiSuite *APISuite) ReadBootID(ctx context.Context) (string, error) {
 	reqCtx, reqCtxCancel := context.WithTimeout(ctx, 10*time.Second)
 	defer reqCtxCancel()
 
-	reader, err := apiSuite.Client.Read(reqCtx, "/proc/sys/kernel/random/boot_id")
+	bootID, err := safe.StateGetByID[*runtimeres.BootID](reqCtx, apiSuite.Client.COSI, runtimeres.BootIDID)
 	if err != nil {
 		return "", err
 	}
 
-	defer reader.Close() //nolint:errcheck
-
-	body, err := io.ReadAll(reader)
-	if err != nil {
-		return "", err
-	}
-
-	bootID := strings.TrimSpace(string(body))
-
-	_, err = io.Copy(io.Discard, reader)
-	if err != nil {
-		return "", err
-	}
-
-	return bootID, reader.Close()
+	return bootID.TypedSpec().BootID, nil
 }
 
 // ReadBootIDWithRetry reads node boot_id.

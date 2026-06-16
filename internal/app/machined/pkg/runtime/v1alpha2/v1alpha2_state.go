@@ -216,6 +216,7 @@ func NewState() (*State, error) {
 		&cri.RegistriesConfig{},
 		&runtime.APIServiceConfig{},
 		&runtime.BootedEntry{},
+		&runtime.BootID{},
 		&runtime.DevicesStatus{},
 		&runtime.Diagnostic{},
 		&runtime.Environment{},
