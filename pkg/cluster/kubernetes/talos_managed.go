@@ -27,6 +27,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/tools/cache"
 
@@ -530,6 +531,13 @@ func syncManifestsSSA(ctx context.Context, objects []*unstructured.Unstructured,
 		WaitTimeout:     options.ReconcileTimeout,
 		NoPrune:         options.NoPrune,
 		Force:           options.ForceManifests,
+		CustomStageKinds: map[schema.GroupKind]struct{}{
+			// perform sync for configmaps/secrets before e.g. deployments/daemonsets,
+			// as there is a common pattern of linking them via a label/annotation checksum,
+			// to ensure that the dependent resources are reconciled after the configmap/secret is updated.
+			schema.ParseGroupKind("ConfigMap"): {},
+			schema.ParseGroupKind("Secret"):    {},
+		},
 	})
 	if err != nil {
 		return fmt.Errorf("error applying manifests: %w", err)

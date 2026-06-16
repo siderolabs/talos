@@ -142,7 +142,7 @@ require (
 	github.com/siderolabs/go-debug v0.6.2
 	github.com/siderolabs/go-kmsg v0.1.6
 	github.com/siderolabs/go-kubeconfig v0.1.2
-	github.com/siderolabs/go-kubernetes v0.2.38
+	github.com/siderolabs/go-kubernetes v0.2.39
 	github.com/siderolabs/go-loadbalancer v0.5.0
 	github.com/siderolabs/go-pcidb v0.3.3
 	github.com/siderolabs/go-pointer v1.0.1
