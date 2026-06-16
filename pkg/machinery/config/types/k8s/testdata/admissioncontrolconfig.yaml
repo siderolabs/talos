@@ -1,0 +1,8 @@
+apiVersion: v1alpha1
+kind: KubeAdmissionControlConfig
+name: PodSecurity
+configuration:
+    apiVersion: pod-security.admission.config.k8s.io/v1alpha1
+    defaults:
+        enforce: baseline
+    kind: PodSecurityConfiguration

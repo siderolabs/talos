@@ -439,6 +439,7 @@ description: Talos gRPC API reference.
     - [AdmissionPluginSpec](#talos.resource.definitions.k8s.AdmissionPluginSpec)
     - [ArgValues](#talos.resource.definitions.k8s.ArgValues)
     - [AuditPolicyConfigSpec](#talos.resource.definitions.k8s.AuditPolicyConfigSpec)
+    - [AuthenticationConfigSpec](#talos.resource.definitions.k8s.AuthenticationConfigSpec)
     - [AuthorizationAuthorizersSpec](#talos.resource.definitions.k8s.AuthorizationAuthorizersSpec)
     - [AuthorizationConfigSpec](#talos.resource.definitions.k8s.AuthorizationConfigSpec)
     - [BootstrapManifestsConfigSpec](#talos.resource.definitions.k8s.BootstrapManifestsConfigSpec)
@@ -7664,6 +7665,9 @@ APIServerConfigSpec is configuration for kube-apiserver.
 | advertised_address | [string](#string) |  |  |
 | resources | [Resources](#talos.resource.definitions.k8s.Resources) |  |  |
 | extra_args | [APIServerConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.APIServerConfigSpec.ExtraArgsEntry) | repeated |  |
+| startup_probes_enabled | [bool](#bool) |  |  |
+| use_authentication_config | [bool](#bool) |  |  |
+| args | [string](#string) | repeated |  |
 
 
 
@@ -7752,6 +7756,21 @@ ArgValues represents values for a command line argument which can be specified m
 
 ### AuditPolicyConfigSpec
 AuditPolicyConfigSpec is audit policy configuration for kube-apiserver.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.AuthenticationConfigSpec"></a>
+
+### AuthenticationConfigSpec
+AuthenticationConfigSpec is authentication configuration for kube-apiserver.
 
 
 | Field | Type | Label | Description |

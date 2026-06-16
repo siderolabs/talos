@@ -1,9 +1,8 @@
 ---
-cluster:
-  apiServer:
-    admissionControl:
-      - name: PodSecurity
-        configuration:
-          exemptions:
-            namespaces:
-              - longhorn-system
+apiVersion: v1alpha1
+kind: KubeAdmissionControlConfig
+name: PodSecurity
+configuration:
+    exemptions:
+        namespaces:
+            - longhorn-system

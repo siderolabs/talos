@@ -37,30 +37,6 @@ cluster:
         key: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSUlMblhpQ3hOWU1CWHpncjVuYmc3bnVtUWM2UGlHaXdmWUN2eFF3Tlhxc3dvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFVjNuRWNSZkZnWEEvTHRsbngvQ29ZTjdwcFAxK1V3UmhWMEpEajBPSitHWjZiTGtLRzlESgpRVWxpbEx5aVliemxJcGFEd2tRMG5ickVPK2hYUThFcVR3PT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo=
     serviceAccount:
         key: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSUlHVElBQjZZUzV0cFcrUnYxeDBPY09Jb1h0SXgzdGZteVFZNGxOWWRCbmpvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFQ3drbVVTUmtrbnlOc0NjTFJNUTlmZWx6cFY0dDdIdlNRcnp6ZGRvK2pWYmlqd2kwVVE1YQp0VW8vZkxQbDlBckVNOHNRWTVOSlgraVdxYjFkQWFXa2VnPT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo=
-    apiServer:
-        image: registry.k8s.io/kube-apiserver:v1.28.0
-        admissionControl:
-            - name: PodSecurity
-              configuration:
-                apiVersion: pod-security.admission.config.k8s.io/v1alpha1
-                defaults:
-                    audit: restricted
-                    audit-version: latest
-                    enforce: baseline
-                    enforce-version: latest
-                    warn: restricted
-                    warn-version: latest
-                exemptions:
-                    namespaces:
-                        - kube-system
-                    runtimeClasses: []
-                    usernames: []
-                kind: PodSecurityConfiguration
-        auditPolicy:
-            apiVersion: audit.k8s.io/v1
-            kind: Policy
-            rules:
-                - level: Metadata
     discovery:
         enabled: true
         registries:
@@ -95,6 +71,54 @@ serviceSubnets:
     - 10.96.0.0/12
 ---
 apiVersion: v1alpha1
+kind: KubeAdmissionControlConfig
+name: PodSecurity
+configuration:
+    apiVersion: pod-security.admission.config.k8s.io/v1alpha1
+    defaults:
+        audit: restricted
+        audit-version: latest
+        enforce: baseline
+        enforce-version: latest
+        warn: restricted
+        warn-version: latest
+    exemptions:
+        namespaces:
+            - kube-system
+        runtimeClasses: []
+        usernames: []
+    kind: PodSecurityConfiguration
+---
+apiVersion: v1alpha1
+kind: KubeAuditPolicyConfig
+configuration:
+    apiVersion: audit.k8s.io/v1
+    kind: Policy
+    rules:
+        - level: Metadata
+---
+apiVersion: v1alpha1
+kind: KubeAuthenticationConfig
+configuration:
+    anonymous:
+        conditions:
+            - path: /livez
+            - path: /readyz
+            - path: /healthz
+        enabled: true
+    jwt: []
+---
+apiVersion: v1alpha1
+kind: KubeAuthorizerConfig
+name: node
+type: Node
+---
+apiVersion: v1alpha1
+kind: KubeAuthorizerConfig
+name: rbac
+type: RBAC
+---
+apiVersion: v1alpha1
 kind: KubeEtcdEncryptionConfig
 config:
     resources:
@@ -105,6 +129,10 @@ config:
                       secret: 45yd2Ke+sytiICojDf8aibTfgt99nzJmO53cjDqrCto=
           resources:
             - secrets
+---
+apiVersion: v1alpha1
+kind: KubeAPIServerConfig
+image: registry.k8s.io/kube-apiserver:v1.28.0
 ---
 apiVersion: v1alpha1
 kind: KubeControllerManagerConfig

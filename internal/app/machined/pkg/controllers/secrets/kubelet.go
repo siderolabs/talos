@@ -24,6 +24,8 @@ import (
 type KubeletController = transform.Controller[*config.MachineConfig, *secrets.Kubelet]
 
 // NewKubeletController instantiates the controller.
+//
+//nolint:gocyclo
 func NewKubeletController() *KubeletController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *secrets.Kubelet]{
@@ -34,6 +36,10 @@ func NewKubeletController() *KubeletController {
 				}
 
 				if cfg.Config().Cluster() == nil || cfg.Config().Machine() == nil {
+					return optional.None[*secrets.Kubelet]()
+				}
+
+				if cfg.Config().K8sAPIServerConfig() == nil {
 					return optional.None[*secrets.Kubelet]()
 				}
 
@@ -54,7 +60,7 @@ func NewKubeletController() *KubeletController {
 					kubeletSecrets.Endpoint = localEndpoint
 				case cfgProvider.Machine().Type().IsControlPlane():
 					// use localhost endpoint for controlplane nodes
-					localEndpoint, err := url.Parse(fmt.Sprintf("https://localhost:%d", cfgProvider.Cluster().LocalAPIServerPort()))
+					localEndpoint, err := url.Parse(fmt.Sprintf("https://localhost:%d", cfgProvider.K8sAPIServerConfig().APIPort()))
 					if err != nil {
 						return err
 					}

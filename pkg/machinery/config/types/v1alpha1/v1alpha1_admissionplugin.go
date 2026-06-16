@@ -13,3 +13,6 @@ func (a *AdmissionPluginConfig) Name() string {
 func (a *AdmissionPluginConfig) Configuration() map[string]any {
 	return a.PluginConfiguration.Object
 }
+
+// K8sAdmissionControlPluginConfigSignal implements the config.K8sAdmissionControlPluginConfig interface.
+func (a *AdmissionPluginConfig) K8sAdmissionControlPluginConfigSignal() {}

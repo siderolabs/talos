@@ -24,7 +24,11 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
 
-func rootMapFunc[Output generic.ResourceWithRD](output Output, requireControlPlane bool) func(cfg *config.MachineConfig) optional.Optional[Output] {
+func rootMapFunc[Output generic.ResourceWithRD](
+	output Output,
+	requireControlPlane bool,
+	extraChecks ...func(cfg *config.MachineConfig) bool,
+) func(cfg *config.MachineConfig) optional.Optional[Output] {
 	return func(cfg *config.MachineConfig) optional.Optional[Output] {
 		if cfg.Metadata().ID() != config.ActiveID {
 			return optional.None[Output]()
@@ -36,6 +40,12 @@ func rootMapFunc[Output generic.ResourceWithRD](output Output, requireControlPla
 
 		if requireControlPlane && !cfg.Config().Machine().Type().IsControlPlane() {
 			return optional.None[Output]()
+		}
+
+		for _, check := range extraChecks {
+			if !check(cfg) {
+				return optional.None[Output]()
+			}
 		}
 
 		return optional.Some(output)
@@ -74,8 +84,14 @@ type RootKubernetesController = transform.Controller[*config.MachineConfig, *sec
 func NewRootKubernetesController() *RootKubernetesController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *secrets.KubernetesRoot]{
-			Name:                    "secrets.RootKubernetesController",
-			MapMetadataOptionalFunc: rootMapFunc(secrets.NewKubernetesRoot(secrets.KubernetesRootID), true),
+			Name: "secrets.RootKubernetesController",
+			MapMetadataOptionalFunc: rootMapFunc(
+				secrets.NewKubernetesRoot(secrets.KubernetesRootID),
+				true,
+				func(cfg *config.MachineConfig) bool {
+					return cfg.Config().K8sAPIServerConfig() != nil
+				},
+			),
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, cfg *config.MachineConfig, res *secrets.KubernetesRoot) error {
 				cfgProvider := cfg.Config()
 				k8sSecrets := res.TypedSpec()
@@ -91,7 +107,7 @@ func NewRootKubernetesController() *RootKubernetesController {
 						return err
 					}
 				} else {
-					localEndpoint, err = url.Parse(fmt.Sprintf("https://localhost:%d", cfgProvider.Cluster().LocalAPIServerPort()))
+					localEndpoint, err = url.Parse(fmt.Sprintf("https://localhost:%d", cfgProvider.K8sAPIServerConfig().APIPort()))
 					if err != nil {
 						return err
 					}
@@ -100,7 +116,7 @@ func NewRootKubernetesController() *RootKubernetesController {
 				k8sSecrets.Name = cfgProvider.Cluster().Name()
 				k8sSecrets.Endpoint = cfgProvider.Cluster().Endpoint()
 				k8sSecrets.LocalEndpoint = localEndpoint
-				k8sSecrets.CertSANs = cfgProvider.Cluster().CertSANs()
+				k8sSecrets.CertSANs = cfgProvider.K8sAPIServerConfig().CertSANs()
 
 				if k8sNetwork := cfgProvider.K8sNetworkConfig(); k8sNetwork != nil {
 					k8sSecrets.DNSDomain = k8sNetwork.DNSDomain()

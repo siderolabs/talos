@@ -64,6 +64,13 @@ func WithKubeletImage(versionContract *config.VersionContract, kubeletImage stri
 
 // WithKubeAPIServerImage returns a patch that updates the kube-apiserver image in the machine configuration.
 func WithKubeAPIServerImage(versionContract *config.VersionContract, kubeAPIServerImage string) ([]byte, error) {
+	if versionContract.MultidocKubernetesConfigSupported() {
+		apiServerConfig := k8s.NewKubeAPIServerConfigV1Alpha1()
+		apiServerConfig.PodImage = kubeAPIServerImage
+
+		return patchFromDocument(apiServerConfig)
+	}
+
 	return patchFromV1Alpha1(map[string]any{
 		"cluster": map[string]any{
 			"apiServer": map[string]any{

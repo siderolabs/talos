@@ -26,7 +26,7 @@ func (c *ClusterConfig) Name() string {
 }
 
 // APIServer implements the config.ClusterConfig interface.
-func (c *ClusterConfig) APIServer() config.APIServer {
+func (c *ClusterConfig) APIServer() *APIServerConfig {
 	if c.APIServerConfig == nil {
 		return &APIServerConfig{}
 	}
@@ -77,7 +77,7 @@ func (c *ClusterConfig) CertSANs() []string {
 		return nil
 	}
 
-	return c.APIServerConfig.CertSANs
+	return c.APIServerConfig.ExtraCertSANs
 }
 
 // IssuingCA implements the config.ClusterConfig interface.

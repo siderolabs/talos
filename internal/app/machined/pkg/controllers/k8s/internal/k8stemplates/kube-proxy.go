@@ -221,7 +221,7 @@ func KubeProxyDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) (runtime
 						proxyContainer,
 					},
 					HostNetwork:        true,
-					PriorityClassName:  "system-cluster-critical",
+					PriorityClassName:  SystemClusterCriticalPriorityClassName,
 					ServiceAccountName: "kube-proxy",
 					Tolerations: []corev1.Toleration{
 						{

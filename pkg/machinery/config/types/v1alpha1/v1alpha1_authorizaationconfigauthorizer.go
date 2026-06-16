@@ -26,6 +26,9 @@ func (a *AuthorizationConfigAuthorizerConfig) Webhook() map[string]any {
 	return a.AuthorizerWebhook.Object
 }
 
+// K8sAuthorizerConfigSignal implements the config.K8sAuthorizerConfig interface.
+func (a *AuthorizationConfigAuthorizerConfig) K8sAuthorizerConfigSignal() {}
+
 // Validate validates the AuthorizationConfigAuthorizerConfig.
 func (a *AuthorizationConfigAuthorizerConfig) Validate() error {
 	if a.AuthorizerType == "" {

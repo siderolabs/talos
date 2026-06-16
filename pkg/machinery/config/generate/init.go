@@ -10,6 +10,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
@@ -109,37 +110,19 @@ func (in *Input) init() ([]config.Document, error) {
 
 	var admissionControlConfig []*v1alpha1.AdmissionPluginConfig
 
-	if in.Options.VersionContract.PodSecurityAdmissionEnabled() {
+	if in.Options.VersionContract.PodSecurityAdmissionEnabled() && !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
 		admissionControlConfig = append(
 			admissionControlConfig,
 			&v1alpha1.AdmissionPluginConfig{
-				PluginName: "PodSecurity",
-				PluginConfiguration: meta.Unstructured{
-					Object: map[string]any{
-						"apiVersion": "pod-security.admission.config.k8s.io/v1alpha1",
-						"kind":       "PodSecurityConfiguration",
-						"defaults": map[string]any{
-							"enforce":         "baseline",
-							"enforce-version": "latest",
-							"audit":           "restricted",
-							"audit-version":   "latest",
-							"warn":            "restricted",
-							"warn-version":    "latest",
-						},
-						"exemptions": map[string]any{
-							"usernames":      []any{},
-							"runtimeClasses": []any{},
-							"namespaces":     []any{"kube-system"},
-						},
-					},
-				},
+				PluginName:          "PodSecurity",
+				PluginConfiguration: k8s.DefaultPodSecurityAdmissionControlConfig().PluginConfig,
 			},
 		)
 	}
 
 	var auditPolicyConfig meta.Unstructured
 
-	if in.Options.VersionContract.APIServerAuditPolicySupported() {
+	if in.Options.VersionContract.APIServerAuditPolicySupported() && !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
 		auditPolicyConfig = v1alpha1.APIServerDefaultAuditPolicy
 	}
 
@@ -149,14 +132,14 @@ func (in *Input) init() ([]config.Document, error) {
 		ClusterSecret: in.Options.SecretsBundle.Cluster.Secret,
 		ControlPlane: &v1alpha1.ControlPlaneConfig{
 			Endpoint:           &v1alpha1.Endpoint{URL: controlPlaneURL},
-			LocalAPIServerPort: in.Options.LocalAPIServerPort,
+			LocalAPIServerPort: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), in.Options.LocalAPIServerPort),
 		},
-		APIServerConfig: &v1alpha1.APIServerConfig{
-			CertSANs:               certSANs,
+		APIServerConfig: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.APIServerConfig{
+			ExtraCertSANs:          certSANs,
 			ContainerImage:         fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, in.KubernetesVersion),
 			AdmissionControlConfig: admissionControlConfig,
 			AuditPolicyConfig:      auditPolicyConfig,
-		},
+		}),
 		ControllerManagerConfig: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.ControllerManagerConfig{ //nolint:staticcheck // legacy configuration
 			ContainerImage: fmt.Sprintf("%s:v%s", constants.KubernetesControllerManagerImage, in.KubernetesVersion),
 		}),
@@ -216,8 +199,8 @@ func (in *Input) init() ([]config.Document, error) {
 		}
 	}
 
-	if !in.Options.VersionContract.HideDisablePSP() {
-		cluster.APIServerConfig.DisablePodSecurityPolicyConfig = new(true)
+	if !in.Options.VersionContract.HideDisablePSP() && !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
+		cluster.APIServerConfig.DisablePodSecurityPolicyConfig = new(true) //nolint:staticcheck // legacy configuration
 	}
 
 	if !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
@@ -285,9 +268,11 @@ func ptrOrNil(b bool) *bool {
 	return nil
 }
 
-func nilIf[T any](condition bool, value *T) *T {
+func nilIf[T any](condition bool, value T) T {
 	if condition {
-		return nil
+		var zero T
+
+		return zero
 	}
 
 	return value

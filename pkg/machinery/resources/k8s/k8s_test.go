@@ -31,6 +31,7 @@ func TestRegisterResource(t *testing.T) {
 		&k8s.APIServerConfig{},
 		&k8s.KubePrismEndpoints{},
 		&k8s.AuditPolicyConfig{},
+		&k8s.AuthenticationConfig{},
 		&k8s.ConfigStatus{},
 		&k8s.ControllerManagerConfig{},
 		&k8s.Endpoint{},

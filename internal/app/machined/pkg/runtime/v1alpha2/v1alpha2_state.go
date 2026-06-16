@@ -143,6 +143,7 @@ func NewState() (*State, error) {
 		&hardware.SystemInformation{},
 		&k8s.AdmissionControlConfig{},
 		&k8s.AuditPolicyConfig{},
+		&k8s.AuthenticationConfig{},
 		&k8s.AuthorizationConfig{},
 		&k8s.APIServerConfig{},
 		&k8s.KubePrismEndpoints{},

@@ -193,6 +193,7 @@ linters:
         - "^siderolabs/sbc-"
         - "^raw\\.xz$"
         - "^resource(s|)$"
+        - "^Webhook$"
     gocyclo:
       min-complexity: 10
     gomoddirectives:

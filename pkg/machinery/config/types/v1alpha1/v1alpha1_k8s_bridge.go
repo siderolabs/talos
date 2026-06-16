@@ -5,11 +5,60 @@
 package v1alpha1
 
 import (
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
+
+// K8sAPIServerConfig implements the config.Config interface.
+func (c *Config) K8sAPIServerConfig() config.K8sAPIServerConfig {
+	clusterConfig := c.ClusterConfig
+	if clusterConfig == nil {
+		clusterConfig = &ClusterConfig{}
+	}
+
+	return struct {
+		*APIServerConfig
+		apiServerConfigShim
+	}{
+		APIServerConfig:     clusterConfig.APIServer(),
+		apiServerConfigShim: apiServerConfigShim{c: clusterConfig},
+	}
+}
+
+type apiServerConfigShim struct {
+	c *ClusterConfig
+}
+
+// K8sAPIServerConfigSignal implements the config.K8sAPIServerConfig interface.
+func (s apiServerConfigShim) K8sAPIServerConfigSignal() {}
+
+// APIPort implements the config.K8sAPIServerConfig interface.
+func (s apiServerConfigShim) APIPort() int {
+	return s.c.LocalAPIServerPort()
+}
+
+// CertSANs implements the config.K8sAPIServerConfig interface.
+func (s apiServerConfigShim) CertSANs() []string {
+	return s.c.CertSANs()
+}
+
+// StartupProbesEnabled implements the config.K8sAPIServerConfig interface.
+func (s apiServerConfigShim) StartupProbesEnabled() bool {
+	return false
+}
+
+// UseAuthenticationConfig implements the config.K8sAPIServerConfig interface.
+func (s apiServerConfigShim) UseAuthenticationConfig() bool {
+	return false
+}
+
+// InjectDefaultAuthorizers implements the config.K8sAPIServerConfig interface.
+func (s apiServerConfigShim) InjectDefaultAuthorizers() bool {
+	return true
+}
 
 // K8sSchedulerConfig implements the config.Config interface.
 func (c *Config) K8sSchedulerConfig() config.K8sSchedulerConfig {
@@ -122,4 +171,55 @@ func (c *Config) K8sFlannelCNIConfig() config.K8sFlannelCNIConfig {
 	}
 
 	return cniConfig.Flannel()
+}
+
+// K8sAdmissionControlPluginConfigs implements the config.Config interface.
+func (c *Config) K8sAdmissionControlPluginConfigs() []config.K8sAdmissionControlPluginConfig {
+	if c.ClusterConfig == nil || c.ClusterConfig.APIServerConfig == nil {
+		return nil
+	}
+
+	return xslices.Map(
+		c.ClusterConfig.APIServerConfig.AdmissionControlConfig,
+		func(pluginConfig *AdmissionPluginConfig) config.K8sAdmissionControlPluginConfig {
+			return pluginConfig
+		},
+	)
+}
+
+// K8sAuditPolicyConfig implements the config.Config interface.
+func (c *Config) K8sAuditPolicyConfig() config.K8sAuditPolicyConfig {
+	if c.ClusterConfig == nil || c.ClusterConfig.APIServerConfig == nil {
+		return auditPolicyConfigShim{APIServerConfig: &APIServerConfig{}}
+	}
+
+	return auditPolicyConfigShim{APIServerConfig: c.ClusterConfig.APIServerConfig}
+}
+
+type auditPolicyConfigShim struct {
+	*APIServerConfig
+}
+
+// K8sAuditPolicyConfigSignal implements the config.K8sAuditPolicyConfig interface.
+func (s auditPolicyConfigShim) K8sAuditPolicyConfigSignal() {}
+
+// Configuration implements the config.K8sAuditPolicyConfig interface.
+func (s auditPolicyConfigShim) Configuration() map[string]any {
+	return s.AuditPolicy()
+}
+
+// K8sAuthorizerConfigs implements the config.APIServer interface.
+func (c *Config) K8sAuthorizerConfigs() []config.K8sAuthorizerConfig {
+	var apiServerConfig *APIServerConfig
+
+	if c.ClusterConfig == nil || c.ClusterConfig.APIServerConfig == nil {
+		apiServerConfig = &APIServerConfig{}
+	} else {
+		apiServerConfig = c.ClusterConfig.APIServerConfig
+	}
+
+	return xslices.Map(
+		apiServerConfig.AuthorizationConfigConfig,
+		func(c *AuthorizationConfigAuthorizerConfig) config.K8sAuthorizerConfig { return c },
+	)
 }

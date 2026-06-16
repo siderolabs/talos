@@ -19,10 +19,8 @@ type ClusterConfig interface {
 	ID() string
 	Name() string
 	Secret() string
-	APIServer() APIServer
 	Endpoint() *url.URL
 	Token() Token
-	CertSANs() []string
 	IssuingCA() *x509.PEMEncodedCertificateAndKey
 	AcceptedCAs() []*x509.PEMEncodedCertificate
 	AggregatorCA() *x509.PEMEncodedCertificateAndKey
@@ -30,7 +28,6 @@ type ClusterConfig interface {
 	AESCBCEncryptionSecret() string
 	SecretboxEncryptionSecret() string
 	Etcd() Etcd
-	LocalAPIServerPort() int
 	CoreDNS() CoreDNS
 	// ExternalCloudProvider returns external cloud provider settings.
 	ExternalCloudProvider() ExternalCloudProvider
@@ -40,32 +37,6 @@ type ClusterConfig interface {
 	AdminKubeconfig() AdminKubeconfig
 	ScheduleOnControlPlanes() bool
 	Discovery() Discovery
-}
-
-// APIServer defines the requirements for a config that pertains to apiserver related
-// options.
-type APIServer interface {
-	Image() string
-	ExtraArgs() map[string][]string
-	ExtraVolumes() []VolumeMount
-	Env() Env
-	AdmissionControl() []AdmissionPlugin
-	AuditPolicy() map[string]any
-	Resources() Resources
-	AuthorizationConfig() []AuthorizationConfigAuthorizer
-}
-
-// AdmissionPlugin defines the API server Admission Plugin configuration.
-type AdmissionPlugin interface {
-	Name() string
-	Configuration() map[string]any
-}
-
-// AuthorizationConfigAuthorizer defines the API server Authorization Authorizer configuration.
-type AuthorizationConfigAuthorizer interface {
-	Type() string
-	Name() string
-	Webhook() map[string]any
 }
 
 // Etcd defines the requirements for a config that pertains to etcd related

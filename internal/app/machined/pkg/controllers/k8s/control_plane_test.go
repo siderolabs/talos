@@ -112,42 +112,6 @@ func (suite *K8sControlPlaneSuite) TestReconcileDefaults() {
 	)
 }
 
-func (suite *K8sControlPlaneSuite) TestReconcileEmptyAuthorizationConfigForK8sLessThanv128() {
-	u, err := url.Parse("https://foo:6443")
-	suite.Require().NoError(err)
-
-	cfg := config.NewMachineConfig(
-		container.NewV1Alpha1(
-			&v1alpha1.Config{
-				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{
-					MachineType: "controlplane",
-				},
-				ClusterConfig: &v1alpha1.ClusterConfig{
-					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{},
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
-						Endpoint: &v1alpha1.Endpoint{
-							URL: u,
-						},
-					},
-					APIServerConfig: &v1alpha1.APIServerConfig{
-						ContainerImage:            "k8s.gcr.io/kube-apiserver:v1.28.0",
-						AuthorizationConfigConfig: []*v1alpha1.AuthorizationConfigAuthorizerConfig{},
-					},
-				},
-			},
-		),
-	)
-
-	suite.setupMachine(cfg)
-
-	rtestutils.AssertResource[*k8s.AuthorizationConfig](suite.Ctx(), suite.T(), suite.State(), k8s.AuthorizationConfigID, func(authorizationConfig *k8s.AuthorizationConfig, assert *assert.Assertions) {
-		assert.Equal(&k8s.AuthorizationConfigSpec{
-			Image: "k8s.gcr.io/kube-apiserver:v1.28.0",
-		}, authorizationConfig.TypedSpec())
-	})
-}
-
 func (suite *K8sControlPlaneSuite) TestReconcileEmptyAuthorizationConfigAuthorizers() {
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)

@@ -15,9 +15,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/safe"
+
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // UserNamespaceSuite verifies that a pod with user namespace works.
@@ -52,58 +55,11 @@ func (suite *UserNamespaceSuite) TestUserNamespace() {
 
 	nodeCtx := client.WithNode(ctx, node)
 
-	reader, err := suite.Client.Read(nodeCtx, "/proc/sys/user/max_user_namespaces")
+	maxNamespaces, err := safe.StateGetByID[*runtime.KernelParamStatus](nodeCtx, suite.Client.COSI, "proc.sys.user.max_user_namespaces")
 	suite.Require().NoError(err)
 
-	var maxUserNamespaces bytes.Buffer
-
-	_, err = maxUserNamespaces.ReadFrom(reader)
-	suite.Require().NoError(err)
-
-	if strings.TrimSpace(maxUserNamespaces.String()) == "0" {
+	if maxNamespaces.TypedSpec().Current == "0" {
 		suite.T().Skip("skipping test since user namespace is disabled")
-	}
-
-	controlPlaneNode := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
-
-	controlPlaneNodeCtx := client.WithNode(ctx, controlPlaneNode)
-
-	controlPlaneNodeConfig, err := suite.ReadConfigFromNode(controlPlaneNodeCtx)
-	suite.Require().NoError(err)
-
-	if controlPlaneNodeConfig.Cluster().APIServer().ExtraArgs() == nil {
-		suite.T().Skip("skipping test since no api server extra args found")
-	} else {
-		if featureGates, ok := controlPlaneNodeConfig.Cluster().APIServer().ExtraArgs()["feature-gates"]; ok {
-			hasUserNamespacesSupport := false
-
-			for _, featureGate := range featureGates {
-				if strings.Contains(featureGate, "UserNamespacesSupport=true") {
-					hasUserNamespacesSupport = true
-
-					break
-				}
-			}
-
-			if !hasUserNamespacesSupport {
-				suite.T().Skip("skipping test since user namespace feature gate is not enabled for kube-apiserver")
-			}
-		}
-	}
-
-	workerNodeConfig, err := suite.ReadConfigFromNode(client.WithNode(ctx, node))
-	suite.Require().NoError(err)
-
-	if workerNodeConfig.Machine().Kubelet().ExtraConfig() == nil {
-		suite.T().Skip("skipping test since no kubelet extra config found")
-	} else {
-		if featureGates, ok := workerNodeConfig.Machine().Kubelet().ExtraConfig()["featureGates"]; ok {
-			if fg, ok := featureGates.(map[string]string); ok {
-				if val, ok := fg["UserNamespacesSupport"]; !ok || val != "true" {
-					suite.T().Skip("skipping test since user namespace feature gate is not enabled for kubelet")
-				}
-			}
-		}
 	}
 
 	k8sNode, err := suite.GetK8sNodeByInternalIP(ctx, node)
@@ -142,7 +98,7 @@ func (suite *UserNamespaceSuite) TestUserNamespace() {
 
 	suite.Require().NotZero(sleepProcessPID, "sleep process not found for user namespace test")
 
-	reader, err = suite.Client.Read(nodeCtx, fmt.Sprintf("/proc/%d/status", sleepProcessPID))
+	reader, err := suite.Client.Read(nodeCtx, fmt.Sprintf("/proc/%d/status", sleepProcessPID))
 	suite.Require().NoError(err)
 
 	var processStatus bytes.Buffer

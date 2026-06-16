@@ -986,7 +986,7 @@ func (c *Config) ValidateKubernetesVersions() error {
 			}{
 				{
 					name:     "kube-apiserver",
-					imageRef: c.Cluster().APIServer().Image(),
+					imageRef: c.ClusterConfig.APIServer().Image(),
 				},
 				{
 					name:     "kube-controller-manager",

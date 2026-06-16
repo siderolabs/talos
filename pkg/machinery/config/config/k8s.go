@@ -10,6 +10,23 @@ import (
 	"github.com/siderolabs/gen/optional"
 )
 
+// K8sAPIServerConfig defines kube-apiserver configuration options.
+//
+//nolint:interfacebloat
+type K8sAPIServerConfig interface {
+	K8sAPIServerConfigSignal()
+	Image() string
+	ExtraArgs() map[string][]string
+	ExtraVolumes() []VolumeMount
+	Env() Env
+	Resources() Resources
+	StartupProbesEnabled() bool
+	UseAuthenticationConfig() bool
+	InjectDefaultAuthorizers() bool
+	CertSANs() []string
+	APIPort() int
+}
+
 // K8sControllerManagerConfig defines configuration options for the kube-controller-manager static pod.
 type K8sControllerManagerConfig interface {
 	K8sControllerManagerConfigSignal()
@@ -67,4 +84,31 @@ type K8sFlannelCNIConfig interface {
 	Resources() Resources
 	ExtraArgs() []string
 	KubeNetworkPoliciesEnabled() bool
+}
+
+// K8sAdmissionControlPluginConfig defines the configuration options for kube-apiserver admission control plugins.
+type K8sAdmissionControlPluginConfig interface {
+	K8sAdmissionControlPluginConfigSignal()
+	NamedDocument
+	Configuration() map[string]any
+}
+
+// K8sAuditPolicyConfig defines the configuration options for kube-apiserver audit policy.
+type K8sAuditPolicyConfig interface {
+	K8sAuditPolicyConfigSignal()
+	Configuration() map[string]any
+}
+
+// K8sAuthenticationConfig defines the configuration options for kube-apiserver authentication.
+type K8sAuthenticationConfig interface {
+	K8sAuthenticationConfigSignal()
+	Configuration() map[string]any
+}
+
+// K8sAuthorizerConfig defines the API server authorization Authorizer configuration.
+type K8sAuthorizerConfig interface {
+	K8sAuthorizerConfigSignal()
+	Type() string
+	Name() string
+	Webhook() map[string]any
 }

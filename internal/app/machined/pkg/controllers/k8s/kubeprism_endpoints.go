@@ -24,7 +24,7 @@ type KubePrismEndpointsController = transform.Controller[*config.MachineConfig, 
 
 // NewKubePrismEndpointsController instantiates the controller.
 //
-//nolint:gocyclo
+//nolint:gocyclo,dupl
 func NewKubePrismEndpointsController() *KubePrismEndpointsController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *k8s.KubePrismEndpoints]{
@@ -35,6 +35,10 @@ func NewKubePrismEndpointsController() *KubePrismEndpointsController {
 				}
 
 				if cfg.Config().Cluster() == nil || cfg.Config().Machine() == nil {
+					return optional.None[*k8s.KubePrismEndpoints]()
+				}
+
+				if cfg.Config().K8sAPIServerConfig() == nil {
 					return optional.None[*k8s.KubePrismEndpoints]()
 				}
 
@@ -59,7 +63,7 @@ func NewKubePrismEndpointsController() *KubePrismEndpointsController {
 				if machineConfig.Config().Machine().Type().IsControlPlane() {
 					endpoints = append(endpoints, k8s.KubePrismEndpoint{
 						Host: "localhost",
-						Port: uint32(machineConfig.Config().Cluster().LocalAPIServerPort()),
+						Port: uint32(machineConfig.Config().K8sAPIServerConfig().APIPort()),
 					})
 				}
 

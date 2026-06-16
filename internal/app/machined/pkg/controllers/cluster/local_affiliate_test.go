@@ -161,7 +161,7 @@ func (suite *LocalAffiliateSuite) TestCPGeneration() {
 	machineType.SetMachineType(machine.TypeControlPlane)
 	suite.Create(machineType)
 
-	apiServerConfig := k8s.NewAPIServerConfig()
+	apiServerConfig := k8s.NewAPIServerConfig(k8s.FinalAPIServerConfigID)
 	apiServerConfig.TypedSpec().LocalPort = 6445
 	suite.Create(apiServerConfig)
 

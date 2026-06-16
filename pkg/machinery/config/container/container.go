@@ -486,6 +486,58 @@ func (container *Container) RunDefaultDHCPOperators() bool {
 		len(findMatchingDocs[config.NetworkDHCPConfig](container.documents)) == 0
 }
 
+// K8sAdmissionControlPluginConfigs implements config.Config interface.
+func (container *Container) K8sAdmissionControlPluginConfigs() []config.K8sAdmissionControlPluginConfig {
+	docs := findMatchingDocs[config.K8sAdmissionControlPluginConfig](container.documents)
+	if len(docs) > 0 {
+		return docs
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sAdmissionControlPluginConfigs()
+	}
+
+	return nil
+}
+
+// K8sAuditPolicyConfig implements config.Config interface.
+func (container *Container) K8sAuditPolicyConfig() config.K8sAuditPolicyConfig {
+	matching := findMatchingDocs[config.K8sAuditPolicyConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sAuditPolicyConfig()
+	}
+
+	return nil
+}
+
+// K8sAuthenticationConfig implements config.Config interface.
+func (container *Container) K8sAuthenticationConfig() config.K8sAuthenticationConfig {
+	matching := findMatchingDocs[config.K8sAuthenticationConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	return nil
+}
+
+// K8sAuthorizerConfigs implements config.Config interface.
+func (container *Container) K8sAuthorizerConfigs() []config.K8sAuthorizerConfig {
+	docs := findMatchingDocs[config.K8sAuthorizerConfig](container.documents)
+	if len(docs) > 0 {
+		return docs
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sAuthorizerConfigs()
+	}
+
+	return nil
+}
+
 // K8sEtcdEncryptionConfig implements config.Config interface.
 func (container *Container) K8sEtcdEncryptionConfig() config.K8sEtcdEncryptionConfig {
 	matching := findMatchingDocs[config.K8sEtcdEncryptionConfig](container.documents)
@@ -494,6 +546,20 @@ func (container *Container) K8sEtcdEncryptionConfig() config.K8sEtcdEncryptionCo
 	}
 
 	return matching[0]
+}
+
+// K8sAPIServerConfig implements config.Config interface.
+func (container *Container) K8sAPIServerConfig() config.K8sAPIServerConfig {
+	matching := findMatchingDocs[config.K8sAPIServerConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sAPIServerConfig()
+	}
+
+	return nil
 }
 
 // K8sControllerManagerConfig implements config.Config interface.

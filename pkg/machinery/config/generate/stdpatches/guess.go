@@ -16,7 +16,12 @@ func GuessVersionContractKubelet(cfg config.Container) *config.VersionContract {
 
 // GuessVersionContractKubeAPIServer attempts to guess the version contract for kube-apiserver configuration based on the provided machine configuration.
 func GuessVersionContractKubeAPIServer(cfg config.Container) *config.VersionContract {
-	return config.TalosVersionCurrent
+	if hasDocument(k8s.KubeAPIServerConfig, cfg) {
+		return config.TalosVersionCurrent
+	}
+
+	// the last before multi-doc k8s config
+	return config.TalosVersion1_13
 }
 
 // GuessVersionContractKubeControllerManager attempts to guess the version contract for kube-controller-manager configuration based on the provided machine configuration.

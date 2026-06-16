@@ -353,13 +353,7 @@ func (ClusterConfig) Doc() *encoder.Doc {
 				Description: "The base64 encoded private key for service account token generation.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The base64 encoded private key for service account token generation." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "apiServer",
-				Type:        "APIServerConfig",
-				Note:        "",
-				Description: "API server specific configuration options.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "API server specific configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{},
 			{},
 			{},
@@ -443,7 +437,6 @@ func (ClusterConfig) Doc() *encoder.Doc {
 	doc.Fields[8].AddExample("ClusterCA example.", pemEncodedCertificateExample())
 	doc.Fields[10].AddExample("AggregatorCA example.", pemEncodedCertificateExample())
 	doc.Fields[11].AddExample("AggregatorCA example.", pemEncodedKeyExample())
-	doc.Fields[12].AddExample("", clusterAPIServerExample())
 	doc.Fields[16].AddExample("", clusterDiscoveryExample())
 	doc.Fields[17].AddExample("", clusterEtcdExample())
 	doc.Fields[18].AddExample("", clusterCoreDNSExample())
@@ -976,181 +969,11 @@ func (ControlPlaneConfig) Doc() *encoder.Doc {
 				Description: "Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.\nIt is single-valued, and may optionally include a port number.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "localAPIServerPort",
-				Type:        "int",
-				Note:        "",
-				Description: "The port that the API server listens on internally.\nThis may be different than the port portion listed in the endpoint field above.\nThe default is `6443`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The port that the API server listens on internally." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 		},
 	}
 
 	doc.AddExample("Setting controlplane endpoint address to 1.2.3.4 and port to 443 example.", clusterControlPlaneExample())
-
-	return doc
-}
-
-func (APIServerConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "APIServerConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "APIServerConfig represents the kube apiserver configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "APIServerConfig represents the kube apiserver configuration options.\n",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "ClusterConfig",
-				FieldName: "apiServer",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "image",
-				Type:        "string",
-				Note:        "",
-				Description: "The container image used in the API server manifest.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The container image used in the API server manifest." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "extraArgs",
-				Type:        "Args",
-				Note:        "",
-				Description: "Extra arguments to supply to the API server.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra arguments to supply to the API server." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "extraVolumes",
-				Type:        "[]VolumeMountConfig",
-				Note:        "",
-				Description: "Extra volumes to mount to the API server static pod.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra volumes to mount to the API server static pod." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "env",
-				Type:        "Env",
-				Note:        "",
-				Description: "The `env` field allows for the addition of environment variables for the control plane component.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `env` field allows for the addition of environment variables for the control plane component." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "certSANs",
-				Type:        "[]string",
-				Note:        "",
-				Description: "Extra certificate subject alternative names for the API server's certificate.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra certificate subject alternative names for the API server's certificate." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{},
-			{
-				Name:        "admissionControl",
-				Type:        "[]AdmissionPluginConfig",
-				Note:        "",
-				Description: "Configure the API server admission plugins.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure the API server admission plugins." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "auditPolicy",
-				Type:        "Unstructured",
-				Note:        "",
-				Description: "Configure the API server audit policy.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure the API server audit policy." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "resources",
-				Type:        "ResourcesConfig",
-				Note:        "",
-				Description: "Configure the API server resources.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure the API server resources." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "authorizationConfig",
-				Type:        "[]AuthorizationConfigAuthorizerConfig",
-				Note:        "",
-				Description: "Configure the API server authorization config. Node and RBAC authorizers are always added irrespective of the configuration.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure the API server authorization config. Node and RBAC authorizers are always added irrespective of the configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", clusterAPIServerExample())
-
-	doc.Fields[0].AddExample("", clusterAPIServerImageExample())
-	doc.Fields[6].AddExample("", admissionControlConfigExample())
-	doc.Fields[7].AddExample("", APIServerDefaultAuditPolicy)
-	doc.Fields[9].AddExample("", authorizationConfigExample())
-
-	return doc
-}
-
-func (AdmissionPluginConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "AdmissionPluginConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "AdmissionPluginConfig represents the API server admission plugin configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "AdmissionPluginConfig represents the API server admission plugin configuration.\n",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "APIServerConfig",
-				FieldName: "admissionControl",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "name",
-				Type:        "string",
-				Note:        "",
-				Description: "Name is the name of the admission controller.\nIt must match the registered admission plugin name.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Name is the name of the admission controller." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "configuration",
-				Type:        "Unstructured",
-				Note:        "",
-				Description: "Configuration is an embedded configuration object to be used as the plugin's\nconfiguration.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configuration is an embedded configuration object to be used as the plugin's" /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", admissionControlConfigExample())
-
-	return doc
-}
-
-func (AuthorizationConfigAuthorizerConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "AuthorizationConfigAuthorizerConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "AuthorizationConfigAuthorizerConfig represents the API server authorization config authorizer configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "AuthorizationConfigAuthorizerConfig represents the API server authorization config authorizer configuration.\n",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "APIServerConfig",
-				FieldName: "authorizationConfig",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "type",
-				Type:        "string",
-				Note:        "",
-				Description: "Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "name",
-				Type:        "string",
-				Note:        "",
-				Description: "Name is used to describe the authorizer.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Name is used to describe the authorizer." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "webhook",
-				Type:        "Unstructured",
-				Note:        "",
-				Description: "webhook is the configuration for the webhook authorizer.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "webhook is the configuration for the webhook authorizer." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", authorizationConfigExample())
 
 	return doc
 }
@@ -1283,41 +1106,6 @@ func (AdminKubeconfigConfig) Doc() *encoder.Doc {
 	}
 
 	doc.AddExample("", clusterAdminKubeconfigExample())
-
-	return doc
-}
-
-func (ResourcesConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "ResourcesConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "ResourcesConfig represents the pod resources." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ResourcesConfig represents the pod resources.\n",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "APIServerConfig",
-				FieldName: "resources",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "requests",
-				Type:        "Unstructured",
-				Note:        "",
-				Description: "Requests configures the reserved cpu/memory resources.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Requests configures the reserved cpu/memory resources." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "limits",
-				Type:        "Unstructured",
-				Note:        "",
-				Description: "Limits configures the maximum cpu/memory resources a container can use.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Limits configures the maximum cpu/memory resources a container can use." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.Fields[0].AddExample("resources requests.", resourcesConfigRequestsExample())
-	doc.Fields[1].AddExample("resources requests.", resourcesConfigLimitsExample())
 
 	return doc
 }
@@ -1499,49 +1287,6 @@ func (KubernetesTalosAPIAccessConfig) Doc() *encoder.Doc {
 	}
 
 	doc.AddExample("", kubernetesTalosAPIAccessConfigExample())
-
-	return doc
-}
-
-func (VolumeMountConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "VolumeMountConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "VolumeMountConfig struct describes extra volume mount for the static pods." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "VolumeMountConfig struct describes extra volume mount for the static pods.\n",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "APIServerConfig",
-				FieldName: "extraVolumes",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "hostPath",
-				Type:        "string",
-				Note:        "",
-				Description: "Path on the host.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Path on the host." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "mountPath",
-				Type:        "string",
-				Note:        "",
-				Description: "Path in the container.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Path in the container." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "readonly",
-				Type:        "bool",
-				Note:        "",
-				Description: "Mount the volume read only.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Mount the volume read only." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.Fields[0].AddExample("", "/var/lib/auth")
-	doc.Fields[1].AddExample("", "/etc/kubernetes/auth")
-	doc.Fields[2].AddExample("", true)
 
 	return doc
 }
@@ -1884,18 +1629,13 @@ func GetFileDoc() *encoder.FileDoc {
 			CoreDNS{}.Doc(),
 			Endpoint{}.Doc(),
 			ControlPlaneConfig{}.Doc(),
-			APIServerConfig{}.Doc(),
-			AdmissionPluginConfig{}.Doc(),
-			AuthorizationConfigAuthorizerConfig{}.Doc(),
 			EtcdConfig{}.Doc(),
 			ExternalCloudProviderConfig{}.Doc(),
 			AdminKubeconfigConfig{}.Doc(),
-			ResourcesConfig{}.Doc(),
 			MachineFile{}.Doc(),
 			FeaturesConfig{}.Doc(),
 			KubePrism{}.Doc(),
 			KubernetesTalosAPIAccessConfig{}.Doc(),
-			VolumeMountConfig{}.Doc(),
 			ClusterInlineManifest{}.Doc(),
 			ClusterDiscoveryConfig{}.Doc(),
 			DiscoveryRegistriesConfig{}.Doc(),

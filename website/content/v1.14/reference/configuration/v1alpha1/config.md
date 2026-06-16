@@ -858,7 +858,6 @@ cluster:
     # ControlPlaneConfig represents the control plane configuration options.
     controlPlane:
         endpoint: https://1.2.3.4 # Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.
-        localAPIServerPort: 443 # The port that the API server listens on internally.
     clusterName: talos.local
 {{< /highlight >}}
 
@@ -870,7 +869,6 @@ cluster:
 |`controlPlane` |<a href="#Config.cluster.controlPlane">ControlPlaneConfig</a> |Provides control plane specific configuration options. <details><summary>Show example(s)</summary>Setting controlplane endpoint address to 1.2.3.4 and port to 443 example.:{{< highlight yaml >}}
 controlPlane:
     endpoint: https://1.2.3.4 # Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.
-    localAPIServerPort: 443 # The port that the API server listens on internally.
 {{< /highlight >}}</details> | |
 |`clusterName` |string |Configures the cluster's name.  | |
 |`token` |string |The [bootstrap token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/) used to join the cluster. <details><summary>Show example(s)</summary>Bootstrap token example (do not use in production!).:{{< highlight yaml >}}
@@ -890,71 +888,6 @@ aggregatorCA:
 |`serviceAccount` |PEMEncodedKey |The base64 encoded private key for service account token generation. <details><summary>Show example(s)</summary>AggregatorCA example.:{{< highlight yaml >}}
 serviceAccount:
     key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
-{{< /highlight >}}</details> | |
-|`apiServer` |<a href="#Config.cluster.apiServer">APIServerConfig</a> |API server specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-apiServer:
-    image: registry.k8s.io/kube-apiserver:v1.36.2 # The container image used in the API server manifest.
-    # Extra arguments to supply to the API server.
-    extraArgs:
-        feature-gates: ServerSideApply=true
-        http2-max-streams-per-connection: "32"
-    # Extra certificate subject alternative names for the API server's certificate.
-    certSANs:
-        - 1.2.3.4
-        - 4.5.6.7
-
-    # # Configure the API server admission plugins.
-    # admissionControl:
-    #     - name: PodSecurity # Name is the name of the admission controller.
-    #       # Configuration is an embedded configuration object to be used as the plugin's
-    #       configuration:
-    #         apiVersion: pod-security.admission.config.k8s.io/v1alpha1
-    #         defaults:
-    #             audit: restricted
-    #             audit-version: latest
-    #             enforce: baseline
-    #             enforce-version: latest
-    #             warn: restricted
-    #             warn-version: latest
-    #         exemptions:
-    #             namespaces:
-    #                 - kube-system
-    #             runtimeClasses: []
-    #             usernames: []
-    #         kind: PodSecurityConfiguration
-
-    # # Configure the API server audit policy.
-    # auditPolicy:
-    #     apiVersion: audit.k8s.io/v1
-    #     kind: Policy
-    #     rules:
-    #         - level: Metadata
-
-    # # Configure the API server authorization config. Node and RBAC authorizers are always added irrespective of the configuration.
-    # authorizationConfig:
-    #     - type: Webhook # Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`.
-    #       name: webhook # Name is used to describe the authorizer.
-    #       # webhook is the configuration for the webhook authorizer.
-    #       webhook:
-    #         connectionInfo:
-    #             type: InClusterConfig
-    #         failurePolicy: Deny
-    #         matchConditionSubjectAccessReviewVersion: v1
-    #         matchConditions:
-    #             - expression: has(request.resourceAttributes)
-    #             - expression: '!(\''system:serviceaccounts:kube-system\'' in request.groups)'
-    #         subjectAccessReviewVersion: v1
-    #         timeout: 3s
-    #     - type: Webhook # Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`.
-    #       name: in-cluster-authorizer # Name is used to describe the authorizer.
-    #       # webhook is the configuration for the webhook authorizer.
-    #       webhook:
-    #         connectionInfo:
-    #             type: InClusterConfig
-    #         failurePolicy: NoOpinion
-    #         matchConditionSubjectAccessReviewVersion: v1
-    #         subjectAccessReviewVersion: v1
-    #         timeout: 3s
 {{< /highlight >}}</details> | |
 |`discovery` |<a href="#Config.cluster.discovery">ClusterDiscoveryConfig</a> |Configures cluster member discovery. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 discovery:
@@ -1035,14 +968,12 @@ ControlPlaneConfig represents the control plane configuration options.
 cluster:
     controlPlane:
         endpoint: https://1.2.3.4 # Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.
-        localAPIServerPort: 443 # The port that the API server listens on internally.
 {{< /highlight >}}
 
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`endpoint` |<a href="#Config.cluster.controlPlane.endpoint">Endpoint</a> |Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.<br>It is single-valued, and may optionally include a port number.  | |
-|`localAPIServerPort` |int |The port that the API server listens on internally.<br>This may be different than the port portion listed in the endpoint field above.<br>The default is `6443`.  | |
 
 
 
@@ -1057,290 +988,6 @@ Endpoint represents the endpoint URL parsed out of the machine config.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-
-
-
-
-
-
-
-
-### apiServer {#Config.cluster.apiServer}
-
-APIServerConfig represents the kube apiserver configuration options.
-
-
-
-
-{{< highlight yaml >}}
-cluster:
-    apiServer:
-        image: registry.k8s.io/kube-apiserver:v1.36.2 # The container image used in the API server manifest.
-        # Extra arguments to supply to the API server.
-        extraArgs:
-            feature-gates: ServerSideApply=true
-            http2-max-streams-per-connection: "32"
-        # Extra certificate subject alternative names for the API server's certificate.
-        certSANs:
-            - 1.2.3.4
-            - 4.5.6.7
-
-        # # Configure the API server admission plugins.
-        # admissionControl:
-        #     - name: PodSecurity # Name is the name of the admission controller.
-        #       # Configuration is an embedded configuration object to be used as the plugin's
-        #       configuration:
-        #         apiVersion: pod-security.admission.config.k8s.io/v1alpha1
-        #         defaults:
-        #             audit: restricted
-        #             audit-version: latest
-        #             enforce: baseline
-        #             enforce-version: latest
-        #             warn: restricted
-        #             warn-version: latest
-        #         exemptions:
-        #             namespaces:
-        #                 - kube-system
-        #             runtimeClasses: []
-        #             usernames: []
-        #         kind: PodSecurityConfiguration
-
-        # # Configure the API server audit policy.
-        # auditPolicy:
-        #     apiVersion: audit.k8s.io/v1
-        #     kind: Policy
-        #     rules:
-        #         - level: Metadata
-
-        # # Configure the API server authorization config. Node and RBAC authorizers are always added irrespective of the configuration.
-        # authorizationConfig:
-        #     - type: Webhook # Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`.
-        #       name: webhook # Name is used to describe the authorizer.
-        #       # webhook is the configuration for the webhook authorizer.
-        #       webhook:
-        #         connectionInfo:
-        #             type: InClusterConfig
-        #         failurePolicy: Deny
-        #         matchConditionSubjectAccessReviewVersion: v1
-        #         matchConditions:
-        #             - expression: has(request.resourceAttributes)
-        #             - expression: '!(\''system:serviceaccounts:kube-system\'' in request.groups)'
-        #         subjectAccessReviewVersion: v1
-        #         timeout: 3s
-        #     - type: Webhook # Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`.
-        #       name: in-cluster-authorizer # Name is used to describe the authorizer.
-        #       # webhook is the configuration for the webhook authorizer.
-        #       webhook:
-        #         connectionInfo:
-        #             type: InClusterConfig
-        #         failurePolicy: NoOpinion
-        #         matchConditionSubjectAccessReviewVersion: v1
-        #         subjectAccessReviewVersion: v1
-        #         timeout: 3s
-{{< /highlight >}}
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`image` |string |The container image used in the API server manifest. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-image: registry.k8s.io/kube-apiserver:v1.36.2
-{{< /highlight >}}</details> | |
-|`extraArgs` |Args |Extra arguments to supply to the API server.  | |
-|`extraVolumes` |<a href="#Config.cluster.apiServer.extraVolumes.">[]VolumeMountConfig</a> |Extra volumes to mount to the API server static pod.  | |
-|`env` |Env |The `env` field allows for the addition of environment variables for the control plane component.  | |
-|`certSANs` |[]string |Extra certificate subject alternative names for the API server's certificate.  | |
-|`admissionControl` |<a href="#Config.cluster.apiServer.admissionControl.">[]AdmissionPluginConfig</a> |Configure the API server admission plugins. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-admissionControl:
-    - name: PodSecurity # Name is the name of the admission controller.
-      # Configuration is an embedded configuration object to be used as the plugin's
-      configuration:
-        apiVersion: pod-security.admission.config.k8s.io/v1alpha1
-        defaults:
-            audit: restricted
-            audit-version: latest
-            enforce: baseline
-            enforce-version: latest
-            warn: restricted
-            warn-version: latest
-        exemptions:
-            namespaces:
-                - kube-system
-            runtimeClasses: []
-            usernames: []
-        kind: PodSecurityConfiguration
-{{< /highlight >}}</details> | |
-|`auditPolicy` |Unstructured |Configure the API server audit policy. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-auditPolicy:
-    apiVersion: audit.k8s.io/v1
-    kind: Policy
-    rules:
-        - level: Metadata
-{{< /highlight >}}</details> | |
-|`resources` |<a href="#Config.cluster.apiServer.resources">ResourcesConfig</a> |Configure the API server resources.  | |
-|`authorizationConfig` |<a href="#Config.cluster.apiServer.authorizationConfig.">[]AuthorizationConfigAuthorizerConfig</a> |Configure the API server authorization config. Node and RBAC authorizers are always added irrespective of the configuration. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-authorizationConfig:
-    - type: Webhook # Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`.
-      name: webhook # Name is used to describe the authorizer.
-      # webhook is the configuration for the webhook authorizer.
-      webhook:
-        connectionInfo:
-            type: InClusterConfig
-        failurePolicy: Deny
-        matchConditionSubjectAccessReviewVersion: v1
-        matchConditions:
-            - expression: has(request.resourceAttributes)
-            - expression: '!(\''system:serviceaccounts:kube-system\'' in request.groups)'
-        subjectAccessReviewVersion: v1
-        timeout: 3s
-    - type: Webhook # Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`.
-      name: in-cluster-authorizer # Name is used to describe the authorizer.
-      # webhook is the configuration for the webhook authorizer.
-      webhook:
-        connectionInfo:
-            type: InClusterConfig
-        failurePolicy: NoOpinion
-        matchConditionSubjectAccessReviewVersion: v1
-        subjectAccessReviewVersion: v1
-        timeout: 3s
-{{< /highlight >}}</details> | |
-
-
-
-
-#### extraVolumes[] {#Config.cluster.apiServer.extraVolumes.}
-
-VolumeMountConfig struct describes extra volume mount for the static pods.
-
-
-
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`hostPath` |string |Path on the host. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-hostPath: /var/lib/auth
-{{< /highlight >}}</details> | |
-|`mountPath` |string |Path in the container. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-mountPath: /etc/kubernetes/auth
-{{< /highlight >}}</details> | |
-|`readonly` |bool |Mount the volume read only. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-readonly: true
-{{< /highlight >}}</details> | |
-
-
-
-
-
-
-#### admissionControl[] {#Config.cluster.apiServer.admissionControl.}
-
-AdmissionPluginConfig represents the API server admission plugin configuration.
-
-
-
-
-{{< highlight yaml >}}
-cluster:
-    apiServer:
-        admissionControl:
-            - name: PodSecurity # Name is the name of the admission controller.
-              # Configuration is an embedded configuration object to be used as the plugin's
-              configuration:
-                apiVersion: pod-security.admission.config.k8s.io/v1alpha1
-                defaults:
-                    audit: restricted
-                    audit-version: latest
-                    enforce: baseline
-                    enforce-version: latest
-                    warn: restricted
-                    warn-version: latest
-                exemptions:
-                    namespaces:
-                        - kube-system
-                    runtimeClasses: []
-                    usernames: []
-                kind: PodSecurityConfiguration
-{{< /highlight >}}
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`name` |string |Name is the name of the admission controller.<br>It must match the registered admission plugin name.  | |
-|`configuration` |Unstructured |Configuration is an embedded configuration object to be used as the plugin's<br>configuration.  | |
-
-
-
-
-
-
-#### resources {#Config.cluster.apiServer.resources}
-
-ResourcesConfig represents the pod resources.
-
-
-
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`requests` |Unstructured |Requests configures the reserved cpu/memory resources. <details><summary>Show example(s)</summary>resources requests.:{{< highlight yaml >}}
-requests:
-    cpu: 1
-    memory: 1Gi
-{{< /highlight >}}</details> | |
-|`limits` |Unstructured |Limits configures the maximum cpu/memory resources a container can use. <details><summary>Show example(s)</summary>resources requests.:{{< highlight yaml >}}
-limits:
-    cpu: 2
-    memory: 2500Mi
-{{< /highlight >}}</details> | |
-
-
-
-
-
-
-#### authorizationConfig[] {#Config.cluster.apiServer.authorizationConfig.}
-
-AuthorizationConfigAuthorizerConfig represents the API server authorization config authorizer configuration.
-
-
-
-
-{{< highlight yaml >}}
-cluster:
-    apiServer:
-        authorizationConfig:
-            - type: Webhook # Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`.
-              name: webhook # Name is used to describe the authorizer.
-              # webhook is the configuration for the webhook authorizer.
-              webhook:
-                connectionInfo:
-                    type: InClusterConfig
-                failurePolicy: Deny
-                matchConditionSubjectAccessReviewVersion: v1
-                matchConditions:
-                    - expression: has(request.resourceAttributes)
-                    - expression: '!(\''system:serviceaccounts:kube-system\'' in request.groups)'
-                subjectAccessReviewVersion: v1
-                timeout: 3s
-            - type: Webhook # Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`.
-              name: in-cluster-authorizer # Name is used to describe the authorizer.
-              # webhook is the configuration for the webhook authorizer.
-              webhook:
-                connectionInfo:
-                    type: InClusterConfig
-                failurePolicy: NoOpinion
-                matchConditionSubjectAccessReviewVersion: v1
-                subjectAccessReviewVersion: v1
-                timeout: 3s
-{{< /highlight >}}
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`type` |string |Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`.  | |
-|`name` |string |Name is used to describe the authorizer.  | |
-|`webhook` |Unstructured |webhook is the configuration for the webhook authorizer.  | |
 
 
 

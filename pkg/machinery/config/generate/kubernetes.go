@@ -7,6 +7,7 @@ package generate
 import (
 	"fmt"
 	"net/netip"
+	"slices"
 
 	"github.com/siderolabs/gen/xslices"
 
@@ -52,6 +53,13 @@ func (in *Input) generateKubernetesControlplaneConfigs() []config.Document {
 		},
 	}
 
+	apiServerConfig := k8s.NewKubeAPIServerConfigV1Alpha1()
+	apiServerConfig.PodImage = fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, in.KubernetesVersion)
+
+	if in.Options.LocalAPIServerPort != 0 {
+		apiServerConfig.PodAPIPort = new(in.Options.LocalAPIServerPort)
+	}
+
 	controllerManagerConfig := k8s.NewKubeControllerManagerConfigV1Alpha1()
 	controllerManagerConfig.PodImage = fmt.Sprintf("%s:v%s", constants.KubernetesControllerManagerImage, in.KubernetesVersion)
 
@@ -61,12 +69,24 @@ func (in *Input) generateKubernetesControlplaneConfigs() []config.Document {
 	proxyConfig := k8s.NewKubeProxyConfigV1Alpha1()
 	proxyConfig.ProxyImage = fmt.Sprintf("%s:v%s", constants.KubeProxyImage, in.KubernetesVersion)
 
-	result := []config.Document{
-		etcdEncryptionConfig,
-		controllerManagerConfig,
-		schedulerConfig,
-		proxyConfig,
-	}
+	result := slices.Concat(
+		[]config.Document{
+			k8s.DefaultPodSecurityAdmissionControlConfig(),
+			k8s.DefaultAuditPolicyConfig(),
+			k8s.DefaultAuthenticationConfig(),
+		},
+		xslices.Map(
+			k8s.DefaultAuthorizationConfig(),
+			func(c *k8s.KubeAuthorizerConfigV1Alpha1) config.Document { return c },
+		),
+		[]config.Document{
+			etcdEncryptionConfig,
+			apiServerConfig,
+			controllerManagerConfig,
+			schedulerConfig,
+			proxyConfig,
+		},
+	)
 
 	if flannelConfig != nil {
 		result = append(result, flannelConfig)

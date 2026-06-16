@@ -23,7 +23,7 @@ type NodeIPConfigController = transform.Controller[*config.MachineConfig, *k8s.N
 
 // NewNodeIPConfigController instantiates the controller.
 //
-//nolint:gocyclo
+//nolint:gocyclo,dupl
 func NewNodeIPConfigController() *NodeIPConfigController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *k8s.NodeIPConfig]{

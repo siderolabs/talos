@@ -94,7 +94,7 @@ func TestPatches(t *testing.T) {
 			kubernetesVersion: "1.34.0",
 
 			assertion: func(t *testing.T, cfg config.Config) {
-				assert.Equal(t, constants.KubernetesAPIServerImage+":v1.35.0", cfg.Cluster().APIServer().Image())
+				assert.Equal(t, constants.KubernetesAPIServerImage+":v1.35.0", cfg.K8sAPIServerConfig().Image())
 			},
 		},
 		{

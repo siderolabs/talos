@@ -393,10 +393,9 @@ type ClusterConfig struct {
 	//         type: string
 	//         additionalProperties: false
 	ClusterServiceAccount *x509.PEMEncodedKey `yaml:"serviceAccount,omitempty"`
-	//   description: |
-	//     API server specific configuration options.
-	//   examples:
-	//     - value: clusterAPIServerExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeAPIServerConfig` instead.
 	APIServerConfig *APIServerConfig `yaml:"apiServer,omitempty"`
 	// docgen:nodoc
 	//
@@ -1052,16 +1051,15 @@ type ControlPlaneConfig struct {
 	//     format: uri
 	//     pattern: "^https://"
 	Endpoint *Endpoint `yaml:"endpoint"`
-	//   description: |
-	//     The port that the API server listens on internally.
-	//     This may be different than the port portion listed in the endpoint field above.
-	//     The default is `6443`.
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeAPIServerConfig` instead.
 	LocalAPIServerPort int `yaml:"localAPIServerPort,omitempty"`
 }
 
-var _ config.APIServer = (*APIServerConfig)(nil)
-
 // APIServerConfig represents the kube apiserver configuration options.
+//
+//docgen:nodoc
 type APIServerConfig struct {
 	//   description: |
 	//     The container image used in the API server manifest.
@@ -1092,36 +1090,31 @@ type APIServerConfig struct {
 	EnvConfig Env `yaml:"env,omitempty"`
 	//   description: |
 	//     Extra certificate subject alternative names for the API server's certificate.
-	CertSANs []string `yaml:"certSANs,omitempty"`
+	ExtraCertSANs []string `yaml:"certSANs,omitempty"`
 	// docgen:nodoc
 	DisablePodSecurityPolicyConfig *bool `yaml:"disablePodSecurityPolicy,omitempty"`
-	//   description: |
-	//     Configure the API server admission plugins.
-	//   examples:
-	//     - value: admissionControlConfigExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeAdmissionControlConfig` instead.
 	AdmissionControlConfig AdmissionPluginConfigList `yaml:"admissionControl,omitempty"`
-	//   description: |
-	//     Configure the API server audit policy.
-	//   examples:
-	//     - value: APIServerDefaultAuditPolicy
-	//   schema:
-	//     type: object
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeAuditPolicyConfig` instead.
 	AuditPolicyConfig meta.Unstructured `yaml:"auditPolicy,omitempty" merge:"replace"`
 	//   description: |
 	//     Configure the API server resources.
 	//   schema:
 	//     type: object
 	ResourcesConfig *ResourcesConfig `yaml:"resources,omitempty"`
-	//   description: |
-	//     Configure the API server authorization config. Node and RBAC authorizers are always added irrespective of the configuration.
-	//   examples:
-	//     - value: authorizationConfigExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeAuthorizerConfig` instead.
 	AuthorizationConfigConfig AuthorizationConfigAuthorizerConfigList `yaml:"authorizationConfig,omitempty"`
 }
 
 // AdmissionPluginConfigList represents the admission plugin configuration list.
 //
-//docgen:alias
+//docgen:nodoc
 type AdmissionPluginConfigList []*AdmissionPluginConfig
 
 // Merge the admission plugin configuration intelligently.
@@ -1161,6 +1154,8 @@ func (configs *AdmissionPluginConfigList) mergeConfig(config *AdmissionPluginCon
 }
 
 // AdmissionPluginConfig represents the API server admission plugin configuration.
+//
+//docgen:nodoc
 type AdmissionPluginConfig struct {
 	//   description: |
 	//     Name is the name of the admission controller.
@@ -1176,10 +1171,12 @@ type AdmissionPluginConfig struct {
 
 // AuthorizationConfigAuthorizerConfigList represents the authorization config authorizer configuration list.
 //
-//docgen:alias
+//docgen:nodoc
 type AuthorizationConfigAuthorizerConfigList []*AuthorizationConfigAuthorizerConfig
 
 // AuthorizationConfigAuthorizerConfig represents the API server authorization config authorizer configuration.
+//
+//docgen:nodoc
 type AuthorizationConfigAuthorizerConfig struct {
 	//   description: |
 	//     Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`.
@@ -1673,6 +1670,8 @@ type EncryptionKeyNodeID struct{}
 type Env = map[string]string
 
 // ResourcesConfig represents the pod resources.
+//
+//docgen:nodoc
 type ResourcesConfig struct {
 	//   description: |
 	//     Requests configures the reserved cpu/memory resources.
@@ -2355,6 +2354,8 @@ type HostDNSConfig struct {
 }
 
 // VolumeMountConfig struct describes extra volume mount for the static pods.
+//
+//docgen:nodoc
 type VolumeMountConfig struct {
 	//   description: |
 	//     Path on the host.

@@ -37,8 +37,8 @@ func (in *APIServerConfig) DeepCopyInto(out *APIServerConfig) {
 			(*out)[key] = val
 		}
 	}
-	if in.CertSANs != nil {
-		in, out := &in.CertSANs, &out.CertSANs
+	if in.ExtraCertSANs != nil {
+		in, out := &in.ExtraCertSANs, &out.ExtraCertSANs
 		*out = make([]string, len(*in))
 		copy(*out, *in)
 	}

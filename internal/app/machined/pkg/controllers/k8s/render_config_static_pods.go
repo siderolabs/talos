@@ -22,7 +22,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	k8sjson "k8s.io/apimachinery/pkg/runtime/serializer/json"
 	apiserverv1 "k8s.io/apiserver/pkg/apis/apiserver/v1"
-	apiserverv1beta1 "k8s.io/apiserver/pkg/apis/apiserver/v1beta1"
 	auditv1 "k8s.io/apiserver/pkg/apis/audit/v1"
 
 	"github.com/siderolabs/talos/internal/pkg/selinux"
@@ -54,6 +53,11 @@ func (ctrl *RenderConfigsStaticPodController) Inputs() []controller.Input {
 		{
 			Namespace: k8s.ControlPlaneNamespaceName,
 			Type:      k8s.AuthorizationConfigType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: k8s.ControlPlaneNamespaceName,
+			Type:      k8s.AuthenticationConfigType,
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -121,6 +125,12 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 
 		kubeAPIServerVersion := compatibility.VersionFromImageRef(authorizerConfig.Image)
 
+		// authentication config is optional, so we don't return an error if it is not found
+		authenticationConfigRes, err := safe.ReaderGetByID[*k8s.AuthenticationConfig](ctx, r, k8s.AuthenticationConfigID)
+		if err != nil && !state.IsNotFoundError(err) {
+			return fmt.Errorf("error getting authentication config resource: %w", err)
+		}
+
 		kubeSchedulerRes, err := safe.ReaderGetByID[*k8s.SchedulerConfig](ctx, r, k8s.FinalSchedulerConfigID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
@@ -150,11 +160,9 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 				filename: "authorization-config.yaml",
 				f:        authorizationConfig(authorizerConfig, kubeAPIServerVersion),
 			},
-			// Anonymous access is restricted to the health endpoints only via the authentication config file
-			// (see ControlPlaneStaticPodController).
 			{
 				filename: "authentication-config.yaml",
-				f:        authenticationConfig(),
+				f:        authenticationConfig(authenticationConfigRes),
 			},
 		}
 
@@ -235,6 +243,10 @@ func (ctrl *RenderConfigsStaticPodController) Run(ctx context.Context, r control
 				auditRes.Metadata().Version().String() +
 				authorizerConfigRes.Metadata().Version().String() +
 				kubeSchedulerRes.Metadata().Version().String()
+
+			if authenticationConfigRes != nil {
+				r.TypedSpec().Version += authenticationConfigRes.Metadata().Version().String()
+			}
 
 			return nil
 		}); err != nil {
@@ -327,23 +339,12 @@ func authorizationConfig(spec *k8s.AuthorizationConfigSpec, kubeAPIServerVersion
 //
 // It enables anonymous authentication only for the health endpoints, so unauthenticated probes can reach them
 // while every other endpoint keeps rejecting anonymous requests.
-func authenticationConfig() func() (runtime.Object, error) {
+func authenticationConfig(authenticationConfigRes *k8s.AuthenticationConfig) func() (runtime.Object, error) {
 	return func() (runtime.Object, error) {
-		cfg := &apiserverv1beta1.AuthenticationConfiguration{
-			JWT: []apiserverv1beta1.JWTAuthenticator{},
-			Anonymous: &apiserverv1beta1.AnonymousAuthConfig{
-				Enabled: true,
-				Conditions: []apiserverv1beta1.AnonymousAuthCondition{
-					{Path: "/livez"},
-					{Path: "/readyz"},
-					{Path: "/healthz"},
-				},
-			},
+		if authenticationConfigRes == nil {
+			return &unstructured.Unstructured{Object: map[string]any{}}, nil
 		}
 
-		cfg.APIVersion = "apiserver.config.k8s.io/v1beta1"
-		cfg.Kind = "AuthenticationConfiguration"
-
-		return cfg, nil
+		return &unstructured.Unstructured{Object: authenticationConfigRes.TypedSpec().Config}, nil
 	}
 }

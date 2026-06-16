@@ -152,44 +152,7 @@ func clusterControlPlaneExample() *ControlPlaneConfig {
 				Scheme: "https",
 			},
 		},
-		LocalAPIServerPort: 443,
 	}
-}
-
-func resourcesConfigRequestsExample() meta.Unstructured {
-	return meta.Unstructured{
-		Object: map[string]any{
-			"cpu":    1,
-			"memory": "1Gi",
-		},
-	}
-}
-
-func resourcesConfigLimitsExample() meta.Unstructured {
-	return meta.Unstructured{
-		Object: map[string]any{
-			"cpu":    2,
-			"memory": "2500Mi",
-		},
-	}
-}
-
-func clusterAPIServerExample() *APIServerConfig {
-	return &APIServerConfig{
-		ContainerImage: (&APIServerConfig{}).Image(),
-		ExtraArgsConfig: meta.Args{
-			"feature-gates":                    meta.NewArgValue("ServerSideApply=true", nil),
-			"http2-max-streams-per-connection": meta.NewArgValue("32", nil),
-		},
-		CertSANs: []string{
-			"1.2.3.4",
-			"4.5.6.7",
-		},
-	}
-}
-
-func clusterAPIServerImageExample() string {
-	return (&APIServerConfig{}).Image()
 }
 
 func clusterEtcdExample() *EtcdConfig {
@@ -380,76 +343,6 @@ func machinePodsExample() []meta.Unstructured {
 							"name":  "nginx",
 							"image": "nginx",
 						},
-					},
-				},
-			},
-		},
-	}
-}
-
-func admissionControlConfigExample() []*AdmissionPluginConfig {
-	return []*AdmissionPluginConfig{
-		{
-			PluginName: "PodSecurity",
-			PluginConfiguration: meta.Unstructured{
-				Object: map[string]any{
-					"apiVersion": "pod-security.admission.config.k8s.io/v1alpha1",
-					"kind":       "PodSecurityConfiguration",
-					"defaults": map[string]any{
-						"enforce":         "baseline",
-						"enforce-version": "latest",
-						"audit":           "restricted",
-						"audit-version":   "latest",
-						"warn":            "restricted",
-						"warn-version":    "latest",
-					},
-					"exemptions": map[string]any{
-						"usernames":      []any{},
-						"runtimeClasses": []any{},
-						"namespaces":     []any{"kube-system"},
-					},
-				},
-			},
-		},
-	}
-}
-
-func authorizationConfigExample() []*AuthorizationConfigAuthorizerConfig {
-	return []*AuthorizationConfigAuthorizerConfig{
-		{
-			AuthorizerType: "Webhook",
-			AuthorizerName: "webhook",
-			AuthorizerWebhook: meta.Unstructured{
-				Object: map[string]any{
-					"timeout":                    "3s",
-					"subjectAccessReviewVersion": "v1",
-					"matchConditionSubjectAccessReviewVersion": "v1",
-					"failurePolicy": "Deny",
-					"connectionInfo": map[string]any{
-						"type": "InClusterConfig",
-					},
-					"matchConditions": []map[string]any{
-						{
-							"expression": "has(request.resourceAttributes)",
-						},
-						{
-							"expression": "!(\\'system:serviceaccounts:kube-system\\' in request.groups)",
-						},
-					},
-				},
-			},
-		},
-		{
-			AuthorizerType: "Webhook",
-			AuthorizerName: "in-cluster-authorizer",
-			AuthorizerWebhook: meta.Unstructured{
-				Object: map[string]any{
-					"timeout":                    "3s",
-					"subjectAccessReviewVersion": "v1",
-					"matchConditionSubjectAccessReviewVersion": "v1",
-					"failurePolicy": "NoOpinion",
-					"connectionInfo": map[string]any{
-						"type": "InClusterConfig",
 					},
 				},
 			},

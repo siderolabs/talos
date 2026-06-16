@@ -36,7 +36,12 @@ type Config interface { //nolint:interfacebloat
 	NetworkRoutingRuleConfigs() []NetworkRoutingRuleConfig
 
 	// - k8s:
+	K8sAdmissionControlPluginConfigs() []K8sAdmissionControlPluginConfig
+	K8sAuditPolicyConfig() K8sAuditPolicyConfig
+	K8sAuthenticationConfig() K8sAuthenticationConfig
+	K8sAuthorizerConfigs() []K8sAuthorizerConfig
 	K8sEtcdEncryptionConfig() K8sEtcdEncryptionConfig
+	K8sAPIServerConfig() K8sAPIServerConfig
 	K8sControllerManagerConfig() K8sControllerManagerConfig
 	K8sSchedulerConfig() K8sSchedulerConfig
 	K8sProxyConfig() K8sProxyConfig

@@ -1253,6 +1253,274 @@
       ],
       "description": "PCIDriverRebindConfig allows to configure PCI driver rebinds."
     },
+    "k8s.KubeAPIServerConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "KubeAPIServerConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "The container image used to run the kube-apiserver component.\n\nThe image reference should contain the tag, even if it is pinned by digest.\n",
+          "markdownDescription": "The container image used to run the kube-apiserver component.\n\nThe image reference should contain the tag, even if it is pinned by digest.",
+          "x-intellij-html-description": "\u003cp\u003eThe container image used to run the kube-apiserver component.\u003c/p\u003e\n\n\u003cp\u003eThe image reference should contain the tag, even if it is pinned by digest.\u003c/p\u003e\n"
+        },
+        "extraArgs": {
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "type": "object",
+          "title": "extraArgs",
+          "description": "Extra command line arguments to supply to the kube-apiserver.\n",
+          "markdownDescription": "Extra command line arguments to supply to the kube-apiserver.",
+          "x-intellij-html-description": "\u003cp\u003eExtra command line arguments to supply to the kube-apiserver.\u003c/p\u003e\n"
+        },
+        "env": {
+          "patternProperties": {
+            ".*": {
+              "type": "string"
+            }
+          },
+          "type": "object",
+          "title": "env",
+          "description": "The env field allows for the addition of environment variables for the kube-apiserver.\n",
+          "markdownDescription": "The `env` field allows for the addition of environment variables for the kube-apiserver.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eenv\u003c/code\u003e field allows for the addition of environment variables for the kube-apiserver.\u003c/p\u003e\n"
+        },
+        "resources": {
+          "type": "object",
+          "title": "resources",
+          "description": "Configure the kube-apiserver resources.\n",
+          "markdownDescription": "Configure the kube-apiserver resources.",
+          "x-intellij-html-description": "\u003cp\u003eConfigure the kube-apiserver resources.\u003c/p\u003e\n"
+        },
+        "apiPort": {
+          "type": "integer",
+          "title": "apiPort",
+          "description": "The port on which the kube-apiserver will listen for requests.\n\nDefault is 6443.\n",
+          "markdownDescription": "The port on which the kube-apiserver will listen for requests.\n\nDefault is 6443.",
+          "x-intellij-html-description": "\u003cp\u003eThe port on which the kube-apiserver will listen for requests.\u003c/p\u003e\n\n\u003cp\u003eDefault is 6443.\u003c/p\u003e\n"
+        },
+        "certExtraSANs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "certExtraSANs",
+          "description": "Provide extra certificate SANs (hostnames, IPs) to add to the kube-apiserver serving certificate.\n\nTalos automatically adds machine’s addresses and hostnames, Kubernetes names, and control plane endpoint\nderived SANs to the kube-apiserver serving certificate.\nThis field allows for adding additional SANs to the serving certificate.\n",
+          "markdownDescription": "Provide extra certificate SANs (hostnames, IPs) to add to the kube-apiserver serving certificate.\n\nTalos automatically adds machine's addresses and hostnames, Kubernetes names, and control plane endpoint\nderived SANs to the kube-apiserver serving certificate.\nThis field allows for adding additional SANs to the serving certificate.",
+          "x-intellij-html-description": "\u003cp\u003eProvide extra certificate SANs (hostnames, IPs) to add to the kube-apiserver serving certificate.\u003c/p\u003e\n\n\u003cp\u003eTalos automatically adds machine\u0026rsquo;s addresses and hostnames, Kubernetes names, and control plane endpoint\nderived SANs to the kube-apiserver serving certificate.\nThis field allows for adding additional SANs to the serving certificate.\u003c/p\u003e\n"
+        },
+        "startupProbes": {
+          "type": "boolean",
+          "title": "startupProbes",
+          "description": "Enable or disable startup probes for kube-apiserver.\n\nDefault is enabled.\n",
+          "markdownDescription": "Enable or disable startup probes for kube-apiserver.\n\nDefault is enabled.",
+          "x-intellij-html-description": "\u003cp\u003eEnable or disable startup probes for kube-apiserver.\u003c/p\u003e\n\n\u003cp\u003eDefault is enabled.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "KubeAPIServerConfig configures kube-apiserver controlplane static pod."
+    },
+    "k8s.KubeAdmissionControlConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "KubeAdmissionControlConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Admission control plugin name, should be a valid Kubernetes admission control plugin name.\n",
+          "markdownDescription": "Admission control plugin name, should be a valid Kubernetes admission control plugin name.",
+          "x-intellij-html-description": "\u003cp\u003eAdmission control plugin name, should be a valid Kubernetes admission control plugin name.\u003c/p\u003e\n"
+        },
+        "configuration": {
+          "type": "object",
+          "title": "configuration",
+          "description": "Kubernetes API server admission control plugins.\nThe value is the literal Kubernetes admission control configuration.\n",
+          "markdownDescription": "Kubernetes API server [admission control plugins](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/).\nThe value is the literal Kubernetes admission control configuration.",
+          "x-intellij-html-description": "\u003cp\u003eKubernetes API server \u003ca href=\"https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/\" target=\"_blank\"\u003eadmission control plugins\u003c/a\u003e.\nThe value is the literal Kubernetes admission control configuration.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "KubeAdmissionControlConfig configures kube-apiserver admission control plugins."
+    },
+    "k8s.KubeAuditPolicyConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "KubeAuditPolicyConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "configuration": {
+          "type": "object",
+          "title": "configuration",
+          "description": "Kubernetes API server audit policy configuration.\nThe value is the literal Kubernetes audit policy configuration.\n",
+          "markdownDescription": "Kubernetes API server [audit policy](https://kubernetes.io/docs/tasks/debug-application-cluster/audit/) configuration.\nThe value is the literal Kubernetes audit policy configuration.",
+          "x-intellij-html-description": "\u003cp\u003eKubernetes API server \u003ca href=\"https://kubernetes.io/docs/tasks/debug-application-cluster/audit/\" target=\"_blank\"\u003eaudit policy\u003c/a\u003e configuration.\nThe value is the literal Kubernetes audit policy configuration.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "KubeAuditPolicyConfig configures kube-apiserver audit policy."
+    },
+    "k8s.KubeAuthenticationConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "KubeAuthenticationConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "configuration": {
+          "type": "object",
+          "title": "configuration",
+          "description": "Kubernetes API server authentication configuration.\nThe value is the literal Kubernetes authentication configuration.\n",
+          "markdownDescription": "Kubernetes API server [authentication](https://kubernetes.io/docs/reference/access-authn-authz/authentication/) configuration.\nThe value is the literal Kubernetes authentication configuration.",
+          "x-intellij-html-description": "\u003cp\u003eKubernetes API server \u003ca href=\"https://kubernetes.io/docs/reference/access-authn-authz/authentication/\" target=\"_blank\"\u003eauthentication\u003c/a\u003e configuration.\nThe value is the literal Kubernetes authentication configuration.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "KubeAuthenticationConfig configures kube-apiserver authentication."
+    },
+    "k8s.KubeAuthorizerConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "KubeAuthorizerConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the authorizer, should be be DNS1123 labels like myauthorizername or subdomains like myauthorizer.example.domain.\n",
+          "markdownDescription": "Name of the authorizer, should be be DNS1123 labels like myauthorizername or subdomains like myauthorizer.example.domain.",
+          "x-intellij-html-description": "\u003cp\u003eName of the authorizer, should be be DNS1123 labels like myauthorizername or subdomains like myauthorizer.example.domain.\u003c/p\u003e\n"
+        },
+        "type": {
+          "enum": [
+            "Node",
+            "RBAC",
+            "Webhook"
+          ],
+          "title": "type",
+          "description": "Type is the name of the authorizer.\n",
+          "markdownDescription": "Type is the name of the authorizer.",
+          "x-intellij-html-description": "\u003cp\u003eType is the name of the authorizer.\u003c/p\u003e\n"
+        },
+        "webhook": {
+          "type": "object",
+          "title": "webhook",
+          "description": "Webhook is the configuration for the webhook authorizer.\n\nThis field is required if the AuthorizerType is Webhook, should not be set for other authorizer types.\nThe value is the literal Kubernetes webhook authorizer configuration.\n",
+          "markdownDescription": "Webhook is the configuration for the webhook authorizer.\n\nThis field is required if the AuthorizerType is Webhook, should not be set for other authorizer types.\nThe value is the literal Kubernetes webhook authorizer configuration.",
+          "x-intellij-html-description": "\u003cp\u003eWebhook is the configuration for the webhook authorizer.\u003c/p\u003e\n\n\u003cp\u003eThis field is required if the AuthorizerType is Webhook, should not be set for other authorizer types.\nThe value is the literal Kubernetes webhook authorizer configuration.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "KubeAuthorizerConfig configures kube-apiserver authorization by configuring a specific authorization plugin."
+    },
     "k8s.KubeControllerManagerConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -4772,106 +5040,6 @@
       "type": "object",
       "description": "ProvisioningSpec describes how the Physical Volumes are provisioned.\\n"
     },
-    "v1alpha1.APIServerConfig": {
-      "properties": {
-        "image": {
-          "type": "string",
-          "title": "image",
-          "description": "The container image used in the API server manifest.\n",
-          "markdownDescription": "The container image used in the API server manifest.",
-          "x-intellij-html-description": "\u003cp\u003eThe container image used in the API server manifest.\u003c/p\u003e\n"
-        },
-        "extraArgs": {
-          "additionalProperties": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              }
-            ]
-          },
-          "type": "object",
-          "title": "extraArgs",
-          "description": "Extra arguments to supply to the API server.\n",
-          "markdownDescription": "Extra arguments to supply to the API server.",
-          "x-intellij-html-description": "\u003cp\u003eExtra arguments to supply to the API server.\u003c/p\u003e\n"
-        },
-        "extraVolumes": {
-          "items": {
-            "$ref": "#/$defs/v1alpha1.VolumeMountConfig"
-          },
-          "type": "array",
-          "title": "extraVolumes",
-          "description": "Extra volumes to mount to the API server static pod.\n",
-          "markdownDescription": "Extra volumes to mount to the API server static pod.",
-          "x-intellij-html-description": "\u003cp\u003eExtra volumes to mount to the API server static pod.\u003c/p\u003e\n"
-        },
-        "env": {
-          "patternProperties": {
-            ".*": {
-              "type": "string"
-            }
-          },
-          "type": "object",
-          "title": "env",
-          "description": "The env field allows for the addition of environment variables for the control plane component.\n",
-          "markdownDescription": "The `env` field allows for the addition of environment variables for the control plane component.",
-          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eenv\u003c/code\u003e field allows for the addition of environment variables for the control plane component.\u003c/p\u003e\n"
-        },
-        "certSANs": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "title": "certSANs",
-          "description": "Extra certificate subject alternative names for the API server’s certificate.\n",
-          "markdownDescription": "Extra certificate subject alternative names for the API server's certificate.",
-          "x-intellij-html-description": "\u003cp\u003eExtra certificate subject alternative names for the API server\u0026rsquo;s certificate.\u003c/p\u003e\n"
-        },
-        "admissionControl": {
-          "items": {
-            "$ref": "#/$defs/v1alpha1.AdmissionPluginConfig"
-          },
-          "type": "array",
-          "title": "admissionControl",
-          "description": "Configure the API server admission plugins.\n",
-          "markdownDescription": "Configure the API server admission plugins.",
-          "x-intellij-html-description": "\u003cp\u003eConfigure the API server admission plugins.\u003c/p\u003e\n"
-        },
-        "auditPolicy": {
-          "type": "object",
-          "title": "auditPolicy",
-          "description": "Configure the API server audit policy.\n",
-          "markdownDescription": "Configure the API server audit policy.",
-          "x-intellij-html-description": "\u003cp\u003eConfigure the API server audit policy.\u003c/p\u003e\n"
-        },
-        "resources": {
-          "type": "object",
-          "title": "resources",
-          "description": "Configure the API server resources.\n",
-          "markdownDescription": "Configure the API server resources.",
-          "x-intellij-html-description": "\u003cp\u003eConfigure the API server resources.\u003c/p\u003e\n"
-        },
-        "authorizationConfig": {
-          "items": {
-            "$ref": "#/$defs/v1alpha1.AuthorizationConfigAuthorizerConfig"
-          },
-          "type": "array",
-          "title": "authorizationConfig",
-          "description": "Configure the API server authorization config. Node and RBAC authorizers are always added irrespective of the configuration.\n",
-          "markdownDescription": "Configure the API server authorization config. Node and RBAC authorizers are always added irrespective of the configuration.",
-          "x-intellij-html-description": "\u003cp\u003eConfigure the API server authorization config. Node and RBAC authorizers are always added irrespective of the configuration.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "APIServerConfig represents the kube apiserver configuration options.\\n"
-    },
     "v1alpha1.AdminKubeconfigConfig": {
       "properties": {
         "certLifetime": {
@@ -4886,55 +5054,6 @@
       "additionalProperties": false,
       "type": "object",
       "description": "AdminKubeconfigConfig contains admin kubeconfig settings.\\n"
-    },
-    "v1alpha1.AdmissionPluginConfig": {
-      "properties": {
-        "name": {
-          "type": "string",
-          "title": "name",
-          "description": "Name is the name of the admission controller.\nIt must match the registered admission plugin name.\n",
-          "markdownDescription": "Name is the name of the admission controller.\nIt must match the registered admission plugin name.",
-          "x-intellij-html-description": "\u003cp\u003eName is the name of the admission controller.\nIt must match the registered admission plugin name.\u003c/p\u003e\n"
-        },
-        "configuration": {
-          "type": "object",
-          "title": "configuration",
-          "description": "Configuration is an embedded configuration object to be used as the plugin’s\nconfiguration.\n",
-          "markdownDescription": "Configuration is an embedded configuration object to be used as the plugin's\nconfiguration.",
-          "x-intellij-html-description": "\u003cp\u003eConfiguration is an embedded configuration object to be used as the plugin\u0026rsquo;s\nconfiguration.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "AdmissionPluginConfig represents the API server admission plugin configuration.\\n"
-    },
-    "v1alpha1.AuthorizationConfigAuthorizerConfig": {
-      "properties": {
-        "type": {
-          "type": "string",
-          "title": "type",
-          "description": "Type is the name of the authorizer. Allowed values are Node, RBAC, and Webhook.\n",
-          "markdownDescription": "Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`.",
-          "x-intellij-html-description": "\u003cp\u003eType is the name of the authorizer. Allowed values are \u003ccode\u003eNode\u003c/code\u003e, \u003ccode\u003eRBAC\u003c/code\u003e, and \u003ccode\u003eWebhook\u003c/code\u003e.\u003c/p\u003e\n"
-        },
-        "name": {
-          "type": "string",
-          "title": "name",
-          "description": "Name is used to describe the authorizer.\n",
-          "markdownDescription": "Name is used to describe the authorizer.",
-          "x-intellij-html-description": "\u003cp\u003eName is used to describe the authorizer.\u003c/p\u003e\n"
-        },
-        "webhook": {
-          "type": "object",
-          "title": "webhook",
-          "description": "webhook is the configuration for the webhook authorizer.\n",
-          "markdownDescription": "webhook is the configuration for the webhook authorizer.",
-          "x-intellij-html-description": "\u003cp\u003ewebhook is the configuration for the webhook authorizer.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "AuthorizationConfigAuthorizerConfig represents the API server authorization config authorizer configuration.\\n"
     },
     "v1alpha1.ClusterConfig": {
       "properties": {
@@ -5031,13 +5150,6 @@
           "description": "The base64 encoded private key for service account token generation.\n",
           "markdownDescription": "The base64 encoded private key for service account token generation.",
           "x-intellij-html-description": "\u003cp\u003eThe base64 encoded private key for service account token generation.\u003c/p\u003e\n"
-        },
-        "apiServer": {
-          "$ref": "#/$defs/v1alpha1.APIServerConfig",
-          "title": "apiServer",
-          "description": "API server specific configuration options.\n",
-          "markdownDescription": "API server specific configuration options.",
-          "x-intellij-html-description": "\u003cp\u003eAPI server specific configuration options.\u003c/p\u003e\n"
         },
         "discovery": {
           "$ref": "#/$defs/v1alpha1.ClusterDiscoveryConfig",
@@ -5207,13 +5319,6 @@
           "description": "Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.\nIt is single-valued, and may optionally include a port number.\n",
           "markdownDescription": "Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.\nIt is single-valued, and may optionally include a port number.",
           "x-intellij-html-description": "\u003cp\u003eEndpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.\nIt is single-valued, and may optionally include a port number.\u003c/p\u003e\n"
-        },
-        "localAPIServerPort": {
-          "type": "integer",
-          "title": "localAPIServerPort",
-          "description": "The port that the API server listens on internally.\nThis may be different than the port portion listed in the endpoint field above.\nThe default is 6443.\n",
-          "markdownDescription": "The port that the API server listens on internally.\nThis may be different than the port portion listed in the endpoint field above.\nThe default is `6443`.",
-          "x-intellij-html-description": "\u003cp\u003eThe port that the API server listens on internally.\nThis may be different than the port portion listed in the endpoint field above.\nThe default is \u003ccode\u003e6443\u003c/code\u003e.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -6148,27 +6253,6 @@
       "type": "object",
       "description": "RegistryServiceConfig struct configures Kubernetes discovery registry.\\n"
     },
-    "v1alpha1.ResourcesConfig": {
-      "properties": {
-        "requests": {
-          "type": "object",
-          "title": "requests",
-          "description": "Requests configures the reserved cpu/memory resources.\n",
-          "markdownDescription": "Requests configures the reserved cpu/memory resources.",
-          "x-intellij-html-description": "\u003cp\u003eRequests configures the reserved cpu/memory resources.\u003c/p\u003e\n"
-        },
-        "limits": {
-          "type": "object",
-          "title": "limits",
-          "description": "Limits configures the maximum cpu/memory resources a container can use.\n",
-          "markdownDescription": "Limits configures the maximum cpu/memory resources a container can use.",
-          "x-intellij-html-description": "\u003cp\u003eLimits configures the maximum cpu/memory resources a container can use.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "ResourcesConfig represents the pod resources.\\n"
-    },
     "v1alpha1.UdevConfig": {
       "properties": {
         "rules": {
@@ -6185,34 +6269,6 @@
       "additionalProperties": false,
       "type": "object",
       "description": "UdevConfig describes how the udev system should be configured.\\n"
-    },
-    "v1alpha1.VolumeMountConfig": {
-      "properties": {
-        "hostPath": {
-          "type": "string",
-          "title": "hostPath",
-          "description": "Path on the host.\n",
-          "markdownDescription": "Path on the host.",
-          "x-intellij-html-description": "\u003cp\u003ePath on the host.\u003c/p\u003e\n"
-        },
-        "mountPath": {
-          "type": "string",
-          "title": "mountPath",
-          "description": "Path in the container.\n",
-          "markdownDescription": "Path in the container.",
-          "x-intellij-html-description": "\u003cp\u003ePath in the container.\u003c/p\u003e\n"
-        },
-        "readonly": {
-          "type": "boolean",
-          "title": "readonly",
-          "description": "Mount the volume read only.\n",
-          "markdownDescription": "Mount the volume read only.",
-          "x-intellij-html-description": "\u003cp\u003eMount the volume read only.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "VolumeMountConfig struct describes extra volume mount for the static pods.\\n"
     }
   },
   "oneOf": [
@@ -6257,6 +6313,21 @@
     },
     {
       "$ref": "#/$defs/hardware.PCIDriverRebindConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/k8s.KubeAdmissionControlConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/k8s.KubeAPIServerConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/k8s.KubeAuditPolicyConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/k8s.KubeAuthenticationConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/k8s.KubeAuthorizerConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/k8s.KubeControllerManagerConfigV1Alpha1"
