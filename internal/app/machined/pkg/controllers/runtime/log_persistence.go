@@ -31,6 +31,7 @@ type LogPersistenceController struct {
 	startup sync.Once
 	// RLocked by the log writers, Locked by volume handlers
 	canLog        sync.RWMutex
+	canLogLocked  bool // mirrors the state of canLog, used only in single-threaded context
 	files         *concurrent.HashTrieMap[string, *logfile.LogFile]
 	logMountPoint string
 }
@@ -87,12 +88,16 @@ func (ctrl *LogPersistenceController) startLogging(vms *block.VolumeMountStatus)
 	ctrl.logMountPoint = vms.TypedSpec().Target
 
 	ctrl.canLog.Unlock()
+	ctrl.canLogLocked = false
 }
 
 func (ctrl *LogPersistenceController) stopLogging() error {
 	// Stop all logging activities, close files
 	// after this call we should not hold /var/log
-	ctrl.canLog.Lock()
+	if !ctrl.canLogLocked {
+		ctrl.canLog.Lock()
+		ctrl.canLogLocked = true
+	}
 
 	for _, f := range ctrl.files.All() {
 		if err := f.Close(); err != nil {
@@ -113,6 +118,7 @@ func (ctrl *LogPersistenceController) Run(ctx context.Context, r controller.Runt
 		ctrl.files = concurrent.NewHashTrieMap[string, *logfile.LogFile]()
 		// Block writes until /var/log is ready
 		ctrl.canLog.Lock()
+		ctrl.canLogLocked = true
 
 		ctrl.V1Alpha1Logging.SetLineWriter(ctrl)
 	})
@@ -123,7 +129,7 @@ func (ctrl *LogPersistenceController) Run(ctx context.Context, r controller.Runt
 	for {
 		select {
 		case <-ctx.Done():
-			return nil
+			return ctrl.stopLogging()
 		case <-ticker.C:
 			for _, f := range ctrl.files.All() {
 				if err := f.Flush(); err != nil {
