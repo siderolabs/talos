@@ -80,12 +80,12 @@ func PopulatePsiToCtx(cgroup string, evalContext map[string]any, oldValues map[s
 		qos  runtime.QoSCgroupClass
 	}{
 		{"", -1},
-		{"init", runtime.QoSCgroupClassSystem},
-		{"system", runtime.QoSCgroupClassSystem},
-		{"podruntime", runtime.QoSCgroupClassPodruntime},
-		{"kubepods/besteffort", runtime.QoSCgroupClassBesteffort},
-		{"kubepods/burstable", runtime.QoSCgroupClassBurstable},
-		{"kubepods/guaranteed", runtime.QoSCgroupClassGuaranteed},
+		{constants.CgroupInit, runtime.QoSCgroupClassSystem},
+		{constants.CgroupSystem, runtime.QoSCgroupClassSystem},
+		{constants.CgroupPodRuntimeRoot, runtime.QoSCgroupClassPodruntime},
+		{constants.CgroupKubepods + "/besteffort", runtime.QoSCgroupClassBesteffort},
+		{constants.CgroupKubepods + "/burstable", runtime.QoSCgroupClassBurstable},
+		{constants.CgroupKubepods + "/guaranteed", runtime.QoSCgroupClassGuaranteed},
 	} {
 		node, err := cgroups.GetCgroupProperty(filepath.Join(cgroup, subtree.path), "memory.pressure")
 
@@ -212,9 +212,9 @@ func RankCgroups(logger *zap.Logger, root string, scoringExpr cel.Expression) ma
 		dir   string
 		class runtime.QoSCgroupClass
 	}{
-		{"kubepods/besteffort", runtime.QoSCgroupClassBesteffort},
-		{"kubepods/burstable", runtime.QoSCgroupClassBurstable},
-		{"kubepods/guaranteed", runtime.QoSCgroupClassGuaranteed},
+		{constants.CgroupKubepods + "/besteffort", runtime.QoSCgroupClassBesteffort},
+		{constants.CgroupKubepods + "/burstable", runtime.QoSCgroupClassBurstable},
+		{constants.CgroupKubepods + "/guaranteed", runtime.QoSCgroupClassGuaranteed},
 		{constants.CgroupPodRuntimeRoot, runtime.QoSCgroupClassPodruntime},
 		{constants.CgroupSystem, runtime.QoSCgroupClassSystem},
 	} {

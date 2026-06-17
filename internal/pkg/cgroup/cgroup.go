@@ -15,15 +15,19 @@
 package cgroup
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/containerd/cgroups/v3"
 	"github.com/containerd/cgroups/v3/cgroup1"
 	"github.com/containerd/cgroups/v3/cgroup2"
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/go-debug"
+	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/pkg/containermode"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -146,6 +150,17 @@ func getCgroupV2Resources(name string) *cgroup2.Resources {
 				Weight: new(MillicoresToCPUWeight(MilliCores(constants.CgroupPodRuntimeMillicores))),
 			},
 		}
+	case constants.CgroupPodRuntimeShim:
+		return &cgroup2.Resources{
+			Memory: &cgroup2.Memory{
+				Min:  new(int64(constants.CgroupPodRuntimeShimReservedMemory)),
+				Low:  new(int64(constants.CgroupPodRuntimeShimReservedMemory * 2)),
+				Swap: new(int64(0)),
+			},
+			CPU: &cgroup2.CPU{
+				Weight: new(MillicoresToCPUWeight(MilliCores(constants.CgroupPodRuntimeShimMillicores))),
+			},
+		}
 	case constants.CgroupKubelet:
 		return &cgroup2.Resources{
 			Memory: &cgroup2.Memory{
@@ -243,4 +258,55 @@ func CreateCgroup(name string) (CommonCgroup, error) {
 	}
 
 	return cg, nil
+}
+
+// KillCgroup kills all processes in the cgroup.
+//
+// This method is only supported for cgroupv2, as cgroupv1 is legacy and only in container mode.
+func KillCgroup(log *zap.Logger, name string) error {
+	if cgroups.Mode() != cgroups.Unified {
+		return nil
+	}
+
+	cg, err := cgroup2.Load(Path(name), cgroup2.WithMountpoint(constants.CgroupMountPath))
+	if err != nil {
+		return fmt.Errorf("failed to load cgroup: %w", err)
+	}
+
+	for i := range 10 {
+		pids, err := cg.Procs(true)
+		if err != nil {
+			if errors.Is(err, fs.ErrNotExist) {
+				return nil
+			}
+
+			return fmt.Errorf("failed to get processes in cgroup: %w", err)
+		}
+
+		if len(pids) == 0 {
+			break
+		}
+
+		if i == 0 {
+			log.Info(
+				"killing processes in cgroup",
+				zap.String("cgroup", name),
+				zap.Int("num_processes", len(pids)),
+			)
+
+			if err := cg.Kill(); err != nil {
+				return fmt.Errorf("failed to kill processes in cgroup: %w", err)
+			}
+		} else {
+			log.Info(
+				"waiting for processes in cgroup to exit",
+				zap.String("cgroup", name),
+				zap.Int("num_processes", len(pids)),
+			)
+		}
+
+		<-time.After(time.Second)
+	}
+
+	return cg.Delete()
 }

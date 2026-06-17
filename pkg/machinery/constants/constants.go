@@ -740,7 +740,7 @@ const (
 	CgroupMountPath = "/sys/fs/cgroup"
 
 	// CgroupInit is the cgroup name for init process.
-	CgroupInit = "/init"
+	CgroupInit = "init"
 
 	// CgroupInitReservedMemory is the hard memory protection for the init process.
 	CgroupInitReservedMemory = 96 * 1024 * 1024
@@ -749,7 +749,7 @@ const (
 	CgroupInitMillicores = 2000
 
 	// CgroupSystem is the cgroup name for system processes.
-	CgroupSystem = "/system"
+	CgroupSystem = "system"
 
 	// CgroupSystemMillicores is the CPU weight for the system cgroup.
 	CgroupSystemMillicores = 1500
@@ -836,7 +836,7 @@ const (
 	SelinuxLabelDashboard = "system_u:system_r:dashboard_t:s0"
 
 	// CgroupPodRuntimeRoot is the cgroup containing Kubernetes runtime components.
-	CgroupPodRuntimeRoot = "/podruntime"
+	CgroupPodRuntimeRoot = "podruntime"
 
 	// CgroupPodRuntimeRootMillicores is the CPU weight for the pod runtime cgroup.
 	CgroupPodRuntimeRootMillicores = 4000
@@ -852,6 +852,15 @@ const (
 
 	// CgroupPodRuntimeReservedMemory is the hard memory protection for the cri runtime processes.
 	CgroupPodRuntimeReservedMemory = 196 * 1024 * 1024
+
+	// CgroupPodRuntimeShim is the cgroup name for CRI shim processes.
+	CgroupPodRuntimeShim = CgroupPodRuntimeRoot + "/shim"
+
+	// CgroupPodRuntimeShimReservedMemory is the hard memory protection for the cri runtime shim processes.
+	CgroupPodRuntimeShimReservedMemory = 48 * 1024 * 1024
+
+	// CgroupPodRuntimeShimMillicores is the CPU weight for the pod runtime shim cgroup.
+	CgroupPodRuntimeShimMillicores = 500
 
 	// CgroupEtcd is the cgroup name for etcd process.
 	CgroupEtcd = CgroupPodRuntimeRoot + "/etcd"
@@ -882,6 +891,9 @@ const (
 
 	// CgroupDashboardMillicores is the CPU weight for the dashboard process.
 	CgroupDashboardMillicores = 200
+
+	// CgroupKubepods is the root cgroup for all pods run by the kubelet.
+	CgroupKubepods = "kubepods"
 
 	// FlannelCNI is the string to use Tanos-managed Flannel CNI (default).
 	FlannelCNI = "flannel"
