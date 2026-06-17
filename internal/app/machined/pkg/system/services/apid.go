@@ -180,6 +180,7 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 	// Set the mounts.
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: "/etc/ssl", Source: "/etc/ssl", Options: []string{"bind", "ro"}},
+		{Type: "bind", Destination: "/apid", Source: "/sbin/init", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: filepath.Dir(constants.MachineSocketPath), Source: filepath.Dir(constants.MachineSocketPath), Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: filepath.Dir(constants.APIRuntimeSocketPath), Source: filepath.Dir(constants.APIRuntimeSocketPath), Options: []string{"rbind", "rw"}},
 	}

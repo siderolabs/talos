@@ -168,6 +168,7 @@ func (t *Trustd) Runner(r runtime.Runtime) (runner.Runner, error) {
 	// Set the mounts.
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: filepath.Dir(constants.TrustdRuntimeSocketPath), Source: filepath.Dir(constants.TrustdRuntimeSocketPath), Options: []string{"rbind", "ro"}},
+		{Type: "bind", Destination: "/trustd", Source: "/sbin/init", Options: []string{"bind", "ro"}},
 	}
 
 	mounts = bindMountContainerMarker(mounts)
