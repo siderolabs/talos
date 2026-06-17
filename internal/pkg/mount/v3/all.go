@@ -6,33 +6,13 @@ package mount
 
 import (
 	"bufio"
-	"fmt"
+	"context"
 	"log"
 	"os"
 	"sort"
 	"strings"
 	"time"
-
-	"golang.org/x/sys/unix"
 )
-
-func unmountWithTimeout(target string, flags int, timeout time.Duration) error {
-	errCh := make(chan error, 1)
-
-	go func() {
-		errCh <- unix.Unmount(target, flags)
-	}()
-
-	timer := time.NewTimer(timeout)
-	defer timer.Stop()
-
-	select {
-	case <-timer.C:
-		return fmt.Errorf("unmounting %s timed out after %s", target, timeout)
-	case err := <-errCh:
-		return err
-	}
-}
 
 // UnmountAll attempts to unmount all the mounted filesystems via "self" mountinfo.
 //
@@ -60,7 +40,7 @@ func UnmountAll() error {
 			}
 
 			if strings.HasPrefix(mountInfo.MountSource, "/dev/") {
-				err = unmountWithTimeout(mountInfo.MountPoint, 0, time.Second)
+				err = SafeUnmount(context.Background(), log.Printf, mountInfo.MountPoint, true, false)
 				if err == nil {
 					log.Printf("unmounted %s (%s)", mountInfo.MountPoint, mountInfo.MountSource)
 				} else {
@@ -93,8 +73,10 @@ func UnmountAll() error {
 }
 
 type mountInfo struct {
-	MountPoint  string
-	MountSource string
+	MountPoint   string
+	MountSource  string
+	MountType    string
+	MountOptions map[string]string
 }
 
 func readMountInfo() ([]mountInfo, error) {
@@ -126,8 +108,25 @@ func readMountInfo() ([]mountInfo, error) {
 			mntInfo.MountPoint = pre[4]
 		}
 
+		if len(post) >= 1 {
+			mntInfo.MountType = post[0]
+		}
+
 		if len(post) >= 2 {
 			mntInfo.MountSource = post[1]
+		}
+
+		if len(post) >= 3 {
+			mntInfo.MountOptions = make(map[string]string)
+
+			for option := range strings.SplitSeq(post[2], ",") {
+				k, v, ok := strings.Cut(option, "=")
+				if ok {
+					mntInfo.MountOptions[k] = v
+				} else {
+					mntInfo.MountOptions[option] = ""
+				}
+			}
 		}
 
 		mounts = append(mounts, mntInfo)
@@ -144,13 +143,33 @@ func getSubmounts(target string) ([]string, error) {
 
 	var submounts []string
 
+	seen := make(map[string]struct{})
+
+	add := func(mountPoint string) {
+		if _, ok := seen[mountPoint]; ok {
+			return
+		}
+
+		seen[mountPoint] = struct{}{}
+		submounts = append(submounts, mountPoint)
+	}
+
 	for _, mnt := range mounts {
 		if mnt.MountPoint == target {
 			continue
 		}
 
+		// mounts nested under the target keep it busy.
 		if strings.HasPrefix(mnt.MountPoint, target+"/") {
-			submounts = append(submounts, mnt.MountPoint)
+			add(mnt.MountPoint)
+
+			continue
+		}
+
+		// overlays mounted elsewhere still pin the target if any of their
+		// backing directories (upper/work/lower) live under it.
+		if mnt.MountType == "overlay" && overlayReferences(mnt, target) {
+			add(mnt.MountPoint)
 		}
 	}
 
@@ -159,4 +178,26 @@ func getSubmounts(target string) ([]string, error) {
 	})
 
 	return submounts, nil
+}
+
+// overlayReferences reports whether an overlay mount has any of its backing
+// directories (upperdir, workdir or one of the lowerdirs) located under target.
+func overlayReferences(mnt mountInfo, target string) bool {
+	prefix := target + "/"
+
+	if strings.HasPrefix(mnt.MountOptions["upperdir"], prefix) {
+		return true
+	}
+
+	if strings.HasPrefix(mnt.MountOptions["workdir"], prefix) {
+		return true
+	}
+
+	for lowerdir := range strings.SplitSeq(mnt.MountOptions["lowerdir"], ":") {
+		if strings.HasPrefix(lowerdir, prefix) {
+			return true
+		}
+	}
+
+	return false
 }

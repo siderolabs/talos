@@ -32,6 +32,7 @@ type Manager struct {
 	extraDirs             []string
 	extraUnmountCallbacks []func(m *Manager)
 	recursiveUnmount      bool
+	lazyUnmount           bool
 
 	point *Point
 }
@@ -112,6 +113,7 @@ func (m *Manager) Unmount() error {
 	opts := UnmountOptions{
 		Printer:   printer,
 		Recursive: m.recursiveUnmount,
+		Lazy:      m.lazyUnmount,
 	}
 
 	for _, cb := range m.extraUnmountCallbacks {
@@ -261,6 +263,19 @@ func WithRecursiveUnmount() ManagerOption {
 	return ManagerOption{
 		set: func(m *Manager) {
 			m.recursiveUnmount = true
+		},
+	}
+}
+
+// WithLazyUnmount enables a lazy detach (MNT_DETACH) as a last resort when the target,
+// or one of its submounts, can't be unmounted otherwise.
+//
+// It's meant for volatile pseudo mounts (e.g. /system, /run) torn down on shutdown,
+// not for real filesystems where a busy mount is better left for the caller to retry.
+func WithLazyUnmount() ManagerOption {
+	return ManagerOption{
+		set: func(m *Manager) {
+			m.lazyUnmount = true
 		},
 	}
 }
