@@ -27,8 +27,6 @@ machine:
             - bar=baz
         wipe: false
         grubUseUKICmdline: true
-    sysctls:
-        foo: bar
     features:
         diskQuotaSupport: true
         kubePrism:
@@ -56,6 +54,11 @@ kind: ResolverConfig
 hostDNS:
     enabled: true
     forwardKubeDNSToHost: true
+---
+apiVersion: v1alpha1
+kind: SysctlConfig
+params:
+    foo: bar
 ---
 apiVersion: v1alpha1
 kind: FilesystemTrimConfig

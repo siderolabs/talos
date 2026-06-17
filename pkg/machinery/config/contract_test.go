@@ -75,6 +75,7 @@ func TestContractCurrent(t *testing.T) {
 	assert.True(t, contract.HostDNSMultidocConfig())
 	assert.True(t, contract.MultidocKubernetesConfigSupported())
 	assert.True(t, contract.FilesystemTrimEnabledByDefault())
+	assert.True(t, contract.MultidocSysctlConfigSupported())
 }
 
 func TestContract1_14(t *testing.T) {
@@ -108,6 +109,7 @@ func TestContract1_14(t *testing.T) {
 	assert.True(t, contract.HostDNSMultidocConfig())
 	assert.True(t, contract.MultidocKubernetesConfigSupported())
 	assert.True(t, contract.FilesystemTrimEnabledByDefault())
+	assert.True(t, contract.MultidocSysctlConfigSupported())
 }
 
 func TestContract1_13(t *testing.T) {
@@ -141,6 +143,7 @@ func TestContract1_13(t *testing.T) {
 	assert.False(t, contract.HostDNSMultidocConfig())
 	assert.False(t, contract.MultidocKubernetesConfigSupported())
 	assert.False(t, contract.FilesystemTrimEnabledByDefault())
+	assert.False(t, contract.MultidocSysctlConfigSupported())
 }
 
 func TestContract1_12(t *testing.T) {
@@ -174,6 +177,7 @@ func TestContract1_12(t *testing.T) {
 	assert.False(t, contract.HostDNSMultidocConfig())
 	assert.False(t, contract.MultidocKubernetesConfigSupported())
 	assert.False(t, contract.FilesystemTrimEnabledByDefault())
+	assert.False(t, contract.MultidocSysctlConfigSupported())
 }
 
 func TestContract1_11(t *testing.T) {
@@ -207,6 +211,7 @@ func TestContract1_11(t *testing.T) {
 	assert.False(t, contract.HostDNSMultidocConfig())
 	assert.False(t, contract.MultidocKubernetesConfigSupported())
 	assert.False(t, contract.FilesystemTrimEnabledByDefault())
+	assert.False(t, contract.MultidocSysctlConfigSupported())
 }
 
 func TestContract1_10(t *testing.T) {
@@ -240,6 +245,7 @@ func TestContract1_10(t *testing.T) {
 	assert.False(t, contract.HostDNSMultidocConfig())
 	assert.False(t, contract.MultidocKubernetesConfigSupported())
 	assert.False(t, contract.FilesystemTrimEnabledByDefault())
+	assert.False(t, contract.MultidocSysctlConfigSupported())
 }
 
 func TestContract1_9(t *testing.T) {
@@ -273,6 +279,7 @@ func TestContract1_9(t *testing.T) {
 	assert.False(t, contract.HostDNSMultidocConfig())
 	assert.False(t, contract.MultidocKubernetesConfigSupported())
 	assert.False(t, contract.FilesystemTrimEnabledByDefault())
+	assert.False(t, contract.MultidocSysctlConfigSupported())
 }
 
 func TestContract1_8(t *testing.T) {
@@ -306,6 +313,7 @@ func TestContract1_8(t *testing.T) {
 	assert.False(t, contract.HostDNSMultidocConfig())
 	assert.False(t, contract.MultidocKubernetesConfigSupported())
 	assert.False(t, contract.FilesystemTrimEnabledByDefault())
+	assert.False(t, contract.MultidocSysctlConfigSupported())
 }
 
 func TestContract1_7(t *testing.T) {
@@ -339,6 +347,7 @@ func TestContract1_7(t *testing.T) {
 	assert.False(t, contract.HostDNSMultidocConfig())
 	assert.False(t, contract.MultidocKubernetesConfigSupported())
 	assert.False(t, contract.FilesystemTrimEnabledByDefault())
+	assert.False(t, contract.MultidocSysctlConfigSupported())
 }
 
 func TestContract1_6(t *testing.T) {
@@ -372,6 +381,7 @@ func TestContract1_6(t *testing.T) {
 	assert.False(t, contract.HostDNSMultidocConfig())
 	assert.False(t, contract.MultidocKubernetesConfigSupported())
 	assert.False(t, contract.FilesystemTrimEnabledByDefault())
+	assert.False(t, contract.MultidocSysctlConfigSupported())
 }
 
 func TestContract1_5(t *testing.T) {
@@ -405,6 +415,7 @@ func TestContract1_5(t *testing.T) {
 	assert.False(t, contract.HostDNSMultidocConfig())
 	assert.False(t, contract.MultidocKubernetesConfigSupported())
 	assert.False(t, contract.FilesystemTrimEnabledByDefault())
+	assert.False(t, contract.MultidocSysctlConfigSupported())
 }
 
 func TestContract1_4(t *testing.T) {
@@ -438,6 +449,7 @@ func TestContract1_4(t *testing.T) {
 	assert.False(t, contract.HostDNSMultidocConfig())
 	assert.False(t, contract.MultidocKubernetesConfigSupported())
 	assert.False(t, contract.FilesystemTrimEnabledByDefault())
+	assert.False(t, contract.MultidocSysctlConfigSupported())
 }
 
 func TestContract1_3(t *testing.T) {
@@ -471,6 +483,7 @@ func TestContract1_3(t *testing.T) {
 	assert.False(t, contract.HostDNSMultidocConfig())
 	assert.False(t, contract.MultidocKubernetesConfigSupported())
 	assert.False(t, contract.FilesystemTrimEnabledByDefault())
+	assert.False(t, contract.MultidocSysctlConfigSupported())
 }
 
 func TestContract1_2(t *testing.T) {
@@ -504,6 +517,7 @@ func TestContract1_2(t *testing.T) {
 	assert.False(t, contract.HostDNSMultidocConfig())
 	assert.False(t, contract.MultidocKubernetesConfigSupported())
 	assert.False(t, contract.FilesystemTrimEnabledByDefault())
+	assert.False(t, contract.MultidocSysctlConfigSupported())
 }
 
 func TestContract1_1(t *testing.T) {
@@ -537,6 +551,7 @@ func TestContract1_1(t *testing.T) {
 	assert.False(t, contract.HostDNSMultidocConfig())
 	assert.False(t, contract.MultidocKubernetesConfigSupported())
 	assert.False(t, contract.FilesystemTrimEnabledByDefault())
+	assert.False(t, contract.MultidocSysctlConfigSupported())
 }
 
 func TestContract1_0(t *testing.T) {
@@ -570,4 +585,5 @@ func TestContract1_0(t *testing.T) {
 	assert.False(t, contract.HostDNSMultidocConfig())
 	assert.False(t, contract.MultidocKubernetesConfigSupported())
 	assert.False(t, contract.FilesystemTrimEnabledByDefault())
+	assert.False(t, contract.MultidocSysctlConfigSupported())
 }

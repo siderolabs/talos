@@ -224,3 +224,8 @@ func (contract *VersionContract) MultidocKubernetesConfigSupported() bool {
 func (contract *VersionContract) FilesystemTrimEnabledByDefault() bool {
 	return contract.Greater(TalosVersion1_13)
 }
+
+// MultidocSysctlConfigSupported returns true if version of Talos should use multi-doc Sysctl config.
+func (contract *VersionContract) MultidocSysctlConfigSupported() bool {
+	return contract.Greater(TalosVersion1_13)
+}

@@ -12,6 +12,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	v1alpha1 "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -39,8 +40,11 @@ func (in *Input) init() ([]config.Document, error) {
 			InstallExtraKernelArgs: in.Options.InstallExtraKernelArgs,
 		},
 		MachineDisks:    in.Options.MachineDisks,
-		MachineSysctls:  in.Options.Sysctls, //nolint:staticcheck // legacy configuration
 		MachineFeatures: &v1alpha1.FeaturesConfig{},
+	}
+
+	if !in.Options.VersionContract.MultidocSysctlConfigSupported() {
+		machine.MachineSysctls = in.Options.Sysctls //nolint:staticcheck // legacy configuration
 	}
 
 	if in.Options.VersionContract.GrubUseUKICmdlineDefault() {
@@ -237,6 +241,13 @@ func (in *Input) init() ([]config.Document, error) {
 		}
 
 		documents = append(documents, resolverConfig)
+	}
+
+	if len(in.Options.Sysctls) > 0 && in.Options.VersionContract.MultidocSysctlConfigSupported() {
+		sysctlConfig := runtime.NewSysctlConfigV1Alpha1()
+		sysctlConfig.Params = in.Options.Sysctls
+
+		documents = append(documents, sysctlConfig)
 	}
 
 	documents = append(documents, in.generateBlockConfigs()...)
