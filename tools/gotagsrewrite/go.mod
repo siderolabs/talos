@@ -1,6 +1,6 @@
 module github.com/siderolabs/talos/tools/gotagsrewrite
 
-go 1.25.10
+go 1.25.11
 
 require (
 	github.com/fatih/structtag v1.2.0
