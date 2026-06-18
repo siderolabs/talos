@@ -17,6 +17,7 @@ import (
 	"time"
 
 	containerdapi "github.com/containerd/containerd/v2/client"
+	"github.com/containerd/containerd/v2/core/containers"
 	"github.com/containerd/containerd/v2/pkg/cap"
 	"github.com/containerd/containerd/v2/pkg/namespaces"
 	"github.com/containerd/containerd/v2/pkg/oci"
@@ -219,7 +220,28 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 			oci.WithDroppedCapabilities(cap.Known()),
 			oci.WithHostNamespace(specs.NetworkNamespace),
 			oci.WithMounts(mounts),
-			oci.WithUser(fmt.Sprintf("%d:%d", constants.EtcdUserID, constants.EtcdUserID)),
+			oci.WithUIDGID(constants.EtcdUserID, constants.EtcdUserID),
+			func(_ context.Context, _ oci.Client, _ *containers.Container, s *oci.Spec) error {
+				rlimit := &specs.POSIXRlimit{
+					Type: "RLIMIT_NOFILE",
+					Hard: uint64(10240),
+					Soft: uint64(10240),
+				}
+
+				if s.Process.Rlimits == nil {
+					s.Process.Rlimits = make([]specs.POSIXRlimit, 0)
+				}
+
+				if s.Process.Rlimits[0].Type == rlimit.Type {
+					s.Process.Rlimits[0] = *rlimit
+
+					return nil
+				}
+
+				s.Process.Rlimits = append(s.Process.Rlimits, *rlimit)
+
+				return nil
+			},
 		),
 		runner.WithOOMScoreAdj(-998),
 	),
