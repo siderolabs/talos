@@ -229,6 +229,11 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 				oci.WithHostNamespace(specs.NetworkNamespace),
 				oci.WithMounts(mounts),
 				oci.WithUIDGID(constants.EtcdUserID, constants.EtcdUserID),
+				oci.WithRlimit(&specs.POSIXRlimit{
+					Type: "RLIMIT_NOFILE",
+					Hard: uint64(10240),
+					Soft: uint64(10240),
+				}),
 			),
 			runner.WithOOMScoreAdj(-998),
 		),
