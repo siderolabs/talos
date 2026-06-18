@@ -1779,6 +1779,12 @@ func (suite *VolumesSuite) TestZswapStatus() {
 
 // TestFSTrimDefaultSchedule verifies that the default schedule for filesystem trimming is applied.
 func (suite *VolumesSuite) TestFSTrimDefaultSchedule() {
+	// TODO: we can remove this skip clause once TF provider in contrib is updated
+	// to Talos 1.14 machinery.
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping test for non-qemu provisioner")
+	}
+
 	for _, node := range suite.DiscoverNodeInternalIPs(suite.ctx) {
 		suite.Run(node, func() {
 			ctx := client.WithNode(suite.ctx, node)
