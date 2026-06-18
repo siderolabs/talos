@@ -1,5 +1,6 @@
 ---
-description: RoutingRuleConfig is a config document to configure Linux policy routing rules.
+description: RoutingRuleConfig is a config document to configure Linux policy routing
+    rules.
 title: RoutingRuleConfig
 ---
 

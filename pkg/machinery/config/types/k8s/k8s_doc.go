@@ -14,7 +14,7 @@ func (ResourcesConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ResourcesConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "ResourcesConfig represents the pod resources." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ResourcesConfig represents the pod resources.",
+		Description: "ResourcesConfig represents the pod resources.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "KubeControllerManagerConfigV1Alpha1",

@@ -421,7 +421,7 @@ func (BridgeSTPConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "BridgeSTPConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "BridgeSTPConfig is a bridge STP (Spanning Tree Protocol) configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "BridgeSTPConfig is a bridge STP (Spanning Tree Protocol) configuration.",
+		Description: "BridgeSTPConfig is a bridge STP (Spanning Tree Protocol) configuration.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "BridgeConfigV1Alpha1",
@@ -448,7 +448,7 @@ func (BridgeVLANConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "BridgeVLANConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "BridgeVLANConfig is a bridge VLAN configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "BridgeVLANConfig is a bridge VLAN configuration.",
+		Description: "BridgeVLANConfig is a bridge VLAN configuration.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "BridgeConfigV1Alpha1",
@@ -785,7 +785,7 @@ func (EthernetRingsConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "EthernetRingsConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "EthernetRingsConfig is a configuration for Ethernet link rings." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "EthernetRingsConfig is a configuration for Ethernet link rings.",
+		Description: "EthernetRingsConfig is a configuration for Ethernet link rings.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "EthernetConfigV1Alpha1",
@@ -873,7 +873,7 @@ func (EthernetChannelsConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "EthernetChannelsConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "EthernetChannelsConfig is a configuration for Ethernet link channels." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "EthernetChannelsConfig is a configuration for Ethernet link channels.",
+		Description: "EthernetChannelsConfig is a configuration for Ethernet link channels.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "EthernetConfigV1Alpha1",
@@ -1109,7 +1109,7 @@ func (KubeSpanFiltersConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "KubeSpanFiltersConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeSpanFiltersConfig configures KubeSpan endpoint filters." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "KubeSpanFiltersConfig configures KubeSpan endpoint filters.",
+		Description: "KubeSpanFiltersConfig configures KubeSpan endpoint filters.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "KubeSpanConfigV1Alpha1",
@@ -1236,7 +1236,7 @@ func (CommonLinkConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "CommonLinkConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "CommonLinkConfig is common configuration for network links, and logical links." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "CommonLinkConfig is common configuration for network links, and logical links.",
+		Description: "CommonLinkConfig is common configuration for network links, and logical links.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "BondConfigV1Alpha1",
@@ -1313,7 +1313,7 @@ func (AddressConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "AddressConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "AddressConfig represents a network address configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "AddressConfig represents a network address configuration.",
+		Description: "AddressConfig represents a network address configuration.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "CommonLinkConfig",
@@ -1348,7 +1348,7 @@ func (RouteConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "RouteConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "RouteConfig represents a network route configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "RouteConfig represents a network route configuration.",
+		Description: "RouteConfig represents a network route configuration.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "CommonLinkConfig",
@@ -1449,7 +1449,7 @@ func (LinkSelector) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "LinkSelector",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "LinkSelector selects a link to alias." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "LinkSelector selects a link to alias.",
+		Description: "LinkSelector selects a link to alias.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "LinkAliasConfigV1Alpha1",
@@ -1525,7 +1525,7 @@ func (NameserverConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "NameserverConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "NameserverConfig represents a single nameserver configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "NameserverConfig represents a single nameserver configuration.",
+		Description: "NameserverConfig represents a single nameserver configuration.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "ResolverConfigV1Alpha1",
@@ -1572,7 +1572,7 @@ func (SearchDomainsConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "SearchDomainsConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "SearchDomainsConfig represents search domains configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "SearchDomainsConfig represents search domains configuration.",
+		Description: "SearchDomainsConfig represents search domains configuration.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "ResolverConfigV1Alpha1",
@@ -1604,7 +1604,7 @@ func (HostDNSConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "HostDNSConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "HostDNSConfig represents host DNS configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "HostDNSConfig represents host DNS configuration.",
+		Description: "HostDNSConfig represents host DNS configuration.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "ResolverConfigV1Alpha1",
@@ -1778,7 +1778,7 @@ func (RulePortSelector) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "RulePortSelector",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "RulePortSelector is a port selector for the network rule." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "RulePortSelector is a port selector for the network rule.",
+		Description: "RulePortSelector is a port selector for the network rule.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "RuleConfigV1Alpha1",
@@ -1819,7 +1819,7 @@ func (IngressRule) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "IngressRule",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "IngressRule is a ingress rule." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "IngressRule is a ingress rule.",
+		Description: "IngressRule is a ingress rule.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "RuleConfigV1Alpha1",
@@ -1934,7 +1934,7 @@ func (CommonProbeConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "CommonProbeConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "CommonProbeConfig holds fields common to all probe types." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "CommonProbeConfig holds fields common to all probe types.",
+		Description: "CommonProbeConfig holds fields common to all probe types.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "HTTPProbeConfigV1Alpha1",
@@ -2021,7 +2021,7 @@ func (NTPConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "NTPConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "NTPConfig represents a NTP server configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "NTPConfig represents a NTP server configuration.",
+		Description: "NTPConfig represents a NTP server configuration.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "TimeSyncConfigV1Alpha1",
@@ -2053,7 +2053,7 @@ func (PTPConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "PTPConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "PTPConfig represents a PTP (Precision Time Protocol) configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "PTPConfig represents a PTP (Precision Time Protocol) configuration.",
+		Description: "PTPConfig represents a PTP (Precision Time Protocol) configuration.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "TimeSyncConfigV1Alpha1",
@@ -2196,7 +2196,7 @@ func (WireguardPeer) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "WireguardPeer",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "WireguardPeer describes a Wireguard peer configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "WireguardPeer describes a Wireguard peer configuration.",
+		Description: "WireguardPeer describes a Wireguard peer configuration.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "WireguardConfigV1Alpha1",

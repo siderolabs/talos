@@ -53,6 +53,7 @@ KubeSpanFiltersConfig configures KubeSpan endpoint filters.
 
 
 
+
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`endpoints` |[]string |Filter node addresses which will be advertised as KubeSpan endpoints for peer-to-peer Wireguard connections.<br><br>By default, all addresses are advertised, and KubeSpan cycles through all endpoints until it finds one that works.<br><br>Default value: no filtering. <details><summary>Show example(s)</summary>Exclude addresses in 192.168.0.0/16 subnet.:{{< highlight yaml >}}

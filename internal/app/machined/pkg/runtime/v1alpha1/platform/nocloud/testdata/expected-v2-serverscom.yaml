@@ -70,7 +70,7 @@ links:
         tlbLogicalLb: 1
         useCarrier: true
         adActorSysPrio: 65535
-        adLacpActive: "on"
+        adLacpActive: 'on'
       layer: platform
     - name: aggi
       logical: true
@@ -96,7 +96,7 @@ links:
         tlbLogicalLb: 1
         useCarrier: true
         adActorSysPrio: 65535
-        adLacpActive: "on"
+        adLacpActive: 'on'
       layer: platform
 routes:
     - family: inet4

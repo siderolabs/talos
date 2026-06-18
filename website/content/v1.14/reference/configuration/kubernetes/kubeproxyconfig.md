@@ -16,7 +16,7 @@ title: KubeProxyConfig
 {{< highlight yaml >}}
 apiVersion: v1alpha1
 kind: KubeProxyConfig
-image: registry.k8s.io/kube-proxy:1.36.1 # The container image used in the kube-proxy manifest.
+image: registry.k8s.io/kube-proxy:1.36.2 # The container image used in the kube-proxy manifest.
 mode: nftables # description: |
 # Provide configuration for the kube-proxy.
 config:
@@ -52,6 +52,7 @@ resources:
 ## resources {#KubeProxyConfig.resources}
 
 ResourcesConfig represents the pod resources.
+
 
 
 

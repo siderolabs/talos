@@ -71,7 +71,7 @@ func (ImageVerificationRuleV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ImageVerificationRuleV1Alpha1",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "ImageVerificationRuleV1Alpha1 defines a verification rule." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ImageVerificationRuleV1Alpha1 defines a verification rule.",
+		Description: "ImageVerificationRuleV1Alpha1 defines a verification rule.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "ImageVerificationConfigV1Alpha1",
@@ -127,7 +127,7 @@ func (ImageKeylessVerifierV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ImageKeylessVerifierV1Alpha1",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "ImageKeylessVerifierV1Alpha1 configures a signature verification provider using Cosign keyless verification." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ImageKeylessVerifierV1Alpha1 configures a signature verification provider using Cosign keyless verification.",
+		Description: "ImageKeylessVerifierV1Alpha1 configures a signature verification provider using Cosign keyless verification.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "ImageVerificationRuleV1Alpha1",
@@ -170,7 +170,7 @@ func (ImagePublicKeyVerifierV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ImagePublicKeyVerifierV1Alpha1",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "ImagePublicKeyVerifierV1Alpha1 configures a signature verification provider using a static public key." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ImagePublicKeyVerifierV1Alpha1 configures a signature verification provider using a static public key.",
+		Description: "ImagePublicKeyVerifierV1Alpha1 configures a signature verification provider using a static public key.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "ImageVerificationRuleV1Alpha1",

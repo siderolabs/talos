@@ -39,7 +39,7 @@ func (LocalImageCacheConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "LocalImageCacheConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "LocalImageCacheConfig configures local image cache." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "LocalImageCacheConfig configures local image cache.",
+		Description: "LocalImageCacheConfig configures local image cache.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "ImageCacheConfigV1Alpha1",
@@ -156,7 +156,7 @@ func (RegistryEndpoint) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "RegistryEndpoint",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "RegistryEndpoint defines a registry mirror endpoint." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "RegistryEndpoint defines a registry mirror endpoint.",
+		Description: "RegistryEndpoint defines a registry mirror endpoint.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "RegistryMirrorConfigV1Alpha1",

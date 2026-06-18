@@ -42,6 +42,7 @@ ProvisioningSpec describes how the Physical Volumes are provisioned.
 
 
 
+
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`volumeSelector` |<a href="#LVMVolumeGroupConfig.provisioning.volumeSelector">LVMVolumeSelectorSpec</a> |Matches disks to initialize as physical volumes.  | |
@@ -52,6 +53,7 @@ ProvisioningSpec describes how the Physical Volumes are provisioned.
 ### volumeSelector {#LVMVolumeGroupConfig.provisioning.volumeSelector}
 
 LVMVolumeSelectorSpec matches disks with CEL.
+
 
 
 

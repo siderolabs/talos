@@ -1,5 +1,6 @@
 ---
-description: LinkAliasConfig is a config document to alias (give a different name) to a physical link.
+description: LinkAliasConfig is a config document to alias (give a different name)
+    to a physical link.
 title: LinkAliasConfig
 ---
 
@@ -49,6 +50,7 @@ name: net%d
 ## selector {#LinkAliasConfig.selector}
 
 LinkSelector selects a link to alias.
+
 
 
 

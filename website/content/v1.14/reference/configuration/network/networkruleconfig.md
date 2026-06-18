@@ -45,6 +45,7 @@ RulePortSelector is a port selector for the network rule.
 
 
 
+
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`ports` |PortRanges |Ports defines a list of port ranges or single ports.<br>The port ranges are inclusive, and should not overlap. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
@@ -66,6 +67,7 @@ ports:
 ## ingress[] {#NetworkRuleConfig.ingress.}
 
 IngressRule is a ingress rule.
+
 
 
 

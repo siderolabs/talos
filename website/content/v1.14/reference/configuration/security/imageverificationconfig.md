@@ -52,6 +52,7 @@ ImageVerificationRuleV1Alpha1 defines a verification rule.
 
 
 
+
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`image` |string |Image reference pattern to match for this rule.<br>Supports glob patterns, matches only on the image registry and repository, not on the tag or digest. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
@@ -70,6 +71,7 @@ image: registry.k8s.io/*
 ### keyless {#ImageVerificationConfig.rules..keyless}
 
 ImageKeylessVerifierV1Alpha1 configures a signature verification provider using Cosign keyless verification.
+
 
 
 
@@ -94,6 +96,7 @@ subjectRegex: .*@example\.com
 ### publicKey {#ImageVerificationConfig.rules..publicKey}
 
 ImagePublicKeyVerifierV1Alpha1 configures a signature verification provider using a static public key.
+
 
 
 

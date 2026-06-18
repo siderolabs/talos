@@ -42,6 +42,7 @@ RegistryEndpoint defines a registry mirror endpoint.
 
 
 
+
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`url` |URL |The URL of the registry mirror endpoint. <details><summary>Show example(s)</summary>{{< highlight yaml >}}

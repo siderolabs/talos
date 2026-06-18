@@ -1,5 +1,6 @@
 ---
-description: BondConfig is a config document to create a bond (link aggregation) over a set of links.
+description: BondConfig is a config document to create a bond (link aggregation) over
+    a set of links.
 title: BondConfig
 ---
 
@@ -171,6 +172,7 @@ AddressConfig represents a network address configuration.
 
 
 
+
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`address` |Prefix |IP address to be assigned to the link.<br><br>This field must include the network prefix length (e.g. /24 for IPv4, /64 for IPv6). <details><summary>Show example(s)</summary>{{< highlight yaml >}}
@@ -188,6 +190,7 @@ address: fd00::1/64
 ## routes[] {#BondConfig.routes.}
 
 RouteConfig represents a network route configuration.
+
 
 
 

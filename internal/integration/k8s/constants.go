@@ -10,11 +10,11 @@ package k8s
 const (
 	// RookCephHelmChartVersion is the version of the Rook Ceph Helm chart to use.
 	// renovate: datasource=helm versioning=helm depName=rook-ceph registryUrl=https://charts.rook.io/release
-	RookCephHelmChartVersion = "v1.19.6"
+	RookCephHelmChartVersion = "v1.20.1"
 	// LongHornHelmChartVersion is the version of the Longhorn Helm chart to use.
 	// renovate: datasource=helm versioning=helm depName=longhorn registryUrl=https://charts.longhorn.io
-	LongHornHelmChartVersion = "1.11.2"
+	LongHornHelmChartVersion = "1.12.0"
 	// OpenEBSChartVersion is the version of the OpenEBS Helm chart to use.
 	// renovate: datasource=helm versioning=helm depName=openebs registryUrl=https://openebs.github.io/openebs
-	OpenEBSChartVersion = "v4.4.0"
+	OpenEBSChartVersion = "4.5.1"
 )

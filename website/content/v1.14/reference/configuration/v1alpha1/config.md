@@ -74,7 +74,7 @@ certSANs:
 {{< /highlight >}}</details> | |
 |`kubelet` |<a href="#Config.machine.kubelet">KubeletConfig</a> |Used to provide additional options to the kubelet. <details><summary>Show example(s)</summary>Kubelet definition example.:{{< highlight yaml >}}
 kubelet:
-    image: ghcr.io/siderolabs/kubelet:v1.36.1 # The `image` field is an optional reference to an alternative kubelet image.
+    image: ghcr.io/siderolabs/kubelet:v1.36.2 # The `image` field is an optional reference to an alternative kubelet image.
     # The `extraArgs` field is used to provide additional flags to the kubelet.
     extraArgs:
         feature-gates: ServerSideApply=true
@@ -232,10 +232,11 @@ KubeletConfig represents the kubelet config values.
 
 
 
+
 {{< highlight yaml >}}
 machine:
     kubelet:
-        image: ghcr.io/siderolabs/kubelet:v1.36.1 # The `image` field is an optional reference to an alternative kubelet image.
+        image: ghcr.io/siderolabs/kubelet:v1.36.2 # The `image` field is an optional reference to an alternative kubelet image.
         # The `extraArgs` field is used to provide additional flags to the kubelet.
         extraArgs:
             feature-gates: ServerSideApply=true
@@ -288,7 +289,7 @@ machine:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`image` |string |The `image` field is an optional reference to an alternative kubelet image. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-image: ghcr.io/siderolabs/kubelet:v1.36.1
+image: ghcr.io/siderolabs/kubelet:v1.36.2
 {{< /highlight >}}</details> | |
 |`clusterDNS` |[]string |The `ClusterDNS` field is an optional reference to an alternative kubelet clusterDNS ip list. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 clusterDNS:
@@ -356,6 +357,7 @@ ExtraMount wraps OCI Mount specification.
 
 
 
+
 {{< highlight yaml >}}
 machine:
     kubelet:
@@ -390,6 +392,7 @@ LinuxIDMapping represents the Linux ID mapping.
 
 
 
+
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`containerID` |uint32 |ContainerID is the starting UID/GID in the container.  | |
@@ -404,6 +407,7 @@ LinuxIDMapping represents the Linux ID mapping.
 ##### gidMappings[] {#Config.machine.kubelet.extraMounts..gidMappings.}
 
 LinuxIDMapping represents the Linux ID mapping.
+
 
 
 
@@ -424,6 +428,7 @@ LinuxIDMapping represents the Linux ID mapping.
 #### nodeIP {#Config.machine.kubelet.nodeIP}
 
 KubeletNodeIPConfig represents the kubelet node IP configuration.
+
 
 
 
@@ -453,6 +458,7 @@ machine:
 ### install {#Config.machine.install}
 
 InstallConfig represents the installation options for preparing a node.
+
 
 
 
@@ -504,6 +510,7 @@ InstallDiskSelector represents a disk query parameters for the install disk look
 
 
 
+
 {{< highlight yaml >}}
 machine:
     install:
@@ -552,6 +559,7 @@ MachineFile represents a file to write to disk.
 
 
 
+
 {{< highlight yaml >}}
 machine:
     files:
@@ -577,6 +585,7 @@ machine:
 ### features {#Config.machine.features}
 
 FeaturesConfig describes individual Talos features that can be switched on or off.
+
 
 
 
@@ -622,6 +631,7 @@ KubernetesTalosAPIAccessConfig describes the configuration for the Talos API acc
 
 
 
+
 {{< highlight yaml >}}
 machine:
     features:
@@ -654,6 +664,7 @@ KubePrism describes the configuration for the KubePrism load balancer.
 
 
 
+
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`enabled` |bool |Enable KubePrism support - will start local load balancing proxy.  | |
@@ -669,6 +680,7 @@ KubePrism describes the configuration for the KubePrism load balancer.
 ### udev {#Config.machine.udev}
 
 UdevConfig describes how the udev system should be configured.
+
 
 
 
@@ -693,6 +705,7 @@ machine:
 ### logging {#Config.machine.logging}
 
 LoggingConfig struct configures Talos logging.
+
 
 
 
@@ -732,6 +745,7 @@ LoggingDestination struct configures Talos logging destination.
 
 
 
+
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`endpoint` |<a href="#Config.machine.logging.destinations..endpoint">Endpoint</a> |Where to send logs. Supported protocols are "tcp" and "udp".  | |
@@ -744,6 +758,7 @@ LoggingDestination struct configures Talos logging destination.
 ##### endpoint {#Config.machine.logging.destinations..endpoint}
 
 Endpoint represents the endpoint URL parsed out of the machine config.
+
 
 
 
@@ -763,6 +778,7 @@ Endpoint represents the endpoint URL parsed out of the machine config.
 ### kernel {#Config.machine.kernel}
 
 KernelConfig struct configures Talos Linux kernel.
+
 
 
 
@@ -789,6 +805,7 @@ KernelModuleConfig struct configures Linux kernel modules to load.
 
 
 
+
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`name` |string |Module name.  | |
@@ -804,6 +821,7 @@ KernelModuleConfig struct configures Linux kernel modules to load.
 ### seccompProfiles[] {#Config.machine.seccompProfiles.}
 
 MachineSeccompProfile defines seccomp profiles for the machine.
+
 
 
 
@@ -875,7 +893,7 @@ serviceAccount:
 {{< /highlight >}}</details> | |
 |`apiServer` |<a href="#Config.cluster.apiServer">APIServerConfig</a> |API server specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 apiServer:
-    image: registry.k8s.io/kube-apiserver:v1.36.1 # The container image used in the API server manifest.
+    image: registry.k8s.io/kube-apiserver:v1.36.2 # The container image used in the API server manifest.
     # Extra arguments to supply to the API server.
     extraArgs:
         feature-gates: ServerSideApply=true
@@ -951,7 +969,7 @@ discovery:
 {{< /highlight >}}</details> | |
 |`etcd` |<a href="#Config.cluster.etcd">EtcdConfig</a> |Etcd specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 etcd:
-    image: registry.k8s.io/etcd:v3.7.0-rc.0 # The container image used to create the etcd service.
+    image: registry.k8s.io/etcd:3.7.0-rc.0-0 # The container image used to create the etcd service.
     # The `ca` is the root certificate authority of the PKI.
     ca:
         crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
@@ -966,7 +984,7 @@ etcd:
 {{< /highlight >}}</details> | |
 |`coreDNS` |<a href="#Config.cluster.coreDNS">CoreDNS</a> |Core DNS specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 coreDNS:
-    image: registry.k8s.io/coredns/coredns:v1.14.2 # The `image` field is an override to the default coredns image.
+    image: registry.k8s.io/coredns/coredns:v1.14.3 # The `image` field is an override to the default coredns image.
 {{< /highlight >}}</details> | |
 |`externalCloudProvider` |<a href="#Config.cluster.externalCloudProvider">ExternalCloudProviderConfig</a> |External cloud provider configuration. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 externalCloudProvider:
@@ -1012,6 +1030,7 @@ ControlPlaneConfig represents the control plane configuration options.
 
 
 
+
 {{< highlight yaml >}}
 cluster:
     controlPlane:
@@ -1035,6 +1054,7 @@ Endpoint represents the endpoint URL parsed out of the machine config.
 
 
 
+
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 
@@ -1051,10 +1071,11 @@ APIServerConfig represents the kube apiserver configuration options.
 
 
 
+
 {{< highlight yaml >}}
 cluster:
     apiServer:
-        image: registry.k8s.io/kube-apiserver:v1.36.1 # The container image used in the API server manifest.
+        image: registry.k8s.io/kube-apiserver:v1.36.2 # The container image used in the API server manifest.
         # Extra arguments to supply to the API server.
         extraArgs:
             feature-gates: ServerSideApply=true
@@ -1122,7 +1143,7 @@ cluster:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`image` |string |The container image used in the API server manifest. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-image: registry.k8s.io/kube-apiserver:v1.36.1
+image: registry.k8s.io/kube-apiserver:v1.36.2
 {{< /highlight >}}</details> | |
 |`extraArgs` |Args |Extra arguments to supply to the API server.  | |
 |`extraVolumes` |<a href="#Config.cluster.apiServer.extraVolumes.">[]VolumeMountConfig</a> |Extra volumes to mount to the API server static pod.  | |
@@ -1193,6 +1214,7 @@ VolumeMountConfig struct describes extra volume mount for the static pods.
 
 
 
+
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`hostPath` |string |Path on the host. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
@@ -1213,6 +1235,7 @@ readonly: true
 #### admissionControl[] {#Config.cluster.apiServer.admissionControl.}
 
 AdmissionPluginConfig represents the API server admission plugin configuration.
+
 
 
 
@@ -1257,6 +1280,7 @@ ResourcesConfig represents the pod resources.
 
 
 
+
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`requests` |Unstructured |Requests configures the reserved cpu/memory resources. <details><summary>Show example(s)</summary>resources requests.:{{< highlight yaml >}}
@@ -1278,6 +1302,7 @@ limits:
 #### authorizationConfig[] {#Config.cluster.apiServer.authorizationConfig.}
 
 AuthorizationConfigAuthorizerConfig represents the API server authorization config authorizer configuration.
+
 
 
 
@@ -1330,6 +1355,7 @@ ClusterDiscoveryConfig struct configures cluster membership discovery.
 
 
 
+
 {{< highlight yaml >}}
 cluster:
     discovery:
@@ -1359,6 +1385,7 @@ DiscoveryRegistriesConfig struct configures cluster membership discovery.
 
 
 
+
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`kubernetes` |<a href="#Config.cluster.discovery.registries.kubernetes">RegistryKubernetesConfig</a> |Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information<br>as annotations on the Node resources.<br><br>This feature is deprecated as it is not compatible with Kubernetes 1.32+.<br>See https://github.com/siderolabs/talos/issues/9980 for more information.  | |
@@ -1370,6 +1397,7 @@ DiscoveryRegistriesConfig struct configures cluster membership discovery.
 ##### kubernetes {#Config.cluster.discovery.registries.kubernetes}
 
 RegistryKubernetesConfig struct configures Kubernetes discovery registry.
+
 
 
 
@@ -1386,6 +1414,7 @@ RegistryKubernetesConfig struct configures Kubernetes discovery registry.
 ##### service {#Config.cluster.discovery.registries.service}
 
 RegistryServiceConfig struct configures Kubernetes discovery registry.
+
 
 
 
@@ -1412,10 +1441,11 @@ EtcdConfig represents the etcd configuration options.
 
 
 
+
 {{< highlight yaml >}}
 cluster:
     etcd:
-        image: registry.k8s.io/etcd:v3.7.0-rc.0 # The container image used to create the etcd service.
+        image: registry.k8s.io/etcd:3.7.0-rc.0-0 # The container image used to create the etcd service.
         # The `ca` is the root certificate authority of the PKI.
         ca:
             crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
@@ -1433,7 +1463,7 @@ cluster:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`image` |string |The container image used to create the etcd service. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-image: registry.k8s.io/etcd:v3.7.0-rc.0
+image: registry.k8s.io/etcd:3.7.0-rc.0-0
 {{< /highlight >}}</details> | |
 |`ca` |PEMEncodedCertificateAndKey |The `ca` is the root certificate authority of the PKI.<br>It is composed of a base64 encoded `crt` and `key`. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 ca:
@@ -1458,10 +1488,11 @@ CoreDNS represents the CoreDNS config values.
 
 
 
+
 {{< highlight yaml >}}
 cluster:
     coreDNS:
-        image: registry.k8s.io/coredns/coredns:v1.14.2 # The `image` field is an override to the default coredns image.
+        image: registry.k8s.io/coredns/coredns:v1.14.3 # The `image` field is an override to the default coredns image.
 {{< /highlight >}}
 
 
@@ -1478,6 +1509,7 @@ cluster:
 ### externalCloudProvider {#Config.cluster.externalCloudProvider}
 
 ExternalCloudProviderConfig contains external cloud provider configuration.
+
 
 
 
@@ -1512,6 +1544,7 @@ ClusterInlineManifest struct describes inline bootstrap manifests for the user.
 
 
 
+
 {{< highlight yaml >}}
 cluster:
     inlineManifests:
@@ -1541,6 +1574,7 @@ contents: /etc/kubernetes/auth
 ### adminKubeconfig {#Config.cluster.adminKubeconfig}
 
 AdminKubeconfigConfig contains admin kubeconfig settings.
+
 
 
 

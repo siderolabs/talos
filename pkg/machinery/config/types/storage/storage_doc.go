@@ -46,7 +46,7 @@ func (ProvisioningSpec) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ProvisioningSpec",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "ProvisioningSpec describes how the Physical Volumes are provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ProvisioningSpec describes how the Physical Volumes are provisioned.",
+		Description: "ProvisioningSpec describes how the Physical Volumes are provisioned.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "LVMVolumeGroupConfigV1Alpha1",
@@ -71,7 +71,7 @@ func (LVMVolumeSelectorSpec) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "LVMVolumeSelectorSpec",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "LVMVolumeSelectorSpec matches disks with CEL." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "LVMVolumeSelectorSpec matches disks with CEL.",
+		Description: "LVMVolumeSelectorSpec matches disks with CEL.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "ProvisioningSpec",
@@ -157,7 +157,7 @@ func (LVMLogicalVolumeProvisioningSpec) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "LVMLogicalVolumeProvisioningSpec",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "LVMLogicalVolumeProvisioningSpec describes how an LV is provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "LVMLogicalVolumeProvisioningSpec describes how an LV is provisioned.",
+		Description: "LVMLogicalVolumeProvisioningSpec describes how an LV is provisioned.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "LVMLogicalVolumeConfigV1Alpha1",

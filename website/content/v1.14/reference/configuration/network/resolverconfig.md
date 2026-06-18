@@ -94,6 +94,7 @@ NameserverConfig represents a single nameserver configuration.
 
 
 
+
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`address` |Addr |The IP address of the nameserver. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
@@ -116,6 +117,7 @@ SearchDomainsConfig represents search domains configuration.
 
 
 
+
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`domains` |[]string |A list of search domains to be used for DNS resolution.<br><br>Search domains are appended to unqualified domain names during DNS resolution.<br>For example, if "example.com" is a search domain and a user tries to resolve<br>"host", the system will attempt to resolve "host.example.com".<br><br>This overrides any search domains obtained via DHCP or platform configuration.<br>The default configuration derives the search domain from the hostname FQDN.  | |
@@ -129,6 +131,7 @@ SearchDomainsConfig represents search domains configuration.
 ## hostDNS {#ResolverConfig.hostDNS}
 
 HostDNSConfig represents host DNS configuration.
+
 
 
 

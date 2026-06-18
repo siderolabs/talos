@@ -73,6 +73,7 @@ ProvisioningSpec describes how the volume is provisioned.
 
 
 
+
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`diskSelector` |<a href="#VolumeConfig.provisioning.diskSelector">DiskSelector</a> |The disk selector expression.  | |
@@ -92,6 +93,7 @@ maxSize: 80%
 ### diskSelector {#VolumeConfig.provisioning.diskSelector}
 
 DiskSelector selects a disk for the volume.
+
 
 
 
@@ -172,6 +174,7 @@ EncryptionKey represents configuration for disk encryption key.
 
 
 
+
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`slot` |int |Key slot number for LUKS2 encryption.  | |
@@ -191,6 +194,7 @@ EncryptionKeyStatic represents throw away key type.
 
 
 
+
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`passphrase` |string |Defines the static passphrase value.  | |
@@ -203,6 +207,7 @@ EncryptionKeyStatic represents throw away key type.
 #### nodeID {#VolumeConfig.encryption.keys..nodeID}
 
 EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel.
+
 
 
 
@@ -242,6 +247,7 @@ EncryptionKeyTPM represents a key that is generated and then sealed/unsealed by 
 
 
 
+
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`options` |<a href="#VolumeConfig.encryption.keys..tpm.options">EncryptionKeyTPMOptions</a> |TPM options for key protection.  | |
@@ -253,6 +259,7 @@ EncryptionKeyTPM represents a key that is generated and then sealed/unsealed by 
 ##### options {#VolumeConfig.encryption.keys..tpm.options}
 
 EncryptionKeyTPMOptions represents the options for TPM-based key protection.
+
 
 
 
@@ -275,6 +282,7 @@ EncryptionKeyTPMOptions represents the options for TPM-based key protection.
 ## mount {#VolumeConfig.mount}
 
 MountSpec describes how the volume is mounted.
+
 
 
 

@@ -96,7 +96,7 @@ PKG_ZSTD ?= $(PKGS_PREFIX)/zstd:$(PKGS)
 # renovate: datasource=github-tags depName=golang/go
 GO_VERSION ?= 1.26
 # renovate: datasource=npm depName=markdownlint-cli
-MARKDOWNLINTCLI_VERSION ?= 0.48.0
+MARKDOWNLINTCLI_VERSION ?= 0.49.0
 OPERATING_SYSTEM := $(shell uname -s | tr "[:upper:]" "[:lower:]")
 ARCH := $(shell uname -m | sed 's/x86_64/amd64/' | sed 's/aarch64/arm64/')
 TALOSCTL_DEFAULT_TARGET := talosctl-$(OPERATING_SYSTEM)
@@ -104,11 +104,11 @@ TALOSCTL_EXECUTABLE := $(PWD)/$(ARTIFACTS)/$(TALOSCTL_DEFAULT_TARGET)-$(ARCH)
 INTEGRATION_TEST := integration-test
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-KUBECTL_VERSION ?= v1.36.1
+KUBECTL_VERSION ?= v1.36.2
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.49
 # renovate: datasource=github-releases depName=helm/helm
-HELM_VERSION ?= v4.2.0
+HELM_VERSION ?= v4.2.2
 # renovate: datasource=github-releases depName=cilium/cilium-cli
 CILIUM_CLI_VERSION ?= v0.19.4
 # renovate: datasource=github-releases depName=microsoft/secureboot_objects

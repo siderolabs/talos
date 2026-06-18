@@ -107,7 +107,7 @@ func (EncryptionKey) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "EncryptionKey",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "EncryptionKey represents configuration for disk encryption key." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "EncryptionKey represents configuration for disk encryption key.",
+		Description: "EncryptionKey represents configuration for disk encryption key.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "EncryptionSpec",
@@ -167,7 +167,7 @@ func (EncryptionKeyStatic) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "EncryptionKeyStatic",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "EncryptionKeyStatic represents throw away key type." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "EncryptionKeyStatic represents throw away key type.",
+		Description: "EncryptionKeyStatic represents throw away key type.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "EncryptionKey",
@@ -219,7 +219,7 @@ func (EncryptionKeyTPM) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "EncryptionKeyTPM",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "EncryptionKeyTPM represents a key that is generated and then sealed/unsealed by the TPM." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "EncryptionKeyTPM represents a key that is generated and then sealed/unsealed by the TPM.",
+		Description: "EncryptionKeyTPM represents a key that is generated and then sealed/unsealed by the TPM.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "EncryptionKey",
@@ -251,7 +251,7 @@ func (EncryptionKeyTPMOptions) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "EncryptionKeyTPMOptions",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "EncryptionKeyTPMOptions represents the options for TPM-based key protection." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "EncryptionKeyTPMOptions represents the options for TPM-based key protection.",
+		Description: "EncryptionKeyTPMOptions represents the options for TPM-based key protection.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "EncryptionKeyTPM",
@@ -276,7 +276,7 @@ func (EncryptionKeyNodeID) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "EncryptionKeyNodeID",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel.",
+		Description: "EncryptionKeyNodeID represents deterministically generated key from the node UUID and PartitionLabel.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "EncryptionKey",
@@ -339,7 +339,7 @@ func (VolumeDiscoverySpec) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "VolumeDiscoverySpec",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "VolumeDiscoverySpec describes how the volume is discovered." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "VolumeDiscoverySpec describes how the volume is discovered.",
+		Description: "VolumeDiscoverySpec describes how the volume is discovered.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "ExistingVolumeConfigV1Alpha1",
@@ -364,7 +364,7 @@ func (VolumeSelector) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "VolumeSelector",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "VolumeSelector selects an existing volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "VolumeSelector selects an existing volume.",
+		Description: "VolumeSelector selects an existing volume.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "VolumeDiscoverySpec",
@@ -392,7 +392,7 @@ func (ExistingMountSpec) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ExistingMountSpec",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "ExistingMountSpec describes how the volume is mounted." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ExistingMountSpec describes how the volume is mounted.",
+		Description: "ExistingMountSpec describes how the volume is mounted.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "ExistingVolumeConfigV1Alpha1",
@@ -473,7 +473,7 @@ func (ExternalMountSpec) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ExternalMountSpec",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "ExternalMountSpec describes how the external volume is mounted." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ExternalMountSpec describes how the external volume is mounted.",
+		Description: "ExternalMountSpec describes how the external volume is mounted.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "ExternalVolumeConfigV1Alpha1",
@@ -519,7 +519,7 @@ func (VirtiofsMountSpec) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "VirtiofsMountSpec",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "VirtiofsMountSpec describes Virtiofs mount options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "VirtiofsMountSpec describes Virtiofs mount options.",
+		Description: "VirtiofsMountSpec describes Virtiofs mount options.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "ExternalMountSpec",
@@ -763,7 +763,7 @@ func (UserMountSpec) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "UserMountSpec",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "UserMountSpec describes how the volume is mounted." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "UserMountSpec describes how the volume is mounted.",
+		Description: "UserMountSpec describes how the volume is mounted.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "UserVolumeConfigV1Alpha1",
@@ -795,7 +795,7 @@ func (FilesystemSpec) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "FilesystemSpec",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "FilesystemSpec configures the filesystem for the volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "FilesystemSpec configures the filesystem for the volume.",
+		Description: "FilesystemSpec configures the filesystem for the volume.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "UserVolumeConfigV1Alpha1",
@@ -885,7 +885,7 @@ func (MountSpec) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "MountSpec",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "MountSpec describes how the volume is mounted." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "MountSpec describes how the volume is mounted.",
+		Description: "MountSpec describes how the volume is mounted.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "VolumeConfigV1Alpha1",
@@ -917,7 +917,7 @@ func (ProvisioningSpec) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ProvisioningSpec",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "ProvisioningSpec describes how the volume is provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ProvisioningSpec describes how the volume is provisioned.",
+		Description: "ProvisioningSpec describes how the volume is provisioned.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "RawVolumeConfigV1Alpha1",
@@ -979,7 +979,7 @@ func (DiskSelector) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "DiskSelector",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "DiskSelector selects a disk for the volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "DiskSelector selects a disk for the volume.",
+		Description: "DiskSelector selects a disk for the volume.\n",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "ProvisioningSpec",

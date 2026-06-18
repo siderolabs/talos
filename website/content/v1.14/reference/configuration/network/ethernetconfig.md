@@ -56,6 +56,7 @@ EthernetRingsConfig is a configuration for Ethernet link rings.
 
 
 
+
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`rx` |uint32 |Number of RX rings.  | |
@@ -77,6 +78,7 @@ EthernetRingsConfig is a configuration for Ethernet link rings.
 ## channels {#EthernetConfig.channels}
 
 EthernetChannelsConfig is a configuration for Ethernet link channels.
+
 
 
 

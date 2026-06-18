@@ -16,7 +16,7 @@ title: KubeSchedulerConfig
 {{< highlight yaml >}}
 apiVersion: v1alpha1
 kind: KubeSchedulerConfig
-image: registry.k8s.io/kube-scheduler:v1.36.1 # The container image used to run the kube-scheduler component.
+image: registry.k8s.io/kube-scheduler:v1.36.2 # The container image used to run the kube-scheduler component.
 # Provide configuration for the kube-scheduler static pod.
 config:
     profiles:
@@ -45,6 +45,7 @@ extraArgs:
 ## resources {#KubeSchedulerConfig.resources}
 
 ResourcesConfig represents the pod resources.
+
 
 
 

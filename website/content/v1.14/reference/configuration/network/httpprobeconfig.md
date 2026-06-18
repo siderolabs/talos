@@ -1,5 +1,6 @@
 ---
-description: HTTPProbeConfig is a config document to configure network HTTP connectivity probes.
+description: HTTPProbeConfig is a config document to configure network HTTP connectivity
+    probes.
 title: HTTPProbeConfig
 ---
 

@@ -46,6 +46,7 @@ ExternalMountSpec describes how the external volume is mounted.
 
 
 
+
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`readOnly` |bool |Mount the volume read-only.  | |
@@ -59,6 +60,7 @@ ExternalMountSpec describes how the external volume is mounted.
 ### virtiofs {#ExternalVolumeConfig.mount.virtiofs}
 
 VirtiofsMountSpec describes Virtiofs mount options.
+
 
 
 
