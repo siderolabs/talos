@@ -18,6 +18,7 @@ import (
 	"time"
 
 	containerdapi "github.com/containerd/containerd/v2/client"
+	"github.com/containerd/containerd/v2/core/containers"
 	"github.com/containerd/containerd/v2/pkg/cap"
 	"github.com/containerd/containerd/v2/pkg/namespaces"
 	"github.com/containerd/containerd/v2/pkg/oci"
@@ -229,6 +230,18 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 			oci.WithHostNamespace(specs.NetworkNamespace),
 			oci.WithMounts(mounts),
 			oci.WithUser(fmt.Sprintf("%d:%d", constants.EtcdUserID, constants.EtcdUserID)),
+			func(_ context.Context, _ oci.Client, _ *containers.Container, spec *oci.Spec) error {
+				// bump the etcd open file limit
+				spec.Process.Rlimits = []specs.POSIXRlimit{
+					{
+						Type: "RLIMIT_NOFILE",
+						Hard: uint64(10240),
+						Soft: uint64(10240),
+					},
+				}
+
+				return nil
+			},
 		),
 		runner.WithOOMScoreAdj(-998),
 	),
