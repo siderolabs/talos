@@ -22,6 +22,8 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -69,6 +71,7 @@ import (
 	"github.com/siderolabs/talos/pkg/archiver"
 	"github.com/siderolabs/talos/pkg/chunker"
 	"github.com/siderolabs/talos/pkg/chunker/stream"
+	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
 	"github.com/siderolabs/talos/pkg/kubeconfig"
 	"github.com/siderolabs/talos/pkg/machinery/api/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
@@ -117,6 +120,9 @@ type Server struct {
 	ShutdownCtx context.Context //nolint:containedctx
 
 	server *grpc.Server
+
+	applyConfigMu       sync.Mutex
+	applyConfigRebooted atomic.Bool
 }
 
 func (s *Server) checkSupported(feature runtime.ModeCapability) error {
@@ -171,6 +177,26 @@ func (m modeWrapper) RequiresInstall() bool {
 //
 //nolint:gocyclo,cyclop
 func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfigurationRequest) (*machine.ApplyConfigurationResponse, error) {
+	if s.Controller.Runtime().State().Platform().Mode().IsAgent() {
+		return nil, status.Error(codes.Unimplemented, "API is not implemented in agent mode")
+	}
+
+	if !s.applyConfigMu.TryLock() {
+		return nil, status.Error(codes.FailedPrecondition, "another apply configuration is already in progress")
+	}
+	defer s.applyConfigMu.Unlock()
+
+	if s.applyConfigRebooted.Load() {
+		return nil, status.Error(codes.FailedPrecondition, "configuration was already applied and node is rebooting, cannot apply more configuration changes until next reboot")
+	}
+
+	roles := authz.GetRoles(ctx)
+	inMaintenance := s.Controller.Runtime().Config() == nil
+
+	if !inMaintenance && !roles.Includes(role.Admin) {
+		return nil, authz.ErrNotAuthorized
+	}
+
 	mode := in.Mode.String()
 	modeDetails := "Applied configuration with a reboot"
 	modeErr := ""
@@ -294,6 +320,8 @@ func (s *Server) ApplyConfiguration(ctx context.Context, in *machine.ApplyConfig
 		if err := s.Controller.Runtime().SetPersistedConfig(cfgProvider); err != nil {
 			return nil, err
 		}
+
+		s.applyConfigRebooted.Store(true)
 
 		go func() {
 			if err := s.Controller.Run(context.Background(), runtime.SequenceReboot, nil, runtime.WithTakeover()); err != nil {
