@@ -149,6 +149,86 @@ func Test_ServeBackground(t *testing.T) {
 	require.NoError(t, m.ClearAll(false))
 }
 
+// TestRunnerRestart ensures a [dns.Runner] can be started, stopped, and
+// started again. Previously the runner reused a single dns.Server across
+// restarts, so the second start failed permanently with
+// "dns: server already started", leaving nothing bound to the listen address.
+func TestRunnerRestart(t *testing.T) {
+	t.Cleanup(func() { goleak.VerifyNone(t) })
+
+	newOpts := func() (dns.RunnerOptions, error) {
+		pc, err := dns.NewUDPPacketConn("udp", "127.0.0.1:0", nil)
+		if err != nil {
+			return dns.RunnerOptions{}, err
+		}
+
+		return dns.RunnerOptions{
+			PacketConn: pc,
+			Handler:    dnssrv.HandlerFunc(func(dnssrv.ResponseWriter, *dnssrv.Msg) {}),
+		}, nil
+	}
+
+	runner := dns.NewRunner(newOpts, zaptest.NewLogger(t))
+
+	for i := range 2 {
+		ctx, cancel := context.WithCancel(t.Context())
+
+		errCh := make(chan error, 1)
+
+		go func() { errCh <- runner.Serve(ctx) }()
+
+		// Give the server time to come up, then assert below that it did not
+		// exit early (e.g. returning "already started" on the second start).
+		time.Sleep(200 * time.Millisecond)
+
+		select {
+		case err := <-errCh:
+			t.Fatalf("runner exited early on start %d: %v", i, err)
+		default:
+		}
+
+		cancel()
+
+		select {
+		case err := <-errCh:
+			if err != nil && strings.Contains(err.Error(), "already started") {
+				t.Fatalf("runner restart failed on start %d: %v", i, err)
+			}
+		case <-time.After(5 * time.Second):
+			t.Fatalf("timeout waiting for runner to stop on start %d", i)
+		}
+	}
+}
+
+// TestRunAllReportsBindFailure ensures that a socket bind failure is reported
+// synchronously through RunAll (wrapped in [dns.ErrCreatingRunner]) rather than
+// being deferred to the supervisor. This keeps the caller able to surface the
+// error, ignore IPv6-only failures, or retry, as it did before the runner was
+// changed to rebuild its listeners on restart.
+func TestRunAllReportsBindFailure(t *testing.T) {
+	t.Cleanup(func() { goleak.VerifyNone(t) })
+
+	m := dns.NewManager(&testReader{}, func(e suture.Event) { t.Log("dns-runners event:", e) }, zaptest.NewLogger(t))
+
+	m.ServeBackground(t.Context())
+
+	var gotErr error
+
+	for _, err := range m.RunAll(slices.Values([]dns.AddressPair{
+		// 192.0.2.0/24 (TEST-NET-1) is not assigned to any interface, so the
+		// bind fails with "cannot assign requested address".
+		{Network: "udp", Addr: netip.MustParseAddrPort("192.0.2.1:10700")},
+	}), false) {
+		if err != nil {
+			gotErr = err
+		}
+	}
+
+	require.ErrorIs(t, gotErr, dns.ErrCreatingRunner)
+
+	require.NoError(t, m.ClearAll(false))
+}
+
 func newManager(t *testing.T, nameservers ...string) func() {
 	m := dns.NewManager(
 		&testReader{},
