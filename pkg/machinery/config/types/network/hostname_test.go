@@ -137,6 +137,15 @@ func TestHostnameConfigValidate(t *testing.T) {
 				return cfg
 			},
 		},
+		{
+			name: "valid 3",
+			cfg: func() *network.HostnameConfigV1Alpha1 {
+				cfg := network.NewHostnameConfigV1Alpha1()
+				cfg.ConfigAuto = new(nethelpers.AutoHostnameKindOff)
+
+				return cfg
+			},
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()

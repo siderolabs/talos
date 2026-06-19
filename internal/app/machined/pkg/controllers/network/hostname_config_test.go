@@ -200,6 +200,21 @@ func (suite *HostnameConfigSuite) TestMachineConfigurationDefaultStable() {
 	}, rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
+func (suite *HostnameConfigSuite) TestMachineConfigurationDefaultOff() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.HostnameConfigController{}))
+
+	hostnameCfg := networkcfg.NewHostnameConfigV1Alpha1()
+	hostnameCfg.ConfigAuto = pointer.To(nethelpers.AutoHostnameKindOff)
+
+	ctr, err := container.New(hostnameCfg)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	ctest.AssertNoResource[*network.HostnameSpec](suite, "default/hostname", rtestutils.WithNamespace(network.ConfigNamespaceName))
+}
+
 func TestHostnameConfigSuite(t *testing.T) {
 	t.Parallel()
 
