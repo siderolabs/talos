@@ -403,7 +403,29 @@ FROM scratch AS microsoft-db-keys
 COPY --from=microsoft-secureboot-database /DB/Certificates/MicCor*.der /db/
 COPY --from=microsoft-secureboot-database /DB/Certificates/microsoft*.der /db/
 
+# The base target provides a container that can be used to build all Talos
+# assets.
+
+FROM build-go AS base
+COPY ./cmd ./cmd
+COPY ./pkg ./pkg
+COPY ./internal ./internal
+COPY --link --from=embed / ./
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go list all >/dev/null
+WORKDIR /src/pkg/machinery
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go list all >/dev/null
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go generate -v ./version
+WORKDIR /src
+
+FROM base AS go-mod-tidy
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go mod tidy
+WORKDIR /src/pkg/machinery
+RUN --mount=type=cache,target=/.cache,id=talos/.cache go mod tidy
+WORKDIR /src
+
 FROM --platform=${BUILDPLATFORM} scratch AS generate
+COPY --link --from=go-mod-tidy /src/go.mod /src/go.sum /
+COPY --link --from=go-mod-tidy /src/pkg/machinery/go.mod /src/pkg/machinery/go.sum /pkg/machinery/
 COPY --from=proto-format-build /src/api /api/
 COPY --from=generate-build-clean /api/resource/definitions/ /api/resource/definitions/
 COPY --from=generate-build-clean /api/machinery /pkg/machinery/
@@ -420,20 +442,6 @@ COPY --from=embed-abbrev / /
 COPY --from=pkg-ca-certificates /etc/ssl/certs/ca-certificates /internal/app/machined/pkg/controllers/secrets/data/
 COPY --from=microsoft-key-keys / /internal/pkg/secureboot/database/certs/
 COPY --from=microsoft-db-keys / /internal/pkg/secureboot/database/certs/
-
-# The base target provides a container that can be used to build all Talos
-# assets.
-
-FROM build-go AS base
-COPY ./cmd ./cmd
-COPY ./pkg ./pkg
-COPY ./internal ./internal
-COPY --from=embed / ./
-RUN --mount=type=cache,target=/.cache,id=talos/.cache go list all >/dev/null
-WORKDIR /src/pkg/machinery
-RUN --mount=type=cache,target=/.cache,id=talos/.cache go list all >/dev/null
-RUN --mount=type=cache,target=/.cache,id=talos/.cache go generate -v ./version
-WORKDIR /src
 
 # The vulncheck target runs the vulnerability check tool.
 
