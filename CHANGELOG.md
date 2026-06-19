@@ -1,3 +1,199 @@
+## [Talos 1.12.9](https://github.com/siderolabs/talos/releases/tag/v1.12.9) (2026-06-19)
+
+Welcome to the v1.12.9 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.18.35
+runc: 1.3.6
+CoreDNS: 1.14.2
+containerd: 2.2.5
+
+Talos is built with Go 1.25.11.
+
+
+### Contributors
+
+* Maja Bojarska
+* Andrey Smirnov
+* Noel Georgi
+* Mateusz Urbanek
+* appkins
+
+### Changes
+<details><summary>17 commits</summary>
+<p>
+
+* [`cba53b450`](https://github.com/siderolabs/talos/commit/cba53b45005715a242c8afa58f648ffdf2523c22) fix: revert coredns to 1.14.2
+* [`70a9d61d1`](https://github.com/siderolabs/talos/commit/70a9d61d10b41111dac499ff0c57f0cd96158af0) fix: bump number of open files for etcd
+* [`045146c1d`](https://github.com/siderolabs/talos/commit/045146c1d74774f10aabe940190d27d143d04f99) fix: guard apply config API call
+* [`6593d3b00`](https://github.com/siderolabs/talos/commit/6593d3b006df713984e2b52d8da10bad86ea41f3) fix: honor FailurePauseTimeout when pausing before reboot
+* [`e7eeb320f`](https://github.com/siderolabs/talos/commit/e7eeb320f4bd835a1499210eee964b02be762788) feat: verify go.mod tidiness in generate target
+* [`cd429e9e4`](https://github.com/siderolabs/talos/commit/cd429e9e4ad1d2466e22955b3e18499dd773496c) fix: relax LUKS header validation
+* [`4c288caf2`](https://github.com/siderolabs/talos/commit/4c288caf2de1db7f84bba0539ca5ed7d6ecb9142) fix: mark more resources as sensitive
+* [`3c576021e`](https://github.com/siderolabs/talos/commit/3c576021e49f0adf2bcda097c722e20cafec3b01) fix: etcd client leak in the (legacy) Upgrade API
+* [`e002e470c`](https://github.com/siderolabs/talos/commit/e002e470ccfee8a4919e9f2daa92b9e2a49bf8ca) fix: recreate dns server and listeners on host DNS runner restart
+* [`9b12c5178`](https://github.com/siderolabs/talos/commit/9b12c51781ab11392a852b6fef2bf07c52a3123b) fix: bring in a change to BCM2712_MIP
+* [`dd4926f31`](https://github.com/siderolabs/talos/commit/dd4926f317f22494a615e51fc768c9c044d98b53) fix: touch rootfs files with SOURCE_DATE_EPOCH
+* [`0e9ef3d13`](https://github.com/siderolabs/talos/commit/0e9ef3d13987ebf02923fa5f10ce66c573446b1c) feat: enforce strict QoS ordering in OOM victim selection
+* [`d040a7d84`](https://github.com/siderolabs/talos/commit/d040a7d846e7f963e6aad02592f9a98e245aa612) fix: relax hostname config validation
+* [`b63a69bc6`](https://github.com/siderolabs/talos/commit/b63a69bc6fabd295b51cc7ee409cf524f2d18a7c) fix: memorymodules resource reporting
+* [`0263a99dd`](https://github.com/siderolabs/talos/commit/0263a99ddcdc063569b7ab9f291017f7e3cb1110) chore: bump containerd to 2.2.5 (cve patches)
+* [`26a2889ef`](https://github.com/siderolabs/talos/commit/26a2889ef50cef5633bbe1540c49b4439ef01217) chore: bump vuln go pkgs, go mod tidy
+* [`19daa72a6`](https://github.com/siderolabs/talos/commit/19daa72a654894f73ba87031bb94d19d095b2d5c) chore: bump pkgs and tools
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>11 commits</summary>
+<p>
+
+* [`0516a46`](https://github.com/siderolabs/pkgs/commit/0516a46b4f2333f5e25aea37e1e0cf61b5aeb320) chore: bump containerd to 2.2.5 (cve patches)
+* [`8ce6127`](https://github.com/siderolabs/pkgs/commit/8ce61275c36bd4d2d1dd8dc15d94e2e9f9d9d0b8) chore: bump tools
+* [`becfefa`](https://github.com/siderolabs/pkgs/commit/becfefa0de7595fc30d492ab7157a6b4580d5001) feat: bump OpenSSL to 3.6.3
+* [`298b394`](https://github.com/siderolabs/pkgs/commit/298b39439cb97537baf9c96108dde4e452738748) feat: bump kernel to 6.18.35
+* [`435044b`](https://github.com/siderolabs/pkgs/commit/435044b2bf7e910f1e127f597aace9a7559b159e) fix: avoid page_table_check BUG on time namespace VVAR page
+* [`a909a84`](https://github.com/siderolabs/pkgs/commit/a909a84a51f4565bf677725414412911a5110e7f) fix: disable PAGE_TABLE_CHECK_ENFORCED in kernel config
+* [`af985d6`](https://github.com/siderolabs/pkgs/commit/af985d634e6534f4b1e458ce8ce5fe279843c1b1) fix: enable CONFIG_BCM2712_MIP as built-in in arm64 kernel config
+* [`de0e5b9`](https://github.com/siderolabs/pkgs/commit/de0e5b9970128a13b41de3014bc638637ed2f51e) feat: bump kernel to 6.18.34
+* [`1e6b222`](https://github.com/siderolabs/pkgs/commit/1e6b22205e88c4778e6819550ae95cebc25d6a41) feat: pre-generate drbd patches using spatch out of tree
+* [`283a3e6`](https://github.com/siderolabs/pkgs/commit/283a3e612627081bc80c347b365ab06376137e27) feat: update Linux to 6.18.33
+* [`56397e0`](https://github.com/siderolabs/pkgs/commit/56397e0aa89751ffbe261bebff1ffa996baae0fe) feat: bump runc to 1.3.6
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>3 commits</summary>
+<p>
+
+* [`3841297`](https://github.com/siderolabs/tools/commit/3841297fd023ffafa873f83cdd2f2f2250016139) chore: bump openssl, libcap, fakeroot; fix texinfo
+* [`4ff7ad2`](https://github.com/siderolabs/tools/commit/4ff7ad26f93e34e9832dc76a631bc2cb8fb2488c) chore: make rekres
+* [`2cc5cac`](https://github.com/siderolabs/tools/commit/2cc5caca55fd2e4bcd74b9733eeeb2733a58f282) chore: bump Go to 1.25.11
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/aws/aws-sdk-go-v2**             v1.39.6 **_new_**
+* **github.com/containerd/containerd/v2**      v2.2.4 -> v2.2.5
+* **github.com/containerd/platforms**          v1.0.0-rc.1 -> v1.0.0-rc.2
+* **github.com/klauspost/compress**            v1.18.3 -> v1.18.5
+* **github.com/opencontainers/runtime-spec**   v1.2.1 -> v1.3.0
+* **github.com/siderolabs/go-blockdevice/v2**  v2.0.28 -> v2.0.30
+* **github.com/siderolabs/pkgs**               v1.12.0-75-g153574b -> v1.12.0-86-g0516a46
+* **github.com/siderolabs/tools**              v1.12.0-12-gcbb843d -> v1.12.0-15-g3841297
+* **golang.org/x/net**                         v0.54.0 -> v0.56.0
+* **golang.org/x/sync**                        v0.20.0 -> v0.21.0
+* **golang.org/x/sys**                         v0.44.0 -> v0.46.0
+* **golang.org/x/term**                        v0.43.0 -> v0.44.0
+* **golang.org/x/text**                        v0.37.0 -> v0.38.0
+
+Previous release can be found at [v1.12.8](https://github.com/siderolabs/talos/releases/tag/v1.12.8)
+
+
+
+
+
+## [Talos 1.12.9](https://github.com/siderolabs/talos/releases/tag/v1.12.9) (2026-06-19)
+
+Welcome to the v1.12.9 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.18.35
+runc: 1.3.6
+containerd: 2.2.5
+
+Talos is built with Go 1.25.11.
+
+
+### Contributors
+
+* Maja Bojarska
+* Andrey Smirnov
+* Noel Georgi
+* Mateusz Urbanek
+* appkins
+
+### Changes
+<details><summary>16 commits</summary>
+<p>
+
+* [`70a9d61d1`](https://github.com/siderolabs/talos/commit/70a9d61d10b41111dac499ff0c57f0cd96158af0) fix: bump number of open files for etcd
+* [`045146c1d`](https://github.com/siderolabs/talos/commit/045146c1d74774f10aabe940190d27d143d04f99) fix: guard apply config API call
+* [`6593d3b00`](https://github.com/siderolabs/talos/commit/6593d3b006df713984e2b52d8da10bad86ea41f3) fix: honor FailurePauseTimeout when pausing before reboot
+* [`e7eeb320f`](https://github.com/siderolabs/talos/commit/e7eeb320f4bd835a1499210eee964b02be762788) feat: verify go.mod tidiness in generate target
+* [`cd429e9e4`](https://github.com/siderolabs/talos/commit/cd429e9e4ad1d2466e22955b3e18499dd773496c) fix: relax LUKS header validation
+* [`4c288caf2`](https://github.com/siderolabs/talos/commit/4c288caf2de1db7f84bba0539ca5ed7d6ecb9142) fix: mark more resources as sensitive
+* [`3c576021e`](https://github.com/siderolabs/talos/commit/3c576021e49f0adf2bcda097c722e20cafec3b01) fix: etcd client leak in the (legacy) Upgrade API
+* [`e002e470c`](https://github.com/siderolabs/talos/commit/e002e470ccfee8a4919e9f2daa92b9e2a49bf8ca) fix: recreate dns server and listeners on host DNS runner restart
+* [`9b12c5178`](https://github.com/siderolabs/talos/commit/9b12c51781ab11392a852b6fef2bf07c52a3123b) fix: bring in a change to BCM2712_MIP
+* [`dd4926f31`](https://github.com/siderolabs/talos/commit/dd4926f317f22494a615e51fc768c9c044d98b53) fix: touch rootfs files with SOURCE_DATE_EPOCH
+* [`0e9ef3d13`](https://github.com/siderolabs/talos/commit/0e9ef3d13987ebf02923fa5f10ce66c573446b1c) feat: enforce strict QoS ordering in OOM victim selection
+* [`d040a7d84`](https://github.com/siderolabs/talos/commit/d040a7d846e7f963e6aad02592f9a98e245aa612) fix: relax hostname config validation
+* [`b63a69bc6`](https://github.com/siderolabs/talos/commit/b63a69bc6fabd295b51cc7ee409cf524f2d18a7c) fix: memorymodules resource reporting
+* [`0263a99dd`](https://github.com/siderolabs/talos/commit/0263a99ddcdc063569b7ab9f291017f7e3cb1110) chore: bump containerd to 2.2.5 (cve patches)
+* [`26a2889ef`](https://github.com/siderolabs/talos/commit/26a2889ef50cef5633bbe1540c49b4439ef01217) chore: bump vuln go pkgs, go mod tidy
+* [`19daa72a6`](https://github.com/siderolabs/talos/commit/19daa72a654894f73ba87031bb94d19d095b2d5c) chore: bump pkgs and tools
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>11 commits</summary>
+<p>
+
+* [`0516a46`](https://github.com/siderolabs/pkgs/commit/0516a46b4f2333f5e25aea37e1e0cf61b5aeb320) chore: bump containerd to 2.2.5 (cve patches)
+* [`8ce6127`](https://github.com/siderolabs/pkgs/commit/8ce61275c36bd4d2d1dd8dc15d94e2e9f9d9d0b8) chore: bump tools
+* [`becfefa`](https://github.com/siderolabs/pkgs/commit/becfefa0de7595fc30d492ab7157a6b4580d5001) feat: bump OpenSSL to 3.6.3
+* [`298b394`](https://github.com/siderolabs/pkgs/commit/298b39439cb97537baf9c96108dde4e452738748) feat: bump kernel to 6.18.35
+* [`435044b`](https://github.com/siderolabs/pkgs/commit/435044b2bf7e910f1e127f597aace9a7559b159e) fix: avoid page_table_check BUG on time namespace VVAR page
+* [`a909a84`](https://github.com/siderolabs/pkgs/commit/a909a84a51f4565bf677725414412911a5110e7f) fix: disable PAGE_TABLE_CHECK_ENFORCED in kernel config
+* [`af985d6`](https://github.com/siderolabs/pkgs/commit/af985d634e6534f4b1e458ce8ce5fe279843c1b1) fix: enable CONFIG_BCM2712_MIP as built-in in arm64 kernel config
+* [`de0e5b9`](https://github.com/siderolabs/pkgs/commit/de0e5b9970128a13b41de3014bc638637ed2f51e) feat: bump kernel to 6.18.34
+* [`1e6b222`](https://github.com/siderolabs/pkgs/commit/1e6b22205e88c4778e6819550ae95cebc25d6a41) feat: pre-generate drbd patches using spatch out of tree
+* [`283a3e6`](https://github.com/siderolabs/pkgs/commit/283a3e612627081bc80c347b365ab06376137e27) feat: update Linux to 6.18.33
+* [`56397e0`](https://github.com/siderolabs/pkgs/commit/56397e0aa89751ffbe261bebff1ffa996baae0fe) feat: bump runc to 1.3.6
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>3 commits</summary>
+<p>
+
+* [`3841297`](https://github.com/siderolabs/tools/commit/3841297fd023ffafa873f83cdd2f2f2250016139) chore: bump openssl, libcap, fakeroot; fix texinfo
+* [`4ff7ad2`](https://github.com/siderolabs/tools/commit/4ff7ad26f93e34e9832dc76a631bc2cb8fb2488c) chore: make rekres
+* [`2cc5cac`](https://github.com/siderolabs/tools/commit/2cc5caca55fd2e4bcd74b9733eeeb2733a58f282) chore: bump Go to 1.25.11
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/aws/aws-sdk-go-v2**             v1.39.6 **_new_**
+* **github.com/containerd/containerd/v2**      v2.2.4 -> v2.2.5
+* **github.com/containerd/platforms**          v1.0.0-rc.1 -> v1.0.0-rc.2
+* **github.com/klauspost/compress**            v1.18.3 -> v1.18.5
+* **github.com/opencontainers/runtime-spec**   v1.2.1 -> v1.3.0
+* **github.com/siderolabs/go-blockdevice/v2**  v2.0.28 -> v2.0.30
+* **github.com/siderolabs/pkgs**               v1.12.0-75-g153574b -> v1.12.0-86-g0516a46
+* **github.com/siderolabs/tools**              v1.12.0-12-gcbb843d -> v1.12.0-15-g3841297
+* **golang.org/x/net**                         v0.54.0 -> v0.56.0
+* **golang.org/x/sync**                        v0.20.0 -> v0.21.0
+* **golang.org/x/sys**                         v0.44.0 -> v0.46.0
+* **golang.org/x/term**                        v0.43.0 -> v0.44.0
+* **golang.org/x/text**                        v0.37.0 -> v0.38.0
+
+Previous release can be found at [v1.12.8](https://github.com/siderolabs/talos/releases/tag/v1.12.8)
+
 ## [Talos 1.12.8](https://github.com/siderolabs/talos/releases/tag/v1.12.8) (2026-05-22)
 
 Welcome to the v1.12.8 release of Talos!
