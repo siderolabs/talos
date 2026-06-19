@@ -86,7 +86,7 @@ func (suite *SystemInfoSuite) TestPopulateSystemInformation() {
 	}
 
 	memorySpecs := map[string]hardware.MemoryModuleSpec{
-		"P1-DIMMA1": {
+		"P1-DIMMA1-P0_Node0_Channel0_Dimm0": {
 			Size:          4096,
 			DeviceLocator: "P1-DIMMA1",
 			BankLocator:   "P0_Node0_Channel0_Dimm0",
@@ -96,7 +96,7 @@ func (suite *SystemInfoSuite) TestPopulateSystemInformation() {
 			AssetTag:      "Dimm0_AssetTag",
 			ProductName:   "18KSF51272PZ-1G4K",
 		},
-		"P1-DIMMA2": {
+		"P1-DIMMA2-P0_Node0_Channel0_Dimm1": {
 			Size:          4096,
 			DeviceLocator: "P1-DIMMA2",
 			BankLocator:   "P0_Node0_Channel0_Dimm1",
@@ -121,6 +121,59 @@ func (suite *SystemInfoSuite) TestPopulateSystemInformation() {
 	for k, v := range memorySpecs {
 		ctest.AssertResource(suite, k, func(r *hardware.MemoryModule, assertions *assert.Assertions) {
 			assertions.Equal(v, *r.TypedSpec())
+		})
+	}
+}
+
+// TestPopulateMemoryModulesSharedDeviceLocator verifies that memory modules are
+// reported individually even when several share the same device locator (some
+// boards report multiple `DIMM 0` modules on different banks).
+func (suite *SystemInfoSuite) TestPopulateMemoryModulesSharedDeviceLocator() {
+	stream, err := os.Open("testdata/MINISFORUM-UM790PRO.dmi")
+	suite.Require().NoError(err)
+
+	suite.T().Cleanup(func() { suite.NoError(stream.Close()) })
+
+	version := smbios.Version{Major: 3, Minor: 3, Revision: 0} // dummy version
+	s, err := smbios.Decode(stream, version)
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(
+		suite.runtime.RegisterController(
+			&hardwarectrl.SystemInfoController{
+				SMBIOS: s,
+			},
+		),
+	)
+
+	suite.startRuntime()
+
+	suite.Require().NoError(suite.state.Create(suite.ctx, runtime.NewMetaLoaded()))
+
+	memorySpecs := map[string]hardware.MemoryModuleSpec{
+		"DIMM-0-P0-CHANNEL-A": {
+			Size:          32768,
+			DeviceLocator: "DIMM 0",
+			BankLocator:   "P0 CHANNEL A",
+			Speed:         5600,
+			Manufacturer:  "Micron Technology",
+			SerialNumber:  "EB159FFA",
+			ProductName:   "CT32G56C46S5.M16B2",
+		},
+		"DIMM-0-P0-CHANNEL-B": {
+			Size:          32768,
+			DeviceLocator: "DIMM 0",
+			BankLocator:   "P0 CHANNEL B",
+			Speed:         5600,
+			Manufacturer:  "Micron Technology",
+			SerialNumber:  "EB159FD4",
+			ProductName:   "CT32G56C46S5.M16B2",
+		},
+	}
+
+	for k, v := range memorySpecs {
+		ctest.AssertResource(suite, k, func(r *hardware.MemoryModule, asrt *assert.Assertions) {
+			asrt.Equal(v, *r.TypedSpec())
 		})
 	}
 }
