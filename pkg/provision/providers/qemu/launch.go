@@ -343,6 +343,12 @@ func launchVM(config *LaunchConfig) error {
 		)
 	}
 
+	// sdStubExtraCmdline is computed per-launch: the base value lives on the
+	// shared *LaunchConfig, but the per-boot config URL must NOT be appended
+	// back onto it, otherwise every relaunch (the for{} loop around launchVM)
+	// accumulates another " talos.config=..." into the persistent field.
+	sdStubExtraCmdline := config.sdStubExtraCmdline
+
 	if !diskBootable || !config.BootloaderEnabled {
 		// if the disk is bootable, and we were forced to disable disk bootloader,
 		// we need to skip ISO/USB boot, as it will fall back to boot from disk
@@ -368,7 +374,7 @@ func launchVM(config *LaunchConfig) error {
 				"-kernel", config.UKIPath,
 				"-append", config.KernelArgs,
 			)
-			config.sdStubExtraCmdline += config.sdStubExtraCmdlineConfig
+			sdStubExtraCmdline += config.sdStubExtraCmdlineConfig
 		case config.KernelImagePath != "":
 			args = append(
 				args,
@@ -376,14 +382,14 @@ func launchVM(config *LaunchConfig) error {
 				"-initrd", config.InitrdPath,
 				"-append", config.KernelArgs,
 			)
-			config.sdStubExtraCmdline += config.sdStubExtraCmdlineConfig
+			sdStubExtraCmdline += config.sdStubExtraCmdlineConfig
 		}
 	}
 
 	if !config.SkipInjectingExtraCmdline {
 		args = append(
 			args,
-			"-smbios", fmt.Sprintf("type=11,value=%s=%s", constants.SDStubCmdlineExtraOEMVar, config.sdStubExtraCmdline),
+			"-smbios", fmt.Sprintf("type=11,value=%s=%s", constants.SDStubCmdlineExtraOEMVar, sdStubExtraCmdline),
 		)
 	}
 
