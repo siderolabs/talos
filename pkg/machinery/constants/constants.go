@@ -1332,6 +1332,12 @@ const (
 		{Besteffort: 1.0, Burstable: 0.5, Guaranteed: 0.0, Podruntime: 0.0, System: 0.0}[class] *
 		   double(memory_current.orValue(0u))`
 
+	// DefaultOOMStrictCgroupClassOrdering is the default value for whether to strictly order cgroups by the OOMCgroupRankingExpression when selecting OOM victims.
+	DefaultOOMStrictCgroupClassOrdering = true
+
+	// DefaultOOMSampleInterval is the default interval for sampling OOM-related metrics and evaluating OOM conditions.
+	DefaultOOMSampleInterval = 500 * time.Millisecond
+
 	// OOMActionLogKeep is the number of OOM action log entries to keep in memory.
 	OOMActionLogKeep = 50
 

@@ -267,6 +267,64 @@ func RankCgroups(logger *zap.Logger, root string, scoringExpr cel.Expression) ma
 	return ranking
 }
 
+// SelectVictim picks the cgroup to OOM-kill. With strictClassOrdering it picks the
+// lowest-importance QoS class with any eligible cgroup (score > 0), then the highest-scoring
+// cgroup within that class; otherwise it picks the highest-scoring cgroup regardless of class.
+func SelectVictim(ranking map[RankedCgroup]float64, strictClassOrdering bool) (RankedCgroup, float64, bool) {
+	if !strictClassOrdering {
+		return selectHighestScore(ranking)
+	}
+
+	const noClass = runtime.QoSCgroupClass(math.MaxInt)
+
+	minClass := noClass
+
+	for cgroup, score := range ranking {
+		if score > 0 && cgroup.Class < minClass {
+			minClass = cgroup.Class
+		}
+	}
+
+	if minClass == noClass {
+		return RankedCgroup{}, 0, false
+	}
+
+	var (
+		maxScore = math.Inf(-1)
+		victim   RankedCgroup
+	)
+
+	for cgroup, score := range ranking {
+		if cgroup.Class == minClass && score > maxScore {
+			maxScore = score
+			victim = cgroup
+		}
+	}
+
+	return victim, maxScore, true
+}
+
+// selectHighestScore picks the highest-scoring cgroup regardless of QoS class.
+func selectHighestScore(ranking map[RankedCgroup]float64) (RankedCgroup, float64, bool) {
+	if len(ranking) == 0 {
+		return RankedCgroup{}, 0, false
+	}
+
+	var (
+		maxScore = math.Inf(-1)
+		victim   RankedCgroup
+	)
+
+	for cgroup, score := range ranking {
+		if score > maxScore {
+			maxScore = score
+			victim = cgroup
+		}
+	}
+
+	return victim, maxScore, true
+}
+
 // ListCgroupProcs returns a list of process IDs for a given cgroup path.
 func ListCgroupProcs(cgroupPath string) []int {
 	processes := []int{}

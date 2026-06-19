@@ -378,7 +378,7 @@ func (container *Container) RunDefaultDHCPOperators() bool {
 func (container *Container) OOMConfig() config.OOMConfig {
 	matching := findMatchingDocs[config.OOMConfig](container.documents)
 	if len(matching) == 0 {
-		return nil
+		return config.DefaultOOMConfig{}
 	}
 
 	return matching[0]

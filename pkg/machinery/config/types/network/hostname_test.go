@@ -141,7 +141,7 @@ func TestHostnameConfigValidate(t *testing.T) {
 			name: "valid 3",
 			cfg: func() *network.HostnameConfigV1Alpha1 {
 				cfg := network.NewHostnameConfigV1Alpha1()
-				cfg.ConfigAuto = new(nethelpers.AutoHostnameKindOff)
+				cfg.ConfigAuto = pointer.To(nethelpers.AutoHostnameKindOff)
 
 				return cfg
 			},

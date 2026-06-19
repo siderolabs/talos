@@ -96,6 +96,13 @@ func (OOMV1Alpha1) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "This expression defines how to rank cgroups for OOM handler." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
+				Name:        "strictCgroupClassOrdering",
+				Type:        "bool",
+				Note:        "",
+				Description: "Whether to enforce strict QoS class ordering when selecting an OOM victim.\n\nWhen enabled (the default), cgroups in the lowest-importance QoS class are\nkilled first, and the ranking score only breaks ties within a class.\nWhen disabled, the highest-scoring cgroup is killed regardless of class.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Whether to enforce strict QoS class ordering when selecting an OOM victim." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "sampleInterval",
 				Type:        "Duration",
 				Note:        "",

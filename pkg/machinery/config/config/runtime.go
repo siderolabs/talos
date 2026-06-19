@@ -8,9 +8,9 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/siderolabs/gen/optional"
-
 	"github.com/siderolabs/talos/pkg/machinery/cel"
+	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // RuntimeConfig defines the interface to access Talos runtime configuration.
@@ -53,7 +53,60 @@ func (w runtimeConfigWrapper) WatchdogTimer() WatchdogTimerConfig {
 
 // OOMConfig defines the interface to access OOM configuration.
 type OOMConfig interface {
-	TriggerExpression() optional.Optional[cel.Expression]
-	CgroupRankingExpression() optional.Optional[cel.Expression]
-	SampleInterval() optional.Optional[time.Duration]
+	TriggerExpression() cel.Expression
+	CgroupRankingExpression() cel.Expression
+	StrictCgroupClassOrdering() bool
+	SampleInterval() time.Duration
+}
+
+// DefaultOOMConfig provides default OOM configuration values.
+type DefaultOOMConfig struct{}
+
+// TriggerExpression implements OOMConfig interface, returning the default OOM trigger expression.
+func (DefaultOOMConfig) TriggerExpression() cel.Expression {
+	return cel.MustExpression(
+		cel.ParseBooleanExpression(
+			constants.DefaultOOMTriggerExpression,
+			celenv.OOMTrigger(),
+		),
+	)
+}
+
+// CgroupRankingExpression implements OOMConfig interface, returning the default cgroup ranking expression.
+//
+// Sort processes by the following hierarchy:
+// First, sort by high-level group:
+//
+//	kubepods (workloads)
+//	podruntime (CRI, kubelet, etcd)
+//	runtime (core containerd, system services)
+//	init
+//
+// Second, inside kubepods we have QoS groups:
+//
+//	first priority: BestEffort
+//	second: Burstable
+//	last: Guaranteed
+//
+// Third, look into other attributes, e.g. OOM score.
+// Fourth, look into memory max - memory current (if memory max is set).
+//
+// Sort to make the most prioritized to OOM-kill cgroup to the first place.
+func (DefaultOOMConfig) CgroupRankingExpression() cel.Expression {
+	return cel.MustExpression(
+		cel.ParseDoubleExpression(
+			constants.DefaultOOMCgroupRankingExpression,
+			celenv.OOMCgroupScoring(),
+		),
+	)
+}
+
+// StrictCgroupClassOrdering implements OOMConfig interface, returning the default value for strict cgroup class ordering.
+func (DefaultOOMConfig) StrictCgroupClassOrdering() bool {
+	return constants.DefaultOOMStrictCgroupClassOrdering
+}
+
+// SampleInterval implements OOMConfig interface, returning the default OOM sample interval.
+func (DefaultOOMConfig) SampleInterval() time.Duration {
+	return constants.DefaultOOMSampleInterval
 }
