@@ -34,14 +34,14 @@ func setupEtcOverlay(etcPath string, upperFSOpts []fsopen.Option, logger *zap.Lo
 	printer := logger.Sugar().Infof
 
 	// Clone the static rootfs /etc as the detached lower layer (squashfs, read-only).
-	lowerFd, err := unix.OpenTree(unix.AT_FDCWD, etcPath, unix.OPEN_TREE_CLONE|unix.OPEN_TREE_CLOEXEC)
+	lowerFd, err := mountv3.OpenTreeClone(etcPath)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to open_tree %q: %w", etcPath, err)
+		return nil, nil, fmt.Errorf("failed to clone lower /etc: %w", err)
 	}
 
-	defer unix.Close(lowerFd) //nolint:errcheck
+	defer lowerFd.Close() //nolint:errcheck
 
-	etcRoot, err := mountv3.NewSecureWritableOverlay([]int{lowerFd}, upperFSOpts, printer)
+	etcRoot, err := mountv3.NewSecureWritableOverlay([]int{lowerFd.Fd()}, upperFSOpts, printer)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to compose writable /etc overlay: %w", err)
 	}
