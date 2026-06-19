@@ -55,6 +55,7 @@ var (
 	helmPath          string
 	kubeStrPath       string
 	provisionerName   string
+	remoteEndpoint    string
 	clusterName       string
 	stateDir          string
 	talosImage        string
@@ -76,11 +77,23 @@ func TestIntegration(t *testing.T) {
 		err         error
 	)
 
-	if provisionerName != "" {
+	// When a remote-provision endpoint is set, reflect cluster state from the remote server instead
+	// of local provisioner state (basic remote-cluster support); otherwise use the named provisioner.
+	factoryName := provisionerName
+
+	var factoryOpts []providers.FactoryOption
+
+	if remoteEndpoint != "" {
+		factoryName = providers.RemoteProviderName
+
+		factoryOpts = append(factoryOpts, providers.WithRemoteEndpoint(remoteEndpoint))
+	}
+
+	if factoryName != "" {
 		// use provisioned cluster state as discovery source
 		ctx := t.Context()
 
-		provisioner, err = providers.Factory(ctx, provisionerName)
+		provisioner, err = providers.Factory(ctx, factoryName, factoryOpts...)
 		if err != nil {
 			t.Error("error initializing provisioner", err)
 		}
@@ -174,6 +187,7 @@ func init() {
 	flag.StringVar(&endpoint, "talos.endpoint", "", "endpoint to use (overrides config)")
 	flag.StringVar(&k8sEndpoint, "talos.k8sendpoint", "", "Kubernetes endpoint to use (overrides kubeconfig)")
 	flag.StringVar(&provisionerName, "talos.provisioner", "", "cluster provisioner to use, if not set cluster state is disabled")
+	flag.StringVar(&remoteEndpoint, "talos.remote-endpoint", "", "host:port of a remote-provision server to reflect cluster state from (for remote clusters); overrides talos.provisioner")
 	flag.StringVar(&stateDir, "talos.state", defaultStateDir, "directory path to store cluster state")
 	flag.StringVar(&clusterName, "talos.name", "talos-default", "the name of the cluster")
 	flag.StringVar(&expectedVersion, "talos.version", version.Tag, "expected Talos version")
