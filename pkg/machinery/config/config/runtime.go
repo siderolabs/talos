@@ -74,6 +74,15 @@ func WrapSysfsConfigList(configs ...SysfsConfig) map[string]string {
 	})
 }
 
+// UnattendedInstallConfig defines the interface to access Talos unattended install configuration.
+type UnattendedInstallConfig interface {
+	UnattendedInstallConfigSignal()
+	InstallerImage() string
+	VolumeSelector() cel.Expression
+	VolumeWipe() bool
+	RebootAfterInstall() *bool
+}
+
 // WatchdogTimerConfig defines the interface to access Talos watchdog timer configuration.
 type WatchdogTimerConfig interface {
 	Device() string

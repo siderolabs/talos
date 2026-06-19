@@ -20,13 +20,6 @@ machine:
                 - rshared
         defaultRuntimeSeccompProfileEnabled: true
         disableManifestsDirectory: true
-    install:
-        disk: /dev/vda
-        extraKernelArgs:
-            - foo=bar
-            - bar=baz
-        wipe: false
-        grubUseUKICmdline: true
     features:
         diskQuotaSupport: true
         kubePrism:
@@ -64,6 +57,14 @@ apiVersion: v1alpha1
 kind: DiscoveryIdentityConfig
 clusterID: 0raF93qnkMvF-FZNuvyGozXNdLiT2FOWSlyBaW4PR-w=
 clusterSecret: pofHbABZq7VXuObsdLdy/bHmz6hlMHZ3p8+6WKrv1ic=
+---
+apiVersion: v1alpha1
+kind: UnattendedInstallConfig
+installer: {}
+provisioning:
+    diskSelector:
+        match: disk.dev_path == "/dev/vda"
+    wipe: false
 ---
 apiVersion: v1alpha1
 kind: ResolverConfig

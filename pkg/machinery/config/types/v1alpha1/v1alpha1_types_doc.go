@@ -131,13 +131,7 @@ func (MachineConfig) Doc() *encoder.Doc {
 			},
 			{},
 			{},
-			{
-				Name:        "install",
-				Type:        "InstallConfig",
-				Note:        "",
-				Description: "Used to provide instructions for installations.\n\nNote that this configuration section gets silently ignored by Talos images that are considered pre-installed.\nTo make sure Talos installs according to the provided configuration, Talos should be booted with ISO or PXE-booted.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Used to provide instructions for installations." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{
 				Name:        "files",
 				Type:        "[]MachineFile",
@@ -218,7 +212,6 @@ func (MachineConfig) Doc() *encoder.Doc {
 	doc.Fields[4].AddExample("Uncomment this to enable SANs.", []string{"10.0.0.10", "172.16.0.10", "192.168.0.10"})
 	doc.Fields[6].AddExample("Kubelet definition example.", machineKubeletExample())
 	doc.Fields[7].AddExample("nginx static pod.", machinePodsExample())
-	doc.Fields[10].AddExample("MachineInstall config usage example.", machineInstallExample())
 	doc.Fields[11].AddExample("MachineFiles usage example.", machineFilesExample())
 	doc.Fields[18].AddExample("", machineFeaturesExample())
 	doc.Fields[20].AddExample("", machineLoggingExample1())
@@ -684,177 +677,6 @@ func (KubeletNodeIPConfig) Doc() *encoder.Doc {
 	}
 
 	doc.AddExample("", kubeletNodeIPExample())
-
-	return doc
-}
-
-func (InstallConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "InstallConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "InstallConfig represents the installation options for preparing a node." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "InstallConfig represents the installation options for preparing a node.\n",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "MachineConfig",
-				FieldName: "install",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "disk",
-				Type:        "string",
-				Note:        "",
-				Description: "The disk used for installations.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The disk used for installations." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "diskSelector",
-				Type:        "InstallDiskSelector",
-				Note:        "",
-				Description: "Look up disk using disk attributes like model, size, serial and others.\nAlways has priority over `disk`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Look up disk using disk attributes like model, size, serial and others." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{},
-			{
-				Name:        "image",
-				Type:        "string",
-				Note:        "",
-				Description: "Allows for supplying the image used to perform the installation.\nImage reference for each Talos release can be found on\n[GitHub releases page](https://github.com/siderolabs/talos/releases).",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Allows for supplying the image used to perform the installation." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{},
-			{},
-			{
-				Name:        "wipe",
-				Type:        "bool",
-				Note:        "",
-				Description: "Indicates if the installation disk should be wiped at installation time.\nDefaults to `true`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Indicates if the installation disk should be wiped at installation time." /* encoder.LineComment */, "" /* encoder.FootComment */},
-				Values: []string{
-					"true",
-					"yes",
-					"false",
-					"no",
-				},
-			},
-			{
-				Name:        "legacyBIOSSupport",
-				Type:        "bool",
-				Note:        "",
-				Description: "Indicates if MBR partition should be marked as bootable (active).\nShould be enabled only for the systems with legacy BIOS that doesn't support GPT partitioning scheme.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Indicates if MBR partition should be marked as bootable (active)." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "grubUseUKICmdline",
-				Type:        "bool",
-				Note:        "",
-				Description: "Indicates if legacy GRUB bootloader should use kernel cmdline from the UKI instead of building it on the host.\nThis changes the way cmdline is managed with GRUB bootloader to be more consistent with UKI/systemd-boot.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Indicates if legacy GRUB bootloader should use kernel cmdline from the UKI instead of building it on the host." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("MachineInstall config usage example.", machineInstallExample())
-
-	doc.Fields[0].AddExample("", "/dev/sda")
-	doc.Fields[0].AddExample("", "/dev/nvme0")
-	doc.Fields[1].AddExample("", machineInstallDiskSelectorExample())
-	doc.Fields[3].AddExample("", "factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:latest")
-
-	return doc
-}
-
-func (InstallDiskSelector) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "InstallDiskSelector",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "InstallDiskSelector represents a disk query parameters for the install disk lookup." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "InstallDiskSelector represents a disk query parameters for the install disk lookup.\n",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "InstallConfig",
-				FieldName: "diskSelector",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "size",
-				Type:        "InstallDiskSizeMatcher",
-				Note:        "",
-				Description: "Disk size.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disk size." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "name",
-				Type:        "string",
-				Note:        "",
-				Description: "Disk name `/sys/block/<dev>/device/name`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disk name `/sys/block/<dev>/device/name`." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "model",
-				Type:        "string",
-				Note:        "",
-				Description: "Disk model `/sys/block/<dev>/device/model`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disk model `/sys/block/<dev>/device/model`." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "serial",
-				Type:        "string",
-				Note:        "",
-				Description: "Disk serial number `/sys/block/<dev>/serial`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disk serial number `/sys/block/<dev>/serial`." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "modalias",
-				Type:        "string",
-				Note:        "",
-				Description: "Disk modalias `/sys/block/<dev>/device/modalias`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disk modalias `/sys/block/<dev>/device/modalias`." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "uuid",
-				Type:        "string",
-				Note:        "",
-				Description: "Disk UUID `/sys/block/<dev>/uuid`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disk UUID `/sys/block/<dev>/uuid`." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "wwid",
-				Type:        "string",
-				Note:        "",
-				Description: "Disk WWID `/sys/block/<dev>/wwid`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disk WWID `/sys/block/<dev>/wwid`." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "type",
-				Type:        "InstallDiskType",
-				Note:        "",
-				Description: "Disk Type.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disk Type." /* encoder.LineComment */, "" /* encoder.FootComment */},
-				Values: []string{
-					"ssd",
-					"hdd",
-					"nvme",
-					"sd",
-				},
-			},
-			{
-				Name:        "busPath",
-				Type:        "string",
-				Note:        "",
-				Description: "Disk bus path.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disk bus path." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", machineInstallDiskSelectorExample())
-
-	doc.Fields[0].AddExample("Select a disk which size is equal to 4GB.", machineInstallDiskSizeMatcherExamples0())
-	doc.Fields[0].AddExample("Select a disk which size is greater than 1TB.", machineInstallDiskSizeMatcherExamples1())
-	doc.Fields[0].AddExample("Select a disk which size is less or equal than 2TB.", machineInstallDiskSizeMatcherExamples2())
-	doc.Fields[8].AddExample("", "/pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0")
-	doc.Fields[8].AddExample("", "/pci0000:00/*")
 
 	return doc
 }
@@ -1404,8 +1226,6 @@ func GetFileDoc() *encoder.FileDoc {
 			ExtraMount{}.Doc(),
 			KubeletConfig{}.Doc(),
 			KubeletNodeIPConfig{}.Doc(),
-			InstallConfig{}.Doc(),
-			InstallDiskSelector{}.Doc(),
 			Endpoint{}.Doc(),
 			ControlPlaneConfig{}.Doc(),
 			EtcdConfig{}.Doc(),

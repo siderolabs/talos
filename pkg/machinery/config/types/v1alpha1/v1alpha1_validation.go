@@ -96,22 +96,20 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 		result = multierror.Append(result, err)
 	}
 
-	if mode.RequiresInstall() {
-		if c.MachineConfig.MachineInstall == nil {
-			result = multierror.Append(result, fmt.Errorf("install instructions are required in %q mode", mode))
-		} else {
-			matcher, err := c.MachineConfig.MachineInstall.DiskMatchExpression()
-			if err != nil {
-				result = multierror.Append(result, fmt.Errorf("install disk selector is invalid: %w", err))
-			}
+	// .machine.install is deprecated in favor of the UnattendedInstallConfig multi-document config,
+	// so it is no longer required. When present, it is still validated for backwards compatibility.
+	if mode.RequiresInstall() && c.MachineConfig.MachineInstall != nil {
+		matcher, err := c.MachineConfig.MachineInstall.DiskMatchExpression()
+		if err != nil {
+			result = multierror.Append(result, fmt.Errorf("install disk selector is invalid: %w", err))
+		}
 
-			if c.MachineConfig.MachineInstall.InstallDisk == "" && matcher == nil {
-				result = multierror.Append(result, errors.New("either install disk or diskSelector should be defined"))
-			}
+		if c.MachineConfig.MachineInstall.InstallDisk == "" && matcher == nil {
+			result = multierror.Append(result, errors.New("either install disk or diskSelector should be defined"))
+		}
 
-			if len(c.MachineConfig.MachineInstall.InstallExtraKernelArgs) > 0 && c.MachineConfig.MachineInstall.GrubUseUKICmdline() {
-				result = multierror.Append(result, errors.New("install.extraKernelArgs and install.grubUseUKICmdline can't be used together"))
-			}
+		if len(c.MachineConfig.MachineInstall.InstallExtraKernelArgs) > 0 && c.MachineConfig.MachineInstall.GrubUseUKICmdline() {
+			result = multierror.Append(result, errors.New("install.extraKernelArgs and install.grubUseUKICmdline can't be used together"))
 		}
 	}
 

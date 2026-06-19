@@ -190,6 +190,7 @@ talosctl cluster create dev [flags]
       --skip-injecting-extra-cmdline             skip injecting extra kernel cmdline parameters via EFI vars through bootloader
       --skip-k8s-node-readiness-check            skip k8s node readiness checks
       --skip-kubeconfig                          skip merging kubeconfig from the created cluster
+      --skip-unattended-install-config           skip generating UnattendedInstallConfig document
       --talos-version string                     the desired Talos version to generate config for (default "latest")
       --talosconfig string                       The location to save the generated Talos configuration file to. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
       --uki-path string                          the UKI image path to use for the initial boot
@@ -408,6 +409,7 @@ talosctl cluster create dev [flags]
       --skip-injecting-extra-cmdline             skip injecting extra kernel cmdline parameters via EFI vars through bootloader
       --skip-k8s-node-readiness-check            skip k8s node readiness checks
       --skip-kubeconfig                          skip merging kubeconfig from the created cluster
+      --skip-unattended-install-config           skip generating UnattendedInstallConfig document
       --talos-version string                     the desired Talos version to generate config for (default "latest")
       --talosconfig string                       The location to save the generated Talos configuration file to. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
       --uki-path string                          the UKI image path to use for the initial boot

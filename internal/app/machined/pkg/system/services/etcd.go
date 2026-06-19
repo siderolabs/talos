@@ -55,6 +55,7 @@ import (
 	etcdresource "github.com/siderolabs/talos/pkg/machinery/resources/etcd"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	timeresource "github.com/siderolabs/talos/pkg/machinery/resources/time"
 )
 
@@ -698,6 +699,13 @@ func IsDirEmpty(name string) (bool, error) {
 //
 // Current instance of etcd (not joined yet) is stopped, and new instance is started in bootstrap mode.
 func BootstrapEtcd(ctx context.Context, r runtime.Runtime, req *machineapi.BootstrapRequest) error {
+	// Reject bootstrap if an unattended install is in progress.
+	if status, err := safe.ReaderGetByID[*runtimeres.UnattendedInstallStatus](
+		ctx, r.State().V1Alpha2().Resources(), runtimeres.UnattendedInstallStatusID,
+	); err == nil && status.TypedSpec().Phase != runtimeres.UnattendedInstallPhaseInstalled {
+		return fmt.Errorf("bootstrap is not allowed during unattended install (phase: %s)", status.TypedSpec().Phase)
+	}
+
 	if err := system.Services(r).Stop(ctx, "etcd"); err != nil {
 		return fmt.Errorf("failed to stop etcd: %w", err)
 	}

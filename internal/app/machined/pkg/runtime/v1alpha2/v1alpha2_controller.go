@@ -61,14 +61,16 @@ type Controller struct {
 	logger          *zap.Logger
 
 	v1alpha1Runtime runtime.Runtime
+	reboot          func(ctx context.Context) error
 }
 
 // NewController creates Controller.
-func NewController(v1alpha1Runtime runtime.Runtime) (*Controller, error) {
+func NewController(v1alpha1Runtime runtime.Runtime, reboot func(ctx context.Context) error) (*Controller, error) {
 	ctrl := &Controller{
 		consoleLogLevel: zap.NewAtomicLevel(),
 		loggingManager:  v1alpha1Runtime.Logging(),
 		v1alpha1Runtime: v1alpha1Runtime,
+		reboot:          reboot,
 	}
 
 	var err error
@@ -429,6 +431,8 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			MetaProvider: ctrl.v1alpha1Runtime.State().Machine(),
 		},
 		&runtimecontrollers.EnvironmentController{},
+		runtimecontrollers.NewUnattendedInstallController(ctrl.v1alpha1Runtime),
+		runtimecontrollers.NewRebootController(ctrl.v1alpha1Runtime, ctrl.reboot),
 		&runtimecontrollers.ExtensionServiceConfigController{},
 		&runtimecontrollers.ExtensionServiceConfigFilesController{
 			V1Alpha1Mode:            ctrl.v1alpha1Runtime.State().Platform().Mode(),

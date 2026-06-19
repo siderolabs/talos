@@ -32,6 +32,7 @@ func (DiskImage) ModifyOptions(presetOps Options, cOps *clusterops.Common, qOps 
 	}
 
 	qOps.NodeDiskImagePath = diskImageURL
+	cOps.SkipUnattendedInstallConfig = true
 
 	return nil
 }

@@ -39,18 +39,11 @@ MachineConfig represents the machine-specific config values.
 {{< highlight yaml >}}
 machine:
     type: controlplane
-    # InstallConfig represents the installation options for preparing a node.
     install:
-        disk: /dev/sda # The disk used for installations.
-        image: factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:latest # Allows for supplying the image used to perform the installation.
-        wipe: false # Indicates if the installation disk should be wiped at installation time.
-        grubUseUKICmdline: true # Indicates if legacy GRUB bootloader should use kernel cmdline from the UKI instead of building it on the host.
-
-        # # Look up disk using disk attributes like model, size, serial and others.
-        # diskSelector:
-        #     size: 4GB # Disk size.
-        #     model: WDC* # Disk model `/sys/block/<dev>/device/model`.
-        #     busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0 # Disk bus path.
+        disk: /dev/sda
+        image: factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:latest
+        wipe: false
+        grubUseUKICmdline: true
 {{< /highlight >}}
 
 
@@ -132,19 +125,6 @@ pods:
         containers:
             - image: nginx
               name: nginx
-{{< /highlight >}}</details> | |
-|`install` |<a href="#Config.machine.install">InstallConfig</a> |Used to provide instructions for installations.<br><br>Note that this configuration section gets silently ignored by Talos images that are considered pre-installed.<br>To make sure Talos installs according to the provided configuration, Talos should be booted with ISO or PXE-booted. <details><summary>Show example(s)</summary>MachineInstall config usage example.:{{< highlight yaml >}}
-install:
-    disk: /dev/sda # The disk used for installations.
-    image: factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:latest # Allows for supplying the image used to perform the installation.
-    wipe: false # Indicates if the installation disk should be wiped at installation time.
-    grubUseUKICmdline: true # Indicates if legacy GRUB bootloader should use kernel cmdline from the UKI instead of building it on the host.
-
-    # # Look up disk using disk attributes like model, size, serial and others.
-    # diskSelector:
-    #     size: 4GB # Disk size.
-    #     model: WDC* # Disk model `/sys/block/<dev>/device/model`.
-    #     busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0 # Disk bus path.
 {{< /highlight >}}</details> | |
 |`files` |<a href="#Config.machine.files.">[]MachineFile</a> |Allows the addition of user specified files.<br>The value of `op` can be `create`, `overwrite`, or `append`.<br>In the case of `create`, `path` must not exist.<br>In the case of `overwrite`, and `append`, `path` must be a valid file.<br>If an `op` value of `append` is used, the existing file will be appended.<br>Note that the file contents are not required to be base64 encoded. <details><summary>Show example(s)</summary>MachineFiles usage example.:{{< highlight yaml >}}
 files:
@@ -441,104 +421,6 @@ machine:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`validSubnets` |[]string |The `validSubnets` field configures the networks to pick kubelet node IP from.<br>For dual stack configuration, there should be two subnets: one for IPv4, another for IPv6.<br>IPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.<br>Negative subnet matches should be specified last to filter out IPs picked by positive matches.<br>If not specified, node IP is picked based on cluster podCIDRs: IPv4/IPv6 address or both.  | |
-
-
-
-
-
-
-
-
-### install {#Config.machine.install}
-
-InstallConfig represents the installation options for preparing a node.
-
-
-
-
-{{< highlight yaml >}}
-machine:
-    install:
-        disk: /dev/sda # The disk used for installations.
-        image: factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:latest # Allows for supplying the image used to perform the installation.
-        wipe: false # Indicates if the installation disk should be wiped at installation time.
-        grubUseUKICmdline: true # Indicates if legacy GRUB bootloader should use kernel cmdline from the UKI instead of building it on the host.
-
-        # # Look up disk using disk attributes like model, size, serial and others.
-        # diskSelector:
-        #     size: 4GB # Disk size.
-        #     model: WDC* # Disk model `/sys/block/<dev>/device/model`.
-        #     busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0 # Disk bus path.
-{{< /highlight >}}
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`disk` |string |The disk used for installations. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-disk: /dev/sda
-{{< /highlight >}}{{< highlight yaml >}}
-disk: /dev/nvme0
-{{< /highlight >}}</details> | |
-|`diskSelector` |<a href="#Config.machine.install.diskSelector">InstallDiskSelector</a> |Look up disk using disk attributes like model, size, serial and others.<br>Always has priority over `disk`. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-diskSelector:
-    size: '>= 1TB' # Disk size.
-    model: WDC* # Disk model `/sys/block/<dev>/device/model`.
-
-    # # Disk bus path.
-    # busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0
-    # busPath: /pci0000:00/*
-{{< /highlight >}}</details> | |
-|`image` |string |Allows for supplying the image used to perform the installation.<br>Image reference for each Talos release can be found on<br>[GitHub releases page](https://github.com/siderolabs/talos/releases). <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-image: factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:latest
-{{< /highlight >}}</details> | |
-|`wipe` |bool |Indicates if the installation disk should be wiped at installation time.<br>Defaults to `true`.  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
-|`legacyBIOSSupport` |bool |Indicates if MBR partition should be marked as bootable (active).<br>Should be enabled only for the systems with legacy BIOS that doesn't support GPT partitioning scheme.  | |
-|`grubUseUKICmdline` |bool |Indicates if legacy GRUB bootloader should use kernel cmdline from the UKI instead of building it on the host.<br>This changes the way cmdline is managed with GRUB bootloader to be more consistent with UKI/systemd-boot.  | |
-
-
-
-
-#### diskSelector {#Config.machine.install.diskSelector}
-
-InstallDiskSelector represents a disk query parameters for the install disk lookup.
-
-
-
-
-{{< highlight yaml >}}
-machine:
-    install:
-        diskSelector:
-            size: '>= 1TB' # Disk size.
-            model: WDC* # Disk model `/sys/block/<dev>/device/model`.
-
-            # # Disk bus path.
-            # busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0
-            # busPath: /pci0000:00/*
-{{< /highlight >}}
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`size` |InstallDiskSizeMatcher |Disk size. <details><summary>Show example(s)</summary>Select a disk which size is equal to 4GB.:{{< highlight yaml >}}
-size: 4GB
-{{< /highlight >}}Select a disk which size is greater than 1TB.:{{< highlight yaml >}}
-size: '> 1TB'
-{{< /highlight >}}Select a disk which size is less or equal than 2TB.:{{< highlight yaml >}}
-size: <= 2TB
-{{< /highlight >}}</details> | |
-|`name` |string |Disk name `/sys/block/<dev>/device/name`.  | |
-|`model` |string |Disk model `/sys/block/<dev>/device/model`.  | |
-|`serial` |string |Disk serial number `/sys/block/<dev>/serial`.  | |
-|`modalias` |string |Disk modalias `/sys/block/<dev>/device/modalias`.  | |
-|`uuid` |string |Disk UUID `/sys/block/<dev>/uuid`.  | |
-|`wwid` |string |Disk WWID `/sys/block/<dev>/wwid`.  | |
-|`type` |InstallDiskType |Disk Type.  |`ssd`<br />`hdd`<br />`nvme`<br />`sd`<br /> |
-|`busPath` |string |Disk bus path. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-busPath: /pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0
-{{< /highlight >}}{{< highlight yaml >}}
-busPath: /pci0000:00/*
-{{< /highlight >}}</details> | |
 
 
 

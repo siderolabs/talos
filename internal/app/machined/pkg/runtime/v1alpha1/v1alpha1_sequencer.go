@@ -157,7 +157,21 @@ func (*Sequencer) Install(r runtime.Runtime) []runtime.Phase {
 	case runtime.ModeContainer:
 		return nil
 	default:
-		if !r.State().Machine().Installed() || r.State().Machine().IsInstallStaged() {
+		// When the UnattendedInstallConfig multi-document config is present, install is driven by the
+		// UnattendedInstallController instead of the install sequence (which also reboots). Skip the
+		// sequence entirely so install/reboot is not performed here.
+		if r.Config() != nil && r.Config().UnattendedInstallConfig() != nil {
+			return nil
+		}
+
+		// If no Install config is present, skip the install sequence entirely.
+		if r.Config() != nil &&
+			(r.Config().Machine().Install() == nil && r.Config().UnattendedInstallConfig() == nil) {
+			return nil
+		}
+
+		if !r.State().Machine().Installed() ||
+			r.State().Machine().IsInstallStaged() {
 			phases = phases.Append(
 				"env",
 				SetUserEnvVars,
@@ -191,7 +205,8 @@ func (*Sequencer) Install(r runtime.Runtime) []runtime.Phase {
 
 // Boot is the boot sequence. This primary goal if this sequence is to apply
 // user supplied settings and start the services for the specific machine type.
-// This sequence should never be reached if an installation is not found.
+// Services are only started when the machine is already installed; otherwise the
+// UnattendedInstallController handles the install and triggers the reboot.
 func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 	phases := PhaseList{}
 

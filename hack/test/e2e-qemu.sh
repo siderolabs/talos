@@ -112,7 +112,7 @@ case "${USE_DISK_IMAGE:-false}" in
   false)
     ;;
   *)
-    QEMU_FLAGS+=("--disk-image-path=_out/metal-amd64.raw.zst")
+    QEMU_FLAGS+=("--disk-image-path=_out/metal-amd64.raw.zst" "--skip-unattended-install-config")
     ;;
 esac
 

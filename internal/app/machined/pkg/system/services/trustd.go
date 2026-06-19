@@ -37,6 +37,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/fipsmode"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 	timeresource "github.com/siderolabs/talos/pkg/machinery/resources/time"
 )
@@ -141,10 +142,19 @@ func (t *Trustd) PostFunc(runtime.Runtime, events.ServiceState) (err error) {
 
 // Condition implements the Service interface.
 func (t *Trustd) Condition(r runtime.Runtime) conditions.Condition {
-	return conditions.WaitForAll(
+	cond := []conditions.Condition{
 		timeresource.NewSyncCondition(r.State().V1Alpha2().Resources()),
 		network.NewReadyCondition(r.State().V1Alpha2().Resources(), network.AddressReady, network.HostnameReady),
-	)
+	}
+
+	if !r.State().Platform().Mode().InContainer() && r.Config().UnattendedInstallConfig() != nil {
+		cond = append(
+			cond,
+			runtimeres.NewUnattendedInstallCondition(r.State().V1Alpha2().Resources()),
+		)
+	}
+
+	return conditions.WaitForAll(cond...)
 }
 
 // DependsOn implements the Service interface.

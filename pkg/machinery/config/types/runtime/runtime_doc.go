@@ -271,6 +271,141 @@ func (UdevRulesConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (UnattendedInstallConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "UnattendedInstallConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "UnattendedInstallConfig is an UnattendedInstallConfig config document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "UnattendedInstallConfig is an UnattendedInstallConfig config document.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "reboot",
+				Type:        "bool",
+				Note:        "",
+				Description: "Reboot is a flag to indicate if the system should reboot after installation.\nIf not set, Talos will reboot only if the installer.image is set.\n",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Reboot is a flag to indicate if the system should reboot after installation." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "installer",
+				Type:        "InstallerSpec",
+				Note:        "",
+				Description: "The installer describes the source of the installation.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The installer describes the source of the installation." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "provisioning",
+				Type:        "ProvisioningSpec",
+				Note:        "",
+				Description: "The provisioning describes how the installation disk should be provisioned.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The provisioning describes how the installation disk should be provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleUnattendedInstallConfigV1Alpha1())
+
+	doc.Fields[2].AddExample("", exampleInstallerSpec())
+
+	return doc
+}
+
+func (InstallerSpec) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "InstallerSpec",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "InstallerSpec describes the installer to perform the installation." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "InstallerSpec describes the installer to perform the installation.\n",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "UnattendedInstallConfigV1Alpha1",
+				FieldName: "installer",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "image",
+				Type:        "string",
+				Note:        "",
+				Description: "Allows for supplying the image used to perform the installation.\nImage reference for each Talos release can be found on\n[GitHub releases page](https://github.com/siderolabs/talos/releases).\n\nIf not set, it will run installer based on the current Talos version\nand current schematic (this requires booting asset built by Image\nFactory).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Allows for supplying the image used to perform the installation." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleInstallerSpec())
+
+	doc.Fields[0].AddExample("", "factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:latest")
+
+	return doc
+}
+
+func (ProvisioningSpec) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "ProvisioningSpec",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "ProvisioningSpec describes how the Physical Volumes are provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "ProvisioningSpec describes how the Physical Volumes are provisioned.\n",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "UnattendedInstallConfigV1Alpha1",
+				FieldName: "provisioning",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "diskSelector",
+				Type:        "DiskSelectorSpec",
+				Note:        "",
+				Description: "Matches disks to initialize as physical volumes.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Matches disks to initialize as physical volumes." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "wipe",
+				Type:        "bool",
+				Note:        "",
+				Description: "Indicates if the installation disk should be wiped at installation time.\nDefaults to `true`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Indicates if the installation disk should be wiped at installation time." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"true",
+					"yes",
+					"false",
+					"no",
+				},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (DiskSelectorSpec) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "DiskSelectorSpec",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "DiskSelectorSpec matches disks with CEL." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "DiskSelectorSpec matches disks with CEL.\n",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ProvisioningSpec",
+				FieldName: "diskSelector",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "match",
+				Type:        "Expression",
+				Note:        "",
+				Description: "CEL expression matching a disk.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "CEL expression matching a disk." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("match raw volume partitions labeled r-lvm*", exampleDiskSelector())
+
+	return doc
+}
+
 func (WatchdogTimerV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "WatchdogTimerConfig",
@@ -319,6 +454,10 @@ func GetFileDoc() *encoder.FileDoc {
 			SysfsConfigV1Alpha1{}.Doc(),
 			EtcFileConfigV1Alpha1{}.Doc(),
 			UdevRulesConfigV1Alpha1{}.Doc(),
+			UnattendedInstallConfigV1Alpha1{}.Doc(),
+			InstallerSpec{}.Doc(),
+			ProvisioningSpec{}.Doc(),
+			DiskSelectorSpec{}.Doc(),
 			WatchdogTimerV1Alpha1{}.Doc(),
 		},
 	}

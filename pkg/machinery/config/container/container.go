@@ -276,6 +276,16 @@ func (container *Container) SysfsConfig() map[string]string {
 	return config.WrapSysfsConfigList(configs...)
 }
 
+// UnattendedInstallConfig implements config.Config interface.
+func (container *Container) UnattendedInstallConfig() config.UnattendedInstallConfig {
+	matching := findMatchingDocs[config.UnattendedInstallConfig](container.documents)
+	if len(matching) == 0 {
+		return nil
+	}
+
+	return matching[0]
+}
+
 // NetworkRules implements config.Config interface.
 func (container *Container) NetworkRules() config.NetworkRuleConfig {
 	return config.WrapNetworkRuleConfigList(findMatchingDocs[config.NetworkRuleConfigSignal](container.documents)...)

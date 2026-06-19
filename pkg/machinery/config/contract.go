@@ -225,6 +225,12 @@ func (contract *VersionContract) DiscoveryIdentityMultidocConfig() bool {
 	return contract.Greater(TalosVersion1_13)
 }
 
+// UnattendedInstallConfig returns true if version of Talos should use the UnattendedInstallConfig multi-doc config
+// instead of the deprecated .machine.install section.
+func (contract *VersionContract) UnattendedInstallConfig() bool {
+	return contract.Greater(TalosVersion1_13)
+}
+
 // MultidocKubernetesConfigSupported returns true if version of Talos should use multi-doc Kubernetes config.
 func (contract *VersionContract) MultidocKubernetesConfigSupported() bool {
 	return contract.Greater(TalosVersion1_13)

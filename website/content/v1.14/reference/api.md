@@ -346,6 +346,7 @@ description: Talos gRPC API reference.
     - [RuntimeKernelModuleType](#talos.resource.definitions.enums.RuntimeKernelModuleType)
     - [RuntimeMachineStage](#talos.resource.definitions.enums.RuntimeMachineStage)
     - [RuntimeSELinuxState](#talos.resource.definitions.enums.RuntimeSELinuxState)
+    - [RuntimeUnattendedInstallPhase](#talos.resource.definitions.enums.RuntimeUnattendedInstallPhase)
     - [StorageLVMLogicalVolumeType](#talos.resource.definitions.enums.StorageLVMLogicalVolumeType)
   
 - [resource/definitions/block/block.proto](#resource/definitions/block/block.proto)
@@ -525,6 +526,7 @@ description: Talos gRPC API reference.
     - [SBOMItemSpec](#talos.resource.definitions.runtime.SBOMItemSpec)
     - [SecurityStateSpec](#talos.resource.definitions.runtime.SecurityStateSpec)
     - [ServicePIDSpec](#talos.resource.definitions.runtime.ServicePIDSpec)
+    - [UnattendedInstallStatusSpec](#talos.resource.definitions.runtime.UnattendedInstallStatusSpec)
     - [UniqueMachineTokenSpec](#talos.resource.definitions.runtime.UniqueMachineTokenSpec)
     - [UnmetCondition](#talos.resource.definitions.runtime.UnmetCondition)
     - [VersionSpec](#talos.resource.definitions.runtime.VersionSpec)
@@ -6206,6 +6208,21 @@ RuntimeSELinuxState describes the current SELinux status.
 
 
 
+<a name="talos.resource.definitions.enums.RuntimeUnattendedInstallPhase"></a>
+
+### RuntimeUnattendedInstallPhase
+RuntimeUnattendedInstallPhase describes the phase of the unattended install.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| UNATTENDED_INSTALL_PHASE_PENDING | 0 |  |
+| UNATTENDED_INSTALL_PHASE_INSTALLING | 1 |  |
+| UNATTENDED_INSTALL_PHASE_INSTALLED | 2 |  |
+| UNATTENDED_INSTALL_PHASE_WAITING_FOR_REBOOT | 3 |  |
+| UNATTENDED_INSTALL_PHASE_FAILED | 4 |  |
+
+
+
 <a name="talos.resource.definitions.enums.StorageLVMLogicalVolumeType"></a>
 
 ### StorageLVMLogicalVolumeType
@@ -9193,6 +9210,23 @@ ServicePIDSpec is the spec for the service PID.
 | ----- | ---- | ----- | ----------- |
 | pid | [int32](#int32) |  | PID is the host PID of the service. |
 | mount_namespace | [string](#string) |  | MountNamespace is the mount namespace of the service. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.runtime.UnattendedInstallStatusSpec"></a>
+
+### UnattendedInstallStatusSpec
+UnattendedInstallStatusSpec describes the unattended install status.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| image | [string](#string) |  |  |
+| phase | [talos.resource.definitions.enums.RuntimeUnattendedInstallPhase](#talos.resource.definitions.enums.RuntimeUnattendedInstallPhase) |  |  |
+| error | [string](#string) |  |  |
 
 
 

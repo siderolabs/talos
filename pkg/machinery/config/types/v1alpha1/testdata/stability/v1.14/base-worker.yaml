@@ -12,9 +12,6 @@ machine:
         image: ghcr.io/siderolabs/kubelet:v1.28.0
         defaultRuntimeSeccompProfileEnabled: true
         disableManifestsDirectory: true
-    install:
-        wipe: false
-        grubUseUKICmdline: true
     features:
         diskQuotaSupport: true
         kubePrism:

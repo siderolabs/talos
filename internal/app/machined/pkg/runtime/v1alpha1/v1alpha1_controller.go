@@ -56,7 +56,17 @@ func NewController() (*Controller, error) {
 		priorityLock: NewPriorityLock[runtime.Sequence](),
 	}
 
-	ctlr.v2, err = v1alpha2.NewController(ctlr.r)
+	reboot := func(ctx context.Context) error {
+		if err := ctlr.Run(ctx, runtime.SequenceReboot, &machine.RebootRequest{}); err != nil {
+			if !runtime.IsRebootError(err) {
+				return err
+			}
+		}
+
+		return nil
+	}
+
+	ctlr.v2, err = v1alpha2.NewController(ctlr.r, reboot)
 	if err != nil {
 		return nil, err
 	}

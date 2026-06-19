@@ -77,10 +77,32 @@ var (
 
 // InstallerImageRepository returns the default container repository for the installer for the given platform.
 func InstallerImageRepository(platform string) string {
-	return Factory + "/" + platform + "-installer/" + DefaultInstallerImageSchematic
+	return NewInstallerImageRepository(Factory, platform, DefaultInstallerImageSchematic)
 }
 
 // InstallerImage returns the default installer image for the given platform.
 func InstallerImage(platform string) string {
-	return InstallerImageRepository(platform) + ":" + version.Tag
+	return NewInstallerImage(Factory, platform, DefaultInstallerImageSchematic, version.Tag)
+}
+
+// NewInstallerImageRepository builds a new installer image for the given factory, platform and schematic.
+func NewInstallerImageRepository(factory, platform, schematic string) string {
+	if factory == "" {
+		factory = Factory
+	}
+
+	return factory + "/" + platform + "-installer/" + schematic
+}
+
+// NewInstallerImage builds a new installer image for the given factory, platform, schematic and tag.
+func NewInstallerImage(factory, platform, schematic, tag string) string {
+	if factory == "" {
+		factory = Factory
+	}
+
+	if tag == "" {
+		tag = version.Tag
+	}
+
+	return NewInstallerImageRepository(factory, platform, schematic) + ":" + tag
 }

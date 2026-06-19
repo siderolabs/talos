@@ -4618,6 +4618,20 @@
       ],
       "description": "WireguardPeer describes a Wireguard peer configuration.\\n"
     },
+    "runtime.DiskSelectorSpec": {
+      "properties": {
+        "match": {
+          "type": "string",
+          "title": "match",
+          "description": "CEL expression matching a disk.\n",
+          "markdownDescription": "CEL expression matching a disk.",
+          "x-intellij-html-description": "\u003cp\u003eCEL expression matching a disk.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "DiskSelectorSpec matches disks with CEL.\\n"
+    },
     "runtime.EnvironmentV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -4746,6 +4760,20 @@
       ],
       "description": "EventSinkConfig is a event sink config document."
     },
+    "runtime.InstallerSpec": {
+      "properties": {
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "Allows for supplying the image used to perform the installation.\nImage reference for each Talos release can be found on\nGitHub releases page.\n\nIf not set, it will run installer based on the current Talos version\nand current schematic (this requires booting asset built by Image\nFactory).\n",
+          "markdownDescription": "Allows for supplying the image used to perform the installation.\nImage reference for each Talos release can be found on\n[GitHub releases page](https://github.com/siderolabs/talos/releases).\n\nIf not set, it will run installer based on the current Talos version\nand current schematic (this requires booting asset built by Image\nFactory).",
+          "x-intellij-html-description": "\u003cp\u003eAllows for supplying the image used to perform the installation.\nImage reference for each Talos release can be found on\n\u003ca href=\"https://github.com/siderolabs/talos/releases\" target=\"_blank\"\u003eGitHub releases page\u003c/a\u003e.\u003c/p\u003e\n\n\u003cp\u003eIf not set, it will run installer based on the current Talos version\nand current schematic (this requires booting asset built by Image\nFactory).\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "InstallerSpec describes the installer to perform the installation.\\n"
+    },
     "runtime.KmsgLogV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -4847,6 +4875,27 @@
         "kind"
       ],
       "description": "OOMConfig is a Out of Memory handler config document."
+    },
+    "runtime.ProvisioningSpec": {
+      "properties": {
+        "diskSelector": {
+          "$ref": "#/$defs/runtime.DiskSelectorSpec",
+          "title": "diskSelector",
+          "description": "Matches disks to initialize as physical volumes.\n",
+          "markdownDescription": "Matches disks to initialize as physical volumes.",
+          "x-intellij-html-description": "\u003cp\u003eMatches disks to initialize as physical volumes.\u003c/p\u003e\n"
+        },
+        "wipe": {
+          "type": "boolean",
+          "title": "wipe",
+          "description": "Indicates if the installation disk should be wiped at installation time.\nDefaults to true.\n",
+          "markdownDescription": "Indicates if the installation disk should be wiped at installation time.\nDefaults to `true`.",
+          "x-intellij-html-description": "\u003cp\u003eIndicates if the installation disk should be wiped at installation time.\nDefaults to \u003ccode\u003etrue\u003c/code\u003e.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "ProvisioningSpec describes how the Physical Volumes are provisioned.\\n"
     },
     "runtime.SysctlConfigV1Alpha1": {
       "properties": {
@@ -4968,6 +5017,56 @@
         "kind"
       ],
       "description": "UdevRulesConfig is a udev rules config document."
+    },
+    "runtime.UnattendedInstallConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "UnattendedInstall"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "reboot": {
+          "type": "boolean",
+          "title": "reboot",
+          "description": "Reboot is a flag to indicate if the system should reboot after installation.\nIf not set, Talos will reboot only if the installer.image is set.\n",
+          "markdownDescription": "Reboot is a flag to indicate if the system should reboot after installation.\nIf not set, Talos will reboot only if the installer.image is set.",
+          "x-intellij-html-description": "\u003cp\u003eReboot is a flag to indicate if the system should reboot after installation.\nIf not set, Talos will reboot only if the installer.image is set.\u003c/p\u003e\n"
+        },
+        "installer": {
+          "$ref": "#/$defs/runtime.InstallerSpec",
+          "title": "installer",
+          "description": "The installer describes the source of the installation.\n",
+          "markdownDescription": "The installer describes the source of the installation.",
+          "x-intellij-html-description": "\u003cp\u003eThe installer describes the source of the installation.\u003c/p\u003e\n"
+        },
+        "provisioning": {
+          "$ref": "#/$defs/runtime.ProvisioningSpec",
+          "title": "provisioning",
+          "description": "The provisioning describes how the installation disk should be provisioned.\n",
+          "markdownDescription": "The provisioning describes how the installation disk should be provisioned.",
+          "x-intellij-html-description": "\u003cp\u003eThe provisioning describes how the installation disk should be provisioned.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "UnattendedInstallConfig is an UnattendedInstallConfig config document."
     },
     "runtime.WatchdogTimerV1Alpha1": {
       "properties": {
@@ -5693,130 +5792,6 @@
       "type": "object",
       "description": "FeaturesConfig describes individual Talos features that can be switched on or off.\\n"
     },
-    "v1alpha1.InstallConfig": {
-      "properties": {
-        "disk": {
-          "type": "string",
-          "title": "disk",
-          "description": "The disk used for installations.\n",
-          "markdownDescription": "The disk used for installations.",
-          "x-intellij-html-description": "\u003cp\u003eThe disk used for installations.\u003c/p\u003e\n"
-        },
-        "diskSelector": {
-          "$ref": "#/$defs/v1alpha1.InstallDiskSelector",
-          "title": "diskSelector",
-          "description": "Look up disk using disk attributes like model, size, serial and others.\nAlways has priority over disk.\n",
-          "markdownDescription": "Look up disk using disk attributes like model, size, serial and others.\nAlways has priority over `disk`.",
-          "x-intellij-html-description": "\u003cp\u003eLook up disk using disk attributes like model, size, serial and others.\nAlways has priority over \u003ccode\u003edisk\u003c/code\u003e.\u003c/p\u003e\n"
-        },
-        "image": {
-          "type": "string",
-          "title": "image",
-          "description": "Allows for supplying the image used to perform the installation.\nImage reference for each Talos release can be found on\nGitHub releases page.\n",
-          "markdownDescription": "Allows for supplying the image used to perform the installation.\nImage reference for each Talos release can be found on\n[GitHub releases page](https://github.com/siderolabs/talos/releases).",
-          "x-intellij-html-description": "\u003cp\u003eAllows for supplying the image used to perform the installation.\nImage reference for each Talos release can be found on\n\u003ca href=\"https://github.com/siderolabs/talos/releases\" target=\"_blank\"\u003eGitHub releases page\u003c/a\u003e.\u003c/p\u003e\n"
-        },
-        "wipe": {
-          "type": "boolean",
-          "title": "wipe",
-          "description": "Indicates if the installation disk should be wiped at installation time.\nDefaults to true.\n",
-          "markdownDescription": "Indicates if the installation disk should be wiped at installation time.\nDefaults to `true`.",
-          "x-intellij-html-description": "\u003cp\u003eIndicates if the installation disk should be wiped at installation time.\nDefaults to \u003ccode\u003etrue\u003c/code\u003e.\u003c/p\u003e\n"
-        },
-        "legacyBIOSSupport": {
-          "type": "boolean",
-          "title": "legacyBIOSSupport",
-          "description": "Indicates if MBR partition should be marked as bootable (active).\nShould be enabled only for the systems with legacy BIOS that doesn’t support GPT partitioning scheme.\n",
-          "markdownDescription": "Indicates if MBR partition should be marked as bootable (active).\nShould be enabled only for the systems with legacy BIOS that doesn't support GPT partitioning scheme.",
-          "x-intellij-html-description": "\u003cp\u003eIndicates if MBR partition should be marked as bootable (active).\nShould be enabled only for the systems with legacy BIOS that doesn\u0026rsquo;t support GPT partitioning scheme.\u003c/p\u003e\n"
-        },
-        "grubUseUKICmdline": {
-          "type": "boolean",
-          "title": "grubUseUKICmdline",
-          "description": "Indicates if legacy GRUB bootloader should use kernel cmdline from the UKI instead of building it on the host.\nThis changes the way cmdline is managed with GRUB bootloader to be more consistent with UKI/systemd-boot.\n",
-          "markdownDescription": "Indicates if legacy GRUB bootloader should use kernel cmdline from the UKI instead of building it on the host.\nThis changes the way cmdline is managed with GRUB bootloader to be more consistent with UKI/systemd-boot.",
-          "x-intellij-html-description": "\u003cp\u003eIndicates if legacy GRUB bootloader should use kernel cmdline from the UKI instead of building it on the host.\nThis changes the way cmdline is managed with GRUB bootloader to be more consistent with UKI/systemd-boot.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "InstallConfig represents the installation options for preparing a node.\\n"
-    },
-    "v1alpha1.InstallDiskSelector": {
-      "properties": {
-        "size": {
-          "type": "string",
-          "title": "size",
-          "description": "Disk size.\n",
-          "markdownDescription": "Disk size.",
-          "x-intellij-html-description": "\u003cp\u003eDisk size.\u003c/p\u003e\n"
-        },
-        "name": {
-          "type": "string",
-          "title": "name",
-          "description": "Disk name /sys/block/\u0026lt;dev\u0026gt;/device/name.\n",
-          "markdownDescription": "Disk name `/sys/block/\u003cdev\u003e/device/name`.",
-          "x-intellij-html-description": "\u003cp\u003eDisk name \u003ccode\u003e/sys/block/\u0026lt;dev\u0026gt;/device/name\u003c/code\u003e.\u003c/p\u003e\n"
-        },
-        "model": {
-          "type": "string",
-          "title": "model",
-          "description": "Disk model /sys/block/\u0026lt;dev\u0026gt;/device/model.\n",
-          "markdownDescription": "Disk model `/sys/block/\u003cdev\u003e/device/model`.",
-          "x-intellij-html-description": "\u003cp\u003eDisk model \u003ccode\u003e/sys/block/\u0026lt;dev\u0026gt;/device/model\u003c/code\u003e.\u003c/p\u003e\n"
-        },
-        "serial": {
-          "type": "string",
-          "title": "serial",
-          "description": "Disk serial number /sys/block/\u0026lt;dev\u0026gt;/serial.\n",
-          "markdownDescription": "Disk serial number `/sys/block/\u003cdev\u003e/serial`.",
-          "x-intellij-html-description": "\u003cp\u003eDisk serial number \u003ccode\u003e/sys/block/\u0026lt;dev\u0026gt;/serial\u003c/code\u003e.\u003c/p\u003e\n"
-        },
-        "modalias": {
-          "type": "string",
-          "title": "modalias",
-          "description": "Disk modalias /sys/block/\u0026lt;dev\u0026gt;/device/modalias.\n",
-          "markdownDescription": "Disk modalias `/sys/block/\u003cdev\u003e/device/modalias`.",
-          "x-intellij-html-description": "\u003cp\u003eDisk modalias \u003ccode\u003e/sys/block/\u0026lt;dev\u0026gt;/device/modalias\u003c/code\u003e.\u003c/p\u003e\n"
-        },
-        "uuid": {
-          "type": "string",
-          "title": "uuid",
-          "description": "Disk UUID /sys/block/\u0026lt;dev\u0026gt;/uuid.\n",
-          "markdownDescription": "Disk UUID `/sys/block/\u003cdev\u003e/uuid`.",
-          "x-intellij-html-description": "\u003cp\u003eDisk UUID \u003ccode\u003e/sys/block/\u0026lt;dev\u0026gt;/uuid\u003c/code\u003e.\u003c/p\u003e\n"
-        },
-        "wwid": {
-          "type": "string",
-          "title": "wwid",
-          "description": "Disk WWID /sys/block/\u0026lt;dev\u0026gt;/wwid.\n",
-          "markdownDescription": "Disk WWID `/sys/block/\u003cdev\u003e/wwid`.",
-          "x-intellij-html-description": "\u003cp\u003eDisk WWID \u003ccode\u003e/sys/block/\u0026lt;dev\u0026gt;/wwid\u003c/code\u003e.\u003c/p\u003e\n"
-        },
-        "type": {
-          "enum": [
-            "ssd",
-            "hdd",
-            "nvme",
-            "sd"
-          ],
-          "title": "type",
-          "description": "Disk Type.\n",
-          "markdownDescription": "Disk Type.",
-          "x-intellij-html-description": "\u003cp\u003eDisk Type.\u003c/p\u003e\n"
-        },
-        "busPath": {
-          "type": "string",
-          "title": "busPath",
-          "description": "Disk bus path.\n",
-          "markdownDescription": "Disk bus path.",
-          "x-intellij-html-description": "\u003cp\u003eDisk bus path.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "InstallDiskSelector represents a disk query parameters for the install disk lookup.\\n"
-    },
     "v1alpha1.KernelConfig": {
       "properties": {
         "modules": {
@@ -6188,13 +6163,6 @@
           "markdownDescription": "Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver.\n\nStatic pods can be used to run components which should be started before the Kubernetes control plane is up.\nTalos doesn't validate the pod definition.\nUpdates to this field can be applied without a reboot.\n\nSee https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/.",
           "x-intellij-html-description": "\u003cp\u003eUsed to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver.\u003c/p\u003e\n\n\u003cp\u003eStatic pods can be used to run components which should be started before the Kubernetes control plane is up.\nTalos doesn\u0026rsquo;t validate the pod definition.\nUpdates to this field can be applied without a reboot.\u003c/p\u003e\n\n\u003cp\u003eSee \u003ca href=\"https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/\" target=\"_blank\"\u003ehttps://kubernetes.io/docs/tasks/configure-pod-container/static-pod/\u003c/a\u003e.\u003c/p\u003e\n"
         },
-        "install": {
-          "$ref": "#/$defs/v1alpha1.InstallConfig",
-          "title": "install",
-          "description": "Used to provide instructions for installations.\n\nNote that this configuration section gets silently ignored by Talos images that are considered pre-installed.\nTo make sure Talos installs according to the provided configuration, Talos should be booted with ISO or PXE-booted.\n",
-          "markdownDescription": "Used to provide instructions for installations.\n\nNote that this configuration section gets silently ignored by Talos images that are considered pre-installed.\nTo make sure Talos installs according to the provided configuration, Talos should be booted with ISO or PXE-booted.",
-          "x-intellij-html-description": "\u003cp\u003eUsed to provide instructions for installations.\u003c/p\u003e\n\n\u003cp\u003eNote that this configuration section gets silently ignored by Talos images that are considered pre-installed.\nTo make sure Talos installs according to the provided configuration, Talos should be booted with ISO or PXE-booted.\u003c/p\u003e\n"
-        },
         "files": {
           "items": {
             "$ref": "#/$defs/v1alpha1.MachineFile"
@@ -6528,6 +6496,9 @@
     },
     {
       "$ref": "#/$defs/runtime.UdevRulesConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/runtime.UnattendedInstallConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/runtime.WatchdogTimerV1Alpha1"

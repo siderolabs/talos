@@ -84,33 +84,6 @@ func machineInstallExample() *InstallConfig {
 	}
 }
 
-func machineInstallDiskSelectorExample() *InstallDiskSelector {
-	return &InstallDiskSelector{
-		Model: "WDC*",
-		Size: &InstallDiskSizeMatcher{
-			condition: ">= 1TB",
-		},
-	}
-}
-
-func machineInstallDiskSizeMatcherExamples0() *InstallDiskSizeMatcher {
-	return &InstallDiskSizeMatcher{
-		condition: "4GB",
-	}
-}
-
-func machineInstallDiskSizeMatcherExamples1() *InstallDiskSizeMatcher {
-	return &InstallDiskSizeMatcher{
-		condition: "> 1TB",
-	}
-}
-
-func machineInstallDiskSizeMatcherExamples2() *InstallDiskSizeMatcher {
-	return &InstallDiskSizeMatcher{
-		condition: "<= 2TB",
-	}
-}
-
 func machineFilesExample() []*MachineFile {
 	return []*MachineFile{
 		{

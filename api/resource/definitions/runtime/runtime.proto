@@ -221,6 +221,13 @@ message ServicePIDSpec {
   string mount_namespace = 2;
 }
 
+// UnattendedInstallStatusSpec describes the unattended install status.
+message UnattendedInstallStatusSpec {
+  string image = 1;
+  talos.resource.definitions.enums.RuntimeUnattendedInstallPhase phase = 2;
+  string error = 3;
+}
+
 // UniqueMachineTokenSpec is the spec for the machine unique token. Token can be empty if machine wasn't assigned any.
 message UniqueMachineTokenSpec {
   string token = 1;

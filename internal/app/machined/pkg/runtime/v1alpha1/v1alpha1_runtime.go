@@ -13,14 +13,15 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	machineconfig "github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 // Runtime implements the Runtime interface.
@@ -151,13 +152,37 @@ func (r *Runtime) NodeName() (string, error) {
 	return nodenameResource.TypedSpec().Nodename, nil
 }
 
-// IsBootstrapAllowed checks for CRI to be up, checked in the bootstrap method.
+// IsBootstrapAllowed checks whether bootstrap is allowed.
+//
+// CRI must be running and healthy, and an in-progress unattended install must not be in a pre-reboot phase.
 func (r *Runtime) IsBootstrapAllowed() bool {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
 
-	svc := &services.CRI{}
-	if err := system.WaitForService(system.StateEventUp, svc.ID(r)).Wait(ctx); err != nil {
+	svc, err := safe.StateWatchFor[*v1alpha1.Service](
+		ctx,
+		r.s.V1Alpha2().Resources(),
+		v1alpha1.NewService("cri").Metadata(),
+		state.WithEventTypes(state.Created, state.Updated),
+	)
+	if err != nil {
+		return false
+	}
+
+	if !svc.TypedSpec().Running || !svc.TypedSpec().Healthy {
+		return false
+	}
+
+	status, err := safe.ReaderGetByID[*runtimeres.UnattendedInstallStatus](
+		ctx,
+		r.s.V1Alpha2().Resources(),
+		runtimeres.UnattendedInstallStatusID,
+	)
+	if err != nil && !state.IsNotFoundError(err) {
+		return false
+	}
+
+	if status != nil && status.TypedSpec().Phase != runtimeres.UnattendedInstallPhaseInstalled {
 		return false
 	}
 

@@ -347,6 +347,20 @@ trim:
 ```
 """
 
+    [notes.unattended_install]
+        title = "Unattended Install Configuration"
+        description = """\
+Talos introduces a new `UnattendedInstall` multi-document config kind which replaces the deprecated `.machine.install`
+section of the v1alpha1 config. The document carries the installer `image` and a `provisioning` section with a CEL
+`volumeSelector` to match the install disk, plus a `wipe` option.
+
+When the `UnattendedInstall` document is present, the install is driven by the new `UnattendedInstallController`
+(exposing an `UnattendedInstallStatus` resource) instead of the legacy install sequence.
+
+`talosctl gen config` and `talosctl cluster create` now generate the `UnattendedInstall` document by default.
+The `.machine.install` field remains supported for backwards compatibility and is still used for older version contracts.
+"""
+
 [make_deps]
 
     [make_deps.tools]

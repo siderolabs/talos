@@ -73,14 +73,28 @@ func runInstallCmd(ctx context.Context) (err error) {
 			}
 		}
 
-		if config.Machine() != nil && config.Machine().Install().LegacyBIOSSupport() {
-			options.LegacyBIOSSupport = true
-		}
+		// defaults from the deprecated .machine.install section (if present).
+		legacyBIOSSupport := config.Machine() != nil && config.Machine().Install().LegacyBIOSSupport()
 
 		// if we don't have v1alpha1 config (we are in maintenance mode),
 		// or if we have v1alpha1 config, and GrubUseUKICmdline is set to true,
 		// then we should set the option to true
-		if config.Machine() == nil || config.Machine().Install().GrubUseUKICmdline() {
+		grubUseUKICmdline := config.Machine() == nil || config.Machine().Install().GrubUseUKICmdline()
+
+		// the UnattendedInstallConfig document takes precedence over the deprecated .machine.install section.
+		if config.UnattendedInstallConfig() != nil {
+			// legacyBIOSSupport is not supported in the new config.
+			legacyBIOSSupport = false
+
+			// GrubUseUKICmdline is always true when UnattendedInstallConfig is used.
+			grubUseUKICmdline = true
+		}
+
+		if legacyBIOSSupport {
+			options.LegacyBIOSSupport = true
+		}
+
+		if grubUseUKICmdline {
 			options.GrubUseUKICmdline = true
 		}
 	}

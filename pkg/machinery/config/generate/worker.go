@@ -35,13 +35,7 @@ func (in *Input) worker() ([]config.Document, error) {
 		MachineKubelet: &v1alpha1.KubeletConfig{
 			KubeletImage: fmt.Sprintf("%s:v%s", constants.KubeletImage, in.KubernetesVersion),
 		},
-		MachineCA: &x509.PEMEncodedCertificateAndKey{Crt: in.Options.SecretsBundle.Certs.OS.Crt},
-		MachineInstall: &v1alpha1.InstallConfig{
-			InstallDisk:            in.Options.InstallDisk,
-			InstallImage:           in.Options.InstallImage,
-			InstallWipe:            new(false),
-			InstallExtraKernelArgs: in.Options.InstallExtraKernelArgs,
-		},
+		MachineCA:       &x509.PEMEncodedCertificateAndKey{Crt: in.Options.SecretsBundle.Certs.OS.Crt},
 		MachineDisks:    in.Options.MachineDisks,
 		MachineFeatures: &v1alpha1.FeaturesConfig{},
 	}
@@ -50,8 +44,19 @@ func (in *Input) worker() ([]config.Document, error) {
 		machine.MachineSysctls = in.Options.Sysctls //nolint:staticcheck // legacy configuration
 	}
 
-	if in.Options.VersionContract.GrubUseUKICmdlineDefault() {
-		machine.MachineInstall.InstallGrubUseUKICmdline = new(true)
+	// .machine.install is deprecated in favor of the UnattendedInstallConfig multi-document config;
+	// only generate it for older version contracts that don't support the new document.
+	if !in.Options.VersionContract.UnattendedInstallConfig() {
+		machine.MachineInstall = &v1alpha1.InstallConfig{ //nolint:staticcheck // legacy configuration
+			InstallDisk:            in.Options.InstallDisk,
+			InstallImage:           in.Options.InstallImage,
+			InstallWipe:            new(false),
+			InstallExtraKernelArgs: in.Options.InstallExtraKernelArgs,
+		}
+
+		if in.Options.VersionContract.GrubUseUKICmdlineDefault() {
+			machine.MachineInstall.InstallGrubUseUKICmdline = new(true) //nolint:staticcheck // legacy configuration
+		}
 	}
 
 	if !in.Options.VersionContract.HideRBACAndKeyUsage() {
@@ -173,6 +178,17 @@ func (in *Input) worker() ([]config.Document, error) {
 			in.Options.SecretsBundle.Cluster.ID,
 			in.Options.SecretsBundle.Cluster.Secret,
 		))
+	}
+
+	// The UnattendedInstallConfig document requires a volume selector, which is derived from the install disk,
+	// so only generate it when an install disk is provided.
+	if in.Options.VersionContract.UnattendedInstallConfig() && in.Options.InstallDisk != "" && !in.Options.SkipUnattendedInstallConfig {
+		unattended, err := in.unattendedInstallConfig()
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate unattended install config: %w", err)
+		}
+
+		documents = append(documents, unattended)
 	}
 
 	if in.Options.VersionContract.HostDNSEnabled() && in.Options.VersionContract.HostDNSMultidocConfig() {

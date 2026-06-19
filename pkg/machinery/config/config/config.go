@@ -83,4 +83,5 @@ type Config interface { //nolint:interfacebloat
 	ImageVerificationConfig() ImageVerificationConfig
 	SysctlConfig() map[string]string
 	SysfsConfig() map[string]string
+	UnattendedInstallConfig() UnattendedInstallConfig
 }

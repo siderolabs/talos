@@ -47,6 +47,15 @@ enum RuntimeFIPSState {
   FIPS_STATE_STRICT = 2;
 }
 
+// RuntimeUnattendedInstallPhase describes the phase of the unattended install.
+enum RuntimeUnattendedInstallPhase {
+  UNATTENDED_INSTALL_PHASE_PENDING = 0;
+  UNATTENDED_INSTALL_PHASE_INSTALLING = 1;
+  UNATTENDED_INSTALL_PHASE_INSTALLED = 2;
+  UNATTENDED_INSTALL_PHASE_WAITING_FOR_REBOOT = 3;
+  UNATTENDED_INSTALL_PHASE_FAILED = 4;
+}
+
 // MachineType represents a machine type.
 enum MachineType {
   // TypeUnknown represents undefined node type, when there is no machine configuration yet.

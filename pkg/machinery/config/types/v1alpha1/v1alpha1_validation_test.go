@@ -204,7 +204,9 @@ func TestValidate(t *testing.T) {
 			},
 		},
 		{
-			name: "NoMachineInstallRequired",
+			// .machine.install is deprecated in favor of the UnattendedInstallConfig document and is no longer
+			// required, even in install mode.
+			name: "NoMachineInstallNotRequired",
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
@@ -222,7 +224,6 @@ func TestValidate(t *testing.T) {
 				},
 			},
 			requiresInstall: true,
-			expectedError:   "1 error occurred:\n\t* install instructions are required in \"runtimeMode(true)\" mode\n\n",
 		},
 		{
 			name: "MachineInstallDisk",

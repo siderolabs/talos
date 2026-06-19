@@ -177,14 +177,9 @@ type MachineConfig struct {
 	//
 	// Deprecated: Use 'UserVolumeConfig' instead.
 	MachineDisks []*MachineDisk `yaml:"disks,omitempty"` // Note: `size` is in units of bytes.
-	//   description: |
-	//     Used to provide instructions for installations.
+	// docgen:nodoc
 	//
-	//     Note that this configuration section gets silently ignored by Talos images that are considered pre-installed.
-	//     To make sure Talos installs according to the provided configuration, Talos should be booted with ISO or PXE-booted.
-	//   examples:
-	//     - name: MachineInstall config usage example.
-	//       value: machineInstallExample()
+	// Deprecated: Use the 'UnattendedInstall' multi-document config instead.
 	MachineInstall *InstallConfig `yaml:"install,omitempty"`
 	//   description: |
 	//     Allows the addition of user specified files.
@@ -761,6 +756,8 @@ func (devices *NetworkDeviceList) mergeDevice(device *Device) error {
 }
 
 // InstallConfig represents the installation options for preparing a node.
+//
+// docgen:nodoc
 type InstallConfig struct {
 	//   description: |
 	//     The disk used for installations.
@@ -876,15 +873,10 @@ type InstallDiskSizeMatchData struct {
 type InstallDiskType string
 
 // InstallDiskSelector represents a disk query parameters for the install disk lookup.
+//
+//docgen:nodoc
 type InstallDiskSelector struct {
 	//   description: Disk size.
-	//   examples:
-	//     - name: Select a disk which size is equal to 4GB.
-	//       value: machineInstallDiskSizeMatcherExamples0()
-	//     - name: Select a disk which size is greater than 1TB.
-	//       value: machineInstallDiskSizeMatcherExamples1()
-	//     - name: Select a disk which size is less or equal than 2TB.
-	//       value: machineInstallDiskSizeMatcherExamples2()
 	//   schema:
 	//     type: string
 	Size *InstallDiskSizeMatcher `yaml:"size,omitempty"`

@@ -10,6 +10,8 @@ import (
 
 	"github.com/siderolabs/go-pointer"
 
+	"github.com/siderolabs/talos/pkg/machinery/cel"
+	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	clustertypes "github.com/siderolabs/talos/pkg/machinery/config/types/cluster"
@@ -37,22 +39,19 @@ func (in *Input) init() ([]config.Document, error) {
 		MachineCA:       in.Options.SecretsBundle.Certs.OS,
 		MachineCertSANs: in.AdditionalMachineCertSANs,
 		MachineToken:    in.Options.SecretsBundle.TrustdInfo.Token,
-		MachineInstall: &v1alpha1.InstallConfig{
-			InstallDisk:            in.Options.InstallDisk,
-			InstallImage:           in.Options.InstallImage,
-			InstallWipe:            new(false),
-			InstallExtraKernelArgs: in.Options.InstallExtraKernelArgs,
-		},
+		MachineInstall: nilIf(in.Options.VersionContract.UnattendedInstallConfig(), &v1alpha1.InstallConfig{ //nolint:staticcheck // legacy configuration
+			InstallDisk:              in.Options.InstallDisk,
+			InstallImage:             in.Options.InstallImage,
+			InstallWipe:              new(false),
+			InstallExtraKernelArgs:   in.Options.InstallExtraKernelArgs,
+			InstallGrubUseUKICmdline: nilIf(!in.Options.VersionContract.GrubUseUKICmdlineDefault(), new(true)), //nolint:staticcheck
+		}),
 		MachineDisks:    in.Options.MachineDisks,
 		MachineFeatures: &v1alpha1.FeaturesConfig{},
 	}
 
 	if !in.Options.VersionContract.MultidocSysctlConfigSupported() {
 		machine.MachineSysctls = in.Options.Sysctls //nolint:staticcheck // legacy configuration
-	}
-
-	if in.Options.VersionContract.GrubUseUKICmdlineDefault() {
-		machine.MachineInstall.InstallGrubUseUKICmdline = new(true)
 	}
 
 	if !in.Options.VersionContract.HideRBACAndKeyUsage() {
@@ -235,6 +234,17 @@ func (in *Input) init() ([]config.Document, error) {
 		))
 	}
 
+	// The UnattendedInstallConfig document requires a volume selector, which is derived from the install disk,
+	// so only generate it when an install disk is provided.
+	if in.Options.VersionContract.UnattendedInstallConfig() && in.Options.InstallDisk != "" && !in.Options.SkipUnattendedInstallConfig {
+		unattended, err := in.unattendedInstallConfig()
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate unattended install config: %w", err)
+		}
+
+		documents = append(documents, unattended)
+	}
+
 	if in.Options.VersionContract.HostDNSEnabled() && in.Options.VersionContract.HostDNSMultidocConfig() {
 		resolverConfig := network.NewResolverConfigV1Alpha1()
 		resolverConfig.ResolverHostDNS = network.HostDNSConfig{
@@ -277,6 +287,24 @@ func (in *Input) init() ([]config.Document, error) {
 	documents = append(documents, extraDocuments...)
 
 	return documents, nil
+}
+
+// unattendedInstallConfig builds the UnattendedInstallConfig multi-document config from the generate options.
+func (in *Input) unattendedInstallConfig() (*runtime.UnattendedInstallConfigV1Alpha1, error) {
+	unattended := runtime.NewUnattendedInstallConfigV1Alpha1()
+	unattended.Installer.Image = in.Options.InstallImage
+	unattended.ProvisioningSpec.Wipe = new(false)
+
+	if in.Options.InstallDisk != "" {
+		expr, err := cel.ParseBooleanExpression(fmt.Sprintf("disk.dev_path == %q", in.Options.InstallDisk), celenv.DiskLocator())
+		if err != nil {
+			return nil, fmt.Errorf("failed to build install disk selector: %w", err)
+		}
+
+		unattended.ProvisioningSpec.DiskSelector.Match = expr
+	}
+
+	return unattended, nil
 }
 
 func ptrOrNil(b bool) *bool {

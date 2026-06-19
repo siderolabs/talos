@@ -455,6 +455,10 @@ func (m *Maker[T]) initGenOps() error {
 		)
 	}
 
+	if m.Ops.SkipUnattendedInstallConfig {
+		genOptions = append(genOptions, generate.WithSkipUnattendedInstallConfig(true))
+	}
+
 	m.GenOps = genOptions
 
 	return nil

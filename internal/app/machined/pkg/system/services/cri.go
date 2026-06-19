@@ -26,6 +26,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 var _ system.HealthcheckedService = (*CRI)(nil)
@@ -74,10 +75,19 @@ func (c *CRI) PostFunc(runtime.Runtime, events.ServiceState) (err error) {
 
 // Condition implements the Service interface.
 func (c *CRI) Condition(r runtime.Runtime) conditions.Condition {
-	return conditions.WaitForAll(
+	cond := []conditions.Condition{
 		network.NewReadyCondition(r.State().V1Alpha2().Resources(), network.AddressReady, network.HostnameReady, network.EtcFilesReady),
 		files.NewEtcFileCondition(r.State().V1Alpha2().Resources(), "machine-id", constants.CRIConfig),
-	)
+	}
+
+	if !r.State().Platform().Mode().InContainer() && r.Config().UnattendedInstallConfig() != nil {
+		cond = append(
+			cond,
+			runtimeres.NewUnattendedInstallCondition(r.State().V1Alpha2().Resources()),
+		)
+	}
+
+	return conditions.WaitForAll(cond...)
 }
 
 // DependsOn implements the Service interface.
