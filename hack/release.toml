@@ -18,7 +18,7 @@ preface = """
     [notes.updates]
         title = "Component Updates"
         description = """\
-Linux: 6.18.35
+Linux: 6.18.36
 Kubernetes: 1.36.2
 containerd: 2.3.2
 etcd: 3.7.0-rc.0-0
@@ -290,8 +290,8 @@ kind: FilesystemTrimConfig
 interval: 168h0m0s # one week
 ```
 
-The default machine configuration for Talos 1.14+ includes a `FilesystemTrimConfig` document with a default trim interval of one week, 
-so trimming is enabled by default for eligible filesystems. For cluster which were upgraded from older versions, the `FilesystemTrimConfig` document will be missing, 
+The default machine configuration for Talos 1.14+ includes a `FilesystemTrimConfig` document with a default trim interval of one week,
+so trimming is enabled by default for eligible filesystems. For cluster which were upgraded from older versions, the `FilesystemTrimConfig` document will be missing,
 so trimming will be disabled by default until the document is added.
 
 When the document is present, Talos builds a stable schedule (hashed by node ID and volume ID, so trims are spread out
