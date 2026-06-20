@@ -165,6 +165,52 @@ The keys `facility`, `seq`, `clock`, `priority`, `msg`, `talos-time` and `talos-
 as they are set by Talos itself.
 """
 
+    [notes.containerd_config_version]
+        title = "containerd Configuration Version 4"
+        description = """\
+Talos now generates `containerd` configuration with `version = 4` (previously `version = 3`).
+
+`containerd` only migrates configuration from older versions, so any custom CRI configuration provided via
+`CRICustomizationConfig` documents (or shipped by system extensions) is now interpreted as version 4, and settings
+which moved in version 4 are silently ignored (only a `Ignoring unknown key in TOML` warning is logged by `containerd`).
+
+In version 4, the top-level server sections moved into plugin configuration blocks, so the following patches need to be adjusted:
+
+| version 3 | version 4 |
+|-----------|-----------|
+| `[metrics]` `address` | `[plugins."io.containerd.server.v1.metrics"]` `address` |
+| `[metrics]` `grpc_histogram` | `[plugins."io.containerd.metrics.v1.grpc-prometheus"]` `grpc_histogram` |
+| `[grpc]` `address`, `uid`, `gid`, `max_recv_message_size`, `max_send_message_size` | `[plugins."io.containerd.server.v1.grpc"]` (same keys) |
+| `[grpc]` `tcp_address`, `tcp_tls_ca`, `tcp_tls_cert`, `tcp_tls_key`, `tcp_tls_common_name` | `[plugins."io.containerd.server.v1.grpc-tcp"]` `address`, `tls_ca`, `tls_cert`, `tls_key`, `tls_common_name` |
+| `[ttrpc]` `address`, `uid`, `gid` | `[plugins."io.containerd.server.v1.ttrpc"]` (same keys) |
+| `[debug]` `address`, `uid`, `gid` | `[plugins."io.containerd.server.v1.debug"]` (same keys) |
+
+For example, the `containerd` metrics customization documented for previous versions of Talos:
+
+```yaml
+apiVersion: v1alpha1
+kind: CRICustomizationConfig
+name: enable-metrics
+content: |
+  [metrics]
+    address = "0.0.0.0:11234"
+```
+
+should now be written as:
+
+```yaml
+apiVersion: v1alpha1
+kind: CRICustomizationConfig
+name: enable-metrics
+content: |
+  [plugins."io.containerd.server.v1.metrics"]
+    address = "0.0.0.0:11234"
+```
+
+Note that `[debug]` `level`, `format` and `log_trace_id` stay at the top level, and that the `ttrpc` address is no longer
+derived from the `grpc` address: if the `grpc` address is customized, the `ttrpc` plugin address has to be set explicitly.
+"""
+
 [make_deps]
 
     [make_deps.tools]
