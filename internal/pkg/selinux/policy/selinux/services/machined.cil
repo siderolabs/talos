@@ -94,8 +94,13 @@
 (allow kernel_t initramfs_t (fd (use)))
 ; Make machined go into proper context
 (allow initramfs_t bin_exec_t (fs_classes (ro))) ; Find init
+(allow initramfs_t bin_exec_t (file (execute execute_no_trans)))
 (allow initramfs_t init_exec_t (fs_classes (ro)))
 (allow initramfs_t init_exec_t (file (execute)))
+(allow initramfs_t cni_plugin_t (fs_classes (ro)))
+(allow initramfs_t cni_plugin_t (file (execute execute_no_trans)))
+(allow initramfs_t modprobe_exec_t (fs_classes (ro)))
+(allow initramfs_t modprobe_exec_t (file (execute execute_no_trans)))
 (typetransition initramfs_t init_exec_t process init_t)
 (allow initramfs_t init_t (process_classes (full)))
 (allow init_t initramfs_t (fd (use)))
