@@ -143,11 +143,14 @@ func findMatchingRoutes(existingRoutes []rtnetlink.RouteMessage, expected *netwo
 			continue
 		}
 
-		if !route.Attributes.Dst.Equal(expected.Destination.Addr().AsSlice()) {
+		// a default route (zero-length prefix) carries no RTA_DST in the kernel, so its Dst is nil; the
+		// expected destination may be either the zero Prefix (nil) or an explicit 0.0.0.0/0 (non-nil).
+		// The length match alone identifies it (a default is unique per family/table/priority).
+		if route.DstLength != 0 && !route.Attributes.Dst.Equal(expected.Destination.Addr().AsSlice()) {
 			continue
 		}
 
-		if !route.Attributes.Gateway.Equal(expected.Gateway.AsSlice()) {
+		if !routeGatewayMatches(&existingRoutes[i], expected) {
 			continue
 		}
 
@@ -165,11 +168,115 @@ func findMatchingRoutes(existingRoutes []rtnetlink.RouteMessage, expected *netwo
 	return result
 }
 
+// crossFamilyVia returns an RTA_VIA next-hop when the gateway's address family differs from the
+// route's destination family (RFC 8950, e.g. an IPv4 route via an IPv6 link-local next-hop).
+// It returns nil for a same-family (or absent) gateway, in which case RTA_GATEWAY is used.
+func crossFamilyVia(family nethelpers.Family, gw netip.Addr) *rtnetlink.RouteVia {
+	if !gw.IsValid() {
+		return nil
+	}
+
+	gwIsV6 := gw.Is6() && !gw.Is4In6()
+
+	switch family {
+	case nethelpers.FamilyInet4:
+		if gwIsV6 {
+			return &rtnetlink.RouteVia{Family: unix.AF_INET6, Addr: gw.AsSlice()}
+		}
+	case nethelpers.FamilyInet6:
+		if !gwIsV6 {
+			return &rtnetlink.RouteVia{Family: unix.AF_INET, Addr: gw.AsSlice()}
+		}
+	}
+
+	return nil
+}
+
+func viaEqual(a, b *rtnetlink.RouteVia) bool {
+	if a == nil || b == nil {
+		return a == b
+	}
+
+	return a.Family == b.Family && a.Addr.Equal(b.Addr)
+}
+
+// routeGatewayMatches reports whether an existing kernel route's next-hop matches the spec, handling
+// the single-gateway, cross-family (RTA_VIA), and multipath cases.
+func routeGatewayMatches(existing *rtnetlink.RouteMessage, expected *network.RouteSpecSpec) bool {
+	if len(expected.NextHops) > 0 {
+		// multipath: top-level gateway/via are empty; per-hop comparison happens in multipathEqual
+		return existing.Attributes.Gateway == nil && existing.Attributes.Via == nil
+	}
+
+	if via := crossFamilyVia(expected.Family, expected.Gateway); via != nil {
+		return viaEqual(existing.Attributes.Via, via)
+	}
+
+	return existing.Attributes.Gateway.Equal(expected.Gateway.AsSlice())
+}
+
+// buildMultipath builds rtnetlink multipath next-hops from the spec, resolving link names to indices.
+//
+// It returns false if any next-hop link cannot be resolved yet, in which case the route should be
+// retried once the link appears.
+func buildMultipath(family nethelpers.Family, links []rtnetlink.LinkMessage, nextHops []network.RouteNextHop) ([]rtnetlink.NextHop, bool) {
+	result := make([]rtnetlink.NextHop, 0, len(nextHops))
+
+	for _, nh := range nextHops {
+		ifIndex := resolveLinkName(links, nh.OutLinkName)
+		if ifIndex == 0 && nh.OutLinkName != "" {
+			return nil, false
+		}
+
+		weight := nh.Weight
+		if weight == 0 {
+			weight = 1
+		}
+
+		hop := rtnetlink.NextHop{
+			Hop: rtnetlink.RTNextHop{
+				IfIndex: ifIndex,
+				Hops:    weight - 1, // the kernel encodes the next-hop weight as (weight - 1)
+			},
+		}
+
+		if via := crossFamilyVia(family, nh.Gateway); via != nil {
+			hop.Via = via
+		} else {
+			hop.Gateway = nh.Gateway.AsSlice()
+		}
+
+		result = append(result, hop)
+	}
+
+	return result, true
+}
+
+// multipathEqual reports whether an existing kernel multipath set matches the expected next-hops.
+func multipathEqual(existing, expected []rtnetlink.NextHop) bool {
+	if len(existing) != len(expected) {
+		return false
+	}
+
+	for i := range expected {
+		if existing[i].Hop.IfIndex != expected[i].Hop.IfIndex ||
+			existing[i].Hop.Hops != expected[i].Hop.Hops ||
+			!existing[i].Gateway.Equal(expected[i].Gateway) ||
+			!viaEqual(existing[i].Via, expected[i].Via) {
+			return false
+		}
+	}
+
+	return true
+}
+
 //nolint:gocyclo,cyclop
 func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Runtime, logger *zap.Logger, conn *rtnetlink.Conn,
 	links []rtnetlink.LinkMessage, routes []rtnetlink.RouteMessage, route *network.RouteSpec,
 ) error {
 	linkIndex := resolveLinkName(links, route.TypedSpec().OutLinkName)
+
+	isMultipath := len(route.TypedSpec().NextHops) > 0
 
 	destinationStr := route.TypedSpec().Destination.String()
 	if value.IsZero(route.TypedSpec().Destination) {
@@ -216,6 +323,17 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 			return nil
 		}
 
+		var multipath []rtnetlink.NextHop
+
+		if isMultipath {
+			var ok bool
+
+			if multipath, ok = buildMultipath(route.TypedSpec().Family, links, route.TypedSpec().NextHops); !ok {
+				// route can't be created as a next-hop link doesn't exist (yet), skip it
+				return nil
+			}
+		}
+
 		matchFound := false
 
 		for _, existing := range findMatchingRoutes(routes, route.TypedSpec()) {
@@ -228,11 +346,13 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 			// check if existing route matches the spec: if it does, skip update
 			if existing.Scope == uint8(route.TypedSpec().Scope) && nethelpers.RouteFlags(existing.Flags).Equal(route.TypedSpec().Flags) &&
 				existing.Protocol == uint8(route.TypedSpec().Protocol) &&
-				existing.Attributes.OutIface == linkIndex &&
+				// when no out-link is requested, accept whatever egress device the kernel resolved
+				(linkIndex == 0 || existing.Attributes.OutIface == linkIndex) &&
 				(value.IsZero(route.TypedSpec().Source) ||
 					existing.Attributes.Src.Equal(route.TypedSpec().Source.AsSlice())) &&
 				existingMTU == route.TypedSpec().MTU &&
-				existing.Type == uint8(route.TypedSpec().Type) {
+				existing.Type == uint8(route.TypedSpec().Type) &&
+				multipathEqual(existing.Attributes.Multipath, multipath) {
 				matchFound = true
 
 				continue
@@ -275,10 +395,22 @@ func (ctrl *RouteSpecController) syncRoute(ctx context.Context, r controller.Run
 		routeAttributes := rtnetlink.RouteAttributes{
 			Dst:      route.TypedSpec().Destination.Addr().AsSlice(),
 			Src:      route.TypedSpec().Source.AsSlice(),
-			Gateway:  route.TypedSpec().Gateway.AsSlice(),
-			OutIface: linkIndex,
 			Priority: route.TypedSpec().Priority,
 			Table:    uint32(route.TypedSpec().Table),
+		}
+
+		if isMultipath {
+			// multipath (ECMP): next-hops live in RTA_MULTIPATH, top-level gateway/oif stay unset
+			routeAttributes.Multipath = multipath
+		} else {
+			routeAttributes.OutIface = linkIndex
+
+			if via := crossFamilyVia(route.TypedSpec().Family, route.TypedSpec().Gateway); via != nil {
+				// cross-family next-hop (RFC 8950): IPv4 dst via IPv6 link-local, etc.
+				routeAttributes.Via = via
+			} else {
+				routeAttributes.Gateway = route.TypedSpec().Gateway.AsSlice()
+			}
 		}
 
 		if route.TypedSpec().MTU != 0 {

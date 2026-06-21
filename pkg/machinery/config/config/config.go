@@ -35,6 +35,7 @@ type Config interface { //nolint:interfacebloat
 	NetworkProbeConfigs() []NetworkCommonProbeConfig
 	NetworkBlackholeRouteConfigs() []NetworkBlackholeRouteConfig
 	NetworkRoutingRuleConfigs() []NetworkRoutingRuleConfig
+	NetworkBGPConfigs() []NetworkBGPConfig
 
 	// - k8s:
 	K8sAdmissionControlPluginConfigs() []K8sAdmissionControlPluginConfig

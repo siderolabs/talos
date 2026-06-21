@@ -39,6 +39,8 @@ type RouteStatusSpec struct {
 	Flags        nethelpers.RouteFlags    `yaml:"flags" protobuf:"11"`
 	Protocol     nethelpers.RouteProtocol `yaml:"protocol" protobuf:"12"`
 	MTU          uint32                   `yaml:"mtu,omitempty" protobuf:"13"`
+	// NextHops is populated for multipath (ECMP) routes; the top-level Gateway/OutLink stay unset then.
+	NextHops []RouteNextHop `yaml:"nextHops,omitempty" protobuf:"14"`
 }
 
 // NewRouteStatus initializes a RouteStatus resource.

@@ -52,6 +52,8 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 		skipInjectingExtraCmdlineFlag = "skip-injecting-extra-cmdline"
 		controlPlanePortFlag          = "control-plane-port"
 		firewallFlag                  = "with-firewall"
+		bgpFlag                       = "with-bgp"
+		bgpCLOSFlag                   = "with-bgp-clos"
 		tpmEnabledFlag                = "with-tpm1_2"
 		tpm2EnabledFlag               = "with-tpm2"
 		withIOMMUFlag                 = "with-iommu"
@@ -248,6 +250,8 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 			"specify percent of corrupt packets on the bridge interface. e.g. 50% = 0.50 (default: 0.0)")
 		qemu.IntVar(&qOps.Bandwidth, bandwidthFlag, qOps.Bandwidth, "specify bandwidth restriction (in kbps) on the bridge interface")
 		qemu.StringVar(&qOps.WithFirewall, firewallFlag, qOps.WithFirewall, "inject firewall rules into the cluster, value is default policy - accept/block")
+		qemu.BoolVar(&qOps.WithBGP, bgpFlag, qOps.WithBGP, "run an embedded gobgp fabric peer on the bridge gateway for testing native BGP")
+		qemu.BoolVar(&qOps.WithBGPCLOS, bgpCLOSFlag, qOps.WithBGPCLOS, "full-CLOS BGP test: nodes have only dedicated unnumbered fabric uplinks to a host fabric peer, reachable  via a BGP loopback")
 		qemu.Var(&qOps.WithSiderolinkAgent, withSiderolinkAgentFlag,
 			"enables the use of siderolink agent as configuration apply mechanism. `true` or `wireguard` enables the agent, `tunnel` enables the agent with grpc tunneling")
 		qemu.StringVar(&qOps.ConfigInjectionMethod,

@@ -268,6 +268,16 @@ type wireOptions struct {
 	JSONLogsEndpoint          string `json:"json_logs_endpoint"`
 	SiderolinkEnabled         bool   `json:"siderolink_enabled"`
 	DeleteStateOnErr          bool   `json:"delete_state_on_err"`
+
+	// BGP test fabric peer (runs server-side, where the VMs and the host FIB live).
+	BGPEnabled       bool   `json:"bgp_enabled"`
+	BGPCLOS          bool   `json:"bgp_clos"`
+	BGPListenAddress string `json:"bgp_listen_address"`
+	BGPNeighborRange string `json:"bgp_neighbor_range"`
+	BGPAdvertise     string `json:"bgp_advertise"`
+	BGPLocalASN      uint32 `json:"bgp_local_asn"`
+	BGPPeerASN       uint32 `json:"bgp_peer_asn"`
+	BGPLoopbackCIDR  string `json:"bgp_loopback_cidr"`
 }
 
 // MarshalOptions resolves a provision.Option list into its serializable
@@ -294,6 +304,14 @@ func MarshalOptions(opts []provision.Option) ([]byte, error) {
 		JSONLogsEndpoint:          o.JSONLogsEndpoint,
 		SiderolinkEnabled:         o.SiderolinkEnabled,
 		DeleteStateOnErr:          o.DeleteStateOnErr,
+		BGPEnabled:                o.BGPEnabled,
+		BGPCLOS:                   o.BGPCLOS,
+		BGPListenAddress:          o.BGPListenAddress,
+		BGPNeighborRange:          o.BGPNeighborRange,
+		BGPAdvertise:              o.BGPAdvertise,
+		BGPLocalASN:               o.BGPLocalASN,
+		BGPPeerASN:                o.BGPPeerASN,
+		BGPLoopbackCIDR:           o.BGPLoopbackCIDR,
 	})
 }
 
@@ -310,7 +328,7 @@ func UnmarshalOptions(b []byte) ([]provision.Option, error) {
 		return nil, fmt.Errorf("decode options: %w", err)
 	}
 
-	return []provision.Option{
+	opts := []provision.Option{
 		provision.WithKubernetesEndpoint(w.KubernetesEndpoint),
 		provision.WithBootloader(w.BootloaderEnabled),
 		provision.WithSkipInjectingExtraCmdline(w.SkipInjectingExtraCmdline),
@@ -322,5 +340,14 @@ func UnmarshalOptions(b []byte) ([]provision.Option, error) {
 		provision.WithJSONLogs(w.JSONLogsEndpoint),
 		provision.WithSiderolinkAgent(w.SiderolinkEnabled),
 		provision.WithDeleteOnErr(w.DeleteStateOnErr),
-	}, nil
+	}
+
+	switch {
+	case w.BGPCLOS:
+		opts = append(opts, provision.WithBGPCLOS(w.BGPAdvertise, w.BGPLocalASN, w.BGPPeerASN, w.BGPLoopbackCIDR))
+	case w.BGPEnabled:
+		opts = append(opts, provision.WithBGP(w.BGPListenAddress, w.BGPNeighborRange, w.BGPAdvertise, w.BGPLocalASN, w.BGPPeerASN))
+	}
+
+	return opts, nil
 }

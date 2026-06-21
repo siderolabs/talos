@@ -7,6 +7,7 @@ option java_package = "dev.talos.api.resource.definitions.network";
 
 import "common/common.proto";
 import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
 import "resource/definitions/enums/enums.proto";
 import "resource/definitions/runtime/runtime.proto";
 
@@ -35,6 +36,20 @@ message AddressStatusSpec {
   talos.resource.definitions.enums.NethelpersScope scope = 9;
   uint32 flags = 10;
   uint32 priority = 11;
+}
+
+// BGPPeerStatusSpec describes the status of a BGP peering session.
+message BGPPeerStatusSpec {
+  string peer = 1;
+  uint32 local_asn = 2;
+  uint32 peer_asn = 3;
+  talos.resource.definitions.enums.NethelpersBGPSessionState state = 4;
+  common.NetIP router_id = 5;
+  google.protobuf.Timestamp since = 6;
+  uint32 received = 7;
+  uint32 advertised = 8;
+  uint32 accepted = 9;
+  string bfd_state = 10;
 }
 
 // BondMasterSpec describes bond settings if Kind == "bond".
@@ -557,6 +572,16 @@ message ResolverStatusSpec {
   repeated NameServerSpec name_servers = 4;
 }
 
+// RouteNextHop describes a single next-hop of a (possibly multipath) route.
+//
+// A next-hop gateway may be in a different address family than the route destination
+// (e.g. an IPv4 prefix reachable via an IPv6 link-local next-hop, RFC 8950).
+message RouteNextHop {
+  common.NetIP gateway = 1;
+  string out_link_name = 2;
+  uint32 weight = 3;
+}
+
 // RouteSpecSpec describes the route.
 message RouteSpecSpec {
   talos.resource.definitions.enums.NethelpersFamily family = 1;
@@ -572,6 +597,9 @@ message RouteSpecSpec {
   talos.resource.definitions.enums.NethelpersRouteProtocol protocol = 11;
   talos.resource.definitions.enums.NetworkConfigLayer config_layer = 12;
   uint32 mtu = 13;
+  // NextHops, when non-empty, describes a multipath (ECMP) route. The top-level Gateway and
+  // OutLinkName are left unset in that case, mirroring the kernel's RTA_GATEWAY vs RTA_MULTIPATH split.
+  repeated RouteNextHop next_hops = 14;
 }
 
 // RouteStatusSpec describes status of rendered secrets.
@@ -589,6 +617,8 @@ message RouteStatusSpec {
   uint32 flags = 11;
   talos.resource.definitions.enums.NethelpersRouteProtocol protocol = 12;
   uint32 mtu = 13;
+  // NextHops is populated for multipath (ECMP) routes; the top-level Gateway/OutLink stay unset then.
+  repeated RouteNextHop next_hops = 14;
 }
 
 // RoutingRuleSpecSpec describes the routing rule.

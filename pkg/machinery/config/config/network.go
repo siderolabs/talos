@@ -403,3 +403,48 @@ type NetworkHTTPProbeConfig interface {
 	URL() meta.URL
 	Timeout() time.Duration
 }
+
+// NetworkBGPConfig defines a native BGP speaker configuration.
+type NetworkBGPConfig interface {
+	// BGPConfig is a signal method for documents implementing this interface.
+	BGPConfig()
+	// LocalASN is the local autonomous system number.
+	LocalASN() uint32
+	// RouterID is the BGP router-id; zero value means derive it from an advertised address.
+	RouterID() netip.Addr
+	// RouteSource is the preferred source address set on BGP-installed routes (kernel src / RTA_PREFSRC);
+	// zero value lets the kernel select the source.
+	RouteSource() netip.Addr
+	// AdvertiseLinks lists interface names whose addresses are originated as host routes (/32, /128).
+	AdvertiseLinks() []string
+	// Multipath enables ECMP (multiple best paths) for received routes.
+	Multipath() bool
+	// MaxPaths caps the number of ECMP next-hops; zero means use the implementation default.
+	MaxPaths() uint8
+	// Neighbors lists the configured BGP neighbors.
+	Neighbors() []NetworkBGPNeighbor
+}
+
+// NetworkBGPNeighbor defines a single BGP neighbor.
+type NetworkBGPNeighbor interface {
+	// Address is the neighbor IP for a numbered session; zero value when the session is unnumbered.
+	Address() netip.Addr
+	// Interface is the interface name for an unnumbered (IPv6 link-local) session; empty when numbered.
+	Interface() string
+	// PeerASN is the expected peer ASN; zero means accept any ASN (eBGP "external").
+	PeerASN() uint32
+	// HoldTime is the BGP hold timer; zero means use the implementation default.
+	HoldTime() time.Duration
+	// BFD returns the BFD configuration for the neighbor, or nil when BFD is disabled.
+	BFD() NetworkBGPBFD
+}
+
+// NetworkBGPBFD defines BFD parameters for a BGP neighbor.
+type NetworkBGPBFD interface {
+	// TransmitInterval is the desired minimum transmit interval.
+	TransmitInterval() time.Duration
+	// ReceiveInterval is the required minimum receive interval.
+	ReceiveInterval() time.Duration
+	// DetectMultiplier is the BFD detection multiplier; zero means use the implementation default.
+	DetectMultiplier() uint8
+}

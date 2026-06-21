@@ -104,6 +104,12 @@ func (p *provisioner) Destroy(ctx context.Context, cluster provision.Cluster, op
 		return err
 	}
 
+	fmt.Fprintln(options.LogWriter, "removing bgp")
+
+	if err := p.DestroyBGP(state); err != nil {
+		return err
+	}
+
 	fmt.Fprintln(options.LogWriter, "removing network")
 
 	if err := p.DestroyNetwork(state); err != nil {

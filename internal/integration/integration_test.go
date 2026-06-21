@@ -39,6 +39,8 @@ var (
 	selinuxEnforcing    bool
 	extensionsQEMU      bool
 	extensionsNvidia    bool
+	bgpEnabled          bool
+	bgpCLOSEnabled      bool
 	verifyUKIBooted     bool
 	airgapped           bool
 	virtiofsd           bool
@@ -127,6 +129,8 @@ func TestIntegration(t *testing.T) {
 				KubeStrPath:         kubeStrPath,
 				ExtensionsQEMU:      extensionsQEMU,
 				ExtensionsNvidia:    extensionsNvidia,
+				BGPEnabled:          bgpEnabled,
+				BGPCLOSEnabled:      bgpCLOSEnabled,
 				TrustedBoot:         trustedBoot,
 				SelinuxEnforcing:    selinuxEnforcing,
 				VerifyUKIBooted:     verifyUKIBooted,
@@ -170,6 +174,8 @@ func init() {
 	flag.BoolVar(&selinuxEnforcing, "talos.enforcing", false, "enable tests for SELinux enforcing mode")
 	flag.BoolVar(&extensionsQEMU, "talos.extensions.qemu", false, "enable tests for qemu extensions")
 	flag.BoolVar(&extensionsNvidia, "talos.extensions.nvidia", false, "enable tests for nvidia extensions")
+	flag.BoolVar(&bgpEnabled, "talos.bgp", false, "enable tests for native BGP (requires a cluster created with --with-bgp)")
+	flag.BoolVar(&bgpCLOSEnabled, "talos.bgp.clos", false, "enable the full-CLOS BGP test (requires a cluster created with --with-bgp-clos)")
 	flag.BoolVar(&race, "talos.race", false, "skip tests that are incompatible with race detector")
 	flag.BoolVar(&verifyUKIBooted, "talos.verifyukibooted", true, "enable tests for verifying that Talos was booted using a UKI")
 
