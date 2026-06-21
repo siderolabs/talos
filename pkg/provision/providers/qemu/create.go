@@ -108,6 +108,14 @@ func (p *provisioner) Create(ctx context.Context, request provision.ClusterReque
 		}
 	}
 
+	if options.BGPEnabled {
+		fmt.Fprintln(options.LogWriter, "creating BGP fabric peer")
+
+		if err = p.CreateBGP(state, request, options); err != nil {
+			return nil, fmt.Errorf("error creating BGP fabric peer: %w", err)
+		}
+	}
+
 	if options.JSONLogsEndpoint != "" {
 		fmt.Fprintln(options.LogWriter, "creating JSON logs server")
 

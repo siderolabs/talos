@@ -2497,6 +2497,164 @@
       ],
       "description": "AddressConfig represents a network address configuration."
     },
+    "network.BGPBFDConfig": {
+      "properties": {
+        "transmitInterval": {
+          "type": "string",
+          "pattern": "^[-+]?(((\\d+(\\.\\d*)?|\\.\\d+|\\d+)([nuµm]?s|m|h))|0)+$",
+          "title": "transmitInterval",
+          "description": "Desired minimum transmit interval. Zero uses the implementation default.\n",
+          "markdownDescription": "Desired minimum transmit interval. Zero uses the implementation default.",
+          "x-intellij-html-description": "\u003cp\u003eDesired minimum transmit interval. Zero uses the implementation default.\u003c/p\u003e\n"
+        },
+        "receiveInterval": {
+          "type": "string",
+          "pattern": "^[-+]?(((\\d+(\\.\\d*)?|\\.\\d+|\\d+)([nuµm]?s|m|h))|0)+$",
+          "title": "receiveInterval",
+          "description": "Required minimum receive interval. Zero uses the implementation default.\n",
+          "markdownDescription": "Required minimum receive interval. Zero uses the implementation default.",
+          "x-intellij-html-description": "\u003cp\u003eRequired minimum receive interval. Zero uses the implementation default.\u003c/p\u003e\n"
+        },
+        "detectMultiplier": {
+          "type": "integer",
+          "title": "detectMultiplier",
+          "description": "BFD detection multiplier. Zero uses the implementation default.\n",
+          "markdownDescription": "BFD detection multiplier. Zero uses the implementation default.",
+          "x-intellij-html-description": "\u003cp\u003eBFD detection multiplier. Zero uses the implementation default.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "BGPBFDConfig configures BFD for a BGP neighbor."
+    },
+    "network.BGPNeighborConfig": {
+      "properties": {
+        "address": {
+          "type": "string",
+          "title": "address",
+          "description": "Neighbor IP address for a numbered session. Mutually exclusive with link.\n",
+          "markdownDescription": "Neighbor IP address for a numbered session. Mutually exclusive with `link`.",
+          "x-intellij-html-description": "\u003cp\u003eNeighbor IP address for a numbered session. Mutually exclusive with \u003ccode\u003elink\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "link": {
+          "type": "string",
+          "title": "link",
+          "description": "Link name for an unnumbered (IPv6 link-local) session. Mutually exclusive with address.\nLink aliases are supported.\n",
+          "markdownDescription": "Link name for an unnumbered (IPv6 link-local) session. Mutually exclusive with `address`.\nLink aliases are supported.",
+          "x-intellij-html-description": "\u003cp\u003eLink name for an unnumbered (IPv6 link-local) session. Mutually exclusive with \u003ccode\u003eaddress\u003c/code\u003e.\nLink aliases are supported.\u003c/p\u003e\n"
+        },
+        "peerASN": {
+          "type": "integer",
+          "title": "peerASN",
+          "description": "Expected peer ASN. Zero accepts any ASN advertised by the peer (eBGP “external”).\n",
+          "markdownDescription": "Expected peer ASN. Zero accepts any ASN advertised by the peer (eBGP \"external\").",
+          "x-intellij-html-description": "\u003cp\u003eExpected peer ASN. Zero accepts any ASN advertised by the peer (eBGP \u0026ldquo;external\u0026rdquo;).\u003c/p\u003e\n"
+        },
+        "holdTime": {
+          "type": "string",
+          "pattern": "^[-+]?(((\\d+(\\.\\d*)?|\\.\\d+|\\d+)([nuµm]?s|m|h))|0)+$",
+          "title": "holdTime",
+          "description": "BGP hold time. Zero uses the implementation default.\n",
+          "markdownDescription": "BGP hold time. Zero uses the implementation default.",
+          "x-intellij-html-description": "\u003cp\u003eBGP hold time. Zero uses the implementation default.\u003c/p\u003e\n"
+        },
+        "bfd": {
+          "$ref": "#/$defs/network.BGPBFDConfig",
+          "title": "bfd",
+          "description": "BFD (Bidirectional Forwarding Detection) configuration for the neighbor.\n",
+          "markdownDescription": "BFD (Bidirectional Forwarding Detection) configuration for the neighbor.",
+          "x-intellij-html-description": "\u003cp\u003eBFD (Bidirectional Forwarding Detection) configuration for the neighbor.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "BGPNeighborConfig configures a single BGP neighbor."
+    },
+    "network.BGPPeerConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "BGPPeerConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "localASN": {
+          "type": "integer",
+          "title": "localASN",
+          "description": "Local autonomous system number for the BGP speaker.\n",
+          "markdownDescription": "Local autonomous system number for the BGP speaker.",
+          "x-intellij-html-description": "\u003cp\u003eLocal autonomous system number for the BGP speaker.\u003c/p\u003e\n"
+        },
+        "routerID": {
+          "type": "string",
+          "title": "routerID",
+          "description": "BGP router-id. If not set, it is derived from the first advertised address.\n",
+          "markdownDescription": "BGP router-id. If not set, it is derived from the first advertised address.",
+          "x-intellij-html-description": "\u003cp\u003eBGP router-id. If not set, it is derived from the first advertised address.\u003c/p\u003e\n"
+        },
+        "routeSource": {
+          "type": "string",
+          "title": "routeSource",
+          "description": "Preferred source address set on routes installed from BGP (the kernel route src / RTA_PREFSRC,\nequivalent to FRR’s ip protocol bgp route-map SETSRC). Set this to the node’s loopback so that\ntraffic following BGP-learned routes is sourced from the node identity even though the unnumbered\nfabric uplinks carry no address of their own. If not set, the kernel selects the source address.\n",
+          "markdownDescription": "Preferred source address set on routes installed from BGP (the kernel route `src` / RTA_PREFSRC,\nequivalent to FRR's `ip protocol bgp route-map SETSRC`). Set this to the node's loopback so that\ntraffic following BGP-learned routes is sourced from the node identity even though the unnumbered\nfabric uplinks carry no address of their own. If not set, the kernel selects the source address.",
+          "x-intellij-html-description": "\u003cp\u003ePreferred source address set on routes installed from BGP (the kernel route \u003ccode\u003esrc\u003c/code\u003e / RTA_PREFSRC,\nequivalent to FRR\u0026rsquo;s \u003ccode\u003eip protocol bgp route-map SETSRC\u003c/code\u003e). Set this to the node\u0026rsquo;s loopback so that\ntraffic following BGP-learned routes is sourced from the node identity even though the unnumbered\nfabric uplinks carry no address of their own. If not set, the kernel selects the source address.\u003c/p\u003e\n"
+        },
+        "advertise": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "advertise",
+          "description": "Names of the links whose addresses are originated into BGP as host routes (/32, /128).\nTypically a loopback or dummy link holding the node IP.\n",
+          "markdownDescription": "Names of the links whose addresses are originated into BGP as host routes (/32, /128).\nTypically a loopback or dummy link holding the node IP.",
+          "x-intellij-html-description": "\u003cp\u003eNames of the links whose addresses are originated into BGP as host routes (/32, /128).\nTypically a loopback or dummy link holding the node IP.\u003c/p\u003e\n"
+        },
+        "multipath": {
+          "type": "boolean",
+          "title": "multipath",
+          "description": "Enable ECMP (multipath) for routes learned from multiple neighbors.\n",
+          "markdownDescription": "Enable ECMP (multipath) for routes learned from multiple neighbors.",
+          "x-intellij-html-description": "\u003cp\u003eEnable ECMP (multipath) for routes learned from multiple neighbors.\u003c/p\u003e\n"
+        },
+        "maxPaths": {
+          "type": "integer",
+          "title": "maxPaths",
+          "description": "Maximum number of ECMP next-hops to install. Zero uses the implementation default.\n",
+          "markdownDescription": "Maximum number of ECMP next-hops to install. Zero uses the implementation default.",
+          "x-intellij-html-description": "\u003cp\u003eMaximum number of ECMP next-hops to install. Zero uses the implementation default.\u003c/p\u003e\n"
+        },
+        "neighbors": {
+          "items": {
+            "$ref": "#/$defs/network.BGPNeighborConfig"
+          },
+          "type": "array",
+          "title": "neighbors",
+          "description": "BGP neighbors to peer with.\n",
+          "markdownDescription": "BGP neighbors to peer with.",
+          "x-intellij-html-description": "\u003cp\u003eBGP neighbors to peer with.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "localASN"
+      ],
+      "description": "BGPPeerConfig configures a native BGP speaker on the host."
+    },
     "network.BlackholeRouteConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -6759,6 +6917,9 @@
     },
     {
       "$ref": "#/$defs/k8s.KubeServiceAccountConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/network.BGPPeerConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/network.BlackholeRouteConfigV1Alpha1"

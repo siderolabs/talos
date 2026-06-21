@@ -14,6 +14,7 @@ import (
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
+	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 
 	common "github.com/siderolabs/talos/pkg/machinery/api/common"
 	enums "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/enums"
@@ -253,6 +254,354 @@ func (x *AddressStatusSpec) GetPriority() uint32 {
 	return 0
 }
 
+// BGPBFDConfigSpec contains BFD parameters for a BGP neighbor.
+type BGPBFDConfigSpec struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	TransmitInterval *durationpb.Duration   `protobuf:"bytes,1,opt,name=transmit_interval,json=transmitInterval,proto3" json:"transmit_interval,omitempty"`
+	ReceiveInterval  *durationpb.Duration   `protobuf:"bytes,2,opt,name=receive_interval,json=receiveInterval,proto3" json:"receive_interval,omitempty"`
+	DetectMultiplier uint32                 `protobuf:"varint,3,opt,name=detect_multiplier,json=detectMultiplier,proto3" json:"detect_multiplier,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *BGPBFDConfigSpec) Reset() {
+	*x = BGPBFDConfigSpec{}
+	mi := &file_resource_definitions_network_network_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BGPBFDConfigSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BGPBFDConfigSpec) ProtoMessage() {}
+
+func (x *BGPBFDConfigSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_network_network_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BGPBFDConfigSpec.ProtoReflect.Descriptor instead.
+func (*BGPBFDConfigSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *BGPBFDConfigSpec) GetTransmitInterval() *durationpb.Duration {
+	if x != nil {
+		return x.TransmitInterval
+	}
+	return nil
+}
+
+func (x *BGPBFDConfigSpec) GetReceiveInterval() *durationpb.Duration {
+	if x != nil {
+		return x.ReceiveInterval
+	}
+	return nil
+}
+
+func (x *BGPBFDConfigSpec) GetDetectMultiplier() uint32 {
+	if x != nil {
+		return x.DetectMultiplier
+	}
+	return 0
+}
+
+// BGPNeighborConfigSpec contains the runtime configuration for a BGP neighbor.
+type BGPNeighborConfigSpec struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Address       *common.NetIP          `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
+	Link          string                 `protobuf:"bytes,2,opt,name=link,proto3" json:"link,omitempty"`
+	PeerAsn       uint32                 `protobuf:"varint,3,opt,name=peer_asn,json=peerAsn,proto3" json:"peer_asn,omitempty"`
+	HoldTime      *durationpb.Duration   `protobuf:"bytes,4,opt,name=hold_time,json=holdTime,proto3" json:"hold_time,omitempty"`
+	Bfd           *BGPBFDConfigSpec      `protobuf:"bytes,5,opt,name=bfd,proto3" json:"bfd,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BGPNeighborConfigSpec) Reset() {
+	*x = BGPNeighborConfigSpec{}
+	mi := &file_resource_definitions_network_network_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BGPNeighborConfigSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BGPNeighborConfigSpec) ProtoMessage() {}
+
+func (x *BGPNeighborConfigSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_network_network_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BGPNeighborConfigSpec.ProtoReflect.Descriptor instead.
+func (*BGPNeighborConfigSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *BGPNeighborConfigSpec) GetAddress() *common.NetIP {
+	if x != nil {
+		return x.Address
+	}
+	return nil
+}
+
+func (x *BGPNeighborConfigSpec) GetLink() string {
+	if x != nil {
+		return x.Link
+	}
+	return ""
+}
+
+func (x *BGPNeighborConfigSpec) GetPeerAsn() uint32 {
+	if x != nil {
+		return x.PeerAsn
+	}
+	return 0
+}
+
+func (x *BGPNeighborConfigSpec) GetHoldTime() *durationpb.Duration {
+	if x != nil {
+		return x.HoldTime
+	}
+	return nil
+}
+
+func (x *BGPNeighborConfigSpec) GetBfd() *BGPBFDConfigSpec {
+	if x != nil {
+		return x.Bfd
+	}
+	return nil
+}
+
+// BGPPeerConfigSpec contains the complete runtime configuration for the BGP speaker.
+type BGPPeerConfigSpec struct {
+	state          protoimpl.MessageState   `protogen:"open.v1"`
+	LocalAsn       uint32                   `protobuf:"varint,1,opt,name=local_asn,json=localAsn,proto3" json:"local_asn,omitempty"`
+	RouterId       *common.NetIP            `protobuf:"bytes,2,opt,name=router_id,json=routerId,proto3" json:"router_id,omitempty"`
+	RouteSource    *common.NetIP            `protobuf:"bytes,3,opt,name=route_source,json=routeSource,proto3" json:"route_source,omitempty"`
+	AdvertiseLinks []string                 `protobuf:"bytes,4,rep,name=advertise_links,json=advertiseLinks,proto3" json:"advertise_links,omitempty"`
+	Multipath      bool                     `protobuf:"varint,5,opt,name=multipath,proto3" json:"multipath,omitempty"`
+	MaxPaths       uint32                   `protobuf:"varint,6,opt,name=max_paths,json=maxPaths,proto3" json:"max_paths,omitempty"`
+	Neighbors      []*BGPNeighborConfigSpec `protobuf:"bytes,7,rep,name=neighbors,proto3" json:"neighbors,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *BGPPeerConfigSpec) Reset() {
+	*x = BGPPeerConfigSpec{}
+	mi := &file_resource_definitions_network_network_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BGPPeerConfigSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BGPPeerConfigSpec) ProtoMessage() {}
+
+func (x *BGPPeerConfigSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_network_network_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BGPPeerConfigSpec.ProtoReflect.Descriptor instead.
+func (*BGPPeerConfigSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *BGPPeerConfigSpec) GetLocalAsn() uint32 {
+	if x != nil {
+		return x.LocalAsn
+	}
+	return 0
+}
+
+func (x *BGPPeerConfigSpec) GetRouterId() *common.NetIP {
+	if x != nil {
+		return x.RouterId
+	}
+	return nil
+}
+
+func (x *BGPPeerConfigSpec) GetRouteSource() *common.NetIP {
+	if x != nil {
+		return x.RouteSource
+	}
+	return nil
+}
+
+func (x *BGPPeerConfigSpec) GetAdvertiseLinks() []string {
+	if x != nil {
+		return x.AdvertiseLinks
+	}
+	return nil
+}
+
+func (x *BGPPeerConfigSpec) GetMultipath() bool {
+	if x != nil {
+		return x.Multipath
+	}
+	return false
+}
+
+func (x *BGPPeerConfigSpec) GetMaxPaths() uint32 {
+	if x != nil {
+		return x.MaxPaths
+	}
+	return 0
+}
+
+func (x *BGPPeerConfigSpec) GetNeighbors() []*BGPNeighborConfigSpec {
+	if x != nil {
+		return x.Neighbors
+	}
+	return nil
+}
+
+// BGPPeerStatusSpec describes the status of a BGP peering session.
+type BGPPeerStatusSpec struct {
+	state         protoimpl.MessageState          `protogen:"open.v1"`
+	Peer          string                          `protobuf:"bytes,1,opt,name=peer,proto3" json:"peer,omitempty"`
+	LocalAsn      uint32                          `protobuf:"varint,2,opt,name=local_asn,json=localAsn,proto3" json:"local_asn,omitempty"`
+	PeerAsn       uint32                          `protobuf:"varint,3,opt,name=peer_asn,json=peerAsn,proto3" json:"peer_asn,omitempty"`
+	State         enums.NethelpersBGPSessionState `protobuf:"varint,4,opt,name=state,proto3,enum=talos.resource.definitions.enums.NethelpersBGPSessionState" json:"state,omitempty"`
+	RouterId      *common.NetIP                   `protobuf:"bytes,5,opt,name=router_id,json=routerId,proto3" json:"router_id,omitempty"`
+	Since         *timestamppb.Timestamp          `protobuf:"bytes,6,opt,name=since,proto3" json:"since,omitempty"`
+	Received      uint32                          `protobuf:"varint,7,opt,name=received,proto3" json:"received,omitempty"`
+	Advertised    uint32                          `protobuf:"varint,8,opt,name=advertised,proto3" json:"advertised,omitempty"`
+	Accepted      uint32                          `protobuf:"varint,9,opt,name=accepted,proto3" json:"accepted,omitempty"`
+	BfdState      string                          `protobuf:"bytes,10,opt,name=bfd_state,json=bfdState,proto3" json:"bfd_state,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BGPPeerStatusSpec) Reset() {
+	*x = BGPPeerStatusSpec{}
+	mi := &file_resource_definitions_network_network_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BGPPeerStatusSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BGPPeerStatusSpec) ProtoMessage() {}
+
+func (x *BGPPeerStatusSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_network_network_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BGPPeerStatusSpec.ProtoReflect.Descriptor instead.
+func (*BGPPeerStatusSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *BGPPeerStatusSpec) GetPeer() string {
+	if x != nil {
+		return x.Peer
+	}
+	return ""
+}
+
+func (x *BGPPeerStatusSpec) GetLocalAsn() uint32 {
+	if x != nil {
+		return x.LocalAsn
+	}
+	return 0
+}
+
+func (x *BGPPeerStatusSpec) GetPeerAsn() uint32 {
+	if x != nil {
+		return x.PeerAsn
+	}
+	return 0
+}
+
+func (x *BGPPeerStatusSpec) GetState() enums.NethelpersBGPSessionState {
+	if x != nil {
+		return x.State
+	}
+	return enums.NethelpersBGPSessionState(0)
+}
+
+func (x *BGPPeerStatusSpec) GetRouterId() *common.NetIP {
+	if x != nil {
+		return x.RouterId
+	}
+	return nil
+}
+
+func (x *BGPPeerStatusSpec) GetSince() *timestamppb.Timestamp {
+	if x != nil {
+		return x.Since
+	}
+	return nil
+}
+
+func (x *BGPPeerStatusSpec) GetReceived() uint32 {
+	if x != nil {
+		return x.Received
+	}
+	return 0
+}
+
+func (x *BGPPeerStatusSpec) GetAdvertised() uint32 {
+	if x != nil {
+		return x.Advertised
+	}
+	return 0
+}
+
+func (x *BGPPeerStatusSpec) GetAccepted() uint32 {
+	if x != nil {
+		return x.Accepted
+	}
+	return 0
+}
+
+func (x *BGPPeerStatusSpec) GetBfdState() string {
+	if x != nil {
+		return x.BfdState
+	}
+	return ""
+}
+
 // BondMasterSpec describes bond settings if Kind == "bond".
 type BondMasterSpec struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -323,7 +672,7 @@ type BondMasterSpec struct {
 
 func (x *BondMasterSpec) Reset() {
 	*x = BondMasterSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[2]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -335,7 +684,7 @@ func (x *BondMasterSpec) String() string {
 func (*BondMasterSpec) ProtoMessage() {}
 
 func (x *BondMasterSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[2]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -348,7 +697,7 @@ func (x *BondMasterSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BondMasterSpec.ProtoReflect.Descriptor instead.
 func (*BondMasterSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{2}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *BondMasterSpec) GetMode() enums.NethelpersBondMode {
@@ -560,7 +909,7 @@ type BondSlave struct {
 
 func (x *BondSlave) Reset() {
 	*x = BondSlave{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[3]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -572,7 +921,7 @@ func (x *BondSlave) String() string {
 func (*BondSlave) ProtoMessage() {}
 
 func (x *BondSlave) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[3]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -585,7 +934,7 @@ func (x *BondSlave) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BondSlave.ProtoReflect.Descriptor instead.
 func (*BondSlave) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{3}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *BondSlave) GetMasterName() string {
@@ -613,7 +962,7 @@ type BridgeMasterSpec struct {
 
 func (x *BridgeMasterSpec) Reset() {
 	*x = BridgeMasterSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[4]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -625,7 +974,7 @@ func (x *BridgeMasterSpec) String() string {
 func (*BridgeMasterSpec) ProtoMessage() {}
 
 func (x *BridgeMasterSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[4]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -638,7 +987,7 @@ func (x *BridgeMasterSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BridgeMasterSpec.ProtoReflect.Descriptor instead.
 func (*BridgeMasterSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{4}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *BridgeMasterSpec) GetStp() *STPSpec {
@@ -666,7 +1015,7 @@ type BridgeSlave struct {
 
 func (x *BridgeSlave) Reset() {
 	*x = BridgeSlave{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[5]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -678,7 +1027,7 @@ func (x *BridgeSlave) String() string {
 func (*BridgeSlave) ProtoMessage() {}
 
 func (x *BridgeSlave) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[5]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -691,7 +1040,7 @@ func (x *BridgeSlave) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BridgeSlave.ProtoReflect.Descriptor instead.
 func (*BridgeSlave) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{5}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *BridgeSlave) GetMasterName() string {
@@ -711,7 +1060,7 @@ type BridgeVLANSpec struct {
 
 func (x *BridgeVLANSpec) Reset() {
 	*x = BridgeVLANSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[6]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -723,7 +1072,7 @@ func (x *BridgeVLANSpec) String() string {
 func (*BridgeVLANSpec) ProtoMessage() {}
 
 func (x *BridgeVLANSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[6]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -736,7 +1085,7 @@ func (x *BridgeVLANSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BridgeVLANSpec.ProtoReflect.Descriptor instead.
 func (*BridgeVLANSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{6}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *BridgeVLANSpec) GetFilteringEnabled() bool {
@@ -757,7 +1106,7 @@ type ClientIdentifierSpec struct {
 
 func (x *ClientIdentifierSpec) Reset() {
 	*x = ClientIdentifierSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[7]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -769,7 +1118,7 @@ func (x *ClientIdentifierSpec) String() string {
 func (*ClientIdentifierSpec) ProtoMessage() {}
 
 func (x *ClientIdentifierSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[7]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -782,7 +1131,7 @@ func (x *ClientIdentifierSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClientIdentifierSpec.ProtoReflect.Descriptor instead.
 func (*ClientIdentifierSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{7}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ClientIdentifierSpec) GetClientIdentifier() enums.NethelpersClientIdentifier {
@@ -812,7 +1161,7 @@ type DHCP4OperatorSpec struct {
 
 func (x *DHCP4OperatorSpec) Reset() {
 	*x = DHCP4OperatorSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[8]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -824,7 +1173,7 @@ func (x *DHCP4OperatorSpec) String() string {
 func (*DHCP4OperatorSpec) ProtoMessage() {}
 
 func (x *DHCP4OperatorSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[8]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -837,7 +1186,7 @@ func (x *DHCP4OperatorSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DHCP4OperatorSpec.ProtoReflect.Descriptor instead.
 func (*DHCP4OperatorSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{8}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *DHCP4OperatorSpec) GetRouteMetric() uint32 {
@@ -880,7 +1229,7 @@ type DHCP6OperatorSpec struct {
 
 func (x *DHCP6OperatorSpec) Reset() {
 	*x = DHCP6OperatorSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[9]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -892,7 +1241,7 @@ func (x *DHCP6OperatorSpec) String() string {
 func (*DHCP6OperatorSpec) ProtoMessage() {}
 
 func (x *DHCP6OperatorSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[9]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -905,7 +1254,7 @@ func (x *DHCP6OperatorSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DHCP6OperatorSpec.ProtoReflect.Descriptor instead.
 func (*DHCP6OperatorSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{9}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *DHCP6OperatorSpec) GetRouteMetric() uint32 {
@@ -939,7 +1288,7 @@ type DNSResolveCacheSpec struct {
 
 func (x *DNSResolveCacheSpec) Reset() {
 	*x = DNSResolveCacheSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[10]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -951,7 +1300,7 @@ func (x *DNSResolveCacheSpec) String() string {
 func (*DNSResolveCacheSpec) ProtoMessage() {}
 
 func (x *DNSResolveCacheSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[10]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -964,7 +1313,7 @@ func (x *DNSResolveCacheSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DNSResolveCacheSpec.ProtoReflect.Descriptor instead.
 func (*DNSResolveCacheSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{10}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *DNSResolveCacheSpec) GetStatus() string {
@@ -987,7 +1336,7 @@ type EthernetChannelsSpec struct {
 
 func (x *EthernetChannelsSpec) Reset() {
 	*x = EthernetChannelsSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[11]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -999,7 +1348,7 @@ func (x *EthernetChannelsSpec) String() string {
 func (*EthernetChannelsSpec) ProtoMessage() {}
 
 func (x *EthernetChannelsSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[11]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1012,7 +1361,7 @@ func (x *EthernetChannelsSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EthernetChannelsSpec.ProtoReflect.Descriptor instead.
 func (*EthernetChannelsSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{11}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *EthernetChannelsSpec) GetRx() uint32 {
@@ -1062,7 +1411,7 @@ type EthernetChannelsStatus struct {
 
 func (x *EthernetChannelsStatus) Reset() {
 	*x = EthernetChannelsStatus{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[12]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1074,7 +1423,7 @@ func (x *EthernetChannelsStatus) String() string {
 func (*EthernetChannelsStatus) ProtoMessage() {}
 
 func (x *EthernetChannelsStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[12]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1087,7 +1436,7 @@ func (x *EthernetChannelsStatus) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EthernetChannelsStatus.ProtoReflect.Descriptor instead.
 func (*EthernetChannelsStatus) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{12}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *EthernetChannelsStatus) GetRxMax() uint32 {
@@ -1157,7 +1506,7 @@ type EthernetFeatureStatus struct {
 
 func (x *EthernetFeatureStatus) Reset() {
 	*x = EthernetFeatureStatus{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[13]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1169,7 +1518,7 @@ func (x *EthernetFeatureStatus) String() string {
 func (*EthernetFeatureStatus) ProtoMessage() {}
 
 func (x *EthernetFeatureStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[13]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1182,7 +1531,7 @@ func (x *EthernetFeatureStatus) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EthernetFeatureStatus.ProtoReflect.Descriptor instead.
 func (*EthernetFeatureStatus) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{13}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *EthernetFeatureStatus) GetName() string {
@@ -1218,7 +1567,7 @@ type EthernetRingsSpec struct {
 
 func (x *EthernetRingsSpec) Reset() {
 	*x = EthernetRingsSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[14]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1230,7 +1579,7 @@ func (x *EthernetRingsSpec) String() string {
 func (*EthernetRingsSpec) ProtoMessage() {}
 
 func (x *EthernetRingsSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[14]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1243,7 +1592,7 @@ func (x *EthernetRingsSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EthernetRingsSpec.ProtoReflect.Descriptor instead.
 func (*EthernetRingsSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{14}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *EthernetRingsSpec) GetRx() uint32 {
@@ -1342,7 +1691,7 @@ type EthernetRingsStatus struct {
 
 func (x *EthernetRingsStatus) Reset() {
 	*x = EthernetRingsStatus{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[15]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1354,7 +1703,7 @@ func (x *EthernetRingsStatus) String() string {
 func (*EthernetRingsStatus) ProtoMessage() {}
 
 func (x *EthernetRingsStatus) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[15]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1367,7 +1716,7 @@ func (x *EthernetRingsStatus) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EthernetRingsStatus.ProtoReflect.Descriptor instead.
 func (*EthernetRingsStatus) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{15}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *EthernetRingsStatus) GetRxMax() uint32 {
@@ -1488,7 +1837,7 @@ type EthernetSpecSpec struct {
 
 func (x *EthernetSpecSpec) Reset() {
 	*x = EthernetSpecSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[16]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1500,7 +1849,7 @@ func (x *EthernetSpecSpec) String() string {
 func (*EthernetSpecSpec) ProtoMessage() {}
 
 func (x *EthernetSpecSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[16]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1513,7 +1862,7 @@ func (x *EthernetSpecSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EthernetSpecSpec.ProtoReflect.Descriptor instead.
 func (*EthernetSpecSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{16}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *EthernetSpecSpec) GetRings() *EthernetRingsSpec {
@@ -1563,7 +1912,7 @@ type EthernetStatusSpec struct {
 
 func (x *EthernetStatusSpec) Reset() {
 	*x = EthernetStatusSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[17]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1575,7 +1924,7 @@ func (x *EthernetStatusSpec) String() string {
 func (*EthernetStatusSpec) ProtoMessage() {}
 
 func (x *EthernetStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[17]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1588,7 +1937,7 @@ func (x *EthernetStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use EthernetStatusSpec.ProtoReflect.Descriptor instead.
 func (*EthernetStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{17}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *EthernetStatusSpec) GetLinkState() bool {
@@ -1674,7 +2023,7 @@ type HTTPProbeSpec struct {
 
 func (x *HTTPProbeSpec) Reset() {
 	*x = HTTPProbeSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[18]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1686,7 +2035,7 @@ func (x *HTTPProbeSpec) String() string {
 func (*HTTPProbeSpec) ProtoMessage() {}
 
 func (x *HTTPProbeSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[18]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1699,7 +2048,7 @@ func (x *HTTPProbeSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HTTPProbeSpec.ProtoReflect.Descriptor instead.
 func (*HTTPProbeSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{18}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *HTTPProbeSpec) GetUrl() *common.URL {
@@ -1729,7 +2078,7 @@ type HardwareAddrSpec struct {
 
 func (x *HardwareAddrSpec) Reset() {
 	*x = HardwareAddrSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[19]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1741,7 +2090,7 @@ func (x *HardwareAddrSpec) String() string {
 func (*HardwareAddrSpec) ProtoMessage() {}
 
 func (x *HardwareAddrSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[19]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1754,7 +2103,7 @@ func (x *HardwareAddrSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HardwareAddrSpec.ProtoReflect.Descriptor instead.
 func (*HardwareAddrSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{19}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{23}
 }
 
 func (x *HardwareAddrSpec) GetName() string {
@@ -1785,7 +2134,7 @@ type HostDNSConfigSpec struct {
 
 func (x *HostDNSConfigSpec) Reset() {
 	*x = HostDNSConfigSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[20]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1797,7 +2146,7 @@ func (x *HostDNSConfigSpec) String() string {
 func (*HostDNSConfigSpec) ProtoMessage() {}
 
 func (x *HostDNSConfigSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[20]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1810,7 +2159,7 @@ func (x *HostDNSConfigSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HostDNSConfigSpec.ProtoReflect.Descriptor instead.
 func (*HostDNSConfigSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{20}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *HostDNSConfigSpec) GetEnabled() bool {
@@ -1860,7 +2209,7 @@ type HostnameSpecSpec struct {
 
 func (x *HostnameSpecSpec) Reset() {
 	*x = HostnameSpecSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[21]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1872,7 +2221,7 @@ func (x *HostnameSpecSpec) String() string {
 func (*HostnameSpecSpec) ProtoMessage() {}
 
 func (x *HostnameSpecSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[21]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1885,7 +2234,7 @@ func (x *HostnameSpecSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HostnameSpecSpec.ProtoReflect.Descriptor instead.
 func (*HostnameSpecSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{21}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *HostnameSpecSpec) GetHostname() string {
@@ -1920,7 +2269,7 @@ type HostnameStatusSpec struct {
 
 func (x *HostnameStatusSpec) Reset() {
 	*x = HostnameStatusSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[22]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1932,7 +2281,7 @@ func (x *HostnameStatusSpec) String() string {
 func (*HostnameStatusSpec) ProtoMessage() {}
 
 func (x *HostnameStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[22]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1945,7 +2294,7 @@ func (x *HostnameStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HostnameStatusSpec.ProtoReflect.Descriptor instead.
 func (*HostnameStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{22}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *HostnameStatusSpec) GetHostname() string {
@@ -1972,7 +2321,7 @@ type LinkAliasSpecSpec struct {
 
 func (x *LinkAliasSpecSpec) Reset() {
 	*x = LinkAliasSpecSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[23]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1984,7 +2333,7 @@ func (x *LinkAliasSpecSpec) String() string {
 func (*LinkAliasSpecSpec) ProtoMessage() {}
 
 func (x *LinkAliasSpecSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[23]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1997,7 +2346,7 @@ func (x *LinkAliasSpecSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LinkAliasSpecSpec.ProtoReflect.Descriptor instead.
 func (*LinkAliasSpecSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{23}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *LinkAliasSpecSpec) GetAlias() string {
@@ -2017,7 +2366,7 @@ type LinkRefreshSpec struct {
 
 func (x *LinkRefreshSpec) Reset() {
 	*x = LinkRefreshSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[24]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2029,7 +2378,7 @@ func (x *LinkRefreshSpec) String() string {
 func (*LinkRefreshSpec) ProtoMessage() {}
 
 func (x *LinkRefreshSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[24]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2042,7 +2391,7 @@ func (x *LinkRefreshSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LinkRefreshSpec.ProtoReflect.Descriptor instead.
 func (*LinkRefreshSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{24}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *LinkRefreshSpec) GetGeneration() int64 {
@@ -2094,7 +2443,7 @@ type LinkSpecSpec struct {
 
 func (x *LinkSpecSpec) Reset() {
 	*x = LinkSpecSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[25]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[29]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2106,7 +2455,7 @@ func (x *LinkSpecSpec) String() string {
 func (*LinkSpecSpec) ProtoMessage() {}
 
 func (x *LinkSpecSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[25]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[29]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2119,7 +2468,7 @@ func (x *LinkSpecSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LinkSpecSpec.ProtoReflect.Descriptor instead.
 func (*LinkSpecSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{25}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{29}
 }
 
 func (x *LinkSpecSpec) GetName() string {
@@ -2293,7 +2642,7 @@ type LinkStatusSpec struct {
 
 func (x *LinkStatusSpec) Reset() {
 	*x = LinkStatusSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[26]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[30]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2305,7 +2654,7 @@ func (x *LinkStatusSpec) String() string {
 func (*LinkStatusSpec) ProtoMessage() {}
 
 func (x *LinkStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[26]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[30]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2318,7 +2667,7 @@ func (x *LinkStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LinkStatusSpec.ProtoReflect.Descriptor instead.
 func (*LinkStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{26}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *LinkStatusSpec) GetIndex() uint32 {
@@ -2564,7 +2913,7 @@ type NameServerSpec struct {
 
 func (x *NameServerSpec) Reset() {
 	*x = NameServerSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[27]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2576,7 +2925,7 @@ func (x *NameServerSpec) String() string {
 func (*NameServerSpec) ProtoMessage() {}
 
 func (x *NameServerSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[27]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2589,7 +2938,7 @@ func (x *NameServerSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NameServerSpec.ProtoReflect.Descriptor instead.
 func (*NameServerSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{27}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *NameServerSpec) GetAddr() *common.NetIP {
@@ -2625,7 +2974,7 @@ type NfTablesAddressMatch struct {
 
 func (x *NfTablesAddressMatch) Reset() {
 	*x = NfTablesAddressMatch{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[28]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2637,7 +2986,7 @@ func (x *NfTablesAddressMatch) String() string {
 func (*NfTablesAddressMatch) ProtoMessage() {}
 
 func (x *NfTablesAddressMatch) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[28]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2650,7 +2999,7 @@ func (x *NfTablesAddressMatch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NfTablesAddressMatch.ProtoReflect.Descriptor instead.
 func (*NfTablesAddressMatch) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{28}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *NfTablesAddressMatch) GetIncludeSubnets() []*common.NetIPPrefix {
@@ -2688,7 +3037,7 @@ type NfTablesChainSpec struct {
 
 func (x *NfTablesChainSpec) Reset() {
 	*x = NfTablesChainSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[29]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2700,7 +3049,7 @@ func (x *NfTablesChainSpec) String() string {
 func (*NfTablesChainSpec) ProtoMessage() {}
 
 func (x *NfTablesChainSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[29]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2713,7 +3062,7 @@ func (x *NfTablesChainSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NfTablesChainSpec.ProtoReflect.Descriptor instead.
 func (*NfTablesChainSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{29}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *NfTablesChainSpec) GetType() string {
@@ -2765,7 +3114,7 @@ type NfTablesClampMSS struct {
 
 func (x *NfTablesClampMSS) Reset() {
 	*x = NfTablesClampMSS{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[30]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2777,7 +3126,7 @@ func (x *NfTablesClampMSS) String() string {
 func (*NfTablesClampMSS) ProtoMessage() {}
 
 func (x *NfTablesClampMSS) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[30]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2790,7 +3139,7 @@ func (x *NfTablesClampMSS) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NfTablesClampMSS.ProtoReflect.Descriptor instead.
 func (*NfTablesClampMSS) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{30}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *NfTablesClampMSS) GetMtu() uint32 {
@@ -2810,7 +3159,7 @@ type NfTablesConntrackStateMatch struct {
 
 func (x *NfTablesConntrackStateMatch) Reset() {
 	*x = NfTablesConntrackStateMatch{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[31]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2822,7 +3171,7 @@ func (x *NfTablesConntrackStateMatch) String() string {
 func (*NfTablesConntrackStateMatch) ProtoMessage() {}
 
 func (x *NfTablesConntrackStateMatch) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[31]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2835,7 +3184,7 @@ func (x *NfTablesConntrackStateMatch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NfTablesConntrackStateMatch.ProtoReflect.Descriptor instead.
 func (*NfTablesConntrackStateMatch) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{31}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *NfTablesConntrackStateMatch) GetStates() []enums.NethelpersConntrackState {
@@ -2855,7 +3204,7 @@ type NfTablesICMPTypeMatch struct {
 
 func (x *NfTablesICMPTypeMatch) Reset() {
 	*x = NfTablesICMPTypeMatch{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[32]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2867,7 +3216,7 @@ func (x *NfTablesICMPTypeMatch) String() string {
 func (*NfTablesICMPTypeMatch) ProtoMessage() {}
 
 func (x *NfTablesICMPTypeMatch) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[32]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2880,7 +3229,7 @@ func (x *NfTablesICMPTypeMatch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NfTablesICMPTypeMatch.ProtoReflect.Descriptor instead.
 func (*NfTablesICMPTypeMatch) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{32}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *NfTablesICMPTypeMatch) GetTypes() []enums.NethelpersICMPType {
@@ -2901,7 +3250,7 @@ type NfTablesIfNameMatch struct {
 
 func (x *NfTablesIfNameMatch) Reset() {
 	*x = NfTablesIfNameMatch{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[33]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2913,7 +3262,7 @@ func (x *NfTablesIfNameMatch) String() string {
 func (*NfTablesIfNameMatch) ProtoMessage() {}
 
 func (x *NfTablesIfNameMatch) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[33]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2926,7 +3275,7 @@ func (x *NfTablesIfNameMatch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NfTablesIfNameMatch.ProtoReflect.Descriptor instead.
 func (*NfTablesIfNameMatch) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{33}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *NfTablesIfNameMatch) GetOperator() enums.NethelpersMatchOperator {
@@ -2956,7 +3305,7 @@ type NfTablesLayer4Match struct {
 
 func (x *NfTablesLayer4Match) Reset() {
 	*x = NfTablesLayer4Match{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[34]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2968,7 +3317,7 @@ func (x *NfTablesLayer4Match) String() string {
 func (*NfTablesLayer4Match) ProtoMessage() {}
 
 func (x *NfTablesLayer4Match) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[34]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2981,7 +3330,7 @@ func (x *NfTablesLayer4Match) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NfTablesLayer4Match.ProtoReflect.Descriptor instead.
 func (*NfTablesLayer4Match) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{34}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *NfTablesLayer4Match) GetProtocol() enums.NethelpersProtocol {
@@ -3022,7 +3371,7 @@ type NfTablesLimitMatch struct {
 
 func (x *NfTablesLimitMatch) Reset() {
 	*x = NfTablesLimitMatch{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[35]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3034,7 +3383,7 @@ func (x *NfTablesLimitMatch) String() string {
 func (*NfTablesLimitMatch) ProtoMessage() {}
 
 func (x *NfTablesLimitMatch) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[35]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3047,7 +3396,7 @@ func (x *NfTablesLimitMatch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NfTablesLimitMatch.ProtoReflect.Descriptor instead.
 func (*NfTablesLimitMatch) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{35}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *NfTablesLimitMatch) GetPacketRatePerSecond() uint64 {
@@ -3075,7 +3424,7 @@ type NfTablesMark struct {
 
 func (x *NfTablesMark) Reset() {
 	*x = NfTablesMark{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[36]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3087,7 +3436,7 @@ func (x *NfTablesMark) String() string {
 func (*NfTablesMark) ProtoMessage() {}
 
 func (x *NfTablesMark) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[36]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3100,7 +3449,7 @@ func (x *NfTablesMark) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NfTablesMark.ProtoReflect.Descriptor instead.
 func (*NfTablesMark) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{36}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *NfTablesMark) GetMask() uint32 {
@@ -3134,7 +3483,7 @@ type NfTablesPortMatch struct {
 
 func (x *NfTablesPortMatch) Reset() {
 	*x = NfTablesPortMatch{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[37]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3146,7 +3495,7 @@ func (x *NfTablesPortMatch) String() string {
 func (*NfTablesPortMatch) ProtoMessage() {}
 
 func (x *NfTablesPortMatch) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[37]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3159,7 +3508,7 @@ func (x *NfTablesPortMatch) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NfTablesPortMatch.ProtoReflect.Descriptor instead.
 func (*NfTablesPortMatch) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{37}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *NfTablesPortMatch) GetRanges() []*PortRange {
@@ -3190,7 +3539,7 @@ type NfTablesRule struct {
 
 func (x *NfTablesRule) Reset() {
 	*x = NfTablesRule{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[38]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3202,7 +3551,7 @@ func (x *NfTablesRule) String() string {
 func (*NfTablesRule) ProtoMessage() {}
 
 func (x *NfTablesRule) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[38]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3215,7 +3564,7 @@ func (x *NfTablesRule) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NfTablesRule.ProtoReflect.Descriptor instead.
 func (*NfTablesRule) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{38}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *NfTablesRule) GetMatchOIfName() *NfTablesIfNameMatch {
@@ -3315,7 +3664,7 @@ type NodeAddressFilterSpec struct {
 
 func (x *NodeAddressFilterSpec) Reset() {
 	*x = NodeAddressFilterSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[39]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3327,7 +3676,7 @@ func (x *NodeAddressFilterSpec) String() string {
 func (*NodeAddressFilterSpec) ProtoMessage() {}
 
 func (x *NodeAddressFilterSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[39]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3340,7 +3689,7 @@ func (x *NodeAddressFilterSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NodeAddressFilterSpec.ProtoReflect.Descriptor instead.
 func (*NodeAddressFilterSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{39}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *NodeAddressFilterSpec) GetIncludeSubnets() []*common.NetIPPrefix {
@@ -3367,7 +3716,7 @@ type NodeAddressSortAlgorithmSpec struct {
 
 func (x *NodeAddressSortAlgorithmSpec) Reset() {
 	*x = NodeAddressSortAlgorithmSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[40]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3379,7 +3728,7 @@ func (x *NodeAddressSortAlgorithmSpec) String() string {
 func (*NodeAddressSortAlgorithmSpec) ProtoMessage() {}
 
 func (x *NodeAddressSortAlgorithmSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[40]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3392,7 +3741,7 @@ func (x *NodeAddressSortAlgorithmSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NodeAddressSortAlgorithmSpec.ProtoReflect.Descriptor instead.
 func (*NodeAddressSortAlgorithmSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{40}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *NodeAddressSortAlgorithmSpec) GetAlgorithm() enums.NethelpersAddressSortAlgorithm {
@@ -3413,7 +3762,7 @@ type NodeAddressSpec struct {
 
 func (x *NodeAddressSpec) Reset() {
 	*x = NodeAddressSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[41]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3425,7 +3774,7 @@ func (x *NodeAddressSpec) String() string {
 func (*NodeAddressSpec) ProtoMessage() {}
 
 func (x *NodeAddressSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[41]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3438,7 +3787,7 @@ func (x *NodeAddressSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use NodeAddressSpec.ProtoReflect.Descriptor instead.
 func (*NodeAddressSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{41}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *NodeAddressSpec) GetAddresses() []*common.NetIPPrefix {
@@ -3471,7 +3820,7 @@ type OperatorSpecSpec struct {
 
 func (x *OperatorSpecSpec) Reset() {
 	*x = OperatorSpecSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[42]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3483,7 +3832,7 @@ func (x *OperatorSpecSpec) String() string {
 func (*OperatorSpecSpec) ProtoMessage() {}
 
 func (x *OperatorSpecSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[42]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3496,7 +3845,7 @@ func (x *OperatorSpecSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use OperatorSpecSpec.ProtoReflect.Descriptor instead.
 func (*OperatorSpecSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{42}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *OperatorSpecSpec) GetOperator() enums.NetworkOperator {
@@ -3570,7 +3919,7 @@ type PlatformConfigSpec struct {
 
 func (x *PlatformConfigSpec) Reset() {
 	*x = PlatformConfigSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[43]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3582,7 +3931,7 @@ func (x *PlatformConfigSpec) String() string {
 func (*PlatformConfigSpec) ProtoMessage() {}
 
 func (x *PlatformConfigSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[43]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3595,7 +3944,7 @@ func (x *PlatformConfigSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlatformConfigSpec.ProtoReflect.Descriptor instead.
 func (*PlatformConfigSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{43}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *PlatformConfigSpec) GetAddresses() []*AddressSpecSpec {
@@ -3681,7 +4030,7 @@ type PortRange struct {
 
 func (x *PortRange) Reset() {
 	*x = PortRange{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[44]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3693,7 +4042,7 @@ func (x *PortRange) String() string {
 func (*PortRange) ProtoMessage() {}
 
 func (x *PortRange) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[44]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3706,7 +4055,7 @@ func (x *PortRange) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PortRange.ProtoReflect.Descriptor instead.
 func (*PortRange) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{44}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *PortRange) GetLo() uint32 {
@@ -3742,7 +4091,7 @@ type ProbeSpecSpec struct {
 
 func (x *ProbeSpecSpec) Reset() {
 	*x = ProbeSpecSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[45]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3754,7 +4103,7 @@ func (x *ProbeSpecSpec) String() string {
 func (*ProbeSpecSpec) ProtoMessage() {}
 
 func (x *ProbeSpecSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[45]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3767,7 +4116,7 @@ func (x *ProbeSpecSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProbeSpecSpec.ProtoReflect.Descriptor instead.
 func (*ProbeSpecSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{45}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *ProbeSpecSpec) GetInterval() *durationpb.Duration {
@@ -3818,7 +4167,7 @@ type ProbeStatusSpec struct {
 
 func (x *ProbeStatusSpec) Reset() {
 	*x = ProbeStatusSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[46]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3830,7 +4179,7 @@ func (x *ProbeStatusSpec) String() string {
 func (*ProbeStatusSpec) ProtoMessage() {}
 
 func (x *ProbeStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[46]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3843,7 +4192,7 @@ func (x *ProbeStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ProbeStatusSpec.ProtoReflect.Descriptor instead.
 func (*ProbeStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{46}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *ProbeStatusSpec) GetSuccess() bool {
@@ -3877,7 +4226,7 @@ type ResolverSpecSpec struct {
 
 func (x *ResolverSpecSpec) Reset() {
 	*x = ResolverSpecSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[47]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3889,7 +4238,7 @@ func (x *ResolverSpecSpec) String() string {
 func (*ResolverSpecSpec) ProtoMessage() {}
 
 func (x *ResolverSpecSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[47]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3902,7 +4251,7 @@ func (x *ResolverSpecSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolverSpecSpec.ProtoReflect.Descriptor instead.
 func (*ResolverSpecSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{47}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *ResolverSpecSpec) GetDnsServers() []*common.NetIP {
@@ -3949,7 +4298,7 @@ type ResolverStatusSpec struct {
 
 func (x *ResolverStatusSpec) Reset() {
 	*x = ResolverStatusSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[48]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3961,7 +4310,7 @@ func (x *ResolverStatusSpec) String() string {
 func (*ResolverStatusSpec) ProtoMessage() {}
 
 func (x *ResolverStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[48]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3974,7 +4323,7 @@ func (x *ResolverStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ResolverStatusSpec.ProtoReflect.Descriptor instead.
 func (*ResolverStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{48}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *ResolverStatusSpec) GetDnsServers() []*common.NetIP {
@@ -3998,29 +4347,96 @@ func (x *ResolverStatusSpec) GetNameServers() []*NameServerSpec {
 	return nil
 }
 
+// RouteNextHop describes a single next-hop of a (possibly multipath) route.
+//
+// A next-hop gateway may be in a different address family than the route destination
+// (e.g. an IPv4 prefix reachable via an IPv6 link-local next-hop, RFC 8950).
+type RouteNextHop struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Gateway       *common.NetIP          `protobuf:"bytes,1,opt,name=gateway,proto3" json:"gateway,omitempty"`
+	OutLinkName   string                 `protobuf:"bytes,2,opt,name=out_link_name,json=outLinkName,proto3" json:"out_link_name,omitempty"`
+	Weight        uint32                 `protobuf:"varint,3,opt,name=weight,proto3" json:"weight,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RouteNextHop) Reset() {
+	*x = RouteNextHop{}
+	mi := &file_resource_definitions_network_network_proto_msgTypes[53]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RouteNextHop) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RouteNextHop) ProtoMessage() {}
+
+func (x *RouteNextHop) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_network_network_proto_msgTypes[53]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RouteNextHop.ProtoReflect.Descriptor instead.
+func (*RouteNextHop) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{53}
+}
+
+func (x *RouteNextHop) GetGateway() *common.NetIP {
+	if x != nil {
+		return x.Gateway
+	}
+	return nil
+}
+
+func (x *RouteNextHop) GetOutLinkName() string {
+	if x != nil {
+		return x.OutLinkName
+	}
+	return ""
+}
+
+func (x *RouteNextHop) GetWeight() uint32 {
+	if x != nil {
+		return x.Weight
+	}
+	return 0
+}
+
 // RouteSpecSpec describes the route.
 type RouteSpecSpec struct {
-	state         protoimpl.MessageState        `protogen:"open.v1"`
-	Family        enums.NethelpersFamily        `protobuf:"varint,1,opt,name=family,proto3,enum=talos.resource.definitions.enums.NethelpersFamily" json:"family,omitempty"`
-	Destination   *common.NetIPPrefix           `protobuf:"bytes,2,opt,name=destination,proto3" json:"destination,omitempty"`
-	Source        *common.NetIP                 `protobuf:"bytes,3,opt,name=source,proto3" json:"source,omitempty"`
-	Gateway       *common.NetIP                 `protobuf:"bytes,4,opt,name=gateway,proto3" json:"gateway,omitempty"`
-	OutLinkName   string                        `protobuf:"bytes,5,opt,name=out_link_name,json=outLinkName,proto3" json:"out_link_name,omitempty"`
-	Table         enums.NethelpersRoutingTable  `protobuf:"varint,6,opt,name=table,proto3,enum=talos.resource.definitions.enums.NethelpersRoutingTable" json:"table,omitempty"`
-	Priority      uint32                        `protobuf:"varint,7,opt,name=priority,proto3" json:"priority,omitempty"`
-	Scope         enums.NethelpersScope         `protobuf:"varint,8,opt,name=scope,proto3,enum=talos.resource.definitions.enums.NethelpersScope" json:"scope,omitempty"`
-	Type          enums.NethelpersRouteType     `protobuf:"varint,9,opt,name=type,proto3,enum=talos.resource.definitions.enums.NethelpersRouteType" json:"type,omitempty"`
-	Flags         uint32                        `protobuf:"varint,10,opt,name=flags,proto3" json:"flags,omitempty"`
-	Protocol      enums.NethelpersRouteProtocol `protobuf:"varint,11,opt,name=protocol,proto3,enum=talos.resource.definitions.enums.NethelpersRouteProtocol" json:"protocol,omitempty"`
-	ConfigLayer   enums.NetworkConfigLayer      `protobuf:"varint,12,opt,name=config_layer,json=configLayer,proto3,enum=talos.resource.definitions.enums.NetworkConfigLayer" json:"config_layer,omitempty"`
-	Mtu           uint32                        `protobuf:"varint,13,opt,name=mtu,proto3" json:"mtu,omitempty"`
+	state       protoimpl.MessageState        `protogen:"open.v1"`
+	Family      enums.NethelpersFamily        `protobuf:"varint,1,opt,name=family,proto3,enum=talos.resource.definitions.enums.NethelpersFamily" json:"family,omitempty"`
+	Destination *common.NetIPPrefix           `protobuf:"bytes,2,opt,name=destination,proto3" json:"destination,omitempty"`
+	Source      *common.NetIP                 `protobuf:"bytes,3,opt,name=source,proto3" json:"source,omitempty"`
+	Gateway     *common.NetIP                 `protobuf:"bytes,4,opt,name=gateway,proto3" json:"gateway,omitempty"`
+	OutLinkName string                        `protobuf:"bytes,5,opt,name=out_link_name,json=outLinkName,proto3" json:"out_link_name,omitempty"`
+	Table       enums.NethelpersRoutingTable  `protobuf:"varint,6,opt,name=table,proto3,enum=talos.resource.definitions.enums.NethelpersRoutingTable" json:"table,omitempty"`
+	Priority    uint32                        `protobuf:"varint,7,opt,name=priority,proto3" json:"priority,omitempty"`
+	Scope       enums.NethelpersScope         `protobuf:"varint,8,opt,name=scope,proto3,enum=talos.resource.definitions.enums.NethelpersScope" json:"scope,omitempty"`
+	Type        enums.NethelpersRouteType     `protobuf:"varint,9,opt,name=type,proto3,enum=talos.resource.definitions.enums.NethelpersRouteType" json:"type,omitempty"`
+	Flags       uint32                        `protobuf:"varint,10,opt,name=flags,proto3" json:"flags,omitempty"`
+	Protocol    enums.NethelpersRouteProtocol `protobuf:"varint,11,opt,name=protocol,proto3,enum=talos.resource.definitions.enums.NethelpersRouteProtocol" json:"protocol,omitempty"`
+	ConfigLayer enums.NetworkConfigLayer      `protobuf:"varint,12,opt,name=config_layer,json=configLayer,proto3,enum=talos.resource.definitions.enums.NetworkConfigLayer" json:"config_layer,omitempty"`
+	Mtu         uint32                        `protobuf:"varint,13,opt,name=mtu,proto3" json:"mtu,omitempty"`
+	// NextHops, when non-empty, describes a multipath (ECMP) route. The top-level Gateway and
+	// OutLinkName are left unset in that case, mirroring the kernel's RTA_GATEWAY vs RTA_MULTIPATH split.
+	NextHops      []*RouteNextHop `protobuf:"bytes,14,rep,name=next_hops,json=nextHops,proto3" json:"next_hops,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RouteSpecSpec) Reset() {
 	*x = RouteSpecSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[49]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4032,7 +4448,7 @@ func (x *RouteSpecSpec) String() string {
 func (*RouteSpecSpec) ProtoMessage() {}
 
 func (x *RouteSpecSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[49]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4045,7 +4461,7 @@ func (x *RouteSpecSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RouteSpecSpec.ProtoReflect.Descriptor instead.
 func (*RouteSpecSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{49}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *RouteSpecSpec) GetFamily() enums.NethelpersFamily {
@@ -4139,29 +4555,38 @@ func (x *RouteSpecSpec) GetMtu() uint32 {
 	return 0
 }
 
+func (x *RouteSpecSpec) GetNextHops() []*RouteNextHop {
+	if x != nil {
+		return x.NextHops
+	}
+	return nil
+}
+
 // RouteStatusSpec describes status of rendered secrets.
 type RouteStatusSpec struct {
-	state         protoimpl.MessageState        `protogen:"open.v1"`
-	Family        enums.NethelpersFamily        `protobuf:"varint,1,opt,name=family,proto3,enum=talos.resource.definitions.enums.NethelpersFamily" json:"family,omitempty"`
-	Destination   *common.NetIPPrefix           `protobuf:"bytes,2,opt,name=destination,proto3" json:"destination,omitempty"`
-	Source        *common.NetIP                 `protobuf:"bytes,3,opt,name=source,proto3" json:"source,omitempty"`
-	Gateway       *common.NetIP                 `protobuf:"bytes,4,opt,name=gateway,proto3" json:"gateway,omitempty"`
-	OutLinkIndex  uint32                        `protobuf:"varint,5,opt,name=out_link_index,json=outLinkIndex,proto3" json:"out_link_index,omitempty"`
-	OutLinkName   string                        `protobuf:"bytes,6,opt,name=out_link_name,json=outLinkName,proto3" json:"out_link_name,omitempty"`
-	Table         enums.NethelpersRoutingTable  `protobuf:"varint,7,opt,name=table,proto3,enum=talos.resource.definitions.enums.NethelpersRoutingTable" json:"table,omitempty"`
-	Priority      uint32                        `protobuf:"varint,8,opt,name=priority,proto3" json:"priority,omitempty"`
-	Scope         enums.NethelpersScope         `protobuf:"varint,9,opt,name=scope,proto3,enum=talos.resource.definitions.enums.NethelpersScope" json:"scope,omitempty"`
-	Type          enums.NethelpersRouteType     `protobuf:"varint,10,opt,name=type,proto3,enum=talos.resource.definitions.enums.NethelpersRouteType" json:"type,omitempty"`
-	Flags         uint32                        `protobuf:"varint,11,opt,name=flags,proto3" json:"flags,omitempty"`
-	Protocol      enums.NethelpersRouteProtocol `protobuf:"varint,12,opt,name=protocol,proto3,enum=talos.resource.definitions.enums.NethelpersRouteProtocol" json:"protocol,omitempty"`
-	Mtu           uint32                        `protobuf:"varint,13,opt,name=mtu,proto3" json:"mtu,omitempty"`
+	state        protoimpl.MessageState        `protogen:"open.v1"`
+	Family       enums.NethelpersFamily        `protobuf:"varint,1,opt,name=family,proto3,enum=talos.resource.definitions.enums.NethelpersFamily" json:"family,omitempty"`
+	Destination  *common.NetIPPrefix           `protobuf:"bytes,2,opt,name=destination,proto3" json:"destination,omitempty"`
+	Source       *common.NetIP                 `protobuf:"bytes,3,opt,name=source,proto3" json:"source,omitempty"`
+	Gateway      *common.NetIP                 `protobuf:"bytes,4,opt,name=gateway,proto3" json:"gateway,omitempty"`
+	OutLinkIndex uint32                        `protobuf:"varint,5,opt,name=out_link_index,json=outLinkIndex,proto3" json:"out_link_index,omitempty"`
+	OutLinkName  string                        `protobuf:"bytes,6,opt,name=out_link_name,json=outLinkName,proto3" json:"out_link_name,omitempty"`
+	Table        enums.NethelpersRoutingTable  `protobuf:"varint,7,opt,name=table,proto3,enum=talos.resource.definitions.enums.NethelpersRoutingTable" json:"table,omitempty"`
+	Priority     uint32                        `protobuf:"varint,8,opt,name=priority,proto3" json:"priority,omitempty"`
+	Scope        enums.NethelpersScope         `protobuf:"varint,9,opt,name=scope,proto3,enum=talos.resource.definitions.enums.NethelpersScope" json:"scope,omitempty"`
+	Type         enums.NethelpersRouteType     `protobuf:"varint,10,opt,name=type,proto3,enum=talos.resource.definitions.enums.NethelpersRouteType" json:"type,omitempty"`
+	Flags        uint32                        `protobuf:"varint,11,opt,name=flags,proto3" json:"flags,omitempty"`
+	Protocol     enums.NethelpersRouteProtocol `protobuf:"varint,12,opt,name=protocol,proto3,enum=talos.resource.definitions.enums.NethelpersRouteProtocol" json:"protocol,omitempty"`
+	Mtu          uint32                        `protobuf:"varint,13,opt,name=mtu,proto3" json:"mtu,omitempty"`
+	// NextHops is populated for multipath (ECMP) routes; the top-level Gateway/OutLink stay unset then.
+	NextHops      []*RouteNextHop `protobuf:"bytes,14,rep,name=next_hops,json=nextHops,proto3" json:"next_hops,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *RouteStatusSpec) Reset() {
 	*x = RouteStatusSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[50]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4173,7 +4598,7 @@ func (x *RouteStatusSpec) String() string {
 func (*RouteStatusSpec) ProtoMessage() {}
 
 func (x *RouteStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[50]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4186,7 +4611,7 @@ func (x *RouteStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RouteStatusSpec.ProtoReflect.Descriptor instead.
 func (*RouteStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{50}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *RouteStatusSpec) GetFamily() enums.NethelpersFamily {
@@ -4280,6 +4705,13 @@ func (x *RouteStatusSpec) GetMtu() uint32 {
 	return 0
 }
 
+func (x *RouteStatusSpec) GetNextHops() []*RouteNextHop {
+	if x != nil {
+		return x.NextHops
+	}
+	return nil
+}
+
 // RoutingRuleSpecSpec describes the routing rule.
 type RoutingRuleSpecSpec struct {
 	state         protoimpl.MessageState            `protogen:"open.v1"`
@@ -4300,7 +4732,7 @@ type RoutingRuleSpecSpec struct {
 
 func (x *RoutingRuleSpecSpec) Reset() {
 	*x = RoutingRuleSpecSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[51]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4312,7 +4744,7 @@ func (x *RoutingRuleSpecSpec) String() string {
 func (*RoutingRuleSpecSpec) ProtoMessage() {}
 
 func (x *RoutingRuleSpecSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[51]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4325,7 +4757,7 @@ func (x *RoutingRuleSpecSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoutingRuleSpecSpec.ProtoReflect.Descriptor instead.
 func (*RoutingRuleSpecSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{51}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *RoutingRuleSpecSpec) GetFamily() enums.NethelpersFamily {
@@ -4424,7 +4856,7 @@ type RoutingRuleStatusSpec struct {
 
 func (x *RoutingRuleStatusSpec) Reset() {
 	*x = RoutingRuleStatusSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[52]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4436,7 +4868,7 @@ func (x *RoutingRuleStatusSpec) String() string {
 func (*RoutingRuleStatusSpec) ProtoMessage() {}
 
 func (x *RoutingRuleStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[52]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4449,7 +4881,7 @@ func (x *RoutingRuleStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RoutingRuleStatusSpec.ProtoReflect.Descriptor instead.
 func (*RoutingRuleStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{52}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *RoutingRuleStatusSpec) GetFamily() enums.NethelpersFamily {
@@ -4532,7 +4964,7 @@ type STPSpec struct {
 
 func (x *STPSpec) Reset() {
 	*x = STPSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[53]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[58]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4544,7 +4976,7 @@ func (x *STPSpec) String() string {
 func (*STPSpec) ProtoMessage() {}
 
 func (x *STPSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[53]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[58]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4557,7 +4989,7 @@ func (x *STPSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use STPSpec.ProtoReflect.Descriptor instead.
 func (*STPSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{53}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{58}
 }
 
 func (x *STPSpec) GetEnabled() bool {
@@ -4577,7 +5009,7 @@ type StaticHostSpec struct {
 
 func (x *StaticHostSpec) Reset() {
 	*x = StaticHostSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[54]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[59]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4589,7 +5021,7 @@ func (x *StaticHostSpec) String() string {
 func (*StaticHostSpec) ProtoMessage() {}
 
 func (x *StaticHostSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[54]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[59]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4602,7 +5034,7 @@ func (x *StaticHostSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StaticHostSpec.ProtoReflect.Descriptor instead.
 func (*StaticHostSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{54}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{59}
 }
 
 func (x *StaticHostSpec) GetAddresses() []*common.NetIP {
@@ -4625,7 +5057,7 @@ type StatusSpec struct {
 
 func (x *StatusSpec) Reset() {
 	*x = StatusSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[55]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[60]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4637,7 +5069,7 @@ func (x *StatusSpec) String() string {
 func (*StatusSpec) ProtoMessage() {}
 
 func (x *StatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[55]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[60]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4650,7 +5082,7 @@ func (x *StatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StatusSpec.ProtoReflect.Descriptor instead.
 func (*StatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{55}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{60}
 }
 
 func (x *StatusSpec) GetAddressReady() bool {
@@ -4694,7 +5126,7 @@ type TCPProbeSpec struct {
 
 func (x *TCPProbeSpec) Reset() {
 	*x = TCPProbeSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[56]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[61]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4706,7 +5138,7 @@ func (x *TCPProbeSpec) String() string {
 func (*TCPProbeSpec) ProtoMessage() {}
 
 func (x *TCPProbeSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[56]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[61]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4719,7 +5151,7 @@ func (x *TCPProbeSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TCPProbeSpec.ProtoReflect.Descriptor instead.
 func (*TCPProbeSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{56}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{61}
 }
 
 func (x *TCPProbeSpec) GetEndpoint() string {
@@ -4748,7 +5180,7 @@ type TimeServerSpecSpec struct {
 
 func (x *TimeServerSpecSpec) Reset() {
 	*x = TimeServerSpecSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[57]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[62]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4760,7 +5192,7 @@ func (x *TimeServerSpecSpec) String() string {
 func (*TimeServerSpecSpec) ProtoMessage() {}
 
 func (x *TimeServerSpecSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[57]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[62]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4773,7 +5205,7 @@ func (x *TimeServerSpecSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TimeServerSpecSpec.ProtoReflect.Descriptor instead.
 func (*TimeServerSpecSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{57}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{62}
 }
 
 func (x *TimeServerSpecSpec) GetNtpServers() []string {
@@ -4808,7 +5240,7 @@ type TimeServerStatusSpec struct {
 
 func (x *TimeServerStatusSpec) Reset() {
 	*x = TimeServerStatusSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[58]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[63]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4820,7 +5252,7 @@ func (x *TimeServerStatusSpec) String() string {
 func (*TimeServerStatusSpec) ProtoMessage() {}
 
 func (x *TimeServerStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[58]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[63]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4833,7 +5265,7 @@ func (x *TimeServerStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TimeServerStatusSpec.ProtoReflect.Descriptor instead.
 func (*TimeServerStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{58}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{63}
 }
 
 func (x *TimeServerStatusSpec) GetNtpServers() []string {
@@ -4862,7 +5294,7 @@ type VIPEquinixMetalSpec struct {
 
 func (x *VIPEquinixMetalSpec) Reset() {
 	*x = VIPEquinixMetalSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[59]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[64]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4874,7 +5306,7 @@ func (x *VIPEquinixMetalSpec) String() string {
 func (*VIPEquinixMetalSpec) ProtoMessage() {}
 
 func (x *VIPEquinixMetalSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[59]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[64]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4887,7 +5319,7 @@ func (x *VIPEquinixMetalSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VIPEquinixMetalSpec.ProtoReflect.Descriptor instead.
 func (*VIPEquinixMetalSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{59}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{64}
 }
 
 func (x *VIPEquinixMetalSpec) GetProjectId() string {
@@ -4923,7 +5355,7 @@ type VIPHCloudSpec struct {
 
 func (x *VIPHCloudSpec) Reset() {
 	*x = VIPHCloudSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[60]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[65]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4935,7 +5367,7 @@ func (x *VIPHCloudSpec) String() string {
 func (*VIPHCloudSpec) ProtoMessage() {}
 
 func (x *VIPHCloudSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[60]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[65]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4948,7 +5380,7 @@ func (x *VIPHCloudSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VIPHCloudSpec.ProtoReflect.Descriptor instead.
 func (*VIPHCloudSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{60}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{65}
 }
 
 func (x *VIPHCloudSpec) GetDeviceId() int64 {
@@ -4985,7 +5417,7 @@ type VIPOperatorSpec struct {
 
 func (x *VIPOperatorSpec) Reset() {
 	*x = VIPOperatorSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[61]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[66]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4997,7 +5429,7 @@ func (x *VIPOperatorSpec) String() string {
 func (*VIPOperatorSpec) ProtoMessage() {}
 
 func (x *VIPOperatorSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[61]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[66]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5010,7 +5442,7 @@ func (x *VIPOperatorSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VIPOperatorSpec.ProtoReflect.Descriptor instead.
 func (*VIPOperatorSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{61}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{66}
 }
 
 func (x *VIPOperatorSpec) GetIp() *common.NetIP {
@@ -5054,7 +5486,7 @@ type VLANSpec struct {
 
 func (x *VLANSpec) Reset() {
 	*x = VLANSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[62]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[67]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5066,7 +5498,7 @@ func (x *VLANSpec) String() string {
 func (*VLANSpec) ProtoMessage() {}
 
 func (x *VLANSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[62]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[67]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5079,7 +5511,7 @@ func (x *VLANSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VLANSpec.ProtoReflect.Descriptor instead.
 func (*VLANSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{62}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{67}
 }
 
 func (x *VLANSpec) GetVid() uint32 {
@@ -5106,7 +5538,7 @@ type VRFMasterSpec struct {
 
 func (x *VRFMasterSpec) Reset() {
 	*x = VRFMasterSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[63]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[68]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5118,7 +5550,7 @@ func (x *VRFMasterSpec) String() string {
 func (*VRFMasterSpec) ProtoMessage() {}
 
 func (x *VRFMasterSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[63]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[68]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5131,7 +5563,7 @@ func (x *VRFMasterSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VRFMasterSpec.ProtoReflect.Descriptor instead.
 func (*VRFMasterSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{63}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{68}
 }
 
 func (x *VRFMasterSpec) GetTable() enums.NethelpersRoutingTable {
@@ -5151,7 +5583,7 @@ type VRFSlave struct {
 
 func (x *VRFSlave) Reset() {
 	*x = VRFSlave{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[64]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[69]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5163,7 +5595,7 @@ func (x *VRFSlave) String() string {
 func (*VRFSlave) ProtoMessage() {}
 
 func (x *VRFSlave) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[64]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[69]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5176,7 +5608,7 @@ func (x *VRFSlave) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use VRFSlave.ProtoReflect.Descriptor instead.
 func (*VRFSlave) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{64}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{69}
 }
 
 func (x *VRFSlave) GetMasterName() string {
@@ -5200,7 +5632,7 @@ type WireguardPeer struct {
 
 func (x *WireguardPeer) Reset() {
 	*x = WireguardPeer{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[65]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[70]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5212,7 +5644,7 @@ func (x *WireguardPeer) String() string {
 func (*WireguardPeer) ProtoMessage() {}
 
 func (x *WireguardPeer) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[65]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[70]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5225,7 +5657,7 @@ func (x *WireguardPeer) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WireguardPeer.ProtoReflect.Descriptor instead.
 func (*WireguardPeer) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{65}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{70}
 }
 
 func (x *WireguardPeer) GetPublicKey() string {
@@ -5279,7 +5711,7 @@ type WireguardSpec struct {
 
 func (x *WireguardSpec) Reset() {
 	*x = WireguardSpec{}
-	mi := &file_resource_definitions_network_network_proto_msgTypes[66]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[71]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5291,7 +5723,7 @@ func (x *WireguardSpec) String() string {
 func (*WireguardSpec) ProtoMessage() {}
 
 func (x *WireguardSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_network_network_proto_msgTypes[66]
+	mi := &file_resource_definitions_network_network_proto_msgTypes[71]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5304,7 +5736,7 @@ func (x *WireguardSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WireguardSpec.ProtoReflect.Descriptor instead.
 func (*WireguardSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{66}
+	return file_resource_definitions_network_network_proto_rawDescGZIP(), []int{71}
 }
 
 func (x *WireguardSpec) GetPrivateKey() string {
@@ -5346,7 +5778,7 @@ var File_resource_definitions_network_network_proto protoreflect.FileDescriptor
 
 const file_resource_definitions_network_network_proto_rawDesc = "" +
 	"\n" +
-	"*resource/definitions/network/network.proto\x12\"talos.resource.definitions.network\x1a\x13common/common.proto\x1a\x1egoogle/protobuf/duration.proto\x1a&resource/definitions/enums/enums.proto\x1a*resource/definitions/runtime/runtime.proto\"\xa9\x03\n" +
+	"*resource/definitions/network/network.proto\x12\"talos.resource.definitions.network\x1a\x13common/common.proto\x1a\x1egoogle/protobuf/duration.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a&resource/definitions/enums/enums.proto\x1a*resource/definitions/runtime/runtime.proto\"\xa9\x03\n" +
 	"\x0fAddressSpecSpec\x12-\n" +
 	"\aaddress\x18\x01 \x01(\v2\x13.common.NetIPPrefixR\aaddress\x12\x1b\n" +
 	"\tlink_name\x18\x02 \x01(\tR\blinkName\x12J\n" +
@@ -5369,7 +5801,39 @@ const file_resource_definitions_network_network_proto_rawDesc = "" +
 	"\x05scope\x18\t \x01(\x0e21.talos.resource.definitions.enums.NethelpersScopeR\x05scope\x12\x14\n" +
 	"\x05flags\x18\n" +
 	" \x01(\rR\x05flags\x12\x1a\n" +
-	"\bpriority\x18\v \x01(\rR\bpriority\"\x8a\f\n" +
+	"\bpriority\x18\v \x01(\rR\bpriority\"\xcd\x01\n" +
+	"\x10BGPBFDConfigSpec\x12F\n" +
+	"\x11transmit_interval\x18\x01 \x01(\v2\x19.google.protobuf.DurationR\x10transmitInterval\x12D\n" +
+	"\x10receive_interval\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\x0freceiveInterval\x12+\n" +
+	"\x11detect_multiplier\x18\x03 \x01(\rR\x10detectMultiplier\"\xef\x01\n" +
+	"\x15BGPNeighborConfigSpec\x12'\n" +
+	"\aaddress\x18\x01 \x01(\v2\r.common.NetIPR\aaddress\x12\x12\n" +
+	"\x04link\x18\x02 \x01(\tR\x04link\x12\x19\n" +
+	"\bpeer_asn\x18\x03 \x01(\rR\apeerAsn\x126\n" +
+	"\thold_time\x18\x04 \x01(\v2\x19.google.protobuf.DurationR\bholdTime\x12F\n" +
+	"\x03bfd\x18\x05 \x01(\v24.talos.resource.definitions.network.BGPBFDConfigSpecR\x03bfd\"\xcb\x02\n" +
+	"\x11BGPPeerConfigSpec\x12\x1b\n" +
+	"\tlocal_asn\x18\x01 \x01(\rR\blocalAsn\x12*\n" +
+	"\trouter_id\x18\x02 \x01(\v2\r.common.NetIPR\brouterId\x120\n" +
+	"\froute_source\x18\x03 \x01(\v2\r.common.NetIPR\vrouteSource\x12'\n" +
+	"\x0fadvertise_links\x18\x04 \x03(\tR\x0eadvertiseLinks\x12\x1c\n" +
+	"\tmultipath\x18\x05 \x01(\bR\tmultipath\x12\x1b\n" +
+	"\tmax_paths\x18\x06 \x01(\rR\bmaxPaths\x12W\n" +
+	"\tneighbors\x18\a \x03(\v29.talos.resource.definitions.network.BGPNeighborConfigSpecR\tneighbors\"\x85\x03\n" +
+	"\x11BGPPeerStatusSpec\x12\x12\n" +
+	"\x04peer\x18\x01 \x01(\tR\x04peer\x12\x1b\n" +
+	"\tlocal_asn\x18\x02 \x01(\rR\blocalAsn\x12\x19\n" +
+	"\bpeer_asn\x18\x03 \x01(\rR\apeerAsn\x12Q\n" +
+	"\x05state\x18\x04 \x01(\x0e2;.talos.resource.definitions.enums.NethelpersBGPSessionStateR\x05state\x12*\n" +
+	"\trouter_id\x18\x05 \x01(\v2\r.common.NetIPR\brouterId\x120\n" +
+	"\x05since\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x05since\x12\x1a\n" +
+	"\breceived\x18\a \x01(\rR\breceived\x12\x1e\n" +
+	"\n" +
+	"advertised\x18\b \x01(\rR\n" +
+	"advertised\x12\x1a\n" +
+	"\baccepted\x18\t \x01(\rR\baccepted\x12\x1b\n" +
+	"\tbfd_state\x18\n" +
+	" \x01(\tR\bbfdState\"\x8a\f\n" +
 	"\x0eBondMasterSpec\x12H\n" +
 	"\x04mode\x18\x01 \x01(\x0e24.talos.resource.definitions.enums.NethelpersBondModeR\x04mode\x12_\n" +
 	"\vhash_policy\x18\x02 \x01(\x0e2>.talos.resource.definitions.enums.NethelpersBondXmitHashPolicyR\n" +
@@ -5705,7 +6169,11 @@ const file_resource_definitions_network_network_proto_rawDesc = "" +
 	"\vdns_servers\x18\x01 \x03(\v2\r.common.NetIPR\n" +
 	"dnsServers\x12%\n" +
 	"\x0esearch_domains\x18\x02 \x03(\tR\rsearchDomains\x12U\n" +
-	"\fname_servers\x18\x04 \x03(\v22.talos.resource.definitions.network.NameServerSpecR\vnameServers\"\xde\x05\n" +
+	"\fname_servers\x18\x04 \x03(\v22.talos.resource.definitions.network.NameServerSpecR\vnameServers\"s\n" +
+	"\fRouteNextHop\x12'\n" +
+	"\agateway\x18\x01 \x01(\v2\r.common.NetIPR\agateway\x12\"\n" +
+	"\rout_link_name\x18\x02 \x01(\tR\voutLinkName\x12\x16\n" +
+	"\x06weight\x18\x03 \x01(\rR\x06weight\"\xad\x06\n" +
 	"\rRouteSpecSpec\x12J\n" +
 	"\x06family\x18\x01 \x01(\x0e22.talos.resource.definitions.enums.NethelpersFamilyR\x06family\x125\n" +
 	"\vdestination\x18\x02 \x01(\v2\x13.common.NetIPPrefixR\vdestination\x12%\n" +
@@ -5720,7 +6188,8 @@ const file_resource_definitions_network_network_proto_rawDesc = "" +
 	" \x01(\rR\x05flags\x12U\n" +
 	"\bprotocol\x18\v \x01(\x0e29.talos.resource.definitions.enums.NethelpersRouteProtocolR\bprotocol\x12W\n" +
 	"\fconfig_layer\x18\f \x01(\x0e24.talos.resource.definitions.enums.NetworkConfigLayerR\vconfigLayer\x12\x10\n" +
-	"\x03mtu\x18\r \x01(\rR\x03mtu\"\xad\x05\n" +
+	"\x03mtu\x18\r \x01(\rR\x03mtu\x12M\n" +
+	"\tnext_hops\x18\x0e \x03(\v20.talos.resource.definitions.network.RouteNextHopR\bnextHops\"\xfc\x05\n" +
 	"\x0fRouteStatusSpec\x12J\n" +
 	"\x06family\x18\x01 \x01(\x0e22.talos.resource.definitions.enums.NethelpersFamilyR\x06family\x125\n" +
 	"\vdestination\x18\x02 \x01(\v2\x13.common.NetIPPrefixR\vdestination\x12%\n" +
@@ -5735,7 +6204,8 @@ const file_resource_definitions_network_network_proto_rawDesc = "" +
 	" \x01(\x0e25.talos.resource.definitions.enums.NethelpersRouteTypeR\x04type\x12\x14\n" +
 	"\x05flags\x18\v \x01(\rR\x05flags\x12U\n" +
 	"\bprotocol\x18\f \x01(\x0e29.talos.resource.definitions.enums.NethelpersRouteProtocolR\bprotocol\x12\x10\n" +
-	"\x03mtu\x18\r \x01(\rR\x03mtu\"\xb3\x04\n" +
+	"\x03mtu\x18\r \x01(\rR\x03mtu\x12M\n" +
+	"\tnext_hops\x18\x0e \x03(\v20.talos.resource.definitions.network.RouteNextHopR\bnextHops\"\xb3\x04\n" +
 	"\x13RoutingRuleSpecSpec\x12J\n" +
 	"\x06family\x18\x01 \x01(\x0e22.talos.resource.definitions.enums.NethelpersFamilyR\x06family\x12%\n" +
 	"\x03src\x18\x02 \x01(\v2\x13.common.NetIPPrefixR\x03src\x12%\n" +
@@ -5837,279 +6307,300 @@ func file_resource_definitions_network_network_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_network_network_proto_rawDescData
 }
 
-var file_resource_definitions_network_network_proto_msgTypes = make([]protoimpl.MessageInfo, 68)
+var file_resource_definitions_network_network_proto_msgTypes = make([]protoimpl.MessageInfo, 73)
 var file_resource_definitions_network_network_proto_goTypes = []any{
 	(*AddressSpecSpec)(nil),                    // 0: talos.resource.definitions.network.AddressSpecSpec
 	(*AddressStatusSpec)(nil),                  // 1: talos.resource.definitions.network.AddressStatusSpec
-	(*BondMasterSpec)(nil),                     // 2: talos.resource.definitions.network.BondMasterSpec
-	(*BondSlave)(nil),                          // 3: talos.resource.definitions.network.BondSlave
-	(*BridgeMasterSpec)(nil),                   // 4: talos.resource.definitions.network.BridgeMasterSpec
-	(*BridgeSlave)(nil),                        // 5: talos.resource.definitions.network.BridgeSlave
-	(*BridgeVLANSpec)(nil),                     // 6: talos.resource.definitions.network.BridgeVLANSpec
-	(*ClientIdentifierSpec)(nil),               // 7: talos.resource.definitions.network.ClientIdentifierSpec
-	(*DHCP4OperatorSpec)(nil),                  // 8: talos.resource.definitions.network.DHCP4OperatorSpec
-	(*DHCP6OperatorSpec)(nil),                  // 9: talos.resource.definitions.network.DHCP6OperatorSpec
-	(*DNSResolveCacheSpec)(nil),                // 10: talos.resource.definitions.network.DNSResolveCacheSpec
-	(*EthernetChannelsSpec)(nil),               // 11: talos.resource.definitions.network.EthernetChannelsSpec
-	(*EthernetChannelsStatus)(nil),             // 12: talos.resource.definitions.network.EthernetChannelsStatus
-	(*EthernetFeatureStatus)(nil),              // 13: talos.resource.definitions.network.EthernetFeatureStatus
-	(*EthernetRingsSpec)(nil),                  // 14: talos.resource.definitions.network.EthernetRingsSpec
-	(*EthernetRingsStatus)(nil),                // 15: talos.resource.definitions.network.EthernetRingsStatus
-	(*EthernetSpecSpec)(nil),                   // 16: talos.resource.definitions.network.EthernetSpecSpec
-	(*EthernetStatusSpec)(nil),                 // 17: talos.resource.definitions.network.EthernetStatusSpec
-	(*HTTPProbeSpec)(nil),                      // 18: talos.resource.definitions.network.HTTPProbeSpec
-	(*HardwareAddrSpec)(nil),                   // 19: talos.resource.definitions.network.HardwareAddrSpec
-	(*HostDNSConfigSpec)(nil),                  // 20: talos.resource.definitions.network.HostDNSConfigSpec
-	(*HostnameSpecSpec)(nil),                   // 21: talos.resource.definitions.network.HostnameSpecSpec
-	(*HostnameStatusSpec)(nil),                 // 22: talos.resource.definitions.network.HostnameStatusSpec
-	(*LinkAliasSpecSpec)(nil),                  // 23: talos.resource.definitions.network.LinkAliasSpecSpec
-	(*LinkRefreshSpec)(nil),                    // 24: talos.resource.definitions.network.LinkRefreshSpec
-	(*LinkSpecSpec)(nil),                       // 25: talos.resource.definitions.network.LinkSpecSpec
-	(*LinkStatusSpec)(nil),                     // 26: talos.resource.definitions.network.LinkStatusSpec
-	(*NameServerSpec)(nil),                     // 27: talos.resource.definitions.network.NameServerSpec
-	(*NfTablesAddressMatch)(nil),               // 28: talos.resource.definitions.network.NfTablesAddressMatch
-	(*NfTablesChainSpec)(nil),                  // 29: talos.resource.definitions.network.NfTablesChainSpec
-	(*NfTablesClampMSS)(nil),                   // 30: talos.resource.definitions.network.NfTablesClampMSS
-	(*NfTablesConntrackStateMatch)(nil),        // 31: talos.resource.definitions.network.NfTablesConntrackStateMatch
-	(*NfTablesICMPTypeMatch)(nil),              // 32: talos.resource.definitions.network.NfTablesICMPTypeMatch
-	(*NfTablesIfNameMatch)(nil),                // 33: talos.resource.definitions.network.NfTablesIfNameMatch
-	(*NfTablesLayer4Match)(nil),                // 34: talos.resource.definitions.network.NfTablesLayer4Match
-	(*NfTablesLimitMatch)(nil),                 // 35: talos.resource.definitions.network.NfTablesLimitMatch
-	(*NfTablesMark)(nil),                       // 36: talos.resource.definitions.network.NfTablesMark
-	(*NfTablesPortMatch)(nil),                  // 37: talos.resource.definitions.network.NfTablesPortMatch
-	(*NfTablesRule)(nil),                       // 38: talos.resource.definitions.network.NfTablesRule
-	(*NodeAddressFilterSpec)(nil),              // 39: talos.resource.definitions.network.NodeAddressFilterSpec
-	(*NodeAddressSortAlgorithmSpec)(nil),       // 40: talos.resource.definitions.network.NodeAddressSortAlgorithmSpec
-	(*NodeAddressSpec)(nil),                    // 41: talos.resource.definitions.network.NodeAddressSpec
-	(*OperatorSpecSpec)(nil),                   // 42: talos.resource.definitions.network.OperatorSpecSpec
-	(*PlatformConfigSpec)(nil),                 // 43: talos.resource.definitions.network.PlatformConfigSpec
-	(*PortRange)(nil),                          // 44: talos.resource.definitions.network.PortRange
-	(*ProbeSpecSpec)(nil),                      // 45: talos.resource.definitions.network.ProbeSpecSpec
-	(*ProbeStatusSpec)(nil),                    // 46: talos.resource.definitions.network.ProbeStatusSpec
-	(*ResolverSpecSpec)(nil),                   // 47: talos.resource.definitions.network.ResolverSpecSpec
-	(*ResolverStatusSpec)(nil),                 // 48: talos.resource.definitions.network.ResolverStatusSpec
-	(*RouteSpecSpec)(nil),                      // 49: talos.resource.definitions.network.RouteSpecSpec
-	(*RouteStatusSpec)(nil),                    // 50: talos.resource.definitions.network.RouteStatusSpec
-	(*RoutingRuleSpecSpec)(nil),                // 51: talos.resource.definitions.network.RoutingRuleSpecSpec
-	(*RoutingRuleStatusSpec)(nil),              // 52: talos.resource.definitions.network.RoutingRuleStatusSpec
-	(*STPSpec)(nil),                            // 53: talos.resource.definitions.network.STPSpec
-	(*StaticHostSpec)(nil),                     // 54: talos.resource.definitions.network.StaticHostSpec
-	(*StatusSpec)(nil),                         // 55: talos.resource.definitions.network.StatusSpec
-	(*TCPProbeSpec)(nil),                       // 56: talos.resource.definitions.network.TCPProbeSpec
-	(*TimeServerSpecSpec)(nil),                 // 57: talos.resource.definitions.network.TimeServerSpecSpec
-	(*TimeServerStatusSpec)(nil),               // 58: talos.resource.definitions.network.TimeServerStatusSpec
-	(*VIPEquinixMetalSpec)(nil),                // 59: talos.resource.definitions.network.VIPEquinixMetalSpec
-	(*VIPHCloudSpec)(nil),                      // 60: talos.resource.definitions.network.VIPHCloudSpec
-	(*VIPOperatorSpec)(nil),                    // 61: talos.resource.definitions.network.VIPOperatorSpec
-	(*VLANSpec)(nil),                           // 62: talos.resource.definitions.network.VLANSpec
-	(*VRFMasterSpec)(nil),                      // 63: talos.resource.definitions.network.VRFMasterSpec
-	(*VRFSlave)(nil),                           // 64: talos.resource.definitions.network.VRFSlave
-	(*WireguardPeer)(nil),                      // 65: talos.resource.definitions.network.WireguardPeer
-	(*WireguardSpec)(nil),                      // 66: talos.resource.definitions.network.WireguardSpec
-	nil,                                        // 67: talos.resource.definitions.network.EthernetSpecSpec.FeaturesEntry
-	(*common.NetIPPrefix)(nil),                 // 68: common.NetIPPrefix
-	(enums.NethelpersFamily)(0),                // 69: talos.resource.definitions.enums.NethelpersFamily
-	(enums.NethelpersScope)(0),                 // 70: talos.resource.definitions.enums.NethelpersScope
-	(enums.NetworkConfigLayer)(0),              // 71: talos.resource.definitions.enums.NetworkConfigLayer
-	(*common.NetIP)(nil),                       // 72: common.NetIP
-	(enums.NethelpersBondMode)(0),              // 73: talos.resource.definitions.enums.NethelpersBondMode
-	(enums.NethelpersBondXmitHashPolicy)(0),    // 74: talos.resource.definitions.enums.NethelpersBondXmitHashPolicy
-	(enums.NethelpersLACPRate)(0),              // 75: talos.resource.definitions.enums.NethelpersLACPRate
-	(enums.NethelpersARPValidate)(0),           // 76: talos.resource.definitions.enums.NethelpersARPValidate
-	(enums.NethelpersARPAllTargets)(0),         // 77: talos.resource.definitions.enums.NethelpersARPAllTargets
-	(enums.NethelpersPrimaryReselect)(0),       // 78: talos.resource.definitions.enums.NethelpersPrimaryReselect
-	(enums.NethelpersFailOverMAC)(0),           // 79: talos.resource.definitions.enums.NethelpersFailOverMAC
-	(enums.NethelpersADSelect)(0),              // 80: talos.resource.definitions.enums.NethelpersADSelect
-	(enums.NethelpersADLACPActive)(0),          // 81: talos.resource.definitions.enums.NethelpersADLACPActive
-	(enums.NethelpersClientIdentifier)(0),      // 82: talos.resource.definitions.enums.NethelpersClientIdentifier
-	(enums.NethelpersWOLMode)(0),               // 83: talos.resource.definitions.enums.NethelpersWOLMode
-	(enums.NethelpersPort)(0),                  // 84: talos.resource.definitions.enums.NethelpersPort
-	(enums.NethelpersDuplex)(0),                // 85: talos.resource.definitions.enums.NethelpersDuplex
-	(*common.URL)(nil),                         // 86: common.URL
-	(*durationpb.Duration)(nil),                // 87: google.protobuf.Duration
-	(*common.NetIPPort)(nil),                   // 88: common.NetIPPort
-	(enums.NethelpersLinkType)(0),              // 89: talos.resource.definitions.enums.NethelpersLinkType
-	(enums.NethelpersOperationalState)(0),      // 90: talos.resource.definitions.enums.NethelpersOperationalState
-	(enums.NethelpersDNSProtocol)(0),           // 91: talos.resource.definitions.enums.NethelpersDNSProtocol
-	(enums.NethelpersNfTablesChainHook)(0),     // 92: talos.resource.definitions.enums.NethelpersNfTablesChainHook
-	(enums.NethelpersNfTablesChainPriority)(0), // 93: talos.resource.definitions.enums.NethelpersNfTablesChainPriority
-	(enums.NethelpersNfTablesVerdict)(0),       // 94: talos.resource.definitions.enums.NethelpersNfTablesVerdict
-	(enums.NethelpersConntrackState)(0),        // 95: talos.resource.definitions.enums.NethelpersConntrackState
-	(enums.NethelpersICMPType)(0),              // 96: talos.resource.definitions.enums.NethelpersICMPType
-	(enums.NethelpersMatchOperator)(0),         // 97: talos.resource.definitions.enums.NethelpersMatchOperator
-	(enums.NethelpersProtocol)(0),              // 98: talos.resource.definitions.enums.NethelpersProtocol
-	(enums.NethelpersAddressSortAlgorithm)(0),  // 99: talos.resource.definitions.enums.NethelpersAddressSortAlgorithm
-	(enums.NetworkOperator)(0),                 // 100: talos.resource.definitions.enums.NetworkOperator
-	(*runtime.PlatformMetadataSpec)(nil),       // 101: talos.resource.definitions.runtime.PlatformMetadataSpec
-	(enums.NethelpersRoutingTable)(0),          // 102: talos.resource.definitions.enums.NethelpersRoutingTable
-	(enums.NethelpersRouteType)(0),             // 103: talos.resource.definitions.enums.NethelpersRouteType
-	(enums.NethelpersRouteProtocol)(0),         // 104: talos.resource.definitions.enums.NethelpersRouteProtocol
-	(enums.NethelpersRoutingRuleAction)(0),     // 105: talos.resource.definitions.enums.NethelpersRoutingRuleAction
-	(enums.NethelpersVLANProtocol)(0),          // 106: talos.resource.definitions.enums.NethelpersVLANProtocol
+	(*BGPBFDConfigSpec)(nil),                   // 2: talos.resource.definitions.network.BGPBFDConfigSpec
+	(*BGPNeighborConfigSpec)(nil),              // 3: talos.resource.definitions.network.BGPNeighborConfigSpec
+	(*BGPPeerConfigSpec)(nil),                  // 4: talos.resource.definitions.network.BGPPeerConfigSpec
+	(*BGPPeerStatusSpec)(nil),                  // 5: talos.resource.definitions.network.BGPPeerStatusSpec
+	(*BondMasterSpec)(nil),                     // 6: talos.resource.definitions.network.BondMasterSpec
+	(*BondSlave)(nil),                          // 7: talos.resource.definitions.network.BondSlave
+	(*BridgeMasterSpec)(nil),                   // 8: talos.resource.definitions.network.BridgeMasterSpec
+	(*BridgeSlave)(nil),                        // 9: talos.resource.definitions.network.BridgeSlave
+	(*BridgeVLANSpec)(nil),                     // 10: talos.resource.definitions.network.BridgeVLANSpec
+	(*ClientIdentifierSpec)(nil),               // 11: talos.resource.definitions.network.ClientIdentifierSpec
+	(*DHCP4OperatorSpec)(nil),                  // 12: talos.resource.definitions.network.DHCP4OperatorSpec
+	(*DHCP6OperatorSpec)(nil),                  // 13: talos.resource.definitions.network.DHCP6OperatorSpec
+	(*DNSResolveCacheSpec)(nil),                // 14: talos.resource.definitions.network.DNSResolveCacheSpec
+	(*EthernetChannelsSpec)(nil),               // 15: talos.resource.definitions.network.EthernetChannelsSpec
+	(*EthernetChannelsStatus)(nil),             // 16: talos.resource.definitions.network.EthernetChannelsStatus
+	(*EthernetFeatureStatus)(nil),              // 17: talos.resource.definitions.network.EthernetFeatureStatus
+	(*EthernetRingsSpec)(nil),                  // 18: talos.resource.definitions.network.EthernetRingsSpec
+	(*EthernetRingsStatus)(nil),                // 19: talos.resource.definitions.network.EthernetRingsStatus
+	(*EthernetSpecSpec)(nil),                   // 20: talos.resource.definitions.network.EthernetSpecSpec
+	(*EthernetStatusSpec)(nil),                 // 21: talos.resource.definitions.network.EthernetStatusSpec
+	(*HTTPProbeSpec)(nil),                      // 22: talos.resource.definitions.network.HTTPProbeSpec
+	(*HardwareAddrSpec)(nil),                   // 23: talos.resource.definitions.network.HardwareAddrSpec
+	(*HostDNSConfigSpec)(nil),                  // 24: talos.resource.definitions.network.HostDNSConfigSpec
+	(*HostnameSpecSpec)(nil),                   // 25: talos.resource.definitions.network.HostnameSpecSpec
+	(*HostnameStatusSpec)(nil),                 // 26: talos.resource.definitions.network.HostnameStatusSpec
+	(*LinkAliasSpecSpec)(nil),                  // 27: talos.resource.definitions.network.LinkAliasSpecSpec
+	(*LinkRefreshSpec)(nil),                    // 28: talos.resource.definitions.network.LinkRefreshSpec
+	(*LinkSpecSpec)(nil),                       // 29: talos.resource.definitions.network.LinkSpecSpec
+	(*LinkStatusSpec)(nil),                     // 30: talos.resource.definitions.network.LinkStatusSpec
+	(*NameServerSpec)(nil),                     // 31: talos.resource.definitions.network.NameServerSpec
+	(*NfTablesAddressMatch)(nil),               // 32: talos.resource.definitions.network.NfTablesAddressMatch
+	(*NfTablesChainSpec)(nil),                  // 33: talos.resource.definitions.network.NfTablesChainSpec
+	(*NfTablesClampMSS)(nil),                   // 34: talos.resource.definitions.network.NfTablesClampMSS
+	(*NfTablesConntrackStateMatch)(nil),        // 35: talos.resource.definitions.network.NfTablesConntrackStateMatch
+	(*NfTablesICMPTypeMatch)(nil),              // 36: talos.resource.definitions.network.NfTablesICMPTypeMatch
+	(*NfTablesIfNameMatch)(nil),                // 37: talos.resource.definitions.network.NfTablesIfNameMatch
+	(*NfTablesLayer4Match)(nil),                // 38: talos.resource.definitions.network.NfTablesLayer4Match
+	(*NfTablesLimitMatch)(nil),                 // 39: talos.resource.definitions.network.NfTablesLimitMatch
+	(*NfTablesMark)(nil),                       // 40: talos.resource.definitions.network.NfTablesMark
+	(*NfTablesPortMatch)(nil),                  // 41: talos.resource.definitions.network.NfTablesPortMatch
+	(*NfTablesRule)(nil),                       // 42: talos.resource.definitions.network.NfTablesRule
+	(*NodeAddressFilterSpec)(nil),              // 43: talos.resource.definitions.network.NodeAddressFilterSpec
+	(*NodeAddressSortAlgorithmSpec)(nil),       // 44: talos.resource.definitions.network.NodeAddressSortAlgorithmSpec
+	(*NodeAddressSpec)(nil),                    // 45: talos.resource.definitions.network.NodeAddressSpec
+	(*OperatorSpecSpec)(nil),                   // 46: talos.resource.definitions.network.OperatorSpecSpec
+	(*PlatformConfigSpec)(nil),                 // 47: talos.resource.definitions.network.PlatformConfigSpec
+	(*PortRange)(nil),                          // 48: talos.resource.definitions.network.PortRange
+	(*ProbeSpecSpec)(nil),                      // 49: talos.resource.definitions.network.ProbeSpecSpec
+	(*ProbeStatusSpec)(nil),                    // 50: talos.resource.definitions.network.ProbeStatusSpec
+	(*ResolverSpecSpec)(nil),                   // 51: talos.resource.definitions.network.ResolverSpecSpec
+	(*ResolverStatusSpec)(nil),                 // 52: talos.resource.definitions.network.ResolverStatusSpec
+	(*RouteNextHop)(nil),                       // 53: talos.resource.definitions.network.RouteNextHop
+	(*RouteSpecSpec)(nil),                      // 54: talos.resource.definitions.network.RouteSpecSpec
+	(*RouteStatusSpec)(nil),                    // 55: talos.resource.definitions.network.RouteStatusSpec
+	(*RoutingRuleSpecSpec)(nil),                // 56: talos.resource.definitions.network.RoutingRuleSpecSpec
+	(*RoutingRuleStatusSpec)(nil),              // 57: talos.resource.definitions.network.RoutingRuleStatusSpec
+	(*STPSpec)(nil),                            // 58: talos.resource.definitions.network.STPSpec
+	(*StaticHostSpec)(nil),                     // 59: talos.resource.definitions.network.StaticHostSpec
+	(*StatusSpec)(nil),                         // 60: talos.resource.definitions.network.StatusSpec
+	(*TCPProbeSpec)(nil),                       // 61: talos.resource.definitions.network.TCPProbeSpec
+	(*TimeServerSpecSpec)(nil),                 // 62: talos.resource.definitions.network.TimeServerSpecSpec
+	(*TimeServerStatusSpec)(nil),               // 63: talos.resource.definitions.network.TimeServerStatusSpec
+	(*VIPEquinixMetalSpec)(nil),                // 64: talos.resource.definitions.network.VIPEquinixMetalSpec
+	(*VIPHCloudSpec)(nil),                      // 65: talos.resource.definitions.network.VIPHCloudSpec
+	(*VIPOperatorSpec)(nil),                    // 66: talos.resource.definitions.network.VIPOperatorSpec
+	(*VLANSpec)(nil),                           // 67: talos.resource.definitions.network.VLANSpec
+	(*VRFMasterSpec)(nil),                      // 68: talos.resource.definitions.network.VRFMasterSpec
+	(*VRFSlave)(nil),                           // 69: talos.resource.definitions.network.VRFSlave
+	(*WireguardPeer)(nil),                      // 70: talos.resource.definitions.network.WireguardPeer
+	(*WireguardSpec)(nil),                      // 71: talos.resource.definitions.network.WireguardSpec
+	nil,                                        // 72: talos.resource.definitions.network.EthernetSpecSpec.FeaturesEntry
+	(*common.NetIPPrefix)(nil),                 // 73: common.NetIPPrefix
+	(enums.NethelpersFamily)(0),                // 74: talos.resource.definitions.enums.NethelpersFamily
+	(enums.NethelpersScope)(0),                 // 75: talos.resource.definitions.enums.NethelpersScope
+	(enums.NetworkConfigLayer)(0),              // 76: talos.resource.definitions.enums.NetworkConfigLayer
+	(*common.NetIP)(nil),                       // 77: common.NetIP
+	(*durationpb.Duration)(nil),                // 78: google.protobuf.Duration
+	(enums.NethelpersBGPSessionState)(0),       // 79: talos.resource.definitions.enums.NethelpersBGPSessionState
+	(*timestamppb.Timestamp)(nil),              // 80: google.protobuf.Timestamp
+	(enums.NethelpersBondMode)(0),              // 81: talos.resource.definitions.enums.NethelpersBondMode
+	(enums.NethelpersBondXmitHashPolicy)(0),    // 82: talos.resource.definitions.enums.NethelpersBondXmitHashPolicy
+	(enums.NethelpersLACPRate)(0),              // 83: talos.resource.definitions.enums.NethelpersLACPRate
+	(enums.NethelpersARPValidate)(0),           // 84: talos.resource.definitions.enums.NethelpersARPValidate
+	(enums.NethelpersARPAllTargets)(0),         // 85: talos.resource.definitions.enums.NethelpersARPAllTargets
+	(enums.NethelpersPrimaryReselect)(0),       // 86: talos.resource.definitions.enums.NethelpersPrimaryReselect
+	(enums.NethelpersFailOverMAC)(0),           // 87: talos.resource.definitions.enums.NethelpersFailOverMAC
+	(enums.NethelpersADSelect)(0),              // 88: talos.resource.definitions.enums.NethelpersADSelect
+	(enums.NethelpersADLACPActive)(0),          // 89: talos.resource.definitions.enums.NethelpersADLACPActive
+	(enums.NethelpersClientIdentifier)(0),      // 90: talos.resource.definitions.enums.NethelpersClientIdentifier
+	(enums.NethelpersWOLMode)(0),               // 91: talos.resource.definitions.enums.NethelpersWOLMode
+	(enums.NethelpersPort)(0),                  // 92: talos.resource.definitions.enums.NethelpersPort
+	(enums.NethelpersDuplex)(0),                // 93: talos.resource.definitions.enums.NethelpersDuplex
+	(*common.URL)(nil),                         // 94: common.URL
+	(*common.NetIPPort)(nil),                   // 95: common.NetIPPort
+	(enums.NethelpersLinkType)(0),              // 96: talos.resource.definitions.enums.NethelpersLinkType
+	(enums.NethelpersOperationalState)(0),      // 97: talos.resource.definitions.enums.NethelpersOperationalState
+	(enums.NethelpersDNSProtocol)(0),           // 98: talos.resource.definitions.enums.NethelpersDNSProtocol
+	(enums.NethelpersNfTablesChainHook)(0),     // 99: talos.resource.definitions.enums.NethelpersNfTablesChainHook
+	(enums.NethelpersNfTablesChainPriority)(0), // 100: talos.resource.definitions.enums.NethelpersNfTablesChainPriority
+	(enums.NethelpersNfTablesVerdict)(0),       // 101: talos.resource.definitions.enums.NethelpersNfTablesVerdict
+	(enums.NethelpersConntrackState)(0),        // 102: talos.resource.definitions.enums.NethelpersConntrackState
+	(enums.NethelpersICMPType)(0),              // 103: talos.resource.definitions.enums.NethelpersICMPType
+	(enums.NethelpersMatchOperator)(0),         // 104: talos.resource.definitions.enums.NethelpersMatchOperator
+	(enums.NethelpersProtocol)(0),              // 105: talos.resource.definitions.enums.NethelpersProtocol
+	(enums.NethelpersAddressSortAlgorithm)(0),  // 106: talos.resource.definitions.enums.NethelpersAddressSortAlgorithm
+	(enums.NetworkOperator)(0),                 // 107: talos.resource.definitions.enums.NetworkOperator
+	(*runtime.PlatformMetadataSpec)(nil),       // 108: talos.resource.definitions.runtime.PlatformMetadataSpec
+	(enums.NethelpersRoutingTable)(0),          // 109: talos.resource.definitions.enums.NethelpersRoutingTable
+	(enums.NethelpersRouteType)(0),             // 110: talos.resource.definitions.enums.NethelpersRouteType
+	(enums.NethelpersRouteProtocol)(0),         // 111: talos.resource.definitions.enums.NethelpersRouteProtocol
+	(enums.NethelpersRoutingRuleAction)(0),     // 112: talos.resource.definitions.enums.NethelpersRoutingRuleAction
+	(enums.NethelpersVLANProtocol)(0),          // 113: talos.resource.definitions.enums.NethelpersVLANProtocol
 }
 var file_resource_definitions_network_network_proto_depIdxs = []int32{
-	68,  // 0: talos.resource.definitions.network.AddressSpecSpec.address:type_name -> common.NetIPPrefix
-	69,  // 1: talos.resource.definitions.network.AddressSpecSpec.family:type_name -> talos.resource.definitions.enums.NethelpersFamily
-	70,  // 2: talos.resource.definitions.network.AddressSpecSpec.scope:type_name -> talos.resource.definitions.enums.NethelpersScope
-	71,  // 3: talos.resource.definitions.network.AddressSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
-	68,  // 4: talos.resource.definitions.network.AddressStatusSpec.address:type_name -> common.NetIPPrefix
-	72,  // 5: talos.resource.definitions.network.AddressStatusSpec.local:type_name -> common.NetIP
-	72,  // 6: talos.resource.definitions.network.AddressStatusSpec.broadcast:type_name -> common.NetIP
-	72,  // 7: talos.resource.definitions.network.AddressStatusSpec.anycast:type_name -> common.NetIP
-	72,  // 8: talos.resource.definitions.network.AddressStatusSpec.multicast:type_name -> common.NetIP
-	69,  // 9: talos.resource.definitions.network.AddressStatusSpec.family:type_name -> talos.resource.definitions.enums.NethelpersFamily
-	70,  // 10: talos.resource.definitions.network.AddressStatusSpec.scope:type_name -> talos.resource.definitions.enums.NethelpersScope
-	73,  // 11: talos.resource.definitions.network.BondMasterSpec.mode:type_name -> talos.resource.definitions.enums.NethelpersBondMode
-	74,  // 12: talos.resource.definitions.network.BondMasterSpec.hash_policy:type_name -> talos.resource.definitions.enums.NethelpersBondXmitHashPolicy
-	75,  // 13: talos.resource.definitions.network.BondMasterSpec.lacp_rate:type_name -> talos.resource.definitions.enums.NethelpersLACPRate
-	76,  // 14: talos.resource.definitions.network.BondMasterSpec.arp_validate:type_name -> talos.resource.definitions.enums.NethelpersARPValidate
-	77,  // 15: talos.resource.definitions.network.BondMasterSpec.arp_all_targets:type_name -> talos.resource.definitions.enums.NethelpersARPAllTargets
-	78,  // 16: talos.resource.definitions.network.BondMasterSpec.primary_reselect:type_name -> talos.resource.definitions.enums.NethelpersPrimaryReselect
-	79,  // 17: talos.resource.definitions.network.BondMasterSpec.fail_over_mac:type_name -> talos.resource.definitions.enums.NethelpersFailOverMAC
-	80,  // 18: talos.resource.definitions.network.BondMasterSpec.ad_select:type_name -> talos.resource.definitions.enums.NethelpersADSelect
-	72,  // 19: talos.resource.definitions.network.BondMasterSpec.arpip_targets:type_name -> common.NetIP
-	72,  // 20: talos.resource.definitions.network.BondMasterSpec.nsip6_targets:type_name -> common.NetIP
-	81,  // 21: talos.resource.definitions.network.BondMasterSpec.adlacp_active:type_name -> talos.resource.definitions.enums.NethelpersADLACPActive
-	53,  // 22: talos.resource.definitions.network.BridgeMasterSpec.stp:type_name -> talos.resource.definitions.network.STPSpec
-	6,   // 23: talos.resource.definitions.network.BridgeMasterSpec.vlan:type_name -> talos.resource.definitions.network.BridgeVLANSpec
-	82,  // 24: talos.resource.definitions.network.ClientIdentifierSpec.client_identifier:type_name -> talos.resource.definitions.enums.NethelpersClientIdentifier
-	7,   // 25: talos.resource.definitions.network.DHCP4OperatorSpec.client_identifier:type_name -> talos.resource.definitions.network.ClientIdentifierSpec
-	7,   // 26: talos.resource.definitions.network.DHCP6OperatorSpec.client_identifier:type_name -> talos.resource.definitions.network.ClientIdentifierSpec
-	14,  // 27: talos.resource.definitions.network.EthernetSpecSpec.rings:type_name -> talos.resource.definitions.network.EthernetRingsSpec
-	67,  // 28: talos.resource.definitions.network.EthernetSpecSpec.features:type_name -> talos.resource.definitions.network.EthernetSpecSpec.FeaturesEntry
-	11,  // 29: talos.resource.definitions.network.EthernetSpecSpec.channels:type_name -> talos.resource.definitions.network.EthernetChannelsSpec
-	83,  // 30: talos.resource.definitions.network.EthernetSpecSpec.wake_on_lan:type_name -> talos.resource.definitions.enums.NethelpersWOLMode
-	84,  // 31: talos.resource.definitions.network.EthernetStatusSpec.port:type_name -> talos.resource.definitions.enums.NethelpersPort
-	85,  // 32: talos.resource.definitions.network.EthernetStatusSpec.duplex:type_name -> talos.resource.definitions.enums.NethelpersDuplex
-	15,  // 33: talos.resource.definitions.network.EthernetStatusSpec.rings:type_name -> talos.resource.definitions.network.EthernetRingsStatus
-	13,  // 34: talos.resource.definitions.network.EthernetStatusSpec.features:type_name -> talos.resource.definitions.network.EthernetFeatureStatus
-	12,  // 35: talos.resource.definitions.network.EthernetStatusSpec.channels:type_name -> talos.resource.definitions.network.EthernetChannelsStatus
-	83,  // 36: talos.resource.definitions.network.EthernetStatusSpec.wake_on_lan:type_name -> talos.resource.definitions.enums.NethelpersWOLMode
-	86,  // 37: talos.resource.definitions.network.HTTPProbeSpec.url:type_name -> common.URL
-	87,  // 38: talos.resource.definitions.network.HTTPProbeSpec.timeout:type_name -> google.protobuf.Duration
-	88,  // 39: talos.resource.definitions.network.HostDNSConfigSpec.listen_addresses:type_name -> common.NetIPPort
-	72,  // 40: talos.resource.definitions.network.HostDNSConfigSpec.service_host_dns_address:type_name -> common.NetIP
-	72,  // 41: talos.resource.definitions.network.HostDNSConfigSpec.service_host_dns_address_v6:type_name -> common.NetIP
-	71,  // 42: talos.resource.definitions.network.HostnameSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
-	89,  // 43: talos.resource.definitions.network.LinkSpecSpec.type:type_name -> talos.resource.definitions.enums.NethelpersLinkType
-	3,   // 44: talos.resource.definitions.network.LinkSpecSpec.bond_slave:type_name -> talos.resource.definitions.network.BondSlave
-	5,   // 45: talos.resource.definitions.network.LinkSpecSpec.bridge_slave:type_name -> talos.resource.definitions.network.BridgeSlave
-	62,  // 46: talos.resource.definitions.network.LinkSpecSpec.vlan:type_name -> talos.resource.definitions.network.VLANSpec
-	2,   // 47: talos.resource.definitions.network.LinkSpecSpec.bond_master:type_name -> talos.resource.definitions.network.BondMasterSpec
-	4,   // 48: talos.resource.definitions.network.LinkSpecSpec.bridge_master:type_name -> talos.resource.definitions.network.BridgeMasterSpec
-	66,  // 49: talos.resource.definitions.network.LinkSpecSpec.wireguard:type_name -> talos.resource.definitions.network.WireguardSpec
-	71,  // 50: talos.resource.definitions.network.LinkSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
-	63,  // 51: talos.resource.definitions.network.LinkSpecSpec.vrf_master:type_name -> talos.resource.definitions.network.VRFMasterSpec
-	64,  // 52: talos.resource.definitions.network.LinkSpecSpec.vrf_slave:type_name -> talos.resource.definitions.network.VRFSlave
-	89,  // 53: talos.resource.definitions.network.LinkStatusSpec.type:type_name -> talos.resource.definitions.enums.NethelpersLinkType
-	90,  // 54: talos.resource.definitions.network.LinkStatusSpec.operational_state:type_name -> talos.resource.definitions.enums.NethelpersOperationalState
-	84,  // 55: talos.resource.definitions.network.LinkStatusSpec.port:type_name -> talos.resource.definitions.enums.NethelpersPort
-	85,  // 56: talos.resource.definitions.network.LinkStatusSpec.duplex:type_name -> talos.resource.definitions.enums.NethelpersDuplex
-	62,  // 57: talos.resource.definitions.network.LinkStatusSpec.vlan:type_name -> talos.resource.definitions.network.VLANSpec
-	4,   // 58: talos.resource.definitions.network.LinkStatusSpec.bridge_master:type_name -> talos.resource.definitions.network.BridgeMasterSpec
-	2,   // 59: talos.resource.definitions.network.LinkStatusSpec.bond_master:type_name -> talos.resource.definitions.network.BondMasterSpec
-	66,  // 60: talos.resource.definitions.network.LinkStatusSpec.wireguard:type_name -> talos.resource.definitions.network.WireguardSpec
-	63,  // 61: talos.resource.definitions.network.LinkStatusSpec.vrf_master:type_name -> talos.resource.definitions.network.VRFMasterSpec
-	72,  // 62: talos.resource.definitions.network.NameServerSpec.addr:type_name -> common.NetIP
-	91,  // 63: talos.resource.definitions.network.NameServerSpec.protocol:type_name -> talos.resource.definitions.enums.NethelpersDNSProtocol
-	68,  // 64: talos.resource.definitions.network.NfTablesAddressMatch.include_subnets:type_name -> common.NetIPPrefix
-	68,  // 65: talos.resource.definitions.network.NfTablesAddressMatch.exclude_subnets:type_name -> common.NetIPPrefix
-	92,  // 66: talos.resource.definitions.network.NfTablesChainSpec.hook:type_name -> talos.resource.definitions.enums.NethelpersNfTablesChainHook
-	93,  // 67: talos.resource.definitions.network.NfTablesChainSpec.priority:type_name -> talos.resource.definitions.enums.NethelpersNfTablesChainPriority
-	38,  // 68: talos.resource.definitions.network.NfTablesChainSpec.rules:type_name -> talos.resource.definitions.network.NfTablesRule
-	94,  // 69: talos.resource.definitions.network.NfTablesChainSpec.policy:type_name -> talos.resource.definitions.enums.NethelpersNfTablesVerdict
-	95,  // 70: talos.resource.definitions.network.NfTablesConntrackStateMatch.states:type_name -> talos.resource.definitions.enums.NethelpersConntrackState
-	96,  // 71: talos.resource.definitions.network.NfTablesICMPTypeMatch.types:type_name -> talos.resource.definitions.enums.NethelpersICMPType
-	97,  // 72: talos.resource.definitions.network.NfTablesIfNameMatch.operator:type_name -> talos.resource.definitions.enums.NethelpersMatchOperator
-	98,  // 73: talos.resource.definitions.network.NfTablesLayer4Match.protocol:type_name -> talos.resource.definitions.enums.NethelpersProtocol
-	37,  // 74: talos.resource.definitions.network.NfTablesLayer4Match.match_source_port:type_name -> talos.resource.definitions.network.NfTablesPortMatch
-	37,  // 75: talos.resource.definitions.network.NfTablesLayer4Match.match_destination_port:type_name -> talos.resource.definitions.network.NfTablesPortMatch
-	32,  // 76: talos.resource.definitions.network.NfTablesLayer4Match.match_icmp_type:type_name -> talos.resource.definitions.network.NfTablesICMPTypeMatch
-	44,  // 77: talos.resource.definitions.network.NfTablesPortMatch.ranges:type_name -> talos.resource.definitions.network.PortRange
-	33,  // 78: talos.resource.definitions.network.NfTablesRule.match_o_if_name:type_name -> talos.resource.definitions.network.NfTablesIfNameMatch
-	94,  // 79: talos.resource.definitions.network.NfTablesRule.verdict:type_name -> talos.resource.definitions.enums.NethelpersNfTablesVerdict
-	36,  // 80: talos.resource.definitions.network.NfTablesRule.match_mark:type_name -> talos.resource.definitions.network.NfTablesMark
-	36,  // 81: talos.resource.definitions.network.NfTablesRule.set_mark:type_name -> talos.resource.definitions.network.NfTablesMark
-	28,  // 82: talos.resource.definitions.network.NfTablesRule.match_source_address:type_name -> talos.resource.definitions.network.NfTablesAddressMatch
-	28,  // 83: talos.resource.definitions.network.NfTablesRule.match_destination_address:type_name -> talos.resource.definitions.network.NfTablesAddressMatch
-	34,  // 84: talos.resource.definitions.network.NfTablesRule.match_layer4:type_name -> talos.resource.definitions.network.NfTablesLayer4Match
-	33,  // 85: talos.resource.definitions.network.NfTablesRule.match_i_if_name:type_name -> talos.resource.definitions.network.NfTablesIfNameMatch
-	30,  // 86: talos.resource.definitions.network.NfTablesRule.clamp_mss:type_name -> talos.resource.definitions.network.NfTablesClampMSS
-	35,  // 87: talos.resource.definitions.network.NfTablesRule.match_limit:type_name -> talos.resource.definitions.network.NfTablesLimitMatch
-	31,  // 88: talos.resource.definitions.network.NfTablesRule.match_conntrack_state:type_name -> talos.resource.definitions.network.NfTablesConntrackStateMatch
-	68,  // 89: talos.resource.definitions.network.NodeAddressFilterSpec.include_subnets:type_name -> common.NetIPPrefix
-	68,  // 90: talos.resource.definitions.network.NodeAddressFilterSpec.exclude_subnets:type_name -> common.NetIPPrefix
-	99,  // 91: talos.resource.definitions.network.NodeAddressSortAlgorithmSpec.algorithm:type_name -> talos.resource.definitions.enums.NethelpersAddressSortAlgorithm
-	68,  // 92: talos.resource.definitions.network.NodeAddressSpec.addresses:type_name -> common.NetIPPrefix
-	99,  // 93: talos.resource.definitions.network.NodeAddressSpec.sort_algorithm:type_name -> talos.resource.definitions.enums.NethelpersAddressSortAlgorithm
-	100, // 94: talos.resource.definitions.network.OperatorSpecSpec.operator:type_name -> talos.resource.definitions.enums.NetworkOperator
-	8,   // 95: talos.resource.definitions.network.OperatorSpecSpec.dhcp4:type_name -> talos.resource.definitions.network.DHCP4OperatorSpec
-	9,   // 96: talos.resource.definitions.network.OperatorSpecSpec.dhcp6:type_name -> talos.resource.definitions.network.DHCP6OperatorSpec
-	61,  // 97: talos.resource.definitions.network.OperatorSpecSpec.vip:type_name -> talos.resource.definitions.network.VIPOperatorSpec
-	71,  // 98: talos.resource.definitions.network.OperatorSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
-	0,   // 99: talos.resource.definitions.network.PlatformConfigSpec.addresses:type_name -> talos.resource.definitions.network.AddressSpecSpec
-	25,  // 100: talos.resource.definitions.network.PlatformConfigSpec.links:type_name -> talos.resource.definitions.network.LinkSpecSpec
-	49,  // 101: talos.resource.definitions.network.PlatformConfigSpec.routes:type_name -> talos.resource.definitions.network.RouteSpecSpec
-	21,  // 102: talos.resource.definitions.network.PlatformConfigSpec.hostnames:type_name -> talos.resource.definitions.network.HostnameSpecSpec
-	47,  // 103: talos.resource.definitions.network.PlatformConfigSpec.resolvers:type_name -> talos.resource.definitions.network.ResolverSpecSpec
-	57,  // 104: talos.resource.definitions.network.PlatformConfigSpec.time_servers:type_name -> talos.resource.definitions.network.TimeServerSpecSpec
-	42,  // 105: talos.resource.definitions.network.PlatformConfigSpec.operators:type_name -> talos.resource.definitions.network.OperatorSpecSpec
-	72,  // 106: talos.resource.definitions.network.PlatformConfigSpec.external_ips:type_name -> common.NetIP
-	45,  // 107: talos.resource.definitions.network.PlatformConfigSpec.probes:type_name -> talos.resource.definitions.network.ProbeSpecSpec
-	101, // 108: talos.resource.definitions.network.PlatformConfigSpec.metadata:type_name -> talos.resource.definitions.runtime.PlatformMetadataSpec
-	87,  // 109: talos.resource.definitions.network.ProbeSpecSpec.interval:type_name -> google.protobuf.Duration
-	56,  // 110: talos.resource.definitions.network.ProbeSpecSpec.tcp:type_name -> talos.resource.definitions.network.TCPProbeSpec
-	71,  // 111: talos.resource.definitions.network.ProbeSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
-	18,  // 112: talos.resource.definitions.network.ProbeSpecSpec.http:type_name -> talos.resource.definitions.network.HTTPProbeSpec
-	72,  // 113: talos.resource.definitions.network.ResolverSpecSpec.dns_servers:type_name -> common.NetIP
-	71,  // 114: talos.resource.definitions.network.ResolverSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
-	27,  // 115: talos.resource.definitions.network.ResolverSpecSpec.name_servers:type_name -> talos.resource.definitions.network.NameServerSpec
-	72,  // 116: talos.resource.definitions.network.ResolverStatusSpec.dns_servers:type_name -> common.NetIP
-	27,  // 117: talos.resource.definitions.network.ResolverStatusSpec.name_servers:type_name -> talos.resource.definitions.network.NameServerSpec
-	69,  // 118: talos.resource.definitions.network.RouteSpecSpec.family:type_name -> talos.resource.definitions.enums.NethelpersFamily
-	68,  // 119: talos.resource.definitions.network.RouteSpecSpec.destination:type_name -> common.NetIPPrefix
-	72,  // 120: talos.resource.definitions.network.RouteSpecSpec.source:type_name -> common.NetIP
-	72,  // 121: talos.resource.definitions.network.RouteSpecSpec.gateway:type_name -> common.NetIP
-	102, // 122: talos.resource.definitions.network.RouteSpecSpec.table:type_name -> talos.resource.definitions.enums.NethelpersRoutingTable
-	70,  // 123: talos.resource.definitions.network.RouteSpecSpec.scope:type_name -> talos.resource.definitions.enums.NethelpersScope
-	103, // 124: talos.resource.definitions.network.RouteSpecSpec.type:type_name -> talos.resource.definitions.enums.NethelpersRouteType
-	104, // 125: talos.resource.definitions.network.RouteSpecSpec.protocol:type_name -> talos.resource.definitions.enums.NethelpersRouteProtocol
-	71,  // 126: talos.resource.definitions.network.RouteSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
-	69,  // 127: talos.resource.definitions.network.RouteStatusSpec.family:type_name -> talos.resource.definitions.enums.NethelpersFamily
-	68,  // 128: talos.resource.definitions.network.RouteStatusSpec.destination:type_name -> common.NetIPPrefix
-	72,  // 129: talos.resource.definitions.network.RouteStatusSpec.source:type_name -> common.NetIP
-	72,  // 130: talos.resource.definitions.network.RouteStatusSpec.gateway:type_name -> common.NetIP
-	102, // 131: talos.resource.definitions.network.RouteStatusSpec.table:type_name -> talos.resource.definitions.enums.NethelpersRoutingTable
-	70,  // 132: talos.resource.definitions.network.RouteStatusSpec.scope:type_name -> talos.resource.definitions.enums.NethelpersScope
-	103, // 133: talos.resource.definitions.network.RouteStatusSpec.type:type_name -> talos.resource.definitions.enums.NethelpersRouteType
-	104, // 134: talos.resource.definitions.network.RouteStatusSpec.protocol:type_name -> talos.resource.definitions.enums.NethelpersRouteProtocol
-	69,  // 135: talos.resource.definitions.network.RoutingRuleSpecSpec.family:type_name -> talos.resource.definitions.enums.NethelpersFamily
-	68,  // 136: talos.resource.definitions.network.RoutingRuleSpecSpec.src:type_name -> common.NetIPPrefix
-	68,  // 137: talos.resource.definitions.network.RoutingRuleSpecSpec.dst:type_name -> common.NetIPPrefix
-	102, // 138: talos.resource.definitions.network.RoutingRuleSpecSpec.table:type_name -> talos.resource.definitions.enums.NethelpersRoutingTable
-	105, // 139: talos.resource.definitions.network.RoutingRuleSpecSpec.action:type_name -> talos.resource.definitions.enums.NethelpersRoutingRuleAction
-	71,  // 140: talos.resource.definitions.network.RoutingRuleSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
-	69,  // 141: talos.resource.definitions.network.RoutingRuleStatusSpec.family:type_name -> talos.resource.definitions.enums.NethelpersFamily
-	68,  // 142: talos.resource.definitions.network.RoutingRuleStatusSpec.src:type_name -> common.NetIPPrefix
-	68,  // 143: talos.resource.definitions.network.RoutingRuleStatusSpec.dst:type_name -> common.NetIPPrefix
-	102, // 144: talos.resource.definitions.network.RoutingRuleStatusSpec.table:type_name -> talos.resource.definitions.enums.NethelpersRoutingTable
-	105, // 145: talos.resource.definitions.network.RoutingRuleStatusSpec.action:type_name -> talos.resource.definitions.enums.NethelpersRoutingRuleAction
-	72,  // 146: talos.resource.definitions.network.StaticHostSpec.addresses:type_name -> common.NetIP
-	87,  // 147: talos.resource.definitions.network.TCPProbeSpec.timeout:type_name -> google.protobuf.Duration
-	71,  // 148: talos.resource.definitions.network.TimeServerSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
-	72,  // 149: talos.resource.definitions.network.VIPOperatorSpec.ip:type_name -> common.NetIP
-	59,  // 150: talos.resource.definitions.network.VIPOperatorSpec.equinix_metal:type_name -> talos.resource.definitions.network.VIPEquinixMetalSpec
-	60,  // 151: talos.resource.definitions.network.VIPOperatorSpec.h_cloud:type_name -> talos.resource.definitions.network.VIPHCloudSpec
-	106, // 152: talos.resource.definitions.network.VLANSpec.protocol:type_name -> talos.resource.definitions.enums.NethelpersVLANProtocol
-	102, // 153: talos.resource.definitions.network.VRFMasterSpec.table:type_name -> talos.resource.definitions.enums.NethelpersRoutingTable
-	87,  // 154: talos.resource.definitions.network.WireguardPeer.persistent_keepalive_interval:type_name -> google.protobuf.Duration
-	68,  // 155: talos.resource.definitions.network.WireguardPeer.allowed_ips:type_name -> common.NetIPPrefix
-	65,  // 156: talos.resource.definitions.network.WireguardSpec.peers:type_name -> talos.resource.definitions.network.WireguardPeer
-	157, // [157:157] is the sub-list for method output_type
-	157, // [157:157] is the sub-list for method input_type
-	157, // [157:157] is the sub-list for extension type_name
-	157, // [157:157] is the sub-list for extension extendee
-	0,   // [0:157] is the sub-list for field type_name
+	73,  // 0: talos.resource.definitions.network.AddressSpecSpec.address:type_name -> common.NetIPPrefix
+	74,  // 1: talos.resource.definitions.network.AddressSpecSpec.family:type_name -> talos.resource.definitions.enums.NethelpersFamily
+	75,  // 2: talos.resource.definitions.network.AddressSpecSpec.scope:type_name -> talos.resource.definitions.enums.NethelpersScope
+	76,  // 3: talos.resource.definitions.network.AddressSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
+	73,  // 4: talos.resource.definitions.network.AddressStatusSpec.address:type_name -> common.NetIPPrefix
+	77,  // 5: talos.resource.definitions.network.AddressStatusSpec.local:type_name -> common.NetIP
+	77,  // 6: talos.resource.definitions.network.AddressStatusSpec.broadcast:type_name -> common.NetIP
+	77,  // 7: talos.resource.definitions.network.AddressStatusSpec.anycast:type_name -> common.NetIP
+	77,  // 8: talos.resource.definitions.network.AddressStatusSpec.multicast:type_name -> common.NetIP
+	74,  // 9: talos.resource.definitions.network.AddressStatusSpec.family:type_name -> talos.resource.definitions.enums.NethelpersFamily
+	75,  // 10: talos.resource.definitions.network.AddressStatusSpec.scope:type_name -> talos.resource.definitions.enums.NethelpersScope
+	78,  // 11: talos.resource.definitions.network.BGPBFDConfigSpec.transmit_interval:type_name -> google.protobuf.Duration
+	78,  // 12: talos.resource.definitions.network.BGPBFDConfigSpec.receive_interval:type_name -> google.protobuf.Duration
+	77,  // 13: talos.resource.definitions.network.BGPNeighborConfigSpec.address:type_name -> common.NetIP
+	78,  // 14: talos.resource.definitions.network.BGPNeighborConfigSpec.hold_time:type_name -> google.protobuf.Duration
+	2,   // 15: talos.resource.definitions.network.BGPNeighborConfigSpec.bfd:type_name -> talos.resource.definitions.network.BGPBFDConfigSpec
+	77,  // 16: talos.resource.definitions.network.BGPPeerConfigSpec.router_id:type_name -> common.NetIP
+	77,  // 17: talos.resource.definitions.network.BGPPeerConfigSpec.route_source:type_name -> common.NetIP
+	3,   // 18: talos.resource.definitions.network.BGPPeerConfigSpec.neighbors:type_name -> talos.resource.definitions.network.BGPNeighborConfigSpec
+	79,  // 19: talos.resource.definitions.network.BGPPeerStatusSpec.state:type_name -> talos.resource.definitions.enums.NethelpersBGPSessionState
+	77,  // 20: talos.resource.definitions.network.BGPPeerStatusSpec.router_id:type_name -> common.NetIP
+	80,  // 21: talos.resource.definitions.network.BGPPeerStatusSpec.since:type_name -> google.protobuf.Timestamp
+	81,  // 22: talos.resource.definitions.network.BondMasterSpec.mode:type_name -> talos.resource.definitions.enums.NethelpersBondMode
+	82,  // 23: talos.resource.definitions.network.BondMasterSpec.hash_policy:type_name -> talos.resource.definitions.enums.NethelpersBondXmitHashPolicy
+	83,  // 24: talos.resource.definitions.network.BondMasterSpec.lacp_rate:type_name -> talos.resource.definitions.enums.NethelpersLACPRate
+	84,  // 25: talos.resource.definitions.network.BondMasterSpec.arp_validate:type_name -> talos.resource.definitions.enums.NethelpersARPValidate
+	85,  // 26: talos.resource.definitions.network.BondMasterSpec.arp_all_targets:type_name -> talos.resource.definitions.enums.NethelpersARPAllTargets
+	86,  // 27: talos.resource.definitions.network.BondMasterSpec.primary_reselect:type_name -> talos.resource.definitions.enums.NethelpersPrimaryReselect
+	87,  // 28: talos.resource.definitions.network.BondMasterSpec.fail_over_mac:type_name -> talos.resource.definitions.enums.NethelpersFailOverMAC
+	88,  // 29: talos.resource.definitions.network.BondMasterSpec.ad_select:type_name -> talos.resource.definitions.enums.NethelpersADSelect
+	77,  // 30: talos.resource.definitions.network.BondMasterSpec.arpip_targets:type_name -> common.NetIP
+	77,  // 31: talos.resource.definitions.network.BondMasterSpec.nsip6_targets:type_name -> common.NetIP
+	89,  // 32: talos.resource.definitions.network.BondMasterSpec.adlacp_active:type_name -> talos.resource.definitions.enums.NethelpersADLACPActive
+	58,  // 33: talos.resource.definitions.network.BridgeMasterSpec.stp:type_name -> talos.resource.definitions.network.STPSpec
+	10,  // 34: talos.resource.definitions.network.BridgeMasterSpec.vlan:type_name -> talos.resource.definitions.network.BridgeVLANSpec
+	90,  // 35: talos.resource.definitions.network.ClientIdentifierSpec.client_identifier:type_name -> talos.resource.definitions.enums.NethelpersClientIdentifier
+	11,  // 36: talos.resource.definitions.network.DHCP4OperatorSpec.client_identifier:type_name -> talos.resource.definitions.network.ClientIdentifierSpec
+	11,  // 37: talos.resource.definitions.network.DHCP6OperatorSpec.client_identifier:type_name -> talos.resource.definitions.network.ClientIdentifierSpec
+	18,  // 38: talos.resource.definitions.network.EthernetSpecSpec.rings:type_name -> talos.resource.definitions.network.EthernetRingsSpec
+	72,  // 39: talos.resource.definitions.network.EthernetSpecSpec.features:type_name -> talos.resource.definitions.network.EthernetSpecSpec.FeaturesEntry
+	15,  // 40: talos.resource.definitions.network.EthernetSpecSpec.channels:type_name -> talos.resource.definitions.network.EthernetChannelsSpec
+	91,  // 41: talos.resource.definitions.network.EthernetSpecSpec.wake_on_lan:type_name -> talos.resource.definitions.enums.NethelpersWOLMode
+	92,  // 42: talos.resource.definitions.network.EthernetStatusSpec.port:type_name -> talos.resource.definitions.enums.NethelpersPort
+	93,  // 43: talos.resource.definitions.network.EthernetStatusSpec.duplex:type_name -> talos.resource.definitions.enums.NethelpersDuplex
+	19,  // 44: talos.resource.definitions.network.EthernetStatusSpec.rings:type_name -> talos.resource.definitions.network.EthernetRingsStatus
+	17,  // 45: talos.resource.definitions.network.EthernetStatusSpec.features:type_name -> talos.resource.definitions.network.EthernetFeatureStatus
+	16,  // 46: talos.resource.definitions.network.EthernetStatusSpec.channels:type_name -> talos.resource.definitions.network.EthernetChannelsStatus
+	91,  // 47: talos.resource.definitions.network.EthernetStatusSpec.wake_on_lan:type_name -> talos.resource.definitions.enums.NethelpersWOLMode
+	94,  // 48: talos.resource.definitions.network.HTTPProbeSpec.url:type_name -> common.URL
+	78,  // 49: talos.resource.definitions.network.HTTPProbeSpec.timeout:type_name -> google.protobuf.Duration
+	95,  // 50: talos.resource.definitions.network.HostDNSConfigSpec.listen_addresses:type_name -> common.NetIPPort
+	77,  // 51: talos.resource.definitions.network.HostDNSConfigSpec.service_host_dns_address:type_name -> common.NetIP
+	77,  // 52: talos.resource.definitions.network.HostDNSConfigSpec.service_host_dns_address_v6:type_name -> common.NetIP
+	76,  // 53: talos.resource.definitions.network.HostnameSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
+	96,  // 54: talos.resource.definitions.network.LinkSpecSpec.type:type_name -> talos.resource.definitions.enums.NethelpersLinkType
+	7,   // 55: talos.resource.definitions.network.LinkSpecSpec.bond_slave:type_name -> talos.resource.definitions.network.BondSlave
+	9,   // 56: talos.resource.definitions.network.LinkSpecSpec.bridge_slave:type_name -> talos.resource.definitions.network.BridgeSlave
+	67,  // 57: talos.resource.definitions.network.LinkSpecSpec.vlan:type_name -> talos.resource.definitions.network.VLANSpec
+	6,   // 58: talos.resource.definitions.network.LinkSpecSpec.bond_master:type_name -> talos.resource.definitions.network.BondMasterSpec
+	8,   // 59: talos.resource.definitions.network.LinkSpecSpec.bridge_master:type_name -> talos.resource.definitions.network.BridgeMasterSpec
+	71,  // 60: talos.resource.definitions.network.LinkSpecSpec.wireguard:type_name -> talos.resource.definitions.network.WireguardSpec
+	76,  // 61: talos.resource.definitions.network.LinkSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
+	68,  // 62: talos.resource.definitions.network.LinkSpecSpec.vrf_master:type_name -> talos.resource.definitions.network.VRFMasterSpec
+	69,  // 63: talos.resource.definitions.network.LinkSpecSpec.vrf_slave:type_name -> talos.resource.definitions.network.VRFSlave
+	96,  // 64: talos.resource.definitions.network.LinkStatusSpec.type:type_name -> talos.resource.definitions.enums.NethelpersLinkType
+	97,  // 65: talos.resource.definitions.network.LinkStatusSpec.operational_state:type_name -> talos.resource.definitions.enums.NethelpersOperationalState
+	92,  // 66: talos.resource.definitions.network.LinkStatusSpec.port:type_name -> talos.resource.definitions.enums.NethelpersPort
+	93,  // 67: talos.resource.definitions.network.LinkStatusSpec.duplex:type_name -> talos.resource.definitions.enums.NethelpersDuplex
+	67,  // 68: talos.resource.definitions.network.LinkStatusSpec.vlan:type_name -> talos.resource.definitions.network.VLANSpec
+	8,   // 69: talos.resource.definitions.network.LinkStatusSpec.bridge_master:type_name -> talos.resource.definitions.network.BridgeMasterSpec
+	6,   // 70: talos.resource.definitions.network.LinkStatusSpec.bond_master:type_name -> talos.resource.definitions.network.BondMasterSpec
+	71,  // 71: talos.resource.definitions.network.LinkStatusSpec.wireguard:type_name -> talos.resource.definitions.network.WireguardSpec
+	68,  // 72: talos.resource.definitions.network.LinkStatusSpec.vrf_master:type_name -> talos.resource.definitions.network.VRFMasterSpec
+	77,  // 73: talos.resource.definitions.network.NameServerSpec.addr:type_name -> common.NetIP
+	98,  // 74: talos.resource.definitions.network.NameServerSpec.protocol:type_name -> talos.resource.definitions.enums.NethelpersDNSProtocol
+	73,  // 75: talos.resource.definitions.network.NfTablesAddressMatch.include_subnets:type_name -> common.NetIPPrefix
+	73,  // 76: talos.resource.definitions.network.NfTablesAddressMatch.exclude_subnets:type_name -> common.NetIPPrefix
+	99,  // 77: talos.resource.definitions.network.NfTablesChainSpec.hook:type_name -> talos.resource.definitions.enums.NethelpersNfTablesChainHook
+	100, // 78: talos.resource.definitions.network.NfTablesChainSpec.priority:type_name -> talos.resource.definitions.enums.NethelpersNfTablesChainPriority
+	42,  // 79: talos.resource.definitions.network.NfTablesChainSpec.rules:type_name -> talos.resource.definitions.network.NfTablesRule
+	101, // 80: talos.resource.definitions.network.NfTablesChainSpec.policy:type_name -> talos.resource.definitions.enums.NethelpersNfTablesVerdict
+	102, // 81: talos.resource.definitions.network.NfTablesConntrackStateMatch.states:type_name -> talos.resource.definitions.enums.NethelpersConntrackState
+	103, // 82: talos.resource.definitions.network.NfTablesICMPTypeMatch.types:type_name -> talos.resource.definitions.enums.NethelpersICMPType
+	104, // 83: talos.resource.definitions.network.NfTablesIfNameMatch.operator:type_name -> talos.resource.definitions.enums.NethelpersMatchOperator
+	105, // 84: talos.resource.definitions.network.NfTablesLayer4Match.protocol:type_name -> talos.resource.definitions.enums.NethelpersProtocol
+	41,  // 85: talos.resource.definitions.network.NfTablesLayer4Match.match_source_port:type_name -> talos.resource.definitions.network.NfTablesPortMatch
+	41,  // 86: talos.resource.definitions.network.NfTablesLayer4Match.match_destination_port:type_name -> talos.resource.definitions.network.NfTablesPortMatch
+	36,  // 87: talos.resource.definitions.network.NfTablesLayer4Match.match_icmp_type:type_name -> talos.resource.definitions.network.NfTablesICMPTypeMatch
+	48,  // 88: talos.resource.definitions.network.NfTablesPortMatch.ranges:type_name -> talos.resource.definitions.network.PortRange
+	37,  // 89: talos.resource.definitions.network.NfTablesRule.match_o_if_name:type_name -> talos.resource.definitions.network.NfTablesIfNameMatch
+	101, // 90: talos.resource.definitions.network.NfTablesRule.verdict:type_name -> talos.resource.definitions.enums.NethelpersNfTablesVerdict
+	40,  // 91: talos.resource.definitions.network.NfTablesRule.match_mark:type_name -> talos.resource.definitions.network.NfTablesMark
+	40,  // 92: talos.resource.definitions.network.NfTablesRule.set_mark:type_name -> talos.resource.definitions.network.NfTablesMark
+	32,  // 93: talos.resource.definitions.network.NfTablesRule.match_source_address:type_name -> talos.resource.definitions.network.NfTablesAddressMatch
+	32,  // 94: talos.resource.definitions.network.NfTablesRule.match_destination_address:type_name -> talos.resource.definitions.network.NfTablesAddressMatch
+	38,  // 95: talos.resource.definitions.network.NfTablesRule.match_layer4:type_name -> talos.resource.definitions.network.NfTablesLayer4Match
+	37,  // 96: talos.resource.definitions.network.NfTablesRule.match_i_if_name:type_name -> talos.resource.definitions.network.NfTablesIfNameMatch
+	34,  // 97: talos.resource.definitions.network.NfTablesRule.clamp_mss:type_name -> talos.resource.definitions.network.NfTablesClampMSS
+	39,  // 98: talos.resource.definitions.network.NfTablesRule.match_limit:type_name -> talos.resource.definitions.network.NfTablesLimitMatch
+	35,  // 99: talos.resource.definitions.network.NfTablesRule.match_conntrack_state:type_name -> talos.resource.definitions.network.NfTablesConntrackStateMatch
+	73,  // 100: talos.resource.definitions.network.NodeAddressFilterSpec.include_subnets:type_name -> common.NetIPPrefix
+	73,  // 101: talos.resource.definitions.network.NodeAddressFilterSpec.exclude_subnets:type_name -> common.NetIPPrefix
+	106, // 102: talos.resource.definitions.network.NodeAddressSortAlgorithmSpec.algorithm:type_name -> talos.resource.definitions.enums.NethelpersAddressSortAlgorithm
+	73,  // 103: talos.resource.definitions.network.NodeAddressSpec.addresses:type_name -> common.NetIPPrefix
+	106, // 104: talos.resource.definitions.network.NodeAddressSpec.sort_algorithm:type_name -> talos.resource.definitions.enums.NethelpersAddressSortAlgorithm
+	107, // 105: talos.resource.definitions.network.OperatorSpecSpec.operator:type_name -> talos.resource.definitions.enums.NetworkOperator
+	12,  // 106: talos.resource.definitions.network.OperatorSpecSpec.dhcp4:type_name -> talos.resource.definitions.network.DHCP4OperatorSpec
+	13,  // 107: talos.resource.definitions.network.OperatorSpecSpec.dhcp6:type_name -> talos.resource.definitions.network.DHCP6OperatorSpec
+	66,  // 108: talos.resource.definitions.network.OperatorSpecSpec.vip:type_name -> talos.resource.definitions.network.VIPOperatorSpec
+	76,  // 109: talos.resource.definitions.network.OperatorSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
+	0,   // 110: talos.resource.definitions.network.PlatformConfigSpec.addresses:type_name -> talos.resource.definitions.network.AddressSpecSpec
+	29,  // 111: talos.resource.definitions.network.PlatformConfigSpec.links:type_name -> talos.resource.definitions.network.LinkSpecSpec
+	54,  // 112: talos.resource.definitions.network.PlatformConfigSpec.routes:type_name -> talos.resource.definitions.network.RouteSpecSpec
+	25,  // 113: talos.resource.definitions.network.PlatformConfigSpec.hostnames:type_name -> talos.resource.definitions.network.HostnameSpecSpec
+	51,  // 114: talos.resource.definitions.network.PlatformConfigSpec.resolvers:type_name -> talos.resource.definitions.network.ResolverSpecSpec
+	62,  // 115: talos.resource.definitions.network.PlatformConfigSpec.time_servers:type_name -> talos.resource.definitions.network.TimeServerSpecSpec
+	46,  // 116: talos.resource.definitions.network.PlatformConfigSpec.operators:type_name -> talos.resource.definitions.network.OperatorSpecSpec
+	77,  // 117: talos.resource.definitions.network.PlatformConfigSpec.external_ips:type_name -> common.NetIP
+	49,  // 118: talos.resource.definitions.network.PlatformConfigSpec.probes:type_name -> talos.resource.definitions.network.ProbeSpecSpec
+	108, // 119: talos.resource.definitions.network.PlatformConfigSpec.metadata:type_name -> talos.resource.definitions.runtime.PlatformMetadataSpec
+	78,  // 120: talos.resource.definitions.network.ProbeSpecSpec.interval:type_name -> google.protobuf.Duration
+	61,  // 121: talos.resource.definitions.network.ProbeSpecSpec.tcp:type_name -> talos.resource.definitions.network.TCPProbeSpec
+	76,  // 122: talos.resource.definitions.network.ProbeSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
+	22,  // 123: talos.resource.definitions.network.ProbeSpecSpec.http:type_name -> talos.resource.definitions.network.HTTPProbeSpec
+	77,  // 124: talos.resource.definitions.network.ResolverSpecSpec.dns_servers:type_name -> common.NetIP
+	76,  // 125: talos.resource.definitions.network.ResolverSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
+	31,  // 126: talos.resource.definitions.network.ResolverSpecSpec.name_servers:type_name -> talos.resource.definitions.network.NameServerSpec
+	77,  // 127: talos.resource.definitions.network.ResolverStatusSpec.dns_servers:type_name -> common.NetIP
+	31,  // 128: talos.resource.definitions.network.ResolverStatusSpec.name_servers:type_name -> talos.resource.definitions.network.NameServerSpec
+	77,  // 129: talos.resource.definitions.network.RouteNextHop.gateway:type_name -> common.NetIP
+	74,  // 130: talos.resource.definitions.network.RouteSpecSpec.family:type_name -> talos.resource.definitions.enums.NethelpersFamily
+	73,  // 131: talos.resource.definitions.network.RouteSpecSpec.destination:type_name -> common.NetIPPrefix
+	77,  // 132: talos.resource.definitions.network.RouteSpecSpec.source:type_name -> common.NetIP
+	77,  // 133: talos.resource.definitions.network.RouteSpecSpec.gateway:type_name -> common.NetIP
+	109, // 134: talos.resource.definitions.network.RouteSpecSpec.table:type_name -> talos.resource.definitions.enums.NethelpersRoutingTable
+	75,  // 135: talos.resource.definitions.network.RouteSpecSpec.scope:type_name -> talos.resource.definitions.enums.NethelpersScope
+	110, // 136: talos.resource.definitions.network.RouteSpecSpec.type:type_name -> talos.resource.definitions.enums.NethelpersRouteType
+	111, // 137: talos.resource.definitions.network.RouteSpecSpec.protocol:type_name -> talos.resource.definitions.enums.NethelpersRouteProtocol
+	76,  // 138: talos.resource.definitions.network.RouteSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
+	53,  // 139: talos.resource.definitions.network.RouteSpecSpec.next_hops:type_name -> talos.resource.definitions.network.RouteNextHop
+	74,  // 140: talos.resource.definitions.network.RouteStatusSpec.family:type_name -> talos.resource.definitions.enums.NethelpersFamily
+	73,  // 141: talos.resource.definitions.network.RouteStatusSpec.destination:type_name -> common.NetIPPrefix
+	77,  // 142: talos.resource.definitions.network.RouteStatusSpec.source:type_name -> common.NetIP
+	77,  // 143: talos.resource.definitions.network.RouteStatusSpec.gateway:type_name -> common.NetIP
+	109, // 144: talos.resource.definitions.network.RouteStatusSpec.table:type_name -> talos.resource.definitions.enums.NethelpersRoutingTable
+	75,  // 145: talos.resource.definitions.network.RouteStatusSpec.scope:type_name -> talos.resource.definitions.enums.NethelpersScope
+	110, // 146: talos.resource.definitions.network.RouteStatusSpec.type:type_name -> talos.resource.definitions.enums.NethelpersRouteType
+	111, // 147: talos.resource.definitions.network.RouteStatusSpec.protocol:type_name -> talos.resource.definitions.enums.NethelpersRouteProtocol
+	53,  // 148: talos.resource.definitions.network.RouteStatusSpec.next_hops:type_name -> talos.resource.definitions.network.RouteNextHop
+	74,  // 149: talos.resource.definitions.network.RoutingRuleSpecSpec.family:type_name -> talos.resource.definitions.enums.NethelpersFamily
+	73,  // 150: talos.resource.definitions.network.RoutingRuleSpecSpec.src:type_name -> common.NetIPPrefix
+	73,  // 151: talos.resource.definitions.network.RoutingRuleSpecSpec.dst:type_name -> common.NetIPPrefix
+	109, // 152: talos.resource.definitions.network.RoutingRuleSpecSpec.table:type_name -> talos.resource.definitions.enums.NethelpersRoutingTable
+	112, // 153: talos.resource.definitions.network.RoutingRuleSpecSpec.action:type_name -> talos.resource.definitions.enums.NethelpersRoutingRuleAction
+	76,  // 154: talos.resource.definitions.network.RoutingRuleSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
+	74,  // 155: talos.resource.definitions.network.RoutingRuleStatusSpec.family:type_name -> talos.resource.definitions.enums.NethelpersFamily
+	73,  // 156: talos.resource.definitions.network.RoutingRuleStatusSpec.src:type_name -> common.NetIPPrefix
+	73,  // 157: talos.resource.definitions.network.RoutingRuleStatusSpec.dst:type_name -> common.NetIPPrefix
+	109, // 158: talos.resource.definitions.network.RoutingRuleStatusSpec.table:type_name -> talos.resource.definitions.enums.NethelpersRoutingTable
+	112, // 159: talos.resource.definitions.network.RoutingRuleStatusSpec.action:type_name -> talos.resource.definitions.enums.NethelpersRoutingRuleAction
+	77,  // 160: talos.resource.definitions.network.StaticHostSpec.addresses:type_name -> common.NetIP
+	78,  // 161: talos.resource.definitions.network.TCPProbeSpec.timeout:type_name -> google.protobuf.Duration
+	76,  // 162: talos.resource.definitions.network.TimeServerSpecSpec.config_layer:type_name -> talos.resource.definitions.enums.NetworkConfigLayer
+	77,  // 163: talos.resource.definitions.network.VIPOperatorSpec.ip:type_name -> common.NetIP
+	64,  // 164: talos.resource.definitions.network.VIPOperatorSpec.equinix_metal:type_name -> talos.resource.definitions.network.VIPEquinixMetalSpec
+	65,  // 165: talos.resource.definitions.network.VIPOperatorSpec.h_cloud:type_name -> talos.resource.definitions.network.VIPHCloudSpec
+	113, // 166: talos.resource.definitions.network.VLANSpec.protocol:type_name -> talos.resource.definitions.enums.NethelpersVLANProtocol
+	109, // 167: talos.resource.definitions.network.VRFMasterSpec.table:type_name -> talos.resource.definitions.enums.NethelpersRoutingTable
+	78,  // 168: talos.resource.definitions.network.WireguardPeer.persistent_keepalive_interval:type_name -> google.protobuf.Duration
+	73,  // 169: talos.resource.definitions.network.WireguardPeer.allowed_ips:type_name -> common.NetIPPrefix
+	70,  // 170: talos.resource.definitions.network.WireguardSpec.peers:type_name -> talos.resource.definitions.network.WireguardPeer
+	171, // [171:171] is the sub-list for method output_type
+	171, // [171:171] is the sub-list for method input_type
+	171, // [171:171] is the sub-list for extension type_name
+	171, // [171:171] is the sub-list for extension extendee
+	0,   // [0:171] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_network_network_proto_init() }
@@ -6123,7 +6614,7 @@ func file_resource_definitions_network_network_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_network_network_proto_rawDesc), len(file_resource_definitions_network_network_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   68,
+			NumMessages:   73,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -317,6 +317,7 @@ description: Talos gRPC API reference.
     - [NethelpersAddressFlag](#talos.resource.definitions.enums.NethelpersAddressFlag)
     - [NethelpersAddressSortAlgorithm](#talos.resource.definitions.enums.NethelpersAddressSortAlgorithm)
     - [NethelpersAutoHostnameKind](#talos.resource.definitions.enums.NethelpersAutoHostnameKind)
+    - [NethelpersBGPSessionState](#talos.resource.definitions.enums.NethelpersBGPSessionState)
     - [NethelpersBondMode](#talos.resource.definitions.enums.NethelpersBondMode)
     - [NethelpersBondXmitHashPolicy](#talos.resource.definitions.enums.NethelpersBondXmitHashPolicy)
     - [NethelpersClientIdentifier](#talos.resource.definitions.enums.NethelpersClientIdentifier)
@@ -545,6 +546,10 @@ description: Talos gRPC API reference.
 - [resource/definitions/network/network.proto](#resource/definitions/network/network.proto)
     - [AddressSpecSpec](#talos.resource.definitions.network.AddressSpecSpec)
     - [AddressStatusSpec](#talos.resource.definitions.network.AddressStatusSpec)
+    - [BGPBFDConfigSpec](#talos.resource.definitions.network.BGPBFDConfigSpec)
+    - [BGPNeighborConfigSpec](#talos.resource.definitions.network.BGPNeighborConfigSpec)
+    - [BGPPeerConfigSpec](#talos.resource.definitions.network.BGPPeerConfigSpec)
+    - [BGPPeerStatusSpec](#talos.resource.definitions.network.BGPPeerStatusSpec)
     - [BondMasterSpec](#talos.resource.definitions.network.BondMasterSpec)
     - [BondSlave](#talos.resource.definitions.network.BondSlave)
     - [BridgeMasterSpec](#talos.resource.definitions.network.BridgeMasterSpec)
@@ -593,6 +598,7 @@ description: Talos gRPC API reference.
     - [ProbeStatusSpec](#talos.resource.definitions.network.ProbeStatusSpec)
     - [ResolverSpecSpec](#talos.resource.definitions.network.ResolverSpecSpec)
     - [ResolverStatusSpec](#talos.resource.definitions.network.ResolverStatusSpec)
+    - [RouteNextHop](#talos.resource.definitions.network.RouteNextHop)
     - [RouteSpecSpec](#talos.resource.definitions.network.RouteSpecSpec)
     - [RouteStatusSpec](#talos.resource.definitions.network.RouteStatusSpec)
     - [RoutingRuleSpecSpec](#talos.resource.definitions.network.RoutingRuleSpecSpec)
@@ -5412,6 +5418,23 @@ NethelpersAutoHostnameKind is a kind of automatically generated hostname.
 
 
 
+<a name="talos.resource.definitions.enums.NethelpersBGPSessionState"></a>
+
+### NethelpersBGPSessionState
+NethelpersBGPSessionState is the state of a BGP peering session (RFC 4271 FSM).
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| BGP_SESSION_STATE_UNKNOWN | 0 |  |
+| BGP_SESSION_STATE_IDLE | 1 |  |
+| BGP_SESSION_STATE_CONNECT | 2 |  |
+| BGP_SESSION_STATE_ACTIVE | 3 |  |
+| BGP_SESSION_STATE_OPEN_SENT | 4 |  |
+| BGP_SESSION_STATE_OPEN_CONFIRM | 5 |  |
+| BGP_SESSION_STATE_ESTABLISHED | 6 |  |
+
+
+
 <a name="talos.resource.definitions.enums.NethelpersBondMode"></a>
 
 ### NethelpersBondMode
@@ -9488,6 +9511,87 @@ AddressStatusSpec describes status of rendered secrets.
 
 
 
+<a name="talos.resource.definitions.network.BGPBFDConfigSpec"></a>
+
+### BGPBFDConfigSpec
+BGPBFDConfigSpec contains BFD parameters for a BGP neighbor.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| transmit_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| receive_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| detect_multiplier | [uint32](#uint32) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.BGPNeighborConfigSpec"></a>
+
+### BGPNeighborConfigSpec
+BGPNeighborConfigSpec contains the runtime configuration for a BGP neighbor.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| address | [common.NetIP](#common.NetIP) |  |  |
+| link | [string](#string) |  |  |
+| peer_asn | [uint32](#uint32) |  |  |
+| hold_time | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| bfd | [BGPBFDConfigSpec](#talos.resource.definitions.network.BGPBFDConfigSpec) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.BGPPeerConfigSpec"></a>
+
+### BGPPeerConfigSpec
+BGPPeerConfigSpec contains the complete runtime configuration for the BGP speaker.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| local_asn | [uint32](#uint32) |  |  |
+| router_id | [common.NetIP](#common.NetIP) |  |  |
+| route_source | [common.NetIP](#common.NetIP) |  |  |
+| advertise_links | [string](#string) | repeated |  |
+| multipath | [bool](#bool) |  |  |
+| max_paths | [uint32](#uint32) |  |  |
+| neighbors | [BGPNeighborConfigSpec](#talos.resource.definitions.network.BGPNeighborConfigSpec) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.BGPPeerStatusSpec"></a>
+
+### BGPPeerStatusSpec
+BGPPeerStatusSpec describes the status of a BGP peering session.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| peer | [string](#string) |  |  |
+| local_asn | [uint32](#uint32) |  |  |
+| peer_asn | [uint32](#uint32) |  |  |
+| state | [talos.resource.definitions.enums.NethelpersBGPSessionState](#talos.resource.definitions.enums.NethelpersBGPSessionState) |  |  |
+| router_id | [common.NetIP](#common.NetIP) |  |  |
+| since | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
+| received | [uint32](#uint32) |  |  |
+| advertised | [uint32](#uint32) |  |  |
+| accepted | [uint32](#uint32) |  |  |
+| bfd_state | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.network.BondMasterSpec"></a>
 
 ### BondMasterSpec
@@ -10416,6 +10520,26 @@ ResolverStatusSpec describes DNS resolvers.
 
 
 
+<a name="talos.resource.definitions.network.RouteNextHop"></a>
+
+### RouteNextHop
+RouteNextHop describes a single next-hop of a (possibly multipath) route.
+
+A next-hop gateway may be in a different address family than the route destination
+(e.g. an IPv4 prefix reachable via an IPv6 link-local next-hop, RFC 8950).
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| gateway | [common.NetIP](#common.NetIP) |  |  |
+| out_link_name | [string](#string) |  |  |
+| weight | [uint32](#uint32) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.network.RouteSpecSpec"></a>
 
 ### RouteSpecSpec
@@ -10437,6 +10561,7 @@ RouteSpecSpec describes the route.
 | protocol | [talos.resource.definitions.enums.NethelpersRouteProtocol](#talos.resource.definitions.enums.NethelpersRouteProtocol) |  |  |
 | config_layer | [talos.resource.definitions.enums.NetworkConfigLayer](#talos.resource.definitions.enums.NetworkConfigLayer) |  |  |
 | mtu | [uint32](#uint32) |  |  |
+| next_hops | [RouteNextHop](#talos.resource.definitions.network.RouteNextHop) | repeated | NextHops, when non-empty, describes a multipath (ECMP) route. The top-level Gateway and OutLinkName are left unset in that case, mirroring the kernel's RTA_GATEWAY vs RTA_MULTIPATH split. |
 
 
 
@@ -10464,6 +10589,7 @@ RouteStatusSpec describes status of rendered secrets.
 | flags | [uint32](#uint32) |  |  |
 | protocol | [talos.resource.definitions.enums.NethelpersRouteProtocol](#talos.resource.definitions.enums.NethelpersRouteProtocol) |  |  |
 | mtu | [uint32](#uint32) |  |  |
+| next_hops | [RouteNextHop](#talos.resource.definitions.network.RouteNextHop) | repeated | NextHops is populated for multipath (ECMP) routes; the top-level Gateway/OutLink stay unset then. |
 
 
 

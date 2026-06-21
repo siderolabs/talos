@@ -40,6 +40,21 @@ type RouteSpecSpec struct {
 	Protocol    nethelpers.RouteProtocol `yaml:"protocol" protobuf:"11"`
 	ConfigLayer ConfigLayer              `yaml:"layer" protobuf:"12"`
 	MTU         uint32                   `yaml:"mtu,omitempty" protobuf:"13"`
+	// NextHops, when non-empty, describes a multipath (ECMP) route. The top-level Gateway and
+	// OutLinkName are left unset in that case, mirroring the kernel's RTA_GATEWAY vs RTA_MULTIPATH split.
+	NextHops []RouteNextHop `yaml:"nextHops,omitempty" protobuf:"14"`
+}
+
+// RouteNextHop describes a single next-hop of a (possibly multipath) route.
+//
+// A next-hop gateway may be in a different address family than the route destination
+// (e.g. an IPv4 prefix reachable via an IPv6 link-local next-hop, RFC 8950).
+//
+//gotagsrewrite:gen
+type RouteNextHop struct {
+	Gateway     netip.Addr `yaml:"gateway" protobuf:"1"`
+	OutLinkName string     `yaml:"outLinkName,omitempty" protobuf:"2"`
+	Weight      uint32     `yaml:"weight,omitempty" protobuf:"3"`
 }
 
 var (
@@ -87,6 +102,9 @@ func (route *RouteSpecSpec) Normalize() nethelpers.Family {
 	}
 
 	switch {
+	case len(route.NextHops) > 0:
+		// multipath routes are reachable via their next-hops, hence global scope
+		route.Scope = nethelpers.ScopeGlobal
 	case value.IsZero(route.Gateway) && !value.IsZero(route.Destination):
 		route.Scope = nethelpers.ScopeLink
 	case route.Destination.Addr().IsLoopback():

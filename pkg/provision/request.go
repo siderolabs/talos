@@ -68,6 +68,21 @@ type NetworkRequest struct {
 	MTU               int
 	Nameservers       []netip.Addr
 
+	// FabricUplinks adds N dedicated point-to-point uplinks per node to the host BGP fabric peer, each
+	// on its own CNI bridge (point-to-point: only that node + the host), used by the full-CLOS BGP test
+	// (`--with-bgp-clos`). Default 0 (disabled).
+	FabricUplinks int
+
+	// CLOSNoNet0 makes nodes authentic CLOS fabric edges: no management net0 / CNI bridge, only the
+	// fabric uplinks (IPv6-link-local) + a loopback identity. Config is delivered over the fabric
+	// link-local (LL bootstrap) and the node is reachable only via its BGP-advertised loopback.
+	CLOSNoNet0 bool
+
+	// NoDHCP disables the default DHCP configuration injected on the node's bridge interface (net0),
+	// leaving it IPv6-link-local only. Used by the BGP-reachability test where the node identity lives
+	// on a BGP-advertised loopback instead.
+	NoDHCP bool
+
 	LoadBalancerPorts []int
 
 	// CNI-specific parameters.

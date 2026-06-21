@@ -1051,6 +1051,9 @@ const (
 	// KubeSpanDefaultPort is the default Wireguard listening port for incoming connections.
 	KubeSpanDefaultPort = 51820
 
+	// BGPDefaultPort is the standard BGP listening port.
+	BGPDefaultPort = 179
+
 	// KubeSpanDefaultRoutingTable is the default routing table for KubeSpan LAN targets.
 	//
 	// This specifies the routing table which will be used for Wireguard-available destinations.

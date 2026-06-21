@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/v2/encryption"
@@ -31,6 +32,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/cri"
+	k8scfg "github.com/siderolabs/talos/pkg/machinery/config/types/k8s"
+	metacfg "github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	networkcfg "github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -38,6 +41,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	blockres "github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 	"github.com/siderolabs/talos/pkg/provision/siderolinkbuilder"
 )
 
@@ -104,6 +108,16 @@ func (m *Qemu) InitExtra() error {
 
 	if m.Ops.WithJSONLogs {
 		m.initJSONLogs()
+	}
+
+	if m.EOps.WithBGP {
+		m.initBGP()
+	}
+
+	if m.EOps.WithBGPCLOS {
+		if err := m.initBGPCLOS(); err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -210,7 +224,9 @@ func (m *Qemu) AddExtraProvisionOpts() error {
 
 	externalKubernetesEndpoint := m.Provisioner.GetExternalKubernetesControlPlaneEndpoint(m.ClusterRequest.Network, m.Ops.ControlPlanePort)
 
-	if m.EOps.UseVIP {
+	// full-CLOS uses the BGP-advertised anycast VIP as the k8s endpoint (reachable via the host zebra
+	// route), not the provisioner's host-side load balancer.
+	if m.EOps.UseVIP || m.EOps.WithBGPCLOS {
 		externalKubernetesEndpoint = "https://" + nethelpers.JoinHostPort(m.VIP.String(), m.Ops.ControlPlanePort)
 	}
 
@@ -333,6 +349,14 @@ func (m *Qemu) ModifyNodes() error {
 		configInjectionMethod = provision.ConfigInjectionMethodMetalISO
 	default:
 		return fmt.Errorf("unknown config injection method %d", configInjectionMethod)
+	}
+
+	// full-CLOS nodes have no routable address before BGP comes up, but metal Configuration() gates the
+	// HTTP config download on network readiness (a non-link-local address) — a deadlock, since the address
+	// only arrives with the config. Deliver config via a local config volume (metal-iso) instead, which is
+	// read with no network wait (and matches a real CLOS edge: config is out-of-band, not over the fabric).
+	if m.EOps.WithBGPCLOS {
+		configInjectionMethod = provision.ConfigInjectionMethodMetalISO
 	}
 
 	var extraKernelArgs *procfs.Cmdline
@@ -715,6 +739,199 @@ func (m *Qemu) initJSONLogs() {
 	)
 
 	m.ConfigBundleOps = slices.Concat(m.ConfigBundleOps, []bundle.Option{bundle.WithPatch([]configpatcher.Patch{configpatcher.NewStrategicMergePatch(cfg)})})
+}
+
+// initBGP starts an embedded gobgp fabric peer on the bridge gateway. Node-side BGPPeerConfig is supplied
+// separately via config patches (each node needs a unique loopback, which a shared patch cannot express).
+func (m *Qemu) initBGP() {
+	const (
+		fabricASN = 65000
+		nodeASN   = 65001
+		advertise = "10.200.0.0/24"
+	)
+
+	m.ProvisionOps = slices.Concat(m.ProvisionOps, []provision.Option{
+		provision.WithBGP(m.GatewayIPs[0].String(), m.Cidrs[0].String(), advertise, fabricASN, nodeASN),
+	})
+}
+
+// initBGPCLOS configures the authentic full-CLOS BGP test: nodes have NO management net0 (only virtio
+// fabric uplink(s) to a host fabric peer + a loopback identity), reachable only via BGP. Each node's
+// config (a unique loopback on lo + an unnumbered BGPPeerConfig peering over the fabric interfaces) is baked
+// here per-node, because a no-net0 node is unreachable until BGP is up and so cannot be patched live.
+func (m *Qemu) initBGPCLOS() error {
+	const (
+		fabricASN = 65000
+		nodeASN   = 65001
+		// advertise a default route: a no-net0 node has no other path off its loopback, so it relies on
+		// the fabric peer for everything (host services, image pulls, internet — the host NATs it out).
+		advertise = "0.0.0.0/0"
+
+		// two dedicated fabric uplinks per node so the test exercises ECMP (and BFD failover).
+		uplinks = 2
+	)
+
+	// The node loopback identities reuse the already-allocated bridge CIDR (the normal --cidr) node IPs:
+	// the nodes are not on the bridge L2 (no net0), so the host's BGP /32s are always more specific than
+	// its connected /24 and reachability is exclusively via BGP.
+	natCIDR := m.Cidrs[0].String()
+
+	m.ClusterRequest.Network.CLOSNoNet0 = true
+	m.ClusterRequest.Network.FabricUplinks = uplinks
+
+	// shared anycast k8s-API VIP: every control-plane node advertises this /32 over BGP, so the fabric
+	// learns it from all CPs and ECMPs across them — the control-plane endpoint is HA "by design" (BGP
+	// replaces the L2/ARP VIP). The cluster's k8s endpoint targets it (set below), reachable via the host
+	// zebra route; no host-side load balancer is involved.
+	vip, err := sideronet.NthIPInNetwork(m.Cidrs[0], vipOffset)
+	if err != nil {
+		return err
+	}
+
+	m.VIP = vip
+	m.InClusterEndpoint = "https://" + nethelpers.JoinHostPort(vip.String(), m.Ops.ControlPlanePort)
+
+	// the fabric NICs are pinned to deterministic PCI slots so their guest kernel names are known at
+	// provision time (used both as the BGP neighbor interface and the talos.config link-local zone).
+	ifaces := make([]string, uplinks)
+	for u := range ifaces {
+		ifaces[u] = vm.CLOSFabricIfaceName(u)
+	}
+
+	if m.PerNodePatches == nil {
+		m.PerNodePatches = map[int][]configpatcher.Patch{}
+	}
+
+	for i := range m.ClusterRequest.Nodes {
+		loopback := firstIPv4(m.ClusterRequest.Nodes[i].IPs)
+
+		// only control-plane nodes carry/advertise the shared k8s-API VIP.
+		nodeVIP := netip.Addr{}
+		if t := m.ClusterRequest.Nodes[i].Type; t == machine.TypeControlPlane {
+			nodeVIP = vip
+		}
+
+		// distinct per-node ASNs (eBGP) so the fabric peer can re-advertise one node's routes to another
+		// without the AS_PATH loop check rejecting them.
+		ctr, err := m.closNodeConfig(loopback, nodeVIP, uint32(nodeASN+i), ifaces)
+		if err != nil {
+			return err
+		}
+
+		m.PerNodePatches[i] = []configpatcher.Patch{configpatcher.NewStrategicMergePatch(ctr)}
+	}
+
+	// flannel auto-detects its VXLAN egress interface from the default route, but the full-CLOS default is
+	// an ECMP route over the fabric uplinks (no single top-level interface) with an IPv6-link-local
+	// next-hop — which flannel cannot resolve ("could not determine interface"). Pin it to the interface
+	// that reaches the host gateway. The generated config already carries a KubeFlannelCNIConfig (multidoc)
+	// which this patch merges into.
+	if m.VersionContract.MultidocKubernetesConfigSupported() {
+		flannel := k8scfg.NewKubeFlannelCNIConfigV1Alpha1()
+		flannel.FlannelBackendType = constants.FlannelDefaultBackend
+		flannel.FlannelExtraArgs = []string{"--iface-can-reach=" + m.GatewayIPs[0].String()}
+
+		flannelCtr, err := container.New(flannel)
+		if err != nil {
+			return err
+		}
+
+		m.ConfigBundleOps = append(m.ConfigBundleOps,
+			bundle.WithPatchControlPlane([]configpatcher.Patch{configpatcher.NewStrategicMergePatch(flannelCtr)}),
+		)
+	}
+
+	m.ProvisionOps = slices.Concat(m.ProvisionOps, []provision.Option{
+		provision.WithBGPCLOS(advertise, fabricASN, nodeASN, natCIDR),
+	})
+
+	return nil
+}
+
+// firstIPv4 returns the first IPv4 address in the list (the node's loopback identity is IPv4), falling
+// back to the first address.
+func firstIPv4(addrs []netip.Addr) netip.Addr {
+	for _, a := range addrs {
+		if a.Is4() {
+			return a
+		}
+	}
+
+	if len(addrs) > 0 {
+		return addrs[0]
+	}
+
+	return netip.Addr{}
+}
+
+// closNodeConfig builds a full-CLOS node's baked config: a loopback /32 on lo (its identity, advertised by
+// BGP) and an unnumbered BGPPeerConfig peering with the host fabric peer over each fabric interface
+// (multipath/ECMP when there is more than one, with BFD). On control-plane nodes a shared anycast k8s-API
+// VIP /32 is also carried on lo (advertised by every CP, so the fabric ECMPs across them = CP-HA).
+func (m *Qemu) closNodeConfig(loopback, vip netip.Addr, asn uint32, ifaces []string) (*container.Container, error) {
+	// carry the loopback /32 on the always-present lo interface (the controller advertises it and filters
+	// the 127/8 + ::1 loopback addresses).
+	lo := networkcfg.NewLinkConfigV1Alpha1("lo")
+	lo.LinkUp = new(true)
+	lo.LinkAddresses = []networkcfg.AddressConfig{
+		{AddressAddress: netip.PrefixFrom(loopback, loopback.BitLen())},
+	}
+
+	// control-plane nodes also carry the shared anycast k8s-API VIP /32; every CP advertises it, so the
+	// fabric learns it from all CPs and ECMPs across them — the control-plane IP is HA "by design".
+	if vip.IsValid() {
+		lo.LinkAddresses = append(lo.LinkAddresses, networkcfg.AddressConfig{
+			AddressAddress: netip.PrefixFrom(vip, vip.BitLen()),
+		})
+	}
+
+	docs := make([]configbase.Document, 0, len(ifaces)*2+1)
+	docs = append(docs, lo)
+
+	// explicitly configure each fabric NIC (link up, no addresses): this marks them configured so Talos
+	// does not start the default DHCP4 operator on them (there is no DHCP on the unnumbered fabric); they
+	// stay IPv6-link-local only for unnumbered BGP.
+	for _, iface := range ifaces {
+		link := networkcfg.NewLinkConfigV1Alpha1(iface)
+		link.LinkUp = new(true)
+
+		docs = append(docs, link)
+	}
+
+	bgp := networkcfg.NewBGPPeerConfigV1Alpha1()
+	bgp.BGPLocalASN = asn
+	bgp.BGPRouterID = metacfg.Addr{Addr: loopback}
+	// source BGP-routed traffic from the loopback identity: the fabric uplinks have no address of their
+	// own, so without this the kernel's source selection for the (cross-family, unnumbered) routes is
+	// non-deterministic.
+	bgp.BGPRouteSource = metacfg.Addr{Addr: loopback}
+	bgp.BGPAdvertise = []string{"lo"}
+	bgp.BGPMultipath = len(ifaces) > 1
+	bgp.BGPNeighborConfigs = make([]networkcfg.BGPNeighborConfig, 0, len(ifaces))
+
+	for _, iface := range ifaces {
+		bgp.BGPNeighborConfigs = append(bgp.BGPNeighborConfigs, networkcfg.BGPNeighborConfig{
+			NeighborLinkConfig: iface,
+			NeighborBFDConfig: &networkcfg.BGPBFDConfig{
+				BFDTransmitInterval: 300 * time.Millisecond,
+				BFDReceiveInterval:  300 * time.Millisecond,
+				BFDDetectMultiplier: 3,
+			},
+		})
+	}
+
+	docs = append(docs, bgp)
+
+	// with no DHCP the node never learns a resolver; point it at the bridge gateway (the provisioner's
+	// DNS), reachable via the BGP-learned default route, so image pulls by name resolve.
+	resolver := networkcfg.NewResolverConfigV1Alpha1()
+	resolver.ResolverNameservers = []networkcfg.NameserverConfig{
+		{Address: metacfg.Addr{Addr: m.GatewayIPs[0]}},
+	}
+
+	docs = append(docs, resolver)
+
+	return container.New(docs...)
 }
 
 func getNameserverIPs(nameservers []string, gatewayIPs []netip.Addr) ([]netip.Addr, error) {

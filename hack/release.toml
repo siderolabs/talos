@@ -247,6 +247,21 @@ The `talosctl support` command now encrypts support bundles using the age encryp
 The default set of recipients includes the 'siderolabs' GitHub organization members, but it can be overridden with custom recipients.
 """
 
+    [notes.bgp]
+        title = "Native BGP"
+        description = """\
+Talos now supports running a native BGP speaker on the host via an embedded GoBGP, configured with the new `BGPPeerConfig` document.
+This removes the need to ship FRR as a system extension for the common fabric-facing use case.
+
+List of changes:
+
+- Added the `BGPPeerConfig` document to configure the local ASN, router-id, advertised interfaces (loopbacks originated as host routes), neighbors, and per-route preferred source (`routeSource`).
+- Numbered and unnumbered (IPv6 link-local, RFC 8950 extended next-hop) peering are supported, including IPv4 prefixes learned over an IPv6 link-local next-hop.
+- ECMP (multipath) and BFD (fast failure detection) are supported for fabric peering; learned routes are installed into the kernel FIB by the existing route controllers.
+- Peer state is observable via the new `BGPPeerStatus` resource (`talosctl get bgppeerstatus`).
+- `RouteSpec`/`RouteStatus` now carry a multipath next-hop list to support ECMP and cross-family (RFC 8950) next-hops.
+"""
+
     [notes.lvm_wipe]
         title = "LVM Wipe"
         description = """\

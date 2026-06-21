@@ -4,3 +4,6 @@ ignore:
   - id: GO-2026-5932
     reason: No fix available; golang.org/x/crypto/openpgp only reachable via cosign legacy PGP signature verification, which Talos does not use (sigstore-based verification).
     date: 2026-07-16
+  - id: GO-2026-4736
+    reason: 'gobgp NEXT_HOP DoS (GHSA-4p9m-8gc4-rw2h). The advisory records no fixed version, so govulncheck flags every version, but the fix commit osrg/gobgp 583080a7 (2026-03-05, malformed nexthop attribute crash) is already an ancestor of the pinned commit 2132288c5159 (2026-06-29) so the code is not actually affected.'
+    date: 2026-07-14

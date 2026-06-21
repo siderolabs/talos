@@ -4,7 +4,10 @@
 
 package meta
 
-import "net/netip"
+import (
+	"fmt"
+	"net/netip"
+)
 
 // Prefix is a wrapper for netip.Prefix.
 //
@@ -18,6 +21,21 @@ type Prefix struct {
 // IsZero implements yaml.IsZeroer interface.
 func (n Prefix) IsZero() bool {
 	return n.Prefix == netip.Prefix{}
+}
+
+// Merge implements the merger interface: the wrapped value is treated as atomic
+// (netip types have unexported fields and cannot be deep-merged via reflection).
+func (n *Prefix) Merge(other any) error {
+	otherPrefix, ok := other.(Prefix)
+	if !ok {
+		return fmt.Errorf("cannot merge Prefix with %T", other)
+	}
+
+	if !otherPrefix.IsZero() {
+		*n = otherPrefix
+	}
+
+	return nil
 }
 
 // Addr is a wrapper for netip.Addr.
@@ -34,6 +52,21 @@ func (n Addr) IsZero() bool {
 	return n.Addr == netip.Addr{}
 }
 
+// Merge implements the merger interface: the wrapped value is treated as atomic
+// (netip types have unexported fields and cannot be deep-merged via reflection).
+func (n *Addr) Merge(other any) error {
+	otherAddr, ok := other.(Addr)
+	if !ok {
+		return fmt.Errorf("cannot merge Addr with %T", other)
+	}
+
+	if !otherAddr.IsZero() {
+		*n = otherAddr
+	}
+
+	return nil
+}
+
 // AddrPort is a wrapper for netip.AddrPort.
 //
 // It implements IsZero() so that yaml.Marshal correctly skips empty values.
@@ -46,4 +79,19 @@ type AddrPort struct {
 // IsZero implements yaml.IsZeroer interface.
 func (n AddrPort) IsZero() bool {
 	return n.AddrPort == netip.AddrPort{}
+}
+
+// Merge implements the merger interface: the wrapped value is treated as atomic
+// (netip types have unexported fields and cannot be deep-merged via reflection).
+func (n *AddrPort) Merge(other any) error {
+	otherAddrPort, ok := other.(AddrPort)
+	if !ok {
+		return fmt.Errorf("cannot merge AddrPort with %T", other)
+	}
+
+	if !otherAddrPort.IsZero() {
+		*n = otherAddrPort
+	}
+
+	return nil
 }

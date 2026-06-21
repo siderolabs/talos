@@ -203,6 +203,8 @@ talosctl cluster create dev [flags]
       --wait-timeout duration                    timeout to wait for the cluster to be ready (default 20m0s)
       --wireguard-cidr string                    CIDR of the wireguard network
       --with-apply-config                        enable apply config when the VM is starting in maintenance mode
+      --with-bgp                                 run an embedded GoBGP fabric peer on the bridge gateway for testing native BGP
+      --with-bgp-clos                            full-CLOS BGP test: nodes have only dedicated unnumbered fabric uplinks to a host fabric peer, reachable via a BGP loopback
       --with-bootloader                          enable bootloader to load kernel and initramfs from disk image after install (default true)
       --with-cluster-discovery                   enable cluster discovery (default true)
       --with-debug                               enable debug in Talos config to send service logs to the console
@@ -423,6 +425,8 @@ talosctl cluster create dev [flags]
       --wait-timeout duration                    timeout to wait for the cluster to be ready (default 20m0s)
       --wireguard-cidr string                    CIDR of the wireguard network
       --with-apply-config                        enable apply config when the VM is starting in maintenance mode
+      --with-bgp                                 run an embedded GoBGP fabric peer on the bridge gateway for testing native BGP
+      --with-bgp-clos                            full-CLOS BGP test: nodes have only dedicated unnumbered fabric uplinks to a host fabric peer, reachable via a BGP loopback
       --with-bootloader                          enable bootloader to load kernel and initramfs from disk image after install (default true)
       --with-cluster-discovery                   enable cluster discovery (default true)
       --with-debug                               enable debug in Talos config to send service logs to the console

@@ -139,6 +139,8 @@ type Qemu struct {
 	Bandwidth                 int
 	DiskEncryptionKeyTypes    []string
 	WithFirewall              string
+	WithBGP                   bool
+	WithBGPCLOS               bool
 	WithSiderolinkAgent       flags.Agent
 	WithIOMMU                 bool
 	ConfigInjectionMethod     string

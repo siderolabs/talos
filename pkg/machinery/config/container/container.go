@@ -557,6 +557,16 @@ func (container *Container) NetworkDHCPConfigs() []config.NetworkDHCPConfig {
 	return findMatchingDocs[config.NetworkDHCPConfig](container.documents)
 }
 
+// NetworkBGPPeerConfig implements config.Config interface.
+func (container *Container) NetworkBGPPeerConfig() config.NetworkBGPPeerConfig {
+	matching := findMatchingDocs[config.NetworkBGPPeerConfig](container.documents)
+	if len(matching) == 0 {
+		return nil
+	}
+
+	return matching[0]
+}
+
 // NetworkDHCPv4Configs implements config.Config interface.
 func (container *Container) NetworkDHCPv4Configs() []config.NetworkDHCPv4Config {
 	return findMatchingDocs[config.NetworkDHCPv4Config](container.documents)
