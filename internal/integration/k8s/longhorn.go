@@ -130,6 +130,8 @@ func (suite *LongHornSuite) TestDeploy() {
 	})
 
 	suite.Run("fio-v2-ublk", func() {
+		suite.T().Skip("fio-v2-ublk is broken: https://github.com/longhorn/longhorn/issues/13273")
+
 		suite.Require().NoError(suite.RunFIOTest(ctx, "longhorn-v2-ublk", "10G"))
 	})
 }
