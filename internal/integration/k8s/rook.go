@@ -17,6 +17,9 @@ import (
 //go:embed testdata/rook-ceph-cluster-values.yaml
 var rookCephClusterValues []byte
 
+//go:embed testdata/ceph-csi-drivers-values.yaml
+var cephCSIDriversValues []byte
+
 // RookSuite tests deploying Rook.
 type RookSuite struct {
 	base.K8sSuite
@@ -55,6 +58,21 @@ func (suite *RookSuite) TestDeploy() {
 		nil,
 	); err != nil {
 		suite.T().Fatalf("failed to install Rook chart: %v", err)
+	}
+
+	// Starting with Rook v1.20 the CSI drivers are no longer deployed by the operator chart;
+	// they have to be installed separately via the ceph-csi-drivers chart, after the operator
+	// (which provides the ceph-csi-operator and its CRDs) and before the cluster chart.
+	if err := suite.HelmInstall(
+		ctx,
+		"rook-ceph",
+		"https://ceph.github.io/ceph-csi-operator",
+		CephCSIDriversHelmChartVersion,
+		"ceph-csi-drivers",
+		"ceph-csi-drivers",
+		cephCSIDriversValues,
+	); err != nil {
+		suite.T().Fatalf("failed to install Ceph-CSI drivers chart: %v", err)
 	}
 
 	if err := suite.HelmInstall(
