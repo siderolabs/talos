@@ -1,3 +1,88 @@
+## [Talos 1.13.5](https://github.com/siderolabs/talos/releases/tag/v1.13.5) (2026-06-22)
+
+Welcome to the v1.13.5 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.18.36
+containerd: 2.2.5
+runc: 1.4.3
+
+Talos is built with Go 1.26.4.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Maja Bojarska
+* Noel Georgi
+* Mateusz Urbanek
+* Aleksei Sviridkin
+
+### Changes
+<details><summary>8 commits</summary>
+<p>
+
+* [`c5089c655`](https://github.com/siderolabs/talos/commit/c5089c6552c9f98a1b65a938f845de26224094d8) fix: bump number of open files for etcd
+* [`e0b4d9d75`](https://github.com/siderolabs/talos/commit/e0b4d9d75133322e0229509358442492d883a665) fix: stop the log persistence and close all files on shutdown
+* [`23a080dcf`](https://github.com/siderolabs/talos/commit/23a080dcffa33a5003260154309b50c1a4ac46e3) fix: honor FailurePauseTimeout when pausing before reboot
+* [`9adc63a32`](https://github.com/siderolabs/talos/commit/9adc63a32bf110324f6f603aaa74a4ec3880ea6b) fix: correct the link alias condition
+* [`b902f9de9`](https://github.com/siderolabs/talos/commit/b902f9de90184c60cc1f1137f85ab4377a2de988) feat: verify go.mod tidiness in generate target
+* [`765f0a1dc`](https://github.com/siderolabs/talos/commit/765f0a1dc9cb444c459f7be14f1d824032b9bb2e) fix: relax LUKS header validation
+* [`d63aba4c7`](https://github.com/siderolabs/talos/commit/d63aba4c7302d24e12dce130e9018789e9198f58) feat: update pkgs and Kubernetes
+* [`f0a5842ab`](https://github.com/siderolabs/talos/commit/f0a5842abeb961822be4c01785bc6d8abc7510fa) fix: update go.mod and rekres
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>8 commits</summary>
+<p>
+
+* [`6b315f7`](https://github.com/siderolabs/pkgs/commit/6b315f7b3531187931ed582f2ccdb84fa70a5e70) chore: update zfs to 2.4.3
+* [`ebf23f3`](https://github.com/siderolabs/pkgs/commit/ebf23f3a0560a571e273c6e8f270a595ecc91363) feat: update Linux to 6.18.36
+* [`7eed62d`](https://github.com/siderolabs/pkgs/commit/7eed62d5c41ee9ce7271f8d9f0c5c35b56e27b69) chore: bump containerd to 2.2.5 (cve patches)
+* [`8b67bab`](https://github.com/siderolabs/pkgs/commit/8b67babcc76372a374945b1bb1d78c6a45f37be0) chore: update nvidia driver lts to 580.167.08
+* [`8cb61b2`](https://github.com/siderolabs/pkgs/commit/8cb61b2ac1f2fe8d951a429b54a9aaeeff51cf09) feat: bump runc
+* [`d736aef`](https://github.com/siderolabs/pkgs/commit/d736aeffae84d09e97e2fe04d018c98e2c172dc1) feat: bump kernel to 6.18.35
+* [`7ede376`](https://github.com/siderolabs/pkgs/commit/7ede3765547ffbff83c73f0e4fb868a549c325a9) fix: avoid page_table_check BUG on time namespace VVAR page
+* [`e69debd`](https://github.com/siderolabs/pkgs/commit/e69debd4d5e85599116e3d0d473a8b0351559704) feat: update tools and rekres
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>2 commits</summary>
+<p>
+
+* [`9b78252`](https://github.com/siderolabs/tools/commit/9b782525fb570a0df96ab027d3e794028c4ad89c) feat: update ca-certificates to 2026-05-14
+* [`4d13aff`](https://github.com/siderolabs/tools/commit/4d13aff3392a0aaf57db505bfb8ca1bd98ca1af6) feat: bump OpenSSL to 3.6.3
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/ryanuber/columnize**            v2.1.2 **_new_**
+* **github.com/siderolabs/go-blockdevice/v2**  v2.0.28 -> v2.0.30
+* **github.com/siderolabs/pkgs**               v1.13.0-28-g54ec9fc -> v1.13.0-36-g6b315f7
+* **github.com/siderolabs/tools**              v1.13.0-4-ga06bb31 -> v1.13.0-6-g9b78252
+* **k8s.io/api**                               v0.36.1 -> v0.36.2
+* **k8s.io/apiextensions-apiserver**           v0.36.1 -> v0.36.2
+* **k8s.io/apimachinery**                      v0.36.1 -> v0.36.2
+* **k8s.io/apiserver**                         v0.36.1 -> v0.36.2
+* **k8s.io/client-go**                         v0.36.1 -> v0.36.2
+* **k8s.io/component-base**                    v0.36.1 -> v0.36.2
+* **k8s.io/cri-api**                           v0.36.1 -> v0.36.2
+* **k8s.io/kube-scheduler**                    v0.36.1 -> v0.36.2
+* **k8s.io/kubectl**                           v0.36.1 -> v0.36.2
+* **k8s.io/kubelet**                           v0.36.1 -> v0.36.2
+* **k8s.io/pod-security-admission**            v0.36.1 -> v0.36.2
+
+Previous release can be found at [v1.13.4](https://github.com/siderolabs/talos/releases/tag/v1.13.4)
+
 ## [Talos 1.13.4](https://github.com/siderolabs/talos/releases/tag/v1.13.4) (2026-06-09)
 
 Welcome to the v1.13.4 release of Talos!
