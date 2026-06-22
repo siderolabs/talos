@@ -117,6 +117,7 @@ kernel/drivers/mmc/host/sdhci-uhs2.ko
 kernel/drivers/mmc/host/sdhci-xenon-driver.ko
 kernel/drivers/mmc/host/sdhci.ko
 kernel/drivers/net/ethernet/amazon/ena/ena.ko
+kernel/drivers/net/ethernet/amd/xgbe/amd-xgbe.ko
 kernel/drivers/net/ethernet/aquantia/atlantic/atlantic.ko
 kernel/drivers/net/ethernet/atheros/alx/alx.ko
 kernel/drivers/net/ethernet/broadcom/bnx2.ko
@@ -190,9 +191,11 @@ kernel/drivers/net/ethernet/stmicro/stmmac/stmmac-platform.ko
 kernel/drivers/net/ethernet/stmicro/stmmac/stmmac.ko
 kernel/drivers/net/hyperv/hv_netvsc.ko
 kernel/drivers/net/mdio.ko
+kernel/drivers/net/mdio/mdio-i2c.ko
 kernel/drivers/net/pcs/pcs_xpcs.ko
 kernel/drivers/net/pcs/pcs-rzn1-miic.ko
 kernel/drivers/net/phy/dp83867.ko
+kernel/drivers/net/phy/sfp.ko
 kernel/drivers/net/usb/r8152.ko
 kernel/drivers/net/virtio_net.ko
 kernel/drivers/net/vmxnet3/vmxnet3.ko
