@@ -27,6 +27,7 @@ import (
 	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-retry/retry"
+	"go.etcd.io/etcd/api/v3/v3rpc/rpctypes"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"go.etcd.io/etcd/etcdutl/v3/snapshot"
 
@@ -276,6 +277,7 @@ func waitPKI(ctx context.Context, r runtime.Runtime) error {
 	return err
 }
 
+//nolint:gocyclo
 func addMember(ctx context.Context, r runtime.Runtime, addrs []string, name string) (*clientv3.MemberListResponse, uint64, error) {
 	client, err := etcd.NewClientFromControlPlaneIPs(ctx, r.State().V1Alpha2().Resources())
 	if err != nil {
@@ -306,6 +308,21 @@ func addMember(ctx context.Context, r runtime.Runtime, addrs []string, name stri
 
 	add, err := client.MemberAddAsLearner(ctx, addrs)
 	if err != nil {
+		if errors.Is(err, rpctypes.ErrPeerURLExist) {
+			// member already exists with the same peer URLs, see if it's ourselves as a learner
+			// we can't really say for sure, but we try to match the peer URLs, and name should
+			// be still empty at this point
+			for _, member := range list.Members {
+				if slices.Equal(member.PeerURLs, addrs) {
+					if member.IsLearner && member.Name == "" {
+						return list, member.ID, nil
+					}
+				}
+			}
+
+			return nil, 0, fmt.Errorf("member already exists with the same peer URLs %q, but is not a learner: %w", addrs, err)
+		}
+
 		return nil, 0, fmt.Errorf("error adding member: %w", err)
 	}
 
