@@ -97,7 +97,7 @@ func RegistryHosts(reg cri.Registries) docker.RegistryHosts {
 				Host:         uu.Host,
 				Scheme:       uu.Scheme,
 				Path:         uu.Path,
-				Capabilities: docker.HostCapabilityResolve | docker.HostCapabilityPull,
+				Capabilities: docker.HostCapabilityResolve | docker.HostCapabilityPull | docker.HostCapabilityReferrers,
 			})
 		}
 
