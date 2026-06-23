@@ -146,6 +146,11 @@ func launchVM(config *LaunchConfig) error {
 		ahciBus                                                                      int
 	)
 
+	blockDeviceIOOptions := "aio=threads,cache=none"
+	if runtime.GOOS == "linux" {
+		blockDeviceIOOptions = "aio=native,cache=none"
+	}
+
 	for i, disk := range config.DiskPaths {
 		driver := config.DiskDrivers[i]
 		blockSize := config.DiskBlockSizes[i]
@@ -193,7 +198,7 @@ func launchVM(config *LaunchConfig) error {
 
 			args = append(
 				args,
-				"-drive", fmt.Sprintf("id=scsi%d,format=raw,if=none,file=%s,discard=unmap,aio=native,cache=none", i, disk),
+				"-drive", fmt.Sprintf("id=scsi%d,format=raw,if=none,file=%s,discard=unmap,%s", i, disk, blockDeviceIOOptions),
 				"-device", fmt.Sprintf("scsi-hd,drive=scsi%d,bus=scsi0.0,logical_block_size=%d,physical_block_size=%d", i, blockSize, blockSize),
 			)
 
@@ -209,7 +214,7 @@ func launchVM(config *LaunchConfig) error {
 
 			args = append(
 				args,
-				"-drive", fmt.Sprintf("id=nvme%d,format=raw,if=none,file=%s,discard=unmap,aio=native,cache=none", i, disk),
+				"-drive", fmt.Sprintf("id=nvme%d,format=raw,if=none,file=%s,discard=unmap,%s", i, disk, blockDeviceIOOptions),
 				"-device", fmt.Sprintf("nvme-ns,drive=nvme%d,logical_block_size=%d,physical_block_size=%d", i, blockSize, blockSize),
 			)
 
@@ -223,7 +228,7 @@ func launchVM(config *LaunchConfig) error {
 
 			args = append(
 				args,
-				"-drive", fmt.Sprintf("id=scsi%d,format=raw,if=none,file=%s,discard=unmap,aio=native,cache=none", i, disk),
+				"-drive", fmt.Sprintf("id=scsi%d,format=raw,if=none,file=%s,discard=unmap,%s", i, disk, blockDeviceIOOptions),
 				"-device", fmt.Sprintf("scsi-hd,drive=scsi%d,bus=scsi1.0,channel=0,scsi-id=%d,lun=0,logical_block_size=%d,physical_block_size=%d", i, i, blockSize, blockSize),
 			)
 
