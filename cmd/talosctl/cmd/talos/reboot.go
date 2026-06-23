@@ -27,10 +27,12 @@ import (
 var rebootCmdFlags = struct {
 	trackableActionCmdFlags
 
-	progress     flags.PflagExtended[reporter.OutputMode]
-	rebootMode   flags.PflagExtended[machine.RebootRequest_Mode]
-	drain        bool
-	drainTimeout time.Duration
+	progress            flags.PflagExtended[reporter.OutputMode]
+	rebootMode          flags.PflagExtended[machine.RebootRequest_Mode]
+	drain               bool
+	drainTimeout        time.Duration
+	waitForVolumeDetach bool
+	volumeDetachTimeout time.Duration
 }{
 	rebootMode: flags.ProtoEnum(machine.RebootRequest_DEFAULT, machine.RebootRequest_Mode_value, machine.RebootRequest_Mode_name),
 	progress:   reporter.NewOutputModeFlag(),
@@ -75,7 +77,7 @@ func rebootRun(ctx context.Context, opts []client.RebootMode) (retErr error) {
 		return rebootInternal(ctx, clientFactory, rebootCmdFlags.wait, rebootCmdFlags.debug, rebootCmdFlags.timeout, rep, opts...)
 	}
 
-	nodeNames, err := drainNodes(ctx, clientFactory, rebootCmdFlags.drainTimeout, rep)
+	nodeNames, err := drainNodes(ctx, clientFactory, rebootCmdFlags.drainTimeout, rebootCmdFlags.waitForVolumeDetach, rebootCmdFlags.volumeDetachTimeout, rep)
 	if err != nil {
 		return fmt.Errorf("error draining nodes: %w", err)
 	}
@@ -154,6 +156,8 @@ func init() {
 	)
 	rebootCmd.Flags().BoolVar(&rebootCmdFlags.drain, "drain", false, "drain the Kubernetes node before rebooting (cordon + evict pods)")
 	rebootCmd.Flags().DurationVar(&rebootCmdFlags.drainTimeout, "drain-timeout", nodedrain.DefaultDrainTimeout, "timeout for draining the Kubernetes node")
+	rebootCmd.Flags().BoolVar(&rebootCmdFlags.waitForVolumeDetach, "wait-for-volume-detach", true, "after draining, wait for the node's CSI volumes to detach before rebooting (best-effort; requires --drain)")
+	rebootCmd.Flags().DurationVar(&rebootCmdFlags.volumeDetachTimeout, "volume-detach-timeout", nodedrain.DefaultVolumeDetachTimeout, "timeout for waiting for the node's CSI volumes to detach")
 	rebootCmdFlags.addTrackActionFlags(rebootCmd)
 	addCommand(rebootCmd)
 }

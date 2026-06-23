@@ -42,8 +42,10 @@ var upgradeCmdFlags = struct {
 	rebootMode   flags.PflagExtended[machine.RebootRequest_Mode]
 	progress     flags.PflagExtended[reporter.OutputMode]
 
-	drain        bool
-	drainTimeout time.Duration
+	drain               bool
+	drainTimeout        time.Duration
+	waitForVolumeDetach bool
+	volumeDetachTimeout time.Duration
 
 	legacy   bool
 	force    bool // Deprecated: only used for legacy upgrade path, to be removed in Talos 1.18.
@@ -140,7 +142,7 @@ func upgradeViaLifecycleService(ctx context.Context, clientFactory *global.Clien
 	var nodeNames map[string]string
 
 	if upgradeCmdFlags.drain {
-		nodeNames, err = drainNodes(ctx, clientFactory, upgradeCmdFlags.drainTimeout, rep)
+		nodeNames, err = drainNodes(ctx, clientFactory, upgradeCmdFlags.drainTimeout, upgradeCmdFlags.waitForVolumeDetach, upgradeCmdFlags.volumeDetachTimeout, rep)
 		if err != nil {
 			return err
 		}
@@ -366,6 +368,8 @@ func init() {
 	upgradeCmd.Flags().Var(upgradeCmdFlags.progress, "progress", fmt.Sprintf("output mode for upgrade progress. Values: %v", upgradeCmdFlags.progress.Options()))
 	upgradeCmd.Flags().BoolVar(&upgradeCmdFlags.drain, "drain", true, "drain the Kubernetes node before rebooting (cordon + evict pods)")
 	upgradeCmd.Flags().DurationVar(&upgradeCmdFlags.drainTimeout, "drain-timeout", nodedrain.DefaultDrainTimeout, "timeout for draining the Kubernetes node")
+	upgradeCmd.Flags().BoolVar(&upgradeCmdFlags.waitForVolumeDetach, "wait-for-volume-detach", true, "after draining, wait for the node's CSI volumes to detach before rebooting (best-effort; requires --drain)")
+	upgradeCmd.Flags().DurationVar(&upgradeCmdFlags.volumeDetachTimeout, "volume-detach-timeout", nodedrain.DefaultVolumeDetachTimeout, "timeout for waiting for the node's CSI volumes to detach")
 
 	// Mark legacy-only flags as deprecated. These are only used when falling back
 	// to the legacy MachineService.Upgrade unary API for older Talos versions.

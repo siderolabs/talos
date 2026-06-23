@@ -30,7 +30,10 @@ type nodeUpdate struct {
 // and performs cordon + drain on all of them in parallel.
 //
 // It returns a map of talosIP -> k8sNodeName for use in the uncordon phase.
-func drainNodes(ctx context.Context, clientFactory *global.ClientFactory, drainTimeout time.Duration, rep *reporter.Reporter) (map[string]string, error) {
+//
+// When waitForVolumeDetach is set, each node also waits (up to volumeDetachTimeout)
+// for its CSI VolumeAttachments to clear after draining; best-effort, never fatal.
+func drainNodes(ctx context.Context, clientFactory *global.ClientFactory, drainTimeout time.Duration, waitForVolumeDetach bool, volumeDetachTimeout time.Duration, rep *reporter.Reporter) (map[string]string, error) {
 	// For kubeconfig - build a random endpoint client (to go to the controlplane).
 	c, err := clientFactory.BuildRandomEndpointClient(ctx)
 	if err != nil {
@@ -90,9 +93,23 @@ func drainNodes(ctx context.Context, clientFactory *global.ClientFactory, drainT
 				updateCh <- nodeUpdate{node: k8sNodeName, update: upd}
 			}
 
-			return nodedrain.CordonAndDrain(ctx, clientset, k8sNodeName, nodedrain.Options{
+			if drainErr := nodedrain.CordonAndDrain(ctx, clientset, k8sNodeName, nodedrain.Options{
 				DrainTimeout: drainTimeout,
-			}, reportFn)
+			}, reportFn); drainErr != nil {
+				return drainErr
+			}
+
+			if waitForVolumeDetach {
+				// Best-effort: a slow or stuck CSI detach must not block the reboot.
+				if detachErr := nodedrain.WaitForVolumeDetach(ctx, clientset, k8sNodeName, volumeDetachTimeout, reportFn); detachErr != nil {
+					reportFn(reporter.Update{
+						Message: fmt.Sprintf("%s: proceeding despite volume detach wait: %v", k8sNodeName, detachErr),
+						Status:  reporter.StatusError,
+					})
+				}
+			}
+
+			return nil
 		})
 	}
 

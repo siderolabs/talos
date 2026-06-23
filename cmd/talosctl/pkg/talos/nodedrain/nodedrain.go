@@ -28,8 +28,15 @@ const (
 	// DefaultDrainTimeout is the default maximum time to wait for the node to be drained.
 	DefaultDrainTimeout = 5 * time.Minute
 
+	// DefaultVolumeDetachTimeout is the default maximum time to wait for the node's
+	// CSI volumes to detach after draining, before rebooting.
+	DefaultVolumeDetachTimeout = 5 * time.Minute
+
 	// nodeReadyPollInterval is how often to poll for node readiness.
 	nodeReadyPollInterval = 5 * time.Second
+
+	// volumeDetachPollInterval is how often to poll for VolumeAttachment teardown.
+	volumeDetachPollInterval = 2 * time.Second
 )
 
 // ReportFunc is a callback for reporting drain progress updates.
@@ -146,6 +153,54 @@ func CordonAndDrain(ctx context.Context, clientset kubernetes.Interface, nodeNam
 	})
 
 	return nil
+}
+
+// WaitForVolumeDetach polls the Kubernetes API until no VolumeAttachment references
+// the node, or the timeout elapses. A drain evicts pods but does not wait for their
+// volumes to be unmounted and detached; rebooting before that completes can orphan a
+// mount and surface as a Multi-Attach error when the pod reschedules elsewhere.
+// Best-effort: callers should warn and proceed on error rather than block the reboot.
+func WaitForVolumeDetach(ctx context.Context, clientset kubernetes.Interface, nodeName string, timeout time.Duration, report ReportFunc) error {
+	if timeout == 0 {
+		timeout = DefaultVolumeDetachTimeout
+	}
+
+	report(reporter.Update{
+		Message: fmt.Sprintf("%s: waiting for volumes to detach", nodeName),
+		Status:  reporter.StatusRunning,
+	})
+
+	return wait.PollUntilContextTimeout(ctx, volumeDetachPollInterval, timeout, true, func(ctx context.Context) (bool, error) {
+		vaList, err := clientset.StorageV1().VolumeAttachments().List(ctx, metav1.ListOptions{})
+		if err != nil {
+			// Transient errors are expected; keep polling until the timeout.
+			return false, nil //nolint:nilerr
+		}
+
+		remaining := 0
+
+		for _, va := range vaList.Items {
+			if va.Spec.NodeName == nodeName {
+				remaining++
+			}
+		}
+
+		if remaining > 0 {
+			report(reporter.Update{
+				Message: fmt.Sprintf("%s: waiting for %d volume(s) to detach", nodeName, remaining),
+				Status:  reporter.StatusRunning,
+			})
+
+			return false, nil
+		}
+
+		report(reporter.Update{
+			Message: fmt.Sprintf("%s: volumes detached", nodeName),
+			Status:  reporter.StatusSucceeded,
+		})
+
+		return true, nil
+	})
 }
 
 // WaitForNodeReady polls the Kubernetes API until the node reports a Ready condition
