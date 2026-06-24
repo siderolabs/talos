@@ -832,7 +832,7 @@ func (VolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "VolumeConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "VolumeConfig is a system volume configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "VolumeConfig is a system volume configuration document.\nNote: at the moment, only `STATE`, `EPHEMERAL` and `IMAGE-CACHE` system volumes are supported.\n",
+		Description: "VolumeConfig is a system volume configuration document.\nNote: at the moment, only `STATE`, `EPHEMERAL` and `IMAGECACHE` system volumes are supported.\n",
 		Fields: []encoder.Doc{
 			{
 				Type:   "Meta",

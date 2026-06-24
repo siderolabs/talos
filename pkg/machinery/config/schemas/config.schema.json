@@ -796,7 +796,7 @@
         "apiVersion",
         "kind"
       ],
-      "description": "VolumeConfig is a system volume configuration document.\\nNote: at the moment, only `STATE`, `EPHEMERAL` and `IMAGE-CACHE` system volumes are supported.\\n"
+      "description": "VolumeConfig is a system volume configuration document.\\nNote: at the moment, only `STATE`, `EPHEMERAL` and `IMAGECACHE` system volumes are supported.\\n"
     },
     "block.VolumeDiscoverySpec": {
       "properties": {

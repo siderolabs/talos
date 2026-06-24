@@ -52,7 +52,7 @@ var (
 // VolumeConfigV1Alpha1 is a system volume configuration document.
 //
 //	description: |
-//	  Note: at the moment, only `STATE`, `EPHEMERAL` and `IMAGE-CACHE` system volumes are supported.
+//	  Note: at the moment, only `STATE`, `EPHEMERAL` and `IMAGECACHE` system volumes are supported.
 //	examples:
 //	  - value: exampleVolumeConfigEphemeralV1Alpha1()
 //	alias: VolumeConfig
