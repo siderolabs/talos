@@ -261,6 +261,82 @@ func TestDocumentUUID_DistinguishesContent(t *testing.T) {
 	}
 }
 
+func TestEnrichGoModuleURLs(t *testing.T) {
+	goRef := func(locator string) *v2_3.PackageExternalReference {
+		return &v2_3.PackageExternalReference{Category: "PACKAGE-MANAGER", RefType: "purl", Locator: locator}
+	}
+
+	doc := &v2_3.Document{Packages: []*v2_3.Package{
+		// plain go module: both URLs get filled in
+		{
+			PackageSPDXIdentifier:     "P-mod",
+			PackageName:               "github.com/foo/Bar",
+			PackageVersion:            "v1.2.3",
+			PackageDownloadLocation:   "NOASSERTION",
+			PackageExternalReferences: []*v2_3.PackageExternalReference{goRef("pkg:golang/github.com/foo/Bar@v1.2.3")},
+		},
+		// existing download location is preserved; only homepage is added
+		{
+			PackageSPDXIdentifier:     "P-talos",
+			PackageName:               "github.com/siderolabs/talos",
+			PackageVersion:            "v1.13.3",
+			PackageDownloadLocation:   "https://github.com/siderolabs/talos/releases/tag/v1.13.3",
+			PackageExternalReferences: []*v2_3.PackageExternalReference{goRef("pkg:golang/github.com/siderolabs/talos@v1.13.3")},
+		},
+		// stdlib: no module domain, left untouched
+		{
+			PackageSPDXIdentifier:     "P-std",
+			PackageName:               "stdlib",
+			PackageVersion:            "go1.26.4",
+			PackageDownloadLocation:   "NOASSERTION",
+			PackageExternalReferences: []*v2_3.PackageExternalReference{goRef("pkg:golang/stdlib@go1.26.4")},
+		},
+		// local replace target: no version, left untouched
+		{
+			PackageSPDXIdentifier:     "P-local",
+			PackageName:               "github.com/foo/local",
+			PackageVersion:            "",
+			PackageDownloadLocation:   "NOASSERTION",
+			PackageExternalReferences: []*v2_3.PackageExternalReference{goRef("pkg:golang/github.com/foo/local")},
+		},
+		// non-go package: untouched
+		{
+			PackageSPDXIdentifier:   "P-other",
+			PackageName:             "libfoo",
+			PackageVersion:          "1.0",
+			PackageDownloadLocation: "NOASSERTION",
+		},
+	}}
+
+	enrichGoModuleURLs(doc)
+
+	mod := findPackage(doc, "P-mod")
+	// uppercase Bar must be proxy-escaped to !bar
+	if want := "https://proxy.golang.org/github.com/foo/!bar/@v/v1.2.3.zip"; mod.PackageDownloadLocation != want {
+		t.Errorf("download location = %q, want %q", mod.PackageDownloadLocation, want)
+	}
+
+	if want := "https://pkg.go.dev/github.com/foo/Bar@v1.2.3"; mod.PackageHomePage != want {
+		t.Errorf("homepage = %q, want %q", mod.PackageHomePage, want)
+	}
+
+	talos := findPackage(doc, "P-talos")
+	if want := "https://github.com/siderolabs/talos/releases/tag/v1.13.3"; talos.PackageDownloadLocation != want {
+		t.Errorf("existing download location overwritten: got %q", talos.PackageDownloadLocation)
+	}
+
+	if want := "https://pkg.go.dev/github.com/siderolabs/talos@v1.13.3"; talos.PackageHomePage != want {
+		t.Errorf("talos homepage = %q, want %q", talos.PackageHomePage, want)
+	}
+
+	for _, id := range []common.ElementID{"P-std", "P-local", "P-other"} {
+		p := findPackage(doc, id)
+		if p.PackageDownloadLocation != "NOASSERTION" || p.PackageHomePage != "" {
+			t.Errorf("%s should be untouched, got download=%q homepage=%q", id, p.PackageDownloadLocation, p.PackageHomePage)
+		}
+	}
+}
+
 // helpers
 
 func newDoc() *v2_3.Document {
