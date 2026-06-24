@@ -5,10 +5,13 @@
 package cri_test
 
 import (
+	"context"
 	"path/filepath"
+	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -30,6 +33,8 @@ func (suite *ImageCacheConfigSuite) TestReconcileNoConfig() {
 		asrt.Equal(cri.ImageCacheStatusDisabled, r.TypedSpec().Status)
 		asrt.Equal(cri.ImageCacheCopyStatusSkipped, r.TypedSpec().CopyStatus)
 	})
+
+	suite.Assert().False(suite.serviceRunner.IsServiceRunning())
 }
 
 func (suite *ImageCacheConfigSuite) TestReconcileFeatureNotEnabled() {
@@ -43,6 +48,8 @@ func (suite *ImageCacheConfigSuite) TestReconcileFeatureNotEnabled() {
 		asrt.Equal(cri.ImageCacheStatusDisabled, r.TypedSpec().Status)
 		asrt.Equal(cri.ImageCacheCopyStatusSkipped, r.TypedSpec().CopyStatus)
 	})
+
+	suite.Assert().False(suite.serviceRunner.IsServiceRunning())
 }
 
 func (suite *ImageCacheConfigSuite) TestReconcileFeatureEnabled() {
@@ -121,11 +128,23 @@ func (suite *ImageCacheConfigSuite) TestReconcileFeatureEnabled() {
 		asrt.Equal([]string{constants.ImageCacheDiskMountPoint, filepath.Join(constants.ImageCacheISOMountPoint, "imagecache")}, r.TypedSpec().Roots)
 	})
 
+	// both volume mount statuses should have a finalizer from the controller
+	ctest.AssertResources(
+		suite,
+		[]string{vms1.Metadata().ID(), vms2.Metadata().ID()},
+		func(r *block.VolumeMountStatus, asrt *assert.Assertions) {
+			asrt.True(r.Metadata().Finalizers().Has(ctrlName))
+		},
+	)
+
+	// registryd should be started
+	suite.Assert().True(suite.serviceRunner.IsServiceRunning())
+
 	// simulate registryd being ready
 	service := v1alpha1res.NewService(crictrl.RegistrydServiceID)
 	service.TypedSpec().Healthy = true
 	service.TypedSpec().Running = true
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), service))
+	suite.Create(service)
 
 	// now both volumes are ready, and service is ready, should be ready
 	ctest.AssertResource(suite, cri.ImageCacheConfigID, func(r *cri.ImageCacheConfig, asrt *assert.Assertions) {
@@ -133,6 +152,50 @@ func (suite *ImageCacheConfigSuite) TestReconcileFeatureEnabled() {
 		asrt.Equal(cri.ImageCacheCopyStatusReady, r.TypedSpec().CopyStatus)
 		asrt.Equal([]string{constants.ImageCacheDiskMountPoint, filepath.Join(constants.ImageCacheISOMountPoint, "imagecache")}, r.TypedSpec().Roots)
 	})
+
+	// now, try to disable the image cache
+	newCfg := config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
+		MachineConfig: &v1alpha1.MachineConfig{
+			MachineFeatures: &v1alpha1.FeaturesConfig{
+				ImageCacheSupport: &v1alpha1.ImageCacheConfig{
+					CacheLocalEnabled: new(false),
+				},
+			},
+		},
+	}))
+	newCfg.Metadata().SetVersion(cfg.Metadata().Version())
+
+	suite.Require().NoError(suite.State().Update(suite.Ctx(), newCfg))
+
+	ctest.AssertResource(suite, cri.ImageCacheConfigID, func(r *cri.ImageCacheConfig, asrt *assert.Assertions) {
+		asrt.Equal(cri.ImageCacheStatusDisabled, r.TypedSpec().Status)
+		asrt.Equal(cri.ImageCacheCopyStatusSkipped, r.TypedSpec().CopyStatus)
+	})
+
+	// registryd should be stopped
+	suite.Assert().False(suite.serviceRunner.IsServiceRunning())
+
+	suite.Destroy(service)
+
+	// controller should remove volume mount requests
+	for _, id := range []resource.ID{
+		ctrlName + "-" + crictrl.VolumeImageCacheISO,
+		ctrlName + "-" + crictrl.VolumeImageCacheDISK,
+	} {
+		ctest.AssertNoResource[*block.VolumeMountRequest](
+			suite,
+			id,
+		)
+	}
+
+	// both volume mount statuses should have finalizer removed
+	ctest.AssertResources(
+		suite,
+		[]string{vms1.Metadata().ID(), vms2.Metadata().ID()},
+		func(r *block.VolumeMountStatus, asrt *assert.Assertions) {
+			asrt.False(r.Metadata().Finalizers().Has(ctrlName))
+		},
+	)
 }
 
 func (suite *ImageCacheConfigSuite) TestReconcileJustDiskVolume() {
@@ -186,6 +249,9 @@ func (suite *ImageCacheConfigSuite) TestReconcileJustDiskVolume() {
 		asrt.Equal(cri.ImageCacheCopyStatusSkipped, r.TypedSpec().CopyStatus)
 		asrt.Equal([]string{constants.ImageCacheDiskMountPoint}, r.TypedSpec().Roots)
 	})
+
+	// registryd should be started
+	suite.Assert().True(suite.serviceRunner.IsServiceRunning())
 
 	// simulate registryd being ready
 	service := v1alpha1res.NewService(crictrl.RegistrydServiceID)
@@ -340,8 +406,10 @@ func TestImageCacheConfigSuite(t *testing.T) {
 	}
 
 	s.AfterSetup = func(suite *ctest.DefaultSuite) {
+		s.serviceRunner = &mockServiceRunner{}
+
 		suite.Require().NoError(suite.Runtime().RegisterController(&crictrl.ImageCacheConfigController{
-			V1Alpha1ServiceManager: &mockServiceRunner{},
+			V1Alpha1ServiceManager: s.serviceRunner,
 			DisableCacheCopy:       true,
 		}))
 	}
@@ -351,12 +419,16 @@ func TestImageCacheConfigSuite(t *testing.T) {
 
 type ImageCacheConfigSuite struct {
 	ctest.DefaultSuite
+
+	serviceRunner *mockServiceRunner
 }
 
-type mockServiceRunner struct{}
+type mockServiceRunner struct {
+	running atomic.Bool
+}
 
 func (mock *mockServiceRunner) IsRunning(id string) (system.Service, bool, error) {
-	return nil, true, nil
+	return nil, mock.running.Load(), nil
 }
 
 func (mock *mockServiceRunner) Load(services ...system.Service) []string {
@@ -364,5 +436,17 @@ func (mock *mockServiceRunner) Load(services ...system.Service) []string {
 }
 
 func (mock *mockServiceRunner) Start(serviceIDs ...string) error {
+	mock.running.Store(true)
+
 	return nil
+}
+
+func (mock *mockServiceRunner) Stop(ctx context.Context, serviceIDs ...string) error {
+	mock.running.Store(false)
+
+	return nil
+}
+
+func (mock *mockServiceRunner) IsServiceRunning() bool {
+	return mock.running.Load()
 }
