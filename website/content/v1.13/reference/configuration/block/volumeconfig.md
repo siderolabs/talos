@@ -1,7 +1,7 @@
 ---
 description: |
     VolumeConfig is a system volume configuration document.
-    Note: at the moment, only `STATE`, `EPHEMERAL` and `IMAGE-CACHE` system volumes are supported.
+    Note: at the moment, only `STATE`, `EPHEMERAL` and `IMAGECACHE` system volumes are supported.
 title: VolumeConfig
 ---
 
