@@ -484,6 +484,8 @@ func (k8sSuite *K8sSuite) NewPod(name string) (podInfo, error) {
 }
 
 // WaitForPodToBeRunning waits for the pod with the given namespace and name to be running.
+//
+//nolint:gocyclo
 func (k8sSuite *K8sSuite) WaitForPodToBeRunning(ctx context.Context, timeout time.Duration, namespace, podName string) error {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
@@ -496,6 +498,15 @@ func (k8sSuite *K8sSuite) WaitForPodToBeRunning(ctx context.Context, timeout tim
 	}
 
 	defer watcher.Stop()
+
+	eventsWatcher, err := k8sSuite.Clientset.CoreV1().Events(namespace).Watch(ctx, metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+
+	defer eventsWatcher.Stop()
+
+	start := time.Now()
 
 	for {
 		select {
@@ -511,9 +522,42 @@ func (k8sSuite *K8sSuite) WaitForPodToBeRunning(ctx context.Context, timeout tim
 				continue
 			}
 
+			k8sSuite.T().Logf(
+				"pod %s/%s is %s",
+				pod.Namespace, pod.Name, pod.Status.Phase,
+			)
+
 			if pod.Name == podName && pod.Status.Phase == corev1.PodRunning {
 				return nil
 			}
+		case event := <-eventsWatcher.ResultChan():
+			if event.Type == watch.Error {
+				return fmt.Errorf("error watching event: %v", event.Object)
+			}
+
+			eventObj, ok := event.Object.(*corev1.Event)
+			if !ok {
+				continue
+			}
+
+			if eventObj.ObjectMeta.GetCreationTimestamp().Time.Before(start) {
+				continue
+			}
+
+			if eventObj.InvolvedObject.Kind != "Pod" {
+				continue
+			}
+
+			if eventObj.InvolvedObject.Name != podName {
+				continue
+			}
+
+			k8sSuite.T().Logf(
+				"event: %s %s %s (%s/%s) (first %s)",
+				eventObj.ObjectMeta.GetCreationTimestamp().String(),
+				eventObj.Reason, eventObj.Message, eventObj.Source.Component, eventObj.Source.Host,
+				time.Since(eventObj.FirstTimestamp.Time),
+			)
 		}
 	}
 }
