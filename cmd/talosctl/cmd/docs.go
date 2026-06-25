@@ -178,6 +178,80 @@ var docsCmd = &cobra.Command{
 	},
 }
 
+// isListMarker checks if a line starts with a markdown list marker.
+func isListMarker(line string) bool {
+	trimmed := strings.TrimSpace(line)
+
+	return strings.HasPrefix(trimmed, "- ") || strings.HasPrefix(trimmed, "* ") || strings.HasPrefix(trimmed, "+ ")
+}
+
+// processIndentedBlock handles a block of consecutive tab-indented lines.
+func processIndentedBlock(lines []string, i *int, result *[]string) {
+	var indentedLines []string
+	for *i < len(lines) && strings.HasPrefix(lines[*i], "\t") {
+		indentedLines = append(indentedLines, strings.TrimPrefix(lines[*i], "\t"))
+		*i++
+	}
+
+	if len(indentedLines) == 0 {
+		return
+	}
+
+	if isListMarker(indentedLines[0]) {
+		for _, l := range indentedLines {
+			*result = append(*result, "\t"+l)
+		}
+	} else {
+		*result = append(*result, "```")
+		*result = append(*result, indentedLines...)
+		*result = append(*result, "```")
+	}
+}
+
+// ConvertIndentedCodeBlocks converts tab-indented lines to fenced code blocks.
+// This handles Cobra's built-in completion commands which use tab-indented lines
+// in their Long descriptions instead of fenced code blocks.
+func ConvertIndentedCodeBlocks(s string) string {
+	lines := strings.Split(s, "\n")
+
+	var result []string
+
+	inCodeBlock := false
+	i := 0
+
+	for i < len(lines) {
+		line := lines[i]
+		trimmed := strings.TrimSpace(line)
+
+		if strings.HasPrefix(trimmed, "```") {
+			inCodeBlock = !inCodeBlock
+
+			result = append(result, line)
+			i++
+
+			continue
+		}
+
+		if inCodeBlock {
+			result = append(result, line)
+			i++
+
+			continue
+		}
+
+		if strings.HasPrefix(line, "\t") {
+			processIndentedBlock(lines, &i, &result)
+
+			continue
+		}
+
+		result = append(result, line)
+		i++
+	}
+
+	return strings.Join(result, "\n")
+}
+
 // GenMarkdownReference is the same as GenMarkdownTree, but
 // with custom filePrepender and linkHandler.
 //
@@ -205,6 +279,8 @@ func GenMarkdownReference(cmd *cobra.Command, w io.Writer, linkHandler func(stri
 	if cmd.Name() == "create" && cmd.Parent() != nil && cmd.Parent().Name() == "cluster" {
 		return nil
 	}
+
+	cmd.Long = ConvertIndentedCodeBlocks(cmd.Long)
 
 	return doc.GenMarkdownCustom(cmd, w, linkHandler)
 }

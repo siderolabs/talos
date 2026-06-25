@@ -714,17 +714,23 @@ If it is not installed already, you can install it via your OS's package manager
 
 To load completions in your current shell session:
 
-	source <(talosctl completion bash)
+```
+source <(talosctl completion bash)
+```
 
 To load completions for every new session, execute once:
 
 #### Linux:
 
-	talosctl completion bash > /etc/bash_completion.d/talosctl
+```
+talosctl completion bash > /etc/bash_completion.d/talosctl
+```
 
 #### macOS:
 
-	talosctl completion bash > $(brew --prefix)/etc/bash_completion.d/talosctl
+```
+talosctl completion bash > $(brew --prefix)/etc/bash_completion.d/talosctl
+```
 
 You will need to start a new shell for this setup to take effect.
 
@@ -754,11 +760,15 @@ Generate the autocompletion script for the fish shell.
 
 To load completions in your current shell session:
 
-	talosctl completion fish | source
+```
+talosctl completion fish | source
+```
 
 To load completions for every new session, execute once:
 
-	talosctl completion fish > ~/.config/fish/completions/talosctl.fish
+```
+talosctl completion fish > ~/.config/fish/completions/talosctl.fish
+```
 
 You will need to start a new shell for this setup to take effect.
 
@@ -788,7 +798,9 @@ Generate the autocompletion script for powershell.
 
 To load completions in your current shell session:
 
-	talosctl completion powershell | Out-String | Invoke-Expression
+```
+talosctl completion powershell | Out-String | Invoke-Expression
+```
 
 To load completions for every new session, add the output of the above command
 to your powershell profile.
@@ -820,21 +832,29 @@ Generate the autocompletion script for the zsh shell.
 If shell completion is not already enabled in your environment you will need
 to enable it.  You can execute the following once:
 
-	echo "autoload -U compinit; compinit" >> ~/.zshrc
+```
+echo "autoload -U compinit; compinit" >> ~/.zshrc
+```
 
 To load completions in your current shell session:
 
-	source <(talosctl completion zsh)
+```
+source <(talosctl completion zsh)
+```
 
 To load completions for every new session, execute once:
 
 #### Linux:
 
-	talosctl completion zsh > "${fpath[1]}/_talosctl"
+```
+talosctl completion zsh > "${fpath[1]}/_talosctl"
+```
 
 #### macOS:
 
-	talosctl completion zsh > $(brew --prefix)/share/zsh/site-functions/_talosctl
+```
+talosctl completion zsh > $(brew --prefix)/share/zsh/site-functions/_talosctl
+```
 
 You will need to start a new shell for this setup to take effect.
 
