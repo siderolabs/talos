@@ -87,7 +87,8 @@ func GetSystemDisk(ctx context.Context, st state.State) (*SystemDiskSpec, error)
 	return systemDisk.TypedSpec(), nil
 }
 
-// GetSystemDiskPaths returns the path(s) of system disk and STATE/EPHEMERAL partitions.
+// GetSystemDiskPaths returns the path(s) of system disk and STATE, EPHEMERAL,
+// CRI, KUBELET, and ETCD partitions (if not backed by EPHEMERAL).
 //
 // This is a legacy method to map old concept of system disk wipe into new volume subsystem.
 func GetSystemDiskPaths(ctx context.Context, st state.State) ([]string, error) {
@@ -104,7 +105,14 @@ func GetSystemDiskPaths(ctx context.Context, st state.State) ([]string, error) {
 	}
 
 	// fetch additional system volumes (which might be on the same or other disks)
-	for _, volumeID := range []string{constants.StatePartitionLabel, constants.EphemeralPartitionLabel} {
+	for _, volumeID := range []string{
+		constants.StatePartitionLabel,
+		constants.EphemeralPartitionLabel,
+		constants.EtcdDataVolumeID,
+		constants.KubeletDataVolumeID,
+		constants.CRIContainerdVolumeID,
+		constants.LogVolumeID,
+	} {
 		volumeStatus, err := safe.ReaderGetByID[*VolumeStatus](ctx, st, volumeID)
 		if err != nil {
 			if state.IsNotFoundError(err) {

@@ -4734,7 +4734,8 @@ jobs:
           QEMU_EXTRA_DISKS_TAGS: disk0
           USER_DISKS_MOUNTS: /var/mnt/extra,/var/mnt/p1,/var/mnt/p2
           WITH_CONFIG_PATCH: '@hack/test/patches/image-verification.yaml'
-          WITH_CONFIG_PATCH_WORKER: '@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml'
+          WITH_CONFIG_PATCH_CONTROLPLANE: '@hack/test/patches/dedicated-system-volumes-controlplane.yaml'
+          WITH_CONFIG_PATCH_WORKER: '@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml:@hack/test/patches/dedicated-system-volumes-worker.yaml'
           WITH_USER_DISK: "true"
         run: |
           sudo -E make e2e-qemu

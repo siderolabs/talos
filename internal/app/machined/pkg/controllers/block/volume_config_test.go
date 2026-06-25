@@ -164,13 +164,13 @@ func (suite *VolumeConfigSuite) TestReconcileDefaults() {
 	})
 
 	ctest.AssertResources(suite, []resource.ID{
-		constants.LogMountPoint,
+		constants.LogVolumeID,
 		"/var/log/audit",
 		"/var/log/containers",
 		"/var/log/pods",
 		constants.EtcdDataVolumeID,
-		"/var/lib/containerd",
-		"/var/lib/kubelet",
+		constants.CRIContainerdVolumeID,
+		constants.KubeletDataVolumeID,
 		"/var/lib/cni",
 		constants.SeccompProfilesDirectory,
 		constants.KubernetesAuditLogDir,
@@ -334,6 +334,225 @@ func (suite *VolumeConfigSuite) TestReconcileExtraEPHEMERALConfig() {
 		asrt.EqualValues(2.5*1024*1024*1024*1024, r.TypedSpec().Provisioning.PartitionSpec.MaxSize)
 		asrt.EqualValues(quirks.New("").PartitionSizes().EphemeralMinSize(), r.TypedSpec().Provisioning.PartitionSpec.MinSize)
 
+		asrt.Equal(block.EncryptionProviderLUKS2, r.TypedSpec().Encryption.Provider)
+	})
+}
+
+func (suite *VolumeConfigSuite) TestReconcilePromoteETCD() {
+	u, err := url.Parse("https://foo:6443")
+	suite.Require().NoError(err)
+
+	ctr, err := container.New(
+		&v1alpha1.Config{
+			ConfigVersion: "v1alpha1",
+			MachineConfig: &v1alpha1.MachineConfig{},
+			ClusterConfig: &v1alpha1.ClusterConfig{
+				ControlPlane: &v1alpha1.ControlPlaneConfig{
+					Endpoint: &v1alpha1.Endpoint{
+						URL: u,
+					},
+				},
+			},
+		},
+		&blockcfg.VolumeConfigV1Alpha1{
+			MetaName: constants.EtcdDataVolumeID,
+			ProvisioningSpec: blockcfg.ProvisioningSpec{
+				DiskSelectorSpec: blockcfg.DiskSelector{
+					Match: cel.MustExpression(cel.ParseBooleanExpression(`disk.transport == "nvme"`, celenv.DiskLocator())),
+				},
+				ProvisioningMaxSize: blockcfg.MustSize("50GiB"),
+			},
+		},
+	)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
+
+	// ETCD should now be provisioned as a dedicated partition instead of a directory
+	ctest.AssertResource(suite, constants.EtcdDataVolumeID, func(r *block.VolumeConfig, asrt *assert.Assertions) {
+		asrt.Equal(block.VolumeTypePartition, r.TypedSpec().Type)
+		asrt.NotEmpty(r.TypedSpec().Provisioning)
+		asrt.Equal(block.WaveSystemDisk, r.TypedSpec().Provisioning.Wave)
+
+		locator, err := r.TypedSpec().Locator.Match.MarshalText()
+		asrt.NoError(err)
+		asrt.Equal(`volume.partition_label == "ETCD"`, string(locator))
+
+		diskSelector, err := r.TypedSpec().Provisioning.DiskSelector.Match.MarshalText()
+		asrt.NoError(err)
+		asrt.Equal(`disk.transport == "nvme"`, string(diskSelector))
+
+		asrt.Equal(constants.EtcdDataVolumeID, r.TypedSpec().Provisioning.PartitionSpec.Label)
+		asrt.EqualValues(50*1024*1024*1024, r.TypedSpec().Provisioning.PartitionSpec.MaxSize)
+
+		// mounted at the same path, under its parent directory volume (/var/lib)
+		asrt.Equal("etcd", r.TypedSpec().Mount.TargetPath)
+		asrt.Equal(filepath.Dir(constants.EtcdDataPath), r.TypedSpec().Mount.ParentID)
+		asrt.Equal(constants.EtcdDataSELinuxLabel, r.TypedSpec().Mount.SelinuxLabel)
+	})
+
+	// CRI, KUBELET and LOG remain directories (no VolumeConfig)
+	ctest.AssertResource(suite, constants.CRIContainerdVolumeID, func(r *block.VolumeConfig, asrt *assert.Assertions) {
+		asrt.Equal(block.VolumeTypeDirectory, r.TypedSpec().Type)
+	})
+	ctest.AssertResource(suite, constants.KubeletDataVolumeID, func(r *block.VolumeConfig, asrt *assert.Assertions) {
+		asrt.Equal(block.VolumeTypeDirectory, r.TypedSpec().Type)
+	})
+	ctest.AssertResource(suite, constants.LogVolumeID, func(r *block.VolumeConfig, asrt *assert.Assertions) {
+		asrt.Equal(block.VolumeTypeDirectory, r.TypedSpec().Type)
+	})
+}
+
+// clusterEndpointConfig returns a minimal v1alpha1 config with a control plane endpoint,
+// which is the prerequisite for the system volume transformers to emit resources.
+func (suite *VolumeConfigSuite) clusterEndpointConfig() *v1alpha1.Config {
+	u, err := url.Parse("https://foo:6443")
+	suite.Require().NoError(err)
+
+	return &v1alpha1.Config{
+		ConfigVersion: "v1alpha1",
+		MachineConfig: &v1alpha1.MachineConfig{},
+		ClusterConfig: &v1alpha1.ClusterConfig{
+			ControlPlane: &v1alpha1.ControlPlaneConfig{
+				Endpoint: &v1alpha1.Endpoint{
+					URL: u,
+				},
+			},
+		},
+	}
+}
+
+// assertPromotedVolume returns an assertion that the volume is provisioned as a dedicated partition
+// mounted at the same path under its parent directory volume.
+func assertPromotedVolume(volumeID, path, selinuxLabel string) func(*block.VolumeConfig, *assert.Assertions) {
+	return func(r *block.VolumeConfig, asrt *assert.Assertions) {
+		asrt.Equal(block.VolumeTypePartition, r.TypedSpec().Type)
+		asrt.NotEmpty(r.TypedSpec().Provisioning)
+		asrt.Equal(block.WaveSystemDisk, r.TypedSpec().Provisioning.Wave)
+		asrt.Equal(volumeID, r.TypedSpec().Provisioning.PartitionSpec.Label)
+
+		locator, err := r.TypedSpec().Locator.Match.MarshalText()
+		asrt.NoError(err)
+		asrt.Equal(`volume.partition_label == "`+volumeID+`"`, string(locator))
+
+		asrt.Equal(filepath.Base(path), r.TypedSpec().Mount.TargetPath)
+
+		// the /var mount point is provided by the EPHEMERAL volume, whose ID is not "/var".
+		expectedParentID := filepath.Dir(path)
+		if expectedParentID == constants.EphemeralMountPoint {
+			expectedParentID = constants.EphemeralPartitionLabel
+		}
+
+		asrt.Equal(expectedParentID, r.TypedSpec().Mount.ParentID)
+		asrt.Equal(selinuxLabel, r.TypedSpec().Mount.SelinuxLabel)
+	}
+}
+
+// reconcilePromoteSingle promotes a single system volume via maxSize provisioning and asserts that
+// it becomes a dedicated partition while the other promotable volumes remain directories.
+func (suite *VolumeConfigSuite) reconcilePromoteSingle(volumeID, path, selinuxLabel string, otherVolumeIDs ...string) {
+	ctr, err := container.New(
+		suite.clusterEndpointConfig(),
+		&blockcfg.VolumeConfigV1Alpha1{
+			MetaName: volumeID,
+			ProvisioningSpec: blockcfg.ProvisioningSpec{
+				ProvisioningMaxSize: blockcfg.MustSize("50GiB"),
+			},
+		},
+	)
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), config.NewMachineConfig(ctr)))
+
+	ctest.AssertResource(suite, volumeID, assertPromotedVolume(volumeID, path, selinuxLabel))
+
+	// the other promotable volumes remain directories (no VolumeConfig)
+	for _, otherID := range otherVolumeIDs {
+		ctest.AssertResource(suite, otherID, func(r *block.VolumeConfig, asrt *assert.Assertions) {
+			asrt.Equal(block.VolumeTypeDirectory, r.TypedSpec().Type)
+		})
+	}
+}
+
+func (suite *VolumeConfigSuite) TestReconcilePromoteCRI() {
+	suite.reconcilePromoteSingle(constants.CRIContainerdVolumeID, constants.CRIContainerdDataPath, constants.CRIContainerdDataSELinuxLabel,
+		constants.EtcdDataVolumeID, constants.KubeletDataVolumeID, constants.LogVolumeID)
+}
+
+func (suite *VolumeConfigSuite) TestReconcilePromoteKUBELET() {
+	suite.reconcilePromoteSingle(constants.KubeletDataVolumeID, constants.KubeletDataPath, constants.KubeletDataSELinuxLabel,
+		constants.EtcdDataVolumeID, constants.CRIContainerdVolumeID, constants.LogVolumeID)
+}
+
+func (suite *VolumeConfigSuite) TestReconcilePromoteLOG() {
+	suite.reconcilePromoteSingle(constants.LogVolumeID, constants.LogMountPoint, constants.LogSELinuxLabel,
+		constants.EtcdDataVolumeID, constants.CRIContainerdVolumeID, constants.KubeletDataVolumeID)
+}
+
+func (suite *VolumeConfigSuite) TestReconcilePromoteAllSystemVolumes() {
+	ctr, err := container.New(
+		suite.clusterEndpointConfig(),
+		&blockcfg.VolumeConfigV1Alpha1{
+			MetaName:         constants.EtcdDataVolumeID,
+			ProvisioningSpec: blockcfg.ProvisioningSpec{ProvisioningMaxSize: blockcfg.MustSize("50GiB")},
+		},
+		&blockcfg.VolumeConfigV1Alpha1{
+			MetaName:         constants.CRIContainerdVolumeID,
+			ProvisioningSpec: blockcfg.ProvisioningSpec{ProvisioningMaxSize: blockcfg.MustSize("50GiB")},
+		},
+		&blockcfg.VolumeConfigV1Alpha1{
+			MetaName:         constants.KubeletDataVolumeID,
+			ProvisioningSpec: blockcfg.ProvisioningSpec{ProvisioningMaxSize: blockcfg.MustSize("50GiB")},
+		},
+		&blockcfg.VolumeConfigV1Alpha1{
+			MetaName:         constants.LogVolumeID,
+			ProvisioningSpec: blockcfg.ProvisioningSpec{ProvisioningMaxSize: blockcfg.MustSize("50GiB")},
+		},
+	)
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), config.NewMachineConfig(ctr)))
+
+	ctest.AssertResource(suite, constants.EtcdDataVolumeID,
+		assertPromotedVolume(constants.EtcdDataVolumeID, constants.EtcdDataPath, constants.EtcdDataSELinuxLabel))
+	ctest.AssertResource(suite, constants.CRIContainerdVolumeID,
+		assertPromotedVolume(constants.CRIContainerdVolumeID, constants.CRIContainerdDataPath, constants.CRIContainerdDataSELinuxLabel))
+	ctest.AssertResource(suite, constants.KubeletDataVolumeID,
+		assertPromotedVolume(constants.KubeletDataVolumeID, constants.KubeletDataPath, constants.KubeletDataSELinuxLabel))
+	ctest.AssertResource(suite, constants.LogVolumeID,
+		assertPromotedVolume(constants.LogVolumeID, constants.LogMountPoint, constants.LogSELinuxLabel))
+}
+
+func (suite *VolumeConfigSuite) TestReconcilePromoteETCDEncrypted() {
+	ctr, err := container.New(
+		suite.clusterEndpointConfig(),
+		&blockcfg.VolumeConfigV1Alpha1{
+			MetaName: constants.EtcdDataVolumeID,
+			ProvisioningSpec: blockcfg.ProvisioningSpec{
+				ProvisioningMaxSize: blockcfg.MustSize("50GiB"),
+			},
+			EncryptionSpec: blockcfg.EncryptionSpec{
+				EncryptionProvider: block.EncryptionProviderLUKS2,
+				EncryptionKeys: []blockcfg.EncryptionKey{
+					{
+						KeySlot: 0,
+						KeyStatic: &blockcfg.EncryptionKeyStatic{
+							KeyData: "topsecret",
+						},
+					},
+				},
+			},
+		},
+	)
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), config.NewMachineConfig(ctr)))
+
+	// ETCD is promoted to an encrypted partition: the configured encryption must be wired through.
+	ctest.AssertResource(suite, constants.EtcdDataVolumeID, func(r *block.VolumeConfig, asrt *assert.Assertions) {
+		asrt.Equal(block.VolumeTypePartition, r.TypedSpec().Type)
+		asrt.NotEmpty(r.TypedSpec().Encryption)
 		asrt.Equal(block.EncryptionProviderLUKS2, r.TypedSpec().Encryption.Provider)
 	})
 }

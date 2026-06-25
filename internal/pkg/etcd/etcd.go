@@ -11,6 +11,7 @@ import (
 	"log"
 	"math/rand/v2"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/state"
@@ -151,6 +152,8 @@ func validateMemberHealth(ctx context.Context, memberURIs []string) (err error) 
 }
 
 // LeaveCluster removes the current member from the etcd cluster and nukes etcd data directory.
+//
+// nolint:gocyclo
 func (c *Client) LeaveCluster(ctx context.Context, st state.State) error {
 	memberID, err := GetLocalMemberID(ctx, st)
 	if err != nil {
@@ -187,9 +190,24 @@ func (c *Client) LeaveCluster(ctx context.Context, st state.State) error {
 		return fmt.Errorf("failed to stop etcd: %w", err)
 	}
 
-	// Once the member is removed, the data is no longer valid.
-	if err := os.RemoveAll(constants.EtcdDataPath); err != nil {
-		return fmt.Errorf("failed to remove %s: %w", constants.EtcdDataPath, err)
+	// Once the member is removed, the data is no longer valid. Remove the *contents* of the etcd
+	// data directory rather than the directory itself: /var/lib/etcd may be a dedicated volume
+	// mount point (promotable system volume), and unlinking a mount point fails with EBUSY.
+	entries, err := os.ReadDir(constants.EtcdDataPath)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+
+		return fmt.Errorf("failed to read %s: %w", constants.EtcdDataPath, err)
+	}
+
+	for _, entry := range entries {
+		p := filepath.Join(constants.EtcdDataPath, entry.Name())
+
+		if err := os.RemoveAll(p); err != nil {
+			return fmt.Errorf("failed to remove %s: %w", p, err)
+		}
 	}
 
 	return nil

@@ -8,18 +8,21 @@ package api
 
 import (
 	"context"
+	"path/filepath"
 	"testing"
 	"time"
 
 	"github.com/blang/semver/v4"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/go-retry/retry"
+	"google.golang.org/grpc/codes"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/etcd"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
@@ -124,16 +127,16 @@ func (suite *EtcdSuite) TestLeaveCluster() {
 		}
 	}
 
-	stream, err := suite.Client.MachineClient.List(nodeCtx, &machineapi.ListRequest{Root: constants.EtcdDataPath})
+	// LeaveCluster nukes the etcd data in place; /var/lib/etcd itself remains (it may be a
+	// dedicated volume mount point), so assert the data (member directory) is gone rather than
+	// the whole path.
+	stream, err := suite.Client.MachineClient.List(nodeCtx, &machineapi.ListRequest{Root: filepath.Join(constants.EtcdDataPath, "member")})
 	suite.Require().NoError(err)
 
 	_, err = stream.Recv()
 	suite.Require().Error(err)
-
-	suite.Assert().EqualError(
-		err,
-		"rpc error: code = Unknown desc = lstat /var/lib/etcd: no such file or directory",
-	)
+	suite.Require().Equal(client.StatusCode(err), codes.Unknown)
+	suite.Require().Contains(client.Status(err).Message(), "no such file or directory")
 
 	// NB: Reboot the node so that it can rejoin the etcd cluster. This allows us
 	// to check the cluster health and catch any issues in rejoining.
@@ -254,18 +257,24 @@ func (suite *EtcdSuite) TestRemoveMember() {
 		),
 	)
 
-	// NB: Reset the ephemeral the node so that it can rejoin the etcd cluster. This allows us
+	// Wipe etcd data so the removed node rejoins the cluster fresh. If ETCD is directory-backed it
+	// lives under EPHEMERAL (wipe EPHEMERAL); if it is a dedicated partition, wipe that partition
+	// directly and leave EPHEMERAL intact.
+	etcdVolumeStatus, err := safe.StateGetByID[*block.VolumeStatus](removeCtx, suite.Client.COSI, constants.EtcdDataVolumeID)
+	suite.Require().NoError(err)
+
+	partitionsToWipe := []*machineapi.ResetPartitionSpec{{Label: constants.EtcdDataVolumeID, Wipe: true}}
+	if etcdVolumeStatus.TypedSpec().Type == block.VolumeTypeDirectory {
+		partitionsToWipe = []*machineapi.ResetPartitionSpec{{Label: constants.EphemeralPartitionLabel, Wipe: true}}
+	}
+
+	// NB: Reset the node so that it can rejoin the etcd cluster. This allows us
 	// to check the cluster health and catch any issues in rejoining.
 	suite.AssertRebooted(
 		suite.ctx, nodeToRemove, func(nodeCtx context.Context) error {
 			_, err = suite.Client.MachineClient.Reset(nodeCtx, &machineapi.ResetRequest{
-				Reboot: true,
-				SystemPartitionsToWipe: []*machineapi.ResetPartitionSpec{
-					{
-						Label: constants.EphemeralPartitionLabel,
-						Wipe:  true,
-					},
-				},
+				Reboot:                 true,
+				SystemPartitionsToWipe: partitionsToWipe,
 			})
 
 			return err

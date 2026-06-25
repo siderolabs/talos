@@ -164,7 +164,7 @@ func (ctrl *LogPersistenceController) Run(ctx context.Context, r controller.Runt
 			block.NewVolumeMountRequest(block.NamespaceName, requestID),
 			func(v *block.VolumeMountRequest) error {
 				v.TypedSpec().Requester = ctrl.Name()
-				v.TypedSpec().VolumeID = constants.LogMountPoint
+				v.TypedSpec().VolumeID = constants.LogVolumeID
 
 				return nil
 			},

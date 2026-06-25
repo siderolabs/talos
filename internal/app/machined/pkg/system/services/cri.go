@@ -106,7 +106,7 @@ func (c *CRI) Volumes(r runtime.Runtime) []string {
 	volumes := []string{
 		"/var/lib",
 		"/var/lib/cni",
-		"/var/lib/containerd",
+		constants.CRIContainerdVolumeID,
 		"/var/run",
 		"/var/run/lock",
 	}

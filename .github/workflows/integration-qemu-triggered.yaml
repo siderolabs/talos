@@ -29,7 +29,8 @@ jobs:
             userDisksMounts: /var/mnt/extra,/var/mnt/p1,/var/mnt/p2
             variant: default
             withConfigPatch: '@hack/test/patches/image-verification.yaml'
-            withConfigPatchWorker: '@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml'
+            withConfigPatchControlPlane: '@hack/test/patches/dedicated-system-volumes-controlplane.yaml'
+            withConfigPatchWorker: '@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml:@hack/test/patches/dedicated-system-volumes-worker.yaml'
             withUserDisk: "true"
           - extraTestArgs: -talos.enforcing
             qemuExtraDisks: "3"
@@ -147,6 +148,7 @@ jobs:
           TAG_SUFFIX_IN: ${{ matrix.tagSuffixIn }}
           USER_DISKS_MOUNTS: ${{ matrix.userDisksMounts }}
           WITH_CONFIG_PATCH: ${{ matrix.withConfigPatch }}
+          WITH_CONFIG_PATCH_CONTROLPLANE: ${{ matrix.withConfigPatchControlPlane }}
           WITH_CONFIG_PATCH_WORKER: ${{ matrix.withConfigPatchWorker }}
           WITH_DISK_ENCRYPTION: ${{ matrix.withDiskEncryption }}
           WITH_ENFORCING: ${{ matrix.withEnforcing }}

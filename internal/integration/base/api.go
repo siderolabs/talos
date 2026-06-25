@@ -609,15 +609,26 @@ func (apiSuite *APISuite) ResetNode(ctx context.Context, node string, resetSpec 
 	bootIDBefore, err := apiSuite.ReadBootID(nodeCtx)
 	apiSuite.Require().NoError(err)
 
-	// figure out if EPHEMERAL is going to be reset
-	ephemeralIsGoingToBeReset := false
+	// Figure out whether the KUBELET volume's backing storage is going to be wiped, which
+	// regenerates the kubelet PKI (and thus its serving cert). This happens on a full reset (the
+	// whole system disk is wiped), when the KUBELET partition is wiped directly, or when KUBELET is
+	// directory-backed (under EPHEMERAL) and EPHEMERAL is wiped. A dedicated KUBELET partition is
+	// independent of EPHEMERAL and survives an EPHEMERAL-only wipe, preserving the cert.
+	kubeletIsGoingToBeReset := false
 
 	if len(resetSpec.SystemPartitionsToWipe) == 0 && len(resetSpec.UserDisksToWipe) == 0 {
-		ephemeralIsGoingToBeReset = true
+		// full reset wipes the entire system disk, including the KUBELET volume
+		kubeletIsGoingToBeReset = true
 	} else {
 		for _, part := range resetSpec.SystemPartitionsToWipe {
-			if part.Label == constants.EphemeralPartitionLabel {
-				ephemeralIsGoingToBeReset = true
+			if part.Label == constants.KubeletDataVolumeID {
+				kubeletIsGoingToBeReset = true
+
+				break
+			}
+
+			if part.Label == constants.EphemeralPartitionLabel && apiSuite.kubeletVolumeIsDirectory(ctx, node) {
+				kubeletIsGoingToBeReset = true
 
 				break
 			}
@@ -685,12 +696,23 @@ waitLoop:
 		postReset, err := apiSuite.HashKubeletCert(ctx, node)
 		apiSuite.Require().NoError(err)
 
-		if ephemeralIsGoingToBeReset {
+		if kubeletIsGoingToBeReset {
 			apiSuite.Assert().NotEqual(preReset, postReset, "reset should lead to new kubelet cert being generated")
 		} else {
-			apiSuite.Assert().Equal(preReset, postReset, "ephemeral partition was not reset")
+			apiSuite.Assert().Equal(preReset, postReset, "kubelet cert should be unchanged (KUBELET volume was not wiped)")
 		}
 	}
+}
+
+// kubeletVolumeIsDirectory reports whether the KUBELET system volume is backed by a directory under
+// EPHEMERAL (vs. a dedicated partition) on the node.
+func (apiSuite *APISuite) kubeletVolumeIsDirectory(ctx context.Context, node string) bool {
+	nodeCtx := client.WithNode(ctx, node)
+
+	volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, apiSuite.Client.COSI, constants.KubeletDataVolumeID)
+	apiSuite.Require().NoError(err)
+
+	return volumeStatus.TypedSpec().Type == block.VolumeTypeDirectory
 }
 
 // DumpLogs dumps a set of logs from the node.

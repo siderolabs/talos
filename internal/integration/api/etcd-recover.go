@@ -15,14 +15,17 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/go-retry/retry"
 	"google.golang.org/grpc/codes"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
 // EtcdRecoverSuite ...
@@ -97,15 +100,36 @@ func (suite *EtcdRecoverSuite) TestSnapshotRecover() {
 
 	// wipe ephemeral partition on all control plane nodes, starting with the one that still has etcd running
 	for _, node := range controlPlaneNodes {
-		suite.ResetNode(suite.ctx, node, &machineapi.ResetRequest{
-			Reboot:   true,
-			Graceful: false,
-			SystemPartitionsToWipe: []*machineapi.ResetPartitionSpec{
-				{
-					Label: constants.EphemeralPartitionLabel,
-					Wipe:  true,
-				},
+		partitionsToWipe := []*machineapi.ResetPartitionSpec{
+			{
+				Label: constants.EphemeralPartitionLabel,
+				Wipe:  true,
 			},
+		}
+
+		// The promotable system volumes (ETCD, CRI, KUBELET) default to directories under EPHEMERAL,
+		// but here they may be dedicated partitions. In the legacy directory layout wiping EPHEMERAL
+		// cleared all of them; once promoted to dedicated partitions it no longer does, so wipe each
+		// promotable volume that is a dedicated partition to keep parity. A directory-backed volume
+		// has no partition to wipe and the reset handler rejects an unlocated label, so skip it.
+		nodeCtx := client.WithNode(suite.ctx, node)
+
+		for _, volumeID := range config.PromotableSystemVolumeNames {
+			vs, err := safe.ReaderGetByID[*block.VolumeStatus](nodeCtx, suite.Client.COSI, volumeID)
+			if err != nil || vs.TypedSpec().Type != block.VolumeTypePartition {
+				continue
+			}
+
+			partitionsToWipe = append(partitionsToWipe, &machineapi.ResetPartitionSpec{
+				Label: volumeID,
+				Wipe:  true,
+			})
+		}
+
+		suite.ResetNode(suite.ctx, node, &machineapi.ResetRequest{
+			Reboot:                 true,
+			Graceful:               false,
+			SystemPartitionsToWipe: partitionsToWipe,
 		}, false)
 	}
 

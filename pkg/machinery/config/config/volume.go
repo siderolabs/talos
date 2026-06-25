@@ -14,6 +14,16 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
+// PromotableSystemVolumeNames are the system volumes that default to a directory under the
+// EPHEMERAL volume but may instead be placed on a dedicated partition (via provisioning) at
+// cluster creation. The backing (directory vs. dedicated partition) is fixed at creation time.
+var PromotableSystemVolumeNames = []string{
+	constants.EtcdDataVolumeID,
+	constants.CRIContainerdVolumeID,
+	constants.KubeletDataVolumeID,
+	constants.LogVolumeID,
+}
+
 // VolumesConfig defines the interface to access volume configuration.
 type VolumesConfig interface {
 	// ByName returns a volume config configuration by name.

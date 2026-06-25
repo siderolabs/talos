@@ -1,0 +1,34 @@
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: KUBELET
+provisioning:
+  minSize: 1GB
+  maxSize: 2GB
+mount:
+  # Just to test that nosuid,noexec,nodev are unset for this volume
+  secure: false
+---
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: CRI
+provisioning:
+  minSize: 1GB
+  maxSize: 2GB
+---
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: ETCD
+provisioning:
+  minSize: 1GB
+  maxSize: 2GB
+---
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: LOG
+provisioning:
+  minSize: 1GB
+  maxSize: 1GB
+mount:
+  # This is also the default for all of the promotable system volumes, but let's set it explicitly for testing purposes
+  secure: true
+---

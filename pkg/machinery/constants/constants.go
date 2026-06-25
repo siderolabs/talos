@@ -474,6 +474,30 @@ const (
 	// EtcdUserID is the user ID for the etcd process.
 	EtcdUserID = 60
 
+	// CRIContainerdDataPath is the path where the CRI containerd stores its' state.
+	CRIContainerdDataPath = "/var/lib/containerd"
+
+	// CRIContainerdVolumeID is the ID of the CRI containerd data volume.
+	CRIContainerdVolumeID = "CRI"
+
+	// CRIContainerdDataSELinuxLabel is the SELinux label for the CRI containerd data directory.
+	CRIContainerdDataSELinuxLabel = "system_u:object_r:containerd_state_t:s0"
+
+	// KubeletDataPath is the path where the kubelet stores its' state.
+	KubeletDataPath = "/var/lib/kubelet"
+
+	// KubeletDataVolumeID is the ID of the kubelet data volume.
+	KubeletDataVolumeID = "KUBELET"
+
+	// KubeletDataSELinuxLabel is the SELinux label for the kubelet data directory.
+	KubeletDataSELinuxLabel = "system_u:object_r:kubelet_state_t:s0"
+
+	// LogVolumeID is the ID of the log data volume.
+	LogVolumeID = "LOG"
+
+	// LogSELinuxLabel is the SELinux label for the log directory.
+	LogSELinuxLabel = "system_u:object_r:var_log_t:s0"
+
 	// ConfigFilename is the filename of the saved config in STATE partition.
 	ConfigFilename = "config.yaml"
 
@@ -1361,7 +1385,7 @@ const (
 	// UserVolumeMountPoint is the path to the volume mount point for the user volumes.
 	UserVolumeMountPoint = "/var/mnt"
 
-	// LogMountPoint is the path to the logs mount point, and ID of the logs volume.
+	// LogMountPoint is the path to the logs mount point.
 	LogMountPoint = "/var/log"
 
 	// UserVolumePrefix is the prefix for the user volumes.

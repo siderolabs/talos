@@ -832,7 +832,7 @@ func (VolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "VolumeConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "VolumeConfig is a system volume configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "VolumeConfig is a system volume configuration document.\nNote: at the moment, only `STATE`, `EPHEMERAL` and `IMAGECACHE` system volumes are supported.\n",
+		Description: "VolumeConfig is a system volume configuration document.\nNote: at the moment, only `STATE`, `EPHEMERAL`, `IMAGECACHE`, `ETCD`, `CRI`, `KUBELET` and `LOG`\nsystem volumes are supported. The `ETCD`, `CRI`, `KUBELET` and `LOG` volumes default to a\ndirectory under `EPHEMERAL`, and can be placed on a dedicated partition by specifying\n`provisioning`. The backing of these volumes (directory vs. dedicated partition) can only be\nchosen at cluster creation time: changing it on an already-provisioned node is not supported.\n",
 		Fields: []encoder.Doc{
 			{
 				Type:   "Meta",

@@ -17,6 +17,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"syscall"
@@ -60,7 +61,9 @@ import (
 	"github.com/siderolabs/talos/pkg/kernel/kspp"
 	"github.com/siderolabs/talos/pkg/kubernetes"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
+	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block/blockhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	metamachinery "github.com/siderolabs/talos/pkg/machinery/meta"
@@ -684,6 +687,19 @@ func UnmountPodMounts(runtime.Sequence, any) (runtime.TaskExecutionFunc, string)
 
 		rdr := bytes.NewReader(b)
 
+		// promotable system-volume partitions (ETCD/CRI/KUBELET/LOG) are COSI-managed and are
+		// unmounted by UnmountPromotableSystemPartitions after their consumers stop; skip the
+		// partition mountpoints themselves here (their pod/overlay submounts are still unmounted
+		// below) so a still-busy mount, e.g. /var/log held by syslogd, doesn't abort the sequence.
+		promotableMountpoints := map[string]struct{}{
+			constants.EtcdDataPath:          {},
+			constants.CRIContainerdDataPath: {},
+			constants.KubeletDataPath:       {},
+			constants.LogMountPoint:         {},
+		}
+
+		var mountpoints []string
+
 		scanner := bufio.NewScanner(rdr)
 		for scanner.Scan() {
 			fields := strings.Fields(scanner.Text())
@@ -693,20 +709,45 @@ func UnmountPodMounts(runtime.Sequence, any) (runtime.TaskExecutionFunc, string)
 			}
 
 			mountpoint := fields[1]
-			if strings.HasPrefix(mountpoint, constants.EphemeralMountPoint+"/") {
-				logger.Printf("unmounting %s\n", mountpoint)
 
-				if err = mountv3.SafeUnmount(ctx, logger.Printf, mountpoint, false, false); err != nil {
-					if errors.Is(err, syscall.EINVAL) {
-						log.Printf("ignoring unmount error %s: %v", mountpoint, err)
-					} else {
-						return fmt.Errorf("error unmounting %s: %w", mountpoint, err)
-					}
+			if _, isPromotable := promotableMountpoints[mountpoint]; isPromotable {
+				continue
+			}
+
+			if strings.HasPrefix(mountpoint, constants.EphemeralMountPoint+"/") {
+				mountpoints = append(mountpoints, mountpoint)
+			}
+		}
+
+		if err = scanner.Err(); err != nil {
+			return err
+		}
+
+		// Unmount the deepest paths first: pod/overlay submounts (e.g. under a dedicated
+		// /var/lib/kubelet or /var/lib/containerd system-volume partition) must be released before
+		// their parent mount, otherwise unmounting the dedicated mount point fails with EBUSY and
+		// leaves the EPHEMERAL teardown blocked.
+		slices.SortFunc(mountpoints, func(a, b string) int {
+			return strings.Count(b, "/") - strings.Count(a, "/")
+		})
+
+		var unmountErrors *multierror.Error
+
+		for _, mountpoint := range mountpoints {
+			logger.Printf("unmounting %s\n", mountpoint)
+
+			if err = mountv3.SafeUnmount(ctx, logger.Printf, mountpoint, false, false); err != nil {
+				if errors.Is(err, syscall.EINVAL) {
+					log.Printf("ignoring unmount error %s: %v", mountpoint, err)
+				} else {
+					// don't abort on a single busy mount: keep going so one failure doesn't leave
+					// the remaining (e.g. sibling or parent) mounts mounted.
+					unmountErrors = multierror.Append(unmountErrors, fmt.Errorf("error unmounting %s: %w", mountpoint, err))
 				}
 			}
 		}
 
-		return scanner.Err()
+		return unmountErrors.ErrorOrNil()
 	}, "unmountPodMounts"
 }
 
@@ -1426,6 +1467,75 @@ func UnmountEphemeralPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc
 
 		return nil
 	}, "unmountEphemeralPartition"
+}
+
+// MountPromotableSystemPartitions mounts the promotable system-volume partitions (ETCD, CRI,
+// KUBELET, LOG) with a persistent, sequencer-owned mount request, so their mount lifetime is tied
+// to the machine lifecycle (like EPHEMERAL) rather than to the services that consume them.
+//
+// Without this, stopping the sole consuming service (e.g. `talosctl service kubelet restart`)
+// drops the last mount requester and the block controllers unmount the dedicated partition while
+// it is still in use (pod submounts under /var/lib/kubelet, log writers under /var/log), which
+// fails with EBUSY and leaves the service stuck waiting for the volume to be remounted.
+//
+// Only volumes provisioned onto a dedicated partition are mounted here; directory-backed
+// promotable volumes are plain directories under EPHEMERAL and need no persistent mount.
+func MountPromotableSystemPartitions(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		for _, name := range configconfig.PromotableSystemVolumeNames {
+			vol, ok := r.Config().Volumes().ByName(name)
+			if !ok || !blockcfg.ProvisioningRequested(vol.Provisioning()) {
+				continue
+			}
+
+			mountRequest := blockres.NewVolumeMountRequest(blockres.NamespaceName, name)
+			mountRequest.TypedSpec().VolumeID = name
+			mountRequest.TypedSpec().Requester = "sequencer"
+			// honor the configured mount options; secure drives nosuid/noexec/nodev on the partition.
+			mountRequest.TypedSpec().Secure = vol.Mount().Secure()
+			mountRequest.TypedSpec().DisableAccessTime = vol.Mount().DisableAccessTime()
+
+			if err := r.State().V1Alpha2().Resources().Create(ctx, mountRequest); err != nil {
+				if state.IsConflictError(err) {
+					continue
+				}
+
+				return fmt.Errorf("failed to create %q mount request: %w", name, err)
+			}
+
+			if _, err := r.State().V1Alpha2().Resources().WatchFor(
+				ctx,
+				blockres.NewVolumeMountStatus(blockres.NamespaceName, name).Metadata(),
+				state.WithEventTypes(state.Created, state.Updated),
+			); err != nil {
+				return fmt.Errorf("failed to wait for %q to be mounted: %w", name, err)
+			}
+		}
+
+		return nil
+	}, "mountPromotableSystemPartitions"
+}
+
+// UnmountPromotableSystemPartitions destroys the persistent, sequencer-owned mount requests
+// created by MountPromotableSystemPartitions, releasing the sequencer's hold so the promotable
+// partitions can be unmounted by the block controllers before the EPHEMERAL partition they live
+// under is torn down.
+func UnmountPromotableSystemPartitions(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
+		for _, name := range configconfig.PromotableSystemVolumeNames {
+			mountRequest := blockres.NewVolumeMountRequest(blockres.NamespaceName, name).Metadata()
+
+			if err := r.State().V1Alpha2().Resources().Destroy(ctx, mountRequest); err != nil {
+				if state.IsNotFoundError(err) {
+					continue
+				}
+
+				return fmt.Errorf("failed to destroy %q mount request: %w", name, err)
+			}
+		}
+
+		return nil
+	}, "unmountPromotableSystemPartitions"
 }
 
 // Install mounts or installs the system partitions.

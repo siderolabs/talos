@@ -796,7 +796,7 @@
         "apiVersion",
         "kind"
       ],
-      "description": "VolumeConfig is a system volume configuration document.\\nNote: at the moment, only `STATE`, `EPHEMERAL` and `IMAGECACHE` system volumes are supported.\\n"
+      "description": "VolumeConfig is a system volume configuration document.\\nNote: at the moment, only `STATE`, `EPHEMERAL`, `IMAGECACHE`, `ETCD`, `CRI`, `KUBELET` and `LOG`\\nsystem volumes are supported. The `ETCD`, `CRI`, `KUBELET` and `LOG` volumes default to a\\ndirectory under `EPHEMERAL`, and can be placed on a dedicated partition by specifying\\n`provisioning`. The backing of these volumes (directory vs. dedicated partition) can only be\\nchosen at cluster creation time: changing it on an already-provisioned node is not supported.\\n"
     },
     "block.VolumeDiscoverySpec": {
       "properties": {

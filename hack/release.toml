@@ -148,7 +148,7 @@ DHCPv4 search domains are now applied to the resolver configuration.
 DHCPv4 configuration now supports `ignoreRoutes` option to ignore routes provided by DHCPv4 servers.
 """
 
-[notes.EPHEMERAL]
+    [notes.EPHEMERAL]
         title = "noexec on EPHEMERAL (/var)"
         description = """\
 Talos 1.14 clusters now default the EPHEMERAL volume (`/var`) to `noexec` in addition to the existing `nosuid` and `nodev`
@@ -173,6 +173,27 @@ mount:
 > NOTE: Setting `secure: false` will also disable `nosuid` and `nodev`, which may have security implications. Use with caution.
 
 Longhorn v2 (SPDK data engine) runs the data plane inside the instance manager process and is not affected.
+"""
+
+    [notes.systemVolumes]
+        title = "Dedicated System Volumes"
+        description = """\
+The `ETCD`, `CRI`, `KUBELET` and `LOG` system volumes (`/var/lib/etcd`, `/var/lib/containerd`, `/var/lib/kubelet` and `/var/log`) can now be placed on dedicated partitions via a `VolumeConfig` document with `provisioning` set (optionally encrypted). By default they remain directories under the `EPHEMERAL` volume.
+
+```yaml
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: ETCD
+provisioning:
+  minSize: 1GB
+  maxSize: 2GB
+```
+
+The backing (directory vs. dedicated partition) is fixed at cluster creation: switching an already-provisioned node between the two is rejected.
+
+A dedicated partition has its own mount, so the `mount.secure` option (`nosuid`/`noexec`/`nodev`, enabled by default) can be set per volume; directory-backed volumes inherit the `EPHEMERAL` mount options.
+
+Note that with `ETCD` on a dedicated partition, etcd data no longer lives under `EPHEMERAL`. Resetting a control plane node with only the `EPHEMERAL` partition wiped will not clear etcd data; wipe the `ETCD` volume to reset etcd.
 """
 
     [notes.DoT]

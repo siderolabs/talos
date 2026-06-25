@@ -1,7 +1,11 @@
 ---
 description: |
     VolumeConfig is a system volume configuration document.
-    Note: at the moment, only `STATE`, `EPHEMERAL` and `IMAGECACHE` system volumes are supported.
+    Note: at the moment, only `STATE`, `EPHEMERAL`, `IMAGECACHE`, `ETCD`, `CRI`, `KUBELET` and `LOG`
+    system volumes are supported. The `ETCD`, `CRI`, `KUBELET` and `LOG` volumes default to a
+    directory under `EPHEMERAL`, and can be placed on a dedicated partition by specifying
+    `provisioning`. The backing of these volumes (directory vs. dedicated partition) can only be
+    chosen at cluster creation time: changing it on an already-provisioned node is not supported.
 title: VolumeConfig
 ---
 

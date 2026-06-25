@@ -9,14 +9,17 @@ import (
 	"fmt"
 	"slices"
 
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-multierror"
 	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
+	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
 // ValidateAsClient validates the config in the client context (outside of Talos).
@@ -144,7 +147,57 @@ func (container *Container) runtimeValidate(ctx context.Context, st state.State,
 		}
 	}
 
+	if err := container.runtimeValidateContainer(ctx, st); err != nil {
+		multiErr = multierror.Append(multiErr, err)
+	}
+
 	return warnings, multiErr.ErrorOrNil()
+}
+
+// runtimeValidateContainer validates the full configuration container in the runtime context.
+//
+// This is the runtime-context counterpart to validateContainer: it performs validation which only
+// makes sense for the whole configuration (vs. individual documents) and which requires runtime
+// state. In particular, it detects a promotable system volume (ETCD, CRI, KUBELET, LOG) whose backing
+// VolumeConfig document has been removed while the volume is still backed by a live dedicated
+// partition. The per-document VolumeConfig.RuntimeValidate cannot catch this because a removed
+// document is no longer part of the container.
+func (container *Container) runtimeValidateContainer(ctx context.Context, st state.State) error {
+	var errs *multierror.Error
+
+	volumes := container.Volumes()
+
+	for _, name := range configconfig.PromotableSystemVolumeNames {
+		if _, present := volumes.ByName(name); present {
+			// the document is still present: VolumeConfig.RuntimeValidate handles any backing conflict.
+			continue
+		}
+
+		volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](ctx, st, name)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				// the volume was never established (cluster creation / boot): nothing to conflict with.
+				continue
+			}
+
+			return err
+		}
+
+		// only compare against a settled volume; an in-flight volume is not yet established.
+		if volumeStatus.TypedSpec().Phase != block.VolumePhaseReady {
+			continue
+		}
+
+		if volumeStatus.TypedSpec().Type == block.VolumeTypePartition {
+			errs = multierror.Append(errs, fmt.Errorf(
+				"the %q system volume is backed by a dedicated partition and its VolumeConfig cannot be removed; "+
+					"migrating a system volume off a dedicated partition is not supported",
+				name,
+			))
+		}
+	}
+
+	return errs.ErrorOrNil()
 }
 
 // validateContainer validates the full configuration container.
