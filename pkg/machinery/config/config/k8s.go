@@ -7,6 +7,7 @@ package config
 import (
 	"net/netip"
 
+	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/optional"
 )
 
@@ -25,6 +26,32 @@ type K8sAPIServerConfig interface {
 	InjectDefaultAuthorizers() bool
 	CertSANs() []string
 	APIPort() int
+}
+
+// K8sAPIServerCAConfig defines kube-apiserver CA configuration options.
+type K8sAPIServerCAConfig interface {
+	K8sAPIServerCAConfigSignal()
+	// IssuingCA returns the key pair used to issue certificates for the kube-apiserver.
+	//
+	// This method only returns non-nil value on the controlplane.
+	IssuingCA() *x509.PEMEncodedCertificateAndKey
+	// AcceptedCAs returns the list of CA certificates that the kube-apiserver trusts.
+	//
+	// If the IssuingCA is not nil, the returned list will include the issuing CA as the first element.
+	AcceptedCAs() []*x509.PEMEncodedCertificate
+}
+
+// K8sAggregatorCAConfig defines kube-apiserver aggregator CA configuration.
+type K8sAggregatorCAConfig interface {
+	K8sAggregatorCAConfigSignal()
+	// IssuingCA returns the key pair used to issue certificates for the kube-apiserver.
+	//
+	// This method only returns non-nil value on the controlplane.
+	IssuingCA() *x509.PEMEncodedCertificateAndKey
+	// AcceptedCAs returns the list of CA certificates that the kube-apiserver trusts.
+	//
+	// If the IssuingCA is not nil, the returned list will include the issuing CA as the first element.
+	AcceptedCAs() []*x509.PEMEncodedCertificate
 }
 
 // K8sControllerManagerConfig defines configuration options for the kube-controller-manager static pod.

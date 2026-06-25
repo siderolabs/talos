@@ -22,6 +22,12 @@ func (in *Input) generateKubernetesControlplaneConfigs() []config.Document {
 		return nil
 	}
 
+	aggregatorCACfg := k8s.NewKubeAggregatorCAConfigV1Alpha1()
+	aggregatorCACfg.AggregatorIssuingCA = &meta.CertificateAndKey{
+		Cert: string(in.Options.SecretsBundle.Certs.K8sAggregator.Crt),
+		Key:  string(in.Options.SecretsBundle.Certs.K8sAggregator.Key),
+	}
+
 	var flannelConfig *k8s.KubeFlannelCNIConfigV1Alpha1
 
 	if in.Options.CNICustomURL == "" {
@@ -71,6 +77,7 @@ func (in *Input) generateKubernetesControlplaneConfigs() []config.Document {
 
 	result := slices.Concat(
 		[]config.Document{
+			aggregatorCACfg,
 			k8s.DefaultPodSecurityAdmissionControlConfig(),
 			k8s.DefaultAuditPolicyConfig(),
 			k8s.DefaultAuthenticationConfig(),
@@ -100,7 +107,7 @@ func (in *Input) generateKubernetesControlplaneConfigs() []config.Document {
 	return result
 }
 
-func (in *Input) generateKubernetesUniversalConfigs() []config.Document {
+func (in *Input) generateKubernetesUniversalConfigs(isControlplane bool) []config.Document {
 	if !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
 		return nil
 	}
@@ -120,7 +127,21 @@ func (in *Input) generateKubernetesUniversalConfigs() []config.Document {
 		},
 	)
 
+	caConfig := k8s.NewKubeAPIServerCAConfigV1Alpha1()
+
+	if isControlplane {
+		caConfig.APIIssuingCA = &meta.CertificateAndKey{
+			Cert: string(in.Options.SecretsBundle.Certs.K8s.Crt),
+			Key:  string(in.Options.SecretsBundle.Certs.K8s.Key),
+		}
+	} else {
+		caConfig.APIAcceptedCAs = []string{
+			string(in.Options.SecretsBundle.Certs.K8s.Crt),
+		}
+	}
+
 	return []config.Document{
 		networkConfig,
+		caConfig,
 	}
 }

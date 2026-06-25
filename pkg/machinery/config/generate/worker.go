@@ -108,7 +108,7 @@ func (in *Input) worker() ([]config.Document, error) {
 	cluster := &v1alpha1.ClusterConfig{
 		ClusterID:      nilIf(in.Options.VersionContract.DiscoveryIdentityMultidocConfig(), in.Options.SecretsBundle.Cluster.ID),     //nolint:staticcheck // legacy configuration
 		ClusterSecret:  nilIf(in.Options.VersionContract.DiscoveryIdentityMultidocConfig(), in.Options.SecretsBundle.Cluster.Secret), //nolint:staticcheck // legacy configuration
-		ClusterCA:      &x509.PEMEncodedCertificateAndKey{Crt: in.Options.SecretsBundle.Certs.K8s.Crt},
+		ClusterCA:      nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &x509.PEMEncodedCertificateAndKey{Crt: in.Options.SecretsBundle.Certs.K8s.Crt}),
 		BootstrapToken: in.Options.SecretsBundle.Secrets.BootstrapToken,
 		ControlPlane: &v1alpha1.ControlPlaneConfig{
 			Endpoint: &v1alpha1.Endpoint{URL: controlPlaneURL},
@@ -224,7 +224,7 @@ func (in *Input) worker() ([]config.Document, error) {
 
 	documents = append(documents, extraDocuments...)
 
-	extraDocuments = in.generateKubernetesUniversalConfigs()
+	extraDocuments = in.generateKubernetesUniversalConfigs(false)
 
 	documents = append(documents, extraDocuments...)
 

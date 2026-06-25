@@ -85,6 +85,7 @@ import (
 	timeapi "github.com/siderolabs/talos/pkg/machinery/api/time"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 	"github.com/siderolabs/talos/pkg/machinery/config"
+	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configdiff"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
@@ -1223,7 +1224,21 @@ func (s *Server) Kubeconfig(empty *emptypb.Empty, obj machine.MachineService_Kub
 
 	var b bytes.Buffer
 
-	if err := kubeconfig.GenerateAdmin(s.Controller.Runtime().Config().Cluster(), &b); err != nil {
+	k8sCAConfig := s.Controller.Runtime().Config().K8sAPIServerCAConfig()
+	if k8sCAConfig == nil {
+		return status.Error(codes.FailedPrecondition, "k8s API server CA config is not set")
+	}
+
+	if err := kubeconfig.GenerateAdmin(
+		struct {
+			configconfig.ClusterConfig
+			configconfig.K8sAPIServerCAConfig
+		}{
+			ClusterConfig:        s.Controller.Runtime().Config().Cluster(),
+			K8sAPIServerCAConfig: k8sCAConfig,
+		},
+		&b,
+	); err != nil {
 		return err
 	}
 

@@ -176,8 +176,8 @@ type etcdEncryptionConfigProvider struct {
 // NewBundleFromConfig creates secrets bundle using existing config.
 func NewBundleFromConfig(clock Clock, c config.Config) (*Bundle, error) {
 	certs := &Certs{
-		K8s:               c.Cluster().IssuingCA(),
-		K8sAggregator:     c.Cluster().AggregatorCA(),
+		K8s:               c.K8sAPIServerCAConfig().IssuingCA(),
+		K8sAggregator:     c.K8sAggregatorCAConfig().IssuingCA(),
 		K8sServiceAccount: c.Cluster().ServiceAccount(),
 		Etcd:              c.Cluster().Etcd().CA(),
 		OS:                c.Machine().Security().IssuingCA(),

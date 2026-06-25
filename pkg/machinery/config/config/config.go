@@ -40,6 +40,8 @@ type Config interface { //nolint:interfacebloat
 	DiscoveryIdentityConfig() DiscoveryIdentityConfig
 
 	// - k8s:
+	K8sAPIServerCAConfig() K8sAPIServerCAConfig
+	K8sAggregatorCAConfig() K8sAggregatorCAConfig
 	K8sAdmissionControlPluginConfigs() []K8sAdmissionControlPluginConfig
 	K8sAuditPolicyConfig() K8sAuditPolicyConfig
 	K8sAuthenticationConfig() K8sAuthenticationConfig

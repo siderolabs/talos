@@ -33,17 +33,15 @@ type GenerateAdminInput interface {
 
 // GenerateAdmin generates admin kubeconfig for the cluster.
 func GenerateAdmin(config GenerateAdminInput, out io.Writer) error {
-	acceptedCAs := config.AcceptedCAs()
-
-	if config.IssuingCA() != nil {
-		acceptedCAs = append(acceptedCAs, &x509.PEMEncodedCertificate{Crt: config.IssuingCA().Crt})
+	if config.IssuingCA() == nil {
+		return fmt.Errorf("issuing CA is not set")
 	}
 
 	return Generate(
 		&GenerateInput{
 			ClusterName:         config.Name(),
 			IssuingCA:           config.IssuingCA(),
-			AcceptedCAs:         acceptedCAs,
+			AcceptedCAs:         config.AcceptedCAs(),
 			CertificateLifetime: config.AdminKubeconfig().CertLifetime(),
 
 			CommonName:   config.AdminKubeconfig().CommonName(),

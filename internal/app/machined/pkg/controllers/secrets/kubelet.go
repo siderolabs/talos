@@ -12,7 +12,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/controller/generic/transform"
-	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
@@ -73,11 +72,9 @@ func NewKubeletController() *KubeletController {
 
 				kubeletSecrets.AcceptedCAs = nil
 
-				if cfgProvider.Cluster().IssuingCA() != nil {
-					kubeletSecrets.AcceptedCAs = append(kubeletSecrets.AcceptedCAs, &x509.PEMEncodedCertificate{Crt: cfgProvider.Cluster().IssuingCA().Crt})
+				if k8sCAProvider := cfgProvider.K8sAPIServerCAConfig(); k8sCAProvider != nil {
+					kubeletSecrets.AcceptedCAs = k8sCAProvider.AcceptedCAs()
 				}
-
-				kubeletSecrets.AcceptedCAs = append(kubeletSecrets.AcceptedCAs, cfgProvider.Cluster().AcceptedCAs()...)
 
 				if len(kubeletSecrets.AcceptedCAs) == 0 {
 					return errors.New("missing accepted Kubernetes CAs")

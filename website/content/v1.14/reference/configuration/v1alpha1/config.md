@@ -723,17 +723,6 @@ controlPlane:
 |`token` |string |The [bootstrap token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/) used to join the cluster. <details><summary>Show example(s)</summary>Bootstrap token example (do not use in production!).:{{< highlight yaml >}}
 token: wlzjyw.bei2zfylhs2by0wd
 {{< /highlight >}}</details> | |
-|`ca` |PEMEncodedCertificateAndKey |The base64 encoded root certificate authority used by Kubernetes. <details><summary>Show example(s)</summary>ClusterCA example.:{{< highlight yaml >}}
-ca:
-    crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
-    key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
-{{< /highlight >}}</details> | |
-|`acceptedCAs` |[]PEMEncodedCertificate |The list of base64 encoded accepted certificate authorities used by Kubernetes.  | |
-|`aggregatorCA` |PEMEncodedCertificateAndKey |The base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation.<br><br>This CA can be self-signed. <details><summary>Show example(s)</summary>AggregatorCA example.:{{< highlight yaml >}}
-aggregatorCA:
-    crt: LS0tIEVYQU1QTEUgQ0VSVElGSUNBVEUgLS0t
-    key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==
-{{< /highlight >}}</details> | |
 |`serviceAccount` |PEMEncodedKey |The base64 encoded private key for service account token generation. <details><summary>Show example(s)</summary>AggregatorCA example.:{{< highlight yaml >}}
 serviceAccount:
     key: LS0tIEVYQU1QTEUgS0VZIC0tLQ==

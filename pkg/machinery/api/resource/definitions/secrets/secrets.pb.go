@@ -533,6 +533,7 @@ type KubernetesRootSpec struct {
 	ApiServerIps              []*common.NetIP                     `protobuf:"bytes,14,rep,name=api_server_ips,json=apiServerIps,proto3" json:"api_server_ips,omitempty"`
 	AcceptedCAs               []*common.PEMEncodedCertificate     `protobuf:"bytes,15,rep,name=accepted_c_as,json=acceptedCAs,proto3" json:"accepted_c_as,omitempty"`
 	EtcdEncryptionConfig      *structpb.Struct                    `protobuf:"bytes,16,opt,name=etcd_encryption_config,json=etcdEncryptionConfig,proto3" json:"etcd_encryption_config,omitempty"`
+	AcceptedAggregatorCAs     []*common.PEMEncodedCertificate     `protobuf:"bytes,17,rep,name=accepted_aggregator_c_as,json=acceptedAggregatorCAs,proto3" json:"accepted_aggregator_c_as,omitempty"`
 	unknownFields             protoimpl.UnknownFields
 	sizeCache                 protoimpl.SizeCache
 }
@@ -668,6 +669,13 @@ func (x *KubernetesRootSpec) GetAcceptedCAs() []*common.PEMEncodedCertificate {
 func (x *KubernetesRootSpec) GetEtcdEncryptionConfig() *structpb.Struct {
 	if x != nil {
 		return x.EtcdEncryptionConfig
+	}
+	return nil
+}
+
+func (x *KubernetesRootSpec) GetAcceptedAggregatorCAs() []*common.PEMEncodedCertificate {
+	if x != nil {
+		return x.AcceptedAggregatorCAs
 	}
 	return nil
 }
@@ -886,7 +894,7 @@ const file_resource_definitions_secrets_secrets_proto_rawDesc = "" +
 	"api_server\x18\x01 \x01(\v2#.common.PEMEncodedCertificateAndKeyR\tapiServer\x12^\n" +
 	"\x19api_server_kubelet_client\x18\x02 \x01(\v2#.common.PEMEncodedCertificateAndKeyR\x16apiServerKubeletClient\x12D\n" +
 	"\vfront_proxy\x18\x03 \x01(\v2#.common.PEMEncodedCertificateAndKeyR\n" +
-	"frontProxy\"\xb5\x06\n" +
+	"frontProxy\"\x8d\a\n" +
 	"\x12KubernetesRootSpec\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12'\n" +
 	"\bendpoint\x18\x02 \x01(\v2\v.common.URLR\bendpoint\x122\n" +
@@ -906,7 +914,8 @@ const file_resource_definitions_secrets_secrets_proto_rawDesc = "" +
 	"\x1bsecretbox_encryption_secret\x18\r \x01(\tR\x19secretboxEncryptionSecret\x123\n" +
 	"\x0eapi_server_ips\x18\x0e \x03(\v2\r.common.NetIPR\fapiServerIps\x12A\n" +
 	"\raccepted_c_as\x18\x0f \x03(\v2\x1d.common.PEMEncodedCertificateR\vacceptedCAs\x12M\n" +
-	"\x16etcd_encryption_config\x18\x10 \x01(\v2\x17.google.protobuf.StructR\x14etcdEncryptionConfig\"J\n" +
+	"\x16etcd_encryption_config\x18\x10 \x01(\v2\x17.google.protobuf.StructR\x14etcdEncryptionConfig\x12V\n" +
+	"\x18accepted_aggregator_c_as\x18\x11 \x03(\v2\x1d.common.PEMEncodedCertificateR\x15acceptedAggregatorCAs\"J\n" +
 	"\x13MaintenanceRootSpec\x123\n" +
 	"\x02ca\x18\x01 \x01(\v2#.common.PEMEncodedCertificateAndKeyR\x02ca\"\x86\x02\n" +
 	"\n" +
@@ -979,17 +988,18 @@ var file_resource_definitions_secrets_secrets_proto_depIdxs = []int32{
 	14, // 19: talos.resource.definitions.secrets.KubernetesRootSpec.api_server_ips:type_name -> common.NetIP
 	13, // 20: talos.resource.definitions.secrets.KubernetesRootSpec.accepted_c_as:type_name -> common.PEMEncodedCertificate
 	17, // 21: talos.resource.definitions.secrets.KubernetesRootSpec.etcd_encryption_config:type_name -> google.protobuf.Struct
-	12, // 22: talos.resource.definitions.secrets.MaintenanceRootSpec.ca:type_name -> common.PEMEncodedCertificateAndKey
-	12, // 23: talos.resource.definitions.secrets.OSRootSpec.issuing_ca:type_name -> common.PEMEncodedCertificateAndKey
-	14, // 24: talos.resource.definitions.secrets.OSRootSpec.cert_sani_ps:type_name -> common.NetIP
-	13, // 25: talos.resource.definitions.secrets.OSRootSpec.accepted_c_as:type_name -> common.PEMEncodedCertificate
-	12, // 26: talos.resource.definitions.secrets.TrustdCertsSpec.server:type_name -> common.PEMEncodedCertificateAndKey
-	13, // 27: talos.resource.definitions.secrets.TrustdCertsSpec.accepted_c_as:type_name -> common.PEMEncodedCertificate
-	28, // [28:28] is the sub-list for method output_type
-	28, // [28:28] is the sub-list for method input_type
-	28, // [28:28] is the sub-list for extension type_name
-	28, // [28:28] is the sub-list for extension extendee
-	0,  // [0:28] is the sub-list for field type_name
+	13, // 22: talos.resource.definitions.secrets.KubernetesRootSpec.accepted_aggregator_c_as:type_name -> common.PEMEncodedCertificate
+	12, // 23: talos.resource.definitions.secrets.MaintenanceRootSpec.ca:type_name -> common.PEMEncodedCertificateAndKey
+	12, // 24: talos.resource.definitions.secrets.OSRootSpec.issuing_ca:type_name -> common.PEMEncodedCertificateAndKey
+	14, // 25: talos.resource.definitions.secrets.OSRootSpec.cert_sani_ps:type_name -> common.NetIP
+	13, // 26: talos.resource.definitions.secrets.OSRootSpec.accepted_c_as:type_name -> common.PEMEncodedCertificate
+	12, // 27: talos.resource.definitions.secrets.TrustdCertsSpec.server:type_name -> common.PEMEncodedCertificateAndKey
+	13, // 28: talos.resource.definitions.secrets.TrustdCertsSpec.accepted_c_as:type_name -> common.PEMEncodedCertificate
+	29, // [29:29] is the sub-list for method output_type
+	29, // [29:29] is the sub-list for method input_type
+	29, // [29:29] is the sub-list for extension type_name
+	29, // [29:29] is the sub-list for extension extendee
+	0,  // [0:29] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_secrets_secrets_proto_init() }

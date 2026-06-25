@@ -37,10 +37,11 @@ type KubernetesRootSpec struct {
 	APIServerIPs  []netip.Addr `yaml:"apiServerIPs" protobuf:"14"`
 	DNSDomain     string       `yaml:"dnsDomain" protobuf:"6"`
 
-	IssuingCA      *x509.PEMEncodedCertificateAndKey `yaml:"issuingCA" protobuf:"7"`
-	AcceptedCAs    []*x509.PEMEncodedCertificate     `yaml:"acceptedCAs" protobuf:"15"`
-	ServiceAccount *x509.PEMEncodedKey               `yaml:"serviceAccount" protobuf:"8"`
-	AggregatorCA   *x509.PEMEncodedCertificateAndKey `yaml:"aggregatorCA" protobuf:"9"`
+	IssuingCA             *x509.PEMEncodedCertificateAndKey `yaml:"issuingCA" protobuf:"7"`
+	AcceptedCAs           []*x509.PEMEncodedCertificate     `yaml:"acceptedCAs" protobuf:"15"`
+	ServiceAccount        *x509.PEMEncodedKey               `yaml:"serviceAccount" protobuf:"8"`
+	AggregatorCA          *x509.PEMEncodedCertificateAndKey `yaml:"aggregatorCA" protobuf:"9"`
+	AcceptedAggregatorCAs []*x509.PEMEncodedCertificate     `yaml:"acceptedAggregatorCAs" protobuf:"17"`
 
 	AESCBCEncryptionSecret string `yaml:"aesCBCEncryptionSecret" protobuf:"10"`
 

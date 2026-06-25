@@ -298,27 +298,9 @@ func (ClusterConfig) Doc() *encoder.Doc {
 			},
 			{},
 			{},
-			{
-				Name:        "ca",
-				Type:        "PEMEncodedCertificateAndKey",
-				Note:        "",
-				Description: "The base64 encoded root certificate authority used by Kubernetes.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The base64 encoded root certificate authority used by Kubernetes." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "acceptedCAs",
-				Type:        "[]PEMEncodedCertificate",
-				Note:        "",
-				Description: "The list of base64 encoded accepted certificate authorities used by Kubernetes.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The list of base64 encoded accepted certificate authorities used by Kubernetes." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "aggregatorCA",
-				Type:        "PEMEncodedCertificateAndKey",
-				Note:        "",
-				Description: "The base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation.\n\nThis CA can be self-signed.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
+			{},
+			{},
 			{
 				Name:        "serviceAccount",
 				Type:        "PEMEncodedKey",
@@ -395,8 +377,6 @@ func (ClusterConfig) Doc() *encoder.Doc {
 
 	doc.Fields[2].AddExample("Setting controlplane endpoint address to 1.2.3.4 and port to 443 example.", clusterControlPlaneExample())
 	doc.Fields[5].AddExample("Bootstrap token example (do not use in production!).", "wlzjyw.bei2zfylhs2by0wd")
-	doc.Fields[8].AddExample("ClusterCA example.", pemEncodedCertificateExample())
-	doc.Fields[10].AddExample("AggregatorCA example.", pemEncodedCertificateExample())
 	doc.Fields[11].AddExample("AggregatorCA example.", pemEncodedKeyExample())
 	doc.Fields[17].AddExample("", clusterEtcdExample())
 	doc.Fields[19].AddExample("", clusterExternalCloudProviderConfigExample())

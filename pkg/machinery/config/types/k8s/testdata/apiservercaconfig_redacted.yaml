@@ -1,0 +1,13 @@
+apiVersion: v1alpha1
+kind: KubeAPIServerCAConfig
+issuingCA:
+    cert: |-
+        -----BEGIN CERTIFICATE-----
+        MIIC0DCCAbigAwIBAgIUI7z
+        -----END CERTIFICATE-----
+    key: REDACTED
+acceptedCAs:
+    - |-
+      -----BEGIN CERTIFICATE-----
+      MIIACCEPTED1
+      -----END CERTIFICATE-----

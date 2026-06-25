@@ -174,6 +174,15 @@ func (o KubernetesRootSpec) DeepCopy() KubernetesRootSpec {
 	if o.AggregatorCA != nil {
 		cp.AggregatorCA = o.AggregatorCA.DeepCopy()
 	}
+	if o.AcceptedAggregatorCAs != nil {
+		cp.AcceptedAggregatorCAs = make([]*x509.PEMEncodedCertificate, len(o.AcceptedAggregatorCAs))
+		copy(cp.AcceptedAggregatorCAs, o.AcceptedAggregatorCAs)
+		for i2 := range o.AcceptedAggregatorCAs {
+			if o.AcceptedAggregatorCAs[i2] != nil {
+				cp.AcceptedAggregatorCAs[i2] = o.AcceptedAggregatorCAs[i2].DeepCopy()
+			}
+		}
+	}
 	if o.EtcdEncryptionConfig != nil {
 		cp.EtcdEncryptionConfig = make(map[string]any, len(o.EtcdEncryptionConfig))
 		for k2, v2 := range o.EtcdEncryptionConfig {

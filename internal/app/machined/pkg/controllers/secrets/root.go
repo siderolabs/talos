@@ -91,6 +91,12 @@ func NewRootKubernetesController() *RootKubernetesController {
 				func(cfg *config.MachineConfig) bool {
 					return cfg.Config().K8sAPIServerConfig() != nil
 				},
+				func(cfg *config.MachineConfig) bool {
+					return cfg.Config().K8sAPIServerCAConfig() != nil
+				},
+				func(cfg *config.MachineConfig) bool {
+					return cfg.Config().K8sAggregatorCAConfig() != nil
+				},
 			),
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, cfg *config.MachineConfig, res *secrets.KubernetesRoot) error {
 				cfgProvider := cfg.Config()
@@ -126,25 +132,11 @@ func NewRootKubernetesController() *RootKubernetesController {
 					k8sSecrets.APIServerIPs = nil
 				}
 
-				k8sSecrets.AggregatorCA = cfgProvider.Cluster().AggregatorCA()
+				k8sSecrets.AggregatorCA = cfgProvider.K8sAggregatorCAConfig().IssuingCA()
+				k8sSecrets.AcceptedAggregatorCAs = cfgProvider.K8sAggregatorCAConfig().AcceptedCAs()
 
-				if k8sSecrets.AggregatorCA == nil {
-					return errors.New("missing cluster.aggregatorCA secret")
-				}
-
-				k8sSecrets.IssuingCA = cfgProvider.Cluster().IssuingCA()
-				k8sSecrets.AcceptedCAs = cfgProvider.Cluster().AcceptedCAs()
-
-				if k8sSecrets.IssuingCA != nil {
-					k8sSecrets.AcceptedCAs = append(k8sSecrets.AcceptedCAs, &x509.PEMEncodedCertificate{
-						Crt: k8sSecrets.IssuingCA.Crt,
-					})
-				}
-
-				if len(k8sSecrets.IssuingCA.Key) == 0 {
-					// drop incomplete issuing CA, as the machine config for workers contains just the cert
-					k8sSecrets.IssuingCA = nil
-				}
+				k8sSecrets.IssuingCA = cfgProvider.K8sAPIServerCAConfig().IssuingCA()
+				k8sSecrets.AcceptedCAs = cfgProvider.K8sAPIServerCAConfig().AcceptedCAs()
 
 				if len(k8sSecrets.AcceptedCAs) == 0 {
 					return errors.New("missing cluster.CA secret")

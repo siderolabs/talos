@@ -1,0 +1,20 @@
+apiVersion: v1alpha1
+kind: KubeAggregatorCAConfig
+issuingCA:
+    cert: |-
+        -----BEGIN CERTIFICATE-----
+        MIIC0DCCAbigAwIBAgIUI7z
+        -----END CERTIFICATE-----
+    key: |-
+        -----BEGIN EC PRIVATE KEY-----
+        MHcCAQEEIABC
+        -----END EC PRIVATE KEY-----
+acceptedCAs:
+    - |-
+      -----BEGIN CERTIFICATE-----
+      MIIACCEPTED1
+      -----END CERTIFICATE-----
+    - |-
+      -----BEGIN CERTIFICATE-----
+      MIIACCEPTED2
+      -----END CERTIFICATE-----

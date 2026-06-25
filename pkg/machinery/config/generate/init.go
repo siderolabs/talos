@@ -162,8 +162,8 @@ func (in *Input) init() ([]config.Document, error) {
 				ServiceSubnet: in.ServiceNet,
 			},
 		),
-		ClusterCA:              in.Options.SecretsBundle.Certs.K8s,
-		ClusterAggregatorCA:    in.Options.SecretsBundle.Certs.K8sAggregator,
+		ClusterCA:              nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), in.Options.SecretsBundle.Certs.K8s),
+		ClusterAggregatorCA:    nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), in.Options.SecretsBundle.Certs.K8sAggregator),
 		ClusterServiceAccount:  in.Options.SecretsBundle.Certs.K8sServiceAccount,
 		BootstrapToken:         in.Options.SecretsBundle.Secrets.BootstrapToken,
 		ExtraManifests:         []string{},
@@ -278,7 +278,7 @@ func (in *Input) init() ([]config.Document, error) {
 
 	documents = append(documents, extraDocuments...)
 
-	extraDocuments = in.generateKubernetesUniversalConfigs()
+	extraDocuments = in.generateKubernetesUniversalConfigs(true)
 
 	documents = append(documents, extraDocuments...)
 
