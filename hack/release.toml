@@ -102,6 +102,7 @@ List of changes:
 - Deprecated `.cluster.scheduler` in the v1alpha1 config; use the `KubeSchedulerConfig` document for kube-scheduler configuration.
 - Deprecated `.cluster.proxy` in the v1alpha1 config; use the `KubeProxyConfig` document for kube-proxy configuration.
 - Deprecated `.cluster.network` in the v1alpha1 config; use the `KubeNetworkConfig` document for Kubernetes network configuration; Flannel can be configured using the `KubeFlannelCNIConfig` document.
+- Deprecated `.cluster.coreDNS` in the v1alpha1 config; use the `KubeCoreDNSConfig` document for CoreDNS configuration.
 - Deprecated `.cluster.discovery` in the v1alpha1 config; use the `DiscoveryServiceConfig` document for discovery service configuration. The v1alpha1 config and `DiscoveryServiceConfig` are mutually exclusive.
 """
 

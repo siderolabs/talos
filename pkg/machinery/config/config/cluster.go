@@ -28,7 +28,6 @@ type ClusterConfig interface {
 	AESCBCEncryptionSecret() string
 	SecretboxEncryptionSecret() string
 	Etcd() Etcd
-	CoreDNS() CoreDNS
 	// ExternalCloudProvider returns external cloud provider settings.
 	ExternalCloudProvider() ExternalCloudProvider
 	ExtraManifestURLs() []string
@@ -54,13 +53,6 @@ type Etcd interface {
 type Token interface {
 	ID() string
 	Secret() string
-}
-
-// CoreDNS defines the requirements for a config that pertains to CoreDNS
-// coredns options.
-type CoreDNS interface {
-	Enabled() bool
-	Image() string
 }
 
 // ExternalCloudProvider defines settings for external cloud provider.

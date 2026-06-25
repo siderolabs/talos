@@ -223,3 +223,12 @@ func (c *Config) K8sAuthorizerConfigs() []config.K8sAuthorizerConfig {
 		func(c *AuthorizationConfigAuthorizerConfig) config.K8sAuthorizerConfig { return c },
 	)
 }
+
+// K8sCoreDNSConfig implements the config.K8sCoreDNSConfig interface.
+func (c *Config) K8sCoreDNSConfig() config.K8sCoreDNSConfig {
+	if c.ClusterConfig == nil || c.ClusterConfig.CoreDNSConfig == nil {
+		return &CoreDNS{}
+	}
+
+	return c.ClusterConfig.CoreDNSConfig
+}

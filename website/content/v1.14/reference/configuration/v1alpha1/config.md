@@ -904,10 +904,6 @@ etcd:
     # advertisedSubnets:
     #     - 10.0.0.0/8
 {{< /highlight >}}</details> | |
-|`coreDNS` |<a href="#Config.cluster.coreDNS">CoreDNS</a> |Core DNS specific configuration options. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-coreDNS:
-    image: registry.k8s.io/coredns/coredns:v1.14.2 # The `image` field is an override to the default coredns image.
-{{< /highlight >}}</details> | |
 |`externalCloudProvider` |<a href="#Config.cluster.externalCloudProvider">ExternalCloudProviderConfig</a> |External cloud provider configuration. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 externalCloudProvider:
     enabled: true # Enable external cloud provider.
@@ -1026,30 +1022,6 @@ advertisedSubnets:
     - 10.0.0.0/8
 {{< /highlight >}}</details> | |
 |`listenSubnets` |[]string |The `listenSubnets` field configures the networks for the etcd to listen for peer and client connections.<br><br>If `listenSubnets` is not set, but `advertisedSubnets` is set, `listenSubnets` defaults to<br>`advertisedSubnets`.<br><br>If neither `advertisedSubnets` nor `listenSubnets` is set, `listenSubnets` defaults to listen on all addresses.<br><br>IPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.<br>Negative subnet matches should be specified last to filter out IPs picked by positive matches.<br>If not specified, advertised IP is selected as the first routable address of the node.  | |
-
-
-
-
-
-
-### coreDNS {#Config.cluster.coreDNS}
-
-CoreDNS represents the CoreDNS config values.
-
-
-
-
-{{< highlight yaml >}}
-cluster:
-    coreDNS:
-        image: registry.k8s.io/coredns/coredns:v1.14.2 # The `image` field is an override to the default coredns image.
-{{< /highlight >}}
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`disabled` |bool |Disable coredns deployment on cluster bootstrap.  | |
-|`image` |string |The `image` field is an override to the default coredns image.  | |
 
 
 

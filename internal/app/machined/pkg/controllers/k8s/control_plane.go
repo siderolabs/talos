@@ -423,13 +423,15 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 
 					PodCIDRs: xslices.Map(cfgProvider.K8sNetworkConfig().PodCIDRs(), netip.Prefix.String),
 
-					CoreDNSEnabled: cfgProvider.Cluster().CoreDNS().Enabled(),
-					CoreDNSImage:   cfgProvider.Cluster().CoreDNS().Image(),
-
 					DNSServiceIP:   dnsServiceIP,
 					DNSServiceIPv6: dnsServiceIPv6,
 
 					TalosAPIServiceEnabled: cfgProvider.Machine().Features().KubernetesTalosAPIAccess().Enabled(),
+				}
+
+				if k8sCoreDNSConfig := cfgProvider.K8sCoreDNSConfig(); k8sCoreDNSConfig != nil {
+					res.TypedSpec().CoreDNSEnabled = k8sCoreDNSConfig.Enabled()
+					res.TypedSpec().CoreDNSImage = k8sCoreDNSConfig.Image()
 				}
 
 				if k8sProxyConfig := cfgProvider.K8sProxyConfig(); k8sProxyConfig != nil {

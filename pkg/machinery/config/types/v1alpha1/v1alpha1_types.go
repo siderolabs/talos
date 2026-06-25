@@ -422,10 +422,9 @@ type ClusterConfig struct {
 	//   examples:
 	//     - value: clusterEtcdExample()
 	EtcdConfig *EtcdConfig `yaml:"etcd,omitempty"`
-	//   description: |
-	//     Core DNS specific configuration options.
-	//   examples:
-	//     - value: clusterCoreDNSExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeCoreDNSConfig` instead.
 	CoreDNSConfig *CoreDNS `yaml:"coreDNS,omitempty"`
 	//   description: |
 	//     External cloud provider configuration.
@@ -984,6 +983,8 @@ type PodCheckpointer struct {
 }
 
 // CoreDNS represents the CoreDNS config values.
+//
+//docgen:nodoc
 type CoreDNS struct {
 	//   description: |
 	//     Disable coredns deployment on cluster bootstrap.

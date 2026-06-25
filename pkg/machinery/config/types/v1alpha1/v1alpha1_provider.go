@@ -1513,6 +1513,9 @@ func (i InstallExtensionConfig) Image() string {
 	return i.ExtensionImage
 }
 
+// K8sCoreDNSConfigSignal implements config.K8sCoreDNSConfig interface.
+func (c *CoreDNS) K8sCoreDNSConfigSignal() {}
+
 // Enabled implements the config.Provider interface.
 func (c *CoreDNS) Enabled() bool {
 	return c.CoreDNSDisabled == nil || !*c.CoreDNSDisabled

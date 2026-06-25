@@ -173,12 +173,6 @@ func clusterEtcdAdvertisedSubnetsExample() []string {
 	return []string{"10.0.0.0/8"}
 }
 
-func clusterCoreDNSExample() *CoreDNS {
-	return &CoreDNS{
-		CoreDNSImage: (&CoreDNS{}).Image(),
-	}
-}
-
 func clusterExternalCloudProviderConfigExample() *ExternalCloudProviderConfig {
 	return &ExternalCloudProviderConfig{
 		ExternalEnabled: new(true),

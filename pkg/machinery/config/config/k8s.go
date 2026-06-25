@@ -112,3 +112,10 @@ type K8sAuthorizerConfig interface {
 	Name() string
 	Webhook() map[string]any
 }
+
+// K8sCoreDNSConfig defines the configuration options for CoreDNS.
+type K8sCoreDNSConfig interface {
+	K8sCoreDNSConfigSignal()
+	Enabled() bool
+	Image() string
+}

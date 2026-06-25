@@ -173,3 +173,7 @@ apiVersion: v1alpha1
 kind: KubeProxyConfig
 image: registry.k8s.io/kube-proxy:v1.28.0
 config: {}
+---
+apiVersion: v1alpha1
+kind: KubeCoreDNSConfig
+enabled: true

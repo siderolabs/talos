@@ -364,13 +364,7 @@ func (ClusterConfig) Doc() *encoder.Doc {
 				Description: "Etcd specific configuration options.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Etcd specific configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "coreDNS",
-				Type:        "CoreDNS",
-				Note:        "",
-				Description: "Core DNS specific configuration options.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Core DNS specific configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{
 				Name:        "externalCloudProvider",
 				Type:        "ExternalCloudProviderConfig",
@@ -431,7 +425,6 @@ func (ClusterConfig) Doc() *encoder.Doc {
 	doc.Fields[10].AddExample("AggregatorCA example.", pemEncodedCertificateExample())
 	doc.Fields[11].AddExample("AggregatorCA example.", pemEncodedKeyExample())
 	doc.Fields[17].AddExample("", clusterEtcdExample())
-	doc.Fields[18].AddExample("", clusterCoreDNSExample())
 	doc.Fields[19].AddExample("", clusterExternalCloudProviderConfigExample())
 	doc.Fields[20].AddExample("", []string{
 		"https://www.example.com/manifest1.yaml",
@@ -881,40 +874,6 @@ func (InstallDiskSelector) Doc() *encoder.Doc {
 	doc.Fields[0].AddExample("Select a disk which size is less or equal than 2TB.", machineInstallDiskSizeMatcherExamples2())
 	doc.Fields[8].AddExample("", "/pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0")
 	doc.Fields[8].AddExample("", "/pci0000:00/*")
-
-	return doc
-}
-
-func (CoreDNS) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "CoreDNS",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "CoreDNS represents the CoreDNS config values." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "CoreDNS represents the CoreDNS config values.\n",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "ClusterConfig",
-				FieldName: "coreDNS",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "disabled",
-				Type:        "bool",
-				Note:        "",
-				Description: "Disable coredns deployment on cluster bootstrap.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disable coredns deployment on cluster bootstrap." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "image",
-				Type:        "string",
-				Note:        "",
-				Description: "The `image` field is an override to the default coredns image.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `image` field is an override to the default coredns image." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", clusterCoreDNSExample())
 
 	return doc
 }
@@ -1493,7 +1452,6 @@ func GetFileDoc() *encoder.FileDoc {
 			KubeletNodeIPConfig{}.Doc(),
 			InstallConfig{}.Doc(),
 			InstallDiskSelector{}.Doc(),
-			CoreDNS{}.Doc(),
 			Endpoint{}.Doc(),
 			ControlPlaneConfig{}.Doc(),
 			EtcdConfig{}.Doc(),

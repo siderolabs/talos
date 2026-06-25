@@ -194,6 +194,8 @@ linters:
         - "^raw\\.xz$"
         - "^resource(s|)$"
         - "^Webhook$"
+        - "enabled$"
+        - "disabled$"
     gocyclo:
       min-complexity: 10
     gomoddirectives:

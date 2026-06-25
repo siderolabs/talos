@@ -1649,6 +1649,49 @@
       ],
       "description": "KubeControllerManagerConfig configures kube-controller-manager controlplane static pod."
     },
+    "k8s.KubeCoreDNSConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "KubeCoreDNSConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "enabled": {
+          "type": "boolean",
+          "title": "enabled",
+          "description": "By default, CoreDNS deployment is enabled.\nSet to false to disable the CoreDNS deployment.\n",
+          "markdownDescription": "By default, CoreDNS deployment is enabled.\nSet to false to disable the CoreDNS deployment.",
+          "x-intellij-html-description": "\u003cp\u003eBy default, CoreDNS deployment is enabled.\nSet to false to disable the CoreDNS deployment.\u003c/p\u003e\n"
+        },
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "The container image used to run the CoreDNS.\n\nIf the value is not set, the default image will be used.\n",
+          "markdownDescription": "The container image used to run the CoreDNS.\n\nIf the value is not set, the default image will be used.",
+          "x-intellij-html-description": "\u003cp\u003eThe container image used to run the CoreDNS.\u003c/p\u003e\n\n\u003cp\u003eIf the value is not set, the default image will be used.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "KubeCoreDNSConfig configures CoreDNS deployment."
+    },
     "k8s.KubeEtcdEncryptionConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -5204,13 +5247,6 @@
           "markdownDescription": "Etcd specific configuration options.",
           "x-intellij-html-description": "\u003cp\u003eEtcd specific configuration options.\u003c/p\u003e\n"
         },
-        "coreDNS": {
-          "$ref": "#/$defs/v1alpha1.CoreDNS",
-          "title": "coreDNS",
-          "description": "Core DNS specific configuration options.\n",
-          "markdownDescription": "Core DNS specific configuration options.",
-          "x-intellij-html-description": "\u003cp\u003eCore DNS specific configuration options.\u003c/p\u003e\n"
-        },
         "externalCloudProvider": {
           "$ref": "#/$defs/v1alpha1.ExternalCloudProviderConfig",
           "title": "externalCloudProvider",
@@ -5342,27 +5378,6 @@
       "additionalProperties": false,
       "type": "object",
       "description": "ControlPlaneConfig represents the control plane configuration options.\\n"
-    },
-    "v1alpha1.CoreDNS": {
-      "properties": {
-        "disabled": {
-          "type": "boolean",
-          "title": "disabled",
-          "description": "Disable coredns deployment on cluster bootstrap.\n",
-          "markdownDescription": "Disable coredns deployment on cluster bootstrap.",
-          "x-intellij-html-description": "\u003cp\u003eDisable coredns deployment on cluster bootstrap.\u003c/p\u003e\n"
-        },
-        "image": {
-          "type": "string",
-          "title": "image",
-          "description": "The image field is an override to the default coredns image.\n",
-          "markdownDescription": "The `image` field is an override to the default coredns image.",
-          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eimage\u003c/code\u003e field is an override to the default coredns image.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "CoreDNS represents the CoreDNS config values.\\n"
     },
     "v1alpha1.Endpoint": {
       "properties": {},
@@ -6296,6 +6311,9 @@
     },
     {
       "$ref": "#/$defs/k8s.KubeControllerManagerConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/k8s.KubeCoreDNSConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/k8s.KubeEtcdEncryptionConfigV1Alpha1"

@@ -323,6 +323,127 @@ func TestKubeProxyBridge(t *testing.T) {
 	}
 }
 
+func TestKubeCoreDNSBridge(t *testing.T) {
+	t.Parallel()
+
+	defaultImage := constants.CoreDNSImage + ":" + constants.DefaultCoreDNSVersion
+
+	for _, test := range []struct {
+		name string
+
+		cfg func(*testing.T) config.Config
+
+		expectDisabled bool
+		expectImage    string
+	}{
+		{
+			name: "v1alpha1 only, disabled",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					ClusterConfig: &v1alpha1.ClusterConfig{
+						CoreDNSConfig: &v1alpha1.CoreDNS{ //nolint:staticcheck // testing deprecated field
+							CoreDNSDisabled: new(true),
+						},
+					},
+				})
+			},
+
+			expectDisabled: true,
+		},
+		{
+			name: "new style disabled",
+
+			cfg: func(*testing.T) config.Config {
+				cd := k8s.NewKubeCoreDNSConfigV1Alpha1()
+				cd.PodEnabled = new(false)
+
+				c, err := container.New(
+					cd,
+				)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectDisabled: true,
+		},
+		{
+			name: "v1alpha1 default",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{})
+			},
+
+			expectImage: defaultImage,
+		},
+		{
+			name: "new style default",
+
+			cfg: func(*testing.T) config.Config {
+				c, err := container.New(
+					k8s.NewKubeCoreDNSConfigV1Alpha1(),
+				)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectImage: defaultImage,
+		},
+		{
+			name: "v1alpha1 only",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					ClusterConfig: &v1alpha1.ClusterConfig{
+						CoreDNSConfig: &v1alpha1.CoreDNS{ //nolint:staticcheck // testing deprecated field
+							CoreDNSImage: "coredns:v1",
+						},
+					},
+				})
+			},
+
+			expectImage: "coredns:v1",
+		},
+		{
+			name: "new style enabled",
+
+			cfg: func(*testing.T) config.Config {
+				cd := k8s.NewKubeCoreDNSConfigV1Alpha1()
+				cd.PodImage = "coredns:v1"
+
+				c, err := container.New(
+					cd,
+				)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectImage: "coredns:v1",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := test.cfg(t)
+
+			coreDNS := cfg.K8sCoreDNSConfig()
+			require.NotNil(t, coreDNS)
+
+			if test.expectDisabled {
+				assert.False(t, coreDNS.Enabled())
+
+				return
+			}
+
+			assert.True(t, coreDNS.Enabled())
+			assert.Equal(t, test.expectImage, coreDNS.Image())
+		})
+	}
+}
+
 func TestKubeNetworkBridge(t *testing.T) {
 	t.Parallel()
 

@@ -313,6 +313,38 @@ func (KubeControllerManagerConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (KubeCoreDNSConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeCoreDNSConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeCoreDNSConfig configures CoreDNS deployment." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeCoreDNSConfig configures CoreDNS deployment.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "enabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "By default, CoreDNS deployment is enabled.\nSet to false to disable the CoreDNS deployment.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "By default, CoreDNS deployment is enabled." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "image",
+				Type:        "string",
+				Note:        "",
+				Description: "The container image used to run the CoreDNS.\n\nIf the value is not set, the default image will be used.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The container image used to run the CoreDNS." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeCoreDNSConfigV1Alpha1())
+
+	return doc
+}
+
 func (KubeEtcdEncryptionConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "KubeEtcdEncryptionConfig",
@@ -583,6 +615,7 @@ func GetFileDoc() *encoder.FileDoc {
 			KubeAuthorizerConfigV1Alpha1{}.Doc(),
 			ResourcesConfig{}.Doc(),
 			KubeControllerManagerConfigV1Alpha1{}.Doc(),
+			KubeCoreDNSConfigV1Alpha1{}.Doc(),
 			KubeEtcdEncryptionConfigV1Alpha1{}.Doc(),
 			KubeFlannelCNIConfigV1Alpha1{}.Doc(),
 			KubeNetworkConfigV1Alpha1{}.Doc(),

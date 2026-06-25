@@ -92,6 +92,11 @@ func (in *Input) generateKubernetesControlplaneConfigs() []config.Document {
 		result = append(result, flannelConfig)
 	}
 
+	coreDNSConfig := k8s.NewKubeCoreDNSConfigV1Alpha1()
+	coreDNSConfig.PodEnabled = new(true)
+
+	result = append(result, coreDNSConfig)
+
 	return result
 }
 

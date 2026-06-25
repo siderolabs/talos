@@ -129,7 +129,7 @@ func (c *ClusterConfig) LocalAPIServerPort() int {
 }
 
 // CoreDNS implements the config.ClusterConfig interface.
-func (c *ClusterConfig) CoreDNS() config.CoreDNS {
+func (c *ClusterConfig) CoreDNS() *CoreDNS {
 	if c.CoreDNSConfig == nil {
 		return &CoreDNS{}
 	}
