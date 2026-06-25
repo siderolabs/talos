@@ -14,6 +14,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/volumes"
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
+	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
@@ -42,6 +43,7 @@ func GetSystemVolumeTransformers(ctx context.Context,
 		metaVolumeTransformer,
 		GetStateVolumeTransformer(encryptionMeta, inContainer, isAgent),
 		GetEphemeralVolumeTransformer(inContainer),
+		GetPromotableSystemVolumesTransformer(inContainer),
 		StandardDirectoryVolumesTransformer,
 		GetOverlayVolumesTransformer(inContainer),
 	}
@@ -279,6 +281,124 @@ func manageStateConfigPresent(cfg configconfig.Config) func(vc *block.VolumeConf
 	}
 }
 
+// promotableVolumeDefinitions are the system volumes that default to a directory under the
+// EPHEMERAL volume, but can be placed on a dedicated partition via a VolumeConfig document at
+// cluster creation time.
+var promotableVolumeDefinitions = []struct {
+	ID           string
+	Path         string
+	Mode         os.FileMode
+	UID          int
+	GID          int
+	Recursive    bool
+	SELinuxLabel string
+}{
+	{
+		ID:           constants.EtcdDataVolumeID,
+		Path:         constants.EtcdDataPath,
+		SELinuxLabel: constants.EtcdDataSELinuxLabel,
+		Mode:         0o700,
+		UID:          constants.EtcdUserID,
+		GID:          constants.EtcdUserID,
+		Recursive:    true,
+	},
+	{
+		ID:           constants.CRIContainerdVolumeID,
+		Path:         constants.CRIContainerdDataPath,
+		SELinuxLabel: constants.CRIContainerdDataSELinuxLabel,
+		Mode:         0o000,
+	},
+	{
+		ID:           constants.KubeletDataVolumeID,
+		Path:         constants.KubeletDataPath,
+		SELinuxLabel: constants.KubeletDataSELinuxLabel,
+		Mode:         0o700,
+	},
+}
+
+// GetPromotableSystemVolumesTransformer returns the transformer for the promotable system volumes
+// (ETCD, CRI, KUBELET).
+//
+// By default each is provisioned as a directory under the EPHEMERAL volume (identical to the
+// legacy behavior). If a matching VolumeConfig with provisioning is present, the volume is instead
+// provisioned as a dedicated partition mounted at the same path.
+//
+// The chosen backing (directory vs. dedicated partition) is fixed at cluster creation: switching an
+// already-provisioned node between the two is rejected by VolumeConfig.RuntimeValidate, so this
+// transformer never has to migrate existing volume data.
+func GetPromotableSystemVolumesTransformer(inContainer bool) volumeConfigTransformer {
+	return func(cfg configconfig.Config) ([]VolumeResource, error) {
+		// skip if no config
+		if cfg == nil || cfg.Machine() == nil {
+			return nil, nil
+		}
+
+		resources := make([]VolumeResource, 0, len(promotableVolumeDefinitions))
+
+		for _, volume := range promotableVolumeDefinitions {
+			// the mount spec is the same whether the volume is a directory or a partition: it is
+			// always mounted at `volume.Path`, under its parent directory volume (e.g. /var/lib).
+			mountSpec := block.MountSpec{
+				TargetPath:       filepath.Base(volume.Path),
+				ParentID:         filepath.Dir(volume.Path),
+				SelinuxLabel:     volume.SELinuxLabel,
+				FileMode:         volume.Mode,
+				UID:              volume.UID,
+				GID:              volume.GID,
+				RecursiveRelabel: volume.Recursive,
+			}
+
+			extraVolumeConfig, _ := cfg.Volumes().ByName(volume.ID)
+
+			var builder *Builder
+
+			if inContainer || !blockcfg.ProvisioningRequested(extraVolumeConfig.Provisioning()) {
+				// default: directory under EPHEMERAL (partitions cannot be provisioned in a container)
+				builder = NewBuilder().
+					WithType(block.VolumeTypeDirectory).
+					WithMount(mountSpec)
+			} else {
+				// placed on a dedicated partition
+				provisioning := extraVolumeConfig.Provisioning()
+
+				builder = NewBuilder().
+					WithType(block.VolumeTypePartition).
+					WithProvisioning(block.ProvisioningSpec{
+						Wave: block.WaveSystemDisk,
+						DiskSelector: block.DiskSelector{
+							Match: provisioning.DiskSelector().ValueOr(systemDiskMatch()),
+						},
+						PartitionSpec: block.PartitionSpec{
+							MinSize:         provisioning.MinSize().ValueOr(quirks.New("").PartitionSizes().EphemeralMinSize()),
+							MaxSize:         provisioning.MaxSize().ValueOrZero(),
+							RelativeMaxSize: provisioning.RelativeMaxSize().ValueOrZero(),
+							NegativeMaxSize: provisioning.MaxSizeNegative(),
+							Grow:            provisioning.Grow().ValueOr(false),
+							Label:           volume.ID,
+							TypeUUID:        partition.LinuxFilesystemData,
+						},
+						FilesystemSpec: block.FilesystemSpec{
+							Type:  block.FilesystemTypeXFS,
+							Label: volume.ID,
+						},
+					}).
+					WithMount(mountSpec).
+					WithLocator(labelVolumeMatch(volume.ID)).
+					WithTrim(cfg, extraVolumeConfig).
+					WithConvertEncryptionConfiguration(extraVolumeConfig.Encryption())
+			}
+
+			resources = append(resources, VolumeResource{
+				VolumeID:      volume.ID,
+				Label:         block.SystemVolumeLabel,
+				TransformFunc: builder.WriterFunc(),
+			})
+		}
+
+		return resources, nil
+	}
+}
+
 var standardVolumeDefinitions = []struct {
 	ID           string
 	Path         string
@@ -323,25 +443,9 @@ var standardVolumeDefinitions = []struct {
 		Mode:         0o700,
 		SELinuxLabel: constants.EphemeralSelinuxLabel,
 	},
-	{
-		ID:           constants.EtcdDataVolumeID,
-		Path:         constants.EtcdDataPath,
-		SELinuxLabel: constants.EtcdDataSELinuxLabel,
-		Mode:         0o700,
-		UID:          constants.EtcdUserID,
-		GID:          constants.EtcdUserID,
-		Recursive:    true,
-	},
-	{
-		Path:         "/var/lib/containerd",
-		Mode:         0o000,
-		SELinuxLabel: "system_u:object_r:containerd_state_t:s0",
-	},
-	{
-		Path:         "/var/lib/kubelet",
-		Mode:         0o700,
-		SELinuxLabel: "system_u:object_r:kubelet_state_t:s0",
-	},
+	// ETCD, CRI (containerd) and KUBELET are "promotable" system volumes: by default they are
+	// directories under EPHEMERAL, but they can be promoted to a dedicated partition via a
+	// VolumeConfig document. They are handled by GetPromotableSystemVolumesTransformer.
 	{
 		Path:         "/var/lib/cni",
 		Mode:         0o700,
@@ -402,6 +506,12 @@ func StandardDirectoryVolumesTransformer(cfg configconfig.Config) ([]VolumeResou
 	parentIDs := map[string]string{
 		"/var":     constants.EphemeralPartitionLabel,
 		"/var/run": "/var/run",
+		// promotable system volumes are created by GetPromotableSystemVolumesTransformer, but
+		// their child directories (e.g. /var/lib/kubelet/seccomp) are created here, so their
+		// volume IDs must be known to resolve the parent mount.
+		constants.EtcdDataPath:          constants.EtcdDataVolumeID,
+		constants.CRIContainerdDataPath: constants.CRIContainerdVolumeID,
+		constants.KubeletDataPath:       constants.KubeletDataVolumeID,
 	}
 
 	for _, volume := range standardVolumeDefinitions {
