@@ -228,3 +228,139 @@ func TestDiscoveryServiceConfigV1Alpha1ConflictValidate(t *testing.T) {
 		})
 	}
 }
+
+func TestNormalizeEndpoint(t *testing.T) {
+	tests := []struct {
+		name           string
+		endpoint       string
+		expectErr      bool
+		expectAddr     string
+		expectInsecure bool
+	}{
+		{
+			name:           "HTTPS with explicit port",
+			endpoint:       "https://discovery.example.com:6443",
+			expectErr:      false,
+			expectAddr:     "discovery.example.com:6443",
+			expectInsecure: false,
+		},
+		{
+			name:           "HTTPS without port defaults to 443",
+			endpoint:       "https://discovery.example.com",
+			expectErr:      false,
+			expectAddr:     "discovery.example.com:443",
+			expectInsecure: false,
+		},
+		{
+			name:           "HTTP with explicit port",
+			endpoint:       "http://discovery.example.com:8080",
+			expectErr:      false,
+			expectAddr:     "discovery.example.com:8080",
+			expectInsecure: true,
+		},
+		{
+			name:           "HTTP without port defaults to 80",
+			endpoint:       "http://discovery.example.com",
+			expectErr:      false,
+			expectAddr:     "discovery.example.com:80",
+			expectInsecure: true,
+		},
+		{
+			name:           "HTTPS without port defaults to 443",
+			endpoint:       "https://discovery.example.com",
+			expectErr:      false,
+			expectAddr:     "discovery.example.com:443",
+			expectInsecure: false,
+		},
+		{
+			name:           "HTTPS with IPv4 and port",
+			endpoint:       "https://192.168.1.1:6443",
+			expectErr:      false,
+			expectAddr:     "192.168.1.1:6443",
+			expectInsecure: false,
+		},
+		{
+			name:           "HTTP with IPv4 defaults to port 80",
+			endpoint:       "http://192.168.1.1",
+			expectErr:      false,
+			expectAddr:     "192.168.1.1:80",
+			expectInsecure: true,
+		},
+		{
+			name:           "HTTPS with IPv6 and port",
+			endpoint:       "https://[::1]:6443",
+			expectErr:      false,
+			expectAddr:     "[::1]:6443",
+			expectInsecure: false,
+		},
+		{
+			name:           "HTTP with IPv6 defaults to port 80",
+			endpoint:       "http://[::1]",
+			expectErr:      false,
+			expectAddr:     "[::1]:80",
+			expectInsecure: true,
+		},
+		{
+			name:           "HTTPS with path is stripped",
+			endpoint:       "https://discovery.example.com:6443/api/v1",
+			expectErr:      false,
+			expectAddr:     "discovery.example.com:6443",
+			expectInsecure: false,
+		},
+		{
+			name:           "HTTPS with query string is stripped",
+			endpoint:       "https://discovery.example.com:6443?key=value",
+			expectErr:      false,
+			expectAddr:     "discovery.example.com:6443",
+			expectInsecure: false,
+		},
+		{
+			name:           "Invalid URL returns error",
+			endpoint:       "not a valid url://[",
+			expectErr:      true,
+			expectAddr:     "",
+			expectInsecure: false,
+		},
+		{
+			name:      "Empty URL returns error",
+			endpoint:  "",
+			expectErr: true,
+		},
+		{
+			name:      "Scheme-less URL returns error",
+			endpoint:  "discovery.example.com",
+			expectErr: true,
+		},
+		{
+			name:      "Unsupported scheme returns error",
+			endpoint:  "ftp://discovery.example.com",
+			expectErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			addr, insecure, err := cluster.NormalizeEndpoint(tt.endpoint)
+
+			if tt.expectErr {
+				if err == nil {
+					t.Errorf("expected error, got nil")
+				}
+
+				return
+			}
+
+			if err != nil {
+				t.Errorf("unexpected error: %v", err)
+			}
+
+			if addr != tt.expectAddr {
+				t.Errorf("expected addr %q, got %q", tt.expectAddr, addr)
+			}
+
+			if insecure != tt.expectInsecure {
+				t.Errorf("expected insecure %v, got %v", tt.expectInsecure, insecure)
+			}
+		})
+	}
+}

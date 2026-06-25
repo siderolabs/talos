@@ -22,7 +22,6 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 
-	clusterctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cluster"
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config"
@@ -279,7 +278,7 @@ func (suite *DiscoverySuite) TestServiceEndpoints() {
 	}
 
 	expected := xslices.Map(provider.DiscoveryServiceConfigs(), func(c configconfig.DiscoveryServiceConfig) cluster.ServiceEndpoint {
-		addr, insecure, err := clusterctrl.NormalizeDiscoveryEndpoint(c.Endpoint().String())
+		addr, insecure, err := clustertypes.NormalizeEndpoint(c.Endpoint().String())
 		suite.Require().NoError(err)
 
 		return cluster.ServiceEndpoint{Name: c.Name(), Endpoint: addr, Insecure: insecure}

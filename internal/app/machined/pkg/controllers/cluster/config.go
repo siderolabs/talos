@@ -7,8 +7,6 @@ package cluster
 import (
 	"context"
 	"encoding/base64"
-	"net"
-	"net/url"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/controller/generic/transform"
@@ -52,7 +50,7 @@ func NewConfigController() *ConfigController {
 					res.TypedSpec().ServiceEndpoints = []cluster.ServiceEndpoint{}
 
 					for _, discoveryServiceConfig := range discoveryServiceConfigs {
-						normalizedEndpoint, insecure, err := NormalizeDiscoveryEndpoint(discoveryServiceConfig.Endpoint().String())
+						normalizedEndpoint, insecure, err := clustertypes.NormalizeEndpoint(discoveryServiceConfig.Endpoint().String())
 						if err != nil {
 							return err
 						}
@@ -100,27 +98,4 @@ func NewConfigController() *ConfigController {
 			},
 		},
 	)
-}
-
-// NormalizeDiscoveryEndpoint normalizes a discovery service endpoint URL into a host:port address plus insecure flag.
-func NormalizeDiscoveryEndpoint(rawEndpoint string) (addr string, insecure bool, err error) {
-	u, err := url.Parse(rawEndpoint)
-	if err != nil {
-		return "", false, err
-	}
-
-	if err := clustertypes.ValidateDiscoveryServiceEndpoint(u); err != nil {
-		return "", false, err
-	}
-
-	port := u.Port()
-	if port == "" {
-		if u.Scheme == "http" {
-			port = "80"
-		} else {
-			port = "443"
-		}
-	}
-
-	return net.JoinHostPort(u.Hostname(), port), u.Scheme == "http", nil
 }

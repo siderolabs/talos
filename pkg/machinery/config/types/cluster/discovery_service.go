@@ -9,6 +9,7 @@ package cluster
 import (
 	"errors"
 	"fmt"
+	"net"
 	"net/url"
 
 	"github.com/siderolabs/gen/ensure"
@@ -156,4 +157,27 @@ func (s *DiscoveryServiceConfigV1Alpha1) V1Alpha1ConflictValidate(v1alpha1Cfg *v
 	}
 
 	return nil
+}
+
+// NormalizeEndpoint normalizes a discovery service endpoint URL into a host:port address plus insecure flag.
+func NormalizeEndpoint(rawEndpoint string) (addr string, insecure bool, err error) {
+	u, err := url.Parse(rawEndpoint)
+	if err != nil {
+		return "", false, err
+	}
+
+	if err := ValidateDiscoveryServiceEndpoint(u); err != nil {
+		return "", false, err
+	}
+
+	port := u.Port()
+	if port == "" {
+		if u.Scheme == "http" {
+			port = "80"
+		} else {
+			port = "443"
+		}
+	}
+
+	return net.JoinHostPort(u.Hostname(), port), u.Scheme == "http", nil
 }
