@@ -3305,9 +3305,9 @@
         "enabled": {
           "type": "boolean",
           "title": "enabled",
-          "description": "Enable the KubeSpan feature.\nCluster discovery should be enabled with cluster.discovery.enabled for KubeSpan to be enabled.\n",
-          "markdownDescription": "Enable the KubeSpan feature.\nCluster discovery should be enabled with cluster.discovery.enabled for KubeSpan to be enabled.",
-          "x-intellij-html-description": "\u003cp\u003eEnable the KubeSpan feature.\nCluster discovery should be enabled with cluster.discovery.enabled for KubeSpan to be enabled.\u003c/p\u003e\n"
+          "description": "Enable the KubeSpan feature.\nRequires cluster discovery to be enabled through a DiscoveryServiceConfig document.\n",
+          "markdownDescription": "Enable the KubeSpan feature.\nRequires cluster discovery to be enabled through a DiscoveryServiceConfig document.",
+          "x-intellij-html-description": "\u003cp\u003eEnable the KubeSpan feature.\nRequires cluster discovery to be enabled through a DiscoveryServiceConfig document.\u003c/p\u003e\n"
         },
         "advertiseKubernetesNetworks": {
           "type": "boolean",

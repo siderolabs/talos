@@ -1059,7 +1059,7 @@ func (KubeSpanConfigV1Alpha1) Doc() *encoder.Doc {
 				Name:        "enabled",
 				Type:        "bool",
 				Note:        "",
-				Description: "Enable the KubeSpan feature.\nCluster discovery should be enabled with cluster.discovery.enabled for KubeSpan to be enabled.",
+				Description: "Enable the KubeSpan feature.\nRequires cluster discovery to be enabled through a DiscoveryServiceConfig document.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable the KubeSpan feature." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{

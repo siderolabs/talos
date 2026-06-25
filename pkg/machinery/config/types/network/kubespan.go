@@ -58,7 +58,7 @@ type KubeSpanConfigV1Alpha1 struct {
 
 	//   description: |
 	//     Enable the KubeSpan feature.
-	//     Cluster discovery should be enabled with cluster.discovery.enabled for KubeSpan to be enabled.
+	//     Requires cluster discovery to be enabled through a DiscoveryServiceConfig document.
 	//   schema:
 	//     type: boolean
 	ConfigEnabled *bool `yaml:"enabled,omitempty"`
