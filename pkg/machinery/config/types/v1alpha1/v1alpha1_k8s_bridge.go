@@ -5,12 +5,97 @@
 package v1alpha1
 
 import (
+	"slices"
+
+	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
+
+// K8sAPIServerCAConfig implements the config.K8sAPIServerCAConfig interface.
+func (c *Config) K8sAPIServerCAConfig() config.K8sAPIServerCAConfig {
+	clusterConfig := c.ClusterConfig
+	if clusterConfig == nil {
+		return nil
+	}
+
+	if clusterConfig.ClusterCA == nil && clusterConfig.ClusterAcceptedCAs == nil {
+		return nil
+	}
+
+	return apiServerCAConfigShim{
+		clusterConfig,
+	}
+}
+
+type apiServerCAConfigShim struct {
+	c *ClusterConfig
+}
+
+// K8sAPIServerCAConfigSignal implements the config.K8sAPIServerCAConfig interface.
+func (s apiServerCAConfigShim) K8sAPIServerCAConfigSignal() {}
+
+// IssuingCA implements the config.K8sAPIServerCAConfig interface.
+func (s apiServerCAConfigShim) IssuingCA() *x509.PEMEncodedCertificateAndKey {
+	if s.c.ClusterCA == nil || len(s.c.ClusterCA.Key) == 0 {
+		return nil
+	}
+
+	return s.c.ClusterCA
+}
+
+// AcceptedCAs implements the config.K8sAPIServerCAConfig interface.
+func (s apiServerCAConfigShim) AcceptedCAs() []*x509.PEMEncodedCertificate {
+	acceptedCAs := slices.Clone(s.c.ClusterAcceptedCAs)
+
+	if s.c.ClusterCA != nil && s.c.ClusterCA.Crt != nil {
+		acceptedCAs = slices.Insert(acceptedCAs, 0, &x509.PEMEncodedCertificate{
+			Crt: s.c.ClusterCA.Crt,
+		})
+	}
+
+	return acceptedCAs
+}
+
+// K8sAggregatorCAConfig implements the config.K8sAggregatorCAConfig interface.
+func (c *Config) K8sAggregatorCAConfig() config.K8sAggregatorCAConfig {
+	clusterConfig := c.ClusterConfig
+	if clusterConfig == nil {
+		return nil
+	}
+
+	if clusterConfig.ClusterAggregatorCA == nil {
+		return nil
+	}
+
+	return aggregatorCAConfigShim{
+		c: clusterConfig,
+	}
+}
+
+type aggregatorCAConfigShim struct {
+	c *ClusterConfig
+}
+
+// K8sAggregatorCAConfigSignal implements the config.K8sAggregatorCAConfig interface.
+func (s aggregatorCAConfigShim) K8sAggregatorCAConfigSignal() {}
+
+// IssuingCA implements the config.K8sAggregatorCAConfig interface.
+func (s aggregatorCAConfigShim) IssuingCA() *x509.PEMEncodedCertificateAndKey {
+	return s.c.ClusterAggregatorCA
+}
+
+// AcceptedCAs implements the config.K8sAggregatorCAConfig interface.
+func (s aggregatorCAConfigShim) AcceptedCAs() []*x509.PEMEncodedCertificate {
+	return []*x509.PEMEncodedCertificate{
+		{
+			Crt: s.c.ClusterAggregatorCA.Crt,
+		},
+	}
+}
 
 // K8sAPIServerConfig implements the config.Config interface.
 func (c *Config) K8sAPIServerConfig() config.K8sAPIServerConfig {

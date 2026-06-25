@@ -8,6 +8,7 @@ import (
 	"net/netip"
 	"testing"
 
+	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -909,6 +910,211 @@ func TestKubeAuthorizerBridge(t *testing.T) {
 			assert.Equal(t, "webhook", authorizers[1].Name())
 			assert.Equal(t, "Webhook", authorizers[1].Type())
 			assert.Equal(t, webhook, authorizers[1].Webhook())
+		})
+	}
+}
+
+func TestKubeAPIServerCABridge(t *testing.T) {
+	t.Parallel()
+
+	// the issuing CA (with a private key) is only present on the controlplane.
+	issuingCA, err := x509.NewSelfSignedCertificateAuthority()
+	require.NoError(t, err)
+
+	// an additional accepted (rotated-out) CA, certificate only.
+	acceptedCA, err := x509.NewSelfSignedCertificateAuthority()
+	require.NoError(t, err)
+
+	for _, test := range []struct {
+		name string
+
+		cfg func(*testing.T) config.Config
+
+		expectIssuingCA   *x509.PEMEncodedCertificateAndKey
+		expectAcceptedCAs []*x509.PEMEncodedCertificate
+	}{
+		{
+			// worker-style config: the machine only has the CA certificate, no private key,
+			// so it can't issue certificates, but trusts the CA.
+			name: "v1alpha1 worker",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					ClusterConfig: &v1alpha1.ClusterConfig{
+						ClusterCA: &x509.PEMEncodedCertificateAndKey{
+							Crt: issuingCA.CrtPEM,
+						},
+					},
+				})
+			},
+
+			expectIssuingCA: nil,
+			expectAcceptedCAs: []*x509.PEMEncodedCertificate{
+				{Crt: issuingCA.CrtPEM},
+			},
+		},
+		{
+			name: "new style worker",
+
+			cfg: func(t *testing.T) config.Config {
+				ca := k8s.NewKubeAPIServerCAConfigV1Alpha1()
+				ca.APIAcceptedCAs = []string{string(issuingCA.CrtPEM)}
+
+				c, err := container.New(ca)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectIssuingCA: nil,
+			expectAcceptedCAs: []*x509.PEMEncodedCertificate{
+				{Crt: issuingCA.CrtPEM},
+			},
+		},
+		{
+			// controlplane-style config: full PKI, the machine has the issuing CA key pair and
+			// an additional accepted CA certificate.
+			name: "v1alpha1 controlplane",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					ClusterConfig: &v1alpha1.ClusterConfig{
+						ClusterCA: &x509.PEMEncodedCertificateAndKey{
+							Crt: issuingCA.CrtPEM,
+							Key: issuingCA.KeyPEM,
+						},
+						ClusterAcceptedCAs: []*x509.PEMEncodedCertificate{
+							{Crt: acceptedCA.CrtPEM},
+						},
+					},
+				})
+			},
+
+			expectIssuingCA: &x509.PEMEncodedCertificateAndKey{
+				Crt: issuingCA.CrtPEM,
+				Key: issuingCA.KeyPEM,
+			},
+			expectAcceptedCAs: []*x509.PEMEncodedCertificate{
+				// the issuing CA certificate is prepended to the list of accepted CAs.
+				{Crt: issuingCA.CrtPEM},
+				{Crt: acceptedCA.CrtPEM},
+			},
+		},
+		{
+			name: "new style controlplane",
+
+			cfg: func(t *testing.T) config.Config {
+				ca := k8s.NewKubeAPIServerCAConfigV1Alpha1()
+				ca.APIIssuingCA = &meta.CertificateAndKey{
+					Cert: string(issuingCA.CrtPEM),
+					Key:  string(issuingCA.KeyPEM),
+				}
+				ca.APIAcceptedCAs = []string{string(acceptedCA.CrtPEM)}
+
+				c, err := container.New(ca)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectIssuingCA: &x509.PEMEncodedCertificateAndKey{
+				Crt: issuingCA.CrtPEM,
+				Key: issuingCA.KeyPEM,
+			},
+			expectAcceptedCAs: []*x509.PEMEncodedCertificate{
+				// the issuing CA certificate is prepended to the list of accepted CAs.
+				{Crt: issuingCA.CrtPEM},
+				{Crt: acceptedCA.CrtPEM},
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := test.cfg(t)
+
+			apiServerCA := cfg.K8sAPIServerCAConfig()
+			require.NotNil(t, apiServerCA)
+
+			assert.Equal(t, test.expectIssuingCA, apiServerCA.IssuingCA())
+			assert.Equal(t, test.expectAcceptedCAs, apiServerCA.AcceptedCAs())
+		})
+	}
+}
+
+func TestKubeAggregatorCABridge(t *testing.T) {
+	t.Parallel()
+
+	aggregatorCA, err := x509.NewSelfSignedCertificateAuthority()
+	require.NoError(t, err)
+
+	for _, test := range []struct {
+		name string
+
+		cfg func(*testing.T) config.Config
+
+		expectIssuingCA   *x509.PEMEncodedCertificateAndKey
+		expectAcceptedCAs []*x509.PEMEncodedCertificate
+	}{
+		{
+			name: "v1alpha1 only",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					ClusterConfig: &v1alpha1.ClusterConfig{
+						ClusterAggregatorCA: &x509.PEMEncodedCertificateAndKey{ //nolint:staticcheck // testing deprecated field
+							Crt: aggregatorCA.CrtPEM,
+							Key: aggregatorCA.KeyPEM,
+						},
+					},
+				})
+			},
+
+			// the issuing CA exposes the full key pair, while only its certificate is exposed as an accepted CA.
+			expectIssuingCA: &x509.PEMEncodedCertificateAndKey{
+				Crt: aggregatorCA.CrtPEM,
+				Key: aggregatorCA.KeyPEM,
+			},
+			expectAcceptedCAs: []*x509.PEMEncodedCertificate{
+				{Crt: aggregatorCA.CrtPEM},
+			},
+		},
+		{
+			name: "new style",
+
+			cfg: func(t *testing.T) config.Config {
+				ca := k8s.NewKubeAggregatorCAConfigV1Alpha1()
+				ca.AggregatorIssuingCA = &meta.CertificateAndKey{
+					Cert: string(aggregatorCA.CrtPEM),
+					Key:  string(aggregatorCA.KeyPEM),
+				}
+
+				c, err := container.New(ca)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectIssuingCA: &x509.PEMEncodedCertificateAndKey{
+				Crt: aggregatorCA.CrtPEM,
+				Key: aggregatorCA.KeyPEM,
+			},
+			expectAcceptedCAs: []*x509.PEMEncodedCertificate{
+				// the issuing CA certificate is prepended to the list of accepted CAs.
+				{Crt: aggregatorCA.CrtPEM},
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := test.cfg(t)
+
+			aggregatorCAConfig := cfg.K8sAggregatorCAConfig()
+			require.NotNil(t, aggregatorCAConfig)
+
+			assert.Equal(t, test.expectIssuingCA, aggregatorCAConfig.IssuingCA())
+			assert.Equal(t, test.expectAcceptedCAs, aggregatorCAConfig.AcceptedCAs())
 		})
 	}
 }

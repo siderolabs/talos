@@ -10,7 +10,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"slices"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -23,9 +22,10 @@ import (
 	"github.com/siderolabs/talos/pkg/cluster"
 	taloskubernetes "github.com/siderolabs/talos/pkg/kubernetes"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
+	"github.com/siderolabs/talos/pkg/machinery/config/generate/rotatepatcher"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	secretsres "github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 	"github.com/siderolabs/talos/pkg/rotate/pki/internal/helpers"
 )
@@ -281,16 +281,8 @@ func (r *rotator) addNewCAAccepted(ctx context.Context) error {
 	r.opts.Printf("> Adding new Kubernetes CA as accepted...\n")
 
 	if err := r.patchAllNodes(ctx,
-		func(_ machine.Type, config *v1alpha1.Config) error {
-			config.ClusterConfig.ClusterAcceptedCAs = append(
-				config.ClusterConfig.ClusterAcceptedCAs,
-				&x509.PEMEncodedCertificate{
-					Crt: r.opts.NewKubernetesCA.Crt,
-				},
-			)
-
-			return nil
-		}); err != nil {
+		rotatepatcher.K8sAddAcceptedCA(r.opts.NewKubernetesCA.Crt),
+	); err != nil {
 		return fmt.Errorf("error patching all machine configs: %w", err)
 	}
 
@@ -301,26 +293,18 @@ func (r *rotator) swapCAs(ctx context.Context) error {
 	r.opts.Printf("> Making new Kubernetes CA the issuing CA, old Kubernetes CA the accepted CA...\n")
 
 	if err := r.patchAllNodes(ctx,
-		func(machineType machine.Type, config *v1alpha1.Config) error {
-			config.ClusterConfig.ClusterAcceptedCAs = append(
-				config.ClusterConfig.ClusterAcceptedCAs,
-				&x509.PEMEncodedCertificate{
-					Crt: r.currentCA,
-				},
-			)
-			config.ClusterConfig.ClusterAcceptedCAs = slices.DeleteFunc(config.Cluster().AcceptedCAs(), func(ca *x509.PEMEncodedCertificate) bool {
-				return bytes.Equal(ca.Crt, r.opts.NewKubernetesCA.Crt)
-			})
-
-			if machineType.IsControlPlane() {
-				config.ClusterConfig.ClusterCA = r.opts.NewKubernetesCA
-			} else {
-				config.ClusterConfig.ClusterCA = &x509.PEMEncodedCertificateAndKey{
-					Crt: r.opts.NewKubernetesCA.Crt,
-				}
+		func(provider config.Provider) (config.Provider, error) {
+			provider, err := rotatepatcher.K8sAddAcceptedCA(r.currentCA)(provider)
+			if err != nil {
+				return nil, err
 			}
 
-			return nil
+			provider, err = rotatepatcher.K8sDeleteAcceptedCA(r.opts.NewKubernetesCA.Crt)(provider)
+			if err != nil {
+				return nil, err
+			}
+
+			return rotatepatcher.K8sSetCA(r.opts.NewKubernetesCA)(provider)
 		}); err != nil {
 		return fmt.Errorf("error patching all machine configs: %w", err)
 	}
@@ -331,21 +315,17 @@ func (r *rotator) swapCAs(ctx context.Context) error {
 func (r *rotator) dropOldCA(ctx context.Context) error {
 	r.opts.Printf("> Removing old Kubernetes CA from the accepted CAs...\n")
 
-	if err := r.patchAllNodes(ctx,
-		func(_ machine.Type, config *v1alpha1.Config) error {
-			config.ClusterConfig.ClusterAcceptedCAs = slices.DeleteFunc(config.Cluster().AcceptedCAs(), func(ca *x509.PEMEncodedCertificate) bool {
-				return bytes.Equal(ca.Crt, r.currentCA)
-			})
-
-			return nil
-		}); err != nil {
+	if err := r.patchAllNodes(
+		ctx,
+		rotatepatcher.K8sDeleteAcceptedCA(r.currentCA),
+	); err != nil {
 		return fmt.Errorf("error patching all machine configs: %w", err)
 	}
 
 	return nil
 }
 
-func (r *rotator) patchAllNodes(ctx context.Context, patchFunc func(machineType machine.Type, config *v1alpha1.Config) error) error {
+func (r *rotator) patchAllNodes(ctx context.Context, patchFunc func(provider config.Provider) (config.Provider, error)) error {
 	for _, machineType := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeWorker} {
 		for _, node := range r.opts.ClusterInfo.NodesByType(machineType) {
 			if r.opts.DryRun {
@@ -354,9 +334,10 @@ func (r *rotator) patchAllNodes(ctx context.Context, patchFunc func(machineType 
 				continue
 			}
 
-			if err := helpers.PatchNodeConfigWithKubeletRestart(ctx, r.opts.TalosClient, node.InternalIP.String(), r.opts.EncoderOption, func(config *v1alpha1.Config) error {
-				return patchFunc(machineType, config)
-			}); err != nil {
+			if err := helpers.PatchNodeConfigWithKubeletRestart(
+				ctx, r.opts.TalosClient, node.InternalIP.String(), r.opts.EncoderOption,
+				patchFunc,
+			); err != nil {
 				return fmt.Errorf("error patching node %s: %w", node.InternalIP, err)
 			}
 

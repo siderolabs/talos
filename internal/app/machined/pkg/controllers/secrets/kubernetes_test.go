@@ -72,6 +72,11 @@ func (suite *KubernetesSuite) TestReconcile() {
 		Crt: aggregatorCA.CrtPEM,
 		Key: aggregatorCA.KeyPEM,
 	}
+	rootSecrets.TypedSpec().AcceptedAggregatorCAs = []*x509.PEMEncodedCertificate{
+		{
+			Crt: aggregatorCA.CrtPEM,
+		},
+	}
 	rootSecrets.TypedSpec().ServiceAccount = &x509.PEMEncodedKey{
 		Key: serviceAccount.KeyPEM,
 	}

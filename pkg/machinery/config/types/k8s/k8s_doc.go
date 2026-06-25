@@ -42,6 +42,38 @@ func (KubeAdmissionControlConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (KubeAggregatorCAConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeAggregatorCAConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeAggregatorCAConfig configures Kubernetes API aggregator accepted CAs." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeAggregatorCAConfig configures Kubernetes API aggregator accepted CAs.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "issuingCA",
+				Type:        "CertificateAndKey",
+				Note:        "",
+				Description: "The currently active issuing certificate authority for the Kubernetes API aggregator flow.\n\nThis field should only be set for the controlplane machines.\nThe value contains a private key and a certificate, PEM encoded.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The currently active issuing certificate authority for the Kubernetes API aggregator flow." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "acceptedCAs",
+				Type:        "[]string",
+				Note:        "",
+				Description: "The list of accepted CA certificates for the Kubernetes API server aggregator flow.\n\nThis field should only be set for the controlplane machines.\nThe value should be a PEM encoded certificate.\nThe issuing CA certificate is automatically added to the list of accepted CAs.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The list of accepted CA certificates for the Kubernetes API server aggregator flow." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeAggregatorCAConfigV1Alpha1())
+
+	return doc
+}
+
 func (KubeAPIServerConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "KubeAPIServerConfig",
@@ -105,6 +137,38 @@ func (KubeAPIServerConfigV1Alpha1) Doc() *encoder.Doc {
 	}
 
 	doc.AddExample("", exampleKubeAPIServerConfigV1Alpha1())
+
+	return doc
+}
+
+func (KubeAPIServerCAConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeAPIServerCAConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeAPIServerCAConfig configures Kubernetes API server CA." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeAPIServerCAConfig configures Kubernetes API server CA.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "issuingCA",
+				Type:        "CertificateAndKey",
+				Note:        "",
+				Description: "The currently active issuing certificate authority for the Kubernetes API server.\n\nThis field should only be set for the controlplane machines.\nThe value contains a private key and a certificate, PEM encoded.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The currently active issuing certificate authority for the Kubernetes API server." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "acceptedCAs",
+				Type:        "[]string",
+				Note:        "",
+				Description: "The list of accepted CA certificates for the Kubernetes API server.\n\nThe value should be a PEM encoded certificate.\nThe issuing CA certificate is automatically added to the list of accepted CAs.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The list of accepted CA certificates for the Kubernetes API server." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeAPIServerCAConfigV1Alpha1())
 
 	return doc
 }
@@ -609,7 +673,9 @@ func GetFileDoc() *encoder.FileDoc {
 		Description: "",
 		Structs: []*encoder.Doc{
 			KubeAdmissionControlConfigV1Alpha1{}.Doc(),
+			KubeAggregatorCAConfigV1Alpha1{}.Doc(),
 			KubeAPIServerConfigV1Alpha1{}.Doc(),
+			KubeAPIServerCAConfigV1Alpha1{}.Doc(),
 			KubeAuditPolicyConfigV1Alpha1{}.Doc(),
 			KubeAuthenticationConfigV1Alpha1{}.Doc(),
 			KubeAuthorizerConfigV1Alpha1{}.Doc(),

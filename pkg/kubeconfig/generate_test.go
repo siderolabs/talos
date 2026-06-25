@@ -16,6 +16,7 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 
 	"github.com/siderolabs/talos/pkg/kubeconfig"
+	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 
@@ -32,31 +33,42 @@ func (suite *GenerateSuite) TestGenerateAdmin() {
 			u, err := url.Parse("http://localhost:3333/api")
 			suite.Require().NoError(err)
 
-			cfg := &v1alpha1.ClusterConfig{
-				ClusterName: "talos1",
-				ClusterCA: &x509.PEMEncodedCertificateAndKey{
-					Crt: ca.CrtPEM,
-					Key: ca.KeyPEM,
-				},
-				ControlPlane: &v1alpha1.ControlPlaneConfig{
-					Endpoint: &v1alpha1.Endpoint{
-						URL: u,
+			cfg := &v1alpha1.Config{
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ClusterName: "talos1",
+					ClusterCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: ca.CrtPEM,
+						Key: ca.KeyPEM,
 					},
-				},
-				AdminKubeconfigConfig: &v1alpha1.AdminKubeconfigConfig{
-					AdminKubeconfigCertLifetime: time.Hour,
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{
+							URL: u,
+						},
+					},
+					AdminKubeconfigConfig: &v1alpha1.AdminKubeconfigConfig{
+						AdminKubeconfigCertLifetime: time.Hour,
+					},
 				},
 			}
 
 			var buf bytes.Buffer
 
-			suite.Require().NoError(kubeconfig.GenerateAdmin(cfg, &buf))
+			suite.Require().NoError(kubeconfig.GenerateAdmin(
+				struct {
+					configconfig.ClusterConfig
+					configconfig.K8sAPIServerCAConfig
+				}{
+					ClusterConfig:        cfg.Cluster(),
+					K8sAPIServerCAConfig: cfg.K8sAPIServerCAConfig(),
+				},
+				&buf,
+			))
 
 			// verify config via k8s client
 			config, err := clientcmd.Load(buf.Bytes())
 			suite.Require().NoError(err)
 
-			suite.Assert().NoError(clientcmd.ConfirmUsable(*config, fmt.Sprintf("admin@%s", cfg.ClusterName)))
+			suite.Assert().NoError(clientcmd.ConfirmUsable(*config, fmt.Sprintf("admin@%s", cfg.Cluster().Name())))
 		})
 	}
 }

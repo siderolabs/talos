@@ -163,7 +163,7 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 			}
 		}
 
-		if c.Cluster().IssuingCA() != nil && len(c.Cluster().IssuingCA().Key) > 0 {
+		if c.ClusterConfig != nil && c.ClusterConfig.ClusterCA != nil && len(c.ClusterConfig.ClusterCA.Key) > 0 {
 			result = multierror.Append(result, errors.New("issuing Kubernetes API CA key is not allowed on non-controlplane nodes (.cluster.ca)"))
 		}
 	case machine.TypeUnknown:
