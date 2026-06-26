@@ -265,13 +265,19 @@ func (suite *ProcessSuite) TestPriority() {
 		done <- r.Run(MockEventSink(suite.T()), MockPidRecorder(suite.T()))
 	}()
 
-	time.Sleep(10 * time.Millisecond)
+	var pid uint64
 
-	pidString, err := os.ReadFile(pidFile)
-	suite.Assert().NoError(err)
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		data, err := os.ReadFile(pidFile)
+		if !assert.NoError(collect, err) {
+			return
+		}
 
-	pid, err := strconv.ParseUint(strings.Trim(string(pidString), "\r\n"), 10, 32)
-	suite.Assert().NoError(err)
+		var parseErr error
+
+		pid, parseErr = strconv.ParseUint(strings.Trim(string(data), "\r\n"), 10, 32)
+		assert.NoError(collect, parseErr)
+	}, time.Second, 10*time.Millisecond)
 
 	currentPriority, err = syscall.Getpriority(syscall.PRIO_PROCESS, int(pid))
 	suite.Assert().NoError(err)
@@ -320,13 +326,19 @@ func (suite *ProcessSuite) TestIOPriority() {
 		done <- r.Run(MockEventSink(suite.T()), MockPidRecorder(suite.T()))
 	}()
 
-	time.Sleep(10 * time.Millisecond)
+	var pid uint64
 
-	pidString, err := os.ReadFile(pidFile)
-	suite.Assert().NoError(err)
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		data, err := os.ReadFile(pidFile)
+		if !assert.NoError(collect, err) {
+			return
+		}
 
-	pid, err := strconv.ParseUint(strings.Trim(string(pidString), "\r\n"), 10, 32)
-	suite.Assert().NoError(err)
+		var parseErr error
+
+		pid, parseErr = strconv.ParseUint(strings.Trim(string(data), "\r\n"), 10, 32)
+		assert.NoError(collect, parseErr)
+	}, time.Second, 10*time.Millisecond)
 
 	//nolint:errcheck
 	ioprio, _, _ = syscall.Syscall(syscall.SYS_IOPRIO_GET, uintptr(1), uintptr(pid), 0)
@@ -374,13 +386,19 @@ func (suite *ProcessSuite) TestSchedulingPolicy() {
 		done <- r.Run(MockEventSink(suite.T()), MockPidRecorder(suite.T()))
 	}()
 
-	time.Sleep(10 * time.Millisecond)
+	var pid uint64
 
-	pidString, err := os.ReadFile(pidFile)
-	suite.Assert().NoError(err)
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		data, err := os.ReadFile(pidFile)
+		if !assert.NoError(collect, err) {
+			return
+		}
 
-	pid, err := strconv.ParseUint(strings.Trim(string(pidString), "\r\n"), 10, 32)
-	suite.Assert().NoError(err)
+		var parseErr error
+
+		pid, parseErr = strconv.ParseUint(strings.Trim(string(data), "\r\n"), 10, 32)
+		assert.NoError(collect, parseErr)
+	}, time.Second, 10*time.Millisecond)
 
 	pol, _, errno = syscall.Syscall(syscall.SYS_SCHED_GETSCHEDULER, uintptr(pid), 0, 0)
 	suite.Assert().Equal(0, int(errno))
