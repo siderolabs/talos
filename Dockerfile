@@ -46,6 +46,7 @@ ARG PKG_LIBNFTNL=scratch
 ARG PKG_LIBPOPT=scratch
 ARG PKG_LIBSELINUX=scratch
 ARG PKG_LIBSEPOL=scratch
+ARG PKG_LIBUCONTEXT=scratch
 ARG PKG_LIBURCU=scratch
 ARG PKG_LINUX_FIRMWARE=scratch
 ARG PKG_LVM2=scratch
@@ -140,6 +141,9 @@ FROM --platform=arm64 ${PKG_LIBPOPT} AS pkg-libpopt-arm64
 
 FROM --platform=amd64 ${PKG_LIBURCU} AS pkg-liburcu-amd64
 FROM --platform=arm64 ${PKG_LIBURCU} AS pkg-liburcu-arm64
+
+FROM --platform=amd64 ${PKG_LIBUCONTEXT} AS pkg-libucontext-amd64
+FROM --platform=arm64 ${PKG_LIBUCONTEXT} AS pkg-libucontext-arm64
 
 FROM --platform=amd64 ${PKG_LIBSEPOL} AS pkg-libsepol-amd64
 FROM --platform=arm64 ${PKG_LIBSEPOL} AS pkg-libsepol-arm64
@@ -763,6 +767,7 @@ COPY --link --from=pkg-libjson-c-amd64 / /rootfs
 COPY --link --from=pkg-libmnl-amd64 / /rootfs
 COPY --link --from=pkg-libnftnl-amd64 / /rootfs
 COPY --link --from=pkg-libpopt-amd64 / /rootfs
+COPY --link --from=pkg-libucontext-amd64 / /rootfs
 COPY --link --from=pkg-liburcu-amd64 / /rootfs
 COPY --link --from=pkg-libsepol-amd64 / /rootfs
 COPY --link --from=pkg-libselinux-amd64 / /rootfs
@@ -852,6 +857,7 @@ COPY --link --from=pkg-libjson-c-arm64 / /rootfs
 COPY --link --from=pkg-libmnl-arm64 / /rootfs
 COPY --link --from=pkg-libnftnl-arm64 / /rootfs
 COPY --link --from=pkg-libpopt-arm64 / /rootfs
+COPY --link --from=pkg-libucontext-arm64 / /rootfs
 COPY --link --from=pkg-liburcu-arm64 / /rootfs
 COPY --link --from=pkg-libsepol-arm64 / /rootfs
 COPY --link --from=pkg-libselinux-arm64 / /rootfs

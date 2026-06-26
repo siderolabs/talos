@@ -26,9 +26,9 @@ ARTIFACTS := _out
 EMBED_TARGET ?= embed
 
 TOOLS_PREFIX ?= ghcr.io/siderolabs/tools
-TOOLS ?= v1.14.0-alpha.0-17-g0f1c859
+TOOLS ?= v1.14.0-alpha.0-18-g878f1db
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.14.0-alpha.0-88-gea48e8b
+PKGS ?= v1.14.0-alpha.0-89-g55d3676
 GENERATE_VEX_PREFIX ?= ghcr.io/siderolabs/generate-vex
 GENERATE_VEX ?= latest
 
@@ -70,6 +70,7 @@ PKG_LIBNFTNL ?= $(PKGS_PREFIX)/libnftnl:$(PKGS)
 PKG_LIBPOPT ?= $(PKGS_PREFIX)/libpopt:$(PKGS)
 PKG_LIBSELINUX ?= $(PKGS_PREFIX)/libselinux:$(PKGS)
 PKG_LIBSEPOL ?= $(PKGS_PREFIX)/libsepol:$(PKGS)
+PKG_LIBUCONTEXT ?= $(PKGS_PREFIX)/libucontext:$(PKGS)
 PKG_LIBURCU ?= $(PKGS_PREFIX)/liburcu:$(PKGS)
 PKG_LINUX_FIRMWARE ?= $(PKGS_PREFIX)/linux-firmware:$(PKGS)
 PKG_LVM2 ?= $(PKGS_PREFIX)/lvm2:$(PKGS)
@@ -219,6 +220,7 @@ COMMON_ARGS += --build-arg=PKG_LIBNFTNL=$(PKG_LIBNFTNL)
 COMMON_ARGS += --build-arg=PKG_LIBPOPT=$(PKG_LIBPOPT)
 COMMON_ARGS += --build-arg=PKG_LIBSELINUX=$(PKG_LIBSELINUX)
 COMMON_ARGS += --build-arg=PKG_LIBSEPOL=$(PKG_LIBSEPOL)
+COMMON_ARGS += --build-arg=PKG_LIBUCONTEXT=$(PKG_LIBUCONTEXT)
 COMMON_ARGS += --build-arg=PKG_LIBURCU=$(PKG_LIBURCU)
 COMMON_ARGS += --build-arg=PKG_LINUX_FIRMWARE=$(PKG_LINUX_FIRMWARE)
 COMMON_ARGS += --build-arg=PKG_LVM2=$(PKG_LVM2)
