@@ -30,7 +30,7 @@ type ClusterCheck func(ClusterInfo) conditions.Condition
 
 // Reporter presents wait progress.
 //
-// It is supposed that reporter drops duplicate messages.
+// It is assumed that reporter drops duplicate messages.
 type Reporter interface {
 	Update(condition conditions.Condition)
 }
@@ -64,9 +64,6 @@ func Wait(ctx context.Context, cluster ClusterInfo, checks []ClusterCheck, repor
 			// report initial state
 			reporter.Update(condition)
 
-			// report last state
-			defer reporter.Update(condition)
-
 			for {
 				select {
 				case err = <-errCh:
@@ -76,6 +73,8 @@ func Wait(ctx context.Context, cluster ClusterInfo, checks []ClusterCheck, repor
 				}
 			}
 		}()
+
+		reporter.Update(condition)
 
 		if err != nil {
 			return err

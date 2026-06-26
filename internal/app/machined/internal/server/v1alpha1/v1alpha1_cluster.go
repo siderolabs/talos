@@ -88,7 +88,7 @@ type healthReporter struct {
 }
 
 func (hr *healthReporter) Update(condition conditions.Condition) {
-	line := fmt.Sprintf("waiting for %s", condition)
+	line := fmt.Sprintf("waiting for %s", conditions.StatusLine(condition))
 
 	if line != hr.lastLine {
 		hr.srv.Send(&clusterapi.HealthCheckProgress{ //nolint:errcheck

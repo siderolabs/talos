@@ -30,8 +30,36 @@ func StderrReporter() *ConditionReporter {
 }
 
 func conditionToUpdate(condition conditions.Condition) reporter.Update {
-	line := strings.TrimSpace(fmt.Sprintf("waiting for %s", condition.String()))
+	line := strings.TrimSpace(fmt.Sprintf("waiting for %s", conditions.StatusLine(condition)))
 
+	if s, ok := condition.(conditions.Stateful); ok {
+		state, _ := s.State() //nolint:errcheck // we only care about the state for reporting
+
+		switch state {
+		case conditions.StateFailed:
+			return reporter.Update{
+				Message: line,
+				Status:  reporter.StatusError,
+			}
+		case conditions.StateSucceeded:
+			return reporter.Update{
+				Message: line,
+				Status:  reporter.StatusSucceeded,
+			}
+		case conditions.StateSkipped:
+			return reporter.Update{
+				Message: line,
+				Status:  reporter.StatusSkip,
+			}
+		case conditions.StateRunning:
+			return reporter.Update{
+				Message: line,
+				Status:  reporter.StatusRunning,
+			}
+		}
+	}
+
+	// Fallback for non-Stateful conditions (legacy suffix matching).
 	switch {
 	case strings.HasSuffix(line, "..."):
 		return reporter.Update{
