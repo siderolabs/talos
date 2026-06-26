@@ -230,6 +230,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&files.CRIRegistryConfigController{
 			EtcRoot: etcRoot,
 		},
+		&files.EtcFileConfigController{},
 		&files.EtcFileController{
 			EtcRoot: etcRoot,
 		},

@@ -50,7 +50,7 @@ func (EtcFileStatusMD) ResourceDefinition() meta.ResourceDefinitionSpec {
 func init() {
 	proto.RegisterDefaultTypes()
 
-	err := protobuf.RegisterDynamic[EtcFileStatusSpec](EtcFileStatusType, &EtcFileStatus{})
+	err := protobuf.RegisterDynamic(EtcFileStatusType, &EtcFileStatus{})
 	if err != nil {
 		panic(err)
 	}

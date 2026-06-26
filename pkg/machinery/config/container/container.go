@@ -219,6 +219,11 @@ func (container *Container) Environment() config.EnvironmentConfig {
 	return config.WrapEnvironmentConfigList(findMatchingDocs[config.EnvironmentConfig](container.documents)...)
 }
 
+// EtcFileConfigs implements config.Config interface.
+func (container *Container) EtcFileConfigs() []config.EtcFileConfig {
+	return findMatchingDocs[config.EtcFileConfig](container.documents)
+}
+
 // SysctlConfig implements config.Config interface.
 //
 // The deprecated v1alpha1 values are merged with the multi-doc documents,

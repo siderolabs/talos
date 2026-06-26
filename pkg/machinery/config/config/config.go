@@ -72,6 +72,7 @@ type Config interface { //nolint:interfacebloat
 	ExtensionServiceConfigs() []ExtensionServiceConfig
 	Runtime() RuntimeConfig
 	Environment() EnvironmentConfig
+	EtcFileConfigs() []EtcFileConfig
 	TrustedRoots() TrustedRootsConfig
 	PCIDriverRebindConfig() PCIDriverRebindConfig
 	OOMConfig() OOMConfig

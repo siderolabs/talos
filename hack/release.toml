@@ -29,6 +29,18 @@ CoreDNS: 1.14.2
 Talos is built with Go 1.26.4.
 """
 
+    [notes.etcfileconfig]
+        title = "EtcFileConfig"
+        description = """\
+Talos now supports managing user-owned files under `/etc` with the new `EtcFileConfig` multi-document
+configuration kind. The document `name` is the path relative to `/etc`, and each document owns the complete
+file contents and mode.
+
+This can be used to configure files such as `/etc/nfsmount.conf` or `/etc/multipath.conf`. Talos-managed
+paths, including `resolv.conf`, `hosts`, `machine-id`, CRI and Kubernetes configuration, trust bundles, and
+identity files, are rejected to prevent overriding files owned by Talos.
+"""
+
     [notes.cri-nri]
         title = "Containerd NRI"
         description = """\

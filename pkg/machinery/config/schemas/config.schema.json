@@ -4614,6 +4614,57 @@
       ],
       "description": "EnvironmentConfig is an environment config document."
     },
+    "runtime.EtcFileConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "EtcFileConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Path of the file relative to /etc.\n",
+          "markdownDescription": "Path of the file relative to `/etc`.",
+          "x-intellij-html-description": "\u003cp\u003ePath of the file relative to \u003ccode\u003e/etc\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "mode": {
+          "type": "integer",
+          "title": "mode",
+          "description": "The file’s permissions in octal.\n",
+          "markdownDescription": "The file's permissions in octal.",
+          "x-intellij-html-description": "\u003cp\u003eThe file\u0026rsquo;s permissions in octal.\u003c/p\u003e\n"
+        },
+        "contents": {
+          "type": "string",
+          "title": "contents",
+          "description": "The contents of the file.\n",
+          "markdownDescription": "The contents of the file.",
+          "x-intellij-html-description": "\u003cp\u003eThe contents of the file.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "name"
+      ],
+      "description": "EtcFileConfig configures a user-managed file under /etc."
+    },
     "runtime.EventSinkV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -6407,6 +6458,9 @@
     },
     {
       "$ref": "#/$defs/runtime.EnvironmentV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/runtime.EtcFileConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/runtime.EventSinkV1Alpha1"

@@ -207,6 +207,45 @@ func (SysfsConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (EtcFileConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "EtcFileConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "EtcFileConfig configures a user-managed file under /etc." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "EtcFileConfig configures a user-managed file under /etc.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Path of the file relative to `/etc`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Path of the file relative to `/etc`." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "mode",
+				Type:        "EtcFileMode",
+				Note:        "",
+				Description: "The file's permissions in octal.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The file's permissions in octal." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "contents",
+				Type:        "string",
+				Note:        "",
+				Description: "The contents of the file.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The contents of the file." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleEtcFileConfigV1Alpha1())
+
+	return doc
+}
+
 func (WatchdogTimerV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "WatchdogTimerConfig",
@@ -253,6 +292,7 @@ func GetFileDoc() *encoder.FileDoc {
 			OOMV1Alpha1{}.Doc(),
 			SysctlConfigV1Alpha1{}.Doc(),
 			SysfsConfigV1Alpha1{}.Doc(),
+			EtcFileConfigV1Alpha1{}.Doc(),
 			WatchdogTimerV1Alpha1{}.Doc(),
 		},
 	}
