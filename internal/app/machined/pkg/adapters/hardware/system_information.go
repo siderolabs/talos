@@ -12,7 +12,7 @@ import (
 
 // SystemInformation adapter provider conversion from smbios.SMBIOS.
 //
-//nolint:revive,golint
+//nolint:revive
 func SystemInformation(p *hardware.SystemInformation) systemInformation {
 	return systemInformation{
 		SystemInformation: p,

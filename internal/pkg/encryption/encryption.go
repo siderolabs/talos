@@ -83,7 +83,6 @@ func NewHandler(encryptionConfig block.EncryptionSpec, volumeID string, helpers 
 		keyHandlers = append(keyHandlers, handler)
 	}
 
-	//nolint:scopelint
 	slices.SortFunc(keyHandlers, func(a, b keys.Handler) int { return cmp.Compare(a.Slot(), b.Slot()) })
 
 	provider := luks.New(

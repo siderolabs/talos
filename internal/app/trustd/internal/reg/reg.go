@@ -35,8 +35,6 @@ type Registrator struct {
 }
 
 // Register implements the factory.Registrator interface.
-//
-//nolint:interfacer
 func (r *Registrator) Register(s *grpc.Server) {
 	securityapi.RegisterSecurityServiceServer(s, r)
 }

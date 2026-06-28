@@ -12,7 +12,7 @@ import (
 
 // CPU adapter provides conversion from procfs.
 //
-//nolint:revive,golint
+//nolint:revive
 func CPU(r *perf.CPU) cpu {
 	return cpu{
 		CPU: r,

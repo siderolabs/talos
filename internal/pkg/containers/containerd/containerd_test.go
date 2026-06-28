@@ -44,7 +44,6 @@ func MockPidRecorder(serviceName string, pid int32, clearEntry bool) error {
 	return nil
 }
 
-//nolint:maligned
 type ContainerdSuite struct {
 	suite.Suite
 

@@ -17,7 +17,7 @@ import (
 
 // BondMasterSpec adapter provides encoding/decoding to netlink structures.
 //
-//nolint:revive,golint
+//nolint:revive
 func BondMasterSpec(r *network.BondMasterSpec) bondMaster {
 	return bondMaster{
 		BondMasterSpec: r,

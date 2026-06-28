@@ -12,7 +12,7 @@ import (
 
 // MemoryModule adapter provider conversion from smbios.SMBIOS.
 //
-//nolint:revive,golint
+//nolint:revive
 func MemoryModule(m *hardware.MemoryModule) memoryModule {
 	return memoryModule{
 		MemoryModule: m,

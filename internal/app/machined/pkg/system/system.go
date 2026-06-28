@@ -59,7 +59,7 @@ func newServices(runtime runtime.Runtime) *singleton {
 
 // Services returns the instance of the system services API.
 //
-//nolint:revive,golint
+//nolint:revive
 func Services(runtime runtime.Runtime) *singleton {
 	once.Do(func() {
 		instance = newServices(runtime)

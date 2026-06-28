@@ -23,8 +23,6 @@ import (
 )
 
 // Input holds info about certs, ips, and node type.
-//
-//nolint:maligned
 type Input struct {
 	Options Options
 

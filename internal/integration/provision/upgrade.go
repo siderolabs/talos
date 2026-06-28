@@ -22,7 +22,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
-//nolint:maligned
 type upgradeSpec struct {
 	ShortName string
 

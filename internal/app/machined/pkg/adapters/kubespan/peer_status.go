@@ -18,7 +18,7 @@ import (
 
 // PeerStatusSpec adapter provides Wireguard integration and state management.
 //
-//nolint:revive,golint
+//nolint:revive
 func PeerStatusSpec(r *kubespan.PeerStatusSpec) peerStatus {
 	return peerStatus{
 		PeerStatusSpec: r,

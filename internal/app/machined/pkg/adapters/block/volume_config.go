@@ -13,7 +13,7 @@ import (
 
 // VolumeConfigSpec adapter provides conversion from MountStatus.
 //
-//nolint:revive,golint
+//nolint:revive
 func VolumeConfigSpec(r *block.VolumeConfigSpec) volumeConfigSpec {
 	return volumeConfigSpec{
 		volumeConfigSpec: r,

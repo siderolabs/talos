@@ -146,7 +146,7 @@ func TestIntegration(t *testing.T) {
 		}
 
 		t.Run(suiteName, func(tt *testing.T) {
-			suite.Run(tt, s) //nolint:scopelint
+			suite.Run(tt, s)
 		})
 
 		if failFast && t.Failed() {

@@ -15,7 +15,7 @@ import (
 
 // StaticPod adapter provides conversion from *v1.Pod.
 //
-//nolint:revive,golint
+//nolint:revive
 func StaticPod(r *k8s.StaticPod) staticPod {
 	return staticPod{
 		StaticPod: r,

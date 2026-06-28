@@ -14,7 +14,7 @@ import (
 
 // StaticPodStatus adapter provides conversion from *v1.PodStatus.
 //
-//nolint:revive,golint
+//nolint:revive
 func StaticPodStatus(r *k8s.StaticPodStatus) staticPodStatus {
 	return staticPodStatus{
 		StaticPodStatus: r,

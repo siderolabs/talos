@@ -21,7 +21,7 @@ import (
 
 // Manifest adapter provides conversion from procfs.
 //
-//nolint:revive,golint
+//nolint:revive
 func Manifest(r *k8s.Manifest) manifest {
 	return manifest{
 		Manifest: r,

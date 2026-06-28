@@ -114,8 +114,6 @@ func NewForConfig(config *restclient.Config) (*Client, error) {
 }
 
 // NewClientFromPKI initializes and returns a Client.
-//
-//nolint:interfacer
 func NewClientFromPKI(ca, crt, key []byte, endpoint *url.URL) (*Client, error) {
 	tlsClientConfig := restclient.TLSClientConfig{
 		CAData:   ca,

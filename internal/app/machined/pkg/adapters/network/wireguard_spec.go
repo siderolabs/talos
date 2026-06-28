@@ -17,7 +17,7 @@ import (
 
 // WireguardSpec adapter provides encoding/decoding to netlink structures.
 //
-//nolint:revive,golint
+//nolint:revive
 func WireguardSpec(r *network.WireguardSpec) wireguardSpec {
 	return wireguardSpec{
 		WireguardSpec: r,
@@ -137,7 +137,7 @@ func (a wireguardSpec) Encode(existing *network.WireguardSpec) (*wgtypes.Config,
 
 			r++
 		// peer from the "left" (existing) is missing in new spec (right), so it should be removed
-		case right == nil || (left != nil && left.PublicKey < right.PublicKey):
+		case right == nil || left.PublicKey < right.PublicKey:
 			// deleting peers from the existing
 			if err := deletePeer(left); err != nil {
 				return nil, err
