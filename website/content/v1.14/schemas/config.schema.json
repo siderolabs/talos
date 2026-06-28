@@ -4885,6 +4885,45 @@
       ],
       "description": "SysfsConfig configures Linux kernel sysfs values."
     },
+    "runtime.UdevRulesConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "UdevRulesConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "rules": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "rules",
+          "description": "Custom udev rules.\n",
+          "markdownDescription": "Custom udev rules.",
+          "x-intellij-html-description": "\u003cp\u003eCustom udev rules.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "UdevRulesConfig is a udev rules config document."
+    },
     "runtime.WatchdogTimerV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -6142,13 +6181,6 @@
           "markdownDescription": "Features describe individual Talos features that can be switched on or off.",
           "x-intellij-html-description": "\u003cp\u003eFeatures describe individual Talos features that can be switched on or off.\u003c/p\u003e\n"
         },
-        "udev": {
-          "$ref": "#/$defs/v1alpha1.UdevConfig",
-          "title": "udev",
-          "description": "Configures the udev system.\n",
-          "markdownDescription": "Configures the udev system.",
-          "x-intellij-html-description": "\u003cp\u003eConfigures the udev system.\u003c/p\u003e\n"
-        },
         "logging": {
           "$ref": "#/$defs/v1alpha1.LoggingConfig",
           "title": "logging",
@@ -6280,23 +6312,6 @@
       "additionalProperties": false,
       "type": "object",
       "description": "MachineSeccompProfile defines seccomp profiles for the machine.\\n"
-    },
-    "v1alpha1.UdevConfig": {
-      "properties": {
-        "rules": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "title": "rules",
-          "description": "List of udev rules to apply to the udev system\n",
-          "markdownDescription": "List of udev rules to apply to the udev system",
-          "x-intellij-html-description": "\u003cp\u003eList of udev rules to apply to the udev system\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "UdevConfig describes how the udev system should be configured.\\n"
     }
   },
   "oneOf": [
@@ -6476,6 +6491,9 @@
     },
     {
       "$ref": "#/$defs/runtime.SysfsConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/runtime.UdevRulesConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/runtime.WatchdogTimerV1Alpha1"

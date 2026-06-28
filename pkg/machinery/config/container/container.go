@@ -224,6 +224,20 @@ func (container *Container) EtcFileConfigs() []config.EtcFileConfig {
 	return findMatchingDocs[config.EtcFileConfig](container.documents)
 }
 
+// UdevRulesConfig implements config.Config interface.
+func (container *Container) UdevRulesConfig() config.UdevConfig {
+	matching := findMatchingDocs[config.UdevConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.Machine().Udev()
+	}
+
+	return nil
+}
+
 // SysctlConfig implements config.Config interface.
 //
 // The deprecated v1alpha1 values are merged with the multi-doc documents,

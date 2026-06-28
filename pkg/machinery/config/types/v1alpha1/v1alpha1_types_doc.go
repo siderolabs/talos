@@ -158,13 +158,7 @@ func (MachineConfig) Doc() *encoder.Doc {
 				Description: "Features describe individual Talos features that can be switched on or off.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Features describe individual Talos features that can be switched on or off." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "udev",
-				Type:        "UdevConfig",
-				Note:        "",
-				Description: "Configures the udev system.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the udev system." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{
 				Name:        "logging",
 				Type:        "LoggingConfig",
@@ -227,7 +221,6 @@ func (MachineConfig) Doc() *encoder.Doc {
 	doc.Fields[10].AddExample("MachineInstall config usage example.", machineInstallExample())
 	doc.Fields[11].AddExample("MachineFiles usage example.", machineFilesExample())
 	doc.Fields[18].AddExample("", machineFeaturesExample())
-	doc.Fields[19].AddExample("", machineUdevExample())
 	doc.Fields[20].AddExample("", machineLoggingExample1())
 	doc.Fields[20].AddExample("", machineLoggingExample2())
 	doc.Fields[21].AddExample("", machineKernelExample())
@@ -1279,33 +1272,6 @@ func (ClusterInlineManifest) Doc() *encoder.Doc {
 	return doc
 }
 
-func (UdevConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "UdevConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "UdevConfig describes how the udev system should be configured." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "UdevConfig describes how the udev system should be configured.\n",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "MachineConfig",
-				FieldName: "udev",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "rules",
-				Type:        "[]string",
-				Note:        "",
-				Description: "List of udev rules to apply to the udev system",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "List of udev rules to apply to the udev system" /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", machineUdevExample())
-
-	return doc
-}
-
 func (LoggingConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "LoggingConfig",
@@ -1462,7 +1428,6 @@ func GetFileDoc() *encoder.FileDoc {
 			KubePrism{}.Doc(),
 			KubernetesTalosAPIAccessConfig{}.Doc(),
 			ClusterInlineManifest{}.Doc(),
-			UdevConfig{}.Doc(),
 			LoggingConfig{}.Doc(),
 			LoggingDestination{}.Doc(),
 			KernelConfig{}.Doc(),

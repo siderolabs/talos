@@ -276,6 +276,19 @@ List of changes:
 - Deprecated `.machine.sysfs` in the v1alpha1 config; use the `SysfsConfig` document for sysfs configuration.
 """
 
+    [notes.udev_rules_config]
+        title = "Udev Rules Multi-document Configuration"
+        description = """\
+Talos introduces new multi-document configuration `UdevRulesConfig` document for configuring custom udev rules.
+The old v1alpha1 `.machine.udev.rules` field is still supported for backwards compatibility, but new deployments should use the new document.
+
+If both old and new configuration sources are used, `UdevRulesConfig` takes precedence.
+
+List of changes:
+
+- Deprecated `.machine.udev.rules` in the v1alpha1 config; use the `UdevRulesConfig` document for custom udev rules.
+"""
+
     [notes.apply_config]
         title = "Apply Configuration Modes"
         description = """\

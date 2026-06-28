@@ -10,6 +10,8 @@ import (
 	"io"
 
 	"golang.org/x/sys/unix"
+
+	"github.com/siderolabs/talos/pkg/xfs"
 )
 
 // bindHardenAttr is the baseline attribute set every read-only bind mount
@@ -93,6 +95,35 @@ func BindReadonlyFd(dfd int, dst string) error {
 		Attr_set: bindHardenAttr,
 	}); err != nil {
 		return fmt.Errorf("failed to set mount attribute: %w", err)
+	}
+
+	if err := unix.MoveMount(sourceFD, "", unix.AT_FDCWD, dst, unix.MOVE_MOUNT_F_EMPTY_PATH); err != nil {
+		return fmt.Errorf("failed to move mount to %s: %w", dst, err)
+	}
+
+	return nil
+}
+
+// BindRootPath binds a path inside root to dst.
+func BindRootPath(root xfs.Root, name, dst string, attrs int) error {
+	rootFD, err := root.Fd()
+	if err != nil {
+		return fmt.Errorf("failed to get root fd: %w", err)
+	}
+
+	sourceFD, err := unix.OpenTree(rootFD, name, unix.OPEN_TREE_CLONE|unix.OPEN_TREE_CLOEXEC)
+	if err != nil {
+		return fmt.Errorf("failed to opentree %q: %w", name, err)
+	}
+
+	defer unix.Close(sourceFD) //nolint:errcheck
+
+	if attrs != 0 {
+		if err := unix.MountSetattr(sourceFD, "", unix.AT_EMPTY_PATH, &unix.MountAttr{
+			Attr_set: uint64(attrs),
+		}); err != nil {
+			return fmt.Errorf("failed to set mount attribute: %w", err)
+		}
 	}
 
 	if err := unix.MoveMount(sourceFD, "", unix.AT_FDCWD, dst, unix.MOVE_MOUNT_F_EMPTY_PATH); err != nil {

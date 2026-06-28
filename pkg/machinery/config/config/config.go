@@ -73,6 +73,7 @@ type Config interface { //nolint:interfacebloat
 	Runtime() RuntimeConfig
 	Environment() EnvironmentConfig
 	EtcFileConfigs() []EtcFileConfig
+	UdevRulesConfig() UdevConfig
 	TrustedRoots() TrustedRootsConfig
 	PCIDriverRebindConfig() PCIDriverRebindConfig
 	OOMConfig() OOMConfig

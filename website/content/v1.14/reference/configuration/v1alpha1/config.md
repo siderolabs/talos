@@ -167,12 +167,6 @@ features:
     #     allowedKubernetesNamespaces:
     #         - kube-system
 {{< /highlight >}}</details> | |
-|`udev` |<a href="#Config.machine.udev">UdevConfig</a> |Configures the udev system. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-udev:
-    # List of udev rules to apply to the udev system
-    rules:
-        - SUBSYSTEM=="drm", KERNEL=="renderD*", GROUP="44", MODE="0660"
-{{< /highlight >}}</details> | |
 |`logging` |<a href="#Config.machine.logging">LoggingConfig</a> |Configures the logging system. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 logging:
     # Logging destination.
@@ -671,31 +665,6 @@ KubePrism describes the configuration for the KubePrism load balancer.
 |`port` |int |KubePrism port.  | |
 
 
-
-
-
-
-
-
-### udev {#Config.machine.udev}
-
-UdevConfig describes how the udev system should be configured.
-
-
-
-
-{{< highlight yaml >}}
-machine:
-    udev:
-        # List of udev rules to apply to the udev system
-        rules:
-            - SUBSYSTEM=="drm", KERNEL=="renderD*", GROUP="44", MODE="0660"
-{{< /highlight >}}
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`rules` |[]string |List of udev rules to apply to the udev system  | |
 
 
 

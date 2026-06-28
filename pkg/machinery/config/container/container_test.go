@@ -21,6 +21,7 @@ import (
 	clustertypes "github.com/siderolabs/talos/pkg/machinery/config/types/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
+	runtimeconfig "github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime/extensions"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -121,6 +122,33 @@ func TestNewConflict(t *testing.T) {
 
 	_, err = container.New(ev2, ev1, uv1, uv2)
 	assert.EqualError(t, err, "conflicting documents: ExistingVolumeConfig/my-user-volume-1 and UserVolumeConfig/my-user-volume-1")
+}
+
+func TestUdevRulesConfig(t *testing.T) {
+	t.Parallel()
+
+	v1alpha1Cfg := &v1alpha1.Config{
+		MachineConfig: &v1alpha1.MachineConfig{
+			MachineUdev: &v1alpha1.UdevConfig{ //nolint:staticcheck // legacy config
+				UdevRules: []string{"legacy-rule"},
+			},
+		},
+	}
+
+	cfg, err := container.New(v1alpha1Cfg)
+	require.NoError(t, err)
+
+	require.NotNil(t, cfg.UdevRulesConfig())
+	assert.Equal(t, []string{"legacy-rule"}, cfg.UdevRulesConfig().Rules())
+
+	udevRulesCfg := runtimeconfig.NewUdevRulesConfigV1Alpha1()
+	udevRulesCfg.UdevRules = []string{"document-rule"}
+
+	cfg, err = container.New(v1alpha1Cfg, udevRulesCfg)
+	require.NoError(t, err)
+
+	require.NotNil(t, cfg.UdevRulesConfig())
+	assert.Equal(t, []string{"document-rule"}, cfg.UdevRulesConfig().Rules())
 }
 
 func TestPatchV1Alpha1(t *testing.T) {

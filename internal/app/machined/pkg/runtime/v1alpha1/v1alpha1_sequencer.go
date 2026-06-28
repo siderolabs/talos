@@ -87,8 +87,8 @@ func (*Sequencer) Initialize(r runtime.Runtime) []runtime.Phase {
 			EnforceKSPPRequirements,
 		).Append(
 			"earlyServices",
-			StartUdevd,
 			StartMachined,
+			WaitForUdevd,
 			StartApid,
 			StartAuditd,
 			StartSyslogd,
@@ -215,10 +215,6 @@ func (*Sequencer) Boot(r runtime.Runtime) []runtime.Phase {
 	).Append(
 		"ephemeral",
 		MountEphemeralPartition,
-	).AppendWhen(
-		r.State().Platform().Mode() != runtime.ModeContainer,
-		"udevSetup",
-		WriteUdevRules,
 	).AppendWhen(
 		r.State().Platform().Mode() != runtime.ModeContainer,
 		"userDisks",

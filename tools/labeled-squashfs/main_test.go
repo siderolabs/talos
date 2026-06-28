@@ -38,6 +38,10 @@ func TestLookupAgainstTalosFileContexts(t *testing.T) {
 		// More specific rule should win (last-match-wins).
 		{"/usr/bin/foo", typeReg, "system_u:object_r:bin_exec_t:s0", true},
 		{"/usr/lib/modules/somemod.ko", typeReg, "system_u:object_r:module_t:s0", true},
+		{"/usr/lib/udev/ata_id", typeReg, "system_u:object_r:udev_exec_t:s0", true},
+		{"/usr/lib/udev/hwdb.bin", typeReg, "system_u:object_r:udev_hwdb_t:s0", true},
+		{"/usr/lib/udev/hwdb.d/20-OUI.hwdb", typeReg, "system_u:object_r:lib_t:s0", true},
+		{"/usr/lib/udev/rules.d/99-talos.rules", typeReg, "system_u:object_r:udev_rules_t:s0", true},
 		// Root entry.
 		{"/", typeDir, "system_u:object_r:rootfs_t:s0", true},
 	}

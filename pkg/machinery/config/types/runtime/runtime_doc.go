@@ -246,6 +246,31 @@ func (EtcFileConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (UdevRulesConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "UdevRulesConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "UdevRulesConfig is a udev rules config document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "UdevRulesConfig is a udev rules config document.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "rules",
+				Type:        "[]string",
+				Note:        "",
+				Description: "Custom udev rules.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Custom udev rules." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleUdevRulesConfigV1Alpha1())
+
+	return doc
+}
+
 func (WatchdogTimerV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "WatchdogTimerConfig",
@@ -293,6 +318,7 @@ func GetFileDoc() *encoder.FileDoc {
 			SysctlConfigV1Alpha1{}.Doc(),
 			SysfsConfigV1Alpha1{}.Doc(),
 			EtcFileConfigV1Alpha1{}.Doc(),
+			UdevRulesConfigV1Alpha1{}.Doc(),
 			WatchdogTimerV1Alpha1{}.Doc(),
 		},
 	}

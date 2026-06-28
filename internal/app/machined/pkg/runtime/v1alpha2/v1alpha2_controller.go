@@ -129,6 +129,15 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 
 	defer etcOverlayUnmount() //nolint:errcheck
 
+	if ctrl.v1alpha1Runtime.State().Platform().Mode() != runtime.ModeContainer {
+		udevUnmount, err := setupUdevWritablePaths(constants.UdevDir, ctrl.logger)
+		if err != nil {
+			return fmt.Errorf("failed to set up udev writable paths: %w", err)
+		}
+
+		defer udevUnmount() //nolint:errcheck
+	}
+
 	lvm, err := lvm.New()
 	if err != nil {
 		return fmt.Errorf("failed to initialize LVM: %w", err)
@@ -238,6 +247,9 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&files.NQNController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
+		&files.UdevRulesController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
 		&hardware.CPUInfoController{
@@ -405,6 +417,9 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&runtimecontrollers.BootedEntryController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
+		&runtimecontrollers.BootIDController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
 		&runtimecontrollers.DevicesStatusController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
@@ -433,9 +448,6 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		},
 		&runtimecontrollers.ExtensionStatusController{},
 		&runtimecontrollers.ImageFactorySchematicController{},
-		&runtimecontrollers.BootIDController{
-			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
-		},
 		&runtimecontrollers.KernelCmdlineController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
@@ -485,6 +497,10 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&runtimecontrollers.WatchdogTimerController{},
 		&runtimecontrollers.OOMController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
+		&runtimecontrollers.UdevServiceController{
+			V1Alpha1Mode:     ctrl.v1alpha1Runtime.State().Platform().Mode(),
+			V1Alpha1Services: system.Services(ctrl.v1alpha1Runtime),
 		},
 		&secrets.APICertSANsController{},
 		&secrets.APIController{},

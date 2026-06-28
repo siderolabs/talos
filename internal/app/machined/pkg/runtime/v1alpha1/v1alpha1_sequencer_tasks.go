@@ -31,7 +31,6 @@ import (
 	pprocfs "github.com/prometheus/procfs"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-blockdevice/v2/block"
-	"github.com/siderolabs/go-cmd/pkg/cmd"
 	"github.com/siderolabs/go-cmd/pkg/cmd/proc"
 	"github.com/siderolabs/go-pointer"
 	"github.com/siderolabs/go-procfs/procfs"
@@ -55,7 +54,6 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/logind"
 	mountv3 "github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/internal/pkg/partition"
-	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/images"
 	"github.com/siderolabs/talos/pkg/kernel/kspp"
@@ -73,6 +71,16 @@ import (
 	resourcev1alpha1 "github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 	"github.com/siderolabs/talos/pkg/minimal"
 )
+
+// WaitForUdevd waits for the controller-owned udevd service to become healthy.
+func WaitForUdevd(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, _ *log.Logger, _ runtime.Runtime) error {
+		ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
+		defer cancel()
+
+		return system.WaitForService(system.StateEventUp, "udevd").Wait(ctx)
+	}, "waitForUdevd"
+}
 
 // WaitForUSB represents the WaitForUSB task.
 func WaitForUSB(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
@@ -272,52 +280,6 @@ func StartContainerd(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) 
 	}, "startContainerd"
 }
 
-// WriteUdevRules is the task that writes udev rules to a udev rules file.
-// TODO: frezbo: move this to controller based since writing udev rules doesn't need a restart.
-func WriteUdevRules(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		rules := r.Config().Machine().Udev().Rules()
-
-		var content strings.Builder
-
-		for _, rule := range rules {
-			content.WriteString(strings.ReplaceAll(rule, "\n", "\\\n"))
-			content.WriteByte('\n')
-		}
-
-		if err = os.WriteFile(constants.UdevRulesPath, []byte(content.String()), 0o644); err != nil {
-			return fmt.Errorf("failed writing custom udev rules: %w", err)
-		}
-
-		if err = selinux.SetLabel(constants.UdevRulesPath, constants.UdevRulesLabel); err != nil {
-			return fmt.Errorf("failed labeling custom udev rules: %w", err)
-		}
-
-		if len(rules) > 0 {
-			if _, err := cmd.RunWithOptions(ctx, "/sbin/udevadm", []string{"control", "--reload"}); err != nil {
-				return err
-			}
-
-			if _, err := cmd.RunWithOptions(ctx, "/sbin/udevadm", []string{"trigger", "--type=devices", "--action=add"}); err != nil {
-				return err
-			}
-
-			if _, err := cmd.RunWithOptions(ctx, "/sbin/udevadm", []string{"trigger", "--type=subsystems", "--action=add"}); err != nil {
-				return err
-			}
-
-			// This ensures that `udevd` finishes processing kernel events, triggered by
-			// `udevd trigger`, to prevent a race condition when a user specifies a path
-			// under `/dev/disk/*` in any disk definitions.
-			_, err := cmd.RunWithOptions(ctx, "/sbin/udevadm", []string{"settle", "--timeout=50"})
-
-			return err
-		}
-
-		return nil
-	}, "writeUdevRules"
-}
-
 // StartMachined represents the task to start machined.
 func StartMachined(_ runtime.Sequence, _ any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
@@ -382,46 +344,6 @@ func StartDashboard(_ runtime.Sequence, _ any) (runtime.TaskExecutionFunc, strin
 
 		return nil
 	}, "startDashboard"
-}
-
-// StartUdevd represents the task to start udevd.
-func StartUdevd(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
-	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		mp := mountv3.NewSystemOverlay(
-			[]string{constants.UdevDir},
-			constants.UdevDir,
-			logger.Printf,
-			mountv3.WithShared(),
-			mountv3.WithSelinuxLabel(constants.UdevRulesLabel),
-		)
-
-		if _, err = mp.Mount(); err != nil {
-			return err
-		}
-
-		var extraSettleTime time.Duration
-
-		settleTimeStr := procfs.ProcCmdline().Get(constants.KernelParamDeviceSettleTime).First()
-		if settleTimeStr != nil {
-			extraSettleTime, err = time.ParseDuration(*settleTimeStr)
-			if err != nil {
-				return fmt.Errorf("failed to parse %s: %w", constants.KernelParamDeviceSettleTime, err)
-			}
-
-			logger.Printf("extra settle time: %s", extraSettleTime)
-		}
-
-		svc := &services.Udevd{
-			ExtraSettleTime: extraSettleTime,
-		}
-
-		system.Services(r).LoadAndStart(svc)
-
-		ctx, cancel := context.WithTimeout(ctx, 10*time.Minute)
-		defer cancel()
-
-		return system.WaitForService(system.StateEventUp, svc.ID(r)).Wait(ctx)
-	}, "startUdevd"
 }
 
 // StartAllServices represents the task to start the system services.

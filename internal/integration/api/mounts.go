@@ -148,7 +148,6 @@ func workloadManaged(m mountInfo) bool {
 var noexecExemptPrefixes = []string{
 	"/opt",                               // CNI plugins, containerd plugins
 	"/usr/libexec/kubernetes",            // kubelet plugins
-	"/usr/lib/udev",                      // udev helpers
 	constants.ExtensionServiceRootfsPath, // /usr/local/lib/containers — extension service rootfs overlays (iscsid, etc.)
 }
 
@@ -190,7 +189,7 @@ func (suite *MountsSuite) TestNosuidPolicy() {
 }
 
 // TestNoexecPolicy asserts every rw mount carries noexec, except
-// documented exemptions (EPHEMERAL, /opt/cni, kubelet plugins, udev
+// documented exemptions (EPHEMERAL, /opt/cni, kubelet plugins
 // helpers). Read-only mounts are exempt (signed rootfs / extension
 // squashfs).
 func (suite *MountsSuite) TestNoexecPolicy() {

@@ -230,6 +230,10 @@ type MachineConfig struct {
 	//     Configures the udev system.
 	//   examples:
 	//     - value: machineUdevExample()
+	//
+	// docgen:nodoc
+	//
+	// Deprecated: Use `UdevRulesConfig` instead.
 	MachineUdev *UdevConfig `yaml:"udev,omitempty"`
 	//   description: |
 	//     Configures the logging system.
@@ -2595,9 +2599,17 @@ type RegistryServiceConfig struct {
 }
 
 // UdevConfig describes how the udev system should be configured.
+//
+// docgen:nodoc
+//
+// Deprecated: Use `UdevRulesConfig` instead.
 type UdevConfig struct {
 	//   description: |
 	//     List of udev rules to apply to the udev system
+	//
+	// docgen:nodoc
+	//
+	// Deprecated: Use `UdevRulesConfig` instead.
 	UdevRules []string `yaml:"rules,omitempty"`
 }
 

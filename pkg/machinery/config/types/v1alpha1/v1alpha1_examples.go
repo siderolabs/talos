@@ -128,12 +128,6 @@ func machineFeaturesExample() *FeaturesConfig {
 	}
 }
 
-func machineUdevExample() *UdevConfig {
-	return &UdevConfig{
-		UdevRules: []string{"SUBSYSTEM==\"drm\", KERNEL==\"renderD*\", GROUP=\"44\", MODE=\"0660\""},
-	}
-}
-
 func clusterConfigExample() any {
 	return struct {
 		ControlPlane *ControlPlaneConfig `yaml:"controlPlane"`
