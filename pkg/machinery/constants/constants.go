@@ -537,7 +537,7 @@ const (
 	DefaultContainerdVersion = "2.3.2"
 
 	// RuncVersion is the runc version.
-	RuncVersion = "1.5.0-rc.3"
+	RuncVersion = "1.5.0"
 
 	// SystemContainerdNamespace is the Containerd namespace for Talos services.
 	SystemContainerdNamespace = "system"
