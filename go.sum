@@ -783,8 +783,8 @@ github.com/siderolabs/discovery-client v0.1.15/go.mod h1:iUpFYp40CNTnqshG7d2r9zj
 github.com/siderolabs/ethtool v0.4.0-sidero h1:Ls/M4bFUjfcB1RDVviPZlL3kWcXaEVVSbKke+EZ2A9U=
 github.com/siderolabs/ethtool v0.4.0-sidero/go.mod h1:nOIR88fiFTdBfakYLEUAhxdy75Ih/fgnSlsSKAHRpfc=
 github.com/siderolabs/gen v0.8.0/go.mod h1:an3a2Y53O7kUjnnK8Bfu3gewtvnIOu5RTU6HalFtXQQ=
-github.com/siderolabs/gen v0.8.6 h1:pE6shuqov3L+5rEcAUJ/kY6iJofimljQw5G95P8a5c4=
-github.com/siderolabs/gen v0.8.6/go.mod h1:J9IbusbES2W6QWjtSHpDV9iPGZHc978h1+KJ4oQRspQ=
+github.com/siderolabs/gen v0.8.7 h1:Nu31kL0ln/facRHBfNX7zcB7w9VZ9tifXKsP4lUtWHw=
+github.com/siderolabs/gen v0.8.7/go.mod h1:J9IbusbES2W6QWjtSHpDV9iPGZHc978h1+KJ4oQRspQ=
 github.com/siderolabs/go-api-signature v0.3.12 h1:i1X+kPh9fzo+lEjtEplZSbtq1p21vKv4FCWJcB/ozvk=
 github.com/siderolabs/go-api-signature v0.3.12/go.mod h1:dPLiXohup4qHX7KUgF/wwOE3lRU5uAr3ssEomNxiyxY=
 github.com/siderolabs/go-blockdevice/v2 v2.0.30 h1:+U7GvHypsQ+LyEqo64LDsvCU59JEnv2vb8nvt1KBgFk=

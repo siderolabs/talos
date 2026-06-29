@@ -136,7 +136,7 @@ require (
 	github.com/siderolabs/crypto v0.6.5
 	github.com/siderolabs/discovery-api v0.1.8
 	github.com/siderolabs/discovery-client v0.1.15
-	github.com/siderolabs/gen v0.8.6
+	github.com/siderolabs/gen v0.8.7
 	github.com/siderolabs/go-api-signature v0.3.12
 	github.com/siderolabs/go-blockdevice/v2 v2.0.30
 	github.com/siderolabs/go-circular v0.2.3
