@@ -40,7 +40,13 @@ func TestRedactSecrets(t *testing.T) {
 
 			require.NotEmpty(t, config.MachineConfig.MachineToken)
 			require.NotEmpty(t, config.MachineConfig.MachineCA.Key)
-			require.NotEmpty(t, config.ClusterConfig.ClusterSecret)
+
+			// for 1.14+ the cluster secret lives in a separate DiscoveryIdentityConfig document,
+			// so it is no longer part of the v1alpha1 config (redaction of that document is covered elsewhere).
+			if !versionContract.DiscoveryIdentityMultidocConfig() {
+				require.NotEmpty(t, config.ClusterConfig.ClusterSecret) //nolint:staticcheck // legacy configuration
+			}
+
 			require.NotEmpty(t, config.ClusterConfig.BootstrapToken)
 			require.Empty(t, config.ClusterConfig.ClusterAESCBCEncryptionSecret)
 
@@ -58,7 +64,11 @@ func TestRedactSecrets(t *testing.T) {
 
 			require.Equal(t, replacement, config.Machine().Security().Token())
 			require.Equal(t, replacement, string(config.Machine().Security().IssuingCA().Key))
-			require.Equal(t, replacement, config.Cluster().Secret())
+
+			if !versionContract.DiscoveryIdentityMultidocConfig() {
+				require.Equal(t, replacement, config.ClusterConfig.Secret())
+			}
+
 			require.Equal(t, "***", config.Cluster().Token().Secret())
 			require.Equal(t, "", config.Cluster().AESCBCEncryptionSecret())
 			require.Equal(t, replacement, string(config.Cluster().IssuingCA().Key))

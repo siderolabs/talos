@@ -16,7 +16,6 @@ type Config interface { //nolint:interfacebloat
 	//  - network
 	SideroLink() SideroLinkConfig
 	NetworkRules() NetworkRuleConfig
-	DiscoveryServiceConfigs() []DiscoveryServiceConfig
 	KubespanConfig() KubespanConfig
 	EthernetConfigs() []EthernetConfig
 	RunDefaultDHCPOperators() bool
@@ -35,6 +34,10 @@ type Config interface { //nolint:interfacebloat
 	NetworkProbeConfigs() []NetworkCommonProbeConfig
 	NetworkBlackholeRouteConfigs() []NetworkBlackholeRouteConfig
 	NetworkRoutingRuleConfigs() []NetworkRoutingRuleConfig
+
+	// - cluster
+	DiscoveryServiceConfigs() []DiscoveryServiceConfig
+	DiscoveryIdentityConfig() DiscoveryIdentityConfig
 
 	// - k8s:
 	K8sAdmissionControlPluginConfigs() []K8sAdmissionControlPluginConfig

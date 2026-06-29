@@ -833,8 +833,6 @@ cluster:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`id` |string |Globally unique identifier for this cluster (base64 encoded random 32 bytes).  | |
-|`secret` |string |Shared secret of cluster (base64 encoded random 32 bytes).<br>This secret is shared among cluster members but should never be sent over the network.  | |
 |`controlPlane` |<a href="#Config.cluster.controlPlane">ControlPlaneConfig</a> |Provides control plane specific configuration options. <details><summary>Show example(s)</summary>Setting controlplane endpoint address to 1.2.3.4 and port to 443 example.:{{< highlight yaml >}}
 controlPlane:
     endpoint: https://1.2.3.4 # Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.

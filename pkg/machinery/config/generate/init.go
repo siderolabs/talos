@@ -130,9 +130,9 @@ func (in *Input) init() ([]config.Document, error) {
 	}
 
 	cluster := &v1alpha1.ClusterConfig{
-		ClusterID:     in.Options.SecretsBundle.Cluster.ID,
+		ClusterID:     nilIf(in.Options.VersionContract.DiscoveryIdentityMultidocConfig(), in.Options.SecretsBundle.Cluster.ID), //nolint:staticcheck // legacy configuration
 		ClusterName:   in.ClusterName,
-		ClusterSecret: in.Options.SecretsBundle.Cluster.Secret,
+		ClusterSecret: nilIf(in.Options.VersionContract.DiscoveryIdentityMultidocConfig(), in.Options.SecretsBundle.Cluster.Secret), //nolint:staticcheck // legacy configuration
 		ControlPlane: &v1alpha1.ControlPlaneConfig{
 			Endpoint:           &v1alpha1.Endpoint{URL: controlPlaneURL},
 			LocalAPIServerPort: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), in.Options.LocalAPIServerPort),
@@ -226,6 +226,13 @@ func (in *Input) init() ([]config.Document, error) {
 		}
 
 		documents = append(documents, clustertypes.NewDiscoveryServiceConfigV1Alpha1("default", endpointURL))
+	}
+
+	if in.Options.VersionContract.DiscoveryIdentityMultidocConfig() {
+		documents = append(documents, clustertypes.NewDiscoveryIdentityConfigV1Alpha1(
+			in.Options.SecretsBundle.Cluster.ID,
+			in.Options.SecretsBundle.Cluster.Secret,
+		))
 	}
 
 	if in.Options.VersionContract.HostDNSEnabled() && in.Options.VersionContract.HostDNSMultidocConfig() {

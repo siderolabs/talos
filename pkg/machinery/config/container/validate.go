@@ -150,7 +150,7 @@ func (container *Container) runtimeValidate(ctx context.Context, st state.State,
 //
 // This validation is used to do validation which only makes sense for the full configuration (vs. individual documents).
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (container *Container) validateContainer(mode validation.RuntimeMode) error {
 	var errs error
 
@@ -186,6 +186,21 @@ func (container *Container) validateContainer(mode validation.RuntimeMode) error
 			if hostDNSConfig == nil || !hostDNSConfig.HostDNSEnabled() {
 				errs = multierror.Append(errs, fmt.Errorf("hostDNS must be enabled when using non-default DNS protocols"))
 			}
+		}
+	}
+
+	// KubeSpan requires a cluster identity, provided either by the deprecated .cluster.id/.cluster.secret
+	// or by a DiscoveryIdentityConfig document. The identity may live in a separate document, so this
+	// cross-document check is done at the container level.
+	if kubeSpanConfig := container.NetworkKubeSpanConfig(); kubeSpanConfig != nil && kubeSpanConfig.Enabled() {
+		identity := container.DiscoveryIdentityConfig()
+
+		if identity == nil || identity.ClusterID() == "" {
+			errs = multierror.Append(errs, fmt.Errorf("cluster ID (.cluster.id or DiscoveryIdentityConfig) should be set when .machine.network.kubespan is enabled"))
+		}
+
+		if identity == nil || identity.ClusterSecret() == "" {
+			errs = multierror.Append(errs, fmt.Errorf("cluster secret (.cluster.secret or DiscoveryIdentityConfig) should be set when .machine.network.kubespan is enabled"))
 		}
 	}
 

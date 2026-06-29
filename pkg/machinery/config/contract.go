@@ -220,6 +220,11 @@ func (contract *VersionContract) DiscoveryServiceMultidocConfig() bool {
 	return contract.Greater(TalosVersion1_13)
 }
 
+// DiscoveryIdentityMultidocConfig returns true if version of Talos should use the multi-doc DiscoveryIdentityConfig.
+func (contract *VersionContract) DiscoveryIdentityMultidocConfig() bool {
+	return contract.Greater(TalosVersion1_13)
+}
+
 // MultidocKubernetesConfigSupported returns true if version of Talos should use multi-doc Kubernetes config.
 func (contract *VersionContract) MultidocKubernetesConfigSupported() bool {
 	return contract.Greater(TalosVersion1_13)

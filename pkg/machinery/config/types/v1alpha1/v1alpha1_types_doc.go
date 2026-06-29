@@ -279,20 +279,8 @@ func (ClusterConfig) Doc() *encoder.Doc {
 			},
 		},
 		Fields: []encoder.Doc{
-			{
-				Name:        "id",
-				Type:        "string",
-				Note:        "",
-				Description: "Globally unique identifier for this cluster (base64 encoded random 32 bytes).",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Globally unique identifier for this cluster (base64 encoded random 32 bytes)." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "secret",
-				Type:        "string",
-				Note:        "",
-				Description: "Shared secret of cluster (base64 encoded random 32 bytes).\nThis secret is shared among cluster members but should never be sent over the network.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Shared secret of cluster (base64 encoded random 32 bytes)." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
+			{},
 			{
 				Name:        "controlPlane",
 				Type:        "ControlPlaneConfig",

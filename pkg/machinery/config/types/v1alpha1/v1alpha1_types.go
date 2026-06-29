@@ -311,12 +311,13 @@ var (
 //	examples:
 //	   - value: clusterConfigExample()
 type ClusterConfig struct {
-	//   description: |
-	//     Globally unique identifier for this cluster (base64 encoded random 32 bytes).
+	// docgen:nodoc
+	//
+	// Deprecated: Use 'DiscoveryIdentityConfig' document instead.
 	ClusterID string `yaml:"id,omitempty"`
-	//   description: |
-	//     Shared secret of cluster (base64 encoded random 32 bytes).
-	//     This secret is shared among cluster members but should never be sent over the network.
+	// docgen:nodoc
+	//
+	// Deprecated: Use 'DiscoveryIdentityConfig' document instead.
 	ClusterSecret string `yaml:"secret,omitempty"`
 	//   description: |
 	//     Provides control plane specific configuration options.

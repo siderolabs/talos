@@ -245,6 +245,68 @@ func TestGenerateDiscoveryServiceConfig(t *testing.T) {
 	}
 }
 
+// TestGenerateDiscoveryIdentityConfig verifies that cluster identity generation is gated on the version contract:
+// 1.14+ emits a multi-doc DiscoveryIdentityConfig and leaves the legacy .cluster.id/.cluster.secret empty,
+// while older versions populate the legacy fields and emit no dedicated document. In both cases the identity is
+// surfaced via the DiscoveryIdentityConfig() accessor.
+func TestGenerateDiscoveryIdentityConfig(t *testing.T) {
+	t.Parallel()
+
+	for _, machineType := range []machine.Type{machine.TypeControlPlane, machine.TypeWorker} {
+		for _, test := range []struct {
+			name       string
+			genOptions []generate.Option
+
+			// expectMultidoc: a DiscoveryIdentityConfig document is emitted
+			expectMultidoc bool
+		}{
+			{
+				name:           "1.14 uses multi-doc identity",
+				genOptions:     []generate.Option{generate.WithVersionContract(config.TalosVersion1_14)},
+				expectMultidoc: true,
+			},
+			{
+				name:           "1.13 uses legacy identity",
+				genOptions:     []generate.Option{generate.WithVersionContract(config.TalosVersion1_13)},
+				expectMultidoc: false,
+			},
+		} {
+			t.Run(fmt.Sprintf("%s/%s", machineType, test.name), func(t *testing.T) {
+				t.Parallel()
+
+				input, err := generate.NewInput("test", "https://10.0.1.5:6443", constants.DefaultKubernetesVersion, test.genOptions...)
+				require.NoError(t, err)
+
+				cfg, err := input.Config(machineType)
+				require.NoError(t, err)
+
+				multidocCount := len(xslices.Filter(cfg.Documents(), func(doc mc.Document) bool {
+					return doc.Kind() == "DiscoveryIdentityConfig"
+				}))
+
+				legacyID := cfg.RawV1Alpha1().ClusterConfig.ClusterID         //nolint:staticcheck // verifying legacy config presence
+				legacySecret := cfg.RawV1Alpha1().ClusterConfig.ClusterSecret //nolint:staticcheck // verifying legacy config presence
+
+				if test.expectMultidoc {
+					assert.Equal(t, 1, multidocCount)
+					assert.Empty(t, legacyID)
+					assert.Empty(t, legacySecret)
+				} else {
+					assert.Equal(t, 0, multidocCount)
+					assert.NotEmpty(t, legacyID)
+					assert.NotEmpty(t, legacySecret)
+				}
+
+				// regardless of the form, the identity must be surfaced through the aggregated accessor
+				identity := cfg.DiscoveryIdentityConfig()
+				require.NotNil(t, identity)
+				assert.NotEmpty(t, identity.ClusterID())
+				assert.NotEmpty(t, identity.ClusterSecret())
+			})
+		}
+	}
+}
+
 type runtimeMode struct {
 	requiresInstall bool
 }

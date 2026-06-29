@@ -6,6 +6,7 @@
 package cluster_test
 
 import (
+	"net/url"
 	"testing"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 	clusterctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cluster"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	clustertypes "github.com/siderolabs/talos/pkg/machinery/config/types/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -249,6 +251,41 @@ func (suite *ConfigSuite) TestLegacyFieldsInsecureEndpoint() {
 			asrt.Equal("insecure.example.com:3000", spec.ServiceEndpoint, "ServiceEndpoint should be normalized address") //nolint:staticcheck // legacy config
 		},
 	)
+}
+
+// TestReconcileMultidocIdentity verifies the multi-doc DiscoveryIdentityConfig path produces the same
+// cluster identity (ServiceClusterID/ServiceEncryptionKey) as the legacy .cluster.id/.cluster.secret fields
+// asserted in TestReconcileConfig.
+func (suite *ConfigSuite) TestReconcileMultidocIdentity() {
+	endpointURL, err := url.Parse("https://discovery.talos.dev/")
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(must(container.New(
+		&v1alpha1.Config{
+			ConfigVersion: "v1alpha1",
+			ClusterConfig: &v1alpha1.ClusterConfig{},
+		},
+		clustertypes.NewDiscoveryServiceConfigV1Alpha1("default", endpointURL),
+		clustertypes.NewDiscoveryIdentityConfigV1Alpha1("cluster1", "kCQsKr4B28VUl7qw1sVkTDNF9fFH++ViIuKsss+C6kc="),
+	)))
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
+
+	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []resource.ID{cluster.ConfigID},
+		func(res *cluster.Config, asrt *assert.Assertions) {
+			spec := res.TypedSpec()
+
+			asrt.Equal([]cluster.ServiceEndpoint{{Name: "default", Endpoint: "discovery.talos.dev:443", Insecure: false}}, spec.ServiceEndpoints)
+			asrt.Equal("cluster1", spec.ServiceClusterID)
+			asrt.Equal(
+				[]byte("\x90\x24\x2c\x2a\xbe\x01\xdb\xc5\x54\x97\xba\xb0\xd6\xc5\x64\x4c\x33\x45\xf5\xf1\x47\xfb\xe5\x62\x22\xe2\xac\xb2\xcf\x82\xea\x47"),
+				spec.ServiceEncryptionKey,
+			)
+		})
+
+	suite.Require().NoError(suite.State().Destroy(suite.Ctx(), cfg.Metadata()))
+
+	rtestutils.AssertNoResource[*cluster.Config](suite.Ctx(), suite.T(), suite.State(), cluster.ConfigID)
 }
 
 func TestConfigSuite(t *testing.T) {

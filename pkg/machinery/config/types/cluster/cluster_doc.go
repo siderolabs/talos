@@ -44,6 +44,38 @@ func (DiscoveryServiceConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (DiscoveryIdentityConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "DiscoveryIdentityConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "DiscoveryIdentityConfig is a config document to configure the cluster identity used by the discovery service." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "DiscoveryIdentityConfig is a config document to configure the cluster identity used by the discovery service.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "clusterID",
+				Type:        "string",
+				Note:        "",
+				Description: "Globally unique identifier for this cluster (base64 encoded random 32 bytes).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Globally unique identifier for this cluster (base64 encoded random 32 bytes)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "clusterSecret",
+				Type:        "string",
+				Note:        "",
+				Description: "Shared secret of cluster (base64 encoded random 32 bytes).\nThis secret is shared among cluster members but should never be sent over the network.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Shared secret of cluster (base64 encoded random 32 bytes)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleDiscoveryIdentityConfigV1Alpha1())
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file cluster_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -51,6 +83,7 @@ func GetFileDoc() *encoder.FileDoc {
 		Description: "Package cluster provides cluster configuration documents.\n",
 		Structs: []*encoder.Doc{
 			DiscoveryServiceConfigV1Alpha1{}.Doc(),
+			DiscoveryIdentityConfigV1Alpha1{}.Doc(),
 		},
 	}
 }

@@ -101,8 +101,8 @@ func (in *Input) worker() ([]config.Document, error) {
 	}
 
 	cluster := &v1alpha1.ClusterConfig{
-		ClusterID:      in.Options.SecretsBundle.Cluster.ID,
-		ClusterSecret:  in.Options.SecretsBundle.Cluster.Secret,
+		ClusterID:      nilIf(in.Options.VersionContract.DiscoveryIdentityMultidocConfig(), in.Options.SecretsBundle.Cluster.ID),     //nolint:staticcheck // legacy configuration
+		ClusterSecret:  nilIf(in.Options.VersionContract.DiscoveryIdentityMultidocConfig(), in.Options.SecretsBundle.Cluster.Secret), //nolint:staticcheck // legacy configuration
 		ClusterCA:      &x509.PEMEncodedCertificateAndKey{Crt: in.Options.SecretsBundle.Certs.K8s.Crt},
 		BootstrapToken: in.Options.SecretsBundle.Secrets.BootstrapToken,
 		ControlPlane: &v1alpha1.ControlPlaneConfig{
@@ -166,6 +166,13 @@ func (in *Input) worker() ([]config.Document, error) {
 		}
 
 		documents = append(documents, clustertypes.NewDiscoveryServiceConfigV1Alpha1("default", endpointURL))
+	}
+
+	if in.Options.VersionContract.DiscoveryIdentityMultidocConfig() {
+		documents = append(documents, clustertypes.NewDiscoveryIdentityConfigV1Alpha1(
+			in.Options.SecretsBundle.Cluster.ID,
+			in.Options.SecretsBundle.Cluster.Secret,
+		))
 	}
 
 	if in.Options.VersionContract.HostDNSEnabled() && in.Options.VersionContract.HostDNSMultidocConfig() {

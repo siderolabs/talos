@@ -7,6 +7,7 @@ package cluster
 import (
 	"context"
 	"encoding/base64"
+	"errors"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/controller/generic/transform"
@@ -62,12 +63,17 @@ func NewConfigController() *ConfigController {
 						})
 					}
 
-					res.TypedSpec().ServiceEncryptionKey, err = base64.StdEncoding.DecodeString(cfg.Cluster().Secret())
+					identity := cfg.DiscoveryIdentityConfig()
+					if identity == nil {
+						return errors.New("cluster identity is required when discovery service is configured")
+					}
+
+					res.TypedSpec().ServiceEncryptionKey, err = base64.StdEncoding.DecodeString(identity.ClusterSecret())
 					if err != nil {
 						return err
 					}
 
-					res.TypedSpec().ServiceClusterID = cfg.Cluster().ID()
+					res.TypedSpec().ServiceClusterID = identity.ClusterID()
 
 					// Legacy field support for Omni backwards compatibility.
 					// We don't actually use these fields anymore in the discovery service controller.

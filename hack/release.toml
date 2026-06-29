@@ -97,13 +97,24 @@ HostDNS configuration was moved from the v1alpha1 config `.machine.features.host
 Talos now supports HTTP network probes, allowing for monitoring of HTTP endpoints.
 HTTP responses with status 200-399 are considered successful, while connection and transport errors are treated as failures.
 """
+    [notes.discovery]
+        title = "Cluster Discovery"
+        description = """\
+Talos introduces support for configuring multiple discovery service endpoints.
+Talos introduces new document for configuring the cluster discovery identity.
+
+List of changes:
+
+- Deprecated `.cluster.discovery` in the v1alpha1 config; use the `DiscoveryServiceConfig` document for discovery service configuration. The v1alpha1 config and `DiscoveryServiceConfig` are mutually exclusive.
+- Deprecated `.cluster.secret` and `cluster.id` in the v1alpha1 config; use the `DiscoveryIdentityConfig` document for discovery identity configuration. The v1alpha1 config and `DiscoveryIdentityConfig` are mutually exclusive.
+- Changed cluster ID encoding in the generated secret bundle, from `base64.URLEncoding` to `base64.StdEncoding`. This aligns the encoding with the rest of Talos.
+"""
 
     [notes.kubernetesmulti]
         title = "Kubernetes Multi-document Configuration"
         description = """\
 Talos introduces new multi-document Kubernetes configuration, which allows for more flexible and modular configuration of Kubernetes components.
 Talos still supports the old v1alpha1 config for backwards compatibility, but new features and fields will only be available in the new multi-document format.
-Talos introduces support for configuring multiple discovery service endpoints.
 The `kube-proxy` is now using configuration to manage its settings instead of command line arguments (with new `KubeProxyConfig` document).
 
 List of changes:
@@ -115,7 +126,6 @@ List of changes:
 - Deprecated `.cluster.proxy` in the v1alpha1 config; use the `KubeProxyConfig` document for kube-proxy configuration.
 - Deprecated `.cluster.network` in the v1alpha1 config; use the `KubeNetworkConfig` document for Kubernetes network configuration; Flannel can be configured using the `KubeFlannelCNIConfig` document.
 - Deprecated `.cluster.coreDNS` in the v1alpha1 config; use the `KubeCoreDNSConfig` document for CoreDNS configuration.
-- Deprecated `.cluster.discovery` in the v1alpha1 config; use the `DiscoveryServiceConfig` document for discovery service configuration. The v1alpha1 config and `DiscoveryServiceConfig` are mutually exclusive.
 """
 
     [notes.dhcpsearchdomains]

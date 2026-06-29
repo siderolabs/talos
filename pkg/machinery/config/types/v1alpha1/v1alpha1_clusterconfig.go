@@ -187,12 +187,12 @@ func (c *ClusterConfig) ScheduleOnControlPlanes() bool {
 
 // ID returns the unique identifier for the cluster.
 func (c *ClusterConfig) ID() string {
-	return c.ClusterID
+	return c.ClusterID //nolint:staticcheck // legacy configuration
 }
 
 // Secret returns the cluster secret.
 func (c *ClusterConfig) Secret() string {
-	return c.ClusterSecret
+	return c.ClusterSecret //nolint:staticcheck // legacy configuration
 }
 
 // CNI implements the config.ClusterNetwork interface.

@@ -1208,9 +1208,9 @@ func TestValidate(t *testing.T) {
 					},
 				},
 			},
-			expectedError: "3 errors occurred:\n\t* .cluster.discovery should be enabled when .machine.network.kubespan is enabled\n" +
-				"\t* .cluster.id should be set when .machine.network.kubespan is enabled\n" +
-				"\t* .cluster.secret should be set when .machine.network.kubespan is enabled\n\n",
+			// .cluster.id/.cluster.secret requirements moved to container-level validation
+			// (the identity may live in a separate DiscoveryIdentityConfig document).
+			expectedError: "1 error occurred:\n\t* .cluster.discovery should be enabled when .machine.network.kubespan is enabled\n\n",
 		},
 		{
 			name: "DiscoveryServiceEndpoint",

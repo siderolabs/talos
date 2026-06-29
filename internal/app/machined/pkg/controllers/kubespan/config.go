@@ -33,6 +33,10 @@ func NewConfigController() *ConfigController {
 					return optional.None[*kubespan.Config]()
 				}
 
+				if cfg.Config().DiscoveryIdentityConfig() == nil {
+					return optional.None[*kubespan.Config]()
+				}
+
 				return optional.Some(kubespan.NewConfig(config.NamespaceName, kubespan.ConfigID))
 			},
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, cfg *config.MachineConfig, res *kubespan.Config) error {
@@ -56,8 +60,10 @@ func NewConfigController() *ConfigController {
 						}
 					}
 
-					res.TypedSpec().ClusterID = c.Cluster().ID()
-					res.TypedSpec().SharedSecret = c.Cluster().Secret()
+					identity := c.DiscoveryIdentityConfig()
+					res.TypedSpec().ClusterID = identity.ClusterID()
+					res.TypedSpec().SharedSecret = identity.ClusterSecret()
+
 					res.TypedSpec().ExtraEndpoints = c.KubespanConfig().ExtraAnnouncedEndpoints()
 				}
 

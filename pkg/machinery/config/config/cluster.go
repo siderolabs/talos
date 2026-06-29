@@ -16,9 +16,7 @@ import (
 //
 //nolint:interfacebloat
 type ClusterConfig interface {
-	ID() string
 	Name() string
-	Secret() string
 	Endpoint() *url.URL
 	Token() Token
 	IssuingCA() *x509.PEMEncodedCertificateAndKey
@@ -36,6 +34,13 @@ type ClusterConfig interface {
 	AdminKubeconfig() AdminKubeconfig
 	ScheduleOnControlPlanes() bool
 	Discovery() Discovery
+}
+
+// DiscoveryIdentityConfig provides the cluster identity (ID and shared secret) used by the
+// discovery service and KubeSpan.
+type DiscoveryIdentityConfig interface {
+	ClusterID() string
+	ClusterSecret() string
 }
 
 // Etcd defines the requirements for a config that pertains to etcd related

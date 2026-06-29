@@ -35,8 +35,6 @@ machine:
     nodeLabels:
         node.kubernetes.io/exclude-from-external-load-balancers: ""
 cluster:
-    id: 0raF93qnkMvF-FZNuvyGozXNdLiT2FOWSlyBaW4PR-w=
-    secret: pofHbABZq7VXuObsdLdy/bHmz6hlMHZ3p8+6WKrv1ic=
     controlPlane:
         endpoint: https://base:6443
     clusterName: base
@@ -61,6 +59,11 @@ apiVersion: v1alpha1
 kind: DiscoveryServiceConfig
 name: default
 endpoint: https://discovery.talos.dev/
+---
+apiVersion: v1alpha1
+kind: DiscoveryIdentityConfig
+clusterID: 0raF93qnkMvF-FZNuvyGozXNdLiT2FOWSlyBaW4PR-w=
+clusterSecret: pofHbABZq7VXuObsdLdy/bHmz6hlMHZ3p8+6WKrv1ic=
 ---
 apiVersion: v1alpha1
 kind: ResolverConfig

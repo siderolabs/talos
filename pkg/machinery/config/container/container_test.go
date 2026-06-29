@@ -63,7 +63,7 @@ func TestNew(t *testing.T) {
 	assert.False(t, cfg.Readonly())
 	assert.False(t, cfg.Debug())
 	assert.True(t, cfg.Machine().Features().DiskQuotaSupportEnabled())
-	assert.Equal(t, "topsecret", cfg.Cluster().Secret())
+	assert.Equal(t, "topsecret", cfg.DiscoveryIdentityConfig().ClusterSecret())
 	assert.Equal(t, "https://siderolink.api/join?jointoken=secret&user=alice", cfg.SideroLink().APIUrl().String())
 	assert.Equal(t, "test-extension", cfg.ExtensionServiceConfigs()[0].Name())
 	assert.Equal(t, "0000:04:00.00", cfg.PCIDriverRebindConfig().PCIDriverRebindConfigs()[0].PCIID())
@@ -80,7 +80,7 @@ func TestNew(t *testing.T) {
 	assert.NotEqual(t, v1alpha1Cfg, cfgBack.RawV1Alpha1())
 
 	cfgRedacted := cfg.RedactSecrets("REDACTED")
-	assert.Equal(t, "REDACTED", cfgRedacted.Cluster().Secret())
+	assert.Equal(t, "REDACTED", cfgRedacted.DiscoveryIdentityConfig().ClusterSecret())
 	assert.Equal(t, "https://siderolink.api/join?jointoken=REDACTED&user=alice", cfgRedacted.SideroLink().APIUrl().String())
 }
 

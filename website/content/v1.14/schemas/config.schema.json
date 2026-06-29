@@ -869,6 +869,51 @@
       ],
       "description": "ZswapConfig is a zswap (compressed memory) configuration document.\\nWhen zswap is enabled, Linux kernel compresses pages that would otherwise be swapped out to disk.\\nThe compressed pages are stored in a memory pool, which is used to avoid writing to disk\\nwhen the system is under memory pressure.\\n"
     },
+    "cluster.DiscoveryIdentityConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "DiscoveryIdentityConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "clusterID": {
+          "type": "string",
+          "title": "clusterID",
+          "description": "Globally unique identifier for this cluster (base64 encoded random 32 bytes).\n",
+          "markdownDescription": "Globally unique identifier for this cluster (base64 encoded random 32 bytes).",
+          "x-intellij-html-description": "\u003cp\u003eGlobally unique identifier for this cluster (base64 encoded random 32 bytes).\u003c/p\u003e\n"
+        },
+        "clusterSecret": {
+          "type": "string",
+          "title": "clusterSecret",
+          "description": "Shared secret of cluster (base64 encoded random 32 bytes).\nThis secret is shared among cluster members but should never be sent over the network.\n",
+          "markdownDescription": "Shared secret of cluster (base64 encoded random 32 bytes).\nThis secret is shared among cluster members but should never be sent over the network.",
+          "x-intellij-html-description": "\u003cp\u003eShared secret of cluster (base64 encoded random 32 bytes).\nThis secret is shared among cluster members but should never be sent over the network.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "clusterID",
+        "clusterSecret",
+        "kind"
+      ],
+      "description": "DiscoveryIdentityConfig is a config document to configure the cluster identity used by the discovery service."
+    },
     "cluster.DiscoveryServiceConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -5236,20 +5281,6 @@
     },
     "v1alpha1.ClusterConfig": {
       "properties": {
-        "id": {
-          "type": "string",
-          "title": "id",
-          "description": "Globally unique identifier for this cluster (base64 encoded random 32 bytes).\n",
-          "markdownDescription": "Globally unique identifier for this cluster (base64 encoded random 32 bytes).",
-          "x-intellij-html-description": "\u003cp\u003eGlobally unique identifier for this cluster (base64 encoded random 32 bytes).\u003c/p\u003e\n"
-        },
-        "secret": {
-          "type": "string",
-          "title": "secret",
-          "description": "Shared secret of cluster (base64 encoded random 32 bytes).\nThis secret is shared among cluster members but should never be sent over the network.\n",
-          "markdownDescription": "Shared secret of cluster (base64 encoded random 32 bytes).\nThis secret is shared among cluster members but should never be sent over the network.",
-          "x-intellij-html-description": "\u003cp\u003eShared secret of cluster (base64 encoded random 32 bytes).\nThis secret is shared among cluster members but should never be sent over the network.\u003c/p\u003e\n"
-        },
         "controlPlane": {
           "$ref": "#/$defs/v1alpha1.ControlPlaneConfig",
           "title": "controlPlane",
@@ -6338,6 +6369,9 @@
     },
     {
       "$ref": "#/$defs/block.ZswapConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/cluster.DiscoveryIdentityConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/cluster.DiscoveryServiceConfigV1Alpha1"

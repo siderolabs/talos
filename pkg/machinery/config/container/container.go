@@ -312,6 +312,27 @@ func (container *Container) DiscoveryServiceConfigs() []config.DiscoveryServiceC
 	return findMatchingDocs[config.DiscoveryServiceConfig](container.documents)
 }
 
+// DiscoveryIdentityConfig implements config.Config interface.
+//
+// The dedicated document and the deprecated v1alpha1 cluster identity (.cluster.id/.cluster.secret) are
+// mutually exclusive (enforced by DiscoveryIdentityConfigV1Alpha1.V1Alpha1ConflictValidate); the v1alpha1
+// config takes priority.
+func (container *Container) DiscoveryIdentityConfig() config.DiscoveryIdentityConfig {
+	// v1alpha1 cluster identity takes priority when it yields a config
+	if container.v1alpha1Config != nil {
+		if legacy := container.v1alpha1Config.DiscoveryIdentityConfig(); legacy != nil {
+			return legacy
+		}
+	}
+
+	// fallback to dedicated multi-doc. Take first, since this doc is not named.
+	if docs := findMatchingDocs[config.DiscoveryIdentityConfig](container.documents); len(docs) > 0 {
+		return docs[0]
+	}
+
+	return nil
+}
+
 // PCIDriverRebindConfig implements config.Config interface.
 func (container *Container) PCIDriverRebindConfig() config.PCIDriverRebindConfig {
 	return config.WrapPCIDriverRebindConfig(findMatchingDocs[config.PCIDriverRebindConfig](container.documents)...)

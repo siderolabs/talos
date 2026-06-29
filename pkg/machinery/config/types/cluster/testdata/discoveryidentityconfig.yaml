@@ -1,0 +1,4 @@
+apiVersion: v1alpha1
+kind: DiscoveryIdentityConfig
+clusterID: MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=
+clusterSecret: vlf2HU1NEZL3Ezi9Tk+RZBLJUbjnsHnTzs3wK9JNk6Q=

@@ -265,13 +265,9 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 			result = multierror.Append(result, errors.New(".cluster.discovery should be enabled when .machine.network.kubespan is enabled"))
 		}
 
-		if c.Cluster().ID() == "" {
-			result = multierror.Append(result, errors.New(".cluster.id should be set when .machine.network.kubespan is enabled"))
-		}
-
-		if c.Cluster().Secret() == "" {
-			result = multierror.Append(result, errors.New(".cluster.secret should be set when .machine.network.kubespan is enabled"))
-		}
+		// Note: the cluster identity (.cluster.id/.cluster.secret or the DiscoveryIdentityConfig document)
+		// requirement for KubeSpan is validated at the container level (see container.validateContainer),
+		// since the identity may live in a separate document.
 
 		for _, cidr := range kcfg.Filters().Endpoints() {
 			cidr = strings.TrimPrefix(cidr, "!")
