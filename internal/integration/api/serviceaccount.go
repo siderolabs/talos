@@ -271,7 +271,7 @@ func (suite *ServiceAccountSuite) creteTestJob(ns, name, serviceAccount, node st
 						"containers": []map[string]any{
 							{
 								"name":  "talosctl",
-								"image": "ghcr.io/siderolabs/talosctl:v1.12.4", // sync with cmd/talos/image.go list
+								"image": "ghcr.io/siderolabs/talosctl:v1.13.5", // sync with cmd/talosctl/cmd/talos/image.go imageNames
 								"args": []string{
 									"--nodes", node,
 									"version",
