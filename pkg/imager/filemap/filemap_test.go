@@ -5,11 +5,13 @@
 package filemap_test
 
 import (
+	"io"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/pkg/imager/filemap"
 )
@@ -68,4 +70,39 @@ func TestFileMap(t *testing.T) {
 		},
 		artifacts,
 	)
+}
+
+// TestLayer exercises the digest, diffID and compressed-read paths the way go-containerregistry
+// does when building and writing an image. Run with -race, it guards against re-introducing
+// repeated compression of the layer (each compression spins up a streaming gzip goroutine, and
+// the GC-reused flate buffers across those goroutines trip the race detector).
+func TestLayer(t *testing.T) {
+	tempDir := t.TempDir()
+
+	require.NoError(t, os.MkdirAll(filepath.Join(tempDir, "a/b"), 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(tempDir, "a/b/file"), []byte("hello world"), 0o644))
+	require.NoError(t, os.WriteFile(filepath.Join(tempDir, "a/executable"), []byte("payload"), 0o755))
+
+	artifacts, err := filemap.Walk(tempDir, "")
+	require.NoError(t, err)
+
+	layer, err := filemap.Layer(artifacts)
+	require.NoError(t, err)
+
+	_, err = layer.Digest()
+	require.NoError(t, err)
+
+	_, err = layer.DiffID()
+	require.NoError(t, err)
+
+	// read the compressed stream multiple times, mirroring digest + tarball write
+	for range 3 {
+		rc, err := layer.Compressed()
+		require.NoError(t, err)
+
+		_, err = io.Copy(io.Discard, rc)
+		require.NoError(t, err)
+
+		require.NoError(t, rc.Close())
+	}
 }

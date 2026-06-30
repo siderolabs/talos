@@ -52,6 +52,25 @@ rules:
 	assert.Equal(t, adapter.Objects()[0].GetKind(), "Policy")
 }
 
+func TestManifestObjectsAreCopies(t *testing.T) {
+	manifest := k8s.NewManifest(k8s.ControlPlaneNamespaceName, "test")
+	adapter := k8sadapter.Manifest(manifest)
+
+	require.NoError(t, adapter.SetYAML([]byte(strings.TrimSpace(`
+apiVersion: audit.k8s.io/v1
+kind: Policy
+rules:
+- level: Metadata
+`))))
+
+	// mutating an object returned by Objects() must not affect the resource spec,
+	// otherwise the controller races with concurrent readers (e.g. the COSI state
+	// server marshaling the resource for an API List/Get).
+	adapter.Objects()[0].SetNamespace("mutated")
+
+	assert.Empty(t, adapter.Objects()[0].GetNamespace())
+}
+
 //go:embed testdata/list.yaml
 var listManifest []byte
 

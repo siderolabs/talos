@@ -116,8 +116,12 @@ func (a manifest) SetYAML(yamlBytes []byte) error {
 }
 
 // Objects returns list of unstructured object.
+//
+// The returned objects are deep copies, so callers may mutate them freely without
+// racing with concurrent readers of the resource spec (e.g. the COSI state server
+// marshaling the resource for an API List/Get).
 func (a manifest) Objects() []*unstructured.Unstructured {
 	return xslices.Map(a.Manifest.TypedSpec().Items, func(item k8s.SingleManifest) *unstructured.Unstructured {
-		return &unstructured.Unstructured{Object: item.Object}
+		return (&unstructured.Unstructured{Object: item.Object}).DeepCopy()
 	})
 }
