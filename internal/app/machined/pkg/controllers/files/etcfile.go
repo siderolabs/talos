@@ -101,7 +101,7 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 			case resource.PhaseRunning:
 				logger.Debug("writing file contents", zap.String("name", filename), zap.Stringer("version", spec.Metadata().Version()))
 
-				if err = UpdateFile(ctrl.EtcRoot, filename, spec.TypedSpec().Contents, spec.TypedSpec().Mode, spec.TypedSpec().SelinuxLabel); err != nil {
+				if err = AtomicUpdate(ctrl.EtcRoot, filename, spec.TypedSpec().Contents, spec.TypedSpec().Mode, spec.TypedSpec().SelinuxLabel); err != nil {
 					return fmt.Errorf("error updating %q: %w", filename, err)
 				}
 
@@ -137,6 +137,11 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 
 // UpdateFile is like `os.WriteFile`, but it will only update the file if the
 // contents have changed.
+//
+// The file is updated in place (truncate + write), which preserves the file's
+// inode. This is required for files that are bind-mounted by inode (e.g. the pod
+// resolv.conf, see network.EtcFileController), where a rename would orphan the
+// bind mount. Callers that do not have this constraint should prefer AtomicUpdate.
 func UpdateFile(root xfs.Root, filename string, contents []byte, mode os.FileMode, selinuxLabel string) error {
 	oldContents, err := xfs.ReadFile(root, filename)
 	if err == nil && bytes.Equal(oldContents, contents) {
@@ -152,4 +157,42 @@ func UpdateFile(root xfs.Root, filename string, contents []byte, mode os.FileMod
 	}
 
 	return selinux.FSetLabel(root, filename, selinuxLabel)
+}
+
+// AtomicUpdate is like UpdateFile, but it updates the file atomically by writing
+// to a temporary file in the same directory and renaming it into place, so that
+// concurrent readers never observe a truncated (empty) file while it is being
+// rewritten.
+//
+// The rename replaces the file's inode, so this MUST NOT be used for files that
+// are bind-mounted by inode (use UpdateFile for those).
+func AtomicUpdate(root xfs.Root, filename string, contents []byte, mode os.FileMode, selinuxLabel string) error {
+	oldContents, err := xfs.ReadFile(root, filename)
+	if err == nil && bytes.Equal(oldContents, contents) {
+		return selinux.FSetLabel(root, filename, selinuxLabel)
+	}
+
+	if err = xfs.MkdirAll(root, filepath.Dir(filename), 0o755); err != nil {
+		return fmt.Errorf("mkdir all failed: %w", err)
+	}
+
+	tmpFilename := filename + ".tmp"
+
+	if err := xfs.WriteFile(root, tmpFilename, contents, mode); err != nil {
+		return fmt.Errorf("write file failed: %w", err)
+	}
+
+	defer xfs.Remove(root, tmpFilename) //nolint:errcheck
+
+	// label the temporary file before the rename so the final file appears
+	// atomically with the correct SELinux label.
+	if err := selinux.FSetLabel(root, tmpFilename, selinuxLabel); err != nil {
+		return err
+	}
+
+	if err := xfs.Rename(root, tmpFilename, filename); err != nil {
+		return fmt.Errorf("rename failed: %w", err)
+	}
+
+	return nil
 }
