@@ -172,7 +172,7 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 		addNetworkMTUFlag(common, &cOps.NetworkMTU)
 		addTalosVersionFlag(common, &cOps.TalosVersion, "the desired Talos version to generate config for")
 
-		common.StringVar(&cOps.NetworkCIDR, networkCIDRFlagName, cOps.NetworkCIDR, "CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way)")
+		common.StringVar(&cOps.NetworkCIDR, networkCIDRFlagName, cOps.NetworkCIDR, "IPv4 CIDR of the cluster network")
 		common.StringVar(&cOps.WireguardCIDR, wireguardCIDRFlag, cOps.WireguardCIDR, "CIDR of the wireguard network")
 		common.BoolVar(&cOps.ApplyConfigEnabled, applyConfigEnabledFlag, cOps.ApplyConfigEnabled, "enable apply config when the VM is starting in maintenance mode")
 		common.StringSliceVar(&cOps.RegistryInsecure, registryInsecureFlag, cOps.RegistryInsecure, "list of registry hostnames to skip TLS verification for")
@@ -195,6 +195,7 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 		common.BoolVar(&cOps.SkipK8sNodeReadinessCheck, skipK8sNodeReadinessCheckFlag, cOps.SkipK8sNodeReadinessCheck, "skip k8s node readiness checks")
 		common.BoolVar(&cOps.WithJSONLogs, withJSONLogsFlag, cOps.WithJSONLogs, "enable JSON logs receiver and configure Talos to send logs there")
 		common.BoolVar(&cOps.WithUUIDHostnames, withUUIDHostnamesFlag, cOps.WithUUIDHostnames, "use machine UUIDs as default hostnames")
+		common.StringVar(&cOps.NetworkCIDRv6, networkCIDRv6FlagName, cOps.NetworkCIDRv6, "IPv6 CIDR of the cluster network (optional, enables IPv6, defaults to automatic ULA derivation)")
 		common.BoolVar(&cOps.NetworkIPv6, networkIPv6Flag, cOps.NetworkIPv6, "enable IPv6 network in the cluster")
 
 		return common
