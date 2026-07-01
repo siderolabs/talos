@@ -60,6 +60,11 @@ func (a *KubePrism) Port() int {
 	return a.ServerPort
 }
 
+// TLSServerName implements [config.KubePrism].
+func (a *KubePrism) TLSServerName() string {
+	return a.ServerTLSServerName
+}
+
 // HostDNSEnabled implements config.NetworkHostDNSConfig interface.
 func (h *HostDNSConfig) HostDNSEnabled() bool {
 	return pointer.SafeDeref(h.HostDNSConfigEnabled)

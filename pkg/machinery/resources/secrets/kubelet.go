@@ -31,6 +31,12 @@ type Kubelet = typed.Resource[KubeletSpec, KubeletExtension]
 type KubeletSpec struct {
 	Endpoint *url.URL `yaml:"endpoint" protobuf:"1"`
 
+	// EndpointTLSServerName, when non-empty, is propagated to the generated
+	// kubelet kubeconfig as `clusters[0].cluster.tls-server-name`, overriding
+	// the SNI/hostname the kubelet uses while still dialing Endpoint as the
+	// TCP destination.
+	EndpointTLSServerName string `yaml:"endpointTLSServerName,omitempty" protobuf:"6"`
+
 	AcceptedCAs []*x509.PEMEncodedCertificate `yaml:"acceptedCAs" protobuf:"5"`
 
 	BootstrapTokenID     string `yaml:"bootstrapTokenID" protobuf:"3"`
