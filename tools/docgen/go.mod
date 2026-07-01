@@ -8,8 +8,8 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.27
 	github.com/pb33f/ordered-map/v2 v2.3.1
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
-	github.com/siderolabs/gen v0.8.6
-	go.yaml.in/yaml/v4 v4.0.0-rc.5
+	github.com/siderolabs/gen v0.8.7
+	go.yaml.in/yaml/v4 v4.0.0-rc.6
 	mvdan.cc/gofumpt v0.10.0
 )
 

@@ -6,8 +6,8 @@ require (
 	github.com/bmatcuk/doublestar/v4 v4.10.0
 	github.com/golangci/plugin-module-register v0.1.2
 	github.com/stretchr/testify v1.11.1
-	go.yaml.in/yaml/v4 v4.0.0-rc.5
-	golang.org/x/tools v0.46.0
+	go.yaml.in/yaml/v4 v4.0.0-rc.6
+	golang.org/x/tools v0.47.0
 )
 
 require (
