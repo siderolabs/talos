@@ -315,6 +315,8 @@ func resolveLogWriter(opts []provision.Option) io.Writer {
 // GenOptions returns the same config-generate options the QEMU provisioner
 // emits, so the configs talosctl generates locally match what the server's
 // in-process QEMU provisioner expects.
+//
+//nolint:gocyclo
 func (p *Provisioner) GenOptions(networkReq provision.NetworkRequest, contract *config.VersionContract) ([]generate.Option, []bundle.Option) {
 	hasIPv4 := false
 	hasIPv6 := false
@@ -333,7 +335,10 @@ func (p *Provisioner) GenOptions(networkReq provision.NetworkRequest, contract *
 
 	var bundleOpts []bundle.Option
 
-	if contract.MultidocNetworkConfigSupported() {
+	// full-CLOS nodes have no management net0 at all (only fabric uplinks + a loopback identity): skip the
+	// net0 alias/DHCP injection. The per-node config (loopback + BGPConfig on the fabric NICs) is baked by
+	// the configmaker and delivered via the metal-iso config volume.
+	if !networkReq.CLOSNoNet0 && contract.MultidocNetworkConfigSupported() {
 		aliasConfig := networkcfg.NewLinkAliasConfigV1Alpha1("net0")
 		aliasConfig.Selector = networkcfg.LinkSelector{
 			Match: cel.MustExpression(cel.ParseBooleanExpression(`link.driver == "virtio_net"`, celenv.LinkLocator())),
@@ -341,9 +346,13 @@ func (p *Provisioner) GenOptions(networkReq provision.NetworkRequest, contract *
 
 		documents := []configconfig.Document{aliasConfig}
 
-		if hasIPv4 {
+		// NoDHCP leaves net0 IPv6-link-local only (BGP-reachability test: identity is on a loopback).
+		switch {
+		case networkReq.NoDHCP:
+			// no DHCP config injected
+		case hasIPv4:
 			documents = append(documents, networkcfg.NewDHCPv4ConfigV1Alpha1("net0"))
-		} else if hasIPv6 {
+		case hasIPv6:
 			documents = append(documents, networkcfg.NewDHCPv6ConfigV1Alpha1("net0"))
 		}
 
@@ -356,7 +365,7 @@ func (p *Provisioner) GenOptions(networkReq provision.NetworkRequest, contract *
 			bundleOpts,
 			bundle.WithPatch([]configpatcher.Patch{configpatcher.NewStrategicMergePatch(ctr)}),
 		)
-	} else {
+	} else if !networkReq.CLOSNoNet0 {
 		virtioSelector := v1alpha1.IfaceBySelector(v1alpha1.NetworkDeviceSelector{
 			NetworkDeviceKernelDriver: "virtio_net",
 		})

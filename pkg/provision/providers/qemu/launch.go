@@ -79,11 +79,32 @@ type LaunchConfig struct {
 
 	VMMac string
 
+	// FabricUplinks describes dedicated point-to-point uplinks from this node to the host BGP fabric
+	// peer, used by the full-CLOS BGP test. Each uplink is a virtio/e1000 NIC backed by its own
+	// per-uplink CNI bridge (root ns) + tc-redirect-tap (node netns).
+	FabricUplinks []FabricUplink
+
+	// CLOSNoNet0 means this node has no management net0 (no CNI bridge) — only the fabric uplinks. The
+	// netns is still created; the net0 netdev, net0 CNI, and IPAM dump are skipped.
+	CLOSNoNet0 bool
+
 	// signals
 	c chan os.Signal
 
 	// controller
 	controller *Controller
+}
+
+// FabricUplink is a dedicated point-to-point BGP fabric uplink: a per-uplink CNI bridge (root ns,
+// where the host fabric peer attaches) connected via tc-redirect-tap to a tap in the node netns.
+type FabricUplink struct {
+	BridgeName  string // host bridge name (root ns); the host fabric peer attaches here
+	CNIConfList string // per-uplink CNI conflist (bridge + tc-redirect-tap), LLA-only (no IPAM)
+	IfName      string // CNI runtimeConf IfName, unique within the node netns
+
+	// filled by withNetworkContext at launch time
+	mac     string
+	tapName string
 }
 
 type networkConfigBase struct {
@@ -124,8 +145,6 @@ func launchVM(config *LaunchConfig) error {
 		"-smp", fmt.Sprintf("cpus=%d", config.VCPUCount),
 		"-cpu", cpuArg,
 		"-nographic",
-		"-netdev", getNetdevParams(config.Network, "net0"),
-		"-device", fmt.Sprintf("virtio-net-pci,netdev=net0,mac=%s,host_mtu=%d", config.VMMac, config.Network.MTU),
 		// TODO: uncomment the following line to get another eth interface not connected to anything
 		// "-nic", "tap,model=e1000,script=no,downscript=no",
 		"-device", "virtio-rng-pci",
@@ -139,6 +158,42 @@ func launchVM(config *LaunchConfig) error {
 		"-device", "virtserialport,chardev=qga0,name=org.qemu.guest_agent.0",
 		"-device", "i6300esb,id=watchdog0",
 		"-watchdog-action", "pause",
+	}
+
+	// management net0 (skipped for authentic full-CLOS nodes, which have only fabric uplinks).
+	if !config.CLOSNoNet0 {
+		args = append(args,
+			"-netdev", getNetdevParams(config.Network, "net0"),
+			"-device", fmt.Sprintf("virtio-net-pci,netdev=net0,mac=%s,host_mtu=%d", config.VMMac, config.Network.MTU),
+		)
+	}
+
+	// dedicated BGP fabric uplinks: each is a NIC on its own per-uplink CNI bridge. tapName is filled by
+	// withNetworkContext (Linux); on platforms without fabric provisioning it stays empty and the uplink
+	// is skipped. With net0 present (Phase 1) e1000 avoids colliding with the net0 alias selector
+	// (link.driver == "virtio_net"); a full-CLOS node has no net0, so the fabric NICs are virtio.
+	fabricModel := "e1000"
+	if config.CLOSNoNet0 {
+		fabricModel = "virtio-net-pci"
+	}
+
+	for i, link := range config.FabricUplinks {
+		if link.tapName == "" {
+			continue
+		}
+
+		device := fmt.Sprintf("%s,netdev=fabric%d,mac=%s", fabricModel, i, link.mac)
+
+		if config.CLOSNoNet0 {
+			// pin to a known PCI slot so the guest kernel interface name is deterministic (needed for
+			// the talos.config link-local zone + the baked BGPConfig neighbor names).
+			device += fmt.Sprintf(",addr=0x%x", vm.CLOSFabricPCIBase+i)
+		}
+
+		args = append(args,
+			"-netdev", fmt.Sprintf("tap,id=fabric%d,ifname=%s,script=no,downscript=no", i, link.tapName),
+			"-device", device,
+		)
 	}
 
 	var (
@@ -541,9 +596,11 @@ func Launch() error {
 	}
 
 	return withNetworkContext(ctx, &config, func(config *LaunchConfig) error {
-		err = dumpIpam(*config)
-		if err != nil {
-			return err
+		// full-CLOS nodes have no net0 and no DHCP, so there are no IPAM records to dump.
+		if !config.CLOSNoNet0 {
+			if err = dumpIpam(*config); err != nil {
+				return err
+			}
 		}
 
 		for {

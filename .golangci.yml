@@ -137,6 +137,9 @@ linters:
                 - "tools/**/*.go"
             slog_imports:
               allow:
+                # gobgp's LoggerOption requires an *slog.Logger (3rd-party compatibility boundary)
+                - "cmd/talosctl/cmd/mgmt/bgp_launch.go"
+                - "internal/app/machined/pkg/controllers/network/bgp.go"
                 - "internal/app/machined/pkg/runtime/v1alpha1/platform/vmware/vmware_supported.go"
                 - "pkg/provision/providers/vm/dnsd.go"
             zap_root_component:
@@ -214,6 +217,8 @@ linters:
         - github.com/mdlayher/kobject
         - golang.zx2c4.com/wireguard/wgctrl
         - github.com/mdlayher/ethtool
+        - github.com/jsimonetti/rtnetlink/v2 # TODO(frezbo): remove once merged upstream
+        - github.com/osrg/gobgp/v4 # TODO(frezbo): remove once merged upstream
       replace-local: true
       exclude-forbidden: false
       retract-allow-no-explanation: false

@@ -400,6 +400,8 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		network.NewRouteMergeController(),
 		&network.RouteSpecController{},
 		&network.RouteStatusController{},
+		&network.BGPController{},
+		&network.RouterAdvertisementController{},
 		&network.RoutingRuleConfigController{},
 		network.NewRoutingRuleMergeController(),
 		&network.RoutingRuleSpecController{},

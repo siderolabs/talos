@@ -900,6 +900,16 @@ spec:
           - test: e2e-firewall
             shortIntegrationTest: "yes"
             withFirewall: block
+          - test: e2e-bgp
+            shortIntegrationTest: "yes"
+            withBGP: "true"
+            extraTestArgs: -talos.bgp
+          - test: e2e-bgp-clos
+            integrationTestRun: TestIntegration/api.BGPSuite/TestBGPCLOS
+            withBGPCLOS: "true"
+            qemuControlplanes: "3"
+            qemuWorkers: "1"
+            extraTestArgs: -talos.bgp.clos
           - test: e2e-canal-reset
             integrationTestRun: TestIntegration/api.ResetSuite/TestResetWithSpec
             customCniUrl: https://raw.githubusercontent.com/projectcalico/calico/v3.32.0/manifests/canal.yaml
@@ -935,6 +945,11 @@ spec:
             GITHUB_STEP_NAME: ${{ github.job}}-${{ matrix.test }}
             SHORT_INTEGRATION_TEST: ${{ matrix.shortIntegrationTest }}
             WITH_FIREWALL: ${{ matrix.withFirewall }}
+            WITH_BGP: ${{ matrix.withBGP }}
+            WITH_BGP_CLOS: ${{ matrix.withBGPCLOS }}
+            QEMU_CONTROLPLANES: ${{ matrix.qemuControlplanes }}
+            QEMU_WORKERS: ${{ matrix.qemuWorkers }}
+            EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
             INTEGRATION_TEST_RUN: ${{ matrix.integrationTestRun }}
             CUSTOM_CNI_URL: ${{ matrix.customCniUrl }}
             WITH_CONTROL_PLANE_PORT: ${{ matrix.withControlPlanePort }}

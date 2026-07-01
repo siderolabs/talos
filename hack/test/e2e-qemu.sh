@@ -67,6 +67,18 @@ case "${WITH_KUBESPAN:-false}" in
     ;;
 esac
 
+case "${WITH_BGP:-false}" in
+  true)
+    QEMU_FLAGS+=("--with-bgp")
+    ;;
+esac
+
+case "${WITH_BGP_CLOS:-false}" in
+  true)
+    QEMU_FLAGS+=("--with-bgp-clos")
+    ;;
+esac
+
 case "${WITH_CONTROL_PLANE_PORT:-false}" in
   false)
     ;;
@@ -327,7 +339,7 @@ function create_cluster {
     --provisioner="${PROVISIONER}" \
     --name="${CLUSTER_NAME}" \
     --kubernetes-version="${KUBERNETES_VERSION}" \
-    --controlplanes=3 \
+    --controlplanes="${QEMU_CONTROLPLANES:-3}" \
     --workers="${QEMU_WORKERS:-2}" \
     --disk="${QEMU_SYSTEM_DISK_SIZE:-15360}" \
     --extra-disks="${QEMU_EXTRA_DISKS:-0}" \

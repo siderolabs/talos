@@ -100,7 +100,7 @@ func withCNIOperationLockedNoResult(config *LaunchConfig, f func() error) error 
 // withNetworkContext creates a network namespace, launches CNI and passes control to the next function
 // filling config with netNS and interface details.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func withNetworkContext(ctx context.Context, config *LaunchConfig, f func(config *LaunchConfig) error) error {
 	// random ID for the CNI, maps to single VM
 	containerID := uuid.New().String()
@@ -118,94 +118,153 @@ func withNetworkContext(ctx context.Context, config *LaunchConfig, f func(config
 		testutils.UnmountNS(ns) //nolint:errcheck
 	}()
 
-	ips := make([]string, len(config.Network.IPs))
-	for j := range ips {
-		ips[j] = sideronet.FormatCIDR(config.Network.IPs[j], config.Network.CIDRs[j])
-	}
+	// management net0 CNI (skipped for full-CLOS nodes, which have only fabric uplinks; the netns is
+	// still created above and reused for the fabric uplinks below).
+	if !config.CLOSNoNet0 {
+		ips := make([]string, len(config.Network.IPs))
+		for j := range ips {
+			ips[j] = sideronet.FormatCIDR(config.Network.IPs[j], config.Network.CIDRs[j])
+		}
 
-	gatewayAddrs := xslices.Map(config.Network.GatewayAddrs, netip.Addr.String)
+		gatewayAddrs := xslices.Map(config.Network.GatewayAddrs, netip.Addr.String)
 
-	runtimeConf := libcni.RuntimeConf{
-		ContainerID: containerID,
-		NetNS:       ns.Path(),
-		IfName:      "veth0",
-		Args: [][2]string{
-			{"IP", strings.Join(ips, ",")},
-			{"GATEWAY", strings.Join(gatewayAddrs, ",")},
-			{"IgnoreUnknown", "1"},
-		},
-	}
+		runtimeConf := libcni.RuntimeConf{
+			ContainerID: containerID,
+			NetNS:       ns.Path(),
+			IfName:      "veth0",
+			Args: [][2]string{
+				{"IP", strings.Join(ips, ",")},
+				{"GATEWAY", strings.Join(gatewayAddrs, ",")},
+				{"IgnoreUnknown", "1"},
+			},
+		}
 
-	// attempt to clean up network in case it was deployed previously
-	err = withCNIOperationLockedNoResult(
-		config,
-		func() error {
-			return cniConfig.DelNetworkList(ctx, config.Network.CniNetworkConfig, &runtimeConf)
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("error deleting CNI network: %w", err)
-	}
-
-	res, err := withCNIOperationLocked(
-		config,
-		func() (types.Result, error) {
-			return cniConfig.AddNetworkList(ctx, config.Network.CniNetworkConfig, &runtimeConf)
-		},
-	)
-	if err != nil {
-		return fmt.Errorf("error provisioning CNI network: %w", err)
-	}
-
-	defer func() {
-		if e := withCNIOperationLockedNoResult(
+		// attempt to clean up network in case it was deployed previously
+		err = withCNIOperationLockedNoResult(
 			config,
 			func() error {
 				return cniConfig.DelNetworkList(ctx, config.Network.CniNetworkConfig, &runtimeConf)
 			},
-		); e != nil {
-			log.Printf("error cleaning up CNI: %s", e)
-		}
-	}()
-
-	currentResult, err := types100.NewResultFromResult(res)
-	if err != nil {
-		return fmt.Errorf("failed to parse cni result: %w", err)
-	}
-
-	vmIface, tapIface, err := cniutils.VMTapPair(currentResult, containerID)
-	if err != nil {
-		return errors.New(
-			"failed to parse VM network configuration from CNI output, ensure CNI is configured with a plugin " +
-				"that supports automatic VM network configuration such as tc-redirect-tap",
 		)
-	}
-
-	if !config.Network.Airgapped {
-		cniChain := utils.FormatChainName(config.Network.CniNetworkConfig.Name, containerID)
-
-		ipt, err := iptables.New()
 		if err != nil {
-			return fmt.Errorf("failed to initialize iptables: %w", err)
+			return fmt.Errorf("error deleting CNI network: %w", err)
 		}
 
-		// don't masquerade traffic with "broadcast" destination from the VM
-		//
-		// no need to clean up the rule, as CNI drops the whole chain
-		if err = ipt.InsertUnique("nat", cniChain, 1, "--destination", "255.255.255.255/32", "-j", "ACCEPT"); err != nil {
-			return fmt.Errorf("failed to insert iptables rule to allow broadcast traffic: %w", err)
+		res, err := withCNIOperationLocked(
+			config,
+			func() (types.Result, error) {
+				return cniConfig.AddNetworkList(ctx, config.Network.CniNetworkConfig, &runtimeConf)
+			},
+		)
+		if err != nil {
+			return fmt.Errorf("error provisioning CNI network: %w", err)
 		}
 
-		for _, cidr := range config.Network.NoMasqueradeCIDRs {
-			if err = ipt.InsertUnique("nat", cniChain, 1, "--destination", cidr.String(), "-j", "ACCEPT"); err != nil {
-				return fmt.Errorf("failed to insert iptables rule to allow non-masquerade traffic to cidr %q: %w", cidr.String(), err)
+		defer func() {
+			if e := withCNIOperationLockedNoResult(
+				config,
+				func() error {
+					return cniConfig.DelNetworkList(ctx, config.Network.CniNetworkConfig, &runtimeConf)
+				},
+			); e != nil {
+				log.Printf("error cleaning up CNI: %s", e)
+			}
+		}()
+
+		currentResult, err := types100.NewResultFromResult(res)
+		if err != nil {
+			return fmt.Errorf("failed to parse cni result: %w", err)
+		}
+
+		vmIface, tapIface, err := cniutils.VMTapPair(currentResult, containerID)
+		if err != nil {
+			return errors.New(
+				"failed to parse VM network configuration from CNI output, ensure CNI is configured with a plugin " +
+					"that supports automatic VM network configuration such as tc-redirect-tap",
+			)
+		}
+
+		if !config.Network.Airgapped {
+			cniChain := utils.FormatChainName(config.Network.CniNetworkConfig.Name, containerID)
+
+			ipt, err := iptables.New()
+			if err != nil {
+				return fmt.Errorf("failed to initialize iptables: %w", err)
+			}
+
+			// don't masquerade traffic with "broadcast" destination from the VM
+			//
+			// no need to clean up the rule, as CNI drops the whole chain
+			if err = ipt.InsertUnique("nat", cniChain, 1, "--destination", "255.255.255.255/32", "-j", "ACCEPT"); err != nil {
+				return fmt.Errorf("failed to insert iptables rule to allow broadcast traffic: %w", err)
+			}
+
+			for _, cidr := range config.Network.NoMasqueradeCIDRs {
+				if err = ipt.InsertUnique("nat", cniChain, 1, "--destination", cidr.String(), "-j", "ACCEPT"); err != nil {
+					return fmt.Errorf("failed to insert iptables rule to allow non-masquerade traffic to cidr %q: %w", cidr.String(), err)
+				}
 			}
 		}
+
+		config.Network.tapName = tapIface.Name
+		config.VMMac = vmIface.Mac
 	}
 
-	config.Network.tapName = tapIface.Name
-	config.VMMac = vmIface.Mac
 	config.Network.ns = ns
+
+	// attach dedicated BGP fabric uplinks (full-CLOS): each on its own per-uplink CNI bridge
+	// (point-to-point) into the same node netns, so the host fabric peer (root ns) is the only
+	// neighbor on the segment.
+	for i := range config.FabricUplinks {
+		uplink := &config.FabricUplinks[i]
+
+		confList, listErr := libcni.ConfListFromBytes([]byte(uplink.CNIConfList))
+		if listErr != nil {
+			return fmt.Errorf("error parsing fabric uplink %q CNI config: %w", uplink.BridgeName, listErr)
+		}
+
+		uplinkRuntimeConf := libcni.RuntimeConf{
+			ContainerID: containerID,
+			NetNS:       ns.Path(),
+			IfName:      uplink.IfName,
+			Args:        [][2]string{{"IgnoreUnknown", "1"}},
+		}
+
+		// clean up any stale state from a previous run
+		if e := withCNIOperationLockedNoResult(config, func() error {
+			return cniConfig.DelNetworkList(ctx, confList, &uplinkRuntimeConf)
+		}); e != nil {
+			return fmt.Errorf("error deleting fabric uplink %q CNI network: %w", uplink.BridgeName, e)
+		}
+
+		fres, addErr := withCNIOperationLocked(config, func() (types.Result, error) {
+			return cniConfig.AddNetworkList(ctx, confList, &uplinkRuntimeConf)
+		})
+		if addErr != nil {
+			return fmt.Errorf("error provisioning fabric uplink %q CNI network: %w", uplink.BridgeName, addErr)
+		}
+
+		defer func() {
+			if e := withCNIOperationLockedNoResult(config, func() error {
+				return cniConfig.DelNetworkList(ctx, confList, &uplinkRuntimeConf)
+			}); e != nil {
+				log.Printf("error cleaning up fabric uplink %q CNI: %s", uplink.BridgeName, e)
+			}
+		}()
+
+		fcur, resErr := types100.NewResultFromResult(fres)
+		if resErr != nil {
+			return fmt.Errorf("failed to parse fabric uplink %q cni result: %w", uplink.BridgeName, resErr)
+		}
+
+		fabricVMIface, fabricTapIface, pairErr := cniutils.VMTapPair(fcur, containerID)
+		if pairErr != nil {
+			return fmt.Errorf("failed to parse fabric uplink %q VM/tap pair: %w", uplink.BridgeName, pairErr)
+		}
+
+		uplink.tapName = fabricTapIface.Name
+		uplink.mac = fabricVMIface.Mac
+	}
 
 	return f(config)
 }

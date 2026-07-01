@@ -122,6 +122,17 @@ enum NethelpersAutoHostnameKind {
   AUTO_HOSTNAME_KIND_STABLE = 2;
 }
 
+// NethelpersBGPSessionState is the state of a BGP peering session (RFC 4271 FSM).
+enum NethelpersBGPSessionState {
+  BGP_SESSION_STATE_UNKNOWN = 0;
+  BGP_SESSION_STATE_IDLE = 1;
+  BGP_SESSION_STATE_CONNECT = 2;
+  BGP_SESSION_STATE_ACTIVE = 3;
+  BGP_SESSION_STATE_OPEN_SENT = 4;
+  BGP_SESSION_STATE_OPEN_CONFIRM = 5;
+  BGP_SESSION_STATE_ESTABLISHED = 6;
+}
+
 // NethelpersBondMode is a bond mode.
 enum NethelpersBondMode {
   BOND_MODE_ROUNDROBIN = 0;
