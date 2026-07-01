@@ -5,6 +5,7 @@ package talos.resource.definitions.storage;
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/storage";
 option java_package = "dev.talos.api.resource.definitions.storage";
 
+import "google/api/expr/v1alpha1/checked.proto";
 import "resource/definitions/enums/enums.proto";
 
 // LVMLogicalVolumeSpecSpec is the spec for LVMLogicalVolumeSpec resource.
@@ -234,5 +235,27 @@ message LVMVolumeGroupStatusSpec {
   string pretty_size = 26;
   // PrettyFree is the human-readable rendering of Free.
   string pretty_free = 27;
+}
+
+// MDArraySpecSpec is the spec for MDArraySpec resource.
+message MDArraySpecSpec {
+  // Name is the array name, stamped into the md metadata.
+  string name = 1;
+  // Level is the RAID level.
+  talos.resource.definitions.enums.StorageMDLevel level = 2;
+  // VolumeSelector matches the member volumes of the array.
+  google.api.expr.v1alpha1.CheckedExpr volume_selector = 3;
+}
+
+// MDArrayStatusSpec is the spec for MDArrayStatus resource.
+message MDArrayStatusSpec {
+  // Name is the array name.
+  string name = 1;
+  // Level is the RAID level.
+  talos.resource.definitions.enums.StorageMDLevel level = 2;
+  // Device is the stable by-id device path of the array.
+  string device = 3;
+  // Members is the list of member device paths.
+  repeated string members = 4;
 }
 

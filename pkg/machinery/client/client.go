@@ -44,6 +44,7 @@ type Client struct {
 	ClusterClient   clusterapi.ClusterServiceClient
 	StorageClient   storageapi.StorageServiceClient
 	LVMClient       machineapi.LVMServiceClient
+	MDClient        machineapi.MDServiceClient
 	InspectClient   inspectapi.InspectServiceClient
 	ImageClient     machineapi.ImageServiceClient
 	DebugClient     machineapi.DebugServiceClient
@@ -173,6 +174,7 @@ func New(_ context.Context, opts ...OptionFunc) (c *Client, err error) {
 	c.ClusterClient = clusterapi.NewClusterServiceClient(c.conn)
 	c.StorageClient = storageapi.NewStorageServiceClient(c.conn)
 	c.LVMClient = machineapi.NewLVMServiceClient(c.conn)
+	c.MDClient = machineapi.NewMDServiceClient(c.conn)
 	c.InspectClient = inspectapi.NewInspectServiceClient(c.conn)
 	c.ImageClient = machineapi.NewImageServiceClient(c.conn)
 	c.DebugClient = machineapi.NewDebugServiceClient(c.conn)
@@ -1077,6 +1079,16 @@ func (c *Client) VolumeGroupRemove(ctx context.Context, req *machineapi.LVMServi
 // See LogicalVolumeRemove for multi-node fan-out semantics.
 func (c *Client) PhysicalVolumeRemove(ctx context.Context, req *machineapi.LVMServicePhysicalVolumeRemoveRequest, callOptions ...grpc.CallOption) error {
 	_, err := c.LVMClient.PhysicalVolumeRemove(ctx, req, callOptions...)
+
+	return err
+}
+
+// MDDestroy stops an MD array and clears its member superblocks via MDService.
+//
+// Multi-node fan-out is the caller's responsibility: dispatch one call per
+// node with client.WithNode (see client/multiplex.Unary).
+func (c *Client) MDDestroy(ctx context.Context, req *machineapi.MDDestroyRequest, callOptions ...grpc.CallOption) error {
+	_, err := c.MDClient.Destroy(ctx, req, callOptions...)
 
 	return err
 }

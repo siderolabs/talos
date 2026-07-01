@@ -787,6 +787,11 @@ enum StorageLVMLogicalVolumeType {
   LVM_LOGICAL_VOLUME_TYPE_RAID10 = 3;
 }
 
+// StorageMDLevel describes the RAID level of an MD (software RAID) array.
+enum StorageMDLevel {
+  MD_LEVEL_RAID1 = 0;
+}
+
 // CriImageCacheStatus describes image cache status type.
 enum CriImageCacheStatus {
   IMAGE_CACHE_STATUS_UNKNOWN = 0;

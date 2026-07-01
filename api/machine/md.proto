@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package machine;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/machine";
+option java_package = "dev.talos.api.machine";
+
+// MDService maintains MD (Multiple Device, software RAID) arrays.
+//
+//   - Destroy: stop the array and clear member superblocks.
+service MDService {
+  // Destroy stops the array and clears the superblock on every member.
+  //
+  // The array must not be in use (e.g. mounted or claimed by another
+  // device) at the time of the call.
+  rpc Destroy(MDDestroyRequest) returns (google.protobuf.Empty);
+}
+
+// MDDestroyRequest identifies the array to tear down.
+message MDDestroyRequest {
+  // Name is the array name to destroy (e.g. "md0").
+  string name = 1;
+}
