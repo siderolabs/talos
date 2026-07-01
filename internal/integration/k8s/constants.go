@@ -15,7 +15,7 @@ const (
 	// Starting with Rook v1.20 the CSI drivers are no longer deployed by the operator chart and
 	// have to be installed separately via the ceph-csi-drivers chart.
 	// renovate: datasource=helm versioning=helm depName=ceph-csi-drivers registryUrl=https://ceph.github.io/ceph-csi-operator
-	CephCSIDriversHelmChartVersion = "v1.0.1"
+	CephCSIDriversHelmChartVersion = "1.0.3"
 	// LongHornHelmChartVersion is the version of the Longhorn Helm chart to use.
 	// renovate: datasource=helm versioning=helm depName=longhorn registryUrl=https://charts.longhorn.io
 	LongHornHelmChartVersion = "1.12.0"

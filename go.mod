@@ -37,22 +37,22 @@ require (
 
 require (
 	cloud.google.com/go/compute/metadata v0.9.0
-	codeberg.org/miekg/dns v0.6.79
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.21.1
+	codeberg.org/miekg/dns v0.6.83
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.22.0
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.13.1
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azcertificates v1.5.0
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys v1.5.0
 	github.com/alexflint/go-filemutex v1.3.0
-	github.com/aws/aws-sdk-go-v2 v1.41.9
-	github.com/aws/aws-sdk-go-v2/config v1.32.20
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.25
-	github.com/aws/aws-sdk-go-v2/service/acm v1.39.2
-	github.com/aws/aws-sdk-go-v2/service/kms v1.53.0
-	github.com/aws/smithy-go v1.26.0
+	github.com/aws/aws-sdk-go-v2 v1.42.1
+	github.com/aws/aws-sdk-go-v2/config v1.32.27
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.30
+	github.com/aws/aws-sdk-go-v2/service/acm v1.41.1
+	github.com/aws/aws-sdk-go-v2/service/kms v1.53.6
+	github.com/aws/smithy-go v1.27.3
 	github.com/beevik/ntp v1.5.0
 	github.com/beevik/nts v0.3.0
 	github.com/blang/semver/v4 v4.0.0
-	github.com/cenkalti/backoff/v4 v4.3.0
+	github.com/cenkalti/backoff/v7 v7.0.0
 	github.com/containerd/cgroups/v3 v3.1.3
 	github.com/containerd/containerd/api v1.11.1
 	github.com/containerd/containerd/v2 v2.3.2
@@ -62,12 +62,12 @@ require (
 	github.com/containerd/typeurl/v2 v2.3.0
 	github.com/containernetworking/cni v1.3.0
 	github.com/containernetworking/plugins v1.9.1
-	github.com/coredns/coredns v1.14.3
+	github.com/coredns/coredns v1.14.4
 	github.com/coreos/go-iptables v0.8.0
-	github.com/cosi-project/runtime v1.16.1
+	github.com/cosi-project/runtime v1.16.2
 	github.com/detailyang/go-fallocate v0.0.0-20180908115635-432fa640bd2e
 	github.com/distribution/reference v0.6.0
-	github.com/docker/cli v29.5.2+incompatible
+	github.com/docker/cli v29.6.1+incompatible
 	github.com/dustin/go-humanize v1.0.1
 	github.com/elastic/go-libaudit/v2 v2.6.2
 	github.com/equinix-ms/go-vmw-guestrpc v1.0.0
@@ -77,30 +77,30 @@ require (
 	github.com/freddierice/go-losetup/v2 v2.0.1
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/g0rbe/go-chattr v1.0.1
-	github.com/gdamore/tcell/v2 v2.13.10
+	github.com/gdamore/tcell/v3 v3.4.0
 	github.com/gertd/go-pluralize v0.2.1
 	github.com/godbus/dbus/v5 v5.2.2
 	github.com/golang/mock v1.7.0-rc.1
-	github.com/google/cadvisor v0.57.0
+	github.com/google/cadvisor v0.60.3
 	github.com/google/cel-go v0.28.1
-	github.com/google/go-containerregistry v0.21.6
+	github.com/google/go-containerregistry v0.21.7
 	github.com/google/go-tpm v0.9.8
 	github.com/google/nftables v0.3.0
 	github.com/google/uuid v1.6.0
-	github.com/gopacket/gopacket v1.6.0
+	github.com/gopacket/gopacket v1.6.1
 	github.com/gosuri/uiprogress v0.0.1
 	github.com/grpc-ecosystem/go-grpc-middleware/v2 v2.3.3
 	github.com/hashicorp/go-cleanhttp v0.5.2
 	github.com/hashicorp/go-envparse v0.1.0
 	github.com/hashicorp/go-getter/v2 v2.2.3
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/hetznercloud/hcloud-go/v2 v2.42.0
-	github.com/insomniacslk/dhcp v0.0.0-20260407060928-11b94ed970f2
+	github.com/hetznercloud/hcloud-go/v2 v2.44.0
+	github.com/insomniacslk/dhcp v0.0.0-20260603135910-a415979eb11e
 	github.com/jeromer/syslogparser v1.1.0
-	github.com/jsimonetti/rtnetlink/v2 v2.2.1-0.20260614152944-ab8601692836
+	github.com/jsimonetti/rtnetlink/v2 9af6401edcfb
 	github.com/jxskiss/base62 v1.1.0
-	github.com/klauspost/compress v1.18.6
-	github.com/klauspost/cpuid/v2 v2.3.0
+	github.com/klauspost/compress v1.19.0
+	github.com/klauspost/cpuid/v2 v2.4.0
 	github.com/linode/go-metadata v0.2.4
 	github.com/martinlindhe/base36 v1.1.1
 	github.com/mattn/go-isatty v0.0.22
@@ -112,20 +112,20 @@ require (
 	github.com/mdlayher/netx v0.0.0-20230430222610-7e21880baee8
 	github.com/mdp/qrterminal/v3 v3.2.1
 	github.com/miekg/dns v1.1.72
-	github.com/moby/moby/api v1.54.2
-	github.com/moby/moby/client v0.4.1
-	github.com/navidys/tvxwidgets v0.13.0
+	github.com/moby/moby/api v1.55.0
+	github.com/moby/moby/client v0.5.0
+	github.com/navidys/tvxwidgets v0.14.0
 	github.com/nberlee/go-netstat v0.1.2
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/opencontainers/runtime-spec v1.3.0
 	github.com/packethost/packngo v0.31.0
-	github.com/pelletier/go-toml/v2 v2.3.1
+	github.com/pelletier/go-toml/v2 v2.4.2
 	github.com/pin/tftp/v3 v3.2.0
 	github.com/pkg/xattr v0.4.12
 	github.com/planetscale/vtprotobuf v0.6.1-0.20250313105119-ba97887b0a25
 	github.com/pmorjan/kmod v1.1.1
-	github.com/prometheus/procfs v0.20.1
+	github.com/prometheus/procfs v0.21.1
 	github.com/rivo/tview v0.42.0
 	github.com/rs/xid v1.6.0
 	github.com/ryanuber/go-glob v1.0.0
@@ -160,7 +160,7 @@ require (
 	github.com/siderolabs/talos/pkg/machinery v1.14.0-alpha.2
 	github.com/sigstore/cosign/v3 v3.1.1
 	github.com/sigstore/sigstore v1.10.8
-	github.com/sigstore/sigstore-go v1.2.0
+	github.com/sigstore/sigstore-go v1.2.1
 	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
@@ -176,7 +176,7 @@ require (
 	go.etcd.io/etcd/etcdutl/v3 v3.7.0-rc.0
 	go.uber.org/goleak v1.3.0
 	go.uber.org/zap v1.28.0
-	go.yaml.in/yaml/v4 v4.0.0-rc.5
+	go.yaml.in/yaml/v4 v4.0.0-rc.6
 	go4.org/netipx v0.0.0-20231129151722-fdeea329fbba
 	golang.org/x/net v0.56.0
 	golang.org/x/oauth2 v0.36.0
@@ -186,7 +186,7 @@ require (
 	golang.org/x/text v0.38.0
 	golang.org/x/time v0.15.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10
-	google.golang.org/grpc v1.81.1
+	google.golang.org/grpc v1.82.0
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
 	gopkg.in/typ.v4 v4.4.0
 	k8s.io/klog/v2 v2.140.0
