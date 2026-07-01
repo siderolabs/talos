@@ -1,3 +1,4 @@
+# todo(majabojarska): might need to adjust the provisioning/mount params here. These are copied from ephemeral-nvme, just with new names.
 apiVersion: v1alpha1
 kind: VolumeConfig
 name: EPHEMERAL
@@ -28,3 +29,4 @@ apiVersion: v1alpha1
 kind: ZswapConfig
 maxPoolPercent: 25
 shrinkerEnabled: true
+---
