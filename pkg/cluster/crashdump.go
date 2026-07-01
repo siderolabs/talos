@@ -69,9 +69,13 @@ func Crashdump(ctx context.Context, cluster provision.Cluster, logWriter io.Writ
 
 	collectors, err := collectors.GetForOptions(ctx, options)
 	if err != nil {
-		fmt.Fprintf(logWriter, "error creating crashdump collector options: %s\n", err)
+		if len(collectors) == 0 {
+			fmt.Fprintf(logWriter, "error creating crashdump collectors: %s\n", err)
 
-		return
+			return
+		}
+
+		fmt.Fprintf(logWriter, "warning: error (ignored) creating some crashdump collectors: %s\n", err)
 	}
 
 	if err := support.CreateSupportBundle(ctx, options, collectors...); err != nil {
