@@ -10938,6 +10938,7 @@ KubernetesRootSpec describes root Kubernetes secrets.
 | api_server_ips | [common.NetIP](#common.NetIP) | repeated |  |
 | accepted_c_as | [common.PEMEncodedCertificate](#common.PEMEncodedCertificate) | repeated |  |
 | etcd_encryption_config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
+| accepted_aggregator_c_as | [common.PEMEncodedCertificate](#common.PEMEncodedCertificate) | repeated |  |
 
 
 

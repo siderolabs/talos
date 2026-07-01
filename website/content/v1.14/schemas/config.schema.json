@@ -1183,7 +1183,7 @@
         },
         "clientIdentity": {
           "properties": {
-            "crt": {
+            "cert": {
               "type": "string"
             },
             "key": {
@@ -1344,6 +1344,61 @@
       ],
       "description": "PCIDriverRebindConfig allows to configure PCI driver rebinds."
     },
+    "k8s.KubeAPIServerCAConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "KubeAPIServerCAConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "issuingCA": {
+          "properties": {
+            "cert": {
+              "type": "string"
+            },
+            "key": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "title": "issuingCA",
+          "description": "The currently active issuing certificate authority for the Kubernetes API server.\n\nThis field should only be set for the controlplane machines.\nThe value contains a private key and a certificate, PEM encoded.\n",
+          "markdownDescription": "The currently active issuing certificate authority for the Kubernetes API server.\n\nThis field should only be set for the controlplane machines.\nThe value contains a private key and a certificate, PEM encoded.",
+          "x-intellij-html-description": "\u003cp\u003eThe currently active issuing certificate authority for the Kubernetes API server.\u003c/p\u003e\n\n\u003cp\u003eThis field should only be set for the controlplane machines.\nThe value contains a private key and a certificate, PEM encoded.\u003c/p\u003e\n"
+        },
+        "acceptedCAs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "acceptedCAs",
+          "description": "The list of accepted CA certificates for the Kubernetes API server.\n\nThe value should be a PEM encoded certificate.\nThe issuing CA certificate is automatically added to the list of accepted CAs.\n",
+          "markdownDescription": "The list of accepted CA certificates for the Kubernetes API server.\n\nThe value should be a PEM encoded certificate.\nThe issuing CA certificate is automatically added to the list of accepted CAs.",
+          "x-intellij-html-description": "\u003cp\u003eThe list of accepted CA certificates for the Kubernetes API server.\u003c/p\u003e\n\n\u003cp\u003eThe value should be a PEM encoded certificate.\nThe issuing CA certificate is automatically added to the list of accepted CAs.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "KubeAPIServerCAConfig configures Kubernetes API server CA."
+    },
     "k8s.KubeAPIServerConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -1485,6 +1540,61 @@
         "kind"
       ],
       "description": "KubeAdmissionControlConfig configures kube-apiserver admission control plugins."
+    },
+    "k8s.KubeAggregatorCAConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "KubeAggregatorCAConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "issuingCA": {
+          "properties": {
+            "cert": {
+              "type": "string"
+            },
+            "key": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false,
+          "type": "object",
+          "title": "issuingCA",
+          "description": "The currently active issuing certificate authority for the Kubernetes API aggregator flow.\n\nThis field should only be set for the controlplane machines.\nThe value contains a private key and a certificate, PEM encoded.\n",
+          "markdownDescription": "The currently active issuing certificate authority for the Kubernetes API aggregator flow.\n\nThis field should only be set for the controlplane machines.\nThe value contains a private key and a certificate, PEM encoded.",
+          "x-intellij-html-description": "\u003cp\u003eThe currently active issuing certificate authority for the Kubernetes API aggregator flow.\u003c/p\u003e\n\n\u003cp\u003eThis field should only be set for the controlplane machines.\nThe value contains a private key and a certificate, PEM encoded.\u003c/p\u003e\n"
+        },
+        "acceptedCAs": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "acceptedCAs",
+          "description": "The list of accepted CA certificates for the Kubernetes API server aggregator flow.\n\nThis field should only be set for the controlplane machines.\nThe value should be a PEM encoded certificate.\nThe issuing CA certificate is automatically added to the list of accepted CAs.\n",
+          "markdownDescription": "The list of accepted CA certificates for the Kubernetes API server aggregator flow.\n\nThis field should only be set for the controlplane machines.\nThe value should be a PEM encoded certificate.\nThe issuing CA certificate is automatically added to the list of accepted CAs.",
+          "x-intellij-html-description": "\u003cp\u003eThe list of accepted CA certificates for the Kubernetes API server aggregator flow.\u003c/p\u003e\n\n\u003cp\u003eThis field should only be set for the controlplane machines.\nThe value should be a PEM encoded certificate.\nThe issuing CA certificate is automatically added to the list of accepted CAs.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "KubeAggregatorCAConfig configures Kubernetes API aggregator accepted CAs."
     },
     "k8s.KubeAuditPolicyConfigV1Alpha1": {
       "properties": {
@@ -5401,51 +5511,6 @@
           "markdownDescription": "The [bootstrap token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/) used to join the cluster.",
           "x-intellij-html-description": "\u003cp\u003eThe \u003ca href=\"https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/\" target=\"_blank\"\u003ebootstrap token\u003c/a\u003e used to join the cluster.\u003c/p\u003e\n"
         },
-        "ca": {
-          "properties": {
-            "crt": {
-              "type": "string"
-            },
-            "key": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false,
-          "type": "object",
-          "title": "ca",
-          "description": "The base64 encoded root certificate authority used by Kubernetes.\n",
-          "markdownDescription": "The base64 encoded root certificate authority used by Kubernetes.",
-          "x-intellij-html-description": "\u003cp\u003eThe base64 encoded root certificate authority used by Kubernetes.\u003c/p\u003e\n"
-        },
-        "acceptedCAs": {
-          "properties": {
-            "crt": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false,
-          "type": "object",
-          "title": "acceptedCAs",
-          "description": "The list of base64 encoded accepted certificate authorities used by Kubernetes.\n",
-          "markdownDescription": "The list of base64 encoded accepted certificate authorities used by Kubernetes.",
-          "x-intellij-html-description": "\u003cp\u003eThe list of base64 encoded accepted certificate authorities used by Kubernetes.\u003c/p\u003e\n"
-        },
-        "aggregatorCA": {
-          "properties": {
-            "crt": {
-              "type": "string"
-            },
-            "key": {
-              "type": "string"
-            }
-          },
-          "additionalProperties": false,
-          "type": "object",
-          "title": "aggregatorCA",
-          "description": "The base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation.\n\nThis CA can be self-signed.\n",
-          "markdownDescription": "The base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation.\n\nThis CA can be self-signed.",
-          "x-intellij-html-description": "\u003cp\u003eThe base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation.\u003c/p\u003e\n\n\u003cp\u003eThis CA can be self-signed.\u003c/p\u003e\n"
-        },
         "serviceAccount": {
           "properties": {
             "key": {
@@ -6366,7 +6431,13 @@
       "$ref": "#/$defs/k8s.KubeAdmissionControlConfigV1Alpha1"
     },
     {
+      "$ref": "#/$defs/k8s.KubeAggregatorCAConfigV1Alpha1"
+    },
+    {
       "$ref": "#/$defs/k8s.KubeAPIServerConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/k8s.KubeAPIServerCAConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/k8s.KubeAuditPolicyConfigV1Alpha1"

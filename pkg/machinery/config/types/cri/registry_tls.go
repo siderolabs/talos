@@ -72,7 +72,7 @@ type RegistryTLSConfigV1Alpha1 struct {
 	//     type: object
 	//     additionalProperties: false
 	//     properties:
-	//       crt:
+	//       cert:
 	//         type: string
 	//       key:
 	//         type: string
@@ -140,18 +140,8 @@ func (s *RegistryTLSConfigV1Alpha1) Validate(validation.RuntimeMode, ...validati
 		}
 	}
 
-	if s.TLSClientIdentity != nil {
-		keyPair := s.ClientIdentity()
-
-		_, err := keyPair.GetCert()
-		if err != nil {
-			errs = errors.Join(errs, fmt.Errorf("client identity certificate is invalid: %w", err))
-		}
-
-		_, err = keyPair.GetPrivateKey()
-		if err != nil {
-			errs = errors.Join(errs, fmt.Errorf("client identity key is invalid: %w", err))
-		}
+	if extraErr := s.TLSClientIdentity.Validate(false); extraErr != nil {
+		errs = errors.Join(errs, fmt.Errorf("client identity: %w", extraErr))
 	}
 
 	return warnings, errs
@@ -159,14 +149,7 @@ func (s *RegistryTLSConfigV1Alpha1) Validate(validation.RuntimeMode, ...validati
 
 // ClientIdentity implements config.RegistryTLSConfigDocument interface.
 func (s *RegistryTLSConfigV1Alpha1) ClientIdentity() *x509.PEMEncodedCertificateAndKey {
-	if s.TLSClientIdentity == nil {
-		return nil
-	}
-
-	return &x509.PEMEncodedCertificateAndKey{
-		Crt: []byte(s.TLSClientIdentity.Cert),
-		Key: []byte(s.TLSClientIdentity.Key),
-	}
+	return s.TLSClientIdentity.ToX509()
 }
 
 // CA implements config.RegistryTLSConfigDocument interface.

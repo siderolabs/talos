@@ -21,8 +21,8 @@ import (
 	"github.com/siderolabs/talos/pkg/cluster"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	configres "github.com/siderolabs/talos/pkg/machinery/resources/config"
 	v1alpha1res "github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
@@ -35,7 +35,7 @@ func MapToInternalIP(in []cluster.NodeInfo) []string {
 }
 
 // PatchNodeConfig patches the node config for the given node.
-func PatchNodeConfig(ctx context.Context, c *client.Client, node string, encoderOpt encoder.Option, patchFunc func(config *v1alpha1.Config) error) error {
+func PatchNodeConfig(ctx context.Context, c *client.Client, node string, encoderOpt encoder.Option, patchFunc func(config.Provider) (config.Provider, error)) error {
 	return retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond), retry.WithErrorLogging(true)).RetryWithContext(
 		ctx,
 		func(ctx context.Context) error {
@@ -54,7 +54,7 @@ func PatchNodeConfig(ctx context.Context, c *client.Client, node string, encoder
 // PatchNodeConfigWithKubeletRestart patches the node config for the given node waiting for the kubelet to be restarted.
 //
 //nolint:gocyclo,cyclop
-func PatchNodeConfigWithKubeletRestart(ctx context.Context, c *client.Client, node string, encoderOpt encoder.Option, patchFunc func(config *v1alpha1.Config) error) error {
+func PatchNodeConfigWithKubeletRestart(ctx context.Context, c *client.Client, node string, encoderOpt encoder.Option, patchFunc func(config.Provider) (config.Provider, error)) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -129,7 +129,7 @@ func PatchNodeConfigWithKubeletRestart(ctx context.Context, c *client.Client, no
 	return nil
 }
 
-func patchNodeConfigInternal(ctx context.Context, c *client.Client, node string, encoderOpt encoder.Option, patchFunc func(config *v1alpha1.Config) error) error {
+func patchNodeConfigInternal(ctx context.Context, c *client.Client, node string, encoderOpt encoder.Option, patchFunc func(config.Provider) (config.Provider, error)) error {
 	ctx = client.WithNode(ctx, node)
 
 	mc, err := safe.StateGetByID[*configres.MachineConfig](ctx, c.COSI, configres.ActiveID)
@@ -137,9 +137,7 @@ func patchNodeConfigInternal(ctx context.Context, c *client.Client, node string,
 		return fmt.Errorf("error fetching config resource: %w", err)
 	}
 
-	provider := mc.Provider()
-
-	newProvider, err := provider.PatchV1Alpha1(patchFunc)
+	newProvider, err := patchFunc(mc.Provider())
 	if err != nil {
 		return fmt.Errorf("error patching config: %w", err)
 	}

@@ -80,21 +80,6 @@ func (c *ClusterConfig) CertSANs() []string {
 	return c.APIServerConfig.ExtraCertSANs
 }
 
-// IssuingCA implements the config.ClusterConfig interface.
-func (c *ClusterConfig) IssuingCA() *x509.PEMEncodedCertificateAndKey {
-	return c.ClusterCA
-}
-
-// AcceptedCAs implements the config.ClusterConfig interface.
-func (c *ClusterConfig) AcceptedCAs() []*x509.PEMEncodedCertificate {
-	return slices.Clone(c.ClusterAcceptedCAs)
-}
-
-// AggregatorCA implements the config.ClusterConfig interface.
-func (c *ClusterConfig) AggregatorCA() *x509.PEMEncodedCertificateAndKey {
-	return c.ClusterAggregatorCA
-}
-
 // ServiceAccount implements the config.ClusterConfig interface.
 func (c *ClusterConfig) ServiceAccount() *x509.PEMEncodedKey {
 	return c.ClusterServiceAccount

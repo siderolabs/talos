@@ -135,19 +135,9 @@ func (container *Container) PatchV1Alpha1(patcher func(*v1alpha1.Config) error) 
 		return nil, fmt.Errorf("v1alpha1.Config is not present in the container")
 	}
 
-	cfg = cfg.DeepCopy()
-
-	if err := patcher(cfg); err != nil {
-		return nil, err
-	}
-
-	otherDocs := xslices.Filter(container.Documents(), func(doc config.Document) bool {
-		_, ok := doc.(*v1alpha1.Config)
-
-		return !ok
+	return PatchDocument(container, func(c *v1alpha1.Config) error {
+		return patcher(c)
 	})
-
-	return New(slices.Insert(otherDocs, 0, config.Document(cfg))...)
 }
 
 // Readonly implements config.Container interface.
@@ -561,6 +551,34 @@ func (container *Container) K8sAdmissionControlPluginConfigs() []config.K8sAdmis
 
 	if container.v1alpha1Config != nil {
 		return container.v1alpha1Config.K8sAdmissionControlPluginConfigs()
+	}
+
+	return nil
+}
+
+// K8sAPIServerCAConfig implements config.Config interface.
+func (container *Container) K8sAPIServerCAConfig() config.K8sAPIServerCAConfig {
+	matching := findMatchingDocs[config.K8sAPIServerCAConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sAPIServerCAConfig()
+	}
+
+	return nil
+}
+
+// K8sAggregatorCAConfig implements config.Config interface.
+func (container *Container) K8sAggregatorCAConfig() config.K8sAggregatorCAConfig {
+	matching := findMatchingDocs[config.K8sAggregatorCAConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sAggregatorCAConfig()
 	}
 
 	return nil

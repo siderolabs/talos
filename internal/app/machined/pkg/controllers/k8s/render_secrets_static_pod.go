@@ -231,7 +231,11 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 						keyFilename:  "service-account.key",
 					},
 					{
-						getter:       func() *x509.PEMEncodedCertificateAndKey { return rootK8sSecrets.AggregatorCA },
+						getter: func() *x509.PEMEncodedCertificateAndKey {
+							return &x509.PEMEncodedCertificateAndKey{
+								Crt: bytes.Join(xslices.Map(rootK8sSecrets.AcceptedAggregatorCAs, func(ca *x509.PEMEncodedCertificate) []byte { return ca.Crt }), nil),
+							}
+						},
 						certFilename: "aggregator-ca.crt",
 					},
 					{

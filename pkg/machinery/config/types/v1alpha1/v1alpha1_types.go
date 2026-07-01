@@ -341,44 +341,17 @@ type ClusterConfig struct {
 	//
 	// Deprecated: Use `KubeEtcdEncryptionConfig` instead.
 	ClusterSecretboxEncryptionSecret string `yaml:"secretboxEncryptionSecret,omitempty"`
-	//   description: |
-	//     The base64 encoded root certificate authority used by Kubernetes.
-	//   examples:
-	//     - name: ClusterCA example.
-	//       value: pemEncodedCertificateExample()
-	//   schema:
-	//     type: object
-	//     additionalProperties: false
-	//     properties:
-	//       crt:
-	//         type: string
-	//       key:
-	//         type: string
-	ClusterCA *x509.PEMEncodedCertificateAndKey `yaml:"ca,omitempty"`
-	//   description: |
-	//     The list of base64 encoded accepted certificate authorities used by Kubernetes.
-	//   schema:
-	//     type: object
-	//     additionalProperties: false
-	//     properties:
-	//       crt:
-	//         type: string
-	ClusterAcceptedCAs []*x509.PEMEncodedCertificate `yaml:"acceptedCAs,omitempty"`
-	//   description: |
-	//     The base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation.
+	//  docgen:nodoc
 	//
-	//     This CA can be self-signed.
-	//   examples:
-	//     - name: AggregatorCA example.
-	//       value: pemEncodedCertificateExample()
-	//   schema:
-	//     type: object
-	//     additionalProperties: false
-	//     properties:
-	//       crt:
-	//         type: string
-	//       key:
-	//         type: string
+	// Deprecated: Use `KubeAPIServerCAConfig` instead.
+	ClusterCA *x509.PEMEncodedCertificateAndKey `yaml:"ca,omitempty"`
+	//  docgen:nodoc
+	//
+	// Deprecated: Use `KubeAPIServerCAConfig` instead.
+	ClusterAcceptedCAs []*x509.PEMEncodedCertificate `yaml:"acceptedCAs,omitempty"`
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeAPIServerAggregatorCAConfig` instead.
 	ClusterAggregatorCA *x509.PEMEncodedCertificateAndKey `yaml:"aggregatorCA,omitempty"`
 	//   description: |
 	//     The base64 encoded private key for service account token generation.
