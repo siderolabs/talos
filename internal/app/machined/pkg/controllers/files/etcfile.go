@@ -135,21 +135,38 @@ func (ctrl *EtcFileController) Run(ctx context.Context, r controller.Runtime, lo
 	}
 }
 
-// UpdateFile is like `os.WriteFile`, but it will only update the file if the
-// contents have changed.
+// UpdateFile will only update the file if the contents have changed.
+//
+// The file is updated atomically by writing to a temporary file in the same
+// directory and renaming it into place, so that concurrent readers never
+// observe a truncated (empty) file while it is being rewritten.
 func UpdateFile(root xfs.Root, filename string, contents []byte, mode os.FileMode, selinuxLabel string) error {
 	oldContents, err := xfs.ReadFile(root, filename)
 	if err == nil && bytes.Equal(oldContents, contents) {
-		return selinux.FSetLabel(root, filename, selinuxLabel)
+		return nil
 	}
 
 	if err = xfs.MkdirAll(root, filepath.Dir(filename), 0o755); err != nil {
 		return fmt.Errorf("mkdir all failed: %w", err)
 	}
 
-	if err := xfs.WriteFile(root, filename, contents, mode); err != nil {
+	tmpFilename := filename + ".tmp"
+
+	if err := xfs.WriteFile(root, tmpFilename, contents, mode); err != nil {
 		return fmt.Errorf("write file failed: %w", err)
 	}
 
-	return selinux.FSetLabel(root, filename, selinuxLabel)
+	defer xfs.Remove(root, tmpFilename) //nolint:errcheck
+
+	// label the temporary file before the rename so the final file appears
+	// atomically with the correct SELinux label.
+	if err := selinux.FSetLabel(root, tmpFilename, selinuxLabel); err != nil {
+		return err
+	}
+
+	if err := xfs.Rename(root, tmpFilename, filename); err != nil {
+		return fmt.Errorf("rename failed: %w", err)
+	}
+
+	return nil
 }
