@@ -24,6 +24,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/internal/integration/base"
@@ -32,6 +33,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -599,6 +601,83 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 		func(dv *block.DiscoveredVolume, asrt *assert.Assertions) {
 			asrt.Empty(dv.TypedSpec().Name, "expected discovered volume %s to be wiped", dv.Metadata().ID())
 		})
+}
+
+// TestPromoteSystemVolumeRejected verifies that attempting to promote a promotable system volume
+// (ETCD/CRI/KUBELET) from a directory to a dedicated partition on an already-running node is
+// rejected by config validation. The backing of these volumes is fixed at cluster creation.
+func (suite *VolumesSuite) TestPromoteSystemVolumeRejected() {
+	if testing.Short() {
+		suite.T().Skip("skipping test in short mode.")
+	}
+
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping test for non-qemu provisioner")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	ctx := client.WithNode(suite.ctx, node)
+
+	userDisks := suite.UserDisks(suite.ctx, node)
+
+	if len(userDisks) < 1 {
+		suite.T().Skipf("skipping test, not enough user disks available on node %s: %q", node, userDisks)
+	}
+
+	// Use KUBELET as a representative promotable volume.
+	volumeID := constants.KubeletDataVolumeID
+
+	// Verify the volume is currently a directory (the default on a freshly-created node).
+	vs, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, volumeID)
+	suite.Require().NoError(err)
+	suite.Require().Equal(block.VolumeTypeDirectory, vs.TypedSpec().Type,
+		"%s should be a directory on a freshly-created node", volumeID)
+
+	suite.T().Logf("attempting to promote %s volume on node %s with disk %s (expected to be rejected)", volumeID, node, userDisks[0])
+
+	disk, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.COSI, filepath.Base(userDisks[0]))
+	suite.Require().NoError(err)
+
+	doc := blockcfg.NewVolumeConfigV1Alpha1()
+	doc.MetaName = volumeID
+	doc.ProvisioningSpec.DiskSelectorSpec.Match = cel.MustExpression(
+		cel.ParseBooleanExpression(fmt.Sprintf("'%s' in disk.symlinks", disk.TypedSpec().Symlinks[0]), celenv.DiskLocator()),
+	)
+	doc.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("100MiB")
+	doc.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("2GiB")
+
+	docBytes, err := yaml.Marshal(doc)
+	suite.Require().NoError(err)
+
+	patch, err := configpatcher.LoadPatch(docBytes)
+	suite.Require().NoError(err)
+
+	cfg, err := suite.ReadConfigFromNode(ctx)
+	suite.Require().NoError(err)
+
+	patchedOut, err := configpatcher.Apply(configpatcher.WithConfig(cfg), []configpatcher.Patch{patch})
+	suite.Require().NoError(err)
+
+	patchedCfg, err := patchedOut.Config()
+	suite.Require().NoError(err)
+
+	cfgBytes, err := patchedCfg.Bytes()
+	suite.Require().NoError(err)
+
+	_, err = suite.Client.ApplyConfiguration(ctx, &machineapi.ApplyConfigurationRequest{
+		Data: cfgBytes,
+		Mode: machineapi.ApplyConfigurationRequest_AUTO,
+	})
+	suite.Require().Error(err, "promoting a system volume on a running node must be rejected")
+	suite.Require().Contains(err.Error(), "cannot be changed after creation",
+		"rejection error must reference the create-only constraint")
+
+	// The volume must still be a directory: the config was rejected, nothing changed.
+	vs, err = safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, volumeID)
+	suite.Require().NoError(err)
+	suite.Require().Equal(block.VolumeTypeDirectory, vs.TypedSpec().Type,
+		"%s must remain a directory after the rejected apply", volumeID)
 }
 
 // TestUserVolumeBTRFS verifies a user volume with BTRFS filesystem.

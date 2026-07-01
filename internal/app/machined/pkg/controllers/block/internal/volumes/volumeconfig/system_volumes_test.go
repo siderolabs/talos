@@ -46,7 +46,7 @@ func TestGetSystemVolumeTransformers(t *testing.T) {
 	encryptionMeta := runtime.NewMetaKey(runtime.NamespaceName, runtime.MetaKeyTagToID(meta.StateEncryptionConfig))
 
 	transformers := volumeconfig.GetSystemVolumeTransformers(ctx, encryptionMeta, false, false)
-	require.Len(t, transformers, 5, "should return 5 transformers")
+	require.Len(t, transformers, 6, "should return 6 transformers")
 
 	var allResources []volumeconfig.VolumeResource //nolint:prealloc // this is a test
 
@@ -269,7 +269,7 @@ func TestStandardDirectoryVolumesTransformer(t *testing.T) {
 			name: "W/ config",
 			cfg:  &baseCfg,
 			checkFunc: func(t *testing.T, resources []volumeconfig.VolumeResource) {
-				require.Len(t, resources, 1+14) // +1 for /var/run symlink, +14 for standard directories
+				require.Len(t, resources, 1+11) // +1 for /var/run symlink, +11 for standard directories (ETCD/CRI/KUBELET are promotable, handled separately)
 
 				var varRunSymlinkResource *volumeconfig.VolumeResource
 
@@ -291,7 +291,7 @@ func TestStandardDirectoryVolumesTransformer(t *testing.T) {
 				})
 
 				// Check some standard directories
-				expectedPaths := []string{"/var/log", "/var/lib", constants.EtcdDataVolumeID}
+				expectedPaths := []string{"/var/log", "/var/lib", "/var/lib/cni"}
 				for _, expectedPath := range expectedPaths {
 					var found bool
 
@@ -324,6 +324,265 @@ func TestStandardDirectoryVolumesTransformer(t *testing.T) {
 			tc.checkFunc(t, resources)
 		})
 	}
+}
+
+func TestGetPromotableSystemVolumesTransformer(t *testing.T) {
+	t.Parallel()
+
+	findResource := func(t *testing.T, resources []volumeconfig.VolumeResource, volumeID string) volumeconfig.VolumeResource {
+		t.Helper()
+
+		for i := range resources {
+			if resources[i].VolumeID == volumeID {
+				return resources[i]
+			}
+		}
+
+		t.Fatalf("missing resource for %q", volumeID)
+
+		return volumeconfig.VolumeResource{}
+	}
+
+	t.Run("default is directory", func(t *testing.T) {
+		t.Parallel()
+
+		transformer := volumeconfig.GetPromotableSystemVolumesTransformer(false)
+		resources, err := transformer(container.NewV1Alpha1(&baseCfg))
+		require.NoError(t, err)
+		require.Len(t, resources, 3)
+
+		for _, volumeID := range []string{constants.EtcdDataVolumeID, constants.CRIContainerdVolumeID, constants.KubeletDataVolumeID} {
+			r := findResource(t, resources, volumeID)
+
+			testTransformFunc(t, r.TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
+				require.NoError(t, err)
+
+				assert.Equal(t, block.VolumeTypeDirectory, vc.TypedSpec().Type)
+				assert.Empty(t, vc.TypedSpec().Provisioning)
+			})
+		}
+	})
+
+	t.Run("promoted to partition via VolumeConfig", func(t *testing.T) {
+		t.Parallel()
+
+		etcdCfg := blockcfg.NewVolumeConfigV1Alpha1()
+		etcdCfg.MetaName = constants.EtcdDataVolumeID
+		etcdCfg.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("50GiB")
+
+		cfg, err := container.New(baseCfg.DeepCopy(), etcdCfg)
+		require.NoError(t, err)
+
+		transformer := volumeconfig.GetPromotableSystemVolumesTransformer(false)
+		resources, err := transformer(cfg)
+		require.NoError(t, err)
+
+		// ETCD promoted to a partition
+		testTransformFunc(t, findResource(t, resources, constants.EtcdDataVolumeID).TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
+			require.NoError(t, err)
+
+			assert.Equal(t, block.VolumeTypePartition, vc.TypedSpec().Type)
+			assert.Equal(t, block.WaveSystemDisk, vc.TypedSpec().Provisioning.Wave)
+			assert.Equal(t, constants.EtcdDataVolumeID, vc.TypedSpec().Provisioning.PartitionSpec.Label)
+			assert.EqualValues(t, 50*1024*1024*1024, vc.TypedSpec().Provisioning.PartitionSpec.MaxSize)
+
+			locator, err := vc.TypedSpec().Locator.Match.MarshalText()
+			require.NoError(t, err)
+			assert.Equal(t, `volume.partition_label == "ETCD"`, string(locator))
+		})
+
+		// KUBELET stays a directory
+		testTransformFunc(t, findResource(t, resources, constants.KubeletDataVolumeID).TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
+			require.NoError(t, err)
+
+			assert.Equal(t, block.VolumeTypeDirectory, vc.TypedSpec().Type)
+		})
+	})
+
+	// promoteCfg builds a config that promotes a single volume via a maxSize provisioning request.
+	promoteCfg := func(t *testing.T, volumeID string) *container.Container {
+		t.Helper()
+
+		volCfg := blockcfg.NewVolumeConfigV1Alpha1()
+		volCfg.MetaName = volumeID
+		volCfg.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("50GiB")
+
+		cfg, err := container.New(baseCfg.DeepCopy(), volCfg)
+		require.NoError(t, err)
+
+		return cfg
+	}
+
+	// assertPromoted asserts that volumeID is provisioned as a dedicated partition.
+	assertPromoted := func(t *testing.T, resources []volumeconfig.VolumeResource, volumeID string) {
+		t.Helper()
+
+		testTransformFunc(t, findResource(t, resources, volumeID).TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
+			require.NoError(t, err)
+
+			assert.Equal(t, block.VolumeTypePartition, vc.TypedSpec().Type)
+			assert.Equal(t, block.WaveSystemDisk, vc.TypedSpec().Provisioning.Wave)
+			assert.Equal(t, volumeID, vc.TypedSpec().Provisioning.PartitionSpec.Label)
+			assert.Equal(t, block.FilesystemTypeXFS, vc.TypedSpec().Provisioning.FilesystemSpec.Type)
+
+			locator, err := vc.TypedSpec().Locator.Match.MarshalText()
+			require.NoError(t, err)
+			assert.Equal(t, `volume.partition_label == "`+volumeID+`"`, string(locator))
+		})
+	}
+
+	assertDirectory := func(t *testing.T, resources []volumeconfig.VolumeResource, volumeID string) {
+		t.Helper()
+
+		testTransformFunc(t, findResource(t, resources, volumeID).TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
+			require.NoError(t, err)
+
+			assert.Equal(t, block.VolumeTypeDirectory, vc.TypedSpec().Type)
+		})
+	}
+
+	t.Run("promote CRI", func(t *testing.T) {
+		t.Parallel()
+
+		transformer := volumeconfig.GetPromotableSystemVolumesTransformer(false)
+		resources, err := transformer(promoteCfg(t, constants.CRIContainerdVolumeID))
+		require.NoError(t, err)
+
+		assertPromoted(t, resources, constants.CRIContainerdVolumeID)
+		assertDirectory(t, resources, constants.EtcdDataVolumeID)
+		assertDirectory(t, resources, constants.KubeletDataVolumeID)
+	})
+
+	t.Run("promote KUBELET", func(t *testing.T) {
+		t.Parallel()
+
+		transformer := volumeconfig.GetPromotableSystemVolumesTransformer(false)
+		resources, err := transformer(promoteCfg(t, constants.KubeletDataVolumeID))
+		require.NoError(t, err)
+
+		assertPromoted(t, resources, constants.KubeletDataVolumeID)
+		assertDirectory(t, resources, constants.EtcdDataVolumeID)
+		assertDirectory(t, resources, constants.CRIContainerdVolumeID)
+	})
+
+	t.Run("promote all three", func(t *testing.T) {
+		t.Parallel()
+
+		etcdCfg := blockcfg.NewVolumeConfigV1Alpha1()
+		etcdCfg.MetaName = constants.EtcdDataVolumeID
+		etcdCfg.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("50GiB")
+
+		criCfg := blockcfg.NewVolumeConfigV1Alpha1()
+		criCfg.MetaName = constants.CRIContainerdVolumeID
+		criCfg.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("50GiB")
+
+		kubeletCfg := blockcfg.NewVolumeConfigV1Alpha1()
+		kubeletCfg.MetaName = constants.KubeletDataVolumeID
+		kubeletCfg.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("50GiB")
+
+		cfg, err := container.New(baseCfg.DeepCopy(), etcdCfg, criCfg, kubeletCfg)
+		require.NoError(t, err)
+
+		transformer := volumeconfig.GetPromotableSystemVolumesTransformer(false)
+		resources, err := transformer(cfg)
+		require.NoError(t, err)
+
+		assertPromoted(t, resources, constants.EtcdDataVolumeID)
+		assertPromoted(t, resources, constants.CRIContainerdVolumeID)
+		assertPromoted(t, resources, constants.KubeletDataVolumeID)
+	})
+
+	t.Run("custom diskSelector honored", func(t *testing.T) {
+		t.Parallel()
+
+		etcdCfg := blockcfg.NewVolumeConfigV1Alpha1()
+		etcdCfg.MetaName = constants.EtcdDataVolumeID
+		etcdCfg.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("50GiB")
+		require.NoError(t, etcdCfg.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.transport == "nvme"`)))
+
+		cfg, err := container.New(baseCfg.DeepCopy(), etcdCfg)
+		require.NoError(t, err)
+
+		transformer := volumeconfig.GetPromotableSystemVolumesTransformer(false)
+		resources, err := transformer(cfg)
+		require.NoError(t, err)
+
+		testTransformFunc(t, findResource(t, resources, constants.EtcdDataVolumeID).TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
+			require.NoError(t, err)
+
+			diskSelector, err := vc.TypedSpec().Provisioning.DiskSelector.Match.MarshalText()
+			require.NoError(t, err)
+			assert.Equal(t, `disk.transport == "nvme"`, string(diskSelector))
+		})
+	})
+
+	t.Run("grow defaults to false", func(t *testing.T) {
+		t.Parallel()
+
+		transformer := volumeconfig.GetPromotableSystemVolumesTransformer(false)
+		resources, err := transformer(promoteCfg(t, constants.EtcdDataVolumeID))
+		require.NoError(t, err)
+
+		testTransformFunc(t, findResource(t, resources, constants.EtcdDataVolumeID).TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
+			require.NoError(t, err)
+
+			// unlike EPHEMERAL (grow defaults to true), promoted system volumes default to grow=false.
+			assert.False(t, vc.TypedSpec().Provisioning.PartitionSpec.Grow)
+		})
+	})
+
+	t.Run("encryption wired", func(t *testing.T) {
+		t.Parallel()
+
+		etcdCfg := blockcfg.NewVolumeConfigV1Alpha1()
+		etcdCfg.MetaName = constants.EtcdDataVolumeID
+		etcdCfg.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("50GiB")
+		etcdCfg.EncryptionSpec.EncryptionProvider = block.EncryptionProviderLUKS2
+		etcdCfg.EncryptionSpec.EncryptionKeys = []blockcfg.EncryptionKey{
+			{
+				KeySlot: 0,
+				KeyStatic: &blockcfg.EncryptionKeyStatic{
+					KeyData: "topsecret",
+				},
+			},
+		}
+
+		cfg, err := container.New(baseCfg.DeepCopy(), etcdCfg)
+		require.NoError(t, err)
+
+		transformer := volumeconfig.GetPromotableSystemVolumesTransformer(false)
+		resources, err := transformer(cfg)
+		require.NoError(t, err)
+
+		testTransformFunc(t, findResource(t, resources, constants.EtcdDataVolumeID).TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
+			require.NoError(t, err)
+
+			assert.Equal(t, block.VolumeTypePartition, vc.TypedSpec().Type)
+			assert.NotEmpty(t, vc.TypedSpec().Encryption, "configured encryption must be wired into the promoted volume")
+			assert.Equal(t, block.EncryptionProviderLUKS2, vc.TypedSpec().Encryption.Provider)
+		})
+	})
+
+	t.Run("always directory in container", func(t *testing.T) {
+		t.Parallel()
+
+		etcdCfg := blockcfg.NewVolumeConfigV1Alpha1()
+		etcdCfg.MetaName = constants.EtcdDataVolumeID
+		etcdCfg.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("50GiB")
+
+		cfg, err := container.New(baseCfg.DeepCopy(), etcdCfg)
+		require.NoError(t, err)
+
+		transformer := volumeconfig.GetPromotableSystemVolumesTransformer(true)
+		resources, err := transformer(cfg)
+		require.NoError(t, err)
+
+		testTransformFunc(t, findResource(t, resources, constants.EtcdDataVolumeID).TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
+			require.NoError(t, err)
+
+			assert.Equal(t, block.VolumeTypeDirectory, vc.TypedSpec().Type)
+		})
+	})
 }
 
 func TestGetOverlayVolumesTransformer(t *testing.T) {

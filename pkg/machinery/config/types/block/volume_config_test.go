@@ -5,10 +5,14 @@
 package block_test
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"testing"
 
+	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
+	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -152,7 +156,7 @@ func TestVolumeConfigValidate(t *testing.T) {
 				return c
 			},
 
-			expectedErrors: "only [\"STATE\" \"EPHEMERAL\" \"IMAGECACHE\"] volumes are supported",
+			expectedErrors: "only [\"STATE\" \"EPHEMERAL\" \"IMAGECACHE\" \"ETCD\" \"CRI\" \"KUBELET\"] volumes are supported",
 		},
 		{
 			name: "invalid disk selector",
@@ -303,6 +307,103 @@ func TestVolumeConfigValidate(t *testing.T) {
 			expectedErrors: "mount config is not allowed for the \"IMAGECACHE\" volume",
 		},
 		{
+			name: "mount spec for ETCD volume",
+
+			cfg: func(t *testing.T) *block.VolumeConfigV1Alpha1 {
+				c := block.NewVolumeConfigV1Alpha1()
+				c.MetaName = constants.EtcdDataVolumeID
+
+				c.MountSpec = block.MountSpec{
+					MountDisableAccessTime: new(true),
+				}
+
+				return c
+			},
+
+			expectedErrors: "mount config is not allowed for the \"ETCD\" volume",
+		},
+		{
+			name: "mount spec for CRI volume",
+
+			cfg: func(t *testing.T) *block.VolumeConfigV1Alpha1 {
+				c := block.NewVolumeConfigV1Alpha1()
+				c.MetaName = constants.CRIContainerdVolumeID
+
+				c.MountSpec = block.MountSpec{
+					MountDisableAccessTime: new(true),
+				}
+
+				return c
+			},
+
+			expectedErrors: "mount config is not allowed for the \"CRI\" volume",
+		},
+		{
+			name: "mount spec for KUBELET volume",
+
+			cfg: func(t *testing.T) *block.VolumeConfigV1Alpha1 {
+				c := block.NewVolumeConfigV1Alpha1()
+				c.MetaName = constants.KubeletDataVolumeID
+
+				c.MountSpec = block.MountSpec{
+					MountDisableAccessTime: new(true),
+				}
+
+				return c
+			},
+
+			expectedErrors: "mount config is not allowed for the \"KUBELET\" volume",
+		},
+		{
+			name: "ETCD promotion provisioning is allowed",
+
+			cfg: func(t *testing.T) *block.VolumeConfigV1Alpha1 {
+				c := block.NewVolumeConfigV1Alpha1()
+				c.MetaName = constants.EtcdDataVolumeID
+
+				require.NoError(t, c.ProvisioningSpec.DiskSelectorSpec.Match.UnmarshalText([]byte(`disk.transport == "nvme" && !system_disk`)))
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("50GiB")
+
+				return c
+			},
+		},
+		{
+			name: "ETCD promotion encryption is allowed",
+
+			cfg: func(t *testing.T) *block.VolumeConfigV1Alpha1 {
+				c := block.NewVolumeConfigV1Alpha1()
+				c.MetaName = constants.EtcdDataVolumeID
+
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("50GiB")
+				c.EncryptionSpec.EncryptionProvider = blockres.EncryptionProviderLUKS2
+				c.EncryptionSpec.EncryptionKeys = []block.EncryptionKey{
+					{
+						KeySlot: 0,
+						KeyStatic: &block.EncryptionKeyStatic{
+							KeyData: "topsecret",
+						},
+					},
+				}
+
+				return c
+			},
+		},
+		{
+			name: "ETCD promotion trim is allowed",
+
+			cfg: func(t *testing.T) *block.VolumeConfigV1Alpha1 {
+				c := block.NewVolumeConfigV1Alpha1()
+				c.MetaName = constants.EtcdDataVolumeID
+
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("50GiB")
+				c.TrimSpec = &block.TrimConfig{
+					TrimEnabled: new(true),
+				}
+
+				return c
+			},
+		},
+		{
 			name: "valid",
 
 			cfg: func(t *testing.T) *block.VolumeConfigV1Alpha1 {
@@ -358,6 +459,114 @@ func TestVolumeConfigValidate(t *testing.T) {
 				require.Error(t, err)
 
 				assert.EqualError(t, err, test.expectedErrors)
+			}
+		})
+	}
+}
+
+func TestVolumeConfigRuntimeValidate(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+
+		volumeID     string
+		provisioning bool
+
+		// current volume to seed into the state (skipped if seedStatus is false).
+		seedStatus   bool
+		currentType  blockres.VolumeType
+		currentPhase blockres.VolumePhase
+
+		expectedError string
+	}{
+		{
+			name:         "promote running directory volume is rejected",
+			volumeID:     constants.EtcdDataVolumeID,
+			provisioning: true,
+			seedStatus:   true,
+			currentType:  blockres.VolumeTypeDirectory,
+			currentPhase: blockres.VolumePhaseReady,
+
+			expectedError: `the backing of the "ETCD" system volume cannot be changed after creation (current: directory, requested: partition); ` +
+				`migrating an existing system volume to or from a dedicated partition is not supported`,
+		},
+		{
+			name:         "demote running partition volume is rejected",
+			volumeID:     constants.KubeletDataVolumeID,
+			provisioning: false,
+			seedStatus:   true,
+			currentType:  blockres.VolumeTypePartition,
+			currentPhase: blockres.VolumePhaseReady,
+
+			expectedError: `the backing of the "KUBELET" system volume cannot be changed after creation (current: partition, requested: directory); ` +
+				`migrating an existing system volume to or from a dedicated partition is not supported`,
+		},
+		{
+			name:         "matching partition is allowed",
+			volumeID:     constants.EtcdDataVolumeID,
+			provisioning: true,
+			seedStatus:   true,
+			currentType:  blockres.VolumeTypePartition,
+			currentPhase: blockres.VolumePhaseReady,
+		},
+		{
+			name:         "matching directory is allowed",
+			volumeID:     constants.CRIContainerdVolumeID,
+			provisioning: false,
+			seedStatus:   true,
+			currentType:  blockres.VolumeTypeDirectory,
+			currentPhase: blockres.VolumePhaseReady,
+		},
+		{
+			name:         "no established volume is allowed (cluster creation)",
+			volumeID:     constants.EtcdDataVolumeID,
+			provisioning: true,
+			seedStatus:   false,
+		},
+		{
+			name:         "unsettled volume is allowed",
+			volumeID:     constants.EtcdDataVolumeID,
+			provisioning: true,
+			seedStatus:   true,
+			currentType:  blockres.VolumeTypeDirectory,
+			currentPhase: blockres.VolumePhaseWaiting,
+		},
+		{
+			name:         "non-promotable volume is ignored",
+			volumeID:     constants.EphemeralPartitionLabel,
+			provisioning: true,
+			seedStatus:   true,
+			currentType:  blockres.VolumeTypeDirectory,
+			currentPhase: blockres.VolumePhaseReady,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx := context.Background()
+			st := state.WrapCore(namespaced.NewState(inmem.Build))
+
+			if test.seedStatus {
+				vs := blockres.NewVolumeStatus(blockres.NamespaceName, test.volumeID)
+				vs.TypedSpec().Type = test.currentType
+				vs.TypedSpec().Phase = test.currentPhase
+				require.NoError(t, st.Create(ctx, vs))
+			}
+
+			c := block.NewVolumeConfigV1Alpha1()
+			c.MetaName = test.volumeID
+
+			if test.provisioning {
+				c.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("50GiB")
+			}
+
+			_, err := c.RuntimeValidate(ctx, st, validationMode{})
+
+			if test.expectedError == "" {
+				require.NoError(t, err)
+			} else {
+				require.EqualError(t, err, test.expectedError)
 			}
 		})
 	}

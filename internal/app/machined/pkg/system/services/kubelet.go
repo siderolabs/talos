@@ -117,7 +117,7 @@ func (k *Kubelet) DependsOn(runtime.Runtime) []string {
 func (k *Kubelet) Volumes(runtime.Runtime) []string {
 	return []string{
 		"/var/lib",
-		"/var/lib/kubelet",
+		constants.KubeletDataVolumeID,
 		constants.LogMountPoint,
 		"/var/log/audit",
 		"/var/log/containers",
