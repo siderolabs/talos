@@ -259,7 +259,7 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 	}
 
 	if kcfg := c.NetworkKubeSpanConfig(); kcfg != nil && kcfg.Enabled() {
-		if !c.Cluster().Discovery().Enabled() {
+		if !c.ClusterConfig.Discovery().Enabled() {
 			result = multierror.Append(result, errors.New(".cluster.discovery should be enabled when .machine.network.kubespan is enabled"))
 		}
 
