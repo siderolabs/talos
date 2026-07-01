@@ -1,0 +1,29 @@
+commit-msg:
+  parallel: false
+  commands:
+    conformance:
+      run: make conformance
+pre-commit:
+  jobs:
+    - name: fix
+      group:
+        parallel: false
+        jobs:
+          - name: generate
+            run: make generate
+            stage_fixed: true
+          - name: docs
+            run: make docs
+            stage_fixed: true
+          - name: fmt
+            run: make fmt
+            stage_fixed: true
+          - name: lint-fmt
+            run: make lint-fmt
+            stage_fixed: true
+    - name: lint
+      group:
+        parallel: false
+        jobs:
+          - name: lint
+            run: make lint
