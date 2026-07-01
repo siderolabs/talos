@@ -1,0 +1,28 @@
+# assemble md arrays
+SUBSYSTEM!="block", GOTO="md_inc_end"
+
+# handle potential components of arrays (the ones supported by md)
+ENV{ID_FS_TYPE}=="linux_raid_member", GOTO="md_inc"
+
+# "noiswmd" on kernel command line stops mdadm from handling
+#  "isw" (aka IMSM - Intel RAID).
+# "nodmraid" on kernel command line stops mdadm from handling
+#  "isw" or "ddf".
+IMPORT{cmdline}="noiswmd"
+IMPORT{cmdline}="nodmraid"
+
+ENV{nodmraid}=="?*", GOTO="md_inc_end"
+ENV{ID_FS_TYPE}=="ddf_raid_member", GOTO="md_inc"
+ENV{noiswmd}=="?*", GOTO="md_inc_end"
+ENV{ID_FS_TYPE}=="isw_raid_member", ACTION!="change", GOTO="md_inc"
+GOTO="md_inc_end"
+
+LABEL="md_inc"
+
+# remember you can limit what gets auto/incrementally assembled by
+# mdadm.conf(5)'s 'AUTO' and selectively whitelist using 'ARRAY'
+ACTION=="add|change", IMPORT{program}="/usr/bin/mdadm --incremental --export $devnode --offroot $env{DEVLINKS}"
+ACTION=="remove", ENV{ID_PATH}=="?*", RUN+="/usr/bin/mdadm -If $name --path $env{ID_PATH}"
+ACTION=="remove", ENV{ID_PATH}!="?*", RUN+="/usr/bin/mdadm -If $name"
+
+LABEL="md_inc_end"

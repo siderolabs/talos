@@ -50,6 +50,7 @@ ARG PKG_LIBUCONTEXT=scratch
 ARG PKG_LIBURCU=scratch
 ARG PKG_LINUX_FIRMWARE=scratch
 ARG PKG_LVM2=scratch
+ARG PKG_MDADM=scratch
 ARG PKG_MTOOLS=scratch
 ARG PKG_MUSL=scratch
 ARG PKG_NFTABLES=scratch
@@ -165,6 +166,9 @@ FROM --platform=arm64 ${PKG_LVM2} AS pkg-lvm2-arm64
 
 FROM --platform=amd64 ${PKG_LIBAIO} AS pkg-libaio-amd64
 FROM --platform=arm64 ${PKG_LIBAIO} AS pkg-libaio-arm64
+
+FROM --platform=amd64 ${PKG_MDADM} AS pkg-mdadm-amd64
+FROM --platform=arm64 ${PKG_MDADM} AS pkg-mdadm-arm64
 
 FROM --platform=amd64 ${PKG_NFTABLES} AS pkg-nftables-amd64
 FROM --platform=arm64 ${PKG_NFTABLES} AS pkg-nftables-arm64
@@ -781,6 +785,7 @@ COPY --link --from=pkg-pcre2-amd64 / /rootfs
 COPY --link --from=pkg-openssl-amd64 / /rootfs
 COPY --link --from=pkg-lvm2-amd64 / /rootfs
 COPY --link --from=pkg-libaio-amd64 / /rootfs
+COPY --link --from=pkg-mdadm-amd64 / /rootfs
 COPY --link --from=pkg-musl-amd64 / /rootfs
 COPY --link --from=pkg-nftables-amd64 / /rootfs
 COPY --link --from=pkg-runc-amd64 / /rootfs
@@ -821,7 +826,7 @@ COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
 COPY --chmod=0644 hack/cri-containerd.toml /rootfs/etc/cri/containerd.toml
 COPY --chmod=0644 hack/cri-plugin.part /rootfs/etc/cri/conf.d/00-base.part
 COPY --chmod=0644 hack/udevd/99-default.link /rootfs/usr/lib/systemd/network/
-COPY --chmod=0644 hack/udevd/40-vm-hotadd.rules hack/udevd/90-selinux.rules hack/udevd/99-talos.rules /rootfs/usr/lib/udev/rules.d/
+COPY --chmod=0644 hack/udevd/40-vm-hotadd.rules hack/udevd/90-md-raid-arrays.rules hack/udevd/90-md-raid-assembly.rules hack/udevd/90-selinux.rules hack/udevd/99-talos.rules /rootfs/usr/lib/udev/rules.d/
 COPY --chmod=0644 hack/lvm.conf /rootfs/etc/lvm/lvm.conf
 COPY --link --chmod=0644 --from=base /src/pkg/machinery/version/os-release /rootfs/etc/os-release
 RUN <<END
@@ -865,6 +870,7 @@ COPY --link --from=pkg-pcre2-arm64 / /rootfs
 COPY --link --from=pkg-openssl-arm64 / /rootfs
 COPY --link --from=pkg-lvm2-arm64 / /rootfs
 COPY --link --from=pkg-libaio-arm64 / /rootfs
+COPY --link --from=pkg-mdadm-arm64 / /rootfs
 COPY --link --from=pkg-musl-arm64 / /rootfs
 COPY --link --from=pkg-nftables-arm64 / /rootfs
 COPY --link --from=pkg-runc-arm64 / /rootfs
@@ -911,7 +917,7 @@ COPY --chmod=0644 hack/containerd.toml /rootfs/etc/containerd/config.toml
 COPY --chmod=0644 hack/cri-containerd.toml /rootfs/etc/cri/containerd.toml
 COPY --chmod=0644 hack/cri-plugin.part /rootfs/etc/cri/conf.d/00-base.part
 COPY --chmod=0644 hack/udevd/99-default.link /rootfs/usr/lib/systemd/network/
-COPY --chmod=0644 hack/udevd/40-vm-hotadd.rules hack/udevd/90-selinux.rules hack/udevd/99-talos.rules /rootfs/usr/lib/udev/rules.d/
+COPY --chmod=0644 hack/udevd/40-vm-hotadd.rules hack/udevd/90-md-raid-arrays.rules hack/udevd/90-md-raid-assembly.rules hack/udevd/90-selinux.rules hack/udevd/99-talos.rules /rootfs/usr/lib/udev/rules.d/
 COPY --chmod=0644 hack/lvm.conf /rootfs/etc/lvm/lvm.conf
 COPY --link --chmod=0644 --from=base /src/pkg/machinery/version/os-release /rootfs/etc/os-release
 RUN <<END
