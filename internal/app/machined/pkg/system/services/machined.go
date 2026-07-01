@@ -142,6 +142,11 @@ var rules = map[string]role.Set{
 		// for maintenance only, verified in the handler
 		role.Reader,
 	),
+	"/machine.MDService/Destroy": role.MakeSet(
+		role.Admin,
+		// for maintenance only, verified in the handler
+		role.Reader,
+	),
 
 	"/time.TimeService/Time":      role.MakeSet(role.Admin, role.Operator, role.Reader),
 	"/time.TimeService/TimeCheck": role.MakeSet(role.Admin, role.Operator, role.Reader),

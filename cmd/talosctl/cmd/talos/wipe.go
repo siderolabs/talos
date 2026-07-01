@@ -243,6 +243,48 @@ The argument is a full device path, e.g. /dev/sda1.`,
 	},
 }
 
+// wipeMDCmd stops an MD (software RAID) array and clears member superblocks.
+var wipeMDCmd = &cobra.Command{
+	Use:   "md <name>",
+	Short: "Destroy an MD (software RAID) array",
+	Long: `Stop an MD (software RAID) array and clear the superblock on every member device.
+
+WARNING: this is destructive. The array must not be in use (mounted or claimed
+by another device). The argument is the array name, e.g. talos.`,
+	Args: cobra.ExactArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		name := args[0]
+
+		ctx := cmd.Context()
+
+		clientFactory, err := NewClientFactory(ctx, &wipeLVMCmdFlags)
+		if err != nil {
+			return err
+		}
+
+		defer clientFactory.Close() //nolint:errcheck
+
+		responseChan := multiplex.UnaryViaFactory(
+			ctx, clientFactory,
+			func(ctx context.Context, c *client.Client) (*emptypb.Empty, error) {
+				return c.MDClient.Destroy(ctx, &machine.MDDestroyRequest{
+					Name: name,
+				})
+			},
+		)
+
+		var errs error
+
+		for resp := range responseChan {
+			if resp.Err != nil {
+				errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
+			}
+		}
+
+		return errs
+	},
+}
+
 func init() {
 	addCommand(wipeCmd)
 
@@ -254,9 +296,9 @@ func init() {
 	wipeDiskCmd.Flags().MarkHidden("skip-secondary-check") //nolint:errcheck
 	wipeDiskCmdFlags.InsecureFlags.AddFlags(wipeDiskCmd)
 
-	for _, c := range []*cobra.Command{wipeLVCmd, wipeVGCmd, wipePVCmd} {
+	for _, c := range []*cobra.Command{wipeLVCmd, wipeVGCmd, wipePVCmd, wipeMDCmd} {
 		wipeLVMCmdFlags.InsecureFlags.AddFlags(c)
 	}
 
-	wipeCmd.AddCommand(wipeDiskCmd, wipeLVCmd, wipeVGCmd, wipePVCmd)
+	wipeCmd.AddCommand(wipeDiskCmd, wipeLVCmd, wipeVGCmd, wipePVCmd, wipeMDCmd)
 }

@@ -1168,6 +1168,113 @@ func (suite *StorageSuite) TestLVMRawVolumeRemoveInUse() {
 	suite.assertPVAndVGStatus(nodeCtx, vgRaw, pvDevices)
 }
 
+// raidDoc builds a RAIDArrayConfig (raid1) whose selector matches the supplied
+// member disks by device path.
+func raidDoc(name string, memberDisks []string) *storagecfg.RAIDArrayConfigV1Alpha1 {
+	doc := storagecfg.NewRAIDArrayConfigV1Alpha1()
+	doc.MetaName = name
+	doc.Level = storageres.MDLevelRAID1
+
+	clauses := xslices.Map(memberDisks, func(d string) string {
+		return fmt.Sprintf(`disk.dev_path == "%s"`, d)
+	})
+
+	doc.ProvisioningSpec.RAIDVolumeSelector.Match = cel.MustExpression(
+		cel.ParseBooleanExpression(strings.Join(clauses, " || "), celenv.DiskLocator()),
+	)
+
+	return doc
+}
+
+// TestRAIDArrayMirror provisions a raid1 (mirror) MD array across two whole
+// disks declaratively via a RAIDArrayConfig, verifies the MDArrayStatus
+// surfaces with both members and the stable by-id device, then tears the array
+// down through the MDService (talosctl wipe md) RPC.
+//
+//nolint:gocyclo
+func (suite *StorageSuite) TestRAIDArrayMirror() {
+	if testing.Short() {
+		suite.T().Skip("skipping test in short mode.")
+	}
+
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping test for non-qemu provisioner")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	nodeName := k8sNode.Name
+
+	userDisks := suite.UserDisks(suite.ctx, node)
+
+	if len(userDisks) < 2 {
+		suite.T().Skipf("not enough user disks on %s/%s: %q", node, nodeName, userDisks)
+	}
+
+	memberDisks := userDisks[:2]
+
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	const raidName = "mdtest"
+
+	suite.T().Logf("provisioning raid1 array %q on %s/%s with %v", raidName, node, nodeName, memberDisks)
+
+	suite.PatchMachineConfig(nodeCtx, raidDoc(raidName, memberDisks))
+
+	// Drop the config first so the reconciler stops managing the array, then
+	// destroy it (stops the array + zeroes member superblocks) so the disks are
+	// reusable by later tests. NotFound means it is already gone.
+	defer func() {
+		suite.RemoveMachineConfigDocumentsByName(nodeCtx, storagecfg.RAIDArrayConfigKind, raidName)
+
+		if err := suite.Client.MDDestroy(nodeCtx, &machineapi.MDDestroyRequest{Name: raidName}); !isAlreadyGone(err) {
+			suite.T().Logf("MDDestroy %q failed: %v", raidName, err)
+		}
+	}()
+
+	const (
+		assertTimeout  = 90 * time.Second
+		assertInterval = 2 * time.Second
+	)
+
+	expectedDevice := "/dev/disk/by-id/md-name-" + raidName
+
+	suite.Require().Eventually(func() bool {
+		status, err := safe.StateGetByID[*storageres.MDArrayStatus](nodeCtx, suite.Client.COSI, raidName)
+		if err != nil {
+			return false
+		}
+
+		spec := status.TypedSpec()
+
+		return spec.Name == raidName &&
+			spec.Level == storageres.MDLevelRAID1 &&
+			spec.Device == expectedDevice &&
+			len(spec.Members) == len(memberDisks)
+	}, assertTimeout, assertInterval, "MD array status not reported for %q", raidName)
+
+	// The array must surface as a block.Disk carrying the by-id md-name symlink.
+	suite.Require().Eventually(func() bool {
+		disks, err := safe.StateListAll[*block.Disk](nodeCtx, suite.Client.COSI)
+		if err != nil {
+			return false
+		}
+
+		for disk := range disks.All() {
+			for _, s := range disk.TypedSpec().Symlinks {
+				if strings.Contains(s, "md-name-"+raidName) {
+					return true
+				}
+			}
+		}
+
+		return false
+	}, assertTimeout, assertInterval, "MD array %q did not surface as a disk", raidName)
+}
+
 // isAlreadyGone reports whether the gRPC error means the LVM object has
 // already been removed.
 func isAlreadyGone(err error) bool {
