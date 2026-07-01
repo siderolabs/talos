@@ -79,8 +79,8 @@ func (ctrl *KernelModuleConfigController) Run(ctx context.Context, r controller.
 
 		r.StartTrackingOutputs()
 
-		if cfg != nil && cfg.Config().Machine() != nil {
-			for _, module := range cfg.Config().Machine().Kernel().Modules() {
+		if cfg != nil {
+			for _, module := range cfg.Config().KernelModuleConfigs() {
 				item := runtime.NewKernelModuleSpec(runtime.NamespaceName, module.Name())
 
 				if err = safe.WriterModify(ctx, r, item, func(res *runtime.KernelModuleSpec) error {

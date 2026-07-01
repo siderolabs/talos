@@ -74,6 +74,12 @@ func WrapSysfsConfigList(configs ...SysfsConfig) map[string]string {
 	})
 }
 
+// KernelModuleConfig defines the interface to access a Talos kernel module to load.
+type KernelModuleConfig interface {
+	Name() string
+	Parameters() []string
+}
+
 // UnattendedInstallConfig defines the interface to access Talos unattended install configuration.
 type UnattendedInstallConfig interface {
 	UnattendedInstallConfigSignal()

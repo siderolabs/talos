@@ -1,3 +1,5 @@
 apiVersion: v1alpha1
 kind: KernelModuleConfig
-name: dm_raid
+name: btrfs
+parameters:
+    - param1

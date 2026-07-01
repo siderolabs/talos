@@ -163,12 +163,6 @@ logging:
           extraTags:
             machine: worker-1
 {{< /highlight >}}</details> | |
-|`kernel` |<a href="#Config.machine.kernel">KernelConfig</a> |Configures the kernel. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-kernel:
-    # Kernel modules to load.
-    modules:
-        - name: btrfs # Module name.
-{{< /highlight >}}</details> | |
 |`seccompProfiles` |<a href="#Config.machine.seccompProfiles.">[]MachineSeccompProfile</a> |Configures the seccomp profiles for the machine. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 seccompProfiles:
     - name: audit.json # The `name` field is used to provide the file name of the seccomp profile.
@@ -618,49 +612,6 @@ Endpoint represents the endpoint URL parsed out of the machine config.
 |-------|------|-------------|----------|
 
 
-
-
-
-
-
-
-
-
-### kernel {#Config.machine.kernel}
-
-KernelConfig struct configures Talos Linux kernel.
-
-
-
-
-{{< highlight yaml >}}
-machine:
-    kernel:
-        # Kernel modules to load.
-        modules:
-            - name: btrfs # Module name.
-{{< /highlight >}}
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`modules` |<a href="#Config.machine.kernel.modules.">[]KernelModuleConfig</a> |Kernel modules to load.  | |
-
-
-
-
-#### modules[] {#Config.machine.kernel.modules.}
-
-KernelModuleConfig struct configures Linux kernel modules to load.
-
-
-
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`name` |string |Module name.  | |
-|`parameters` |[]string |Module parameters, changes applied after reboot.  | |
 
 
 

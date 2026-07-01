@@ -39,7 +39,6 @@ type MachineConfig interface {
 	Features() Features
 	Udev() UdevConfig
 	Logging() Logging
-	Kernel() Kernel
 	SeccompProfiles() []SeccompProfile
 	NodeLabels() NodeLabels
 	NodeAnnotations() NodeAnnotations
@@ -402,15 +401,4 @@ type LoggingDestination interface {
 	Endpoint() *url.URL
 	ExtraTags() map[string]string
 	Format() string
-}
-
-// Kernel describes Talos Linux kernel configuration.
-type Kernel interface {
-	Modules() []KernelModule
-}
-
-// KernelModule describes Linux module to load.
-type KernelModule interface {
-	Name() string
-	Parameters() []string
 }

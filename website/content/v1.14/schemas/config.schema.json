@@ -4884,6 +4884,53 @@
       "type": "object",
       "description": "InstallerSpec describes the installer to perform the installation.\\n"
     },
+    "runtime.KernelModuleConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "KernelModuleConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Module name.\n",
+          "markdownDescription": "Module name.",
+          "x-intellij-html-description": "\u003cp\u003eModule name.\u003c/p\u003e\n"
+        },
+        "parameters": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "parameters",
+          "description": "Module parameters, changes applied after reboot.\n",
+          "markdownDescription": "Module parameters, changes applied after reboot.",
+          "x-intellij-html-description": "\u003cp\u003eModule parameters, changes applied after reboot.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "name"
+      ],
+      "description": "KernelModuleConfig is a config document to configure a Linux kernel module to load."
+    },
     "runtime.KmsgLogV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -5857,47 +5904,6 @@
       "type": "object",
       "description": "FeaturesConfig describes individual Talos features that can be switched on or off.\\n"
     },
-    "v1alpha1.KernelConfig": {
-      "properties": {
-        "modules": {
-          "items": {
-            "$ref": "#/$defs/v1alpha1.KernelModuleConfig"
-          },
-          "type": "array",
-          "title": "modules",
-          "description": "Kernel modules to load.\n",
-          "markdownDescription": "Kernel modules to load.",
-          "x-intellij-html-description": "\u003cp\u003eKernel modules to load.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "KernelConfig struct configures Talos Linux kernel.\\n"
-    },
-    "v1alpha1.KernelModuleConfig": {
-      "properties": {
-        "name": {
-          "type": "string",
-          "title": "name",
-          "description": "Module name.\n",
-          "markdownDescription": "Module name.",
-          "x-intellij-html-description": "\u003cp\u003eModule name.\u003c/p\u003e\n"
-        },
-        "parameters": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "title": "parameters",
-          "description": "Module parameters, changes applied after reboot.\n",
-          "markdownDescription": "Module parameters, changes applied after reboot.",
-          "x-intellij-html-description": "\u003cp\u003eModule parameters, changes applied after reboot.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "KernelModuleConfig struct configures Linux kernel modules to load.\\n"
-    },
     "v1alpha1.KubePrism": {
       "properties": {
         "enabled": {
@@ -6252,13 +6258,6 @@
           "markdownDescription": "Configures the logging system.",
           "x-intellij-html-description": "\u003cp\u003eConfigures the logging system.\u003c/p\u003e\n"
         },
-        "kernel": {
-          "$ref": "#/$defs/v1alpha1.KernelConfig",
-          "title": "kernel",
-          "description": "Configures the kernel.\n",
-          "markdownDescription": "Configures the kernel.",
-          "x-intellij-html-description": "\u003cp\u003eConfigures the kernel.\u003c/p\u003e\n"
-        },
         "seccompProfiles": {
           "items": {
             "$ref": "#/$defs/v1alpha1.MachineSeccompProfile"
@@ -6552,6 +6551,9 @@
     },
     {
       "$ref": "#/$defs/runtime.EventSinkV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/runtime.KernelModuleConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/runtime.KmsgLogV1Alpha1"

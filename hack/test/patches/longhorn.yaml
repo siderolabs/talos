@@ -1,11 +1,20 @@
+apiVersion: v1alpha1
+kind: KernelModuleConfig
+name: nvme_tcp
+---
+apiVersion: v1alpha1
+kind: KernelModuleConfig
+name: vfio_pci
+---
+apiVersion: v1alpha1
+kind: KernelModuleConfig
+name: uio_pci_generic
+---
+apiVersion: v1alpha1
+kind: KernelModuleConfig
+name: ublk_drv
 ---
 machine:
-  kernel:
-    modules:
-      - name: nvme_tcp
-      - name: vfio_pci
-      - name: uio_pci_generic
-      - name: ublk_drv
   kubelet:
     extraMounts:
       - destination: /var/lib/longhorn

@@ -236,10 +236,9 @@ type MachineConfig struct {
 	//     - value: machineLoggingExample1()
 	//     - value: machineLoggingExample2()
 	MachineLogging *LoggingConfig `yaml:"logging,omitempty"`
-	//   description: |
-	//     Configures the kernel.
-	//   examples:
-	//     - value: machineKernelExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use 'KernelModuleConfig' instead.
 	MachineKernel *KernelConfig `yaml:"kernel,omitempty"`
 	//  description: |
 	//    Configures the seccomp profiles for the machine.
@@ -2602,18 +2601,32 @@ type LoggingDestination struct {
 }
 
 // KernelConfig struct configures Talos Linux kernel.
+//
+// docgen:nodoc
+//
+// Deprecated: Use multi-doc `KernelModuleConfig` instead.
 type KernelConfig struct {
 	// description: |
 	//   Kernel modules to load.
+	//
+	// Deprecated: Use multi-doc `KernelModuleConfig` instead.
 	KernelModules []*KernelModuleConfig `yaml:"modules,omitempty"`
 }
 
 // KernelModuleConfig struct configures Linux kernel modules to load.
+//
+// docgen:nodoc
+//
+// Deprecated: Use multi-doc `KernelModuleConfig` instead.
 type KernelModuleConfig struct {
 	// description: |
 	//   Module name.
+	//
+	// Deprecated: Use multi-doc `KernelModuleConfig` instead.
 	ModuleName string `yaml:"name"`
 	// description: |
 	//   Module parameters, changes applied after reboot.
+	//
+	// Deprecated: Use multi-doc `KernelModuleConfig` instead.
 	ModuleParameters []string `yaml:"parameters,omitempty"`
 }

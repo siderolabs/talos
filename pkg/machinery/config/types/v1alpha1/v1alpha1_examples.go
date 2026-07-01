@@ -268,16 +268,6 @@ func machineLoggingExample2() LoggingConfig {
 	}
 }
 
-func machineKernelExample() *KernelConfig {
-	return &KernelConfig{
-		KernelModules: []*KernelModuleConfig{
-			{
-				ModuleName: "btrfs",
-			},
-		},
-	}
-}
-
 func machinePodsExample() []meta.Unstructured {
 	return []meta.Unstructured{
 		{

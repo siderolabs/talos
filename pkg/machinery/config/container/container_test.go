@@ -283,6 +283,96 @@ func TestDiscoveryServiceConfigs(t *testing.T) {
 	}
 }
 
+func TestKernelModuleConfigsMixing(t *testing.T) {
+	t.Parallel()
+
+	legacy := &v1alpha1.Config{
+		MachineConfig: &v1alpha1.MachineConfig{
+			MachineKernel: &v1alpha1.KernelConfig{ //nolint:staticcheck // legacy configuration
+				KernelModules: []*v1alpha1.KernelModuleConfig{ //nolint:staticcheck // legacy configuration
+					{
+						ModuleName:       "btrfs",
+						ModuleParameters: []string{"legacy-param"},
+					},
+					{
+						ModuleName: "e1000",
+					},
+				},
+			},
+		},
+	}
+
+	overlappingDoc := runtimeconfig.NewKernelModuleConfigV1Alpha1("btrfs")
+	overlappingDoc.ModuleParameters = []string{"doc-param"}
+
+	standaloneDoc := runtimeconfig.NewKernelModuleConfigV1Alpha1("vrf")
+
+	for _, tt := range []struct {
+		name      string
+		documents []config.Document
+
+		// expected (name -> parameters) of the returned modules, in order
+		expected [][2]any
+	}{
+		{
+			name:      "no config at all",
+			documents: []config.Document{&v1alpha1.Config{}},
+			expected:  nil,
+		},
+		{
+			name:      "only legacy",
+			documents: []config.Document{legacy},
+			expected: [][2]any{
+				{"btrfs", []string{"legacy-param"}},
+				{"e1000", []string(nil)},
+			},
+		},
+		{
+			name:      "only multi-doc, no v1alpha1 config present",
+			documents: []config.Document{standaloneDoc},
+			expected: [][2]any{
+				{"vrf", []string(nil)},
+			},
+		},
+		{
+			name:      "legacy and non-overlapping multi-doc are merged",
+			documents: []config.Document{legacy, standaloneDoc},
+			expected: [][2]any{
+				{"btrfs", []string{"legacy-param"}},
+				{"e1000", []string(nil)},
+				{"vrf", []string(nil)},
+			},
+		},
+		{
+			// the document is ordered after the legacy entries, so downstream consumers processing
+			// the list in order and keying by module name (as KernelModuleConfigController does) see
+			// the document's parameters win on a name conflict.
+			name:      "multi-doc is appended after legacy on module name conflict",
+			documents: []config.Document{legacy, overlappingDoc},
+			expected: [][2]any{
+				{"btrfs", []string{"legacy-param"}},
+				{"e1000", []string(nil)},
+				{"btrfs", []string{"doc-param"}},
+			},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctr, err := container.New(tt.documents...)
+			require.NoError(t, err)
+
+			got := ctr.KernelModuleConfigs()
+
+			actual := xslices.Map(got, func(m config.KernelModuleConfig) [2]any {
+				return [2]any{m.Name(), m.Parameters()}
+			})
+
+			assert.Equal(t, tt.expected, actual)
+		})
+	}
+}
+
 func TestRunDefaultDHCPOperators(t *testing.T) {
 	t.Parallel()
 

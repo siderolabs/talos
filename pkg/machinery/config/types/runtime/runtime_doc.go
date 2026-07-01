@@ -440,6 +440,38 @@ func (WatchdogTimerV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (KernelModuleConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KernelModuleConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KernelModuleConfig is a config document to configure a Linux kernel module to load." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KernelModuleConfig is a config document to configure a Linux kernel module to load.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Module name.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Module name." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "parameters",
+				Type:        "[]string",
+				Note:        "",
+				Description: "Module parameters, changes applied after reboot.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Module parameters, changes applied after reboot." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKernelModuleConfigV1Alpha1())
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file runtime_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -459,6 +491,7 @@ func GetFileDoc() *encoder.FileDoc {
 			ProvisioningSpec{}.Doc(),
 			DiskSelectorSpec{}.Doc(),
 			WatchdogTimerV1Alpha1{}.Doc(),
+			KernelModuleConfigV1Alpha1{}.Doc(),
 		},
 	}
 }

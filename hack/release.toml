@@ -285,6 +285,7 @@ List of changes:
 
 - Deprecated `.machine.sysctls` in the v1alpha1 config; use the `SysctlConfig` document for kernel sysctl configuration.
 - Deprecated `.machine.sysfs` in the v1alpha1 config; use the `SysfsConfig` document for sysfs configuration.
+- Deprecated `.machine.kernel` in the v1alpha1 config; use the `KernelModuleConfig` document for kernel module configuration.
 """
 
     [notes.udev_rules_config]

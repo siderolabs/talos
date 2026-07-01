@@ -10,17 +10,23 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 )
 
-// Modules implements config.Kernel interface.
-func (kc *KernelConfig) Modules() []config.KernelModule {
-	return xslices.Map(kc.KernelModules, func(kmc *KernelModuleConfig) config.KernelModule { return kmc })
+// Name implements config.KernelModuleConfig interface.
+func (cfg *KernelModuleConfig) Name() string {
+	return cfg.ModuleName
 }
 
-// Name implements config.KernelModule interface.
-func (kmc *KernelModuleConfig) Name() string {
-	return kmc.ModuleName
+// Parameters implements config.KernelModuleConfig interface.
+func (cfg *KernelModuleConfig) Parameters() []string {
+	return cfg.ModuleParameters
 }
 
-// Parameters implements config.KernelModule interface.
-func (kmc *KernelModuleConfig) Parameters() []string {
-	return kmc.ModuleParameters
+// KernelModuleConfigs returns the kernel module configs derived from the legacy v1alpha1 machine kernel config.
+func (c *Config) KernelModuleConfigs() []config.KernelModuleConfig {
+	if c.MachineConfig == nil || c.MachineConfig.MachineKernel == nil { //nolint:staticcheck // legacy configuration
+		return nil
+	}
+
+	return xslices.Map(c.MachineConfig.MachineKernel.KernelModules, func(m *KernelModuleConfig) config.KernelModuleConfig { //nolint:staticcheck // legacy configuration
+		return m
+	})
 }

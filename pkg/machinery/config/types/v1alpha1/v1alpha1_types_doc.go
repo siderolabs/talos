@@ -160,13 +160,7 @@ func (MachineConfig) Doc() *encoder.Doc {
 				Description: "Configures the logging system.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the logging system." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "kernel",
-				Type:        "KernelConfig",
-				Note:        "",
-				Description: "Configures the kernel.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the kernel." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{
 				Name:        "seccompProfiles",
 				Type:        "[]MachineSeccompProfile",
@@ -216,7 +210,6 @@ func (MachineConfig) Doc() *encoder.Doc {
 	doc.Fields[18].AddExample("", machineFeaturesExample())
 	doc.Fields[20].AddExample("", machineLoggingExample1())
 	doc.Fields[20].AddExample("", machineLoggingExample2())
-	doc.Fields[21].AddExample("", machineKernelExample())
 	doc.Fields[22].AddExample("", machineSeccompExample())
 	doc.Fields[23].AddExample("override default open file limit", machineBaseRuntimeSpecOverridesExample())
 	doc.Fields[24].AddExample("node labels example.", map[string]string{"exampleLabel": "exampleLabelValue"})
@@ -1133,65 +1126,6 @@ func (LoggingDestination) Doc() *encoder.Doc {
 	return doc
 }
 
-func (KernelConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "KernelConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "KernelConfig struct configures Talos Linux kernel." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "KernelConfig struct configures Talos Linux kernel.\n",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "MachineConfig",
-				FieldName: "kernel",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "modules",
-				Type:        "[]KernelModuleConfig",
-				Note:        "",
-				Description: "Kernel modules to load.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Kernel modules to load." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", machineKernelExample())
-
-	return doc
-}
-
-func (KernelModuleConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "KernelModuleConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "KernelModuleConfig struct configures Linux kernel modules to load." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "KernelModuleConfig struct configures Linux kernel modules to load.\n",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "KernelConfig",
-				FieldName: "modules",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "name",
-				Type:        "string",
-				Note:        "",
-				Description: "Module name.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Module name." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "parameters",
-				Type:        "[]string",
-				Note:        "",
-				Description: "Module parameters, changes applied after reboot.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Module parameters, changes applied after reboot." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	return doc
-}
-
 // GetFileDoc returns documentation for the file ./v1alpha1_types_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -1218,8 +1152,6 @@ func GetFileDoc() *encoder.FileDoc {
 			ClusterInlineManifest{}.Doc(),
 			LoggingConfig{}.Doc(),
 			LoggingDestination{}.Doc(),
-			KernelConfig{}.Doc(),
-			KernelModuleConfig{}.Doc(),
 		},
 	}
 }

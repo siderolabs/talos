@@ -287,6 +287,25 @@ func (container *Container) SysfsConfig() map[string]string {
 	return config.WrapSysfsConfigList(configs...)
 }
 
+// KernelModuleConfigs implements config.Config interface.
+//
+// The deprecated v1alpha1 .machine.kernel.modules values are merged with the multi-doc documents,
+// with the multi-doc documents taking precedence over the legacy config on module name conflicts
+// (enforced by the KernelModuleConfigController, which writes one resource per module name).
+func (container *Container) KernelModuleConfigs() []config.KernelModuleConfig {
+	var modules []config.KernelModuleConfig
+
+	// v1alpha1 has the lowest priority
+	if container.v1alpha1Config != nil {
+		modules = container.v1alpha1Config.KernelModuleConfigs()
+	}
+
+	// dedicated documents take precedence over v1alpha1
+	modules = append(modules, findMatchingDocs[config.KernelModuleConfig](container.documents)...)
+
+	return modules
+}
+
 // UnattendedInstallConfig implements config.Config interface.
 func (container *Container) UnattendedInstallConfig() config.UnattendedInstallConfig {
 	matching := findMatchingDocs[config.UnattendedInstallConfig](container.documents)
