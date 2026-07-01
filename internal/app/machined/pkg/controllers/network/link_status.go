@@ -229,6 +229,8 @@ func (ctrl *LinkStatusController) reconcile(
 		if err = safe.WriterModify(ctx, r, network.NewLinkStatus(network.NamespaceName, link.Attributes.Name), func(r *network.LinkStatus) error {
 			status := r.TypedSpec()
 
+			prevUp := status.LinkState
+
 			status.Alias = pointer.SafeDeref(link.Attributes.Alias)
 			status.AltNames = slices.Clone(link.Attributes.AltNames)
 			status.Index = link.Index
@@ -260,6 +262,10 @@ func (ctrl *LinkStatusController) reconcile(
 				status.LinkState = ethState.Link
 			} else {
 				status.LinkState = false
+			}
+
+			if prevUp != status.LinkState && status.Physical() {
+				logger.Info("link state changed", zap.String("link", link.Attributes.Name), zap.Bool("up", status.LinkState))
 			}
 
 			if ethInfo != nil {
