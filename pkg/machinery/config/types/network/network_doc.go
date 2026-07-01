@@ -1474,6 +1474,161 @@ func (LinkSelector) Doc() *encoder.Doc {
 	return doc
 }
 
+func (NATRuleConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "NetworkNATRuleConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "NetworkNATRuleConfig is a network NAT rule config document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "NetworkNATRuleConfig is a network NAT rule config document.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the config document.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the config document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "type",
+				Type:        "NATType",
+				Note:        "",
+				Description: "Type is the kind of NAT operation: masquerade, snat, or dnat.\nDefaults to masquerade when omitted.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Type is the kind of NAT operation: masquerade, snat, or dnat." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"masquerade",
+					"snat",
+					"dnat",
+				},
+			},
+			{
+				Name:        "sourceAddress",
+				Type:        "NATSubnetConfig",
+				Note:        "",
+				Description: "SourceAddress restricts which source addresses are matched.\nApplies to masquerade, snat, and dnat.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "SourceAddress restricts which source addresses are matched." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "outputInterface",
+				Type:        "NATInterfaceConfig",
+				Note:        "",
+				Description: "OutputInterface restricts which egress interfaces trigger the rule.\nApplies to masquerade and snat.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "OutputInterface restricts which egress interfaces trigger the rule." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "snatAddress",
+				Type:        "Addr",
+				Note:        "",
+				Description: "SNATAddress is the address to translate the source to.\nRequired when type is snat.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "SNATAddress is the address to translate the source to." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "snatPort",
+				Type:        "uint16",
+				Note:        "",
+				Description: "SNATPort is the source port to translate to.\nOptional for snat; when zero, the kernel chooses the source port (default behaviour).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "SNATPort is the source port to translate to." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "inputInterface",
+				Type:        "NATInterfaceConfig",
+				Note:        "",
+				Description: "InputInterface restricts which ingress interfaces trigger the rule.\nApplies to dnat.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "InputInterface restricts which ingress interfaces trigger the rule." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "destinationAddress",
+				Type:        "NATSubnetConfig",
+				Note:        "",
+				Description: "DestinationAddress restricts which destination addresses are matched.\nApplies to snat and dnat.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "DestinationAddress restricts which destination addresses are matched." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "dnatAddress",
+				Type:        "Addr",
+				Note:        "",
+				Description: "DNATAddress is the address to redirect traffic to.\nRequired when type is dnat.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "DNATAddress is the address to redirect traffic to." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "dnatPort",
+				Type:        "uint16",
+				Note:        "",
+				Description: "DNATPort is the port to redirect traffic to.\nOptional for dnat; when zero, the original destination port is preserved.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "DNATPort is the port to redirect traffic to." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleNATRuleConfigMasquerade())
+
+	doc.AddExample("", exampleNATRuleConfigSNAT())
+
+	doc.AddExample("", exampleNATRuleConfigDNAT())
+
+	return doc
+}
+
+func (NATSubnetConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "NATSubnetConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "NATSubnetConfig holds a list of subnets to match." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "NATSubnetConfig holds a list of subnets to match.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "NATRuleConfigV1Alpha1",
+				FieldName: "sourceAddress",
+			},
+			{
+				TypeName:  "NATRuleConfigV1Alpha1",
+				FieldName: "destinationAddress",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "includeSubnets",
+				Type:        "[]Prefix",
+				Note:        "",
+				Description: "IncludeSubnets is the list of CIDRs that match.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "IncludeSubnets is the list of CIDRs that match." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (NATInterfaceConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "NATInterfaceConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "NATInterfaceConfig holds a list of interface names to match." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "NATInterfaceConfig holds a list of interface names to match.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "NATRuleConfigV1Alpha1",
+				FieldName: "outputInterface",
+			},
+			{
+				TypeName:  "NATRuleConfigV1Alpha1",
+				FieldName: "inputInterface",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "interfaceNames",
+				Type:        "[]string",
+				Note:        "",
+				Description: "InterfaceNames is the list of interface names to match against.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "InterfaceNames is the list of interface names to match against." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
 func (ResolverConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ResolverConfig",
@@ -2277,6 +2432,9 @@ func GetFileDoc() *encoder.FileDoc {
 			RouteConfig{}.Doc(),
 			LinkAliasConfigV1Alpha1{}.Doc(),
 			LinkSelector{}.Doc(),
+			NATRuleConfigV1Alpha1{}.Doc(),
+			NATSubnetConfig{}.Doc(),
+			NATInterfaceConfig{}.Doc(),
 			ResolverConfigV1Alpha1{}.Doc(),
 			NameserverConfig{}.Doc(),
 			SearchDomainsConfig{}.Doc(),

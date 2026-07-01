@@ -70,6 +70,45 @@ func (w networkRuleConfigWrapper) Rules() []NetworkRule {
 	)
 }
 
+// NetworkNATConfigSignal is used to signal documents which implement NetworkNATRuleConfig.
+type NetworkNATConfigSignal interface {
+	NetworkNATConfigSignal()
+}
+
+// NetworkNATRuleConfig provides access to NAT rules from config documents.
+type NetworkNATRuleConfig interface {
+	NATRules() []NetworkNATRule
+}
+
+// NetworkNATRule describes a single NAT rule.
+type NetworkNATRule interface {
+	NATType() nethelpers.NATType
+	SourceSubnets() []netip.Prefix
+	DestinationSubnets() []netip.Prefix
+	OutputInterfaces() []string
+	InputInterfaces() []string
+	SNATAddress() *netip.Addr
+	SNATPort() uint16
+	DNATAddress() *netip.Addr
+	DNATPort() uint16
+}
+
+// WrapNetworkNATConfigList aggregates multiple NAT config documents into a single view.
+func WrapNetworkNATConfigList(configs ...NetworkNATConfigSignal) NetworkNATRuleConfig {
+	return networkNATConfigWrapper(configs)
+}
+
+type networkNATConfigWrapper []NetworkNATConfigSignal
+
+func (w networkNATConfigWrapper) NATRules() []NetworkNATRule {
+	return aggregateValues(
+		filterDocuments[NetworkNATRuleConfig](w),
+		func(c NetworkNATRuleConfig) []NetworkNATRule {
+			return c.NATRules()
+		},
+	)
+}
+
 // EthernetConfig defines a network interface configuration.
 type EthernetConfig interface {
 	NamedDocument
