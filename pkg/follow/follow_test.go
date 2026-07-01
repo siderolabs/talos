@@ -222,6 +222,33 @@ func (suite *FollowSuite) TestDeleted() {
 	suite.Require().Equal([]byte("abcdefghijklmno"), <-combinedCh)
 }
 
+func (suite *FollowSuite) TestRenamed() {
+	ctx, ctxCancel := context.WithCancel(context.Background())
+	defer ctxCancel()
+
+	// pass sizeHint as 15+1 to make code read beyond the end and encounter file renamed
+	combinedCh := suite.readAll(ctx, "file was removed while watching", 16, time.Second)
+
+	time.Sleep(150 * time.Millisecond)
+
+	//nolint:errcheck
+	suite.writer.WriteString("abc")
+	//nolint:errcheck
+	suite.writer.WriteString("def")
+	//nolint:errcheck
+	suite.writer.WriteString("ghi")
+	//nolint:errcheck
+	suite.writer.WriteString("jkl")
+	//nolint:errcheck
+	suite.writer.WriteString("mno")
+	time.Sleep(150 * time.Millisecond)
+
+	// chunker should terminate when file is renamed away
+	suite.Require().NoError(os.Rename(suite.writer.Name(), suite.writer.Name()+".old"))
+
+	suite.Require().Equal([]byte("abcdefghijklmno"), <-combinedCh)
+}
+
 func (suite *FollowSuite) TestReadWrite() {
 	ctx, ctxCancel := context.WithCancel(context.Background())
 	defer ctxCancel()
