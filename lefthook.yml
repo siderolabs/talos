@@ -1,8 +1,3 @@
-commit-msg:
-  parallel: false
-  commands:
-    conformance:
-      run: make conformance
 pre-commit:
   jobs:
     - name: fix
@@ -11,15 +6,23 @@ pre-commit:
         jobs:
           - name: generate
             run: make generate
+            env:
+              USERNAME: siderolabs
             stage_fixed: true
           - name: docs
             run: make docs
+            env:
+              USERNAME: siderolabs
             stage_fixed: true
           - name: fmt
             run: make fmt
+            env:
+              USERNAME: siderolabs
             stage_fixed: true
           - name: lint-fmt
             run: make lint-fmt
+            env:
+              USERNAME: siderolabs
             stage_fixed: true
     - name: lint
       group:
@@ -27,3 +30,12 @@ pre-commit:
         jobs:
           - name: lint
             run: make lint
+            env:
+              USERNAME: siderolabs
+post-commit:
+  parallel: false
+  commands:
+    conformance:
+      run: make conformance
+      env:
+        USERNAME: siderolabs
