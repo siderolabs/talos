@@ -1,0 +1,47 @@
+; sandboxd_t: PID 1 of the sandbox PID+mount namespace. It is a service LAUNCHER
+; (forks cri, kubelet and the pods directly into the namespace), so it needs the
+; same privileges toward the service domains that init_t (machined) has — but it
+; deliberately does NOT get machined's broader machine-management rights (config,
+; disk, bootloader, apid/trustd management, ...). That narrowing is the point of
+; giving it its own domain instead of resharing init_t.
+;
+; sandboxd_t is a member of service_p (via the call below) and therefore of
+; any_p, so the broad any_p grants in common/processes.cil already cover: self
+; capabilities (incl. sys_admin for the scoped /proc mount and sys_resource for
+; oom_score_adj=-1000), self fs_classes rw (the oom write), null_device_t (its
+; /dev/null stdin), and self process_classes.
+;
+; The transition into sandboxd_t is set up by the service_p macro (entrypoint on
+; init_exec_t) plus init_t's existing "init_t -> service_p transition" grant;
+; machined sets the pending exec label (SelinuxLabelSandboxd) on the fork thread.
+(type sandboxd_t)
+(call service_p (sandboxd_t init_exec_t))
+
+; Launch services into the namespace: transition to any service_p domain, set the
+; pending exec label, exec the service binaries, signal them. Mirrors init_t's
+; grants in machined.cil / common/processes.cil.
+(allow sandboxd_t service_p (process (transition signal sigkill)))
+(allow sandboxd_t service_p (process2 (nosuid_transition)))
+(allow sandboxd_t service_p (process_classes (full)))
+(allow sandboxd_t service_p (fs_classes (rw)))
+(allow sandboxd_t service_p (fd (use)))
+(allow sandboxd_t service_p (key (view read write search link setattr create)))
+(allow sandboxd_t service_exec_f (file (execute)))
+(allow sandboxd_t service_exec_f (fs_classes (ro)))
+
+; Anchor the namespace: overmount a fresh procfs scoped to the new PID namespace.
+(allow sandboxd_t procfs_t (filesystem (mount remount)))
+(allow sandboxd_t procfs_t (dir (mounton)))
+
+; Control + per-service SEQPACKET sockets are created by machined (init_t).
+; (sandboxd's stdout/stderr/ready fds are init_t pipes and its use of init_t fds
+; are already covered by the system_p -> init_t fifo_file/fd grants in machined.cil.)
+(allow sandboxd_t init_t (unix_stream_socket (read write getattr getopt setopt shutdown)))
+
+; A launched service inherits sandboxd's fd table across execve, so the service
+; domain "uses" fds labeled sandboxd_t (e.g. the exec fd, forwarded stdio).
+(allow service_p sandboxd_t (fd (use)))
+
+; machined resolves the host PID from / signals via the pidfd that sandboxd opens
+; for each service and passes back over the control socket (fd labeled sandboxd_t).
+(allow init_t sandboxd_t (fd (use)))

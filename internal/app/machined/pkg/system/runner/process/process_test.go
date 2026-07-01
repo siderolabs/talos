@@ -12,6 +12,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"syscall"
 	"testing"
 	"time"
@@ -408,6 +409,241 @@ func (suite *ProcessSuite) TestSchedulingPolicy() {
 
 	suite.Assert().NoError(r.Stop())
 	<-done
+}
+
+// mockSandboxHandle is a runtime.SandboxHandle for exercising the sandbox launch
+// path without a real sandboxd. Wait blocks until either the handle is unblocked
+// or the first signal is delivered.
+type mockSandboxHandle struct {
+	hostPID int
+
+	unblock  chan struct{} // closed to make Wait return
+	once     sync.Once
+	signalCh chan syscall.Signal
+
+	mu     sync.Mutex
+	closed bool
+}
+
+func (h *mockSandboxHandle) HostPID() int { return h.hostPID }
+
+func (h *mockSandboxHandle) Signal(sig syscall.Signal) error {
+	select {
+	case h.signalCh <- sig:
+	default:
+	}
+
+	h.once.Do(func() { close(h.unblock) }) // first signal ends Wait
+
+	return nil
+}
+
+func (h *mockSandboxHandle) Wait() (int, error) {
+	<-h.unblock
+
+	return 0, nil
+}
+
+func (h *mockSandboxHandle) Close() error {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	h.closed = true
+
+	return nil
+}
+
+func (h *mockSandboxHandle) isClosed() bool {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+
+	return h.closed
+}
+
+func newMockSandboxHandle(hostPID int) *mockSandboxHandle {
+	return &mockSandboxHandle{
+		hostPID:  hostPID,
+		unblock:  make(chan struct{}),
+		signalCh: make(chan syscall.Signal, 4),
+	}
+}
+
+// mockSandboxLauncher is a runtime.SandboxLauncher returning a fixed handle (or
+// error) and recording the LaunchConfig it received.
+type mockSandboxLauncher struct {
+	handle   runtime.SandboxHandle
+	err      error
+	launched chan runtime.LaunchConfig
+}
+
+func (l *mockSandboxLauncher) Launch(cfg runtime.LaunchConfig) (runtime.SandboxHandle, error) {
+	if l.err != nil {
+		return nil, l.err
+	}
+
+	select {
+	case l.launched <- cfg:
+	default:
+	}
+
+	return l.handle, nil
+}
+
+// TestSandboxUnavailable verifies that when the sandbox launcher getter returns
+// nil (namespace not up yet), Run fails fast instead of launching on the host.
+func (suite *ProcessSuite) TestSandboxUnavailable() {
+	r := process.NewRunner(false, &runner.Args{
+		ID:          "sb-unavail",
+		ProcessArgs: []string{"/bin/true"},
+	},
+		runner.WithLoggingManager(suite.loggingManager),
+		runner.WithSandbox(func() runtime.SandboxLauncher { return nil }),
+	)
+
+	suite.Require().NoError(r.Open())
+
+	defer func() { suite.Assert().NoError(r.Close()) }()
+
+	err := r.Run(MockEventSink(suite.T()), MockPidRecorder(suite.T()))
+	suite.Assert().Error(err)
+	suite.Assert().Contains(err.Error(), "sandbox namespace not available")
+}
+
+// TestSandboxRetryWhenUnavailable verifies the launcher getter is re-resolved on
+// each (re)launch, so a service recovers once the sandbox namespace comes up.
+func (suite *ProcessSuite) TestSandboxRetryWhenUnavailable() {
+	handle := newMockSandboxHandle(424242)
+	close(handle.unblock) // Wait returns immediately (clean exit)
+
+	launcher := &mockSandboxLauncher{handle: handle, launched: make(chan runtime.LaunchConfig, 1)}
+
+	var calls atomic.Int32
+
+	getter := func() runtime.SandboxLauncher {
+		if calls.Add(1) < 3 {
+			return nil // unavailable for the first two attempts
+		}
+
+		return launcher
+	}
+
+	r := restart.New(process.NewRunner(false, &runner.Args{
+		ID:          "sb-retry",
+		ProcessArgs: []string{"/bin/true"},
+	},
+		runner.WithLoggingManager(suite.loggingManager),
+		runner.WithSandbox(getter),
+	), restart.WithType(restart.UntilSuccess), restart.WithRestartInterval(time.Millisecond))
+
+	suite.Require().NoError(r.Open())
+
+	defer func() { suite.Assert().NoError(r.Close()) }()
+
+	suite.Assert().NoError(r.Run(MockEventSink(suite.T()), MockPidRecorder(suite.T())))
+
+	select {
+	case <-launcher.launched:
+	default:
+		suite.Fail("launcher was never invoked after retries")
+	}
+
+	suite.Assert().GreaterOrEqual(calls.Load(), int32(3))
+}
+
+// TestSandboxSuccess verifies the launch config is forwarded, the host PID from
+// the handle is recorded, and the handle is closed when Run returns.
+func (suite *ProcessSuite) TestSandboxSuccess() {
+	const hostPID = 424242
+
+	handle := newMockSandboxHandle(hostPID)
+	close(handle.unblock) // Wait returns immediately
+
+	launcher := &mockSandboxLauncher{handle: handle, launched: make(chan runtime.LaunchConfig, 1)}
+
+	recorded := make(chan int32, 4)
+	pidRecorder := func(id string, pid int32, clearEntry bool) error {
+		if !clearEntry {
+			recorded <- pid
+		}
+
+		return nil
+	}
+
+	r := process.NewRunner(false, &runner.Args{
+		ID:          "sb-ok",
+		ProcessArgs: []string{"/bin/true"},
+	},
+		runner.WithLoggingManager(suite.loggingManager),
+		runner.WithSelinuxLabel("system_u:system_r:pod_containerd_t:s0"),
+		runner.WithSandbox(func() runtime.SandboxLauncher { return launcher }),
+	)
+
+	suite.Require().NoError(r.Open())
+
+	defer func() { suite.Assert().NoError(r.Close()) }()
+
+	suite.Assert().NoError(r.Run(MockEventSink(suite.T()), pidRecorder))
+
+	select {
+	case p := <-recorded:
+		suite.Assert().Equal(int32(hostPID), p, "host PID from the handle should be recorded")
+	default:
+		suite.Fail("host PID was not recorded")
+	}
+
+	cfg := <-launcher.launched
+	suite.Assert().Equal([]string{"/bin/true"}, cfg.Args)
+	suite.Assert().Equal("system_u:system_r:pod_containerd_t:s0", cfg.SelinuxLabel)
+
+	suite.Assert().True(handle.isClosed(), "handle should be closed on Run return")
+}
+
+// TestSandboxStopSignal verifies that stopping the runner signals the service
+// through the handle (not the host process table).
+func (suite *ProcessSuite) TestSandboxStopSignal() {
+	handle := newMockSandboxHandle(424242) // Wait blocks until first signal
+
+	launcher := &mockSandboxLauncher{handle: handle, launched: make(chan runtime.LaunchConfig, 1)}
+
+	r := process.NewRunner(false, &runner.Args{
+		ID:          "sb-stop",
+		ProcessArgs: []string{"/bin/true"},
+	},
+		runner.WithLoggingManager(suite.loggingManager),
+		runner.WithSandbox(func() runtime.SandboxLauncher { return launcher }),
+	)
+
+	suite.Require().NoError(r.Open())
+
+	defer func() { suite.Assert().NoError(r.Close()) }()
+
+	done := make(chan error, 1)
+
+	go func() {
+		done <- r.Run(MockEventSink(suite.T()), MockPidRecorder(suite.T()))
+	}()
+
+	select {
+	case <-launcher.launched:
+	case <-time.After(time.Second):
+		suite.Fail("launch did not happen")
+	}
+
+	suite.Assert().NoError(r.Stop())
+
+	select {
+	case err := <-done:
+		suite.Assert().NoError(err)
+	case <-time.After(time.Second):
+		suite.Fail("Run did not return after Stop")
+	}
+
+	select {
+	case sig := <-handle.signalCh:
+		suite.Assert().Equal(syscall.SIGTERM, sig)
+	default:
+		suite.Fail("no signal was delivered through the handle")
+	}
 }
 
 func TestProcessSuite(t *testing.T) {

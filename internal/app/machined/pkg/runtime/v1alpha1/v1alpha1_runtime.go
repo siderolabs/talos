@@ -30,6 +30,9 @@ type Runtime struct {
 	e runtime.EventStream
 	l runtime.LoggingManager
 
+	sandboxMu sync.RWMutex
+	sandbox   runtime.SandboxLauncher
+
 	rollbackTimerMu sync.Mutex
 	rollbackTimer   *time.Timer
 }
@@ -192,4 +195,23 @@ func (r *Runtime) IsBootstrapAllowed() bool {
 // GetSystemInformation returns system information resource if it exists.
 func (r *Runtime) GetSystemInformation(ctx context.Context) (*hardware.SystemInformation, error) {
 	return safe.StateGet[*hardware.SystemInformation](ctx, r.State().V1Alpha2().Resources(), hardware.NewSystemInformation(hardware.SystemInformationID).Metadata())
+}
+
+// Sandbox implements the Runtime interface.
+func (r *Runtime) Sandbox() runtime.SandboxLauncher {
+	r.sandboxMu.RLock()
+	defer r.sandboxMu.RUnlock()
+
+	return r.sandbox
+}
+
+// SetSandbox publishes (or clears, with a nil launcher) the sandbox namespace
+// client. The sandboxd runner calls it every time the namespace is created and
+// again when it is torn down, so it may be invoked repeatedly as the namespace
+// is recreated on restart.
+func (r *Runtime) SetSandbox(launcher runtime.SandboxLauncher) {
+	r.sandboxMu.Lock()
+	defer r.sandboxMu.Unlock()
+
+	r.sandbox = launcher
 }

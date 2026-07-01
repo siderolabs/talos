@@ -361,6 +361,19 @@ When the `UnattendedInstall` document is present, the install is driven by the n
 The `.machine.install` field remains supported for backwards compatibility and is still used for older version contracts.
 """
 
+    [notes.sandboxd]
+        title = "Workload Isolation (sandboxd)"
+        description = """\
+The container runtime plane — CRI containerd, the kubelet, and all pods — now runs inside a dedicated PID and
+mount namespace anchored by a new `sandboxd` service, instead of sharing `machined`'s namespaces. As a result,
+workloads (even privileged, `hostPID` pods) can no longer reach `machined` (PID 1) or its file descriptors via
+`/proc/1/fd`, and see a `/proc` scoped to the sandbox namespace rather than the host.
+
+`sandboxd` runs in its own least-privilege SELinux domain (`sandboxd_t`) and is supervised as a restart-forever
+service: if it dies the kernel tears down the namespace and Talos recreates it — relaunching CRI, the kubelet,
+and pods — without rebooting the node. Its logs are available via `talosctl logs sandboxd`.
+"""
+
 [make_deps]
 
     [make_deps.tools]
