@@ -667,7 +667,7 @@ installer-with-extensions: $(ARTIFACTS)/extensions/_out/extensions-metadata
 	$(MAKE) image-installer \
 		IMAGER_ARGS="--base-installer-image=$(REGISTRY_AND_USERNAME)/installer-base$(IMAGE_NAME_SUFFIX):$(IMAGE_TAG_IN) $(shell cat $(ARTIFACTS)/extensions/_out/extensions-metadata | $(EXTENSIONS_FILTER_COMMAND) | xargs -n 1 echo --system-extension-image)"
 	crane push $(ARTIFACTS)/installer-amd64.tar $(REGISTRY_AND_USERNAME)/installer$(IMAGE_NAME_SUFFIX):$(IMAGE_TAG_OUT)-amd64-extensions
-	INSTALLER_IMAGE_EXTENSIONS="$(REGISTRY_AND_USERNAME)/installer$(IMAGE_NAME_SUFFIX):$(IMAGE_TAG_OUT)-amd64-extensions" yq eval -n '.machine.install.image = strenv(INSTALLER_IMAGE_EXTENSIONS)' > $(ARTIFACTS)/installer-extensions-patch.yaml
+	INSTALLER_IMAGE_EXTENSIONS="$(REGISTRY_AND_USERNAME)/installer$(IMAGE_NAME_SUFFIX):$(IMAGE_TAG_OUT)-amd64-extensions" yq eval -n '.apiVersion = "v1alpha1" | .kind = "UnattendedInstallConfig" | .installer.image = strenv(INSTALLER_IMAGE_EXTENSIONS) | .provisioning.diskSelector.match = "disk.dev_path == \"/dev/vda\""' > $(ARTIFACTS)/installer-extensions-patch.yaml
 
 kubelet-fat-patch:
 	K8S_VERSION=$(KUBECTL_VERSION) yq eval -n '.machine.kubelet.image = "ghcr.io/siderolabs/kubelet:" + strenv(K8S_VERSION) + "-fat"' > $(ARTIFACTS)/kubelet-fat-patch.yaml
