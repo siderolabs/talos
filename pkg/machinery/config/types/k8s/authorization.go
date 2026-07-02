@@ -39,6 +39,7 @@ var (
 	_ config.NamedDocument                = &KubeAuthorizerConfigV1Alpha1{}
 	_ config.Validator                    = &KubeAuthorizerConfigV1Alpha1{}
 	_ container.V1Alpha1ConflictValidator = &KubeAuthorizerConfigV1Alpha1{}
+	_ container.ControlplaneOnlyConfig    = &KubeAuthorizerConfigV1Alpha1{}
 )
 
 // KubeAuthorizerConfigV1Alpha1 configures kube-apiserver authorization by configuring a specific authorization plugin.
@@ -216,3 +217,6 @@ func (s *KubeAuthorizerConfigV1Alpha1) Type() string {
 func (s *KubeAuthorizerConfigV1Alpha1) Webhook() map[string]any {
 	return s.AuthorizerWebhook.Object
 }
+
+// ControlplaneOnlyDocument implements container.ControlplaneOnlyConfig interface.
+func (s *KubeAuthorizerConfigV1Alpha1) ControlplaneOnlyDocument() {}

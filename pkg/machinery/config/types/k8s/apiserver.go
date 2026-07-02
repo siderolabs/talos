@@ -43,6 +43,7 @@ var (
 	_ config.K8sAPIServerConfig           = &KubeAPIServerConfigV1Alpha1{}
 	_ config.Validator                    = &KubeAPIServerConfigV1Alpha1{}
 	_ container.V1Alpha1ConflictValidator = &KubeAPIServerConfigV1Alpha1{}
+	_ container.ControlplaneOnlyConfig    = &KubeAPIServerConfigV1Alpha1{}
 )
 
 // KubeAPIServerConfigV1Alpha1 configures kube-apiserver controlplane static pod.
@@ -293,3 +294,6 @@ func (s *KubeAPIServerConfigV1Alpha1) APIPort() int {
 func (s *KubeAPIServerConfigV1Alpha1) InjectDefaultAuthorizers() bool {
 	return false
 }
+
+// ControlplaneOnlyDocument implements container.ControlplaneOnlyConfig interface.
+func (s *KubeAPIServerConfigV1Alpha1) ControlplaneOnlyDocument() {}

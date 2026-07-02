@@ -40,6 +40,7 @@ var (
 	_ config.K8sFlannelCNIConfig          = &KubeFlannelCNIConfigV1Alpha1{}
 	_ config.Validator                    = &KubeFlannelCNIConfigV1Alpha1{}
 	_ container.V1Alpha1ConflictValidator = &KubeFlannelCNIConfigV1Alpha1{}
+	_ container.ControlplaneOnlyConfig    = &KubeFlannelCNIConfigV1Alpha1{}
 )
 
 // KubeFlannelCNIConfigV1Alpha1 deploys Flannel CNI to the cluster.
@@ -192,3 +193,6 @@ func (s *KubeFlannelCNIConfigV1Alpha1) ExtraArgs() []string {
 func (s *KubeFlannelCNIConfigV1Alpha1) KubeNetworkPoliciesEnabled() bool {
 	return pointer.SafeDeref(s.FlannelKubeNetworkPoliciesEnabled)
 }
+
+// ControlplaneOnlyDocument implements container.ControlplaneOnlyConfig interface.
+func (s *KubeFlannelCNIConfigV1Alpha1) ControlplaneOnlyDocument() {}

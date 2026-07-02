@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
@@ -270,6 +271,13 @@ func TestValidateContainer(t *testing.T) {
 		},
 	}
 
+	kubeEtcdEncryptionConfig := k8s.NewKubeEtcdEncryptionConfigV1Alpha1()
+	kubeEtcdEncryptionConfig.Config = meta.Unstructured{
+		Object: map[string]any{
+			"some": "thing",
+		},
+	}
+
 	for _, tt := range []struct {
 		name        string
 		documents   []config.Document
@@ -328,6 +336,18 @@ func TestValidateContainer(t *testing.T) {
 		{
 			name:      "DoT with hostDNS",
 			documents: []config.Document{resolverConfigDoT, v1alpha1CfgHostDNS},
+		},
+		{
+			name:      "controlplane doc only",
+			documents: []config.Document{kubeEtcdEncryptionConfig},
+
+			expectedError: "1 error occurred:\n\t* the following document kinds are only allowed on control plane machines: [KubeEtcdEncryptionConfig]\n\n",
+		},
+		{
+			name:      "controlplane doc with v1alpha1 worker",
+			documents: []config.Document{v1alpha1Cfg, kubeEtcdEncryptionConfig},
+
+			expectedError: "1 error occurred:\n\t* the following document kinds are only allowed on control plane machines: [KubeEtcdEncryptionConfig]\n\n",
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {

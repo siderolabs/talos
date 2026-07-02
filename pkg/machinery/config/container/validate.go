@@ -11,6 +11,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/hashicorp/go-multierror"
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
@@ -214,11 +215,28 @@ func (container *Container) validateContainer(mode validation.RuntimeMode) error
 		}
 	}
 
-	// worker specific checks
-	if container.Machine() != nil && container.Machine().Type() == machine.TypeWorker {
-		if container.K8sEtcdEncryptionConfig() != nil {
-			errs = multierror.Append(errs, fmt.Errorf("etcd encryption config is not supported for worker machines"))
-		}
+	// machine type specific checks
+	var machineType machine.Type
+
+	if container.Machine() != nil {
+		machineType = container.Machine().Type()
+	}
+
+	controlplaneDocs := findMatchingDocs[ControlplaneOnlyConfig](container.documents)
+
+	if len(controlplaneDocs) > 0 && !machineType.IsControlPlane() {
+		kinds := xslices.Map(controlplaneDocs, func(d ControlplaneOnlyConfig) string {
+			return d.Kind()
+		})
+		slices.Sort(kinds)
+		kinds = slices.Compact(kinds)
+
+		errs = multierror.Append(errs,
+			fmt.Errorf(
+				"the following document kinds are only allowed on control plane machines: %v",
+				kinds,
+			),
+		)
 	}
 
 	return errs

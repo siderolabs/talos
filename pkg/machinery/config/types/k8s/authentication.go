@@ -6,6 +6,7 @@ package k8s
 
 import (
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 )
@@ -28,7 +29,8 @@ func init() {
 
 // Check interfaces.
 var (
-	_ config.K8sAuthenticationConfig = &KubeAuthenticationConfigV1Alpha1{}
+	_ config.K8sAuthenticationConfig   = &KubeAuthenticationConfigV1Alpha1{}
+	_ container.ControlplaneOnlyConfig = &KubeAuthenticationConfigV1Alpha1{}
 )
 
 // KubeAuthenticationConfigV1Alpha1 configures kube-apiserver authentication.
@@ -100,3 +102,6 @@ func (s *KubeAuthenticationConfigV1Alpha1) K8sAuthenticationConfigSignal() {}
 func (s *KubeAuthenticationConfigV1Alpha1) Configuration() map[string]any {
 	return s.AuthConfig.Object
 }
+
+// ControlplaneOnlyDocument implements container.ControlplaneOnlyConfig interface.
+func (s *KubeAuthenticationConfigV1Alpha1) ControlplaneOnlyDocument() {}

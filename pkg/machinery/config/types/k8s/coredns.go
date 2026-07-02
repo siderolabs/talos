@@ -35,6 +35,7 @@ func init() {
 var (
 	_ config.K8sCoreDNSConfig             = &KubeCoreDNSConfigV1Alpha1{}
 	_ container.V1Alpha1ConflictValidator = &KubeCoreDNSConfigV1Alpha1{}
+	_ container.ControlplaneOnlyConfig    = &KubeCoreDNSConfigV1Alpha1{}
 )
 
 // KubeCoreDNSConfigV1Alpha1 configures CoreDNS deployment.
@@ -110,3 +111,6 @@ func (s *KubeCoreDNSConfigV1Alpha1) Image() string {
 
 	return s.PodImage
 }
+
+// ControlplaneOnlyDocument implements container.ControlplaneOnlyConfig interface.
+func (s *KubeCoreDNSConfigV1Alpha1) ControlplaneOnlyDocument() {}

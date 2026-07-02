@@ -24,7 +24,7 @@ type PatcherFunc func(config.Provider) (config.Provider, error)
 func K8sAddAcceptedCA(caCrt []byte) PatcherFunc {
 	return func(in config.Provider) (config.Provider, error) {
 		// detect version contract, and act accordingly
-		multidoc := hasDocument(k8s.KubeAPIServerCAConfig, in)
+		multidoc := in.Has(k8s.KubeAPIServerCAConfig)
 
 		if !multidoc {
 			return in.PatchV1Alpha1(func(cfg *v1alpha1.Config) error {
@@ -60,7 +60,7 @@ func K8sAddAcceptedCA(caCrt []byte) PatcherFunc {
 func K8sDeleteAcceptedCA(caCrt []byte) PatcherFunc {
 	return func(in config.Provider) (config.Provider, error) {
 		// detect version contract, and act accordingly
-		multidoc := hasDocument(k8s.KubeAPIServerCAConfig, in)
+		multidoc := in.Has(k8s.KubeAPIServerCAConfig)
 
 		if !multidoc {
 			return in.PatchV1Alpha1(func(cfg *v1alpha1.Config) error {
@@ -99,7 +99,7 @@ func K8sDeleteAcceptedCA(caCrt []byte) PatcherFunc {
 func K8sSetCA(newCA *x509.PEMEncodedCertificateAndKey) PatcherFunc {
 	return func(in config.Provider) (config.Provider, error) {
 		// detect version contract, and act accordingly
-		multidoc := hasDocument(k8s.KubeAPIServerCAConfig, in)
+		multidoc := in.Has(k8s.KubeAPIServerCAConfig)
 		machineType := in.Machine().Type()
 
 		if !multidoc {

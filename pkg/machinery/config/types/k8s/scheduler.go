@@ -39,6 +39,7 @@ var (
 	_ config.K8sSchedulerConfig           = &KubeSchedulerConfigV1Alpha1{}
 	_ config.Validator                    = &KubeSchedulerConfigV1Alpha1{}
 	_ container.V1Alpha1ConflictValidator = &KubeSchedulerConfigV1Alpha1{}
+	_ container.ControlplaneOnlyConfig    = &KubeSchedulerConfigV1Alpha1{}
 )
 
 // KubeSchedulerConfigV1Alpha1 configures kube-scheduler controlplane static pod.
@@ -230,3 +231,6 @@ func (s *KubeSchedulerConfigV1Alpha1) Config() map[string]any {
 func (s *KubeSchedulerConfigV1Alpha1) ExtraVolumes() []config.VolumeMount {
 	return nil
 }
+
+// ControlplaneOnlyDocument implements container.ControlplaneOnlyConfig interface.
+func (s *KubeSchedulerConfigV1Alpha1) ControlplaneOnlyDocument() {}

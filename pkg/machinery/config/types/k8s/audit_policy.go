@@ -34,6 +34,7 @@ func init() {
 var (
 	_ config.K8sAuditPolicyConfig         = &KubeAuditPolicyConfigV1Alpha1{}
 	_ container.V1Alpha1ConflictValidator = &KubeAuditPolicyConfigV1Alpha1{}
+	_ container.ControlplaneOnlyConfig    = &KubeAuditPolicyConfigV1Alpha1{}
 )
 
 // KubeAuditPolicyConfigV1Alpha1 configures kube-apiserver audit policy.
@@ -107,3 +108,6 @@ func (s *KubeAuditPolicyConfigV1Alpha1) K8sAuditPolicyConfigSignal() {}
 func (s *KubeAuditPolicyConfigV1Alpha1) Configuration() map[string]any {
 	return s.AuditConfig.Object
 }
+
+// ControlplaneOnlyDocument implements container.ControlplaneOnlyConfig interface.
+func (s *KubeAuditPolicyConfigV1Alpha1) ControlplaneOnlyDocument() {}

@@ -42,6 +42,7 @@ var (
 	_ config.Validator                    = &KubeAggregatorCAConfigV1Alpha1{}
 	_ config.SecretDocument               = &KubeAggregatorCAConfigV1Alpha1{}
 	_ container.V1Alpha1ConflictValidator = &KubeAggregatorCAConfigV1Alpha1{}
+	_ container.ControlplaneOnlyConfig    = &KubeAggregatorCAConfigV1Alpha1{}
 )
 
 // KubeAggregatorCAConfigV1Alpha1 configures Kubernetes API aggregator accepted CAs.
@@ -169,3 +170,6 @@ func (s *KubeAggregatorCAConfigV1Alpha1) Redact(replacement string) {
 		s.AggregatorIssuingCA.Key = replacement
 	}
 }
+
+// ControlplaneOnlyDocument implements container.ControlplaneOnlyConfig interface.
+func (s *KubeAggregatorCAConfigV1Alpha1) ControlplaneOnlyDocument() {}

@@ -4,15 +4,3 @@
 
 // Package rotatepatcher provides a config patcher which modifies machine configuration to rotate PKI.
 package rotatepatcher
-
-import "github.com/siderolabs/talos/pkg/machinery/config"
-
-func hasDocument(kind string, cfg config.Container) bool {
-	for _, doc := range cfg.Documents() {
-		if doc.Kind() == kind {
-			return true
-		}
-	}
-
-	return false
-}

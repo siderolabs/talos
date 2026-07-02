@@ -16,7 +16,7 @@ func GuessVersionContractKubelet(cfg config.Container) *config.VersionContract {
 
 // GuessVersionContractKubeAPIServer attempts to guess the version contract for kube-apiserver configuration based on the provided machine configuration.
 func GuessVersionContractKubeAPIServer(cfg config.Container) *config.VersionContract {
-	if hasDocument(k8s.KubeAPIServerConfig, cfg) {
+	if cfg.Has(k8s.KubeAPIServerConfig) {
 		return config.TalosVersionCurrent
 	}
 
@@ -26,7 +26,7 @@ func GuessVersionContractKubeAPIServer(cfg config.Container) *config.VersionCont
 
 // GuessVersionContractKubeControllerManager attempts to guess the version contract for kube-controller-manager configuration based on the provided machine configuration.
 func GuessVersionContractKubeControllerManager(cfg config.Container) *config.VersionContract {
-	if hasDocument(k8s.KubeControllerManagerConfig, cfg) {
+	if cfg.Has(k8s.KubeControllerManagerConfig) {
 		return config.TalosVersionCurrent
 	}
 
@@ -36,7 +36,7 @@ func GuessVersionContractKubeControllerManager(cfg config.Container) *config.Ver
 
 // GuessVersionContractKubeScheduler attempts to guess the version contract for kube-scheduler configuration based on the provided machine configuration.
 func GuessVersionContractKubeScheduler(cfg config.Container) *config.VersionContract {
-	if hasDocument(k8s.KubeSchedulerConfig, cfg) {
+	if cfg.Has(k8s.KubeSchedulerConfig) {
 		return config.TalosVersionCurrent
 	}
 
@@ -46,20 +46,10 @@ func GuessVersionContractKubeScheduler(cfg config.Container) *config.VersionCont
 
 // GuessVersionContractKubeProxy attempts to guess the version contract for kube-proxy configuration based on the provided machine configuration.
 func GuessVersionContractKubeProxy(cfg config.Container) *config.VersionContract {
-	if hasDocument(k8s.KubeProxyConfig, cfg) {
+	if cfg.Has(k8s.KubeProxyConfig) {
 		return config.TalosVersionCurrent
 	}
 
 	// the last before multi-doc k8s config
 	return config.TalosVersion1_13
-}
-
-func hasDocument(kind string, cfg config.Container) bool {
-	for _, doc := range cfg.Documents() {
-		if doc.Kind() == kind {
-			return true
-		}
-	}
-
-	return false
 }

@@ -37,6 +37,7 @@ var (
 	_ config.NamedDocument                   = &KubeAdmissionControlConfigV1Alpha1{}
 	_ config.Validator                       = &KubeAdmissionControlConfigV1Alpha1{}
 	_ container.V1Alpha1ConflictValidator    = &KubeAdmissionControlConfigV1Alpha1{}
+	_ container.ControlplaneOnlyConfig       = &KubeAdmissionControlConfigV1Alpha1{}
 )
 
 // KubeAdmissionControlConfigV1Alpha1 configures kube-apiserver admission control plugins.
@@ -142,3 +143,6 @@ func (s *KubeAdmissionControlConfigV1Alpha1) K8sAdmissionControlPluginConfigSign
 func (s *KubeAdmissionControlConfigV1Alpha1) Configuration() map[string]any {
 	return s.PluginConfig.Object
 }
+
+// ControlplaneOnlyDocument implements container.ControlplaneOnlyConfig interface.
+func (s *KubeAdmissionControlConfigV1Alpha1) ControlplaneOnlyDocument() {}

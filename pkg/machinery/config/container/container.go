@@ -25,6 +25,14 @@ type V1Alpha1ConflictValidator interface {
 	V1Alpha1ConflictValidate(*v1alpha1.Config) error
 }
 
+// ControlplaneOnlyConfig is the interface implemented by config documents which are only applicable to controlplane nodes.
+//
+// Such documents will not be allowed for machines which do not have a machine type, or the machine type is not controlplane/init.
+type ControlplaneOnlyConfig interface {
+	config.Document
+	ControlplaneOnlyDocument()
+}
+
 // Container wraps all configuration documents into a single container.
 type Container struct {
 	v1alpha1Config *v1alpha1.Config
@@ -137,6 +145,19 @@ func (container *Container) PatchV1Alpha1(patcher func(*v1alpha1.Config) error) 
 
 	return PatchDocument(container, func(c *v1alpha1.Config) error {
 		return patcher(c)
+	})
+}
+
+// Has checks if the container has a document of the given kind.
+//
+// This method only works for new multi-doc config documents, and does not check for v1alpha1.Config.
+func (container *Container) Has(kind string) bool {
+	return slices.ContainsFunc(container.documents, func(d config.Document) bool {
+		if _, ok := d.(selector); ok {
+			return false
+		}
+
+		return d.Kind() == kind
 	})
 }
 

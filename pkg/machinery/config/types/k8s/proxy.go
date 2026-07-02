@@ -39,6 +39,7 @@ var (
 	_ config.K8sProxyConfig               = &KubeProxyConfigV1Alpha1{}
 	_ config.Validator                    = &KubeProxyConfigV1Alpha1{}
 	_ container.V1Alpha1ConflictValidator = &KubeProxyConfigV1Alpha1{}
+	_ container.ControlplaneOnlyConfig    = &KubeProxyConfigV1Alpha1{}
 )
 
 // KubeProxyConfigV1Alpha1 deploys Flannel CNI to the cluster.
@@ -232,3 +233,6 @@ func (s *KubeProxyConfigV1Alpha1) Config() map[string]any {
 func (s *KubeProxyConfigV1Alpha1) UseConfigFile() bool {
 	return true
 }
+
+// ControlplaneOnlyDocument implements container.ControlplaneOnlyConfig interface.
+func (s *KubeProxyConfigV1Alpha1) ControlplaneOnlyDocument() {}

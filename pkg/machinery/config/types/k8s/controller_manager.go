@@ -39,6 +39,7 @@ var (
 	_ config.K8sControllerManagerConfig   = &KubeControllerManagerConfigV1Alpha1{}
 	_ config.Validator                    = &KubeControllerManagerConfigV1Alpha1{}
 	_ container.V1Alpha1ConflictValidator = &KubeControllerManagerConfigV1Alpha1{}
+	_ container.ControlplaneOnlyConfig    = &KubeControllerManagerConfigV1Alpha1{}
 )
 
 // KubeControllerManagerConfigV1Alpha1 configures kube-controller-manager controlplane static pod.
@@ -196,3 +197,6 @@ func (s *KubeControllerManagerConfigV1Alpha1) Resources() config.Resources {
 func (s *KubeControllerManagerConfigV1Alpha1) ExtraVolumes() []config.VolumeMount {
 	return nil
 }
+
+// ControlplaneOnlyDocument implements container.ControlplaneOnlyConfig interface.
+func (s *KubeControllerManagerConfigV1Alpha1) ControlplaneOnlyDocument() {}
