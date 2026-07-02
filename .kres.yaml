@@ -99,6 +99,7 @@ spec:
     integration/qemu-csi-openebs: "Run QEMU CSI OpenEBS integration tests"
     integration/qemu-csi-longhorn: "Run QEMU CSI Longhorn integration tests"
     integration/qemu-csi-rook-ceph: "Run QEMU CSI Rook Ceph integration tests"
+    integration/qemu-csi-netapp: "Run QEMU CSI NetApp Trident integration tests"
     integration/qemu-default: "Run QEMU integration tests on default variant"
     integration/qemu-encrypted-vip: "Run QEMU integration tests with disk encryption and virtual IP"
     integration/qemu-enforcing: "Run QEMU integration tests on enforcing variant"
@@ -1601,6 +1602,85 @@ spec:
           artifactStep:
             type: upload
             artifactName: talos-logs-integration-qemu-csi-longhorn-${{ matrix.csi }}
+            disableExecutableListGeneration: true
+            artifactPath: /tmp/logs-*.tar.gz
+            additionalArtifacts:
+              - "/tmp/support-*.zip"
+    - name: integration-qemu-csi-netapp
+      buildxOptions:
+        enabled: true
+      sops: true
+      depends:
+        - default
+      runnerGroup: large
+      onWorkflowRun:
+        workflows: [artifacts-cron]
+        types: [completed]
+      triggerLabels:
+        - integration/qemu-csi
+        - integration/extensions
+        - integration/qemu-csi-netapp
+        - integration/release-gate
+      steps:
+        - name: download-artifacts
+          artifactStep:
+            type: download
+            artifactName: talos-artifacts
+            artifactPath: _out
+        - name: ci-temp-release-tag
+        - name: checkout extensions
+          checkoutStep:
+            repository: siderolabs/extensions
+            ref: main
+            path: _out/extensions
+        - name: set variables
+          nonMakeStep: true
+          command: cat _out/talos-metadata >> "$GITHUB_ENV"
+        - name: build extensions
+          command: iscsi-tools multipath-tools nfs-utils trident-iscsi-tools util-linux-tools extensions-metadata
+          arguments:
+            - -C
+            - _out/extensions
+          environment:
+            PLATFORM: linux/amd64
+            PUSH: true
+            REGISTRY: registry.dev.siderolabs.io
+        - name: installer extensions
+          command: installer-with-extensions
+          environment:
+            EXTENSIONS_FILTER_COMMAND: "grep -E '/iscsi-tools|multipath-tools|nfs-utils|trident-iscsi-tools|util-linux-tools'"
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: e2e-qemu-csi-netapp
+          command: e2e-qemu
+          withSudo: true
+          environment:
+            GITHUB_STEP_NAME: ${{ github.job}}-e2e-qemu-csi-netapp
+            SHORT_INTEGRATION_TEST: yes
+            QEMU_WORKERS: 3
+            QEMU_MEMORY_WORKERS: 10240
+            QEMU_CPUS_WORKERS: 8
+            QEMU_SYSTEM_DISK_SIZE: 20480
+            WITH_CONFIG_PATCH_CONTROLPLANE: "@hack/test/patches/netapp-cp.yaml"
+            WITH_CONFIG_PATCH_WORKER: "@_out/installer-extensions-patch.yaml:@hack/test/patches/netapp.yaml"
+            EXTRA_TEST_ARGS: -talos.csi=netapp
+            TRIDENT_ONTAP_MANAGEMENT_LIF: ${{ env.TRIDENT_ONTAP_MANAGEMENT_LIF }}
+            TRIDENT_ONTAP_SVM: svm0
+            TRIDENT_ONTAP_USERNAME: ${{ env.TRIDENT_ONTAP_USERNAME }}
+            TRIDENT_ONTAP_PASSWORD: ${{ env.TRIDENT_ONTAP_PASSWORD }}
+            IMAGE_REGISTRY: registry.dev.siderolabs.io
+        - name: save-fio-benchmark
+          artifactStep:
+            type: upload
+            artifactName: fio-integration-qemu-csi-netapp
+            disableExecutableListGeneration: true
+            artifactPath: /tmp/fio-*.json
+            retentionDays: "180"
+        - name: save-talos-logs
+          conditions:
+            - always
+          artifactStep:
+            type: upload
+            artifactName: talos-logs-integration-qemu-csi-netapp
             disableExecutableListGeneration: true
             artifactPath: /tmp/logs-*.tar.gz
             additionalArtifacts:

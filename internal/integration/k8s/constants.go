@@ -22,4 +22,7 @@ const (
 	// OpenEBSChartVersion is the version of the OpenEBS Helm chart to use.
 	// renovate: datasource=helm versioning=helm depName=openebs registryUrl=https://openebs.github.io/openebs
 	OpenEBSChartVersion = "4.5.1"
+	// TridentOperatorChartVersion is the version of the NetApp Trident Operator Helm chart to use.
+	// renovate: datasource=helm versioning=helm depName=trident-operator registryUrl=https://netapp.github.io/trident-helm-chart
+	TridentOperatorChartVersion = "100.2606.0"
 )
