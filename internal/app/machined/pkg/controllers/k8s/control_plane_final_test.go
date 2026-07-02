@@ -17,6 +17,7 @@ import (
 	k8sctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
+	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
 
 type ControlPlaneSchedulerFinalSuite struct {
@@ -547,6 +548,23 @@ type ControlPlaneAPIServerFinalSuite struct {
 	ctest.DefaultSuite
 }
 
+// setK8sRoot creates or updates the KubernetesRoot secret the APIServer final controller reads
+// to build the api-audiences / service-account-issuer flags.
+func setK8sRoot(suite *ControlPlaneAPIServerFinalSuite, spec secrets.KubernetesRootSpec) {
+	root := secrets.NewKubernetesRoot(secrets.KubernetesRootID)
+	*root.TypedSpec() = spec
+
+	if _, err := suite.State().Get(suite.Ctx(), root.Metadata()); err == nil {
+		ctest.UpdateWithConflicts(suite, root, func(r *secrets.KubernetesRoot) error {
+			*r.TypedSpec() = spec
+
+			return nil
+		})
+	} else {
+		suite.Create(root)
+	}
+}
+
 // nolint:gocyclo
 func (suite *ControlPlaneAPIServerFinalSuite) TestTransform() {
 	secretsDir := constants.KubernetesAPIServerSecretsDir
@@ -558,50 +576,83 @@ func (suite *ControlPlaneAPIServerFinalSuite) TestTransform() {
 
 	const image = "registry.k8s.io/kube-apiserver:v1.32.0"
 
+	// defaultAudiences / defaultIssuers are the values the KubernetesRoot secret carries in the
+	// common case (a single audience and a single issuer, both equal to the control plane endpoint).
+	defaultAudiences := []string{"https://localhost:6443"}
+	defaultIssuers := []string{"https://localhost:6443"}
+
+	// baseK8sRoot returns the KubernetesRoot secret spec that feeds the api-audiences /
+	// service-account-issuer flags. IssuerURL is the primary issuer; AcceptedIssuers (if any)
+	// are appended after it, and APIAudiences becomes the api-audiences list.
+	baseK8sRoot := func() secrets.KubernetesRootSpec {
+		return secrets.KubernetesRootSpec{
+			APIAudiences: defaultAudiences,
+			IssuerURL:    defaultIssuers[0],
+		}
+	}
+
 	// commonArgs are the args shared by every case, excluding the authentication-config /
 	// authorization-config / authorization-mode flags which differ per case. They are kept
-	// in the sorted order produced by argsbuilder.Args().
-	commonArgs := func() []string {
-		return []string{
+	// in the sorted order produced by argsbuilder.Args(). The api-audiences and
+	// service-account-issuer flags are repeated once per audience/issuer, matching how
+	// argsbuilder emits multi-valued args.
+	commonArgs := func(audiences, issuers []string) []string {
+		args := []string{ //nolint:prealloc
 			"/usr/local/bin/kube-apiserver",
 			"--admission-control-config-file=" + filepath.Join(configDir, "admission-control-config.yaml"),
 			"--allow-privileged=true",
-			"--api-audiences=https://localhost:6443",
+		}
+
+		for _, audience := range audiences {
+			args = append(args, "--api-audiences="+audience)
+		}
+
+		args = append(
+			args,
 			"--audit-log-maxage=30",
 			"--audit-log-maxbackup=10",
 			"--audit-log-maxsize=100",
-			"--audit-log-path=" + auditLogPath,
-			"--audit-policy-file=" + filepath.Join(configDir, "auditpolicy.yaml"),
+			"--audit-log-path="+auditLogPath,
+			"--audit-policy-file="+filepath.Join(configDir, "auditpolicy.yaml"),
 			// authentication-config / authorization-* slotted in here per-case
 			"--bind-address=0.0.0.0",
-			"--client-ca-file=" + filepath.Join(secretsDir, "ca.crt"),
+			"--client-ca-file="+filepath.Join(secretsDir, "ca.crt"),
 			"--enable-admission-plugins=NodeRestriction",
 			"--enable-bootstrap-token-auth=true",
-			"--encryption-provider-config=" + filepath.Join(secretsDir, "encryptionconfig.yaml"),
-			"--etcd-cafile=" + filepath.Join(secretsDir, "etcd-client-ca.crt"),
-			"--etcd-certfile=" + filepath.Join(secretsDir, "etcd-client.crt"),
-			"--etcd-keyfile=" + filepath.Join(secretsDir, "etcd-client.key"),
+			"--encryption-provider-config="+filepath.Join(secretsDir, "encryptionconfig.yaml"),
+			"--etcd-cafile="+filepath.Join(secretsDir, "etcd-client-ca.crt"),
+			"--etcd-certfile="+filepath.Join(secretsDir, "etcd-client.crt"),
+			"--etcd-keyfile="+filepath.Join(secretsDir, "etcd-client.key"),
 			"--etcd-servers=https://127.0.0.1:2379",
-			"--kubelet-client-certificate=" + filepath.Join(secretsDir, "apiserver-kubelet-client.crt"),
-			"--kubelet-client-key=" + filepath.Join(secretsDir, "apiserver-kubelet-client.key"),
+			"--kubelet-client-certificate="+filepath.Join(secretsDir, "apiserver-kubelet-client.crt"),
+			"--kubelet-client-key="+filepath.Join(secretsDir, "apiserver-kubelet-client.key"),
 			"--kubelet-preferred-address-types=InternalIP,ExternalIP,Hostname",
 			"--profiling=false",
-			"--proxy-client-cert-file=" + filepath.Join(secretsDir, "front-proxy-client.crt"),
-			"--proxy-client-key-file=" + filepath.Join(secretsDir, "front-proxy-client.key"),
+			"--proxy-client-cert-file="+filepath.Join(secretsDir, "front-proxy-client.crt"),
+			"--proxy-client-key-file="+filepath.Join(secretsDir, "front-proxy-client.key"),
 			"--requestheader-allowed-names=front-proxy-client",
-			"--requestheader-client-ca-file=" + filepath.Join(secretsDir, "aggregator-ca.crt"),
+			"--requestheader-client-ca-file="+filepath.Join(secretsDir, "aggregator-ca.crt"),
 			"--requestheader-extra-headers-prefix=X-Remote-Extra-",
 			"--requestheader-group-headers=X-Remote-Group",
 			"--requestheader-username-headers=X-Remote-User",
 			"--secure-port=6443",
-			"--service-account-issuer=https://localhost:6443",
-			"--service-account-key-file=" + filepath.Join(secretsDir, "service-account.pub"),
-			"--service-account-signing-key-file=" + filepath.Join(secretsDir, "service-account.key"),
-			"--service-cluster-ip-range=10.96.0.0/12",
-			"--tls-cert-file=" + filepath.Join(secretsDir, "apiserver.crt"),
-			"--tls-min-version=VersionTLS13",
-			"--tls-private-key-file=" + filepath.Join(secretsDir, "apiserver.key"),
+		)
+
+		for _, issuer := range issuers {
+			args = append(args, "--service-account-issuer="+issuer)
 		}
+
+		args = append(
+			args,
+			"--service-account-key-file="+filepath.Join(secretsDir, "service-account.pub"),
+			"--service-account-signing-key-file="+filepath.Join(secretsDir, "service-account.key"),
+			"--service-cluster-ip-range=10.96.0.0/12",
+			"--tls-cert-file="+filepath.Join(secretsDir, "apiserver.crt"),
+			"--tls-min-version=VersionTLS13",
+			"--tls-private-key-file="+filepath.Join(secretsDir, "apiserver.key"),
+		)
+
+		return args
 	}
 
 	baseSpec := func() k8s.APIServerConfigSpec {
@@ -615,12 +666,11 @@ func (suite *ControlPlaneAPIServerFinalSuite) TestTransform() {
 	}
 
 	// withAuthArgs inserts the per-case authentication/authorization flags into the sorted
-	// commonArgs at the right alphabetical positions (after --audit-policy-file).
-	withAuthArgs := func(authArgs ...string) []string {
-		args := commonArgs()
-		out := make([]string, 0, len(args)+len(authArgs))
+	// base args at the right alphabetical positions (after --audit-policy-file).
+	withAuthArgs := func(base []string, authArgs ...string) []string {
+		out := make([]string, 0, len(base)+len(authArgs))
 
-		for _, a := range args {
+		for _, a := range base {
 			if a == "--bind-address=0.0.0.0" {
 				out = append(out, authArgs...)
 			}
@@ -650,12 +700,14 @@ func (suite *ControlPlaneAPIServerFinalSuite) TestTransform() {
 
 	for _, tt := range []struct {
 		name     string
+		k8sRoot  secrets.KubernetesRootSpec
 		input    k8s.APIServerConfigSpec
 		expected k8s.APIServerConfigSpec
 	}{
 		{
 			// New path: structured authentication & authorization config files are used.
-			name: "new path: authentication-config and authorization-config",
+			name:    "new path: authentication-config and authorization-config",
+			k8sRoot: baseK8sRoot(),
 			input: func() k8s.APIServerConfigSpec {
 				s := baseSpec()
 				s.UseAuthenticationConfig = true
@@ -666,6 +718,7 @@ func (suite *ControlPlaneAPIServerFinalSuite) TestTransform() {
 				s := baseSpec()
 				s.UseAuthenticationConfig = true
 				s.Args = withAuthArgs(
+					commonArgs(defaultAudiences, defaultIssuers),
 					"--authentication-config="+authnConfigPath,
 					"--authorization-config="+authzConfigPath,
 				)
@@ -676,7 +729,8 @@ func (suite *ControlPlaneAPIServerFinalSuite) TestTransform() {
 		{
 			// Legacy path: neither authentication-config nor authorization-config is present;
 			// the user pins authorization-mode, so the controller falls back to --authorization-mode.
-			name: "legacy path: no authentication-config, authorization-mode set",
+			name:    "legacy path: no authentication-config, authorization-mode set",
+			k8sRoot: baseK8sRoot(),
 			input: func() k8s.APIServerConfigSpec {
 				s := baseSpec()
 				s.UseAuthenticationConfig = false
@@ -689,6 +743,7 @@ func (suite *ControlPlaneAPIServerFinalSuite) TestTransform() {
 			expected: func() k8s.APIServerConfigSpec {
 				s := baseSpec()
 				s.Args = withAnonymousAuth(withAuthArgs(
+					commonArgs(defaultAudiences, defaultIssuers),
 					"--authorization-mode=Node,RBAC,Webhook",
 				))
 
@@ -697,7 +752,8 @@ func (suite *ControlPlaneAPIServerFinalSuite) TestTransform() {
 		},
 		{
 			// Legacy path triggered via an authorization-webhook-* flag rather than authorization-mode.
-			name: "legacy path: authorization-webhook flag triggers authorization-mode",
+			name:    "legacy path: authorization-webhook flag triggers authorization-mode",
+			k8sRoot: baseK8sRoot(),
 			input: func() k8s.APIServerConfigSpec {
 				s := baseSpec()
 				s.UseAuthenticationConfig = false
@@ -710,6 +766,7 @@ func (suite *ControlPlaneAPIServerFinalSuite) TestTransform() {
 			expected: func() k8s.APIServerConfigSpec {
 				s := baseSpec()
 				args := withAuthArgs(
+					commonArgs(defaultAudiences, defaultIssuers),
 					"--authorization-mode=Node,RBAC",
 				)
 				// authorization-webhook-config-file sorts right after --authorization-mode.
@@ -730,7 +787,8 @@ func (suite *ControlPlaneAPIServerFinalSuite) TestTransform() {
 		},
 		{
 			// Pass-through fields, conditional advertise-address & cloud-provider, and additive extra args.
-			name: "pass-through fields, advertised address, cloud provider and extra args",
+			name:    "pass-through fields, advertised address, cloud provider and extra args",
+			k8sRoot: baseK8sRoot(),
 			input: func() k8s.APIServerConfigSpec {
 				s := baseSpec()
 				s.UseAuthenticationConfig = true
@@ -766,6 +824,7 @@ func (suite *ControlPlaneAPIServerFinalSuite) TestTransform() {
 				}
 
 				args := withAuthArgs(
+					commonArgs(defaultAudiences, defaultIssuers),
 					"--authentication-config="+authnConfigPath,
 					"--authorization-config="+authzConfigPath,
 				)
@@ -794,7 +853,8 @@ func (suite *ControlPlaneAPIServerFinalSuite) TestTransform() {
 		{
 			// audit-log-max* flags use the default (override) merge policy, so user-provided
 			// values replace the controller defaults.
-			name: "audit-log-max flags overridden via extra args",
+			name:    "audit-log-max flags overridden via extra args",
+			k8sRoot: baseK8sRoot(),
 			input: func() k8s.APIServerConfigSpec {
 				s := baseSpec()
 				s.UseAuthenticationConfig = true
@@ -811,6 +871,7 @@ func (suite *ControlPlaneAPIServerFinalSuite) TestTransform() {
 				s.UseAuthenticationConfig = true
 
 				args := withAuthArgs(
+					commonArgs(defaultAudiences, defaultIssuers),
 					"--authentication-config="+authnConfigPath,
 					"--authorization-config="+authzConfigPath,
 				)
@@ -832,8 +893,99 @@ func (suite *ControlPlaneAPIServerFinalSuite) TestTransform() {
 				return s
 			}(),
 		},
+		{
+			// Multiple accepted API audiences from the KubernetesRoot secret produce one
+			// --api-audiences flag per audience, in the order provided.
+			name: "multiple api audiences",
+			k8sRoot: secrets.KubernetesRootSpec{
+				APIAudiences: []string{"https://localhost:6443", "https://kubernetes.default.svc", "sts.amazonaws.com"},
+				IssuerURL:    "https://localhost:6443",
+			},
+			input: func() k8s.APIServerConfigSpec {
+				s := baseSpec()
+				s.UseAuthenticationConfig = true
+
+				return s
+			}(),
+			expected: func() k8s.APIServerConfigSpec {
+				s := baseSpec()
+				s.UseAuthenticationConfig = true
+				s.Args = withAuthArgs(
+					commonArgs(
+						[]string{"https://localhost:6443", "https://kubernetes.default.svc", "sts.amazonaws.com"},
+						defaultIssuers,
+					),
+					"--authentication-config="+authnConfigPath,
+					"--authorization-config="+authzConfigPath,
+				)
+
+				return s
+			}(),
+		},
+		{
+			// A primary IssuerURL plus additional AcceptedIssuers produce one
+			// --service-account-issuer flag each, with the primary issuer first.
+			name: "multiple service account issuers",
+			k8sRoot: secrets.KubernetesRootSpec{
+				APIAudiences:    defaultAudiences,
+				IssuerURL:       "https://localhost:6443",
+				AcceptedIssuers: []string{"https://old-issuer.example.com", "https://oidc.example.com"},
+			},
+			input: func() k8s.APIServerConfigSpec {
+				s := baseSpec()
+				s.UseAuthenticationConfig = true
+
+				return s
+			}(),
+			expected: func() k8s.APIServerConfigSpec {
+				s := baseSpec()
+				s.UseAuthenticationConfig = true
+				s.Args = withAuthArgs(
+					commonArgs(
+						defaultAudiences,
+						[]string{"https://localhost:6443", "https://old-issuer.example.com", "https://oidc.example.com"},
+					),
+					"--authentication-config="+authnConfigPath,
+					"--authorization-config="+authzConfigPath,
+				)
+
+				return s
+			}(),
+		},
+		{
+			// Multiple audiences and multiple issuers combined: both flags are repeated
+			// independently, each in the order carried by the KubernetesRoot secret.
+			name: "multiple audiences and issuers combined",
+			k8sRoot: secrets.KubernetesRootSpec{
+				APIAudiences:    []string{"https://localhost:6443", "sts.amazonaws.com"},
+				IssuerURL:       "https://issuer.example.com",
+				AcceptedIssuers: []string{"https://localhost:6443"},
+			},
+			input: func() k8s.APIServerConfigSpec {
+				s := baseSpec()
+				s.UseAuthenticationConfig = true
+
+				return s
+			}(),
+			expected: func() k8s.APIServerConfigSpec {
+				s := baseSpec()
+				s.UseAuthenticationConfig = true
+				s.Args = withAuthArgs(
+					commonArgs(
+						[]string{"https://localhost:6443", "sts.amazonaws.com"},
+						[]string{"https://issuer.example.com", "https://localhost:6443"},
+					),
+					"--authentication-config="+authnConfigPath,
+					"--authorization-config="+authzConfigPath,
+				)
+
+				return s
+			}(),
+		},
 	} {
 		suite.Run(tt.name, func() {
+			setK8sRoot(suite, tt.k8sRoot)
+
 			in := k8s.NewAPIServerConfig(k8s.APIServerConfigID)
 			*in.TypedSpec() = tt.input
 
@@ -864,6 +1016,11 @@ func (suite *ControlPlaneAPIServerFinalSuite) TestRejectsDeniedExtraArgs() {
 		"etcd-servers",
 	} {
 		suite.Run(arg, func() {
+			setK8sRoot(suite, secrets.KubernetesRootSpec{
+				APIAudiences: []string{"https://localhost:6443"},
+				IssuerURL:    "https://localhost:6443",
+			})
+
 			in := k8s.NewAPIServerConfig(k8s.APIServerConfigID)
 			*in.TypedSpec() = k8s.APIServerConfigSpec{
 				Image:                "registry.k8s.io/kube-apiserver:v1.32.0",

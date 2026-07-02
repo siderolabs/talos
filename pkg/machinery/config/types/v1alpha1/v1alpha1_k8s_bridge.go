@@ -5,6 +5,7 @@
 package v1alpha1
 
 import (
+	"net/url"
 	"slices"
 
 	"github.com/siderolabs/crypto/x509"
@@ -316,4 +317,63 @@ func (c *Config) K8sCoreDNSConfig() config.K8sCoreDNSConfig {
 	}
 
 	return c.ClusterConfig.CoreDNSConfig
+}
+
+// K8sServiceAccountConfig implements the config.K8sServiceAccountConfig interface.
+func (c *Config) K8sServiceAccountConfig() config.K8sServiceAccountConfig {
+	if c.ClusterConfig == nil || c.ClusterConfig.ClusterServiceAccount == nil {
+		return nil
+	}
+
+	return serviceAccountShim{
+		endpoint: c.ClusterConfig.Endpoint(),
+		key:      c.ClusterConfig.ClusterServiceAccount,
+	}
+}
+
+type serviceAccountShim struct {
+	endpoint *url.URL
+	key      *x509.PEMEncodedKey
+}
+
+// K8sServiceAccountConfigSignal implements the config.K8sServiceAccountConfig interface.
+func (s serviceAccountShim) K8sServiceAccountConfigSignal() {}
+
+// IssuingKey implements the config.K8sServiceAccountConfig interface.
+func (s serviceAccountShim) IssuingKey() *x509.PEMEncodedKey {
+	return s.key
+}
+
+// AcceptedKeys implements the config.K8sServiceAccountConfig interface.
+func (s serviceAccountShim) AcceptedKeys() []*x509.PEMEncodedKey {
+	issuingKey, err := s.IssuingKey().GetKey()
+	if err != nil {
+		// legacy config doesn't fully validate the key, and the actual failure
+		// was previously deferred to the controllers, so here return a broken
+		// config
+		//
+		// no actually working config can have a broken service account key
+		return nil
+	}
+
+	return []*x509.PEMEncodedKey{
+		{
+			Key: issuingKey.GetPublicKeyPEM(),
+		},
+	}
+}
+
+// IssuerURL implements the config.K8sServiceAccountConfig interface.
+func (s serviceAccountShim) IssuerURL() string {
+	return s.endpoint.String()
+}
+
+// AcceptedIssuers implements the config.K8sServiceAccountConfig interface.
+func (s serviceAccountShim) AcceptedIssuers() []string {
+	return nil
+}
+
+// APIAudiences implements the config.K8sServiceAccountConfig interface.
+func (s serviceAccountShim) APIAudiences() []string {
+	return []string{s.endpoint.String()}
 }

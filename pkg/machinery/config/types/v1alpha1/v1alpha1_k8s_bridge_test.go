@@ -6,9 +6,11 @@ package v1alpha1_test
 
 import (
 	"net/netip"
+	"net/url"
 	"testing"
 
 	"github.com/siderolabs/crypto/x509"
+	"github.com/siderolabs/gen/ensure"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -1038,6 +1040,146 @@ func TestKubeAPIServerCABridge(t *testing.T) {
 
 			assert.Equal(t, test.expectIssuingCA, apiServerCA.IssuingCA())
 			assert.Equal(t, test.expectAcceptedCAs, apiServerCA.AcceptedCAs())
+		})
+	}
+}
+
+func TestKubeServiceAccountBridge(t *testing.T) {
+	t.Parallel()
+
+	// the service account issuing key is only present on the controlplane.
+	sa, err := x509.NewSelfSignedCertificateAuthority()
+	require.NoError(t, err)
+
+	issuingKey, err := (&x509.PEMEncodedKey{Key: sa.KeyPEM}).GetKey()
+	require.NoError(t, err)
+
+	endpoint := ensure.Value(url.Parse("https://cluster-endpoint:6443"))
+
+	for _, test := range []struct {
+		name string
+
+		cfg func(*testing.T) config.Config
+
+		expectNil          bool
+		expectIssuerURL    string
+		expectIssuingKey   *x509.PEMEncodedKey
+		expectAcceptedKeys []*x509.PEMEncodedKey
+	}{
+		{
+			name: "no cluster config",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{})
+			},
+
+			expectNil: true,
+		},
+		{
+			name: "cluster config without service account",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					ClusterConfig: &v1alpha1.ClusterConfig{},
+				})
+			},
+
+			expectNil: true,
+		},
+		{
+			name: "v1alpha1 with service account",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					ClusterConfig: &v1alpha1.ClusterConfig{
+						ControlPlane: &v1alpha1.ControlPlaneConfig{
+							Endpoint: &v1alpha1.Endpoint{URL: endpoint},
+						},
+						ClusterServiceAccount: &x509.PEMEncodedKey{
+							Key: sa.KeyPEM,
+						},
+					},
+				})
+			},
+
+			expectIssuerURL:  "https://cluster-endpoint:6443",
+			expectIssuingKey: &x509.PEMEncodedKey{Key: sa.KeyPEM},
+			// the accepted keys are derived by exposing the public key of the issuing key.
+			expectAcceptedKeys: []*x509.PEMEncodedKey{
+				{Key: issuingKey.GetPublicKeyPEM()},
+			},
+		},
+		{
+			// the new-style multi-doc config, set up to be equivalent to the legacy config above:
+			// the same issuing key and endpoint, with no additional accepted keys/issuers/audiences.
+			name: "new style",
+
+			cfg: func(t *testing.T) config.Config {
+				serviceAccount := k8s.NewKubeServiceAccountConfigV1Alpha1()
+				serviceAccount.ServiceIssuer = k8s.IssuerServiceAccountConfig{
+					PrivateKey: string(sa.KeyPEM),
+					IssuerURL:  meta.URL{URL: endpoint},
+				}
+
+				c, err := container.New(serviceAccount)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectIssuerURL:  "https://cluster-endpoint:6443",
+			expectIssuingKey: &x509.PEMEncodedKey{Key: sa.KeyPEM},
+			expectAcceptedKeys: []*x509.PEMEncodedKey{
+				{Key: issuingKey.GetPublicKeyPEM()},
+			},
+		},
+		{
+			// a broken key is tolerated for backwards compatibility: the actual failure was
+			// previously deferred to the controllers, so the accepted keys come back empty.
+			name: "v1alpha1 with broken service account key",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					ClusterConfig: &v1alpha1.ClusterConfig{
+						ControlPlane: &v1alpha1.ControlPlaneConfig{
+							Endpoint: &v1alpha1.Endpoint{URL: endpoint},
+						},
+						ClusterServiceAccount: &x509.PEMEncodedKey{
+							Key: []byte("not a valid key"),
+						},
+					},
+				})
+			},
+
+			expectIssuerURL:    "https://cluster-endpoint:6443",
+			expectIssuingKey:   &x509.PEMEncodedKey{Key: []byte("not a valid key")},
+			expectAcceptedKeys: nil,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := test.cfg(t)
+
+			serviceAccount := cfg.K8sServiceAccountConfig()
+
+			if test.expectNil {
+				assert.Nil(t, serviceAccount)
+
+				return
+			}
+
+			require.NotNil(t, serviceAccount)
+
+			assert.Equal(t, test.expectIssuerURL, serviceAccount.IssuerURL())
+			assert.Equal(t, test.expectIssuingKey, serviceAccount.IssuingKey())
+			assert.Equal(t, test.expectAcceptedKeys, serviceAccount.AcceptedKeys())
+
+			// the legacy config doesn't support additional accepted issuers.
+			assert.Nil(t, serviceAccount.AcceptedIssuers())
+
+			// the API audiences default to the issuer URL.
+			assert.Equal(t, []string{test.expectIssuerURL}, serviceAccount.APIAudiences())
 		})
 	}
 }

@@ -146,3 +146,13 @@ type K8sCoreDNSConfig interface {
 	Enabled() bool
 	Image() string
 }
+
+// K8sServiceAccountConfig defines the configuration options for Kubernetes service accounts.
+type K8sServiceAccountConfig interface {
+	K8sServiceAccountConfigSignal()
+	IssuingKey() *x509.PEMEncodedKey
+	AcceptedKeys() []*x509.PEMEncodedKey
+	IssuerURL() string
+	AcceptedIssuers() []string
+	APIAudiences() []string
+}

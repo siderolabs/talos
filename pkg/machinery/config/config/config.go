@@ -54,6 +54,7 @@ type Config interface { //nolint:interfacebloat
 	K8sNetworkConfig() K8sNetworkConfig
 	K8sFlannelCNIConfig() K8sFlannelCNIConfig
 	K8sCoreDNSConfig() K8sCoreDNSConfig
+	K8sServiceAccountConfig() K8sServiceAccountConfig
 
 	// - block devices/storage:
 	Volumes() VolumesConfig

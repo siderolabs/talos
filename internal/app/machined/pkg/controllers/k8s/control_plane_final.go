@@ -14,8 +14,11 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/controller/generic/transform"
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/optional"
+	"github.com/siderolabs/gen/xerrors"
 	"github.com/siderolabs/go-kubernetes/kubernetes/compatibility"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -25,6 +28,7 @@ import (
 	"github.com/siderolabs/talos/pkg/argsbuilder"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
+	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
 
 // ControlPlaneAPIServerFinalController manages final k8s.APIServerConfig.
@@ -43,6 +47,15 @@ func NewControlPlaneAPIServerFinalController() *ControlPlaneAPIServerFinalContro
 				return optional.Some(k8s.NewAPIServerConfig(k8s.FinalAPIServerConfigID))
 			},
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, in *k8s.APIServerConfig, out *k8s.APIServerConfig) error {
+				k8sRoot, err := safe.ReaderGetByID[*secrets.KubernetesRoot](ctx, r, secrets.KubernetesRootID)
+				if err != nil {
+					if state.IsNotFoundError(err) {
+						return xerrors.NewTaggedf[transform.SkipReconcileTag]("waiting for kubernetes root config")
+					}
+
+					return fmt.Errorf("failed to get kubernetes root secret: %w", err)
+				}
+
 				// clear the spec
 				*out.TypedSpec() = k8s.APIServerConfigSpec{}
 
@@ -70,7 +83,7 @@ func NewControlPlaneAPIServerFinalController() *ControlPlaneAPIServerFinalContro
 				builder := argsbuilder.Args{
 					"admission-control-config-file":      {filepath.Join(constants.KubernetesAPIServerConfigDir, "admission-control-config.yaml")},
 					"allow-privileged":                   {"true"},
-					"api-audiences":                      {cfg.ControlPlaneEndpoint},
+					"api-audiences":                      k8sRoot.TypedSpec().APIAudiences,
 					"bind-address":                       {"0.0.0.0"},
 					"client-ca-file":                     {filepath.Join(constants.KubernetesAPIServerSecretsDir, "ca.crt")},
 					"enable-admission-plugins":           {strings.Join(enabledAdmissionPlugins, ",")},
@@ -97,13 +110,18 @@ func NewControlPlaneAPIServerFinalController() *ControlPlaneAPIServerFinalContro
 					"kubelet-client-certificate":         {filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver-kubelet-client.crt")},
 					"kubelet-client-key":                 {filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver-kubelet-client.key")},
 					"secure-port":                        {strconv.FormatInt(int64(cfg.LocalPort), 10)},
-					"service-account-issuer":             {cfg.ControlPlaneEndpoint},
-					"service-account-key-file":           {filepath.Join(constants.KubernetesAPIServerSecretsDir, "service-account.pub")},
-					"service-account-signing-key-file":   {filepath.Join(constants.KubernetesAPIServerSecretsDir, "service-account.key")},
-					"service-cluster-ip-range":           {strings.Join(cfg.ServiceCIDRs, ",")},
-					"tls-cert-file":                      {filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver.crt")},
-					"tls-private-key-file":               {filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver.key")},
-					"kubelet-preferred-address-types":    {"InternalIP,ExternalIP,Hostname"},
+					"service-account-issuer": slices.Concat(
+						// first, the issuer URL
+						[]string{k8sRoot.TypedSpec().IssuerURL},
+						// then, other accepted issuer URLs
+						k8sRoot.TypedSpec().AcceptedIssuers,
+					),
+					"service-account-key-file":         {filepath.Join(constants.KubernetesAPIServerSecretsDir, "service-account.pub")},
+					"service-account-signing-key-file": {filepath.Join(constants.KubernetesAPIServerSecretsDir, "service-account.key")},
+					"service-cluster-ip-range":         {strings.Join(cfg.ServiceCIDRs, ",")},
+					"tls-cert-file":                    {filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver.crt")},
+					"tls-private-key-file":             {filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver.key")},
+					"kubelet-preferred-address-types":  {"InternalIP,ExternalIP,Hostname"},
 				}
 
 				if cfg.AdvertisedAddress != "" {
@@ -164,6 +182,14 @@ func NewControlPlaneAPIServerFinalController() *ControlPlaneAPIServerFinalContro
 			},
 		},
 		transform.WithOutputKind(controller.OutputShared),
+		transform.WithExtraInputs(
+			controller.Input{
+				Namespace: secrets.NamespaceName,
+				Type:      secrets.KubernetesRootType,
+				ID:        optional.Some(secrets.KubernetesRootID),
+				Kind:      controller.InputWeak,
+			},
+		),
 	)
 }
 

@@ -178,7 +178,7 @@ func NewBundleFromConfig(clock Clock, c config.Config) (*Bundle, error) {
 	certs := &Certs{
 		K8s:               c.K8sAPIServerCAConfig().IssuingCA(),
 		K8sAggregator:     c.K8sAggregatorCAConfig().IssuingCA(),
-		K8sServiceAccount: c.Cluster().ServiceAccount(),
+		K8sServiceAccount: c.K8sServiceAccountConfig().IssuingKey(),
 		Etcd:              c.Cluster().Etcd().CA(),
 		OS:                c.Machine().Security().IssuingCA(),
 	}

@@ -10929,7 +10929,7 @@ KubernetesRootSpec describes root Kubernetes secrets.
 | cert_sa_ns | [string](#string) | repeated |  |
 | dns_domain | [string](#string) |  |  |
 | issuing_ca | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
-| service_account | [common.PEMEncodedKey](#common.PEMEncodedKey) |  |  |
+| service_account | [common.PEMEncodedKey](#common.PEMEncodedKey) |  | ServiceAccount is the issuing service account key. |
 | aggregator_ca | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
 | aescbc_encryption_secret | [string](#string) |  |  |
 | bootstrap_token_id | [string](#string) |  |  |
@@ -10939,6 +10939,10 @@ KubernetesRootSpec describes root Kubernetes secrets.
 | accepted_c_as | [common.PEMEncodedCertificate](#common.PEMEncodedCertificate) | repeated |  |
 | etcd_encryption_config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
 | accepted_aggregator_c_as | [common.PEMEncodedCertificate](#common.PEMEncodedCertificate) | repeated |  |
+| service_account_accepted_keys | [common.PEMEncodedKey](#common.PEMEncodedKey) | repeated | ServiceAccountAcceptedKeys are the accepted service account keys.<br><br>It already contains the public version of the issuing key. |
+| issuer_url | [string](#string) |  | IssuerURL is the URL of the service account issuer. |
+| accepted_issuers | [string](#string) | repeated | AcceptedIssuers are the accepted service account issuers.<br><br>It doesn't contain the issuerURL. |
+| api_audiences | [string](#string) | repeated | APIAudiences are the accepted service account audiences. |
 
 
 

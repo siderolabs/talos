@@ -340,6 +340,8 @@ func (suite *VolumesSuite) TestVolumesStatus() {
 }
 
 // TestUserVolumesPartition performs a series of operations on user volumes: creating, destroying, verifying, etc.
+//
+//nolint:gocyclo
 func (suite *VolumesSuite) TestUserVolumesPartition() {
 	if testing.Short() {
 		suite.T().Skip("skipping test in short mode.")
@@ -444,7 +446,20 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 	// the volumes have a bit different trim settings, let's verify that the trim schedule is updated accordingly
 	//
 	// the third volume has trim disabled, so it should not have a schedule at all
-	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, userVolumeIDs[:1],
+	//
+	// first, verify if default trim interval is enabled
+	testCfg, err := suite.ReadConfigFromNode(ctx)
+	suite.Require().NoError(err)
+
+	defaultTrimScheduleEnabled := testCfg.FilesystemTrimConfig() != nil
+
+	userVolumesWithTrimSchedule := userVolumeIDs[:1]
+	if !defaultTrimScheduleEnabled {
+		// if the default schedule is not enabled, the volume 0 will not get a trim schedule
+		userVolumesWithTrimSchedule = userVolumeIDs[1:2]
+	}
+
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, userVolumesWithTrimSchedule,
 		func(vs *block.VolumeTrimSchedule, asrt *assert.Assertions) {
 			expectedInterval := constants.DefaultFilesystemTrimInterval
 
@@ -1783,6 +1798,15 @@ func (suite *VolumesSuite) TestFSTrimDefaultSchedule() {
 	// to Talos 1.14 machinery.
 	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
 		suite.T().Skip("skipping test for non-qemu provisioner")
+	}
+
+	// confirm the defaults by reading the config from a single node
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
+	cfg, err := suite.ReadConfigFromNode(client.WithNode(suite.ctx, node))
+	suite.Require().NoError(err)
+
+	if cfg.FilesystemTrimConfig() == nil {
+		suite.T().Skipf("skipping test, filesystem trimming is not enabled by default")
 	}
 
 	for _, node := range suite.DiscoverNodeInternalIPs(suite.ctx) {

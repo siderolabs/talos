@@ -7,6 +7,7 @@ package generate
 import (
 	"fmt"
 	"net/netip"
+	"net/url"
 	"slices"
 
 	"github.com/siderolabs/gen/xslices"
@@ -17,7 +18,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
-func (in *Input) generateKubernetesControlplaneConfigs() []config.Document {
+func (in *Input) generateKubernetesControlplaneConfigs(controlplaneURL *url.URL) []config.Document {
 	if !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
 		return nil
 	}
@@ -59,6 +60,12 @@ func (in *Input) generateKubernetesControlplaneConfigs() []config.Document {
 		},
 	}
 
+	serviceAccountConfig := k8s.NewKubeServiceAccountConfigV1Alpha1()
+	serviceAccountConfig.ServiceIssuer = k8s.IssuerServiceAccountConfig{
+		PrivateKey: string(in.Options.SecretsBundle.Certs.K8sServiceAccount.Key),
+		IssuerURL:  meta.URL{URL: controlplaneURL},
+	}
+
 	apiServerConfig := k8s.NewKubeAPIServerConfigV1Alpha1()
 	apiServerConfig.PodImage = fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, in.KubernetesVersion)
 
@@ -88,6 +95,7 @@ func (in *Input) generateKubernetesControlplaneConfigs() []config.Document {
 		),
 		[]config.Document{
 			etcdEncryptionConfig,
+			serviceAccountConfig,
 			apiServerConfig,
 			controllerManagerConfig,
 			schedulerConfig,

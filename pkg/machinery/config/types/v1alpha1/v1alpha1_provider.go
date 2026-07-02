@@ -278,37 +278,9 @@ func (m *MachineConfig) Network() config.MachineNetwork {
 	return m.MachineNetwork
 }
 
-// Controlplane implements the config.Provider interface.
-func (m *MachineConfig) Controlplane() config.MachineControlPlane {
-	if m.MachineControlPlane == nil {
-		return &MachineControlPlaneConfig{}
-	}
-
-	return m.MachineControlPlane
-}
-
 // Pods implements the config.Provider interface.
 func (m *MachineConfig) Pods() []map[string]any {
 	return xslices.Map(m.MachinePods, func(u meta.Unstructured) map[string]any { return u.Object })
-}
-
-// ControllerManager implements the config.Provider interface.
-func (m *MachineControlPlaneConfig) ControllerManager() config.MachineControllerManager {
-	if m.MachineControllerManager == nil {
-		return &MachineControllerManagerConfig{}
-	}
-
-	return m.MachineControllerManager
-}
-
-// Disabled implements the config.Provider interface.
-func (m *MachineControllerManagerConfig) Disabled() bool {
-	return pointer.SafeDeref(m.MachineControllerManagerDisabled)
-}
-
-// Disabled implements the config.Provider interface.
-func (m *MachineSchedulerConfig) Disabled() bool {
-	return pointer.SafeDeref(m.MachineSchedulerDisabled)
 }
 
 // Kubelet implements the config.Provider interface.

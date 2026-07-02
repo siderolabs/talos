@@ -273,6 +273,14 @@ case "${WITH_USER_DISK:-false}" in
     ;;
 esac
 
+case "${WITH_TALOS_VERSION:-none}" in
+  none)
+    ;;
+  *)
+    QEMU_FLAGS+=("--talos-version=${WITH_TALOS_VERSION}")
+    ;;
+esac
+
 case "${WITH_ENFORCING:-false}" in
   false)
     ;;

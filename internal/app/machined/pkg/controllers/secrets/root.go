@@ -97,6 +97,9 @@ func NewRootKubernetesController() *RootKubernetesController {
 				func(cfg *config.MachineConfig) bool {
 					return cfg.Config().K8sAggregatorCAConfig() != nil
 				},
+				func(cfg *config.MachineConfig) bool {
+					return cfg.Config().K8sServiceAccountConfig() != nil
+				},
 			),
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, cfg *config.MachineConfig, res *secrets.KubernetesRoot) error {
 				cfgProvider := cfg.Config()
@@ -142,7 +145,11 @@ func NewRootKubernetesController() *RootKubernetesController {
 					return errors.New("missing cluster.CA secret")
 				}
 
-				k8sSecrets.ServiceAccount = cfgProvider.Cluster().ServiceAccount()
+				k8sSecrets.ServiceAccount = cfgProvider.K8sServiceAccountConfig().IssuingKey()
+				k8sSecrets.ServiceAccountAcceptedKeys = cfgProvider.K8sServiceAccountConfig().AcceptedKeys()
+				k8sSecrets.IssuerURL = cfgProvider.K8sServiceAccountConfig().IssuerURL()
+				k8sSecrets.AcceptedIssuers = cfgProvider.K8sServiceAccountConfig().AcceptedIssuers()
+				k8sSecrets.APIAudiences = cfgProvider.K8sServiceAccountConfig().APIAudiences()
 
 				k8sSecrets.AESCBCEncryptionSecret = cfgProvider.Cluster().AESCBCEncryptionSecret()
 				k8sSecrets.SecretboxEncryptionSecret = cfgProvider.Cluster().SecretboxEncryptionSecret()

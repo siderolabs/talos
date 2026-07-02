@@ -56,12 +56,6 @@ func pemEncodedCertificateExample() *x509.PEMEncodedCertificateAndKey {
 	}
 }
 
-func pemEncodedKeyExample() *x509.PEMEncodedKey {
-	return &x509.PEMEncodedKey{
-		Key: []byte("--- EXAMPLE KEY ---"),
-	}
-}
-
 func machineKubeletExample() *KubeletConfig {
 	return &KubeletConfig{
 		KubeletImage: (&KubeletConfig{}).Image(),

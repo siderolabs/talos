@@ -30,7 +30,6 @@ type MachineConfig interface {
 	Env() Env
 	Files() ([]File, error)
 	Type() machine.Type
-	Controlplane() MachineControlPlane
 	Pods() []map[string]any
 	Kubelet() Kubelet
 	Sysctls() map[string]string
@@ -111,20 +110,6 @@ type Security interface {
 	AcceptedCAs() []*x509.PEMEncodedCertificate
 	Token() string
 	CertSANs() []string
-}
-
-// MachineControlPlane defines the requirements for a config that pertains to Controlplane
-// related options.
-type MachineControlPlane interface {
-	ControllerManager() MachineControllerManager
-}
-
-// MachineControllerManager defines the requirements for a config that pertains to ControllerManager
-// related options.
-//
-//nolint:iface
-type MachineControllerManager interface {
-	Disabled() bool
 }
 
 // MachineNetwork defines the requirements for a config that pertains to network

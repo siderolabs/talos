@@ -161,11 +161,6 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 		k8sCerts := certsRes.TypedSpec()
 		etcdEncryption := etcdEncryptionConfig.TypedSpec()
 
-		serviceAccountKey, err := rootK8sSecrets.ServiceAccount.GetKey()
-		if err != nil {
-			return fmt.Errorf("error parsing service account key: %w", err)
-		}
-
 		type secret struct {
 			getter       func() *x509.PEMEncodedCertificateAndKey
 			certFilename string
@@ -223,8 +218,8 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 					{
 						getter: func() *x509.PEMEncodedCertificateAndKey {
 							return &x509.PEMEncodedCertificateAndKey{
-								Crt: serviceAccountKey.GetPublicKeyPEM(),
-								Key: serviceAccountKey.GetPrivateKeyPEM(),
+								Crt: bytes.Join(xslices.Map(rootK8sSecrets.ServiceAccountAcceptedKeys, func(ca *x509.PEMEncodedKey) []byte { return ca.Key }), nil),
+								Key: rootK8sSecrets.ServiceAccount.Key,
 							}
 						},
 						certFilename: "service-account.pub",
@@ -268,8 +263,7 @@ func (ctrl *RenderSecretsStaticPodController) Run(ctx context.Context, r control
 					{
 						getter: func() *x509.PEMEncodedCertificateAndKey {
 							return &x509.PEMEncodedCertificateAndKey{
-								Crt: serviceAccountKey.GetPublicKeyPEM(),
-								Key: serviceAccountKey.GetPrivateKeyPEM(),
+								Key: rootK8sSecrets.ServiceAccount.Key,
 							}
 						},
 						keyFilename: "service-account.key",

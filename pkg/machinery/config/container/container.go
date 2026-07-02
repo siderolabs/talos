@@ -770,6 +770,20 @@ func (container *Container) K8sCoreDNSConfig() config.K8sCoreDNSConfig {
 	return nil
 }
 
+// K8sServiceAccountConfig implements config.Config interface.
+func (container *Container) K8sServiceAccountConfig() config.K8sServiceAccountConfig {
+	matching := findMatchingDocs[config.K8sServiceAccountConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sServiceAccountConfig()
+	}
+
+	return nil
+}
+
 // OOMConfig implements config.Config interface.
 func (container *Container) OOMConfig() config.OOMConfig {
 	matching := findMatchingDocs[config.OOMConfig](container.documents)

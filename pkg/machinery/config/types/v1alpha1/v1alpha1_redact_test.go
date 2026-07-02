@@ -51,7 +51,7 @@ func TestRedactSecrets(t *testing.T) {
 			require.Empty(t, config.Cluster().AESCBCEncryptionSecret())
 
 			require.NotEmpty(t, config.Cluster().Etcd().CA().Key)
-			require.NotEmpty(t, config.Cluster().ServiceAccount().Key)
+			require.NotEmpty(t, config.K8sServiceAccountConfig().IssuingKey().Key)
 
 			if !versionContract.MultidocKubernetesConfigSupported() {
 				require.NotEmpty(t, config.Cluster().SecretboxEncryptionSecret())
@@ -72,7 +72,7 @@ func TestRedactSecrets(t *testing.T) {
 			require.Equal(t, "", redacted.Cluster().AESCBCEncryptionSecret())
 			require.Equal(t, replacement, string(redacted.K8sAPIServerCAConfig().IssuingCA().Key))
 			require.Equal(t, replacement, string(redacted.Cluster().Etcd().CA().Key))
-			require.Equal(t, replacement, string(redacted.Cluster().ServiceAccount().Key))
+			require.Equal(t, replacement, string(redacted.K8sServiceAccountConfig().IssuingKey().Key))
 
 			if versionContract.MultidocKubernetesConfigSupported() {
 				require.Empty(t, redacted.Cluster().SecretboxEncryptionSecret())

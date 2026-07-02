@@ -22,6 +22,7 @@ import (
 	"github.com/siderolabs/talos/pkg/cluster/kubernetes"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	k8sconfig "github.com/siderolabs/talos/pkg/machinery/config/types/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 	"github.com/siderolabs/talos/pkg/provision"
 	"github.com/siderolabs/talos/pkg/provision/access"
@@ -75,6 +76,10 @@ func (suite *ManifestsSuite) TestSync() {
 	// some tests creates cluster without kube-proxy, skip in this case
 	if !config.K8sProxyConfig().Enabled() {
 		suite.T().Skip("skip when kube-proxy is disabled")
+	}
+
+	if !config.Has(k8sconfig.KubeProxyConfig) {
+		suite.T().Skip("skip when kube-proxy multi-doc config is not present")
 	}
 
 	clusterAccess := access.NewAdapter(suite.Cluster, provision.WithTalosClient(suite.Client))

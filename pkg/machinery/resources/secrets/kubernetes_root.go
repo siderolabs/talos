@@ -39,9 +39,23 @@ type KubernetesRootSpec struct {
 
 	IssuingCA             *x509.PEMEncodedCertificateAndKey `yaml:"issuingCA" protobuf:"7"`
 	AcceptedCAs           []*x509.PEMEncodedCertificate     `yaml:"acceptedCAs" protobuf:"15"`
-	ServiceAccount        *x509.PEMEncodedKey               `yaml:"serviceAccount" protobuf:"8"`
 	AggregatorCA          *x509.PEMEncodedCertificateAndKey `yaml:"aggregatorCA" protobuf:"9"`
 	AcceptedAggregatorCAs []*x509.PEMEncodedCertificate     `yaml:"acceptedAggregatorCAs" protobuf:"17"`
+
+	// ServiceAccount is the issuing service account key.
+	ServiceAccount *x509.PEMEncodedKey `yaml:"serviceAccount" protobuf:"8"`
+	// ServiceAccountAcceptedKeys are the accepted service account keys.
+	//
+	// It already contains the public version of the issuing key.
+	ServiceAccountAcceptedKeys []*x509.PEMEncodedKey `yaml:"serviceAccountAcceptedKeys" protobuf:"18"`
+	// IssuerURL is the URL of the service account issuer.
+	IssuerURL string `yaml:"issuerURL" protobuf:"19"`
+	// AcceptedIssuers are the accepted service account issuers.
+	//
+	// It doesn't contain the issuerURL.
+	AcceptedIssuers []string `yaml:"acceptedIssuers" protobuf:"20"`
+	// APIAudiences are the accepted service account audiences.
+	APIAudiences []string `yaml:"apiAudiences" protobuf:"21"`
 
 	AESCBCEncryptionSecret string `yaml:"aesCBCEncryptionSecret" protobuf:"10"`
 

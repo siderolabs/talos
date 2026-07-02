@@ -19,7 +19,6 @@ type ClusterConfig interface {
 	Name() string
 	Endpoint() *url.URL
 	Token() Token
-	ServiceAccount() *x509.PEMEncodedKey
 	AESCBCEncryptionSecret() string
 	SecretboxEncryptionSecret() string
 	Etcd() Etcd

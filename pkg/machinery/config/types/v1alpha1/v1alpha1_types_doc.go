@@ -294,13 +294,7 @@ func (ClusterConfig) Doc() *encoder.Doc {
 			{},
 			{},
 			{},
-			{
-				Name:        "serviceAccount",
-				Type:        "PEMEncodedKey",
-				Note:        "",
-				Description: "The base64 encoded private key for service account token generation.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The base64 encoded private key for service account token generation." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{},
 			{},
 			{},
@@ -370,7 +364,6 @@ func (ClusterConfig) Doc() *encoder.Doc {
 
 	doc.Fields[2].AddExample("Setting controlplane endpoint address to 1.2.3.4 and port to 443 example.", clusterControlPlaneExample())
 	doc.Fields[5].AddExample("Bootstrap token example (do not use in production!).", "wlzjyw.bei2zfylhs2by0wd")
-	doc.Fields[11].AddExample("AggregatorCA example.", pemEncodedKeyExample())
 	doc.Fields[17].AddExample("", clusterEtcdExample())
 	doc.Fields[19].AddExample("", clusterExternalCloudProviderConfigExample())
 	doc.Fields[20].AddExample("", []string{

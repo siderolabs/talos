@@ -352,18 +352,9 @@ type ClusterConfig struct {
 	//
 	// Deprecated: Use `KubeAPIServerAggregatorCAConfig` instead.
 	ClusterAggregatorCA *x509.PEMEncodedCertificateAndKey `yaml:"aggregatorCA,omitempty"`
-	//   description: |
-	//     The base64 encoded private key for service account token generation.
-	//   examples:
-	//     - name: AggregatorCA example.
-	//       value: pemEncodedKeyExample()
-	//   schema:
-	//     type: object
-	//     additionalProperties: false
-	//     properties:
-	//       key:
-	//         type: string
-	//         additionalProperties: false
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeServiceAccountConfig` instead.
 	ClusterServiceAccount *x509.PEMEncodedKey `yaml:"serviceAccount,omitempty"`
 	// docgen:nodoc
 	//

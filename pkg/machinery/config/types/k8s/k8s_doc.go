@@ -666,6 +666,109 @@ func (KubeSchedulerConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (KubeServiceAccountConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeServiceAccountConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeServiceAccountConfig configures Kubernetes service accounts." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeServiceAccountConfig configures Kubernetes service accounts.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "issuer",
+				Type:        "IssuerServiceAccountConfig",
+				Note:        "",
+				Description: "The service account issuer configuration.\n\nThis configures how the service accounts are issued in Kubernetes.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The service account issuer configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "accepted",
+				Type:        "AcceptedServiceAccountConfig",
+				Note:        "",
+				Description: "The additional service accounts which are accepted by the Kubernetes API server.\n\nThis might be used for service account rotation, or for accepting service accounts from other clusters,\nor for accepting service accounts from other issuers.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The additional service accounts which are accepted by the Kubernetes API server." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeServiceAccountConfigV1Alpha1())
+
+	return doc
+}
+
+func (IssuerServiceAccountConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "IssuerServiceAccountConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "IssuerServiceAccountConfig configures the service account issuer." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "IssuerServiceAccountConfig configures the service account issuer.\n",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "KubeServiceAccountConfigV1Alpha1",
+				FieldName: "issuer",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "privateKey",
+				Type:        "string",
+				Note:        "",
+				Description: "The key which is used to sign the service account tokens.\n\nThis key is used to sign the service account tokens, and it is used by the Kubernetes API server to verify the service account tokens.\nThe key must be a valid PEM encoded RSA or ECDSA private key.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The key which is used to sign the service account tokens." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "issuerURL",
+				Type:        "URL",
+				Note:        "",
+				Description: "The issuer URL which is used to sign the service account tokens.\n\nThis URL is used to sign the service account tokens, and it is used by the Kubernetes API server to verify the service account tokens.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The issuer URL which is used to sign the service account tokens." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (AcceptedServiceAccountConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "AcceptedServiceAccountConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "AcceptedServiceAccountConfig configures the accepted service accounts." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "AcceptedServiceAccountConfig configures the accepted service accounts.\n",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "KubeServiceAccountConfigV1Alpha1",
+				FieldName: "accepted",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "publicKeys",
+				Type:        "[]string",
+				Note:        "",
+				Description: "The list of public keys which are used to verify the service account tokens.\n\nThese keys are used by the Kubernetes API server to verify the service account tokens.\nThe keys must be valid PEM encoded RSA or ECDSA public keys.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The list of public keys which are used to verify the service account tokens." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "issuers",
+				Type:        "[]URL",
+				Note:        "",
+				Description: "The additional service account issuers which are accepted by the Kubernetes API server.\n\nThis might be used for service account rotation, or for accepting service accounts from other clusters,\nor for accepting service accounts from other issuers.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The additional service account issuers which are accepted by the Kubernetes API server." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "audiences",
+				Type:        "[]string",
+				Note:        "",
+				Description: "The list of API audiences for which the service account tokens are accepted by the Kubernetes API server.\n\nIf this field is not set, the default is to set to the issuer URL of the service account issuer.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The list of API audiences for which the service account tokens are accepted by the Kubernetes API server." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file k8s_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -687,6 +790,9 @@ func GetFileDoc() *encoder.FileDoc {
 			KubeNetworkConfigV1Alpha1{}.Doc(),
 			KubeProxyConfigV1Alpha1{}.Doc(),
 			KubeSchedulerConfigV1Alpha1{}.Doc(),
+			KubeServiceAccountConfigV1Alpha1{}.Doc(),
+			IssuerServiceAccountConfig{}.Doc(),
+			AcceptedServiceAccountConfig{}.Doc(),
 		},
 	}
 }

@@ -1344,6 +1344,70 @@
       ],
       "description": "PCIDriverRebindConfig allows to configure PCI driver rebinds."
     },
+    "k8s.AcceptedServiceAccountConfig": {
+      "properties": {
+        "publicKeys": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "publicKeys",
+          "description": "The list of public keys which are used to verify the service account tokens.\n\nThese keys are used by the Kubernetes API server to verify the service account tokens.\nThe keys must be valid PEM encoded RSA or ECDSA public keys.\n",
+          "markdownDescription": "The list of public keys which are used to verify the service account tokens.\n\nThese keys are used by the Kubernetes API server to verify the service account tokens.\nThe keys must be valid PEM encoded RSA or ECDSA public keys.",
+          "x-intellij-html-description": "\u003cp\u003eThe list of public keys which are used to verify the service account tokens.\u003c/p\u003e\n\n\u003cp\u003eThese keys are used by the Kubernetes API server to verify the service account tokens.\nThe keys must be valid PEM encoded RSA or ECDSA public keys.\u003c/p\u003e\n"
+        },
+        "issuers": {
+          "items": {
+            "type": "string",
+            "pattern": "^(http|https)://"
+          },
+          "type": "array",
+          "title": "issuers",
+          "description": "The additional service account issuers which are accepted by the Kubernetes API server.\n\nThis might be used for service account rotation, or for accepting service accounts from other clusters,\nor for accepting service accounts from other issuers.\n",
+          "markdownDescription": "The additional service account issuers which are accepted by the Kubernetes API server.\n\nThis might be used for service account rotation, or for accepting service accounts from other clusters,\nor for accepting service accounts from other issuers.",
+          "x-intellij-html-description": "\u003cp\u003eThe additional service account issuers which are accepted by the Kubernetes API server.\u003c/p\u003e\n\n\u003cp\u003eThis might be used for service account rotation, or for accepting service accounts from other clusters,\nor for accepting service accounts from other issuers.\u003c/p\u003e\n"
+        },
+        "audiences": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "audiences",
+          "description": "The list of API audiences for which the service account tokens are accepted by the Kubernetes API server.\n\nIf this field is not set, the default is to set to the issuer URL of the service account issuer.\n",
+          "markdownDescription": "The list of API audiences for which the service account tokens are accepted by the Kubernetes API server.\n\nIf this field is not set, the default is to set to the issuer URL of the service account issuer.",
+          "x-intellij-html-description": "\u003cp\u003eThe list of API audiences for which the service account tokens are accepted by the Kubernetes API server.\u003c/p\u003e\n\n\u003cp\u003eIf this field is not set, the default is to set to the issuer URL of the service account issuer.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "AcceptedServiceAccountConfig configures the accepted service accounts.\\n"
+    },
+    "k8s.IssuerServiceAccountConfig": {
+      "properties": {
+        "privateKey": {
+          "type": "string",
+          "title": "privateKey",
+          "description": "The key which is used to sign the service account tokens.\n\nThis key is used to sign the service account tokens, and it is used by the Kubernetes API server to verify the service account tokens.\nThe key must be a valid PEM encoded RSA or ECDSA private key.\n",
+          "markdownDescription": "The key which is used to sign the service account tokens.\n\nThis key is used to sign the service account tokens, and it is used by the Kubernetes API server to verify the service account tokens.\nThe key must be a valid PEM encoded RSA or ECDSA private key.",
+          "x-intellij-html-description": "\u003cp\u003eThe key which is used to sign the service account tokens.\u003c/p\u003e\n\n\u003cp\u003eThis key is used to sign the service account tokens, and it is used by the Kubernetes API server to verify the service account tokens.\nThe key must be a valid PEM encoded RSA or ECDSA private key.\u003c/p\u003e\n"
+        },
+        "issuerURL": {
+          "type": "string",
+          "pattern": "^(http|https)://",
+          "title": "issuerURL",
+          "description": "The issuer URL which is used to sign the service account tokens.\n\nThis URL is used to sign the service account tokens, and it is used by the Kubernetes API server to verify the service account tokens.\n",
+          "markdownDescription": "The issuer URL which is used to sign the service account tokens.\n\nThis URL is used to sign the service account tokens, and it is used by the Kubernetes API server to verify the service account tokens.",
+          "x-intellij-html-description": "\u003cp\u003eThe issuer URL which is used to sign the service account tokens.\u003c/p\u003e\n\n\u003cp\u003eThis URL is used to sign the service account tokens, and it is used by the Kubernetes API server to verify the service account tokens.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "issuerURL",
+        "privateKey"
+      ],
+      "description": "IssuerServiceAccountConfig configures the service account issuer.\\n"
+    },
     "k8s.KubeAPIServerCAConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -2196,6 +2260,50 @@
         "kind"
       ],
       "description": "KubeSchedulerConfig configures kube-scheduler controlplane static pod."
+    },
+    "k8s.KubeServiceAccountConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "KubeServiceAccountConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "issuer": {
+          "$ref": "#/$defs/k8s.IssuerServiceAccountConfig",
+          "title": "issuer",
+          "description": "The service account issuer configuration.\n\nThis configures how the service accounts are issued in Kubernetes.\n",
+          "markdownDescription": "The service account issuer configuration.\n\nThis configures how the service accounts are issued in Kubernetes.",
+          "x-intellij-html-description": "\u003cp\u003eThe service account issuer configuration.\u003c/p\u003e\n\n\u003cp\u003eThis configures how the service accounts are issued in Kubernetes.\u003c/p\u003e\n"
+        },
+        "accepted": {
+          "$ref": "#/$defs/k8s.AcceptedServiceAccountConfig",
+          "title": "accepted",
+          "description": "The additional service accounts which are accepted by the Kubernetes API server.\n\nThis might be used for service account rotation, or for accepting service accounts from other clusters,\nor for accepting service accounts from other issuers.\n",
+          "markdownDescription": "The additional service accounts which are accepted by the Kubernetes API server.\n\nThis might be used for service account rotation, or for accepting service accounts from other clusters,\nor for accepting service accounts from other issuers.",
+          "x-intellij-html-description": "\u003cp\u003eThe additional service accounts which are accepted by the Kubernetes API server.\u003c/p\u003e\n\n\u003cp\u003eThis might be used for service account rotation, or for accepting service accounts from other clusters,\nor for accepting service accounts from other issuers.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "issuer",
+        "kind"
+      ],
+      "description": "KubeServiceAccountConfig configures Kubernetes service accounts."
     },
     "network.AddressConfig": {
       "properties": {
@@ -5558,20 +5666,6 @@
           "markdownDescription": "The [bootstrap token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/) used to join the cluster.",
           "x-intellij-html-description": "\u003cp\u003eThe \u003ca href=\"https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/\" target=\"_blank\"\u003ebootstrap token\u003c/a\u003e used to join the cluster.\u003c/p\u003e\n"
         },
-        "serviceAccount": {
-          "properties": {
-            "key": {
-              "additionalProperties": false,
-              "type": "string"
-            }
-          },
-          "additionalProperties": false,
-          "type": "object",
-          "title": "serviceAccount",
-          "description": "The base64 encoded private key for service account token generation.\n",
-          "markdownDescription": "The base64 encoded private key for service account token generation.",
-          "x-intellij-html-description": "\u003cp\u003eThe base64 encoded private key for service account token generation.\u003c/p\u003e\n"
-        },
         "etcd": {
           "$ref": "#/$defs/v1alpha1.EtcdConfig",
           "title": "etcd",
@@ -6467,6 +6561,9 @@
     },
     {
       "$ref": "#/$defs/k8s.KubeSchedulerConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/k8s.KubeServiceAccountConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/network.BlackholeRouteConfigV1Alpha1"

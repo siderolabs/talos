@@ -104,6 +104,7 @@ spec:
     integration/qemu-encrypted-vip: "Run QEMU integration tests with disk encryption and virtual IP"
     integration/qemu-enforcing: "Run QEMU integration tests on enforcing variant"
     integration/qemu-race: "Run QEMU integration tests with the race detector"
+    integration/qemu-13: "Run QEMU integration tests with Talos version contract v1.13"
     integration/release-gate: "Run all release-gate integration tests"
     integration/reproducibility-test: "Run build reproducibility tests"
     integration/trusted-boot: "Run trusted-boot integration tests (all variants)"
@@ -302,7 +303,7 @@ spec:
         - default
       runnerGroup: large
       crons:
-        - '30 7 * * *'
+        - "30 7 * * *"
       steps:
         - name: login-to-registry
           registryLoginStep:
@@ -404,7 +405,7 @@ spec:
         enabled: true
       runnerGroup: large
       crons:
-        - '30 3 * * *'
+        - "30 3 * * *"
       cronOnly: true
       steps:
         - name: external-artifacts
@@ -490,6 +491,15 @@ spec:
             qemuExtraDiscsTags: "disk0"
             qemuMemoryControlplanes: "4096"
             qemuMemoryWorkers: "4096"
+          - variant: "13"
+            withUserDisk: "true"
+            userDisksMounts: "/var/mnt/extra,/var/mnt/p1,/var/mnt/p2"
+            withConfigPatch: "@hack/test/patches/image-verification.yaml"
+            withConfigPatchWorker: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
+            withTalosVersion: "v1.13"
+            qemuExtraDisks: "5"
+            qemuExtraDisksDrivers: "virtiofs,ide,nvme"
+            qemuExtraDiscsTags: "disk0"
       steps:
         - name: download-artifacts
           artifactStep:
@@ -522,6 +532,7 @@ spec:
             USER_DISKS_MOUNTS: ${{ matrix.userDisksMounts }}
             WITH_CONFIG_PATCH: ${{ matrix.withConfigPatch }}
             WITH_CONFIG_PATCH_WORKER: ${{ matrix.withConfigPatchWorker }}
+            WITH_TALOS_VERSION: ${{ matrix.withTalosVersion }}
             QEMU_EXTRA_DISKS: ${{ matrix.qemuExtraDisks }}
             QEMU_EXTRA_DISKS_SIZE: "10240"
             QEMU_EXTRA_DISKS_DRIVERS: ${{ matrix.qemuExtraDisksDrivers }}
@@ -852,6 +863,7 @@ spec:
         - integration/qemu-enforcing
         - integration/qemu-encrypted-vip
         - integration/qemu-race
+        - integration/qemu-13
         - integration/conformance
         - integration/conformance-default
         - integration/conformance-enforcing
@@ -1805,15 +1817,15 @@ spec:
           - test: e2e-image-cache
             withISO: "true"
             useDiskImage: ""
-            withConfigPatch: '@hack/test/patches/image-cache.yaml:@hack/test/patches/image-verification.yaml'
+            withConfigPatch: "@hack/test/patches/image-cache.yaml:@hack/test/patches/image-verification.yaml"
           - test: e2e-image-cache-disk
             withISO: ""
             useDiskImage: "true"
-            withConfigPatch: '@hack/test/patches/image-cache.yaml:@hack/test/patches/image-verification.yaml'
+            withConfigPatch: "@hack/test/patches/image-cache.yaml:@hack/test/patches/image-verification.yaml"
           - test: e2e-image-cache-encrypted
             withISO: "true"
             useDiskImage: ""
-            withConfigPatch: '@hack/test/patches/image-cache.yaml:@hack/test/patches/image-cache-encrypted.yaml:@hack/test/patches/image-verification.yaml'
+            withConfigPatch: "@hack/test/patches/image-cache.yaml:@hack/test/patches/image-cache-encrypted.yaml:@hack/test/patches/image-verification.yaml"
       steps:
         - name: download-artifacts
           artifactStep:
@@ -2066,7 +2078,12 @@ spec:
           - driver: oss
             variant: lts
             arch: amd64
-            triggerLabels: [integration/aws-nvidia-oss, integration/aws-nvidia-oss-lts, integration/aws-nvidia-oss-lts-amd64]
+            triggerLabels:
+              [
+                integration/aws-nvidia-oss,
+                integration/aws-nvidia-oss-lts,
+                integration/aws-nvidia-oss-lts-amd64,
+              ]
             buildTargets: nvidia-container-toolkit-lts nvidia-open-gpu-kernel-modules-lts extensions-metadata
             buildPlatform: linux/amd64
             targetArch: amd64
@@ -2075,7 +2092,12 @@ spec:
           - driver: oss
             variant: lts
             arch: arm64
-            triggerLabels: [integration/aws-nvidia-oss, integration/aws-nvidia-oss-lts, integration/aws-nvidia-oss-lts-arm64]
+            triggerLabels:
+              [
+                integration/aws-nvidia-oss,
+                integration/aws-nvidia-oss-lts,
+                integration/aws-nvidia-oss-lts-arm64,
+              ]
             buildTargets: nvidia-container-toolkit-lts nvidia-open-gpu-kernel-modules-lts extensions-metadata
             buildPlatform: linux/arm64
             targetArch: arm64
@@ -2084,7 +2106,12 @@ spec:
           - driver: oss
             variant: production
             arch: amd64
-            triggerLabels: [integration/aws-nvidia-oss, integration/aws-nvidia-oss-production, integration/aws-nvidia-oss-production-amd64]
+            triggerLabels:
+              [
+                integration/aws-nvidia-oss,
+                integration/aws-nvidia-oss-production,
+                integration/aws-nvidia-oss-production-amd64,
+              ]
             buildTargets: nvidia-container-toolkit-production nvidia-open-gpu-kernel-modules-production extensions-metadata
             buildPlatform: linux/amd64
             targetArch: amd64
@@ -2093,7 +2120,12 @@ spec:
           - driver: oss
             variant: production
             arch: arm64
-            triggerLabels: [integration/aws-nvidia-oss, integration/aws-nvidia-oss-production, integration/aws-nvidia-oss-production-arm64]
+            triggerLabels:
+              [
+                integration/aws-nvidia-oss,
+                integration/aws-nvidia-oss-production,
+                integration/aws-nvidia-oss-production-arm64,
+              ]
             buildTargets: nvidia-container-toolkit-production nvidia-open-gpu-kernel-modules-production extensions-metadata
             buildPlatform: linux/arm64
             targetArch: arm64
@@ -2102,7 +2134,12 @@ spec:
           - driver: nonfree
             variant: lts
             arch: amd64
-            triggerLabels: [integration/aws-nvidia-nonfree, integration/aws-nvidia-nonfree-lts, integration/aws-nvidia-nonfree-lts-amd64]
+            triggerLabels:
+              [
+                integration/aws-nvidia-nonfree,
+                integration/aws-nvidia-nonfree-lts,
+                integration/aws-nvidia-nonfree-lts-amd64,
+              ]
             buildTargets: nvidia-container-toolkit-lts nonfree-kmod-nvidia-lts extensions-metadata
             buildPlatform: linux/amd64
             targetArch: amd64
@@ -2111,7 +2148,12 @@ spec:
           - driver: nonfree
             variant: lts
             arch: arm64
-            triggerLabels: [integration/aws-nvidia-nonfree, integration/aws-nvidia-nonfree-lts, integration/aws-nvidia-nonfree-lts-arm64]
+            triggerLabels:
+              [
+                integration/aws-nvidia-nonfree,
+                integration/aws-nvidia-nonfree-lts,
+                integration/aws-nvidia-nonfree-lts-arm64,
+              ]
             buildTargets: nvidia-container-toolkit-lts nonfree-kmod-nvidia-lts extensions-metadata
             buildPlatform: linux/arm64
             targetArch: arm64
@@ -2120,7 +2162,12 @@ spec:
           - driver: nonfree
             variant: production
             arch: amd64
-            triggerLabels: [integration/aws-nvidia-nonfree, integration/aws-nvidia-nonfree-production, integration/aws-nvidia-nonfree-production-amd64]
+            triggerLabels:
+              [
+                integration/aws-nvidia-nonfree,
+                integration/aws-nvidia-nonfree-production,
+                integration/aws-nvidia-nonfree-production-amd64,
+              ]
             buildTargets: nvidia-container-toolkit-production nonfree-kmod-nvidia-production extensions-metadata
             buildPlatform: linux/amd64
             targetArch: amd64
@@ -2129,7 +2176,12 @@ spec:
           - driver: nonfree
             variant: production
             arch: arm64
-            triggerLabels: [integration/aws-nvidia-nonfree, integration/aws-nvidia-nonfree-production, integration/aws-nvidia-nonfree-production-arm64]
+            triggerLabels:
+              [
+                integration/aws-nvidia-nonfree,
+                integration/aws-nvidia-nonfree-production,
+                integration/aws-nvidia-nonfree-production-arm64,
+              ]
             buildTargets: nvidia-container-toolkit-production nonfree-kmod-nvidia-production extensions-metadata
             buildPlatform: linux/arm64
             targetArch: arm64

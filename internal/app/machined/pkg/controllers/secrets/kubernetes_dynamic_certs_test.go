@@ -58,9 +58,6 @@ func (suite *KubernetesDynamicCertsSuite) TestReconcile() {
 	)
 	suite.Require().NoError(err)
 
-	serviceAccount, err := x509.NewECDSAKey()
-	suite.Require().NoError(err)
-
 	rootSecrets.TypedSpec().Name = "cluster1"
 	rootSecrets.TypedSpec().Endpoint, err = url.Parse("https://some.url:6443/")
 	suite.Require().NoError(err)
@@ -74,9 +71,6 @@ func (suite *KubernetesDynamicCertsSuite) TestReconcile() {
 	rootSecrets.TypedSpec().AggregatorCA = &x509.PEMEncodedCertificateAndKey{
 		Crt: aggregatorCA.CrtPEM,
 		Key: aggregatorCA.KeyPEM,
-	}
-	rootSecrets.TypedSpec().ServiceAccount = &x509.PEMEncodedKey{
-		Key: serviceAccount.KeyPEM,
 	}
 	rootSecrets.TypedSpec().CertSANs = []string{"example.com"}
 	rootSecrets.TypedSpec().APIServerIPs = []netip.Addr{netip.MustParseAddr("10.4.3.2"), netip.MustParseAddr("10.2.1.3")}
