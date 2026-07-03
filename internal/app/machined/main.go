@@ -22,6 +22,7 @@ import (
 	"github.com/siderolabs/go-cmd/pkg/cmd/proc"
 	"github.com/siderolabs/go-cmd/pkg/cmd/proc/reaper"
 	debug "github.com/siderolabs/go-debug"
+	"github.com/siderolabs/go-kmsg"
 	"github.com/siderolabs/go-procfs/procfs"
 	"go.uber.org/zap"
 	"golang.org/x/sys/unix"
@@ -36,6 +37,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
 	"github.com/siderolabs/talos/internal/app/poweroff"
 	"github.com/siderolabs/talos/internal/app/trustd"
+	"github.com/siderolabs/talos/internal/pkg/containermode"
 	"github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/pkg/httpdefaults"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
@@ -336,7 +338,17 @@ func main() {
 
 		return
 	// Azure uses the hv_utils kernel module to shutdown the node in hyper-v by calling perform_shutdown which will call orderly_poweroff which will call /sbin/poweroff.
-	case "poweroff", "shutdown":
+	// Hyper-V restart requests call orderly_reboot which will call /sbin/reboot.
+	case "poweroff", "shutdown", "reboot":
+		// These are invoked by the kernel usermode helper (and machined is the static
+		// usermode helper), which has no console, so set up kmsg logging to make the
+		// invocation and its result visible in `talosctl dmesg`.
+		if !containermode.InContainer() {
+			kmsg.SetupLogger(nil, filepath.Base(os.Args[0]), nil) //nolint:errcheck // best effort logging to kmsg
+		}
+
+		log.Printf("usermode helper invoked as %q (args %v)", os.Args[0], os.Args[1:])
+
 		poweroff.Main(os.Args)
 
 		return

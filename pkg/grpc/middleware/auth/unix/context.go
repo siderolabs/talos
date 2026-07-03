@@ -18,6 +18,11 @@ type PeerCredentials struct {
 	UID            uint32
 	GID            uint32
 	MountNamespace string
+	// ExeDev and ExeIno identify the executable backing the peer process
+	// (device and inode of /proc/<pid>/exe), used to recognize machined's own
+	// binary re-executed as a kernel usermode helper.
+	ExeDev uint64
+	ExeIno uint64
 }
 
 // AuthType implements credentials.AuthInfo.
