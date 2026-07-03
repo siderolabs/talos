@@ -36,6 +36,9 @@ var (
 
 	//go:embed testdata/trident-storageclass-nas.yaml
 	tridentStorageClassNAS []byte
+
+	//go:embed testdata/trident-fio.fio
+	tridentFIOConfig []byte
 )
 
 // tridentONTAPConfig holds the ONTAP connection details templated into the
@@ -157,12 +160,19 @@ func (suite *NetAppSuite) TestDeploy() {
 	suite.Require().NoError(suite.WaitForResource(ctx, "trident", "trident.netapp.io", "TridentBackendConfig", "v1", "backend-ontap-san", "{.status.phase}", "Bound"))
 	suite.Require().NoError(suite.WaitForResource(ctx, "trident", "trident.netapp.io", "TridentBackendConfig", "v1", "backend-ontap-nas", "{.status.phase}", "Bound"))
 
+	// The CSI node plugin must be running on every node before a volume can attach/mount, so wait
+	// for the trident-node DaemonSet to be fully ready before exercising fio.
+	suite.Require().NoError(suite.WaitForDaemonSetReady(ctx, 5*time.Minute, "trident", "app=node.csi.trident.netapp.io"))
+
+	// Use a lighter, time-bounded fio job (see testdata/trident-fio.fio): the ONTAP backends
+	// in CI are slow enough that kubestr's built-in default-fio job cannot finish within
+	// kubestr's internal exec timeout.
 	suite.Run("fio-ontap-san", func() {
-		suite.Require().NoError(suite.RunFIOTest(ctx, "trident-ontap-san", "10G"))
+		suite.Require().NoError(suite.RunFIOTestWithConfig(ctx, "trident-ontap-san", "10G", tridentFIOConfig))
 	})
 
 	suite.Run("fio-ontap-nas", func() {
-		suite.Require().NoError(suite.RunFIOTest(ctx, "trident-ontap-nas", "10G"))
+		suite.Require().NoError(suite.RunFIOTestWithConfig(ctx, "trident-ontap-nas", "10G", tridentFIOConfig))
 	})
 }
 

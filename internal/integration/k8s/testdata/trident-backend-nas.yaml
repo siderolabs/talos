@@ -25,4 +25,4 @@ spec:
     protocol: nas
   useREST: true
   nfsMountOptions: nfsvers=4
-  autoExportPolicy: true
+  autoExportPolicy: false
