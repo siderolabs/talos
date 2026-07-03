@@ -807,6 +807,9 @@ RUN <<END
     # some extensions like qemu-guest agent will call '/sbin/shutdown'
     ln /rootfs/usr/bin/init /rootfs/usr/bin/shutdown
     chmod +x /rootfs/usr/bin/shutdown
+    # the orderly_reboot call by the kernel (e.g. hyper-v restart request) will call '/sbin/reboot'
+    ln /rootfs/usr/bin/init /rootfs/usr/bin/reboot
+    chmod +x /rootfs/usr/bin/reboot
     ln /rootfs/usr/bin/init /rootfs/usr/bin/dashboard
     chmod +x /rootfs/usr/bin/dashboard
 END
@@ -898,6 +901,9 @@ RUN <<END
     # some extensions like qemu-guest agent will call '/sbin/shutdown'
     ln /rootfs/usr/bin/init /rootfs/usr/bin/shutdown
     chmod +x /rootfs/usr/bin/shutdown
+    # the orderly_reboot call by the kernel (e.g. hyper-v restart request) will call '/sbin/reboot'
+    ln /rootfs/usr/bin/init /rootfs/usr/bin/reboot
+    chmod +x /rootfs/usr/bin/reboot
     ln /rootfs/usr/bin/init /rootfs/usr/bin/dashboard
     chmod +x /rootfs/usr/bin/dashboard
 END

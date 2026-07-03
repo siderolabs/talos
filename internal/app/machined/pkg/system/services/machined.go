@@ -24,6 +24,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/health"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/goroutine"
+	"github.com/siderolabs/talos/internal/pkg/miniprocfs"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/grpc/factory"
@@ -167,8 +168,20 @@ func (s *machinedService) Main(ctx context.Context, _ runtime.Runtime, logWriter
 		Logger:        log.New(logWriter, "machined/authz/authorizer ", log.Flags()).Printf,
 	}
 
+	// machined's own identity, used to recognize the kernel static usermode helper
+	// (e.g. `/sbin/poweroff` -> machined), which re-executes this same binary in this
+	// same mount namespace.
+	selfMountNamespace, _ := miniprocfs.ReadMountNamespace(int32(os.Getpid()))
+	selfExeDev, selfExeIno, _ := miniprocfs.ReadExeIdentity(int32(os.Getpid()))
+
 	pidAuthorizer := &unix.Authorizer{
-		Resources: s.c.Runtime().State().V1Alpha2().Resources(),
+		Resources:          s.c.Runtime().State().V1Alpha2().Resources(),
+		SelfMountNamespace: selfMountNamespace,
+		SelfExeDev:         selfExeDev,
+		SelfExeIno:         selfExeIno,
+		// the usermode helper only ever calls Shutdown/Reboot, both of which accept Admin/Operator;
+		// poweroff.Main requests role.Admin and the authorizer intersects requested with allowed.
+		UsermodeHelperRoles: role.MakeSet(role.Admin, role.Operator),
 		AllowedServices: []unix.AllowedService{
 			{
 				// normal network API access

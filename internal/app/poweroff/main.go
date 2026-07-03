@@ -7,6 +7,7 @@ package poweroff
 import (
 	"context"
 	"log"
+	"path/filepath"
 	"slices"
 
 	"google.golang.org/grpc"
@@ -34,7 +35,7 @@ func Main(args []string) {
 	ctx := context.Background()
 
 	md := metadata.Pairs()
-	authz.SetMetadata(md, role.MakeSet(role.Admin))
+	authz.SetMetadata(md, role.MakeSet(role.Operator))
 	adminCtx := metadata.NewOutgoingContext(ctx, md)
 
 	client, err := client.New(
@@ -48,22 +49,42 @@ func Main(args []string) {
 		log.Fatalf("error while creating machinery client: %s", err)
 	}
 
-	switch ActionFromArgs(args) {
+	action := ActionFromArgs(args)
+
+	log.Printf("helper: action %q", action)
+
+	switch action {
 	case Shutdown:
 		err = client.Shutdown(adminCtx)
 		if err != nil {
 			log.Fatalf("error while sending shutdown command: %s", err)
 		}
+
+		log.Printf("shutdown command sent")
 	case Reboot:
 		err = client.Reboot(adminCtx)
 		if err != nil {
 			log.Fatalf("error while sending reboot command: %s", err)
 		}
+
+		log.Printf("reboot command sent")
 	}
 }
 
 // ActionFromArgs returns the action to be performed based on the arguments.
+//
+// The default action is derived from the basename the binary was invoked as
+// (e.g. the kernel usermode helper calls `/sbin/reboot` for orderly_reboot and
+// `/sbin/poweroff` for orderly_poweroff), and can be overridden by explicit flags.
+//
+//nolint:gocyclo
 func ActionFromArgs(args []string) Action {
+	action := Shutdown
+
+	if len(args) > 0 && filepath.Base(args[0]) == "reboot" {
+		action = Reboot
+	}
+
 	if len(args) > 1 {
 		if slices.ContainsFunc(args[1:], func(s string) bool {
 			return s == "--halt" || s == "-H" || s == "--poweroff" || s == "-P" || s == "-p"
@@ -78,5 +99,5 @@ func ActionFromArgs(args []string) Action {
 		}
 	}
 
-	return Shutdown
+	return action
 }
