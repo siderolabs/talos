@@ -1434,7 +1434,7 @@ spec:
             WITH_FIREWALL: accept
             CILIUM_INSTALL_TYPE: ${{ matrix.ciliumInstallType }}
             WITH_KUBESPAN: ${{ matrix.withKubespan }}
-            WITH_CONFIG_PATCH: ${{ matrix.ciliumConfigPatch }}
+            WITH_CONFIG_PATCH_CONTROLPLANE: ${{ matrix.ciliumConfigPatch }}
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs
           conditions:
