@@ -159,7 +159,7 @@ func (s *LVMVolumeGroupConfigV1Alpha1) PhysicalVolumeSelector() cel.Expression {
 
 // Validate implements config.Validator interface.
 //
-//nolint:gocyclo
+//nolint:dupl,gocyclo
 func (s *LVMVolumeGroupConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
 	var validationErrors error
 

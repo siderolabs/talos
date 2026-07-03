@@ -787,6 +787,20 @@ enum StorageLVMLogicalVolumeType {
   LVM_LOGICAL_VOLUME_TYPE_RAID10 = 3;
 }
 
+// StorageMDArrayPhase describes the provisioning/sync state of an MD array.
+enum StorageMDArrayPhase {
+  MD_ARRAY_PHASE_UNKNOWN = 0;
+  MD_ARRAY_PHASE_WAITING = 1;
+  MD_ARRAY_PHASE_REBUILDING = 2;
+  MD_ARRAY_PHASE_READY = 3;
+  MD_ARRAY_PHASE_ERROR = 4;
+}
+
+// StorageMDLevel describes the RAID level of an MD (software RAID) array.
+enum StorageMDLevel {
+  MD_LEVEL_RAID1 = 0;
+}
+
 // CriImageCacheStatus describes image cache status type.
 enum CriImageCacheStatus {
   IMAGE_CACHE_STATUS_UNKNOWN = 0;

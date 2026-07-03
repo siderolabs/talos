@@ -265,6 +265,19 @@ size surfaces an `LVMValidationError` instead. Removal stays an explicit operati
 remove RPC (`talosctl wipe lv`).
 """
 
+    [notes.raid_arrays]
+        title = "RAID Array Creation"
+        description = """\
+Talos can now create and grow Linux MD (software RAID) arrays declaratively through a new `RAIDArrayConfig`
+multi-doc config kind. Each document names an array, its `level` (`raid1`) and a CEL `volumeSelector` over
+the disk inventory; matched disks are assembled into the requested array with `mdadm` and exposed at the stable
+`/dev/disk/by-id/md-name-<name>` path. New matching disks added to an existing array are attached automatically.
+
+Reconciliation is strictly additive and safe-by-default. Arrays are never destroyed by removing the config;
+removal stays an explicit operation via `talosctl wipe md <device>`. The new `MDArrayStatus` resource reports the
+assembled array, level, device path, and members.
+"""
+
     [notes.kernel_module_status]
         title = "Kernel Module Status"
         description = """\

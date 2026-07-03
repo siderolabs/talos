@@ -95,3 +95,16 @@ func newLVDoc(name, vg string, lvType storageres.LVMLogicalVolumeType, maxSize s
 
 	return doc
 }
+
+// newRAIDDoc builds a minimal v1alpha1 RAIDArrayConfig doc.
+func newRAIDDoc(name, match string) *storagecfg.RAIDArrayConfigV1Alpha1 {
+	doc := storagecfg.NewRAIDArrayConfigV1Alpha1()
+	doc.MetaName = name
+	doc.Level = storageres.MDLevelRAID1
+
+	if err := doc.ProvisioningSpec.RAIDVolumeSelector.Match.UnmarshalText([]byte(match)); err != nil {
+		panic(err)
+	}
+
+	return doc
+}

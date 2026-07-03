@@ -7,7 +7,7 @@ package storage
 import (
 	"context"
 	"fmt"
-	"sort"
+	"slices"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -16,10 +16,9 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
-	blockpb "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
-	"github.com/siderolabs/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/block/blockhelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
@@ -52,6 +51,12 @@ func (ctrl *LVMPhysicalVolumeSpecController) Inputs() []controller.Input {
 		{
 			Namespace: block.NamespaceName,
 			Type:      block.DiskType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: block.NamespaceName,
+			Type:      block.SystemDiskType,
+			ID:        optional.Some(block.SystemDiskID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -99,7 +104,7 @@ func (ctrl *LVMPhysicalVolumeSpecController) reconcile(ctx context.Context, r co
 		vgDocs = machineCfg.Config().LVMVolumeGroupConfigs()
 	}
 
-	volumes, err := buildVolumeProtos(ctx, r)
+	volumes, err := buildMatchContexts(ctx, r)
 	if err != nil {
 		return err
 	}
@@ -129,7 +134,7 @@ func (ctrl *LVMPhysicalVolumeSpecController) emitSpecs(
 	r controller.Runtime,
 	logger *zap.Logger,
 	vgDocs []configconfig.LVMVolumeGroupConfig,
-	volumes []volumeProto,
+	volumes []blockhelpers.MatchContext,
 ) error {
 	// Per-device claim map: detect VGs whose selectors overlap (LVM forbids a
 	// PV in two VGs).
@@ -164,14 +169,14 @@ func (ctrl *LVMPhysicalVolumeSpecController) matchVolumesToVG(
 	r controller.Runtime,
 	logger *zap.Logger,
 	doc configconfig.LVMVolumeGroupConfig,
-	volumes []volumeProto,
+	volumes []blockhelpers.MatchContext,
 	claimedBy map[string]string,
 	conflicts map[string]string,
 ) error {
 	selector := doc.PhysicalVolumeSelector()
 
 	for _, vol := range volumes {
-		matches, err := selector.EvalBool(celenv.VolumeLocator(), vol.celContext)
+		matches, err := selector.EvalBool(celenv.VolumeLocator(), vol.CELContext)
 		if err != nil {
 			return fmt.Errorf("evaluate selector for VG %q: %w", doc.Name(), err)
 		}
@@ -183,22 +188,22 @@ func (ctrl *LVMPhysicalVolumeSpecController) matchVolumesToVG(
 		// A partitioned whole disk can't be a PV; its partitions are matched
 		// separately. Skip it so the reconciler doesn't try pvcreate on a
 		// device that lvm rejects ("device is partitioned").
-		if vol.partitioned {
+		if vol.Partitioned {
 			logger.Debug(
 				"skipping partitioned disk as PV candidate; its partitions are preferred",
-				zap.String("device", vol.devPath),
+				zap.String("device", vol.DevPath),
 				zap.String("vg", doc.Name()),
 			)
 
 			continue
 		}
 
-		if prev, ok := claimedBy[vol.devPath]; ok && prev != doc.Name() {
-			conflicts[doc.Name()] = fmt.Sprintf("device %q already claimed by volume group %q", vol.devPath, prev)
+		if prev, ok := claimedBy[vol.DevPath]; ok && prev != doc.Name() {
+			conflicts[doc.Name()] = fmt.Sprintf("device %q already claimed by volume group %q", vol.DevPath, prev)
 
 			logger.Warn(
 				"disk claimed by multiple LVM volume groups; skipping",
-				zap.String("device", vol.devPath),
+				zap.String("device", vol.DevPath),
 				zap.String("first_vg", prev),
 				zap.String("conflicting_vg", doc.Name()),
 			)
@@ -206,9 +211,9 @@ func (ctrl *LVMPhysicalVolumeSpecController) matchVolumesToVG(
 			continue
 		}
 
-		claimedBy[vol.devPath] = doc.Name()
+		claimedBy[vol.DevPath] = doc.Name()
 
-		if err := ctrl.writePVSpec(ctx, r, vol.devPath, doc.Name()); err != nil {
+		if err := ctrl.writePVSpec(ctx, r, vol.DevPath, doc.Name()); err != nil {
 			return err
 		}
 	}
@@ -254,38 +259,17 @@ func (ctrl *LVMPhysicalVolumeSpecController) writeValidationError(ctx context.Co
 	return nil
 }
 
-// volumeProto is a discovered volume prepared for CEL selector evaluation.
-type volumeProto struct {
-	devPath     string
-	celContext  map[string]any
-	partitioned bool
-}
-
-// buildVolumeProtos lists discovered volumes and prepares the CEL evaluation
-// context for each. Every volume gets a `volume` variable. The `disk` variable
-// is bound to the real disk only for whole-disk volumes; partitions get an
-// empty DiskSpec so disk-level predicates (e.g. disk.transport == "nvme")
-// evaluate to false against them rather than spanning the disk and all its
+// buildMatchContexts lists discovered volumes, disks and the system disk, and
+// delegates CEL context construction to blockhelpers.BuildMatchContexts. Every
+// volume gets a `volume` variable; `disk` is bound to the real disk only for
+// whole-disk volumes so disk-level predicates (e.g. disk.transport == "nvme")
+// evaluate false against partitions rather than spanning the disk and all its
 // partitions. Partitions are therefore selectable only via `volume.*`
 // predicates (e.g. volume.partition_label), matching the documented contract.
-//
-//nolint:gocyclo
-func buildVolumeProtos(ctx context.Context, r controller.Runtime) ([]volumeProto, error) {
+func buildMatchContexts(ctx context.Context, r controller.Runtime) ([]blockhelpers.MatchContext, error) {
 	disks, err := safe.ReaderListAll[*block.Disk](ctx, r)
 	if err != nil {
 		return nil, fmt.Errorf("list disks: %w", err)
-	}
-
-	diskByDevPath := map[string]*blockpb.DiskSpec{}
-
-	for d := range disks.All() {
-		spec := &blockpb.DiskSpec{}
-
-		if err := proto.ResourceSpecToProto(d, spec); err != nil {
-			return nil, fmt.Errorf("convert disk %q to proto: %w", d.Metadata().ID(), err)
-		}
-
-		diskByDevPath[spec.DevPath] = spec
 	}
 
 	volumes, err := safe.ReaderListAll[*block.DiscoveredVolume](ctx, r)
@@ -293,53 +277,16 @@ func buildVolumeProtos(ctx context.Context, r controller.Runtime) ([]volumeProto
 		return nil, fmt.Errorf("list discovered volumes: %w", err)
 	}
 
-	// Devices that are parents of at least one partition. A partitioned
-	// whole disk cannot back a PV directly.
-	hasPartitions := map[string]struct{}{}
+	systemDiskDevPath := ""
 
-	for v := range volumes.All() {
-		if parent := v.TypedSpec().ParentDevPath; parent != "" {
-			hasPartitions[parent] = struct{}{}
-		}
+	systemDisk, err := safe.ReaderGetByID[*block.SystemDisk](ctx, r, block.SystemDiskID)
+	if err != nil && !state.IsNotFoundError(err) {
+		return nil, fmt.Errorf("get system disk: %w", err)
 	}
 
-	out := make([]volumeProto, 0, volumes.Len())
-
-	for v := range volumes.All() {
-		spec := &blockpb.DiscoveredVolumeSpec{}
-
-		if err := proto.ResourceSpecToProto(v, spec); err != nil {
-			return nil, fmt.Errorf("convert discovered volume %q to proto: %w", v.Metadata().ID(), err)
-		}
-
-		if spec.DevPath == "" {
-			continue
-		}
-
-		// Bind the real disk only for whole-disk volumes (no parent). Partitions
-		// and disks without a Disk resource get an empty DiskSpec so disk-level
-		// predicates evaluate false instead of erroring on an unbound variable.
-		disk := &blockpb.DiskSpec{}
-		partitioned := false
-
-		if spec.ParentDevPath == "" {
-			if d, ok := diskByDevPath[spec.DevPath]; ok {
-				disk = d
-			}
-
-			_, partitioned = hasPartitions[spec.DevPath]
-		}
-
-		celCtx := map[string]any{
-			"volume": spec,
-			"disk":   disk,
-		}
-
-		out = append(out, volumeProto{devPath: spec.DevPath, celContext: celCtx, partitioned: partitioned})
+	if systemDisk != nil {
+		systemDiskDevPath = systemDisk.TypedSpec().DevPath
 	}
 
-	// Stable order for deterministic downstream iteration.
-	sort.Slice(out, func(i, j int) bool { return out[i].devPath < out[j].devPath })
-
-	return out, nil
+	return blockhelpers.BuildMatchContexts(slices.Collect(disks.All()), slices.Collect(volumes.All()), systemDiskDevPath)
 }

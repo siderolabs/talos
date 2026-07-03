@@ -5,6 +5,7 @@ package talos.resource.definitions.storage;
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/storage";
 option java_package = "dev.talos.api.resource.definitions.storage";
 
+import "google/api/expr/v1alpha1/checked.proto";
 import "resource/definitions/enums/enums.proto";
 
 // LVMLogicalVolumeSpecSpec is the spec for LVMLogicalVolumeSpec resource.
@@ -234,5 +235,44 @@ message LVMVolumeGroupStatusSpec {
   string pretty_size = 26;
   // PrettyFree is the human-readable rendering of Free.
   string pretty_free = 27;
+}
+
+// MDArraySpecSpec is the spec for MDArraySpec resource.
+message MDArraySpecSpec {
+  // Level is the RAID level.
+  talos.resource.definitions.enums.StorageMDLevel level = 1;
+  // VolumeSelector matches the member volumes of the array.
+  google.api.expr.v1alpha1.CheckedExpr volume_selector = 2;
+}
+
+// MDArrayStatusSpec is the spec for MDArrayStatus resource.
+message MDArrayStatusSpec {
+  // Level is the RAID level.
+  talos.resource.definitions.enums.StorageMDLevel level = 1;
+  // Device is the stable by-id device path of the array.
+  string device = 2;
+  // Members is the list of member device paths.
+  repeated string members = 3;
+  // Error is the last provisioning error, if any.
+  string error = 4;
+  // Status is the provisioning/sync state of the array.
+  talos.resource.definitions.enums.StorageMDArrayPhase status = 5;
+  // RaidDevices is the observed active RAID device count.
+  int64 raid_devices = 6;
+  // UUID is the stable MD array UUID.
+  string uuid = 7;
+  // Name is the metadata-stamped array name.
+  string name = 8;
+  // Metadata is the MD metadata format/version.
+  string metadata = 9;
+  // ArrayState is the current sysfs array_state value.
+  string array_state = 10;
+  // SyncAction is the current sysfs sync_action value.
+  string sync_action = 11;
+}
+
+// MDRefreshRequestSpec is the spec for MDRefreshRequest.
+message MDRefreshRequestSpec {
+  int64 request = 1;
 }
 

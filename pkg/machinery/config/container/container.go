@@ -418,6 +418,11 @@ func (container *Container) LVMLogicalVolumeConfigs() []config.LVMLogicalVolumeC
 	return findMatchingDocs[config.LVMLogicalVolumeConfig](container.documents)
 }
 
+// RAIDArrayConfigs implements config.Config interface.
+func (container *Container) RAIDArrayConfigs() []config.RAIDArrayConfig {
+	return findMatchingDocs[config.RAIDArrayConfig](container.documents)
+}
+
 // ZswapConfig implements config.Config interface.
 func (container *Container) ZswapConfig() config.ZswapConfig {
 	matching := findMatchingDocs[config.ZswapConfig](container.documents)

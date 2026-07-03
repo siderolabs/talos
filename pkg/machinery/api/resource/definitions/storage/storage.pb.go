@@ -11,6 +11,7 @@ import (
 	sync "sync"
 	unsafe "unsafe"
 
+	v1alpha1 "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 
@@ -1196,11 +1197,247 @@ func (x *LVMVolumeGroupStatusSpec) GetPrettyFree() string {
 	return ""
 }
 
+// MDArraySpecSpec is the spec for MDArraySpec resource.
+type MDArraySpecSpec struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Level is the RAID level.
+	Level enums.StorageMDLevel `protobuf:"varint,1,opt,name=level,proto3,enum=talos.resource.definitions.enums.StorageMDLevel" json:"level,omitempty"`
+	// VolumeSelector matches the member volumes of the array.
+	VolumeSelector *v1alpha1.CheckedExpr `protobuf:"bytes,2,opt,name=volume_selector,json=volumeSelector,proto3" json:"volume_selector,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *MDArraySpecSpec) Reset() {
+	*x = MDArraySpecSpec{}
+	mi := &file_resource_definitions_storage_storage_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MDArraySpecSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MDArraySpecSpec) ProtoMessage() {}
+
+func (x *MDArraySpecSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_storage_storage_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MDArraySpecSpec.ProtoReflect.Descriptor instead.
+func (*MDArraySpecSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_storage_storage_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *MDArraySpecSpec) GetLevel() enums.StorageMDLevel {
+	if x != nil {
+		return x.Level
+	}
+	return enums.StorageMDLevel(0)
+}
+
+func (x *MDArraySpecSpec) GetVolumeSelector() *v1alpha1.CheckedExpr {
+	if x != nil {
+		return x.VolumeSelector
+	}
+	return nil
+}
+
+// MDArrayStatusSpec is the spec for MDArrayStatus resource.
+type MDArrayStatusSpec struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Level is the RAID level.
+	Level enums.StorageMDLevel `protobuf:"varint,1,opt,name=level,proto3,enum=talos.resource.definitions.enums.StorageMDLevel" json:"level,omitempty"`
+	// Device is the stable by-id device path of the array.
+	Device string `protobuf:"bytes,2,opt,name=device,proto3" json:"device,omitempty"`
+	// Members is the list of member device paths.
+	Members []string `protobuf:"bytes,3,rep,name=members,proto3" json:"members,omitempty"`
+	// Error is the last provisioning error, if any.
+	Error string `protobuf:"bytes,4,opt,name=error,proto3" json:"error,omitempty"`
+	// Status is the provisioning/sync state of the array.
+	Status enums.StorageMDArrayPhase `protobuf:"varint,5,opt,name=status,proto3,enum=talos.resource.definitions.enums.StorageMDArrayPhase" json:"status,omitempty"`
+	// RaidDevices is the observed active RAID device count.
+	RaidDevices int64 `protobuf:"varint,6,opt,name=raid_devices,json=raidDevices,proto3" json:"raid_devices,omitempty"`
+	// UUID is the stable MD array UUID.
+	Uuid string `protobuf:"bytes,7,opt,name=uuid,proto3" json:"uuid,omitempty"`
+	// Name is the metadata-stamped array name.
+	Name string `protobuf:"bytes,8,opt,name=name,proto3" json:"name,omitempty"`
+	// Metadata is the MD metadata format/version.
+	Metadata string `protobuf:"bytes,9,opt,name=metadata,proto3" json:"metadata,omitempty"`
+	// ArrayState is the current sysfs array_state value.
+	ArrayState string `protobuf:"bytes,10,opt,name=array_state,json=arrayState,proto3" json:"array_state,omitempty"`
+	// SyncAction is the current sysfs sync_action value.
+	SyncAction    string `protobuf:"bytes,11,opt,name=sync_action,json=syncAction,proto3" json:"sync_action,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MDArrayStatusSpec) Reset() {
+	*x = MDArrayStatusSpec{}
+	mi := &file_resource_definitions_storage_storage_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MDArrayStatusSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MDArrayStatusSpec) ProtoMessage() {}
+
+func (x *MDArrayStatusSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_storage_storage_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MDArrayStatusSpec.ProtoReflect.Descriptor instead.
+func (*MDArrayStatusSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_storage_storage_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *MDArrayStatusSpec) GetLevel() enums.StorageMDLevel {
+	if x != nil {
+		return x.Level
+	}
+	return enums.StorageMDLevel(0)
+}
+
+func (x *MDArrayStatusSpec) GetDevice() string {
+	if x != nil {
+		return x.Device
+	}
+	return ""
+}
+
+func (x *MDArrayStatusSpec) GetMembers() []string {
+	if x != nil {
+		return x.Members
+	}
+	return nil
+}
+
+func (x *MDArrayStatusSpec) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+func (x *MDArrayStatusSpec) GetStatus() enums.StorageMDArrayPhase {
+	if x != nil {
+		return x.Status
+	}
+	return enums.StorageMDArrayPhase(0)
+}
+
+func (x *MDArrayStatusSpec) GetRaidDevices() int64 {
+	if x != nil {
+		return x.RaidDevices
+	}
+	return 0
+}
+
+func (x *MDArrayStatusSpec) GetUuid() string {
+	if x != nil {
+		return x.Uuid
+	}
+	return ""
+}
+
+func (x *MDArrayStatusSpec) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *MDArrayStatusSpec) GetMetadata() string {
+	if x != nil {
+		return x.Metadata
+	}
+	return ""
+}
+
+func (x *MDArrayStatusSpec) GetArrayState() string {
+	if x != nil {
+		return x.ArrayState
+	}
+	return ""
+}
+
+func (x *MDArrayStatusSpec) GetSyncAction() string {
+	if x != nil {
+		return x.SyncAction
+	}
+	return ""
+}
+
+// MDRefreshRequestSpec is the spec for MDRefreshRequest.
+type MDRefreshRequestSpec struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Request       int64                  `protobuf:"varint,1,opt,name=request,proto3" json:"request,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MDRefreshRequestSpec) Reset() {
+	*x = MDRefreshRequestSpec{}
+	mi := &file_resource_definitions_storage_storage_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MDRefreshRequestSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MDRefreshRequestSpec) ProtoMessage() {}
+
+func (x *MDRefreshRequestSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_storage_storage_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MDRefreshRequestSpec.ProtoReflect.Descriptor instead.
+func (*MDRefreshRequestSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_storage_storage_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *MDRefreshRequestSpec) GetRequest() int64 {
+	if x != nil {
+		return x.Request
+	}
+	return 0
+}
+
 var File_resource_definitions_storage_storage_proto protoreflect.FileDescriptor
 
 const file_resource_definitions_storage_storage_proto_rawDesc = "" +
 	"\n" +
-	"*resource/definitions/storage/storage.proto\x12\"talos.resource.definitions.storage\x1a&resource/definitions/enums/enums.proto\"\x95\x02\n" +
+	"*resource/definitions/storage/storage.proto\x12\"talos.resource.definitions.storage\x1a&google/api/expr/v1alpha1/checked.proto\x1a&resource/definitions/enums/enums.proto\"\x95\x02\n" +
 	"\x18LVMLogicalVolumeSpecSpec\x12\x17\n" +
 	"\avg_name\x18\x01 \x01(\tR\x06vgName\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12Q\n" +
@@ -1327,7 +1564,27 @@ const file_resource_definitions_storage_storage_proto_rawDesc = "" +
 	"\vpretty_size\x18\x1a \x01(\tR\n" +
 	"prettySize\x12\x1f\n" +
 	"\vpretty_free\x18\x1b \x01(\tR\n" +
-	"prettyFreeBx\n" +
+	"prettyFree\"\xa9\x01\n" +
+	"\x0fMDArraySpecSpec\x12F\n" +
+	"\x05level\x18\x01 \x01(\x0e20.talos.resource.definitions.enums.StorageMDLevelR\x05level\x12N\n" +
+	"\x0fvolume_selector\x18\x02 \x01(\v2%.google.api.expr.v1alpha1.CheckedExprR\x0evolumeSelector\"\x9b\x03\n" +
+	"\x11MDArrayStatusSpec\x12F\n" +
+	"\x05level\x18\x01 \x01(\x0e20.talos.resource.definitions.enums.StorageMDLevelR\x05level\x12\x16\n" +
+	"\x06device\x18\x02 \x01(\tR\x06device\x12\x18\n" +
+	"\amembers\x18\x03 \x03(\tR\amembers\x12\x14\n" +
+	"\x05error\x18\x04 \x01(\tR\x05error\x12M\n" +
+	"\x06status\x18\x05 \x01(\x0e25.talos.resource.definitions.enums.StorageMDArrayPhaseR\x06status\x12!\n" +
+	"\fraid_devices\x18\x06 \x01(\x03R\vraidDevices\x12\x12\n" +
+	"\x04uuid\x18\a \x01(\tR\x04uuid\x12\x12\n" +
+	"\x04name\x18\b \x01(\tR\x04name\x12\x1a\n" +
+	"\bmetadata\x18\t \x01(\tR\bmetadata\x12\x1f\n" +
+	"\varray_state\x18\n" +
+	" \x01(\tR\n" +
+	"arrayState\x12\x1f\n" +
+	"\vsync_action\x18\v \x01(\tR\n" +
+	"syncAction\"0\n" +
+	"\x14MDRefreshRequestSpec\x12\x18\n" +
+	"\arequest\x18\x01 \x01(\x03R\arequestBx\n" +
 	"*dev.talos.api.resource.definitions.storageZJgithub.com/siderolabs/talos/pkg/machinery/api/resource/definitions/storageb\x06proto3"
 
 var (
@@ -1342,7 +1599,7 @@ func file_resource_definitions_storage_storage_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_storage_storage_proto_rawDescData
 }
 
-var file_resource_definitions_storage_storage_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_resource_definitions_storage_storage_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
 var file_resource_definitions_storage_storage_proto_goTypes = []any{
 	(*LVMLogicalVolumeSpecSpec)(nil),       // 0: talos.resource.definitions.storage.LVMLogicalVolumeSpecSpec
 	(*LVMLogicalVolumeStatusSpec)(nil),     // 1: talos.resource.definitions.storage.LVMLogicalVolumeStatusSpec
@@ -1352,15 +1609,25 @@ var file_resource_definitions_storage_storage_proto_goTypes = []any{
 	(*LVMValidationErrorSpec)(nil),         // 5: talos.resource.definitions.storage.LVMValidationErrorSpec
 	(*LVMVolumeGroupSpecSpec)(nil),         // 6: talos.resource.definitions.storage.LVMVolumeGroupSpecSpec
 	(*LVMVolumeGroupStatusSpec)(nil),       // 7: talos.resource.definitions.storage.LVMVolumeGroupStatusSpec
-	(enums.StorageLVMLogicalVolumeType)(0), // 8: talos.resource.definitions.enums.StorageLVMLogicalVolumeType
+	(*MDArraySpecSpec)(nil),                // 8: talos.resource.definitions.storage.MDArraySpecSpec
+	(*MDArrayStatusSpec)(nil),              // 9: talos.resource.definitions.storage.MDArrayStatusSpec
+	(*MDRefreshRequestSpec)(nil),           // 10: talos.resource.definitions.storage.MDRefreshRequestSpec
+	(enums.StorageLVMLogicalVolumeType)(0), // 11: talos.resource.definitions.enums.StorageLVMLogicalVolumeType
+	(enums.StorageMDLevel)(0),              // 12: talos.resource.definitions.enums.StorageMDLevel
+	(*v1alpha1.CheckedExpr)(nil),           // 13: google.api.expr.v1alpha1.CheckedExpr
+	(enums.StorageMDArrayPhase)(0),         // 14: talos.resource.definitions.enums.StorageMDArrayPhase
 }
 var file_resource_definitions_storage_storage_proto_depIdxs = []int32{
-	8, // 0: talos.resource.definitions.storage.LVMLogicalVolumeSpecSpec.type:type_name -> talos.resource.definitions.enums.StorageLVMLogicalVolumeType
-	1, // [1:1] is the sub-list for method output_type
-	1, // [1:1] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	11, // 0: talos.resource.definitions.storage.LVMLogicalVolumeSpecSpec.type:type_name -> talos.resource.definitions.enums.StorageLVMLogicalVolumeType
+	12, // 1: talos.resource.definitions.storage.MDArraySpecSpec.level:type_name -> talos.resource.definitions.enums.StorageMDLevel
+	13, // 2: talos.resource.definitions.storage.MDArraySpecSpec.volume_selector:type_name -> google.api.expr.v1alpha1.CheckedExpr
+	12, // 3: talos.resource.definitions.storage.MDArrayStatusSpec.level:type_name -> talos.resource.definitions.enums.StorageMDLevel
+	14, // 4: talos.resource.definitions.storage.MDArrayStatusSpec.status:type_name -> talos.resource.definitions.enums.StorageMDArrayPhase
+	5,  // [5:5] is the sub-list for method output_type
+	5,  // [5:5] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_storage_storage_proto_init() }
@@ -1374,7 +1641,7 @@ func file_resource_definitions_storage_storage_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_storage_storage_proto_rawDesc), len(file_resource_definitions_storage_storage_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   8,
+			NumMessages:   11,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

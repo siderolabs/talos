@@ -3864,6 +3864,45 @@ talosctl wipe lv <vg/lv> [flags]
 
 * [talosctl wipe](#talosctl-wipe)	 - Wipe block device or volumes
 
+## talosctl wipe md
+
+Destroy an MD (software RAID) array
+
+### Synopsis
+
+Stop an MD (software RAID) array and clear the superblock on every member device.
+
+WARNING: this is destructive. The array must not be in use (mounted or claimed
+by another device). The argument is the full array device path, e.g.
+/dev/disk/by-id/md-name-data.
+
+```
+talosctl wipe md <device> [flags]
+```
+
+### Options
+
+```
+      --cert-fingerprint strings   list of server certificate fingerprints to accept (defaults to no check, only used with --insecure flag)
+  -h, --help                       help for md
+  -i, --insecure                   use the insecure (encrypted with no auth) maintenance service
+```
+
+### Options inherited from parent commands
+
+```
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
+```
+
+### SEE ALSO
+
+* [talosctl wipe](#talosctl-wipe)	 - Wipe block device or volumes
+
 ## talosctl wipe pv
 
 Remove an LVM physical volume label
@@ -3964,6 +4003,7 @@ Wipe block device or volumes
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl wipe disk](#talosctl-wipe-disk)	 - Wipe a block device (disk or partition) which is not used as a volume
 * [talosctl wipe lv](#talosctl-wipe-lv)	 - Remove an LVM logical volume
+* [talosctl wipe md](#talosctl-wipe-md)	 - Destroy an MD (software RAID) array
 * [talosctl wipe pv](#talosctl-wipe-pv)	 - Remove an LVM physical volume label
 * [talosctl wipe vg](#talosctl-wipe-vg)	 - Remove an LVM volume group (cascades to its LVs)
 

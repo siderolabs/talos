@@ -155,6 +155,8 @@ type ExternalVolumeConfig interface {
 }
 
 // VolumeDiscoveryConfig defines the interface to discover volumes.
+//
+//nolint:iface
 type VolumeDiscoveryConfig interface {
 	VolumeSelector() cel.Expression
 }

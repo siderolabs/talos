@@ -43,6 +43,7 @@ import (
 	runtimelogging "github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/pkg/lvm"
+	"github.com/siderolabs/talos/internal/pkg/md"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/logging"
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -86,6 +87,8 @@ func NewController(v1alpha1Runtime runtime.Runtime, reboot func(ctx context.Cont
 }
 
 // Run the controller runtime.
+//
+//nolint:gocyclo
 func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error {
 	// adjust the log level based on machine configuration
 	go ctrl.watchMachineConfig(ctx)
@@ -140,9 +143,14 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		defer udevUnmount() //nolint:errcheck
 	}
 
-	lvm, err := lvm.New()
+	lvmProvisioner, err := lvm.New()
 	if err != nil {
 		return fmt.Errorf("failed to initialize LVM: %w", err)
+	}
+
+	mdProvisioner, err := md.New()
+	if err != nil {
+		return fmt.Errorf("failed to initialize MD: %w", err)
 	}
 
 	for _, c := range []controller.Controller{
@@ -173,11 +181,11 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		},
 		&storage.LVMActivationController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
-			LVM:          lvm,
+			LVM:          lvmProvisioner,
 		},
 		&storage.LVMLogicalVolumeReconcileController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
-			LVM:          lvm,
+			LVM:          lvmProvisioner,
 		},
 		&storage.LVMLogicalVolumeSpecController{},
 		&storage.LVMPhysicalVolumeSpecController{},
@@ -186,13 +194,27 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		},
 		&storage.LVMScanController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
-			LVM:          lvm,
+			LVM:          lvmProvisioner,
 		},
 		&storage.LVMVolumeGroupReconcileController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
-			LVM:          lvm,
+			LVM:          lvmProvisioner,
 		},
 		&storage.LVMVolumeGroupSpecController{},
+		&storage.MDArraySpecController{},
+		&storage.MDMonitorController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+			MD:           mdProvisioner,
+		},
+		&storage.MDArrayReconcileController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+			State:        ctrl.v1alpha1Runtime.State().V1Alpha2().Resources(),
+			MD:           mdProvisioner,
+		},
+		&storage.MDLastResortController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+			MD:           mdProvisioner,
+		},
 		&cluster.AffiliateMergeController{},
 		cluster.NewConfigController(),
 		&cluster.DiscoveryServiceController{},

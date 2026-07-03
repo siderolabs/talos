@@ -288,6 +288,11 @@ description: Talos gRPC API reference.
   
     - [MachineService](#machine.MachineService)
   
+- [machine/md.proto](#machine/md.proto)
+    - [MDDestroyRequest](#machine.MDDestroyRequest)
+  
+    - [MDService](#machine.MDService)
+  
 - [resource/config/config.proto](#resource/config/config.proto)
     - [MachineConfigSpec](#resource.config.MachineConfigSpec)
     - [MachineTypeSpec](#resource.config.MachineTypeSpec)
@@ -348,6 +353,8 @@ description: Talos gRPC API reference.
     - [RuntimeSELinuxState](#talos.resource.definitions.enums.RuntimeSELinuxState)
     - [RuntimeUnattendedInstallPhase](#talos.resource.definitions.enums.RuntimeUnattendedInstallPhase)
     - [StorageLVMLogicalVolumeType](#talos.resource.definitions.enums.StorageLVMLogicalVolumeType)
+    - [StorageMDArrayPhase](#talos.resource.definitions.enums.StorageMDArrayPhase)
+    - [StorageMDLevel](#talos.resource.definitions.enums.StorageMDLevel)
   
 - [resource/definitions/block/block.proto](#resource/definitions/block/block.proto)
     - [DeviceSpec](#talos.resource.definitions.block.DeviceSpec)
@@ -642,6 +649,9 @@ description: Talos gRPC API reference.
     - [LVMValidationErrorSpec](#talos.resource.definitions.storage.LVMValidationErrorSpec)
     - [LVMVolumeGroupSpecSpec](#talos.resource.definitions.storage.LVMVolumeGroupSpecSpec)
     - [LVMVolumeGroupStatusSpec](#talos.resource.definitions.storage.LVMVolumeGroupStatusSpec)
+    - [MDArraySpecSpec](#talos.resource.definitions.storage.MDArraySpecSpec)
+    - [MDArrayStatusSpec](#talos.resource.definitions.storage.MDArrayStatusSpec)
+    - [MDRefreshRequestSpec](#talos.resource.definitions.storage.MDRefreshRequestSpec)
   
 - [resource/definitions/time/time.proto](#resource/definitions/time/time.proto)
     - [AdjtimeStatusSpec](#talos.resource.definitions.time.AdjtimeStatusSpec)
@@ -5038,6 +5048,49 @@ The machine service definition.
 
 
 
+<a name="machine/md.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## machine/md.proto
+
+
+
+<a name="machine.MDDestroyRequest"></a>
+
+### MDDestroyRequest
+MDDestroyRequest identifies the array device to tear down.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| device | [string](#string) |  | Device is the full array device path to destroy (e.g. "/dev/disk/by-id/md-name-data"). |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="machine.MDService"></a>
+
+### MDService
+MDService maintains MD (Multiple Device, software RAID) arrays.
+
+  - Destroy: stop the array and clear member superblocks.
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| Destroy | [MDDestroyRequest](#machine.MDDestroyRequest) | [.google.protobuf.Empty](#google.protobuf.Empty) | Destroy stops the array and clears the superblock on every member.<br><br>The array must not be in use (e.g. mounted or claimed by another device) at the time of the call. |
+
+ <!-- end services -->
+
+
+
 <a name="resource/config/config.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
@@ -6234,6 +6287,32 @@ StorageLVMLogicalVolumeType describes the layout of an LVM logical volume.
 | LVM_LOGICAL_VOLUME_TYPE_RAID1 | 1 |  |
 | LVM_LOGICAL_VOLUME_TYPE_RAID0 | 2 |  |
 | LVM_LOGICAL_VOLUME_TYPE_RAID10 | 3 |  |
+
+
+
+<a name="talos.resource.definitions.enums.StorageMDArrayPhase"></a>
+
+### StorageMDArrayPhase
+StorageMDArrayPhase describes the provisioning/sync state of an MD array.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| MD_ARRAY_PHASE_UNKNOWN | 0 |  |
+| MD_ARRAY_PHASE_WAITING | 1 |  |
+| MD_ARRAY_PHASE_REBUILDING | 2 |  |
+| MD_ARRAY_PHASE_READY | 3 |  |
+| MD_ARRAY_PHASE_ERROR | 4 |  |
+
+
+
+<a name="talos.resource.definitions.enums.StorageMDLevel"></a>
+
+### StorageMDLevel
+StorageMDLevel describes the RAID level of an MD (software RAID) array.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| MD_LEVEL_RAID1 | 0 |  |
 
 
  <!-- end enums -->
@@ -11374,6 +11453,62 @@ Raw strings preserve LVM sentinel values.
 | tags | [string](#string) | repeated | Tags is the list of tags attached to the VG (vg_tags). |
 | pretty_size | [string](#string) |  | PrettySize is the human-readable rendering of Size. |
 | pretty_free | [string](#string) |  | PrettyFree is the human-readable rendering of Free. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.storage.MDArraySpecSpec"></a>
+
+### MDArraySpecSpec
+MDArraySpecSpec is the spec for MDArraySpec resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| level | [talos.resource.definitions.enums.StorageMDLevel](#talos.resource.definitions.enums.StorageMDLevel) |  | Level is the RAID level. |
+| volume_selector | [google.api.expr.v1alpha1.CheckedExpr](#google.api.expr.v1alpha1.CheckedExpr) |  | VolumeSelector matches the member volumes of the array. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.storage.MDArrayStatusSpec"></a>
+
+### MDArrayStatusSpec
+MDArrayStatusSpec is the spec for MDArrayStatus resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| level | [talos.resource.definitions.enums.StorageMDLevel](#talos.resource.definitions.enums.StorageMDLevel) |  | Level is the RAID level. |
+| device | [string](#string) |  | Device is the stable by-id device path of the array. |
+| members | [string](#string) | repeated | Members is the list of member device paths. |
+| error | [string](#string) |  | Error is the last provisioning error, if any. |
+| status | [talos.resource.definitions.enums.StorageMDArrayPhase](#talos.resource.definitions.enums.StorageMDArrayPhase) |  | Status is the provisioning/sync state of the array. |
+| raid_devices | [int64](#int64) |  | RaidDevices is the observed active RAID device count. |
+| uuid | [string](#string) |  | UUID is the stable MD array UUID. |
+| name | [string](#string) |  | Name is the metadata-stamped array name. |
+| metadata | [string](#string) |  | Metadata is the MD metadata format/version. |
+| array_state | [string](#string) |  | ArrayState is the current sysfs array_state value. |
+| sync_action | [string](#string) |  | SyncAction is the current sysfs sync_action value. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.storage.MDRefreshRequestSpec"></a>
+
+### MDRefreshRequestSpec
+MDRefreshRequestSpec is the spec for MDRefreshRequest.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| request | [int64](#int64) |  |  |
 
 
 
