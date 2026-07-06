@@ -214,6 +214,7 @@ linters:
         - github.com/mdlayher/kobject
         - golang.zx2c4.com/wireguard/wgctrl
         - github.com/mdlayher/ethtool
+        - github.com/secure-io/siv-go
       replace-local: true
       exclude-forbidden: false
       retract-allow-no-explanation: false
