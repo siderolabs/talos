@@ -61,6 +61,8 @@ const (
 )
 
 // TestDeploy verifies that tink can be deployed with a single control-plane node.
+//
+//nolint:gocyclo
 func (suite *TinkSuite) TestDeploy() {
 	if testing.Short() {
 		suite.T().Skip("skipping in short mode")
@@ -227,6 +229,13 @@ func (suite *TinkSuite) TestDeploy() {
 		suite.LogPodLogs(ctx, namespace, ss+"-0")
 		suite.T().Fatalf("failed to bootstrap Talos-in-Kubernetes")
 	}
+
+	suite.T().Cleanup(func() {
+		// dump the TinK pod logs if the test failed, to help with debugging
+		if suite.T().Failed() {
+			suite.LogPodLogs(suite.T().Context(), namespace, ss+"-0")
+		}
+	})
 
 	clusterAccess := &tinkClusterAccess{
 		KubernetesClient: cluster.KubernetesClient{

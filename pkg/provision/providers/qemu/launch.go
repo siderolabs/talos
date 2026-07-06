@@ -379,7 +379,6 @@ func launchVM(config *LaunchConfig) error {
 				"-kernel", config.UKIPath,
 				"-append", config.KernelArgs,
 			)
-			sdStubExtraCmdline += config.sdStubExtraCmdlineConfig
 		case config.KernelImagePath != "":
 			args = append(
 				args,
@@ -387,8 +386,16 @@ func launchVM(config *LaunchConfig) error {
 				"-initrd", config.InitrdPath,
 				"-append", config.KernelArgs,
 			)
-			sdStubExtraCmdline += config.sdStubExtraCmdlineConfig
 		}
+	}
+
+	if (config.UKIPath != "" || config.KernelImagePath != "") && config.USBPath == "" && config.ISOPath == "" {
+		// inject talos.config= into the boot, even if the disk is bootable,
+		// as the tests might wipe just STATE partition relying on Talos being able to
+		// re-download the config on boot
+		//
+		// but, don't activate this on USB/ISO boot options
+		sdStubExtraCmdline += config.sdStubExtraCmdlineConfig
 	}
 
 	if !config.SkipInjectingExtraCmdline {

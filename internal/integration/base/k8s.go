@@ -658,6 +658,8 @@ func (k8sSuite *K8sSuite) LogPodLogs(ctx context.Context, namespace, podName str
 	readCloser, err := req.Stream(ctx)
 	if err != nil {
 		k8sSuite.T().Logf("failed to get pod logs: %s", err)
+
+		return
 	}
 
 	defer readCloser.Close() //nolint:errcheck
