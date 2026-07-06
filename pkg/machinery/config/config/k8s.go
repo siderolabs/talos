@@ -100,6 +100,8 @@ type K8sNetworkConfig interface {
 	PodCIDRs() []netip.Prefix
 	ServiceCIDRs() []netip.Prefix
 	DNSDomain() string
+	NodeCIDRMaskSizeIPv4() int
+	NodeCIDRMaskSizeIPv6() int
 }
 
 // K8sFlannelCNIConfig defines the configuration options for the Flannel CNI in Kubernetes.

@@ -203,7 +203,7 @@ func (c *ClusterConfig) PodCIDRs() []netip.Prefix {
 	case c.ClusterNetwork == nil:
 		fallthrough
 	case len(c.ClusterNetwork.PodSubnet) == 0:
-		subnets = []string{constants.DefaultIPv4PodNet}
+		subnets = []string{constants.DefaultIPv4PodCIDR}
 	default:
 		subnets = c.ClusterNetwork.PodSubnet
 	}
@@ -223,7 +223,7 @@ func (c *ClusterConfig) ServiceCIDRs() []netip.Prefix {
 	case c.ClusterNetwork == nil:
 		fallthrough
 	case len(c.ClusterNetwork.ServiceSubnet) == 0:
-		subnets = []string{constants.DefaultIPv4ServiceNet}
+		subnets = []string{constants.DefaultIPv4ServiceCIDR}
 	default:
 		subnets = c.ClusterNetwork.ServiceSubnet
 	}
@@ -242,6 +242,20 @@ func (c *ClusterConfig) DNSDomain() string {
 	}
 
 	return c.ClusterNetwork.DNSDomain
+}
+
+// NodeCIDRMaskSizeIPv4 implements the config.K8sNetworkConfig interface.
+//
+// The legacy v1alpha1 config has no per-node CIDR mask size setting, so the default is always used.
+func (c *ClusterConfig) NodeCIDRMaskSizeIPv4() int {
+	return constants.DefaultNodeCIDRMaskSizeIPv4
+}
+
+// NodeCIDRMaskSizeIPv6 implements the config.K8sNetworkConfig interface.
+//
+// The legacy v1alpha1 config has no per-node CIDR mask size setting, so the default is always used.
+func (c *ClusterConfig) NodeCIDRMaskSizeIPv6() int {
+	return constants.DefaultNodeCIDRMaskSizeIPv6
 }
 
 // Discovery implements the config.Cluster interface.

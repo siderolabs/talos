@@ -110,7 +110,7 @@ func (s *Service) ContainerRun(srv grpc.BidiStreamingServer[machine.DebugContain
 	}
 
 	defer func() {
-		cg.Delete() // nolint: errcheck
+		cg.Delete() //nolint: errcheck
 	}()
 
 	ctr, err := createDebugContainer(ctx, c8dClient, containerID, img, spec, cgroupPath)

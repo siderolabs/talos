@@ -116,6 +116,8 @@ message ControllerManagerConfigSpec {
   Resources resources = 9;
   map<string, ArgValues> extra_args = 10;
   repeated string args = 11;
+  int64 node_cidr_mask_size_i_pv4 = 12;
+  int64 node_cidr_mask_size_i_pv6 = 13;
 }
 
 // EndpointSpec describes a list of endpoints to connect to.

@@ -2076,6 +2076,24 @@
           "description": "The service subnet (CIDR), this can be a single value or two values for dual-stack clusters.\n",
           "markdownDescription": "The service subnet (CIDR), this can be a single value or two values for dual-stack clusters.",
           "x-intellij-html-description": "\u003cp\u003eThe service subnet (CIDR), this can be a single value or two values for dual-stack clusters.\u003c/p\u003e\n"
+        },
+        "nodeCIDRMaskSizeIPv4": {
+          "type": "integer",
+          "maximum": 32,
+          "minimum": 1,
+          "title": "nodeCIDRMaskSizeIPv4",
+          "description": "The IPv4 per-node pod CIDR mask size, i.e. the size of the pod CIDR allocated to each node, from the IPv4 pod subnet.\nThe default is 24.\nMust be between 1 and 32.\n",
+          "markdownDescription": "The IPv4 per-node pod CIDR mask size, i.e. the size of the pod CIDR allocated to each node, from the IPv4 pod subnet.\nThe default is `24`.\nMust be between 1 and 32.",
+          "x-intellij-html-description": "\u003cp\u003eThe IPv4 per-node pod CIDR mask size, i.e. the size of the pod CIDR allocated to each node, from the IPv4 pod subnet.\nThe default is \u003ccode\u003e24\u003c/code\u003e.\nMust be between 1 and 32.\u003c/p\u003e\n"
+        },
+        "nodeCIDRMaskSizeIPv6": {
+          "type": "integer",
+          "maximum": 128,
+          "minimum": 1,
+          "title": "nodeCIDRMaskSizeIPv6",
+          "description": "The IPv6 per-node pod CIDR mask size, i.e. the size of the pod CIDR allocated to each node, from the IPv6 pod subnet.\nThe default is 64.\nMust be between 1 and 128.\n",
+          "markdownDescription": "The IPv6 per-node pod CIDR mask size, i.e. the size of the pod CIDR allocated to each node, from the IPv6 pod subnet.\nThe default is `64`.\nMust be between 1 and 128.",
+          "x-intellij-html-description": "\u003cp\u003eThe IPv6 per-node pod CIDR mask size, i.e. the size of the pod CIDR allocated to each node, from the IPv6 pod subnet.\nThe default is \u003ccode\u003e64\u003c/code\u003e.\nMust be between 1 and 128.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

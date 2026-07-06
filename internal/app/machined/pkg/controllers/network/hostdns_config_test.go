@@ -62,7 +62,7 @@ func (suite *HostDNSConfigSuite) TestLegacyConfigEnabled() {
 						Endpoint: &v1alpha1.Endpoint{URL: u},
 					},
 					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
-						PodSubnet: []string{constants.DefaultIPv4PodNet},
+						PodSubnet: []string{constants.DefaultIPv4PodCIDR},
 					},
 				},
 			},
@@ -109,7 +109,7 @@ func (suite *HostDNSConfigSuite) TestLegacyConfigForwardKubeDNSIPv4() {
 						Endpoint: &v1alpha1.Endpoint{URL: u},
 					},
 					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
-						PodSubnet: []string{constants.DefaultIPv4PodNet, constants.DefaultIPv6PodNet},
+						PodSubnet: []string{constants.DefaultIPv4PodCIDR, constants.DefaultIPv6PodCIDR},
 					},
 				},
 			},
@@ -184,7 +184,7 @@ func (suite *HostDNSConfigSuite) TestLegacyConfigForwardKubeDNSIPv6Only() {
 						Endpoint: &v1alpha1.Endpoint{URL: u},
 					},
 					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
-						PodSubnet: []string{constants.DefaultIPv6PodNet},
+						PodSubnet: []string{constants.DefaultIPv6PodCIDR},
 					},
 				},
 			},
@@ -226,7 +226,7 @@ func (suite *HostDNSConfigSuite) TestResolverConfigDocument() {
 		MachineConfig: &v1alpha1.MachineConfig{},
 		ClusterConfig: &v1alpha1.ClusterConfig{
 			ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
-				PodSubnet: []string{constants.DefaultIPv4PodNet},
+				PodSubnet: []string{constants.DefaultIPv4PodCIDR},
 			},
 		},
 	}

@@ -67,10 +67,10 @@ func (suite *K8sControlPlaneSuite) TestReconcileDefaults() {
 
 	cn := k8scfg.NewKubeNetworkConfigV1Alpha1()
 	cn.NetworkPodSubnets = []meta.Prefix{
-		{Prefix: netip.MustParsePrefix(constants.DefaultIPv4PodNet)},
+		{Prefix: netip.MustParsePrefix(constants.DefaultIPv4PodCIDR)},
 	}
 	cn.NetworkServiceSubnets = []meta.Prefix{
-		{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceNet)},
+		{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceCIDR)},
 	}
 
 	ctr, err := container.New(v1alpha1Cfg, cn)
@@ -436,8 +436,8 @@ func (suite *K8sControlPlaneSuite) TestReconcileIPv6() {
 						},
 					},
 					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
-						PodSubnet:     []string{constants.DefaultIPv6PodNet},
-						ServiceSubnet: []string{constants.DefaultIPv6ServiceNet},
+						PodSubnet:     []string{constants.DefaultIPv6PodCIDR},
+						ServiceSubnet: []string{constants.DefaultIPv6ServiceCIDR},
 					},
 				},
 			},
@@ -473,8 +473,8 @@ func (suite *K8sControlPlaneSuite) TestReconcileDualStack() {
 						},
 					},
 					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
-						PodSubnet:     []string{constants.DefaultIPv4PodNet, constants.DefaultIPv6PodNet},
-						ServiceSubnet: []string{constants.DefaultIPv4ServiceNet, constants.DefaultIPv6ServiceNet},
+						PodSubnet:     []string{constants.DefaultIPv4PodCIDR, constants.DefaultIPv6PodCIDR},
+						ServiceSubnet: []string{constants.DefaultIPv4ServiceCIDR, constants.DefaultIPv6ServiceCIDR},
 					},
 				},
 			},

@@ -849,6 +849,8 @@ type ControllerManagerConfigSpec struct {
 	Resources            *Resources             `protobuf:"bytes,9,opt,name=resources,proto3" json:"resources,omitempty"`
 	ExtraArgs            map[string]*ArgValues  `protobuf:"bytes,10,rep,name=extra_args,json=extraArgs,proto3" json:"extra_args,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	Args                 []string               `protobuf:"bytes,11,rep,name=args,proto3" json:"args,omitempty"`
+	NodeCidrMaskSizeIPv4 int64                  `protobuf:"varint,12,opt,name=node_cidr_mask_size_i_pv4,json=nodeCidrMaskSizeIPv4,proto3" json:"node_cidr_mask_size_i_pv4,omitempty"`
+	NodeCidrMaskSizeIPv6 int64                  `protobuf:"varint,13,opt,name=node_cidr_mask_size_i_pv6,json=nodeCidrMaskSizeIPv6,proto3" json:"node_cidr_mask_size_i_pv6,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -951,6 +953,20 @@ func (x *ControllerManagerConfigSpec) GetArgs() []string {
 		return x.Args
 	}
 	return nil
+}
+
+func (x *ControllerManagerConfigSpec) GetNodeCidrMaskSizeIPv4() int64 {
+	if x != nil {
+		return x.NodeCidrMaskSizeIPv4
+	}
+	return 0
+}
+
+func (x *ControllerManagerConfigSpec) GetNodeCidrMaskSizeIPv6() int64 {
+	if x != nil {
+		return x.NodeCidrMaskSizeIPv6
+	}
+	return 0
 }
 
 // EndpointSpec describes a list of endpoints to connect to.
@@ -2705,7 +2721,7 @@ const file_resource_definitions_k8s_k8s_proto_rawDesc = "" +
 	"\x15proxy_config_checksum\x18\x1d \x01(\tR\x13proxyConfigChecksum\"B\n" +
 	"\x10ConfigStatusSpec\x12\x14\n" +
 	"\x05ready\x18\x01 \x01(\bR\x05ready\x12\x18\n" +
-	"\aversion\x18\x02 \x01(\tR\aversion\"\x91\x06\n" +
+	"\aversion\x18\x02 \x01(\tR\aversion\"\x83\a\n" +
 	"\x1bControllerManagerConfigSpec\x12\x18\n" +
 	"\aenabled\x18\x01 \x01(\bR\aenabled\x12\x14\n" +
 	"\x05image\x18\x02 \x01(\tR\x05image\x12%\n" +
@@ -2719,7 +2735,9 @@ const file_resource_definitions_k8s_k8s_proto_rawDesc = "" +
 	"\n" +
 	"extra_args\x18\n" +
 	" \x03(\v2J.talos.resource.definitions.k8s.ControllerManagerConfigSpec.ExtraArgsEntryR\textraArgs\x12\x12\n" +
-	"\x04args\x18\v \x03(\tR\x04args\x1aG\n" +
+	"\x04args\x18\v \x03(\tR\x04args\x127\n" +
+	"\x19node_cidr_mask_size_i_pv4\x18\f \x01(\x03R\x14nodeCidrMaskSizeIPv4\x127\n" +
+	"\x19node_cidr_mask_size_i_pv6\x18\r \x01(\x03R\x14nodeCidrMaskSizeIPv6\x1aG\n" +
 	"\x19EnvironmentVariablesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1ag\n" +

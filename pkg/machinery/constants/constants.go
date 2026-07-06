@@ -907,17 +907,34 @@ const (
 	// CNISELinuxLabel is the SELinux label to be set for CNI configuration overlay mount.
 	CNISELinuxLabel = "system_u:object_r:cni_conf_t:s0"
 
-	// DefaultIPv4PodNet is the IPv4 network to be used for kubernetes Pods.
-	DefaultIPv4PodNet = "10.244.0.0/16"
+	// DefaultIPv4PodCIDR is the IPv4 network to be used for kubernetes Pods.
+	DefaultIPv4PodCIDR = "10.244.0.0/16"
 
-	// DefaultIPv4ServiceNet is the IPv4 network to be used for kubernetes Services.
-	DefaultIPv4ServiceNet = "10.96.0.0/12"
+	// DefaultIPv4ServiceCIDR is the IPv4 network to be used for kubernetes Services.
+	DefaultIPv4ServiceCIDR = "10.96.0.0/12"
 
-	// DefaultIPv6PodNet is the IPv6 network to be used for kubernetes Pods.
-	DefaultIPv6PodNet = "fc00:db8:10::/56"
+	// DefaultIPv6PodCIDR is the IPv6 network to be used for kubernetes Pods.
+	DefaultIPv6PodCIDR = "fc00:db8:10::/56"
 
-	// DefaultIPv6ServiceNet is the IPv6 network to be used for kubernetes Services.
-	DefaultIPv6ServiceNet = "fc00:db8:20::/112"
+	// DefaultIPv6ServiceCIDR is the IPv6 network to be used for kubernetes Services.
+	DefaultIPv6ServiceCIDR = "fc00:db8:20::/112"
+
+	// MaxHostBitsForServiceSubnet is the maximum number of host bits allowed in a service subnet
+	// (i.e. the service subnet may hold at most 2^MaxHostBitsForServiceSubnet addresses).
+	MaxHostBitsForServiceSubnet = 20
+
+	// PodSubnetNodeMaskMaxDiff is the maximum allowed difference between the per-node pod CIDR mask
+	// size and the pod subnet mask size.
+	//
+	// It bounds the size of the per-node pod CIDR allocation bitmap, which is kept uncompressed in
+	// memory; https://github.com/kubernetes/kubernetes/issues/44918
+	PodSubnetNodeMaskMaxDiff = 16
+
+	// DefaultNodeCIDRMaskSizeIPv4 is the default IPv4 per-node pod CIDR mask size.
+	DefaultNodeCIDRMaskSizeIPv4 = 24
+
+	// DefaultNodeCIDRMaskSizeIPv6 is the default IPv6 per-node pod CIDR mask size.
+	DefaultNodeCIDRMaskSizeIPv6 = 64
 
 	// DefaultDNSDomain is the default DNS domain.
 	DefaultDNSDomain = "cluster.local"

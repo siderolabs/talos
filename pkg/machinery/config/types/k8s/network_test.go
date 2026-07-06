@@ -29,10 +29,10 @@ func TestKubeNetworkConfigMarshalStability(t *testing.T) {
 	cfg := k8s.NewKubeNetworkConfigV1Alpha1()
 	cfg.NetworkDNSDomain = constants.DefaultDNSDomain
 	cfg.NetworkPodSubnets = []meta.Prefix{
-		{Prefix: netip.MustParsePrefix(constants.DefaultIPv4PodNet)},
+		{Prefix: netip.MustParsePrefix(constants.DefaultIPv4PodCIDR)},
 	}
 	cfg.NetworkServiceSubnets = []meta.Prefix{
-		{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceNet)},
+		{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceCIDR)},
 	}
 
 	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
@@ -59,10 +59,10 @@ func TestKubeNetworkConfigUnmarshal(t *testing.T) {
 		},
 		NetworkDNSDomain: constants.DefaultDNSDomain,
 		NetworkPodSubnets: []meta.Prefix{
-			{Prefix: netip.MustParsePrefix(constants.DefaultIPv4PodNet)},
+			{Prefix: netip.MustParsePrefix(constants.DefaultIPv4PodCIDR)},
 		},
 		NetworkServiceSubnets: []meta.Prefix{
-			{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceNet)},
+			{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceCIDR)},
 		},
 	}, docs[0])
 }
@@ -81,7 +81,7 @@ func TestKubeNetworkConfigValidate(t *testing.T) {
 			name: "empty",
 			cfg:  k8s.NewKubeNetworkConfigV1Alpha1,
 
-			expectedError: "pod subnets: at least one subnets must be specified\nservice subnets: at least one subnets must be specified",
+			expectedError: "pod subnets: at least one subnet must be specified\nservice subnets: at least one subnet must be specified",
 		},
 		{
 			name: "double v4",
@@ -89,12 +89,12 @@ func TestKubeNetworkConfigValidate(t *testing.T) {
 				cfg := k8s.NewKubeNetworkConfigV1Alpha1()
 				cfg.NetworkDNSDomain = constants.DefaultDNSDomain
 				cfg.NetworkPodSubnets = []meta.Prefix{
-					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4PodNet)},
-					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4PodNet)},
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4PodCIDR)},
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4PodCIDR)},
 				}
 				cfg.NetworkServiceSubnets = []meta.Prefix{
-					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceNet)},
-					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceNet)},
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceCIDR)},
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceCIDR)},
 				}
 
 				return cfg
@@ -109,11 +109,11 @@ func TestKubeNetworkConfigValidate(t *testing.T) {
 				cfg := k8s.NewKubeNetworkConfigV1Alpha1()
 				cfg.NetworkDNSDomain = constants.DefaultDNSDomain
 				cfg.NetworkPodSubnets = []meta.Prefix{
-					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4PodNet)},
-					{Prefix: netip.MustParsePrefix(constants.DefaultIPv6PodNet)},
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4PodCIDR)},
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv6PodCIDR)},
 				}
 				cfg.NetworkServiceSubnets = []meta.Prefix{
-					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceNet)},
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceCIDR)},
 				}
 
 				return cfg
@@ -130,7 +130,7 @@ func TestKubeNetworkConfigValidate(t *testing.T) {
 					{Prefix: netip.MustParsePrefix("192.168.1.1/24")},
 				}
 				cfg.NetworkServiceSubnets = []meta.Prefix{
-					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceNet)},
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceCIDR)},
 				}
 
 				return cfg
@@ -144,10 +144,10 @@ func TestKubeNetworkConfigValidate(t *testing.T) {
 				cfg := k8s.NewKubeNetworkConfigV1Alpha1()
 				cfg.NetworkDNSDomain = constants.DefaultDNSDomain
 				cfg.NetworkPodSubnets = []meta.Prefix{
-					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4PodNet)},
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4PodCIDR)},
 				}
 				cfg.NetworkServiceSubnets = []meta.Prefix{
-					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceNet)},
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceCIDR)},
 				}
 
 				return cfg
@@ -159,10 +159,10 @@ func TestKubeNetworkConfigValidate(t *testing.T) {
 				cfg := k8s.NewKubeNetworkConfigV1Alpha1()
 				cfg.NetworkDNSDomain = constants.DefaultDNSDomain
 				cfg.NetworkPodSubnets = []meta.Prefix{
-					{Prefix: netip.MustParsePrefix(constants.DefaultIPv6PodNet)},
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv6PodCIDR)},
 				}
 				cfg.NetworkServiceSubnets = []meta.Prefix{
-					{Prefix: netip.MustParsePrefix(constants.DefaultIPv6ServiceNet)},
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv6ServiceCIDR)},
 				}
 
 				return cfg
@@ -174,13 +174,291 @@ func TestKubeNetworkConfigValidate(t *testing.T) {
 				cfg := k8s.NewKubeNetworkConfigV1Alpha1()
 				cfg.NetworkDNSDomain = constants.DefaultDNSDomain
 				cfg.NetworkPodSubnets = []meta.Prefix{
-					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4PodNet)},
-					{Prefix: netip.MustParsePrefix(constants.DefaultIPv6PodNet)},
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4PodCIDR)},
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv6PodCIDR)},
 				}
 				cfg.NetworkServiceSubnets = []meta.Prefix{
-					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceNet)},
-					{Prefix: netip.MustParsePrefix(constants.DefaultIPv6ServiceNet)},
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceCIDR)},
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv6ServiceCIDR)},
 				}
+
+				return cfg
+			},
+		},
+		{
+			name: "service subnet too large",
+			cfg: func() *k8s.KubeNetworkConfigV1Alpha1 {
+				cfg := k8s.NewKubeNetworkConfigV1Alpha1()
+				cfg.NetworkDNSDomain = constants.DefaultDNSDomain
+				cfg.NetworkPodSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4PodCIDR)},
+				}
+				cfg.NetworkServiceSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix("10.0.0.0/10")},
+				}
+
+				return cfg
+			},
+
+			expectedError: "service subnets: invalid subnet: 10.0.0.0/10 is too large, it must be at least /12 (at most 20 host identifier bits)",
+		},
+		{
+			name: "pod subnet too large for node mask v4",
+			cfg: func() *k8s.KubeNetworkConfigV1Alpha1 {
+				cfg := k8s.NewKubeNetworkConfigV1Alpha1()
+				cfg.NetworkDNSDomain = constants.DefaultDNSDomain
+				cfg.NetworkPodSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix("2.0.0.0/7")},
+				}
+				cfg.NetworkServiceSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceCIDR)},
+				}
+
+				return cfg
+			},
+
+			expectedError: "pod subnets: invalid subnet: 2.0.0.0/7 is too large for the per-node pod CIDR mask size /24, the difference must be at most 16 bits",
+		},
+		{
+			name: "pod subnet too large for node mask v6",
+			cfg: func() *k8s.KubeNetworkConfigV1Alpha1 {
+				cfg := k8s.NewKubeNetworkConfigV1Alpha1()
+				cfg.NetworkDNSDomain = constants.DefaultDNSDomain
+				cfg.NetworkPodSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix("fc00:db8::/40")},
+				}
+				cfg.NetworkServiceSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv6ServiceCIDR)},
+				}
+
+				return cfg
+			},
+
+			expectedError: "pod subnets: invalid subnet: fc00:db8::/40 is too large for the per-node pod CIDR mask size /64, the difference must be at most 16 bits",
+		},
+		{
+			name: "pod subnet smaller than node mask",
+			cfg: func() *k8s.KubeNetworkConfigV1Alpha1 {
+				cfg := k8s.NewKubeNetworkConfigV1Alpha1()
+				cfg.NetworkDNSDomain = constants.DefaultDNSDomain
+				cfg.NetworkPodSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix("10.244.0.0/28")},
+				}
+				cfg.NetworkServiceSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceCIDR)},
+				}
+
+				return cfg
+			},
+
+			expectedError: "pod subnets: invalid subnet: 10.244.0.0/28 is smaller than the per-node pod CIDR mask size /24",
+		},
+		{
+			name: "custom node mask makes pod subnet valid",
+			cfg: func() *k8s.KubeNetworkConfigV1Alpha1 {
+				cfg := k8s.NewKubeNetworkConfigV1Alpha1()
+				cfg.NetworkDNSDomain = constants.DefaultDNSDomain
+				cfg.NetworkPodSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix("2.0.0.0/7")},
+				}
+				cfg.NetworkServiceSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceCIDR)},
+				}
+				cfg.NetworkNodeCIDRMaskSizeIPv4 = 20
+
+				return cfg
+			},
+		},
+		{
+			name: "custom node mask makes pod subnet invalid v6",
+			cfg: func() *k8s.KubeNetworkConfigV1Alpha1 {
+				cfg := k8s.NewKubeNetworkConfigV1Alpha1()
+				cfg.NetworkDNSDomain = constants.DefaultDNSDomain
+				cfg.NetworkPodSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv6PodCIDR)},
+				}
+				cfg.NetworkServiceSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv6ServiceCIDR)},
+				}
+				cfg.NetworkNodeCIDRMaskSizeIPv6 = 80
+
+				return cfg
+			},
+
+			expectedError: "pod subnets: invalid subnet: fc00:db8:10::/56 is too large for the per-node pod CIDR mask size /80, the difference must be at most 16 bits",
+		},
+		{
+			name: "node mask ipv4 negative",
+			cfg: func() *k8s.KubeNetworkConfigV1Alpha1 {
+				cfg := k8s.NewKubeNetworkConfigV1Alpha1()
+				cfg.NetworkDNSDomain = constants.DefaultDNSDomain
+				cfg.NetworkPodSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4PodCIDR)},
+				}
+				cfg.NetworkServiceSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceCIDR)},
+				}
+				cfg.NetworkNodeCIDRMaskSizeIPv4 = -1
+
+				return cfg
+			},
+
+			expectedError: "nodeCIDRMaskSizeIPv4 must be between 1 and 32",
+		},
+		{
+			name: "node mask ipv4 too large",
+			cfg: func() *k8s.KubeNetworkConfigV1Alpha1 {
+				cfg := k8s.NewKubeNetworkConfigV1Alpha1()
+				cfg.NetworkDNSDomain = constants.DefaultDNSDomain
+				cfg.NetworkPodSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4PodCIDR)},
+				}
+				cfg.NetworkServiceSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceCIDR)},
+				}
+				cfg.NetworkNodeCIDRMaskSizeIPv4 = 33
+
+				return cfg
+			},
+
+			expectedError: "nodeCIDRMaskSizeIPv4 must be between 1 and 32",
+		},
+		{
+			name: "node mask ipv6 negative",
+			cfg: func() *k8s.KubeNetworkConfigV1Alpha1 {
+				cfg := k8s.NewKubeNetworkConfigV1Alpha1()
+				cfg.NetworkDNSDomain = constants.DefaultDNSDomain
+				cfg.NetworkPodSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv6PodCIDR)},
+				}
+				cfg.NetworkServiceSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv6ServiceCIDR)},
+				}
+				cfg.NetworkNodeCIDRMaskSizeIPv6 = -5
+
+				return cfg
+			},
+
+			expectedError: "nodeCIDRMaskSizeIPv6 must be between 1 and 128",
+		},
+		{
+			name: "node mask ipv6 too large",
+			cfg: func() *k8s.KubeNetworkConfigV1Alpha1 {
+				cfg := k8s.NewKubeNetworkConfigV1Alpha1()
+				cfg.NetworkDNSDomain = constants.DefaultDNSDomain
+				cfg.NetworkPodSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv6PodCIDR)},
+				}
+				cfg.NetworkServiceSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv6ServiceCIDR)},
+				}
+				cfg.NetworkNodeCIDRMaskSizeIPv6 = 129
+
+				return cfg
+			},
+
+			expectedError: "nodeCIDRMaskSizeIPv6 must be between 1 and 128",
+		},
+		{
+			name: "node mask ipv4 and ipv6 both out of range",
+			cfg: func() *k8s.KubeNetworkConfigV1Alpha1 {
+				cfg := k8s.NewKubeNetworkConfigV1Alpha1()
+				cfg.NetworkDNSDomain = constants.DefaultDNSDomain
+				cfg.NetworkPodSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4PodCIDR)},
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv6PodCIDR)},
+				}
+				cfg.NetworkServiceSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceCIDR)},
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv6ServiceCIDR)},
+				}
+				cfg.NetworkNodeCIDRMaskSizeIPv4 = -1
+				cfg.NetworkNodeCIDRMaskSizeIPv6 = 200
+
+				return cfg
+			},
+
+			expectedError: "nodeCIDRMaskSizeIPv4 must be between 1 and 32\nnodeCIDRMaskSizeIPv6 must be between 1 and 128",
+		},
+		{
+			name: "node mask ipv4 boundary valid at 1",
+			cfg: func() *k8s.KubeNetworkConfigV1Alpha1 {
+				cfg := k8s.NewKubeNetworkConfigV1Alpha1()
+				cfg.NetworkDNSDomain = constants.DefaultDNSDomain
+				cfg.NetworkPodSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix("0.0.0.0/1")},
+				}
+				cfg.NetworkServiceSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceCIDR)},
+				}
+				cfg.NetworkNodeCIDRMaskSizeIPv4 = 1
+
+				return cfg
+			},
+		},
+		{
+			name: "node mask ipv4 boundary valid at 32",
+			cfg: func() *k8s.KubeNetworkConfigV1Alpha1 {
+				cfg := k8s.NewKubeNetworkConfigV1Alpha1()
+				cfg.NetworkDNSDomain = constants.DefaultDNSDomain
+				cfg.NetworkPodSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4PodCIDR)},
+				}
+				cfg.NetworkServiceSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceCIDR)},
+				}
+				cfg.NetworkNodeCIDRMaskSizeIPv4 = 32
+
+				return cfg
+			},
+		},
+		{
+			name: "node mask ipv6 boundary valid at 1",
+			cfg: func() *k8s.KubeNetworkConfigV1Alpha1 {
+				cfg := k8s.NewKubeNetworkConfigV1Alpha1()
+				cfg.NetworkDNSDomain = constants.DefaultDNSDomain
+				cfg.NetworkPodSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix("::/1")},
+				}
+				cfg.NetworkServiceSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv6ServiceCIDR)},
+				}
+				cfg.NetworkNodeCIDRMaskSizeIPv6 = 1
+
+				return cfg
+			},
+		},
+		{
+			name: "node mask ipv6 boundary valid at 128",
+			cfg: func() *k8s.KubeNetworkConfigV1Alpha1 {
+				cfg := k8s.NewKubeNetworkConfigV1Alpha1()
+				cfg.NetworkDNSDomain = constants.DefaultDNSDomain
+				cfg.NetworkPodSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix("fc00:db8:10::/120")},
+				}
+				cfg.NetworkServiceSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv6ServiceCIDR)},
+				}
+				cfg.NetworkNodeCIDRMaskSizeIPv6 = 128
+
+				return cfg
+			},
+		},
+		{
+			name: "node mask ipv4 and ipv6 explicitly unset",
+			cfg: func() *k8s.KubeNetworkConfigV1Alpha1 {
+				cfg := k8s.NewKubeNetworkConfigV1Alpha1()
+				cfg.NetworkDNSDomain = constants.DefaultDNSDomain
+				cfg.NetworkPodSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4PodCIDR)},
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv6PodCIDR)},
+				}
+				cfg.NetworkServiceSubnets = []meta.Prefix{
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceCIDR)},
+					{Prefix: netip.MustParsePrefix(constants.DefaultIPv6ServiceCIDR)},
+				}
+				cfg.NetworkNodeCIDRMaskSizeIPv4 = 0
+				cfg.NetworkNodeCIDRMaskSizeIPv6 = 0
 
 				return cfg
 			},
@@ -224,7 +502,7 @@ func TestKubeNetworkConfigV1Alpha1Validate(t *testing.T) {
 				},
 			},
 
-			expectedError: "cluster network config in v1alpha1 config (.machine.cluster.network) can't be used with KubeNetworkConfig document, please remove it to avoid conflicts",
+			expectedError: "cluster network config is already set in the v1alpha1 config (.machine.cluster.network). Please remove it and use only the new KubeNetworkConfig document to avoid conflicts",
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {

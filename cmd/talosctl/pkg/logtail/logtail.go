@@ -43,7 +43,7 @@ func waitForFile(ctx context.Context, path string) (*os.File, error) {
 // polling for new output until ctx is done, reopening the file if it is
 // recreated or truncated — i.e. `tail -F` behavior.
 //
-// nolint:gocyclo
+//nolint:gocyclo
 func Tail(ctx context.Context, path string, follow bool, emit EmitFunc) {
 	f, err := os.Open(path)
 	if err != nil {
@@ -60,7 +60,7 @@ func Tail(ctx context.Context, path string, follow bool, emit EmitFunc) {
 		}
 	}
 
-	defer func() { f.Close() }() // nolint:errcheck
+	defer func() { f.Close() }() //nolint:errcheck
 
 	var (
 		partial []byte
@@ -144,7 +144,7 @@ func reopenIfRotated(f *os.File, path string, offset int64) (*os.File, bool) {
 		return f, false
 	}
 
-	defer func() { f.Close() }() // nolint:errcheck
+	defer func() { f.Close() }() //nolint:errcheck
 
 	return nf, true
 }

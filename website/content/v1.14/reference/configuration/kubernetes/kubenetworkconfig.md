@@ -57,6 +57,8 @@ serviceSubnets:
 |`dnsDomain` |string |The domain used by Kubernetes DNS.<br>The default is `cluster.local`  | |
 |`podSubnets` |[]Prefix |The pod subnet (CIDR), this can be a single value or two values for dual-stack clusters.  | |
 |`serviceSubnets` |[]Prefix |The service subnet (CIDR), this can be a single value or two values for dual-stack clusters.  | |
+|`nodeCIDRMaskSizeIPv4` |int |The IPv4 per-node pod CIDR mask size, i.e. the size of the pod CIDR allocated to each node, from the IPv4 pod subnet.<br>The default is `24`.<br>Must be between 1 and 32.  | |
+|`nodeCIDRMaskSizeIPv6` |int |The IPv6 per-node pod CIDR mask size, i.e. the size of the pod CIDR allocated to each node, from the IPv6 pod subnet.<br>The default is `64`.<br>Must be between 1 and 128.  | |
 
 
 

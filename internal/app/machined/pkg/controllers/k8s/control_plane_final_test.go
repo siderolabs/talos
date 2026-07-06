@@ -305,10 +305,11 @@ func (suite *ControlPlaneControllerManagerFinalSuite) TestTransform() {
 		{
 			name: "enabled produces canonical args",
 			input: k8s.ControllerManagerConfigSpec{
-				Enabled:      true,
-				Image:        imagePostRemoval,
-				PodCIDRs:     []string{"10.244.0.0/16"},
-				ServiceCIDRs: []string{"10.96.0.0/12"},
+				Enabled:              true,
+				Image:                imagePostRemoval,
+				PodCIDRs:             []string{"10.244.0.0/16"},
+				ServiceCIDRs:         []string{"10.96.0.0/12"},
+				NodeCIDRMaskSizeIPv4: 24,
 			},
 			expected: k8s.ControllerManagerConfigSpec{
 				Enabled: true,
@@ -327,6 +328,7 @@ func (suite *ControlPlaneControllerManagerFinalSuite) TestTransform() {
 					"--controllers=*",
 					"--kubeconfig=" + kubeconfigPath,
 					"--leader-elect=true",
+					"--node-cidr-mask-size-ipv4=24",
 					"--profiling=false",
 					"--root-ca-file=" + caCrtPath,
 					"--service-account-private-key-file=" + saKeyPath,
@@ -338,13 +340,88 @@ func (suite *ControlPlaneControllerManagerFinalSuite) TestTransform() {
 			},
 		},
 		{
+			name: "custom IPv4 node CIDR mask size flows through",
+			input: k8s.ControllerManagerConfigSpec{
+				Enabled:              true,
+				Image:                imagePostRemoval,
+				PodCIDRs:             []string{"10.244.0.0/16"},
+				ServiceCIDRs:         []string{"10.96.0.0/12"},
+				NodeCIDRMaskSizeIPv4: 25,
+			},
+			expected: k8s.ControllerManagerConfigSpec{
+				Enabled: true,
+				Image:   imagePostRemoval,
+				Args: []string{
+					"/usr/local/bin/kube-controller-manager",
+					"--use-service-account-credentials",
+					"--allocate-node-cidrs=true",
+					"--authentication-kubeconfig=" + kubeconfigPath,
+					"--authorization-kubeconfig=" + kubeconfigPath,
+					"--bind-address=127.0.0.1",
+					"--cluster-cidr=10.244.0.0/16",
+					"--cluster-signing-cert-file=" + caCrtPath,
+					"--cluster-signing-key-file=" + caKeyPath,
+					"--configure-cloud-routes=false",
+					"--controllers=*",
+					"--kubeconfig=" + kubeconfigPath,
+					"--leader-elect=true",
+					"--node-cidr-mask-size-ipv4=25",
+					"--profiling=false",
+					"--root-ca-file=" + caCrtPath,
+					"--service-account-private-key-file=" + saKeyPath,
+					"--service-cluster-ip-range=10.96.0.0/12",
+					"--terminated-pod-gc-threshold=100",
+					"--tls-min-version=VersionTLS13",
+					"--use-service-account-credentials=true",
+				},
+			},
+		},
+		{
+			name: "IPv6-only emits only the IPv6 node CIDR mask size",
+			input: k8s.ControllerManagerConfigSpec{
+				Enabled:              true,
+				Image:                imagePostRemoval,
+				PodCIDRs:             []string{"fd00::/64"},
+				ServiceCIDRs:         []string{"fd00:1::/108"},
+				NodeCIDRMaskSizeIPv6: 64,
+			},
+			expected: k8s.ControllerManagerConfigSpec{
+				Enabled: true,
+				Image:   imagePostRemoval,
+				Args: []string{
+					"/usr/local/bin/kube-controller-manager",
+					"--use-service-account-credentials",
+					"--allocate-node-cidrs=true",
+					"--authentication-kubeconfig=" + kubeconfigPath,
+					"--authorization-kubeconfig=" + kubeconfigPath,
+					"--bind-address=127.0.0.1",
+					"--cluster-cidr=fd00::/64",
+					"--cluster-signing-cert-file=" + caCrtPath,
+					"--cluster-signing-key-file=" + caKeyPath,
+					"--configure-cloud-routes=false",
+					"--controllers=*",
+					"--kubeconfig=" + kubeconfigPath,
+					"--leader-elect=true",
+					"--node-cidr-mask-size-ipv6=64",
+					"--profiling=false",
+					"--root-ca-file=" + caCrtPath,
+					"--service-account-private-key-file=" + saKeyPath,
+					"--service-cluster-ip-range=fd00:1::/108",
+					"--terminated-pod-gc-threshold=100",
+					"--tls-min-version=VersionTLS13",
+					"--use-service-account-credentials=true",
+				},
+			},
+		},
+		{
 			name: "cloud provider keeps --cloud-provider on k8s < 1.33",
 			input: k8s.ControllerManagerConfigSpec{
-				Enabled:       true,
-				Image:         imagePreRemoval,
-				CloudProvider: "external",
-				PodCIDRs:      []string{"10.244.0.0/16"},
-				ServiceCIDRs:  []string{"10.96.0.0/12"},
+				Enabled:              true,
+				Image:                imagePreRemoval,
+				CloudProvider:        "external",
+				PodCIDRs:             []string{"10.244.0.0/16"},
+				ServiceCIDRs:         []string{"10.96.0.0/12"},
+				NodeCIDRMaskSizeIPv4: 24,
 			},
 			expected: k8s.ControllerManagerConfigSpec{
 				Enabled: true,
@@ -364,6 +441,7 @@ func (suite *ControlPlaneControllerManagerFinalSuite) TestTransform() {
 					"--controllers=*",
 					"--kubeconfig=" + kubeconfigPath,
 					"--leader-elect=true",
+					"--node-cidr-mask-size-ipv4=24",
 					"--profiling=false",
 					"--root-ca-file=" + caCrtPath,
 					"--service-account-private-key-file=" + saKeyPath,
@@ -377,11 +455,12 @@ func (suite *ControlPlaneControllerManagerFinalSuite) TestTransform() {
 		{
 			name: "cloud provider dropped on k8s >= 1.33",
 			input: k8s.ControllerManagerConfigSpec{
-				Enabled:       true,
-				Image:         imagePostRemoval,
-				CloudProvider: "external",
-				PodCIDRs:      []string{"10.244.0.0/16"},
-				ServiceCIDRs:  []string{"10.96.0.0/12"},
+				Enabled:              true,
+				Image:                imagePostRemoval,
+				CloudProvider:        "external",
+				PodCIDRs:             []string{"10.244.0.0/16"},
+				ServiceCIDRs:         []string{"10.96.0.0/12"},
+				NodeCIDRMaskSizeIPv4: 24,
 			},
 			expected: k8s.ControllerManagerConfigSpec{
 				Enabled: true,
@@ -400,6 +479,7 @@ func (suite *ControlPlaneControllerManagerFinalSuite) TestTransform() {
 					"--controllers=*",
 					"--kubeconfig=" + kubeconfigPath,
 					"--leader-elect=true",
+					"--node-cidr-mask-size-ipv4=24",
 					"--profiling=false",
 					"--root-ca-file=" + caCrtPath,
 					"--service-account-private-key-file=" + saKeyPath,
@@ -413,10 +493,12 @@ func (suite *ControlPlaneControllerManagerFinalSuite) TestTransform() {
 		{
 			name: "multiple pod and service CIDRs joined; extra controllers merged additively",
 			input: k8s.ControllerManagerConfigSpec{
-				Enabled:      true,
-				Image:        imagePostRemoval,
-				PodCIDRs:     []string{"10.244.0.0/16", "fd00::/64"},
-				ServiceCIDRs: []string{"10.96.0.0/12", "fd00:1::/108"},
+				Enabled:              true,
+				Image:                imagePostRemoval,
+				PodCIDRs:             []string{"10.244.0.0/16", "fd00::/64"},
+				ServiceCIDRs:         []string{"10.96.0.0/12", "fd00:1::/108"},
+				NodeCIDRMaskSizeIPv4: 24,
+				NodeCIDRMaskSizeIPv6: 64,
 				ExtraArgs: map[string]k8s.ArgValues{
 					"controllers": {Values: []string{"-bootstrapsigner", "-tokencleaner"}},
 					"v":           {Values: []string{"4"}},
@@ -439,6 +521,8 @@ func (suite *ControlPlaneControllerManagerFinalSuite) TestTransform() {
 					"--controllers=*,-bootstrapsigner,-tokencleaner",
 					"--kubeconfig=" + kubeconfigPath,
 					"--leader-elect=true",
+					"--node-cidr-mask-size-ipv4=24",
+					"--node-cidr-mask-size-ipv6=64",
 					"--profiling=false",
 					"--root-ca-file=" + caCrtPath,
 					"--service-account-private-key-file=" + saKeyPath,
@@ -453,10 +537,11 @@ func (suite *ControlPlaneControllerManagerFinalSuite) TestTransform() {
 		{
 			name: "extra args override defaults; pass-through fields preserved",
 			input: k8s.ControllerManagerConfigSpec{
-				Enabled:      true,
-				Image:        imagePostRemoval,
-				PodCIDRs:     []string{"10.244.0.0/16"},
-				ServiceCIDRs: []string{"10.96.0.0/12"},
+				Enabled:              true,
+				Image:                imagePostRemoval,
+				PodCIDRs:             []string{"10.244.0.0/16"},
+				ServiceCIDRs:         []string{"10.96.0.0/12"},
+				NodeCIDRMaskSizeIPv4: 24,
 				ExtraArgs: map[string]k8s.ArgValues{
 					"bind-address":                {Values: []string{"0.0.0.0"}},
 					"terminated-pod-gc-threshold": {Values: []string{"50"}},
@@ -499,6 +584,7 @@ func (suite *ControlPlaneControllerManagerFinalSuite) TestTransform() {
 					"--controllers=*",
 					"--kubeconfig=" + kubeconfigPath,
 					"--leader-elect=true",
+					"--node-cidr-mask-size-ipv4=24",
 					"--profiling=false",
 					"--root-ca-file=" + caCrtPath,
 					"--service-account-private-key-file=" + saKeyPath,
@@ -565,7 +651,7 @@ func setK8sRoot(suite *ControlPlaneAPIServerFinalSuite, spec secrets.KubernetesR
 	}
 }
 
-// nolint:gocyclo
+//nolint:gocyclo
 func (suite *ControlPlaneAPIServerFinalSuite) TestTransform() {
 	secretsDir := constants.KubernetesAPIServerSecretsDir
 	configDir := constants.KubernetesAPIServerConfigDir

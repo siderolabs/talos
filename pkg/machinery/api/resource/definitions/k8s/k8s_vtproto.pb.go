@@ -904,6 +904,16 @@ func (m *ControllerManagerConfigSpec) MarshalToSizedBufferVT(dAtA []byte) (int, 
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.NodeCidrMaskSizeIPv6 != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.NodeCidrMaskSizeIPv6))
+		i--
+		dAtA[i] = 0x68
+	}
+	if m.NodeCidrMaskSizeIPv4 != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.NodeCidrMaskSizeIPv4))
+		i--
+		dAtA[i] = 0x60
+	}
 	if len(m.Args) > 0 {
 		for iNdEx := len(m.Args) - 1; iNdEx >= 0; iNdEx-- {
 			i -= len(m.Args[iNdEx])
@@ -3192,6 +3202,12 @@ func (m *ControllerManagerConfigSpec) SizeVT() (n int) {
 			l = len(s)
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
+	}
+	if m.NodeCidrMaskSizeIPv4 != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.NodeCidrMaskSizeIPv4))
+	}
+	if m.NodeCidrMaskSizeIPv6 != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.NodeCidrMaskSizeIPv6))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -6776,6 +6792,44 @@ func (m *ControllerManagerConfigSpec) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Args = append(m.Args, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
+		case 12:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NodeCidrMaskSizeIPv4", wireType)
+			}
+			m.NodeCidrMaskSizeIPv4 = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.NodeCidrMaskSizeIPv4 |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 13:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NodeCidrMaskSizeIPv6", wireType)
+			}
+			m.NodeCidrMaskSizeIPv6 = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.NodeCidrMaskSizeIPv6 |= int64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

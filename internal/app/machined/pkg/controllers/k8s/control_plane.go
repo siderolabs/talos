@@ -320,6 +320,8 @@ func NewControlPlaneControllerManagerController() *ControlPlaneControllerManager
 					ExtraVolumes:         convertVolumes(controllerManagerConfig.ExtraVolumes()),
 					EnvironmentVariables: controllerManagerConfig.Env(),
 					Resources:            convertResources(controllerManagerConfig.Resources()),
+					NodeCIDRMaskSizeIPv4: machineConfig.Config().K8sNetworkConfig().NodeCIDRMaskSizeIPv4(),
+					NodeCIDRMaskSizeIPv6: machineConfig.Config().K8sNetworkConfig().NodeCIDRMaskSizeIPv6(),
 				}
 
 				return nil

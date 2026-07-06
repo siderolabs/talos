@@ -534,6 +534,20 @@ func (KubeNetworkConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "The service subnet (CIDR), this can be a single value or two values for dual-stack clusters.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The service subnet (CIDR), this can be a single value or two values for dual-stack clusters." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "nodeCIDRMaskSizeIPv4",
+				Type:        "int",
+				Note:        "",
+				Description: "The IPv4 per-node pod CIDR mask size, i.e. the size of the pod CIDR allocated to each node, from the IPv4 pod subnet.\nThe default is `24`.\nMust be between 1 and 32.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The IPv4 per-node pod CIDR mask size, i.e. the size of the pod CIDR allocated to each node, from the IPv4 pod subnet." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "nodeCIDRMaskSizeIPv6",
+				Type:        "int",
+				Note:        "",
+				Description: "The IPv6 per-node pod CIDR mask size, i.e. the size of the pod CIDR allocated to each node, from the IPv6 pod subnet.\nThe default is `64`.\nMust be between 1 and 128.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The IPv6 per-node pod CIDR mask size, i.e. the size of the pod CIDR allocated to each node, from the IPv6 pod subnet." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 

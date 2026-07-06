@@ -66,8 +66,8 @@ func (suite *NodeIPConfigSuite) TestReconcileWithSubnets() {
 						},
 					},
 					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
-						ServiceSubnet: []string{constants.DefaultIPv4ServiceNet},
-						PodSubnet:     []string{constants.DefaultIPv4PodNet},
+						ServiceSubnet: []string{constants.DefaultIPv4ServiceCIDR},
+						PodSubnet:     []string{constants.DefaultIPv4PodCIDR},
 					},
 				},
 			},
@@ -101,8 +101,8 @@ func (suite *NodeIPConfigSuite) TestReconcileWithNewVIPs() {
 				},
 			},
 			ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
-				ServiceSubnet: []string{constants.DefaultIPv4ServiceNet},
-				PodSubnet:     []string{constants.DefaultIPv4PodNet},
+				ServiceSubnet: []string{constants.DefaultIPv4ServiceCIDR},
+				PodSubnet:     []string{constants.DefaultIPv4PodCIDR},
 			},
 		},
 	}
@@ -144,8 +144,8 @@ func (suite *NodeIPConfigSuite) TestReconcileDefaults() {
 						},
 					},
 					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
-						ServiceSubnet: []string{constants.DefaultIPv4ServiceNet, constants.DefaultIPv6ServiceNet},
-						PodSubnet:     []string{constants.DefaultIPv4PodNet, constants.DefaultIPv6PodNet},
+						ServiceSubnet: []string{constants.DefaultIPv4ServiceCIDR, constants.DefaultIPv6ServiceCIDR},
+						PodSubnet:     []string{constants.DefaultIPv4PodCIDR, constants.DefaultIPv6PodCIDR},
 					},
 				},
 			},

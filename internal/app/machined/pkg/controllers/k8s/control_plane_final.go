@@ -7,6 +7,7 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"net/netip"
 	"path/filepath"
 	"slices"
 	"strconv"
@@ -228,6 +229,8 @@ func handleKubeAPIServerAuthorizationFlags(argBuilder argsbuilder.Args, extraArg
 type ControlPlaneControllerManagerFinalController = transform.Controller[*k8s.ControllerManagerConfig, *k8s.ControllerManagerConfig]
 
 // NewControlPlaneControllerManagerFinalController instantiates the controller.
+//
+//nolint:gocyclo
 func NewControlPlaneControllerManagerFinalController() *ControlPlaneControllerManagerFinalController {
 	return transform.NewController(
 		transform.Settings[*k8s.ControllerManagerConfig, *k8s.ControllerManagerConfig]{
@@ -283,6 +286,34 @@ func NewControlPlaneControllerManagerFinalController() *ControlPlaneControllerMa
 
 				if in.TypedSpec().CloudProvider != "" && !k8sVersion.CloudProviderFlagRemoved() {
 					builder.Set("cloud-provider", argsbuilder.Value{in.TypedSpec().CloudProvider})
+				}
+
+				// emit the per-node pod CIDR mask size only for the address families actually present in the
+				// cluster CIDRs (pod CIDRs): kube-controller-manager rejects a per-family flag when that family is absent.
+				//
+				// This is not mentioned in the configuration reference, grep `--node-cidr-mask-size` at
+				// https://github.com/kubernetes/kubernetes/blob/16e45f3b5e6a76a1ac741550e3a65980eea783c2/CHANGELOG/CHANGELOG-1.23.md#L2387-L2390
+				var hasIPv4, hasIPv6 bool
+
+				for _, podCIDR := range in.TypedSpec().PodCIDRs {
+					prefix, err := netip.ParsePrefix(podCIDR)
+					if err != nil {
+						return fmt.Errorf("failed to parse pod CIDR %q: %w", podCIDR, err)
+					}
+
+					if prefix.Addr().Is6() {
+						hasIPv6 = true
+					} else {
+						hasIPv4 = true
+					}
+				}
+
+				if hasIPv4 {
+					builder.Set("node-cidr-mask-size-ipv4", argsbuilder.Value{strconv.Itoa(in.TypedSpec().NodeCIDRMaskSizeIPv4)})
+				}
+
+				if hasIPv6 {
+					builder.Set("node-cidr-mask-size-ipv6", argsbuilder.Value{strconv.Itoa(in.TypedSpec().NodeCIDRMaskSizeIPv6)})
 				}
 
 				mergePolicies := argsbuilder.MergePolicies{

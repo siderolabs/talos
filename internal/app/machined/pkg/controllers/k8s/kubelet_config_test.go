@@ -141,7 +141,7 @@ func (suite *KubeletConfigSuite) TestReconcileDefaults() {
 						},
 					},
 					ClusterNetwork: &v1alpha1.ClusterNetworkConfig{
-						ServiceSubnet: []string{constants.DefaultIPv4ServiceNet},
+						ServiceSubnet: []string{constants.DefaultIPv4ServiceCIDR},
 					},
 				},
 			},

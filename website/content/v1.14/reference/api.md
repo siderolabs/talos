@@ -8019,6 +8019,8 @@ ControllerManagerConfigSpec is configuration for kube-controller-manager.
 | resources | [Resources](#talos.resource.definitions.k8s.Resources) |  |  |
 | extra_args | [ControllerManagerConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.ControllerManagerConfigSpec.ExtraArgsEntry) | repeated |  |
 | args | [string](#string) | repeated |  |
+| node_cidr_mask_size_i_pv4 | [int64](#int64) |  |  |
+| node_cidr_mask_size_i_pv6 | [int64](#int64) |  |  |
 
 
 
