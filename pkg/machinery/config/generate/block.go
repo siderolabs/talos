@@ -11,16 +11,25 @@ import (
 )
 
 func (in *Input) generateBlockConfigs() []config.Document {
-	if !in.Options.VersionContract.FilesystemTrimEnabledByDefault() {
-		return nil
+	var documents []config.Document
+
+	if in.Options.VersionContract.FilesystemTrimEnabledByDefault() {
+		ephemeralConfig := block.NewVolumeConfigV1Alpha1()
+		ephemeralConfig.MetaName = constants.EphemeralPartitionLabel
+		ephemeralConfig.MountSpec.MountSecure = new(true)
+
+		trimConfig := block.NewFilesystemTrimConfigV1Alpha1()
+		trimConfig.TrimInterval = constants.DefaultFilesystemTrimInterval
+
+		documents = append(documents, ephemeralConfig, trimConfig)
 	}
 
-	ephemeralConfig := block.NewVolumeConfigV1Alpha1()
-	ephemeralConfig.MetaName = constants.EphemeralPartitionLabel
-	ephemeralConfig.MountSpec.MountSecure = new(true)
+	if in.Options.VersionContract.DiskSMARTEnabledByDefault() {
+		smartConfig := block.NewDiskSMARTConfigV1Alpha1()
+		smartConfig.SMARTInterval = constants.DefaultDiskSMARTInterval
 
-	trimConfig := block.NewFilesystemTrimConfigV1Alpha1()
-	trimConfig.TrimInterval = constants.DefaultFilesystemTrimInterval
+		documents = append(documents, smartConfig)
+	}
 
-	return []config.Document{ephemeralConfig, trimConfig}
+	return documents
 }

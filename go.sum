@@ -469,6 +469,8 @@ github.com/alexbrainman/sspi v0.0.0-20250919150558-7d374ff0d59e h1:4dAU9FXIyQktp
 github.com/alexbrainman/sspi v0.0.0-20250919150558-7d374ff0d59e/go.mod h1:cEWa1LVoE5KvSD9ONXsZrj0z6KqySlCCNKHlLzbqAt4=
 github.com/alexflint/go-filemutex v1.3.0 h1:LgE+nTUWnQCyRKbpoceKZsPQbs84LivvgwUymZXdOcM=
 github.com/alexflint/go-filemutex v1.3.0/go.mod h1:U0+VA/i30mGBlLCrFPGtTe9y6wGQfNAWPBTekHQ+c8A=
+github.com/anatol/vmtest v0.0.0-20260313235012-c2b0479898b4 h1:E9KSKETdT7YYxgOAWMRshWLoMF40nV53ZFTPskPXUTI=
+github.com/anatol/vmtest v0.0.0-20260313235012-c2b0479898b4/go.mod h1:LQKSHEViwHPr4yRxK/6U+WpYY8ytg1uvVrjt/+PYgfI=
 github.com/ansel1/merry v1.5.0/go.mod h1:wUy/yW0JX0ix9GYvUbciq+bi3jW/vlKPlbpI7qdZpOw=
 github.com/ansel1/merry v1.5.1/go.mod h1:wUy/yW0JX0ix9GYvUbciq+bi3jW/vlKPlbpI7qdZpOw=
 github.com/ansel1/merry v1.7.0/go.mod h1:Gr6uWXdwE8lRNqHuxT6aflGcueJoayPj0JyT9yiQgD0=
@@ -1189,6 +1191,8 @@ github.com/lucasb-eyer/go-colorful v1.4.0 h1:UtrWVfLdarDgc44HcS7pYloGHJUjHV/4FwW
 github.com/lucasb-eyer/go-colorful v1.4.0/go.mod h1:R4dSotOR9KMtayYi1e77YzuveK+i7ruzyGqttikkLy0=
 github.com/lyft/protoc-gen-star v0.6.0/go.mod h1:TGAoBVkt8w7MPG72TrKIu85MIdXwDuzJYeZuUPFPNwA=
 github.com/lyft/protoc-gen-star v0.6.1/go.mod h1:TGAoBVkt8w7MPG72TrKIu85MIdXwDuzJYeZuUPFPNwA=
+github.com/majabojarska/smart.go v0.0.0-20260707122632-d93e71f8295c h1:9eLHH+oFEf6zuz49vUtL0hI0FRD5qGgXn1G4wBEr4cc=
+github.com/majabojarska/smart.go v0.0.0-20260707122632-d93e71f8295c/go.mod h1:PrHdljtLe/VXVRH+zAJOcPjHkOHjF8/T2Arblruu/ac=
 github.com/marmos91/dittofs v0.30.0 h1:mZQ82SO4KBM5pIBwT3XJrL3SYiFtheLHBic6D6Ow7rg=
 github.com/marmos91/dittofs v0.30.0/go.mod h1:KLvCWoK5PNYA/eIfAgRxrIqRl2HgHm5x2ZReZozkLi8=
 github.com/martinlindhe/base36 v1.1.1 h1:1F1MZ5MGghBXDZ2KJ3QfxmiydlWOGB8HCEtkap5NkVg=
@@ -1599,6 +1603,8 @@ github.com/tink-crypto/tink-go/v2 v2.7.0 h1:k7QnUXJ1cRDpvoy/5l1FimZqMAArRff8vjUq
 github.com/tink-crypto/tink-go/v2 v2.7.0/go.mod h1:cWNpQ/yAT/QHzAV0kBGMOSJzzYTKofDZdJaUqOPPWCI=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20220101234140-673ab2c3ae75 h1:6fotK7otjonDflCTK0BCfls4SPy3NcCVb5dqqmbRknE=
 github.com/tmc/grpc-websocket-proxy v0.0.0-20220101234140-673ab2c3ae75/go.mod h1:KO6IkyS8Y3j8OdNO85qEYBsRPuteD+YciPomcXdrMnk=
+github.com/tmc/scp v0.0.0-20170824174625-f7b48647feef h1:7D6Nm4D6f0ci9yttWaKjM1TMAXrH5Su72dojqYGntFY=
+github.com/tmc/scp v0.0.0-20170824174625-f7b48647feef/go.mod h1:WLFStEdnJXpjK8kd4qKLwQKX/1vrDzp5BcDyiZJBHJM=
 github.com/transparency-dev/formats v0.1.1 h1:4bVHJc+KdBgpA1OJD1yjI+g0i5Z1graCppTMH8lWKJI=
 github.com/transparency-dev/formats v0.1.1/go.mod h1:qtZ8goRuJ8FTBG9c9+Bj0rn2rUG7eG/AUTkr+Aw3jFw=
 github.com/transparency-dev/merkle v0.0.2 h1:Q9nBoQcZcgPamMkGn7ghV8XiTZ/kRxn1yCG81+twTK4=

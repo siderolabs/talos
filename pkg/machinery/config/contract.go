@@ -296,6 +296,15 @@ func (contract *VersionContract) WorkloadIsolationEnabledByDefault() bool {
 	return contract.Greater(TalosVersion1_13)
 }
 
+// DiskSMARTEnabledByDefault returns true if version of Talos should have disk SMART monitoring
+// enabled by default (emitted as a DiskSMARTConfig document by config generation).
+//
+// The presence of the document is what enables collection, so emitting it turns disk SMART
+// monitoring on; removing it from the machine config turns it back off.
+func (contract *VersionContract) DiskSMARTEnabledByDefault() bool {
+	return contract.Greater(TalosVersion1_14)
+}
+
 // MultidocSysctlConfigSupported returns true if version of Talos should use multi-doc Sysctl config.
 func (contract *VersionContract) MultidocSysctlConfigSupported() bool {
 	return contract.Greater(TalosVersion1_13)

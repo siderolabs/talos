@@ -2,6 +2,43 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://talos.dev/v1.15/schemas/config.schema.json",
   "$defs": {
+    "block.DiskSMARTConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "DiskSMARTConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "interval": {
+          "type": "string",
+          "pattern": "^[-+]?(((\\d+(\\.\\d*)?|\\d*(\\.\\d+)+)([nuµm]?s|m|h))|0)+$",
+          "title": "interval",
+          "description": "The interval at which disk SMART status is refreshed.\n",
+          "markdownDescription": "The interval at which disk SMART status is refreshed.",
+          "x-intellij-html-description": "\u003cp\u003eThe interval at which disk SMART status is refreshed.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "DiskSMARTConfig is a disk SMART monitoring configuration document.\\nDisk SMART monitoring periodically collects SMART (Self-Monitoring, Analysis and Reporting\\nTechnology) health information from disks, exposed via the `SMARTStatus` resource\\n(`talosctl get smart`).\\n\\nSMART collection is performed whenever this document is present in the machine configuration;\\nremove the document to disable it. Disks in standby are never spun up just to be probed.\\n"
+    },
     "block.DiskSelector": {
       "properties": {
         "match": {
@@ -8083,6 +8120,9 @@
     }
   },
   "oneOf": [
+    {
+      "$ref": "#/$defs/block.DiskSMARTConfigV1Alpha1"
+    },
     {
       "$ref": "#/$defs/block.ExistingVolumeConfigV1Alpha1"
     },

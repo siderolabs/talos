@@ -265,6 +265,17 @@ type FilesystemTrimConfig interface {
 	Interval() time.Duration
 }
 
+// DiskSMARTConfig defines the interface to access disk SMART monitoring configuration.
+//
+// The presence of the configuration enables SMART status collection: a non-nil DiskSMARTConfig
+// means collection is enabled, while a nil one (no document in the machine configuration) means
+// it is disabled.
+type DiskSMARTConfig interface {
+	DiskSMARTConfigSignal()
+	// Interval returns the interval at which disk SMART status is refreshed.
+	Interval() time.Duration
+}
+
 // VolumeTrimConfigProvider defines the interface to access per-volume trim configuration.
 type VolumeTrimConfigProvider interface {
 	// Trim returns the per-volume trim configuration, or nil if not set.

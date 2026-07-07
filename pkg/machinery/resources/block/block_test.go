@@ -35,6 +35,7 @@ func TestRegisterResource(t *testing.T) {
 		&block.Disk{},
 		&block.MountRequest{},
 		&block.MountStatus{},
+		&block.SMARTStatus{},
 		&block.SwapStatus{},
 		&block.Symlink{},
 		&block.SystemDisk{},

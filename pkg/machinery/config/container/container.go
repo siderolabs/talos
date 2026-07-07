@@ -533,6 +533,16 @@ func (container *Container) FilesystemScrubConfig() config.FilesystemScrubConfig
 	return matching[0]
 }
 
+// DiskSMARTConfig implements config.Config interface.
+func (container *Container) DiskSMARTConfig() config.DiskSMARTConfig {
+	matching := findMatchingDocs[config.DiskSMARTConfig](container.documents)
+	if len(matching) == 0 {
+		return nil
+	}
+
+	return matching[0]
+}
+
 // NetworkStaticHostConfig implements config.Config interface.
 func (container *Container) NetworkStaticHostConfig() []config.NetworkStaticHostConfig {
 	return slices.Concat(
