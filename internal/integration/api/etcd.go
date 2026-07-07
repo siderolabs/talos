@@ -13,6 +13,7 @@ import (
 
 	"github.com/blang/semver/v4"
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/siderolabs/go-retry/retry"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -225,15 +226,33 @@ func (suite *EtcdSuite) TestRemoveMember() {
 	})
 	suite.Require().NoError(err)
 
-	// verify that memberID disappeared from etcd member list
-	resp, err := suite.Client.EtcdMemberList(controlCtx, &machineapi.EtcdMemberListRequest{})
-	suite.Require().NoError(err)
+	// Verify that memberID disappeared from the etcd member list.
+	//
+	// This is retried because the control node builds an etcd client across all control plane
+	// IPs and health-checks each by dialing: right after the removed member is forfeited/removed,
+	// its etcd can reset the connection, surfacing as a transient "connection reset by peer"
+	// (gRPC Unavailable) while building the client. Re-list until the member is gone.
+	suite.Require().NoError(
+		retry.Constant(time.Second*5, retry.WithUnits(200*time.Millisecond)).RetryWithContext(
+			controlCtx,
+			func(ctx context.Context) error {
+				resp, err := suite.Client.EtcdMemberList(ctx, &machineapi.EtcdMemberListRequest{})
+				if err != nil {
+					return retry.ExpectedError(err)
+				}
 
-	for _, message := range resp.GetMessages() {
-		for _, member := range message.GetMembers() {
-			suite.Assert().NotEqual(memberID, member.GetId())
-		}
-	}
+				for _, message := range resp.GetMessages() {
+					for _, member := range message.GetMembers() {
+						if member.GetId() == memberID {
+							return retry.ExpectedErrorf("member %d still present in etcd member list", memberID)
+						}
+					}
+				}
+
+				return nil
+			},
+		),
+	)
 
 	// NB: Reset the ephemeral the node so that it can rejoin the etcd cluster. This allows us
 	// to check the cluster health and catch any issues in rejoining.
