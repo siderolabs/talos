@@ -10,6 +10,38 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 )
 
+func (DiskSMARTConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "DiskSMARTConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "DiskSMARTConfig is a disk SMART monitoring configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "DiskSMARTConfig is a disk SMART monitoring configuration document.\nDisk SMART monitoring periodically collects SMART (Self-Monitoring, Analysis and Reporting\nTechnology) health information from disks, exposed via the `SMARTStatus` resource\n(`talosctl get smart`).\n\nSMART collection is enabled by default; this document allows tuning the refresh interval or\ndisabling it. Disks in standby are never spun up just to be probed.\n",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "enabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable or disable disk SMART monitoring.\n\nDefaults to enabled when this document is present.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable or disable disk SMART monitoring." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "interval",
+				Type:        "Duration",
+				Note:        "",
+				Description: "The interval at which disk SMART status is refreshed.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The interval at which disk SMART status is refreshed." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleDiskSMARTConfigV1Alpha1())
+
+	return doc
+}
+
 func (EncryptionSpec) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "EncryptionSpec",
@@ -1111,6 +1143,7 @@ func GetFileDoc() *encoder.FileDoc {
 		Name:        "block",
 		Description: "Package block provides block device and volume configuration documents.\n",
 		Structs: []*encoder.Doc{
+			DiskSMARTConfigV1Alpha1{}.Doc(),
 			EncryptionSpec{}.Doc(),
 			EncryptionKey{}.Doc(),
 			EncryptionKeyStatic{}.Doc(),

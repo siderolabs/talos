@@ -162,6 +162,9 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&block.MountController{},
 		&block.MountRequestController{},
 		&block.MountStatusController{},
+		&block.SMARTStatusController{
+			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
+		},
 		&block.SwapStatusController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},

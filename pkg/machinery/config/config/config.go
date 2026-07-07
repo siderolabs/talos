@@ -74,6 +74,7 @@ type Config interface { //nolint:interfacebloat
 	SwapVolumeConfigs() []SwapVolumeConfig
 	ZswapConfig() ZswapConfig
 	FilesystemTrimConfig() FilesystemTrimConfig
+	DiskSMARTConfig() DiskSMARTConfig
 	LVMVolumeGroupConfigs() []LVMVolumeGroupConfig
 	LVMLogicalVolumeConfigs() []LVMLogicalVolumeConfig
 	RAIDArrayConfigs() []RAIDArrayConfig

@@ -3,6 +3,9 @@ module github.com/siderolabs/talos
 go 1.26.5
 
 replace (
+	// forked to set O_CLOEXEC on device open and add SataDevice.CheckPowerMode (skip standby disks)
+	github.com/anatol/smart.go => github.com/majabojarska/smart.go v0.0.0-20260707122632-d93e71f8295c
+
 	// forked coredns so we don't carry caddy and other stuff into the Talos
 	github.com/coredns/coredns => github.com/siderolabs/coredns v1.14.53
 
@@ -46,6 +49,7 @@ require (
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azcertificates v1.5.0
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys v1.5.0
 	github.com/alexflint/go-filemutex v1.3.0
+	github.com/anatol/smart.go v0.0.0-20260707122632-d93e71f8295c
 	github.com/aws/aws-sdk-go-v2 v1.43.0
 	github.com/aws/aws-sdk-go-v2/config v1.32.31
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.31

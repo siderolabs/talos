@@ -468,6 +468,32 @@ trim:
 ```
 """
 
+    [notes.disk_smart]
+        title = "Disk SMART Status"
+        description = """\
+Talos now collects SMART (Self-Monitoring, Analysis and Reporting Technology) health information from disks,
+exposed via the new `SMARTStatus` resource (one per disk, keyed by the disk device name):
+
+```bash
+talosctl get smart
+```
+
+The resource reports an overall health verdict, temperature, power-on hours and power cycles, NVMe wear
+indicators (percent used, available spare, critical warning, media errors) and, for ATA/SATA disks, the raw
+SMART attribute table with per-attribute thresholds.
+
+SMART collection is enabled by default. Rotational disks are never spun up just to be probed: a disk in
+standby is detected via ATA `CHECK POWER MODE` and its SMART data is left untouched until it is active again.
+Collection can be tuned or disabled via the new `DiskSMARTConfig` document:
+
+```yaml
+apiVersion: v1alpha1
+kind: DiskSMARTConfig
+enabled: true
+interval: 30m0s
+```
+"""
+
     [notes.unattended_install]
         title = "Unattended Install Configuration"
         description = """\
