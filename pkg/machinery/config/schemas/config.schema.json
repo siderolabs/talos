@@ -2980,6 +2980,13 @@
           "markdownDescription": "Ignore hostname received from the DHCP server.",
           "x-intellij-html-description": "\u003cp\u003eIgnore hostname received from the DHCP server.\u003c/p\u003e\n"
         },
+        "ignoreRoutes": {
+          "type": "boolean",
+          "title": "ignoreRoutes",
+          "description": "Ignore routes received from the DHCP server (the default gateway and classless static routes).\n\nThe connected route for the leased address is still configured.\n",
+          "markdownDescription": "Ignore routes received from the DHCP server (the default gateway and classless static routes).\n\nThe connected route for the leased address is still configured.",
+          "x-intellij-html-description": "\u003cp\u003eIgnore routes received from the DHCP server (the default gateway and classless static routes).\u003c/p\u003e\n\n\u003cp\u003eThe connected route for the leased address is still configured.\u003c/p\u003e\n"
+        },
         "clientIdentifier": {
           "enum": [
             "none",

@@ -805,6 +805,7 @@ type DHCP4OperatorSpec struct {
 	RouteMetric         uint32                 `protobuf:"varint,1,opt,name=route_metric,json=routeMetric,proto3" json:"route_metric,omitempty"`
 	SkipHostnameRequest bool                   `protobuf:"varint,2,opt,name=skip_hostname_request,json=skipHostnameRequest,proto3" json:"skip_hostname_request,omitempty"`
 	ClientIdentifier    *ClientIdentifierSpec  `protobuf:"bytes,3,opt,name=client_identifier,json=clientIdentifier,proto3" json:"client_identifier,omitempty"`
+	SkipRoutes          bool                   `protobuf:"varint,4,opt,name=skip_routes,json=skipRoutes,proto3" json:"skip_routes,omitempty"`
 	unknownFields       protoimpl.UnknownFields
 	sizeCache           protoimpl.SizeCache
 }
@@ -858,6 +859,13 @@ func (x *DHCP4OperatorSpec) GetClientIdentifier() *ClientIdentifierSpec {
 		return x.ClientIdentifier
 	}
 	return nil
+}
+
+func (x *DHCP4OperatorSpec) GetSkipRoutes() bool {
+	if x != nil {
+		return x.SkipRoutes
+	}
+	return false
 }
 
 // DHCP6OperatorSpec describes DHCP6 operator options.
@@ -5414,11 +5422,13 @@ const file_resource_definitions_network_network_proto_rawDesc = "" +
 	"\x14ClientIdentifierSpec\x12i\n" +
 	"\x11client_identifier\x18\x01 \x01(\x0e2<.talos.resource.definitions.enums.NethelpersClientIdentifierR\x10clientIdentifier\x12 \n" +
 	"\fduid_raw_hex\x18\x02 \x01(\tR\n" +
-	"duidRawHex\"\xd1\x01\n" +
+	"duidRawHex\"\xf2\x01\n" +
 	"\x11DHCP4OperatorSpec\x12!\n" +
 	"\froute_metric\x18\x01 \x01(\rR\vrouteMetric\x122\n" +
 	"\x15skip_hostname_request\x18\x02 \x01(\bR\x13skipHostnameRequest\x12e\n" +
-	"\x11client_identifier\x18\x03 \x01(\v28.talos.resource.definitions.network.ClientIdentifierSpecR\x10clientIdentifier\"\xd1\x01\n" +
+	"\x11client_identifier\x18\x03 \x01(\v28.talos.resource.definitions.network.ClientIdentifierSpecR\x10clientIdentifier\x12\x1f\n" +
+	"\vskip_routes\x18\x04 \x01(\bR\n" +
+	"skipRoutes\"\xd1\x01\n" +
 	"\x11DHCP6OperatorSpec\x12!\n" +
 	"\froute_metric\x18\x02 \x01(\rR\vrouteMetric\x122\n" +
 	"\x15skip_hostname_request\x18\x03 \x01(\bR\x13skipHostnameRequest\x12e\n" +

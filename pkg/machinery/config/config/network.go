@@ -200,6 +200,7 @@ type NetworkDHCPv4Config interface {
 	NetworkDHCPv4Config() // signal method
 	RouteMetric() optional.Optional[uint32]
 	IgnoreHostname() optional.Optional[bool]
+	IgnoreRoutes() optional.Optional[bool]
 	ClientIdentifier() nethelpers.ClientIdentifier
 	DUIDRaw() optional.Optional[nethelpers.HardwareAddr]
 }

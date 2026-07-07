@@ -587,6 +587,13 @@ func (DHCPv4ConfigV1Alpha1) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Ignore hostname received from the DHCP server." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
+				Name:        "ignoreRoutes",
+				Type:        "bool",
+				Note:        "",
+				Description: "Ignore routes received from the DHCP server (the default gateway and classless static routes).\n\nThe connected route for the leased address is still configured.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Ignore routes received from the DHCP server (the default gateway and classless static routes)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "clientIdentifier",
 				Type:        "ClientIdentifier",
 				Note:        "",
@@ -611,7 +618,7 @@ func (DHCPv4ConfigV1Alpha1) Doc() *encoder.Doc {
 	doc.AddExample("", exampleDHCPv4ConfigV1Alpha1())
 
 	doc.Fields[1].AddExample("", "enp0s2")
-	doc.Fields[5].AddExample("", "00:01:00:01:23:45:67:89:ab:cd:ef:01:23:45")
+	doc.Fields[6].AddExample("", "00:01:00:01:23:45:67:89:ab:cd:ef:01:23:45")
 
 	return doc
 }

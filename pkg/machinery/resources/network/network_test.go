@@ -95,6 +95,10 @@ func TestProtobufInterop(t *testing.T) {
 			res:  &network.NfTablesChain{},
 			spec: &networkpb.NfTablesChainSpec{},
 		},
+		{
+			res:  &network.OperatorSpec{},
+			spec: &networkpb.OperatorSpecSpec{},
+		},
 	} {
 		t.Run(test.res.ResourceDefinition().Type, func(t *testing.T) {
 			t.Parallel()
@@ -102,4 +106,22 @@ func TestProtobufInterop(t *testing.T) {
 			require.NoError(t, proto.ResourceSpecToProto(test.res, test.spec, protoenc.WithMarshalZeroFields()))
 		})
 	}
+}
+
+// TestOperatorSpecDHCP4SkipRoutesProtobuf is a regression test for the DHCP4
+// SkipRoutes field being dropped when an OperatorSpec crosses the resource API:
+// the field is present on the Go resource struct but must also exist in the
+// generated protobuf bindings, or it is silently lost on the wire.
+func TestOperatorSpecDHCP4SkipRoutesProtobuf(t *testing.T) {
+	t.Parallel()
+
+	res := network.NewOperatorSpec(network.NamespaceName, "test")
+	res.TypedSpec().Operator = network.OperatorDHCP4
+	res.TypedSpec().DHCP4.SkipRoutes = true
+
+	var spec networkpb.OperatorSpecSpec
+
+	require.NoError(t, proto.ResourceSpecToProto(res, &spec))
+
+	assert.True(t, spec.GetDhcp4().GetSkipRoutes(), "SkipRoutes must survive the resource->protobuf roundtrip")
 }

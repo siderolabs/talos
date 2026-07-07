@@ -33,7 +33,7 @@ func TestParseDHCP4Ack(t *testing.T) {
 			dhcpv4.WithOption(dhcpv4.OptRouter(net.IPv4(10, 0, 0, 1))),
 		))(t)
 
-		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, false)
+		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, false, true)
 
 		require.Len(t, specs.Addresses, 1)
 		assert.Equal(t, must.Value(netip.ParsePrefix("10.0.0.5/24"))(t), specs.Addresses[0].Address)
@@ -63,7 +63,7 @@ func TestParseDHCP4Ack(t *testing.T) {
 			dhcpv4.WithOption(dhcpv4.OptRouter(net.IPv4(10, 0, 0, 1))),
 		))(t)
 
-		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, false)
+		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, false, true)
 
 		require.Len(t, specs.Routes, 2)
 		assert.Equal(t, must.Value(netip.ParseAddr("10.0.0.1"))(t), specs.Routes[0].Gateway)
@@ -86,7 +86,7 @@ func TestParseDHCP4Ack(t *testing.T) {
 			})),
 		))(t)
 
-		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, false)
+		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, false, true)
 
 		// Classless routes win, router option ignored — only the classless
 		// route is present (gateway is in the subnet, no helper needed).
@@ -118,7 +118,7 @@ func TestParseDHCP4Ack(t *testing.T) {
 			)),
 		))(t)
 
-		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, false)
+		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, false, true)
 
 		// 3 classless routes + 1 on-link helper for the shared gateway (deduped).
 		require.Len(t, specs.Routes, 4)
@@ -150,7 +150,7 @@ func TestParseDHCP4Ack(t *testing.T) {
 			})),
 		))(t)
 
-		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, false)
+		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, false, true)
 
 		require.Len(t, specs.Routes, 1, "no helper for unspecified gateway")
 		assert.Equal(t, must.Value(netip.ParsePrefix("192.168.1.0/24"))(t), specs.Routes[0].Destination)
@@ -170,7 +170,7 @@ func TestParseDHCP4Ack(t *testing.T) {
 			dhcpv4.WithOption(dhcpv4.OptGeneric(dhcpv4.OptionInterfaceMTU, []byte{0x05, 0xdc})), // 1500
 		))(t)
 
-		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, true)
+		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, true, true)
 
 		require.Len(t, specs.Links, 1)
 		assert.Equal(t, uint32(1500), specs.Links[0].MTU)
@@ -206,7 +206,7 @@ func TestParseDHCP4Ack(t *testing.T) {
 			dhcpv4.WithDomainSearchList("corp.example.com", "example.com"),
 		))(t)
 
-		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, false)
+		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, false, true)
 
 		require.Len(t, specs.Resolvers, 1)
 		assert.Equal(t, []string{"corp.example.com", "example.com"}, specs.Resolvers[0].SearchDomains)
@@ -222,7 +222,7 @@ func TestParseDHCP4Ack(t *testing.T) {
 			dhcpv4.WithOption(dhcpv4.OptDomainName("example.com")),
 		))(t)
 
-		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, false)
+		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, false, true)
 
 		require.Len(t, specs.Resolvers, 1)
 		assert.Equal(t, []string{"corp.example.com", "example.com"}, specs.Resolvers[0].SearchDomains)
@@ -237,7 +237,7 @@ func TestParseDHCP4Ack(t *testing.T) {
 			dhcpv4.WithOption(dhcpv4.OptDomainName("example.com")),
 		))(t)
 
-		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, false)
+		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, false, true)
 
 		require.Len(t, specs.Resolvers, 1)
 		assert.Equal(t, []string{"example.com", "corp.example.com"}, specs.Resolvers[0].SearchDomains)
@@ -253,7 +253,7 @@ func TestParseDHCP4Ack(t *testing.T) {
 			dhcpv4.WithOption(dhcpv4.OptDomainName("example.com")),
 		))(t)
 
-		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, false)
+		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, false, true)
 
 		require.Len(t, specs.Resolvers, 1)
 		assert.Empty(t, specs.Resolvers[0].NameServers)
@@ -271,7 +271,7 @@ func TestParseDHCP4Ack(t *testing.T) {
 			dhcpv4.WithOption(dhcpv4.OptGeneric(dhcpv4.OptionDomainName, []byte("\x00\x00"))),
 		))(t)
 
-		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, false)
+		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, false, true)
 
 		require.Len(t, specs.Resolvers, 1)
 		assert.Empty(t, specs.Resolvers[0].SearchDomains)
@@ -285,8 +285,41 @@ func TestParseDHCP4Ack(t *testing.T) {
 			dhcpv4.WithOption(dhcpv4.OptHostName("myhost")),
 		))(t)
 
-		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, false)
+		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, false, true)
 
 		assert.Empty(t, specs.Hostname)
+	})
+
+	t.Run("useRoutes=false suppresses the router-option default route", func(t *testing.T) {
+		ack := must.Value(dhcpv4.New(
+			dhcpv4.WithMessageType(dhcpv4.MessageTypeAck),
+			dhcpv4.WithYourIP(net.IPv4(10, 0, 0, 5)),
+			dhcpv4.WithNetmask(net.CIDRMask(24, 32)),
+			dhcpv4.WithOption(dhcpv4.OptRouter(net.IPv4(10, 0, 0, 1))),
+			dhcpv4.WithOption(dhcpv4.OptDNS(net.IPv4(8, 8, 8, 8))),
+		))(t)
+
+		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, false, false)
+
+		assert.Empty(t, specs.Routes, "useRoutes=false drops the router-option route")
+		require.Len(t, specs.Addresses, 1, "the leased address is still configured")
+		require.Len(t, specs.Resolvers, 1, "only routes are dropped; DNS is still parsed")
+	})
+
+	t.Run("useRoutes=false suppresses classless static routes", func(t *testing.T) {
+		ack := must.Value(dhcpv4.New(
+			dhcpv4.WithMessageType(dhcpv4.MessageTypeAck),
+			dhcpv4.WithYourIP(net.IPv4(10, 0, 0, 5)),
+			dhcpv4.WithNetmask(net.CIDRMask(24, 32)),
+			dhcpv4.WithOption(dhcpv4.OptClasslessStaticRoute(&dhcpv4.Route{
+				Dest:   &net.IPNet{IP: net.IPv4(0, 0, 0, 0), Mask: net.CIDRMask(0, 32)},
+				Router: net.IPv4(10, 0, 0, 254),
+			})),
+		))(t)
+
+		specs := dhcpparse.ParseDHCP4Ack(ack, linkName, routeMetric, false, false)
+
+		assert.Empty(t, specs.Routes, "useRoutes=false drops classless static routes too")
+		require.Len(t, specs.Addresses, 1, "the leased address is still configured")
 	})
 }

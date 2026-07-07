@@ -257,6 +257,10 @@ func (o *DHCPv4ConfigV1Alpha1) DeepCopy() *DHCPv4ConfigV1Alpha1 {
 		cp.ConfigIgnoreHostname = new(bool)
 		*cp.ConfigIgnoreHostname = *o.ConfigIgnoreHostname
 	}
+	if o.ConfigIgnoreRoutes != nil {
+		cp.ConfigIgnoreRoutes = new(bool)
+		*cp.ConfigIgnoreRoutes = *o.ConfigIgnoreRoutes
+	}
 	if o.ConfigClientIdentifier != nil {
 		cp.ConfigClientIdentifier = new(nethelpers.ClientIdentifier)
 		*cp.ConfigClientIdentifier = *o.ConfigClientIdentifier

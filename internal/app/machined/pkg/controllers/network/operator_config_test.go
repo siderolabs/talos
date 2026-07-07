@@ -386,6 +386,7 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationNewStyle() {
 	dhcp1 := networkcfg.NewDHCPv4ConfigV1Alpha1("eth0")
 	dhcp1.ConfigRouteMetric = 256
 	dhcp1.ConfigIgnoreHostname = new(true)
+	dhcp1.ConfigIgnoreRoutes = new(true)
 
 	dhcp2 := networkcfg.NewDHCPv6ConfigV1Alpha1("eth0")
 	dhcp2.ConfigRouteMetric = 512
@@ -417,12 +418,14 @@ func (suite *OperatorConfigSuite) TestMachineConfigurationNewStyle() {
 				asrt.Equal("eth0", r.TypedSpec().LinkName)
 				asrt.EqualValues(256, r.TypedSpec().DHCP4.RouteMetric)
 				asrt.True(r.TypedSpec().DHCP4.SkipHostnameRequest)
+				asrt.True(r.TypedSpec().DHCP4.SkipRoutes)
 				asrt.Equal(nethelpers.ClientIdentifierMAC, r.TypedSpec().DHCP4.ClientIdentifier.ClientIdentifier)
 			case "configuration/dhcp4/eth23":
 				asrt.Equal(network.OperatorDHCP4, r.TypedSpec().Operator)
 				asrt.Equal("eth23", r.TypedSpec().LinkName)
 				asrt.EqualValues(network.DefaultRouteMetric, r.TypedSpec().DHCP4.RouteMetric)
 				asrt.False(r.TypedSpec().DHCP4.SkipHostnameRequest)
+				asrt.False(r.TypedSpec().DHCP4.SkipRoutes)
 				asrt.Equal(nethelpers.ClientIdentifierMAC, r.TypedSpec().DHCP4.ClientIdentifier.ClientIdentifier)
 			case "configuration/dhcp4/eth2":
 				asrt.Equal(network.OperatorDHCP4, r.TypedSpec().Operator)

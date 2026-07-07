@@ -131,9 +131,11 @@ List of changes:
 """
 
     [notes.dhcpsearchdomains]
-        title = "DHCP Search Domains"
+        title = "DHCP"
         description = """\
 DHCPv4 search domains are now applied to the resolver configuration.
+
+DHCPv4 configuration now supports `ignoreRoutes` option to ignore routes provided by DHCPv4 servers.
 """
 
 [notes.EPHEMERAL]

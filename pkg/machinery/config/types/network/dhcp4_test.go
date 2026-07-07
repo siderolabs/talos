@@ -28,6 +28,7 @@ func TestDHCPv4ConfigMarshalStability(t *testing.T) {
 	cfg := network.NewDHCPv4ConfigV1Alpha1("enp0s3")
 	cfg.ConfigRouteMetric = 512
 	cfg.ConfigIgnoreHostname = new(true)
+	cfg.ConfigIgnoreRoutes = new(true)
 	cfg.ConfigClientIdentifier = new(nethelpers.ClientIdentifierDUID)
 	cfg.ConfigDUIDRaw = nethelpers.HardwareAddr{0x00, 0x01, 0x00, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0x01, 0x23, 0x45}
 
@@ -56,6 +57,7 @@ func TestDHCPv4ConfigUnmarshal(t *testing.T) {
 		MetaName:               "enp0s3",
 		ConfigRouteMetric:      512,
 		ConfigIgnoreHostname:   new(true),
+		ConfigIgnoreRoutes:     new(true),
 		ConfigClientIdentifier: new(nethelpers.ClientIdentifierDUID),
 		ConfigDUIDRaw:          nethelpers.HardwareAddr{0x00, 0x01, 0x00, 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef, 0x01, 0x23, 0x45},
 	}, docs[0])

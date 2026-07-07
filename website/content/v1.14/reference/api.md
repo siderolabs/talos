@@ -9601,6 +9601,7 @@ DHCP4OperatorSpec describes DHCP4 operator options.
 | route_metric | [uint32](#uint32) |  |  |
 | skip_hostname_request | [bool](#bool) |  |  |
 | client_identifier | [ClientIdentifierSpec](#talos.resource.definitions.network.ClientIdentifierSpec) |  |  |
+| skip_routes | [bool](#bool) |  |  |
 
 
 
