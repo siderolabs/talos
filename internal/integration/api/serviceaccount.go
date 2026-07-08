@@ -99,15 +99,15 @@ func (suite *ServiceAccountSuite) TestValid() {
 			event.Type == corev1.EventTypeNormal &&
 			event.Reason == "Synced"
 	})
-	suite.Assert().NoError(err)
+	suite.Require().NoError(err)
 
 	secret, err := suite.waitForSecret("kube-system", name)
-	suite.Assert().NoError(err)
+	suite.Require().NoError(err)
 
 	talosConfig := secret.Data["config"]
 
 	conf, err := config.FromBytes(talosConfig)
-	suite.Assert().NoError(err)
+	suite.Require().NoError(err)
 
 	expectedServiceName := fmt.Sprintf(
 		"%s.%s",
