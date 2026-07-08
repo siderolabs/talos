@@ -16,11 +16,11 @@ import (
 	"net/http"
 	"os"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/hashicorp/go-cleanhttp"
+	"github.com/siderolabs/go-retry/retry"
 	"golang.org/x/sync/errgroup"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -50,8 +50,9 @@ func (suite *FirewallSuite) SetupTest() {
 		suite.T().Skip("without full cluster state can't guarantee availability of kubelet IPs")
 	}
 
-	// make sure we abort at some point in time, but give enough room for Resets
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 30*time.Second)
+	// make sure we abort at some point in time, but give enough room for Resets and for the
+	// NodePort to become reachable while retrying under network chaos (packet loss/latency).
+	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 3*time.Minute)
 }
 
 // TearDownTest ...
@@ -163,40 +164,48 @@ func (suite *FirewallSuite) TestNodePortAccess() {
 
 	suite.Require().NotZero(nodePort)
 
-	suite.T().Log("sleeping for 5 seconds to allow kube-proxy to update nftables")
+	// probe dials the NodePort once. In the default-block case a single successful connection
+	// is a hard failure; otherwise a not-yet-reachable NodePort is retryable (see below).
+	probe := func(ctx context.Context, node string) error {
+		attemptCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+		defer cancel()
 
-	time.Sleep(5 * time.Second)
+		var d net.Dialer
+
+		conn, err := d.DialContext(attemptCtx, "tcp", net.JoinHostPort(node, strconv.Itoa(nodePort)))
+		if conn != nil {
+			conn.Close() //nolint:errcheck
+		}
+
+		if firewallDefaultBlock {
+			if err == nil {
+				return errors.New("nodePort API should not be available")
+			}
+
+			if !errors.Is(err, os.ErrDeadlineExceeded) && !errors.Is(err, context.DeadlineExceeded) {
+				return fmt.Errorf("unexpected error: %w", err)
+			}
+
+			return nil
+		}
+
+		// The NodePort must become reachable, but that takes a moment: the service proxy may not
+		// be ready yet (connection refused) and, under network chaos, packets may be dropped or
+		// delayed (i/o timeout). Both are transient, so retry rather than failing on first attempt.
+		if err != nil {
+			return retry.ExpectedError(fmt.Errorf("nodePort API not available yet: %w", err))
+		}
+
+		return nil
+	}
 
 	eg, ctx := errgroup.WithContext(suite.ctx)
 
 	for _, node := range allNodes {
 		eg.Go(func() error {
-			attemptCtx, cancel := context.WithTimeout(ctx, time.Second)
-			defer cancel()
-
-			var d net.Dialer
-
-			conn, err := d.DialContext(attemptCtx, "tcp", net.JoinHostPort(node, strconv.Itoa(nodePort)))
-			if conn != nil {
-				conn.Close() //nolint:errcheck
-			}
-
-			if firewallDefaultBlock {
-				if err == nil {
-					return errors.New("nodePort API should not be available")
-				}
-
-				if !errors.Is(err, os.ErrDeadlineExceeded) && !errors.Is(err, context.DeadlineExceeded) {
-					return fmt.Errorf("unexpected error: %w", err)
-				}
-			} else if err != nil {
-				// ignore connection refused, as it's not firewall, but rather service proxy not ready yet
-				if !strings.Contains(err.Error(), "connection refused") {
-					return fmt.Errorf("nodePort API should be available: %w", err)
-				}
-			}
-
-			return nil
+			return retry.Constant(time.Minute, retry.WithUnits(time.Second)).RetryWithContext(ctx, func(ctx context.Context) error {
+				return probe(ctx, node)
+			})
 		})
 	}
 
