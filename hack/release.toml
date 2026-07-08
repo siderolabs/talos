@@ -22,7 +22,7 @@ Linux: 6.18.38
 containerd: 2.2.5
 runc: 1.4.3
 
-Talos is built with Go 1.26.4.
+Talos is built with Go 1.26.5.
 """
 
 [make_deps]
