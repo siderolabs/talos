@@ -74,6 +74,16 @@ type RAIDArrayConfigV1Alpha1 struct {
 	//     - raid1
 	Level storageres.MDLevel `yaml:"level"`
 	//   description: |
+	//     MD on-disk metadata format.
+	//
+	//     Defaults to 1.0, which stores the superblock at the end of the member
+	//     device so the array can back a bootable partition. Use 1.2 for data
+	//     arrays that do not need to be bootable.
+	//   values:
+	//     - "1.0"
+	//     - "1.2"
+	MetadataFormat storageres.MDMetadata `yaml:"metadata,omitempty"`
+	//   description: |
 	//     The provisioning describes how the RAID arrays are provisioned.
 	ProvisioningSpec RAIDProvisioningSpec `yaml:"provisioning"`
 }
@@ -165,6 +175,11 @@ func (s *RAIDArrayConfigV1Alpha1) RAIDArrayConfigSignal() {}
 // RAIDLevel implements config.RAIDArrayConfig.
 func (s *RAIDArrayConfigV1Alpha1) RAIDLevel() storageres.MDLevel {
 	return s.Level
+}
+
+// RAIDMetadata implements config.RAIDArrayConfig.
+func (s *RAIDArrayConfigV1Alpha1) RAIDMetadata() storageres.MDMetadata {
+	return s.MetadataFormat
 }
 
 // Provisioning implements config.RAIDArrayConfig.

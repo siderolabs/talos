@@ -928,6 +928,10 @@ spec:
             shortIntegrationTest: "yes"
             with4kDisk: "true"
             with4kDiskImage: "true"
+          - test: e2e-md-boot
+            shortIntegrationTest: "yes"
+            qemuSystemDisks: "2"
+            withConfigPatch: "@hack/test/patches/md-boot-array.yaml"
           - test: e2e-flannel-netpol
             shortIntegrationTest: "yes"
             qemuMemoryWorkers: "4096"
@@ -956,6 +960,7 @@ spec:
             WITH_UKI_BOOT: ${{ matrix.withUkiBoot }}
             WITH_4K_DISK: ${{ matrix.with4kDisk }}
             WITH_4K_DISK_IMAGE: ${{ matrix.with4kDiskImage }}
+            QEMU_SYSTEM_DISKS: ${{ matrix.qemuSystemDisks }}
             QEMU_MEMORY_WORKERS: ${{ matrix.qemuMemoryWorkers }}
             QEMU_MEMORY_CONTROLPLANES: ${{ matrix.qemuMemoryControlplanes }}
             TEST_MODE: ${{ matrix.testMode }}

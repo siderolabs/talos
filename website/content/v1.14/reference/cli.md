@@ -184,6 +184,7 @@ talosctl cluster create dev [flags]
       --nameservers strings                      list of nameservers to use
       --no-masquerade-cidrs strings              list of CIDRs to exclude from NAT
       --omni-api-endpoint string                 the Omni API endpoint (must include a scheme, a hostname and a join token, e.g. 'https://siderolink.omni.example?jointoken=foobar')
+      --primary-disks int                        number of primary disks to create for each VM (each sized by --disk) (default 1)
       --registry-insecure-skip-verify strings    list of registry hostnames to skip TLS verification for
       --registry-mirror strings                  list of registry mirrors to use in format: <registry host>=<mirror URL>
       --skip-injecting-config                    skip injecting config from embedded metadata server, write config files to current directory
@@ -403,6 +404,7 @@ talosctl cluster create dev [flags]
       --nameservers strings                      list of nameservers to use
       --no-masquerade-cidrs strings              list of CIDRs to exclude from NAT
       --omni-api-endpoint string                 the Omni API endpoint (must include a scheme, a hostname and a join token, e.g. 'https://siderolink.omni.example?jointoken=foobar')
+      --primary-disks int                        number of primary disks to create for each VM (each sized by --disk) (default 1)
       --registry-insecure-skip-verify strings    list of registry hostnames to skip TLS verification for
       --registry-mirror strings                  list of registry mirrors to use in format: <registry host>=<mirror URL>
       --skip-injecting-config                    skip injecting config from embedded metadata server, write config files to current directory

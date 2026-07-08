@@ -1068,6 +1068,11 @@ func (m *MDArraySpecSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.Metadata != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Metadata))
+		i--
+		dAtA[i] = 0x18
+	}
 	if m.VolumeSelector != nil {
 		if vtmsg, ok := interface{}(m.VolumeSelector).(interface {
 			MarshalToSizedBufferVT([]byte) (int, error)
@@ -1730,6 +1735,9 @@ func (m *MDArraySpecSpec) SizeVT() (n int) {
 			l = proto.Size(m.VolumeSelector)
 		}
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	if m.Metadata != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.Metadata))
 	}
 	n += len(m.unknownFields)
 	return n
@@ -5327,6 +5335,25 @@ func (m *MDArraySpecSpec) UnmarshalVT(dAtA []byte) error {
 				}
 			}
 			iNdEx = postIndex
+		case 3:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Metadata", wireType)
+			}
+			m.Metadata = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Metadata |= enums.StorageMDMetadata(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

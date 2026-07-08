@@ -17,6 +17,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 	storagecfg "github.com/siderolabs/talos/pkg/machinery/config/types/storage"
+	storageres "github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
 
 //nolint:dupl
@@ -35,6 +36,19 @@ func TestRAIDArrayConfigMarshalUnmarshal(t *testing.T) {
 			cfg: func(t *testing.T) *storagecfg.RAIDArrayConfigV1Alpha1 {
 				c := storagecfg.NewRAIDArrayConfigV1Alpha1()
 				c.MetaName = "data"
+
+				require.NoError(t, c.ProvisioningSpec.RAIDVolumeSelector.Match.UnmarshalText([]byte(`disk.transport == "virtio"`)))
+
+				return c
+			},
+		},
+		{
+			name:     "metadata 1.2",
+			filename: "raidarrayconfig_metadata12.yaml",
+			cfg: func(t *testing.T) *storagecfg.RAIDArrayConfigV1Alpha1 {
+				c := storagecfg.NewRAIDArrayConfigV1Alpha1()
+				c.MetaName = "data"
+				c.MetadataFormat = storageres.MDMetadata12
 
 				require.NoError(t, c.ProvisioningSpec.RAIDVolumeSelector.Match.UnmarshalText([]byte(`disk.transport == "virtio"`)))
 

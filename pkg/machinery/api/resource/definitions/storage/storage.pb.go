@@ -1204,8 +1204,10 @@ type MDArraySpecSpec struct {
 	Level enums.StorageMDLevel `protobuf:"varint,1,opt,name=level,proto3,enum=talos.resource.definitions.enums.StorageMDLevel" json:"level,omitempty"`
 	// VolumeSelector matches the member volumes of the array.
 	VolumeSelector *v1alpha1.CheckedExpr `protobuf:"bytes,2,opt,name=volume_selector,json=volumeSelector,proto3" json:"volume_selector,omitempty"`
-	unknownFields  protoimpl.UnknownFields
-	sizeCache      protoimpl.SizeCache
+	// Metadata is the on-disk MD metadata format.
+	Metadata      enums.StorageMDMetadata `protobuf:"varint,3,opt,name=metadata,proto3,enum=talos.resource.definitions.enums.StorageMDMetadata" json:"metadata,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *MDArraySpecSpec) Reset() {
@@ -1250,6 +1252,13 @@ func (x *MDArraySpecSpec) GetVolumeSelector() *v1alpha1.CheckedExpr {
 		return x.VolumeSelector
 	}
 	return nil
+}
+
+func (x *MDArraySpecSpec) GetMetadata() enums.StorageMDMetadata {
+	if x != nil {
+		return x.Metadata
+	}
+	return enums.StorageMDMetadata(0)
 }
 
 // MDArrayStatusSpec is the spec for MDArrayStatus resource.
@@ -1564,10 +1573,11 @@ const file_resource_definitions_storage_storage_proto_rawDesc = "" +
 	"\vpretty_size\x18\x1a \x01(\tR\n" +
 	"prettySize\x12\x1f\n" +
 	"\vpretty_free\x18\x1b \x01(\tR\n" +
-	"prettyFree\"\xa9\x01\n" +
+	"prettyFree\"\xfa\x01\n" +
 	"\x0fMDArraySpecSpec\x12F\n" +
 	"\x05level\x18\x01 \x01(\x0e20.talos.resource.definitions.enums.StorageMDLevelR\x05level\x12N\n" +
-	"\x0fvolume_selector\x18\x02 \x01(\v2%.google.api.expr.v1alpha1.CheckedExprR\x0evolumeSelector\"\x9b\x03\n" +
+	"\x0fvolume_selector\x18\x02 \x01(\v2%.google.api.expr.v1alpha1.CheckedExprR\x0evolumeSelector\x12O\n" +
+	"\bmetadata\x18\x03 \x01(\x0e23.talos.resource.definitions.enums.StorageMDMetadataR\bmetadata\"\x9b\x03\n" +
 	"\x11MDArrayStatusSpec\x12F\n" +
 	"\x05level\x18\x01 \x01(\x0e20.talos.resource.definitions.enums.StorageMDLevelR\x05level\x12\x16\n" +
 	"\x06device\x18\x02 \x01(\tR\x06device\x12\x18\n" +
@@ -1615,19 +1625,21 @@ var file_resource_definitions_storage_storage_proto_goTypes = []any{
 	(enums.StorageLVMLogicalVolumeType)(0), // 11: talos.resource.definitions.enums.StorageLVMLogicalVolumeType
 	(enums.StorageMDLevel)(0),              // 12: talos.resource.definitions.enums.StorageMDLevel
 	(*v1alpha1.CheckedExpr)(nil),           // 13: google.api.expr.v1alpha1.CheckedExpr
-	(enums.StorageMDArrayPhase)(0),         // 14: talos.resource.definitions.enums.StorageMDArrayPhase
+	(enums.StorageMDMetadata)(0),           // 14: talos.resource.definitions.enums.StorageMDMetadata
+	(enums.StorageMDArrayPhase)(0),         // 15: talos.resource.definitions.enums.StorageMDArrayPhase
 }
 var file_resource_definitions_storage_storage_proto_depIdxs = []int32{
 	11, // 0: talos.resource.definitions.storage.LVMLogicalVolumeSpecSpec.type:type_name -> talos.resource.definitions.enums.StorageLVMLogicalVolumeType
 	12, // 1: talos.resource.definitions.storage.MDArraySpecSpec.level:type_name -> talos.resource.definitions.enums.StorageMDLevel
 	13, // 2: talos.resource.definitions.storage.MDArraySpecSpec.volume_selector:type_name -> google.api.expr.v1alpha1.CheckedExpr
-	12, // 3: talos.resource.definitions.storage.MDArrayStatusSpec.level:type_name -> talos.resource.definitions.enums.StorageMDLevel
-	14, // 4: talos.resource.definitions.storage.MDArrayStatusSpec.status:type_name -> talos.resource.definitions.enums.StorageMDArrayPhase
-	5,  // [5:5] is the sub-list for method output_type
-	5,  // [5:5] is the sub-list for method input_type
-	5,  // [5:5] is the sub-list for extension type_name
-	5,  // [5:5] is the sub-list for extension extendee
-	0,  // [0:5] is the sub-list for field type_name
+	14, // 3: talos.resource.definitions.storage.MDArraySpecSpec.metadata:type_name -> talos.resource.definitions.enums.StorageMDMetadata
+	12, // 4: talos.resource.definitions.storage.MDArrayStatusSpec.level:type_name -> talos.resource.definitions.enums.StorageMDLevel
+	15, // 5: talos.resource.definitions.storage.MDArrayStatusSpec.status:type_name -> talos.resource.definitions.enums.StorageMDArrayPhase
+	6,  // [6:6] is the sub-list for method output_type
+	6,  // [6:6] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_storage_storage_proto_init() }

@@ -28,6 +28,8 @@ type MDArraySpecSpec struct {
 	Level MDLevel `yaml:"level" protobuf:"1"`
 	// VolumeSelector matches the member volumes of the array.
 	VolumeSelector cel.Expression `yaml:"volumeSelector" protobuf:"2"`
+	// Metadata is the on-disk MD metadata format.
+	Metadata MDMetadata `yaml:"metadata" protobuf:"3"`
 }
 
 // NewMDArraySpec initializes an MDArraySpec resource.

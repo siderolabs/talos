@@ -5664,6 +5664,16 @@
           "markdownDescription": "RAID level.",
           "x-intellij-html-description": "\u003cp\u003eRAID level.\u003c/p\u003e\n"
         },
+        "metadata": {
+          "enum": [
+            "1.0",
+            "1.2"
+          ],
+          "title": "metadata",
+          "description": "MD on-disk metadata format.\n\nDefaults to 1.0, which stores the superblock at the end of the member\ndevice so the array can back a bootable partition. Use 1.2 for data\narrays that do not need to be bootable.\n",
+          "markdownDescription": "MD on-disk metadata format.\n\nDefaults to 1.0, which stores the superblock at the end of the member\ndevice so the array can back a bootable partition. Use 1.2 for data\narrays that do not need to be bootable.",
+          "x-intellij-html-description": "\u003cp\u003eMD on-disk metadata format.\u003c/p\u003e\n\n\u003cp\u003eDefaults to 1.0, which stores the superblock at the end of the member\ndevice so the array can back a bootable partition. Use 1.2 for data\narrays that do not need to be bootable.\u003c/p\u003e\n"
+        },
         "provisioning": {
           "$ref": "#/$defs/storage.RAIDProvisioningSpec",
           "title": "provisioning",

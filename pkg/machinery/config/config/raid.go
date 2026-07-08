@@ -14,6 +14,7 @@ type RAIDArrayConfig interface {
 	NamedDocument
 	RAIDArrayConfigSignal()
 	RAIDLevel() storageres.MDLevel
+	RAIDMetadata() storageres.MDMetadata
 	Provisioning() RAIDProvisioningConfig
 }
 

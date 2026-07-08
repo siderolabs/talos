@@ -1,0 +1,18 @@
+apiVersion: v1alpha1
+kind: RAIDArrayConfig
+name: boot
+level: raid1
+metadata: "1.0"
+provisioning:
+    volumeSelector:
+        match: disk.transport == "virtio" && disk.size >= 12u * GiB
+---
+apiVersion: v1alpha1
+kind: UnattendedInstallConfig
+provisioning:
+    diskSelector:
+        match: '"/dev/disk/by-id/md-name-talos:boot" in disk.symlinks'
+---
+apiVersion: v1alpha1
+kind: KernelModuleConfig
+name: raid1

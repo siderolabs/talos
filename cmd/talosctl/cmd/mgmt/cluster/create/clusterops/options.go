@@ -114,6 +114,7 @@ type Qemu struct {
 	NetworkNoMasqueradeCIDRs  []string
 	Nameservers               []string
 	Disks                     flags.Disks
+	PrimaryDisks              int
 	DiskBlockSize             uint
 	PreallocateDisks          bool
 	ClusterUserVolumes        []string
@@ -210,6 +211,7 @@ func GetQemu() Qemu {
 		CniBundleURL: fmt.Sprintf("https://github.com/%s/talos/releases/download/%s/talosctl-cni-bundle-%s.tar.gz",
 			images.Username, version.Trim(version.Tag), constants.ArchVariable),
 		Disks:          disks,
+		PrimaryDisks:   1,
 		ImageCachePort: 5000,
 	}
 }

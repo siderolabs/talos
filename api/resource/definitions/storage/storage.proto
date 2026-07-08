@@ -243,6 +243,8 @@ message MDArraySpecSpec {
   talos.resource.definitions.enums.StorageMDLevel level = 1;
   // VolumeSelector matches the member volumes of the array.
   google.api.expr.v1alpha1.CheckedExpr volume_selector = 2;
+  // Metadata is the on-disk MD metadata format.
+  talos.resource.definitions.enums.StorageMDMetadata metadata = 3;
 }
 
 // MDArrayStatusSpec is the spec for MDArrayStatus resource.

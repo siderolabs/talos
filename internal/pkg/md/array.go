@@ -216,6 +216,8 @@ func (md *MD) RunArray(ctx context.Context, device string) error {
 type CreateOptions struct {
 	// Level is the mdadm RAID level.
 	Level int
+	// Metadata is the mdadm metadata format (e.g. "1.0"); empty lets mdadm pick its default.
+	Metadata string
 	// RaidDevices is the number of active member slots.
 	RaidDevices int
 	// Devices are the member block devices.
@@ -233,7 +235,7 @@ func (md *MD) Create(ctx context.Context, name string, opts CreateOptions) (stri
 	}
 
 	node := freeMDNode()
-	args := make([]string, 0, 7+len(opts.Devices))
+	args := make([]string, 0, 8+len(opts.Devices))
 	args = append(args,
 		"--create", node,
 		"--name", name,
@@ -243,6 +245,11 @@ func (md *MD) Create(ctx context.Context, name string, opts CreateOptions) (stri
 		"--level="+strconv.Itoa(opts.Level),
 		"--raid-devices="+strconv.Itoa(opts.RaidDevices),
 	)
+
+	if opts.Metadata != "" {
+		args = append(args, "--metadata="+opts.Metadata)
+	}
+
 	args = append(args, opts.Devices...)
 
 	if _, err := md.run(ctx, args...); err != nil {

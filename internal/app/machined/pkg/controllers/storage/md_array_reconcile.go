@@ -239,7 +239,7 @@ func (ctrl *MDArrayReconcileController) createArray(
 ) (*storage.MDArrayStatusSpec, error) {
 	logger.Info("creating MD array", zap.String("array", name), zap.Strings("members", members))
 
-	device, err := ctrl.MD.Create(ctx, name, md.CreateOptions{Level: spec.Level.Mdadm(), RaidDevices: len(members), Devices: members})
+	device, err := ctrl.MD.Create(ctx, name, md.CreateOptions{Level: spec.Level.Mdadm(), Metadata: spec.Metadata.Mdadm(), RaidDevices: len(members), Devices: members})
 	if err != nil && !errors.Is(err, md.ErrExists) {
 		return statusWithError(status, fmt.Errorf("create: %w", err))
 	}

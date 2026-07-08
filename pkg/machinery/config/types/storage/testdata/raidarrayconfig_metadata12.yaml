@@ -1,0 +1,8 @@
+apiVersion: v1alpha1
+kind: RAIDArrayConfig
+name: data
+level: raid1
+metadata: "1.2"
+provisioning:
+    volumeSelector:
+        match: disk.transport == "virtio"

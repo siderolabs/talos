@@ -220,6 +220,17 @@ func (RAIDArrayConfigV1Alpha1) Doc() *encoder.Doc {
 				},
 			},
 			{
+				Name:        "metadata",
+				Type:        "MDMetadata",
+				Note:        "",
+				Description: "MD on-disk metadata format.\n\nDefaults to 1.0, which stores the superblock at the end of the member\ndevice so the array can back a bootable partition. Use 1.2 for data\narrays that do not need to be bootable.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "MD on-disk metadata format." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"1.0",
+					"1.2",
+				},
+			},
+			{
 				Name:        "provisioning",
 				Type:        "RAIDProvisioningSpec",
 				Note:        "",

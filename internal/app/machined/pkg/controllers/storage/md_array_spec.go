@@ -74,6 +74,7 @@ func (ctrl *MDArraySpecController) Run(ctx context.Context, r controller.Runtime
 					func(s *storage.MDArraySpec) error {
 						spec := s.TypedSpec()
 						spec.Level = doc.RAIDLevel()
+						spec.Metadata = doc.RAIDMetadata()
 						spec.VolumeSelector = doc.Provisioning().VolumeSelector()
 
 						return nil

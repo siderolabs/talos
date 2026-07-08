@@ -37,6 +37,7 @@ provisioning:
 |-------|------|-------------|----------|
 |`name` |string |Array name, stamped into the md metadata.<br><br>Must be 1-32 chars: ASCII letters, digits, hyphens, underscores.<br>Exposed as `/dev/disk/by-id/md-name-<name>`.  | |
 |`level` |MDLevel |RAID level.  |`raid1`<br /> |
+|`metadata` |MDMetadata |MD on-disk metadata format.<br><br>Defaults to 1.0, which stores the superblock at the end of the member<br>device so the array can back a bootable partition. Use 1.2 for data<br>arrays that do not need to be bootable.  |`1.0`<br />`1.2`<br /> |
 |`provisioning` |<a href="#RAIDArrayConfig.provisioning">RAIDProvisioningSpec</a> |The provisioning describes how the RAID arrays are provisioned.  | |
 
 

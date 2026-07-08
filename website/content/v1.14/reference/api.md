@@ -355,6 +355,7 @@ description: Talos gRPC API reference.
     - [StorageLVMLogicalVolumeType](#talos.resource.definitions.enums.StorageLVMLogicalVolumeType)
     - [StorageMDArrayPhase](#talos.resource.definitions.enums.StorageMDArrayPhase)
     - [StorageMDLevel](#talos.resource.definitions.enums.StorageMDLevel)
+    - [StorageMDMetadata](#talos.resource.definitions.enums.StorageMDMetadata)
   
 - [resource/definitions/block/block.proto](#resource/definitions/block/block.proto)
     - [DeviceSpec](#talos.resource.definitions.block.DeviceSpec)
@@ -6315,6 +6316,18 @@ StorageMDLevel describes the RAID level of an MD (software RAID) array.
 | MD_LEVEL_RAID1 | 0 |  |
 
 
+
+<a name="talos.resource.definitions.enums.StorageMDMetadata"></a>
+
+### StorageMDMetadata
+StorageMDMetadata describes the on-disk metadata format of an MD (software RAID) array.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| MD_METADATA10 | 0 |  |
+| MD_METADATA12 | 1 |  |
+
+
  <!-- end enums -->
 
  <!-- end HasExtensions -->
@@ -11469,6 +11482,7 @@ MDArraySpecSpec is the spec for MDArraySpec resource.
 | ----- | ---- | ----- | ----------- |
 | level | [talos.resource.definitions.enums.StorageMDLevel](#talos.resource.definitions.enums.StorageMDLevel) |  | Level is the RAID level. |
 | volume_selector | [google.api.expr.v1alpha1.CheckedExpr](#google.api.expr.v1alpha1.CheckedExpr) |  | VolumeSelector matches the member volumes of the array. |
+| metadata | [talos.resource.definitions.enums.StorageMDMetadata](#talos.resource.definitions.enums.StorageMDMetadata) |  | Metadata is the on-disk MD metadata format. |
 
 
 

@@ -278,6 +278,18 @@ removal stays an explicit operation via `talosctl wipe md <device>`. The new `MD
 assembled array, level, device path, and members.
 """
 
+    [notes.raid_boot]
+        title = "Booting from a RAID Array"
+        description = """\
+Talos can now be installed onto and boot from a Linux MD (software RAID) array. Define a `RAIDArrayConfig` for the
+array and point the install disk selector (`UnattendedInstallConfig`) at the resulting `/dev/disk/by-id/md-name-<name>`
+device.
+
+Only `raid1` arrays with `metadata: "1.0"` can be used for booting: the 1.0 format keeps its superblock at the end of
+each member, so the partition table written to the array stays visible at the start of every disk, allowing the
+firmware to boot from any member. `metadata` defaults to `1.0`; other levels and metadata formats are not bootable.
+"""
+
     [notes.kernel_module_status]
         title = "Kernel Module Status"
         description = """\

@@ -801,6 +801,12 @@ enum StorageMDLevel {
   MD_LEVEL_RAID1 = 0;
 }
 
+// StorageMDMetadata describes the on-disk metadata format of an MD (software RAID) array.
+enum StorageMDMetadata {
+  MD_METADATA10 = 0;
+  MD_METADATA12 = 1;
+}
+
 // CriImageCacheStatus describes image cache status type.
 enum CriImageCacheStatus {
   IMAGE_CACHE_STATUS_UNKNOWN = 0;
