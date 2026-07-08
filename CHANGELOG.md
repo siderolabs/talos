@@ -1,3 +1,95 @@
+## [Talos 1.13.6](https://github.com/siderolabs/talos/releases/tag/v1.13.6) (2026-07-08)
+
+Welcome to the v1.13.6 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.18.38
+
+Talos is built with Go 1.26.5.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Mateusz Urbanek
+* Noel Georgi
+* Maja Bojarska
+* Mark Glants
+
+### Changes
+<details><summary>14 commits</summary>
+<p>
+
+* [`9d8e47dd3`](https://github.com/siderolabs/talos/commit/9d8e47dd3cbb6cadf697dc05e29d4343f29a8d7a) chore: update pkgs and tools
+* [`31552f400`](https://github.com/siderolabs/talos/commit/31552f40099cdcf181b8bee820055847b86ecda4) fix: shutdown/reboot via usermode helpers
+* [`bc0c3f3d3`](https://github.com/siderolabs/talos/commit/bc0c3f3d39327b04dcaa0c15bea8b06a8c64b8a1) fix: flaky serviceaccount suite test
+* [`3e7559258`](https://github.com/siderolabs/talos/commit/3e7559258e8da86b94114e2fc6b5b293d465dc09) fix: flaky tests
+* [`fbe4d900d`](https://github.com/siderolabs/talos/commit/fbe4d900d983ab81fe5b5faacdbe5d5d124a613e) fix: data race in manifest sync
+* [`6df3a452b`](https://github.com/siderolabs/talos/commit/6df3a452b0aaea5dab75e3221c2a600f5ab1b94e) fix: provide cooldown period for the QoS trigger
+* [`85f8dd63e`](https://github.com/siderolabs/talos/commit/85f8dd63ed7dac59ab939ee0be1acb7e66659a08) fix: decode extraArgs list values correctly
+* [`c2a56d592`](https://github.com/siderolabs/talos/commit/c2a56d592a9c7f1246052148e341e9bd5d78fb29) fix: kubelet stuck restarting
+* [`871440858`](https://github.com/siderolabs/talos/commit/8714408587bea7d9f70be41e29ce69e61978abdc) chore: bump rekor for GHSA-47q9-m4ww-924m
+* [`3e37ef8cd`](https://github.com/siderolabs/talos/commit/3e37ef8cddffed23e67adedc9bef5398353b70db) fix: handle image cache being disabled
+* [`466bcd804`](https://github.com/siderolabs/talos/commit/466bcd80466c2897c7a254a21f0ef85b80da4cd0) fix: align documented image cache partition label
+* [`d3cf09bcb`](https://github.com/siderolabs/talos/commit/d3cf09bcb8d58b6d548871fff6a57594744fc034) fix: image verification with referrers
+* [`e9609b992`](https://github.com/siderolabs/talos/commit/e9609b992fde91094acc1eb1338b1f60d2d5252b) feat: add AMD XGBE driver to initramfs
+* [`f18efcc4d`](https://github.com/siderolabs/talos/commit/f18efcc4d6f603dde1967a2045bea161768fceaf) chore: update deps
+</p>
+</details>
+
+### Changes from siderolabs/gen
+<details><summary>1 commit</summary>
+<p>
+
+* [`c526410`](https://github.com/siderolabs/gen/commit/c526410f8c26b75ab386877036d4855098f9c429) fix: skip unknown-key check for types with custom YAML unmarshaler
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>7 commits</summary>
+<p>
+
+* [`d8c80cc`](https://github.com/siderolabs/pkgs/commit/d8c80cc52d6c60a25c7ab2a80fa78814c08a04da) chore: update toolchain and tools
+* [`71874fb`](https://github.com/siderolabs/pkgs/commit/71874fb48cab246870e28559782f951592bb3116) feat: bump kernel to 6.18.38
+* [`a2406a1`](https://github.com/siderolabs/pkgs/commit/a2406a1b487d02c1610bc3969f9c501d2b137028) feat: bump kernel 6.18.37
+* [`e410c35`](https://github.com/siderolabs/pkgs/commit/e410c3557eedad8aea76738af75aa15a469fdda0) feat: update Linux firmware to 20260622
+* [`389b8aa`](https://github.com/siderolabs/pkgs/commit/389b8aaf4dd96f37faa914ae9fbf2353cec81a55) fix: patch Linux kernel for tunnel metadata buffer overflow
+* [`7e4a719`](https://github.com/siderolabs/pkgs/commit/7e4a71958dfb6786ec05c4026b308c7e3dfe8043) feat: add support for AMD XGBE driver
+* [`1915c58`](https://github.com/siderolabs/pkgs/commit/1915c580e4e1b0f471875f1c7bf16cf6a25f4110) feat: enable NF_TABLES_ARP option
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`c58afd5`](https://github.com/siderolabs/tools/commit/c58afd571730474b923c817946c34f57bc920674) chore: bump toolchain
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/Azure/azure-sdk-for-go/sdk/azcore**   v1.21.0 -> v1.21.1
+* **github.com/aws/aws-sdk-go-v2**                   v1.41.4 -> v1.41.7
+* **github.com/aws/aws-sdk-go-v2/config**            v1.32.12 -> v1.32.17
+* **github.com/aws/aws-sdk-go-v2/feature/ec2/imds**  v1.18.20 -> v1.18.23
+* **github.com/aws/aws-sdk-go-v2/service/kms**       v1.50.3 -> v1.51.1
+* **github.com/aws/smithy-go**                       v1.24.2 -> v1.25.1
+* **github.com/siderolabs/gen**                      v0.8.6 -> v0.8.7
+* **github.com/siderolabs/pkgs**                     v1.13.0-36-g6b315f7 -> v1.13.0-43-gd8c80cc
+* **github.com/siderolabs/tools**                    v1.13.0-6-g9b78252 -> v1.13.0-7-gc58afd5
+* **github.com/sigstore/cosign/v3**                  v3.0.5 -> v3.0.6
+* **github.com/sigstore/sigstore**                   v1.10.5 -> v1.10.6
+* **go.uber.org/zap**                                v1.27.1 -> v1.28.0
+
+Previous release can be found at [v1.13.5](https://github.com/siderolabs/talos/releases/tag/v1.13.5)
+
 ## [Talos 1.13.5](https://github.com/siderolabs/talos/releases/tag/v1.13.5) (2026-06-22)
 
 Welcome to the v1.13.5 release of Talos!
