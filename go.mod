@@ -173,10 +173,10 @@ require (
 	github.com/u-root/u-root v0.16.0
 	github.com/ulikunitz/xz v0.5.15
 	github.com/vultr/metadata v1.1.0
-	go.etcd.io/etcd/api/v3 v3.7.0-rc.0
-	go.etcd.io/etcd/client/pkg/v3 v3.7.0-rc.0
-	go.etcd.io/etcd/client/v3 v3.7.0-rc.0
-	go.etcd.io/etcd/etcdutl/v3 v3.7.0-rc.0
+	go.etcd.io/etcd/api/v3 v3.7.0
+	go.etcd.io/etcd/client/pkg/v3 v3.7.0
+	go.etcd.io/etcd/client/v3 v3.7.0
+	go.etcd.io/etcd/etcdutl/v3 v3.7.0
 	go.uber.org/goleak v1.3.0
 	go.uber.org/zap v1.28.0
 	go.yaml.in/yaml/v4 v4.0.0-rc.5
@@ -383,10 +383,10 @@ require (
 	github.com/xlab/treeprint v1.2.0 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20240726163527-a2c0da244d78 // indirect
 	github.com/zalando/go-keyring v0.2.6 // indirect
-	go.etcd.io/bbolt v1.5.0-rc.0 // indirect
-	go.etcd.io/etcd/pkg/v3 v3.7.0-rc.0 // indirect
-	go.etcd.io/etcd/server/v3 v3.7.0-rc.0 // indirect
-	go.etcd.io/raft/v3 v3.7.0-rc.1 // indirect
+	go.etcd.io/bbolt v1.5.0 // indirect
+	go.etcd.io/etcd/pkg/v3 v3.7.0 // indirect
+	go.etcd.io/etcd/server/v3 v3.7.0 // indirect
+	go.etcd.io/raft/v3 v3.7.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.68.0 // indirect
