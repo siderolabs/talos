@@ -39,6 +39,7 @@ var upgradeCmdFlags = struct {
 	imageCmdFlagsType
 
 	upgradeImage string
+	noReboot     bool
 	rebootMode   flags.PflagExtended[machine.RebootRequest_Mode]
 	progress     flags.PflagExtended[reporter.OutputMode]
 
@@ -93,6 +94,10 @@ var talosUpgradeAPIVersionRange = semver.MustParseRange(">1.13.0-alpha.2 <2.0.0"
 func upgradeViaLifecycleService(ctx context.Context, clientFactory *global.ClientFactory) (retErr error) {
 	if upgradeCmdFlags.debug {
 		upgradeCmdFlags.wait = true
+	}
+
+	if upgradeCmdFlags.noReboot {
+		upgradeCmdFlags.drain = false
 	}
 
 	if upgradeCmdFlags.legacy {
@@ -158,9 +163,11 @@ func upgradeViaLifecycleService(ctx context.Context, clientFactory *global.Clien
 		}
 	}()
 
-	err = rebootInternal(ctx, clientFactory, upgradeCmdFlags.wait, upgradeCmdFlags.debug, upgradeCmdFlags.timeout, rep, opts...)
-	if err != nil {
-		return fmt.Errorf("error during upgrade: %w", err)
+	if !upgradeCmdFlags.noReboot {
+		err = rebootInternal(ctx, clientFactory, upgradeCmdFlags.wait, upgradeCmdFlags.debug, upgradeCmdFlags.timeout, rep, opts...)
+		if err != nil {
+			return fmt.Errorf("error during upgrade: %w", err)
+		}
 	}
 
 	return nil
@@ -364,6 +371,7 @@ func init() {
 		),
 	)
 	upgradeCmd.Flags().Var(upgradeCmdFlags.progress, "progress", fmt.Sprintf("output mode for upgrade progress. Values: %v", upgradeCmdFlags.progress.Options()))
+	upgradeCmd.Flags().BoolVar(&upgradeCmdFlags.noReboot, "no-reboot", false, "do not reboot the node after upgrade (skip reboot and drain)")
 	upgradeCmd.Flags().BoolVar(&upgradeCmdFlags.drain, "drain", true, "drain the Kubernetes node before rebooting (cordon + evict pods)")
 	upgradeCmd.Flags().DurationVar(&upgradeCmdFlags.drainTimeout, "drain-timeout", nodedrain.DefaultDrainTimeout, "timeout for draining the Kubernetes node")
 

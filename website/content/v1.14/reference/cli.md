@@ -3653,6 +3653,7 @@ talosctl upgrade [flags]
   -i, --image string               the container image to use for performing the install (default "factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:v1.14.0-alpha.2")
       --legacy                     force use of legacy upgrade method
       --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "system")
+      --no-reboot                  do not reboot the node after upgrade (skip reboot and drain)
   -n, --nodes strings              target the specified nodes
       --progress string            output mode for upgrade progress. Values: [auto plain] (default "auto")
   -m, --reboot-mode string         select the reboot mode during upgrade. Mode "powercycle" bypasses kexec. Values: [default force powercycle] (default "default")
