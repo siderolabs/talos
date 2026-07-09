@@ -3457,6 +3457,7 @@ talosctl upgrade [flags]
   -i, --image string               the container image to use for performing the install (default "ghcr.io/siderolabs/installer:v1.13.6")
       --legacy                     force use of legacy upgrade method
       --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "system")
+      --no-reboot                  do not reboot the node after upgrade (skip reboot and drain)
   -n, --nodes strings              target the specified nodes
       --progress string            output mode for upgrade progress. Values: [auto plain] (default "auto")
   -m, --reboot-mode string         select the reboot mode during upgrade. Mode "powercycle" bypasses kexec. Values: [default force powercycle] (default "default")
