@@ -9,17 +9,25 @@ package api
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/cel"
+	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
 // RebootSuite ...
@@ -275,6 +283,54 @@ func (suite *RebootSuite) TestRebootAllNodes() {
 		// NB: using `ctx` here to have client talking to init node by default
 		suite.AssertClusterHealthy(suite.ctx)
 	}
+}
+
+// TestRebootWithFailingUserVolume verifies that a user volume whose allocation fails
+// (it references a disk that does not exist) does not block the reboot sequence.
+//
+// The reboot sequence tears down the volume lifecycle; a failing user volume that is
+// never provisioned must not hold that teardown up, otherwise the node fails to reboot.
+func (suite *RebootSuite) TestRebootWithFailingUserVolume() {
+	if !suite.Capabilities().SupportsReboot {
+		suite.T().Skip("cluster doesn't support reboots")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	volumeID := fmt.Sprintf("badvol%04x", rand.Int31())
+	userVolumeID := constants.UserVolumePrefix + volumeID
+
+	suite.T().Logf("creating a failing user volume %q on node %s", volumeID, node)
+
+	doc := blockcfg.NewUserVolumeConfigV1Alpha1()
+	doc.MetaName = volumeID
+	// selector references a disk that does not exist, so the volume can never be allocated
+	doc.ProvisioningSpec.DiskSelectorSpec.Match = cel.MustExpression(
+		cel.ParseBooleanExpression(`disk.dev_path == "/dev/does-not-exist"`, celenv.DiskLocator()),
+	)
+	doc.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("100MiB")
+	doc.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("1GiB")
+
+	suite.PatchMachineConfig(nodeCtx, doc)
+	defer suite.RemoveMachineConfigDocumentsByName(nodeCtx, blockcfg.UserVolumeConfigKind, volumeID)
+
+	// the user volume should fail to allocate (no disk matched the selector)
+	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{userVolumeID},
+		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+			asrt.Equal(block.VolumePhaseFailed, vs.TypedSpec().Phase)
+		},
+	)
+
+	// reboot must complete despite the failing user volume
+	suite.AssertRebooted(
+		suite.ctx, node, func(nodeCtx context.Context) error {
+			return base.IgnoreGRPCUnavailable(suite.Client.Reboot(nodeCtx))
+		}, 10*time.Minute,
+		suite.CleanupFailedPods,
+	)
+
+	suite.WaitForBootDone(suite.ctx)
 }
 
 func init() {
