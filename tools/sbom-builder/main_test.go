@@ -287,9 +287,9 @@ func TestEnrichGoModuleURLs(t *testing.T) {
 		{
 			PackageSPDXIdentifier:     "P-std",
 			PackageName:               "stdlib",
-			PackageVersion:            "go1.26.4",
+			PackageVersion:            "go1.26.5",
 			PackageDownloadLocation:   "NOASSERTION",
-			PackageExternalReferences: []*v2_3.PackageExternalReference{goRef("pkg:golang/stdlib@go1.26.4")},
+			PackageExternalReferences: []*v2_3.PackageExternalReference{goRef("pkg:golang/stdlib@go1.26.5")},
 		},
 		// local replace target: no version, left untouched
 		{

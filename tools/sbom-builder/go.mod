@@ -1,6 +1,6 @@
 module github.com/siderolabs/talos/tools/sbom-builder
 
-go 1.26.4
+go 1.26.5
 
 require (
 	github.com/anchore/syft v1.45.1
