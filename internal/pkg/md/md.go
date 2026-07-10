@@ -62,26 +62,31 @@ func (md *MD) run(ctx context.Context, args ...string) (string, error) {
 // EventCallback is a thread-safe callback for handling events of type T.
 type EventCallback[T any] struct {
 	mu      sync.Mutex
-	onEvent func(T, error)
+	onEvent func(T)
 }
 
 // NewEventCallback creates a new EventCallback for handling events of type T.
-func NewEventCallback[T any](onEvent func(T, error)) *EventCallback[T] {
+func NewEventCallback[T any](onEvent func(T)) *EventCallback[T] {
 	return &EventCallback[T]{
 		onEvent: onEvent,
 	}
 }
 
 // Emit calls the onEvent callback with the provided event of type T.
-func (ec *EventCallback[T]) Emit(event T, err error) {
+func (ec *EventCallback[T]) Emit(event T) {
 	ec.mu.Lock()
 	defer ec.mu.Unlock()
 
-	ec.onEvent(event, err)
+	ec.onEvent(event)
 }
 
 // Monitor runs mdadm monitor and calls onEvent for each emitted event line.
-func (md *MD) Monitor(ctx context.Context, onEvent func(string, error)) error {
+//
+// onEvent receives only stdout event lines. Errors are not delivered through the
+// callback: stderr is buffered and classified via the process exit, so the
+// terminal "no array" condition surfaces once, as the (quiet) ErrNotFound return
+// value, rather than also being logged as a warning per restart.
+func (md *MD) Monitor(ctx context.Context, onEvent func(string)) error {
 	var stderr bytes.Buffer
 
 	ec := NewEventCallback(onEvent)
@@ -91,12 +96,11 @@ func (md *MD) Monitor(ctx context.Context, onEvent func(string, error)) error {
 		md.mdadm,
 		[]string{"--monitor", "--scan", "--mail=talos@local"},
 		cmd.WithStdout(newLineWriter(func(s string) {
-			ec.Emit(s, nil)
+			ec.Emit(s)
 		})),
 		cmd.WithStderr(newLineWriter(func(s string) {
 			stderr.WriteString(s)
 			stderr.WriteByte('\n')
-			ec.Emit("", errors.New(s))
 		})),
 	)
 	if err != nil {

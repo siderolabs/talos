@@ -23,9 +23,9 @@ type fakeMDMonitor struct {
 	events []string
 }
 
-func (f *fakeMDMonitor) Monitor(ctx context.Context, onEvent func(string, error)) error {
+func (f *fakeMDMonitor) Monitor(ctx context.Context, onEvent func(string)) error {
 	for _, e := range f.events {
-		onEvent(e, nil)
+		onEvent(e)
 	}
 
 	<-ctx.Done()

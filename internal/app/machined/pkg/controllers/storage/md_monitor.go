@@ -27,7 +27,7 @@ const mdMonitorRestartBackoff = 30 * time.Second
 
 // MDMonitor is the mdadm monitor subset used by MDMonitorController.
 type MDMonitor interface {
-	Monitor(ctx context.Context, onEvent func(string, error)) error
+	Monitor(ctx context.Context, onEvent func(string)) error
 }
 
 // MDMonitorController runs mdadm monitor and emits MD refresh requests for each event.
@@ -99,11 +99,7 @@ func (ctrl *MDMonitorController) Run(ctx context.Context, r controller.Runtime, 
 }
 
 func (ctrl *MDMonitorController) runMonitor(ctx context.Context, r controller.Writer, logger *zap.Logger) error {
-	return ctrl.MD.Monitor(ctx, func(event string, err error) {
-		if err != nil {
-			logger.Warn("MD monitor error", zap.Error(err))
-		}
-
+	return ctrl.MD.Monitor(ctx, func(event string) {
 		if !strings.Contains(event, " event detected ") {
 			logger.Info("MD monitor message", zap.String("message", event))
 

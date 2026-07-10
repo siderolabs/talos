@@ -179,9 +179,13 @@ func (suite *VolumesSuite) TestDisks() {
 
 				if suite.Cluster != nil {
 					// running on our own provider, transport should be always detected
-					if disk.TypedSpec().BusPath == "/virtual" {
+					switch {
+					case strings.HasPrefix(disk.Metadata().ID(), "dm-"):
+						// device-mapper disks report a "dm" transport
+						suite.Assert().Equal("dm", disk.TypedSpec().Transport, "disk: %s", disk.Metadata().ID())
+					case disk.TypedSpec().BusPath == "/virtual":
 						suite.Assert().Empty(disk.TypedSpec().Transport, "disk: %s", disk.Metadata().ID())
-					} else {
+					default:
 						suite.Assert().NotEmpty(disk.TypedSpec().Transport, "disk: %s", disk.Metadata().ID())
 					}
 				}

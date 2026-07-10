@@ -88,9 +88,7 @@ printf 'mdadm: RebuildFinished event detected on md device /dev/md0\n'
 
 	var events []string
 
-	require.NoError(t, m.Monitor(context.Background(), func(event string, err error) {
-		assert.NoError(t, err)
-
+	require.NoError(t, m.Monitor(context.Background(), func(event string) {
 		events = append(events, event)
 	}))
 
@@ -116,9 +114,14 @@ exit 1
 	m, err := New(WithMdadmPath(script))
 	require.NoError(t, err)
 
-	err = m.Monitor(context.Background(), func(string, error) {})
+	// the "no array" condition must surface only via the return value; the
+	// callback must not fire for it, otherwise it gets logged as a warning on
+	// every restart.
+	called := false
+	err = m.Monitor(context.Background(), func(string) { called = true })
 	require.Error(t, err)
 	assert.True(t, errors.Is(err, ErrNotFound))
+	assert.False(t, called, "callback must not fire for the no-array condition")
 }
 
 func TestCommandArguments(t *testing.T) {
