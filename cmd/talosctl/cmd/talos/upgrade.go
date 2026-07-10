@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"text/tabwriter"
 	"time"
 
@@ -117,7 +118,7 @@ func upgradeViaLifecycleService(ctx context.Context, clientFactory *global.Clien
 		upgradeCmdFlags.wait = true
 	}
 
-	imageRef, err := resolveUpgradeImage(ctx, clientFactory)
+	imageRefs, err := resolveUpgradeImages(ctx, clientFactory)
 	if err != nil {
 		return err
 	}
@@ -125,7 +126,7 @@ func upgradeViaLifecycleService(ctx context.Context, clientFactory *global.Clien
 	if upgradeCmdFlags.legacy {
 		cli.Warning("Forcing use of legacy upgrade method. This flag is deprecated and will be removed in Talos 1.18.")
 
-		return upgradeLegacy(ctx, clientFactory, imageRef)
+		return upgradeLegacy(ctx, clientFactory, imageRefs)
 	}
 
 	opts := []client.RebootMode{
@@ -148,18 +149,18 @@ func upgradeViaLifecycleService(ctx context.Context, clientFactory *global.Clien
 				Message: "New upgrade API is not available, falling back to legacy",
 			})
 
-			return upgradeLegacy(ctx, clientFactory, imageRef)
+			return upgradeLegacy(ctx, clientFactory, imageRefs)
 		}
 
 		return fmt.Errorf("error checking Talos version compatibility: %w", err)
 	}
 
-	_, err = imagePullInternal(ctx, clientFactory, containerdInstance, imageRef, rep)
+	_, err = imagePullInternal(ctx, clientFactory, containerdInstance, imageRefs, rep)
 	if err != nil {
 		return fmt.Errorf("error pulling upgrade image: %w", err)
 	}
 
-	_, err = upgradeInternal(ctx, clientFactory, containerdInstance, imageRef, rep)
+	_, err = upgradeInternal(ctx, clientFactory, containerdInstance, imageRefs, rep)
 	if err != nil {
 		return fmt.Errorf("error during upgrade: %w", err)
 	}
@@ -193,85 +194,119 @@ func upgradeViaLifecycleService(ctx context.Context, clientFactory *global.Clien
 	return nil
 }
 
-// resolveUpgradeImage resolves the installer image reference for the upgrade.
+// resolveUpgradeImages resolves the installer image reference for each targeted node.
 //
-// If --image is set, it is used verbatim (legacy behavior). Otherwise the reference is built
-// as <factory>/<platform>-installer[-secureboot]/<schematic>:<version> from the component flags
-// (--factory, --schematic, --talos-version, --secure-boot, --platform), filling in components
-// not set explicitly from the machine's state.
+// If --image is set, it is used verbatim for every node (legacy behavior). Otherwise each node's
+// reference is built independently as <factory>/<platform>-installer[-secureboot]/<schematic>:<version>
+// from the component flags (--factory, --schematic, --talos-version, --secure-boot, --platform),
+// filling in components not set explicitly from that node's own machine state. Resolving per node
+// lets a single invocation upgrade a heterogeneous cluster correctly (e.g. nodes with different
+// schematics, platforms, or SecureBoot state) instead of assuming a uniform configuration.
 //
-//nolint:gocyclo
-func resolveUpgradeImage(ctx context.Context, clientFactory *global.ClientFactory) (string, error) {
+// If a node's state cannot be read, that node falls back to the built-in defaults (empty schematic,
+// metal platform, public factory, non-SecureBoot).
+func resolveUpgradeImages(ctx context.Context, clientFactory *global.ClientFactory) (map[string]string, error) {
+	nodes := clientFactory.Nodes()
+
 	if upgradeCmdFlags.upgradeImage != "" {
 		if upgradeCmdFlags.componentFlagsChanged {
 			cli.Warning("--image is set, ignoring component flags (--factory, --schematic, --talos-version, --secure-boot, --platform)")
 		}
 
-		return upgradeCmdFlags.upgradeImage, nil
+		return uniformImageRefs(nodes, upgradeCmdFlags.upgradeImage), nil
 	}
 
+	// If every derived component is set explicitly, no per-node state is needed: the image is uniform.
+	if upgradeCmdFlags.schematic != "" && upgradeCmdFlags.platform != "" &&
+		upgradeCmdFlags.secureBootChanged && upgradeCmdFlags.factoryChanged {
+		imageRef := buildUpgradeImage(&helpers.MachineContext{})
+
+		fmt.Printf("upgrade image: %s\n", imageRef)
+
+		return uniformImageRefs(nodes, imageRef), nil
+	}
+
+	imageRefs := make(map[string]string, len(nodes))
+
+	var (
+		mu sync.Mutex
+		wg sync.WaitGroup
+	)
+
+	for _, node := range nodes {
+		wg.Add(1)
+
+		go func() {
+			defer wg.Done()
+
+			machineCtx := &helpers.MachineContext{}
+
+			queryCtx, c, err := clientFactory.BuildClient(ctx, node)
+			if err != nil {
+				cli.Warning("node %s: error building client to read machine state, using the default installer image: %v", node, err)
+			} else if machineCtx, err = helpers.QueryMachineContext(queryCtx, c); err != nil {
+				cli.Warning("node %s: error reading machine state, using the default installer image: %v", node, err)
+
+				machineCtx = &helpers.MachineContext{}
+			}
+
+			imageRef := buildUpgradeImage(machineCtx)
+
+			mu.Lock()
+			imageRefs[node] = imageRef
+			fmt.Printf("%s: upgrade image: %s\n", node, imageRef)
+			mu.Unlock()
+		}()
+	}
+
+	wg.Wait()
+
+	return imageRefs, nil
+}
+
+// buildUpgradeImage builds the installer image reference for a single node, taking each component
+// from the explicit flag when set and otherwise from the node's machine state, with the built-in
+// defaults as the final fallback.
+func buildUpgradeImage(machineCtx *helpers.MachineContext) string {
 	targetVersion := upgradeCmdFlags.talosVersion
 	if targetVersion == "" {
 		targetVersion = version.Tag
 	}
 
-	factory := upgradeCmdFlags.factory
 	schematic := upgradeCmdFlags.schematic
-	secureBoot := upgradeCmdFlags.secureBoot
+	if schematic == "" {
+		schematic = machineCtx.Schematic
+	}
+
 	platform := upgradeCmdFlags.platform
-
-	// Query the machine state only for the components which were not set explicitly.
-	if schematic == "" || platform == "" || !upgradeCmdFlags.secureBootChanged || !upgradeCmdFlags.factoryChanged {
-		nodes := clientFactory.Nodes()
-		if len(nodes) > 1 {
-			cli.Warning("multiple nodes specified, resolving the upgrade image from node %s", nodes[0])
-		}
-
-		queryCtx, c, err := clientFactory.BuildClientFirstNode(ctx)
-		if err != nil {
-			return "", fmt.Errorf("error building client to resolve the upgrade image (use --image or set all component flags to skip): %w", err)
-		}
-
-		machineCtx, err := helpers.QueryMachineContext(queryCtx, c)
-		if err != nil {
-			return "", fmt.Errorf("error reading machine state to resolve the upgrade image (use --image or set all component flags to skip): %w", err)
-		}
-
-		if schematic == "" {
-			schematic = machineCtx.Schematic
-
-			if schematic == "" {
-				cli.Warning("machine schematic ID is not known, using the default (empty) schematic")
-			}
-		}
-
-		if platform == "" {
-			platform = machineCtx.Platform
-		}
-
-		if !upgradeCmdFlags.secureBootChanged {
-			secureBoot = machineCtx.SecureBoot
-		}
-
-		// Prefer the factory host the machine was actually installed from, so a node
-		// built from a private/mirror factory upgrades against the same one.
-		if !upgradeCmdFlags.factoryChanged && machineCtx.FactoryHost != "" {
-			factory = machineCtx.FactoryHost
-		}
+	if platform == "" {
+		platform = machineCtx.Platform
 	}
 
 	if platform == "" {
 		platform = "metal"
 	}
 
-	imageRef := helpers.BuildImageFactoryURL(factory, schematic, targetVersion, platform, secureBoot)
+	secureBoot := upgradeCmdFlags.secureBoot
+	if !upgradeCmdFlags.secureBootChanged {
+		secureBoot = machineCtx.SecureBoot
+	}
 
-	fmt.Printf("upgrade image: %s\n", imageRef)
+	// Prefer the factory host the machine was actually installed from, so a node built from a
+	// private/mirror factory upgrades against the same one; fall back to the public factory.
+	factory := upgradeCmdFlags.factory
+	if !upgradeCmdFlags.factoryChanged {
+		factory = machineCtx.FactoryHost
+	}
 
-	return imageRef, nil
+	if factory == "" {
+		factory = images.Factory
+	}
+
+	return helpers.BuildImageFactoryURL(factory, schematic, targetVersion, platform, secureBoot)
 }
 
-func upgradeInternal(ctx context.Context, clientFactory *global.ClientFactory, containerdInstance *common.ContainerdInstance, imageRef string, rep *reporter.Reporter) (map[string]int32, error) {
+func upgradeInternal(ctx context.Context, clientFactory *global.ClientFactory, containerdInstance *common.ContainerdInstance, imageRefs map[string]string, rep *reporter.Reporter) (map[string]int32, error) {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
@@ -288,7 +323,7 @@ func upgradeInternal(ctx context.Context, clientFactory *global.ClientFactory, c
 			return c.LifecycleClient.Upgrade(ctx, &machine.LifecycleServiceUpgradeRequest{
 				Containerd: containerdInstance,
 				Source: &machine.InstallArtifactsSource{
-					ImageName: imageRef,
+					ImageName: imageRefs[nodeFromContext(ctx)],
 				},
 			})
 		},
@@ -344,7 +379,7 @@ func upgradeInternal(ctx context.Context, clientFactory *global.ClientFactory, c
 // upgradeLegacy dispatches to the legacy upgrade path, respecting --wait.
 //
 // Note: remove me in Talos 1.18.
-func upgradeLegacy(ctx context.Context, clientFactory *global.ClientFactory, imageRef string) error {
+func upgradeLegacy(ctx context.Context, clientFactory *global.ClientFactory, imageRefs map[string]string) error {
 	rebootModeStr := strings.ToUpper(upgradeCmdFlags.rebootMode.String())
 
 	rebootMode, ok := machine.UpgradeRequest_RebootMode_value[rebootModeStr]
@@ -352,8 +387,8 @@ func upgradeLegacy(ctx context.Context, clientFactory *global.ClientFactory, ima
 		return fmt.Errorf("invalid reboot mode: %s", upgradeCmdFlags.rebootMode)
 	}
 
-	opts := []client.UpgradeOption{
-		client.WithUpgradeImage(imageRef),
+	// The installer image is added per node (see legacyUpgradeOptsForNode), so it is omitted here.
+	baseOpts := []client.UpgradeOption{
 		client.WithUpgradeRebootMode(machine.UpgradeRequest_RebootMode(rebootMode)),
 		client.WithUpgradePreserve(upgradeCmdFlags.preserve),
 		client.WithUpgradeStage(upgradeCmdFlags.stage),
@@ -361,14 +396,14 @@ func upgradeLegacy(ctx context.Context, clientFactory *global.ClientFactory, ima
 	}
 
 	if !upgradeCmdFlags.wait {
-		return runUpgradeLegacyNoWaitWithOpts(ctx, opts)
+		return runUpgradeLegacyNoWaitWithOpts(ctx, baseOpts, imageRefs)
 	}
 
 	return action.NewTracker(
 		clientFactory,
 		action.MachineReadyEventFn,
 		func(ctx context.Context, c *client.Client) (string, error) {
-			return upgradeGetActorID(ctx, c, opts)
+			return upgradeGetActorID(ctx, c, baseOpts, imageRefs)
 		},
 		action.WithPostCheck(action.BootIDChangedPostCheckFn),
 		action.WithDebug(upgradeCmdFlags.debug),
@@ -376,10 +411,22 @@ func upgradeLegacy(ctx context.Context, clientFactory *global.ClientFactory, ima
 	).Run(ctx)
 }
 
+// legacyUpgradeOptsForNode returns the upgrade options for a single node, appending that node's
+// resolved installer image (recovered from the node-scoped context) to the shared base options.
+//
+// Note: remove me in Talos 1.18.
+func legacyUpgradeOptsForNode(ctx context.Context, baseOpts []client.UpgradeOption, imageRefs map[string]string) []client.UpgradeOption {
+	opts := make([]client.UpgradeOption, 0, len(baseOpts)+1)
+	opts = append(opts, baseOpts...)
+	opts = append(opts, client.WithUpgradeImage(imageRefs[nodeFromContext(ctx)]))
+
+	return opts
+}
+
 // runUpgradeLegacyNoWaitWithOpts runs the legacy upgrade without waiting.
 //
 // Note: remove me in Talos 1.18.
-func runUpgradeLegacyNoWaitWithOpts(ctx context.Context, opts []client.UpgradeOption) error {
+func runUpgradeLegacyNoWaitWithOpts(ctx context.Context, baseOpts []client.UpgradeOption, imageRefs map[string]string) error {
 	clientFactory, err := NewClientFactory(ctx, &upgradeCmdFlags)
 	if err != nil {
 		return err
@@ -387,13 +434,13 @@ func runUpgradeLegacyNoWaitWithOpts(ctx context.Context, opts []client.UpgradeOp
 
 	defer clientFactory.Close() //nolint:errcheck
 
-	return doUpgradeLegacy(ctx, clientFactory, opts)
+	return doUpgradeLegacy(ctx, clientFactory, baseOpts, imageRefs)
 }
 
 // doUpgradeLegacy performs the legacy MachineService.Upgrade call across all nodes.
 //
 // Note: remove me in Talos 1.18.
-func doUpgradeLegacy(ctx context.Context, clientFactory *global.ClientFactory, opts []client.UpgradeOption) error {
+func doUpgradeLegacy(ctx context.Context, clientFactory *global.ClientFactory, baseOpts []client.UpgradeOption, imageRefs map[string]string) error {
 	if err := helpers.ClientVersionCheck(ctx, clientFactory); err != nil {
 		return err
 	}
@@ -401,6 +448,8 @@ func doUpgradeLegacy(ctx context.Context, clientFactory *global.ClientFactory, o
 	responseChan := multiplex.UnaryViaFactory(
 		ctx, clientFactory,
 		func(ctx context.Context, c *client.Client) (*machine.UpgradeResponse, error) {
+			opts := legacyUpgradeOptsForNode(ctx, baseOpts, imageRefs)
+
 			// TODO: See if we can validate version and prevent starting upgrades to an unknown version
 			resp, err := c.UpgradeWithOptions(ctx, opts...) //nolint:staticcheck // legacy talosctl methods, to be removed in Talos 1.18
 			if err != nil {
@@ -439,7 +488,9 @@ func doUpgradeLegacy(ctx context.Context, clientFactory *global.ClientFactory, o
 // upgradeGetActorID is used by the legacy action tracker path.
 //
 // Note: remove me in Talos 1.18.
-func upgradeGetActorID(ctx context.Context, c *client.Client, opts []client.UpgradeOption) (string, error) {
+func upgradeGetActorID(ctx context.Context, c *client.Client, baseOpts []client.UpgradeOption, imageRefs map[string]string) (string, error) {
+	opts := legacyUpgradeOptsForNode(ctx, baseOpts, imageRefs)
+
 	resp, err := c.UpgradeWithOptions(ctx, opts...) //nolint:staticcheck // legacy talosctl methods, to be removed in Talos 1.18
 	if err != nil {
 		return "", err
@@ -453,8 +504,8 @@ func upgradeGetActorID(ctx context.Context, c *client.Client, opts []client.Upgr
 }
 
 func init() {
-	upgradeCmd.Flags().StringVar(&upgradeCmdFlags.factory, "factory", images.Factory,
-		"Image Factory host to use for the installer image")
+	upgradeCmd.Flags().StringVar(&upgradeCmdFlags.factory, "factory", "",
+		"Image Factory host to use for the installer image (defaults to the machine's factory, then factory.talos.dev)")
 	upgradeCmd.Flags().StringVar(&upgradeCmdFlags.schematic, "schematic", "",
 		"Image Factory schematic ID to use for the installer image (defaults to the machine's current schematic)")
 	upgradeCmd.Flags().StringVar(&upgradeCmdFlags.talosVersion, "talos-version", "",

@@ -86,7 +86,7 @@ var debugCmd = &cobra.Command{
 				return fmt.Errorf("failed to import image: %w", err)
 			}
 		} else {
-			pullResult, err := imagePullInternal(ctx, clientFactory, ctrdInstance, args[0], rep)
+			pullResult, err := imagePullInternal(ctx, clientFactory, ctrdInstance, uniformImageRefs(clientFactory.Nodes(), args[0]), rep)
 			if err != nil {
 				return fmt.Errorf("failed to pull image: %w", err)
 			}

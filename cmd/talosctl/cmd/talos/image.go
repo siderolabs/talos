@@ -28,6 +28,7 @@ import (
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/emptypb"
 
@@ -247,16 +248,46 @@ func imagePull(ctx context.Context, imageRef string) error {
 		return err
 	}
 
-	_, err = imagePullInternal(ctx, clientFactory, containerdInstance, imageRef, rep)
+	_, err = imagePullInternal(ctx, clientFactory, containerdInstance, uniformImageRefs(clientFactory.Nodes(), imageRef), rep)
 
 	return err
 }
 
+// nodeFromContext extracts the target node from the outgoing gRPC metadata set by client.WithNode.
+//
+// The multiplex helpers build a node-scoped context per node before invoking the per-node callback,
+// so this is how a callback recovers which node it is talking to in order to look up per-node state.
+func nodeFromContext(ctx context.Context) string {
+	md, ok := metadata.FromOutgoingContext(ctx)
+	if !ok {
+		return ""
+	}
+
+	if v := md.Get("node"); len(v) > 0 {
+		return v[0]
+	}
+
+	return ""
+}
+
+// uniformImageRefs maps every targeted node to the same image reference, for callers which pull or
+// install a single image across all nodes (as opposed to the per-node images resolved by upgrade).
+func uniformImageRefs(nodes []string, imageRef string) map[string]string {
+	refs := make(map[string]string, len(nodes))
+
+	for _, node := range nodes {
+		refs[node] = imageRef
+	}
+
+	return refs
+}
+
+// imagePullInternal pulls a per-node image reference (keyed by node) into each node's container runtime.
 func imagePullInternal(
 	ctx context.Context,
 	clientFactory *global.ClientFactory,
 	containerdInstance *common.ContainerdInstance,
-	imageRef string,
+	imageRefs map[string]string,
 	rep *reporter.Reporter,
 ) (map[string]string, error) {
 	streamCtx, cancel := context.WithCancel(ctx)
@@ -267,7 +298,7 @@ func imagePullInternal(
 		func(ctx context.Context, c *client.Client) (grpc.ServerStreamingClient[machine.ImageServicePullResponse], error) {
 			return c.ImageClient.Pull(ctx, &machine.ImageServicePullRequest{
 				Containerd: containerdInstance,
-				ImageRef:   imageRef,
+				ImageRef:   imageRefs[nodeFromContext(ctx)],
 			})
 		},
 	)
@@ -285,7 +316,7 @@ func imagePullInternal(
 				cancel()
 
 				// fallback to legacy API for older Talos
-				return nil, imagePullLegacy(ctx, imageRef)
+				return nil, imagePullLegacy(ctx, imageRefs[resp.Node])
 			}
 
 			errs = errors.Join(errs, fmt.Errorf("error from node %s: %w", resp.Node, resp.Err))
