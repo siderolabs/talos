@@ -160,6 +160,7 @@ kernel/drivers/net/ethernet/stmicro/stmmac/dwmac-intel.ko
 kernel/drivers/net/ethernet/stmicro/stmmac/stmmac-pci.ko
 kernel/drivers/net/ethernet/stmicro/stmmac/stmmac-platform.ko
 kernel/drivers/net/ethernet/stmicro/stmmac/stmmac.ko
+kernel/drivers/net/ifb.ko
 kernel/drivers/net/mdio.ko
 kernel/drivers/net/mdio/mdio-i2c.ko
 kernel/drivers/net/mii.ko
