@@ -83,15 +83,19 @@ func (ctrl *LogPersistenceController) WriteLog(id string, line []byte) error {
 	return lf.Write(line)
 }
 
-func (ctrl *LogPersistenceController) startLogging(vms *block.VolumeMountStatus) {
+func (ctrl *LogPersistenceController) startLogging(logger *zap.Logger, vms *block.VolumeMountStatus) {
 	// here we can start logging activities
 	ctrl.logMountPoint = vms.TypedSpec().Target
 
 	ctrl.canLog.Unlock()
 	ctrl.canLogLocked = false
+
+	logger.Debug("log persistence started")
 }
 
-func (ctrl *LogPersistenceController) stopLogging() error {
+func (ctrl *LogPersistenceController) stopLogging(logger *zap.Logger) error {
+	logger.Debug("log persistence stopping", zap.Bool("active", !ctrl.canLogLocked))
+
 	// Stop all logging activities, close files
 	// after this call we should not hold /var/log
 	if !ctrl.canLogLocked {
@@ -126,10 +130,20 @@ func (ctrl *LogPersistenceController) Run(ctx context.Context, r controller.Runt
 	ticker := time.NewTicker(constants.LogFlushPeriod)
 	defer ticker.Stop()
 
+	defer func() {
+		// if the context is canceled, the controller runtime is shutting down
+		// so stop the logging unconditionally to clear the open files in /var
+		if ctx.Err() != nil {
+			if err := ctrl.stopLogging(logger); err != nil {
+				logger.Error("error stopping persistent logging", zap.Error(err))
+			}
+		}
+	}()
+
 	for {
 		select {
 		case <-ctx.Done():
-			return ctrl.stopLogging()
+			return nil
 		case <-ticker.C:
 			for _, f := range ctrl.files.All() {
 				if err := f.Flush(); err != nil {
@@ -175,11 +189,11 @@ func (ctrl *LogPersistenceController) Run(ctx context.Context, r controller.Runt
 					return fmt.Errorf("error adding finalizer to volume mount status for log volume: %w", err)
 				}
 
-				ctrl.startLogging(vms)
+				ctrl.startLogging(logger, vms)
 			}
 		case resource.PhaseTearingDown:
 			if vms.Metadata().Finalizers().Has(ctrl.Name()) {
-				if err = ctrl.stopLogging(); err != nil {
+				if err = ctrl.stopLogging(logger); err != nil {
 					return fmt.Errorf("error stopping persistent logging: %w", err)
 				}
 
