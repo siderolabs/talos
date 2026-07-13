@@ -12,6 +12,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"slices"
 	"syscall"
 	"time"
 
@@ -198,14 +199,42 @@ func (c *Controller) Sequencer() runtime.Sequencer {
 func (c *Controller) ListenForEvents(ctx context.Context) error {
 	sigs := make(chan os.Signal, 1)
 
-	signal.Notify(sigs, syscall.SIGTERM)
+	var signalsToHandle, signalsToIgnore []os.Signal
 
-	errCh := make(chan error, 2)
+	if c.r.State().Platform().Mode() == runtime.ModeContainer {
+		signalsToHandle = []os.Signal{syscall.SIGTERM}
+		signalsToIgnore = []os.Signal{syscall.SIGINT}
+	} else {
+		signalsToHandle = []os.Signal{syscall.SIGINT}
+		signalsToIgnore = []os.Signal{syscall.SIGTERM}
+	}
 
-	go func() {
-		<-sigs
-		signal.Stop(sigs)
+	signal.Notify(sigs, signalsToHandle...)
+	signal.Ignore(signalsToIgnore...)
 
+	var eg errgroup.Group
+
+	eg.Go(func() error {
+		c.listenForSignals(ctx, sigs, slices.Concat(signalsToHandle, signalsToIgnore))
+
+		return nil
+	})
+
+	if c.r.State().Platform().Mode() != runtime.ModeContainer {
+		eg.Go(func() error {
+			return c.listenForACPI(ctx)
+		})
+	}
+
+	return eg.Wait()
+}
+
+func (c *Controller) listenForSignals(ctx context.Context, sigs chan os.Signal, allSignals []os.Signal) {
+	sig := <-sigs
+
+	switch sig {
+	case syscall.SIGTERM:
+		// in container mode, SIGTERM is used to signal container shutdown
 		log.Printf("shutdown via SIGTERM received")
 
 		if err := c.Run(ctx, runtime.SequenceShutdown, &machine.ShutdownRequest{Force: true}, runtime.WithTakeover()); err != nil {
@@ -213,35 +242,35 @@ func (c *Controller) ListenForEvents(ctx context.Context) error {
 				log.Printf("shutdown failed: %v", err)
 			}
 		}
+	case syscall.SIGINT:
+		// in metal mode, SIGINT is sent on Ctrl+Alt+Del, we should reboot the machine in this case
+		log.Printf("reboot via SIGINT received")
 
-		errCh <- nil
-	}()
-
-	if c.r.State().Platform().Mode() == runtime.ModeContainer {
-		return nil
-	}
-
-	go func() {
-		if err := acpi.StartACPIListener(); err != nil {
-			errCh <- err
-
-			return
-		}
-
-		log.Printf("shutdown via ACPI received")
-
-		if err := c.Run(ctx, runtime.SequenceShutdown, &machine.ShutdownRequest{Force: true}, runtime.WithTakeover()); err != nil {
+		if err := c.Run(ctx, runtime.SequenceReboot, &machine.RebootRequest{Mode: machine.RebootRequest_FORCE}, runtime.WithTakeover()); err != nil {
 			if !runtime.IsRebootError(err) {
-				log.Printf("failed to run shutdown sequence: %s", err)
+				log.Printf("reboot failed: %v", err)
 			}
 		}
+	}
 
-		errCh <- nil
-	}()
+	// ignore further signals, since we are already shutting down or rebooting
+	signal.Ignore(allSignals...)
+}
 
-	err := <-errCh
+func (c *Controller) listenForACPI(ctx context.Context) error {
+	if err := acpi.StartACPIListener(); err != nil {
+		return err
+	}
 
-	return err
+	log.Printf("shutdown via ACPI received")
+
+	if err := c.Run(ctx, runtime.SequenceShutdown, &machine.ShutdownRequest{Force: true}, runtime.WithTakeover()); err != nil {
+		if !runtime.IsRebootError(err) {
+			log.Printf("failed to run shutdown sequence: %s", err)
+		}
+	}
+
+	return nil
 }
 
 func (c *Controller) run(ctx context.Context, seq runtime.Sequence, phases []runtime.Phase, data any) error {
