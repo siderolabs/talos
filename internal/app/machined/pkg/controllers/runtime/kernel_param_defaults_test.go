@@ -68,6 +68,10 @@ func getParams(mode runtime.Mode) []*kernel.Param {
 				Key:   "proc.sys.fs.protected_fifos",
 				Value: "2",
 			},
+			{
+				Key:   "proc.sys.kernel.ctrl-alt-del",
+				Value: "0",
+			},
 		}...)
 	}
 
