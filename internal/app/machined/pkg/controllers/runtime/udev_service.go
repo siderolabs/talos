@@ -92,9 +92,13 @@ func (ctrl *UdevServiceController) ensureStarted(ctx context.Context, r controll
 		return fmt.Errorf("udev service manager is not configured")
 	}
 
-	extraSettleTime, err := ctrl.extraSettleTime(ctx, r, logger)
+	extraSettleTime, kernelCmdlineReady, err := ctrl.extraSettleTime(ctx, r, logger)
 	if err != nil {
 		return err
+	}
+
+	if !kernelCmdlineReady {
+		return nil
 	}
 
 	service := &services.Udevd{
@@ -134,17 +138,17 @@ func (ctrl *UdevServiceController) ensureStarted(ctx context.Context, r controll
 	return nil
 }
 
-func (ctrl *UdevServiceController) extraSettleTime(ctx context.Context, r controller.Reader, logger *zap.Logger) (time.Duration, error) {
+func (ctrl *UdevServiceController) extraSettleTime(ctx context.Context, r controller.Reader, logger *zap.Logger) (time.Duration, bool, error) {
 	kernelCmdline, err := safe.ReaderGetByID[*runtimeres.KernelCmdline](ctx, r, runtimeres.KernelCmdlineID)
 	if err != nil {
 		if state.IsNotFoundError(err) {
-			return 0, nil
+			return 0, false, nil
 		}
 
-		return 0, fmt.Errorf("failed to get kernel cmdline: %w", err)
+		return 0, false, fmt.Errorf("failed to get kernel cmdline: %w", err)
 	}
 
-	return extraSettleTimeFromCmdline(kernelCmdline.TypedSpec().Cmdline, logger), nil
+	return extraSettleTimeFromCmdline(kernelCmdline.TypedSpec().Cmdline, logger), true, nil
 }
 
 func extraSettleTimeFromCmdline(cmdline string, logger *zap.Logger) time.Duration {

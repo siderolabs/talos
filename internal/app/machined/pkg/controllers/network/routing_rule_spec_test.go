@@ -443,13 +443,36 @@ func (suite *RoutingRuleSpecSuite) TestDstPrefix() {
 // TestForeignRulePreserved verifies the controller never deletes rules it
 // did not install (rules with a Protocol other than RTPROT_STATIC), even
 // when their priority+family collides with a Talos-managed spec.
+//
+//nolint:gocyclo
 func (suite *RoutingRuleSpecSuite) TestForeignRulePreserved() {
-	priority := uint32(31100)
-
 	conn, err := rtnetlink.Dial(nil)
 	suite.Require().NoError(err)
 
 	defer conn.Close() //nolint:errcheck
+
+	rules, err := conn.Rule.List()
+	suite.Require().NoError(err)
+
+	priority := uint32(31100)
+
+	for {
+		priorityInUse := false
+
+		for _, rule := range rules {
+			if rule.Family == uint8(nethelpers.FamilyInet4) && pointer.SafeDeref(rule.Attributes.Priority) == priority {
+				priorityInUse = true
+
+				break
+			}
+		}
+
+		if !priorityInUse {
+			break
+		}
+
+		priority++
+	}
 
 	// Pre-install a foreign rule at the same priority+family with a
 	// non-Talos protocol marker (RTPROT_BOOT). The controller's match
@@ -509,7 +532,7 @@ func (suite *RoutingRuleSpecSuite) TestForeignRulePreserved() {
 	)
 
 	// Foreign rule must still be present.
-	rules, err := conn.Rule.List()
+	rules, err = conn.Rule.List()
 	suite.Require().NoError(err)
 
 	var foreignFound bool

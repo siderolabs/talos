@@ -1554,7 +1554,7 @@ spec:
           - csi: longhorn
             longhornEngine: v2
             extraWorkerPatch: ""
-            extraTestArgs: ""
+            extraTestArgs: "-talos.csi.timeout=30m"
           - csi: longhorn-v1
             longhornEngine: v1
             extraWorkerPatch: ":@_out/kubelet-fat-patch.yaml:@hack/test/patches/ephemeral-insecure.yaml"
