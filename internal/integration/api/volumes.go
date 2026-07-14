@@ -26,7 +26,6 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
-	crictrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cri"
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/api/storage"
@@ -1889,7 +1888,7 @@ func (suite *VolumesSuite) TestImageCacheLocalEnabledWithoutCacheVolume() {
 
 	suite.PatchMachineConfig(ctx, imageCacheCfg)
 
-	volumeIDs := []resource.ID{crictrl.VolumeImageCacheISO, crictrl.VolumeImageCacheDISK}
+	volumeIDs := []resource.ID{constants.ImageCacheISOLabel, constants.ImageCachePartitionLabel}
 	rtestutils.AssertResources(
 		ctx,
 		suite.T(),
@@ -1919,10 +1918,10 @@ func (suite *VolumesSuite) TestImageCacheLocalEnabledWithoutCacheVolume() {
 		},
 	)
 
-	ctrlName := (&crictrl.ImageCacheConfigController{}).Name()
+	ctrlName := "cri.ImageCacheConfigController"
 	mountRequestIDs := []resource.ID{
-		ctrlName + "-" + crictrl.VolumeImageCacheISO,
-		ctrlName + "-" + crictrl.VolumeImageCacheDISK,
+		ctrlName + "-" + constants.ImageCacheISOLabel,
+		ctrlName + "-" + constants.ImageCachePartitionLabel,
 	}
 
 	rtestutils.AssertResources(

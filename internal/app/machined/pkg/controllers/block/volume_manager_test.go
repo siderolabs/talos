@@ -159,9 +159,14 @@ func (suite *VolumeManagerSuite) TestFailingSystemVolumeStillBlocks() {
 	_, err := suite.State().Teardown(suite.Ctx(), lifecycle.Metadata())
 	suite.Require().NoError(err)
 
+	// Capture ctx/state in locals: Never leaks its last condition goroutine past
+	// return, and reading suite.Ctx()/suite.State() there races the next test's
+	// SetupTest overwriting those fields.
+	ctx, st := suite.Ctx(), suite.State()
+
 	// lifecycle finalizer must NOT be removed while the system volume is not closed
 	suite.Assert().Never(func() bool {
-		lc, err := safe.StateGetByID[*block.VolumeLifecycle](suite.Ctx(), suite.State(), block.VolumeLifecycleID)
+		lc, err := safe.StateGetByID[*block.VolumeLifecycle](ctx, st, block.VolumeLifecycleID)
 		if err != nil {
 			return false
 		}

@@ -112,7 +112,7 @@ func (ctrl *ImageCacheConfigController) Outputs() []controller.Output {
 
 // Volume configuration constants.
 const (
-	VolumeImageCacheISO  = "IMAGECACHE-ISO"
+	VolumeImageCacheISO  = constants.ImageCacheISOLabel
 	VolumeImageCacheDISK = constants.ImageCachePartitionLabel
 
 	MinImageCacheSize = 500 * 1024 * 1024      // 500MB

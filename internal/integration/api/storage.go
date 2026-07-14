@@ -1566,18 +1566,37 @@ func (suite *StorageSuite) deleteLVMVolumes(node string, pvDisks []string) {
 	// wipe RPCs by re-running pvcreate / vgcreate.
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, storagecfg.LVMVolumeGroupConfigKind, vgName)
 
-	if err := suite.Client.VolumeGroupRemove(nodeCtx, &machineapi.LVMServiceVolumeGroupRemoveRequest{
-		VolumeGroup: vgName,
-	}); !isAlreadyGone(err) {
-		suite.T().Logf("VolumeGroupRemove %s failed: %v", vgName, err)
-	}
+	const (
+		removeTimeout  = 60 * time.Second
+		removeInterval = 2 * time.Second
+	)
+
+	// Removing config docs (user volume, LV) only patches config; the actual
+	// unmount + LV teardown happens asynchronously via the reconciler. Retry
+	// the wipe RPCs until the LV closes ("logical volume is open") and the PVs
+	// are no longer in use, otherwise the disks are never released.
+	suite.Require().Eventually(func() bool {
+		err := suite.Client.VolumeGroupRemove(nodeCtx, &machineapi.LVMServiceVolumeGroupRemoveRequest{
+			VolumeGroup: vgName,
+		})
+		if !isAlreadyGone(err) {
+			suite.T().Logf("VolumeGroupRemove %s failed: %v", vgName, err)
+		}
+
+		return isAlreadyGone(err)
+	}, removeTimeout, removeInterval, "VolumeGroupRemove %s never succeeded", vgName)
 
 	for _, dev := range pvDisks {
-		if err := suite.Client.PhysicalVolumeRemove(nodeCtx, &machineapi.LVMServicePhysicalVolumeRemoveRequest{
-			Device: dev,
-		}); !isAlreadyGone(err) {
-			suite.T().Logf("PhysicalVolumeRemove %s failed: %v", dev, err)
-		}
+		suite.Require().Eventually(func() bool {
+			err := suite.Client.PhysicalVolumeRemove(nodeCtx, &machineapi.LVMServicePhysicalVolumeRemoveRequest{
+				Device: dev,
+			})
+			if !isAlreadyGone(err) {
+				suite.T().Logf("PhysicalVolumeRemove %s failed: %v", dev, err)
+			}
+
+			return isAlreadyGone(err)
+		}, removeTimeout, removeInterval, "PhysicalVolumeRemove %s never succeeded", dev)
 	}
 }
 

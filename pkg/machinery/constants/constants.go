@@ -1310,6 +1310,9 @@ const (
 	// MetalAgentModeFlagPath is the path to the file indicating if the node is running in Metal Agent mode.
 	MetalAgentModeFlagPath = "/usr/local/etc/is-metal-agent"
 
+	// ImageCacheISOLabel is the label for the image cache ISO.
+	ImageCacheISOLabel = "IMAGECACHE-ISO"
+
 	// ImageCachePartitionLabel is the label for the image cache partition.
 	ImageCachePartitionLabel = "IMAGECACHE"
 
