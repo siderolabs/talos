@@ -14,6 +14,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/health"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/goroutine"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/restart"
 	"github.com/siderolabs/talos/pkg/conditions"
 )
 
@@ -57,7 +58,15 @@ func (s *Auditd) Volumes(runtime.Runtime) []string {
 
 // Runner implements the Service interface.
 func (s *Auditd) Runner(r runtime.Runtime) (runner.Runner, error) {
-	return goroutine.NewRunner(r, auditdServiceID, auditd.Main, runner.WithLoggingManager(r.Logging())), nil
+	return restart.New(
+		goroutine.NewRunner(
+			r,
+			auditdServiceID,
+			auditd.Main,
+			runner.WithLoggingManager(r.Logging()),
+		),
+		restart.WithType(restart.Forever),
+	), nil
 }
 
 // HealthFunc implements the HealthcheckedService interface.
