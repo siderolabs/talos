@@ -117,6 +117,7 @@ kernel/drivers/infiniband/ulp/ipoib/ib_ipoib.ko
 kernel/drivers/input/misc/xen-kbdfront.ko
 kernel/drivers/input/mouse/psmouse.ko
 kernel/drivers/input/serio/hyperv-keyboard.ko
+kernel/drivers/iommu/iommufd/iommufd.ko
 kernel/drivers/leds/led-class-multicolor.ko
 kernel/drivers/md/bcache/bcache.ko
 kernel/drivers/md/dm-bio-prison.ko
