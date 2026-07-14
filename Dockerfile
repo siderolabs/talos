@@ -802,19 +802,14 @@ COPY --link --from=machined-build-amd64 /machined /rootfs/usr/bin/init
 
 RUN <<END
     # the orderly_poweroff call by the kernel will call '/sbin/poweroff'
-    ln /rootfs/usr/bin/init /rootfs/usr/bin/poweroff
-    chmod +x /rootfs/usr/bin/poweroff
+    ln -s init /rootfs/usr/bin/poweroff
     # some extensions like qemu-guest agent will call '/sbin/shutdown'
-    ln /rootfs/usr/bin/init /rootfs/usr/bin/shutdown
-    chmod +x /rootfs/usr/bin/shutdown
+    ln -s init /rootfs/usr/bin/shutdown
     # the orderly_reboot call by the kernel (e.g. hyper-v restart request) will call '/sbin/reboot'
-    ln /rootfs/usr/bin/init /rootfs/usr/bin/reboot
-    chmod +x /rootfs/usr/bin/reboot
-    ln /rootfs/usr/bin/init /rootfs/usr/bin/dashboard
-    chmod +x /rootfs/usr/bin/dashboard
+    ln -s init /rootfs/usr/bin/reboot
+    ln -s init /rootfs/usr/bin/dashboard
     # sandboxd is PID 1 of the sandbox PID+mount namespace, re-exec'd by machined
-    ln /rootfs/usr/bin/init /rootfs/usr/bin/sandboxd
-    chmod +x /rootfs/usr/bin/sandboxd
+    ln -s init /rootfs/usr/bin/sandboxd
 END
 # NB: We run the cleanup step before creating extra directories, files, and
 # symlinks to avoid accidentally cleaning them up.
@@ -899,19 +894,14 @@ COPY --link --from=machined-build-arm64 /machined /rootfs/usr/bin/init
 
 RUN <<END
     # the orderly_poweroff call by the kernel will call '/sbin/poweroff'
-    ln /rootfs/usr/bin/init /rootfs/usr/bin/poweroff
-    chmod +x /rootfs/usr/bin/poweroff
+    ln -s init /rootfs/usr/bin/poweroff
     # some extensions like qemu-guest agent will call '/sbin/shutdown'
-    ln /rootfs/usr/bin/init /rootfs/usr/bin/shutdown
-    chmod +x /rootfs/usr/bin/shutdown
+    ln -s init /rootfs/usr/bin/shutdown
     # the orderly_reboot call by the kernel (e.g. hyper-v restart request) will call '/sbin/reboot'
-    ln /rootfs/usr/bin/init /rootfs/usr/bin/reboot
-    chmod +x /rootfs/usr/bin/reboot
-    ln /rootfs/usr/bin/init /rootfs/usr/bin/dashboard
-    chmod +x /rootfs/usr/bin/dashboard
+    ln -s init /rootfs/usr/bin/reboot
+    ln -s init /rootfs/usr/bin/dashboard
     # sandboxd is PID 1 of the sandbox PID+mount namespace, re-exec'd by machined
-    ln /rootfs/usr/bin/init /rootfs/usr/bin/sandboxd
-    chmod +x /rootfs/usr/bin/sandboxd
+    ln -s init /rootfs/usr/bin/sandboxd
 END
 # NB: We run the cleanup step before creating extra directories, files, and
 # symlinks to avoid accidentally cleaning them up.

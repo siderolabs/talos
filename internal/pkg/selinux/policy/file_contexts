@@ -24,13 +24,8 @@
 /lib/modules	system_u:object_r:module_t:s0
 /usr/bin/runc	system_u:object_r:containerd_exec_t:s0
 /usr/bin/init	--	system_u:object_r:init_exec_t:s0
-/usr/bin/reboot	system_u:object_r:init_exec_t:s0
 /usr/bin/udevadm	--	system_u:object_r:udev_exec_t:s0
-/usr/bin/poweroff	system_u:object_r:init_exec_t:s0
-/usr/bin/sandboxd	system_u:object_r:init_exec_t:s0
-/usr/bin/shutdown	system_u:object_r:init_exec_t:s0
 /usr/bin/modprobe	--	system_u:object_r:modprobe_exec_t:s0
-/usr/bin/dashboard	system_u:object_r:init_exec_t:s0
 /usr/bin/containerd	system_u:object_r:containerd_exec_t:s0
 /usr/bin/systemd-udevd	--	system_u:object_r:udev_exec_t:s0
 /usr/bin/containerd-shim-runc-v2	system_u:object_r:containerd_exec_t:s0

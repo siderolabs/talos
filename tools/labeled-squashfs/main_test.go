@@ -30,7 +30,7 @@ func TestLookupAgainstTalosFileContexts(t *testing.T) {
 	}{
 		// Exact-match literal entries.
 		{"/usr/bin/init", typeReg, "system_u:object_r:init_exec_t:s0", true},
-		{"/usr/bin/poweroff", typeAny, "system_u:object_r:init_exec_t:s0", true},
+		{"/usr/bin/poweroff", typeAny, "system_u:object_r:bin_exec_t:s0", true},
 		{"/usr/bin/runc", typeAny, "system_u:object_r:containerd_exec_t:s0", true},
 		// Regex match: /etc(/.*)? covers both /etc and /etc/foo.
 		{"/etc", typeDir, "system_u:object_r:etc_t:s0", true},
