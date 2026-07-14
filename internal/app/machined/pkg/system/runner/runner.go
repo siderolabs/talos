@@ -74,6 +74,11 @@ type Options struct {
 	OverrideSeccompProfile func(*specs.LinuxSeccomp)
 	// DroppedCapabilities is the list of capabilities to drop.
 	DroppedCapabilities []string
+	// AllowedCapabilities is the list of capabilities to run with, dropping all other
+	// capabilities (additive model, including capabilities introduced by future kernels).
+	//
+	// Mutually exclusive with DroppedCapabilities.
+	AllowedCapabilities []string
 	// SelinuxLabel is the SELinux label to be assigned
 	SelinuxLabel string
 	// StdinFile is the path to the file to use as stdin.
@@ -210,6 +215,13 @@ func WithCustomSeccompProfile(override func(*specs.LinuxSeccomp)) Option {
 func WithDroppedCapabilities(caps map[string]struct{}) Option {
 	return func(args *Options) {
 		args.DroppedCapabilities = maps.Keys(caps)
+	}
+}
+
+// WithCapabilities sets the list of capabilities to run with, dropping all other capabilities.
+func WithCapabilities(caps []string) Option {
+	return func(args *Options) {
+		args.AllowedCapabilities = caps
 	}
 }
 
