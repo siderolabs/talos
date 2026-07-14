@@ -1,6 +1,6 @@
 module github.com/siderolabs/talos
 
-go 1.25.11
+go 1.25.12
 
 replace (
 	// see e.g. https://github.com/grpc/grpc-go/issues/6696

@@ -2,7 +2,7 @@ module github.com/siderolabs/talos/tools
 
 // upgrading all tools: go get tool
 
-go 1.25.11
+go 1.25.12
 
 tool (
 	github.com/aarzilli/whydeadcode

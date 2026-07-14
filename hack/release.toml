@@ -20,7 +20,7 @@ preface = """
         description = """\
 Linux: 6.18.38
 
-Talos is built with Go 1.25.11.
+Talos is built with Go 1.25.12.
 """
 
 [make_deps]
