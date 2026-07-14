@@ -209,7 +209,57 @@ func (suite *FirewallSuite) TestNodePortAccess() {
 		})
 	}
 
-	suite.Require().NoError(eg.Wait())
+	if err := eg.Wait(); err != nil {
+		suite.describeTestNginx()
+		suite.Require().NoError(err)
+	}
+}
+
+// describeTestNginx dumps pod status, container states and events for the test-nginx
+// deployment to help diagnose why the NodePort never became reachable.
+func (suite *FirewallSuite) describeTestNginx() {
+	dumpCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	pods, err := suite.Clientset.CoreV1().Pods("default").List(dumpCtx, metav1.ListOptions{LabelSelector: "app=test-nginx"})
+	if err != nil {
+		suite.T().Logf("failed to list test-nginx pods: %v", err)
+
+		return
+	}
+
+	if len(pods.Items) == 0 {
+		suite.T().Log("no test-nginx pods found")
+	}
+
+	for _, pod := range pods.Items {
+		suite.T().Logf("pod %s: phase=%s node=%s reason=%q message=%q",
+			pod.Name, pod.Status.Phase, pod.Spec.NodeName, pod.Status.Reason, pod.Status.Message)
+
+		for _, cs := range pod.Status.ContainerStatuses {
+			switch {
+			case cs.State.Waiting != nil:
+				suite.T().Logf("  container %s waiting: %s: %s", cs.Name, cs.State.Waiting.Reason, cs.State.Waiting.Message)
+			case cs.State.Terminated != nil:
+				suite.T().Logf("  container %s terminated: %s: %s", cs.Name, cs.State.Terminated.Reason, cs.State.Terminated.Message)
+			case cs.State.Running != nil:
+				suite.T().Logf("  container %s running, ready=%t", cs.Name, cs.Ready)
+			}
+		}
+
+		events, err := suite.Clientset.CoreV1().Events("default").List(dumpCtx, metav1.ListOptions{
+			FieldSelector: "involvedObject.name=" + pod.Name,
+		})
+		if err != nil {
+			suite.T().Logf("  failed to list events for pod %s: %v", pod.Name, err)
+
+			continue
+		}
+
+		for _, ev := range events.Items {
+			suite.T().Logf("  event %s %s: %s", ev.Type, ev.Reason, ev.Message)
+		}
+	}
 }
 
 func init() {

@@ -209,7 +209,7 @@ func (ctrl *ImageCacheConfigController) Run(ctx context.Context, r controller.Ru
 						return fmt.Errorf("error stopping service: %w", err)
 					}
 				}
-			} else {
+			} else if imageCacheDisabled {
 				// if the service is not running, remove the volume mount requests
 				vmrs, err := safe.ReaderListAll[*block.VolumeMountRequest](ctx, r)
 				if err != nil {
