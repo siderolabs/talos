@@ -15,7 +15,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/go-retry/retry"
-	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/codes"
 
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -83,11 +82,13 @@ func (s *APIBootstrapper) Bootstrap(ctx context.Context, out io.Writer) error {
 
 	fmt.Fprintln(out, "bootstrapping cluster")
 
-	return retry.Constant(backoff.DefaultConfig.MaxDelay, retry.WithUnits(100*time.Millisecond)).RetryWithContext(nodeCtx, func(nodeCtx context.Context) error {
+	return retry.Constant(10*time.Minute, retry.WithUnits(500*time.Millisecond)).RetryWithContext(nodeCtx, func(nodeCtx context.Context) error {
 		retryCtx, cancel := context.WithTimeout(nodeCtx, 2*time.Second)
 		defer cancel()
 
 		if err = cli.Bootstrap(retryCtx, &machineapi.BootstrapRequest{}); err != nil {
+			statusCode := client.StatusCode(err)
+
 			switch {
 			// deadline exceeded in case it's verbatim context error
 			case errors.Is(err, context.DeadlineExceeded):
@@ -95,7 +96,9 @@ func (s *APIBootstrapper) Bootstrap(ctx context.Context, out io.Writer) error {
 			// FailedPrecondition when time is not in sync yet on the server
 			// DeadlineExceeded when the call fails in the gRPC stack either on the server or client side
 			// Canceled is when apid restarts on transitioning maintenance -> ready
-			case client.StatusCode(err) == codes.FailedPrecondition || client.StatusCode(err) == codes.DeadlineExceeded || client.StatusCode(err) == codes.Canceled:
+			// Unavailable is when apid or the network is still coming up
+			case statusCode == codes.FailedPrecondition || statusCode == codes.DeadlineExceeded ||
+				statusCode == codes.Canceled || statusCode == codes.Unavailable:
 				return retry.ExpectedError(err)
 			// connection refused, including proxied connection refused via the endpoint to the node
 			case strings.Contains(err.Error(), "connection refused"):

@@ -103,6 +103,7 @@ func (suite *ServiceAccountSuite) TestValid() {
 
 	secret, err := suite.waitForSecret("kube-system", name)
 	suite.Require().NoError(err)
+	suite.Assert().True(metav1.IsControlledBy(secret, sa))
 
 	talosConfig := secret.Data["config"]
 
@@ -131,6 +132,13 @@ func (suite *ServiceAccountSuite) TestValid() {
 	suite.Assert().NoError(err)
 
 	err = suite.DeleteResource(suite.ctx, serviceAccountGVR, "kube-system", name)
+	suite.Require().NoError(err)
+
+	// The controller owns the secret through an owner reference. Kubernetes GC
+	// discovers CRDs asynchronously, so waiting for it here races a freshly
+	// installed ServiceAccount CRD. Verify the owner reference above and clean
+	// up the test object directly.
+	err = suite.DeleteResource(suite.ctx, secretGVR, "kube-system", name)
 	suite.Require().NoError(err)
 
 	err = suite.EnsureResourceIsDeleted(suite.ctx, 30*time.Second, secretGVR, "kube-system", name)

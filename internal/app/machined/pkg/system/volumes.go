@@ -33,14 +33,20 @@ func (svcrunner *ServiceRunner) deleteVolumeMountRequest(ctx context.Context, re
 		}
 	}
 
+	activeRequests := make([]volumeRequest, 0, len(requests))
+
 	for _, request := range requests {
 		err := st.Destroy(ctx, block.NewVolumeMountRequest(block.NamespaceName, request.requestID).Metadata())
-		if err != nil {
+		if err != nil && !state.IsNotFoundError(err) {
 			return fmt.Errorf("failed to destroy volume mount request %q: %w", request.requestID, err)
+		}
+
+		if err == nil {
+			activeRequests = append(activeRequests, request)
 		}
 	}
 
-	for _, request := range requests {
+	for _, request := range activeRequests {
 		if _, err := st.WatchFor(ctx, block.NewVolumeMountStatus(block.NamespaceName, request.requestID).Metadata(), state.WithEventTypes(state.Destroyed)); err != nil {
 			return fmt.Errorf("failed to watch for volume mount status to be destroyed %q: %w", request.requestID, err)
 		}

@@ -11,5 +11,17 @@ cp "${ARTIFACTS}/e2e-aws-kubeconfig" "${KUBECONFIG}"
 CONTROLPLANE0_NODE=$(${TALOSCTL} config info -o json | jq -r '.endpoints[0]')
 ${TALOSCTL} config node "${CONTROLPLANE0_NODE}"
 
+# Terraform waits for the Talos API, but AWS can publish the Classic ELB DNS
+# record a little later. The integration tests use this kubeconfig directly.
+for _ in {1..60}; do
+  if ${KUBECTL} version --request-timeout=5s >/dev/null 2>&1; then
+    break
+  fi
+
+  sleep 2
+done
+
+${KUBECTL} version --request-timeout=5s >/dev/null
+
 run_talos_integration_test
 run_kubernetes_integration_test

@@ -151,6 +151,11 @@ func (suite *FirewallSuite) TestNodePortAccess() {
 
 	suite.ApplyManifests(suite.ctx, localPathStorage)
 
+	// A NodePort without a ready endpoint only proves that kube-proxy rejects the
+	// connection. Wait for the workload first, especially when the image comes
+	// from the image cache or an air-gapped registry.
+	suite.Require().NoError(suite.WaitForDeploymentAvailable(suite.ctx, time.Minute, "default", "test-nginx", 1))
+
 	// fetch the NodePort service
 	// read back Service to figure out the ports
 	svc, err := suite.Clientset.CoreV1().Services("default").Get(suite.ctx, "test-nginx", metav1.GetOptions{})
