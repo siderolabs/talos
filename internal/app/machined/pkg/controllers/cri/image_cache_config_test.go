@@ -189,6 +189,56 @@ func (suite *ImageCacheConfigSuite) TestReconcileFeatureEnabled() {
 	)
 }
 
+func (suite *ImageCacheConfigSuite) TestReconcileFeatureEnabledWithoutCacheVolumeKeepsMountRequests() {
+	ctrlName := (&crictrl.ImageCacheConfigController{}).Name()
+
+	imageCacheCfg := cricfg.NewImageCacheConfigV1Alpha1()
+	imageCacheCfg.LocalConfig.ConfigEnabled = new(true)
+
+	cfg := config.NewMachineConfig(must(container.New(imageCacheCfg)))
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
+
+	vs1 := block.NewVolumeStatus(block.NamespaceName, crictrl.VolumeImageCacheISO)
+	vs1.TypedSpec().Phase = block.VolumePhaseMissing
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), vs1))
+
+	vs2 := block.NewVolumeStatus(block.NamespaceName, crictrl.VolumeImageCacheDISK)
+	vs2.TypedSpec().Phase = block.VolumePhaseMissing
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), vs2))
+
+	ctest.AssertResource(suite, cri.ImageCacheConfigID, func(r *cri.ImageCacheConfig, asrt *assert.Assertions) {
+		asrt.Equal(cri.ImageCacheStatusDisabled, r.TypedSpec().Status)
+		asrt.Equal(cri.ImageCacheCopyStatusSkipped, r.TypedSpec().CopyStatus)
+		asrt.Empty(r.TypedSpec().Roots)
+	})
+
+	ids := []string{
+		ctrlName + "-" + crictrl.VolumeImageCacheISO,
+		ctrlName + "-" + crictrl.VolumeImageCacheDISK,
+	}
+
+	ctest.AssertResources(suite, ids, func(vmr *block.VolumeMountRequest, asrt *assert.Assertions) {
+		asrt.Equal(ctrlName, vmr.TypedSpec().Requester)
+		asrt.True(vmr.TypedSpec().ReadOnly)
+	})
+
+	vs2.TypedSpec().Phase = block.VolumePhaseWaiting
+	suite.Update(vs2)
+
+	ctest.AssertResource(suite, cri.ImageCacheConfigID, func(r *cri.ImageCacheConfig, asrt *assert.Assertions) {
+		asrt.Equal(cri.ImageCacheStatusDisabled, r.TypedSpec().Status)
+		asrt.Equal(cri.ImageCacheCopyStatusSkipped, r.TypedSpec().CopyStatus)
+		asrt.Empty(r.TypedSpec().Roots)
+	})
+
+	ctest.AssertResources(suite, ids, func(vmr *block.VolumeMountRequest, asrt *assert.Assertions) {
+		asrt.Equal(ctrlName, vmr.TypedSpec().Requester)
+	})
+
+	suite.Assert().False(suite.serviceRunner.IsServiceRunning())
+}
+
 func (suite *ImageCacheConfigSuite) TestReconcileJustDiskVolume() {
 	ctrlName := (&crictrl.ImageCacheConfigController{}).Name()
 

@@ -26,16 +26,20 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
+	crictrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cri"
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/api/storage"
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
+	cricfg "github.com/siderolabs/talos/pkg/machinery/config/types/cri"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
+	crires "github.com/siderolabs/talos/pkg/machinery/resources/cri"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
@@ -1845,6 +1849,139 @@ func (suite *VolumesSuite) TestFSTrimDefaultSchedule() {
 				rtestutils.AssertNoResource[*block.VolumeTrimSchedule](ctx, suite.T(), suite.Client.COSI, name)
 			}
 		})
+	}
+}
+
+// TestImageCacheLocalEnabledWithoutCacheVolume verifies that enabling the local image cache on a node
+// without a cache volume doesn't cause VolumeMountRequest create/delete churn.
+func (suite *VolumesSuite) TestImageCacheLocalEnabledWithoutCacheVolume() {
+	node := suite.RandomDiscoveredNodeInternalIP()
+	ctx := client.WithNode(suite.ctx, node)
+
+	suite.T().Logf("using node %s", node)
+
+	cfg, err := suite.ReadConfigFromNode(ctx)
+	suite.Require().NoError(err)
+
+	originalImageCacheDocs := filterImageCacheConfigDocs(cfg.Documents())
+	if cfg.ImageCacheConfig() != nil && len(originalImageCacheDocs) == 0 {
+		suite.T().Skip("image cache is configured via v1alpha1 machine config")
+	}
+
+	defer func() {
+		suite.RemoveMachineConfigDocuments(ctx, cricfg.ImageCacheConfig)
+
+		if len(originalImageCacheDocs) > 0 {
+			patches := make([]any, 0, len(originalImageCacheDocs))
+			for _, doc := range originalImageCacheDocs {
+				patches = append(patches, doc)
+			}
+
+			suite.PatchMachineConfig(ctx, patches...)
+		}
+	}()
+
+	suite.RemoveMachineConfigDocuments(ctx, cricfg.ImageCacheConfig)
+
+	imageCacheCfg := cricfg.NewImageCacheConfigV1Alpha1()
+	imageCacheCfg.LocalConfig.ConfigEnabled = new(bool)
+	*imageCacheCfg.LocalConfig.ConfigEnabled = true
+
+	suite.PatchMachineConfig(ctx, imageCacheCfg)
+
+	volumeIDs := []resource.ID{crictrl.VolumeImageCacheISO, crictrl.VolumeImageCacheDISK}
+	rtestutils.AssertResources(
+		ctx,
+		suite.T(),
+		suite.Client.COSI,
+		volumeIDs,
+		func(*block.VolumeStatus, *assert.Assertions) {},
+	)
+
+	for _, id := range volumeIDs {
+		volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, id)
+		suite.Require().NoError(err)
+
+		if volumeStatus.TypedSpec().Phase == block.VolumePhaseReady {
+			suite.T().Skipf("node has ready image cache volume %q", id)
+		}
+	}
+
+	rtestutils.AssertResources(
+		ctx,
+		suite.T(),
+		suite.Client.COSI,
+		[]resource.ID{crires.ImageCacheConfigID},
+		func(cfg *crires.ImageCacheConfig, asrt *assert.Assertions) {
+			asrt.Equal(crires.ImageCacheStatusDisabled, cfg.TypedSpec().Status)
+			asrt.Equal(crires.ImageCacheCopyStatusSkipped, cfg.TypedSpec().CopyStatus)
+			asrt.Empty(cfg.TypedSpec().Roots)
+		},
+	)
+
+	ctrlName := (&crictrl.ImageCacheConfigController{}).Name()
+	mountRequestIDs := []resource.ID{
+		ctrlName + "-" + crictrl.VolumeImageCacheISO,
+		ctrlName + "-" + crictrl.VolumeImageCacheDISK,
+	}
+
+	rtestutils.AssertResources(
+		ctx,
+		suite.T(),
+		suite.Client.COSI,
+		mountRequestIDs,
+		func(vmr *block.VolumeMountRequest, asrt *assert.Assertions) {
+			asrt.Equal(ctrlName, vmr.TypedSpec().Requester)
+		},
+	)
+
+	suite.assertImageCacheMountRequestsStable(ctx, mountRequestIDs, 10*time.Second)
+}
+
+func filterImageCacheConfigDocs(docs []configconfig.Document) []configconfig.Document {
+	result := make([]configconfig.Document, 0, len(docs))
+
+	for _, doc := range docs {
+		if doc.Kind() == cricfg.ImageCacheConfig {
+			result = append(result, doc)
+		}
+	}
+
+	return result
+}
+
+func (suite *VolumesSuite) assertImageCacheMountRequestsStable(ctx context.Context, ids []resource.ID, duration time.Duration) {
+	versions := make(map[resource.ID]resource.Version, len(ids))
+
+	for _, id := range ids {
+		vmr, err := safe.StateGetByID[*block.VolumeMountRequest](ctx, suite.Client.COSI, id)
+		suite.Require().NoError(err)
+
+		versions[id] = vmr.Metadata().Version()
+	}
+
+	deadline := time.After(duration)
+
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			suite.Require().NoError(ctx.Err())
+		case <-deadline:
+			return
+		case <-ticker.C:
+			for _, id := range ids {
+				vmr, err := safe.StateGetByID[*block.VolumeMountRequest](ctx, suite.Client.COSI, id)
+				suite.Require().NoError(err)
+				suite.Require().True(
+					versions[id].Equal(vmr.Metadata().Version()),
+					"image cache mount request %q changed while cache was enabled without a backing volume",
+					id,
+				)
+			}
+		}
 	}
 }
 
