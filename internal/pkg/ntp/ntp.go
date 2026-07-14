@@ -8,6 +8,7 @@ package ntp
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"math/bits"
 	"net"
@@ -177,7 +178,7 @@ func (syncer *Syncer) Run(ctx context.Context) {
 	pollInterval := time.Duration(0)
 
 	for {
-		lastSyncServer, resp, err := syncer.query(ctx)
+		lastSyncServer, resp, kissOfDeath, err := syncer.query(ctx)
 		if err != nil {
 			return
 		}
@@ -189,8 +190,18 @@ func (syncer *Syncer) Run(ctx context.Context) {
 
 		switch {
 		case resp == nil:
-			// if no response was ever received, consider doing short sleep to retry sooner as it's not Kiss-o-Death response
-			pollInterval = syncer.RetryPoll
+			// no valid response received
+			if kissOfDeath {
+				// slow down polling if we got kiss of death response
+				if pollInterval < syncer.MinPoll {
+					pollInterval = syncer.MinPoll
+				} else if pollInterval < syncer.MaxPoll {
+					pollInterval *= 2
+				}
+			} else {
+				// retry sooner, not kiss of death, maybe network issue
+				pollInterval = syncer.RetryPoll
+			}
 		case pollInterval == 0:
 			// first sync
 			pollInterval = syncer.MinPoll
@@ -245,17 +256,21 @@ func (syncer *Syncer) Run(ctx context.Context) {
 	}
 }
 
-func (syncer *Syncer) query(ctx context.Context) (lastSyncServer string, measurement *Measurement, err error) {
+//nolint:gocyclo
+func (syncer *Syncer) query(ctx context.Context) (lastSyncServer string, measurement *Measurement, koD bool, err error) {
 	lastSyncServer = syncer.getLastSyncServer()
 	failedServer := ""
 
 	if lastSyncServer != "" {
-		measurement, err = syncer.queryServer(lastSyncServer)
+		var lastKoD bool
+
+		measurement, lastKoD, err = syncer.queryServer(lastSyncServer)
 		if err != nil {
 			syncer.logger.Error(fmt.Sprintf("time query error with server %q", lastSyncServer), zap.Error(err))
 
 			failedServer = lastSyncServer
 			lastSyncServer = ""
+			koD = koD || lastKoD
 			err = nil
 		}
 	}
@@ -265,7 +280,7 @@ func (syncer *Syncer) query(ctx context.Context) (lastSyncServer string, measure
 
 		serverList, err = syncer.resolveServers(ctx)
 		if err != nil {
-			return lastSyncServer, measurement, err
+			return lastSyncServer, measurement, koD, err
 		}
 
 		for _, server := range serverList {
@@ -276,28 +291,32 @@ func (syncer *Syncer) query(ctx context.Context) (lastSyncServer string, measure
 
 			select {
 			case <-ctx.Done():
-				return lastSyncServer, measurement, ctx.Err()
+				return lastSyncServer, measurement, koD, ctx.Err()
 			case <-syncer.restartSyncCh:
 				syncer.restartSync() // re-queue restart for outer loop
 
-				return lastSyncServer, measurement, nil
+				return lastSyncServer, measurement, koD, nil
 			default:
 			}
 
-			measurement, err = syncer.queryServer(server)
+			var lastKoD bool
+
+			measurement, lastKoD, err = syncer.queryServer(server)
 			if err != nil {
 				syncer.logger.Error(fmt.Sprintf("time query error with server %q", server), zap.Error(err))
 				err = nil
+				koD = koD || lastKoD
 			} else {
 				syncer.setLastSyncServer(server)
 				lastSyncServer = server
+				koD = false
 
 				break
 			}
 		}
 	}
 
-	return lastSyncServer, measurement, err
+	return lastSyncServer, measurement, koD, err
 }
 
 // IsPTPDevice checks if a given server string represents a PTP device.
@@ -339,7 +358,7 @@ func (syncer *Syncer) lookupIPAddrWithTimeout(ctx context.Context, host string, 
 	return (&net.Resolver{}).LookupIPAddr(ctx, host)
 }
 
-func (syncer *Syncer) queryServer(server string) (*Measurement, error) {
+func (syncer *Syncer) queryServer(server string) (*Measurement, bool, error) {
 	if IsPTPDevice(server) {
 		return syncer.queryPTP(server)
 	}
@@ -347,10 +366,10 @@ func (syncer *Syncer) queryServer(server string) (*Measurement, error) {
 	return syncer.queryNTP(server)
 }
 
-func (syncer *Syncer) queryPTP(device string) (*Measurement, error) {
+func (syncer *Syncer) queryPTP(device string) (*Measurement, bool, error) {
 	ts, err := QueryPTPDevice(device)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	offset := time.Until(time.Unix(ts.Sec, ts.Nsec))
@@ -367,7 +386,7 @@ func (syncer *Syncer) queryPTP(device string) (*Measurement, error) {
 		Spike:       false,
 	}
 
-	return meas, err
+	return meas, false, err
 }
 
 // QueryPTPDevice queries PTP device for current time.
@@ -399,10 +418,10 @@ func QueryPTPDevice(device string) (unix.Timespec, error) {
 	return ts, err
 }
 
-func (syncer *Syncer) queryNTP(server string) (*Measurement, error) {
+func (syncer *Syncer) queryNTP(server string) (*Measurement, bool, error) {
 	resp, err := syncer.NTPQuery(server)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	syncer.logger.Debug("NTP response",
@@ -418,14 +437,14 @@ func (syncer *Syncer) queryNTP(server string) (*Measurement, error) {
 
 	validationError := resp.Validate()
 	if validationError != nil {
-		return nil, validationError
+		return nil, errors.Is(validationError, ntp.ErrKissOfDeath), validationError
 	}
 
 	return &Measurement{
 		ClockOffset: resp.ClockOffset,
 		Leap:        resp.Leap,
 		Spike:       syncer.isSpike(resp),
-	}, nil
+	}, false, nil
 }
 
 // log2i returns 0 for v == 0 and v == 1.

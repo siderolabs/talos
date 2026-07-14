@@ -265,7 +265,8 @@ func (suite *NTPSuite) TestSyncKissOfDeath() {
 	syncer.DisableRTC = true
 
 	syncer.MinPoll = time.Second
-	syncer.MaxPoll = time.Second
+	syncer.MaxPoll = 2 * time.Second
+	syncer.RetryPoll = time.Hour // this should not be used for kiss-of-death responses
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
