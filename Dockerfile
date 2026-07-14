@@ -759,16 +759,12 @@ COPY --link --from=pkg-debug-tools-amd64 * /rootfs/
 
 RUN <<END
     # the orderly_poweroff call by the kernel will call '/sbin/poweroff'
-    ln /rootfs/usr/bin/init /rootfs/usr/bin/poweroff
-    chmod +x /rootfs/usr/bin/poweroff
+    ln -s init /rootfs/usr/bin/poweroff
     # some extensions like qemu-guest agent will call '/sbin/shutdown'
-    ln /rootfs/usr/bin/init /rootfs/usr/bin/shutdown
-    chmod +x /rootfs/usr/bin/shutdown
+    ln -s init /rootfs/usr/bin/shutdown
     # the orderly_reboot call by the kernel (e.g. hyper-v restart request) will call '/sbin/reboot'
-    ln /rootfs/usr/bin/init /rootfs/usr/bin/reboot
-    chmod +x /rootfs/usr/bin/reboot
-    ln /rootfs/usr/bin/init /rootfs/usr/bin/dashboard
-    chmod +x /rootfs/usr/bin/dashboard
+    ln -s init /rootfs/usr/bin/reboot
+    ln -s init /rootfs/usr/bin/dashboard
 END
 # NB: We run the cleanup step before creating extra directories, files, and
 # symlinks to avoid accidentally cleaning them up.
@@ -849,16 +845,12 @@ COPY --link --from=pkg-debug-tools-arm64 * /rootfs/
 
 RUN <<END
     # the orderly_poweroff call by the kernel will call '/sbin/poweroff'
-    ln /rootfs/usr/bin/init /rootfs/usr/bin/poweroff
-    chmod +x /rootfs/usr/bin/poweroff
+    ln -s init /rootfs/usr/bin/poweroff
     # some extensions like qemu-guest agent will call '/sbin/shutdown'
-    ln /rootfs/usr/bin/init /rootfs/usr/bin/shutdown
-    chmod +x /rootfs/usr/bin/shutdown
+    ln -s init /rootfs/usr/bin/shutdown
     # the orderly_reboot call by the kernel (e.g. hyper-v restart request) will call '/sbin/reboot'
-    ln /rootfs/usr/bin/init /rootfs/usr/bin/reboot
-    chmod +x /rootfs/usr/bin/reboot
-    ln /rootfs/usr/bin/init /rootfs/usr/bin/dashboard
-    chmod +x /rootfs/usr/bin/dashboard
+    ln -s init /rootfs/usr/bin/reboot
+    ln -s init /rootfs/usr/bin/dashboard
 END
 # NB: We run the cleanup step before creating extra directories, files, and
 # symlinks to avoid accidentally cleaning them up.
