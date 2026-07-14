@@ -82,6 +82,7 @@ kernel/drivers/infiniband/hw/irdma/irdma.ko
 kernel/drivers/infiniband/hw/mlx4/mlx4_ib.ko
 kernel/drivers/infiniband/hw/mlx5/mlx5_ib.ko
 kernel/drivers/infiniband/sw/rxe/rdma_rxe.ko
+kernel/drivers/iommu/iommufd/iommufd.ko
 kernel/drivers/leds/led-class-multicolor.ko
 kernel/drivers/md/bcache/bcache.ko
 kernel/drivers/md/dm-bio-prison.ko
