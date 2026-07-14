@@ -93,7 +93,13 @@ func receiveEvents(ctx context.Context, client *libaudit.AuditClient, logWriter 
 				return nil
 			}
 
-			if errors.Is(err, syscall.EINTR) && errors.Is(err, syscall.EAGAIN) {
+			if errors.Is(err, syscall.EINTR) || errors.Is(err, syscall.EAGAIN) {
+				continue
+			}
+
+			if errors.Is(err, syscall.ENOBUFS) {
+				fmt.Fprintf(logWriter, "audit backlog limit reached, some audit events may have been lost\n")
+
 				continue
 			}
 
