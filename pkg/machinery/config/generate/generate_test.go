@@ -19,6 +19,7 @@ import (
 	mc "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/cri"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/role"
@@ -165,6 +166,61 @@ func TestGenerateRegistryMirrorsOrder(t *testing.T) {
 	named, ok = registryConfigs[1].(mc.NamedDocument)
 	require.True(t, ok)
 	assert.Equal(t, "b.com", named.Name())
+}
+
+func TestGenerateEphemeralVolumeConfig(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name            string
+		versionContract *config.VersionContract
+		expectConfig    bool
+	}{
+		{
+			name:         "current",
+			expectConfig: true,
+		},
+		{
+			name:            "1.14",
+			versionContract: config.TalosVersion1_14,
+			expectConfig:    true,
+		},
+		{
+			name:            "1.13",
+			versionContract: config.TalosVersion1_13,
+		},
+	} {
+		for _, machineType := range []machine.Type{machine.TypeInit, machine.TypeControlPlane, machine.TypeWorker} {
+			t.Run(fmt.Sprintf("%s/%s", test.name, machineType), func(t *testing.T) {
+				t.Parallel()
+
+				input, err := generate.NewInput(
+					"test",
+					"https://10.0.1.5:6443",
+					constants.DefaultKubernetesVersion,
+					generate.WithVersionContract(test.versionContract),
+				)
+				require.NoError(t, err)
+
+				cfg, err := input.Config(machineType)
+				require.NoError(t, err)
+
+				volumeConfig, ok := cfg.Volumes().ByName(constants.EphemeralPartitionLabel)
+				require.Equal(t, test.expectConfig, ok)
+
+				if !ok {
+					assert.False(t, volumeConfig.Mount().Secure())
+
+					return
+				}
+
+				ephemeralConfig, ok := volumeConfig.(*blockcfg.VolumeConfigV1Alpha1)
+				require.True(t, ok)
+				require.NotNil(t, ephemeralConfig.MountSpec.MountSecure)
+				assert.True(t, *ephemeralConfig.MountSpec.MountSecure)
+			})
+		}
+	}
 }
 
 // TestGenerateDiscoveryServiceConfig verifies that discovery config generation is gated on the version contract:

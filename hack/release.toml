@@ -141,12 +141,16 @@ DHCPv4 configuration now supports `ignoreRoutes` option to ignore routes provide
 [notes.EPHEMERAL]
         title = "noexec on EPHEMERAL (/var)"
         description = """\
-The EPHEMERAL volume (`/var`) is now mounted with `noexec` in addition to the existing `nosuid` and `nodev`,
-blocking binary execution from `/var`.
+Talos 1.14 clusters now default the EPHEMERAL volume (`/var`) to `noexec` in addition to the existing `nosuid` and `nodev`
+mount options through generated machine configuration.
 
-Workloads that exec binaries placed under `/var` will break.
-For example, Longhorn v1's `instance-manager` exec's engine binaries the `engine-image` DaemonSet drops under `/var/lib/longhorn/engine-binaries/`,
-which now fails with `permission denied`. Affected users can opt out via a `VolumeConfig` document:
+Existing machines are not affected on upgrades.
+
+Note: Workloads that execute binaries placed under `/var` can break on new machines.
+Longhorn v1 and [vCluster](https://www.vcluster.com/docs/vcluster/troubleshoot/noexec-emptydir-volumes) are known to be affected.
+For example, Longhorn v1's `instance-manager` executes engine binaries that the `engine-image` DaemonSet places under
+`/var/lib/longhorn/engine-binaries/`, which now fails with `permission denied`.
+Affected users can opt out via a `VolumeConfig` document:
 
 ```yaml
 apiVersion: v1alpha1
@@ -158,7 +162,7 @@ mount:
 
 > NOTE: Setting `secure: false` will also disable `nosuid` and `nodev`, which may have security implications. Use with caution.
 
-Upgrade note: apply this `VolumeConfig` patch *before* upgrading, otherwise affected workloads will fail after the next reboot. Longhorn v2 (SPDK data engine) runs the data plane inside the instance manager process and is not affected.
+Longhorn v2 (SPDK data engine) runs the data plane inside the instance manager process and is not affected.
 """
 
     [notes.DoT]

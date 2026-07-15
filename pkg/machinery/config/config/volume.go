@@ -10,6 +10,7 @@ import (
 	"github.com/siderolabs/gen/optional"
 
 	"github.com/siderolabs/talos/pkg/machinery/cel"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
@@ -54,10 +55,12 @@ func (w volumesConfigWrapper) ByName(name string) (VolumeConfig, bool) {
 		}
 	}
 
-	return emptyVolumeConfig{}, false
+	return emptyVolumeConfig{secure: name != constants.EphemeralPartitionLabel}, false
 }
 
-type emptyVolumeConfig struct{}
+type emptyVolumeConfig struct {
+	secure bool
+}
 
 func (emptyVolumeConfig) Name() string {
 	return ""
@@ -95,22 +98,24 @@ func (emptyVolumeConfig) MaxSizeNegative() bool {
 	return false
 }
 
-func (emptyVolumeConfig) Mount() VolumeMountConfig {
-	return emptyVolumeMountConfig{}
+func (config emptyVolumeConfig) Mount() VolumeMountConfig {
+	return emptyVolumeMountConfig(config)
 }
 
 func (emptyVolumeConfig) Trim() VolumeTrimConfig {
 	return nil
 }
 
-type emptyVolumeMountConfig struct{}
+type emptyVolumeMountConfig struct {
+	secure bool
+}
 
 func (emptyVolumeMountConfig) DisableAccessTime() bool {
 	return false
 }
 
-func (emptyVolumeMountConfig) Secure() bool {
-	return true
+func (config emptyVolumeMountConfig) Secure() bool {
+	return config.secure
 }
 
 func (emptyVolumeMountConfig) ReadOnly() bool {

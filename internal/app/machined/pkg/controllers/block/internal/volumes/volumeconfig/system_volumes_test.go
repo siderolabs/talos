@@ -7,6 +7,7 @@ package volumeconfig_test
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/url"
 	"testing"
 
@@ -450,7 +451,7 @@ func TestEphemeralVolumeTransformerWithExtraConfig(t *testing.T) {
 func TestEphemeralVolumeSecure(t *testing.T) {
 	t.Parallel()
 
-	t.Run("default is secure", func(t *testing.T) {
+	t.Run("default is not secure", func(t *testing.T) {
 		t.Parallel()
 
 		transformer := volumeconfig.GetEphemeralVolumeTransformer(false)
@@ -460,17 +461,15 @@ func TestEphemeralVolumeSecure(t *testing.T) {
 
 		testTransformFunc(t, resources[0].TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
 			require.NoError(t, err)
-			assert.True(t, vc.TypedSpec().Mount.Secure, "EPHEMERAL should be secure by default")
+			assert.False(t, vc.TypedSpec().Mount.Secure, "EPHEMERAL should not be secure without explicit configuration")
 		})
 	})
 
-	t.Run("secure=false via VolumeConfig overrides default", func(t *testing.T) {
+	t.Run("VolumeConfig defaults to secure", func(t *testing.T) {
 		t.Parallel()
 
-		secureOff := false
 		ephemeralCfg := blockcfg.NewVolumeConfigV1Alpha1()
 		ephemeralCfg.MetaName = constants.EphemeralPartitionLabel
-		ephemeralCfg.MountSpec.MountSecure = &secureOff
 
 		cfg, err := container.New(baseCfg.DeepCopy(), ephemeralCfg)
 		require.NoError(t, err)
@@ -482,9 +481,32 @@ func TestEphemeralVolumeSecure(t *testing.T) {
 
 		testTransformFunc(t, resources[0].TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
 			require.NoError(t, err)
-			assert.False(t, vc.TypedSpec().Mount.Secure, "EPHEMERAL Secure should be overridable via VolumeConfig")
+			assert.True(t, vc.TypedSpec().Mount.Secure)
 		})
 	})
+
+	for _, secure := range []bool{false, true} {
+		t.Run(fmt.Sprintf("secure=%t via VolumeConfig", secure), func(t *testing.T) {
+			t.Parallel()
+
+			ephemeralCfg := blockcfg.NewVolumeConfigV1Alpha1()
+			ephemeralCfg.MetaName = constants.EphemeralPartitionLabel
+			ephemeralCfg.MountSpec.MountSecure = &secure
+
+			cfg, err := container.New(baseCfg.DeepCopy(), ephemeralCfg)
+			require.NoError(t, err)
+
+			transformer := volumeconfig.GetEphemeralVolumeTransformer(false)
+			resources, err := transformer(cfg)
+			require.NoError(t, err)
+			require.Len(t, resources, 1)
+
+			testTransformFunc(t, resources[0].TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
+				require.NoError(t, err)
+				assert.Equal(t, secure, vc.TypedSpec().Mount.Secure)
+			})
+		})
+	}
 }
 
 func testTransformFunc(t *testing.T,

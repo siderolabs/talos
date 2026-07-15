@@ -15,8 +15,12 @@ func (in *Input) generateBlockConfigs() []config.Document {
 		return nil
 	}
 
+	ephemeralConfig := block.NewVolumeConfigV1Alpha1()
+	ephemeralConfig.MetaName = constants.EphemeralPartitionLabel
+	ephemeralConfig.MountSpec.MountSecure = new(true)
+
 	trimConfig := block.NewFilesystemTrimConfigV1Alpha1()
 	trimConfig.TrimInterval = constants.DefaultFilesystemTrimInterval
 
-	return []config.Document{trimConfig}
+	return []config.Document{ephemeralConfig, trimConfig}
 }
