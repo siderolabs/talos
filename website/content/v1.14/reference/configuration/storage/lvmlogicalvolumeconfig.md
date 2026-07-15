@@ -45,7 +45,6 @@ LVMLogicalVolumeProvisioningSpec describes how an LV is provisioned.
 
 
 
-
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`volumeGroup` |string |Name of the volume group that backs the logical volume.  | |

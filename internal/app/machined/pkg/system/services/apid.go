@@ -124,7 +124,6 @@ func (o *APID) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	}
 
 	o.runtimeServer = grpc.NewServer(
-		grpc.SharedWriteBuffer(true),
 		grpc.Creds(unix.NewServerCredentials()),
 		grpc.ChainUnaryInterceptor(
 			pidAuthorizer.UnaryInterceptor(),

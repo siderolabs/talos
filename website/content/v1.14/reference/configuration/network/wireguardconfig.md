@@ -64,7 +64,6 @@ WireguardPeer describes a Wireguard peer configuration.
 
 
 
-
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`publicKey` |string |Specifies the public key of this peer.<br>Can be extracted from private key by running `wg pubkey < private.key`.  | |
@@ -81,7 +80,6 @@ WireguardPeer describes a Wireguard peer configuration.
 ## addresses[] {#WireguardConfig.addresses.}
 
 AddressConfig represents a network address configuration.
-
 
 
 
@@ -103,7 +101,6 @@ address: fd00::1/64
 ## routes[] {#WireguardConfig.routes.}
 
 RouteConfig represents a network route configuration.
-
 
 
 

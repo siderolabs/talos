@@ -46,7 +46,6 @@ VolumeDiscoverySpec describes how the volume is discovered.
 
 
 
-
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`volumeSelector` |<a href="#ExistingVolumeConfig.discovery.volumeSelector">VolumeSelector</a> |The volume selector expression.  | |
@@ -57,7 +56,6 @@ VolumeDiscoverySpec describes how the volume is discovered.
 ### volumeSelector {#ExistingVolumeConfig.discovery.volumeSelector}
 
 VolumeSelector selects an existing volume.
-
 
 
 
@@ -80,7 +78,6 @@ match: volume.name == "xfs" && disk.serial == "SERIAL123"
 ## mount {#ExistingVolumeConfig.mount}
 
 ExistingMountSpec describes how the volume is mounted.
-
 
 
 

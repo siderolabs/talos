@@ -52,7 +52,6 @@ NTPConfig represents a NTP server configuration.
 
 
 
-
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`servers` |[]string |Specifies time (NTP) servers to use for setting the system time.<br>Defaults to `time.cloudflare.com` when configuration is not provided.  | |
@@ -66,7 +65,6 @@ NTPConfig represents a NTP server configuration.
 ## ptp {#TimeSyncConfig.ptp}
 
 PTPConfig represents a PTP (Precision Time Protocol) configuration.
-
 
 
 

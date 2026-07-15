@@ -36,7 +36,6 @@ LocalImageCacheConfig configures local image cache.
 
 
 
-
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`enabled` |bool |Is the local image cache enabled.  | |

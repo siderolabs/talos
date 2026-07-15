@@ -316,7 +316,7 @@ func (InstallerSpec) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "InstallerSpec",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "InstallerSpec describes the installer to perform the installation." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "InstallerSpec describes the installer to perform the installation.\n",
+		Description: "InstallerSpec describes the installer to perform the installation.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "UnattendedInstallConfigV1Alpha1",
@@ -345,7 +345,7 @@ func (ProvisioningSpec) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ProvisioningSpec",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "ProvisioningSpec describes how the Physical Volumes are provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ProvisioningSpec describes how the Physical Volumes are provisioned.\n",
+		Description: "ProvisioningSpec describes how the Physical Volumes are provisioned.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "UnattendedInstallConfigV1Alpha1",
@@ -383,7 +383,7 @@ func (DiskSelectorSpec) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "DiskSelectorSpec",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "DiskSelectorSpec matches disks with CEL." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "DiskSelectorSpec matches disks with CEL.\n",
+		Description: "DiskSelectorSpec matches disks with CEL.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "ProvisioningSpec",

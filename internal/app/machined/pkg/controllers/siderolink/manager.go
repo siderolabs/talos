@@ -367,7 +367,6 @@ func (ctrl *ManagerController) provision(ctx context.Context, r controller.Runti
 		conn, connErr := grpc.NewClient(
 			cfg.TypedSpec().Host,
 			withTransportCredentials(cfg.TypedSpec().Insecure),
-			grpc.WithSharedWriteBuffer(true),
 			grpc.WithContextDialer(dialer.DynamicProxyDialerWithTLSConfig(httpdefaults.RootCAsTLSConfig)),
 		)
 		if connErr != nil {

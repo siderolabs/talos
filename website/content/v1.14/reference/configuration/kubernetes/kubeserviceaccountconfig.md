@@ -50,7 +50,6 @@ IssuerServiceAccountConfig configures the service account issuer.
 
 
 
-
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`privateKey` |string |The key which is used to sign the service account tokens.<br><br>This key is used to sign the service account tokens, and it is used by the Kubernetes API server to verify the service account tokens.<br>The key must be a valid PEM encoded RSA or ECDSA private key.  | |
@@ -64,7 +63,6 @@ IssuerServiceAccountConfig configures the service account issuer.
 ## accepted {#KubeServiceAccountConfig.accepted}
 
 AcceptedServiceAccountConfig configures the accepted service accounts.
-
 
 
 

@@ -46,7 +46,7 @@ func (ProvisioningSpec) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ProvisioningSpec",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "ProvisioningSpec describes how the Physical Volumes are provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ProvisioningSpec describes how the Physical Volumes are provisioned.\n",
+		Description: "ProvisioningSpec describes how the Physical Volumes are provisioned.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "LVMVolumeGroupConfigV1Alpha1",
@@ -71,7 +71,7 @@ func (LVMVolumeSelectorSpec) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "LVMVolumeSelectorSpec",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "LVMVolumeSelectorSpec matches disks with CEL." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "LVMVolumeSelectorSpec matches disks with CEL.\n",
+		Description: "LVMVolumeSelectorSpec matches disks with CEL.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "ProvisioningSpec",
@@ -157,7 +157,7 @@ func (LVMLogicalVolumeProvisioningSpec) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "LVMLogicalVolumeProvisioningSpec",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "LVMLogicalVolumeProvisioningSpec describes how an LV is provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "LVMLogicalVolumeProvisioningSpec describes how an LV is provisioned.\n",
+		Description: "LVMLogicalVolumeProvisioningSpec describes how an LV is provisioned.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "LVMLogicalVolumeConfigV1Alpha1",
@@ -249,7 +249,7 @@ func (RAIDProvisioningSpec) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "RAIDProvisioningSpec",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "RAIDProvisioningSpec describes how the RAID arrays are provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "RAIDProvisioningSpec describes how the RAID arrays are provisioned.\n",
+		Description: "RAIDProvisioningSpec describes how the RAID arrays are provisioned.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "RAIDArrayConfigV1Alpha1",
@@ -274,7 +274,7 @@ func (RAIDVolumeSelector) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "RAIDVolumeSelector",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "RAIDVolumeSelector matches member disks with CEL." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "RAIDVolumeSelector matches member disks with CEL.\n",
+		Description: "RAIDVolumeSelector matches member disks with CEL.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "RAIDProvisioningSpec",

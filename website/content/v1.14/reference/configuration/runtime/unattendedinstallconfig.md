@@ -46,7 +46,6 @@ InstallerSpec describes the installer to perform the installation.
 
 
 
-
 {{< highlight yaml >}}
 installer:
     image: factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:latest # Allows for supplying the image used to perform the installation.
@@ -71,7 +70,6 @@ ProvisioningSpec describes how the Physical Volumes are provisioned.
 
 
 
-
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`diskSelector` |<a href="#UnattendedInstallConfig.provisioning.diskSelector">DiskSelectorSpec</a> |Matches disks to initialize as physical volumes.  | |
@@ -83,7 +81,6 @@ ProvisioningSpec describes how the Physical Volumes are provisioned.
 ### diskSelector {#UnattendedInstallConfig.provisioning.diskSelector}
 
 DiskSelectorSpec matches disks with CEL.
-
 
 
 

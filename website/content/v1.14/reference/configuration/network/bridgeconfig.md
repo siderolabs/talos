@@ -62,7 +62,6 @@ BridgeSTPConfig is a bridge STP (Spanning Tree Protocol) configuration.
 
 
 
-
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`enabled` |bool |Enable or disable STP on the bridge. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
@@ -77,7 +76,6 @@ enabled: true
 ## vlan {#BridgeConfig.vlan}
 
 BridgeVLANConfig is a bridge VLAN configuration.
-
 
 
 
@@ -100,7 +98,6 @@ AddressConfig represents a network address configuration.
 
 
 
-
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`address` |Prefix |IP address to be assigned to the link.<br><br>This field must include the network prefix length (e.g. /24 for IPv4, /64 for IPv6). <details><summary>Show example(s)</summary>{{< highlight yaml >}}
@@ -118,7 +115,6 @@ address: fd00::1/64
 ## routes[] {#BridgeConfig.routes.}
 
 RouteConfig represents a network route configuration.
-
 
 
 

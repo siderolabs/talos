@@ -223,7 +223,7 @@ func (MachineSeccompProfile) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "MachineSeccompProfile",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "MachineSeccompProfile defines seccomp profiles for the machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "MachineSeccompProfile defines seccomp profiles for the machine.\n",
+		Description: "MachineSeccompProfile defines seccomp profiles for the machine.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "MachineConfig",
@@ -385,7 +385,7 @@ func (LinuxIDMapping) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "LinuxIDMapping",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "LinuxIDMapping represents the Linux ID mapping." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "LinuxIDMapping represents the Linux ID mapping.\n",
+		Description: "LinuxIDMapping represents the Linux ID mapping.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "ExtraMount",
@@ -428,7 +428,7 @@ func (ExtraMount) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ExtraMount",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "ExtraMount wraps OCI Mount specification." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ExtraMount wraps OCI Mount specification.\n",
+		Description: "ExtraMount wraps OCI Mount specification.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "KubeletConfig",
@@ -490,7 +490,7 @@ func (KubeletConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "KubeletConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeletConfig represents the kubelet config values." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "KubeletConfig represents the kubelet config values.\n",
+		Description: "KubeletConfig represents the kubelet config values.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "MachineConfig",
@@ -624,7 +624,7 @@ func (KubeletNodeIPConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "KubeletNodeIPConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeletNodeIPConfig represents the kubelet node IP configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "KubeletNodeIPConfig represents the kubelet node IP configuration.\n",
+		Description: "KubeletNodeIPConfig represents the kubelet node IP configuration.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "KubeletConfig",
@@ -651,7 +651,7 @@ func (Endpoint) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "Endpoint",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "Endpoint represents the endpoint URL parsed out of the machine config." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "Endpoint represents the endpoint URL parsed out of the machine config.\n",
+		Description: "Endpoint represents the endpoint URL parsed out of the machine config.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "ControlPlaneConfig",
@@ -674,7 +674,7 @@ func (ControlPlaneConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ControlPlaneConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "ControlPlaneConfig represents the control plane configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ControlPlaneConfig represents the control plane configuration options.\n",
+		Description: "ControlPlaneConfig represents the control plane configuration options.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "ClusterConfig",
@@ -702,7 +702,7 @@ func (EtcdConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "EtcdConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "EtcdConfig represents the etcd configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "EtcdConfig represents the etcd configuration options.\n",
+		Description: "EtcdConfig represents the etcd configuration options.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "ClusterConfig",
@@ -762,7 +762,7 @@ func (ExternalCloudProviderConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ExternalCloudProviderConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "ExternalCloudProviderConfig contains external cloud provider configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ExternalCloudProviderConfig contains external cloud provider configuration.\n",
+		Description: "ExternalCloudProviderConfig contains external cloud provider configuration.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "ClusterConfig",
@@ -807,7 +807,7 @@ func (AdminKubeconfigConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "AdminKubeconfigConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "AdminKubeconfigConfig contains admin kubeconfig settings." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "AdminKubeconfigConfig contains admin kubeconfig settings.\n",
+		Description: "AdminKubeconfigConfig contains admin kubeconfig settings.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "ClusterConfig",
@@ -834,7 +834,7 @@ func (MachineFile) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "MachineFile",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "MachineFile represents a file to write to disk." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "MachineFile represents a file to write to disk.\n",
+		Description: "MachineFile represents a file to write to disk.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "MachineConfig",
@@ -887,7 +887,7 @@ func (FeaturesConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "FeaturesConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "FeaturesConfig describes individual Talos features that can be switched on or off." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "FeaturesConfig describes individual Talos features that can be switched on or off.\n",
+		Description: "FeaturesConfig describes individual Talos features that can be switched on or off.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "MachineConfig",
@@ -942,7 +942,7 @@ func (KubePrism) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "KubePrism",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "KubePrism describes the configuration for the KubePrism load balancer." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "KubePrism describes the configuration for the KubePrism load balancer.\n",
+		Description: "KubePrism describes the configuration for the KubePrism load balancer.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "FeaturesConfig",
@@ -974,7 +974,7 @@ func (KubernetesTalosAPIAccessConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "KubernetesTalosAPIAccessConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "KubernetesTalosAPIAccessConfig describes the configuration for the Talos API access from Kubernetes pods." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "KubernetesTalosAPIAccessConfig describes the configuration for the Talos API access from Kubernetes pods.\n",
+		Description: "KubernetesTalosAPIAccessConfig describes the configuration for the Talos API access from Kubernetes pods.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "FeaturesConfig",
@@ -1015,7 +1015,7 @@ func (ClusterInlineManifest) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ClusterInlineManifest",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "ClusterInlineManifest struct describes inline bootstrap manifests for the user." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ClusterInlineManifest struct describes inline bootstrap manifests for the user.\n",
+		Description: "ClusterInlineManifest struct describes inline bootstrap manifests for the user.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "ClusterConfig",
@@ -1052,7 +1052,7 @@ func (LoggingConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "LoggingConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "LoggingConfig struct configures Talos logging." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "LoggingConfig struct configures Talos logging.\n",
+		Description: "LoggingConfig struct configures Talos logging.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "MachineConfig",
@@ -1081,7 +1081,7 @@ func (LoggingDestination) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "LoggingDestination",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "LoggingDestination struct configures Talos logging destination." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "LoggingDestination struct configures Talos logging destination.\n",
+		Description: "LoggingDestination struct configures Talos logging destination.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "LoggingConfig",

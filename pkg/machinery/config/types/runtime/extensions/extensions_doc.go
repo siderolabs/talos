@@ -53,7 +53,7 @@ func (ConfigFile) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ConfigFile",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "ConfigFile is a config file for extension services." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ConfigFile is a config file for extension services.\n",
+		Description: "ConfigFile is a config file for extension services.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "ServiceConfigV1Alpha1",

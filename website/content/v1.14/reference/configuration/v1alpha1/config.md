@@ -200,7 +200,6 @@ KubeletConfig represents the kubelet config values.
 
 
 
-
 {{< highlight yaml >}}
 machine:
     kubelet:
@@ -325,7 +324,6 @@ ExtraMount wraps OCI Mount specification.
 
 
 
-
 {{< highlight yaml >}}
 machine:
     kubelet:
@@ -360,7 +358,6 @@ LinuxIDMapping represents the Linux ID mapping.
 
 
 
-
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`containerID` |uint32 |ContainerID is the starting UID/GID in the container.  | |
@@ -375,7 +372,6 @@ LinuxIDMapping represents the Linux ID mapping.
 ##### gidMappings[] {#Config.machine.kubelet.extraMounts..gidMappings.}
 
 LinuxIDMapping represents the Linux ID mapping.
-
 
 
 
@@ -396,7 +392,6 @@ LinuxIDMapping represents the Linux ID mapping.
 #### nodeIP {#Config.machine.kubelet.nodeIP}
 
 KubeletNodeIPConfig represents the kubelet node IP configuration.
-
 
 
 
@@ -429,7 +424,6 @@ MachineFile represents a file to write to disk.
 
 
 
-
 {{< highlight yaml >}}
 machine:
     files:
@@ -455,7 +449,6 @@ machine:
 ### features {#Config.machine.features}
 
 FeaturesConfig describes individual Talos features that can be switched on or off.
-
 
 
 
@@ -501,7 +494,6 @@ KubernetesTalosAPIAccessConfig describes the configuration for the Talos API acc
 
 
 
-
 {{< highlight yaml >}}
 machine:
     features:
@@ -534,7 +526,6 @@ KubePrism describes the configuration for the KubePrism load balancer.
 
 
 
-
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`enabled` |bool |Enable KubePrism support - will start local load balancing proxy.  | |
@@ -550,7 +541,6 @@ KubePrism describes the configuration for the KubePrism load balancer.
 ### logging {#Config.machine.logging}
 
 LoggingConfig struct configures Talos logging.
-
 
 
 
@@ -590,7 +580,6 @@ LoggingDestination struct configures Talos logging destination.
 
 
 
-
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`endpoint` |<a href="#Config.machine.logging.destinations..endpoint">Endpoint</a> |Where to send logs. Supported protocols are "tcp" and "udp".  | |
@@ -603,7 +592,6 @@ LoggingDestination struct configures Talos logging destination.
 ##### endpoint {#Config.machine.logging.destinations..endpoint}
 
 Endpoint represents the endpoint URL parsed out of the machine config.
-
 
 
 
@@ -623,7 +611,6 @@ Endpoint represents the endpoint URL parsed out of the machine config.
 ### seccompProfiles[] {#Config.machine.seccompProfiles.}
 
 MachineSeccompProfile defines seccomp profiles for the machine.
-
 
 
 
@@ -733,7 +720,6 @@ ControlPlaneConfig represents the control plane configuration options.
 
 
 
-
 {{< highlight yaml >}}
 cluster:
     controlPlane:
@@ -755,7 +741,6 @@ Endpoint represents the endpoint URL parsed out of the machine config.
 
 
 
-
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 
@@ -769,7 +754,6 @@ Endpoint represents the endpoint URL parsed out of the machine config.
 ### etcd {#Config.cluster.etcd}
 
 EtcdConfig represents the etcd configuration options.
-
 
 
 
@@ -819,7 +803,6 @@ ExternalCloudProviderConfig contains external cloud provider configuration.
 
 
 
-
 {{< highlight yaml >}}
 cluster:
     externalCloudProvider:
@@ -848,7 +831,6 @@ manifests:
 ### inlineManifests[] {#Config.cluster.inlineManifests.}
 
 ClusterInlineManifest struct describes inline bootstrap manifests for the user.
-
 
 
 
@@ -881,7 +863,6 @@ contents: /etc/kubernetes/auth
 ### adminKubeconfig {#Config.cluster.adminKubeconfig}
 
 AdminKubeconfigConfig contains admin kubeconfig settings.
-
 
 
 

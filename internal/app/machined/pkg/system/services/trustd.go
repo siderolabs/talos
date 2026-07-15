@@ -117,7 +117,6 @@ func (t *Trustd) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	}
 
 	t.runtimeServer = grpc.NewServer(
-		grpc.SharedWriteBuffer(true),
 		grpc.Creds(unix.NewServerCredentials()),
 		grpc.ChainUnaryInterceptor(
 			pidAuthorizer.UnaryInterceptor(),

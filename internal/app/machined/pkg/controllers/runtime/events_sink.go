@@ -167,7 +167,6 @@ func (ctrl *EventsSinkController) Run(ctx context.Context, r controller.Runtime,
 			conn, err = grpc.NewClient(
 				cfg.TypedSpec().Endpoint,
 				grpc.WithTransportCredentials(insecure.NewCredentials()),
-				grpc.WithSharedWriteBuffer(true),
 				grpc.WithContextDialer(dialer.DynamicProxyDialerWithTLSConfig(httpdefaults.RootCAsTLSConfig)),
 			)
 			if err != nil {

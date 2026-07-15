@@ -56,7 +56,7 @@ func NewClient(ctx context.Context, endpoints []string, dialOpts ...grpc.DialOpt
 		Endpoints:   endpoints,
 		DialTimeout: 5 * time.Second,
 		Context:     ctx,
-		DialOptions: append(dialOpts, grpc.WithSharedWriteBuffer(true)),
+		DialOptions: dialOpts,
 		TLS:         tlsConfig,
 		Logger:      zap.NewNop(),
 	})

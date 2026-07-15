@@ -277,7 +277,7 @@ func (ResourcesConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ResourcesConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "ResourcesConfig represents the pod resources." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ResourcesConfig represents the pod resources.\n",
+		Description: "ResourcesConfig represents the pod resources.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "KubeAPIServerConfigV1Alpha1",
@@ -716,7 +716,7 @@ func (IssuerServiceAccountConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "IssuerServiceAccountConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "IssuerServiceAccountConfig configures the service account issuer." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "IssuerServiceAccountConfig configures the service account issuer.\n",
+		Description: "IssuerServiceAccountConfig configures the service account issuer.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "KubeServiceAccountConfigV1Alpha1",
@@ -748,7 +748,7 @@ func (AcceptedServiceAccountConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "AcceptedServiceAccountConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "AcceptedServiceAccountConfig configures the accepted service accounts." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "AcceptedServiceAccountConfig configures the accepted service accounts.\n",
+		Description: "AcceptedServiceAccountConfig configures the accepted service accounts.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "KubeServiceAccountConfigV1Alpha1",

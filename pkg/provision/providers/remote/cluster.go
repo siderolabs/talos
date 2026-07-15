@@ -18,9 +18,9 @@ type Cluster struct {
 }
 
 // Provisioner returns the name of the provisioner that built the cluster on
-// the server. Always "remote" from the client's perspective.
+// the server.
 func (c *Cluster) Provisioner() string {
-	return ProviderName
+	return c.wire.ProvisionerName
 }
 
 // StatePath returns the path to the state directory on the server.

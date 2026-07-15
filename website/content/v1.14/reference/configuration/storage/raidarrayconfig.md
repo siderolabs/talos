@@ -50,7 +50,6 @@ RAIDProvisioningSpec describes how the RAID arrays are provisioned.
 
 
 
-
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`volumeSelector` |<a href="#RAIDArrayConfig.provisioning.volumeSelector">RAIDVolumeSelector</a> |The volume selector describes how the members of RAID arrays are selected.  | |
@@ -61,7 +60,6 @@ RAIDProvisioningSpec describes how the RAID arrays are provisioned.
 ### volumeSelector {#RAIDArrayConfig.provisioning.volumeSelector}
 
 RAIDVolumeSelector matches member disks with CEL.
-
 
 
 

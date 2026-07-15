@@ -43,7 +43,6 @@ ConfigFile is a config file for extension services.
 
 
 
-
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`content` |string |The content of the extension service config file.  | |
