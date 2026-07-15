@@ -17,7 +17,7 @@ title: KubeCoreDNSConfig
 apiVersion: v1alpha1
 kind: KubeCoreDNSConfig
 enabled: true # By default, CoreDNS deployment is enabled.
-image: registry.k8s.io/coredns/coredns:v1.14.2 # The container image used to run the CoreDNS.
+image: registry.k8s.io/coredns/coredns:v1.14.4 # The container image used to run the CoreDNS.
 {{< /highlight >}}
 
 

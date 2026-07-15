@@ -27,7 +27,7 @@ func TestKubeCoreDNSConfigMarshalStability(t *testing.T) {
 
 	cfg := k8s.NewKubeCoreDNSConfigV1Alpha1()
 	cfg.PodEnabled = new(true)
-	cfg.PodImage = constants.CoreDNSImage + ":" + constants.DefaultCoreDNSVersion
+	cfg.PodImage = constants.CoreDNSImage + ":v1.14.2"
 
 	marshaled, err := encoder.NewEncoder(cfg, encoder.WithComments(encoder.CommentsDisabled)).Encode()
 	require.NoError(t, err)
@@ -52,7 +52,7 @@ func TestKubeCoreDNSConfigUnmarshal(t *testing.T) {
 			MetaKind:       k8s.KubeCoreDNSConfig,
 		},
 		PodEnabled: new(true),
-		PodImage:   constants.CoreDNSImage + ":" + constants.DefaultCoreDNSVersion,
+		PodImage:   constants.CoreDNSImage + ":v1.14.2",
 	}, docs[0])
 }
 

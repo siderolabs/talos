@@ -502,7 +502,7 @@ var imageK8sBundleCmdFlags = struct {
 	etcdVersion                pflag.Value
 	kubeNetworkPoliciesVersion pflag.Value
 }{
-	k8sVersion:                 flags.Semver(constants.DefaultKubernetesVersion),
+	k8sVersion:                 flags.Semver("v" + constants.DefaultKubernetesVersion),
 	flannelVersion:             flags.Semver(constants.FlannelVersion),
 	corednsVersion:             flags.Semver(constants.DefaultCoreDNSVersion),
 	etcdVersion:                flags.Semver(constants.DefaultEtcdVersion),
