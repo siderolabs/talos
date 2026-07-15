@@ -215,6 +215,17 @@ func getCgroupV2Resources(name string) *cgroup2.Resources {
 				Weight: new(MillicoresToCPUWeight(MilliCores(constants.CgroupTrustdMillicores))),
 			},
 		}
+	case constants.CgroupSystemSandbox:
+		return &cgroup2.Resources{
+			Memory: &cgroup2.Memory{
+				Min:  new(int64(constants.CgroupSystemSandboxReservedMemory)),
+				Low:  new(int64(constants.CgroupSystemSandboxReservedMemory * 2)),
+				Swap: new(int64(0)),
+			},
+			CPU: &cgroup2.CPU{
+				Weight: new(MillicoresToCPUWeight(MilliCores(constants.CgroupSystemSandboxMillicores))),
+			},
+		}
 	}
 
 	return &cgroup2.Resources{}

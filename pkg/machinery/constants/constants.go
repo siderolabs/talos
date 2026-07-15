@@ -839,6 +839,15 @@ const (
 	// the sandbox PID+mount namespace that launches the container-plane services).
 	SelinuxLabelSandboxd = "system_u:system_r:sandboxd_t:s0"
 
+	// CgroupSystemSandbox is the cgroup name for the sandbox processe for the CRI workloads.
+	CgroupSystemSandbox = CgroupSystem + "/sandbox"
+
+	// CgroupSystemSandboxReservedMemory is the hard memory protection for the sandbox process.
+	CgroupSystemSandboxReservedMemory = 32 * 1024 * 1024
+
+	// CgroupSystemSandboxMillicores is the CPU weight for the sandbox cgroup.
+	CgroupSystemSandboxMillicores = 100
+
 	// CgroupPodRuntimeRoot is the cgroup containing Kubernetes runtime components.
 	CgroupPodRuntimeRoot = "podruntime"
 

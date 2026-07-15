@@ -10,7 +10,7 @@ import (
 	"io/fs"
 	"log"
 	"os"
-	"path"
+	"path/filepath"
 	"slices"
 	"syscall"
 	"time"
@@ -292,7 +292,7 @@ func (p *processRunner) build(extraLogWriter io.Writer) (commandWrapper, error) 
 
 	// cgroupfd is more reliable, use it when possible
 	if cgroups.Mode() == cgroups.Unified && cgroupFdSupported && p.opts.UID == 0 {
-		cg, err := os.Open(path.Join(constants.CgroupMountPath, cgroup.Path(p.opts.CgroupPath)))
+		cg, err := os.Open(filepath.Join(constants.CgroupMountPath, cgroup.Path(p.opts.CgroupPath)))
 		if err == nil {
 			wrapper.cgroupFile = cg
 

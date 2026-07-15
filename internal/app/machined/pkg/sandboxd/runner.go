@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"syscall"
 
 	"github.com/siderolabs/go-cmd/pkg/cmd/proc/reaper"
@@ -17,6 +18,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
+	"github.com/siderolabs/talos/internal/pkg/cgroup"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -77,6 +79,25 @@ func (s *sandboxRunner) Stop() error {
 //nolint:gocyclo
 func (s *sandboxRunner) Run(eventSink events.Recorder, pidRecorder pid.Recorder) error {
 	defer close(s.stopped)
+
+	cg, err := cgroup.CreateCgroup(constants.CgroupSystemSandbox)
+	if err != nil {
+		return fmt.Errorf("error creating cgroup: %w", err)
+	}
+
+	defer func() {
+		err := cg.Delete()
+		if err != nil {
+			eventSink(events.StateStopping, "Failed to remove cgroup for sandboxd: %s", err)
+		}
+	}()
+
+	cgFile, err := os.Open(filepath.Join(constants.CgroupMountPath, cgroup.Path(constants.CgroupSystemSandbox)))
+	if err != nil {
+		return fmt.Errorf("error opening cgroup file: %w", err)
+	}
+
+	defer cgFile.Close() //nolint:errcheck
 
 	readyR, readyW, err := os.Pipe()
 	if err != nil {
@@ -151,7 +172,8 @@ func (s *sandboxRunner) Run(eventSink events.Recorder, pidRecorder pid.Recorder)
 	}
 
 	pid, err := launcher.Launch(&sandboxdLaunchContext{
-		files: []uintptr{devNull.Fd(), logW.Fd(), logW.Fd(), readyW.Fd(), controlInit.Fd()},
+		files:      []uintptr{devNull.Fd(), logW.Fd(), logW.Fd(), readyW.Fd(), controlInit.Fd()},
+		cgroupFile: cgFile,
 	})
 
 	// The child holds its own copies of the passed fds now; drop ours. Closing
@@ -247,7 +269,8 @@ func (s *sandboxRunner) Run(eventSink events.Recorder, pidRecorder pid.Recorder)
 
 // sandboxdLaunchContext is passed to the libcap launch callback for sandboxd.
 type sandboxdLaunchContext struct {
-	files []uintptr // stdin, stdout, stderr, ready pipe, control socket
+	files      []uintptr // stdin, stdout, stderr, ready pipe, control socket
+	cgroupFile *os.File
 }
 
 // beforeSandboxdExec runs on libcap's launch thread just before it forks+execs
@@ -269,6 +292,11 @@ func beforeSandboxdExec(pa *syscall.ProcAttr, data any) error {
 	}
 
 	pa.Sys.Cloneflags = syscall.CLONE_NEWPID | syscall.CLONE_NEWNS
+
+	if cfg.cgroupFile != nil {
+		pa.Sys.UseCgroupFD = true
+		pa.Sys.CgroupFD = int(cfg.cgroupFile.Fd())
+	}
 
 	if selinux.IsEnabled() {
 		if err := os.WriteFile("/proc/thread-self/attr/exec", []byte(constants.SelinuxLabelSandboxd), 0o777); err != nil {
