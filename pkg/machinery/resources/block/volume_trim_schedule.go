@@ -5,7 +5,6 @@
 package block
 
 import (
-	"hash/fnv"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -34,73 +33,6 @@ type VolumeTrimScheduleSpec struct {
 	Interval time.Duration `yaml:"interval" protobuf:"2"`
 	// NextTrim is the next scheduled trim time for the volume.
 	NextTrim time.Time `yaml:"nextTrim" protobuf:"3"`
-}
-
-// TrimScheduleOffset returns the stable offset within the trim interval for a seed.
-//
-// The offset is derived by hashing the seed (e.g. node ID + volume ID), so it stays
-// constant for a given seed and interval, spreading trims across the interval - both
-// across volumes on a node and across nodes in a cluster.
-func TrimScheduleOffset(seed string, interval time.Duration) time.Duration {
-	if interval <= 0 {
-		return 0
-	}
-
-	h := fnv.New64a()
-	h.Write([]byte(seed)) //nolint:errcheck // hash.Hash.Write never returns an error
-
-	return time.Duration(h.Sum64() % uint64(interval))
-}
-
-// NextTrimTime returns the earliest trim slot strictly after t for the seed.
-//
-// Trim slots form a stable lattice anchored at the Unix epoch: offset, offset+interval,
-// offset+2*interval, ... where offset is derived from the seed.
-func NextTrimTime(seed string, interval time.Duration, t time.Time) time.Time {
-	if interval <= 0 {
-		return time.Time{}
-	}
-
-	anchor := time.Unix(0, int64(TrimScheduleOffset(seed, interval)))
-
-	return TrimSlotAfter(anchor, interval, t)
-}
-
-// TrimSlotBefore returns the most recent trim slot at or before t on the lattice
-// anchored at the given slot (anchor + k*interval for integer k).
-//
-// It only needs a single known slot (anchor) and the interval, so it does not depend
-// on the seed used to compute the schedule.
-func TrimSlotBefore(anchor time.Time, interval time.Duration, t time.Time) time.Time {
-	if interval <= 0 {
-		return time.Time{}
-	}
-
-	step := int64(interval)
-	diff := t.UnixNano() - anchor.UnixNano()
-
-	// number of full intervals between the anchor and t (floored).
-	k := diff / step
-	if diff%step < 0 {
-		k--
-	}
-
-	return anchor.Add(time.Duration(k) * interval)
-}
-
-// TrimSlotAfter returns the earliest trim slot strictly after t on the lattice
-// anchored at the given slot.
-func TrimSlotAfter(anchor time.Time, interval time.Duration, t time.Time) time.Time {
-	if interval <= 0 {
-		return time.Time{}
-	}
-
-	slot := TrimSlotBefore(anchor, interval, t)
-	if !slot.After(t) {
-		slot = slot.Add(interval)
-	}
-
-	return slot
 }
 
 // NewVolumeTrimSchedule initializes a VolumeTrimSchedule resource.
