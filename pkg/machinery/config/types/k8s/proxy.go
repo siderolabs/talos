@@ -114,7 +114,7 @@ func NewKubeProxyConfigV1Alpha1() *KubeProxyConfigV1Alpha1 {
 func exampleKubeProxyConfigV1Alpha1() *KubeProxyConfigV1Alpha1 {
 	cfg := NewKubeProxyConfigV1Alpha1()
 	cfg.ProxyMode = "nftables"
-	cfg.ProxyImage = constants.KubeProxyImage + ":" + constants.DefaultKubernetesVersion
+	cfg.ProxyImage = constants.KubeProxyImage + ":v" + constants.DefaultKubernetesVersion
 	cfg.ProxyConfig = meta.Unstructured{
 		Object: map[string]any{
 			"bindAddressHardFail": true,

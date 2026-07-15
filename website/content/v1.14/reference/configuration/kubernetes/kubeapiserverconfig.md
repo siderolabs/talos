@@ -16,7 +16,7 @@ title: KubeAPIServerConfig
 {{< highlight yaml >}}
 apiVersion: v1alpha1
 kind: KubeAPIServerConfig
-image: registry.k8s.io/kube-apiserver:v1.36.2 # The container image used to run the kube-apiserver component.
+image: registry.k8s.io/kube-apiserver:v1.37.0-alpha.3 # The container image used to run the kube-apiserver component.
 # Extra command line arguments to supply to the kube-apiserver.
 extraArgs:
     feature-gates: ServerSideApply=true
