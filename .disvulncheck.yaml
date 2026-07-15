@@ -3,4 +3,4 @@ ignore_ttl: 168h # 7 days, each entry must be revalidated after this time, and e
 ignore:
   - id: GO-2026-5932
     reason: No fix available; golang.org/x/crypto/openpgp only reachable via cosign legacy PGP signature verification, which Talos does not use (sigstore-based verification).
-    date: 2026-07-09
+    date: 2026-07-16
