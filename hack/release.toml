@@ -127,6 +127,7 @@ List of changes:
 - Deprecated `.cluster.proxy` in the v1alpha1 config; use the `KubeProxyConfig` document for kube-proxy configuration.
 - Deprecated `.cluster.network` in the v1alpha1 config; use the `KubeNetworkConfig` document for Kubernetes network configuration; Flannel can be configured using the `KubeFlannelCNIConfig` document.
 - Deprecated `.cluster.coreDNS` in the v1alpha1 config; use the `KubeCoreDNSConfig` document for CoreDNS configuration.
+- Deprecated `.cluster.name` and `.cluster.controlPlane.endpoint in the v1alpha1 config; use the `KubeClusterConfig` document for cluster name and control plane endpoint configuration.
 - Added `nodeCIDRMaskSizeIPv4` (default `24`) and `nodeCIDRMaskSizeIPv6` (default `64`) settings to the `KubeNetworkConfig` document to control the per-node pod CIDR mask size and validate the pod and service subnet sizes.
 """
 

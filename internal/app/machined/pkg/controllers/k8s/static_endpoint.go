@@ -69,8 +69,8 @@ func (ctrl *StaticEndpointController) Run(ctx context.Context, r controller.Runt
 
 		r.StartTrackingOutputs()
 
-		if machineConfig != nil && machineConfig.Config().Cluster() != nil {
-			cpHostname := machineConfig.Config().Cluster().Endpoint().Hostname()
+		if machineConfig != nil && machineConfig.Config().K8sClusterConfig() != nil {
+			cpHostname := machineConfig.Config().K8sClusterConfig().ClusterEndpoint().Hostname()
 
 			var (
 				resolver net.Resolver

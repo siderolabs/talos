@@ -273,6 +273,38 @@ func (KubeAuthorizerConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (KubeClusterConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeClusterConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeClusterConfig configures Kubernetes cluster base settings." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeClusterConfig configures Kubernetes cluster base settings.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "clusterName",
+				Type:        "string",
+				Note:        "",
+				Description: "The cluster name.\nIt is used mostly for informational purposes, and gets included into kubeconfig.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The cluster name." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "endpoint",
+				Type:        "URL",
+				Note:        "",
+				Description: "The Kubernetes API endpoint.\nFor a single-node cluster, this can be the same as the node's IP address.\nFor a multi-node cluster, this should be the load balancer's IP address or DNS name,\nor any other address (VIP, BGP, etc.) that can be used to reach the Kubernetes API server from the nodes.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The Kubernetes API endpoint." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeClusterConfig1V1Alpha1())
+
+	return doc
+}
+
 func (ResourcesConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ResourcesConfig",
@@ -796,6 +828,7 @@ func GetFileDoc() *encoder.FileDoc {
 			KubeAuditPolicyConfigV1Alpha1{}.Doc(),
 			KubeAuthenticationConfigV1Alpha1{}.Doc(),
 			KubeAuthorizerConfigV1Alpha1{}.Doc(),
+			KubeClusterConfigV1Alpha1{}.Doc(),
 			ResourcesConfig{}.Doc(),
 			KubeControllerManagerConfigV1Alpha1{}.Doc(),
 			KubeCoreDNSConfigV1Alpha1{}.Doc(),

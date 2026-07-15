@@ -115,10 +115,14 @@ func (in *Input) generateKubernetesControlplaneConfigs(controlplaneURL *url.URL)
 	return result
 }
 
-func (in *Input) generateKubernetesUniversalConfigs(isControlplane bool) []config.Document {
+func (in *Input) generateKubernetesUniversalConfigs(isControlplane bool, controlPlaneURL *url.URL) []config.Document {
 	if !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
 		return nil
 	}
+
+	clusterConfig := k8s.NewKubeClusterConfigV1Alpha1()
+	clusterConfig.ClusterNameConfig = in.ClusterName
+	clusterConfig.ClusterEndpointConfig = meta.URL{URL: controlPlaneURL}
 
 	networkConfig := k8s.NewKubeNetworkConfigV1Alpha1()
 	networkConfig.NetworkDNSDomain = in.Options.DNSDomain
@@ -149,6 +153,7 @@ func (in *Input) generateKubernetesUniversalConfigs(isControlplane bool) []confi
 	}
 
 	return []config.Document{
+		clusterConfig,
 		networkConfig,
 		caConfig,
 	}

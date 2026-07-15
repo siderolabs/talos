@@ -129,13 +129,13 @@ func (in *Input) init() ([]config.Document, error) {
 	}
 
 	cluster := &v1alpha1.ClusterConfig{
-		ClusterID:     nilIf(in.Options.VersionContract.DiscoveryIdentityMultidocConfig(), in.Options.SecretsBundle.Cluster.ID), //nolint:staticcheck // legacy configuration
-		ClusterName:   in.ClusterName,
+		ClusterID:     nilIf(in.Options.VersionContract.DiscoveryIdentityMultidocConfig(), in.Options.SecretsBundle.Cluster.ID),     //nolint:staticcheck // legacy configuration
+		ClusterName:   nilIf(in.Options.VersionContract.DiscoveryIdentityMultidocConfig(), in.ClusterName),                          //nolint:staticcheck // legacy configuration
 		ClusterSecret: nilIf(in.Options.VersionContract.DiscoveryIdentityMultidocConfig(), in.Options.SecretsBundle.Cluster.Secret), //nolint:staticcheck // legacy configuration
-		ControlPlane: &v1alpha1.ControlPlaneConfig{
+		ControlPlane: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.ControlPlaneConfig{
 			Endpoint:           &v1alpha1.Endpoint{URL: controlPlaneURL},
-			LocalAPIServerPort: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), in.Options.LocalAPIServerPort),
-		},
+			LocalAPIServerPort: in.Options.LocalAPIServerPort,
+		}),
 		APIServerConfig: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.APIServerConfig{
 			ExtraCertSANs:          certSANs,
 			ContainerImage:         fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, in.KubernetesVersion),
@@ -280,7 +280,7 @@ func (in *Input) init() ([]config.Document, error) {
 
 	documents = append(documents, extraDocuments...)
 
-	extraDocuments = in.generateKubernetesUniversalConfigs(true)
+	extraDocuments = in.generateKubernetesUniversalConfigs(true, controlPlaneURL)
 
 	documents = append(documents, extraDocuments...)
 

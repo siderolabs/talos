@@ -42,6 +42,10 @@ func NewKubeletController() *KubeletController {
 					return optional.None[*secrets.Kubelet]()
 				}
 
+				if cfg.Config().K8sClusterConfig() == nil {
+					return optional.None[*secrets.Kubelet]()
+				}
+
 				return optional.Some(secrets.NewKubelet(secrets.KubeletID))
 			},
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, cfg *config.MachineConfig, res *secrets.Kubelet) error {
@@ -67,7 +71,7 @@ func NewKubeletController() *KubeletController {
 					kubeletSecrets.Endpoint = localEndpoint
 				default:
 					// use cluster endpoint for workers
-					kubeletSecrets.Endpoint = cfgProvider.Cluster().Endpoint()
+					kubeletSecrets.Endpoint = cfgProvider.K8sClusterConfig().ClusterEndpoint()
 				}
 
 				kubeletSecrets.AcceptedCAs = nil

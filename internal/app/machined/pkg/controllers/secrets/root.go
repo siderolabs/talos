@@ -100,6 +100,9 @@ func NewRootKubernetesController() *RootKubernetesController {
 				func(cfg *config.MachineConfig) bool {
 					return cfg.Config().K8sServiceAccountConfig() != nil
 				},
+				func(cfg *config.MachineConfig) bool {
+					return cfg.Config().K8sClusterConfig() != nil
+				},
 			),
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, cfg *config.MachineConfig, res *secrets.KubernetesRoot) error {
 				cfgProvider := cfg.Config()
@@ -122,8 +125,8 @@ func NewRootKubernetesController() *RootKubernetesController {
 					}
 				}
 
-				k8sSecrets.Name = cfgProvider.Cluster().Name()
-				k8sSecrets.Endpoint = cfgProvider.Cluster().Endpoint()
+				k8sSecrets.Name = cfgProvider.K8sClusterConfig().ClusterName()
+				k8sSecrets.Endpoint = cfgProvider.K8sClusterConfig().ClusterEndpoint()
 				k8sSecrets.LocalEndpoint = localEndpoint
 				k8sSecrets.CertSANs = cfgProvider.K8sAPIServerConfig().CertSANs()
 

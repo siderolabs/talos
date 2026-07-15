@@ -267,20 +267,8 @@ func (ClusterConfig) Doc() *encoder.Doc {
 		Fields: []encoder.Doc{
 			{},
 			{},
-			{
-				Name:        "controlPlane",
-				Type:        "ControlPlaneConfig",
-				Note:        "",
-				Description: "Provides control plane specific configuration options.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Provides control plane specific configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "clusterName",
-				Type:        "string",
-				Note:        "",
-				Description: "Configures the cluster's name.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the cluster's name." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
+			{},
 			{},
 			{
 				Name:        "token",
@@ -360,9 +348,6 @@ func (ClusterConfig) Doc() *encoder.Doc {
 		},
 	}
 
-	doc.AddExample("", clusterConfigExample())
-
-	doc.Fields[2].AddExample("Setting controlplane endpoint address to 1.2.3.4 and port to 443 example.", clusterControlPlaneExample())
 	doc.Fields[5].AddExample("Bootstrap token example (do not use in production!).", "wlzjyw.bei2zfylhs2by0wd")
 	doc.Fields[17].AddExample("", clusterEtcdExample())
 	doc.Fields[19].AddExample("", clusterExternalCloudProviderConfigExample())
@@ -654,10 +639,6 @@ func (Endpoint) Doc() *encoder.Doc {
 		Description: "Endpoint represents the endpoint URL parsed out of the machine config.",
 		AppearsIn: []encoder.Appearance{
 			{
-				TypeName:  "ControlPlaneConfig",
-				FieldName: "endpoint",
-			},
-			{
 				TypeName:  "LoggingDestination",
 				FieldName: "endpoint",
 			},
@@ -666,34 +647,6 @@ func (Endpoint) Doc() *encoder.Doc {
 			{},
 		},
 	}
-
-	return doc
-}
-
-func (ControlPlaneConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "ControlPlaneConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "ControlPlaneConfig represents the control plane configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ControlPlaneConfig represents the control plane configuration options.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "ClusterConfig",
-				FieldName: "controlPlane",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "endpoint",
-				Type:        "Endpoint",
-				Note:        "",
-				Description: "Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.\nIt is single-valued, and may optionally include a port number.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{},
-		},
-	}
-
-	doc.AddExample("Setting controlplane endpoint address to 1.2.3.4 and port to 443 example.", clusterControlPlaneExample())
 
 	return doc
 }
@@ -1134,7 +1087,6 @@ func GetFileDoc() *encoder.FileDoc {
 			KubeletConfig{}.Doc(),
 			KubeletNodeIPConfig{}.Doc(),
 			Endpoint{}.Doc(),
-			ControlPlaneConfig{}.Doc(),
 			EtcdConfig{}.Doc(),
 			ExternalCloudProviderConfig{}.Doc(),
 			AdminKubeconfigConfig{}.Doc(),

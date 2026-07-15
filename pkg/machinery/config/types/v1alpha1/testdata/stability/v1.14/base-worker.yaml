@@ -18,9 +18,6 @@ machine:
             enabled: true
             port: 7445
 cluster:
-    controlPlane:
-        endpoint: https://base:6443
-    clusterName: base
     token: inn7ol.u4ehnti8qyls9ymo
 ---
 apiVersion: v1alpha1
@@ -56,6 +53,11 @@ workloadIsolation: true
 apiVersion: v1alpha1
 kind: HostnameConfig
 auto: stable
+---
+apiVersion: v1alpha1
+kind: KubeClusterConfig
+clusterName: base
+endpoint: https://base:6443
 ---
 apiVersion: v1alpha1
 kind: KubeNetworkConfig

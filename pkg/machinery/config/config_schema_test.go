@@ -7,7 +7,6 @@ package config_test
 import (
 	_ "embed"
 	"net/netip"
-	"net/url"
 	"strings"
 	"testing"
 
@@ -56,18 +55,6 @@ func TestSchemaValidation(t *testing.T) {
 				config.ConfigVersion = "v1alpha2"
 			}, nil),
 			expectedErrorContains: `value must be 'v1alpha1'`,
-		},
-		{
-			name: "v1alpha1_invalid-control-plane-endpoint",
-			config: newV1Alpha1Config(t, func(config *v1alpha1.Config) {
-				endpointURL, urlErr := url.Parse("ftp://127.0.0.1:6443")
-				require.NoError(t, urlErr)
-
-				config.ClusterConfig.ControlPlane.Endpoint = &v1alpha1.Endpoint{
-					URL: endpointURL,
-				}
-			}, nil),
-			expectedErrorContains: `does not match pattern '^https://'`,
 		},
 		{
 			name: "v1alpha1_invalid-duration",

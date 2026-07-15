@@ -642,22 +642,9 @@ ClusterConfig represents the cluster-wide config values.
 
 
 
-{{< highlight yaml >}}
-cluster:
-    # ControlPlaneConfig represents the control plane configuration options.
-    controlPlane:
-        endpoint: https://1.2.3.4 # Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.
-    clusterName: talos.local
-{{< /highlight >}}
-
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`controlPlane` |<a href="#Config.cluster.controlPlane">ControlPlaneConfig</a> |Provides control plane specific configuration options. <details><summary>Show example(s)</summary>Setting controlplane endpoint address to 1.2.3.4 and port to 443 example.:{{< highlight yaml >}}
-controlPlane:
-    endpoint: https://1.2.3.4 # Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.
-{{< /highlight >}}</details> | |
-|`clusterName` |string |Configures the cluster's name.  | |
 |`token` |string |The [bootstrap token](https://kubernetes.io/docs/reference/access-authn-authz/bootstrap-tokens/) used to join the cluster. <details><summary>Show example(s)</summary>Bootstrap token example (do not use in production!).:{{< highlight yaml >}}
 token: wlzjyw.bei2zfylhs2by0wd
 {{< /highlight >}}</details> | |
@@ -710,43 +697,6 @@ adminKubeconfig:
 |`allowSchedulingOnControlPlanes` |bool |Allows running workload on control-plane nodes. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 allowSchedulingOnControlPlanes: true
 {{< /highlight >}}</details> |`true`<br />`yes`<br />`false`<br />`no`<br /> |
-
-
-
-
-### controlPlane {#Config.cluster.controlPlane}
-
-ControlPlaneConfig represents the control plane configuration options.
-
-
-
-{{< highlight yaml >}}
-cluster:
-    controlPlane:
-        endpoint: https://1.2.3.4 # Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.
-{{< /highlight >}}
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`endpoint` |<a href="#Config.cluster.controlPlane.endpoint">Endpoint</a> |Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.<br>It is single-valued, and may optionally include a port number.  | |
-
-
-
-
-#### endpoint {#Config.cluster.controlPlane.endpoint}
-
-Endpoint represents the endpoint URL parsed out of the machine config.
-
-
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-
-
-
-
 
 
 

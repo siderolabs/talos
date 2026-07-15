@@ -34,7 +34,11 @@ func NewKubePrismEndpointsController() *KubePrismEndpointsController {
 					return optional.None[*k8s.KubePrismEndpoints]()
 				}
 
-				if cfg.Config().Cluster() == nil || cfg.Config().Machine() == nil {
+				if cfg.Config().Machine() == nil {
+					return optional.None[*k8s.KubePrismEndpoints]()
+				}
+
+				if cfg.Config().K8sClusterConfig() == nil {
 					return optional.None[*k8s.KubePrismEndpoints]()
 				}
 
@@ -52,7 +56,7 @@ func NewKubePrismEndpointsController() *KubePrismEndpointsController {
 
 				var endpoints []k8s.KubePrismEndpoint
 
-				ce := machineConfig.Config().Cluster().Endpoint()
+				ce := machineConfig.Config().K8sClusterConfig().ClusterEndpoint()
 				if ce != nil {
 					endpoints = append(endpoints, k8s.KubePrismEndpoint{
 						Host: ce.Hostname(),

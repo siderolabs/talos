@@ -30,7 +30,7 @@ func TestGenerateConfig(t *testing.T) {
 		),
 	}
 
-	patches, err := configpatcher.LoadPatches([]string{"cluster:\n  clusterName: foo\n"})
+	patches, err := configpatcher.LoadPatches([]string{"apiVersion: v1alpha1\nkind: KubeClusterConfig\nclusterName: foo\n"})
 	require.NoError(t, err)
 
 	configBundleOpts = append(configBundleOpts, bundle.WithPatch(patches))
@@ -56,6 +56,6 @@ func TestGenerateConfig(t *testing.T) {
 
 		require.NoError(t, err)
 
-		assert.Equal(t, "foo", cfg.Cluster().Name())
+		assert.Equal(t, "foo", cfg.K8sClusterConfig().ClusterName())
 	}
 }

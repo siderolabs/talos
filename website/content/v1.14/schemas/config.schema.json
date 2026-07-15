@@ -1786,6 +1786,52 @@
       ],
       "description": "KubeAuthorizerConfig configures kube-apiserver authorization by configuring a specific authorization plugin."
     },
+    "k8s.KubeClusterConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "KubeClusterConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "clusterName": {
+          "type": "string",
+          "title": "clusterName",
+          "description": "The cluster name.\nIt is used mostly for informational purposes, and gets included into kubeconfig.\n",
+          "markdownDescription": "The cluster name.\nIt is used mostly for informational purposes, and gets included into kubeconfig.",
+          "x-intellij-html-description": "\u003cp\u003eThe cluster name.\nIt is used mostly for informational purposes, and gets included into kubeconfig.\u003c/p\u003e\n"
+        },
+        "endpoint": {
+          "type": "string",
+          "pattern": "^https://",
+          "title": "endpoint",
+          "description": "The Kubernetes API endpoint.\nFor a single-node cluster, this can be the same as the node’s IP address.\nFor a multi-node cluster, this should be the load balancer’s IP address or DNS name,\nor any other address (VIP, BGP, etc.) that can be used to reach the Kubernetes API server from the nodes.\n",
+          "markdownDescription": "The Kubernetes API endpoint.\nFor a single-node cluster, this can be the same as the node's IP address.\nFor a multi-node cluster, this should be the load balancer's IP address or DNS name,\nor any other address (VIP, BGP, etc.) that can be used to reach the Kubernetes API server from the nodes.",
+          "x-intellij-html-description": "\u003cp\u003eThe Kubernetes API endpoint.\nFor a single-node cluster, this can be the same as the node\u0026rsquo;s IP address.\nFor a multi-node cluster, this should be the load balancer\u0026rsquo;s IP address or DNS name,\nor any other address (VIP, BGP, etc.) that can be used to reach the Kubernetes API server from the nodes.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "clusterName",
+        "endpoint",
+        "kind"
+      ],
+      "description": "KubeClusterConfig configures Kubernetes cluster base settings."
+    },
     "k8s.KubeControllerManagerConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -5796,20 +5842,6 @@
     },
     "v1alpha1.ClusterConfig": {
       "properties": {
-        "controlPlane": {
-          "$ref": "#/$defs/v1alpha1.ControlPlaneConfig",
-          "title": "controlPlane",
-          "description": "Provides control plane specific configuration options.\n",
-          "markdownDescription": "Provides control plane specific configuration options.",
-          "x-intellij-html-description": "\u003cp\u003eProvides control plane specific configuration options.\u003c/p\u003e\n"
-        },
-        "clusterName": {
-          "type": "string",
-          "title": "clusterName",
-          "description": "Configures the cluster’s name.\n",
-          "markdownDescription": "Configures the cluster's name.",
-          "x-intellij-html-description": "\u003cp\u003eConfigures the cluster\u0026rsquo;s name.\u003c/p\u003e\n"
-        },
         "token": {
           "type": "string",
           "title": "token",
@@ -5939,22 +5971,6 @@
       "additionalProperties": false,
       "type": "object",
       "description": "Config defines the v1alpha1.Config Talos machine configuration document."
-    },
-    "v1alpha1.ControlPlaneConfig": {
-      "properties": {
-        "endpoint": {
-          "type": "string",
-          "pattern": "^https://",
-          "format": "uri",
-          "title": "endpoint",
-          "description": "Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.\nIt is single-valued, and may optionally include a port number.\n",
-          "markdownDescription": "Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.\nIt is single-valued, and may optionally include a port number.",
-          "x-intellij-html-description": "\u003cp\u003eEndpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.\nIt is single-valued, and may optionally include a port number.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "ControlPlaneConfig represents the control plane configuration options."
     },
     "v1alpha1.Endpoint": {
       "properties": {},
@@ -6691,6 +6707,9 @@
     },
     {
       "$ref": "#/$defs/k8s.KubeAuthorizerConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/k8s.KubeClusterConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/k8s.KubeControllerManagerConfigV1Alpha1"

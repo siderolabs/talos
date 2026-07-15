@@ -29,7 +29,11 @@ func NewInfoController() *InfoController {
 					return optional.None[*cluster.Info]()
 				}
 
-				if cfg.Config().Cluster() == nil {
+				if cfg.Config().DiscoveryIdentityConfig() == nil {
+					return optional.None[*cluster.Info]()
+				}
+
+				if cfg.Config().K8sClusterConfig() == nil {
 					return optional.None[*cluster.Info]()
 				}
 
@@ -42,7 +46,7 @@ func NewInfoController() *InfoController {
 					info.TypedSpec().ClusterID = ""
 				}
 
-				info.TypedSpec().ClusterName = cfg.Config().Cluster().Name()
+				info.TypedSpec().ClusterName = cfg.Config().K8sClusterConfig().ClusterName()
 
 				return nil
 			},

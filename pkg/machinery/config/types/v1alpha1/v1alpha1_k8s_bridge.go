@@ -377,3 +377,28 @@ func (s serviceAccountShim) AcceptedIssuers() []string {
 func (s serviceAccountShim) APIAudiences() []string {
 	return []string{s.endpoint.String()}
 }
+
+// K8sClusterConfig implements the config.Config interface.
+func (c *Config) K8sClusterConfig() config.K8sClusterConfig {
+	if c.ClusterConfig == nil || c.ClusterConfig.ControlPlane == nil {
+		return nil
+	}
+
+	return k8sClusterConfigShim{
+		c: c.ClusterConfig,
+	}
+}
+
+type k8sClusterConfigShim struct {
+	c *ClusterConfig
+}
+
+// ClusterName implements the config.K8sClusterConfig interface.
+func (s k8sClusterConfigShim) ClusterName() string {
+	return s.c.Name()
+}
+
+// ClusterEndpoint implements the config.K8sClusterConfig interface.
+func (s k8sClusterConfigShim) ClusterEndpoint() *url.URL {
+	return s.c.Endpoint()
+}

@@ -9,7 +9,6 @@ machine:
             - interface: eth0
               dhcp: true
 cluster:
-    controlPlane: null
     proxy:
         extraArgs:
             foo: bar

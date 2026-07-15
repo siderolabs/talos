@@ -24,8 +24,8 @@ import (
 //
 // This interface is implemented by config.Cluster().
 type GenerateAdminInput interface {
-	Name() string
-	Endpoint() *url.URL
+	ClusterName() string
+	ClusterEndpoint() *url.URL
 	IssuingCA() *x509.PEMEncodedCertificateAndKey
 	AcceptedCAs() []*x509.PEMEncodedCertificate
 	AdminKubeconfig() config.AdminKubeconfig
@@ -39,7 +39,7 @@ func GenerateAdmin(config GenerateAdminInput, out io.Writer) error {
 
 	return Generate(
 		&GenerateInput{
-			ClusterName:         config.Name(),
+			ClusterName:         config.ClusterName(),
 			IssuingCA:           config.IssuingCA(),
 			AcceptedCAs:         config.AcceptedCAs(),
 			CertificateLifetime: config.AdminKubeconfig().CertLifetime(),
@@ -47,7 +47,7 @@ func GenerateAdmin(config GenerateAdminInput, out io.Writer) error {
 			CommonName:   config.AdminKubeconfig().CommonName(),
 			Organization: config.AdminKubeconfig().CertOrganization(),
 
-			Endpoint:    config.Endpoint().String(),
+			Endpoint:    config.ClusterEndpoint().String(),
 			Username:    "admin",
 			ContextName: "admin",
 		},

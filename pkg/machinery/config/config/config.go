@@ -51,6 +51,7 @@ type Config interface { //nolint:interfacebloat
 	K8sControllerManagerConfig() K8sControllerManagerConfig
 	K8sSchedulerConfig() K8sSchedulerConfig
 	K8sProxyConfig() K8sProxyConfig
+	K8sClusterConfig() K8sClusterConfig
 	K8sNetworkConfig() K8sNetworkConfig
 	K8sFlannelCNIConfig() K8sFlannelCNIConfig
 	K8sCoreDNSConfig() K8sCoreDNSConfig

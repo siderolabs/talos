@@ -1235,9 +1235,11 @@ func (s *Server) Kubeconfig(empty *emptypb.Empty, obj machine.MachineService_Kub
 		struct {
 			configconfig.ClusterConfig
 			configconfig.K8sAPIServerCAConfig
+			configconfig.K8sClusterConfig
 		}{
 			ClusterConfig:        s.Controller.Runtime().Config().Cluster(),
 			K8sAPIServerCAConfig: k8sCAConfig,
+			K8sClusterConfig:     s.Controller.Runtime().Config().K8sClusterConfig(),
 		},
 		&b,
 	); err != nil {
@@ -2356,7 +2358,7 @@ func (s *Server) GenerateClientConfiguration(ctx context.Context, in *machine.Ge
 	}
 
 	// make a nice context name
-	contextName := s.Controller.Runtime().Config().Cluster().Name()
+	contextName := s.Controller.Runtime().Config().K8sClusterConfig().ClusterName()
 	if r := roles.Strings(); len(r) == 1 {
 		contextName = strings.TrimPrefix(r[0], role.Prefix) + "@" + contextName
 	}

@@ -301,9 +301,6 @@ var (
 )
 
 // ClusterConfig represents the cluster-wide config values.
-//
-//	examples:
-//	   - value: clusterConfigExample()
 type ClusterConfig struct {
 	// docgen:nodoc
 	//
@@ -313,14 +310,13 @@ type ClusterConfig struct {
 	//
 	// Deprecated: Use 'DiscoveryIdentityConfig' document instead.
 	ClusterSecret string `yaml:"secret,omitempty"`
-	//   description: |
-	//     Provides control plane specific configuration options.
-	//   examples:
-	//     - name: Setting controlplane endpoint address to 1.2.3.4 and port to 443 example.
-	//       value: clusterControlPlaneExample()
-	ControlPlane *ControlPlaneConfig `yaml:"controlPlane"`
-	//   description: |
-	//     Configures the cluster's name.
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeClusterConfig` instead.
+	ControlPlane *ControlPlaneConfig `yaml:"controlPlane,omitempty"`
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeClusterConfig` instead.
 	ClusterName string `yaml:"clusterName,omitempty"`
 	// docgen:nodoc
 	//
@@ -372,10 +368,6 @@ type ClusterConfig struct {
 	//
 	// Deprecated: Use `KubeSchedulerConfig` instead.
 	SchedulerConfig *SchedulerConfig `yaml:"scheduler,omitempty"`
-	//   description: |
-	//     Configures cluster member discovery.
-	//   examples:
-	//     - value: clusterDiscoveryExample()
 	// docgen:nodoc
 	//
 	// Deprecated: Use 'DiscoveryServiceConfig' instead
@@ -1006,6 +998,8 @@ func (e *Endpoint) DeepCopy() *Endpoint {
 }
 
 // ControlPlaneConfig represents the control plane configuration options.
+//
+//docgen:nodoc
 type ControlPlaneConfig struct {
 	//   description: |
 	//     Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.

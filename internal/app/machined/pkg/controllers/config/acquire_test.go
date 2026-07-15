@@ -326,7 +326,7 @@ func (suite *AcquireSuite) TestFromDisk() {
 	suite.injectViaDisk(suite.completeMachineConfig, true)
 
 	cfg := suite.waitForConfig(false)
-	suite.Require().Equal(cfg.Cluster().Name(), suite.clusterName)
+	suite.Require().Equal(cfg.K8sClusterConfig().ClusterName(), suite.clusterName)
 
 	suite.Assert().Empty(suite.eventPublisher.getEvents())
 	suite.Assert().Equal(
@@ -443,7 +443,7 @@ func (suite *AcquireSuite) TestFromPlatform() {
 	suite.triggerAcquire()
 
 	cfg := suite.waitForConfig(true)
-	suite.Require().Equal(cfg.Cluster().Name(), suite.clusterName)
+	suite.Require().Equal(cfg.K8sClusterConfig().ClusterName(), suite.clusterName)
 
 	suite.Assert().Empty(suite.eventPublisher.getEvents())
 	suite.Assert().Equal(
@@ -538,7 +538,7 @@ func (suite *AcquireSuite) TestFromPlatformGzip() {
 	suite.triggerAcquire()
 
 	cfg := suite.waitForConfig(true)
-	suite.Require().Equal(cfg.Cluster().Name(), suite.clusterName)
+	suite.Require().Equal(cfg.K8sClusterConfig().ClusterName(), suite.clusterName)
 
 	suite.Assert().Empty(suite.eventPublisher.getEvents())
 	suite.Assert().Equal(
@@ -722,7 +722,7 @@ func (suite *AcquireSuite) TestFromCmdlineEarlyToPlatform() {
 	suite.Require().Equal(cfg.SideroLink().APIUrl().Host, "siderolink.api")
 
 	cfg = suite.waitForConfig(true)
-	suite.Require().Equal(cfg.Cluster().Name(), suite.clusterName)
+	suite.Require().Equal(cfg.K8sClusterConfig().ClusterName(), suite.clusterName)
 
 	suite.Assert().Empty(suite.eventPublisher.getEvents())
 	suite.Assert().Equal(

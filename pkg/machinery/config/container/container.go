@@ -743,6 +743,20 @@ func (container *Container) K8sProxyConfig() config.K8sProxyConfig {
 	return nil
 }
 
+// K8sClusterConfig implements config.Config interface.
+func (container *Container) K8sClusterConfig() config.K8sClusterConfig {
+	matching := findMatchingDocs[config.K8sClusterConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sClusterConfig()
+	}
+
+	return nil
+}
+
 // K8sNetworkConfig implements config.Config interface.
 func (container *Container) K8sNetworkConfig() config.K8sNetworkConfig {
 	matching := findMatchingDocs[config.K8sNetworkConfig](container.documents)

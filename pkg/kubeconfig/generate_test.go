@@ -57,9 +57,11 @@ func (suite *GenerateSuite) TestGenerateAdmin() {
 				struct {
 					configconfig.ClusterConfig
 					configconfig.K8sAPIServerCAConfig
+					configconfig.K8sClusterConfig
 				}{
 					ClusterConfig:        cfg.Cluster(),
 					K8sAPIServerCAConfig: cfg.K8sAPIServerCAConfig(),
+					K8sClusterConfig:     cfg.K8sClusterConfig(),
 				},
 				&buf,
 			))
@@ -68,7 +70,7 @@ func (suite *GenerateSuite) TestGenerateAdmin() {
 			config, err := clientcmd.Load(buf.Bytes())
 			suite.Require().NoError(err)
 
-			suite.Assert().NoError(clientcmd.ConfirmUsable(*config, fmt.Sprintf("admin@%s", cfg.Cluster().Name())))
+			suite.Assert().NoError(clientcmd.ConfirmUsable(*config, fmt.Sprintf("admin@%s", cfg.K8sClusterConfig().ClusterName())))
 		})
 	}
 }

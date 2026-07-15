@@ -5,7 +5,6 @@
 package config
 
 import (
-	"net/url"
 	"time"
 
 	"github.com/siderolabs/crypto/x509"
@@ -16,8 +15,6 @@ import (
 //
 //nolint:interfacebloat
 type ClusterConfig interface {
-	Name() string
-	Endpoint() *url.URL
 	Token() Token
 	AESCBCEncryptionSecret() string
 	SecretboxEncryptionSecret() string

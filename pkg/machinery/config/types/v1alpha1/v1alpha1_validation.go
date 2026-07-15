@@ -404,12 +404,14 @@ func (c *ClusterConfig) Validate(isControlPlane bool) error {
 		return errors.New("cluster instructions are required")
 	}
 
-	if c.ControlPlane == nil || c.ControlPlane.Endpoint == nil {
-		return errors.New("cluster controlplane endpoint is required")
-	}
+	if c.ControlPlane != nil {
+		if c.ControlPlane.Endpoint == nil {
+			return errors.New("cluster controlplane endpoint is required")
+		}
 
-	if err := sideronet.ValidateEndpointURI(c.ControlPlane.Endpoint.URL.String()); err != nil {
-		result = multierror.Append(result, fmt.Errorf("invalid controlplane endpoint: %w", err))
+		if err := sideronet.ValidateEndpointURI(c.ControlPlane.Endpoint.URL.String()); err != nil {
+			result = multierror.Append(result, fmt.Errorf("invalid controlplane endpoint: %w", err))
+		}
 	}
 
 	if c.ClusterNetwork != nil && c.ClusterNetwork.DNSDomain != "" && !isValidDNSName(c.ClusterNetwork.DNSDomain) {

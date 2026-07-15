@@ -1260,3 +1260,83 @@ func TestKubeAggregatorCABridge(t *testing.T) {
 		})
 	}
 }
+
+func TestKubeClusterConfigBridge(t *testing.T) {
+	t.Parallel()
+
+	endpoint := ensure.Value(url.Parse("https://cluster-endpoint:6443/"))
+
+	for _, test := range []struct {
+		name string
+
+		cfg func(*testing.T) config.Config
+
+		expectNil bool
+
+		expectClusterName     string
+		expectClusterEndpoint *url.URL
+	}{
+		{
+			name: "no cluster config",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{})
+			},
+
+			expectNil: true,
+		},
+		{
+			name: "v1alpha1 only",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					ClusterConfig: &v1alpha1.ClusterConfig{
+						ClusterName: "test-cluster",
+						ControlPlane: &v1alpha1.ControlPlaneConfig{
+							Endpoint: &v1alpha1.Endpoint{URL: endpoint},
+						},
+					},
+				})
+			},
+
+			expectClusterName:     "test-cluster",
+			expectClusterEndpoint: endpoint,
+		},
+		{
+			name: "new style",
+
+			cfg: func(t *testing.T) config.Config {
+				cc := k8s.NewKubeClusterConfigV1Alpha1()
+				cc.ClusterNameConfig = "test-cluster"
+				cc.ClusterEndpointConfig = meta.URL{URL: endpoint}
+
+				c, err := container.New(cc)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectClusterName:     "test-cluster",
+			expectClusterEndpoint: endpoint,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := test.cfg(t)
+
+			clusterConfig := cfg.K8sClusterConfig()
+
+			if test.expectNil {
+				assert.Nil(t, clusterConfig)
+
+				return
+			}
+
+			require.NotNil(t, clusterConfig)
+
+			assert.Equal(t, test.expectClusterName, clusterConfig.ClusterName())
+			assert.Equal(t, test.expectClusterEndpoint, clusterConfig.ClusterEndpoint())
+		})
+	}
+}

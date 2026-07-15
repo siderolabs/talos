@@ -6,6 +6,7 @@ package config
 
 import (
 	"net/netip"
+	"net/url"
 
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/optional"
@@ -157,4 +158,10 @@ type K8sServiceAccountConfig interface {
 	IssuerURL() string
 	AcceptedIssuers() []string
 	APIAudiences() []string
+}
+
+// K8sClusterConfig defines cluster-wide configuration options for Kubernetes.
+type K8sClusterConfig interface {
+	ClusterName() string
+	ClusterEndpoint() *url.URL
 }

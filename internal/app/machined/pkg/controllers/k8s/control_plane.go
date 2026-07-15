@@ -237,6 +237,9 @@ func NewControlPlaneAPIServerController() *ControlPlaneAPIServerController {
 				func(machineConfig *config.MachineConfig) bool {
 					return machineConfig.Config().K8sAPIServerConfig() != nil
 				},
+				func(machineConfig *config.MachineConfig) bool {
+					return machineConfig.Config().K8sClusterConfig() != nil
+				},
 			),
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, machineConfig *config.MachineConfig, res *k8s.APIServerConfig) error {
 				cfgProvider := machineConfig.Config()
@@ -259,7 +262,7 @@ func NewControlPlaneAPIServerController() *ControlPlaneAPIServerController {
 				*res.TypedSpec() = k8s.APIServerConfigSpec{
 					Image:                   cfgProvider.K8sAPIServerConfig().Image(),
 					CloudProvider:           cloudProvider,
-					ControlPlaneEndpoint:    cfgProvider.Cluster().Endpoint().String(),
+					ControlPlaneEndpoint:    cfgProvider.K8sClusterConfig().ClusterEndpoint().String(),
 					EtcdServers:             []string{fmt.Sprintf("https://%s", nethelpers.JoinHostPort("127.0.0.1", constants.EtcdClientPort))},
 					LocalPort:               cfgProvider.K8sAPIServerConfig().APIPort(),
 					ServiceCIDRs:            xslices.Map(cfgProvider.K8sNetworkConfig().ServiceCIDRs(), netip.Prefix.String),
@@ -385,6 +388,9 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 				func(machineConfig *config.MachineConfig) bool {
 					return machineConfig.Config().K8sNetworkConfig() != nil
 				},
+				func(machineConfig *config.MachineConfig) bool {
+					return machineConfig.Config().K8sClusterConfig() != nil
+				},
 			),
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, machineConfig *config.MachineConfig, res *k8s.BootstrapManifestsConfig) error {
 				cfgProvider := machineConfig.Config()
@@ -416,7 +422,7 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 					flannelKubeServiceHost = "127.0.0.1"
 					flannelKubeServicePort = strconv.Itoa(cfgProvider.Machine().Features().KubePrism().Port())
 				} else {
-					server = cfgProvider.Cluster().Endpoint().String()
+					server = cfgProvider.K8sClusterConfig().ClusterEndpoint().String()
 				}
 
 				*res.TypedSpec() = k8s.BootstrapManifestsConfigSpec{

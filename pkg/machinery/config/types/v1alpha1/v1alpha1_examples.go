@@ -95,27 +95,6 @@ func machineFeaturesExample() *FeaturesConfig {
 	}
 }
 
-func clusterConfigExample() any {
-	return struct {
-		ControlPlane *ControlPlaneConfig `yaml:"controlPlane"`
-		ClusterName  string              `yaml:"clusterName"`
-	}{
-		ControlPlane: clusterControlPlaneExample(),
-		ClusterName:  "talos.local",
-	}
-}
-
-func clusterControlPlaneExample() *ControlPlaneConfig {
-	return &ControlPlaneConfig{
-		Endpoint: &Endpoint{
-			&url.URL{
-				Host:   "1.2.3.4",
-				Scheme: "https",
-			},
-		},
-	}
-}
-
 func clusterEtcdExample() *EtcdConfig {
 	return &EtcdConfig{
 		ContainerImage: (&EtcdConfig{}).Image(),
