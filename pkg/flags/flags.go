@@ -58,6 +58,7 @@ func StringChoice(defaultValue string, otherChoices ...string) pflag.Value {
 
 type semverValue struct {
 	value      semver.Version
+	prefix     string
 	validators []SemverValidateFunc
 }
 
@@ -66,6 +67,10 @@ type SemverValidateFunc func(v semver.Version) error
 
 // Set implements pflag.Value interface.
 func (v *semverValue) Set(s string) error {
+	if strings.HasPrefix(s, "v") {
+		v.prefix = "v"
+	}
+
 	vers, err := semver.ParseTolerant(s)
 	if err != nil {
 		return err
@@ -86,7 +91,7 @@ func (v *semverValue) Set(s string) error {
 func (v *semverValue) Type() string { return "semver" }
 
 // String implements pflag.Value interface.
-func (v *semverValue) String() string { return "v" + v.value.String() }
+func (v *semverValue) String() string { return v.prefix + v.value.String() }
 
 // Semver returns a pflag.Value that parses and stores a semantic version.
 //
@@ -96,6 +101,12 @@ func (v *semverValue) String() string { return "v" + v.value.String() }
 // The returned value is initialized with defaultValue, which is used until Set
 // is called successfully.
 func Semver(defaultValue string, validators ...SemverValidateFunc) pflag.Value {
+	var prefix string
+
+	if strings.HasPrefix(defaultValue, "v") {
+		prefix = "v"
+	}
+
 	v, err := semver.ParseTolerant(defaultValue)
 	if err != nil {
 		panic(err)
@@ -103,6 +114,7 @@ func Semver(defaultValue string, validators ...SemverValidateFunc) pflag.Value {
 
 	return &semverValue{
 		value:      v,
+		prefix:     prefix,
 		validators: validators,
 	}
 }
