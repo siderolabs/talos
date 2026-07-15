@@ -251,6 +251,12 @@ func (svcrunner *ServiceRunner) Run(notifyChannels ...chan<- struct{}) error {
 
 	if condition != nil {
 		if err := svcrunner.waitFor(ctx, condition); err != nil {
+			// a canceled context here means the service was shut down before it
+			// started running; treat it as a clean stop (mirrors run(), see below)
+			if ctx.Err() != nil {
+				return nil
+			}
+
 			return fmt.Errorf("condition failed: %w", err)
 		}
 	}
@@ -258,6 +264,11 @@ func (svcrunner *ServiceRunner) Run(notifyChannels ...chan<- struct{}) error {
 	svcrunner.UpdateState(ctx, events.StatePreparing, "Running pre state")
 
 	if err := svcrunner.service.PreFunc(ctx, svcrunner.runtime); err != nil {
+		// see above: a canceled context means the service was shut down
+		if ctx.Err() != nil {
+			return nil
+		}
+
 		return fmt.Errorf("failed to run pre stage: %w", err)
 	}
 
