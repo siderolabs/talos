@@ -151,7 +151,7 @@ func (s *OOMV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]
 
 // TriggerExpression returns the OOM trigger expression.
 func (s *OOMV1Alpha1) TriggerExpression() cel.Expression {
-	if s.OOMCgroupRankingExpression.IsZero() {
+	if s.OOMTriggerExpression.IsZero() {
 		return config.DefaultOOMConfig{}.TriggerExpression()
 	}
 

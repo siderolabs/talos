@@ -824,7 +824,7 @@ func TestEvaluateTrigger(t *testing.T) {
 			name: "cgroup-true-cool",
 			dir:  "./testdata/trigger-true",
 			ctx: map[string]any{
-				"time_since_trigger": 3 * time.Second,
+				"time_since_trigger": 6 * time.Second,
 			},
 			triggerExpr: triggerExpr1,
 			expect:      true,
