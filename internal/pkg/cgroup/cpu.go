@@ -8,8 +8,8 @@ import (
 	"runtime"
 	"sync"
 
-	"github.com/google/cadvisor/utils/sysfs"
-	"github.com/google/cadvisor/utils/sysinfo"
+	"github.com/google/cadvisor/lib/utils/sysfs"
+	"github.com/google/cadvisor/lib/utils/sysinfo"
 )
 
 var availableCPUCores = sync.OnceValue(func() int {
