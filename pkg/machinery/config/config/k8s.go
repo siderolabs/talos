@@ -165,3 +165,18 @@ type K8sClusterConfig interface {
 	ClusterName() string
 	ClusterEndpoint() *url.URL
 }
+
+// K8sNodeIPConfig defines the way node IPs are selected for the kubelet.
+type K8sNodeIPConfig interface {
+	ValidSubnets() []string
+}
+
+// K8sNodeConfig defines configuration options for the Kubernetes node.
+type K8sNodeConfig interface {
+	SkipNodeRegistration() bool
+	RegisterWithFQDN() bool
+	NodeIP() K8sNodeIPConfig
+	Labels() map[string]string
+	Taints() map[string]string
+	Annotations() map[string]string
+}

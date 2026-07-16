@@ -57,7 +57,7 @@ func (suite *NodeAnnotationsSuite) updateMachineConfig(annotations map[string]st
 
 		suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
 	} else {
-		cfg.Container().RawV1Alpha1().MachineConfig.MachineNodeAnnotations = annotations
+		cfg.Container().RawV1Alpha1().MachineConfig.MachineNodeAnnotations = annotations //nolint:staticcheck // testing legacy config
 		suite.Require().NoError(suite.State().Update(suite.Ctx(), cfg))
 	}
 }

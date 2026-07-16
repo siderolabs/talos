@@ -469,6 +469,7 @@ description: Talos gRPC API reference.
     - [KubePrismStatusesSpec](#talos.resource.definitions.k8s.KubePrismStatusesSpec)
     - [KubeletConfigSpec](#talos.resource.definitions.k8s.KubeletConfigSpec)
     - [KubeletConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.ExtraArgsEntry)
+    - [KubeletConfigSpec.RegisterWithTaintsEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.RegisterWithTaintsEntry)
     - [KubeletKubeconfigSpec](#talos.resource.definitions.k8s.KubeletKubeconfigSpec)
     - [KubeletSpecSpec](#talos.resource.definitions.k8s.KubeletSpecSpec)
     - [ManifestSpec](#talos.resource.definitions.k8s.ManifestSpec)
@@ -8243,8 +8244,8 @@ KubeletConfigSpec holds the source of kubelet configuration.
 | disable_manifests_directory | [bool](#bool) |  |  |
 | enable_fs_quota_monitoring | [bool](#bool) |  |  |
 | credential_provider_config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
-| allow_scheduling_on_control_plane | [bool](#bool) |  |  |
 | extra_args | [KubeletConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.ExtraArgsEntry) | repeated |  |
+| register_with_taints | [KubeletConfigSpec.RegisterWithTaintsEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.RegisterWithTaintsEntry) | repeated |  |
 
 
 
@@ -8261,6 +8262,22 @@ KubeletConfigSpec holds the source of kubelet configuration.
 | ----- | ---- | ----- | ----------- |
 | key | [string](#string) |  |  |
 | value | [ArgValues](#talos.resource.definitions.k8s.ArgValues) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.KubeletConfigSpec.RegisterWithTaintsEntry"></a>
+
+### KubeletConfigSpec.RegisterWithTaintsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
 
 
 

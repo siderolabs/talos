@@ -20,8 +20,9 @@ import (
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -60,6 +61,13 @@ func (suite *NodeTaintsSuite) TestUpdateControlPlane() {
 
 // testUpdate cycles through a set of node taints updates reverting the change in the end.
 func (suite *NodeTaintsSuite) testUpdate(node string) {
+	nodeConfig, err := suite.ReadConfigFromNode(client.WithNode(suite.ctx, node))
+	suite.Require().NoError(err)
+
+	if !nodeConfig.Has(k8s.KubeNodeConfig) {
+		suite.T().Skipf("node %q does not have new-style KubeNodeConfig", node)
+	}
+
 	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
 	suite.Require().NoError(err)
 
@@ -69,8 +77,9 @@ func (suite *NodeTaintsSuite) testUpdate(node string) {
 
 	// set two new taints
 	suite.setNodeTaints(node, map[string]string{
-		"talos.dev/test1": "value1:NoSchedule",
-		"talos.dev/test2": "NoSchedule",
+		constants.LabelNodeRoleControlPlane: "NoSchedule",
+		"talos.dev/test1":                   "value1:NoSchedule",
+		"talos.dev/test2":                   "NoSchedule",
 	})
 
 	suite.waitUntil(watchCh, map[string]string{
@@ -81,7 +90,8 @@ func (suite *NodeTaintsSuite) testUpdate(node string) {
 
 	// remove one taint
 	suite.setNodeTaints(node, map[string]string{
-		"talos.dev/test1": "value1:NoSchedule",
+		constants.LabelNodeRoleControlPlane: "NoSchedule",
+		"talos.dev/test1":                   "value1:NoSchedule",
 	})
 
 	suite.waitUntil(watchCh, map[string]string{
@@ -89,8 +99,10 @@ func (suite *NodeTaintsSuite) testUpdate(node string) {
 		"talos.dev/test1":                   "value1:NoSchedule",
 	})
 
-	// remove all taints
-	suite.setNodeTaints(node, nil)
+	// remove all custom taints
+	suite.setNodeTaints(node, map[string]string{
+		constants.LabelNodeRoleControlPlane: "NoSchedule",
+	})
 
 	suite.waitUntil(watchCh, map[string]string{
 		constants.LabelNodeRoleControlPlane: "NoSchedule",
@@ -160,9 +172,16 @@ func (suite *NodeTaintsSuite) setNodeTaints(nodeIP string, nodeTaints map[string
 
 	nodeConfig := must.Value(suite.ReadConfigFromNode(nodeCtx))(suite.T())
 
-	bytes := suite.PatchV1Alpha1Config(nodeConfig, func(nodeConfigRaw *v1alpha1.Config) {
-		nodeConfigRaw.MachineConfig.MachineNodeTaints = nodeTaints
-	})
+	nodeConfig = must.Value(container.PatchDocument(
+		nodeConfig,
+		func(nodeConfig *k8s.KubeNodeConfigV1Alpha1) error {
+			nodeConfig.TaintsConfig = nodeTaints
+
+			return nil
+		}))(suite.T())
+
+	bytes, err := nodeConfig.Bytes()
+	suite.Require().NoError(err)
 
 	must.Value(suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
 		Data: bytes,

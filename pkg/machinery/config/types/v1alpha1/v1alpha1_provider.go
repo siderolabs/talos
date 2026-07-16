@@ -95,21 +95,6 @@ func (m *MachineSeccompProfile) Value() map[string]any {
 	return m.MachineSeccompProfileValue.Object
 }
 
-// NodeLabels implements the config.Provider interface.
-func (m *MachineConfig) NodeLabels() config.NodeLabels {
-	return m.MachineNodeLabels
-}
-
-// NodeAnnotations implements the config.Provider interface.
-func (m *MachineConfig) NodeAnnotations() config.NodeAnnotations {
-	return m.MachineNodeAnnotations
-}
-
-// NodeTaints implements the config.Provider interface.
-func (m *MachineConfig) NodeTaints() config.NodeTaints {
-	return m.MachineNodeTaints
-}
-
 // BaseRuntimeSpecOverrides implements the config.Provider interface.
 func (m *MachineConfig) BaseRuntimeSpecOverrides() map[string]any {
 	return m.MachineBaseRuntimeSpecOverrides.Object
@@ -463,33 +448,9 @@ func (k *KubeletConfig) DefaultRuntimeSeccompProfileEnabled() bool {
 	return pointer.SafeDeref(k.KubeletDefaultRuntimeSeccompProfileEnabled)
 }
 
-// RegisterWithFQDN implements the config.Provider interface.
-func (k *KubeletConfig) RegisterWithFQDN() bool {
-	return pointer.SafeDeref(k.KubeletRegisterWithFQDN)
-}
-
-// NodeIP implements the config.Provider interface.
-func (k *KubeletConfig) NodeIP() config.KubeletNodeIP {
-	if k.KubeletNodeIP == nil {
-		return &KubeletNodeIPConfig{}
-	}
-
-	return k.KubeletNodeIP
-}
-
-// SkipNodeRegistration implements the config.Provider interface.
-func (k *KubeletConfig) SkipNodeRegistration() bool {
-	return pointer.SafeDeref(k.KubeletSkipNodeRegistration)
-}
-
 // DisableManifestsDirectory implements the KubeletConfig interface.
 func (k *KubeletConfig) DisableManifestsDirectory() bool {
 	return pointer.SafeDeref(k.KubeletDisableManifestsDirectory)
-}
-
-// ValidSubnets implements the config.Provider interface.
-func (k *KubeletNodeIPConfig) ValidSubnets() []string {
-	return k.KubeletNodeIPValidSubnets
 }
 
 // RegistryMirrorConfigs returns a map of registry mirror configurations.

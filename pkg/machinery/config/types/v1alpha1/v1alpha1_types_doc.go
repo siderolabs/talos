@@ -175,27 +175,9 @@ func (MachineConfig) Doc() *encoder.Doc {
 				Description: "Override (patch) settings in the default OCI runtime spec for CRI containers.\n\nIt can be used to set some default container settings which are not configurable in Kubernetes,\nfor example default ulimits.\nNote: this change applies to all newly created containers, and it requires a reboot to take effect.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Override (patch) settings in the default OCI runtime spec for CRI containers." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "nodeLabels",
-				Type:        "map[string]string",
-				Note:        "",
-				Description: "Configures the node labels for the machine.\n\nNote: In the default Kubernetes configuration, worker nodes are restricted to set\nlabels with some prefixes (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin).",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the node labels for the machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "nodeAnnotations",
-				Type:        "map[string]string",
-				Note:        "",
-				Description: "Configures the node annotations for the machine.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the node annotations for the machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "nodeTaints",
-				Type:        "map[string]string",
-				Note:        "",
-				Description: "Configures the node taints for the machine. Effect is optional.\n\nNote: In the default Kubernetes configuration, worker nodes are not allowed to\nmodify the taints (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin).",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the node taints for the machine. Effect is optional." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
+			{},
+			{},
 		},
 	}
 
@@ -212,9 +194,6 @@ func (MachineConfig) Doc() *encoder.Doc {
 	doc.Fields[20].AddExample("", machineLoggingExample2())
 	doc.Fields[22].AddExample("", machineSeccompExample())
 	doc.Fields[23].AddExample("override default open file limit", machineBaseRuntimeSpecOverridesExample())
-	doc.Fields[24].AddExample("node labels example.", map[string]string{"exampleLabel": "exampleLabelValue"})
-	doc.Fields[25].AddExample("node annotations example.", map[string]string{"customer.io/rack": "r13a25"})
-	doc.Fields[26].AddExample("node taints example.", map[string]string{"exampleTaint": "exampleTaintValue:NoSchedule"})
 
 	return doc
 }
@@ -332,19 +311,7 @@ func (ClusterConfig) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Settings for admin kubeconfig generation." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{},
-			{
-				Name:        "allowSchedulingOnControlPlanes",
-				Type:        "bool",
-				Note:        "",
-				Description: "Allows running workload on control-plane nodes.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Allows running workload on control-plane nodes." /* encoder.LineComment */, "" /* encoder.FootComment */},
-				Values: []string{
-					"true",
-					"yes",
-					"false",
-					"no",
-				},
-			},
+			{},
 		},
 	}
 
@@ -361,7 +328,6 @@ func (ClusterConfig) Doc() *encoder.Doc {
 	})
 	doc.Fields[22].AddExample("", clusterInlineManifestsExample())
 	doc.Fields[23].AddExample("", clusterAdminKubeconfigExample())
-	doc.Fields[25].AddExample("", true)
 
 	return doc
 }
@@ -538,39 +504,9 @@ func (KubeletConfig) Doc() *encoder.Doc {
 					"no",
 				},
 			},
-			{
-				Name:        "registerWithFQDN",
-				Type:        "bool",
-				Note:        "",
-				Description: "The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration.\nThis is required in clouds like AWS.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration." /* encoder.LineComment */, "" /* encoder.FootComment */},
-				Values: []string{
-					"true",
-					"yes",
-					"false",
-					"no",
-				},
-			},
-			{
-				Name:        "nodeIP",
-				Type:        "KubeletNodeIPConfig",
-				Note:        "",
-				Description: "The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.\nThis is used when a node has multiple addresses to choose from.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `nodeIP` field is used to configure `--node-ip` flag for the kubelet." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "skipNodeRegistration",
-				Type:        "bool",
-				Note:        "",
-				Description: "The `skipNodeRegistration` is used to run the kubelet without registering with the apiserver.\nThis runs kubelet as standalone and only runs static pods.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `skipNodeRegistration` is used to run the kubelet without registering with the apiserver." /* encoder.LineComment */, "" /* encoder.FootComment */},
-				Values: []string{
-					"true",
-					"yes",
-					"false",
-					"no",
-				},
-			},
+			{},
+			{},
+			{},
 			{
 				Name:        "disableManifestsDirectory",
 				Type:        "bool",
@@ -600,34 +536,6 @@ func (KubeletConfig) Doc() *encoder.Doc {
 	doc.Fields[3].AddExample("", kubeletExtraMountsExample())
 	doc.Fields[4].AddExample("", kubeletExtraConfigExample())
 	doc.Fields[5].AddExample("", kubeletCredentialProviderConfigExample())
-	doc.Fields[8].AddExample("", kubeletNodeIPExample())
-
-	return doc
-}
-
-func (KubeletNodeIPConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "KubeletNodeIPConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeletNodeIPConfig represents the kubelet node IP configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "KubeletNodeIPConfig represents the kubelet node IP configuration.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "KubeletConfig",
-				FieldName: "nodeIP",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "validSubnets",
-				Type:        "[]string",
-				Note:        "",
-				Description: "The `validSubnets` field configures the networks to pick kubelet node IP from.\nFor dual stack configuration, there should be two subnets: one for IPv4, another for IPv6.\nIPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, node IP is picked based on cluster podCIDRs: IPv4/IPv6 address or both.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `validSubnets` field configures the networks to pick kubelet node IP from." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", kubeletNodeIPExample())
 
 	return doc
 }
@@ -1085,7 +993,6 @@ func GetFileDoc() *encoder.FileDoc {
 			LinuxIDMapping{}.Doc(),
 			ExtraMount{}.Doc(),
 			KubeletConfig{}.Doc(),
-			KubeletNodeIPConfig{}.Doc(),
 			Endpoint{}.Doc(),
 			EtcdConfig{}.Doc(),
 			ExternalCloudProviderConfig{}.Doc(),

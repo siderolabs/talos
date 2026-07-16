@@ -450,6 +450,12 @@ func (o KubeletConfigSpec) DeepCopy() KubeletConfigSpec {
 			cp.CredentialProviderConfig[k2] = v2
 		}
 	}
+	if o.RegisterWithTaints != nil {
+		cp.RegisterWithTaints = make(map[string]string, len(o.RegisterWithTaints))
+		for k2, v2 := range o.RegisterWithTaints {
+			cp.RegisterWithTaints[k2] = v2
+		}
+	}
 	return cp
 }
 

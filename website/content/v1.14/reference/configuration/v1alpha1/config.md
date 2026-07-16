@@ -39,11 +39,6 @@ MachineConfig represents the machine-specific config values.
 {{< highlight yaml >}}
 machine:
     type: controlplane
-    install:
-        disk: /dev/sda
-        image: factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:latest
-        wipe: false
-        grubUseUKICmdline: true
 {{< /highlight >}}
 
 
@@ -106,14 +101,6 @@ kubelet:
     #             - '*.dkr.ecr.us-iso-east-1.c2s.ic.gov'
     #             - '*.dkr.ecr.us-isob-east-1.sc2s.sgov.gov'
     #           name: ecr-credential-provider
-
-    # # The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.
-    # nodeIP:
-    #     # The `validSubnets` field configures the networks to pick kubelet node IP from.
-    #     validSubnets:
-    #         - 10.0.0.0/8
-    #         - '!10.0.0.3/32'
-    #         - fdc7::/16
 {{< /highlight >}}</details> | |
 |`pods` |[]Unstructured |Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver.<br><br>Static pods can be used to run components which should be started before the Kubernetes control plane is up.<br>Talos doesn't validate the pod definition.<br>Updates to this field can be applied without a reboot.<br><br>See https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/. <details><summary>Show example(s)</summary>nginx static pod.:{{< highlight yaml >}}
 pods:
@@ -178,18 +165,6 @@ baseRuntimeSpecOverrides:
               soft: 1024
               type: RLIMIT_NOFILE
 {{< /highlight >}}</details> | |
-|`nodeLabels` |map[string]string |Configures the node labels for the machine.<br><br>Note: In the default Kubernetes configuration, worker nodes are restricted to set<br>labels with some prefixes (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin). <details><summary>Show example(s)</summary>node labels example.:{{< highlight yaml >}}
-nodeLabels:
-    exampleLabel: exampleLabelValue
-{{< /highlight >}}</details> | |
-|`nodeAnnotations` |map[string]string |Configures the node annotations for the machine. <details><summary>Show example(s)</summary>node annotations example.:{{< highlight yaml >}}
-nodeAnnotations:
-    customer.io/rack: r13a25
-{{< /highlight >}}</details> | |
-|`nodeTaints` |map[string]string |Configures the node taints for the machine. Effect is optional.<br><br>Note: In the default Kubernetes configuration, worker nodes are not allowed to<br>modify the taints (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin). <details><summary>Show example(s)</summary>node taints example.:{{< highlight yaml >}}
-nodeTaints:
-    exampleTaint: exampleTaintValue:NoSchedule
-{{< /highlight >}}</details> | |
 
 
 
@@ -242,14 +217,6 @@ machine:
         #             - '*.dkr.ecr.us-iso-east-1.c2s.ic.gov'
         #             - '*.dkr.ecr.us-isob-east-1.sc2s.sgov.gov'
         #           name: ecr-credential-provider
-
-        # # The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.
-        # nodeIP:
-        #     # The `validSubnets` field configures the networks to pick kubelet node IP from.
-        #     validSubnets:
-        #         - 10.0.0.0/8
-        #         - '!10.0.0.3/32'
-        #         - fdc7::/16
 {{< /highlight >}}
 
 
@@ -303,16 +270,6 @@ credentialProviderConfig:
           name: ecr-credential-provider
 {{< /highlight >}}</details> | |
 |`defaultRuntimeSeccompProfileEnabled` |bool |Enable container runtime default Seccomp profile.  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
-|`registerWithFQDN` |bool |The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration.<br>This is required in clouds like AWS.  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
-|`nodeIP` |<a href="#Config.machine.kubelet.nodeIP">KubeletNodeIPConfig</a> |The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.<br>This is used when a node has multiple addresses to choose from. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-nodeIP:
-    # The `validSubnets` field configures the networks to pick kubelet node IP from.
-    validSubnets:
-        - 10.0.0.0/8
-        - '!10.0.0.3/32'
-        - fdc7::/16
-{{< /highlight >}}</details> | |
-|`skipNodeRegistration` |bool |The `skipNodeRegistration` is used to run the kubelet without registering with the apiserver.<br>This runs kubelet as standalone and only runs static pods.  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
 |`disableManifestsDirectory` |bool |The `disableManifestsDirectory` field configures the kubelet to get static pod manifests from the /etc/kubernetes/manifests directory.<br>It's recommended to configure static pods with the "pods" key instead.  |`true`<br />`yes`<br />`false`<br />`no`<br /> |
 
 
@@ -383,33 +340,6 @@ LinuxIDMapping represents the Linux ID mapping.
 |`size` |uint32 |Size is the number of IDs to be mapped.  | |
 
 
-
-
-
-
-
-
-#### nodeIP {#Config.machine.kubelet.nodeIP}
-
-KubeletNodeIPConfig represents the kubelet node IP configuration.
-
-
-
-{{< highlight yaml >}}
-machine:
-    kubelet:
-        nodeIP:
-            # The `validSubnets` field configures the networks to pick kubelet node IP from.
-            validSubnets:
-                - 10.0.0.0/8
-                - '!10.0.0.3/32'
-                - fdc7::/16
-{{< /highlight >}}
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`validSubnets` |[]string |The `validSubnets` field configures the networks to pick kubelet node IP from.<br>For dual stack configuration, there should be two subnets: one for IPv4, another for IPv6.<br>IPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.<br>Negative subnet matches should be specified last to filter out IPs picked by positive matches.<br>If not specified, node IP is picked based on cluster podCIDRs: IPv4/IPv6 address or both.  | |
 
 
 
@@ -694,9 +624,6 @@ inlineManifests:
 adminKubeconfig:
     certLifetime: 1h0m0s # Admin kubeconfig certificate lifetime (default is 1 year).
 {{< /highlight >}}</details> | |
-|`allowSchedulingOnControlPlanes` |bool |Allows running workload on control-plane nodes. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-allowSchedulingOnControlPlanes: true
-{{< /highlight >}}</details> |`true`<br />`yes`<br />`false`<br />`no`<br /> |
 
 
 

@@ -257,29 +257,17 @@ type MachineConfig struct {
 	//  schema:
 	//    type: object
 	MachineBaseRuntimeSpecOverrides meta.Unstructured `yaml:"baseRuntimeSpecOverrides,omitempty"`
-	//  description: |
-	//    Configures the node labels for the machine.
+	// docgen:nodoc
 	//
-	//    Note: In the default Kubernetes configuration, worker nodes are restricted to set
-	//    labels with some prefixes (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin).
-	//  examples:
-	//    - name: node labels example.
-	//      value: 'map[string]string{"exampleLabel": "exampleLabelValue"}'
+	// Deprecated: use `KubeNodeConfig` instead.
 	MachineNodeLabels map[string]string `yaml:"nodeLabels,omitempty"`
-	//  description: |
-	//    Configures the node annotations for the machine.
-	//  examples:
-	//    - name: node annotations example.
-	//      value: 'map[string]string{"customer.io/rack": "r13a25"}'
-	MachineNodeAnnotations map[string]string `yaml:"nodeAnnotations,omitempty"`
-	//  description: |
-	//    Configures the node taints for the machine. Effect is optional.
+	// docgen:nodoc
 	//
-	//    Note: In the default Kubernetes configuration, worker nodes are not allowed to
-	//    modify the taints (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin).
-	//  examples:
-	//    - name: node taints example.
-	//      value: 'map[string]string{"exampleTaint": "exampleTaintValue:NoSchedule"}'
+	// Deprecated: use `KubeNodeConfig` instead.
+	MachineNodeAnnotations map[string]string `yaml:"nodeAnnotations,omitempty"`
+	// docgen:nodoc
+	//
+	// Deprecated: use `KubeNodeConfig` instead.
 	MachineNodeTaints map[string]string `yaml:"nodeTaints,omitempty"`
 }
 
@@ -423,17 +411,11 @@ type ClusterConfig struct {
 	AdminKubeconfigConfig *AdminKubeconfigConfig `yaml:"adminKubeconfig,omitempty"`
 	// docgen:nodoc
 	//
-	// Deprecated: Use `AllowSchedulingOnControlPlanes` instead.
+	// Deprecated: use `KubeNodeConfig` instead.
 	AllowSchedulingOnMasters *bool `yaml:"allowSchedulingOnMasters,omitempty"`
-	//   description: |
-	//     Allows running workload on control-plane nodes.
-	//   values:
-	//     - true
-	//     - yes
-	//     - false
-	//     - no
-	//   examples:
-	//     - value: true
+	// docgen:nodoc
+	//
+	// Deprecated: use `KubeNodeConfig` instead.
 	AllowSchedulingOnControlPlanes *bool `yaml:"allowSchedulingOnControlPlanes,omitempty"`
 }
 
@@ -576,29 +558,17 @@ type KubeletConfig struct {
 	//    - false
 	//    - no
 	KubeletDefaultRuntimeSeccompProfileEnabled *bool `yaml:"defaultRuntimeSeccompProfileEnabled,omitempty"`
-	//   description: |
-	//     The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration.
-	//     This is required in clouds like AWS.
-	//   values:
-	//     - true
-	//     - yes
-	//     - false
-	//     - no
+	// docgen:nodoc
+	//
+	// Deprecated: use `KubeNodeConfig` instead.
 	KubeletRegisterWithFQDN *bool `yaml:"registerWithFQDN,omitempty"`
-	//   description: |
-	//     The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.
-	//     This is used when a node has multiple addresses to choose from.
-	//   examples:
-	//     - value: kubeletNodeIPExample()
+	// docgen:nodoc
+	//
+	// Deprecated: use `KubeNodeConfig` instead.
 	KubeletNodeIP *KubeletNodeIPConfig `yaml:"nodeIP,omitempty"`
-	//   description: |
-	//      The `skipNodeRegistration` is used to run the kubelet without registering with the apiserver.
-	//      This runs kubelet as standalone and only runs static pods.
-	//   values:
-	//     - true
-	//     - yes
-	//     - false
-	//     - no
+	// docgen:nodoc
+	//
+	// Deprecated: use `KubeNodeConfig` instead.
 	KubeletSkipNodeRegistration *bool `yaml:"skipNodeRegistration,omitempty"`
 	//   description: |
 	//     The `disableManifestsDirectory` field configures the kubelet to get static pod manifests from the /etc/kubernetes/manifests directory.
@@ -612,6 +582,8 @@ type KubeletConfig struct {
 }
 
 // KubeletNodeIPConfig represents the kubelet node IP configuration.
+//
+//docgen:nodoc
 type KubeletNodeIPConfig struct {
 	//  description: |
 	//    The `validSubnets` field configures the networks to pick kubelet node IP from.

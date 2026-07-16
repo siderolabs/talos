@@ -18,7 +18,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
-func (in *Input) generateKubernetesControlplaneConfigs(controlplaneURL *url.URL) []config.Document {
+func (in *Input) generateKubernetesControlplaneConfigs(controlplaneURL *url.URL, certSANs []string) []config.Document {
 	if !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
 		return nil
 	}
@@ -68,6 +68,7 @@ func (in *Input) generateKubernetesControlplaneConfigs(controlplaneURL *url.URL)
 
 	apiServerConfig := k8s.NewKubeAPIServerConfigV1Alpha1()
 	apiServerConfig.PodImage = fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, in.KubernetesVersion)
+	apiServerConfig.PodCertExtraSANs = certSANs
 
 	if in.Options.LocalAPIServerPort != 0 {
 		apiServerConfig.PodAPIPort = new(in.Options.LocalAPIServerPort)
@@ -124,6 +125,24 @@ func (in *Input) generateKubernetesUniversalConfigs(isControlplane bool, control
 	clusterConfig.ClusterNameConfig = in.ClusterName
 	clusterConfig.ClusterEndpointConfig = meta.URL{URL: controlPlaneURL}
 
+	nodeConfig := k8s.NewKubeNodeConfigV1Alpha1()
+
+	if isControlplane {
+		nodeConfig.LabelsConfig = map[string]string{
+			constants.LabelNodeRoleControlPlane: "",
+		}
+	}
+
+	if isControlplane && in.Options.VersionContract.AddExcludeFromExternalLoadBalancer() {
+		nodeConfig.LabelsConfig[constants.LabelExcludeFromExternalLB] = ""
+	}
+
+	if isControlplane && !in.Options.AllowSchedulingOnControlPlanes {
+		nodeConfig.TaintsConfig = map[string]string{
+			constants.LabelNodeRoleControlPlane: constants.TaintEffectNoSchedule,
+		}
+	}
+
 	networkConfig := k8s.NewKubeNetworkConfigV1Alpha1()
 	networkConfig.NetworkDNSDomain = in.Options.DNSDomain
 	networkConfig.NetworkPodSubnets = xslices.Map(
@@ -154,6 +173,7 @@ func (in *Input) generateKubernetesUniversalConfigs(isControlplane bool, control
 
 	return []config.Document{
 		clusterConfig,
+		nodeConfig,
 		networkConfig,
 		caConfig,
 	}

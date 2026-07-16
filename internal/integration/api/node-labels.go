@@ -8,6 +8,7 @@ package api
 
 import (
 	"context"
+	"maps"
 	"time"
 
 	v1 "k8s.io/api/core/v1"
@@ -15,8 +16,9 @@ import (
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -62,6 +64,13 @@ func (suite *NodeLabelsSuite) TestUpdateWorker() {
 
 // testUpdate cycles through a set of node label updates reverting the change in the end.
 func (suite *NodeLabelsSuite) testUpdate(node string, isControlplane bool) {
+	nodeConfig, err := suite.ReadConfigFromNode(client.WithNode(suite.ctx, node))
+	suite.Require().NoError(err)
+
+	if !nodeConfig.Has(k8s.KubeNodeConfig) {
+		suite.T().Skipf("node %q does not have new-style KubeNodeConfig", node)
+	}
+
 	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
 	suite.Require().NoError(err)
 
@@ -82,7 +91,7 @@ func (suite *NodeLabelsSuite) testUpdate(node string, isControlplane bool) {
 	suite.waitUntil(watchCh, map[string]string{
 		"talos.dev/test1": "value1",
 		"talos.dev/test2": "value2",
-	}, isControlplane)
+	})
 
 	// remove one label owned by Talos
 	suite.setNodeLabels(node, map[string]string{
@@ -92,7 +101,7 @@ func (suite *NodeLabelsSuite) testUpdate(node string, isControlplane bool) {
 	suite.waitUntil(watchCh, map[string]string{
 		"talos.dev/test1": "foo",
 		"talos.dev/test2": "",
-	}, isControlplane)
+	})
 
 	// on control plane node, try to override a label not owned by Talos
 	if isControlplane {
@@ -104,7 +113,7 @@ func (suite *NodeLabelsSuite) testUpdate(node string, isControlplane bool) {
 		suite.waitUntil(watchCh, map[string]string{
 			"talos.dev/test1": "foo2",
 			stdLabelName:      stdLabelValue,
-		}, isControlplane)
+		})
 	}
 
 	// remove all Talos Labels
@@ -113,33 +122,11 @@ func (suite *NodeLabelsSuite) testUpdate(node string, isControlplane bool) {
 	suite.waitUntil(watchCh, map[string]string{
 		"talos.dev/test1": "",
 		"talos.dev/test2": "",
-	}, isControlplane)
-}
-
-// TestAllowScheduling verifies node taints are updated.
-func (suite *NodeLabelsSuite) TestAllowScheduling() {
-	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
-
-	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
-	suite.Require().NoError(err)
-
-	suite.T().Logf("updating taints on node %q (%q)", node, k8sNode.Name)
-
-	watchCh := suite.SetupNodeInformer(suite.ctx, k8sNode.Name)
-
-	suite.waitUntil(watchCh, nil, true)
-
-	suite.setAllowScheduling(node, true)
-
-	suite.waitUntil(watchCh, nil, false)
-
-	suite.setAllowScheduling(node, false)
-
-	suite.waitUntil(watchCh, nil, true)
+	})
 }
 
 //nolint:gocyclo
-func (suite *NodeLabelsSuite) waitUntil(watchCh <-chan *v1.Node, expectedLabels map[string]string, taintNoSchedule bool) {
+func (suite *NodeLabelsSuite) waitUntil(watchCh <-chan *v1.Node, expectedLabels map[string]string) {
 outer:
 	for {
 		select {
@@ -163,24 +150,6 @@ outer:
 				}
 			}
 
-			var found bool
-
-			for _, taint := range k8sNode.Spec.Taints {
-				if taint.Key == constants.LabelNodeRoleControlPlane && taint.Effect == v1.TaintEffectNoSchedule {
-					found = true
-				}
-			}
-
-			if taintNoSchedule && !found {
-				suite.T().Logf("taint %q is not present", constants.LabelNodeRoleControlPlane)
-
-				continue outer
-			} else if !taintNoSchedule && found {
-				suite.T().Logf("taint %q is still present", constants.LabelNodeRoleControlPlane)
-
-				continue outer
-			}
-
 			return
 		case <-suite.ctx.Done():
 			suite.T().Fatal("timeout")
@@ -194,31 +163,30 @@ func (suite *NodeLabelsSuite) setNodeLabels(nodeIP string, nodeLabels map[string
 	nodeConfig, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Require().NoError(err)
 
-	bytes := suite.PatchV1Alpha1Config(nodeConfig, func(nodeConfigRaw *v1alpha1.Config) {
-		nodeConfigRaw.MachineConfig.MachineNodeLabels = nodeLabels
-	})
+	nodeLabels = maps.Clone(nodeLabels)
 
-	_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
-		Data: bytes,
-		Mode: machineapi.ApplyConfigurationRequest_NO_REBOOT,
-	})
+	nodeConfig, err = container.PatchDocument(
+		nodeConfig,
+		func(nodeConfig *k8s.KubeNodeConfigV1Alpha1) error {
+			// preserve system labels
+			for _, label := range []string{constants.LabelNodeRoleControlPlane, constants.LabelExcludeFromExternalLB} {
+				if v, ok := nodeConfig.LabelsConfig[label]; ok {
+					if nodeLabels == nil {
+						nodeLabels = make(map[string]string)
+					}
 
+					nodeLabels[label] = v
+				}
+			}
+
+			nodeConfig.LabelsConfig = nodeLabels
+
+			return nil
+		})
 	suite.Require().NoError(err)
-}
 
-func (suite *NodeLabelsSuite) setAllowScheduling(nodeIP string, allowScheduling bool) {
-	nodeCtx := client.WithNode(suite.ctx, nodeIP)
-
-	nodeConfig, err := suite.ReadConfigFromNode(nodeCtx)
+	bytes, err := nodeConfig.Bytes()
 	suite.Require().NoError(err)
-
-	bytes := suite.PatchV1Alpha1Config(nodeConfig, func(nodeConfigRaw *v1alpha1.Config) {
-		if allowScheduling {
-			nodeConfigRaw.ClusterConfig.AllowSchedulingOnControlPlanes = new(true)
-		} else {
-			nodeConfigRaw.ClusterConfig.AllowSchedulingOnControlPlanes = nil
-		}
-	})
 
 	_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
 		Data: bytes,

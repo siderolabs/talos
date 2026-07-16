@@ -41,11 +41,9 @@ func configExample() any {
 
 func machineConfigExample() any {
 	return struct {
-		Type    string
-		Install *InstallConfig
+		Type string
 	}{
-		Type:    machine.TypeControlPlane.String(),
-		Install: machineInstallExample(),
+		Type: machine.TypeControlPlane.String(),
 	}
 }
 
@@ -67,15 +65,6 @@ func machineKubeletExample() *KubeletConfig {
 
 func kubeletImageExample() string {
 	return (&KubeletConfig{}).Image()
-}
-
-func machineInstallExample() *InstallConfig {
-	return &InstallConfig{
-		InstallDisk:              "/dev/sda",
-		InstallImage:             "factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:latest",
-		InstallWipe:              new(false),
-		InstallGrubUseUKICmdline: new(true),
-	}
 }
 
 func machineFilesExample() []*MachineFile {
@@ -167,16 +156,6 @@ kind: Namespace
 metadata:
 	name: ci
 `),
-		},
-	}
-}
-
-func kubeletNodeIPExample() *KubeletNodeIPConfig {
-	return &KubeletNodeIPConfig{
-		KubeletNodeIPValidSubnets: []string{
-			"10.0.0.0/8",
-			"!10.0.0.3/32",
-			"fdc7::/16",
 		},
 	}
 }

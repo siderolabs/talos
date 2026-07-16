@@ -1261,6 +1261,138 @@ func TestKubeAggregatorCABridge(t *testing.T) {
 	}
 }
 
+func TestKubeNodeConfigBridge(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+
+		cfg func(*testing.T) config.Config
+
+		expectNil bool
+
+		expectSkipNodeRegistration bool
+		expectRegisterWithFQDN     bool
+		expectValidSubnets         []string
+		expectLabels               map[string]string
+		expectAnnotations          map[string]string
+		expectTaints               map[string]string
+	}{
+		{
+			name: "no machine or cluster config",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{})
+			},
+
+			expectNil: true,
+		},
+		{
+			name: "v1alpha1 controlplane",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{
+						MachineType: "controlplane",
+						MachineKubelet: &v1alpha1.KubeletConfig{
+							KubeletSkipNodeRegistration: new(true),
+							KubeletRegisterWithFQDN:     new(true),
+							KubeletNodeIP: &v1alpha1.KubeletNodeIPConfig{
+								KubeletNodeIPValidSubnets: []string{"10.0.0.0/8"},
+							},
+						},
+						MachineNodeLabels:      map[string]string{"examplelabel": "examplevalue"},
+						MachineNodeAnnotations: map[string]string{"customer.io/rack": "r13a25"},
+						MachineNodeTaints:      map[string]string{"exampletaint": "examplevalue:NoSchedule"},
+					},
+					ClusterConfig: &v1alpha1.ClusterConfig{},
+				})
+			},
+
+			expectSkipNodeRegistration: true,
+			expectRegisterWithFQDN:     true,
+			expectValidSubnets:         []string{"10.0.0.0/8"},
+			// the control plane role label is injected for control plane nodes.
+			expectLabels: map[string]string{
+				"examplelabel":                      "examplevalue",
+				constants.LabelNodeRoleControlPlane: "",
+			},
+			expectAnnotations: map[string]string{"customer.io/rack": "r13a25"},
+			// the control plane taint is injected when scheduling on control planes is not allowed.
+			expectTaints: map[string]string{
+				"exampletaint":                      "examplevalue:NoSchedule",
+				constants.LabelNodeRoleControlPlane: constants.TaintEffectNoSchedule,
+			},
+		},
+		{
+			name: "v1alpha1 worker with scheduling allowed",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{
+						MachineType:       "worker",
+						MachineNodeLabels: map[string]string{"examplelabel": "examplevalue"},
+					},
+				})
+			},
+
+			// no control plane role label for worker nodes, and no control plane taint when scheduling is allowed.
+			expectLabels: map[string]string{"examplelabel": "examplevalue"},
+		},
+		{
+			name: "new style",
+
+			cfg: func(t *testing.T) config.Config {
+				nc := k8s.NewKubeNodeConfigV1Alpha1()
+				nc.SkipNodeRegistrationConfig = new(true)
+				nc.RegisterWithFQDNConfig = new(true)
+				nc.NodeIPConfig = k8s.NodeIPConfig{
+					NodeIPValidSubnets: []string{"10.0.0.0/8"},
+				}
+				nc.LabelsConfig = map[string]string{"examplelabel": "examplevalue"}
+				nc.AnnotationsConfig = map[string]string{"customer.io/rack": "r13a25"}
+				nc.TaintsConfig = map[string]string{"exampletaint": "examplevalue:NoSchedule"}
+
+				c, err := container.New(nc)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			// the new-style config exposes the fields verbatim, without injecting control plane labels/taints.
+			expectSkipNodeRegistration: true,
+			expectRegisterWithFQDN:     true,
+			expectValidSubnets:         []string{"10.0.0.0/8"},
+			expectLabels:               map[string]string{"examplelabel": "examplevalue"},
+			expectAnnotations:          map[string]string{"customer.io/rack": "r13a25"},
+			expectTaints:               map[string]string{"exampletaint": "examplevalue:NoSchedule"},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := test.cfg(t)
+
+			nodeConfig := cfg.K8sNodeConfig()
+
+			if test.expectNil {
+				assert.Nil(t, nodeConfig)
+
+				return
+			}
+
+			require.NotNil(t, nodeConfig)
+
+			assert.Equal(t, test.expectSkipNodeRegistration, nodeConfig.SkipNodeRegistration())
+			assert.Equal(t, test.expectRegisterWithFQDN, nodeConfig.RegisterWithFQDN())
+			assert.Equal(t, test.expectValidSubnets, nodeConfig.NodeIP().ValidSubnets())
+			assert.Equal(t, test.expectLabels, nodeConfig.Labels())
+			assert.Equal(t, test.expectAnnotations, nodeConfig.Annotations())
+			assert.Equal(t, test.expectTaints, nodeConfig.Taints())
+		})
+	}
+}
+
 func TestKubeClusterConfigBridge(t *testing.T) {
 	t.Parallel()
 

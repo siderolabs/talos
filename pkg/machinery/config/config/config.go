@@ -53,6 +53,7 @@ type Config interface { //nolint:interfacebloat
 	K8sProxyConfig() K8sProxyConfig
 	K8sClusterConfig() K8sClusterConfig
 	K8sNetworkConfig() K8sNetworkConfig
+	K8sNodeConfig() K8sNodeConfig
 	K8sFlannelCNIConfig() K8sFlannelCNIConfig
 	K8sCoreDNSConfig() K8sCoreDNSConfig
 	K8sServiceAccountConfig() K8sServiceAccountConfig

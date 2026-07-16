@@ -64,9 +64,9 @@ func (suite *NodeTaintsSuite) updateMachineConfig(machineType machine.Type, allo
 
 		suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
 	} else {
-		cfg.Container().RawV1Alpha1().ClusterConfig.AllowSchedulingOnControlPlanes = new(allowScheduling)
+		cfg.Container().RawV1Alpha1().ClusterConfig.AllowSchedulingOnControlPlanes = new(allowScheduling) //nolint:staticcheck
 		cfg.Container().RawV1Alpha1().MachineConfig.MachineType = machineType.String()
-		cfg.Container().RawV1Alpha1().MachineConfig.MachineNodeTaints = nodeTaints
+		cfg.Container().RawV1Alpha1().MachineConfig.MachineNodeTaints = nodeTaints //nolint:staticcheck
 		suite.Require().NoError(suite.State().Update(suite.Ctx(), cfg))
 	}
 }
@@ -81,9 +81,9 @@ func (suite *NodeTaintsSuite) TestControlplane() {
 	suite.updateMachineConfig(machine.TypeControlPlane, false)
 
 	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []string{constants.LabelNodeRoleControlPlane},
-		func(labelSpec *k8s.NodeTaintSpec, asrt *assert.Assertions) {
-			asrt.Empty(labelSpec.TypedSpec().Value)
-			asrt.Equal(string(v1.TaintEffectNoSchedule), labelSpec.TypedSpec().Effect)
+		func(taintSpec *k8s.NodeTaintSpec, asrt *assert.Assertions) {
+			asrt.Empty(taintSpec.TypedSpec().Value)
+			asrt.Equal(string(v1.TaintEffectNoSchedule), taintSpec.TypedSpec().Effect)
 		})
 
 	suite.updateMachineConfig(machine.TypeControlPlane, true)

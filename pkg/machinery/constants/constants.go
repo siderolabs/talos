@@ -1440,6 +1440,11 @@ const (
 	//
 	// The default value is 1 week.
 	DefaultFilesystemTrimInterval = 7 * 24 * time.Hour
+
+	// TaintEffectNoSchedule is the taint effect for NoSchedule.
+	//
+	// Vendored here to avoid pulling in k8s.io.
+	TaintEffectNoSchedule = "NoSchedule"
 )
 
 // names of variable that can be substituted in the talos.config kernel parameter.

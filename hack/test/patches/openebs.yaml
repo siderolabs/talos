@@ -1,7 +1,5 @@
 ---
 machine:
-  nodeLabels:
-    openebs.io/engine: "mayastor"
   kubelet:
     extraMounts:
       - destination: /var/local
@@ -11,6 +9,11 @@ machine:
           - bind
           - rshared
           - rw
+---
+apiVersion: v1alpha1
+kind: KubeNodeConfig
+labels:
+  openebs.io/engine: "mayastor"
 ---
 apiVersion: v1alpha1
 kind: SysctlConfig

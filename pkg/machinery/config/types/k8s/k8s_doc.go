@@ -592,6 +592,103 @@ func (KubeNetworkConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (KubeNodeConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeNodeConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeNodeConfig configures Kubernetes node." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeNodeConfig configures Kubernetes node.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "skipNodeRegistration",
+				Type:        "bool",
+				Note:        "",
+				Description: "The `skipNodeRegistration` is used to run the kubelet without registering with the apiserver.\nThis runs kubelet as standalone and only runs static pods.\nWhen this is set to true, other fields in this document are ignored.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The `skipNodeRegistration` is used to run the kubelet without registering with the apiserver." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"true",
+					"yes",
+					"false",
+					"no",
+				},
+			},
+			{
+				Name:        "registerWithFQDN",
+				Type:        "bool",
+				Note:        "",
+				Description: "The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration.\nThis is required in clouds like AWS.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"true",
+					"yes",
+					"false",
+					"no",
+				},
+			},
+			{
+				Name:        "nodeIP",
+				Type:        "NodeIPConfig",
+				Note:        "",
+				Description: "The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.\nThis field should be set when a node has multiple addresses to choose from.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The `nodeIP` field is used to configure `--node-ip` flag for the kubelet." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "labels",
+				Type:        "map[string]string",
+				Note:        "",
+				Description: "Configures the node labels for the machine.\n\nNote: In the default Kubernetes configuration, worker nodes are restricted to set\nlabels with some prefixes (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the node labels for the machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "annotations",
+				Type:        "map[string]string",
+				Note:        "",
+				Description: "Configures the node annotations for the machine.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the node annotations for the machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "taints",
+				Type:        "map[string]string",
+				Note:        "",
+				Description: "Configures the node taints for the machine. Effect is optional.\n\nNote: In the default Kubernetes configuration, worker nodes are not allowed to\nmodify the taints (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the node taints for the machine. Effect is optional." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeNodeConfigV1Alpha1())
+
+	return doc
+}
+
+func (NodeIPConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "NodeIPConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "NodeIPConfig represents the node IP configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "NodeIPConfig represents the node IP configuration.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "KubeNodeConfigV1Alpha1",
+				FieldName: "nodeIP",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "validSubnets",
+				Type:        "[]string",
+				Note:        "",
+				Description: "The `validSubnets` field configures the networks to pick kubelet node IP from.\nFor dual stack configuration, there should be two subnets: one for IPv4, another for IPv6.\nIPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, node IP is picked based on cluster podCIDRs: IPv4/IPv6 address or both.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The `validSubnets` field configures the networks to pick kubelet node IP from." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
 func (KubeProxyConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "KubeProxyConfig",
@@ -835,6 +932,8 @@ func GetFileDoc() *encoder.FileDoc {
 			KubeEtcdEncryptionConfigV1Alpha1{}.Doc(),
 			KubeFlannelCNIConfigV1Alpha1{}.Doc(),
 			KubeNetworkConfigV1Alpha1{}.Doc(),
+			KubeNodeConfigV1Alpha1{}.Doc(),
+			NodeIPConfig{}.Doc(),
 			KubeProxyConfigV1Alpha1{}.Doc(),
 			KubeSchedulerConfigV1Alpha1{}.Doc(),
 			KubeServiceAccountConfigV1Alpha1{}.Doc(),

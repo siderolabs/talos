@@ -7,16 +7,14 @@ package k8s
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
-	v1 "k8s.io/api/core/v1"
 
-	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/labels"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
@@ -69,21 +67,9 @@ func (ctrl *NodeTaintSpecController) Run(ctx context.Context, r controller.Runti
 
 		r.StartTrackingOutputs()
 
-		if cfg != nil && cfg.Config().Machine() != nil {
-			if cfg.Config().Cluster() != nil {
-				if cfg.Config().Machine().Type().IsControlPlane() && !cfg.Config().Cluster().ScheduleOnControlPlanes() {
-					if err = createTaint(ctx, r, constants.LabelNodeRoleControlPlane, "", string(v1.TaintEffectNoSchedule)); err != nil {
-						return err
-					}
-				}
-			}
-
-			for key, val := range cfg.Config().Machine().NodeTaints() {
-				value, effect, found := strings.Cut(val, ":")
-				if !found {
-					effect = value
-					value = ""
-				}
+		if cfg != nil && cfg.Config().K8sNodeConfig() != nil {
+			for key, val := range cfg.Config().K8sNodeConfig().Taints() {
+				value, effect := labels.ParseTaint(val)
 
 				if err = createTaint(ctx, r, key, value, effect); err != nil {
 					return err

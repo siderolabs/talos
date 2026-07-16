@@ -78,7 +78,7 @@ func (ctrl *NodenameController) Run(ctx context.Context, r controller.Runtime, _
 
 		cfgProvider := cfg.Config()
 
-		if cfgProvider.Machine() == nil {
+		if cfgProvider.K8sNodeConfig() == nil {
 			continue
 		}
 
@@ -98,7 +98,7 @@ func (ctrl *NodenameController) Run(ctx context.Context, r controller.Runtime, _
 			func(res *k8s.Nodename) error {
 				var hostname string
 
-				if cfgProvider.Machine().Kubelet().RegisterWithFQDN() {
+				if cfgProvider.K8sNodeConfig().RegisterWithFQDN() {
 					hostname = hostnameStatus.TypedSpec().FQDN()
 				} else {
 					hostname = hostnameStatus.TypedSpec().Hostname
@@ -110,7 +110,7 @@ func (ctrl *NodenameController) Run(ctx context.Context, r controller.Runtime, _
 				}
 
 				res.TypedSpec().HostnameVersion = hostnameStatus.Metadata().Version().String()
-				res.TypedSpec().SkipNodeRegistration = cfgProvider.Machine().Kubelet().SkipNodeRegistration()
+				res.TypedSpec().SkipNodeRegistration = cfgProvider.K8sNodeConfig().SkipNodeRegistration()
 
 				return nil
 			},

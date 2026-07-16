@@ -25,7 +25,6 @@ type ClusterConfig interface {
 	ExtraManifestHeaderMap() map[string]string
 	InlineManifests() []InlineManifest
 	AdminKubeconfig() AdminKubeconfig
-	ScheduleOnControlPlanes() bool
 	Discovery() Discovery
 }
 

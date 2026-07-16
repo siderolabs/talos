@@ -1,0 +1,14 @@
+apiVersion: v1alpha1
+kind: KubeNodeConfig
+registerWithFQDN: true
+nodeIP:
+    validSubnets:
+        - 10.0.0.0/8
+        - '!10.0.0.3/32'
+        - fdc7::/16
+labels:
+    examplelabel: examplevalue
+annotations:
+    customer.io/rack: r13a25
+taints:
+    exampletaint: examplevalue:NoSchedule

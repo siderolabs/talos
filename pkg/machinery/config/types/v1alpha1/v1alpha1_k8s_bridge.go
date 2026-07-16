@@ -5,6 +5,7 @@
 package v1alpha1
 
 import (
+	"maps"
 	"net/url"
 	"slices"
 
@@ -401,4 +402,108 @@ func (s k8sClusterConfigShim) ClusterName() string {
 // ClusterEndpoint implements the config.K8sClusterConfig interface.
 func (s k8sClusterConfigShim) ClusterEndpoint() *url.URL {
 	return s.c.Endpoint()
+}
+
+// K8sNodeConfig implements the config.Config interface.
+func (c *Config) K8sNodeConfig() config.K8sNodeConfig {
+	if c.MachineConfig == nil && c.ClusterConfig == nil {
+		return nil
+	}
+
+	var (
+		machineConfig *MachineConfig
+		kubeletConfig *KubeletConfig
+		clusterConfig *ClusterConfig
+	)
+
+	if c.MachineConfig != nil {
+		machineConfig = c.MachineConfig
+	} else {
+		machineConfig = &MachineConfig{}
+	}
+
+	if machineConfig.MachineKubelet != nil {
+		kubeletConfig = machineConfig.MachineKubelet
+	} else {
+		kubeletConfig = &KubeletConfig{}
+	}
+
+	if c.ClusterConfig != nil {
+		clusterConfig = c.ClusterConfig
+	} else {
+		clusterConfig = &ClusterConfig{}
+	}
+
+	return k8sNodeConfigShim{
+		machineConfig: machineConfig,
+		kubeletConfig: kubeletConfig,
+		clusterConfig: clusterConfig,
+	}
+}
+
+type k8sNodeConfigShim struct {
+	machineConfig *MachineConfig
+	kubeletConfig *KubeletConfig
+	clusterConfig *ClusterConfig
+}
+
+// SkipNodeRegistration implements the config.K8sNodeConfig interface.
+func (s k8sNodeConfigShim) SkipNodeRegistration() bool {
+	return pointer.SafeDeref(s.kubeletConfig.KubeletSkipNodeRegistration)
+}
+
+// RegisterWithFQDN implements the config.K8sNodeConfig interface.
+func (s k8sNodeConfigShim) RegisterWithFQDN() bool {
+	return pointer.SafeDeref(s.kubeletConfig.KubeletRegisterWithFQDN)
+}
+
+// NodeIP implements the config.K8sNodeConfig interface.
+func (s k8sNodeConfigShim) NodeIP() config.K8sNodeIPConfig {
+	return pointer.SafeDeref(s.kubeletConfig.KubeletNodeIP)
+}
+
+// ValidSubnets implements the config.K8sNodeIPConfig interface.
+func (c KubeletNodeIPConfig) ValidSubnets() []string {
+	return c.KubeletNodeIPValidSubnets
+}
+
+// Labels implements the config.K8sNodeConfig interface.
+func (s k8sNodeConfigShim) Labels() map[string]string {
+	l := s.machineConfig.MachineNodeLabels
+
+	if s.machineConfig.Type().IsControlPlane() {
+		if l == nil {
+			l = map[string]string{}
+		} else {
+			l = maps.Clone(l)
+		}
+
+		l[constants.LabelNodeRoleControlPlane] = ""
+	}
+
+	return l
+}
+
+// Taints implements the config.K8sNodeConfig interface.
+func (s k8sNodeConfigShim) Taints() map[string]string {
+	t := s.machineConfig.MachineNodeTaints
+
+	if s.machineConfig.Type().IsControlPlane() {
+		if !s.clusterConfig.ScheduleOnControlPlanes() {
+			if t == nil {
+				t = map[string]string{}
+			} else {
+				t = maps.Clone(t)
+			}
+
+			t[constants.LabelNodeRoleControlPlane] = constants.TaintEffectNoSchedule
+		}
+	}
+
+	return t
+}
+
+// Annotations implements the config.K8sNodeConfig interface.
+func (s k8sNodeConfigShim) Annotations() map[string]string {
+	return s.machineConfig.MachineNodeAnnotations
 }

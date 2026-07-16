@@ -25,8 +25,6 @@ machine:
         kubePrism:
             enabled: true
             port: 7445
-    nodeLabels:
-        node.kubernetes.io/exclude-from-external-load-balancers: ""
 cluster:
     token: inn7ol.u4ehnti8qyls9ymo
     etcd:
@@ -35,7 +33,6 @@ cluster:
             key: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSU03Q2VnMk1GQW5TM3ROMzV6QTc0aFZ3VElkTkthK0ZwUHlYVERCdU4wVFlvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFNmxTeTNTekRRRmdBTHNlSXR5UU1paTVaSVJkVTFGUmMzcEZ3b3g1QUE1VHdjZ0VVQ0xaNApwMTJSNGp3ZGozWXhqbmxLYW9GY3o3QVR5ME5mWTdMVWt3PT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo=
     extraManifests:
         - https://example.com/cni.yaml
-    allowSchedulingOnControlPlanes: true
 ---
 apiVersion: v1alpha1
 kind: DiscoveryServiceConfig
@@ -94,6 +91,13 @@ apiVersion: v1alpha1
 kind: KubeClusterConfig
 clusterName: base
 endpoint: https://base:6443
+---
+apiVersion: v1alpha1
+kind: KubeNodeConfig
+nodeIP: {}
+labels:
+    node-role.kubernetes.io/control-plane: ""
+    node.kubernetes.io/exclude-from-external-load-balancers: ""
 ---
 apiVersion: v1alpha1
 kind: KubeNetworkConfig
@@ -221,6 +225,9 @@ apiVersion: v1alpha1
 kind: KubeAPIServerConfig
 image: registry.k8s.io/kube-apiserver:v1.28.0
 apiPort: 5443
+certExtraSANs:
+    - foo
+    - bar
 ---
 apiVersion: v1alpha1
 kind: KubeControllerManagerConfig

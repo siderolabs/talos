@@ -17,8 +17,6 @@ machine:
         kubePrism:
             enabled: true
             port: 7445
-    nodeLabels:
-        node.kubernetes.io/exclude-from-external-load-balancers: ""
 cluster:
     token: inn7ol.u4ehnti8qyls9ymo
     etcd:
@@ -64,6 +62,15 @@ apiVersion: v1alpha1
 kind: KubeClusterConfig
 clusterName: base
 endpoint: https://base:6443
+---
+apiVersion: v1alpha1
+kind: KubeNodeConfig
+nodeIP: {}
+labels:
+    node-role.kubernetes.io/control-plane: ""
+    node.kubernetes.io/exclude-from-external-load-balancers: ""
+taints:
+    node-role.kubernetes.io/control-plane: NoSchedule
 ---
 apiVersion: v1alpha1
 kind: KubeNetworkConfig

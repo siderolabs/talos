@@ -87,6 +87,10 @@ clusterName: base
 endpoint: https://base:6443
 ---
 apiVersion: v1alpha1
+kind: KubeNodeConfig
+nodeIP: {}
+---
+apiVersion: v1alpha1
 kind: KubeNetworkConfig
 dnsDomain: example.com
 podSubnets:

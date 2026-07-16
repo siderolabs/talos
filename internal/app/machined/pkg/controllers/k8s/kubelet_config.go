@@ -42,6 +42,10 @@ func NewKubeletConfigController() *KubeletConfigController {
 					return optional.None[*k8s.KubeletConfig]()
 				}
 
+				if cfg.Config().K8sNodeConfig() == nil {
+					return optional.None[*k8s.KubeletConfig]()
+				}
+
 				return optional.Some(k8s.NewKubeletConfig(k8s.NamespaceName, k8s.KubeletID))
 			},
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, cfg *config.MachineConfig, res *k8s.KubeletConfig) error {
@@ -78,12 +82,12 @@ func NewKubeletConfigController() *KubeletConfigController {
 				kubeletConfig.ExtraConfig = cfgProvider.Machine().Kubelet().ExtraConfig()
 				kubeletConfig.CloudProviderExternal = cfgProvider.Cluster().ExternalCloudProvider().Enabled()
 				kubeletConfig.DefaultRuntimeSeccompEnabled = cfgProvider.Machine().Kubelet().DefaultRuntimeSeccompProfileEnabled()
-				kubeletConfig.SkipNodeRegistration = cfgProvider.Machine().Kubelet().SkipNodeRegistration()
+				kubeletConfig.SkipNodeRegistration = cfgProvider.K8sNodeConfig().SkipNodeRegistration()
 				kubeletConfig.StaticPodListURL = staticPodURL.TypedSpec().URL
 				kubeletConfig.DisableManifestsDirectory = cfgProvider.Machine().Kubelet().DisableManifestsDirectory()
 				kubeletConfig.EnableFSQuotaMonitoring = cfgProvider.Machine().Features().DiskQuotaSupportEnabled()
 				kubeletConfig.CredentialProviderConfig = cfgProvider.Machine().Kubelet().CredentialProviderConfig()
-				kubeletConfig.AllowSchedulingOnControlPlane = cfgProvider.Cluster().ScheduleOnControlPlanes()
+				kubeletConfig.RegisterWithTaints = cfgProvider.K8sNodeConfig().Taints()
 
 				return nil
 			},

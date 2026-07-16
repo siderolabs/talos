@@ -250,7 +250,7 @@ func NewControlPlaneAPIServerController() *ControlPlaneAPIServerController {
 				}
 
 				advertisedAddress := "$(POD_IP)"
-				if cfgProvider.Machine().Kubelet().SkipNodeRegistration() {
+				if cfgProvider.K8sNodeConfig() != nil && cfgProvider.K8sNodeConfig().SkipNodeRegistration() {
 					advertisedAddress = ""
 				}
 

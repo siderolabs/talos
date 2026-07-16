@@ -95,12 +95,12 @@ func (in *Input) init() ([]config.Document, error) {
 		}
 	}
 
-	if in.Options.VersionContract.AddExcludeFromExternalLoadBalancer() {
-		if machine.MachineNodeLabels == nil {
-			machine.MachineNodeLabels = map[string]string{}
+	if in.Options.VersionContract.AddExcludeFromExternalLoadBalancer() && !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
+		if machine.MachineNodeLabels == nil { //nolint:staticcheck // legacy configuration
+			machine.MachineNodeLabels = map[string]string{} //nolint:staticcheck // legacy configuration
 		}
 
-		machine.MachineNodeLabels[constants.LabelExcludeFromExternalLB] = ""
+		machine.MachineNodeLabels[constants.LabelExcludeFromExternalLB] = "" //nolint:staticcheck // legacy configuration
 	}
 
 	certSANs := in.GetAPIServerSANs()
@@ -182,9 +182,9 @@ func (in *Input) init() ([]config.Document, error) {
 		}
 	}
 
-	if in.Options.AllowSchedulingOnControlPlanes {
+	if in.Options.AllowSchedulingOnControlPlanes && !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
 		if in.Options.VersionContract.KubernetesAllowSchedulingOnControlPlanes() {
-			cluster.AllowSchedulingOnControlPlanes = new(in.Options.AllowSchedulingOnControlPlanes)
+			cluster.AllowSchedulingOnControlPlanes = new(in.Options.AllowSchedulingOnControlPlanes) //nolint:staticcheck
 		} else {
 			// backwards compatibility for Talos versions older than 1.2
 			cluster.AllowSchedulingOnMasters = new(in.Options.AllowSchedulingOnControlPlanes) //nolint:staticcheck
@@ -284,7 +284,7 @@ func (in *Input) init() ([]config.Document, error) {
 
 	documents = append(documents, extraDocuments...)
 
-	extraDocuments = in.generateKubernetesControlplaneConfigs(controlPlaneURL)
+	extraDocuments = in.generateKubernetesControlplaneConfigs(controlPlaneURL, certSANs)
 
 	documents = append(documents, extraDocuments...)
 

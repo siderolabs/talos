@@ -292,6 +292,8 @@ func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Ph
 		resetSystemDisk = true
 	}
 
+	skipNodeRegistration := r.Config() != nil && r.Config().K8sNodeConfig() != nil && r.Config().K8sNodeConfig().SkipNodeRegistration()
+
 	switch r.State().Platform().Mode() { //nolint:exhaustive
 	case runtime.ModeContainer:
 		phases = phases.AppendList(stopAllPhaselist(r, false)).
@@ -301,7 +303,7 @@ func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Ph
 			)
 	default:
 		phases = phases.AppendWhen(
-			in.GetGraceful() && !r.Config().Machine().Kubelet().SkipNodeRegistration(),
+			in.GetGraceful() && !skipNodeRegistration,
 			"drain",
 			taskErrorHandler(logError, CordonAndDrainNode),
 		).AppendWhen(
@@ -355,7 +357,7 @@ func (*Sequencer) Reset(r runtime.Runtime, in runtime.ResetOptions) []runtime.Ph
 
 // Shutdown is the shutdown sequence.
 func (*Sequencer) Shutdown(r runtime.Runtime, in *machineapi.ShutdownRequest) []runtime.Phase {
-	skipNodeRegistration := r.Config() != nil && r.Config().Machine() != nil && r.Config().Machine().Kubelet().SkipNodeRegistration()
+	skipNodeRegistration := r.Config() != nil && r.Config().K8sNodeConfig() != nil && r.Config().K8sNodeConfig().SkipNodeRegistration()
 
 	phases := PhaseList{}.Append(
 		"storeShutdown",
@@ -436,12 +438,14 @@ func (*Sequencer) MaintenanceUpgrade(r runtime.Runtime, in *machineapi.UpgradeRe
 func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []runtime.Phase {
 	phases := PhaseList{}
 
+	skipNodeRegistration := r.Config() != nil && r.Config().K8sNodeConfig() != nil && r.Config().K8sNodeConfig().SkipNodeRegistration()
+
 	switch r.State().Platform().Mode() { //nolint:exhaustive
 	case runtime.ModeContainer:
 		return nil
 	default:
 		phases = phases.AppendWhen(
-			!r.Config().Machine().Kubelet().SkipNodeRegistration(),
+			!skipNodeRegistration,
 			"drain",
 			CordonAndDrainNode,
 		).Append(

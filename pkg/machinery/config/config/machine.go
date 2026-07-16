@@ -39,9 +39,6 @@ type MachineConfig interface {
 	Udev() UdevConfig
 	Logging() Logging
 	SeccompProfiles() []SeccompProfile
-	NodeLabels() NodeLabels
-	NodeAnnotations() NodeAnnotations
-	NodeTaints() NodeTaints
 	BaseRuntimeSpecOverrides() map[string]any
 }
 
@@ -51,15 +48,6 @@ type SeccompProfile interface {
 	Name() string
 	Value() map[string]any
 }
-
-// NodeLabels defines the labels that should be set on a node.
-type NodeLabels map[string]string
-
-// NodeAnnotations defines the annotations that should be set on a node.
-type NodeAnnotations map[string]string
-
-// NodeTaints defines the taints that should be set on a node.
-type NodeTaints map[string]string
 
 // Disk represents the options available for partitioning, formatting, and
 // mounting extra disks.
@@ -288,15 +276,7 @@ type Kubelet interface {
 	ExtraConfig() map[string]any
 	CredentialProviderConfig() map[string]any
 	DefaultRuntimeSeccompProfileEnabled() bool
-	RegisterWithFQDN() bool
-	NodeIP() KubeletNodeIP
-	SkipNodeRegistration() bool
 	DisableManifestsDirectory() bool
-}
-
-// KubeletNodeIP defines the way node IPs are selected for the kubelet.
-type KubeletNodeIP interface {
-	ValidSubnets() []string
 }
 
 // EncryptionKey defines settings for the partition encryption key handling.
