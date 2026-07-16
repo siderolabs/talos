@@ -886,6 +886,9 @@ const (
 	// SelinuxLabelPodRuntime is the SELinux label for kubernetes containerd runtime processes.
 	SelinuxLabelPodRuntime = "system_u:system_r:pod_containerd_t:s0"
 
+	// CgroupPodRuntimeShimReservedMemory is the hard memory protection for the cri runtime shim processes.
+	CgroupPodRuntimeShimReservedMemory = 48 * 1024 * 1024
+
 	// CgroupPodRuntimeReservedMemory is the hard memory protection for the cri runtime processes.
 	CgroupPodRuntimeReservedMemory = 196 * 1024 * 1024
 
@@ -912,6 +915,12 @@ const (
 
 	// CgroupKubeletMillicores is the CPU weight for the kubelet process.
 	CgroupKubeletMillicores = 1000
+
+	// CgroupPodRuntimeRootReservedMemory is the hard memory protection for the CRI runtime, shims, and kubelet.
+	CgroupPodRuntimeRootReservedMemory = CgroupPodRuntimeReservedMemory + CgroupPodRuntimeShimReservedMemory + CgroupKubeletReservedMemory
+
+	// CgroupPodRuntimeRootSoftReservedMemory is the soft memory protection for the CRI runtime, shims, kubelet, and etcd.
+	CgroupPodRuntimeRootSoftReservedMemory = CgroupPodRuntimeRootReservedMemory*2 + CgroupEtcdReservedMemory
 
 	// CgroupDashboardMaxMemory is the hard memory limit for the dashboard process.
 	CgroupDashboardMaxMemory = 196 * 1024 * 1024
