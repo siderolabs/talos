@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
@@ -78,10 +78,9 @@ func (suite *TLSConfigSuite) newTLSConfig(withClient, skipClientCertVerify bool)
 
 // updateAPI applies mutate to the current secrets.API resource in state.
 func (suite *TLSConfigSuite) updateAPI(mutate func(*secrets.API)) {
-	r, err := suite.resources.Get(suite.ctx, resource.NewMetadata(secrets.NamespaceName, secrets.APIType, secrets.APIID, resource.VersionUndefined))
+	api, err := safe.StateGetResource(suite.ctx, suite.resources, secrets.NewAPI())
 	suite.Require().NoError(err)
 
-	api := r.(*secrets.API).DeepCopy().(*secrets.API) //nolint:forcetypeassert
 	mutate(api)
 	suite.Require().NoError(suite.resources.Update(suite.ctx, api))
 }
@@ -108,21 +107,9 @@ func (suite *TLSConfigSuite) TestServerConfigServerOnly() {
 	suite.Equal(stdlibtls.NoClientCert, serverTLS.ClientAuth)
 }
 
-// TestClientConfigWithClient checks ClientConfig when a client cert is present.
-func (suite *TLSConfigSuite) TestClientConfigWithClient() {
-	cfg := suite.newTLSConfig(true, false)
-
-	clientTLS, err := cfg.ClientConfig()
-	suite.Require().NoError(err)
-	suite.Require().NotNil(clientTLS)
-
-	clientCert, err := clientTLS.GetClientCertificate(nil)
-	suite.Require().NoError(err)
-	suite.NotNil(clientCert)
-}
-
 // TestClientConfigWithoutClient checks that ClientConfig is nil without a client cert.
 func (suite *TLSConfigSuite) TestClientConfigWithoutClient() {
+	// no client cert, and no client cert verification
 	cfg := suite.newTLSConfig(false, false)
 
 	clientTLS, err := cfg.ClientConfig()
@@ -157,21 +144,26 @@ func (suite *TLSConfigSuite) TestWatchRotation() {
 		})
 	}()
 
+	// Refreshing the secrets.API object with a new one.
+	// It updates the keys and certs as well.
 	next := suite.newAPICerts(true)
 	suite.updateAPI(func(api *secrets.API) {
 		*api.TypedSpec() = *next.TypedSpec()
 	})
 
 	select {
+	// We block until changes land on the channel.
 	case <-updated:
 	case <-suite.ctx.Done():
 		suite.Require().Fail("timed out waiting for watch update")
 	}
 
+	// Compare the server cert with the old server cert.
 	server2, err := serverTLS.GetCertificate(nil)
 	suite.Require().NoError(err)
 	suite.NotEqual(server1.Certificate[0], server2.Certificate[0])
 
+	// Compare the client cert with the old client cert.
 	client2, err := clientTLS.GetClientCertificate(nil)
 	suite.Require().NoError(err)
 	suite.NotEqual(client1.Certificate[0], client2.Certificate[0])
@@ -197,6 +189,7 @@ func (suite *TLSConfigSuite) TestWatchClearsClient() {
 	})
 
 	select {
+	// We block until changes land on the channel.
 	case <-updated:
 	case <-suite.ctx.Done():
 		suite.Require().Fail("timed out waiting for watch update")
