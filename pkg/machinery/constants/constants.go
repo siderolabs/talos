@@ -866,6 +866,12 @@ const (
 	// CgroupKubeletMillicores is the CPU weight for the kubelet process.
 	CgroupKubeletMillicores = 1000
 
+	// CgroupPodRuntimeRootReservedMemory is the hard memory protection for the CRI runtime, shims, and kubelet.
+	CgroupPodRuntimeRootReservedMemory = CgroupPodRuntimeReservedMemory + CgroupKubeletReservedMemory
+
+	// CgroupPodRuntimeRootSoftReservedMemory is the soft memory protection for the CRI runtime, shims, kubelet, and etcd.
+	CgroupPodRuntimeRootSoftReservedMemory = CgroupPodRuntimeRootReservedMemory*2 + CgroupEtcdReservedMemory
+
 	// CgroupDashboardMaxMemory is the hard memory limit for the dashboard process.
 	CgroupDashboardMaxMemory = 128 * 1024 * 1024
 

@@ -131,6 +131,10 @@ func getCgroupV2Resources(name string) *cgroup2.Resources {
 		}
 	case constants.CgroupPodRuntimeRoot:
 		return &cgroup2.Resources{
+			Memory: &cgroup2.Memory{
+				Min: new(int64(constants.CgroupPodRuntimeRootReservedMemory)),
+				Low: new(int64(constants.CgroupPodRuntimeRootSoftReservedMemory)),
+			},
 			CPU: &cgroup2.CPU{
 				Weight: new(MillicoresToCPUWeight(MilliCores(constants.CgroupPodRuntimeRootMillicores))),
 			},
