@@ -494,6 +494,7 @@ spec:
           - variant: "13"
             withUserDisk: "true"
             userDisksMounts: "/var/mnt/extra,/var/mnt/p1,/var/mnt/p2"
+            extraTestArgs: "-talos.skip-ephemeral-policy"
             withConfigPatch: "@hack/test/patches/image-verification.yaml"
             withConfigPatchWorker: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
             withTalosVersion: "v1.13"
