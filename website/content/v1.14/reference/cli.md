@@ -631,7 +631,7 @@ Forcefully reboots cluster nodes
 Forcefully reboots cluster nodes by restarting the underlying VMs.
 
 By default all nodes are rebooted; pass --node (repeatable) to reboot only specific
-nodes, matched by name or IP address. Only QEMU-based clusters are supported.
+nodes, matched by name or IP address. Local and remote QEMU clusters are supported.
 
 ```
 talosctl cluster reboot [flags]
@@ -683,6 +683,40 @@ talosctl cluster show [flags]
 
 * [talosctl cluster](#talosctl-cluster)	 - A collection of commands for managing local docker-based or QEMU-based clusters
 
+## talosctl cluster sync
+
+Sync kernel and initramfs to a remote cluster
+
+### Synopsis
+
+Uploads the locally-built kernel and initramfs to a remote QEMU cluster.
+
+Artifacts are content-addressed, so unchanged files are not uploaded. The command
+updates the stable boot paths used by clusters created without a bootloader. Run
+'talosctl cluster reboot' afterward to restart the VMs with the new artifacts.
+
+```
+talosctl cluster sync [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for sync
+```
+
+### Options inherited from parent commands
+
+```
+      --name string              the name of the cluster (default "talos-default")
+      --remote-endpoint string   host:port of a talosctl remote-provision-launch server to delegate provisioning to; when set, no local QEMU is required
+      --state string             directory path to store cluster state (default "/home/user/.talos/clusters")
+```
+
+### SEE ALSO
+
+* [talosctl cluster](#talosctl-cluster)	 - A collection of commands for managing local docker-based or QEMU-based clusters
+
 ## talosctl cluster
 
 A collection of commands for managing local docker-based or QEMU-based clusters
@@ -704,6 +738,7 @@ A collection of commands for managing local docker-based or QEMU-based clusters
 * [talosctl cluster logs](#talosctl-cluster-logs)	 - Stream QEMU console logs for cluster machines
 * [talosctl cluster reboot](#talosctl-cluster-reboot)	 - Forcefully reboots cluster nodes
 * [talosctl cluster show](#talosctl-cluster-show)	 - Shows info about a local provisioned kubernetes cluster
+* [talosctl cluster sync](#talosctl-cluster-sync)	 - Sync kernel and initramfs to a remote cluster
 
 ## talosctl completion bash
 

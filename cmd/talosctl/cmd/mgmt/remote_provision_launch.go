@@ -9,7 +9,9 @@ package mgmt
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
 	"net"
 	"os"
 	"path/filepath"
@@ -112,27 +114,9 @@ func (s *remoteProvisionImpl) Create(req *remoteprovisionpb.CreateRequest, strea
 		return status.Errorf(codes.InvalidArgument, "decode cluster request: %v", err)
 	}
 
-	// Rewrite any artifact paths supplied by the client to canonical
-	// server-side paths (where rsync / UploadArtifact dropped them).
-	applyArtifactPaths(&clusterReq, req.GetArtifactPaths())
-
-	// Server owns the state directory.
-	clusterReq.StateDirectory = s.stateDir
-
-	// Server should run its own talosctl for sub-launches (loadbalancer,
-	// qemu, dhcpd, ...). The client's SelfExecutable path is irrelevant.
-	self, err := os.Executable()
-	if err == nil {
-		clusterReq.SelfExecutable = self
+	if err := s.prepareClusterRequest(&clusterReq, req.GetArtifactPaths()); err != nil {
+		return err
 	}
-
-	// Client-side CNI defaults (e.g. ~/.talos/cni) leak through the
-	// ClusterRequest; rewrite them to server-local paths under stateDir
-	// so the CNI bundle downloads + plugins land somewhere sane on the
-	// server, not under the client's $HOME.
-	clusterReq.Network.CNI.BinPath = []string{filepath.Join(s.stateDir, "cni", "bin")}
-	clusterReq.Network.CNI.ConfDir = filepath.Join(s.stateDir, "cni", "conf.d")
-	clusterReq.Network.CNI.CacheDir = filepath.Join(s.stateDir, "cni", "cache")
 
 	logger := &streamLogWriter{stream: stream}
 
@@ -177,6 +161,47 @@ func (s *remoteProvisionImpl) Create(req *remoteprovisionpb.CreateRequest, strea
 	})
 }
 
+func (s *remoteProvisionImpl) prepareClusterRequest(clusterReq *provision.ClusterRequest, paths map[string]string) error {
+	stateRoot, err := os.OpenRoot(s.stateDir)
+	if err != nil {
+		return status.Errorf(codes.Internal, "open state directory: %v", err)
+	}
+
+	defer stateRoot.Close() //nolint:errcheck
+
+	if _, err := stateRoot.Stat(clusterReq.Name); err == nil {
+		return status.Errorf(codes.AlreadyExists, "cluster %q already exists", clusterReq.Name)
+	} else if !errors.Is(err, fs.ErrNotExist) {
+		return status.Errorf(codes.Internal, "check cluster %q state: %v", clusterReq.Name, err)
+	}
+
+	// Keep kernel and initramfs at stable per-cluster paths. QEMU's
+	// launcher retains these paths across cold reboots, while cluster sync
+	// can atomically replace them with new content-addressed artifacts.
+	artifactPaths, _, err := s.syncBootArtifactPaths(clusterReq.Name, paths)
+	if err != nil {
+		return status.Errorf(codes.InvalidArgument, "prepare boot artifacts: %v", err)
+	}
+
+	applyArtifactPaths(clusterReq, artifactPaths)
+
+	clusterReq.StateDirectory = s.stateDir
+
+	// Server should run its own talosctl for sub-launches (loadbalancer,
+	// qemu, dhcpd, ...). The client's SelfExecutable path is irrelevant.
+	if self, err := os.Executable(); err == nil {
+		clusterReq.SelfExecutable = self
+	}
+
+	// Client-side CNI defaults (e.g. ~/.talos/cni) leak through the
+	// ClusterRequest; rewrite them to server-local paths under stateDir.
+	clusterReq.Network.CNI.BinPath = []string{filepath.Join(s.stateDir, "cni", "bin")}
+	clusterReq.Network.CNI.ConfDir = filepath.Join(s.stateDir, "cni", "conf.d")
+	clusterReq.Network.CNI.CacheDir = filepath.Join(s.stateDir, "cni", "cache")
+
+	return nil
+}
+
 // Destroy tears down a cluster by name. Reflects against the local state
 // directory to rehydrate the cluster, then delegates to the QEMU provisioner.
 func (s *remoteProvisionImpl) Destroy(ctx context.Context, req *remoteprovisionpb.DestroyRequest) (*remoteprovisionpb.DestroyResponse, error) {
@@ -194,6 +219,17 @@ func (s *remoteProvisionImpl) Destroy(ctx context.Context, req *remoteprovisionp
 
 	if err := provisioner.Destroy(ctx, cluster); err != nil {
 		return nil, status.Errorf(codes.Internal, "destroy cluster %q: %v", req.GetClusterName(), err)
+	}
+
+	root, err := s.openBootArtifactRoot()
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "open boot artifact root: %v", err)
+	}
+
+	defer root.Close() //nolint:errcheck
+
+	if err := root.RemoveAll(req.GetClusterName()); err != nil {
+		return nil, status.Errorf(codes.Internal, "remove boot artifacts for cluster %q: %v", req.GetClusterName(), err)
 	}
 
 	return &remoteprovisionpb.DestroyResponse{}, nil

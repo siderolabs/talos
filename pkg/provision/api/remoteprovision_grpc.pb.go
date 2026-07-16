@@ -21,13 +21,15 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	RemoteProvisionService_Ping_FullMethodName           = "/remoteprovision.RemoteProvisionService/Ping"
-	RemoteProvisionService_Create_FullMethodName         = "/remoteprovision.RemoteProvisionService/Create"
-	RemoteProvisionService_Destroy_FullMethodName        = "/remoteprovision.RemoteProvisionService/Destroy"
-	RemoteProvisionService_Reflect_FullMethodName        = "/remoteprovision.RemoteProvisionService/Reflect"
-	RemoteProvisionService_StreamLogs_FullMethodName     = "/remoteprovision.RemoteProvisionService/StreamLogs"
-	RemoteProvisionService_StatArtifact_FullMethodName   = "/remoteprovision.RemoteProvisionService/StatArtifact"
-	RemoteProvisionService_UploadArtifact_FullMethodName = "/remoteprovision.RemoteProvisionService/UploadArtifact"
+	RemoteProvisionService_Ping_FullMethodName              = "/remoteprovision.RemoteProvisionService/Ping"
+	RemoteProvisionService_Create_FullMethodName            = "/remoteprovision.RemoteProvisionService/Create"
+	RemoteProvisionService_Destroy_FullMethodName           = "/remoteprovision.RemoteProvisionService/Destroy"
+	RemoteProvisionService_Reflect_FullMethodName           = "/remoteprovision.RemoteProvisionService/Reflect"
+	RemoteProvisionService_StreamLogs_FullMethodName        = "/remoteprovision.RemoteProvisionService/StreamLogs"
+	RemoteProvisionService_StatArtifact_FullMethodName      = "/remoteprovision.RemoteProvisionService/StatArtifact"
+	RemoteProvisionService_UploadArtifact_FullMethodName    = "/remoteprovision.RemoteProvisionService/UploadArtifact"
+	RemoteProvisionService_SyncBootArtifacts_FullMethodName = "/remoteprovision.RemoteProvisionService/SyncBootArtifacts"
+	RemoteProvisionService_Reboot_FullMethodName            = "/remoteprovision.RemoteProvisionService/Reboot"
 )
 
 // RemoteProvisionServiceClient is the client API for RemoteProvisionService service.
@@ -64,6 +66,11 @@ type RemoteProvisionServiceClient interface {
 	// to the server's content-addressed cache. The first frame carries the
 	// sha256; the rest carry data.
 	UploadArtifact(ctx context.Context, opts ...grpc.CallOption) (grpc.ClientStreamingClient[ArtifactChunk, ArtifactRef], error)
+	// SyncBootArtifacts updates the stable kernel and initramfs references
+	// used by an existing no-bootloader cluster.
+	SyncBootArtifacts(ctx context.Context, in *SyncBootArtifactsRequest, opts ...grpc.CallOption) (*SyncBootArtifactsResponse, error)
+	// Reboot forcefully restarts one QEMU node.
+	Reboot(ctx context.Context, in *RebootRequest, opts ...grpc.CallOption) (*RebootResponse, error)
 }
 
 type remoteProvisionServiceClient struct {
@@ -165,6 +172,26 @@ func (c *remoteProvisionServiceClient) UploadArtifact(ctx context.Context, opts 
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type RemoteProvisionService_UploadArtifactClient = grpc.ClientStreamingClient[ArtifactChunk, ArtifactRef]
 
+func (c *remoteProvisionServiceClient) SyncBootArtifacts(ctx context.Context, in *SyncBootArtifactsRequest, opts ...grpc.CallOption) (*SyncBootArtifactsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SyncBootArtifactsResponse)
+	err := c.cc.Invoke(ctx, RemoteProvisionService_SyncBootArtifacts_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *remoteProvisionServiceClient) Reboot(ctx context.Context, in *RebootRequest, opts ...grpc.CallOption) (*RebootResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RebootResponse)
+	err := c.cc.Invoke(ctx, RemoteProvisionService_Reboot_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RemoteProvisionServiceServer is the server API for RemoteProvisionService service.
 // All implementations must embed UnimplementedRemoteProvisionServiceServer
 // for forward compatibility.
@@ -199,6 +226,11 @@ type RemoteProvisionServiceServer interface {
 	// to the server's content-addressed cache. The first frame carries the
 	// sha256; the rest carry data.
 	UploadArtifact(grpc.ClientStreamingServer[ArtifactChunk, ArtifactRef]) error
+	// SyncBootArtifacts updates the stable kernel and initramfs references
+	// used by an existing no-bootloader cluster.
+	SyncBootArtifacts(context.Context, *SyncBootArtifactsRequest) (*SyncBootArtifactsResponse, error)
+	// Reboot forcefully restarts one QEMU node.
+	Reboot(context.Context, *RebootRequest) (*RebootResponse, error)
 	mustEmbedUnimplementedRemoteProvisionServiceServer()
 }
 
@@ -229,6 +261,12 @@ func (UnimplementedRemoteProvisionServiceServer) StatArtifact(context.Context, *
 }
 func (UnimplementedRemoteProvisionServiceServer) UploadArtifact(grpc.ClientStreamingServer[ArtifactChunk, ArtifactRef]) error {
 	return status.Error(codes.Unimplemented, "method UploadArtifact not implemented")
+}
+func (UnimplementedRemoteProvisionServiceServer) SyncBootArtifacts(context.Context, *SyncBootArtifactsRequest) (*SyncBootArtifactsResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method SyncBootArtifacts not implemented")
+}
+func (UnimplementedRemoteProvisionServiceServer) Reboot(context.Context, *RebootRequest) (*RebootResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method Reboot not implemented")
 }
 func (UnimplementedRemoteProvisionServiceServer) mustEmbedUnimplementedRemoteProvisionServiceServer() {
 }
@@ -353,6 +391,42 @@ func _RemoteProvisionService_UploadArtifact_Handler(srv interface{}, stream grpc
 // This type alias is provided for backwards compatibility with existing code that references the prior non-generic stream type by name.
 type RemoteProvisionService_UploadArtifactServer = grpc.ClientStreamingServer[ArtifactChunk, ArtifactRef]
 
+func _RemoteProvisionService_SyncBootArtifacts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SyncBootArtifactsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RemoteProvisionServiceServer).SyncBootArtifacts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RemoteProvisionService_SyncBootArtifacts_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RemoteProvisionServiceServer).SyncBootArtifacts(ctx, req.(*SyncBootArtifactsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _RemoteProvisionService_Reboot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RebootRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RemoteProvisionServiceServer).Reboot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RemoteProvisionService_Reboot_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RemoteProvisionServiceServer).Reboot(ctx, req.(*RebootRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RemoteProvisionService_ServiceDesc is the grpc.ServiceDesc for RemoteProvisionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -375,6 +449,14 @@ var RemoteProvisionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "StatArtifact",
 			Handler:    _RemoteProvisionService_StatArtifact_Handler,
+		},
+		{
+			MethodName: "SyncBootArtifacts",
+			Handler:    _RemoteProvisionService_SyncBootArtifacts_Handler,
+		},
+		{
+			MethodName: "Reboot",
+			Handler:    _RemoteProvisionService_Reboot_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

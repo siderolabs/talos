@@ -43,6 +43,13 @@ service RemoteProvisionService {
   // to the server's content-addressed cache. The first frame carries the
   // sha256; the rest carry data.
   rpc UploadArtifact(stream ArtifactChunk) returns (ArtifactRef);
+
+  // SyncBootArtifacts updates the stable kernel and initramfs references
+  // used by an existing no-bootloader cluster.
+  rpc SyncBootArtifacts(SyncBootArtifactsRequest) returns (SyncBootArtifactsResponse);
+
+  // Reboot forcefully restarts one QEMU node.
+  rpc Reboot(RebootRequest) returns (RebootResponse);
 }
 
 // PingResponse identifies the remote-provision server.
@@ -154,3 +161,24 @@ message ArtifactChunk {
 message ArtifactRef {
   string path = 1;
 }
+
+// SyncBootArtifactsRequest updates content-addressed boot artifact references
+// for an existing cluster. artifact_paths accepts only kernel and initramfs.
+message SyncBootArtifactsRequest {
+  string cluster_name = 1;
+  map<string, string> artifact_paths = 2;
+}
+
+// SyncBootArtifactsResponse reports which stable references changed.
+message SyncBootArtifactsResponse {
+  map<string, bool> changed = 1;
+}
+
+// RebootRequest identifies one QEMU node to forcefully restart.
+message RebootRequest {
+  string cluster_name = 1;
+  string machine_name = 2;
+}
+
+// RebootResponse is empty on success.
+message RebootResponse {}
