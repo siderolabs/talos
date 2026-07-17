@@ -95,6 +95,61 @@ func cmdWipe(ctx context.Context, args []string) error {
 	return errs
 }
 
+var wipeVolumeCmdFlags struct {
+	global.InsecureFlags
+
+	onReboot bool
+}
+
+// wipeVolumeCmd represents the wipe volume command.
+var wipeVolumeCmd = &cobra.Command{
+	Use:   "volume <volume ID>...",
+	Short: "Wipe a system volume",
+	Long: `Wipe one or more system volumes by their volume ID (e.g. EPHEMERAL, STATE).
+
+By default the volume is wiped immediately; a volume which is currently in use
+cannot be wiped live, use --on-reboot to stage the wipe for the next boot.`,
+	Args: cobra.MinimumNArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		ctx := cmd.Context()
+
+		clientFactory, err := NewClientFactory(ctx, &wipeVolumeCmdFlags)
+		if err != nil {
+			return err
+		}
+
+		defer clientFactory.Close() //nolint:errcheck
+
+		respCh := multiplex.UnaryViaFactory(
+			ctx, clientFactory,
+			func(ctx context.Context, c *client.Client) (struct{}, error) {
+				return struct{}{}, c.VolumeWipe(ctx, &machine.VolumeWipeRequest{
+					VolumeIds: args,
+					OnReboot:  wipeVolumeCmdFlags.onReboot,
+				})
+			},
+		)
+
+		var errs error
+
+		for resp := range respCh {
+			if resp.Err != nil {
+				errs = errors.Join(errs, fmt.Errorf("error wiping volume on node %s: %w", resp.Node, resp.Err))
+
+				continue
+			}
+
+			if wipeVolumeCmdFlags.onReboot {
+				fmt.Printf("volume wipe staged on node %s, it will take effect on the next reboot\n", resp.Node)
+			} else {
+				fmt.Printf("volume wiped on node %s\n", resp.Node)
+			}
+		}
+
+		return errs
+	},
+}
+
 func wipeMethodValues() []string {
 	var method storage.BlockDeviceWipeDescriptor_Method
 
@@ -304,5 +359,8 @@ func init() {
 		wipeLVMCmdFlags.InsecureFlags.AddFlags(c)
 	}
 
-	wipeCmd.AddCommand(wipeDiskCmd, wipeLVCmd, wipeVGCmd, wipePVCmd, wipeMDCmd)
+	wipeVolumeCmd.Flags().BoolVar(&wipeVolumeCmdFlags.onReboot, "on-reboot", false, "stage the wipe to happen on the next boot instead of immediately")
+	wipeVolumeCmdFlags.InsecureFlags.AddFlags(wipeVolumeCmd)
+
+	wipeCmd.AddCommand(wipeDiskCmd, wipeVolumeCmd, wipeLVCmd, wipeVGCmd, wipePVCmd, wipeMDCmd)
 }
