@@ -575,6 +575,7 @@ description: Talos gRPC API reference.
     - [NfTablesChainSpec](#talos.resource.definitions.network.NfTablesChainSpec)
     - [NfTablesClampMSS](#talos.resource.definitions.network.NfTablesClampMSS)
     - [NfTablesConntrackStateMatch](#talos.resource.definitions.network.NfTablesConntrackStateMatch)
+    - [NfTablesDNATTarget](#talos.resource.definitions.network.NfTablesDNATTarget)
     - [NfTablesICMPTypeMatch](#talos.resource.definitions.network.NfTablesICMPTypeMatch)
     - [NfTablesIfNameMatch](#talos.resource.definitions.network.NfTablesIfNameMatch)
     - [NfTablesLayer4Match](#talos.resource.definitions.network.NfTablesLayer4Match)
@@ -582,6 +583,7 @@ description: Talos gRPC API reference.
     - [NfTablesMark](#talos.resource.definitions.network.NfTablesMark)
     - [NfTablesPortMatch](#talos.resource.definitions.network.NfTablesPortMatch)
     - [NfTablesRule](#talos.resource.definitions.network.NfTablesRule)
+    - [NfTablesSNATTarget](#talos.resource.definitions.network.NfTablesSNATTarget)
     - [NodeAddressFilterSpec](#talos.resource.definitions.network.NodeAddressFilterSpec)
     - [NodeAddressSortAlgorithmSpec](#talos.resource.definitions.network.NodeAddressSortAlgorithmSpec)
     - [NodeAddressSpec](#talos.resource.definitions.network.NodeAddressSpec)
@@ -10088,6 +10090,22 @@ NfTablesConntrackStateMatch describes the match on the connection tracking state
 
 
 
+<a name="talos.resource.definitions.network.NfTablesDNATTarget"></a>
+
+### NfTablesDNATTarget
+NfTablesDNATTarget is the destination for a DNAT rule.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| address | [common.NetIP](#common.NetIP) |  | Address is the address to redirect the traffic to. |
+| port | [uint32](#uint32) |  | Port is the port to redirect the traffic to. |
+
+
+
+
+
+
 <a name="talos.resource.definitions.network.NfTablesICMPTypeMatch"></a>
 
 ### NfTablesICMPTypeMatch
@@ -10210,6 +10228,25 @@ NfTablesRule describes a single rule in the nftables chain.
 | match_limit | [NfTablesLimitMatch](#talos.resource.definitions.network.NfTablesLimitMatch) |  |  |
 | match_conntrack_state | [NfTablesConntrackStateMatch](#talos.resource.definitions.network.NfTablesConntrackStateMatch) |  |  |
 | anon_counter | [bool](#bool) |  |  |
+| masquerade | [bool](#bool) |  |  |
+| snat | [NfTablesSNATTarget](#talos.resource.definitions.network.NfTablesSNATTarget) |  |  |
+| dnat | [NfTablesDNATTarget](#talos.resource.definitions.network.NfTablesDNATTarget) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.NfTablesSNATTarget"></a>
+
+### NfTablesSNATTarget
+NfTablesSNATTarget is the source for an SNAT rule.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| address | [common.NetIP](#common.NetIP) |  | Address is the address to translate the source to. |
+| port | [uint32](#uint32) |  | Port is the source port to translate to. |
 
 
 

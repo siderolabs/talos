@@ -1,0 +1,11 @@
+apiVersion: v1alpha1
+kind: NetworkNATRuleConfig
+name: test-snat
+type: snat
+sourceAddress:
+    includeSubnets:
+        - 10.0.0.0/8
+outputInterface:
+    interfaceNames:
+        - eth0
+snatAddress: 203.0.113.1

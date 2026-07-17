@@ -3977,6 +3977,145 @@
       "type": "object",
       "description": "LinkSelector selects a link to alias."
     },
+    "network.NATInterfaceConfig": {
+      "properties": {
+        "interfaceNames": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "interfaceNames",
+          "description": "InterfaceNames is the list of interface names to match against.\n",
+          "markdownDescription": "InterfaceNames is the list of interface names to match against.",
+          "x-intellij-html-description": "\u003cp\u003eInterfaceNames is the list of interface names to match against.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "NATInterfaceConfig holds a list of interface names to match."
+    },
+    "network.NATRuleConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "NetworkNATRuleConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the config document.\n",
+          "markdownDescription": "Name of the config document.",
+          "x-intellij-html-description": "\u003cp\u003eName of the config document.\u003c/p\u003e\n"
+        },
+        "type": {
+          "enum": [
+            "masquerade",
+            "snat",
+            "dnat"
+          ],
+          "title": "type",
+          "description": "Type is the kind of NAT operation: masquerade, snat, or dnat.\nDefaults to masquerade when omitted.\n",
+          "markdownDescription": "Type is the kind of NAT operation: masquerade, snat, or dnat.\nDefaults to masquerade when omitted.",
+          "x-intellij-html-description": "\u003cp\u003eType is the kind of NAT operation: masquerade, snat, or dnat.\nDefaults to masquerade when omitted.\u003c/p\u003e\n"
+        },
+        "sourceAddress": {
+          "$ref": "#/$defs/network.NATSubnetConfig",
+          "title": "sourceAddress",
+          "description": "SourceAddress restricts which source addresses are matched.\nApplies to masquerade, snat, and dnat.\n",
+          "markdownDescription": "SourceAddress restricts which source addresses are matched.\nApplies to masquerade, snat, and dnat.",
+          "x-intellij-html-description": "\u003cp\u003eSourceAddress restricts which source addresses are matched.\nApplies to masquerade, snat, and dnat.\u003c/p\u003e\n"
+        },
+        "outputInterface": {
+          "$ref": "#/$defs/network.NATInterfaceConfig",
+          "title": "outputInterface",
+          "description": "OutputInterface restricts which egress interfaces trigger the rule.\nApplies to masquerade and snat.\n",
+          "markdownDescription": "OutputInterface restricts which egress interfaces trigger the rule.\nApplies to masquerade and snat.",
+          "x-intellij-html-description": "\u003cp\u003eOutputInterface restricts which egress interfaces trigger the rule.\nApplies to masquerade and snat.\u003c/p\u003e\n"
+        },
+        "snatAddress": {
+          "type": "string",
+          "title": "snatAddress",
+          "description": "SNATAddress is the address to translate the source to.\nRequired when type is snat.\n",
+          "markdownDescription": "SNATAddress is the address to translate the source to.\nRequired when type is snat.",
+          "x-intellij-html-description": "\u003cp\u003eSNATAddress is the address to translate the source to.\nRequired when type is snat.\u003c/p\u003e\n"
+        },
+        "snatPort": {
+          "type": "integer",
+          "title": "snatPort",
+          "description": "SNATPort is the source port to translate to.\nOptional for snat; when zero, the kernel chooses the source port (default behaviour).\n",
+          "markdownDescription": "SNATPort is the source port to translate to.\nOptional for snat; when zero, the kernel chooses the source port (default behaviour).",
+          "x-intellij-html-description": "\u003cp\u003eSNATPort is the source port to translate to.\nOptional for snat; when zero, the kernel chooses the source port (default behaviour).\u003c/p\u003e\n"
+        },
+        "inputInterface": {
+          "$ref": "#/$defs/network.NATInterfaceConfig",
+          "title": "inputInterface",
+          "description": "InputInterface restricts which ingress interfaces trigger the rule.\nApplies to dnat.\n",
+          "markdownDescription": "InputInterface restricts which ingress interfaces trigger the rule.\nApplies to dnat.",
+          "x-intellij-html-description": "\u003cp\u003eInputInterface restricts which ingress interfaces trigger the rule.\nApplies to dnat.\u003c/p\u003e\n"
+        },
+        "destinationAddress": {
+          "$ref": "#/$defs/network.NATSubnetConfig",
+          "title": "destinationAddress",
+          "description": "DestinationAddress restricts which destination addresses are matched.\nApplies to snat and dnat.\n",
+          "markdownDescription": "DestinationAddress restricts which destination addresses are matched.\nApplies to snat and dnat.",
+          "x-intellij-html-description": "\u003cp\u003eDestinationAddress restricts which destination addresses are matched.\nApplies to snat and dnat.\u003c/p\u003e\n"
+        },
+        "dnatAddress": {
+          "type": "string",
+          "title": "dnatAddress",
+          "description": "DNATAddress is the address to redirect traffic to.\nRequired when type is dnat.\n",
+          "markdownDescription": "DNATAddress is the address to redirect traffic to.\nRequired when type is dnat.",
+          "x-intellij-html-description": "\u003cp\u003eDNATAddress is the address to redirect traffic to.\nRequired when type is dnat.\u003c/p\u003e\n"
+        },
+        "dnatPort": {
+          "type": "integer",
+          "title": "dnatPort",
+          "description": "DNATPort is the port to redirect traffic to.\nOptional for dnat; when zero, the original destination port is preserved.\n",
+          "markdownDescription": "DNATPort is the port to redirect traffic to.\nOptional for dnat; when zero, the original destination port is preserved.",
+          "x-intellij-html-description": "\u003cp\u003eDNATPort is the port to redirect traffic to.\nOptional for dnat; when zero, the original destination port is preserved.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "name"
+      ],
+      "description": "NetworkNATRuleConfig is a network NAT rule config document."
+    },
+    "network.NATSubnetConfig": {
+      "properties": {
+        "includeSubnets": {
+          "items": {
+            "type": "string",
+            "pattern": "^[0-9a-f.:]+/\\d{1,3}$"
+          },
+          "type": "array",
+          "title": "includeSubnets",
+          "description": "IncludeSubnets is the list of CIDRs that match.\n",
+          "markdownDescription": "IncludeSubnets is the list of CIDRs that match.",
+          "x-intellij-html-description": "\u003cp\u003eIncludeSubnets is the list of CIDRs that match.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "NATSubnetConfig holds a list of subnets to match."
+    },
     "network.NTPConfig": {
       "properties": {
         "servers": {
@@ -6782,6 +6921,9 @@
     },
     {
       "$ref": "#/$defs/network.LinkAliasConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/network.NATRuleConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/network.ResolverConfigV1Alpha1"

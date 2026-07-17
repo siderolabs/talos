@@ -321,6 +321,11 @@ func (container *Container) NetworkRules() config.NetworkRuleConfig {
 	return config.WrapNetworkRuleConfigList(findMatchingDocs[config.NetworkRuleConfigSignal](container.documents)...)
 }
 
+// NetworkNATRules implements config.Config interface.
+func (container *Container) NetworkNATRules() config.NetworkNATRuleConfig {
+	return config.WrapNetworkNATConfigList(findMatchingDocs[config.NetworkNATConfigSignal](container.documents)...)
+}
+
 // TrustedRoots implements config.Config interface.
 func (container *Container) TrustedRoots() config.TrustedRootsConfig {
 	return config.WrapTrustedRootsConfig(findMatchingDocs[config.TrustedRootsConfig](container.documents)...)

@@ -400,6 +400,14 @@ message NfTablesConntrackStateMatch {
   repeated talos.resource.definitions.enums.NethelpersConntrackState states = 1;
 }
 
+// NfTablesDNATTarget is the destination for a DNAT rule.
+message NfTablesDNATTarget {
+  // Address is the address to redirect the traffic to.
+  common.NetIP address = 1;
+  // Port is the port to redirect the traffic to.
+  uint32 port = 2;
+}
+
 // NfTablesICMPTypeMatch describes the match on the ICMP type.
 message NfTablesICMPTypeMatch {
   repeated talos.resource.definitions.enums.NethelpersICMPType types = 1;
@@ -456,6 +464,17 @@ message NfTablesRule {
   NfTablesLimitMatch match_limit = 10;
   NfTablesConntrackStateMatch match_conntrack_state = 11;
   bool anon_counter = 12;
+  bool masquerade = 13;
+  NfTablesSNATTarget snat = 14;
+  NfTablesDNATTarget dnat = 15;
+}
+
+// NfTablesSNATTarget is the source for an SNAT rule.
+message NfTablesSNATTarget {
+  // Address is the address to translate the source to.
+  common.NetIP address = 1;
+  // Port is the source port to translate to.
+  uint32 port = 2;
 }
 
 // NodeAddressFilterSpec describes a filter for NodeAddresses.
