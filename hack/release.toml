@@ -137,6 +137,7 @@ List of changes:
    - `.machine.nodeAnnotations`
    - `.machine.nodeTaints`
 - The default `NoSchedule` taint for controlplane and label are now explicitly listed in `KubeNodeConfig`.
+- Deprecated the rest of `.machine.kubelet` fields in the v1alpha1 config; use the `KubeNodeConfig` and `KubeCredentialProviderConfig` documents for kubelet configuration.
 - Added `nodeCIDRMaskSizeIPv4` (default `24`) and `nodeCIDRMaskSizeIPv6` (default `64`) settings to the `KubeNetworkConfig` document to control the per-node pod CIDR mask size and validate the pod and service subnet sizes.
 """
 

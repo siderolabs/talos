@@ -1,8 +1,4 @@
-machine:
-  kubelet:
-    extraMounts:
-      - source: /var/opt
-        destination: /var/opt
-        type: bind
-        options:
-          - rshared
+apiVersion: v1alpha1
+kind: KubeletConfig
+clusterDNS:
+  - 3.3.3.3

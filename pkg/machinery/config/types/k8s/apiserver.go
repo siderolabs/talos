@@ -60,6 +60,7 @@ type KubeAPIServerConfigV1Alpha1 struct {
 	//     The container image used to run the kube-apiserver component.
 	//
 	//     The image reference should contain the tag, even if it is pinned by digest.
+	//   schemaRequired: true
 	PodImage string `yaml:"image"`
 	//   description: |
 	//     Extra command line arguments to supply to the kube-apiserver.

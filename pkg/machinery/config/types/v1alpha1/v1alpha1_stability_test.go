@@ -92,8 +92,15 @@ func TestConfigEncodingStability(t *testing.T) {
 				)
 				require.NoError(t, err)
 
-				patches, err := configpatcher.LoadPatches([]string{"@testdata/stability/patch.yaml"})
-				require.NoError(t, err)
+				var patches []configpatcher.Patch
+
+				if !versionContract.MultidocKernelModuleConfigSupported() {
+					patches, err = configpatcher.LoadPatches([]string{"@testdata/stability/patch-pre14.yaml"})
+					require.NoError(t, err)
+				} else {
+					patches, err = configpatcher.LoadPatches([]string{"@testdata/stability/patch.yaml"})
+					require.NoError(t, err)
+				}
 
 				testConfigStability(t, in, versionContract, "overrides", recordMode, patches...)
 			})

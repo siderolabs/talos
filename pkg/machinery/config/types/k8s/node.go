@@ -194,7 +194,7 @@ func (s *KubeNodeConfigV1Alpha1) V1Alpha1ConflictValidate(v1alpha1Cfg *v1alpha1.
 	}
 
 	if v1alpha1Cfg.MachineConfig != nil {
-		if v1alpha1Cfg.MachineConfig.MachineKubelet != nil {
+		if v1alpha1Cfg.MachineConfig.MachineKubelet != nil { //nolint:staticcheck // testing deprecated field
 			if v1alpha1Cfg.MachineConfig.MachineKubelet.KubeletSkipNodeRegistration != nil { //nolint:staticcheck // testing deprecated field
 				return errors.New(".machine.kubelet.skipNodeRegistration is already set in v1alpha1 config")
 			}

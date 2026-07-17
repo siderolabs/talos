@@ -14,16 +14,10 @@ apiVersion: v1alpha1
 kind: KernelModuleConfig
 name: ublk_drv
 ---
-machine:
-  kubelet:
-    extraMounts:
-      - destination: /var/lib/longhorn
-        type: bind
-        source: /var/lib/longhorn
-        options:
-          - bind
-          - rshared
-          - rw
+apiVersion: v1alpha1
+kind: UserVolumeConfig
+name: longhorn
+volumeType: directory
 ---
 apiVersion: v1alpha1
 kind: SysctlConfig

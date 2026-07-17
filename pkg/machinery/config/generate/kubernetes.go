@@ -143,6 +143,10 @@ func (in *Input) generateKubernetesUniversalConfigs(isControlplane bool, control
 		}
 	}
 
+	kubeletConfig := k8s.NewKubeletConfigV1Alpha1()
+	kubeletConfig.KubeletImage = fmt.Sprintf("%s:v%s", constants.KubeletImage, in.KubernetesVersion)
+	kubeletConfig.KubeletDefaultRuntimeSeccompProfileEnabled = new(true)
+
 	networkConfig := k8s.NewKubeNetworkConfigV1Alpha1()
 	networkConfig.NetworkDNSDomain = in.Options.DNSDomain
 	networkConfig.NetworkPodSubnets = xslices.Map(
@@ -174,6 +178,7 @@ func (in *Input) generateKubernetesUniversalConfigs(isControlplane bool, control
 	return []config.Document{
 		clusterConfig,
 		nodeConfig,
+		kubeletConfig,
 		networkConfig,
 		caConfig,
 	}

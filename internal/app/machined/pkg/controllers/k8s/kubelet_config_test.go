@@ -46,7 +46,7 @@ func (suite *KubeletConfigSuite) TestReconcile() {
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineKubelet: &v1alpha1.KubeletConfig{
+					MachineKubelet: &v1alpha1.KubeletConfig{ //nolint:staticcheck // legacy config
 						KubeletImage:      "kubelet",
 						KubeletClusterDNS: []string{"10.0.0.1"},
 						KubeletExtraArgs: meta.Args{
@@ -130,7 +130,7 @@ func (suite *KubeletConfigSuite) TestReconcileDefaults() {
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineKubelet: &v1alpha1.KubeletConfig{
+					MachineKubelet: &v1alpha1.KubeletConfig{ //nolint:staticcheck // legacy config
 						KubeletImage: "kubelet",
 					},
 				},

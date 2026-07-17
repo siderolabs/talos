@@ -3,9 +3,14 @@ mayastor:
     node:
       initContainers:
         enabled: false
+  etcd:
+    localpvScConfig:
+      basePath: /var/mnt/openebs/localpv-hostpath/etcd
 engines:
   local:
     lvm:
       enabled: false
     zfs:
       enabled: false
+loki:
+  enabled: false

@@ -837,6 +837,34 @@ func (container *Container) K8sServiceAccountConfig() config.K8sServiceAccountCo
 	return nil
 }
 
+// K8sKubeletConfig implements config.Config interface.
+func (container *Container) K8sKubeletConfig() config.K8sKubeletConfig {
+	matching := findMatchingDocs[config.K8sKubeletConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sKubeletConfig()
+	}
+
+	return nil
+}
+
+// K8sCredentialProviderConfig implements config.Config interface.
+func (container *Container) K8sCredentialProviderConfig() config.K8sCredentialProviderConfig {
+	matching := findMatchingDocs[config.K8sCredentialProviderConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sCredentialProviderConfig()
+	}
+
+	return nil
+}
+
 // OOMConfig implements config.Config interface.
 func (container *Container) OOMConfig() config.OOMConfig {
 	matching := findMatchingDocs[config.OOMConfig](container.documents)

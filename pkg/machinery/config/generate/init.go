@@ -33,9 +33,9 @@ func (in *Input) init() ([]config.Document, error) {
 
 	machine := &v1alpha1.MachineConfig{
 		MachineType: machine.TypeInit.String(),
-		MachineKubelet: &v1alpha1.KubeletConfig{
+		MachineKubelet: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.KubeletConfig{ //nolint:staticcheck // legacy configuration
 			KubeletImage: fmt.Sprintf("%s:v%s", constants.KubeletImage, in.KubernetesVersion),
-		},
+		}),
 		MachineCA:       in.Options.SecretsBundle.Certs.OS,
 		MachineCertSANs: in.AdditionalMachineCertSANs,
 		MachineToken:    in.Options.SecretsBundle.TrustdInfo.Token,
@@ -80,12 +80,12 @@ func (in *Input) init() ([]config.Document, error) {
 		}
 	}
 
-	if in.Options.VersionContract.KubeletDefaultRuntimeSeccompProfileEnabled() {
-		machine.MachineKubelet.KubeletDefaultRuntimeSeccompProfileEnabled = new(true)
+	if !in.Options.VersionContract.MultidocKubernetesConfigSupported() && in.Options.VersionContract.KubeletDefaultRuntimeSeccompProfileEnabled() {
+		machine.MachineKubelet.KubeletDefaultRuntimeSeccompProfileEnabled = new(true) //nolint:staticcheck // legacy configuration
 	}
 
-	if in.Options.VersionContract.KubeletManifestsDirectoryDisabled() {
-		machine.MachineKubelet.KubeletDisableManifestsDirectory = new(true)
+	if !in.Options.VersionContract.MultidocKubernetesConfigSupported() && in.Options.VersionContract.KubeletManifestsDirectoryDisabled() {
+		machine.MachineKubelet.KubeletDisableManifestsDirectory = new(true) //nolint:staticcheck // legacy configuration
 	}
 
 	if in.Options.VersionContract.HostDNSEnabled() && !in.Options.VersionContract.HostDNSMultidocConfig() {

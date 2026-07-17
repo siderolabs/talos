@@ -53,6 +53,13 @@ func WithTrustedRoots(versionContract *config.VersionContract, trustedRoots stri
 
 // WithKubeletImage returns a patch that updates the kubelet image in the machine configuration.
 func WithKubeletImage(versionContract *config.VersionContract, kubeletImage string) ([]byte, error) {
+	if versionContract.MultidocKubernetesConfigSupported() {
+		kubeletConfig := k8s.NewKubeletConfigV1Alpha1()
+		kubeletConfig.KubeletImage = kubeletImage
+
+		return patchFromDocument(kubeletConfig)
+	}
+
 	return patchFromV1Alpha1(map[string]any{
 		"machine": map[string]any{
 			"kubelet": map[string]any{

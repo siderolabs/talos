@@ -8,7 +8,6 @@ package v1alpha1
 
 import (
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 )
 
 func (Config) Doc() *encoder.Doc {
@@ -115,13 +114,7 @@ func (MachineConfig) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra certificate subject alternative names for the machine's certificate." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{},
-			{
-				Name:        "kubelet",
-				Type:        "KubeletConfig",
-				Note:        "",
-				Description: "Used to provide additional options to the kubelet.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Used to provide additional options to the kubelet." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{
 				Name:        "pods",
 				Type:        "[]Unstructured",
@@ -186,7 +179,6 @@ func (MachineConfig) Doc() *encoder.Doc {
 	doc.Fields[1].AddExample("example token", "328hom.uqjzh6jnn2eie9oi")
 	doc.Fields[2].AddExample("machine CA example", pemEncodedCertificateExample())
 	doc.Fields[4].AddExample("Uncomment this to enable SANs.", []string{"10.0.0.10", "172.16.0.10", "192.168.0.10"})
-	doc.Fields[6].AddExample("Kubelet definition example.", machineKubeletExample())
 	doc.Fields[7].AddExample("nginx static pod.", machinePodsExample())
 	doc.Fields[11].AddExample("MachineFiles usage example.", machineFilesExample())
 	doc.Fields[18].AddExample("", machineFeaturesExample())
@@ -328,214 +320,6 @@ func (ClusterConfig) Doc() *encoder.Doc {
 	})
 	doc.Fields[22].AddExample("", clusterInlineManifestsExample())
 	doc.Fields[23].AddExample("", clusterAdminKubeconfigExample())
-
-	return doc
-}
-
-func (LinuxIDMapping) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "LinuxIDMapping",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "LinuxIDMapping represents the Linux ID mapping." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "LinuxIDMapping represents the Linux ID mapping.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "ExtraMount",
-				FieldName: "uidMappings",
-			},
-			{
-				TypeName:  "ExtraMount",
-				FieldName: "gidMappings",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "containerID",
-				Type:        "uint32",
-				Note:        "",
-				Description: "ContainerID is the starting UID/GID in the container.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "ContainerID is the starting UID/GID in the container." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "hostID",
-				Type:        "uint32",
-				Note:        "",
-				Description: "HostID is the starting UID/GID on the host to be mapped to 'ContainerID'.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "HostID is the starting UID/GID on the host to be mapped to 'ContainerID'." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "size",
-				Type:        "uint32",
-				Note:        "",
-				Description: "Size is the number of IDs to be mapped.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Size is the number of IDs to be mapped." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	return doc
-}
-
-func (ExtraMount) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "ExtraMount",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "ExtraMount wraps OCI Mount specification." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ExtraMount wraps OCI Mount specification.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "KubeletConfig",
-				FieldName: "extraMounts",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "destination",
-				Type:        "string",
-				Note:        "",
-				Description: "Destination is the absolute path where the mount will be placed in the container.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Destination is the absolute path where the mount will be placed in the container." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "type",
-				Type:        "string",
-				Note:        "",
-				Description: "Type specifies the mount kind.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Type specifies the mount kind." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "source",
-				Type:        "string",
-				Note:        "",
-				Description: "Source specifies the source path of the mount.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Source specifies the source path of the mount." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "options",
-				Type:        "[]string",
-				Note:        "",
-				Description: "Options are fstab style mount options.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Options are fstab style mount options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "uidMappings",
-				Type:        "[]LinuxIDMapping",
-				Note:        "",
-				Description: "UID/GID mappings used for changing file owners w/o calling chown, fs should support it.\n\nEvery mount point could have its own mapping.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "UID/GID mappings used for changing file owners w/o calling chown, fs should support it." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "gidMappings",
-				Type:        "[]LinuxIDMapping",
-				Note:        "",
-				Description: "UID/GID mappings used for changing file owners w/o calling chown, fs should support it.\n\nEvery mount point could have its own mapping.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "UID/GID mappings used for changing file owners w/o calling chown, fs should support it." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", kubeletExtraMountsExample())
-
-	return doc
-}
-
-func (KubeletConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "KubeletConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeletConfig represents the kubelet config values." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "KubeletConfig represents the kubelet config values.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "MachineConfig",
-				FieldName: "kubelet",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "image",
-				Type:        "string",
-				Note:        "",
-				Description: "The `image` field is an optional reference to an alternative kubelet image.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `image` field is an optional reference to an alternative kubelet image." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "clusterDNS",
-				Type:        "[]string",
-				Note:        "",
-				Description: "The `ClusterDNS` field is an optional reference to an alternative kubelet clusterDNS ip list.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `ClusterDNS` field is an optional reference to an alternative kubelet clusterDNS ip list." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "extraArgs",
-				Type:        "Args",
-				Note:        "",
-				Description: "The `extraArgs` field is used to provide additional flags to the kubelet.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `extraArgs` field is used to provide additional flags to the kubelet." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "extraMounts",
-				Type:        "[]ExtraMount",
-				Note:        "",
-				Description: "The `extraMounts` field is used to add additional mounts to the kubelet container.\nNote that either `bind` or `rbind` are required in the `options`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `extraMounts` field is used to add additional mounts to the kubelet container." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "extraConfig",
-				Type:        "Unstructured",
-				Note:        "",
-				Description: "The `extraConfig` field is used to provide kubelet configuration overrides.\n\nSome fields are not allowed to be overridden: authentication and authorization, cgroups\nconfiguration, ports, etc.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `extraConfig` field is used to provide kubelet configuration overrides." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "credentialProviderConfig",
-				Type:        "Unstructured",
-				Note:        "",
-				Description: "The `KubeletCredentialProviderConfig` field is used to provide kubelet credential configuration.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `KubeletCredentialProviderConfig` field is used to provide kubelet credential configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "defaultRuntimeSeccompProfileEnabled",
-				Type:        "bool",
-				Note:        "",
-				Description: "Enable container runtime default Seccomp profile.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable container runtime default Seccomp profile." /* encoder.LineComment */, "" /* encoder.FootComment */},
-				Values: []string{
-					"true",
-					"yes",
-					"false",
-					"no",
-				},
-			},
-			{},
-			{},
-			{},
-			{
-				Name:        "disableManifestsDirectory",
-				Type:        "bool",
-				Note:        "",
-				Description: "The `disableManifestsDirectory` field configures the kubelet to get static pod manifests from the /etc/kubernetes/manifests directory.\nIt's recommended to configure static pods with the \"pods\" key instead.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `disableManifestsDirectory` field configures the kubelet to get static pod manifests from the /etc/kubernetes/manifests directory." /* encoder.LineComment */, "" /* encoder.FootComment */},
-				Values: []string{
-					"true",
-					"yes",
-					"false",
-					"no",
-				},
-			},
-		},
-	}
-
-	doc.AddExample("Kubelet definition example.", machineKubeletExample())
-
-	doc.Fields[0].AddExample("", kubeletImageExample())
-	doc.Fields[1].AddExample("", []string{"10.96.0.10", "169.254.2.53"})
-	doc.Fields[2].AddExample("", meta.Args{
-		"key": meta.NewArgValue("value", nil),
-	})
-	doc.Fields[2].AddExample("", meta.Args{
-		"key": meta.NewArgValue("", []string{"value1", "value2"}),
-	})
-	doc.Fields[3].AddExample("", kubeletExtraMountsExample())
-	doc.Fields[4].AddExample("", kubeletExtraConfigExample())
-	doc.Fields[5].AddExample("", kubeletCredentialProviderConfigExample())
 
 	return doc
 }
@@ -990,9 +774,6 @@ func GetFileDoc() *encoder.FileDoc {
 			MachineConfig{}.Doc(),
 			MachineSeccompProfile{}.Doc(),
 			ClusterConfig{}.Doc(),
-			LinuxIDMapping{}.Doc(),
-			ExtraMount{}.Doc(),
-			KubeletConfig{}.Doc(),
 			Endpoint{}.Doc(),
 			EtcdConfig{}.Doc(),
 			ExternalCloudProviderConfig{}.Doc(),

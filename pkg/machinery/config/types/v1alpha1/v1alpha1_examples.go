@@ -54,19 +54,6 @@ func pemEncodedCertificateExample() *x509.PEMEncodedCertificateAndKey {
 	}
 }
 
-func machineKubeletExample() *KubeletConfig {
-	return &KubeletConfig{
-		KubeletImage: (&KubeletConfig{}).Image(),
-		KubeletExtraArgs: meta.Args{
-			"feature-gates": meta.NewArgValue("ServerSideApply=true", nil),
-		},
-	}
-}
-
-func kubeletImageExample() string {
-	return (&KubeletConfig{}).Image()
-}
-
 func machineFilesExample() []*MachineFile {
 	return []*MachineFile{
 		{
@@ -131,21 +118,6 @@ func machineSeccompExample() []*MachineSeccompProfile {
 	}
 }
 
-func kubeletExtraMountsExample() []ExtraMount {
-	return []ExtraMount{
-		{
-			Source:      "/var/lib/example",
-			Destination: "/var/lib/example",
-			Type:        "bind",
-			Options: []string{
-				"bind",
-				"rshared",
-				"rw",
-			},
-		},
-	}
-}
-
 func clusterInlineManifestsExample() ClusterInlineManifests {
 	return ClusterInlineManifests{
 		{
@@ -156,37 +128,6 @@ kind: Namespace
 metadata:
 	name: ci
 `),
-		},
-	}
-}
-
-func kubeletExtraConfigExample() meta.Unstructured {
-	return meta.Unstructured{
-		Object: map[string]any{
-			"serverTLSBootstrap": true,
-		},
-	}
-}
-
-func kubeletCredentialProviderConfigExample() meta.Unstructured {
-	return meta.Unstructured{
-		Object: map[string]any{
-			"apiVersion": "kubelet.config.k8s.io/v1",
-			"kind":       "CredentialProviderConfig",
-			"providers": []any{
-				map[string]any{
-					"name":       "ecr-credential-provider",
-					"apiVersion": "credentialprovider.kubelet.k8s.io/v1",
-					"matchImages": []any{
-						"*.dkr.ecr.*.amazonaws.com",
-						"*.dkr.ecr.*.amazonaws.com.cn",
-						"*.dkr.ecr-fips.*.amazonaws.com",
-						"*.dkr.ecr.us-iso-east-1.c2s.ic.gov",
-						"*.dkr.ecr.us-isob-east-1.sc2s.sgov.gov",
-					},
-					"defaultCacheDuration": "12h",
-				},
-			},
 		},
 	}
 }

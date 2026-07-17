@@ -11,6 +11,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"slices"
 	"strings"
 	"time"
 
@@ -270,7 +271,10 @@ func (suite *MountsSuite) checkOptOnNode(node, opt string, exempt func(mountInfo
 		// /var honors the EPHEMERAL VolumeConfig's mount.secure setting; when
 		// the cluster was deployed with secure=false skip the assertion to match
 		// the configured policy rather than the secure-by-default one.
-		if suite.SkipEphemeralPolicy && m.mountPoint == constants.EphemeralMountPoint {
+		//
+		// also `/var/mnt/longhorn` is a directory volume, so it inherits the mount
+		// flags from `/var`
+		if suite.SkipEphemeralPolicy && slices.Contains([]string{constants.EphemeralMountPoint, "/var/mnt/longhorn"}, m.mountPoint) {
 			continue
 		}
 

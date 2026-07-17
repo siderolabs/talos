@@ -968,8 +968,8 @@ func (e *EtcdConfig) Validate() error {
 func (c *Config) ValidateKubernetesVersions() error {
 	var result *multierror.Error
 
-	if c.MachineConfig != nil {
-		if err := compatibility.ValidateKubernetesImageTag(c.Machine().Kubelet().Image()); err != nil {
+	if c.MachineConfig != nil && c.MachineConfig.MachineKubelet != nil {
+		if err := compatibility.ValidateKubernetesImageTag(c.MachineConfig.MachineKubelet.Image()); err != nil {
 			result = multierror.Append(result, fmt.Errorf("kubelet image is not valid: %w", err))
 		}
 	}

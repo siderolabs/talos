@@ -1558,6 +1558,7 @@
       "type": "object",
       "required": [
         "apiVersion",
+        "image",
         "kind"
       ],
       "description": "KubeAPIServerConfig configures kube-apiserver controlplane static pod."
@@ -1910,6 +1911,7 @@
       "type": "object",
       "required": [
         "apiVersion",
+        "image",
         "kind"
       ],
       "description": "KubeControllerManagerConfig configures kube-controller-manager controlplane static pod."
@@ -1956,6 +1958,42 @@
         "kind"
       ],
       "description": "KubeCoreDNSConfig configures CoreDNS deployment."
+    },
+    "k8s.KubeCredentialProviderConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "KubeCredentialProviderConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "configuration": {
+          "type": "object",
+          "title": "configuration",
+          "description": "Kubelet credential provider configuration (used for image registry authentication).\nThe value is the literal kubelet’s credential provider configuration.\n",
+          "markdownDescription": "Kubelet credential provider configuration (used for image registry authentication).\nThe value is the literal kubelet's credential provider configuration.",
+          "x-intellij-html-description": "\u003cp\u003eKubelet credential provider configuration (used for image registry authentication).\nThe value is the literal kubelet\u0026rsquo;s credential provider configuration.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "KubeCredentialProviderConfig configures kubelet's credential provider."
     },
     "k8s.KubeEtcdEncryptionConfigV1Alpha1": {
       "properties": {
@@ -2318,6 +2356,7 @@
       "type": "object",
       "required": [
         "apiVersion",
+        "image",
         "kind"
       ],
       "description": "KubeProxyConfig deploys Flannel CNI to the cluster."
@@ -2407,6 +2446,7 @@
       "type": "object",
       "required": [
         "apiVersion",
+        "image",
         "kind"
       ],
       "description": "KubeSchedulerConfig configures kube-scheduler controlplane static pod."
@@ -2454,6 +2494,87 @@
         "kind"
       ],
       "description": "KubeServiceAccountConfig configures Kubernetes service accounts."
+    },
+    "k8s.KubeletConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "KubeletConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "The container image used to run the kubelet component.\n\nThe image reference should contain the tag, even if it is pinned by digest.\n",
+          "markdownDescription": "The container image used to run the kubelet component.\n\nThe image reference should contain the tag, even if it is pinned by digest.",
+          "x-intellij-html-description": "\u003cp\u003eThe container image used to run the kubelet component.\u003c/p\u003e\n\n\u003cp\u003eThe image reference should contain the tag, even if it is pinned by digest.\u003c/p\u003e\n"
+        },
+        "config": {
+          "type": "object",
+          "title": "config",
+          "description": "Provide extra configuration for the kubelet.\n\nThere is no need to specify kind and apiVersion fields (they will be set automatically),\nbut the rest of the configuration should be provided as is.\n\nSee https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/ for the details of the configuration schema.\n",
+          "markdownDescription": "Provide extra configuration for the kubelet.\n\nThere is no need to specify kind and apiVersion fields (they will be set automatically),\nbut the rest of the configuration should be provided as is.\n\nSee https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/ for the details of the configuration schema.",
+          "x-intellij-html-description": "\u003cp\u003eProvide extra configuration for the kubelet.\u003c/p\u003e\n\n\u003cp\u003eThere is no need to specify kind and apiVersion fields (they will be set automatically),\nbut the rest of the configuration should be provided as is.\u003c/p\u003e\n\n\u003cp\u003eSee \u003ca href=\"https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/\" target=\"_blank\"\u003ehttps://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/\u003c/a\u003e for the details of the configuration schema.\u003c/p\u003e\n"
+        },
+        "extraArgs": {
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              }
+            ]
+          },
+          "type": "object",
+          "title": "extraArgs",
+          "description": "Extra command line arguments to supply to the kubelet.\n\nIt is preferable to use config field to provide configuration overrides.\n",
+          "markdownDescription": "Extra command line arguments to supply to the kubelet.\n\nIt is preferable to use `config` field to provide configuration overrides.",
+          "x-intellij-html-description": "\u003cp\u003eExtra command line arguments to supply to the kubelet.\u003c/p\u003e\n\n\u003cp\u003eIt is preferable to use \u003ccode\u003econfig\u003c/code\u003e field to provide configuration overrides.\u003c/p\u003e\n"
+        },
+        "clusterDNS": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "clusterDNS",
+          "description": "The ClusterDNS field is an optional reference to an alternative kubelet clusterDNS ip list.\n",
+          "markdownDescription": "The `ClusterDNS` field is an optional reference to an alternative kubelet clusterDNS ip list.",
+          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eClusterDNS\u003c/code\u003e field is an optional reference to an alternative kubelet clusterDNS ip list.\u003c/p\u003e\n"
+        },
+        "defaultRuntimeSeccompProfileEnabled": {
+          "type": "boolean",
+          "title": "defaultRuntimeSeccompProfileEnabled",
+          "description": "Enable container runtime default Seccomp profile.\n",
+          "markdownDescription": "Enable container runtime default Seccomp profile.",
+          "x-intellij-html-description": "\u003cp\u003eEnable container runtime default Seccomp profile.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "image",
+        "kind"
+      ],
+      "description": "KubeletConfig configures kubelet component on the node."
     },
     "k8s.NodeIPConfig": {
       "properties": {
@@ -6326,64 +6447,6 @@
       "type": "object",
       "description": "ExternalCloudProviderConfig contains external cloud provider configuration."
     },
-    "v1alpha1.ExtraMount": {
-      "properties": {
-        "destination": {
-          "type": "string",
-          "title": "destination",
-          "description": "Destination is the absolute path where the mount will be placed in the container.\n",
-          "markdownDescription": "Destination is the absolute path where the mount will be placed in the container.",
-          "x-intellij-html-description": "\u003cp\u003eDestination is the absolute path where the mount will be placed in the container.\u003c/p\u003e\n"
-        },
-        "type": {
-          "type": "string",
-          "title": "type",
-          "description": "Type specifies the mount kind.\n",
-          "markdownDescription": "Type specifies the mount kind.",
-          "x-intellij-html-description": "\u003cp\u003eType specifies the mount kind.\u003c/p\u003e\n"
-        },
-        "source": {
-          "type": "string",
-          "title": "source",
-          "description": "Source specifies the source path of the mount.\n",
-          "markdownDescription": "Source specifies the source path of the mount.",
-          "x-intellij-html-description": "\u003cp\u003eSource specifies the source path of the mount.\u003c/p\u003e\n"
-        },
-        "options": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "title": "options",
-          "description": "Options are fstab style mount options.\n",
-          "markdownDescription": "Options are fstab style mount options.",
-          "x-intellij-html-description": "\u003cp\u003eOptions are fstab style mount options.\u003c/p\u003e\n"
-        },
-        "uidMappings": {
-          "items": {
-            "$ref": "#/$defs/v1alpha1.LinuxIDMapping"
-          },
-          "type": "array",
-          "title": "uidMappings",
-          "description": "UID/GID mappings used for changing file owners w/o calling chown, fs should support it.\n\nEvery mount point could have its own mapping.\n",
-          "markdownDescription": "UID/GID mappings used for changing file owners w/o calling chown, fs should support it.\n\nEvery mount point could have its own mapping.",
-          "x-intellij-html-description": "\u003cp\u003eUID/GID mappings used for changing file owners w/o calling chown, fs should support it.\u003c/p\u003e\n\n\u003cp\u003eEvery mount point could have its own mapping.\u003c/p\u003e\n"
-        },
-        "gidMappings": {
-          "items": {
-            "$ref": "#/$defs/v1alpha1.LinuxIDMapping"
-          },
-          "type": "array",
-          "title": "gidMappings",
-          "description": "UID/GID mappings used for changing file owners w/o calling chown, fs should support it.\n\nEvery mount point could have its own mapping.\n",
-          "markdownDescription": "UID/GID mappings used for changing file owners w/o calling chown, fs should support it.\n\nEvery mount point could have its own mapping.",
-          "x-intellij-html-description": "\u003cp\u003eUID/GID mappings used for changing file owners w/o calling chown, fs should support it.\u003c/p\u003e\n\n\u003cp\u003eEvery mount point could have its own mapping.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "ExtraMount wraps OCI Mount specification."
-    },
     "v1alpha1.FeaturesConfig": {
       "properties": {
         "kubernetesTalosAPIAccess": {
@@ -6440,88 +6503,6 @@
       "type": "object",
       "description": "KubePrism describes the configuration for the KubePrism load balancer."
     },
-    "v1alpha1.KubeletConfig": {
-      "properties": {
-        "image": {
-          "type": "string",
-          "title": "image",
-          "description": "The image field is an optional reference to an alternative kubelet image.\n",
-          "markdownDescription": "The `image` field is an optional reference to an alternative kubelet image.",
-          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eimage\u003c/code\u003e field is an optional reference to an alternative kubelet image.\u003c/p\u003e\n"
-        },
-        "clusterDNS": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array",
-          "title": "clusterDNS",
-          "description": "The ClusterDNS field is an optional reference to an alternative kubelet clusterDNS ip list.\n",
-          "markdownDescription": "The `ClusterDNS` field is an optional reference to an alternative kubelet clusterDNS ip list.",
-          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eClusterDNS\u003c/code\u003e field is an optional reference to an alternative kubelet clusterDNS ip list.\u003c/p\u003e\n"
-        },
-        "extraArgs": {
-          "additionalProperties": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
-              }
-            ]
-          },
-          "type": "object",
-          "title": "extraArgs",
-          "description": "The extraArgs field is used to provide additional flags to the kubelet.\n",
-          "markdownDescription": "The `extraArgs` field is used to provide additional flags to the kubelet.",
-          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eextraArgs\u003c/code\u003e field is used to provide additional flags to the kubelet.\u003c/p\u003e\n"
-        },
-        "extraMounts": {
-          "items": {
-            "$ref": "#/$defs/v1alpha1.ExtraMount"
-          },
-          "type": "array",
-          "title": "extraMounts",
-          "description": "The extraMounts field is used to add additional mounts to the kubelet container.\nNote that either bind or rbind are required in the options.\n",
-          "markdownDescription": "The `extraMounts` field is used to add additional mounts to the kubelet container.\nNote that either `bind` or `rbind` are required in the `options`.",
-          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eextraMounts\u003c/code\u003e field is used to add additional mounts to the kubelet container.\nNote that either \u003ccode\u003ebind\u003c/code\u003e or \u003ccode\u003erbind\u003c/code\u003e are required in the \u003ccode\u003eoptions\u003c/code\u003e.\u003c/p\u003e\n"
-        },
-        "extraConfig": {
-          "type": "object",
-          "title": "extraConfig",
-          "description": "The extraConfig field is used to provide kubelet configuration overrides.\n\nSome fields are not allowed to be overridden: authentication and authorization, cgroups\nconfiguration, ports, etc.\n",
-          "markdownDescription": "The `extraConfig` field is used to provide kubelet configuration overrides.\n\nSome fields are not allowed to be overridden: authentication and authorization, cgroups\nconfiguration, ports, etc.",
-          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eextraConfig\u003c/code\u003e field is used to provide kubelet configuration overrides.\u003c/p\u003e\n\n\u003cp\u003eSome fields are not allowed to be overridden: authentication and authorization, cgroups\nconfiguration, ports, etc.\u003c/p\u003e\n"
-        },
-        "credentialProviderConfig": {
-          "type": "object",
-          "title": "credentialProviderConfig",
-          "description": "The KubeletCredentialProviderConfig field is used to provide kubelet credential configuration.\n",
-          "markdownDescription": "The `KubeletCredentialProviderConfig` field is used to provide kubelet credential configuration.",
-          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003eKubeletCredentialProviderConfig\u003c/code\u003e field is used to provide kubelet credential configuration.\u003c/p\u003e\n"
-        },
-        "defaultRuntimeSeccompProfileEnabled": {
-          "type": "boolean",
-          "title": "defaultRuntimeSeccompProfileEnabled",
-          "description": "Enable container runtime default Seccomp profile.\n",
-          "markdownDescription": "Enable container runtime default Seccomp profile.",
-          "x-intellij-html-description": "\u003cp\u003eEnable container runtime default Seccomp profile.\u003c/p\u003e\n"
-        },
-        "disableManifestsDirectory": {
-          "type": "boolean",
-          "title": "disableManifestsDirectory",
-          "description": "The disableManifestsDirectory field configures the kubelet to get static pod manifests from the /etc/kubernetes/manifests directory.\nIt’s recommended to configure static pods with the “pods” key instead.\n",
-          "markdownDescription": "The `disableManifestsDirectory` field configures the kubelet to get static pod manifests from the /etc/kubernetes/manifests directory.\nIt's recommended to configure static pods with the \"pods\" key instead.",
-          "x-intellij-html-description": "\u003cp\u003eThe \u003ccode\u003edisableManifestsDirectory\u003c/code\u003e field configures the kubelet to get static pod manifests from the /etc/kubernetes/manifests directory.\nIt\u0026rsquo;s recommended to configure static pods with the \u0026ldquo;pods\u0026rdquo; key instead.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "KubeletConfig represents the kubelet config values."
-    },
     "v1alpha1.KubernetesTalosAPIAccessConfig": {
       "properties": {
         "enabled": {
@@ -6555,34 +6536,6 @@
       "additionalProperties": false,
       "type": "object",
       "description": "KubernetesTalosAPIAccessConfig describes the configuration for the Talos API access from Kubernetes pods."
-    },
-    "v1alpha1.LinuxIDMapping": {
-      "properties": {
-        "containerID": {
-          "type": "integer",
-          "title": "containerID",
-          "description": "ContainerID is the starting UID/GID in the container.\n",
-          "markdownDescription": "ContainerID is the starting UID/GID in the container.",
-          "x-intellij-html-description": "\u003cp\u003eContainerID is the starting UID/GID in the container.\u003c/p\u003e\n"
-        },
-        "hostID": {
-          "type": "integer",
-          "title": "hostID",
-          "description": "HostID is the starting UID/GID on the host to be mapped to ‘ContainerID’.\n",
-          "markdownDescription": "HostID is the starting UID/GID on the host to be mapped to 'ContainerID'.",
-          "x-intellij-html-description": "\u003cp\u003eHostID is the starting UID/GID on the host to be mapped to \u0026lsquo;ContainerID\u0026rsquo;.\u003c/p\u003e\n"
-        },
-        "size": {
-          "type": "integer",
-          "title": "size",
-          "description": "Size is the number of IDs to be mapped.\n",
-          "markdownDescription": "Size is the number of IDs to be mapped.",
-          "x-intellij-html-description": "\u003cp\u003eSize is the number of IDs to be mapped.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "LinuxIDMapping represents the Linux ID mapping."
     },
     "v1alpha1.LoggingConfig": {
       "properties": {
@@ -6693,13 +6646,6 @@
           "description": "Extra certificate subject alternative names for the machine’s certificate.\nBy default, all non-loopback interface IPs are automatically added to the certificate’s SANs.\n",
           "markdownDescription": "Extra certificate subject alternative names for the machine's certificate.\nBy default, all non-loopback interface IPs are automatically added to the certificate's SANs.",
           "x-intellij-html-description": "\u003cp\u003eExtra certificate subject alternative names for the machine\u0026rsquo;s certificate.\nBy default, all non-loopback interface IPs are automatically added to the certificate\u0026rsquo;s SANs.\u003c/p\u003e\n"
-        },
-        "kubelet": {
-          "$ref": "#/$defs/v1alpha1.KubeletConfig",
-          "title": "kubelet",
-          "description": "Used to provide additional options to the kubelet.\n",
-          "markdownDescription": "Used to provide additional options to the kubelet.",
-          "x-intellij-html-description": "\u003cp\u003eUsed to provide additional options to the kubelet.\u003c/p\u003e\n"
         },
         "pods": {
           "items": {
@@ -6898,10 +6844,16 @@
       "$ref": "#/$defs/k8s.KubeCoreDNSConfigV1Alpha1"
     },
     {
+      "$ref": "#/$defs/k8s.KubeCredentialProviderConfigV1Alpha1"
+    },
+    {
       "$ref": "#/$defs/k8s.KubeEtcdEncryptionConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/k8s.KubeFlannelCNIConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/k8s.KubeletConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/k8s.KubeNetworkConfigV1Alpha1"

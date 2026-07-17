@@ -201,7 +201,7 @@ func TestKubeNodeConfigV1Alpha1ConflictValidate(t *testing.T) {
 			name: "legacy skipNodeRegistration present",
 			v1alpha1Cfg: &v1alpha1.Config{
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineKubelet: &v1alpha1.KubeletConfig{
+					MachineKubelet: &v1alpha1.KubeletConfig{ //nolint:staticcheck // legacy config
 						KubeletSkipNodeRegistration: new(true),
 					},
 				},
@@ -212,7 +212,7 @@ func TestKubeNodeConfigV1Alpha1ConflictValidate(t *testing.T) {
 			name: "legacy registerWithFQDN present",
 			v1alpha1Cfg: &v1alpha1.Config{
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineKubelet: &v1alpha1.KubeletConfig{
+					MachineKubelet: &v1alpha1.KubeletConfig{ //nolint:staticcheck // legacy config
 						KubeletRegisterWithFQDN: new(true),
 					},
 				},
@@ -223,7 +223,7 @@ func TestKubeNodeConfigV1Alpha1ConflictValidate(t *testing.T) {
 			name: "legacy nodeIP present",
 			v1alpha1Cfg: &v1alpha1.Config{
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineKubelet: &v1alpha1.KubeletConfig{
+					MachineKubelet: &v1alpha1.KubeletConfig{ //nolint:staticcheck // testing legacy config conflict
 						KubeletNodeIP: &v1alpha1.KubeletNodeIPConfig{},
 					},
 				},

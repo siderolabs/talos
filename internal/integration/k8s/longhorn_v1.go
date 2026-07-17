@@ -19,6 +19,9 @@ import (
 )
 
 var (
+	//go:embed testdata/longhorn-engine-values.yaml
+	longhornEngineV1Values []byte
+
 	//go:embed testdata/longhorn-iscsi-volume.yaml
 	longHornISCSIVolumeManifest []byte
 
@@ -73,7 +76,7 @@ func (suite *LongHornV1Suite) TestDeploy() {
 		LongHornHelmChartVersion,
 		"longhorn",
 		"longhorn",
-		nil,
+		longhornEngineV1Values,
 	); err != nil {
 		suite.T().Fatalf("failed to install Longhorn chart: %v", err)
 	}

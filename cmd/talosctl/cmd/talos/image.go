@@ -520,7 +520,7 @@ var imageK8sBundleCmd = &cobra.Command{
 			container.NewV1Alpha1(
 				&v1alpha1.Config{
 					MachineConfig: &v1alpha1.MachineConfig{
-						MachineKubelet: &v1alpha1.KubeletConfig{},
+						MachineKubelet: &v1alpha1.KubeletConfig{}, //nolint:staticcheck // legacy config
 					},
 					ClusterConfig: &v1alpha1.ClusterConfig{
 						EtcdConfig:              &v1alpha1.EtcdConfig{},
@@ -702,7 +702,7 @@ var imageIntegrationCmd = &cobra.Command{
 
 		imgs := images.List(container.NewV1Alpha1(&v1alpha1.Config{
 			MachineConfig: &v1alpha1.MachineConfig{
-				MachineKubelet: &v1alpha1.KubeletConfig{},
+				MachineKubelet: &v1alpha1.KubeletConfig{}, //nolint:staticcheck // legacy config
 			},
 			ClusterConfig: &v1alpha1.ClusterConfig{
 				EtcdConfig:              &v1alpha1.EtcdConfig{},

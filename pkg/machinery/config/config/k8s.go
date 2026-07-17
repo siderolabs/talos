@@ -8,6 +8,7 @@ import (
 	"net/netip"
 	"net/url"
 
+	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/optional"
 )
@@ -179,4 +180,22 @@ type K8sNodeConfig interface {
 	Labels() map[string]string
 	Taints() map[string]string
 	Annotations() map[string]string
+}
+
+// K8sKubeletConfig defines the kubelet configuration options for the Kubernetes node.
+type K8sKubeletConfig interface {
+	K8sKubeletConfigSignal()
+	Image() string
+	ClusterDNS() []string
+	ExtraArgs() map[string][]string
+	ExtraMounts() []specs.Mount
+	ExtraConfig() map[string]any
+	DefaultRuntimeSeccompProfileEnabled() bool
+	DisableManifestsDirectory() bool
+}
+
+// K8sCredentialProviderConfig defines the configuration options for the Kubernetes credential provider.
+type K8sCredentialProviderConfig interface {
+	K8sCredentialProviderConfigSignal()
+	Configuration() map[string]any
 }

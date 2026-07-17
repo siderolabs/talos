@@ -1393,6 +1393,232 @@ func TestKubeNodeConfigBridge(t *testing.T) {
 	}
 }
 
+func TestKubeKubeletConfigBridge(t *testing.T) {
+	t.Parallel()
+
+	defaultImage := constants.KubeletImage + ":v" + constants.DefaultKubernetesVersion
+
+	for _, test := range []struct {
+		name string
+
+		cfg func(*testing.T) config.Config
+
+		expectNil bool
+
+		expectImage                     string
+		expectClusterDNS                []string
+		expectExtraArgs                 map[string][]string
+		expectExtraConfig               map[string]any
+		expectSeccompEnabled            bool
+		expectDisableManifestsDirectory bool
+	}{
+		{
+			name: "no machine config",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{})
+			},
+
+			expectNil: true,
+		},
+		{
+			name: "v1alpha1 default kubelet",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{},
+				})
+			},
+
+			// the legacy config falls back to the default kubelet image when none is set.
+			expectImage:     defaultImage,
+			expectExtraArgs: map[string][]string{},
+		},
+		{
+			name: "v1alpha1 only",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{
+						MachineKubelet: &v1alpha1.KubeletConfig{
+							KubeletImage:      "kubelet:v1",
+							KubeletClusterDNS: []string{"10.96.0.10"},
+							KubeletExtraArgs: meta.Args{
+								"feature-gates": meta.NewArgValue("AllBeta=true", nil),
+							},
+							KubeletExtraConfig: meta.Unstructured{
+								Object: map[string]any{"serverTLSBootstrap": true},
+							},
+							KubeletDefaultRuntimeSeccompProfileEnabled: new(true),
+							KubeletDisableManifestsDirectory:           new(true),
+						},
+					},
+				})
+			},
+
+			expectImage:                     "kubelet:v1",
+			expectClusterDNS:                []string{"10.96.0.10"},
+			expectExtraArgs:                 map[string][]string{"feature-gates": {"AllBeta=true"}},
+			expectExtraConfig:               map[string]any{"serverTLSBootstrap": true},
+			expectSeccompEnabled:            true,
+			expectDisableManifestsDirectory: true,
+		},
+		{
+			name: "new style",
+
+			cfg: func(t *testing.T) config.Config {
+				kc := k8s.NewKubeletConfigV1Alpha1()
+				kc.KubeletImage = "kubelet:v1"
+				kc.KubeletClusterDNS = []string{"10.96.0.10"}
+				kc.KubeletArgs = meta.Args{
+					"feature-gates": meta.NewArgValue("AllBeta=true", nil),
+				}
+				kc.KubeletConfig = meta.Unstructured{
+					Object: map[string]any{"serverTLSBootstrap": true},
+				}
+				kc.KubeletDefaultRuntimeSeccompProfileEnabled = new(true)
+
+				c, err := container.New(kc)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectImage:          "kubelet:v1",
+			expectClusterDNS:     []string{"10.96.0.10"},
+			expectExtraArgs:      map[string][]string{"feature-gates": {"AllBeta=true"}},
+			expectExtraConfig:    map[string]any{"serverTLSBootstrap": true},
+			expectSeccompEnabled: true,
+			// the new-style config always disables the static manifests directory.
+			expectDisableManifestsDirectory: true,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := test.cfg(t)
+
+			kubelet := cfg.K8sKubeletConfig()
+
+			if test.expectNil {
+				assert.Nil(t, kubelet)
+
+				return
+			}
+
+			require.NotNil(t, kubelet)
+
+			assert.Equal(t, test.expectImage, kubelet.Image())
+			assert.Equal(t, test.expectClusterDNS, kubelet.ClusterDNS())
+			assert.Equal(t, test.expectExtraArgs, kubelet.ExtraArgs())
+			assert.Equal(t, test.expectExtraConfig, kubelet.ExtraConfig())
+			assert.Equal(t, test.expectSeccompEnabled, kubelet.DefaultRuntimeSeccompProfileEnabled())
+			assert.Equal(t, test.expectDisableManifestsDirectory, kubelet.DisableManifestsDirectory())
+			assert.Nil(t, kubelet.ExtraMounts())
+		})
+	}
+}
+
+func TestKubeCredentialProviderConfigBridge(t *testing.T) {
+	t.Parallel()
+
+	credentialProviderConfig := map[string]any{
+		"apiVersion": "kubelet.config.k8s.io/v1",
+		"kind":       "CredentialProviderConfig",
+		"providers": []any{
+			map[string]any{
+				"name":       "ecr-credential-provider",
+				"apiVersion": "credentialprovider.kubelet.k8s.io/v1",
+				"matchImages": []any{
+					"*.dkr.ecr.*.amazonaws.com",
+				},
+				"defaultCacheDuration": "12h",
+			},
+		},
+	}
+
+	for _, test := range []struct {
+		name string
+
+		cfg func(*testing.T) config.Config
+
+		expectNil bool
+
+		expectConfiguration map[string]any
+	}{
+		{
+			name: "no machine config",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{})
+			},
+
+			expectNil: true,
+		},
+		{
+			name: "machine config without kubelet",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{},
+				})
+			},
+
+			expectNil: true,
+		},
+		{
+			name: "v1alpha1 only",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{
+						MachineKubelet: &v1alpha1.KubeletConfig{
+							KubeletCredentialProviderConfig: meta.Unstructured{
+								Object: credentialProviderConfig,
+							},
+						},
+					},
+				})
+			},
+
+			expectConfiguration: credentialProviderConfig,
+		},
+		{
+			name: "new style",
+
+			cfg: func(t *testing.T) config.Config {
+				cp := k8s.NewKubeCredentialProviderConfigV1Alpha1()
+				cp.CredentialProviderConfig.Object = credentialProviderConfig
+
+				c, err := container.New(cp)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectConfiguration: credentialProviderConfig,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := test.cfg(t)
+
+			credentialProvider := cfg.K8sCredentialProviderConfig()
+
+			if test.expectNil {
+				assert.Nil(t, credentialProvider)
+
+				return
+			}
+
+			require.NotNil(t, credentialProvider)
+
+			assert.Equal(t, test.expectConfiguration, credentialProvider.Configuration())
+		})
+	}
+}
+
 func TestKubeClusterConfigBridge(t *testing.T) {
 	t.Parallel()
 

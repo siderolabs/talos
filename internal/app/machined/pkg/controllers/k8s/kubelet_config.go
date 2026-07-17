@@ -25,6 +25,8 @@ import (
 type KubeletConfigController = transform.Controller[*config.MachineConfig, *k8s.KubeletConfig]
 
 // NewKubeletConfigController instantiates the config controller.
+//
+//nolint:gocyclo
 func NewKubeletConfigController() *KubeletConfigController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *k8s.KubeletConfig]{
@@ -46,6 +48,10 @@ func NewKubeletConfigController() *KubeletConfigController {
 					return optional.None[*k8s.KubeletConfig]()
 				}
 
+				if cfg.Config().K8sKubeletConfig() == nil {
+					return optional.None[*k8s.KubeletConfig]()
+				}
+
 				return optional.Some(k8s.NewKubeletConfig(k8s.NamespaceName, k8s.KubeletID))
 			},
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, cfg *config.MachineConfig, res *k8s.KubeletConfig) error {
@@ -61,9 +67,9 @@ func NewKubeletConfigController() *KubeletConfigController {
 				kubeletConfig := res.TypedSpec()
 				cfgProvider := cfg.Config()
 
-				kubeletConfig.Image = cfgProvider.Machine().Kubelet().Image()
+				kubeletConfig.Image = cfgProvider.K8sKubeletConfig().Image()
 
-				kubeletConfig.ClusterDNS = cfgProvider.Machine().Kubelet().ClusterDNS()
+				kubeletConfig.ClusterDNS = cfgProvider.K8sKubeletConfig().ClusterDNS()
 
 				if len(kubeletConfig.ClusterDNS) == 0 {
 					addrs := k8s.DNSServiceAddrs(cfgProvider.K8sNetworkConfig().ServiceCIDRs())
@@ -71,23 +77,28 @@ func NewKubeletConfigController() *KubeletConfigController {
 					kubeletConfig.ClusterDNS = xslices.Map(addrs, netip.Addr.String)
 				}
 
-				extraArgs := make(map[string]k8s.ArgValues, len(cfgProvider.Machine().Kubelet().ExtraArgs()))
-				for k, v := range cfgProvider.Machine().Kubelet().ExtraArgs() {
+				extraArgs := make(map[string]k8s.ArgValues, len(cfgProvider.K8sKubeletConfig().ExtraArgs()))
+				for k, v := range cfgProvider.K8sKubeletConfig().ExtraArgs() {
 					extraArgs[k] = k8s.ArgValues{Values: v}
 				}
 
 				kubeletConfig.ClusterDomain = cfgProvider.K8sNetworkConfig().DNSDomain()
 				kubeletConfig.ExtraArgs = extraArgs
-				kubeletConfig.ExtraMounts = cfgProvider.Machine().Kubelet().ExtraMounts()
-				kubeletConfig.ExtraConfig = cfgProvider.Machine().Kubelet().ExtraConfig()
+				kubeletConfig.ExtraMounts = cfgProvider.K8sKubeletConfig().ExtraMounts()
+				kubeletConfig.ExtraConfig = cfgProvider.K8sKubeletConfig().ExtraConfig()
 				kubeletConfig.CloudProviderExternal = cfgProvider.Cluster().ExternalCloudProvider().Enabled()
-				kubeletConfig.DefaultRuntimeSeccompEnabled = cfgProvider.Machine().Kubelet().DefaultRuntimeSeccompProfileEnabled()
+				kubeletConfig.DefaultRuntimeSeccompEnabled = cfgProvider.K8sKubeletConfig().DefaultRuntimeSeccompProfileEnabled()
 				kubeletConfig.SkipNodeRegistration = cfgProvider.K8sNodeConfig().SkipNodeRegistration()
 				kubeletConfig.StaticPodListURL = staticPodURL.TypedSpec().URL
-				kubeletConfig.DisableManifestsDirectory = cfgProvider.Machine().Kubelet().DisableManifestsDirectory()
+				kubeletConfig.DisableManifestsDirectory = cfgProvider.K8sKubeletConfig().DisableManifestsDirectory()
 				kubeletConfig.EnableFSQuotaMonitoring = cfgProvider.Machine().Features().DiskQuotaSupportEnabled()
-				kubeletConfig.CredentialProviderConfig = cfgProvider.Machine().Kubelet().CredentialProviderConfig()
 				kubeletConfig.RegisterWithTaints = cfgProvider.K8sNodeConfig().Taints()
+
+				if k8sCredentialProviderConfig := cfgProvider.K8sCredentialProviderConfig(); k8sCredentialProviderConfig != nil {
+					kubeletConfig.CredentialProviderConfig = k8sCredentialProviderConfig.Configuration()
+				} else {
+					kubeletConfig.CredentialProviderConfig = nil
+				}
 
 				return nil
 			},

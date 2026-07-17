@@ -78,7 +78,7 @@ func TestPatches(t *testing.T) {
 			kubernetesVersion: "1.34.0",
 
 			assertion: func(t *testing.T, cfg config.Config) {
-				assert.Equal(t, constants.KubeletImage+":v1.35.0", cfg.Machine().Kubelet().Image())
+				assert.Equal(t, constants.KubeletImage+":v1.35.0", cfg.K8sKubeletConfig().Image())
 			},
 		},
 		{

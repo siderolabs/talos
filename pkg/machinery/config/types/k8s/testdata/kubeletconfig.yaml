@@ -1,0 +1,10 @@
+apiVersion: v1alpha1
+kind: KubeletConfig
+image: ghcr.io/siderolabs/kubelet:v1.36.0
+config:
+    serverTLSBootstrap: true
+extraArgs:
+    feature-gates: AllBeta=true
+clusterDNS:
+    - 10.96.0.10
+defaultRuntimeSeccompProfileEnabled: true

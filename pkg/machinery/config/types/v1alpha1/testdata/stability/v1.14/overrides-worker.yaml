@@ -10,16 +10,6 @@ machine:
     certSANs:
         - foo
         - bar
-    kubelet:
-        image: ghcr.io/siderolabs/kubelet:v1.28.0
-        extraMounts:
-            - destination: /var/opt
-              type: bind
-              source: /var/opt
-              options:
-                - rshared
-        defaultRuntimeSeccompProfileEnabled: true
-        disableManifestsDirectory: true
     features:
         diskQuotaSupport: true
         kubePrism:
@@ -89,6 +79,14 @@ endpoint: https://base:6443
 apiVersion: v1alpha1
 kind: KubeNodeConfig
 nodeIP: {}
+---
+apiVersion: v1alpha1
+kind: KubeletConfig
+image: ghcr.io/siderolabs/kubelet:v1.28.0
+config: {}
+clusterDNS:
+    - 3.3.3.3
+defaultRuntimeSeccompProfileEnabled: true
 ---
 apiVersion: v1alpha1
 kind: KubeNetworkConfig

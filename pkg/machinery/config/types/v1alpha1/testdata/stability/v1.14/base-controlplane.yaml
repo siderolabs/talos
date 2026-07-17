@@ -8,10 +8,6 @@ machine:
         crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJQakNCOGFBREFnRUNBaEI5cStGVXpodzkycHVPemtpNzB1eGRNQVVHQXl0bGNEQVFNUTR3REFZRFZRUUsKRXdWMFlXeHZjekFlRncweU16RXdNVEl4TURRMk1EbGFGdzB6TXpFd01Ea3hNRFEyTURsYU1CQXhEakFNQmdOVgpCQW9UQlhSaGJHOXpNQ293QlFZREsyVndBeUVBaHVLczZxeCtKWi8wWG8ybXdpQUNjK1EwSVYySGhMd3ozVTZICmUxemZjS2lqWVRCZk1BNEdBMVVkRHdFQi93UUVBd0lDaERBZEJnTlZIU1VFRmpBVUJnZ3JCZ0VGQlFjREFRWUkKS3dZQkJRVUhBd0l3RHdZRFZSMFRBUUgvQkFVd0F3RUIvekFkQmdOVkhRNEVGZ1FVSlgzWlVNRktWWFZ5NWhKWQozZG9NWENpVEJZRXdCUVlESzJWd0EwRUFCbUxrbDhITmQ3cUpEN3VqQkk2UG9abVRQQWlEcU9GQ0NTVDZJYlZDClF3UzQ1bk1tMldtalRIc3ZrYU5FQ0dneTBhQXJaaFdsbnVYWUswY0t3Z2VJQ0E9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
         key: LS0tLS1CRUdJTiBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0KTUM0Q0FRQXdCUVlESzJWd0JDSUVJTURXbklEdVpSdlhQcW1tbSt6bk15SWMrdk53ZjdnYksvSmR3WC9iN2d1RQotLS0tLUVORCBFRDI1NTE5IFBSSVZBVEUgS0VZLS0tLS0K
     certSANs: []
-    kubelet:
-        image: ghcr.io/siderolabs/kubelet:v1.28.0
-        defaultRuntimeSeccompProfileEnabled: true
-        disableManifestsDirectory: true
     features:
         diskQuotaSupport: true
         kubePrism:
@@ -71,6 +67,12 @@ labels:
     node.kubernetes.io/exclude-from-external-load-balancers: ""
 taints:
     node-role.kubernetes.io/control-plane: NoSchedule
+---
+apiVersion: v1alpha1
+kind: KubeletConfig
+image: ghcr.io/siderolabs/kubelet:v1.28.0
+config: {}
+defaultRuntimeSeccompProfileEnabled: true
 ---
 apiVersion: v1alpha1
 kind: KubeNetworkConfig

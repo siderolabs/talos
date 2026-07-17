@@ -36,7 +36,7 @@ func (suite *NodeIPConfigSuite) TestReconcileWithSubnets() {
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{
-					MachineKubelet: &v1alpha1.KubeletConfig{
+					MachineKubelet: &v1alpha1.KubeletConfig{ //nolint:staticcheck // legacy config
 						KubeletNodeIP: &v1alpha1.KubeletNodeIPConfig{
 							KubeletNodeIPValidSubnets: []string{"10.0.0.0/24"},
 						},

@@ -441,6 +441,31 @@ func (KubeCoreDNSConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (KubeCredentialProviderConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeCredentialProviderConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeCredentialProviderConfig configures kubelet's credential provider." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeCredentialProviderConfig configures kubelet's credential provider.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "configuration",
+				Type:        "Unstructured",
+				Note:        "",
+				Description: "Kubelet credential provider configuration (used for image registry authentication).\nThe value is the literal kubelet's credential provider configuration.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Kubelet credential provider configuration (used for image registry authentication)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeCredentialProviderConfigV1Alpha1())
+
+	return doc
+}
+
 func (KubeEtcdEncryptionConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "KubeEtcdEncryptionConfig",
@@ -531,6 +556,65 @@ func (KubeFlannelCNIConfigV1Alpha1) Doc() *encoder.Doc {
 	doc.AddExample("", exampleKubeFlannelCNIConfigV1Alpha1())
 
 	doc.Fields[6].AddExample("", []string{"--iface-can-reach=192.168.1.1"})
+
+	return doc
+}
+
+func (KubeletConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeletConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeletConfig configures kubelet component on the node." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeletConfig configures kubelet component on the node.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "image",
+				Type:        "string",
+				Note:        "",
+				Description: "The container image used to run the kubelet component.\n\nThe image reference should contain the tag, even if it is pinned by digest.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The container image used to run the kubelet component." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "config",
+				Type:        "Unstructured",
+				Note:        "",
+				Description: "Provide extra configuration for the kubelet.\n\nThere is no need to specify kind and apiVersion fields (they will be set automatically),\nbut the rest of the configuration should be provided as is.\n\nSee https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/ for the details of the configuration schema.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Provide extra configuration for the kubelet." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "extraArgs",
+				Type:        "Args",
+				Note:        "",
+				Description: "Extra command line arguments to supply to the kubelet.\n\nIt is preferable to use `config` field to provide configuration overrides.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra command line arguments to supply to the kubelet." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "clusterDNS",
+				Type:        "[]string",
+				Note:        "",
+				Description: "The `ClusterDNS` field is an optional reference to an alternative kubelet clusterDNS ip list.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The `ClusterDNS` field is an optional reference to an alternative kubelet clusterDNS ip list." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "defaultRuntimeSeccompProfileEnabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable container runtime default Seccomp profile.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable container runtime default Seccomp profile." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"true",
+					"yes",
+					"false",
+					"no",
+				},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeletConfigV1Alpha1())
 
 	return doc
 }
@@ -929,8 +1013,10 @@ func GetFileDoc() *encoder.FileDoc {
 			ResourcesConfig{}.Doc(),
 			KubeControllerManagerConfigV1Alpha1{}.Doc(),
 			KubeCoreDNSConfigV1Alpha1{}.Doc(),
+			KubeCredentialProviderConfigV1Alpha1{}.Doc(),
 			KubeEtcdEncryptionConfigV1Alpha1{}.Doc(),
 			KubeFlannelCNIConfigV1Alpha1{}.Doc(),
+			KubeletConfigV1Alpha1{}.Doc(),
 			KubeNetworkConfigV1Alpha1{}.Doc(),
 			KubeNodeConfigV1Alpha1{}.Doc(),
 			NodeIPConfig{}.Doc(),

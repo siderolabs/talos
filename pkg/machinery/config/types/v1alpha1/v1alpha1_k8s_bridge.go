@@ -507,3 +507,39 @@ func (s k8sNodeConfigShim) Taints() map[string]string {
 func (s k8sNodeConfigShim) Annotations() map[string]string {
 	return s.machineConfig.MachineNodeAnnotations
 }
+
+// K8sKubeletConfig implements the config.Config interface.
+func (c *Config) K8sKubeletConfig() config.K8sKubeletConfig {
+	if c.MachineConfig == nil {
+		return nil
+	}
+
+	if c.MachineConfig.MachineKubelet == nil {
+		return &KubeletConfig{}
+	}
+
+	return c.MachineConfig.MachineKubelet
+}
+
+// K8sCredentialProviderConfig implements the config.Config interface.
+func (c *Config) K8sCredentialProviderConfig() config.K8sCredentialProviderConfig {
+	if c.MachineConfig == nil || c.MachineConfig.MachineKubelet == nil {
+		return nil
+	}
+
+	return k8sCredentialProviderConfigShim{
+		kubeletConfig: c.MachineConfig.MachineKubelet,
+	}
+}
+
+type k8sCredentialProviderConfigShim struct {
+	kubeletConfig *KubeletConfig
+}
+
+// K8sCredentialProviderConfigSignal implements config.K8sCredentialProviderConfig interface.
+func (s k8sCredentialProviderConfigShim) K8sCredentialProviderConfigSignal() {}
+
+// Configuration implements config.K8sCredentialProviderConfig interface.
+func (s k8sCredentialProviderConfigShim) Configuration() map[string]any {
+	return s.kubeletConfig.CredentialProviderConfig()
+}

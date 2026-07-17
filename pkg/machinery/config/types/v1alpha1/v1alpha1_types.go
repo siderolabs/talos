@@ -146,11 +146,9 @@ type MachineConfig struct {
 	//
 	// Deprecated: Use `KubeControllerManagerConfig`/`KubeSchedulerConfig` instead.
 	MachineControlPlane *MachineControlPlaneConfig `yaml:"controlPlane,omitempty"`
-	//   description: |
-	//     Used to provide additional options to the kubelet.
-	//   examples:
-	//     - name: Kubelet definition example.
-	//       value: machineKubeletExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeletConfig` instead.
 	MachineKubelet *KubeletConfig `yaml:"kubelet,omitempty"`
 	//   description: |
 	//     Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver.
@@ -420,6 +418,8 @@ type ClusterConfig struct {
 }
 
 // LinuxIDMapping represents the Linux ID mapping.
+//
+//docgen:nodoc
 type LinuxIDMapping struct {
 	//   description: |
 	//     ContainerID is the starting UID/GID in the container.
@@ -433,6 +433,8 @@ type LinuxIDMapping struct {
 }
 
 // ExtraMount wraps OCI Mount specification.
+//
+//docgen:nodoc
 type ExtraMount struct {
 	//   description: |
 	//     Destination is the absolute path where the mount will be placed in the container.
@@ -496,52 +498,30 @@ type MachineSchedulerConfig struct {
 }
 
 // KubeletConfig represents the kubelet config values.
+//
+// Deprecated: Use `KubeletConfig` instead.
+//
+// docgen:nodoc
 type KubeletConfig struct {
-	//   description: |
-	//     The `image` field is an optional reference to an alternative kubelet image.
-	//   examples:
-	//     - value: kubeletImageExample()
-	KubeletImage string `yaml:"image,omitempty"`
-	//   description: |
-	//     The `ClusterDNS` field is an optional reference to an alternative kubelet clusterDNS ip list.
-	//   examples:
-	//     - value: '[]string{"10.96.0.10", "169.254.2.53"}'
-	KubeletClusterDNS []string `yaml:"clusterDNS,omitempty"`
-	//   description: |
-	//     The `extraArgs` field is used to provide additional flags to the kubelet.
-	//   examples:
-	//     - value: >
-	//         meta.Args{
-	//           "key": meta.NewArgValue("value", nil),
-	//         }
-	//     - value: >
-	//         meta.Args{
-	//           "key": meta.NewArgValue("", []string{"value1", "value2"}),
-	//         }
-	//   schema:
-	//     type: object
-	//     additionalProperties:
-	//       oneOf:
-	//         - type: string
-	//         - type: array
-	//           items:
-	//             type: string
-	KubeletExtraArgs meta.Args `yaml:"extraArgs,omitempty"`
-	//   description: |
-	//     The `extraMounts` field is used to add additional mounts to the kubelet container.
-	//     Note that either `bind` or `rbind` are required in the `options`.
-	//   examples:
-	//     - value: kubeletExtraMountsExample()
-	KubeletExtraMounts []ExtraMount `yaml:"extraMounts,omitempty"`
-	//   description: |
-	//     The `extraConfig` field is used to provide kubelet configuration overrides.
+	// docgen:nodoc
 	//
-	//     Some fields are not allowed to be overridden: authentication and authorization, cgroups
-	//     configuration, ports, etc.
-	//   examples:
-	//     - value: kubeletExtraConfigExample()
-	//   schema:
-	//     type: object
+	// Deprecated: use `KubeletConfig` instead.
+	KubeletImage string `yaml:"image,omitempty"`
+	// docgen:nodoc
+	//
+	// Deprecated: use `KubeletConfig` instead.
+	KubeletClusterDNS []string `yaml:"clusterDNS,omitempty"`
+	// docgen:nodoc
+	//
+	// Deprecated: use `KubeletConfig` instead.
+	KubeletExtraArgs meta.Args `yaml:"extraArgs,omitempty"`
+	// docgen:nodoc
+	//
+	// Deprecated: removed in multi-doc config.
+	KubeletExtraMounts []ExtraMount `yaml:"extraMounts,omitempty"`
+	// docgen:nodoc
+	//
+	// Deprecated: use `KubeletConfig` instead.
 	KubeletExtraConfig meta.Unstructured `yaml:"extraConfig,omitempty"`
 	//  description: |
 	//   The `KubeletCredentialProviderConfig` field is used to provide kubelet credential configuration.
@@ -550,13 +530,9 @@ type KubeletConfig struct {
 	//  schema:
 	//    type: object
 	KubeletCredentialProviderConfig meta.Unstructured `yaml:"credentialProviderConfig,omitempty"`
-	//  description: |
-	//    Enable container runtime default Seccomp profile.
-	//  values:
-	//    - true
-	//    - yes
-	//    - false
-	//    - no
+	// docgen:nodoc
+	//
+	// Deprecated: use `KubeletConfig` instead.
 	KubeletDefaultRuntimeSeccompProfileEnabled *bool `yaml:"defaultRuntimeSeccompProfileEnabled,omitempty"`
 	// docgen:nodoc
 	//
@@ -570,14 +546,9 @@ type KubeletConfig struct {
 	//
 	// Deprecated: use `KubeNodeConfig` instead.
 	KubeletSkipNodeRegistration *bool `yaml:"skipNodeRegistration,omitempty"`
-	//   description: |
-	//     The `disableManifestsDirectory` field configures the kubelet to get static pod manifests from the /etc/kubernetes/manifests directory.
-	//     It's recommended to configure static pods with the "pods" key instead.
-	//   values:
-	//     - true
-	//     - yes
-	//     - false
-	//     - no
+	// docgen:nodoc
+	//
+	// Deprecated: locked to true in multi-doc config.
 	KubeletDisableManifestsDirectory *bool `yaml:"disableManifestsDirectory,omitempty"`
 }
 

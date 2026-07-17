@@ -9,7 +9,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/crypto/x509"
 
 	"github.com/siderolabs/talos/pkg/machinery/cel"
@@ -31,7 +30,6 @@ type MachineConfig interface {
 	Files() ([]File, error)
 	Type() machine.Type
 	Pods() []map[string]any
-	Kubelet() Kubelet
 	Sysctls() map[string]string
 	Sysfs() map[string]string
 	SystemDiskEncryption() SystemDiskEncryption
@@ -262,21 +260,6 @@ type NetworkDeviceSelector interface {
 	PCIID() string
 	KernelDriver() string
 	Physical() *bool
-}
-
-// Kubelet defines the requirements for a config that pertains to kubelet
-// related options.
-//
-//nolint:interfacebloat
-type Kubelet interface {
-	Image() string
-	ClusterDNS() []string
-	ExtraArgs() map[string][]string
-	ExtraMounts() []specs.Mount
-	ExtraConfig() map[string]any
-	CredentialProviderConfig() map[string]any
-	DefaultRuntimeSeccompProfileEnabled() bool
-	DisableManifestsDirectory() bool
 }
 
 // EncryptionKey defines settings for the partition encryption key handling.

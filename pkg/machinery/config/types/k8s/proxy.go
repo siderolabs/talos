@@ -59,6 +59,7 @@ type KubeProxyConfigV1Alpha1 struct {
 	ProxyEnabled *bool `yaml:"enabled,omitempty"`
 	//   description: |
 	//     The container image used in the kube-proxy manifest.
+	//   schemaRequired: true
 	ProxyImage string `yaml:"image,omitempty"`
 	//   description: |
 	//     Proxy mode of kube-proxy.

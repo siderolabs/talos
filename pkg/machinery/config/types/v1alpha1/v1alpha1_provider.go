@@ -268,15 +268,6 @@ func (m *MachineConfig) Pods() []map[string]any {
 	return xslices.Map(m.MachinePods, func(u meta.Unstructured) map[string]any { return u.Object })
 }
 
-// Kubelet implements the config.Provider interface.
-func (m *MachineConfig) Kubelet() config.Kubelet {
-	if m.MachineKubelet == nil {
-		return &KubeletConfig{}
-	}
-
-	return m.MachineKubelet
-}
-
 // Env implements the config.Provider interface.
 func (m *MachineConfig) Env() config.Env {
 	return m.MachineEnv
@@ -372,6 +363,9 @@ func (m *MachineConfig) Logging() config.Logging {
 
 	return m.MachineLogging
 }
+
+// K8sKubeletConfigSignal implements the config.K8sKubeletConfig interface.
+func (k *KubeletConfig) K8sKubeletConfigSignal() {}
 
 // Image implements the config.Provider interface.
 func (k *KubeletConfig) Image() string {
