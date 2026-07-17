@@ -6,6 +6,9 @@ package system_test
 
 import (
 	"context"
+	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/cosi-project/runtime/pkg/state"
@@ -13,9 +16,16 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 
+	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
+	"github.com/siderolabs/talos/internal/pkg/meta"
+	blockpb "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
+	"github.com/siderolabs/talos/pkg/machinery/cel"
+	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	metaconsts "github.com/siderolabs/talos/pkg/machinery/meta"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
@@ -167,4 +177,188 @@ func TestFindBackingVolume(t *testing.T) {
 			assert.Equal(t, test.expected, backingVolume)
 		})
 	}
+}
+
+func TestVolumeStatusToSelector(t *testing.T) {
+	t.Parallel()
+
+	t.Run("partition matches by partition UUID and round-trips through JSON", func(t *testing.T) {
+		t.Parallel()
+
+		const partUUID = "d2f3a1c0-0000-4000-8000-000000000001"
+
+		vs := block.NewVolumeStatus(block.NamespaceName, "EPHEMERAL")
+		vs.TypedSpec().Type = block.VolumeTypePartition
+		vs.TypedSpec().PartitionUUID = partUUID
+
+		sel, err := system.VolumeStatusToSelector(vs)
+		require.NoError(t, err)
+
+		// selectors are stored in META as a JSON array of expression strings
+		data, err := json.Marshal([]cel.Expression{sel})
+		require.NoError(t, err)
+
+		var restored []cel.Expression
+
+		require.NoError(t, json.Unmarshal(data, &restored))
+		require.Len(t, restored, 1)
+
+		env := celenv.VolumeLocator()
+
+		match, err := restored[0].EvalBool(env, map[string]any{
+			"volume": &blockpb.DiscoveredVolumeSpec{PartitionUuid: partUUID},
+		})
+		require.NoError(t, err)
+		assert.True(t, match, "selector should match a volume with the same partition UUID")
+
+		noMatch, err := restored[0].EvalBool(env, map[string]any{
+			"volume": &blockpb.DiscoveredVolumeSpec{PartitionUuid: "00000000-0000-4000-8000-000000000002"},
+		})
+		require.NoError(t, err)
+		assert.False(t, noMatch, "selector should not match a volume with a different partition UUID")
+	})
+
+	t.Run("partition without a UUID is an error", func(t *testing.T) {
+		t.Parallel()
+
+		vs := block.NewVolumeStatus(block.NamespaceName, "EPHEMERAL")
+		vs.TypedSpec().Type = block.VolumeTypePartition
+
+		_, err := system.VolumeStatusToSelector(vs)
+		require.Error(t, err)
+	})
+
+	t.Run("non-partition volume type is unsupported", func(t *testing.T) {
+		t.Parallel()
+
+		vs := block.NewVolumeStatus(block.NamespaceName, "SOME-DIR")
+		vs.TypedSpec().Type = block.VolumeTypeDirectory
+
+		_, err := system.VolumeStatusToSelector(vs)
+		require.Error(t, err)
+	})
+}
+
+func TestVolumeStatusesToSelectors(t *testing.T) {
+	t.Parallel()
+
+	vs1 := block.NewVolumeStatus(block.NamespaceName, "EPHEMERAL")
+	vs1.TypedSpec().Type = block.VolumeTypePartition
+	vs1.TypedSpec().PartitionUUID = "d2f3a1c0-0000-4000-8000-000000000001"
+
+	vs2 := block.NewVolumeStatus(block.NamespaceName, "STATE")
+	vs2.TypedSpec().Type = block.VolumeTypePartition
+	vs2.TypedSpec().PartitionUUID = "d2f3a1c0-0000-4000-8000-000000000002"
+
+	selectors, err := system.VolumeStatusesToSelectors([]*block.VolumeStatus{vs1, vs2})
+	require.NoError(t, err)
+	require.Len(t, selectors, 2)
+
+	// an error on any volume fails the whole conversion
+	bad := block.NewVolumeStatus(block.NamespaceName, "VAR")
+	bad.TypedSpec().Type = block.VolumeTypeDirectory
+
+	_, err = system.VolumeStatusesToSelectors([]*block.VolumeStatus{vs1, bad})
+	require.Error(t, err)
+}
+
+// fakeController, fakeRuntime, fakeState and fakeMachineState each embed their real interface
+// (nil) and override only the one method WipeVolumesOnReboot needs, so they satisfy the full
+// interface without stubbing out every unrelated method.
+type fakeController struct {
+	machineruntime.Controller
+
+	rt machineruntime.Runtime
+}
+
+func (f fakeController) Runtime() machineruntime.Runtime { return f.rt }
+
+type fakeRuntime struct {
+	machineruntime.Runtime
+
+	st machineruntime.State
+}
+
+func (f fakeRuntime) State() machineruntime.State { return f.st }
+
+type fakeState struct {
+	machineruntime.State
+
+	machine machineruntime.MachineState
+}
+
+func (f fakeState) Machine() machineruntime.MachineState { return f.machine }
+
+type fakeMachineState struct {
+	machineruntime.MachineState
+
+	meta machineruntime.Meta
+}
+
+func (f fakeMachineState) Meta() machineruntime.Meta { return f.meta }
+
+// newFakeController builds a runtime.Controller backed by a real, temp-file-backed META store,
+// so WipeVolumesOnReboot exercises the same SetTag/ReadTag/Flush path it does in production.
+func newFakeController(t *testing.T) machineruntime.Controller {
+	t.Helper()
+
+	tmpDir := t.TempDir()
+	path := filepath.Join(tmpDir, "meta")
+
+	f, err := os.Create(path)
+	require.NoError(t, err)
+	require.NoError(t, f.Truncate(1024*1024))
+	require.NoError(t, f.Close())
+
+	st := state.WrapCore(namespaced.NewState(inmem.Build))
+
+	m, err := meta.New(t.Context(), st, meta.WithFixedPath(path))
+	require.NoError(t, err)
+
+	return fakeController{
+		rt: fakeRuntime{
+			st: fakeState{
+				machine: fakeMachineState{meta: m},
+			},
+		},
+	}
+}
+
+func readStagedWipeSelectors(t *testing.T, ctrl machineruntime.Controller) []cel.Expression {
+	t.Helper()
+
+	tagValue, ok := ctrl.Runtime().State().Machine().Meta().ReadTag(metaconsts.StagedWipeSelectors)
+	require.True(t, ok, "expected staged wipe selectors tag to be set")
+
+	var selectors []cel.Expression
+	require.NoError(t, json.Unmarshal([]byte(tagValue), &selectors))
+
+	return selectors
+}
+
+func TestWipeVolumesOnReboot(t *testing.T) {
+	t.Parallel()
+
+	vs1 := block.NewVolumeStatus(block.NamespaceName, "EPHEMERAL")
+	vs1.TypedSpec().Type = block.VolumeTypePartition
+	vs1.TypedSpec().PartitionUUID = "d2f3a1c0-0000-4000-8000-000000000001"
+
+	vs2 := block.NewVolumeStatus(block.NamespaceName, "STATE")
+	vs2.TypedSpec().Type = block.VolumeTypePartition
+	vs2.TypedSpec().PartitionUUID = "d2f3a1c0-0000-4000-8000-000000000002"
+
+	ctx := t.Context()
+	logger := zap.NewNop()
+	ctrl := newFakeController(t)
+
+	require.NoError(t, system.WipeVolumesOnReboot(ctx, ctrl, logger, []*block.VolumeStatus{vs1}))
+	assert.Len(t, readStagedWipeSelectors(t, ctrl), 1, "staging one volume should stage one selector")
+
+	// staging the same volume again, alongside a new one, must not duplicate the existing selector
+	require.NoError(t, system.WipeVolumesOnReboot(ctx, ctrl, logger, []*block.VolumeStatus{vs1, vs2}))
+	assert.Len(t, readStagedWipeSelectors(t, ctrl), 2, "re-staging an already-staged volume should be deduplicated")
+
+	// staging the already-staged volume once more, alone, should be a no-op on the selector count
+	require.NoError(t, system.WipeVolumesOnReboot(ctx, ctrl, logger, []*block.VolumeStatus{vs1}))
+	assert.Len(t, readStagedWipeSelectors(t, ctrl), 2, "staging an already-staged volume a third time should still be deduplicated")
 }

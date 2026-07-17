@@ -47,6 +47,24 @@ This means that Secure Boot images will now have `lockdown=integrity` enabled by
 Users can override it by adding `lockdown=confidentiality` to the kernel command line through Image Factory if they require it.
 """
 
+    [notes.volume_wipe]
+        title = "System Volume Wipe"
+        description = """\
+Talos now supports wiping system volumes by their volume ID with the new `talosctl wipe volume <ID>` command
+(e.g. `talosctl wipe volume EPHEMERAL`).
+
+By default the volume is wiped immediately; a volume which is currently in use cannot be wiped live, so use
+`--on-reboot` to stage the wipe. A staged wipe is recorded and applied early on the next boot, before the
+volume manager provisions volumes, and the volume is re-provisioned cleanly afterwards.
+
+The `META` volume is not a valid wipe target and is rejected: it carries the staged wipe instructions
+themselves, so it is the one volume which has to be provisioned *before* the wipe runs, and it also holds
+the machine's unique token.
+
+This can be combined with `talosctl apply-config --staged` to reshape system volumes across a reboot, for
+example splitting the monolithic EPHEMERAL volume into sub-volumes.
+"""
+
 [make_deps]
 
     [make_deps.tools]
