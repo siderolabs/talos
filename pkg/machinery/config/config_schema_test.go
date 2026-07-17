@@ -102,7 +102,7 @@ func TestSchemaValidation(t *testing.T) {
 
 				assert.Contains(t, errorsStr, test.expectedErrorContains)
 			} else {
-				assert.NoError(t, testErr)
+				assert.NoError(t, testErr, "config was: %+v", test.config)
 			}
 		})
 	}

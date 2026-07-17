@@ -199,3 +199,25 @@ type K8sCredentialProviderConfig interface {
 	K8sCredentialProviderConfigSignal()
 	Configuration() map[string]any
 }
+
+// K8sStaticPodConfig defines the configuration options for a Kubernetes static pod.
+type K8sStaticPodConfig interface {
+	K8sStaticPodConfigSignal()
+	NamedDocument
+	Pod() map[string]any
+}
+
+// K8sInlineManifestConfig describes inline manifest for the cluster bootstrap.
+type K8sInlineManifestConfig interface {
+	K8sInlineManifestConfigSignal()
+	NamedDocument
+	Contents() string
+}
+
+// K8sExternalManifestConfig describes external manifest for the cluster bootstrap.
+type K8sExternalManifestConfig interface {
+	K8sExternalManifestConfigSignal()
+	NamedDocument
+	Headers() map[string]string
+	URL() string
+}

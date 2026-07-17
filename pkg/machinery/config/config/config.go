@@ -60,6 +60,9 @@ type Config interface { //nolint:interfacebloat
 	K8sServiceAccountConfig() K8sServiceAccountConfig
 	K8sKubeletConfig() K8sKubeletConfig
 	K8sCredentialProviderConfig() K8sCredentialProviderConfig
+	K8sStaticPodConfigs() []K8sStaticPodConfig
+	K8sInlineManifestConfigs() []K8sInlineManifestConfig
+	K8sExternalManifestConfigs() []K8sExternalManifestConfig
 
 	// - block devices/storage:
 	Volumes() VolumesConfig

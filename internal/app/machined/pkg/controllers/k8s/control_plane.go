@@ -528,19 +528,19 @@ func NewControlPlaneExtraManifestsController() *ControlPlaneExtraManifestsContro
 					})
 				}
 
-				for _, url := range cfgProvider.Cluster().ExtraManifestURLs() {
+				for _, manifest := range cfgProvider.K8sExternalManifestConfigs() {
 					spec.ExtraManifests = append(spec.ExtraManifests, k8s.ExtraManifest{
-						Name:         url,
-						URL:          url,
-						Priority:     "99", // make sure extra manifests come last, when PSP is already created
-						ExtraHeaders: cfgProvider.Cluster().ExtraManifestHeaderMap(),
+						Name:         manifest.Name(),
+						URL:          manifest.URL(),
+						Priority:     "99", // make sure extra manifests come last
+						ExtraHeaders: manifest.Headers(),
 					})
 				}
 
-				for _, manifest := range cfgProvider.Cluster().InlineManifests() {
+				for _, manifest := range cfgProvider.K8sInlineManifestConfigs() {
 					spec.ExtraManifests = append(spec.ExtraManifests, k8s.ExtraManifest{
 						Name:           manifest.Name(),
-						Priority:       "99", // make sure extra manifests come last, when PSP is already created
+						Priority:       "99", // make sure extra manifests come last
 						InlineManifest: manifest.Contents(),
 					})
 				}

@@ -821,7 +821,7 @@ func (suite *K8sControlPlaneSuite) TestReconcileInlineManifests() {
 							URL: u,
 						},
 					},
-					ClusterInlineManifests: v1alpha1.ClusterInlineManifests{
+					ClusterInlineManifests: v1alpha1.ClusterInlineManifests{ //nolint:staticcheck // legacy config
 						{
 							InlineManifestName: "namespace-ci",
 							InlineManifestContents: strings.TrimSpace(

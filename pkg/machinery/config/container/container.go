@@ -865,6 +865,39 @@ func (container *Container) K8sCredentialProviderConfig() config.K8sCredentialPr
 	return nil
 }
 
+// K8sStaticPodConfigs implements config.Config interface.
+func (container *Container) K8sStaticPodConfigs() []config.K8sStaticPodConfig {
+	matching := findMatchingDocs[config.K8sStaticPodConfig](container.documents)
+
+	if container.v1alpha1Config != nil {
+		matching = append(matching, container.v1alpha1Config.K8sStaticPodConfigs()...)
+	}
+
+	return matching
+}
+
+// K8sInlineManifestConfigs implements config.Config interface.
+func (container *Container) K8sInlineManifestConfigs() []config.K8sInlineManifestConfig {
+	matching := findMatchingDocs[config.K8sInlineManifestConfig](container.documents)
+
+	if container.v1alpha1Config != nil {
+		matching = append(matching, container.v1alpha1Config.K8sInlineManifestConfigs()...)
+	}
+
+	return matching
+}
+
+// K8sExternalManifestConfigs implements config.Config interface.
+func (container *Container) K8sExternalManifestConfigs() []config.K8sExternalManifestConfig {
+	matching := findMatchingDocs[config.K8sExternalManifestConfig](container.documents)
+
+	if container.v1alpha1Config != nil {
+		matching = append(matching, container.v1alpha1Config.K8sExternalManifestConfigs()...)
+	}
+
+	return matching
+}
+
 // OOMConfig implements config.Config interface.
 func (container *Container) OOMConfig() config.OOMConfig {
 	matching := findMatchingDocs[config.OOMConfig](container.documents)

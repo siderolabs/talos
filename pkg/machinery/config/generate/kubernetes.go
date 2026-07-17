@@ -18,7 +18,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
-func (in *Input) generateKubernetesControlplaneConfigs(controlplaneURL *url.URL, certSANs []string) []config.Document {
+func (in *Input) generateKubernetesControlplaneConfigs(controlplaneURL *url.URL, certSANs []string, customCNIURL *url.URL) []config.Document {
 	if !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
 		return nil
 	}
@@ -112,6 +112,14 @@ func (in *Input) generateKubernetesControlplaneConfigs(controlplaneURL *url.URL,
 	coreDNSConfig.PodEnabled = new(true)
 
 	result = append(result, coreDNSConfig)
+
+	if customCNIURL != nil {
+		manifestConfig := k8s.NewKubeExternalManifestConfigV1Alpha1()
+		manifestConfig.MetaName = "custom-cni"
+		manifestConfig.URLSpec = meta.URL{URL: customCNIURL}
+
+		result = append(result, manifestConfig)
+	}
 
 	return result
 }

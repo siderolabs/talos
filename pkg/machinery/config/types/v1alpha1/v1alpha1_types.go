@@ -150,21 +150,9 @@ type MachineConfig struct {
 	//
 	// Deprecated: Use `KubeletConfig` instead.
 	MachineKubelet *KubeletConfig `yaml:"kubelet,omitempty"`
-	//   description: |
-	//     Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver.
+	// docgen:nodoc
 	//
-	//     Static pods can be used to run components which should be started before the Kubernetes control plane is up.
-	//     Talos doesn't validate the pod definition.
-	//     Updates to this field can be applied without a reboot.
-	//
-	//     See https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/.
-	//   examples:
-	//     - name: nginx static pod.
-	//       value: machinePodsExample()
-	//   schema:
-	//     type: array
-	//     items:
-	//       type: object
+	// Deprecated: Use `KubeStaticPodConfig` instead.
 	MachinePods []meta.Unstructured `yaml:"pods,omitempty"`
 	// docgen:nodoc
 	//
@@ -372,34 +360,17 @@ type ClusterConfig struct {
 	//   examples:
 	//     - value: clusterExternalCloudProviderConfigExample()
 	ExternalCloudProviderConfig *ExternalCloudProviderConfig `yaml:"externalCloudProvider,omitempty"`
-	//   description: |
-	//     A list of urls that point to additional manifests.
-	//     These will get automatically deployed as part of the bootstrap.
-	//   examples:
-	//     - value: >
-	//        []string{
-	//         "https://www.example.com/manifest1.yaml",
-	//         "https://www.example.com/manifest2.yaml",
-	//        }
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeExternalManifestConfig` instead.
 	ExtraManifests []string `yaml:"extraManifests,omitempty" talos:"omitonlyifnil"`
-	//   description: |
-	//     A map of key value pairs that will be added while fetching the extraManifests.
-	//   examples:
-	//     - value: >
-	//         map[string]string{
-	//           "Token": "1234567",
-	//           "X-ExtraInfo": "info",
-	//         }
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeExternalManifestConfig` instead.
 	ExtraManifestHeaders map[string]string `yaml:"extraManifestHeaders,omitempty"`
-	//   description: |
-	//     A list of inline Kubernetes manifests.
-	//     These will get automatically deployed as part of the bootstrap.
-	//   examples:
-	//     - value: clusterInlineManifestsExample()
-	//   schema:
-	//     type: array
-	//     items:
-	//       $ref: "#/$defs/v1alpha1.ClusterInlineManifest"
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeInlineManifestConfig` instead.
 	ClusterInlineManifests ClusterInlineManifests `yaml:"inlineManifests,omitempty" talos:"omitonlyifnil"`
 	//   description: |
 	//     Settings for admin kubeconfig generation.
@@ -2277,7 +2248,9 @@ type VolumeMountConfig struct {
 
 // ClusterInlineManifests is a list of ClusterInlineManifest.
 //
-//docgen:alias
+// docgen:nodoc
+//
+// Deprecated: Use `KubeInlineManifestConfig` instead.
 type ClusterInlineManifests []ClusterInlineManifest
 
 // UnmarshalYAML implements yaml.Unmarshaler.
@@ -2301,6 +2274,10 @@ func (manifests *ClusterInlineManifests) UnmarshalYAML(value *yaml.Node) error {
 }
 
 // ClusterInlineManifest struct describes inline bootstrap manifests for the user.
+//
+// docgen:nodoc
+//
+// Deprecated: Use `KubeInlineManifestConfig` instead.
 type ClusterInlineManifest struct {
 	//   description: |
 	//     Name of the manifest.

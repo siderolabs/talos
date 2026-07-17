@@ -29,7 +29,6 @@ type MachineConfig interface {
 	Env() Env
 	Files() ([]File, error)
 	Type() machine.Type
-	Pods() []map[string]any
 	Sysctls() map[string]string
 	Sysfs() map[string]string
 	SystemDiskEncryption() SystemDiskEncryption

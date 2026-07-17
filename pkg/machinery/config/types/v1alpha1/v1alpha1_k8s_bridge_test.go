@@ -7,6 +7,7 @@ package v1alpha1_test
 import (
 	"net/netip"
 	"net/url"
+	"strings"
 	"testing"
 
 	"github.com/siderolabs/crypto/x509"
@@ -1615,6 +1616,283 @@ func TestKubeCredentialProviderConfigBridge(t *testing.T) {
 			require.NotNil(t, credentialProvider)
 
 			assert.Equal(t, test.expectConfiguration, credentialProvider.Configuration())
+		})
+	}
+}
+
+func TestKubeStaticPodConfigBridge(t *testing.T) {
+	t.Parallel()
+
+	podSpec := map[string]any{
+		"apiVersion": "v1",
+		"kind":       "Pod",
+		"metadata": map[string]any{
+			"name":      "nginx",
+			"namespace": "ci",
+		},
+		"spec": map[string]any{
+			"containers": []any{
+				map[string]any{
+					"name":  "nginx",
+					"image": "nginx",
+				},
+			},
+		},
+	}
+
+	for _, test := range []struct {
+		name string
+
+		cfg func(*testing.T) config.Config
+
+		expectNil bool
+
+		expectName string
+		expectPod  map[string]any
+	}{
+		{
+			name: "no machine config",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{})
+			},
+
+			expectNil: true,
+		},
+		{
+			name: "v1alpha1 only",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{
+						MachinePods: []meta.Unstructured{
+							{Object: podSpec},
+						},
+					},
+				})
+			},
+
+			// the legacy config has no name, so it's synthesized from the pod's namespace and name.
+			expectName: "ci-nginx",
+			expectPod:  podSpec,
+		},
+		{
+			name: "new style",
+
+			cfg: func(t *testing.T) config.Config {
+				sp := k8s.NewKubeStaticPodConfigV1Alpha1()
+				sp.MetaName = "nginx"
+				sp.PodSpec.Object = podSpec
+
+				c, err := container.New(sp)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectName: "nginx",
+			expectPod:  podSpec,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := test.cfg(t)
+
+			staticPods := cfg.K8sStaticPodConfigs()
+
+			if test.expectNil {
+				assert.Nil(t, staticPods)
+
+				return
+			}
+
+			require.Len(t, staticPods, 1)
+
+			assert.Equal(t, test.expectName, staticPods[0].Name())
+			assert.Equal(t, test.expectPod, staticPods[0].Pod())
+		})
+	}
+}
+
+func TestKubeInlineManifestConfigBridge(t *testing.T) {
+	t.Parallel()
+
+	contents := strings.TrimSpace(`
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ci
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: build-settings
+  namespace: ci
+data:
+  parallelism: "4"
+`)
+
+	for _, test := range []struct {
+		name string
+
+		cfg func(*testing.T) config.Config
+
+		expectNil bool
+
+		expectName     string
+		expectContents string
+	}{
+		{
+			name: "no cluster config",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{})
+			},
+
+			expectNil: true,
+		},
+		{
+			name: "v1alpha1 only",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					ClusterConfig: &v1alpha1.ClusterConfig{
+						ClusterInlineManifests: v1alpha1.ClusterInlineManifests{
+							{
+								InlineManifestName:     "namespace-ci",
+								InlineManifestContents: contents,
+							},
+						},
+					},
+				})
+			},
+
+			expectName:     "namespace-ci",
+			expectContents: contents,
+		},
+		{
+			name: "new style",
+
+			cfg: func(t *testing.T) config.Config {
+				im := k8s.NewKubeInlineManifestConfigV1Alpha1()
+				im.MetaName = "namespace-ci"
+				im.ManifestSpec = contents
+
+				c, err := container.New(im)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectName:     "namespace-ci",
+			expectContents: contents,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := test.cfg(t)
+
+			manifests := cfg.K8sInlineManifestConfigs()
+
+			if test.expectNil {
+				assert.Nil(t, manifests)
+
+				return
+			}
+
+			require.Len(t, manifests, 1)
+
+			assert.Equal(t, test.expectName, manifests[0].Name())
+			assert.Equal(t, test.expectContents, manifests[0].Contents())
+		})
+	}
+}
+
+func TestKubeExternalManifestConfigBridge(t *testing.T) {
+	t.Parallel()
+
+	manifestURL := "https://www.example.com/manifest1.yaml"
+	headers := map[string]string{
+		"Authorization": "Bearer token",
+	}
+
+	for _, test := range []struct {
+		name string
+
+		cfg func(*testing.T) config.Config
+
+		expectNil bool
+
+		expectName    string
+		expectURL     string
+		expectHeaders map[string]string
+	}{
+		{
+			name: "no cluster config",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{})
+			},
+
+			expectNil: true,
+		},
+		{
+			name: "v1alpha1 only",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					ClusterConfig: &v1alpha1.ClusterConfig{
+						ExtraManifests:       []string{manifestURL},
+						ExtraManifestHeaders: headers,
+					},
+				})
+			},
+
+			// the legacy config has no name, so the URL is reused as the name.
+			expectName:    manifestURL,
+			expectURL:     manifestURL,
+			expectHeaders: headers,
+		},
+		{
+			name: "new style",
+
+			cfg: func(t *testing.T) config.Config {
+				em := k8s.NewKubeExternalManifestConfigV1Alpha1()
+				em.MetaName = "example-cni"
+				em.HeadersSpec = headers
+				em.URLSpec = meta.URL{URL: ensure.Value(url.Parse(manifestURL))}
+
+				c, err := container.New(em)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectName:    "example-cni",
+			expectURL:     manifestURL,
+			expectHeaders: headers,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := test.cfg(t)
+
+			manifests := cfg.K8sExternalManifestConfigs()
+
+			if test.expectNil {
+				assert.Nil(t, manifests)
+
+				return
+			}
+
+			require.Len(t, manifests, 1)
+
+			assert.Equal(t, test.expectName, manifests[0].Name())
+			assert.Equal(t, test.expectURL, manifests[0].URL())
+			assert.Equal(t, test.expectHeaders, manifests[0].Headers())
 		})
 	}
 }

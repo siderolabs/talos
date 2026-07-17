@@ -1,0 +1,6 @@
+apiVersion: v1alpha1
+kind: KubeExternalManifestConfig
+name: example-cni
+headers:
+    Authorization: Bearer token
+url: https://www.example.com/manifest1.yaml

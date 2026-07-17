@@ -147,11 +147,6 @@ func (c *ClusterConfig) ExtraManifestHeaderMap() map[string]string {
 	return c.ExtraManifestHeaders
 }
 
-// InlineManifests implements the config.ClusterConfig interface.
-func (c *ClusterConfig) InlineManifests() []config.InlineManifest {
-	return xslices.Map(c.ClusterInlineManifests, func(m ClusterInlineManifest) config.InlineManifest { return m })
-}
-
 // AdminKubeconfig implements the config.ClusterConfig interface.
 func (c *ClusterConfig) AdminKubeconfig() config.AdminKubeconfig {
 	if c.AdminKubeconfigConfig == nil {

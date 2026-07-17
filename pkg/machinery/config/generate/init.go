@@ -162,23 +162,25 @@ func (in *Input) init() ([]config.Document, error) {
 				ServiceSubnet: in.ServiceNet,
 			},
 		),
-		ClusterCA:              nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), in.Options.SecretsBundle.Certs.K8s),
-		ClusterAggregatorCA:    nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), in.Options.SecretsBundle.Certs.K8sAggregator),
-		ClusterServiceAccount:  nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), in.Options.SecretsBundle.Certs.K8sServiceAccount),
-		BootstrapToken:         in.Options.SecretsBundle.Secrets.BootstrapToken,
-		ExtraManifests:         []string{},
-		ClusterInlineManifests: v1alpha1.ClusterInlineManifests{},
+		ClusterCA:             nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), in.Options.SecretsBundle.Certs.K8s),
+		ClusterAggregatorCA:   nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), in.Options.SecretsBundle.Certs.K8sAggregator),
+		ClusterServiceAccount: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), in.Options.SecretsBundle.Certs.K8sServiceAccount),
+		BootstrapToken:        in.Options.SecretsBundle.Secrets.BootstrapToken,
 	}
 
+	var customCNIURL *url.URL
+
 	if in.Options.CNICustomURL != "" {
+		customCNIURL, err = url.Parse(in.Options.CNICustomURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse custom CNI URL: %w", err)
+		}
+
 		if !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
 			cluster.ClusterNetwork.CNI = &v1alpha1.CNIConfig{ //nolint:staticcheck // legacy configuration
 				CNIName: constants.CustomCNI,
-				CNIUrls: []string{in.Options.CNICustomURL},
+				CNIUrls: []string{customCNIURL.String()},
 			}
-		} else {
-			// we don't have extra manifests as multi-doc yet, so put it in the legacy field for now
-			cluster.ExtraManifests = append(cluster.ExtraManifests, in.Options.CNICustomURL)
 		}
 	}
 
@@ -284,7 +286,7 @@ func (in *Input) init() ([]config.Document, error) {
 
 	documents = append(documents, extraDocuments...)
 
-	extraDocuments = in.generateKubernetesControlplaneConfigs(controlPlaneURL, certSANs)
+	extraDocuments = in.generateKubernetesControlplaneConfigs(controlPlaneURL, certSANs, customCNIURL)
 
 	documents = append(documents, extraDocuments...)
 

@@ -21,9 +21,6 @@ type ClusterConfig interface {
 	Etcd() Etcd
 	// ExternalCloudProvider returns external cloud provider settings.
 	ExternalCloudProvider() ExternalCloudProvider
-	ExtraManifestURLs() []string
-	ExtraManifestHeaderMap() map[string]string
-	InlineManifests() []InlineManifest
 	AdminKubeconfig() AdminKubeconfig
 	Discovery() Discovery
 }
@@ -81,12 +78,6 @@ type Resources interface {
 	MemoryRequests() string
 	CPULimits() string
 	MemoryLimits() string
-}
-
-// InlineManifest describes inline manifest for the cluster boostrap.
-type InlineManifest interface {
-	Name() string
-	Contents() string
 }
 
 // Discovery describes cluster membership discovery.

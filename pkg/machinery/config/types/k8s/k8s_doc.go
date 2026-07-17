@@ -491,6 +491,45 @@ func (KubeEtcdEncryptionConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (KubeExternalManifestConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeExternalManifestConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeExternalManifestConfig configures a Kubernetes manifest which is downloaded from a URL." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeExternalManifestConfig configures a Kubernetes manifest which is downloaded from a URL.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of manifest.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of manifest." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "headers",
+				Type:        "map[string]string",
+				Note:        "",
+				Description: "Optional HTTP headers to use when downloading the manifest.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Optional HTTP headers to use when downloading the manifest." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "url",
+				Type:        "URL",
+				Note:        "",
+				Description: "Kubernetes manifest definition, via the URL to download it from.\nPlease note that Talos does not watch URL contents, and might download\nthe manifest only once, during the boot.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Kubernetes manifest definition, via the URL to download it from." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeExternalManifestConfigV1Alpha1())
+
+	return doc
+}
+
 func (KubeFlannelCNIConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "KubeFlannelCNIConfig",
@@ -556,6 +595,38 @@ func (KubeFlannelCNIConfigV1Alpha1) Doc() *encoder.Doc {
 	doc.AddExample("", exampleKubeFlannelCNIConfigV1Alpha1())
 
 	doc.Fields[6].AddExample("", []string{"--iface-can-reach=192.168.1.1"})
+
+	return doc
+}
+
+func (KubeInlineManifestConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeInlineManifestConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeInlineManifestConfig configures a Kubernetes manifest to be applied to the cluster." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeInlineManifestConfig configures a Kubernetes manifest to be applied to the cluster.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of manifest.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of manifest." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "manifest",
+				Type:        "string",
+				Note:        "",
+				Description: "Kubernetes manifest definition, it is supplied as a raw string.\nIt might contain a set of YAML documents separated by `---`.\nThe format matches what can be supplied as `kubectl apply -f <file>`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Kubernetes manifest definition, it is supplied as a raw string." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeInlineManifestConfigV1Alpha1())
 
 	return doc
 }
@@ -996,6 +1067,38 @@ func (AcceptedServiceAccountConfig) Doc() *encoder.Doc {
 	return doc
 }
 
+func (KubeStaticPodConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeStaticPodConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeStaticPodConfig configures a pod definition to be run as a static pod by the kubelet." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeStaticPodConfig configures a pod definition to be run as a static pod by the kubelet.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the static pod.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the static pod." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "pod",
+				Type:        "Unstructured",
+				Note:        "",
+				Description: "Static pods can be used to run components which should be started before the Kubernetes control plane is up.\nTalos doesn't validate the pod definition.\nUpdates to this field can be applied without a reboot.\n\nSee https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Static pods can be used to run components which should be started before the Kubernetes control plane is up." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeStaticPodConfigV1Alpha1())
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file k8s_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -1015,7 +1118,9 @@ func GetFileDoc() *encoder.FileDoc {
 			KubeCoreDNSConfigV1Alpha1{}.Doc(),
 			KubeCredentialProviderConfigV1Alpha1{}.Doc(),
 			KubeEtcdEncryptionConfigV1Alpha1{}.Doc(),
+			KubeExternalManifestConfigV1Alpha1{}.Doc(),
 			KubeFlannelCNIConfigV1Alpha1{}.Doc(),
+			KubeInlineManifestConfigV1Alpha1{}.Doc(),
 			KubeletConfigV1Alpha1{}.Doc(),
 			KubeNetworkConfigV1Alpha1{}.Doc(),
 			KubeNodeConfigV1Alpha1{}.Doc(),
@@ -1025,6 +1130,7 @@ func GetFileDoc() *encoder.FileDoc {
 			KubeServiceAccountConfigV1Alpha1{}.Doc(),
 			IssuerServiceAccountConfig{}.Doc(),
 			AcceptedServiceAccountConfig{}.Doc(),
+			KubeStaticPodConfigV1Alpha1{}.Doc(),
 		},
 	}
 }

@@ -60,17 +60,6 @@ certSANs:
     - 172.16.0.10
     - 192.168.0.10
 {{< /highlight >}}</details> | |
-|`pods` |[]Unstructured |Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver.<br><br>Static pods can be used to run components which should be started before the Kubernetes control plane is up.<br>Talos doesn't validate the pod definition.<br>Updates to this field can be applied without a reboot.<br><br>See https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/. <details><summary>Show example(s)</summary>nginx static pod.:{{< highlight yaml >}}
-pods:
-    - apiVersion: v1
-      kind: pod
-      metadata:
-        name: nginx
-      spec:
-        containers:
-            - image: nginx
-              name: nginx
-{{< /highlight >}}</details> | |
 |`files` |<a href="#Config.machine.files.">[]MachineFile</a> |Allows the addition of user specified files.<br>The value of `op` can be `create`, `overwrite`, or `append`.<br>In the case of `create`, `path` must not exist.<br>In the case of `overwrite`, and `append`, `path` must be a valid file.<br>If an `op` value of `append` is used, the existing file will be appended.<br>Note that the file contents are not required to be base64 encoded. <details><summary>Show example(s)</summary>MachineFiles usage example.:{{< highlight yaml >}}
 files:
     - content: '...' # The contents of the file.
@@ -380,25 +369,6 @@ externalCloudProvider:
         - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml
         - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/aws-cloud-controller-manager-daemonset.yaml
 {{< /highlight >}}</details> | |
-|`extraManifests` |[]string |A list of urls that point to additional manifests.<br>These will get automatically deployed as part of the bootstrap. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-extraManifests:
-    - https://www.example.com/manifest1.yaml
-    - https://www.example.com/manifest2.yaml
-{{< /highlight >}}</details> | |
-|`extraManifestHeaders` |map[string]string |A map of key value pairs that will be added while fetching the extraManifests. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-extraManifestHeaders:
-    Token: "1234567"
-    X-ExtraInfo: info
-{{< /highlight >}}</details> | |
-|`inlineManifests` |<a href="#Config.cluster.inlineManifests.">[]ClusterInlineManifest</a> |A list of inline Kubernetes manifests.<br>These will get automatically deployed as part of the bootstrap. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-inlineManifests:
-    - name: namespace-ci # Name of the manifest.
-      contents: |- # Manifest contents as a string.
-        apiVersion: v1
-        kind: Namespace
-        metadata:
-        	name: ci
-{{< /highlight >}}</details> | |
 |`adminKubeconfig` |<a href="#Config.cluster.adminKubeconfig">AdminKubeconfigConfig</a> |Settings for admin kubeconfig generation.<br>Certificate lifetime can be configured. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 adminKubeconfig:
     certLifetime: 1h0m0s # Admin kubeconfig certificate lifetime (default is 1 year).
@@ -477,38 +447,6 @@ cluster:
 manifests:
     - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/rbac.yaml
     - https://raw.githubusercontent.com/kubernetes/cloud-provider-aws/v1.20.0-alpha.0/manifests/aws-cloud-controller-manager-daemonset.yaml
-{{< /highlight >}}</details> | |
-
-
-
-
-
-
-### inlineManifests[] {#Config.cluster.inlineManifests.}
-
-ClusterInlineManifest struct describes inline bootstrap manifests for the user.
-
-
-
-{{< highlight yaml >}}
-cluster:
-    inlineManifests:
-        - name: namespace-ci # Name of the manifest.
-          contents: |- # Manifest contents as a string.
-            apiVersion: v1
-            kind: Namespace
-            metadata:
-            	name: ci
-{{< /highlight >}}
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`name` |string |Name of the manifest.<br>Name should be unique. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-name: csi
-{{< /highlight >}}</details> | |
-|`contents` |string |Manifest contents as a string. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-contents: /etc/kubernetes/auth
 {{< /highlight >}}</details> | |
 
 

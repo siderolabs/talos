@@ -115,13 +115,7 @@ func (MachineConfig) Doc() *encoder.Doc {
 			},
 			{},
 			{},
-			{
-				Name:        "pods",
-				Type:        "[]Unstructured",
-				Note:        "",
-				Description: "Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver.\n\nStatic pods can be used to run components which should be started before the Kubernetes control plane is up.\nTalos doesn't validate the pod definition.\nUpdates to this field can be applied without a reboot.\n\nSee https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{},
 			{},
 			{},
@@ -179,7 +173,6 @@ func (MachineConfig) Doc() *encoder.Doc {
 	doc.Fields[1].AddExample("example token", "328hom.uqjzh6jnn2eie9oi")
 	doc.Fields[2].AddExample("machine CA example", pemEncodedCertificateExample())
 	doc.Fields[4].AddExample("Uncomment this to enable SANs.", []string{"10.0.0.10", "172.16.0.10", "192.168.0.10"})
-	doc.Fields[7].AddExample("nginx static pod.", machinePodsExample())
 	doc.Fields[11].AddExample("MachineFiles usage example.", machineFilesExample())
 	doc.Fields[18].AddExample("", machineFeaturesExample())
 	doc.Fields[20].AddExample("", machineLoggingExample1())
@@ -274,27 +267,9 @@ func (ClusterConfig) Doc() *encoder.Doc {
 				Description: "External cloud provider configuration.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "External cloud provider configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "extraManifests",
-				Type:        "[]string",
-				Note:        "",
-				Description: "A list of urls that point to additional manifests.\nThese will get automatically deployed as part of the bootstrap.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "A list of urls that point to additional manifests." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "extraManifestHeaders",
-				Type:        "map[string]string",
-				Note:        "",
-				Description: "A map of key value pairs that will be added while fetching the extraManifests.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "A map of key value pairs that will be added while fetching the extraManifests." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "inlineManifests",
-				Type:        "[]ClusterInlineManifest",
-				Note:        "",
-				Description: "A list of inline Kubernetes manifests.\nThese will get automatically deployed as part of the bootstrap.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "A list of inline Kubernetes manifests." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
+			{},
+			{},
 			{
 				Name:        "adminKubeconfig",
 				Type:        "AdminKubeconfigConfig",
@@ -310,15 +285,6 @@ func (ClusterConfig) Doc() *encoder.Doc {
 	doc.Fields[5].AddExample("Bootstrap token example (do not use in production!).", "wlzjyw.bei2zfylhs2by0wd")
 	doc.Fields[17].AddExample("", clusterEtcdExample())
 	doc.Fields[19].AddExample("", clusterExternalCloudProviderConfigExample())
-	doc.Fields[20].AddExample("", []string{
-		"https://www.example.com/manifest1.yaml",
-		"https://www.example.com/manifest2.yaml",
-	})
-	doc.Fields[21].AddExample("", map[string]string{
-		"Token":       "1234567",
-		"X-ExtraInfo": "info",
-	})
-	doc.Fields[22].AddExample("", clusterInlineManifestsExample())
 	doc.Fields[23].AddExample("", clusterAdminKubeconfigExample())
 
 	return doc
@@ -656,43 +622,6 @@ func (KubernetesTalosAPIAccessConfig) Doc() *encoder.Doc {
 	return doc
 }
 
-func (ClusterInlineManifest) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "ClusterInlineManifest",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "ClusterInlineManifest struct describes inline bootstrap manifests for the user." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ClusterInlineManifest struct describes inline bootstrap manifests for the user.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "ClusterConfig",
-				FieldName: "inlineManifests",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "name",
-				Type:        "string",
-				Note:        "",
-				Description: "Name of the manifest.\nName should be unique.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the manifest." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "contents",
-				Type:        "string",
-				Note:        "",
-				Description: "Manifest contents as a string.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Manifest contents as a string." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", clusterInlineManifestsExample())
-
-	doc.Fields[0].AddExample("", "csi")
-	doc.Fields[1].AddExample("", "/etc/kubernetes/auth")
-
-	return doc
-}
-
 func (LoggingConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "LoggingConfig",
@@ -782,7 +711,6 @@ func GetFileDoc() *encoder.FileDoc {
 			FeaturesConfig{}.Doc(),
 			KubePrism{}.Doc(),
 			KubernetesTalosAPIAccessConfig{}.Doc(),
-			ClusterInlineManifest{}.Doc(),
 			LoggingConfig{}.Doc(),
 			LoggingDestination{}.Doc(),
 		},

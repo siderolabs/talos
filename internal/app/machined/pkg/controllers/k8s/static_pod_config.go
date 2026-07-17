@@ -6,7 +6,6 @@ package k8s
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -14,8 +13,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
-	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
@@ -71,37 +68,12 @@ func (ctrl *StaticPodConfigController) Run(ctx context.Context, r controller.Run
 
 		r.StartTrackingOutputs()
 
-		if cfg != nil && cfg.Config().Machine() != nil {
+		if cfg != nil {
 			cfgProvider := cfg.Config()
 
-			for _, pod := range cfgProvider.Machine().Pods() {
-				var (
-					name, namespace string
-					ok              bool
-				)
-
-				name, ok, err = unstructured.NestedString(pod, "metadata", "name")
-				if err != nil {
-					return fmt.Errorf("error getting name from static pod: %w", err)
-				}
-
-				if !ok {
-					return errors.New("name is missing in static pod metadata")
-				}
-
-				namespace, ok, err = unstructured.NestedString(pod, "metadata", "namespace")
-				if err != nil {
-					return fmt.Errorf("error getting namespace from static pod: %w", err)
-				}
-
-				if !ok {
-					namespace = corev1.NamespaceDefault
-				}
-
-				id := fmt.Sprintf("%s-%s", namespace, name)
-
-				if err = safe.WriterModify(ctx, r, k8s.NewStaticPod(k8s.NamespaceName, id), func(r *k8s.StaticPod) error {
-					r.TypedSpec().Pod = pod
+			for _, pod := range cfgProvider.K8sStaticPodConfigs() {
+				if err = safe.WriterModify(ctx, r, k8s.NewStaticPod(k8s.NamespaceName, pod.Name()), func(r *k8s.StaticPod) error {
+					r.TypedSpec().Pod = pod.Pod()
 
 					return nil
 				}); err != nil {

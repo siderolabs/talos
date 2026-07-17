@@ -6,7 +6,6 @@ package v1alpha1
 
 import (
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/siderolabs/crypto/x509"
@@ -118,20 +117,6 @@ func machineSeccompExample() []*MachineSeccompProfile {
 	}
 }
 
-func clusterInlineManifestsExample() ClusterInlineManifests {
-	return ClusterInlineManifests{
-		{
-			InlineManifestName: "namespace-ci",
-			InlineManifestContents: strings.TrimSpace(`
-apiVersion: v1
-kind: Namespace
-metadata:
-	name: ci
-`),
-		},
-	}
-}
-
 func machineLoggingExample1() LoggingConfig {
 	return LoggingConfig{
 		LoggingDestinations: []LoggingDestination{
@@ -155,28 +140,6 @@ func machineLoggingExample2() LoggingConfig {
 				LoggingFormat: constants.LoggingFormatJSONLines,
 				LoggingExtraTags: map[string]string{
 					"machine": "worker-1",
-				},
-			},
-		},
-	}
-}
-
-func machinePodsExample() []meta.Unstructured {
-	return []meta.Unstructured{
-		{
-			Object: map[string]any{
-				"apiVersion": "v1",
-				"kind":       "pod",
-				"metadata": map[string]any{
-					"name": "nginx",
-				},
-				"spec": map[string]any{
-					"containers": []any{
-						map[string]any{
-							"name":  "nginx",
-							"image": "nginx",
-						},
-					},
 				},
 			},
 		},

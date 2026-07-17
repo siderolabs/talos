@@ -14,6 +14,7 @@ import (
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -542,4 +543,97 @@ func (s k8sCredentialProviderConfigShim) K8sCredentialProviderConfigSignal() {}
 // Configuration implements config.K8sCredentialProviderConfig interface.
 func (s k8sCredentialProviderConfigShim) Configuration() map[string]any {
 	return s.kubeletConfig.CredentialProviderConfig()
+}
+
+// K8sStaticPodConfigs implements the config.Config interface.
+func (c *Config) K8sStaticPodConfigs() []config.K8sStaticPodConfig {
+	if c.MachineConfig == nil {
+		return nil
+	}
+
+	return xslices.Map(
+		c.MachineConfig.MachinePods,
+		func(u meta.Unstructured) config.K8sStaticPodConfig {
+			return kubeStaticPodShim{obj: u.Object}
+		},
+	)
+}
+
+type kubeStaticPodShim struct {
+	obj map[string]any
+}
+
+func (s kubeStaticPodShim) K8sStaticPodConfigSignal() {}
+
+func (s kubeStaticPodShim) Name() string {
+	// the v1alpha1 config doesn't have a name, so we try to synthesize the name
+	// of out pod's namespace and name
+	//
+	// if we fail to do so, we replace each component with 'default' as best effort
+	name := "default"
+	namespace := "default"
+
+	if metadata, ok := s.obj["metadata"].(map[string]any); ok {
+		if n, ok := metadata["name"].(string); ok {
+			name = n
+		}
+
+		if ns, ok := metadata["namespace"].(string); ok {
+			namespace = ns
+		}
+	}
+
+	return namespace + "-" + name
+}
+
+func (s kubeStaticPodShim) Pod() map[string]any {
+	return s.obj
+}
+
+// K8sInlineManifestConfigs implements the config.Config interface.
+func (c *Config) K8sInlineManifestConfigs() []config.K8sInlineManifestConfig {
+	if c.ClusterConfig == nil {
+		return nil
+	}
+
+	return xslices.Map(
+		c.ClusterConfig.ClusterInlineManifests,
+		func(m ClusterInlineManifest) config.K8sInlineManifestConfig { return m },
+	)
+}
+
+// K8sExternalManifestConfigs implements the config.Config interface.
+func (c *Config) K8sExternalManifestConfigs() []config.K8sExternalManifestConfig {
+	if c.ClusterConfig == nil {
+		return nil
+	}
+
+	return xslices.Map(
+		c.ClusterConfig.ExtraManifestURLs(),
+		func(u string) config.K8sExternalManifestConfig {
+			return kubeExternalManifestShim{
+				url:     u,
+				headers: c.ClusterConfig.ExtraManifestHeaderMap(),
+			}
+		},
+	)
+}
+
+type kubeExternalManifestShim struct {
+	url     string
+	headers map[string]string
+}
+
+func (s kubeExternalManifestShim) K8sExternalManifestConfigSignal() {}
+
+func (s kubeExternalManifestShim) URL() string {
+	return s.url
+}
+
+func (s kubeExternalManifestShim) Headers() map[string]string {
+	return s.headers
+}
+
+func (s kubeExternalManifestShim) Name() string {
+	return s.url
 }
