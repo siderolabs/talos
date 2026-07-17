@@ -29,4 +29,6 @@ const (
 	UniqueMachineToken
 	// DiskImageBootloader stores the bootloader used for the disk image, this key is wiped on first boot.
 	DiskImageBootloader
+	// StagedVolumesToWipe stores a JSON-serialized list of system volume IDs to wipe on the next boot.
+	StagedVolumesToWipe
 )
