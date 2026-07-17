@@ -6,11 +6,17 @@ package md
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
+
+	"github.com/siderolabs/go-blockdevice/v2/block"
+
+	"github.com/siderolabs/talos/internal/pkg/partition"
 )
 
 var (
@@ -323,14 +329,52 @@ func (md *MD) Stop(ctx context.Context, device string) error {
 }
 
 // ZeroSuperblock clears MD metadata from member devices.
+//
+// It wipes the on-disk regions where MD stores its superblock directly through
+// the block device (covering every metadata version: 1.1 at the start, 1.2 at
+// 4KiB, 1.0 and 0.90 at the device end), rather than shelling out to
+// `mdadm --zero-superblock`. mdadm only clears a superblock it can still parse
+// on the exact device given, so it is a silent no-op on a stale or corrupt
+// superblock, or on a member that has detached from the array - exactly the
+// leftovers that get auto-assembled into a phantom array holding the disk busy
+// and breaking the next array built from it.
+//
+// Callers must ensure the members are not part of an assembled array (stop it
+// first); a busy device cannot be locked and wiped.
 func (md *MD) ZeroSuperblock(ctx context.Context, members ...string) error {
 	if len(members) == 0 {
 		return fmt.Errorf("%w: at least one member is required", ErrInvalidArgument)
 	}
 
-	_, err := md.run(ctx, append([]string{"--zero-superblock"}, members...)...)
+	var errs error
 
-	return err
+	for _, member := range members {
+		if err := wipeSuperblock(ctx, member); err != nil {
+			errs = errors.Join(errs, fmt.Errorf("zero superblock on %q: %w", member, err))
+		}
+	}
+
+	return errs
+}
+
+// wipeSuperblock zeroes the MD superblock on a single member device using the
+// standard Talos block wipe primitive (secure discard + signature wipe + first
+// and last 1MiB fast wipe), which reaches every possible superblock location.
+func wipeSuperblock(ctx context.Context, member string) error {
+	bd, err := block.NewFromPath(member, block.OpenForWrite())
+	if err != nil {
+		return fmt.Errorf("open block device: %w", err)
+	}
+
+	defer bd.Close() //nolint:errcheck
+
+	if err := bd.RetryLockWithTimeout(ctx, true, time.Minute); err != nil {
+		return fmt.Errorf("lock block device: %w", err)
+	}
+
+	defer bd.Unlock() //nolint:errcheck
+
+	return partition.WipeWithSignatures(bd, member, nil)
 }
 
 // DetailDevice returns parsed mdadm --detail --export information for an array.
