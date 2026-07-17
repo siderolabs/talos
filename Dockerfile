@@ -652,6 +652,7 @@ COPY --from=talosctl-windows-arm64 / /
 
 FROM scratch AS talosctl
 ARG TARGETARCH
+COPY --link --from=pkg-ca-certificates /etc/ssl/certs/ca-certificates /etc/ssl/certs/ca-certificates
 COPY --from=talosctl-all /talosctl-linux-${TARGETARCH} /talosctl
 ARG TAG
 ENV VERSION=${TAG}

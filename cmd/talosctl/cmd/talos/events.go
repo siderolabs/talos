@@ -66,8 +66,7 @@ var eventsCmd = &cobra.Command{
 
 				event, err := client.UnmarshalEvent(ev)
 				if err != nil {
-					var errBadEvent client.EventNotSupportedError
-					if errors.As(err, &errBadEvent) {
+					if _, ok := errors.AsType[client.EventNotSupportedError](err); ok { //nolint:errcheck
 						return nil
 					}
 

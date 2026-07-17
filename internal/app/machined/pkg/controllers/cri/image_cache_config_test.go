@@ -201,10 +201,15 @@ func (suite *ImageCacheConfigSuite) TestReconcileFeatureEnabled() {
 func (suite *ImageCacheConfigSuite) TestReconcileFeatureEnabledWithoutCacheVolumeKeepsMountRequests() {
 	ctrlName := (&crictrl.ImageCacheConfigController{}).Name()
 
-	imageCacheCfg := cricfg.NewImageCacheConfigV1Alpha1()
-	imageCacheCfg.LocalConfig.ConfigEnabled = new(true)
-
-	cfg := config.NewMachineConfig(must(container.New(imageCacheCfg)))
+	cfg := config.NewMachineConfig(container.NewV1Alpha1(&v1alpha1.Config{
+		MachineConfig: &v1alpha1.MachineConfig{
+			MachineFeatures: &v1alpha1.FeaturesConfig{
+				ImageCacheSupport: &v1alpha1.ImageCacheConfig{
+					CacheLocalEnabled: new(true),
+				},
+			},
+		},
+	}))
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
 

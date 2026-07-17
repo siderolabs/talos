@@ -208,8 +208,7 @@ func fetchAddressList(getMetadataKey func(string) (string, error), path string) 
 }
 
 func isNotFoundError(err error) bool {
-	var awsErr *smithyhttp.ResponseError
-	if errors.As(err, &awsErr) {
+	if awsErr, ok := errors.AsType[*smithyhttp.ResponseError](err); ok {
 		return awsErr.HTTPStatusCode() == http.StatusNotFound
 	}
 

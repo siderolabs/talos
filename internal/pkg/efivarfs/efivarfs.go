@@ -155,8 +155,7 @@ func (rw *FilesystemReaderWriter) Write(scope uuid.UUID, varName string, attrs A
 	if err != nil {
 		e := err
 		// Unwrap PathError here as we wrap our own parameter message around it
-		var perr *fs.PathError
-		if errors.As(err, &perr) {
+		if perr, ok := errors.AsType[*fs.PathError](err); ok {
 			e = perr.Err
 		}
 
@@ -189,8 +188,7 @@ func (rw *FilesystemReaderWriter) Read(scope uuid.UUID, varName string) ([]byte,
 	if err != nil {
 		e := err
 		// Unwrap PathError here as we wrap our own parameter message around it
-		var perr *fs.PathError
-		if errors.As(err, &perr) {
+		if perr, ok := errors.AsType[*fs.PathError](err); ok {
 			e = perr.Err
 		}
 

@@ -8,6 +8,7 @@ package provision
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"time"
 
@@ -66,7 +67,8 @@ func (suite *ExternalTriggerSuite) TestTriggers() {
 
 		maintenanceClients[i], err = client.New(
 			suite.ctx,
-			client.WithMaintenanceMode(machine.IPs[0].String(), nil),
+			client.WithTLSConfig(&tls.Config{InsecureSkipVerify: true}),
+			client.WithEndpoints(machine.IPs[0].String()),
 		)
 		suite.Require().NoError(err)
 	}

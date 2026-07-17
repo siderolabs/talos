@@ -232,8 +232,7 @@ func gcpOperationError(op *compute.Operation) error {
 func (u *GCPUploder) checkImageExists(imageName string) (bool, error) {
 	_, err := u.computeService.Images.Get(u.projectID, imageName).Do()
 	if err != nil {
-		var googleErr *googleapi.Error
-		if errors.As(err, &googleErr) {
+		if googleErr, ok := errors.AsType[*googleapi.Error](err); ok {
 			if googleErr.Code == http.StatusNotFound {
 				return false, nil
 			}
@@ -299,9 +298,7 @@ func (u *GCPUploder) deleteImage(imageName string) error {
 	if err := retry.Constant(5*time.Minute, retry.WithUnits(30*time.Second)).Retry(func() error {
 		_, err := u.computeService.Images.Get(u.projectID, imageName).Do()
 		if err != nil {
-			var googleErr *googleapi.Error
-
-			if errors.As(err, &googleErr) {
+			if googleErr, ok := errors.AsType[*googleapi.Error](err); ok {
 				if googleErr.Code == http.StatusNotFound {
 					return nil
 				}
