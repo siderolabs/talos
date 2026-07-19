@@ -53,17 +53,6 @@ func pemEncodedCertificateExample() *x509.PEMEncodedCertificateAndKey {
 	}
 }
 
-func machineFilesExample() []*MachineFile {
-	return []*MachineFile{
-		{
-			FileContent:     "...",
-			FilePermissions: 0o666,
-			FilePath:        "/tmp/file.txt",
-			FileOp:          "append",
-		},
-	}
-}
-
 func machineFeaturesExample() *FeaturesConfig {
 	return &FeaturesConfig{
 		DiskQuotaSupport: new(true),
@@ -154,22 +143,6 @@ func kubernetesTalosAPIAccessConfigExample() *KubernetesTalosAPIAccessConfig {
 		},
 		AccessAllowedKubernetesNamespaces: []string{
 			"kube-system",
-		},
-	}
-}
-
-func machineBaseRuntimeSpecOverridesExample() meta.Unstructured {
-	return meta.Unstructured{
-		Object: map[string]any{
-			"process": map[string]any{
-				"rlimits": []map[string]any{
-					{
-						"type": "RLIMIT_NOFILE",
-						"hard": 1024,
-						"soft": 1024,
-					},
-				},
-			},
 		},
 	}
 }

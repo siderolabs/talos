@@ -13,6 +13,8 @@ import (
 	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/cosi-project/runtime/pkg/state/registry"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/cri"
 )
@@ -24,10 +26,27 @@ func TestRegisterResource(t *testing.T) {
 	resourceRegistry := registry.NewResourceRegistry(resources)
 
 	for _, resource := range []meta.ResourceWithRD{
+		&cri.BaseRuntimeSpecConfig{},
+		&cri.CustomizationConfig{},
 		&cri.ImageCacheConfig{},
 		&cri.SeccompProfile{},
 		&cri.RegistriesConfig{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, resource))
 	}
+}
+
+func TestBaseRuntimeSpecConfigSpecMarshalYAML(t *testing.T) {
+	t.Parallel()
+
+	marshaled, err := yaml.Marshal(cri.BaseRuntimeSpecConfigSpec{
+		Object: map[string]any{
+			"linux": map[string]any{
+				"cgroupsPath": "/example",
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	assert.Equal(t, "linux:\n    cgroupsPath: /example\n", string(marshaled))
 }

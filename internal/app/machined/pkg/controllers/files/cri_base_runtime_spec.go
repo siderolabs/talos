@@ -5,23 +5,20 @@
 package files
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 
-	"github.com/containerd/containerd/v2/core/containers"
-	"github.com/containerd/containerd/v2/pkg/namespaces"
 	"github.com/containerd/containerd/v2/pkg/oci"
-	"github.com/containerd/platforms"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
-	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/cri"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 )
 
@@ -37,9 +34,8 @@ func (ctrl *CRIBaseRuntimeSpecController) Name() string {
 func (ctrl *CRIBaseRuntimeSpecController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
-			Namespace: config.NamespaceName,
-			Type:      config.MachineConfigType,
-			ID:        optional.Some(config.ActiveID),
+			Namespace: cri.NamespaceName,
+			Type:      cri.BaseRuntimeSpecConfigType,
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -66,52 +62,19 @@ func (ctrl *CRIBaseRuntimeSpecController) Run(ctx context.Context, r controller.
 		case <-r.EventCh():
 		}
 
-		cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, r, config.ActiveID)
+		configs, err := readRuntimeSpecConfigs(ctx, r)
 		if err != nil {
-			if state.IsNotFoundError(err) {
-				// wait for machine config to be available
-				continue
-			}
-
-			return fmt.Errorf("error getting machine config: %w", err)
+			return err
 		}
 
-		if cfg.Config().Machine() == nil {
-			// wait for machine config to be available
+		if configs == nil {
+			// wait for the generated defaults to be available
 			continue
 		}
 
-		platform := platforms.DefaultString()
-
-		defaultSpec, err := oci.GenerateSpecWithPlatform(
-			namespaces.WithNamespace(ctx, constants.K8sContainerdNamespace),
-			nil,
-			platform,
-			&containers.Container{},
-		)
+		defaultSpec, err := mergeRuntimeSpecConfigs(configs)
 		if err != nil {
-			return fmt.Errorf("error generating default spec: %w", err)
-		}
-
-		// compatibility with CRI defaults:
-		// * remove default rlimits (See https://github.com/containerd/cri/issues/515)
-		defaultSpec.Process.Rlimits = nil
-
-		if len(cfg.Config().Machine().BaseRuntimeSpecOverrides()) > 0 {
-			var overrides oci.Spec
-
-			jsonOverrides, err := json.Marshal(cfg.Config().Machine().BaseRuntimeSpecOverrides())
-			if err != nil {
-				return fmt.Errorf("error marshaling runtime spec overrides: %w", err)
-			}
-
-			if err := json.Unmarshal(jsonOverrides, &overrides); err != nil {
-				return fmt.Errorf("error unmarshaling runtime spec overrides: %w", err)
-			}
-
-			if err := merge.Merge(defaultSpec, &overrides); err != nil {
-				return fmt.Errorf("error merging runtime spec overrides: %w", err)
-			}
+			return err
 		}
 
 		contents, err := json.Marshal(defaultSpec)
@@ -134,4 +97,48 @@ func (ctrl *CRIBaseRuntimeSpecController) Run(ctx context.Context, r controller.
 
 		r.ResetRestartBackoff()
 	}
+}
+
+func readRuntimeSpecConfigs(ctx context.Context, r controller.Reader) ([]*cri.BaseRuntimeSpecConfig, error) {
+	configList, err := safe.ReaderListAll[*cri.BaseRuntimeSpecConfig](ctx, r)
+	if err != nil {
+		return nil, fmt.Errorf("error listing runtime spec configs: %w", err)
+	}
+
+	configs := safe.ToSlice(configList, func(cfg *cri.BaseRuntimeSpecConfig) *cri.BaseRuntimeSpecConfig { return cfg })
+
+	if !slices.ContainsFunc(configs, func(cfg *cri.BaseRuntimeSpecConfig) bool {
+		return cfg.Metadata().ID() == cri.BaseRuntimeSpecDefaultID
+	}) {
+		return nil, nil
+	}
+
+	slices.SortFunc(configs, func(left, right *cri.BaseRuntimeSpecConfig) int {
+		return cmp.Compare(left.Metadata().ID(), right.Metadata().ID())
+	})
+
+	return configs, nil
+}
+
+func mergeRuntimeSpecConfigs(configs []*cri.BaseRuntimeSpecConfig) (*oci.Spec, error) {
+	result := &oci.Spec{}
+
+	for _, cfg := range configs {
+		data, err := json.Marshal(cfg.TypedSpec().Object)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling runtime spec config %q: %w", cfg.Metadata().ID(), err)
+		}
+
+		var source oci.Spec
+
+		if err = json.Unmarshal(data, &source); err != nil {
+			return nil, fmt.Errorf("error unmarshaling runtime spec config %q: %w", cfg.Metadata().ID(), err)
+		}
+
+		if err = merge.Merge(result, &source); err != nil {
+			return nil, fmt.Errorf("error merging runtime spec config %q: %w", cfg.Metadata().ID(), err)
+		}
+	}
+
+	return result, nil
 }

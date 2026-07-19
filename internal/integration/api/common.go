@@ -17,9 +17,8 @@ import (
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
+	criconfig "github.com/siderolabs/talos/pkg/machinery/config/types/cri"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -252,32 +251,31 @@ func (suite *CommonSuite) TestBaseOCISpec() {
 
 	suite.T().Logf("adjusting base OCI specs on %s/%s", node, nodeName)
 
-	suite.PatchMachineConfig(nodeCtx, &v1alpha1.Config{
-		MachineConfig: &v1alpha1.MachineConfig{
-			MachineBaseRuntimeSpecOverrides: meta.Unstructured{
-				Object: map[string]any{
-					"process": map[string]any{
-						"rlimits": []map[string]any{
-							{
-								"type": "RLIMIT_NOFILE",
-								"hard": 1024,
-								"soft": 1024,
-							},
-						},
-					},
+	ociRuntimeOverride := criconfig.NewCRIBaseRuntimeSpecConfigV1Alpha1()
+	ociRuntimeOverride.OverridesConfig.Object = map[string]any{
+		"process": map[string]any{
+			"rlimits": []map[string]any{
+				{
+					"type": "RLIMIT_NOFILE",
+					"hard": 1024,
+					"soft": 1024,
 				},
 			},
 		},
+	}
+
+	suite.PatchMachineConfig(nodeCtx, ociRuntimeOverride)
+
+	ts := suite.LatestServiceEventTimestamp(suite.ctx, "cri", node)
+
+	suite.AssertServiceEventsInOrder(suite.ctx, node, "cri", ts, []string{
+		"Stopping",
+		"Finished",
+		"Starting",
+		"Waiting",
+		"Preparing",
+		"Running",
 	})
-
-	suite.AssertRebooted(
-		suite.ctx, node, func(nodeCtx context.Context) error {
-			return base.IgnoreGRPCUnavailable(suite.Client.Reboot(nodeCtx))
-		}, assertRebootedRebootTimeout,
-		suite.CleanupFailedPods,
-	)
-
-	suite.ClearConnectionRefused(suite.ctx, node)
 
 	ociUlimits1PodDef, err := suite.NewPod("oci-ulimits-test-1")
 	suite.Require().NoError(err)
@@ -297,26 +295,21 @@ func (suite *CommonSuite) TestBaseOCISpec() {
 	suite.Require().Equal("", stderr)
 	suite.Require().Equal("1024\n", stdout)
 
-	// delete immediately, as we're going to reboot the node
+	// Delete immediately before switching to the CRIBaseRuntimeSpecConfig document.
 	suite.Assert().NoError(ociUlimits1PodDef.Delete(suite.ctx))
 
-	// revert the patch
-	suite.PatchMachineConfig(nodeCtx, map[string]any{
-		"machine": map[string]any{
-			"baseRuntimeSpecOverrides": map[string]any{
-				"$patch": "delete",
-			},
-		},
+	suite.RemoveMachineConfigDocuments(nodeCtx, criconfig.CRIBaseRuntimeSpecConfigKind)
+
+	ts = suite.LatestServiceEventTimestamp(suite.ctx, "cri", node)
+
+	suite.AssertServiceEventsInOrder(suite.ctx, node, "cri", ts, []string{
+		"Stopping",
+		"Finished",
+		"Starting",
+		"Waiting",
+		"Preparing",
+		"Running",
 	})
-
-	suite.AssertRebooted(
-		suite.ctx, node, func(nodeCtx context.Context) error {
-			return base.IgnoreGRPCUnavailable(suite.Client.Reboot(nodeCtx))
-		}, assertRebootedRebootTimeout,
-		suite.CleanupFailedPods,
-	)
-
-	suite.ClearConnectionRefused(suite.ctx, node)
 
 	ociUlimits2PodDef, err := suite.NewPod("oci-ulimits-test-2")
 	suite.Require().NoError(err)

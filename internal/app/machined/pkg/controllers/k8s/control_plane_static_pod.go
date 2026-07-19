@@ -107,10 +107,17 @@ func (ctrl *ControlPlaneStaticPodController) Run(ctx context.Context, r controll
 			return fmt.Errorf("failed to get config status resource: %w", err)
 		}
 
+		// Keep the desired static pods while etcd is temporarily unavailable.
+		// In particular, restarting CRI also restarts the etcd task; deleting the
+		// kube-apiserver pod here would prevent the control plane from recovering.
+		if etcdResource == nil || !etcdResource.TypedSpec().Healthy {
+			continue
+		}
+
 		r.StartTrackingOutputs()
 
 		// pre-condition to produce static pods
-		if etcdResource != nil && etcdResource.TypedSpec().Healthy && configStatusResource != nil && secretsStatusResource != nil {
+		if configStatusResource != nil && secretsStatusResource != nil {
 			configVersion := configStatusResource.TypedSpec().Version
 			secretsVersion := secretsStatusResource.TypedSpec().Version
 

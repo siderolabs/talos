@@ -6,20 +6,19 @@ package files_test
 
 import (
 	"encoding/json"
+	"io/fs"
 	"testing"
 	"time"
 
 	"github.com/containerd/containerd/v2/pkg/oci"
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	filesctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/files"
-	"github.com/siderolabs/talos/pkg/machinery/config/container"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
-	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/cri"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 )
 
@@ -28,18 +27,12 @@ type CRIBaseRuntimeSpecSuite struct {
 }
 
 func (suite *CRIBaseRuntimeSpecSuite) TestDefaults() {
-	cfg := config.NewMachineConfig(
-		container.NewV1Alpha1(
-			&v1alpha1.Config{
-				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{
-					MachineType: "controlplane",
-				},
-			},
-		),
-	)
-
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
+	suite.createRuntimeSpecConfig(cri.BaseRuntimeSpecDefaultID, map[string]any{
+		"ociVersion": "1.0.2",
+		"process": map[string]any{
+			"cwd": "/default",
+		},
+	})
 
 	ctest.AssertResource(suite, constants.CRIBaseRuntimeSpec, func(etcFile *files.EtcFileSpec, asrt *assert.Assertions) {
 		contents := etcFile.TypedSpec().Contents
@@ -49,36 +42,31 @@ func (suite *CRIBaseRuntimeSpecSuite) TestDefaults() {
 		asrt.NoError(json.Unmarshal(contents, &ociSpec))
 
 		asrt.Empty(ociSpec.Process.Rlimits)
+		asrt.Equal("/default", ociSpec.Process.Cwd)
+		asrt.Equal(fs.FileMode(0o600), etcFile.TypedSpec().Mode)
+		asrt.Equal(constants.EtcSelinuxLabel, etcFile.TypedSpec().SelinuxLabel)
 	})
 }
 
 func (suite *CRIBaseRuntimeSpecSuite) TestOverrides() {
-	cfg := config.NewMachineConfig(
-		container.NewV1Alpha1(
-			&v1alpha1.Config{
-				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{
-					MachineType: "controlplane",
-					MachineBaseRuntimeSpecOverrides: meta.Unstructured{
-						Object: map[string]any{
-							"process": map[string]any{
-								"rlimits": []map[string]any{
-									{
-										"type": "RLIMIT_NOFILE",
-										"hard": 1024,
-										"soft": 1024,
-									},
-								},
-							},
-						},
-					},
+	suite.createRuntimeSpecConfig(cri.BaseRuntimeSpecDefaultID, map[string]any{
+		"ociVersion": "1.0.2",
+		"process": map[string]any{
+			"cwd": "/default",
+		},
+	})
+	suite.createRuntimeSpecConfig(cri.BaseRuntimeSpecOverridesID, map[string]any{
+		"process": map[string]any{
+			"noNewPrivileges": true,
+			"rlimits": []map[string]any{
+				{
+					"type": "RLIMIT_NOFILE",
+					"hard": 1024,
+					"soft": 1024,
 				},
 			},
-		),
-	)
-
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
-
+		},
+	})
 	ctest.AssertResource(suite, constants.CRIBaseRuntimeSpec, func(etcFile *files.EtcFileSpec, asrt *assert.Assertions) {
 		contents := etcFile.TypedSpec().Contents
 
@@ -86,11 +74,20 @@ func (suite *CRIBaseRuntimeSpecSuite) TestOverrides() {
 
 		asrt.NoError(json.Unmarshal(contents, &ociSpec))
 
-		asrt.NotEmpty(ociSpec.Process.Rlimits)
+		asrt.Len(ociSpec.Process.Rlimits, 1)
 		asrt.Equal("RLIMIT_NOFILE", ociSpec.Process.Rlimits[0].Type)
 		asrt.Equal(uint64(1024), ociSpec.Process.Rlimits[0].Hard)
 		asrt.Equal(uint64(1024), ociSpec.Process.Rlimits[0].Soft)
+		asrt.Equal("/default", ociSpec.Process.Cwd)
+		asrt.True(ociSpec.Process.NoNewPrivileges)
 	})
+}
+
+func (suite *CRIBaseRuntimeSpecSuite) createRuntimeSpecConfig(id resource.ID, spec map[string]any) {
+	cfg := cri.NewBaseRuntimeSpecConfig(id)
+	cfg.TypedSpec().Object = spec
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
 }
 
 func TestCRIBaseRuntimeSpecSuite(t *testing.T) {

@@ -60,13 +60,6 @@ certSANs:
     - 172.16.0.10
     - 192.168.0.10
 {{< /highlight >}}</details> | |
-|`files` |<a href="#Config.machine.files.">[]MachineFile</a> |Allows the addition of user specified files.<br>The value of `op` can be `create`, `overwrite`, or `append`.<br>In the case of `create`, `path` must not exist.<br>In the case of `overwrite`, and `append`, `path` must be a valid file.<br>If an `op` value of `append` is used, the existing file will be appended.<br>Note that the file contents are not required to be base64 encoded. <details><summary>Show example(s)</summary>MachineFiles usage example.:{{< highlight yaml >}}
-files:
-    - content: '...' # The contents of the file.
-      permissions: 0o666 # The file's permissions in octal.
-      path: /tmp/file.txt # The path of the file.
-      op: append # The operation to use
-{{< /highlight >}}</details> | |
 |`features` |<a href="#Config.machine.features">FeaturesConfig</a> |Features describe individual Talos features that can be switched on or off. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 features:
     diskQuotaSupport: true # Enable XFS project quota support for EPHEMERAL partition and user disks.
@@ -104,42 +97,6 @@ seccompProfiles:
       value:
         defaultAction: SCMP_ACT_LOG
 {{< /highlight >}}</details> | |
-|`baseRuntimeSpecOverrides` |Unstructured |Override (patch) settings in the default OCI runtime spec for CRI containers.<br><br>It can be used to set some default container settings which are not configurable in Kubernetes,<br>for example default ulimits.<br>Note: this change applies to all newly created containers, and it requires a reboot to take effect. <details><summary>Show example(s)</summary>override default open file limit:{{< highlight yaml >}}
-baseRuntimeSpecOverrides:
-    process:
-        rlimits:
-            - hard: 1024
-              soft: 1024
-              type: RLIMIT_NOFILE
-{{< /highlight >}}</details> | |
-
-
-
-
-### files[] {#Config.machine.files.}
-
-MachineFile represents a file to write to disk.
-
-
-
-{{< highlight yaml >}}
-machine:
-    files:
-        - content: '...' # The contents of the file.
-          permissions: 0o666 # The file's permissions in octal.
-          path: /tmp/file.txt # The path of the file.
-          op: append # The operation to use
-{{< /highlight >}}
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`content` |string |The contents of the file.  | |
-|`permissions` |FileMode |The file's permissions in octal.  | |
-|`path` |string |The path of the file.  | |
-|`op` |string |The operation to use  |`create`<br />`append`<br />`overwrite`<br /> |
-
-
 
 
 

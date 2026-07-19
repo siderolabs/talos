@@ -9,6 +9,16 @@ import "common/common.proto";
 import "google/protobuf/struct.proto";
 import "resource/definitions/enums/enums.proto";
 
+// BaseRuntimeSpecConfigSpec describes an OCI runtime spec configuration source.
+message BaseRuntimeSpecConfigSpec {
+  google.protobuf.Struct object = 1;
+}
+
+// CustomizationConfigSpec describes one CRI customization fragment.
+message CustomizationConfigSpec {
+  string content = 1;
+}
+
 // ImageCacheConfigSpec represents the ImageCacheConfig.
 message ImageCacheConfigSpec {
   talos.resource.definitions.enums.CriImageCacheStatus status = 1;

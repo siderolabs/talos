@@ -584,10 +584,7 @@ const (
 	// CRIConfig is the path to the CRI merged configuration file relative to /etc.
 	CRIConfig = "cri/conf.d/cri.toml"
 
-	// CRIRegistryConfigPart is the path to the CRI generated registry configuration relative to /etc.
-	CRIRegistryConfigPart = "cri/conf.d/01-registries.part"
-
-	// CRICustomizationConfigPart is the path to the CRI generated registry configuration relative to /etc.
+	// CRICustomizationConfigPart is the path to the legacy CRI customization configuration relative to /etc.
 	CRICustomizationConfigPart = "cri/conf.d/20-customization.part"
 
 	// CRIBaseRuntimeSpec is the path to the base runtime spec for the CRI.

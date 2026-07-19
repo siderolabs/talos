@@ -1002,6 +1002,86 @@
       ],
       "description": "DiscoveryServiceConfig is a config document to configure a discovery service."
     },
+    "cri.CRIBaseRuntimeSpecConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "CRIBaseRuntimeSpecConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "overrides": {
+          "type": "object",
+          "title": "overrides",
+          "description": "Overrides for the default OCI runtime specification used by CRI containers.\n\nThis document is mutually exclusive with the deprecated\n.machine.baseRuntimeSpecOverrides field.\n\nStrategic merge patches replace this overrides object as a whole, so\nreapplying the same document is idempotent.\n\nApplying, updating, or removing these overrides restarts CRI automatically.\nA machine reboot is not required.\n",
+          "markdownDescription": "Overrides for the default OCI runtime specification used by CRI containers.\n\nThis document is mutually exclusive with the deprecated\n`.machine.baseRuntimeSpecOverrides` field.\n\nStrategic merge patches replace this overrides object as a whole, so\nreapplying the same document is idempotent.\n\nApplying, updating, or removing these overrides restarts CRI automatically.\nA machine reboot is not required.",
+          "x-intellij-html-description": "\u003cp\u003eOverrides for the default OCI runtime specification used by CRI containers.\u003c/p\u003e\n\n\u003cp\u003eThis document is mutually exclusive with the deprecated\n\u003ccode\u003e.machine.baseRuntimeSpecOverrides\u003c/code\u003e field.\u003c/p\u003e\n\n\u003cp\u003eStrategic merge patches replace this overrides object as a whole, so\nreapplying the same document is idempotent.\u003c/p\u003e\n\n\u003cp\u003eApplying, updating, or removing these overrides restarts CRI automatically.\nA machine reboot is not required.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "CRIBaseRuntimeSpecConfig configures the base OCI runtime specification for CRI containers."
+    },
+    "cri.CRICustomizationConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "CRICustomizationConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the CRI customization.\n\nCustomizations are merged with physical CRI configuration parts in\nlexicographical order by name. The legacy\n/etc/cri/conf.d/20-customization.part machine file is included under\nthe reserved name customization.\n\nApplying, updating, or removing a customization restarts CRI automatically.\n",
+          "markdownDescription": "Name of the CRI customization.\n\nCustomizations are merged with physical CRI configuration parts in\nlexicographical order by name. The legacy\n`/etc/cri/conf.d/20-customization.part` machine file is included under\nthe reserved name `customization`.\n\nApplying, updating, or removing a customization restarts CRI automatically.",
+          "x-intellij-html-description": "\u003cp\u003eName of the CRI customization.\u003c/p\u003e\n\n\u003cp\u003eCustomizations are merged with physical CRI configuration parts in\nlexicographical order by name. The legacy\n\u003ccode\u003e/etc/cri/conf.d/20-customization.part\u003c/code\u003e machine file is included under\nthe reserved name \u003ccode\u003ecustomization\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eApplying, updating, or removing a customization restarts CRI automatically.\u003c/p\u003e\n"
+        },
+        "content": {
+          "type": "string",
+          "title": "content",
+          "description": "CRI containerd configuration fragment in TOML format.\n",
+          "markdownDescription": "CRI containerd configuration fragment in TOML format.",
+          "x-intellij-html-description": "\u003cp\u003eCRI containerd configuration fragment in TOML format.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "name"
+      ],
+      "description": "CRICustomizationConfig configures the CRI containerd instance."
+    },
     "cri.ImageCacheConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -6800,16 +6880,6 @@
           "markdownDescription": "Extra certificate subject alternative names for the machine's certificate.\nBy default, all non-loopback interface IPs are automatically added to the certificate's SANs.",
           "x-intellij-html-description": "\u003cp\u003eExtra certificate subject alternative names for the machine\u0026rsquo;s certificate.\nBy default, all non-loopback interface IPs are automatically added to the certificate\u0026rsquo;s SANs.\u003c/p\u003e\n"
         },
-        "files": {
-          "items": {
-            "$ref": "#/$defs/v1alpha1.MachineFile"
-          },
-          "type": "array",
-          "title": "files",
-          "description": "Allows the addition of user specified files.\nThe value of op can be create, overwrite, or append.\nIn the case of create, path must not exist.\nIn the case of overwrite, and append, path must be a valid file.\nIf an op value of append is used, the existing file will be appended.\nNote that the file contents are not required to be base64 encoded.\n",
-          "markdownDescription": "Allows the addition of user specified files.\nThe value of `op` can be `create`, `overwrite`, or `append`.\nIn the case of `create`, `path` must not exist.\nIn the case of `overwrite`, and `append`, `path` must be a valid file.\nIf an `op` value of `append` is used, the existing file will be appended.\nNote that the file contents are not required to be base64 encoded.",
-          "x-intellij-html-description": "\u003cp\u003eAllows the addition of user specified files.\nThe value of \u003ccode\u003eop\u003c/code\u003e can be \u003ccode\u003ecreate\u003c/code\u003e, \u003ccode\u003eoverwrite\u003c/code\u003e, or \u003ccode\u003eappend\u003c/code\u003e.\nIn the case of \u003ccode\u003ecreate\u003c/code\u003e, \u003ccode\u003epath\u003c/code\u003e must not exist.\nIn the case of \u003ccode\u003eoverwrite\u003c/code\u003e, and \u003ccode\u003eappend\u003c/code\u003e, \u003ccode\u003epath\u003c/code\u003e must be a valid file.\nIf an \u003ccode\u003eop\u003c/code\u003e value of \u003ccode\u003eappend\u003c/code\u003e is used, the existing file will be appended.\nNote that the file contents are not required to be base64 encoded.\u003c/p\u003e\n"
-        },
         "features": {
           "$ref": "#/$defs/v1alpha1.FeaturesConfig",
           "title": "features",
@@ -6833,57 +6903,11 @@
           "description": "Configures the seccomp profiles for the machine.\n",
           "markdownDescription": "Configures the seccomp profiles for the machine.",
           "x-intellij-html-description": "\u003cp\u003eConfigures the seccomp profiles for the machine.\u003c/p\u003e\n"
-        },
-        "baseRuntimeSpecOverrides": {
-          "type": "object",
-          "title": "baseRuntimeSpecOverrides",
-          "description": "Override (patch) settings in the default OCI runtime spec for CRI containers.\n\nIt can be used to set some default container settings which are not configurable in Kubernetes,\nfor example default ulimits.\nNote: this change applies to all newly created containers, and it requires a reboot to take effect.\n",
-          "markdownDescription": "Override (patch) settings in the default OCI runtime spec for CRI containers.\n\nIt can be used to set some default container settings which are not configurable in Kubernetes,\nfor example default ulimits.\nNote: this change applies to all newly created containers, and it requires a reboot to take effect.",
-          "x-intellij-html-description": "\u003cp\u003eOverride (patch) settings in the default OCI runtime spec for CRI containers.\u003c/p\u003e\n\n\u003cp\u003eIt can be used to set some default container settings which are not configurable in Kubernetes,\nfor example default ulimits.\nNote: this change applies to all newly created containers, and it requires a reboot to take effect.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
       "type": "object",
       "description": "MachineConfig represents the machine-specific config values."
-    },
-    "v1alpha1.MachineFile": {
-      "properties": {
-        "content": {
-          "type": "string",
-          "title": "content",
-          "description": "The contents of the file.\n",
-          "markdownDescription": "The contents of the file.",
-          "x-intellij-html-description": "\u003cp\u003eThe contents of the file.\u003c/p\u003e\n"
-        },
-        "permissions": {
-          "type": "integer",
-          "title": "permissions",
-          "description": "The file’s permissions in octal.\n",
-          "markdownDescription": "The file's permissions in octal.",
-          "x-intellij-html-description": "\u003cp\u003eThe file\u0026rsquo;s permissions in octal.\u003c/p\u003e\n"
-        },
-        "path": {
-          "type": "string",
-          "title": "path",
-          "description": "The path of the file.\n",
-          "markdownDescription": "The path of the file.",
-          "x-intellij-html-description": "\u003cp\u003eThe path of the file.\u003c/p\u003e\n"
-        },
-        "op": {
-          "enum": [
-            "create",
-            "append",
-            "overwrite"
-          ],
-          "title": "op",
-          "description": "The operation to use\n",
-          "markdownDescription": "The operation to use",
-          "x-intellij-html-description": "\u003cp\u003eThe operation to use\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "MachineFile represents a file to write to disk."
     },
     "v1alpha1.MachineSeccompProfile": {
       "properties": {
@@ -6937,6 +6961,12 @@
     },
     {
       "$ref": "#/$defs/cluster.DiscoveryServiceConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/cri.CRIBaseRuntimeSpecConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/cri.CRICustomizationConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/cri.ImageCacheConfigV1Alpha1"

@@ -94,11 +94,6 @@ func (m *MachineSeccompProfile) Value() map[string]any {
 	return m.MachineSeccompProfileValue.Object
 }
 
-// BaseRuntimeSpecOverrides implements the config.Provider interface.
-func (m *MachineConfig) BaseRuntimeSpecOverrides() map[string]any {
-	return m.MachineBaseRuntimeSpecOverrides.Object
-}
-
 // Cluster implements the config.Provider interface.
 func (c *Config) Cluster() config.ClusterConfig {
 	if c == nil || c.ClusterConfig == nil {

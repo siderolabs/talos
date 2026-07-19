@@ -1,0 +1,8 @@
+apiVersion: v1alpha1
+kind: CRIBaseRuntimeSpecConfig
+overrides:
+    process:
+        rlimits:
+            - hard: 1024
+              soft: 1024
+              type: RLIMIT_NOFILE

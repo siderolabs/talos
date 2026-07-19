@@ -247,6 +247,35 @@ func (container *Container) EtcFileConfigs() []config.EtcFileConfig {
 	return findMatchingDocs[config.EtcFileConfig](container.documents)
 }
 
+// CRICustomizationConfigs implements config.Config interface.
+func (container *Container) CRICustomizationConfigs() []config.CRICustomizationConfig {
+	matching := findMatchingDocs[config.CRICustomizationConfig](container.documents)
+
+	if container.v1alpha1Config != nil {
+		matching = append(matching, container.v1alpha1Config.CRICustomizationConfigs()...)
+	}
+
+	slices.SortStableFunc(matching, func(a, b config.CRICustomizationConfig) int {
+		return strings.Compare(a.Name(), b.Name())
+	})
+
+	return matching
+}
+
+// CRIBaseRuntimeSpecConfig implements config.Config interface.
+func (container *Container) CRIBaseRuntimeSpecConfig() config.CRIBaseRuntimeSpecConfig {
+	matching := findMatchingDocs[config.CRIBaseRuntimeSpecConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.CRIBaseRuntimeSpecConfig()
+	}
+
+	return nil
+}
+
 // UdevRulesConfig implements config.Config interface.
 func (container *Container) UdevRulesConfig() config.UdevConfig {
 	matching := findMatchingDocs[config.UdevConfig](container.documents)

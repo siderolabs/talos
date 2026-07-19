@@ -83,6 +83,8 @@ type Config interface { //nolint:interfacebloat
 	RegistryAuthConfigs() map[string]RegistryAuthConfig
 	RegistryTLSConfigs() map[string]RegistryTLSConfig
 	ImageCacheConfig() ImageCacheConfig
+	CRIBaseRuntimeSpecConfig() CRIBaseRuntimeSpecConfig
+	CRICustomizationConfigs() []CRICustomizationConfig
 
 	// - misc:
 	ExtensionServiceConfigs() []ExtensionServiceConfig

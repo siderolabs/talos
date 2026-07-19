@@ -9,55 +9,40 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"io"
-	"os"
+	"maps"
+	"slices"
 
 	"github.com/pelletier/go-toml/v2"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/merge"
 )
 
-// tomlDecodeFile decodes a TOML file into the provided destination, and returns a sha256 hash of the file content.
-func tomlDecodeFile(path string, dest any) ([]byte, error) {
-	f, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-
-	defer f.Close() //nolint:errcheck
-
-	hash := sha256.New()
-
-	err = toml.NewDecoder(io.TeeReader(f, hash)).Decode(dest)
-
-	return hash.Sum(nil), err
+// Part is a named TOML fragment with human-readable provenance.
+type Part struct {
+	Contents []byte
+	Origin   string
 }
 
-// Merge several TOML documents in files into one.
-//
-// Merge process relies on generic map[string]any merge which might not always be correct.
-//
-// Merge returns a sha256 checksum of each file merged.
-func Merge(parts []string) ([]byte, map[string][]byte, error) {
+// Merge merges named TOML configuration fragments in lexicographical order by name.
+func Merge(parts map[string]Part) ([]byte, error) {
 	merged := map[string]any{}
-	checksums := make(map[string][]byte, len(parts))
 
 	var header []byte
 
-	for _, part := range parts {
+	for _, name := range slices.Sorted(maps.Keys(parts)) {
+		part := parts[name]
 		partial := map[string]any{}
 
-		hash, err := tomlDecodeFile(part, &partial)
-		if err != nil {
-			return nil, nil, fmt.Errorf("error decoding %q: %w", part, err)
+		if err := toml.Unmarshal(part.Contents, &partial); err != nil {
+			return nil, fmt.Errorf("error decoding %q: %w", name, err)
 		}
 
 		if err := merge.Merge(merged, partial); err != nil {
-			return nil, nil, fmt.Errorf("error merging %q: %w", part, err)
+			return nil, fmt.Errorf("error merging %q: %w", name, err)
 		}
 
-		header = fmt.Appendf(header, "## %s (sha256:%s)\n", part, hex.EncodeToString(hash))
-		checksums[part] = hash
+		hash := sha256.Sum256(part.Contents)
+		header = fmt.Appendf(header, "## %s (sha256:%s)\n", part.Origin, hex.EncodeToString(hash[:]))
 	}
 
 	var out bytes.Buffer
@@ -66,8 +51,8 @@ func Merge(parts []string) ([]byte, map[string][]byte, error) {
 	_ = out.WriteByte('\n')
 
 	if err := toml.NewEncoder(&out).SetIndentTables(true).Encode(merged); err != nil {
-		return nil, nil, fmt.Errorf("error encoding merged config: %w", err)
+		return nil, fmt.Errorf("error encoding merged config: %w", err)
 	}
 
-	return out.Bytes(), checksums, nil
+	return out.Bytes(), nil
 }

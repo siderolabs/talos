@@ -75,17 +75,16 @@ identity files, are rejected to prevent overriding files owned by Talos.
 Talos no longer disables NRI (Node Resource Interface) for the CRI containerd instance by default, so NRI is available
 to use without any machine config patches.
 
-To bring back the old behavior of NRI disabled by default, use the following machine config patch:
+To bring back the old behavior of NRI disabled by default, add the following machine configuration document:
 
 ```yaml
-machine:
-  files:
-    - content: |
-        [plugins]
-          [plugins."io.containerd.nri.v1.nri"]
-             disable = true
-      path: /etc/cri/conf.d/20-customization.part
-      op: create
+apiVersion: v1alpha1
+kind: CRICustomizationConfig
+name: disable-nri
+content: |
+  [plugins]
+    [plugins."io.containerd.nri.v1.nri"]
+       disable = true
 ```
 """
 
@@ -95,6 +94,45 @@ machine:
 Talos no longer provisions the deprecated FlexVolume executable host path at
 `/usr/libexec/kubernetes`. FlexVolume has been deprecated since Kubernetes 1.23.
 Modern CSI plugin paths under `/var/lib/kubelet` are unaffected.
+"""
+
+    [notes.cri-customization]
+        title = "CRI Customization Configuration"
+        description = """\
+Talos now supports customizing the CRI containerd configuration with named `CRICustomizationConfig`
+documents. Each document contains a TOML fragment; fragments are merged in lexicographical order by name.
+Applying, updating, or removing these documents updates the generated CRI configuration and restarts CRI
+automatically.
+
+The legacy `/etc/cri/conf.d/20-customization.part` machine-file configuration remains supported during the
+deprecation period and is exposed under the reserved name `customization`. A `CRICustomizationConfig` document
+cannot use that name.
+
+NOTE: a machine reboot is no longer required to apply changes to CRI configuration.
+"""
+
+    [notes.cri-base-runtime-spec]
+        title = "CRI Base Runtime Specification Configuration"
+        description = """\
+Talos now supports overriding the default OCI runtime specification for CRI containers with a
+`CRIBaseRuntimeSpecConfig` document:
+
+```yaml
+apiVersion: v1alpha1
+kind: CRIBaseRuntimeSpecConfig
+overrides:
+  process:
+    rlimits:
+      - type: RLIMIT_NOFILE
+        hard: 1024
+        soft: 1024
+```
+
+The `.machine.baseRuntimeSpecOverrides` field is deprecated and remains supported during the deprecation
+period. It is mutually exclusive with `CRIBaseRuntimeSpecConfig`; configurations containing both are rejected.
+
+Applying, updating, or removing either source regenerates the base runtime specification and restarts CRI
+automatically. A machine reboot is no longer required.
 """
 
     [notes.nts]
@@ -175,6 +213,8 @@ List of changes:
 - The default `NoSchedule` taint for controlplane and label are now explicitly listed in `KubeNodeConfig`.
 - Deprecated the rest of `.machine.kubelet` fields in the v1alpha1 config; use the `KubeNodeConfig` and `KubeCredentialProviderConfig` documents for kubelet configuration.
 - Deprecated `.machine.pods` in the v1alpha1 config; use the `KubeStaticPodConfig` document for static pod configuration.
+- Deprecated `.machine.files` in the v1alpha1 config; use dedicated configuration documents such as `EtcFileConfig` and `CRICustomizationConfig` instead.
+- Deprecated `.machine.baseRuntimeSpecOverrides` in the v1alpha1 config; use the `CRIBaseRuntimeSpecConfig` document for base runtimespec overrides.
 - Deprecated `.cluster.inlineManifests` in the v1alpha1 config; use the `KubeInlineManifestConfig` document for inline manifests.
 - Deprecated `.cluster.extraManifests` and `.cluster.extraManifestHeaders` in the v1alpha1 config; use the `KubeExternalManifestConfig` document for external manifests.
 - Deprecated `.machine.features.kubePrism`; use the `KubePrismConfig` document for KubePrism configuration (or remove it to disable KubePrism).

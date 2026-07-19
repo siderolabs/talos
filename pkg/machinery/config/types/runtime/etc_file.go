@@ -22,7 +22,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/validation"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 // EtcFileConfigKind is a user /etc file config document kind.
@@ -151,23 +150,18 @@ var managedEtcFiles = []string{
 	"localtime",
 	"os-release",
 	"xattr.conf",
-	constants.CRIConfig,
-	constants.CRICustomizationConfigPart,
-	constants.CRIBaseRuntimeSpec,
-	constants.DefaultTrustedRelativeCAFile,
-	"iscsi/initiatorname.iscsi",
-	"nvme/hostid",
-	"nvme/hostnqn",
 }
 
 var managedEtcPrefixes = []string{
-	"cni/",
-	"kubernetes/",
-	"cri/",
-	"apparmor/",
 	"apparmor.d/",
+	"apparmor/",
 	"ca-certificates/",
+	"cni/",
+	"cri/",
+	"iscsi/",
+	"kubernetes/",
 	"lvm/",
+	"nvme/",
 	"pki/",
 	"selinux/",
 	"ssl/",

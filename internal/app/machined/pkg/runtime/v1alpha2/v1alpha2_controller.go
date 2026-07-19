@@ -245,9 +245,14 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&cri.ImageCacheConfigController{
 			V1Alpha1ServiceManager: system.Services(ctrl.v1alpha1Runtime),
 		},
+		&cri.RuntimeSpecConfigController{},
+		&cri.CustomizationConfigController{},
 		cri.NewImageGCController("containerd", false),
 		cri.NewImageGCController("cri", true),
 		&cri.RegistriesConfigController{},
+		&cri.ServiceController{
+			V1Alpha1Services: system.Services(ctrl.v1alpha1Runtime),
+		},
 		&cri.SeccompProfileController{},
 		&cri.SeccompProfileFileController{
 			V1Alpha1Mode:             ctrl.v1alpha1Runtime.State().Platform().Mode(),
@@ -259,8 +264,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&etcd.SpecController{},
 		&etcd.MemberController{},
 		&files.CRIBaseRuntimeSpecController{},
-		&files.CRIConfigPartsController{},
-		&files.CRIRegistryConfigController{
+		&files.CRIConfigController{
 			EtcRoot: etcRoot,
 		},
 		&files.EtcFileConfigController{},

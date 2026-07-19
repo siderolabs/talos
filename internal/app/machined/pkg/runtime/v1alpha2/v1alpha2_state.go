@@ -218,6 +218,8 @@ func NewState() (*State, error) {
 		&network.TimeServerSpec{},
 		&perf.CPU{},
 		&perf.Memory{},
+		&cri.BaseRuntimeSpecConfig{},
+		&cri.CustomizationConfig{},
 		&cri.RegistriesConfig{},
 		&runtime.APIServiceConfig{},
 		&runtime.BootedEntry{},

@@ -26,6 +26,96 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// BaseRuntimeSpecConfigSpec describes an OCI runtime spec configuration source.
+type BaseRuntimeSpecConfigSpec struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Object        *structpb.Struct       `protobuf:"bytes,1,opt,name=object,proto3" json:"object,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *BaseRuntimeSpecConfigSpec) Reset() {
+	*x = BaseRuntimeSpecConfigSpec{}
+	mi := &file_resource_definitions_cri_cri_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BaseRuntimeSpecConfigSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BaseRuntimeSpecConfigSpec) ProtoMessage() {}
+
+func (x *BaseRuntimeSpecConfigSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_cri_cri_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BaseRuntimeSpecConfigSpec.ProtoReflect.Descriptor instead.
+func (*BaseRuntimeSpecConfigSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_cri_cri_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *BaseRuntimeSpecConfigSpec) GetObject() *structpb.Struct {
+	if x != nil {
+		return x.Object
+	}
+	return nil
+}
+
+// CustomizationConfigSpec describes one CRI customization fragment.
+type CustomizationConfigSpec struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Content       string                 `protobuf:"bytes,1,opt,name=content,proto3" json:"content,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CustomizationConfigSpec) Reset() {
+	*x = CustomizationConfigSpec{}
+	mi := &file_resource_definitions_cri_cri_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CustomizationConfigSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CustomizationConfigSpec) ProtoMessage() {}
+
+func (x *CustomizationConfigSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_cri_cri_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CustomizationConfigSpec.ProtoReflect.Descriptor instead.
+func (*CustomizationConfigSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_cri_cri_proto_rawDescGZIP(), []int{1}
+}
+
+func (x *CustomizationConfigSpec) GetContent() string {
+	if x != nil {
+		return x.Content
+	}
+	return ""
+}
+
 // ImageCacheConfigSpec represents the ImageCacheConfig.
 type ImageCacheConfigSpec struct {
 	state         protoimpl.MessageState        `protogen:"open.v1"`
@@ -38,7 +128,7 @@ type ImageCacheConfigSpec struct {
 
 func (x *ImageCacheConfigSpec) Reset() {
 	*x = ImageCacheConfigSpec{}
-	mi := &file_resource_definitions_cri_cri_proto_msgTypes[0]
+	mi := &file_resource_definitions_cri_cri_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -50,7 +140,7 @@ func (x *ImageCacheConfigSpec) String() string {
 func (*ImageCacheConfigSpec) ProtoMessage() {}
 
 func (x *ImageCacheConfigSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_cri_cri_proto_msgTypes[0]
+	mi := &file_resource_definitions_cri_cri_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -63,7 +153,7 @@ func (x *ImageCacheConfigSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ImageCacheConfigSpec.ProtoReflect.Descriptor instead.
 func (*ImageCacheConfigSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_cri_cri_proto_rawDescGZIP(), []int{0}
+	return file_resource_definitions_cri_cri_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *ImageCacheConfigSpec) GetStatus() enums.CriImageCacheStatus {
@@ -99,7 +189,7 @@ type RegistriesConfigSpec struct {
 
 func (x *RegistriesConfigSpec) Reset() {
 	*x = RegistriesConfigSpec{}
-	mi := &file_resource_definitions_cri_cri_proto_msgTypes[1]
+	mi := &file_resource_definitions_cri_cri_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -111,7 +201,7 @@ func (x *RegistriesConfigSpec) String() string {
 func (*RegistriesConfigSpec) ProtoMessage() {}
 
 func (x *RegistriesConfigSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_cri_cri_proto_msgTypes[1]
+	mi := &file_resource_definitions_cri_cri_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -124,7 +214,7 @@ func (x *RegistriesConfigSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegistriesConfigSpec.ProtoReflect.Descriptor instead.
 func (*RegistriesConfigSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_cri_cri_proto_rawDescGZIP(), []int{1}
+	return file_resource_definitions_cri_cri_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *RegistriesConfigSpec) GetRegistryMirrors() map[string]*RegistryMirrorConfig {
@@ -161,7 +251,7 @@ type RegistryAuthConfig struct {
 
 func (x *RegistryAuthConfig) Reset() {
 	*x = RegistryAuthConfig{}
-	mi := &file_resource_definitions_cri_cri_proto_msgTypes[2]
+	mi := &file_resource_definitions_cri_cri_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -173,7 +263,7 @@ func (x *RegistryAuthConfig) String() string {
 func (*RegistryAuthConfig) ProtoMessage() {}
 
 func (x *RegistryAuthConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_cri_cri_proto_msgTypes[2]
+	mi := &file_resource_definitions_cri_cri_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -186,7 +276,7 @@ func (x *RegistryAuthConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegistryAuthConfig.ProtoReflect.Descriptor instead.
 func (*RegistryAuthConfig) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_cri_cri_proto_rawDescGZIP(), []int{2}
+	return file_resource_definitions_cri_cri_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *RegistryAuthConfig) GetRegistryUsername() string {
@@ -228,7 +318,7 @@ type RegistryEndpointConfig struct {
 
 func (x *RegistryEndpointConfig) Reset() {
 	*x = RegistryEndpointConfig{}
-	mi := &file_resource_definitions_cri_cri_proto_msgTypes[3]
+	mi := &file_resource_definitions_cri_cri_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -240,7 +330,7 @@ func (x *RegistryEndpointConfig) String() string {
 func (*RegistryEndpointConfig) ProtoMessage() {}
 
 func (x *RegistryEndpointConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_cri_cri_proto_msgTypes[3]
+	mi := &file_resource_definitions_cri_cri_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -253,7 +343,7 @@ func (x *RegistryEndpointConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegistryEndpointConfig.ProtoReflect.Descriptor instead.
 func (*RegistryEndpointConfig) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_cri_cri_proto_rawDescGZIP(), []int{3}
+	return file_resource_definitions_cri_cri_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *RegistryEndpointConfig) GetEndpointEndpoint() string {
@@ -281,7 +371,7 @@ type RegistryMirrorConfig struct {
 
 func (x *RegistryMirrorConfig) Reset() {
 	*x = RegistryMirrorConfig{}
-	mi := &file_resource_definitions_cri_cri_proto_msgTypes[4]
+	mi := &file_resource_definitions_cri_cri_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -293,7 +383,7 @@ func (x *RegistryMirrorConfig) String() string {
 func (*RegistryMirrorConfig) ProtoMessage() {}
 
 func (x *RegistryMirrorConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_cri_cri_proto_msgTypes[4]
+	mi := &file_resource_definitions_cri_cri_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -306,7 +396,7 @@ func (x *RegistryMirrorConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegistryMirrorConfig.ProtoReflect.Descriptor instead.
 func (*RegistryMirrorConfig) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_cri_cri_proto_rawDescGZIP(), []int{4}
+	return file_resource_definitions_cri_cri_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *RegistryMirrorConfig) GetMirrorEndpoints() []*RegistryEndpointConfig {
@@ -335,7 +425,7 @@ type RegistryTLSConfig struct {
 
 func (x *RegistryTLSConfig) Reset() {
 	*x = RegistryTLSConfig{}
-	mi := &file_resource_definitions_cri_cri_proto_msgTypes[5]
+	mi := &file_resource_definitions_cri_cri_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -347,7 +437,7 @@ func (x *RegistryTLSConfig) String() string {
 func (*RegistryTLSConfig) ProtoMessage() {}
 
 func (x *RegistryTLSConfig) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_cri_cri_proto_msgTypes[5]
+	mi := &file_resource_definitions_cri_cri_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -360,7 +450,7 @@ func (x *RegistryTLSConfig) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RegistryTLSConfig.ProtoReflect.Descriptor instead.
 func (*RegistryTLSConfig) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_cri_cri_proto_rawDescGZIP(), []int{5}
+	return file_resource_definitions_cri_cri_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *RegistryTLSConfig) GetTlsClientIdentity() *common.PEMEncodedCertificateAndKey {
@@ -395,7 +485,7 @@ type SeccompProfileSpec struct {
 
 func (x *SeccompProfileSpec) Reset() {
 	*x = SeccompProfileSpec{}
-	mi := &file_resource_definitions_cri_cri_proto_msgTypes[6]
+	mi := &file_resource_definitions_cri_cri_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -407,7 +497,7 @@ func (x *SeccompProfileSpec) String() string {
 func (*SeccompProfileSpec) ProtoMessage() {}
 
 func (x *SeccompProfileSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_cri_cri_proto_msgTypes[6]
+	mi := &file_resource_definitions_cri_cri_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -420,7 +510,7 @@ func (x *SeccompProfileSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SeccompProfileSpec.ProtoReflect.Descriptor instead.
 func (*SeccompProfileSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_cri_cri_proto_rawDescGZIP(), []int{6}
+	return file_resource_definitions_cri_cri_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *SeccompProfileSpec) GetName() string {
@@ -441,7 +531,11 @@ var File_resource_definitions_cri_cri_proto protoreflect.FileDescriptor
 
 const file_resource_definitions_cri_cri_proto_rawDesc = "" +
 	"\n" +
-	"\"resource/definitions/cri/cri.proto\x12\x1etalos.resource.definitions.cri\x1a\x13common/common.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a&resource/definitions/enums/enums.proto\"\xd7\x01\n" +
+	"\"resource/definitions/cri/cri.proto\x12\x1etalos.resource.definitions.cri\x1a\x13common/common.proto\x1a\x1cgoogle/protobuf/struct.proto\x1a&resource/definitions/enums/enums.proto\"L\n" +
+	"\x19BaseRuntimeSpecConfigSpec\x12/\n" +
+	"\x06object\x18\x01 \x01(\v2\x17.google.protobuf.StructR\x06object\"3\n" +
+	"\x17CustomizationConfigSpec\x12\x18\n" +
+	"\acontent\x18\x01 \x01(\tR\acontent\"\xd7\x01\n" +
 	"\x14ImageCacheConfigSpec\x12M\n" +
 	"\x06status\x18\x01 \x01(\x0e25.talos.resource.definitions.enums.CriImageCacheStatusR\x06status\x12\x14\n" +
 	"\x05roots\x18\x02 \x03(\tR\x05roots\x12Z\n" +
@@ -492,40 +586,43 @@ func file_resource_definitions_cri_cri_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_cri_cri_proto_rawDescData
 }
 
-var file_resource_definitions_cri_cri_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_resource_definitions_cri_cri_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_resource_definitions_cri_cri_proto_goTypes = []any{
-	(*ImageCacheConfigSpec)(nil),       // 0: talos.resource.definitions.cri.ImageCacheConfigSpec
-	(*RegistriesConfigSpec)(nil),       // 1: talos.resource.definitions.cri.RegistriesConfigSpec
-	(*RegistryAuthConfig)(nil),         // 2: talos.resource.definitions.cri.RegistryAuthConfig
-	(*RegistryEndpointConfig)(nil),     // 3: talos.resource.definitions.cri.RegistryEndpointConfig
-	(*RegistryMirrorConfig)(nil),       // 4: talos.resource.definitions.cri.RegistryMirrorConfig
-	(*RegistryTLSConfig)(nil),          // 5: talos.resource.definitions.cri.RegistryTLSConfig
-	(*SeccompProfileSpec)(nil),         // 6: talos.resource.definitions.cri.SeccompProfileSpec
-	nil,                                // 7: talos.resource.definitions.cri.RegistriesConfigSpec.RegistryMirrorsEntry
-	nil,                                // 8: talos.resource.definitions.cri.RegistriesConfigSpec.RegistryAuthsEntry
-	nil,                                // 9: talos.resource.definitions.cri.RegistriesConfigSpec.RegistryTlSsEntry
-	(enums.CriImageCacheStatus)(0),     // 10: talos.resource.definitions.enums.CriImageCacheStatus
-	(enums.CriImageCacheCopyStatus)(0), // 11: talos.resource.definitions.enums.CriImageCacheCopyStatus
-	(*common.PEMEncodedCertificateAndKey)(nil), // 12: common.PEMEncodedCertificateAndKey
-	(*structpb.Struct)(nil),                    // 13: google.protobuf.Struct
+	(*BaseRuntimeSpecConfigSpec)(nil),          // 0: talos.resource.definitions.cri.BaseRuntimeSpecConfigSpec
+	(*CustomizationConfigSpec)(nil),            // 1: talos.resource.definitions.cri.CustomizationConfigSpec
+	(*ImageCacheConfigSpec)(nil),               // 2: talos.resource.definitions.cri.ImageCacheConfigSpec
+	(*RegistriesConfigSpec)(nil),               // 3: talos.resource.definitions.cri.RegistriesConfigSpec
+	(*RegistryAuthConfig)(nil),                 // 4: talos.resource.definitions.cri.RegistryAuthConfig
+	(*RegistryEndpointConfig)(nil),             // 5: talos.resource.definitions.cri.RegistryEndpointConfig
+	(*RegistryMirrorConfig)(nil),               // 6: talos.resource.definitions.cri.RegistryMirrorConfig
+	(*RegistryTLSConfig)(nil),                  // 7: talos.resource.definitions.cri.RegistryTLSConfig
+	(*SeccompProfileSpec)(nil),                 // 8: talos.resource.definitions.cri.SeccompProfileSpec
+	nil,                                        // 9: talos.resource.definitions.cri.RegistriesConfigSpec.RegistryMirrorsEntry
+	nil,                                        // 10: talos.resource.definitions.cri.RegistriesConfigSpec.RegistryAuthsEntry
+	nil,                                        // 11: talos.resource.definitions.cri.RegistriesConfigSpec.RegistryTlSsEntry
+	(*structpb.Struct)(nil),                    // 12: google.protobuf.Struct
+	(enums.CriImageCacheStatus)(0),             // 13: talos.resource.definitions.enums.CriImageCacheStatus
+	(enums.CriImageCacheCopyStatus)(0),         // 14: talos.resource.definitions.enums.CriImageCacheCopyStatus
+	(*common.PEMEncodedCertificateAndKey)(nil), // 15: common.PEMEncodedCertificateAndKey
 }
 var file_resource_definitions_cri_cri_proto_depIdxs = []int32{
-	10, // 0: talos.resource.definitions.cri.ImageCacheConfigSpec.status:type_name -> talos.resource.definitions.enums.CriImageCacheStatus
-	11, // 1: talos.resource.definitions.cri.ImageCacheConfigSpec.copy_status:type_name -> talos.resource.definitions.enums.CriImageCacheCopyStatus
-	7,  // 2: talos.resource.definitions.cri.RegistriesConfigSpec.registry_mirrors:type_name -> talos.resource.definitions.cri.RegistriesConfigSpec.RegistryMirrorsEntry
-	8,  // 3: talos.resource.definitions.cri.RegistriesConfigSpec.registry_auths:type_name -> talos.resource.definitions.cri.RegistriesConfigSpec.RegistryAuthsEntry
-	9,  // 4: talos.resource.definitions.cri.RegistriesConfigSpec.registry_tl_ss:type_name -> talos.resource.definitions.cri.RegistriesConfigSpec.RegistryTlSsEntry
-	3,  // 5: talos.resource.definitions.cri.RegistryMirrorConfig.mirror_endpoints:type_name -> talos.resource.definitions.cri.RegistryEndpointConfig
-	12, // 6: talos.resource.definitions.cri.RegistryTLSConfig.tls_client_identity:type_name -> common.PEMEncodedCertificateAndKey
-	13, // 7: talos.resource.definitions.cri.SeccompProfileSpec.value:type_name -> google.protobuf.Struct
-	4,  // 8: talos.resource.definitions.cri.RegistriesConfigSpec.RegistryMirrorsEntry.value:type_name -> talos.resource.definitions.cri.RegistryMirrorConfig
-	2,  // 9: talos.resource.definitions.cri.RegistriesConfigSpec.RegistryAuthsEntry.value:type_name -> talos.resource.definitions.cri.RegistryAuthConfig
-	5,  // 10: talos.resource.definitions.cri.RegistriesConfigSpec.RegistryTlSsEntry.value:type_name -> talos.resource.definitions.cri.RegistryTLSConfig
-	11, // [11:11] is the sub-list for method output_type
-	11, // [11:11] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	12, // 0: talos.resource.definitions.cri.BaseRuntimeSpecConfigSpec.object:type_name -> google.protobuf.Struct
+	13, // 1: talos.resource.definitions.cri.ImageCacheConfigSpec.status:type_name -> talos.resource.definitions.enums.CriImageCacheStatus
+	14, // 2: talos.resource.definitions.cri.ImageCacheConfigSpec.copy_status:type_name -> talos.resource.definitions.enums.CriImageCacheCopyStatus
+	9,  // 3: talos.resource.definitions.cri.RegistriesConfigSpec.registry_mirrors:type_name -> talos.resource.definitions.cri.RegistriesConfigSpec.RegistryMirrorsEntry
+	10, // 4: talos.resource.definitions.cri.RegistriesConfigSpec.registry_auths:type_name -> talos.resource.definitions.cri.RegistriesConfigSpec.RegistryAuthsEntry
+	11, // 5: talos.resource.definitions.cri.RegistriesConfigSpec.registry_tl_ss:type_name -> talos.resource.definitions.cri.RegistriesConfigSpec.RegistryTlSsEntry
+	5,  // 6: talos.resource.definitions.cri.RegistryMirrorConfig.mirror_endpoints:type_name -> talos.resource.definitions.cri.RegistryEndpointConfig
+	15, // 7: talos.resource.definitions.cri.RegistryTLSConfig.tls_client_identity:type_name -> common.PEMEncodedCertificateAndKey
+	12, // 8: talos.resource.definitions.cri.SeccompProfileSpec.value:type_name -> google.protobuf.Struct
+	6,  // 9: talos.resource.definitions.cri.RegistriesConfigSpec.RegistryMirrorsEntry.value:type_name -> talos.resource.definitions.cri.RegistryMirrorConfig
+	4,  // 10: talos.resource.definitions.cri.RegistriesConfigSpec.RegistryAuthsEntry.value:type_name -> talos.resource.definitions.cri.RegistryAuthConfig
+	7,  // 11: talos.resource.definitions.cri.RegistriesConfigSpec.RegistryTlSsEntry.value:type_name -> talos.resource.definitions.cri.RegistryTLSConfig
+	12, // [12:12] is the sub-list for method output_type
+	12, // [12:12] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_cri_cri_proto_init() }
@@ -539,7 +636,7 @@ func file_resource_definitions_cri_cri_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_cri_cri_proto_rawDesc), len(file_resource_definitions_cri_cri_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

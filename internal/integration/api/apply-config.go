@@ -17,7 +17,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/siderolabs/gen/ensure"
-	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -32,6 +31,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/cri"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -218,10 +218,6 @@ func (suite *ApplyConfigSuite) TestApplyNoOpCRIPatch() {
 		suite.T().Skip("skipping in short mode")
 	}
 
-	if !suite.Capabilities().SupportsReboot {
-		suite.T().Skip("cluster doesn't support reboot")
-	}
-
 	suite.WaitForBootDone(suite.ctx)
 
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
@@ -229,69 +225,39 @@ func (suite *ApplyConfigSuite) TestApplyNoOpCRIPatch() {
 	suite.ClearConnectionRefused(suite.ctx, node)
 	nodeCtx := client.WithNode(suite.ctx, node)
 
-	provider, err := suite.ReadConfigFromNode(nodeCtx)
-	suite.Require().NoErrorf(err, "failed to read existing config from node %q", node)
+	criCustomization := cri.NewCRICustomizationConfigV1Alpha1("baseruntimespec")
+	criCustomization.CustomizationContent = `[plugins."io.containerd.cri.v1.runtime".containerd.runtimes.runc]
+  base_runtime_spec = "/etc/cri/conf.d/base-spec.json"`
 
-	// this CRI patch is a no-op, as NRI is already disabled by default, this verifies that CRI config generation handles it correctly.
-	cfgDataOut := suite.PatchV1Alpha1Config(provider, func(cfg *v1alpha1.Config) {
-		cfg.MachineConfig.MachineFiles = xslices.Filter(cfg.MachineConfig.MachineFiles, func(file *v1alpha1.MachineFile) bool {
-			return file.FilePath != "/etc/cri/conf.d/20-customization.part"
-		})
+	lastCRIEvent := suite.LatestServiceEventTimestamp(suite.ctx, node, "cri")
 
-		cfg.MachineConfig.MachineFiles = append(
-			cfg.MachineConfig.MachineFiles,
-			&v1alpha1.MachineFile{
-				FilePath: "/etc/cri/conf.d/20-customization.part",
-				FileOp:   "create",
-				FileContent: `[plugins]
-          [plugins."io.containerd.nri.v1.nri"]
-             disable = true`,
-			},
-		)
+	suite.PatchMachineConfig(nodeCtx, criCustomization)
+
+	defer func() {
+		suite.RemoveMachineConfigDocumentsByName(nodeCtx, cri.CRICustomizationConfigKind, criCustomization.MetaName)
+	}()
+
+	suite.AssertServiceEventsInOrder(suite.ctx, node, "cri", lastCRIEvent, []string{
+		"Stopping",
+		"Finished",
+		"Starting",
+		"Waiting",
+		"Preparing",
+		"Running",
 	})
 
-	_, err = suite.Client.ApplyConfiguration(
-		nodeCtx, &machineapi.ApplyConfigurationRequest{
-			Data: cfgDataOut,
-			Mode: machineapi.ApplyConfigurationRequest_AUTO,
-		},
-	)
-	suite.Require().NoErrorf(err, "failed to apply configuration (node %q)", node)
+	lastCRIEvent = suite.LatestServiceEventTimestamp(suite.ctx, node, "cri")
 
-	suite.AssertRebooted(
-		suite.ctx, node, func(nodeCtx context.Context) error {
-			return base.IgnoreGRPCUnavailable(suite.Client.Reboot(nodeCtx))
-		}, assertRebootedRebootTimeout,
-		suite.CleanupFailedPods,
-	)
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, cri.CRICustomizationConfigKind, criCustomization.MetaName)
 
-	suite.ClearConnectionRefused(suite.ctx, node)
-
-	// revert the patch
-	provider, err = suite.ReadConfigFromNode(nodeCtx)
-	suite.Require().NoErrorf(err, "failed to read existing config from node %q", node)
-
-	// this CRI patch is a no-op, as NRI is already disabled by default, this verifies that CRI config generation handles it correctly.
-	cfgDataOut = suite.PatchV1Alpha1Config(provider, func(cfg *v1alpha1.Config) {
-		cfg.MachineConfig.MachineFiles = xslices.Filter(cfg.MachineConfig.MachineFiles, func(file *v1alpha1.MachineFile) bool {
-			return file.FilePath != "/etc/cri/conf.d/20-customization.part"
-		})
+	suite.AssertServiceEventsInOrder(suite.ctx, node, "cri", lastCRIEvent, []string{
+		"Stopping",
+		"Finished",
+		"Starting",
+		"Waiting",
+		"Preparing",
+		"Running",
 	})
-
-	_, err = suite.Client.ApplyConfiguration(
-		nodeCtx, &machineapi.ApplyConfigurationRequest{
-			Data: cfgDataOut,
-			Mode: machineapi.ApplyConfigurationRequest_AUTO,
-		},
-	)
-	suite.Require().NoErrorf(err, "failed to apply configuration (node %q)", node)
-
-	suite.AssertRebooted(
-		suite.ctx, node, func(nodeCtx context.Context) error {
-			return base.IgnoreGRPCUnavailable(suite.Client.Reboot(nodeCtx))
-		}, assertRebootedRebootTimeout,
-		suite.CleanupFailedPods,
-	)
 }
 
 // TestApplyWithoutReboot verifies the apply config API without reboot.
@@ -559,8 +525,8 @@ func (suite *ApplyConfigSuite) TestApplyDryRun() {
 
 	cfgDataOut := suite.PatchV1Alpha1Config(provider, func(cfg *v1alpha1.Config) {
 		// this won't be possible without a reboot
-		cfg.MachineConfig.MachineFiles = append(
-			cfg.MachineConfig.MachineFiles,
+		cfg.MachineConfig.MachineFiles = append( //nolint:staticcheck // test deprecated machine files compatibility
+			cfg.MachineConfig.MachineFiles, //nolint:staticcheck // test deprecated machine files compatibility
 			&v1alpha1.MachineFile{
 				FileContent:     "test",
 				FilePermissions: v1alpha1.FileMode(os.ModePerm),

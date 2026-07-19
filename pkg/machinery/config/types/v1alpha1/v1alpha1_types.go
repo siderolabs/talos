@@ -167,16 +167,9 @@ type MachineConfig struct {
 	//
 	// Deprecated: Use the 'UnattendedInstall' multi-document config instead.
 	MachineInstall *InstallConfig `yaml:"install,omitempty"`
-	//   description: |
-	//     Allows the addition of user specified files.
-	//     The value of `op` can be `create`, `overwrite`, or `append`.
-	//     In the case of `create`, `path` must not exist.
-	//     In the case of `overwrite`, and `append`, `path` must be a valid file.
-	//     If an `op` value of `append` is used, the existing file will be appended.
-	//     Note that the file contents are not required to be base64 encoded.
-	//   examples:
-	//      - name: MachineFiles usage example.
-	//        value: machineFilesExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use dedicated configuration documents such as EtcFileConfig and CRICustomizationConfig instead.
 	MachineFiles []*MachineFile `yaml:"files,omitempty"` // Note: The specified `path` is relative to `/var`.
 	// docgen:nodoc
 	//
@@ -231,17 +224,9 @@ type MachineConfig struct {
 	//  examples:
 	//    - value: machineSeccompExample()
 	MachineSeccompProfiles []*MachineSeccompProfile `yaml:"seccompProfiles,omitempty" talos:"omitonlyifnil"`
-	//  description: |
-	//    Override (patch) settings in the default OCI runtime spec for CRI containers.
+	// docgen:nodoc
 	//
-	//    It can be used to set some default container settings which are not configurable in Kubernetes,
-	//    for example default ulimits.
-	//    Note: this change applies to all newly created containers, and it requires a reboot to take effect.
-	//  examples:
-	//    - name: override default open file limit
-	//      value: machineBaseRuntimeSpecOverridesExample()
-	//  schema:
-	//    type: object
+	// Deprecated: Use the CRIBaseRuntimeSpecConfig configuration document instead.
 	MachineBaseRuntimeSpecOverrides meta.Unstructured `yaml:"baseRuntimeSpecOverrides,omitempty"`
 	// docgen:nodoc
 	//
@@ -1581,6 +1566,8 @@ func (fm FileMode) MarshalYAML() (any, error) {
 }
 
 // MachineFile represents a file to write to disk.
+//
+//docgen:nodoc
 type MachineFile struct {
 	//   description: The contents of the file.
 	FileContent string `yaml:"content"`

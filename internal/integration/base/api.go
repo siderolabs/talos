@@ -474,6 +474,78 @@ func (apiSuite *APISuite) AssertServicesRunning(ctx context.Context, node string
 	}
 }
 
+// LatestServiceEventTimestamp returns the timestamp of the latest recorded event for a service.
+func (apiSuite *APISuite) LatestServiceEventTimestamp(ctx context.Context, node string, serviceName string) time.Time {
+	nodeCtx := client.WithNode(ctx, node)
+
+	resp, err := apiSuite.Client.ServiceInfo(nodeCtx, serviceName)
+	apiSuite.Require().NoError(err)
+	apiSuite.Require().NotEmpty(resp, "expected service %s to be registered", serviceName)
+
+	var latest time.Time
+
+	for _, serviceInfo := range resp {
+		for _, event := range serviceInfo.Service.GetEvents().GetEvents() {
+			if event.GetTs() == nil {
+				continue
+			}
+
+			eventTime := event.GetTs().AsTime()
+			if eventTime.After(latest) {
+				latest = eventTime
+			}
+		}
+	}
+
+	apiSuite.Require().False(latest.IsZero(), "expected service %s to have timestamped events", serviceName)
+
+	return latest
+}
+
+// AssertServiceEventsInOrder waits for a healthy service to emit the expected states after the given timestamp.
+func (apiSuite *APISuite) AssertServiceEventsInOrder(ctx context.Context, node string, serviceName string, since time.Time, expectedEvents []string) {
+	nodeCtx := client.WithNode(ctx, node)
+
+	apiSuite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		resp, err := apiSuite.Client.ServiceInfo(nodeCtx, serviceName)
+		if !assert.NoError(collect, err) || !assert.NotEmpty(collect, resp, "expected service %s to be registered", serviceName) {
+			return
+		}
+
+		actualEvents := make([]string, 0)
+		healthy := false
+
+		for _, serviceInfo := range resp {
+			healthy = healthy || serviceInfo.Service.GetHealth().GetHealthy()
+
+			for _, event := range serviceInfo.Service.GetEvents().GetEvents() {
+				if event.GetTs() != nil && event.GetTs().AsTime().After(since) {
+					actualEvents = append(actualEvents, event.GetState())
+				}
+			}
+		}
+
+		actualEvents = slices.Compact(actualEvents)
+
+		assert.True(collect, healthy, "expected service %s to be healthy", serviceName)
+
+		if !assert.GreaterOrEqual(
+			collect,
+			len(actualEvents),
+			len(expectedEvents),
+			"expected service %s to emit at least %d states after %s, but got %v",
+			serviceName,
+			len(expectedEvents),
+			since,
+			actualEvents,
+		) {
+			return
+		}
+
+		assert.Equal(collect, expectedEvents, actualEvents[len(actualEvents)-len(expectedEvents):], "unexpected service %s event sequence after %s", serviceName, since)
+	}, time.Minute, time.Second, "expected service %s to become healthy with events %v after %s", serviceName, expectedEvents, since)
+}
+
 // AssertExpectedModules verifies that expected kernel modules are loaded on the node as dynamic type and live state.
 func (apiSuite *APISuite) AssertExpectedModules(ctx context.Context, node string, expectedModules []string) {
 	nodeCtx := client.WithNode(ctx, node)

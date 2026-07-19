@@ -6,6 +6,7 @@ package container_test
 
 import (
 	"net/url"
+	"path/filepath"
 	"testing"
 
 	"github.com/siderolabs/gen/xslices"
@@ -19,12 +20,15 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	clustertypes "github.com/siderolabs/talos/pkg/machinery/config/types/cluster"
+	critypes "github.com/siderolabs/talos/pkg/machinery/config/types/cri"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/hardware"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	runtimeconfig "github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime/extensions"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 func TestNew(t *testing.T) {
@@ -135,6 +139,62 @@ func TestNewConflict(t *testing.T) {
 
 	_, err = container.New(ev2, ev1, uv1, uv2)
 	assert.EqualError(t, err, "conflicting documents: ExistingVolumeConfig/my-user-volume-1 and UserVolumeConfig/my-user-volume-1")
+}
+
+func TestCRICustomizationConfigs(t *testing.T) {
+	t.Parallel()
+
+	legacy := &v1alpha1.Config{
+		MachineConfig: &v1alpha1.MachineConfig{
+			MachineFiles: []*v1alpha1.MachineFile{ //nolint:staticcheck // test deprecated compatibility
+				{
+					FilePath:    filepath.Join("/etc", constants.CRICustomizationConfigPart),
+					FileContent: "legacy",
+				},
+			},
+		},
+	}
+
+	document := critypes.NewCRICustomizationConfigV1Alpha1("document")
+	document.CustomizationContent = "document"
+
+	cfg, err := container.New(legacy, document)
+	require.NoError(t, err)
+
+	customizations := cfg.CRICustomizationConfigs()
+	require.Len(t, customizations, 2)
+	assert.Equal(t, config.LegacyCRICustomizationConfigName, customizations[0].Name())
+	assert.Equal(t, "legacy", customizations[0].Content())
+	assert.Equal(t, "document", customizations[1].Name())
+	assert.Equal(t, "document", customizations[1].Content())
+}
+
+func TestCRIBaseRuntimeSpecConfig(t *testing.T) {
+	t.Parallel()
+
+	document := critypes.NewCRIBaseRuntimeSpecConfigV1Alpha1()
+	document.OverridesConfig.Object = map[string]any{
+		"process": map[string]any{"noNewPrivileges": true},
+	}
+
+	cfg, err := container.New(document)
+	require.NoError(t, err)
+
+	assert.Equal(t, document, cfg.CRIBaseRuntimeSpecConfig())
+
+	legacy := &v1alpha1.Config{
+		MachineConfig: &v1alpha1.MachineConfig{
+			MachineBaseRuntimeSpecOverrides: meta.Unstructured{ //nolint:staticcheck // test deprecated compatibility
+				Object: map[string]any{"process": map[string]any{"cwd": "/legacy"}},
+			},
+		},
+	}
+
+	cfg, err = container.New(legacy)
+	require.NoError(t, err)
+
+	require.NotNil(t, cfg.CRIBaseRuntimeSpecConfig())
+	assert.Equal(t, legacy.MachineConfig.MachineBaseRuntimeSpecOverrides.Object, cfg.CRIBaseRuntimeSpecConfig().Overrides()) //nolint:staticcheck // test deprecated compatibility
 }
 
 func TestUdevRulesConfig(t *testing.T) {

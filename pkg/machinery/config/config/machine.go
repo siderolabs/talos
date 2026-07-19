@@ -36,7 +36,6 @@ type MachineConfig interface {
 	Udev() UdevConfig
 	Logging() Logging
 	SeccompProfiles() []SeccompProfile
-	BaseRuntimeSpecOverrides() map[string]any
 }
 
 // SeccompProfile defines the requirements for a config that pertains to seccomp

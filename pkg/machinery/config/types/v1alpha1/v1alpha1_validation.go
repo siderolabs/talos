@@ -92,6 +92,14 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 		return nil, result.ErrorOrNil()
 	}
 
+	if len(c.MachineConfig.MachineFiles) > 0 { //nolint:staticcheck // warn about deprecated configuration
+		warnings = append(warnings, ".machine.files is deprecated; use dedicated configuration documents instead")
+	}
+
+	if len(c.MachineConfig.MachineBaseRuntimeSpecOverrides.Object) > 0 { //nolint:staticcheck // warn about deprecated configuration
+		warnings = append(warnings, ".machine.baseRuntimeSpecOverrides is deprecated; use a CRIBaseRuntimeSpecConfig document instead")
+	}
+
 	if err := c.ClusterConfig.Validate(c.Machine().Type().IsControlPlane()); err != nil {
 		result = multierror.Append(result, err)
 	}
@@ -340,9 +348,9 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 		result = multierror.Append(result, errors.New(".persist should be enabled"))
 	}
 
-	if len(c.Machine().BaseRuntimeSpecOverrides()) > 0 {
+	if len(c.MachineConfig.MachineBaseRuntimeSpecOverrides.Object) > 0 { //nolint:staticcheck // validate deprecated compatibility field
 		// try to unmarshal the overrides to ensure they are valid
-		jsonSpec, err := json.Marshal(c.Machine().BaseRuntimeSpecOverrides())
+		jsonSpec, err := json.Marshal(c.MachineConfig.MachineBaseRuntimeSpecOverrides.Object) //nolint:staticcheck // validate deprecated compatibility field
 		if err != nil {
 			result = multierror.Append(result, fmt.Errorf("failed to marshal base runtime spec overrides: %w", err))
 		} else {

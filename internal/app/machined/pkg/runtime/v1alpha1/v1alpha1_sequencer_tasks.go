@@ -8,8 +8,6 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -367,10 +365,11 @@ func StartAllServices(runtime.Sequence, any) (runtime.TaskExecutionFunc, string)
 
 		svcs := system.Services(r)
 
-		// load the kubelet service, but don't start it;
-		// KubeletServiceController will start it once it's ready.
+		// Load kubelet and CRI, but don't start them; their service controllers
+		// will start them once their rendered configuration is ready.
 		svcs.Load(
 			&services.Kubelet{},
+			&services.CRI{},
 		)
 
 		serviceList := []system.Service{}
@@ -381,8 +380,6 @@ func StartAllServices(runtime.Sequence, any) (runtime.TaskExecutionFunc, string)
 		if sandboxd.Enabled(r) {
 			serviceList = append(serviceList, &services.Sandboxd{})
 		}
-
-		serviceList = append(serviceList, &services.CRI{})
 
 		switch t := r.Config().Machine().Type(); t {
 		case machine.TypeInit:
@@ -553,12 +550,8 @@ func WriteUserFiles(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 				continue
 			}
 
-			// CRI configuration customization
+			// skipping CRI configuration customization file, as it is handled by the cri customization config controller
 			if f.Path() == filepath.Join("/etc", constants.CRICustomizationConfigPart) {
-				if err = injectCRIConfigPatch(ctx, r.State().V1Alpha2().Resources(), []byte(f.Content())); err != nil {
-					result = multierror.Append(result, err)
-				}
-
 				continue
 			}
 
@@ -609,52 +602,6 @@ func WriteUserFiles(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 
 		return result.ErrorOrNil()
 	}, "writeUserFiles"
-}
-
-func injectCRIConfigPatch(ctx context.Context, st state.State, content []byte) error {
-	// limit overall waiting time
-	ctx, cancel := context.WithTimeout(ctx, time.Minute)
-	defer cancel()
-
-	etcFileSpec := resourcefiles.NewEtcFileSpec(resourcefiles.NamespaceName, constants.CRICustomizationConfigPart)
-	etcFileSpec.TypedSpec().Mode = 0o600
-	etcFileSpec.TypedSpec().Contents = content
-	etcFileSpec.TypedSpec().SelinuxLabel = constants.EtcSelinuxLabel
-
-	if err := st.Create(ctx, etcFileSpec); err != nil {
-		return err
-	}
-
-	checksumRaw := sha256.Sum256(content)
-	expectedChecksum := hex.EncodeToString(checksumRaw[:])
-	expectedAnnotation := resourcefiles.SourceFileAnnotation + ":" + filepath.Join("/etc", etcFileSpec.Metadata().ID())
-
-	fileSpec, err := st.WatchFor(ctx, resourcefiles.NewEtcFileSpec(resourcefiles.NamespaceName, constants.CRIConfig).Metadata(),
-		state.WithCondition(func(r resource.Resource) (bool, error) {
-			spec, ok := r.(*resourcefiles.EtcFileSpec)
-			if !ok {
-				return false, nil
-			}
-
-			value, ok := spec.Metadata().Annotations().Get(expectedAnnotation)
-
-			return ok && value == expectedChecksum, nil
-		}))
-	if err != nil {
-		return fmt.Errorf("error waiting for file %q to be updated: %w", constants.CRIConfig, err)
-	}
-
-	// wait for the file to be rendered
-	_, err = st.WatchFor(ctx, resourcefiles.NewEtcFileStatus(resourcefiles.NamespaceName, constants.CRIConfig).Metadata(), state.WithCondition(func(r resource.Resource) (bool, error) {
-		fileStatus, ok := r.(*resourcefiles.EtcFileStatus)
-		if !ok {
-			return false, nil
-		}
-
-		return fileStatus.TypedSpec().SpecVersion == fileSpec.Metadata().Version().String(), nil
-	}))
-
-	return err
 }
 
 func existsAndIsFile(p string) (err error) {

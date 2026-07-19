@@ -103,6 +103,29 @@ func TestValidate(t *testing.T) {
 			},
 		},
 		{
+			name: "MachineFilesDeprecated",
+			config: &v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineType: "worker",
+					MachineCA: &x509.PEMEncodedCertificateAndKey{
+						Crt: []byte("foo"),
+					},
+					MachineFiles: []*v1alpha1.MachineFile{ //nolint:staticcheck // test deprecation warning
+						{FilePath: "/var/example", FileOp: "create"},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ControlPlane: &v1alpha1.ControlPlaneConfig{
+						Endpoint: &v1alpha1.Endpoint{endpointURL},
+					},
+				},
+			},
+			expectedWarnings: []string{
+				`.machine.files is deprecated; use dedicated configuration documents instead`,
+			},
+		},
+		{
 			name: "NoMachineTypeStrict",
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
@@ -1982,6 +2005,9 @@ func TestValidate(t *testing.T) {
 						},
 					},
 				},
+			},
+			expectedWarnings: []string{
+				`.machine.baseRuntimeSpecOverrides is deprecated; use a CRIBaseRuntimeSpecConfig document instead`,
 			},
 		},
 		{

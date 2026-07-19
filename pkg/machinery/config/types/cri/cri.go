@@ -5,6 +5,6 @@
 // Package cri provides container runtime interface related config documents.
 package cri
 
-//go:generate go tool github.com/siderolabs/talos/tools/docgen -output cri_doc.go image_cache.go registry_auth.go registry_mirror.go registry_tls.go
+//go:generate go tool github.com/siderolabs/talos/tools/docgen -output cri_doc.go base_runtime_spec.go customization.go image_cache.go registry_auth.go registry_mirror.go registry_tls.go
 
-//go:generate go tool github.com/siderolabs/deep-copy -type ImageCacheConfigV1Alpha1 -type RegistryAuthConfigV1Alpha1 -type RegistryMirrorConfigV1Alpha1 -type RegistryTLSConfigV1Alpha1 -pointer-receiver -header-file ../../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate go tool github.com/siderolabs/deep-copy -type CRIBaseRuntimeSpecConfigV1Alpha1 -type CRICustomizationConfigV1Alpha1 -type ImageCacheConfigV1Alpha1 -type RegistryAuthConfigV1Alpha1 -type RegistryMirrorConfigV1Alpha1 -type RegistryTLSConfigV1Alpha1 -pointer-receiver -header-file ../../../../../hack/boilerplate.txt -o deep_copy.generated.go .

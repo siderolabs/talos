@@ -399,6 +399,8 @@ description: Talos gRPC API reference.
     - [ServiceEndpoint](#talos.resource.definitions.cluster.ServiceEndpoint)
   
 - [resource/definitions/cri/cri.proto](#resource/definitions/cri/cri.proto)
+    - [BaseRuntimeSpecConfigSpec](#talos.resource.definitions.cri.BaseRuntimeSpecConfigSpec)
+    - [CustomizationConfigSpec](#talos.resource.definitions.cri.CustomizationConfigSpec)
     - [ImageCacheConfigSpec](#talos.resource.definitions.cri.ImageCacheConfigSpec)
     - [RegistriesConfigSpec](#talos.resource.definitions.cri.RegistriesConfigSpec)
     - [RegistriesConfigSpec.RegistryAuthsEntry](#talos.resource.definitions.cri.RegistriesConfigSpec.RegistryAuthsEntry)
@@ -7129,6 +7131,36 @@ ServiceEndpoint describes a service endpoint for discovery.
 <p align="right"><a href="#top">Top</a></p>
 
 ## resource/definitions/cri/cri.proto
+
+
+
+<a name="talos.resource.definitions.cri.BaseRuntimeSpecConfigSpec"></a>
+
+### BaseRuntimeSpecConfigSpec
+BaseRuntimeSpecConfigSpec describes an OCI runtime spec configuration source.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| object | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.cri.CustomizationConfigSpec"></a>
+
+### CustomizationConfigSpec
+CustomizationConfigSpec describes one CRI customization fragment.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| content | [string](#string) |  |  |
+
+
+
 
 
 

@@ -119,13 +119,7 @@ func (MachineConfig) Doc() *encoder.Doc {
 			{},
 			{},
 			{},
-			{
-				Name:        "files",
-				Type:        "[]MachineFile",
-				Note:        "Note: The specified `path` is relative to `/var`.\n",
-				Description: "Allows the addition of user specified files.\nThe value of `op` can be `create`, `overwrite`, or `append`.\nIn the case of `create`, `path` must not exist.\nIn the case of `overwrite`, and `append`, `path` must be a valid file.\nIf an `op` value of `append` is used, the existing file will be appended.\nNote that the file contents are not required to be base64 encoded.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Allows the addition of user specified files." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{},
 			{},
 			{},
@@ -155,13 +149,7 @@ func (MachineConfig) Doc() *encoder.Doc {
 				Description: "Configures the seccomp profiles for the machine.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the seccomp profiles for the machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "baseRuntimeSpecOverrides",
-				Type:        "Unstructured",
-				Note:        "",
-				Description: "Override (patch) settings in the default OCI runtime spec for CRI containers.\n\nIt can be used to set some default container settings which are not configurable in Kubernetes,\nfor example default ulimits.\nNote: this change applies to all newly created containers, and it requires a reboot to take effect.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Override (patch) settings in the default OCI runtime spec for CRI containers." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{},
 			{},
 			{},
@@ -173,12 +161,10 @@ func (MachineConfig) Doc() *encoder.Doc {
 	doc.Fields[1].AddExample("example token", "328hom.uqjzh6jnn2eie9oi")
 	doc.Fields[2].AddExample("machine CA example", pemEncodedCertificateExample())
 	doc.Fields[4].AddExample("Uncomment this to enable SANs.", []string{"10.0.0.10", "172.16.0.10", "192.168.0.10"})
-	doc.Fields[11].AddExample("MachineFiles usage example.", machineFilesExample())
 	doc.Fields[18].AddExample("", machineFeaturesExample())
 	doc.Fields[20].AddExample("", machineLoggingExample1())
 	doc.Fields[20].AddExample("", machineLoggingExample2())
 	doc.Fields[22].AddExample("", machineSeccompExample())
-	doc.Fields[23].AddExample("override default open file limit", machineBaseRuntimeSpecOverridesExample())
 
 	return doc
 }
@@ -441,59 +427,6 @@ func (AdminKubeconfigConfig) Doc() *encoder.Doc {
 	return doc
 }
 
-func (MachineFile) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "MachineFile",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "MachineFile represents a file to write to disk." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "MachineFile represents a file to write to disk.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "MachineConfig",
-				FieldName: "files",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "content",
-				Type:        "string",
-				Note:        "",
-				Description: "The contents of the file.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The contents of the file." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "permissions",
-				Type:        "FileMode",
-				Note:        "",
-				Description: "The file's permissions in octal.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The file's permissions in octal." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "path",
-				Type:        "string",
-				Note:        "",
-				Description: "The path of the file.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The path of the file." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "op",
-				Type:        "string",
-				Note:        "",
-				Description: "The operation to use",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The operation to use" /* encoder.LineComment */, "" /* encoder.FootComment */},
-				Values: []string{
-					"create",
-					"append",
-					"overwrite",
-				},
-			},
-		},
-	}
-
-	doc.AddExample("MachineFiles usage example.", machineFilesExample())
-
-	return doc
-}
-
 func (FeaturesConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "FeaturesConfig",
@@ -669,7 +602,6 @@ func GetFileDoc() *encoder.FileDoc {
 			EtcdConfig{}.Doc(),
 			ExternalCloudProviderConfig{}.Doc(),
 			AdminKubeconfigConfig{}.Doc(),
-			MachineFile{}.Doc(),
 			FeaturesConfig{}.Doc(),
 			KubernetesTalosAPIAccessConfig{}.Doc(),
 			LoggingConfig{}.Doc(),

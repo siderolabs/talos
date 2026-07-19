@@ -11,6 +11,7 @@ import (
 
 	containerd "github.com/containerd/containerd/v2/client"
 	"github.com/containerd/containerd/v2/defaults"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/xslices"
 	"google.golang.org/grpc/health/grpc_health_v1"
 
@@ -25,6 +26,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -38,6 +40,8 @@ type CRI struct {
 	// client is a lazy-initialized containerd client. It should be accessed using the Client() method.
 	client *containerd.Client
 }
+
+const criServiceID = "cri"
 
 // Client lazy-initializes the containerd client if needed and returns it.
 func (c *CRI) Client() (*containerd.Client, error) {
@@ -57,18 +61,43 @@ func (c *CRI) Client() (*containerd.Client, error) {
 
 // ID implements the Service interface.
 func (c *CRI) ID(runtime.Runtime) string {
-	return "cri"
+	return criServiceID
 }
 
 // PreFunc implements the Service interface.
-func (c *CRI) PreFunc(context.Context, runtime.Runtime) error {
-	return os.MkdirAll(defaults.DefaultRootDir, os.ModeDir)
+func (c *CRI) PreFunc(ctx context.Context, r runtime.Runtime) error {
+	if err := os.MkdirAll(defaults.DefaultRootDir, 0o750); err != nil {
+		return err
+	}
+
+	if r.State().Platform().Mode().InContainer() {
+		return nil
+	}
+
+	return createOverlayMountRequests(ctx, r.State().V1Alpha2().Resources())
+}
+
+func createOverlayMountRequests(ctx context.Context, st state.State) error {
+	for _, overlay := range constants.Overlays {
+		mountRequest := block.NewVolumeMountRequest(block.NamespaceName, overlay.Path)
+		mountRequest.TypedSpec().Requester = criServiceID
+		mountRequest.TypedSpec().VolumeID = overlay.Path
+
+		if err := st.Create(ctx, mountRequest); err != nil && !state.IsConflictError(err) {
+			return fmt.Errorf("error creating persistent volume mount request for overlay %q: %w", overlay.Path, err)
+		}
+	}
+
+	return nil
 }
 
 // PostFunc implements the Service interface.
 func (c *CRI) PostFunc(runtime.Runtime, events.ServiceState) (err error) {
 	if c.client != nil {
-		return c.client.Close()
+		client := c.client
+		c.client = nil
+
+		return client.Close()
 	}
 
 	return nil
@@ -78,10 +107,12 @@ func (c *CRI) PostFunc(runtime.Runtime, events.ServiceState) (err error) {
 func (c *CRI) Condition(r runtime.Runtime) conditions.Condition {
 	cond := []conditions.Condition{
 		network.NewReadyCondition(r.State().V1Alpha2().Resources(), network.AddressReady, network.HostnameReady, network.EtcFilesReady),
-		files.NewEtcFileCondition(r.State().V1Alpha2().Resources(), "machine-id", constants.CRIConfig),
+		files.NewEtcFileCondition(r.State().V1Alpha2().Resources(), "machine-id", constants.CRIConfig, constants.CRIBaseRuntimeSpec),
 	}
 
-	if !r.State().Platform().Mode().InContainer() && r.Config().UnattendedInstallConfig() != nil {
+	cfg := r.Config()
+
+	if !r.State().Platform().Mode().InContainer() && cfg != nil && cfg.UnattendedInstallConfig() != nil {
 		cond = append(
 			cond,
 			runtimeres.NewUnattendedInstallCondition(r.State().V1Alpha2().Resources()),
