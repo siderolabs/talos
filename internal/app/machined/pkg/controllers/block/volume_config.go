@@ -43,30 +43,43 @@ func (ctrl *VolumeConfigController) Name() string {
 
 // Inputs implements controller.Controller interface.
 func (ctrl *VolumeConfigController) Inputs() []controller.Input {
-	return []controller.Input{
-		{
+	inputs := make([]controller.Input, 0, 4+len(constants.Overlays))
+
+	inputs = append(inputs,
+		controller.Input{
 			Namespace: config.NamespaceName,
 			Type:      config.MachineConfigType,
 			ID:        optional.Some(config.ActiveID),
 			Kind:      controller.InputWeak,
 		},
-		{
+		controller.Input{
 			Namespace: runtime.NamespaceName,
 			Type:      runtime.MetaKeyType,
 			ID:        optional.Some(runtime.MetaKeyTagToID(meta.StateEncryptionConfig)),
 			Kind:      controller.InputWeak,
 		},
-		{
+		controller.Input{
 			Namespace: block.NamespaceName,
 			Type:      block.VolumeMountRequestType,
 			Kind:      controller.InputDestroyReady,
 		},
-		{
+		controller.Input{
 			Namespace: block.NamespaceName,
 			Type:      block.VolumeConfigType,
 			Kind:      controller.InputDestroyReady,
 		},
+	)
+
+	for _, overlay := range constants.Overlays {
+		inputs = append(inputs, controller.Input{
+			Namespace: block.NamespaceName,
+			Type:      block.MountStatusType,
+			ID:        optional.Some(overlay.Path),
+			Kind:      controller.InputWeak,
+		})
 	}
+
+	return inputs
 }
 
 // Outputs implements controller.Controller interface.
@@ -117,6 +130,10 @@ func (ctrl *VolumeConfigController) Run(ctx context.Context, r controller.Runtim
 			cfg = machineCfg.Config()
 		}
 
+		if err = ctrl.reconcileOverlayMountRequests(ctx, r); err != nil {
+			return err
+		}
+
 		if err := ctrl.setupStateEncryption(ctx, logger, cfg); err != nil {
 			return err
 		}
@@ -152,6 +169,35 @@ func (ctrl *VolumeConfigController) Run(ctx context.Context, r controller.Runtim
 			return fmt.Errorf("error cleaning up unused volumes: %w", err)
 		}
 	}
+}
+
+func (ctrl *VolumeConfigController) reconcileOverlayMountRequests(ctx context.Context, r controller.ReaderWriter) error {
+	for _, overlay := range constants.Overlays {
+		// Let the service mount the overlay first, then adopt it to keep it mounted across service restarts.
+		mountStatus, err := safe.ReaderGetByID[*block.MountStatus](ctx, r, overlay.Path)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return fmt.Errorf("failed to get overlay mount status %q: %w", overlay.Path, err)
+		}
+
+		if mountStatus.Metadata().Phase() != resource.PhaseRunning {
+			continue
+		}
+
+		if err = safe.WriterModify(ctx, r, block.NewVolumeMountRequest(block.NamespaceName, overlay.Path), func(request *block.VolumeMountRequest) error {
+			request.TypedSpec().Requester = ctrl.Name()
+			request.TypedSpec().VolumeID = overlay.Path
+
+			return nil
+		}); err != nil {
+			return fmt.Errorf("failed to create overlay mount request %q: %w", overlay.Path, err)
+		}
+	}
+
+	return nil
 }
 
 func (ctrl *VolumeConfigController) setupStateEncryption(ctx context.Context, l *zap.Logger, cfg configconfig.Config) error { //nolint:gocyclo

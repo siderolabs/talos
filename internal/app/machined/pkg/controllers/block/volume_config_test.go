@@ -99,6 +99,10 @@ func (suite *VolumeConfigSuite) TestReconcileDefaults() {
 	})
 	ctest.AssertNoResource[*block.VolumeConfig](suite, constants.EphemeralPartitionLabel)
 
+	for _, overlay := range constants.Overlays {
+		ctest.AssertNoResource[*block.VolumeMountRequest](suite, overlay.Path)
+	}
+
 	// create a dummy machine config
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
@@ -186,6 +190,44 @@ func (suite *VolumeConfigSuite) TestReconcileDefaults() {
 		func(r *block.VolumeConfig, asrt *assert.Assertions) {
 			asrt.Equal(block.VolumeTypeOverlay, r.TypedSpec().Type)
 		})
+
+	for _, overlay := range constants.Overlays {
+		ctest.AssertNoResource[*block.VolumeMountRequest](suite, overlay.Path)
+	}
+
+	for _, overlay := range constants.Overlays {
+		mountStatus := block.NewMountStatus(block.NamespaceName, overlay.Path)
+		mountStatus.TypedSpec().Spec.VolumeID = overlay.Path
+		mountStatus.TypedSpec().Target = overlay.Path
+		suite.Create(mountStatus)
+	}
+
+	ctest.AssertResources(suite,
+		xslices.Map(constants.Overlays, func(target constants.SELinuxLabeledPath) resource.ID {
+			return target.Path
+		}),
+		func(r *block.VolumeMountRequest, asrt *assert.Assertions) {
+			asrt.Equal(r.Metadata().ID(), r.TypedSpec().VolumeID)
+			asrt.Equal("block.VolumeConfigController", r.TypedSpec().Requester)
+			asrt.Empty(r.Metadata().Labels().Raw())
+		})
+
+	for _, overlay := range constants.Overlays {
+		mountStatus := block.NewMountStatus(block.NamespaceName, overlay.Path)
+		suite.Require().NoError(suite.State().AddFinalizer(suite.Ctx(), mountStatus.Metadata(), "test"))
+
+		ready, err := suite.State().Teardown(suite.Ctx(), mountStatus.Metadata())
+		suite.Require().NoError(err)
+		suite.Require().False(ready)
+
+		// The request is a runtime-lifetime pin; volume teardown makes it inert without deleting it.
+		ctest.AssertResource(suite, overlay.Path, func(*block.VolumeMountRequest, *assert.Assertions) {})
+
+		suite.Require().NoError(suite.State().RemoveFinalizer(suite.Ctx(), mountStatus.Metadata(), "test"))
+		suite.Destroy(mountStatus)
+
+		ctest.AssertResource(suite, overlay.Path, func(*block.VolumeMountRequest, *assert.Assertions) {})
+	}
 }
 
 func (suite *VolumeConfigSuite) TestReconcileEncryptedSTATE() {
