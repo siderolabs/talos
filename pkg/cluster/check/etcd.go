@@ -63,35 +63,42 @@ func EtcdConsistentAssertion(ctx context.Context, cl ClusterInfo) error {
 		return cmp.Compare(a.node, b.node)
 	})
 
+	// members are identified by their etcd member ID, which is stable across reboots;
+	// the hostname (member name) is not used for identification, as a member can
+	// temporarily report an empty name right after a reboot, before it re-learns
+	// peer names via a raft proposal, even though cluster membership is otherwise consistent.
 	type data struct {
-		hostname  string
-		id        uint64
 		isLearner bool
 	}
 
-	knownMembers := map[data]struct{}{}
+	knownMembers := map[uint64]data{}
 
 	for i, message := range memberResponses {
 		if i == 0 {
 			// Fill data using first message
 			for _, member := range message.Members {
-				knownMembers[data{member.Hostname, member.Id, member.IsLearner}] = struct{}{}
+				knownMembers[member.Id] = data{isLearner: member.IsLearner}
 			}
 
 			continue
 		}
 
 		if len(message.Members) != len(knownMembers) {
-			expected := maps.ToSlice(knownMembers, func(k data, v struct{}) string { return k.hostname })
-			actual := xslices.Map(message.Members, (*machineapi.EtcdMember).GetHostname)
+			expected := maps.ToSlice(knownMembers, func(id uint64, v data) string { return fmt.Sprintf("%016x", id) })
+			actual := xslices.Map(message.Members, func(m *machineapi.EtcdMember) string { return fmt.Sprintf("%016x", m.GetId()) })
 
-			return fmt.Errorf("%s: expected to have %v members, got %v", message.node, expected, actual)
+			return fmt.Errorf("%s: expected to have members %v, got %v", message.node, expected, actual)
 		}
 
 		// check that member list is the same on all nodes
 		for _, member := range message.Members {
-			if _, found := knownMembers[data{member.Hostname, member.Id, member.IsLearner}]; !found {
-				return fmt.Errorf("%s: found unexpected etcd member %s", message.node, member.Hostname)
+			known, found := knownMembers[member.Id]
+			if !found {
+				return fmt.Errorf("%s: found unexpected etcd member %016x (hostname %q)", message.node, member.Id, member.Hostname)
+			}
+
+			if known.isLearner != member.IsLearner {
+				return fmt.Errorf("%s: etcd member %016x learner status mismatch: expected %v, got %v", message.node, member.Id, known.isLearner, member.IsLearner)
 			}
 		}
 	}
