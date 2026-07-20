@@ -439,27 +439,16 @@ func (suite *TinkSuite) getTinkManifests(namespace, serviceName, ssName, talosIm
 		Size       string
 	}
 
-	for _, overlayMount := range append(
-		[]overlayMountSpec{
-			{
-				MountPoint: constants.StateMountPoint,
-				Size:       "100Mi",
-			},
-			{
-				MountPoint: constants.EphemeralMountPoint,
-				Size:       "6Gi",
-			},
+	for _, overlayMount := range []overlayMountSpec{
+		{
+			MountPoint: constants.StateMountPoint,
+			Size:       "100Mi",
 		},
-		xslices.Map(
-			xslices.Filter(constants.Overlays, func(overlay constants.SELinuxLabeledPath) bool { return overlay.Path != "/opt" }), // /opt/cni/bin contains CNI binaries
-			func(mnt constants.SELinuxLabeledPath) overlayMountSpec {
-				return overlayMountSpec{
-					MountPoint: mnt.Path,
-					Size:       "100Mi",
-				}
-			},
-		)...,
-	) {
+		{
+			MountPoint: constants.EphemeralMountPoint,
+			Size:       "6Gi",
+		},
+	} {
 		name := strings.ReplaceAll(strings.TrimLeft(overlayMount.MountPoint, "/"), "/", "-")
 
 		statefulSet.Spec.Template.Spec.Containers[0].VolumeMounts = append(

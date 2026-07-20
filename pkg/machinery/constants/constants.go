@@ -215,9 +215,6 @@ const (
 	// KubernetesConfigSELinuxLabel is the SELinux label to be set for the Kubernetes configuration directory overlay mount.
 	KubernetesConfigSELinuxLabel = "system_u:object_r:k8s_conf_t:s0"
 
-	// KubeletPluginsSELinuxLabel is the SELinux label to be set for the Kubernetes plugin directory overlay mount.
-	KubeletPluginsSELinuxLabel = "system_u:object_r:k8s_plugin_t:s0"
-
 	// DefaultCertificatesDir is the path the Kubernetes PKI directory.
 	DefaultCertificatesDir = KubernetesConfigBaseDir + "/" + "pki"
 
@@ -1489,14 +1486,12 @@ type SELinuxLabeledPath struct {
 	Label string
 	// Secure applies the nosuid+nodev+noexec triplet to the overlay. Set
 	// for config-only overlays (e.g. /etc/cni, /etc/kubernetes); leave
-	// false for overlays that host plugin/helper binaries (e.g. /opt,
-	// /usr/libexec/kubernetes).
+	// false for overlays that host plugin/helper binaries (e.g. /opt).
 	Secure bool
 }
 
 // Overlays is the set of paths to create overlay mounts for.
 var Overlays = []SELinuxLabeledPath{
-	{Path: "/usr/libexec/kubernetes", Label: KubeletPluginsSELinuxLabel},
 	{Path: "/opt", Label: OptSELinuxLabel},
 }
 

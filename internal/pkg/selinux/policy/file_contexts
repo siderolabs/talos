@@ -12,7 +12,6 @@
 /usr/lib/udev/hwdb[.]bin	--	system_u:object_r:udev_hwdb_t:s0
 /usr/share/zoneinfo(/.*)?	system_u:object_r:etc_t:s0
 /usr/lib/udev/rules.d(/.*)?	system_u:object_r:udev_rules_t:s0
-/usr/libexec/kubernetes(/.*)?	system_u:object_r:k8s_plugin_t:s0
 /usr/local/lib/kubelet/credentialproviders(/.*)?	system_u:object_r:k8s_credentialproviders_t:s0
 /	system_u:object_r:rootfs_t:s0
 /bin	system_u:object_r:bin_exec_t:s0

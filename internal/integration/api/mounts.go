@@ -151,7 +151,6 @@ func workloadManaged(m mountInfo) bool {
 // which is a separate mount with its own flags.
 var noexecExemptPrefixes = []string{
 	"/opt",                               // CNI plugins, containerd plugins
-	"/usr/libexec/kubernetes",            // kubelet plugins
 	constants.ExtensionServiceRootfsPath, // /usr/local/lib/containers — extension service rootfs overlays (iscsid, etc.)
 }
 

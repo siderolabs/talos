@@ -61,6 +61,14 @@ machine:
 ```
 """
 
+    [notes.flexvolume]
+        title = "FlexVolume Host Path Removed"
+        description = """\
+Talos no longer provisions the deprecated FlexVolume executable host path at
+`/usr/libexec/kubernetes`. FlexVolume has been deprecated since Kubernetes 1.23.
+Modern CSI plugin paths under `/var/lib/kubelet` are unaffected.
+"""
+
     [notes.nts]
         title = "NTS for Time Synchronization"
         description = """\

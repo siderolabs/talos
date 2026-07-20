@@ -102,7 +102,6 @@ func (suite *SELinuxSuite) TestFileMountLabels() {
 		// Overlays
 		"/etc/cni":                        constants.CNISELinuxLabel,
 		constants.KubernetesConfigBaseDir: constants.KubernetesConfigSELinuxLabel,
-		"/usr/libexec/kubernetes":         constants.KubeletPluginsSELinuxLabel,
 		"/opt":                            constants.OptSELinuxLabel,
 		"/opt/cni":                        "system_u:object_r:cni_plugin_t:s0",
 		"/opt/containerd":                 "system_u:object_r:containerd_plugin_t:s0",
