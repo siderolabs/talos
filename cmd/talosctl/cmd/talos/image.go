@@ -678,6 +678,7 @@ var imageIntegrationCmd = &cobra.Command{
 			"registry.k8s.io/kube-apiserver:v1.27.0",
 			"registry.k8s.io/kube-apiserver:v1.27.1",
 			"docker.io/library/alpine:3.23",
+			"docker.io/library/nginx:latest",
 			imageIntegrationCmdFlags.registryAndUser + "/installer:" +
 				imageIntegrationCmdFlags.installerTag,
 			imageIntegrationCmdFlags.registryAndUser + "/talos:" +
