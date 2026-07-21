@@ -2,8 +2,8 @@ ignore_ttl: 168h # 7 days, each entry must be revalidated after this time, and e
 
 ignore:
   - id: GO-2026-5932
-    reason: No fix available; golang.org/x/crypto/openpgp only reachable via cosign legacy PGP signature verification, which Talos does not use (sigstore-based verification).
-    date: 2026-07-16
+    reason: No fix available. golang.org/x/crypto/openpgp is imported transitively because Cosign pulls Rekor's legacy rekord/v0.0.1 PGP implementation. Talos verifies Sigstore/X.509 signatures and does not use PGP; Cosign's legacy .sig path is an OCI storage format, not PGP. The reported PCR, error, io.Reader/io.Writer, and DSSE-to-rekord call chains are govulncheck VTA interface/factory false positives.
+    date: 2026-07-21
   - id: GO-2026-4736
-    reason: 'gobgp NEXT_HOP DoS (GHSA-4p9m-8gc4-rw2h). The advisory records no fixed version, so govulncheck flags every version, but the fix commit osrg/gobgp 583080a7 (2026-03-05, malformed nexthop attribute crash) is already an ancestor of the pinned commit 2132288c5159 (2026-06-29) so the code is not actually affected.'
-    date: 2026-07-14
+    reason: 'gobgp NEXT_HOP DoS (GHSA-4p9m-8gc4-rw2h). The reachable recvMessageloop symbol is real, but the advisory records no fixed version, so govulncheck flags every version. Fix commit osrg/gobgp 583080a7 is an ancestor of pinned commit 2132288c5159, whose source skips ValidateUpdateMsg when parsing has already selected error handling, so it is not affected.'
+    date: 2026-07-21
