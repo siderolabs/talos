@@ -928,7 +928,7 @@ spec:
             extraTestArgs: -talos.bgp.clos
           - test: e2e-canal-reset
             integrationTestRun: TestIntegration/api.ResetSuite/TestResetWithSpec
-            customCniUrl: https://raw.githubusercontent.com/projectcalico/calico/v3.32.0/manifests/canal.yaml
+            customCniUrl: https://raw.githubusercontent.com/projectcalico/calico/v3.32.1/manifests/canal.yaml
           - test: e2e-controlplane-port
             shortIntegrationTest: "yes"
             withControlPlanePort: "443"
