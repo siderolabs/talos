@@ -238,9 +238,14 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsCrun() {
 	suite.testRuntimeClass("crun", "crun")
 }
 
-// TestExtensionsKataContainers verifies gvisor runtime class is working.
+// TestExtensionsKataContainers verifies that Kata Containers Cloud Hypervisor runtime class is working.
 func (suite *ExtensionsSuiteQEMU) TestExtensionsKataContainers() {
 	suite.testRuntimeClass("kata", "kata")
+}
+
+// TestExtensionsKataContainersQEMU verifies that Kata Containers QEMU runtime class is working.
+func (suite *ExtensionsSuiteQEMU) TestExtensionsKataContainersQEMU() {
+	suite.testRuntimeClass("kata-qemu", "kata-qemu")
 }
 
 // TestExtensionsYouki verifies youki runtime class is working.
