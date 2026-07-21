@@ -1,3 +1,95 @@
+## [Talos 1.13.7](https://github.com/siderolabs/talos/releases/tag/v1.13.7) (2026-07-21)
+
+Welcome to the v1.13.7 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.18.39
+containerd: 2.2.6
+Flannel: 0.28.7
+CoreDNS: 1.14.4
+
+Talos is built with Go 1.26.5.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Mateusz Urbanek
+* Noel Georgi
+* Calin
+* Dario Emerson
+* Maja Bojarska
+
+### Changes
+<details><summary>18 commits</summary>
+<p>
+
+* [`fc6f9b173`](https://github.com/siderolabs/talos/commit/fc6f9b173f54e1412ad8019380db600f41b6bb9f) test: add nginx to the image cache integration
+* [`c6c435ba7`](https://github.com/siderolabs/talos/commit/c6c435ba79c97ba73ebd6baf0aa4f0bdf10de364) test: increase resource inmem buffer to stabilize the tests
+* [`202dc152a`](https://github.com/siderolabs/talos/commit/202dc152a3e654d1e91b8d045ea51bc79e8310f0) fix: add ca-certificates to talosctl
+* [`3a14c8d36`](https://github.com/siderolabs/talos/commit/3a14c8d36959b83e477b0315cef2b96bec9e55ea) fix: vrf sorting
+* [`a4c1e6eb4`](https://github.com/siderolabs/talos/commit/a4c1e6eb41febabcd72ff633da01705664eceb56) fix: oom podruntime protection
+* [`57b861657`](https://github.com/siderolabs/talos/commit/57b861657e716e61f26972fc9c27e6214dbe0d9f) feat: bump CoreDNS, Flannel
+* [`58a78fe22`](https://github.com/siderolabs/talos/commit/58a78fe220df1690c73d39319c8a36ccb1abd648) fix: use symlinks for init aliases
+* [`428872bf4`](https://github.com/siderolabs/talos/commit/428872bf4bb5056ca33d4a497a260fc4870743a9) fix: do proper backoff for NTP Kiss-of-Death responses
+* [`1d55e281a`](https://github.com/siderolabs/talos/commit/1d55e281a4a37ee1c30a64f66fdb1ba19c309f49) feat: add iommufd as a kernel module
+* [`576638def`](https://github.com/siderolabs/talos/commit/576638defd097e36e5295a2ee6f1b10f4461942b) fix: make audit restartable
+* [`76328f941`](https://github.com/siderolabs/talos/commit/76328f941f4aa5088eee5d73b4e12701c2529b96) fix: avoid image cache mount request churn
+* [`46f9ac675`](https://github.com/siderolabs/talos/commit/46f9ac675294194d69757715f87943a6a721c403) feat: bring in ifb.ko module
+* [`0d752e784`](https://github.com/siderolabs/talos/commit/0d752e78404e54e24e6438cc2c226e178625addd) fix: provide correct handler for Ctrl-Alt-Delete sequence
+* [`fe9d33095`](https://github.com/siderolabs/talos/commit/fe9d330953b295e9ef615d939cd3419828cf8928) fix: terminate log persistence a bit harder
+* [`7c8021a3e`](https://github.com/siderolabs/talos/commit/7c8021a3eb663b612e13a0c440f7f824e86136c0) feat: add --no-reboot flag to upgrade cmd
+* [`a155bad1b`](https://github.com/siderolabs/talos/commit/a155bad1b2b2c6b6053176ed74709b3ae2ad8297) fix: do not block volume lifecycle teardown on failed user volumes
+* [`c63f0789a`](https://github.com/siderolabs/talos/commit/c63f0789a9437ba3719f7c9cd65191afb497d8d3) fix: flaky tests
+* [`2bf6b7462`](https://github.com/siderolabs/talos/commit/2bf6b74625e81781b6a90699db7e51ba8f0ee7c3) feat: bring in Linux 6.18.39, containerd 2.2.6
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>6 commits</summary>
+<p>
+
+* [`91fe0a0`](https://github.com/siderolabs/pkgs/commit/91fe0a0dc065c93f0405eb60b4bbec19c7e96e12) feat: update Linux to 6.18.39
+* [`1018556`](https://github.com/siderolabs/pkgs/commit/10185561bffe77af08f2404fd1731bb304a9c242) feat: enable CONFIG_IOMMUFD and CONFIG_VFIO_DEVICE_CDEV
+* [`d529479`](https://github.com/siderolabs/pkgs/commit/d529479e471ccf92d6bc3910f5d06e727aad8db1) chore: bump nvidia to 580.167.08
+* [`971fd23`](https://github.com/siderolabs/pkgs/commit/971fd23a4b3cec65c353c02cae17a090c3f2e525) fix: enable CONFIG_IFB as a module
+* [`acece91`](https://github.com/siderolabs/pkgs/commit/acece916f8e8aaefc1cc017fdbb8d56d7d516107) feat: update DRBD to 9.3.3
+* [`b91905c`](https://github.com/siderolabs/pkgs/commit/b91905c6a7086918c0aaa74a076662c50695ea17) feat: update containerd to 2.2.6
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`c2844e6`](https://github.com/siderolabs/tools/commit/c2844e6b4b01d66e781e53b6b261048fadf80be8) feat: update util-linux to 2.42.2
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys**  v1.4.0 -> v1.5.0
+* **github.com/aws/aws-sdk-go-v2/service/kms**                        v1.51.1 -> v1.52.0
+* **github.com/docker/cli**                                           v29.4.0 -> v29.4.3
+* **github.com/google/go-containerregistry**                          v0.21.5 -> v0.21.6
+* **github.com/klauspost/compress**                                   v1.18.5 -> v1.18.6
+* **github.com/moby/moby/api**                                        v1.54.1 -> v1.54.2
+* **github.com/moby/moby/client**                                     v0.4.0 -> v0.4.1
+* **github.com/siderolabs/pkgs**                                      v1.13.0-43-gd8c80cc -> v1.13.0-49-g91fe0a0
+* **github.com/siderolabs/tools**                                     v1.13.0-7-gc58afd5 -> v1.13.0-8-gc2844e6
+* **github.com/sigstore/sigstore**                                    v1.10.6 -> v1.10.8
+* **github.com/sigstore/sigstore-go**                                 v1.1.4 -> v1.2.0
+* **github.com/theupdateframework/go-tuf/v2**                         v2.4.1 -> 7e8f69f906ef
+* **google.golang.org/grpc**                                          v1.81.0 -> v1.81.1
+
+Previous release can be found at [v1.13.6](https://github.com/siderolabs/talos/releases/tag/v1.13.6)
+
 ## [Talos 1.13.6](https://github.com/siderolabs/talos/releases/tag/v1.13.6) (2026-07-08)
 
 Welcome to the v1.13.6 release of Talos!
