@@ -10,9 +10,6 @@ machine:
     certSANs: []
     features:
         diskQuotaSupport: true
-        kubePrism:
-            enabled: true
-            port: 7445
 cluster:
     token: inn7ol.u4ehnti8qyls9ymo
 ---
@@ -88,3 +85,7 @@ acceptedCAs:
       cUaEJxVRyvHPzqPq0ohbNcj2OsvwuJPS3JKUAiBJhp4aV0osQDQHbgn7WQaXhvEO
       9mlSmTTE029pVoF2ZA==
       -----END CERTIFICATE-----
+---
+apiVersion: v1alpha1
+kind: KubePrismConfig
+port: 7445

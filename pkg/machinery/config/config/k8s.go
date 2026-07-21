@@ -221,3 +221,10 @@ type K8sExternalManifestConfig interface {
 	Headers() map[string]string
 	URL() string
 }
+
+// K8sKubePrismConfig describes the API Server load balancer features.
+type K8sKubePrismConfig interface {
+	K8sKubePrismConfigSignal()
+	Port() int
+	TLSServerName() string
+}

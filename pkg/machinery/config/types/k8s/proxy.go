@@ -42,7 +42,7 @@ var (
 	_ container.ControlplaneOnlyConfig    = &KubeProxyConfigV1Alpha1{}
 )
 
-// KubeProxyConfigV1Alpha1 deploys Flannel CNI to the cluster.
+// KubeProxyConfigV1Alpha1 configures kube-proxy deployment.
 //
 //	examples:
 //	  - value: exampleKubeProxyConfigV1Alpha1()

@@ -180,7 +180,6 @@ kubernetesTalosAPIAccess:
         - kube-system
 {{< /highlight >}}</details> | |
 |`diskQuotaSupport` |bool |Enable XFS project quota support for EPHEMERAL partition and user disks.<br>Also enables kubelet tracking of ephemeral disk usage in the kubelet via quota.  | |
-|`kubePrism` |<a href="#Config.machine.features.kubePrism">KubePrism</a> |KubePrism - local proxy/load balancer on defined port that will distribute<br>requests to all API servers in the cluster.  | |
 |`nodeAddressSortAlgorithm` |string |Select the node address sort algorithm.<br>The 'v1' algorithm sorts addresses by the address itself.<br>The 'v2' algorithm prefers more specific prefixes.<br>If unset, defaults to 'v1'.  | |
 
 
@@ -211,23 +210,6 @@ machine:
 |`enabled` |bool |Enable Talos API access from Kubernetes pods.  | |
 |`allowedRoles` |[]string |The list of Talos API roles which can be granted for access from Kubernetes pods.<br><br>Empty list means that no roles can be granted, so access is blocked.  | |
 |`allowedKubernetesNamespaces` |[]string |The list of Kubernetes namespaces Talos API access is available from.  | |
-
-
-
-
-
-
-#### kubePrism {#Config.machine.features.kubePrism}
-
-KubePrism describes the configuration for the KubePrism load balancer.
-
-
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`enabled` |bool |Enable KubePrism support - will start local load balancing proxy.  | |
-|`port` |int |KubePrism port.  | |
 
 
 

@@ -910,6 +910,20 @@ func (container *Container) K8sExternalManifestConfigs() []config.K8sExternalMan
 	return matching
 }
 
+// K8sKubePrismConfig implements config.Config interface.
+func (container *Container) K8sKubePrismConfig() config.K8sKubePrismConfig {
+	matching := findMatchingDocs[config.K8sKubePrismConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sKubePrismConfig()
+	}
+
+	return nil
+}
+
 // OOMConfig implements config.Config interface.
 func (container *Container) OOMConfig() config.OOMConfig {
 	matching := findMatchingDocs[config.OOMConfig](container.documents)

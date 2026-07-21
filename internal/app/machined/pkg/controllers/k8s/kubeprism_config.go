@@ -33,11 +33,7 @@ func NewKubePrismConfigController() *KubePrismConfigController {
 					return optional.None[*k8s.KubePrismConfig]()
 				}
 
-				if cfg.Config().Machine() == nil {
-					return optional.None[*k8s.KubePrismConfig]()
-				}
-
-				if !cfg.Config().Machine().Features().KubePrism().Enabled() {
+				if cfg.Config().K8sKubePrismConfig() == nil {
 					return optional.None[*k8s.KubePrismConfig]()
 				}
 
@@ -56,7 +52,7 @@ func NewKubePrismConfigController() *KubePrismConfigController {
 				spec := res.TypedSpec()
 				spec.Endpoints = endpt.TypedSpec().Endpoints
 				spec.Host = "127.0.0.1"
-				spec.Port = cfg.Config().Machine().Features().KubePrism().Port()
+				spec.Port = cfg.Config().K8sKubePrismConfig().Port()
 
 				return nil
 			},

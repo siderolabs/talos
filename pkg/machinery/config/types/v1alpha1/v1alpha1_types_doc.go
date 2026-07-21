@@ -523,13 +523,7 @@ func (FeaturesConfig) Doc() *encoder.Doc {
 				Description: "Enable XFS project quota support for EPHEMERAL partition and user disks.\nAlso enables kubelet tracking of ephemeral disk usage in the kubelet via quota.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable XFS project quota support for EPHEMERAL partition and user disks." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "kubePrism",
-				Type:        "KubePrism",
-				Note:        "",
-				Description: "KubePrism - local proxy/load balancer on defined port that will distribute\nrequests to all API servers in the cluster.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "KubePrism - local proxy/load balancer on defined port that will distribute" /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{},
 			{},
 			{
@@ -545,38 +539,6 @@ func (FeaturesConfig) Doc() *encoder.Doc {
 	doc.AddExample("", machineFeaturesExample())
 
 	doc.Fields[2].AddExample("", kubernetesTalosAPIAccessConfigExample())
-
-	return doc
-}
-
-func (KubePrism) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "KubePrism",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "KubePrism describes the configuration for the KubePrism load balancer." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "KubePrism describes the configuration for the KubePrism load balancer.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "FeaturesConfig",
-				FieldName: "kubePrism",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "enabled",
-				Type:        "bool",
-				Note:        "",
-				Description: "Enable KubePrism support - will start local load balancing proxy.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable KubePrism support - will start local load balancing proxy." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "port",
-				Type:        "int",
-				Note:        "",
-				Description: "KubePrism port.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "KubePrism port." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
 
 	return doc
 }
@@ -709,7 +671,6 @@ func GetFileDoc() *encoder.FileDoc {
 			AdminKubeconfigConfig{}.Doc(),
 			MachineFile{}.Doc(),
 			FeaturesConfig{}.Doc(),
-			KubePrism{}.Doc(),
 			KubernetesTalosAPIAccessConfig{}.Doc(),
 			LoggingConfig{}.Doc(),
 			LoggingDestination{}.Doc(),

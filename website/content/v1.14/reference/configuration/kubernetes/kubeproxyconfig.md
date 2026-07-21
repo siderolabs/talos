@@ -1,5 +1,5 @@
 ---
-description: KubeProxyConfig deploys Flannel CNI to the cluster.
+description: KubeProxyConfig configures kube-proxy deployment.
 title: KubeProxyConfig
 ---
 

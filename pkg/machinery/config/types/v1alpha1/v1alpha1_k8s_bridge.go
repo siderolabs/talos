@@ -637,3 +637,17 @@ func (s kubeExternalManifestShim) Headers() map[string]string {
 func (s kubeExternalManifestShim) Name() string {
 	return s.url
 }
+
+// K8sKubePrismConfig implements the config.Config interface.
+func (c *Config) K8sKubePrismConfig() config.K8sKubePrismConfig {
+	if c.MachineConfig == nil || c.MachineConfig.MachineFeatures == nil {
+		return nil
+	}
+
+	kubePrismConfig := c.MachineConfig.MachineFeatures.KubePrismSupport
+	if kubePrismConfig == nil || !kubePrismConfig.Enabled() {
+		return nil
+	}
+
+	return kubePrismConfig
+}

@@ -690,6 +690,38 @@ func (KubeletConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (KubePrismConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubePrismConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubePrismConfig configures node-local Kubernetes API load balancer." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubePrismConfig configures node-local Kubernetes API load balancer.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "port",
+				Type:        "int",
+				Note:        "",
+				Description: "KubePrism port.\nThe load balancer will be started on `127.0.0.1:<port>` and it will\nautomatically include a controlplane endpoint and direct addresses of\nall controlplane nodes in the cluster.\nThe KubePrism will pick up the route(s) with the lowest RTT to the controlplane nodes,\nexcluding the unavailable ones, and will automatically update the route list when the controlplane nodes change.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "KubePrism port." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "tlsServerName",
+				Type:        "string",
+				Note:        "",
+				Description: "Override the TLS server name (SNI) used by the kubelet when connecting to\nthe KubePrism endpoint.\n\nKubePrism still listens on `127.0.0.1:<port>` and the kubelet still dials\nthat address, but the generated kubelet kubeconfig will carry\n`clusters[0].cluster.tls-server-name` set to this value, so the kubelet\nuses it for SNI and certificate hostname verification.\n\nThis is useful when KubePrism's upstream apiserver is reached through an\nSNI-routing L4 proxy (for example nginx-ingress in ssl-passthrough mode in\nfront of a Kamaji-hosted apiserver), where SNI=127.0.0.1 doesn't match any\nroute and the proxy serves a fallback certificate.\n\nWhen empty (default), no `tls-server-name` is set and behavior is unchanged.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Override the TLS server name (SNI) used by the kubelet when connecting to" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubePrismConfigV1Alpha1())
+
+	return doc
+}
+
 func (KubeNetworkConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "KubeNetworkConfig",
@@ -847,8 +879,8 @@ func (NodeIPConfig) Doc() *encoder.Doc {
 func (KubeProxyConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "KubeProxyConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeProxyConfig deploys Flannel CNI to the cluster." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "KubeProxyConfig deploys Flannel CNI to the cluster.",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeProxyConfig configures kube-proxy deployment." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeProxyConfig configures kube-proxy deployment.",
 		Fields: []encoder.Doc{
 			{
 				Type:   "Meta",
@@ -1122,6 +1154,7 @@ func GetFileDoc() *encoder.FileDoc {
 			KubeFlannelCNIConfigV1Alpha1{}.Doc(),
 			KubeInlineManifestConfigV1Alpha1{}.Doc(),
 			KubeletConfigV1Alpha1{}.Doc(),
+			KubePrismConfigV1Alpha1{}.Doc(),
 			KubeNetworkConfigV1Alpha1{}.Doc(),
 			KubeNodeConfigV1Alpha1{}.Doc(),
 			NodeIPConfig{}.Doc(),

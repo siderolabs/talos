@@ -316,7 +316,6 @@ type SystemDiskEncryption interface {
 type Features interface {
 	KubernetesTalosAPIAccess() KubernetesTalosAPIAccess
 	DiskQuotaSupportEnabled() bool
-	KubePrism() KubePrism
 	NodeAddressSortAlgorithm() nethelpers.AddressSortAlgorithm
 }
 
@@ -325,12 +324,6 @@ type KubernetesTalosAPIAccess interface {
 	Enabled() bool
 	AllowedRoles() []string
 	AllowedKubernetesNamespaces() []string
-}
-
-// KubePrism describes the API Server load balancer features.
-type KubePrism interface {
-	Enabled() bool
-	Port() int
 }
 
 // UdevConfig describes configuration for udev.

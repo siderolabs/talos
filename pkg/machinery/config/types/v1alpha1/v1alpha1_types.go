@@ -2148,9 +2148,9 @@ type FeaturesConfig struct {
 	//     Enable XFS project quota support for EPHEMERAL partition and user disks.
 	//     Also enables kubelet tracking of ephemeral disk usage in the kubelet via quota.
 	DiskQuotaSupport *bool `yaml:"diskQuotaSupport,omitempty"`
-	//   description: |
-	//     KubePrism - local proxy/load balancer on defined port that will distribute
-	//     requests to all API servers in the cluster.
+	// docgen:nodoc
+	//
+	// Deprecated: Use KubePrismConfig document instead.
 	KubePrismSupport *KubePrism `yaml:"kubePrism,omitempty"`
 	// docgen:nodoc
 	//
@@ -2169,6 +2169,10 @@ type FeaturesConfig struct {
 }
 
 // KubePrism describes the configuration for the KubePrism load balancer.
+//
+// docgen:nodoc
+//
+// Deprecated: Use KubePrismConfig document instead.
 type KubePrism struct {
 	//   description: |
 	//     Enable KubePrism support - will start local load balancing proxy.

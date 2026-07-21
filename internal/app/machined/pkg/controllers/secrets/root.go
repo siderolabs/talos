@@ -113,8 +113,8 @@ func NewRootKubernetesController() *RootKubernetesController {
 					localEndpoint *url.URL
 				)
 
-				if cfgProvider.Machine().Features().KubePrism().Enabled() {
-					localEndpoint, err = url.Parse(fmt.Sprintf("https://127.0.0.1:%d", cfgProvider.Machine().Features().KubePrism().Port()))
+				if kubePrismConfig := cfgProvider.K8sKubePrismConfig(); kubePrismConfig != nil {
+					localEndpoint, err = url.Parse(fmt.Sprintf("https://127.0.0.1:%d", kubePrismConfig.Port()))
 					if err != nil {
 						return err
 					}

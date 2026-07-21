@@ -183,11 +183,25 @@ func (in *Input) generateKubernetesUniversalConfigs(isControlplane bool, control
 		}
 	}
 
-	return []config.Document{
+	docs := []config.Document{
 		clusterConfig,
 		nodeConfig,
 		kubeletConfig,
 		networkConfig,
 		caConfig,
 	}
+
+	// default to enabled, but if set explicitly, allow it to be disabled
+	kubePrismPort, optionSet := in.Options.KubePrismPort.Get()
+	if !optionSet {
+		kubePrismPort = constants.DefaultKubePrismPort
+	}
+
+	if kubePrismPort > 0 {
+		kubePrismConfig := k8s.NewKubePrismConfigV1Alpha1()
+		kubePrismConfig.PortConfig = kubePrismPort
+		docs = append(docs, kubePrismConfig)
+	}
+
+	return docs
 }

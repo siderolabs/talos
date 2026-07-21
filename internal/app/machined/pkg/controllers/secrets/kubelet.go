@@ -51,16 +51,20 @@ func NewKubeletController() *KubeletController {
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, cfg *config.MachineConfig, res *secrets.Kubelet) error {
 				cfgProvider := cfg.Config()
 				kubeletSecrets := res.TypedSpec()
+				kubePrismConfig := cfgProvider.K8sKubePrismConfig()
+
+				kubeletSecrets.EndpointTLSServerName = ""
 
 				switch {
-				case cfgProvider.Machine().Features().KubePrism().Enabled():
+				case kubePrismConfig != nil:
 					// use cluster endpoint for controlplane nodes with loadbalancer support
-					localEndpoint, err := url.Parse(fmt.Sprintf("https://127.0.0.1:%d", cfgProvider.Machine().Features().KubePrism().Port()))
+					localEndpoint, err := url.Parse(fmt.Sprintf("https://127.0.0.1:%d", kubePrismConfig.Port()))
 					if err != nil {
 						return err
 					}
 
 					kubeletSecrets.Endpoint = localEndpoint
+					kubeletSecrets.EndpointTLSServerName = kubePrismConfig.TLSServerName()
 				case cfgProvider.Machine().Type().IsControlPlane():
 					// use localhost endpoint for controlplane nodes
 					localEndpoint, err := url.Parse(fmt.Sprintf("https://localhost:%d", cfgProvider.K8sAPIServerConfig().APIPort()))

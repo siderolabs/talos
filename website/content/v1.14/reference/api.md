@@ -11113,6 +11113,7 @@ KubeletSpec describes root Kubernetes secrets.
 | bootstrap_token_id | [string](#string) |  |  |
 | bootstrap_token_secret | [string](#string) |  |  |
 | accepted_c_as | [common.PEMEncodedCertificate](#common.PEMEncodedCertificate) | repeated |  |
+| endpoint_tls_server_name | [string](#string) |  | EndpointTLSServerName, when non-empty, is propagated to the generated kubelet kubeconfig as `clusters[0].cluster.tls-server-name`, overriding the SNI/hostname the kubelet uses while still dialing Endpoint as the TCP destination. |
 
 
 

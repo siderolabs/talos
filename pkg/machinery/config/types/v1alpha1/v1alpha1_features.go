@@ -21,15 +21,6 @@ func (f *FeaturesConfig) DiskQuotaSupportEnabled() bool {
 	return pointer.SafeDeref(f.DiskQuotaSupport)
 }
 
-// KubePrism implements config.Features interface.
-func (f *FeaturesConfig) KubePrism() config.KubePrism {
-	if f.KubePrismSupport == nil {
-		return &KubePrism{}
-	}
-
-	return f.KubePrismSupport
-}
-
 // NodeAddressSortAlgorithm implements config.Features interface.
 func (f *FeaturesConfig) NodeAddressSortAlgorithm() nethelpers.AddressSortAlgorithm {
 	if f.FeatureNodeAddressSortAlgorithm == "" {
@@ -46,12 +37,14 @@ func (f *FeaturesConfig) NodeAddressSortAlgorithm() nethelpers.AddressSortAlgori
 
 const defaultKubePrismPort = 7445
 
-// Enabled implements [config.KubePrism].
+// Enabled is  a legacy method.
+//
+// New implementation returns nil interface if the feature is not enabled.
 func (a *KubePrism) Enabled() bool {
 	return pointer.SafeDeref(a.ServerEnabled)
 }
 
-// Port implements [config.KubePrism].
+// Port implements [config.K8sKubePrismConfig].
 func (a *KubePrism) Port() int {
 	if a.ServerPort == 0 {
 		return defaultKubePrismPort
@@ -59,6 +52,14 @@ func (a *KubePrism) Port() int {
 
 	return a.ServerPort
 }
+
+// TLSServerName implements [config.K8sKubePrismConfig].
+func (a *KubePrism) TLSServerName() string {
+	return ""
+}
+
+// K8sKubePrismConfigSignal implements [config.K8sKubePrismConfig] interface.
+func (a *KubePrism) K8sKubePrismConfigSignal() {}
 
 // HostDNSEnabled implements config.NetworkHostDNSConfig interface.
 func (h *HostDNSConfig) HostDNSEnabled() bool {

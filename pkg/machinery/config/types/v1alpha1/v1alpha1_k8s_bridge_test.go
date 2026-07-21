@@ -1976,3 +1976,140 @@ func TestKubeClusterConfigBridge(t *testing.T) {
 		})
 	}
 }
+
+func TestKubePrismConfigBridge(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+
+		cfg func(*testing.T) config.Config
+
+		expectNil           bool
+		expectPort          int
+		expectTLSServerName string
+	}{
+		{
+			name: "v1alpha1 empty",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{})
+			},
+
+			expectNil: true,
+		},
+		{
+			name: "v1alpha1 without features",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{},
+				})
+			},
+
+			expectNil: true,
+		},
+		{
+			name: "v1alpha1 without KubePrism",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{
+						MachineFeatures: &v1alpha1.FeaturesConfig{},
+					},
+				})
+			},
+
+			expectNil: true,
+		},
+		{
+			name: "v1alpha1 KubePrism disabled",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{
+						MachineFeatures: &v1alpha1.FeaturesConfig{
+							KubePrismSupport: &v1alpha1.KubePrism{ //nolint:staticcheck // testing deprecated field
+								ServerEnabled: new(false),
+								ServerPort:    8443,
+							},
+						},
+					},
+				})
+			},
+
+			expectNil: true,
+		},
+		{
+			name: "v1alpha1 KubePrism enabled, default port",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{
+						MachineFeatures: &v1alpha1.FeaturesConfig{
+							KubePrismSupport: &v1alpha1.KubePrism{ //nolint:staticcheck // testing deprecated field
+								ServerEnabled: new(true),
+							},
+						},
+					},
+				})
+			},
+
+			expectPort: constants.DefaultKubePrismPort,
+		},
+		{
+			name: "v1alpha1 KubePrism enabled, explicit port",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{
+						MachineFeatures: &v1alpha1.FeaturesConfig{
+							KubePrismSupport: &v1alpha1.KubePrism{ //nolint:staticcheck // testing deprecated field
+								ServerEnabled: new(true),
+								ServerPort:    8443,
+							},
+						},
+					},
+				})
+			},
+
+			expectPort: 8443,
+		},
+		{
+			name: "new style",
+
+			cfg: func(t *testing.T) config.Config {
+				kp := k8s.NewKubePrismConfigV1Alpha1()
+				kp.PortConfig = 8443
+				kp.TLSServerNameConfig = "api.cluster.local"
+
+				c, err := container.New(kp)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectPort:          8443,
+			expectTLSServerName: "api.cluster.local",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := test.cfg(t)
+
+			kubePrism := cfg.K8sKubePrismConfig()
+
+			if test.expectNil {
+				assert.Nil(t, kubePrism)
+
+				return
+			}
+
+			require.NotNil(t, kubePrism)
+
+			assert.Equal(t, test.expectPort, kubePrism.Port())
+			assert.Equal(t, test.expectTLSServerName, kubePrism.TLSServerName())
+		})
+	}
+}

@@ -322,8 +322,13 @@ type KubeletSpec struct {
 	BootstrapTokenId     string                          `protobuf:"bytes,3,opt,name=bootstrap_token_id,json=bootstrapTokenId,proto3" json:"bootstrap_token_id,omitempty"`
 	BootstrapTokenSecret string                          `protobuf:"bytes,4,opt,name=bootstrap_token_secret,json=bootstrapTokenSecret,proto3" json:"bootstrap_token_secret,omitempty"`
 	AcceptedCAs          []*common.PEMEncodedCertificate `protobuf:"bytes,5,rep,name=accepted_c_as,json=acceptedCAs,proto3" json:"accepted_c_as,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	// EndpointTLSServerName, when non-empty, is propagated to the generated
+	// kubelet kubeconfig as `clusters[0].cluster.tls-server-name`, overriding
+	// the SNI/hostname the kubelet uses while still dialing Endpoint as the
+	// TCP destination.
+	EndpointTlsServerName string `protobuf:"bytes,6,opt,name=endpoint_tls_server_name,json=endpointTlsServerName,proto3" json:"endpoint_tls_server_name,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *KubeletSpec) Reset() {
@@ -382,6 +387,13 @@ func (x *KubeletSpec) GetAcceptedCAs() []*common.PEMEncodedCertificate {
 		return x.AcceptedCAs
 	}
 	return nil
+}
+
+func (x *KubeletSpec) GetEndpointTlsServerName() string {
+	if x != nil {
+		return x.EndpointTlsServerName
+	}
+	return ""
 }
 
 // KubernetesCertsSpec describes generated Kubernetes certificates.
@@ -919,12 +931,13 @@ const file_resource_definitions_secrets_secrets_proto_rawDesc = "" +
 	"etcd_admin\x18\x03 \x01(\v2#.common.PEMEncodedCertificateAndKeyR\tetcdAdmin\x12K\n" +
 	"\x0fetcd_api_server\x18\x04 \x01(\v2#.common.PEMEncodedCertificateAndKeyR\retcdApiServer\"L\n" +
 	"\fEtcdRootSpec\x12<\n" +
-	"\aetcd_ca\x18\x01 \x01(\v2#.common.PEMEncodedCertificateAndKeyR\x06etcdCa\"\xdd\x01\n" +
+	"\aetcd_ca\x18\x01 \x01(\v2#.common.PEMEncodedCertificateAndKeyR\x06etcdCa\"\x96\x02\n" +
 	"\vKubeletSpec\x12'\n" +
 	"\bendpoint\x18\x01 \x01(\v2\v.common.URLR\bendpoint\x12,\n" +
 	"\x12bootstrap_token_id\x18\x03 \x01(\tR\x10bootstrapTokenId\x124\n" +
 	"\x16bootstrap_token_secret\x18\x04 \x01(\tR\x14bootstrapTokenSecret\x12A\n" +
-	"\raccepted_c_as\x18\x05 \x03(\v2\x1d.common.PEMEncodedCertificateR\vacceptedCAs\"\xf5\x01\n" +
+	"\raccepted_c_as\x18\x05 \x03(\v2\x1d.common.PEMEncodedCertificateR\vacceptedCAs\x127\n" +
+	"\x18endpoint_tls_server_name\x18\x06 \x01(\tR\x15endpointTlsServerName\"\xf5\x01\n" +
 	"\x13KubernetesCertsSpec\x121\n" +
 	"\x14scheduler_kubeconfig\x18\x04 \x01(\tR\x13schedulerKubeconfig\x12B\n" +
 	"\x1dcontroller_manager_kubeconfig\x18\x05 \x01(\tR\x1bcontrollerManagerKubeconfig\x12<\n" +

@@ -417,10 +417,10 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 					flannelKubeServiceHost, flannelKubeServicePort string
 				)
 
-				if cfgProvider.Machine().Features().KubePrism().Enabled() {
-					server = fmt.Sprintf("https://127.0.0.1:%d", cfgProvider.Machine().Features().KubePrism().Port())
+				if kubePrismConfig := cfgProvider.K8sKubePrismConfig(); kubePrismConfig != nil {
+					server = fmt.Sprintf("https://127.0.0.1:%d", kubePrismConfig.Port())
 					flannelKubeServiceHost = "127.0.0.1"
-					flannelKubeServicePort = strconv.Itoa(cfgProvider.Machine().Features().KubePrism().Port())
+					flannelKubeServicePort = strconv.Itoa(kubePrismConfig.Port())
 				} else {
 					server = cfgProvider.K8sClusterConfig().ClusterEndpoint().String()
 				}

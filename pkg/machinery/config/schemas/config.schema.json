@@ -2379,6 +2379,50 @@
       ],
       "description": "KubeNodeConfig configures Kubernetes node."
     },
+    "k8s.KubePrismConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "KubePrismConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "port": {
+          "type": "integer",
+          "title": "port",
+          "description": "KubePrism port.\nThe load balancer will be started on 127.0.0.1:\u0026lt;port\u0026gt; and it will\nautomatically include a controlplane endpoint and direct addresses of\nall controlplane nodes in the cluster.\nThe KubePrism will pick up the route(s) with the lowest RTT to the controlplane nodes,\nexcluding the unavailable ones, and will automatically update the route list when the controlplane nodes change.\n",
+          "markdownDescription": "KubePrism port.\nThe load balancer will be started on `127.0.0.1:\u003cport\u003e` and it will\nautomatically include a controlplane endpoint and direct addresses of\nall controlplane nodes in the cluster.\nThe KubePrism will pick up the route(s) with the lowest RTT to the controlplane nodes,\nexcluding the unavailable ones, and will automatically update the route list when the controlplane nodes change.",
+          "x-intellij-html-description": "\u003cp\u003eKubePrism port.\nThe load balancer will be started on \u003ccode\u003e127.0.0.1:\u0026lt;port\u0026gt;\u003c/code\u003e and it will\nautomatically include a controlplane endpoint and direct addresses of\nall controlplane nodes in the cluster.\nThe KubePrism will pick up the route(s) with the lowest RTT to the controlplane nodes,\nexcluding the unavailable ones, and will automatically update the route list when the controlplane nodes change.\u003c/p\u003e\n"
+        },
+        "tlsServerName": {
+          "type": "string",
+          "title": "tlsServerName",
+          "description": "Override the TLS server name (SNI) used by the kubelet when connecting to\nthe KubePrism endpoint.\n\nKubePrism still listens on 127.0.0.1:\u0026lt;port\u0026gt; and the kubelet still dials\nthat address, but the generated kubelet kubeconfig will carry\nclusters[0].cluster.tls-server-name set to this value, so the kubelet\nuses it for SNI and certificate hostname verification.\n\nThis is useful when KubePrism’s upstream apiserver is reached through an\nSNI-routing L4 proxy (for example nginx-ingress in ssl-passthrough mode in\nfront of a Kamaji-hosted apiserver), where SNI=127.0.0.1 doesn’t match any\nroute and the proxy serves a fallback certificate.\n\nWhen empty (default), no tls-server-name is set and behavior is unchanged.\n",
+          "markdownDescription": "Override the TLS server name (SNI) used by the kubelet when connecting to\nthe KubePrism endpoint.\n\nKubePrism still listens on `127.0.0.1:\u003cport\u003e` and the kubelet still dials\nthat address, but the generated kubelet kubeconfig will carry\n`clusters[0].cluster.tls-server-name` set to this value, so the kubelet\nuses it for SNI and certificate hostname verification.\n\nThis is useful when KubePrism's upstream apiserver is reached through an\nSNI-routing L4 proxy (for example nginx-ingress in ssl-passthrough mode in\nfront of a Kamaji-hosted apiserver), where SNI=127.0.0.1 doesn't match any\nroute and the proxy serves a fallback certificate.\n\nWhen empty (default), no `tls-server-name` is set and behavior is unchanged.",
+          "x-intellij-html-description": "\u003cp\u003eOverride the TLS server name (SNI) used by the kubelet when connecting to\nthe KubePrism endpoint.\u003c/p\u003e\n\n\u003cp\u003eKubePrism still listens on \u003ccode\u003e127.0.0.1:\u0026lt;port\u0026gt;\u003c/code\u003e and the kubelet still dials\nthat address, but the generated kubelet kubeconfig will carry\n\u003ccode\u003eclusters[0].cluster.tls-server-name\u003c/code\u003e set to this value, so the kubelet\nuses it for SNI and certificate hostname verification.\u003c/p\u003e\n\n\u003cp\u003eThis is useful when KubePrism\u0026rsquo;s upstream apiserver is reached through an\nSNI-routing L4 proxy (for example nginx-ingress in ssl-passthrough mode in\nfront of a Kamaji-hosted apiserver), where SNI=127.0.0.1 doesn\u0026rsquo;t match any\nroute and the proxy serves a fallback certificate.\u003c/p\u003e\n\n\u003cp\u003eWhen empty (default), no \u003ccode\u003etls-server-name\u003c/code\u003e is set and behavior is unchanged.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind",
+        "port"
+      ],
+      "description": "KubePrismConfig configures node-local Kubernetes API load balancer."
+    },
     "k8s.KubeProxyConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -2462,7 +2506,7 @@
         "image",
         "kind"
       ],
-      "description": "KubeProxyConfig deploys Flannel CNI to the cluster."
+      "description": "KubeProxyConfig configures kube-proxy deployment."
     },
     "k8s.KubeSchedulerConfigV1Alpha1": {
       "properties": {
@@ -6558,13 +6602,6 @@
           "markdownDescription": "Enable XFS project quota support for EPHEMERAL partition and user disks.\nAlso enables kubelet tracking of ephemeral disk usage in the kubelet via quota.",
           "x-intellij-html-description": "\u003cp\u003eEnable XFS project quota support for EPHEMERAL partition and user disks.\nAlso enables kubelet tracking of ephemeral disk usage in the kubelet via quota.\u003c/p\u003e\n"
         },
-        "kubePrism": {
-          "$ref": "#/$defs/v1alpha1.KubePrism",
-          "title": "kubePrism",
-          "description": "KubePrism - local proxy/load balancer on defined port that will distribute\nrequests to all API servers in the cluster.\n",
-          "markdownDescription": "KubePrism - local proxy/load balancer on defined port that will distribute\nrequests to all API servers in the cluster.",
-          "x-intellij-html-description": "\u003cp\u003eKubePrism - local proxy/load balancer on defined port that will distribute\nrequests to all API servers in the cluster.\u003c/p\u003e\n"
-        },
         "nodeAddressSortAlgorithm": {
           "type": "string",
           "title": "nodeAddressSortAlgorithm",
@@ -6576,27 +6613,6 @@
       "additionalProperties": false,
       "type": "object",
       "description": "FeaturesConfig describes individual Talos features that can be switched on or off."
-    },
-    "v1alpha1.KubePrism": {
-      "properties": {
-        "enabled": {
-          "type": "boolean",
-          "title": "enabled",
-          "description": "Enable KubePrism support - will start local load balancing proxy.\n",
-          "markdownDescription": "Enable KubePrism support - will start local load balancing proxy.",
-          "x-intellij-html-description": "\u003cp\u003eEnable KubePrism support - will start local load balancing proxy.\u003c/p\u003e\n"
-        },
-        "port": {
-          "type": "integer",
-          "title": "port",
-          "description": "KubePrism port.\n",
-          "markdownDescription": "KubePrism port.",
-          "x-intellij-html-description": "\u003cp\u003eKubePrism port.\u003c/p\u003e\n"
-        }
-      },
-      "additionalProperties": false,
-      "type": "object",
-      "description": "KubePrism describes the configuration for the KubePrism load balancer."
     },
     "v1alpha1.KubernetesTalosAPIAccessConfig": {
       "properties": {
@@ -6945,6 +6961,9 @@
     },
     {
       "$ref": "#/$defs/k8s.KubeletConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/k8s.KubePrismConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/k8s.KubeNetworkConfigV1Alpha1"

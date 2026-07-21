@@ -10,9 +10,6 @@ machine:
     certSANs: []
     features:
         diskQuotaSupport: true
-        kubePrism:
-            enabled: true
-            port: 7445
 cluster:
     token: inn7ol.u4ehnti8qyls9ymo
     etcd:
@@ -103,6 +100,10 @@ issuingCA:
         AwEHoUQDQgAEyxoR/IbISguv4m5k668RSK4zX4cHqh2RG5TB0G3ztmnu4kSGECV/
         6rhBw7GlOJ+kcOsDwBMXcFggQVpaAs41aw==
         -----END EC PRIVATE KEY-----
+---
+apiVersion: v1alpha1
+kind: KubePrismConfig
+port: 7445
 ---
 apiVersion: v1alpha1
 kind: KubeAggregatorCAConfig

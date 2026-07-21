@@ -66,17 +66,19 @@ func (in *Input) init() ([]config.Document, error) {
 		machine.MachineFeatures.DiskQuotaSupport = new(true)
 	}
 
-	if kubePrismPort, optionSet := in.Options.KubePrismPort.Get(); optionSet { // default to enabled, but if set explicitly, allow it to be disabled
-		if kubePrismPort > 0 {
-			machine.MachineFeatures.KubePrismSupport = &v1alpha1.KubePrism{
-				ServerEnabled: new(true),
-				ServerPort:    kubePrismPort,
+	if !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
+		if kubePrismPort, optionSet := in.Options.KubePrismPort.Get(); optionSet { // default to enabled, but if set explicitly, allow it to be disabled
+			if kubePrismPort > 0 {
+				machine.MachineFeatures.KubePrismSupport = &v1alpha1.KubePrism{ //nolint:staticcheck // legacy configuration
+					ServerEnabled: new(true),
+					ServerPort:    kubePrismPort,
+				}
 			}
-		}
-	} else if in.Options.VersionContract.KubePrismEnabled() {
-		machine.MachineFeatures.KubePrismSupport = &v1alpha1.KubePrism{
-			ServerEnabled: new(true),
-			ServerPort:    constants.DefaultKubePrismPort,
+		} else if in.Options.VersionContract.KubePrismEnabled() {
+			machine.MachineFeatures.KubePrismSupport = &v1alpha1.KubePrism{ //nolint:staticcheck // legacy configuration
+				ServerEnabled: new(true),
+				ServerPort:    constants.DefaultKubePrismPort,
+			}
 		}
 	}
 
