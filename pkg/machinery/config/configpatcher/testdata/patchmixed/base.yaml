@@ -1,0 +1,13 @@
+apiVersion: v1alpha1
+kind: RegistryMirrorConfig
+name: registry.k8s.io
+endpoints:
+  - url: http://172.20.0.1:5001
+---
+apiVersion: v1alpha1
+kind: LinkConfig
+name: eth0
+addresses:
+  - address: 10.0.42.136/24
+routes:
+  - gateway: 10.0.42.1

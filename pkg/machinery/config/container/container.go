@@ -117,6 +117,18 @@ func NewReadonly(bytes []byte, documents ...config.Document) (*Container, error)
 	return c, nil
 }
 
+// NewReadonlyUnvalidated creates a read-only container which does not validate the documents at all.
+//
+// Some methods of the provider don't work at all for such containers.
+// This method is meant to be used only for loading config patches.
+func NewReadonlyUnvalidated(bytes []byte, documents ...config.Document) *Container {
+	return &Container{
+		documents: slices.Clone(documents),
+		bytes:     bytes,
+		readonly:  true,
+	}
+}
+
 // NewV1Alpha1 creates a container with (only) v1alpha1.Config document.
 func NewV1Alpha1(config *v1alpha1.Config) *Container {
 	return &Container{

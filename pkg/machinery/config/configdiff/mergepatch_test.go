@@ -304,9 +304,9 @@ kind: NetworkDefaultActionConfig
 			require.NoError(t, err)
 
 			for i, patch := range patches {
-				provider := patch.(configpatcher.StrategicMergePatch).Provider()
+				strategicPatch := patch.(configpatcher.StrategicMergePatch)
 
-				patchBytes, err := provider.Bytes()
+				patchBytes, err := strategicPatch.Bytes()
 				require.NoError(t, err)
 
 				require.Equal(t, string(patchBytes), string(tt.patchesAsBytes[i]))

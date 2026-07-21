@@ -367,3 +367,43 @@ func TestPatchLink(t *testing.T) {
 		})
 	}
 }
+
+//go:embed testdata/patchmixed/base.yaml
+var mixedBase []byte
+
+//go:embed testdata/patchmixed/expected.yaml
+var mixedExpected string
+
+func TestPatchMixed(t *testing.T) {
+	patches, err := configpatcher.LoadPatches([]string{
+		"@testdata/patchmixed/patch.yaml",
+	})
+	require.NoError(t, err)
+
+	cfg, err := configloader.NewFromBytes(mixedBase)
+	require.NoError(t, err)
+
+	for _, tt := range []struct {
+		name  string
+		input configpatcher.Input
+	}{
+		{
+			name:  "WithConfig",
+			input: configpatcher.WithConfig(cfg),
+		},
+		{
+			name:  "WithBytes",
+			input: configpatcher.WithBytes(mixedBase),
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			out, err := configpatcher.Apply(tt.input, patches)
+			require.NoError(t, err)
+
+			bytes, err := out.Bytes()
+			require.NoError(t, err)
+
+			assert.Equal(t, mixedExpected, string(bytes))
+		})
+	}
+}

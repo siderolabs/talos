@@ -43,8 +43,8 @@ const (
 type Decoder struct{}
 
 // Decode decodes all known manifests.
-func (d *Decoder) Decode(r io.Reader, allowPatchDelete bool) ([]config.Document, error) {
-	return parse(r, allowPatchDelete)
+func (d *Decoder) Decode(r io.Reader, allowPatchDelete, allowDuplicates bool) ([]config.Document, error) {
+	return parse(r, allowPatchDelete, allowDuplicates)
 }
 
 // NewDecoder initializes and returns a `Decoder`.
@@ -59,7 +59,7 @@ type documentID struct {
 }
 
 //nolint:gocyclo
-func parse(r io.Reader, allowPatchDelete bool) (decoded []config.Document, err error) {
+func parse(r io.Reader, allowPatchDelete, allowDuplicates bool) (decoded []config.Document, err error) {
 	// Recover from yaml.v3 panics because we rely on machine configuration loading _a lot_.
 	defer func() {
 		if p := recover(); p != nil {
@@ -123,8 +123,10 @@ func parse(r io.Reader, allowPatchDelete bool) (decoded []config.Document, err e
 				Name:       findValue(manifest, "name", false),
 			}
 
-			if _, ok := knownDocuments[id]; ok {
-				return nil, fmt.Errorf("duplicate document %s/%s/%s is not allowed (line %d)", id.APIVersion, id.Kind, id.Name, manifest.Line)
+			if !allowDuplicates {
+				if _, ok := knownDocuments[id]; ok {
+					return nil, fmt.Errorf("duplicate document %s/%s/%s is not allowed (line %d)", id.APIVersion, id.Kind, id.Name, manifest.Line)
+				}
 			}
 
 			knownDocuments[id] = struct{}{}

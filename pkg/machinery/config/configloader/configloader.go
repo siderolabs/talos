@@ -35,13 +35,17 @@ func newConfig(r io.Reader, opt ...Opt) (config config.Provider, err error) {
 	// preserve the original contents
 	r = io.TeeReader(r, &buf)
 
-	manifests, err := dec.Decode(r, opts.allowPatchDelete)
+	manifests, err := dec.Decode(r, opts.allowPatchDelete, opts.noValidation)
 	if err != nil {
 		return nil, err
 	}
 
 	if len(manifests) == 0 {
 		return nil, ErrNoConfig
+	}
+
+	if opts.noValidation {
+		return container.NewReadonlyUnvalidated(buf.Bytes(), manifests...), nil
 	}
 
 	return container.NewReadonly(buf.Bytes(), manifests...)
@@ -77,6 +81,7 @@ func NewFromBytes(source []byte, o ...Opt) (config.Provider, error) {
 // Opts represents the options for the config loader.
 type Opts struct {
 	allowPatchDelete bool
+	noValidation     bool
 }
 
 // Opt is a functional option for the config loader.
@@ -86,6 +91,13 @@ type Opt func(*Opts)
 func WithAllowPatchDelete() Opt {
 	return func(o *Opts) {
 		o.allowPatchDelete = true
+	}
+}
+
+// WithNoValidation disables validation of the config.
+func WithNoValidation() Opt {
+	return func(o *Opts) {
+		o.noValidation = true
 	}
 }
 
