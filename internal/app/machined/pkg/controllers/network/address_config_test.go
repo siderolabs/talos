@@ -236,6 +236,32 @@ func (suite *AddressConfigSuite) TestMachineConfiguration() {
 	)
 }
 
+func (suite *AddressConfigSuite) TestVethMachineConfiguration() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.AddressConfigController{}))
+
+	veth := networkcfg.NewVethConfigV1Alpha1("veth-metallb", "veth-router")
+	veth.LinkAddresses = []networkcfg.AddressConfig{{AddressAddress: netip.MustParsePrefix("fda1::1/127")}}
+	veth.VethPeer.LinkAddresses = []networkcfg.AddressConfig{{AddressAddress: netip.MustParsePrefix("fda1::/127")}}
+
+	ctr, err := container.New(veth)
+	suite.Require().NoError(err)
+
+	suite.Create(config.NewMachineConfig(ctr))
+
+	ctest.AssertResources(
+		suite,
+		[]string{
+			"configuration/veth-metallb/fda1::1/127",
+			"configuration/veth-router/fda1::/127",
+		},
+		func(r *network.AddressSpec, asrt *assert.Assertions) {
+			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
+			asrt.Contains([]string{"veth-metallb", "veth-router"}, r.TypedSpec().LinkName)
+		},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
+	)
+}
+
 func TestAddressConfigSuite(t *testing.T) {
 	suite.Run(t, &AddressConfigSuite{
 		DefaultSuite: ctest.DefaultSuite{

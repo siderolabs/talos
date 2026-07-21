@@ -119,7 +119,6 @@ func (suite *LinkSpecSuite) TestDummy() {
 
 	// attempt to disable multicast
 	ctest.UpdateWithConflicts(suite, dummy, func(r *network.LinkSpec) error {
-		r.TypedSpec().Multicast = new(bool)
 		r.TypedSpec().Multicast = new(false)
 
 		return nil
@@ -162,6 +161,212 @@ func (suite *LinkSpecSuite) TestDummyWithMAC() {
 	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), dummy.Metadata()))
 
 	ctest.AssertNoResource[*network.LinkSpec](suite, dummyInterface)
+}
+
+func (suite *LinkSpecSuite) TestVeth() {
+	primaryName := suite.uniqueDummyInterface()
+	peerName := suite.uniqueDummyInterface()
+
+	conn, err := rtnetlink.Dial(nil)
+	suite.Require().NoError(err)
+
+	defer conn.Close() //nolint:errcheck
+	defer func() {
+		if iface, ifaceErr := net.InterfaceByName(primaryName); ifaceErr == nil {
+			conn.Link.Delete(uint32(iface.Index)) //nolint:errcheck
+		}
+	}()
+
+	primary := network.NewLinkSpec(network.NamespaceName, primaryName)
+	*primary.TypedSpec() = network.LinkSpecSpec{
+		Name:        primaryName,
+		Type:        nethelpers.LinkEther,
+		Kind:        network.LinkKindVeth,
+		MTU:         1400,
+		Up:          true,
+		Logical:     true,
+		Veth:        network.VethSpec{PeerName: peerName},
+		ConfigLayer: network.ConfigDefault,
+	}
+
+	peer := network.NewLinkSpec(network.NamespaceName, peerName)
+	*peer.TypedSpec() = network.LinkSpecSpec{
+		Name:        peerName,
+		Type:        nethelpers.LinkEther,
+		Kind:        network.LinkKindVeth,
+		MTU:         1300,
+		Up:          true,
+		Logical:     true,
+		Veth:        network.VethSpec{PeerName: primaryName},
+		ConfigLayer: network.ConfigDefault,
+	}
+
+	// LinkSpecController atomically creates the pair and configures both endpoints independently of resource order.
+	suite.Create(peer)
+	suite.Create(primary)
+
+	ctest.AssertResources(suite, []string{primaryName, peerName}, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Equal(network.LinkKindVeth, r.TypedSpec().Kind)
+		asrt.Contains([]nethelpers.OperationalState{nethelpers.OperStateUp, nethelpers.OperStateUnknown}, r.TypedSpec().OperationalState)
+
+		if r.Metadata().ID() == primaryName {
+			asrt.EqualValues(1400, r.TypedSpec().MTU)
+		} else {
+			asrt.EqualValues(1300, r.TypedSpec().MTU)
+		}
+	})
+
+	links, err := conn.Link.List()
+	suite.Require().NoError(err)
+
+	var primaryIndex, peerIndex, primaryPeerIndex, peerPeerIndex uint32
+
+	for _, link := range links {
+		switch link.Attributes.Name {
+		case primaryName:
+			primaryIndex = link.Index
+			primaryPeerIndex = link.Attributes.Type
+		case peerName:
+			peerIndex = link.Index
+			peerPeerIndex = link.Attributes.Type
+		}
+	}
+
+	suite.Equal(peerIndex, primaryPeerIndex)
+	suite.Equal(primaryIndex, peerPeerIndex)
+
+	for _, r := range []resource.Resource{primary, peer} {
+		suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), r.Metadata()))
+	}
+
+	ctest.AssertNoResource[*network.LinkStatus](suite, primaryName)
+	ctest.AssertNoResource[*network.LinkStatus](suite, peerName)
+}
+
+func (suite *LinkSpecSuite) TestVethReconfigurePeers() {
+	nameA := suite.uniqueDummyInterface()
+	nameB := suite.uniqueDummyInterface()
+	nameC := suite.uniqueDummyInterface()
+	nameD := suite.uniqueDummyInterface()
+
+	specA, specB := newVethLinkSpecs(nameA, nameB)
+	specC, specD := newVethLinkSpecs(nameC, nameD)
+	specs := []*network.LinkSpec{specA, specB, specC, specD}
+
+	for _, spec := range specs {
+		suite.Create(spec)
+	}
+
+	assertPeer := func(name, peerName string) {
+		ctest.AssertResource(suite, name, func(link *network.LinkStatus, asrt *assert.Assertions) {
+			asrt.Equal(network.LinkKindVeth, link.TypedSpec().Kind)
+			asrt.Equal(peerName, link.TypedSpec().Veth.PeerName)
+		})
+	}
+
+	assertPeer(nameA, nameB)
+	assertPeer(nameB, nameA)
+	assertPeer(nameC, nameD)
+	assertPeer(nameD, nameC)
+
+	peers := map[string]string{
+		nameA: nameC,
+		nameB: nameD,
+		nameC: nameA,
+		nameD: nameB,
+	}
+
+	for _, spec := range specs {
+		ctest.UpdateWithConflicts(suite, spec, func(link *network.LinkSpec) error {
+			link.TypedSpec().Veth.PeerName = peers[link.TypedSpec().Name]
+
+			return nil
+		})
+	}
+
+	assertPeer(nameA, nameC)
+	assertPeer(nameB, nameD)
+	assertPeer(nameC, nameA)
+	assertPeer(nameD, nameB)
+
+	for _, spec := range specs {
+		suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), spec.Metadata()))
+	}
+
+	for _, name := range []string{nameA, nameB, nameC, nameD} {
+		ctest.AssertNoResource[*network.LinkStatus](suite, name)
+	}
+}
+
+func (suite *LinkSpecSuite) TestVethReplacesWrongKind() {
+	primaryName := suite.uniqueDummyInterface()
+	peerName := suite.uniqueDummyInterface()
+
+	conn, err := rtnetlink.Dial(nil)
+	suite.Require().NoError(err)
+
+	defer conn.Close() //nolint:errcheck
+
+	suite.Require().NoError(conn.Link.New(&rtnetlink.LinkMessage{
+		Type: uint16(nethelpers.LinkEther),
+		Attributes: &rtnetlink.LinkAttributes{
+			Name: primaryName,
+			Info: &rtnetlink.LinkInfo{
+				Kind: "dummy",
+				Data: &rtnetlink.LinkData{Name: "dummy"},
+			},
+		},
+	}))
+
+	defer func() {
+		if iface, ifaceErr := net.InterfaceByName(primaryName); ifaceErr == nil {
+			conn.Link.Delete(uint32(iface.Index)) //nolint:errcheck
+		}
+	}()
+
+	ctest.AssertResource(suite, primaryName, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Equal("dummy", r.TypedSpec().Kind)
+	})
+
+	primary, peer := newVethLinkSpecs(primaryName, peerName)
+	suite.Create(primary)
+	suite.Create(peer)
+
+	ctest.AssertResources(suite, []string{primaryName, peerName}, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Equal(network.LinkKindVeth, r.TypedSpec().Kind)
+	})
+
+	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), primary.Metadata()))
+	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), peer.Metadata()))
+
+	ctest.AssertNoResource[*network.LinkStatus](suite, primaryName)
+	ctest.AssertNoResource[*network.LinkStatus](suite, peerName)
+}
+
+func newVethLinkSpecs(primaryName, peerName string) (*network.LinkSpec, *network.LinkSpec) {
+	primary := network.NewLinkSpec(network.NamespaceName, primaryName)
+	*primary.TypedSpec() = network.LinkSpecSpec{
+		Name:        primaryName,
+		Type:        nethelpers.LinkEther,
+		Kind:        network.LinkKindVeth,
+		Up:          true,
+		Logical:     true,
+		Veth:        network.VethSpec{PeerName: peerName},
+		ConfigLayer: network.ConfigDefault,
+	}
+
+	peer := network.NewLinkSpec(network.NamespaceName, peerName)
+	*peer.TypedSpec() = network.LinkSpecSpec{
+		Name:        peerName,
+		Type:        nethelpers.LinkEther,
+		Kind:        network.LinkKindVeth,
+		Up:          true,
+		Logical:     true,
+		Veth:        network.VethSpec{PeerName: primaryName},
+		ConfigLayer: network.ConfigDefault,
+	}
+
+	return primary, peer
 }
 
 //nolint:gocyclo

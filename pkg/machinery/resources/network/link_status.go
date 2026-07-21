@@ -62,6 +62,7 @@ type LinkStatusSpec struct {
 	BondMaster   BondMasterSpec   `yaml:"bondMaster,omitempty" protobuf:"28"`
 	VRFMaster    VRFMasterSpec    `yaml:"vrfMaster,omitempty" protobuf:"33"`
 	Wireguard    WireguardSpec    `yaml:"wireguard,omitempty" protobuf:"29"`
+	Veth         VethSpec         `yaml:"veth,omitempty" protobuf:"34"`
 }
 
 // Physical checks if the link is physical ethernet.

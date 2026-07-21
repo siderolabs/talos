@@ -243,6 +243,8 @@ func (ctrl *LinkStatusController) reconcile(
 			status.QueueDisc = link.Attributes.QueueDisc
 
 			status.MTU = link.Attributes.MTU
+
+			status.Veth = network.VethSpec{}
 			if link.Attributes.Master != nil {
 				status.MasterIndex = *link.Attributes.Master
 			} else {
@@ -333,6 +335,8 @@ func (ctrl *LinkStatusController) reconcile(
 			}
 
 			switch status.Kind {
+			case network.LinkKindVeth:
+				status.Veth.PeerName = vethPeerName(links, link)
 			case network.LinkKindVLAN:
 				if rawLinkData == nil {
 					logger.Warn("VLAN link data is nil", zap.String("link", link.Attributes.Name))
@@ -387,4 +391,20 @@ func (ctrl *LinkStatusController) reconcile(
 	}
 
 	return nil
+}
+
+func vethPeerName(links []rtnetlink.LinkMessage, current rtnetlink.LinkMessage) string {
+	for _, candidate := range links {
+		if candidate.Index != current.Attributes.Type {
+			continue
+		}
+
+		if candidate.Attributes.Info == nil || candidate.Attributes.Info.Kind != network.LinkKindVeth || candidate.Attributes.Type != current.Index {
+			return ""
+		}
+
+		return candidate.Attributes.Name
+	}
+
+	return ""
 }

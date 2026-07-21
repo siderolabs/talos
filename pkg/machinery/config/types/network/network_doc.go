@@ -1430,6 +1430,14 @@ func (CommonLinkConfig) Doc() *encoder.Doc {
 				FieldName: "",
 			},
 			{
+				TypeName:  "VethConfigV1Alpha1",
+				FieldName: "",
+			},
+			{
+				TypeName:  "VethPeerConfig",
+				FieldName: "",
+			},
+			{
 				TypeName:  "VLANConfigV1Alpha1",
 				FieldName: "",
 			},
@@ -2245,6 +2253,75 @@ func (PTPConfig) Doc() *encoder.Doc {
 	return doc
 }
 
+func (VethConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VethConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VethConfig is a config document to create a virtual Ethernet device pair." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VethConfig is a config document to create a virtual Ethernet device pair.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of this end of the veth pair.\n\nThis is a literal kernel interface name. Link aliases are not supported here because\nthe interface is created by this document rather than selected from existing physical links.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of this end of the veth pair." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "peer",
+				Type:        "VethPeerConfig",
+				Note:        "",
+				Description: "Configuration for the peer end of the veth pair.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Configuration for the peer end of the veth pair." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Type:   "CommonLinkConfig",
+				Inline: true,
+			},
+		},
+	}
+
+	doc.AddExample("", exampleVethConfigV1Alpha1())
+
+	doc.Fields[1].AddExample("", "veth0")
+
+	return doc
+}
+
+func (VethPeerConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "VethPeerConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "VethPeerConfig is the configuration for the peer end of a veth pair." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "VethPeerConfig is the configuration for the peer end of a veth pair.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VethConfigV1Alpha1",
+				FieldName: "peer",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the peer end of the veth pair.\n\nThis is a literal kernel interface name. Link aliases are not supported here because\nthe interface is created by this document rather than selected from existing physical links.\n\nBoth endpoints are created in the host network namespace. This name can be listed in a\nVRFConfig document's `links` field to attach the peer endpoint to that VRF.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the peer end of the veth pair." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Type:   "CommonLinkConfig",
+				Inline: true,
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("", "veth-router")
+
+	return doc
+}
+
 func (VLANConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "VLANConfig",
@@ -2465,6 +2542,8 @@ func GetFileDoc() *encoder.FileDoc {
 			TimeSyncConfigV1Alpha1{}.Doc(),
 			NTPConfig{}.Doc(),
 			PTPConfig{}.Doc(),
+			VethConfigV1Alpha1{}.Doc(),
+			VethPeerConfig{}.Doc(),
 			VLANConfigV1Alpha1{}.Doc(),
 			WireguardConfigV1Alpha1{}.Doc(),
 			WireguardPeer{}.Doc(),

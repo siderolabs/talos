@@ -1,0 +1,12 @@
+apiVersion: v1alpha1
+kind: VethConfig
+name: veth-metallb
+peer:
+    name: veth-router
+    mtu: 1400
+    addresses:
+        - address: fda1::/127
+up: true
+mtu: 1500
+addresses:
+    - address: fda1::1/127

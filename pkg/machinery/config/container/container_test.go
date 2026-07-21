@@ -197,6 +197,40 @@ func TestCRIBaseRuntimeSpecConfig(t *testing.T) {
 	assert.Equal(t, legacy.MachineConfig.MachineBaseRuntimeSpecOverrides.Object, cfg.CRIBaseRuntimeSpecConfig().Overrides()) //nolint:staticcheck // test deprecated compatibility
 }
 
+func TestVethLinkConfigs(t *testing.T) {
+	t.Parallel()
+
+	veth := network.NewVethConfigV1Alpha1("veth-host", "veth-router")
+
+	cfg, err := container.New(veth)
+	require.NoError(t, err)
+
+	links := cfg.NetworkCommonLinkConfigs()
+	require.Len(t, links, 2)
+	assert.Equal(t, "veth-host", links[0].Name())
+	assert.Equal(t, "veth-router", links[1].Name())
+
+	second := network.NewVethConfigV1Alpha1("veth-host-2", "veth-router-2")
+	cfg, err = container.New(veth, second)
+	require.NoError(t, err)
+	assert.Len(t, cfg.NetworkCommonLinkConfigs(), 4)
+
+	reverse := network.NewVethConfigV1Alpha1("veth-router", "veth-host")
+	_, err = container.New(veth, reverse)
+	assert.EqualError(t, err, `conflicting link configurations: VethConfig/veth-host and VethConfig/veth-router both configure "veth-router"`)
+
+	physical := network.NewLinkConfigV1Alpha1("veth-router")
+	_, err = container.New(veth, physical)
+	assert.EqualError(t, err, `conflicting link configurations: VethConfig/veth-host and LinkConfig/veth-router both configure "veth-router"`)
+
+	_, err = container.New(physical, veth)
+	assert.EqualError(t, err, `conflicting link configurations: LinkConfig/veth-router and VethConfig/veth-host both configure "veth-router"`)
+
+	dummy := network.NewDummyLinkConfigV1Alpha1("veth-router")
+	_, err = container.New(veth, dummy)
+	assert.EqualError(t, err, `conflicting link configurations: VethConfig/veth-host and DummyLinkConfig/veth-router both configure "veth-router"`)
+}
+
 func TestUdevRulesConfig(t *testing.T) {
 	t.Parallel()
 

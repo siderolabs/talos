@@ -53,6 +53,7 @@ func New(documents ...config.Document) (*Container, error) {
 
 	seenDocuments := make(map[string]struct{})
 	conflictingDocuments := make(map[string]string)
+	claimedNetworkLinks := make(map[string]string)
 
 	for _, doc := range documents {
 		switch d := doc.(type) {
@@ -93,6 +94,29 @@ func New(documents ...config.Document) (*Container, error) {
 						}
 
 						conflictingDocuments[conflictingID] = documentID
+					}
+				}
+
+				if linkConfig, ok := d.(config.NetworkCommonLinkConfig); ok {
+					linkConfigs := []config.NetworkCommonLinkConfig{linkConfig}
+
+					if additional, ok := d.(config.NetworkAdditionalLinkConfigs); ok {
+						linkConfigs = append(linkConfigs, additional.AdditionalLinkConfigs()...)
+					}
+
+					for _, claimedLinkConfig := range linkConfigs {
+						linkName := claimedLinkConfig.Name()
+
+						if owner, exists := claimedNetworkLinks[linkName]; exists {
+							return nil, fmt.Errorf(
+								"conflicting link configurations: %s and %s both configure %q",
+								owner,
+								documentID,
+								linkName,
+							)
+						}
+
+						claimedNetworkLinks[linkName] = documentID
 					}
 				}
 			}
@@ -585,7 +609,13 @@ func (container *Container) NetworkKubeSpanConfig() config.NetworkKubeSpanConfig
 
 // NetworkCommonLinkConfigs implements config.Config interface.
 func (container *Container) NetworkCommonLinkConfigs() []config.NetworkCommonLinkConfig {
-	return findMatchingDocs[config.NetworkCommonLinkConfig](container.documents)
+	result := findMatchingDocs[config.NetworkCommonLinkConfig](container.documents)
+
+	for _, additional := range findMatchingDocs[config.NetworkAdditionalLinkConfigs](container.documents) {
+		result = append(result, additional.AdditionalLinkConfigs()...)
+	}
+
+	return result
 }
 
 // NetworkLinkAliasConfigs implements config.Config interface.

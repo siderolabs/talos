@@ -65,6 +65,7 @@ type LinkSpecSpec struct {
 	BridgeMaster BridgeMasterSpec `yaml:"bridgeMaster,omitempty" protobuf:"12"`
 	VRFMaster    VRFMasterSpec    `yaml:"vrfMaster,omitempty" protobuf:"17"`
 	Wireguard    WireguardSpec    `yaml:"wireguard,omitempty" protobuf:"13"`
+	Veth         VethSpec         `yaml:"veth,omitempty" protobuf:"19"`
 
 	// Configuration layer.
 	ConfigLayer ConfigLayer `yaml:"layer" protobuf:"14"`
@@ -99,6 +100,13 @@ type VRFSlave struct {
 	MasterName string `yaml:"masterName,omitempty" protobuf:"1"`
 }
 
+// VethSpec identifies the expected peer of a veth endpoint.
+//
+//gotagsrewrite:gen
+type VethSpec struct {
+	PeerName string `yaml:"peerName,omitempty" protobuf:"1"`
+}
+
 // Merge with other, overwriting fields from other if set.
 func (spec *LinkSpecSpec) Merge(other *LinkSpecSpec) error {
 	// prefer Logical, as it is defined for bonds/vlans, etc.
@@ -114,6 +122,7 @@ func (spec *LinkSpecSpec) Merge(other *LinkSpecSpec) error {
 	updateIfNotZero(&spec.BridgeSlave, other.BridgeSlave)
 	updateIfNotZero(&spec.VRFMaster, other.VRFMaster)
 	updateIfNotZero(&spec.VRFSlave, other.VRFSlave)
+	updateIfNotZero(&spec.Veth, other.Veth)
 
 	if !other.BondMaster.IsZero() {
 		spec.BondMaster = other.BondMaster.DeepCopy()

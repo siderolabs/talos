@@ -363,6 +363,7 @@ message LinkSpecSpec {
   VRFMasterSpec vrf_master = 17;
   // VRFSlave carries VRF slave details for interfaces in a VRF.
   VRFSlave vrf_slave = 18;
+  VethSpec veth = 19;
 }
 
 // LinkStatusSpec describes status of rendered secrets.
@@ -403,6 +404,7 @@ message LinkStatusSpec {
   string alias = 31;
   repeated string alt_names = 32;
   VRFMasterSpec vrf_master = 33;
+  VethSpec veth = 34;
 }
 
 // NameServerSpec describes a single DNS nameserver with additional configuration.
@@ -755,6 +757,11 @@ message VRFMasterSpec {
 // VRFSlave contains the name of the master vrf for an interface
 message VRFSlave {
   string master_name = 1;
+}
+
+// VethSpec identifies the expected peer of a veth endpoint.
+message VethSpec {
+  string peer_name = 1;
 }
 
 // WireguardPeer describes a single peer.

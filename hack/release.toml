@@ -364,6 +364,29 @@ List of changes:
 - `RouteSpec`/`RouteStatus` now carry a multipath next-hop list to support ECMP and cross-family (RFC 8950) next-hops.
 """
 
+    [notes.vethconfig]
+        title = "Virtual Ethernet Pairs"
+        description = """\
+Talos now supports declarative virtual Ethernet (`veth`) pairs through the new `VethConfig` multi-document
+configuration kind. Both endpoints are created in the host network namespace and support the common link settings,
+addresses, routes, and multicast configuration.
+
+For example, the following configuration creates a pair named `veth-host` and `veth-router` with an address on each
+endpoint:
+
+```yaml
+apiVersion: v1alpha1
+kind: VethConfig
+name: veth-host
+addresses:
+  - address: 10.3.0.1/30
+peer:
+  name: veth-router
+  addresses:
+    - address: 10.3.0.2/30
+```
+"""
+
     [notes.lvm_wipe]
         title = "LVM Wipe"
         description = """\

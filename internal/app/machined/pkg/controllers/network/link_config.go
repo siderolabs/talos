@@ -253,7 +253,7 @@ func (ctrl *LinkConfigController) processMachineConfiguration(
 	linkMap := map[string]*network.LinkSpecSpec{}
 
 	ctrl.processDevicesConfiguration(logger, linkMap, devices, linkNameResolver)
-	ctrl.processLinkConfigs(logger, linkMap, cfg, linkNameResolver)
+	ctrl.processLinkConfigs(linkMap, cfg, linkNameResolver)
 
 	return maps.ValuesFunc(linkMap, func(link *network.LinkSpecSpec) network.LinkSpecSpec { return *link })
 }
@@ -409,14 +409,27 @@ func (ctrl *LinkConfigController) processDevicesConfiguration(
 }
 
 //nolint:gocyclo,cyclop
-func (ctrl *LinkConfigController) processLinkConfigs(logger *zap.Logger, linkMap map[string]*network.LinkSpecSpec, cfg *config.MachineConfig, linkNameResolver *network.LinkResolver) {
+func (ctrl *LinkConfigController) processLinkConfigs(linkMap map[string]*network.LinkSpecSpec, cfg *config.MachineConfig, linkNameResolver *network.LinkResolver) {
 	if cfg == nil {
 		return
 	}
 
-	for _, linkConfig := range cfg.Config().NetworkCommonLinkConfigs() {
+	linkConfigs := cfg.Config().NetworkCommonLinkConfigs()
+	vethLinkNames := map[string]struct{}{}
+
+	for _, linkConfig := range linkConfigs {
+		if vethConfig, ok := linkConfig.(talosconfig.NetworkVethConfig); ok {
+			vethLinkNames[vethConfig.Name()] = struct{}{}
+			vethLinkNames[vethConfig.Peer().Name()] = struct{}{}
+		}
+	}
+
+	for _, linkConfig := range linkConfigs {
 		linkName := linkConfig.Name()
-		linkName = linkNameResolver.Resolve(linkName)
+
+		if _, isVeth := vethLinkNames[linkName]; !isVeth {
+			linkName = linkNameResolver.Resolve(linkName)
+		}
 
 		if _, exists := linkMap[linkName]; !exists {
 			linkMap[linkName] = &network.LinkSpecSpec{
@@ -446,6 +459,18 @@ func (ctrl *LinkConfigController) processLinkConfigs(logger *zap.Logger, linkMap
 		switch specificLinkConfig := linkConfig.(type) {
 		case talosconfig.NetworkPhysicalLinkConfig:
 			// nothing specific for physical links
+		case talosconfig.NetworkVethConfig:
+			peerName := specificLinkConfig.Peer().Name()
+
+			if _, exists := linkMap[peerName]; !exists {
+				linkMap[peerName] = &network.LinkSpecSpec{
+					Name:        peerName,
+					ConfigLayer: network.ConfigMachineConfiguration,
+				}
+			}
+
+			vethLink(linkMap[linkName], peerName)
+			vethLink(linkMap[peerName], linkName)
 		case talosconfig.NetworkDummyLinkConfig:
 			dummyLink(linkMap[linkName])
 		case talosconfig.NetworkVLANConfig:
@@ -501,8 +526,6 @@ func (ctrl *LinkConfigController) processLinkConfigs(logger *zap.Logger, linkMap
 			}
 		case talosconfig.NetworkWireguardConfig:
 			wireguardLink(linkMap[linkName], specificLinkConfig)
-		default:
-			logger.Error("unknown link config type", zap.String("linkName", linkName), zap.String("type", fmt.Sprintf("%T", specificLinkConfig)))
 		}
 	}
 
@@ -615,4 +638,11 @@ func dummyLink(link *network.LinkSpecSpec) {
 	link.Logical = true
 	link.Kind = "dummy"
 	link.Type = nethelpers.LinkEther
+}
+
+func vethLink(link *network.LinkSpecSpec, peerName string) {
+	link.Logical = true
+	link.Type = nethelpers.LinkEther
+	link.Kind = network.LinkKindVeth
+	link.Veth.PeerName = peerName
 }

@@ -41,6 +41,7 @@ func conflictingLinkKinds(selfKind string) []string {
 		BridgeKind,
 		DummyLinkKind,
 		LinkKind,
+		VethKind,
 		VLANKind,
 		VRFKind,
 		WireguardKind,

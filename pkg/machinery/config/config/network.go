@@ -149,6 +149,14 @@ type NetworkDummyLinkConfig interface {
 	NetworkCommonLinkConfig
 }
 
+// NetworkVethConfig defines a veth pair configuration.
+type NetworkVethConfig interface {
+	NetworkCommonLinkConfig
+
+	NetworkVethConfigSignal()
+	Peer() NetworkCommonLinkConfig
+}
+
 // NetworkHardwareAddressConfig defines a hardware (MAC) address configuration.
 type NetworkHardwareAddressConfig interface {
 	HardwareAddress() optional.Optional[nethelpers.HardwareAddr]
@@ -162,6 +170,12 @@ type NetworkCommonLinkConfig interface {
 	Addresses() []NetworkAddressConfig
 	Routes() []NetworkRouteConfig
 	Multicast() optional.Optional[bool]
+}
+
+// NetworkAdditionalLinkConfigs defines additional link configurations for a network link.
+// This is used for links that can have multiple configurations, such as veth pairs.
+type NetworkAdditionalLinkConfigs interface {
+	AdditionalLinkConfigs() []NetworkCommonLinkConfig
 }
 
 // NetworkAddressConfig defines a network address configuration.

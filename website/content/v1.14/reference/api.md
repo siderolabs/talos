@@ -618,6 +618,7 @@ description: Talos gRPC API reference.
     - [VLANSpec](#talos.resource.definitions.network.VLANSpec)
     - [VRFMasterSpec](#talos.resource.definitions.network.VRFMasterSpec)
     - [VRFSlave](#talos.resource.definitions.network.VRFSlave)
+    - [VethSpec](#talos.resource.definitions.network.VethSpec)
     - [WireguardPeer](#talos.resource.definitions.network.WireguardPeer)
     - [WireguardSpec](#talos.resource.definitions.network.WireguardSpec)
   
@@ -10118,6 +10119,7 @@ LinkSpecSpec describes spec for the link.
 | multicast | [bool](#bool) |  | Multicast indicates whether the multicast flag should be set on the interface to the value. |
 | vrf_master | [VRFMasterSpec](#talos.resource.definitions.network.VRFMasterSpec) |  |  |
 | vrf_slave | [VRFSlave](#talos.resource.definitions.network.VRFSlave) |  | VRFSlave carries VRF slave details for interfaces in a VRF. |
+| veth | [VethSpec](#talos.resource.definitions.network.VethSpec) |  |  |
 
 
 
@@ -10165,6 +10167,7 @@ LinkStatusSpec describes status of rendered secrets.
 | alias | [string](#string) |  | Fields coming from rtnetlink API. |
 | alt_names | [string](#string) | repeated |  |
 | vrf_master | [VRFMasterSpec](#talos.resource.definitions.network.VRFMasterSpec) |  |  |
+| veth | [VethSpec](#talos.resource.definitions.network.VethSpec) |  |  |
 
 
 
@@ -10883,6 +10886,21 @@ VRFSlave contains the name of the master vrf for an interface
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | master_name | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.VethSpec"></a>
+
+### VethSpec
+VethSpec identifies the expected peer of a veth endpoint.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| peer_name | [string](#string) |  |  |
 
 
 

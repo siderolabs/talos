@@ -664,6 +664,106 @@ func (suite *NetworkConfigSuite) TestVRFConfig() {
 	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, vrfName)
 }
 
+// TestVethConfig tests veth creation, rename, VRF composition, and cleanup.
+func (suite *NetworkConfigSuite) TestVethConfig() {
+	if suite.Cluster == nil {
+		suite.T().Skip("skipping if cluster is not qemu/docker")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	suite.T().Logf("testing on node %q", node)
+
+	suffix := rand.IntN(10000)
+	name := fmt.Sprintf("veth%d", suffix)
+	oldPeerName := fmt.Sprintf("vold%d", suffix)
+	newPeerName := fmt.Sprintf("vnew%d", suffix)
+	vrfName := fmt.Sprintf("vrf.%d", suffix)
+
+	veth := network.NewVethConfigV1Alpha1(name, oldPeerName)
+	veth.LinkMTU = 1400
+	veth.LinkAddresses = []network.AddressConfig{{AddressAddress: netip.MustParsePrefix("192.0.2.1/32")}}
+	veth.VethPeer.LinkMTU = 1300
+	veth.VethPeer.LinkAddresses = []network.AddressConfig{{AddressAddress: netip.MustParsePrefix("192.0.2.2/32")}}
+
+	suite.PatchMachineConfig(nodeCtx, veth)
+
+	assertVethLink := func(linkName, peerName string, mtu uint32) {
+		rtestutils.AssertResource(
+			nodeCtx, suite.T(), suite.Client.COSI, linkName,
+			func(link *networkres.LinkStatus, asrt *assert.Assertions) {
+				asrt.Equal(networkres.LinkKindVeth, link.TypedSpec().Kind)
+				asrt.EqualValues(mtu, link.TypedSpec().MTU)
+				asrt.Equal(peerName, link.TypedSpec().Veth.PeerName)
+			},
+		)
+	}
+
+	assertVethLink(name, oldPeerName, 1400)
+	assertVethLink(oldPeerName, name, 1300)
+
+	nameAddressID := name + "/192.0.2.1/32"
+	oldPeerAddressID := oldPeerName + "/192.0.2.2/32"
+
+	rtestutils.AssertResources(
+		nodeCtx, suite.T(), suite.Client.COSI,
+		[]resource.ID{nameAddressID, oldPeerAddressID},
+		func(address *networkres.AddressStatus, asrt *assert.Assertions) {
+			asrt.Contains([]string{name, oldPeerName}, address.TypedSpec().LinkName)
+		},
+	)
+
+	veth.VethPeer.VethPeerName = newPeerName
+	veth.VethPeer.LinkMTU = 1200
+	suite.PatchMachineConfig(nodeCtx, veth)
+
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, oldPeerName)
+	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.COSI, oldPeerAddressID)
+
+	assertVethLink(name, newPeerName, 1400)
+	assertVethLink(newPeerName, name, 1200)
+
+	newPeerAddressID := newPeerName + "/192.0.2.2/32"
+	rtestutils.AssertResources(
+		nodeCtx, suite.T(), suite.Client.COSI,
+		[]resource.ID{nameAddressID, newPeerAddressID},
+		func(address *networkres.AddressStatus, asrt *assert.Assertions) {
+			asrt.Contains([]string{name, newPeerName}, address.TypedSpec().LinkName)
+		},
+	)
+
+	vrf := network.NewVRFConfigV1Alpha1(vrfName)
+	vrf.VRFLinks = []string{newPeerName}
+	vrf.VRFTable = nethelpers.Table123
+	suite.PatchMachineConfig(nodeCtx, vrf)
+
+	rtestutils.AssertResource(
+		nodeCtx, suite.T(), suite.Client.COSI, newPeerName,
+		func(link *networkres.LinkStatus, asrt *assert.Assertions) {
+			asrt.Equal(networkres.LinkKindVeth, link.TypedSpec().Kind)
+			asrt.NotZero(link.TypedSpec().MasterIndex)
+			asrt.Equal("vrf", link.TypedSpec().SlaveKind)
+		},
+	)
+	rtestutils.AssertResource(
+		nodeCtx, suite.T(), suite.Client.COSI, vrfName,
+		func(link *networkres.LinkStatus, asrt *assert.Assertions) {
+			asrt.Equal("vrf", link.TypedSpec().Kind)
+			asrt.Equal(vrf.VRFTable, link.TypedSpec().VRFMaster.Table)
+		},
+	)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.VRFKind, vrfName)
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.VethKind, name)
+
+	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.COSI, nameAddressID)
+	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.COSI, newPeerAddressID)
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, name)
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, newPeerName)
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, vrfName)
+}
+
 // TestWireguardConfig tests creation of Wireguard interfaces.
 func (suite *NetworkConfigSuite) TestWireguardConfig() {
 	if suite.Cluster == nil {
