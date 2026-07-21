@@ -11,6 +11,8 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"golang.org/x/time/rate"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/internal/trigger"
 )
@@ -42,4 +44,34 @@ func TestRateLimitedTrigger(t *testing.T) {
 	}
 
 	assert.InDelta(t, int64(14), mock.Get(), 5)
+}
+
+func TestRateLimitedTriggerQueuesTrailingEvent(t *testing.T) {
+	mock := &mockTrigger{}
+
+	ctx, cancel := context.WithCancel(t.Context())
+	t.Cleanup(cancel)
+
+	trig := trigger.NewRateLimitedTrigger(ctx, mock, rate.Every(250*time.Millisecond), 1)
+
+	// Consume the initial burst token.
+	trig.QueueReconcile()
+	require.Eventually(t, func() bool {
+		return mock.Get() == 1
+	}, time.Second, time.Millisecond)
+
+	baseline := mock.Get()
+
+	// The worker dequeues this event and blocks in limiter.Wait.
+	trig.QueueReconcile()
+	require.Never(t, func() bool {
+		return mock.Get() > baseline
+	}, 50*time.Millisecond, time.Millisecond)
+
+	// This event must remain pending until the rate-limited event is forwarded.
+	trig.QueueReconcile()
+
+	require.Eventually(t, func() bool {
+		return mock.Get() == baseline+2
+	}, time.Second, time.Millisecond)
 }
