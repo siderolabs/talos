@@ -84,6 +84,11 @@ type ContainerAsset struct {
 	OCIPath string `yaml:"ociPath,omitempty"`
 }
 
+// IsSet returns true when the container asset has a configured image source.
+func (c ContainerAsset) IsSet() bool {
+	return c.ImageRef != "" || c.TarballPath != "" || c.OCIPath != ""
+}
+
 // SecureBootAssets describes secureboot assets.
 type SecureBootAssets struct {
 	// SecureBoot signing key & cert.
@@ -197,8 +202,7 @@ const defaultSecureBootPrefix = "/secureboot"
 //nolint:gocyclo,cyclop
 func (i *Input) FillDefaults(arch, version string, secureboot bool) {
 	var (
-		zeroFileAsset      FileAsset
-		zeroContainerAsset ContainerAsset
+		zeroFileAsset FileAsset
 	)
 
 	if i.Kernel == zeroFileAsset {
@@ -209,7 +213,7 @@ func (i *Input) FillDefaults(arch, version string, secureboot bool) {
 		i.Initramfs.Path = fmt.Sprintf(constants.InitramfsAssetPath, arch)
 	}
 
-	if i.BaseInstaller == zeroContainerAsset {
+	if !i.BaseInstaller.IsSet() {
 		i.BaseInstaller.ImageRef = fmt.Sprintf("%s:%s", images.DefaultInstallerImageRepository, version) //nolint:staticcheck // required as a <1.11.0 fallback
 
 		if quirks.New(version).SupportsUnifiedInstaller() {
