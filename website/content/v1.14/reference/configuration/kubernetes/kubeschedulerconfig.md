@@ -16,7 +16,7 @@ title: KubeSchedulerConfig
 {{< highlight yaml >}}
 apiVersion: v1alpha1
 kind: KubeSchedulerConfig
-image: registry.k8s.io/kube-scheduler:v1.37.0-alpha.3 # The container image used to run the kube-scheduler component.
+image: registry.k8s.io/kube-scheduler:v1.37.0-beta.0 # The container image used to run the kube-scheduler component.
 # Provide configuration for the kube-scheduler static pod.
 config:
     profiles:

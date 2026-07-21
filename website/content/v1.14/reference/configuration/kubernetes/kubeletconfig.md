@@ -16,7 +16,7 @@ title: KubeletConfig
 {{< highlight yaml >}}
 apiVersion: v1alpha1
 kind: KubeletConfig
-image: ghcr.io/siderolabs/kubelet:v1.37.0-alpha.3 # The container image used to run the kubelet component.
+image: ghcr.io/siderolabs/kubelet:v1.37.0-beta.0 # The container image used to run the kubelet component.
 # Provide extra configuration for the kubelet.
 config:
     serverTLSBootstrap: true
