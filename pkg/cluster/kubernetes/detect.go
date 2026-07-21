@@ -12,6 +12,8 @@ import (
 
 	"github.com/blang/semver/v4"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+	"github.com/siderolabs/talos/pkg/kubernetes"
 )
 
 // DetectLowestVersion returns lowest Kubernetes components versions in the cluster.
@@ -48,9 +50,7 @@ func DetectLowestVersion(ctx context.Context, cluster UpgradeProvider, options U
 				continue
 			}
 
-			image, _, _ := strings.Cut(container.Image, "@")
-
-			_, imageTag, ok := strings.Cut(image, ":")
+			imageTag, ok := kubernetes.VersionFromImageRef(container.Image)
 			if !ok {
 				continue
 			}

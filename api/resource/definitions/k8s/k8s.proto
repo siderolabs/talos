@@ -213,6 +213,12 @@ message KubeletSpecSpec {
   google.protobuf.Struct credential_provider_config = 6;
 }
 
+// KubeletStatusSpec describes the current kubelet state.
+message KubeletStatusSpec {
+  // Image is the kubelet image reference.
+  string image = 1;
+}
+
 // ManifestSpec holds the Kubernetes resources spec.
 message ManifestSpec {
   repeated SingleManifest items = 1;

@@ -40,6 +40,7 @@ func TestRegisterResource(t *testing.T) {
 		&k8s.KubeletKubeconfig{},
 		&k8s.KubeletLifecycle{},
 		&k8s.KubeletSpec{},
+		&k8s.KubeletStatus{},
 		&k8s.KubePrismStatuses{},
 		&k8s.KubePrismConfig{},
 		&k8s.ManifestStatus{},

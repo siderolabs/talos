@@ -473,6 +473,7 @@ description: Talos gRPC API reference.
     - [KubeletConfigSpec.RegisterWithTaintsEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.RegisterWithTaintsEntry)
     - [KubeletKubeconfigSpec](#talos.resource.definitions.k8s.KubeletKubeconfigSpec)
     - [KubeletSpecSpec](#talos.resource.definitions.k8s.KubeletSpecSpec)
+    - [KubeletStatusSpec](#talos.resource.definitions.k8s.KubeletStatusSpec)
     - [ManifestSpec](#talos.resource.definitions.k8s.ManifestSpec)
     - [ManifestStatusSpec](#talos.resource.definitions.k8s.ManifestStatusSpec)
     - [NodeAnnotationSpecSpec](#talos.resource.definitions.k8s.NodeAnnotationSpecSpec)
@@ -8336,6 +8337,21 @@ KubeletSpecSpec holds the source of kubelet configuration.
 | expected_nodename | [string](#string) |  |  |
 | config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
 | credential_provider_config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.KubeletStatusSpec"></a>
+
+### KubeletStatusSpec
+KubeletStatusSpec describes the current kubelet state.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| image | [string](#string) |  | Image is the kubelet image reference. |
 
 
 

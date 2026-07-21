@@ -32,6 +32,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 
 	"github.com/siderolabs/talos/pkg/cluster"
+	"github.com/siderolabs/talos/pkg/kubernetes"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config"
@@ -384,14 +385,15 @@ func upgradeStaticPodPatcher(
 		}
 
 		logUpdate := func(oldImage string) {
-			oldImage, _, _ = strings.Cut(oldImage, "@") // ignore digest if present
-			_, version, _ := strings.Cut(oldImage, ":")
+			oldVersion, _ := kubernetes.VersionFromImageRef(oldImage)
 
-			if version == "" {
-				version = options.Path.FromVersion()
+			if oldVersion == "" {
+				oldVersion = options.Path.FromVersion()
 			}
 
-			options.Log(" > update %s: %s -> %s", service, version, options.Path.ToVersion())
+			oldVersion = strings.TrimLeft(oldVersion, "v")
+
+			options.Log(" > update %s: %s -> %s", service, oldVersion, options.Path.ToVersion())
 
 			if options.DryRun {
 				options.Log(" > skipped in dry-run")

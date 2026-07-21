@@ -111,7 +111,10 @@ func (source *Source) runResourceWatch(ctx context.Context, node string) error {
 		runtime.NewMachineStatus().Metadata(),
 		runtime.NewSecurityStateSpec(v1alpha1.NamespaceName).Metadata(),
 		config.NewMachineType().Metadata(),
+		// KubeletSpec is sensitive (os:admin only), while KubeletStatus is not, but it is not available on older Talos versions,
+		// so watch both and use whichever comes through.
 		k8s.NewKubeletSpec(k8s.NamespaceName, k8s.KubeletID).Metadata(),
+		k8s.NewKubeletStatus(k8s.NamespaceName, k8s.KubeletID).Metadata(),
 		network.NewResolverStatus(network.NamespaceName, network.ResolverID).Metadata(),
 		network.NewTimeServerStatus(network.NamespaceName, network.TimeServerID).Metadata(),
 		hardware.NewSystemInformation(hardware.SystemInformationID).Metadata(),

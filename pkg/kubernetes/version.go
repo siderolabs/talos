@@ -9,6 +9,25 @@ import (
 	"github.com/distribution/reference"
 )
 
+// VersionFromImageRef extracts the tag out of the image reference, ignoring the digest (if present).
+//
+// It returns false if the reference can't be parsed or if the tag is missing.
+func VersionFromImageRef(image string) (string, bool) {
+	imageRef, err := reference.ParseNormalizedNamed(image)
+	if err != nil {
+		// couldn't parse the reference
+		return "", false
+	}
+
+	taggedRef, ok := imageRef.(reference.Tagged)
+	if !ok {
+		// tag is missing
+		return "", false
+	}
+
+	return taggedRef.Tag(), true
+}
+
 // VersionGTE returns true if the version of the image is greater than or equal to the provided version.
 //
 // It supports any kind of image reference, but requires the tag to be present.

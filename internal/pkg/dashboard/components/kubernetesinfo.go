@@ -13,6 +13,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/pkg/dashboard/apidata"
 	"github.com/siderolabs/talos/internal/pkg/dashboard/resourcedata"
+	"github.com/siderolabs/talos/pkg/kubernetes"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
@@ -90,14 +91,9 @@ func (widget *KubernetesInfo) updateNodeData(data resourcedata.Data) {
 
 	switch res := data.Resource.(type) {
 	case *k8s.KubeletSpec:
-		if data.Deleted {
-			nodeData.kubernetesVersion = notAvailable
-		} else {
-			imageParts := strings.Split(res.TypedSpec().Image, ":")
-			if len(imageParts) > 0 {
-				nodeData.kubernetesVersion = imageParts[len(imageParts)-1]
-			}
-		}
+		nodeData.kubernetesVersion = kubernetesVersion(data.Deleted, res.TypedSpec().Image)
+	case *k8s.KubeletStatus:
+		nodeData.kubernetesVersion = kubernetesVersion(data.Deleted, res.TypedSpec().Image)
 	case *k8s.StaticPodStatus:
 		if data.Deleted {
 			delete(nodeData.staticPodStatusMap, res.Metadata().ID())
@@ -115,6 +111,20 @@ func (widget *KubernetesInfo) updateNodeData(data resourcedata.Data) {
 			nodeData.typ = res.MachineType().String()
 		}
 	}
+}
+
+// kubernetesVersion derives the Kubernetes version from the kubelet image reference.
+func kubernetesVersion(deleted bool, image string) string {
+	if deleted {
+		return notAvailable
+	}
+
+	version, ok := kubernetes.VersionFromImageRef(image)
+	if !ok {
+		return notAvailable
+	}
+
+	return version
 }
 
 func (widget *KubernetesInfo) updateNodeAPIData(node string, data *apidata.Node) {
