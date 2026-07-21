@@ -155,7 +155,8 @@ var rootCmd = &cobra.Command{
 
 			if cmdFlags.BaseInstallerImage != "" {
 				prof.Input.BaseInstaller = profile.ContainerAsset{
-					ImageRef: cmdFlags.BaseInstallerImage,
+					ImageRef:      cmdFlags.BaseInstallerImage,
+					ForceInsecure: cmdFlags.Insecure,
 				}
 			}
 
@@ -168,18 +169,14 @@ var rootCmd = &cobra.Command{
 
 				if _, err := name.ParseReference(cmdFlags.ImageCache, parseOpts...); err == nil {
 					prof.Input.ImageCache = profile.ContainerAsset{
-						ImageRef: cmdFlags.ImageCache,
+						ImageRef:      cmdFlags.ImageCache,
+						ForceInsecure: cmdFlags.Insecure,
 					}
 				} else {
 					prof.Input.ImageCache = profile.ContainerAsset{
 						OCIPath: cmdFlags.ImageCache,
 					}
 				}
-			}
-
-			if cmdFlags.Insecure {
-				prof.Input.BaseInstaller.ForceInsecure = cmdFlags.Insecure
-				prof.Input.ImageCache.ForceInsecure = cmdFlags.Insecure
 			}
 
 			if cmdFlags.SecurebootIncludeWellKnownCerts {
