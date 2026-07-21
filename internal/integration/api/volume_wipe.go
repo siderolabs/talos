@@ -103,31 +103,44 @@ func (suite *VolumeWipeSuite) TestVolumeWipeImmediate() {
 
 // TestVolumeWipeStagedReboot verifies a staged (on-reboot) wipe of EPHEMERAL end-to-end.
 //
-// Staging writes the StagedVolumesToWipe META tag; on the next reboot the WipeStagedVolumes boot
-// task consumes the tag, wipes the volume, and reboots again. The volume is then re-provisioned.
+// Staging writes the StagedPartitionsToWipe META tag with partition UUIDs; on the next reboot
+// the VolumeWipeController (running as part of the normal COSI controller runtime) consumes the tag,
+// wipes the volume, and emits a VolumeWipeStatus resource. The volume is then re-provisioned.
 func (suite *VolumeWipeSuite) TestVolumeWipeStagedReboot() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 	nodeCtx := client.WithNode(suite.ctx, node)
 
 	suite.T().Logf("staging EPHEMERAL wipe on %s", node)
 
+	// Get the current EPHEMERAL volume status to know its partition UUID
+	var ephemeralUUID string
+
+	rtestutils.AssertResource(
+		nodeCtx, suite.T(), suite.Client.COSI,
+		constants.EphemeralPartitionLabel,
+		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+			ephemeralUUID = vs.TypedSpec().PartitionUUID
+			asrt.NotEmpty(ephemeralUUID)
+		},
+	)
+
 	suite.Require().NoError(suite.Client.VolumeWipe(nodeCtx, &machineapi.VolumeWipeRequest{
 		VolumeIds: []string{constants.EphemeralPartitionLabel},
 		OnReboot:  true,
 	}))
 
-	// the staged wipe tag should be written to META
+	// the staged wipe tag should be written to META with the partition UUID
 	rtestutils.AssertResource(
 		nodeCtx, suite.T(), suite.Client.COSI,
-		runtimeres.MetaKeyTagToID(meta.StagedVolumesToWipe),
+		runtimeres.MetaKeyTagToID(meta.StagedPartitionsToWipe),
 		func(metaKey *runtimeres.MetaKey, asrt *assert.Assertions) {
-			asrt.Contains(metaKey.TypedSpec().Value, constants.EphemeralPartitionLabel)
+			asrt.Contains(metaKey.TypedSpec().Value, ephemeralUUID)
 		},
 	)
 
 	suite.T().Logf("rebooting %s to apply the staged wipe", node)
 
-	// reboot to apply the staged wipe; the boot task wipes and reboots a second time, which
+	// reboot to apply the staged wipe; the controller wipes and reboots, which
 	// AssertRebooted/WaitForBootDone tolerate (waits for the final MachineStageRunning).
 	suite.AssertRebooted(
 		suite.ctx, node,
@@ -138,10 +151,10 @@ func (suite *VolumeWipeSuite) TestVolumeWipeStagedReboot() {
 		suite.CleanupFailedPods,
 	)
 
-	// the boot task should have consumed (deleted) the staged wipe tag
+	// the controller should have consumed (deleted) the staged wipe tag
 	rtestutils.AssertNoResource[*runtimeres.MetaKey](
 		client.WithNode(suite.ctx, node), suite.T(), suite.Client.COSI,
-		runtimeres.MetaKeyTagToID(meta.StagedVolumesToWipe),
+		runtimeres.MetaKeyTagToID(meta.StagedPartitionsToWipe),
 	)
 
 	// EPHEMERAL should be re-provisioned and ready

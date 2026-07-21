@@ -392,6 +392,7 @@ description: Talos gRPC API reference.
     - [VolumeMountStatusSpec](#talos.resource.definitions.block.VolumeMountStatusSpec)
     - [VolumeStatusSpec](#talos.resource.definitions.block.VolumeStatusSpec)
     - [VolumeTrimScheduleSpec](#talos.resource.definitions.block.VolumeTrimScheduleSpec)
+    - [VolumeWipeStatusSpec](#talos.resource.definitions.block.VolumeWipeStatusSpec)
     - [ZswapStatusSpec](#talos.resource.definitions.block.ZswapStatusSpec)
   
 - [resource/definitions/cluster/cluster.proto](#resource/definitions/cluster/cluster.proto)
@@ -7018,6 +7019,21 @@ VolumeTrimScheduleSpec is the spec for VolumeTrimSchedule resource.
 | filesystem | [talos.resource.definitions.enums.BlockFilesystemType](#talos.resource.definitions.enums.BlockFilesystemType) |  | Filesystem is the filesystem type of the volume to be trimmed. |
 | interval | [google.protobuf.Duration](#google.protobuf.Duration) |  | Interval is the trim interval for the volume. |
 | next_trim | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | NextTrim is the next scheduled trim time for the volume. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.VolumeWipeStatusSpec"></a>
+
+### VolumeWipeStatusSpec
+VolumeWipeStatusSpec is the spec for VolumeWipeStatus resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| ready | [bool](#bool) |  | Ready indicates whether the volume wiping has completed successfully. |
 
 
 

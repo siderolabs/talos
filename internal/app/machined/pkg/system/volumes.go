@@ -6,16 +6,24 @@ package system
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"log"
 	"slices"
 	"strings"
 	"sync"
 
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/xslices"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/pkg/partition"
 	"github.com/siderolabs/talos/pkg/conditions"
+	"github.com/siderolabs/talos/pkg/machinery/meta"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
@@ -120,4 +128,102 @@ func WaitForVolumesToBeMounted(st state.State, requests []volumeRequest) conditi
 		requests:        requests,
 		pendingRequests: slices.Clone(requests),
 	}
+}
+
+// ResolveSystemVolumeStatuses resolves the given volume IDs to their VolumeStatus, validating that each one
+// exists and is a system volume. It returns a gRPC status error suitable for returning from the API.
+func ResolveSystemVolumeStatuses(ctx context.Context, coreState state.CoreState, volumeIDs []string) ([]*block.VolumeStatus, error) {
+	result := make([]*block.VolumeStatus, 0, len(volumeIDs))
+
+	for _, id := range volumeIDs {
+		volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](ctx, coreState, id)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				return nil, status.Errorf(codes.NotFound, "volume %q not found", id)
+			}
+
+			return nil, status.Errorf(codes.Internal, "failed to get volume status with ID %q: %s", id, err)
+		}
+
+		if _, ok := volumeStatus.Metadata().Labels().Get(block.SystemVolumeLabel); !ok {
+			return nil, status.Errorf(codes.InvalidArgument, "volume %q is not a system volume", id)
+		}
+
+		if volumeStatus.TypedSpec().Type != block.VolumeTypePartition {
+			return nil, status.Errorf(codes.InvalidArgument, "volume %q is not a partition-backed volume (type: %v)", id, volumeStatus.TypedSpec().Type)
+		}
+
+		result = append(result, volumeStatus)
+	}
+
+	return result, nil
+}
+
+// WipeVolumesOnReboot marks the partition UUIDs to be wiped on the next boot.
+func WipeVolumesOnReboot(ctx context.Context, ctrl runtime.Controller, volumeStatuses []*block.VolumeStatus) error {
+	partitionUUIDs := make([]string, 0, len(volumeStatuses))
+	for _, volumeStatus := range volumeStatuses {
+		partitionUUIDs = append(partitionUUIDs, volumeStatus.TypedSpec().PartitionUUID)
+	}
+
+	serializedPartitionUUIDs, err := json.Marshal(partitionUUIDs)
+	if err != nil {
+		return fmt.Errorf("error serializing staged partition UUIDs: %w", err)
+	}
+
+	if ok, err := ctrl.Runtime().State().Machine().Meta().SetTag(ctx, meta.StagedPartitionsToWipe, string(serializedPartitionUUIDs)); !ok || err != nil {
+		return fmt.Errorf("error adding staged partition wipe tag: %w", err)
+	}
+
+	if err := ctrl.Runtime().State().Machine().Meta().Flush(); err != nil {
+		return fmt.Errorf("error writing meta: %w", err)
+	}
+
+	return nil
+}
+
+// WipeVolumesNow immediately wipes each of the given volumes, failing fast on the first error.
+func WipeVolumesNow(ctx context.Context, ctrl runtime.Controller, volumeStatuses []*block.VolumeStatus) error {
+	for _, volumeStatus := range volumeStatuses {
+		if volumeStatus.TypedSpec().Location == "" {
+			return fmt.Errorf(
+				"volume %q is not located",
+				volumeStatus.Metadata().ID(),
+			)
+		}
+
+		target := partition.VolumeWipeTargetFromVolumeStatus(volumeStatus)
+
+		if err := target.Wipe(ctx, log.Printf); err != nil {
+			return fmt.Errorf(
+				"failed to wipe volume %q: %s; if the volume is in use, retry with --on-reboot",
+				volumeStatus.Metadata().ID(),
+				err,
+			)
+		}
+	}
+
+	return nil
+}
+
+// AssertVolumesNotMounted rejects an immediate wipe of any volume that is currently mounted (in use).
+//
+// A mounted volume can't be wiped safely while the node is running; that's what --on-reboot is for.
+// Mount state is tracked by block.VolumeMountStatus resources, keyed to a volume via VolumeID.
+func AssertVolumesNotMounted(ctx context.Context, ctrl runtime.Controller, ids []string) error {
+	mountStatuses, err := safe.StateListAll[*block.VolumeMountStatus](ctx, ctrl.Runtime().State().V1Alpha2().Resources())
+	if err != nil {
+		return status.Errorf(codes.Internal, "failed to list volume mount statuses: %s", err)
+	}
+
+	wanted := xslices.ToSet(ids)
+
+	for mountStatus := range mountStatuses.All() {
+		if _, ok := wanted[mountStatus.TypedSpec().VolumeID]; ok {
+			return status.Errorf(codes.FailedPrecondition,
+				"volume %q is in use (mounted); retry with --on-reboot", mountStatus.TypedSpec().VolumeID)
+		}
+	}
+
+	return nil
 }

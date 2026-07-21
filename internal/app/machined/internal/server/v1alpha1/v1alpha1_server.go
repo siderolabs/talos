@@ -674,12 +674,13 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 		}
 	}
 
-	if len(in.GetSystemPartitionsToWipe()) > 0 {
+	systemPartitionsToWipe := in.GetSystemPartitionsToWipe()
+	if len(systemPartitionsToWipe) > 0 {
 		if in.Mode == machine.ResetRequest_USER_DISKS {
 			return nil, errors.New("reset failed: invalid input, wipe mode USER_DISKS doesn't support SystemPartitionsToWipe parameter")
 		}
 
-		for _, spec := range in.GetSystemPartitionsToWipe() {
+		for _, spec := range systemPartitionsToWipe {
 			volumeStatus, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, s.Controller.Runtime().State().V1Alpha2().Resources(), spec.Label)
 			if err != nil {
 				return nil, fmt.Errorf("failed to get volume status with label %q: %w", spec.Label, err)
@@ -742,24 +743,23 @@ func (s *Server) VolumeWipe(ctx context.Context, in *machine.VolumeWipeRequest) 
 		return nil, status.Error(codes.InvalidArgument, "no volume IDs specified")
 	}
 
-	// validate that each volume ID resolves to a system volume before performing any wipe
-	volumeStatuses, err := resolveSystemVolumeStatuses(ctx, s.Controller.Runtime().State().V1Alpha2().Resources(), in.GetVolumeIds())
+	volumeStatuses, err := system.ResolveSystemVolumeStatuses(ctx, s.Controller.Runtime().State().V1Alpha2().Resources(), in.GetVolumeIds())
 	if err != nil {
 		return nil, err
 	}
 
 	if in.GetOnReboot() {
-		if err := s.wipeVolumesStaged(ctx, in.GetVolumeIds()); err != nil {
+		if err := system.WipeVolumesOnReboot(ctx, s.Controller, volumeStatuses); err != nil {
 			return nil, err
 		}
 	} else {
 		// an immediate wipe of a mounted (in-use) volume would destroy the live filesystem
 		// (e.g. wiping EPHEMERAL out from under a running /var); reject it and steer to --on-reboot.
-		if err := assertVolumesNotMounted(ctx, s.Controller.Runtime().State().V1Alpha2().Resources(), in.GetVolumeIds()); err != nil {
+		if err := system.AssertVolumesNotMounted(ctx, s.Controller, in.GetVolumeIds()); err != nil {
 			return nil, err
 		}
 
-		if err := wipeVolumesImmediate(ctx, volumeStatuses); err != nil {
+		if err := system.WipeVolumesNow(ctx, s.Controller, volumeStatuses); err != nil {
 			return nil, err
 		}
 	}
@@ -767,89 +767,6 @@ func (s *Server) VolumeWipe(ctx context.Context, in *machine.VolumeWipeRequest) 
 	return &machine.VolumeWipeResponse{
 		Messages: []*machine.VolumeWipe{{}},
 	}, nil
-}
-
-// wipeVolumesStaged records the given volume IDs so they are wiped on the next boot.
-func (s *Server) wipeVolumesStaged(ctx context.Context, volumeIDs []string) error {
-	serialized, err := json.Marshal(volumeIDs)
-	if err != nil {
-		return fmt.Errorf("error serializing staged volume wipe: %w", err)
-	}
-
-	if ok, err := s.Controller.Runtime().State().Machine().Meta().SetTag(ctx, meta.StagedVolumesToWipe, string(serialized)); !ok || err != nil {
-		return fmt.Errorf("error adding staged volume wipe tag: %w", err)
-	}
-
-	if err := s.Controller.Runtime().State().Machine().Meta().Flush(); err != nil {
-		return fmt.Errorf("error writing meta: %w", err)
-	}
-
-	return nil
-}
-
-// wipeVolumesImmediate immediately wipes each of the given volumes, failing fast on the first error.
-func wipeVolumesImmediate(ctx context.Context, volumeStatuses []*block.VolumeStatus) error {
-	for _, volumeStatus := range volumeStatuses {
-		if volumeStatus.TypedSpec().Location == "" {
-			return status.Errorf(codes.FailedPrecondition, "volume %q is not located", volumeStatus.Metadata().ID())
-		}
-
-		target := partition.VolumeWipeTargetFromVolumeStatus(volumeStatus)
-
-		if err := target.Wipe(ctx, log.Printf); err != nil {
-			return status.Errorf(codes.FailedPrecondition,
-				"failed to wipe volume %q: %s; if the volume is in use, retry with --on-reboot", volumeStatus.Metadata().ID(), err)
-		}
-	}
-
-	return nil
-}
-
-// assertVolumesNotMounted rejects an immediate wipe of any volume that is currently mounted (in use).
-//
-// A mounted volume can't be wiped safely while the node is running; that's what --on-reboot is for.
-// Mount state is tracked by block.VolumeMountStatus resources, keyed to a volume via VolumeID.
-func assertVolumesNotMounted(ctx context.Context, st state.CoreState, ids []string) error {
-	mountStatuses, err := safe.StateListAll[*block.VolumeMountStatus](ctx, st)
-	if err != nil {
-		return status.Errorf(codes.Internal, "failed to list volume mount statuses: %s", err)
-	}
-
-	wanted := xslices.ToSet(ids)
-
-	for mountStatus := range mountStatuses.All() {
-		if _, ok := wanted[mountStatus.TypedSpec().VolumeID]; ok {
-			return status.Errorf(codes.FailedPrecondition,
-				"volume %q is in use (mounted); retry with --on-reboot", mountStatus.TypedSpec().VolumeID)
-		}
-	}
-
-	return nil
-}
-
-// resolveSystemVolumeStatuses resolves the given volume IDs to their VolumeStatus, validating that each one
-// exists and is a system volume. It returns a gRPC status error suitable for returning from the API.
-func resolveSystemVolumeStatuses(ctx context.Context, st state.CoreState, ids []string) ([]*block.VolumeStatus, error) {
-	result := make([]*block.VolumeStatus, 0, len(ids))
-
-	for _, id := range ids {
-		volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](ctx, st, id)
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				return nil, status.Errorf(codes.NotFound, "volume %q not found", id)
-			}
-
-			return nil, status.Errorf(codes.Internal, "failed to get volume status with ID %q: %s", id, err)
-		}
-
-		if _, ok := volumeStatus.Metadata().Labels().Get(block.SystemVolumeLabel); !ok {
-			return nil, status.Errorf(codes.InvalidArgument, "volume %q is not a system volume", id)
-		}
-
-		result = append(result, volumeStatus)
-	}
-
-	return result, nil
 }
 
 // ServiceList returns list of the registered services and their status.

@@ -2538,6 +2538,52 @@ func (x *VolumeTrimScheduleSpec) GetNextTrim() *timestamppb.Timestamp {
 	return nil
 }
 
+// VolumeWipeStatusSpec is the spec for VolumeWipeStatus resource.
+type VolumeWipeStatusSpec struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Ready indicates whether the volume wiping has completed successfully.
+	Ready         bool `protobuf:"varint,1,opt,name=ready,proto3" json:"ready,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *VolumeWipeStatusSpec) Reset() {
+	*x = VolumeWipeStatusSpec{}
+	mi := &file_resource_definitions_block_block_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *VolumeWipeStatusSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*VolumeWipeStatusSpec) ProtoMessage() {}
+
+func (x *VolumeWipeStatusSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_resource_definitions_block_block_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use VolumeWipeStatusSpec.ProtoReflect.Descriptor instead.
+func (*VolumeWipeStatusSpec) Descriptor() ([]byte, []int) {
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *VolumeWipeStatusSpec) GetReady() bool {
+	if x != nil {
+		return x.Ready
+	}
+	return false
+}
+
 // ZswapStatusSpec is the spec for ZswapStatus resource.
 type ZswapStatusSpec struct {
 	state               protoimpl.MessageState `protogen:"open.v1"`
@@ -2557,7 +2603,7 @@ type ZswapStatusSpec struct {
 
 func (x *ZswapStatusSpec) Reset() {
 	*x = ZswapStatusSpec{}
-	mi := &file_resource_definitions_block_block_proto_msgTypes[27]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[28]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2569,7 +2615,7 @@ func (x *ZswapStatusSpec) String() string {
 func (*ZswapStatusSpec) ProtoMessage() {}
 
 func (x *ZswapStatusSpec) ProtoReflect() protoreflect.Message {
-	mi := &file_resource_definitions_block_block_proto_msgTypes[27]
+	mi := &file_resource_definitions_block_block_proto_msgTypes[28]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2582,7 +2628,7 @@ func (x *ZswapStatusSpec) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ZswapStatusSpec.ProtoReflect.Descriptor instead.
 func (*ZswapStatusSpec) Descriptor() ([]byte, []int) {
-	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{27}
+	return file_resource_definitions_block_block_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *ZswapStatusSpec) GetTotalSizeBytes() uint64 {
@@ -2906,7 +2952,9 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"filesystem\x18\x01 \x01(\x0e25.talos.resource.definitions.enums.BlockFilesystemTypeR\n" +
 	"filesystem\x125\n" +
 	"\binterval\x18\x02 \x01(\v2\x19.google.protobuf.DurationR\binterval\x127\n" +
-	"\tnext_trim\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\bnextTrim\"\xd0\x03\n" +
+	"\tnext_trim\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\bnextTrim\",\n" +
+	"\x14VolumeWipeStatusSpec\x12\x14\n" +
+	"\x05ready\x18\x01 \x01(\bR\x05ready\"\xd0\x03\n" +
 	"\x0fZswapStatusSpec\x12(\n" +
 	"\x10total_size_bytes\x18\x01 \x01(\x04R\x0etotalSizeBytes\x12(\n" +
 	"\x10total_size_human\x18\x02 \x01(\tR\x0etotalSizeHuman\x12!\n" +
@@ -2933,7 +2981,7 @@ func file_resource_definitions_block_block_proto_rawDescGZIP() []byte {
 	return file_resource_definitions_block_block_proto_rawDescData
 }
 
-var file_resource_definitions_block_block_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
+var file_resource_definitions_block_block_proto_msgTypes = make([]protoimpl.MessageInfo, 29)
 var file_resource_definitions_block_block_proto_goTypes = []any{
 	(*DeviceSpec)(nil),                     // 0: talos.resource.definitions.block.DeviceSpec
 	(*DiscoveredVolumeSpec)(nil),           // 1: talos.resource.definitions.block.DiscoveredVolumeSpec
@@ -2962,52 +3010,53 @@ var file_resource_definitions_block_block_proto_goTypes = []any{
 	(*VolumeMountStatusSpec)(nil),          // 24: talos.resource.definitions.block.VolumeMountStatusSpec
 	(*VolumeStatusSpec)(nil),               // 25: talos.resource.definitions.block.VolumeStatusSpec
 	(*VolumeTrimScheduleSpec)(nil),         // 26: talos.resource.definitions.block.VolumeTrimScheduleSpec
-	(*ZswapStatusSpec)(nil),                // 27: talos.resource.definitions.block.ZswapStatusSpec
-	(*v1alpha1.CheckedExpr)(nil),           // 28: google.api.expr.v1alpha1.CheckedExpr
-	(enums.BlockEncryptionKeyType)(0),      // 29: talos.resource.definitions.enums.BlockEncryptionKeyType
-	(enums.BlockEncryptionProviderType)(0), // 30: talos.resource.definitions.enums.BlockEncryptionProviderType
-	(enums.BlockFilesystemType)(0),         // 31: talos.resource.definitions.enums.BlockFilesystemType
-	(enums.BlockFSParameterType)(0),        // 32: talos.resource.definitions.enums.BlockFSParameterType
-	(enums.BlockVolumeType)(0),             // 33: talos.resource.definitions.enums.BlockVolumeType
-	(*durationpb.Duration)(nil),            // 34: google.protobuf.Duration
-	(enums.BlockVolumePhase)(0),            // 35: talos.resource.definitions.enums.BlockVolumePhase
-	(*timestamppb.Timestamp)(nil),          // 36: google.protobuf.Timestamp
+	(*VolumeWipeStatusSpec)(nil),           // 27: talos.resource.definitions.block.VolumeWipeStatusSpec
+	(*ZswapStatusSpec)(nil),                // 28: talos.resource.definitions.block.ZswapStatusSpec
+	(*v1alpha1.CheckedExpr)(nil),           // 29: google.api.expr.v1alpha1.CheckedExpr
+	(enums.BlockEncryptionKeyType)(0),      // 30: talos.resource.definitions.enums.BlockEncryptionKeyType
+	(enums.BlockEncryptionProviderType)(0), // 31: talos.resource.definitions.enums.BlockEncryptionProviderType
+	(enums.BlockFilesystemType)(0),         // 32: talos.resource.definitions.enums.BlockFilesystemType
+	(enums.BlockFSParameterType)(0),        // 33: talos.resource.definitions.enums.BlockFSParameterType
+	(enums.BlockVolumeType)(0),             // 34: talos.resource.definitions.enums.BlockVolumeType
+	(*durationpb.Duration)(nil),            // 35: google.protobuf.Duration
+	(enums.BlockVolumePhase)(0),            // 36: talos.resource.definitions.enums.BlockVolumePhase
+	(*timestamppb.Timestamp)(nil),          // 37: google.protobuf.Timestamp
 }
 var file_resource_definitions_block_block_proto_depIdxs = []int32{
-	28, // 0: talos.resource.definitions.block.DiskSelector.match:type_name -> google.api.expr.v1alpha1.CheckedExpr
-	29, // 1: talos.resource.definitions.block.EncryptionKey.type:type_name -> talos.resource.definitions.enums.BlockEncryptionKeyType
-	30, // 2: talos.resource.definitions.block.EncryptionSpec.provider:type_name -> talos.resource.definitions.enums.BlockEncryptionProviderType
+	29, // 0: talos.resource.definitions.block.DiskSelector.match:type_name -> google.api.expr.v1alpha1.CheckedExpr
+	30, // 1: talos.resource.definitions.block.EncryptionKey.type:type_name -> talos.resource.definitions.enums.BlockEncryptionKeyType
+	31, // 2: talos.resource.definitions.block.EncryptionSpec.provider:type_name -> talos.resource.definitions.enums.BlockEncryptionProviderType
 	6,  // 3: talos.resource.definitions.block.EncryptionSpec.keys:type_name -> talos.resource.definitions.block.EncryptionKey
-	31, // 4: talos.resource.definitions.block.FilesystemSpec.type:type_name -> talos.resource.definitions.enums.BlockFilesystemType
-	28, // 5: talos.resource.definitions.block.LocatorSpec.match:type_name -> google.api.expr.v1alpha1.CheckedExpr
-	28, // 6: talos.resource.definitions.block.LocatorSpec.disk_match:type_name -> google.api.expr.v1alpha1.CheckedExpr
+	32, // 4: talos.resource.definitions.block.FilesystemSpec.type:type_name -> talos.resource.definitions.enums.BlockFilesystemType
+	29, // 5: talos.resource.definitions.block.LocatorSpec.match:type_name -> google.api.expr.v1alpha1.CheckedExpr
+	29, // 6: talos.resource.definitions.block.LocatorSpec.disk_match:type_name -> google.api.expr.v1alpha1.CheckedExpr
 	13, // 7: talos.resource.definitions.block.MountSpec.parameters:type_name -> talos.resource.definitions.block.ParameterSpec
 	10, // 8: talos.resource.definitions.block.MountStatusSpec.spec:type_name -> talos.resource.definitions.block.MountRequestSpec
-	31, // 9: talos.resource.definitions.block.MountStatusSpec.filesystem:type_name -> talos.resource.definitions.enums.BlockFilesystemType
-	30, // 10: talos.resource.definitions.block.MountStatusSpec.encryption_provider:type_name -> talos.resource.definitions.enums.BlockEncryptionProviderType
-	32, // 11: talos.resource.definitions.block.ParameterSpec.type:type_name -> talos.resource.definitions.enums.BlockFSParameterType
+	32, // 9: talos.resource.definitions.block.MountStatusSpec.filesystem:type_name -> talos.resource.definitions.enums.BlockFilesystemType
+	31, // 10: talos.resource.definitions.block.MountStatusSpec.encryption_provider:type_name -> talos.resource.definitions.enums.BlockEncryptionProviderType
+	33, // 11: talos.resource.definitions.block.ParameterSpec.type:type_name -> talos.resource.definitions.enums.BlockFSParameterType
 	4,  // 12: talos.resource.definitions.block.ProvisioningSpec.disk_selector:type_name -> talos.resource.definitions.block.DiskSelector
 	14, // 13: talos.resource.definitions.block.ProvisioningSpec.partition_spec:type_name -> talos.resource.definitions.block.PartitionSpec
 	8,  // 14: talos.resource.definitions.block.ProvisioningSpec.filesystem_spec:type_name -> talos.resource.definitions.block.FilesystemSpec
-	33, // 15: talos.resource.definitions.block.VolumeConfigSpec.type:type_name -> talos.resource.definitions.enums.BlockVolumeType
+	34, // 15: talos.resource.definitions.block.VolumeConfigSpec.type:type_name -> talos.resource.definitions.enums.BlockVolumeType
 	15, // 16: talos.resource.definitions.block.VolumeConfigSpec.provisioning:type_name -> talos.resource.definitions.block.ProvisioningSpec
 	9,  // 17: talos.resource.definitions.block.VolumeConfigSpec.locator:type_name -> talos.resource.definitions.block.LocatorSpec
 	11, // 18: talos.resource.definitions.block.VolumeConfigSpec.mount:type_name -> talos.resource.definitions.block.MountSpec
 	7,  // 19: talos.resource.definitions.block.VolumeConfigSpec.encryption:type_name -> talos.resource.definitions.block.EncryptionSpec
 	17, // 20: talos.resource.definitions.block.VolumeConfigSpec.symlink:type_name -> talos.resource.definitions.block.SymlinkProvisioningSpec
-	34, // 21: talos.resource.definitions.block.VolumeConfigSpec.trim_interval:type_name -> google.protobuf.Duration
-	35, // 22: talos.resource.definitions.block.VolumeStatusSpec.phase:type_name -> talos.resource.definitions.enums.BlockVolumePhase
-	35, // 23: talos.resource.definitions.block.VolumeStatusSpec.pre_fail_phase:type_name -> talos.resource.definitions.enums.BlockVolumePhase
-	31, // 24: talos.resource.definitions.block.VolumeStatusSpec.filesystem:type_name -> talos.resource.definitions.enums.BlockFilesystemType
-	30, // 25: talos.resource.definitions.block.VolumeStatusSpec.encryption_provider:type_name -> talos.resource.definitions.enums.BlockEncryptionProviderType
+	35, // 21: talos.resource.definitions.block.VolumeConfigSpec.trim_interval:type_name -> google.protobuf.Duration
+	36, // 22: talos.resource.definitions.block.VolumeStatusSpec.phase:type_name -> talos.resource.definitions.enums.BlockVolumePhase
+	36, // 23: talos.resource.definitions.block.VolumeStatusSpec.pre_fail_phase:type_name -> talos.resource.definitions.enums.BlockVolumePhase
+	32, // 24: talos.resource.definitions.block.VolumeStatusSpec.filesystem:type_name -> talos.resource.definitions.enums.BlockFilesystemType
+	31, // 25: talos.resource.definitions.block.VolumeStatusSpec.encryption_provider:type_name -> talos.resource.definitions.enums.BlockEncryptionProviderType
 	11, // 26: talos.resource.definitions.block.VolumeStatusSpec.mount_spec:type_name -> talos.resource.definitions.block.MountSpec
-	33, // 27: talos.resource.definitions.block.VolumeStatusSpec.type:type_name -> talos.resource.definitions.enums.BlockVolumeType
+	34, // 27: talos.resource.definitions.block.VolumeStatusSpec.type:type_name -> talos.resource.definitions.enums.BlockVolumeType
 	17, // 28: talos.resource.definitions.block.VolumeStatusSpec.symlink_spec:type_name -> talos.resource.definitions.block.SymlinkProvisioningSpec
 	20, // 29: talos.resource.definitions.block.VolumeStatusSpec.tpm_encryption_options:type_name -> talos.resource.definitions.block.TPMEncryptionOptionsInfo
-	34, // 30: talos.resource.definitions.block.VolumeStatusSpec.trim_interval:type_name -> google.protobuf.Duration
-	31, // 31: talos.resource.definitions.block.VolumeTrimScheduleSpec.filesystem:type_name -> talos.resource.definitions.enums.BlockFilesystemType
-	34, // 32: talos.resource.definitions.block.VolumeTrimScheduleSpec.interval:type_name -> google.protobuf.Duration
-	36, // 33: talos.resource.definitions.block.VolumeTrimScheduleSpec.next_trim:type_name -> google.protobuf.Timestamp
+	35, // 30: talos.resource.definitions.block.VolumeStatusSpec.trim_interval:type_name -> google.protobuf.Duration
+	32, // 31: talos.resource.definitions.block.VolumeTrimScheduleSpec.filesystem:type_name -> talos.resource.definitions.enums.BlockFilesystemType
+	35, // 32: talos.resource.definitions.block.VolumeTrimScheduleSpec.interval:type_name -> google.protobuf.Duration
+	37, // 33: talos.resource.definitions.block.VolumeTrimScheduleSpec.next_trim:type_name -> google.protobuf.Timestamp
 	34, // [34:34] is the sub-list for method output_type
 	34, // [34:34] is the sub-list for method input_type
 	34, // [34:34] is the sub-list for extension type_name
@@ -3026,7 +3075,7 @@ func file_resource_definitions_block_block_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_resource_definitions_block_block_proto_rawDesc), len(file_resource_definitions_block_block_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   28,
+			NumMessages:   29,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

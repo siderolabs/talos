@@ -66,6 +66,12 @@ func (ctrl *VolumeConfigController) Inputs() []controller.Input {
 			Type:      block.VolumeConfigType,
 			Kind:      controller.InputDestroyReady,
 		},
+		{
+			Namespace: block.NamespaceName,
+			Type:      block.VolumeWipeStatusType,
+			ID:        optional.Some(block.VolumeWipeID),
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -143,6 +149,18 @@ func (ctrl *VolumeConfigController) Run(ctx context.Context, r controller.Runtim
 		}
 
 		for _, resource := range resources {
+			if resource.VolumeID != constants.MetaPartitionLabel {
+				volumesWiped, err := safe.ReaderGetByID[*block.VolumeWipeStatus](ctx, r, block.VolumeWipeID)
+				if err != nil {
+					return fmt.Errorf("error fetching volume wipe status: %w", err)
+				}
+
+				if !volumesWiped.TypedSpec().Ready {
+					// Volumes not wiped yet, skip creating non-META volumes until wipe is complete
+					continue
+				}
+			}
+
 			if err := ctrl.createVolume(ctx, r, resource, volumeConfigsByID, volumeMountRequestsByID); err != nil {
 				return fmt.Errorf("error creating volumes: %w", err)
 			}
