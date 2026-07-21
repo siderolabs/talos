@@ -14,9 +14,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
-	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/mdlayher/ndp"
-	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
@@ -49,8 +47,12 @@ func (ctrl *RouterAdvertisementController) Inputs() []controller.Input {
 	return []controller.Input{
 		{
 			Namespace: network.NamespaceName,
-			Type:      network.BGPPeerConfigType,
-			ID:        optional.Some(network.BGPPeerConfigID),
+			Type:      network.BGPInstanceConfigType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: network.NamespaceName,
+			Type:      network.LinkStatusType,
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -60,7 +62,7 @@ func (ctrl *RouterAdvertisementController) Inputs() []controller.Input {
 func (ctrl *RouterAdvertisementController) Outputs() []controller.Output {
 	return []controller.Output{
 		{
-			Type: runtimeres.KernelParamSpecType,
+			Type: runtimeres.KernelParamDefaultSpecType,
 			Kind: controller.OutputShared,
 		},
 	}
@@ -97,17 +99,30 @@ func (ctrl *RouterAdvertisementController) stopAll() {
 
 //nolint:gocyclo
 func (ctrl *RouterAdvertisementController) reconcile(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	configResource, err := safe.ReaderGetByID[*network.BGPPeerConfig](ctx, r, network.BGPPeerConfigID)
-	if err != nil && !state.IsNotFoundError(err) {
-		return fmt.Errorf("error getting BGP peer config: %w", err)
+	configResources, err := safe.ReaderListAll[*network.BGPInstanceConfig](ctx, r)
+	if err != nil {
+		return fmt.Errorf("error listing BGP instance configs: %w", err)
+	}
+
+	linkStatuses, err := safe.ReaderListAll[*network.LinkStatus](ctx, r)
+	if err != nil {
+		return fmt.Errorf("error listing link statuses: %w", err)
+	}
+
+	linkResolver := network.NewLinkResolver(linkStatuses.All)
+	readyLinks := map[string]struct{}{}
+
+	for linkStatus := range linkStatuses.All() {
+		readyLinks[linkStatus.Metadata().ID()] = struct{}{}
 	}
 
 	interfaces := map[string]struct{}{}
 
-	if configResource != nil {
+	for configResource := range configResources.All() {
 		for _, neighbor := range configResource.TypedSpec().Neighbors {
-			if neighbor.Link != "" {
-				interfaces[neighbor.Link] = struct{}{}
+			link := linkResolver.Resolve(neighbor.Link)
+			if _, ready := readyLinks[link]; ready {
+				interfaces[link] = struct{}{}
 			}
 		}
 	}
@@ -147,7 +162,7 @@ func (ctrl *RouterAdvertisementController) reconcile(ctx context.Context, r cont
 		}
 	}
 
-	return safe.CleanupOutputs[*runtimeres.KernelParamSpec](ctx, r)
+	return safe.CleanupOutputs[*runtimeres.KernelParamDefaultSpec](ctx, r)
 }
 
 // runSender periodically emits Router Advertisements on the given interface until the context is done.

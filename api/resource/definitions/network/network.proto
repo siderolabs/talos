@@ -45,17 +45,8 @@ message BGPBFDConfigSpec {
   uint32 detect_multiplier = 3;
 }
 
-// BGPNeighborConfigSpec contains the runtime configuration for a BGP neighbor.
-message BGPNeighborConfigSpec {
-  common.NetIP address = 1;
-  string link = 2;
-  uint32 peer_asn = 3;
-  google.protobuf.Duration hold_time = 4;
-  BGPBFDConfigSpec bfd = 5;
-}
-
-// BGPPeerConfigSpec contains the complete runtime configuration for the BGP speaker.
-message BGPPeerConfigSpec {
+// BGPInstanceConfigSpec contains the resolved runtime configuration for a BGP routing instance.
+message BGPInstanceConfigSpec {
   uint32 local_asn = 1;
   common.NetIP router_id = 2;
   common.NetIP route_source = 3;
@@ -63,6 +54,19 @@ message BGPPeerConfigSpec {
   bool multipath = 5;
   uint32 max_paths = 6;
   repeated BGPNeighborConfigSpec neighbors = 7;
+  string vrf = 8;
+  talos.resource.definitions.enums.NethelpersRoutingTable vrf_table = 9;
+}
+
+// BGPNeighborConfigSpec contains the runtime configuration for a BGP neighbor.
+message BGPNeighborConfigSpec {
+  common.NetIP address = 1;
+  string link = 2;
+  uint32 peer_asn = 3;
+  google.protobuf.Duration hold_time = 4;
+  BGPBFDConfigSpec bfd = 5;
+  uint32 local_asn = 6;
+  bool passive = 7;
 }
 
 // BGPPeerStatusSpec describes the status of a BGP peering session.
@@ -77,6 +81,7 @@ message BGPPeerStatusSpec {
   uint32 advertised = 8;
   uint32 accepted = 9;
   string bfd_state = 10;
+  string instance = 11;
 }
 
 // BondMasterSpec describes bond settings if Kind == "bond".

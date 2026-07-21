@@ -34,7 +34,7 @@ type Config interface { //nolint:interfacebloat
 	NetworkProbeConfigs() []NetworkCommonProbeConfig
 	NetworkBlackholeRouteConfigs() []NetworkBlackholeRouteConfig
 	NetworkRoutingRuleConfigs() []NetworkRoutingRuleConfig
-	NetworkBGPPeerConfig() NetworkBGPPeerConfig
+	NetworkBGPInstanceConfigs() []NetworkBGPInstanceConfig
 
 	// - cluster
 	DiscoveryServiceConfigs() []DiscoveryServiceConfig

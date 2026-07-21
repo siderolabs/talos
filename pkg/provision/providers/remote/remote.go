@@ -336,7 +336,7 @@ func (p *Provisioner) GenOptions(networkReq provision.NetworkRequest, contract *
 	var bundleOpts []bundle.Option
 
 	// full-CLOS nodes have no management net0 at all (only fabric uplinks + a loopback identity): skip the
-	// net0 alias/DHCP injection. The per-node config (loopback + BGPPeerConfig on the fabric NICs) is baked by
+	// net0 alias/DHCP injection. The per-node config (loopback + BGPInstanceConfig on the fabric NICs) is baked by
 	// the configmaker and delivered via the metal-iso config volume.
 	if !networkReq.CLOSNoNet0 && contract.MultidocNetworkConfigSupported() {
 		aliasConfig := networkcfg.NewLinkAliasConfigV1Alpha1("net0")

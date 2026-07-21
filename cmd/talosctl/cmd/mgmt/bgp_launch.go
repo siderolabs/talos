@@ -30,6 +30,7 @@ var fabricAllNodes = netip.MustParseAddr("ff02::1")
 var bgpLaunchCmdFlags struct {
 	addr          string
 	neighborRange string
+	vrfNeighbor   string
 	advertise     string
 	asn           uint32
 	peerASN       uint32
@@ -93,6 +94,22 @@ var bgpLaunchCmd = &cobra.Command{
 			},
 		}); err != nil {
 			return fmt.Errorf("error adding peer group: %w", err)
+		}
+
+		if bgpLaunchCmdFlags.vrfNeighbor != "" {
+			vrfNeighbor, parseErr := netip.ParseAddr(bgpLaunchCmdFlags.vrfNeighbor)
+			if parseErr != nil {
+				return fmt.Errorf("invalid --bgp-vrf-neighbor: %w", parseErr)
+			}
+
+			// This address is inside the dynamic-neighbor range, but GoBGP matches an explicitly
+			// configured peer before consulting dynamic ranges. The static peer actively dials the
+			// passive Talos VRF neighbor, directly exercising the VRF-bound listener's accept path.
+			if err = srv.AddPeer(ctx, &gobgpapi.AddPeerRequest{
+				Peer: bgpLaunchActivePeer(vrfNeighbor, bgpLaunchCmdFlags.peerASN),
+			}); err != nil {
+				return fmt.Errorf("error adding active VRF test peer: %w", err)
+			}
 		}
 
 		if err = srv.AddDynamicNeighbor(ctx, &gobgpapi.AddDynamicNeighborRequest{
@@ -241,6 +258,25 @@ func bgpLaunchAfiSafi(afi gobgpapi.Family_Afi) *gobgpapi.AfiSafi {
 	}
 }
 
+func bgpLaunchActivePeer(address netip.Addr, peerASN uint32) *gobgpapi.Peer {
+	return &gobgpapi.Peer{
+		Conf: &gobgpapi.PeerConf{
+			NeighborAddress: address.String(),
+			PeerAsn:         peerASN,
+		},
+		AfiSafis: []*gobgpapi.AfiSafi{
+			bgpLaunchAfiSafi(gobgpapi.Family_AFI_IP),
+			bgpLaunchAfiSafi(gobgpapi.Family_AFI_IP6),
+		},
+		Timers: &gobgpapi.Timers{
+			Config: &gobgpapi.TimersConfig{
+				// The peer starts before the integration test configures the reserved guest address.
+				ConnectRetry: 1,
+			},
+		},
+	}
+}
+
 // bgpLaunchAdvertise originates a prefix with next-hop-self so peers can resolve it.
 func bgpLaunchAdvertise(srv *gobgpsrv.BgpServer, prefix netip.Prefix) error {
 	nlri, err := bgppacket.NewIPAddrPrefix(prefix)
@@ -323,6 +359,7 @@ func fabricSendRAs(ctx context.Context, name string) {
 func init() {
 	bgpLaunchCmd.Flags().StringVar(&bgpLaunchCmdFlags.addr, "bgp-addr", "", "fabric peer listen/router-id address")
 	bgpLaunchCmd.Flags().StringVar(&bgpLaunchCmdFlags.neighborRange, "bgp-neighbor-range", "", "CIDR range accepted as dynamic neighbors")
+	bgpLaunchCmd.Flags().StringVar(&bgpLaunchCmdFlags.vrfNeighbor, "bgp-vrf-neighbor", "", "static neighbor dialed for the inbound VRF listener test")
 	bgpLaunchCmd.Flags().StringVar(&bgpLaunchCmdFlags.advertise, "bgp-advertise", "", "prefix to advertise to nodes")
 	bgpLaunchCmd.Flags().Uint32Var(&bgpLaunchCmdFlags.asn, "bgp-asn", 65000, "fabric ASN")
 	bgpLaunchCmd.Flags().Uint32Var(&bgpLaunchCmdFlags.peerASN, "bgp-peer-asn", 65001, "expected node (peer) ASN")

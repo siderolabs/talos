@@ -628,14 +628,9 @@ func (container *Container) NetworkDHCPConfigs() []config.NetworkDHCPConfig {
 	return findMatchingDocs[config.NetworkDHCPConfig](container.documents)
 }
 
-// NetworkBGPPeerConfig implements config.Config interface.
-func (container *Container) NetworkBGPPeerConfig() config.NetworkBGPPeerConfig {
-	matching := findMatchingDocs[config.NetworkBGPPeerConfig](container.documents)
-	if len(matching) == 0 {
-		return nil
-	}
-
-	return matching[0]
+// NetworkBGPInstanceConfigs implements config.Config interface.
+func (container *Container) NetworkBGPInstanceConfigs() []config.NetworkBGPInstanceConfig {
+	return findMatchingDocs[config.NetworkBGPInstanceConfig](container.documents)
 }
 
 // NetworkDHCPv4Configs implements config.Config interface.

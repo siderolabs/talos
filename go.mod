@@ -12,6 +12,9 @@ replace (
 	// see https://github.com/mdlayher/kobject/pull/5
 	github.com/mdlayher/kobject => github.com/smira/kobject v0.0.0-20240304111826-49c8d4613389
 
+	// prevent watcher shutdown leaks until https://github.com/osrg/gobgp/pull/3505 is merged
+	github.com/osrg/gobgp/v4 => github.com/frezbo/gobgp/v4 v4.0.0-20260723125704-323c85fa213c
+
 	// replace to disable assembly implementation (see https://github.com/beevik/nts/issues/1#issuecomment-4879122150)
 	github.com/secure-io/siv-go => github.com/smira/siv-go v0.0.0-20260706144621-2093d2730928
 

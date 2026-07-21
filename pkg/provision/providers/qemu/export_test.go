@@ -26,3 +26,8 @@ type APIPortAllocatorForTest struct {
 func (allocator *APIPortAllocatorForTest) Allocate(ctx context.Context, host string) (*net.TCPAddr, error) {
 	return allocator.allocator.allocate(ctx, host)
 }
+
+// BuildFabricUplinksForTest exposes BGP test uplink construction for tests.
+func BuildFabricUplinksForTest(networkName, managementBridge string, nodeIdx, count, mtu int, bgpEnabled, bgpCLOS bool) []FabricUplink {
+	return buildFabricUplinks(networkName, managementBridge, nodeIdx, count, mtu, bgpEnabled, bgpCLOS)
+}

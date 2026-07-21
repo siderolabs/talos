@@ -215,6 +215,7 @@ linters:
       replace-allow-list:
         - gopkg.in/yaml.v3
         - github.com/coredns/coredns
+        - github.com/osrg/gobgp/v4
         - github.com/mdlayher/kobject
         - golang.zx2c4.com/wireguard/wgctrl
         - github.com/mdlayher/ethtool

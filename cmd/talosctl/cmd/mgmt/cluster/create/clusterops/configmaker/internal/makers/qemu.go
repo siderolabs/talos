@@ -741,7 +741,7 @@ func (m *Qemu) initJSONLogs() {
 	m.ConfigBundleOps = slices.Concat(m.ConfigBundleOps, []bundle.Option{bundle.WithPatch([]configpatcher.Patch{configpatcher.NewStrategicMergePatch(cfg)})})
 }
 
-// initBGP starts an embedded gobgp fabric peer on the bridge gateway. Node-side BGPPeerConfig is supplied
+// initBGP starts an embedded gobgp fabric peer on the bridge gateway. Node-side BGPInstanceConfig is supplied
 // separately via config patches (each node needs a unique loopback, which a shared patch cannot express).
 func (m *Qemu) initBGP() {
 	const (
@@ -757,7 +757,7 @@ func (m *Qemu) initBGP() {
 
 // initBGPCLOS configures the authentic full-CLOS BGP test: nodes have NO management net0 (only virtio
 // fabric uplink(s) to a host fabric peer + a loopback identity), reachable only via BGP. Each node's
-// config (a unique loopback on lo + an unnumbered BGPPeerConfig peering over the fabric interfaces) is baked
+// config (a unique loopback on lo + an unnumbered BGPInstanceConfig peering over the fabric interfaces) is baked
 // here per-node, because a no-net0 node is unreachable until BGP is up and so cannot be patched live.
 func (m *Qemu) initBGPCLOS() error {
 	const (
@@ -836,7 +836,8 @@ func (m *Qemu) initBGPCLOS() error {
 			return err
 		}
 
-		m.ConfigBundleOps = append(m.ConfigBundleOps,
+		m.ConfigBundleOps = append(
+			m.ConfigBundleOps,
 			bundle.WithPatchControlPlane([]configpatcher.Patch{configpatcher.NewStrategicMergePatch(flannelCtr)}),
 		)
 	}
@@ -865,7 +866,7 @@ func firstIPv4(addrs []netip.Addr) netip.Addr {
 }
 
 // closNodeConfig builds a full-CLOS node's baked config: a loopback /32 on lo (its identity, advertised by
-// BGP) and an unnumbered BGPPeerConfig peering with the host fabric peer over each fabric interface
+// BGP) and an unnumbered BGPInstanceConfig peering with the host fabric peer over each fabric interface
 // (multipath/ECMP when there is more than one, with BFD). On control-plane nodes a shared anycast k8s-API
 // VIP /32 is also carried on lo (advertised by every CP, so the fabric ECMPs across them = CP-HA).
 func (m *Qemu) closNodeConfig(loopback, vip netip.Addr, asn uint32, ifaces []string) (*container.Container, error) {
@@ -898,7 +899,7 @@ func (m *Qemu) closNodeConfig(loopback, vip netip.Addr, asn uint32, ifaces []str
 		docs = append(docs, link)
 	}
 
-	bgp := networkcfg.NewBGPPeerConfigV1Alpha1()
+	bgp := networkcfg.NewBGPInstanceConfigV1Alpha1("fabric")
 	bgp.BGPLocalASN = asn
 	bgp.BGPRouterID = metacfg.Addr{Addr: loopback}
 	// source BGP-routed traffic from the loopback identity: the fabric uplinks have no address of their

@@ -430,7 +430,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		network.NewRouteMergeController(),
 		&network.RouteSpecController{},
 		&network.RouteStatusController{},
-		&network.BGPPeerConfigController{},
+		&network.BGPInstanceConfigController{},
 		&network.BGPController{},
 		&network.RouterAdvertisementController{},
 		&network.RoutingRuleConfigController{},

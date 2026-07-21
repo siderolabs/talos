@@ -551,8 +551,8 @@ description: Talos gRPC API reference.
     - [AddressSpecSpec](#talos.resource.definitions.network.AddressSpecSpec)
     - [AddressStatusSpec](#talos.resource.definitions.network.AddressStatusSpec)
     - [BGPBFDConfigSpec](#talos.resource.definitions.network.BGPBFDConfigSpec)
+    - [BGPInstanceConfigSpec](#talos.resource.definitions.network.BGPInstanceConfigSpec)
     - [BGPNeighborConfigSpec](#talos.resource.definitions.network.BGPNeighborConfigSpec)
-    - [BGPPeerConfigSpec](#talos.resource.definitions.network.BGPPeerConfigSpec)
     - [BGPPeerStatusSpec](#talos.resource.definitions.network.BGPPeerStatusSpec)
     - [BondMasterSpec](#talos.resource.definitions.network.BondMasterSpec)
     - [BondSlave](#talos.resource.definitions.network.BondSlave)
@@ -9594,6 +9594,29 @@ BGPBFDConfigSpec contains BFD parameters for a BGP neighbor.
 
 
 
+<a name="talos.resource.definitions.network.BGPInstanceConfigSpec"></a>
+
+### BGPInstanceConfigSpec
+BGPInstanceConfigSpec contains the resolved runtime configuration for a BGP routing instance.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| local_asn | [uint32](#uint32) |  |  |
+| router_id | [common.NetIP](#common.NetIP) |  |  |
+| route_source | [common.NetIP](#common.NetIP) |  |  |
+| advertise_links | [string](#string) | repeated |  |
+| multipath | [bool](#bool) |  |  |
+| max_paths | [uint32](#uint32) |  |  |
+| neighbors | [BGPNeighborConfigSpec](#talos.resource.definitions.network.BGPNeighborConfigSpec) | repeated |  |
+| vrf | [string](#string) |  |  |
+| vrf_table | [talos.resource.definitions.enums.NethelpersRoutingTable](#talos.resource.definitions.enums.NethelpersRoutingTable) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.network.BGPNeighborConfigSpec"></a>
 
 ### BGPNeighborConfigSpec
@@ -9607,27 +9630,8 @@ BGPNeighborConfigSpec contains the runtime configuration for a BGP neighbor.
 | peer_asn | [uint32](#uint32) |  |  |
 | hold_time | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
 | bfd | [BGPBFDConfigSpec](#talos.resource.definitions.network.BGPBFDConfigSpec) |  |  |
-
-
-
-
-
-
-<a name="talos.resource.definitions.network.BGPPeerConfigSpec"></a>
-
-### BGPPeerConfigSpec
-BGPPeerConfigSpec contains the complete runtime configuration for the BGP speaker.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
 | local_asn | [uint32](#uint32) |  |  |
-| router_id | [common.NetIP](#common.NetIP) |  |  |
-| route_source | [common.NetIP](#common.NetIP) |  |  |
-| advertise_links | [string](#string) | repeated |  |
-| multipath | [bool](#bool) |  |  |
-| max_paths | [uint32](#uint32) |  |  |
-| neighbors | [BGPNeighborConfigSpec](#talos.resource.definitions.network.BGPNeighborConfigSpec) | repeated |  |
+| passive | [bool](#bool) |  |  |
 
 
 
@@ -9652,6 +9656,7 @@ BGPPeerStatusSpec describes the status of a BGP peering session.
 | advertised | [uint32](#uint32) |  |  |
 | accepted | [uint32](#uint32) |  |  |
 | bfd_state | [string](#string) |  |  |
+| instance | [string](#string) |  |  |
 
 
 
