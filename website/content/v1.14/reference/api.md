@@ -367,6 +367,8 @@ description: Talos gRPC API reference.
     - [DiskSpec](#talos.resource.definitions.block.DiskSpec)
     - [EncryptionKey](#talos.resource.definitions.block.EncryptionKey)
     - [EncryptionSpec](#talos.resource.definitions.block.EncryptionSpec)
+    - [FSScrubScheduleSpec](#talos.resource.definitions.block.FSScrubScheduleSpec)
+    - [FSScrubStatusSpec](#talos.resource.definitions.block.FSScrubStatusSpec)
     - [FilesystemSpec](#talos.resource.definitions.block.FilesystemSpec)
     - [LocatorSpec](#talos.resource.definitions.block.LocatorSpec)
     - [MountRequestSpec](#talos.resource.definitions.block.MountRequestSpec)
@@ -6547,6 +6549,42 @@ EncryptionSpec is the spec for volume encryption.
 
 
 
+<a name="talos.resource.definitions.block.FSScrubScheduleSpec"></a>
+
+### FSScrubScheduleSpec
+FSScrubScheduleSpec is the spec for FSScrubSchedule resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| filesystem | [talos.resource.definitions.enums.BlockFilesystemType](#talos.resource.definitions.enums.BlockFilesystemType) |  | Filesystem is the filesystem type of the volume to be scrubbed. |
+| interval | [google.protobuf.Duration](#google.protobuf.Duration) |  | Interval is the scrub interval for the volume. |
+| next_scrub | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | NextScrub is the next scheduled scrub time for the volume. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.FSScrubStatusSpec"></a>
+
+### FSScrubStatusSpec
+FSScrubStatusSpec describes status of filesystem scrub jobs.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| mountpoint | [string](#string) |  |  |
+| interval | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| time | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
+| duration | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| status | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.block.FilesystemSpec"></a>
 
 ### FilesystemSpec
@@ -6822,6 +6860,8 @@ VolumeConfigSpec is the spec for VolumeConfig resource.
 | symlink | [SymlinkProvisioningSpec](#talos.resource.definitions.block.SymlinkProvisioningSpec) |  | Symlink options for the volume. |
 | trim_enabled | [bool](#bool) |  | TrimEnabled indicates whether the volume should be trimmed (fstrim) on a schedule. |
 | trim_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  | TrimInterval is the resolved interval at which the volume should be trimmed. |
+| scrub_enabled | [bool](#bool) |  | ScrubEnabled indicates whether the volume filesystem should be scrubbed on a schedule. |
+| scrub_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  | ScrubInterval is the resolved period at which the volume filesystem should be scrubbed. |
 
 
 
@@ -6902,6 +6942,8 @@ VolumeStatusSpec is the spec for VolumeStatus resource.
 | encryption_allow_discards | [bool](#bool) |  | EncryptionAllowDiscards indicates whether the encrypted volume passes discards to the underlying device. |
 | trim_enabled | [bool](#bool) |  | TrimEnabled indicates whether the volume should be trimmed (fstrim) on a schedule. |
 | trim_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  | TrimInterval is the resolved interval at which the volume should be trimmed. |
+| scrub_enabled | [bool](#bool) |  | ScrubEnabled indicates whether the volume filesystem should be scrubbed on a schedule. |
+| scrub_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  | ScrubInterval is the resolved period at which the volume filesystem should be scrubbed. |
 
 
 

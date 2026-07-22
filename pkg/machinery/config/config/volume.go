@@ -39,6 +39,7 @@ type VolumeConfig interface {
 	Encryption() EncryptionConfig
 	Mount() VolumeMountConfig
 	VolumeTrimConfigProvider
+	VolumeScrubConfigProvider
 }
 
 // VolumeProvisioningConfig defines the interface to access volume provisioning configuration.
@@ -116,6 +117,10 @@ func (emptyVolumeConfig) Trim() VolumeTrimConfig {
 	return nil
 }
 
+func (emptyVolumeConfig) Scrub() VolumeScrubConfig {
+	return nil
+}
+
 type emptyVolumeMountConfig struct {
 	secure bool
 }
@@ -142,6 +147,7 @@ type UserVolumeConfig interface {
 	Encryption() EncryptionConfig
 	Mount() UserVolumeMountConfig
 	VolumeTrimConfigProvider
+	VolumeScrubConfigProvider
 }
 
 // RawVolumeConfig defines the interface to access raw volume configuration.
@@ -159,6 +165,7 @@ type ExistingVolumeConfig interface {
 	VolumeDiscovery() VolumeDiscoveryConfig
 	Mount() ExistingVolumeMountConfig
 	VolumeTrimConfigProvider
+	VolumeScrubConfigProvider
 }
 
 // ExternalVolumeConfig defines the interface to access external volume configuration.
@@ -242,9 +249,38 @@ type VolumeTrimConfigProvider interface {
 // VolumeTrimConfig defines the interface to access per-volume filesystem trim configuration.
 //
 // It overrides the global filesystem trim configuration for the volume.
+//
+//nolint:iface
 type VolumeTrimConfig interface {
 	// Enabled returns whether trimming is enabled for the volume (if explicitly set).
 	Enabled() optional.Optional[bool]
 	// Interval returns the trim interval for the volume (if explicitly set), overriding the global interval.
+	Interval() optional.Optional[time.Duration]
+}
+
+// FilesystemScrubConfig defines the interface to access global filesystem scrub configuration.
+type FilesystemScrubConfig interface {
+	FilesystemScrubConfigSignal()
+	// Enabled returns whether periodic filesystem scrubbing is enabled (if explicitly set).
+	Enabled() optional.Optional[bool]
+	// Interval returns the global scrub interval (if explicitly set).
+	Interval() optional.Optional[time.Duration]
+}
+
+// VolumeScrubConfigProvider defines the interface to access per-volume scrub configuration.
+type VolumeScrubConfigProvider interface {
+	// Scrub returns the per-volume scrub configuration, or nil if not set.
+	Scrub() VolumeScrubConfig
+}
+
+// VolumeScrubConfig defines the interface to access per-volume filesystem scrub configuration.
+//
+// It overrides the global filesystem scrub configuration for the volume.
+//
+//nolint:iface
+type VolumeScrubConfig interface {
+	// Enabled returns whether scrubbing is enabled for the volume (if explicitly set).
+	Enabled() optional.Optional[bool]
+	// Interval returns the scrub interval for the volume (if explicitly set), overriding the global interval.
 	Interval() optional.Optional[time.Duration]
 }

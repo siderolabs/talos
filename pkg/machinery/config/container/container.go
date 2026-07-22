@@ -465,6 +465,16 @@ func (container *Container) SecurityProfileConfig() config.SecurityProfileConfig
 	return matching[0]
 }
 
+// FilesystemScrubConfig implements config.Config interface.
+func (container *Container) FilesystemScrubConfig() config.FilesystemScrubConfig {
+	matching := findMatchingDocs[config.FilesystemScrubConfig](container.documents)
+	if len(matching) == 0 {
+		return nil
+	}
+
+	return matching[0]
+}
+
 // NetworkStaticHostConfig implements config.Config interface.
 func (container *Container) NetworkStaticHostConfig() []config.NetworkStaticHostConfig {
 	return slices.Concat(

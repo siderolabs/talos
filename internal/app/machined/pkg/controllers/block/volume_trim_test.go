@@ -82,7 +82,7 @@ func (suite *VolumeTrimSuite) createSchedule(id string) {
 	schedule := block.NewVolumeTrimSchedule(block.NamespaceName, id)
 	schedule.TypedSpec().Filesystem = block.FilesystemTypeXFS
 	schedule.TypedSpec().Interval = runnerTrimInterval
-	schedule.TypedSpec().NextTrim = block.NextTrimTime(id, runnerTrimInterval, time.Now())
+	schedule.TypedSpec().NextTrim = block.NextScheduledTime(id, runnerTrimInterval, time.Now())
 	suite.Create(schedule)
 }
 

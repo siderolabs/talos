@@ -127,6 +127,25 @@ message EncryptionSpec {
   bool allow_discards = 7;
 }
 
+// FSScrubScheduleSpec is the spec for FSScrubSchedule resource.
+message FSScrubScheduleSpec {
+  // Filesystem is the filesystem type of the volume to be scrubbed.
+  talos.resource.definitions.enums.BlockFilesystemType filesystem = 1;
+  // Interval is the scrub interval for the volume.
+  google.protobuf.Duration interval = 2;
+  // NextScrub is the next scheduled scrub time for the volume.
+  google.protobuf.Timestamp next_scrub = 3;
+}
+
+// FSScrubStatusSpec describes status of filesystem scrub jobs.
+message FSScrubStatusSpec {
+  string mountpoint = 1;
+  google.protobuf.Duration interval = 2;
+  google.protobuf.Timestamp time = 3;
+  google.protobuf.Duration duration = 4;
+  string status = 5;
+}
+
 // FilesystemSpec is the spec for volume filesystem.
 message FilesystemSpec {
   // Filesystem type.
@@ -300,6 +319,10 @@ message VolumeConfigSpec {
   bool trim_enabled = 8;
   // TrimInterval is the resolved interval at which the volume should be trimmed.
   google.protobuf.Duration trim_interval = 9;
+  // ScrubEnabled indicates whether the volume filesystem should be scrubbed on a schedule.
+  bool scrub_enabled = 10;
+  // ScrubInterval is the resolved period at which the volume filesystem should be scrubbed.
+  google.protobuf.Duration scrub_interval = 11;
 }
 
 // VolumeMountRequestSpec is the spec for VolumeMountRequest.
@@ -365,6 +388,10 @@ message VolumeStatusSpec {
   bool trim_enabled = 24;
   // TrimInterval is the resolved interval at which the volume should be trimmed.
   google.protobuf.Duration trim_interval = 25;
+  // ScrubEnabled indicates whether the volume filesystem should be scrubbed on a schedule.
+  bool scrub_enabled = 26;
+  // ScrubInterval is the resolved period at which the volume filesystem should be scrubbed.
+  google.protobuf.Duration scrub_interval = 27;
 }
 
 // VolumeTrimScheduleSpec is the spec for VolumeTrimSchedule resource.
