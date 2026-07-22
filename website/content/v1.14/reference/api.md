@@ -361,6 +361,7 @@ description: Talos gRPC API reference.
 - [resource/definitions/block/block.proto](#resource/definitions/block/block.proto)
     - [DeviceSpec](#talos.resource.definitions.block.DeviceSpec)
     - [DiscoveredVolumeSpec](#talos.resource.definitions.block.DiscoveredVolumeSpec)
+    - [DiscoveredVolumesStatusSpec](#talos.resource.definitions.block.DiscoveredVolumesStatusSpec)
     - [DiscoveryRefreshRequestSpec](#talos.resource.definitions.block.DiscoveryRefreshRequestSpec)
     - [DiscoveryRefreshStatusSpec](#talos.resource.definitions.block.DiscoveryRefreshStatusSpec)
     - [DiskSelector](#talos.resource.definitions.block.DiskSelector)
@@ -6423,6 +6424,21 @@ DiscoveredVolumeSpec is the spec for DiscoveredVolumes resource.
 | parent_dev_path | [string](#string) |  |  |
 | pretty_size | [string](#string) |  |  |
 | offset | [uint64](#uint64) |  | Offset of the partition/volume inside Parent device (in bytes). |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.DiscoveredVolumesStatusSpec"></a>
+
+### DiscoveredVolumesStatusSpec
+DiscoveredVolumesStatusSpec is the spec for discovered volumes status.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| ready | [bool](#bool) |  | Volume discovery has been completed and the discovered volumes are ready to be used. |
 
 
 

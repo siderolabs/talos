@@ -18,7 +18,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
-	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 type VolumeManagerSuite struct {
@@ -43,10 +42,10 @@ func TestVolumeManagerSuite(t *testing.T) {
 func (suite *VolumeManagerSuite) setupFailingVolume(id string, labels ...string) *block.VolumeLifecycle {
 	ctx := suite.Ctx()
 
-	// devices are ready
-	devicesStatus := runtimeres.NewDevicesStatus(runtimeres.NamespaceName, runtimeres.DevicesID)
-	devicesStatus.TypedSpec().Ready = true
-	suite.Require().NoError(suite.State().Create(ctx, devicesStatus))
+	// discovered volumes are ready
+	discoveredVolumesStatus := block.NewDiscoveredVolumesStatus(block.NamespaceName, block.DiscoveredVolumesStatusID)
+	discoveredVolumesStatus.TypedSpec().Ready = true
+	suite.Require().NoError(suite.State().Create(ctx, discoveredVolumesStatus))
 
 	// volume lifecycle exists (controller ceases all ops without it)
 	lifecycle := block.NewVolumeLifecycle(block.NamespaceName, block.VolumeLifecycleID)
@@ -72,31 +71,6 @@ func (suite *VolumeManagerSuite) setupFailingVolume(id string, labels ...string)
 		Match: cel.MustExpression(cel.ParseBooleanExpression(`volume.partition_label == "`+id+`"`, celenv.VolumeLocator())),
 	}
 	suite.Require().NoError(suite.State().Create(ctx, vc))
-
-	// the controller writes a DiscoveryRefreshRequest once devices become ready;
-	// mirror it back as a DiscoveryRefreshStatus so devicesReady becomes true.
-	suite.Assert().Eventually(func() bool {
-		req, err := safe.StateGetByID[*block.DiscoveryRefreshRequest](ctx, suite.State(), block.RefreshID)
-		if err != nil {
-			return false
-		}
-
-		st := block.NewDiscoveryRefreshStatus(block.NamespaceName, block.RefreshID)
-		st.TypedSpec().Request = req.TypedSpec().Request
-
-		if err := suite.State().Create(ctx, st); err != nil {
-			// already created - update
-			existing, gerr := safe.StateGetByID[*block.DiscoveryRefreshStatus](ctx, suite.State(), block.RefreshID)
-			if gerr != nil {
-				return false
-			}
-
-			existing.TypedSpec().Request = req.TypedSpec().Request
-			suite.Require().NoError(suite.State().Update(ctx, existing))
-		}
-
-		return true
-	}, 10*time.Second, 100*time.Millisecond)
 
 	// the volume should end up Failed (no disk matched selector)
 	ctest.AssertResource(suite, id, func(vs *block.VolumeStatus, asrt *assert.Assertions) {

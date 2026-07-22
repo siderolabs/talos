@@ -31,7 +31,6 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/hardware"
-	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
 
@@ -73,14 +72,9 @@ func (ctrl *VolumeManagerController) Inputs() []controller.Input {
 			Kind:      controller.InputWeak,
 		},
 		{
-			Namespace: runtime.NamespaceName,
-			Type:      runtime.DevicesStatusType,
-			ID:        optional.Some(runtime.DevicesID),
-			Kind:      controller.InputWeak,
-		},
-		{
 			Namespace: block.NamespaceName,
-			Type:      block.DiscoveryRefreshStatusType,
+			Type:      block.DiscoveredVolumesStatusType,
+			ID:        optional.Some(block.DiscoveredVolumesStatusID),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -116,10 +110,6 @@ func (ctrl *VolumeManagerController) Outputs() []controller.Output {
 			Type: block.VolumeStatusType,
 			Kind: controller.OutputExclusive,
 		},
-		{
-			Type: block.DiscoveryRefreshRequestType,
-			Kind: controller.OutputExclusive,
-		},
 	}
 }
 
@@ -127,11 +117,6 @@ func (ctrl *VolumeManagerController) Outputs() []controller.Output {
 //
 //nolint:gocyclo,cyclop
 func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	var (
-		deviceReadyObserved bool
-		deviceReadyRequest  int
-	)
-
 	retryTicker := time.NewTicker(30 * time.Second)
 	defer retryTicker.Stop()
 
@@ -150,35 +135,12 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 			shouldRetry = false
 		}
 
-		// if devices are not ready, we can't provision and locate most volumes
-		devicesStatus, err := safe.ReaderGetByID[*runtime.DevicesStatus](ctx, r, runtime.DevicesID)
+		discoveredVolumesStatus, err := safe.ReaderGetByID[*block.DiscoveredVolumesStatus](ctx, r, block.DiscoveredVolumesStatusID)
 		if err != nil && !state.IsNotFoundError(err) {
-			return fmt.Errorf("error fetching devices status: %w", err)
+			return fmt.Errorf("error fetching discovered volumes status: %w", err)
 		}
 
-		devicesReady := devicesStatus != nil && devicesStatus.TypedSpec().Ready
-
-		if devicesReady && !deviceReadyObserved {
-			deviceReadyObserved = true
-
-			// udevd reports that devices are ready, now it's time to refresh the discovery volumes
-			if err = safe.WriterModify(ctx, r, block.NewDiscoveryRefreshRequest(block.NamespaceName, block.RefreshID), func(drr *block.DiscoveryRefreshRequest) error {
-				drr.TypedSpec().Request++
-				deviceReadyRequest = drr.TypedSpec().Request
-
-				return nil
-			}); err != nil {
-				return fmt.Errorf("error updating discovery refresh request: %w", err)
-			}
-		}
-
-		refreshStatus, err := safe.ReaderGetByID[*block.DiscoveryRefreshStatus](ctx, r, block.RefreshID)
-		if err != nil && !state.IsNotFoundError(err) {
-			return fmt.Errorf("error fetching discovery refresh status: %w", err)
-		}
-
-		// now devicesReady is only true if the refresh status is up to date
-		devicesReady = devicesReady && refreshStatus != nil && refreshStatus.TypedSpec().Request == deviceReadyRequest
+		devicesReady := discoveredVolumesStatus != nil && discoveredVolumesStatus.TypedSpec().Ready
 
 		discoveredVolumes, err := safe.ReaderListAll[*block.DiscoveredVolume](ctx, r)
 		if err != nil {

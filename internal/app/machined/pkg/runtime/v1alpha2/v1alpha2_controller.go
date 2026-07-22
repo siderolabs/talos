@@ -157,6 +157,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&block.DevicesController{
 			V1Alpha1Mode: ctrl.v1alpha1Runtime.State().Platform().Mode(),
 		},
+		&block.DiscoveredVolumesStatusController{},
 		&block.DiscoveryController{},
 		&block.DisksController{},
 		&block.MountController{},

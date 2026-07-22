@@ -31,6 +31,7 @@ func TestRegisterResource(t *testing.T) {
 		&block.DiscoveryRefreshRequest{},
 		&block.DiscoveryRefreshStatus{},
 		&block.DiscoveredVolume{},
+		&block.DiscoveredVolumesStatus{},
 		&block.Disk{},
 		&block.MountRequest{},
 		&block.MountStatus{},

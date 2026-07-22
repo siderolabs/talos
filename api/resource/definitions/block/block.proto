@@ -56,6 +56,12 @@ message DiscoveredVolumeSpec {
   uint64 offset = 20;
 }
 
+// DiscoveredVolumesStatusSpec is the spec for discovered volumes status.
+message DiscoveredVolumesStatusSpec {
+  // Volume discovery has been completed and the discovered volumes are ready to be used.
+  bool ready = 1;
+}
+
 // DiscoveryRefreshRequestSpec is the spec for DiscoveryRefreshRequest.
 message DiscoveryRefreshRequestSpec {
   int64 request = 1;
