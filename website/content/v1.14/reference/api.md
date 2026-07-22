@@ -6558,6 +6558,7 @@ FilesystemSpec is the spec for volume filesystem.
 | ----- | ---- | ----- | ----------- |
 | type | [talos.resource.definitions.enums.BlockFilesystemType](#talos.resource.definitions.enums.BlockFilesystemType) |  | Filesystem type. |
 | label | [string](#string) |  | Filesystem label. |
+| min_allocation_group_size | [uint64](#uint64) |  | MinAllocationGroupSize is the minimum XFS allocation group size in bytes.<br><br>Zero leaves the mkfs.xfs defaults alone. |
 
 
 

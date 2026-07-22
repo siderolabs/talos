@@ -12,6 +12,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
@@ -34,6 +35,20 @@ type volumeConfigTransformer func(c configconfig.Config) ([]VolumeResource, erro
 type SkipUserVolumeMountRequest struct{}
 
 var noMatch = cel.MustExpression(cel.ParseBooleanExpression("false", celenv.Empty()))
+
+// minAllocationGroupSize resolves the effective XFS minimum allocation group size: the configured
+// override if there is one, and the Talos default otherwise.
+func minAllocationGroupSize(filesystem configconfig.SystemVolumeFilesystemConfig) uint64 {
+	if filesystem != nil {
+		if xfs := filesystem.XFS(); xfs != nil {
+			if size, ok := xfs.MinAllocationGroupSize().Get(); ok {
+				return size
+			}
+		}
+	}
+
+	return quirks.New("").XFSMinAllocationGroupSize()
+}
 
 func labelVolumeMatch(label string) cel.Expression {
 	return cel.MustExpression(cel.ParseBooleanExpression(fmt.Sprintf("volume.partition_label == '%s'", label), celenv.VolumeLocator()))

@@ -14,6 +14,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/siderolabs/gen/optional"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -202,4 +203,105 @@ func TestXFSReproducibility(t *testing.T) {
 	require.NoError(t, fileData.Close())
 
 	assert.Equal(t, sum1.Sum(nil), sum2.Sum(nil))
+}
+
+func TestXFSConcurrency(t *testing.T) {
+	t.Parallel()
+
+	const (
+		gib = 1024 * 1024 * 1024
+		tib = 1024 * gib
+	)
+
+	for _, test := range []struct {
+		name string
+
+		deviceSize uint64
+		minAGSize  uint64
+		numCPU     int
+
+		expected optional.Optional[int]
+	}{
+		{
+			name: "disabled",
+
+			deviceSize: 930 * gib,
+			minAGSize:  0,
+			numCPU:     128,
+
+			expected: optional.None[int](),
+		},
+		{
+			name: "unknown device size",
+
+			deviceSize: 0,
+			minAGSize:  64 * gib,
+			numCPU:     128,
+
+			expected: optional.None[int](),
+		},
+		{
+			// smaller than a single allocation group: fall back to the classic geometry, and never
+			// emit 1, which mkfs.xfs reads as the magic "number of CPUs" value
+			name: "smaller than min AG size",
+
+			deviceSize: 40 * gib,
+			minAGSize:  64 * gib,
+			numCPU:     128,
+
+			expected: optional.Some(0),
+		},
+		{
+			// exactly one allocation group would fit, still not enough to beat the magic value
+			name: "exactly one AG",
+
+			deviceSize: 100 * gib,
+			minAGSize:  64 * gib,
+			numCPU:     128,
+
+			expected: optional.Some(0),
+		},
+		{
+			name: "capped by min AG size",
+
+			deviceSize: 464 * gib,
+			minAGSize:  64 * gib,
+			numCPU:     128,
+
+			expected: optional.Some(7),
+		},
+		{
+			name: "capped by min AG size, many cores",
+
+			deviceSize: 1900 * gib,
+			minAGSize:  64 * gib,
+			numCPU:     384,
+
+			expected: optional.Some(29),
+		},
+		{
+			name: "capped by CPU count",
+
+			deviceSize: 15 * tib,
+			minAGSize:  64 * gib,
+			numCPU:     32,
+
+			expected: optional.Some(32),
+		},
+		{
+			name: "no CPUs reported",
+
+			deviceSize: 930 * gib,
+			minAGSize:  64 * gib,
+			numCPU:     0,
+
+			expected: optional.None[int](),
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, makefs.XFSConcurrency(test.deviceSize, test.minAGSize, test.numCPU))
+		})
+	}
 }

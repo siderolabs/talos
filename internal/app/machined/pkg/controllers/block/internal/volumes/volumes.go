@@ -97,3 +97,18 @@ type ManagerContext struct {
 	EncryptionHelpers       encryption.Helpers
 	ShouldCloseVolume       bool
 }
+
+// FindDisk returns the disk with the given device path, or nil if it is not known.
+func (ctx ManagerContext) FindDisk(devPath string) *blockpb.DiskSpec {
+	if devPath == "" {
+		return nil
+	}
+
+	for _, diskCtx := range ctx.Disks {
+		if diskCtx.Disk.DevPath == devPath {
+			return diskCtx.Disk
+		}
+	}
+
+	return nil
+}

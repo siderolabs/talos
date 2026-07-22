@@ -261,6 +261,18 @@ func (o *UserVolumeConfigV1Alpha1) DeepCopy() *UserVolumeConfigV1Alpha1 {
 		cp.FilesystemSpec.ProjectQuotaSupportConfig = new(bool)
 		*cp.FilesystemSpec.ProjectQuotaSupportConfig = *o.FilesystemSpec.ProjectQuotaSupportConfig
 	}
+	if o.FilesystemSpec.XFSSpec != nil {
+		cp.FilesystemSpec.XFSSpec = new(XFSSpec)
+		*cp.FilesystemSpec.XFSSpec = *o.FilesystemSpec.XFSSpec
+		if o.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.value != nil {
+			cp.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.value = new(uint64)
+			*cp.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.value = *o.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.value
+		}
+		if o.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.raw != nil {
+			cp.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.raw = make([]byte, len(o.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.raw))
+			copy(cp.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.raw, o.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.raw)
+		}
+	}
 	if o.EncryptionSpec.EncryptionKeys != nil {
 		cp.EncryptionSpec.EncryptionKeys = make([]EncryptionKey, len(o.EncryptionSpec.EncryptionKeys))
 		copy(cp.EncryptionSpec.EncryptionKeys, o.EncryptionSpec.EncryptionKeys)
@@ -385,6 +397,18 @@ func (o *VolumeConfigV1Alpha1) DeepCopy() *VolumeConfigV1Alpha1 {
 		if o.ProvisioningSpec.ProvisioningMaxSize.ByteSize.raw != nil {
 			cp.ProvisioningSpec.ProvisioningMaxSize.ByteSize.raw = make([]byte, len(o.ProvisioningSpec.ProvisioningMaxSize.ByteSize.raw))
 			copy(cp.ProvisioningSpec.ProvisioningMaxSize.ByteSize.raw, o.ProvisioningSpec.ProvisioningMaxSize.ByteSize.raw)
+		}
+	}
+	if o.FilesystemSpec.XFSSpec != nil {
+		cp.FilesystemSpec.XFSSpec = new(XFSSpec)
+		*cp.FilesystemSpec.XFSSpec = *o.FilesystemSpec.XFSSpec
+		if o.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.value != nil {
+			cp.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.value = new(uint64)
+			*cp.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.value = *o.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.value
+		}
+		if o.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.raw != nil {
+			cp.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.raw = make([]byte, len(o.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.raw))
+			copy(cp.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.raw, o.FilesystemSpec.XFSSpec.MinAllocationGroupSizeConfig.raw)
 		}
 	}
 	if o.EncryptionSpec.EncryptionKeys != nil {

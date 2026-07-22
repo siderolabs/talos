@@ -82,6 +82,20 @@ func TestVolumeConfigMarshalUnmarshal(t *testing.T) {
 			},
 		},
 		{
+			name:     "xfs min allocation group size",
+			filename: "volumeconfig_xfs.yaml",
+			cfg: func(*testing.T) *block.VolumeConfigV1Alpha1 {
+				c := block.NewVolumeConfigV1Alpha1()
+				c.MetaName = constants.EphemeralPartitionLabel
+
+				c.FilesystemSpec.XFSSpec = &block.XFSSpec{
+					MinAllocationGroupSizeConfig: block.MustByteSize("128GiB"),
+				}
+
+				return c
+			},
+		},
+		{
 			name:     "state",
 			filename: "volumeconfig_state.yaml",
 			cfg: func(t *testing.T) *block.VolumeConfigV1Alpha1 {
@@ -157,6 +171,22 @@ func TestVolumeConfigValidate(t *testing.T) {
 			},
 
 			expectedErrors: "only [\"STATE\" \"EPHEMERAL\" \"IMAGECACHE\" \"ETCD\" \"CRI\" \"KUBELET\" \"LOG\"] volumes are supported",
+		},
+		{
+			name: "filesystem config for image cache",
+
+			cfg: func(t *testing.T) *block.VolumeConfigV1Alpha1 {
+				c := block.NewVolumeConfigV1Alpha1()
+				c.MetaName = constants.ImageCachePartitionLabel
+
+				c.FilesystemSpec.XFSSpec = &block.XFSSpec{
+					MinAllocationGroupSizeConfig: block.MustByteSize("128GiB"),
+				}
+
+				return c
+			},
+
+			expectedErrors: "filesystem config is not allowed for the \"IMAGECACHE\" volume",
 		},
 		{
 			name: "invalid disk selector",

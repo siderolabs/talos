@@ -396,6 +396,13 @@
           "description": "Enables project quota support, valid only for ‘xfs’ filesystem.\n\nNote: changing this value might require a full remount of the filesystem.\n",
           "markdownDescription": "Enables project quota support, valid only for 'xfs' filesystem.\n\nNote: changing this value might require a full remount of the filesystem.",
           "x-intellij-html-description": "\u003cp\u003eEnables project quota support, valid only for \u0026lsquo;xfs\u0026rsquo; filesystem.\u003c/p\u003e\n\n\u003cp\u003eNote: changing this value might require a full remount of the filesystem.\u003c/p\u003e\n"
+        },
+        "xfs": {
+          "$ref": "#/$defs/block.XFSSpec",
+          "title": "xfs",
+          "description": "XFS-specific filesystem options, valid only for ‘xfs’ filesystem.\n",
+          "markdownDescription": "XFS-specific filesystem options, valid only for 'xfs' filesystem.",
+          "x-intellij-html-description": "\u003cp\u003eXFS-specific filesystem options, valid only for \u0026lsquo;xfs\u0026rsquo; filesystem.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -595,6 +602,20 @@
       ],
       "description": "SwapVolumeConfig is a disk swap volume configuration document.\\nSwap volume is automatically allocated as a partition on the specified disk\\nand activated as swap, removing a swap volume deactivates swap.\\nThe partition label is automatically generated as `s-\u003cname\u003e`.\\n"
     },
+    "block.SystemVolumeFilesystemSpec": {
+      "properties": {
+        "xfs": {
+          "$ref": "#/$defs/block.XFSSpec",
+          "title": "xfs",
+          "description": "XFS-specific filesystem options.\n",
+          "markdownDescription": "XFS-specific filesystem options.",
+          "x-intellij-html-description": "\u003cp\u003eXFS-specific filesystem options.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "SystemVolumeFilesystemSpec describes how the system volume is formatted.\\n\\nThe filesystem type is fixed for system volumes, and project quota support is configured via\\nmachine features, so only the filesystem-specific tunables are exposed here.\\n"
+    },
     "block.TrimConfig": {
       "properties": {
         "enabled": {
@@ -768,6 +789,13 @@
           "markdownDescription": "The provisioning describes how the volume is provisioned.",
           "x-intellij-html-description": "\u003cp\u003eThe provisioning describes how the volume is provisioned.\u003c/p\u003e\n"
         },
+        "filesystem": {
+          "$ref": "#/$defs/block.SystemVolumeFilesystemSpec",
+          "title": "filesystem",
+          "description": "The filesystem describes how the volume is formatted.\n\nNote: this only takes effect at the time the volume is formatted.\n",
+          "markdownDescription": "The filesystem describes how the volume is formatted.\n\nNote: this only takes effect at the time the volume is formatted.",
+          "x-intellij-html-description": "\u003cp\u003eThe filesystem describes how the volume is formatted.\u003c/p\u003e\n\n\u003cp\u003eNote: this only takes effect at the time the volume is formatted.\u003c/p\u003e\n"
+        },
         "encryption": {
           "$ref": "#/$defs/block.EncryptionSpec",
           "title": "encryption",
@@ -825,6 +853,20 @@
       "additionalProperties": false,
       "type": "object",
       "description": "VolumeSelector selects an existing volume."
+    },
+    "block.XFSSpec": {
+      "properties": {
+        "minAllocationGroupSize": {
+          "type": "string",
+          "title": "minAllocationGroupSize",
+          "description": "The minimum size of an XFS allocation group.\n\nOn non-rotational devices mkfs.xfs sizes the allocation group count to the number of\nCPUs, which on machines with many cores and a modest disk yields hundreds of tiny\nallocation groups. Talos bounds the allocation group size from below to keep the geometry\nsane; this option overrides that bound.\n\nSet to zero to use the mkfs.xfs defaults unchanged.\n\nNote: this only affects volumes at the time they are formatted.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 100MB.\n",
+          "markdownDescription": "The minimum size of an XFS allocation group.\n\nOn non-rotational devices `mkfs.xfs` sizes the allocation group count to the number of\nCPUs, which on machines with many cores and a modest disk yields hundreds of tiny\nallocation groups. Talos bounds the allocation group size from below to keep the geometry\nsane; this option overrides that bound.\n\nSet to zero to use the `mkfs.xfs` defaults unchanged.\n\nNote: this only affects volumes at the time they are formatted.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 100MB.",
+          "x-intellij-html-description": "\u003cp\u003eThe minimum size of an XFS allocation group.\u003c/p\u003e\n\n\u003cp\u003eOn non-rotational devices \u003ccode\u003emkfs.xfs\u003c/code\u003e sizes the allocation group count to the number of\nCPUs, which on machines with many cores and a modest disk yields hundreds of tiny\nallocation groups. Talos bounds the allocation group size from below to keep the geometry\nsane; this option overrides that bound.\u003c/p\u003e\n\n\u003cp\u003eSet to zero to use the \u003ccode\u003emkfs.xfs\u003c/code\u003e defaults unchanged.\u003c/p\u003e\n\n\u003cp\u003eNote: this only affects volumes at the time they are formatted.\u003c/p\u003e\n\n\u003cp\u003eSize is specified in bytes, but can be expressed in human readable format, e.g. 100MB.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "XFSSpec configures XFS-specific filesystem options."
     },
     "block.ZswapConfigV1Alpha1": {
       "properties": {

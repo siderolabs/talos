@@ -29,6 +29,34 @@ CoreDNS: 1.14.6
 Talos is built with Go 1.26.5.
 """
 
+    [notes.xfsallocationgroups]
+        title = "XFS Allocation Group Geometry"
+        description = """\
+On non-rotational devices `mkfs.xfs` sizes the allocation group count to the number of CPUs, bounding the
+allocation group size from below at 4 GiB only. On machines with many cores and a modest disk this produces
+hundreds of tiny allocation groups, which squeezes the AG-local reflink/rmap metadata (leading to spurious
+`ENOSPC` on reflink-heavy workloads while the filesystem still has plenty of free space) and inflates the
+journal at the same time.
+
+Talos now keeps XFS allocation groups at 64 GiB or above when it formats a volume. The bound can be changed
+per volume, and setting it to zero restores the stock `mkfs.xfs` behavior:
+
+```yaml
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: EPHEMERAL
+filesystem:
+  xfs:
+    minAllocationGroupSize: 128GiB
+```
+
+The same `filesystem.xfs.minAllocationGroupSize` setting is available for `UserVolumeConfig`.
+
+Note: allocation group geometry is fixed when the filesystem is created, so this only affects volumes
+formatted by Talos 1.14 or later. Existing volumes keep their current geometry until they are wiped and
+re-created (e.g. `talosctl reset --system-labels-to-wipe=EPHEMERAL`).
+"""
+
     [notes.etcfileconfig]
         title = "EtcFileConfig"
         description = """\

@@ -265,6 +265,23 @@ func (q Quirks) XFSMkfsConfig() string {
 	}
 }
 
+// minTalosVersionXFSAllocationGroupFloor is the version that started bounding the mkfs.xfs
+// concurrency-based allocation group geometry by a minimum allocation group size.
+var minTalosVersionXFSAllocationGroupFloor = semver.MustParse("1.14.0")
+
+// XFSMinAllocationGroupSize returns the minimum XFS allocation group size (in bytes) Talos enforces
+// when mkfs.xfs would otherwise scale the allocation group count to the CPU count.
+//
+// Zero means that the mkfs.xfs defaults are left alone.
+func (q Quirks) XFSMinAllocationGroupSize() uint64 {
+	// if the version doesn't parse, we assume it's latest Talos
+	if q.v != nil && q.v.LT(minTalosVersionXFSAllocationGroupFloor) {
+		return 0
+	}
+
+	return 64 * gib
+}
+
 var maxTalosVersionIMASupported = semver.MustParse("1.10.99")
 
 // SupportsIMA returns true if the Talos version has IMA support.

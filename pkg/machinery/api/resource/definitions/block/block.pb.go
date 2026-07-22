@@ -883,9 +883,13 @@ type FilesystemSpec struct {
 	// Filesystem type.
 	Type enums.BlockFilesystemType `protobuf:"varint,1,opt,name=type,proto3,enum=talos.resource.definitions.enums.BlockFilesystemType" json:"type,omitempty"`
 	// Filesystem label.
-	Label         string `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	Label string `protobuf:"bytes,2,opt,name=label,proto3" json:"label,omitempty"`
+	// MinAllocationGroupSize is the minimum XFS allocation group size in bytes.
+	//
+	// Zero leaves the mkfs.xfs defaults alone.
+	MinAllocationGroupSize uint64 `protobuf:"varint,3,opt,name=min_allocation_group_size,json=minAllocationGroupSize,proto3" json:"min_allocation_group_size,omitempty"`
+	unknownFields          protoimpl.UnknownFields
+	sizeCache              protoimpl.SizeCache
 }
 
 func (x *FilesystemSpec) Reset() {
@@ -930,6 +934,13 @@ func (x *FilesystemSpec) GetLabel() string {
 		return x.Label
 	}
 	return ""
+}
+
+func (x *FilesystemSpec) GetMinAllocationGroupSize() uint64 {
+	if x != nil {
+		return x.MinAllocationGroupSize
+	}
+	return 0
 }
 
 // LocatorSpec is the spec for volume locator.
@@ -2751,10 +2762,11 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\n" +
 	"block_size\x18\x05 \x01(\x04R\tblockSize\x12!\n" +
 	"\fperf_options\x18\x06 \x03(\tR\vperfOptions\x12%\n" +
-	"\x0eallow_discards\x18\a \x01(\bR\rallowDiscards\"q\n" +
+	"\x0eallow_discards\x18\a \x01(\bR\rallowDiscards\"\xac\x01\n" +
 	"\x0eFilesystemSpec\x12I\n" +
 	"\x04type\x18\x01 \x01(\x0e25.talos.resource.definitions.enums.BlockFilesystemTypeR\x04type\x12\x14\n" +
-	"\x05label\x18\x02 \x01(\tR\x05label\"\x90\x01\n" +
+	"\x05label\x18\x02 \x01(\tR\x05label\x129\n" +
+	"\x19min_allocation_group_size\x18\x03 \x01(\x04R\x16minAllocationGroupSize\"\x90\x01\n" +
 	"\vLocatorSpec\x12;\n" +
 	"\x05match\x18\x01 \x01(\v2%.google.api.expr.v1alpha1.CheckedExprR\x05match\x12D\n" +
 	"\n" +

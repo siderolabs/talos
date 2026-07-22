@@ -764,6 +764,72 @@ func TestEphemeralVolumeTransformerWithExtraConfig(t *testing.T) {
 	})
 }
 
+func TestEphemeralVolumeMinAllocationGroupSize(t *testing.T) {
+	t.Parallel()
+
+	const defaultMinAGSize = 64 * 1024 * 1024 * 1024
+
+	t.Run("Talos default without configuration", func(t *testing.T) {
+		t.Parallel()
+
+		transformer := volumeconfig.GetEphemeralVolumeTransformer(false)
+		resources, err := transformer(container.NewV1Alpha1(&baseCfg))
+		require.NoError(t, err)
+		require.Len(t, resources, 1)
+
+		testTransformFunc(t, resources[0].TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
+			require.NoError(t, err)
+			assert.EqualValues(t, defaultMinAGSize, vc.TypedSpec().Provisioning.FilesystemSpec.MinAllocationGroupSize)
+		})
+	})
+
+	t.Run("overridden by VolumeConfig", func(t *testing.T) {
+		t.Parallel()
+
+		ephemeralCfg := blockcfg.NewVolumeConfigV1Alpha1()
+		ephemeralCfg.MetaName = constants.EphemeralPartitionLabel
+		ephemeralCfg.FilesystemSpec.XFSSpec = &blockcfg.XFSSpec{
+			MinAllocationGroupSizeConfig: blockcfg.MustByteSize("16GiB"),
+		}
+
+		cfg, err := container.New(baseCfg.DeepCopy(), ephemeralCfg)
+		require.NoError(t, err)
+
+		transformer := volumeconfig.GetEphemeralVolumeTransformer(false)
+		resources, err := transformer(cfg)
+		require.NoError(t, err)
+		require.Len(t, resources, 1)
+
+		testTransformFunc(t, resources[0].TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
+			require.NoError(t, err)
+			assert.EqualValues(t, 16*1024*1024*1024, vc.TypedSpec().Provisioning.FilesystemSpec.MinAllocationGroupSize)
+		})
+	})
+
+	t.Run("mkfs defaults when set to zero", func(t *testing.T) {
+		t.Parallel()
+
+		ephemeralCfg := blockcfg.NewVolumeConfigV1Alpha1()
+		ephemeralCfg.MetaName = constants.EphemeralPartitionLabel
+		ephemeralCfg.FilesystemSpec.XFSSpec = &blockcfg.XFSSpec{
+			MinAllocationGroupSizeConfig: blockcfg.MustByteSize("0"),
+		}
+
+		cfg, err := container.New(baseCfg.DeepCopy(), ephemeralCfg)
+		require.NoError(t, err)
+
+		transformer := volumeconfig.GetEphemeralVolumeTransformer(false)
+		resources, err := transformer(cfg)
+		require.NoError(t, err)
+		require.Len(t, resources, 1)
+
+		testTransformFunc(t, resources[0].TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
+			require.NoError(t, err)
+			assert.Zero(t, vc.TypedSpec().Provisioning.FilesystemSpec.MinAllocationGroupSize)
+		})
+	})
+}
+
 func TestEphemeralVolumeSecure(t *testing.T) {
 	t.Parallel()
 

@@ -16,13 +16,15 @@ type Option func(*Options)
 
 // Options for makefs.
 type Options struct {
-	Label               string
-	ConfigFile          string
-	SourceDirectory     string
-	SectorSize          uint
-	Force               bool
-	Reproducible        bool
-	UnsupportedFSOption bool
+	Label                  string
+	ConfigFile             string
+	SourceDirectory        string
+	SectorSize             uint
+	DeviceSize             uint64
+	MinAllocationGroupSize uint64
+	Force                  bool
+	Reproducible           bool
+	UnsupportedFSOption    bool
 
 	Printf func(string, ...any)
 }
@@ -79,6 +81,24 @@ func WithSourceDirectory(sourceDir string) Option {
 func WithSectorSize(sectorSize uint) Option {
 	return func(o *Options) {
 		o.SectorSize = sectorSize
+	}
+}
+
+// WithDeviceSize sets the size of the device being formatted, in bytes.
+//
+// It is only used to derive filesystem geometry, see WithMinAllocationGroupSize.
+func WithDeviceSize(size uint64) Option {
+	return func(o *Options) {
+		o.DeviceSize = size
+	}
+}
+
+// WithMinAllocationGroupSize sets the minimum allocation group size (in bytes) for XFS.
+//
+// It has no effect unless WithDeviceSize is set as well. Zero leaves the mkfs defaults alone.
+func WithMinAllocationGroupSize(size uint64) Option {
+	return func(o *Options) {
+		o.MinAllocationGroupSize = size
 	}
 }
 

@@ -125,8 +125,9 @@ func GetEphemeralVolumeTransformer(inContainer bool) volumeConfigTransformer {
 							TypeUUID:        partition.LinuxFilesystemData,
 						},
 						FilesystemSpec: block.FilesystemSpec{
-							Type:  block.FilesystemTypeXFS,
-							Label: constants.EphemeralPartitionLabel,
+							Type:                   block.FilesystemTypeXFS,
+							Label:                  constants.EphemeralPartitionLabel,
+							MinAllocationGroupSize: minAllocationGroupSize(extraVolumeConfig.Filesystem()),
 						},
 					}).
 					WithMount(block.MountSpec{
@@ -270,8 +271,9 @@ func manageStateConfigPresent(cfg configconfig.Config) func(vc *block.VolumeConf
 					TypeUUID: partition.LinuxFilesystemData,
 				},
 				FilesystemSpec: block.FilesystemSpec{
-					Type:  block.FilesystemTypeXFS,
-					Label: constants.StatePartitionLabel,
+					Type:                   block.FilesystemTypeXFS,
+					Label:                  constants.StatePartitionLabel,
+					MinAllocationGroupSize: minAllocationGroupSize(extraVolumeConfig.Filesystem()),
 				},
 			}).
 			WithTrim(cfg, extraVolumeConfig).
@@ -394,8 +396,9 @@ func GetPromotableSystemVolumesTransformer(inContainer bool) volumeConfigTransfo
 							TypeUUID:        partition.LinuxFilesystemData,
 						},
 						FilesystemSpec: block.FilesystemSpec{
-							Type:  block.FilesystemTypeXFS,
-							Label: volume.ID,
+							Type:                   block.FilesystemTypeXFS,
+							Label:                  volume.ID,
+							MinAllocationGroupSize: minAllocationGroupSize(extraVolumeConfig.Filesystem()),
 						},
 					}).
 					WithMount(mountSpec).

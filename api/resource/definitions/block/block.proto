@@ -133,6 +133,10 @@ message FilesystemSpec {
   talos.resource.definitions.enums.BlockFilesystemType type = 1;
   // Filesystem label.
   string label = 2;
+  // MinAllocationGroupSize is the minimum XFS allocation group size in bytes.
+  //
+  // Zero leaves the mkfs.xfs defaults alone.
+  uint64 min_allocation_group_size = 3;
 }
 
 // LocatorSpec is the spec for volume locator.

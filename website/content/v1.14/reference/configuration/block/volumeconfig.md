@@ -63,6 +63,7 @@ provisioning:
 |-------|------|-------------|----------|
 |`name` |string |Name of the volume.  | |
 |`provisioning` |<a href="#VolumeConfig.provisioning">ProvisioningSpec</a> |The provisioning describes how the volume is provisioned.  | |
+|`filesystem` |<a href="#VolumeConfig.filesystem">SystemVolumeFilesystemSpec</a> |The filesystem describes how the volume is formatted.<br><br>Note: this only takes effect at the time the volume is formatted.  | |
 |`encryption` |<a href="#VolumeConfig.encryption">EncryptionSpec</a> |The encryption describes how the volume is encrypted.  | |
 |`mount` |<a href="#VolumeConfig.mount">MountSpec</a> |The mount describes additional mount options.  | |
 |`trim` |<a href="#VolumeConfig.trim">TrimConfig</a> |The trim describes the per-volume filesystem trim (fstrim) configuration.  | |
@@ -106,6 +107,44 @@ DiskSelector selects a disk for the volume.
 match: disk.size > 120u * GB && disk.size < 1u * TB
 {{< /highlight >}}match SATA disks that are not rotational and not system disks:{{< highlight yaml >}}
 match: disk.transport == "sata" && !disk.rotational && !system_disk
+{{< /highlight >}}</details> | |
+
+
+
+
+
+
+
+
+## filesystem {#VolumeConfig.filesystem}
+
+SystemVolumeFilesystemSpec describes how the system volume is formatted.
+
+The filesystem type is fixed for system volumes, and project quota support is configured via
+machine features, so only the filesystem-specific tunables are exposed here.
+
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`xfs` |<a href="#VolumeConfig.filesystem.xfs">XFSSpec</a> |XFS-specific filesystem options.  | |
+
+
+
+
+### xfs {#VolumeConfig.filesystem.xfs}
+
+XFSSpec configures XFS-specific filesystem options.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`minAllocationGroupSize` |ByteSize |The minimum size of an XFS allocation group.<br><br>On non-rotational devices `mkfs.xfs` sizes the allocation group count to the number of<br>CPUs, which on machines with many cores and a modest disk yields hundreds of tiny<br>allocation groups. Talos bounds the allocation group size from below to keep the geometry<br>sane; this option overrides that bound.<br><br>Set to zero to use the `mkfs.xfs` defaults unchanged.<br><br>Note: this only affects volumes at the time they are formatted.<br><br>Size is specified in bytes, but can be expressed in human readable format, e.g. 100MB. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+minAllocationGroupSize: 128GiB
 {{< /highlight >}}</details> | |
 
 

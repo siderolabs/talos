@@ -22,6 +22,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	machineconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 )
@@ -200,7 +201,8 @@ func (ctrl *UserDiskConfigController) processUserDiskPartition(
 					TypeUUID: partition.LinuxFilesystemData,
 				},
 				FilesystemSpec: block.FilesystemSpec{
-					Type: block.FilesystemTypeXFS,
+					Type:                   block.FilesystemTypeXFS,
+					MinAllocationGroupSize: quirks.New("").XFSMinAllocationGroupSize(),
 				},
 			}
 

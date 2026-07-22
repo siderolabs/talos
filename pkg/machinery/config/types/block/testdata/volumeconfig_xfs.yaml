@@ -1,0 +1,6 @@
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: EPHEMERAL
+filesystem:
+    xfs:
+        minAllocationGroupSize: 128GiB

@@ -156,6 +156,10 @@ type FilesystemSpec struct {
 	Type FilesystemType `yaml:"type" protobuf:"1"`
 	// Filesystem label.
 	Label string `yaml:"label,omitempty" protobuf:"2"`
+	// MinAllocationGroupSize is the minimum XFS allocation group size in bytes.
+	//
+	// Zero leaves the mkfs.xfs defaults alone.
+	MinAllocationGroupSize uint64 `yaml:"minAllocationGroupSize,omitempty" protobuf:"3"`
 }
 
 // EncryptionSpec is the spec for volume encryption.

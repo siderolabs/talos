@@ -76,6 +76,11 @@ type VolumeConfigV1Alpha1 struct {
 	//     The provisioning describes how the volume is provisioned.
 	ProvisioningSpec ProvisioningSpec `yaml:"provisioning,omitempty"`
 	//   description: |
+	//     The filesystem describes how the volume is formatted.
+	//
+	//     Note: this only takes effect at the time the volume is formatted.
+	FilesystemSpec SystemVolumeFilesystemSpec `yaml:"filesystem,omitempty"`
+	//   description: |
 	//     The encryption describes how the volume is encrypted.
 	EncryptionSpec EncryptionSpec `yaml:"encryption,omitempty"`
 	//   description: |
@@ -84,6 +89,30 @@ type VolumeConfigV1Alpha1 struct {
 	//   description: |
 	//     The trim describes the per-volume filesystem trim (fstrim) configuration.
 	TrimSpec *TrimConfig `yaml:"trim,omitempty"`
+}
+
+// SystemVolumeFilesystemSpec describes how the system volume is formatted.
+//
+// The filesystem type is fixed for system volumes, and project quota support is configured via
+// machine features, so only the filesystem-specific tunables are exposed here.
+type SystemVolumeFilesystemSpec struct {
+	//   description: |
+	//     XFS-specific filesystem options.
+	XFSSpec *XFSSpec `yaml:"xfs,omitempty"`
+}
+
+// IsZero checks if the filesystem spec is zero.
+func (s SystemVolumeFilesystemSpec) IsZero() bool {
+	return s.XFSSpec == nil
+}
+
+// XFS implements config.SystemVolumeFilesystemConfig interface.
+func (s SystemVolumeFilesystemSpec) XFS() config.XFSFilesystemConfig {
+	if s.XFSSpec == nil {
+		return nil
+	}
+
+	return s.XFSSpec
 }
 
 // MountSpec describes how the volume is mounted.
@@ -269,6 +298,11 @@ func (s *VolumeConfigV1Alpha1) validateVolumeConstraints() error {
 		validationErrors = errors.Join(validationErrors, mountNotAllowed(s.MetaName, s.MountSpec))
 	case constants.ImageCachePartitionLabel:
 		validationErrors = errors.Join(validationErrors, mountNotAllowed(s.MetaName, s.MountSpec))
+
+		// the image cache is formatted as ext4, so the xfs options don't apply.
+		if !s.FilesystemSpec.IsZero() {
+			validationErrors = errors.Join(validationErrors, fmt.Errorf("filesystem config is not allowed for the %q volume", s.MetaName))
+		}
 	case constants.EtcdDataVolumeID, constants.CRIContainerdVolumeID, constants.KubeletDataVolumeID, constants.LogVolumeID:
 		// these volumes default to a directory under EPHEMERAL and can be placed on a dedicated
 		// partition via provisioning (optionally encrypted). Mount config only takes effect on the
@@ -345,6 +379,11 @@ func (s *VolumeConfigV1Alpha1) RuntimeValidate(ctx context.Context, st state.Sta
 // Provisioning implements config.VolumeConfig interface.
 func (s *VolumeConfigV1Alpha1) Provisioning() config.VolumeProvisioningConfig {
 	return s.ProvisioningSpec
+}
+
+// Filesystem implements config.VolumeConfig interface.
+func (s *VolumeConfigV1Alpha1) Filesystem() config.SystemVolumeFilesystemConfig {
+	return s.FilesystemSpec
 }
 
 // Encryption implements config.VolumeConfig interface.

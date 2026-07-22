@@ -1,0 +1,10 @@
+apiVersion: v1alpha1
+kind: UserVolumeConfig
+name: build-cache
+provisioning:
+    diskSelector:
+        match: '!system_disk'
+    minSize: 10GiB
+filesystem:
+    xfs:
+        minAllocationGroupSize: 128GiB

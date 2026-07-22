@@ -822,8 +822,46 @@ func (FilesystemSpec) Doc() *encoder.Doc {
 				Description: "Enables project quota support, valid only for 'xfs' filesystem.\n\nNote: changing this value might require a full remount of the filesystem.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Enables project quota support, valid only for 'xfs' filesystem." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "xfs",
+				Type:        "XFSSpec",
+				Note:        "",
+				Description: "XFS-specific filesystem options, valid only for 'xfs' filesystem.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "XFS-specific filesystem options, valid only for 'xfs' filesystem." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
+
+	return doc
+}
+
+func (XFSSpec) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "XFSSpec",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "XFSSpec configures XFS-specific filesystem options." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "XFSSpec configures XFS-specific filesystem options.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "FilesystemSpec",
+				FieldName: "xfs",
+			},
+			{
+				TypeName:  "SystemVolumeFilesystemSpec",
+				FieldName: "xfs",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "minAllocationGroupSize",
+				Type:        "ByteSize",
+				Note:        "",
+				Description: "The minimum size of an XFS allocation group.\n\nOn non-rotational devices `mkfs.xfs` sizes the allocation group count to the number of\nCPUs, which on machines with many cores and a modest disk yields hundreds of tiny\nallocation groups. Talos bounds the allocation group size from below to keep the geometry\nsane; this option overrides that bound.\n\nSet to zero to use the `mkfs.xfs` defaults unchanged.\n\nNote: this only affects volumes at the time they are formatted.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 100MB.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The minimum size of an XFS allocation group." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("", "128GiB")
 
 	return doc
 }
@@ -853,6 +891,13 @@ func (VolumeConfigV1Alpha1) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The provisioning describes how the volume is provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
+				Name:        "filesystem",
+				Type:        "SystemVolumeFilesystemSpec",
+				Note:        "",
+				Description: "The filesystem describes how the volume is formatted.\n\nNote: this only takes effect at the time the volume is formatted.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The filesystem describes how the volume is formatted." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "encryption",
 				Type:        "EncryptionSpec",
 				Note:        "",
@@ -877,6 +922,31 @@ func (VolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	}
 
 	doc.AddExample("", exampleVolumeConfigEphemeralV1Alpha1())
+
+	return doc
+}
+
+func (SystemVolumeFilesystemSpec) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "SystemVolumeFilesystemSpec",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "SystemVolumeFilesystemSpec describes how the system volume is formatted." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "SystemVolumeFilesystemSpec describes how the system volume is formatted.\n\nThe filesystem type is fixed for system volumes, and project quota support is configured via\nmachine features, so only the filesystem-specific tunables are exposed here.\n",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VolumeConfigV1Alpha1",
+				FieldName: "filesystem",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "xfs",
+				Type:        "XFSSpec",
+				Note:        "",
+				Description: "XFS-specific filesystem options.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "XFS-specific filesystem options." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
 
 	return doc
 }
@@ -1062,7 +1132,9 @@ func GetFileDoc() *encoder.FileDoc {
 			UserVolumeConfigV1Alpha1{}.Doc(),
 			UserMountSpec{}.Doc(),
 			FilesystemSpec{}.Doc(),
+			XFSSpec{}.Doc(),
 			VolumeConfigV1Alpha1{}.Doc(),
+			SystemVolumeFilesystemSpec{}.Doc(),
 			MountSpec{}.Doc(),
 			ProvisioningSpec{}.Doc(),
 			DiskSelector{}.Doc(),

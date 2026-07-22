@@ -36,6 +36,7 @@ type VolumesConfig interface {
 type VolumeConfig interface {
 	NamedDocument
 	Provisioning() VolumeProvisioningConfig
+	Filesystem() SystemVolumeFilesystemConfig
 	Encryption() EncryptionConfig
 	Mount() VolumeMountConfig
 	VolumeTrimConfigProvider
@@ -78,6 +79,14 @@ func (emptyVolumeConfig) Name() string {
 
 func (emptyVolumeConfig) Provisioning() VolumeProvisioningConfig {
 	return emptyVolumeConfig{}
+}
+
+func (config emptyVolumeConfig) Filesystem() SystemVolumeFilesystemConfig {
+	return config
+}
+
+func (emptyVolumeConfig) XFS() XFSFilesystemConfig {
+	return nil
 }
 
 func (emptyVolumeConfig) Encryption() EncryptionConfig {
@@ -205,10 +214,25 @@ type ExternalVolumeMountConfigSpec interface {
 
 // FilesystemConfig defines the interface to access filesystem configuration.
 type FilesystemConfig interface {
+	SystemVolumeFilesystemConfig
 	// Type returns the filesystem type.
 	Type() block.FilesystemType
 	// ProjectQuotaSupport returns true if the filesystem should support project quotas.
 	ProjectQuotaSupport() bool
+}
+
+// SystemVolumeFilesystemConfig is the subset of the filesystem configuration which can be set for
+// system volumes (the filesystem type is fixed, and project quota support comes from machine
+// features).
+type SystemVolumeFilesystemConfig interface {
+	// XFS returns the XFS-specific filesystem configuration, if any.
+	XFS() XFSFilesystemConfig
+}
+
+// XFSFilesystemConfig defines the interface to access XFS-specific filesystem configuration.
+type XFSFilesystemConfig interface {
+	// MinAllocationGroupSize returns the minimum XFS allocation group size in bytes.
+	MinAllocationGroupSize() optional.Optional[uint64]
 }
 
 // SwapVolumeConfig defines the interface to access swap volume configuration.
