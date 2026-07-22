@@ -7,7 +7,6 @@ package vm
 import (
 	"context"
 	"fmt"
-	"net"
 	"os"
 	"os/exec"
 	"strings"
@@ -19,18 +18,14 @@ import (
 )
 
 // CreateDHCPd creates a DHCP server on darwin.
-// It waits for the interface to appear, shut's down the apple bootp DHCPd server created by qemu by default,
-// starts the talos DHCP server and then starts the apple bootp server again, which is configured such
-// that it detects existing dhcp servers on interfaces and doesn't interfare with them.
+// The bridge interface already exists at this point, brought up and held open by CreateNetwork.
+// It shuts down the apple bootp DHCPd server, starts the talos DHCP server and then starts the
+// apple bootp server again, which is configured such that it detects existing dhcp servers on
+// interfaces and doesn't interfere with them.
 func (p *Provisioner) CreateDHCPd(ctx context.Context, state *provision.State, clusterReq provision.ClusterRequest) error {
-	err := waitForInterface(ctx, state.BridgeName)
-	if err != nil {
-		return err
-	}
-
 	cmd := exec.CommandContext(ctx, "/bin/launchctl", "unload", "-w", "/System/Library/LaunchDaemons/bootps.plist")
 
-	err = cmd.Run()
+	err := cmd.Run()
 	if err != nil {
 		return fmt.Errorf("failed to stop native dhcp server: %w", err)
 	}
@@ -55,24 +50,6 @@ func (p *Provisioner) CreateDHCPd(ctx context.Context, state *provision.State, c
 	}
 
 	return nil
-}
-
-// waitForInterface returns when interface is found or errors after a minute.
-func waitForInterface(ctx context.Context, interfaceName string) error {
-	return retry.Constant(1*time.Minute, retry.WithUnits(50*time.Millisecond)).RetryWithContext(ctx, func(_ context.Context) error {
-		ifaces, err := net.Interfaces()
-		if err != nil {
-			return err
-		}
-
-		for _, iface := range ifaces {
-			if iface.Name == interfaceName {
-				return nil
-			}
-		}
-
-		return retry.ExpectedError(fmt.Errorf("interface %s not found", interfaceName))
-	})
 }
 
 func waitForDHCPServerUp(ctx context.Context, state *provision.State) error {
