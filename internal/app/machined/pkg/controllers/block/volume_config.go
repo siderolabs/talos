@@ -150,12 +150,13 @@ func (ctrl *VolumeConfigController) Run(ctx context.Context, r controller.Runtim
 
 		for _, resource := range resources {
 			if resource.VolumeID != constants.MetaPartitionLabel {
-				volumesWiped, err := safe.ReaderGetByID[*block.VolumeWipeStatus](ctx, r, block.VolumeWipeID)
+				volumeWipeStatus, err := safe.ReaderGetByID[*block.VolumeWipeStatus](ctx, r, block.VolumeWipeID)
 				if err != nil {
 					return fmt.Errorf("error fetching volume wipe status: %w", err)
+					// TODO(majabojarska): What if we upgrade from a node that doesn't have these labels?
 				}
 
-				if !volumesWiped.TypedSpec().Ready {
+				if !volumeWipeStatus.TypedSpec().Ready {
 					// Volumes not wiped yet, skip creating non-META volumes until wipe is complete
 					continue
 				}

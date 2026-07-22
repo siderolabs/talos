@@ -72,23 +72,37 @@ func (ctrl *VolumeWipeController) Run(ctx context.Context, r controller.Runtime,
 		case <-r.EventCh():
 		}
 
-		metaKey, err := safe.ReaderGetByID[*runtime.MetaKey](ctx, r, runtime.MetaKeyTagToID(meta.StagedPartitionsToWipe))
+		_, err := safe.ReaderGetByID[*runtime.MetaLoaded](ctx, r, runtime.MetaLoadedID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
 			}
 
-			return fmt.Errorf("failed to get staged partitions to wipe meta key: %w", err)
+			return fmt.Errorf("error getting meta loaded resource: %w", err)
+		}
+
+		// TODO(majabojarska): Must distinguish META not found vs key not found
+		metaKey, err := safe.ReaderGetByID[*runtime.MetaKey](ctx, r, runtime.MetaKeyTagToID(meta.StagedPartitionsToWipe))
+		if err != nil {
+			return fmt.Errorf("failed to read META key (StagedPartitionsToWipe): %w", err)
 		}
 
 		if metaKey == nil {
-			continue
-		}
+			// Nothing to wipe
+			// logger.Info("META key not found or empty, skipping volume wipe", zap.Int("metaKey", meta.StagedPartitionsToWipe))
+			if err := safe.WriterModify(
+				ctx,
+				r,
+				block.NewVolumeWipeStatus(block.NamespaceName, block.VolumeWipeID),
+				func(status *block.VolumeWipeStatus) error {
+					status.TypedSpec().Ready = true
 
-		// unmarshal the stored partition UUIDs
-		var partitionUUIDs map[string]bool
-		if err := json.Unmarshal([]byte(metaKey.TypedSpec().Value), &partitionUUIDs); err != nil {
-			return fmt.Errorf("failed to decode staged partitions to wipe tag: %w", err)
+					return nil
+				}); err != nil {
+				return fmt.Errorf("failed to write volume wipe status: %w", err)
+			}
+
+			return nil
 		}
 
 		// delete + flush the tag FIRST, before wiping — preserves safety (a wipe failure can't cause a boot loop)
@@ -99,6 +113,12 @@ func (ctrl *VolumeWipeController) Run(ctx context.Context, r controller.Runtime,
 
 		if err := ctrl.MetaProvider.Meta().Flush(); err != nil {
 			return fmt.Errorf("failed to flush meta: %w", err)
+		}
+
+		// unmarshal the stored partition UUIDs
+		var partitionUUIDs map[string]bool
+		if err := json.Unmarshal([]byte(metaKey.TypedSpec().Value), &partitionUUIDs); err != nil {
+			return fmt.Errorf("failed to decode staged partitions to wipe tag: %w", err)
 		}
 
 		discoveredVolumes, err := safe.ReaderListAll[*block.DiscoveredVolume](ctx, r)
