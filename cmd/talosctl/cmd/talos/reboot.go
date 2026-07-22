@@ -76,15 +76,24 @@ func rebootRun(ctx context.Context, opts []client.RebootMode) (retErr error) {
 	}
 
 	nodeNames, err := drainNodes(ctx, clientFactory, rebootCmdFlags.drainTimeout, rep)
+
+	// Register the uncordon before checking the error: on a partial drain failure
+	// drainNodes still returns the nodes it managed to cordon. Unlike upgrade there
+	// is no staged image forcing us onward, so aborting the reboot is fine - but the
+	// nodes that were cordoned must still be restored to schedulable rather than left
+	// SchedulingDisabled. On the abort path the nodes never rebooted, so the deferred
+	// WaitForNodeReady returns immediately and the uncordon proceeds.
+	defer func() {
+		if len(nodeNames) > 0 {
+			if uncordonErr := uncordonNodes(ctx, clientFactory, nodeNames, rebootCmdFlags.timeout, rep); uncordonErr != nil {
+				retErr = errors.Join(retErr, uncordonErr)
+			}
+		}
+	}()
+
 	if err != nil {
 		return fmt.Errorf("error draining nodes: %w", err)
 	}
-
-	defer func() {
-		if uncordonErr := uncordonNodes(ctx, clientFactory, nodeNames, rebootCmdFlags.timeout, rep); uncordonErr != nil {
-			retErr = errors.Join(retErr, uncordonErr)
-		}
-	}()
 
 	return rebootInternal(ctx, clientFactory, rebootCmdFlags.wait, rebootCmdFlags.debug, rebootCmdFlags.timeout, rep, opts...)
 }

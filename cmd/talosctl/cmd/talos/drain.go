@@ -30,6 +30,12 @@ type nodeUpdate struct {
 // and performs cordon + drain on all of them in parallel.
 //
 // It returns a map of talosIP -> k8sNodeName for use in the uncordon phase.
+//
+// On error the map is still returned (partially populated): each node name is
+// recorded before that node is cordoned, so the map holds every node that may
+// have been cordoned before the failure. A caller that proceeds past a failed
+// drain (e.g. the upgrade path, which has already staged a new image on disk)
+// can then still uncordon those nodes instead of leaving them SchedulingDisabled.
 func drainNodes(ctx context.Context, clientFactory *global.ClientFactory, drainTimeout time.Duration, rep *reporter.Reporter) (map[string]string, error) {
 	// For kubeconfig - build a random endpoint client (to go to the controlplane).
 	c, err := clientFactory.BuildRandomEndpointClient(ctx)
@@ -103,7 +109,10 @@ func drainNodes(ctx context.Context, clientFactory *global.ClientFactory, drainT
 	<-aggregatorDone
 
 	if err != nil {
-		return nil, err
+		// Return the partially-populated map alongside the error: it holds the
+		// nodes that were cordoned before the failure, so a caller that continues
+		// past a failed drain can still uncordon them.
+		return k8sNames, err
 	}
 
 	return k8sNames, nil
