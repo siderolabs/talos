@@ -25,6 +25,7 @@ import (
 // PCRStatusController manages TPM PCR extension.
 type PCRStatusController struct {
 	V1Alpha1Mode runtimetalos.Mode
+	TPMExtender  func(pcr int, data []byte) error
 
 	numberOfExtensions int
 }
@@ -41,6 +42,16 @@ func (ctrl *PCRStatusController) Inputs() []controller.Input {
 			Namespace: block.NamespaceName,
 			Type:      block.VolumeStatusType,
 			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: block.NamespaceName,
+			Type:      block.VolumeConfigType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: hardware.NamespaceName,
+			Type:      hardware.PCRStatusType,
+			Kind:      controller.InputDestroyReady,
 		},
 	}
 }
@@ -64,6 +75,10 @@ func (ctrl *PCRStatusController) Run(ctx context.Context, r controller.Runtime, 
 		return nil
 	}
 
+	if ctrl.TPMExtender == nil {
+		ctrl.TPMExtender = tpm2.PCRExtend
+	}
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -75,7 +90,7 @@ func (ctrl *PCRStatusController) Run(ctx context.Context, r controller.Runtime, 
 		case 0:
 			// extend the PCR for the first time
 			// this unlock initial PCR extension
-			if err := tpm2.PCRExtend(constants.UKIPCR, []byte(secureboot.EnterMachined)); err != nil {
+			if err := ctrl.TPMExtender(constants.UKIPCR, []byte(secureboot.EnterMachined)); err != nil {
 				return fmt.Errorf("error performing initial PCR extension: %w", err)
 			}
 
@@ -95,6 +110,7 @@ func (ctrl *PCRStatusController) Run(ctx context.Context, r controller.Runtime, 
 
 			volumesReady := map[string]struct{}{}
 			volumesPending := map[string]struct{}{}
+			volumeStatusObserved := map[string]struct{}{}
 
 			for volumeStatus := range volumeStatuses.All() {
 				switch volumeStatus.TypedSpec().Type {
@@ -104,6 +120,8 @@ func (ctrl *PCRStatusController) Run(ctx context.Context, r controller.Runtime, 
 					// skip it, not encryptable
 					continue
 				}
+
+				volumeStatusObserved[volumeStatus.Metadata().ID()] = struct{}{}
 
 				switch volumeStatus.TypedSpec().Phase {
 				case block.VolumePhaseMissing:
@@ -115,6 +133,26 @@ func (ctrl *PCRStatusController) Run(ctx context.Context, r controller.Runtime, 
 				case block.VolumePhaseLocated, block.VolumePhaseWaiting, block.VolumePhaseFailed,
 					block.VolumePhaseProvisioned, block.VolumePhasePrepared:
 					volumesPending[volumeStatus.Metadata().ID()] = struct{}{}
+				}
+			}
+
+			volumeConfigs, err := safe.ReaderListAll[*block.VolumeConfig](ctx, r)
+			if err != nil {
+				return fmt.Errorf("error listing volume statuses: %w", err)
+			}
+
+			for volumeConfig := range volumeConfigs.All() {
+				switch volumeConfig.TypedSpec().Type {
+				case block.VolumeTypeDisk, block.VolumeTypePartition:
+					// can be encrypted
+				case block.VolumeTypeDirectory, block.VolumeTypeOverlay, block.VolumeTypeSymlink, block.VolumeTypeTmpfs, block.VolumeTypeExternal:
+					// skip it, not encryptable
+					continue
+				}
+
+				// if we have a volume config, but no status, it means the volume is pending, so stay on the safe side and don't extend the PCR yet
+				if _, observed := volumeStatusObserved[volumeConfig.Metadata().ID()]; !observed {
+					volumesPending[volumeConfig.Metadata().ID()] = struct{}{}
 				}
 			}
 
@@ -156,7 +194,7 @@ func (ctrl *PCRStatusController) Run(ctx context.Context, r controller.Runtime, 
 				return fmt.Errorf("error destroying PCRStatus resource: %w", err)
 			}
 
-			if err := tpm2.PCRExtend(constants.UKIPCR, []byte(secureboot.StartTheWorld)); err != nil {
+			if err := ctrl.TPMExtender(constants.UKIPCR, []byte(secureboot.StartTheWorld)); err != nil {
 				return fmt.Errorf("error performing PCR extension: %w", err)
 			}
 
