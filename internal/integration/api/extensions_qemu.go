@@ -248,6 +248,11 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsKataContainersQEMU() {
 	suite.testRuntimeClass("kata-qemu", "kata-qemu")
 }
 
+// TestExtensionsKataContainersSNP verifies that Kata Containers confidential VMs runtime class is working.
+func (suite *ExtensionsSuiteQEMU) TestExtensionsKataContainersSNP() {
+	suite.testRuntimeClass("kata-qemu-coco-dev", "kata-qemu-coco-dev")
+}
+
 // TestExtensionsYouki verifies youki runtime class is working.
 func (suite *ExtensionsSuiteQEMU) TestExtensionsYouki() {
 	suite.testRuntimeClass("youki", "youki")

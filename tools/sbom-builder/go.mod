@@ -3,12 +3,12 @@ module github.com/siderolabs/talos/tools/sbom-builder
 go 1.26.5
 
 require (
-	github.com/anchore/syft v1.46.0
+	github.com/anchore/syft v1.49.0
 	github.com/google/uuid v1.6.0
 	github.com/spdx/tools-golang v0.6.0-rc4
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/mod v0.38.0
-	modernc.org/sqlite v1.53.0
+	modernc.org/sqlite v1.54.0
 )
 
 require (
@@ -50,7 +50,7 @@ require (
 	github.com/anchore/go-sync v0.1.1 // indirect
 	github.com/anchore/go-version v1.2.2-0.20200701162849-18adb9c92b9b // indirect
 	github.com/anchore/packageurl-go v0.2.0 // indirect
-	github.com/anchore/stereoscope v0.2.2 // indirect
+	github.com/anchore/stereoscope v0.3.0 // indirect
 	github.com/andybalholm/brotli v1.2.2 // indirect
 	github.com/apparentlymart/go-textseg/v15 v15.0.0 // indirect
 	github.com/apparentlymart/go-textseg/v17 v17.0.1 // indirect
@@ -281,6 +281,7 @@ require (
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	howett.net/plist v1.0.1 // indirect
 	modernc.org/libc v1.74.1 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.11.0 // indirect
