@@ -1456,13 +1456,13 @@ func UnmountEphemeralPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 		mountRequest := blockres.NewVolumeMountRequest(blockres.NamespaceName, constants.EphemeralPartitionLabel).Metadata()
 
-		err := r.State().V1Alpha2().Resources().Destroy(ctx, mountRequest)
+		err := r.State().V1Alpha2().Resources().TeardownAndDestroy(ctx, mountRequest)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				return nil
 			}
 
-			return fmt.Errorf("failed to destroy EPHEMERAL mount request: %w", err)
+			return fmt.Errorf("failed to teardown EPHEMERAL mount request: %w", err)
 		}
 
 		return nil
