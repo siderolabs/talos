@@ -6,6 +6,7 @@ package debug
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -17,6 +18,7 @@ import (
 	containerd "github.com/containerd/containerd/v2/client"
 	"github.com/containerd/errdefs"
 	ocispec "github.com/opencontainers/image-spec/identity"
+	"github.com/siderolabs/go-cmd/pkg/cmd/proc/reaper"
 	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 
@@ -238,9 +240,15 @@ func launchInHostNs(
 		Env:  env,
 		Dir:  "/",
 	}
+	notifyCh := make(chan reaper.ProcessInfo, 8)
+
+	usingReaper := reaper.Notify(notifyCh)
+	if usingReaper {
+		defer reaper.Stop(notifyCh)
+	}
 
 	if tty {
-		return runWithOpenPty(ctx, cmd, merged, ptyMaster, ptySlave, stdin, stdout, cgroupFd, controlC)
+		return runWithOpenPty(ctx, cmd, merged, ptyMaster, ptySlave, stdin, stdout, cgroupFd, controlC, usingReaper, notifyCh)
 	}
 
 	cmd.Stdin = stdin
@@ -264,15 +272,24 @@ func launchInHostNs(
 
 	go runControlLoop(ctx, done, controlC, cmd.Process.Pid, nil)
 
-	if waitErr := cmd.Wait(); waitErr != nil {
-		if exitErr, ok := waitErr.(*exec.ExitError); ok {
-			return exitErr.ExitCode(), nil
-		}
+	return waitHostNsCommand(cmd, usingReaper, notifyCh)
+}
 
-		return 1, waitErr
+func waitHostNsCommand(cmd *exec.Cmd, usingReaper bool, notifyCh <-chan reaper.ProcessInfo) (int, error) {
+	waitErr := reaper.WaitWrapper(usingReaper, notifyCh, cmd)
+	if waitErr == nil {
+		return 0, nil
 	}
 
-	return 0, nil
+	if execErr, execErrOk := errors.AsType[*exec.ExitError](waitErr); execErrOk {
+		return execErr.ExitCode(), nil
+	}
+
+	if reaperExitErr, reaperExitErrOk := errors.AsType[*reaper.ExitError](waitErr); reaperExitErrOk {
+		return reaperExitErr.ExitCode, nil
+	}
+
+	return 1, waitErr
 }
 
 // runControlLoop handles out-of-band control messages for a running host-ns child:
@@ -339,6 +356,8 @@ func runWithOpenPty(
 	stdout io.Writer,
 	cgroupFd *os.File,
 	controlC <-chan hostNsControl,
+	usingReaper bool,
+	notifyCh <-chan reaper.ProcessInfo,
 ) (int, error) {
 	defer ptyMaster.Close() //nolint:errcheck
 
@@ -399,15 +418,7 @@ func runWithOpenPty(
 		}
 	}()
 
-	if waitErr := cmd.Wait(); waitErr != nil {
-		if exitErr, ok := waitErr.(*exec.ExitError); ok {
-			return exitErr.ExitCode(), nil
-		}
-
-		return 1, waitErr
-	}
-
-	return 0, nil
+	return waitHostNsCommand(cmd, usingReaper, notifyCh)
 }
 
 // openPty opens a new pseudo-terminal pair using Linux's /dev/ptmx.
