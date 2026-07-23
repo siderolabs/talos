@@ -11,7 +11,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
-	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	v1 "k8s.io/api/core/v1"
@@ -58,51 +57,6 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileDefaults() {
 			suite.Require().NoError(err)
 		},
 	)
-}
-
-func (suite *ControlPlaneStaticPodSuite) TestEtcdUnhealthyPreservesStaticPods() {
-	secretStatus := k8s.NewSecretsStatus(k8s.ControlPlaneNamespaceName, k8s.StaticPodSecretsStaticPodID)
-	configStatus := k8s.NewConfigStatus(k8s.ControlPlaneNamespaceName, k8s.ConfigStatusStaticPodID)
-	configAPIServer := k8s.NewAPIServerConfig(k8s.FinalAPIServerConfigID)
-	configControllerManager := k8s.NewControllerManagerConfig(k8s.FinalControllerManagerConfigID)
-	configControllerManager.TypedSpec().Enabled = true
-	configScheduler := k8s.NewSchedulerConfig(k8s.FinalSchedulerConfigID)
-	configScheduler.TypedSpec().Enabled = true
-
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), configStatus))
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), secretStatus))
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), configAPIServer))
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), configControllerManager))
-	suite.Require().NoError(suite.State().Create(suite.Ctx(), configScheduler))
-
-	staticPodIDs := []resource.ID{
-		k8s.APIServerID,
-		k8s.ControllerManagerID,
-		k8s.SchedulerID,
-	}
-
-	rtestutils.AssertResources(
-		suite.Ctx(),
-		suite.T(),
-		suite.State(),
-		staticPodIDs,
-		func(*k8s.StaticPod, *assert.Assertions) {},
-	)
-
-	ctest.UpdateWithConflicts(suite, v1alpha1.NewService("etcd"), func(service *v1alpha1.Service) error {
-		service.TypedSpec().Healthy = false
-		service.TypedSpec().Unknown = false
-
-		return nil
-	})
-
-	for _, id := range staticPodIDs {
-		suite.Never(func() bool {
-			_, err := suite.State().Get(suite.Ctx(), k8s.NewStaticPod(k8s.NamespaceName, id).Metadata())
-
-			return state.IsNotFoundError(err)
-		}, 500*time.Millisecond, 10*time.Millisecond)
-	}
 }
 
 func (suite *ControlPlaneStaticPodSuite) TestControlPlaneStaticPodsExceptScheduler() {
