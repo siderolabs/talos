@@ -21,6 +21,8 @@ import (
 	"github.com/containerd/containerd/v2/pkg/namespaces"
 	"github.com/containerd/containerd/v2/pkg/oci"
 	"github.com/containerd/errdefs"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
@@ -45,6 +47,10 @@ type containerdRunner struct {
 	container   containerd.Container
 	stdinCloser *StdinCloser
 }
+
+const taskWaitRetryInterval = time.Second
+
+var errTaskWaitClosed = errors.New("task wait stream closed without an exit status")
 
 // NewRunner creates runner.Runner that runs a container in containerd.
 func NewRunner(logToConsole bool, args *runner.Args, setters ...runner.Option) runner.Runner {
@@ -234,32 +240,63 @@ func (c *containerdRunner) Run(eventSink events.Recorder, pidRecorder pid.Record
 		}
 	}()
 
-	statusC, err := task.Wait(c.ctx)
-	if err != nil {
-		return fmt.Errorf("failed waiting for task: %q: %w", c.args.ID, err)
+	recovering := false
+
+taskWaitLoop:
+	for {
+		statusC, waitErr := task.Wait(c.ctx)
+		if waitErr != nil {
+			return fmt.Errorf("failed waiting for task %q: %w", c.args.ID, waitErr)
+		}
+
+		select {
+		case status, ok := <-statusC:
+			retry, statusErr := retryTaskWait(status, ok)
+			if statusErr != nil {
+				return fmt.Errorf("failed waiting for task %q: %w", c.args.ID, statusErr)
+			}
+
+			if !retry {
+				code := status.ExitCode()
+				if code != 0 {
+					return fmt.Errorf("task %q failed: exit code %d (last log %q)", c.args.ID, code, lastLog.GetLastLog())
+				}
+
+				return nil
+			}
+
+			if !recovering {
+				log.Printf("task wait stream interrupted, waiting for containerd: %v", status.Error())
+			}
+
+			recovering = true
+
+			select {
+			case <-c.stop:
+				break taskWaitLoop
+			case <-time.After(taskWaitRetryInterval):
+			}
+		case <-c.stop:
+			break taskWaitLoop
+		}
 	}
 
-	select {
-	case status := <-statusC:
-		code := status.ExitCode()
-		if code != 0 {
-			return fmt.Errorf("task %q failed: exit code %d (last log %q)", c.args.ID, code, lastLog.GetLastLog())
-		}
+	// graceful stop the task
+	eventSink(
+		events.StateStopping,
+		"Sending SIGTERM to task %s (PID %d, container %s)",
+		task.ID(),
+		task.Pid(),
+		c.container.ID(),
+	)
 
-		return nil
-	case <-c.stop:
-		// graceful stop the task
-		eventSink(
-			events.StateStopping,
-			"Sending SIGTERM to task %s (PID %d, container %s)",
-			task.ID(),
-			task.Pid(),
-			c.container.ID(),
-		)
+	if err = task.Kill(c.ctx, syscall.SIGTERM, containerd.WithKillAll); err != nil {
+		return fmt.Errorf("error sending SIGTERM: %w", err)
+	}
 
-		if err = task.Kill(c.ctx, syscall.SIGTERM, containerd.WithKillAll); err != nil {
-			return fmt.Errorf("error sending SIGTERM: %w", err)
-		}
+	statusC, err := task.Wait(c.ctx)
+	if err != nil {
+		return fmt.Errorf("failed waiting for task after SIGTERM: %w", err)
 	}
 
 	select {
@@ -284,6 +321,26 @@ func (c *containerdRunner) Run(eventSink events.Recorder, pidRecorder pid.Record
 	<-statusC
 
 	return logW.Close()
+}
+
+func retryTaskWait(status containerd.ExitStatus, ok bool) (bool, error) {
+	if !ok {
+		return false, errTaskWaitClosed
+	}
+
+	if err := status.Error(); err != nil {
+		if isContainerdUnavailable(err) {
+			return true, nil
+		}
+
+		return false, err
+	}
+
+	return false, nil
+}
+
+func isContainerdUnavailable(err error) bool {
+	return errdefs.IsUnavailable(err) || status.Code(err) == codes.Unavailable
 }
 
 // Stop implements runner.Runner interface.
