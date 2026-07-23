@@ -7,19 +7,11 @@ package helpers
 import (
 	"fmt"
 	"strings"
-
-	"github.com/siderolabs/talos/pkg/images"
 )
 
 // BuildImageFactoryURL builds an installer image reference of the form
 // <factory>/<platform>-installer[-secureboot]/<schematic ID>:<version>.
-//
-// An empty schematic is substituted with the default (empty) schematic ID.
 func BuildImageFactoryURL(factory, schematic, version, platform string, secureBoot bool) string {
-	if schematic == "" {
-		schematic = images.DefaultInstallerImageSchematic
-	}
-
 	installerType := platform + "-installer"
 	if secureBoot {
 		installerType += "-secureboot"

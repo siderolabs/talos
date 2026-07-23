@@ -17,9 +17,6 @@ import (
 )
 
 // MachineContext is the machine state relevant to building an installer image reference.
-//
-// An empty Schematic means the machine doesn't expose its schematic ID (e.g. not a factory image).
-// An empty FactoryHost means the machine doesn't expose the factory it was installed from.
 type MachineContext struct {
 	Schematic   string
 	FactoryHost string
@@ -67,7 +64,7 @@ func QueryMachineContext(ctx context.Context, c *client.Client) (*MachineContext
 // factoryHostFromAPIURL strips the scheme (and any trailing slash) from the schematic's
 // API URL so it can be used as the host component of a container image reference.
 //
-// e.g. "https://factory.talos.dev" -> "factory.talos.dev".
+// e.g. "https://factory.talos.dev/" -> "factory.talos.dev".
 func factoryHostFromAPIURL(apiURL string) string {
 	host := apiURL
 

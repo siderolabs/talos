@@ -218,7 +218,7 @@ func resolveUpgradeImages(ctx context.Context, clientFactory *global.ClientFacto
 
 	// If every derived component is set explicitly, no per-node state is needed: the image is uniform.
 	if upgradeCmdFlags.schematic != "" && upgradeCmdFlags.platform != "" &&
-		upgradeCmdFlags.secureBootChanged && upgradeCmdFlags.factoryChanged {
+		upgradeCmdFlags.secureBootChanged && upgradeCmdFlags.factoryChanged && upgradeCmdFlags.talosVersion != ""{
 		imageRef := buildUpgradeImage(&helpers.MachineContext{})
 
 		fmt.Printf("upgrade image: %s\n", imageRef)
@@ -278,6 +278,10 @@ func buildUpgradeImage(machineCtx *helpers.MachineContext) string {
 		schematic = machineCtx.Schematic
 	}
 
+	if schematic == "" {
+        schematic = images.DefaultInstallerImageSchematic
+    }
+
 	platform := upgradeCmdFlags.platform
 	if platform == "" {
 		platform = machineCtx.Platform
@@ -292,8 +296,6 @@ func buildUpgradeImage(machineCtx *helpers.MachineContext) string {
 		secureBoot = machineCtx.SecureBoot
 	}
 
-	// Prefer the factory host the machine was actually installed from, so a node built from a
-	// private/mirror factory upgrades against the same one; fall back to the public factory.
 	factory := upgradeCmdFlags.factory
 	if !upgradeCmdFlags.factoryChanged {
 		factory = machineCtx.FactoryHost
