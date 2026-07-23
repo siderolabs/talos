@@ -5,15 +5,22 @@
 package system_test
 
 import (
+	"context"
 	"errors"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
 	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/health"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
 	"github.com/siderolabs/talos/pkg/conditions"
 )
 
@@ -111,6 +118,172 @@ func (suite *ServiceRunnerSuite) TestFullFlowHealthy() {
 		events.StateRunning,
 		events.StateRunning, // one more notification when service is healthy
 	}, sr)
+}
+
+func TestServiceRunnerPublishesHealthReadyBeforeRunning(t *testing.T) {
+	healthCheckStarted := make(chan struct{})
+	healthStateUpdated := make(chan struct{})
+	allowHealthCheck := make(chan struct{})
+	allowRunning := make(chan struct{})
+	runningPublished := make(chan struct{})
+
+	runnr := &blockedRunningRunner{
+		allowRunning:     allowRunning,
+		runningPublished: runningPublished,
+		exitCh:           make(chan error),
+	}
+
+	svc := &blockedHealthcheckedService{
+		MockService: MockService{
+			runner: runnr,
+		},
+		healthCheckStarted: healthCheckStarted,
+		healthStateUpdated: healthStateUpdated,
+		allowHealthCheck:   allowHealthCheck,
+	}
+
+	sr := system.NewServiceRunner(system.Services(newRuntime(t)), svc, newRuntime(t))
+	errCh := make(chan error, 1)
+
+	go func() {
+		errCh <- sr.Run()
+	}()
+
+	var (
+		releaseHealthCheck sync.Once
+		releaseRunning     sync.Once
+	)
+
+	t.Cleanup(func() {
+		releaseHealthCheck.Do(func() { close(allowHealthCheck) })
+		releaseRunning.Do(func() { close(allowRunning) })
+
+		sr.Shutdown()
+		require.NoError(t, <-errCh)
+	})
+
+	select {
+	case <-healthCheckStarted:
+	case <-time.After(time.Minute):
+		require.FailNow(t, "health check did not start")
+	}
+
+	releaseHealthCheck.Do(func() { close(allowHealthCheck) })
+
+	// The next check starts only after health.Run publishes the first result.
+	select {
+	case <-healthStateUpdated:
+	case <-time.After(time.Minute):
+		require.FailNow(t, "health state was not updated")
+	}
+
+	releaseRunning.Do(func() { close(allowRunning) })
+
+	select {
+	case <-runningPublished:
+	case <-time.After(time.Minute):
+		require.FailNow(t, "running state was not published")
+	}
+
+	findLastEvent := func(state events.ServiceState) *events.ServiceEvent {
+		history := sr.GetEventHistory(1000)
+
+		for i := len(history) - 1; i >= 0; i-- {
+			if history[i].State == state {
+				return &history[i]
+			}
+		}
+
+		return nil
+	}
+
+	runningEvent := findLastEvent(events.StateRunning)
+
+	require.NotNil(t, runningEvent)
+	require.False(t, runningEvent.Health.AsProto().Unknown)
+	require.True(t, runningEvent.Health.AsProto().Healthy)
+
+	sr.UpdateState(t.Context(), events.StateStopping, "Stopping")
+
+	stoppingEvent := findLastEvent(events.StateStopping)
+
+	require.NotNil(t, stoppingEvent)
+	require.True(t, stoppingEvent.Health.AsProto().Unknown)
+}
+
+type blockedHealthcheckedService struct {
+	MockService
+
+	healthCheckStarted chan<- struct{}
+	healthStateUpdated chan<- struct{}
+	allowHealthCheck   <-chan struct{}
+	healthCheckCount   atomic.Int32
+}
+
+func (svc *blockedHealthcheckedService) HealthFunc(runtime.Runtime) health.Check {
+	return func(ctx context.Context) error {
+		switch svc.healthCheckCount.Add(1) {
+		case 1:
+			close(svc.healthCheckStarted)
+
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-svc.allowHealthCheck:
+				return nil
+			}
+		case 2:
+			// Block further updates after proving the first result was published.
+			close(svc.healthStateUpdated)
+
+			<-ctx.Done()
+
+			return ctx.Err()
+		default:
+			return nil
+		}
+	}
+}
+
+func (svc *blockedHealthcheckedService) HealthSettings(runtime.Runtime) *health.Settings {
+	return &health.Settings{
+		Timeout: time.Minute,
+		Period:  time.Millisecond,
+	}
+}
+
+type blockedRunningRunner struct {
+	allowRunning     <-chan struct{}
+	runningPublished chan<- struct{}
+	exitCh           chan error
+	stopOnce         sync.Once
+}
+
+func (runnr *blockedRunningRunner) Open() error {
+	return nil
+}
+
+func (runnr *blockedRunningRunner) Close() error {
+	return nil
+}
+
+func (runnr *blockedRunningRunner) Run(eventSink events.Recorder, _ pid.Recorder) error {
+	<-runnr.allowRunning
+
+	eventSink(events.StateRunning, "Running")
+	close(runnr.runningPublished)
+
+	return <-runnr.exitCh
+}
+
+func (runnr *blockedRunningRunner) Stop() error {
+	runnr.stopOnce.Do(func() { close(runnr.exitCh) })
+
+	return nil
+}
+
+func (runnr *blockedRunningRunner) String() string {
+	return "blockedRunningRunner()"
 }
 
 func (suite *ServiceRunnerSuite) TestFullFlowHealthChanges() {

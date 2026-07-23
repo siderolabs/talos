@@ -82,6 +82,9 @@ func (svcrunner *ServiceRunner) UpdateState(ctx context.Context, newstate events
 		State:     newstate,
 		Timestamp: time.Now(),
 	}
+	if newstate == events.StateRunning {
+		event.Health = svcrunner.healthState.Get()
+	}
 
 	svcrunner.state = newstate
 	svcrunner.events.Push(event)
@@ -333,16 +336,6 @@ func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) er
 		var healthWg sync.WaitGroup
 		defer healthWg.Wait()
 
-		healthWg.Go(func() {
-			//nolint:errcheck
-			health.Run(
-				ctx,
-				healthSvc.HealthSettings(svcrunner.runtime),
-				&svcrunner.healthState,
-				healthSvc.HealthFunc(svcrunner.runtime),
-			)
-		})
-
 		notifyCh := make(chan health.StateChange, 2)
 
 		svcrunner.healthState.Subscribe(notifyCh)
@@ -357,6 +350,16 @@ func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) er
 					svcrunner.healthUpdate(ctx, change)
 				}
 			}
+		})
+
+		healthWg.Go(func() {
+			//nolint:errcheck
+			health.Run(
+				ctx,
+				healthSvc.HealthSettings(svcrunner.runtime),
+				&svcrunner.healthState,
+				healthSvc.HealthFunc(svcrunner.runtime),
+			)
 		})
 	}
 
