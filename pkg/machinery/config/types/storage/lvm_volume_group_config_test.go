@@ -36,7 +36,7 @@ func TestLVMVolumeGroupConfigMarshalUnmarshal(t *testing.T) {
 				c := storagecfg.NewLVMVolumeGroupConfigV1Alpha1()
 				c.MetaName = "vg-pool"
 
-				require.NoError(t, c.PhysicalVolumes.VolumeSelector.Match.UnmarshalText([]byte(`disk.transport == "nvme"`)))
+				require.NoError(t, c.ProvisioningSpec.VolumeSelector.Match.UnmarshalText([]byte(`disk.transport == "nvme"`)))
 
 				return c
 			},
@@ -88,7 +88,7 @@ func TestLVMVolumeGroupConfigValidate(t *testing.T) {
 			cfg: func(t *testing.T) *storagecfg.LVMVolumeGroupConfigV1Alpha1 {
 				c := storagecfg.NewLVMVolumeGroupConfigV1Alpha1()
 
-				require.NoError(t, c.PhysicalVolumes.VolumeSelector.Match.UnmarshalText([]byte(`disk.transport == "nvme"`)))
+				require.NoError(t, c.ProvisioningSpec.VolumeSelector.Match.UnmarshalText([]byte(`disk.transport == "nvme"`)))
 
 				return c
 			},
@@ -102,7 +102,7 @@ func TestLVMVolumeGroupConfigValidate(t *testing.T) {
 				c := storagecfg.NewLVMVolumeGroupConfigV1Alpha1()
 				c.MetaName = strings.Repeat("X", 64)
 
-				require.NoError(t, c.PhysicalVolumes.VolumeSelector.Match.UnmarshalText([]byte(`disk.transport == "nvme"`)))
+				require.NoError(t, c.ProvisioningSpec.VolumeSelector.Match.UnmarshalText([]byte(`disk.transport == "nvme"`)))
 
 				return c
 			},
@@ -116,7 +116,7 @@ func TestLVMVolumeGroupConfigValidate(t *testing.T) {
 				c := storagecfg.NewLVMVolumeGroupConfigV1Alpha1()
 				c.MetaName = "vg pool"
 
-				require.NoError(t, c.PhysicalVolumes.VolumeSelector.Match.UnmarshalText([]byte(`disk.transport == "nvme"`)))
+				require.NoError(t, c.ProvisioningSpec.VolumeSelector.Match.UnmarshalText([]byte(`disk.transport == "nvme"`)))
 
 				return c
 			},
@@ -133,7 +133,7 @@ func TestLVMVolumeGroupConfigValidate(t *testing.T) {
 				return c
 			},
 
-			expectedErrors: "physicalVolumes.volumeSelector.match is required",
+			expectedErrors: "provisioning.volumeSelector.match is required",
 		},
 		{
 			name: "valid",
@@ -142,7 +142,7 @@ func TestLVMVolumeGroupConfigValidate(t *testing.T) {
 				c := storagecfg.NewLVMVolumeGroupConfigV1Alpha1()
 				c.MetaName = "vg-pool"
 
-				require.NoError(t, c.PhysicalVolumes.VolumeSelector.Match.UnmarshalText([]byte(`disk.transport == "nvme"`)))
+				require.NoError(t, c.ProvisioningSpec.VolumeSelector.Match.UnmarshalText([]byte(`disk.transport == "nvme"`)))
 
 				return c
 			},
@@ -154,7 +154,7 @@ func TestLVMVolumeGroupConfigValidate(t *testing.T) {
 				c := storagecfg.NewLVMVolumeGroupConfigV1Alpha1()
 				c.MetaName = "vg_pool_data"
 
-				require.NoError(t, c.PhysicalVolumes.VolumeSelector.Match.UnmarshalText([]byte(`disk.transport == "nvme"`)))
+				require.NoError(t, c.ProvisioningSpec.VolumeSelector.Match.UnmarshalText([]byte(`disk.transport == "nvme"`)))
 
 				return c
 			},

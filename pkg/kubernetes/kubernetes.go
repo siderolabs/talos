@@ -30,6 +30,7 @@ import (
 	restclient "k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
+	"github.com/siderolabs/talos/pkg/httpdefaults"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
@@ -62,6 +63,8 @@ func NewClientFromKubeletKubeconfig() (*Client, error) {
 		Timeout:   15 * time.Second,
 		KeepAlive: 30 * time.Second,
 	}).DialContext
+
+	config.UserAgent = httpdefaults.UserAgent()
 
 	return NewForConfig(config)
 }
@@ -102,6 +105,8 @@ func NewForConfig(config *restclient.Config) (*Client, error) {
 		return nil, fmt.Errorf("failed to load client key: %w", err)
 	}
 
+	config.UserAgent = httpdefaults.UserAgent()
+
 	// now, initialize the client using the standard method
 	client, err := taloskubernetes.NewForConfig(config)
 	if err != nil {
@@ -114,8 +119,6 @@ func NewForConfig(config *restclient.Config) (*Client, error) {
 }
 
 // NewClientFromPKI initializes and returns a Client.
-//
-//nolint:interfacer
 func NewClientFromPKI(ca, crt, key []byte, endpoint *url.URL) (*Client, error) {
 	tlsClientConfig := restclient.TLSClientConfig{
 		CAData:   ca,

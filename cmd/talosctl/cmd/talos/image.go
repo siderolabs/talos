@@ -533,7 +533,7 @@ var imageK8sBundleCmdFlags = struct {
 	etcdVersion                pflag.Value
 	kubeNetworkPoliciesVersion pflag.Value
 }{
-	k8sVersion:                 flags.Semver(constants.DefaultKubernetesVersion),
+	k8sVersion:                 flags.Semver("v" + constants.DefaultKubernetesVersion),
 	flannelVersion:             flags.Semver(constants.FlannelVersion),
 	corednsVersion:             flags.Semver(constants.DefaultCoreDNSVersion),
 	etcdVersion:                flags.Semver(constants.DefaultEtcdVersion),
@@ -551,7 +551,7 @@ var imageK8sBundleCmd = &cobra.Command{
 			container.NewV1Alpha1(
 				&v1alpha1.Config{
 					MachineConfig: &v1alpha1.MachineConfig{
-						MachineKubelet: &v1alpha1.KubeletConfig{},
+						MachineKubelet: &v1alpha1.KubeletConfig{}, //nolint:staticcheck // legacy config
 					},
 					ClusterConfig: &v1alpha1.ClusterConfig{
 						EtcdConfig:              &v1alpha1.EtcdConfig{},
@@ -559,7 +559,7 @@ var imageK8sBundleCmd = &cobra.Command{
 						ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{}, //nolint:staticcheck // legacy config
 						SchedulerConfig:         &v1alpha1.SchedulerConfig{},         //nolint:staticcheck // legacy config
 						CoreDNSConfig:           &v1alpha1.CoreDNS{},
-						ProxyConfig:             &v1alpha1.ProxyConfig{},
+						ProxyConfig:             &v1alpha1.ProxyConfig{}, //nolint:staticcheck // legacy configuration
 					},
 				},
 			),
@@ -733,7 +733,7 @@ var imageIntegrationCmd = &cobra.Command{
 
 		imgs := images.List(container.NewV1Alpha1(&v1alpha1.Config{
 			MachineConfig: &v1alpha1.MachineConfig{
-				MachineKubelet: &v1alpha1.KubeletConfig{},
+				MachineKubelet: &v1alpha1.KubeletConfig{}, //nolint:staticcheck // legacy config
 			},
 			ClusterConfig: &v1alpha1.ClusterConfig{
 				EtcdConfig:              &v1alpha1.EtcdConfig{},
@@ -741,7 +741,7 @@ var imageIntegrationCmd = &cobra.Command{
 				ControllerManagerConfig: &v1alpha1.ControllerManagerConfig{}, //nolint:staticcheck
 				SchedulerConfig:         &v1alpha1.SchedulerConfig{},         //nolint:staticcheck
 				CoreDNSConfig:           &v1alpha1.CoreDNS{},
-				ProxyConfig:             &v1alpha1.ProxyConfig{},
+				ProxyConfig:             &v1alpha1.ProxyConfig{}, //nolint:staticcheck
 			},
 		}))
 
@@ -758,10 +758,12 @@ var imageIntegrationCmd = &cobra.Command{
 			imgs.KubeNetworkPolicies.String(),
 			"registry.k8s.io/conformance:v" + constants.DefaultKubernetesVersion,
 			"docker.io/library/alpine:latest",
-			"ghcr.io/siderolabs/talosctl:v1.12.4",
+			"ghcr.io/siderolabs/talosctl:v1.13.5",
 			"registry.k8s.io/kube-apiserver:v1.27.0",
 			"registry.k8s.io/kube-apiserver:v1.27.1",
 			"docker.io/library/alpine:3.23",
+			constants.DebugHostNsImage,
+			"docker.io/library/nginx:latest",
 			imageIntegrationCmdFlags.registryAndUser + "/installer:" +
 				imageIntegrationCmdFlags.installerTag,
 			imageIntegrationCmdFlags.registryAndUser + "/talos:" +

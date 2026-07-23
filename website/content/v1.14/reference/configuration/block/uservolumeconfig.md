@@ -160,6 +160,7 @@ encryption:
 |`filesystem` |<a href="#UserVolumeConfig.filesystem">FilesystemSpec</a> |The filesystem describes how the volume is formatted.  | |
 |`encryption` |<a href="#UserVolumeConfig.encryption">EncryptionSpec</a> |The encryption describes how the volume is encrypted.  | |
 |`mount` |<a href="#UserVolumeConfig.mount">UserMountSpec</a> |The mount describes additional mount options.  | |
+|`trim` |<a href="#UserVolumeConfig.trim">TrimConfig</a> |The trim describes the per-volume filesystem trim (fstrim) configuration.  | |
 
 
 
@@ -220,6 +221,25 @@ FilesystemSpec configures the filesystem for the volume.
 |-------|------|-------------|----------|
 |`type` |FilesystemType |Filesystem type. Default is `xfs`.  |`ext4`<br />`xfs`<br />`btrfs`<br /> |
 |`projectQuotaSupport` |bool |Enables project quota support, valid only for 'xfs' filesystem.<br><br>Note: changing this value might require a full remount of the filesystem.  | |
+|`xfs` |<a href="#UserVolumeConfig.filesystem.xfs">XFSSpec</a> |XFS-specific filesystem options, valid only for 'xfs' filesystem.  | |
+
+
+
+
+### xfs {#UserVolumeConfig.filesystem.xfs}
+
+XFSSpec configures XFS-specific filesystem options.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`minAllocationGroupSize` |ByteSize |The minimum size of an XFS allocation group.<br><br>On non-rotational devices `mkfs.xfs` sizes the allocation group count to the number of<br>CPUs, which on machines with many cores and a modest disk yields hundreds of tiny<br>allocation groups. Talos bounds the allocation group size from below to keep the geometry<br>sane; this option overrides that bound.<br><br>Set to zero to use the `mkfs.xfs` defaults unchanged.<br><br>Note: this only affects volumes at the time they are formatted.<br><br>Size is specified in bytes, but can be expressed in human readable format, e.g. 100MB. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+minAllocationGroupSize: 128GiB
+{{< /highlight >}}</details> | |
+
+
 
 
 
@@ -398,6 +418,26 @@ UserMountSpec describes how the volume is mounted.
 |-------|------|-------------|----------|
 |`disableAccessTime` |bool |If true, disable file access time updates.  | |
 |`secure` |bool |Enable secure mount options (nosuid, nodev).<br><br>Defaults to true for better security.  | |
+
+
+
+
+
+
+## trim {#UserVolumeConfig.trim}
+
+TrimConfig describes per-volume filesystem trim (fstrim) configuration.
+
+It overrides the global FilesystemTrimConfig for the volume.
+
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`enabled` |bool |Enable or disable trimming for this volume.<br><br>If not set, trimming is enabled when the global FilesystemTrimConfig is present.  | |
+|`interval` |Duration |The interval at which the volume is trimmed, overriding the global trim interval.  | |
 
 
 

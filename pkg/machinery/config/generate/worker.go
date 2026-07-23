@@ -9,10 +9,13 @@ import (
 	"net/url"
 
 	"github.com/siderolabs/crypto/x509"
+	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	clustertypes "github.com/siderolabs/talos/pkg/machinery/config/types/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	v1alpha1 "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -29,23 +32,31 @@ func (in *Input) worker() ([]config.Document, error) {
 		MachineType:     machine.TypeWorker.String(),
 		MachineToken:    in.Options.SecretsBundle.TrustdInfo.Token,
 		MachineCertSANs: in.AdditionalMachineCertSANs,
-		MachineKubelet: &v1alpha1.KubeletConfig{
+		MachineKubelet: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.KubeletConfig{ //nolint:staticcheck // legacy configuration
 			KubeletImage: fmt.Sprintf("%s:v%s", constants.KubeletImage, in.KubernetesVersion),
-		},
-		MachineCA: &x509.PEMEncodedCertificateAndKey{Crt: in.Options.SecretsBundle.Certs.OS.Crt},
-		MachineInstall: &v1alpha1.InstallConfig{
+		}),
+		MachineCA:       &x509.PEMEncodedCertificateAndKey{Crt: in.Options.SecretsBundle.Certs.OS.Crt},
+		MachineDisks:    in.Options.MachineDisks,
+		MachineFeatures: &v1alpha1.FeaturesConfig{},
+	}
+
+	if !in.Options.VersionContract.MultidocSysctlConfigSupported() {
+		machine.MachineSysctls = in.Options.Sysctls //nolint:staticcheck // legacy configuration
+	}
+
+	// .machine.install is deprecated in favor of the UnattendedInstallConfig multi-document config;
+	// only generate it for older version contracts that don't support the new document.
+	if !in.Options.VersionContract.UnattendedInstallConfig() {
+		machine.MachineInstall = &v1alpha1.InstallConfig{ //nolint:staticcheck // legacy configuration
 			InstallDisk:            in.Options.InstallDisk,
 			InstallImage:           in.Options.InstallImage,
 			InstallWipe:            new(false),
 			InstallExtraKernelArgs: in.Options.InstallExtraKernelArgs,
-		},
-		MachineDisks:    in.Options.MachineDisks,
-		MachineSysctls:  in.Options.Sysctls, //nolint:staticcheck // legacy configuration
-		MachineFeatures: &v1alpha1.FeaturesConfig{},
-	}
+		}
 
-	if in.Options.VersionContract.GrubUseUKICmdlineDefault() {
-		machine.MachineInstall.InstallGrubUseUKICmdline = new(true)
+		if in.Options.VersionContract.GrubUseUKICmdlineDefault() {
+			machine.MachineInstall.InstallGrubUseUKICmdline = new(true) //nolint:staticcheck // legacy configuration
+		}
 	}
 
 	if !in.Options.VersionContract.HideRBACAndKeyUsage() {
@@ -60,26 +71,28 @@ func (in *Input) worker() ([]config.Document, error) {
 		machine.MachineFeatures.DiskQuotaSupport = new(true)
 	}
 
-	if kubePrismPort, optionSet := in.Options.KubePrismPort.Get(); optionSet { // default to enabled, but if set explicitly, allow it to be disabled
-		if kubePrismPort > 0 {
-			machine.MachineFeatures.KubePrismSupport = &v1alpha1.KubePrism{
+	if !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
+		if kubePrismPort, optionSet := in.Options.KubePrismPort.Get(); optionSet { // default to enabled, but if set explicitly, allow it to be disabled
+			if kubePrismPort > 0 {
+				machine.MachineFeatures.KubePrismSupport = &v1alpha1.KubePrism{ //nolint:staticcheck // legacy configuration
+					ServerEnabled: new(true),
+					ServerPort:    kubePrismPort,
+				}
+			}
+		} else if in.Options.VersionContract.KubePrismEnabled() {
+			machine.MachineFeatures.KubePrismSupport = &v1alpha1.KubePrism{ //nolint:staticcheck // legacy configuration
 				ServerEnabled: new(true),
-				ServerPort:    kubePrismPort,
+				ServerPort:    constants.DefaultKubePrismPort,
 			}
 		}
-	} else if in.Options.VersionContract.KubePrismEnabled() {
-		machine.MachineFeatures.KubePrismSupport = &v1alpha1.KubePrism{
-			ServerEnabled: new(true),
-			ServerPort:    constants.DefaultKubePrismPort,
-		}
 	}
 
-	if in.Options.VersionContract.KubeletDefaultRuntimeSeccompProfileEnabled() {
-		machine.MachineKubelet.KubeletDefaultRuntimeSeccompProfileEnabled = new(true)
+	if !in.Options.VersionContract.MultidocKubernetesConfigSupported() && in.Options.VersionContract.KubeletDefaultRuntimeSeccompProfileEnabled() {
+		machine.MachineKubelet.KubeletDefaultRuntimeSeccompProfileEnabled = new(true) //nolint:staticcheck // legacy configuration
 	}
 
-	if in.Options.VersionContract.KubeletManifestsDirectoryDisabled() {
-		machine.MachineKubelet.KubeletDisableManifestsDirectory = new(true)
+	if !in.Options.VersionContract.MultidocKubernetesConfigSupported() && in.Options.VersionContract.KubeletManifestsDirectoryDisabled() {
+		machine.MachineKubelet.KubeletDisableManifestsDirectory = new(true) //nolint:staticcheck // legacy configuration
 	}
 
 	if in.Options.VersionContract.HostDNSEnabled() && !in.Options.VersionContract.HostDNSMultidocConfig() {
@@ -95,13 +108,13 @@ func (in *Input) worker() ([]config.Document, error) {
 	}
 
 	cluster := &v1alpha1.ClusterConfig{
-		ClusterID:      in.Options.SecretsBundle.Cluster.ID,
-		ClusterSecret:  in.Options.SecretsBundle.Cluster.Secret,
-		ClusterCA:      &x509.PEMEncodedCertificateAndKey{Crt: in.Options.SecretsBundle.Certs.K8s.Crt},
+		ClusterID:      nilIf(in.Options.VersionContract.DiscoveryIdentityMultidocConfig(), in.Options.SecretsBundle.Cluster.ID),     //nolint:staticcheck // legacy configuration
+		ClusterSecret:  nilIf(in.Options.VersionContract.DiscoveryIdentityMultidocConfig(), in.Options.SecretsBundle.Cluster.Secret), //nolint:staticcheck // legacy configuration
+		ClusterCA:      nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &x509.PEMEncodedCertificateAndKey{Crt: in.Options.SecretsBundle.Certs.K8s.Crt}),
 		BootstrapToken: in.Options.SecretsBundle.Secrets.BootstrapToken,
-		ControlPlane: &v1alpha1.ControlPlaneConfig{
+		ControlPlane: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.ControlPlaneConfig{
 			Endpoint: &v1alpha1.Endpoint{URL: controlPlaneURL},
-		},
+		}),
 		ClusterNetwork: nilIf(
 			in.Options.VersionContract.MultidocKubernetesConfigSupported(),
 			&v1alpha1.ClusterNetworkConfig{
@@ -119,13 +132,13 @@ func (in *Input) worker() ([]config.Document, error) {
 		}
 	}
 
-	if in.Options.DiscoveryEnabled != nil {
-		cluster.ClusterDiscoveryConfig = &v1alpha1.ClusterDiscoveryConfig{
+	if in.Options.DiscoveryEnabled != nil && !in.Options.VersionContract.DiscoveryServiceMultidocConfig() {
+		cluster.ClusterDiscoveryConfig = &v1alpha1.ClusterDiscoveryConfig{ //nolint:staticcheck // legacy configuration
 			DiscoveryEnabled: new(*in.Options.DiscoveryEnabled),
 		}
 
 		if in.Options.VersionContract.KubernetesDiscoveryBackendDisabled() {
-			cluster.ClusterDiscoveryConfig.DiscoveryRegistries.RegistryKubernetes.RegistryDisabled = new(true)
+			cluster.ClusterDiscoveryConfig.DiscoveryRegistries.RegistryKubernetes.RegistryDisabled = new(true) //nolint:staticcheck // legacy configuration
 		}
 	}
 
@@ -144,14 +157,41 @@ func (in *Input) worker() ([]config.Document, error) {
 		}
 	}
 
-	if in.Options.VersionContract.ClusterNameForWorkers() {
-		cluster.ClusterName = in.ClusterName
+	if in.Options.VersionContract.ClusterNameForWorkers() && !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
+		cluster.ClusterName = in.ClusterName //nolint:staticcheck // legacy configuration
 	}
 
 	v1alpha1Config.MachineConfig = machine
 	v1alpha1Config.ClusterConfig = cluster
 
 	documents := []config.Document{v1alpha1Config}
+
+	if pointer.SafeDeref(in.Options.DiscoveryEnabled) && in.Options.VersionContract.DiscoveryServiceMultidocConfig() {
+		endpointURL, err := url.Parse(constants.DefaultDiscoveryServiceEndpoint)
+		if err != nil {
+			return nil, err
+		}
+
+		documents = append(documents, clustertypes.NewDiscoveryServiceConfigV1Alpha1("default", endpointURL))
+	}
+
+	if in.Options.VersionContract.DiscoveryIdentityMultidocConfig() {
+		documents = append(documents, clustertypes.NewDiscoveryIdentityConfigV1Alpha1(
+			in.Options.SecretsBundle.Cluster.ID,
+			in.Options.SecretsBundle.Cluster.Secret,
+		))
+	}
+
+	// The UnattendedInstallConfig document requires a volume selector, which is derived from the install disk,
+	// so only generate it when an install disk is provided.
+	if in.Options.VersionContract.UnattendedInstallConfig() && in.Options.InstallDisk != "" && !in.Options.SkipUnattendedInstallConfig {
+		unattended, err := in.unattendedInstallConfig()
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate unattended install config: %w", err)
+		}
+
+		documents = append(documents, unattended)
+	}
 
 	if in.Options.VersionContract.HostDNSEnabled() && in.Options.VersionContract.HostDNSMultidocConfig() {
 		resolverConfig := network.NewResolverConfigV1Alpha1()
@@ -162,6 +202,17 @@ func (in *Input) worker() ([]config.Document, error) {
 
 		documents = append(documents, resolverConfig)
 	}
+
+	if len(in.Options.Sysctls) > 0 && in.Options.VersionContract.MultidocSysctlConfigSupported() {
+		sysctlConfig := runtime.NewSysctlConfigV1Alpha1()
+		sysctlConfig.Params = in.Options.Sysctls
+
+		documents = append(documents, sysctlConfig)
+	}
+
+	documents = append(documents, in.generateBlockConfigs()...)
+
+	documents = append(documents, in.generateSecurityProfileConfigs()...)
 
 	extraDocuments, err := in.generateRegistryConfigs(machine)
 	if err != nil {
@@ -177,7 +228,7 @@ func (in *Input) worker() ([]config.Document, error) {
 
 	documents = append(documents, extraDocuments...)
 
-	extraDocuments = in.generateKubernetesUniversalConfigs()
+	extraDocuments = in.generateKubernetesUniversalConfigs(false, controlPlaneURL)
 
 	documents = append(documents, extraDocuments...)
 

@@ -74,6 +74,11 @@ type LVMVolumeGroupStatusSpec struct {
 	SystemID string `yaml:"systemID" protobuf:"24"`
 	// Tags is the list of tags attached to the VG (vg_tags).
 	Tags []string `yaml:"tags" protobuf:"25"`
+
+	// PrettySize is the human-readable rendering of Size.
+	PrettySize string `yaml:"prettySize,omitempty" protobuf:"26"`
+	// PrettyFree is the human-readable rendering of Free.
+	PrettyFree string `yaml:"prettyFree,omitempty" protobuf:"27"`
 }
 
 // NewLVMVolumeGroupStatus initializes a LVMVolumeGroupStatus resource.
@@ -96,8 +101,8 @@ func (LVMVolumeGroupStatusExtension) ResourceDefinition() meta.ResourceDefinitio
 		PrintColumns: []meta.PrintColumn{
 			{Name: "Name", JSONPath: "{.name}"},
 			{Name: "Permissions", JSONPath: "{.permissions}"},
-			{Name: "Size", JSONPath: "{.size}"},
-			{Name: "Free", JSONPath: "{.free}"},
+			{Name: "Size", JSONPath: "{.prettySize}"},
+			{Name: "Free", JSONPath: "{.prettyFree}"},
 			{Name: "PVs", JSONPath: "{.pvCount}"},
 			{Name: "LVs", JSONPath: "{.lvCount}"},
 		},

@@ -7,13 +7,19 @@ package k8s
 import (
 	"context"
 	"fmt"
+	"net/netip"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/controller/generic/transform"
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/optional"
+	"github.com/siderolabs/gen/xerrors"
 	"github.com/siderolabs/go-kubernetes/kubernetes/compatibility"
 	"go.uber.org/zap"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -23,12 +29,208 @@ import (
 	"github.com/siderolabs/talos/pkg/argsbuilder"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
+	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
+
+// ControlPlaneAPIServerFinalController manages final k8s.APIServerConfig.
+type ControlPlaneAPIServerFinalController = transform.Controller[*k8s.APIServerConfig, *k8s.APIServerConfig]
+
+// NewControlPlaneAPIServerFinalController instantiates the controller.
+func NewControlPlaneAPIServerFinalController() *ControlPlaneAPIServerFinalController {
+	return transform.NewController(
+		transform.Settings[*k8s.APIServerConfig, *k8s.APIServerConfig]{
+			Name: "k8s.ControlPlaneAPIServerFinalController",
+			MapMetadataOptionalFunc: func(in *k8s.APIServerConfig) optional.Optional[*k8s.APIServerConfig] {
+				if in.Metadata().ID() != k8s.APIServerConfigID {
+					return optional.None[*k8s.APIServerConfig]()
+				}
+
+				return optional.Some(k8s.NewAPIServerConfig(k8s.FinalAPIServerConfigID))
+			},
+			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, in *k8s.APIServerConfig, out *k8s.APIServerConfig) error {
+				k8sRoot, err := safe.ReaderGetByID[*secrets.KubernetesRoot](ctx, r, secrets.KubernetesRootID)
+				if err != nil {
+					if state.IsNotFoundError(err) {
+						return xerrors.NewTaggedf[transform.SkipReconcileTag]("waiting for kubernetes root config")
+					}
+
+					return fmt.Errorf("failed to get kubernetes root secret: %w", err)
+				}
+
+				// clear the spec
+				*out.TypedSpec() = k8s.APIServerConfigSpec{}
+
+				cfg := in.TypedSpec()
+
+				out.TypedSpec().Image = cfg.Image
+				out.TypedSpec().CloudProvider = cfg.CloudProvider
+				out.TypedSpec().ControlPlaneEndpoint = cfg.ControlPlaneEndpoint
+				out.TypedSpec().EtcdServers = cfg.EtcdServers
+				out.TypedSpec().LocalPort = cfg.LocalPort
+				out.TypedSpec().ServiceCIDRs = cfg.ServiceCIDRs
+				out.TypedSpec().ExtraVolumes = cfg.ExtraVolumes
+				out.TypedSpec().EnvironmentVariables = cfg.EnvironmentVariables
+				out.TypedSpec().AdvertisedAddress = cfg.AdvertisedAddress
+				out.TypedSpec().Resources = cfg.Resources
+				out.TypedSpec().StartupProbesEnabled = cfg.StartupProbesEnabled
+				out.TypedSpec().UseAuthenticationConfig = cfg.UseAuthenticationConfig
+
+				enabledAdmissionPlugins := []string{"NodeRestriction"}
+
+				args := []string{ //nolint:prealloc // very dynamic length
+					"/usr/local/bin/kube-apiserver",
+				}
+
+				builder := argsbuilder.Args{
+					"admission-control-config-file":      {filepath.Join(constants.KubernetesAPIServerConfigDir, "admission-control-config.yaml")},
+					"allow-privileged":                   {"true"},
+					"api-audiences":                      k8sRoot.TypedSpec().APIAudiences,
+					"bind-address":                       {"0.0.0.0"},
+					"client-ca-file":                     {filepath.Join(constants.KubernetesAPIServerSecretsDir, "ca.crt")},
+					"enable-admission-plugins":           {strings.Join(enabledAdmissionPlugins, ",")},
+					"requestheader-client-ca-file":       {filepath.Join(constants.KubernetesAPIServerSecretsDir, "aggregator-ca.crt")},
+					"requestheader-allowed-names":        {"front-proxy-client"},
+					"requestheader-extra-headers-prefix": {"X-Remote-Extra-"},
+					"requestheader-group-headers":        {"X-Remote-Group"},
+					"requestheader-username-headers":     {"X-Remote-User"},
+					"proxy-client-cert-file":             {filepath.Join(constants.KubernetesAPIServerSecretsDir, "front-proxy-client.crt")},
+					"proxy-client-key-file":              {filepath.Join(constants.KubernetesAPIServerSecretsDir, "front-proxy-client.key")},
+					"enable-bootstrap-token-auth":        {"true"},
+					"tls-min-version":                    {"VersionTLS13"},
+					"encryption-provider-config":         {filepath.Join(constants.KubernetesAPIServerSecretsDir, "encryptionconfig.yaml")},
+					"audit-policy-file":                  {filepath.Join(constants.KubernetesAPIServerConfigDir, "auditpolicy.yaml")},
+					"audit-log-path":                     {filepath.Join(constants.KubernetesAuditLogDir, "kube-apiserver.log")},
+					"audit-log-maxage":                   {"30"},
+					"audit-log-maxbackup":                {"10"},
+					"audit-log-maxsize":                  {"100"},
+					"profiling":                          {"false"},
+					"etcd-cafile":                        {filepath.Join(constants.KubernetesAPIServerSecretsDir, "etcd-client-ca.crt")},
+					"etcd-certfile":                      {filepath.Join(constants.KubernetesAPIServerSecretsDir, "etcd-client.crt")},
+					"etcd-keyfile":                       {filepath.Join(constants.KubernetesAPIServerSecretsDir, "etcd-client.key")},
+					"etcd-servers":                       {strings.Join(cfg.EtcdServers, ",")},
+					"kubelet-client-certificate":         {filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver-kubelet-client.crt")},
+					"kubelet-client-key":                 {filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver-kubelet-client.key")},
+					"secure-port":                        {strconv.FormatInt(int64(cfg.LocalPort), 10)},
+					"service-account-issuer": slices.Concat(
+						// first, the issuer URL
+						[]string{k8sRoot.TypedSpec().IssuerURL},
+						// then, other accepted issuer URLs
+						k8sRoot.TypedSpec().AcceptedIssuers,
+					),
+					"service-account-key-file":         {filepath.Join(constants.KubernetesAPIServerSecretsDir, "service-account.pub")},
+					"service-account-signing-key-file": {filepath.Join(constants.KubernetesAPIServerSecretsDir, "service-account.key")},
+					"service-cluster-ip-range":         {strings.Join(cfg.ServiceCIDRs, ",")},
+					"tls-cert-file":                    {filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver.crt")},
+					"tls-private-key-file":             {filepath.Join(constants.KubernetesAPIServerSecretsDir, "apiserver.key")},
+					"kubelet-preferred-address-types":  {"InternalIP,ExternalIP,Hostname"},
+				}
+
+				if cfg.AdvertisedAddress != "" {
+					builder.Set("advertise-address", argsbuilder.Value{cfg.AdvertisedAddress})
+				}
+
+				k8sVersion := compatibility.VersionFromImageRef(cfg.Image)
+
+				if cfg.CloudProvider != "" && !k8sVersion.CloudProviderFlagRemoved() {
+					builder.Set("cloud-provider", argsbuilder.Value{cfg.CloudProvider})
+				}
+
+				if cfg.UseAuthenticationConfig {
+					builder.Set("authentication-config", argsbuilder.Value{filepath.Join(constants.KubernetesAPIServerConfigDir, "authentication-config.yaml")})
+				} else {
+					builder.Set("anonymous-auth", argsbuilder.Value{"false"})
+				}
+
+				extraArgs := make(argsbuilder.Args, len(cfg.ExtraArgs))
+				for k, v := range cfg.ExtraArgs {
+					extraArgs[k] = v.Values
+				}
+
+				handleKubeAPIServerAuthorizationFlags(builder, extraArgs)
+
+				mergePolicies := argsbuilder.MergePolicies{
+					"enable-admission-plugins": argsbuilder.MergeAdditive,
+					"feature-gates":            argsbuilder.MergeAdditive,
+					"authorization-mode":       argsbuilder.MergeAdditive,
+
+					"etcd-servers":                     argsbuilder.MergeDenied,
+					"client-ca-file":                   argsbuilder.MergeDenied,
+					"requestheader-client-ca-file":     argsbuilder.MergeDenied,
+					"proxy-client-cert-file":           argsbuilder.MergeDenied,
+					"proxy-client-key-file":            argsbuilder.MergeDenied,
+					"encryption-provider-config":       argsbuilder.MergeDenied,
+					"etcd-cafile":                      argsbuilder.MergeDenied,
+					"etcd-certfile":                    argsbuilder.MergeDenied,
+					"etcd-keyfile":                     argsbuilder.MergeDenied,
+					"kubelet-client-certificate":       argsbuilder.MergeDenied,
+					"kubelet-client-key":               argsbuilder.MergeDenied,
+					"service-account-key-file":         argsbuilder.MergeDenied,
+					"service-account-signing-key-file": argsbuilder.MergeDenied,
+					"tls-cert-file":                    argsbuilder.MergeDenied,
+					"tls-min-version":                  argsbuilder.MergeDenied,
+					"tls-private-key-file":             argsbuilder.MergeDenied,
+					"authorization-config":             argsbuilder.MergeDenied,
+					"authentication-config":            argsbuilder.MergeDenied,
+				}
+
+				if err := builder.Merge(extraArgs, argsbuilder.WithMergePolicies(mergePolicies)); err != nil {
+					return err
+				}
+
+				out.TypedSpec().Args = slices.Concat(args, builder.Args())
+
+				return nil
+			},
+		},
+		transform.WithOutputKind(controller.OutputShared),
+		transform.WithExtraInputs(
+			controller.Input{
+				Namespace: secrets.NamespaceName,
+				Type:      secrets.KubernetesRootType,
+				ID:        optional.Some(secrets.KubernetesRootID),
+				Kind:      controller.InputWeak,
+			},
+		),
+	)
+}
+
+func kubeAPIServerExtraArgsHasAuthorizationWebhookFlags(extraArgs map[string][]string) bool {
+	return slices.ContainsFunc(maps.Keys(extraArgs), func(arg string) bool {
+		return strings.HasPrefix(arg, "authorization-webhook-")
+	})
+}
+
+func kubeAPIServerExtraArgsHasAuthorizationModeFlag(extraArgs map[string][]string) bool {
+	_, ok := extraArgs["authorization-mode"]
+
+	return ok
+}
+
+func handleKubeAPIServerAuthorizationFlags(argBuilder argsbuilder.Args, extraArgs map[string][]string) {
+	// this handle multiple cases:
+	// 1. user already has set `authorization-mode` flag, we'll just merge our default `authorization-mode` flag
+	if kubeAPIServerExtraArgsHasAuthorizationModeFlag(extraArgs) {
+		argBuilder.Set("authorization-mode", argsbuilder.Value{"Node,RBAC"})
+
+		return
+	}
+
+	// 2. user has set `authorization-webhook-*` flags, we'll just merge our default `authorization-mode` flag
+	if kubeAPIServerExtraArgsHasAuthorizationWebhookFlags(extraArgs) {
+		argBuilder.Set("authorization-mode", argsbuilder.Value{"Node,RBAC"})
+
+		return
+	}
+
+	argBuilder.Set("authorization-config", argsbuilder.Value{filepath.Join(constants.KubernetesAPIServerConfigDir, "authorization-config.yaml")})
+}
 
 // ControlPlaneControllerManagerFinalController manages final k8s.ControllerManagerConfig.
 type ControlPlaneControllerManagerFinalController = transform.Controller[*k8s.ControllerManagerConfig, *k8s.ControllerManagerConfig]
 
 // NewControlPlaneControllerManagerFinalController instantiates the controller.
+//
+//nolint:gocyclo
 func NewControlPlaneControllerManagerFinalController() *ControlPlaneControllerManagerFinalController {
 	return transform.NewController(
 		transform.Settings[*k8s.ControllerManagerConfig, *k8s.ControllerManagerConfig]{
@@ -84,6 +286,34 @@ func NewControlPlaneControllerManagerFinalController() *ControlPlaneControllerMa
 
 				if in.TypedSpec().CloudProvider != "" && !k8sVersion.CloudProviderFlagRemoved() {
 					builder.Set("cloud-provider", argsbuilder.Value{in.TypedSpec().CloudProvider})
+				}
+
+				// emit the per-node pod CIDR mask size only for the address families actually present in the
+				// cluster CIDRs (pod CIDRs): kube-controller-manager rejects a per-family flag when that family is absent.
+				//
+				// This is not mentioned in the configuration reference, grep `--node-cidr-mask-size` at
+				// https://github.com/kubernetes/kubernetes/blob/16e45f3b5e6a76a1ac741550e3a65980eea783c2/CHANGELOG/CHANGELOG-1.23.md#L2387-L2390
+				var hasIPv4, hasIPv6 bool
+
+				for _, podCIDR := range in.TypedSpec().PodCIDRs {
+					prefix, err := netip.ParsePrefix(podCIDR)
+					if err != nil {
+						return fmt.Errorf("failed to parse pod CIDR %q: %w", podCIDR, err)
+					}
+
+					if prefix.Addr().Is6() {
+						hasIPv6 = true
+					} else {
+						hasIPv4 = true
+					}
+				}
+
+				if hasIPv4 {
+					builder.Set("node-cidr-mask-size-ipv4", argsbuilder.Value{strconv.Itoa(in.TypedSpec().NodeCIDRMaskSizeIPv4)})
+				}
+
+				if hasIPv6 {
+					builder.Set("node-cidr-mask-size-ipv6", argsbuilder.Value{strconv.Itoa(in.TypedSpec().NodeCIDRMaskSizeIPv6)})
 				}
 
 				mergePolicies := argsbuilder.MergePolicies{

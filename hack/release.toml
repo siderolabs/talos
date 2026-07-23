@@ -18,13 +18,55 @@ preface = """
     [notes.updates]
         title = "Component Updates"
         description = """\
-Linux: 6.18.35
-Kubernetes: 1.36.1
-containerd: 2.3.1
-etcd: v3.7.0-rc.0
-Flannel: v0.28.5
+Linux: 6.18.39
+Kubernetes: 1.37.0-beta.0
+containerd: 2.3.3
+etcd: v3.7.0
+Flannel: 0.28.8
+runc: 1.5.1
+CoreDNS: 1.14.6
 
-Talos is built with Go 1.26.4.
+Talos is built with Go 1.26.5.
+"""
+
+    [notes.xfsallocationgroups]
+        title = "XFS Allocation Group Geometry"
+        description = """\
+On non-rotational devices `mkfs.xfs` sizes the allocation group count to the number of CPUs, bounding the
+allocation group size from below at 4 GiB only. On machines with many cores and a modest disk this produces
+hundreds of tiny allocation groups, which squeezes the AG-local reflink/rmap metadata (leading to spurious
+`ENOSPC` on reflink-heavy workloads while the filesystem still has plenty of free space) and inflates the
+journal at the same time.
+
+Talos now keeps XFS allocation groups at 64 GiB or above when it formats a volume. The bound can be changed
+per volume, and setting it to zero restores the stock `mkfs.xfs` behavior:
+
+```yaml
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: EPHEMERAL
+filesystem:
+  xfs:
+    minAllocationGroupSize: 128GiB
+```
+
+The same `filesystem.xfs.minAllocationGroupSize` setting is available for `UserVolumeConfig`.
+
+Note: allocation group geometry is fixed when the filesystem is created, so this only affects volumes
+formatted by Talos 1.14 or later. Existing volumes keep their current geometry until they are wiped and
+re-created (e.g. `talosctl reset --system-labels-to-wipe=EPHEMERAL`).
+"""
+
+    [notes.etcfileconfig]
+        title = "EtcFileConfig"
+        description = """\
+Talos now supports managing user-owned files under `/etc` with the new `EtcFileConfig` multi-document
+configuration kind. The document `name` is the path relative to `/etc`, and each document owns the complete
+file contents and mode.
+
+This can be used to configure files such as `/etc/nfsmount.conf` or `/etc/multipath.conf`. Talos-managed
+paths, including `resolv.conf`, `hosts`, `machine-id`, CRI and Kubernetes configuration, trust bundles, and
+identity files, are rejected to prevent overriding files owned by Talos.
 """
 
     [notes.cri-nri]
@@ -45,6 +87,14 @@ machine:
       path: /etc/cri/conf.d/20-customization.part
       op: create
 ```
+"""
+
+    [notes.flexvolume]
+        title = "FlexVolume Host Path Removed"
+        description = """\
+Talos no longer provisions the deprecated FlexVolume executable host path at
+`/usr/libexec/kubernetes`. FlexVolume has been deprecated since Kubernetes 1.23.
+Modern CSI plugin paths under `/var/lib/kubelet` are unaffected.
 """
 
     [notes.nts]
@@ -83,36 +133,75 @@ HostDNS configuration was moved from the v1alpha1 config `.machine.features.host
 Talos now supports HTTP network probes, allowing for monitoring of HTTP endpoints.
 HTTP responses with status 200-399 are considered successful, while connection and transport errors are treated as failures.
 """
+    [notes.discovery]
+        title = "Cluster Discovery"
+        description = """\
+Talos introduces support for configuring multiple discovery service endpoints.
+Talos introduces new document for configuring the cluster discovery identity.
+
+List of changes:
+
+- Deprecated `.cluster.discovery` in the v1alpha1 config; use the `DiscoveryServiceConfig` document for discovery service configuration. The v1alpha1 config and `DiscoveryServiceConfig` are mutually exclusive.
+- Deprecated `.cluster.secret` and `cluster.id` in the v1alpha1 config; use the `DiscoveryIdentityConfig` document for discovery identity configuration. The v1alpha1 config and `DiscoveryIdentityConfig` are mutually exclusive.
+- Changed cluster ID encoding in the generated secret bundle, from `base64.URLEncoding` to `base64.StdEncoding`. This aligns the encoding with the rest of Talos.
+"""
 
     [notes.kubernetesmulti]
         title = "Kubernetes Multi-document Configuration"
         description = """\
 Talos introduces new multi-document Kubernetes configuration, which allows for more flexible and modular configuration of Kubernetes components.
 Talos still supports the old v1alpha1 config for backwards compatibility, but new features and fields will only be available in the new multi-document format.
+The `kube-proxy` is now using configuration to manage its settings instead of command line arguments (with new `KubeProxyConfig` document).
 
 List of changes:
 
 - Deprecated `.cluster.secretboxEncryptionSecret` in the v1alpha1 config; use the `KubeEtcdEncryptionConfig` document for full etcd encryption configuration.
+- Deprecated `.cluster.apiServer` in the v1alpha1 config; use the `KubeAPIServerConfig`, `KubeAdmissionControlConfig`, `KubeAuditPolicyConfig`, `KubeAuthenticationConfig` and `KubeAuthorizerConfig` documents for kube-apiserver configuration.
+- Deprecated `.cluster.ca`, `.cluster.acceptedCAs` and `.cluster.aggregatorCA` in the v1alpha1 config; use the `KubeAPIServerCAConfig`, `KubeAggregatorCAConfig` documents.
 - Deprecated `.cluster.controllerManager` in the v1alpha1 config; use the `KubeControllerManagerConfig` document for kube-controller-manager configuration.
 - Deprecated `.cluster.scheduler` in the v1alpha1 config; use the `KubeSchedulerConfig` document for kube-scheduler configuration.
+- Deprecated `.cluster.proxy` in the v1alpha1 config; use the `KubeProxyConfig` document for kube-proxy configuration.
 - Deprecated `.cluster.network` in the v1alpha1 config; use the `KubeNetworkConfig` document for Kubernetes network configuration; Flannel can be configured using the `KubeFlannelCNIConfig` document.
+- Deprecated `.cluster.coreDNS` in the v1alpha1 config; use the `KubeCoreDNSConfig` document for CoreDNS configuration.
+- Deprecated `.cluster.name` and `.cluster.controlPlane.endpoint in the v1alpha1 config; use the `KubeClusterConfig` document for cluster name and control plane endpoint configuration.
+- Deprecated the following list of fields, all of them moved into `KubeNodeConfig:
+   - `.cluster.allowSchedulingOnControlPlanes`
+   - `.machine.kubelet.skipNodeRegistration`
+   - `.machine.kubelet.registerWithFQDN`
+   - `.machine.kubelet.nodeIP`
+   - `.machine.nodeLabels`
+   - `.machine.nodeAnnotations`
+   - `.machine.nodeTaints`
+- The default `NoSchedule` taint for controlplane and label are now explicitly listed in `KubeNodeConfig`.
+- Deprecated the rest of `.machine.kubelet` fields in the v1alpha1 config; use the `KubeNodeConfig` and `KubeCredentialProviderConfig` documents for kubelet configuration.
+- Deprecated `.machine.pods` in the v1alpha1 config; use the `KubeStaticPodConfig` document for static pod configuration.
+- Deprecated `.cluster.inlineManifests` in the v1alpha1 config; use the `KubeInlineManifestConfig` document for inline manifests.
+- Deprecated `.cluster.extraManifests` and `.cluster.extraManifestHeaders` in the v1alpha1 config; use the `KubeExternalManifestConfig` document for external manifests.
+- Deprecated `.machine.features.kubePrism`; use the `KubePrismConfig` document for KubePrism configuration (or remove it to disable KubePrism).
+- Added `nodeCIDRMaskSizeIPv4` (default `24`) and `nodeCIDRMaskSizeIPv6` (default `64`) settings to the `KubeNetworkConfig` document to control the per-node pod CIDR mask size and validate the pod and service subnet sizes.
 """
 
     [notes.dhcpsearchdomains]
-        title = "DHCP Search Domains"
+        title = "DHCP"
         description = """\
 DHCPv4 search domains are now applied to the resolver configuration.
+
+DHCPv4 configuration now supports `ignoreRoutes` option to ignore routes provided by DHCPv4 servers.
 """
 
-[notes.EPHEMERAL]
+    [notes.EPHEMERAL]
         title = "noexec on EPHEMERAL (/var)"
         description = """\
-The EPHEMERAL volume (`/var`) is now mounted with `noexec` in addition to the existing `nosuid` and `nodev`,
-blocking binary execution from `/var`.
+Talos 1.14 clusters now default the EPHEMERAL volume (`/var`) to `noexec` in addition to the existing `nosuid` and `nodev`
+mount options through generated machine configuration.
 
-Workloads that exec binaries placed under `/var` will break.
-For example, Longhorn v1's `instance-manager` exec's engine binaries the `engine-image` DaemonSet drops under `/var/lib/longhorn/engine-binaries/`,
-which now fails with `permission denied`. Affected users can opt out via a `VolumeConfig` document:
+Existing machines are not affected on upgrades.
+
+Note: Workloads that execute binaries placed under `/var` can break on new machines.
+Longhorn v1 and [vCluster](https://www.vcluster.com/docs/vcluster/troubleshoot/noexec-emptydir-volumes) are known to be affected.
+For example, Longhorn v1's `instance-manager` executes engine binaries that the `engine-image` DaemonSet places under
+`/var/lib/longhorn/engine-binaries/`, which now fails with `permission denied`.
+Affected users can opt out via a `VolumeConfig` document:
 
 ```yaml
 apiVersion: v1alpha1
@@ -124,7 +213,28 @@ mount:
 
 > NOTE: Setting `secure: false` will also disable `nosuid` and `nodev`, which may have security implications. Use with caution.
 
-Upgrade note: apply this `VolumeConfig` patch *before* upgrading, otherwise affected workloads will fail after the next reboot. Longhorn v2 (SPDK data engine) runs the data plane inside the instance manager process and is not affected.
+Longhorn v2 (SPDK data engine) runs the data plane inside the instance manager process and is not affected.
+"""
+
+    [notes.systemVolumes]
+        title = "Dedicated System Volumes"
+        description = """\
+The `ETCD`, `CRI`, `KUBELET` and `LOG` system volumes (`/var/lib/etcd`, `/var/lib/containerd`, `/var/lib/kubelet` and `/var/log`) can now be placed on dedicated partitions via a `VolumeConfig` document with `provisioning` set (optionally encrypted). By default they remain directories under the `EPHEMERAL` volume.
+
+```yaml
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: ETCD
+provisioning:
+  minSize: 1GB
+  maxSize: 2GB
+```
+
+The backing (directory vs. dedicated partition) is fixed at cluster creation: switching an already-provisioned node between the two is rejected.
+
+A dedicated partition has its own mount, so the `mount.secure` option (`nosuid`/`noexec`/`nodev`, enabled by default) can be set per volume; directory-backed volumes inherit the `EPHEMERAL` mount options.
+
+Note that with `ETCD` on a dedicated partition, etcd data no longer lives under `EPHEMERAL`. Resetting a control plane node with only the `EPHEMERAL` partition wiped will not clear etcd data; wipe the `ETCD` volume to reset etcd.
 """
 
     [notes.DoT]
@@ -199,6 +309,21 @@ The `talosctl support` command now encrypts support bundles using the age encryp
 The default set of recipients includes the 'siderolabs' GitHub organization members, but it can be overridden with custom recipients.
 """
 
+    [notes.bgp]
+        title = "Native BGP"
+        description = """\
+Talos now supports running a native BGP speaker on the host via an embedded GoBGP, configured with the new `BGPPeerConfig` document.
+This removes the need to ship FRR as a system extension for the common fabric-facing use case.
+
+List of changes:
+
+- Added the `BGPPeerConfig` document to configure the local ASN, router-id, advertised interfaces (loopbacks originated as host routes), neighbors, and per-route preferred source (`routeSource`).
+- Numbered and unnumbered (IPv6 link-local, RFC 8950 extended next-hop) peering are supported, including IPv4 prefixes learned over an IPv6 link-local next-hop.
+- ECMP (multipath) and BFD (fast failure detection) are supported for fabric peering; learned routes are installed into the kernel FIB by the existing route controllers.
+- Peer state is observable via the new `BGPPeerStatus` resource (`talosctl get bgppeerstatus`).
+- `RouteSpec`/`RouteStatus` now carry a multipath next-hop list to support ECMP and cross-family (RFC 8950) next-hops.
+"""
+
     [notes.lvm_wipe]
         title = "LVM Wipe"
         description = """\
@@ -234,6 +359,31 @@ size surfaces an `LVMValidationError` instead. Removal stays an explicit operati
 remove RPC (`talosctl wipe lv`).
 """
 
+    [notes.raid_arrays]
+        title = "RAID Array Creation"
+        description = """\
+Talos can now create and grow Linux MD (software RAID) arrays declaratively through a new `RAIDArrayConfig`
+multi-doc config kind. Each document names an array, its `level` (`raid1`) and a CEL `volumeSelector` over
+the disk inventory; matched disks are assembled into the requested array with `mdadm` and exposed at the stable
+`/dev/disk/by-id/md-name-<name>` path. New matching disks added to an existing array are attached automatically.
+
+Reconciliation is strictly additive and safe-by-default. Arrays are never destroyed by removing the config;
+removal stays an explicit operation via `talosctl wipe md <device>`. The new `MDArrayStatus` resource reports the
+assembled array, level, device path, and members.
+"""
+
+    [notes.raid_boot]
+        title = "Booting from a RAID Array"
+        description = """\
+Talos can now be installed onto and boot from a Linux MD (software RAID) array. Define a `RAIDArrayConfig` for the
+array and point the install disk selector (`UnattendedInstallConfig`) at the resulting `/dev/disk/by-id/md-name-<name>`
+device.
+
+Only `raid1` arrays with `metadata: "1.0"` can be used for booting: the 1.0 format keeps its superblock at the end of
+each member, so the partition table written to the array stays visible at the start of every disk, allowing the
+firmware to boot from any member. `metadata` defaults to `1.0`; other levels and metadata formats are not bootable.
+"""
+
     [notes.kernel_module_status]
         title = "Kernel Module Status"
         description = """\
@@ -254,6 +404,20 @@ List of changes:
 
 - Deprecated `.machine.sysctls` in the v1alpha1 config; use the `SysctlConfig` document for kernel sysctl configuration.
 - Deprecated `.machine.sysfs` in the v1alpha1 config; use the `SysfsConfig` document for sysfs configuration.
+- Deprecated `.machine.kernel` in the v1alpha1 config; use the `KernelModuleConfig` document for kernel module configuration.
+"""
+
+    [notes.udev_rules_config]
+        title = "Udev Rules Multi-document Configuration"
+        description = """\
+Talos introduces new multi-document configuration `UdevRulesConfig` document for configuring custom udev rules.
+The old v1alpha1 `.machine.udev.rules` field is still supported for backwards compatibility, but new deployments should use the new document.
+
+If both old and new configuration sources are used, `UdevRulesConfig` takes precedence.
+
+List of changes:
+
+- Deprecated `.machine.udev.rules` in the v1alpha1 config; use the `UdevRulesConfig` document for custom udev rules.
 """
 
     [notes.apply_config]
@@ -270,6 +434,93 @@ Volume encryption now supports an `allowDiscards` option (disabled by default) w
 through to the underlying device when the encrypted volume is opened.
 
 This only enables passing discards through to the underlying device; Talos does not perform any fstrim/discard operation by itself.
+"""
+
+    [notes.filesystem_trim]
+        title = "Filesystem Trim"
+        description = """\
+Talos can now periodically trim (the equivalent of the `fstrim` command) mounted filesystems which support trimming,
+discarding unused blocks. This is useful for SSDs and thin-provisioned storage.
+
+Trimming is opt-in via a new `FilesystemTrimConfig` document which sets the global trim interval:
+
+```yaml
+apiVersion: v1alpha1
+kind: FilesystemTrimConfig
+interval: 168h0m0s # one week
+```
+
+The default machine configuration for Talos 1.14+ includes a `FilesystemTrimConfig` document with a default trim interval of one week,
+so trimming is enabled by default for eligible filesystems. For cluster which were upgraded from older versions, the `FilesystemTrimConfig` document will be missing,
+so trimming will be disabled by default until the document is added.
+
+When the document is present, Talos builds a stable schedule (hashed by node ID and volume ID, so trims are spread out
+across volumes and across nodes in a cluster) and trims eligible volumes (ready disk/partition volumes with a
+trim-capable filesystem; for encrypted volumes only when `allowDiscards` is set).
+
+The trim interval can be overridden or disabled per-volume via a `trim` block on the volume documents
+(`VolumeConfig`, `UserVolumeConfig`, `ExistingVolumeConfig`, `ExternalVolumeConfig`):
+
+```yaml
+trim:
+  enabled: true
+  interval: 24h0m0s
+```
+"""
+
+    [notes.unattended_install]
+        title = "Unattended Install Configuration"
+        description = """\
+Talos introduces a new `UnattendedInstall` multi-document config kind which replaces the deprecated `.machine.install`
+section of the v1alpha1 config. The document carries the installer `image` and a `provisioning` section with a CEL
+`volumeSelector` to match the install disk, plus a `wipe` option.
+
+When the `UnattendedInstall` document is present, the install is driven by the new `UnattendedInstallController`
+(exposing an `UnattendedInstallStatus` resource) instead of the legacy install sequence.
+
+`talosctl gen config` and `talosctl cluster create` now generate the `UnattendedInstall` document by default.
+The `.machine.install` field remains supported for backwards compatibility and is still used for older version contracts.
+"""
+
+    [notes.sandboxd]
+        title = "Workload Isolation (sandboxd)"
+        description = """\
+The container runtime plane — CRI containerd, the kubelet, and all pods — now runs inside a dedicated PID and
+mount namespace anchored by a new `sandboxd` service, instead of sharing `machined`'s namespaces.
+
+`sandboxd` runs in its own least-privilege SELinux domain (`sandboxd_t`). if it dies the kernel tears down the
+namespace and Talos recreates it — relaunching CRI, the kubelet, and pods — without rebooting the node.
+Its logs are available via `talosctl logs sandboxd`.
+
+Workload isolation is controlled by the `workloadIsolation` field of the new `SecurityProfileConfig` document.
+`talosctl gen config` emits it with `workloadIsolation: true` for Talos 1.14+, so **new clusters are isolated by
+default**. Clusters **upgraded** from older versions do not have this document and therefore keep the previous
+(non-isolated) behavior until it is added — upgrades change nothing on their own. To enable on an existing
+cluster, add the document:
+
+```yaml
+apiVersion: v1alpha1
+kind: SecurityProfileConfig
+workloadIsolation: true
+```
+
+> NOTE: With workload isolation enabled, the deprecated in-tree Kubernetes iSCSI volume plugin does not work
+> (the kubelet cannot reach the host `iscsid` across the sandbox); use a CSI driver instead. See the in-tree
+> volume plugin deprecation note.
+"""
+
+    [notes.kubelet]
+        title = "In-tree Volume Plugins Deprecated"
+        description = """\
+Because the kubelet now runs inside the sandbox namespace (see the workload isolation note), the in-tree
+Kubernetes volume plugins that require the kubelet to reach host-level daemons no longer work. In particular
+the in-tree `iscsi` volume plugin, which drives the kubelet's `iscsiadm` wrapper to talk to the host `iscsid`,
+can no longer locate it across the sandbox PID namespace boundary.
+
+Use CSI drivers instead — a CSI node plugin performs the attach/mount itself in its own privileged pod and is
+unaffected by the sandbox. For iSCSI, `kubernetes-csi/csi-driver-iscsi` (or `democratic-csi`) consumes a
+target the same way. All in-tree (non-CSI) volume plugins are deprecated for the kubelet and support for them
+may be removed in a later release.
 """
 
 [make_deps]

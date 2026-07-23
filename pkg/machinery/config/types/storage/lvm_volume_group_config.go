@@ -61,30 +61,30 @@ type LVMVolumeGroupConfigV1Alpha1 struct {
 	//     Must be 1-63 chars: ASCII letters, digits, hyphens, underscores.
 	MetaName string `yaml:"name"`
 	//   description: |
-	//     Selects backing disks.
-	PhysicalVolumes LVMPhysicalVolumesSpec `yaml:"physicalVolumes"`
+	//     The provisioning describes how the Physical Volumes are provisioned.
+	ProvisioningSpec ProvisioningSpec `yaml:"provisioning"`
 }
 
-// LVMPhysicalVolumesSpec selects backing disks.
-type LVMPhysicalVolumesSpec struct {
+// ProvisioningSpec describes how the Physical Volumes are provisioned.
+type ProvisioningSpec struct {
 	//   description: |
 	//     Matches disks to initialize as physical volumes.
 	VolumeSelector LVMVolumeSelectorSpec `yaml:"volumeSelector,omitempty"`
 }
 
 // IsZero reports whether the spec is empty.
-func (s LVMPhysicalVolumesSpec) IsZero() bool {
+func (s ProvisioningSpec) IsZero() bool {
 	return s.VolumeSelector.IsZero()
 }
 
 // Validate parses selector without mutating stored config.
-func (s LVMPhysicalVolumesSpec) Validate() error {
+func (s ProvisioningSpec) Validate() error {
 	if s.VolumeSelector.Match.IsZero() {
-		return errors.New("physicalVolumes.volumeSelector.match is required")
+		return errors.New("provisioning.volumeSelector.match is required")
 	}
 
 	if err := s.VolumeSelector.Match.ParseBool(celenv.VolumeLocator()); err != nil {
-		return fmt.Errorf("physicalVolumes.volumeSelector.match: %w", err)
+		return fmt.Errorf("provisioning.volumeSelector.match: %w", err)
 	}
 
 	return nil
@@ -126,7 +126,7 @@ func NewLVMVolumeGroupConfigV1Alpha1() *LVMVolumeGroupConfigV1Alpha1 {
 func exampleLVMVolumeGroupConfigV1Alpha1() *LVMVolumeGroupConfigV1Alpha1 {
 	cfg := NewLVMVolumeGroupConfigV1Alpha1()
 	cfg.MetaName = "vg-pool"
-	cfg.PhysicalVolumes = LVMPhysicalVolumesSpec{
+	cfg.ProvisioningSpec = ProvisioningSpec{
 		VolumeSelector: LVMVolumeSelectorSpec{
 			Match: exampleLVMVolumeSelector(),
 		},
@@ -154,12 +154,12 @@ func (s *LVMVolumeGroupConfigV1Alpha1) LVMVolumeGroupConfigSignal() {}
 
 // PhysicalVolumeSelector implements config.LVMVolumeGroupConfig.
 func (s *LVMVolumeGroupConfigV1Alpha1) PhysicalVolumeSelector() cel.Expression {
-	return s.PhysicalVolumes.VolumeSelector.Match
+	return s.ProvisioningSpec.VolumeSelector.Match
 }
 
 // Validate implements config.Validator interface.
 //
-//nolint:gocyclo
+//nolint:dupl,gocyclo
 func (s *LVMVolumeGroupConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Option) ([]string, error) {
 	var validationErrors error
 
@@ -188,7 +188,7 @@ func (s *LVMVolumeGroupConfigV1Alpha1) Validate(validation.RuntimeMode, ...valid
 		validationErrors = errors.Join(validationErrors, errors.New("name can only contain ASCII letters, digits, hyphens and underscores"))
 	}
 
-	if err := s.PhysicalVolumes.Validate(); err != nil {
+	if err := s.ProvisioningSpec.Validate(); err != nil {
 		validationErrors = errors.Join(validationErrors, err)
 	}
 

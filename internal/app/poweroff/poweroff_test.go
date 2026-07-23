@@ -88,6 +88,26 @@ func TestParseArgs(t *testing.T) {
 			args:   []string{"poweroff", "--reboot"},
 			action: poweroff.Reboot,
 		},
+		{
+			name:   "reboot no args",
+			args:   []string{"reboot"},
+			action: poweroff.Reboot,
+		},
+		{
+			name:   "reboot full path",
+			args:   []string{"/sbin/reboot"},
+			action: poweroff.Reboot,
+		},
+		{
+			name:   "reboot with poweroff",
+			args:   []string{"reboot", "-p"},
+			action: poweroff.Shutdown,
+		},
+		{
+			name:   "reboot with poweroff long",
+			args:   []string{"reboot", "--poweroff"},
+			action: poweroff.Shutdown,
+		},
 	}
 
 	for _, tt := range tests {

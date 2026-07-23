@@ -27,7 +27,7 @@ var rebootCmd = &cobra.Command{
 	Long: `Forcefully reboots cluster nodes by restarting the underlying VMs.
 
 By default all nodes are rebooted; pass --node (repeatable) to reboot only specific
-nodes, matched by name or IP address. Only QEMU-based clusters are supported.`,
+nodes, matched by name or IP address. Local and remote QEMU clusters are supported.`,
 	Args: cobra.NoArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		return reboot(cmd.Context())
@@ -35,12 +35,7 @@ nodes, matched by name or IP address. Only QEMU-based clusters are supported.`,
 }
 
 func reboot(ctx context.Context) error {
-	state, err := provision.ReadState(ctx, PersistentFlags.ClusterName, PersistentFlags.StateDir)
-	if err != nil {
-		return fmt.Errorf("failed to read cluster state: %w", err)
-	}
-
-	provisioner, err := providers.Factory(ctx, state.ProvisionerName)
+	provisioner, cluster, err := rebootProvisionerAndCluster(ctx)
 	if err != nil {
 		return err
 	}
@@ -49,12 +44,7 @@ func reboot(ctx context.Context) error {
 
 	rebooter, ok := provisioner.(provision.RebootProvisioner)
 	if !ok {
-		return fmt.Errorf("provisioner %q does not support rebooting nodes", state.ProvisionerName)
-	}
-
-	cluster, err := provisioner.Reflect(ctx, PersistentFlags.ClusterName, PersistentFlags.StateDir)
-	if err != nil {
-		return err
+		return fmt.Errorf("provisioner %q does not support rebooting nodes", cluster.Provisioner())
 	}
 
 	nodes, err := selectRebootNodes(cluster.Info().Nodes, rebootCmdFlags.nodes)
@@ -71,6 +61,43 @@ func reboot(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+func rebootProvisionerAndCluster(ctx context.Context) (provision.Provisioner, provision.Cluster, error) {
+	if PersistentFlags.RemoteEndpoint != "" {
+		provisioner, err := providers.Factory(ctx, providers.RemoteProviderName, providers.WithRemoteEndpoint(PersistentFlags.RemoteEndpoint))
+		if err != nil {
+			return nil, nil, err
+		}
+
+		cluster, err := provisioner.Reflect(ctx, PersistentFlags.ClusterName, "")
+		if err != nil {
+			provisioner.Close() //nolint:errcheck
+
+			return nil, nil, err
+		}
+
+		return provisioner, cluster, nil
+	}
+
+	state, err := provision.ReadState(ctx, PersistentFlags.ClusterName, PersistentFlags.StateDir)
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to read cluster state: %w", err)
+	}
+
+	provisioner, err := providers.Factory(ctx, state.ProvisionerName)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	cluster, err := provisioner.Reflect(ctx, PersistentFlags.ClusterName, PersistentFlags.StateDir)
+	if err != nil {
+		provisioner.Close() //nolint:errcheck
+
+		return nil, nil, err
+	}
+
+	return provisioner, cluster, nil
 }
 
 // selectRebootNodes returns the nodes matching the given filters (by name or IP).

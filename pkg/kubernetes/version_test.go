@@ -13,6 +13,50 @@ import (
 	"github.com/siderolabs/talos/pkg/kubernetes"
 )
 
+func TestVersionFromImageRef(t *testing.T) {
+	for _, test := range []struct {
+		name  string
+		image string
+
+		expected   string
+		expectedOk bool
+	}{
+		{
+			name:  "tagged image",
+			image: "registry.k8s.io/kube-apiserver:v1.30.0",
+
+			expected:   "v1.30.0",
+			expectedOk: true,
+		},
+		{
+			name:  "tagged and digested image",
+			image: "registry.k8s.io/kube-apiserver:v1.30.0@sha256:9efd51eb47ecdd66b9426d9361edca2cbed38d57c4fe9d81213867310a1fdd99",
+
+			expected:   "v1.30.0",
+			expectedOk: true,
+		},
+		{
+			name:  "only digest",
+			image: "registry.k8s.io/kube-apiserver@sha256:9efd51eb47ecdd66b9426d9361edca2cbed38d57c4fe9d81213867310a1fdd99",
+		},
+		{
+			name:  "no tag",
+			image: "registry.k8s.io/kube-apiserver",
+		},
+		{
+			name:  "invalid reference",
+			image: "not a reference",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			version, ok := kubernetes.VersionFromImageRef(test.image)
+
+			require.Equal(t, test.expectedOk, ok)
+			require.Equal(t, test.expected, version)
+		})
+	}
+}
+
 func TestVersionGTE(t *testing.T) {
 	for _, test := range []struct {
 		name string

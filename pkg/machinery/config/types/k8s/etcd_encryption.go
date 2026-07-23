@@ -37,6 +37,7 @@ var (
 	_ config.SecretDocument               = &KubeEtcdEncryptionConfigV1Alpha1{}
 	_ config.Validator                    = &KubeEtcdEncryptionConfigV1Alpha1{}
 	_ container.V1Alpha1ConflictValidator = &KubeEtcdEncryptionConfigV1Alpha1{}
+	_ container.ControlplaneOnlyConfig    = &KubeEtcdEncryptionConfigV1Alpha1{}
 )
 
 // KubeEtcdEncryptionConfigV1Alpha1 configures kube-apiserver etcd encryption rules.
@@ -158,3 +159,6 @@ func (s *KubeEtcdEncryptionConfigV1Alpha1) V1Alpha1ConflictValidate(v1alpha1Cfg 
 func (s *KubeEtcdEncryptionConfigV1Alpha1) EtcdEncryptionConfig() map[string]any {
 	return s.Config.Object
 }
+
+// ControlplaneOnlyDocument implements container.ControlplaneOnlyConfig interface.
+func (s *KubeEtcdEncryptionConfigV1Alpha1) ControlplaneOnlyDocument() {}

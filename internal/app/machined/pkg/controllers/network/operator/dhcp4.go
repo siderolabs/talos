@@ -35,6 +35,7 @@ type DHCP4 struct {
 	routeMetric         uint32
 	clientIdentifier    network.ClientIdentifierSpec
 	skipHostnameRequest bool
+	skipRoutes          bool
 	requestMTU          bool
 
 	lease *nclient4.Lease
@@ -56,6 +57,7 @@ func NewDHCP4(logger *zap.Logger, linkName string, config network.DHCP4OperatorS
 		linkName:            linkName,
 		routeMetric:         config.RouteMetric,
 		skipHostnameRequest: config.SkipHostnameRequest,
+		skipRoutes:          config.SkipRoutes,
 		clientIdentifier:    config.ClientIdentifier,
 		// <3 azure
 		// When including dhcp.OptionInterfaceMTU we don't get a dhcp offer back on azure.
@@ -305,7 +307,7 @@ func (d *DHCP4) TimeServerSpecs() []network.TimeServerSpecSpec {
 }
 
 func (d *DHCP4) parseNetworkConfigFromAck(ack *dhcpv4.DHCPv4, useHostname bool) {
-	specs := dhcpparse.ParseDHCP4Ack(ack, d.linkName, d.routeMetric, useHostname)
+	specs := dhcpparse.ParseDHCP4Ack(ack, d.linkName, d.routeMetric, useHostname, !d.skipRoutes)
 
 	d.mu.Lock()
 	defer d.mu.Unlock()

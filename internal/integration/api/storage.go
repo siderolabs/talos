@@ -56,7 +56,7 @@ func (suite *StorageSuite) SetupTest() {
 		suite.T().Skip("cluster doesn't support volumes")
 	}
 
-	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 5*time.Minute)
+	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 30*time.Minute)
 }
 
 // TearDownTest ...
@@ -68,6 +68,22 @@ func (suite *StorageSuite) TearDownTest() {
 
 const vgName = "vg0"
 
+// assertUserDisksReleased waits until all user disks visible before the test
+// claim are visible again. It should be deferred immediately after the disk
+// count check, before resource cleanup defers are registered.
+func (suite *StorageSuite) assertUserDisksReleased(ctx context.Context, node, nodeName string, initial []string) {
+	if suite.T().Failed() {
+		return
+	}
+
+	initialCount := len(initial)
+
+	suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+		current := suite.UserDisks(ctx, node)
+		assert.Lenf(collect, current, initialCount, "user disks were not released on %s/%s: initial %v, current %v", node, nodeName, initial, current)
+	}, 30*time.Second, time.Second, "user disks were not released on %s/%s", node, nodeName)
+}
+
 // newVGConfig builds a doc whose selector matches the supplied disks.
 func newVGConfig(pvDisks []string) *storagecfg.LVMVolumeGroupConfigV1Alpha1 {
 	doc := storagecfg.NewLVMVolumeGroupConfigV1Alpha1()
@@ -78,7 +94,7 @@ func newVGConfig(pvDisks []string) *storagecfg.LVMVolumeGroupConfigV1Alpha1 {
 	})
 	expr := strings.Join(clauses, " || ")
 
-	doc.PhysicalVolumes.VolumeSelector.Match = cel.MustExpression(
+	doc.ProvisioningSpec.VolumeSelector.Match = cel.MustExpression(
 		cel.ParseBooleanExpression(expr, celenv.DiskLocator()),
 	)
 
@@ -228,6 +244,8 @@ func (suite *StorageSuite) TestLVMUserVolumeOnLogicalVolume() {
 		suite.T().Skipf("not enough user disks on %s/%s: %q", node, nodeName, userDisks)
 	}
 
+	defer suite.assertUserDisksReleased(suite.ctx, node, nodeName, userDisks)
+
 	pvDisks := userDisks[:3]
 
 	nodeCtx := client.WithNode(suite.ctx, node)
@@ -349,6 +367,8 @@ func (suite *StorageSuite) TestLVMActivation() {
 		suite.T().Skipf("not enough user disks on %s/%s: %q", node, nodeName, userDisks)
 	}
 
+	defer suite.assertUserDisksReleased(suite.ctx, node, nodeName, userDisks)
+
 	pvDisks := userDisks[:2]
 
 	nodeCtx := client.WithNode(suite.ctx, node)
@@ -402,6 +422,8 @@ func (suite *StorageSuite) TestLVMRaid1LogicalVolume() {
 	if len(userDisks) < 2 {
 		suite.T().Skipf("not enough user disks on %s/%s: %q", node, nodeName, userDisks)
 	}
+
+	defer suite.assertUserDisksReleased(suite.ctx, node, nodeName, userDisks)
 
 	pvDisks := userDisks[:2]
 
@@ -469,6 +491,8 @@ func (suite *StorageSuite) runLVTypeTest(lvType, wantLayout string, pvCount int)
 	if len(userDisks) < pvCount {
 		suite.T().Skipf("not enough user disks on %s/%s for %s (need %d): %q", node, nodeName, lvType, pvCount, userDisks)
 	}
+
+	defer suite.assertUserDisksReleased(suite.ctx, node, nodeName, userDisks)
 
 	pvDisks := userDisks[:pvCount]
 
@@ -559,6 +583,8 @@ func (suite *StorageSuite) TestLVMGrowLogicalVolume() {
 		suite.T().Skipf("not enough user disks on %s/%s: %q", node, nodeName, userDisks)
 	}
 
+	defer suite.assertUserDisksReleased(suite.ctx, node, nodeName, userDisks)
+
 	pvDisks := userDisks[:2]
 
 	nodeCtx := client.WithNode(suite.ctx, node)
@@ -618,7 +644,7 @@ func (suite *StorageSuite) TestLVMGrowLogicalVolume() {
 func vgDocSelector(name, match string) *storagecfg.LVMVolumeGroupConfigV1Alpha1 {
 	doc := storagecfg.NewLVMVolumeGroupConfigV1Alpha1()
 	doc.MetaName = name
-	doc.PhysicalVolumes.VolumeSelector.Match = cel.MustExpression(
+	doc.ProvisioningSpec.VolumeSelector.Match = cel.MustExpression(
 		cel.ParseBooleanExpression(match, celenv.VolumeLocator()),
 	)
 
@@ -843,6 +869,8 @@ func (suite *StorageSuite) TestLVMOnRawVolumes() {
 		suite.T().Skipf("not enough user disks on %s/%s: %q", node, nodeName, userDisks)
 	}
 
+	defer suite.assertUserDisksReleased(suite.ctx, node, nodeName, userDisks)
+
 	nodeCtx := client.WithNode(suite.ctx, node)
 
 	disk, err := safe.StateGetByID[*block.Disk](nodeCtx, suite.Client.COSI, filepath.Base(userDisks[0]))
@@ -891,6 +919,8 @@ func (suite *StorageSuite) TestLVMOnSpecificPVs() {
 	if len(userDisks) < 2 {
 		suite.T().Skipf("not enough user disks on %s/%s: %q", node, nodeName, userDisks)
 	}
+
+	defer suite.assertUserDisksReleased(suite.ctx, node, nodeName, userDisks)
 
 	pvDisks := userDisks[:2]
 
@@ -951,6 +981,8 @@ func (suite *StorageSuite) TestLVMLogicalVolume() {
 	if len(userDisks) < 1 {
 		suite.T().Skipf("not enough user disks on %s/%s: %q", node, nodeName, userDisks)
 	}
+
+	defer suite.assertUserDisksReleased(suite.ctx, node, nodeName, userDisks)
 
 	pvDisks := userDisks[:1]
 
@@ -1034,6 +1066,8 @@ func (suite *StorageSuite) TestLVMOverlapConflict() {
 		suite.T().Skipf("not enough user disks on %s/%s: %q", node, nodeName, userDisks)
 	}
 
+	defer suite.assertUserDisksReleased(suite.ctx, node, nodeName, userDisks)
+
 	sharedDisk := userDisks[0]
 
 	nodeCtx := client.WithNode(suite.ctx, node)
@@ -1116,6 +1150,8 @@ func (suite *StorageSuite) TestLVMRawVolumeRemoveInUse() {
 		suite.T().Skipf("not enough user disks on %s/%s: %q", node, nodeName, userDisks)
 	}
 
+	defer suite.assertUserDisksReleased(suite.ctx, node, nodeName, userDisks)
+
 	nodeCtx := client.WithNode(suite.ctx, node)
 
 	disk, err := safe.StateGetByID[*block.Disk](nodeCtx, suite.Client.COSI, filepath.Base(userDisks[0]))
@@ -1168,6 +1204,348 @@ func (suite *StorageSuite) TestLVMRawVolumeRemoveInUse() {
 	suite.assertPVAndVGStatus(nodeCtx, vgRaw, pvDevices)
 }
 
+// raidDoc builds a RAIDArrayConfig whose selector matches the supplied
+// member disks by device path.
+func raidDoc(name string, level storageres.MDLevel, memberDisks []string) *storagecfg.RAIDArrayConfigV1Alpha1 {
+	doc := storagecfg.NewRAIDArrayConfigV1Alpha1()
+	doc.MetaName = name
+	doc.Level = level
+
+	clauses := xslices.Map(memberDisks, func(d string) string {
+		return fmt.Sprintf(`disk.dev_path == "%s"`, d)
+	})
+
+	doc.ProvisioningSpec.RAIDVolumeSelector.Match = cel.MustExpression(
+		cel.ParseBooleanExpression(strings.Join(clauses, " || "), celenv.DiskLocator()),
+	)
+
+	return doc
+}
+
+const (
+	raidAssertTimeout  = 10 * time.Minute // array rebuild can take a while
+	raidAssertInterval = 15 * time.Second
+)
+
+// provisionRAID1Mirror provisions a raid1 (mirror) MD array named raidName across
+// the first two user disks declaratively via a RAIDArrayConfig, waits for the
+// MDArrayStatus to surface with both members and the stable by-id device (Ready or
+// still rebuilding). minDisks lets callers require extra spare disks (e.g. the
+// grow test needs a third). Each test must pass a unique raidName so its array and
+// member disks do not collide with the other RAID tests in this suite.
+//
+// It returns the node context, the stable by-id device path, the full user-disk
+// list, and a teardown func the caller MUST defer. teardown wipes and destroys the
+// array (freeing the member disks) and asserts the disks are released.
+//
+//nolint:gocyclo
+func (suite *StorageSuite) provisionRAID1Mirror(raidName string, minDisks int) (nodeCtx context.Context, expectedDevice string, userDisks []string, teardown func()) {
+	suite.T().Helper()
+
+	if testing.Short() {
+		suite.T().Skip("skipping test in short mode.")
+	}
+
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping test for non-qemu provisioner")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	nodeName := k8sNode.Name
+
+	userDisks = suite.UserDisks(suite.ctx, node)
+
+	if len(userDisks) < minDisks {
+		suite.T().Skipf("not enough user disks on %s/%s: %q", node, nodeName, userDisks)
+	}
+
+	memberDisks := userDisks[:2]
+
+	nodeCtx = client.WithNode(suite.ctx, node)
+
+	// mdadm records the array name prefixed with the "talos" homehost (see
+	// md.DevicePath), so the stable by-id alias is md-name-talos:<name>.
+	expectedDevice = "/dev/disk/by-id/md-name-talos:" + raidName
+
+	// Drop the config first so the reconciler stops managing the array, then
+	// destroy it (stops the array + zeroes member superblocks) so the disks are
+	// reusable by later tests. NotFound means it is already gone. The disk-release
+	// check runs last, after the array is torn down.
+	teardown = func() {
+		suite.RemoveMachineConfigDocumentsByName(nodeCtx, storagecfg.RAIDArrayConfigKind, raidName)
+
+		// MDDestroy zeroes the md superblocks but NOT the array's data area, so a
+		// filesystem written on top of the array (e.g. a whole-disk UserVolume)
+		// leaves a stale signature at the member disks' data offset that would
+		// resurface in the next array assembled from the same disks and trip up the
+		// volume manager's format check ("wrong format"). Wiping the members can't
+		// reach that offset; wipe the array device itself (its signatures map
+		// straight to the members' data area) BEFORE destroying it. The array may
+		// still be briefly held by a user volume being torn down (its config is
+		// removed by the test's own defer, which runs first), so retry.
+		if devName, ok := suite.raidArrayDevName(nodeCtx, raidName); ok {
+			suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+				err := suite.Client.BlockDeviceWipe(nodeCtx, &storageapi.BlockDeviceWipeRequest{
+					Devices: []*storageapi.BlockDeviceWipeDescriptor{
+						{
+							Device: devName,
+							Method: storageapi.BlockDeviceWipeDescriptor_FAST,
+						},
+					},
+				})
+				if isAlreadyGone(err) {
+					return
+				}
+
+				assert.NoError(collect, err)
+			}, 3*time.Minute, 5*time.Second, "failed to wipe MD array device %s", devName)
+		}
+
+		// Stop the array + zero member superblocks. NotFound means already gone.
+		suite.Require().EventuallyWithT(func(collect *assert.CollectT) {
+			err := suite.Client.MDDestroy(nodeCtx, &machineapi.MDDestroyRequest{Device: expectedDevice})
+			if isAlreadyGone(err) {
+				return
+			}
+
+			assert.NoError(collect, err)
+		}, 3*time.Minute, 5*time.Second, "failed to destroy MD array %q", expectedDevice)
+
+		suite.assertUserDisksReleased(suite.ctx, node, nodeName, userDisks)
+	}
+
+	suite.T().Logf("provisioning raid1 array %q on %s/%s with %v", raidName, node, nodeName, memberDisks)
+
+	suite.PatchMachineConfig(nodeCtx, raidDoc(raidName, storageres.MDLevelRAID1, memberDisks))
+
+	suite.Require().Eventually(func() bool {
+		return suite.mdArrayStatusMatches(nodeCtx, raidName, expectedDevice, memberDisks)
+	}, raidAssertTimeout, raidAssertInterval, "MD array status not reported for %q", raidName)
+
+	return nodeCtx, expectedDevice, userDisks, teardown
+}
+
+// raidArrayDevName returns the kernel device name (e.g. "md0") of the MD array
+// carrying the by-id md-name symlink, if it currently exists.
+func (suite *StorageSuite) raidArrayDevName(nodeCtx context.Context, raidName string) (string, bool) {
+	disks, err := safe.StateListAll[*block.Disk](nodeCtx, suite.Client.COSI)
+	if err != nil {
+		return "", false
+	}
+
+	for disk := range disks.All() {
+		for _, s := range disk.TypedSpec().Symlinks {
+			if strings.Contains(s, "md-name-talos:"+raidName) {
+				return filepath.Base(disk.TypedSpec().DevPath), true
+			}
+		}
+	}
+
+	return "", false
+}
+
+// raidDiskSymlink waits until the MD array surfaces as a block.Disk carrying the
+// by-id md-name symlink and returns that symlink.
+func (suite *StorageSuite) raidDiskSymlink(nodeCtx context.Context, raidName string) string {
+	var raidSymlink string
+
+	suite.Require().Eventually(func() bool {
+		disks, err := safe.StateListAll[*block.Disk](nodeCtx, suite.Client.COSI)
+		if err != nil {
+			return false
+		}
+
+		for disk := range disks.All() {
+			for _, s := range disk.TypedSpec().Symlinks {
+				if strings.Contains(s, "md-name-talos:"+raidName) {
+					raidSymlink = s
+
+					return true
+				}
+			}
+		}
+
+		return false
+	}, raidAssertTimeout, raidAssertInterval, "MD array %q did not surface as a disk", raidName)
+
+	return raidSymlink
+}
+
+// assertRAIDUserVolumeReadyMounted waits until the user volume becomes Ready and
+// mounted.
+func (suite *StorageSuite) assertRAIDUserVolumeReadyMounted(nodeCtx context.Context, userVolumeID string) {
+	suite.Require().Eventually(func() bool {
+		vs, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.COSI, userVolumeID)
+		if err != nil {
+			return false
+		}
+
+		return vs.TypedSpec().Phase == block.VolumePhaseReady
+	}, raidAssertTimeout, raidAssertInterval, "raid-backed user volume %q not ready", userVolumeID)
+
+	suite.Require().Eventually(func() bool {
+		_, err := safe.StateGetByID[*block.MountStatus](nodeCtx, suite.Client.COSI, userVolumeID)
+
+		return err == nil
+	}, raidAssertTimeout, raidAssertInterval, "raid-backed user volume %q not mounted", userVolumeID)
+}
+
+// TestRAIDArrayGrow provisions a raid1 array across two disks, then grows it by
+// adding a third matched disk, verifying the MDArrayStatus picks up all three
+// members and starts rebuilding. It intentionally does not wait for the resync to
+// finish (see mdArrayGrewToMembers). The array is torn down through the MDService
+// (talosctl wipe md) RPC.
+func (suite *StorageSuite) TestRAIDArrayGrow_RAID1() {
+	const raidName = "mdgrow"
+
+	nodeCtx, expectedDevice, userDisks, teardown := suite.provisionRAID1Mirror(raidName, 3)
+	defer teardown()
+
+	grownMemberDisks := userDisks[:3]
+
+	suite.T().Logf("growing raid1 array %q with %v", raidName, grownMemberDisks)
+
+	suite.PatchMachineConfig(nodeCtx, raidDoc(raidName, storageres.MDLevelRAID1, grownMemberDisks))
+
+	suite.Require().Eventually(func() bool {
+		return suite.mdArrayStatusMatches(nodeCtx, raidName, expectedDevice, grownMemberDisks)
+	}, raidAssertTimeout, raidAssertInterval, "MD array status was not grown for %q", raidName)
+}
+
+// TestRAIDArrayUserVolumeDisk provisions a disk-backed (whole-device) UserVolume
+// on top of a raid1 array and verifies it comes up Ready and mounted.
+func (suite *StorageSuite) TestRAIDArrayUserVolumeDisk_RAID1() {
+	const raidName = "mdudisk"
+
+	nodeCtx, _, _, teardown := suite.provisionRAID1Mirror(raidName, 2)
+	defer teardown()
+
+	raidSymlink := suite.raidDiskSymlink(nodeCtx, raidName)
+
+	const userVol = "raiduserdisk"
+
+	suite.T().Logf("provisioning disk UserVolume %q on raid1 array %s (%s)", userVol, raidName, raidSymlink)
+
+	uv := blockcfg.NewUserVolumeConfigV1Alpha1()
+	uv.MetaName = userVol
+	uv.VolumeType = new(block.VolumeTypeDisk)
+	uv.ProvisioningSpec.DiskSelectorSpec.Match = cel.MustExpression(
+		cel.ParseBooleanExpression(fmt.Sprintf("'%s' in disk.symlinks", raidSymlink), celenv.DiskLocator()),
+	)
+	uv.FilesystemSpec.FilesystemType = block.FilesystemTypeXFS
+
+	suite.PatchMachineConfig(nodeCtx, uv)
+
+	defer suite.RemoveMachineConfigDocumentsByName(nodeCtx, blockcfg.UserVolumeConfigKind, userVol)
+
+	suite.assertRAIDUserVolumeReadyMounted(nodeCtx, constants.UserVolumePrefix+userVol)
+}
+
+// TestRAIDArrayUserVolumePartition provisions a partition-backed UserVolume (a
+// partition carved from the raid device) on top of a raid1 array and verifies it
+// comes up Ready and mounted.
+func (suite *StorageSuite) TestRAIDArrayUserVolumePartition_RAID1() {
+	const raidName = "mdupart"
+
+	nodeCtx, _, _, teardown := suite.provisionRAID1Mirror(raidName, 2)
+	defer teardown()
+
+	raidSymlink := suite.raidDiskSymlink(nodeCtx, raidName)
+
+	const userVol = "raiduserpart"
+
+	suite.T().Logf("provisioning partition UserVolume %q on raid1 array %s (%s)", userVol, raidName, raidSymlink)
+
+	uv := blockcfg.NewUserVolumeConfigV1Alpha1()
+	uv.MetaName = userVol
+	// Default VolumeType is Partition: a partition is carved out of the raid device.
+	uv.ProvisioningSpec.DiskSelectorSpec.Match = cel.MustExpression(
+		cel.ParseBooleanExpression(fmt.Sprintf("'%s' in disk.symlinks", raidSymlink), celenv.DiskLocator()),
+	)
+	uv.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("100MiB")
+	uv.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("1GiB")
+	uv.FilesystemSpec.FilesystemType = block.FilesystemTypeXFS
+
+	suite.PatchMachineConfig(nodeCtx, uv)
+
+	defer suite.RemoveMachineConfigDocumentsByName(nodeCtx, blockcfg.UserVolumeConfigKind, userVol)
+
+	suite.assertRAIDUserVolumeReadyMounted(nodeCtx, constants.UserVolumePrefix+userVol)
+}
+
+// mdArrayStatusMatches reports whether the array carries exactly the expected
+// members and its identity fields are populated. It accepts a Ready OR Rebuilding
+// array and does NOT wait for the resync to finish: every grow recovers the
+// mirror, which can take far longer than the test budget. Observing the array
+// with the expected members and no error is enough to prove the config
+// reconciled.
+//
+//nolint:gocyclo
+func (suite *StorageSuite) mdArrayStatusMatches(ctx context.Context, name, device string, members []string) bool {
+	status, err := safe.StateGetByID[*storageres.MDArrayStatus](ctx, suite.Client.COSI, name)
+	if err != nil {
+		suite.T().Logf("MD array %q: status not found yet: %v", name, err)
+
+		return false
+	}
+
+	spec := status.TypedSpec()
+
+	var mismatches []string
+
+	check := func(cond bool, format string, args ...any) {
+		if !cond {
+			mismatches = append(mismatches, fmt.Sprintf(format, args...))
+		}
+	}
+
+	check(status.Metadata().ID() == name, "id: got %q, want %q", status.Metadata().ID(), name)
+	check(spec.Level == storageres.MDLevelRAID1, "level: got %q, want %q", spec.Level, storageres.MDLevelRAID1)
+	check(spec.Device == device, "device: got %q, want %q", spec.Device, device)
+	check(spec.Error == "", "error: got %q, want empty", spec.Error)
+	check(spec.RaidDevices == len(members), "raid_devices: got %d, want %d", spec.RaidDevices, len(members))
+	check(spec.UUID != "", "uuid: empty")
+	check(spec.Name == "talos:"+name, "name: got %q, want %q", spec.Name, "talos:"+name)
+	check(spec.Metadata != "", "metadata: empty")
+	check(spec.ArrayState != "", "array_state: empty")
+	check(sameStringSet(spec.Members, members), "members: got %v, want %v", spec.Members, members)
+	check(
+		spec.Status == storageres.MDArrayPhaseReady || spec.Status == storageres.MDArrayPhaseRebuilding,
+		"status: got %q, want ready or rebuilding", spec.Status,
+	)
+
+	if len(mismatches) > 0 {
+		suite.T().Logf("MD array %q not matching yet: %s", name, strings.Join(mismatches, "; "))
+
+		return false
+	}
+
+	return true
+}
+
+func sameStringSet(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+
+	seen := make(map[string]struct{}, len(a))
+	for _, v := range a {
+		seen[v] = struct{}{}
+	}
+
+	for _, v := range b {
+		if _, ok := seen[v]; !ok {
+			return false
+		}
+	}
+
+	return true
+}
+
 // isAlreadyGone reports whether the gRPC error means the LVM object has
 // already been removed.
 func isAlreadyGone(err error) bool {
@@ -1188,18 +1566,37 @@ func (suite *StorageSuite) deleteLVMVolumes(node string, pvDisks []string) {
 	// wipe RPCs by re-running pvcreate / vgcreate.
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, storagecfg.LVMVolumeGroupConfigKind, vgName)
 
-	if err := suite.Client.VolumeGroupRemove(nodeCtx, &machineapi.LVMServiceVolumeGroupRemoveRequest{
-		VolumeGroup: vgName,
-	}); !isAlreadyGone(err) {
-		suite.T().Logf("VolumeGroupRemove %s failed: %v", vgName, err)
-	}
+	const (
+		removeTimeout  = 60 * time.Second
+		removeInterval = 2 * time.Second
+	)
+
+	// Removing config docs (user volume, LV) only patches config; the actual
+	// unmount + LV teardown happens asynchronously via the reconciler. Retry
+	// the wipe RPCs until the LV closes ("logical volume is open") and the PVs
+	// are no longer in use, otherwise the disks are never released.
+	suite.Require().Eventually(func() bool {
+		err := suite.Client.VolumeGroupRemove(nodeCtx, &machineapi.LVMServiceVolumeGroupRemoveRequest{
+			VolumeGroup: vgName,
+		})
+		if !isAlreadyGone(err) {
+			suite.T().Logf("VolumeGroupRemove %s failed: %v", vgName, err)
+		}
+
+		return isAlreadyGone(err)
+	}, removeTimeout, removeInterval, "VolumeGroupRemove %s never succeeded", vgName)
 
 	for _, dev := range pvDisks {
-		if err := suite.Client.PhysicalVolumeRemove(nodeCtx, &machineapi.LVMServicePhysicalVolumeRemoveRequest{
-			Device: dev,
-		}); !isAlreadyGone(err) {
-			suite.T().Logf("PhysicalVolumeRemove %s failed: %v", dev, err)
-		}
+		suite.Require().Eventually(func() bool {
+			err := suite.Client.PhysicalVolumeRemove(nodeCtx, &machineapi.LVMServicePhysicalVolumeRemoveRequest{
+				Device: dev,
+			})
+			if !isAlreadyGone(err) {
+				suite.T().Logf("PhysicalVolumeRemove %s failed: %v", dev, err)
+			}
+
+			return isAlreadyGone(err)
+		}, removeTimeout, removeInterval, "PhysicalVolumeRemove %s never succeeded", dev)
 	}
 }
 

@@ -16,7 +16,7 @@ import (
 
 // VolumeMountStatus adapter provides conversion from MountStatus.
 //
-//nolint:revive,golint
+//nolint:revive
 func VolumeMountStatus(r *block.VolumeMountStatus) volumeMountStatus {
 	return volumeMountStatus{
 		VolumeMountStatus: r,

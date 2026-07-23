@@ -9,7 +9,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/siderolabs/crypto/x509"
 
 	"github.com/siderolabs/talos/pkg/machinery/cel"
@@ -30,20 +29,13 @@ type MachineConfig interface {
 	Env() Env
 	Files() ([]File, error)
 	Type() machine.Type
-	Controlplane() MachineControlPlane
-	Pods() []map[string]any
-	Kubelet() Kubelet
 	Sysctls() map[string]string
 	Sysfs() map[string]string
 	SystemDiskEncryption() SystemDiskEncryption
 	Features() Features
 	Udev() UdevConfig
 	Logging() Logging
-	Kernel() Kernel
 	SeccompProfiles() []SeccompProfile
-	NodeLabels() NodeLabels
-	NodeAnnotations() NodeAnnotations
-	NodeTaints() NodeTaints
 	BaseRuntimeSpecOverrides() map[string]any
 }
 
@@ -53,15 +45,6 @@ type SeccompProfile interface {
 	Name() string
 	Value() map[string]any
 }
-
-// NodeLabels defines the labels that should be set on a node.
-type NodeLabels map[string]string
-
-// NodeAnnotations defines the annotations that should be set on a node.
-type NodeAnnotations map[string]string
-
-// NodeTaints defines the taints that should be set on a node.
-type NodeTaints map[string]string
 
 // Disk represents the options available for partitioning, formatting, and
 // mounting extra disks.
@@ -112,20 +95,6 @@ type Security interface {
 	AcceptedCAs() []*x509.PEMEncodedCertificate
 	Token() string
 	CertSANs() []string
-}
-
-// MachineControlPlane defines the requirements for a config that pertains to Controlplane
-// related options.
-type MachineControlPlane interface {
-	ControllerManager() MachineControllerManager
-}
-
-// MachineControllerManager defines the requirements for a config that pertains to ControllerManager
-// related options.
-//
-//nolint:iface
-type MachineControllerManager interface {
-	Disabled() bool
 }
 
 // MachineNetwork defines the requirements for a config that pertains to network
@@ -292,29 +261,6 @@ type NetworkDeviceSelector interface {
 	Physical() *bool
 }
 
-// Kubelet defines the requirements for a config that pertains to kubelet
-// related options.
-//
-//nolint:interfacebloat
-type Kubelet interface {
-	Image() string
-	ClusterDNS() []string
-	ExtraArgs() map[string][]string
-	ExtraMounts() []specs.Mount
-	ExtraConfig() map[string]any
-	CredentialProviderConfig() map[string]any
-	DefaultRuntimeSeccompProfileEnabled() bool
-	RegisterWithFQDN() bool
-	NodeIP() KubeletNodeIP
-	SkipNodeRegistration() bool
-	DisableManifestsDirectory() bool
-}
-
-// KubeletNodeIP defines the way node IPs are selected for the kubelet.
-type KubeletNodeIP interface {
-	ValidSubnets() []string
-}
-
 // EncryptionKey defines settings for the partition encryption key handling.
 type EncryptionKey interface {
 	Static() EncryptionKeyStatic
@@ -370,7 +316,6 @@ type SystemDiskEncryption interface {
 type Features interface {
 	KubernetesTalosAPIAccess() KubernetesTalosAPIAccess
 	DiskQuotaSupportEnabled() bool
-	KubePrism() KubePrism
 	NodeAddressSortAlgorithm() nethelpers.AddressSortAlgorithm
 }
 
@@ -379,12 +324,6 @@ type KubernetesTalosAPIAccess interface {
 	Enabled() bool
 	AllowedRoles() []string
 	AllowedKubernetesNamespaces() []string
-}
-
-// KubePrism describes the API Server load balancer features.
-type KubePrism interface {
-	Enabled() bool
-	Port() int
 }
 
 // UdevConfig describes configuration for udev.
@@ -402,15 +341,4 @@ type LoggingDestination interface {
 	Endpoint() *url.URL
 	ExtraTags() map[string]string
 	Format() string
-}
-
-// Kernel describes Talos Linux kernel configuration.
-type Kernel interface {
-	Modules() []KernelModule
-}
-
-// KernelModule describes Linux module to load.
-type KernelModule interface {
-	Name() string
-	Parameters() []string
 }

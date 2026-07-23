@@ -16,7 +16,7 @@ import (
 
 // VLANSpec adapter provides encoding/decoding to netlink structures.
 //
-//nolint:revive,golint
+//nolint:revive
 func VLANSpec(r *network.VLANSpec) vlanSpec {
 	return vlanSpec{
 		VLANSpec: r,

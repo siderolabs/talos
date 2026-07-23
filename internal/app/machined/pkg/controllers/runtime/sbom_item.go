@@ -120,10 +120,11 @@ type spdxDocument struct {
 }
 
 type spdxPackage struct {
-	Name         string            `json:"name"`
-	Version      string            `json:"versionInfo"`
-	License      string            `json:"licenseDeclared"`
-	ExternalRefs []spdxExternalRef `json:"externalRefs"`
+	Name             string            `json:"name"`
+	Version          string            `json:"versionInfo"`
+	LicenseDeclared  string            `json:"licenseDeclared"`
+	LicenseConcluded string            `json:"licenseConcluded"`
+	ExternalRefs     []spdxExternalRef `json:"externalRefs"`
 }
 
 type spdxExternalRef struct {
@@ -152,23 +153,7 @@ func (ctrl *SBOMItemController) processSPDXFile(ctx context.Context, r controlle
 
 		if err := safe.WriterModify(ctx, r, runtimeres.NewSBOMItemSpec(runtimeres.NamespaceName, pkg.Name),
 			func(item *runtimeres.SBOMItem) error {
-				item.TypedSpec().Name = pkg.Name
-				item.TypedSpec().Version = pkg.Version
-
-				if pkg.License != "NOASSERTION" {
-					item.TypedSpec().License = pkg.License
-				}
-
-				for _, ref := range pkg.ExternalRefs {
-					switch ref.Type {
-					case "cpe23Type":
-						item.TypedSpec().CPEs = append(item.TypedSpec().CPEs, ref.Locator)
-					case "purl":
-						item.TypedSpec().PURLs = append(item.TypedSpec().PURLs, ref.Locator)
-					}
-				}
-
-				item.TypedSpec().Extension = isExtension
+				updateSBOMItem(item, pkg, isExtension)
 
 				return nil
 			}); err != nil {
@@ -177,4 +162,27 @@ func (ctrl *SBOMItemController) processSPDXFile(ctx context.Context, r controlle
 	}
 
 	return nil
+}
+
+// updateSBOMItem populates an SBOMItem resource from a parsed SPDX package.
+func updateSBOMItem(item *runtimeres.SBOMItem, pkg spdxPackage, isExtension bool) {
+	item.TypedSpec().Name = pkg.Name
+	item.TypedSpec().Version = pkg.Version
+
+	if pkg.LicenseConcluded != "NOASSERTION" {
+		item.TypedSpec().License = pkg.LicenseConcluded
+	} else if pkg.LicenseDeclared != "NOASSERTION" {
+		item.TypedSpec().License = pkg.LicenseDeclared
+	}
+
+	for _, ref := range pkg.ExternalRefs {
+		switch ref.Type {
+		case "cpe23Type":
+			item.TypedSpec().CPEs = append(item.TypedSpec().CPEs, ref.Locator)
+		case "purl":
+			item.TypedSpec().PURLs = append(item.TypedSpec().PURLs, ref.Locator)
+		}
+	}
+
+	item.TypedSpec().Extension = isExtension
 }

@@ -13,6 +13,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/netip"
 	"os"
 	"path/filepath"
@@ -733,6 +734,23 @@ func (suite *BaseSuite) upgradeKubernetes(fromVersion, toVersion string, skipKub
 	}
 
 	suite.Require().NoError(kubernetes.Upgrade(suite.ctx, suite.clusterAccess, options))
+}
+
+func (suite *BaseSuite) sendMonitorCommand(ctx context.Context, nodeName, command string) {
+	statePath, err := suite.Cluster.StatePath()
+	suite.Require().NoError(err)
+
+	socketPath := filepath.Join(statePath, nodeName+".monitor")
+
+	conn, err := (&net.Dialer{}).DialContext(ctx, "unix", socketPath)
+	suite.Require().NoError(err)
+
+	defer func() {
+		suite.Require().NoError(conn.Close())
+	}()
+
+	_, err = conn.Write([]byte(command + "\n"))
+	suite.Require().NoError(err)
 }
 
 type clusterOptions struct {

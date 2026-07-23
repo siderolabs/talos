@@ -1,0 +1,50 @@
+; Lightweight fio job for the NetApp Trident CSI integration tests.
+;
+; This mirrors kubestr's built-in "default-fio" job (four time_based jobs, 15s each) with a
+; single change: size is reduced from 2G to 256M per job. On slow backends such as ONTAP SAN
+; over iSCSI, default-fio lays out its four 2GiB data files (~8GiB total) before the timed I/O
+; runs; that layout is not bounded by runtime and overruns kubestr's internal exec timeout.
+; Shrinking to 256M keeps the layout small enough to finish inside that window while still
+; exercising the full provision -> attach -> mount -> read/write path.
+[global]
+randrepeat=0
+verify=0
+ioengine=libaio
+direct=1
+gtod_reduce=1
+[job1]
+name=read_iops
+bs=4K
+iodepth=64
+size=256M
+readwrite=randread
+time_based
+ramp_time=2s
+runtime=15s
+[job2]
+name=write_iops
+bs=4K
+iodepth=64
+size=256M
+readwrite=randwrite
+time_based
+ramp_time=2s
+runtime=15s
+[job3]
+name=read_bw
+bs=128K
+iodepth=64
+size=256M
+readwrite=randread
+time_based
+ramp_time=2s
+runtime=15s
+[job4]
+name=write_bw
+bs=128K
+iodepth=64
+size=256M
+readwrite=randwrite
+time_based
+ramp_time=2s
+runtime=15s

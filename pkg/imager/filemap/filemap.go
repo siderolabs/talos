@@ -150,7 +150,11 @@ func Layer(filemap []File) (v1.Layer, error) {
 	slices.SortFunc(filemap, func(a, b File) int { return cmp.Compare(a.ImagePath, b.ImagePath) })
 
 	// Return a new copy of the buffer each time it's opened.
+	//
+	// WithCompressedCaching memoizes the compressed bytes after the first read, so the gzip
+	// pipeline is spun up exactly once instead of being re-created for each digest/diffID/write
+	// access.
 	return tarball.LayerFromOpener(func() (io.ReadCloser, error) {
 		return Build(filemap), nil
-	}, tarball.WithMediaType(types.OCILayer))
+	}, tarball.WithMediaType(types.OCILayer), tarball.WithCompressedCaching)
 }

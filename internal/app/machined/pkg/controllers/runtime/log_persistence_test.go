@@ -44,6 +44,15 @@ func (loggingMock) SetLineWriter(w runtime.LogWriter) {}
 
 func (loggingMock) RegisteredLogs() []string { return nil }
 
+func (suite *LogPersistenceSuite) TestNoEPHEMERAL() {
+	ctrl := &runtimectrl.LogPersistenceController{
+		V1Alpha1Logging: loggingMock{},
+	}
+
+	// don't mount the EPEMERAL volume, controller should still shutdown
+	suite.Require().NoError(suite.Runtime().RegisterController(ctrl))
+}
+
 func (suite *LogPersistenceSuite) TestDefault() {
 	ctrl := &runtimectrl.LogPersistenceController{
 		V1Alpha1Logging: loggingMock{},

@@ -18,6 +18,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader/internal/decoder"
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/registry"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
@@ -173,7 +174,7 @@ spec:
 	test: true
 `),
 			expected:    nil,
-			expectedErr: "decode error: yaml: while scanning for the next token at line 5: found character that cannot start any token",
+			expectedErr: "decode error: go-yaml load error in scanner (while scanning for the next token) at L5.C1: found character that cannot start any token",
 		},
 		{
 			name: "extra field",
@@ -286,7 +287,7 @@ omit: false
 			name:        "internal error",
 			source:      []byte(":   \xea"),
 			expected:    nil,
-			expectedErr: "decode error: yaml: offset 4: incomplete UTF-8 octet sequence",
+			expectedErr: "decode error: go-yaml load error in reader at <unknown position>: incomplete UTF-8 octet sequence",
 		},
 		{
 			name: "unstructured config",
@@ -303,6 +304,28 @@ pods:
 `),
 			expected:    nil,
 			expectedErr: "",
+		},
+		{
+			name: "kube apiserver extra args list value",
+			source: []byte(`---
+apiVersion: v1alpha1
+kind: KubeAPIServerConfig
+extraArgs:
+  service-account-issuer:
+    - https://OLD-ENDPOINT:6443
+    - https://NEW-ENDPOINT:6443
+`),
+			expected: []config.Document{
+				&k8s.KubeAPIServerConfigV1Alpha1{
+					Meta: meta.Meta{
+						MetaAPIVersion: "v1alpha1",
+						MetaKind:       "KubeAPIServerConfig",
+					},
+					PodArgs: meta.Args{
+						"service-account-issuer": meta.NewArgValue("", []string{"https://OLD-ENDPOINT:6443", "https://NEW-ENDPOINT:6443"}),
+					},
+				},
+			},
 		},
 		{
 			name: "omit empty test",
@@ -340,7 +363,7 @@ test: true
 			t.Parallel()
 
 			d := decoder.NewDecoder()
-			actual, err := d.Decode(bytes.NewReader(tt.source), false)
+			actual, err := d.Decode(bytes.NewReader(tt.source), false, false)
 
 			if tt.expected != nil {
 				assert.Equal(t, tt.expected, actual)
@@ -369,7 +392,7 @@ func TestDecoderV1Alpha1Config(t *testing.T) {
 			require.NoError(t, err)
 
 			d := decoder.NewDecoder()
-			_, err = d.Decode(bytes.NewReader(contents), false)
+			_, err = d.Decode(bytes.NewReader(contents), false, false)
 
 			assert.NoError(t, err)
 		})
@@ -383,9 +406,13 @@ func TestDoubleV1Alpha1(t *testing.T) {
 	contents := must.Value(files.ReadFile("v1alpha1.yaml"))(t)
 
 	d := decoder.NewDecoder()
-	_, err := d.Decode(bytes.NewReader(contents), false)
+	_, err := d.Decode(bytes.NewReader(contents), false, false)
 	require.Error(t, err)
 	require.ErrorContains(t, err, "not allowed")
+
+	// now try with the allow duplicates
+	_, err = d.Decode(bytes.NewReader(contents), false, true)
+	require.NoError(t, err)
 }
 
 func BenchmarkDecoderV1Alpha1Config(b *testing.B) {
@@ -396,7 +423,7 @@ func BenchmarkDecoderV1Alpha1Config(b *testing.B) {
 
 	for b.Loop() {
 		d := decoder.NewDecoder()
-		_, err = d.Decode(bytes.NewReader(contents), false)
+		_, err = d.Decode(bytes.NewReader(contents), false, false)
 
 		assert.NoError(b, err)
 	}

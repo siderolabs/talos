@@ -59,7 +59,7 @@ func (suite *NodeLabelsSuite) updateMachineConfig(machineType machine.Type, labe
 
 		suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
 	} else {
-		cfg.Container().RawV1Alpha1().MachineConfig.MachineNodeLabels = labels
+		cfg.Container().RawV1Alpha1().MachineConfig.MachineNodeLabels = labels //nolint:staticcheck // testing legacy config
 		cfg.Container().RawV1Alpha1().MachineConfig.MachineType = machineType.String()
 		suite.Require().NoError(suite.State().Update(suite.Ctx(), cfg))
 	}

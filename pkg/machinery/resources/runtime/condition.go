@@ -120,6 +120,39 @@ func (condition *DevicesStatusCondition) Wait(ctx context.Context) error {
 	return err
 }
 
+// UnattendedInstallCondition implements condition which waits for unattended install to complete.
+type UnattendedInstallCondition struct {
+	state state.State
+}
+
+// NewUnattendedInstallCondition builds a condition which waits for unattended install to complete.
+func NewUnattendedInstallCondition(state state.State) *UnattendedInstallCondition {
+	return &UnattendedInstallCondition{
+		state: state,
+	}
+}
+
+func (condition *UnattendedInstallCondition) String() string {
+	return "unattended install"
+}
+
+// Wait implements condition interface.
+func (condition *UnattendedInstallCondition) Wait(ctx context.Context) error {
+	_, err := condition.state.WatchFor(
+		ctx,
+		resource.NewMetadata(NamespaceName, UnattendedInstallStatusType, UnattendedInstallStatusID, resource.VersionUndefined),
+		state.WithCondition(func(r resource.Resource) (bool, error) {
+			if resource.IsTombstone(r) {
+				return false, nil
+			}
+
+			return r.(*UnattendedInstallStatus).TypedSpec().Phase == UnattendedInstallPhaseInstalled, nil
+		}),
+	)
+
+	return err
+}
+
 // APIServiceConfigCondition implements condition which waits for api service config to be ready.
 type APIServiceConfigCondition struct {
 	state state.State

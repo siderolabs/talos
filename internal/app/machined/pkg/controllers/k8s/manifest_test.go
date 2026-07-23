@@ -31,12 +31,12 @@ var defaultManifestSpec = k8s.BootstrapManifestsConfigSpec{
 	Server:        "127.0.0.1",
 	ClusterDomain: "cluster.",
 
-	PodCIDRs: []string{constants.DefaultIPv4PodNet},
+	PodCIDRs: []string{constants.DefaultIPv4PodCIDR},
 
 	ProxyEnabled: true,
 	ProxyImage:   "foo/bar",
 	ProxyArgs: []string{
-		fmt.Sprintf("--cluster-cidr=%s", constants.DefaultIPv4PodNet),
+		fmt.Sprintf("--cluster-cidr=%s", constants.DefaultIPv4PodCIDR),
 		"--hostname-override=$(NODE_NAME)",
 		"--kubeconfig=/etc/kubernetes/kubeconfig",
 		"--proxy-mode=iptables",
@@ -142,7 +142,7 @@ func (suite *ManifestSuite) TestReconcileIPv6() {
 
 	manifestConfig := k8s.NewBootstrapManifestsConfig()
 	spec := defaultManifestSpec
-	spec.PodCIDRs = []string{constants.DefaultIPv6PodNet}
+	spec.PodCIDRs = []string{constants.DefaultIPv6PodCIDR}
 	spec.DNSServiceIP = ""
 	spec.DNSServiceIPv6 = "fc00:db8:10::10"
 	*manifestConfig.TypedSpec() = spec
@@ -191,7 +191,7 @@ func (suite *ManifestSuite) TestReconcileIPv6() {
 		v, _, _ := unstructured.NestedString(configmap.Object, "data", "net-conf.json") //nolint:errcheck
 		asrt.Contains(v, `"EnableIPv4": false`)
 		asrt.Contains(v, `"EnableIPv6": true`)
-		asrt.Contains(v, fmt.Sprintf(`"IPv6Network": "%s"`, constants.DefaultIPv6PodNet))
+		asrt.Contains(v, fmt.Sprintf(`"IPv6Network": "%s"`, constants.DefaultIPv6PodCIDR))
 	})
 }
 

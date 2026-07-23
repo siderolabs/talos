@@ -10,6 +10,301 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
 )
 
+func (KubeAdmissionControlConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeAdmissionControlConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeAdmissionControlConfig configures kube-apiserver admission control plugins." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeAdmissionControlConfig configures kube-apiserver admission control plugins.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Admission control plugin name, should be a valid Kubernetes admission control plugin name.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Admission control plugin name, should be a valid Kubernetes admission control plugin name." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "configuration",
+				Type:        "Unstructured",
+				Note:        "",
+				Description: "Kubernetes API server [admission control plugins](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/).\nThe value is the literal Kubernetes admission control configuration.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Kubernetes API server [admission control plugins](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeAdmissionControlConfigV1Alpha1())
+
+	return doc
+}
+
+func (KubeAggregatorCAConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeAggregatorCAConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeAggregatorCAConfig configures Kubernetes API aggregator accepted CAs." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeAggregatorCAConfig configures Kubernetes API aggregator accepted CAs.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "issuingCA",
+				Type:        "CertificateAndKey",
+				Note:        "",
+				Description: "The currently active issuing certificate authority for the Kubernetes API aggregator flow.\n\nThis field should only be set for the controlplane machines.\nThe value contains a private key and a certificate, PEM encoded.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The currently active issuing certificate authority for the Kubernetes API aggregator flow." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "acceptedCAs",
+				Type:        "[]string",
+				Note:        "",
+				Description: "The list of accepted CA certificates for the Kubernetes API server aggregator flow.\n\nThis field should only be set for the controlplane machines.\nThe value should be a PEM encoded certificate.\nThe issuing CA certificate is automatically added to the list of accepted CAs.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The list of accepted CA certificates for the Kubernetes API server aggregator flow." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeAggregatorCAConfigV1Alpha1())
+
+	return doc
+}
+
+func (KubeAPIServerConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeAPIServerConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeAPIServerConfig configures kube-apiserver controlplane static pod." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeAPIServerConfig configures kube-apiserver controlplane static pod.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "image",
+				Type:        "string",
+				Note:        "",
+				Description: "The container image used to run the kube-apiserver component.\n\nThe image reference should contain the tag, even if it is pinned by digest.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The container image used to run the kube-apiserver component." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "extraArgs",
+				Type:        "Args",
+				Note:        "",
+				Description: "Extra command line arguments to supply to the kube-apiserver.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra command line arguments to supply to the kube-apiserver." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "env",
+				Type:        "map[string]string",
+				Note:        "",
+				Description: "The `env` field allows for the addition of environment variables for the kube-apiserver.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The `env` field allows for the addition of environment variables for the kube-apiserver." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "resources",
+				Type:        "ResourcesConfig",
+				Note:        "",
+				Description: "Configure the kube-apiserver resources.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure the kube-apiserver resources." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "apiPort",
+				Type:        "int",
+				Note:        "",
+				Description: "The port on which the kube-apiserver will listen for requests.\n\nDefault is 6443.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The port on which the kube-apiserver will listen for requests." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "certExtraSANs",
+				Type:        "[]string",
+				Note:        "",
+				Description: "Provide extra certificate SANs (hostnames, IPs) to add to the kube-apiserver serving certificate.\n\nTalos automatically adds machine's addresses and hostnames, Kubernetes names, and control plane endpoint\nderived SANs to the kube-apiserver serving certificate.\nThis field allows for adding additional SANs to the serving certificate.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Provide extra certificate SANs (hostnames, IPs) to add to the kube-apiserver serving certificate." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "startupProbes",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable or disable startup probes for kube-apiserver.\n\nDefault is enabled.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable or disable startup probes for kube-apiserver." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeAPIServerConfigV1Alpha1())
+
+	return doc
+}
+
+func (KubeAPIServerCAConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeAPIServerCAConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeAPIServerCAConfig configures Kubernetes API server CA." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeAPIServerCAConfig configures Kubernetes API server CA.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "issuingCA",
+				Type:        "CertificateAndKey",
+				Note:        "",
+				Description: "The currently active issuing certificate authority for the Kubernetes API server.\n\nThis field should only be set for the controlplane machines.\nThe value contains a private key and a certificate, PEM encoded.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The currently active issuing certificate authority for the Kubernetes API server." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "acceptedCAs",
+				Type:        "[]string",
+				Note:        "",
+				Description: "The list of accepted CA certificates for the Kubernetes API server.\n\nThe value should be a PEM encoded certificate.\nThe issuing CA certificate is automatically added to the list of accepted CAs.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The list of accepted CA certificates for the Kubernetes API server." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeAPIServerCAConfigV1Alpha1())
+
+	return doc
+}
+
+func (KubeAuditPolicyConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeAuditPolicyConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeAuditPolicyConfig configures kube-apiserver audit policy." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeAuditPolicyConfig configures kube-apiserver audit policy.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "configuration",
+				Type:        "Unstructured",
+				Note:        "",
+				Description: "Kubernetes API server [audit policy](https://kubernetes.io/docs/tasks/debug-application-cluster/audit/) configuration.\nThe value is the literal Kubernetes audit policy configuration.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Kubernetes API server [audit policy](https://kubernetes.io/docs/tasks/debug-application-cluster/audit/) configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeAuditPolicyConfigV1Alpha1())
+
+	return doc
+}
+
+func (KubeAuthenticationConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeAuthenticationConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeAuthenticationConfig configures kube-apiserver authentication." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeAuthenticationConfig configures kube-apiserver authentication.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "configuration",
+				Type:        "Unstructured",
+				Note:        "",
+				Description: "Kubernetes API server [authentication](https://kubernetes.io/docs/reference/access-authn-authz/authentication/) configuration.\nThe value is the literal Kubernetes authentication configuration.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Kubernetes API server [authentication](https://kubernetes.io/docs/reference/access-authn-authz/authentication/) configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeAuthenticationConfigV1Alpha1())
+
+	return doc
+}
+
+func (KubeAuthorizerConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeAuthorizerConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeAuthorizerConfig configures kube-apiserver authorization by configuring a specific authorization plugin." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeAuthorizerConfig configures kube-apiserver authorization by configuring a specific authorization plugin.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the authorizer, should be be DNS1123 labels like myauthorizername or subdomains like myauthorizer.example.domain.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the authorizer, should be be DNS1123 labels like myauthorizername or subdomains like myauthorizer.example.domain." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "type",
+				Type:        "string",
+				Note:        "",
+				Description: "Type is the name of the authorizer.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Type is the name of the authorizer." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"Node",
+					"RBAC",
+					"Webhook",
+				},
+			},
+			{
+				Name:        "webhook",
+				Type:        "Unstructured",
+				Note:        "",
+				Description: "Webhook is the configuration for the webhook authorizer.\n\nThis field is required if the AuthorizerType is Webhook, should not be set for other authorizer types.\nThe value is the literal Kubernetes webhook authorizer configuration.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Webhook is the configuration for the webhook authorizer." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeAuthorizerConfigV1Alpha1())
+
+	doc.AddExample("", exampleKubeAuthorizerConfigV1Alpha2())
+
+	doc.AddExample("", exampleKubeAuthorizerConfigV1Alpha3())
+
+	doc.AddExample("", exampleKubeAuthorizerConfigV1Alpha4())
+
+	return doc
+}
+
+func (KubeClusterConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeClusterConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeClusterConfig configures Kubernetes cluster base settings." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeClusterConfig configures Kubernetes cluster base settings.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "clusterName",
+				Type:        "string",
+				Note:        "",
+				Description: "The cluster name.\nIt is used mostly for informational purposes, and gets included into kubeconfig.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The cluster name." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "endpoint",
+				Type:        "URL",
+				Note:        "",
+				Description: "The Kubernetes API endpoint.\nFor a single-node cluster, this can be the same as the node's IP address.\nFor a multi-node cluster, this should be the load balancer's IP address or DNS name,\nor any other address (VIP, BGP, etc.) that can be used to reach the Kubernetes API server from the nodes.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The Kubernetes API endpoint." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeClusterConfig1V1Alpha1())
+
+	return doc
+}
+
 func (ResourcesConfig) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "ResourcesConfig",
@@ -17,11 +312,19 @@ func (ResourcesConfig) Doc() *encoder.Doc {
 		Description: "ResourcesConfig represents the pod resources.",
 		AppearsIn: []encoder.Appearance{
 			{
+				TypeName:  "KubeAPIServerConfigV1Alpha1",
+				FieldName: "resources",
+			},
+			{
 				TypeName:  "KubeControllerManagerConfigV1Alpha1",
 				FieldName: "resources",
 			},
 			{
 				TypeName:  "KubeFlannelCNIConfigV1Alpha1",
+				FieldName: "resources",
+			},
+			{
+				TypeName:  "KubeProxyConfigV1Alpha1",
 				FieldName: "resources",
 			},
 			{
@@ -106,6 +409,63 @@ func (KubeControllerManagerConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (KubeCoreDNSConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeCoreDNSConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeCoreDNSConfig configures CoreDNS deployment." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeCoreDNSConfig configures CoreDNS deployment.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "enabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "By default, CoreDNS deployment is enabled.\nSet to false to disable the CoreDNS deployment.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "By default, CoreDNS deployment is enabled." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "image",
+				Type:        "string",
+				Note:        "",
+				Description: "The container image used to run the CoreDNS.\n\nIf the value is not set, the default image will be used.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The container image used to run the CoreDNS." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeCoreDNSConfigV1Alpha1())
+
+	return doc
+}
+
+func (KubeCredentialProviderConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeCredentialProviderConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeCredentialProviderConfig configures kubelet's credential provider." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeCredentialProviderConfig configures kubelet's credential provider.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "configuration",
+				Type:        "Unstructured",
+				Note:        "",
+				Description: "Kubelet credential provider configuration (used for image registry authentication).\nThe value is the literal kubelet's credential provider configuration.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Kubelet credential provider configuration (used for image registry authentication)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeCredentialProviderConfigV1Alpha1())
+
+	return doc
+}
+
 func (KubeEtcdEncryptionConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "KubeEtcdEncryptionConfig",
@@ -127,6 +487,45 @@ func (KubeEtcdEncryptionConfigV1Alpha1) Doc() *encoder.Doc {
 	}
 
 	doc.AddExample("", exampleKubeEtcdEncryptionConfigV1Alpha1())
+
+	return doc
+}
+
+func (KubeExternalManifestConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeExternalManifestConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeExternalManifestConfig configures a Kubernetes manifest which is downloaded from a URL." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeExternalManifestConfig configures a Kubernetes manifest which is downloaded from a URL.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of manifest.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of manifest." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "headers",
+				Type:        "map[string]string",
+				Note:        "",
+				Description: "Optional HTTP headers to use when downloading the manifest.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Optional HTTP headers to use when downloading the manifest." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "url",
+				Type:        "URL",
+				Note:        "",
+				Description: "Kubernetes manifest definition, via the URL to download it from.\nPlease note that Talos does not watch URL contents, and might download\nthe manifest only once, during the boot.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Kubernetes manifest definition, via the URL to download it from." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeExternalManifestConfigV1Alpha1())
 
 	return doc
 }
@@ -200,6 +599,129 @@ func (KubeFlannelCNIConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (KubeInlineManifestConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeInlineManifestConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeInlineManifestConfig configures a Kubernetes manifest to be applied to the cluster." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeInlineManifestConfig configures a Kubernetes manifest to be applied to the cluster.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of manifest.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of manifest." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "manifest",
+				Type:        "string",
+				Note:        "",
+				Description: "Kubernetes manifest definition, it is supplied as a raw string.\nIt might contain a set of YAML documents separated by `---`.\nThe format matches what can be supplied as `kubectl apply -f <file>`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Kubernetes manifest definition, it is supplied as a raw string." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeInlineManifestConfigV1Alpha1())
+
+	return doc
+}
+
+func (KubeletConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeletConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeletConfig configures kubelet component on the node." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeletConfig configures kubelet component on the node.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "image",
+				Type:        "string",
+				Note:        "",
+				Description: "The container image used to run the kubelet component.\n\nThe image reference should contain the tag, even if it is pinned by digest.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The container image used to run the kubelet component." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "config",
+				Type:        "Unstructured",
+				Note:        "",
+				Description: "Provide extra configuration for the kubelet.\n\nThere is no need to specify kind and apiVersion fields (they will be set automatically),\nbut the rest of the configuration should be provided as is.\n\nSee https://kubernetes.io/docs/reference/config-api/kubelet-config.v1beta1/ for the details of the configuration schema.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Provide extra configuration for the kubelet." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "extraArgs",
+				Type:        "Args",
+				Note:        "",
+				Description: "Extra command line arguments to supply to the kubelet.\n\nIt is preferable to use `config` field to provide configuration overrides.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra command line arguments to supply to the kubelet." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "clusterDNS",
+				Type:        "[]string",
+				Note:        "",
+				Description: "The `ClusterDNS` field is an optional reference to an alternative kubelet clusterDNS ip list.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The `ClusterDNS` field is an optional reference to an alternative kubelet clusterDNS ip list." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "defaultRuntimeSeccompProfileEnabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable container runtime default Seccomp profile.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable container runtime default Seccomp profile." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"true",
+					"yes",
+					"false",
+					"no",
+				},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeletConfigV1Alpha1())
+
+	return doc
+}
+
+func (KubePrismConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubePrismConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubePrismConfig configures node-local Kubernetes API load balancer." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubePrismConfig configures node-local Kubernetes API load balancer.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "port",
+				Type:        "int",
+				Note:        "",
+				Description: "KubePrism port.\nThe load balancer will be started on `127.0.0.1:<port>` and it will\nautomatically include a controlplane endpoint and direct addresses of\nall controlplane nodes in the cluster.\nThe KubePrism will pick up the route(s) with the lowest RTT to the controlplane nodes,\nexcluding the unavailable ones, and will automatically update the route list when the controlplane nodes change.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "KubePrism port." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "tlsServerName",
+				Type:        "string",
+				Note:        "",
+				Description: "Override the TLS server name (SNI) used by the kubelet when connecting to\nthe KubePrism endpoint.\n\nKubePrism still listens on `127.0.0.1:<port>` and the kubelet still dials\nthat address, but the generated kubelet kubeconfig will carry\n`clusters[0].cluster.tls-server-name` set to this value, so the kubelet\nuses it for SNI and certificate hostname verification.\n\nThis is useful when KubePrism's upstream apiserver is reached through an\nSNI-routing L4 proxy (for example nginx-ingress in ssl-passthrough mode in\nfront of a Kamaji-hosted apiserver), where SNI=127.0.0.1 doesn't match any\nroute and the proxy serves a fallback certificate.\n\nWhen empty (default), no `tls-server-name` is set and behavior is unchanged.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Override the TLS server name (SNI) used by the kubelet when connecting to" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubePrismConfigV1Alpha1())
+
+	return doc
+}
+
 func (KubeNetworkConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "KubeNetworkConfig",
@@ -231,6 +753,20 @@ func (KubeNetworkConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "The service subnet (CIDR), this can be a single value or two values for dual-stack clusters.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The service subnet (CIDR), this can be a single value or two values for dual-stack clusters." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "nodeCIDRMaskSizeIPv4",
+				Type:        "int",
+				Note:        "",
+				Description: "The IPv4 per-node pod CIDR mask size, i.e. the size of the pod CIDR allocated to each node, from the IPv4 pod subnet.\nThe default is `24`.\nMust be between 1 and 32.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The IPv4 per-node pod CIDR mask size, i.e. the size of the pod CIDR allocated to each node, from the IPv4 pod subnet." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "nodeCIDRMaskSizeIPv6",
+				Type:        "int",
+				Note:        "",
+				Description: "The IPv6 per-node pod CIDR mask size, i.e. the size of the pod CIDR allocated to each node, from the IPv6 pod subnet.\nThe default is `64`.\nMust be between 1 and 128.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The IPv6 per-node pod CIDR mask size, i.e. the size of the pod CIDR allocated to each node, from the IPv6 pod subnet." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
@@ -239,6 +775,163 @@ func (KubeNetworkConfigV1Alpha1) Doc() *encoder.Doc {
 	doc.AddExample("", exampleKubeNetworkConfig2V1Alpha1())
 
 	doc.AddExample("", exampleKubeNetworkConfig3V1Alpha1())
+
+	return doc
+}
+
+func (KubeNodeConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeNodeConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeNodeConfig configures Kubernetes node." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeNodeConfig configures Kubernetes node.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "skipNodeRegistration",
+				Type:        "bool",
+				Note:        "",
+				Description: "The `skipNodeRegistration` is used to run the kubelet without registering with the apiserver.\nThis runs kubelet as standalone and only runs static pods.\nWhen this is set to true, other fields in this document are ignored.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The `skipNodeRegistration` is used to run the kubelet without registering with the apiserver." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"true",
+					"yes",
+					"false",
+					"no",
+				},
+			},
+			{
+				Name:        "registerWithFQDN",
+				Type:        "bool",
+				Note:        "",
+				Description: "The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration.\nThis is required in clouds like AWS.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"true",
+					"yes",
+					"false",
+					"no",
+				},
+			},
+			{
+				Name:        "nodeIP",
+				Type:        "NodeIPConfig",
+				Note:        "",
+				Description: "The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.\nThis field should be set when a node has multiple addresses to choose from.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The `nodeIP` field is used to configure `--node-ip` flag for the kubelet." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "labels",
+				Type:        "map[string]string",
+				Note:        "",
+				Description: "Configures the node labels for the machine.\n\nNote: In the default Kubernetes configuration, worker nodes are restricted to set\nlabels with some prefixes (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the node labels for the machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "annotations",
+				Type:        "map[string]string",
+				Note:        "",
+				Description: "Configures the node annotations for the machine.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the node annotations for the machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "taints",
+				Type:        "map[string]string",
+				Note:        "",
+				Description: "Configures the node taints for the machine. Effect is optional.\n\nNote: In the default Kubernetes configuration, worker nodes are not allowed to\nmodify the taints (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the node taints for the machine. Effect is optional." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeNodeConfigV1Alpha1())
+
+	return doc
+}
+
+func (NodeIPConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "NodeIPConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "NodeIPConfig represents the node IP configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "NodeIPConfig represents the node IP configuration.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "KubeNodeConfigV1Alpha1",
+				FieldName: "nodeIP",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "validSubnets",
+				Type:        "[]string",
+				Note:        "",
+				Description: "The `validSubnets` field configures the networks to pick kubelet node IP from.\nFor dual stack configuration, there should be two subnets: one for IPv4, another for IPv6.\nIPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, node IP is picked based on cluster podCIDRs: IPv4/IPv6 address or both.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The `validSubnets` field configures the networks to pick kubelet node IP from." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (KubeProxyConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeProxyConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeProxyConfig configures kube-proxy deployment." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeProxyConfig configures kube-proxy deployment.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "enabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable or disable kube-proxy deployment on cluster bootstrap.\n\nDefault is enabled.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable or disable kube-proxy deployment on cluster bootstrap." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "image",
+				Type:        "string",
+				Note:        "",
+				Description: "The container image used in the kube-proxy manifest.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The container image used in the kube-proxy manifest." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "mode",
+				Type:        "string",
+				Note:        "",
+				Description: "description: |\n    Proxy mode of kube-proxy.\n\n   The default value is 'nftables'.\n   It is not recommended to use any other value.\n values:\n   - iptables\n   - ipvs\n   - nftables\n",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "description: |" /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "config",
+				Type:        "Unstructured",
+				Note:        "",
+				Description: "Provide configuration for the kube-proxy.\n\nThere is no need  to specify kind and apiVersion fields (they will be set automatically),\nbut the rest of the configuration should be provided as is.\n\nSee https://kubernetes.io/docs/reference/config-api/kube-proxy-config.v1alpha1/ for the details of the configuration schema.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Provide configuration for the kube-proxy." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "extraArgs",
+				Type:        "Args",
+				Note:        "",
+				Description: "Extra arguments to supply to kube-proxy.\n\nPlease note that kube-proxy is configured with a configuration file,\nso most flags have no effect.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra arguments to supply to kube-proxy." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "resources",
+				Type:        "ResourcesConfig",
+				Note:        "",
+				Description: "Configure the kube-proxy resources.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure the kube-proxy resources." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeProxyConfigV1Alpha1())
 
 	return doc
 }
@@ -303,18 +996,174 @@ func (KubeSchedulerConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (KubeServiceAccountConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeServiceAccountConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeServiceAccountConfig configures Kubernetes service accounts." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeServiceAccountConfig configures Kubernetes service accounts.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "issuer",
+				Type:        "IssuerServiceAccountConfig",
+				Note:        "",
+				Description: "The service account issuer configuration.\n\nThis configures how the service accounts are issued in Kubernetes.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The service account issuer configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "accepted",
+				Type:        "AcceptedServiceAccountConfig",
+				Note:        "",
+				Description: "The additional service accounts which are accepted by the Kubernetes API server.\n\nThis might be used for service account rotation, or for accepting service accounts from other clusters,\nor for accepting service accounts from other issuers.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The additional service accounts which are accepted by the Kubernetes API server." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeServiceAccountConfigV1Alpha1())
+
+	return doc
+}
+
+func (IssuerServiceAccountConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "IssuerServiceAccountConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "IssuerServiceAccountConfig configures the service account issuer." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "IssuerServiceAccountConfig configures the service account issuer.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "KubeServiceAccountConfigV1Alpha1",
+				FieldName: "issuer",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "privateKey",
+				Type:        "string",
+				Note:        "",
+				Description: "The key which is used to sign the service account tokens.\n\nThis key is used to sign the service account tokens, and it is used by the Kubernetes API server to verify the service account tokens.\nThe key must be a valid PEM encoded RSA or ECDSA private key.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The key which is used to sign the service account tokens." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "issuerURL",
+				Type:        "URL",
+				Note:        "",
+				Description: "The issuer URL which is used to sign the service account tokens.\n\nThis URL is used to sign the service account tokens, and it is used by the Kubernetes API server to verify the service account tokens.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The issuer URL which is used to sign the service account tokens." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (AcceptedServiceAccountConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "AcceptedServiceAccountConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "AcceptedServiceAccountConfig configures the accepted service accounts." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "AcceptedServiceAccountConfig configures the accepted service accounts.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "KubeServiceAccountConfigV1Alpha1",
+				FieldName: "accepted",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "publicKeys",
+				Type:        "[]string",
+				Note:        "",
+				Description: "The list of public keys which are used to verify the service account tokens.\n\nThese keys are used by the Kubernetes API server to verify the service account tokens.\nThe keys must be valid PEM encoded RSA or ECDSA public keys.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The list of public keys which are used to verify the service account tokens." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "issuers",
+				Type:        "[]URL",
+				Note:        "",
+				Description: "The additional service account issuers which are accepted by the Kubernetes API server.\n\nThis might be used for service account rotation, or for accepting service accounts from other clusters,\nor for accepting service accounts from other issuers.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The additional service account issuers which are accepted by the Kubernetes API server." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "audiences",
+				Type:        "[]string",
+				Note:        "",
+				Description: "The list of API audiences for which the service account tokens are accepted by the Kubernetes API server.\n\nIf this field is not set, the default is to set to the issuer URL of the service account issuer.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The list of API audiences for which the service account tokens are accepted by the Kubernetes API server." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (KubeStaticPodConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeStaticPodConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeStaticPodConfig configures a pod definition to be run as a static pod by the kubelet." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeStaticPodConfig configures a pod definition to be run as a static pod by the kubelet.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the static pod.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the static pod." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "pod",
+				Type:        "Unstructured",
+				Note:        "",
+				Description: "Static pods can be used to run components which should be started before the Kubernetes control plane is up.\nTalos doesn't validate the pod definition.\nUpdates to this field can be applied without a reboot.\n\nSee https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Static pods can be used to run components which should be started before the Kubernetes control plane is up." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeStaticPodConfigV1Alpha1())
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file k8s_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
 		Name:        "k8s",
 		Description: "",
 		Structs: []*encoder.Doc{
+			KubeAdmissionControlConfigV1Alpha1{}.Doc(),
+			KubeAggregatorCAConfigV1Alpha1{}.Doc(),
+			KubeAPIServerConfigV1Alpha1{}.Doc(),
+			KubeAPIServerCAConfigV1Alpha1{}.Doc(),
+			KubeAuditPolicyConfigV1Alpha1{}.Doc(),
+			KubeAuthenticationConfigV1Alpha1{}.Doc(),
+			KubeAuthorizerConfigV1Alpha1{}.Doc(),
+			KubeClusterConfigV1Alpha1{}.Doc(),
 			ResourcesConfig{}.Doc(),
 			KubeControllerManagerConfigV1Alpha1{}.Doc(),
+			KubeCoreDNSConfigV1Alpha1{}.Doc(),
+			KubeCredentialProviderConfigV1Alpha1{}.Doc(),
 			KubeEtcdEncryptionConfigV1Alpha1{}.Doc(),
+			KubeExternalManifestConfigV1Alpha1{}.Doc(),
 			KubeFlannelCNIConfigV1Alpha1{}.Doc(),
+			KubeInlineManifestConfigV1Alpha1{}.Doc(),
+			KubeletConfigV1Alpha1{}.Doc(),
+			KubePrismConfigV1Alpha1{}.Doc(),
 			KubeNetworkConfigV1Alpha1{}.Doc(),
+			KubeNodeConfigV1Alpha1{}.Doc(),
+			NodeIPConfig{}.Doc(),
+			KubeProxyConfigV1Alpha1{}.Doc(),
 			KubeSchedulerConfigV1Alpha1{}.Doc(),
+			KubeServiceAccountConfigV1Alpha1{}.Doc(),
+			IssuerServiceAccountConfig{}.Doc(),
+			AcceptedServiceAccountConfig{}.Doc(),
+			KubeStaticPodConfigV1Alpha1{}.Doc(),
 		},
 	}
 }

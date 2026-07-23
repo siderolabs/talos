@@ -46,43 +46,44 @@ type ParsedNodeResources struct {
 // Common are the options that are not specific to a single provider.
 type Common struct {
 	// rootOps are the options from the root cluster command
-	RootOps                   *clustercmd.CmdOps
-	TalosconfigDestination    string
-	RegistryMirrors           []string
-	RegistryInsecure          []string
-	KubernetesVersion         string
-	ApplyConfigEnabled        bool
-	ConfigDebug               bool
-	NetworkCIDR               string
-	NetworkMTU                int
-	NetworkIPv4               bool
-	DNSDomain                 string
-	Workers                   int
-	Controlplanes             int
-	ControlplaneResources     NodeResources
-	WorkerResources           NodeResources
-	ClusterWait               bool
-	ClusterWaitTimeout        time.Duration
-	ForceInitNodeAsEndpoint   bool
-	ForceEndpoint             string
-	ControlPlanePort          int
-	WithInitNode              bool
-	CustomCNIUrl              string
-	SkipKubeconfig            bool
-	SkipInjectingConfig       bool
-	TalosVersion              string
-	EnableKubeSpan            bool
-	EnableClusterDiscovery    bool
-	ConfigPatch               []string
-	ConfigPatchControlPlane   []string
-	ConfigPatchWorker         []string
-	KubePrismPort             int
-	SkipK8sNodeReadinessCheck bool
-	WithJSONLogs              bool
-	WireguardCIDR             string
-	WithUUIDHostnames         bool
-	NetworkIPv6               bool
-	OmniAPIEndpoint           string
+	RootOps                     *clustercmd.CmdOps
+	TalosconfigDestination      string
+	RegistryMirrors             []string
+	RegistryInsecure            []string
+	KubernetesVersion           string
+	ApplyConfigEnabled          bool
+	ConfigDebug                 bool
+	NetworkCIDR                 string
+	NetworkMTU                  int
+	NetworkIPv4                 bool
+	DNSDomain                   string
+	Workers                     int
+	Controlplanes               int
+	ControlplaneResources       NodeResources
+	WorkerResources             NodeResources
+	ClusterWait                 bool
+	ClusterWaitTimeout          time.Duration
+	ForceInitNodeAsEndpoint     bool
+	ForceEndpoint               string
+	ControlPlanePort            int
+	WithInitNode                bool
+	CustomCNIUrl                string
+	SkipKubeconfig              bool
+	SkipInjectingConfig         bool
+	SkipUnattendedInstallConfig bool
+	TalosVersion                string
+	EnableKubeSpan              bool
+	EnableClusterDiscovery      bool
+	ConfigPatch                 []string
+	ConfigPatchControlPlane     []string
+	ConfigPatchWorker           []string
+	KubePrismPort               int
+	SkipK8sNodeReadinessCheck   bool
+	WithJSONLogs                bool
+	WireguardCIDR               string
+	WithUUIDHostnames           bool
+	NetworkIPv6                 bool
+	OmniAPIEndpoint             string
 }
 
 // Docker are options specific to docker provisioner.
@@ -113,6 +114,7 @@ type Qemu struct {
 	NetworkNoMasqueradeCIDRs  []string
 	Nameservers               []string
 	Disks                     flags.Disks
+	PrimaryDisks              int
 	DiskBlockSize             uint
 	PreallocateDisks          bool
 	ClusterUserVolumes        []string
@@ -137,6 +139,8 @@ type Qemu struct {
 	Bandwidth                 int
 	DiskEncryptionKeyTypes    []string
 	WithFirewall              string
+	WithBGP                   bool
+	WithBGPCLOS               bool
 	WithSiderolinkAgent       flags.Agent
 	WithIOMMU                 bool
 	ConfigInjectionMethod     string
@@ -209,6 +213,7 @@ func GetQemu() Qemu {
 		CniBundleURL: fmt.Sprintf("https://github.com/%s/talos/releases/download/%s/talosctl-cni-bundle-%s.tar.gz",
 			images.Username, version.Trim(version.Tag), constants.ArchVariable),
 		Disks:          disks,
+		PrimaryDisks:   1,
 		ImageCachePort: 5000,
 	}
 }

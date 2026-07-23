@@ -26,7 +26,7 @@ func (c *ClusterConfig) Name() string {
 }
 
 // APIServer implements the config.ClusterConfig interface.
-func (c *ClusterConfig) APIServer() config.APIServer {
+func (c *ClusterConfig) APIServer() *APIServerConfig {
 	if c.APIServerConfig == nil {
 		return &APIServerConfig{}
 	}
@@ -44,7 +44,7 @@ func (c *ClusterConfig) ControllerManager() *ControllerManagerConfig {
 }
 
 // Proxy implements the config.ClusterConfig interface.
-func (c *ClusterConfig) Proxy() config.Proxy {
+func (c *ClusterConfig) Proxy() *ProxyConfig {
 	if c.ProxyConfig == nil {
 		return &ProxyConfig{}
 	}
@@ -77,22 +77,7 @@ func (c *ClusterConfig) CertSANs() []string {
 		return nil
 	}
 
-	return c.APIServerConfig.CertSANs
-}
-
-// IssuingCA implements the config.ClusterConfig interface.
-func (c *ClusterConfig) IssuingCA() *x509.PEMEncodedCertificateAndKey {
-	return c.ClusterCA
-}
-
-// AcceptedCAs implements the config.ClusterConfig interface.
-func (c *ClusterConfig) AcceptedCAs() []*x509.PEMEncodedCertificate {
-	return slices.Clone(c.ClusterAcceptedCAs)
-}
-
-// AggregatorCA implements the config.ClusterConfig interface.
-func (c *ClusterConfig) AggregatorCA() *x509.PEMEncodedCertificateAndKey {
-	return c.ClusterAggregatorCA
+	return c.APIServerConfig.ExtraCertSANs
 }
 
 // ServiceAccount implements the config.ClusterConfig interface.
@@ -129,7 +114,7 @@ func (c *ClusterConfig) LocalAPIServerPort() int {
 }
 
 // CoreDNS implements the config.ClusterConfig interface.
-func (c *ClusterConfig) CoreDNS() config.CoreDNS {
+func (c *ClusterConfig) CoreDNS() *CoreDNS {
 	if c.CoreDNSConfig == nil {
 		return &CoreDNS{}
 	}
@@ -162,11 +147,6 @@ func (c *ClusterConfig) ExtraManifestHeaderMap() map[string]string {
 	return c.ExtraManifestHeaders
 }
 
-// InlineManifests implements the config.ClusterConfig interface.
-func (c *ClusterConfig) InlineManifests() []config.InlineManifest {
-	return xslices.Map(c.ClusterInlineManifests, func(m ClusterInlineManifest) config.InlineManifest { return m })
-}
-
 // AdminKubeconfig implements the config.ClusterConfig interface.
 func (c *ClusterConfig) AdminKubeconfig() config.AdminKubeconfig {
 	if c.AdminKubeconfigConfig == nil {
@@ -187,12 +167,12 @@ func (c *ClusterConfig) ScheduleOnControlPlanes() bool {
 
 // ID returns the unique identifier for the cluster.
 func (c *ClusterConfig) ID() string {
-	return c.ClusterID
+	return c.ClusterID //nolint:staticcheck // legacy configuration
 }
 
 // Secret returns the cluster secret.
 func (c *ClusterConfig) Secret() string {
-	return c.ClusterSecret
+	return c.ClusterSecret //nolint:staticcheck // legacy configuration
 }
 
 // CNI implements the config.ClusterNetwork interface.
@@ -218,7 +198,7 @@ func (c *ClusterConfig) PodCIDRs() []netip.Prefix {
 	case c.ClusterNetwork == nil:
 		fallthrough
 	case len(c.ClusterNetwork.PodSubnet) == 0:
-		subnets = []string{constants.DefaultIPv4PodNet}
+		subnets = []string{constants.DefaultIPv4PodCIDR}
 	default:
 		subnets = c.ClusterNetwork.PodSubnet
 	}
@@ -238,7 +218,7 @@ func (c *ClusterConfig) ServiceCIDRs() []netip.Prefix {
 	case c.ClusterNetwork == nil:
 		fallthrough
 	case len(c.ClusterNetwork.ServiceSubnet) == 0:
-		subnets = []string{constants.DefaultIPv4ServiceNet}
+		subnets = []string{constants.DefaultIPv4ServiceCIDR}
 	default:
 		subnets = c.ClusterNetwork.ServiceSubnet
 	}
@@ -257,6 +237,20 @@ func (c *ClusterConfig) DNSDomain() string {
 	}
 
 	return c.ClusterNetwork.DNSDomain
+}
+
+// NodeCIDRMaskSizeIPv4 implements the config.K8sNetworkConfig interface.
+//
+// The legacy v1alpha1 config has no per-node CIDR mask size setting, so the default is always used.
+func (c *ClusterConfig) NodeCIDRMaskSizeIPv4() int {
+	return constants.DefaultNodeCIDRMaskSizeIPv4
+}
+
+// NodeCIDRMaskSizeIPv6 implements the config.K8sNetworkConfig interface.
+//
+// The legacy v1alpha1 config has no per-node CIDR mask size setting, so the default is always used.
+func (c *ClusterConfig) NodeCIDRMaskSizeIPv6() int {
+	return constants.DefaultNodeCIDRMaskSizeIPv6
 }
 
 // Discovery implements the config.Cluster interface.

@@ -24,7 +24,11 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
 
-func rootMapFunc[Output generic.ResourceWithRD](output Output, requireControlPlane bool) func(cfg *config.MachineConfig) optional.Optional[Output] {
+func rootMapFunc[Output generic.ResourceWithRD](
+	output Output,
+	requireControlPlane bool,
+	extraChecks ...func(cfg *config.MachineConfig) bool,
+) func(cfg *config.MachineConfig) optional.Optional[Output] {
 	return func(cfg *config.MachineConfig) optional.Optional[Output] {
 		if cfg.Metadata().ID() != config.ActiveID {
 			return optional.None[Output]()
@@ -36,6 +40,12 @@ func rootMapFunc[Output generic.ResourceWithRD](output Output, requireControlPla
 
 		if requireControlPlane && !cfg.Config().Machine().Type().IsControlPlane() {
 			return optional.None[Output]()
+		}
+
+		for _, check := range extraChecks {
+			if !check(cfg) {
+				return optional.None[Output]()
+			}
 		}
 
 		return optional.Some(output)
@@ -74,8 +84,26 @@ type RootKubernetesController = transform.Controller[*config.MachineConfig, *sec
 func NewRootKubernetesController() *RootKubernetesController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *secrets.KubernetesRoot]{
-			Name:                    "secrets.RootKubernetesController",
-			MapMetadataOptionalFunc: rootMapFunc(secrets.NewKubernetesRoot(secrets.KubernetesRootID), true),
+			Name: "secrets.RootKubernetesController",
+			MapMetadataOptionalFunc: rootMapFunc(
+				secrets.NewKubernetesRoot(secrets.KubernetesRootID),
+				true,
+				func(cfg *config.MachineConfig) bool {
+					return cfg.Config().K8sAPIServerConfig() != nil
+				},
+				func(cfg *config.MachineConfig) bool {
+					return cfg.Config().K8sAPIServerCAConfig() != nil
+				},
+				func(cfg *config.MachineConfig) bool {
+					return cfg.Config().K8sAggregatorCAConfig() != nil
+				},
+				func(cfg *config.MachineConfig) bool {
+					return cfg.Config().K8sServiceAccountConfig() != nil
+				},
+				func(cfg *config.MachineConfig) bool {
+					return cfg.Config().K8sClusterConfig() != nil
+				},
+			),
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, cfg *config.MachineConfig, res *secrets.KubernetesRoot) error {
 				cfgProvider := cfg.Config()
 				k8sSecrets := res.TypedSpec()
@@ -85,22 +113,22 @@ func NewRootKubernetesController() *RootKubernetesController {
 					localEndpoint *url.URL
 				)
 
-				if cfgProvider.Machine().Features().KubePrism().Enabled() {
-					localEndpoint, err = url.Parse(fmt.Sprintf("https://127.0.0.1:%d", cfgProvider.Machine().Features().KubePrism().Port()))
+				if kubePrismConfig := cfgProvider.K8sKubePrismConfig(); kubePrismConfig != nil {
+					localEndpoint, err = url.Parse(fmt.Sprintf("https://127.0.0.1:%d", kubePrismConfig.Port()))
 					if err != nil {
 						return err
 					}
 				} else {
-					localEndpoint, err = url.Parse(fmt.Sprintf("https://localhost:%d", cfgProvider.Cluster().LocalAPIServerPort()))
+					localEndpoint, err = url.Parse(fmt.Sprintf("https://localhost:%d", cfgProvider.K8sAPIServerConfig().APIPort()))
 					if err != nil {
 						return err
 					}
 				}
 
-				k8sSecrets.Name = cfgProvider.Cluster().Name()
-				k8sSecrets.Endpoint = cfgProvider.Cluster().Endpoint()
+				k8sSecrets.Name = cfgProvider.K8sClusterConfig().ClusterName()
+				k8sSecrets.Endpoint = cfgProvider.K8sClusterConfig().ClusterEndpoint()
 				k8sSecrets.LocalEndpoint = localEndpoint
-				k8sSecrets.CertSANs = cfgProvider.Cluster().CertSANs()
+				k8sSecrets.CertSANs = cfgProvider.K8sAPIServerConfig().CertSANs()
 
 				if k8sNetwork := cfgProvider.K8sNetworkConfig(); k8sNetwork != nil {
 					k8sSecrets.DNSDomain = k8sNetwork.DNSDomain()
@@ -110,31 +138,21 @@ func NewRootKubernetesController() *RootKubernetesController {
 					k8sSecrets.APIServerIPs = nil
 				}
 
-				k8sSecrets.AggregatorCA = cfgProvider.Cluster().AggregatorCA()
+				k8sSecrets.AggregatorCA = cfgProvider.K8sAggregatorCAConfig().IssuingCA()
+				k8sSecrets.AcceptedAggregatorCAs = cfgProvider.K8sAggregatorCAConfig().AcceptedCAs()
 
-				if k8sSecrets.AggregatorCA == nil {
-					return errors.New("missing cluster.aggregatorCA secret")
-				}
-
-				k8sSecrets.IssuingCA = cfgProvider.Cluster().IssuingCA()
-				k8sSecrets.AcceptedCAs = cfgProvider.Cluster().AcceptedCAs()
-
-				if k8sSecrets.IssuingCA != nil {
-					k8sSecrets.AcceptedCAs = append(k8sSecrets.AcceptedCAs, &x509.PEMEncodedCertificate{
-						Crt: k8sSecrets.IssuingCA.Crt,
-					})
-				}
-
-				if len(k8sSecrets.IssuingCA.Key) == 0 {
-					// drop incomplete issuing CA, as the machine config for workers contains just the cert
-					k8sSecrets.IssuingCA = nil
-				}
+				k8sSecrets.IssuingCA = cfgProvider.K8sAPIServerCAConfig().IssuingCA()
+				k8sSecrets.AcceptedCAs = cfgProvider.K8sAPIServerCAConfig().AcceptedCAs()
 
 				if len(k8sSecrets.AcceptedCAs) == 0 {
 					return errors.New("missing cluster.CA secret")
 				}
 
-				k8sSecrets.ServiceAccount = cfgProvider.Cluster().ServiceAccount()
+				k8sSecrets.ServiceAccount = cfgProvider.K8sServiceAccountConfig().IssuingKey()
+				k8sSecrets.ServiceAccountAcceptedKeys = cfgProvider.K8sServiceAccountConfig().AcceptedKeys()
+				k8sSecrets.IssuerURL = cfgProvider.K8sServiceAccountConfig().IssuerURL()
+				k8sSecrets.AcceptedIssuers = cfgProvider.K8sServiceAccountConfig().AcceptedIssuers()
+				k8sSecrets.APIAudiences = cfgProvider.K8sServiceAccountConfig().APIAudiences()
 
 				k8sSecrets.AESCBCEncryptionSecret = cfgProvider.Cluster().AESCBCEncryptionSecret()
 				k8sSecrets.SecretboxEncryptionSecret = cfgProvider.Cluster().SecretboxEncryptionSecret()

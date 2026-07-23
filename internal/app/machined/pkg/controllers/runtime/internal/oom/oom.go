@@ -23,6 +23,71 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
+// Names of the QoS class cgroups the kubelet creates directly under the kubepods
+// cgroup. Guaranteed pods have no dedicated class cgroup: they live directly under
+// kubepods, alongside these.
+const (
+	cgroupBesteffort = "besteffort"
+	cgroupBurstable  = "burstable"
+)
+
+// qosClasses lists all QoS classes tracked in the OOM eval context.
+var qosClasses = []runtime.QoSCgroupClass{
+	runtime.QoSCgroupClassBesteffort,
+	runtime.QoSCgroupClassBurstable,
+	runtime.QoSCgroupClassGuaranteed,
+	runtime.QoSCgroupClassPodruntime,
+	runtime.QoSCgroupClassSystem,
+}
+
+// guaranteedCgroups lists the cgroup paths (relative to root) of Guaranteed QoS pods.
+//
+// The kubelet places Guaranteed pods directly under the kubepods cgroup, next to the
+// besteffort/burstable class cgroups (which are excluded here), rather than in a
+// dedicated "guaranteed" sub-cgroup.
+func guaranteedCgroups(root string) []string {
+	entries, err := os.ReadDir(filepath.Join(root, constants.CgroupKubepods))
+	if err != nil {
+		return nil
+	}
+
+	var paths []string
+
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+
+		if entry.Name() == cgroupBesteffort || entry.Name() == cgroupBurstable {
+			continue
+		}
+
+		paths = append(paths, filepath.Join(constants.CgroupKubepods, entry.Name()))
+	}
+
+	return paths
+}
+
+// qosMap returns the per-class map stored under key in evalContext, creating it
+// (pre-seeded with all QoS classes set to zero) if it doesn't exist yet.
+//
+// Pre-seeding keeps every QoS class present in the eval context even when no cgroup
+// of that class currently exists (e.g. no Guaranteed pods scheduled).
+func qosMap(evalContext map[string]any, key string) map[int]float64 {
+	if v, ok := evalContext[key]; ok {
+		return v.(map[int]float64)
+	}
+
+	m := make(map[int]float64, len(qosClasses))
+	for _, class := range qosClasses {
+		m[int(class)] = 0
+	}
+
+	evalContext[key] = m
+
+	return m
+}
+
 // RankedCgroup contains information about a cgroup used for OOM handling.
 type RankedCgroup struct {
 	Class         runtime.QoSCgroupClass
@@ -75,18 +140,28 @@ func PopulatePsiToCtx(cgroup string, evalContext map[string]any, oldValues map[s
 		return fmt.Errorf("sample interval must be greater than zero")
 	}
 
-	for _, subtree := range []struct {
+	type subtree struct {
 		path string
 		qos  runtime.QoSCgroupClass
-	}{
+	}
+
+	subtrees := []subtree{
 		{"", -1},
-		{"init", runtime.QoSCgroupClassSystem},
-		{"system", runtime.QoSCgroupClassSystem},
-		{"podruntime", runtime.QoSCgroupClassPodruntime},
-		{"kubepods/besteffort", runtime.QoSCgroupClassBesteffort},
-		{"kubepods/burstable", runtime.QoSCgroupClassBurstable},
-		{"kubepods/guaranteed", runtime.QoSCgroupClassGuaranteed},
-	} {
+		{constants.CgroupInit, runtime.QoSCgroupClassSystem},
+		{constants.CgroupSystem, runtime.QoSCgroupClassSystem},
+		{constants.CgroupPodRuntimeRoot, runtime.QoSCgroupClassPodruntime},
+		{constants.CgroupKubepods + "/" + cgroupBesteffort, runtime.QoSCgroupClassBesteffort},
+		{constants.CgroupKubepods + "/" + cgroupBurstable, runtime.QoSCgroupClassBurstable},
+	}
+
+	// Guaranteed pods live directly under the kubepods cgroup (there is no dedicated
+	// "guaranteed" QoS cgroup), so aggregate the class metrics by summing over each
+	// Guaranteed pod cgroup.
+	for _, path := range guaranteedCgroups(cgroup) {
+		subtrees = append(subtrees, subtree{path, runtime.QoSCgroupClassGuaranteed})
+	}
+
+	for _, subtree := range subtrees {
 		node, err := cgroups.GetCgroupProperty(filepath.Join(cgroup, subtree.path), "memory.pressure")
 
 		for _, psiType := range []string{"some", "full"} {
@@ -115,21 +190,8 @@ func PopulatePsiToCtx(cgroup string, evalContext map[string]any, oldValues map[s
 					evalContext["d_memory_"+psiType+"_"+span] = diff
 					evalContext["memory_"+psiType+"_"+span] = value
 				} else {
-					valuesMap, ok := evalContext["qos_memory_"+psiType+"_"+span]
-					if !ok {
-						valuesMap = map[int]float64{}
-						evalContext["qos_memory_"+psiType+"_"+span] = valuesMap
-					}
-
-					valuesMap.(map[int]float64)[int(subtree.qos)] += value
-
-					dValuesMap, ok := evalContext["d_qos_memory_"+psiType+"_"+span]
-					if !ok {
-						dValuesMap = map[int]float64{}
-						evalContext["d_qos_memory_"+psiType+"_"+span] = dValuesMap
-					}
-
-					dValuesMap.(map[int]float64)[int(subtree.qos)] += diff
+					qosMap(evalContext, "qos_memory_"+psiType+"_"+span)[int(subtree.qos)] += value
+					qosMap(evalContext, "d_qos_memory_"+psiType+"_"+span)[int(subtree.qos)] += diff
 				}
 			}
 		}
@@ -158,13 +220,7 @@ func PopulatePsiToCtx(cgroup string, evalContext map[string]any, oldValues map[s
 				value = 0.0
 			}
 
-			valuesMap, ok := evalContext["qos_memory_"+parameter.name]
-			if !ok {
-				valuesMap = map[int]float64{}
-				evalContext["qos_memory_"+parameter.name] = valuesMap
-			}
-
-			valuesMap.(map[int]float64)[int(subtree.qos)] += value
+			qosMap(evalContext, "qos_memory_"+parameter.name)[int(subtree.qos)] += value
 
 			oldPath := subtree.path + "/" + "memory_" + parameter.name
 
@@ -173,13 +229,7 @@ func PopulatePsiToCtx(cgroup string, evalContext map[string]any, oldValues map[s
 				diff = (value - oldValue) / sampleInterval.Seconds()
 			}
 
-			dValuesMap, ok := evalContext["d_qos_memory_"+parameter.name]
-			if !ok {
-				dValuesMap = map[int]float64{}
-				evalContext["d_qos_memory_"+parameter.name] = dValuesMap
-			}
-
-			dValuesMap.(map[int]float64)[int(subtree.qos)] += diff
+			qosMap(evalContext, "d_qos_memory_"+parameter.name)[int(subtree.qos)] += diff
 		}
 	}
 
@@ -211,12 +261,18 @@ func RankCgroups(logger *zap.Logger, root string, scoringExpr cel.Expression) ma
 	for _, cg := range []struct {
 		dir   string
 		class runtime.QoSCgroupClass
+		skip  map[string]struct{}
 	}{
-		{"kubepods/besteffort", runtime.QoSCgroupClassBesteffort},
-		{"kubepods/burstable", runtime.QoSCgroupClassBurstable},
-		{"kubepods/guaranteed", runtime.QoSCgroupClassGuaranteed},
-		{constants.CgroupPodRuntimeRoot, runtime.QoSCgroupClassPodruntime},
-		{constants.CgroupSystem, runtime.QoSCgroupClassSystem},
+		{constants.CgroupKubepods + "/" + cgroupBesteffort, runtime.QoSCgroupClassBesteffort, nil},
+		{constants.CgroupKubepods + "/" + cgroupBurstable, runtime.QoSCgroupClassBurstable, nil},
+		// Guaranteed pods live directly under the kubepods cgroup, alongside the
+		// besteffort/burstable class cgroups which must be skipped here.
+		{constants.CgroupKubepods, runtime.QoSCgroupClassGuaranteed, map[string]struct{}{
+			cgroupBesteffort: {},
+			cgroupBurstable:  {},
+		}},
+		{constants.CgroupPodRuntimeRoot, runtime.QoSCgroupClassPodruntime, nil},
+		{constants.CgroupSystem, runtime.QoSCgroupClassSystem, nil},
 	} {
 		entries, err := os.ReadDir(filepath.Join(root, cg.dir))
 		if err != nil && !os.IsNotExist(err) {
@@ -230,47 +286,56 @@ func RankCgroups(logger *zap.Logger, root string, scoringExpr cel.Expression) ma
 				continue
 			}
 
-			leafDir := filepath.Join(root, cg.dir, leaf.Name())
-
-			node := cgroups.Node{}
-
-			for _, prop := range []string{"memory.current", "memory.peak", "memory.max"} {
-				err := cgroups.ReadCgroupfsProperty(&node, leafDir, prop)
-				if err != nil {
-					logger.Error(
-						"cannot read property for cgroup",
-						zap.String("dir", leafDir), zap.String("propery", prop), zap.Error(err),
-					)
-
-					continue
-				}
-			}
-
-			cgroup := RankedCgroup{
-				Path:          leafDir,
-				Class:         cg.class,
-				MemoryCurrent: node.MemoryCurrent,
-				MemoryPeak:    node.MemoryPeak,
-				MemoryMax:     node.MemoryMax,
-			}
-
-			cgroupRank, err := cgroup.CalculateScore(&scoringExpr)
-			if err != nil {
-				logger.Error(
-					"cannot calculate score for cgroup",
-					zap.String("dir", cgroup.Path), zap.Error(err),
-				)
-
+			if _, skipped := cg.skip[leaf.Name()]; skipped {
 				continue
 			}
 
-			if cgroupRank > 0 {
+			cgroup, cgroupRank, ok := rankCgroupLeaf(logger, filepath.Join(root, cg.dir, leaf.Name()), cg.class, scoringExpr)
+			if ok && cgroupRank > 0 {
 				ranking[cgroup] = cgroupRank
 			}
 		}
 	}
 
 	return ranking
+}
+
+// rankCgroupLeaf reads the memory properties of a single cgroup and scores it.
+//
+// It returns the ranked cgroup, its score, and whether scoring succeeded.
+func rankCgroupLeaf(logger *zap.Logger, leafDir string, class runtime.QoSCgroupClass, scoringExpr cel.Expression) (RankedCgroup, float64, bool) {
+	node := cgroups.Node{}
+
+	for _, prop := range []string{"memory.current", "memory.peak", "memory.max"} {
+		if err := cgroups.ReadCgroupfsProperty(&node, leafDir, prop); err != nil {
+			logger.Error(
+				"cannot read property for cgroup",
+				zap.String("dir", leafDir), zap.String("property", prop), zap.Error(err),
+			)
+
+			continue
+		}
+	}
+
+	cgroup := RankedCgroup{
+		Path:          leafDir,
+		Class:         class,
+		MemoryCurrent: node.MemoryCurrent,
+		MemoryPeak:    node.MemoryPeak,
+		MemoryMax:     node.MemoryMax,
+	}
+
+	cgroupRank, err := cgroup.CalculateScore(&scoringExpr)
+	if err != nil {
+		logger.Error(
+			"cannot calculate score for cgroup",
+			zap.String("dir", cgroup.Path), zap.Error(err),
+		)
+
+		return RankedCgroup{}, 0, false
+	}
+
+	return cgroup, cgroupRank, true
 }
 
 // SelectVictim picks the cgroup to OOM-kill. With strictClassOrdering it picks the

@@ -124,8 +124,8 @@ masterIndex: 4
 operationalState: lowerLayerDown
 kind: bridge
 slaveKind: ether
-busPath: "00:11:22"
-pciID: "0000:00:00.0"
+busPath: '00:11:22'
+pciID: '0000:00:00.0'
 driver: bonding
 driverVersion: 1.0.0
 firmwareVersion: 3.1.5

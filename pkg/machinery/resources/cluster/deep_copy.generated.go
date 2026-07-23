@@ -43,6 +43,10 @@ func (o ConfigSpec) DeepCopy() ConfigSpec {
 		cp.ServiceEncryptionKey = make([]byte, len(o.ServiceEncryptionKey))
 		copy(cp.ServiceEncryptionKey, o.ServiceEncryptionKey)
 	}
+	if o.ServiceEndpoints != nil {
+		cp.ServiceEndpoints = make([]ServiceEndpoint, len(o.ServiceEndpoints))
+		copy(cp.ServiceEndpoints, o.ServiceEndpoints)
+	}
 	return cp
 }
 

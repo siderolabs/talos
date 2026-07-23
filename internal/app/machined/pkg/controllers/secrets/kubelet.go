@@ -12,7 +12,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/controller/generic/transform"
-	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
@@ -24,6 +23,8 @@ import (
 type KubeletController = transform.Controller[*config.MachineConfig, *secrets.Kubelet]
 
 // NewKubeletController instantiates the controller.
+//
+//nolint:gocyclo
 func NewKubeletController() *KubeletController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *secrets.Kubelet]{
@@ -37,24 +38,36 @@ func NewKubeletController() *KubeletController {
 					return optional.None[*secrets.Kubelet]()
 				}
 
+				if cfg.Config().K8sAPIServerConfig() == nil {
+					return optional.None[*secrets.Kubelet]()
+				}
+
+				if cfg.Config().K8sClusterConfig() == nil {
+					return optional.None[*secrets.Kubelet]()
+				}
+
 				return optional.Some(secrets.NewKubelet(secrets.KubeletID))
 			},
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, cfg *config.MachineConfig, res *secrets.Kubelet) error {
 				cfgProvider := cfg.Config()
 				kubeletSecrets := res.TypedSpec()
+				kubePrismConfig := cfgProvider.K8sKubePrismConfig()
+
+				kubeletSecrets.EndpointTLSServerName = ""
 
 				switch {
-				case cfgProvider.Machine().Features().KubePrism().Enabled():
+				case kubePrismConfig != nil:
 					// use cluster endpoint for controlplane nodes with loadbalancer support
-					localEndpoint, err := url.Parse(fmt.Sprintf("https://127.0.0.1:%d", cfgProvider.Machine().Features().KubePrism().Port()))
+					localEndpoint, err := url.Parse(fmt.Sprintf("https://127.0.0.1:%d", kubePrismConfig.Port()))
 					if err != nil {
 						return err
 					}
 
 					kubeletSecrets.Endpoint = localEndpoint
+					kubeletSecrets.EndpointTLSServerName = kubePrismConfig.TLSServerName()
 				case cfgProvider.Machine().Type().IsControlPlane():
 					// use localhost endpoint for controlplane nodes
-					localEndpoint, err := url.Parse(fmt.Sprintf("https://localhost:%d", cfgProvider.Cluster().LocalAPIServerPort()))
+					localEndpoint, err := url.Parse(fmt.Sprintf("https://localhost:%d", cfgProvider.K8sAPIServerConfig().APIPort()))
 					if err != nil {
 						return err
 					}
@@ -62,16 +75,14 @@ func NewKubeletController() *KubeletController {
 					kubeletSecrets.Endpoint = localEndpoint
 				default:
 					// use cluster endpoint for workers
-					kubeletSecrets.Endpoint = cfgProvider.Cluster().Endpoint()
+					kubeletSecrets.Endpoint = cfgProvider.K8sClusterConfig().ClusterEndpoint()
 				}
 
 				kubeletSecrets.AcceptedCAs = nil
 
-				if cfgProvider.Cluster().IssuingCA() != nil {
-					kubeletSecrets.AcceptedCAs = append(kubeletSecrets.AcceptedCAs, &x509.PEMEncodedCertificate{Crt: cfgProvider.Cluster().IssuingCA().Crt})
+				if k8sCAProvider := cfgProvider.K8sAPIServerCAConfig(); k8sCAProvider != nil {
+					kubeletSecrets.AcceptedCAs = k8sCAProvider.AcceptedCAs()
 				}
-
-				kubeletSecrets.AcceptedCAs = append(kubeletSecrets.AcceptedCAs, cfgProvider.Cluster().AcceptedCAs()...)
 
 				if len(kubeletSecrets.AcceptedCAs) == 0 {
 					return errors.New("missing accepted Kubernetes CAs")

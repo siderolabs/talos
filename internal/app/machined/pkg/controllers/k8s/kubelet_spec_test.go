@@ -362,8 +362,8 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 			Mode: kubeletconfig.KubeletAuthorizationModeWebhook,
 		},
 		CgroupRoot:            "/",
-		SystemCgroups:         constants.CgroupSystem,
-		KubeletCgroups:        constants.CgroupKubelet,
+		SystemCgroups:         "/" + constants.CgroupSystem,
+		KubeletCgroups:        "/" + constants.CgroupKubelet,
 		RotateCertificates:    true,
 		ProtectKernelDefaults: true,
 		Address:               "0.0.0.0",
@@ -419,6 +419,9 @@ func TestNewKubeletConfigurationMerge(t *testing.T) {
 			cfgSpec: &k8s.KubeletConfigSpec{
 				ClusterDNS:    []string{"10.0.0.5"},
 				ClusterDomain: "cluster.local",
+				RegisterWithTaints: map[string]string{
+					constants.LabelNodeRoleControlPlane: string(corev1.TaintEffectNoSchedule),
+				},
 			},
 			kubeletVersion: compatibility.VersionFromImageRef("ghcr.io/siderolabs/kubelet:v1.29.0"),
 			expectedOverrides: func(kc *kubeletconfig.KubeletConfiguration) {

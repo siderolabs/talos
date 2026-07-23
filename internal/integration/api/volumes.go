@@ -24,6 +24,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
+	"go.yaml.in/yaml/v4"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/internal/integration/base"
@@ -32,10 +33,15 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
+	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
+	cricfg "github.com/siderolabs/talos/pkg/machinery/config/types/cri"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
+	crires "github.com/siderolabs/talos/pkg/machinery/resources/cri"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
@@ -179,9 +185,13 @@ func (suite *VolumesSuite) TestDisks() {
 
 				if suite.Cluster != nil {
 					// running on our own provider, transport should be always detected
-					if disk.TypedSpec().BusPath == "/virtual" {
+					switch {
+					case strings.HasPrefix(disk.Metadata().ID(), "dm-"):
+						// device-mapper disks report a "dm" transport
+						suite.Assert().Equal("dm", disk.TypedSpec().Transport, "disk: %s", disk.Metadata().ID())
+					case disk.TypedSpec().BusPath == "/virtual":
 						suite.Assert().Empty(disk.TypedSpec().Transport, "disk: %s", disk.Metadata().ID())
-					} else {
+					default:
 						suite.Assert().NotEmpty(disk.TypedSpec().Transport, "disk: %s", disk.Metadata().ID())
 					}
 				}
@@ -340,6 +350,8 @@ func (suite *VolumesSuite) TestVolumesStatus() {
 }
 
 // TestUserVolumesPartition performs a series of operations on user volumes: creating, destroying, verifying, etc.
+//
+//nolint:gocyclo
 func (suite *VolumesSuite) TestUserVolumesPartition() {
 	if testing.Short() {
 		suite.T().Skip("skipping test in short mode.")
@@ -402,6 +414,10 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 		doc.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("100MiB")
 		doc.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("-60%")
 
+		doc.TrimSpec = &blockcfg.TrimConfig{
+			TrimInterval: time.Hour,
+		}
+
 		return doc
 	})...)
 
@@ -413,6 +429,10 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 		)
 		doc.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("100MiB")
 		doc.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("20%")
+
+		doc.TrimSpec = &blockcfg.TrimConfig{
+			TrimEnabled: new(false),
+		}
 
 		return doc
 	})...)
@@ -432,6 +452,36 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 	// check that the volumes are mounted
 	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, userVolumeIDs,
 		func(vs *block.MountStatus, _ *assert.Assertions) {})
+
+	// the volumes have a bit different trim settings, let's verify that the trim schedule is updated accordingly
+	//
+	// the third volume has trim disabled, so it should not have a schedule at all
+	//
+	// first, verify if default trim interval is enabled
+	testCfg, err := suite.ReadConfigFromNode(ctx)
+	suite.Require().NoError(err)
+
+	defaultTrimScheduleEnabled := testCfg.FilesystemTrimConfig() != nil
+
+	userVolumesWithTrimSchedule := userVolumeIDs[:1]
+	if !defaultTrimScheduleEnabled {
+		// if the default schedule is not enabled, the volume 0 will not get a trim schedule
+		userVolumesWithTrimSchedule = userVolumeIDs[1:2]
+	}
+
+	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, userVolumesWithTrimSchedule,
+		func(vs *block.VolumeTrimSchedule, asrt *assert.Assertions) {
+			expectedInterval := constants.DefaultFilesystemTrimInterval
+
+			if vs.Metadata().ID() == userVolumeIDs[1] {
+				expectedInterval = time.Hour
+			}
+
+			asrt.Equal(expectedInterval, vs.TypedSpec().Interval)
+		},
+	)
+
+	rtestutils.AssertNoResource[*block.VolumeTrimSchedule](ctx, suite.T(), suite.Client.COSI, userVolumeIDs[2])
 
 	// create a pod using user volumes
 	podDef, err := suite.NewPod("user-volume-test")
@@ -574,6 +624,165 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 		func(dv *block.DiscoveredVolume, asrt *assert.Assertions) {
 			asrt.Empty(dv.TypedSpec().Name, "expected discovered volume %s to be wiped", dv.Metadata().ID())
 		})
+}
+
+// TestPromoteSystemVolumeRejected verifies that attempting to promote a promotable system volume
+// (ETCD/CRI/KUBELET/LOG) from a directory to a dedicated partition on an already-running node is
+// rejected by config validation. The backing of these volumes is fixed at cluster creation.
+func (suite *VolumesSuite) TestPromoteSystemVolumeRejected() {
+	if testing.Short() {
+		suite.T().Skip("skipping test in short mode.")
+	}
+
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping test for non-qemu provisioner")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+
+	ctx := client.WithNode(suite.ctx, node)
+
+	userDisks := suite.UserDisks(suite.ctx, node)
+
+	if len(userDisks) < 1 {
+		suite.T().Skipf("skipping test, not enough user disks available on node %s: %q", node, userDisks)
+	}
+
+	disk, err := safe.StateGetByID[*block.Disk](ctx, suite.Client.COSI, filepath.Base(userDisks[0]))
+	suite.Require().NoError(err)
+
+	cfg, err := suite.ReadConfigFromNode(ctx)
+	suite.Require().NoError(err)
+
+	// Exercise every promotable system volume (ETCD/CRI/KUBELET/LOG). Which ones default to a
+	// directory under EPHEMERAL vs. a dedicated partition depends on the node's config patches, so
+	// only the directory-backed ones are candidates for a (rejected) promotion here.
+	for _, volumeID := range config.PromotableSystemVolumeNames {
+		suite.Run(volumeID, func() {
+			// Only a directory-backed volume can be (attempted to be) promoted; skip the ones that
+			// are already dedicated partitions.
+			vs, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, volumeID)
+			suite.Require().NoError(err)
+
+			if vs.TypedSpec().Type != block.VolumeTypeDirectory {
+				suite.T().Skipf("skipping, %s is not a directory on node %s", volumeID, node)
+			}
+
+			suite.T().Logf("attempting to promote %s volume on node %s with disk %s (expected to be rejected)", volumeID, node, userDisks[0])
+
+			doc := blockcfg.NewVolumeConfigV1Alpha1()
+			doc.MetaName = volumeID
+			doc.ProvisioningSpec.DiskSelectorSpec.Match = cel.MustExpression(
+				cel.ParseBooleanExpression(fmt.Sprintf("'%s' in disk.symlinks", disk.TypedSpec().Symlinks[0]), celenv.DiskLocator()),
+			)
+			doc.ProvisioningSpec.ProvisioningMinSize = blockcfg.MustByteSize("100MiB")
+			doc.ProvisioningSpec.ProvisioningMaxSize = blockcfg.MustSize("2GiB")
+
+			docBytes, err := yaml.Marshal(doc)
+			suite.Require().NoError(err)
+
+			patch, err := configpatcher.LoadPatch(docBytes)
+			suite.Require().NoError(err)
+
+			patchedOut, err := configpatcher.Apply(configpatcher.WithConfig(cfg), []configpatcher.Patch{patch})
+			suite.Require().NoError(err)
+
+			patchedCfg, err := patchedOut.Config()
+			suite.Require().NoError(err)
+
+			cfgBytes, err := patchedCfg.Bytes()
+			suite.Require().NoError(err)
+
+			_, err = suite.Client.ApplyConfiguration(ctx, &machineapi.ApplyConfigurationRequest{
+				Data: cfgBytes,
+				Mode: machineapi.ApplyConfigurationRequest_AUTO,
+			})
+			suite.Require().Error(err, "promoting a system volume on a running node must be rejected")
+			suite.Require().Contains(err.Error(), "cannot be changed after creation",
+				"rejection error must reference the create-only constraint")
+
+			// The volume must still be a directory: the config was rejected, nothing changed.
+			vs, err = safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, volumeID)
+			suite.Require().NoError(err)
+			suite.Require().Equal(block.VolumeTypeDirectory, vs.TypedSpec().Type,
+				"%s must remain a directory after the rejected apply", volumeID)
+		})
+	}
+}
+
+// TestDemoteSystemVolumeRejected verifies that attempting to demote a promotable system volume
+// (ETCD/CRI/KUBELET/LOG) from a dedicated partition back to a directory on an already-running node
+// is rejected by config validation. The backing of these volumes is fixed at cluster creation.
+//
+// On the QEMU integration cluster the control plane nodes provision these volumes as dedicated
+// partitions (via hack/test/patches/dedicated-system-volumes.yaml), so a control plane node is used.
+func (suite *VolumesSuite) TestDemoteSystemVolumeRejected() {
+	if testing.Short() {
+		suite.T().Skip("skipping test in short mode.")
+	}
+
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping test for non-qemu provisioner")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
+
+	ctx := client.WithNode(suite.ctx, node)
+
+	cfg, err := suite.ReadConfigFromNode(ctx)
+	suite.Require().NoError(err)
+
+	// Exercise every promotable system volume (ETCD/CRI/KUBELET/LOG) provisioned as a dedicated
+	// partition on the control plane.
+	for _, volumeID := range config.PromotableSystemVolumeNames {
+		suite.Run(volumeID, func() {
+			// Verify the volume is currently a dedicated partition (the control plane default in this cluster).
+			vs, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, volumeID)
+			suite.Require().NoError(err)
+
+			if vs.TypedSpec().Type != block.VolumeTypePartition {
+				suite.T().Skipf("skipping, %s is not a dedicated partition on node %s", volumeID, node)
+			}
+
+			// Removing the VolumeConfig document requests the volume to revert to a directory, which
+			// is a forbidden migration off a dedicated partition.
+			remaining := xslices.Filter(cfg.Documents(), func(doc config.Document) bool {
+				if doc.Kind() != blockcfg.VolumeConfigKind {
+					return true
+				}
+
+				namedDoc, ok := doc.(config.NamedDocument)
+
+				return !ok || namedDoc.Name() != volumeID
+			})
+
+			if len(remaining) == len(cfg.Documents()) {
+				suite.T().Skipf("skipping, no %s VolumeConfig document present on node %s", volumeID, node)
+			}
+
+			suite.T().Logf("attempting to demote %s volume on node %s by removing its VolumeConfig (expected to be rejected)", volumeID, node)
+
+			ctr, err := container.New(remaining...)
+			suite.Require().NoError(err)
+
+			cfgBytes, err := ctr.Bytes()
+			suite.Require().NoError(err)
+
+			_, err = suite.Client.ApplyConfiguration(ctx, &machineapi.ApplyConfigurationRequest{
+				Data: cfgBytes,
+				Mode: machineapi.ApplyConfigurationRequest_AUTO,
+			})
+			suite.Require().Error(err, "demoting a system volume on a running node must be rejected")
+			suite.Require().Contains(err.Error(), "cannot be removed",
+				"rejection error must reference the create-only constraint")
+
+			// The volume must still be a partition: the config was rejected, nothing changed.
+			vs, err = safe.ReaderGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, volumeID)
+			suite.Require().NoError(err)
+			suite.Require().Equal(block.VolumeTypePartition, vs.TypedSpec().Type,
+				"%s must remain a dedicated partition after the rejected apply", volumeID)
+		})
+	}
 }
 
 // TestUserVolumeBTRFS verifies a user volume with BTRFS filesystem.
@@ -1749,6 +1958,191 @@ func (suite *VolumesSuite) TestZswapStatus() {
 				},
 			)
 		})
+	}
+}
+
+// TestFSTrimDefaultSchedule verifies that the default schedule for filesystem trimming is applied.
+func (suite *VolumesSuite) TestFSTrimDefaultSchedule() {
+	// TODO: we can remove this skip clause once TF provider in contrib is updated
+	// to Talos 1.14 machinery.
+	if suite.Cluster == nil || suite.Cluster.Provisioner() != base.ProvisionerQEMU {
+		suite.T().Skip("skipping test for non-qemu provisioner")
+	}
+
+	// confirm the defaults by reading the config from a single node
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
+	cfg, err := suite.ReadConfigFromNode(client.WithNode(suite.ctx, node))
+	suite.Require().NoError(err)
+
+	if cfg.FilesystemTrimConfig() == nil {
+		suite.T().Skipf("skipping test, filesystem trimming is not enabled by default")
+	}
+
+	for _, node := range suite.DiscoverNodeInternalIPs(suite.ctx) {
+		suite.Run(node, func() {
+			ctx := client.WithNode(suite.ctx, node)
+
+			var shouldHaveSchedule, shouldNotHaveSchedule []string
+
+			for _, name := range []string{constants.EphemeralPartitionLabel, constants.StatePartitionLabel} {
+				vs, err := safe.StateGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, name)
+				suite.Require().NoError(err)
+
+				if vs.TypedSpec().EncryptionProvider == block.EncryptionProviderLUKS2 && !vs.TypedSpec().EncryptionAllowDiscards {
+					shouldNotHaveSchedule = append(shouldNotHaveSchedule, name)
+				} else {
+					shouldHaveSchedule = append(shouldHaveSchedule, name)
+				}
+			}
+
+			if len(shouldHaveSchedule) > 0 {
+				rtestutils.AssertResources(
+					ctx, suite.T(), suite.Client.COSI,
+					shouldHaveSchedule,
+					func(schedule *block.VolumeTrimSchedule, asrt *assert.Assertions) {
+						asrt.Equal(constants.DefaultFilesystemTrimInterval, schedule.TypedSpec().Interval)
+						asrt.NotZero(schedule.TypedSpec().NextTrim)
+					},
+				)
+			}
+
+			for _, name := range shouldNotHaveSchedule {
+				rtestutils.AssertNoResource[*block.VolumeTrimSchedule](ctx, suite.T(), suite.Client.COSI, name)
+			}
+		})
+	}
+}
+
+// TestImageCacheLocalEnabledWithoutCacheVolume verifies that enabling the local image cache on a node
+// without a cache volume doesn't cause VolumeMountRequest create/delete churn.
+func (suite *VolumesSuite) TestImageCacheLocalEnabledWithoutCacheVolume() {
+	node := suite.RandomDiscoveredNodeInternalIP()
+	ctx := client.WithNode(suite.ctx, node)
+
+	suite.T().Logf("using node %s", node)
+
+	cfg, err := suite.ReadConfigFromNode(ctx)
+	suite.Require().NoError(err)
+
+	originalImageCacheDocs := filterImageCacheConfigDocs(cfg.Documents())
+	if cfg.ImageCacheConfig() != nil && len(originalImageCacheDocs) == 0 {
+		suite.T().Skip("image cache is configured via v1alpha1 machine config")
+	}
+
+	defer func() {
+		suite.RemoveMachineConfigDocuments(ctx, cricfg.ImageCacheConfig)
+
+		if len(originalImageCacheDocs) > 0 {
+			patches := make([]any, 0, len(originalImageCacheDocs))
+			for _, doc := range originalImageCacheDocs {
+				patches = append(patches, doc)
+			}
+
+			suite.PatchMachineConfig(ctx, patches...)
+		}
+	}()
+
+	suite.RemoveMachineConfigDocuments(ctx, cricfg.ImageCacheConfig)
+
+	imageCacheCfg := cricfg.NewImageCacheConfigV1Alpha1()
+	imageCacheCfg.LocalConfig.ConfigEnabled = new(bool)
+	*imageCacheCfg.LocalConfig.ConfigEnabled = true
+
+	suite.PatchMachineConfig(ctx, imageCacheCfg)
+
+	volumeIDs := []resource.ID{constants.ImageCacheISOLabel, constants.ImageCachePartitionLabel}
+	rtestutils.AssertResources(
+		ctx,
+		suite.T(),
+		suite.Client.COSI,
+		volumeIDs,
+		func(*block.VolumeStatus, *assert.Assertions) {},
+	)
+
+	for _, id := range volumeIDs {
+		volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](ctx, suite.Client.COSI, id)
+		suite.Require().NoError(err)
+
+		if volumeStatus.TypedSpec().Phase == block.VolumePhaseReady {
+			suite.T().Skipf("node has ready image cache volume %q", id)
+		}
+	}
+
+	rtestutils.AssertResources(
+		ctx,
+		suite.T(),
+		suite.Client.COSI,
+		[]resource.ID{crires.ImageCacheConfigID},
+		func(cfg *crires.ImageCacheConfig, asrt *assert.Assertions) {
+			asrt.Equal(crires.ImageCacheStatusDisabled, cfg.TypedSpec().Status)
+			asrt.Equal(crires.ImageCacheCopyStatusSkipped, cfg.TypedSpec().CopyStatus)
+			asrt.Empty(cfg.TypedSpec().Roots)
+		},
+	)
+
+	ctrlName := "cri.ImageCacheConfigController"
+	mountRequestIDs := []resource.ID{
+		ctrlName + "-" + constants.ImageCacheISOLabel,
+		ctrlName + "-" + constants.ImageCachePartitionLabel,
+	}
+
+	rtestutils.AssertResources(
+		ctx,
+		suite.T(),
+		suite.Client.COSI,
+		mountRequestIDs,
+		func(vmr *block.VolumeMountRequest, asrt *assert.Assertions) {
+			asrt.Equal(ctrlName, vmr.TypedSpec().Requester)
+		},
+	)
+
+	suite.assertImageCacheMountRequestsStable(ctx, mountRequestIDs, 10*time.Second)
+}
+
+func filterImageCacheConfigDocs(docs []config.Document) []config.Document {
+	result := make([]config.Document, 0, len(docs))
+
+	for _, doc := range docs {
+		if doc.Kind() == cricfg.ImageCacheConfig {
+			result = append(result, doc)
+		}
+	}
+
+	return result
+}
+
+func (suite *VolumesSuite) assertImageCacheMountRequestsStable(ctx context.Context, ids []resource.ID, duration time.Duration) {
+	versions := make(map[resource.ID]resource.Version, len(ids))
+
+	for _, id := range ids {
+		vmr, err := safe.StateGetByID[*block.VolumeMountRequest](ctx, suite.Client.COSI, id)
+		suite.Require().NoError(err)
+
+		versions[id] = vmr.Metadata().Version()
+	}
+
+	deadline := time.After(duration)
+
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			suite.Require().NoError(ctx.Err())
+		case <-deadline:
+			return
+		case <-ticker.C:
+			for _, id := range ids {
+				vmr, err := safe.StateGetByID[*block.VolumeMountRequest](ctx, suite.Client.COSI, id)
+				suite.Require().NoError(err)
+				suite.Require().True(
+					versions[id].Equal(vmr.Metadata().Version()),
+					"image cache mount request %q changed while cache was enabled without a backing volume",
+					id,
+				)
+			}
+		}
 	}
 }
 

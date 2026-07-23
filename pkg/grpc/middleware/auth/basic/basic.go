@@ -45,7 +45,6 @@ func NewConnection(address string, creds credentials.PerRPCCredentials, accepted
 	grpcOpts := []grpc.DialOption{
 		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
 		grpc.WithPerRPCCredentials(creds),
-		grpc.WithSharedWriteBuffer(true),
 		grpc.WithContextDialer(dialer.DynamicProxyDialerWithTLSConfig(httpdefaults.RootCAsTLSConfig)),
 	}
 

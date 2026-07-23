@@ -77,12 +77,8 @@ func (ctrl *NodeLabelSpecController) Run(ctx context.Context, r controller.Runti
 
 		nodeLabels := map[string]string{}
 
-		if cfg != nil && cfg.Config().Machine() != nil {
-			maps.Copy(nodeLabels, cfg.Config().Machine().NodeLabels())
-
-			if cfg.Config().Machine().Type().IsControlPlane() {
-				nodeLabels[constants.LabelNodeRoleControlPlane] = ""
-			}
+		if cfg != nil && cfg.Config().K8sNodeConfig() != nil {
+			maps.Copy(nodeLabels, cfg.Config().K8sNodeConfig().Labels())
 		}
 
 		if err = extensionsToNodeKV(

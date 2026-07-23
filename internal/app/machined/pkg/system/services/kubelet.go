@@ -117,8 +117,8 @@ func (k *Kubelet) DependsOn(runtime.Runtime) []string {
 func (k *Kubelet) Volumes(runtime.Runtime) []string {
 	return []string{
 		"/var/lib",
-		"/var/lib/kubelet",
-		constants.LogMountPoint,
+		constants.KubeletDataVolumeID,
+		constants.LogVolumeID,
 		"/var/log/audit",
 		"/var/log/containers",
 		"/var/log/pods",
@@ -161,7 +161,6 @@ func (k *Kubelet) Runner(r runtime.Runtime) (runner.Runner, error) {
 		{Type: "bind", Destination: "/etc/os-release", Source: "/etc/os-release", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: constants.PodResolvConfPath, Source: constants.PodResolvConfPath, Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: "/etc/cni", Source: "/etc/cni", Options: []string{"bind", "ro"}},
-		{Type: "bind", Destination: "/usr/libexec/kubernetes", Source: "/usr/libexec/kubernetes", Options: []string{"bind", "rw"}},
 		{Type: "bind", Destination: "/var/run", Source: "/run", Options: []string{"rbind", "rslave", "rw"}},
 		{Type: "bind", Destination: "/var/lib/containerd", Source: "/var/lib/containerd", Options: []string{"rbind", "rslave", "rw"}},
 		{Type: "bind", Destination: "/var/lib/kubelet", Source: "/var/lib/kubelet", Options: []string{"rbind", "rshared", "rw"}},

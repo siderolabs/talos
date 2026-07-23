@@ -79,11 +79,32 @@ type LaunchConfig struct {
 
 	VMMac string
 
+	// FabricUplinks describes dedicated point-to-point uplinks from this node to the host BGP fabric
+	// peer, used by the full-CLOS BGP test. Each uplink is a virtio/e1000 NIC backed by its own
+	// per-uplink CNI bridge (root ns) + tc-redirect-tap (node netns).
+	FabricUplinks []FabricUplink
+
+	// CLOSNoNet0 means this node has no management net0 (no CNI bridge) — only the fabric uplinks. The
+	// netns is still created; the net0 netdev, net0 CNI, and IPAM dump are skipped.
+	CLOSNoNet0 bool
+
 	// signals
 	c chan os.Signal
 
 	// controller
 	controller *Controller
+}
+
+// FabricUplink is a dedicated point-to-point BGP fabric uplink: a per-uplink CNI bridge (root ns,
+// where the host fabric peer attaches) connected via tc-redirect-tap to a tap in the node netns.
+type FabricUplink struct {
+	BridgeName  string // host bridge name (root ns); the host fabric peer attaches here
+	CNIConfList string // per-uplink CNI conflist (bridge + tc-redirect-tap), LLA-only (no IPAM)
+	IfName      string // CNI runtimeConf IfName, unique within the node netns
+
+	// filled by withNetworkContext at launch time
+	mac     string
+	tapName string
 }
 
 type networkConfigBase struct {
@@ -124,8 +145,6 @@ func launchVM(config *LaunchConfig) error {
 		"-smp", fmt.Sprintf("cpus=%d", config.VCPUCount),
 		"-cpu", cpuArg,
 		"-nographic",
-		"-netdev", getNetdevParams(config.Network, "net0"),
-		"-device", fmt.Sprintf("virtio-net-pci,netdev=net0,mac=%s,host_mtu=%d", config.VMMac, config.Network.MTU),
 		// TODO: uncomment the following line to get another eth interface not connected to anything
 		// "-nic", "tap,model=e1000,script=no,downscript=no",
 		"-device", "virtio-rng-pci",
@@ -141,10 +160,37 @@ func launchVM(config *LaunchConfig) error {
 		"-watchdog-action", "pause",
 	}
 
+	// management net0 (skipped for authentic full-CLOS nodes, which have only fabric uplinks).
+	if !config.CLOSNoNet0 {
+		args = append(args,
+			"-netdev", getNetdevParams(config.Network, "net0"),
+			"-device", fmt.Sprintf("virtio-net-pci,netdev=net0,mac=%s,host_mtu=%d", config.VMMac, config.Network.MTU),
+		)
+	}
+
+	// dedicated BGP fabric uplinks: each is a NIC on its own per-uplink CNI bridge. tapName is filled by
+	// withNetworkContext (Linux); on platforms without fabric provisioning it stays empty and the uplink
+	// is skipped.
+	for i, link := range config.FabricUplinks {
+		if link.tapName == "" {
+			continue
+		}
+
+		args = append(args,
+			"-netdev", fmt.Sprintf("tap,id=fabric%d,ifname=%s,script=no,downscript=no", i, link.tapName),
+			"-device", fabricDevice(config, i, link),
+		)
+	}
+
 	var (
 		scsiAttached, ahciAttached, nvmeAttached, megaraidAttached, virtiofsAttached bool
 		ahciBus                                                                      int
 	)
+
+	blockDeviceIOOptions := "aio=threads,cache=none"
+	if runtime.GOOS == "linux" {
+		blockDeviceIOOptions = "aio=native,cache=none"
+	}
 
 	for i, disk := range config.DiskPaths {
 		driver := config.DiskDrivers[i]
@@ -193,7 +239,7 @@ func launchVM(config *LaunchConfig) error {
 
 			args = append(
 				args,
-				"-drive", fmt.Sprintf("id=scsi%d,format=raw,if=none,file=%s,discard=unmap,aio=native,cache=none", i, disk),
+				"-drive", fmt.Sprintf("id=scsi%d,format=raw,if=none,file=%s,discard=unmap,%s", i, disk, blockDeviceIOOptions),
 				"-device", fmt.Sprintf("scsi-hd,drive=scsi%d,bus=scsi0.0,logical_block_size=%d,physical_block_size=%d", i, blockSize, blockSize),
 			)
 
@@ -209,7 +255,7 @@ func launchVM(config *LaunchConfig) error {
 
 			args = append(
 				args,
-				"-drive", fmt.Sprintf("id=nvme%d,format=raw,if=none,file=%s,discard=unmap,aio=native,cache=none", i, disk),
+				"-drive", fmt.Sprintf("id=nvme%d,format=raw,if=none,file=%s,discard=unmap,%s", i, disk, blockDeviceIOOptions),
 				"-device", fmt.Sprintf("nvme-ns,drive=nvme%d,logical_block_size=%d,physical_block_size=%d", i, blockSize, blockSize),
 			)
 
@@ -223,7 +269,7 @@ func launchVM(config *LaunchConfig) error {
 
 			args = append(
 				args,
-				"-drive", fmt.Sprintf("id=scsi%d,format=raw,if=none,file=%s,discard=unmap,aio=native,cache=none", i, disk),
+				"-drive", fmt.Sprintf("id=scsi%d,format=raw,if=none,file=%s,discard=unmap,%s", i, disk, blockDeviceIOOptions),
 				"-device", fmt.Sprintf("scsi-hd,drive=scsi%d,bus=scsi1.0,channel=0,scsi-id=%d,lun=0,logical_block_size=%d,physical_block_size=%d", i, i, blockSize, blockSize),
 			)
 
@@ -343,6 +389,12 @@ func launchVM(config *LaunchConfig) error {
 		)
 	}
 
+	// sdStubExtraCmdline is computed per-launch: the base value lives on the
+	// shared *LaunchConfig, but the per-boot config URL must NOT be appended
+	// back onto it, otherwise every relaunch (the for{} loop around launchVM)
+	// accumulates another " talos.config=..." into the persistent field.
+	sdStubExtraCmdline := config.sdStubExtraCmdline
+
 	if !diskBootable || !config.BootloaderEnabled {
 		// if the disk is bootable, and we were forced to disable disk bootloader,
 		// we need to skip ISO/USB boot, as it will fall back to boot from disk
@@ -368,7 +420,6 @@ func launchVM(config *LaunchConfig) error {
 				"-kernel", config.UKIPath,
 				"-append", config.KernelArgs,
 			)
-			config.sdStubExtraCmdline += config.sdStubExtraCmdlineConfig
 		case config.KernelImagePath != "":
 			args = append(
 				args,
@@ -376,14 +427,22 @@ func launchVM(config *LaunchConfig) error {
 				"-initrd", config.InitrdPath,
 				"-append", config.KernelArgs,
 			)
-			config.sdStubExtraCmdline += config.sdStubExtraCmdlineConfig
 		}
+	}
+
+	if (config.UKIPath != "" || config.KernelImagePath != "") && config.USBPath == "" && config.ISOPath == "" {
+		// inject talos.config= into the boot, even if the disk is bootable,
+		// as the tests might wipe just STATE partition relying on Talos being able to
+		// re-download the config on boot
+		//
+		// but, don't activate this on USB/ISO boot options
+		sdStubExtraCmdline += config.sdStubExtraCmdlineConfig
 	}
 
 	if !config.SkipInjectingExtraCmdline {
 		args = append(
 			args,
-			"-smbios", fmt.Sprintf("type=11,value=%s=%s", constants.SDStubCmdlineExtraOEMVar, config.sdStubExtraCmdline),
+			"-smbios", fmt.Sprintf("type=11,value=%s=%s", constants.SDStubCmdlineExtraOEMVar, sdStubExtraCmdline),
 		)
 	}
 
@@ -468,6 +527,24 @@ func launchVM(config *LaunchConfig) error {
 	}
 }
 
+func fabricDevice(config *LaunchConfig, index int, link FabricUplink) string {
+	// With net0 present (Phase 1), e1000 avoids colliding with the net0 alias selector
+	// (link.driver == "virtio_net"). A full-CLOS node has no net0, so the fabric NICs are virtio.
+	if !config.CLOSNoNet0 {
+		return fmt.Sprintf("e1000,netdev=fabric%d,mac=%s", index, link.mac)
+	}
+
+	// Pin to a known PCI slot so the guest kernel interface name is deterministic. Advertise the host
+	// fabric MTU as well; otherwise virtio defaults to 1500 even when the CNI bridge uses a lower MTU.
+	return fmt.Sprintf(
+		"virtio-net-pci,netdev=fabric%d,mac=%s,addr=0x%x,host_mtu=%d",
+		index,
+		link.mac,
+		vm.CLOSFabricPCIBase+index,
+		config.Network.MTU,
+	)
+}
+
 func sendMonitorCommand(monitorPath, command string) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -530,9 +607,11 @@ func Launch() error {
 	}
 
 	return withNetworkContext(ctx, &config, func(config *LaunchConfig) error {
-		err = dumpIpam(*config)
-		if err != nil {
-			return err
+		// full-CLOS nodes have no net0 and no DHCP, so there are no IPAM records to dump.
+		if !config.CLOSNoNet0 {
+			if err = dumpIpam(*config); err != nil {
+				return err
+			}
 		}
 
 		for {

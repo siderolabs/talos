@@ -1,5 +1,6 @@
 ---
-description: BridgeConfig is a config document to create a Bridge (link aggregation) over a set of links.
+description: BridgeConfig is a config document to create a Bridge (link aggregation)
+    over a set of links.
 title: BridgeConfig
 ---
 

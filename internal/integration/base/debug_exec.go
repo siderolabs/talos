@@ -16,24 +16,16 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
-
-// DebugContainerImage is the default image used for one-shot privileged debug containers.
-const DebugContainerImage = "docker.io/library/alpine:3.23"
 
 // RunDebugContainer pulls the image (if needed) and runs a one-shot privileged debug container
 // on the node via the DebugService, returning the combined stdout/stderr output and the exit code.
-//
-// The debug container runs in the host PID/IPC/network namespaces, fully privileged, with the host
-// root filesystem bind-mounted at /host, but it does not join the host mount namespace. To run host
-// binaries (e.g. those installed by system extensions, which live in the host root and mount
-// namespace), use ExecInHostMountNS which wraps the command with nsenter.
-//
 // Note: in non-TTY mode the server multiplexes stdout and stderr into a single stream, so the
 // returned output contains both.
 //
 //nolint:gocyclo
-func (apiSuite *APISuite) RunDebugContainer(ctx context.Context, node, image string, args ...string) (string, int32, error) {
+func (apiSuite *APISuite) RunDebugContainer(ctx context.Context, node string, args ...string) (string, int32, error) {
 	nodeCtx := client.WithNode(ctx, node)
 
 	containerd := &common.ContainerdInstance{
@@ -44,10 +36,10 @@ func (apiSuite *APISuite) RunDebugContainer(ctx context.Context, node, image str
 	// pull the image into the system namespace first
 	rcv, err := apiSuite.Client.ImageClient.Pull(nodeCtx, &machineapi.ImageServicePullRequest{
 		Containerd: containerd,
-		ImageRef:   image,
+		ImageRef:   constants.DebugHostNsImage,
 	})
 	if err != nil {
-		return "", 0, fmt.Errorf("failed to pull image %q: %w", image, err)
+		return "", 0, fmt.Errorf("failed to pull image %q: %w", constants.DebugHostNsImage, err)
 	}
 
 	var pulledImage string
@@ -59,7 +51,7 @@ func (apiSuite *APISuite) RunDebugContainer(ctx context.Context, node, image str
 				break
 			}
 
-			return "", 0, fmt.Errorf("failed to pull image %q: %w", image, err)
+			return "", 0, fmt.Errorf("failed to pull image %q: %w", constants.DebugHostNsImage, err)
 		}
 
 		pulledImage = msg.GetName()
@@ -76,7 +68,7 @@ func (apiSuite *APISuite) RunDebugContainer(ctx context.Context, node, image str
 				Containerd: containerd,
 				ImageName:  pulledImage,
 				Args:       args,
-				Profile:    machineapi.DebugContainerRunRequestSpec_PROFILE_PRIVILEGED,
+				Profile:    machineapi.DebugContainerRunRequestSpec_PROFILE_HOST_NS,
 			},
 		},
 	}); err != nil {
@@ -120,15 +112,4 @@ func (apiSuite *APISuite) RunDebugContainer(ctx context.Context, node, image str
 	}
 
 	return out.String(), exitCode, nil
-}
-
-// ExecInHostMountNS runs a command in the host mount namespace via a one-shot privileged debug
-// container, returning the combined stdout/stderr output and the exit code.
-//
-// The command is executed via `nsenter --mount=/proc/1/ns/mnt --` so that host binaries installed
-// by system extensions (which live in the host root filesystem and mount namespace) are reachable.
-func (apiSuite *APISuite) ExecInHostMountNS(ctx context.Context, node string, command ...string) (string, int32, error) {
-	args := append([]string{"nsenter", "--mount=/proc/1/ns/mnt", "--"}, command...)
-
-	return apiSuite.RunDebugContainer(ctx, node, DebugContainerImage, args...)
 }

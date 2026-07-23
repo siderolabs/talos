@@ -34,9 +34,18 @@ type FS struct {
 	boolParams   map[string]struct{}
 	stringParams map[string][]string
 	binaryParams map[string][][]byte
+	fdParams     []fdParam
 
 	mntfd    int
 	mntflags int
+}
+
+// fdParam is an ordered fsconfig FSCONFIG_SET_FD parameter (e.g. an overlayfs
+// "lowerdir+" layer passed by file descriptor). Order is preserved as the relative
+// priority of repeated keys (e.g. lowerdir+) is significant.
+type fdParam struct {
+	key string
+	fd  int
 }
 
 // Interface guard.
@@ -127,6 +136,12 @@ func (fs *FS) new() (err error) {
 			if err := unix.FsconfigSetString(fsfd, key, value); err != nil {
 				return fmt.Errorf("FSCONFIG_SET_BINARY failed: %w: key=%q", err, key)
 			}
+		}
+	}
+
+	for _, p := range fs.fdParams {
+		if err := unix.FsconfigSetFd(fsfd, p.key, p.fd); err != nil {
+			return fmt.Errorf("FSCONFIG_SET_FD failed: %w: key=%q fd=%d", err, p.key, p.fd)
 		}
 	}
 

@@ -25,6 +25,14 @@ type V1Alpha1ConflictValidator interface {
 	V1Alpha1ConflictValidate(*v1alpha1.Config) error
 }
 
+// ControlplaneOnlyConfig is the interface implemented by config documents which are only applicable to controlplane nodes.
+//
+// Such documents will not be allowed for machines which do not have a machine type, or the machine type is not controlplane/init.
+type ControlplaneOnlyConfig interface {
+	config.Document
+	ControlplaneOnlyDocument()
+}
+
 // Container wraps all configuration documents into a single container.
 type Container struct {
 	v1alpha1Config *v1alpha1.Config
@@ -109,6 +117,18 @@ func NewReadonly(bytes []byte, documents ...config.Document) (*Container, error)
 	return c, nil
 }
 
+// NewReadonlyUnvalidated creates a read-only container which does not validate the documents at all.
+//
+// Some methods of the provider don't work at all for such containers.
+// This method is meant to be used only for loading config patches.
+func NewReadonlyUnvalidated(bytes []byte, documents ...config.Document) *Container {
+	return &Container{
+		documents: slices.Clone(documents),
+		bytes:     bytes,
+		readonly:  true,
+	}
+}
+
 // NewV1Alpha1 creates a container with (only) v1alpha1.Config document.
 func NewV1Alpha1(config *v1alpha1.Config) *Container {
 	return &Container{
@@ -135,19 +155,22 @@ func (container *Container) PatchV1Alpha1(patcher func(*v1alpha1.Config) error) 
 		return nil, fmt.Errorf("v1alpha1.Config is not present in the container")
 	}
 
-	cfg = cfg.DeepCopy()
-
-	if err := patcher(cfg); err != nil {
-		return nil, err
-	}
-
-	otherDocs := xslices.Filter(container.Documents(), func(doc config.Document) bool {
-		_, ok := doc.(*v1alpha1.Config)
-
-		return !ok
+	return PatchDocument(container, func(c *v1alpha1.Config) error {
+		return patcher(c)
 	})
+}
 
-	return New(slices.Insert(otherDocs, 0, config.Document(cfg))...)
+// Has checks if the container has a document of the given kind.
+//
+// This method only works for new multi-doc config documents, and does not check for v1alpha1.Config.
+func (container *Container) Has(kind string) bool {
+	return slices.ContainsFunc(container.documents, func(d config.Document) bool {
+		if _, ok := d.(selector); ok {
+			return false
+		}
+
+		return d.Kind() == kind
+	})
 }
 
 // Readonly implements config.Container interface.
@@ -219,6 +242,25 @@ func (container *Container) Environment() config.EnvironmentConfig {
 	return config.WrapEnvironmentConfigList(findMatchingDocs[config.EnvironmentConfig](container.documents)...)
 }
 
+// EtcFileConfigs implements config.Config interface.
+func (container *Container) EtcFileConfigs() []config.EtcFileConfig {
+	return findMatchingDocs[config.EtcFileConfig](container.documents)
+}
+
+// UdevRulesConfig implements config.Config interface.
+func (container *Container) UdevRulesConfig() config.UdevConfig {
+	matching := findMatchingDocs[config.UdevConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.Machine().Udev()
+	}
+
+	return nil
+}
+
 // SysctlConfig implements config.Config interface.
 //
 // The deprecated v1alpha1 values are merged with the multi-doc documents,
@@ -257,6 +299,35 @@ func (container *Container) SysfsConfig() map[string]string {
 	return config.WrapSysfsConfigList(configs...)
 }
 
+// KernelModuleConfigs implements config.Config interface.
+//
+// The deprecated v1alpha1 .machine.kernel.modules values are merged with the multi-doc documents,
+// with the multi-doc documents taking precedence over the legacy config on module name conflicts
+// (enforced by the KernelModuleConfigController, which writes one resource per module name).
+func (container *Container) KernelModuleConfigs() []config.KernelModuleConfig {
+	var modules []config.KernelModuleConfig
+
+	// v1alpha1 has the lowest priority
+	if container.v1alpha1Config != nil {
+		modules = container.v1alpha1Config.KernelModuleConfigs()
+	}
+
+	// dedicated documents take precedence over v1alpha1
+	modules = append(modules, findMatchingDocs[config.KernelModuleConfig](container.documents)...)
+
+	return modules
+}
+
+// UnattendedInstallConfig implements config.Config interface.
+func (container *Container) UnattendedInstallConfig() config.UnattendedInstallConfig {
+	matching := findMatchingDocs[config.UnattendedInstallConfig](container.documents)
+	if len(matching) == 0 {
+		return nil
+	}
+
+	return matching[0]
+}
+
 // NetworkRules implements config.Config interface.
 func (container *Container) NetworkRules() config.NetworkRuleConfig {
 	return config.WrapNetworkRuleConfigList(findMatchingDocs[config.NetworkRuleConfigSignal](container.documents)...)
@@ -275,6 +346,43 @@ func (container *Container) Volumes() config.VolumesConfig {
 // KubespanConfig implements config.Config interface.
 func (container *Container) KubespanConfig() config.KubespanConfig {
 	return config.WrapKubespanConfig(findMatchingDocs[config.KubespanConfig](container.documents)...)
+}
+
+// DiscoveryServiceConfigs implements config.Config interface.
+//
+// Dedicated documents and the deprecated v1alpha1 discovery config are mutually exclusive
+// (enforced by DiscoveryServiceConfigV1Alpha1.V1Alpha1ConflictValidate); the v1alpha1 config takes priority.
+func (container *Container) DiscoveryServiceConfigs() []config.DiscoveryServiceConfig {
+	// v1alpha1 discovery takes priority when it yields a config
+	if container.v1alpha1Config != nil {
+		if legacy := container.v1alpha1Config.DiscoveryServiceConfigs(); len(legacy) > 0 {
+			return legacy
+		}
+	}
+
+	// fallback to dedicated documents
+	return findMatchingDocs[config.DiscoveryServiceConfig](container.documents)
+}
+
+// DiscoveryIdentityConfig implements config.Config interface.
+//
+// The dedicated document and the deprecated v1alpha1 cluster identity (.cluster.id/.cluster.secret) are
+// mutually exclusive (enforced by DiscoveryIdentityConfigV1Alpha1.V1Alpha1ConflictValidate); the v1alpha1
+// config takes priority.
+func (container *Container) DiscoveryIdentityConfig() config.DiscoveryIdentityConfig {
+	// v1alpha1 cluster identity takes priority when it yields a config
+	if container.v1alpha1Config != nil {
+		if legacy := container.v1alpha1Config.DiscoveryIdentityConfig(); legacy != nil {
+			return legacy
+		}
+	}
+
+	// fallback to dedicated multi-doc. Take first, since this doc is not named.
+	if docs := findMatchingDocs[config.DiscoveryIdentityConfig](container.documents); len(docs) > 0 {
+		return docs[0]
+	}
+
+	return nil
 }
 
 // PCIDriverRebindConfig implements config.Config interface.
@@ -322,9 +430,34 @@ func (container *Container) LVMLogicalVolumeConfigs() []config.LVMLogicalVolumeC
 	return findMatchingDocs[config.LVMLogicalVolumeConfig](container.documents)
 }
 
+// RAIDArrayConfigs implements config.Config interface.
+func (container *Container) RAIDArrayConfigs() []config.RAIDArrayConfig {
+	return findMatchingDocs[config.RAIDArrayConfig](container.documents)
+}
+
 // ZswapConfig implements config.Config interface.
 func (container *Container) ZswapConfig() config.ZswapConfig {
 	matching := findMatchingDocs[config.ZswapConfig](container.documents)
+	if len(matching) == 0 {
+		return nil
+	}
+
+	return matching[0]
+}
+
+// FilesystemTrimConfig implements config.Config interface.
+func (container *Container) FilesystemTrimConfig() config.FilesystemTrimConfig {
+	matching := findMatchingDocs[config.FilesystemTrimConfig](container.documents)
+	if len(matching) == 0 {
+		return nil
+	}
+
+	return matching[0]
+}
+
+// SecurityProfileConfig implements config.Config interface.
+func (container *Container) SecurityProfileConfig() config.SecurityProfileConfig {
+	matching := findMatchingDocs[config.SecurityProfileConfig](container.documents)
 	if len(matching) == 0 {
 		return nil
 	}
@@ -436,6 +569,16 @@ func (container *Container) NetworkDHCPConfigs() []config.NetworkDHCPConfig {
 	return findMatchingDocs[config.NetworkDHCPConfig](container.documents)
 }
 
+// NetworkBGPPeerConfig implements config.Config interface.
+func (container *Container) NetworkBGPPeerConfig() config.NetworkBGPPeerConfig {
+	matching := findMatchingDocs[config.NetworkBGPPeerConfig](container.documents)
+	if len(matching) == 0 {
+		return nil
+	}
+
+	return matching[0]
+}
+
 // NetworkDHCPv4Configs implements config.Config interface.
 func (container *Container) NetworkDHCPv4Configs() []config.NetworkDHCPv4Config {
 	return findMatchingDocs[config.NetworkDHCPv4Config](container.documents)
@@ -476,6 +619,86 @@ func (container *Container) RunDefaultDHCPOperators() bool {
 		len(findMatchingDocs[config.NetworkDHCPConfig](container.documents)) == 0
 }
 
+// K8sAdmissionControlPluginConfigs implements config.Config interface.
+func (container *Container) K8sAdmissionControlPluginConfigs() []config.K8sAdmissionControlPluginConfig {
+	docs := findMatchingDocs[config.K8sAdmissionControlPluginConfig](container.documents)
+	if len(docs) > 0 {
+		return docs
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sAdmissionControlPluginConfigs()
+	}
+
+	return nil
+}
+
+// K8sAPIServerCAConfig implements config.Config interface.
+func (container *Container) K8sAPIServerCAConfig() config.K8sAPIServerCAConfig {
+	matching := findMatchingDocs[config.K8sAPIServerCAConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sAPIServerCAConfig()
+	}
+
+	return nil
+}
+
+// K8sAggregatorCAConfig implements config.Config interface.
+func (container *Container) K8sAggregatorCAConfig() config.K8sAggregatorCAConfig {
+	matching := findMatchingDocs[config.K8sAggregatorCAConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sAggregatorCAConfig()
+	}
+
+	return nil
+}
+
+// K8sAuditPolicyConfig implements config.Config interface.
+func (container *Container) K8sAuditPolicyConfig() config.K8sAuditPolicyConfig {
+	matching := findMatchingDocs[config.K8sAuditPolicyConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sAuditPolicyConfig()
+	}
+
+	return nil
+}
+
+// K8sAuthenticationConfig implements config.Config interface.
+func (container *Container) K8sAuthenticationConfig() config.K8sAuthenticationConfig {
+	matching := findMatchingDocs[config.K8sAuthenticationConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	return nil
+}
+
+// K8sAuthorizerConfigs implements config.Config interface.
+func (container *Container) K8sAuthorizerConfigs() []config.K8sAuthorizerConfig {
+	docs := findMatchingDocs[config.K8sAuthorizerConfig](container.documents)
+	if len(docs) > 0 {
+		return docs
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sAuthorizerConfigs()
+	}
+
+	return nil
+}
+
 // K8sEtcdEncryptionConfig implements config.Config interface.
 func (container *Container) K8sEtcdEncryptionConfig() config.K8sEtcdEncryptionConfig {
 	matching := findMatchingDocs[config.K8sEtcdEncryptionConfig](container.documents)
@@ -484,6 +707,20 @@ func (container *Container) K8sEtcdEncryptionConfig() config.K8sEtcdEncryptionCo
 	}
 
 	return matching[0]
+}
+
+// K8sAPIServerConfig implements config.Config interface.
+func (container *Container) K8sAPIServerConfig() config.K8sAPIServerConfig {
+	matching := findMatchingDocs[config.K8sAPIServerConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sAPIServerConfig()
+	}
+
+	return nil
 }
 
 // K8sControllerManagerConfig implements config.Config interface.
@@ -514,6 +751,48 @@ func (container *Container) K8sSchedulerConfig() config.K8sSchedulerConfig {
 	return nil
 }
 
+// K8sProxyConfig implements config.Config interface.
+func (container *Container) K8sProxyConfig() config.K8sProxyConfig {
+	matching := findMatchingDocs[config.K8sProxyConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sProxyConfig()
+	}
+
+	return nil
+}
+
+// K8sClusterConfig implements config.Config interface.
+func (container *Container) K8sClusterConfig() config.K8sClusterConfig {
+	matching := findMatchingDocs[config.K8sClusterConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sClusterConfig()
+	}
+
+	return nil
+}
+
+// K8sNodeConfig implements config.Config interface.
+func (container *Container) K8sNodeConfig() config.K8sNodeConfig {
+	matching := findMatchingDocs[config.K8sNodeConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sNodeConfig()
+	}
+
+	return nil
+}
+
 // K8sNetworkConfig implements config.Config interface.
 func (container *Container) K8sNetworkConfig() config.K8sNetworkConfig {
 	matching := findMatchingDocs[config.K8sNetworkConfig](container.documents)
@@ -537,6 +816,109 @@ func (container *Container) K8sFlannelCNIConfig() config.K8sFlannelCNIConfig {
 
 	if container.v1alpha1Config != nil {
 		return container.v1alpha1Config.K8sFlannelCNIConfig()
+	}
+
+	return nil
+}
+
+// K8sCoreDNSConfig implements config.Config interface.
+func (container *Container) K8sCoreDNSConfig() config.K8sCoreDNSConfig {
+	matching := findMatchingDocs[config.K8sCoreDNSConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sCoreDNSConfig()
+	}
+
+	return nil
+}
+
+// K8sServiceAccountConfig implements config.Config interface.
+func (container *Container) K8sServiceAccountConfig() config.K8sServiceAccountConfig {
+	matching := findMatchingDocs[config.K8sServiceAccountConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sServiceAccountConfig()
+	}
+
+	return nil
+}
+
+// K8sKubeletConfig implements config.Config interface.
+func (container *Container) K8sKubeletConfig() config.K8sKubeletConfig {
+	matching := findMatchingDocs[config.K8sKubeletConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sKubeletConfig()
+	}
+
+	return nil
+}
+
+// K8sCredentialProviderConfig implements config.Config interface.
+func (container *Container) K8sCredentialProviderConfig() config.K8sCredentialProviderConfig {
+	matching := findMatchingDocs[config.K8sCredentialProviderConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sCredentialProviderConfig()
+	}
+
+	return nil
+}
+
+// K8sStaticPodConfigs implements config.Config interface.
+func (container *Container) K8sStaticPodConfigs() []config.K8sStaticPodConfig {
+	matching := findMatchingDocs[config.K8sStaticPodConfig](container.documents)
+
+	if container.v1alpha1Config != nil {
+		matching = append(matching, container.v1alpha1Config.K8sStaticPodConfigs()...)
+	}
+
+	return matching
+}
+
+// K8sInlineManifestConfigs implements config.Config interface.
+func (container *Container) K8sInlineManifestConfigs() []config.K8sInlineManifestConfig {
+	matching := findMatchingDocs[config.K8sInlineManifestConfig](container.documents)
+
+	if container.v1alpha1Config != nil {
+		matching = append(matching, container.v1alpha1Config.K8sInlineManifestConfigs()...)
+	}
+
+	return matching
+}
+
+// K8sExternalManifestConfigs implements config.Config interface.
+func (container *Container) K8sExternalManifestConfigs() []config.K8sExternalManifestConfig {
+	matching := findMatchingDocs[config.K8sExternalManifestConfig](container.documents)
+
+	if container.v1alpha1Config != nil {
+		matching = append(matching, container.v1alpha1Config.K8sExternalManifestConfigs()...)
+	}
+
+	return matching
+}
+
+// K8sKubePrismConfig implements config.Config interface.
+func (container *Container) K8sKubePrismConfig() config.K8sKubePrismConfig {
+	matching := findMatchingDocs[config.K8sKubePrismConfig](container.documents)
+	if len(matching) > 0 {
+		return matching[0]
+	}
+
+	if container.v1alpha1Config != nil {
+		return container.v1alpha1Config.K8sKubePrismConfig()
 	}
 
 	return nil

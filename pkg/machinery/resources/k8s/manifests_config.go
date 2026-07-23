@@ -32,9 +32,12 @@ type BootstrapManifestsConfigSpec struct {
 
 	PodCIDRs []string `yaml:"podCIDRs" protobuf:"3"`
 
-	ProxyEnabled bool     `yaml:"proxyEnabled" protobuf:"4"`
-	ProxyImage   string   `yaml:"proxyImage" protobuf:"5"`
-	ProxyArgs    []string `yaml:"proxyArgs" protobuf:"6"`
+	ProxyEnabled        bool           `yaml:"proxyEnabled" protobuf:"4"`
+	ProxyImage          string         `yaml:"proxyImage" protobuf:"5"`
+	ProxyArgs           []string       `yaml:"proxyArgs" protobuf:"6"`
+	ProxyConfig         map[string]any `yaml:"proxyConfig" protobuf:"27"`
+	ProxyConfigChecksum string         `yaml:"proxyConfigChecksum" protobuf:"29"`
+	ProxyResources      Resources      `yaml:"proxyResources" protobuf:"28"`
 
 	CoreDNSEnabled bool   `yaml:"coreDNSEnabled" protobuf:"7"`
 	CoreDNSImage   string `yaml:"coreDNSImage" protobuf:"8"`

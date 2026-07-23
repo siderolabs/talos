@@ -273,7 +273,7 @@ func CoreDNSDeployment(spec *k8s.BootstrapManifestsConfigSpec) runtime.Object {
 						},
 					},
 					ServiceAccountName: "coredns",
-					PriorityClassName:  "system-cluster-critical",
+					PriorityClassName:  SystemClusterCriticalPriorityClassName,
 					Tolerations: []corev1.Toleration{
 						{
 							Key:      "node-role.kubernetes.io/control-plane",

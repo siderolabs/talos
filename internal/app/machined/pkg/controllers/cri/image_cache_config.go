@@ -42,6 +42,7 @@ type ServiceManager interface {
 	IsRunning(id string) (system.Service, bool, error)
 	Load(services ...system.Service) []string
 	Start(serviceIDs ...string) error
+	Stop(ctx context.Context, serviceIDs ...string) error
 }
 
 // ImageCacheConfigController manages configures Image Cache.
@@ -111,7 +112,7 @@ func (ctrl *ImageCacheConfigController) Outputs() []controller.Output {
 
 // Volume configuration constants.
 const (
-	VolumeImageCacheISO  = "IMAGECACHE-ISO"
+	VolumeImageCacheISO  = constants.ImageCacheISOLabel
 	VolumeImageCacheDISK = constants.ImageCachePartitionLabel
 
 	MinImageCacheSize = 500 * 1024 * 1024      // 500MB
@@ -198,6 +199,56 @@ func (ctrl *ImageCacheConfigController) Run(ctx context.Context, r controller.Ru
 			}
 		}
 
+		// do some cleanup on disabled status
+		if status == cri.ImageCacheStatusDisabled {
+			if registryDService != nil {
+				_, running, err := ctrl.V1Alpha1ServiceManager.IsRunning(RegistrydServiceID)
+
+				if err == nil && running {
+					if err = ctrl.V1Alpha1ServiceManager.Stop(ctx, RegistrydServiceID); err != nil {
+						return fmt.Errorf("error stopping service: %w", err)
+					}
+				}
+			} else if imageCacheDisabled {
+				// if the service is not running, remove the volume mount requests
+				vmrs, err := safe.ReaderListAll[*block.VolumeMountRequest](ctx, r)
+				if err != nil {
+					return fmt.Errorf("error listing volume mount requests: %w", err)
+				}
+
+				for vmr := range vmrs.All() {
+					if vmr.Metadata().Owner() != ctrl.Name() {
+						continue
+					}
+
+					ready, err := r.Teardown(ctx, vmr.Metadata())
+					if err != nil {
+						return fmt.Errorf("error tearing down volume mount request: %w", err)
+					}
+
+					if ready {
+						if err = r.Destroy(ctx, vmr.Metadata()); err != nil {
+							return fmt.Errorf("error destroying volume mount request: %w", err)
+						}
+					}
+				}
+
+				// also remove our finalizers on VolumeMountStatuses
+				vmss, err := safe.ReaderListAll[*block.VolumeMountStatus](ctx, r)
+				if err != nil {
+					return fmt.Errorf("error listing volume mount status: %w", err)
+				}
+
+				for vms := range vmss.All() {
+					if vms.Metadata().Finalizers().Has(ctrl.Name()) {
+						if err = r.RemoveFinalizer(ctx, vms.Metadata(), ctrl.Name()); err != nil {
+							return fmt.Errorf("error removing finalizer: %w", err)
+						}
+					}
+				}
+			}
+		}
+
 		logger.Debug("image cache status", zap.String("status", status.String()), zap.String("copy_status", copyStatus.String()))
 
 		if err = safe.WriterModify(ctx, r, cri.NewImageCacheConfig(), func(cfg *cri.ImageCacheConfig) error {
@@ -209,6 +260,8 @@ func (ctrl *ImageCacheConfigController) Run(ctx context.Context, r controller.Ru
 		}); err != nil {
 			return fmt.Errorf("error writing ImageCacheConfig: %w", err)
 		}
+
+		r.ResetRestartBackoff()
 	}
 }
 

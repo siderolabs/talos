@@ -5,7 +5,6 @@
 package secrets
 
 import (
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"os"
@@ -19,6 +18,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/internal/cis"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/role"
 )
@@ -176,16 +176,18 @@ type etcdEncryptionConfigProvider struct {
 // NewBundleFromConfig creates secrets bundle using existing config.
 func NewBundleFromConfig(clock Clock, c config.Config) (*Bundle, error) {
 	certs := &Certs{
-		K8s:               c.Cluster().IssuingCA(),
-		K8sAggregator:     c.Cluster().AggregatorCA(),
-		K8sServiceAccount: c.Cluster().ServiceAccount(),
+		K8s:               c.K8sAPIServerCAConfig().IssuingCA(),
+		K8sAggregator:     c.K8sAggregatorCAConfig().IssuingCA(),
+		K8sServiceAccount: c.K8sServiceAccountConfig().IssuingKey(),
 		Etcd:              c.Cluster().Etcd().CA(),
 		OS:                c.Machine().Security().IssuingCA(),
 	}
 
-	cluster := &Cluster{
-		ID:     c.Cluster().ID(),
-		Secret: c.Cluster().Secret(),
+	cluster := &Cluster{}
+
+	if identity := c.DiscoveryIdentityConfig(); identity != nil {
+		cluster.ID = identity.ClusterID()
+		cluster.Secret = identity.ClusterSecret()
 	}
 
 	trustd := &TrustdInfo{
@@ -390,7 +392,7 @@ func (bundle *Bundle) populate(versionContract *config.VersionContract) error {
 			return fmt.Errorf("failed to generate cluster ID: %w", err)
 		}
 
-		bundle.Cluster.ID = base64.URLEncoding.EncodeToString(clusterID)
+		bundle.Cluster.ID = cluster.ClusterIDEncoding.EncodeToString(clusterID)
 	}
 
 	if bundle.Cluster.Secret == "" {
@@ -399,7 +401,7 @@ func (bundle *Bundle) populate(versionContract *config.VersionContract) error {
 			return fmt.Errorf("failed to generate cluster secret: %w", err)
 		}
 
-		bundle.Cluster.Secret = base64.StdEncoding.EncodeToString(clusterSecret)
+		bundle.Cluster.Secret = cluster.ClusterSecretEncoding.EncodeToString(clusterSecret)
 	}
 
 	return nil

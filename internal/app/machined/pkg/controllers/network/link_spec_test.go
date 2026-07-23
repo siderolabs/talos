@@ -883,7 +883,7 @@ func TestLinkSpecSuite(t *testing.T) {
 	})
 }
 
-func TestSortBonds(t *testing.T) {
+func TestSortLinks(t *testing.T) {
 	expected := toResources([]network.LinkSpecSpec{
 		{
 			Name: "A",
@@ -913,6 +913,18 @@ func TestSortBonds(t *testing.T) {
 				MasterName: "C",
 				SlaveIndex: 2,
 			},
+		}, {
+			Name: "Z",
+		}, {
+			Name: "D",
+			VRFSlave: network.VRFSlave{
+				MasterName: "Z",
+			},
+		}, {
+			Name: "H",
+			VRFSlave: network.VRFSlave{
+				MasterName: "Z",
+			},
 		},
 	})
 
@@ -926,7 +938,7 @@ func TestSortBonds(t *testing.T) {
 		})
 
 		rnd.Shuffle(res.Len(), res.Swap)
-		netctrl.SortBonds(&res)
+		netctrl.SortLinks(&res)
 		require.Equal(t, expected, res, "failed with seed %d iteration %d", seed, i)
 	}
 }

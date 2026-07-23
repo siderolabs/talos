@@ -127,7 +127,7 @@ func (ctrl *LinkSpecController) Run(ctx context.Context, r controller.Runtime, l
 		// loop over links and make reconcile decision
 		var multiErr *multierror.Error
 
-		SortBonds(&list)
+		SortLinks(&list)
 
 		for link := range list.All() {
 			if err = ctrl.syncLink(ctx, r, logger, conn, wgClient, &links, link); err != nil {
@@ -143,9 +143,8 @@ func (ctrl *LinkSpecController) Run(ctx context.Context, r controller.Runtime, l
 	}
 }
 
-// SortBonds sort resources in increasing order, except it places slave interfaces right after the bond
-// in proper order.
-func SortBonds(items *safe.List[*network.LinkSpec]) {
+// SortLinks sorts resources by name, placing bond and VRF masters before their slaves.
+func SortLinks(items *safe.List[*network.LinkSpec]) {
 	items.SortFunc(func(ll, rr *network.LinkSpec) int {
 		left := ll.TypedSpec()
 		right := rr.TypedSpec()
@@ -153,11 +152,15 @@ func SortBonds(items *safe.List[*network.LinkSpec]) {
 		l := ordered.MakeTriple(left.Name, 0, "")
 		if left.BondSlave.MasterName != "" {
 			l = ordered.MakeTriple(left.BondSlave.MasterName, left.BondSlave.SlaveIndex, left.Name)
+		} else if left.VRFSlave.MasterName != "" {
+			l = ordered.MakeTriple(left.VRFSlave.MasterName, 0, left.Name)
 		}
 
 		r := ordered.MakeTriple(right.Name, 0, "")
 		if right.BondSlave.MasterName != "" {
 			r = ordered.MakeTriple(right.BondSlave.MasterName, right.BondSlave.SlaveIndex, right.Name)
+		} else if right.VRFSlave.MasterName != "" {
+			r = ordered.MakeTriple(right.VRFSlave.MasterName, 0, right.Name)
 		}
 
 		return l.Compare(r)

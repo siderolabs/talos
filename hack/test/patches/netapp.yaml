@@ -1,0 +1,18 @@
+---
+machine:
+  kernel:
+    modules:
+      - name: dm_multipath
+      - name: dm_round-robin
+---
+apiVersion: v1alpha1
+kind: ExtensionServiceConfig
+name: multipathd
+configFiles:
+    - content: |
+        defaults {
+            user_friendly_names yes
+            find_multipaths no
+            path_selector "round-robin 0"
+        }
+      mountPath: /etc/multipath.conf

@@ -4,12 +4,15 @@
 
 package v1alpha1
 
-// Name implements the config.InlineManifest interface.
+// K8sInlineManifestConfigSignal implements the config.K8sInlineManifestConfig interface.
+func (m ClusterInlineManifest) K8sInlineManifestConfigSignal() {}
+
+// Name implements the config.K8sInlineManifestConfig interface.
 func (m ClusterInlineManifest) Name() string {
 	return m.InlineManifestName
 }
 
-// Contents implements the config.InlineManifest interface.
+// Contents implements the config.K8sInlineManifestConfig interface.
 func (m ClusterInlineManifest) Contents() string {
 	return m.InlineManifestContents
 }

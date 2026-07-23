@@ -116,6 +116,11 @@ func (ctrl *KernelParamDefaultsController) getKernelParams() []*kernel.Param {
 				Key:   "proc.sys.net.bridge.bridge-nf-call-ip6tables",
 				Value: "1",
 			},
+			{
+				Key: "proc.sys.kernel.ctrl-alt-del",
+				// Make Ctrl-Alt-Del trigger a SIGINT to init process
+				Value: "0",
+			},
 		}...)
 	}
 

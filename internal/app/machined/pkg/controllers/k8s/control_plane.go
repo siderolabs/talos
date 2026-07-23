@@ -6,27 +6,30 @@ package k8s
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"net/netip"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
 
-	"github.com/blang/semver/v4"
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/controller/generic"
 	"github.com/cosi-project/runtime/pkg/controller/generic/transform"
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
-	"github.com/siderolabs/go-kubernetes/kubernetes/compatibility"
 	"go.uber.org/zap"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/runtime"
+	apiserverv1beta1 "k8s.io/apiserver/pkg/apis/apiserver/v1beta1"
+	proxyv1alpha1 "k8s.io/kube-proxy/config/v1alpha1"
+	"sigs.k8s.io/yaml"
 
+	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s/internal/k8sjson"
 	"github.com/siderolabs/talos/pkg/argsbuilder"
 	"github.com/siderolabs/talos/pkg/images"
-	"github.com/siderolabs/talos/pkg/kubernetes"
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -76,7 +79,7 @@ func NewControlPlaneAdmissionControlController() *ControlPlaneAdmissionControlCo
 
 				res.TypedSpec().Config = nil
 
-				for _, cfg := range cfgProvider.Cluster().APIServer().AdmissionControl() {
+				for _, cfg := range cfgProvider.K8sAdmissionControlPluginConfigs() {
 					res.TypedSpec().Config = append(
 						res.TypedSpec().Config,
 						k8s.AdmissionPluginSpec{
@@ -99,12 +102,59 @@ type ControlPlaneAuditPolicyController = transform.Controller[*config.MachineCon
 func NewControlPlaneAuditPolicyController() *ControlPlaneAuditPolicyController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *k8s.AuditPolicyConfig]{
-			Name:                    "k8s.ControlPlaneAuditPolicyController",
-			MapMetadataOptionalFunc: controlplaneMapFunc(k8s.NewAuditPolicyConfig()),
+			Name: "k8s.ControlPlaneAuditPolicyController",
+			MapMetadataOptionalFunc: controlplaneMapFunc(
+				k8s.NewAuditPolicyConfig(),
+				func(machineConfig *config.MachineConfig) bool {
+					return machineConfig.Config().K8sAuditPolicyConfig() != nil
+				},
+			),
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, machineConfig *config.MachineConfig, res *k8s.AuditPolicyConfig) error {
 				cfgProvider := machineConfig.Config()
 
-				res.TypedSpec().Config = cfgProvider.Cluster().APIServer().AuditPolicy()
+				res.TypedSpec().Config = cfgProvider.K8sAuditPolicyConfig().Configuration()
+
+				return nil
+			},
+		},
+	)
+}
+
+// ControlPlaneAuthenticationController manages k8s.AuthenticationConfig based on configuration.
+type ControlPlaneAuthenticationController = transform.Controller[*config.MachineConfig, *k8s.AuthenticationConfig]
+
+// NewControlPlaneAuthenticationController instantiates the controller.
+func NewControlPlaneAuthenticationController() *ControlPlaneAuthenticationController {
+	return transform.NewController(
+		transform.Settings[*config.MachineConfig, *k8s.AuthenticationConfig]{
+			Name: "k8s.ControlPlaneAuthenticationController",
+			MapMetadataOptionalFunc: controlplaneMapFunc(
+				k8s.NewAuthenticationConfig(),
+				func(machineConfig *config.MachineConfig) bool {
+					return machineConfig.Config().K8sAuthenticationConfig() != nil
+				},
+			),
+			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, machineConfig *config.MachineConfig, res *k8s.AuthenticationConfig) error {
+				inCfg := machineConfig.Config().K8sAuthenticationConfig().Configuration()
+
+				// Validate against the typed schema, but emit the user-provided map so
+				// fields the user didn't set don't leak into the YAML as zero values —
+				// older Kubernetes releases reject keys they don't know about.
+				var cfg apiserverv1beta1.AuthenticationConfiguration
+
+				if err := runtime.DefaultUnstructuredConverter.FromUnstructuredWithValidation(inCfg, &cfg, false); err != nil {
+					return fmt.Errorf("error unmarshaling authentication configuration: %w", err)
+				}
+
+				outCfg, ok := k8sjson.DeepCopyToJSON(inCfg).(map[string]any)
+				if !ok || outCfg == nil {
+					outCfg = map[string]any{}
+				}
+
+				outCfg["apiVersion"] = "apiserver.config.k8s.io/v1beta1"
+				outCfg["kind"] = "AuthenticationConfiguration"
+
+				res.TypedSpec().Config = outCfg
 
 				return nil
 			},
@@ -119,51 +169,48 @@ type ControlPlaneAuthorizationController = transform.Controller[*config.MachineC
 func NewControlPlaneAuthorizationController() *ControlPlaneAuthorizationController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *k8s.AuthorizationConfig]{
-			Name:                    "k8s.ControlPlaneAuthorizationPolicyController",
-			MapMetadataOptionalFunc: controlplaneMapFunc(k8s.NewAuthorizationConfig()),
+			Name: "k8s.ControlPlaneAuthorizationController",
+			MapMetadataOptionalFunc: controlplaneMapFunc(
+				k8s.NewAuthorizationConfig(),
+				func(machineConfig *config.MachineConfig) bool {
+					return machineConfig.Config().K8sAPIServerConfig() != nil
+				},
+			),
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, machineConfig *config.MachineConfig, res *k8s.AuthorizationConfig) error {
 				cfgProvider := machineConfig.Config()
 
-				res.TypedSpec().Image = cfgProvider.Cluster().APIServer().Image()
+				res.TypedSpec().Image = cfgProvider.K8sAPIServerConfig().Image()
 
-				if !compatibility.VersionFromImageRef(cfgProvider.Cluster().APIServer().Image()).KubeAPIServerSupportsAuthorizationConfigFile() {
-					return nil
-				}
-
-				if cfgProvider.Cluster().APIServer().AuthorizationConfig() == nil {
-					res.TypedSpec().Config = v1alpha1.APIServerDefaultAuthorizationConfigAuthorizers
-
-					return nil
-				}
-
-				var authorizers []k8s.AuthorizationAuthorizersSpec
-
-				for _, authorizer := range cfgProvider.Cluster().APIServer().AuthorizationConfig() {
-					authorizers = slices.Concat(authorizers, []k8s.AuthorizationAuthorizersSpec{
-						{
+				authorizers := xslices.Map(
+					cfgProvider.K8sAuthorizerConfigs(),
+					func(authorizer talosconfig.K8sAuthorizerConfig) k8s.AuthorizationAuthorizersSpec {
+						return k8s.AuthorizationAuthorizersSpec{
 							Type:    authorizer.Type(),
 							Name:    authorizer.Name(),
 							Webhook: authorizer.Webhook(),
-						},
-					})
-				}
+						}
+					},
+				)
 
-				if !slices.ContainsFunc(authorizers, func(a k8s.AuthorizationAuthorizersSpec) bool {
-					return a.Type == "Node"
-				}) {
-					authorizers = slices.Insert(authorizers, 0, k8s.AuthorizationAuthorizersSpec{
-						Type: "Node",
-						Name: "node",
-					})
-				}
+				// this flow is only used for legacy config
+				if cfgProvider.K8sAPIServerConfig().InjectDefaultAuthorizers() {
+					if !slices.ContainsFunc(authorizers, func(a k8s.AuthorizationAuthorizersSpec) bool {
+						return a.Type == "Node"
+					}) {
+						authorizers = slices.Insert(authorizers, 0, k8s.AuthorizationAuthorizersSpec{
+							Type: "Node",
+							Name: "node",
+						})
+					}
 
-				if !slices.ContainsFunc(authorizers, func(a k8s.AuthorizationAuthorizersSpec) bool {
-					return a.Type == "RBAC"
-				}) {
-					authorizers = slices.Insert(authorizers, 1, k8s.AuthorizationAuthorizersSpec{
-						Type: "RBAC",
-						Name: "rbac",
-					})
+					if !slices.ContainsFunc(authorizers, func(a k8s.AuthorizationAuthorizersSpec) bool {
+						return a.Type == "RBAC"
+					}) {
+						authorizers = slices.Insert(authorizers, 1, k8s.AuthorizationAuthorizersSpec{
+							Type: "RBAC",
+							Name: "rbac",
+						})
+					}
 				}
 
 				res.TypedSpec().Config = authorizers
@@ -183,9 +230,15 @@ func NewControlPlaneAPIServerController() *ControlPlaneAPIServerController {
 		transform.Settings[*config.MachineConfig, *k8s.APIServerConfig]{
 			Name: "k8s.ControlPlaneAPIServerController",
 			MapMetadataOptionalFunc: controlplaneMapFunc(
-				k8s.NewAPIServerConfig(),
+				k8s.NewAPIServerConfig(k8s.APIServerConfigID),
 				func(machineConfig *config.MachineConfig) bool {
 					return machineConfig.Config().K8sNetworkConfig() != nil
+				},
+				func(machineConfig *config.MachineConfig) bool {
+					return machineConfig.Config().K8sAPIServerConfig() != nil
+				},
+				func(machineConfig *config.MachineConfig) bool {
+					return machineConfig.Config().K8sClusterConfig() != nil
 				},
 			),
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, machineConfig *config.MachineConfig, res *k8s.APIServerConfig) error {
@@ -197,32 +250,35 @@ func NewControlPlaneAPIServerController() *ControlPlaneAPIServerController {
 				}
 
 				advertisedAddress := "$(POD_IP)"
-				if cfgProvider.Machine().Kubelet().SkipNodeRegistration() {
+				if cfgProvider.K8sNodeConfig() != nil && cfgProvider.K8sNodeConfig().SkipNodeRegistration() {
 					advertisedAddress = ""
 				}
 
-				extraArgs := make(map[string]k8s.ArgValues, len(cfgProvider.Cluster().APIServer().ExtraArgs()))
-				for k, v := range cfgProvider.Cluster().APIServer().ExtraArgs() {
+				extraArgs := make(map[string]k8s.ArgValues, len(cfgProvider.K8sAPIServerConfig().ExtraArgs()))
+				for k, v := range cfgProvider.K8sAPIServerConfig().ExtraArgs() {
 					extraArgs[k] = k8s.ArgValues{Values: v}
 				}
 
 				*res.TypedSpec() = k8s.APIServerConfigSpec{
-					Image:                cfgProvider.Cluster().APIServer().Image(),
-					CloudProvider:        cloudProvider,
-					ControlPlaneEndpoint: cfgProvider.Cluster().Endpoint().String(),
-					EtcdServers:          []string{fmt.Sprintf("https://%s", nethelpers.JoinHostPort("127.0.0.1", constants.EtcdClientPort))},
-					LocalPort:            cfgProvider.Cluster().LocalAPIServerPort(),
-					ServiceCIDRs:         xslices.Map(cfgProvider.K8sNetworkConfig().ServiceCIDRs(), netip.Prefix.String),
-					ExtraArgs:            extraArgs,
-					ExtraVolumes:         convertVolumes(cfgProvider.Cluster().APIServer().ExtraVolumes()),
-					EnvironmentVariables: cfgProvider.Cluster().APIServer().Env(),
-					AdvertisedAddress:    advertisedAddress,
-					Resources:            convertResources(cfgProvider.Cluster().APIServer().Resources()),
+					Image:                   cfgProvider.K8sAPIServerConfig().Image(),
+					CloudProvider:           cloudProvider,
+					ControlPlaneEndpoint:    cfgProvider.K8sClusterConfig().ClusterEndpoint().String(),
+					EtcdServers:             []string{fmt.Sprintf("https://%s", nethelpers.JoinHostPort("127.0.0.1", constants.EtcdClientPort))},
+					LocalPort:               cfgProvider.K8sAPIServerConfig().APIPort(),
+					ServiceCIDRs:            xslices.Map(cfgProvider.K8sNetworkConfig().ServiceCIDRs(), netip.Prefix.String),
+					ExtraArgs:               extraArgs,
+					ExtraVolumes:            convertVolumes(cfgProvider.K8sAPIServerConfig().ExtraVolumes()),
+					EnvironmentVariables:    cfgProvider.K8sAPIServerConfig().Env(),
+					AdvertisedAddress:       advertisedAddress,
+					Resources:               convertResources(cfgProvider.K8sAPIServerConfig().Resources()),
+					StartupProbesEnabled:    cfgProvider.K8sAPIServerConfig().StartupProbesEnabled(),
+					UseAuthenticationConfig: cfgProvider.K8sAPIServerConfig().UseAuthenticationConfig(),
 				}
 
 				return nil
 			},
 		},
+		transform.WithOutputKind(controller.OutputShared),
 	)
 }
 
@@ -267,6 +323,8 @@ func NewControlPlaneControllerManagerController() *ControlPlaneControllerManager
 					ExtraVolumes:         convertVolumes(controllerManagerConfig.ExtraVolumes()),
 					EnvironmentVariables: controllerManagerConfig.Env(),
 					Resources:            convertResources(controllerManagerConfig.Resources()),
+					NodeCIDRMaskSizeIPv4: machineConfig.Config().K8sNetworkConfig().NodeCIDRMaskSizeIPv4(),
+					NodeCIDRMaskSizeIPv6: machineConfig.Config().K8sNetworkConfig().NodeCIDRMaskSizeIPv6(),
 				}
 
 				return nil
@@ -330,6 +388,9 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 				func(machineConfig *config.MachineConfig) bool {
 					return machineConfig.Config().K8sNetworkConfig() != nil
 				},
+				func(machineConfig *config.MachineConfig) bool {
+					return machineConfig.Config().K8sClusterConfig() != nil
+				},
 			),
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, machineConfig *config.MachineConfig, res *k8s.BootstrapManifestsConfig) error {
 				cfgProvider := machineConfig.Config()
@@ -351,22 +412,17 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 
 				images := images.List(cfgProvider)
 
-				proxyArgs, err := getProxyArgs(cfgProvider)
-				if err != nil {
-					return err
-				}
-
 				var (
 					server                                         string
 					flannelKubeServiceHost, flannelKubeServicePort string
 				)
 
-				if cfgProvider.Machine().Features().KubePrism().Enabled() {
-					server = fmt.Sprintf("https://127.0.0.1:%d", cfgProvider.Machine().Features().KubePrism().Port())
+				if kubePrismConfig := cfgProvider.K8sKubePrismConfig(); kubePrismConfig != nil {
+					server = fmt.Sprintf("https://127.0.0.1:%d", kubePrismConfig.Port())
 					flannelKubeServiceHost = "127.0.0.1"
-					flannelKubeServicePort = strconv.Itoa(cfgProvider.Machine().Features().KubePrism().Port())
+					flannelKubeServicePort = strconv.Itoa(kubePrismConfig.Port())
 				} else {
-					server = cfgProvider.Cluster().Endpoint().String()
+					server = cfgProvider.K8sClusterConfig().ClusterEndpoint().String()
 				}
 
 				*res.TypedSpec() = k8s.BootstrapManifestsConfigSpec{
@@ -375,17 +431,25 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 
 					PodCIDRs: xslices.Map(cfgProvider.K8sNetworkConfig().PodCIDRs(), netip.Prefix.String),
 
-					ProxyEnabled: cfgProvider.Cluster().Proxy().Enabled(),
-					ProxyImage:   cfgProvider.Cluster().Proxy().Image(),
-					ProxyArgs:    proxyArgs,
-
-					CoreDNSEnabled: cfgProvider.Cluster().CoreDNS().Enabled(),
-					CoreDNSImage:   cfgProvider.Cluster().CoreDNS().Image(),
-
 					DNSServiceIP:   dnsServiceIP,
 					DNSServiceIPv6: dnsServiceIPv6,
 
 					TalosAPIServiceEnabled: cfgProvider.Machine().Features().KubernetesTalosAPIAccess().Enabled(),
+				}
+
+				if k8sCoreDNSConfig := cfgProvider.K8sCoreDNSConfig(); k8sCoreDNSConfig != nil {
+					res.TypedSpec().CoreDNSEnabled = k8sCoreDNSConfig.Enabled()
+					res.TypedSpec().CoreDNSImage = k8sCoreDNSConfig.Image()
+				}
+
+				if k8sProxyConfig := cfgProvider.K8sProxyConfig(); k8sProxyConfig != nil {
+					res.TypedSpec().ProxyEnabled = k8sProxyConfig.Enabled()
+					res.TypedSpec().ProxyImage = k8sProxyConfig.Image()
+					res.TypedSpec().ProxyResources = convertResources(k8sProxyConfig.Resources())
+
+					if err := manageProxyConfigArgs(res, k8sProxyConfig, cfgProvider.K8sNetworkConfig()); err != nil {
+						return fmt.Errorf("managing proxy config args: %w", err)
+					}
 				}
 
 				if k8sFlannelCNIConfig := cfgProvider.K8sFlannelCNIConfig(); k8sFlannelCNIConfig != nil {
@@ -464,19 +528,19 @@ func NewControlPlaneExtraManifestsController() *ControlPlaneExtraManifestsContro
 					})
 				}
 
-				for _, url := range cfgProvider.Cluster().ExtraManifestURLs() {
+				for _, manifest := range cfgProvider.K8sExternalManifestConfigs() {
 					spec.ExtraManifests = append(spec.ExtraManifests, k8s.ExtraManifest{
-						Name:         url,
-						URL:          url,
-						Priority:     "99", // make sure extra manifests come last, when PSP is already created
-						ExtraHeaders: cfgProvider.Cluster().ExtraManifestHeaderMap(),
+						Name:         manifest.Name(),
+						URL:          manifest.URL(),
+						Priority:     "99", // make sure extra manifests come last
+						ExtraHeaders: manifest.Headers(),
 					})
 				}
 
-				for _, manifest := range cfgProvider.Cluster().InlineManifests() {
+				for _, manifest := range cfgProvider.K8sInlineManifestConfigs() {
 					spec.ExtraManifests = append(spec.ExtraManifests, k8s.ExtraManifest{
 						Name:           manifest.Name(),
-						Priority:       "99", // make sure extra manifests come last, when PSP is already created
+						Priority:       "99", // make sure extra manifests come last
 						InlineManifest: manifest.Contents(),
 					})
 				}
@@ -527,35 +591,111 @@ func convertResources(resources talosconfig.Resources) k8s.Resources {
 	}
 }
 
-func getProxyArgs(cfgProvider talosconfig.Config) ([]string, error) {
-	clusterCidr := strings.Join(xslices.Map(cfgProvider.K8sNetworkConfig().PodCIDRs(), netip.Prefix.String), ",")
+//nolint:gocyclo
+func manageProxyConfigArgs(res *k8s.BootstrapManifestsConfig, cfg talosconfig.K8sProxyConfig, networkConfig talosconfig.K8sNetworkConfig) error {
+	clusterCidr := strings.Join(xslices.Map(networkConfig.PodCIDRs(), netip.Prefix.String), ",")
 
-	proxyMode := cfgProvider.Cluster().Proxy().Mode()
+	proxyMode := cfg.Mode()
 
 	if proxyMode == "" {
-		// determine proxy mode based on kube-proxy version via the image, use 'nftables' for Kubernetes >= 1.31
-		if kubernetes.VersionGTE(cfgProvider.Cluster().Proxy().Image(), semver.MustParse("1.31.0")) {
-			proxyMode = "nftables"
-		} else {
-			proxyMode = "iptables"
+		// Kubernetes >= 1.31 supports 'nftables' mode, and we don't support Kubernetes < 1.31
+		proxyMode = "nftables"
+	}
+
+	if cfg.UseConfigFile() {
+		builder := argsbuilder.Args{
+			// the path must match the ConfigMap mount in the kube-proxy DaemonSet template
+			"config":            {"/var/lib/kube-proxy/config.conf"},
+			"hostname-override": {"$(NODE_NAME)"},
 		}
+
+		policies := argsbuilder.MergePolicies{
+			"config": argsbuilder.MergeDenied,
+		}
+
+		if err := builder.Merge(cfg.ExtraArgs(), argsbuilder.WithMergePolicies(policies)); err != nil {
+			return err
+		}
+
+		res.TypedSpec().ProxyArgs = builder.Args()
+
+		// Validate against the typed schema, but emit the user-provided map so
+		// fields the user didn't set don't leak into the YAML as zero values —
+		// older Kubernetes releases reject keys they don't know about.
+		var proxyCfg proxyv1alpha1.KubeProxyConfiguration
+
+		if err := runtime.DefaultUnstructuredConverter.FromUnstructuredWithValidation(cfg.Config(), &proxyCfg, false); err != nil {
+			return fmt.Errorf("error unmarshaling proxy configuration: %w", err)
+		}
+
+		outCfg, ok := k8sjson.DeepCopyToJSON(cfg.Config()).(map[string]any)
+		if !ok || outCfg == nil {
+			outCfg = map[string]any{}
+		}
+
+		outCfg["apiVersion"] = "kubeproxy.config.k8s.io/v1alpha1"
+		outCfg["kind"] = "KubeProxyConfiguration"
+
+		clientConn, _ := outCfg["clientConnection"].(map[string]any)
+		if clientConn == nil {
+			clientConn = map[string]any{}
+			outCfg["clientConnection"] = clientConn
+		}
+
+		clientConn["kubeconfig"] = filepath.Join(constants.KubernetesConfigBaseDir, "kubeconfig")
+
+		// Migrate the settings which are otherwise passed as command-line flags in the
+		// legacy (non-config-file) mode into the configuration, but only when the user
+		// didn't already set them explicitly so we don't override their intent.
+		if _, ok := outCfg["clusterCIDR"]; !ok {
+			outCfg["clusterCIDR"] = clusterCidr
+		}
+
+		if _, ok := outCfg["mode"]; !ok {
+			outCfg["mode"] = proxyMode
+		}
+
+		conntrack, _ := outCfg["conntrack"].(map[string]any)
+		if conntrack == nil {
+			conntrack = map[string]any{}
+			outCfg["conntrack"] = conntrack
+		}
+
+		if _, ok := conntrack["maxPerCore"]; !ok {
+			conntrack["maxPerCore"] = int32(0)
+		}
+
+		res.TypedSpec().ProxyConfig = outCfg
+
+		// Compute a checksum of the rendered configuration so the kube-proxy DaemonSet
+		// can be rolled when the config changes (a ConfigMap update alone doesn't restart pods).
+		configYAML, err := yaml.Marshal(outCfg)
+		if err != nil {
+			return fmt.Errorf("error marshaling proxy configuration: %w", err)
+		}
+
+		res.TypedSpec().ProxyConfigChecksum = fmt.Sprintf("%x", sha256.Sum256(configYAML))
+	} else {
+		builder := argsbuilder.Args{
+			"cluster-cidr":           {clusterCidr},
+			"hostname-override":      {"$(NODE_NAME)"},
+			"kubeconfig":             {"/etc/kubernetes/kubeconfig"},
+			"proxy-mode":             {proxyMode},
+			"conntrack-max-per-core": {"0"},
+		}
+
+		policies := argsbuilder.MergePolicies{
+			"kubeconfig": argsbuilder.MergeDenied,
+		}
+
+		if err := builder.Merge(cfg.ExtraArgs(), argsbuilder.WithMergePolicies(policies)); err != nil {
+			return err
+		}
+
+		res.TypedSpec().ProxyArgs = builder.Args()
+		res.TypedSpec().ProxyConfig = nil
+		res.TypedSpec().ProxyConfigChecksum = ""
 	}
 
-	builder := argsbuilder.Args{
-		"cluster-cidr":           {clusterCidr},
-		"hostname-override":      {"$(NODE_NAME)"},
-		"kubeconfig":             {"/etc/kubernetes/kubeconfig"},
-		"proxy-mode":             {proxyMode},
-		"conntrack-max-per-core": {"0"},
-	}
-
-	policies := argsbuilder.MergePolicies{
-		"kubeconfig": argsbuilder.MergeDenied,
-	}
-
-	if err := builder.Merge(cfgProvider.Cluster().Proxy().ExtraArgs(), argsbuilder.WithMergePolicies(policies)); err != nil {
-		return nil, err
-	}
-
-	return builder.Args(), nil
+	return nil
 }

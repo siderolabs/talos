@@ -4,13 +4,21 @@
 (filecon "/usr/bin/systemd-udevd" file udev_exec_t)
 (filecon "/usr/bin/udevadm" file udev_exec_t)
 
-; Do not reorder: label non-executable rules files as executable
+; Keep udev data labels after the generic /usr/lib label: file_contexts lookup
+; is last-match-wins.
 (type udev_rules_t)
 (call system_f (udev_rules_t))
 (filecon "/usr/lib/udev/rules.d(/.*)?" any (system_u object_r udev_rules_t (systemLow systemLow)))
-(filecon "/usr/lib/udev(/.*)?" any udev_exec_t)
-; Some rules are on tmpfs
+
+(type udev_hwdb_t)
+(call system_f (udev_hwdb_t))
+(filecon "/usr/lib/udev/hwdb[.]bin" file (system_u object_r udev_hwdb_t (systemLow systemLow)))
+
+(filecon "/usr/lib/udev/[^/.]+" file udev_exec_t)
+; Some rules and hwdb files are on tmpfs.
 (allow udev_rules_t tmpfs_t (filesystem (associate)))
+(allow udev_rules_t udev_rules_t (filesystem (associate)))
+(allow udev_hwdb_t tmpfs_t (filesystem (associate)))
 (allow udev_t lib_t (fs_classes (ioctl)))
 
 (type module_t)

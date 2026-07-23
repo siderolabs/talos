@@ -1,0 +1,15 @@
+apiVersion: v1alpha1
+kind: BGPPeerConfig
+localASN: 65001
+routerID: 10.0.0.1
+advertise:
+    - dummy0
+multipath: true
+neighbors:
+    - address: 10.5.0.1
+      peerASN: 65000
+    - link: enp0s1
+      bfd:
+        transmitInterval: 300ms
+        receiveInterval: 300ms
+        detectMultiplier: 3

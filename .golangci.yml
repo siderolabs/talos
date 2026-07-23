@@ -23,6 +23,7 @@ linters:
     - contextcheck
     - depguard
     - dupword
+    - embeddedstructfieldcheck
     - err113
     - errorlint
     - exhaustruct
@@ -91,6 +92,7 @@ linters:
                 - "internal/app/dashboard/main.go"
                 - "internal/app/debug/container_streams.go"
                 - "internal/app/debug/debug.go"
+                - "internal/app/debug/hostns.go"
                 - "internal/app/lifecycle/container.go"
                 - "internal/app/machined/internal/server/v1alpha1/v1alpha1_cluster.go"
                 - "internal/app/machined/internal/server/v1alpha1/v1alpha1_server.go"
@@ -136,6 +138,9 @@ linters:
                 - "tools/**/*.go"
             slog_imports:
               allow:
+                # gobgp's LoggerOption requires an *slog.Logger (3rd-party compatibility boundary)
+                - "cmd/talosctl/cmd/mgmt/bgp_launch.go"
+                - "internal/app/machined/pkg/controllers/network/bgp.go"
                 - "internal/app/machined/pkg/runtime/v1alpha1/platform/vmware/vmware_supported.go"
                 - "pkg/provision/providers/vm/dnsd.go"
             zap_root_component:
@@ -143,6 +148,8 @@ linters:
                 - "pkg/logging/zap.go"
     cyclop:
       max-complexity: 20
+    dogsled:
+      max-blank-identifiers: 2
     dupl:
       threshold: 100
     errcheck:
@@ -152,6 +159,8 @@ linters:
         - fmt.Fprintln
         - fmt.Fprintf
         - fmt.Fprint
+    exhaustive:
+      default-signifies-exhaustive: false
     goconst:
       min-len: 3
       min-occurrences: 5
@@ -193,8 +202,15 @@ linters:
         - "^siderolabs/sbc-"
         - "^raw\\.xz$"
         - "^resource(s|)$"
+        - "^Webhook$"
+        - "enabled$"
+        - "disabled$"
+    gocognit:
+      min-complexity: 30
     gocyclo:
       min-complexity: 10
+    godot:
+      scope: declarations
     gomoddirectives:
       replace-allow-list:
         - gopkg.in/yaml.v3
@@ -202,9 +218,16 @@ linters:
         - github.com/mdlayher/kobject
         - golang.zx2c4.com/wireguard/wgctrl
         - github.com/mdlayher/ethtool
+        - github.com/secure-io/siv-go
       replace-local: true
       exclude-forbidden: false
       retract-allow-no-explanation: false
+    gomodguard_v2: {}
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment
+        - shadow
     lll:
       line-length: 200
       tab-width: 1
@@ -218,10 +241,21 @@ linters:
       simple: true
       range-loops: true
       for-loops: false
+    revive:
+      rules:
+        - name: var-naming
+          disabled: true
+    rowserrcheck: {}
     staticcheck:
       checks: ["all", "-ST1000", "-ST1003", "-ST1016", "-ST1020", "-ST1021", "-ST1022", "-QF1001", "-QF1008"]
+    testpackage: {}
+    unparam:
+      check-exported: false
     unused:
       local-variables-are-used: false
+    whitespace:
+      multi-if: false
+      multi-func: false
   exclusions:
     generated: lax
     rules:
@@ -548,8 +582,8 @@ linters:
       - builtin$
       - examples$
 issues:
-  max-issues-per-linter: 0
-  max-same-issues: 0
+  max-issues-per-linter: 1024
+  max-same-issues: 1024
   uniq-by-line: true
   new: false
 formatters:

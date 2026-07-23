@@ -19,7 +19,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
-//go:generate go tool github.com/siderolabs/deep-copy -type DeviceSpec -type DiscoveredVolumeSpec -type DiscoveryRefreshRequestSpec -type DiscoveryRefreshStatusSpec -type DiskSpec -type MountRequestSpec -type MountStatusSpec -type ParameterSpec -type SwapStatusSpec -type SymlinkSpec -type SystemDiskSpec -type UserDiskConfigStatusSpec -type VolumeConfigSpec -type VolumeLifecycleSpec -type VolumeMountRequestSpec -type VolumeMountStatusSpec -type VolumeStatusSpec -type ZswapStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate go tool github.com/siderolabs/deep-copy -type DeviceSpec -type DiscoveredVolumeSpec -type DiscoveryRefreshRequestSpec -type DiscoveryRefreshStatusSpec -type DiskSpec -type MountRequestSpec -type MountStatusSpec -type ParameterSpec -type SwapStatusSpec -type SymlinkSpec -type SystemDiskSpec -type UserDiskConfigStatusSpec -type VolumeConfigSpec -type VolumeLifecycleSpec -type VolumeMountRequestSpec -type VolumeMountStatusSpec -type VolumeStatusSpec -type VolumeTrimScheduleSpec -type ZswapStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
 
 //go:generate go tool github.com/dmarkham/enumer -type=VolumeType,VolumePhase,FilesystemType,EncryptionKeyType,EncryptionProviderType,FSParameterType -linecomment -text
 
@@ -87,7 +87,8 @@ func GetSystemDisk(ctx context.Context, st state.State) (*SystemDiskSpec, error)
 	return systemDisk.TypedSpec(), nil
 }
 
-// GetSystemDiskPaths returns the path(s) of system disk and STATE/EPHEMERAL partitions.
+// GetSystemDiskPaths returns the path(s) of system disk and STATE, EPHEMERAL,
+// CRI, KUBELET, and ETCD partitions (if not backed by EPHEMERAL).
 //
 // This is a legacy method to map old concept of system disk wipe into new volume subsystem.
 func GetSystemDiskPaths(ctx context.Context, st state.State) ([]string, error) {
@@ -104,7 +105,14 @@ func GetSystemDiskPaths(ctx context.Context, st state.State) ([]string, error) {
 	}
 
 	// fetch additional system volumes (which might be on the same or other disks)
-	for _, volumeID := range []string{constants.StatePartitionLabel, constants.EphemeralPartitionLabel} {
+	for _, volumeID := range []string{
+		constants.StatePartitionLabel,
+		constants.EphemeralPartitionLabel,
+		constants.EtcdDataVolumeID,
+		constants.KubeletDataVolumeID,
+		constants.CRIContainerdVolumeID,
+		constants.LogVolumeID,
+	} {
 		volumeStatus, err := safe.ReaderGetByID[*VolumeStatus](ctx, st, volumeID)
 		if err != nil {
 			if state.IsNotFoundError(err) {

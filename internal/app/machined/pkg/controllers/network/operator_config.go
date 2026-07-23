@@ -257,6 +257,7 @@ func (ctrl *OperatorConfigController) Run(ctx context.Context, r controller.Runt
 					DHCP4: network.DHCP4OperatorSpec{
 						RouteMetric:         dhcp4.RouteMetric().ValueOr(network.DefaultRouteMetric),
 						SkipHostnameRequest: dhcp4.IgnoreHostname().ValueOrZero(),
+						SkipRoutes:          dhcp4.IgnoreRoutes().ValueOrZero(),
 						ClientIdentifier: network.ClientIdentifierSpec{
 							ClientIdentifier: dhcp4.ClientIdentifier(),
 							DUIDRawHex:       hex.EncodeToString(dhcp4.DUIDRaw().ValueOrZero()),

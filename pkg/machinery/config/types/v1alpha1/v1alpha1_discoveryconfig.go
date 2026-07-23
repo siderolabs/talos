@@ -5,11 +5,44 @@
 package v1alpha1
 
 import (
+	"net/url"
+
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
+
+// legacyDiscoveryServiceConfig adapts the v1alpha1 cluster discovery config to the config.DiscoveryServiceConfig interface.
+type legacyDiscoveryServiceConfig struct {
+	endpoint *url.URL
+}
+
+// Name implements config.DiscoveryServiceConfig interface.
+func (legacyDiscoveryServiceConfig) Name() string {
+	return "legacy"
+}
+
+// Endpoint implements config.DiscoveryServiceConfig interface.
+func (c legacyDiscoveryServiceConfig) Endpoint() *url.URL {
+	return c.endpoint
+}
+
+// DiscoveryServiceConfigs returns the discovery service configs derived from the legacy v1alpha1 cluster discovery config.
+func (c *Config) DiscoveryServiceConfigs() []config.DiscoveryServiceConfig {
+	if c.ClusterConfig == nil || c.ClusterConfig.ClusterDiscoveryConfig == nil ||
+		!pointer.SafeDeref(c.ClusterConfig.ClusterDiscoveryConfig.DiscoveryEnabled) ||
+		!c.ClusterConfig.ClusterDiscoveryConfig.DiscoveryRegistries.RegistryService.Enabled() {
+		return nil
+	}
+
+	endpoint, err := url.Parse(c.ClusterConfig.ClusterDiscoveryConfig.DiscoveryRegistries.RegistryService.Endpoint())
+	if err != nil {
+		return nil
+	}
+
+	return []config.DiscoveryServiceConfig{legacyDiscoveryServiceConfig{endpoint: endpoint}}
+}
 
 // Enabled implements the config.ClusterDiscovery interface.
 func (c *ClusterDiscoveryConfig) Enabled() bool {
@@ -27,7 +60,7 @@ func (c DiscoveryRegistriesConfig) Kubernetes() config.KubernetesRegistry {
 }
 
 // Service implements the config.DiscoveryRegistries interface.
-func (c DiscoveryRegistriesConfig) Service() config.ServiceRegistry {
+func (c DiscoveryRegistriesConfig) Service() RegistryServiceConfig {
 	return c.RegistryService
 }
 

@@ -6,7 +6,6 @@ package v1alpha1
 
 import (
 	"net/url"
-	"strings"
 	"time"
 
 	"github.com/siderolabs/crypto/x509"
@@ -41,11 +40,9 @@ func configExample() any {
 
 func machineConfigExample() any {
 	return struct {
-		Type    string
-		Install *InstallConfig
+		Type string
 	}{
-		Type:    machine.TypeControlPlane.String(),
-		Install: machineInstallExample(),
+		Type: machine.TypeControlPlane.String(),
 	}
 }
 
@@ -53,61 +50,6 @@ func pemEncodedCertificateExample() *x509.PEMEncodedCertificateAndKey {
 	return &x509.PEMEncodedCertificateAndKey{
 		Crt: []byte("--- EXAMPLE CERTIFICATE ---"),
 		Key: []byte("--- EXAMPLE KEY ---"),
-	}
-}
-
-func pemEncodedKeyExample() *x509.PEMEncodedKey {
-	return &x509.PEMEncodedKey{
-		Key: []byte("--- EXAMPLE KEY ---"),
-	}
-}
-
-func machineKubeletExample() *KubeletConfig {
-	return &KubeletConfig{
-		KubeletImage: (&KubeletConfig{}).Image(),
-		KubeletExtraArgs: meta.Args{
-			"feature-gates": meta.NewArgValue("ServerSideApply=true", nil),
-		},
-	}
-}
-
-func kubeletImageExample() string {
-	return (&KubeletConfig{}).Image()
-}
-
-func machineInstallExample() *InstallConfig {
-	return &InstallConfig{
-		InstallDisk:              "/dev/sda",
-		InstallImage:             "factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:latest",
-		InstallWipe:              new(false),
-		InstallGrubUseUKICmdline: new(true),
-	}
-}
-
-func machineInstallDiskSelectorExample() *InstallDiskSelector {
-	return &InstallDiskSelector{
-		Model: "WDC*",
-		Size: &InstallDiskSizeMatcher{
-			condition: ">= 1TB",
-		},
-	}
-}
-
-func machineInstallDiskSizeMatcherExamples0() *InstallDiskSizeMatcher {
-	return &InstallDiskSizeMatcher{
-		condition: "4GB",
-	}
-}
-
-func machineInstallDiskSizeMatcherExamples1() *InstallDiskSizeMatcher {
-	return &InstallDiskSizeMatcher{
-		condition: "> 1TB",
-	}
-}
-
-func machineInstallDiskSizeMatcherExamples2() *InstallDiskSizeMatcher {
-	return &InstallDiskSizeMatcher{
-		condition: "<= 2TB",
 	}
 }
 
@@ -128,84 +70,6 @@ func machineFeaturesExample() *FeaturesConfig {
 	}
 }
 
-func machineUdevExample() *UdevConfig {
-	return &UdevConfig{
-		UdevRules: []string{"SUBSYSTEM==\"drm\", KERNEL==\"renderD*\", GROUP=\"44\", MODE=\"0660\""},
-	}
-}
-
-func clusterConfigExample() any {
-	return struct {
-		ControlPlane *ControlPlaneConfig `yaml:"controlPlane"`
-		ClusterName  string              `yaml:"clusterName"`
-	}{
-		ControlPlane: clusterControlPlaneExample(),
-		ClusterName:  "talos.local",
-	}
-}
-
-func clusterControlPlaneExample() *ControlPlaneConfig {
-	return &ControlPlaneConfig{
-		Endpoint: &Endpoint{
-			&url.URL{
-				Host:   "1.2.3.4",
-				Scheme: "https",
-			},
-		},
-		LocalAPIServerPort: 443,
-	}
-}
-
-func resourcesConfigRequestsExample() meta.Unstructured {
-	return meta.Unstructured{
-		Object: map[string]any{
-			"cpu":    1,
-			"memory": "1Gi",
-		},
-	}
-}
-
-func resourcesConfigLimitsExample() meta.Unstructured {
-	return meta.Unstructured{
-		Object: map[string]any{
-			"cpu":    2,
-			"memory": "2500Mi",
-		},
-	}
-}
-
-func clusterAPIServerExample() *APIServerConfig {
-	return &APIServerConfig{
-		ContainerImage: (&APIServerConfig{}).Image(),
-		ExtraArgsConfig: meta.Args{
-			"feature-gates":                    meta.NewArgValue("ServerSideApply=true", nil),
-			"http2-max-streams-per-connection": meta.NewArgValue("32", nil),
-		},
-		CertSANs: []string{
-			"1.2.3.4",
-			"4.5.6.7",
-		},
-	}
-}
-
-func clusterAPIServerImageExample() string {
-	return (&APIServerConfig{}).Image()
-}
-
-func clusterProxyExample() *ProxyConfig {
-	return &ProxyConfig{
-		ContainerImage: (&ProxyConfig{}).Image(),
-		ExtraArgsConfig: meta.Args{
-			"proxy-mode": meta.NewArgValue("iptables", nil),
-		},
-		ModeConfig: "ipvs",
-	}
-}
-
-func clusterProxyImageExample() string {
-	return (&ProxyConfig{}).Image()
-}
-
 func clusterEtcdExample() *EtcdConfig {
 	return &EtcdConfig{
 		ContainerImage: (&EtcdConfig{}).Image(),
@@ -222,12 +86,6 @@ func clusterEtcdImageExample() string {
 
 func clusterEtcdAdvertisedSubnetsExample() []string {
 	return []string{"10.0.0.0/8"}
-}
-
-func clusterCoreDNSExample() *CoreDNS {
-	return &CoreDNS{
-		CoreDNSImage: (&CoreDNS{}).Image(),
-	}
 }
 
 func clusterExternalCloudProviderConfigExample() *ExternalCloudProviderConfig {
@@ -259,87 +117,6 @@ func machineSeccompExample() []*MachineSeccompProfile {
 	}
 }
 
-func kubeletExtraMountsExample() []ExtraMount {
-	return []ExtraMount{
-		{
-			Source:      "/var/lib/example",
-			Destination: "/var/lib/example",
-			Type:        "bind",
-			Options: []string{
-				"bind",
-				"rshared",
-				"rw",
-			},
-		},
-	}
-}
-
-func clusterInlineManifestsExample() ClusterInlineManifests {
-	return ClusterInlineManifests{
-		{
-			InlineManifestName: "namespace-ci",
-			InlineManifestContents: strings.TrimSpace(`
-apiVersion: v1
-kind: Namespace
-metadata:
-	name: ci
-`),
-		},
-	}
-}
-
-func clusterDiscoveryExample() ClusterDiscoveryConfig {
-	return ClusterDiscoveryConfig{
-		DiscoveryEnabled: new(true),
-		DiscoveryRegistries: DiscoveryRegistriesConfig{
-			RegistryService: RegistryServiceConfig{
-				RegistryEndpoint: constants.DefaultDiscoveryServiceEndpoint,
-			},
-		},
-	}
-}
-
-func kubeletNodeIPExample() *KubeletNodeIPConfig {
-	return &KubeletNodeIPConfig{
-		KubeletNodeIPValidSubnets: []string{
-			"10.0.0.0/8",
-			"!10.0.0.3/32",
-			"fdc7::/16",
-		},
-	}
-}
-
-func kubeletExtraConfigExample() meta.Unstructured {
-	return meta.Unstructured{
-		Object: map[string]any{
-			"serverTLSBootstrap": true,
-		},
-	}
-}
-
-func kubeletCredentialProviderConfigExample() meta.Unstructured {
-	return meta.Unstructured{
-		Object: map[string]any{
-			"apiVersion": "kubelet.config.k8s.io/v1",
-			"kind":       "CredentialProviderConfig",
-			"providers": []any{
-				map[string]any{
-					"name":       "ecr-credential-provider",
-					"apiVersion": "credentialprovider.kubelet.k8s.io/v1",
-					"matchImages": []any{
-						"*.dkr.ecr.*.amazonaws.com",
-						"*.dkr.ecr.*.amazonaws.com.cn",
-						"*.dkr.ecr-fips.*.amazonaws.com",
-						"*.dkr.ecr.us-iso-east-1.c2s.ic.gov",
-						"*.dkr.ecr.us-isob-east-1.sc2s.sgov.gov",
-					},
-					"defaultCacheDuration": "12h",
-				},
-			},
-		},
-	}
-}
-
 func machineLoggingExample1() LoggingConfig {
 	return LoggingConfig{
 		LoggingDestinations: []LoggingDestination{
@@ -363,108 +140,6 @@ func machineLoggingExample2() LoggingConfig {
 				LoggingFormat: constants.LoggingFormatJSONLines,
 				LoggingExtraTags: map[string]string{
 					"machine": "worker-1",
-				},
-			},
-		},
-	}
-}
-
-func machineKernelExample() *KernelConfig {
-	return &KernelConfig{
-		KernelModules: []*KernelModuleConfig{
-			{
-				ModuleName: "btrfs",
-			},
-		},
-	}
-}
-
-func machinePodsExample() []meta.Unstructured {
-	return []meta.Unstructured{
-		{
-			Object: map[string]any{
-				"apiVersion": "v1",
-				"kind":       "pod",
-				"metadata": map[string]any{
-					"name": "nginx",
-				},
-				"spec": map[string]any{
-					"containers": []any{
-						map[string]any{
-							"name":  "nginx",
-							"image": "nginx",
-						},
-					},
-				},
-			},
-		},
-	}
-}
-
-func admissionControlConfigExample() []*AdmissionPluginConfig {
-	return []*AdmissionPluginConfig{
-		{
-			PluginName: "PodSecurity",
-			PluginConfiguration: meta.Unstructured{
-				Object: map[string]any{
-					"apiVersion": "pod-security.admission.config.k8s.io/v1alpha1",
-					"kind":       "PodSecurityConfiguration",
-					"defaults": map[string]any{
-						"enforce":         "baseline",
-						"enforce-version": "latest",
-						"audit":           "restricted",
-						"audit-version":   "latest",
-						"warn":            "restricted",
-						"warn-version":    "latest",
-					},
-					"exemptions": map[string]any{
-						"usernames":      []any{},
-						"runtimeClasses": []any{},
-						"namespaces":     []any{"kube-system"},
-					},
-				},
-			},
-		},
-	}
-}
-
-func authorizationConfigExample() []*AuthorizationConfigAuthorizerConfig {
-	return []*AuthorizationConfigAuthorizerConfig{
-		{
-			AuthorizerType: "Webhook",
-			AuthorizerName: "webhook",
-			AuthorizerWebhook: meta.Unstructured{
-				Object: map[string]any{
-					"timeout":                    "3s",
-					"subjectAccessReviewVersion": "v1",
-					"matchConditionSubjectAccessReviewVersion": "v1",
-					"failurePolicy": "Deny",
-					"connectionInfo": map[string]any{
-						"type": "InClusterConfig",
-					},
-					"matchConditions": []map[string]any{
-						{
-							"expression": "has(request.resourceAttributes)",
-						},
-						{
-							"expression": "!(\\'system:serviceaccounts:kube-system\\' in request.groups)",
-						},
-					},
-				},
-			},
-		},
-		{
-			AuthorizerType: "Webhook",
-			AuthorizerName: "in-cluster-authorizer",
-			AuthorizerWebhook: meta.Unstructured{
-				Object: map[string]any{
-					"timeout":                    "3s",
-					"subjectAccessReviewVersion": "v1",
-					"matchConditionSubjectAccessReviewVersion": "v1",
-					"failurePolicy": "NoOpinion",
-					"connectionInfo": map[string]any{
-						"type": "InClusterConfig",
-					},
 				},
 			},
 		},

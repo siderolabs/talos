@@ -6,6 +6,7 @@ package lvm
 
 import (
 	"errors"
+	"fmt"
 	"regexp"
 
 	"github.com/siderolabs/go-cmd/pkg/cmd"
@@ -179,7 +180,7 @@ func sentinelFor(exit *cmd.ExitError) error {
 		return ErrInitFailed
 	}
 
-	return ErrCommand
+	return fmt.Errorf("%w: %s", ErrCommand, exit.Output)
 }
 
 // matchStderr returns the sentinel that best describes the given lvm stderr,

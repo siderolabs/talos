@@ -5,6 +5,7 @@
 package encoder_test
 
 import (
+	"strings"
 	"sync"
 	"testing"
 
@@ -545,7 +546,12 @@ func (suite *EncoderSuite) TestConcurrent() {
 
 func decodeToMap(data []byte) (map[any]any, error) {
 	raw := map[any]any{}
+
 	err := yaml.Unmarshal(data, &raw)
+	if err != nil && strings.Contains(err.Error(), "no documents in stream") {
+		// comment-only output decodes to an empty document, which is expected
+		return raw, nil
+	}
 
 	return raw, err
 }

@@ -92,6 +92,11 @@ type Options struct {
 	IOPriority optional.Optional[IOPriorityParam]
 	// SchedulingPolicy is the scheduling policy of the process.
 	SchedulingPolicy optional.Optional[uint]
+	// Sandbox, when non-nil, returns the launcher for the shared sandbox
+	// PID+mount namespace; the process is launched inside it instead of the host
+	// namespace. It is evaluated at each (re)launch so a recreated namespace is
+	// picked up; a nil return means the namespace is not currently available.
+	Sandbox func() runtime.SandboxLauncher
 }
 
 // Option is the functional option func.
@@ -292,5 +297,15 @@ const (
 func WithSchedulingPolicy(policy uint) Option {
 	return func(args *Options) {
 		args.SchedulingPolicy = optional.Some(policy)
+	}
+}
+
+// WithSandbox causes the process to be launched inside the shared
+// sandbox PID+mount namespace. The getter is evaluated at each launch; a nil
+// getter is a no-op (host namespace), and a getter returning nil means the
+// namespace is not yet available (the launch is retried).
+func WithSandbox(launcher func() runtime.SandboxLauncher) Option {
+	return func(args *Options) {
+		args.Sandbox = launcher
 	}
 }

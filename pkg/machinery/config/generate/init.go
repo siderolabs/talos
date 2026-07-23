@@ -8,10 +8,17 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/siderolabs/go-pointer"
+
+	"github.com/siderolabs/talos/pkg/machinery/cel"
+	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	clustertypes "github.com/siderolabs/talos/pkg/machinery/config/types/cluster"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	v1alpha1 "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -26,25 +33,25 @@ func (in *Input) init() ([]config.Document, error) {
 
 	machine := &v1alpha1.MachineConfig{
 		MachineType: machine.TypeInit.String(),
-		MachineKubelet: &v1alpha1.KubeletConfig{
+		MachineKubelet: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.KubeletConfig{ //nolint:staticcheck // legacy configuration
 			KubeletImage: fmt.Sprintf("%s:v%s", constants.KubeletImage, in.KubernetesVersion),
-		},
+		}),
 		MachineCA:       in.Options.SecretsBundle.Certs.OS,
 		MachineCertSANs: in.AdditionalMachineCertSANs,
 		MachineToken:    in.Options.SecretsBundle.TrustdInfo.Token,
-		MachineInstall: &v1alpha1.InstallConfig{
-			InstallDisk:            in.Options.InstallDisk,
-			InstallImage:           in.Options.InstallImage,
-			InstallWipe:            new(false),
-			InstallExtraKernelArgs: in.Options.InstallExtraKernelArgs,
-		},
+		MachineInstall: nilIf(in.Options.VersionContract.UnattendedInstallConfig(), &v1alpha1.InstallConfig{ //nolint:staticcheck // legacy configuration
+			InstallDisk:              in.Options.InstallDisk,
+			InstallImage:             in.Options.InstallImage,
+			InstallWipe:              new(false),
+			InstallExtraKernelArgs:   in.Options.InstallExtraKernelArgs,
+			InstallGrubUseUKICmdline: nilIf(!in.Options.VersionContract.GrubUseUKICmdlineDefault(), new(true)), //nolint:staticcheck
+		}),
 		MachineDisks:    in.Options.MachineDisks,
-		MachineSysctls:  in.Options.Sysctls, //nolint:staticcheck // legacy configuration
 		MachineFeatures: &v1alpha1.FeaturesConfig{},
 	}
 
-	if in.Options.VersionContract.GrubUseUKICmdlineDefault() {
-		machine.MachineInstall.InstallGrubUseUKICmdline = new(true)
+	if !in.Options.VersionContract.MultidocSysctlConfigSupported() {
+		machine.MachineSysctls = in.Options.Sysctls //nolint:staticcheck // legacy configuration
 	}
 
 	if !in.Options.VersionContract.HideRBACAndKeyUsage() {
@@ -59,26 +66,28 @@ func (in *Input) init() ([]config.Document, error) {
 		machine.MachineFeatures.DiskQuotaSupport = new(true)
 	}
 
-	if kubePrismPort, optionSet := in.Options.KubePrismPort.Get(); optionSet { // default to enabled, but if set explicitly, allow it to be disabled
-		if kubePrismPort > 0 {
-			machine.MachineFeatures.KubePrismSupport = &v1alpha1.KubePrism{
+	if !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
+		if kubePrismPort, optionSet := in.Options.KubePrismPort.Get(); optionSet { // default to enabled, but if set explicitly, allow it to be disabled
+			if kubePrismPort > 0 {
+				machine.MachineFeatures.KubePrismSupport = &v1alpha1.KubePrism{ //nolint:staticcheck // legacy configuration
+					ServerEnabled: new(true),
+					ServerPort:    kubePrismPort,
+				}
+			}
+		} else if in.Options.VersionContract.KubePrismEnabled() {
+			machine.MachineFeatures.KubePrismSupport = &v1alpha1.KubePrism{ //nolint:staticcheck // legacy configuration
 				ServerEnabled: new(true),
-				ServerPort:    kubePrismPort,
+				ServerPort:    constants.DefaultKubePrismPort,
 			}
 		}
-	} else if in.Options.VersionContract.KubePrismEnabled() {
-		machine.MachineFeatures.KubePrismSupport = &v1alpha1.KubePrism{
-			ServerEnabled: new(true),
-			ServerPort:    constants.DefaultKubePrismPort,
-		}
 	}
 
-	if in.Options.VersionContract.KubeletDefaultRuntimeSeccompProfileEnabled() {
-		machine.MachineKubelet.KubeletDefaultRuntimeSeccompProfileEnabled = new(true)
+	if !in.Options.VersionContract.MultidocKubernetesConfigSupported() && in.Options.VersionContract.KubeletDefaultRuntimeSeccompProfileEnabled() {
+		machine.MachineKubelet.KubeletDefaultRuntimeSeccompProfileEnabled = new(true) //nolint:staticcheck // legacy configuration
 	}
 
-	if in.Options.VersionContract.KubeletManifestsDirectoryDisabled() {
-		machine.MachineKubelet.KubeletDisableManifestsDirectory = new(true)
+	if !in.Options.VersionContract.MultidocKubernetesConfigSupported() && in.Options.VersionContract.KubeletManifestsDirectoryDisabled() {
+		machine.MachineKubelet.KubeletDisableManifestsDirectory = new(true) //nolint:staticcheck // legacy configuration
 	}
 
 	if in.Options.VersionContract.HostDNSEnabled() && !in.Options.VersionContract.HostDNSMultidocConfig() {
@@ -88,12 +97,12 @@ func (in *Input) init() ([]config.Document, error) {
 		}
 	}
 
-	if in.Options.VersionContract.AddExcludeFromExternalLoadBalancer() {
-		if machine.MachineNodeLabels == nil {
-			machine.MachineNodeLabels = map[string]string{}
+	if in.Options.VersionContract.AddExcludeFromExternalLoadBalancer() && !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
+		if machine.MachineNodeLabels == nil { //nolint:staticcheck // legacy configuration
+			machine.MachineNodeLabels = map[string]string{} //nolint:staticcheck // legacy configuration
 		}
 
-		machine.MachineNodeLabels[constants.LabelExcludeFromExternalLB] = ""
+		machine.MachineNodeLabels[constants.LabelExcludeFromExternalLB] = "" //nolint:staticcheck // legacy configuration
 	}
 
 	certSANs := in.GetAPIServerSANs()
@@ -105,60 +114,42 @@ func (in *Input) init() ([]config.Document, error) {
 
 	var admissionControlConfig []*v1alpha1.AdmissionPluginConfig
 
-	if in.Options.VersionContract.PodSecurityAdmissionEnabled() {
+	if in.Options.VersionContract.PodSecurityAdmissionEnabled() && !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
 		admissionControlConfig = append(
 			admissionControlConfig,
 			&v1alpha1.AdmissionPluginConfig{
-				PluginName: "PodSecurity",
-				PluginConfiguration: meta.Unstructured{
-					Object: map[string]any{
-						"apiVersion": "pod-security.admission.config.k8s.io/v1alpha1",
-						"kind":       "PodSecurityConfiguration",
-						"defaults": map[string]any{
-							"enforce":         "baseline",
-							"enforce-version": "latest",
-							"audit":           "restricted",
-							"audit-version":   "latest",
-							"warn":            "restricted",
-							"warn-version":    "latest",
-						},
-						"exemptions": map[string]any{
-							"usernames":      []any{},
-							"runtimeClasses": []any{},
-							"namespaces":     []any{"kube-system"},
-						},
-					},
-				},
+				PluginName:          "PodSecurity",
+				PluginConfiguration: k8s.DefaultPodSecurityAdmissionControlConfig().PluginConfig,
 			},
 		)
 	}
 
 	var auditPolicyConfig meta.Unstructured
 
-	if in.Options.VersionContract.APIServerAuditPolicySupported() {
+	if in.Options.VersionContract.APIServerAuditPolicySupported() && !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
 		auditPolicyConfig = v1alpha1.APIServerDefaultAuditPolicy
 	}
 
 	cluster := &v1alpha1.ClusterConfig{
-		ClusterID:     in.Options.SecretsBundle.Cluster.ID,
-		ClusterName:   in.ClusterName,
-		ClusterSecret: in.Options.SecretsBundle.Cluster.Secret,
-		ControlPlane: &v1alpha1.ControlPlaneConfig{
+		ClusterID:     nilIf(in.Options.VersionContract.DiscoveryIdentityMultidocConfig(), in.Options.SecretsBundle.Cluster.ID),     //nolint:staticcheck // legacy configuration
+		ClusterName:   nilIf(in.Options.VersionContract.DiscoveryIdentityMultidocConfig(), in.ClusterName),                          //nolint:staticcheck // legacy configuration
+		ClusterSecret: nilIf(in.Options.VersionContract.DiscoveryIdentityMultidocConfig(), in.Options.SecretsBundle.Cluster.Secret), //nolint:staticcheck // legacy configuration
+		ControlPlane: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.ControlPlaneConfig{
 			Endpoint:           &v1alpha1.Endpoint{URL: controlPlaneURL},
 			LocalAPIServerPort: in.Options.LocalAPIServerPort,
-		},
-		APIServerConfig: &v1alpha1.APIServerConfig{
-			CertSANs:               certSANs,
+		}),
+		APIServerConfig: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.APIServerConfig{
+			ExtraCertSANs:          certSANs,
 			ContainerImage:         fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, in.KubernetesVersion),
 			AdmissionControlConfig: admissionControlConfig,
 			AuditPolicyConfig:      auditPolicyConfig,
-		},
+		}),
 		ControllerManagerConfig: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.ControllerManagerConfig{ //nolint:staticcheck // legacy configuration
 			ContainerImage: fmt.Sprintf("%s:v%s", constants.KubernetesControllerManagerImage, in.KubernetesVersion),
 		}),
-		ProxyConfig: &v1alpha1.ProxyConfig{
+		ProxyConfig: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.ProxyConfig{ //nolint:staticcheck // legacy configuration
 			ContainerImage: fmt.Sprintf("%s:v%s", constants.KubeProxyImage, in.KubernetesVersion),
-		},
+		}),
 		SchedulerConfig: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.SchedulerConfig{ //nolint:staticcheck // legacy configuration
 			ContainerImage: fmt.Sprintf("%s:v%s", constants.KubernetesSchedulerImage, in.KubernetesVersion),
 		}),
@@ -173,47 +164,49 @@ func (in *Input) init() ([]config.Document, error) {
 				ServiceSubnet: in.ServiceNet,
 			},
 		),
-		ClusterCA:              in.Options.SecretsBundle.Certs.K8s,
-		ClusterAggregatorCA:    in.Options.SecretsBundle.Certs.K8sAggregator,
-		ClusterServiceAccount:  in.Options.SecretsBundle.Certs.K8sServiceAccount,
-		BootstrapToken:         in.Options.SecretsBundle.Secrets.BootstrapToken,
-		ExtraManifests:         []string{},
-		ClusterInlineManifests: v1alpha1.ClusterInlineManifests{},
+		ClusterCA:             nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), in.Options.SecretsBundle.Certs.K8s),
+		ClusterAggregatorCA:   nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), in.Options.SecretsBundle.Certs.K8sAggregator),
+		ClusterServiceAccount: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), in.Options.SecretsBundle.Certs.K8sServiceAccount),
+		BootstrapToken:        in.Options.SecretsBundle.Secrets.BootstrapToken,
 	}
 
+	var customCNIURL *url.URL
+
 	if in.Options.CNICustomURL != "" {
+		customCNIURL, err = url.Parse(in.Options.CNICustomURL)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse custom CNI URL: %w", err)
+		}
+
 		if !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
 			cluster.ClusterNetwork.CNI = &v1alpha1.CNIConfig{ //nolint:staticcheck // legacy configuration
 				CNIName: constants.CustomCNI,
-				CNIUrls: []string{in.Options.CNICustomURL},
+				CNIUrls: []string{customCNIURL.String()},
 			}
-		} else {
-			// we don't have extra manifests as multi-doc yet, so put it in the legacy field for now
-			cluster.ExtraManifests = append(cluster.ExtraManifests, in.Options.CNICustomURL)
 		}
 	}
 
-	if in.Options.AllowSchedulingOnControlPlanes {
+	if in.Options.AllowSchedulingOnControlPlanes && !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
 		if in.Options.VersionContract.KubernetesAllowSchedulingOnControlPlanes() {
-			cluster.AllowSchedulingOnControlPlanes = new(in.Options.AllowSchedulingOnControlPlanes)
+			cluster.AllowSchedulingOnControlPlanes = new(in.Options.AllowSchedulingOnControlPlanes) //nolint:staticcheck
 		} else {
 			// backwards compatibility for Talos versions older than 1.2
 			cluster.AllowSchedulingOnMasters = new(in.Options.AllowSchedulingOnControlPlanes) //nolint:staticcheck
 		}
 	}
 
-	if in.Options.DiscoveryEnabled != nil {
-		cluster.ClusterDiscoveryConfig = &v1alpha1.ClusterDiscoveryConfig{
+	if in.Options.DiscoveryEnabled != nil && !in.Options.VersionContract.DiscoveryServiceMultidocConfig() {
+		cluster.ClusterDiscoveryConfig = &v1alpha1.ClusterDiscoveryConfig{ //nolint:staticcheck // legacy configuration
 			DiscoveryEnabled: new(*in.Options.DiscoveryEnabled),
 		}
 
 		if in.Options.VersionContract.KubernetesDiscoveryBackendDisabled() {
-			cluster.ClusterDiscoveryConfig.DiscoveryRegistries.RegistryKubernetes.RegistryDisabled = new(true)
+			cluster.ClusterDiscoveryConfig.DiscoveryRegistries.RegistryKubernetes.RegistryDisabled = new(true) //nolint:staticcheck // legacy configuration
 		}
 	}
 
-	if !in.Options.VersionContract.HideDisablePSP() {
-		cluster.APIServerConfig.DisablePodSecurityPolicyConfig = new(true)
+	if !in.Options.VersionContract.HideDisablePSP() && !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
+		cluster.APIServerConfig.DisablePodSecurityPolicyConfig = new(true) //nolint:staticcheck // legacy configuration
 	}
 
 	if !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
@@ -229,6 +222,33 @@ func (in *Input) init() ([]config.Document, error) {
 
 	documents := []config.Document{v1alpha1Config}
 
+	if pointer.SafeDeref(in.Options.DiscoveryEnabled) && in.Options.VersionContract.DiscoveryServiceMultidocConfig() {
+		endpointURL, err := url.Parse(constants.DefaultDiscoveryServiceEndpoint)
+		if err != nil {
+			return nil, err
+		}
+
+		documents = append(documents, clustertypes.NewDiscoveryServiceConfigV1Alpha1("default", endpointURL))
+	}
+
+	if in.Options.VersionContract.DiscoveryIdentityMultidocConfig() {
+		documents = append(documents, clustertypes.NewDiscoveryIdentityConfigV1Alpha1(
+			in.Options.SecretsBundle.Cluster.ID,
+			in.Options.SecretsBundle.Cluster.Secret,
+		))
+	}
+
+	// The UnattendedInstallConfig document requires a volume selector, which is derived from the install disk,
+	// so only generate it when an install disk is provided.
+	if in.Options.VersionContract.UnattendedInstallConfig() && in.Options.InstallDisk != "" && !in.Options.SkipUnattendedInstallConfig {
+		unattended, err := in.unattendedInstallConfig()
+		if err != nil {
+			return nil, fmt.Errorf("failed to generate unattended install config: %w", err)
+		}
+
+		documents = append(documents, unattended)
+	}
+
 	if in.Options.VersionContract.HostDNSEnabled() && in.Options.VersionContract.HostDNSMultidocConfig() {
 		resolverConfig := network.NewResolverConfigV1Alpha1()
 		resolverConfig.ResolverHostDNS = network.HostDNSConfig{
@@ -238,6 +258,17 @@ func (in *Input) init() ([]config.Document, error) {
 
 		documents = append(documents, resolverConfig)
 	}
+
+	if len(in.Options.Sysctls) > 0 && in.Options.VersionContract.MultidocSysctlConfigSupported() {
+		sysctlConfig := runtime.NewSysctlConfigV1Alpha1()
+		sysctlConfig.Params = in.Options.Sysctls
+
+		documents = append(documents, sysctlConfig)
+	}
+
+	documents = append(documents, in.generateBlockConfigs()...)
+
+	documents = append(documents, in.generateSecurityProfileConfigs()...)
 
 	extraDocuments, err := in.generateRegistryConfigs(machine)
 	if err != nil {
@@ -253,15 +284,33 @@ func (in *Input) init() ([]config.Document, error) {
 
 	documents = append(documents, extraDocuments...)
 
-	extraDocuments = in.generateKubernetesUniversalConfigs()
+	extraDocuments = in.generateKubernetesUniversalConfigs(true, controlPlaneURL)
 
 	documents = append(documents, extraDocuments...)
 
-	extraDocuments = in.generateKubernetesControlplaneConfigs()
+	extraDocuments = in.generateKubernetesControlplaneConfigs(controlPlaneURL, certSANs, customCNIURL)
 
 	documents = append(documents, extraDocuments...)
 
 	return documents, nil
+}
+
+// unattendedInstallConfig builds the UnattendedInstallConfig multi-document config from the generate options.
+func (in *Input) unattendedInstallConfig() (*runtime.UnattendedInstallConfigV1Alpha1, error) {
+	unattended := runtime.NewUnattendedInstallConfigV1Alpha1()
+	unattended.Installer.Image = in.Options.InstallImage
+	unattended.ProvisioningSpec.Wipe = new(false)
+
+	if in.Options.InstallDisk != "" {
+		expr, err := cel.ParseBooleanExpression(fmt.Sprintf("disk.dev_path == %q", in.Options.InstallDisk), celenv.DiskLocator())
+		if err != nil {
+			return nil, fmt.Errorf("failed to build install disk selector: %w", err)
+		}
+
+		unattended.ProvisioningSpec.DiskSelector.Match = expr
+	}
+
+	return unattended, nil
 }
 
 func ptrOrNil(b bool) *bool {
@@ -272,9 +321,11 @@ func ptrOrNil(b bool) *bool {
 	return nil
 }
 
-func nilIf[T any](condition bool, value *T) *T {
+func nilIf[T any](condition bool, value T) T {
 	if condition {
-		return nil
+		var zero T
+
+		return zero
 	}
 
 	return value

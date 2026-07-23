@@ -56,7 +56,7 @@ func ControllerManagerPod(configResource *k8s.ControllerManagerConfig, secretsVe
 		},
 		Spec: v1.PodSpec{
 			Priority:          new(SystemCriticalPriority),
-			PriorityClassName: "system-cluster-critical",
+			PriorityClassName: SystemClusterCriticalPriorityClassName,
 			Containers: []v1.Container{
 				{
 					Name:    k8s.ControllerManagerID,

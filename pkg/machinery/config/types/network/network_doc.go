@@ -15,6 +15,170 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
 
+func (BGPPeerConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "BGPPeerConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "BGPPeerConfig configures a native BGP speaker on the host." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "BGPPeerConfig configures a native BGP speaker on the host.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "localASN",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Local autonomous system number for the BGP speaker.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Local autonomous system number for the BGP speaker." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "routerID",
+				Type:        "Addr",
+				Note:        "",
+				Description: "BGP router-id. If not set, it is derived from the first advertised address.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "BGP router-id. If not set, it is derived from the first advertised address." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "routeSource",
+				Type:        "Addr",
+				Note:        "",
+				Description: "Preferred source address set on routes installed from BGP (the kernel route `src` / RTA_PREFSRC,\nequivalent to FRR's `ip protocol bgp route-map SETSRC`). Set this to the node's loopback so that\ntraffic following BGP-learned routes is sourced from the node identity even though the unnumbered\nfabric uplinks carry no address of their own. If not set, the kernel selects the source address.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Preferred source address set on routes installed from BGP (the kernel route `src` / RTA_PREFSRC," /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "advertise",
+				Type:        "[]string",
+				Note:        "",
+				Description: "Names of the links whose addresses are originated into BGP as host routes (/32, /128).\nTypically a loopback or dummy link holding the node IP.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Names of the links whose addresses are originated into BGP as host routes (/32, /128)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "multipath",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable ECMP (multipath) for routes learned from multiple neighbors.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable ECMP (multipath) for routes learned from multiple neighbors." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "maxPaths",
+				Type:        "uint8",
+				Note:        "",
+				Description: "Maximum number of ECMP next-hops to install. Zero uses the implementation default.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Maximum number of ECMP next-hops to install. Zero uses the implementation default." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "neighbors",
+				Type:        "[]BGPNeighborConfig",
+				Note:        "",
+				Description: "BGP neighbors to peer with.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "BGP neighbors to peer with." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleBGPPeerConfigV1Alpha1())
+
+	doc.Fields[1].AddExample("", uint32(65001))
+	doc.Fields[2].AddExample("", meta.Addr{Addr: netip.MustParseAddr("10.0.0.1")})
+	doc.Fields[3].AddExample("", meta.Addr{Addr: netip.MustParseAddr("10.0.0.1")})
+	doc.Fields[4].AddExample("", []string{"dummy0"})
+
+	return doc
+}
+
+func (BGPNeighborConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "BGPNeighborConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "BGPNeighborConfig configures a single BGP neighbor." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "BGPNeighborConfig configures a single BGP neighbor.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "BGPPeerConfigV1Alpha1",
+				FieldName: "neighbors",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "address",
+				Type:        "Addr",
+				Note:        "",
+				Description: "Neighbor IP address for a numbered session. Mutually exclusive with `link`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Neighbor IP address for a numbered session. Mutually exclusive with `link`." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "link",
+				Type:        "string",
+				Note:        "",
+				Description: "Link name for an unnumbered (IPv6 link-local) session. Mutually exclusive with `address`.\nLink aliases are supported.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Link name for an unnumbered (IPv6 link-local) session. Mutually exclusive with `address`." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "peerASN",
+				Type:        "uint32",
+				Note:        "",
+				Description: "Expected peer ASN. Zero accepts any ASN advertised by the peer (eBGP \"external\").",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Expected peer ASN. Zero accepts any ASN advertised by the peer (eBGP \"external\")." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "holdTime",
+				Type:        "Duration",
+				Note:        "",
+				Description: "BGP hold time. Zero uses the implementation default.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "BGP hold time. Zero uses the implementation default." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "bfd",
+				Type:        "BGPBFDConfig",
+				Note:        "",
+				Description: "BFD (Bidirectional Forwarding Detection) configuration for the neighbor.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "BFD (Bidirectional Forwarding Detection) configuration for the neighbor." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (BGPBFDConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "BGPBFDConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "BGPBFDConfig configures BFD for a BGP neighbor." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "BGPBFDConfig configures BFD for a BGP neighbor.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "BGPNeighborConfig",
+				FieldName: "bfd",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "transmitInterval",
+				Type:        "Duration",
+				Note:        "",
+				Description: "Desired minimum transmit interval. Zero uses the implementation default.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Desired minimum transmit interval. Zero uses the implementation default." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "receiveInterval",
+				Type:        "Duration",
+				Note:        "",
+				Description: "Required minimum receive interval. Zero uses the implementation default.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Required minimum receive interval. Zero uses the implementation default." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "detectMultiplier",
+				Type:        "uint8",
+				Note:        "",
+				Description: "BFD detection multiplier. Zero uses the implementation default.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "BFD detection multiplier. Zero uses the implementation default." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
 func (BlackholeRouteConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "BlackholeRouteConfig",
@@ -587,6 +751,13 @@ func (DHCPv4ConfigV1Alpha1) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Ignore hostname received from the DHCP server." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
+				Name:        "ignoreRoutes",
+				Type:        "bool",
+				Note:        "",
+				Description: "Ignore routes received from the DHCP server (the default gateway and classless static routes).\n\nThe connected route for the leased address is still configured.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Ignore routes received from the DHCP server (the default gateway and classless static routes)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "clientIdentifier",
 				Type:        "ClientIdentifier",
 				Note:        "",
@@ -611,7 +782,7 @@ func (DHCPv4ConfigV1Alpha1) Doc() *encoder.Doc {
 	doc.AddExample("", exampleDHCPv4ConfigV1Alpha1())
 
 	doc.Fields[1].AddExample("", "enp0s2")
-	doc.Fields[5].AddExample("", "00:01:00:01:23:45:67:89:ab:cd:ef:01:23:45")
+	doc.Fields[6].AddExample("", "00:01:00:01:23:45:67:89:ab:cd:ef:01:23:45")
 
 	return doc
 }
@@ -1059,7 +1230,7 @@ func (KubeSpanConfigV1Alpha1) Doc() *encoder.Doc {
 				Name:        "enabled",
 				Type:        "bool",
 				Note:        "",
-				Description: "Enable the KubeSpan feature.\nCluster discovery should be enabled with cluster.discovery.enabled for KubeSpan to be enabled.",
+				Description: "Enable the KubeSpan feature.\nRequires cluster discovery to be enabled through a DiscoveryServiceConfig document.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable the KubeSpan feature." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
@@ -2251,6 +2422,9 @@ func GetFileDoc() *encoder.FileDoc {
 		Name:        "network",
 		Description: "Package network provides network machine configuration documents.\n",
 		Structs: []*encoder.Doc{
+			BGPPeerConfigV1Alpha1{}.Doc(),
+			BGPNeighborConfig{}.Doc(),
+			BGPBFDConfig{}.Doc(),
 			BlackholeRouteConfigV1Alpha1{}.Doc(),
 			BondConfigV1Alpha1{}.Doc(),
 			BridgeConfigV1Alpha1{}.Doc(),

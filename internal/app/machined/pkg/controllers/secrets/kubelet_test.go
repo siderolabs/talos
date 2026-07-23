@@ -7,23 +7,23 @@ package secrets_test
 import (
 	"net/url"
 	"testing"
-	"time"
 
-	"github.com/cosi-project/runtime/pkg/resource"
-	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/crypto/x509"
-	"github.com/siderolabs/go-retry/retry"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	secretsctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/secrets"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	k8scfg "github.com/siderolabs/talos/pkg/machinery/config/types/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/secrets"
 )
 
 func TestKubeletSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, &KubeletSuite{
 		DefaultSuite: ctest.DefaultSuite{
 			AfterSetup: func(suite *ctest.DefaultSuite) {
@@ -66,35 +66,58 @@ func (suite *KubeletSuite) TestReconcile() {
 
 	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
 
-	suite.Assert().NoError(
-		retry.Constant(10*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
-			func() error {
-				kubeletSecrets, err := ctest.Get[*secrets.Kubelet](
-					suite,
-					resource.NewMetadata(
-						secrets.NamespaceName,
-						secrets.KubeletType,
-						secrets.KubeletID,
-						resource.VersionUndefined,
-					),
-				)
-				if err != nil {
-					if state.IsNotFoundError(err) {
-						return retry.ExpectedError(err)
-					}
+	ctest.AssertResource(suite, secrets.KubeletID, func(kubeletSecrets *secrets.Kubelet, asrt *assert.Assertions) {
+		spec := kubeletSecrets.TypedSpec()
 
-					return err
-				}
+		suite.Assert().Equal("https://foo:6443", spec.Endpoint.String())
+		suite.Assert().Equal([]*x509.PEMEncodedCertificate{{Crt: k8sCA.Crt}}, spec.AcceptedCAs)
+		suite.Assert().Equal("abc", spec.BootstrapTokenID)
+		suite.Assert().Equal("def", spec.BootstrapTokenSecret)
+		suite.Assert().Empty(spec.EndpointTLSServerName)
+	})
+}
 
-				spec := kubeletSecrets.TypedSpec()
+func (suite *KubeletSuite) TestReconcileKubePrism() {
+	u, err := url.Parse("https://foo:6443")
+	suite.Require().NoError(err)
 
-				suite.Assert().Equal("https://foo:6443", spec.Endpoint.String())
-				suite.Assert().Equal([]*x509.PEMEncodedCertificate{{Crt: k8sCA.Crt}}, spec.AcceptedCAs)
-				suite.Assert().Equal("abc", spec.BootstrapTokenID)
-				suite.Assert().Equal("def", spec.BootstrapTokenSecret)
+	ca, err := x509.NewSelfSignedCertificateAuthority(x509.RSA(false))
+	suite.Require().NoError(err)
 
-				return nil
+	k8sCA := x509.NewCertificateAndKeyFromCertificateAuthority(ca)
+
+	v1alpha1Cfg := &v1alpha1.Config{
+		ConfigVersion: "v1alpha1",
+		MachineConfig: &v1alpha1.MachineConfig{},
+		ClusterConfig: &v1alpha1.ClusterConfig{
+			ControlPlane: &v1alpha1.ControlPlaneConfig{
+				Endpoint: &v1alpha1.Endpoint{
+					URL: u,
+				},
 			},
-		),
-	)
+			ClusterCA:      k8sCA,
+			BootstrapToken: "abc.def",
+		},
+	}
+
+	kubePrismConfig := k8scfg.NewKubePrismConfigV1Alpha1()
+	kubePrismConfig.PortConfig = 3333
+	kubePrismConfig.TLSServerNameConfig = "my-lb"
+
+	ctr, err := container.New(v1alpha1Cfg, kubePrismConfig)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), cfg))
+
+	ctest.AssertResource(suite, secrets.KubeletID, func(kubeletSecrets *secrets.Kubelet, asrt *assert.Assertions) {
+		spec := kubeletSecrets.TypedSpec()
+
+		suite.Assert().Equal("https://127.0.0.1:3333", spec.Endpoint.String())
+		suite.Assert().Equal([]*x509.PEMEncodedCertificate{{Crt: k8sCA.Crt}}, spec.AcceptedCAs)
+		suite.Assert().Equal("abc", spec.BootstrapTokenID)
+		suite.Assert().Equal("def", spec.BootstrapTokenSecret)
+		suite.Assert().Equal("my-lb", spec.EndpointTLSServerName)
+	})
 }

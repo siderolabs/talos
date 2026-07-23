@@ -1,0 +1,17 @@
+apiVersion: v1alpha1
+kind: KubeInlineManifestConfig
+name: namespace-ci
+manifest: |-
+    apiVersion: v1
+    kind: Namespace
+    metadata:
+      name: ci
+    ---
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: build-settings
+      namespace: ci
+    data:
+      parallelism: "4"
+      verbose: "true"

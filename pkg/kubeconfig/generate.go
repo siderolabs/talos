@@ -24,8 +24,8 @@ import (
 //
 // This interface is implemented by config.Cluster().
 type GenerateAdminInput interface {
-	Name() string
-	Endpoint() *url.URL
+	ClusterName() string
+	ClusterEndpoint() *url.URL
 	IssuingCA() *x509.PEMEncodedCertificateAndKey
 	AcceptedCAs() []*x509.PEMEncodedCertificate
 	AdminKubeconfig() config.AdminKubeconfig
@@ -33,23 +33,21 @@ type GenerateAdminInput interface {
 
 // GenerateAdmin generates admin kubeconfig for the cluster.
 func GenerateAdmin(config GenerateAdminInput, out io.Writer) error {
-	acceptedCAs := config.AcceptedCAs()
-
-	if config.IssuingCA() != nil {
-		acceptedCAs = append(acceptedCAs, &x509.PEMEncodedCertificate{Crt: config.IssuingCA().Crt})
+	if config.IssuingCA() == nil {
+		return fmt.Errorf("issuing CA is not set")
 	}
 
 	return Generate(
 		&GenerateInput{
-			ClusterName:         config.Name(),
+			ClusterName:         config.ClusterName(),
 			IssuingCA:           config.IssuingCA(),
-			AcceptedCAs:         acceptedCAs,
+			AcceptedCAs:         config.AcceptedCAs(),
 			CertificateLifetime: config.AdminKubeconfig().CertLifetime(),
 
 			CommonName:   config.AdminKubeconfig().CommonName(),
 			Organization: config.AdminKubeconfig().CertOrganization(),
 
-			Endpoint:    config.Endpoint().String(),
+			Endpoint:    config.ClusterEndpoint().String(),
 			Username:    "admin",
 			ContextName: "admin",
 		},

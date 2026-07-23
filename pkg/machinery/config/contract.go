@@ -215,7 +215,44 @@ func (contract *VersionContract) HostDNSMultidocConfig() bool {
 	return contract.Greater(TalosVersion1_13)
 }
 
+// DiscoveryServiceMultidocConfig returns true if version of Talos should use the multi-doc DiscoveryServiceConfig.
+func (contract *VersionContract) DiscoveryServiceMultidocConfig() bool {
+	return contract.Greater(TalosVersion1_13)
+}
+
+// DiscoveryIdentityMultidocConfig returns true if version of Talos should use the multi-doc DiscoveryIdentityConfig.
+func (contract *VersionContract) DiscoveryIdentityMultidocConfig() bool {
+	return contract.Greater(TalosVersion1_13)
+}
+
+// UnattendedInstallConfig returns true if version of Talos should use the UnattendedInstallConfig multi-doc config
+// instead of the deprecated .machine.install section.
+func (contract *VersionContract) UnattendedInstallConfig() bool {
+	return contract.Greater(TalosVersion1_13)
+}
+
 // MultidocKubernetesConfigSupported returns true if version of Talos should use multi-doc Kubernetes config.
 func (contract *VersionContract) MultidocKubernetesConfigSupported() bool {
+	return contract.Greater(TalosVersion1_13)
+}
+
+// FilesystemTrimEnabledByDefault returns true if version of Talos should have filesystem trim enabled by default.
+func (contract *VersionContract) FilesystemTrimEnabledByDefault() bool {
+	return contract.Greater(TalosVersion1_13)
+}
+
+// WorkloadIsolationEnabledByDefault returns true if version of Talos should have workload isolation (sandboxd)
+// enabled by default (emitted as a SecurityProfileConfig document with workloadIsolation set by config generation).
+func (contract *VersionContract) WorkloadIsolationEnabledByDefault() bool {
+	return contract.Greater(TalosVersion1_13)
+}
+
+// MultidocSysctlConfigSupported returns true if version of Talos should use multi-doc Sysctl config.
+func (contract *VersionContract) MultidocSysctlConfigSupported() bool {
+	return contract.Greater(TalosVersion1_13)
+}
+
+// MultidocKernelModuleConfigSupported returns true if version of Talos should use multi-doc KernelModuleConfig.
+func (contract *VersionContract) MultidocKernelModuleConfigSupported() bool {
 	return contract.Greater(TalosVersion1_13)
 }

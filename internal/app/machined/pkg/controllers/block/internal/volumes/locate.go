@@ -5,6 +5,7 @@
 package volumes
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 
@@ -175,13 +176,8 @@ func locateVolumeByMatch(vc ManagerContext) (bool, error) {
 		matchContext := map[string]any{"volume": dv}
 
 		// Resolve the parent disk for CEL context
-		for _, diskCtx := range vc.Disks {
-			if (dv.ParentDevPath != "" && diskCtx.Disk.DevPath == dv.ParentDevPath) ||
-				(dv.ParentDevPath == "" && diskCtx.Disk.DevPath == dv.DevPath) {
-				matchContext["disk"] = diskCtx.Disk
-
-				break
-			}
+		if disk := vc.FindDisk(cmp.Or(dv.ParentDevPath, dv.DevPath)); disk != nil {
+			matchContext["disk"] = disk
 		}
 
 		matches, err := spec.Locator.Match.EvalBool(env, matchContext)

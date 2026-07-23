@@ -146,9 +146,9 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 		}
 	}()
 
-	for {
-		var wallClockJumpDetected bool
+	var wallClockJumpDetected bool
 
+	for {
 		select {
 		case <-ctx.Done():
 			return nil
@@ -207,6 +207,7 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 
 		if wallClockJumpDetected && syncDisabled {
 			epoch++
+			wallClockJumpDetected = false
 
 			logger.Info(
 				"detected wall-clock jump while time synchronization is disabled, incrementing time epoch",

@@ -1,0 +1,184 @@
+syntax = "proto3";
+
+package remoteprovision;
+
+import "google/protobuf/empty.proto";
+
+option go_package = "github.com/siderolabs/talos/pkg/provision/api";
+option java_package = "dev.talos.api.remoteprovision";
+
+// RemoteProvisionService is the gRPC interface to a remote `talosctl
+// cluster create` provisioner — the cluster-equivalent of a BuildKit
+// remote builder. It is consumed by the `remote` provisioner under
+// pkg/provision/providers/remote and served by `talosctl
+// remote-provision-launch`.
+//
+// The server owns the QEMU lifecycle, the state directory, and the bridge
+// network. RPC payloads carrying provision.ClusterRequest / provision.Cluster
+// are JSON-encoded; the server unmarshals them and hands them to the
+// in-process QEMU provisioner unchanged.
+service RemoteProvisionService {
+  // Ping returns server identity for connectivity sanity checks.
+  rpc Ping(google.protobuf.Empty) returns (PingResponse);
+
+  // Create provisions a cluster. The stream emits progress events; the
+  // terminal event carries the JSON-encoded provision.Cluster.
+  rpc Create(CreateRequest) returns (stream CreateEvent);
+
+  // Destroy tears down a previously-created cluster.
+  rpc Destroy(DestroyRequest) returns (DestroyResponse);
+
+  // Reflect returns a previously-created cluster's state by name.
+  rpc Reflect(ReflectRequest) returns (ReflectResponse);
+
+  // StreamLogs tails a machine's QEMU console log from the server's state
+  // directory — the remote equivalent of `tail -F <machine>.log`.
+  rpc StreamLogs(LogsRequest) returns (stream LogData);
+
+  // StatArtifact reports whether a content-addressed artifact is already
+  // cached on the server, so the client can skip re-uploading it.
+  rpc StatArtifact(StatArtifactRequest) returns (StatArtifactResponse);
+
+  // UploadArtifact streams a boot artifact (kernel, initramfs, ISO, ...)
+  // to the server's content-addressed cache. The first frame carries the
+  // sha256; the rest carry data.
+  rpc UploadArtifact(stream ArtifactChunk) returns (ArtifactRef);
+
+  // SyncBootArtifacts updates the stable kernel and initramfs references
+  // used by an existing no-bootloader cluster.
+  rpc SyncBootArtifacts(SyncBootArtifactsRequest) returns (SyncBootArtifactsResponse);
+
+  // Reboot forcefully restarts one QEMU node.
+  rpc Reboot(RebootRequest) returns (RebootResponse);
+}
+
+// PingResponse identifies the remote-provision server.
+message PingResponse {
+  // server_version is the talosctl version backing the server.
+  string server_version = 1;
+  // host_arch is the server's architecture ("amd64" / "arm64"). Clients
+  // target this arch for remote cluster creation.
+  string host_arch = 2;
+}
+
+// CreateRequest carries a JSON-encoded provision.ClusterRequest plus
+// references to artifacts the server should resolve to canonical paths
+// before passing the request to the QEMU provisioner.
+message CreateRequest {
+  // cluster_request is a JSON-encoded provision.ClusterRequest.
+  bytes cluster_request = 1;
+
+  // artifact_paths maps logical artifact names (kernel, initramfs, iso,
+  // usb, uki, diskimage, ipxe) to canonical paths on the server. The
+  // client populates these after uploading the corresponding local files.
+  // URL-valued entries are skipped and fetched server-side instead.
+  map<string, string> artifact_paths = 2;
+
+  // options is a JSON-encoded subset of provision.Options (UEFI, TPM,
+  // bootloader, etc.). The server reconstructs the provision.Option list
+  // from it; non-serializable fields (LogWriter, Talos client) are set
+  // server-side.
+  bytes options = 3;
+}
+
+// CreateEvent is one frame of the Create stream.
+message CreateEvent {
+  oneof event {
+    // status is a human-readable progress line.
+    string status = 1;
+    // warning is a human-readable non-fatal warning.
+    string warning = 2;
+    // cluster is the JSON-encoded provision.Cluster — emitted as the
+    // terminal event on success.
+    bytes cluster = 3;
+  }
+}
+
+// DestroyRequest identifies the cluster to tear down.
+message DestroyRequest {
+  // cluster_name identifies the cluster on the server's state directory.
+  string cluster_name = 1;
+}
+
+// DestroyResponse is empty on success.
+message DestroyResponse {}
+
+// ReflectRequest looks up a cluster by name.
+message ReflectRequest {
+  string cluster_name = 1;
+}
+
+// ReflectResponse returns the JSON-encoded provision.Cluster.
+message ReflectResponse {
+  bytes cluster = 1;
+}
+
+// LogsRequest identifies machine logs to stream.
+message LogsRequest {
+  // cluster_name is the cluster the machine(s) belong to.
+  string cluster_name = 1;
+  // machine_name is the node name (e.g. "talos-default-controlplane-1").
+  // Empty means stream every machine in the cluster.
+  string machine_name = 2;
+  // follow keeps the stream open and tails new output (tail -F).
+  bool follow = 3;
+}
+
+// LogData is one console log line tagged with its source machine.
+message LogData {
+  // machine_name is the node the line came from.
+  string machine_name = 1;
+  // line is a single console log line (no trailing newline).
+  string line = 2;
+}
+
+// StatArtifactRequest asks whether a content-addressed artifact is cached.
+message StatArtifactRequest {
+  // sha256 is the lowercase hex digest of the artifact.
+  string sha256 = 1;
+}
+
+// StatArtifactResponse reports artifact cache status.
+message StatArtifactResponse {
+  // exists is true when the artifact is already cached.
+  bool exists = 1;
+  // path is the canonical server path when exists is true.
+  string path = 2;
+}
+
+// ArtifactChunk is one frame of an UploadArtifact stream: the first frame
+// carries sha256, the rest carry data.
+message ArtifactChunk {
+  oneof payload {
+    // sha256 is the lowercase hex digest; sent once, as the first frame.
+    string sha256 = 1;
+    // data is a slice of artifact bytes.
+    bytes data = 2;
+  }
+}
+
+// ArtifactRef is the canonical server path of an uploaded artifact.
+message ArtifactRef {
+  string path = 1;
+}
+
+// SyncBootArtifactsRequest updates content-addressed boot artifact references
+// for an existing cluster. artifact_paths accepts only kernel and initramfs.
+message SyncBootArtifactsRequest {
+  string cluster_name = 1;
+  map<string, string> artifact_paths = 2;
+}
+
+// SyncBootArtifactsResponse reports which stable references changed.
+message SyncBootArtifactsResponse {
+  map<string, bool> changed = 1;
+}
+
+// RebootRequest identifies one QEMU node to forcefully restart.
+message RebootRequest {
+  string cluster_name = 1;
+  string machine_name = 2;
+}
+
+// RebootResponse is empty on success.
+message RebootResponse {}

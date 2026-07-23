@@ -1,0 +1,3 @@
+apiVersion: v1alpha1
+kind: FilesystemTrimConfig
+interval: 168h0m0s

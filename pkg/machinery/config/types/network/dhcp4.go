@@ -69,6 +69,11 @@ type DHCPv4ConfigV1Alpha1 struct {
 	//     Ignore hostname received from the DHCP server.
 	ConfigIgnoreHostname *bool `yaml:"ignoreHostname,omitempty"`
 	//   description: |
+	//     Ignore routes received from the DHCP server (the default gateway and classless static routes).
+	//
+	//     The connected route for the leased address is still configured.
+	ConfigIgnoreRoutes *bool `yaml:"ignoreRoutes,omitempty"`
+	//   description: |
 	//     Client identifier to use when communicating with DHCP servers.
 	//
 	//     Defaults to 'mac' if not set.
@@ -140,6 +145,15 @@ func (s *DHCPv4ConfigV1Alpha1) IgnoreHostname() optional.Optional[bool] {
 	}
 
 	return optional.Some(*s.ConfigIgnoreHostname)
+}
+
+// IgnoreRoutes returns whether to ignore routes from DHCP server.
+func (s *DHCPv4ConfigV1Alpha1) IgnoreRoutes() optional.Optional[bool] {
+	if s.ConfigIgnoreRoutes == nil {
+		return optional.None[bool]()
+	}
+
+	return optional.Some(*s.ConfigIgnoreRoutes)
 }
 
 // ClientIdentifier returns the client identifier.

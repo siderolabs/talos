@@ -186,10 +186,15 @@ func (suite *MachineStatusSuite) TestReconcile() {
 		},
 	}
 
+	// Capture ctx/state in locals: Never leaks its last condition goroutine past
+	// return, and reading suite.Ctx()/suite.State() there races the next test's
+	// SetupTest overwriting those fields.
+	ctx, st := suite.Ctx(), suite.State()
+
 	// Poll over a short window to verify the stage never flips to "rebooting" or any other stage after the NOOP event.
 	suite.Require().Never(
 		func() bool {
-			status, err := safe.StateGetByID[*runtime.MachineStatus](suite.Ctx(), suite.State(), runtime.MachineStatusID)
+			status, err := safe.StateGetByID[*runtime.MachineStatus](ctx, st, runtime.MachineStatusID)
 			suite.NoError(err, "status should exist")
 
 			return status.TypedSpec().Stage != runtime.MachineStageShuttingDown

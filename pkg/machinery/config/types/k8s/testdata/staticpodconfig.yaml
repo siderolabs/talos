@@ -1,0 +1,12 @@
+apiVersion: v1alpha1
+kind: KubeStaticPodConfig
+name: nginx
+pod:
+    apiVersion: v1
+    kind: Pod
+    metadata:
+        name: nginx
+    spec:
+        containers:
+            - image: nginx
+              name: nginx

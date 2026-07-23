@@ -7,6 +7,8 @@ package generate
 import (
 	"fmt"
 	"net/netip"
+	"net/url"
+	"slices"
 
 	"github.com/siderolabs/gen/xslices"
 
@@ -16,9 +18,15 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
-func (in *Input) generateKubernetesControlplaneConfigs() []config.Document {
+func (in *Input) generateKubernetesControlplaneConfigs(controlplaneURL *url.URL, certSANs []string, customCNIURL *url.URL) []config.Document {
 	if !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
 		return nil
+	}
+
+	aggregatorCACfg := k8s.NewKubeAggregatorCAConfigV1Alpha1()
+	aggregatorCACfg.AggregatorIssuingCA = &meta.CertificateAndKey{
+		Cert: string(in.Options.SecretsBundle.Certs.K8sAggregator.Crt),
+		Key:  string(in.Options.SecretsBundle.Certs.K8sAggregator.Key),
 	}
 
 	var flannelConfig *k8s.KubeFlannelCNIConfigV1Alpha1
@@ -52,29 +60,100 @@ func (in *Input) generateKubernetesControlplaneConfigs() []config.Document {
 		},
 	}
 
+	serviceAccountConfig := k8s.NewKubeServiceAccountConfigV1Alpha1()
+	serviceAccountConfig.ServiceIssuer = k8s.IssuerServiceAccountConfig{
+		PrivateKey: string(in.Options.SecretsBundle.Certs.K8sServiceAccount.Key),
+		IssuerURL:  meta.URL{URL: controlplaneURL},
+	}
+
+	apiServerConfig := k8s.NewKubeAPIServerConfigV1Alpha1()
+	apiServerConfig.PodImage = fmt.Sprintf("%s:v%s", constants.KubernetesAPIServerImage, in.KubernetesVersion)
+	apiServerConfig.PodCertExtraSANs = certSANs
+
+	if in.Options.LocalAPIServerPort != 0 {
+		apiServerConfig.PodAPIPort = new(in.Options.LocalAPIServerPort)
+	}
+
 	controllerManagerConfig := k8s.NewKubeControllerManagerConfigV1Alpha1()
 	controllerManagerConfig.PodImage = fmt.Sprintf("%s:v%s", constants.KubernetesControllerManagerImage, in.KubernetesVersion)
 
 	schedulerConfig := k8s.NewKubeSchedulerConfigV1Alpha1()
 	schedulerConfig.PodImage = fmt.Sprintf("%s:v%s", constants.KubernetesSchedulerImage, in.KubernetesVersion)
 
-	result := []config.Document{
-		etcdEncryptionConfig,
-		controllerManagerConfig,
-		schedulerConfig,
-	}
+	proxyConfig := k8s.NewKubeProxyConfigV1Alpha1()
+	proxyConfig.ProxyImage = fmt.Sprintf("%s:v%s", constants.KubeProxyImage, in.KubernetesVersion)
+
+	result := slices.Concat(
+		[]config.Document{
+			aggregatorCACfg,
+			k8s.DefaultPodSecurityAdmissionControlConfig(),
+			k8s.DefaultAuditPolicyConfig(),
+			k8s.DefaultAuthenticationConfig(),
+		},
+		xslices.Map(
+			k8s.DefaultAuthorizationConfig(),
+			func(c *k8s.KubeAuthorizerConfigV1Alpha1) config.Document { return c },
+		),
+		[]config.Document{
+			etcdEncryptionConfig,
+			serviceAccountConfig,
+			apiServerConfig,
+			controllerManagerConfig,
+			schedulerConfig,
+			proxyConfig,
+		},
+	)
 
 	if flannelConfig != nil {
 		result = append(result, flannelConfig)
 	}
 
+	coreDNSConfig := k8s.NewKubeCoreDNSConfigV1Alpha1()
+	coreDNSConfig.PodEnabled = new(true)
+
+	result = append(result, coreDNSConfig)
+
+	if customCNIURL != nil {
+		manifestConfig := k8s.NewKubeExternalManifestConfigV1Alpha1()
+		manifestConfig.MetaName = "custom-cni"
+		manifestConfig.URLSpec = meta.URL{URL: customCNIURL}
+
+		result = append(result, manifestConfig)
+	}
+
 	return result
 }
 
-func (in *Input) generateKubernetesUniversalConfigs() []config.Document {
+func (in *Input) generateKubernetesUniversalConfigs(isControlplane bool, controlPlaneURL *url.URL) []config.Document {
 	if !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
 		return nil
 	}
+
+	clusterConfig := k8s.NewKubeClusterConfigV1Alpha1()
+	clusterConfig.ClusterNameConfig = in.ClusterName
+	clusterConfig.ClusterEndpointConfig = meta.URL{URL: controlPlaneURL}
+
+	nodeConfig := k8s.NewKubeNodeConfigV1Alpha1()
+
+	if isControlplane {
+		nodeConfig.LabelsConfig = map[string]string{
+			constants.LabelNodeRoleControlPlane: "",
+		}
+	}
+
+	if isControlplane && in.Options.VersionContract.AddExcludeFromExternalLoadBalancer() {
+		nodeConfig.LabelsConfig[constants.LabelExcludeFromExternalLB] = ""
+	}
+
+	if isControlplane && !in.Options.AllowSchedulingOnControlPlanes {
+		nodeConfig.TaintsConfig = map[string]string{
+			constants.LabelNodeRoleControlPlane: constants.TaintEffectNoSchedule,
+		}
+	}
+
+	kubeletConfig := k8s.NewKubeletConfigV1Alpha1()
+	kubeletConfig.KubeletImage = fmt.Sprintf("%s:v%s", constants.KubeletImage, in.KubernetesVersion)
+	kubeletConfig.KubeletDefaultRuntimeSeccompProfileEnabled = new(true)
 
 	networkConfig := k8s.NewKubeNetworkConfigV1Alpha1()
 	networkConfig.NetworkDNSDomain = in.Options.DNSDomain
@@ -91,7 +170,38 @@ func (in *Input) generateKubernetesUniversalConfigs() []config.Document {
 		},
 	)
 
-	return []config.Document{
-		networkConfig,
+	caConfig := k8s.NewKubeAPIServerCAConfigV1Alpha1()
+
+	if isControlplane {
+		caConfig.APIIssuingCA = &meta.CertificateAndKey{
+			Cert: string(in.Options.SecretsBundle.Certs.K8s.Crt),
+			Key:  string(in.Options.SecretsBundle.Certs.K8s.Key),
+		}
+	} else {
+		caConfig.APIAcceptedCAs = []string{
+			string(in.Options.SecretsBundle.Certs.K8s.Crt),
+		}
 	}
+
+	docs := []config.Document{
+		clusterConfig,
+		nodeConfig,
+		kubeletConfig,
+		networkConfig,
+		caConfig,
+	}
+
+	// default to enabled, but if set explicitly, allow it to be disabled
+	kubePrismPort, optionSet := in.Options.KubePrismPort.Get()
+	if !optionSet {
+		kubePrismPort = constants.DefaultKubePrismPort
+	}
+
+	if kubePrismPort > 0 {
+		kubePrismConfig := k8s.NewKubePrismConfigV1Alpha1()
+		kubePrismConfig.PortConfig = kubePrismPort
+		docs = append(docs, kubePrismConfig)
+	}
+
+	return docs
 }

@@ -201,6 +201,46 @@ func TestXFSMkfsConfigFile(t *testing.T) {
 	}
 }
 
+func TestXFSMinAllocationGroupSize(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		version string
+
+		expected uint64
+	}{
+		{
+			version:  "1.10.0",
+			expected: 0,
+		},
+		{
+			version:  "1.13.0",
+			expected: 0,
+		},
+		{
+			version:  "1.13.5",
+			expected: 0,
+		},
+		{
+			version:  "1.14.0",
+			expected: 64 * 1024 * 1024 * 1024,
+		},
+		{
+			version:  "1.15.0",
+			expected: 64 * 1024 * 1024 * 1024,
+		},
+		{
+			expected: 64 * 1024 * 1024 * 1024,
+		},
+	} {
+		t.Run(test.version, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, test.expected, quirks.New(test.version).XFSMinAllocationGroupSize())
+		})
+	}
+}
+
 func TestPartitionSizes(t *testing.T) {
 	t.Parallel()
 

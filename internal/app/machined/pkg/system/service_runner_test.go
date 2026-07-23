@@ -330,7 +330,8 @@ func (suite *ServiceRunnerSuite) TestAbortOnCondition() {
 
 	sr.Shutdown()
 
-	suite.Assert().EqualError(<-errCh, "condition failed: context canceled")
+	// a shutdown while waiting on the condition is a clean stop, not a failure
+	suite.Assert().NoError(<-errCh)
 
 	suite.assertStateSequence([]events.ServiceState{
 		events.StateStarting,

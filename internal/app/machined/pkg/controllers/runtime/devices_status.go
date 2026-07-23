@@ -9,11 +9,13 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
 
-	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/v1alpha1"
 	machineruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
 // DevicesStatusController loads extensions.yaml and updates DevicesStatus resources.
@@ -27,8 +29,15 @@ func (ctrl *DevicesStatusController) Name() string {
 }
 
 // Inputs implements controller.Controller interface.
-func (ctrl *DevicesStatusController) Inputs() []controller.Input {
-	return nil
+func (ctl *DevicesStatusController) Inputs() []controller.Input {
+	return []controller.Input{
+		{
+			Namespace: v1alpha1.NamespaceName,
+			Type:      v1alpha1.ServiceType,
+			ID:        optional.Some("udevd"),
+			Kind:      controller.InputWeak,
+		},
+	}
 }
 
 // Outputs implements controller.Controller interface.
@@ -44,10 +53,12 @@ func (ctrl *DevicesStatusController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 func (ctrl *DevicesStatusController) Run(ctx context.Context, r controller.Runtime, _ *zap.Logger) error {
 	// in container mode, devices are always ready
-	if ctrl.V1Alpha1Mode != machineruntime.ModeContainer {
-		if err := v1alpha1.WaitForServiceHealthy(ctx, r, "udevd", nil); err != nil {
-			return err
-		}
+	if ctrl.V1Alpha1Mode == machineruntime.ModeContainer {
+		return safe.WriterModify(ctx, r, runtime.NewDevicesStatus(runtime.NamespaceName, runtime.DevicesID), func(status *runtime.DevicesStatus) error {
+			status.TypedSpec().Ready = true
+
+			return nil
+		})
 	}
 
 	for {
@@ -57,6 +68,20 @@ func (ctrl *DevicesStatusController) Run(ctx context.Context, r controller.Runti
 		case <-r.EventCh():
 		}
 
+		service, err := safe.ReaderGetByID[*v1alpha1.Service](ctx, r, "udevd")
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return err
+		}
+
+		if !(service.TypedSpec().Running && service.TypedSpec().Healthy) {
+			// condition not met
+			continue
+		}
+
 		if err := safe.WriterModify(ctx, r, runtime.NewDevicesStatus(runtime.NamespaceName, runtime.DevicesID), func(status *runtime.DevicesStatus) error {
 			status.TypedSpec().Ready = true
 
@@ -64,5 +89,8 @@ func (ctrl *DevicesStatusController) Run(ctx context.Context, r controller.Runti
 		}); err != nil {
 			return err
 		}
+
+		// everything is done, ready, stop the controller
+		return nil
 	}
 }

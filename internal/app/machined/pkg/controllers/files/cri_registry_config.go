@@ -27,12 +27,8 @@ import (
 
 // CRIRegistryConfigController generates parts of the CRI config for registry configuration.
 type CRIRegistryConfigController struct {
-	// Path to /etc directory, read-only filesystem.
-	EtcPath string
 	// EtcRoot is the root for /etc filesystem operations.
 	EtcRoot xfs.Root
-
-	bindMountCreated bool
 }
 
 // Name implements controller.Controller interface.
@@ -67,23 +63,7 @@ func (ctrl *CRIRegistryConfigController) Outputs() []controller.Output {
 //nolint:gocyclo
 func (ctrl *CRIRegistryConfigController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	src := filepath.Join(constants.CRIConfdPath, "hosts")
-	dest := filepath.Join(ctrl.EtcPath, src)
-
-	if !ctrl.bindMountCreated {
-		if ctrl.EtcRoot.FSType() == "os" {
-			shadowPath := filepath.Join(ctrl.EtcRoot.Source(), src)
-
-			if err := createBindMountDir(shadowPath, dest); err != nil {
-				return fmt.Errorf("bind mount failed for %q -> %q: %w", shadowPath, dest, err)
-			}
-		} else {
-			if err := createBindMountDirFd(ctrl.EtcRoot, src, dest); err != nil {
-				return fmt.Errorf("bind mount failed for %q: %w", dest, err)
-			}
-		}
-
-		ctrl.bindMountCreated = true
-	}
+	dest := filepath.Join("etc", src)
 
 	for {
 		select {

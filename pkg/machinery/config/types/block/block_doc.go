@@ -320,6 +320,13 @@ func (ExistingVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "The mount describes additional mount options.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The mount describes additional mount options." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "trim",
+				Type:        "TrimConfig",
+				Note:        "",
+				Description: "The trim describes the per-volume filesystem trim (fstrim) configuration.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The trim describes the per-volume filesystem trim (fstrim) configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
@@ -533,6 +540,31 @@ func (VirtiofsMountSpec) Doc() *encoder.Doc {
 	return doc
 }
 
+func (FilesystemTrimConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "FilesystemTrimConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "FilesystemTrimConfig is a filesystem trim (fstrim) configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "FilesystemTrimConfig is a filesystem trim (fstrim) configuration document.\nFilesystem trim (the equivalent of the `fstrim` command) periodically discards unused blocks\nof mounted filesystems which support trimming.\n\nWhen this document is present, Talos builds a stable per-node, per-volume schedule and trims\neligible volumes at the configured interval. If the document is absent, no automatic trimming\nis performed (unless enabled explicitly on a per-volume basis).\n",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "interval",
+				Type:        "Duration",
+				Note:        "",
+				Description: "The interval at which the filesystems are trimmed.\n\nThe trim is performed at a stable, hash-derived time within the interval, which is different\nfor each volume and each node, so that trims are spread out over time.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The interval at which the filesystems are trimmed." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleFilesystemTrimConfigV1Alpha1())
+
+	return doc
+}
+
 func (RawVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "RawVolumeConfig",
@@ -611,6 +643,46 @@ func (SwapVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (TrimConfig) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "TrimConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "TrimConfig describes per-volume filesystem trim (fstrim) configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "TrimConfig describes per-volume filesystem trim (fstrim) configuration.\n\nIt overrides the global FilesystemTrimConfig for the volume.\n",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ExistingVolumeConfigV1Alpha1",
+				FieldName: "trim",
+			},
+			{
+				TypeName:  "UserVolumeConfigV1Alpha1",
+				FieldName: "trim",
+			},
+			{
+				TypeName:  "VolumeConfigV1Alpha1",
+				FieldName: "trim",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "enabled",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable or disable trimming for this volume.\n\nIf not set, trimming is enabled when the global FilesystemTrimConfig is present.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable or disable trimming for this volume." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "interval",
+				Type:        "Duration",
+				Note:        "",
+				Description: "The interval at which the volume is trimmed, overriding the global trim interval.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The interval at which the volume is trimmed, overriding the global trim interval." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
 func (UserVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "UserVolumeConfig",
@@ -667,6 +739,13 @@ func (UserVolumeConfigV1Alpha1) Doc() *encoder.Doc {
 				Note:        "",
 				Description: "The mount describes additional mount options.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The mount describes additional mount options." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "trim",
+				Type:        "TrimConfig",
+				Note:        "",
+				Description: "The trim describes the per-volume filesystem trim (fstrim) configuration.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The trim describes the per-volume filesystem trim (fstrim) configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
@@ -743,8 +822,46 @@ func (FilesystemSpec) Doc() *encoder.Doc {
 				Description: "Enables project quota support, valid only for 'xfs' filesystem.\n\nNote: changing this value might require a full remount of the filesystem.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Enables project quota support, valid only for 'xfs' filesystem." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "xfs",
+				Type:        "XFSSpec",
+				Note:        "",
+				Description: "XFS-specific filesystem options, valid only for 'xfs' filesystem.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "XFS-specific filesystem options, valid only for 'xfs' filesystem." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
+
+	return doc
+}
+
+func (XFSSpec) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "XFSSpec",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "XFSSpec configures XFS-specific filesystem options." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "XFSSpec configures XFS-specific filesystem options.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "FilesystemSpec",
+				FieldName: "xfs",
+			},
+			{
+				TypeName:  "SystemVolumeFilesystemSpec",
+				FieldName: "xfs",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "minAllocationGroupSize",
+				Type:        "ByteSize",
+				Note:        "",
+				Description: "The minimum size of an XFS allocation group.\n\nOn non-rotational devices `mkfs.xfs` sizes the allocation group count to the number of\nCPUs, which on machines with many cores and a modest disk yields hundreds of tiny\nallocation groups. Talos bounds the allocation group size from below to keep the geometry\nsane; this option overrides that bound.\n\nSet to zero to use the `mkfs.xfs` defaults unchanged.\n\nNote: this only affects volumes at the time they are formatted.\n\nSize is specified in bytes, but can be expressed in human readable format, e.g. 100MB.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The minimum size of an XFS allocation group." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("", "128GiB")
 
 	return doc
 }
@@ -753,7 +870,7 @@ func (VolumeConfigV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "VolumeConfig",
 		Comments:    [3]string{"" /* encoder.HeadComment */, "VolumeConfig is a system volume configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "VolumeConfig is a system volume configuration document.\nNote: at the moment, only `STATE`, `EPHEMERAL` and `IMAGE-CACHE` system volumes are supported.\n",
+		Description: "VolumeConfig is a system volume configuration document.\nNote: at the moment, only `STATE`, `EPHEMERAL`, `IMAGECACHE`, `ETCD`, `CRI`, `KUBELET` and `LOG`\nsystem volumes are supported. The `ETCD`, `CRI`, `KUBELET` and `LOG` volumes default to a\ndirectory under `EPHEMERAL`, and can be placed on a dedicated partition by specifying\n`provisioning`. The backing of these volumes (directory vs. dedicated partition) can only be\nchosen at cluster creation time: changing it on an already-provisioned node is not supported.\n",
 		Fields: []encoder.Doc{
 			{
 				Type:   "Meta",
@@ -774,6 +891,13 @@ func (VolumeConfigV1Alpha1) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The provisioning describes how the volume is provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
+				Name:        "filesystem",
+				Type:        "SystemVolumeFilesystemSpec",
+				Note:        "",
+				Description: "The filesystem describes how the volume is formatted.\n\nNote: this only takes effect at the time the volume is formatted.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The filesystem describes how the volume is formatted." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "encryption",
 				Type:        "EncryptionSpec",
 				Note:        "",
@@ -787,10 +911,42 @@ func (VolumeConfigV1Alpha1) Doc() *encoder.Doc {
 				Description: "The mount describes additional mount options.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "The mount describes additional mount options." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
+			{
+				Name:        "trim",
+				Type:        "TrimConfig",
+				Note:        "",
+				Description: "The trim describes the per-volume filesystem trim (fstrim) configuration.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The trim describes the per-volume filesystem trim (fstrim) configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
 		},
 	}
 
 	doc.AddExample("", exampleVolumeConfigEphemeralV1Alpha1())
+
+	return doc
+}
+
+func (SystemVolumeFilesystemSpec) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "SystemVolumeFilesystemSpec",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "SystemVolumeFilesystemSpec describes how the system volume is formatted." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "SystemVolumeFilesystemSpec describes how the system volume is formatted.\n\nThe filesystem type is fixed for system volumes, and project quota support is configured via\nmachine features, so only the filesystem-specific tunables are exposed here.\n",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "VolumeConfigV1Alpha1",
+				FieldName: "filesystem",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "xfs",
+				Type:        "XFSSpec",
+				Note:        "",
+				Description: "XFS-specific filesystem options.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "XFS-specific filesystem options." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
 
 	return doc
 }
@@ -969,12 +1125,16 @@ func GetFileDoc() *encoder.FileDoc {
 			ExternalVolumeConfigV1Alpha1{}.Doc(),
 			ExternalMountSpec{}.Doc(),
 			VirtiofsMountSpec{}.Doc(),
+			FilesystemTrimConfigV1Alpha1{}.Doc(),
 			RawVolumeConfigV1Alpha1{}.Doc(),
 			SwapVolumeConfigV1Alpha1{}.Doc(),
+			TrimConfig{}.Doc(),
 			UserVolumeConfigV1Alpha1{}.Doc(),
 			UserMountSpec{}.Doc(),
 			FilesystemSpec{}.Doc(),
+			XFSSpec{}.Doc(),
 			VolumeConfigV1Alpha1{}.Doc(),
+			SystemVolumeFilesystemSpec{}.Doc(),
 			MountSpec{}.Doc(),
 			ProvisioningSpec{}.Doc(),
 			DiskSelector{}.Doc(),

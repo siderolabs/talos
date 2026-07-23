@@ -19,6 +19,9 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
+// volumeMountFinalizer is the finalizer a service puts on the `VolumeMountStatus` it uses.
+const volumeMountFinalizer = "service"
+
 func (svcrunner *ServiceRunner) deleteVolumeMountRequest(ctx context.Context, requests []volumeRequest) error {
 	st := svcrunner.runtime.State().V1Alpha2().Resources()
 
@@ -26,21 +29,27 @@ func (svcrunner *ServiceRunner) deleteVolumeMountRequest(ctx context.Context, re
 	slices.Reverse(requests)
 
 	for _, request := range requests {
-		if err := st.RemoveFinalizer(ctx, block.NewVolumeMountStatus(block.NamespaceName, request.requestID).Metadata(), "service"); err != nil {
+		if err := st.RemoveFinalizer(ctx, block.NewVolumeMountStatus(block.NamespaceName, request.requestID).Metadata(), volumeMountFinalizer); err != nil {
 			if !state.IsNotFoundError(err) {
 				return fmt.Errorf("failed to remove finalizer from mount status %q: %w", request.requestID, err)
 			}
 		}
 	}
 
+	activeRequests := make([]volumeRequest, 0, len(requests))
+
 	for _, request := range requests {
 		err := st.Destroy(ctx, block.NewVolumeMountRequest(block.NamespaceName, request.requestID).Metadata())
-		if err != nil {
+		if err != nil && !state.IsNotFoundError(err) {
 			return fmt.Errorf("failed to destroy volume mount request %q: %w", request.requestID, err)
+		}
+
+		if err == nil {
+			activeRequests = append(activeRequests, request)
 		}
 	}
 
-	for _, request := range requests {
+	for _, request := range activeRequests {
 		if _, err := st.WatchFor(ctx, block.NewVolumeMountStatus(block.NamespaceName, request.requestID).Metadata(), state.WithEventTypes(state.Destroyed)); err != nil {
 			return fmt.Errorf("failed to watch for volume mount status to be destroyed %q: %w", request.requestID, err)
 		}
@@ -65,30 +74,41 @@ func (cond *volumesMountedCondition) Wait(ctx context.Context) error {
 	for idx := range cond.requests {
 		req := cond.requests[idx]
 
-		// create volume mount request
-		mountRequest := block.NewVolumeMountRequest(block.NamespaceName, req.requestID)
-		mountRequest.TypedSpec().Requester = req.requester
-		mountRequest.TypedSpec().VolumeID = req.volumeID
+		// mount request IDs are stable across service restarts, so a `VolumeMountStatus` observed here
+		// might still belong to the previous generation of the service, and go into tearing down phase
+		// right after we observe it as running; retry until we manage to put a finalizer on a
+		// `VolumeMountStatus` which is still running
+		for {
+			// create volume mount request
+			mountRequest := block.NewVolumeMountRequest(block.NamespaceName, req.requestID)
+			mountRequest.TypedSpec().Requester = req.requester
+			mountRequest.TypedSpec().VolumeID = req.volumeID
 
-		if err := cond.st.Create(ctx, mountRequest); err != nil {
-			if !state.IsConflictError(err) {
-				return fmt.Errorf("failed to create mount request: %w", err)
+			if err := cond.st.Create(ctx, mountRequest); err != nil && !state.IsConflictError(err) {
+				return fmt.Errorf("failed to create mount request %q: %w", req.requestID, err)
 			}
-		}
 
-		// wait for the mount status
-		_, err := cond.st.WatchFor(
-			ctx,
-			block.NewVolumeMountStatus(block.NamespaceName, req.requestID).Metadata(),
-			state.WithEventTypes(state.Created, state.Updated),
-			state.WithPhases(resource.PhaseRunning),
-		)
-		if err != nil {
-			return err
-		}
+			// wait for the mount status
+			_, err := cond.st.WatchFor(
+				ctx,
+				block.NewVolumeMountStatus(block.NamespaceName, req.requestID).Metadata(),
+				state.WithEventTypes(state.Created, state.Updated),
+				state.WithPhases(resource.PhaseRunning),
+			)
+			if err != nil {
+				return err
+			}
 
-		if err = cond.st.AddFinalizer(ctx, block.NewVolumeMountStatus(block.NamespaceName, req.requestID).Metadata(), "service"); err != nil {
-			return err
+			err = cond.lockVolumeMountStatus(ctx, req.requestID)
+			if err == nil {
+				break
+			}
+
+			// the volume mount status went away or started tearing down after we have observed it as running,
+			// so wait for the new one to be established
+			if !state.IsPhaseConflictError(err) && !state.IsNotFoundError(err) {
+				return err
+			}
 		}
 
 		cond.mu.Lock()
@@ -97,6 +117,33 @@ func (cond *volumesMountedCondition) Wait(ctx context.Context) error {
 	}
 
 	return nil
+}
+
+// lockVolumeMountStatus puts the service finalizer on the volume mount status, but only if it is still running.
+//
+// Unlike `state.AddFinalizer`, which updates the resource in any phase, this fails with a phase conflict error
+// if the volume mount status is already tearing down: putting a finalizer on it would block its teardown forever,
+// as the finalizer is only removed when the service stops.
+func (cond *volumesMountedCondition) lockVolumeMountStatus(ctx context.Context, requestID string) error {
+	ptr := block.NewVolumeMountStatus(block.NamespaceName, requestID).Metadata()
+
+	current, err := cond.st.Get(ctx, ptr)
+	if err != nil {
+		return err
+	}
+
+	_, err = cond.st.UpdateWithConflicts(
+		ctx, ptr,
+		func(r resource.Resource) error {
+			r.Metadata().Finalizers().Add(volumeMountFinalizer)
+
+			return nil
+		},
+		state.WithUpdateOwner(current.Metadata().Owner()),
+		state.WithExpectedPhase(resource.PhaseRunning),
+	)
+
+	return err
 }
 
 func (cond *volumesMountedCondition) String() string {

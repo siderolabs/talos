@@ -8,8 +8,6 @@ package v1alpha1
 
 import (
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 func (Config) Doc() *encoder.Doc {
@@ -116,29 +114,11 @@ func (MachineConfig) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra certificate subject alternative names for the machine's certificate." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{},
-			{
-				Name:        "kubelet",
-				Type:        "KubeletConfig",
-				Note:        "",
-				Description: "Used to provide additional options to the kubelet.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Used to provide additional options to the kubelet." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "pods",
-				Type:        "[]Unstructured",
-				Note:        "",
-				Description: "Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver.\n\nStatic pods can be used to run components which should be started before the Kubernetes control plane is up.\nTalos doesn't validate the pod definition.\nUpdates to this field can be applied without a reboot.\n\nSee https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
 			{},
 			{},
-			{
-				Name:        "install",
-				Type:        "InstallConfig",
-				Note:        "",
-				Description: "Used to provide instructions for installations.\n\nNote that this configuration section gets silently ignored by Talos images that are considered pre-installed.\nTo make sure Talos installs according to the provided configuration, Talos should be booted with ISO or PXE-booted.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Used to provide instructions for installations." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
+			{},
+			{},
 			{
 				Name:        "files",
 				Type:        "[]MachineFile",
@@ -159,13 +139,7 @@ func (MachineConfig) Doc() *encoder.Doc {
 				Description: "Features describe individual Talos features that can be switched on or off.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Features describe individual Talos features that can be switched on or off." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "udev",
-				Type:        "UdevConfig",
-				Note:        "",
-				Description: "Configures the udev system.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the udev system." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{
 				Name:        "logging",
 				Type:        "LoggingConfig",
@@ -173,13 +147,7 @@ func (MachineConfig) Doc() *encoder.Doc {
 				Description: "Configures the logging system.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the logging system." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "kernel",
-				Type:        "KernelConfig",
-				Note:        "",
-				Description: "Configures the kernel.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the kernel." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{
 				Name:        "seccompProfiles",
 				Type:        "[]MachineSeccompProfile",
@@ -194,27 +162,9 @@ func (MachineConfig) Doc() *encoder.Doc {
 				Description: "Override (patch) settings in the default OCI runtime spec for CRI containers.\n\nIt can be used to set some default container settings which are not configurable in Kubernetes,\nfor example default ulimits.\nNote: this change applies to all newly created containers, and it requires a reboot to take effect.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Override (patch) settings in the default OCI runtime spec for CRI containers." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "nodeLabels",
-				Type:        "map[string]string",
-				Note:        "",
-				Description: "Configures the node labels for the machine.\n\nNote: In the default Kubernetes configuration, worker nodes are restricted to set\nlabels with some prefixes (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin).",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the node labels for the machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "nodeAnnotations",
-				Type:        "map[string]string",
-				Note:        "",
-				Description: "Configures the node annotations for the machine.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the node annotations for the machine." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "nodeTaints",
-				Type:        "map[string]string",
-				Note:        "",
-				Description: "Configures the node taints for the machine. Effect is optional.\n\nNote: In the default Kubernetes configuration, worker nodes are not allowed to\nmodify the taints (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin).",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the node taints for the machine. Effect is optional." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
+			{},
+			{},
 		},
 	}
 
@@ -223,20 +173,12 @@ func (MachineConfig) Doc() *encoder.Doc {
 	doc.Fields[1].AddExample("example token", "328hom.uqjzh6jnn2eie9oi")
 	doc.Fields[2].AddExample("machine CA example", pemEncodedCertificateExample())
 	doc.Fields[4].AddExample("Uncomment this to enable SANs.", []string{"10.0.0.10", "172.16.0.10", "192.168.0.10"})
-	doc.Fields[6].AddExample("Kubelet definition example.", machineKubeletExample())
-	doc.Fields[7].AddExample("nginx static pod.", machinePodsExample())
-	doc.Fields[10].AddExample("MachineInstall config usage example.", machineInstallExample())
 	doc.Fields[11].AddExample("MachineFiles usage example.", machineFilesExample())
 	doc.Fields[18].AddExample("", machineFeaturesExample())
-	doc.Fields[19].AddExample("", machineUdevExample())
 	doc.Fields[20].AddExample("", machineLoggingExample1())
 	doc.Fields[20].AddExample("", machineLoggingExample2())
-	doc.Fields[21].AddExample("", machineKernelExample())
 	doc.Fields[22].AddExample("", machineSeccompExample())
 	doc.Fields[23].AddExample("override default open file limit", machineBaseRuntimeSpecOverridesExample())
-	doc.Fields[24].AddExample("node labels example.", map[string]string{"exampleLabel": "exampleLabelValue"})
-	doc.Fields[25].AddExample("node annotations example.", map[string]string{"customer.io/rack": "r13a25"})
-	doc.Fields[26].AddExample("node taints example.", map[string]string{"exampleTaint": "exampleTaintValue:NoSchedule"})
 
 	return doc
 }
@@ -287,34 +229,10 @@ func (ClusterConfig) Doc() *encoder.Doc {
 			},
 		},
 		Fields: []encoder.Doc{
-			{
-				Name:        "id",
-				Type:        "string",
-				Note:        "",
-				Description: "Globally unique identifier for this cluster (base64 encoded random 32 bytes).",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Globally unique identifier for this cluster (base64 encoded random 32 bytes)." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "secret",
-				Type:        "string",
-				Note:        "",
-				Description: "Shared secret of cluster (base64 encoded random 32 bytes).\nThis secret is shared among cluster members but should never be sent over the network.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Shared secret of cluster (base64 encoded random 32 bytes)." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "controlPlane",
-				Type:        "ControlPlaneConfig",
-				Note:        "",
-				Description: "Provides control plane specific configuration options.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Provides control plane specific configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "clusterName",
-				Type:        "string",
-				Note:        "",
-				Description: "Configures the cluster's name.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures the cluster's name." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
+			{},
+			{},
+			{},
 			{},
 			{
 				Name:        "token",
@@ -325,57 +243,15 @@ func (ClusterConfig) Doc() *encoder.Doc {
 			},
 			{},
 			{},
-			{
-				Name:        "ca",
-				Type:        "PEMEncodedCertificateAndKey",
-				Note:        "",
-				Description: "The base64 encoded root certificate authority used by Kubernetes.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The base64 encoded root certificate authority used by Kubernetes." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "acceptedCAs",
-				Type:        "[]PEMEncodedCertificate",
-				Note:        "",
-				Description: "The list of base64 encoded accepted certificate authorities used by Kubernetes.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The list of base64 encoded accepted certificate authorities used by Kubernetes." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "aggregatorCA",
-				Type:        "PEMEncodedCertificateAndKey",
-				Note:        "",
-				Description: "The base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation.\n\nThis CA can be self-signed.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "serviceAccount",
-				Type:        "PEMEncodedKey",
-				Note:        "",
-				Description: "The base64 encoded private key for service account token generation.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The base64 encoded private key for service account token generation." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "apiServer",
-				Type:        "APIServerConfig",
-				Note:        "",
-				Description: "API server specific configuration options.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "API server specific configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
 			{},
-			{
-				Name:        "proxy",
-				Type:        "ProxyConfig",
-				Note:        "",
-				Description: "Kube-proxy server-specific configuration options",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Kube-proxy server-specific configuration options" /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
 			{},
-			{
-				Name:        "discovery",
-				Type:        "ClusterDiscoveryConfig",
-				Note:        "",
-				Description: "Configures cluster member discovery.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configures cluster member discovery." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
+			{},
 			{
 				Name:        "etcd",
 				Type:        "EtcdConfig",
@@ -383,13 +259,7 @@ func (ClusterConfig) Doc() *encoder.Doc {
 				Description: "Etcd specific configuration options.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Etcd specific configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "coreDNS",
-				Type:        "CoreDNS",
-				Note:        "",
-				Description: "Core DNS specific configuration options.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Core DNS specific configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{
 				Name:        "externalCloudProvider",
 				Type:        "ExternalCloudProviderConfig",
@@ -397,27 +267,9 @@ func (ClusterConfig) Doc() *encoder.Doc {
 				Description: "External cloud provider configuration.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "External cloud provider configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "extraManifests",
-				Type:        "[]string",
-				Note:        "",
-				Description: "A list of urls that point to additional manifests.\nThese will get automatically deployed as part of the bootstrap.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "A list of urls that point to additional manifests." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "extraManifestHeaders",
-				Type:        "map[string]string",
-				Note:        "",
-				Description: "A map of key value pairs that will be added while fetching the extraManifests.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "A map of key value pairs that will be added while fetching the extraManifests." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "inlineManifests",
-				Type:        "[]ClusterInlineManifest",
-				Note:        "",
-				Description: "A list of inline Kubernetes manifests.\nThese will get automatically deployed as part of the bootstrap.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "A list of inline Kubernetes manifests." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
+			{},
+			{},
 			{
 				Name:        "adminKubeconfig",
 				Type:        "AdminKubeconfigConfig",
@@ -426,517 +278,14 @@ func (ClusterConfig) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Settings for admin kubeconfig generation." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{},
-			{
-				Name:        "allowSchedulingOnControlPlanes",
-				Type:        "bool",
-				Note:        "",
-				Description: "Allows running workload on control-plane nodes.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Allows running workload on control-plane nodes." /* encoder.LineComment */, "" /* encoder.FootComment */},
-				Values: []string{
-					"true",
-					"yes",
-					"false",
-					"no",
-				},
-			},
+			{},
 		},
 	}
 
-	doc.AddExample("", clusterConfigExample())
-
-	doc.Fields[2].AddExample("Setting controlplane endpoint address to 1.2.3.4 and port to 443 example.", clusterControlPlaneExample())
 	doc.Fields[5].AddExample("Bootstrap token example (do not use in production!).", "wlzjyw.bei2zfylhs2by0wd")
-	doc.Fields[8].AddExample("ClusterCA example.", pemEncodedCertificateExample())
-	doc.Fields[10].AddExample("AggregatorCA example.", pemEncodedCertificateExample())
-	doc.Fields[11].AddExample("AggregatorCA example.", pemEncodedKeyExample())
-	doc.Fields[12].AddExample("", clusterAPIServerExample())
-	doc.Fields[14].AddExample("", clusterProxyExample())
-	doc.Fields[16].AddExample("", clusterDiscoveryExample())
 	doc.Fields[17].AddExample("", clusterEtcdExample())
-	doc.Fields[18].AddExample("", clusterCoreDNSExample())
 	doc.Fields[19].AddExample("", clusterExternalCloudProviderConfigExample())
-	doc.Fields[20].AddExample("", []string{
-		"https://www.example.com/manifest1.yaml",
-		"https://www.example.com/manifest2.yaml",
-	})
-	doc.Fields[21].AddExample("", map[string]string{
-		"Token":       "1234567",
-		"X-ExtraInfo": "info",
-	})
-	doc.Fields[22].AddExample("", clusterInlineManifestsExample())
 	doc.Fields[23].AddExample("", clusterAdminKubeconfigExample())
-	doc.Fields[25].AddExample("", true)
-
-	return doc
-}
-
-func (LinuxIDMapping) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "LinuxIDMapping",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "LinuxIDMapping represents the Linux ID mapping." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "LinuxIDMapping represents the Linux ID mapping.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "ExtraMount",
-				FieldName: "uidMappings",
-			},
-			{
-				TypeName:  "ExtraMount",
-				FieldName: "gidMappings",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "containerID",
-				Type:        "uint32",
-				Note:        "",
-				Description: "ContainerID is the starting UID/GID in the container.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "ContainerID is the starting UID/GID in the container." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "hostID",
-				Type:        "uint32",
-				Note:        "",
-				Description: "HostID is the starting UID/GID on the host to be mapped to 'ContainerID'.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "HostID is the starting UID/GID on the host to be mapped to 'ContainerID'." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "size",
-				Type:        "uint32",
-				Note:        "",
-				Description: "Size is the number of IDs to be mapped.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Size is the number of IDs to be mapped." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	return doc
-}
-
-func (ExtraMount) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "ExtraMount",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "ExtraMount wraps OCI Mount specification." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ExtraMount wraps OCI Mount specification.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "KubeletConfig",
-				FieldName: "extraMounts",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "destination",
-				Type:        "string",
-				Note:        "",
-				Description: "Destination is the absolute path where the mount will be placed in the container.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Destination is the absolute path where the mount will be placed in the container." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "type",
-				Type:        "string",
-				Note:        "",
-				Description: "Type specifies the mount kind.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Type specifies the mount kind." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "source",
-				Type:        "string",
-				Note:        "",
-				Description: "Source specifies the source path of the mount.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Source specifies the source path of the mount." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "options",
-				Type:        "[]string",
-				Note:        "",
-				Description: "Options are fstab style mount options.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Options are fstab style mount options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "uidMappings",
-				Type:        "[]LinuxIDMapping",
-				Note:        "",
-				Description: "UID/GID mappings used for changing file owners w/o calling chown, fs should support it.\n\nEvery mount point could have its own mapping.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "UID/GID mappings used for changing file owners w/o calling chown, fs should support it." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "gidMappings",
-				Type:        "[]LinuxIDMapping",
-				Note:        "",
-				Description: "UID/GID mappings used for changing file owners w/o calling chown, fs should support it.\n\nEvery mount point could have its own mapping.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "UID/GID mappings used for changing file owners w/o calling chown, fs should support it." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", kubeletExtraMountsExample())
-
-	return doc
-}
-
-func (KubeletConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "KubeletConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeletConfig represents the kubelet config values." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "KubeletConfig represents the kubelet config values.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "MachineConfig",
-				FieldName: "kubelet",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "image",
-				Type:        "string",
-				Note:        "",
-				Description: "The `image` field is an optional reference to an alternative kubelet image.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `image` field is an optional reference to an alternative kubelet image." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "clusterDNS",
-				Type:        "[]string",
-				Note:        "",
-				Description: "The `ClusterDNS` field is an optional reference to an alternative kubelet clusterDNS ip list.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `ClusterDNS` field is an optional reference to an alternative kubelet clusterDNS ip list." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "extraArgs",
-				Type:        "Args",
-				Note:        "",
-				Description: "The `extraArgs` field is used to provide additional flags to the kubelet.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `extraArgs` field is used to provide additional flags to the kubelet." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "extraMounts",
-				Type:        "[]ExtraMount",
-				Note:        "",
-				Description: "The `extraMounts` field is used to add additional mounts to the kubelet container.\nNote that either `bind` or `rbind` are required in the `options`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `extraMounts` field is used to add additional mounts to the kubelet container." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "extraConfig",
-				Type:        "Unstructured",
-				Note:        "",
-				Description: "The `extraConfig` field is used to provide kubelet configuration overrides.\n\nSome fields are not allowed to be overridden: authentication and authorization, cgroups\nconfiguration, ports, etc.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `extraConfig` field is used to provide kubelet configuration overrides." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "credentialProviderConfig",
-				Type:        "Unstructured",
-				Note:        "",
-				Description: "The `KubeletCredentialProviderConfig` field is used to provide kubelet credential configuration.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `KubeletCredentialProviderConfig` field is used to provide kubelet credential configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "defaultRuntimeSeccompProfileEnabled",
-				Type:        "bool",
-				Note:        "",
-				Description: "Enable container runtime default Seccomp profile.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable container runtime default Seccomp profile." /* encoder.LineComment */, "" /* encoder.FootComment */},
-				Values: []string{
-					"true",
-					"yes",
-					"false",
-					"no",
-				},
-			},
-			{
-				Name:        "registerWithFQDN",
-				Type:        "bool",
-				Note:        "",
-				Description: "The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration.\nThis is required in clouds like AWS.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration." /* encoder.LineComment */, "" /* encoder.FootComment */},
-				Values: []string{
-					"true",
-					"yes",
-					"false",
-					"no",
-				},
-			},
-			{
-				Name:        "nodeIP",
-				Type:        "KubeletNodeIPConfig",
-				Note:        "",
-				Description: "The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.\nThis is used when a node has multiple addresses to choose from.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `nodeIP` field is used to configure `--node-ip` flag for the kubelet." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "skipNodeRegistration",
-				Type:        "bool",
-				Note:        "",
-				Description: "The `skipNodeRegistration` is used to run the kubelet without registering with the apiserver.\nThis runs kubelet as standalone and only runs static pods.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `skipNodeRegistration` is used to run the kubelet without registering with the apiserver." /* encoder.LineComment */, "" /* encoder.FootComment */},
-				Values: []string{
-					"true",
-					"yes",
-					"false",
-					"no",
-				},
-			},
-			{
-				Name:        "disableManifestsDirectory",
-				Type:        "bool",
-				Note:        "",
-				Description: "The `disableManifestsDirectory` field configures the kubelet to get static pod manifests from the /etc/kubernetes/manifests directory.\nIt's recommended to configure static pods with the \"pods\" key instead.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `disableManifestsDirectory` field configures the kubelet to get static pod manifests from the /etc/kubernetes/manifests directory." /* encoder.LineComment */, "" /* encoder.FootComment */},
-				Values: []string{
-					"true",
-					"yes",
-					"false",
-					"no",
-				},
-			},
-		},
-	}
-
-	doc.AddExample("Kubelet definition example.", machineKubeletExample())
-
-	doc.Fields[0].AddExample("", kubeletImageExample())
-	doc.Fields[1].AddExample("", []string{"10.96.0.10", "169.254.2.53"})
-	doc.Fields[2].AddExample("", meta.Args{
-		"key": meta.NewArgValue("value", nil),
-	})
-	doc.Fields[2].AddExample("", meta.Args{
-		"key": meta.NewArgValue("", []string{"value1", "value2"}),
-	})
-	doc.Fields[3].AddExample("", kubeletExtraMountsExample())
-	doc.Fields[4].AddExample("", kubeletExtraConfigExample())
-	doc.Fields[5].AddExample("", kubeletCredentialProviderConfigExample())
-	doc.Fields[8].AddExample("", kubeletNodeIPExample())
-
-	return doc
-}
-
-func (KubeletNodeIPConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "KubeletNodeIPConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeletNodeIPConfig represents the kubelet node IP configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "KubeletNodeIPConfig represents the kubelet node IP configuration.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "KubeletConfig",
-				FieldName: "nodeIP",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "validSubnets",
-				Type:        "[]string",
-				Note:        "",
-				Description: "The `validSubnets` field configures the networks to pick kubelet node IP from.\nFor dual stack configuration, there should be two subnets: one for IPv4, another for IPv6.\nIPs can be excluded from the list by using negative match with `!`, e.g `!10.0.0.0/8`.\nNegative subnet matches should be specified last to filter out IPs picked by positive matches.\nIf not specified, node IP is picked based on cluster podCIDRs: IPv4/IPv6 address or both.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `validSubnets` field configures the networks to pick kubelet node IP from." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", kubeletNodeIPExample())
-
-	return doc
-}
-
-func (InstallConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "InstallConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "InstallConfig represents the installation options for preparing a node." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "InstallConfig represents the installation options for preparing a node.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "MachineConfig",
-				FieldName: "install",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "disk",
-				Type:        "string",
-				Note:        "",
-				Description: "The disk used for installations.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The disk used for installations." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "diskSelector",
-				Type:        "InstallDiskSelector",
-				Note:        "",
-				Description: "Look up disk using disk attributes like model, size, serial and others.\nAlways has priority over `disk`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Look up disk using disk attributes like model, size, serial and others." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{},
-			{
-				Name:        "image",
-				Type:        "string",
-				Note:        "",
-				Description: "Allows for supplying the image used to perform the installation.\nImage reference for each Talos release can be found on\n[GitHub releases page](https://github.com/siderolabs/talos/releases).",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Allows for supplying the image used to perform the installation." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{},
-			{},
-			{
-				Name:        "wipe",
-				Type:        "bool",
-				Note:        "",
-				Description: "Indicates if the installation disk should be wiped at installation time.\nDefaults to `true`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Indicates if the installation disk should be wiped at installation time." /* encoder.LineComment */, "" /* encoder.FootComment */},
-				Values: []string{
-					"true",
-					"yes",
-					"false",
-					"no",
-				},
-			},
-			{
-				Name:        "legacyBIOSSupport",
-				Type:        "bool",
-				Note:        "",
-				Description: "Indicates if MBR partition should be marked as bootable (active).\nShould be enabled only for the systems with legacy BIOS that doesn't support GPT partitioning scheme.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Indicates if MBR partition should be marked as bootable (active)." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "grubUseUKICmdline",
-				Type:        "bool",
-				Note:        "",
-				Description: "Indicates if legacy GRUB bootloader should use kernel cmdline from the UKI instead of building it on the host.\nThis changes the way cmdline is managed with GRUB bootloader to be more consistent with UKI/systemd-boot.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Indicates if legacy GRUB bootloader should use kernel cmdline from the UKI instead of building it on the host." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("MachineInstall config usage example.", machineInstallExample())
-
-	doc.Fields[0].AddExample("", "/dev/sda")
-	doc.Fields[0].AddExample("", "/dev/nvme0")
-	doc.Fields[1].AddExample("", machineInstallDiskSelectorExample())
-	doc.Fields[3].AddExample("", "factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:latest")
-
-	return doc
-}
-
-func (InstallDiskSelector) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "InstallDiskSelector",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "InstallDiskSelector represents a disk query parameters for the install disk lookup." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "InstallDiskSelector represents a disk query parameters for the install disk lookup.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "InstallConfig",
-				FieldName: "diskSelector",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "size",
-				Type:        "InstallDiskSizeMatcher",
-				Note:        "",
-				Description: "Disk size.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disk size." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "name",
-				Type:        "string",
-				Note:        "",
-				Description: "Disk name `/sys/block/<dev>/device/name`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disk name `/sys/block/<dev>/device/name`." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "model",
-				Type:        "string",
-				Note:        "",
-				Description: "Disk model `/sys/block/<dev>/device/model`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disk model `/sys/block/<dev>/device/model`." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "serial",
-				Type:        "string",
-				Note:        "",
-				Description: "Disk serial number `/sys/block/<dev>/serial`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disk serial number `/sys/block/<dev>/serial`." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "modalias",
-				Type:        "string",
-				Note:        "",
-				Description: "Disk modalias `/sys/block/<dev>/device/modalias`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disk modalias `/sys/block/<dev>/device/modalias`." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "uuid",
-				Type:        "string",
-				Note:        "",
-				Description: "Disk UUID `/sys/block/<dev>/uuid`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disk UUID `/sys/block/<dev>/uuid`." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "wwid",
-				Type:        "string",
-				Note:        "",
-				Description: "Disk WWID `/sys/block/<dev>/wwid`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disk WWID `/sys/block/<dev>/wwid`." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "type",
-				Type:        "InstallDiskType",
-				Note:        "",
-				Description: "Disk Type.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disk Type." /* encoder.LineComment */, "" /* encoder.FootComment */},
-				Values: []string{
-					"ssd",
-					"hdd",
-					"nvme",
-					"sd",
-				},
-			},
-			{
-				Name:        "busPath",
-				Type:        "string",
-				Note:        "",
-				Description: "Disk bus path.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disk bus path." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", machineInstallDiskSelectorExample())
-
-	doc.Fields[0].AddExample("Select a disk which size is equal to 4GB.", machineInstallDiskSizeMatcherExamples0())
-	doc.Fields[0].AddExample("Select a disk which size is greater than 1TB.", machineInstallDiskSizeMatcherExamples1())
-	doc.Fields[0].AddExample("Select a disk which size is less or equal than 2TB.", machineInstallDiskSizeMatcherExamples2())
-	doc.Fields[8].AddExample("", "/pci0000:00/0000:00:17.0/ata1/host0/target0:0:0/0:0:0:0")
-	doc.Fields[8].AddExample("", "/pci0000:00/*")
-
-	return doc
-}
-
-func (CoreDNS) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "CoreDNS",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "CoreDNS represents the CoreDNS config values." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "CoreDNS represents the CoreDNS config values.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "ClusterConfig",
-				FieldName: "coreDNS",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "disabled",
-				Type:        "bool",
-				Note:        "",
-				Description: "Disable coredns deployment on cluster bootstrap.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disable coredns deployment on cluster bootstrap." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "image",
-				Type:        "string",
-				Note:        "",
-				Description: "The `image` field is an override to the default coredns image.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `image` field is an override to the default coredns image." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", clusterCoreDNSExample())
 
 	return doc
 }
@@ -948,10 +297,6 @@ func (Endpoint) Doc() *encoder.Doc {
 		Description: "Endpoint represents the endpoint URL parsed out of the machine config.",
 		AppearsIn: []encoder.Appearance{
 			{
-				TypeName:  "ControlPlaneConfig",
-				FieldName: "endpoint",
-			},
-			{
 				TypeName:  "LoggingDestination",
 				FieldName: "endpoint",
 			},
@@ -960,255 +305,6 @@ func (Endpoint) Doc() *encoder.Doc {
 			{},
 		},
 	}
-
-	return doc
-}
-
-func (ControlPlaneConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "ControlPlaneConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "ControlPlaneConfig represents the control plane configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ControlPlaneConfig represents the control plane configuration options.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "ClusterConfig",
-				FieldName: "controlPlane",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "endpoint",
-				Type:        "Endpoint",
-				Note:        "",
-				Description: "Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.\nIt is single-valued, and may optionally include a port number.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "localAPIServerPort",
-				Type:        "int",
-				Note:        "",
-				Description: "The port that the API server listens on internally.\nThis may be different than the port portion listed in the endpoint field above.\nThe default is `6443`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The port that the API server listens on internally." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("Setting controlplane endpoint address to 1.2.3.4 and port to 443 example.", clusterControlPlaneExample())
-
-	return doc
-}
-
-func (APIServerConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "APIServerConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "APIServerConfig represents the kube apiserver configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "APIServerConfig represents the kube apiserver configuration options.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "ClusterConfig",
-				FieldName: "apiServer",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "image",
-				Type:        "string",
-				Note:        "",
-				Description: "The container image used in the API server manifest.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The container image used in the API server manifest." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "extraArgs",
-				Type:        "Args",
-				Note:        "",
-				Description: "Extra arguments to supply to the API server.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra arguments to supply to the API server." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "extraVolumes",
-				Type:        "[]VolumeMountConfig",
-				Note:        "",
-				Description: "Extra volumes to mount to the API server static pod.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra volumes to mount to the API server static pod." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "env",
-				Type:        "Env",
-				Note:        "",
-				Description: "The `env` field allows for the addition of environment variables for the control plane component.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The `env` field allows for the addition of environment variables for the control plane component." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "certSANs",
-				Type:        "[]string",
-				Note:        "",
-				Description: "Extra certificate subject alternative names for the API server's certificate.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra certificate subject alternative names for the API server's certificate." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{},
-			{
-				Name:        "admissionControl",
-				Type:        "[]AdmissionPluginConfig",
-				Note:        "",
-				Description: "Configure the API server admission plugins.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure the API server admission plugins." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "auditPolicy",
-				Type:        "Unstructured",
-				Note:        "",
-				Description: "Configure the API server audit policy.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure the API server audit policy." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "resources",
-				Type:        "ResourcesConfig",
-				Note:        "",
-				Description: "Configure the API server resources.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure the API server resources." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "authorizationConfig",
-				Type:        "[]AuthorizationConfigAuthorizerConfig",
-				Note:        "",
-				Description: "Configure the API server authorization config. Node and RBAC authorizers are always added irrespective of the configuration.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure the API server authorization config. Node and RBAC authorizers are always added irrespective of the configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", clusterAPIServerExample())
-
-	doc.Fields[0].AddExample("", clusterAPIServerImageExample())
-	doc.Fields[6].AddExample("", admissionControlConfigExample())
-	doc.Fields[7].AddExample("", APIServerDefaultAuditPolicy)
-	doc.Fields[9].AddExample("", authorizationConfigExample())
-
-	return doc
-}
-
-func (AdmissionPluginConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "AdmissionPluginConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "AdmissionPluginConfig represents the API server admission plugin configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "AdmissionPluginConfig represents the API server admission plugin configuration.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "APIServerConfig",
-				FieldName: "admissionControl",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "name",
-				Type:        "string",
-				Note:        "",
-				Description: "Name is the name of the admission controller.\nIt must match the registered admission plugin name.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Name is the name of the admission controller." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "configuration",
-				Type:        "Unstructured",
-				Note:        "",
-				Description: "Configuration is an embedded configuration object to be used as the plugin's\nconfiguration.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configuration is an embedded configuration object to be used as the plugin's" /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", admissionControlConfigExample())
-
-	return doc
-}
-
-func (AuthorizationConfigAuthorizerConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "AuthorizationConfigAuthorizerConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "AuthorizationConfigAuthorizerConfig represents the API server authorization config authorizer configuration." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "AuthorizationConfigAuthorizerConfig represents the API server authorization config authorizer configuration.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "APIServerConfig",
-				FieldName: "authorizationConfig",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "type",
-				Type:        "string",
-				Note:        "",
-				Description: "Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "name",
-				Type:        "string",
-				Note:        "",
-				Description: "Name is used to describe the authorizer.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Name is used to describe the authorizer." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "webhook",
-				Type:        "Unstructured",
-				Note:        "",
-				Description: "webhook is the configuration for the webhook authorizer.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "webhook is the configuration for the webhook authorizer." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", authorizationConfigExample())
-
-	return doc
-}
-
-func (ProxyConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "ProxyConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "ProxyConfig represents the kube proxy configuration options." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ProxyConfig represents the kube proxy configuration options.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "ClusterConfig",
-				FieldName: "proxy",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "disabled",
-				Type:        "bool",
-				Note:        "",
-				Description: "Disable kube-proxy deployment on cluster bootstrap.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disable kube-proxy deployment on cluster bootstrap." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "image",
-				Type:        "string",
-				Note:        "",
-				Description: "The container image used in the kube-proxy manifest.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The container image used in the kube-proxy manifest." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "mode",
-				Type:        "string",
-				Note:        "",
-				Description: "proxy mode of kube-proxy.\nThe default is 'iptables'.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "proxy mode of kube-proxy." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "extraArgs",
-				Type:        "Args",
-				Note:        "",
-				Description: "Extra arguments to supply to kube-proxy.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Extra arguments to supply to kube-proxy." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", clusterProxyExample())
-
-	doc.Fields[0].AddExample("", new(false))
-	doc.Fields[1].AddExample("", clusterProxyImageExample())
 
 	return doc
 }
@@ -1345,41 +441,6 @@ func (AdminKubeconfigConfig) Doc() *encoder.Doc {
 	return doc
 }
 
-func (ResourcesConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "ResourcesConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "ResourcesConfig represents the pod resources." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ResourcesConfig represents the pod resources.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "APIServerConfig",
-				FieldName: "resources",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "requests",
-				Type:        "Unstructured",
-				Note:        "",
-				Description: "Requests configures the reserved cpu/memory resources.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Requests configures the reserved cpu/memory resources." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "limits",
-				Type:        "Unstructured",
-				Note:        "",
-				Description: "Limits configures the maximum cpu/memory resources a container can use.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Limits configures the maximum cpu/memory resources a container can use." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.Fields[0].AddExample("resources requests.", resourcesConfigRequestsExample())
-	doc.Fields[1].AddExample("resources requests.", resourcesConfigLimitsExample())
-
-	return doc
-}
-
 func (MachineFile) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "MachineFile",
@@ -1462,13 +523,7 @@ func (FeaturesConfig) Doc() *encoder.Doc {
 				Description: "Enable XFS project quota support for EPHEMERAL partition and user disks.\nAlso enables kubelet tracking of ephemeral disk usage in the kubelet via quota.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable XFS project quota support for EPHEMERAL partition and user disks." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
-			{
-				Name:        "kubePrism",
-				Type:        "KubePrism",
-				Note:        "",
-				Description: "KubePrism - local proxy/load balancer on defined port that will distribute\nrequests to all API servers in the cluster.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "KubePrism - local proxy/load balancer on defined port that will distribute" /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{},
 			{},
 			{
@@ -1484,38 +539,6 @@ func (FeaturesConfig) Doc() *encoder.Doc {
 	doc.AddExample("", machineFeaturesExample())
 
 	doc.Fields[2].AddExample("", kubernetesTalosAPIAccessConfigExample())
-
-	return doc
-}
-
-func (KubePrism) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "KubePrism",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "KubePrism describes the configuration for the KubePrism load balancer." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "KubePrism describes the configuration for the KubePrism load balancer.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "FeaturesConfig",
-				FieldName: "kubePrism",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "enabled",
-				Type:        "bool",
-				Note:        "",
-				Description: "Enable KubePrism support - will start local load balancing proxy.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable KubePrism support - will start local load balancing proxy." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "port",
-				Type:        "int",
-				Note:        "",
-				Description: "KubePrism port.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "KubePrism port." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
 
 	return doc
 }
@@ -1557,238 +580,6 @@ func (KubernetesTalosAPIAccessConfig) Doc() *encoder.Doc {
 	}
 
 	doc.AddExample("", kubernetesTalosAPIAccessConfigExample())
-
-	return doc
-}
-
-func (VolumeMountConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "VolumeMountConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "VolumeMountConfig struct describes extra volume mount for the static pods." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "VolumeMountConfig struct describes extra volume mount for the static pods.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "APIServerConfig",
-				FieldName: "extraVolumes",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "hostPath",
-				Type:        "string",
-				Note:        "",
-				Description: "Path on the host.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Path on the host." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "mountPath",
-				Type:        "string",
-				Note:        "",
-				Description: "Path in the container.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Path in the container." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "readonly",
-				Type:        "bool",
-				Note:        "",
-				Description: "Mount the volume read only.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Mount the volume read only." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.Fields[0].AddExample("", "/var/lib/auth")
-	doc.Fields[1].AddExample("", "/etc/kubernetes/auth")
-	doc.Fields[2].AddExample("", true)
-
-	return doc
-}
-
-func (ClusterInlineManifest) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "ClusterInlineManifest",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "ClusterInlineManifest struct describes inline bootstrap manifests for the user." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ClusterInlineManifest struct describes inline bootstrap manifests for the user.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "ClusterConfig",
-				FieldName: "inlineManifests",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "name",
-				Type:        "string",
-				Note:        "",
-				Description: "Name of the manifest.\nName should be unique.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the manifest." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "contents",
-				Type:        "string",
-				Note:        "",
-				Description: "Manifest contents as a string.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Manifest contents as a string." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", clusterInlineManifestsExample())
-
-	doc.Fields[0].AddExample("", "csi")
-	doc.Fields[1].AddExample("", "/etc/kubernetes/auth")
-
-	return doc
-}
-
-func (ClusterDiscoveryConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "ClusterDiscoveryConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "ClusterDiscoveryConfig struct configures cluster membership discovery." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "ClusterDiscoveryConfig struct configures cluster membership discovery.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "ClusterConfig",
-				FieldName: "discovery",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "enabled",
-				Type:        "bool",
-				Note:        "",
-				Description: "Enable the cluster membership discovery feature.\nCluster discovery is based on individual registries which are configured under the registries field.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable the cluster membership discovery feature." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "registries",
-				Type:        "DiscoveryRegistriesConfig",
-				Note:        "",
-				Description: "Configure registries used for cluster member discovery.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure registries used for cluster member discovery." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", clusterDiscoveryExample())
-
-	return doc
-}
-
-func (DiscoveryRegistriesConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "DiscoveryRegistriesConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "DiscoveryRegistriesConfig struct configures cluster membership discovery." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "DiscoveryRegistriesConfig struct configures cluster membership discovery.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "ClusterDiscoveryConfig",
-				FieldName: "registries",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "kubernetes",
-				Type:        "RegistryKubernetesConfig",
-				Note:        "",
-				Description: "Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information\nas annotations on the Node resources.\n\nThis feature is deprecated as it is not compatible with Kubernetes 1.32+.\nSee https://github.com/siderolabs/talos/issues/9980 for more information.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information" /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "service",
-				Type:        "RegistryServiceConfig",
-				Note:        "",
-				Description: "Service registry is using an external service to push and pull information about cluster members.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Service registry is using an external service to push and pull information about cluster members." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	return doc
-}
-
-func (RegistryKubernetesConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "RegistryKubernetesConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "RegistryKubernetesConfig struct configures Kubernetes discovery registry." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "RegistryKubernetesConfig struct configures Kubernetes discovery registry.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "DiscoveryRegistriesConfig",
-				FieldName: "kubernetes",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "disabled",
-				Type:        "bool",
-				Note:        "",
-				Description: "Disable Kubernetes discovery registry.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disable Kubernetes discovery registry." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	return doc
-}
-
-func (RegistryServiceConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "RegistryServiceConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "RegistryServiceConfig struct configures Kubernetes discovery registry." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "RegistryServiceConfig struct configures Kubernetes discovery registry.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "DiscoveryRegistriesConfig",
-				FieldName: "service",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "disabled",
-				Type:        "bool",
-				Note:        "",
-				Description: "Disable external service discovery registry.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Disable external service discovery registry." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "endpoint",
-				Type:        "string",
-				Note:        "",
-				Description: "External service endpoint.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "External service endpoint." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.Fields[1].AddExample("", constants.DefaultDiscoveryServiceEndpoint)
-
-	return doc
-}
-
-func (UdevConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "UdevConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "UdevConfig describes how the udev system should be configured." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "UdevConfig describes how the udev system should be configured.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "MachineConfig",
-				FieldName: "udev",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "rules",
-				Type:        "[]string",
-				Note:        "",
-				Description: "List of udev rules to apply to the udev system",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "List of udev rules to apply to the udev system" /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", machineUdevExample())
 
 	return doc
 }
@@ -1864,65 +655,6 @@ func (LoggingDestination) Doc() *encoder.Doc {
 	return doc
 }
 
-func (KernelConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "KernelConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "KernelConfig struct configures Talos Linux kernel." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "KernelConfig struct configures Talos Linux kernel.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "MachineConfig",
-				FieldName: "kernel",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "modules",
-				Type:        "[]KernelModuleConfig",
-				Note:        "",
-				Description: "Kernel modules to load.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Kernel modules to load." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", machineKernelExample())
-
-	return doc
-}
-
-func (KernelModuleConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "KernelModuleConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "KernelModuleConfig struct configures Linux kernel modules to load." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "KernelModuleConfig struct configures Linux kernel modules to load.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "KernelConfig",
-				FieldName: "modules",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "name",
-				Type:        "string",
-				Note:        "",
-				Description: "Module name.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Module name." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "parameters",
-				Type:        "[]string",
-				Note:        "",
-				Description: "Module parameters, changes applied after reboot.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Module parameters, changes applied after reboot." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	return doc
-}
-
 // GetFileDoc returns documentation for the file ./v1alpha1_types_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -1933,38 +665,15 @@ func GetFileDoc() *encoder.FileDoc {
 			MachineConfig{}.Doc(),
 			MachineSeccompProfile{}.Doc(),
 			ClusterConfig{}.Doc(),
-			LinuxIDMapping{}.Doc(),
-			ExtraMount{}.Doc(),
-			KubeletConfig{}.Doc(),
-			KubeletNodeIPConfig{}.Doc(),
-			InstallConfig{}.Doc(),
-			InstallDiskSelector{}.Doc(),
-			CoreDNS{}.Doc(),
 			Endpoint{}.Doc(),
-			ControlPlaneConfig{}.Doc(),
-			APIServerConfig{}.Doc(),
-			AdmissionPluginConfig{}.Doc(),
-			AuthorizationConfigAuthorizerConfig{}.Doc(),
-			ProxyConfig{}.Doc(),
 			EtcdConfig{}.Doc(),
 			ExternalCloudProviderConfig{}.Doc(),
 			AdminKubeconfigConfig{}.Doc(),
-			ResourcesConfig{}.Doc(),
 			MachineFile{}.Doc(),
 			FeaturesConfig{}.Doc(),
-			KubePrism{}.Doc(),
 			KubernetesTalosAPIAccessConfig{}.Doc(),
-			VolumeMountConfig{}.Doc(),
-			ClusterInlineManifest{}.Doc(),
-			ClusterDiscoveryConfig{}.Doc(),
-			DiscoveryRegistriesConfig{}.Doc(),
-			RegistryKubernetesConfig{}.Doc(),
-			RegistryServiceConfig{}.Doc(),
-			UdevConfig{}.Doc(),
 			LoggingConfig{}.Doc(),
 			LoggingDestination{}.Doc(),
-			KernelConfig{}.Doc(),
-			KernelModuleConfig{}.Doc(),
 		},
 	}
 }

@@ -165,6 +165,117 @@ func TestTemplates(t *testing.T) {
 			},
 		},
 		{
+			name: "apiserver-minimal",
+			obj: func() runtime.Object {
+				cfg := k8s.NewAPIServerConfig(k8s.FinalAPIServerConfigID)
+				*cfg.TypedSpec() = k8s.APIServerConfigSpec{
+					Image:     "registry.k8s.io/kube-apiserver:v1.36.0",
+					LocalPort: 6443,
+					Args: []string{
+						"/usr/local/bin/kube-apiserver",
+						"--etcd-servers=https://127.0.0.1:2379",
+						"--secure-port=6443",
+					},
+				}
+
+				obj, err := k8stemplates.APIServerPod(cfg, "111", "222")
+				require.NoError(t, err)
+
+				return obj
+			},
+		},
+		{
+			name: "apiserver-with-startup-probes",
+			obj: func() runtime.Object {
+				cfg := k8s.NewAPIServerConfig(k8s.FinalAPIServerConfigID)
+				*cfg.TypedSpec() = k8s.APIServerConfigSpec{
+					Image:                "registry.k8s.io/kube-apiserver:v1.36.0",
+					LocalPort:            6443,
+					StartupProbesEnabled: true,
+					Args: []string{
+						"/usr/local/bin/kube-apiserver",
+						"--etcd-servers=https://127.0.0.1:2379",
+						"--secure-port=6443",
+					},
+				}
+
+				obj, err := k8stemplates.APIServerPod(cfg, "111", "222")
+				require.NoError(t, err)
+
+				return obj
+			},
+		},
+		{
+			name: "apiserver-with-resources-and-env",
+			obj: func() runtime.Object {
+				cfg := k8s.NewAPIServerConfig(k8s.FinalAPIServerConfigID)
+				*cfg.TypedSpec() = k8s.APIServerConfigSpec{
+					Image:     "registry.k8s.io/kube-apiserver:v1.36.0",
+					LocalPort: 6443,
+					Args: []string{
+						"/usr/local/bin/kube-apiserver",
+						"--etcd-servers=https://127.0.0.1:2379",
+						"--secure-port=6443",
+					},
+					EnvironmentVariables: map[string]string{
+						"HTTP_PROXY":  "http://127.0.0.1:443",
+						"GOGC":        "50",
+						"NO_PROXY":    "10.0.0.0/8",
+						"HTTPS_PROXY": "http://127.0.0.1:443",
+					},
+					Resources: k8s.Resources{
+						Requests: map[string]string{
+							"cpu":    "100m",
+							"memory": "1Gi",
+						},
+						Limits: map[string]string{
+							"cpu":    "2",
+							"memory": "4Gi",
+						},
+					},
+				}
+
+				obj, err := k8stemplates.APIServerPod(cfg, "111", "222")
+				require.NoError(t, err)
+
+				return obj
+			},
+		},
+		{
+			name: "apiserver-with-extra-volumes",
+			obj: func() runtime.Object {
+				cfg := k8s.NewAPIServerConfig(k8s.FinalAPIServerConfigID)
+				*cfg.TypedSpec() = k8s.APIServerConfigSpec{
+					Image:     "registry.k8s.io/kube-apiserver:v1.36.0",
+					LocalPort: 6443,
+					Args: []string{
+						"/usr/local/bin/kube-apiserver",
+						"--etcd-servers=https://127.0.0.1:2379",
+						"--secure-port=6443",
+					},
+					ExtraVolumes: []k8s.ExtraVolume{
+						{
+							Name:      "audit",
+							HostPath:  "/var/lib/audit",
+							MountPath: "/etc/kubernetes/audit",
+							ReadOnly:  true,
+						},
+						{
+							Name:      "encryption",
+							HostPath:  "/var/lib/encryption",
+							MountPath: "/etc/kubernetes/encryption",
+							ReadOnly:  false,
+						},
+					},
+				}
+
+				obj, err := k8stemplates.APIServerPod(cfg, "111", "222")
+				require.NoError(t, err)
+
+				return obj
+			},
+		},
+		{
 			name: "coredns-service-ipv4",
 			obj: func() runtime.Object {
 				return k8stemplates.CoreDNSService(&k8s.BootstrapManifestsConfigSpec{
@@ -263,10 +374,64 @@ func TestTemplates(t *testing.T) {
 		{
 			name: "kube-proxy-daemonset",
 			obj: func() runtime.Object {
-				return k8stemplates.KubeProxyDaemonSetTemplate(&k8s.BootstrapManifestsConfigSpec{
+				spec, err := k8stemplates.KubeProxyDaemonSetTemplate(&k8s.BootstrapManifestsConfigSpec{
 					ProxyImage: "k8s.gcr.io/kube-proxy:v1.27.0",
 					ProxyArgs:  []string{"--proxy-mode=iptables"},
 				})
+				require.NoError(t, err)
+
+				return spec
+			},
+		},
+		{
+			name: "kube-proxy-daemonset-with-config",
+			obj: func() runtime.Object {
+				spec, err := k8stemplates.KubeProxyDaemonSetTemplate(&k8s.BootstrapManifestsConfigSpec{
+					ProxyImage: "k8s.gcr.io/kube-proxy:v1.27.0",
+					ProxyArgs:  []string{"--config=/var/lib/kube-proxy/config.conf", "--hostname-override=$(NODE_NAME)"},
+					ProxyConfig: map[string]any{
+						"apiVersion": "kubeproxy.config.k8s.io/v1alpha1",
+						"kind":       "KubeProxyConfiguration",
+						"mode":       "nftables",
+					},
+					ProxyResources: k8s.Resources{
+						Requests: map[string]string{
+							"cpu":    "150m",
+							"memory": "64Mi",
+						},
+						Limits: map[string]string{
+							"cpu":    "300m",
+							"memory": "128Mi",
+						},
+					},
+					ProxyConfigChecksum: "abc123",
+				})
+				require.NoError(t, err)
+
+				return spec
+			},
+		},
+		{
+			name: "kube-proxy-configmap",
+			obj: func() runtime.Object {
+				spec, err := k8stemplates.KubeProxyConfigMapTemplate(&k8s.BootstrapManifestsConfigSpec{
+					ProxyConfig: map[string]any{
+						"apiVersion":  "kubeproxy.config.k8s.io/v1alpha1",
+						"kind":        "KubeProxyConfiguration",
+						"mode":        "nftables",
+						"clusterCIDR": "10.244.0.0/16",
+						"clientConnection": map[string]any{
+							"kubeconfig": "/etc/kubernetes/kubeconfig",
+						},
+						"conntrack": map[string]any{
+							"maxPerCore": int32(0),
+						},
+					},
+					ProxyConfigChecksum: "abc123",
+				})
+				require.NoError(t, err)
+
+				return spec
 			},
 		},
 		{

@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
@@ -18,6 +19,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 )
 
 var (
@@ -90,6 +92,42 @@ func (suite *SystemServicesSuite) TestStopWithRevDeps() {
 	}
 
 	system.Services(nil).Shutdown(context.TODO())
+}
+
+func serviceState(id string) string {
+	for _, svcRunner := range system.Services(nil).List() {
+		if proto := svcRunner.AsProto(); proto.Id == id {
+			return proto.State
+		}
+	}
+
+	return ""
+}
+
+// TestStopDuringCondition verifies that stopping a service while it is still
+// waiting on its start condition is treated as a clean stop, and doesn't leave
+// the service stuck in the Failed state (regression test).
+func (suite *SystemServicesSuite) TestStopDuringCondition() {
+	cond := NewMockCondition("test condition")
+
+	system.Services(newRuntime(suite.T())).LoadAndStart(
+		&MockService{name: "stopcond", condition: cond},
+	)
+
+	// wait until the service is waiting on the condition
+	suite.Require().NoError(retry.Constant(time.Minute, retry.WithUnits(10*time.Millisecond)).Retry(func() error {
+		if state := serviceState("stopcond"); state != events.StateWaiting.String() {
+			return retry.ExpectedErrorf("service should be waiting, got %q", state)
+		}
+
+		return nil
+	}))
+
+	// stopping the service while it waits on the condition should be a clean
+	// stop, not a failure (it used to stick in StateFailed)
+	suite.Require().NoError(system.Services(nil).Stop(context.Background(), "stopcond"))
+
+	suite.Assert().Equal(events.StateFinished.String(), serviceState("stopcond"))
 }
 
 func TestSystemServicesSuite(t *testing.T) {

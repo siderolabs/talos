@@ -16,7 +16,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/efivarfs"
 )
 
-// nolint:gocyclo
+//nolint:gocyclo
 func TestMarshalExamples(t *testing.T) {
 	cases := []struct {
 		name        string

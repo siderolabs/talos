@@ -1,0 +1,4 @@
+apiVersion: v1alpha1
+kind: KubeClusterConfig
+clusterName: example-cluster
+endpoint: https://example.com:6443/

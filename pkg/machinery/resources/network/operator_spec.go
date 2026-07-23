@@ -60,6 +60,7 @@ type DHCP4OperatorSpec struct {
 	RouteMetric         uint32               `yaml:"routeMetric" protobuf:"1"`
 	SkipHostnameRequest bool                 `yaml:"skipHostnameRequest,omitempty" protobuf:"2"`
 	ClientIdentifier    ClientIdentifierSpec `yaml:"clientIdentifier,omitempty" protobuf:"3"`
+	SkipRoutes          bool                 `yaml:"skipRoutes,omitempty" protobuf:"4"`
 }
 
 // DHCP6OperatorSpec describes DHCP6 operator options.

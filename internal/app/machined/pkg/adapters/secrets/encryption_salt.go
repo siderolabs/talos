@@ -14,7 +14,7 @@ import (
 
 // EncryptionSalt adapter provides encryption salt generation.
 //
-//nolint:revive,golint
+//nolint:revive
 func EncryptionSalt(r *secrets.EncryptionSaltSpec) encryptionSalt {
 	return encryptionSalt{
 		EncryptionSaltSpec: r,

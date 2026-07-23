@@ -359,6 +359,12 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 				volumeStatuses[vc.Metadata().ID()] = volumeStatus
 			}
 
+			// propagate resolved trim configuration and the encryption discard setting to the status,
+			// so consumers (e.g. the trim schedule controller) don't need to read the volume config.
+			volumeStatus.TypedSpec().TrimEnabled = vc.TypedSpec().TrimEnabled
+			volumeStatus.TypedSpec().TrimInterval = vc.TypedSpec().TrimInterval
+			volumeStatus.TypedSpec().EncryptionAllowDiscards = vc.TypedSpec().Encryption.AllowDiscards
+
 			if tearingDown && volumeStatus.Metadata().Phase() != resource.PhaseTearingDown {
 				// volume status is not yet in the tearing down phase, so move it there
 				_, err = r.Teardown(ctx, volumeStatus.Metadata())
@@ -447,7 +453,9 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 			}
 
 			// when closing, ignore META volume, we want it to stay longer, so no problem if is not closed yet
-			allClosed = allClosed && (volumeStatus.TypedSpec().Phase == block.VolumePhaseClosed || vc.Metadata().ID() == constants.MetaPartitionLabel)
+			allClosed = allClosed && (volumeStatus.TypedSpec().Phase == block.VolumePhaseClosed ||
+				vc.Metadata().ID() == constants.MetaPartitionLabel ||
+				isFailedUserVolumeProvisioning(volumeLifecycleTearingDown, vc, volumeStatus))
 
 			if shouldCloseVolume && volumeStatus.TypedSpec().Phase == block.VolumePhaseClosed {
 				if volumeParentStatus != nil {
@@ -490,6 +498,54 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 				return fmt.Errorf("error removing finalizer from volume lifecycle: %w", err)
 			}
 		}
+	}
+}
+
+// userConfiguredVolumeLabels are the labels for volumes provisioned from user machine
+// configuration (as opposed to system volumes). A failing allocation of any of these
+// must not block a global volume lifecycle teardown (e.g. reset/reboot/upgrade).
+var userConfiguredVolumeLabels = []string{
+	block.UserVolumeLabel,
+	block.RawVolumeLabel,
+	block.ExistingVolumeLabel,
+	block.SwapVolumeLabel,
+}
+
+// isFailedUserVolumeProvisioning reports whether a volume is a user-configured volume
+// whose provisioning failed before it was ever provisioned/mounted, during a global
+// volume lifecycle teardown. Such volumes have nothing to close (no mount, no open
+// crypto device), so they should not hold up the teardown - otherwise a user volume
+// referencing a non-existent disk blocks reset until the teardown times out.
+func isFailedUserVolumeProvisioning(volumeLifecycleTearingDown bool, volumeConfig *block.VolumeConfig, volumeStatus *block.VolumeStatus) bool {
+	if !volumeLifecycleTearingDown || volumeStatus.TypedSpec().Phase != block.VolumePhaseFailed {
+		return false
+	}
+
+	isUserConfigured := false
+
+	for _, label := range userConfiguredVolumeLabels {
+		if _, ok := volumeConfig.Metadata().Labels().Raw()[label]; ok {
+			isUserConfigured = true
+
+			break
+		}
+	}
+
+	if !isUserConfigured {
+		return false
+	}
+
+	switch volumeStatus.TypedSpec().PreFailPhase {
+	case block.VolumePhaseWaiting, block.VolumePhaseMissing, block.VolumePhaseLocated,
+		block.VolumePhaseProvisioned, block.VolumePhaseFailed, block.VolumePhaseClosed:
+		// never opened a device or a mount, so there is nothing to close: safe to skip
+		return true
+	case block.VolumePhaseReady, block.VolumePhasePrepared:
+		// volume was decrypted and/or mounted, it needs a real close - must not skip
+		return false
+	default:
+		// unknown/new phase: stay strict and keep blocking the teardown
+		return false
 	}
 }
 

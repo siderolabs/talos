@@ -62,6 +62,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/bootloader/options"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
+	"github.com/siderolabs/talos/internal/app/mdd"
 	"github.com/siderolabs/talos/internal/app/resources"
 	storaged "github.com/siderolabs/talos/internal/app/storaged"
 	"github.com/siderolabs/talos/internal/pkg/containers"
@@ -85,6 +86,7 @@ import (
 	timeapi "github.com/siderolabs/talos/pkg/machinery/api/time"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 	"github.com/siderolabs/talos/pkg/machinery/config"
+	configconfig "github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configdiff"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/generate/secrets"
@@ -158,6 +160,7 @@ func (s *Server) Register(obj *grpc.Server) {
 	inspect.RegisterInspectServiceServer(obj, &InspectServer{server: s})
 	storage.RegisterStorageServiceServer(obj, &storaged.Server{Controller: s.Controller})
 	machine.RegisterLVMServiceServer(obj, lvmd.NewService(s.Controller, s.Logger))
+	machine.RegisterMDServiceServer(obj, mdd.NewService(s.Controller, s.Logger))
 	timeapi.RegisterTimeServiceServer(obj, &TimeServer{ConfigProvider: s.Controller.Runtime()})
 }
 
@@ -1223,7 +1226,23 @@ func (s *Server) Kubeconfig(empty *emptypb.Empty, obj machine.MachineService_Kub
 
 	var b bytes.Buffer
 
-	if err := kubeconfig.GenerateAdmin(s.Controller.Runtime().Config().Cluster(), &b); err != nil {
+	k8sCAConfig := s.Controller.Runtime().Config().K8sAPIServerCAConfig()
+	if k8sCAConfig == nil {
+		return status.Error(codes.FailedPrecondition, "k8s API server CA config is not set")
+	}
+
+	if err := kubeconfig.GenerateAdmin(
+		struct {
+			configconfig.ClusterConfig
+			configconfig.K8sAPIServerCAConfig
+			configconfig.K8sClusterConfig
+		}{
+			ClusterConfig:        s.Controller.Runtime().Config().Cluster(),
+			K8sAPIServerCAConfig: k8sCAConfig,
+			K8sClusterConfig:     s.Controller.Runtime().Config().K8sClusterConfig(),
+		},
+		&b,
+	); err != nil {
 		return err
 	}
 
@@ -2339,7 +2358,7 @@ func (s *Server) GenerateClientConfiguration(ctx context.Context, in *machine.Ge
 	}
 
 	// make a nice context name
-	contextName := s.Controller.Runtime().Config().Cluster().Name()
+	contextName := s.Controller.Runtime().Config().K8sClusterConfig().ClusterName()
 	if r := roles.Strings(); len(r) == 1 {
 		contextName = strings.TrimPrefix(r[0], role.Prefix) + "@" + contextName
 	}

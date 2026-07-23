@@ -49,11 +49,9 @@ func NewClient(nodename string, clientCert, clientKey, caPEM []byte) (*Client, e
 	kubeletCert, err := os.ReadFile(filepath.Join(constants.KubeletPKIDir, "kubelet.crt"))
 	if err == nil {
 		config.CAData = append(config.CAData, kubeletCert...)
-	} else if err != nil {
+	} else if !errors.Is(err, fs.ErrNotExist) {
 		// ignore if file doesn't exist, assume cert isn't self-signed
-		if !errors.Is(err, fs.ErrNotExist) {
-			return nil, fmt.Errorf("error reading kubelet certificate: %w", err)
-		}
+		return nil, fmt.Errorf("error reading kubelet certificate: %w", err)
 	}
 
 	client := &Client{}

@@ -1,4 +1,3 @@
-machine:
-  kernel:
-    modules:
-      - name: dm_raid
+apiVersion: v1alpha1
+kind: KernelModuleConfig
+name: dm_raid

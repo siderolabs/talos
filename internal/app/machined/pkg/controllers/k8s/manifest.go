@@ -236,15 +236,23 @@ func (ctrl *ManifestController) render(cfg k8s.BootstrapManifestsConfigSpec, scr
 	}
 
 	if cfg.ProxyEnabled {
+		var objects []runtime.Object
+
+		if cfg.ProxyConfig != nil {
+			objects = append(objects, aggregateManifestError(k8stemplates.KubeProxyConfigMapTemplate(&cfg)))
+		}
+
+		objects = append(objects,
+			aggregateManifestError(k8stemplates.KubeProxyDaemonSetTemplate(&cfg)),
+			k8stemplates.KubeProxyServiceAccount(),
+			k8stemplates.KubeProxyClusterRoleBinding(),
+		)
+
 		manifests = append(
 			manifests,
 			renderedManifest{
 				"10-kube-proxy",
-				[]runtime.Object{
-					k8stemplates.KubeProxyDaemonSetTemplate(&cfg),
-					k8stemplates.KubeProxyServiceAccount(),
-					k8stemplates.KubeProxyClusterRoleBinding(),
-				},
+				objects,
 			},
 		)
 	}

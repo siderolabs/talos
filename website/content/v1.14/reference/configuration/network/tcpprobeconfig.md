@@ -1,5 +1,6 @@
 ---
-description: TCPProbeConfig is a config document to configure network TCP connectivity probes.
+description: TCPProbeConfig is a config document to configure network TCP connectivity
+    probes.
 title: TCPProbeConfig
 ---
 

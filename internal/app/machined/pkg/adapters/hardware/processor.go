@@ -12,7 +12,7 @@ import (
 
 // Processor adapter provider conversion from smbios.SMBIOS.
 //
-//nolint:revive,golint
+//nolint:revive
 func Processor(p *hardware.Processor) processor {
 	return processor{
 		Processor: p,

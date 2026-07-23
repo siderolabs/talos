@@ -61,6 +61,11 @@ type Container interface {
 	//
 	// Documents should be not be modified.
 	Documents() []config.Document
+
+	// Has checks if the container has a config document of the given kind.
+	//
+	// This method doesn't support legacy v1alpha1 config.
+	Has(kind string) bool
 }
 
 // Provider defines the configuration consumption interface combining access and encoding/decoding.

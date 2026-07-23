@@ -95,6 +95,11 @@ func (ctrl *RouteStatusController) Run(ctx context.Context, r controller.Runtime
 			gatewayAddr, _ := netip.AddrFromSlice(route.Attributes.Gateway)
 			outLinkName := linkLookup[route.Attributes.OutIface]
 
+			if route.Attributes.Via != nil {
+				// cross-family next-hop (RTA_VIA): surface the via address as the gateway
+				gatewayAddr, _ = netip.AddrFromSlice(route.Attributes.Via.Addr)
+			}
+
 			id := network.RouteID(nethelpers.RoutingTable(route.Table), nethelpers.Family(route.Family), dstPrefix, gatewayAddr, route.Attributes.Priority, outLinkName)
 
 			if err = safe.WriterModify(ctx, r, network.NewRouteStatus(network.NamespaceName, id), func(r *network.RouteStatus) error {
@@ -117,6 +122,26 @@ func (ctrl *RouteStatusController) Run(ctx context.Context, r controller.Runtime
 					status.MTU = route.Attributes.Metrics.MTU
 				} else {
 					status.MTU = 0
+				}
+
+				status.NextHops = nil
+
+				for _, nh := range route.Attributes.Multipath {
+					nhGateway, _ := netip.AddrFromSlice(nh.Gateway)
+
+					if nh.Via != nil {
+						nhGateway, _ = netip.AddrFromSlice(nh.Via.Addr)
+					}
+
+					// RTNextHop.Hops maps to Linux rtnh_hops, which encodes ECMP weight minus one;
+					// it is unrelated to BGP path length.
+					weight := uint32(nh.Hop.Hops) + 1
+
+					status.NextHops = append(status.NextHops, network.RouteNextHop{
+						Gateway:     nhGateway,
+						OutLinkName: linkLookup[nh.Hop.IfIndex],
+						Weight:      weight,
+					})
 				}
 
 				return nil

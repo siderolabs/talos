@@ -1,0 +1,15 @@
+version: v2
+modules:
+  - path: ./
+lint:
+  use:
+    - BASIC
+  # proto package "remoteprovision" lives at the module root rather than
+  # under a remoteprovision/ subdir; the package name is what callers see
+  # on the wire, so we keep it descriptive instead of letting the
+  # directory dictate it.
+  except:
+    - PACKAGE_DIRECTORY_MATCH
+breaking:
+  use:
+    - FILE

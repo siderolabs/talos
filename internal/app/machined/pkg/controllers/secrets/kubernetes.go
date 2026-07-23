@@ -211,11 +211,11 @@ type generateAdminAdapter struct {
 	endpoint *url.URL
 }
 
-func (adapter *generateAdminAdapter) Name() string {
+func (adapter *generateAdminAdapter) ClusterName() string {
 	return adapter.k8sRoot.Name
 }
 
-func (adapter *generateAdminAdapter) Endpoint() *url.URL {
+func (adapter *generateAdminAdapter) ClusterEndpoint() *url.URL {
 	return adapter.endpoint
 }
 

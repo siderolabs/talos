@@ -111,6 +111,24 @@ func TestVerifyImage(t *testing.T) {
 			expectedResultMessage: "verified via bundle",
 		},
 		{
+			// Regression for siderolabs/talos#13639: cilium stores its signature as an OCI
+			// referrer (sigstore bundle v0.3) reachable only via the OCI Distribution referrers
+			// API endpoint, not via the bundle/.sig tag schemes. Requires HostCapabilityReferrers
+			// on the resolver hosts so containerd queries /v2/<name>/referrers/<digest>.
+			imageRef: "quay.io/cilium/cilium:v1.19.5@sha256:20fbbc14ac20b55a292c0dcda5571bf31cde30a7dbc68c29db3e709390ab0732",
+			checkOpts: cosign.CheckOpts{
+				TrustedMaterial: trustedRoot,
+				Identities: []cosign.Identity{
+					{
+						Issuer:        "https://token.actions.githubusercontent.com",
+						SubjectRegExp: `^https://github\.com/cilium/cilium/\.github/workflows/build-images-releases\.yaml@refs/tags/v.*$`,
+					},
+				},
+			},
+
+			expectedResultMessage: "verified via bundle referrer with digest sha256:3ae99bc9aa2691fe7c6c4b9d1261c84afcc8aaf96f426fde7bba481c8dd0fabb",
+		},
+		{
 			imageRef: "ghcr.io/siderolabs/extensions:v1.13.0-alpha.1-17-gc538dab@sha256:32ed7bb3845215bfd71bf4284a2a5113ecd49ce45cde0324764fe84b378c8633",
 			checkOpts: cosign.CheckOpts{
 				TrustedMaterial: trustedRoot,

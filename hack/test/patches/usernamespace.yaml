@@ -1,15 +1,4 @@
----
-cluster:
-  apiServer:
-    extraArgs:
-      feature-gates: UserNamespacesSupport=true
-machine:
-  kubelet:
-    extraConfig:
-      featureGates:
-        UserNamespacesSupport: true
----
 apiVersion: v1alpha1
 kind: SysctlConfig
 params:
-  user.max_user_namespaces: "11255"
+    user.max_user_namespaces: "11255"

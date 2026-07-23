@@ -1,0 +1,5 @@
+apiVersion: v1alpha1
+kind: KernelModuleConfig
+name: btrfs
+parameters:
+    - param1

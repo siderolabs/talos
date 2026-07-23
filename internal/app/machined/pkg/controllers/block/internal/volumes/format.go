@@ -5,6 +5,7 @@
 package volumes
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"os"
@@ -100,10 +101,10 @@ func Format(ctx context.Context, logger *zap.Logger, volumeContext ManagerContex
 		zap.Stringer("filesystem", volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Type),
 	)
 
+	makefsOptions := []makefs.Option{makefs.WithPrintf(logger.Sugar().Debugf)}
+
 	switch volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Type { //nolint:exhaustive
 	case block.FilesystemTypeXFS:
-		var makefsOptions []makefs.Option
-
 		// xfs doesn't support by default filesystems < 300 MiB
 		if volumeContext.Status.Size <= 300*1024*1024 {
 			makefsOptions = append(makefsOptions, makefs.WithUnsupportedFSOption(true))
@@ -115,12 +116,19 @@ func Format(ctx context.Context, logger *zap.Logger, volumeContext ManagerContex
 
 		makefsOptions = append(makefsOptions, makefs.WithConfigFile(quirks.New("").XFSMkfsConfig()))
 
+		// mkfs.xfs only scales the allocation group count (and the journal size) to the CPU count on
+		// non-rotational devices, so the minimum allocation group size is only relevant there.
+		if disk := volumeContext.FindDisk(cmp.Or(volumeContext.Status.ParentLocation, volumeContext.Status.Location)); disk != nil && !disk.Rotational {
+			makefsOptions = append(makefsOptions,
+				makefs.WithDeviceSize(volumeContext.Status.Size),
+				makefs.WithMinAllocationGroupSize(volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.MinAllocationGroupSize),
+			)
+		}
+
 		if err = makefs.XFS(ctx, volumeContext.Status.MountLocation, makefsOptions...); err != nil {
 			return xerrors.NewTaggedf[Retryable]("error formatting XFS: %w", err)
 		}
 	case block.FilesystemTypeEXT4:
-		var makefsOptions []makefs.Option
-
 		if volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Label != "" {
 			makefsOptions = append(makefsOptions, makefs.WithLabel(volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Label))
 		}
@@ -129,8 +137,6 @@ func Format(ctx context.Context, logger *zap.Logger, volumeContext ManagerContex
 			return xerrors.NewTaggedf[Retryable]("error formatting ext4: %w", err)
 		}
 	case block.FilesystemTypeBtrfs:
-		var makefsOptions []makefs.Option
-
 		if volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Label != "" {
 			makefsOptions = append(makefsOptions, makefs.WithLabel(volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Label))
 		}

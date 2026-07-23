@@ -82,8 +82,20 @@ unmountLoop:
 // SafeUnmount unmounts the target path, first without force, then with force if the first attempt fails.
 //
 // It makes sure that unmounting has a finite operation timeout.
-// If recursive is true, it will first unmount all child mounts under target.
-func SafeUnmount(ctx context.Context, printer func(string, ...any), target string, recursive bool) error {
+//
+// If recursive is true, it first unmounts all child mounts (and overlays whose
+// backing dirs live under target).
+//
+// If lazy is true, it detaches the target (and any submount it can't unmount)
+// with MNT_DETACH as a last resort. This is used to tear down volatile pseudo
+// mounts (e.g. /system, /run) on shutdown, where the target may still be pinned
+// by kernel references (loop devices, peer mounts in other namespaces, ...)
+// that no regular unmount can release. It should not be set for real
+// filesystems, where a busy mount is better left for the caller to retry and
+// diagnose.
+//
+//nolint:gocyclo
+func SafeUnmount(ctx context.Context, printer func(string, ...any), target string, recursive, lazy bool) error {
 	const (
 		unmountTimeout      = 90 * time.Second
 		unmountForceTimeout = 10 * time.Second
@@ -101,7 +113,7 @@ func SafeUnmount(ctx context.Context, printer func(string, ...any), target strin
 			for _, submount := range submounts {
 				printer("recursively unmounting submount %s", submount)
 
-				if err := safeUnmountSingle(ctx, printer, submount, unmountTimeout); err != nil {
+				if err := safeUnmountSingle(ctx, printer, submount, unmountTimeout, lazy); err != nil {
 					printer("failed to unmount submount %s: %v", submount, err)
 				}
 			}
@@ -110,24 +122,59 @@ func SafeUnmount(ctx context.Context, printer func(string, ...any), target strin
 
 	ok, err := unmountLoop(ctx, printer, target, 0, unmountTimeout, "")
 
-	if ok {
-		return err
+	// the unmount syscall completed within the timeout: a hung unmount (ok ==
+	// false) is the only case the force flag can help with, otherwise the
+	// result (success or e.g. EBUSY) is final for the regular attempt.
+	if !ok {
+		printer("unmounting %s with force", target)
+
+		ok, err = unmountLoop(ctx, printer, target, unix.MNT_FORCE, unmountForceTimeout, " with force flag")
 	}
 
-	printer("unmounting %s with force", target)
-
-	ok, err = unmountLoop(ctx, printer, target, unix.MNT_FORCE, unmountForceTimeout, " with force flag")
-
-	if ok {
+	switch {
+	case ok && err == nil:
+		return nil
+	case lazy:
+		// volatile pseudo mount still busy or hung: detach it lazily so it
+		// leaves the tree immediately and the kernel reaps it once the
+		// remaining references are gone.
+		return lazyDetach(printer, target)
+	case ok:
 		return err
+	default:
+		return fmt.Errorf("unmounting %s with force flag timed out", target)
 	}
-
-	return fmt.Errorf("unmounting %s with force flag timed out", target)
 }
 
-func safeUnmountSingle(ctx context.Context, printer func(string, ...any), target string, timeout time.Duration) error {
+// safeUnmountSingle unmounts a single submount that keeps a parent mount busy.
+//
+// When lazy is set, it falls back to a lazy detach (MNT_DETACH) if the regular
+// unmount fails or times out: detaching the submount from the tree is enough to
+// let the parent be unmounted, and the kernel reaps it once it's no longer in
+// use. Otherwise it reports the unmount result for the caller to log.
+func safeUnmountSingle(ctx context.Context, printer func(string, ...any), target string, timeout time.Duration, lazy bool) error {
 	ok, err := unmountLoop(ctx, printer, target, 0, timeout, "")
-	if ok {
+
+	switch {
+	case ok && (err == nil || errors.Is(err, unix.EINVAL)):
+		// unmounted, or already unmounted
+		return nil
+	case !lazy:
+		if ok {
+			return err
+		}
+
+		return nil
+	}
+
+	return lazyDetach(printer, target)
+}
+
+// lazyDetach detaches target with MNT_DETACH, ignoring an EINVAL (not mounted).
+func lazyDetach(printer func(string, ...any), target string) error {
+	printer("lazily detaching %s", target)
+
+	if err := unix.Unmount(target, unix.MNT_DETACH); err != nil && !errors.Is(err, unix.EINVAL) {
 		return err
 	}
 

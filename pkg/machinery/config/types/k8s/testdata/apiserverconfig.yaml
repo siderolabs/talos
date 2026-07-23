@@ -1,0 +1,15 @@
+apiVersion: v1alpha1
+kind: KubeAPIServerConfig
+image: registry.k8s.io/kube-apiserver:v1.36.0
+extraArgs:
+    feature-gates: ServerSideApply=true
+env:
+    HTTPS_PROXY: http://proxy:8080
+resources:
+    requests:
+        cpu: 2
+        memory: 2Gi
+apiPort: 8443
+certExtraSANs:
+    - k8s.example.com
+startupProbes: false

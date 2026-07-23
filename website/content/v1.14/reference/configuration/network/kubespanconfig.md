@@ -36,7 +36,7 @@ filters:
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`enabled` |bool |Enable the KubeSpan feature.<br>Cluster discovery should be enabled with cluster.discovery.enabled for KubeSpan to be enabled.  | |
+|`enabled` |bool |Enable the KubeSpan feature.<br>Requires cluster discovery to be enabled through a DiscoveryServiceConfig document.  | |
 |`advertiseKubernetesNetworks` |bool |Control whether Kubernetes pod CIDRs are announced over KubeSpan from the node.<br>If disabled, CNI handles pod-to-pod traffic encapsulation.<br>If enabled, KubeSpan takes over pod-to-pod traffic directly.  | |
 |`allowDownPeerBypass` |bool |Skip sending traffic via KubeSpan if the peer connection state is not up.<br>This provides configurable choice between connectivity and security.  | |
 |`harvestExtraEndpoints` |bool |KubeSpan can collect and publish extra endpoints for each member of the cluster<br>based on Wireguard endpoint information for each peer.<br>Disabled by default. Do not enable with high peer counts (>50).  | |

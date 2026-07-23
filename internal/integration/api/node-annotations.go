@@ -15,8 +15,9 @@ import (
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/k8s"
 )
 
 // NodeAnnotationsSuite verifies updating node annotations via machine config.
@@ -61,6 +62,13 @@ func (suite *NodeAnnotationsSuite) TestUpdateWorker() {
 
 // testUpdate cycles through a set of node annotation updates reverting the change in the end.
 func (suite *NodeAnnotationsSuite) testUpdate(node string) {
+	nodeConfig, err := suite.ReadConfigFromNode(client.WithNode(suite.ctx, node))
+	suite.Require().NoError(err)
+
+	if !nodeConfig.Has(k8s.KubeNodeConfig) {
+		suite.T().Skipf("node %q does not have new-style KubeNodeConfig", node)
+	}
+
 	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
 	suite.Require().NoError(err)
 
@@ -135,9 +143,17 @@ func (suite *NodeAnnotationsSuite) setNodeAnnotations(nodeIP string, nodeAnnotat
 	nodeConfig, err := suite.ReadConfigFromNode(nodeCtx)
 	suite.Require().NoError(err)
 
-	bytes := suite.PatchV1Alpha1Config(nodeConfig, func(nodeConfigRaw *v1alpha1.Config) {
-		nodeConfigRaw.MachineConfig.MachineNodeAnnotations = nodeAnnotations
-	})
+	nodeConfig, err = container.PatchDocument(
+		nodeConfig,
+		func(nodeConfig *k8s.KubeNodeConfigV1Alpha1) error {
+			nodeConfig.AnnotationsConfig = nodeAnnotations
+
+			return nil
+		})
+	suite.Require().NoError(err)
+
+	bytes, err := nodeConfig.Bytes()
+	suite.Require().NoError(err)
 
 	_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
 		Data: bytes,

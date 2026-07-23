@@ -146,27 +146,13 @@ type MachineConfig struct {
 	//
 	// Deprecated: Use `KubeControllerManagerConfig`/`KubeSchedulerConfig` instead.
 	MachineControlPlane *MachineControlPlaneConfig `yaml:"controlPlane,omitempty"`
-	//   description: |
-	//     Used to provide additional options to the kubelet.
-	//   examples:
-	//     - name: Kubelet definition example.
-	//       value: machineKubeletExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeletConfig` instead.
 	MachineKubelet *KubeletConfig `yaml:"kubelet,omitempty"`
-	//   description: |
-	//     Used to provide static pod definitions to be run by the kubelet directly bypassing the kube-apiserver.
+	// docgen:nodoc
 	//
-	//     Static pods can be used to run components which should be started before the Kubernetes control plane is up.
-	//     Talos doesn't validate the pod definition.
-	//     Updates to this field can be applied without a reboot.
-	//
-	//     See https://kubernetes.io/docs/tasks/configure-pod-container/static-pod/.
-	//   examples:
-	//     - name: nginx static pod.
-	//       value: machinePodsExample()
-	//   schema:
-	//     type: array
-	//     items:
-	//       type: object
+	// Deprecated: Use `KubeStaticPodConfig` instead.
 	MachinePods []meta.Unstructured `yaml:"pods,omitempty"`
 	// docgen:nodoc
 	//
@@ -177,14 +163,9 @@ type MachineConfig struct {
 	//
 	// Deprecated: Use 'UserVolumeConfig' instead.
 	MachineDisks []*MachineDisk `yaml:"disks,omitempty"` // Note: `size` is in units of bytes.
-	//   description: |
-	//     Used to provide instructions for installations.
+	// docgen:nodoc
 	//
-	//     Note that this configuration section gets silently ignored by Talos images that are considered pre-installed.
-	//     To make sure Talos installs according to the provided configuration, Talos should be booted with ISO or PXE-booted.
-	//   examples:
-	//     - name: MachineInstall config usage example.
-	//       value: machineInstallExample()
+	// Deprecated: Use the 'UnattendedInstall' multi-document config instead.
 	MachineInstall *InstallConfig `yaml:"install,omitempty"`
 	//   description: |
 	//     Allows the addition of user specified files.
@@ -230,6 +211,10 @@ type MachineConfig struct {
 	//     Configures the udev system.
 	//   examples:
 	//     - value: machineUdevExample()
+	//
+	// docgen:nodoc
+	//
+	// Deprecated: Use `UdevRulesConfig` instead.
 	MachineUdev *UdevConfig `yaml:"udev,omitempty"`
 	//   description: |
 	//     Configures the logging system.
@@ -237,10 +222,9 @@ type MachineConfig struct {
 	//     - value: machineLoggingExample1()
 	//     - value: machineLoggingExample2()
 	MachineLogging *LoggingConfig `yaml:"logging,omitempty"`
-	//   description: |
-	//     Configures the kernel.
-	//   examples:
-	//     - value: machineKernelExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use 'KernelModuleConfig' instead.
 	MachineKernel *KernelConfig `yaml:"kernel,omitempty"`
 	//  description: |
 	//    Configures the seccomp profiles for the machine.
@@ -259,29 +243,17 @@ type MachineConfig struct {
 	//  schema:
 	//    type: object
 	MachineBaseRuntimeSpecOverrides meta.Unstructured `yaml:"baseRuntimeSpecOverrides,omitempty"`
-	//  description: |
-	//    Configures the node labels for the machine.
+	// docgen:nodoc
 	//
-	//    Note: In the default Kubernetes configuration, worker nodes are restricted to set
-	//    labels with some prefixes (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin).
-	//  examples:
-	//    - name: node labels example.
-	//      value: 'map[string]string{"exampleLabel": "exampleLabelValue"}'
+	// Deprecated: use `KubeNodeConfig` instead.
 	MachineNodeLabels map[string]string `yaml:"nodeLabels,omitempty"`
-	//  description: |
-	//    Configures the node annotations for the machine.
-	//  examples:
-	//    - name: node annotations example.
-	//      value: 'map[string]string{"customer.io/rack": "r13a25"}'
-	MachineNodeAnnotations map[string]string `yaml:"nodeAnnotations,omitempty"`
-	//  description: |
-	//    Configures the node taints for the machine. Effect is optional.
+	// docgen:nodoc
 	//
-	//    Note: In the default Kubernetes configuration, worker nodes are not allowed to
-	//    modify the taints (see [NodeRestriction](https://kubernetes.io/docs/reference/access-authn-authz/admission-controllers/#noderestriction) admission plugin).
-	//  examples:
-	//    - name: node taints example.
-	//      value: 'map[string]string{"exampleTaint": "exampleTaintValue:NoSchedule"}'
+	// Deprecated: use `KubeNodeConfig` instead.
+	MachineNodeAnnotations map[string]string `yaml:"nodeAnnotations,omitempty"`
+	// docgen:nodoc
+	//
+	// Deprecated: use `KubeNodeConfig` instead.
 	MachineNodeTaints map[string]string `yaml:"nodeTaints,omitempty"`
 }
 
@@ -303,25 +275,22 @@ var (
 )
 
 // ClusterConfig represents the cluster-wide config values.
-//
-//	examples:
-//	   - value: clusterConfigExample()
 type ClusterConfig struct {
-	//   description: |
-	//     Globally unique identifier for this cluster (base64 encoded random 32 bytes).
+	// docgen:nodoc
+	//
+	// Deprecated: Use 'DiscoveryIdentityConfig' document instead.
 	ClusterID string `yaml:"id,omitempty"`
-	//   description: |
-	//     Shared secret of cluster (base64 encoded random 32 bytes).
-	//     This secret is shared among cluster members but should never be sent over the network.
+	// docgen:nodoc
+	//
+	// Deprecated: Use 'DiscoveryIdentityConfig' document instead.
 	ClusterSecret string `yaml:"secret,omitempty"`
-	//   description: |
-	//     Provides control plane specific configuration options.
-	//   examples:
-	//     - name: Setting controlplane endpoint address to 1.2.3.4 and port to 443 example.
-	//       value: clusterControlPlaneExample()
-	ControlPlane *ControlPlaneConfig `yaml:"controlPlane"`
-	//   description: |
-	//     Configures the cluster's name.
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeClusterConfig` instead.
+	ControlPlane *ControlPlaneConfig `yaml:"controlPlane,omitempty"`
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeClusterConfig` instead.
 	ClusterName string `yaml:"clusterName,omitempty"`
 	// docgen:nodoc
 	//
@@ -341,124 +310,67 @@ type ClusterConfig struct {
 	//
 	// Deprecated: Use `KubeEtcdEncryptionConfig` instead.
 	ClusterSecretboxEncryptionSecret string `yaml:"secretboxEncryptionSecret,omitempty"`
-	//   description: |
-	//     The base64 encoded root certificate authority used by Kubernetes.
-	//   examples:
-	//     - name: ClusterCA example.
-	//       value: pemEncodedCertificateExample()
-	//   schema:
-	//     type: object
-	//     additionalProperties: false
-	//     properties:
-	//       crt:
-	//         type: string
-	//       key:
-	//         type: string
-	ClusterCA *x509.PEMEncodedCertificateAndKey `yaml:"ca,omitempty"`
-	//   description: |
-	//     The list of base64 encoded accepted certificate authorities used by Kubernetes.
-	//   schema:
-	//     type: object
-	//     additionalProperties: false
-	//     properties:
-	//       crt:
-	//         type: string
-	ClusterAcceptedCAs []*x509.PEMEncodedCertificate `yaml:"acceptedCAs,omitempty"`
-	//   description: |
-	//     The base64 encoded aggregator certificate authority used by Kubernetes for front-proxy certificate generation.
+	//  docgen:nodoc
 	//
-	//     This CA can be self-signed.
-	//   examples:
-	//     - name: AggregatorCA example.
-	//       value: pemEncodedCertificateExample()
-	//   schema:
-	//     type: object
-	//     additionalProperties: false
-	//     properties:
-	//       crt:
-	//         type: string
-	//       key:
-	//         type: string
+	// Deprecated: Use `KubeAPIServerCAConfig` instead.
+	ClusterCA *x509.PEMEncodedCertificateAndKey `yaml:"ca,omitempty"`
+	//  docgen:nodoc
+	//
+	// Deprecated: Use `KubeAPIServerCAConfig` instead.
+	ClusterAcceptedCAs []*x509.PEMEncodedCertificate `yaml:"acceptedCAs,omitempty"`
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeAPIServerAggregatorCAConfig` instead.
 	ClusterAggregatorCA *x509.PEMEncodedCertificateAndKey `yaml:"aggregatorCA,omitempty"`
-	//   description: |
-	//     The base64 encoded private key for service account token generation.
-	//   examples:
-	//     - name: AggregatorCA example.
-	//       value: pemEncodedKeyExample()
-	//   schema:
-	//     type: object
-	//     additionalProperties: false
-	//     properties:
-	//       key:
-	//         type: string
-	//         additionalProperties: false
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeServiceAccountConfig` instead.
 	ClusterServiceAccount *x509.PEMEncodedKey `yaml:"serviceAccount,omitempty"`
-	//   description: |
-	//     API server specific configuration options.
-	//   examples:
-	//     - value: clusterAPIServerExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeAPIServerConfig` instead.
 	APIServerConfig *APIServerConfig `yaml:"apiServer,omitempty"`
 	// docgen:nodoc
 	//
 	// Deprecated: Use `KubeControllerManagerConfig` instead.
 	ControllerManagerConfig *ControllerManagerConfig `yaml:"controllerManager,omitempty"`
-	//   description: |
-	//     Kube-proxy server-specific configuration options
-	//   examples:
-	//     - value: clusterProxyExample()
+	// docgen:nodoc
+	//
+	// Deprecated: use `KubeProxyConfig` instead.
 	ProxyConfig *ProxyConfig `yaml:"proxy,omitempty"`
 	// docgen:nodoc
 	//
 	// Deprecated: Use `KubeSchedulerConfig` instead.
 	SchedulerConfig *SchedulerConfig `yaml:"scheduler,omitempty"`
-	//   description: |
-	//     Configures cluster member discovery.
-	//   examples:
-	//     - value: clusterDiscoveryExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use 'DiscoveryServiceConfig' instead
 	ClusterDiscoveryConfig *ClusterDiscoveryConfig `yaml:"discovery,omitempty"`
 	//   description: |
 	//     Etcd specific configuration options.
 	//   examples:
 	//     - value: clusterEtcdExample()
 	EtcdConfig *EtcdConfig `yaml:"etcd,omitempty"`
-	//   description: |
-	//     Core DNS specific configuration options.
-	//   examples:
-	//     - value: clusterCoreDNSExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeCoreDNSConfig` instead.
 	CoreDNSConfig *CoreDNS `yaml:"coreDNS,omitempty"`
 	//   description: |
 	//     External cloud provider configuration.
 	//   examples:
 	//     - value: clusterExternalCloudProviderConfigExample()
 	ExternalCloudProviderConfig *ExternalCloudProviderConfig `yaml:"externalCloudProvider,omitempty"`
-	//   description: |
-	//     A list of urls that point to additional manifests.
-	//     These will get automatically deployed as part of the bootstrap.
-	//   examples:
-	//     - value: >
-	//        []string{
-	//         "https://www.example.com/manifest1.yaml",
-	//         "https://www.example.com/manifest2.yaml",
-	//        }
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeExternalManifestConfig` instead.
 	ExtraManifests []string `yaml:"extraManifests,omitempty" talos:"omitonlyifnil"`
-	//   description: |
-	//     A map of key value pairs that will be added while fetching the extraManifests.
-	//   examples:
-	//     - value: >
-	//         map[string]string{
-	//           "Token": "1234567",
-	//           "X-ExtraInfo": "info",
-	//         }
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeExternalManifestConfig` instead.
 	ExtraManifestHeaders map[string]string `yaml:"extraManifestHeaders,omitempty"`
-	//   description: |
-	//     A list of inline Kubernetes manifests.
-	//     These will get automatically deployed as part of the bootstrap.
-	//   examples:
-	//     - value: clusterInlineManifestsExample()
-	//   schema:
-	//     type: array
-	//     items:
-	//       $ref: "#/$defs/v1alpha1.ClusterInlineManifest"
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeInlineManifestConfig` instead.
 	ClusterInlineManifests ClusterInlineManifests `yaml:"inlineManifests,omitempty" talos:"omitonlyifnil"`
 	//   description: |
 	//     Settings for admin kubeconfig generation.
@@ -468,21 +380,17 @@ type ClusterConfig struct {
 	AdminKubeconfigConfig *AdminKubeconfigConfig `yaml:"adminKubeconfig,omitempty"`
 	// docgen:nodoc
 	//
-	// Deprecated: Use `AllowSchedulingOnControlPlanes` instead.
+	// Deprecated: use `KubeNodeConfig` instead.
 	AllowSchedulingOnMasters *bool `yaml:"allowSchedulingOnMasters,omitempty"`
-	//   description: |
-	//     Allows running workload on control-plane nodes.
-	//   values:
-	//     - true
-	//     - yes
-	//     - false
-	//     - no
-	//   examples:
-	//     - value: true
+	// docgen:nodoc
+	//
+	// Deprecated: use `KubeNodeConfig` instead.
 	AllowSchedulingOnControlPlanes *bool `yaml:"allowSchedulingOnControlPlanes,omitempty"`
 }
 
 // LinuxIDMapping represents the Linux ID mapping.
+//
+//docgen:nodoc
 type LinuxIDMapping struct {
 	//   description: |
 	//     ContainerID is the starting UID/GID in the container.
@@ -496,6 +404,8 @@ type LinuxIDMapping struct {
 }
 
 // ExtraMount wraps OCI Mount specification.
+//
+//docgen:nodoc
 type ExtraMount struct {
 	//   description: |
 	//     Destination is the absolute path where the mount will be placed in the container.
@@ -559,52 +469,30 @@ type MachineSchedulerConfig struct {
 }
 
 // KubeletConfig represents the kubelet config values.
+//
+// Deprecated: Use `KubeletConfig` instead.
+//
+// docgen:nodoc
 type KubeletConfig struct {
-	//   description: |
-	//     The `image` field is an optional reference to an alternative kubelet image.
-	//   examples:
-	//     - value: kubeletImageExample()
-	KubeletImage string `yaml:"image,omitempty"`
-	//   description: |
-	//     The `ClusterDNS` field is an optional reference to an alternative kubelet clusterDNS ip list.
-	//   examples:
-	//     - value: '[]string{"10.96.0.10", "169.254.2.53"}'
-	KubeletClusterDNS []string `yaml:"clusterDNS,omitempty"`
-	//   description: |
-	//     The `extraArgs` field is used to provide additional flags to the kubelet.
-	//   examples:
-	//     - value: >
-	//         meta.Args{
-	//           "key": meta.NewArgValue("value", nil),
-	//         }
-	//     - value: >
-	//         meta.Args{
-	//           "key": meta.NewArgValue("", []string{"value1", "value2"}),
-	//         }
-	//   schema:
-	//     type: object
-	//     additionalProperties:
-	//       oneOf:
-	//         - type: string
-	//         - type: array
-	//           items:
-	//             type: string
-	KubeletExtraArgs meta.Args `yaml:"extraArgs,omitempty"`
-	//   description: |
-	//     The `extraMounts` field is used to add additional mounts to the kubelet container.
-	//     Note that either `bind` or `rbind` are required in the `options`.
-	//   examples:
-	//     - value: kubeletExtraMountsExample()
-	KubeletExtraMounts []ExtraMount `yaml:"extraMounts,omitempty"`
-	//   description: |
-	//     The `extraConfig` field is used to provide kubelet configuration overrides.
+	// docgen:nodoc
 	//
-	//     Some fields are not allowed to be overridden: authentication and authorization, cgroups
-	//     configuration, ports, etc.
-	//   examples:
-	//     - value: kubeletExtraConfigExample()
-	//   schema:
-	//     type: object
+	// Deprecated: use `KubeletConfig` instead.
+	KubeletImage string `yaml:"image,omitempty"`
+	// docgen:nodoc
+	//
+	// Deprecated: use `KubeletConfig` instead.
+	KubeletClusterDNS []string `yaml:"clusterDNS,omitempty"`
+	// docgen:nodoc
+	//
+	// Deprecated: use `KubeletConfig` instead.
+	KubeletExtraArgs meta.Args `yaml:"extraArgs,omitempty"`
+	// docgen:nodoc
+	//
+	// Deprecated: removed in multi-doc config.
+	KubeletExtraMounts []ExtraMount `yaml:"extraMounts,omitempty"`
+	// docgen:nodoc
+	//
+	// Deprecated: use `KubeletConfig` instead.
 	KubeletExtraConfig meta.Unstructured `yaml:"extraConfig,omitempty"`
 	//  description: |
 	//   The `KubeletCredentialProviderConfig` field is used to provide kubelet credential configuration.
@@ -613,50 +501,31 @@ type KubeletConfig struct {
 	//  schema:
 	//    type: object
 	KubeletCredentialProviderConfig meta.Unstructured `yaml:"credentialProviderConfig,omitempty"`
-	//  description: |
-	//    Enable container runtime default Seccomp profile.
-	//  values:
-	//    - true
-	//    - yes
-	//    - false
-	//    - no
+	// docgen:nodoc
+	//
+	// Deprecated: use `KubeletConfig` instead.
 	KubeletDefaultRuntimeSeccompProfileEnabled *bool `yaml:"defaultRuntimeSeccompProfileEnabled,omitempty"`
-	//   description: |
-	//     The `registerWithFQDN` field is used to force kubelet to use the node FQDN for registration.
-	//     This is required in clouds like AWS.
-	//   values:
-	//     - true
-	//     - yes
-	//     - false
-	//     - no
+	// docgen:nodoc
+	//
+	// Deprecated: use `KubeNodeConfig` instead.
 	KubeletRegisterWithFQDN *bool `yaml:"registerWithFQDN,omitempty"`
-	//   description: |
-	//     The `nodeIP` field is used to configure `--node-ip` flag for the kubelet.
-	//     This is used when a node has multiple addresses to choose from.
-	//   examples:
-	//     - value: kubeletNodeIPExample()
+	// docgen:nodoc
+	//
+	// Deprecated: use `KubeNodeConfig` instead.
 	KubeletNodeIP *KubeletNodeIPConfig `yaml:"nodeIP,omitempty"`
-	//   description: |
-	//      The `skipNodeRegistration` is used to run the kubelet without registering with the apiserver.
-	//      This runs kubelet as standalone and only runs static pods.
-	//   values:
-	//     - true
-	//     - yes
-	//     - false
-	//     - no
+	// docgen:nodoc
+	//
+	// Deprecated: use `KubeNodeConfig` instead.
 	KubeletSkipNodeRegistration *bool `yaml:"skipNodeRegistration,omitempty"`
-	//   description: |
-	//     The `disableManifestsDirectory` field configures the kubelet to get static pod manifests from the /etc/kubernetes/manifests directory.
-	//     It's recommended to configure static pods with the "pods" key instead.
-	//   values:
-	//     - true
-	//     - yes
-	//     - false
-	//     - no
+	// docgen:nodoc
+	//
+	// Deprecated: locked to true in multi-doc config.
 	KubeletDisableManifestsDirectory *bool `yaml:"disableManifestsDirectory,omitempty"`
 }
 
 // KubeletNodeIPConfig represents the kubelet node IP configuration.
+//
+//docgen:nodoc
 type KubeletNodeIPConfig struct {
 	//  description: |
 	//    The `validSubnets` field configures the networks to pick kubelet node IP from.
@@ -756,6 +625,8 @@ func (devices *NetworkDeviceList) mergeDevice(device *Device) error {
 }
 
 // InstallConfig represents the installation options for preparing a node.
+//
+// docgen:nodoc
 type InstallConfig struct {
 	//   description: |
 	//     The disk used for installations.
@@ -871,15 +742,10 @@ type InstallDiskSizeMatchData struct {
 type InstallDiskType string
 
 // InstallDiskSelector represents a disk query parameters for the install disk lookup.
+//
+//docgen:nodoc
 type InstallDiskSelector struct {
 	//   description: Disk size.
-	//   examples:
-	//     - name: Select a disk which size is equal to 4GB.
-	//       value: machineInstallDiskSizeMatcherExamples0()
-	//     - name: Select a disk which size is greater than 1TB.
-	//       value: machineInstallDiskSizeMatcherExamples1()
-	//     - name: Select a disk which size is less or equal than 2TB.
-	//       value: machineInstallDiskSizeMatcherExamples2()
 	//   schema:
 	//     type: string
 	Size *InstallDiskSizeMatcher `yaml:"size,omitempty"`
@@ -983,6 +849,8 @@ type PodCheckpointer struct {
 }
 
 // CoreDNS represents the CoreDNS config values.
+//
+//docgen:nodoc
 type CoreDNS struct {
 	//   description: |
 	//     Disable coredns deployment on cluster bootstrap.
@@ -1044,6 +912,8 @@ func (e *Endpoint) DeepCopy() *Endpoint {
 }
 
 // ControlPlaneConfig represents the control plane configuration options.
+//
+//docgen:nodoc
 type ControlPlaneConfig struct {
 	//   description: |
 	//     Endpoint is the canonical controlplane endpoint, which can be an IP address or a DNS hostname.
@@ -1053,16 +923,15 @@ type ControlPlaneConfig struct {
 	//     format: uri
 	//     pattern: "^https://"
 	Endpoint *Endpoint `yaml:"endpoint"`
-	//   description: |
-	//     The port that the API server listens on internally.
-	//     This may be different than the port portion listed in the endpoint field above.
-	//     The default is `6443`.
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeAPIServerConfig` instead.
 	LocalAPIServerPort int `yaml:"localAPIServerPort,omitempty"`
 }
 
-var _ config.APIServer = (*APIServerConfig)(nil)
-
 // APIServerConfig represents the kube apiserver configuration options.
+//
+//docgen:nodoc
 type APIServerConfig struct {
 	//   description: |
 	//     The container image used in the API server manifest.
@@ -1093,36 +962,31 @@ type APIServerConfig struct {
 	EnvConfig Env `yaml:"env,omitempty"`
 	//   description: |
 	//     Extra certificate subject alternative names for the API server's certificate.
-	CertSANs []string `yaml:"certSANs,omitempty"`
+	ExtraCertSANs []string `yaml:"certSANs,omitempty"`
 	// docgen:nodoc
 	DisablePodSecurityPolicyConfig *bool `yaml:"disablePodSecurityPolicy,omitempty"`
-	//   description: |
-	//     Configure the API server admission plugins.
-	//   examples:
-	//     - value: admissionControlConfigExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeAdmissionControlConfig` instead.
 	AdmissionControlConfig AdmissionPluginConfigList `yaml:"admissionControl,omitempty"`
-	//   description: |
-	//     Configure the API server audit policy.
-	//   examples:
-	//     - value: APIServerDefaultAuditPolicy
-	//   schema:
-	//     type: object
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeAuditPolicyConfig` instead.
 	AuditPolicyConfig meta.Unstructured `yaml:"auditPolicy,omitempty" merge:"replace"`
 	//   description: |
 	//     Configure the API server resources.
 	//   schema:
 	//     type: object
 	ResourcesConfig *ResourcesConfig `yaml:"resources,omitempty"`
-	//   description: |
-	//     Configure the API server authorization config. Node and RBAC authorizers are always added irrespective of the configuration.
-	//   examples:
-	//     - value: authorizationConfigExample()
+	// docgen:nodoc
+	//
+	// Deprecated: Use `KubeAuthorizerConfig` instead.
 	AuthorizationConfigConfig AuthorizationConfigAuthorizerConfigList `yaml:"authorizationConfig,omitempty"`
 }
 
 // AdmissionPluginConfigList represents the admission plugin configuration list.
 //
-//docgen:alias
+//docgen:nodoc
 type AdmissionPluginConfigList []*AdmissionPluginConfig
 
 // Merge the admission plugin configuration intelligently.
@@ -1162,6 +1026,8 @@ func (configs *AdmissionPluginConfigList) mergeConfig(config *AdmissionPluginCon
 }
 
 // AdmissionPluginConfig represents the API server admission plugin configuration.
+//
+//docgen:nodoc
 type AdmissionPluginConfig struct {
 	//   description: |
 	//     Name is the name of the admission controller.
@@ -1177,10 +1043,12 @@ type AdmissionPluginConfig struct {
 
 // AuthorizationConfigAuthorizerConfigList represents the authorization config authorizer configuration list.
 //
-//docgen:alias
+//docgen:nodoc
 type AuthorizationConfigAuthorizerConfigList []*AuthorizationConfigAuthorizerConfig
 
 // AuthorizationConfigAuthorizerConfig represents the API server authorization config authorizer configuration.
+//
+//docgen:nodoc
 type AuthorizationConfigAuthorizerConfig struct {
 	//   description: |
 	//     Type is the name of the authorizer. Allowed values are `Node`, `RBAC`, and `Webhook`.
@@ -1234,6 +1102,10 @@ type ControllerManagerConfig struct {
 }
 
 // ProxyConfig represents the kube proxy configuration options.
+//
+// Deprecated: use KubeProxyConfig instead.
+//
+// docgen:nodoc
 type ProxyConfig struct {
 	//   description: |
 	//     Disable kube-proxy deployment on cluster bootstrap.
@@ -1670,6 +1542,8 @@ type EncryptionKeyNodeID struct{}
 type Env = map[string]string
 
 // ResourcesConfig represents the pod resources.
+//
+//docgen:nodoc
 type ResourcesConfig struct {
 	//   description: |
 	//     Requests configures the reserved cpu/memory resources.
@@ -2274,9 +2148,9 @@ type FeaturesConfig struct {
 	//     Enable XFS project quota support for EPHEMERAL partition and user disks.
 	//     Also enables kubelet tracking of ephemeral disk usage in the kubelet via quota.
 	DiskQuotaSupport *bool `yaml:"diskQuotaSupport,omitempty"`
-	//   description: |
-	//     KubePrism - local proxy/load balancer on defined port that will distribute
-	//     requests to all API servers in the cluster.
+	// docgen:nodoc
+	//
+	// Deprecated: Use KubePrismConfig document instead.
 	KubePrismSupport *KubePrism `yaml:"kubePrism,omitempty"`
 	// docgen:nodoc
 	//
@@ -2295,6 +2169,10 @@ type FeaturesConfig struct {
 }
 
 // KubePrism describes the configuration for the KubePrism load balancer.
+//
+// docgen:nodoc
+//
+// Deprecated: Use KubePrismConfig document instead.
 type KubePrism struct {
 	//   description: |
 	//     Enable KubePrism support - will start local load balancing proxy.
@@ -2352,6 +2230,8 @@ type HostDNSConfig struct {
 }
 
 // VolumeMountConfig struct describes extra volume mount for the static pods.
+//
+//docgen:nodoc
 type VolumeMountConfig struct {
 	//   description: |
 	//     Path on the host.
@@ -2372,7 +2252,9 @@ type VolumeMountConfig struct {
 
 // ClusterInlineManifests is a list of ClusterInlineManifest.
 //
-//docgen:alias
+// docgen:nodoc
+//
+// Deprecated: Use `KubeInlineManifestConfig` instead.
 type ClusterInlineManifests []ClusterInlineManifest
 
 // UnmarshalYAML implements yaml.Unmarshaler.
@@ -2396,6 +2278,10 @@ func (manifests *ClusterInlineManifests) UnmarshalYAML(value *yaml.Node) error {
 }
 
 // ClusterInlineManifest struct describes inline bootstrap manifests for the user.
+//
+// docgen:nodoc
+//
+// Deprecated: Use `KubeInlineManifestConfig` instead.
 type ClusterInlineManifest struct {
 	//   description: |
 	//     Name of the manifest.
@@ -2503,17 +2389,33 @@ type NetworkDeviceSelector struct {
 }
 
 // ClusterDiscoveryConfig struct configures cluster membership discovery.
+//
+// docgen:nodoc
+//
+// Deprecated: Use 'DiscoveryServiceConfig' document instead.
 type ClusterDiscoveryConfig struct {
 	// description: |
 	//   Enable the cluster membership discovery feature.
 	//   Cluster discovery is based on individual registries which are configured under the registries field.
+	//
+	// docgen:nodoc
+	//
+	// Deprecated: Use 'DiscoveryServiceConfig' document instead.
 	DiscoveryEnabled *bool `yaml:"enabled,omitempty"`
 	// description: |
 	//   Configure registries used for cluster member discovery.
+	//
+	// docgen:nodoc
+	//
+	// Deprecated: Use 'DiscoveryServiceConfig' document instead.
 	DiscoveryRegistries DiscoveryRegistriesConfig `yaml:"registries"`
 }
 
 // DiscoveryRegistriesConfig struct configures cluster membership discovery.
+//
+// docgen:nodoc
+//
+// Deprecated: Use 'DiscoveryServiceConfig' document instead.
 type DiscoveryRegistriesConfig struct {
 	// description: |
 	//   Kubernetes registry uses Kubernetes API server to discover cluster members and stores additional information
@@ -2521,13 +2423,25 @@ type DiscoveryRegistriesConfig struct {
 	//
 	//   This feature is deprecated as it is not compatible with Kubernetes 1.32+.
 	//   See https://github.com/siderolabs/talos/issues/9980 for more information.
+	//
+	// docgen:nodoc
+	//
+	// Deprecated: Use 'DiscoveryServiceConfig' document instead.
 	RegistryKubernetes RegistryKubernetesConfig `yaml:"kubernetes"`
 	// description: |
 	//   Service registry is using an external service to push and pull information about cluster members.
+	//
+	// docgen:nodoc
+	//
+	// Deprecated: Use 'DiscoveryServiceConfig' document instead.
 	RegistryService RegistryServiceConfig `yaml:"service"`
 }
 
 // RegistryKubernetesConfig struct configures Kubernetes discovery registry.
+//
+// docgen:nodoc
+//
+// Deprecated: Use 'DiscoveryServiceConfig' document instead.
 type RegistryKubernetesConfig struct {
 	// description: |
 	//   Disable Kubernetes discovery registry.
@@ -2535,21 +2449,41 @@ type RegistryKubernetesConfig struct {
 }
 
 // RegistryServiceConfig struct configures Kubernetes discovery registry.
+//
+// docgen:nodoc
+//
+// Deprecated: Use 'DiscoveryServiceConfig' document instead.
 type RegistryServiceConfig struct {
 	// description: |
 	//   Disable external service discovery registry.
+	//
+	// docgen:nodoc
+	//
+	// Deprecated: Use 'DiscoveryServiceConfig' document instead.
 	RegistryDisabled *bool `yaml:"disabled,omitempty"`
 	// description: |
 	//   External service endpoint.
 	// examples:
 	//   - value: constants.DefaultDiscoveryServiceEndpoint
+	//
+	// docgen:nodoc
+	//
+	// Deprecated: Use 'DiscoveryServiceConfig' document instead.
 	RegistryEndpoint string `yaml:"endpoint,omitempty"`
 }
 
 // UdevConfig describes how the udev system should be configured.
+//
+// docgen:nodoc
+//
+// Deprecated: Use `UdevRulesConfig` instead.
 type UdevConfig struct {
 	//   description: |
 	//     List of udev rules to apply to the udev system
+	//
+	// docgen:nodoc
+	//
+	// Deprecated: Use `UdevRulesConfig` instead.
 	UdevRules []string `yaml:"rules,omitempty"`
 }
 
@@ -2576,18 +2510,32 @@ type LoggingDestination struct {
 }
 
 // KernelConfig struct configures Talos Linux kernel.
+//
+// docgen:nodoc
+//
+// Deprecated: Use multi-doc `KernelModuleConfig` instead.
 type KernelConfig struct {
 	// description: |
 	//   Kernel modules to load.
+	//
+	// Deprecated: Use multi-doc `KernelModuleConfig` instead.
 	KernelModules []*KernelModuleConfig `yaml:"modules,omitempty"`
 }
 
 // KernelModuleConfig struct configures Linux kernel modules to load.
+//
+// docgen:nodoc
+//
+// Deprecated: Use multi-doc `KernelModuleConfig` instead.
 type KernelModuleConfig struct {
 	// description: |
 	//   Module name.
+	//
+	// Deprecated: Use multi-doc `KernelModuleConfig` instead.
 	ModuleName string `yaml:"name"`
 	// description: |
 	//   Module parameters, changes applied after reboot.
+	//
+	// Deprecated: Use multi-doc `KernelModuleConfig` instead.
 	ModuleParameters []string `yaml:"parameters,omitempty"`
 }

@@ -28,11 +28,11 @@ func (LVMVolumeGroupConfigV1Alpha1) Doc() *encoder.Doc {
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Volume group name." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
-				Name:        "physicalVolumes",
-				Type:        "LVMPhysicalVolumesSpec",
+				Name:        "provisioning",
+				Type:        "ProvisioningSpec",
 				Note:        "",
-				Description: "Selects backing disks.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Selects backing disks." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "The provisioning describes how the Physical Volumes are provisioned.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The provisioning describes how the Physical Volumes are provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
@@ -42,15 +42,15 @@ func (LVMVolumeGroupConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
-func (LVMPhysicalVolumesSpec) Doc() *encoder.Doc {
+func (ProvisioningSpec) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
-		Type:        "LVMPhysicalVolumesSpec",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "LVMPhysicalVolumesSpec selects backing disks." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "LVMPhysicalVolumesSpec selects backing disks.",
+		Type:        "ProvisioningSpec",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "ProvisioningSpec describes how the Physical Volumes are provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "ProvisioningSpec describes how the Physical Volumes are provisioned.",
 		AppearsIn: []encoder.Appearance{
 			{
 				TypeName:  "LVMVolumeGroupConfigV1Alpha1",
-				FieldName: "physicalVolumes",
+				FieldName: "provisioning",
 			},
 		},
 		Fields: []encoder.Doc{
@@ -74,7 +74,7 @@ func (LVMVolumeSelectorSpec) Doc() *encoder.Doc {
 		Description: "LVMVolumeSelectorSpec matches disks with CEL.",
 		AppearsIn: []encoder.Appearance{
 			{
-				TypeName:  "LVMPhysicalVolumesSpec",
+				TypeName:  "ProvisioningSpec",
 				FieldName: "volumeSelector",
 			},
 		},
@@ -192,6 +192,111 @@ func (LVMLogicalVolumeProvisioningSpec) Doc() *encoder.Doc {
 	return doc
 }
 
+func (RAIDArrayConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "RAIDArrayConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "RAIDArrayConfig provisions a Linux MD (software RAID) array." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "RAIDArrayConfig provisions a Linux MD (software RAID) array.\nProvisions a Linux software RAID (MD) array from matching disks.\n\nThe array is exposed at `/dev/disk/by-id/md-name-<name>` and can back a\nuser volume. Provisioning is additive: the array and its members are\ncreated but never destroyed by this document. Use `talosctl wipe md <device>`\nto remove an array.\n",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Array name, stamped into the md metadata.\n\nMust be 1-32 chars: ASCII letters, digits, hyphens, underscores.\nExposed as `/dev/disk/by-id/md-name-<name>`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Array name, stamped into the md metadata." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "level",
+				Type:        "MDLevel",
+				Note:        "",
+				Description: "RAID level.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "RAID level." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"raid1",
+				},
+			},
+			{
+				Name:        "metadata",
+				Type:        "MDMetadata",
+				Note:        "",
+				Description: "MD on-disk metadata format.\n\nDefaults to 1.0, which stores the superblock at the end of the member\ndevice so the array can back a bootable partition. Use 1.2 for data\narrays that do not need to be bootable.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "MD on-disk metadata format." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"1.0",
+					"1.2",
+				},
+			},
+			{
+				Name:        "provisioning",
+				Type:        "RAIDProvisioningSpec",
+				Note:        "",
+				Description: "The provisioning describes how the RAID arrays are provisioned.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The provisioning describes how the RAID arrays are provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleRAIDArrayConfigV1Alpha1())
+
+	return doc
+}
+
+func (RAIDProvisioningSpec) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "RAIDProvisioningSpec",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "RAIDProvisioningSpec describes how the RAID arrays are provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "RAIDProvisioningSpec describes how the RAID arrays are provisioned.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "RAIDArrayConfigV1Alpha1",
+				FieldName: "provisioning",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "volumeSelector",
+				Type:        "RAIDVolumeSelector",
+				Note:        "",
+				Description: "The volume selector describes how the members of RAID arrays are selected.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The volume selector describes how the members of RAID arrays are selected." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (RAIDVolumeSelector) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "RAIDVolumeSelector",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "RAIDVolumeSelector matches member disks with CEL." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "RAIDVolumeSelector matches member disks with CEL.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "RAIDProvisioningSpec",
+				FieldName: "volumeSelector",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "match",
+				Type:        "Expression",
+				Note:        "",
+				Description: "CEL expression matching the member volumes of the array.\n\nEvaluated against each discovered volume with the `volume` variable;\nthe `disk` variable is bound for whole disks (empty for partitions), so\nboth whole disks and partitions can be selected. The system disk and\nits partitions are never eligible.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "CEL expression matching the member volumes of the array." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("match NVMe disks larger than 100 GiB", exampleRAIDDiskSelector())
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file storage_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -199,10 +304,13 @@ func GetFileDoc() *encoder.FileDoc {
 		Description: "Package storage provides storage virtualization configuration documents.\n",
 		Structs: []*encoder.Doc{
 			LVMVolumeGroupConfigV1Alpha1{}.Doc(),
-			LVMPhysicalVolumesSpec{}.Doc(),
+			ProvisioningSpec{}.Doc(),
 			LVMVolumeSelectorSpec{}.Doc(),
 			LVMLogicalVolumeConfigV1Alpha1{}.Doc(),
 			LVMLogicalVolumeProvisioningSpec{}.Doc(),
+			RAIDArrayConfigV1Alpha1{}.Doc(),
+			RAIDProvisioningSpec{}.Doc(),
+			RAIDVolumeSelector{}.Doc(),
 		},
 	}
 }

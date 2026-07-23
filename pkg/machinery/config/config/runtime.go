@@ -5,6 +5,7 @@
 package config
 
 import (
+	"io/fs"
 	"iter"
 	"maps"
 	"net/url"
@@ -25,6 +26,13 @@ type RuntimeConfig interface {
 // EnvironmentConfig defines the interface to access Talos environment configuration.
 type EnvironmentConfig interface {
 	Variables() map[string]string
+}
+
+// EtcFileConfig defines the interface to access user-managed /etc file configuration.
+type EtcFileConfig interface {
+	Name() string
+	Content() string
+	Mode() fs.FileMode
 }
 
 // WrapEnvironmentConfigList wraps a list of EnvironmentConfig into a single EnvironmentConfig aggregating the results.
@@ -66,10 +74,32 @@ func WrapSysfsConfigList(configs ...SysfsConfig) map[string]string {
 	})
 }
 
+// KernelModuleConfig defines the interface to access a Talos kernel module to load.
+type KernelModuleConfig interface {
+	Name() string
+	Parameters() []string
+}
+
+// UnattendedInstallConfig defines the interface to access Talos unattended install configuration.
+type UnattendedInstallConfig interface {
+	UnattendedInstallConfigSignal()
+	InstallerImage() string
+	VolumeSelector() cel.Expression
+	VolumeWipe() bool
+	RebootAfterInstall() *bool
+}
+
 // WatchdogTimerConfig defines the interface to access Talos watchdog timer configuration.
 type WatchdogTimerConfig interface {
 	Device() string
 	Timeout() time.Duration
+}
+
+// SecurityProfileConfig defines the interface to access Talos node security profile configuration.
+type SecurityProfileConfig interface {
+	SecurityProfileConfigSignal()
+	// WorkloadIsolation reports whether the container plane should run inside the sandbox namespace.
+	WorkloadIsolation() bool
 }
 
 // WrapRuntimeConfigList wraps a list of RuntimeConfig into a single RuntimeConfig aggregating the results.

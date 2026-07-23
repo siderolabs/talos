@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: backend-ontap-san-secret
+  namespace: trident
+type: Opaque
+stringData:
+  username: "{{ .Username }}"
+  password: "{{ .Password }}"
+---
+apiVersion: trident.netapp.io/v1
+kind: TridentBackendConfig
+metadata:
+  name: backend-ontap-san
+  namespace: trident
+spec:
+  version: 1
+  storageDriverName: ontap-san
+  backendName: ontap-san
+  managementLIF: "{{ .ManagementLIF }}"
+  svm: "{{ .SVM }}"
+  credentials:
+    name: backend-ontap-san-secret
+  labels:
+    protocol: iscsi
+  sanType: iscsi
+  useREST: true

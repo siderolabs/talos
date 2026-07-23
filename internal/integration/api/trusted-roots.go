@@ -85,8 +85,11 @@ func (suite *TrustedRootsSuite) TestTrustedRoots() {
 	// clean up custom config if it exists
 	suite.RemoveMachineConfigDocuments(nodeCtx, cfgDocument.MetaKind)
 
-	certificates := suite.readTrustedRoots(nodeCtx)
-	suite.Require().Contains(certificates, "Bundle of CA Root Certificates")
+	// the config change above rewrites the trusted roots file, so retry the read until
+	// the default bundle is observed (avoids racing the file rewrite).
+	suite.Require().Eventually(func() bool {
+		return strings.Contains(suite.readTrustedRoots(nodeCtx), "Bundle of CA Root Certificates")
+	}, 5*time.Second, 100*time.Millisecond)
 
 	// enable custom trusted roots
 	suite.PatchMachineConfig(nodeCtx, cfgDocument)

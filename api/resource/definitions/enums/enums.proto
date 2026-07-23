@@ -47,6 +47,15 @@ enum RuntimeFIPSState {
   FIPS_STATE_STRICT = 2;
 }
 
+// RuntimeUnattendedInstallPhase describes the phase of the unattended install.
+enum RuntimeUnattendedInstallPhase {
+  UNATTENDED_INSTALL_PHASE_PENDING = 0;
+  UNATTENDED_INSTALL_PHASE_INSTALLING = 1;
+  UNATTENDED_INSTALL_PHASE_INSTALLED = 2;
+  UNATTENDED_INSTALL_PHASE_WAITING_FOR_REBOOT = 3;
+  UNATTENDED_INSTALL_PHASE_FAILED = 4;
+}
+
 // MachineType represents a machine type.
 enum MachineType {
   // TypeUnknown represents undefined node type, when there is no machine configuration yet.
@@ -120,6 +129,17 @@ enum NethelpersAutoHostnameKind {
   AUTO_HOSTNAME_KIND_OFF = 0;
   AUTO_HOSTNAME_KIND_ADDR = 1;
   AUTO_HOSTNAME_KIND_STABLE = 2;
+}
+
+// NethelpersBGPSessionState is the state of a BGP peering session (RFC 4271 FSM).
+enum NethelpersBGPSessionState {
+  BGP_SESSION_STATE_UNKNOWN = 0;
+  BGP_SESSION_STATE_IDLE = 1;
+  BGP_SESSION_STATE_CONNECT = 2;
+  BGP_SESSION_STATE_ACTIVE = 3;
+  BGP_SESSION_STATE_OPEN_SENT = 4;
+  BGP_SESSION_STATE_OPEN_CONFIRM = 5;
+  BGP_SESSION_STATE_ESTABLISHED = 6;
 }
 
 // NethelpersBondMode is a bond mode.
@@ -776,6 +796,26 @@ enum StorageLVMLogicalVolumeType {
   LVM_LOGICAL_VOLUME_TYPE_RAID1 = 1;
   LVM_LOGICAL_VOLUME_TYPE_RAID0 = 2;
   LVM_LOGICAL_VOLUME_TYPE_RAID10 = 3;
+}
+
+// StorageMDArrayPhase describes the provisioning/sync state of an MD array.
+enum StorageMDArrayPhase {
+  MD_ARRAY_PHASE_UNKNOWN = 0;
+  MD_ARRAY_PHASE_WAITING = 1;
+  MD_ARRAY_PHASE_REBUILDING = 2;
+  MD_ARRAY_PHASE_READY = 3;
+  MD_ARRAY_PHASE_ERROR = 4;
+}
+
+// StorageMDLevel describes the RAID level of an MD (software RAID) array.
+enum StorageMDLevel {
+  MD_LEVEL_RAID1 = 0;
+}
+
+// StorageMDMetadata describes the on-disk metadata format of an MD (software RAID) array.
+enum StorageMDMetadata {
+  MD_METADATA10 = 0;
+  MD_METADATA12 = 1;
 }
 
 // CriImageCacheStatus describes image cache status type.

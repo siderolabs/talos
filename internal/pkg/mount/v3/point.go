@@ -133,6 +133,7 @@ func (p *Point) Share() error {
 type UnmountOptions struct {
 	Printer   func(string, ...any)
 	Recursive bool
+	Lazy      bool
 }
 
 // Release closes the file descriptor of the underlying mount point.
@@ -155,7 +156,7 @@ func (p *Point) Unmount(opts UnmountOptions) error {
 	}
 
 	err := p.retry(func() error {
-		return SafeUnmount(context.Background(), opts.Printer, p.target, opts.Recursive)
+		return SafeUnmount(context.Background(), opts.Printer, p.target, opts.Recursive, opts.Lazy)
 	}, true)
 	if err != nil {
 		logSubmounts(opts.Printer, p.target)

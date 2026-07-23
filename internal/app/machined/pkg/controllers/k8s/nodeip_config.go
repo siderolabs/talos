@@ -23,7 +23,7 @@ type NodeIPConfigController = transform.Controller[*config.MachineConfig, *k8s.N
 
 // NewNodeIPConfigController instantiates the controller.
 //
-//nolint:gocyclo
+//nolint:gocyclo,dupl
 func NewNodeIPConfigController() *NodeIPConfigController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *k8s.NodeIPConfig]{
@@ -33,11 +33,15 @@ func NewNodeIPConfigController() *NodeIPConfigController {
 					return optional.None[*k8s.NodeIPConfig]()
 				}
 
-				if cfg.Config().Machine() == nil || cfg.Config().Cluster() == nil {
+				if cfg.Config().Machine() == nil {
 					return optional.None[*k8s.NodeIPConfig]()
 				}
 
 				if cfg.Config().K8sNetworkConfig() == nil {
+					return optional.None[*k8s.NodeIPConfig]()
+				}
+
+				if cfg.Config().K8sNodeConfig() == nil {
 					return optional.None[*k8s.NodeIPConfig]()
 				}
 
@@ -47,7 +51,7 @@ func NewNodeIPConfigController() *NodeIPConfigController {
 				spec := res.TypedSpec()
 				cfgProvider := cfg.Config()
 
-				spec.ValidSubnets = cfgProvider.Machine().Kubelet().NodeIP().ValidSubnets()
+				spec.ValidSubnets = cfgProvider.K8sNodeConfig().NodeIP().ValidSubnets()
 
 				if len(spec.ValidSubnets) == 0 {
 					// automatically deduce validsubnets from ServiceCIDRs

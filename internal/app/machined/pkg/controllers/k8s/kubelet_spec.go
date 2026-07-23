@@ -5,6 +5,7 @@
 package k8s
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"net/netip"
@@ -31,6 +32,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/kubelet"
+	"github.com/siderolabs/talos/pkg/machinery/labels"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
@@ -324,22 +326,30 @@ func NewKubeletConfiguration(cfgSpec *k8s.KubeletConfigSpec, kubeletVersion comp
 	if cfgSpec.SkipNodeRegistration {
 		config.Authentication.Webhook.Enabled = new(false)
 		config.Authorization.Mode = kubeletconfig.KubeletAuthorizationModeAlwaysAllow
-	} else if machineType.IsControlPlane() && !cfgSpec.AllowSchedulingOnControlPlane {
+	} else if cfgSpec.ExtraArgs["register-with-taints"].Values == nil { // / don't clash with taints provided via extraArgs, it is deprecated on kubelet side
 		// register with taint to prevent scheduling on control plane nodes race with NodeApplyController applying the initial taint
 		// NodeApplyController will take ownership of the taint after the first successful apply
-		if slices.IndexFunc(config.RegisterWithTaints, func(t corev1.Taint) bool {
-			return t.Key == constants.LabelNodeRoleControlPlane
-		}) == -1 { // don't add the taint if it's already in the config
-			if cfgSpec.ExtraArgs["register-with-taints"].Values == nil { // don't clash with taints provided via extraArgs, it is deprecated on kubelet side
+		for key, taint := range cfgSpec.RegisterWithTaints {
+			value, effect := labels.ParseTaint(taint)
+
+			if slices.IndexFunc(config.RegisterWithTaints, func(t corev1.Taint) bool {
+				return t.Key == key
+			}) == -1 { // don't add the taint if it's already in the config
 				config.RegisterWithTaints = append(
 					config.RegisterWithTaints,
 					corev1.Taint{
-						Key:    constants.LabelNodeRoleControlPlane,
-						Effect: corev1.TaintEffectNoSchedule,
+						Key:    key,
+						Effect: corev1.TaintEffect(effect),
+						Value:  value,
 					},
 				)
 			}
 		}
+
+		// sort the taints to establish stable order
+		slices.SortFunc(config.RegisterWithTaints, func(a, b corev1.Taint) int {
+			return cmp.Compare(a.Key, b.Key)
+		})
 	}
 
 	// fields which can be overridden

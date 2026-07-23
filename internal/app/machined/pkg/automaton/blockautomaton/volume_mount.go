@@ -9,6 +9,7 @@ import (
 	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/controller"
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/xerrors"
@@ -108,6 +109,12 @@ func waitForMountStatus(ctx context.Context, r controller.ReaderWriter, logger *
 	if mountStatus == nil {
 		// wait for the mount status to be established
 		return nil, xerrors.NewTaggedf[automaton.Continue]("waiting for mount status to be established")
+	}
+
+	if mountStatus.Metadata().Phase() != resource.PhaseRunning {
+		// the mount status is left over from the previous generation of the mount request, putting a finalizer
+		// on it would block its teardown forever, so wait for it to be destroyed and re-established
+		return nil, xerrors.NewTaggedf[automaton.Continue]("waiting for mount status to be torn down")
 	}
 
 	if mountStatus.TypedSpec().ReadOnly && !mountContext.options.ReadOnly {

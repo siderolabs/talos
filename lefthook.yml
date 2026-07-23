@@ -1,0 +1,62 @@
+pre-commit:
+  jobs:
+    - name: fix
+      group:
+        parallel: false
+        jobs:
+          - name: generate
+            run: make generate
+            glob:
+              - "pkg/**"
+              - "api/**"
+              - "hack/boilerplate.txt"
+            env:
+              USERNAME: siderolabs
+            stage_fixed: true
+          - name: docs
+            run: make docs
+            glob:
+              - "cmd/talosctl/**"
+              - "pkg/machinery/config/**"
+            env:
+              USERNAME: siderolabs
+            stage_fixed: true
+          - name: fmt
+            run: make fmt
+            glob:
+              - "api/**/*.proto"
+              - "pkg/provision/api/**/*.proto"
+            env:
+              USERNAME: siderolabs
+            stage_fixed: true
+          - name: lint-fmt
+            run: make lint-fmt
+            glob:
+              - "**/*.go"
+            env:
+              USERNAME: siderolabs
+            stage_fixed: true
+    - name: lint
+      group:
+        parallel: false
+        jobs:
+          - name: lint
+            run: make lint
+            glob:
+              - "**/*.go"
+              - "**/*.proto"
+              - "**/*.md"
+              - "go.mod"
+              - "go.sum"
+              - "pkg/machinery/go.mod"
+              - "pkg/machinery/go.sum"
+              - ".golangci.yml"
+            env:
+              USERNAME: siderolabs
+post-commit:
+  parallel: false
+  commands:
+    conformance:
+      run: make conformance
+      env:
+        USERNAME: siderolabs

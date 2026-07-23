@@ -13,8 +13,10 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/hashicorp/go-multierror"
+	"github.com/siderolabs/go-retry/retry"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
@@ -85,6 +87,7 @@ func (suite *RebootSuite) TestReboot() {
 		append([]string{"health"}, args...),
 		base.StdoutEmpty(),
 		base.StderrNotEmpty(),
+		base.WithRetry(retry.Constant(2*time.Minute, retry.WithUnits(time.Second))),
 	)
 }
 

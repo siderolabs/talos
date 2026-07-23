@@ -180,8 +180,6 @@ func (s *Scaleway) ParseMetadata(metadata *instance.Metadata) (*runtime.Platform
 }
 
 // Configuration implements the runtime.Platform interface.
-//
-//nolint:stylecheck
 func (s *Scaleway) Configuration(ctx context.Context, r state.State) ([]byte, error) {
 	if err := netutils.Wait(ctx, r); err != nil {
 		return nil, err

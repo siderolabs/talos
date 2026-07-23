@@ -322,8 +322,13 @@ type KubeletSpec struct {
 	BootstrapTokenId     string                          `protobuf:"bytes,3,opt,name=bootstrap_token_id,json=bootstrapTokenId,proto3" json:"bootstrap_token_id,omitempty"`
 	BootstrapTokenSecret string                          `protobuf:"bytes,4,opt,name=bootstrap_token_secret,json=bootstrapTokenSecret,proto3" json:"bootstrap_token_secret,omitempty"`
 	AcceptedCAs          []*common.PEMEncodedCertificate `protobuf:"bytes,5,rep,name=accepted_c_as,json=acceptedCAs,proto3" json:"accepted_c_as,omitempty"`
-	unknownFields        protoimpl.UnknownFields
-	sizeCache            protoimpl.SizeCache
+	// EndpointTLSServerName, when non-empty, is propagated to the generated
+	// kubelet kubeconfig as `clusters[0].cluster.tls-server-name`, overriding
+	// the SNI/hostname the kubelet uses while still dialing Endpoint as the
+	// TCP destination.
+	EndpointTlsServerName string `protobuf:"bytes,6,opt,name=endpoint_tls_server_name,json=endpointTlsServerName,proto3" json:"endpoint_tls_server_name,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
 }
 
 func (x *KubeletSpec) Reset() {
@@ -382,6 +387,13 @@ func (x *KubeletSpec) GetAcceptedCAs() []*common.PEMEncodedCertificate {
 		return x.AcceptedCAs
 	}
 	return nil
+}
+
+func (x *KubeletSpec) GetEndpointTlsServerName() string {
+	if x != nil {
+		return x.EndpointTlsServerName
+	}
+	return ""
 }
 
 // KubernetesCertsSpec describes generated Kubernetes certificates.
@@ -517,13 +529,14 @@ func (x *KubernetesDynamicCertsSpec) GetFrontProxy() *common.PEMEncodedCertifica
 
 // KubernetesRootSpec describes root Kubernetes secrets.
 type KubernetesRootSpec struct {
-	state                     protoimpl.MessageState              `protogen:"open.v1"`
-	Name                      string                              `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Endpoint                  *common.URL                         `protobuf:"bytes,2,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
-	LocalEndpoint             *common.URL                         `protobuf:"bytes,3,opt,name=local_endpoint,json=localEndpoint,proto3" json:"local_endpoint,omitempty"`
-	CertSaNs                  []string                            `protobuf:"bytes,4,rep,name=cert_sa_ns,json=certSaNs,proto3" json:"cert_sa_ns,omitempty"`
-	DnsDomain                 string                              `protobuf:"bytes,6,opt,name=dns_domain,json=dnsDomain,proto3" json:"dns_domain,omitempty"`
-	IssuingCa                 *common.PEMEncodedCertificateAndKey `protobuf:"bytes,7,opt,name=issuing_ca,json=issuingCa,proto3" json:"issuing_ca,omitempty"`
+	state         protoimpl.MessageState              `protogen:"open.v1"`
+	Name          string                              `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Endpoint      *common.URL                         `protobuf:"bytes,2,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
+	LocalEndpoint *common.URL                         `protobuf:"bytes,3,opt,name=local_endpoint,json=localEndpoint,proto3" json:"local_endpoint,omitempty"`
+	CertSaNs      []string                            `protobuf:"bytes,4,rep,name=cert_sa_ns,json=certSaNs,proto3" json:"cert_sa_ns,omitempty"`
+	DnsDomain     string                              `protobuf:"bytes,6,opt,name=dns_domain,json=dnsDomain,proto3" json:"dns_domain,omitempty"`
+	IssuingCa     *common.PEMEncodedCertificateAndKey `protobuf:"bytes,7,opt,name=issuing_ca,json=issuingCa,proto3" json:"issuing_ca,omitempty"`
+	// ServiceAccount is the issuing service account key.
 	ServiceAccount            *common.PEMEncodedKey               `protobuf:"bytes,8,opt,name=service_account,json=serviceAccount,proto3" json:"service_account,omitempty"`
 	AggregatorCa              *common.PEMEncodedCertificateAndKey `protobuf:"bytes,9,opt,name=aggregator_ca,json=aggregatorCa,proto3" json:"aggregator_ca,omitempty"`
 	AescbcEncryptionSecret    string                              `protobuf:"bytes,10,opt,name=aescbc_encryption_secret,json=aescbcEncryptionSecret,proto3" json:"aescbc_encryption_secret,omitempty"`
@@ -533,8 +546,21 @@ type KubernetesRootSpec struct {
 	ApiServerIps              []*common.NetIP                     `protobuf:"bytes,14,rep,name=api_server_ips,json=apiServerIps,proto3" json:"api_server_ips,omitempty"`
 	AcceptedCAs               []*common.PEMEncodedCertificate     `protobuf:"bytes,15,rep,name=accepted_c_as,json=acceptedCAs,proto3" json:"accepted_c_as,omitempty"`
 	EtcdEncryptionConfig      *structpb.Struct                    `protobuf:"bytes,16,opt,name=etcd_encryption_config,json=etcdEncryptionConfig,proto3" json:"etcd_encryption_config,omitempty"`
-	unknownFields             protoimpl.UnknownFields
-	sizeCache                 protoimpl.SizeCache
+	AcceptedAggregatorCAs     []*common.PEMEncodedCertificate     `protobuf:"bytes,17,rep,name=accepted_aggregator_c_as,json=acceptedAggregatorCAs,proto3" json:"accepted_aggregator_c_as,omitempty"`
+	// ServiceAccountAcceptedKeys are the accepted service account keys.
+	//
+	// It already contains the public version of the issuing key.
+	ServiceAccountAcceptedKeys []*common.PEMEncodedKey `protobuf:"bytes,18,rep,name=service_account_accepted_keys,json=serviceAccountAcceptedKeys,proto3" json:"service_account_accepted_keys,omitempty"`
+	// IssuerURL is the URL of the service account issuer.
+	IssuerUrl string `protobuf:"bytes,19,opt,name=issuer_url,json=issuerUrl,proto3" json:"issuer_url,omitempty"`
+	// AcceptedIssuers are the accepted service account issuers.
+	//
+	// It doesn't contain the issuerURL.
+	AcceptedIssuers []string `protobuf:"bytes,20,rep,name=accepted_issuers,json=acceptedIssuers,proto3" json:"accepted_issuers,omitempty"`
+	// APIAudiences are the accepted service account audiences.
+	ApiAudiences  []string `protobuf:"bytes,21,rep,name=api_audiences,json=apiAudiences,proto3" json:"api_audiences,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
 }
 
 func (x *KubernetesRootSpec) Reset() {
@@ -668,6 +694,41 @@ func (x *KubernetesRootSpec) GetAcceptedCAs() []*common.PEMEncodedCertificate {
 func (x *KubernetesRootSpec) GetEtcdEncryptionConfig() *structpb.Struct {
 	if x != nil {
 		return x.EtcdEncryptionConfig
+	}
+	return nil
+}
+
+func (x *KubernetesRootSpec) GetAcceptedAggregatorCAs() []*common.PEMEncodedCertificate {
+	if x != nil {
+		return x.AcceptedAggregatorCAs
+	}
+	return nil
+}
+
+func (x *KubernetesRootSpec) GetServiceAccountAcceptedKeys() []*common.PEMEncodedKey {
+	if x != nil {
+		return x.ServiceAccountAcceptedKeys
+	}
+	return nil
+}
+
+func (x *KubernetesRootSpec) GetIssuerUrl() string {
+	if x != nil {
+		return x.IssuerUrl
+	}
+	return ""
+}
+
+func (x *KubernetesRootSpec) GetAcceptedIssuers() []string {
+	if x != nil {
+		return x.AcceptedIssuers
+	}
+	return nil
+}
+
+func (x *KubernetesRootSpec) GetApiAudiences() []string {
+	if x != nil {
+		return x.ApiAudiences
 	}
 	return nil
 }
@@ -870,12 +931,13 @@ const file_resource_definitions_secrets_secrets_proto_rawDesc = "" +
 	"etcd_admin\x18\x03 \x01(\v2#.common.PEMEncodedCertificateAndKeyR\tetcdAdmin\x12K\n" +
 	"\x0fetcd_api_server\x18\x04 \x01(\v2#.common.PEMEncodedCertificateAndKeyR\retcdApiServer\"L\n" +
 	"\fEtcdRootSpec\x12<\n" +
-	"\aetcd_ca\x18\x01 \x01(\v2#.common.PEMEncodedCertificateAndKeyR\x06etcdCa\"\xdd\x01\n" +
+	"\aetcd_ca\x18\x01 \x01(\v2#.common.PEMEncodedCertificateAndKeyR\x06etcdCa\"\x96\x02\n" +
 	"\vKubeletSpec\x12'\n" +
 	"\bendpoint\x18\x01 \x01(\v2\v.common.URLR\bendpoint\x12,\n" +
 	"\x12bootstrap_token_id\x18\x03 \x01(\tR\x10bootstrapTokenId\x124\n" +
 	"\x16bootstrap_token_secret\x18\x04 \x01(\tR\x14bootstrapTokenSecret\x12A\n" +
-	"\raccepted_c_as\x18\x05 \x03(\v2\x1d.common.PEMEncodedCertificateR\vacceptedCAs\"\xf5\x01\n" +
+	"\raccepted_c_as\x18\x05 \x03(\v2\x1d.common.PEMEncodedCertificateR\vacceptedCAs\x127\n" +
+	"\x18endpoint_tls_server_name\x18\x06 \x01(\tR\x15endpointTlsServerName\"\xf5\x01\n" +
 	"\x13KubernetesCertsSpec\x121\n" +
 	"\x14scheduler_kubeconfig\x18\x04 \x01(\tR\x13schedulerKubeconfig\x12B\n" +
 	"\x1dcontroller_manager_kubeconfig\x18\x05 \x01(\tR\x1bcontrollerManagerKubeconfig\x12<\n" +
@@ -886,7 +948,7 @@ const file_resource_definitions_secrets_secrets_proto_rawDesc = "" +
 	"api_server\x18\x01 \x01(\v2#.common.PEMEncodedCertificateAndKeyR\tapiServer\x12^\n" +
 	"\x19api_server_kubelet_client\x18\x02 \x01(\v2#.common.PEMEncodedCertificateAndKeyR\x16apiServerKubeletClient\x12D\n" +
 	"\vfront_proxy\x18\x03 \x01(\v2#.common.PEMEncodedCertificateAndKeyR\n" +
-	"frontProxy\"\xb5\x06\n" +
+	"frontProxy\"\xd6\b\n" +
 	"\x12KubernetesRootSpec\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12'\n" +
 	"\bendpoint\x18\x02 \x01(\v2\v.common.URLR\bendpoint\x122\n" +
@@ -906,7 +968,13 @@ const file_resource_definitions_secrets_secrets_proto_rawDesc = "" +
 	"\x1bsecretbox_encryption_secret\x18\r \x01(\tR\x19secretboxEncryptionSecret\x123\n" +
 	"\x0eapi_server_ips\x18\x0e \x03(\v2\r.common.NetIPR\fapiServerIps\x12A\n" +
 	"\raccepted_c_as\x18\x0f \x03(\v2\x1d.common.PEMEncodedCertificateR\vacceptedCAs\x12M\n" +
-	"\x16etcd_encryption_config\x18\x10 \x01(\v2\x17.google.protobuf.StructR\x14etcdEncryptionConfig\"J\n" +
+	"\x16etcd_encryption_config\x18\x10 \x01(\v2\x17.google.protobuf.StructR\x14etcdEncryptionConfig\x12V\n" +
+	"\x18accepted_aggregator_c_as\x18\x11 \x03(\v2\x1d.common.PEMEncodedCertificateR\x15acceptedAggregatorCAs\x12X\n" +
+	"\x1dservice_account_accepted_keys\x18\x12 \x03(\v2\x15.common.PEMEncodedKeyR\x1aserviceAccountAcceptedKeys\x12\x1d\n" +
+	"\n" +
+	"issuer_url\x18\x13 \x01(\tR\tissuerUrl\x12)\n" +
+	"\x10accepted_issuers\x18\x14 \x03(\tR\x0facceptedIssuers\x12#\n" +
+	"\rapi_audiences\x18\x15 \x03(\tR\fapiAudiences\"J\n" +
 	"\x13MaintenanceRootSpec\x123\n" +
 	"\x02ca\x18\x01 \x01(\v2#.common.PEMEncodedCertificateAndKeyR\x02ca\"\x86\x02\n" +
 	"\n" +
@@ -979,17 +1047,19 @@ var file_resource_definitions_secrets_secrets_proto_depIdxs = []int32{
 	14, // 19: talos.resource.definitions.secrets.KubernetesRootSpec.api_server_ips:type_name -> common.NetIP
 	13, // 20: talos.resource.definitions.secrets.KubernetesRootSpec.accepted_c_as:type_name -> common.PEMEncodedCertificate
 	17, // 21: talos.resource.definitions.secrets.KubernetesRootSpec.etcd_encryption_config:type_name -> google.protobuf.Struct
-	12, // 22: talos.resource.definitions.secrets.MaintenanceRootSpec.ca:type_name -> common.PEMEncodedCertificateAndKey
-	12, // 23: talos.resource.definitions.secrets.OSRootSpec.issuing_ca:type_name -> common.PEMEncodedCertificateAndKey
-	14, // 24: talos.resource.definitions.secrets.OSRootSpec.cert_sani_ps:type_name -> common.NetIP
-	13, // 25: talos.resource.definitions.secrets.OSRootSpec.accepted_c_as:type_name -> common.PEMEncodedCertificate
-	12, // 26: talos.resource.definitions.secrets.TrustdCertsSpec.server:type_name -> common.PEMEncodedCertificateAndKey
-	13, // 27: talos.resource.definitions.secrets.TrustdCertsSpec.accepted_c_as:type_name -> common.PEMEncodedCertificate
-	28, // [28:28] is the sub-list for method output_type
-	28, // [28:28] is the sub-list for method input_type
-	28, // [28:28] is the sub-list for extension type_name
-	28, // [28:28] is the sub-list for extension extendee
-	0,  // [0:28] is the sub-list for field type_name
+	13, // 22: talos.resource.definitions.secrets.KubernetesRootSpec.accepted_aggregator_c_as:type_name -> common.PEMEncodedCertificate
+	16, // 23: talos.resource.definitions.secrets.KubernetesRootSpec.service_account_accepted_keys:type_name -> common.PEMEncodedKey
+	12, // 24: talos.resource.definitions.secrets.MaintenanceRootSpec.ca:type_name -> common.PEMEncodedCertificateAndKey
+	12, // 25: talos.resource.definitions.secrets.OSRootSpec.issuing_ca:type_name -> common.PEMEncodedCertificateAndKey
+	14, // 26: talos.resource.definitions.secrets.OSRootSpec.cert_sani_ps:type_name -> common.NetIP
+	13, // 27: talos.resource.definitions.secrets.OSRootSpec.accepted_c_as:type_name -> common.PEMEncodedCertificate
+	12, // 28: talos.resource.definitions.secrets.TrustdCertsSpec.server:type_name -> common.PEMEncodedCertificateAndKey
+	13, // 29: talos.resource.definitions.secrets.TrustdCertsSpec.accepted_c_as:type_name -> common.PEMEncodedCertificate
+	30, // [30:30] is the sub-list for method output_type
+	30, // [30:30] is the sub-list for method input_type
+	30, // [30:30] is the sub-list for extension type_name
+	30, // [30:30] is the sub-list for extension extendee
+	0,  // [0:30] is the sub-list for field type_name
 }
 
 func init() { file_resource_definitions_secrets_secrets_proto_init() }

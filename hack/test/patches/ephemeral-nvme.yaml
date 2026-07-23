@@ -18,11 +18,11 @@ provisioning:
   minSize: 500MB
   maxSize: 500MB
 ---
-machine:
-  kubelet:
-    extraConfig:
-      memorySwap:
-        swapBehavior: LimitedSwap
+apiVersion: v1alpha1
+kind: KubeletConfig
+config:
+  memorySwap:
+    swapBehavior: LimitedSwap
 ---
 apiVersion: v1alpha1
 kind: ZswapConfig

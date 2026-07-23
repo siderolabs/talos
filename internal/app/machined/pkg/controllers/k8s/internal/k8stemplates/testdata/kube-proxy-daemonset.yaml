@@ -32,7 +32,10 @@ spec:
               fieldPath: status.podIP
         image: k8s.gcr.io/kube-proxy:v1.27.0
         name: kube-proxy
-        resources: {}
+        resources:
+          requests:
+            cpu: 100m
+            memory: 50Mi
         securityContext:
           privileged: true
         volumeMounts:

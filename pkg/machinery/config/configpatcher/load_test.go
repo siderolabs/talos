@@ -73,7 +73,13 @@ func TestLoadStrategic(t *testing.T) {
 	p, ok := raw.(configpatcher.StrategicMergePatch)
 	require.True(t, ok)
 
-	assert.Equal(t, "foo.bar", p.Provider().NetworkHostnameConfig().Hostname())
+	require.Len(t, p.Documents(), 1)
+	assert.Equal(t, "v1alpha1", p.Documents()[0].Kind())
+
+	b, err := p.Bytes()
+	require.NoError(t, err)
+
+	assert.Equal(t, strategicPatch, b)
 }
 
 func TestLoadJSONPatches(t *testing.T) {

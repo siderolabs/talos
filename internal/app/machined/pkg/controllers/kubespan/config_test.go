@@ -75,7 +75,10 @@ func (suite *ConfigSuite) TestReconcileDisabled() {
 			&v1alpha1.Config{
 				ConfigVersion: "v1alpha1",
 				MachineConfig: &v1alpha1.MachineConfig{},
-				ClusterConfig: &v1alpha1.ClusterConfig{},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ClusterID:     "test-cluster-id",
+					ClusterSecret: "test-cluster-secret",
+				},
 			},
 		),
 	)
@@ -85,6 +88,8 @@ func (suite *ConfigSuite) TestReconcileDisabled() {
 		spec := res.TypedSpec()
 
 		asrt.False(spec.Enabled)
+		asrt.Equal("test-cluster-id", spec.ClusterID)
+		asrt.Equal("test-cluster-secret", spec.SharedSecret)
 	})
 }
 
@@ -125,6 +130,30 @@ func (suite *ConfigSuite) TestReconcileMultiDoc() {
 			asrt.Equal([]netip.Prefix{netip.MustParsePrefix("10.0.0.0/8")}, spec.ExcludeAdvertisedNetworks)
 		},
 	)
+}
+
+func (suite *ConfigSuite) TestReconcileNoDiscoveryIdentityConfig() {
+	cfg := config.NewMachineConfig(
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{
+					MachineNetwork: &v1alpha1.NetworkConfig{ //nolint:staticcheck // legacy config
+						NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{ //nolint:staticcheck // legacy config
+							KubeSpanEnabled: new(true),
+						},
+					},
+				},
+				ClusterConfig: &v1alpha1.ClusterConfig{
+					ClusterID:     "",
+					ClusterSecret: "",
+				},
+			},
+		),
+	)
+	suite.Create(cfg)
+
+	ctest.AssertNoResource[*kubespan.Config](suite, kubespan.ConfigID)
 }
 
 func TestConfigSuite(t *testing.T) {

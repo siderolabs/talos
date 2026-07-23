@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"testing"
 
+	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/gen/xtesting/must"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,8 +18,10 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
+	clustertypes "github.com/siderolabs/talos/pkg/machinery/config/types/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/hardware"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
+	runtimeconfig "github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime/extensions"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
@@ -60,7 +63,7 @@ func TestNew(t *testing.T) {
 	assert.False(t, cfg.Readonly())
 	assert.False(t, cfg.Debug())
 	assert.True(t, cfg.Machine().Features().DiskQuotaSupportEnabled())
-	assert.Equal(t, "topsecret", cfg.Cluster().Secret())
+	assert.Equal(t, "topsecret", cfg.DiscoveryIdentityConfig().ClusterSecret())
 	assert.Equal(t, "https://siderolink.api/join?jointoken=secret&user=alice", cfg.SideroLink().APIUrl().String())
 	assert.Equal(t, "test-extension", cfg.ExtensionServiceConfigs()[0].Name())
 	assert.Equal(t, "0000:04:00.00", cfg.PCIDriverRebindConfig().PCIDriverRebindConfigs()[0].PCIID())
@@ -77,8 +80,21 @@ func TestNew(t *testing.T) {
 	assert.NotEqual(t, v1alpha1Cfg, cfgBack.RawV1Alpha1())
 
 	cfgRedacted := cfg.RedactSecrets("REDACTED")
-	assert.Equal(t, "REDACTED", cfgRedacted.Cluster().Secret())
+	assert.Equal(t, "REDACTED", cfgRedacted.DiscoveryIdentityConfig().ClusterSecret())
 	assert.Equal(t, "https://siderolink.api/join?jointoken=REDACTED&user=alice", cfgRedacted.SideroLink().APIUrl().String())
+}
+
+func TestNetworkBGPPeerConfig(t *testing.T) {
+	t.Parallel()
+
+	cfg, err := container.New()
+	require.NoError(t, err)
+	assert.Nil(t, cfg.NetworkBGPPeerConfig())
+
+	bgpPeerCfg := network.NewBGPPeerConfigV1Alpha1()
+	cfg, err = container.New(bgpPeerCfg)
+	require.NoError(t, err)
+	assert.Same(t, bgpPeerCfg, cfg.NetworkBGPPeerConfig())
 }
 
 func TestNewDuplicate(t *testing.T) {
@@ -121,6 +137,33 @@ func TestNewConflict(t *testing.T) {
 	assert.EqualError(t, err, "conflicting documents: ExistingVolumeConfig/my-user-volume-1 and UserVolumeConfig/my-user-volume-1")
 }
 
+func TestUdevRulesConfig(t *testing.T) {
+	t.Parallel()
+
+	v1alpha1Cfg := &v1alpha1.Config{
+		MachineConfig: &v1alpha1.MachineConfig{
+			MachineUdev: &v1alpha1.UdevConfig{ //nolint:staticcheck // legacy config
+				UdevRules: []string{"legacy-rule"},
+			},
+		},
+	}
+
+	cfg, err := container.New(v1alpha1Cfg)
+	require.NoError(t, err)
+
+	require.NotNil(t, cfg.UdevRulesConfig())
+	assert.Equal(t, []string{"legacy-rule"}, cfg.UdevRulesConfig().Rules())
+
+	udevRulesCfg := runtimeconfig.NewUdevRulesConfigV1Alpha1()
+	udevRulesCfg.UdevRules = []string{"document-rule"}
+
+	cfg, err = container.New(v1alpha1Cfg, udevRulesCfg)
+	require.NoError(t, err)
+
+	require.NotNil(t, cfg.UdevRulesConfig())
+	assert.Equal(t, []string{"document-rule"}, cfg.UdevRulesConfig().Rules())
+}
+
 func TestPatchV1Alpha1(t *testing.T) {
 	t.Parallel()
 
@@ -148,6 +191,199 @@ func TestPatchV1Alpha1(t *testing.T) {
 
 	assert.Equal(t, "https://siderolink.api/?jointoken=secret&user=alice", cfg.SideroLink().APIUrl().String())
 	assert.Equal(t, "https://siderolink.api/?jointoken=secret&user=alice", patchedCfg.SideroLink().APIUrl().String())
+}
+
+func TestDiscoveryServiceConfigs(t *testing.T) {
+	t.Parallel()
+
+	// legacy v1alpha1 cluster discovery config, surfaces as a single config named "legacy"
+	legacyEnabled := &v1alpha1.Config{
+		ClusterConfig: &v1alpha1.ClusterConfig{
+			ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{ //nolint:staticcheck // legacy config
+				DiscoveryEnabled: new(true),
+				DiscoveryRegistries: v1alpha1.DiscoveryRegistriesConfig{ //nolint:staticcheck // legacy config
+					RegistryService: v1alpha1.RegistryServiceConfig{ //nolint:staticcheck // legacy config
+						RegistryEndpoint: "https://legacy.discovery.test/",
+					},
+				},
+			},
+		},
+	}
+
+	// legacy cluster discovery disabled, surfaces no config
+	legacyDisabled := &v1alpha1.Config{
+		ClusterConfig: &v1alpha1.ClusterConfig{
+			ClusterDiscoveryConfig: &v1alpha1.ClusterDiscoveryConfig{ //nolint:staticcheck // legacy config
+				DiscoveryEnabled: new(false),
+			},
+		},
+	}
+
+	primaryDoc := clustertypes.NewDiscoveryServiceConfigV1Alpha1("primary", must.Value(url.Parse("https://primary.discovery.test/"))(t))
+	secondaryDoc := clustertypes.NewDiscoveryServiceConfigV1Alpha1("secondary", must.Value(url.Parse("grpc://secondary.discovery.test/"))(t))
+
+	for _, tt := range []struct {
+		name      string
+		documents []config.Document
+
+		// expected (name -> endpoint) of the returned configs
+		expected map[string]string
+	}{
+		{
+			name:      "no configs at all",
+			documents: []config.Document{&v1alpha1.Config{}},
+			expected:  map[string]string{},
+		},
+		{
+			// v1alpha1 with a cluster config but no discovery block must not panic
+			name:      "v1alpha1 without discovery block",
+			documents: []config.Document{&v1alpha1.Config{ClusterConfig: &v1alpha1.ClusterConfig{}}},
+			expected:  map[string]string{},
+		},
+		{
+			name:      "only legacy",
+			documents: []config.Document{legacyEnabled},
+			expected:  map[string]string{"legacy": "https://legacy.discovery.test/"},
+		},
+		{
+			name:      "legacy disabled",
+			documents: []config.Document{legacyDisabled},
+			expected:  map[string]string{},
+		},
+		{
+			name:      "only multi-doc, no v1alpha1 config present",
+			documents: []config.Document{primaryDoc, secondaryDoc},
+			expected: map[string]string{
+				"primary":   "https://primary.discovery.test/",
+				"secondary": "grpc://secondary.discovery.test/",
+			},
+		},
+		{
+			name:      "legacy disabled with multi-doc",
+			documents: []config.Document{legacyDisabled, primaryDoc},
+			expected: map[string]string{
+				"primary": "https://primary.discovery.test/",
+			},
+		},
+		{
+			// such a config is rejected by validation, but the accessor still prefers the v1alpha1 config
+			name:      "legacy takes precedence over documents",
+			documents: []config.Document{legacyEnabled, primaryDoc, secondaryDoc},
+			expected: map[string]string{
+				"legacy": "https://legacy.discovery.test/",
+			},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctr, err := container.New(tt.documents...)
+			require.NoError(t, err)
+
+			got := ctr.DiscoveryServiceConfigs()
+
+			// len check also guards against duplicate names collapsing in the map below
+			assert.Len(t, got, len(tt.expected), "returned configs should not contain duplicate names")
+
+			actual := xslices.ToMap(got, func(c config.DiscoveryServiceConfig) (string, string) {
+				return c.Name(), c.Endpoint().String()
+			})
+
+			for name, endpoint := range tt.expected {
+				assert.Equal(t, endpoint, actual[name], "discovery service config %q", name)
+			}
+		})
+	}
+}
+
+func TestKernelModuleConfigsMixing(t *testing.T) {
+	t.Parallel()
+
+	legacy := &v1alpha1.Config{
+		MachineConfig: &v1alpha1.MachineConfig{
+			MachineKernel: &v1alpha1.KernelConfig{ //nolint:staticcheck // legacy configuration
+				KernelModules: []*v1alpha1.KernelModuleConfig{ //nolint:staticcheck // legacy configuration
+					{
+						ModuleName:       "btrfs",
+						ModuleParameters: []string{"legacy-param"},
+					},
+					{
+						ModuleName: "e1000",
+					},
+				},
+			},
+		},
+	}
+
+	overlappingDoc := runtimeconfig.NewKernelModuleConfigV1Alpha1("btrfs")
+	overlappingDoc.ModuleParameters = []string{"doc-param"}
+
+	standaloneDoc := runtimeconfig.NewKernelModuleConfigV1Alpha1("vrf")
+
+	for _, tt := range []struct {
+		name      string
+		documents []config.Document
+
+		// expected (name -> parameters) of the returned modules, in order
+		expected [][2]any
+	}{
+		{
+			name:      "no config at all",
+			documents: []config.Document{&v1alpha1.Config{}},
+			expected:  nil,
+		},
+		{
+			name:      "only legacy",
+			documents: []config.Document{legacy},
+			expected: [][2]any{
+				{"btrfs", []string{"legacy-param"}},
+				{"e1000", []string(nil)},
+			},
+		},
+		{
+			name:      "only multi-doc, no v1alpha1 config present",
+			documents: []config.Document{standaloneDoc},
+			expected: [][2]any{
+				{"vrf", []string(nil)},
+			},
+		},
+		{
+			name:      "legacy and non-overlapping multi-doc are merged",
+			documents: []config.Document{legacy, standaloneDoc},
+			expected: [][2]any{
+				{"btrfs", []string{"legacy-param"}},
+				{"e1000", []string(nil)},
+				{"vrf", []string(nil)},
+			},
+		},
+		{
+			// the document is ordered after the legacy entries, so downstream consumers processing
+			// the list in order and keying by module name (as KernelModuleConfigController does) see
+			// the document's parameters win on a name conflict.
+			name:      "multi-doc is appended after legacy on module name conflict",
+			documents: []config.Document{legacy, overlappingDoc},
+			expected: [][2]any{
+				{"btrfs", []string{"legacy-param"}},
+				{"e1000", []string(nil)},
+				{"btrfs", []string{"doc-param"}},
+			},
+		},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctr, err := container.New(tt.documents...)
+			require.NoError(t, err)
+
+			got := ctr.KernelModuleConfigs()
+
+			actual := xslices.Map(got, func(m config.KernelModuleConfig) [2]any {
+				return [2]any{m.Name(), m.Parameters()}
+			})
+
+			assert.Equal(t, tt.expected, actual)
+		})
+	}
 }
 
 func TestRunDefaultDHCPOperators(t *testing.T) {

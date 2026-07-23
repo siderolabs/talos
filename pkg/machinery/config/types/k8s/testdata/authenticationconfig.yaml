@@ -1,0 +1,10 @@
+apiVersion: v1alpha1
+kind: KubeAuthenticationConfig
+configuration:
+    apiVersion: apiserver.config.k8s.io/v1beta1
+    jwt:
+        - issuer:
+            audiences:
+                - my-app
+            url: https://example.com
+    kind: AuthenticationConfiguration

@@ -53,6 +53,13 @@ func WithTrustedRoots(versionContract *config.VersionContract, trustedRoots stri
 
 // WithKubeletImage returns a patch that updates the kubelet image in the machine configuration.
 func WithKubeletImage(versionContract *config.VersionContract, kubeletImage string) ([]byte, error) {
+	if versionContract.MultidocKubernetesConfigSupported() {
+		kubeletConfig := k8s.NewKubeletConfigV1Alpha1()
+		kubeletConfig.KubeletImage = kubeletImage
+
+		return patchFromDocument(kubeletConfig)
+	}
+
 	return patchFromV1Alpha1(map[string]any{
 		"machine": map[string]any{
 			"kubelet": map[string]any{
@@ -64,6 +71,13 @@ func WithKubeletImage(versionContract *config.VersionContract, kubeletImage stri
 
 // WithKubeAPIServerImage returns a patch that updates the kube-apiserver image in the machine configuration.
 func WithKubeAPIServerImage(versionContract *config.VersionContract, kubeAPIServerImage string) ([]byte, error) {
+	if versionContract.MultidocKubernetesConfigSupported() {
+		apiServerConfig := k8s.NewKubeAPIServerConfigV1Alpha1()
+		apiServerConfig.PodImage = kubeAPIServerImage
+
+		return patchFromDocument(apiServerConfig)
+	}
+
 	return patchFromV1Alpha1(map[string]any{
 		"cluster": map[string]any{
 			"apiServer": map[string]any{
@@ -111,6 +125,13 @@ func WithKubeSchedulerImage(versionContract *config.VersionContract, kubeSchedul
 
 // WithKubeProxyImage returns a patch that updates the kube-proxy image in the machine configuration.
 func WithKubeProxyImage(versionContract *config.VersionContract, kubeProxyImage string) ([]byte, error) {
+	if versionContract.MultidocKubernetesConfigSupported() {
+		proxyConfig := k8s.NewKubeProxyConfigV1Alpha1()
+		proxyConfig.ProxyImage = kubeProxyImage
+
+		return patchFromDocument(proxyConfig)
+	}
+
 	return patchFromV1Alpha1(map[string]any{
 		"cluster": map[string]any{
 			"proxy": map[string]any{

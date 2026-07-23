@@ -113,6 +113,12 @@ func LoadConfig(path string) (Config, error) {
 
 	baseDir := filepath.Dir(resolvedPath)
 
+	// An empty config file is valid and selects the defaults; yaml v4 returns a
+	// "no documents in stream" error for an empty document, so handle it here.
+	if len(strings.TrimSpace(string(data))) == 0 {
+		return NormalizeConfig(Config{}, baseDir)
+	}
+
 	settings, isGolangCI, err := golangCILinterSettings(data)
 	if err != nil {
 		return Config{}, fmt.Errorf("parsing golangci-lint config %q: %w", path, err)

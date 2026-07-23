@@ -39,6 +39,7 @@ var (
 	_ config.K8sControllerManagerConfig   = &KubeControllerManagerConfigV1Alpha1{}
 	_ config.Validator                    = &KubeControllerManagerConfigV1Alpha1{}
 	_ container.V1Alpha1ConflictValidator = &KubeControllerManagerConfigV1Alpha1{}
+	_ container.ControlplaneOnlyConfig    = &KubeControllerManagerConfigV1Alpha1{}
 )
 
 // KubeControllerManagerConfigV1Alpha1 configures kube-controller-manager controlplane static pod.
@@ -59,6 +60,7 @@ type KubeControllerManagerConfigV1Alpha1 struct {
 	//     The container image used to run the kube-controller-manager component.
 	//
 	//     The image reference should contain the tag, even if it is pinned by digest.
+	//   schemaRequired: true
 	PodImage string `yaml:"image"`
 	//   description: |
 	//     Extra command line arguments to supply to the kube-controller-manager.
@@ -196,3 +198,6 @@ func (s *KubeControllerManagerConfigV1Alpha1) Resources() config.Resources {
 func (s *KubeControllerManagerConfigV1Alpha1) ExtraVolumes() []config.VolumeMount {
 	return nil
 }
+
+// ControlplaneOnlyDocument implements container.ControlplaneOnlyConfig interface.
+func (s *KubeControllerManagerConfigV1Alpha1) ControlplaneOnlyDocument() {}

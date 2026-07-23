@@ -20,15 +20,20 @@ message AffiliateSpec {
   ControlPlane control_plane = 8;
 }
 
-// ConfigSpec describes KubeSpan configuration.
+// ConfigSpec describes Discovery configuration.
 message ConfigSpec {
+  // Deprecated: use ServiceEndpoints instead (configured via DiscoveryServiceConfig documents)
   bool discovery_enabled = 1;
   bool registry_kubernetes_enabled = 2;
+  // Deprecated: enabled via DiscoveryServiceConfig documents instead.
   bool registry_service_enabled = 3;
+  // Deprecated: use ServiceEndpoints instead
   string service_endpoint = 4;
+  // Deprecated: use ServiceEndpoints instead
   bool service_endpoint_insecure = 5;
   bytes service_encryption_key = 6;
   string service_cluster_id = 7;
+  repeated ServiceEndpoint service_endpoints = 8;
 }
 
 // ControlPlane describes ControlPlane data if any.
@@ -69,5 +74,12 @@ message MemberSpec {
   talos.resource.definitions.enums.MachineType machine_type = 4;
   string operating_system = 5;
   ControlPlane control_plane = 6;
+}
+
+// ServiceEndpoint describes a service endpoint for discovery.
+message ServiceEndpoint {
+  string name = 1;
+  string endpoint = 2;
+  bool insecure = 3;
 }
 

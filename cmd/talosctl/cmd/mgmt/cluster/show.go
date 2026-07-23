@@ -34,7 +34,7 @@ var showCmd = &cobra.Command{
 }
 
 func show(ctx context.Context) error {
-	provisioner, err := providers.Factory(ctx, provisionerName)
+	provisioner, err := selectProvisioner(ctx)
 	if err != nil {
 		return err
 	}
@@ -47,6 +47,17 @@ func show(ctx context.Context) error {
 	}
 
 	return ShowCluster(cluster)
+}
+
+// selectProvisioner returns the remote provisioner if --remote-endpoint is
+// set on the parent cluster command, otherwise falls back to the legacy
+// per-subcommand --provisioner flag (docker by default).
+func selectProvisioner(ctx context.Context) (provision.Provisioner, error) {
+	if PersistentFlags.RemoteEndpoint != "" {
+		return providers.Factory(ctx, providers.RemoteProviderName, providers.WithRemoteEndpoint(PersistentFlags.RemoteEndpoint))
+	}
+
+	return providers.Factory(ctx, provisionerName)
 }
 
 // ShowCluster prints the details about the cluster to the terminal.

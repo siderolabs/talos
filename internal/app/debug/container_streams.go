@@ -202,6 +202,140 @@ func (g *grpcStdioStreamer) processMessage(ctx context.Context, task containerda
 	return nil
 }
 
+// hostNsControl carries out-of-band control messages from the gRPC recv loop
+// to the locked goroutine that owns the child process and pty master.
+type hostNsControl struct {
+	signal int32
+	resize *machine.DebugContainerTerminalResize
+}
+
+// streamHostNs is the streaming coordinator for PROFILE_HOST_NS sessions.
+// Unlike stream(), it does not need a containerd Task. Signals and resize events
+// are forwarded to the child via controlC; stdin/stdout travel through pipes as usual.
+func (g *grpcStdioStreamer) streamHostNs(ctx context.Context, exitC <-chan int, controlC chan<- hostNsControl) error { //nolint:gocyclo,cyclop
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	sendLoopCh, recvLoopCh := make(chan error, 1), make(chan error, 1)
+
+	go func(errCh chan<- error) {
+		errCh <- panicsafe.RunErr(g.sendLoop)
+	}(sendLoopCh)
+
+	go func(errCh chan<- error) {
+		errCh <- panicsafe.RunErr(func() error {
+			return g.recvLoopHostNs(controlC)
+		})
+	}(recvLoopCh)
+
+	for {
+		select {
+		case code := <-exitC:
+			g.stdoutW.Close() //nolint:errcheck
+			g.stdinW.Close()  //nolint:errcheck
+
+			cancel()
+
+			if sendLoopCh != nil {
+				<-sendLoopCh
+			}
+
+			if err := g.srv.Send(&machine.DebugContainerRunResponse{
+				Resp: &machine.DebugContainerRunResponse_ExitCode{
+					ExitCode: int32(code),
+				},
+			}); err != nil {
+				return fmt.Errorf("host-ns: send exit code: %w", err)
+			}
+
+			if recvLoopCh != nil {
+				<-recvLoopCh
+			}
+
+			return nil
+
+		case sendErr := <-sendLoopCh:
+			if sendErr == nil {
+				sendLoopCh = nil
+
+				continue
+			}
+
+			g.stdinW.Close() //nolint:errcheck
+
+			return fmt.Errorf("host-ns: send loop: %w", sendErr)
+
+		case recvErr := <-recvLoopCh:
+			if recvErr == nil {
+				recvLoopCh = nil
+
+				continue
+			}
+
+			g.stdoutW.Close() //nolint:errcheck
+
+			return fmt.Errorf("host-ns: recv loop: %w", recvErr)
+
+		case <-ctx.Done():
+			g.stdoutW.Close() //nolint:errcheck
+			g.stdinW.Close()  //nolint:errcheck
+
+			if recvLoopCh != nil {
+				<-recvLoopCh
+			}
+
+			if sendLoopCh != nil {
+				<-sendLoopCh
+			}
+
+			return ctx.Err()
+		}
+	}
+}
+
+// recvLoopHostNs reads gRPC messages, forwarding stdin bytes to the child pipe
+// and routing signals/resize events to the control loop via controlC.
+// Sends to controlC are non-blocking: if the child has already exited the
+// control loop goroutine will have stopped reading, and we drop rather than hang.
+func (g *grpcStdioStreamer) recvLoopHostNs(controlC chan<- hostNsControl) error { //nolint:gocyclo
+	defer g.stdinW.Close() //nolint:errcheck
+
+	for {
+		msg, err := g.srv.Recv()
+		if err != nil {
+			if status.Code(err) != codes.Canceled && err != io.EOF {
+				return fmt.Errorf("host-ns recv: %w", err)
+			}
+
+			return nil
+		}
+
+		switch msg.Request.(type) {
+		case *machine.DebugContainerRunRequest_StdinData:
+			if data := msg.GetStdinData(); len(data) > 0 {
+				if _, writeErr := g.stdinW.Write(data); writeErr != nil {
+					return fmt.Errorf("host-ns stdin write: %w", writeErr)
+				}
+			}
+
+		case *machine.DebugContainerRunRequest_Signal:
+			select {
+			case controlC <- hostNsControl{signal: msg.GetSignal()}:
+			default:
+			}
+
+		case *machine.DebugContainerRunRequest_TermResize:
+			select {
+			case controlC <- hostNsControl{resize: msg.GetTermResize()}:
+			default:
+			}
+
+		default:
+			log.Printf("host-ns: unknown request type %T", msg.Request)
+		}
+	}
+}
+
 func (g *grpcStdioStreamer) sendLoop() error {
 	defer g.stdoutW.Close() //nolint:errcheck
 

@@ -1,0 +1,28 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: backend-ontap-nas-secret
+  namespace: trident
+type: Opaque
+stringData:
+  username: "{{ .Username }}"
+  password: "{{ .Password }}"
+---
+apiVersion: trident.netapp.io/v1
+kind: TridentBackendConfig
+metadata:
+  name: backend-ontap-nas
+  namespace: trident
+spec:
+  version: 1
+  storageDriverName: ontap-nas
+  backendName: ontap-nas
+  managementLIF: "{{ .ManagementLIF }}"
+  svm: "{{ .SVM }}"
+  credentials:
+    name: backend-ontap-nas-secret
+  labels:
+    protocol: nas
+  useREST: true
+  nfsMountOptions: nfsvers=4
+  autoExportPolicy: false

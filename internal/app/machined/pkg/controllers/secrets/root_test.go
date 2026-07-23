@@ -74,13 +74,9 @@ func (suite *RootSuite) TestReconcileControlPlane() {
 	rtestutils.AssertResources(
 		suite.Ctx(), suite.T(), suite.State(), []resource.ID{secrets.KubernetesRootID},
 		func(res *secrets.KubernetesRoot, asrt *assert.Assertions) {
-			asrt.Equal(res.TypedSpec().IssuingCA, cfg.Cluster().IssuingCA())
+			asrt.Equal(res.TypedSpec().IssuingCA, cfg.K8sAPIServerCAConfig().IssuingCA())
 			asrt.Equal(
-				[]*x509.PEMEncodedCertificate{
-					{
-						Crt: cfg.Cluster().IssuingCA().Crt,
-					},
-				},
+				cfg.K8sAPIServerCAConfig().AcceptedCAs(),
 				res.TypedSpec().AcceptedCAs,
 			)
 			asrt.Empty(res.TypedSpec().AESCBCEncryptionSecret)

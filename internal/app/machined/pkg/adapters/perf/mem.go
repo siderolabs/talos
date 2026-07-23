@@ -13,7 +13,7 @@ import (
 
 // Memory adapter provides conversion from procfs.
 //
-//nolint:revive,golint
+//nolint:revive
 func Memory(r *perf.Memory) memory {
 	return memory{
 		Memory: r,

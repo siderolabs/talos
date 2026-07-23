@@ -30,6 +30,7 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/talos/helpers"
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
+	"github.com/siderolabs/talos/pkg/machinery/api/storage"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
@@ -237,9 +238,19 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsCrun() {
 	suite.testRuntimeClass("crun", "crun")
 }
 
-// TestExtensionsKataContainers verifies gvisor runtime class is working.
+// TestExtensionsKataContainers verifies that Kata Containers Cloud Hypervisor runtime class is working.
 func (suite *ExtensionsSuiteQEMU) TestExtensionsKataContainers() {
 	suite.testRuntimeClass("kata", "kata")
+}
+
+// TestExtensionsKataContainersQEMU verifies that Kata Containers QEMU runtime class is working.
+func (suite *ExtensionsSuiteQEMU) TestExtensionsKataContainersQEMU() {
+	suite.testRuntimeClass("kata-qemu", "kata-qemu")
+}
+
+// TestExtensionsKataContainersSNP verifies that Kata Containers confidential VMs runtime class is working.
+func (suite *ExtensionsSuiteQEMU) TestExtensionsKataContainersSNP() {
+	suite.testRuntimeClass("kata-qemu-coco-dev", "kata-qemu-coco-dev")
 }
 
 // TestExtensionsYouki verifies youki runtime class is working.
@@ -311,70 +322,6 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsStargz() {
 	suite.Require().NoError(suite.WaitForPodToBeRunning(suite.ctx, 5*time.Minute, "default", "stargz-hello"))
 }
 
-// TestExtensionsMdADM verifies mdadm is working, udev rules work and the raid is mounted on reboot.
-func (suite *ExtensionsSuiteQEMU) TestExtensionsMdADM() {
-	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
-
-	userDisks := suite.UserDisks(suite.ctx, node)
-
-	suite.Require().GreaterOrEqual(len(userDisks), 2, "expected at least two user disks to be available")
-
-	raidDisks := userDisks[:2]
-
-	stdout, exitCode, err := suite.ExecInHostMountNS(suite.ctx, node,
-		append([]string{"mdadm", "--create", "/dev/md/testmd", "--raid-devices=2", "--metadata=1.2", "--level=1"}, raidDisks...)...,
-	)
-	suite.Require().NoError(err)
-	suite.Require().EqualValues(0, exitCode, "mdadm --create failed: %s", stdout)
-
-	suite.Require().Contains(stdout, "mdadm: array /dev/md/testmd started.")
-
-	defer func() {
-		hostNameStatus, err := safe.StateGetByID[*network.HostnameStatus](client.WithNode(suite.ctx, node), suite.Client.COSI, "hostname")
-		suite.Require().NoError(err)
-
-		hostname := hostNameStatus.TypedSpec().Hostname
-
-		if _, _, err := suite.ExecInHostMountNS(suite.ctx, node,
-			"mdadm", "--wait", "--stop", "/dev/md/"+hostname+":testmd",
-		); err != nil {
-			suite.T().Logf("failed to stop mdadm array: %v", err)
-		}
-
-		if _, _, err := suite.ExecInHostMountNS(suite.ctx, node,
-			append([]string{"mdadm", "--zero-superblock"}, raidDisks...)...,
-		); err != nil {
-			suite.T().Logf("failed to remove md array backed by volumes %v: %v", raidDisks, err)
-		}
-	}()
-
-	// now we want to reboot the node and make sure the array is still mounted
-	suite.AssertRebooted(
-		suite.ctx, node, func(nodeCtx context.Context) error {
-			return base.IgnoreGRPCUnavailable(suite.Client.Reboot(nodeCtx))
-		}, 5*time.Minute,
-	)
-
-	suite.Require().True(suite.mdADMArrayExists(), "expected mdadm array to be present")
-}
-
-func (suite *ExtensionsSuiteQEMU) mdADMArrayExists() bool {
-	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
-
-	ctx := client.WithNode(suite.ctx, node)
-
-	disks, err := safe.StateListAll[*block.Disk](ctx, suite.Client.COSI)
-	suite.Require().NoError(err)
-
-	for disk := range disks.All() {
-		if strings.HasPrefix(disk.TypedSpec().DevPath, "/dev/md") {
-			return true
-		}
-	}
-
-	return false
-}
-
 // TestExtensionsZFS verifies zfs is working, udev rules work and the pool is mounted on reboot.
 func (suite *ExtensionsSuiteQEMU) TestExtensionsZFS() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
@@ -384,14 +331,14 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsZFS() {
 
 	suite.Require().NotEmpty(userDisks, "expected at least one user disks to be available")
 
-	stdout, exitCode, err := suite.ExecInHostMountNS(suite.ctx, node,
+	stdout, exitCode, err := suite.RunDebugContainer(suite.ctx, node,
 		"zpool", "create", "-m", "/var/tank", "tank", userDisks[0],
 	)
 	suite.Require().NoError(err)
 	suite.Require().EqualValues(0, exitCode, "zpool create failed: %s", stdout)
 	suite.Require().Equal("", stdout)
 
-	stdout, exitCode, err = suite.ExecInHostMountNS(suite.ctx, node,
+	stdout, exitCode, err = suite.RunDebugContainer(suite.ctx, node,
 		"zfs", "create", "-V", "1gb", "tank/vol",
 	)
 	suite.Require().NoError(err)
@@ -399,12 +346,20 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsZFS() {
 	suite.Require().Equal("", stdout)
 
 	defer func() {
-		if _, _, err := suite.ExecInHostMountNS(suite.ctx, node, "zfs", "destroy", "tank/vol"); err != nil {
+		if _, _, err := suite.RunDebugContainer(suite.ctx, node, "zfs", "destroy", "tank/vol"); err != nil {
 			suite.T().Logf("failed to remove zfs dataset tank/vol: %v", err)
 		}
 
-		if _, _, err := suite.ExecInHostMountNS(suite.ctx, node, "zpool", "destroy", "tank"); err != nil {
+		if _, _, err := suite.RunDebugContainer(suite.ctx, node, "zpool", "destroy", "tank"); err != nil {
 			suite.T().Logf("failed to remove zpool tank: %v", err)
+		}
+
+		// Wipe the disk so no zfs label lingers (otherwise the pool is re-discovered
+		// as a volume after the test).
+		if err := suite.Client.BlockDeviceWipe(client.WithNode(suite.ctx, node), &storage.BlockDeviceWipeRequest{
+			Devices: []*storage.BlockDeviceWipeDescriptor{{Device: filepath.Base(userDisks[0])}},
+		}); err != nil {
+			suite.T().Logf("failed to wipe disk %s: %v", userDisks[0], err)
 		}
 	}()
 
@@ -467,7 +422,7 @@ func (suite *ExtensionsSuiteQEMU) checkZFSPoolMounted(t *assert.CollectT, node s
 func (suite *ExtensionsSuiteQEMU) TestExtensionsUtilLinuxTools() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 
-	stdout, exitCode, err := suite.ExecInHostMountNS(suite.ctx, node,
+	stdout, exitCode, err := suite.RunDebugContainer(suite.ctx, node,
 		"/usr/local/sbin/fstrim", "--version",
 	)
 	suite.Require().NoError(err)

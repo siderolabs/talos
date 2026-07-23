@@ -46,6 +46,7 @@ func TalosAPIdAllAPIs() []protoreflect.FileDescriptor {
 		machine.File_machine_image_proto,
 		machine.File_machine_lifecycle_proto,
 		machine.File_machine_lvm_proto,
+		machine.File_machine_md_proto,
 	)
 }
 

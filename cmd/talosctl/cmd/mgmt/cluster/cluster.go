@@ -29,6 +29,9 @@ var Cmd = &cobra.Command{
 type CmdOps struct {
 	StateDir    string
 	ClusterName string
+	// RemoteEndpoint, when set, routes cluster lifecycle (create/destroy/
+	// show) to a remote-provision gRPC daemon at host:port.
+	RemoteEndpoint string
 }
 
 // PersistentFlags are the persistent flags of the cluster command.
@@ -52,6 +55,8 @@ func init() {
 
 	Cmd.PersistentFlags().StringVar(&PersistentFlags.StateDir, "state", DefaultStateDir, "directory path to store cluster state")
 	Cmd.PersistentFlags().StringVar(&PersistentFlags.ClusterName, "name", "talos-default", "the name of the cluster")
+	Cmd.PersistentFlags().StringVar(&PersistentFlags.RemoteEndpoint, "remote-endpoint", "",
+		"host:port of a talosctl remote-provision-launch server to delegate provisioning to; when set, no local QEMU is required")
 }
 
 // AddProvisionerFlag adds the provisioner flag to a command.

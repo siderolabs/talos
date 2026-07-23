@@ -17,7 +17,7 @@ import (
 
 // IdentitySpec adapter provides identity generation.
 //
-//nolint:revive,golint
+//nolint:revive
 func IdentitySpec(r *cluster.IdentitySpec) identity {
 	return identity{
 		IdentitySpec: r,

@@ -7,7 +7,6 @@ package conditions
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sync"
 	"time"
 )
@@ -25,6 +24,7 @@ type pollingCondition struct {
 	lastErrMu  sync.Mutex
 	lastErr    error
 	lastErrSet bool
+	failed     bool
 
 	assertion   AssertionFunc
 	description string
@@ -32,21 +32,27 @@ type pollingCondition struct {
 }
 
 func (p *pollingCondition) String() string {
-	lastErr := "..."
+	return p.description
+}
 
+// State returns the current state and the last non-fatal poll error
+// (nil unless running after a transient error).
+func (p *pollingCondition) State() (State, error) {
 	p.lastErrMu.Lock()
+	defer p.lastErrMu.Unlock()
 
-	if p.lastErrSet {
-		if p.lastErr != nil {
-			lastErr = p.lastErr.Error()
-		} else {
-			lastErr = OK
-		}
+	switch {
+	case p.failed:
+		return StateFailed, p.lastErr
+	case !p.lastErrSet:
+		return StateRunning, nil
+	case p.lastErr == nil:
+		return StateSucceeded, nil
+	case errors.Is(p.lastErr, ErrSkipAssertion):
+		return StateSkipped, nil
+	default:
+		return StateRunning, p.lastErr
 	}
-
-	p.lastErrMu.Unlock()
-
-	return fmt.Sprintf("%s: %s", p.description, lastErr)
 }
 
 func (p *pollingCondition) Wait(ctx context.Context) error {
@@ -67,12 +73,16 @@ func (p *pollingCondition) Wait(ctx context.Context) error {
 
 			return err
 		}()
-		if err == nil || err == ErrSkipAssertion {
+		if err == nil || errors.Is(err, ErrSkipAssertion) {
 			return nil
 		}
 
 		select {
 		case <-ctx.Done():
+			p.lastErrMu.Lock()
+			p.failed = true
+			p.lastErrMu.Unlock()
+
 			return ctx.Err()
 		case <-ticker.C:
 		}

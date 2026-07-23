@@ -13,7 +13,7 @@ import (
 
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
-	DefaultKernelVersion = "6.18.35-talos"
+	DefaultKernelVersion = "6.18.39-talos"
 
 	// KernelParamConfig is the kernel parameter name for specifying the URL.
 	// to the config.
@@ -215,9 +215,6 @@ const (
 	// KubernetesConfigSELinuxLabel is the SELinux label to be set for the Kubernetes configuration directory overlay mount.
 	KubernetesConfigSELinuxLabel = "system_u:object_r:k8s_conf_t:s0"
 
-	// KubeletPluginsSELinuxLabel is the SELinux label to be set for the Kubernetes plugin directory overlay mount.
-	KubeletPluginsSELinuxLabel = "system_u:object_r:k8s_plugin_t:s0"
-
 	// DefaultCertificatesDir is the path the Kubernetes PKI directory.
 	DefaultCertificatesDir = KubernetesConfigBaseDir + "/" + "pki"
 
@@ -374,7 +371,7 @@ const (
 
 	// DefaultKubernetesVersion is the default target version of the control plane.
 	// renovate: datasource=github-releases depName=kubernetes/kubernetes
-	DefaultKubernetesVersion = "1.36.1"
+	DefaultKubernetesVersion = "1.37.0-beta.0"
 
 	// SupportedKubernetesVersions is the number of Kubernetes versions supported by Talos starting from DefaultKubernetesVersion going backwards.
 	SupportedKubernetesVersions = 6
@@ -402,7 +399,7 @@ const (
 
 	// DefaultCoreDNSVersion is the default version for the CoreDNS.
 	// renovate: datasource=docker depName=registry.k8s.io/coredns/coredns
-	DefaultCoreDNSVersion = "v1.14.2"
+	DefaultCoreDNSVersion = "v1.14.6"
 
 	// LabelNodeRoleControlPlane is the node label required by a control plane node.
 	LabelNodeRoleControlPlane = "node-role.kubernetes.io/control-plane"
@@ -436,7 +433,7 @@ const (
 
 	// DefaultEtcdVersion is the default target version of etcd.
 	// renovate: datasource=docker depName=registry.k8s.io/etcd
-	DefaultEtcdVersion = "v3.7.0-rc.0"
+	DefaultEtcdVersion = "v3.7.0"
 
 	// EtcdRootTalosKey is the root etcd key for Talos-specific storage.
 	EtcdRootTalosKey = "talos:v1"
@@ -473,6 +470,30 @@ const (
 
 	// EtcdUserID is the user ID for the etcd process.
 	EtcdUserID = 60
+
+	// CRIContainerdDataPath is the path where the CRI containerd stores its' state.
+	CRIContainerdDataPath = "/var/lib/containerd"
+
+	// CRIContainerdVolumeID is the ID of the CRI containerd data volume.
+	CRIContainerdVolumeID = "CRI"
+
+	// CRIContainerdDataSELinuxLabel is the SELinux label for the CRI containerd data directory.
+	CRIContainerdDataSELinuxLabel = "system_u:object_r:containerd_state_t:s0"
+
+	// KubeletDataPath is the path where the kubelet stores its' state.
+	KubeletDataPath = "/var/lib/kubelet"
+
+	// KubeletDataVolumeID is the ID of the kubelet data volume.
+	KubeletDataVolumeID = "KUBELET"
+
+	// KubeletDataSELinuxLabel is the SELinux label for the kubelet data directory.
+	KubeletDataSELinuxLabel = "system_u:object_r:kubelet_state_t:s0"
+
+	// LogVolumeID is the ID of the log data volume.
+	LogVolumeID = "LOG"
+
+	// LogSELinuxLabel is the SELinux label for the log directory.
+	LogSELinuxLabel = "system_u:object_r:var_log_t:s0"
 
 	// ConfigFilename is the filename of the saved config in STATE partition.
 	ConfigFilename = "config.yaml"
@@ -534,10 +555,10 @@ const (
 	TrustdUserID = 51
 
 	// DefaultContainerdVersion is the default container runtime version.
-	DefaultContainerdVersion = "2.3.1"
+	DefaultContainerdVersion = "2.3.3"
 
 	// RuncVersion is the runc version.
-	RuncVersion = "1.4.2"
+	RuncVersion = "1.5.1"
 
 	// SystemContainerdNamespace is the Containerd namespace for Talos services.
 	SystemContainerdNamespace = "system"
@@ -740,7 +761,7 @@ const (
 	CgroupMountPath = "/sys/fs/cgroup"
 
 	// CgroupInit is the cgroup name for init process.
-	CgroupInit = "/init"
+	CgroupInit = "init"
 
 	// CgroupInitReservedMemory is the hard memory protection for the init process.
 	CgroupInitReservedMemory = 96 * 1024 * 1024
@@ -749,7 +770,7 @@ const (
 	CgroupInitMillicores = 2000
 
 	// CgroupSystem is the cgroup name for system processes.
-	CgroupSystem = "/system"
+	CgroupSystem = "system"
 
 	// CgroupSystemMillicores is the CPU weight for the system cgroup.
 	CgroupSystemMillicores = 1500
@@ -768,6 +789,18 @@ const (
 
 	// CgroupSystemDebug is the cgroup name for debug processes.
 	CgroupSystemDebug = CgroupSystem + "/debug"
+
+	// DebugHostNsImage is the default image used for PROFILE_HOST_NS debug sessions.
+	// It provides a Nix environment whose store paths are self-contained and do not
+	// conflict with the Talos host's library paths when bind-mounted into the forked
+	// mount namespace.
+	DebugHostNsImage = "docker.io/nixos/nix:latest"
+
+	// DebugHostNsWorkdirBase is the disk-backed base directory for PROFILE_HOST_NS
+	// overlay upper/work layers. It lives on the EPHEMERAL partition (/var) so that
+	// writes to the session root (nix eval cache, /tmp, /etc) and the /nix store do
+	// not pin RAM in a tmpfs — the default in-memory debug containerd roots on tmpfs.
+	DebugHostNsWorkdirBase = "/var/system/debug"
 
 	// SelinuxLabelMachined is the SELinux label for machined.
 	SelinuxLabelMachined = "system_u:system_r:init_t:s0"
@@ -835,8 +868,21 @@ const (
 	// SelinuxLabelDashboard is the SELinux label for dashboard process.
 	SelinuxLabelDashboard = "system_u:system_r:dashboard_t:s0"
 
+	// SelinuxLabelSandboxd is the SELinux label for the sandboxd process (PID 1 of
+	// the sandbox PID+mount namespace that launches the container-plane services).
+	SelinuxLabelSandboxd = "system_u:system_r:sandboxd_t:s0"
+
+	// CgroupSystemSandbox is the cgroup name for the sandbox processe for the CRI workloads.
+	CgroupSystemSandbox = CgroupSystem + "/sandbox"
+
+	// CgroupSystemSandboxReservedMemory is the hard memory protection for the sandbox process.
+	CgroupSystemSandboxReservedMemory = 32 * 1024 * 1024
+
+	// CgroupSystemSandboxMillicores is the CPU weight for the sandbox cgroup.
+	CgroupSystemSandboxMillicores = 100
+
 	// CgroupPodRuntimeRoot is the cgroup containing Kubernetes runtime components.
-	CgroupPodRuntimeRoot = "/podruntime"
+	CgroupPodRuntimeRoot = "podruntime"
 
 	// CgroupPodRuntimeRootMillicores is the CPU weight for the pod runtime cgroup.
 	CgroupPodRuntimeRootMillicores = 4000
@@ -852,6 +898,15 @@ const (
 
 	// CgroupPodRuntimeReservedMemory is the hard memory protection for the cri runtime processes.
 	CgroupPodRuntimeReservedMemory = 196 * 1024 * 1024
+
+	// CgroupPodRuntimeShim is the cgroup name for CRI shim processes.
+	CgroupPodRuntimeShim = CgroupPodRuntimeRoot + "/shim"
+
+	// CgroupPodRuntimeShimReservedMemory is the hard memory protection for the cri runtime shim processes.
+	CgroupPodRuntimeShimReservedMemory = 48 * 1024 * 1024
+
+	// CgroupPodRuntimeShimMillicores is the CPU weight for the pod runtime shim cgroup.
+	CgroupPodRuntimeShimMillicores = 500
 
 	// CgroupEtcd is the cgroup name for etcd process.
 	CgroupEtcd = CgroupPodRuntimeRoot + "/etcd"
@@ -877,11 +932,20 @@ const (
 	// CgroupKubeletMillicores is the CPU weight for the kubelet process.
 	CgroupKubeletMillicores = 1000
 
+	// CgroupPodRuntimeRootReservedMemory is the hard memory protection for the CRI runtime, shims, and kubelet.
+	CgroupPodRuntimeRootReservedMemory = CgroupPodRuntimeReservedMemory + CgroupPodRuntimeShimReservedMemory + CgroupKubeletReservedMemory
+
+	// CgroupPodRuntimeRootSoftReservedMemory is the soft memory protection for the CRI runtime, shims, kubelet, and etcd.
+	CgroupPodRuntimeRootSoftReservedMemory = CgroupPodRuntimeRootReservedMemory*2 + CgroupEtcdReservedMemory
+
 	// CgroupDashboardMaxMemory is the hard memory limit for the dashboard process.
 	CgroupDashboardMaxMemory = 128 * 1024 * 1024
 
 	// CgroupDashboardMillicores is the CPU weight for the dashboard process.
 	CgroupDashboardMillicores = 200
+
+	// CgroupKubepods is the root cgroup for all pods run by the kubelet.
+	CgroupKubepods = "kubepods"
 
 	// FlannelCNI is the string to use Tanos-managed Flannel CNI (default).
 	FlannelCNI = "flannel"
@@ -895,17 +959,34 @@ const (
 	// CNISELinuxLabel is the SELinux label to be set for CNI configuration overlay mount.
 	CNISELinuxLabel = "system_u:object_r:cni_conf_t:s0"
 
-	// DefaultIPv4PodNet is the IPv4 network to be used for kubernetes Pods.
-	DefaultIPv4PodNet = "10.244.0.0/16"
+	// DefaultIPv4PodCIDR is the IPv4 network to be used for kubernetes Pods.
+	DefaultIPv4PodCIDR = "10.244.0.0/16"
 
-	// DefaultIPv4ServiceNet is the IPv4 network to be used for kubernetes Services.
-	DefaultIPv4ServiceNet = "10.96.0.0/12"
+	// DefaultIPv4ServiceCIDR is the IPv4 network to be used for kubernetes Services.
+	DefaultIPv4ServiceCIDR = "10.96.0.0/12"
 
-	// DefaultIPv6PodNet is the IPv6 network to be used for kubernetes Pods.
-	DefaultIPv6PodNet = "fc00:db8:10::/56"
+	// DefaultIPv6PodCIDR is the IPv6 network to be used for kubernetes Pods.
+	DefaultIPv6PodCIDR = "fc00:db8:10::/56"
 
-	// DefaultIPv6ServiceNet is the IPv6 network to be used for kubernetes Services.
-	DefaultIPv6ServiceNet = "fc00:db8:20::/112"
+	// DefaultIPv6ServiceCIDR is the IPv6 network to be used for kubernetes Services.
+	DefaultIPv6ServiceCIDR = "fc00:db8:20::/112"
+
+	// MaxHostBitsForServiceSubnet is the maximum number of host bits allowed in a service subnet
+	// (i.e. the service subnet may hold at most 2^MaxHostBitsForServiceSubnet addresses).
+	MaxHostBitsForServiceSubnet = 20
+
+	// PodSubnetNodeMaskMaxDiff is the maximum allowed difference between the per-node pod CIDR mask
+	// size and the pod subnet mask size.
+	//
+	// It bounds the size of the per-node pod CIDR allocation bitmap, which is kept uncompressed in
+	// memory; https://github.com/kubernetes/kubernetes/issues/44918
+	PodSubnetNodeMaskMaxDiff = 16
+
+	// DefaultNodeCIDRMaskSizeIPv4 is the default IPv4 per-node pod CIDR mask size.
+	DefaultNodeCIDRMaskSizeIPv4 = 24
+
+	// DefaultNodeCIDRMaskSizeIPv6 is the default IPv6 per-node pod CIDR mask size.
+	DefaultNodeCIDRMaskSizeIPv6 = 64
 
 	// DefaultDNSDomain is the default DNS domain.
 	DefaultDNSDomain = "cluster.local"
@@ -990,6 +1071,9 @@ const (
 
 	// KubeSpanDefaultPort is the default Wireguard listening port for incoming connections.
 	KubeSpanDefaultPort = 51820
+
+	// BGPDefaultPort is the standard BGP listening port.
+	BGPDefaultPort = 179
 
 	// KubeSpanDefaultRoutingTable is the default routing table for KubeSpan LAN targets.
 	//
@@ -1122,7 +1206,7 @@ const (
 	ProcModulesPath = "/proc/modules"
 
 	// GoVersion is the version of Go compiler this release was built with.
-	GoVersion = "go1.26.4"
+	GoVersion = "go1.26.5"
 
 	// KubernetesTalosAPIServiceName is the name of the Kubernetes service to access Talos API.
 	KubernetesTalosAPIServiceName = "talos"
@@ -1199,11 +1283,11 @@ const (
 	// FlannelVersion is the version of flannel to use.
 	//
 	// Note: while updating, make sure to copy flannel image from docker.io to ghcr.io:
-	//   crane cp docker.io/flannel/flannel:vX.Y.Z ghcr.io/siderolabs/flannel:vX.Y.Z
+	//   crane cp docker.io/flannel/flannel:X.Y.Z ghcr.io/siderolabs/flannel:X.Y.Z
 	// And sign the image using image-signer.
 	//
 	// renovate: datasource=github-releases depName=flannel-io/flannel
-	FlannelVersion = "v0.28.5"
+	FlannelVersion = "0.28.8"
 
 	// FlannelDefaultBackend is the default backend for flannel.
 	FlannelDefaultBackend = "vxlan"
@@ -1214,7 +1298,7 @@ const (
 	// KubeNetworkPoliciesVersion is the version of kube-network-policies when network policies are enabled for flannel.
 	//
 	// renovate: datasource=docker depName=registry.k8s.io/networking/kube-network-policies
-	KubeNetworkPoliciesVersion = "v1.0.0"
+	KubeNetworkPoliciesVersion = "v1.1.0"
 
 	// PlatformMetal is the name of the metal platform.
 	PlatformMetal = "metal"
@@ -1277,6 +1361,9 @@ const (
 	// MetalAgentModeFlagPath is the path to the file indicating if the node is running in Metal Agent mode.
 	MetalAgentModeFlagPath = "/usr/local/etc/is-metal-agent"
 
+	// ImageCacheISOLabel is the label for the image cache ISO.
+	ImageCacheISOLabel = "IMAGECACHE-ISO"
+
 	// ImageCachePartitionLabel is the label for the image cache partition.
 	ImageCachePartitionLabel = "IMAGECACHE"
 
@@ -1295,7 +1382,7 @@ const (
 	// UserVolumeMountPoint is the path to the volume mount point for the user volumes.
 	UserVolumeMountPoint = "/var/mnt"
 
-	// LogMountPoint is the path to the logs mount point, and ID of the logs volume.
+	// LogMountPoint is the path to the logs mount point.
 	LogMountPoint = "/var/log"
 
 	// UserVolumePrefix is the prefix for the user volumes.
@@ -1341,7 +1428,7 @@ const (
 
 	// DefaultOOMTriggerExpression is the default CEL expression used to determine whether to trigger OOM.
 	DefaultOOMTriggerExpression = `(multiply_qos_vectors(d_qos_memory_full_total, {System: 8.0, Podruntime: 4.0}) > 3000.0 &&
-	     multiply_qos_vectors(qos_memory_full_avg10, {System: 1.0, Podruntime: 1.0}) > 5.0) ||
+	     multiply_qos_vectors(qos_memory_full_avg10, {System: 1.0, Podruntime: 1.0}) > 5.0 && time_since_trigger > duration("5s")) ||
 		(memory_full_avg10 > 75.0 && time_since_trigger > duration("10s"))`
 
 	// DefaultOOMCgroupRankingExpression is the default CEL expression used to rank cgroups for OOM killer.
@@ -1372,6 +1459,16 @@ const (
 
 	// TarPaxHeaderSELinux is the name of the PAX header for storing SELinux labels.
 	TarPaxHeaderSELinux = "SCHILY.xattr.security.selinux"
+
+	// DefaultFilesystemTrimInterval is the default interval for trimming filesystems.
+	//
+	// The default value is 1 week.
+	DefaultFilesystemTrimInterval = 7 * 24 * time.Hour
+
+	// TaintEffectNoSchedule is the taint effect for NoSchedule.
+	//
+	// Vendored here to avoid pulling in k8s.io.
+	TaintEffectNoSchedule = "NoSchedule"
 )
 
 // names of variable that can be substituted in the talos.config kernel parameter.
@@ -1389,16 +1486,12 @@ type SELinuxLabeledPath struct {
 	Label string
 	// Secure applies the nosuid+nodev+noexec triplet to the overlay. Set
 	// for config-only overlays (e.g. /etc/cni, /etc/kubernetes); leave
-	// false for overlays that host plugin/helper binaries (e.g. /opt,
-	// /usr/libexec/kubernetes).
+	// false for overlays that host plugin/helper binaries (e.g. /opt).
 	Secure bool
 }
 
 // Overlays is the set of paths to create overlay mounts for.
 var Overlays = []SELinuxLabeledPath{
-	{Path: "/etc/cni", Label: CNISELinuxLabel, Secure: true},
-	{Path: KubernetesConfigBaseDir, Label: KubernetesConfigSELinuxLabel, Secure: true},
-	{Path: "/usr/libexec/kubernetes", Label: KubeletPluginsSELinuxLabel},
 	{Path: "/opt", Label: OptSELinuxLabel},
 }
 

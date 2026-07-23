@@ -288,6 +288,11 @@ description: Talos gRPC API reference.
   
     - [MachineService](#machine.MachineService)
   
+- [machine/md.proto](#machine/md.proto)
+    - [MDDestroyRequest](#machine.MDDestroyRequest)
+  
+    - [MDService](#machine.MDService)
+  
 - [resource/config/config.proto](#resource/config/config.proto)
     - [MachineConfigSpec](#resource.config.MachineConfigSpec)
     - [MachineTypeSpec](#resource.config.MachineTypeSpec)
@@ -312,6 +317,7 @@ description: Talos gRPC API reference.
     - [NethelpersAddressFlag](#talos.resource.definitions.enums.NethelpersAddressFlag)
     - [NethelpersAddressSortAlgorithm](#talos.resource.definitions.enums.NethelpersAddressSortAlgorithm)
     - [NethelpersAutoHostnameKind](#talos.resource.definitions.enums.NethelpersAutoHostnameKind)
+    - [NethelpersBGPSessionState](#talos.resource.definitions.enums.NethelpersBGPSessionState)
     - [NethelpersBondMode](#talos.resource.definitions.enums.NethelpersBondMode)
     - [NethelpersBondXmitHashPolicy](#talos.resource.definitions.enums.NethelpersBondXmitHashPolicy)
     - [NethelpersClientIdentifier](#talos.resource.definitions.enums.NethelpersClientIdentifier)
@@ -346,7 +352,11 @@ description: Talos gRPC API reference.
     - [RuntimeKernelModuleType](#talos.resource.definitions.enums.RuntimeKernelModuleType)
     - [RuntimeMachineStage](#talos.resource.definitions.enums.RuntimeMachineStage)
     - [RuntimeSELinuxState](#talos.resource.definitions.enums.RuntimeSELinuxState)
+    - [RuntimeUnattendedInstallPhase](#talos.resource.definitions.enums.RuntimeUnattendedInstallPhase)
     - [StorageLVMLogicalVolumeType](#talos.resource.definitions.enums.StorageLVMLogicalVolumeType)
+    - [StorageMDArrayPhase](#talos.resource.definitions.enums.StorageMDArrayPhase)
+    - [StorageMDLevel](#talos.resource.definitions.enums.StorageMDLevel)
+    - [StorageMDMetadata](#talos.resource.definitions.enums.StorageMDMetadata)
   
 - [resource/definitions/block/block.proto](#resource/definitions/block/block.proto)
     - [DeviceSpec](#talos.resource.definitions.block.DeviceSpec)
@@ -375,6 +385,7 @@ description: Talos gRPC API reference.
     - [VolumeMountRequestSpec](#talos.resource.definitions.block.VolumeMountRequestSpec)
     - [VolumeMountStatusSpec](#talos.resource.definitions.block.VolumeMountStatusSpec)
     - [VolumeStatusSpec](#talos.resource.definitions.block.VolumeStatusSpec)
+    - [VolumeTrimScheduleSpec](#talos.resource.definitions.block.VolumeTrimScheduleSpec)
     - [ZswapStatusSpec](#talos.resource.definitions.block.ZswapStatusSpec)
   
 - [resource/definitions/cluster/cluster.proto](#resource/definitions/cluster/cluster.proto)
@@ -385,6 +396,7 @@ description: Talos gRPC API reference.
     - [InfoSpec](#talos.resource.definitions.cluster.InfoSpec)
     - [KubeSpanAffiliateSpec](#talos.resource.definitions.cluster.KubeSpanAffiliateSpec)
     - [MemberSpec](#talos.resource.definitions.cluster.MemberSpec)
+    - [ServiceEndpoint](#talos.resource.definitions.cluster.ServiceEndpoint)
   
 - [resource/definitions/cri/cri.proto](#resource/definitions/cri/cri.proto)
     - [ImageCacheConfigSpec](#talos.resource.definitions.cri.ImageCacheConfigSpec)
@@ -438,6 +450,7 @@ description: Talos gRPC API reference.
     - [AdmissionPluginSpec](#talos.resource.definitions.k8s.AdmissionPluginSpec)
     - [ArgValues](#talos.resource.definitions.k8s.ArgValues)
     - [AuditPolicyConfigSpec](#talos.resource.definitions.k8s.AuditPolicyConfigSpec)
+    - [AuthenticationConfigSpec](#talos.resource.definitions.k8s.AuthenticationConfigSpec)
     - [AuthorizationAuthorizersSpec](#talos.resource.definitions.k8s.AuthorizationAuthorizersSpec)
     - [AuthorizationConfigSpec](#talos.resource.definitions.k8s.AuthorizationConfigSpec)
     - [BootstrapManifestsConfigSpec](#talos.resource.definitions.k8s.BootstrapManifestsConfigSpec)
@@ -457,8 +470,10 @@ description: Talos gRPC API reference.
     - [KubePrismStatusesSpec](#talos.resource.definitions.k8s.KubePrismStatusesSpec)
     - [KubeletConfigSpec](#talos.resource.definitions.k8s.KubeletConfigSpec)
     - [KubeletConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.ExtraArgsEntry)
+    - [KubeletConfigSpec.RegisterWithTaintsEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.RegisterWithTaintsEntry)
     - [KubeletKubeconfigSpec](#talos.resource.definitions.k8s.KubeletKubeconfigSpec)
     - [KubeletSpecSpec](#talos.resource.definitions.k8s.KubeletSpecSpec)
+    - [KubeletStatusSpec](#talos.resource.definitions.k8s.KubeletStatusSpec)
     - [ManifestSpec](#talos.resource.definitions.k8s.ManifestSpec)
     - [ManifestStatusSpec](#talos.resource.definitions.k8s.ManifestStatusSpec)
     - [NodeAnnotationSpecSpec](#talos.resource.definitions.k8s.NodeAnnotationSpecSpec)
@@ -494,6 +509,7 @@ description: Talos gRPC API reference.
   
 - [resource/definitions/runtime/runtime.proto](#resource/definitions/runtime/runtime.proto)
     - [APIServiceConfigSpec](#talos.resource.definitions.runtime.APIServiceConfigSpec)
+    - [BootIDSpec](#talos.resource.definitions.runtime.BootIDSpec)
     - [BootedEntrySpec](#talos.resource.definitions.runtime.BootedEntrySpec)
     - [DevicesStatusSpec](#talos.resource.definitions.runtime.DevicesStatusSpec)
     - [DiagnosticSpec](#talos.resource.definitions.runtime.DiagnosticSpec)
@@ -521,6 +537,7 @@ description: Talos gRPC API reference.
     - [SBOMItemSpec](#talos.resource.definitions.runtime.SBOMItemSpec)
     - [SecurityStateSpec](#talos.resource.definitions.runtime.SecurityStateSpec)
     - [ServicePIDSpec](#talos.resource.definitions.runtime.ServicePIDSpec)
+    - [UnattendedInstallStatusSpec](#talos.resource.definitions.runtime.UnattendedInstallStatusSpec)
     - [UniqueMachineTokenSpec](#talos.resource.definitions.runtime.UniqueMachineTokenSpec)
     - [UnmetCondition](#talos.resource.definitions.runtime.UnmetCondition)
     - [VersionSpec](#talos.resource.definitions.runtime.VersionSpec)
@@ -530,6 +547,10 @@ description: Talos gRPC API reference.
 - [resource/definitions/network/network.proto](#resource/definitions/network/network.proto)
     - [AddressSpecSpec](#talos.resource.definitions.network.AddressSpecSpec)
     - [AddressStatusSpec](#talos.resource.definitions.network.AddressStatusSpec)
+    - [BGPBFDConfigSpec](#talos.resource.definitions.network.BGPBFDConfigSpec)
+    - [BGPNeighborConfigSpec](#talos.resource.definitions.network.BGPNeighborConfigSpec)
+    - [BGPPeerConfigSpec](#talos.resource.definitions.network.BGPPeerConfigSpec)
+    - [BGPPeerStatusSpec](#talos.resource.definitions.network.BGPPeerStatusSpec)
     - [BondMasterSpec](#talos.resource.definitions.network.BondMasterSpec)
     - [BondSlave](#talos.resource.definitions.network.BondSlave)
     - [BridgeMasterSpec](#talos.resource.definitions.network.BridgeMasterSpec)
@@ -578,6 +599,7 @@ description: Talos gRPC API reference.
     - [ProbeStatusSpec](#talos.resource.definitions.network.ProbeStatusSpec)
     - [ResolverSpecSpec](#talos.resource.definitions.network.ResolverSpecSpec)
     - [ResolverStatusSpec](#talos.resource.definitions.network.ResolverStatusSpec)
+    - [RouteNextHop](#talos.resource.definitions.network.RouteNextHop)
     - [RouteSpecSpec](#talos.resource.definitions.network.RouteSpecSpec)
     - [RouteStatusSpec](#talos.resource.definitions.network.RouteStatusSpec)
     - [RoutingRuleSpecSpec](#talos.resource.definitions.network.RoutingRuleSpecSpec)
@@ -636,6 +658,9 @@ description: Talos gRPC API reference.
     - [LVMValidationErrorSpec](#talos.resource.definitions.storage.LVMValidationErrorSpec)
     - [LVMVolumeGroupSpecSpec](#talos.resource.definitions.storage.LVMVolumeGroupSpecSpec)
     - [LVMVolumeGroupStatusSpec](#talos.resource.definitions.storage.LVMVolumeGroupStatusSpec)
+    - [MDArraySpecSpec](#talos.resource.definitions.storage.MDArraySpecSpec)
+    - [MDArrayStatusSpec](#talos.resource.definitions.storage.MDArrayStatusSpec)
+    - [MDRefreshRequestSpec](#talos.resource.definitions.storage.MDRefreshRequestSpec)
   
 - [resource/definitions/time/time.proto](#resource/definitions/time/time.proto)
     - [AdjtimeStatusSpec](#talos.resource.definitions.time.AdjtimeStatusSpec)
@@ -1231,6 +1256,7 @@ InspectService provides auxiliary API to inspect OS internals.
 | ---- | ------ | ----------- |
 | PROFILE_UNSPECIFIED | 0 |  |
 | PROFILE_PRIVILEGED | 1 |  |
+| PROFILE_HOST_NS | 2 | PROFILE_HOST_NS forks the host mount namespace, overlays image tools at /nix, and runs the shell directly on the host rootfs without nsenter. |
 
 
  <!-- end enums -->
@@ -5032,6 +5058,49 @@ The machine service definition.
 
 
 
+<a name="machine/md.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## machine/md.proto
+
+
+
+<a name="machine.MDDestroyRequest"></a>
+
+### MDDestroyRequest
+MDDestroyRequest identifies the array device to tear down.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| device | [string](#string) |  | Device is the full array device path to destroy (e.g. "/dev/disk/by-id/md-name-data"). |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="machine.MDService"></a>
+
+### MDService
+MDService maintains MD (Multiple Device, software RAID) arrays.
+
+  - Destroy: stop the array and clear member superblocks.
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| Destroy | [MDDestroyRequest](#machine.MDDestroyRequest) | [.google.protobuf.Empty](#google.protobuf.Empty) | Destroy stops the array and clears the superblock on every member.<br><br>The array must not be in use (e.g. mounted or claimed by another device) at the time of the call. |
+
+ <!-- end services -->
+
+
+
 <a name="resource/config/config.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
@@ -5347,6 +5416,23 @@ NethelpersAutoHostnameKind is a kind of automatically generated hostname.
 | AUTO_HOSTNAME_KIND_OFF | 0 |  |
 | AUTO_HOSTNAME_KIND_ADDR | 1 |  |
 | AUTO_HOSTNAME_KIND_STABLE | 2 |  |
+
+
+
+<a name="talos.resource.definitions.enums.NethelpersBGPSessionState"></a>
+
+### NethelpersBGPSessionState
+NethelpersBGPSessionState is the state of a BGP peering session (RFC 4271 FSM).
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| BGP_SESSION_STATE_UNKNOWN | 0 |  |
+| BGP_SESSION_STATE_IDLE | 1 |  |
+| BGP_SESSION_STATE_CONNECT | 2 |  |
+| BGP_SESSION_STATE_ACTIVE | 3 |  |
+| BGP_SESSION_STATE_OPEN_SENT | 4 |  |
+| BGP_SESSION_STATE_OPEN_CONFIRM | 5 |  |
+| BGP_SESSION_STATE_ESTABLISHED | 6 |  |
 
 
 
@@ -6202,6 +6288,21 @@ RuntimeSELinuxState describes the current SELinux status.
 
 
 
+<a name="talos.resource.definitions.enums.RuntimeUnattendedInstallPhase"></a>
+
+### RuntimeUnattendedInstallPhase
+RuntimeUnattendedInstallPhase describes the phase of the unattended install.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| UNATTENDED_INSTALL_PHASE_PENDING | 0 |  |
+| UNATTENDED_INSTALL_PHASE_INSTALLING | 1 |  |
+| UNATTENDED_INSTALL_PHASE_INSTALLED | 2 |  |
+| UNATTENDED_INSTALL_PHASE_WAITING_FOR_REBOOT | 3 |  |
+| UNATTENDED_INSTALL_PHASE_FAILED | 4 |  |
+
+
+
 <a name="talos.resource.definitions.enums.StorageLVMLogicalVolumeType"></a>
 
 ### StorageLVMLogicalVolumeType
@@ -6213,6 +6314,44 @@ StorageLVMLogicalVolumeType describes the layout of an LVM logical volume.
 | LVM_LOGICAL_VOLUME_TYPE_RAID1 | 1 |  |
 | LVM_LOGICAL_VOLUME_TYPE_RAID0 | 2 |  |
 | LVM_LOGICAL_VOLUME_TYPE_RAID10 | 3 |  |
+
+
+
+<a name="talos.resource.definitions.enums.StorageMDArrayPhase"></a>
+
+### StorageMDArrayPhase
+StorageMDArrayPhase describes the provisioning/sync state of an MD array.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| MD_ARRAY_PHASE_UNKNOWN | 0 |  |
+| MD_ARRAY_PHASE_WAITING | 1 |  |
+| MD_ARRAY_PHASE_REBUILDING | 2 |  |
+| MD_ARRAY_PHASE_READY | 3 |  |
+| MD_ARRAY_PHASE_ERROR | 4 |  |
+
+
+
+<a name="talos.resource.definitions.enums.StorageMDLevel"></a>
+
+### StorageMDLevel
+StorageMDLevel describes the RAID level of an MD (software RAID) array.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| MD_LEVEL_RAID1 | 0 |  |
+
+
+
+<a name="talos.resource.definitions.enums.StorageMDMetadata"></a>
+
+### StorageMDMetadata
+StorageMDMetadata describes the on-disk metadata format of an MD (software RAID) array.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| MD_METADATA10 | 0 |  |
+| MD_METADATA12 | 1 |  |
 
 
  <!-- end enums -->
@@ -6419,6 +6558,7 @@ FilesystemSpec is the spec for volume filesystem.
 | ----- | ---- | ----- | ----------- |
 | type | [talos.resource.definitions.enums.BlockFilesystemType](#talos.resource.definitions.enums.BlockFilesystemType) |  | Filesystem type. |
 | label | [string](#string) |  | Filesystem label. |
+| min_allocation_group_size | [uint64](#uint64) |  | MinAllocationGroupSize is the minimum XFS allocation group size in bytes.<br><br>Zero leaves the mkfs.xfs defaults alone. |
 
 
 
@@ -6682,6 +6822,8 @@ VolumeConfigSpec is the spec for VolumeConfig resource.
 | mount | [MountSpec](#talos.resource.definitions.block.MountSpec) |  | Mount options for the volume. |
 | encryption | [EncryptionSpec](#talos.resource.definitions.block.EncryptionSpec) |  | Encryption configuration (how to encrypt a volume). |
 | symlink | [SymlinkProvisioningSpec](#talos.resource.definitions.block.SymlinkProvisioningSpec) |  | Symlink options for the volume. |
+| trim_enabled | [bool](#bool) |  | TrimEnabled indicates whether the volume should be trimmed (fstrim) on a schedule. |
+| trim_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  | TrimInterval is the resolved interval at which the volume should be trimmed. |
 
 
 
@@ -6759,6 +6901,26 @@ VolumeStatusSpec is the spec for VolumeStatus resource.
 | encryption_locked_to_state | [bool](#bool) |  | EncryptionLockedToState indicates if the encryption is locked to STATE partition |
 | encryption_slot | [int64](#int64) |  | EncryptionSlot indicates the currently used encryption slot used for decryption. |
 | tpm_encryption_options | [TPMEncryptionOptionsInfo](#talos.resource.definitions.block.TPMEncryptionOptionsInfo) |  | TPMEncryptionOptions is the options for TPM-based encryption. |
+| encryption_allow_discards | [bool](#bool) |  | EncryptionAllowDiscards indicates whether the encrypted volume passes discards to the underlying device. |
+| trim_enabled | [bool](#bool) |  | TrimEnabled indicates whether the volume should be trimmed (fstrim) on a schedule. |
+| trim_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  | TrimInterval is the resolved interval at which the volume should be trimmed. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.VolumeTrimScheduleSpec"></a>
+
+### VolumeTrimScheduleSpec
+VolumeTrimScheduleSpec is the spec for VolumeTrimSchedule resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| filesystem | [talos.resource.definitions.enums.BlockFilesystemType](#talos.resource.definitions.enums.BlockFilesystemType) |  | Filesystem is the filesystem type of the volume to be trimmed. |
+| interval | [google.protobuf.Duration](#google.protobuf.Duration) |  | Interval is the trim interval for the volume. |
+| next_trim | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | NextTrim is the next scheduled trim time for the volume. |
 
 
 
@@ -6830,18 +6992,19 @@ AffiliateSpec describes Affiliate state.
 <a name="talos.resource.definitions.cluster.ConfigSpec"></a>
 
 ### ConfigSpec
-ConfigSpec describes KubeSpan configuration.
+ConfigSpec describes Discovery configuration.
 
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| discovery_enabled | [bool](#bool) |  |  |
+| discovery_enabled | [bool](#bool) |  | Deprecated: use ServiceEndpoints instead (configured via DiscoveryServiceConfig documents) |
 | registry_kubernetes_enabled | [bool](#bool) |  |  |
-| registry_service_enabled | [bool](#bool) |  |  |
-| service_endpoint | [string](#string) |  |  |
-| service_endpoint_insecure | [bool](#bool) |  |  |
+| registry_service_enabled | [bool](#bool) |  | Deprecated: enabled via DiscoveryServiceConfig documents instead. |
+| service_endpoint | [string](#string) |  | Deprecated: use ServiceEndpoints instead |
+| service_endpoint_insecure | [bool](#bool) |  | Deprecated: use ServiceEndpoints instead |
 | service_encryption_key | [bytes](#bytes) |  |  |
 | service_cluster_id | [string](#string) |  |  |
+| service_endpoints | [ServiceEndpoint](#talos.resource.definitions.cluster.ServiceEndpoint) | repeated |  |
 
 
 
@@ -6930,6 +7093,23 @@ MemberSpec describes Member state.
 | machine_type | [talos.resource.definitions.enums.MachineType](#talos.resource.definitions.enums.MachineType) |  |  |
 | operating_system | [string](#string) |  |  |
 | control_plane | [ControlPlane](#talos.resource.definitions.cluster.ControlPlane) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.cluster.ServiceEndpoint"></a>
+
+### ServiceEndpoint
+ServiceEndpoint describes a service endpoint for discovery.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| name | [string](#string) |  |  |
+| endpoint | [string](#string) |  |  |
+| insecure | [bool](#bool) |  |  |
 
 
 
@@ -7640,6 +7820,9 @@ APIServerConfigSpec is configuration for kube-apiserver.
 | advertised_address | [string](#string) |  |  |
 | resources | [Resources](#talos.resource.definitions.k8s.Resources) |  |  |
 | extra_args | [APIServerConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.APIServerConfigSpec.ExtraArgsEntry) | repeated |  |
+| startup_probes_enabled | [bool](#bool) |  |  |
+| use_authentication_config | [bool](#bool) |  |  |
+| args | [string](#string) | repeated |  |
 
 
 
@@ -7739,6 +7922,21 @@ AuditPolicyConfigSpec is audit policy configuration for kube-apiserver.
 
 
 
+<a name="talos.resource.definitions.k8s.AuthenticationConfigSpec"></a>
+
+### AuthenticationConfigSpec
+AuthenticationConfigSpec is authentication configuration for kube-apiserver.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.k8s.AuthorizationAuthorizersSpec"></a>
 
 ### AuthorizationAuthorizersSpec
@@ -7805,6 +8003,9 @@ BootstrapManifestsConfigSpec is configuration for bootstrap manifests.
 | flannel_backend_port | [uint32](#uint32) |  |  |
 | flannel_resources | [Resources](#talos.resource.definitions.k8s.Resources) |  |  |
 | flannel_backend_extra_config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
+| proxy_config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
+| proxy_resources | [Resources](#talos.resource.definitions.k8s.Resources) |  |  |
+| proxy_config_checksum | [string](#string) |  |  |
 
 
 
@@ -7845,6 +8046,8 @@ ControllerManagerConfigSpec is configuration for kube-controller-manager.
 | resources | [Resources](#talos.resource.definitions.k8s.Resources) |  |  |
 | extra_args | [ControllerManagerConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.ControllerManagerConfigSpec.ExtraArgsEntry) | repeated |  |
 | args | [string](#string) | repeated |  |
+| node_cidr_mask_size_i_pv4 | [int64](#int64) |  |  |
+| node_cidr_mask_size_i_pv6 | [int64](#int64) |  |  |
 
 
 
@@ -8066,8 +8269,8 @@ KubeletConfigSpec holds the source of kubelet configuration.
 | disable_manifests_directory | [bool](#bool) |  |  |
 | enable_fs_quota_monitoring | [bool](#bool) |  |  |
 | credential_provider_config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
-| allow_scheduling_on_control_plane | [bool](#bool) |  |  |
 | extra_args | [KubeletConfigSpec.ExtraArgsEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.ExtraArgsEntry) | repeated |  |
+| register_with_taints | [KubeletConfigSpec.RegisterWithTaintsEntry](#talos.resource.definitions.k8s.KubeletConfigSpec.RegisterWithTaintsEntry) | repeated |  |
 
 
 
@@ -8084,6 +8287,22 @@ KubeletConfigSpec holds the source of kubelet configuration.
 | ----- | ---- | ----- | ----------- |
 | key | [string](#string) |  |  |
 | value | [ArgValues](#talos.resource.definitions.k8s.ArgValues) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.KubeletConfigSpec.RegisterWithTaintsEntry"></a>
+
+### KubeletConfigSpec.RegisterWithTaintsEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| key | [string](#string) |  |  |
+| value | [string](#string) |  |  |
 
 
 
@@ -8119,6 +8338,21 @@ KubeletSpecSpec holds the source of kubelet configuration.
 | expected_nodename | [string](#string) |  |  |
 | config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
 | credential_provider_config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.k8s.KubeletStatusSpec"></a>
+
+### KubeletStatusSpec
+KubeletStatusSpec describes the current kubelet state.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| image | [string](#string) |  | Image is the kubelet image reference. |
 
 
 
@@ -8666,6 +8900,21 @@ APIServiceConfigSpec describes configuration for Talos API service (apid).
 
 
 
+<a name="talos.resource.definitions.runtime.BootIDSpec"></a>
+
+### BootIDSpec
+BootIDSpec presents the kernel boot ID (contents of /proc/sys/kernel/random/boot_id).
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| boot_id | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.runtime.BootedEntrySpec"></a>
 
 ### BootedEntrySpec
@@ -9119,6 +9368,23 @@ ServicePIDSpec is the spec for the service PID.
 
 
 
+<a name="talos.resource.definitions.runtime.UnattendedInstallStatusSpec"></a>
+
+### UnattendedInstallStatusSpec
+UnattendedInstallStatusSpec describes the unattended install status.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| image | [string](#string) |  |  |
+| phase | [talos.resource.definitions.enums.RuntimeUnattendedInstallPhase](#talos.resource.definitions.enums.RuntimeUnattendedInstallPhase) |  |  |
+| error | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.runtime.UniqueMachineTokenSpec"></a>
 
 ### UniqueMachineTokenSpec
@@ -9262,6 +9528,87 @@ AddressStatusSpec describes status of rendered secrets.
 
 
 
+<a name="talos.resource.definitions.network.BGPBFDConfigSpec"></a>
+
+### BGPBFDConfigSpec
+BGPBFDConfigSpec contains BFD parameters for a BGP neighbor.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| transmit_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| receive_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| detect_multiplier | [uint32](#uint32) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.BGPNeighborConfigSpec"></a>
+
+### BGPNeighborConfigSpec
+BGPNeighborConfigSpec contains the runtime configuration for a BGP neighbor.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| address | [common.NetIP](#common.NetIP) |  |  |
+| link | [string](#string) |  |  |
+| peer_asn | [uint32](#uint32) |  |  |
+| hold_time | [google.protobuf.Duration](#google.protobuf.Duration) |  |  |
+| bfd | [BGPBFDConfigSpec](#talos.resource.definitions.network.BGPBFDConfigSpec) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.BGPPeerConfigSpec"></a>
+
+### BGPPeerConfigSpec
+BGPPeerConfigSpec contains the complete runtime configuration for the BGP speaker.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| local_asn | [uint32](#uint32) |  |  |
+| router_id | [common.NetIP](#common.NetIP) |  |  |
+| route_source | [common.NetIP](#common.NetIP) |  |  |
+| advertise_links | [string](#string) | repeated |  |
+| multipath | [bool](#bool) |  |  |
+| max_paths | [uint32](#uint32) |  |  |
+| neighbors | [BGPNeighborConfigSpec](#talos.resource.definitions.network.BGPNeighborConfigSpec) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.network.BGPPeerStatusSpec"></a>
+
+### BGPPeerStatusSpec
+BGPPeerStatusSpec describes the status of a BGP peering session.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| peer | [string](#string) |  |  |
+| local_asn | [uint32](#uint32) |  |  |
+| peer_asn | [uint32](#uint32) |  |  |
+| state | [talos.resource.definitions.enums.NethelpersBGPSessionState](#talos.resource.definitions.enums.NethelpersBGPSessionState) |  |  |
+| router_id | [common.NetIP](#common.NetIP) |  |  |
+| since | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  |  |
+| received | [uint32](#uint32) |  |  |
+| advertised | [uint32](#uint32) |  |  |
+| accepted | [uint32](#uint32) |  |  |
+| bfd_state | [string](#string) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.network.BondMasterSpec"></a>
 
 ### BondMasterSpec
@@ -9393,6 +9740,7 @@ DHCP4OperatorSpec describes DHCP4 operator options.
 | route_metric | [uint32](#uint32) |  |  |
 | skip_hostname_request | [bool](#bool) |  |  |
 | client_identifier | [ClientIdentifierSpec](#talos.resource.definitions.network.ClientIdentifierSpec) |  |  |
+| skip_routes | [bool](#bool) |  |  |
 
 
 
@@ -10189,6 +10537,26 @@ ResolverStatusSpec describes DNS resolvers.
 
 
 
+<a name="talos.resource.definitions.network.RouteNextHop"></a>
+
+### RouteNextHop
+RouteNextHop describes a single next-hop of a (possibly multipath) route.
+
+A next-hop gateway may be in a different address family than the route destination
+(e.g. an IPv4 prefix reachable via an IPv6 link-local next-hop, RFC 8950).
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| gateway | [common.NetIP](#common.NetIP) |  |  |
+| out_link_name | [string](#string) |  |  |
+| weight | [uint32](#uint32) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.network.RouteSpecSpec"></a>
 
 ### RouteSpecSpec
@@ -10210,6 +10578,7 @@ RouteSpecSpec describes the route.
 | protocol | [talos.resource.definitions.enums.NethelpersRouteProtocol](#talos.resource.definitions.enums.NethelpersRouteProtocol) |  |  |
 | config_layer | [talos.resource.definitions.enums.NetworkConfigLayer](#talos.resource.definitions.enums.NetworkConfigLayer) |  |  |
 | mtu | [uint32](#uint32) |  |  |
+| next_hops | [RouteNextHop](#talos.resource.definitions.network.RouteNextHop) | repeated | NextHops, when non-empty, describes a multipath (ECMP) route. The top-level Gateway and OutLinkName are left unset in that case, mirroring the kernel's RTA_GATEWAY vs RTA_MULTIPATH split. |
 
 
 
@@ -10237,6 +10606,7 @@ RouteStatusSpec describes status of rendered secrets.
 | flags | [uint32](#uint32) |  |  |
 | protocol | [talos.resource.definitions.enums.NethelpersRouteProtocol](#talos.resource.definitions.enums.NethelpersRouteProtocol) |  |  |
 | mtu | [uint32](#uint32) |  |  |
+| next_hops | [RouteNextHop](#talos.resource.definitions.network.RouteNextHop) | repeated | NextHops is populated for multipath (ECMP) routes; the top-level Gateway/OutLink stay unset then. |
 
 
 
@@ -10760,6 +11130,7 @@ KubeletSpec describes root Kubernetes secrets.
 | bootstrap_token_id | [string](#string) |  |  |
 | bootstrap_token_secret | [string](#string) |  |  |
 | accepted_c_as | [common.PEMEncodedCertificate](#common.PEMEncodedCertificate) | repeated |  |
+| endpoint_tls_server_name | [string](#string) |  | EndpointTLSServerName, when non-empty, is propagated to the generated kubelet kubeconfig as `clusters[0].cluster.tls-server-name`, overriding the SNI/hostname the kubelet uses while still dialing Endpoint as the TCP destination. |
 
 
 
@@ -10815,7 +11186,7 @@ KubernetesRootSpec describes root Kubernetes secrets.
 | cert_sa_ns | [string](#string) | repeated |  |
 | dns_domain | [string](#string) |  |  |
 | issuing_ca | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
-| service_account | [common.PEMEncodedKey](#common.PEMEncodedKey) |  |  |
+| service_account | [common.PEMEncodedKey](#common.PEMEncodedKey) |  | ServiceAccount is the issuing service account key. |
 | aggregator_ca | [common.PEMEncodedCertificateAndKey](#common.PEMEncodedCertificateAndKey) |  |  |
 | aescbc_encryption_secret | [string](#string) |  |  |
 | bootstrap_token_id | [string](#string) |  |  |
@@ -10824,6 +11195,11 @@ KubernetesRootSpec describes root Kubernetes secrets.
 | api_server_ips | [common.NetIP](#common.NetIP) | repeated |  |
 | accepted_c_as | [common.PEMEncodedCertificate](#common.PEMEncodedCertificate) | repeated |  |
 | etcd_encryption_config | [google.protobuf.Struct](#google.protobuf.Struct) |  |  |
+| accepted_aggregator_c_as | [common.PEMEncodedCertificate](#common.PEMEncodedCertificate) | repeated |  |
+| service_account_accepted_keys | [common.PEMEncodedKey](#common.PEMEncodedKey) | repeated | ServiceAccountAcceptedKeys are the accepted service account keys.<br><br>It already contains the public version of the issuing key. |
+| issuer_url | [string](#string) |  | IssuerURL is the URL of the service account issuer. |
+| accepted_issuers | [string](#string) | repeated | AcceptedIssuers are the accepted service account issuers.<br><br>It doesn't contain the issuerURL. |
+| api_audiences | [string](#string) | repeated | APIAudiences are the accepted service account audiences. |
 
 
 
@@ -11114,6 +11490,7 @@ LVMLogicalVolumeStatusSpec mirrors selected `lvs` columns.
 | convert_lv | [string](#string) |  | ConvertLV is the target LV of an in-progress lvconvert (convert_lv); empty otherwise. |
 | when_full | [string](#string) |  | WhenFull reflects lv_when_full ("error" / "queue" / ""). |
 | tags | [string](#string) | repeated | Tags is the list of tags attached to the LV (lv_tags). |
+| pretty_size | [string](#string) |  | PrettySize is the human-readable rendering of Size; empty when Size is not a byte count. |
 
 
 
@@ -11162,6 +11539,9 @@ Raw strings preserve LVM sentinel values.
 | major | [string](#string) |  | Major is the raw pv_major column ("-1" for orphan PVs, otherwise the kernel major). |
 | minor | [string](#string) |  | Minor is the raw pv_minor column ("-1" for orphan PVs, otherwise the kernel minor). |
 | tags | [string](#string) | repeated | Tags is the list of tags attached to the PV (pv_tags). |
+| pretty_size | [string](#string) |  | PrettySize is the human-readable rendering of Size. |
+| pretty_device_size | [string](#string) |  | PrettyDeviceSize is the human-readable rendering of DeviceSize. |
+| pretty_free | [string](#string) |  | PrettyFree is the human-readable rendering of Free. |
 
 
 
@@ -11249,6 +11629,65 @@ Raw strings preserve LVM sentinel values.
 | lock_type | [string](#string) |  | LockType is the raw vg_lock_type column. |
 | system_id | [string](#string) |  | SystemID is the system_id stamped into VG metadata (vg_systemid). |
 | tags | [string](#string) | repeated | Tags is the list of tags attached to the VG (vg_tags). |
+| pretty_size | [string](#string) |  | PrettySize is the human-readable rendering of Size. |
+| pretty_free | [string](#string) |  | PrettyFree is the human-readable rendering of Free. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.storage.MDArraySpecSpec"></a>
+
+### MDArraySpecSpec
+MDArraySpecSpec is the spec for MDArraySpec resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| level | [talos.resource.definitions.enums.StorageMDLevel](#talos.resource.definitions.enums.StorageMDLevel) |  | Level is the RAID level. |
+| volume_selector | [google.api.expr.v1alpha1.CheckedExpr](#google.api.expr.v1alpha1.CheckedExpr) |  | VolumeSelector matches the member volumes of the array. |
+| metadata | [talos.resource.definitions.enums.StorageMDMetadata](#talos.resource.definitions.enums.StorageMDMetadata) |  | Metadata is the on-disk MD metadata format. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.storage.MDArrayStatusSpec"></a>
+
+### MDArrayStatusSpec
+MDArrayStatusSpec is the spec for MDArrayStatus resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| level | [talos.resource.definitions.enums.StorageMDLevel](#talos.resource.definitions.enums.StorageMDLevel) |  | Level is the RAID level. |
+| device | [string](#string) |  | Device is the stable by-id device path of the array. |
+| members | [string](#string) | repeated | Members is the list of member device paths. |
+| error | [string](#string) |  | Error is the last provisioning error, if any. |
+| status | [talos.resource.definitions.enums.StorageMDArrayPhase](#talos.resource.definitions.enums.StorageMDArrayPhase) |  | Status is the provisioning/sync state of the array. |
+| raid_devices | [int64](#int64) |  | RaidDevices is the observed active RAID device count. |
+| uuid | [string](#string) |  | UUID is the stable MD array UUID. |
+| name | [string](#string) |  | Name is the metadata-stamped array name. |
+| metadata | [string](#string) |  | Metadata is the MD metadata format/version. |
+| array_state | [string](#string) |  | ArrayState is the current sysfs array_state value. |
+| sync_action | [string](#string) |  | SyncAction is the current sysfs sync_action value. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.storage.MDRefreshRequestSpec"></a>
+
+### MDRefreshRequestSpec
+MDRefreshRequestSpec is the spec for MDRefreshRequest.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| request | [int64](#int64) |  |  |
 
 
 

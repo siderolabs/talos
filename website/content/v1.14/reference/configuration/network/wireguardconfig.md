@@ -1,5 +1,6 @@
 ---
-description: WireguardConfig is a config document to create and configure a Wireguard network link.
+description: WireguardConfig is a config document to create and configure a Wireguard
+    network link.
 title: WireguardConfig
 ---
 

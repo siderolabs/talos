@@ -326,7 +326,7 @@ func (suite *AcquireSuite) TestFromDisk() {
 	suite.injectViaDisk(suite.completeMachineConfig, true)
 
 	cfg := suite.waitForConfig(false)
-	suite.Require().Equal(cfg.Cluster().Name(), suite.clusterName)
+	suite.Require().Equal(cfg.K8sClusterConfig().ClusterName(), suite.clusterName)
 
 	suite.Assert().Empty(suite.eventPublisher.getEvents())
 	suite.Assert().Equal(
@@ -443,7 +443,7 @@ func (suite *AcquireSuite) TestFromPlatform() {
 	suite.triggerAcquire()
 
 	cfg := suite.waitForConfig(true)
-	suite.Require().Equal(cfg.Cluster().Name(), suite.clusterName)
+	suite.Require().Equal(cfg.K8sClusterConfig().ClusterName(), suite.clusterName)
 
 	suite.Assert().Empty(suite.eventPublisher.getEvents())
 	suite.Assert().Equal(
@@ -484,7 +484,7 @@ func (suite *AcquireSuite) TestFromPlatformFailure() {
 func (suite *AcquireSuite) TestFromPlatformNotValid() {
 	suite.noStateVolume()
 
-	patchCfg, err := configloader.NewFromBytes([]byte(`{"machine": {"nodeLabels": {"/1": "2"}}}`))
+	patchCfg, err := configloader.NewFromBytes([]byte("apiVersion: v1alpha1\nkind: KubeNodeConfig\nlabels: {'/1': '2'}"))
 	suite.Require().NoError(err)
 
 	out, err := configpatcher.Apply(configpatcher.WithBytes(suite.completeMachineConfig), []configpatcher.Patch{
@@ -513,13 +513,13 @@ func (suite *AcquireSuite) TestFromPlatformNotValid() {
 	suite.Assert().Equal("Error loading and validating Talos machine config.", ev.Message)
 	suite.Assert().Equal(
 		"failed to validate config acquired via platform mock: 1 error occurred:\n"+
-			"\t* v1alpha1.Config: 1 error occurred:\n\t* invalid machine node labels: 1 error occurred:\n\t* prefix cannot be empty: \"/1\"\n\n\n\n\n\n",
+			"\t* KubeNodeConfig: invalid node labels: 1 error occurred:\n\t* prefix cannot be empty: \"/1\"\n\n\n\n",
 		ev.Error.Error(),
 	)
 
 	suite.Assert().Equal(&machineapi.ConfigLoadErrorEvent{
-		Error: "failed to validate config acquired via platform mock: 1 error occurred:" +
-			"\n\t* v1alpha1.Config: 1 error occurred:\n\t* invalid machine node labels: 1 error occurred:\n\t* prefix cannot be empty: \"/1\"\n\n\n\n\n\n",
+		Error: "failed to validate config acquired via platform mock: 1 error occurred:\n" +
+			"\t* KubeNodeConfig: invalid node labels: 1 error occurred:\n\t* prefix cannot be empty: \"/1\"\n\n\n\n",
 	}, suite.eventPublisher.getEvents()[0])
 }
 
@@ -538,7 +538,7 @@ func (suite *AcquireSuite) TestFromPlatformGzip() {
 	suite.triggerAcquire()
 
 	cfg := suite.waitForConfig(true)
-	suite.Require().Equal(cfg.Cluster().Name(), suite.clusterName)
+	suite.Require().Equal(cfg.K8sClusterConfig().ClusterName(), suite.clusterName)
 
 	suite.Assert().Empty(suite.eventPublisher.getEvents())
 	suite.Assert().Equal(
@@ -722,7 +722,7 @@ func (suite *AcquireSuite) TestFromCmdlineEarlyToPlatform() {
 	suite.Require().Equal(cfg.SideroLink().APIUrl().Host, "siderolink.api")
 
 	cfg = suite.waitForConfig(true)
-	suite.Require().Equal(cfg.Cluster().Name(), suite.clusterName)
+	suite.Require().Equal(cfg.K8sClusterConfig().ClusterName(), suite.clusterName)
 
 	suite.Assert().Empty(suite.eventPublisher.getEvents())
 	suite.Assert().Equal(

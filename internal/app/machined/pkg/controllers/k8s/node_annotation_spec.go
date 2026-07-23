@@ -76,8 +76,8 @@ func (ctrl *NodeAnnotationSpecController) Run(ctx context.Context, r controller.
 
 		nodeAnnotations := map[string]string{}
 
-		if cfg != nil && cfg.Config().Machine() != nil {
-			maps.Copy(nodeAnnotations, cfg.Config().Machine().NodeAnnotations())
+		if cfg != nil && cfg.Config().K8sNodeConfig() != nil {
+			maps.Copy(nodeAnnotations, cfg.Config().K8sNodeConfig().Annotations())
 		}
 
 		if err = extensionsToNodeKV(

@@ -343,14 +343,25 @@ func (suite *ExtensionsSuiteNVIDIA) getPodLogs(namespace, name string) string { 
 }
 
 func (suite *ExtensionsSuiteNVIDIA) getNVIDIANodes(labelQuery string) []string {
-	nodes, err := suite.Clientset.CoreV1().Nodes().List(suite.ctx, metav1.ListOptions{
-		LabelSelector: labelQuery,
+	var nodes *corev1.NodeList
+
+	err := retry.Constant(2*time.Minute, retry.WithUnits(5*time.Second)).RetryWithContext(suite.ctx, func(ctx context.Context) error {
+		var err error
+
+		nodes, err = suite.Clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{
+			LabelSelector: labelQuery,
+		})
+		if err != nil {
+			return retry.ExpectedError(err)
+		}
+
+		if len(nodes.Items) == 0 {
+			return retry.ExpectedErrorf("no nodes with NVIDIA GPUs matching label selector %q found", labelQuery)
+		}
+
+		return nil
 	})
 	suite.Require().NoError(err)
-
-	// if we don't have any node with NVIDIA GPUs we fail the test
-	// since we explicitly asked for them
-	suite.Require().NotEmpty(nodes.Items, "no nodes with NVIDIA GPUs matching label selector '%s' found", labelQuery)
 
 	nodeList := make([]string, len(nodes.Items))
 

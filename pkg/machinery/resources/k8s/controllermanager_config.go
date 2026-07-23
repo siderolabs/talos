@@ -40,6 +40,8 @@ type ControllerManagerConfigSpec struct {
 	ExtraVolumes         []ExtraVolume        `yaml:"extraVolumes" protobuf:"7"`
 	EnvironmentVariables map[string]string    `yaml:"environmentVariables" protobuf:"8"`
 	Resources            Resources            `yaml:"resources" protobuf:"9"`
+	NodeCIDRMaskSizeIPv4 int                  `yaml:"nodeCIDRMaskSizeIPv4" protobuf:"12"`
+	NodeCIDRMaskSizeIPv6 int                  `yaml:"nodeCIDRMaskSizeIPv6" protobuf:"13"`
 }
 
 // NewControllerManagerConfig returns new ControllerManagerConfig resource.

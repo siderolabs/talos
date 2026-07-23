@@ -35,7 +35,7 @@ func TestPollingCondition(t *testing.T) {
 
 		err := cond.Wait(t.Context())
 		assert.NoError(t, err)
-		assert.Equal(t, "Test condition: OK", cond.String())
+		assert.Equal(t, "Test condition", cond.String())
 		assert.Equal(t, 2, calls)
 	})
 
@@ -56,7 +56,7 @@ func TestPollingCondition(t *testing.T) {
 
 		err := cond.Wait(t.Context())
 		assert.NoError(t, err)
-		assert.Equal(t, "Test condition: SKIP", cond.String())
+		assert.Equal(t, "Test condition", cond.String())
 		assert.Equal(t, 2, calls)
 	})
 
@@ -76,7 +76,140 @@ func TestPollingCondition(t *testing.T) {
 
 		err := cond.Wait(ctx)
 		assert.Equal(t, context.DeadlineExceeded, err)
-		assert.Equal(t, "Test condition: failed", cond.String())
+		assert.Equal(t, "Test condition", cond.String())
 		assert.Equal(t, 2, calls)
+	})
+}
+
+func TestPollingConditionState(t *testing.T) {
+	t.Parallel()
+
+	t.Run("unpolled", func(t *testing.T) {
+		t.Parallel()
+
+		cond := conditions.PollingCondition("Test", func(ctx context.Context) error {
+			return nil
+		}, time.Millisecond)
+
+		state, err := cond.(conditions.Stateful).State()
+		assert.Equal(t, conditions.StateRunning, state)
+		assert.NoError(t, err)
+	})
+
+	t.Run("succeeded", func(t *testing.T) {
+		t.Parallel()
+
+		cond := conditions.PollingCondition("Test", func(ctx context.Context) error {
+			return nil
+		}, time.Millisecond)
+
+		err := cond.Wait(t.Context())
+		assert.NoError(t, err)
+
+		state, lastErr := cond.(conditions.Stateful).State()
+		assert.Equal(t, conditions.StateSucceeded, state)
+		assert.NoError(t, lastErr)
+	})
+
+	t.Run("skipped", func(t *testing.T) {
+		t.Parallel()
+
+		cond := conditions.PollingCondition("Test", func(ctx context.Context) error {
+			return conditions.ErrSkipAssertion
+		}, time.Millisecond)
+
+		err := cond.Wait(t.Context())
+		assert.NoError(t, err)
+
+		state, lastErr := cond.(conditions.Stateful).State()
+		assert.Equal(t, conditions.StateSkipped, state)
+		assert.NoError(t, lastErr)
+	})
+
+	t.Run("failed", func(t *testing.T) {
+		t.Parallel()
+
+		pollErr := errors.New("connection refused")
+
+		cond := conditions.PollingCondition("Test", func(ctx context.Context) error {
+			return pollErr
+		}, time.Millisecond)
+
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel() // cancel immediately so Wait exits after the first assertion attempt
+
+		err := cond.Wait(ctx)
+		assert.ErrorIs(t, err, context.Canceled)
+
+		state, lastErr := cond.(conditions.Stateful).State()
+		assert.Equal(t, conditions.StateFailed, state)
+		assert.Equal(t, pollErr, lastErr)
+	})
+}
+
+func TestDescribe(t *testing.T) {
+	t.Parallel()
+
+	t.Run("unpolled", func(t *testing.T) {
+		t.Parallel()
+
+		cond := conditions.PollingCondition("Test", func(ctx context.Context) error {
+			return nil
+		}, time.Millisecond)
+
+		assert.Equal(t, "Test: ...", conditions.StatusLine(cond))
+	})
+
+	t.Run("succeeded", func(t *testing.T) {
+		t.Parallel()
+
+		cond := conditions.PollingCondition("Test", func(ctx context.Context) error {
+			return nil
+		}, time.Millisecond)
+
+		err := cond.Wait(t.Context())
+		assert.NoError(t, err)
+
+		assert.Equal(t, "Test: OK", conditions.StatusLine(cond))
+	})
+
+	t.Run("skipped", func(t *testing.T) {
+		t.Parallel()
+
+		cond := conditions.PollingCondition("Test", func(ctx context.Context) error {
+			return conditions.ErrSkipAssertion
+		}, time.Millisecond)
+
+		err := cond.Wait(t.Context())
+		assert.NoError(t, err)
+
+		assert.Equal(t, "Test: SKIP", conditions.StatusLine(cond))
+	})
+
+	t.Run("failed", func(t *testing.T) {
+		t.Parallel()
+
+		pollErr := errors.New("connection refused")
+
+		cond := conditions.PollingCondition("Test", func(ctx context.Context) error {
+			return pollErr
+		}, time.Millisecond)
+
+		ctx, cancel := context.WithCancel(t.Context())
+		cancel()
+
+		err := cond.Wait(ctx)
+		assert.ErrorIs(t, err, context.Canceled)
+
+		assert.Equal(t, "Test: connection refused", conditions.StatusLine(cond))
+	})
+
+	t.Run("non-Stateful", func(t *testing.T) {
+		t.Parallel()
+
+		// A non-Stateful condition just returns its String() unchanged.
+		cond := conditions.WaitForFileToExist("test.txt")
+
+		assert.Equal(t, cond.String(), conditions.StatusLine(cond))
 	})
 }

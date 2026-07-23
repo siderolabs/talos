@@ -134,7 +134,7 @@ talosctl cluster create dev [flags]
       --bad-rtc                                  launch VM with bad RTC state
       --cidr string                              CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way) (default "10.5.0.0/24")
       --cni-bin-path strings                     search path for CNI binaries (default [/home/user/.talos/cni/bin])
-      --cni-bundle-url string                    URL to download CNI bundle from (default "https://github.com/siderolabs/talos/releases/download/v1.14.0-alpha.1/talosctl-cni-bundle-${ARCH}.tar.gz")
+      --cni-bundle-url string                    URL to download CNI bundle from (default "https://github.com/siderolabs/talos/releases/download/v1.14.0-alpha.2/talosctl-cni-bundle-${ARCH}.tar.gz")
       --cni-cache-dir string                     CNI cache directory path (default "/home/user/.talos/cni/cache")
       --cni-conf-dir string                      CNI config directory path (default "/home/user/.talos/cni/conf.d")
       --config-injection-method string           a method to inject machine config: default is HTTP server, 'metal-iso' to mount an ISO
@@ -177,19 +177,21 @@ talosctl cluster create dev [flags]
       --ipxe-boot-script string                  iPXE boot script (URL) to use
       --iso-path string                          the ISO path to use for the initial boot
       --kubeprism-port int                       KubePrism port (set to 0 to disable) (default 7445)
-      --kubernetes-version string                desired kubernetes version to run (default "1.36.1")
+      --kubernetes-version string                desired kubernetes version to run (default "1.37.0-beta.0")
       --memory string(mb,gb)                     the limit on memory usage for each control plane/VM (default 2.0GiB)
       --memory-workers string(mb,gb)             the limit on memory usage for each worker/VM (default 2.0GiB)
       --mtu int                                  MTU of the cluster network (default 1500)
       --nameservers strings                      list of nameservers to use
       --no-masquerade-cidrs strings              list of CIDRs to exclude from NAT
       --omni-api-endpoint string                 the Omni API endpoint (must include a scheme, a hostname and a join token, e.g. 'https://siderolink.omni.example?jointoken=foobar')
+      --primary-disks int                        number of primary disks to create for each VM (each sized by --disk) (default 1)
       --registry-insecure-skip-verify strings    list of registry hostnames to skip TLS verification for
       --registry-mirror strings                  list of registry mirrors to use in format: <registry host>=<mirror URL>
       --skip-injecting-config                    skip injecting config from embedded metadata server, write config files to current directory
       --skip-injecting-extra-cmdline             skip injecting extra kernel cmdline parameters via EFI vars through bootloader
       --skip-k8s-node-readiness-check            skip k8s node readiness checks
       --skip-kubeconfig                          skip merging kubeconfig from the created cluster
+      --skip-unattended-install-config           skip generating UnattendedInstallConfig document
       --talos-version string                     the desired Talos version to generate config for (default "latest")
       --talosconfig string                       The location to save the generated Talos configuration file to. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
       --uki-path string                          the UKI image path to use for the initial boot
@@ -201,6 +203,8 @@ talosctl cluster create dev [flags]
       --wait-timeout duration                    timeout to wait for the cluster to be ready (default 20m0s)
       --wireguard-cidr string                    CIDR of the wireguard network
       --with-apply-config                        enable apply config when the VM is starting in maintenance mode
+      --with-bgp                                 run an embedded GoBGP fabric peer on the bridge gateway for testing native BGP
+      --with-bgp-clos                            full-CLOS BGP test: nodes have only dedicated unnumbered fabric uplinks to a host fabric peer, reachable via a BGP loopback
       --with-bootloader                          enable bootloader to load kernel and initramfs from disk image after install (default true)
       --with-cluster-discovery                   enable cluster discovery (default true)
       --with-debug                               enable debug in Talos config to send service logs to the console
@@ -227,8 +231,9 @@ talosctl cluster create dev [flags]
 ### Options inherited from parent commands
 
 ```
-      --name string    the name of the cluster (default "talos-default")
-      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
+      --name string              the name of the cluster (default "talos-default")
+      --remote-endpoint string   host:port of a talosctl remote-provision-launch server to delegate provisioning to; when set, no local QEMU is required
+      --state string             directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
 
 ### SEE ALSO
@@ -255,7 +260,7 @@ talosctl cluster create docker [flags]
   -h, --help                                     help for docker
       --host-ip string                           Host IP to forward exposed ports to (default "0.0.0.0")
       --image string                             the talos image to run (default "ghcr.io/siderolabs/talos:latest")
-      --kubernetes-version string                desired kubernetes version to run (default "1.36.1")
+      --kubernetes-version string                desired kubernetes version to run (default "1.37.0-beta.0")
       --memory-controlplanes string(mb,gb)       the limit on memory usage for each control plane/VM (default 2.0GiB)
       --memory-workers string(mb,gb)             the limit on memory usage for each worker/VM (default 2.0GiB)
       --mount mount                              attach a mount to the container (docker --mount syntax)
@@ -267,8 +272,9 @@ talosctl cluster create docker [flags]
 ### Options inherited from parent commands
 
 ```
-      --name string    the name of the cluster (default "talos-default")
-      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
+      --name string              the name of the cluster (default "talos-default")
+      --remote-endpoint string   host:port of a talosctl remote-provision-launch server to delegate provisioning to; when set, no local QEMU is required
+      --state string             directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
 
 ### SEE ALSO
@@ -311,7 +317,7 @@ talosctl cluster create qemu [flags]
   -h, --help                                     help for qemu
       --image-factory-auth string                username:password for authenticating with the Image Factory
       --image-factory-url string                 Image Factory url (default "https://factory.talos.dev/")
-      --kubernetes-version string                desired kubernetes version to run (default "1.36.1")
+      --kubernetes-version string                desired kubernetes version to run (default "1.37.0-beta.0")
       --memory-controlplanes string(mb,gb)       the limit on memory usage for each control plane/VM (default 2.0GiB)
       --memory-workers string(mb,gb)             the limit on memory usage for each worker/VM (default 2.0GiB)
       --omni-api-endpoint string                 the Omni API endpoint (must include a scheme, a hostname and a join token, e.g. 'https://siderolink.omni.example?jointoken=foobar')
@@ -325,8 +331,9 @@ talosctl cluster create qemu [flags]
 ### Options inherited from parent commands
 
 ```
-      --name string    the name of the cluster (default "talos-default")
-      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
+      --name string              the name of the cluster (default "talos-default")
+      --remote-endpoint string   host:port of a talosctl remote-provision-launch server to delegate provisioning to; when set, no local QEMU is required
+      --state string             directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
 
 ### SEE ALSO
@@ -349,7 +356,7 @@ talosctl cluster create dev [flags]
       --bad-rtc                                  launch VM with bad RTC state
       --cidr string                              CIDR of the cluster network (IPv4, ULA network for IPv6 is derived in automated way) (default "10.5.0.0/24")
       --cni-bin-path strings                     search path for CNI binaries (default [/home/user/.talos/cni/bin])
-      --cni-bundle-url string                    URL to download CNI bundle from (default "https://github.com/siderolabs/talos/releases/download/v1.14.0-alpha.1/talosctl-cni-bundle-${ARCH}.tar.gz")
+      --cni-bundle-url string                    URL to download CNI bundle from (default "https://github.com/siderolabs/talos/releases/download/v1.14.0-alpha.2/talosctl-cni-bundle-${ARCH}.tar.gz")
       --cni-cache-dir string                     CNI cache directory path (default "/home/user/.talos/cni/cache")
       --cni-conf-dir string                      CNI config directory path (default "/home/user/.talos/cni/conf.d")
       --config-injection-method string           a method to inject machine config: default is HTTP server, 'metal-iso' to mount an ISO
@@ -392,19 +399,21 @@ talosctl cluster create dev [flags]
       --ipxe-boot-script string                  iPXE boot script (URL) to use
       --iso-path string                          the ISO path to use for the initial boot
       --kubeprism-port int                       KubePrism port (set to 0 to disable) (default 7445)
-      --kubernetes-version string                desired kubernetes version to run (default "1.36.1")
+      --kubernetes-version string                desired kubernetes version to run (default "1.37.0-beta.0")
       --memory string(mb,gb)                     the limit on memory usage for each control plane/VM (default 2.0GiB)
       --memory-workers string(mb,gb)             the limit on memory usage for each worker/VM (default 2.0GiB)
       --mtu int                                  MTU of the cluster network (default 1500)
       --nameservers strings                      list of nameservers to use
       --no-masquerade-cidrs strings              list of CIDRs to exclude from NAT
       --omni-api-endpoint string                 the Omni API endpoint (must include a scheme, a hostname and a join token, e.g. 'https://siderolink.omni.example?jointoken=foobar')
+      --primary-disks int                        number of primary disks to create for each VM (each sized by --disk) (default 1)
       --registry-insecure-skip-verify strings    list of registry hostnames to skip TLS verification for
       --registry-mirror strings                  list of registry mirrors to use in format: <registry host>=<mirror URL>
       --skip-injecting-config                    skip injecting config from embedded metadata server, write config files to current directory
       --skip-injecting-extra-cmdline             skip injecting extra kernel cmdline parameters via EFI vars through bootloader
       --skip-k8s-node-readiness-check            skip k8s node readiness checks
       --skip-kubeconfig                          skip merging kubeconfig from the created cluster
+      --skip-unattended-install-config           skip generating UnattendedInstallConfig document
       --talos-version string                     the desired Talos version to generate config for (default "latest")
       --talosconfig string                       The location to save the generated Talos configuration file to. Defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order.
       --uki-path string                          the UKI image path to use for the initial boot
@@ -416,6 +425,8 @@ talosctl cluster create dev [flags]
       --wait-timeout duration                    timeout to wait for the cluster to be ready (default 20m0s)
       --wireguard-cidr string                    CIDR of the wireguard network
       --with-apply-config                        enable apply config when the VM is starting in maintenance mode
+      --with-bgp                                 run an embedded GoBGP fabric peer on the bridge gateway for testing native BGP
+      --with-bgp-clos                            full-CLOS BGP test: nodes have only dedicated unnumbered fabric uplinks to a host fabric peer, reachable via a BGP loopback
       --with-bootloader                          enable bootloader to load kernel and initramfs from disk image after install (default true)
       --with-cluster-discovery                   enable cluster discovery (default true)
       --with-debug                               enable debug in Talos config to send service logs to the console
@@ -442,8 +453,9 @@ talosctl cluster create dev [flags]
 ### Options inherited from parent commands
 
 ```
-      --name string    the name of the cluster (default "talos-default")
-      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
+      --name string              the name of the cluster (default "talos-default")
+      --remote-endpoint string   host:port of a talosctl remote-provision-launch server to delegate provisioning to; when set, no local QEMU is required
+      --state string             directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
 
 ### SEE ALSO
@@ -470,7 +482,7 @@ talosctl cluster create docker [flags]
   -h, --help                                     help for docker
       --host-ip string                           Host IP to forward exposed ports to (default "0.0.0.0")
       --image string                             the talos image to run (default "ghcr.io/siderolabs/talos:latest")
-      --kubernetes-version string                desired kubernetes version to run (default "1.36.1")
+      --kubernetes-version string                desired kubernetes version to run (default "1.37.0-beta.0")
       --memory-controlplanes string(mb,gb)       the limit on memory usage for each control plane/VM (default 2.0GiB)
       --memory-workers string(mb,gb)             the limit on memory usage for each worker/VM (default 2.0GiB)
       --mount mount                              attach a mount to the container (docker --mount syntax)
@@ -482,8 +494,9 @@ talosctl cluster create docker [flags]
 ### Options inherited from parent commands
 
 ```
-      --name string    the name of the cluster (default "talos-default")
-      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
+      --name string              the name of the cluster (default "talos-default")
+      --remote-endpoint string   host:port of a talosctl remote-provision-launch server to delegate provisioning to; when set, no local QEMU is required
+      --state string             directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
 
 ### SEE ALSO
@@ -526,7 +539,7 @@ talosctl cluster create qemu [flags]
   -h, --help                                     help for qemu
       --image-factory-auth string                username:password for authenticating with the Image Factory
       --image-factory-url string                 Image Factory url (default "https://factory.talos.dev/")
-      --kubernetes-version string                desired kubernetes version to run (default "1.36.1")
+      --kubernetes-version string                desired kubernetes version to run (default "1.37.0-beta.0")
       --memory-controlplanes string(mb,gb)       the limit on memory usage for each control plane/VM (default 2.0GiB)
       --memory-workers string(mb,gb)             the limit on memory usage for each worker/VM (default 2.0GiB)
       --omni-api-endpoint string                 the Omni API endpoint (must include a scheme, a hostname and a join token, e.g. 'https://siderolink.omni.example?jointoken=foobar')
@@ -540,8 +553,9 @@ talosctl cluster create qemu [flags]
 ### Options inherited from parent commands
 
 ```
-      --name string    the name of the cluster (default "talos-default")
-      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
+      --name string              the name of the cluster (default "talos-default")
+      --remote-endpoint string   host:port of a talosctl remote-provision-launch server to delegate provisioning to; when set, no local QEMU is required
+      --state string             directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
 
 ### SEE ALSO
@@ -568,8 +582,9 @@ talosctl cluster destroy [flags]
 ### Options inherited from parent commands
 
 ```
-      --name string    the name of the cluster (default "talos-default")
-      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
+      --name string              the name of the cluster (default "talos-default")
+      --remote-endpoint string   host:port of a talosctl remote-provision-launch server to delegate provisioning to; when set, no local QEMU is required
+      --state string             directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
 
 ### SEE ALSO
@@ -585,7 +600,8 @@ Stream QEMU console logs for cluster machines
 Streams QEMU console logs (the per-machine <machine>.log files).
 
 With no machine argument, every machine in the cluster is tailed, each line
-prefixed with its machine name.
+prefixed with its machine name. Works against a local cluster or, with
+--remote-endpoint, a remote-provision server.
 
 ```
 talosctl cluster logs [machine] [flags]
@@ -601,8 +617,9 @@ talosctl cluster logs [machine] [flags]
 ### Options inherited from parent commands
 
 ```
-      --name string    the name of the cluster (default "talos-default")
-      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
+      --name string              the name of the cluster (default "talos-default")
+      --remote-endpoint string   host:port of a talosctl remote-provision-launch server to delegate provisioning to; when set, no local QEMU is required
+      --state string             directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
 
 ### SEE ALSO
@@ -618,7 +635,7 @@ Forcefully reboots cluster nodes
 Forcefully reboots cluster nodes by restarting the underlying VMs.
 
 By default all nodes are rebooted; pass --node (repeatable) to reboot only specific
-nodes, matched by name or IP address. Only QEMU-based clusters are supported.
+nodes, matched by name or IP address. Local and remote QEMU clusters are supported.
 
 ```
 talosctl cluster reboot [flags]
@@ -634,8 +651,9 @@ talosctl cluster reboot [flags]
 ### Options inherited from parent commands
 
 ```
-      --name string    the name of the cluster (default "talos-default")
-      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
+      --name string              the name of the cluster (default "talos-default")
+      --remote-endpoint string   host:port of a talosctl remote-provision-launch server to delegate provisioning to; when set, no local QEMU is required
+      --state string             directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
 
 ### SEE ALSO
@@ -660,8 +678,43 @@ talosctl cluster show [flags]
 ### Options inherited from parent commands
 
 ```
-      --name string    the name of the cluster (default "talos-default")
-      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
+      --name string              the name of the cluster (default "talos-default")
+      --remote-endpoint string   host:port of a talosctl remote-provision-launch server to delegate provisioning to; when set, no local QEMU is required
+      --state string             directory path to store cluster state (default "/home/user/.talos/clusters")
+```
+
+### SEE ALSO
+
+* [talosctl cluster](#talosctl-cluster)	 - A collection of commands for managing local docker-based or QEMU-based clusters
+
+## talosctl cluster sync
+
+Sync kernel and initramfs to a remote cluster
+
+### Synopsis
+
+Uploads the locally-built kernel and initramfs to a remote QEMU cluster.
+
+Artifacts are content-addressed, so unchanged files are not uploaded. The command
+updates the stable boot paths used by clusters created without a bootloader. Run
+'talosctl cluster reboot' afterward to restart the VMs with the new artifacts.
+
+```
+talosctl cluster sync [flags]
+```
+
+### Options
+
+```
+  -h, --help   help for sync
+```
+
+### Options inherited from parent commands
+
+```
+      --name string              the name of the cluster (default "talos-default")
+      --remote-endpoint string   host:port of a talosctl remote-provision-launch server to delegate provisioning to; when set, no local QEMU is required
+      --state string             directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
 
 ### SEE ALSO
@@ -675,9 +728,10 @@ A collection of commands for managing local docker-based or QEMU-based clusters
 ### Options
 
 ```
-  -h, --help           help for cluster
-      --name string    the name of the cluster (default "talos-default")
-      --state string   directory path to store cluster state (default "/home/user/.talos/clusters")
+  -h, --help                     help for cluster
+      --name string              the name of the cluster (default "talos-default")
+      --remote-endpoint string   host:port of a talosctl remote-provision-launch server to delegate provisioning to; when set, no local QEMU is required
+      --state string             directory path to store cluster state (default "/home/user/.talos/clusters")
 ```
 
 ### SEE ALSO
@@ -688,6 +742,7 @@ A collection of commands for managing local docker-based or QEMU-based clusters
 * [talosctl cluster logs](#talosctl-cluster-logs)	 - Stream QEMU console logs for cluster machines
 * [talosctl cluster reboot](#talosctl-cluster-reboot)	 - Forcefully reboots cluster nodes
 * [talosctl cluster show](#talosctl-cluster-show)	 - Shows info about a local provisioned kubernetes cluster
+* [talosctl cluster sync](#talosctl-cluster-sync)	 - Sync kernel and initramfs to a remote cluster
 
 ## talosctl completion bash
 
@@ -702,17 +757,23 @@ If it is not installed already, you can install it via your OS's package manager
 
 To load completions in your current shell session:
 
-	source <(talosctl completion bash)
+```
+source <(talosctl completion bash)
+```
 
 To load completions for every new session, execute once:
 
 #### Linux:
 
-	talosctl completion bash > /etc/bash_completion.d/talosctl
+```
+talosctl completion bash > /etc/bash_completion.d/talosctl
+```
 
 #### macOS:
 
-	talosctl completion bash > $(brew --prefix)/etc/bash_completion.d/talosctl
+```
+talosctl completion bash > $(brew --prefix)/etc/bash_completion.d/talosctl
+```
 
 You will need to start a new shell for this setup to take effect.
 
@@ -742,11 +803,15 @@ Generate the autocompletion script for the fish shell.
 
 To load completions in your current shell session:
 
-	talosctl completion fish | source
+```
+talosctl completion fish | source
+```
 
 To load completions for every new session, execute once:
 
-	talosctl completion fish > ~/.config/fish/completions/talosctl.fish
+```
+talosctl completion fish > ~/.config/fish/completions/talosctl.fish
+```
 
 You will need to start a new shell for this setup to take effect.
 
@@ -776,7 +841,9 @@ Generate the autocompletion script for powershell.
 
 To load completions in your current shell session:
 
-	talosctl completion powershell | Out-String | Invoke-Expression
+```
+talosctl completion powershell | Out-String | Invoke-Expression
+```
 
 To load completions for every new session, add the output of the above command
 to your powershell profile.
@@ -808,21 +875,29 @@ Generate the autocompletion script for the zsh shell.
 If shell completion is not already enabled in your environment you will need
 to enable it.  You can execute the following once:
 
-	echo "autoload -U compinit; compinit" >> ~/.zshrc
+```
+echo "autoload -U compinit; compinit" >> ~/.zshrc
+```
 
 To load completions in your current shell session:
 
-	source <(talosctl completion zsh)
+```
+source <(talosctl completion zsh)
+```
 
 To load completions for every new session, execute once:
 
 #### Linux:
 
-	talosctl completion zsh > "${fpath[1]}/_talosctl"
+```
+talosctl completion zsh > "${fpath[1]}/_talosctl"
+```
 
 #### macOS:
 
-	talosctl completion zsh > $(brew --prefix)/share/zsh/site-functions/_talosctl
+```
+talosctl completion zsh > $(brew --prefix)/share/zsh/site-functions/_talosctl
+```
 
 You will need to start a new shell for this setup to take effect.
 
@@ -1364,7 +1439,7 @@ talosctl dashboard [flags]
 Run a debug container from an image archive or reference
 
 ```
-talosctl debug <image-tar-path|image ref> [args] [flags]
+talosctl debug [<image-tar-path|image ref>] [flags]
 ```
 
 ### Examples
@@ -1988,7 +2063,7 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
   -h, --help                                     help for config
       --install-disk string                      the disk to install to (default "/dev/sda")
       --install-image string                     the image used to perform an installation (default "factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:latest")
-      --kubernetes-version string                desired kubernetes version to run (default "1.36.1")
+      --kubernetes-version string                desired kubernetes version to run (default "1.37.0-beta.0")
   -o, --output string                            destination to output generated files. when multiple output types are specified, it must be a directory. for a single output type, it must either be a file path, or "-" for stdout
   -t, --output-types strings                     types of outputs to be generated. valid types are: ["controlplane" "worker" "talosconfig"] (default [controlplane,worker,talosconfig])
       --registry-mirror strings                  list of registry mirrors to use in format: <registry host>=<mirror URL>
@@ -2392,7 +2467,7 @@ talosctl image cache-create [flags]
 ### Examples
 
 ```
-talosctl images cache-create --images=ghcr.io/siderolabs/kubelet:v1.36.1 --image-cache-path=/tmp/talos-image-cache
+talosctl images cache-create --images=ghcr.io/siderolabs/kubelet:v1.37.0-beta.0 --image-cache-path=/tmp/talos-image-cache
 
 Alternatively, stdin can be piped to the command:
 talosctl images default | talosctl images cache-create --image-cache-path=/tmp/talos-image-cache --images=-
@@ -2479,12 +2554,12 @@ talosctl image k8s-bundle [flags]
 ### Options
 
 ```
-      --coredns-version semver                 CoreDNS semantic version (default v1.14.2)
-      --etcd-version semver                    ETCD semantic version (default v3.7.0-rc.0)
-      --flannel-version semver                 Flannel CNI semantic version (default v0.28.5)
+      --coredns-version semver                 CoreDNS semantic version (default v1.14.6)
+      --etcd-version semver                    ETCD semantic version (default v3.7.0)
+      --flannel-version semver                 Flannel CNI semantic version (default 0.28.8)
   -h, --help                                   help for k8s-bundle
-      --k8s-version semver                     Kubernetes semantic version (default v1.36.1)
-      --kube-network-policies-version semver   kube-network-policies semantic version (default v1.0.0)
+      --k8s-version semver                     Kubernetes semantic version (default v1.37.0-beta.0)
+      --kube-network-policies-version semver   kube-network-policies semantic version (default v1.1.0)
 ```
 
 ### Options inherited from parent commands
@@ -3267,6 +3342,43 @@ talosctl reboot [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl remote-provision-launch
+
+Run the remote QEMU provisioner gRPC server
+
+### Synopsis
+
+Long-running gRPC daemon that wraps the in-process QEMU provisioner
+so 'talosctl cluster create --remote-endpoint=...' can delegate to it.
+
+The host must provide the full QEMU provisioner toolchain on PATH —
+qemu-system-{amd64,arm64}, qemu-img, swtpm, virtiofsd, mkisofs — plus
+OVMF firmware and access to /dev/kvm, /dev/net/tun and /dev/vhost-net.
+
+Operators packaging their own image can layer talosctl on top of a
+toolchain base, e.g.:
+
+  FROM ghcr.io/siderolabs/build-container:<tag>
+  COPY --from=ghcr.io/siderolabs/talosctl:<tag> /talosctl /usr/local/bin/talosctl
+  ENTRYPOINT ["/usr/local/bin/talosctl", "remote-provision-launch"]
+
+
+```
+talosctl remote-provision-launch [flags]
+```
+
+### Options
+
+```
+  -h, --help               help for remote-provision-launch
+      --listen string      address to listen on for gRPC (default "0.0.0.0:50100")
+      --state-dir string   directory for per-cluster state and artifact cache (default "/var/lib/talos-remote-provision")
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+
 ## talosctl reset
 
 Reset a node
@@ -3579,9 +3691,10 @@ talosctl upgrade [flags]
       --drain-timeout duration     timeout for draining the Kubernetes node (default 5m0s)
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for upgrade
-  -i, --image string               the container image to use for performing the install (default "factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:v1.14.0-alpha.1")
+  -i, --image string               the container image to use for performing the install (default "factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:v1.14.0-alpha.2")
       --legacy                     force use of legacy upgrade method
       --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "system")
+      --no-reboot                  do not reboot the node after upgrade (skip reboot and drain)
   -n, --nodes strings              target the specified nodes
       --progress string            output mode for upgrade progress. Values: [auto plain] (default "auto")
   -m, --reboot-mode string         select the reboot mode during upgrade. Mode "powercycle" bypasses kexec. Values: [default force powercycle] (default "default")
@@ -3630,7 +3743,7 @@ talosctl upgrade-k8s [flags]
       --scheduler-image string                 kube-scheduler image to use (default "registry.k8s.io/kube-scheduler")
       --siderov1-keys-dir string               the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --talosconfig string                     the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
-      --to string                              the Kubernetes control plane version to upgrade to (default "1.36.1")
+      --to string                              the Kubernetes control plane version to upgrade to (default "1.37.0-beta.0")
       --upgrade-kubelet                        upgrade kubelet service (default true)
       --with-docs                              patch all machine configs adding the documentation for each field (default true)
       --with-examples                          patch all machine configs with the commented examples (default true)
@@ -3793,6 +3906,45 @@ talosctl wipe lv <vg/lv> [flags]
 
 * [talosctl wipe](#talosctl-wipe)	 - Wipe block device or volumes
 
+## talosctl wipe md
+
+Destroy an MD (software RAID) array
+
+### Synopsis
+
+Stop an MD (software RAID) array and clear the superblock on every member device.
+
+WARNING: this is destructive. The array must not be in use (mounted or claimed
+by another device). The argument is the full array device path, e.g.
+/dev/disk/by-id/md-name-data.
+
+```
+talosctl wipe md <device> [flags]
+```
+
+### Options
+
+```
+      --cert-fingerprint strings   list of server certificate fingerprints to accept (defaults to no check, only used with --insecure flag)
+  -h, --help                       help for md
+  -i, --insecure                   use the insecure (encrypted with no auth) maintenance service
+```
+
+### Options inherited from parent commands
+
+```
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
+```
+
+### SEE ALSO
+
+* [talosctl wipe](#talosctl-wipe)	 - Wipe block device or volumes
+
 ## talosctl wipe pv
 
 Remove an LVM physical volume label
@@ -3893,6 +4045,7 @@ Wipe block device or volumes
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl wipe disk](#talosctl-wipe-disk)	 - Wipe a block device (disk or partition) which is not used as a volume
 * [talosctl wipe lv](#talosctl-wipe-lv)	 - Remove an LVM logical volume
+* [talosctl wipe md](#talosctl-wipe-md)	 - Destroy an MD (software RAID) array
 * [talosctl wipe pv](#talosctl-wipe-pv)	 - Remove an LVM physical volume label
 * [talosctl wipe vg](#talosctl-wipe-vg)	 - Remove an LVM volume group (cascades to its LVs)
 
@@ -3942,6 +4095,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl processes](#talosctl-processes)	 - List running processes
 * [talosctl read](#talosctl-read)	 - Read a file on the machine
 * [talosctl reboot](#talosctl-reboot)	 - Reboot a node
+* [talosctl remote-provision-launch](#talosctl-remote-provision-launch)	 - Run the remote QEMU provisioner gRPC server
 * [talosctl reset](#talosctl-reset)	 - Reset a node
 * [talosctl restart](#talosctl-restart)	 - Restart a process
 * [talosctl rollback](#talosctl-rollback)	 - Rollback a node to the previous installation

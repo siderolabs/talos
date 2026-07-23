@@ -23,6 +23,7 @@ spec:
         app: test-nginx
     spec:
       containers:
+      # Update this if talosctl images integration changes the cached nginx image.
       - image: nginx
         imagePullPolicy: Always
         name: nginx

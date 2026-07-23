@@ -1,0 +1,14 @@
+apiVersion: v1alpha1
+kind: DiscoveryServiceConfig
+name: primary
+endpoint: https://discovery.talos.dev/
+---
+apiVersion: v1alpha1
+kind: DiscoveryServiceConfig
+name: secondary
+endpoint: https://discovery-secondary.talos.dev/path
+---
+apiVersion: v1alpha1
+kind: DiscoveryServiceConfig
+name: grpc-endpoint
+endpoint: grpc://discovery-grpc.talos.dev:6443

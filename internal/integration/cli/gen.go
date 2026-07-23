@@ -133,9 +133,9 @@ func (suite *GenSuite) TestGenConfigURLValidation() {
 // TestGenConfigPatchStrategic verifies that gen config --config-patch works with strategic merge patches.
 func (suite *GenSuite) TestGenConfigPatchStrategic() {
 	patch, err := yaml.Marshal(map[string]any{
-		"cluster": map[string]any{
-			"clusterName": "bar",
-		},
+		"apiVersion":  "v1alpha1",
+		"kind":        "KubeClusterConfig",
+		"clusterName": "bar",
 	})
 	suite.Require().NoError(err)
 
@@ -175,9 +175,9 @@ func (suite *GenSuite) TestGenConfigPatchStrategic() {
 
 				switch {
 				case tt.shouldAffect[configName]:
-					suite.Assert().Equal("bar", cfg.Cluster().Name(), "checking %q", configName)
+					suite.Assert().Equal("bar", cfg.K8sClusterConfig().ClusterName(), "checking %q", configName)
 				default:
-					suite.Assert().Equal("foo", cfg.Cluster().Name(), "checking %q", configName)
+					suite.Assert().Equal("foo", cfg.K8sClusterConfig().ClusterName(), "checking %q", configName)
 				}
 			}
 		})

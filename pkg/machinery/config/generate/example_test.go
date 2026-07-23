@@ -78,7 +78,7 @@ func Example() {
 		}
 
 		// config can be tweaked at this point to add machine-specific configuration, e.g.:
-		cfg.RawV1Alpha1().MachineConfig.MachineInstall.InstallDisk = "/dev/sdb"
+		cfg.RawV1Alpha1().MachineConfig.MachineCertSANs = append(cfg.RawV1Alpha1().MachineConfig.MachineCertSANs, node+".example.com")
 
 		// marshal the config to YAML
 		var marshaledCfg []byte

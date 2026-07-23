@@ -67,6 +67,18 @@ case "${WITH_KUBESPAN:-false}" in
     ;;
 esac
 
+case "${WITH_BGP:-false}" in
+  true)
+    QEMU_FLAGS+=("--with-bgp")
+    ;;
+esac
+
+case "${WITH_BGP_CLOS:-false}" in
+  true)
+    QEMU_FLAGS+=("--with-bgp-clos")
+    ;;
+esac
+
 case "${WITH_CONTROL_PLANE_PORT:-false}" in
   false)
     ;;
@@ -112,7 +124,7 @@ case "${USE_DISK_IMAGE:-false}" in
   false)
     ;;
   *)
-    QEMU_FLAGS+=("--disk-image-path=_out/metal-amd64.raw.zst")
+    QEMU_FLAGS+=("--disk-image-path=_out/metal-amd64.raw.zst" "--skip-unattended-install-config")
     ;;
 esac
 
@@ -273,6 +285,14 @@ case "${WITH_USER_DISK:-false}" in
     ;;
 esac
 
+case "${WITH_TALOS_VERSION:-none}" in
+  none)
+    ;;
+  *)
+    QEMU_FLAGS+=("--talos-version=${WITH_TALOS_VERSION}")
+    ;;
+esac
+
 case "${WITH_ENFORCING:-false}" in
   false)
     ;;
@@ -327,9 +347,10 @@ function create_cluster {
     --provisioner="${PROVISIONER}" \
     --name="${CLUSTER_NAME}" \
     --kubernetes-version="${KUBERNETES_VERSION}" \
-    --controlplanes=3 \
+    --controlplanes="${QEMU_CONTROLPLANES:-3}" \
     --workers="${QEMU_WORKERS:-2}" \
     --disk="${QEMU_SYSTEM_DISK_SIZE:-15360}" \
+    --primary-disks="${QEMU_SYSTEM_DISKS:-1}" \
     --extra-disks="${QEMU_EXTRA_DISKS:-0}" \
     --extra-disks-size="${QEMU_EXTRA_DISKS_SIZE:-6144}" \
     --extra-disks-drivers="${QEMU_EXTRA_DISKS_DRIVERS:-}" \

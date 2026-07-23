@@ -120,7 +120,6 @@ func (a *APID) GetConnection(ctx context.Context, _ string) (context.Context, *g
 			grpc.MaxCallRecvMsgSize(constants.GRPCMaxMessageSize),
 			grpc.ForceCodecV2(proxy.Codec()),
 		),
-		grpc.WithSharedWriteBuffer(true),
 	)
 
 	return outCtx, a.conn, err

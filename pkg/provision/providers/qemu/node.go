@@ -15,6 +15,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"syscall"
@@ -30,6 +31,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
 	"github.com/siderolabs/talos/pkg/provision"
+	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
 //nolint:gocyclo,cyclop
@@ -194,6 +196,18 @@ func (p *provisioner) createNode(ctx context.Context, state *provision.State, cl
 		// Generate a random MAC address.
 		// On linux this is later overridden to the interface mac.
 		VMMac: getRandomMacAddress(),
+
+		// dedicated BGP fabric uplinks to the host fabric peer (full-CLOS test); the node index must
+		// match what CreateBGP computes for the bridge names (index within clusterReq.Nodes).
+		FabricUplinks: buildFabricUplinks(
+			clusterReq.Network.Name,
+			slices.IndexFunc(clusterReq.Nodes, func(n provision.NodeRequest) bool { return n.Name == nodeReq.Name }),
+			clusterReq.Network.FabricUplinks,
+			clusterReq.Network.MTU,
+		),
+
+		// authentic full-CLOS node: no management net0, only the fabric uplinks above.
+		CLOSNoNet0: clusterReq.Network.CLOSNoNet0,
 	}
 
 	if clusterReq.IPXEBootScript != "" {
@@ -427,4 +441,37 @@ func getRandomMacAddress() string {
 	buf[0] = buf[0]&^multicast | local
 
 	return net.HardwareAddr(buf).String()
+}
+
+// buildFabricUplinks builds the dedicated point-to-point BGP fabric uplinks for a node: each is its own
+// CNI bridge (deterministic name shared with CreateBGP) + tc-redirect-tap, LLA-only (no IPAM).
+func buildFabricUplinks(networkName string, nodeIdx, count, mtu int) []FabricUplink {
+	if count <= 0 || nodeIdx < 0 {
+		return nil
+	}
+
+	uplinks := make([]FabricUplink, 0, count)
+
+	for u := range count {
+		bridge := vm.FabricBridgeName(networkName, nodeIdx, u)
+
+		uplinks = append(uplinks, FabricUplink{
+			BridgeName:  bridge,
+			IfName:      fmt.Sprintf("vethf%d", u),
+			CNIConfList: fabricCNIConfList(bridge, mtu),
+		})
+	}
+
+	return uplinks
+}
+
+// fabricCNIConfList returns a per-uplink CNI conflist: an L2-only bridge (no IPAM, no gateway, no
+// masquerade) plus tc-redirect-tap, so the uplink comes up IPv6-link-local only for unnumbered BGP.
+func fabricCNIConfList(bridge string, mtu int) string {
+	return fmt.Sprintf(
+		`{"name":%q,"cniVersion":"0.4.0","plugins":[`+
+			`{"type":"bridge","bridge":%q,"ipMasq":false,"isGateway":false,"mtu":%d,"ipam":{}},`+
+			`{"type":"tc-redirect-tap"}]}`,
+		bridge, bridge, mtu,
+	)
 }

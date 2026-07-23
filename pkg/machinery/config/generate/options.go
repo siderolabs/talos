@@ -48,6 +48,15 @@ func WithKubePrismPort(port int) Option {
 	}
 }
 
+// WithSkipUnattendedInstallConfig specifies whether to skip generating UnattendedInstallConfig.
+func WithSkipUnattendedInstallConfig(skip bool) Option {
+	return func(o *Options) error {
+		o.SkipUnattendedInstallConfig = skip
+
+		return nil
+	}
+}
+
 // WithInstallDisk specifies install disk to use in Talos cluster.
 func WithInstallDisk(disk string) Option {
 	return func(o *Options) error {
@@ -288,6 +297,8 @@ type Options struct {
 	HostDNSForwardKubeDNSToHost optional.Optional[bool]
 
 	KubeSpanEnabled optional.Optional[bool]
+
+	SkipUnattendedInstallConfig bool
 
 	// Client options.
 	Roles        role.Set

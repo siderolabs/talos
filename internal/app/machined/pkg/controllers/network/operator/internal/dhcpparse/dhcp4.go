@@ -39,11 +39,13 @@ type DHCP4AckSpecs struct {
 // ParseDHCP4Ack converts a DHCPv4 ACK packet into network configuration specs.
 //
 // It is a pure function (no I/O, no shared state) — `linkName` and
-// `routeMetric` come from the operator's configuration, and `useHostname`
-// controls whether the ACK's hostname/domain options are honored.
+// `routeMetric` come from the operator's configuration, `useHostname`
+// controls whether the ACK's hostname/domain options are honored, and
+// `useRoutes` controls whether the routes carried by the ACK (the default
+// gateway and classless static routes) are installed at all.
 //
 //nolint:gocyclo
-func ParseDHCP4Ack(ack *dhcpv4.DHCPv4, linkName string, routeMetric uint32, useHostname bool) DHCP4AckSpecs {
+func ParseDHCP4Ack(ack *dhcpv4.DHCPv4, linkName string, routeMetric uint32, useHostname bool, useRoutes bool) DHCP4AckSpecs {
 	var specs DHCP4AckSpecs
 
 	addr, _ := netipx.FromStdIPNet(&net.IPNet{
@@ -73,41 +75,76 @@ func ParseDHCP4Ack(ack *dhcpv4.DHCPv4, linkName string, routeMetric uint32, useH
 		}
 	}
 
-	// rfc3442:
-	//   If the DHCP server returns both a Classless Static Routes option and
-	//   a Router option, the DHCP client MUST ignore the Router option.
-	if len(ack.ClasslessStaticRoute()) > 0 {
-		// Track gateways for which we've already emitted an on-link route so
-		// we don't add duplicates when several classless routes share a gateway.
-		onLinkGateways := map[netip.Addr]struct{}{}
+	if useRoutes {
+		// rfc3442:
+		//   If the DHCP server returns both a Classless Static Routes option and
+		//   a Router option, the DHCP client MUST ignore the Router option.
+		if len(ack.ClasslessStaticRoute()) > 0 {
+			// Track gateways for which we've already emitted an on-link route so
+			// we don't add duplicates when several classless routes share a gateway.
+			onLinkGateways := map[netip.Addr]struct{}{}
 
-		for _, route := range ack.ClasslessStaticRoute() {
-			gw, _ := netipx.FromStdIP(route.Router)
-			dst, _ := netipx.FromStdIPNet(route.Dest)
+			for _, route := range ack.ClasslessStaticRoute() {
+				gw, _ := netipx.FromStdIP(route.Router)
+				dst, _ := netipx.FromStdIPNet(route.Dest)
 
-			specs.Routes = append(specs.Routes, network.RouteSpecSpec{
-				Family:      nethelpers.FamilyInet4,
-				Destination: dst,
-				Source:      addr.Addr(),
-				Gateway:     gw,
-				OutLinkName: linkName,
-				Table:       nethelpers.TableMain,
-				Priority:    routeMetric,
-				Scope:       nethelpers.ScopeGlobal,
-				Type:        nethelpers.TypeUnicast,
-				Protocol:    nethelpers.ProtocolBoot,
-				ConfigLayer: network.ConfigOperator,
-			})
+				specs.Routes = append(specs.Routes, network.RouteSpecSpec{
+					Family:      nethelpers.FamilyInet4,
+					Destination: dst,
+					Source:      addr.Addr(),
+					Gateway:     gw,
+					OutLinkName: linkName,
+					Table:       nethelpers.TableMain,
+					Priority:    routeMetric,
+					Scope:       nethelpers.ScopeGlobal,
+					Type:        nethelpers.TypeUnicast,
+					Protocol:    nethelpers.ProtocolBoot,
+					ConfigLayer: network.ConfigOperator,
+				})
 
-			// If the gateway lives outside the lease's subnet, the kernel
-			// can't resolve it as on-link and refuses to install the route.
-			// AWS does this in IPv6-only subnets, handing out a 169.254.x.x/32
-			// lease with classless routes via 169.254.0.1. Add an explicit
-			// on-link route to the gateway so those routes can be installed.
-			if gw.IsValid() && !gw.IsUnspecified() && !addr.Contains(gw) {
-				if _, seen := onLinkGateways[gw]; !seen {
-					onLinkGateways[gw] = struct{}{}
+				// If the gateway lives outside the lease's subnet, the kernel
+				// can't resolve it as on-link and refuses to install the route.
+				// AWS does this in IPv6-only subnets, handing out a 169.254.x.x/32
+				// lease with classless routes via 169.254.0.1. Add an explicit
+				// on-link route to the gateway so those routes can be installed.
+				if gw.IsValid() && !gw.IsUnspecified() && !addr.Contains(gw) {
+					if _, seen := onLinkGateways[gw]; !seen {
+						onLinkGateways[gw] = struct{}{}
 
+						specs.Routes = append(specs.Routes, network.RouteSpecSpec{
+							Family:      nethelpers.FamilyInet4,
+							Destination: netip.PrefixFrom(gw, gw.BitLen()),
+							Source:      addr.Addr(),
+							OutLinkName: linkName,
+							Table:       nethelpers.TableMain,
+							Priority:    routeMetric,
+							Scope:       nethelpers.ScopeLink,
+							Type:        nethelpers.TypeUnicast,
+							Protocol:    nethelpers.ProtocolBoot,
+							ConfigLayer: network.ConfigOperator,
+						})
+					}
+				}
+			}
+		} else {
+			for _, router := range ack.Router() {
+				gw, _ := netipx.FromStdIP(router)
+
+				specs.Routes = append(specs.Routes, network.RouteSpecSpec{
+					Family:      nethelpers.FamilyInet4,
+					Gateway:     gw,
+					Source:      addr.Addr(),
+					OutLinkName: linkName,
+					Table:       nethelpers.TableMain,
+					Priority:    routeMetric,
+					Scope:       nethelpers.ScopeGlobal,
+					Type:        nethelpers.TypeUnicast,
+					Protocol:    nethelpers.ProtocolBoot,
+					ConfigLayer: network.ConfigOperator,
+				})
+
+				if !addr.Contains(gw) {
+					// Add an interface route for the gateway if it's not in the same network
 					specs.Routes = append(specs.Routes, network.RouteSpecSpec{
 						Family:      nethelpers.FamilyInet4,
 						Destination: netip.PrefixFrom(gw, gw.BitLen()),
@@ -121,39 +158,6 @@ func ParseDHCP4Ack(ack *dhcpv4.DHCPv4, linkName string, routeMetric uint32, useH
 						ConfigLayer: network.ConfigOperator,
 					})
 				}
-			}
-		}
-	} else {
-		for _, router := range ack.Router() {
-			gw, _ := netipx.FromStdIP(router)
-
-			specs.Routes = append(specs.Routes, network.RouteSpecSpec{
-				Family:      nethelpers.FamilyInet4,
-				Gateway:     gw,
-				Source:      addr.Addr(),
-				OutLinkName: linkName,
-				Table:       nethelpers.TableMain,
-				Priority:    routeMetric,
-				Scope:       nethelpers.ScopeGlobal,
-				Type:        nethelpers.TypeUnicast,
-				Protocol:    nethelpers.ProtocolBoot,
-				ConfigLayer: network.ConfigOperator,
-			})
-
-			if !addr.Contains(gw) {
-				// Add an interface route for the gateway if it's not in the same network
-				specs.Routes = append(specs.Routes, network.RouteSpecSpec{
-					Family:      nethelpers.FamilyInet4,
-					Destination: netip.PrefixFrom(gw, gw.BitLen()),
-					Source:      addr.Addr(),
-					OutLinkName: linkName,
-					Table:       nethelpers.TableMain,
-					Priority:    routeMetric,
-					Scope:       nethelpers.ScopeLink,
-					Type:        nethelpers.TypeUnicast,
-					Protocol:    nethelpers.ProtocolBoot,
-					ConfigLayer: network.ConfigOperator,
-				})
 			}
 		}
 	}

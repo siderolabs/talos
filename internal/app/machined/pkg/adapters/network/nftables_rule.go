@@ -26,7 +26,7 @@ import (
 
 // NfTablesRule adapter provides encoding to nftables instructions.
 //
-//nolint:revive,golint
+//nolint:revive
 func NfTablesRule(r *network.NfTablesRule) nftablesRule {
 	return nftablesRule{
 		NfTablesRule: r,

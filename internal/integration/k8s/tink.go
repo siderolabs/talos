@@ -61,6 +61,8 @@ const (
 )
 
 // TestDeploy verifies that tink can be deployed with a single control-plane node.
+//
+//nolint:gocyclo
 func (suite *TinkSuite) TestDeploy() {
 	if testing.Short() {
 		suite.T().Skip("skipping in short mode")
@@ -68,6 +70,15 @@ func (suite *TinkSuite) TestDeploy() {
 
 	if suite.Cluster == nil {
 		suite.T().Skip("without full cluster state reaching out to the node IP is not reliable")
+	}
+
+	if suite.SelinuxEnforcing {
+		// The in-container Talos composes /etc as a writable overlay; writing a managed file into a
+		// lower-provided subdir (e.g. cri/conf.d) triggers an overlayfs copy-up that propagates the
+		// pod rootfs's containerd_state_t label onto the tmpfs upper. Creating a containerd_state_t
+		// inode on tmpfs_t is denied (associate), and the pod runs pod_t with no way to relabel, so
+		// the inner Talos cannot write /etc. Skip until the host policy permits this copy-up.
+		suite.T().Skip("skipping in SELinux enforcing mode: in-container /etc overlay copy-up is denied")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Minute)
@@ -218,6 +229,13 @@ func (suite *TinkSuite) TestDeploy() {
 		suite.LogPodLogs(ctx, namespace, ss+"-0")
 		suite.T().Fatalf("failed to bootstrap Talos-in-Kubernetes")
 	}
+
+	suite.T().Cleanup(func() {
+		// dump the TinK pod logs if the test failed, to help with debugging
+		if suite.T().Failed() {
+			suite.LogPodLogs(suite.T().Context(), namespace, ss+"-0")
+		}
+	})
 
 	clusterAccess := &tinkClusterAccess{
 		KubernetesClient: cluster.KubernetesClient{
@@ -421,27 +439,16 @@ func (suite *TinkSuite) getTinkManifests(namespace, serviceName, ssName, talosIm
 		Size       string
 	}
 
-	for _, overlayMount := range append(
-		[]overlayMountSpec{
-			{
-				MountPoint: constants.StateMountPoint,
-				Size:       "100Mi",
-			},
-			{
-				MountPoint: constants.EphemeralMountPoint,
-				Size:       "6Gi",
-			},
+	for _, overlayMount := range []overlayMountSpec{
+		{
+			MountPoint: constants.StateMountPoint,
+			Size:       "100Mi",
 		},
-		xslices.Map(
-			xslices.Filter(constants.Overlays, func(overlay constants.SELinuxLabeledPath) bool { return overlay.Path != "/opt" }), // /opt/cni/bin contains CNI binaries
-			func(mnt constants.SELinuxLabeledPath) overlayMountSpec {
-				return overlayMountSpec{
-					MountPoint: mnt.Path,
-					Size:       "100Mi",
-				}
-			},
-		)...,
-	) {
+		{
+			MountPoint: constants.EphemeralMountPoint,
+			Size:       "6Gi",
+		},
+	} {
 		name := strings.ReplaceAll(strings.TrimLeft(overlayMount.MountPoint, "/"), "/", "-")
 
 		statefulSet.Spec.Template.Spec.Containers[0].VolumeMounts = append(

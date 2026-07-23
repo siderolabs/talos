@@ -23,8 +23,6 @@ import (
 )
 
 // Input holds info about certs, ips, and node type.
-//
-//nolint:maligned
 type Input struct {
 	Options Options
 
@@ -73,11 +71,11 @@ func NewInput(clustername, endpoint, kubernetesVersion string, opts ...Option) (
 	var podNet, serviceNet string
 
 	if addr, addrErr := netip.ParseAddr(endpoint); addrErr == nil && addr.Is6() {
-		podNet = constants.DefaultIPv6PodNet
-		serviceNet = constants.DefaultIPv6ServiceNet
+		podNet = constants.DefaultIPv6PodCIDR
+		serviceNet = constants.DefaultIPv6ServiceCIDR
 	} else {
-		podNet = constants.DefaultIPv4PodNet
-		serviceNet = constants.DefaultIPv4ServiceNet
+		podNet = constants.DefaultIPv4PodCIDR
+		serviceNet = constants.DefaultIPv4ServiceCIDR
 	}
 
 	if input.Options.SecretsBundle == nil {

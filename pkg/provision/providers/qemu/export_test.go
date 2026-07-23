@@ -1,0 +1,13 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+package qemu
+
+// FabricDeviceForTest exposes fabric device argument construction for tests.
+func FabricDeviceForTest(clos bool, index int, mac string, mtu int) string {
+	return fabricDevice(&LaunchConfig{
+		CLOSNoNet0: clos,
+		Network:    networkConfig{networkConfigBase: networkConfigBase{MTU: mtu}},
+	}, index, FabricUplink{mac: mac})
+}

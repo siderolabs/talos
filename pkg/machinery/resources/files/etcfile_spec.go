@@ -35,10 +35,12 @@ type EtcFileSpecSpec struct {
 
 // NewEtcFileSpec initializes a EtcFileSpec resource.
 func NewEtcFileSpec(namespace resource.Namespace, id resource.ID) *EtcFileSpec {
-	return typed.NewResource[EtcFileSpecSpec, EtcFileSpecExtension](
+	res := typed.NewResource[EtcFileSpecSpec, EtcFileSpecExtension](
 		resource.NewMetadata(namespace, EtcFileSpecType, id, resource.VersionUndefined),
 		EtcFileSpecSpec{},
 	)
+
+	return res
 }
 
 // EtcFileSpecExtension provides auxiliary methods for EtcFileSpec.
@@ -58,7 +60,7 @@ func (EtcFileSpecExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 func init() {
 	proto.RegisterDefaultTypes()
 
-	err := protobuf.RegisterDynamic[EtcFileSpecSpec](EtcFileSpecType, &EtcFileSpec{})
+	err := protobuf.RegisterDynamic(EtcFileSpecType, &EtcFileSpec{})
 	if err != nil {
 		panic(err)
 	}

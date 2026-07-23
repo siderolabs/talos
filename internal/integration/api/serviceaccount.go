@@ -64,7 +64,7 @@ func (suite *ServiceAccountSuite) SetupTest() {
 	// make sure API calls have timeout
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 5*time.Minute)
 
-	suite.ClearConnectionRefused(suite.ctx, suite.DiscoverNodeInternalIPsByType(suite.ctx, machine.TypeWorker)...)
+	suite.ClearConnectionRefused(suite.ctx, suite.DiscoverNodeInternalIPs(suite.ctx)...)
 	suite.AssertClusterHealthy(suite.ctx)
 }
 
@@ -85,25 +85,30 @@ func (suite *ServiceAccountSuite) TestValid() {
 	_, err = suite.getCRD()
 	suite.Assert().NoError(err)
 
-	sa, err := suite.createServiceAccount("kube-system", name, []string{"os:reader"})
-	suite.Assert().NoError(err)
+	// Best-effort cleanup in case a previous run left this SA behind.
+	suite.DeleteResource(suite.ctx, serviceAccountGVR, "kube-system", name)                          //nolint:errcheck
+	suite.EnsureResourceIsDeleted(suite.ctx, 30*time.Second, serviceAccountGVR, "kube-system", name) //nolint:errcheck
 
-	defer suite.DeleteResource(suite.ctx, serviceAccountGVR, "default", name) //nolint:errcheck
+	sa, err := suite.createServiceAccount("kube-system", name, []string{"os:reader"})
+	suite.Require().NoError(err)
+
+	defer suite.DeleteResource(suite.ctx, serviceAccountGVR, "kube-system", name) //nolint:errcheck
 
 	err = suite.WaitForEventExists(suite.ctx, "kube-system", func(event eventsv1.Event) bool {
 		return event.Regarding.UID == sa.GetUID() &&
 			event.Type == corev1.EventTypeNormal &&
 			event.Reason == "Synced"
 	})
-	suite.Assert().NoError(err)
+	suite.Require().NoError(err)
 
 	secret, err := suite.waitForSecret("kube-system", name)
-	suite.Assert().NoError(err)
+	suite.Require().NoError(err)
+	suite.Assert().True(metav1.IsControlledBy(secret, sa))
 
 	talosConfig := secret.Data["config"]
 
 	conf, err := config.FromBytes(talosConfig)
-	suite.Assert().NoError(err)
+	suite.Require().NoError(err)
 
 	expectedServiceName := fmt.Sprintf(
 		"%s.%s",
@@ -114,19 +119,26 @@ func (suite *ServiceAccountSuite) TestValid() {
 
 	node := suite.RandomDiscoveredNodeInternalIP()
 
-	_, err = suite.creteTestJob("kube-system", name, name, node)
+	_, err = suite.createTestJob("kube-system", name, name, node)
 	suite.Assert().NoError(err)
+
+	defer func() {
+		suite.DeleteResource(suite.ctx, jobGVR, "kube-system", name) //nolint:errcheck
+
+		suite.Assert().NoError(suite.EnsureResourceIsDeleted(suite.ctx, 30*time.Second, jobGVR, "kube-system", name)) //nolint:errcheck
+	}()
 
 	err = suite.waitForJobReady(2*time.Minute, "kube-system", name)
 	suite.Assert().NoError(err)
 
-	err = suite.DeleteResource(suite.ctx, jobGVR, "kube-system", name)
+	err = suite.DeleteResource(suite.ctx, serviceAccountGVR, "kube-system", name)
 	suite.Require().NoError(err)
 
-	err = suite.EnsureResourceIsDeleted(suite.ctx, 30*time.Second, jobGVR, "kube-system", name)
-	suite.Assert().NoError(err)
-
-	err = suite.DeleteResource(suite.ctx, serviceAccountGVR, "kube-system", name)
+	// The controller owns the secret through an owner reference. Kubernetes GC
+	// discovers CRDs asynchronously, so waiting for it here races a freshly
+	// installed ServiceAccount CRD. Verify the owner reference above and clean
+	// up the test object directly.
+	err = suite.DeleteResource(suite.ctx, secretGVR, "kube-system", name)
 	suite.Require().NoError(err)
 
 	err = suite.EnsureResourceIsDeleted(suite.ctx, 30*time.Second, secretGVR, "kube-system", name)
@@ -247,7 +259,7 @@ func (suite *ServiceAccountSuite) createServiceAccount(ns string, name string, r
 	}, metav1.CreateOptions{})
 }
 
-func (suite *ServiceAccountSuite) creteTestJob(ns, name, serviceAccount, node string) (*unstructured.Unstructured, error) {
+func (suite *ServiceAccountSuite) createTestJob(ns, name, serviceAccount, node string) (*unstructured.Unstructured, error) {
 	return suite.DynamicClient.Resource(jobGVR).Namespace(ns).Create(suite.ctx, &unstructured.Unstructured{
 		Object: map[string]any{
 			"apiVersion": fmt.Sprintf("%s/%s", jobGVR.Group, jobGVR.Version),
@@ -271,7 +283,7 @@ func (suite *ServiceAccountSuite) creteTestJob(ns, name, serviceAccount, node st
 						"containers": []map[string]any{
 							{
 								"name":  "talosctl",
-								"image": "ghcr.io/siderolabs/talosctl:v1.12.4", // sync with cmd/talos/image.go list
+								"image": "ghcr.io/siderolabs/talosctl:v1.13.5", // sync with cmd/talosctl/cmd/talos/image.go imageNames
 								"args": []string{
 									"--nodes", node,
 									"version",

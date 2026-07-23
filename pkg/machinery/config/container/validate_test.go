@@ -5,10 +5,14 @@
 package container_test
 
 import (
+	"context"
 	"net/netip"
 	"net/url"
 	"testing"
 
+	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
+	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/xtesting/must"
 	"github.com/stretchr/testify/require"
@@ -16,6 +20,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
@@ -270,6 +275,13 @@ func TestValidateContainer(t *testing.T) {
 		},
 	}
 
+	kubeEtcdEncryptionConfig := k8s.NewKubeEtcdEncryptionConfigV1Alpha1()
+	kubeEtcdEncryptionConfig.Config = meta.Unstructured{
+		Object: map[string]any{
+			"some": "thing",
+		},
+	}
+
 	for _, tt := range []struct {
 		name        string
 		documents   []config.Document
@@ -329,6 +341,18 @@ func TestValidateContainer(t *testing.T) {
 			name:      "DoT with hostDNS",
 			documents: []config.Document{resolverConfigDoT, v1alpha1CfgHostDNS},
 		},
+		{
+			name:      "controlplane doc only",
+			documents: []config.Document{kubeEtcdEncryptionConfig},
+
+			expectedError: "1 error occurred:\n\t* the following document kinds are only allowed on control plane machines: [KubeEtcdEncryptionConfig]\n\n",
+		},
+		{
+			name:      "controlplane doc with v1alpha1 worker",
+			documents: []config.Document{v1alpha1Cfg, kubeEtcdEncryptionConfig},
+
+			expectedError: "1 error occurred:\n\t* the following document kinds are only allowed on control plane machines: [KubeEtcdEncryptionConfig]\n\n",
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
@@ -342,6 +366,115 @@ func TestValidateContainer(t *testing.T) {
 				require.NoError(t, err)
 			} else {
 				require.EqualError(t, err, tt.expectedError)
+			}
+		})
+	}
+}
+
+func TestRuntimeValidateSystemVolumeBacking(t *testing.T) {
+	t.Parallel()
+
+	const (
+		documentAbsent              = "absent"
+		documentWithoutProvisioning = "directory"
+		documentWithProvisioning    = "partition"
+	)
+
+	for _, test := range []struct {
+		name string
+
+		// document controls the KUBELET VolumeConfig document in the config:
+		// absent (removed), present without provisioning, or present with provisioning.
+		document string
+
+		// current volume to seed into the state (skipped if seedStatus is false).
+		seedStatus   bool
+		currentType  blockres.VolumeType
+		currentPhase blockres.VolumePhase
+
+		expectedErrorContains string
+	}{
+		{
+			name:         "removing config of a ready partition volume is rejected",
+			document:     documentAbsent,
+			seedStatus:   true,
+			currentType:  blockres.VolumeTypePartition,
+			currentPhase: blockres.VolumePhaseReady,
+
+			expectedErrorContains: `the "KUBELET" system volume is backed by a dedicated partition and its VolumeConfig cannot be removed; ` +
+				`migrating a system volume off a dedicated partition is not supported`,
+		},
+		{
+			name:         "removing config of a ready directory volume is allowed",
+			document:     documentAbsent,
+			seedStatus:   true,
+			currentType:  blockres.VolumeTypeDirectory,
+			currentPhase: blockres.VolumePhaseReady,
+		},
+		{
+			name:       "removing config with no established volume is allowed (cluster creation)",
+			document:   documentAbsent,
+			seedStatus: false,
+		},
+		{
+			name:         "removing config of an unsettled partition volume is allowed",
+			document:     documentAbsent,
+			seedStatus:   true,
+			currentType:  blockres.VolumeTypePartition,
+			currentPhase: blockres.VolumePhaseWaiting,
+		},
+		{
+			name:         "demoting via present config (drop provisioning) is still rejected by the per-document guard",
+			document:     documentWithoutProvisioning,
+			seedStatus:   true,
+			currentType:  blockres.VolumeTypePartition,
+			currentPhase: blockres.VolumePhaseReady,
+
+			expectedErrorContains: `the backing of the "KUBELET" system volume cannot be changed after creation (current: partition, requested: directory)`,
+		},
+		{
+			name:         "matching present partition config is allowed",
+			document:     documentWithProvisioning,
+			seedStatus:   true,
+			currentType:  blockres.VolumeTypePartition,
+			currentPhase: blockres.VolumePhaseReady,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			ctx := context.Background()
+			st := state.WrapCore(namespaced.NewState(inmem.Build))
+
+			if test.seedStatus {
+				vs := blockres.NewVolumeStatus(blockres.NamespaceName, constants.KubeletDataVolumeID)
+				vs.TypedSpec().Type = test.currentType
+				vs.TypedSpec().Phase = test.currentPhase
+				require.NoError(t, st.Create(ctx, vs))
+			}
+
+			var documents []config.Document
+
+			if test.document != documentAbsent {
+				vc := block.NewVolumeConfigV1Alpha1()
+				vc.MetaName = constants.KubeletDataVolumeID
+
+				if test.document == documentWithProvisioning {
+					vc.ProvisioningSpec.ProvisioningMaxSize = block.MustSize("5GB")
+				}
+
+				documents = append(documents, vc)
+			}
+
+			ctr, err := container.New(documents...)
+			require.NoError(t, err)
+
+			_, err = ctr.ValidateAtRuntime(ctx, st, validationMode{})
+
+			if test.expectedErrorContains == "" {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, test.expectedErrorContains)
 			}
 		})
 	}

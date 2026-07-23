@@ -20,7 +20,7 @@ import (
 // StrategicMergePatch is a strategic merge config patch.
 type StrategicMergePatch interface {
 	Documents() []config.Document
-	Provider() coreconfig.Provider
+	Bytes() ([]byte, error)
 }
 
 // StrategicMerge performs strategic merge config patching.
@@ -73,7 +73,9 @@ func StrategicMerge(cfg coreconfig.Provider, patch StrategicMergePatch) (corecon
 		} else if _, isSel := rightDoc.(configloader.Selector); !isSel {
 			// only append documents which are not delete selectors;
 			// a delete selector for a non-existent document is silently skipped
-			left = append(left, rightDoc)
+			cloned := rightDoc.Clone()
+			left = append(left, cloned)
+			leftIndex[id] = cloned
 		}
 	}
 
@@ -93,6 +95,6 @@ func (s strategicMergePatch) Documents() []config.Document {
 	return s.provider.Documents()
 }
 
-func (s strategicMergePatch) Provider() coreconfig.Provider { return s.provider }
+func (s strategicMergePatch) Bytes() ([]byte, error) { return s.provider.Bytes() }
 
 var _ StrategicMergePatch = strategicMergePatch{}

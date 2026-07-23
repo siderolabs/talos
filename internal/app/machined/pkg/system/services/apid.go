@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-//nolint:golint
+//nolint:revive
 package services
 
 import (
@@ -124,7 +124,6 @@ func (o *APID) PreFunc(ctx context.Context, r runtime.Runtime) error {
 	}
 
 	o.runtimeServer = grpc.NewServer(
-		grpc.SharedWriteBuffer(true),
 		grpc.Creds(unix.NewServerCredentials()),
 		grpc.ChainUnaryInterceptor(
 			pidAuthorizer.UnaryInterceptor(),
@@ -180,6 +179,7 @@ func (o *APID) Runner(r runtime.Runtime) (runner.Runner, error) {
 	// Set the mounts.
 	mounts := []specs.Mount{
 		{Type: "bind", Destination: "/etc/ssl", Source: "/etc/ssl", Options: []string{"bind", "ro"}},
+		{Type: "bind", Destination: "/apid", Source: "/sbin/init", Options: []string{"bind", "ro"}},
 		{Type: "bind", Destination: filepath.Dir(constants.MachineSocketPath), Source: filepath.Dir(constants.MachineSocketPath), Options: []string{"rbind", "ro"}},
 		{Type: "bind", Destination: filepath.Dir(constants.APIRuntimeSocketPath), Source: filepath.Dir(constants.APIRuntimeSocketPath), Options: []string{"rbind", "rw"}},
 	}

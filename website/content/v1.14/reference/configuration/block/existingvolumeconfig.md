@@ -34,6 +34,7 @@ discovery:
 |`name` |string |Name of the volume.<br><br>Name can only contain:<br>lowercase and uppercase ASCII letters, digits, and hyphens.  | |
 |`discovery` |<a href="#ExistingVolumeConfig.discovery">VolumeDiscoverySpec</a> |The discovery describes how to find a volume.  | |
 |`mount` |<a href="#ExistingVolumeConfig.mount">ExistingMountSpec</a> |The mount describes additional mount options.  | |
+|`trim` |<a href="#ExistingVolumeConfig.trim">TrimConfig</a> |The trim describes the per-volume filesystem trim (fstrim) configuration.  | |
 
 
 
@@ -86,6 +87,26 @@ ExistingMountSpec describes how the volume is mounted.
 |`readOnly` |bool |Mount the volume read-only.  | |
 |`disableAccessTime` |bool |If true, disable file access time updates.  | |
 |`secure` |bool |Enable secure mount options (nosuid, nodev).<br><br>Defaults to true for better security.  | |
+
+
+
+
+
+
+## trim {#ExistingVolumeConfig.trim}
+
+TrimConfig describes per-volume filesystem trim (fstrim) configuration.
+
+It overrides the global FilesystemTrimConfig for the volume.
+
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`enabled` |bool |Enable or disable trimming for this volume.<br><br>If not set, trimming is enabled when the global FilesystemTrimConfig is present.  | |
+|`interval` |Duration |The interval at which the volume is trimmed, overriding the global trim interval.  | |
 
 
 

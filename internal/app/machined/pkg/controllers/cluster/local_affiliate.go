@@ -99,7 +99,7 @@ func (ctrl *LocalAffiliateController) Inputs() []controller.Input {
 		{
 			Namespace: k8s.ControlPlaneNamespaceName,
 			Type:      k8s.APIServerConfigType,
-			ID:        optional.Some(k8s.APIServerConfigID),
+			ID:        optional.Some(k8s.FinalAPIServerConfigID),
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -212,7 +212,7 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 		}
 
 		// optional resources (kubernetes)
-		apiServerConfig, err := safe.ReaderGetByID[*k8s.APIServerConfig](ctx, r, k8s.APIServerConfigID)
+		apiServerConfig, err := safe.ReaderGetByID[*k8s.APIServerConfig](ctx, r, k8s.FinalAPIServerConfigID)
 		if err != nil && !state.IsNotFoundError(err) {
 			return fmt.Errorf("error getting API server config: %w", err)
 		}
@@ -221,7 +221,9 @@ func (ctrl *LocalAffiliateController) Run(ctx context.Context, r controller.Runt
 
 		touchedIDs := map[resource.ID]struct{}{}
 
-		if discoveryConfig.TypedSpec().DiscoveryEnabled {
+		discoverySpec := discoveryConfig.TypedSpec()
+
+		if discoverySpec.RegistryKubernetesEnabled || len(discoverySpec.ServiceEndpoints) > 0 {
 			if err = safe.WriterModify(ctx, r, cluster.NewAffiliate(cluster.NamespaceName, localID), func(res *cluster.Affiliate) error {
 				spec := res.TypedSpec()
 

@@ -8,6 +8,7 @@ import (
 	"context"
 	stdlibx509 "crypto/x509"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -193,6 +194,8 @@ func (ctrl *KubernetesDynamicCertsController) updateSecrets(k8sRoot *secrets.Kub
 	}
 
 	k8sCerts.APIServer = x509.NewCertificateAndKeyFromKeyPair(apiServer)
+	// append the issuing CA to the API server cert so that clients can verify it if they trust the CA chain
+	k8sCerts.APIServer.Crt = slices.Concat(k8sCerts.APIServer.Crt, []byte{'\n'}, k8sRoot.IssuingCA.Crt)
 
 	apiServerKubeletClient, err := x509.NewKeyPair(
 		ca,

@@ -35,14 +35,11 @@ type merger interface {
 	Merge(other any) error
 }
 
-var (
-	zeroValue  reflect.Value
-	mergerType = reflect.TypeFor[merger]()
-)
+var mergerType = reflect.TypeFor[merger]()
 
 //nolint:gocyclo,cyclop
 func merge(vl, vr reflect.Value, replace, overwrite bool) error {
-	if vl == zeroValue && vr == zeroValue {
+	if !vl.IsValid() && !vr.IsValid() {
 		return nil
 	}
 
@@ -199,11 +196,10 @@ func merge(vl, vr reflect.Value, replace, overwrite bool) error {
 	return nil
 }
 
-// isNilOrZero returns true if the [reflect.Value] is zero [reflect.Value] or something that is nil.
-// We need it because if map contains a key with `nil` value, simply comparing that result to the `zeroValue`
-// is not enough.
+// isNilOrZero returns true if the [reflect.Value] is invalid or something that is nil.
+// We need it because if map contains a key with `nil` value, IsValid is not enough.
 func isNilOrZero(idx reflect.Value) bool {
-	if idx == zeroValue {
+	if !idx.IsValid() {
 		return true
 	}
 

@@ -179,7 +179,6 @@ func NewDefaultOptions(setters ...Option) *Options {
 		grpc.InitialConnWindowSize(65535*16),
 		grpc.ChainUnaryInterceptor(opts.UnaryInterceptors...),
 		grpc.ChainStreamInterceptor(opts.StreamInterceptors...),
-		grpc.SharedWriteBuffer(true),
 	)
 
 	return opts

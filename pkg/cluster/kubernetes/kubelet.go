@@ -185,20 +185,19 @@ func upgradeKubeletPatcher(
 ) func(config.Container) (configpatcher.Patch, error) {
 	return func(cfg config.Container) (configpatcher.Patch, error) {
 		oldImage := kubeletSpec.TypedSpec().Image
-		oldImage, _, _ = strings.Cut(oldImage, "@") // ignore digest if present
+		oldVersion, _ := kubernetes.VersionFromImageRef(oldImage)
 
-		oldSuffix := extractKubeletVersionSuffix(oldImage)
+		oldSuffix := extractKubeletVersionSuffix(oldVersion)
 		newVersion := options.Path.ToVersion() + oldSuffix
 
-		logUpdate := func(oldImage string) {
-			_, version, _ := strings.Cut(oldImage, ":")
-			if version == "" {
-				version = options.Path.FromVersion()
+		logUpdate := func(oldVersion string) {
+			if oldVersion == "" {
+				oldVersion = options.Path.FromVersion()
 			}
 
-			version = strings.TrimLeft(version, "v")
+			oldVersion = strings.TrimLeft(oldVersion, "v")
 
-			options.Log(" > update %s: %s -> %s", kubelet, version, newVersion)
+			options.Log(" > update %s: %s -> %s", kubelet, oldVersion, newVersion)
 
 			if options.DryRun {
 				options.Log(" > skipped in dry-run")
@@ -211,7 +210,7 @@ func upgradeKubeletPatcher(
 			return nil, errUpdateSkipped
 		}
 
-		logUpdate(oldImage)
+		logUpdate(oldVersion)
 
 		if options.DryRun {
 			return nil, errUpdateSkipped

@@ -520,7 +520,7 @@ func (d *Dashboard) processTick() {
 func (d *Dashboard) selectScreen(screen Screen) {
 	for _, info := range d.screenConfigs {
 		if info.screen == screen {
-			d.selectedScreenConfig = &info //nolint:exportloopref
+			d.selectedScreenConfig = &info
 
 			d.mainGrid.AddItem(info.primitive, 1, 0, 1, 1, 0, 0, false)
 

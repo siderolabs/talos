@@ -484,6 +484,8 @@ func (k8sSuite *K8sSuite) NewPod(name string) (podInfo, error) {
 }
 
 // WaitForPodToBeRunning waits for the pod with the given namespace and name to be running.
+//
+//nolint:gocyclo
 func (k8sSuite *K8sSuite) WaitForPodToBeRunning(ctx context.Context, timeout time.Duration, namespace, podName string) error {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
@@ -496,6 +498,15 @@ func (k8sSuite *K8sSuite) WaitForPodToBeRunning(ctx context.Context, timeout tim
 	}
 
 	defer watcher.Stop()
+
+	eventsWatcher, err := k8sSuite.Clientset.CoreV1().Events(namespace).Watch(ctx, metav1.ListOptions{})
+	if err != nil {
+		return err
+	}
+
+	defer eventsWatcher.Stop()
+
+	start := time.Now()
 
 	for {
 		select {
@@ -511,9 +522,42 @@ func (k8sSuite *K8sSuite) WaitForPodToBeRunning(ctx context.Context, timeout tim
 				continue
 			}
 
+			k8sSuite.T().Logf(
+				"pod %s/%s is %s",
+				pod.Namespace, pod.Name, pod.Status.Phase,
+			)
+
 			if pod.Name == podName && pod.Status.Phase == corev1.PodRunning {
 				return nil
 			}
+		case event := <-eventsWatcher.ResultChan():
+			if event.Type == watch.Error {
+				return fmt.Errorf("error watching event: %v", event.Object)
+			}
+
+			eventObj, ok := event.Object.(*corev1.Event)
+			if !ok {
+				continue
+			}
+
+			if eventObj.ObjectMeta.GetCreationTimestamp().Time.Before(start) {
+				continue
+			}
+
+			if eventObj.InvolvedObject.Kind != "Pod" {
+				continue
+			}
+
+			if eventObj.InvolvedObject.Name != podName {
+				continue
+			}
+
+			k8sSuite.T().Logf(
+				"event: %s %s %s (%s/%s) (first %s)",
+				eventObj.ObjectMeta.GetCreationTimestamp().String(),
+				eventObj.Reason, eventObj.Message, eventObj.Source.Component, eventObj.Source.Host,
+				time.Since(eventObj.FirstTimestamp.Time),
+			)
 		}
 	}
 }
@@ -553,6 +597,42 @@ func (k8sSuite *K8sSuite) WaitForDeploymentAvailable(ctx context.Context, timeou
 	}
 }
 
+// WaitForDaemonSetReady waits for every DaemonSet matching the label selector in the namespace to
+// finish rolling out, mirroring `kubectl rollout status daemonset` so a stale status during a pod
+// restart cannot report ready prematurely.
+func (k8sSuite *K8sSuite) WaitForDaemonSetReady(ctx context.Context, timeout time.Duration, namespace, labelSelector string) error {
+	logged := map[string]string{}
+
+	return retry.Constant(timeout, retry.WithUnits(2*time.Second)).Retry(func() error {
+		dsList, err := k8sSuite.Clientset.AppsV1().DaemonSets(namespace).List(ctx, metav1.ListOptions{LabelSelector: labelSelector})
+		if err != nil {
+			return err
+		}
+
+		if len(dsList.Items) == 0 {
+			return retry.ExpectedError(fmt.Errorf("no daemonset in namespace %q matching %q", namespace, labelSelector))
+		}
+
+		for _, ds := range dsList.Items {
+			s := ds.Status
+
+			status := fmt.Sprintf("generation %d/%d, updated %d/%d, available %d/%d",
+				s.ObservedGeneration, ds.Generation, s.UpdatedNumberScheduled, s.DesiredNumberScheduled, s.NumberAvailable, s.DesiredNumberScheduled)
+			if logged[ds.Name] != status {
+				k8sSuite.T().Logf("waiting for daemonset %q: %s", ds.Name, status)
+				logged[ds.Name] = status
+			}
+
+			if s.ObservedGeneration < ds.Generation || s.DesiredNumberScheduled == 0 ||
+				s.UpdatedNumberScheduled < s.DesiredNumberScheduled || s.NumberAvailable < s.DesiredNumberScheduled {
+				return retry.ExpectedError(fmt.Errorf("daemonset %q not ready: %d/%d available", ds.Name, s.NumberAvailable, s.DesiredNumberScheduled))
+			}
+		}
+
+		return nil
+	})
+}
+
 // LogPodLogsByLabel logs the logs of the pod with the given namespace and label.
 func (k8sSuite *K8sSuite) LogPodLogsByLabel(ctx context.Context, namespace, label, value string) {
 	ctx, cancel := context.WithTimeout(ctx, time.Minute)
@@ -578,6 +658,8 @@ func (k8sSuite *K8sSuite) LogPodLogs(ctx context.Context, namespace, podName str
 	readCloser, err := req.Stream(ctx)
 	if err != nil {
 		k8sSuite.T().Logf("failed to get pod logs: %s", err)
+
+		return
 	}
 
 	defer readCloser.Close() //nolint:errcheck
@@ -586,6 +668,10 @@ func (k8sSuite *K8sSuite) LogPodLogs(ctx context.Context, namespace, podName str
 
 	for scanner.Scan() {
 		k8sSuite.T().Logf("%s/%s: %s", namespace, podName, scanner.Text())
+	}
+
+	if err := scanner.Err(); err != nil {
+		k8sSuite.T().Logf("failed to read pod logs: %s", err)
 	}
 }
 
@@ -769,8 +855,40 @@ func (k8sSuite *K8sSuite) GetUnstructuredResource(ctx context.Context, namespace
 	return result, nil
 }
 
-// RunFIOTest runs the FIO test with the given storage class and size using kubestr.
+// RunFIOTest runs the FIO test with the given storage class and size using kubestr's
+// built-in default-fio job.
 func (k8sSuite *K8sSuite) RunFIOTest(ctx context.Context, storageClass, size string) error {
+	return k8sSuite.runFIO(ctx, storageClass, size, "")
+}
+
+// RunFIOTestWithConfig runs the FIO test with a custom fio job definition instead of
+// kubestr's built-in default-fio job. This is required for slow backends (e.g. ONTAP SAN
+// over iSCSI) where the default ~8GiB job set cannot complete within kubestr's internal
+// exec timeout; a lighter, time-bounded job keeps the run inside that window.
+func (k8sSuite *K8sSuite) RunFIOTestWithConfig(ctx context.Context, storageClass, size string, fioConfig []byte) error {
+	fioFile, err := os.CreateTemp("", "kubestr-fio-*.fio")
+	if err != nil {
+		return fmt.Errorf("failed to create fio config file: %w", err)
+	}
+
+	defer os.Remove(fioFile.Name()) //nolint:errcheck
+
+	if _, err := fioFile.Write(fioConfig); err != nil {
+		fioFile.Close() //nolint:errcheck
+
+		return fmt.Errorf("failed to write fio config file: %w", err)
+	}
+
+	if err := fioFile.Close(); err != nil {
+		return fmt.Errorf("failed to close fio config file: %w", err)
+	}
+
+	return k8sSuite.runFIO(ctx, storageClass, size, fioFile.Name())
+}
+
+// runFIO runs kubestr's fio test against the given storage class. When fioFile is
+// non-empty kubestr uses that fio job definition instead of its built-in default-fio job.
+func (k8sSuite *K8sSuite) runFIO(ctx context.Context, storageClass, size, fioFile string) error {
 	args := []string{
 		"--outfile",
 		fmt.Sprintf("/tmp/fio-%s.json", storageClass),
@@ -781,6 +899,10 @@ func (k8sSuite *K8sSuite) RunFIOTest(ctx context.Context, storageClass, size str
 		storageClass,
 		"--size",
 		size,
+	}
+
+	if fioFile != "" {
+		args = append(args, "--fiofile", fioFile)
 	}
 
 	cmd := exec.CommandContext(ctx, k8sSuite.KubeStrPath, args...)

@@ -84,3 +84,14 @@ func WithBinaryParameters(param string, value []byte) Option {
 		},
 	}
 }
+
+// WithFdParameter adds an FSCONFIG_SET_FD parameter (a value passed by file
+// descriptor, e.g. an overlayfs "lowerdir+" layer). Repeated keys preserve their
+// order, which is significant for layer priority (first added = uppermost layer).
+func WithFdParameter(param string, fd int) Option {
+	return Option{
+		set: func(t *FS) {
+			t.fdParams = append(t.fdParams, fdParam{key: param, fd: fd})
+		},
+	}
+}

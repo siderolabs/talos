@@ -61,11 +61,17 @@ func (unixCreds) ServerHandshake(rawConn net.Conn) (net.Conn, credentials.AuthIn
 
 	mountNamespace, _ := miniprocfs.ReadMountNamespace(ucred.Pid)
 
+	// capture the peer executable identity while the peer is still connected (blocked on the RPC),
+	// so we can recognize machined's own binary re-executed as a kernel usermode helper.
+	exeDev, exeIno, _ := miniprocfs.ReadExeIdentity(ucred.Pid)
+
 	return rawConn, PeerCredentials{
 		PID:            ucred.Pid,
 		UID:            ucred.Uid,
 		GID:            ucred.Gid,
 		MountNamespace: mountNamespace,
+		ExeDev:         exeDev,
+		ExeIno:         exeIno,
 	}, nil
 }
 

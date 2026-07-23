@@ -97,7 +97,7 @@ func SchedulerPod(configResource *k8s.SchedulerConfig, secretsVersion string) (r
 		},
 		Spec: v1.PodSpec{
 			Priority:          new(SystemCriticalPriority),
-			PriorityClassName: "system-cluster-critical",
+			PriorityClassName: SystemClusterCriticalPriorityClassName,
 			Containers: []v1.Container{
 				{
 					Name:    k8s.SchedulerID,

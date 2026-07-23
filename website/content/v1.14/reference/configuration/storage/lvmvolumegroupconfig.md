@@ -19,8 +19,8 @@ title: LVMVolumeGroupConfig
 apiVersion: v1alpha1
 kind: LVMVolumeGroupConfig
 name: vg-pool # Volume group name.
-# Selects backing disks.
-physicalVolumes:
+# The provisioning describes how the Physical Volumes are provisioned.
+provisioning:
     # Matches disks to initialize as physical volumes.
     volumeSelector:
         match: volume.partition_label.startsWith("r-lvm") # CEL expression matching a disk or partition to use as a physical volume.
@@ -30,26 +30,26 @@ physicalVolumes:
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
 |`name` |string |Volume group name.<br><br>Must be 1-63 chars: ASCII letters, digits, hyphens, underscores.  | |
-|`physicalVolumes` |<a href="#LVMVolumeGroupConfig.physicalVolumes">LVMPhysicalVolumesSpec</a> |Selects backing disks.  | |
+|`provisioning` |<a href="#LVMVolumeGroupConfig.provisioning">ProvisioningSpec</a> |The provisioning describes how the Physical Volumes are provisioned.  | |
 
 
 
 
-## physicalVolumes {#LVMVolumeGroupConfig.physicalVolumes}
+## provisioning {#LVMVolumeGroupConfig.provisioning}
 
-LVMPhysicalVolumesSpec selects backing disks.
+ProvisioningSpec describes how the Physical Volumes are provisioned.
 
 
 
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`volumeSelector` |<a href="#LVMVolumeGroupConfig.physicalVolumes.volumeSelector">LVMVolumeSelectorSpec</a> |Matches disks to initialize as physical volumes.  | |
+|`volumeSelector` |<a href="#LVMVolumeGroupConfig.provisioning.volumeSelector">LVMVolumeSelectorSpec</a> |Matches disks to initialize as physical volumes.  | |
 
 
 
 
-### volumeSelector {#LVMVolumeGroupConfig.physicalVolumes.volumeSelector}
+### volumeSelector {#LVMVolumeGroupConfig.provisioning.volumeSelector}
 
 LVMVolumeSelectorSpec matches disks with CEL.
 

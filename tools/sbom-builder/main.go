@@ -31,7 +31,13 @@
 //     (https://github.com/anchore/syft/blob/v1.44.0/syft/format/common/spdxhelpers/to_syft_model.go#L128),
 //     so any externalRefs on it never reach the vulnerability matcher.
 //
-//  2. Provide deterministic output (RFC3339 CreationInfo.Created derived from
+//  2. Enrich the Go-module packages syft catalogs: per-module license
+//     discovery is enabled against the local module cache (GOMODCACHE), and
+//     each go-module package gets its PackageDownloadLocation (module proxy
+//     zip) and PackageHomePage (pkg.go.dev) filled in, both derived from the
+//     module path and version. syft leaves these as NOASSERTION otherwise.
+//
+//  3. Provide deterministic output (RFC3339 CreationInfo.Created derived from
 //     SOURCE_DATE_EPOCH, plus a UUIDv5 documentNamespace hashed from a stable
 //     digest of the cataloged packages). This replaces the prior fork-only
 //     env vars while https://github.com/anchore/syft/pull/3932 remains open.
@@ -54,11 +60,14 @@ import (
 
 	"github.com/anchore/syft/syft"
 	"github.com/anchore/syft/syft/cataloging"
+	"github.com/anchore/syft/syft/cataloging/pkgcataloging"
 	"github.com/anchore/syft/syft/format/common/spdxhelpers"
+	"github.com/anchore/syft/syft/pkg/cataloger/golang"
 	"github.com/anchore/syft/syft/source"
 	"github.com/google/uuid"
 	"github.com/spdx/tools-golang/spdx/v2/common"
 	v2_3 "github.com/spdx/tools-golang/spdx/v2/v2_3"
+	"golang.org/x/mod/module"
 	_ "modernc.org/sqlite" // pulled in by syft catalogers; harmless if unused
 )
 
@@ -110,10 +119,20 @@ func run(sourceDir, sourceName, sourceVersion, cpeVendor, cpeProduct string, sou
 	}
 	defer src.Close() //nolint:errcheck
 
+	// Enable the Go cataloger's per-module license discovery from the local
+	// module cache. syft's default mod-cache dir is derived from GOPATH, but the
+	// Talos build sets GOMODCACHE explicitly (e.g. /.cache/mod), so point the
+	// cataloger at GOMODCACHE when it is set. The cache is fully populated by the
+	// preceding `go mod download`, so this stays offline and reproducible.
+	goCfg := golang.DefaultCatalogerConfig().
+		WithSearchLocalModCacheLicenses(true).
+		WithLocalModCacheDir(os.Getenv("GOMODCACHE"))
+
 	cfg := syft.DefaultCreateSBOMConfig().
 		WithCatalogerSelection(
 			cataloging.NewSelectionRequest().WithExpression("+sbom-cataloger,go"),
-		)
+		).
+		WithPackagesConfig(pkgcataloging.DefaultConfig().WithGolangConfig(goCfg))
 
 	sbomDoc, err := syft.CreateSBOM(ctx, src, cfg)
 	if err != nil {
@@ -128,6 +147,8 @@ func run(sourceDir, sourceName, sourceVersion, cpeVendor, cpeProduct string, sou
 		cpeRef(cpeVendor, cpeProduct, cpeVersion),
 	)
 	addGoModulePackage(doc, sourceVersion)
+
+	enrichGoModuleURLs(doc)
 
 	applyDeterminism(doc, normalizedName, sourceDateEpoch)
 
@@ -310,6 +331,80 @@ func addGoModulePackage(doc *v2_3.Document, version string) {
 			break
 		}
 	}
+}
+
+const goProxyBaseURL = "https://proxy.golang.org"
+
+// enrichGoModuleURLs fills in PackageDownloadLocation and PackageHomePage for
+// every Go-module package syft cataloged. syft leaves both as NOASSERTION for
+// go-module packages, but they are fully derivable from the module path and
+// version:
+//
+//   - PackageDownloadLocation: the module proxy zip
+//     (https://proxy.golang.org/<escaped-path>/@v/<escaped-version>.zip), the
+//     canonical, content-addressed artifact for the module version.
+//   - PackageHomePage: the pkg.go.dev landing page
+//     (https://pkg.go.dev/<path>@<version>), the human-facing entry point.
+//
+// A package is treated as a Go module when it carries a `pkg:golang/...` purl
+// externalRef. The module path is taken from PackageName (syft sets it to the
+// module path) rather than parsed back out of the purl, so we avoid the
+// purl-escaping round-trip; the proxy escaping is applied here via
+// golang.org/x/mod/module.
+//
+// Only empty/NOASSERTION/NONE fields are filled, so identifiers already set by
+// addOSPackage/addGoModulePackage (e.g. the GitHub release URL on the talos
+// module) are preserved. Packages without a resolvable module version — local
+// `replace` targets and the synthetic stdlib package, which has no dot-bearing
+// module domain — are skipped, since neither the proxy nor pkg.go.dev can
+// address them.
+func enrichGoModuleURLs(doc *v2_3.Document) {
+	for _, p := range doc.Packages {
+		if !isGoModulePackage(p) {
+			continue
+		}
+
+		modulePath := p.PackageName
+		version := p.PackageVersion
+
+		// Need a module-domain path (contains a dot) and a concrete version to
+		// build either URL; local replaces and stdlib have neither.
+		if version == "" || !strings.Contains(modulePath, ".") {
+			continue
+		}
+
+		if isUnsetLocation(p.PackageDownloadLocation) {
+			if escPath, err := module.EscapePath(modulePath); err == nil {
+				if escVer, err := module.EscapeVersion(version); err == nil {
+					p.PackageDownloadLocation = fmt.Sprintf(
+						"%s/%s/@v/%s.zip", goProxyBaseURL, escPath, escVer,
+					)
+				}
+			}
+		}
+
+		if p.PackageHomePage == "" {
+			p.PackageHomePage = fmt.Sprintf("https://pkg.go.dev/%s@%s", modulePath, version)
+		}
+	}
+}
+
+// isGoModulePackage reports whether the SPDX package carries a `pkg:golang/...`
+// purl externalRef, syft's marker for a Go-module package.
+func isGoModulePackage(p *v2_3.Package) bool {
+	for _, ref := range p.PackageExternalReferences {
+		if ref.RefType == "purl" && strings.HasPrefix(ref.Locator, "pkg:golang/") {
+			return true
+		}
+	}
+
+	return false
+}
+
+// isUnsetLocation reports whether an SPDX download-location field carries no
+// real value (empty, NOASSERTION, or NONE) and so is safe to fill in.
+func isUnsetLocation(loc string) bool {
+	return loc == "" || loc == "NOASSERTION" || loc == "NONE"
 }
 
 // applyDeterminism overwrites creationInfo.created and documentNamespace with

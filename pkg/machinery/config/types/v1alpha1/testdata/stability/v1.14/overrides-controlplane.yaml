@@ -10,96 +10,57 @@ machine:
     certSANs:
         - foo
         - bar
-    kubelet:
-        image: ghcr.io/siderolabs/kubelet:v1.28.0
-        extraMounts:
-            - destination: /var/opt
-              type: bind
-              source: /var/opt
-              options:
-                - rshared
-        defaultRuntimeSeccompProfileEnabled: true
-        disableManifestsDirectory: true
-    install:
-        disk: /dev/vda
-        extraKernelArgs:
-            - foo=bar
-            - bar=baz
-        wipe: false
-        grubUseUKICmdline: true
-    sysctls:
-        foo: bar
     features:
         diskQuotaSupport: true
-        kubePrism:
-            enabled: true
-            port: 7445
-    nodeLabels:
-        node.kubernetes.io/exclude-from-external-load-balancers: ""
 cluster:
-    id: 0raF93qnkMvF-FZNuvyGozXNdLiT2FOWSlyBaW4PR-w=
-    secret: pofHbABZq7VXuObsdLdy/bHmz6hlMHZ3p8+6WKrv1ic=
-    controlPlane:
-        endpoint: https://base:6443
-        localAPIServerPort: 5443
-    clusterName: base
     token: inn7ol.u4ehnti8qyls9ymo
-    ca:
-        crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJpVENDQVMrZ0F3SUJBZ0lRYm1hNDNPalRwR0I5TjVxOVFEc3RFekFLQmdncWhrak9QUVFEQWpBVk1STXcKRVFZRFZRUUtFd3ByZFdKbGNtNWxkR1Z6TUI0WERUSXpNVEF4TWpFd05EWXdPVm9YRFRNek1UQXdPVEV3TkRZdwpPVm93RlRFVE1CRUdBMVVFQ2hNS2EzVmlaWEp1WlhSbGN6QlpNQk1HQnlxR1NNNDlBZ0VHQ0NxR1NNNDlBd0VICkEwSUFCTXNhRWZ5R3lFb0xyK0p1Wk91dkVVaXVNMStIQjZvZGtSdVV3ZEJ0ODdacDd1SkVoaEFsZitxNFFjT3gKcFRpZnBIRHJBOEFURjNCWUlFRmFXZ0xPTld1allUQmZNQTRHQTFVZER3RUIvd1FFQXdJQ2hEQWRCZ05WSFNVRQpGakFVQmdnckJnRUZCUWNEQVFZSUt3WUJCUVVIQXdJd0R3WURWUjBUQVFIL0JBVXdBd0VCL3pBZEJnTlZIUTRFCkZnUVU0ZEVkM1RoVzRKWlVWcXR1OEFZNWx1NUhQeGN3Q2dZSUtvWkl6ajBFQXdJRFNBQXdSUUloQUpJbkFMb0EKY1VhRUp4VlJ5dkhQenFQcTBvaGJOY2oyT3N2d3VKUFMzSktVQWlCSmhwNGFWMG9zUURRSGJnbjdXUWFYaHZFTwo5bWxTbVRURTAyOXBWb0YyWkE9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
-        key: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSUVZbFloNzVTUTZ6VUJFTUZ6em5pUzZuVVg3Q2VxQ013S3k0RTZHVEVFMGNvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFeXhvUi9JYklTZ3V2NG01azY2OFJTSzR6WDRjSHFoMlJHNVRCMEczenRtbnU0a1NHRUNWLwo2cmhCdzdHbE9KK2tjT3NEd0JNWGNGZ2dRVnBhQXM0MWF3PT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo=
-    aggregatorCA:
-        crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJYakNDQVFXZ0F3SUJBZ0lRWnNnVDRZZzVxRkNIbS9QTnV5QUVSekFLQmdncWhrak9QUVFEQWpBQU1CNFgKRFRJek1UQXhNakV3TkRZd09Wb1hEVE16TVRBd09URXdORFl3T1Zvd0FEQlpNQk1HQnlxR1NNNDlBZ0VHQ0NxRwpTTTQ5QXdFSEEwSUFCRmQ1eEhFWHhZRndQeTdaWjhmd3FHRGU2YVQ5ZmxNRVlWZENRNDlEaWZobWVteTVDaHZRCnlVRkpZcFM4b21HODVTS1dnOEpFTkoyNnhEdm9WMFBCS2srallUQmZNQTRHQTFVZER3RUIvd1FFQXdJQ2hEQWQKQmdOVkhTVUVGakFVQmdnckJnRUZCUWNEQVFZSUt3WUJCUVVIQXdJd0R3WURWUjBUQVFIL0JBVXdBd0VCL3pBZApCZ05WSFE0RUZnUVV4K0xab1FrYjlmOTN0Y0g4NnZjOUc2ZE13T2t3Q2dZSUtvWkl6ajBFQXdJRFJ3QXdSQUlnClhudDVXdmEzOGtWVTB3NjExMEp4bU43Qm5zcWl2NnNMaXlJNXRUR1BDQk1DSUZDQlJ3RXZSYTNnU3pkdXB6ajcKQVJLV3NlK3V5YW9rMnlNYXZnaUVITWpUCi0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
-        key: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSUlMblhpQ3hOWU1CWHpncjVuYmc3bnVtUWM2UGlHaXdmWUN2eFF3Tlhxc3dvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFVjNuRWNSZkZnWEEvTHRsbngvQ29ZTjdwcFAxK1V3UmhWMEpEajBPSitHWjZiTGtLRzlESgpRVWxpbEx5aVliemxJcGFEd2tRMG5ickVPK2hYUThFcVR3PT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo=
-    serviceAccount:
-        key: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSUlHVElBQjZZUzV0cFcrUnYxeDBPY09Jb1h0SXgzdGZteVFZNGxOWWRCbmpvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFQ3drbVVTUmtrbnlOc0NjTFJNUTlmZWx6cFY0dDdIdlNRcnp6ZGRvK2pWYmlqd2kwVVE1YQp0VW8vZkxQbDlBckVNOHNRWTVOSlgraVdxYjFkQWFXa2VnPT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo=
-    apiServer:
-        image: registry.k8s.io/kube-apiserver:v1.28.0
-        certSANs:
-            - foo
-            - bar
-        admissionControl:
-            - name: PodSecurity
-              configuration:
-                apiVersion: pod-security.admission.config.k8s.io/v1alpha1
-                defaults:
-                    audit: restricted
-                    audit-version: latest
-                    enforce: baseline
-                    enforce-version: latest
-                    warn: restricted
-                    warn-version: latest
-                exemptions:
-                    namespaces:
-                        - kube-system
-                    runtimeClasses: []
-                    usernames: []
-                kind: PodSecurityConfiguration
-        auditPolicy:
-            apiVersion: audit.k8s.io/v1
-            kind: Policy
-            rules:
-                - level: Metadata
-    proxy:
-        image: registry.k8s.io/kube-proxy:v1.28.0
-    discovery:
-        enabled: true
-        registries:
-            kubernetes:
-                disabled: true
-            service: {}
     etcd:
         ca:
             crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJmVENDQVNPZ0F3SUJBZ0lRVkNTWmFQU3Z0TlZTcjYrVkRyUks0akFLQmdncWhrak9QUVFEQWpBUE1RMHcKQ3dZRFZRUUtFd1JsZEdOa01CNFhEVEl6TVRBeE1qRXdORFl3T1ZvWERUTXpNVEF3T1RFd05EWXdPVm93RHpFTgpNQXNHQTFVRUNoTUVaWFJqWkRCWk1CTUdCeXFHU000OUFnRUdDQ3FHU000OUF3RUhBMElBQk9wVXN0MHN3MEJZCkFDN0hpTGNrRElvdVdTRVhWTlJVWE42UmNLTWVRQU9VOEhJQkZBaTJlS2Rka2VJOEhZOTJNWTU1U21xQlhNK3cKRTh0RFgyT3kxSk9qWVRCZk1BNEdBMVVkRHdFQi93UUVBd0lDaERBZEJnTlZIU1VFRmpBVUJnZ3JCZ0VGQlFjRApBUVlJS3dZQkJRVUhBd0l3RHdZRFZSMFRBUUgvQkFVd0F3RUIvekFkQmdOVkhRNEVGZ1FVejVmai9oZTZoUjhMCkFRTU5qTjgxNS8zV3B6d3dDZ1lJS29aSXpqMEVBd0lEU0FBd1JRSWdFWWcyTlp3NkExek02eURNWTRHN1JPVkwKc0JOU0VhSDd4VmVSalBSblAvZ0NJUURiYzFMNmI0SkU0MCtuUCtYNG5pZlB0QWp5REhhUzVMS0YzQWZkUkRWdApMUT09Ci0tLS0tRU5EIENFUlRJRklDQVRFLS0tLS0K
             key: LS0tLS1CRUdJTiBFQyBQUklWQVRFIEtFWS0tLS0tCk1IY0NBUUVFSU03Q2VnMk1GQW5TM3ROMzV6QTc0aFZ3VElkTkthK0ZwUHlYVERCdU4wVFlvQW9HQ0NxR1NNNDkKQXdFSG9VUURRZ0FFNmxTeTNTekRRRmdBTHNlSXR5UU1paTVaSVJkVTFGUmMzcEZ3b3g1QUE1VHdjZ0VVQ0xaNApwMTJSNGp3ZGozWXhqbmxLYW9GY3o3QVR5ME5mWTdMVWt3PT0KLS0tLS1FTkQgRUMgUFJJVkFURSBLRVktLS0tLQo=
-    extraManifests:
-        - https://example.com/cni.yaml
-    allowSchedulingOnControlPlanes: true
+---
+apiVersion: v1alpha1
+kind: DiscoveryServiceConfig
+name: default
+endpoint: https://discovery.talos.dev/
+---
+apiVersion: v1alpha1
+kind: DiscoveryIdentityConfig
+clusterID: 0raF93qnkMvF-FZNuvyGozXNdLiT2FOWSlyBaW4PR-w=
+clusterSecret: pofHbABZq7VXuObsdLdy/bHmz6hlMHZ3p8+6WKrv1ic=
+---
+apiVersion: v1alpha1
+kind: UnattendedInstallConfig
+installer: {}
+provisioning:
+    diskSelector:
+        match: disk.dev_path == "/dev/vda"
+    wipe: false
 ---
 apiVersion: v1alpha1
 kind: ResolverConfig
 hostDNS:
     enabled: true
     forwardKubeDNSToHost: true
+---
+apiVersion: v1alpha1
+kind: SysctlConfig
+params:
+    foo: bar
+---
+apiVersion: v1alpha1
+kind: VolumeConfig
+name: EPHEMERAL
+mount:
+    secure: true
+---
+apiVersion: v1alpha1
+kind: FilesystemTrimConfig
+interval: 168h0m0s
+---
+apiVersion: v1alpha1
+kind: SecurityProfileConfig
+workloadIsolation: true
 ---
 apiVersion: v1alpha1
 kind: RegistryMirrorConfig
@@ -112,12 +73,127 @@ kind: HostnameConfig
 auto: stable
 ---
 apiVersion: v1alpha1
+kind: KubeClusterConfig
+clusterName: base
+endpoint: https://base:6443
+---
+apiVersion: v1alpha1
+kind: KubeNodeConfig
+nodeIP: {}
+labels:
+    node-role.kubernetes.io/control-plane: ""
+    node.kubernetes.io/exclude-from-external-load-balancers: ""
+---
+apiVersion: v1alpha1
+kind: KubeletConfig
+image: ghcr.io/siderolabs/kubelet:v1.28.0
+config: {}
+clusterDNS:
+    - 3.3.3.3
+defaultRuntimeSeccompProfileEnabled: true
+---
+apiVersion: v1alpha1
 kind: KubeNetworkConfig
 dnsDomain: example.com
 podSubnets:
     - 10.244.0.0/16
 serviceSubnets:
     - 10.96.0.0/12
+---
+apiVersion: v1alpha1
+kind: KubeAPIServerCAConfig
+issuingCA:
+    cert: |
+        -----BEGIN CERTIFICATE-----
+        MIIBiTCCAS+gAwIBAgIQbma43OjTpGB9N5q9QDstEzAKBggqhkjOPQQDAjAVMRMw
+        EQYDVQQKEwprdWJlcm5ldGVzMB4XDTIzMTAxMjEwNDYwOVoXDTMzMTAwOTEwNDYw
+        OVowFTETMBEGA1UEChMKa3ViZXJuZXRlczBZMBMGByqGSM49AgEGCCqGSM49AwEH
+        A0IABMsaEfyGyEoLr+JuZOuvEUiuM1+HB6odkRuUwdBt87Zp7uJEhhAlf+q4QcOx
+        pTifpHDrA8ATF3BYIEFaWgLONWujYTBfMA4GA1UdDwEB/wQEAwIChDAdBgNVHSUE
+        FjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4E
+        FgQU4dEd3ThW4JZUVqtu8AY5lu5HPxcwCgYIKoZIzj0EAwIDSAAwRQIhAJInALoA
+        cUaEJxVRyvHPzqPq0ohbNcj2OsvwuJPS3JKUAiBJhp4aV0osQDQHbgn7WQaXhvEO
+        9mlSmTTE029pVoF2ZA==
+        -----END CERTIFICATE-----
+    key: |
+        -----BEGIN EC PRIVATE KEY-----
+        MHcCAQEEIEYlYh75SQ6zUBEMFzzniS6nUX7CeqCMwKy4E6GTEE0coAoGCCqGSM49
+        AwEHoUQDQgAEyxoR/IbISguv4m5k668RSK4zX4cHqh2RG5TB0G3ztmnu4kSGECV/
+        6rhBw7GlOJ+kcOsDwBMXcFggQVpaAs41aw==
+        -----END EC PRIVATE KEY-----
+---
+apiVersion: v1alpha1
+kind: KubePrismConfig
+port: 7445
+---
+apiVersion: v1alpha1
+kind: KubeAggregatorCAConfig
+issuingCA:
+    cert: |
+        -----BEGIN CERTIFICATE-----
+        MIIBXjCCAQWgAwIBAgIQZsgT4Yg5qFCHm/PNuyAERzAKBggqhkjOPQQDAjAAMB4X
+        DTIzMTAxMjEwNDYwOVoXDTMzMTAwOTEwNDYwOVowADBZMBMGByqGSM49AgEGCCqG
+        SM49AwEHA0IABFd5xHEXxYFwPy7ZZ8fwqGDe6aT9flMEYVdCQ49Difhmemy5ChvQ
+        yUFJYpS8omG85SKWg8JENJ26xDvoV0PBKk+jYTBfMA4GA1UdDwEB/wQEAwIChDAd
+        BgNVHSUEFjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwDwYDVR0TAQH/BAUwAwEB/zAd
+        BgNVHQ4EFgQUx+LZoQkb9f93tcH86vc9G6dMwOkwCgYIKoZIzj0EAwIDRwAwRAIg
+        Xnt5Wva38kVU0w6110JxmN7Bnsqiv6sLiyI5tTGPCBMCIFCBRwEvRa3gSzdupzj7
+        ARKWse+uyaok2yMavgiEHMjT
+        -----END CERTIFICATE-----
+    key: |
+        -----BEGIN EC PRIVATE KEY-----
+        MHcCAQEEIILnXiCxNYMBXzgr5nbg7numQc6PiGiwfYCvxQwNXqswoAoGCCqGSM49
+        AwEHoUQDQgAEV3nEcRfFgXA/Ltlnx/CoYN7ppP1+UwRhV0JDj0OJ+GZ6bLkKG9DJ
+        QUlilLyiYbzlIpaDwkQ0nbrEO+hXQ8EqTw==
+        -----END EC PRIVATE KEY-----
+---
+apiVersion: v1alpha1
+kind: KubeAdmissionControlConfig
+name: PodSecurity
+configuration:
+    apiVersion: pod-security.admission.config.k8s.io/v1alpha1
+    defaults:
+        audit: restricted
+        audit-version: latest
+        enforce: baseline
+        enforce-version: latest
+        warn: restricted
+        warn-version: latest
+    exemptions:
+        namespaces:
+            - kube-system
+        runtimeClasses: []
+        usernames: []
+    kind: PodSecurityConfiguration
+---
+apiVersion: v1alpha1
+kind: KubeAuditPolicyConfig
+configuration:
+    apiVersion: audit.k8s.io/v1
+    kind: Policy
+    rules:
+        - level: Metadata
+---
+apiVersion: v1alpha1
+kind: KubeAuthenticationConfig
+configuration:
+    anonymous:
+        conditions:
+            - path: /livez
+            - path: /readyz
+            - path: /healthz
+        enabled: true
+    jwt: []
+---
+apiVersion: v1alpha1
+kind: KubeAuthorizerConfig
+name: node
+type: Node
+---
+apiVersion: v1alpha1
+kind: KubeAuthorizerConfig
+name: rbac
+type: RBAC
 ---
 apiVersion: v1alpha1
 kind: KubeEtcdEncryptionConfig
@@ -132,6 +208,25 @@ config:
             - secrets
 ---
 apiVersion: v1alpha1
+kind: KubeServiceAccountConfig
+issuer:
+    privateKey: |
+        -----BEGIN EC PRIVATE KEY-----
+        MHcCAQEEIIGTIAB6YS5tpW+Rv1x0OcOIoXtIx3tfmyQY4lNYdBnjoAoGCCqGSM49
+        AwEHoUQDQgAECwkmUSRkknyNsCcLRMQ9felzpV4t7HvSQrzzddo+jVbijwi0UQ5a
+        tUo/fLPl9ArEM8sQY5NJX+iWqb1dAaWkeg==
+        -----END EC PRIVATE KEY-----
+    issuerURL: https://base:6443
+---
+apiVersion: v1alpha1
+kind: KubeAPIServerConfig
+image: registry.k8s.io/kube-apiserver:v1.28.0
+apiPort: 5443
+certExtraSANs:
+    - foo
+    - bar
+---
+apiVersion: v1alpha1
 kind: KubeControllerManagerConfig
 image: registry.k8s.io/kube-controller-manager:v1.28.0
 ---
@@ -139,3 +234,17 @@ apiVersion: v1alpha1
 kind: KubeSchedulerConfig
 image: registry.k8s.io/kube-scheduler:v1.28.0
 config: {}
+---
+apiVersion: v1alpha1
+kind: KubeProxyConfig
+image: registry.k8s.io/kube-proxy:v1.28.0
+config: {}
+---
+apiVersion: v1alpha1
+kind: KubeCoreDNSConfig
+enabled: true
+---
+apiVersion: v1alpha1
+kind: KubeExternalManifestConfig
+name: custom-cni
+url: https://example.com/cni.yaml

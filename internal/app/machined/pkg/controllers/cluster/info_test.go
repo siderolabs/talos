@@ -5,6 +5,7 @@
 package cluster_test
 
 import (
+	"net/url"
 	"testing"
 	"time"
 
@@ -31,6 +32,11 @@ func (suite *InfoSuite) TestReconcile() {
 		ClusterConfig: &v1alpha1.ClusterConfig{
 			ClusterID:   "cluster1",
 			ClusterName: "foo",
+			ControlPlane: &v1alpha1.ControlPlaneConfig{
+				Endpoint: &v1alpha1.Endpoint{
+					URL: must(url.Parse("https://example.com/")),
+				},
+			},
 		},
 	}))
 

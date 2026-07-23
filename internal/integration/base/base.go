@@ -48,6 +48,11 @@ type TalosSuite struct {
 	ExtensionsQEMU bool
 	// ExtensionsNvidia runs tests with nvidia extensions enabled
 	ExtensionsNvidia bool
+	// BGPEnabled runs tests against a cluster created with an embedded BGP fabric peer (--with-bgp)
+	BGPEnabled bool
+	// BGPCLOSEnabled runs the full-CLOS BGP test against a cluster created with --with-bgp-clos (each
+	// node peers unnumbered with a host fabric peer over dedicated uplinks)
+	BGPCLOSEnabled bool
 	// TrustedBoot tells if the cluster is secure booted and disks are encrypted
 	TrustedBoot bool
 	// SelinuxEnforcing tells if the cluster is booted with the image with selinux enforcement enabled

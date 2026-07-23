@@ -1,5 +1,6 @@
 ---
-description: KubeControllerManagerConfig configures kube-controller-manager controlplane static pod.
+description: KubeControllerManagerConfig configures kube-controller-manager controlplane
+    static pod.
 title: KubeControllerManagerConfig
 ---
 
@@ -16,7 +17,7 @@ title: KubeControllerManagerConfig
 {{< highlight yaml >}}
 apiVersion: v1alpha1
 kind: KubeControllerManagerConfig
-image: registry.k8s.io/kube-controller-manager:v1.36.1 # The container image used to run the kube-controller-manager component.
+image: registry.k8s.io/kube-controller-manager:v1.37.0-beta.0 # The container image used to run the kube-controller-manager component.
 # Extra command line arguments to supply to the kube-controller-manager.
 extraArgs:
     feature-gates: AllBeta=true

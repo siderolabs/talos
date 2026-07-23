@@ -8,34 +8,20 @@ machine:
         crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJQakNCOGFBREFnRUNBaEI5cStGVXpodzkycHVPemtpNzB1eGRNQVVHQXl0bGNEQVFNUTR3REFZRFZRUUsKRXdWMFlXeHZjekFlRncweU16RXdNVEl4TURRMk1EbGFGdzB6TXpFd01Ea3hNRFEyTURsYU1CQXhEakFNQmdOVgpCQW9UQlhSaGJHOXpNQ293QlFZREsyVndBeUVBaHVLczZxeCtKWi8wWG8ybXdpQUNjK1EwSVYySGhMd3ozVTZICmUxemZjS2lqWVRCZk1BNEdBMVVkRHdFQi93UUVBd0lDaERBZEJnTlZIU1VFRmpBVUJnZ3JCZ0VGQlFjREFRWUkKS3dZQkJRVUhBd0l3RHdZRFZSMFRBUUgvQkFVd0F3RUIvekFkQmdOVkhRNEVGZ1FVSlgzWlVNRktWWFZ5NWhKWQozZG9NWENpVEJZRXdCUVlESzJWd0EwRUFCbUxrbDhITmQ3cUpEN3VqQkk2UG9abVRQQWlEcU9GQ0NTVDZJYlZDClF3UzQ1bk1tMldtalRIc3ZrYU5FQ0dneTBhQXJaaFdsbnVYWUswY0t3Z2VJQ0E9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
         key: ""
     certSANs: []
-    kubelet:
-        image: ghcr.io/siderolabs/kubelet:v1.28.0
-        defaultRuntimeSeccompProfileEnabled: true
-        disableManifestsDirectory: true
-    install:
-        wipe: false
-        grubUseUKICmdline: true
     features:
         diskQuotaSupport: true
-        kubePrism:
-            enabled: true
-            port: 7445
 cluster:
-    id: 0raF93qnkMvF-FZNuvyGozXNdLiT2FOWSlyBaW4PR-w=
-    secret: pofHbABZq7VXuObsdLdy/bHmz6hlMHZ3p8+6WKrv1ic=
-    controlPlane:
-        endpoint: https://base:6443
-    clusterName: base
     token: inn7ol.u4ehnti8qyls9ymo
-    ca:
-        crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUJpVENDQVMrZ0F3SUJBZ0lRYm1hNDNPalRwR0I5TjVxOVFEc3RFekFLQmdncWhrak9QUVFEQWpBVk1STXcKRVFZRFZRUUtFd3ByZFdKbGNtNWxkR1Z6TUI0WERUSXpNVEF4TWpFd05EWXdPVm9YRFRNek1UQXdPVEV3TkRZdwpPVm93RlRFVE1CRUdBMVVFQ2hNS2EzVmlaWEp1WlhSbGN6QlpNQk1HQnlxR1NNNDlBZ0VHQ0NxR1NNNDlBd0VICkEwSUFCTXNhRWZ5R3lFb0xyK0p1Wk91dkVVaXVNMStIQjZvZGtSdVV3ZEJ0ODdacDd1SkVoaEFsZitxNFFjT3gKcFRpZnBIRHJBOEFURjNCWUlFRmFXZ0xPTld1allUQmZNQTRHQTFVZER3RUIvd1FFQXdJQ2hEQWRCZ05WSFNVRQpGakFVQmdnckJnRUZCUWNEQVFZSUt3WUJCUVVIQXdJd0R3WURWUjBUQVFIL0JBVXdBd0VCL3pBZEJnTlZIUTRFCkZnUVU0ZEVkM1RoVzRKWlVWcXR1OEFZNWx1NUhQeGN3Q2dZSUtvWkl6ajBFQXdJRFNBQXdSUUloQUpJbkFMb0EKY1VhRUp4VlJ5dkhQenFQcTBvaGJOY2oyT3N2d3VKUFMzSktVQWlCSmhwNGFWMG9zUURRSGJnbjdXUWFYaHZFTwo5bWxTbVRURTAyOXBWb0YyWkE9PQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg==
-        key: ""
-    discovery:
-        enabled: true
-        registries:
-            kubernetes:
-                disabled: true
-            service: {}
+---
+apiVersion: v1alpha1
+kind: DiscoveryServiceConfig
+name: default
+endpoint: https://discovery.talos.dev/
+---
+apiVersion: v1alpha1
+kind: DiscoveryIdentityConfig
+clusterID: 0raF93qnkMvF-FZNuvyGozXNdLiT2FOWSlyBaW4PR-w=
+clusterSecret: pofHbABZq7VXuObsdLdy/bHmz6hlMHZ3p8+6WKrv1ic=
 ---
 apiVersion: v1alpha1
 kind: ResolverConfig
@@ -44,8 +30,37 @@ hostDNS:
     forwardKubeDNSToHost: true
 ---
 apiVersion: v1alpha1
+kind: VolumeConfig
+name: EPHEMERAL
+mount:
+    secure: true
+---
+apiVersion: v1alpha1
+kind: FilesystemTrimConfig
+interval: 168h0m0s
+---
+apiVersion: v1alpha1
+kind: SecurityProfileConfig
+workloadIsolation: true
+---
+apiVersion: v1alpha1
 kind: HostnameConfig
 auto: stable
+---
+apiVersion: v1alpha1
+kind: KubeClusterConfig
+clusterName: base
+endpoint: https://base:6443
+---
+apiVersion: v1alpha1
+kind: KubeNodeConfig
+nodeIP: {}
+---
+apiVersion: v1alpha1
+kind: KubeletConfig
+image: ghcr.io/siderolabs/kubelet:v1.28.0
+config: {}
+defaultRuntimeSeccompProfileEnabled: true
 ---
 apiVersion: v1alpha1
 kind: KubeNetworkConfig
@@ -54,3 +69,23 @@ podSubnets:
     - 10.244.0.0/16
 serviceSubnets:
     - 10.96.0.0/12
+---
+apiVersion: v1alpha1
+kind: KubeAPIServerCAConfig
+acceptedCAs:
+    - |
+      -----BEGIN CERTIFICATE-----
+      MIIBiTCCAS+gAwIBAgIQbma43OjTpGB9N5q9QDstEzAKBggqhkjOPQQDAjAVMRMw
+      EQYDVQQKEwprdWJlcm5ldGVzMB4XDTIzMTAxMjEwNDYwOVoXDTMzMTAwOTEwNDYw
+      OVowFTETMBEGA1UEChMKa3ViZXJuZXRlczBZMBMGByqGSM49AgEGCCqGSM49AwEH
+      A0IABMsaEfyGyEoLr+JuZOuvEUiuM1+HB6odkRuUwdBt87Zp7uJEhhAlf+q4QcOx
+      pTifpHDrA8ATF3BYIEFaWgLONWujYTBfMA4GA1UdDwEB/wQEAwIChDAdBgNVHSUE
+      FjAUBggrBgEFBQcDAQYIKwYBBQUHAwIwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4E
+      FgQU4dEd3ThW4JZUVqtu8AY5lu5HPxcwCgYIKoZIzj0EAwIDSAAwRQIhAJInALoA
+      cUaEJxVRyvHPzqPq0ohbNcj2OsvwuJPS3JKUAiBJhp4aV0osQDQHbgn7WQaXhvEO
+      9mlSmTTE029pVoF2ZA==
+      -----END CERTIFICATE-----
+---
+apiVersion: v1alpha1
+kind: KubePrismConfig
+port: 7445

@@ -207,6 +207,205 @@ func (SysfsConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (EtcFileConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "EtcFileConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "EtcFileConfig configures a user-managed file under /etc." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "EtcFileConfig configures a user-managed file under /etc.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Path of the file relative to `/etc`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Path of the file relative to `/etc`." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "mode",
+				Type:        "EtcFileMode",
+				Note:        "",
+				Description: "The file's permissions in octal.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The file's permissions in octal." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "contents",
+				Type:        "string",
+				Note:        "",
+				Description: "The contents of the file.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The contents of the file." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleEtcFileConfigV1Alpha1())
+
+	return doc
+}
+
+func (UdevRulesConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "UdevRulesConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "UdevRulesConfig is a udev rules config document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "UdevRulesConfig is a udev rules config document.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "rules",
+				Type:        "[]string",
+				Note:        "",
+				Description: "Custom udev rules.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Custom udev rules." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleUdevRulesConfigV1Alpha1())
+
+	return doc
+}
+
+func (UnattendedInstallConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "UnattendedInstallConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "UnattendedInstallConfig is an UnattendedInstallConfig config document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "UnattendedInstallConfig is an UnattendedInstallConfig config document.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "reboot",
+				Type:        "bool",
+				Note:        "",
+				Description: "Reboot is a flag to indicate if the system should reboot after installation.\nIf not set, Talos will reboot only if the installer.image is set.\n",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Reboot is a flag to indicate if the system should reboot after installation." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "installer",
+				Type:        "InstallerSpec",
+				Note:        "",
+				Description: "The installer describes the source of the installation.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The installer describes the source of the installation." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "provisioning",
+				Type:        "ProvisioningSpec",
+				Note:        "",
+				Description: "The provisioning describes how the installation disk should be provisioned.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The provisioning describes how the installation disk should be provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleUnattendedInstallConfigV1Alpha1())
+
+	doc.Fields[2].AddExample("", exampleInstallerSpec())
+
+	return doc
+}
+
+func (InstallerSpec) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "InstallerSpec",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "InstallerSpec describes the installer to perform the installation." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "InstallerSpec describes the installer to perform the installation.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "UnattendedInstallConfigV1Alpha1",
+				FieldName: "installer",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "image",
+				Type:        "string",
+				Note:        "",
+				Description: "Allows for supplying the image used to perform the installation.\nImage reference for each Talos release can be found on\n[GitHub releases page](https://github.com/siderolabs/talos/releases).\n\nIf not set, it will run installer based on the current Talos version\nand current schematic (this requires booting asset built by Image\nFactory).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Allows for supplying the image used to perform the installation." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleInstallerSpec())
+
+	doc.Fields[0].AddExample("", "factory.talos.dev/metal-installer/376567988ad370138ad8b2698212367b8edcb69b5fd68c80be1f2ec7d603b4ba:latest")
+
+	return doc
+}
+
+func (ProvisioningSpec) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "ProvisioningSpec",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "ProvisioningSpec describes how the Physical Volumes are provisioned." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "ProvisioningSpec describes how the Physical Volumes are provisioned.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "UnattendedInstallConfigV1Alpha1",
+				FieldName: "provisioning",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "diskSelector",
+				Type:        "DiskSelectorSpec",
+				Note:        "",
+				Description: "Matches disks to initialize as physical volumes.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Matches disks to initialize as physical volumes." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "wipe",
+				Type:        "bool",
+				Note:        "",
+				Description: "Indicates if the installation disk should be wiped at installation time.\nDefaults to `true`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Indicates if the installation disk should be wiped at installation time." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Values: []string{
+					"true",
+					"yes",
+					"false",
+					"no",
+				},
+			},
+		},
+	}
+
+	return doc
+}
+
+func (DiskSelectorSpec) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "DiskSelectorSpec",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "DiskSelectorSpec matches disks with CEL." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "DiskSelectorSpec matches disks with CEL.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "ProvisioningSpec",
+				FieldName: "diskSelector",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "match",
+				Type:        "Expression",
+				Note:        "",
+				Description: "CEL expression matching a disk.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "CEL expression matching a disk." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.Fields[0].AddExample("match raw volume partitions labeled r-lvm*", exampleDiskSelector())
+
+	return doc
+}
+
 func (WatchdogTimerV1Alpha1) Doc() *encoder.Doc {
 	doc := &encoder.Doc{
 		Type:        "WatchdogTimerConfig",
@@ -241,6 +440,63 @@ func (WatchdogTimerV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (KernelModuleConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KernelModuleConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KernelModuleConfig is a config document to configure a Linux kernel module to load." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KernelModuleConfig is a config document to configure a Linux kernel module to load.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "name",
+				Type:        "string",
+				Note:        "",
+				Description: "Module name.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Module name." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "parameters",
+				Type:        "[]string",
+				Note:        "",
+				Description: "Module parameters, changes applied after reboot.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Module parameters, changes applied after reboot." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKernelModuleConfigV1Alpha1())
+
+	return doc
+}
+
+func (SecurityProfileConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "SecurityProfileConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "SecurityProfileConfig is a node security profile configuration document." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "SecurityProfileConfig is a node security profile configuration document.\nThe security profile groups node-level security hardening features. Additional hardening options\nwill be added to this document over time.\n\nCurrently it controls workload isolation: running the container runtime plane (CRI containerd, the\nkubelet, and all pods) inside a dedicated PID and mount namespace anchored by the `sandboxd` service,\nisolating them from `machined` (PID 1) and its file descriptors.\n\n`talosctl gen config` emits this document with `workloadIsolation: true` for Talos 1.14+, so new\nclusters are isolated by default; clusters upgraded from older versions do not have the document and\nkeep the old (non-isolated) behavior unless it is added.\n\nNote: with workload isolation enabled, the deprecated in-tree Kubernetes iSCSI volume plugin does not\nwork (the kubelet cannot reach the host iscsid across the sandbox); use a CSI driver instead.\n",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "workloadIsolation",
+				Type:        "bool",
+				Note:        "",
+				Description: "Enable workload isolation (run the container plane inside the sandbox namespace).",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable workload isolation (run the container plane inside the sandbox namespace)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleSecurityProfileConfigV1Alpha1())
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file runtime_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -253,7 +509,15 @@ func GetFileDoc() *encoder.FileDoc {
 			OOMV1Alpha1{}.Doc(),
 			SysctlConfigV1Alpha1{}.Doc(),
 			SysfsConfigV1Alpha1{}.Doc(),
+			EtcFileConfigV1Alpha1{}.Doc(),
+			UdevRulesConfigV1Alpha1{}.Doc(),
+			UnattendedInstallConfigV1Alpha1{}.Doc(),
+			InstallerSpec{}.Doc(),
+			ProvisioningSpec{}.Doc(),
+			DiskSelectorSpec{}.Doc(),
 			WatchdogTimerV1Alpha1{}.Doc(),
+			KernelModuleConfigV1Alpha1{}.Doc(),
+			SecurityProfileConfigV1Alpha1{}.Doc(),
 		},
 	}
 }

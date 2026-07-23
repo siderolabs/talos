@@ -46,6 +46,7 @@ var upgradeCmdFlags = struct {
 	platform     string
 
 	upgradeImage string
+	noReboot     bool
 	rebootMode   flags.PflagExtended[machine.RebootRequest_Mode]
 	progress     flags.PflagExtended[reporter.OutputMode]
 
@@ -118,6 +119,10 @@ func upgradeViaLifecycleService(ctx context.Context, clientFactory *global.Clien
 		upgradeCmdFlags.wait = true
 	}
 
+	if upgradeCmdFlags.noReboot {
+		upgradeCmdFlags.drain = false
+	}
+	
 	imageRefs, err := resolveUpgradeImages(ctx, clientFactory)
 	if err != nil {
 		return err
@@ -186,9 +191,11 @@ func upgradeViaLifecycleService(ctx context.Context, clientFactory *global.Clien
 		}
 	}()
 
-	err = rebootInternal(ctx, clientFactory, upgradeCmdFlags.wait, upgradeCmdFlags.debug, upgradeCmdFlags.timeout, rep, opts...)
-	if err != nil {
-		return fmt.Errorf("error during upgrade: %w", err)
+	if !upgradeCmdFlags.noReboot {
+		err = rebootInternal(ctx, clientFactory, upgradeCmdFlags.wait, upgradeCmdFlags.debug, upgradeCmdFlags.timeout, rep, opts...)
+		if err != nil {
+			return fmt.Errorf("error during upgrade: %w", err)
+		}
 	}
 
 	return nil
@@ -535,6 +542,7 @@ func init() {
 		),
 	)
 	upgradeCmd.Flags().Var(upgradeCmdFlags.progress, "progress", fmt.Sprintf("output mode for upgrade progress. Values: %v", upgradeCmdFlags.progress.Options()))
+	upgradeCmd.Flags().BoolVar(&upgradeCmdFlags.noReboot, "no-reboot", false, "do not reboot the node after upgrade (skip reboot and drain)")
 	upgradeCmd.Flags().BoolVar(&upgradeCmdFlags.drain, "drain", true, "drain the Kubernetes node before rebooting (cordon + evict pods)")
 	upgradeCmd.Flags().DurationVar(&upgradeCmdFlags.drainTimeout, "drain-timeout", nodedrain.DefaultDrainTimeout, "timeout for draining the Kubernetes node")
 
