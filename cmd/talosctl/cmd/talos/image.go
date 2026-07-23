@@ -254,9 +254,6 @@ func imagePull(ctx context.Context, imageRef string) error {
 }
 
 // nodeFromContext extracts the target node from the outgoing gRPC metadata set by client.WithNode.
-//
-// The multiplex helpers build a node-scoped context per node before invoking the per-node callback,
-// so this is how a callback recovers which node it is talking to in order to look up per-node state.
 func nodeFromContext(ctx context.Context) string {
 	md, ok := metadata.FromOutgoingContext(ctx)
 	if !ok {

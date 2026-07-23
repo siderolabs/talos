@@ -7,6 +7,7 @@ package helpers
 import (
 	"context"
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -61,20 +62,14 @@ func QueryMachineContext(ctx context.Context, c *client.Client) (*MachineContext
 	return machineCtx, nil
 }
 
-// factoryHostFromAPIURL strips the scheme (and any trailing slash) from the schematic's
-// API URL so it can be used as the host component of a container image reference.
+// factoryHostFromAPIURL extracts the host from the schematic's API URL so it can be
+// used as the registry host component of a container image reference.
 //
-// e.g. "https://factory.talos.dev/" -> "factory.talos.dev".
+// e.g. "https://factory.talos.dev" -> "factory.talos.dev"
 func factoryHostFromAPIURL(apiURL string) string {
-	host := apiURL
-
-	for _, scheme := range []string{"https://", "http://"} {
-		if rest, ok := strings.CutPrefix(host, scheme); ok {
-			host = rest
-
-			break
-		}
-	}
-
-	return strings.TrimSuffix(host, "/")
+    if u, err := url.Parse(apiURL); err == nil && u.Host != "" {
+        return u.Host
+    }
+    
+    return strings.TrimSuffix(apiURL, "/")
 }

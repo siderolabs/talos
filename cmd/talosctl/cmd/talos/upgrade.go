@@ -53,7 +53,6 @@ var upgradeCmdFlags = struct {
 	drain        bool
 	drainTimeout time.Duration
 
-	// set in RunE: whether --secure-boot / --factory / any component flag was set explicitly.
 	secureBootChanged     bool
 	factoryChanged        bool
 	componentFlagsChanged bool
@@ -122,7 +121,7 @@ func upgradeViaLifecycleService(ctx context.Context, clientFactory *global.Clien
 	if upgradeCmdFlags.noReboot {
 		upgradeCmdFlags.drain = false
 	}
-	
+
 	imageRefs, err := resolveUpgradeImages(ctx, clientFactory)
 	if err != nil {
 		return err
@@ -202,19 +201,10 @@ func upgradeViaLifecycleService(ctx context.Context, clientFactory *global.Clien
 }
 
 // resolveUpgradeImages resolves the installer image reference for each targeted node.
-//
-// If --image is set, it is used verbatim for every node (legacy behavior). Otherwise each node's
-// reference is built independently as <factory>/<platform>-installer[-secureboot]/<schematic>:<version>
-// from the component flags (--factory, --schematic, --talos-version, --secure-boot, --platform),
-// filling in components not set explicitly from that node's own machine state. Resolving per node
-// lets a single invocation upgrade a heterogeneous cluster correctly (e.g. nodes with different
-// schematics, platforms, or SecureBoot state) instead of assuming a uniform configuration.
-//
-// If a node's state cannot be read, that node falls back to the built-in defaults (empty schematic,
-// metal platform, public factory, non-SecureBoot).
 func resolveUpgradeImages(ctx context.Context, clientFactory *global.ClientFactory) (map[string]string, error) {
 	nodes := clientFactory.Nodes()
 
+	// If --image is set, ignore the component flags and use this for upgrading every node (legacy behavior).
 	if upgradeCmdFlags.upgradeImage != "" {
 		if upgradeCmdFlags.componentFlagsChanged {
 			cli.Warning("--image is set, ignoring component flags (--factory, --schematic, --talos-version, --secure-boot, --platform)")
@@ -233,6 +223,7 @@ func resolveUpgradeImages(ctx context.Context, clientFactory *global.ClientFacto
 		return uniformImageRefs(nodes, imageRef), nil
 	}
 
+	// Otherwise, each node's machine state must be read to fill in any components not set explicitly.
 	imageRefs := make(map[string]string, len(nodes))
 
 	var (
@@ -241,11 +232,7 @@ func resolveUpgradeImages(ctx context.Context, clientFactory *global.ClientFacto
 	)
 
 	for _, node := range nodes {
-		wg.Add(1)
-
-		go func() {
-			defer wg.Done()
-
+		wg.Go(func() {
 			machineCtx := &helpers.MachineContext{}
 
 			queryCtx, c, err := clientFactory.BuildClient(ctx, node)
@@ -263,7 +250,7 @@ func resolveUpgradeImages(ctx context.Context, clientFactory *global.ClientFacto
 			imageRefs[node] = imageRef
 			fmt.Printf("%s: upgrade image: %s\n", node, imageRef)
 			mu.Unlock()
-		}()
+		})
 	}
 
 	wg.Wait()
