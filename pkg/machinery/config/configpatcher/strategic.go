@@ -8,8 +8,6 @@ import (
 	"errors"
 	"slices"
 
-	"github.com/siderolabs/gen/xslices"
-
 	coreconfig "github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
@@ -42,9 +40,11 @@ func StrategicMerge(cfg coreconfig.Provider, patch StrategicMergePatch) (corecon
 		return id
 	}
 
-	leftIndex := xslices.ToMap(left, func(d config.Document) (string, config.Document) {
-		return documentID(d), d
-	})
+	leftIndex := make(map[string]config.Document, len(left))
+
+	for _, d := range left {
+		leftIndex[documentID(d)] = d
+	}
 
 	for _, rightDoc := range right {
 		id := documentID(rightDoc)

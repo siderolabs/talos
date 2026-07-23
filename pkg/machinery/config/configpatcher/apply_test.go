@@ -14,6 +14,7 @@ import (
 
 	"github.com/siderolabs/talos/pkg/machinery/config/configloader"
 	"github.com/siderolabs/talos/pkg/machinery/config/configpatcher"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
 )
 
 //go:embed testdata/apply/config.yaml
@@ -133,6 +134,24 @@ func TestApplyMultiDoc(t *testing.T) {
 			assert.Equal(t, expectedMultidoc, string(bytes))
 		})
 	}
+}
+
+func TestApplyToEmptyConfig(t *testing.T) {
+	patches, err := configpatcher.LoadPatches([]string{
+		"@testdata/multidoc/strategic2.yaml",
+	})
+	require.NoError(t, err)
+
+	cfg, err := container.New()
+	require.NoError(t, err)
+
+	out, err := configpatcher.Apply(configpatcher.WithConfig(cfg), patches)
+	require.NoError(t, err)
+
+	patched, err := out.Config()
+	require.NoError(t, err)
+
+	require.Len(t, patched.Documents(), 2)
 }
 
 //go:embed testdata/auditpolicy/config.yaml
