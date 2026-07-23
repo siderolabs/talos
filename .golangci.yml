@@ -219,6 +219,7 @@ linters:
         - golang.zx2c4.com/wireguard/wgctrl
         - github.com/mdlayher/ethtool
         - github.com/secure-io/siv-go
+        - github.com/anatol/smart.go
       replace-local: true
       exclude-forbidden: false
       retract-allow-no-explanation: false
@@ -247,7 +248,18 @@ linters:
           disabled: true
     rowserrcheck: {}
     staticcheck:
-      checks: ["all", "-ST1000", "-ST1003", "-ST1016", "-ST1020", "-ST1021", "-ST1022", "-QF1001", "-QF1008"]
+      checks:
+        [
+          "all",
+          "-ST1000",
+          "-ST1003",
+          "-ST1016",
+          "-ST1020",
+          "-ST1021",
+          "-ST1022",
+          "-QF1001",
+          "-QF1008",
+        ]
     testpackage: {}
     unparam:
       check-exported: false

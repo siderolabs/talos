@@ -1466,6 +1466,10 @@ const (
 	//
 	// Vendored here to avoid pulling in k8s.io.
 	TaintEffectNoSchedule = "NoSchedule"
+	// DefaultDiskSMARTInterval is the default interval for refreshing disk SMART status.
+	//
+	// The default value is 30 minutes. Disks in standby are not spun up to be probed.
+	DefaultDiskSMARTInterval = 30 * time.Minute
 )
 
 // names of variable that can be substituted in the talos.config kernel parameter.

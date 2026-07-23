@@ -375,6 +375,8 @@ description: Talos gRPC API reference.
     - [ParameterSpec](#talos.resource.definitions.block.ParameterSpec)
     - [PartitionSpec](#talos.resource.definitions.block.PartitionSpec)
     - [ProvisioningSpec](#talos.resource.definitions.block.ProvisioningSpec)
+    - [SMARTAttribute](#talos.resource.definitions.block.SMARTAttribute)
+    - [SMARTStatusSpec](#talos.resource.definitions.block.SMARTStatusSpec)
     - [SwapStatusSpec](#talos.resource.definitions.block.SwapStatusSpec)
     - [SymlinkProvisioningSpec](#talos.resource.definitions.block.SymlinkProvisioningSpec)
     - [SymlinkSpec](#talos.resource.definitions.block.SymlinkSpec)
@@ -6703,6 +6705,54 @@ ProvisioningSpec is the spec for volume provisioning.
 | partition_spec | [PartitionSpec](#talos.resource.definitions.block.PartitionSpec) |  | PartitionSpec describes how to provision the volume (partition type). |
 | wave | [int64](#int64) |  | Provisioning wave for the volume.<br><br>Waves are processed sequentially - the volumes in the wave are only provisioned after the previous wave is done. |
 | filesystem_spec | [FilesystemSpec](#talos.resource.definitions.block.FilesystemSpec) |  | FilesystemSpec describes how to provision the volume (filesystem type). |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.SMARTAttribute"></a>
+
+### SMARTAttribute
+SMARTAttribute is a single ATA SMART attribute.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| id | [uint32](#uint32) |  |  |
+| name | [string](#string) |  |  |
+| current | [uint32](#uint32) |  |  |
+| worst | [uint32](#uint32) |  |  |
+| threshold | [uint32](#uint32) |  |  |
+| raw_value | [uint64](#uint64) |  |  |
+| failing | [bool](#bool) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.block.SMARTStatusSpec"></a>
+
+### SMARTStatusSpec
+SMARTStatusSpec is the spec for SMARTStatus resource.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| dev_path | [string](#string) |  | DevPath is the path to the block device, e.g. /dev/sda. |
+| device_type | [string](#string) |  | DeviceType is the SMART device type: "nvme", "sata" or "scsi". |
+| healthy | [bool](#bool) |  | Healthy is the overall SMART health verdict computed by Talos. |
+| message | [string](#string) |  | Message carries additional details, e.g. why the disk is unhealthy or that the probe was skipped because the disk was in standby. |
+| power_state | [string](#string) |  | PowerState reports the disk power mode observed during the last probe, e.g. "active", "idle" or "standby". SMART data is not refreshed while the disk is in standby (to avoid spinning it up). |
+| temperature | [uint32](#uint32) |  | Temperature is the disk temperature in degrees Celsius. |
+| power_on_hours | [uint64](#uint64) |  |  |
+| power_cycles | [uint64](#uint64) |  |  |
+| percent_used | [uint32](#uint32) |  | NVMe-specific fields. |
+| available_spare | [uint32](#uint32) |  |  |
+| critical_warning | [uint32](#uint32) |  |  |
+| media_errors | [uint64](#uint64) |  |  |
+| attributes | [SMARTAttribute](#talos.resource.definitions.block.SMARTAttribute) | repeated | Attributes is the raw ATA SMART attribute table (empty for NVMe/SCSI). |
 
 
 

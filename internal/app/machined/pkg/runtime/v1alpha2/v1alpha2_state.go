@@ -107,6 +107,7 @@ func NewState() (*State, error) {
 		&block.Disk{},
 		&block.MountRequest{},
 		&block.MountStatus{},
+		&block.SMARTStatus{},
 		&block.SwapStatus{},
 		&block.Symlink{},
 		&block.SystemDisk{},
