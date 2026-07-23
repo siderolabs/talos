@@ -96,9 +96,12 @@ func (suite *ControlPlaneStaticPodSuite) TestEtcdUnhealthyPreservesStaticPods() 
 		return nil
 	})
 
+	ctx := suite.Ctx()
+	st := suite.State()
+
 	for _, id := range staticPodIDs {
 		suite.Never(func() bool {
-			_, err := suite.State().Get(suite.Ctx(), k8s.NewStaticPod(k8s.NamespaceName, id).Metadata())
+			_, err := st.Get(ctx, k8s.NewStaticPod(k8s.NamespaceName, id).Metadata())
 
 			return state.IsNotFoundError(err)
 		}, 500*time.Millisecond, 10*time.Millisecond)
