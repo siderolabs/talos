@@ -92,12 +92,9 @@ func (i *Imager) outISO(ctx context.Context, path string, report *reporter.Repor
 
 	scratchSpace := filepath.Join(i.tempDir, "iso")
 
-	var (
-		err                error
-		zeroContainerAsset profile.ContainerAsset
-	)
+	var err error
 
-	if i.prof.Input.ImageCache != zeroContainerAsset {
+	if i.prof.Input.ImageCache.IsSet() {
 		if err := os.MkdirAll(filepath.Join(scratchSpace, "imagecache"), 0o755); err != nil {
 			return xerrors.NewTaggedf[IOTag]("%w", err)
 		}
@@ -347,8 +344,6 @@ func (i *Imager) prepareEnrollmentDBs(signer pesign.CertificateSigner) (pkPath, 
 
 //nolint:gocyclo
 func (i *Imager) buildImage(ctx context.Context, path string, printf func(string, ...any)) error {
-	var zeroContainerAsset profile.ContainerAsset
-
 	cmdline := procfs.NewCmdline(i.cmdline)
 
 	scratchSpace := filepath.Join(i.tempDir, "image")
@@ -410,7 +405,7 @@ func (i *Imager) buildImage(ctx context.Context, path string, printf func(string
 		opts.SignatureKeyPath = db
 	}
 
-	if i.prof.Input.ImageCache != zeroContainerAsset {
+	if i.prof.Input.ImageCache.IsSet() {
 		imageCacheDir := filepath.Join(i.tempDir, "imagecache")
 
 		if err := os.MkdirAll(imageCacheDir, 0o755); err != nil {
