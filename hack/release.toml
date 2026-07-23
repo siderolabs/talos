@@ -333,6 +333,20 @@ This feature allows for selective wiping of logical volumes, volume groups, and 
 With `talosctl wipe lv/vg/pv <name>`, users can wipe LVM metadata from a specific logical volume, volume group, or physical volume.
 """
 
+    [notes.volume_wipe]
+        title = "System Volume Wipe"
+        description = """\
+Talos now supports wiping system volumes by their volume ID with the new `talosctl wipe volume <ID>` command
+(e.g. `talosctl wipe volume EPHEMERAL`).
+
+By default the volume is wiped immediately; a volume which is currently in use cannot be wiped live, so use
+`--on-reboot` to stage the wipe. A staged wipe is recorded and applied early on the next boot, before the
+volume manager provisions volumes, and the volume is re-provisioned cleanly afterwards.
+
+This can be combined with `talosctl apply-config --staged` to reshape system volumes across a reboot, for
+example splitting the monolithic EPHEMERAL volume into sub-volumes.
+"""
+
     [notes.lvm_volume_group]
         title = "LVM Volume Group Creation"
         description = """\

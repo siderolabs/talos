@@ -4024,6 +4024,45 @@ talosctl wipe vg <name> [flags]
 
 * [talosctl wipe](#talosctl-wipe)	 - Wipe block device or volumes
 
+## talosctl wipe volume
+
+Wipe a system volume
+
+### Synopsis
+
+Wipe one or more system volumes by their volume ID (e.g. EPHEMERAL, STATE).
+
+By default the volume is wiped immediately; a volume which is currently in use
+cannot be wiped live, use --on-reboot to stage the wipe for the next boot.
+
+```
+talosctl wipe volume <volume ID>... [flags]
+```
+
+### Options
+
+```
+      --cert-fingerprint strings   list of server certificate fingerprints to accept (defaults to no check, only used with --insecure flag)
+  -h, --help                       help for volume
+  -i, --insecure                   use the insecure (encrypted with no auth) maintenance service
+      --on-reboot                  stage the wipe to happen on the next boot instead of immediately
+```
+
+### Options inherited from parent commands
+
+```
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
+```
+
+### SEE ALSO
+
+* [talosctl wipe](#talosctl-wipe)	 - Wipe block device or volumes
+
 ## talosctl wipe
 
 Wipe block device or volumes
@@ -4048,6 +4087,7 @@ Wipe block device or volumes
 * [talosctl wipe md](#talosctl-wipe-md)	 - Destroy an MD (software RAID) array
 * [talosctl wipe pv](#talosctl-wipe-pv)	 - Remove an LVM physical volume label
 * [talosctl wipe vg](#talosctl-wipe-vg)	 - Remove an LVM volume group (cascades to its LVs)
+* [talosctl wipe volume](#talosctl-wipe-volume)	 - Wipe a system volume
 
 ## talosctl
 

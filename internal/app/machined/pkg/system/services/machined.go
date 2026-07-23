@@ -111,6 +111,8 @@ var rules = map[string]role.Set{
 	"/machine.MachineService/SystemStat":                  role.MakeSet(role.Admin, role.Operator, role.Reader),
 	"/machine.MachineService/Upgrade":                     role.MakeSet(role.Admin),
 	"/machine.MachineService/Version":                     role.MakeSet(role.Admin, role.Operator, role.Reader),
+	"/machine.MachineService/VolumeWipe":                  role.MakeSet(role.Admin),
+	"/machine.MachineService/StageVolumeWipe":             role.MakeSet(role.Admin),
 
 	// per-type authorization is handled by the service itself
 	"/cosi.resource.State/Create":             role.MakeSet(role.Admin),

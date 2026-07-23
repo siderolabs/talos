@@ -381,6 +381,12 @@ message VolumeTrimScheduleSpec {
   google.protobuf.Timestamp next_trim = 3;
 }
 
+// VolumeWipeStatusSpec is the spec for VolumeWipeStatus resource.
+message VolumeWipeStatusSpec {
+  // Ready indicates whether the volume wiping has completed successfully.
+  bool ready = 1;
+}
+
 // ZswapStatusSpec is the spec for ZswapStatus resource.
 message ZswapStatusSpec {
   uint64 total_size_bytes = 1;

@@ -674,12 +674,13 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 		}
 	}
 
-	if len(in.GetSystemPartitionsToWipe()) > 0 {
+	systemPartitionsToWipe := in.GetSystemPartitionsToWipe()
+	if len(systemPartitionsToWipe) > 0 {
 		if in.Mode == machine.ResetRequest_USER_DISKS {
 			return nil, errors.New("reset failed: invalid input, wipe mode USER_DISKS doesn't support SystemPartitionsToWipe parameter")
 		}
 
-		for _, spec := range in.GetSystemPartitionsToWipe() {
+		for _, spec := range systemPartitionsToWipe {
 			volumeStatus, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, s.Controller.Runtime().State().V1Alpha2().Resources(), spec.Label)
 			if err != nil {
 				return nil, fmt.Errorf("failed to get volume status with label %q: %w", spec.Label, err)
@@ -723,6 +724,49 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 	}
 
 	return reply, nil
+}
+
+// VolumeWipe wipes one or more system volumes, either immediately or staged for the next boot.
+func (s *Server) VolumeWipe(ctx context.Context, in *machine.VolumeWipeRequest) (*machine.VolumeWipeResponse, error) {
+	if s.Controller.Runtime().State().Platform().Mode().IsAgent() {
+		return nil, status.Error(codes.Unimplemented, "API is not implemented in agent mode")
+	}
+
+	roles := authz.GetRoles(ctx)
+	inMaintenance := !s.Controller.Runtime().ConfigCompleteForBoot()
+
+	if !inMaintenance && !roles.Includes(role.Admin) {
+		return nil, authz.ErrNotAuthorized
+	}
+
+	if len(in.GetVolumeIds()) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "no volume IDs specified")
+	}
+
+	volumeStatuses, err := system.ResolveSystemVolumeStatuses(ctx, s.Controller.Runtime().State().V1Alpha2().Resources(), in.GetVolumeIds())
+	if err != nil {
+		return nil, err
+	}
+
+	if in.GetOnReboot() {
+		if err := system.WipeVolumesOnReboot(ctx, s.Controller, volumeStatuses); err != nil {
+			return nil, err
+		}
+	} else {
+		// an immediate wipe of a mounted (in-use) volume would destroy the live filesystem
+		// (e.g. wiping EPHEMERAL out from under a running /var); reject it and steer to --on-reboot.
+		if err := system.AssertVolumesNotMounted(ctx, s.Controller, in.GetVolumeIds()); err != nil {
+			return nil, err
+		}
+
+		if err := system.WipeVolumesNow(ctx, s.Controller, volumeStatuses); err != nil {
+			return nil, err
+		}
+	}
+
+	return &machine.VolumeWipeResponse{
+		Messages: []*machine.VolumeWipe{{}},
+	}, nil
 }
 
 // ServiceList returns list of the registered services and their status.
