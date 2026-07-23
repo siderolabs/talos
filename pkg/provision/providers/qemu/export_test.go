@@ -4,10 +4,25 @@
 
 package qemu
 
+import (
+	"context"
+	"net"
+)
+
 // FabricDeviceForTest exposes fabric device argument construction for tests.
 func FabricDeviceForTest(clos bool, index int, mac string, mtu int) string {
 	return fabricDevice(&LaunchConfig{
 		CLOSNoNet0: clos,
 		Network:    networkConfig{networkConfigBase: networkConfigBase{MTU: mtu}},
 	}, index, FabricUplink{mac: mac})
+}
+
+// APIPortAllocatorForTest exposes apiPortAllocator for tests.
+type APIPortAllocatorForTest struct {
+	allocator apiPortAllocator
+}
+
+// Allocate reserves an API port for tests.
+func (allocator *APIPortAllocatorForTest) Allocate(ctx context.Context, host string) (*net.TCPAddr, error) {
+	return allocator.allocator.allocate(ctx, host)
 }

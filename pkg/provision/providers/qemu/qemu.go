@@ -24,12 +24,14 @@ import (
 
 type provisioner struct {
 	vm.Provisioner
+
+	apiPorts apiPortAllocator
 }
 
 // NewProvisioner initializes qemu provisioner.
 func NewProvisioner(ctx context.Context) (provision.Provisioner, error) {
 	p := &provisioner{
-		vm.Provisioner{
+		Provisioner: vm.Provisioner{
 			Name: "qemu",
 		},
 	}

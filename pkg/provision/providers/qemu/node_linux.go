@@ -12,10 +12,5 @@ import (
 )
 
 func (p *provisioner) findAPIBindAddrs(ctx context.Context, clusterReq provision.ClusterRequest) (*net.TCPAddr, error) {
-	l, err := (&net.ListenConfig{}).Listen(ctx, "tcp", net.JoinHostPort(clusterReq.Network.GatewayAddrs[0].String(), "0"))
-	if err != nil {
-		return nil, err
-	}
-
-	return l.Addr().(*net.TCPAddr), l.Close()
+	return p.apiPorts.allocate(ctx, clusterReq.Network.GatewayAddrs[0].String())
 }
