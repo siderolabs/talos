@@ -23,6 +23,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"go.uber.org/zap/zaptest"
+	"go.uber.org/zap/zaptest/observer"
 	"golang.org/x/sys/unix"
 	"golang.zx2c4.com/wireguard/wgctrl/wgtypes"
 
@@ -36,6 +40,8 @@ import (
 
 type LinkSpecSuite struct {
 	ctest.DefaultSuite
+
+	observedLogs *observer.ObservedLogs
 }
 
 func (suite *LinkSpecSuite) uniqueDummyInterface() string {
@@ -572,6 +578,14 @@ func (suite *LinkSpecSuite) TestBond8023ad() {
 		}
 	})
 
+	for _, entry := range suite.observedLogs.FilterMessage("controller failed").All() {
+		suite.Require().NotContains(fmt.Sprint(entry.ContextMap()["error"]), bondName)
+	}
+
+	for _, entry := range suite.observedLogs.FilterMessage("updating bond settings").All() {
+		suite.Require().NotEqual(bondName, entry.ContextMap()["link"])
+	}
+
 	// teardown the links
 	for _, r := range append(dummies, bond) {
 		suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), r.Metadata()))
@@ -867,8 +881,13 @@ func TestLinkSpecSuite(t *testing.T) {
 		t.Skip("requires root")
 	}
 
+	observerCore, observedLogs := observer.New(zap.DebugLevel)
+	logger := zap.New(zapcore.NewTee(zaptest.NewLogger(t).Core(), observerCore))
+
 	suite.Run(t, &LinkSpecSuite{
+		observedLogs: observedLogs,
 		DefaultSuite: ctest.DefaultSuite{
+			Logger:  logger,
 			Timeout: 15 * time.Second,
 			AfterSetup: func(suite *ctest.DefaultSuite) {
 				// create fake device ready status

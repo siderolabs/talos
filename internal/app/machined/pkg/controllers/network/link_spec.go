@@ -195,6 +195,19 @@ func findLink(links []rtnetlink.LinkMessage, name string, allowAliases bool) *rt
 	return nil
 }
 
+func rawLinkData(link *rtnetlink.LinkMessage) []byte {
+	if link == nil || link.Attributes == nil || link.Attributes.Info == nil || link.Attributes.Info.Data == nil {
+		return nil
+	}
+
+	linkData, ok := link.Attributes.Info.Data.(*rtnetlink.LinkData)
+	if !ok {
+		return nil
+	}
+
+	return linkData.Data
+}
+
 // syncLink syncs kernel state with the LinkSpec link.
 //
 // This method is really long, but it's hard to break it down in multiple pieces, are those pieces and steps are inter-dependent, so, instead,
@@ -253,14 +266,7 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 		}
 	case resource.PhaseRunning:
 		existing := findLink(*links, link.TypedSpec().Name, !link.TypedSpec().Logical) // allow aliases for physical links
-
-		var existingRawLinkData []byte
-
-		if existing != nil && existing.Attributes != nil && existing.Attributes.Info != nil && existing.Attributes.Info.Data != nil {
-			if existingLinkData, ok := existing.Attributes.Info.Data.(*rtnetlink.LinkData); ok {
-				existingRawLinkData = existingLinkData.Data
-			}
-		}
+		existingRawLinkData := rawLinkData(existing)
 
 		// check if type/kind matches for the existing logical link
 		if existing != nil && link.TypedSpec().Logical {
@@ -381,6 +387,13 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 				}
 			}
 
+			if link.TypedSpec().Kind == network.LinkKindBond {
+				data, err = networkadapter.BondMasterSpec(&link.TypedSpec().BondMaster).Encode()
+				if err != nil {
+					return fmt.Errorf("error encoding bond attributes for link %q: %w", link.TypedSpec().Name, err)
+				}
+			}
+
 			// vrf settings should be set on interface creation (parent + vrf settings)
 			if link.TypedSpec().VRFSlave.MasterName != "" {
 				master := findLink(*links, link.TypedSpec().VRFSlave.MasterName, false)
@@ -434,6 +447,8 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 			if existing == nil {
 				return fmt.Errorf("created link %q not found in the link list", link.TypedSpec().Name)
 			}
+
+			existingRawLinkData = rawLinkData(existing)
 		}
 
 		// sync bond settings
