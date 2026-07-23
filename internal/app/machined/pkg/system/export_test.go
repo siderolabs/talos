@@ -9,10 +9,17 @@ import (
 	"github.com/siderolabs/talos/pkg/conditions"
 )
 
+// Singleton exports the unexported singleton type so that tests can name it.
+type Singleton = singleton
+
 func NewServices(runtime runtime.Runtime) *singleton { //nolint:revive
 	return newServices(runtime)
 }
 
 func WaitForServiceWithInstance(instance *singleton, event StateEvent, service string) conditions.Condition {
-	return waitForService(instance, event, service)
+	return waitForService(instance, []StateEvent{event}, service)
+}
+
+func WaitForServiceAnyEventWithInstance(instance *singleton, events []StateEvent, service string) conditions.Condition {
+	return waitForService(instance, events, service)
 }

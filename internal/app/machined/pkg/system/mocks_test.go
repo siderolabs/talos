@@ -129,6 +129,30 @@ func (m *MockRunner) String() string {
 	return "MockRunner()"
 }
 
+// MockFinishingRunner models a one-shot service: it runs to completion right away,
+// and it never reports events.StateRunning, so the service is never 'up'.
+type MockFinishingRunner struct{}
+
+func (MockFinishingRunner) Open() error {
+	return nil
+}
+
+func (MockFinishingRunner) Close() error {
+	return nil
+}
+
+func (MockFinishingRunner) Run(events.Recorder, pid.Recorder) error {
+	return nil
+}
+
+func (MockFinishingRunner) Stop() error {
+	return nil
+}
+
+func (MockFinishingRunner) String() string {
+	return "MockFinishingRunner()"
+}
+
 type MockCondition struct {
 	done chan struct{}
 	desc string
