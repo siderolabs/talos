@@ -1,4 +1,4 @@
-version = 3
+version = 4
 
 [plugins."io.containerd.cri.v1.images"]
   discard_unpacked_layers = true
