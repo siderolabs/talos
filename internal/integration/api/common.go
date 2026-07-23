@@ -266,7 +266,7 @@ func (suite *CommonSuite) TestBaseOCISpec() {
 
 	suite.PatchMachineConfig(nodeCtx, ociRuntimeOverride)
 
-	ts := suite.LatestServiceEventTimestamp(suite.ctx, "cri", node)
+	ts := suite.LatestServiceEventTimestamp(suite.ctx, node, "cri")
 
 	suite.AssertServiceEventsInOrder(suite.ctx, node, "cri", ts, []string{
 		"Stopping",
@@ -300,7 +300,7 @@ func (suite *CommonSuite) TestBaseOCISpec() {
 
 	suite.RemoveMachineConfigDocuments(nodeCtx, criconfig.CRIBaseRuntimeSpecConfigKind)
 
-	ts = suite.LatestServiceEventTimestamp(suite.ctx, "cri", node)
+	ts = suite.LatestServiceEventTimestamp(suite.ctx, node, "cri")
 
 	suite.AssertServiceEventsInOrder(suite.ctx, node, "cri", ts, []string{
 		"Stopping",

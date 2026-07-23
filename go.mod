@@ -162,7 +162,7 @@ require (
 	github.com/siderolabs/net v0.4.0
 	github.com/siderolabs/proto-codec v0.1.4
 	github.com/siderolabs/siderolink v0.3.16
-	github.com/siderolabs/talos/pkg/machinery v1.14.0-alpha.2
+	github.com/siderolabs/talos/pkg/machinery v1.14.0-beta.0
 	github.com/sigstore/cosign/v3 v3.1.2
 	github.com/sigstore/sigstore v1.10.8
 	github.com/sigstore/sigstore-go v1.2.2

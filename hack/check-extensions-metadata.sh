@@ -9,7 +9,7 @@ TALOS_PKGS=$(cat pkg/machinery/gendata/data/pkgs)
 TALOS_TOOLS=$(cat pkg/machinery/gendata/data/tools)
 TAG=$(cat pkg/machinery/gendata/data/tag)
 
-if [[ "$TAG" =~ -alpha ]]; then
+if [[ "$TAG" =~ -(alpha|beta) ]]; then
 	EXTENSIONS_BRANCH="main"
 else
 	MINOR=$(echo "$TAG" | sed -E 's/^v([0-9]+\.[0-9]+)\..*/\1/')
