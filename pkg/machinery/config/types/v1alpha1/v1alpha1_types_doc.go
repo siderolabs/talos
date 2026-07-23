@@ -441,13 +441,7 @@ func (FeaturesConfig) Doc() *encoder.Doc {
 		Fields: []encoder.Doc{
 			{},
 			{},
-			{
-				Name:        "kubernetesTalosAPIAccess",
-				Type:        "KubernetesTalosAPIAccessConfig",
-				Note:        "",
-				Description: "Configure Talos API access from Kubernetes pods.\n\nThis feature is disabled if the feature config is not specified.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Configure Talos API access from Kubernetes pods." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
+			{},
 			{},
 			{
 				Name:        "diskQuotaSupport",
@@ -470,49 +464,6 @@ func (FeaturesConfig) Doc() *encoder.Doc {
 	}
 
 	doc.AddExample("", machineFeaturesExample())
-
-	doc.Fields[2].AddExample("", kubernetesTalosAPIAccessConfigExample())
-
-	return doc
-}
-
-func (KubernetesTalosAPIAccessConfig) Doc() *encoder.Doc {
-	doc := &encoder.Doc{
-		Type:        "KubernetesTalosAPIAccessConfig",
-		Comments:    [3]string{"" /* encoder.HeadComment */, "KubernetesTalosAPIAccessConfig describes the configuration for the Talos API access from Kubernetes pods." /* encoder.LineComment */, "" /* encoder.FootComment */},
-		Description: "KubernetesTalosAPIAccessConfig describes the configuration for the Talos API access from Kubernetes pods.",
-		AppearsIn: []encoder.Appearance{
-			{
-				TypeName:  "FeaturesConfig",
-				FieldName: "kubernetesTalosAPIAccess",
-			},
-		},
-		Fields: []encoder.Doc{
-			{
-				Name:        "enabled",
-				Type:        "bool",
-				Note:        "",
-				Description: "Enable Talos API access from Kubernetes pods.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable Talos API access from Kubernetes pods." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "allowedRoles",
-				Type:        "[]string",
-				Note:        "",
-				Description: "The list of Talos API roles which can be granted for access from Kubernetes pods.\n\nEmpty list means that no roles can be granted, so access is blocked.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The list of Talos API roles which can be granted for access from Kubernetes pods." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-			{
-				Name:        "allowedKubernetesNamespaces",
-				Type:        "[]string",
-				Note:        "",
-				Description: "The list of Kubernetes namespaces Talos API access is available from.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "The list of Kubernetes namespaces Talos API access is available from." /* encoder.LineComment */, "" /* encoder.FootComment */},
-			},
-		},
-	}
-
-	doc.AddExample("", kubernetesTalosAPIAccessConfigExample())
 
 	return doc
 }
@@ -603,7 +554,6 @@ func GetFileDoc() *encoder.FileDoc {
 			ExternalCloudProviderConfig{}.Doc(),
 			AdminKubeconfigConfig{}.Doc(),
 			FeaturesConfig{}.Doc(),
-			KubernetesTalosAPIAccessConfig{}.Doc(),
 			LoggingConfig{}.Doc(),
 			LoggingDestination{}.Doc(),
 		},

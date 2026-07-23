@@ -7,14 +7,8 @@ package v1alpha1
 import (
 	"github.com/siderolabs/go-pointer"
 
-	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 )
-
-// KubernetesTalosAPIAccess implements config.Features interface.
-func (f *FeaturesConfig) KubernetesTalosAPIAccess() config.KubernetesTalosAPIAccess {
-	return f.KubernetesTalosAPIAccessConfig
-}
 
 // DiskQuotaSupportEnabled implements config.Features interface.
 func (f *FeaturesConfig) DiskQuotaSupportEnabled() bool {

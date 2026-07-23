@@ -1131,6 +1131,38 @@ func (KubeStaticPodConfigV1Alpha1) Doc() *encoder.Doc {
 	return doc
 }
 
+func (KubeTalosAPIAccessConfigV1Alpha1) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "KubeTalosAPIAccessConfig",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "KubeTalosAPIAccessConfig configures access to Talos API from Kubernetes pods via service accounts." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "KubeTalosAPIAccessConfig configures access to Talos API from Kubernetes pods via service accounts.",
+		Fields: []encoder.Doc{
+			{
+				Type:   "Meta",
+				Inline: true,
+			},
+			{
+				Name:        "allowedRoles",
+				Type:        "[]string",
+				Note:        "",
+				Description: "The list of Talos API roles which can be granted for access from Kubernetes pods.\n\nEmpty list means that no roles can be granted, so access is blocked.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The list of Talos API roles which can be granted for access from Kubernetes pods." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "allowedKubernetesNamespaces",
+				Type:        "[]string",
+				Note:        "",
+				Description: "The list of Kubernetes namespaces Talos API access is available from.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "The list of Kubernetes namespaces Talos API access is available from." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
+
+	doc.AddExample("", exampleKubeTalosAPIAccessConfigV1Alpha1())
+
+	return doc
+}
+
 // GetFileDoc returns documentation for the file k8s_doc.go.
 func GetFileDoc() *encoder.FileDoc {
 	return &encoder.FileDoc{
@@ -1164,6 +1196,7 @@ func GetFileDoc() *encoder.FileDoc {
 			IssuerServiceAccountConfig{}.Doc(),
 			AcceptedServiceAccountConfig{}.Doc(),
 			KubeStaticPodConfigV1Alpha1{}.Doc(),
+			KubeTalosAPIAccessConfigV1Alpha1{}.Doc(),
 		},
 	}
 }

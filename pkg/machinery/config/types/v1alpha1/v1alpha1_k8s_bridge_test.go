@@ -22,6 +22,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/role"
 )
 
 // These tests ensure that v1alpha1 types properly implement new-style config interfaces.
@@ -2110,6 +2111,172 @@ func TestKubePrismConfigBridge(t *testing.T) {
 
 			assert.Equal(t, test.expectPort, kubePrism.Port())
 			assert.Equal(t, test.expectTLSServerName, kubePrism.TLSServerName())
+		})
+	}
+}
+
+func TestKubeTalosAPIAccessConfigBridge(t *testing.T) {
+	t.Parallel()
+
+	for _, test := range []struct {
+		name string
+
+		cfg func(*testing.T) config.Config
+
+		expectNil bool
+
+		expectAllowedRoles      []string
+		expectAllowedNamespaces []string
+	}{
+		{
+			name: "v1alpha1 empty",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{})
+			},
+
+			expectNil: true,
+		},
+		{
+			name: "v1alpha1 without features",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{},
+				})
+			},
+
+			expectNil: true,
+		},
+		{
+			name: "v1alpha1 without Talos API access",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{
+						MachineFeatures: &v1alpha1.FeaturesConfig{},
+					},
+				})
+			},
+
+			expectNil: true,
+		},
+		{
+			name: "v1alpha1 Talos API access disabled",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{
+						MachineFeatures: &v1alpha1.FeaturesConfig{
+							KubernetesTalosAPIAccessConfig: &v1alpha1.KubernetesTalosAPIAccessConfig{ //nolint:staticcheck // testing deprecated field
+								AccessEnabled:                     new(false),
+								AccessAllowedRoles:                []string{string(role.Reader)},
+								AccessAllowedKubernetesNamespaces: []string{"kube-system"},
+							},
+						},
+					},
+				})
+			},
+
+			expectNil: true,
+		},
+		{
+			name: "v1alpha1 Talos API access enabled",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{
+						MachineFeatures: &v1alpha1.FeaturesConfig{
+							KubernetesTalosAPIAccessConfig: &v1alpha1.KubernetesTalosAPIAccessConfig{ //nolint:staticcheck // testing deprecated field
+								AccessEnabled:                     new(true),
+								AccessAllowedRoles:                []string{string(role.Reader), string(role.Operator)},
+								AccessAllowedKubernetesNamespaces: []string{"kube-system", "talos-system"},
+							},
+						},
+					},
+				})
+			},
+
+			expectAllowedRoles:      []string{"os:reader", "os:operator"},
+			expectAllowedNamespaces: []string{"kube-system", "talos-system"},
+		},
+		{
+			name: "v1alpha1 Talos API access enabled, no roles",
+
+			cfg: func(*testing.T) config.Config {
+				return container.NewV1Alpha1(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{
+						MachineFeatures: &v1alpha1.FeaturesConfig{
+							KubernetesTalosAPIAccessConfig: &v1alpha1.KubernetesTalosAPIAccessConfig{ //nolint:staticcheck // testing deprecated field
+								AccessEnabled: new(true),
+							},
+						},
+					},
+				})
+			},
+		},
+		{
+			name: "new style",
+
+			cfg: func(t *testing.T) config.Config {
+				ta := k8s.NewKubeTalosAPIAccessConfigV1Alpha1()
+				ta.AccessAllowedRoles = []string{string(role.Reader)}
+				ta.AccessAllowedKubernetesNamespaces = []string{"kube-system"}
+
+				c, err := container.New(ta)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectAllowedRoles:      []string{"os:reader"},
+			expectAllowedNamespaces: []string{"kube-system"},
+		},
+		{
+			name: "new style takes precedence",
+
+			cfg: func(t *testing.T) config.Config {
+				ta := k8s.NewKubeTalosAPIAccessConfigV1Alpha1()
+				ta.AccessAllowedRoles = []string{string(role.Reader)}
+				ta.AccessAllowedKubernetesNamespaces = []string{"kube-system"}
+
+				c, err := container.New(&v1alpha1.Config{
+					MachineConfig: &v1alpha1.MachineConfig{
+						MachineFeatures: &v1alpha1.FeaturesConfig{
+							KubernetesTalosAPIAccessConfig: &v1alpha1.KubernetesTalosAPIAccessConfig{ //nolint:staticcheck // testing deprecated field
+								AccessEnabled:                     new(true),
+								AccessAllowedRoles:                []string{string(role.Admin)},
+								AccessAllowedKubernetesNamespaces: []string{"default"},
+							},
+						},
+					},
+				}, ta)
+				require.NoError(t, err)
+
+				return c
+			},
+
+			expectAllowedRoles:      []string{"os:reader"},
+			expectAllowedNamespaces: []string{"kube-system"},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			cfg := test.cfg(t)
+
+			talosAPIAccess := cfg.K8sTalosAPIAccessConfig()
+
+			if test.expectNil {
+				assert.Nil(t, talosAPIAccess)
+
+				return
+			}
+
+			require.NotNil(t, talosAPIAccess)
+
+			assert.Equal(t, test.expectAllowedRoles, talosAPIAccess.AllowedRoles())
+			assert.Equal(t, test.expectAllowedNamespaces, talosAPIAccess.AllowedKubernetesNamespaces())
 		})
 	}
 }

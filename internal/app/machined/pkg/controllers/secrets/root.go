@@ -210,7 +210,7 @@ func NewRootOSController() *RootOSController {
 					}
 				}
 
-				if cfgProvider.Machine().Features().KubernetesTalosAPIAccess().Enabled() {
+				if cfgProvider.K8sTalosAPIAccessConfig() != nil {
 					// add Kubernetes Talos service name to the list of SANs
 					osSecrets.CertSANDNSNames = append(
 						osSecrets.CertSANDNSNames,

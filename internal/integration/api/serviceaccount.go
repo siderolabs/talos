@@ -20,11 +20,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/siderolabs/talos/internal/integration/base"
-	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/client/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -394,28 +393,23 @@ func (suite *ServiceAccountSuite) configureAPIAccess(
 	for _, ip := range controlPlaneIPs {
 		nodeCtx := client.WithNode(suite.ctx, ip)
 
-		nodeConfig, err := suite.ReadConfigFromNode(nodeCtx)
-		if err != nil {
-			return err
-		}
+		var patch any
 
-		bytes := suite.PatchV1Alpha1Config(nodeConfig, func(nodeConfigRaw *v1alpha1.Config) {
-			accessConfig := v1alpha1.KubernetesTalosAPIAccessConfig{
-				AccessEnabled:                     new(enabled),
-				AccessAllowedRoles:                allowedRoles,
-				AccessAllowedKubernetesNamespaces: allowedNamespaces,
+		if !enabled {
+			patch = map[string]any{
+				"apiVersion": "v1alpha1",
+				"kind":       k8s.KubeTalosAPIAccessConfig,
+				"$patch":     "delete",
 			}
+		} else {
+			cfg := k8s.NewKubeTalosAPIAccessConfigV1Alpha1()
+			cfg.AccessAllowedKubernetesNamespaces = allowedNamespaces
+			cfg.AccessAllowedRoles = allowedRoles
 
-			nodeConfigRaw.MachineConfig.MachineFeatures.KubernetesTalosAPIAccessConfig = &accessConfig
-		})
-
-		_, err = suite.Client.ApplyConfiguration(nodeCtx, &machineapi.ApplyConfigurationRequest{
-			Data: bytes,
-			Mode: machineapi.ApplyConfigurationRequest_NO_REBOOT,
-		})
-		if err != nil {
-			return err
+			patch = cfg
 		}
+
+		suite.PatchMachineConfig(nodeCtx, patch)
 	}
 
 	if enabled { // wait for CRD, Talos endpoint service, and at least one ready endpoint

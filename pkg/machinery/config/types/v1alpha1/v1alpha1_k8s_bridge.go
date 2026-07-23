@@ -651,3 +651,17 @@ func (c *Config) K8sKubePrismConfig() config.K8sKubePrismConfig {
 
 	return kubePrismConfig
 }
+
+// K8sTalosAPIAccessConfig implements the config.Config interface.
+func (c *Config) K8sTalosAPIAccessConfig() config.K8sTalosAPIAccessConfig {
+	if c.MachineConfig == nil || c.MachineConfig.MachineFeatures == nil {
+		return nil
+	}
+
+	talosAPIAccessConfig := c.MachineConfig.MachineFeatures.KubernetesTalosAPIAccessConfig
+	if talosAPIAccessConfig == nil || !talosAPIAccessConfig.Enabled() {
+		return nil
+	}
+
+	return talosAPIAccessConfig
+}

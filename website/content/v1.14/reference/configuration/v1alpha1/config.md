@@ -63,16 +63,6 @@ certSANs:
 |`features` |<a href="#Config.machine.features">FeaturesConfig</a> |Features describe individual Talos features that can be switched on or off. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 features:
     diskQuotaSupport: true # Enable XFS project quota support for EPHEMERAL partition and user disks.
-
-    # # Configure Talos API access from Kubernetes pods.
-    # kubernetesTalosAPIAccess:
-    #     enabled: true # Enable Talos API access from Kubernetes pods.
-    #     # The list of Talos API roles which can be granted for access from Kubernetes pods.
-    #     allowedRoles:
-    #         - os:reader
-    #     # The list of Kubernetes namespaces Talos API access is available from.
-    #     allowedKubernetesNamespaces:
-    #         - kube-system
 {{< /highlight >}}</details> | |
 |`logging` |<a href="#Config.machine.logging">LoggingConfig</a> |Configures the logging system. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 logging:
@@ -111,64 +101,13 @@ FeaturesConfig describes individual Talos features that can be switched on or of
 machine:
     features:
         diskQuotaSupport: true # Enable XFS project quota support for EPHEMERAL partition and user disks.
-
-        # # Configure Talos API access from Kubernetes pods.
-        # kubernetesTalosAPIAccess:
-        #     enabled: true # Enable Talos API access from Kubernetes pods.
-        #     # The list of Talos API roles which can be granted for access from Kubernetes pods.
-        #     allowedRoles:
-        #         - os:reader
-        #     # The list of Kubernetes namespaces Talos API access is available from.
-        #     allowedKubernetesNamespaces:
-        #         - kube-system
 {{< /highlight >}}
 
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`kubernetesTalosAPIAccess` |<a href="#Config.machine.features.kubernetesTalosAPIAccess">KubernetesTalosAPIAccessConfig</a> |Configure Talos API access from Kubernetes pods.<br><br>This feature is disabled if the feature config is not specified. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
-kubernetesTalosAPIAccess:
-    enabled: true # Enable Talos API access from Kubernetes pods.
-    # The list of Talos API roles which can be granted for access from Kubernetes pods.
-    allowedRoles:
-        - os:reader
-    # The list of Kubernetes namespaces Talos API access is available from.
-    allowedKubernetesNamespaces:
-        - kube-system
-{{< /highlight >}}</details> | |
 |`diskQuotaSupport` |bool |Enable XFS project quota support for EPHEMERAL partition and user disks.<br>Also enables kubelet tracking of ephemeral disk usage in the kubelet via quota.  | |
 |`nodeAddressSortAlgorithm` |string |Select the node address sort algorithm.<br>The 'v1' algorithm sorts addresses by the address itself.<br>The 'v2' algorithm prefers more specific prefixes.<br>If unset, defaults to 'v1'.  | |
-
-
-
-
-#### kubernetesTalosAPIAccess {#Config.machine.features.kubernetesTalosAPIAccess}
-
-KubernetesTalosAPIAccessConfig describes the configuration for the Talos API access from Kubernetes pods.
-
-
-
-{{< highlight yaml >}}
-machine:
-    features:
-        kubernetesTalosAPIAccess:
-            enabled: true # Enable Talos API access from Kubernetes pods.
-            # The list of Talos API roles which can be granted for access from Kubernetes pods.
-            allowedRoles:
-                - os:reader
-            # The list of Kubernetes namespaces Talos API access is available from.
-            allowedKubernetesNamespaces:
-                - kube-system
-{{< /highlight >}}
-
-
-| Field | Type | Description | Value(s) |
-|-------|------|-------------|----------|
-|`enabled` |bool |Enable Talos API access from Kubernetes pods.  | |
-|`allowedRoles` |[]string |The list of Talos API roles which can be granted for access from Kubernetes pods.<br><br>Empty list means that no roles can be granted, so access is blocked.  | |
-|`allowedKubernetesNamespaces` |[]string |The list of Kubernetes namespaces Talos API access is available from.  | |
-
-
 
 
 
