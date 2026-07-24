@@ -438,7 +438,7 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pkg/profile v1.7.0 // indirect
 	github.com/pkg/xattr v0.4.12 // indirect
-	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
+	github.com/planetscale/vtprotobuf v0.6.1-0.20260702190614-8ae5a48058df // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/pquerna/cachecontrol v0.0.0-20180517163645-1555304b9b35 // indirect
 	github.com/prometheus/client_golang v1.23.2 // indirect
@@ -483,13 +483,13 @@ require (
 	github.com/siderolabs/go-pointer v1.0.1 // indirect
 	github.com/siderolabs/go-retry v0.3.3 // indirect
 	github.com/siderolabs/importvet v0.2.0 // indirect
-	github.com/siderolabs/talos/tools/cloud-image-uploader v0.0.0-20260722162145-c68085286288 // indirect
-	github.com/siderolabs/talos/tools/docgen v0.0.0-20260722162145-c68085286288 // indirect
-	github.com/siderolabs/talos/tools/gotagsrewrite v0.0.0-20260722162145-c68085286288 // indirect
-	github.com/siderolabs/talos/tools/labeled-squashfs v0.0.0-20260722162145-c68085286288 // indirect
-	github.com/siderolabs/talos/tools/loglinter v0.0.0-20260722162145-c68085286288 // indirect
-	github.com/siderolabs/talos/tools/sbom-builder v0.0.0-20260722162145-c68085286288 // indirect
-	github.com/siderolabs/talos/tools/structprotogen v0.0.0-20260722162145-c68085286288 // indirect
+	github.com/siderolabs/talos/tools/cloud-image-uploader v0.0.0-20260724081549-644ecbc66c7c // indirect
+	github.com/siderolabs/talos/tools/docgen v0.0.0-20260724081549-644ecbc66c7c // indirect
+	github.com/siderolabs/talos/tools/gotagsrewrite v0.0.0-20260724081549-644ecbc66c7c // indirect
+	github.com/siderolabs/talos/tools/labeled-squashfs v0.0.0-20260723181104-6be2b138439b // indirect
+	github.com/siderolabs/talos/tools/loglinter v0.0.0-20260724081549-644ecbc66c7c // indirect
+	github.com/siderolabs/talos/tools/sbom-builder v0.0.0-20260724081549-644ecbc66c7c // indirect
+	github.com/siderolabs/talos/tools/structprotogen v0.0.0-20260724081549-644ecbc66c7c // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
 	github.com/sivchari/containedctx v1.0.3 // indirect
 	github.com/skeema/knownhosts v1.3.2 // indirect
@@ -583,7 +583,7 @@ require (
 	golang.org/x/vuln v1.6.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gonum.org/v1/gonum v0.17.0 // indirect
-	google.golang.org/api v0.289.0 // indirect
+	google.golang.org/api v0.290.0 // indirect
 	google.golang.org/genproto v0.0.0-20260713224248-f5fc221cf8c4 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260715232425-e75dac1f907d // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260715232425-e75dac1f907d // indirect
@@ -596,7 +596,7 @@ require (
 	gorm.io/gorm v1.31.2 // indirect
 	honnef.co/go/tools v0.7.0 // indirect
 	howett.net/plist v1.0.1 // indirect
-	k8s.io/code-generator v0.36.2 // indirect
+	k8s.io/code-generator v0.36.3 // indirect
 	k8s.io/gengo/v2 v2.0.0-20251215205346-5ee0d033ba5b // indirect
 	k8s.io/klog/v2 v2.140.0 // indirect
 	modernc.org/libc v1.74.1 // indirect
