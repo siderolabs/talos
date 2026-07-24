@@ -85,6 +85,13 @@ func (c *Config) DisableSearchDomain() bool {
 	return pointer.SafeDeref(c.MachineConfig.MachineNetwork.NetworkDisableSearchDomain)
 }
 
+// DisableDHCPSearchDomain implements config.NetworkResolverConfig interface.
+//
+// The legacy v1alpha1 machine config has no field for this; use the ResolverConfig document instead.
+func (c *Config) DisableDHCPSearchDomain() bool {
+	return false
+}
+
 // NetworkTimeSyncConfig implements config.NetworkTimeSyncConfig interface.
 func (c *Config) NetworkTimeSyncConfig() config.NetworkTimeSyncConfig {
 	if c.MachineConfig == nil || c.MachineConfig.MachineTime == nil {

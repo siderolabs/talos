@@ -61,6 +61,9 @@ type ResolverSpecSpec struct {
 	NameServers   []NameServerSpec `yaml:"nameServers,omitempty" protobuf:"4"`
 	ConfigLayer   ConfigLayer      `yaml:"layer" protobuf:"2"`
 	SearchDomains []string         `yaml:"searchDomains,omitempty" protobuf:"3"`
+	// DisableDHCPSearchDomains, when set on the machine configuration layer, drops search domains
+	// obtained from DHCP (operator layer) during merge.
+	DisableDHCPSearchDomains bool `yaml:"disableDHCPSearchDomains,omitempty" protobuf:"5"`
 }
 
 // NewResolverSpec initializes a ResolverSpec resource.

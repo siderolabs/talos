@@ -230,8 +230,9 @@ func (ctrl *ResolverConfigController) parseMachineConfiguration(cfgProvider talo
 
 	resolvers := cfgProvider.NetworkResolverConfig().Resolvers()
 	searchDomains := cfgProvider.NetworkResolverConfig().SearchDomains()
+	disableDHCP := cfgProvider.NetworkResolverConfig().DisableDHCPSearchDomain()
 
-	if len(resolvers) == 0 && len(searchDomains) == 0 {
+	if len(resolvers) == 0 && len(searchDomains) == 0 && !disableDHCP {
 		return spec, false
 	}
 
@@ -244,6 +245,7 @@ func (ctrl *ResolverConfigController) parseMachineConfiguration(cfgProvider talo
 	})
 
 	spec.SearchDomains = slices.Clone(searchDomains)
+	spec.DisableDHCPSearchDomains = disableDHCP
 	spec.ConfigLayer = network.ConfigMachineConfiguration
 
 	return spec, true

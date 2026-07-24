@@ -555,6 +555,10 @@ func (o *ResolverConfigV1Alpha1) DeepCopy() *ResolverConfigV1Alpha1 {
 		cp.ResolverSearchDomains.SearchDisableDefault = new(bool)
 		*cp.ResolverSearchDomains.SearchDisableDefault = *o.ResolverSearchDomains.SearchDisableDefault
 	}
+	if o.ResolverSearchDomains.SearchDisableDHCP != nil {
+		cp.ResolverSearchDomains.SearchDisableDHCP = new(bool)
+		*cp.ResolverSearchDomains.SearchDisableDHCP = *o.ResolverSearchDomains.SearchDisableDHCP
+	}
 	if o.ResolverHostDNS.HostDNSEnabled != nil {
 		cp.ResolverHostDNS.HostDNSEnabled = new(bool)
 		*cp.ResolverHostDNS.HostDNSEnabled = *o.ResolverHostDNS.HostDNSEnabled

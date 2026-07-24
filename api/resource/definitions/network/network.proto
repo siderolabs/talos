@@ -589,6 +589,9 @@ message ResolverSpecSpec {
   repeated string search_domains = 3;
   // NameServers is a list of DNS servers with additional configuration.
   repeated NameServerSpec name_servers = 4;
+  // DisableDHCPSearchDomains, when set on the machine configuration layer, drops search domains
+  // obtained from DHCP (operator layer) during merge.
+  bool disable_dhcp_search_domains = 5;
 }
 
 // ResolverStatusSpec describes DNS resolvers.

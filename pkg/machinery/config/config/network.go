@@ -125,6 +125,7 @@ type NetworkResolverConfig interface {
 	Resolvers() []NetworkResolver
 	SearchDomains() []string
 	DisableSearchDomain() bool
+	DisableDHCPSearchDomain() bool
 }
 
 // NetworkTimeSyncConfig defines the requirements for a config that pertains to time related

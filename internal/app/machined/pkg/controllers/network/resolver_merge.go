@@ -31,33 +31,39 @@ func NewResolverMergeController() controller.Controller {
 				return cmp.Compare(l.TypedSpec().ConfigLayer, r.TypedSpec().ConfigLayer)
 			})
 
+			// machine configuration may request dropping search domains obtained from DHCP (operator layer)
+			var disableDHCPSearchDomains bool
+
+			for res := range list.All() {
+				if spec := res.TypedSpec(); spec.ConfigLayer == network.ConfigMachineConfiguration && spec.DisableDHCPSearchDomains {
+					disableDHCPSearchDomains = true
+				}
+			}
+
 			// simply merge by layers, overriding with the next configuration layer
 			var final network.ResolverSpecSpec
 
 			for res := range list.All() {
 				spec := res.TypedSpec()
 
-				domainPos := 0
-
-				for _, domain := range spec.SearchDomains {
-					if !slices.Contains(final.SearchDomains, domain) {
-						final.SearchDomains = slices.Insert(final.SearchDomains, domainPos, domain)
-						domainPos++
-					}
-				}
-
 				switch spec.ConfigLayer { //nolint:exhaustive
 				case final.ConfigLayer:
 					// simply append server lists on the same layer
 					final.NameServers = append(final.NameServers, spec.NameServers...)
+
+					mergeSearchDomains(&final, spec, disableDHCPSearchDomains)
 				case network.ConfigMachineConfiguration:
 					// machine configuration overrides previous layers, but only when DNS servers are set
 					if len(spec.NameServers) > 0 {
 						final.NameServers = slices.Clone(spec.NameServers)
 					}
+
+					mergeSearchDomains(&final, spec, disableDHCPSearchDomains)
 				default:
 					// otherwise, do a smart merge across IPv4/IPv6
 					mergeNameServers(&final.NameServers, spec.NameServers)
+
+					mergeSearchDomains(&final, spec, disableDHCPSearchDomains)
 				}
 
 				final.ConfigLayer = spec.ConfigLayer
@@ -74,6 +80,23 @@ func NewResolverMergeController() controller.Controller {
 			return nil
 		},
 	)
+}
+
+// mergeSearchDomains appends search domains from spec into final, skipping DHCP (operator layer)
+// search domains when the machine configuration requested disabling them.
+func mergeSearchDomains(final *network.ResolverSpecSpec, spec *network.ResolverSpecSpec, disableDHCPSearchDomains bool) {
+	if disableDHCPSearchDomains && spec.ConfigLayer == network.ConfigOperator {
+		return
+	}
+
+	domainPos := 0
+
+	for _, domain := range spec.SearchDomains {
+		if !slices.Contains(final.SearchDomains, domain) {
+			final.SearchDomains = slices.Insert(final.SearchDomains, domainPos, domain)
+			domainPos++
+		}
+	}
 }
 
 func mergeNameServers(dst *[]network.NameServerSpec, src []network.NameServerSpec) {

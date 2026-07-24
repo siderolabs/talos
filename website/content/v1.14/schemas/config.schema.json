@@ -5044,9 +5044,9 @@
           },
           "type": "array",
           "title": "domains",
-          "description": "A list of search domains to be used for DNS resolution.\n\nSearch domains are appended to unqualified domain names during DNS resolution.\nFor example, if “example.com” is a search domain and a user tries to resolve\n“host”, the system will attempt to resolve “host.example.com”.\n\nThis overrides any search domains obtained via DHCP or platform configuration.\nThe default configuration derives the search domain from the hostname FQDN.\n",
-          "markdownDescription": "A list of search domains to be used for DNS resolution.\n\nSearch domains are appended to unqualified domain names during DNS resolution.\nFor example, if \"example.com\" is a search domain and a user tries to resolve\n\"host\", the system will attempt to resolve \"host.example.com\".\n\nThis overrides any search domains obtained via DHCP or platform configuration.\nThe default configuration derives the search domain from the hostname FQDN.",
-          "x-intellij-html-description": "\u003cp\u003eA list of search domains to be used for DNS resolution.\u003c/p\u003e\n\n\u003cp\u003eSearch domains are appended to unqualified domain names during DNS resolution.\nFor example, if \u0026ldquo;example.com\u0026rdquo; is a search domain and a user tries to resolve\n\u0026ldquo;host\u0026rdquo;, the system will attempt to resolve \u0026ldquo;host.example.com\u0026rdquo;.\u003c/p\u003e\n\n\u003cp\u003eThis overrides any search domains obtained via DHCP or platform configuration.\nThe default configuration derives the search domain from the hostname FQDN.\u003c/p\u003e\n"
+          "description": "A list of search domains to be used for DNS resolution.\n\nSearch domains are appended to unqualified domain names during DNS resolution.\nFor example, if “example.com” is a search domain and a user tries to resolve\n“host”, the system will attempt to resolve “host.example.com”.\n\nIf not empty, this overrides any search domains obtained via DHCP or platform configuration.\nThe default configuration derives the search domain from the hostname FQDN.\n",
+          "markdownDescription": "A list of search domains to be used for DNS resolution.\n\nSearch domains are appended to unqualified domain names during DNS resolution.\nFor example, if \"example.com\" is a search domain and a user tries to resolve\n\"host\", the system will attempt to resolve \"host.example.com\".\n\nIf not empty, this overrides any search domains obtained via DHCP or platform configuration.\nThe default configuration derives the search domain from the hostname FQDN.",
+          "x-intellij-html-description": "\u003cp\u003eA list of search domains to be used for DNS resolution.\u003c/p\u003e\n\n\u003cp\u003eSearch domains are appended to unqualified domain names during DNS resolution.\nFor example, if \u0026ldquo;example.com\u0026rdquo; is a search domain and a user tries to resolve\n\u0026ldquo;host\u0026rdquo;, the system will attempt to resolve \u0026ldquo;host.example.com\u0026rdquo;.\u003c/p\u003e\n\n\u003cp\u003eIf not empty, this overrides any search domains obtained via DHCP or platform configuration.\nThe default configuration derives the search domain from the hostname FQDN.\u003c/p\u003e\n"
         },
         "disableDefault": {
           "type": "boolean",
@@ -5054,6 +5054,13 @@
           "description": "Disable default search domain configuration from hostname FQDN.\n\nWhen set to true, the system will not derive search domains from the hostname FQDN.\nThis allows for a custom configuration of search domains without any defaults.\n",
           "markdownDescription": "Disable default search domain configuration from hostname FQDN.\n\nWhen set to true, the system will not derive search domains from the hostname FQDN.\nThis allows for a custom configuration of search domains without any defaults.",
           "x-intellij-html-description": "\u003cp\u003eDisable default search domain configuration from hostname FQDN.\u003c/p\u003e\n\n\u003cp\u003eWhen set to true, the system will not derive search domains from the hostname FQDN.\nThis allows for a custom configuration of search domains without any defaults.\u003c/p\u003e\n"
+        },
+        "disableDHCP": {
+          "type": "boolean",
+          "title": "disableDHCP",
+          "description": "Disable search domains obtained via DHCP.\n\nWhen set to true, search domains advertised by DHCP servers are not added to\n/etc/resolv.conf. Search domains configured explicitly in domains are still applied.\n",
+          "markdownDescription": "Disable search domains obtained via DHCP.\n\nWhen set to true, search domains advertised by DHCP servers are not added to\n`/etc/resolv.conf`. Search domains configured explicitly in `domains` are still applied.",
+          "x-intellij-html-description": "\u003cp\u003eDisable search domains obtained via DHCP.\u003c/p\u003e\n\n\u003cp\u003eWhen set to true, search domains advertised by DHCP servers are not added to\n\u003ccode\u003e/etc/resolv.conf\u003c/code\u003e. Search domains configured explicitly in \u003ccode\u003edomains\u003c/code\u003e are still applied.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

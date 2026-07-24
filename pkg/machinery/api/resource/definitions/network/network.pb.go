@@ -4235,9 +4235,12 @@ type ResolverSpecSpec struct {
 	ConfigLayer   enums.NetworkConfigLayer `protobuf:"varint,2,opt,name=config_layer,json=configLayer,proto3,enum=talos.resource.definitions.enums.NetworkConfigLayer" json:"config_layer,omitempty"`
 	SearchDomains []string                 `protobuf:"bytes,3,rep,name=search_domains,json=searchDomains,proto3" json:"search_domains,omitempty"`
 	// NameServers is a list of DNS servers with additional configuration.
-	NameServers   []*NameServerSpec `protobuf:"bytes,4,rep,name=name_servers,json=nameServers,proto3" json:"name_servers,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	NameServers []*NameServerSpec `protobuf:"bytes,4,rep,name=name_servers,json=nameServers,proto3" json:"name_servers,omitempty"`
+	// DisableDHCPSearchDomains, when set on the machine configuration layer, drops search domains
+	// obtained from DHCP (operator layer) during merge.
+	DisableDhcpSearchDomains bool `protobuf:"varint,5,opt,name=disable_dhcp_search_domains,json=disableDhcpSearchDomains,proto3" json:"disable_dhcp_search_domains,omitempty"`
+	unknownFields            protoimpl.UnknownFields
+	sizeCache                protoimpl.SizeCache
 }
 
 func (x *ResolverSpecSpec) Reset() {
@@ -4296,6 +4299,13 @@ func (x *ResolverSpecSpec) GetNameServers() []*NameServerSpec {
 		return x.NameServers
 	}
 	return nil
+}
+
+func (x *ResolverSpecSpec) GetDisableDhcpSearchDomains() bool {
+	if x != nil {
+		return x.DisableDhcpSearchDomains
+	}
+	return false
 }
 
 // ResolverStatusSpec describes DNS resolvers.
@@ -6221,13 +6231,14 @@ const file_resource_definitions_network_network_proto_rawDesc = "" +
 	"\x0fProbeStatusSpec\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1d\n" +
 	"\n" +
-	"last_error\x18\x02 \x01(\tR\tlastError\"\x99\x02\n" +
+	"last_error\x18\x02 \x01(\tR\tlastError\"\xd8\x02\n" +
 	"\x10ResolverSpecSpec\x12.\n" +
 	"\vdns_servers\x18\x01 \x03(\v2\r.common.NetIPR\n" +
 	"dnsServers\x12W\n" +
 	"\fconfig_layer\x18\x02 \x01(\x0e24.talos.resource.definitions.enums.NetworkConfigLayerR\vconfigLayer\x12%\n" +
 	"\x0esearch_domains\x18\x03 \x03(\tR\rsearchDomains\x12U\n" +
-	"\fname_servers\x18\x04 \x03(\v22.talos.resource.definitions.network.NameServerSpecR\vnameServers\"\xc2\x01\n" +
+	"\fname_servers\x18\x04 \x03(\v22.talos.resource.definitions.network.NameServerSpecR\vnameServers\x12=\n" +
+	"\x1bdisable_dhcp_search_domains\x18\x05 \x01(\bR\x18disableDhcpSearchDomains\"\xc2\x01\n" +
 	"\x12ResolverStatusSpec\x12.\n" +
 	"\vdns_servers\x18\x01 \x03(\v2\r.common.NetIPR\n" +
 	"dnsServers\x12%\n" +
