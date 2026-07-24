@@ -14,12 +14,20 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"go.uber.org/zap"
+
+	"github.com/siderolabs/talos/pkg/machinery/resources"
 )
 
 type genericMergeFunc[T typed.DeepCopyable[T], E typed.Extension] func(logger *zap.Logger, in safe.List[*typed.Resource[T, E]]) map[resource.ID]*T
 
+// DeepCopyRedactable combines the DeepCopyable and Redactable interfaces for generic type T.
+type DeepCopyRedactable[T any] interface {
+	typed.DeepCopyable[T]
+	resources.RedactableSpec[T]
+}
+
 // GenericMergeController initializes a generic merge controller for network resources.
-func GenericMergeController[T typed.DeepCopyable[T], E typed.Extension](namespaceIn, namespaceOut resource.Namespace, mergeFunc genericMergeFunc[T, E]) controller.Controller {
+func GenericMergeController[T DeepCopyRedactable[T], E typed.Extension](namespaceIn, namespaceOut resource.Namespace, mergeFunc genericMergeFunc[T, E]) controller.Controller {
 	var zeroE E
 
 	controllerName := strings.ReplaceAll(zeroE.ResourceDefinition().Type, "Spec", "MergeController")
@@ -33,7 +41,7 @@ func GenericMergeController[T typed.DeepCopyable[T], E typed.Extension](namespac
 	}
 }
 
-type genericMergeController[T typed.DeepCopyable[T], E typed.Extension] struct {
+type genericMergeController[T DeepCopyRedactable[T], E typed.Extension] struct {
 	controllerName string
 	resourceType   resource.Type
 	namespaceIn    resource.Namespace
@@ -124,8 +132,10 @@ func (ctrl *genericMergeController[T, E]) Run(ctx context.Context, r controller.
 		var zeroT T
 
 		for id, spec := range merged {
+			md := resource.NewMetadata(ctrl.namespaceOut, ctrl.resourceType, id, resource.VersionUndefined)
+
 			if err = safe.WriterModify(ctx, r,
-				typed.NewResource[T, E](resource.NewMetadata(ctrl.namespaceOut, ctrl.resourceType, id, resource.VersionUndefined), zeroT),
+				typed.NewResource[T, E](md, zeroT),
 				func(r *R) error {
 					*r.TypedSpec() = *spec
 
@@ -134,7 +144,9 @@ func (ctrl *genericMergeController[T, E]) Run(ctx context.Context, r controller.
 				return fmt.Errorf("error updating resource: %w", err)
 			}
 
-			logger.Debug("merged spec", zap.String("id", id), zap.Any("spec", spec))
+			specRedacted := (*spec).RedactSecrets(md)
+
+			logger.Debug("merged spec", zap.String("id", id), zap.Any("spec", specRedacted))
 		}
 
 		r.ResetRestartBackoff()

@@ -25,6 +25,7 @@ const TimeServerID resource.ID = "timeservers"
 // TimeServerSpecSpec describes NTP servers.
 //
 //gotagsrewrite:gen
+//redactgen:gen
 type TimeServerSpecSpec struct {
 	NTPServers  []string    `yaml:"timeServers" protobuf:"1"`
 	UseNTS      bool        `yaml:"useNTS,omitempty" protobuf:"3"`

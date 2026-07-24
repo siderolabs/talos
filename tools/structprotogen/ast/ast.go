@@ -162,7 +162,7 @@ func isTarget(doc *ast.CommentGroup) bool {
 }
 
 func isTargetComment(str string) bool {
-	return str == "//gotagsrewrite:gen"
+	return str == "//gotagsrewrite:gen" || str == "//redactgen:gen"
 }
 
 func filter[T, V any](slc []T, f func(n T) (V, bool)) []V {

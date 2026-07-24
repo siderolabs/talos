@@ -10,5 +10,6 @@ use (
 	./tools/labeled-squashfs
 	./tools/sbom-builder
 	./tools/loglinter
+	./tools/redactgen
 	./tools/structprotogen
 )

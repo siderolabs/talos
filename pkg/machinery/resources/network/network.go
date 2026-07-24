@@ -16,6 +16,8 @@ import (
 
 //go:generate go tool github.com/dmarkham/enumer -type=ConfigLayer,Operator -linecomment -text
 
+//go:generate go tool github.com/siderolabs/talos/tools/redactgen -header-file ../../../../hack/boilerplate.txt -o redact.generated.go .
+
 // NamespaceName contains resources related to networking.
 const NamespaceName resource.Namespace = "network"
 

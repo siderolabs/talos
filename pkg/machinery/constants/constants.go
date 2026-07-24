@@ -1469,6 +1469,9 @@ const (
 	//
 	// Vendored here to avoid pulling in k8s.io.
 	TaintEffectNoSchedule = "NoSchedule"
+
+	// Redacted is the replacement for sensitive values.
+	Redacted = "REDACTED"
 )
 
 // names of variable that can be substituted in the talos.config kernel parameter.

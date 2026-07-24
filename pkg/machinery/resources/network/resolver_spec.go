@@ -52,6 +52,7 @@ func (ns NameServerSpec) String() string {
 // ResolverSpecSpec describes DNS resolvers.
 //
 //gotagsrewrite:gen
+//redactgen:gen
 type ResolverSpecSpec struct {
 	// DNSServers is a flat list of DNS server IP addresses.
 	//

@@ -187,6 +187,34 @@ func (suite *ProbeConfigSuite) TestHTTPProbe() { //nolint:dupl
 	ctest.AssertNoResource[*network.ProbeSpec](suite, "configuration/http:https://example.com", rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
+func (suite *ProbeConfigSuite) TestHTTPProbeWithPassword() { //nolint:dupl
+	probeConfig := networkcfg.NewHTTPProbeConfigV1Alpha1("http-check")
+	probeConfig.ProbeInterval = time.Second
+	probeConfig.ProbeFailureThreshold = 3
+	probeConfig.HTTPEndpoint = meta.URL{URL: ensure.Value(url.Parse("https://user:topsecret@example.com"))}
+	probeConfig.HTTPTimeout = 10 * time.Second
+
+	ctr, err := container.New(probeConfig)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	ctest.AssertResources(
+		suite,
+		[]string{
+			"configuration/http:https://example.com",
+		}, func(r *network.ProbeSpec, asrt *assert.Assertions) {
+			asrt.Equal(time.Second, r.TypedSpec().Interval)
+			asrt.Equal(3, r.TypedSpec().FailureThreshold)
+			asrt.Equal("https://user:topsecret@example.com", r.TypedSpec().HTTP.URL.String())
+			asrt.Equal(10*time.Second, r.TypedSpec().HTTP.Timeout)
+			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
+		},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
+	)
+}
+
 func TestProbeConfigSuite(t *testing.T) {
 	t.Parallel()
 
