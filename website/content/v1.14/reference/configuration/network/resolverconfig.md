@@ -118,8 +118,9 @@ SearchDomainsConfig represents search domains configuration.
 
 | Field | Type | Description | Value(s) |
 |-------|------|-------------|----------|
-|`domains` |[]string |A list of search domains to be used for DNS resolution.<br><br>Search domains are appended to unqualified domain names during DNS resolution.<br>For example, if "example.com" is a search domain and a user tries to resolve<br>"host", the system will attempt to resolve "host.example.com".<br><br>This overrides any search domains obtained via DHCP or platform configuration.<br>The default configuration derives the search domain from the hostname FQDN.  | |
+|`domains` |[]string |A list of search domains to be used for DNS resolution.<br><br>Search domains are appended to unqualified domain names during DNS resolution.<br>For example, if "example.com" is a search domain and a user tries to resolve<br>"host", the system will attempt to resolve "host.example.com".<br><br>If not empty, this overrides any search domains obtained via DHCP or platform configuration.<br>The default configuration derives the search domain from the hostname FQDN.  | |
 |`disableDefault` |bool |Disable default search domain configuration from hostname FQDN.<br><br>When set to true, the system will not derive search domains from the hostname FQDN.<br>This allows for a custom configuration of search domains without any defaults.  | |
+|`disableDHCP` |bool |Disable search domains obtained via DHCP.<br><br>When set to true, search domains advertised by DHCP servers are not added to<br>`/etc/resolv.conf`. Search domains configured explicitly in `domains` are still applied.  | |
 
 
 

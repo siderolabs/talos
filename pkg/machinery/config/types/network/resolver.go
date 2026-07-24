@@ -135,7 +135,7 @@ type SearchDomainsConfig struct {
 	//     For example, if "example.com" is a search domain and a user tries to resolve
 	//     "host", the system will attempt to resolve "host.example.com".
 	//
-	//     This overrides any search domains obtained via DHCP or platform configuration.
+	//     If not empty, this overrides any search domains obtained via DHCP or platform configuration.
 	//     The default configuration derives the search domain from the hostname FQDN.
 	SearchDomains []string `yaml:"domains,omitempty"`
 	//   description: |
@@ -144,6 +144,12 @@ type SearchDomainsConfig struct {
 	//     When set to true, the system will not derive search domains from the hostname FQDN.
 	//     This allows for a custom configuration of search domains without any defaults.
 	SearchDisableDefault *bool `yaml:"disableDefault,omitempty"`
+	//   description: |
+	//     Disable search domains obtained via DHCP.
+	//
+	//     When set to true, search domains advertised by DHCP servers are not added to
+	//     `/etc/resolv.conf`. Search domains configured explicitly in `domains` are still applied.
+	SearchDisableDHCP *bool `yaml:"disableDHCP,omitempty"`
 }
 
 // HostDNSConfig represents host DNS configuration.
@@ -362,6 +368,11 @@ func (s *ResolverConfigV1Alpha1) SearchDomains() []string {
 // DisableSearchDomain implements NetworkResolverConfig interface.
 func (s *ResolverConfigV1Alpha1) DisableSearchDomain() bool {
 	return pointer.SafeDeref(s.ResolverSearchDomains.SearchDisableDefault)
+}
+
+// DisableDHCPSearchDomain implements NetworkResolverConfig interface.
+func (s *ResolverConfigV1Alpha1) DisableDHCPSearchDomain() bool {
+	return pointer.SafeDeref(s.ResolverSearchDomains.SearchDisableDHCP)
 }
 
 // HostDNSEnabled implements NetworkHostDNSConfig interface.

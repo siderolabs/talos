@@ -10565,6 +10565,7 @@ ResolverSpecSpec describes DNS resolvers.
 | config_layer | [talos.resource.definitions.enums.NetworkConfigLayer](#talos.resource.definitions.enums.NetworkConfigLayer) |  |  |
 | search_domains | [string](#string) | repeated |  |
 | name_servers | [NameServerSpec](#talos.resource.definitions.network.NameServerSpec) | repeated | NameServers is a list of DNS servers with additional configuration. |
+| disable_dhcp_search_domains | [bool](#bool) |  | DisableDHCPSearchDomains, when set on the machine configuration layer, drops search domains obtained from DHCP (operator layer) during merge. |
 
 
 

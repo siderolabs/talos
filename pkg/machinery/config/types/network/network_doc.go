@@ -1763,7 +1763,7 @@ func (SearchDomainsConfig) Doc() *encoder.Doc {
 				Name:        "domains",
 				Type:        "[]string",
 				Note:        "",
-				Description: "A list of search domains to be used for DNS resolution.\n\nSearch domains are appended to unqualified domain names during DNS resolution.\nFor example, if \"example.com\" is a search domain and a user tries to resolve\n\"host\", the system will attempt to resolve \"host.example.com\".\n\nThis overrides any search domains obtained via DHCP or platform configuration.\nThe default configuration derives the search domain from the hostname FQDN.",
+				Description: "A list of search domains to be used for DNS resolution.\n\nSearch domains are appended to unqualified domain names during DNS resolution.\nFor example, if \"example.com\" is a search domain and a user tries to resolve\n\"host\", the system will attempt to resolve \"host.example.com\".\n\nIf not empty, this overrides any search domains obtained via DHCP or platform configuration.\nThe default configuration derives the search domain from the hostname FQDN.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "A list of search domains to be used for DNS resolution." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
@@ -1772,6 +1772,13 @@ func (SearchDomainsConfig) Doc() *encoder.Doc {
 				Note:        "",
 				Description: "Disable default search domain configuration from hostname FQDN.\n\nWhen set to true, the system will not derive search domains from the hostname FQDN.\nThis allows for a custom configuration of search domains without any defaults.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Disable default search domain configuration from hostname FQDN." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "disableDHCP",
+				Type:        "bool",
+				Note:        "",
+				Description: "Disable search domains obtained via DHCP.\n\nWhen set to true, search domains advertised by DHCP servers are not added to\n`/etc/resolv.conf`. Search domains configured explicitly in `domains` are still applied.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Disable search domains obtained via DHCP." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
