@@ -2865,7 +2865,11 @@ type VolumeStatusSpec struct {
 	// ScrubInterval is the resolved period at which the volume filesystem should be scrubbed.
 	ScrubInterval *durationpb.Duration `protobuf:"bytes,27,opt,name=scrub_interval,json=scrubInterval,proto3" json:"scrub_interval,omitempty"`
 	// TrimOptions are the resolved options of the trim operation.
-	TrimOptions   *TrimOptionsSpec `protobuf:"bytes,28,opt,name=trim_options,json=trimOptions,proto3" json:"trim_options,omitempty"`
+	TrimOptions *TrimOptionsSpec `protobuf:"bytes,28,opt,name=trim_options,json=trimOptions,proto3" json:"trim_options,omitempty"`
+	// Grow indicates whether the volume filesystem should be grown to fill the volume.
+	//
+	// The filesystem is grown on mount, and whenever the volume size changes while mounted.
+	Grow          bool `protobuf:"varint,29,opt,name=grow,proto3" json:"grow,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3094,6 +3098,13 @@ func (x *VolumeStatusSpec) GetTrimOptions() *TrimOptionsSpec {
 		return x.TrimOptions
 	}
 	return nil
+}
+
+func (x *VolumeStatusSpec) GetGrow() bool {
+	if x != nil {
+		return x.Grow
+	}
+	return false
 }
 
 // VolumeTrimScheduleSpec is the spec for VolumeTrimSchedule resource.
@@ -3562,7 +3573,7 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\bdetached\x18\x05 \x01(\bR\bdetached\x12.\n" +
 	"\x13disable_access_time\x18\x06 \x01(\bR\x11disableAccessTime\x12\x16\n" +
 	"\x06secure\x18\a \x01(\bR\x06secure\x12\x17\n" +
-	"\ano_exec\x18\b \x01(\bR\x06noExec\"\xdf\f\n" +
+	"\ano_exec\x18\b \x01(\bR\x06noExec\"\xf3\f\n" +
 	"\x10VolumeStatusSpec\x12H\n" +
 	"\x05phase\x18\x01 \x01(\x0e22.talos.resource.definitions.enums.BlockVolumePhaseR\x05phase\x12\x1a\n" +
 	"\blocation\x18\x02 \x01(\tR\blocation\x12#\n" +
@@ -3596,7 +3607,8 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\rtrim_interval\x18\x19 \x01(\v2\x19.google.protobuf.DurationR\ftrimInterval\x12#\n" +
 	"\rscrub_enabled\x18\x1a \x01(\bR\fscrubEnabled\x12@\n" +
 	"\x0escrub_interval\x18\x1b \x01(\v2\x19.google.protobuf.DurationR\rscrubInterval\x12T\n" +
-	"\ftrim_options\x18\x1c \x01(\v21.talos.resource.definitions.block.TrimOptionsSpecR\vtrimOptions\"\xac\x02\n" +
+	"\ftrim_options\x18\x1c \x01(\v21.talos.resource.definitions.block.TrimOptionsSpecR\vtrimOptions\x12\x12\n" +
+	"\x04grow\x18\x1d \x01(\bR\x04grow\"\xac\x02\n" +
 	"\x16VolumeTrimScheduleSpec\x12U\n" +
 	"\n" +
 	"filesystem\x18\x01 \x01(\x0e25.talos.resource.definitions.enums.BlockFilesystemTypeR\n" +

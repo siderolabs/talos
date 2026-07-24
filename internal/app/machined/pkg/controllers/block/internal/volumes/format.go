@@ -8,7 +8,6 @@ import (
 	"cmp"
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -18,11 +17,9 @@ import (
 	"github.com/siderolabs/go-blockdevice/v2/swap"
 	"go.uber.org/zap"
 
-	mountv3 "github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/pkg/machinery/imager/quirks"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/makefs"
-	"github.com/siderolabs/talos/pkg/xfs/fsopen"
 )
 
 // Format establishes a filesystem on a block device.
@@ -79,13 +76,8 @@ func Format(ctx context.Context, logger *zap.Logger, volumeContext ManagerContex
 		// swap volume, format always
 	case info.Name == volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Type.String():
 		// filesystem already exists and matches the requested type
-		if volumeContext.Cfg.TypedSpec().Provisioning.PartitionSpec.Grow {
-			// if the partition is set to grow, we need to grow the filesystem
-			if err = GrowFilesystem(ctx, logger, volumeContext); err != nil {
-				return fmt.Errorf("error growing filesystem: %w", err)
-			}
-		}
-
+		//
+		// if the volume is set to grow, the filesystem is grown by the mount controller
 		volumeContext.Status.Phase = block.VolumePhaseReady
 		volumeContext.Status.Filesystem = volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Type
 
@@ -159,74 +151,4 @@ func Format(ctx context.Context, logger *zap.Logger, volumeContext ManagerContex
 	volumeContext.Status.Filesystem = volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Type
 
 	return nil
-}
-
-func withTemporaryMount(logger *zap.Logger, volumeContext ManagerContext, fn func(mountPoint string) error) error {
-	tmpDir, err := os.MkdirTemp("", "talos-growfs-")
-	if err != nil {
-		return fmt.Errorf("error creating temporary directory: %w", err)
-	}
-
-	defer os.Remove(tmpDir) //nolint:errcheck
-
-	manager := mountv3.NewManager(
-		mountv3.WithPrinter(logger.Sugar().Infof),
-		mountv3.WithTarget(tmpDir),
-		mountv3.WithFsopen(
-			volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Type.String(),
-			fsopen.WithSource(volumeContext.Status.MountLocation),
-			// A quota-less XFS mount clears accounting state even when it is
-			// only used for growth, forcing quotacheck on the final mount.
-			fsopen.WithProjectQuota(volumeContext.Status.MountSpec.ProjectQuotaSupport),
-		),
-	)
-
-	if _, err := manager.Mount(); err != nil {
-		return fmt.Errorf("error mounting partition: %w", err)
-	}
-
-	defer manager.Unmount() //nolint:errcheck
-
-	return fn(tmpDir)
-}
-
-// GrowFilesystem grows the filesystem on the block device.
-func GrowFilesystem(ctx context.Context, logger *zap.Logger, volumeContext ManagerContext) error {
-	switch volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Type { //nolint:exhaustive
-	case block.FilesystemTypeXFS:
-		// XFS requires partition to be mounted to grow
-		logger.Info("growing XFS filesystem", zap.String("device", volumeContext.Status.MountLocation))
-
-		if err := withTemporaryMount(logger, volumeContext, func(tmpMountPoint string) error {
-			return makefs.XFSGrow(ctx, tmpMountPoint)
-		}); err != nil {
-			return fmt.Errorf("error growing XFS: %w", err)
-		}
-
-		return nil
-	case block.FilesystemTypeEXT4:
-		logger.Info("growing ext4 filesystem", zap.String("device", volumeContext.Status.MountLocation))
-
-		if err := makefs.Ext4Resize(ctx, volumeContext.Status.MountLocation); err != nil {
-			return fmt.Errorf("error growing ext4: %w", err)
-		}
-
-		return nil
-	case block.FilesystemTypeBtrfs:
-		// btrfs requires partition to be mounted to grow
-		logger.Info("growing btrfs filesystem", zap.String("device", volumeContext.Status.MountLocation))
-
-		if err := withTemporaryMount(logger, volumeContext, func(tmpMountPoint string) error {
-			return makefs.BTRFSGrow(ctx, tmpMountPoint)
-		}); err != nil {
-			return fmt.Errorf("error growing btrfs: %w", err)
-		}
-
-		return nil
-	case block.FilesystemTypeSwap:
-		// swap is always reformatted, so we don't need to grow it
-		return nil
-	default:
-		return fmt.Errorf("unsupported filesystem type to grow: %s", volumeContext.Cfg.TypedSpec().Provisioning.FilesystemSpec.Type)
-	}
 }

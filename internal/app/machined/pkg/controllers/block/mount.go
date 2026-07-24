@@ -43,9 +43,13 @@ type mountContext struct {
 	disableAccessTime   bool
 	secure              bool
 	noExec              bool
+	detached            bool
 	securityInitialized bool
 	mountPointCreated   bool
 	unmounter           func() error
+
+	// volumeSize is the size of the volume the filesystem was last grown for.
+	volumeSize uint64
 }
 
 // MountController performs actual mount/unmount operations based on the MountRequests.
@@ -759,6 +763,7 @@ func (ctrl *MountController) handleDiskMountOperation(
 			disableAccessTime:   mountRequest.TypedSpec().DisableAccessTime,
 			secure:              mountRequest.TypedSpec().Secure,
 			noExec:              mountRequest.TypedSpec().NoExec,
+			detached:            mountRequest.TypedSpec().Detached,
 			securityInitialized: true,
 			mountPointCreated:   mountPointCreated,
 			unmounter:           manager.Unmount,
@@ -805,6 +810,10 @@ func (ctrl *MountController) handleDiskMountOperation(
 		mountCtx.disableAccessTime = mountRequest.TypedSpec().DisableAccessTime
 	}
 
+	if err := growMountedFilesystem(ctx, logger, mountCtx, volumeStatus); err != nil {
+		return fmt.Errorf("failed to grow filesystem %q: %w", mountRequest.Metadata().ID(), err)
+	}
+
 	return updateMountSecurity(
 		logger,
 		mountRequest.Metadata().ID(),
@@ -813,6 +822,34 @@ func (ctrl *MountController) handleDiskMountOperation(
 		mountRequest.TypedSpec().Secure,
 		mountRequest.TypedSpec().NoExec,
 	)
+}
+
+// growMountedFilesystem grows the filesystem of the mounted volume (if the volume is set to grow).
+//
+// The filesystem is grown on the initial mount, and whenever the volume size changes.
+func growMountedFilesystem(ctx context.Context, logger *zap.Logger, mountCtx *mountContext, volumeStatus *block.VolumeStatus) error {
+	if !volumeStatus.TypedSpec().Grow || mountCtx.volumeSize == volumeStatus.TypedSpec().Size {
+		return nil
+	}
+
+	// growing the filesystem requires a writable mount attached to the mount tree,
+	// so postpone it until the volume is mounted that way
+	if mountCtx.readOnly || mountCtx.detached {
+		return nil
+	}
+
+	if err := mountops.GrowFilesystem(
+		ctx, logger,
+		volumeStatus.TypedSpec().Filesystem,
+		volumeStatus.TypedSpec().MountLocation,
+		mountCtx.point.Target(),
+	); err != nil {
+		return err
+	}
+
+	mountCtx.volumeSize = volumeStatus.TypedSpec().Size
+
+	return nil
 }
 
 func bindMountOptions(selinuxLabel string, secure, noExec bool) []mount.ManagerOption {

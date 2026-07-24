@@ -8012,6 +8012,7 @@ VolumeStatusSpec is the spec for VolumeStatus resource.
 | scrub_enabled | [bool](#bool) |  | ScrubEnabled indicates whether the volume filesystem should be scrubbed on a schedule. |
 | scrub_interval | [google.protobuf.Duration](#google.protobuf.Duration) |  | ScrubInterval is the resolved period at which the volume filesystem should be scrubbed. |
 | trim_options | [TrimOptionsSpec](#talos.resource.definitions.block.TrimOptionsSpec) |  | TrimOptions are the resolved options of the trim operation. |
+| grow | [bool](#bool) |  | Grow indicates whether the volume filesystem should be grown to fill the volume.<br><br>The filesystem is grown on mount, and whenever the volume size changes while mounted. |
 
 
 

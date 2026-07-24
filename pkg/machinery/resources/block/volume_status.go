@@ -46,6 +46,11 @@ type VolumeStatusSpec struct {
 	Size           uint64 `yaml:"size,omitempty" protobuf:"9"`
 	PrettySize     string `yaml:"prettySize,omitempty" protobuf:"13"`
 
+	// Grow indicates whether the volume filesystem should be grown to fill the volume.
+	//
+	// The filesystem is grown on mount, and whenever the volume size changes while mounted.
+	Grow bool `yaml:"grow,omitempty" protobuf:"29"`
+
 	// Filesystem is the filesystem type.
 	Filesystem FilesystemType `yaml:"filesystem,omitempty" protobuf:"10"`
 

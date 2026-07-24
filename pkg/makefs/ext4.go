@@ -182,6 +182,18 @@ func Ext4Resize(ctx context.Context, partname string) error {
 	return nil
 }
 
+// Ext4Grow expands a mounted ext4 filesystem to the maximum possible (online resize).
+//
+// The partition MUST be mounted, use Ext4Resize for unmounted filesystems.
+func Ext4Grow(ctx context.Context, partname string) error {
+	_, err := cmd.RunWithOptions(ctx, "resize2fs", []string{partname})
+	if err != nil {
+		return fmt.Errorf("failed to grow ext4 filesystem: %w", err)
+	}
+
+	return nil
+}
+
 // Ext4Repair repairs a ext4 filesystem.
 func Ext4Repair(ctx context.Context, partname string) error {
 	_, err := cmd.RunWithOptions(ctx, "e2fsck", []string{"-f", "-p", partname})

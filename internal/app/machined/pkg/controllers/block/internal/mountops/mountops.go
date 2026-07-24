@@ -7,6 +7,7 @@ package mountops
 
 import (
 	"cmp"
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -19,6 +20,7 @@ import (
 	"github.com/siderolabs/talos/internal/pkg/mount/v3"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
+	"github.com/siderolabs/talos/pkg/makefs"
 )
 
 // CreateMountPoint creates the mount point directory if it doesn't exist.
@@ -109,5 +111,28 @@ func CleanupEmptyDirectories(logger *zap.Logger, path string) {
 		}
 
 		logger.Info("removed empty directory", zap.String("path", target))
+	}
+}
+
+// GrowFilesystem grows the mounted filesystem to fill the underlying block device.
+//
+// The source is the block device, and the target is the path the filesystem is mounted at.
+// Filesystems which can't be grown are skipped.
+func GrowFilesystem(ctx context.Context, logger *zap.Logger, fstype block.FilesystemType, source, target string) error {
+	switch fstype { //nolint:exhaustive
+	case block.FilesystemTypeXFS:
+		logger.Info("growing XFS filesystem", zap.String("device", source), zap.String("target", target))
+
+		return makefs.XFSGrow(ctx, target)
+	case block.FilesystemTypeEXT4:
+		logger.Info("growing ext4 filesystem", zap.String("device", source), zap.String("target", target))
+
+		return makefs.Ext4Grow(ctx, source)
+	case block.FilesystemTypeBtrfs:
+		logger.Info("growing btrfs filesystem", zap.String("device", source), zap.String("target", target))
+
+		return makefs.BTRFSGrow(ctx, target)
+	default:
+		return nil
 	}
 }

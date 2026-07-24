@@ -453,8 +453,8 @@ func (p ProvisioningSpec) Validate(required bool, sizeSupported bool) ([]string,
 		if p.ProvisioningMinSize.IsNegative() {
 			validationErrors = errors.Join(validationErrors, errors.New("min size cannot be negative"))
 		}
-	} else if !p.ProvisioningMinSize.IsZero() || !p.ProvisioningMaxSize.IsZero() || p.Grow().IsPresent() {
-		validationErrors = errors.Join(validationErrors, errors.New("min size, max size and grow are not supported"))
+	} else if !p.ProvisioningMinSize.IsZero() || !p.ProvisioningMaxSize.IsZero() {
+		validationErrors = errors.Join(validationErrors, errors.New("min size and max size are not supported"))
 	}
 
 	return nil, validationErrors

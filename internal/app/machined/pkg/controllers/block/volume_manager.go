@@ -41,6 +41,9 @@ type VolumeManagerController struct {
 	// BootPartitionWaitTimeout bounds the wait for the boot partition to be discovered before the volumes
 	// might be declared missing, defaults to bootpartition.DefaultWaitTimeout.
 	BootPartitionWaitTimeout time.Duration
+
+	// observedDiskSizes tracks the size of the parent disk (by volume ID) the partition volume was last grown for.
+	observedDiskSizes map[string]uint64
 }
 
 // Name implements controller.Controller interface.
@@ -129,6 +132,10 @@ func (ctrl *VolumeManagerController) Outputs() []controller.Output {
 //
 //nolint:gocyclo,cyclop
 func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
+	if ctrl.observedDiskSizes == nil {
+		ctrl.observedDiskSizes = map[string]uint64{}
+	}
+
 	retryTicker := time.NewTicker(30 * time.Second)
 	defer retryTicker.Stop()
 
@@ -368,6 +375,7 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 			volumeStatus.TypedSpec().ScrubEnabled = vc.TypedSpec().ScrubEnabled
 			volumeStatus.TypedSpec().ScrubInterval = vc.TypedSpec().ScrubInterval
 			volumeStatus.TypedSpec().EncryptionAllowDiscards = vc.TypedSpec().Encryption.AllowDiscards
+			volumeStatus.TypedSpec().Grow = vc.TypedSpec().Provisioning.PartitionSpec.Grow
 
 			if tearingDown && volumeStatus.Metadata().Phase() != resource.PhaseTearingDown {
 				// volume status is not yet in the tearing down phase, so move it there
@@ -400,6 +408,7 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 						SaltGetter:           ctrl.getSaltGetter(r),
 					},
 					ShouldCloseVolume: shouldCloseVolume,
+					ObservedDiskSizes: ctrl.observedDiskSizes,
 				},
 			); err != nil {
 				volumeStatus.TypedSpec().PreFailPhase = volumeStatus.TypedSpec().Phase
@@ -476,6 +485,7 @@ func (ctrl *VolumeManagerController) Run(ctx context.Context, r controller.Runti
 				}
 
 				delete(volumeStatuses, volumeStatus.Metadata().ID())
+				delete(ctrl.observedDiskSizes, volumeStatus.Metadata().ID())
 			}
 		}
 
@@ -583,7 +593,7 @@ func (ctrl *VolumeManagerController) progressVolumeConfig(ctx context.Context, l
 //	                            { Prepared } // decrypted (if needed)
 //	                              |
 //	                              v
-//	                            { Ready } // can be mounted
+//	                            { Ready } // can be mounted, grown live if the disk grows
 //
 //nolint:gocyclo,cyclop
 func (ctrl *VolumeManagerController) processVolumeConfig(ctx context.Context, logger *zap.Logger, volumeContext volumes.ManagerContext) error {
@@ -594,7 +604,13 @@ func (ctrl *VolumeManagerController) processVolumeConfig(ctx context.Context, lo
 			// normal state machine
 			switch volumeContext.Status.Phase {
 			case block.VolumePhaseReady:
-				// nothing to do, ready
+				// the volume is ready, but the underlying disk might have grown
+				//
+				// the volume is in use, so the failure to grow it live shouldn't affect the volume phase
+				if err := volumes.GrowLive(ctx, logger, volumeContext); err != nil {
+					logger.Warn("failed to grow volume", zap.Error(err))
+				}
+
 				return nil
 			case block.VolumePhaseWaiting, block.VolumePhaseMissing:
 				if err := volumes.LocateAndProvision(ctx, logger, volumeContext); err != nil {

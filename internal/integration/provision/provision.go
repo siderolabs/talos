@@ -8,6 +8,7 @@
 package provision
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -816,8 +817,42 @@ func (suite *BaseSuite) sendMonitorCommand(ctx context.Context, nodeName, comman
 		suite.Require().NoError(conn.Close())
 	}()
 
+	suite.readMonitorUntilPrompt(conn)
+
 	_, err = conn.Write([]byte(command + "\n"))
 	suite.Require().NoError(err)
+
+	resp := suite.readMonitorUntilPrompt(conn)
+
+	// HMP readline echoes (and redraws per character) the typed command on the first line
+	if _, after, ok := strings.Cut(resp, "\n"); ok {
+		resp = after
+	}
+
+	resp = strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(resp), "(qemu)"))
+
+	suite.T().Logf("monitor response for command %q on node %q:\n%v", command, nodeName, resp)
+}
+
+func (suite *BaseSuite) readMonitorUntilPrompt(conn net.Conn) string {
+	suite.Require().NoError(conn.SetReadDeadline(time.Now().Add(5 * time.Second)))
+
+	var msg bytes.Buffer
+
+	buf := make([]byte, 1024)
+
+	for {
+		n, err := conn.Read(buf)
+		suite.Require().NoError(err)
+
+		msg.Write(buf[:n])
+
+		if strings.Contains(msg.String(), "(qemu)") {
+			break
+		}
+	}
+
+	return msg.String()
 }
 
 type clusterOptions struct {
@@ -856,6 +891,10 @@ type clusterOptions struct {
 	// the respective machine type.
 	ConfigPatchesControlPlane []configpatcher.Patch
 	ConfigPatchesWorker       []configpatcher.Patch
+
+	// ExtraDisks is the number of extra disks to attach to each node,
+	// the disks will be added by default with the default disk size with SCSI driver.
+	ExtraDisks int
 }
 
 // setupCluster provisions source clusters and waits for health.
@@ -1094,21 +1133,33 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 	)
 	suite.Require().NoError(err)
 
+	nodeDisks := func() []*provision.Disk {
+		result := make([]*provision.Disk, 1, 1+options.ExtraDisks)
+		result[0] = &provision.Disk{
+			Size: DefaultSettings.DiskGB * 1024 * 1024 * 1024,
+		}
+
+		for range options.ExtraDisks {
+			result = append(result, &provision.Disk{
+				Size:   DefaultSettings.DiskGB * 1024 * 1024 * 1024,
+				Driver: "scsi",
+			})
+		}
+
+		return result
+	}
+
 	for i := range options.ControlplaneNodes {
 		request.Nodes = append(
 			request.Nodes,
 			provision.NodeRequest{
-				Name:     fmt.Sprintf("control-plane-%d", i+1),
-				Type:     machine.TypeControlPlane,
-				IPs:      []netip.Addr{ips[i]},
-				UUID:     &suite.controlplaneUUIDs[i],
-				Memory:   DefaultSettings.MemMB * 1024 * 1024,
-				NanoCPUs: DefaultSettings.CPUs * 1000 * 1000 * 1000,
-				Disks: []*provision.Disk{
-					{
-						Size: DefaultSettings.DiskGB * 1024 * 1024 * 1024,
-					},
-				},
+				Name:                fmt.Sprintf("control-plane-%d", i+1),
+				Type:                machine.TypeControlPlane,
+				IPs:                 []netip.Addr{ips[i]},
+				UUID:                &suite.controlplaneUUIDs[i],
+				Memory:              DefaultSettings.MemMB * 1024 * 1024,
+				NanoCPUs:            DefaultSettings.CPUs * 1000 * 1000 * 1000,
+				Disks:               nodeDisks(),
 				Config:              suite.configBundle.ControlPlane(),
 				ExtraKernelArgs:     options.InjectBootKernelArgs,
 				SDStubKernelArgs:    options.InjectExtraKernelArgs,
@@ -1121,17 +1172,13 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 		request.Nodes = append(
 			request.Nodes,
 			provision.NodeRequest{
-				Name:     fmt.Sprintf("worker-%d", i),
-				Type:     machine.TypeWorker,
-				IPs:      []netip.Addr{ips[options.ControlplaneNodes+i-1]},
-				UUID:     &suite.workerUUIDs[i-1],
-				Memory:   DefaultSettings.MemMB * 1024 * 1024,
-				NanoCPUs: DefaultSettings.CPUs * 1000 * 1000 * 1000,
-				Disks: []*provision.Disk{
-					{
-						Size: DefaultSettings.DiskGB * 1024 * 1024 * 1024,
-					},
-				},
+				Name:                fmt.Sprintf("worker-%d", i),
+				Type:                machine.TypeWorker,
+				IPs:                 []netip.Addr{ips[options.ControlplaneNodes+i-1]},
+				UUID:                &suite.workerUUIDs[i-1],
+				Memory:              DefaultSettings.MemMB * 1024 * 1024,
+				NanoCPUs:            DefaultSettings.CPUs * 1000 * 1000 * 1000,
+				Disks:               nodeDisks(),
 				Config:              suite.configBundle.Worker(),
 				ExtraKernelArgs:     options.InjectBootKernelArgs,
 				SDStubKernelArgs:    options.InjectExtraKernelArgs,

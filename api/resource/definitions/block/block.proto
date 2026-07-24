@@ -467,6 +467,10 @@ message VolumeStatusSpec {
   google.protobuf.Duration scrub_interval = 27;
   // TrimOptions are the resolved options of the trim operation.
   TrimOptionsSpec trim_options = 28;
+  // Grow indicates whether the volume filesystem should be grown to fill the volume.
+  //
+  // The filesystem is grown on mount, and whenever the volume size changes while mounted.
+  bool grow = 29;
 }
 
 // VolumeTrimScheduleSpec is the spec for VolumeTrimSchedule resource.

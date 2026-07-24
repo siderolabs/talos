@@ -18,20 +18,107 @@ import (
 )
 
 // Grow grows a volume.
-//
-//nolint:gocyclo
 func Grow(ctx context.Context, logger *zap.Logger, volumeContext ManagerContext) error {
-	if !(volumeContext.Cfg.TypedSpec().Type == block.VolumeTypePartition && volumeContext.Cfg.TypedSpec().Provisioning.PartitionSpec.Grow) {
-		// nothing to do
-		volumeContext.Status.Phase = block.VolumePhaseProvisioned
+	if volumeContext.Cfg.TypedSpec().Type == block.VolumeTypePartition && volumeContext.Cfg.TypedSpec().Provisioning.PartitionSpec.Grow {
+		// record the disk size the partition is grown for, so that live growth can pick up further disk size changes
+		volumeContext.recordObservedDiskSize()
+
+		if err := growPartition(ctx, logger, volumeContext); err != nil {
+			return err
+		}
+	}
+
+	volumeContext.Status.Phase = block.VolumePhaseProvisioned
+
+	return nil
+}
+
+// GrowLive grows a ready (and possibly mounted) volume if the underlying disk has grown.
+//
+// The new size of the volume is propagated to the volume status, and the filesystem
+// is grown by the mount controller.
+//
+// Live growth is only supported for unencrypted volumes on top of raw disks.
+func GrowLive(ctx context.Context, logger *zap.Logger, volumeContext ManagerContext) error {
+	if !volumeContext.Cfg.TypedSpec().Provisioning.PartitionSpec.Grow {
+		return nil
+	}
+
+	if volumeContext.Cfg.TypedSpec().Encryption.Provider != block.EncryptionProviderNone {
+		return nil
+	}
+
+	switch volumeContext.Cfg.TypedSpec().Type { //nolint:exhaustive
+	case block.VolumeTypeDisk:
+		growLiveDisk(logger, volumeContext)
+	case block.VolumeTypePartition:
+		return growLivePartition(ctx, logger, volumeContext)
+	}
+
+	return nil
+}
+
+// growLiveDisk propagates the new size of the disk to the disk volume.
+func growLiveDisk(logger *zap.Logger, volumeContext ManagerContext) {
+	disk := volumeContext.FindDisk(volumeContext.Status.Location)
+	if disk == nil || disk.Size <= volumeContext.Status.Size {
+		return
+	}
+
+	logger.Info("disk volume grown",
+		zap.String("disk", volumeContext.Status.Location),
+		zap.String("size", fmt.Sprintf("%d -> %d", volumeContext.Status.Size, disk.Size)),
+	)
+
+	volumeContext.Status.SetSize(disk.Size)
+}
+
+// growLivePartition grows the partition volume if the parent disk size has changed since it was last grown.
+func growLivePartition(ctx context.Context, logger *zap.Logger, volumeContext ManagerContext) error {
+	disk := volumeContext.FindDisk(volumeContext.Status.ParentLocation)
+	if disk == nil {
+		return nil
+	}
+
+	observedSize, ok := volumeContext.ObservedDiskSizes[volumeContext.Cfg.Metadata().ID()]
+	if !ok {
+		// first time seeing the volume ready (e.g. after a restart), the partition was grown when provisioned
+		volumeContext.recordObservedDiskSize()
 
 		return nil
 	}
 
+	if observedSize == disk.Size {
+		return nil
+	}
+
+	prevSize := volumeContext.Status.Size
+
+	if err := growPartition(ctx, logger, volumeContext); err != nil {
+		return err
+	}
+
+	volumeContext.recordObservedDiskSize()
+
+	if volumeContext.Status.Size != prevSize {
+		logger.Info("partition volume grown",
+			zap.String("disk", volumeContext.Status.ParentLocation),
+			zap.Int("partition", volumeContext.Status.PartitionIndex),
+			zap.String("size", fmt.Sprintf("%d -> %d", prevSize, volumeContext.Status.Size)),
+		)
+	}
+
+	return nil
+}
+
+// growPartition grows the partition to fill the available space on the disk (up to the max size).
+//
+// On success, the new size of the partition is set in the volume status.
+//
+//nolint:gocyclo
+func growPartition(ctx context.Context, logger *zap.Logger, volumeContext ManagerContext) error {
 	if volumeContext.Cfg.TypedSpec().Provisioning.PartitionSpec.MaxSize > 0 && volumeContext.Status.Size >= volumeContext.Cfg.TypedSpec().Provisioning.PartitionSpec.MaxSize {
 		// nowhere to grow
-		volumeContext.Status.Phase = block.VolumePhaseProvisioned
-
 		return nil
 	}
 
@@ -64,8 +151,6 @@ func Grow(ctx context.Context, logger *zap.Logger, volumeContext ManagerContext)
 	}
 
 	if availableGrowth <= 1024*1024 { // don't grow by less than 1MiB
-		volumeContext.Status.Phase = block.VolumePhaseProvisioned
-
 		return nil
 	}
 
@@ -83,7 +168,6 @@ func Grow(ctx context.Context, logger *zap.Logger, volumeContext ManagerContext)
 		return fmt.Errorf("error writing GPT: %w", err)
 	}
 
-	volumeContext.Status.Phase = block.VolumePhaseProvisioned
 	volumeContext.Status.SetSize(volumeContext.Status.Size + availableGrowth)
 
 	return nil

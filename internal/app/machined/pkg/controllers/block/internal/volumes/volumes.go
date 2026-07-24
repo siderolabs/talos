@@ -105,6 +105,22 @@ type ManagerContext struct {
 	PreviousWaveProvisioned bool
 	EncryptionHelpers       encryption.Helpers
 	ShouldCloseVolume       bool
+
+	// ObservedDiskSizes is the size of the disk (by volume ID) the partition volume was last grown for.
+	//
+	// It is used to detect disk size changes to grow the partition live.
+	ObservedDiskSizes map[string]uint64
+}
+
+// recordObservedDiskSize records the current size of the parent disk of the volume.
+func (ctx ManagerContext) recordObservedDiskSize() {
+	if ctx.ObservedDiskSizes == nil {
+		return
+	}
+
+	if disk := ctx.FindDisk(ctx.Status.ParentLocation); disk != nil {
+		ctx.ObservedDiskSizes[ctx.Cfg.Metadata().ID()] = disk.Size
+	}
 }
 
 // FindDisk returns the disk with the given device path, or nil if it is not known.

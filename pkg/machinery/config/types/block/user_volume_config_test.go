@@ -390,7 +390,7 @@ func TestUserVolumeConfigValidate(t *testing.T) {
 				return c
 			},
 
-			expectedErrors: "min size, max size and grow are not supported",
+			expectedErrors: "min size and max size are not supported",
 		},
 		{
 			name: "filesystem spec for directory",

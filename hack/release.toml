@@ -660,6 +660,15 @@ Omitting the `flowControl` field leaves the link's flow control configuration un
 Current flow control settings are reported on the `EthernetStatus` resource.
 """
 
+    [notes.live_growth]
+        title = "Live Volume Growth"
+        description = """\
+Talos now supports live growth of partition and disk volumes with `xfs`, `ext4` and `btrfs` filesystems, without unmounting the volume or stopping workloads.
+The partition should be the last one on the disk to be grown, and the filesystem should be grown after the partition is resized. Talos does not support shrinking volumes.
+
+The `UserVolumeConfig` of `type: disk` now supports a `grow` field, which can be set to `true` to allow the volume to grow when the underlying disk is resized.
+"""
+
 [make_deps]
 
     [make_deps.tools]
