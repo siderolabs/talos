@@ -6,6 +6,11 @@ routerID: 10.0.0.1
 advertise:
     - dummy0
 multipath: true
+installRoutes: false
+importRoutes:
+    - bgpInstance: workload
+      prefixes:
+        - 198.51.100.0/24
 neighbors:
     - address: 10.5.0.1
       peerASN: 65000

@@ -12,9 +12,6 @@ replace (
 	// see https://github.com/mdlayher/kobject/pull/5
 	github.com/mdlayher/kobject => github.com/smira/kobject v0.0.0-20240304111826-49c8d4613389
 
-	// prevent watcher shutdown leaks until https://github.com/osrg/gobgp/pull/3505 is merged
-	github.com/osrg/gobgp/v4 => github.com/frezbo/gobgp/v4 v4.0.0-20260723125704-323c85fa213c
-
 	// replace to disable assembly implementation (see https://github.com/beevik/nts/issues/1#issuecomment-4879122150)
 	github.com/secure-io/siv-go => github.com/smira/siv-go v0.0.0-20260706144621-2093d2730928
 
@@ -126,7 +123,7 @@ require (
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/opencontainers/runtime-spec v1.3.0
-	github.com/osrg/gobgp/v4 v4.7.0
+	github.com/osrg/gobgp/v4 v4.7.1-0.20260728014820-31e136b73c64
 	github.com/packethost/packngo v0.31.0
 	github.com/pelletier/go-toml/v2 v2.4.3
 	github.com/pin/tftp/v3 v3.2.0

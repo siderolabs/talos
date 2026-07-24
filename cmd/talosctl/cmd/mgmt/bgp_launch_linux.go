@@ -61,9 +61,14 @@ func fabricZebra(ctx context.Context, srv *gobgpsrv.BgpServer, ifaces []string, 
 		return fmt.Errorf("error watching BGP events: %w", err)
 	}
 
-	installed := map[netip.Prefix]struct{}{}
+	fabricIfaces := fabricInterfaceIndices(ifaces)
 
-	defer fabricCleanupRoutes(conn, 0, installed)
+	installed, err := fabricLoadOwnedRoutes(conn, fabricIfaces)
+	if err != nil {
+		return fmt.Errorf("error loading existing fabric routes: %w", err)
+	}
+
+	defer fabricCleanupRoutes(conn, installed)
 
 	ticker := time.NewTicker(fabricRetryInterval)
 	defer ticker.Stop()
@@ -138,7 +143,12 @@ type fabricHop struct {
 // multiple best paths (gobgp runs with UseMultiplePaths) and is installed as an ECMP multipath route.
 //
 //nolint:gocyclo
-func fabricReconcileRoutes(srv *gobgpsrv.BgpServer, conn *rtnetlink.Conn, ifaces []string, installed map[netip.Prefix]struct{}) {
+func fabricReconcileRoutes(
+	srv *gobgpsrv.BgpServer,
+	conn *rtnetlink.Conn,
+	ifaces []string,
+	installed map[netip.Prefix]rtnetlink.RouteMessage,
+) {
 	desired := map[netip.Prefix][]fabricHop{}
 
 	for _, family := range []bgppacket.Family{bgppacket.RF_IPv4_UC, bgppacket.RF_IPv6_UC} {
@@ -148,6 +158,13 @@ func fabricReconcileRoutes(srv *gobgpsrv.BgpServer, conn *rtnetlink.Conn, ifaces
 		}, func(prefix bgppacket.NLRI, paths []*apiutil.Path) {
 			dst, parseErr := netip.ParsePrefix(prefix.String())
 			if parseErr != nil {
+				return
+			}
+
+			// The provisioner host only needs direct access to node identities and advertised VIPs.
+			// Keep broader workload routes in the fabric RIB without replacing an unrelated host
+			// route such as the provisioner's own Kubernetes PodCIDR.
+			if !fabricHostRouteEligible(dst) {
 				return
 			}
 
@@ -181,21 +198,124 @@ func fabricReconcileRoutes(srv *gobgpsrv.BgpServer, conn *rtnetlink.Conn, ifaces
 	}
 
 	for dst, hops := range desired {
+		if _, ok := installed[dst]; !ok {
+			occupied, err := fabricRouteExists(conn, dst)
+			if err != nil || occupied {
+				continue
+			}
+		}
+
 		// re-install every reconcile (Replace is idempotent): the next-hop set changes as nodes
 		// advertising an anycast VIP come and go (control-plane failover).
-		if err := fabricInstallRoute(conn, dst, hops); err == nil {
-			installed[dst] = struct{}{}
+		route, err := fabricInstallRoute(conn, dst, hops)
+		if err == nil {
+			installed[dst] = route
 		}
 	}
 
-	for dst := range installed {
+	for dst, route := range installed {
 		if _, ok := desired[dst]; ok {
 			continue
 		}
 
-		fabricDeleteRoute(conn, dst)
+		fabricDeleteRoute(conn, route)
 		delete(installed, dst)
 	}
+}
+
+func fabricRouteExists(conn *rtnetlink.Conn, dst netip.Prefix) (bool, error) {
+	routes, err := conn.Route.List()
+	if err != nil {
+		return false, err
+	}
+
+	for _, route := range routes {
+		if route.Attributes.Table == unix.RT_TABLE_MAIN &&
+			route.DstLength == uint8(dst.Bits()) &&
+			route.Attributes.Dst.Equal(dst.Addr().AsSlice()) {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func fabricInterfaceIndices(ifaces []string) map[uint32]struct{} {
+	result := make(map[uint32]struct{}, len(ifaces))
+
+	for _, name := range ifaces {
+		iface, err := net.InterfaceByName(name)
+		if err == nil {
+			result[uint32(iface.Index)] = struct{}{}
+		}
+	}
+
+	return result
+}
+
+func fabricLoadOwnedRoutes(
+	conn *rtnetlink.Conn,
+	ifaces map[uint32]struct{},
+) (map[netip.Prefix]rtnetlink.RouteMessage, error) {
+	routes, err := conn.Route.List()
+	if err != nil {
+		return nil, err
+	}
+
+	return fabricOwnedRouteInventory(routes, ifaces), nil
+}
+
+func fabricOwnedRouteInventory(
+	routes []rtnetlink.RouteMessage,
+	ifaces map[uint32]struct{},
+) map[netip.Prefix]rtnetlink.RouteMessage {
+	result := map[netip.Prefix]rtnetlink.RouteMessage{}
+
+	for _, route := range routes {
+		prefix, ok := fabricOwnedRoutePrefix(route, ifaces)
+		if ok {
+			result[prefix] = route
+		}
+	}
+
+	return result
+}
+
+func fabricOwnedRoutePrefix(
+	route rtnetlink.RouteMessage,
+	ifaces map[uint32]struct{},
+) (netip.Prefix, bool) {
+	if route.Protocol != unix.RTPROT_BGP || route.Attributes.Table != unix.RT_TABLE_MAIN {
+		return netip.Prefix{}, false
+	}
+
+	address, ok := netip.AddrFromSlice(route.Attributes.Dst)
+	if !ok {
+		return netip.Prefix{}, false
+	}
+
+	prefix := netip.PrefixFrom(address.Unmap(), int(route.DstLength)).Masked()
+	if !fabricHostRouteEligible(prefix) || !fabricRouteUsesInterfaces(route, ifaces) {
+		return netip.Prefix{}, false
+	}
+
+	return prefix, true
+}
+
+func fabricRouteUsesInterfaces(route rtnetlink.RouteMessage, ifaces map[uint32]struct{}) bool {
+	if len(route.Attributes.Multipath) == 0 {
+		_, ok := ifaces[route.Attributes.OutIface]
+
+		return ok
+	}
+
+	for _, hop := range route.Attributes.Multipath {
+		if _, ok := ifaces[hop.Hop.IfIndex]; !ok {
+			return false
+		}
+	}
+
+	return true
 }
 
 // fabricEgress resolves the egress interface index for a learned path: the peer's link-local next-hop is
@@ -222,9 +342,9 @@ func fabricEgress(path *apiutil.Path, ifaces []string) int {
 // fabricInstallRoute installs a host route to dst via the given next-hop(s), using RTA_VIA for a
 // cross-family (IPv4-dst / IPv6-link-local-nh) next-hop (RFC 8950). A single hop installs a plain route;
 // multiple hops install an ECMP multipath route (RTA_MULTIPATH), one next-hop per advertising node.
-func fabricInstallRoute(conn *rtnetlink.Conn, dst netip.Prefix, hops []fabricHop) error {
+func fabricInstallRoute(conn *rtnetlink.Conn, dst netip.Prefix, hops []fabricHop) (rtnetlink.RouteMessage, error) {
 	if len(hops) == 0 {
-		return nil
+		return rtnetlink.RouteMessage{}, nil
 	}
 
 	family := uint8(unix.AF_INET)
@@ -263,35 +383,25 @@ func fabricInstallRoute(conn *rtnetlink.Conn, dst netip.Prefix, hops []fabricHop
 		}
 	}
 
-	return conn.Route.Replace(&rtnetlink.RouteMessage{
+	route := rtnetlink.RouteMessage{
 		Family:     family,
 		DstLength:  uint8(dst.Bits()),
 		Protocol:   unix.RTPROT_BGP,
 		Scope:      unix.RT_SCOPE_UNIVERSE,
 		Type:       unix.RTN_UNICAST,
 		Attributes: attrs,
-	})
-}
-
-func fabricDeleteRoute(conn *rtnetlink.Conn, dst netip.Prefix) {
-	family := uint8(unix.AF_INET)
-	if dst.Addr().Is6() {
-		family = unix.AF_INET6
 	}
 
-	_ = conn.Route.Delete(&rtnetlink.RouteMessage{ //nolint:errcheck
-		Family:    family,
-		DstLength: uint8(dst.Bits()),
-		Attributes: rtnetlink.RouteAttributes{
-			Dst:   dst.Addr().AsSlice(),
-			Table: unix.RT_TABLE_MAIN,
-		},
-	})
+	return route, conn.Route.Replace(&route)
 }
 
-func fabricCleanupRoutes(conn *rtnetlink.Conn, _ int, installed map[netip.Prefix]struct{}) {
-	for dst := range installed {
-		fabricDeleteRoute(conn, dst)
+func fabricDeleteRoute(conn *rtnetlink.Conn, route rtnetlink.RouteMessage) {
+	conn.Route.Delete(&route) //nolint:errcheck
+}
+
+func fabricCleanupRoutes(conn *rtnetlink.Conn, installed map[netip.Prefix]rtnetlink.RouteMessage) {
+	for _, route := range installed {
+		fabricDeleteRoute(conn, route)
 	}
 }
 

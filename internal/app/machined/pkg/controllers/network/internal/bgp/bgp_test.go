@@ -6,6 +6,7 @@ package bgp_test
 
 import (
 	"net/netip"
+	"slices"
 	"testing"
 	"time"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/osrg/gobgp/v4/pkg/apiutil"
 	bgppacket "github.com/osrg/gobgp/v4/pkg/packet/bgp"
 	"github.com/siderolabs/gen/value"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -72,6 +74,74 @@ func TestBuildOriginatedPath(t *testing.T) {
 		assert.Equal(t, test.family, path.Family)
 		assert.Equal(t, test.prefix.String(), path.Nlri.String())
 	}
+}
+
+func TestBuildImportedPathPreservesPolicyAttributes(t *testing.T) {
+	t.Parallel()
+
+	prefix := netip.MustParsePrefix("198.51.100.100/32")
+	nlri, err := bgppacket.NewIPAddrPrefix(prefix)
+	require.NoError(t, err)
+
+	nexthop, err := bgppacket.NewPathAttributeNextHop(netip.MustParseAddr("192.0.2.1"))
+	require.NoError(t, err)
+
+	source := &apiutil.Path{
+		Family:      bgppacket.RF_IPv4_UC,
+		Nlri:        nlri,
+		Best:        true,
+		PeerASN:     4200000001,
+		PeerAddress: netip.MustParseAddr("192.0.2.1"),
+		Attrs: []bgppacket.PathAttributeInterface{
+			bgppacket.NewPathAttributeOrigin(0),
+			bgppacket.NewPathAttributeAsPath([]bgppacket.AsPathParamInterface{
+				bgppacket.NewAs4PathParam(2, []uint32{4200000001}),
+			}),
+			nexthop,
+			bgppacket.NewPathAttributeMultiExitDisc(50),
+			bgppacket.NewPathAttributeLocalPref(200),
+			bgppacket.NewPathAttributeCommunities([]uint32{65000<<16 | 100}),
+			bgppacket.NewPathAttributeLargeCommunities([]*bgppacket.LargeCommunity{{
+				ASN:        65000,
+				LocalData1: 1,
+				LocalData2: 2,
+			}}),
+		},
+	}
+
+	imported, err := internalbgp.BuildImportedPath(source)
+	require.NoError(t, err)
+
+	assert.Equal(t, source.Family, imported.Family)
+	assert.Equal(t, source.Nlri.String(), imported.Nlri.String())
+	assert.Equal(t, netip.IPv4Unspecified(), internalbgp.PathNexthop(imported))
+	assert.False(t, imported.Best)
+	assert.Zero(t, imported.PeerASN)
+	assert.False(t, imported.PeerAddress.IsValid())
+
+	wantTypes := []bgppacket.BGPAttrType{
+		bgppacket.BGP_ATTR_TYPE_ORIGIN,
+		bgppacket.BGP_ATTR_TYPE_AS_PATH,
+		bgppacket.BGP_ATTR_TYPE_MULTI_EXIT_DISC,
+		bgppacket.BGP_ATTR_TYPE_LOCAL_PREF,
+		bgppacket.BGP_ATTR_TYPE_COMMUNITIES,
+		bgppacket.BGP_ATTR_TYPE_LARGE_COMMUNITY,
+		bgppacket.BGP_ATTR_TYPE_NEXT_HOP,
+	}
+	assert.Equal(t, wantTypes, xslices.Map(imported.Attrs, func(attr bgppacket.PathAttributeInterface) bgppacket.BGPAttrType {
+		return attr.GetType()
+	}))
+
+	sourceFingerprint, err := internalbgp.PathFingerprint(imported)
+	require.NoError(t, err)
+
+	changed := *imported
+	changed.Attrs = slices.Clone(imported.Attrs)
+	changed.Attrs[2] = bgppacket.NewPathAttributeMultiExitDisc(51)
+
+	changedFingerprint, err := internalbgp.PathFingerprint(&changed)
+	require.NoError(t, err)
+	assert.NotEqual(t, sourceFingerprint, changedFingerprint)
 }
 
 func TestPathNexthop(t *testing.T) {

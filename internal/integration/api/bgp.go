@@ -15,6 +15,7 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -446,14 +447,14 @@ func (suite *BGPSuite) closFabricLinks(nodeCtx context.Context) []string {
 
 // managementNetwork returns the node's physical virtio-net management link and IPv4 subnet.
 func (suite *BGPSuite) managementNetwork(nodeCtx context.Context) (string, netip.Prefix) {
-	link, prefix, err := suite.lookupManagementNetwork(nodeCtx)
+	link, prefix, err := lookupBGPManagementNetwork(nodeCtx, suite.Client.COSI)
 	suite.Require().NoError(err)
 
 	return link, prefix
 }
 
-func (suite *BGPSuite) lookupManagementNetwork(nodeCtx context.Context) (string, netip.Prefix, error) {
-	links, err := safe.StateListAll[*networkres.LinkStatus](nodeCtx, suite.Client.COSI)
+func lookupBGPManagementNetwork(nodeCtx context.Context, cosi state.State) (string, netip.Prefix, error) {
+	links, err := safe.StateListAll[*networkres.LinkStatus](nodeCtx, cosi)
 	if err != nil {
 		return "", netip.Prefix{}, err
 	}
@@ -472,7 +473,7 @@ func (suite *BGPSuite) lookupManagementNetwork(nodeCtx context.Context) (string,
 		return "", netip.Prefix{}, fmt.Errorf("no virtio-net management interface found")
 	}
 
-	addresses, err := safe.StateListAll[*networkres.AddressStatus](nodeCtx, suite.Client.COSI)
+	addresses, err := safe.StateListAll[*networkres.AddressStatus](nodeCtx, cosi)
 	if err != nil {
 		return "", netip.Prefix{}, err
 	}
@@ -490,7 +491,7 @@ func (suite *BGPSuite) lookupManagementNetwork(nodeCtx context.Context) (string,
 
 func (suite *BGPSuite) waitForManagementNetwork(nodeCtx context.Context, expectedLink string, expectedPrefix netip.Prefix) {
 	suite.Eventually(func() bool {
-		link, prefix, err := suite.lookupManagementNetwork(nodeCtx)
+		link, prefix, err := lookupBGPManagementNetwork(nodeCtx, suite.Client.COSI)
 
 		return err == nil && link == expectedLink && prefix == expectedPrefix
 	}, 2*time.Minute, time.Second, "management network %s %s did not recover after VRF configuration", expectedLink, expectedPrefix)

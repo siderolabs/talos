@@ -5,6 +5,8 @@
 package makers_test
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	sideronet "github.com/siderolabs/net"
@@ -64,6 +66,35 @@ func TestQemuMaker_RegistryAuth(t *testing.T) {
 	require.NoError(t, err)
 
 	assertConfigDefaultness(t, cOps, *m.Maker, nil, configpatcher.NewStrategicMergePatch(ctr))
+}
+
+func TestQemuMaker_BGPCLOSCustomCNIPatchWins(t *testing.T) {
+	cOps := clusterops.GetCommon()
+	qOps := clusterops.GetQemu()
+	qOps.WithBGPCLOS = true
+
+	patchPath := filepath.Join(t.TempDir(), "custom-cni.yaml")
+	require.NoError(t, os.WriteFile(patchPath, []byte(`apiVersion: v1alpha1
+kind: KubeFlannelCNIConfig
+$patch: delete
+`), 0o600))
+
+	cOps.ConfigPatchControlPlane = []string{patchPath}
+
+	m, err := makers.NewQemu(makers.MakerOptions[clusterops.Qemu]{
+		ExtraOps:    qOps,
+		CommonOps:   cOps,
+		Provisioner: testProvisioner{},
+	})
+	require.NoError(t, err)
+
+	clusterConfigs, err := m.GetClusterConfigs()
+	require.NoError(t, err)
+
+	controlPlaneConfig, err := clusterConfigs.ClusterRequest.Nodes[0].Config.EncodeBytes()
+	require.NoError(t, err)
+
+	assert.NotContains(t, string(controlPlaneConfig), "kind: KubeFlannelCNIConfig")
 }
 
 func TestQemuMaker_Disks(t *testing.T) {

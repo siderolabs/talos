@@ -1,0 +1,64 @@
+apiVersion: cilium.io/v2
+kind: CiliumLoadBalancerIPPool
+metadata:
+  name: {{ .PoolName }}
+spec:
+  blocks:
+    - cidr: {{ .VIPPrefix }}
+  serviceSelector:
+    matchLabels:
+      {{ .ServiceLabel }}: {{ .LabelValue }}
+---
+apiVersion: cilium.io/v2
+kind: CiliumBGPAdvertisement
+metadata:
+  name: {{ .AdvertisementName }}
+  labels:
+    {{ .AdvertisementLabel }}: {{ .LabelValue }}
+spec:
+  advertisements:
+    - advertisementType: Service
+      service:
+        addresses:
+          - LoadBalancerIP
+      selector:
+        matchLabels:
+          {{ .ServiceLabel }}: {{ .LabelValue }}
+    - advertisementType: PodCIDR
+---
+apiVersion: cilium.io/v2
+kind: CiliumBGPPeerConfig
+metadata:
+  name: {{ .PeerConfigName }}
+spec:
+  timers:
+    connectRetryTimeSeconds: 3
+    holdTimeSeconds: 9
+    keepAliveTimeSeconds: 3
+  transport:
+    peerPort: 179
+    sourceInterface: {{ .SourceInterface }}
+  families:
+    - afi: ipv4
+      safi: unicast
+      advertisements:
+        matchLabels:
+          {{ .AdvertisementLabel }}: {{ .LabelValue }}
+---
+apiVersion: cilium.io/v2
+kind: CiliumBGPClusterConfig
+metadata:
+  name: {{ .InstanceName }}
+spec:
+  nodeSelector:
+    matchLabels:
+      kubernetes.io/hostname: {{ .NodeName }}
+  bgpInstances:
+    - name: {{ .InstanceName }}
+      localASN: {{ .SpeakerASN }}
+      peers:
+        - name: {{ .PeerName }}
+          peerASN: {{ .TalosASN }}
+          peerAddress: "{{ .RouterAddress }}"
+          peerConfigRef:
+            name: {{ .PeerConfigName }}

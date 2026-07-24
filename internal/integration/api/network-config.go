@@ -917,7 +917,8 @@ func (suite *NetworkConfigSuite) TestRoutingRuleBasic() {
 
 	suite.assertKernelDefaultRoutingRulesPresent(nodeCtx)
 
-	const rulePriority uint32 = 1000
+	// Avoid priority 1000, which Linux uses for the persistent global l3mdev rule once a VRF has been created.
+	const rulePriority uint32 = 2000
 
 	cfg := network.NewRoutingRuleConfigV1Alpha1(rulePriority)
 	cfg.RuleSrc = meta.Prefix{Prefix: netip.MustParsePrefix("10.99.0.0/16")}
@@ -925,7 +926,7 @@ func (suite *NetworkConfigSuite) TestRoutingRuleBasic() {
 
 	suite.PatchMachineConfig(nodeCtx, cfg)
 
-	const ruleStatusID = "inet4/01000"
+	const ruleStatusID = "inet4/02000"
 
 	rtestutils.AssertResource(
 		nodeCtx, suite.T(), suite.Client.COSI, ruleStatusID,
@@ -933,7 +934,7 @@ func (suite *NetworkConfigSuite) TestRoutingRuleBasic() {
 			asrt.Equal(nethelpers.FamilyInet4, rule.TypedSpec().Family)
 			asrt.Equal(netip.MustParsePrefix("10.99.0.0/16"), rule.TypedSpec().Src)
 			asrt.Equal(nethelpers.RoutingTable(100), rule.TypedSpec().Table)
-			asrt.Equal(uint32(1000), rule.TypedSpec().Priority)
+			asrt.Equal(rulePriority, rule.TypedSpec().Priority)
 		},
 	)
 

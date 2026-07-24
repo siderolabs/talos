@@ -22,6 +22,11 @@ func TestBGPInstanceConfigDeepCopy(t *testing.T) {
 
 	spec := network.BGPInstanceConfigSpec{
 		AdvertiseLinks: []string{"dummy0"},
+		InstallRoutes:  true,
+		ImportRoutes: []network.BGPImportRouteSpec{{
+			BGPInstance: "workload",
+			Prefixes:    []netip.Prefix{netip.MustParsePrefix("198.51.100.0/24")},
+		}},
 		Neighbors: []network.BGPNeighborConfigSpec{{
 			Link: "eth0",
 			BFD:  &network.BGPBFDConfigSpec{TransmitInterval: time.Second},
@@ -30,10 +35,14 @@ func TestBGPInstanceConfigDeepCopy(t *testing.T) {
 
 	clone := spec.DeepCopy()
 	clone.AdvertiseLinks[0] = "dummy1"
+	clone.ImportRoutes[0].BGPInstance = "changed"
+	clone.ImportRoutes[0].Prefixes[0] = netip.MustParsePrefix("203.0.113.0/24")
 	clone.Neighbors[0].Link = "eth1"
 	clone.Neighbors[0].BFD.TransmitInterval = 2 * time.Second
 
 	assert.Equal(t, "dummy0", spec.AdvertiseLinks[0])
+	assert.Equal(t, "workload", spec.ImportRoutes[0].BGPInstance)
+	assert.Equal(t, netip.MustParsePrefix("198.51.100.0/24"), spec.ImportRoutes[0].Prefixes[0])
 	assert.Equal(t, "eth0", spec.Neighbors[0].Link)
 	assert.Equal(t, time.Second, spec.Neighbors[0].BFD.TransmitInterval)
 }
@@ -49,8 +58,13 @@ func TestBGPInstanceConfigProtobufRoundTrip(t *testing.T) {
 		AdvertiseLinks: []string{"dummy0"},
 		Multipath:      true,
 		MaxPaths:       8,
+		InstallRoutes:  true,
 		VRF:            "vrf-blue",
 		VRFTable:       88,
+		ImportRoutes: []network.BGPImportRouteSpec{{
+			BGPInstance: "workload",
+			Prefixes:    []netip.Prefix{netip.MustParsePrefix("198.51.100.0/24")},
+		}},
 		Neighbors: []network.BGPNeighborConfigSpec{
 			{
 				Link:     "eth0",

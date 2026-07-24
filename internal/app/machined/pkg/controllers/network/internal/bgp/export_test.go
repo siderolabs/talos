@@ -8,6 +8,8 @@ import (
 	"maps"
 	"net/netip"
 
+	"github.com/osrg/gobgp/v4/pkg/apiutil"
+	bgppacket "github.com/osrg/gobgp/v4/pkg/packet/bgp"
 	gobgpsrv "github.com/osrg/gobgp/v4/pkg/server"
 )
 
@@ -16,9 +18,14 @@ func InstanceServerForTest(instance *Instance) *gobgpsrv.BgpServer {
 	return instance.server
 }
 
+// SetInstanceServerForTest replaces the server used by an instance.
+func SetInstanceServerForTest(instance *Instance, server *gobgpsrv.BgpServer) {
+	instance.server = server
+}
+
 // InstanceMapsInitializedForTest reports whether constructor-owned maps are initialized.
 func InstanceMapsInitializedForTest(instance *Instance) bool {
-	return instance.originated != nil && instance.peers != nil && instance.peerIfaces != nil
+	return instance.originated != nil && instance.imported != nil && instance.peers != nil && instance.peerIfaces != nil
 }
 
 // InstancePeerKeysForTest returns the reconciled peer-key snapshot.
@@ -36,4 +43,21 @@ func InstanceOriginatedForTest(instance *Instance, prefix netip.Prefix) bool {
 	_, ok := instance.originated[prefix]
 
 	return ok
+}
+
+// InstanceImportedForTest reports whether a prefix is currently imported.
+func InstanceImportedForTest(instance *Instance, prefix netip.Prefix) bool {
+	_, ok := instance.imported[prefix]
+
+	return ok
+}
+
+// ImportFamiliesForTest exposes import selector family selection.
+func ImportFamiliesForTest(selectors []netip.Prefix) []bgppacket.Family {
+	return importFamilies(selectors)
+}
+
+// ListImportCandidatesForTest exposes candidate selection for lifecycle tests.
+func ListImportCandidatesForTest(instance *Instance, selectors []netip.Prefix) (map[netip.Prefix]*apiutil.Path, error) {
+	return instance.listImportCandidates(selectors)
 }

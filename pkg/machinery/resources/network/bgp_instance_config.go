@@ -45,6 +45,14 @@ type BGPNeighborConfigSpec struct {
 	Passive  bool              `yaml:"passive,omitempty" protobuf:"7"`
 }
 
+// BGPImportRouteSpec selects routes learned by another BGP instance for one-way import.
+//
+//gotagsrewrite:gen
+type BGPImportRouteSpec struct {
+	BGPInstance string         `yaml:"bgpInstance" protobuf:"1"`
+	Prefixes    []netip.Prefix `yaml:"prefixes" protobuf:"2"`
+}
+
 // BGPInstanceConfigSpec contains the resolved runtime configuration for a BGP routing instance.
 //
 //gotagsrewrite:gen
@@ -58,6 +66,8 @@ type BGPInstanceConfigSpec struct {
 	Neighbors      []BGPNeighborConfigSpec `yaml:"neighbors,omitempty" protobuf:"7"`
 	VRF            string                  `yaml:"vrf,omitempty" protobuf:"8"`
 	VRFTable       nethelpers.RoutingTable `yaml:"vrfTable,omitempty" protobuf:"9"`
+	ImportRoutes   []BGPImportRouteSpec    `yaml:"importRoutes,omitempty" protobuf:"10"`
+	InstallRoutes  bool                    `yaml:"installRoutes" protobuf:"11"`
 }
 
 // NewBGPInstanceConfig initializes a named BGPInstanceConfig resource.

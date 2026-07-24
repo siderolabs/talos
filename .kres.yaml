@@ -1453,6 +1453,16 @@ spec:
             ciliumConfigPatch: "@hack/test/patches/cilium-kubeproxy.yaml"
             ciliumInstallType: strict
             withKubespan: "true"
+          - test: e2e-cilium-bgp
+            ciliumConfigPatch: "@hack/test/patches/cilium-kubeproxy.yaml"
+            ciliumInstallType: strict
+            withKubespan: ""
+            withBGPCLOS: "true"
+            withCiliumBGP: "true"
+            qemuControlplanes: "3"
+            qemuWorkers: "1"
+            extraTestArgs: -talos.bgp.clos -talos.bgp.cilium
+            integrationTestRun: TestIntegration/api.BGPCiliumSuite
       steps:
         - name: download-artifacts
           artifactStep:
@@ -1470,6 +1480,12 @@ spec:
             WITH_FIREWALL: accept
             CILIUM_INSTALL_TYPE: ${{ matrix.ciliumInstallType }}
             WITH_KUBESPAN: ${{ matrix.withKubespan }}
+            WITH_BGP_CLOS: ${{ matrix.withBGPCLOS }}
+            WITH_CILIUM_BGP: ${{ matrix.withCiliumBGP }}
+            QEMU_CONTROLPLANES: ${{ matrix.qemuControlplanes }}
+            QEMU_WORKERS: ${{ matrix.qemuWorkers }}
+            EXTRA_TEST_ARGS: ${{ matrix.extraTestArgs }}
+            INTEGRATION_TEST_RUN: ${{ matrix.integrationTestRun }}
             WITH_CONFIG_PATCH_CONTROLPLANE: ${{ matrix.ciliumConfigPatch }}
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-talos-logs

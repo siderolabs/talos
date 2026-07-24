@@ -1,0 +1,56 @@
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: {{ .PoolName }}
+  namespace: {{ .Namespace }}
+spec:
+  addresses:
+    - {{ .VIPPrefix }}
+---
+apiVersion: metallb.io/v1beta2
+kind: BGPPeer
+metadata:
+  name: {{ .PeerName }}
+  namespace: {{ .Namespace }}
+spec:
+  myASN: {{ .SpeakerASN }}
+  peerASN: {{ .TalosASN }}
+  peerAddress: "{{ .RouterAddress }}"
+  sourceAddress: "{{ .SpeakerAddress }}"
+  holdTime: "9s"
+  dualStackAddressFamily: true
+  nodeSelectors:
+    - matchLabels:
+        kubernetes.io/hostname: {{ .NodeName }}
+---
+apiVersion: metallb.io/v1beta1
+kind: BGPAdvertisement
+metadata:
+  name: {{ .AdvertisementName }}
+  namespace: {{ .Namespace }}
+spec:
+  ipAddressPools:
+    - {{ .PoolName }}
+  peers:
+    - {{ .PeerName }}
+  nodeSelectors:
+    - matchLabels:
+        kubernetes.io/hostname: {{ .NodeName }}
+---
+apiVersion: frrk8s.metallb.io/v1beta1
+kind: FRRConfiguration
+metadata:
+  name: {{ .ExtendedNextHopName }}
+  namespace: {{ .Namespace }}
+spec:
+  nodeSelector:
+    matchLabels:
+      kubernetes.io/hostname: {{ .NodeName }}
+  raw:
+    priority: 100
+    rawConfig: |
+      router bgp {{ .SpeakerASN }}
+       neighbor {{ .RouterAddress }} capability extended-nexthop
+      exit
+
+# Keep a document trailer so ParseManifests trimming preserves the rawConfig newline.

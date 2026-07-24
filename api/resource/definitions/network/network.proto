@@ -45,6 +45,12 @@ message BGPBFDConfigSpec {
   uint32 detect_multiplier = 3;
 }
 
+// BGPImportRouteSpec selects routes learned by another BGP instance for one-way import.
+message BGPImportRouteSpec {
+  string bgp_instance = 1;
+  repeated common.NetIPPrefix prefixes = 2;
+}
+
 // BGPInstanceConfigSpec contains the resolved runtime configuration for a BGP routing instance.
 message BGPInstanceConfigSpec {
   uint32 local_asn = 1;
@@ -56,6 +62,8 @@ message BGPInstanceConfigSpec {
   repeated BGPNeighborConfigSpec neighbors = 7;
   string vrf = 8;
   talos.resource.definitions.enums.NethelpersRoutingTable vrf_table = 9;
+  repeated BGPImportRouteSpec import_routes = 10;
+  bool install_routes = 11;
 }
 
 // BGPNeighborConfigSpec contains the runtime configuration for a BGP neighbor.

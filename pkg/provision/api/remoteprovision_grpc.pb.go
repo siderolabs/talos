@@ -30,6 +30,7 @@ const (
 	RemoteProvisionService_UploadArtifact_FullMethodName    = "/remoteprovision.RemoteProvisionService/UploadArtifact"
 	RemoteProvisionService_SyncBootArtifacts_FullMethodName = "/remoteprovision.RemoteProvisionService/SyncBootArtifacts"
 	RemoteProvisionService_Reboot_FullMethodName            = "/remoteprovision.RemoteProvisionService/Reboot"
+	RemoteProvisionService_ProbeHTTP_FullMethodName         = "/remoteprovision.RemoteProvisionService/ProbeHTTP"
 )
 
 // RemoteProvisionServiceClient is the client API for RemoteProvisionService service.
@@ -71,6 +72,8 @@ type RemoteProvisionServiceClient interface {
 	SyncBootArtifacts(ctx context.Context, in *SyncBootArtifactsRequest, opts ...grpc.CallOption) (*SyncBootArtifactsResponse, error)
 	// Reboot forcefully restarts one QEMU node.
 	Reboot(ctx context.Context, in *RebootRequest, opts ...grpc.CallOption) (*RebootResponse, error)
+	// ProbeHTTP performs a bounded HTTP GET from the provisioner host network namespace.
+	ProbeHTTP(ctx context.Context, in *ProbeHTTPRequest, opts ...grpc.CallOption) (*ProbeHTTPResponse, error)
 }
 
 type remoteProvisionServiceClient struct {
@@ -192,6 +195,16 @@ func (c *remoteProvisionServiceClient) Reboot(ctx context.Context, in *RebootReq
 	return out, nil
 }
 
+func (c *remoteProvisionServiceClient) ProbeHTTP(ctx context.Context, in *ProbeHTTPRequest, opts ...grpc.CallOption) (*ProbeHTTPResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ProbeHTTPResponse)
+	err := c.cc.Invoke(ctx, RemoteProvisionService_ProbeHTTP_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RemoteProvisionServiceServer is the server API for RemoteProvisionService service.
 // All implementations must embed UnimplementedRemoteProvisionServiceServer
 // for forward compatibility.
@@ -231,6 +244,8 @@ type RemoteProvisionServiceServer interface {
 	SyncBootArtifacts(context.Context, *SyncBootArtifactsRequest) (*SyncBootArtifactsResponse, error)
 	// Reboot forcefully restarts one QEMU node.
 	Reboot(context.Context, *RebootRequest) (*RebootResponse, error)
+	// ProbeHTTP performs a bounded HTTP GET from the provisioner host network namespace.
+	ProbeHTTP(context.Context, *ProbeHTTPRequest) (*ProbeHTTPResponse, error)
 	mustEmbedUnimplementedRemoteProvisionServiceServer()
 }
 
@@ -267,6 +282,9 @@ func (UnimplementedRemoteProvisionServiceServer) SyncBootArtifacts(context.Conte
 }
 func (UnimplementedRemoteProvisionServiceServer) Reboot(context.Context, *RebootRequest) (*RebootResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Reboot not implemented")
+}
+func (UnimplementedRemoteProvisionServiceServer) ProbeHTTP(context.Context, *ProbeHTTPRequest) (*ProbeHTTPResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ProbeHTTP not implemented")
 }
 func (UnimplementedRemoteProvisionServiceServer) mustEmbedUnimplementedRemoteProvisionServiceServer() {
 }
@@ -427,6 +445,24 @@ func _RemoteProvisionService_Reboot_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RemoteProvisionService_ProbeHTTP_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ProbeHTTPRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RemoteProvisionServiceServer).ProbeHTTP(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RemoteProvisionService_ProbeHTTP_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RemoteProvisionServiceServer).ProbeHTTP(ctx, req.(*ProbeHTTPRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // RemoteProvisionService_ServiceDesc is the grpc.ServiceDesc for RemoteProvisionService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -457,6 +493,10 @@ var RemoteProvisionService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Reboot",
 			Handler:    _RemoteProvisionService_Reboot_Handler,
+		},
+		{
+			MethodName: "ProbeHTTP",
+			Handler:    _RemoteProvisionService_ProbeHTTP_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

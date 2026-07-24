@@ -34,6 +34,7 @@ type fakeServer struct {
 	mu            sync.Mutex
 	synced        map[string]string
 	rebootedNodes []string
+	probeRequest  *remoteprovisionpb.ProbeHTTPRequest
 }
 
 func (*fakeServer) Ping(context.Context, *emptypb.Empty) (*remoteprovisionpb.PingResponse, error) {
@@ -122,6 +123,25 @@ func (s *fakeServer) Reboot(_ context.Context, req *remoteprovisionpb.RebootRequ
 	s.rebootedNodes = append(s.rebootedNodes, req.GetMachineName())
 
 	return &remoteprovisionpb.RebootResponse{}, nil
+}
+
+func (s *fakeServer) ProbeHTTP(_ context.Context, req *remoteprovisionpb.ProbeHTTPRequest) (*remoteprovisionpb.ProbeHTTPResponse, error) {
+	s.mu.Lock()
+	s.probeRequest = req
+	s.mu.Unlock()
+
+	if req.GetPath() == "/failure" {
+		return &remoteprovisionpb.ProbeHTTPResponse{
+			Outcome: &remoteprovisionpb.ProbeHTTPResponse_Failure{Failure: "no route to host"},
+		}, nil
+	}
+
+	return &remoteprovisionpb.ProbeHTTPResponse{
+		Outcome: &remoteprovisionpb.ProbeHTTPResponse_Result{Result: &remoteprovisionpb.ProbeHTTPResult{
+			StatusCode: 201,
+			Body:       []byte("probe-ok"),
+		}},
+	}, nil
 }
 
 // startFakeServer spins up the in-process gRPC server, returning its
@@ -228,6 +248,50 @@ func TestProvisionerSyncAndReboot(t *testing.T) {
 	server.mu.Unlock()
 
 	require.Equal(t, []string{"worker-1"}, rebootedNodes)
+}
+
+func TestProvisionerHTTPProbe(t *testing.T) {
+	endpoint, server, stop := startFakeServer(t)
+	defer stop()
+
+	provisioner, err := remote.NewProvisioner(t.Context(), endpoint)
+	require.NoError(t, err)
+
+	defer provisioner.Close() //nolint:errcheck
+
+	cluster, err := provisioner.Reflect(t.Context(), "test-cluster", "")
+	require.NoError(t, err)
+
+	httpProber := provisioner.(provision.HTTPProbeProvisioner) //nolint:forcetypeassert
+	response, err := httpProber.ProbeHTTP(t.Context(), cluster, provision.HTTPProbeRequest{
+		IP:      netip.MustParseAddr("203.0.113.100"),
+		Port:    8080,
+		Path:    "/success",
+		Timeout: 1500 * time.Millisecond,
+	})
+	require.NoError(t, err)
+	require.Empty(t, response.Failure)
+	require.Equal(t, 201, response.StatusCode)
+	require.Equal(t, []byte("probe-ok"), response.Body)
+
+	server.mu.Lock()
+	probeRequest := server.probeRequest
+	server.mu.Unlock()
+
+	require.Equal(t, "test-cluster", probeRequest.GetClusterName())
+	require.Equal(t, "203.0.113.100", probeRequest.GetIp())
+	require.Equal(t, uint32(8080), probeRequest.GetPort())
+	require.Equal(t, "/success", probeRequest.GetPath())
+	require.Equal(t, uint32(1500), probeRequest.GetTimeoutMillis())
+
+	response, err = httpProber.ProbeHTTP(t.Context(), cluster, provision.HTTPProbeRequest{
+		IP:   netip.MustParseAddr("203.0.113.100"),
+		Port: 80,
+		Path: "/failure",
+	})
+	require.NoError(t, err)
+	require.Equal(t, "no route to host", response.Failure)
+	require.Zero(t, response.StatusCode)
 }
 
 func TestNewProvisionerEmptyEndpoint(t *testing.T) {

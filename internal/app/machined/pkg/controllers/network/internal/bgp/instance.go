@@ -24,22 +24,26 @@ import (
 
 // Instance owns the lifecycle and reconciled state of one GoBGP server.
 type Instance struct {
-	server      *gobgpsrv.BgpServer
-	serverKey   string
-	watchCancel context.CancelFunc
-	originated  map[netip.Prefix]struct{}
-	advertised  []netip.Prefix
-	table       nethelpers.RoutingTable
-	source      netip.Addr
-	localASN    uint32
-	peers       map[string]string
-	peerIfaces  map[netip.Addr]string
+	server        *gobgpsrv.BgpServer
+	serverKey     string
+	watchCancel   context.CancelFunc
+	originated    map[netip.Prefix]struct{}
+	imported      map[netip.Prefix]importedPath
+	advertised    []netip.Prefix
+	imports       []network.BGPImportRouteSpec
+	table         nethelpers.RoutingTable
+	source        netip.Addr
+	localASN      uint32
+	installRoutes bool
+	peers         map[string]string
+	peerIfaces    map[netip.Addr]string
 }
 
 // NewInstance creates an initialized, stopped BGP instance.
 func NewInstance() *Instance {
 	return &Instance{
 		originated: map[netip.Prefix]struct{}{},
+		imported:   map[netip.Prefix]importedPath{},
 		peers:      map[string]string{},
 		peerIfaces: map[netip.Addr]string{},
 	}
@@ -69,10 +73,13 @@ func (instance *Instance) Stop() {
 
 func (instance *Instance) clearState() {
 	instance.originated = map[netip.Prefix]struct{}{}
+	instance.imported = map[netip.Prefix]importedPath{}
 	instance.advertised = nil
+	instance.imports = nil
 	instance.table = 0
 	instance.source = netip.Addr{}
 	instance.localASN = 0
+	instance.installRoutes = false
 	instance.peers = map[string]string{}
 	instance.peerIfaces = map[netip.Addr]string{}
 }
@@ -193,14 +200,18 @@ func (instance *Instance) ReconcileOriginated(advertised []netip.Prefix) error {
 // SetOutputState records the successfully reconciled configuration used to build controller outputs.
 func (instance *Instance) SetOutputState(
 	advertised []netip.Prefix,
+	imports []network.BGPImportRouteSpec,
 	table nethelpers.RoutingTable,
 	source netip.Addr,
 	localASN uint32,
+	installRoutes bool,
 ) {
 	instance.advertised = slices.Clone(advertised)
+	instance.imports = cloneImportRoutes(imports)
 	instance.table = table
 	instance.source = source
 	instance.localASN = localASN
+	instance.installRoutes = installRoutes
 }
 
 func (instance *Instance) reconcilePeers(

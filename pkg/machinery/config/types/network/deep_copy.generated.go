@@ -21,6 +21,24 @@ func (o *BGPInstanceConfigV1Alpha1) DeepCopy() *BGPInstanceConfigV1Alpha1 {
 		cp.BGPAdvertise = make([]string, len(o.BGPAdvertise))
 		copy(cp.BGPAdvertise, o.BGPAdvertise)
 	}
+	if o.BGPMultipath != nil {
+		cp.BGPMultipath = new(bool)
+		*cp.BGPMultipath = *o.BGPMultipath
+	}
+	if o.BGPInstallRoutes != nil {
+		cp.BGPInstallRoutes = new(bool)
+		*cp.BGPInstallRoutes = *o.BGPInstallRoutes
+	}
+	if o.BGPImportRoutes != nil {
+		cp.BGPImportRoutes = make([]BGPImportRoute, len(o.BGPImportRoutes))
+		copy(cp.BGPImportRoutes, o.BGPImportRoutes)
+		for i2 := range o.BGPImportRoutes {
+			if o.BGPImportRoutes[i2].ImportPrefixes != nil {
+				cp.BGPImportRoutes[i2].ImportPrefixes = make([]meta.Prefix, len(o.BGPImportRoutes[i2].ImportPrefixes))
+				copy(cp.BGPImportRoutes[i2].ImportPrefixes, o.BGPImportRoutes[i2].ImportPrefixes)
+			}
+		}
+	}
 	if o.BGPNeighborConfigs != nil {
 		cp.BGPNeighborConfigs = make([]BGPNeighborConfig, len(o.BGPNeighborConfigs))
 		copy(cp.BGPNeighborConfigs, o.BGPNeighborConfigs)

@@ -26,9 +26,10 @@ type BGPControllerSuite struct {
 func (suite *BGPControllerSuite) TestIndependentInstanceLifecycle() {
 	fabric := network.NewBGPInstanceConfig("fabric")
 	*fabric.TypedSpec() = network.BGPInstanceConfigSpec{
-		LocalASN: 65001,
-		RouterID: netip.MustParseAddr("10.0.0.1"),
-		VRFTable: nethelpers.TableMain,
+		LocalASN:      65001,
+		RouterID:      netip.MustParseAddr("10.0.0.1"),
+		VRFTable:      nethelpers.TableMain,
+		InstallRoutes: true,
 		Neighbors: []network.BGPNeighborConfigSpec{
 			{
 				Address: netip.MustParseAddr("192.0.2.1"),
@@ -40,9 +41,10 @@ func (suite *BGPControllerSuite) TestIndependentInstanceLifecycle() {
 
 	workload := network.NewBGPInstanceConfig("workload")
 	*workload.TypedSpec() = network.BGPInstanceConfigSpec{
-		LocalASN: 65003,
-		RouterID: netip.MustParseAddr("10.0.0.2"),
-		VRFTable: 88,
+		LocalASN:      65003,
+		RouterID:      netip.MustParseAddr("10.0.0.2"),
+		VRFTable:      88,
+		InstallRoutes: true,
 		Neighbors: []network.BGPNeighborConfigSpec{
 			{
 				Address: netip.MustParseAddr("192.0.2.2"),
@@ -64,6 +66,27 @@ func (suite *BGPControllerSuite) TestIndependentInstanceLifecycle() {
 	rtestutils.AssertResource(suite.Ctx(), suite.T(), suite.State(), "workload/192.0.2.2", func(res *network.BGPPeerStatus, assertions *assert.Assertions) {
 		assertions.Equal("workload", res.TypedSpec().Instance)
 		assertions.Equal(uint32(65003), res.TypedSpec().LocalASN)
+	}, rtestutils.WithNamespace(network.NamespaceName))
+
+	var fabricPeerCreated time.Time
+
+	rtestutils.AssertResource(suite.Ctx(), suite.T(), suite.State(), "fabric/192.0.2.1", func(res *network.BGPPeerStatus, _ *assert.Assertions) {
+		fabricPeerCreated = res.Metadata().Created()
+	}, rtestutils.WithNamespace(network.NamespaceName))
+
+	currentFabric, err := suite.State().Get(suite.Ctx(), fabric.Metadata())
+	suite.Require().NoError(err)
+
+	updatedFabric := currentFabric.(*network.BGPInstanceConfig)
+	updatedFabric.TypedSpec().ImportRoutes = []network.BGPImportRouteSpec{{
+		BGPInstance: "workload",
+		Prefixes:    []netip.Prefix{netip.MustParsePrefix("198.51.100.0/24")},
+	}}
+	suite.Update(updatedFabric)
+
+	// Import policy is reconciled inside the running target server and must not restart fabric peers.
+	rtestutils.AssertResource(suite.Ctx(), suite.T(), suite.State(), "fabric/192.0.2.1", func(res *network.BGPPeerStatus, assertions *assert.Assertions) {
+		assertions.Equal(fabricPeerCreated, res.Metadata().Created())
 	}, rtestutils.WithNamespace(network.NamespaceName))
 
 	suite.Destroy(workload)
@@ -109,6 +132,7 @@ func (suite *BGPControllerSuite) TestRuntimeStatusResolutionAndServerRestart() {
 		RouteSource:    netip.MustParseAddr("10.0.0.2"),
 		AdvertiseLinks: []string{"node-ip"},
 		VRFTable:       nethelpers.TableMain,
+		InstallRoutes:  true,
 		Neighbors: []network.BGPNeighborConfigSpec{
 			{
 				Address: netip.MustParseAddr("192.0.2.1"),

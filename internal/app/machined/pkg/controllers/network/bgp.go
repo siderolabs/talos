@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"iter"
 	"net/netip"
+	"slices"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -198,8 +199,6 @@ func (ctrl *BGPController) reconcile(ctx context.Context, r controller.Runtime, 
 
 	desired := map[resource.ID]struct{}{}
 
-	var outputs []bgpInstanceOutputs
-
 	for configResource := range configs.All() {
 		name := configResource.Metadata().ID()
 		desired[name] = struct{}{}
@@ -215,10 +214,6 @@ func (ctrl *BGPController) reconcile(ctx context.Context, r controller.Runtime, 
 			instanceLogger := logger.With(zap.String("instance", name))
 			instanceLogger.Warn("BGP runtime configuration is not ready, preserving the running instance", zap.Error(resolveErr))
 
-			if instance.Running() {
-				outputs = append(outputs, instanceOutputs(ctx, name, instance))
-			}
-
 			continue
 		}
 
@@ -226,10 +221,6 @@ func (ctrl *BGPController) reconcile(ctx context.Context, r controller.Runtime, 
 
 		if !resolved.RouterID.IsValid() {
 			instanceLogger.Warn("BGP router-id could not be determined, preserving the running instance")
-
-			if instance.Running() {
-				outputs = append(outputs, instanceOutputs(ctx, name, instance))
-			}
 
 			continue
 		}
@@ -255,12 +246,12 @@ func (ctrl *BGPController) reconcile(ctx context.Context, r controller.Runtime, 
 
 		instance.SetOutputState(
 			resolved.AdvertisedPrefixes,
+			resolved.Spec.ImportRoutes,
 			resolved.Spec.VRFTable,
 			resolved.Spec.RouteSource,
 			resolved.Spec.LocalASN,
+			resolved.Spec.InstallRoutes,
 		)
-
-		outputs = append(outputs, instanceOutputs(ctx, name, instance))
 	}
 
 	for name, instance := range ctrl.instances {
@@ -270,6 +261,59 @@ func (ctrl *BGPController) reconcile(ctx context.Context, r controller.Runtime, 
 
 		instance.Stop()
 		delete(ctrl.instances, name)
+	}
+
+	instanceNames := make([]resource.ID, 0, len(desired))
+	for name := range desired {
+		instanceNames = append(instanceNames, name)
+	}
+
+	slices.Sort(instanceNames)
+
+	for _, name := range instanceNames {
+		instance := ctrl.instances[name]
+		if instance == nil || !instance.Running() {
+			continue
+		}
+
+		desiredCount, ready, importErr := internalbgp.ReconcileImportedPaths(name, instance, ctrl.instances, desired)
+		if importErr != nil {
+			return fmt.Errorf("error resolving route imports for BGP instance %q: %w", name, importErr)
+		}
+
+		if !ready {
+			logger.With(zap.String("instance", name)).Warn("BGP route import source is not ready, preserving imported paths")
+
+			continue
+		}
+
+		logger.Debug(
+			"reconciled BGP route imports",
+			zap.String("instance", name),
+			zap.Int("desired", desiredCount),
+			zap.Int("current", instance.ImportedCount()),
+		)
+	}
+
+	outputs := make([]bgpInstanceOutputs, 0, len(instanceNames))
+
+	for _, name := range instanceNames {
+		instance := ctrl.instances[name]
+		if instance == nil || !instance.Running() {
+			continue
+		}
+
+		output := instanceOutputs(ctx, name, instance)
+		outputs = append(outputs, output)
+
+		logger.Debug(
+			"prepared BGP instance outputs",
+			zap.String("instance", name),
+			zap.Bool("install_routes", instance.InstallRoutes()),
+			zap.Int("learned_routes", len(output.learned)),
+			zap.Int("imported_routes", instance.ImportedCount()),
+			zap.Int("peer_statuses", len(output.peerStatuses)),
+		)
 	}
 
 	return ctrl.writeOutputs(ctx, r, outputs)

@@ -30,6 +30,8 @@ type TalosSuite struct {
 	K8sEndpoint string
 	// Cluster describes provisioned cluster, used for discovery purposes
 	Cluster provision.Cluster
+	// HTTPProbeProvisioner probes through the external provisioner/fabric network namespace.
+	HTTPProbeProvisioner provision.HTTPProbeProvisioner
 	// TalosConfig is a path to talosconfig
 	TalosConfig string
 	// Version is the (expected) version of Talos tests are running against
@@ -53,6 +55,8 @@ type TalosSuite struct {
 	// BGPCLOSEnabled runs the full-CLOS BGP test against a cluster created with --with-bgp-clos (each
 	// node peers unnumbered with a host fabric peer over dedicated uplinks)
 	BGPCLOSEnabled bool
+	// CiliumBGPEnabled runs the Cilium-to-fabric BGP integration test against a Cilium CNI cluster.
+	CiliumBGPEnabled bool
 	// TrustedBoot tells if the cluster is secure booted and disks are encrypted
 	TrustedBoot bool
 	// SelinuxEnforcing tells if the cluster is booted with the image with selinux enforcement enabled

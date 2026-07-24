@@ -71,8 +71,8 @@ func (BGPInstanceConfigV1Alpha1) Doc() *encoder.Doc {
 				Name:        "multipath",
 				Type:        "bool",
 				Note:        "",
-				Description: "Enable ECMP (multipath) for routes learned from multiple neighbors.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable ECMP (multipath) for routes learned from multiple neighbors." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Enable ECMP (multipath) for routes learned from multiple neighbors. Defaults to false.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable ECMP (multipath) for routes learned from multiple neighbors. Defaults to false." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
 				Name:        "maxPaths",
@@ -80,6 +80,20 @@ func (BGPInstanceConfigV1Alpha1) Doc() *encoder.Doc {
 				Note:        "",
 				Description: "Maximum number of ECMP next-hops to install. Zero uses the implementation default.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Maximum number of ECMP next-hops to install. Zero uses the implementation default." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "installRoutes",
+				Type:        "bool",
+				Note:        "",
+				Description: "Install routes learned from BGP neighbors into the Linux routing table. Defaults to true.\nWhen false, learned routes remain in this instance's BGP RIB and can still be selected by\n`importRoutes`, but Talos does not install them into the Linux FIB.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Install routes learned from BGP neighbors into the Linux routing table. Defaults to true." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "importRoutes",
+				Type:        "[]BGPImportRoute",
+				Note:        "",
+				Description: "Selected routes to import from other BGP instances. Imports are one-way: matching best paths\nlearned from each source instance are preserved and advertised by this instance with its own\nnext hop. Locally originated and previously imported paths are not recursively imported.\nSelectors in a single target instance must not overlap, giving each imported prefix one source.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Selected routes to import from other BGP instances. Imports are one-way: matching best paths" /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
 				Name:        "neighbors",
@@ -98,6 +112,38 @@ func (BGPInstanceConfigV1Alpha1) Doc() *encoder.Doc {
 	doc.Fields[4].AddExample("", meta.Addr{Addr: netip.MustParseAddr("10.0.0.1")})
 	doc.Fields[5].AddExample("", meta.Addr{Addr: netip.MustParseAddr("10.0.0.1")})
 	doc.Fields[6].AddExample("", []string{"dummy0"})
+
+	return doc
+}
+
+func (BGPImportRoute) Doc() *encoder.Doc {
+	doc := &encoder.Doc{
+		Type:        "BGPImportRoute",
+		Comments:    [3]string{"" /* encoder.HeadComment */, "BGPImportRoute selects routes learned by another BGP instance for one-way import." /* encoder.LineComment */, "" /* encoder.FootComment */},
+		Description: "BGPImportRoute selects routes learned by another BGP instance for one-way import.",
+		AppearsIn: []encoder.Appearance{
+			{
+				TypeName:  "BGPInstanceConfigV1Alpha1",
+				FieldName: "importRoutes",
+			},
+		},
+		Fields: []encoder.Doc{
+			{
+				Name:        "bgpInstance",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the source BGP instance.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the source BGP instance." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
+				Name:        "prefixes",
+				Type:        "[]Prefix",
+				Note:        "",
+				Description: "CIDR selectors. A learned route matches when it is contained by one of these prefixes.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "CIDR selectors. A learned route matches when it is contained by one of these prefixes." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+		},
+	}
 
 	return doc
 }
@@ -2529,6 +2575,7 @@ func GetFileDoc() *encoder.FileDoc {
 		Description: "Package network provides network machine configuration documents.\n",
 		Structs: []*encoder.Doc{
 			BGPInstanceConfigV1Alpha1{}.Doc(),
+			BGPImportRoute{}.Doc(),
 			BGPNeighborConfig{}.Doc(),
 			BGPBFDConfig{}.Doc(),
 			BlackholeRouteConfigV1Alpha1{}.Doc(),

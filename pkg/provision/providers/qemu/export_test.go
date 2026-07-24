@@ -7,6 +7,8 @@ package qemu
 import (
 	"context"
 	"net"
+
+	"github.com/siderolabs/talos/pkg/provision"
 )
 
 // FabricDeviceForTest exposes fabric device argument construction for tests.
@@ -30,4 +32,9 @@ func (allocator *APIPortAllocatorForTest) Allocate(ctx context.Context, host str
 // BuildFabricUplinksForTest exposes BGP test uplink construction for tests.
 func BuildFabricUplinksForTest(networkName, managementBridge string, nodeIdx, count, mtu int, bgpEnabled, bgpCLOS bool) []FabricUplink {
 	return buildFabricUplinks(networkName, managementBridge, nodeIdx, count, mtu, bgpEnabled, bgpCLOS)
+}
+
+// ProbeHTTPForTest exposes the bounded provisioner-host HTTP implementation for tests.
+func ProbeHTTPForTest(ctx context.Context, request provision.HTTPProbeRequest) (provision.HTTPProbeResponse, error) {
+	return probeHTTP(ctx, request)
 }

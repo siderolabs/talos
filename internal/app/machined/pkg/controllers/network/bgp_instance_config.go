@@ -7,6 +7,7 @@ package network
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
@@ -119,7 +120,66 @@ func renderBGPInstanceConfigs(machineConfig *configresource.MachineConfig) (map[
 		desired[name] = spec
 	}
 
+	if err := validateBGPImportGraph(desired); err != nil {
+		return nil, err
+	}
+
 	return desired, nil
+}
+
+func validateBGPImportGraph(instances map[string]network.BGPInstanceConfigSpec) error {
+	names := make([]string, 0, len(instances))
+	for name := range instances {
+		names = append(names, name)
+	}
+
+	slices.Sort(names)
+
+	const (
+		unvisited uint8 = iota
+		visiting
+		visited
+	)
+
+	state := map[string]uint8{}
+
+	var visit func(string) error
+
+	visit = func(name string) error {
+		state[name] = visiting
+
+		for _, routeImport := range instances[name].ImportRoutes {
+			source := routeImport.BGPInstance
+			if _, exists := instances[source]; !exists {
+				return fmt.Errorf("BGP instance %q imports routes from missing BGP instance %q", name, source)
+			}
+
+			switch state[source] {
+			case visiting:
+				return fmt.Errorf("BGP route import cycle from instance %q to instance %q", name, source)
+			case unvisited:
+				if err := visit(source); err != nil {
+					return err
+				}
+			}
+		}
+
+		state[name] = visited
+
+		return nil
+	}
+
+	for _, name := range names {
+		if state[name] != unvisited {
+			continue
+		}
+
+		if err := visit(name); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 type bgpProjectionState struct {
@@ -200,11 +260,20 @@ func buildBGPInstanceConfigSpec(cfg talosconfig.NetworkBGPInstanceConfig) networ
 		AdvertiseLinks: make([]string, len(cfg.AdvertiseLinks())),
 		Multipath:      cfg.Multipath(),
 		MaxPaths:       cfg.MaxPaths(),
+		InstallRoutes:  cfg.InstallRoutes(),
+		ImportRoutes:   make([]network.BGPImportRouteSpec, 0, len(cfg.ImportRoutes())),
 		Neighbors:      make([]network.BGPNeighborConfigSpec, 0, len(cfg.Neighbors())),
 	}
 
 	for i, link := range cfg.AdvertiseLinks() {
 		spec.AdvertiseLinks[i] = link
+	}
+
+	for _, routeImport := range cfg.ImportRoutes() {
+		spec.ImportRoutes = append(spec.ImportRoutes, network.BGPImportRouteSpec{
+			BGPInstance: routeImport.BGPInstance(),
+			Prefixes:    slices.Clone(routeImport.Prefixes()),
+		})
 	}
 
 	for _, neighbor := range cfg.Neighbors() {

@@ -836,9 +836,11 @@ func (m *Qemu) initBGPCLOS() error {
 			return err
 		}
 
-		m.ConfigBundleOps = append(
+		// Apply the CLOS Flannel default before user-supplied patches, so an explicit custom-CNI
+		// deletion or override remains authoritative.
+		m.ConfigBundleOps = slices.Concat(
+			[]bundle.Option{bundle.WithPatchControlPlane([]configpatcher.Patch{configpatcher.NewStrategicMergePatch(flannelCtr)})},
 			m.ConfigBundleOps,
-			bundle.WithPatchControlPlane([]configpatcher.Patch{configpatcher.NewStrategicMergePatch(flannelCtr)}),
 		)
 	}
 
@@ -907,7 +909,7 @@ func (m *Qemu) closNodeConfig(loopback, vip netip.Addr, asn uint32, ifaces []str
 	// non-deterministic.
 	bgp.BGPRouteSource = metacfg.Addr{Addr: loopback}
 	bgp.BGPAdvertise = []string{"lo"}
-	bgp.BGPMultipath = len(ifaces) > 1
+	bgp.BGPMultipath = new(len(ifaces) > 1)
 	bgp.BGPNeighborConfigs = make([]networkcfg.BGPNeighborConfig, 0, len(ifaces))
 
 	for _, iface := range ifaces {

@@ -713,6 +713,18 @@ func (k8sSuite *K8sSuite) HelmInstall(ctx context.Context, namespace, repository
 	return cmd.Run()
 }
 
+// HelmUninstall uninstalls the named Helm release from a namespace.
+func (k8sSuite *K8sSuite) HelmUninstall(ctx context.Context, namespace, releaseName string) error {
+	cmd := exec.CommandContext(ctx, k8sSuite.HelmPath, "uninstall", "--namespace", namespace, releaseName)
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	k8sSuite.T().Logf("running helm command: %s", strings.Join(cmd.Args, " "))
+
+	return cmd.Run()
+}
+
 // WaitForResource waits for the resource with the given group, kind, version, namespace and jsonpath field selector to have the given expected value.
 // mostly a restructuring of `kubectl wait` from https://github.com/kubernetes/kubectl/blob/master/pkg/cmd/wait/wait.go
 //

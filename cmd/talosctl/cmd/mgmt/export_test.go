@@ -14,3 +14,8 @@ import (
 func BGPLaunchActivePeerForTest(address netip.Addr, peerASN uint32) *api.Peer {
 	return bgpLaunchActivePeer(address, peerASN)
 }
+
+// BGPLaunchHostRouteEligibleForTest exposes provisioner-host route filtering for tests.
+func BGPLaunchHostRouteEligibleForTest(prefix netip.Prefix) bool {
+	return fabricHostRouteEligible(prefix)
+}

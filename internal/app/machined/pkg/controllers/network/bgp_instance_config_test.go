@@ -35,7 +35,7 @@ func newFabricConfig(holdTime time.Duration) *networkcfg.BGPInstanceConfigV1Alph
 	instance.BGPRouterID = meta.Addr{Addr: netip.MustParseAddr("10.0.0.1")}
 	instance.BGPRouteSource = meta.Addr{Addr: netip.MustParseAddr("10.0.0.2")}
 	instance.BGPAdvertise = []string{"node-ip"}
-	instance.BGPMultipath = true
+	instance.BGPMultipath = new(true)
 	instance.BGPMaxPaths = 4
 	instance.BGPNeighborConfigs = []networkcfg.BGPNeighborConfig{
 		{
@@ -74,6 +74,7 @@ func (suite *BGPInstanceConfigSuite) TestRenderInlineBehaviorAndPreserveConfigur
 		assertions.Equal(netip.MustParseAddr("10.0.0.1"), spec.RouterID)
 		assertions.Equal(netip.MustParseAddr("10.0.0.2"), spec.RouteSource)
 		assertions.Equal([]string{"node-ip"}, spec.AdvertiseLinks)
+		assertions.True(spec.InstallRoutes)
 		assertions.Equal(nethelpers.TableMain, spec.VRFTable)
 		assertions.Len(spec.Neighbors, 2)
 		assertions.Equal("fabric0", spec.Neighbors[0].Link)
@@ -89,6 +90,7 @@ func (suite *BGPInstanceConfigSuite) TestRenderInlineBehaviorAndPreserveConfigur
 	}, rtestutils.WithNamespace(network.NamespaceName))
 
 	updatedInstance := newFabricConfig(12 * time.Second)
+	updatedInstance.BGPInstallRoutes = new(false)
 	updatedContainer, err := container.New(updatedInstance)
 	suite.Require().NoError(err)
 
@@ -98,6 +100,7 @@ func (suite *BGPInstanceConfigSuite) TestRenderInlineBehaviorAndPreserveConfigur
 
 	rtestutils.AssertResource(suite.Ctx(), suite.T(), suite.State(), "fabric", func(res *network.BGPInstanceConfig, assertions *assert.Assertions) {
 		assertions.Equal(12*time.Second, res.TypedSpec().Neighbors[0].HoldTime)
+		assertions.False(res.TypedSpec().InstallRoutes)
 	}, rtestutils.WithNamespace(network.NamespaceName))
 
 	suite.Destroy(updatedMachineConfig)
@@ -149,6 +152,63 @@ func (suite *BGPInstanceConfigSuite) TestInvalidProjectionRetainsLastKnownGood()
 	// The projection returns an error before tracking/writing outputs, retaining the last valid set.
 	rtestutils.AssertResource(suite.Ctx(), suite.T(), suite.State(), "fabric", func(res *network.BGPInstanceConfig, assertions *assert.Assertions) {
 		assertions.Equal(9*time.Second, res.TypedSpec().Neighbors[0].HoldTime)
+	}, rtestutils.WithNamespace(network.NamespaceName))
+}
+
+func (suite *BGPInstanceConfigSuite) TestRouteImportsAndInvalidGraphPreserveLastKnownGood() {
+	fabric := newFabricConfig(9 * time.Second)
+	fabric.BGPImportRoutes = []networkcfg.BGPImportRoute{{
+		ImportBGPInstance: "workload",
+		ImportPrefixes:    []meta.Prefix{{Prefix: netip.MustParsePrefix("198.51.100.0/24")}},
+	}}
+
+	workload := networkcfg.NewBGPInstanceConfigV1Alpha1("workload")
+	workload.BGPVRF = "vrf-workload"
+	workload.BGPLocalASN = 4200000000
+	workload.BGPRouterID = meta.Addr{Addr: netip.MustParseAddr("10.0.0.2")}
+
+	vrf := networkcfg.NewVRFConfigV1Alpha1("vrf-workload")
+	vrf.VRFTable = 88
+
+	ctr, err := container.New(vrf, fabric, workload)
+	suite.Require().NoError(err)
+
+	machineConfig := configresource.NewMachineConfig(ctr)
+	suite.Create(machineConfig)
+
+	rtestutils.AssertResource(suite.Ctx(), suite.T(), suite.State(), "fabric", func(res *network.BGPInstanceConfig, assertions *assert.Assertions) {
+		assertions.Equal([]network.BGPImportRouteSpec{{
+			BGPInstance: "workload",
+			Prefixes:    []netip.Prefix{netip.MustParsePrefix("198.51.100.0/24")},
+		}}, res.TypedSpec().ImportRoutes)
+	}, rtestutils.WithNamespace(network.NamespaceName))
+
+	workload.BGPImportRoutes = []networkcfg.BGPImportRoute{{
+		ImportBGPInstance: "fabric",
+		ImportPrefixes:    []meta.Prefix{{Prefix: netip.MustParsePrefix("198.51.100.0/24")}},
+	}}
+
+	cyclicContainer, err := container.New(vrf, fabric, workload)
+	suite.Require().NoError(err)
+
+	cyclicMachineConfig := configresource.NewMachineConfig(cyclicContainer)
+	cyclicMachineConfig.Metadata().SetVersion(machineConfig.Metadata().Version())
+	suite.Update(cyclicMachineConfig)
+
+	// A graph validation error occurs before output tracking, preserving both previous resources.
+	rtestutils.AssertResource(suite.Ctx(), suite.T(), suite.State(), "workload", func(res *network.BGPInstanceConfig, assertions *assert.Assertions) {
+		assertions.Empty(res.TypedSpec().ImportRoutes)
+	}, rtestutils.WithNamespace(network.NamespaceName))
+
+	missingContainer, err := container.New(vrf, fabric)
+	suite.Require().NoError(err)
+
+	missingMachineConfig := configresource.NewMachineConfig(missingContainer)
+	missingMachineConfig.Metadata().SetVersion(cyclicMachineConfig.Metadata().Version())
+	suite.Update(missingMachineConfig)
+
+	rtestutils.AssertResource(suite.Ctx(), suite.T(), suite.State(), "workload", func(res *network.BGPInstanceConfig, assertions *assert.Assertions) {
+		assertions.Empty(res.TypedSpec().ImportRoutes)
 	}, rtestutils.WithNamespace(network.NamespaceName))
 }
 

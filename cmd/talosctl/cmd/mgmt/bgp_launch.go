@@ -27,6 +27,10 @@ const fabricRAInterval = 10 * time.Second
 
 var fabricAllNodes = netip.MustParseAddr("ff02::1")
 
+func fabricHostRouteEligible(prefix netip.Prefix) bool {
+	return prefix.IsValid() && prefix.Bits() == prefix.Addr().BitLen()
+}
+
 var bgpLaunchCmdFlags struct {
 	addr          string
 	neighborRange string

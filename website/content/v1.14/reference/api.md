@@ -553,6 +553,7 @@ description: Talos gRPC API reference.
     - [AddressSpecSpec](#talos.resource.definitions.network.AddressSpecSpec)
     - [AddressStatusSpec](#talos.resource.definitions.network.AddressStatusSpec)
     - [BGPBFDConfigSpec](#talos.resource.definitions.network.BGPBFDConfigSpec)
+    - [BGPImportRouteSpec](#talos.resource.definitions.network.BGPImportRouteSpec)
     - [BGPInstanceConfigSpec](#talos.resource.definitions.network.BGPInstanceConfigSpec)
     - [BGPNeighborConfigSpec](#talos.resource.definitions.network.BGPNeighborConfigSpec)
     - [BGPPeerStatusSpec](#talos.resource.definitions.network.BGPPeerStatusSpec)
@@ -9636,6 +9637,22 @@ BGPBFDConfigSpec contains BFD parameters for a BGP neighbor.
 
 
 
+<a name="talos.resource.definitions.network.BGPImportRouteSpec"></a>
+
+### BGPImportRouteSpec
+BGPImportRouteSpec selects routes learned by another BGP instance for one-way import.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| bgp_instance | [string](#string) |  |  |
+| prefixes | [common.NetIPPrefix](#common.NetIPPrefix) | repeated |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.network.BGPInstanceConfigSpec"></a>
 
 ### BGPInstanceConfigSpec
@@ -9653,6 +9670,8 @@ BGPInstanceConfigSpec contains the resolved runtime configuration for a BGP rout
 | neighbors | [BGPNeighborConfigSpec](#talos.resource.definitions.network.BGPNeighborConfigSpec) | repeated |  |
 | vrf | [string](#string) |  |  |
 | vrf_table | [talos.resource.definitions.enums.NethelpersRoutingTable](#talos.resource.definitions.enums.NethelpersRoutingTable) |  |  |
+| import_routes | [BGPImportRouteSpec](#talos.resource.definitions.network.BGPImportRouteSpec) | repeated |  |
+| install_routes | [bool](#bool) |  |  |
 
 
 

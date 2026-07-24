@@ -373,10 +373,10 @@ List of changes:
 - Numbered and unnumbered (IPv6 link-local, RFC 8950 extended next-hop) peering are supported, including IPv4 prefixes learned over an IPv6 link-local next-hop.
 - Neighbor-local ASN overrides and passive sessions are supported. ECMP (multipath) and BFD (fast failure detection) are supported for fabric peering.
 - BFD is currently supported only by the instance in the default routing domain; GoBGP's embedded BFD listener is not VRF-aware.
-- Each instance owns an isolated BGP RIB and installs learned routes into its default or VRF routing table through the existing route controllers.
+- Each instance owns an isolated BGP RIB and, by default, installs learned routes into its default or VRF routing table through the existing route controllers. Set `installRoutes: false` to retain learned routes in the BGP RIB without installing them into the Linux routing table.
+- Instances can selectively import best neighbor-learned routes from other named instances with `importRoutes` prefix selectors. Imports are one-way, preserve path attributes, and do not recursively import locally originated or previously imported paths.
 - Peer state is observable via instance-qualified `BGPPeerStatus` resources (`talosctl get bgppeerstatus`).
 - `RouteSpec`/`RouteStatus` now carry a multipath next-hop list to support ECMP and cross-family (RFC 8950) next-hops.
-- Inter-instance route import/leaking is not yet supported, so a VRF-scoped workload-speaker instance cannot yet export its routes through a separate fabric instance.
 """
 
     [notes.vethconfig]

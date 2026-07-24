@@ -50,6 +50,9 @@ service RemoteProvisionService {
 
   // Reboot forcefully restarts one QEMU node.
   rpc Reboot(RebootRequest) returns (RebootResponse);
+
+  // ProbeHTTP performs a bounded HTTP GET from the provisioner host network namespace.
+  rpc ProbeHTTP(ProbeHTTPRequest) returns (ProbeHTTPResponse);
 }
 
 // PingResponse identifies the remote-provision server.
@@ -182,3 +185,33 @@ message RebootRequest {
 
 // RebootResponse is empty on success.
 message RebootResponse {}
+
+// ProbeHTTPRequest describes a bounded HTTP GET through the provisioner host FIB.
+message ProbeHTTPRequest {
+  // cluster_name identifies an existing cluster whose fabric is being probed.
+  string cluster_name = 1;
+  // ip is a literal IPv4 or IPv6 destination; hostnames are rejected.
+  string ip = 2;
+  // port is the destination TCP port and must be in the range 1-65535.
+  uint32 port = 3;
+  // path is the HTTP request path and must start with '/'.
+  string path = 4;
+  // timeout_millis is clamped by the server to the supported bounds.
+  uint32 timeout_millis = 5;
+}
+
+// ProbeHTTPResult is a bounded HTTP response. Non-2xx status codes remain HTTP results.
+message ProbeHTTPResult {
+  int32 status_code = 1;
+  // body is truncated to the provisioner's maximum response size.
+  bytes body = 2;
+}
+
+// ProbeHTTPResponse distinguishes an HTTP response from an expected transport failure.
+message ProbeHTTPResponse {
+  oneof outcome {
+    ProbeHTTPResult result = 1;
+    // failure contains a transport error such as timeout, refusal, or no route.
+    string failure = 2;
+  }
+}

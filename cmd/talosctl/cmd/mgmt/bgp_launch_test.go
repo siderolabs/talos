@@ -27,3 +27,24 @@ func TestBGPLaunchActivePeer(t *testing.T) {
 	assert.Equal(t, api.Family_AFI_IP, peer.GetAfiSafis()[0].GetConfig().GetFamily().GetAfi())
 	assert.Equal(t, api.Family_AFI_IP6, peer.GetAfiSafis()[1].GetConfig().GetFamily().GetAfi())
 }
+
+func TestBGPLaunchHostRouteEligible(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		prefix string
+		valid  bool
+	}{
+		{prefix: "172.16.0.2/32", valid: true},
+		{prefix: "198.51.100.100/32", valid: true},
+		{prefix: "2001:db8::1/128", valid: true},
+		{prefix: "10.244.0.0/24", valid: false},
+		{prefix: "2001:db8::/64", valid: false},
+	} {
+		t.Run(tc.prefix, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, tc.valid, mgmt.BGPLaunchHostRouteEligibleForTest(netip.MustParsePrefix(tc.prefix)))
+		})
+	}
+}

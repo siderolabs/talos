@@ -203,6 +203,19 @@ function build_registry_mirrors {
 function install_and_run_cilium_cni_tests {
   get_kubeconfig
 
+  local cilium_install_args=()
+
+  if [[ "${WITH_CILIUM_BGP:-false}" == "true" ]]; then
+    cilium_install_args+=("--set=bgpControlPlane.enabled=true")
+  fi
+
+  if [[ "${WITH_BGP_CLOS:-false}" == "true" && "${CILIUM_INSTALL_TYPE:-none}" == "strict" ]]; then
+    # Full-CLOS nodes keep their IPv4 identity on lo and use IPv6-link-local-only fabric uplinks.
+    # Select both the loopback and every fabric NIC so kube-proxy replacement has an IPv4 direct
+    # routing address while attaching its external service datapath to every uplink.
+    cilium_install_args+=("--set=devices={lo,enp0s+}" "--set=nodePort.directRoutingDevice=lo")
+  fi
+
   case "${WITH_KUBESPAN:-false}" in
     true)
       CILIUM_NODE_ENCRYPTION=false
@@ -217,6 +230,7 @@ function install_and_run_cilium_cni_tests {
   case "${CILIUM_INSTALL_TYPE:-none}" in
     strict)
       ${CILIUM_CLI} install \
+        "${cilium_install_args[@]}" \
         --set=ipam.mode=kubernetes \
         --set=kubeProxyReplacement=true \
         --set=encryption.nodeEncryption=${CILIUM_NODE_ENCRYPTION} \
@@ -231,6 +245,7 @@ function install_and_run_cilium_cni_tests {
       # explicitly setting kubeProxyReplacement=disabled since by the time cilium cli runs talos
       # has not yet applied the kube-proxy manifests
       ${CILIUM_CLI} install \
+        "${cilium_install_args[@]}" \
         --set=ipam.mode=kubernetes \
         --set=kubeProxyReplacement=false \
         --set=encryption.nodeEncryption=${CILIUM_NODE_ENCRYPTION} \

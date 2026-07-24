@@ -55,6 +55,16 @@ func (o BGPInstanceConfigSpec) DeepCopy() BGPInstanceConfigSpec {
 			cp.Neighbors[i2] = o.Neighbors[i2].DeepCopy()
 		}
 	}
+	if o.ImportRoutes != nil {
+		cp.ImportRoutes = make([]BGPImportRouteSpec, len(o.ImportRoutes))
+		copy(cp.ImportRoutes, o.ImportRoutes)
+		for i2 := range o.ImportRoutes {
+			if o.ImportRoutes[i2].Prefixes != nil {
+				cp.ImportRoutes[i2].Prefixes = make([]netip.Prefix, len(o.ImportRoutes[i2].Prefixes))
+				copy(cp.ImportRoutes[i2].Prefixes, o.ImportRoutes[i2].Prefixes)
+			}
+		}
+	}
 	return cp
 }
 

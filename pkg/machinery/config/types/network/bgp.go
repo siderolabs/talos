@@ -92,16 +92,45 @@ type BGPInstanceConfigV1Alpha1 struct {
 	//   examples:
 	//    - value: >
 	//       []string{"dummy0"}
-	BGPAdvertise []string `yaml:"advertise,omitempty"`
+	BGPAdvertise []string `yaml:"advertise,omitempty" merge:"replace"`
 	//   description: |
-	//     Enable ECMP (multipath) for routes learned from multiple neighbors.
-	BGPMultipath bool `yaml:"multipath,omitempty"`
+	//     Enable ECMP (multipath) for routes learned from multiple neighbors. Defaults to false.
+	BGPMultipath *bool `yaml:"multipath,omitempty"`
 	//   description: |
 	//     Maximum number of ECMP next-hops to install. Zero uses the implementation default.
 	BGPMaxPaths uint8 `yaml:"maxPaths,omitempty"`
 	//   description: |
+	//     Install routes learned from BGP neighbors into the Linux routing table. Defaults to true.
+	//     When false, learned routes remain in this instance's BGP RIB and can still be selected by
+	//     `importRoutes`, but Talos does not install them into the Linux FIB.
+	BGPInstallRoutes *bool `yaml:"installRoutes,omitempty"`
+	//   description: |
+	//     Selected routes to import from other BGP instances. Imports are one-way: matching best paths
+	//     learned from each source instance are preserved and advertised by this instance with its own
+	//     next hop. Locally originated and previously imported paths are not recursively imported.
+	//     Selectors in a single target instance must not overlap, giving each imported prefix one source.
+	BGPImportRoutes []BGPImportRoute `yaml:"importRoutes,omitempty" merge:"replace"`
+	//   description: |
 	//     BGP neighbors in this routing instance.
-	BGPNeighborConfigs []BGPNeighborConfig `yaml:"neighbors,omitempty"`
+	BGPNeighborConfigs []BGPNeighborConfig `yaml:"neighbors,omitempty" merge:"replace"`
+}
+
+// BGPImportRoute selects routes learned by another BGP instance for one-way import.
+type BGPImportRoute struct {
+	//   description: |
+	//     Name of the source BGP instance.
+	//   schemaRequired: true
+	ImportBGPInstance string `yaml:"bgpInstance"`
+	//   description: |
+	//     CIDR selectors. A learned route matches when it is contained by one of these prefixes.
+	//   schema:
+	//     type: array
+	//     items:
+	//       type: string
+	//       pattern: ^[0-9a-f.:]+/\d{1,3}$
+	//     minItems: 1
+	//   schemaRequired: true
+	ImportPrefixes []meta.Prefix `yaml:"prefixes"`
 }
 
 // BGPNeighborConfig configures a concrete BGP neighbor.
@@ -170,7 +199,11 @@ func exampleBGPInstanceConfigV1Alpha1() *BGPInstanceConfigV1Alpha1 {
 	cfg := NewBGPInstanceConfigV1Alpha1("fabric")
 	cfg.BGPLocalASN = 65001
 	cfg.BGPAdvertise = []string{"dummy0"}
-	cfg.BGPMultipath = true
+	cfg.BGPMultipath = new(true)
+	cfg.BGPImportRoutes = []BGPImportRoute{{
+		ImportBGPInstance: "workload",
+		ImportPrefixes:    []meta.Prefix{{Prefix: netip.MustParsePrefix("198.51.100.0/24")}},
+	}}
 	cfg.BGPNeighborConfigs = []BGPNeighborConfig{
 		{
 			NeighborLinkConfig: "enp1s0",
@@ -222,10 +255,30 @@ func (s *BGPInstanceConfigV1Alpha1) RouteSource() netip.Addr { return s.BGPRoute
 func (s *BGPInstanceConfigV1Alpha1) AdvertiseLinks() []string { return s.BGPAdvertise }
 
 // Multipath implements config.NetworkBGPInstanceConfig interface.
-func (s *BGPInstanceConfigV1Alpha1) Multipath() bool { return s.BGPMultipath }
+func (s *BGPInstanceConfigV1Alpha1) Multipath() bool {
+	if s.BGPMultipath == nil {
+		return false
+	}
+
+	return *s.BGPMultipath
+}
 
 // MaxPaths implements config.NetworkBGPInstanceConfig interface.
 func (s *BGPInstanceConfigV1Alpha1) MaxPaths() uint8 { return s.BGPMaxPaths }
+
+// InstallRoutes implements config.NetworkBGPInstanceConfig interface.
+func (s *BGPInstanceConfigV1Alpha1) InstallRoutes() bool {
+	if s.BGPInstallRoutes == nil {
+		return true
+	}
+
+	return *s.BGPInstallRoutes
+}
+
+// ImportRoutes implements config.NetworkBGPInstanceConfig interface.
+func (s *BGPInstanceConfigV1Alpha1) ImportRoutes() []config.NetworkBGPImportRoute {
+	return xslices.Map(s.BGPImportRoutes, func(route BGPImportRoute) config.NetworkBGPImportRoute { return route })
+}
 
 // Neighbors implements config.NetworkBGPInstanceConfig interface.
 func (s *BGPInstanceConfigV1Alpha1) Neighbors() []config.NetworkBGPNeighbor {
@@ -272,7 +325,107 @@ func (s *BGPInstanceConfigV1Alpha1) Validate(validation.RuntimeMode, ...validati
 		seen[key] = struct{}{}
 	}
 
+	errs = errors.Join(errs, validateBGPImportRoutes(s.MetaName, s.BGPImportRoutes))
+
 	return warnings, errs
+}
+
+//docgen:nodoc
+type indexedBGPImportSelector struct {
+	prefix     netip.Prefix
+	routeIndex int
+}
+
+func validateBGPImportRoutes(instanceName string, routes []BGPImportRoute) error {
+	var errs error
+
+	seenSources := map[string]struct{}{}
+	selectors := []indexedBGPImportSelector{}
+
+	for i, route := range routes {
+		errs = errors.Join(errs, validateBGPImportRoute(i, instanceName, route))
+
+		if route.ImportBGPInstance != "" {
+			if _, ok := seenSources[route.ImportBGPInstance]; ok {
+				errs = errors.Join(errs, fmt.Errorf("importRoutes[%d]: duplicate source BGP instance %q", i, route.ImportBGPInstance))
+			}
+
+			seenSources[route.ImportBGPInstance] = struct{}{}
+		}
+
+		for _, configuredPrefix := range route.ImportPrefixes {
+			prefix := configuredPrefix.Prefix
+			if !prefix.IsValid() || prefix != prefix.Masked() {
+				continue
+			}
+
+			for _, selector := range selectors {
+				if selector.routeIndex != i && prefixesOverlap(selector.prefix, prefix) {
+					errs = errors.Join(errs, fmt.Errorf(
+						"importRoutes[%d]: prefix %s overlaps importRoutes[%d] prefix %s",
+						i,
+						prefix,
+						selector.routeIndex,
+						selector.prefix,
+					))
+				}
+			}
+
+			selectors = append(selectors, indexedBGPImportSelector{prefix: prefix, routeIndex: i})
+		}
+	}
+
+	return errs
+}
+
+func validateBGPImportRoute(index int, instanceName string, route BGPImportRoute) error {
+	var errs error
+
+	switch route.ImportBGPInstance {
+	case "":
+		errs = errors.Join(errs, fmt.Errorf("importRoutes[%d]: bgpInstance must be specified", index))
+	case instanceName:
+		errs = errors.Join(errs, fmt.Errorf("importRoutes[%d]: cannot import from the same BGP instance %q", index, instanceName))
+	}
+
+	return errors.Join(errs, validateBGPImportPrefixes(index, route.ImportPrefixes))
+}
+
+func validateBGPImportPrefixes(index int, prefixes []meta.Prefix) error {
+	var errs error
+
+	if len(prefixes) == 0 {
+		errs = errors.Join(errs, fmt.Errorf("importRoutes[%d]: at least one prefix must be specified", index))
+	}
+
+	for i, configuredPrefix := range prefixes {
+		prefix := configuredPrefix.Prefix
+
+		if !prefix.IsValid() {
+			errs = errors.Join(errs, fmt.Errorf("importRoutes[%d].prefixes[%d]: invalid prefix", index, i))
+
+			continue
+		}
+
+		if prefix != prefix.Masked() {
+			errs = errors.Join(errs, fmt.Errorf("importRoutes[%d].prefixes[%d]: prefix %s must be masked", index, i, prefix))
+		}
+
+		for j := range i {
+			other := prefixes[j].Prefix
+			if !other.IsValid() || !prefixesOverlap(other, prefix) {
+				continue
+			}
+
+			errs = errors.Join(errs, fmt.Errorf("importRoutes[%d].prefixes[%d]: prefix %s overlaps prefixes[%d] %s", index, i, prefix, j, other))
+		}
+	}
+
+	return errs
+}
+
+func prefixesOverlap(a, b netip.Prefix) bool {
+	return a.Addr().BitLen() == b.Addr().BitLen() && (a.Contains(b.Addr()) || b.Contains(a.Addr()))
 }
 
 func bgpNeighborKey(index int, neighbor BGPNeighborConfig) (string, error) {
@@ -341,6 +494,14 @@ func (n BGPNeighborConfig) BFD() config.NetworkBGPBFD {
 	}
 
 	return n.NeighborBFDConfig
+}
+
+// BGPInstance implements config.NetworkBGPImportRoute interface.
+func (route BGPImportRoute) BGPInstance() string { return route.ImportBGPInstance }
+
+// Prefixes implements config.NetworkBGPImportRoute interface.
+func (route BGPImportRoute) Prefixes() []netip.Prefix {
+	return xslices.Map(route.ImportPrefixes, func(prefix meta.Prefix) netip.Prefix { return prefix.Prefix })
 }
 
 // TransmitInterval implements config.NetworkBGPBFD interface.

@@ -6,6 +6,8 @@
 package bgp
 
 import (
+	"crypto/sha256"
+	"encoding/binary"
 	"fmt"
 	"net/netip"
 	"strings"
@@ -130,6 +132,109 @@ func BuildOriginatedPath(prefix netip.Prefix) (*apiutil.Path, error) {
 		Nlri:   nlri,
 		Attrs:  []bgppacket.PathAttributeInterface{origin, mpReach},
 	}, nil
+}
+
+// BuildImportedPath clones a learned BGP path for local injection into another BGP instance.
+// Path-selection and policy attributes are preserved, while transport metadata and next-hop
+// attributes are rebuilt so the importing instance applies next-hop-self when exporting the path.
+func BuildImportedPath(source *apiutil.Path) (*apiutil.Path, error) {
+	if source == nil || source.Nlri == nil {
+		return nil, fmt.Errorf("source path and NLRI must be specified")
+	}
+
+	attrs, err := cloneImportedPathAttributes(source.Attrs)
+	if err != nil {
+		return nil, err
+	}
+
+	nextHop, err := importedNextHop(source)
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiutil.Path{
+		Family: source.Family,
+		Nlri:   source.Nlri,
+		Attrs:  append(attrs, nextHop),
+	}, nil
+}
+
+func cloneImportedPathAttributes(attributes []bgppacket.PathAttributeInterface) ([]bgppacket.PathAttributeInterface, error) {
+	preserved := make([]bgppacket.PathAttributeInterface, 0, len(attributes))
+
+	for _, attr := range attributes {
+		switch attr.GetType() { //nolint:exhaustive // preserve every attribute except transport next-hop metadata
+		case bgppacket.BGP_ATTR_TYPE_NEXT_HOP,
+			bgppacket.BGP_ATTR_TYPE_MP_REACH_NLRI,
+			bgppacket.BGP_ATTR_TYPE_MP_UNREACH_NLRI:
+			continue
+		default:
+			preserved = append(preserved, attr)
+		}
+	}
+
+	marshaled, err := apiutil.MarshalPathAttributes(preserved)
+	if err != nil {
+		return nil, fmt.Errorf("error cloning imported path attributes: %w", err)
+	}
+
+	attrs, err := apiutil.UnmarshalPathAttributes(marshaled)
+	if err != nil {
+		return nil, fmt.Errorf("error restoring imported path attributes: %w", err)
+	}
+
+	return attrs, nil
+}
+
+func importedNextHop(source *apiutil.Path) (bgppacket.PathAttributeInterface, error) {
+	switch source.Family { //nolint:exhaustive // route import intentionally supports only unicast families
+	case bgppacket.RF_IPv4_UC:
+		nexthop, nexthopErr := bgppacket.NewPathAttributeNextHop(netip.IPv4Unspecified())
+		if nexthopErr != nil {
+			return nil, fmt.Errorf("error building imported IPv4 next-hop: %w", nexthopErr)
+		}
+
+		return nexthop, nil
+	case bgppacket.RF_IPv6_UC:
+		mpReach, mpReachErr := bgppacket.NewPathAttributeMpReachNLRI(
+			bgppacket.RF_IPv6_UC,
+			[]bgppacket.PathNLRI{{NLRI: source.Nlri}},
+			netip.IPv6Unspecified(),
+		)
+		if mpReachErr != nil {
+			return nil, fmt.Errorf("error building imported IPv6 next-hop: %w", mpReachErr)
+		}
+
+		return mpReach, nil
+	default:
+		return nil, fmt.Errorf("unsupported imported path family %s", source.Family)
+	}
+}
+
+// PathFingerprint returns a stable digest of a path's NLRI, family, and attributes.
+func PathFingerprint(path *apiutil.Path) ([]byte, error) {
+	if path == nil || path.Nlri == nil {
+		return nil, fmt.Errorf("path and NLRI must be specified")
+	}
+
+	hash := sha256.New()
+
+	var family [4]byte
+	binary.BigEndian.PutUint32(family[:], uint32(path.Family))
+
+	hash.Write(family[:])                  //nolint:errcheck
+	hash.Write([]byte(path.Nlri.String())) //nolint:errcheck
+
+	for _, attr := range path.Attrs {
+		serialized, err := attr.Serialize()
+		if err != nil {
+			return nil, fmt.Errorf("error serializing path attribute %d: %w", attr.GetType(), err)
+		}
+
+		hash.Write(serialized) //nolint:errcheck
+	}
+
+	return hash.Sum(nil), nil
 }
 
 // PathNexthop extracts the next-hop address from a path's attributes.

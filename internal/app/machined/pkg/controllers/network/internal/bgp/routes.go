@@ -26,10 +26,15 @@ type Snapshot struct {
 
 // Snapshot returns learned routes and peer state from the running GoBGP server.
 func (instance *Instance) Snapshot(ctx context.Context) Snapshot {
+	var learned map[netip.Prefix][]network.RouteNextHop
+	if instance.installRoutes {
+		learned = instance.learnedRoutes()
+	}
+
 	return Snapshot{
 		Table:        instance.table,
 		Source:       instance.source,
-		Learned:      instance.learnedRoutes(),
+		Learned:      learned,
 		PeerStatuses: instance.peerStatuses(ctx),
 	}
 }
@@ -38,9 +43,13 @@ func (instance *Instance) Snapshot(ctx context.Context) Snapshot {
 func (instance *Instance) learnedRoutes() map[netip.Prefix][]network.RouteNextHop {
 	learned := map[netip.Prefix][]network.RouteNextHop{}
 
-	advertisedSet := make(map[netip.Prefix]struct{}, len(instance.advertised))
+	localSet := make(map[netip.Prefix]struct{}, len(instance.advertised)+len(instance.imported))
 	for _, prefix := range instance.advertised {
-		advertisedSet[prefix] = struct{}{}
+		localSet[prefix] = struct{}{}
+	}
+
+	for prefix := range instance.imported {
+		localSet[prefix] = struct{}{}
 	}
 
 	for _, family := range []bgppacket.Family{bgppacket.RF_IPv4_UC, bgppacket.RF_IPv6_UC} {
@@ -53,7 +62,7 @@ func (instance *Instance) learnedRoutes() map[netip.Prefix][]network.RouteNextHo
 				return
 			}
 
-			if _, ok := advertisedSet[dst]; ok {
+			if _, ok := localSet[dst]; ok {
 				return
 			}
 

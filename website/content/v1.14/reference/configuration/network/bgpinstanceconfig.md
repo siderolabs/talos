@@ -21,7 +21,13 @@ localASN: 65001 # Local autonomous system number for the BGP instance.
 # Names or aliases of the links whose addresses are originated into BGP as host routes (/32, /128).
 advertise:
     - dummy0
-multipath: true # Enable ECMP (multipath) for routes learned from multiple neighbors.
+multipath: true # Enable ECMP (multipath) for routes learned from multiple neighbors. Defaults to false.
+# Selected routes to import from other BGP instances. Imports are one-way: matching best paths
+importRoutes:
+    - bgpInstance: workload # Name of the source BGP instance.
+      # CIDR selectors. A learned route matches when it is contained by one of these prefixes.
+      prefixes:
+        - 198.51.100.0/24
 # BGP neighbors in this routing instance.
 neighbors:
     - link: enp1s0 # Link name or alias for an unnumbered (IPv6 link-local) session. Mutually exclusive with `address`.
@@ -68,9 +74,28 @@ routeSource: 10.0.0.1
 advertise:
     - dummy0
 {{< /highlight >}}</details> | |
-|`multipath` |bool |Enable ECMP (multipath) for routes learned from multiple neighbors.  | |
+|`multipath` |bool |Enable ECMP (multipath) for routes learned from multiple neighbors. Defaults to false.  | |
 |`maxPaths` |uint8 |Maximum number of ECMP next-hops to install. Zero uses the implementation default.  | |
+|`installRoutes` |bool |Install routes learned from BGP neighbors into the Linux routing table. Defaults to true.<br>When false, learned routes remain in this instance's BGP RIB and can still be selected by<br>`importRoutes`, but Talos does not install them into the Linux FIB.  | |
+|`importRoutes` |<a href="#BGPInstanceConfig.importRoutes.">[]BGPImportRoute</a> |Selected routes to import from other BGP instances. Imports are one-way: matching best paths<br>learned from each source instance are preserved and advertised by this instance with its own<br>next hop. Locally originated and previously imported paths are not recursively imported.<br>Selectors in a single target instance must not overlap, giving each imported prefix one source.  | |
 |`neighbors` |<a href="#BGPInstanceConfig.neighbors.">[]BGPNeighborConfig</a> |BGP neighbors in this routing instance.  | |
+
+
+
+
+## importRoutes[] {#BGPInstanceConfig.importRoutes.}
+
+BGPImportRoute selects routes learned by another BGP instance for one-way import.
+
+
+
+
+| Field | Type | Description | Value(s) |
+|-------|------|-------------|----------|
+|`bgpInstance` |string |Name of the source BGP instance.  | |
+|`prefixes` |[]Prefix |CIDR selectors. A learned route matches when it is contained by one of these prefixes.  | |
+
+
 
 
 

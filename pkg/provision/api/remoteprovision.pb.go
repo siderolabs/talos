@@ -968,6 +968,226 @@ func (*RebootResponse) Descriptor() ([]byte, []int) {
 	return file_remoteprovision_proto_rawDescGZIP(), []int{16}
 }
 
+// ProbeHTTPRequest describes a bounded HTTP GET through the provisioner host FIB.
+type ProbeHTTPRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// cluster_name identifies an existing cluster whose fabric is being probed.
+	ClusterName string `protobuf:"bytes,1,opt,name=cluster_name,json=clusterName,proto3" json:"cluster_name,omitempty"`
+	// ip is a literal IPv4 or IPv6 destination; hostnames are rejected.
+	Ip string `protobuf:"bytes,2,opt,name=ip,proto3" json:"ip,omitempty"`
+	// port is the destination TCP port and must be in the range 1-65535.
+	Port uint32 `protobuf:"varint,3,opt,name=port,proto3" json:"port,omitempty"`
+	// path is the HTTP request path and must start with '/'.
+	Path string `protobuf:"bytes,4,opt,name=path,proto3" json:"path,omitempty"`
+	// timeout_millis is clamped by the server to the supported bounds.
+	TimeoutMillis uint32 `protobuf:"varint,5,opt,name=timeout_millis,json=timeoutMillis,proto3" json:"timeout_millis,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ProbeHTTPRequest) Reset() {
+	*x = ProbeHTTPRequest{}
+	mi := &file_remoteprovision_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ProbeHTTPRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ProbeHTTPRequest) ProtoMessage() {}
+
+func (x *ProbeHTTPRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_remoteprovision_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ProbeHTTPRequest.ProtoReflect.Descriptor instead.
+func (*ProbeHTTPRequest) Descriptor() ([]byte, []int) {
+	return file_remoteprovision_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *ProbeHTTPRequest) GetClusterName() string {
+	if x != nil {
+		return x.ClusterName
+	}
+	return ""
+}
+
+func (x *ProbeHTTPRequest) GetIp() string {
+	if x != nil {
+		return x.Ip
+	}
+	return ""
+}
+
+func (x *ProbeHTTPRequest) GetPort() uint32 {
+	if x != nil {
+		return x.Port
+	}
+	return 0
+}
+
+func (x *ProbeHTTPRequest) GetPath() string {
+	if x != nil {
+		return x.Path
+	}
+	return ""
+}
+
+func (x *ProbeHTTPRequest) GetTimeoutMillis() uint32 {
+	if x != nil {
+		return x.TimeoutMillis
+	}
+	return 0
+}
+
+// ProbeHTTPResult is a bounded HTTP response. Non-2xx status codes remain HTTP results.
+type ProbeHTTPResult struct {
+	state      protoimpl.MessageState `protogen:"open.v1"`
+	StatusCode int32                  `protobuf:"varint,1,opt,name=status_code,json=statusCode,proto3" json:"status_code,omitempty"`
+	// body is truncated to the provisioner's maximum response size.
+	Body          []byte `protobuf:"bytes,2,opt,name=body,proto3" json:"body,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ProbeHTTPResult) Reset() {
+	*x = ProbeHTTPResult{}
+	mi := &file_remoteprovision_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ProbeHTTPResult) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ProbeHTTPResult) ProtoMessage() {}
+
+func (x *ProbeHTTPResult) ProtoReflect() protoreflect.Message {
+	mi := &file_remoteprovision_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ProbeHTTPResult.ProtoReflect.Descriptor instead.
+func (*ProbeHTTPResult) Descriptor() ([]byte, []int) {
+	return file_remoteprovision_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *ProbeHTTPResult) GetStatusCode() int32 {
+	if x != nil {
+		return x.StatusCode
+	}
+	return 0
+}
+
+func (x *ProbeHTTPResult) GetBody() []byte {
+	if x != nil {
+		return x.Body
+	}
+	return nil
+}
+
+// ProbeHTTPResponse distinguishes an HTTP response from an expected transport failure.
+type ProbeHTTPResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Types that are valid to be assigned to Outcome:
+	//
+	//	*ProbeHTTPResponse_Result
+	//	*ProbeHTTPResponse_Failure
+	Outcome       isProbeHTTPResponse_Outcome `protobuf_oneof:"outcome"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ProbeHTTPResponse) Reset() {
+	*x = ProbeHTTPResponse{}
+	mi := &file_remoteprovision_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ProbeHTTPResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ProbeHTTPResponse) ProtoMessage() {}
+
+func (x *ProbeHTTPResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_remoteprovision_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ProbeHTTPResponse.ProtoReflect.Descriptor instead.
+func (*ProbeHTTPResponse) Descriptor() ([]byte, []int) {
+	return file_remoteprovision_proto_rawDescGZIP(), []int{19}
+}
+
+func (x *ProbeHTTPResponse) GetOutcome() isProbeHTTPResponse_Outcome {
+	if x != nil {
+		return x.Outcome
+	}
+	return nil
+}
+
+func (x *ProbeHTTPResponse) GetResult() *ProbeHTTPResult {
+	if x != nil {
+		if x, ok := x.Outcome.(*ProbeHTTPResponse_Result); ok {
+			return x.Result
+		}
+	}
+	return nil
+}
+
+func (x *ProbeHTTPResponse) GetFailure() string {
+	if x != nil {
+		if x, ok := x.Outcome.(*ProbeHTTPResponse_Failure); ok {
+			return x.Failure
+		}
+	}
+	return ""
+}
+
+type isProbeHTTPResponse_Outcome interface {
+	isProbeHTTPResponse_Outcome()
+}
+
+type ProbeHTTPResponse_Result struct {
+	Result *ProbeHTTPResult `protobuf:"bytes,1,opt,name=result,proto3,oneof"`
+}
+
+type ProbeHTTPResponse_Failure struct {
+	// failure contains a transport error such as timeout, refusal, or no route.
+	Failure string `protobuf:"bytes,2,opt,name=failure,proto3,oneof"`
+}
+
+func (*ProbeHTTPResponse_Result) isProbeHTTPResponse_Outcome() {}
+
+func (*ProbeHTTPResponse_Failure) isProbeHTTPResponse_Outcome() {}
+
 var File_remoteprovision_proto protoreflect.FileDescriptor
 
 const file_remoteprovision_proto_rawDesc = "" +
@@ -1027,7 +1247,21 @@ const file_remoteprovision_proto_rawDesc = "" +
 	"\rRebootRequest\x12!\n" +
 	"\fcluster_name\x18\x01 \x01(\tR\vclusterName\x12!\n" +
 	"\fmachine_name\x18\x02 \x01(\tR\vmachineName\"\x10\n" +
-	"\x0eRebootResponse2\xeb\x05\n" +
+	"\x0eRebootResponse\"\x94\x01\n" +
+	"\x10ProbeHTTPRequest\x12!\n" +
+	"\fcluster_name\x18\x01 \x01(\tR\vclusterName\x12\x0e\n" +
+	"\x02ip\x18\x02 \x01(\tR\x02ip\x12\x12\n" +
+	"\x04port\x18\x03 \x01(\rR\x04port\x12\x12\n" +
+	"\x04path\x18\x04 \x01(\tR\x04path\x12%\n" +
+	"\x0etimeout_millis\x18\x05 \x01(\rR\rtimeoutMillis\"F\n" +
+	"\x0fProbeHTTPResult\x12\x1f\n" +
+	"\vstatus_code\x18\x01 \x01(\x05R\n" +
+	"statusCode\x12\x12\n" +
+	"\x04body\x18\x02 \x01(\fR\x04body\"v\n" +
+	"\x11ProbeHTTPResponse\x12:\n" +
+	"\x06result\x18\x01 \x01(\v2 .remoteprovision.ProbeHTTPResultH\x00R\x06result\x12\x1a\n" +
+	"\afailure\x18\x02 \x01(\tH\x00R\afailureB\t\n" +
+	"\aoutcome2\xbf\x06\n" +
 	"\x16RemoteProvisionService\x12=\n" +
 	"\x04Ping\x12\x16.google.protobuf.Empty\x1a\x1d.remoteprovision.PingResponse\x12H\n" +
 	"\x06Create\x12\x1e.remoteprovision.CreateRequest\x1a\x1c.remoteprovision.CreateEvent0\x01\x12L\n" +
@@ -1038,7 +1272,8 @@ const file_remoteprovision_proto_rawDesc = "" +
 	"\fStatArtifact\x12$.remoteprovision.StatArtifactRequest\x1a%.remoteprovision.StatArtifactResponse\x12P\n" +
 	"\x0eUploadArtifact\x12\x1e.remoteprovision.ArtifactChunk\x1a\x1c.remoteprovision.ArtifactRef(\x01\x12j\n" +
 	"\x11SyncBootArtifacts\x12).remoteprovision.SyncBootArtifactsRequest\x1a*.remoteprovision.SyncBootArtifactsResponse\x12I\n" +
-	"\x06Reboot\x12\x1e.remoteprovision.RebootRequest\x1a\x1f.remoteprovision.RebootResponseBN\n" +
+	"\x06Reboot\x12\x1e.remoteprovision.RebootRequest\x1a\x1f.remoteprovision.RebootResponse\x12R\n" +
+	"\tProbeHTTP\x12!.remoteprovision.ProbeHTTPRequest\x1a\".remoteprovision.ProbeHTTPResponseBN\n" +
 	"\x1ddev.talos.api.remoteprovisionZ-github.com/siderolabs/talos/pkg/provision/apib\x06proto3"
 
 var (
@@ -1053,7 +1288,7 @@ func file_remoteprovision_proto_rawDescGZIP() []byte {
 	return file_remoteprovision_proto_rawDescData
 }
 
-var file_remoteprovision_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_remoteprovision_proto_msgTypes = make([]protoimpl.MessageInfo, 23)
 var file_remoteprovision_proto_goTypes = []any{
 	(*PingResponse)(nil),              // 0: remoteprovision.PingResponse
 	(*CreateRequest)(nil),             // 1: remoteprovision.CreateRequest
@@ -1072,38 +1307,44 @@ var file_remoteprovision_proto_goTypes = []any{
 	(*SyncBootArtifactsResponse)(nil), // 14: remoteprovision.SyncBootArtifactsResponse
 	(*RebootRequest)(nil),             // 15: remoteprovision.RebootRequest
 	(*RebootResponse)(nil),            // 16: remoteprovision.RebootResponse
-	nil,                               // 17: remoteprovision.CreateRequest.ArtifactPathsEntry
-	nil,                               // 18: remoteprovision.SyncBootArtifactsRequest.ArtifactPathsEntry
-	nil,                               // 19: remoteprovision.SyncBootArtifactsResponse.ChangedEntry
-	(*emptypb.Empty)(nil),             // 20: google.protobuf.Empty
+	(*ProbeHTTPRequest)(nil),          // 17: remoteprovision.ProbeHTTPRequest
+	(*ProbeHTTPResult)(nil),           // 18: remoteprovision.ProbeHTTPResult
+	(*ProbeHTTPResponse)(nil),         // 19: remoteprovision.ProbeHTTPResponse
+	nil,                               // 20: remoteprovision.CreateRequest.ArtifactPathsEntry
+	nil,                               // 21: remoteprovision.SyncBootArtifactsRequest.ArtifactPathsEntry
+	nil,                               // 22: remoteprovision.SyncBootArtifactsResponse.ChangedEntry
+	(*emptypb.Empty)(nil),             // 23: google.protobuf.Empty
 }
 var file_remoteprovision_proto_depIdxs = []int32{
-	17, // 0: remoteprovision.CreateRequest.artifact_paths:type_name -> remoteprovision.CreateRequest.ArtifactPathsEntry
-	18, // 1: remoteprovision.SyncBootArtifactsRequest.artifact_paths:type_name -> remoteprovision.SyncBootArtifactsRequest.ArtifactPathsEntry
-	19, // 2: remoteprovision.SyncBootArtifactsResponse.changed:type_name -> remoteprovision.SyncBootArtifactsResponse.ChangedEntry
-	20, // 3: remoteprovision.RemoteProvisionService.Ping:input_type -> google.protobuf.Empty
-	1,  // 4: remoteprovision.RemoteProvisionService.Create:input_type -> remoteprovision.CreateRequest
-	3,  // 5: remoteprovision.RemoteProvisionService.Destroy:input_type -> remoteprovision.DestroyRequest
-	5,  // 6: remoteprovision.RemoteProvisionService.Reflect:input_type -> remoteprovision.ReflectRequest
-	7,  // 7: remoteprovision.RemoteProvisionService.StreamLogs:input_type -> remoteprovision.LogsRequest
-	9,  // 8: remoteprovision.RemoteProvisionService.StatArtifact:input_type -> remoteprovision.StatArtifactRequest
-	11, // 9: remoteprovision.RemoteProvisionService.UploadArtifact:input_type -> remoteprovision.ArtifactChunk
-	13, // 10: remoteprovision.RemoteProvisionService.SyncBootArtifacts:input_type -> remoteprovision.SyncBootArtifactsRequest
-	15, // 11: remoteprovision.RemoteProvisionService.Reboot:input_type -> remoteprovision.RebootRequest
-	0,  // 12: remoteprovision.RemoteProvisionService.Ping:output_type -> remoteprovision.PingResponse
-	2,  // 13: remoteprovision.RemoteProvisionService.Create:output_type -> remoteprovision.CreateEvent
-	4,  // 14: remoteprovision.RemoteProvisionService.Destroy:output_type -> remoteprovision.DestroyResponse
-	6,  // 15: remoteprovision.RemoteProvisionService.Reflect:output_type -> remoteprovision.ReflectResponse
-	8,  // 16: remoteprovision.RemoteProvisionService.StreamLogs:output_type -> remoteprovision.LogData
-	10, // 17: remoteprovision.RemoteProvisionService.StatArtifact:output_type -> remoteprovision.StatArtifactResponse
-	12, // 18: remoteprovision.RemoteProvisionService.UploadArtifact:output_type -> remoteprovision.ArtifactRef
-	14, // 19: remoteprovision.RemoteProvisionService.SyncBootArtifacts:output_type -> remoteprovision.SyncBootArtifactsResponse
-	16, // 20: remoteprovision.RemoteProvisionService.Reboot:output_type -> remoteprovision.RebootResponse
-	12, // [12:21] is the sub-list for method output_type
-	3,  // [3:12] is the sub-list for method input_type
-	3,  // [3:3] is the sub-list for extension type_name
-	3,  // [3:3] is the sub-list for extension extendee
-	0,  // [0:3] is the sub-list for field type_name
+	20, // 0: remoteprovision.CreateRequest.artifact_paths:type_name -> remoteprovision.CreateRequest.ArtifactPathsEntry
+	21, // 1: remoteprovision.SyncBootArtifactsRequest.artifact_paths:type_name -> remoteprovision.SyncBootArtifactsRequest.ArtifactPathsEntry
+	22, // 2: remoteprovision.SyncBootArtifactsResponse.changed:type_name -> remoteprovision.SyncBootArtifactsResponse.ChangedEntry
+	18, // 3: remoteprovision.ProbeHTTPResponse.result:type_name -> remoteprovision.ProbeHTTPResult
+	23, // 4: remoteprovision.RemoteProvisionService.Ping:input_type -> google.protobuf.Empty
+	1,  // 5: remoteprovision.RemoteProvisionService.Create:input_type -> remoteprovision.CreateRequest
+	3,  // 6: remoteprovision.RemoteProvisionService.Destroy:input_type -> remoteprovision.DestroyRequest
+	5,  // 7: remoteprovision.RemoteProvisionService.Reflect:input_type -> remoteprovision.ReflectRequest
+	7,  // 8: remoteprovision.RemoteProvisionService.StreamLogs:input_type -> remoteprovision.LogsRequest
+	9,  // 9: remoteprovision.RemoteProvisionService.StatArtifact:input_type -> remoteprovision.StatArtifactRequest
+	11, // 10: remoteprovision.RemoteProvisionService.UploadArtifact:input_type -> remoteprovision.ArtifactChunk
+	13, // 11: remoteprovision.RemoteProvisionService.SyncBootArtifacts:input_type -> remoteprovision.SyncBootArtifactsRequest
+	15, // 12: remoteprovision.RemoteProvisionService.Reboot:input_type -> remoteprovision.RebootRequest
+	17, // 13: remoteprovision.RemoteProvisionService.ProbeHTTP:input_type -> remoteprovision.ProbeHTTPRequest
+	0,  // 14: remoteprovision.RemoteProvisionService.Ping:output_type -> remoteprovision.PingResponse
+	2,  // 15: remoteprovision.RemoteProvisionService.Create:output_type -> remoteprovision.CreateEvent
+	4,  // 16: remoteprovision.RemoteProvisionService.Destroy:output_type -> remoteprovision.DestroyResponse
+	6,  // 17: remoteprovision.RemoteProvisionService.Reflect:output_type -> remoteprovision.ReflectResponse
+	8,  // 18: remoteprovision.RemoteProvisionService.StreamLogs:output_type -> remoteprovision.LogData
+	10, // 19: remoteprovision.RemoteProvisionService.StatArtifact:output_type -> remoteprovision.StatArtifactResponse
+	12, // 20: remoteprovision.RemoteProvisionService.UploadArtifact:output_type -> remoteprovision.ArtifactRef
+	14, // 21: remoteprovision.RemoteProvisionService.SyncBootArtifacts:output_type -> remoteprovision.SyncBootArtifactsResponse
+	16, // 22: remoteprovision.RemoteProvisionService.Reboot:output_type -> remoteprovision.RebootResponse
+	19, // 23: remoteprovision.RemoteProvisionService.ProbeHTTP:output_type -> remoteprovision.ProbeHTTPResponse
+	14, // [14:24] is the sub-list for method output_type
+	4,  // [4:14] is the sub-list for method input_type
+	4,  // [4:4] is the sub-list for extension type_name
+	4,  // [4:4] is the sub-list for extension extendee
+	0,  // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_remoteprovision_proto_init() }
@@ -1120,13 +1361,17 @@ func file_remoteprovision_proto_init() {
 		(*ArtifactChunk_Sha256)(nil),
 		(*ArtifactChunk_Data)(nil),
 	}
+	file_remoteprovision_proto_msgTypes[19].OneofWrappers = []any{
+		(*ProbeHTTPResponse_Result)(nil),
+		(*ProbeHTTPResponse_Failure)(nil),
+	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_remoteprovision_proto_rawDesc), len(file_remoteprovision_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   20,
+			NumMessages:   23,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

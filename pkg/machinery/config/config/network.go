@@ -424,6 +424,8 @@ type NetworkHTTPProbeConfig interface {
 }
 
 // NetworkBGPInstanceConfig defines a native BGP routing instance configuration.
+//
+//nolint:interfacebloat
 type NetworkBGPInstanceConfig interface {
 	NamedDocument
 	// BGPInstanceConfigSignal is a signal method for documents implementing this interface.
@@ -443,8 +445,20 @@ type NetworkBGPInstanceConfig interface {
 	Multipath() bool
 	// MaxPaths caps the number of ECMP next-hops; zero means use the implementation default.
 	MaxPaths() uint8
+	// InstallRoutes reports whether neighbor-learned routes should be installed into the Linux FIB.
+	InstallRoutes() bool
+	// ImportRoutes lists one-way route imports from other BGP instances.
+	ImportRoutes() []NetworkBGPImportRoute
 	// Neighbors lists the configured BGP neighbors.
 	Neighbors() []NetworkBGPNeighbor
+}
+
+// NetworkBGPImportRoute defines selected routes imported from another BGP instance.
+type NetworkBGPImportRoute interface {
+	// BGPInstance is the name of the source BGP instance.
+	BGPInstance() string
+	// Prefixes lists covering selectors for routes learned by the source instance.
+	Prefixes() []netip.Prefix
 }
 
 // NetworkBGPNeighbor defines a single BGP neighbor.

@@ -13,9 +13,11 @@ import (
 	"fmt"
 	"io/fs"
 	"net"
+	"net/netip"
 	"os"
 	"path/filepath"
 	"runtime"
+	"time"
 
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
@@ -255,6 +257,71 @@ func (s *remoteProvisionImpl) Reflect(ctx context.Context, req *remoteprovisionp
 	}
 
 	return &remoteprovisionpb.ReflectResponse{Cluster: payload}, nil
+}
+
+// ProbeHTTP performs a bounded HTTP GET from the provisioner host network namespace.
+func (s *remoteProvisionImpl) ProbeHTTP(ctx context.Context, req *remoteprovisionpb.ProbeHTTPRequest) (*remoteprovisionpb.ProbeHTTPResponse, error) {
+	request, err := remoteHTTPProbeRequest(req)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "invalid HTTP probe request: %v", err)
+	}
+
+	provisioner, err := qemu.NewProvisioner(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "qemu provisioner init: %v", err)
+	}
+
+	defer provisioner.Close() //nolint:errcheck
+
+	cluster, err := provisioner.Reflect(ctx, req.GetClusterName(), s.stateDir)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, "reflect cluster %q: %v", req.GetClusterName(), err)
+	}
+
+	probeProvisioner, ok := provisioner.(provision.HTTPProbeProvisioner)
+	if !ok {
+		return nil, status.Error(codes.Unimplemented, "qemu provisioner does not support HTTP probes")
+	}
+
+	response, err := probeProvisioner.ProbeHTTP(ctx, cluster, request)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "probe HTTP: %v", err)
+	}
+
+	if response.Failure != "" {
+		return &remoteprovisionpb.ProbeHTTPResponse{
+			Outcome: &remoteprovisionpb.ProbeHTTPResponse_Failure{Failure: response.Failure},
+		}, nil
+	}
+
+	return &remoteprovisionpb.ProbeHTTPResponse{
+		Outcome: &remoteprovisionpb.ProbeHTTPResponse_Result{Result: &remoteprovisionpb.ProbeHTTPResult{
+			StatusCode: int32(response.StatusCode),
+			Body:       response.Body,
+		}},
+	}, nil
+}
+
+func remoteHTTPProbeRequest(req *remoteprovisionpb.ProbeHTTPRequest) (provision.HTTPProbeRequest, error) {
+	if req.GetClusterName() == "" {
+		return provision.HTTPProbeRequest{}, fmt.Errorf("cluster name is required")
+	}
+
+	ip, err := netip.ParseAddr(req.GetIp())
+	if err != nil {
+		return provision.HTTPProbeRequest{}, fmt.Errorf("probe IP must be a literal address: %w", err)
+	}
+
+	if req.GetPort() == 0 || req.GetPort() > 65535 {
+		return provision.HTTPProbeRequest{}, fmt.Errorf("probe port must be in the range 1-65535")
+	}
+
+	return (provision.HTTPProbeRequest{
+		IP:      ip,
+		Port:    uint16(req.GetPort()),
+		Path:    req.GetPath(),
+		Timeout: time.Duration(req.GetTimeoutMillis()) * time.Millisecond,
+	}).Normalize()
 }
 
 // applyArtifactPaths rewrites file-path fields of a ClusterRequest using
