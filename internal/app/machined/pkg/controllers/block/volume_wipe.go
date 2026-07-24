@@ -61,9 +61,9 @@ func (ctrl *VolumeWipeController) Outputs() []controller.Output {
 
 // Run implements controller.Controller interface.
 //
-// TODO(majabojarska): refactor this to bring down cyclo
+// TODO(majabojarska): once fully functional and with test cov, refactor this to bring down cyclo, and then remove the nolint directive.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (ctrl *VolumeWipeController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	for {
 		select {
@@ -72,13 +72,34 @@ func (ctrl *VolumeWipeController) Run(ctx context.Context, r controller.Runtime,
 		case <-r.EventCh():
 		}
 
-		_, err := safe.ReaderGetByID[*runtime.MetaLoaded](ctx, r, runtime.MetaLoadedID)
+		metaLoaded, err := safe.ReaderGetByID[*runtime.MetaLoaded](ctx, r, runtime.MetaLoadedID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				continue
 			}
 
 			return fmt.Errorf("error getting meta loaded resource: %w", err)
+		}
+
+		if !metaLoaded.TypedSpec().Done {
+			logger.Info("waiting for META to be loaded")
+
+			continue
+		}
+
+		discoveredVolumesStatus, err := safe.ReaderGetByID[*block.DiscoveredVolumesStatus](ctx, r, block.DiscoveredVolumesStatusID)
+		if err != nil {
+			if state.IsNotFoundError(err) {
+				continue
+			}
+
+			return fmt.Errorf("error getting discovered volumes status: %w", err)
+		}
+
+		if !discoveredVolumesStatus.TypedSpec().Ready {
+			logger.Info("waiting for discovered volumes to be ready")
+
+			continue
 		}
 
 		// TODO(majabojarska): Must distinguish META not found vs key not found
