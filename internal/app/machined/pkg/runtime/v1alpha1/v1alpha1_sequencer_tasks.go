@@ -409,7 +409,7 @@ func StartAllServices(runtime.Sequence, any) (runtime.TaskExecutionFunc, string)
 		logger.Printf("waiting for %d services", len(svcs.List()))
 
 		for _, svc := range svcs.List() {
-			cond := system.WaitForService(system.StateEventUp, svc.AsProto().GetId())
+			cond := system.WaitForServiceAnyEvent([]system.StateEvent{system.StateEventUp, system.StateEventFinished}, svc.AsProto().GetId())
 			all = append(all, cond)
 		}
 

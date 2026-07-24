@@ -226,7 +226,9 @@ func (svcrunner *ServiceRunner) Run(notifyChannels ...chan<- struct{}) error {
 	condition := svcrunner.service.Condition(svcrunner.runtime)
 
 	if dependencies := svcrunner.service.DependsOn(svcrunner.runtime); len(dependencies) > 0 {
-		serviceConditions := xslices.Map(dependencies, func(dep string) conditions.Condition { return waitForService(instance, StateEventUp, dep) })
+		serviceConditions := xslices.Map(dependencies, func(dep string) conditions.Condition {
+			return waitForService(instance, []StateEvent{StateEventUp}, dep)
+		})
 		serviceDependencies := conditions.WaitForAll(serviceConditions...)
 
 		condition = conditions.WaitForAll(serviceDependencies, condition)
@@ -463,10 +465,10 @@ func (svcrunner *ServiceRunner) inStateLocked(event StateEvent) bool {
 	switch event {
 	case StateEventUp:
 		// up when:
-		//   a) either skipped or already finished
+		//   a) skipped
 		//   b) or running and healthy (if supports health checks)
 		switch svcrunner.state { //nolint:exhaustive
-		case events.StateSkipped, events.StateFinished:
+		case events.StateSkipped:
 			return true
 		case events.StateRunning:
 			// check if service supports health checks
@@ -486,11 +488,7 @@ func (svcrunner *ServiceRunner) inStateLocked(event StateEvent) bool {
 			return false
 		}
 	case StateEventFinished:
-		if svcrunner.state == events.StateFinished {
-			return true
-		}
-
-		return false
+		return svcrunner.state == events.StateFinished
 	default:
 		panic("unsupported event")
 	}

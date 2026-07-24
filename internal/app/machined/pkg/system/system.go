@@ -361,12 +361,12 @@ func (s *singleton) stopServices(ctx context.Context, services []string, waitFor
 	for name, svcrunner := range servicesToStop {
 		shutdownWg.Add(1)
 
-		stoppedConds = append(stoppedConds, waitForService(s, StateEventDown, name))
+		stoppedConds = append(stoppedConds, waitForService(s, []StateEvent{StateEventDown}, name))
 
 		go func(svcrunner *ServiceRunner, reverseDeps []string) {
 			defer shutdownWg.Done()
 
-			conds := xslices.Map(reverseDeps, func(dep string) conditions.Condition { return waitForService(s, StateEventDown, dep) })
+			conds := xslices.Map(reverseDeps, func(dep string) conditions.Condition { return waitForService(s, []StateEvent{StateEventDown}, dep) })
 			allDeps := conditions.WaitForAll(conds...)
 
 			if err := allDeps.Wait(shutdownCtx); err != nil {

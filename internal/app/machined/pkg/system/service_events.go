@@ -7,8 +7,11 @@ package system
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
+
+	"github.com/siderolabs/gen/xslices"
 
 	"github.com/siderolabs/talos/pkg/conditions"
 )
@@ -28,7 +31,7 @@ type serviceCondition struct {
 	waitingRegister bool
 	instance        *singleton
 
-	event   StateEvent
+	events  []StateEvent
 	service string
 }
 
@@ -47,8 +50,10 @@ func (sc *serviceCondition) Wait(ctx context.Context) error {
 func (sc *serviceCondition) waitEvent(ctx context.Context, svcrunner *ServiceRunner) error {
 	notifyCh := make(chan struct{}, 1)
 
-	svcrunner.Subscribe(sc.event, notifyCh)
-	defer svcrunner.Unsubscribe(sc.event, notifyCh)
+	for _, ev := range sc.events {
+		svcrunner.Subscribe(ev, notifyCh)
+		defer svcrunner.Unsubscribe(ev, notifyCh)
+	}
 
 	select {
 	case <-ctx.Done():
@@ -100,18 +105,27 @@ func (sc *serviceCondition) String() string {
 		return fmt.Sprintf("service %q to be registered", sc.service)
 	}
 
-	return fmt.Sprintf("service %q to be %q", sc.service, string(sc.event))
+	if len(sc.events) == 1 {
+		return fmt.Sprintf("service %q to be %q", sc.service, string(sc.events[0]))
+	}
+
+	return fmt.Sprintf("service %q to be %s", sc.service, strings.Join(xslices.Map(sc.events, func(e StateEvent) string { return string(e) }), "/"))
 }
 
 // WaitForService waits for service to reach some state event.
 func WaitForService(event StateEvent, service string) conditions.Condition {
-	return waitForService(instance, event, service)
+	return waitForService(instance, []StateEvent{event}, service)
 }
 
-func waitForService(instance *singleton, event StateEvent, service string) conditions.Condition {
+// WaitForServiceAnyEvent waits for service to reach some state event (one of).
+func WaitForServiceAnyEvent(events []StateEvent, service string) conditions.Condition {
+	return waitForService(instance, events, service)
+}
+
+func waitForService(instance *singleton, events []StateEvent, service string) conditions.Condition {
 	return &serviceCondition{
 		instance: instance,
-		event:    event,
+		events:   events,
 		service:  service,
 	}
 }
