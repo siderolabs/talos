@@ -44,7 +44,7 @@ func DefaultClusterChecks() []ClusterCheck {
 						return err
 					}
 
-					if !present {
+					if !present || replicas == 0 {
 						return conditions.ErrSkipAssertion
 					}
 
