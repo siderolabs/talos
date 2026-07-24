@@ -26,6 +26,7 @@ type RouteSpec = typed.Resource[RouteSpecSpec, RouteSpecExtension]
 // RouteSpecSpec describes the route.
 //
 //gotagsrewrite:gen
+//redactgen:gen
 type RouteSpecSpec struct {
 	Family      nethelpers.Family        `yaml:"family" protobuf:"1"`
 	Destination netip.Prefix             `yaml:"dst" protobuf:"2"`

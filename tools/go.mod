@@ -18,6 +18,7 @@ tool (
 	github.com/siderolabs/importvet/cmd/importvet
 	github.com/siderolabs/talos/tools/docgen
 	github.com/siderolabs/talos/tools/gotagsrewrite
+	github.com/siderolabs/talos/tools/redactgen
 	github.com/siderolabs/talos/tools/structprotogen
 	golang.org/x/tools/cmd/goimports
 	golang.org/x/tools/cmd/stringer
@@ -32,6 +33,7 @@ tool (
 replace (
 	github.com/siderolabs/talos/tools/docgen => ./docgen
 	github.com/siderolabs/talos/tools/gotagsrewrite => ./gotagsrewrite
+	github.com/siderolabs/talos/tools/redactgen => ./redactgen
 	github.com/siderolabs/talos/tools/structprotogen => ./structprotogen
 )
 
@@ -469,6 +471,7 @@ require (
 	github.com/siderolabs/importvet v0.2.0 // indirect
 	github.com/siderolabs/talos/tools/docgen v0.0.0-20260414160823-e3e8f01ca66e // indirect
 	github.com/siderolabs/talos/tools/gotagsrewrite v0.0.0-20260414160823-e3e8f01ca66e // indirect
+	github.com/siderolabs/talos/tools/redactgen v0.0.0-20260414160823-e3e8f01ca66e // indirect
 	github.com/siderolabs/talos/tools/structprotogen v0.0.0-20260414160823-e3e8f01ca66e // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
 	github.com/sivchari/containedctx v1.0.3 // indirect

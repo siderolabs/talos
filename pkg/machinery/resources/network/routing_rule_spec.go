@@ -25,6 +25,7 @@ type RoutingRuleSpec = typed.Resource[RoutingRuleSpecSpec, RoutingRuleSpecExtens
 // RoutingRuleSpecSpec describes the routing rule.
 //
 //gotagsrewrite:gen
+//redactgen:gen
 type RoutingRuleSpecSpec struct {
 	Family      nethelpers.Family            `yaml:"family" protobuf:"1"`
 	Src         netip.Prefix                 `yaml:"src" protobuf:"2"`

@@ -7,5 +7,6 @@ use (
 	./tools
 	./tools/docgen
 	./tools/gotagsrewrite
+	./tools/redactgen
 	./tools/structprotogen
 )

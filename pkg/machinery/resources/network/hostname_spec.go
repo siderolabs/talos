@@ -28,6 +28,7 @@ const HostnameID resource.ID = "hostname"
 // HostnameSpecSpec describes node hostname.
 //
 //gotagsrewrite:gen
+//redactgen:gen
 type HostnameSpecSpec struct {
 	Hostname    string      `yaml:"hostname" protobuf:"1"`
 	Domainname  string      `yaml:"domainname" protobuf:"2"`

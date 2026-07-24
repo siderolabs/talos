@@ -25,6 +25,7 @@ type LinkSpec = typed.Resource[LinkSpecSpec, LinkSpecExtension]
 // LinkSpecSpec describes spec for the link.
 //
 //gotagsrewrite:gen
+//redactgen:gen
 type LinkSpecSpec struct {
 	// Name defines link name
 	Name string `yaml:"name" protobuf:"1"`

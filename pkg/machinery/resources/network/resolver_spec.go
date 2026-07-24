@@ -27,6 +27,7 @@ const ResolverID resource.ID = "resolvers"
 // ResolverSpecSpec describes DNS resolvers.
 //
 //gotagsrewrite:gen
+//redactgen:gen
 type ResolverSpecSpec struct {
 	DNSServers    []netip.Addr `yaml:"dnsServers" protobuf:"1"`
 	ConfigLayer   ConfigLayer  `yaml:"layer" protobuf:"2"`

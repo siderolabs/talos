@@ -25,6 +25,7 @@ type OperatorSpec = typed.Resource[OperatorSpecSpec, OperatorSpecExtension]
 // OperatorSpecSpec describes operator specification.
 //
 //gotagsrewrite:gen
+//redactgen:gen
 type OperatorSpecSpec struct {
 	Operator  Operator `yaml:"operator" protobuf:"1"`
 	LinkName  string   `yaml:"linkName" protobuf:"2"`
@@ -88,7 +89,7 @@ type VIPOperatorSpec struct {
 type VIPEquinixMetalSpec struct {
 	ProjectID string `yaml:"projectID" protobuf:"1"`
 	DeviceID  string `yaml:"deviceID" protobuf:"2"`
-	APIToken  string `yaml:"apiToken" protobuf:"3"`
+	APIToken  string `yaml:"apiToken" protobuf:"3" redact:"replace"`
 }
 
 // VIPHCloudSpec describes virtual (elastic) IP settings for Hetzner Cloud.
@@ -97,7 +98,7 @@ type VIPEquinixMetalSpec struct {
 type VIPHCloudSpec struct {
 	DeviceID  int64  `yaml:"deviceID" protobuf:"1"`
 	NetworkID int64  `yaml:"networkID" protobuf:"2"`
-	APIToken  string `yaml:"apiToken" protobuf:"3"`
+	APIToken  string `yaml:"apiToken" protobuf:"3" redact:"replace"`
 }
 
 // NewOperatorSpec initializes a OperatorSpec resource.
