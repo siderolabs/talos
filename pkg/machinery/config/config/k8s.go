@@ -228,3 +228,9 @@ type K8sKubePrismConfig interface {
 	Port() int
 	TLSServerName() string
 }
+
+// K8sTalosAPIAccessConfig describes the Kubernetes Talos API access features.
+type K8sTalosAPIAccessConfig interface {
+	AllowedRoles() []string
+	AllowedKubernetesNamespaces() []string
+}

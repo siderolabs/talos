@@ -313,16 +313,8 @@ type SystemDiskEncryption interface {
 
 // Features describe individual Talos features that can be switched on or off.
 type Features interface {
-	KubernetesTalosAPIAccess() KubernetesTalosAPIAccess
 	DiskQuotaSupportEnabled() bool
 	NodeAddressSortAlgorithm() nethelpers.AddressSortAlgorithm
-}
-
-// KubernetesTalosAPIAccess describes the Kubernetes Talos API access features.
-type KubernetesTalosAPIAccess interface {
-	Enabled() bool
-	AllowedRoles() []string
-	AllowedKubernetesNamespaces() []string
 }
 
 // UdevConfig describes configuration for udev.

@@ -218,6 +218,7 @@ List of changes:
 - Deprecated `.cluster.inlineManifests` in the v1alpha1 config; use the `KubeInlineManifestConfig` document for inline manifests.
 - Deprecated `.cluster.extraManifests` and `.cluster.extraManifestHeaders` in the v1alpha1 config; use the `KubeExternalManifestConfig` document for external manifests.
 - Deprecated `.machine.features.kubePrism`; use the `KubePrismConfig` document for KubePrism configuration (or remove it to disable KubePrism).
+- Deprecated `.machine.features.kubernetesTalosAPIAccess`; use the `KubeTalosAPIAccessConfig` document instead.
 - Added `nodeCIDRMaskSizeIPv4` (default `24`) and `nodeCIDRMaskSizeIPv6` (default `64`) settings to the `KubeNetworkConfig` document to control the per-node pod CIDR mask size and validate the pod and service subnet sizes.
 """
 

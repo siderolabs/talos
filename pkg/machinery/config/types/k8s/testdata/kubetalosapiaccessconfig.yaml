@@ -1,0 +1,6 @@
+apiVersion: v1alpha1
+kind: KubeTalosAPIAccessConfig
+allowedRoles:
+    - os:reader
+allowedKubernetesNamespaces:
+    - kube-system

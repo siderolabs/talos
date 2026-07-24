@@ -31,7 +31,7 @@ func (suite *ConfigSuite) TestReconcileConfig() {
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineType: "controlplane",
 			MachineFeatures: &v1alpha1.FeaturesConfig{
-				KubernetesTalosAPIAccessConfig: &v1alpha1.KubernetesTalosAPIAccessConfig{
+				KubernetesTalosAPIAccessConfig: &v1alpha1.KubernetesTalosAPIAccessConfig{ //nolint:staticcheck // legacy config
 					AccessEnabled:                     new(true),
 					AccessAllowedRoles:                []string{"os:admin"},
 					AccessAllowedKubernetesNamespaces: []string{"kube-system"},
@@ -76,7 +76,7 @@ func (suite *ConfigSuite) TestReconcileWorker() {
 		MachineConfig: &v1alpha1.MachineConfig{
 			MachineType: "worker",
 			MachineFeatures: &v1alpha1.FeaturesConfig{
-				KubernetesTalosAPIAccessConfig: &v1alpha1.KubernetesTalosAPIAccessConfig{
+				KubernetesTalosAPIAccessConfig: &v1alpha1.KubernetesTalosAPIAccessConfig{ //nolint:staticcheck // legacy config
 					AccessEnabled:                     new(true),
 					AccessAllowedRoles:                []string{"os:admin"},
 					AccessAllowedKubernetesNamespaces: []string{"kube-system"},

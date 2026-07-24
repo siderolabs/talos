@@ -434,7 +434,7 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 					DNSServiceIP:   dnsServiceIP,
 					DNSServiceIPv6: dnsServiceIPv6,
 
-					TalosAPIServiceEnabled: cfgProvider.Machine().Features().KubernetesTalosAPIAccess().Enabled(),
+					TalosAPIServiceEnabled: cfgProvider.K8sTalosAPIAccessConfig() != nil,
 				}
 
 				if k8sCoreDNSConfig := cfgProvider.K8sCoreDNSConfig(); k8sCoreDNSConfig != nil {

@@ -134,15 +134,3 @@ func machineLoggingExample2() LoggingConfig {
 		},
 	}
 }
-
-func kubernetesTalosAPIAccessConfigExample() *KubernetesTalosAPIAccessConfig {
-	return &KubernetesTalosAPIAccessConfig{
-		AccessEnabled: new(true),
-		AccessAllowedRoles: []string{
-			"os:reader",
-		},
-		AccessAllowedKubernetesNamespaces: []string{
-			"kube-system",
-		},
-	}
-}

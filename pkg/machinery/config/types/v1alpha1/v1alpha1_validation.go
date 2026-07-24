@@ -326,12 +326,12 @@ func (c *Config) Validate(mode validation.RuntimeMode, options ...validation.Opt
 		result = multierror.Append(result, fmt.Errorf("invalid machine node taints: %w", err))
 	}
 
-	if c.Machine().Features().KubernetesTalosAPIAccess().Enabled() {
+	if apiAccessConfig := c.K8sTalosAPIAccessConfig(); apiAccessConfig != nil {
 		if !c.Machine().Type().IsControlPlane() {
 			result = multierror.Append(result, errors.New("feature Kubernetes Talos API Access can only be enabled on control plane machines"))
 		}
 
-		for _, r := range c.Machine().Features().KubernetesTalosAPIAccess().AllowedRoles() {
+		for _, r := range apiAccessConfig.AllowedRoles() {
 			if !role.All.Includes(role.Role(r)) {
 				result = multierror.Append(result, fmt.Errorf("invalid role %q in allowed roles for Kubernetes Talos API Access", r))
 			}

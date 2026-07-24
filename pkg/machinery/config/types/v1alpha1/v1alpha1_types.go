@@ -2122,12 +2122,9 @@ type FeaturesConfig struct {
 	//
 	// Deprecated: use HostConfig instead.
 	StableHostname *bool `yaml:"stableHostname,omitempty"`
-	//   description: |
-	//    Configure Talos API access from Kubernetes pods.
+	// docgen:nodoc
 	//
-	//    This feature is disabled if the feature config is not specified.
-	//   examples:
-	//     - value: kubernetesTalosAPIAccessConfigExample()
+	// Deprecated: use KubeTalosAPIAccessConfig instead.
 	KubernetesTalosAPIAccessConfig *KubernetesTalosAPIAccessConfig `yaml:"kubernetesTalosAPIAccess,omitempty"`
 	// docgen:nodoc
 	ApidCheckExtKeyUsage *bool `yaml:"apidCheckExtKeyUsage,omitempty"`
@@ -2179,6 +2176,10 @@ type ImageCacheConfig struct {
 }
 
 // KubernetesTalosAPIAccessConfig describes the configuration for the Talos API access from Kubernetes pods.
+//
+// docgen:nodoc
+//
+// Deprecated: Use KubeTalosAPIAccessConfig document instead.
 type KubernetesTalosAPIAccessConfig struct {
 	//   description: |
 	//     Enable Talos API access from Kubernetes pods.
