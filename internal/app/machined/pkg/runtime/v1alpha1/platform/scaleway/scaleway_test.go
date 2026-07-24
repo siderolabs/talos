@@ -9,7 +9,6 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/scaleway/scaleway-sdk-go/api/instance/v1"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v4"
@@ -35,6 +34,12 @@ var expectedNetworkConfigV2 string
 //go:embed testdata/expected-v3.yaml
 var expectedNetworkConfigV3 string
 
+//go:embed testdata/metadata-v4.json
+var rawMetadataV4 []byte
+
+//go:embed testdata/expected-v4.yaml
+var expectedNetworkConfigV4 string
+
 func TestParseMetadata(t *testing.T) {
 	p := &scaleway.Scaleway{}
 
@@ -58,9 +63,14 @@ func TestParseMetadata(t *testing.T) {
 			raw:      rawMetadataV3,
 			expected: expectedNetworkConfigV3,
 		},
+		{
+			name:     "V4",
+			raw:      rawMetadataV4,
+			expected: expectedNetworkConfigV4,
+		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			var metadata instance.Metadata
+			var metadata scaleway.Metadata
 
 			require.NoError(t, json.Unmarshal(tt.raw, &metadata))
 

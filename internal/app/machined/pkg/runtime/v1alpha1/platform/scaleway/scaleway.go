@@ -7,10 +7,11 @@ package scaleway
 
 import (
 	"context"
+	stderrors "errors"
 	"fmt"
 	"log"
 	"net/netip"
-	"strconv"
+	"net/url"
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/scaleway/scaleway-sdk-go/api/instance/v1"
@@ -19,6 +20,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/errors"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/address"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/internal/netutils"
 	"github.com/siderolabs/talos/pkg/download"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -36,10 +38,28 @@ func (s *Scaleway) Name() string {
 	return "scaleway"
 }
 
+func staticRoute(family nethelpers.Family, dst netip.Prefix, gw netip.Addr, priority uint32) network.RouteSpecSpec {
+	r := network.RouteSpecSpec{
+		ConfigLayer: network.ConfigPlatform,
+		OutLinkName: "eth0",
+		Destination: dst,
+		Gateway:     gw,
+		Table:       nethelpers.TableMain,
+		Protocol:    nethelpers.ProtocolStatic,
+		Type:        nethelpers.TypeUnicast,
+		Family:      family,
+		Priority:    priority,
+	}
+
+	r.Normalize()
+
+	return r
+}
+
 // ParseMetadata converts Scaleway platform metadata into platform network config.
 //
-//nolint:gocyclo
-func (s *Scaleway) ParseMetadata(metadata *instance.Metadata) (*runtime.PlatformNetworkConfig, error) {
+//nolint:gocyclo,cyclop
+func (s *Scaleway) ParseMetadata(metadata *Metadata) (*runtime.PlatformNetworkConfig, error) {
 	networkConfig := &runtime.PlatformNetworkConfig{}
 
 	if metadata.Hostname != "" {
@@ -56,98 +76,100 @@ func (s *Scaleway) ParseMetadata(metadata *instance.Metadata) (*runtime.Platform
 
 	var publicIPs []string
 
-	if metadata.PublicIP.Address != "" && metadata.PublicIP.Family == "inet" {
-		publicIPs = append(publicIPs, metadata.PublicIP.Address)
-	}
-
 	networkConfig.Links = append(networkConfig.Links, network.LinkSpecSpec{
 		Name:        "eth0",
 		Up:          true,
 		ConfigLayer: network.ConfigPlatform,
 	})
 
-	gw, _ := netip.ParsePrefix("169.254.42.42/32") //nolint:errcheck
-	route := network.RouteSpecSpec{
-		ConfigLayer: network.ConfigPlatform,
-		OutLinkName: "eth0",
-		Destination: gw,
-		Table:       nethelpers.TableMain,
-		Protocol:    nethelpers.ProtocolStatic,
-		Type:        nethelpers.TypeUnicast,
-		Family:      nethelpers.FamilyInet4,
-		Priority:    4 * network.DefaultRouteMetric,
+	u, _ := url.Parse(ScalewayMetadataEndpoint)      //nolint:errcheck
+	metadataAddr, _ := netip.ParseAddr(u.Hostname()) //nolint:errcheck
+	networkConfig.Routes = []network.RouteSpecSpec{
+		staticRoute(nethelpers.FamilyInet4, netip.PrefixFrom(metadataAddr, metadataAddr.BitLen()), netip.Addr{}, 4*network.DefaultRouteMetric),
 	}
 
-	route.Normalize()
-	networkConfig.Routes = []network.RouteSpecSpec{route}
+	if metadata.RoutedIPEnabled {
+		for _, v4 := range metadata.PublicIpsV4 {
+			publicIPs = append(publicIPs, v4.Address)
 
-	if len(metadata.PublicIpsV4) > 0 {
-		networkConfig.Operators = append(networkConfig.Operators, network.OperatorSpecSpec{
-			Operator:  network.OperatorDHCP4,
-			LinkName:  "eth0",
-			RequireUp: true,
-			DHCP4: network.DHCP4OperatorSpec{
-				RouteMetric: network.DefaultRouteMetric,
-			},
-			ConfigLayer: network.ConfigPlatform,
-		})
-	}
+			addr, err := address.IPPrefixFrom(v4.Address, v4.Netmask)
+			if err != nil {
+				return nil, err
+			}
 
-	if metadata.IPv6.Address != "" || len(metadata.PublicIpsV6) > 0 {
-		address := metadata.IPv6.Address
-		netmask := metadata.IPv6.Netmask
-		gateway := metadata.IPv6.Gateway
-
-		if address == "" || netmask == "" || gateway == "" {
-			address = metadata.PublicIpsV6[0].Address
-			netmask = metadata.PublicIpsV6[0].Netmask
-			gateway = metadata.PublicIpsV6[0].Gateway
-		}
-
-		bits, err := strconv.Atoi(netmask)
-		if err != nil {
-			return nil, err
-		}
-
-		ip, err := netip.ParseAddr(address)
-		if err != nil {
-			return nil, err
-		}
-
-		addr := netip.PrefixFrom(ip, bits)
-
-		publicIPs = append(publicIPs, address)
-		networkConfig.Addresses = append(
-			networkConfig.Addresses,
-			network.AddressSpecSpec{
+			networkConfig.Addresses = append(networkConfig.Addresses, network.AddressSpecSpec{
 				ConfigLayer: network.ConfigPlatform,
 				LinkName:    "eth0",
 				Address:     addr,
 				Scope:       nethelpers.ScopeGlobal,
 				Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
-				Family:      nethelpers.FamilyInet6,
-			},
-		)
+				Family:      nethelpers.FamilyInet4,
+			})
 
-		gw, err := netip.ParseAddr(gateway)
+			if v4.Gateway != "" {
+				gw, err := netip.ParseAddr(v4.Gateway)
+				if err != nil {
+					return nil, err
+				}
+
+				// /32 routed IPs require a host route to the gateway before the default route.
+				networkConfig.Routes = append(networkConfig.Routes,
+					staticRoute(nethelpers.FamilyInet4, netip.PrefixFrom(gw, gw.BitLen()), netip.Addr{}, 3*network.DefaultRouteMetric),
+					staticRoute(nethelpers.FamilyInet4, netip.Prefix{}, gw, 2*network.DefaultRouteMetric),
+				)
+			}
+		}
+	} else {
+		if metadata.PublicIP.Family == "inet" && metadata.PublicIP.Address != "" {
+			publicIPs = append(publicIPs, metadata.PublicIP.Address)
+		}
+
+		if len(metadata.PublicIpsV4) > 0 {
+			networkConfig.Operators = append(networkConfig.Operators, network.OperatorSpecSpec{
+				Operator:  network.OperatorDHCP4,
+				LinkName:  "eth0",
+				RequireUp: true,
+				DHCP4: network.DHCP4OperatorSpec{
+					RouteMetric: network.DefaultRouteMetric,
+				},
+				ConfigLayer: network.ConfigPlatform,
+			})
+		}
+	}
+
+	// IPv6: use PublicIpsV6 for all entries; fall back to the legacy IPv6 field on older instances.
+	v6ips := metadata.PublicIpsV6
+	if len(v6ips) == 0 && metadata.IPv6.Address != "" && metadata.IPv6.Netmask != "" && metadata.IPv6.Gateway != "" {
+		v6ips = []instance.MetadataIP{{
+			Address: metadata.IPv6.Address,
+			Netmask: metadata.IPv6.Netmask,
+			Gateway: metadata.IPv6.Gateway,
+		}}
+	}
+
+	for _, v6 := range v6ips {
+		addr, err := address.IPPrefixFrom(v6.Address, v6.Netmask)
 		if err != nil {
 			return nil, err
 		}
 
-		route := network.RouteSpecSpec{
-			ConfigLayer: network.ConfigPlatform,
-			Gateway:     gw,
-			OutLinkName: "eth0",
-			Table:       nethelpers.TableMain,
-			Protocol:    nethelpers.ProtocolStatic,
-			Type:        nethelpers.TypeUnicast,
-			Family:      nethelpers.FamilyInet6,
-			Priority:    2 * network.DefaultRouteMetric,
+		gw, err := netip.ParseAddr(v6.Gateway)
+		if err != nil {
+			return nil, err
 		}
 
-		route.Normalize()
-
-		networkConfig.Routes = append(networkConfig.Routes, route)
+		publicIPs = append(publicIPs, v6.Address)
+		networkConfig.Addresses = append(networkConfig.Addresses, network.AddressSpecSpec{
+			ConfigLayer: network.ConfigPlatform,
+			LinkName:    "eth0",
+			Address:     addr,
+			Scope:       nethelpers.ScopeGlobal,
+			Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+			Family:      nethelpers.FamilyInet6,
+		})
+		networkConfig.Routes = append(networkConfig.Routes,
+			staticRoute(nethelpers.FamilyInet6, netip.Prefix{}, gw, 2*network.DefaultRouteMetric),
+		)
 	}
 
 	for _, ipStr := range publicIPs {
@@ -187,10 +209,25 @@ func (s *Scaleway) Configuration(ctx context.Context, r state.State) ([]byte, er
 
 	log.Printf("fetching machine config from %q", ScalewayUserDataEndpoint)
 
-	return download.Download(ctx, ScalewayUserDataEndpoint,
+	probeCtx, cancel := context.WithTimeout(ctx, metadataIPv4Timeout)
+	cfg, err := download.Download(probeCtx, ScalewayUserDataEndpoint,
 		download.WithLowSrcPort(),
+		download.WithTimeout(metadataIPv4Timeout),
 		download.WithErrorOnNotFound(errors.ErrNoConfigSource),
 		download.WithErrorOnEmptyResponse(errors.ErrNoConfigSource))
+
+	cancel()
+
+	if err != nil && !stderrors.Is(err, errors.ErrNoConfigSource) {
+		log.Printf("IPv4 user-data unreachable, falling back to IPv6 endpoint %q", ScalewayUserDataEndpointIPv6)
+
+		cfg, err = download.Download(ctx, ScalewayUserDataEndpointIPv6,
+			download.WithLowSrcPort(),
+			download.WithErrorOnNotFound(errors.ErrNoConfigSource),
+			download.WithErrorOnEmptyResponse(errors.ErrNoConfigSource))
+	}
+
+	return cfg, err
 }
 
 // Mode implements the runtime.Platform interface.
