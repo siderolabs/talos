@@ -191,7 +191,7 @@ func RunInstallerContainer(
 		oci.WithApparmorProfile(""),
 		oci.WithSeccompUnconfined,
 		oci.WithAllDevicesAllowed,
-		oci.WithEnv(environment.Get(cfg)),
+		oci.WithEnv(options.Environment(environment.Get(cfg))),
 	}
 
 	if selinux.IsEnabled() {

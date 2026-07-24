@@ -100,7 +100,7 @@ func runInstallerContainer(ctx context.Context, pidRecorder pid.Recorder, rc *co
 	// build container spec
 	mounts := buildMounts()
 	args := buildInstallerArgs(rc.disk, rc.platform, &options)
-	specOpts := buildSpecOpts(img, args, mounts)
+	specOpts := buildSpecOpts(img, args, mounts, options.Environment(nil))
 
 	containerID, err := generateContainerID()
 	if err != nil {
@@ -316,10 +316,11 @@ func buildInstallerArgs(disk, platform string, options *install.Options) []strin
 }
 
 // buildSpecOpts constructs the OCI spec options for the installer container.
-func buildSpecOpts(img client.Image, args []string, mounts []specs.Mount) []oci.SpecOpts {
+func buildSpecOpts(img client.Image, args []string, mounts []specs.Mount, env []string) []oci.SpecOpts {
 	specOpts := []oci.SpecOpts{
 		containerdrunner.WithImageConfigStripped(img),
 		oci.WithProcessArgs(args...),
+		oci.WithEnv(env),
 		oci.WithHostNamespace(specs.NetworkNamespace),
 		oci.WithHostNamespace(specs.PIDNamespace),
 		oci.WithMounts(mounts),

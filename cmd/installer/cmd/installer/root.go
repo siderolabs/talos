@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"strconv"
 
 	"github.com/siderolabs/gen/xerrors"
 	"github.com/spf13/cobra"
@@ -26,6 +27,15 @@ var rootCmd = &cobra.Command{
 }
 
 func setFlagsFromEnvironment() error {
+	if value := os.Getenv(constants.InstallerGrubUseUKICmdlineEnvVar); value != "" {
+		grubUseUKICmdline, err := strconv.ParseBool(value)
+		if err != nil {
+			return xerrors.NewTaggedf[install.InvalidInputTag]("invalid %s value: %w", constants.InstallerGrubUseUKICmdlineEnvVar, err)
+		}
+
+		options.GrubUseUKICmdline = grubUseUKICmdline
+	}
+
 	if metaEnvBase64 := os.Getenv(constants.MetaValuesEnvVar); metaEnvBase64 != "" {
 		if err := options.MetaValues.Decode(metaEnvBase64); err != nil {
 			return xerrors.NewTaggedf[install.InvalidInputTag]("%w", err)

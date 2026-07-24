@@ -102,6 +102,7 @@ func (s *Service) Install(req *machine.LifecycleServiceInstallRequest, ss grpc.S
 			opts: []install.Option{
 				install.WithForce(true),
 				install.WithZero(false),
+				install.WithGrubUseUKICmdline(true),
 			},
 			send: func(msg string) error {
 				s.logger.Info("installation progress", zap.String("message", msg))

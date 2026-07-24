@@ -1303,6 +1303,9 @@ const (
 	// MetaValuesEnvVar is the name of the environment variable to store encoded meta values for the disk image (installer).
 	MetaValuesEnvVar = "INSTALLER_META_BASE64"
 
+	// InstallerGrubUseUKICmdlineEnvVar controls whether GRUB uses the kernel command line embedded in the UKI.
+	InstallerGrubUseUKICmdlineEnvVar = "INSTALLER_GRUB_USE_UKI_CMDLINE"
+
 	// MaintenanceServiceCommonName is the CN of the maintenance service server certificate.
 	MaintenanceServiceCommonName = "maintenance-service.talos.dev"
 

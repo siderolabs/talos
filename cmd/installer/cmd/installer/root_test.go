@@ -10,9 +10,22 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/siderolabs/talos/cmd/installer/pkg/install"
 	installerexitcode "github.com/siderolabs/talos/pkg/installer/exitcode"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
+
+func TestSetFlagsFromEnvironmentGrubUseUKICmdline(t *testing.T) {
+	t.Setenv(constants.InstallerGrubUseUKICmdlineEnvVar, "true")
+
+	oldOptions := options
+	options = &install.Options{}
+
+	t.Cleanup(func() { options = oldOptions })
+
+	require.NoError(t, setFlagsFromEnvironment())
+	require.True(t, options.GrubUseUKICmdline)
+}
 
 func TestExecuteInvalidMetaEnv(t *testing.T) {
 	t.Setenv(constants.MetaValuesEnvVar, "!!!")

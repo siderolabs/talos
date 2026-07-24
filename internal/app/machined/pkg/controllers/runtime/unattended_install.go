@@ -83,6 +83,7 @@ func NewUnattendedInstallController(rt v1alpha1runtime.Runtime) *UnattendedInsta
 				crires.RegistryBuilder(resources),
 				install.WithForce(true),
 				install.WithZero(wipe),
+				install.WithGrubUseUKICmdline(true),
 			); err != nil {
 				return err
 			}
