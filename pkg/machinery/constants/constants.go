@@ -1371,6 +1371,9 @@ const (
 	// SYSLOG_ACTION_READ_ALL is a named type argument to klogctl.
 	//nolint:golint
 	SYSLOG_ACTION_READ_ALL = 3
+
+	// Redacted is the replacement for sensitive values.
+	Redacted = "REDACTED"
 )
 
 // names of variable that can be substituted in the talos.config kernel parameter.

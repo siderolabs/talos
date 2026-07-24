@@ -27,6 +27,7 @@ type AddressSpec = typed.Resource[AddressSpecSpec, AddressSpecExtension]
 // AddressSpecSpec describes status of rendered secrets.
 //
 //gotagsrewrite:gen
+//redactgen:gen
 type AddressSpecSpec struct {
 	Address         netip.Prefix            `yaml:"address" protobuf:"1"`
 	LinkName        string                  `yaml:"linkName" protobuf:"2"`

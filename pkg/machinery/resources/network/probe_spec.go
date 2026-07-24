@@ -26,6 +26,7 @@ type ProbeSpec = typed.Resource[ProbeSpecSpec, ProbeSpecExtension]
 // ProbeSpecSpec describes the Probe.
 //
 //gotagsrewrite:gen
+//redactgen:gen
 type ProbeSpecSpec struct {
 	// Interval between the probes.
 	Interval time.Duration `yaml:"interval" protobuf:"1"`

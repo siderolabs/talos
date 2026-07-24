@@ -296,7 +296,7 @@ type BridgeVLANSpec struct {
 //gotagsrewrite:gen
 type WireguardSpec struct {
 	// PrivateKey is used to configure the link, present only in the LinkSpec.
-	PrivateKey string `yaml:"privateKey,omitempty" protobuf:"1"`
+	PrivateKey string `yaml:"privateKey,omitempty" protobuf:"1" redact:"replace"`
 	// PublicKey is only used in LinkStatus to show the link status.
 	PublicKey    string          `yaml:"publicKey,omitempty" protobuf:"2"`
 	ListenPort   int             `yaml:"listenPort" protobuf:"3"`
@@ -309,7 +309,7 @@ type WireguardSpec struct {
 //gotagsrewrite:gen
 type WireguardPeer struct {
 	PublicKey                   string         `yaml:"publicKey" protobuf:"1"`
-	PresharedKey                string         `yaml:"presharedKey" protobuf:"2"`
+	PresharedKey                string         `yaml:"presharedKey" protobuf:"2" redact:"replace"`
 	Endpoint                    string         `yaml:"endpoint" protobuf:"3"`
 	PersistentKeepaliveInterval time.Duration  `yaml:"persistentKeepaliveInterval" protobuf:"4"`
 	AllowedIPs                  []netip.Prefix `yaml:"allowedIPs" protobuf:"5"`
