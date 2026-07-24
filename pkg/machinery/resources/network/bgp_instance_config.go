@@ -13,17 +13,15 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
 
+	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 )
 
-// BGPPeerConfigType is the type of the BGPPeerConfig resource.
-const BGPPeerConfigType = resource.Type("BGPPeerConfigs.net.talos.dev")
+// BGPInstanceConfigType is the type of the BGPInstanceConfig resource.
+const BGPInstanceConfigType = resource.Type("BGPInstanceConfigs.net.talos.dev")
 
-// BGPPeerConfigID is the singleton BGPPeerConfig resource ID.
-const BGPPeerConfigID resource.ID = "config"
-
-// BGPPeerConfig contains the runtime configuration for the BGP speaker.
-type BGPPeerConfig = typed.Resource[BGPPeerConfigSpec, BGPPeerConfigExtension]
+// BGPInstanceConfig contains the resolved runtime configuration for a BGP routing instance.
+type BGPInstanceConfig = typed.Resource[BGPInstanceConfigSpec, BGPInstanceConfigExtension]
 
 // BGPBFDConfigSpec contains BFD parameters for a BGP neighbor.
 //
@@ -43,12 +41,14 @@ type BGPNeighborConfigSpec struct {
 	PeerASN  uint32            `yaml:"peerASN,omitempty" protobuf:"3"`
 	HoldTime time.Duration     `yaml:"holdTime,omitempty" protobuf:"4"`
 	BFD      *BGPBFDConfigSpec `yaml:"bfd,omitempty" protobuf:"5"`
+	LocalASN uint32            `yaml:"localASN,omitempty" protobuf:"6"`
+	Passive  bool              `yaml:"passive,omitempty" protobuf:"7"`
 }
 
-// BGPPeerConfigSpec contains the complete runtime configuration for the BGP speaker.
+// BGPInstanceConfigSpec contains the resolved runtime configuration for a BGP routing instance.
 //
 //gotagsrewrite:gen
-type BGPPeerConfigSpec struct {
+type BGPInstanceConfigSpec struct {
 	LocalASN       uint32                  `yaml:"localASN" protobuf:"1"`
 	RouterID       netip.Addr              `yaml:"routerID,omitempty" protobuf:"2"`
 	RouteSource    netip.Addr              `yaml:"routeSource,omitempty" protobuf:"3"`
@@ -56,28 +56,31 @@ type BGPPeerConfigSpec struct {
 	Multipath      bool                    `yaml:"multipath,omitempty" protobuf:"5"`
 	MaxPaths       uint8                   `yaml:"maxPaths,omitempty" protobuf:"6"`
 	Neighbors      []BGPNeighborConfigSpec `yaml:"neighbors,omitempty" protobuf:"7"`
+	VRF            string                  `yaml:"vrf,omitempty" protobuf:"8"`
+	VRFTable       nethelpers.RoutingTable `yaml:"vrfTable,omitempty" protobuf:"9"`
 }
 
-// NewBGPPeerConfig initializes the singleton BGPPeerConfig resource.
-func NewBGPPeerConfig() *BGPPeerConfig {
-	return typed.NewResource[BGPPeerConfigSpec, BGPPeerConfigExtension](
-		resource.NewMetadata(NamespaceName, BGPPeerConfigType, BGPPeerConfigID, resource.VersionUndefined),
-		BGPPeerConfigSpec{},
+// NewBGPInstanceConfig initializes a named BGPInstanceConfig resource.
+func NewBGPInstanceConfig(id resource.ID) *BGPInstanceConfig {
+	return typed.NewResource[BGPInstanceConfigSpec, BGPInstanceConfigExtension](
+		resource.NewMetadata(NamespaceName, BGPInstanceConfigType, id, resource.VersionUndefined),
+		BGPInstanceConfigSpec{},
 	)
 }
 
-// BGPPeerConfigExtension provides auxiliary methods for BGPPeerConfig.
-type BGPPeerConfigExtension struct{}
+// BGPInstanceConfigExtension provides auxiliary methods for BGPInstanceConfig.
+type BGPInstanceConfigExtension struct{}
 
 // ResourceDefinition implements [typed.Extension] interface.
-func (BGPPeerConfigExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
+func (BGPInstanceConfigExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 	return meta.ResourceDefinitionSpec{
-		Type:             BGPPeerConfigType,
+		Type:             BGPInstanceConfigType,
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		PrintColumns: []meta.PrintColumn{
 			{Name: "Local ASN", JSONPath: "{.localASN}"},
 			{Name: "Router ID", JSONPath: "{.routerID}"},
+			{Name: "VRF", JSONPath: "{.vrf}"},
 			{Name: "Neighbors", JSONPath: "{.neighbors}"},
 		},
 	}
@@ -86,7 +89,7 @@ func (BGPPeerConfigExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 func init() {
 	proto.RegisterDefaultTypes()
 
-	if err := protobuf.RegisterDynamic[BGPPeerConfigSpec](BGPPeerConfigType, &BGPPeerConfig{}); err != nil {
+	if err := protobuf.RegisterDynamic[BGPInstanceConfigSpec](BGPInstanceConfigType, &BGPInstanceConfig{}); err != nil {
 		panic(err)
 	}
 }

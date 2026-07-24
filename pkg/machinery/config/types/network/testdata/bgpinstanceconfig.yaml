@@ -1,5 +1,6 @@
 apiVersion: v1alpha1
-kind: BGPPeerConfig
+kind: BGPInstanceConfig
+name: fabric
 localASN: 65001
 routerID: 10.0.0.1
 advertise:
@@ -8,7 +9,11 @@ multipath: true
 neighbors:
     - address: 10.5.0.1
       peerASN: 65000
+      passive: true
+      holdTime: 9s
     - link: enp0s1
+      peerASN: 65000
+      holdTime: 9s
       bfd:
         transmitInterval: 300ms
         receiveInterval: 300ms

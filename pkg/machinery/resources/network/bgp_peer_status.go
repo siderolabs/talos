@@ -37,6 +37,7 @@ type BGPPeerStatusSpec struct {
 	Advertised uint32                     `yaml:"advertised" protobuf:"8"`
 	Accepted   uint32                     `yaml:"accepted" protobuf:"9"`
 	BFDState   string                     `yaml:"bfdState,omitempty" protobuf:"10"`
+	Instance   string                     `yaml:"instance" protobuf:"11"`
 }
 
 // NewBGPPeerStatus initializes a BGPPeerStatus resource.
@@ -57,6 +58,10 @@ func (BGPPeerStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
 		Aliases:          []resource.Type{},
 		DefaultNamespace: NamespaceName,
 		PrintColumns: []meta.PrintColumn{
+			{
+				Name:     "Instance",
+				JSONPath: `{.instance}`,
+			},
 			{
 				Name:     "Peer",
 				JSONPath: `{.peer}`,

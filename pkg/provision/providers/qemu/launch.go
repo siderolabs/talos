@@ -79,9 +79,8 @@ type LaunchConfig struct {
 
 	VMMac string
 
-	// FabricUplinks describes dedicated point-to-point uplinks from this node to the host BGP fabric
-	// peer, used by the full-CLOS BGP test. Each uplink is a virtio/e1000 NIC backed by its own
-	// per-uplink CNI bridge (root ns) + tc-redirect-tap (node netns).
+	// FabricUplinks describes additional L2-only BGP test NICs backed by a CNI bridge in the root
+	// namespace and tc-redirect-tap in the node namespace.
 	FabricUplinks []FabricUplink
 
 	// CLOSNoNet0 means this node has no management net0 (no CNI bridge) — only the fabric uplinks. The
@@ -95,11 +94,10 @@ type LaunchConfig struct {
 	controller *Controller
 }
 
-// FabricUplink is a dedicated point-to-point BGP fabric uplink: a per-uplink CNI bridge (root ns,
-// where the host fabric peer attaches) connected via tc-redirect-tap to a tap in the node netns.
+// FabricUplink is an additional L2-only BGP test NIC connected via tc-redirect-tap to the node netns.
 type FabricUplink struct {
-	BridgeName  string // host bridge name (root ns); the host fabric peer attaches here
-	CNIConfList string // per-uplink CNI conflist (bridge + tc-redirect-tap), LLA-only (no IPAM)
+	BridgeName  string // host bridge name (root ns); the host fabric peer is reachable here
+	CNIConfList string // CNI conflist (bridge + tc-redirect-tap), with no IPAM
 	IfName      string // CNI runtimeConf IfName, unique within the node netns
 
 	// filled by withNetworkContext at launch time

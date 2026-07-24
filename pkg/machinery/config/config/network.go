@@ -419,10 +419,13 @@ type NetworkHTTPProbeConfig interface {
 	Timeout() time.Duration
 }
 
-// NetworkBGPPeerConfig defines a native BGP speaker configuration.
-type NetworkBGPPeerConfig interface {
-	// BGPPeerConfig is a signal method for documents implementing this interface.
-	BGPPeerConfig()
+// NetworkBGPInstanceConfig defines a native BGP routing instance configuration.
+type NetworkBGPInstanceConfig interface {
+	NamedDocument
+	// BGPInstanceConfigSignal is a signal method for documents implementing this interface.
+	BGPInstanceConfigSignal()
+	// VRF is the Linux VRF link used by the instance; empty means the default routing domain.
+	VRF() string
 	// LocalASN is the local autonomous system number.
 	LocalASN() uint32
 	// RouterID is the BGP router-id; zero value means derive it from an advertised address.
@@ -430,7 +433,7 @@ type NetworkBGPPeerConfig interface {
 	// RouteSource is the preferred source address set on BGP-installed routes (kernel src / RTA_PREFSRC);
 	// zero value lets the kernel select the source.
 	RouteSource() netip.Addr
-	// AdvertiseLinks lists link names whose addresses are originated as host routes (/32, /128).
+	// AdvertiseLinks lists link names or aliases whose addresses are originated as host routes (/32, /128).
 	AdvertiseLinks() []string
 	// Multipath enables ECMP (multiple best paths) for received routes.
 	Multipath() bool
@@ -448,9 +451,13 @@ type NetworkBGPNeighbor interface {
 	Link() string
 	// PeerASN is the expected peer ASN; zero means accept any ASN (eBGP "external").
 	PeerASN() uint32
+	// LocalASN is the local ASN override; zero means use the instance ASN.
+	LocalASN() uint32
+	// Passive reports whether the local speaker waits for the neighbor to connect.
+	Passive() bool
 	// HoldTime is the BGP hold timer; zero means use the implementation default.
 	HoldTime() time.Duration
-	// BFD returns the BFD configuration for the neighbor, or nil when BFD is disabled.
+	// BFD returns this neighbor's BFD configuration, or nil when BFD is disabled.
 	BFD() NetworkBGPBFD
 }
 

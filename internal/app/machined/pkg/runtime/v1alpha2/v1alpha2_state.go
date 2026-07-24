@@ -183,7 +183,7 @@ func NewState() (*State, error) {
 		&kubespan.PeerStatus{},
 		&network.AddressStatus{},
 		&network.AddressSpec{},
-		&network.BGPPeerConfig{},
+		&network.BGPInstanceConfig{},
 		&network.BGPPeerStatus{},
 		&network.DeviceConfigSpec{},
 		&network.DNSResolveCache{},

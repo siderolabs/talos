@@ -8,6 +8,7 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"net/netip"
 	"slices"
 	"time"
@@ -24,6 +25,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	networkres "github.com/siderolabs/talos/pkg/machinery/resources/network"
+	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
 // BGPSuite verifies native BGP against the embedded fabric peer started by `talosctl cluster create --with-bgp`.
@@ -87,7 +89,7 @@ func (suite *BGPSuite) TestNumberedBGP() {
 		{AddressAddress: netip.MustParsePrefix(nodeLoopbk)},
 	}
 
-	bgp := network.NewBGPPeerConfigV1Alpha1()
+	bgp := network.NewBGPInstanceConfigV1Alpha1("fabric")
 	bgp.BGPLocalASN = nodeASN
 	bgp.BGPAdvertise = []string{"lo"}
 	bgp.BGPNeighborConfigs = []network.BGPNeighborConfig{
@@ -101,8 +103,9 @@ func (suite *BGPSuite) TestNumberedBGP() {
 
 	// session should reach Established with the fabric peer.
 	rtestutils.AssertResource(
-		nodeCtx, suite.T(), suite.Client.COSI, fabric.String(),
+		nodeCtx, suite.T(), suite.Client.COSI, "fabric/"+fabric.String(),
 		func(peer *networkres.BGPPeerStatus, asrt *assert.Assertions) {
+			asrt.Equal("fabric", peer.TypedSpec().Instance)
 			asrt.Equal(nethelpers.BGPSessionStateEstablished, peer.TypedSpec().State)
 			asrt.Equal(uint32(fabricASN), peer.TypedSpec().PeerASN)
 		},
@@ -127,11 +130,143 @@ func (suite *BGPSuite) TestNumberedBGP() {
 	)
 
 	// cleanup: removing the config should tear down the session and the learned route.
-	suite.RemoveMachineConfigDocuments(nodeCtx, network.BGPPeerKind)
+	suite.RemoveMachineConfigDocuments(nodeCtx, network.BGPInstanceKind)
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.LinkKind, "lo")
 
-	rtestutils.AssertNoResource[*networkres.BGPPeerStatus](nodeCtx, suite.T(), suite.Client.COSI, fabric.String())
+	rtestutils.AssertNoResource[*networkres.BGPPeerStatus](nodeCtx, suite.T(), suite.Client.COSI, "fabric/"+fabric.String())
 	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.COSI, learnedRouteID)
+}
+
+// TestVRFBGP verifies that the embedded fabric peer can initiate a session into a passive BGP
+// neighbor whose listener is bound to a Linux VRF, while a default-domain listener uses the same port.
+func (suite *BGPSuite) TestVRFBGP() {
+	if !suite.BGPEnabled {
+		suite.T().Skip("skipping BGP test; enable with -talos.bgp (requires a cluster created with --with-bgp)")
+	}
+
+	if suite.BGPCLOSEnabled {
+		suite.T().Skip("skipping numbered VRF BGP test on a full-CLOS cluster")
+	}
+
+	if suite.Cluster == nil || suite.Cluster.Provisioner() == base.ProvisionerDocker {
+		suite.T().Skip("skipping BGP test since provisioner is not qemu")
+	}
+
+	const (
+		nodeASN        = 65001
+		fabricASN      = 65000
+		nodeLoopback   = "10.99.0.11/32"
+		fabricRoute    = "10.200.0.0/24"
+		vrfName        = "vrf-bgp"
+		defaultBGPName = "fabric"
+		vrfBGPName     = "vrf-fabric"
+	)
+
+	const vrfTable = nethelpers.RoutingTable(100)
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	managementLink, managementPrefix := suite.managementNetwork(nodeCtx)
+	fabric := managementPrefix.Masked().Addr().Next()
+	vrfAddress := vm.VRFPeerAddress()
+
+	vrfLink := suite.vrfBGPLink(nodeCtx)
+
+	suite.T().Logf(
+		"testing inbound VRF BGP listener on node %q: management %s, VRF link %s, fabric %s -> %s",
+		node,
+		managementLink,
+		vrfLink,
+		fabric,
+		vrfAddress,
+	)
+
+	lo := network.NewLinkConfigV1Alpha1("lo")
+	lo.LinkUp = new(true)
+	lo.LinkAddresses = []network.AddressConfig{{AddressAddress: netip.MustParsePrefix(nodeLoopback)}}
+
+	vrfLinkConfig := network.NewLinkConfigV1Alpha1(vrfLink)
+	vrfLinkConfig.LinkUp = new(true)
+	vrfLinkConfig.LinkAddresses = []network.AddressConfig{{AddressAddress: vm.VRFPeerPrefix()}}
+	vrfLinkConfig.LinkRoutes = []network.RouteConfig{{
+		RouteDestination: meta.Prefix{Prefix: netip.PrefixFrom(fabric, fabric.BitLen())},
+		RouteTable:       vrfTable,
+	}}
+
+	loopbackAddressID := "lo/" + nodeLoopback
+	vrfAddressID := vrfLink + "/" + vm.VRFPeerPrefix().String()
+	vrfFabricRouteID := networkres.RouteID(
+		vrfTable,
+		nethelpers.FamilyInet4,
+		netip.PrefixFrom(fabric, fabric.BitLen()),
+		netip.Addr{},
+		networkres.DefaultRouteMetric,
+		vrfLink,
+	)
+
+	vrf := network.NewVRFConfigV1Alpha1(vrfName)
+	vrf.VRFLinks = []string{vrfLink}
+	vrf.VRFTable = vrfTable
+	vrf.LinkUp = new(true)
+
+	defaultBGP := network.NewBGPInstanceConfigV1Alpha1(defaultBGPName)
+	defaultBGP.BGPLocalASN = nodeASN
+	defaultBGP.BGPAdvertise = []string{"lo"}
+	defaultBGP.BGPNeighborConfigs = []network.BGPNeighborConfig{{
+		NeighborAddressConfig: meta.Addr{Addr: fabric},
+		NeighborPeerASN:       fabricASN,
+	}}
+
+	vrfBGP := network.NewBGPInstanceConfigV1Alpha1(vrfBGPName)
+	vrfBGP.BGPVRF = vrfName
+	vrfBGP.BGPLocalASN = nodeASN
+	vrfBGP.BGPRouterID = meta.Addr{Addr: vrfAddress}
+	vrfBGP.BGPNeighborConfigs = []network.BGPNeighborConfig{{
+		NeighborAddressConfig: meta.Addr{Addr: fabric},
+		NeighborPeerASN:       fabricASN,
+		NeighborPassive:       true,
+	}}
+
+	suite.PatchMachineConfig(nodeCtx, lo, vrfLinkConfig, vrf, defaultBGP, vrfBGP)
+	suite.waitForBGPPeer(nodeCtx, defaultBGPName+"/"+fabric.String(), defaultBGPName, fabricASN)
+
+	vrfPeerID := vrfBGPName + "/" + fabric.String()
+	suite.waitForBGPPeer(nodeCtx, vrfPeerID, vrfBGPName, fabricASN)
+
+	learnedRouteID := networkres.RouteID(
+		vrfTable,
+		nethelpers.FamilyInet4,
+		netip.MustParsePrefix(fabricRoute),
+		fabric,
+		0,
+		"",
+	)
+
+	suite.waitForBGPRoute(nodeCtx, learnedRouteID, vrfTable, fabric)
+	suite.waitForManagementNetwork(nodeCtx, managementLink, managementPrefix)
+
+	finalManagementLink, finalManagementPrefix := suite.managementNetwork(nodeCtx)
+	suite.Require().Equal(managementLink, finalManagementLink)
+	suite.Require().Equal(managementPrefix, finalManagementPrefix)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.BGPInstanceKind, defaultBGPName, vrfBGPName)
+
+	rtestutils.AssertNoResource[*networkres.BGPPeerStatus](nodeCtx, suite.T(), suite.Client.COSI, defaultBGPName+"/"+fabric.String())
+	rtestutils.AssertNoResource[*networkres.BGPPeerStatus](nodeCtx, suite.T(), suite.Client.COSI, vrfPeerID)
+	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.COSI, learnedRouteID)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.VRFKind, vrfName)
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.LinkKind, "lo", vrfLink)
+
+	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.COSI, loopbackAddressID)
+	rtestutils.AssertNoResource[*networkres.AddressStatus](nodeCtx, suite.T(), suite.Client.COSI, vrfAddressID)
+	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.COSI, vrfFabricRouteID)
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, vrfName)
+
+	finalManagementLink, finalManagementPrefix = suite.managementNetwork(nodeCtx)
+	suite.Require().Equal(managementLink, finalManagementLink)
+	suite.Require().Equal(managementPrefix, finalManagementPrefix)
 }
 
 // assertBFDUp waits until BFD is up on every BGP peer.
@@ -188,7 +323,7 @@ func (suite *BGPSuite) assertLearnedLoopback(nodeCtx context.Context, dest netip
 
 // TestBGPCLOS verifies a full-CLOS cluster (--with-bgp-clos): every node has NO management net0, only
 // dedicated unnumbered fabric uplink(s) to the host BGP fabric peer and a loopback identity, reachable
-// only via BGP. The per-node config (loopback on lo + unnumbered BGPPeerConfig over the fabric uplinks) is
+// only via BGP. The per-node config (loopback on lo + unnumbered BGPInstanceConfig over the fabric uplinks) is
 // baked at cluster-create time (a no-net0 node is unreachable until BGP is up), so this test only asserts
 // the converged state. The fact talosctl can reach each node at its loopback is itself proof the host
 // installed the BGP routes.
@@ -309,11 +444,19 @@ func (suite *BGPSuite) closFabricLinks(nodeCtx context.Context) []string {
 	return names
 }
 
-// bridgeGateway returns the bridge gateway address (where the --with-bgp fabric peer listens): the first
-// host IP of the node's net0 (physical virtio-net) subnet, matching the provisioner's gateway allocation.
-func (suite *BGPSuite) bridgeGateway(nodeCtx context.Context) netip.Addr {
-	links, err := safe.StateListAll[*networkres.LinkStatus](nodeCtx, suite.Client.COSI)
+// managementNetwork returns the node's physical virtio-net management link and IPv4 subnet.
+func (suite *BGPSuite) managementNetwork(nodeCtx context.Context) (string, netip.Prefix) {
+	link, prefix, err := suite.lookupManagementNetwork(nodeCtx)
 	suite.Require().NoError(err)
+
+	return link, prefix
+}
+
+func (suite *BGPSuite) lookupManagementNetwork(nodeCtx context.Context) (string, netip.Prefix, error) {
+	links, err := safe.StateListAll[*networkres.LinkStatus](nodeCtx, suite.Client.COSI)
+	if err != nil {
+		return "", netip.Prefix{}, err
+	}
 
 	var net0 string
 
@@ -325,22 +468,91 @@ func (suite *BGPSuite) bridgeGateway(nodeCtx context.Context) netip.Addr {
 		}
 	}
 
-	suite.Require().NotEmpty(net0, "no virtio-net (net0) interface found")
+	if net0 == "" {
+		return "", netip.Prefix{}, fmt.Errorf("no virtio-net management interface found")
+	}
 
 	addresses, err := safe.StateListAll[*networkres.AddressStatus](nodeCtx, suite.Client.COSI)
-	suite.Require().NoError(err)
+	if err != nil {
+		return "", netip.Prefix{}, err
+	}
 
 	for address := range addresses.All() {
 		spec := address.TypedSpec()
 
 		if spec.LinkName == net0 && spec.Address.Addr().Is4() {
-			return spec.Address.Masked().Addr().Next()
+			return net0, spec.Address.Masked(), nil
 		}
 	}
 
-	suite.Require().Fail("no IPv4 address on net0 to derive the bridge gateway")
+	return "", netip.Prefix{}, fmt.Errorf("no IPv4 management address on %q", net0)
+}
 
-	return netip.Addr{}
+func (suite *BGPSuite) waitForManagementNetwork(nodeCtx context.Context, expectedLink string, expectedPrefix netip.Prefix) {
+	suite.Eventually(func() bool {
+		link, prefix, err := suite.lookupManagementNetwork(nodeCtx)
+
+		return err == nil && link == expectedLink && prefix == expectedPrefix
+	}, 2*time.Minute, time.Second, "management network %s %s did not recover after VRF configuration", expectedLink, expectedPrefix)
+}
+
+func (suite *BGPSuite) waitForBGPPeer(nodeCtx context.Context, id, instance string, peerASN uint32) {
+	suite.Eventually(func() bool {
+		peer, err := safe.StateGetByID[*networkres.BGPPeerStatus](nodeCtx, suite.Client.COSI, id)
+		if err != nil {
+			return false
+		}
+
+		spec := peer.TypedSpec()
+
+		return spec.Instance == instance && spec.State == nethelpers.BGPSessionStateEstablished && spec.PeerASN == peerASN
+	}, 2*time.Minute, time.Second, "BGP peer %q did not reach Established", id)
+}
+
+func (suite *BGPSuite) waitForBGPRoute(
+	nodeCtx context.Context,
+	id string,
+	table nethelpers.RoutingTable,
+	gateway netip.Addr,
+) {
+	suite.Eventually(func() bool {
+		route, err := safe.StateGetByID[*networkres.RouteStatus](nodeCtx, suite.Client.COSI, id)
+		if err != nil {
+			return false
+		}
+
+		spec := route.TypedSpec()
+
+		return spec.Table == table && spec.Gateway == gateway && spec.Protocol == nethelpers.ProtocolBGP
+	}, 2*time.Minute, time.Second, "BGP route %q was not installed", id)
+}
+
+// bridgeGateway returns the bridge gateway address (where the --with-bgp fabric peer listens): the first
+// host IP of the node's net0 subnet, matching the provisioner's gateway allocation.
+func (suite *BGPSuite) bridgeGateway(nodeCtx context.Context) netip.Addr {
+	_, prefix := suite.managementNetwork(nodeCtx)
+
+	return prefix.Masked().Addr().Next()
+}
+
+// vrfBGPLink returns the extra e1000 NIC attached to the management bridge for the inbound VRF test.
+func (suite *BGPSuite) vrfBGPLink(nodeCtx context.Context) string {
+	links, err := safe.StateListAll[*networkres.LinkStatus](nodeCtx, suite.Client.COSI)
+	suite.Require().NoError(err)
+
+	var result []string
+
+	for link := range links.All() {
+		spec := link.TypedSpec()
+
+		if spec.Physical() && spec.Driver == "e1000" {
+			result = append(result, link.Metadata().ID())
+		}
+	}
+
+	suite.Require().Len(result, 1, "expected exactly one e1000 VRF test NIC")
+
+	return result[0]
 }
 
 // assertDefaultRoute waits until a BGP-learned default route is installed (the fabric peer's default).

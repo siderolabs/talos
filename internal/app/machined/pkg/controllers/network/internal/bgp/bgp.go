@@ -24,6 +24,8 @@ type Peer struct {
 	Address   string
 	LinkLocal netip.Addr
 	Link      string
+	// BindInterface constrains the outbound transport to a VRF or interface.
+	BindInterface string
 }
 
 // BuildPeer translates a resolved peer into a GoBGP peer.
@@ -37,6 +39,18 @@ func BuildPeer(peer Peer, multipath bool) *gobgpapi.Peer {
 			afiSafi(gobgpapi.Family_AFI_IP, multipath),
 			afiSafi(gobgpapi.Family_AFI_IP6, multipath),
 		},
+	}
+
+	if peer.Config.LocalASN != 0 {
+		result.Conf.LocalAsn = peer.Config.LocalASN
+		result.Conf.ReplacePeerAsn = true
+	}
+
+	if peer.Config.Passive || peer.BindInterface != "" {
+		result.Transport = &gobgpapi.Transport{
+			PassiveMode:   peer.Config.Passive,
+			BindInterface: peer.BindInterface,
+		}
 	}
 
 	if peer.Config.HoldTime > 0 {
@@ -141,11 +155,15 @@ func PathNexthop(path *apiutil.Path) netip.Addr {
 }
 
 // RouteSpec builds a RouteSpec for a learned destination and its next-hops.
-func RouteSpec(prefix netip.Prefix, nexthops []network.RouteNextHop, source netip.Addr) network.RouteSpecSpec {
+func RouteSpec(prefix netip.Prefix, nexthops []network.RouteNextHop, source netip.Addr, table nethelpers.RoutingTable) network.RouteSpecSpec {
+	if table == nethelpers.TableUnspec {
+		table = nethelpers.TableMain
+	}
+
 	spec := network.RouteSpecSpec{
 		Family:      addrFamily(prefix.Addr()),
 		Destination: prefix,
-		Table:       nethelpers.TableMain,
+		Table:       table,
 		Protocol:    nethelpers.ProtocolBGP,
 		Type:        nethelpers.TypeUnicast,
 		Scope:       nethelpers.ScopeGlobal,
@@ -181,6 +199,10 @@ func PeerStatus(peer *gobgpapi.Peer, localASN uint32) network.BGPPeerStatusSpec 
 		LocalASN: localASN,
 		PeerASN:  conf.GetPeerAsn(),
 		State:    SessionState(state.GetSessionState()),
+	}
+
+	if conf.GetLocalAsn() != 0 {
+		spec.LocalASN = conf.GetLocalAsn()
 	}
 
 	if spec.PeerASN == 0 {
@@ -239,15 +261,24 @@ func addrFamily(addr netip.Addr) nethelpers.Family {
 }
 
 // ServerKey returns a deterministic representation of server-level configuration.
-func ServerKey(localASN uint32, routerID netip.Addr, multipath bool, maxPaths uint8) string {
-	return fmt.Sprintf("asn=%d;router=%s;multipath=%t;maxpaths=%d;", localASN, routerID, multipath, maxPaths)
+func ServerKey(localASN uint32, routerID netip.Addr, multipath bool, maxPaths uint8, vrf string, table nethelpers.RoutingTable, listenPort int32) string {
+	return fmt.Sprintf("asn=%d;router=%s;multipath=%t;maxpaths=%d;vrf=%s;table=%s;listen=%d;", localASN, routerID, multipath, maxPaths, vrf, table, listenPort)
 }
 
 // PeerKey returns a deterministic representation of a peer's configuration.
 func PeerKey(peer Peer) string {
 	var builder strings.Builder
 
-	fmt.Fprintf(&builder, "%s/%d/%s", peer.Address, peer.Config.PeerASN, peer.Config.HoldTime)
+	fmt.Fprintf(
+		&builder,
+		"%s/%d/%d/%t/%s/%s",
+		peer.Address,
+		peer.Config.PeerASN,
+		peer.Config.LocalASN,
+		peer.Config.Passive,
+		peer.BindInterface,
+		peer.Config.HoldTime,
+	)
 
 	if peer.Config.BFD != nil {
 		fmt.Fprintf(

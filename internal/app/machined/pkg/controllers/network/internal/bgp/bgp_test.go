@@ -25,9 +25,12 @@ func TestBuildPeer(t *testing.T) {
 	t.Parallel()
 
 	peer := internalbgp.BuildPeer(internalbgp.Peer{
-		Address: "fe80::1%eth0",
+		Address:       "fe80::1%eth0",
+		BindInterface: "vrf-blue",
 		Config: network.BGPNeighborConfigSpec{
 			PeerASN:  65002,
+			LocalASN: 65003,
+			Passive:  true,
 			HoldTime: 90 * time.Second,
 			BFD: &network.BGPBFDConfigSpec{
 				TransmitInterval: 300 * time.Millisecond,
@@ -39,6 +42,10 @@ func TestBuildPeer(t *testing.T) {
 
 	assert.Equal(t, "fe80::1%eth0", peer.GetConf().GetNeighborAddress())
 	assert.Equal(t, uint32(65002), peer.GetConf().GetPeerAsn())
+	assert.Equal(t, uint32(65003), peer.GetConf().GetLocalAsn())
+	assert.True(t, peer.GetConf().GetReplacePeerAsn())
+	assert.True(t, peer.GetTransport().GetPassiveMode())
+	assert.Equal(t, "vrf-blue", peer.GetTransport().GetBindInterface())
 	assert.Equal(t, uint64(90), peer.GetTimers().GetConfig().GetHoldTime())
 	assert.Equal(t, uint64(30), peer.GetTimers().GetConfig().GetKeepaliveInterval())
 	assert.Equal(t, uint32(300000), peer.GetBfd().GetDesiredMinimumTxInterval())
@@ -101,6 +108,7 @@ func TestRouteSpec(t *testing.T) {
 		netip.MustParsePrefix("10.0.0.0/24"),
 		[]network.RouteNextHop{{Gateway: netip.MustParseAddr("10.5.0.1")}},
 		netip.MustParseAddr("10.0.0.1"),
+		88,
 	)
 
 	assert.Equal(t, nethelpers.FamilyInet4, single.Family)
@@ -108,17 +116,19 @@ func TestRouteSpec(t *testing.T) {
 	assert.Equal(t, netip.MustParseAddr("10.0.0.1"), single.Source)
 	assert.Empty(t, single.NextHops)
 	assert.Equal(t, nethelpers.ProtocolBGP, single.Protocol)
+	assert.Equal(t, nethelpers.RoutingTable(88), single.Table)
 
 	nexthops := []network.RouteNextHop{
 		{Gateway: netip.MustParseAddr("fe80::1")},
 		{Gateway: netip.MustParseAddr("fe80::2")},
 	}
-	multipath := internalbgp.RouteSpec(netip.MustParsePrefix("2001:db8::/64"), nexthops, netip.MustParseAddr("10.0.0.1"))
+	multipath := internalbgp.RouteSpec(netip.MustParsePrefix("2001:db8::/64"), nexthops, netip.MustParseAddr("10.0.0.1"), nethelpers.TableUnspec)
 
 	assert.Equal(t, nethelpers.FamilyInet6, multipath.Family)
 	assert.True(t, value.IsZero(multipath.Gateway))
 	assert.False(t, multipath.Source.IsValid(), "a cross-family preferred source must be ignored")
 	assert.Equal(t, nexthops, multipath.NextHops)
+	assert.Equal(t, nethelpers.TableMain, multipath.Table)
 }
 
 func TestSessionState(t *testing.T) {
@@ -172,8 +182,8 @@ func TestKeys(t *testing.T) {
 
 	assert.Equal(
 		t,
-		"asn=65001;router=10.0.0.1;multipath=true;maxpaths=8;",
-		internalbgp.ServerKey(65001, netip.MustParseAddr("10.0.0.1"), true, 8),
+		"asn=65001;router=10.0.0.1;multipath=true;maxpaths=8;vrf=vrf-blue;table=88;listen=179;",
+		internalbgp.ServerKey(65001, netip.MustParseAddr("10.0.0.1"), true, 8, "vrf-blue", 88, 179),
 	)
 
 	peer := internalbgp.Peer{

@@ -88,17 +88,19 @@ func TestNew(t *testing.T) {
 	assert.Equal(t, "https://siderolink.api/join?jointoken=REDACTED&user=alice", cfgRedacted.SideroLink().APIUrl().String())
 }
 
-func TestNetworkBGPPeerConfig(t *testing.T) {
+func TestNetworkBGPConfigs(t *testing.T) {
 	t.Parallel()
 
 	cfg, err := container.New()
 	require.NoError(t, err)
-	assert.Nil(t, cfg.NetworkBGPPeerConfig())
+	assert.Empty(t, cfg.NetworkBGPInstanceConfigs())
 
-	bgpPeerCfg := network.NewBGPPeerConfigV1Alpha1()
-	cfg, err = container.New(bgpPeerCfg)
+	instance1 := network.NewBGPInstanceConfigV1Alpha1("fabric")
+	instance2 := network.NewBGPInstanceConfigV1Alpha1("metallb")
+
+	cfg, err = container.New(instance1, instance2)
 	require.NoError(t, err)
-	assert.Same(t, bgpPeerCfg, cfg.NetworkBGPPeerConfig())
+	assert.Equal(t, []config.NetworkBGPInstanceConfig{instance1, instance2}, cfg.NetworkBGPInstanceConfigs())
 }
 
 func TestNewDuplicate(t *testing.T) {

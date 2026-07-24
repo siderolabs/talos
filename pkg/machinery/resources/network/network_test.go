@@ -33,7 +33,7 @@ func TestRegisterResource(t *testing.T) {
 	for _, resource := range []meta.ResourceWithRD{
 		&network.AddressStatus{},
 		&network.AddressSpec{},
-		&network.BGPPeerConfig{},
+		&network.BGPInstanceConfig{},
 		&network.HardwareAddr{},
 		&network.DNSUpstream{},
 		&network.EthernetSpec{},

@@ -197,13 +197,16 @@ func (p *provisioner) createNode(ctx context.Context, state *provision.State, cl
 		// On linux this is later overridden to the interface mac.
 		VMMac: getRandomMacAddress(),
 
-		// dedicated BGP fabric uplinks to the host fabric peer (full-CLOS test); the node index must
-		// match what CreateBGP computes for the bridge names (index within clusterReq.Nodes).
+		// BGP test uplinks: dedicated per-node bridges for full CLOS, or an extra L2-only NIC on the
+		// management bridge for the inbound VRF-listener test. The node index must match CreateBGP.
 		FabricUplinks: buildFabricUplinks(
 			clusterReq.Network.Name,
+			state.BridgeName,
 			slices.IndexFunc(clusterReq.Nodes, func(n provision.NodeRequest) bool { return n.Name == nodeReq.Name }),
 			clusterReq.Network.FabricUplinks,
 			clusterReq.Network.MTU,
+			opts.BGPEnabled,
+			opts.BGPCLOS,
 		),
 
 		// authentic full-CLOS node: no management net0, only the fabric uplinks above.
@@ -443,14 +446,13 @@ func getRandomMacAddress() string {
 	return net.HardwareAddr(buf).String()
 }
 
-// buildFabricUplinks builds the dedicated point-to-point BGP fabric uplinks for a node: each is its own
-// CNI bridge (deterministic name shared with CreateBGP) + tc-redirect-tap, LLA-only (no IPAM).
-func buildFabricUplinks(networkName string, nodeIdx, count, mtu int) []FabricUplink {
-	if count <= 0 || nodeIdx < 0 {
+// buildFabricUplinks builds the additional L2-only NICs used by the BGP integration topologies.
+func buildFabricUplinks(networkName, managementBridge string, nodeIdx, count, mtu int, bgpEnabled, bgpCLOS bool) []FabricUplink {
+	if nodeIdx < 0 {
 		return nil
 	}
 
-	uplinks := make([]FabricUplink, 0, count)
+	uplinks := make([]FabricUplink, 0, count+1)
 
 	for u := range count {
 		bridge := vm.FabricBridgeName(networkName, nodeIdx, u)
@@ -462,11 +464,19 @@ func buildFabricUplinks(networkName string, nodeIdx, count, mtu int) []FabricUpl
 		})
 	}
 
+	if bgpEnabled && !bgpCLOS {
+		uplinks = append(uplinks, FabricUplink{
+			BridgeName:  managementBridge,
+			IfName:      "vethvrf",
+			CNIConfList: fabricCNIConfList(managementBridge, mtu),
+		})
+	}
+
 	return uplinks
 }
 
-// fabricCNIConfList returns a per-uplink CNI conflist: an L2-only bridge (no IPAM, no gateway, no
-// masquerade) plus tc-redirect-tap, so the uplink comes up IPv6-link-local only for unnumbered BGP.
+// fabricCNIConfList returns an L2-only bridge CNI conflist (no IPAM, gateway, or masquerade) plus
+// tc-redirect-tap.
 func fabricCNIConfList(bridge string, mtu int) string {
 	return fmt.Sprintf(
 		`{"name":%q,"cniVersion":"0.4.0","plugins":[`+

@@ -212,9 +212,8 @@ func withNetworkContext(ctx context.Context, config *LaunchConfig, f func(config
 
 	config.Network.ns = ns
 
-	// attach dedicated BGP fabric uplinks (full-CLOS): each on its own per-uplink CNI bridge
-	// (point-to-point) into the same node netns, so the host fabric peer (root ns) is the only
-	// neighbor on the segment.
+	// Attach additional L2-only BGP test NICs. Full-CLOS links use dedicated point-to-point bridges;
+	// the numbered VRF-listener test attaches one extra NIC to the management bridge.
 	for i := range config.FabricUplinks {
 		uplink := &config.FabricUplinks[i]
 

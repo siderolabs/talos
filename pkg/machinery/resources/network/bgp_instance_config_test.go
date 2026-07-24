@@ -17,10 +17,10 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
 
-func TestBGPPeerConfigDeepCopy(t *testing.T) {
+func TestBGPInstanceConfigDeepCopy(t *testing.T) {
 	t.Parallel()
 
-	spec := network.BGPPeerConfigSpec{
+	spec := network.BGPInstanceConfigSpec{
 		AdvertiseLinks: []string{"dummy0"},
 		Neighbors: []network.BGPNeighborConfigSpec{{
 			Link: "eth0",
@@ -38,21 +38,25 @@ func TestBGPPeerConfigDeepCopy(t *testing.T) {
 	assert.Equal(t, time.Second, spec.Neighbors[0].BFD.TransmitInterval)
 }
 
-func TestBGPPeerConfigProtobufRoundTrip(t *testing.T) {
+func TestBGPInstanceConfigProtobufRoundTrip(t *testing.T) {
 	t.Parallel()
 
-	config := network.NewBGPPeerConfig()
-	*config.TypedSpec() = network.BGPPeerConfigSpec{
+	config := network.NewBGPInstanceConfig("fabric")
+	*config.TypedSpec() = network.BGPInstanceConfigSpec{
 		LocalASN:       65001,
 		RouterID:       netip.MustParseAddr("192.0.2.1"),
 		RouteSource:    netip.MustParseAddr("192.0.2.2"),
 		AdvertiseLinks: []string{"dummy0"},
 		Multipath:      true,
 		MaxPaths:       8,
+		VRF:            "vrf-blue",
+		VRFTable:       88,
 		Neighbors: []network.BGPNeighborConfigSpec{
 			{
 				Link:     "eth0",
 				PeerASN:  65002,
+				LocalASN: 65004,
+				Passive:  true,
 				HoldTime: 90 * time.Second,
 				BFD: &network.BGPBFDConfigSpec{
 					TransmitInterval: 300 * time.Millisecond,

@@ -8,6 +8,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"net/netip"
 	"os"
 	"os/exec"
 	"strconv"
@@ -24,9 +25,11 @@ const (
 // chosen so the guest kernel interface names are deterministic.
 const CLOSFabricPCIBase = 0x10
 
+var bgpVRFPeerPrefix = netip.MustParsePrefix("192.0.2.2/30")
+
 // CLOSFabricIfaceName returns the predictable guest kernel interface name for fabric uplink i on a
 // full-CLOS node (no net0), pinned to PCI slot CLOSFabricPCIBase+i. Used for the talos.config link-local
-// zone and the baked BGPPeerConfig neighbor names. NOTE: confirm on the first live boot (machine-type/arch).
+// zone and the baked BGPInstanceConfig neighbor names. NOTE: confirm on the first live boot (machine-type/arch).
 func CLOSFabricIfaceName(i int) string {
 	return fmt.Sprintf("enp0s%d", CLOSFabricPCIBase+i)
 }
@@ -40,6 +43,16 @@ func FabricBridgeName(networkName string, nodeIdx, uplinkIdx int) string {
 	return "bgp" + hex.EncodeToString(h[:])[:11]
 }
 
+// VRFPeerPrefix returns the isolated guest prefix used by the inbound VRF BGP listener test.
+func VRFPeerPrefix() netip.Prefix {
+	return bgpVRFPeerPrefix
+}
+
+// VRFPeerAddress returns the isolated guest address used by the inbound VRF BGP listener test.
+func VRFPeerAddress() netip.Addr {
+	return bgpVRFPeerPrefix.Addr()
+}
+
 // CreateBGP creates an embedded gobgp fabric peer for testing native BGP.
 func (p *Provisioner) CreateBGP(state *provision.State, clusterReq provision.ClusterRequest, options provision.Options) error {
 	pidPath := state.GetRelativePath(bgpPid)
@@ -51,37 +64,10 @@ func (p *Provisioner) CreateBGP(state *provision.State, clusterReq provision.Clu
 
 	defer logFile.Close() //nolint:errcheck
 
-	listenAddr := options.BGPListenAddress
-	if listenAddr == "" && len(clusterReq.Network.GatewayAddrs) > 0 {
-		// unnumbered mode has no configured listen address; use the bridge gateway as the router-id.
-		listenAddr = clusterReq.Network.GatewayAddrs[0].String()
-	}
+	args := bgpLaunchArgs(clusterReq, options)
 
-	args := []string{
-		"bgp-launch",
-		"--bgp-addr", listenAddr,
-		"--bgp-neighbor-range", options.BGPNeighborRange,
-		"--bgp-advertise", options.BGPAdvertise,
-		"--bgp-asn", strconv.FormatUint(uint64(options.BGPLocalASN), 10),
-		"--bgp-peer-asn", strconv.FormatUint(uint64(options.BGPPeerASN), 10),
-	}
-
-	if options.BGPCLOS {
-		// full-CLOS: nodes have no net0, so they are reachable only via BGP. Peer unnumbered over every
-		// node's dedicated fabric uplink(s), program their learned loopback /32s into the host FIB (zebra),
-		// and NAT the loopback CIDR so the nodes reach host services + the internet. The bridge names match
-		// what the node launcher uses.
-		args = append(args, "--bgp-unnumbered", "--bgp-zebra")
-
-		if options.BGPLoopbackCIDR != "" {
-			args = append(args, "--bgp-nat-cidr", options.BGPLoopbackCIDR)
-		}
-
-		for i := range clusterReq.Nodes {
-			for u := range clusterReq.Network.FabricUplinks {
-				args = append(args, "--bgp-interface", FabricBridgeName(clusterReq.Network.Name, i, u))
-			}
-		}
+	if err = prepareBGPVRFPeerRoute(state, clusterReq, options); err != nil {
+		return err
 	}
 
 	cmd := exec.Command(clusterReq.SelfExecutable, args...) //nolint:noctx // runs in background
@@ -98,6 +84,55 @@ func (p *Provisioner) CreateBGP(state *provision.State, clusterReq provision.Clu
 	}
 
 	return nil
+}
+
+func bgpLaunchArgs(clusterReq provision.ClusterRequest, options provision.Options) []string {
+	listenAddr := options.BGPListenAddress
+	if listenAddr == "" && len(clusterReq.Network.GatewayAddrs) > 0 {
+		// unnumbered mode has no configured listen address; use the bridge gateway as the router-id.
+		listenAddr = clusterReq.Network.GatewayAddrs[0].String()
+	}
+
+	args := []string{
+		"bgp-launch",
+		"--bgp-addr", listenAddr,
+		"--bgp-neighbor-range", options.BGPNeighborRange,
+		"--bgp-advertise", options.BGPAdvertise,
+		"--bgp-asn", strconv.FormatUint(uint64(options.BGPLocalASN), 10),
+		"--bgp-peer-asn", strconv.FormatUint(uint64(options.BGPPeerASN), 10),
+	}
+
+	if !options.BGPCLOS {
+		return append(args, "--bgp-vrf-neighbor", VRFPeerAddress().String())
+	}
+
+	// Full CLOS: nodes have no net0, so they are reachable only via BGP. Peer unnumbered over every
+	// node fabric uplink, program learned loopbacks into the host FIB, and NAT the loopback CIDR.
+	args = append(args, "--bgp-unnumbered", "--bgp-zebra")
+
+	if options.BGPLoopbackCIDR != "" {
+		args = append(args, "--bgp-nat-cidr", options.BGPLoopbackCIDR)
+	}
+
+	for i := range clusterReq.Nodes {
+		for u := range clusterReq.Network.FabricUplinks {
+			args = append(args, "--bgp-interface", FabricBridgeName(clusterReq.Network.Name, i, u))
+		}
+	}
+
+	return args
+}
+
+func prepareBGPVRFPeerRoute(state *provision.State, clusterReq provision.ClusterRequest, options provision.Options) error {
+	if options.BGPCLOS {
+		return nil
+	}
+
+	if len(clusterReq.Network.GatewayAddrs) == 0 {
+		return fmt.Errorf("BGP VRF peer route requires a bridge gateway address")
+	}
+
+	return configureBGPVRFPeerRoute(state.BridgeName, VRFPeerAddress(), clusterReq.Network.GatewayAddrs[0])
 }
 
 // DestroyBGP destroys the embedded gobgp fabric peer.
