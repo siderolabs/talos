@@ -264,6 +264,34 @@ func (suite *ResolverConfigSuite) TestMachineConfigurationNewStyle() {
 	ctest.AssertNoResource[*network.ResolverSpec](suite, "configuration/resolvers", rtestutils.WithNamespace(network.ConfigNamespaceName))
 }
 
+func (suite *ResolverConfigSuite) TestMachineConfigurationEmptySearchDomains() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.ResolverConfigController{}))
+
+	rc := networkcfg.NewResolverConfigV1Alpha1()
+	// explicit empty search domains (domains: []): no nameservers, override to clear
+	rc.ResolverSearchDomains = networkcfg.SearchDomainsConfig{
+		SearchDomains: []string{},
+	}
+
+	ctr, err := container.New(rc)
+	suite.Require().NoError(err)
+
+	cfg := config.NewMachineConfig(ctr)
+	suite.Create(cfg)
+
+	ctest.AssertResources(
+		suite,
+		[]string{
+			"configuration/resolvers",
+		}, func(r *network.ResolverSpec, asrt *assert.Assertions) {
+			asrt.True(r.TypedSpec().SearchDomainsOverridden)
+			asrt.Empty(r.TypedSpec().NameServers)
+			asrt.Empty(r.TypedSpec().SearchDomains)
+		},
+		rtestutils.WithNamespace(network.ConfigNamespaceName),
+	)
+}
+
 func (suite *ResolverConfigSuite) TestMachineConfigurationDNSOverTLS() {
 	suite.Require().NoError(suite.Runtime().RegisterController(&netctrl.ResolverConfigController{}))
 

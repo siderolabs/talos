@@ -190,6 +190,89 @@ func (suite *ResolverMergeSuite) TestMergeSearchDomainsOnlyConfig() {
 	)
 }
 
+func (suite *ResolverMergeSuite) TestMergeOverrideSearchDomains() {
+	def := network.NewResolverSpec(network.ConfigNamespaceName, "default/resolvers")
+	*def.TypedSpec() = network.ResolverSpecSpec{
+		NameServers: []network.NameServerSpec{
+			{Addr: netip.MustParseAddr(constants.DefaultPrimaryResolver)},
+			{Addr: netip.MustParseAddr(constants.DefaultSecondaryResolver)},
+		},
+		SearchDomains: []string{"fqdn.example"},
+		ConfigLayer:   network.ConfigDefault,
+	}
+
+	dhcp := network.NewResolverSpec(network.ConfigNamespaceName, "dhcp/eth0")
+	*dhcp.TypedSpec() = network.ResolverSpecSpec{
+		NameServers: []network.NameServerSpec{
+			{Addr: netip.MustParseAddr("192.168.131.1")},
+		},
+		SearchDomains: []string{"somewhere.com", "home.lab"},
+		ConfigLayer:   network.ConfigOperator,
+	}
+
+	cfg := network.NewResolverSpec(network.ConfigNamespaceName, "configuration/resolvers")
+	*cfg.TypedSpec() = network.ResolverSpecSpec{
+		SearchDomains:           []string{"another.lab"},
+		SearchDomainsOverridden: true,
+		ConfigLayer:             network.ConfigMachineConfiguration,
+	}
+
+	for _, res := range []resource.Resource{def, dhcp, cfg} {
+		suite.Create(res)
+	}
+
+	suite.assertResolvers(
+		[]string{
+			"resolvers",
+		}, func(r *network.ResolverSpec, asrt *assert.Assertions) {
+			// DHCP nameservers preserved; machine config search domains override all previous layers
+			asrt.Equal([]network.NameServerSpec{{Addr: netip.MustParseAddr("192.168.131.1")}}, r.TypedSpec().NameServers)
+			asrt.Equal(network.ConfigMachineConfiguration, r.TypedSpec().ConfigLayer)
+			asrt.Equal([]string{"another.lab"}, r.TypedSpec().SearchDomains)
+		},
+	)
+}
+
+func (suite *ResolverMergeSuite) TestMergeClearSearchDomains() {
+	def := network.NewResolverSpec(network.ConfigNamespaceName, "default/resolvers")
+	*def.TypedSpec() = network.ResolverSpecSpec{
+		NameServers: []network.NameServerSpec{
+			{Addr: netip.MustParseAddr(constants.DefaultPrimaryResolver)},
+		},
+		SearchDomains: []string{"fqdn.example"},
+		ConfigLayer:   network.ConfigDefault,
+	}
+
+	dhcp := network.NewResolverSpec(network.ConfigNamespaceName, "dhcp/eth0")
+	*dhcp.TypedSpec() = network.ResolverSpecSpec{
+		NameServers: []network.NameServerSpec{
+			{Addr: netip.MustParseAddr("192.168.131.1")},
+		},
+		SearchDomains: []string{"somewhere.com", "home.lab"},
+		ConfigLayer:   network.ConfigOperator,
+	}
+
+	// empty override clears all search domains obtained from DHCP/platform/default
+	cfg := network.NewResolverSpec(network.ConfigNamespaceName, "configuration/resolvers")
+	*cfg.TypedSpec() = network.ResolverSpecSpec{
+		SearchDomains:           []string{},
+		SearchDomainsOverridden: true,
+		ConfigLayer:             network.ConfigMachineConfiguration,
+	}
+
+	for _, res := range []resource.Resource{def, dhcp, cfg} {
+		suite.Create(res)
+	}
+
+	suite.assertResolvers(
+		[]string{
+			"resolvers",
+		}, func(r *network.ResolverSpec, asrt *assert.Assertions) {
+			asrt.Empty(r.TypedSpec().SearchDomains)
+		},
+	)
+}
+
 func (suite *ResolverMergeSuite) TestMergeIPv6OnlyConfig() {
 	def := network.NewResolverSpec(network.ConfigNamespaceName, "default/resolvers")
 	*def.TypedSpec() = network.ResolverSpecSpec{

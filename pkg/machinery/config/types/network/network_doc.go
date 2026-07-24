@@ -1792,7 +1792,7 @@ func (SearchDomainsConfig) Doc() *encoder.Doc {
 				Name:        "domains",
 				Type:        "[]string",
 				Note:        "",
-				Description: "A list of search domains to be used for DNS resolution.\n\nSearch domains are appended to unqualified domain names during DNS resolution.\nFor example, if \"example.com\" is a search domain and a user tries to resolve\n\"host\", the system will attempt to resolve \"host.example.com\".\n\nThis overrides any search domains obtained via DHCP or platform configuration.\nThe default configuration derives the search domain from the hostname FQDN.",
+				Description: "A list of search domains to be used for DNS resolution.\n\nSearch domains are appended to unqualified domain names during DNS resolution.\nFor example, if \"example.com\" is a search domain and a user tries to resolve\n\"host\", the system will attempt to resolve \"host.example.com\".\n\nIf set, this overrides any search domains obtained via DHCP or platform configuration.\nAn empty list (`domains: []`) clears search domains obtained from DHCP or platform,\nwhile leaving this field unset inherits them.\nThe default configuration derives the search domain from the hostname FQDN.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "A list of search domains to be used for DNS resolution." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{

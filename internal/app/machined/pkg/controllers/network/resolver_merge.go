@@ -37,27 +37,30 @@ func NewResolverMergeController() controller.Controller {
 			for res := range list.All() {
 				spec := res.TypedSpec()
 
-				domainPos := 0
-
-				for _, domain := range spec.SearchDomains {
-					if !slices.Contains(final.SearchDomains, domain) {
-						final.SearchDomains = slices.Insert(final.SearchDomains, domainPos, domain)
-						domainPos++
-					}
-				}
-
 				switch spec.ConfigLayer { //nolint:exhaustive
 				case final.ConfigLayer:
 					// simply append server lists on the same layer
 					final.NameServers = append(final.NameServers, spec.NameServers...)
+
+					final.SearchDomains = mergeSearchDomains(final.SearchDomains, spec.SearchDomains)
 				case network.ConfigMachineConfiguration:
 					// machine configuration overrides previous layers, but only when DNS servers are set
 					if len(spec.NameServers) > 0 {
 						final.NameServers = slices.Clone(spec.NameServers)
 					}
+
+					// machine configuration search domains, when explicitly set, override those from
+					// previous layers; an empty override clears DHCP/platform search domains
+					if spec.SearchDomainsOverridden {
+						final.SearchDomains = slices.Clone(spec.SearchDomains)
+					} else {
+						final.SearchDomains = mergeSearchDomains(final.SearchDomains, spec.SearchDomains)
+					}
 				default:
 					// otherwise, do a smart merge across IPv4/IPv6
 					mergeNameServers(&final.NameServers, spec.NameServers)
+
+					final.SearchDomains = mergeSearchDomains(final.SearchDomains, spec.SearchDomains)
 				}
 
 				final.ConfigLayer = spec.ConfigLayer
@@ -74,6 +77,30 @@ func NewResolverMergeController() controller.Controller {
 			return nil
 		},
 	)
+}
+
+// mergeSearchDomains unions search domains from src into dst, preserving dst order and dropping duplicates.
+//
+// New unique domains from src are prepended (in src order); domains already present in dst keep their
+// relative position.
+func mergeSearchDomains(dst, src []string) []string {
+	if len(src) == 0 {
+		return dst
+	}
+
+	merged := slices.Clone(dst)
+	insertPos := 0
+
+	for _, domain := range src {
+		if slices.Contains(merged, domain) {
+			continue
+		}
+
+		merged = slices.Insert(merged, insertPos, domain)
+		insertPos++
+	}
+
+	return merged
 }
 
 func mergeNameServers(dst *[]network.NameServerSpec, src []network.NameServerSpec) {

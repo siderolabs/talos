@@ -364,7 +364,14 @@ func TestResolverBridging(t *testing.T) {
 					Protocol: nethelpers.DNSProtocolDefault,
 				}
 			}), resolverConfig.Resolvers())
-			assert.Equal(t, test.expectedSearchDomains, resolverConfig.SearchDomains())
+
+			searchDomains := resolverConfig.SearchDomains()
+			if test.expectedSearchDomains == nil {
+				assert.False(t, searchDomains.IsPresent())
+			} else {
+				assert.Equal(t, test.expectedSearchDomains, searchDomains.ValueOrZero())
+			}
+
 			assert.Equal(t, test.expectedDisableSearch, resolverConfig.DisableSearchDomain())
 		})
 	}

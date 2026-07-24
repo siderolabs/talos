@@ -6,7 +6,9 @@ package v1alpha1
 
 import (
 	"net/netip"
+	"slices"
 
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/go-pointer"
 
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
@@ -68,12 +70,12 @@ func (c *Config) Resolvers() []config.NetworkResolver {
 }
 
 // SearchDomains implements config.NetworkResolverConfig interface.
-func (c *Config) SearchDomains() []string {
-	if c.MachineConfig == nil || c.MachineConfig.MachineNetwork == nil {
-		return nil
+func (c *Config) SearchDomains() optional.Optional[[]string] {
+	if c.MachineConfig == nil || c.MachineConfig.MachineNetwork == nil || c.MachineConfig.MachineNetwork.Searches == nil {
+		return optional.None[[]string]()
 	}
 
-	return c.MachineConfig.MachineNetwork.Searches
+	return optional.Some(slices.Clone(c.MachineConfig.MachineNetwork.Searches))
 }
 
 // DisableSearchDomain implements config.NetworkResolverConfig interface.

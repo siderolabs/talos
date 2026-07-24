@@ -12,6 +12,7 @@ import (
 	"net/netip"
 	"slices"
 
+	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/value"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-pointer"
@@ -135,7 +136,9 @@ type SearchDomainsConfig struct {
 	//     For example, if "example.com" is a search domain and a user tries to resolve
 	//     "host", the system will attempt to resolve "host.example.com".
 	//
-	//     This overrides any search domains obtained via DHCP or platform configuration.
+	//     If set, this overrides any search domains obtained via DHCP or platform configuration.
+	//     An empty list (`domains: []`) clears search domains obtained from DHCP or platform,
+	//     while leaving this field unset inherits them.
 	//     The default configuration derives the search domain from the hostname FQDN.
 	SearchDomains []string `yaml:"domains,omitempty"`
 	//   description: |
@@ -258,7 +261,7 @@ func (s *ResolverConfigV1Alpha1) Clone() config.Document {
 
 // V1Alpha1ConflictValidate implements container.V1Alpha1ConflictValidator interface.
 func (s *ResolverConfigV1Alpha1) V1Alpha1ConflictValidate(v1alpha1Cfg *v1alpha1.Config) error {
-	if v1alpha1Cfg.SearchDomains() != nil {
+	if v1alpha1Cfg.SearchDomains().IsPresent() {
 		return errors.New(".machine.network.searchDomains is already set in v1alpha1 config")
 	}
 
@@ -355,8 +358,12 @@ func (s *ResolverConfigV1Alpha1) Resolvers() []config.NetworkResolver {
 }
 
 // SearchDomains implements NetworkResolverConfig interface.
-func (s *ResolverConfigV1Alpha1) SearchDomains() []string {
-	return slices.Clone(s.ResolverSearchDomains.SearchDomains)
+func (s *ResolverConfigV1Alpha1) SearchDomains() optional.Optional[[]string] {
+	if s.ResolverSearchDomains.SearchDomains == nil {
+		return optional.None[[]string]()
+	}
+
+	return optional.Some(slices.Clone(s.ResolverSearchDomains.SearchDomains))
 }
 
 // DisableSearchDomain implements NetworkResolverConfig interface.

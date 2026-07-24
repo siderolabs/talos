@@ -10570,6 +10570,7 @@ ResolverSpecSpec describes DNS resolvers.
 | config_layer | [talos.resource.definitions.enums.NetworkConfigLayer](#talos.resource.definitions.enums.NetworkConfigLayer) |  |  |
 | search_domains | [string](#string) | repeated |  |
 | name_servers | [NameServerSpec](#talos.resource.definitions.network.NameServerSpec) | repeated | NameServers is a list of DNS servers with additional configuration. |
+| search_domains_overridden | [bool](#bool) |  | SearchDomainsOverridden indicates that SearchDomains was explicitly set on the machine configuration layer and must override (rather than merge with) search domains from previous layers. This is a separate field because protobuf cannot distinguish an empty slice from an unset one, and an empty override is used to clear DHCP/platform search domains. |
 
 
 

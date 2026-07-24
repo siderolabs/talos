@@ -123,7 +123,11 @@ type NetworkResolver struct {
 // NetworkResolverConfig defines a resolver configuration.
 type NetworkResolverConfig interface {
 	Resolvers() []NetworkResolver
-	SearchDomains() []string
+	// SearchDomains returns the configured search domains.
+	//
+	// An absent value means search domains are not configured (inherit from other layers);
+	// a present (possibly empty) value overrides search domains from DHCP or platform.
+	SearchDomains() optional.Optional[[]string]
 	DisableSearchDomain() bool
 }
 

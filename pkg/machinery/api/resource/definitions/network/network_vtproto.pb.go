@@ -4292,6 +4292,16 @@ func (m *ResolverSpecSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.SearchDomainsOverridden {
+		i--
+		if m.SearchDomainsOverridden {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x28
+	}
 	if len(m.NameServers) > 0 {
 		for iNdEx := len(m.NameServers) - 1; iNdEx >= 0; iNdEx-- {
 			size, err := m.NameServers[iNdEx].MarshalToSizedBufferVT(dAtA[:i])
@@ -7643,6 +7653,9 @@ func (m *ResolverSpecSpec) SizeVT() (n int) {
 			l = e.SizeVT()
 			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 		}
+	}
+	if m.SearchDomainsOverridden {
+		n += 2
 	}
 	n += len(m.unknownFields)
 	return n
@@ -18972,6 +18985,26 @@ func (m *ResolverSpecSpec) UnmarshalVT(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SearchDomainsOverridden", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.SearchDomainsOverridden = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

@@ -594,6 +594,11 @@ message ResolverSpecSpec {
   repeated string search_domains = 3;
   // NameServers is a list of DNS servers with additional configuration.
   repeated NameServerSpec name_servers = 4;
+  // SearchDomainsOverridden indicates that SearchDomains was explicitly set on the machine
+  // configuration layer and must override (rather than merge with) search domains from previous
+  // layers. This is a separate field because protobuf cannot distinguish an empty slice from an
+  // unset one, and an empty override is used to clear DHCP/platform search domains.
+  bool search_domains_overridden = 5;
 }
 
 // ResolverStatusSpec describes DNS resolvers.

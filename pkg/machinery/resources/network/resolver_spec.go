@@ -62,6 +62,11 @@ type ResolverSpecSpec struct {
 	NameServers   []NameServerSpec `yaml:"nameServers,omitempty" protobuf:"4"`
 	ConfigLayer   ConfigLayer      `yaml:"layer" protobuf:"2"`
 	SearchDomains []string         `yaml:"searchDomains,omitempty" protobuf:"3"`
+	// SearchDomainsOverridden indicates that SearchDomains was explicitly set on the machine
+	// configuration layer and must override (rather than merge with) search domains from previous
+	// layers. This is a separate field because protobuf cannot distinguish an empty slice from an
+	// unset one, and an empty override is used to clear DHCP/platform search domains.
+	SearchDomainsOverridden bool `yaml:"searchDomainsOverridden,omitempty" protobuf:"5"`
 }
 
 // NewResolverSpec initializes a ResolverSpec resource.
