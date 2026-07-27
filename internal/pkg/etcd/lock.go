@@ -7,7 +7,6 @@ package etcd
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"go.etcd.io/etcd/client/v3/concurrency"
 	"go.uber.org/zap"
@@ -27,7 +26,31 @@ func WithLock(ctx context.Context, key string, logger *zap.Logger, f func() erro
 		return fmt.Errorf("error creating etcd session: %w", err)
 	}
 
-	defer session.Close() //nolint:errcheck
+	// Revoke the session lease to release the lock, instead of dropping the mutex key with
+	// `Mutex.Unlock`.
+	//
+	// `Mutex.Unlock` is a no-op unless the client-side bookkeeping says the key was written, and
+	// that bookkeeping is unreliable exactly when it matters: `Mutex.tryAcquire` assigns the
+	// revision only after its transaction returns, so a transaction which is applied by etcd but
+	// whose response never reaches a canceled client leaves the key in place while `Unlock`
+	// reports `ErrLockReleased` and deletes nothing. The mutex is a FIFO queue ordered by create
+	// revision, so such a key blocks every other waiter until its lease expires (60s).
+	//
+	// The lease is what the key hangs off, so revoking it drops the key whatever the client
+	// believes, and it is a single round-trip for the common path too.
+	defer func() {
+		logger.Debug("releasing mutex", zap.String("key", key))
+
+		if err := etcdClient.RevokeSession(ctx, session); err != nil {
+			level := zap.ErrorLevel
+			if ctx.Err() != nil {
+				// etcd is expected to be unreachable while the machine is shutting down
+				level = zap.DebugLevel
+			}
+
+			logger.Log(level, "error releasing mutex", zap.String("key", key), zap.Error(err))
+		}
+	}()
 
 	mutex := concurrency.NewMutex(session, key)
 
@@ -38,17 +61,6 @@ func WithLock(ctx context.Context, key string, logger *zap.Logger, f func() erro
 	}
 
 	logger.Debug("mutex acquired", zap.String("key", key))
-
-	defer func() {
-		logger.Debug("releasing mutex", zap.String("key", key))
-
-		unlockCtx, unlockCancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer unlockCancel()
-
-		if err = mutex.Unlock(unlockCtx); err != nil {
-			logger.Error("error releasing mutex", zap.String("key", key), zap.Error(err))
-		}
-	}()
 
 	return f()
 }
