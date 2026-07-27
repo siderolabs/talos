@@ -16,7 +16,7 @@ import (
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/go-pointer"
 	"google.golang.org/grpc/codes"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/siderolabs/talos/pkg/cluster"
@@ -49,14 +49,14 @@ func K8sAllNodesReportedAssertion(ctx context.Context, cl ClusterInfo) error {
 
 		for _, nodeAddress := range node.Status.Addresses {
 			switch nodeAddress.Type { //nolint:exhaustive
-			case v1.NodeInternalIP:
+			case corev1.NodeInternalIP:
 				internalIP, err = netip.ParseAddr(nodeAddress.Address)
 				if err != nil {
 					return err
 				}
 
 				ips = append(ips, internalIP)
-			case v1.NodeExternalIP:
+			case corev1.NodeExternalIP:
 				externalIP, err := netip.ParseAddr(nodeAddress.Address)
 				if err != nil {
 					return err
@@ -104,14 +104,14 @@ func K8sFullControlPlaneAssertion(ctx context.Context, cl ClusterInfo) error {
 
 				for _, nodeAddress := range node.Status.Addresses {
 					switch nodeAddress.Type { //nolint:exhaustive
-					case v1.NodeInternalIP:
+					case corev1.NodeInternalIP:
 						internalIP, err = netip.ParseAddr(nodeAddress.Address)
 						if err != nil {
 							return err
 						}
 
 						ips = append(ips, internalIP)
-					case v1.NodeExternalIP:
+					case corev1.NodeExternalIP:
 						externalIP, err2 := netip.ParseAddr(nodeAddress.Address)
 						if err2 != nil {
 							return err2
@@ -194,8 +194,8 @@ func K8sFullControlPlaneAssertion(ctx context.Context, cl ClusterInfo) error {
 
 		for _, pod := range pods.Items {
 			for _, cond := range pod.Status.Conditions {
-				if cond.Type == v1.PodReady {
-					if cond.Status != v1.ConditionTrue {
+				if cond.Type == corev1.PodReady {
+					if cond.Status != corev1.ConditionTrue {
 						notReadyPods = append(notReadyPods, pod.Name)
 
 						break
@@ -228,8 +228,8 @@ func K8sAllNodesReadyAssertion(ctx context.Context, cluster cluster.K8sProvider)
 
 	for _, node := range nodes.Items {
 		for _, cond := range node.Status.Conditions {
-			if cond.Type == v1.NodeReady {
-				if cond.Status != v1.ConditionTrue {
+			if cond.Type == corev1.NodeReady {
+				if cond.Status != corev1.ConditionTrue {
 					notReadyNodes = append(notReadyNodes, node.Name)
 
 					break
@@ -303,7 +303,7 @@ func K8sPodReadyAssertion(ctx context.Context, cluster cluster.K8sProvider, repl
 		}
 
 		// skip failed pods
-		if pod.Status.Phase == v1.PodFailed {
+		if pod.Status.Phase == corev1.PodFailed {
 			continue
 		}
 
@@ -327,8 +327,8 @@ func K8sPodReadyAssertion(ctx context.Context, cluster cluster.K8sProvider, repl
 		ready := false
 
 		for _, cond := range pod.Status.Conditions {
-			if cond.Type == v1.PodReady {
-				if cond.Status == v1.ConditionTrue {
+			if cond.Type == corev1.PodReady {
+				if cond.Status == corev1.ConditionTrue {
 					ready = true
 
 					break

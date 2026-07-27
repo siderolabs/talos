@@ -12,7 +12,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 
@@ -22,11 +22,11 @@ import (
 // CoreDNSService returns the CoreDNS service object.
 func CoreDNSService(spec *k8s.BootstrapManifestsConfigSpec) runtime.Object {
 	obj := &corev1.Service{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "Service",
 			APIVersion: corev1.SchemeGroupVersion.Version,
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      "kube-dns",
 			Namespace: "kube-system",
 			Annotations: map[string]string{
@@ -89,11 +89,11 @@ func CoreDNSService(spec *k8s.BootstrapManifestsConfigSpec) runtime.Object {
 // CoreDNSServiceAccount returns the CoreDNS service account object.
 func CoreDNSServiceAccount() runtime.Object {
 	return &corev1.ServiceAccount{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "ServiceAccount",
 			APIVersion: corev1.SchemeGroupVersion.Version,
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      "coredns",
 			Namespace: "kube-system",
 		},
@@ -103,11 +103,11 @@ func CoreDNSServiceAccount() runtime.Object {
 // CoreDNSClusterRoleBinding returns the CoreDNS ClusterRoleBinding object.
 func CoreDNSClusterRoleBinding() runtime.Object {
 	return &rbacv1.ClusterRoleBinding{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "ClusterRoleBinding",
 			APIVersion: rbacv1.SchemeGroupVersion.String(),
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: "system:coredns",
 			Labels: map[string]string{
 				"kubernetes.io/bootstrapping": "rbac-defaults",
@@ -134,11 +134,11 @@ func CoreDNSClusterRoleBinding() runtime.Object {
 // CoreDNSClusterRole returns the CoreDNS ClusterRole object.
 func CoreDNSClusterRole() runtime.Object {
 	return &rbacv1.ClusterRole{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "ClusterRole",
 			APIVersion: rbacv1.SchemeGroupVersion.String(),
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: "system:coredns",
 			Labels: map[string]string{
 				"kubernetes.io/bootstrapping": "rbac-defaults",
@@ -199,11 +199,11 @@ func CoreDNSConfigMap(spec *k8s.BootstrapManifestsConfigSpec) runtime.Object {
 `
 
 	return &corev1.ConfigMap{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "ConfigMap",
 			APIVersion: corev1.SchemeGroupVersion.Version,
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      "coredns",
 			Namespace: "kube-system",
 		},
@@ -216,11 +216,11 @@ func CoreDNSConfigMap(spec *k8s.BootstrapManifestsConfigSpec) runtime.Object {
 // CoreDNSDeployment returns the CoreDNS Deployment object.
 func CoreDNSDeployment(spec *k8s.BootstrapManifestsConfigSpec) runtime.Object {
 	return &appsv1.Deployment{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "Deployment",
 			APIVersion: appsv1.SchemeGroupVersion.String(),
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      "coredns",
 			Namespace: "kube-system",
 			Labels: map[string]string{
@@ -236,13 +236,13 @@ func CoreDNSDeployment(spec *k8s.BootstrapManifestsConfigSpec) runtime.Object {
 					MaxUnavailable: new(intstr.FromInt(1)),
 				},
 			},
-			Selector: &v1.LabelSelector{
+			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"k8s-app": "kube-dns",
 				},
 			},
 			Template: corev1.PodTemplateSpec{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
 						"k8s-app": "kube-dns",
 					},
@@ -252,16 +252,17 @@ func CoreDNSDeployment(spec *k8s.BootstrapManifestsConfigSpec) runtime.Object {
 						"kubernetes.io/os": "linux",
 					},
 					Affinity: &corev1.Affinity{
+						NodeAffinity: nodeAffinity,
 						PodAntiAffinity: &corev1.PodAntiAffinity{
 							PreferredDuringSchedulingIgnoredDuringExecution: []corev1.WeightedPodAffinityTerm{
 								{
 									Weight: 100,
 									PodAffinityTerm: corev1.PodAffinityTerm{
-										LabelSelector: &v1.LabelSelector{
-											MatchExpressions: []v1.LabelSelectorRequirement{
+										LabelSelector: &metav1.LabelSelector{
+											MatchExpressions: []metav1.LabelSelectorRequirement{
 												{
 													Key:      "k8s-app",
-													Operator: v1.LabelSelectorOpIn,
+													Operator: metav1.LabelSelectorOpIn,
 													Values:   []string{"kube-dns"},
 												},
 											},

@@ -20,7 +20,7 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-retry/retry"
 	"go.uber.org/zap"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
@@ -261,7 +261,7 @@ func (ctrl *NodeApplyController) sync(
 	})
 }
 
-func umarshalOwnedAnnotation(node *v1.Node, annotation string) (map[string]struct{}, error) {
+func umarshalOwnedAnnotation(node *corev1.Node, annotation string) (map[string]struct{}, error) {
 	ownedJSON := []byte(node.Annotations[annotation])
 
 	var owned []string
@@ -280,7 +280,7 @@ func umarshalOwnedAnnotation(node *v1.Node, annotation string) (map[string]struc
 	return ownedMap, nil
 }
 
-func marshalOwnedAnnotation(node *v1.Node, annotation string, ownedMap map[string]struct{}) error {
+func marshalOwnedAnnotation(node *corev1.Node, annotation string, ownedMap map[string]struct{}) error {
 	owned := maps.Keys(ownedMap)
 	slices.Sort(owned)
 
@@ -394,14 +394,14 @@ func (ctrl *NodeApplyController) applyNodeKV(logger *zap.Logger, nodeKV map[stri
 // ApplyLabels performs the inner loop of the node label reconciliation.
 //
 // This method is exported for testing purposes.
-func (ctrl *NodeApplyController) ApplyLabels(logger *zap.Logger, node *v1.Node, ownedLabels map[string]struct{}, nodeLabelSpecs map[string]string) {
+func (ctrl *NodeApplyController) ApplyLabels(logger *zap.Logger, node *corev1.Node, ownedLabels map[string]struct{}, nodeLabelSpecs map[string]string) {
 	ctrl.applyNodeKV(logger, node.Labels, ownedLabels, nodeLabelSpecs)
 }
 
 // ApplyAnnotations performs the inner loop of the node annotation reconciliation.
 //
 // This method is exported for testing purposes.
-func (ctrl *NodeApplyController) ApplyAnnotations(logger *zap.Logger, node *v1.Node, ownedAnnotations map[string]struct{}, nodeAnnotationSpecs map[string]string) {
+func (ctrl *NodeApplyController) ApplyAnnotations(logger *zap.Logger, node *corev1.Node, ownedAnnotations map[string]struct{}, nodeAnnotationSpecs map[string]string) {
 	ctrl.applyNodeKV(logger, node.Annotations, ownedAnnotations, nodeAnnotationSpecs)
 }
 
@@ -410,10 +410,10 @@ func (ctrl *NodeApplyController) ApplyAnnotations(logger *zap.Logger, node *v1.N
 // This method is exported for testing purposes.
 //
 //nolint:gocyclo
-func (ctrl *NodeApplyController) ApplyTaints(logger *zap.Logger, node *v1.Node, ownedTaints map[string]struct{}, nodeTaints []k8s.NodeTaintSpecSpec) {
+func (ctrl *NodeApplyController) ApplyTaints(logger *zap.Logger, node *corev1.Node, ownedTaints map[string]struct{}, nodeTaints []k8s.NodeTaintSpecSpec) {
 	// set taints from the spec
 	for _, taint := range nodeTaints {
-		var currentValue *v1.Taint
+		var currentValue *corev1.Taint
 
 		for i, nodeTaint := range node.Spec.Taints {
 			if nodeTaint.Key == taint.Key {
@@ -423,10 +423,10 @@ func (ctrl *NodeApplyController) ApplyTaints(logger *zap.Logger, node *v1.Node, 
 
 		if currentValue == nil {
 			// taint is not set on the node yet, so take it over
-			node.Spec.Taints = append(node.Spec.Taints, v1.Taint{
+			node.Spec.Taints = append(node.Spec.Taints, corev1.Taint{
 				Key:    taint.Key,
 				Value:  taint.Value,
-				Effect: v1.TaintEffect(taint.Effect),
+				Effect: corev1.TaintEffect(taint.Effect),
 			})
 			ownedTaints[taint.Key] = struct{}{}
 		} else {
@@ -434,8 +434,8 @@ func (ctrl *NodeApplyController) ApplyTaints(logger *zap.Logger, node *v1.Node, 
 			if _, owned := ownedTaints[taint.Key]; owned {
 				// taint is owned, so update it
 				currentValue.Value = taint.Value
-				currentValue.Effect = v1.TaintEffect(taint.Effect)
-			} else if currentValue.Value == taint.Value && currentValue.Effect == v1.TaintEffect(taint.Effect) {
+				currentValue.Effect = corev1.TaintEffect(taint.Effect)
+			} else if currentValue.Value == taint.Value && currentValue.Effect == corev1.TaintEffect(taint.Effect) {
 				// no change to the taint, skip it, but mark it as owned
 				ownedTaints[taint.Key] = struct{}{}
 			} else {
@@ -446,7 +446,7 @@ func (ctrl *NodeApplyController) ApplyTaints(logger *zap.Logger, node *v1.Node, 
 
 	// remove taints which are owned but are not in the spec
 	node.Spec.Taints = xslices.FilterInPlace(node.Spec.Taints,
-		func(nodeTaint v1.Taint) bool {
+		func(nodeTaint corev1.Taint) bool {
 			if _, owned := ownedTaints[nodeTaint.Key]; !owned {
 				return true
 			}
@@ -466,7 +466,7 @@ func (ctrl *NodeApplyController) ApplyTaints(logger *zap.Logger, node *v1.Node, 
 // ApplyCordoned marks the node as unschedulable if it is cordoned.
 //
 // This method is exported for testing purposes.
-func (ctrl *NodeApplyController) ApplyCordoned(logger *zap.Logger, node *v1.Node, shouldCordon bool) {
+func (ctrl *NodeApplyController) ApplyCordoned(logger *zap.Logger, node *corev1.Node, shouldCordon bool) {
 	switch {
 	case shouldCordon && !node.Spec.Unschedulable:
 		node.Spec.Unschedulable = true

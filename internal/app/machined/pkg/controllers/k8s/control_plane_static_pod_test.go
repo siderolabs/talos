@@ -13,7 +13,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	apiresource "k8s.io/apimachinery/pkg/api/resource"
 
 	k8sadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/k8s"
@@ -119,45 +119,45 @@ func (suite *ControlPlaneStaticPodSuite) TestReconcileStaticPodResources() {
 
 	tests := []struct {
 		resources   k8s.Resources
-		expected    v1.ResourceRequirements
-		expectedEnv v1.EnvVar
+		expected    corev1.ResourceRequirements
+		expectedEnv corev1.EnvVar
 	}{
 		{
 			resources: k8s.Resources{
 				Requests: map[string]string{
-					string(v1.ResourceCPU):    "100m",
-					string(v1.ResourceMemory): "256Mi",
+					string(corev1.ResourceCPU):    "100m",
+					string(corev1.ResourceMemory): "256Mi",
 				},
 			},
-			expected: v1.ResourceRequirements{
-				Requests: map[v1.ResourceName]apiresource.Quantity{
-					v1.ResourceCPU:    apiresource.MustParse("100m"),
-					v1.ResourceMemory: apiresource.MustParse("256Mi"),
+			expected: corev1.ResourceRequirements{
+				Requests: map[corev1.ResourceName]apiresource.Quantity{
+					corev1.ResourceCPU:    apiresource.MustParse("100m"),
+					corev1.ResourceMemory: apiresource.MustParse("256Mi"),
 				},
 			},
 		},
 		{
 			resources: k8s.Resources{
 				Requests: map[string]string{
-					string(v1.ResourceCPU):    "100m",
-					string(v1.ResourceMemory): "256Mi",
+					string(corev1.ResourceCPU):    "100m",
+					string(corev1.ResourceMemory): "256Mi",
 				},
 				Limits: map[string]string{
-					string(v1.ResourceCPU):    "1",
-					string(v1.ResourceMemory): "1Gi",
+					string(corev1.ResourceCPU):    "1",
+					string(corev1.ResourceMemory): "1Gi",
 				},
 			},
-			expected: v1.ResourceRequirements{
-				Requests: map[v1.ResourceName]apiresource.Quantity{
-					v1.ResourceCPU:    apiresource.MustParse("100m"),
-					v1.ResourceMemory: apiresource.MustParse("256Mi"),
+			expected: corev1.ResourceRequirements{
+				Requests: map[corev1.ResourceName]apiresource.Quantity{
+					corev1.ResourceCPU:    apiresource.MustParse("100m"),
+					corev1.ResourceMemory: apiresource.MustParse("256Mi"),
 				},
-				Limits: map[v1.ResourceName]apiresource.Quantity{
-					v1.ResourceCPU:    apiresource.MustParse("1"),
-					v1.ResourceMemory: apiresource.MustParse("1Gi"),
+				Limits: map[corev1.ResourceName]apiresource.Quantity{
+					corev1.ResourceCPU:    apiresource.MustParse("1"),
+					corev1.ResourceMemory: apiresource.MustParse("1Gi"),
 				},
 			},
-			expectedEnv: v1.EnvVar{
+			expectedEnv: corev1.EnvVar{
 				Name:  "GOMEMLIMIT",
 				Value: strconv.FormatInt(1024*1024*1024*k8stemplates.GoGCMemLimitPercentage/100, 10),
 			},

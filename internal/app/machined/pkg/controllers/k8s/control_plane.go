@@ -20,7 +20,7 @@ import (
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	apiserverv1beta1 "k8s.io/apiserver/pkg/apis/apiserver/v1beta1"
 	proxyv1alpha1 "k8s.io/kube-proxy/config/v1alpha1"
@@ -574,18 +574,18 @@ func convertResources(resources talosconfig.Resources) k8s.Resources {
 		convertedLimits = map[string]string{}
 
 		if cpuLimits != "" {
-			convertedLimits[string(v1.ResourceCPU)] = cpuLimits
+			convertedLimits[string(corev1.ResourceCPU)] = cpuLimits
 		}
 
 		if memoryLimits != "" {
-			convertedLimits[string(v1.ResourceMemory)] = memoryLimits
+			convertedLimits[string(corev1.ResourceMemory)] = memoryLimits
 		}
 	}
 
 	return k8s.Resources{
 		Requests: map[string]string{
-			string(v1.ResourceCPU):    resources.CPURequests(),
-			string(v1.ResourceMemory): resources.MemoryRequests(),
+			string(corev1.ResourceCPU):    resources.CPURequests(),
+			string(corev1.ResourceMemory): resources.MemoryRequests(),
 		},
 		Limits: convertedLimits,
 	}

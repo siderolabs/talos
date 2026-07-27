@@ -9,7 +9,7 @@ package base
 import (
 	"context"
 
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
@@ -55,7 +55,7 @@ func discoverNodesK8s(ctx context.Context, client *client.Client, suite *TalosSu
 		var address string
 
 		for _, nodeAddress := range node.Status.Addresses {
-			if nodeAddress.Type == v1.NodeInternalIP {
+			if nodeAddress.Type == corev1.NodeInternalIP {
 				address = nodeAddress.Address
 
 				break

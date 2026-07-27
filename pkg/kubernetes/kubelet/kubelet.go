@@ -15,7 +15,7 @@ import (
 	"path/filepath"
 	"time"
 
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -88,8 +88,8 @@ type PodList struct {
 
 // Pod returns pod details.
 type Pod struct {
-	Metadata Metadata     `json:"metadata"`
-	Status   v1.PodStatus `json:"status"`
+	Metadata Metadata         `json:"metadata"`
+	Status   corev1.PodStatus `json:"status"`
 }
 
 // Metadata is a pod metadata.

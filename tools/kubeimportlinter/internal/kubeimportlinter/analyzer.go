@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package loglinter
+package kubeimportlinter
 
 import (
 	"fmt"
@@ -11,13 +11,13 @@ import (
 )
 
 // AnalyzerName is the registered analyzer name used by the plugin and CLI.
-const AnalyzerName = "loglinter"
+const AnalyzerName = "kubeimportlinter"
 
 // NewAnalyzer builds an analysis.Analyzer from a normalized config.
 func NewAnalyzer(cfg Config) *analysis.Analyzer {
 	return &analysis.Analyzer{
 		Name:             AnalyzerName,
-		Doc:              "checks logging usage and message-shape conventions",
+		Doc:              "checks that versioned Kubernetes imports are aliased to descriptive names",
 		RunDespiteErrors: true,
 		Run: func(pass *analysis.Pass) (any, error) {
 			issues, err := lintSyntaxFiles(cfg, pass.Fset, pass.TypesInfo, pass.Files)

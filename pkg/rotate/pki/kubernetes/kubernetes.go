@@ -16,7 +16,7 @@ import (
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/go-retry/retry"
 	"go.yaml.in/yaml/v4"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/siderolabs/talos/pkg/cluster"
@@ -257,8 +257,8 @@ func (r *rotator) verifyConnectivity(ctx context.Context, client *cluster.Kubern
 
 			for _, node := range nodes.Items {
 				for _, cond := range node.Status.Conditions {
-					if cond.Type == v1.NodeReady {
-						if cond.Status != v1.ConditionTrue {
+					if cond.Type == corev1.NodeReady {
+						if cond.Status != corev1.ConditionTrue {
 							notReadyNodes = append(notReadyNodes, node.Name)
 
 							break

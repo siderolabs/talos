@@ -7,9 +7,10 @@ use (
 	./tools/cloud-image-uploader
 	./tools/docgen
 	./tools/gotagsrewrite
+	./tools/kubeimportlinter
 	./tools/labeled-squashfs
-	./tools/sbom-builder
 	./tools/loglinter
 	./tools/redactgen
+	./tools/sbom-builder
 	./tools/structprotogen
 )

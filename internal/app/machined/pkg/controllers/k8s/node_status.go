@@ -15,7 +15,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s/internal/nodewatch"
@@ -240,8 +240,8 @@ func (ctrl *NodeStatusController) Run(ctx context.Context, r controller.Runtime,
 					res.TypedSpec().PodCIDRs = podCIDRs
 
 					for _, condition := range node.Status.Conditions {
-						if condition.Type == v1.NodeReady {
-							res.TypedSpec().NodeReady = condition.Status == v1.ConditionTrue
+						if condition.Type == corev1.NodeReady {
+							res.TypedSpec().NodeReady = condition.Status == corev1.ConditionTrue
 						}
 					}
 

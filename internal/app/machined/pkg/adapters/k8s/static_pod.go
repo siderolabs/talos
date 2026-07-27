@@ -7,7 +7,7 @@ package k8s
 import (
 	"encoding/json"
 
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
@@ -27,8 +27,8 @@ type staticPod struct {
 }
 
 // Pod returns native Kubernetes resource.
-func (a staticPod) Pod() (*v1.Pod, error) {
-	var spec v1.Pod
+func (a staticPod) Pod() (*corev1.Pod, error) {
+	var spec corev1.Pod
 
 	jsonSerialized, err := json.Marshal(a.StaticPod.TypedSpec().Pod)
 	if err != nil {

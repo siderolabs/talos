@@ -17,7 +17,7 @@ import (
 	"go.uber.org/zap"
 	corev1 "k8s.io/api/core/v1"
 	discoveryv1 "k8s.io/api/discovery/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/client-go/informers"
 	"k8s.io/client-go/tools/cache"
@@ -329,7 +329,7 @@ func kubernetesEndpointSliceWatcher(ctx context.Context, logger *zap.Logger, cli
 	informerFactory := informers.NewSharedInformerFactoryWithOptions(
 		client.Clientset, constants.KubernetesInformerDefaultResyncPeriod,
 		informers.WithNamespace(corev1.NamespaceDefault),
-		informers.WithTweakListOptions(func(options *v1.ListOptions) {
+		informers.WithTweakListOptions(func(options *metav1.ListOptions) {
 			options.FieldSelector = fields.OneTermEqualSelector("metadata.name", "kubernetes").String()
 		}),
 	)

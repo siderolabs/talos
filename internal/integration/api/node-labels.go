@@ -11,7 +11,7 @@ import (
 	"maps"
 	"time"
 
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -126,7 +126,7 @@ func (suite *NodeLabelsSuite) testUpdate(node string, isControlplane bool) {
 }
 
 //nolint:gocyclo
-func (suite *NodeLabelsSuite) waitUntil(watchCh <-chan *v1.Node, expectedLabels map[string]string) {
+func (suite *NodeLabelsSuite) waitUntil(watchCh <-chan *corev1.Node, expectedLabels map[string]string) {
 outer:
 	for {
 		select {

@@ -6,7 +6,7 @@ package k8stemplates
 
 import (
 	rbacv1 "k8s.io/api/rbac/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
@@ -15,11 +15,11 @@ import (
 // endpoints for the internal discovery.
 func TalosNodesRBACClusterRoleBinding() runtime.Object {
 	return &rbacv1.ClusterRoleBinding{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "ClusterRoleBinding",
 			APIVersion: rbacv1.SchemeGroupVersion.String(),
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: "system:talos-nodes",
 			Labels: map[string]string{
 				"kubernetes.io/bootstrapping": "rbac-defaults",
@@ -48,11 +48,11 @@ func TalosNodesRBACClusterRoleBinding() runtime.Object {
 // endpoints for the internal discovery.
 func TalosNodesRBACClusterRole() runtime.Object {
 	return &rbacv1.ClusterRole{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "ClusterRole",
 			APIVersion: rbacv1.SchemeGroupVersion.String(),
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: "system:talos-nodes",
 			Labels: map[string]string{
 				"kubernetes.io/bootstrapping": "rbac-defaults",

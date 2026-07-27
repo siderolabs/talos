@@ -16,7 +16,7 @@ import (
 	"github.com/siderolabs/gen/value"
 	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -77,7 +77,7 @@ func AnnotationsFromAffiliate(affiliate *cluster.Affiliate) map[string]string {
 // If the Node resource doesn't have cluster discovery annotations, nil is returned.
 //
 //nolint:gocyclo
-func AffiliateFromNode(node *v1.Node) *cluster.AffiliateSpec {
+func AffiliateFromNode(node *corev1.Node) *cluster.AffiliateSpec {
 	nodeID, ok := node.Annotations[constants.ClusterNodeIDAnnotation]
 	if !ok {
 		// skip the node, not part of the cluster discovery process
@@ -96,7 +96,7 @@ func AffiliateFromNode(node *v1.Node) *cluster.AffiliateSpec {
 	affiliate.Nodename = node.Name
 
 	for _, addr := range node.Status.Addresses {
-		if addr.Type == v1.NodeHostName {
+		if addr.Type == corev1.NodeHostName {
 			affiliate.Hostname = addr.Address
 
 			break
@@ -219,7 +219,7 @@ func (r *Kubernetes) Push(ctx context.Context, affiliate *cluster.Affiliate) err
 		return fmt.Errorf("failed to marshal new data for node %q: %w", node.Name, err)
 	}
 
-	patchBytes, err := strategicpatch.CreateTwoWayMergePatch(oldData, newData, v1.Node{})
+	patchBytes, err := strategicpatch.CreateTwoWayMergePatch(oldData, newData, corev1.Node{})
 	if err != nil {
 		return fmt.Errorf("failed to create two way merge patch: %w", err)
 	}

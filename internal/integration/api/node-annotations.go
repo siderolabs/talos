@@ -10,7 +10,7 @@ import (
 	"context"
 	"time"
 
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -106,7 +106,7 @@ func (suite *NodeAnnotationsSuite) testUpdate(node string) {
 	})
 }
 
-func (suite *NodeAnnotationsSuite) waitUntil(watchCh <-chan *v1.Node, expectedAnnotations map[string]string) {
+func (suite *NodeAnnotationsSuite) waitUntil(watchCh <-chan *corev1.Node, expectedAnnotations map[string]string) {
 outer:
 	for {
 		select {

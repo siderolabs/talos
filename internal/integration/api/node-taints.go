@@ -15,7 +15,7 @@ import (
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/gen/xtesting/must"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
@@ -109,14 +109,14 @@ func (suite *NodeTaintsSuite) testUpdate(node string) {
 	})
 }
 
-func (suite *NodeTaintsSuite) waitUntil(watchCh <-chan *v1.Node, expectedTaints map[string]string) {
+func (suite *NodeTaintsSuite) waitUntil(watchCh <-chan *corev1.Node, expectedTaints map[string]string) {
 outer:
 	for {
 		select {
 		case k8sNode := <-watchCh:
 			suite.T().Logf("labels %#v, taints %#v", k8sNode.Labels, k8sNode.Spec.Taints)
 
-			taints := xslices.ToMap(k8sNode.Spec.Taints, func(t v1.Taint) (string, string) {
+			taints := xslices.ToMap(k8sNode.Spec.Taints, func(t corev1.Taint) (string, string) {
 				switch {
 				case t.Value == "":
 					return t.Key, string(t.Effect)

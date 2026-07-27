@@ -17,7 +17,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/xiter"
 	"github.com/siderolabs/go-retry/retry"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/siderolabs/talos/pkg/kubernetes"
@@ -266,11 +266,11 @@ func checkNodeKubeletVersion(ctx context.Context, cluster UpgradeProvider, nodeT
 		ready := false
 
 		for _, condition := range node.Status.Conditions {
-			if condition.Type != v1.NodeReady {
+			if condition.Type != corev1.NodeReady {
 				continue
 			}
 
-			if condition.Status == v1.ConditionTrue {
+			if condition.Status == corev1.ConditionTrue {
 				ready = true
 
 				break

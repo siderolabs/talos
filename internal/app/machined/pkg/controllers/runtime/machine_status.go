@@ -16,7 +16,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/optional"
 	"go.uber.org/zap"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 
 	k8sadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/k8s"
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
@@ -323,17 +323,17 @@ func (ctrl *MachineStatusController) staticPodsCheck(ctx context.Context, r cont
 		}
 
 		switch status.Phase {
-		case v1.PodPending, v1.PodFailed, v1.PodUnknown:
+		case corev1.PodPending, corev1.PodFailed, corev1.PodUnknown:
 			problems = append(problems, fmt.Sprintf("%s %s", staticPod.Metadata().ID(), strings.ToLower(string(status.Phase))))
-		case v1.PodSucceeded:
+		case corev1.PodSucceeded:
 			// do nothing, terminal phase
-		case v1.PodRunning:
+		case corev1.PodRunning:
 			// check readiness
 			ready := false
 
 			for _, condition := range status.Conditions {
-				if condition.Type == v1.PodReady {
-					ready = condition.Status == v1.ConditionTrue
+				if condition.Type == corev1.PodReady {
+					ready = condition.Status == corev1.ConditionTrue
 
 					break
 				}

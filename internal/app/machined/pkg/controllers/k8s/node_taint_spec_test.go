@@ -14,7 +14,7 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	k8sctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s"
@@ -83,7 +83,7 @@ func (suite *NodeTaintsSuite) TestControlplane() {
 	rtestutils.AssertResources(suite.Ctx(), suite.T(), suite.State(), []string{constants.LabelNodeRoleControlPlane},
 		func(taintSpec *k8s.NodeTaintSpec, asrt *assert.Assertions) {
 			asrt.Empty(taintSpec.TypedSpec().Value)
-			asrt.Equal(string(v1.TaintEffectNoSchedule), taintSpec.TypedSpec().Effect)
+			asrt.Equal(string(corev1.TaintEffectNoSchedule), taintSpec.TypedSpec().Effect)
 		})
 
 	suite.updateMachineConfig(machine.TypeControlPlane, true)
@@ -103,7 +103,7 @@ func (suite *NodeTaintsSuite) TestCustomTaints() {
 		func(labelSpec *k8s.NodeTaintSpec, asrt *assert.Assertions) {
 			asrt.Equal(customTaintKey, labelSpec.TypedSpec().Key)
 			asrt.Equal("value1", labelSpec.TypedSpec().Value)
-			asrt.Equal(string(v1.TaintEffectNoSchedule), labelSpec.TypedSpec().Effect)
+			asrt.Equal(string(corev1.TaintEffectNoSchedule), labelSpec.TypedSpec().Effect)
 		})
 
 	suite.updateMachineConfig(machine.TypeControlPlane, false)

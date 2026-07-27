@@ -11,7 +11,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"sigs.k8s.io/yaml"
@@ -54,11 +54,11 @@ func KubeProxyConfigMapTemplate(spec *k8s.BootstrapManifestsConfigSpec) (runtime
 	}
 
 	return &corev1.ConfigMap{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			APIVersion: corev1.SchemeGroupVersion.String(),
 			Kind:       "ConfigMap",
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      kubeProxyConfigMapName(spec.ProxyConfigChecksum),
 			Namespace: "kube-system",
 			Labels: map[string]string{
@@ -184,11 +184,11 @@ func KubeProxyDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) (runtime
 	}
 
 	return &appsv1.DaemonSet{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "DaemonSet",
 			APIVersion: appsv1.SchemeGroupVersion.String(),
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      "kube-proxy",
 			Namespace: "kube-system",
 			Labels: map[string]string{
@@ -197,7 +197,7 @@ func KubeProxyDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) (runtime
 			},
 		},
 		Spec: appsv1.DaemonSetSpec{
-			Selector: &v1.LabelSelector{
+			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{
 					"tier":    "node",
 					"k8s-app": "kube-proxy",
@@ -210,13 +210,16 @@ func KubeProxyDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) (runtime
 				},
 			},
 			Template: corev1.PodTemplateSpec{
-				ObjectMeta: v1.ObjectMeta{
+				ObjectMeta: metav1.ObjectMeta{
 					Labels: map[string]string{
 						"tier":    "node",
 						"k8s-app": "kube-proxy",
 					},
 				},
 				Spec: corev1.PodSpec{
+					Affinity: &corev1.Affinity{
+						NodeAffinity: nodeAffinity,
+					},
 					Containers: []corev1.Container{
 						proxyContainer,
 					},
@@ -243,11 +246,11 @@ func KubeProxyDaemonSetTemplate(spec *k8s.BootstrapManifestsConfigSpec) (runtime
 // KubeProxyServiceAccount returns the ServiceAccount for kube-proxy.
 func KubeProxyServiceAccount() runtime.Object {
 	return &corev1.ServiceAccount{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "ServiceAccount",
 			APIVersion: corev1.SchemeGroupVersion.String(),
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      "kube-proxy",
 			Namespace: "kube-system",
 		},
@@ -257,11 +260,11 @@ func KubeProxyServiceAccount() runtime.Object {
 // KubeProxyClusterRoleBinding returns the ClusterRoleBinding for kube-proxy.
 func KubeProxyClusterRoleBinding() runtime.Object {
 	return &rbacv1.ClusterRoleBinding{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "ClusterRoleBinding",
 			APIVersion: rbacv1.SchemeGroupVersion.String(),
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: "kube-proxy",
 		},
 		Subjects: []rbacv1.Subject{

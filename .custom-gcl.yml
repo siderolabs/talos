@@ -3,3 +3,6 @@ plugins:
   - module: github.com/siderolabs/talos/tools/loglinter
     import: github.com/siderolabs/talos/tools/loglinter/plugin
     path: ./tools/loglinter
+  - module: github.com/siderolabs/talos/tools/kubeimportlinter
+    import: github.com/siderolabs/talos/tools/kubeimportlinter/plugin
+    path: ./tools/kubeimportlinter

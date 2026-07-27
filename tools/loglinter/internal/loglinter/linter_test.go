@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package main_test
+package loglinter //nolint:testpackage // exercises the unexported plugin entry point
 
 import (
 	"os"
@@ -11,18 +11,11 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	main "github.com/siderolabs/talos/tools/loglinter"
+	"golang.org/x/tools/go/packages"
 )
 
-func TestRunDisallowsAllRulesByDefault(t *testing.T) {
-	root := writeTestFixture(t)
-
-	configPath := filepath.Join(root, "log-linter.yaml")
-	writeTestFile(t, root, "log-linter.yaml", ``)
-
-	issues, err := main.Run(configPath, nil)
-	require.NoError(t, err)
+func TestLintDisallowsAllRulesByDefault(t *testing.T) {
+	issues := lintFixture(t, writeTestFixture(t), Config{})
 
 	assert.Len(t, issues, 5)
 
@@ -38,117 +31,72 @@ func TestRunDisallowsAllRulesByDefault(t *testing.T) {
 		"zap_message_sprintf",
 		"zap_root_component",
 	} {
-		assert.Equal(t, rules[rule], 1)
+		assert.Equal(t, 1, rules[rule])
 	}
 }
 
-func TestRunAllowsConfiguredExceptions(t *testing.T) {
-	root := writeTestFixture(t)
+func TestLintAllowsConfiguredExceptions(t *testing.T) {
+	allow := RuleScope{Allow: []string{"service/bad.go"}}
 
-	configPath := filepath.Join(root, "log-linter.yaml")
-	writeTestFile(t, root, "log-linter.yaml", `rules:
-  stdlib_log_calls:
-    allow:
-      - service/bad.go
-  slog_imports:
-    allow:
-      - service/bad.go
-  zap_message_formatting:
-    allow:
-      - service/bad.go
-  zap_message_sprintf:
-    allow:
-      - service/bad.go
-  zap_root_component:
-    allow:
-      - service/bad.go
-`)
+	cfg := Config{Rules: Rules{
+		StdlibLogCalls:       StdlibLogCallsRule{RuleScope: allow},
+		SlogImports:          SlogImportsRule{RuleScope: allow},
+		ZapMessageFormatting: ZapMessageFormattingRule{RuleScope: allow},
+		ZapMessageSprintf:    ZapMessageSprintfRule{RuleScope: allow},
+		ZapRootComponent:     ZapRootComponentRule{RuleScope: allow},
+	}}
 
-	issues, err := main.Run(configPath, nil)
-	require.NoError(t, err)
-
-	assert.Len(t, issues, 0)
+	assert.Empty(t, lintFixture(t, writeTestFixture(t), cfg))
 }
 
-func TestRunRespectsIgnoreComment(t *testing.T) {
-	root := t.TempDir()
+func TestLintRespectsIgnoreComment(t *testing.T) {
+	root := writeTestFixture(t)
 
-	writeTestFile(t, root, "go.mod", `module example.com/test
-
-go 1.26.0
-`)
+	require.NoError(t, os.Remove(filepath.Join(root, "service/bad.go")))
 
 	writeTestFile(t, root, "service/ignore.go", `package service
 
 import "log"
 
-func run() {
+func ignored() {
 	// loglint:ignore stdlib_log_calls kmsg compatibility shim
 	log.Printf("allowed")
 }
 `)
 
-	configPath := filepath.Join(root, "log-linter.yaml")
-	writeTestFile(t, root, "log-linter.yaml", ``)
-
-	issues, err := main.Run(configPath, nil)
-	require.NoError(t, err)
-
-	assert.Len(t, issues, 0)
+	assert.Empty(t, lintFixture(t, root, Config{}))
 }
 
-func TestLoadConfigResolvesPathFromParentDirectories(t *testing.T) {
-	root := t.TempDir()
+// lintFixture lints every package of the fixture module rooted at root, using
+// the same entry point as the golangci-lint plugin.
+func lintFixture(t *testing.T, root string, cfg Config) []Issue {
+	t.Helper()
 
-	writeTestFile(t, root, "configs/log-linter.yaml", ``)
-
-	t.Chdir(filepath.Join(root, "configs"))
-
-	cfg, err := main.LoadConfig("configs/log-linter.yaml")
+	cfg, err := NormalizeConfig(cfg, root)
 	require.NoError(t, err)
 
-	expectedRoot := filepath.Join(root, "configs")
-	assert.Equal(t, expectedRoot, cfg.Root)
-}
-
-func TestLoadConfigExtractsGolangCISettings(t *testing.T) {
-	root := t.TempDir()
-
-	writeTestFile(t, root, ".golangci.yml", `version: "2"
-linters:
-  settings:
-    custom:
-      loglinter:
-        type: module
-        settings:
-          exclude:
-            - "vendor/**"
-          rules:
-            stdlib_log_calls:
-              allow:
-                - "allowed.go"
-`)
-
-	cfg, err := main.LoadConfig(filepath.Join(root, ".golangci.yml"))
+	pkgs, err := packages.Load(&packages.Config{
+		Mode:  packages.NeedFiles | packages.NeedSyntax | packages.NeedTypes | packages.NeedTypesInfo | packages.NeedDeps | packages.NeedImports,
+		Dir:   root,
+		Env:   append(os.Environ(), "GOWORK=off", "GOFLAGS=-mod=mod", "GOPROXY=off"),
+		Tests: false,
+	}, "./...")
 	require.NoError(t, err)
 
-	assert.Equal(t, root, cfg.Root)
-	assert.Equal(t, []string{"vendor/**"}, cfg.Exclude)
-	assert.Equal(t, []string{"allowed.go"}, cfg.Rules.StdlibLogCalls.Allow)
-}
+	issues := make([]Issue, 0)
 
-func TestLoadConfigLoadsStandaloneConfigDirectly(t *testing.T) {
-	root := t.TempDir()
+	for _, pkg := range pkgs {
+		for _, pkgErr := range pkg.Errors {
+			t.Fatalf("loading fixture package: %v", pkgErr)
+		}
 
-	writeTestFile(t, root, "log-linter.yaml", `exclude:
-  - "standalone/**"
-`)
+		pkgIssues, err := lintSyntaxFiles(cfg, pkg.Fset, pkg.TypesInfo, pkg.Syntax)
+		require.NoError(t, err)
 
-	cfg, err := main.LoadConfig(filepath.Join(root, "log-linter.yaml"))
-	require.NoError(t, err)
+		issues = append(issues, pkgIssues...)
+	}
 
-	assert.Equal(t, root, cfg.Root)
-	assert.Equal(t, []string{"standalone/**"}, cfg.Exclude)
+	return issues
 }
 
 func writeTestFixture(t *testing.T) string {

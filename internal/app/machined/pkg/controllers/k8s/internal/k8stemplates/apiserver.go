@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/siderolabs/go-kubernetes/kubernetes/compatibility"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -102,20 +102,20 @@ func APIServerPod(configResource *k8s.APIServerConfig, secretsVersion, configVer
 	// The probes are unauthenticated requests, so they can only be used when anonymous access to the health
 	// endpoints is allowed via the authentication config file, otherwise they would be rejected with a 401.
 	var (
-		startupProbe   *v1.Probe
-		livenessProbe  *v1.Probe
-		readinessProbe *v1.Probe
+		startupProbe   *corev1.Probe
+		livenessProbe  *corev1.Probe
+		readinessProbe *corev1.Probe
 	)
 
 	if cfg.StartupProbesEnabled {
 		// Probe configuration follows kubeadm defaults.
-		startupProbe = &v1.Probe{
-			ProbeHandler: v1.ProbeHandler{
-				HTTPGet: &v1.HTTPGetAction{
+		startupProbe = &corev1.Probe{
+			ProbeHandler: corev1.ProbeHandler{
+				HTTPGet: &corev1.HTTPGetAction{
 					Path:   "/livez",
 					Host:   "localhost",
 					Port:   intstr.FromInt(cfg.LocalPort),
-					Scheme: v1.URISchemeHTTPS,
+					Scheme: corev1.URISchemeHTTPS,
 				},
 			},
 			InitialDelaySeconds: 10,
@@ -124,13 +124,13 @@ func APIServerPod(configResource *k8s.APIServerConfig, secretsVersion, configVer
 			FailureThreshold:    24,
 		}
 
-		readinessProbe = &v1.Probe{
-			ProbeHandler: v1.ProbeHandler{
-				HTTPGet: &v1.HTTPGetAction{
+		readinessProbe = &corev1.Probe{
+			ProbeHandler: corev1.ProbeHandler{
+				HTTPGet: &corev1.HTTPGetAction{
 					Path:   "/readyz",
 					Host:   "localhost",
 					Port:   intstr.FromInt(cfg.LocalPort),
-					Scheme: v1.URISchemeHTTPS,
+					Scheme: corev1.URISchemeHTTPS,
 				},
 			},
 			InitialDelaySeconds: 0,
@@ -139,13 +139,13 @@ func APIServerPod(configResource *k8s.APIServerConfig, secretsVersion, configVer
 			FailureThreshold:    3,
 		}
 
-		livenessProbe = &v1.Probe{
-			ProbeHandler: v1.ProbeHandler{
-				HTTPGet: &v1.HTTPGetAction{
+		livenessProbe = &corev1.Probe{
+			ProbeHandler: corev1.ProbeHandler{
+				HTTPGet: &corev1.HTTPGetAction{
 					Path:   "/livez",
 					Host:   "localhost",
 					Port:   intstr.FromInt(cfg.LocalPort),
-					Scheme: v1.URISchemeHTTPS,
+					Scheme: corev1.URISchemeHTTPS,
 				},
 			},
 			InitialDelaySeconds: 10,
@@ -155,7 +155,7 @@ func APIServerPod(configResource *k8s.APIServerConfig, secretsVersion, configVer
 		}
 	}
 
-	return &v1.Pod{
+	return &corev1.Pod{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
 			Kind:       "Pod",
@@ -178,20 +178,20 @@ func APIServerPod(configResource *k8s.APIServerConfig, secretsVersion, configVer
 				"app.kubernetes.io/managed-by": strings.ReplaceAll(version.Name, " ", "-"),
 			},
 		},
-		Spec: v1.PodSpec{
+		Spec: corev1.PodSpec{
 			Priority:          new(SystemCriticalPriority),
 			PriorityClassName: SystemClusterCriticalPriorityClassName,
-			Containers: []v1.Container{
+			Containers: []corev1.Container{
 				{
 					Name:    k8s.APIServerID,
 					Image:   cfg.Image,
 					Command: cfg.Args,
 					Env: append(
-						[]v1.EnvVar{
+						[]corev1.EnvVar{
 							{
 								Name: "POD_IP",
-								ValueFrom: &v1.EnvVarSource{
-									FieldRef: &v1.ObjectFieldSelector{
+								ValueFrom: &corev1.EnvVarSource{
+									FieldRef: &corev1.ObjectFieldSelector{
 										FieldPath: "status.podIP",
 									},
 								},
@@ -199,7 +199,7 @@ func APIServerPod(configResource *k8s.APIServerConfig, secretsVersion, configVer
 						},
 						env...,
 					),
-					VolumeMounts: append([]v1.VolumeMount{
+					VolumeMounts: append([]corev1.VolumeMount{
 						{
 							Name:      "secrets",
 							MountPath: constants.KubernetesAPIServerSecretsDir,
@@ -220,49 +220,49 @@ func APIServerPod(configResource *k8s.APIServerConfig, secretsVersion, configVer
 					LivenessProbe:  livenessProbe,
 					ReadinessProbe: readinessProbe,
 					Resources:      resources,
-					SecurityContext: &v1.SecurityContext{
+					SecurityContext: &corev1.SecurityContext{
 						AllowPrivilegeEscalation: new(false),
 						ReadOnlyRootFilesystem:   new(true),
-						Capabilities: &v1.Capabilities{
-							Drop: []v1.Capability{"ALL"},
+						Capabilities: &corev1.Capabilities{
+							Drop: []corev1.Capability{"ALL"},
 							// kube-apiserver binary has cap_net_bind_service=+ep set.
 							// It does not matter if ports < 1024 are configured, the setcap flag causes a capability dependency.
 							// https://github.com/kubernetes/kubernetes/blob/5b92e46b2238b4d84358451013e634361084ff7d/build/server-image/kube-apiserver/Dockerfile#L26
-							Add: []v1.Capability{"NET_BIND_SERVICE"},
+							Add: []corev1.Capability{"NET_BIND_SERVICE"},
 						},
-						SeccompProfile: &v1.SeccompProfile{
-							Type: v1.SeccompProfileTypeRuntimeDefault,
+						SeccompProfile: &corev1.SeccompProfile{
+							Type: corev1.SeccompProfileTypeRuntimeDefault,
 						},
 					},
 				},
 			},
 			HostNetwork: true,
-			SecurityContext: &v1.PodSecurityContext{
+			SecurityContext: &corev1.PodSecurityContext{
 				RunAsNonRoot: new(true),
 				RunAsUser:    new(int64(constants.KubernetesAPIServerRunUser)),
 				RunAsGroup:   new(int64(constants.KubernetesAPIServerRunGroup)),
 			},
-			Volumes: append([]v1.Volume{
+			Volumes: append([]corev1.Volume{
 				{
 					Name: "secrets",
-					VolumeSource: v1.VolumeSource{
-						HostPath: &v1.HostPathVolumeSource{
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
 							Path: constants.KubernetesAPIServerSecretsDir,
 						},
 					},
 				},
 				{
 					Name: "config",
-					VolumeSource: v1.VolumeSource{
-						HostPath: &v1.HostPathVolumeSource{
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
 							Path: constants.KubernetesAPIServerConfigDir,
 						},
 					},
 				},
 				{
 					Name: "audit",
-					VolumeSource: v1.VolumeSource{
-						HostPath: &v1.HostPathVolumeSource{
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
 							Path: constants.KubernetesAuditLogDir,
 						},
 					},

@@ -12,7 +12,7 @@ import (
 	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap/zaptest"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 
 	k8sctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -115,7 +115,7 @@ func TestApplyLabels(t *testing.T) { //nolint:dupl
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			node := &v1.Node{}
+			node := &corev1.Node{}
 			node.Labels = tt.inputLabels
 
 			ownedLabels := xslices.ToSet(tt.ownedLabels)
@@ -234,7 +234,7 @@ func TestApplyAnnotations(t *testing.T) { //nolint:dupl
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			node := &v1.Node{}
+			node := &corev1.Node{}
 			node.Annotations = tt.inputAnnotations
 
 			ownedAnnotations := xslices.ToSet(tt.ownedAnnotations)
@@ -265,11 +265,11 @@ func TestApplyTaints(t *testing.T) {
 
 	for _, tt := range []struct {
 		name        string
-		inputTaints []v1.Taint
+		inputTaints []corev1.Taint
 		ownedTaints []string
 		taintSpec   []k8s.NodeTaintSpecSpec
 
-		expectedTaints      []v1.Taint
+		expectedTaints      []corev1.Taint
 		expectedOwnedTaints []string
 	}{
 		{
@@ -283,7 +283,7 @@ func TestApplyTaints(t *testing.T) {
 		},
 		{
 			name: "initial set taints",
-			inputTaints: []v1.Taint{
+			inputTaints: []corev1.Taint{
 				{
 					Key:   "foo",
 					Value: "bar",
@@ -302,7 +302,7 @@ func TestApplyTaints(t *testing.T) {
 				},
 			},
 
-			expectedTaints: []v1.Taint{
+			expectedTaints: []corev1.Taint{
 				{
 					Key:   "foo",
 					Value: "bar",
@@ -324,7 +324,7 @@ func TestApplyTaints(t *testing.T) {
 		},
 		{
 			name: "update owned taints",
-			inputTaints: []v1.Taint{
+			inputTaints: []corev1.Taint{
 				{
 					Key:   "foo",
 					Value: "bar",
@@ -350,7 +350,7 @@ func TestApplyTaints(t *testing.T) {
 				},
 			},
 
-			expectedTaints: []v1.Taint{
+			expectedTaints: []corev1.Taint{
 				{
 					Key:   "foo",
 					Value: "bar",
@@ -366,7 +366,7 @@ func TestApplyTaints(t *testing.T) {
 		},
 		{
 			name: "ignore not owned taints",
-			inputTaints: []v1.Taint{
+			inputTaints: []corev1.Taint{
 				{
 					Key:   "foo",
 					Value: "bar",
@@ -394,7 +394,7 @@ func TestApplyTaints(t *testing.T) {
 				},
 			},
 
-			expectedTaints: []v1.Taint{
+			expectedTaints: []corev1.Taint{
 				{
 					Key:   "foo",
 					Value: "bar",
@@ -417,7 +417,7 @@ func TestApplyTaints(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			node := &v1.Node{}
+			node := &corev1.Node{}
 			node.Spec.Taints = tt.inputTaints
 
 			ownedTaints := xslices.ToSet(tt.ownedTaints)
@@ -513,7 +513,7 @@ func TestApplyCordoned(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			node := &v1.Node{}
+			node := &corev1.Node{}
 			node.Annotations = tt.inputAnnotations
 			node.Spec.Unschedulable = tt.inputUnschedulable
 

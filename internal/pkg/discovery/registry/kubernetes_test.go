@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/siderolabs/talos/internal/pkg/discovery/registry"
@@ -100,23 +100,23 @@ func TestAnnotationsFromAffiliate(t *testing.T) {
 func TestAffiliateFromNode(t *testing.T) {
 	for _, tt := range []struct {
 		name     string
-		node     v1.Node
+		node     corev1.Node
 		expected *cluster.AffiliateSpec
 	}{
 		{
 			name: "no annotations",
-			node: v1.Node{
+			node: corev1.Node{
 				ObjectMeta: metav1.ObjectMeta{
 					Name:        "worker-1",
 					Annotations: map[string]string{},
 				},
-				Spec: v1.NodeSpec{},
+				Spec: corev1.NodeSpec{},
 			},
 			expected: nil,
 		},
 		{
 			name: "discovered",
-			node: v1.Node{
+			node: corev1.Node{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "bar",
 					Annotations: map[string]string{
@@ -132,15 +132,15 @@ func TestAffiliateFromNode(t *testing.T) {
 						constants.LabelNodeRoleControlPlane: "",
 					},
 				},
-				Spec: v1.NodeSpec{},
-				Status: v1.NodeStatus{
-					Addresses: []v1.NodeAddress{
+				Spec: corev1.NodeSpec{},
+				Status: corev1.NodeStatus{
+					Addresses: []corev1.NodeAddress{
 						{
-							Type:    v1.NodeHostName,
+							Type:    corev1.NodeHostName,
 							Address: "foo.com",
 						},
 					},
-					NodeInfo: v1.NodeSystemInfo{
+					NodeInfo: corev1.NodeSystemInfo{
 						OSImage: "Talos (v1.0.0)",
 					},
 				},
@@ -163,7 +163,7 @@ func TestAffiliateFromNode(t *testing.T) {
 		},
 		{
 			name: "controlplane",
-			node: v1.Node{
+			node: corev1.Node{
 				ObjectMeta: metav1.ObjectMeta{
 					Name: "bar",
 					Annotations: map[string]string{
@@ -175,15 +175,15 @@ func TestAffiliateFromNode(t *testing.T) {
 						constants.LabelNodeRoleControlPlane: "",
 					},
 				},
-				Spec: v1.NodeSpec{},
-				Status: v1.NodeStatus{
-					Addresses: []v1.NodeAddress{
+				Spec: corev1.NodeSpec{},
+				Status: corev1.NodeStatus{
+					Addresses: []corev1.NodeAddress{
 						{
-							Type:    v1.NodeHostName,
+							Type:    corev1.NodeHostName,
 							Address: "foo.com",
 						},
 					},
-					NodeInfo: v1.NodeSystemInfo{
+					NodeInfo: corev1.NodeSystemInfo{
 						OSImage: "Talos (v1.0.0)",
 					},
 				},

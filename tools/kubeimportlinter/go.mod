@@ -1,4 +1,4 @@
-module github.com/siderolabs/talos/tools/loglinter
+module github.com/siderolabs/talos/tools/kubeimportlinter
 
 go 1.26.5
 

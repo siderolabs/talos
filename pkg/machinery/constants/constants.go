@@ -11,6 +11,13 @@ import (
 	"github.com/siderolabs/crypto/x509"
 )
 
+// SupportedArchitectures is the list of architectures supported by Talos.
+// It is used in kubernetes pod scheduling constraints.
+var SupportedArchitectures = []string{
+	"amd64",
+	"arm64",
+}
+
 const (
 	// DefaultKernelVersion is the default Linux kernel version.
 	DefaultKernelVersion = "6.18.39-talos"

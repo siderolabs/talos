@@ -15,7 +15,7 @@ import (
 	"github.com/siderolabs/go-talos-support/support"
 	"github.com/siderolabs/go-talos-support/support/bundle"
 	"github.com/siderolabs/go-talos-support/support/collectors"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8s "k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 
@@ -107,7 +107,7 @@ func getKubernetesClient(ctx context.Context, c *client.Client) (*k8s.Clientset,
 	}
 
 	// just checking that k8s responds
-	_, err = clientset.CoreV1().Namespaces().Get(ctx, "kube-system", v1.GetOptions{})
+	_, err = clientset.CoreV1().Namespaces().Get(ctx, "kube-system", metav1.GetOptions{})
 	if err != nil {
 		return nil, err
 	}

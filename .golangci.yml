@@ -19,6 +19,7 @@ linters:
   default: all
   enable:
     - loglinter
+    - kubeimportlinter
   disable:
     - contextcheck
     - depguard
@@ -146,6 +147,14 @@ linters:
             zap_root_component:
               allow:
                 - "pkg/logging/zap.go"
+      kubeimportlinter:
+        type: module
+        description: checks that versioned Kubernetes imports are aliased
+        original-url: github.com/siderolabs/talos/tools/kubeimportlinter
+        settings:
+          exclude:
+            - "**/*_test.go"
+            - "vendor/**"
     cyclop:
       max-complexity: 20
     dogsled:

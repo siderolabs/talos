@@ -24,7 +24,7 @@ import (
 	"github.com/siderolabs/go-kubernetes/kubernetes/upgrade"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -582,7 +582,7 @@ func checkPodStatus(ctx context.Context, cluster UpgradeProvider, options Upgrad
 		}),
 	)
 
-	notifyCh := make(chan *v1.Pod)
+	notifyCh := make(chan *corev1.Pod)
 
 	informer := informerFactory.Core().V1().Pods().Informer()
 
@@ -593,9 +593,9 @@ func checkPodStatus(ctx context.Context, cluster UpgradeProvider, options Upgrad
 	}
 
 	if _, err := informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc:    func(obj any) { channel.SendWithContext(ctx, notifyCh, obj.(*v1.Pod)) },
+		AddFunc:    func(obj any) { channel.SendWithContext(ctx, notifyCh, obj.(*corev1.Pod)) },
 		DeleteFunc: func(_ any) {},
-		UpdateFunc: func(_, obj any) { channel.SendWithContext(ctx, notifyCh, obj.(*v1.Pod)) },
+		UpdateFunc: func(_, obj any) { channel.SendWithContext(ctx, notifyCh, obj.(*corev1.Pod)) },
 	}); err != nil {
 		return fmt.Errorf("error adding watch event handler: %w", err)
 	}
@@ -625,11 +625,11 @@ func checkPodStatus(ctx context.Context, cluster UpgradeProvider, options Upgrad
 			ready := false
 
 			for _, condition := range pod.Status.Conditions {
-				if condition.Type != v1.PodReady {
+				if condition.Type != corev1.PodReady {
 					continue
 				}
 
-				if condition.Status == v1.ConditionTrue {
+				if condition.Status == corev1.ConditionTrue {
 					ready = true
 
 					break

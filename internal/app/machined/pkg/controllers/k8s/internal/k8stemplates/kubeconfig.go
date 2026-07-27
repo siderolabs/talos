@@ -6,7 +6,7 @@ package k8stemplates
 
 import (
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
@@ -44,11 +44,11 @@ func KubeconfigInClusterTemplate(spec *k8s.BootstrapManifestsConfigSpec) runtime
 	}
 
 	return &corev1.ConfigMap{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "ConfigMap",
 			APIVersion: corev1.SchemeGroupVersion.String(),
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name:      "kubeconfig-in-cluster",
 			Namespace: "kube-system",
 		},

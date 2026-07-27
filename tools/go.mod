@@ -20,7 +20,6 @@ tool (
 	github.com/siderolabs/talos/tools/docgen
 	github.com/siderolabs/talos/tools/gotagsrewrite
 	github.com/siderolabs/talos/tools/labeled-squashfs
-	github.com/siderolabs/talos/tools/loglinter
 	github.com/siderolabs/talos/tools/redactgen
 	github.com/siderolabs/talos/tools/sbom-builder
 	github.com/siderolabs/talos/tools/structprotogen
@@ -39,7 +38,6 @@ replace (
 	github.com/siderolabs/talos/tools/docgen => ./docgen
 	github.com/siderolabs/talos/tools/gotagsrewrite => ./gotagsrewrite
 	github.com/siderolabs/talos/tools/labeled-squashfs => ./labeled-squashfs
-	github.com/siderolabs/talos/tools/loglinter => ./loglinter
 	github.com/siderolabs/talos/tools/redactgen => ./redactgen
 	github.com/siderolabs/talos/tools/sbom-builder => ./sbom-builder
 	github.com/siderolabs/talos/tools/structprotogen => ./structprotogen
@@ -489,7 +487,6 @@ require (
 	github.com/siderolabs/talos/tools/docgen v0.0.0-20260722162145-c68085286288 // indirect
 	github.com/siderolabs/talos/tools/gotagsrewrite v0.0.0-20260722162145-c68085286288 // indirect
 	github.com/siderolabs/talos/tools/labeled-squashfs v0.0.0-20260722162145-c68085286288 // indirect
-	github.com/siderolabs/talos/tools/loglinter v0.0.0-20260722162145-c68085286288 // indirect
 	github.com/siderolabs/talos/tools/redactgen v0.0.0-20260722162145-c68085286288 // indirect
 	github.com/siderolabs/talos/tools/sbom-builder v0.0.0-20260722162145-c68085286288 // indirect
 	github.com/siderolabs/talos/tools/structprotogen v0.0.0-20260722162145-c68085286288 // indirect

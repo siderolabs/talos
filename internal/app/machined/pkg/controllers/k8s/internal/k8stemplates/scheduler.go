@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/siderolabs/go-kubernetes/kubernetes/compatibility"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/util/intstr"
@@ -34,37 +34,37 @@ func SchedulerPod(configResource *k8s.SchedulerConfig, secretsVersion string) (r
 
 	kubeSchedulerVersion := compatibility.VersionFromImageRef(cfg.Image)
 
-	livenessProbe := &v1.Probe{
-		ProbeHandler: v1.ProbeHandler{
-			HTTPGet: &v1.HTTPGetAction{
+	livenessProbe := &corev1.Probe{
+		ProbeHandler: corev1.ProbeHandler{
+			HTTPGet: &corev1.HTTPGetAction{
 				Path:   kubeSchedulerVersion.KubeSchedulerHealthLivenessEndpoint(),
 				Host:   "localhost",
 				Port:   intstr.FromInt(10259),
-				Scheme: v1.URISchemeHTTPS,
+				Scheme: corev1.URISchemeHTTPS,
 			},
 		},
 		TimeoutSeconds: 15,
 	}
 
-	readinessProbe := &v1.Probe{
-		ProbeHandler: v1.ProbeHandler{
-			HTTPGet: &v1.HTTPGetAction{
+	readinessProbe := &corev1.Probe{
+		ProbeHandler: corev1.ProbeHandler{
+			HTTPGet: &corev1.HTTPGetAction{
 				Path:   kubeSchedulerVersion.KubeSchedulerHealthReadinessEndpoint(),
 				Host:   "localhost",
 				Port:   intstr.FromInt(10259),
-				Scheme: v1.URISchemeHTTPS,
+				Scheme: corev1.URISchemeHTTPS,
 			},
 		},
 		TimeoutSeconds: 15,
 	}
 
-	startupProbe := &v1.Probe{
-		ProbeHandler: v1.ProbeHandler{
-			HTTPGet: &v1.HTTPGetAction{
+	startupProbe := &corev1.Probe{
+		ProbeHandler: corev1.ProbeHandler{
+			HTTPGet: &corev1.HTTPGetAction{
 				Path:   kubeSchedulerVersion.KubeSchedulerHealthStartupEndpoint(),
 				Host:   "localhost",
 				Port:   intstr.FromInt(10259),
-				Scheme: v1.URISchemeHTTPS,
+				Scheme: corev1.URISchemeHTTPS,
 			},
 		},
 		// Give 60 seconds for the container to start up
@@ -73,7 +73,7 @@ func SchedulerPod(configResource *k8s.SchedulerConfig, secretsVersion string) (r
 		TimeoutSeconds:   15,
 	}
 
-	return &v1.Pod{
+	return &corev1.Pod{
 		TypeMeta: metav1.TypeMeta{
 			APIVersion: "v1",
 			Kind:       "Pod",
@@ -95,20 +95,20 @@ func SchedulerPod(configResource *k8s.SchedulerConfig, secretsVersion string) (r
 				"app.kubernetes.io/managed-by": strings.ReplaceAll(version.Name, " ", "-"),
 			},
 		},
-		Spec: v1.PodSpec{
+		Spec: corev1.PodSpec{
 			Priority:          new(SystemCriticalPriority),
 			PriorityClassName: SystemClusterCriticalPriorityClassName,
-			Containers: []v1.Container{
+			Containers: []corev1.Container{
 				{
 					Name:    k8s.SchedulerID,
 					Image:   cfg.Image,
 					Command: cfg.Args,
 					Env: append(
-						[]v1.EnvVar{
+						[]corev1.EnvVar{
 							{
 								Name: "POD_IP",
-								ValueFrom: &v1.EnvVarSource{
-									FieldRef: &v1.ObjectFieldSelector{
+								ValueFrom: &corev1.EnvVarSource{
+									FieldRef: &corev1.ObjectFieldSelector{
 										FieldPath: "status.podIP",
 									},
 								},
@@ -116,7 +116,7 @@ func SchedulerPod(configResource *k8s.SchedulerConfig, secretsVersion string) (r
 						},
 						env...,
 					),
-					VolumeMounts: append(append([]v1.VolumeMount{
+					VolumeMounts: append(append([]corev1.VolumeMount{
 						{
 							Name:      "secrets",
 							MountPath: constants.KubernetesSchedulerSecretsDir,
@@ -132,37 +132,37 @@ func SchedulerPod(configResource *k8s.SchedulerConfig, secretsVersion string) (r
 					LivenessProbe:  livenessProbe,
 					ReadinessProbe: readinessProbe,
 					Resources:      resources,
-					SecurityContext: &v1.SecurityContext{
+					SecurityContext: &corev1.SecurityContext{
 						AllowPrivilegeEscalation: new(false),
 						ReadOnlyRootFilesystem:   new(true),
-						Capabilities: &v1.Capabilities{
-							Drop: []v1.Capability{"ALL"},
+						Capabilities: &corev1.Capabilities{
+							Drop: []corev1.Capability{"ALL"},
 						},
-						SeccompProfile: &v1.SeccompProfile{
-							Type: v1.SeccompProfileTypeRuntimeDefault,
+						SeccompProfile: &corev1.SeccompProfile{
+							Type: corev1.SeccompProfileTypeRuntimeDefault,
 						},
 					},
 				},
 			},
 			HostNetwork: true,
-			SecurityContext: &v1.PodSecurityContext{
+			SecurityContext: &corev1.PodSecurityContext{
 				RunAsNonRoot: new(true),
 				RunAsUser:    new(int64(constants.KubernetesSchedulerRunUser)),
 				RunAsGroup:   new(int64(constants.KubernetesSchedulerRunGroup)),
 			},
-			Volumes: append(append([]v1.Volume{
+			Volumes: append(append([]corev1.Volume{
 				{
 					Name: "secrets",
-					VolumeSource: v1.VolumeSource{
-						HostPath: &v1.HostPathVolumeSource{
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
 							Path: constants.KubernetesSchedulerSecretsDir,
 						},
 					},
 				},
 				{
 					Name: "config",
-					VolumeSource: v1.VolumeSource{
-						HostPath: &v1.HostPathVolumeSource{
+					VolumeSource: corev1.VolumeSource{
+						HostPath: &corev1.HostPathVolumeSource{
 							Path: constants.KubernetesSchedulerConfigDir,
 						},
 					},

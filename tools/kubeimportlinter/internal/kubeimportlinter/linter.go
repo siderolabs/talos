@@ -2,7 +2,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-package loglinter
+package kubeimportlinter
 
 import (
 	"fmt"
@@ -17,7 +17,7 @@ import (
 	"github.com/bmatcuk/doublestar/v4"
 )
 
-// Issue describes a single finding reported by log-linter.
+// Issue describes a single finding reported by kubeimportlinter.
 type Issue struct {
 	Rule    string
 	Path    string
@@ -33,7 +33,6 @@ type fileContext struct {
 	fset      *token.FileSet
 	typesInfo *types.Info
 	relPath   string
-	parents   map[ast.Node]ast.Node
 	ignores   []ignoreComment
 }
 
@@ -43,6 +42,7 @@ type ignoreComment struct {
 	Rules     map[string]struct{}
 }
 
+// lintSyntaxFiles lints already-loaded files; used by the golangci-lint plugin.
 func lintSyntaxFiles(cfg Config, fset *token.FileSet, typesInfo *types.Info, files []*ast.File) ([]Issue, error) {
 	issues := make([]Issue, 0)
 
@@ -64,7 +64,6 @@ func lintSyntaxFiles(cfg Config, fset *token.FileSet, typesInfo *types.Info, fil
 			fset:      fset,
 			typesInfo: typesInfo,
 			relPath:   relPath,
-			parents:   buildParentMap(file),
 			ignores:   collectIgnoreComments(file, fset),
 		}
 
@@ -74,6 +73,10 @@ func lintSyntaxFiles(cfg Config, fset *token.FileSet, typesInfo *types.Info, fil
 	sortIssues(issues)
 
 	return issues, nil
+}
+
+func lintFile(ctx fileContext) []Issue {
+	return lintVersionedImports(ctx)
 }
 
 func issueKey(issue Issue) string {
@@ -100,18 +103,6 @@ func sortIssues(issues []Issue) {
 
 		return strings.Compare(a.Message, b.Message)
 	})
-}
-
-func lintFile(ctx fileContext) []Issue {
-	issues := make([]Issue, 0) //nolint:prealloc
-
-	issues = append(issues, lintSlogImports(ctx)...)
-	issues = append(issues, lintStdlibLogCalls(ctx)...)
-	issues = append(issues, lintZapMessageFormatting(ctx)...)
-	issues = append(issues, lintZapMessageSprintf(ctx)...)
-	issues = append(issues, lintZapRootComponent(ctx)...)
-
-	return issues
 }
 
 func repoRelativePath(root, path string) (string, error) {
@@ -178,7 +169,7 @@ func collectIgnoreComments(file *ast.File, fset *token.FileSet) []ignoreComment 
 }
 
 func parseIgnoreRules(text string) []string {
-	const marker = "loglint:ignore"
+	const marker = "kubeimportlint:ignore"
 
 	_, after, ok := strings.Cut(text, marker)
 	if !ok {
@@ -204,29 +195,6 @@ func parseIgnoreRules(text string) []string {
 	}
 
 	return out
-}
-
-func buildParentMap(root ast.Node) map[ast.Node]ast.Node {
-	parents := map[ast.Node]ast.Node{}
-	stack := make([]ast.Node, 0)
-
-	ast.Inspect(root, func(node ast.Node) bool {
-		if node == nil {
-			stack = stack[:len(stack)-1]
-
-			return false
-		}
-
-		if len(stack) > 0 {
-			parents[node] = stack[len(stack)-1]
-		}
-
-		stack = append(stack, node)
-
-		return true
-	})
-
-	return parents
 }
 
 func matchRuleScope(relPath string, globalExclude []string, scope RuleScope) bool {
@@ -266,20 +234,6 @@ func matchAnyPattern(relPath string, patterns []string) bool {
 	}
 
 	return false
-}
-
-func stringSet(values []string) map[string]struct{} {
-	out := make(map[string]struct{}, len(values))
-	for _, value := range values {
-		value = strings.TrimSpace(value)
-		if value == "" {
-			continue
-		}
-
-		out[value] = struct{}{}
-	}
-
-	return out
 }
 
 func importPath(spec *ast.ImportSpec) string {

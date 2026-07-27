@@ -18,7 +18,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/xslices"
 	"go.uber.org/zap"
-	v1 "k8s.io/api/certificates/v1"
+	certificatesv1 "k8s.io/api/certificates/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 
@@ -97,13 +97,13 @@ func KubeletCSRNotApprovedCheck(ctx context.Context, r controller.Reader, logger
 
 	expectedUsername := fmt.Sprintf("system:node:%s", nodeName.TypedSpec().Nodename)
 
-	csrs.Items = xslices.Filter(csrs.Items, func(csr v1.CertificateSigningRequest) bool {
+	csrs.Items = xslices.Filter(csrs.Items, func(csr certificatesv1.CertificateSigningRequest) bool {
 		if csr.Spec.Username != expectedUsername {
 			return false
 		}
 
 		for _, condition := range csr.Status.Conditions {
-			if condition.Type == v1.CertificateApproved {
+			if condition.Type == certificatesv1.CertificateApproved {
 				return false
 			}
 		}
@@ -122,7 +122,7 @@ func KubeletCSRNotApprovedCheck(ctx context.Context, r controller.Reader, logger
 			fmt.Sprintf(
 				"pending CSRs: %s",
 				strings.Join(
-					xslices.Map(csrs.Items, func(csr v1.CertificateSigningRequest) string { return csr.Name }),
+					xslices.Map(csrs.Items, func(csr certificatesv1.CertificateSigningRequest) string { return csr.Name }),
 					", ",
 				),
 			),

@@ -6,18 +6,18 @@ package k8stemplates
 
 import (
 	rbacv1 "k8s.io/api/rbac/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 )
 
 // CSRNodeBootstrapTemplate returns the CSR node bootstrap template.
 func CSRNodeBootstrapTemplate() runtime.Object {
 	return &rbacv1.ClusterRoleBinding{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "ClusterRoleBinding",
 			APIVersion: rbacv1.SchemeGroupVersion.String(),
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: "system-bootstrap-node-bootstrapper",
 		},
 		Subjects: []rbacv1.Subject{
@@ -43,11 +43,11 @@ func CSRNodeBootstrapTemplate() runtime.Object {
 // CSRApproverRoleBindingTemplate returns the CSR approver role binding template.
 func CSRApproverRoleBindingTemplate() runtime.Object {
 	return &rbacv1.ClusterRoleBinding{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "ClusterRoleBinding",
 			APIVersion: rbacv1.SchemeGroupVersion.String(),
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: "system-bootstrap-approve-node-client-csr",
 		},
 		Subjects: []rbacv1.Subject{
@@ -68,11 +68,11 @@ func CSRApproverRoleBindingTemplate() runtime.Object {
 // CSRRenewalRoleBindingTemplate returns the CSR renewal role binding template.
 func CSRRenewalRoleBindingTemplate() runtime.Object {
 	return &rbacv1.ClusterRoleBinding{
-		TypeMeta: v1.TypeMeta{
+		TypeMeta: metav1.TypeMeta{
 			Kind:       "ClusterRoleBinding",
 			APIVersion: rbacv1.SchemeGroupVersion.String(),
 		},
-		ObjectMeta: v1.ObjectMeta{
+		ObjectMeta: metav1.ObjectMeta{
 			Name: "system-bootstrap-node-renewal",
 		},
 		Subjects: []rbacv1.Subject{

@@ -7,7 +7,7 @@ package k8s
 import (
 	"encoding/json"
 
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
@@ -26,7 +26,7 @@ type staticPodStatus struct {
 }
 
 // SetStatus sets status from native Kubernetes resource.
-func (a staticPodStatus) SetStatus(status *v1.PodStatus) error {
+func (a staticPodStatus) SetStatus(status *corev1.PodStatus) error {
 	jsonSerialized, err := json.Marshal(status)
 	if err != nil {
 		return err
@@ -38,8 +38,8 @@ func (a staticPodStatus) SetStatus(status *v1.PodStatus) error {
 }
 
 // Status gets status from native Kubernetes resource.
-func (a staticPodStatus) Status() (*v1.PodStatus, error) {
-	var spec v1.PodStatus
+func (a staticPodStatus) Status() (*corev1.PodStatus, error) {
+	var spec corev1.PodStatus
 
 	jsonSerialized, err := json.Marshal(a.StaticPodStatus.TypedSpec().PodStatus)
 	if err != nil {

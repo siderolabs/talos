@@ -10,11 +10,11 @@ import (
 
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/gen/xslices"
-	v1 "k8s.io/api/core/v1"
+	corev1 "k8s.io/api/core/v1"
 )
 
 // EnvVars produces Kubernetes env vars spec from a map.
-func EnvVars(environment map[string]string) []v1.EnvVar {
+func EnvVars(environment map[string]string) []corev1.EnvVar {
 	if len(environment) == 0 {
 		return nil
 	}
@@ -22,9 +22,9 @@ func EnvVars(environment map[string]string) []v1.EnvVar {
 	keys := maps.Keys(environment)
 	slices.Sort(keys)
 
-	return xslices.Map(keys, func(key string) v1.EnvVar {
+	return xslices.Map(keys, func(key string) corev1.EnvVar {
 		// Kubernetes supports variable references in variable values, so escape '$' to prevent that.
-		return v1.EnvVar{
+		return corev1.EnvVar{
 			Name:  key,
 			Value: strings.ReplaceAll(environment[key], "$", "$$"),
 		}
