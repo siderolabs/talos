@@ -17,12 +17,16 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/volumes/volumeconfig"
 	"github.com/siderolabs/talos/internal/pkg/partition"
+	blockpb "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
+	"github.com/siderolabs/talos/pkg/machinery/cel"
+	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
 	"github.com/siderolabs/talos/pkg/machinery/meta"
+	"github.com/siderolabs/talos/pkg/machinery/proto"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
-// VolumeWipeController reads the StagedPartitionsToWipe META tag and wipes volumes by UUID.
+// VolumeWipeController reads the StagedWipeTargets META tag and wipes volumes matching its CEL selectors.
 type VolumeWipeController struct {
 	MetaProvider volumeconfig.MetaProvider
 }
@@ -38,7 +42,7 @@ func (ctrl *VolumeWipeController) Inputs() []controller.Input {
 		{
 			Namespace: runtime.NamespaceName,
 			Type:      runtime.MetaKeyType,
-			ID:        optional.Some(runtime.MetaKeyTagToID(meta.StagedPartitionsToWipe)),
+			ID:        optional.Some(runtime.MetaKeyTagToID(meta.StagedWipeSelectors)),
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -87,6 +91,8 @@ func (ctrl *VolumeWipeController) Run(ctx context.Context, r controller.Runtime,
 			continue
 		}
 
+		// At this point, we know META exists and has been loaded
+
 		discoveredVolumesStatus, err := safe.ReaderGetByID[*block.DiscoveredVolumesStatus](ctx, r, block.DiscoveredVolumesStatusID)
 		if err != nil {
 			if state.IsNotFoundError(err) {
@@ -102,15 +108,15 @@ func (ctrl *VolumeWipeController) Run(ctx context.Context, r controller.Runtime,
 			continue
 		}
 
-		// TODO(majabojarska): Must distinguish META not found vs key not found
-		metaKey, err := safe.ReaderGetByID[*runtime.MetaKey](ctx, r, runtime.MetaKeyTagToID(meta.StagedPartitionsToWipe))
+		// Volumes are now ready, we can execute the wipe instructions.
+
+		metaKey, err := safe.ReaderGetByID[*runtime.MetaKey](ctx, r, runtime.MetaKeyTagToID(meta.StagedWipeSelectors))
 		if err != nil {
-			return fmt.Errorf("failed to read META key (StagedPartitionsToWipe): %w", err)
+			return fmt.Errorf("failed to read META key (StagedWipeTargets): %w", err)
 		}
 
 		if metaKey == nil {
-			// Nothing to wipe
-			// logger.Info("META key not found or empty, skipping volume wipe", zap.Int("metaKey", meta.StagedPartitionsToWipe))
+			// Nothing to wipe: the StagedWipeTargets tag is absent.
 			if err := safe.WriterModify(
 				ctx,
 				r,
@@ -128,18 +134,18 @@ func (ctrl *VolumeWipeController) Run(ctx context.Context, r controller.Runtime,
 
 		// delete + flush the tag FIRST, before wiping — preserves safety (a wipe failure can't cause a boot loop)
 		// and avoids re-triggering on the same generation
-		if _, err := ctrl.MetaProvider.Meta().DeleteTag(ctx, meta.StagedPartitionsToWipe); err != nil {
-			return fmt.Errorf("failed to delete staged partitions to wipe tag: %w", err)
+		if _, err := ctrl.MetaProvider.Meta().DeleteTag(ctx, meta.StagedWipeSelectors); err != nil {
+			return fmt.Errorf("failed to delete staged wipe targets tag: %w", err)
 		}
 
 		if err := ctrl.MetaProvider.Meta().Flush(); err != nil {
 			return fmt.Errorf("failed to flush meta: %w", err)
 		}
 
-		// unmarshal the stored partition UUIDs
-		var partitionUUIDs map[string]bool
-		if err := json.Unmarshal([]byte(metaKey.TypedSpec().Value), &partitionUUIDs); err != nil {
-			return fmt.Errorf("failed to decode staged partitions to wipe tag: %w", err)
+		// unmarshal the stored CEL selectors
+		var selectors []cel.Expression
+		if err := json.Unmarshal([]byte(metaKey.TypedSpec().Value), &selectors); err != nil {
+			return fmt.Errorf("failed to decode staged wipe selectors: %w", err)
 		}
 
 		discoveredVolumes, err := safe.ReaderListAll[*block.DiscoveredVolume](ctx, r)
@@ -147,16 +153,40 @@ func (ctrl *VolumeWipeController) Run(ctx context.Context, r controller.Runtime,
 			return fmt.Errorf("failed to list discovered volumes: %w", err)
 		}
 
+		// convert each discovered volume to its proto spec once, for CEL evaluation
+		type discoveredVolume struct {
+			resource *block.DiscoveredVolume
+			spec     *blockpb.DiscoveredVolumeSpec
+		}
+
+		volumes := make([]discoveredVolume, 0, discoveredVolumes.Len())
+
+		for dv := range discoveredVolumes.All() {
+			spec := &blockpb.DiscoveredVolumeSpec{}
+			if err := proto.ResourceSpecToProto(dv, spec); err != nil {
+				return fmt.Errorf("failed to convert discovered volume %q to proto: %w", dv.Metadata().ID(), err)
+			}
+
+			volumes = append(volumes, discoveredVolume{resource: dv, spec: spec})
+		}
+
 		logfn := func(format string, args ...any) {
 			logger.Sugar().Infof(format, args...)
 		}
 
-		for uuid := range partitionUUIDs {
+		env := celenv.VolumeLocator()
+
+		for _, selector := range selectors {
 			var wipeTarget *partition.VolumeWipeTarget
 
-			for dv := range discoveredVolumes.All() {
-				if dv.TypedSpec().PartitionUUID == uuid {
-					wipeTarget = partition.VolumeWipeTargetFromDiscoveredVolume(dv)
+			for _, vol := range volumes {
+				matches, err := selector.EvalBool(env, map[string]any{"volume": vol.spec})
+				if err != nil {
+					return fmt.Errorf("failed to evaluate wipe selector %q: %w", selector, err)
+				}
+
+				if matches {
+					wipeTarget = partition.VolumeWipeTargetFromDiscoveredVolume(vol.resource)
 
 					// Found a match
 					break
@@ -164,15 +194,15 @@ func (ctrl *VolumeWipeController) Run(ctx context.Context, r controller.Runtime,
 			}
 
 			if wipeTarget == nil {
-				logger.Sugar().Infof("skipping staged wipe of partition %q: not found", uuid)
+				logger.Sugar().Errorf("failed to execute staged wipe for volume %q: no matching volume", selector)
 
 				continue
 			}
 
-			logger.Sugar().Infof("executing staged wipe of partition %s", wipeTarget)
+			logger.Sugar().Infof("executing staged wipe of %s", wipeTarget)
 
 			if err := wipeTarget.Wipe(ctx, logfn); err != nil {
-				logger.Sugar().Errorf("failed wiping partition %s: %w", wipeTarget, err)
+				logger.Sugar().Errorf("failed wiping %s: %v", wipeTarget, err)
 
 				continue
 			}

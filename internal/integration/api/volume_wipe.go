@@ -103,7 +103,7 @@ func (suite *VolumeWipeSuite) TestVolumeWipeImmediate() {
 
 // TestVolumeWipeStagedReboot verifies a staged (on-reboot) wipe of EPHEMERAL end-to-end.
 //
-// Staging writes the StagedPartitionsToWipe META tag with partition UUIDs; on the next reboot
+// Staging writes the StagedWipeTargets META tag with CEL selectors; on the next reboot
 // the VolumeWipeController (running as part of the normal COSI controller runtime) consumes the tag,
 // wipes the volume, and emits a VolumeWipeStatus resource. The volume is then re-provisioned.
 func (suite *VolumeWipeSuite) TestVolumeWipeStagedReboot() {
@@ -129,10 +129,10 @@ func (suite *VolumeWipeSuite) TestVolumeWipeStagedReboot() {
 		OnReboot:  true,
 	}))
 
-	// the staged wipe tag should be written to META with the partition UUID
+	// the staged wipe tag should be written to META with a CEL selector embedding the partition UUID
 	rtestutils.AssertResource(
 		nodeCtx, suite.T(), suite.Client.COSI,
-		runtimeres.MetaKeyTagToID(meta.StagedPartitionsToWipe),
+		runtimeres.MetaKeyTagToID(meta.StagedWipeSelectors),
 		func(metaKey *runtimeres.MetaKey, asrt *assert.Assertions) {
 			asrt.Contains(metaKey.TypedSpec().Value, ephemeralUUID)
 		},
@@ -154,7 +154,7 @@ func (suite *VolumeWipeSuite) TestVolumeWipeStagedReboot() {
 	// the controller should have consumed (deleted) the staged wipe tag
 	rtestutils.AssertNoResource[*runtimeres.MetaKey](
 		client.WithNode(suite.ctx, node), suite.T(), suite.Client.COSI,
-		runtimeres.MetaKeyTagToID(meta.StagedPartitionsToWipe),
+		runtimeres.MetaKeyTagToID(meta.StagedWipeSelectors),
 	)
 
 	// EPHEMERAL should be re-provisioned and ready

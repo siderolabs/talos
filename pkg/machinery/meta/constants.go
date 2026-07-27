@@ -29,6 +29,6 @@ const (
 	UniqueMachineToken
 	// DiskImageBootloader stores the bootloader used for the disk image, this key is wiped on first boot.
 	DiskImageBootloader
-	// StagedPartitionsToWipe stores a JSON-serialized list of parition UUIDs to wipe on the next boot.
-	StagedPartitionsToWipe
+	// StagedWipeSelectors stores a JSON-serialized list of CEL selectors for volumes to wipe on next boot.
+	StagedWipeSelectors
 )
