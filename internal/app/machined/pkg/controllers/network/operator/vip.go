@@ -222,7 +222,20 @@ func (vip *VIP) campaign(ctx context.Context, notifyCh chan<- struct{}) error {
 	if err != nil {
 		return fmt.Errorf("failed to create concurrency session: %w", err)
 	}
-	defer sess.Close() //nolint:errcheck
+
+	defer func() {
+		// Revoke the session lease to drop this node's election key.
+		//
+		// `Election.Campaign` cleans the key up itself when the campaign is interrupted, but it
+		// does so on the client context, which is canceled at the very same moment the campaign
+		// is aborted, so that attempt always fails. The etcd election is a FIFO queue ordered by
+		// create revision, so a key left behind by a node which is no longer campaigning delays
+		// the failover for every node queued behind it until the lease expires (60s).
+		if err := ec.RevokeSession(ctx, sess); err != nil {
+			// etcd is expected to be unreachable when the machine is shutting down
+			vip.logger.Debug("failed revoking etcd session", zap.Error(err))
+		}
+	}()
 
 	election := concurrency.NewElection(sess, vip.etcdElectionKey())
 
@@ -242,7 +255,9 @@ func (vip *VIP) campaign(ctx context.Context, notifyCh chan<- struct{}) error {
 		}
 	}
 
-	campaignErrCh := make(chan error)
+	// buffered, as the loop below stops waiting for the campaign on other events, and the
+	// goroutine should not be leaked blocking on the send
+	campaignErrCh := make(chan error, 1)
 
 	go func() {
 		campaignErrCh <- election.Campaign(ctx, hostname)
@@ -299,7 +314,7 @@ campaignLoop:
 
 	defer func() {
 		// use a new context to resign, as `ctx` might be canceled
-		resignCtx, resignCancel := context.WithTimeout(context.Background(), 10*time.Second)
+		resignCtx, resignCancel := context.WithTimeout(context.WithoutCancel(ctx), etcd.CleanupTimeout)
 		defer resignCancel()
 
 		election.Resign(resignCtx) //nolint:errcheck

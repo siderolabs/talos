@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"github.com/siderolabs/gen/channel"
-	"github.com/siderolabs/gen/xslices"
 	"github.com/siderolabs/go-retry/retry"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -222,13 +221,12 @@ func (k8sSuite *K8sSuite) EnsureResourceIsDeleted(
 func (k8sSuite *K8sSuite) WaitForEventExists(ctx context.Context, ns string, checkFn func(event eventsv1.Event) bool) error {
 	return retry.Constant(15*time.Second).RetryWithContext(ctx, func(ctx context.Context) error {
 		events, err := k8sSuite.Clientset.EventsV1().Events(ns).List(ctx, metav1.ListOptions{})
-
-		filteredEvents := xslices.Filter(events.Items, func(item eventsv1.Event) bool {
-			return checkFn(item)
-		})
-
-		if len(filteredEvents) == 0 {
+		if err != nil {
 			return retry.ExpectedError(err)
+		}
+
+		if !slices.ContainsFunc(events.Items, checkFn) {
+			return retry.ExpectedErrorf("no matching event found in namespace %q", ns)
 		}
 
 		return nil
