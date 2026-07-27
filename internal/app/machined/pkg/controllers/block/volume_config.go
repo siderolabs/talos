@@ -142,7 +142,6 @@ func (ctrl *VolumeConfigController) Run(ctx context.Context, r controller.Runtim
 				volumeWipeStatus, err := safe.ReaderGetByID[*block.VolumeWipeStatus](ctx, r, block.VolumeWipeID)
 				if err != nil {
 					return fmt.Errorf("error fetching volume wipe status: %w", err)
-					// TODO(majabojarska): What if we upgrade from a node that doesn't have these labels?
 				}
 
 				if !volumeWipeStatus.TypedSpec().Ready {

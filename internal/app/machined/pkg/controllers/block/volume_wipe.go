@@ -50,6 +50,18 @@ func (ctrl *VolumeWipeController) Inputs() []controller.Input {
 			Type:      block.DiscoveredVolumeType,
 			Kind:      controller.InputWeak,
 		},
+		{
+			Namespace: block.NamespaceName,
+			Type:      block.DiscoveredVolumesStatusType,
+			ID:        optional.Some(block.DiscoveredVolumesStatusID),
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: runtime.NamespaceName,
+			Type:      runtime.MetaLoadedType,
+			ID:        optional.Some(runtime.MetaLoadedID),
+			Kind:      controller.InputWeak,
+		},
 	}
 }
 
@@ -111,7 +123,9 @@ func (ctrl *VolumeWipeController) Run(ctx context.Context, r controller.Runtime,
 		// Volumes are now ready, we can execute the wipe instructions.
 
 		metaKey, err := safe.ReaderGetByID[*runtime.MetaKey](ctx, r, runtime.MetaKeyTagToID(meta.StagedWipeSelectors))
-		if err != nil {
+		if err != nil && !state.IsNotFoundError(err) {
+			// NotFound just means the tag is absent, which is a valid case (nothing to wipe).
+			// We have checked that META is loaded, so any other error is unexpected.
 			return fmt.Errorf("failed to read META key (StagedWipeTargets): %w", err)
 		}
 
@@ -174,13 +188,13 @@ func (ctrl *VolumeWipeController) Run(ctx context.Context, r controller.Runtime,
 			logger.Sugar().Infof(format, args...)
 		}
 
-		env := celenv.VolumeLocator()
+		volumeLocator := celenv.VolumeLocator()
 
 		for _, selector := range selectors {
 			var wipeTarget *partition.VolumeWipeTarget
 
 			for _, vol := range volumes {
-				matches, err := selector.EvalBool(env, map[string]any{"volume": vol.spec})
+				matches, err := selector.EvalBool(volumeLocator, map[string]any{"volume": vol.spec})
 				if err != nil {
 					return fmt.Errorf("failed to evaluate wipe selector %q: %w", selector, err)
 				}
