@@ -363,6 +363,29 @@ func TestGenerateDiscoveryIdentityConfig(t *testing.T) {
 	}
 }
 
+func TestGenerateNoEtcdKubernetes(t *testing.T) {
+	t.Parallel()
+
+	input, err := generate.NewInput(
+		"bare", "https://10.0.1.5", constants.DefaultKubernetesVersion,
+		generate.WithVersionContract(config.TalosVersionCurrent.DisableEtcd().DisableKubernetes()),
+	)
+	require.NoError(t, err)
+
+	for _, machineType := range []machine.Type{machine.TypeControlPlane, machine.TypeWorker} {
+		t.Run(machineType.String(), func(t *testing.T) {
+			t.Parallel()
+
+			cfg, err := input.Config(machineType)
+			require.NoError(t, err)
+
+			warnings, err := cfg.ValidateAsClient(runtimeMode{})
+			require.NoError(t, err)
+			assert.Empty(t, warnings)
+		})
+	}
+}
+
 type runtimeMode struct {
 	requiresInstall bool
 }

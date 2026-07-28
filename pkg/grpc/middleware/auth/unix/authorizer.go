@@ -155,7 +155,7 @@ func (a *Authorizer) Authorize(ctx context.Context) (role.Set, error) {
 	for {
 		select {
 		case <-ctx.Done():
-			a.logf("timed out waiting for runner state to be populated with PID")
+			a.logf("timed out waiting for runner state to be populated with PID (%d)", pid)
 
 			return role.Set{}, ErrNotAuthorized
 		case wrappedEvent := <-eventCh:

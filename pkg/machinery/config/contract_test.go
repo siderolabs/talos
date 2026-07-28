@@ -30,7 +30,7 @@ func TestContractParseVersion(t *testing.T) {
 		"v1.5":           config.TalosVersion1_5,
 		"v1.5.":          config.TalosVersion1_5,
 		"v1.5.1":         config.TalosVersion1_5,
-		"v1.88":          {1, 88},
+		"v1.88":          {Major: 1, Minor: 88},
 		"v1.5.3-alpha.4": config.TalosVersion1_5,
 		"1.6":            config.TalosVersion1_6,
 	} {
@@ -42,6 +42,32 @@ func TestContractParseVersion(t *testing.T) {
 			assert.Equal(t, expected, actual)
 		})
 	}
+}
+
+func TestContractDisableKubernetesEtcd(t *testing.T) {
+	t.Parallel()
+
+	var contract *config.VersionContract
+
+	assert.False(t, contract.KubernetesDisabled())
+	assert.True(t, contract.DisableKubernetes().KubernetesDisabled())
+
+	assert.False(t, contract.EtcdDisabled())
+	assert.True(t, contract.DisableEtcd().EtcdDisabled())
+
+	assert.True(t, contract.DisableEtcd().DisableKubernetes().Greater(config.TalosVersion1_14))
+	assert.Equal(t, "current", contract.DisableEtcd().DisableKubernetes().String())
+
+	contract = config.TalosVersion1_14
+
+	assert.False(t, contract.KubernetesDisabled())
+	assert.True(t, contract.DisableKubernetes().KubernetesDisabled())
+
+	assert.False(t, contract.EtcdDisabled())
+	assert.True(t, contract.DisableEtcd().EtcdDisabled())
+
+	assert.True(t, contract.DisableEtcd().DisableKubernetes().Greater(config.TalosVersion1_13))
+	assert.Equal(t, "v1.14", contract.DisableEtcd().DisableKubernetes().String())
 }
 
 func TestContractCurrent(t *testing.T) {

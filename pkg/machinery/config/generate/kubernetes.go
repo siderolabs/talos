@@ -19,7 +19,7 @@ import (
 )
 
 func (in *Input) generateKubernetesControlplaneConfigs(controlplaneURL *url.URL, certSANs []string, customCNIURL *url.URL) []config.Document {
-	if !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
+	if in.Options.VersionContract.KubernetesDisabled() || !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
 		return nil
 	}
 
@@ -153,8 +153,9 @@ func (in *Input) generateKubernetesControlplaneConfigs(controlplaneURL *url.URL,
 	return result
 }
 
+//nolint:gocyclo
 func (in *Input) generateKubernetesUniversalConfigs(isControlplane bool, controlPlaneURL *url.URL) []config.Document {
-	if !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
+	if in.Options.VersionContract.KubernetesDisabled() || !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
 		return nil
 	}
 

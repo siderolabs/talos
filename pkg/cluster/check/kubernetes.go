@@ -12,6 +12,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/gen/maps"
 	"github.com/siderolabs/go-pointer"
@@ -20,6 +21,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/siderolabs/talos/pkg/cluster"
+	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -30,6 +32,11 @@ import (
 func K8sAllNodesReportedAssertion(ctx context.Context, cl ClusterInfo) error {
 	clientset, err := cl.K8sClient(ctx)
 	if err != nil {
+		// No Kubernetes config, skip the check
+		if client.StatusCode(err) == codes.FailedPrecondition {
+			return conditions.ErrSkipAssertion
+		}
+
 		return err
 	}
 
@@ -83,6 +90,11 @@ func K8sAllNodesReportedAssertion(ctx context.Context, cl ClusterInfo) error {
 func K8sFullControlPlaneAssertion(ctx context.Context, cl ClusterInfo) error {
 	clientset, err := cl.K8sClient(ctx)
 	if err != nil {
+		// No Kubernetes config, skip the check
+		if client.StatusCode(err) == codes.FailedPrecondition {
+			return conditions.ErrSkipAssertion
+		}
+
 		return err
 	}
 
@@ -216,6 +228,11 @@ func K8sFullControlPlaneAssertion(ctx context.Context, cl ClusterInfo) error {
 func K8sAllNodesReadyAssertion(ctx context.Context, cluster cluster.K8sProvider) error {
 	clientset, err := cluster.K8sClient(ctx)
 	if err != nil {
+		// No Kubernetes config, skip the check
+		if client.StatusCode(err) == codes.FailedPrecondition {
+			return conditions.ErrSkipAssertion
+		}
+
 		return err
 	}
 
@@ -249,6 +266,11 @@ func K8sAllNodesReadyAssertion(ctx context.Context, cluster cluster.K8sProvider)
 func K8sAllNodesSchedulableAssertion(ctx context.Context, cluster cluster.K8sProvider) error {
 	clientset, err := cluster.K8sClient(ctx)
 	if err != nil {
+		// No Kubernetes config, skip the check
+		if client.StatusCode(err) == codes.FailedPrecondition {
+			return conditions.ErrSkipAssertion
+		}
+
 		return err
 	}
 
@@ -280,6 +302,11 @@ func K8sAllNodesSchedulableAssertion(ctx context.Context, cluster cluster.K8sPro
 func K8sPodReadyAssertion(ctx context.Context, cluster cluster.K8sProvider, replicas int, namespace, labelSelector string) error {
 	clientset, err := cluster.K8sClient(ctx)
 	if err != nil {
+		// No Kubernetes config, skip the check
+		if client.StatusCode(err) == codes.FailedPrecondition {
+			return conditions.ErrSkipAssertion
+		}
+
 		return err
 	}
 
@@ -362,6 +389,11 @@ func K8sPodReadyAssertion(ctx context.Context, cluster cluster.K8sProvider, repl
 func DaemonSetPresent(ctx context.Context, cluster cluster.K8sProvider, namespace, labelSelector string) (bool, int, error) {
 	clientset, err := cluster.K8sClient(ctx)
 	if err != nil {
+		// No Kubernetes config, skip the check
+		if client.StatusCode(err) == codes.FailedPrecondition {
+			return false, 0, conditions.ErrSkipAssertion
+		}
+
 		return false, 0, err
 	}
 
@@ -383,6 +415,11 @@ func DaemonSetPresent(ctx context.Context, cluster cluster.K8sProvider, namespac
 func DeploymentPresent(ctx context.Context, cluster cluster.K8sProvider, namespace, labelSelector string) (bool, int, error) {
 	clientset, err := cluster.K8sClient(ctx)
 	if err != nil {
+		// No Kubernetes config, skip the check
+		if client.StatusCode(err) == codes.FailedPrecondition {
+			return false, 0, conditions.ErrSkipAssertion
+		}
+
 		return false, 0, err
 	}
 
@@ -403,29 +440,51 @@ func DeploymentPresent(ctx context.Context, cluster cluster.K8sProvider, namespa
 }
 
 // K8sControlPlaneStaticPods checks whether all the controlplane nodes are running required Kubernetes static pods.
+//
+//nolint:gocyclo
 func K8sControlPlaneStaticPods(ctx context.Context, cl ClusterInfo) error {
 	expectedNodes := append(cl.NodesByType(machine.TypeInit), cl.NodesByType(machine.TypeControlPlane)...)
 
-	// using here new Talos COSI API, Talos 1.2+ required
 	c, err := cl.Client()
 	if err != nil {
 		return err
 	}
 
 	for _, node := range expectedNodes {
-		expectedStaticPods := map[string]struct{}{
-			"kube-system/kube-apiserver":          {},
-			"kube-system/kube-controller-manager": {},
-			"kube-system/kube-scheduler":          {},
-		}
+		expectedStaticPods := map[string]struct{}{}
 
-		items, err := safe.StateListAll[*k8s.StaticPodStatus](client.WithNode(ctx, node.InternalIP.String()), c.COSI)
-		if err != nil {
-			if client.StatusCode(err) == codes.Unimplemented {
-				// old version of Talos without COSI API
-				return nil
+		nodeCtx := client.WithNode(ctx, node.InternalIP.String())
+
+		for _, staticPod := range []struct {
+			id                 string
+			configResourceType resource.Type
+		}{
+			{
+				id:                 "kube-system/kube-apiserver",
+				configResourceType: k8s.APIServerConfigType,
+			},
+			{
+				id:                 "kube-system/kube-controller-manager",
+				configResourceType: k8s.ControllerManagerConfigType,
+			},
+			{
+				id:                 "kube-system/kube-scheduler",
+				configResourceType: k8s.SchedulerConfigType,
+			},
+		} {
+			// Talos 1.14 introduces more IDs for the same type, so use simple List API to avoid sticking to IDs
+			items, err := c.COSI.List(nodeCtx, resource.NewMetadata(k8s.ControlPlaneNamespaceName, staticPod.configResourceType, "", resource.VersionUndefined))
+			if err != nil {
+				return fmt.Errorf("error listing static pods config for node %s: %w", node.InternalIP, err)
 			}
 
+			if len(items.Items) > 0 {
+				expectedStaticPods[staticPod.id] = struct{}{}
+			}
+		}
+
+		items, err := safe.StateListAll[*k8s.StaticPodStatus](nodeCtx, c.COSI)
+		if err != nil {
 			return fmt.Errorf("error listing static pods on node %s: %w", node.InternalIP, err)
 		}
 

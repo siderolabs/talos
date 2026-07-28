@@ -26,6 +26,11 @@ type SummaryGrid struct {
 	node       string
 	logViewers map[string]*components.LogViewer
 
+	talosInfo         *components.TalosInfo
+	kubernetesInfo    *components.KubernetesInfo
+	networkInfo       *components.NetworkInfo
+	kubernetesVisible bool
+
 	diagnostics        *components.Diagnostics
 	diagnosticsVisible bool
 }
@@ -40,34 +45,29 @@ func NewSummaryGrid(app *tview.Application) *SummaryGrid {
 		logViewers: make(map[string]*components.LogViewer),
 	}
 
-	widget.SetRows(summaryTopFixedRows, 0).SetColumns(-3, -2, -3)
-
-	talosInfo := components.NewTalosInfo()
-	widget.AddItem(talosInfo, 0, 0, 1, 1, 0, 0, false)
-
-	kubernetesInfo := components.NewKubernetesInfo()
-	widget.AddItem(kubernetesInfo, 0, 1, 1, 1, 0, 0, false)
-
-	networkInfo := components.NewNetworkInfo()
-	widget.AddItem(networkInfo, 0, 2, 1, 1, 0, 0, false)
-
+	widget.talosInfo = components.NewTalosInfo()
+	widget.kubernetesInfo = components.NewKubernetesInfo()
+	widget.networkInfo = components.NewNetworkInfo()
 	widget.diagnostics = components.NewDiagnostics()
 
+	// the Kubernetes column is hidden until the Kubernetes version is detected
+	widget.refreshLayout()
+
 	widget.apiDataListeners = []APIDataListener{
-		kubernetesInfo,
+		widget.kubernetesInfo,
 	}
 
 	widget.resourceListeners = []ResourceDataListener{
-		talosInfo,
-		kubernetesInfo,
-		networkInfo,
+		widget.talosInfo,
+		widget.kubernetesInfo,
+		widget.networkInfo,
 		widget.diagnostics,
 	}
 
 	widget.nodeSelectListeners = []NodeSelectListener{
-		talosInfo,
-		kubernetesInfo,
-		networkInfo,
+		widget.talosInfo,
+		widget.kubernetesInfo,
+		widget.networkInfo,
 		widget.diagnostics,
 	}
 
@@ -84,6 +84,7 @@ func (widget *SummaryGrid) OnNodeSelect(node string) {
 		nodeSelectListener.OnNodeSelect(node)
 	}
 
+	widget.updateKubernetesVisibility()
 	widget.updateDiagnostics()
 }
 
@@ -92,6 +93,8 @@ func (widget *SummaryGrid) OnAPIDataChange(node string, data *apidata.Data) {
 	for _, dataWidget := range widget.apiDataListeners {
 		dataWidget.OnAPIDataChange(node, data)
 	}
+
+	widget.updateKubernetesVisibility()
 }
 
 // OnResourceDataChange implements the ResourceDataListener interface.
@@ -100,12 +103,59 @@ func (widget *SummaryGrid) OnResourceDataChange(nodeResource resourcedata.Data) 
 		resourceListener.OnResourceDataChange(nodeResource)
 	}
 
+	widget.updateKubernetesVisibility()
 	widget.updateDiagnostics()
 }
 
 // OnLogDataChange implements the LogDataListener interface.
 func (widget *SummaryGrid) OnLogDataChange(node, logLine, logError string) {
 	widget.logViewer(node).WriteLog(logLine, logError)
+}
+
+// updateKubernetesVisibility shows or hides the Kubernetes column based on whether
+// Kubernetes is configured on the selected node.
+func (widget *SummaryGrid) updateKubernetesVisibility() {
+	if widget.kubernetesInfo.Configured() == widget.kubernetesVisible {
+		return
+	}
+
+	widget.kubernetesVisible = !widget.kubernetesVisible
+
+	widget.refreshLayout()
+}
+
+// refreshLayout re-builds the grid layout, as the number of columns depends on
+// the Kubernetes column visibility.
+func (widget *SummaryGrid) refreshLayout() {
+	widget.Clear()
+
+	widget.diagnosticsVisible = false
+	widget.SetRows(summaryTopFixedRows, 0)
+
+	if widget.kubernetesVisible {
+		widget.SetColumns(-3, -2, -3)
+
+		widget.AddItem(widget.talosInfo, 0, 0, 1, 1, 0, 0, false)
+		widget.AddItem(widget.kubernetesInfo, 0, 1, 1, 1, 0, 0, false)
+		widget.AddItem(widget.networkInfo, 0, 2, 1, 1, 0, 0, false)
+	} else {
+		widget.SetColumns(-1, -1)
+
+		widget.AddItem(widget.talosInfo, 0, 0, 1, 1, 0, 0, false)
+		widget.AddItem(widget.networkInfo, 0, 1, 1, 1, 0, 0, false)
+	}
+
+	widget.updateLogViewer()
+	widget.updateDiagnostics()
+}
+
+// columns returns the number of grid columns in the current layout.
+func (widget *SummaryGrid) columns() int {
+	if widget.kubernetesVisible {
+		return 3
+	}
+
+	return 2
 }
 
 func (widget *SummaryGrid) updateDiagnostics() {
@@ -118,7 +168,7 @@ func (widget *SummaryGrid) updateDiagnostics() {
 		widget.diagnosticsVisible = false
 	case height > 0 && !widget.diagnosticsVisible:
 		widget.SetRows(summaryTopFixedRows, 0, height)
-		widget.AddItem(widget.diagnostics, 2, 0, 1, 3, 0, 0, false)
+		widget.AddItem(widget.diagnostics, 2, 0, 1, widget.columns(), 0, 0, false)
 		widget.diagnosticsVisible = true
 	case height > 0:
 		widget.SetRows(summaryTopFixedRows, 0, height)
@@ -134,7 +184,7 @@ func (widget *SummaryGrid) updateLogViewer() {
 
 	for currNode, logViewer := range widget.logViewers {
 		if currNode == widget.node {
-			widget.AddItem(logViewer, 1, 0, 1, 3, 0, 0, false)
+			widget.AddItem(logViewer, 1, 0, 1, widget.columns(), 0, 0, false)
 
 			widget.app.SetFocus(logViewer)
 

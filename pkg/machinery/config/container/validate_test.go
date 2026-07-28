@@ -252,6 +252,10 @@ func TestValidateContainer(t *testing.T) {
 		},
 	}
 
+	v1alpha1CfgControlplane := v1alpha1Cfg.DeepCopy()
+	v1alpha1CfgControlplane.MachineConfig.MachineType = "controlplane"
+	v1alpha1CfgControlplane.MachineConfig.MachineCA.Key = []byte("controlplane-key")
+
 	resolverConfig := network.NewResolverConfigV1Alpha1()
 	resolverConfig.ResolverNameservers = []network.NameserverConfig{
 		{
@@ -292,6 +296,8 @@ func TestValidateContainer(t *testing.T) {
 	)
 
 	discoveryServiceConfig := cluster.NewDiscoveryServiceConfigV1Alpha1("default", must.Value(url.Parse("https://discovery.api/"))(t))
+
+	apiServerCAConfig := k8s.NewKubeAPIServerCAConfigV1Alpha1()
 
 	for _, tt := range []struct {
 		name        string
@@ -380,6 +386,12 @@ func TestValidateContainer(t *testing.T) {
 		{
 			name:      "discovery with kubespan and identity",
 			documents: []config.Document{discoveryServiceConfig, discoveryIdentityConfig, kubespanConfig},
+		},
+		{
+			name:      "api-server CA without etcd encryption",
+			documents: []config.Document{v1alpha1CfgControlplane, apiServerCAConfig},
+
+			expectedError: "1 error occurred:\n\t* etcd encryption config is required for control plane machines running kube-apiserver\n\n",
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {

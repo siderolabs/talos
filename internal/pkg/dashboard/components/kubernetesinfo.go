@@ -57,6 +57,15 @@ func NewKubernetesInfo() *KubernetesInfo {
 	return kubernetes
 }
 
+// Configured returns true if Kubernetes is configured on the selected node.
+//
+// Kubernetes is assumed to be configured if the Kubernetes version was detected.
+func (widget *KubernetesInfo) Configured() bool {
+	data, ok := widget.nodeMap[widget.selectedNode]
+
+	return ok && data.kubernetesVersion != notAvailable
+}
+
 // OnNodeSelect implements the NodeSelectListener interface.
 func (widget *KubernetesInfo) OnNodeSelect(node string) {
 	if node != widget.selectedNode {

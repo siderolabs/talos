@@ -267,21 +267,26 @@ func (container *Container) validateContainer(mode validation.RuntimeMode) error
 		}
 	}
 
-	// control plane specific checks
-	if container.Machine() != nil && container.Machine().Type().IsControlPlane() {
-		hasLegacyEtcdEncryptionConfig := container.Cluster() != nil && (container.Cluster().SecretboxEncryptionSecret() != "" || container.Cluster().AESCBCEncryptionSecret() != "")
-		hasKubeEtcdEncryptionConfig := container.K8sEtcdEncryptionConfig() != nil
-
-		if !hasLegacyEtcdEncryptionConfig && !hasKubeEtcdEncryptionConfig {
-			errs = multierror.Append(errs, fmt.Errorf("etcd encryption config is required for control plane machines"))
-		}
-	}
-
 	// machine type specific checks
 	var machineType machine.Type
 
 	if container.Machine() != nil {
 		machineType = container.Machine().Type()
+	}
+
+	// control plane specific checks
+	if machineType.IsControlPlane() {
+		// switching here on api-server CA config instead of api-server config,
+		// as due to backwards compatibility reasons, the empty legacy `.cluster.apiServer` config
+		// resolves to "default api-server".
+		if container.K8sAPIServerCAConfig() != nil {
+			hasLegacyEtcdEncryptionConfig := container.Cluster() != nil && (container.Cluster().SecretboxEncryptionSecret() != "" || container.Cluster().AESCBCEncryptionSecret() != "")
+			hasKubeEtcdEncryptionConfig := container.K8sEtcdEncryptionConfig() != nil
+
+			if !hasLegacyEtcdEncryptionConfig && !hasKubeEtcdEncryptionConfig {
+				errs = multierror.Append(errs, fmt.Errorf("etcd encryption config is required for control plane machines running kube-apiserver"))
+			}
+		}
 	}
 
 	controlplaneDocs := findMatchingDocs[ControlplaneOnlyConfig](container.documents)

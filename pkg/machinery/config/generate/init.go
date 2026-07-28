@@ -153,9 +153,9 @@ func (in *Input) init() ([]config.Document, error) {
 		SchedulerConfig: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.SchedulerConfig{ //nolint:staticcheck // legacy configuration
 			ContainerImage: fmt.Sprintf("%s:v%s", constants.KubernetesSchedulerImage, in.KubernetesVersion),
 		}),
-		EtcdConfig: &v1alpha1.EtcdConfig{
+		EtcdConfig: nilIf(in.Options.VersionContract.EtcdDisabled(), &v1alpha1.EtcdConfig{
 			RootCA: in.Options.SecretsBundle.Certs.Etcd,
-		},
+		}),
 		ClusterNetwork: nilIf(
 			in.Options.VersionContract.MultidocKubernetesConfigSupported(),
 			&v1alpha1.ClusterNetworkConfig{
@@ -167,7 +167,7 @@ func (in *Input) init() ([]config.Document, error) {
 		ClusterCA:             nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), in.Options.SecretsBundle.Certs.K8s),
 		ClusterAggregatorCA:   nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), in.Options.SecretsBundle.Certs.K8sAggregator),
 		ClusterServiceAccount: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), in.Options.SecretsBundle.Certs.K8sServiceAccount),
-		BootstrapToken:        in.Options.SecretsBundle.Secrets.BootstrapToken,
+		BootstrapToken:        nilIf(in.Options.VersionContract.KubernetesDisabled(), in.Options.SecretsBundle.Secrets.BootstrapToken),
 	}
 
 	var customCNIURL *url.URL

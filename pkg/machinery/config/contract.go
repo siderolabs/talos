@@ -20,26 +20,29 @@ import (
 type VersionContract struct {
 	Major int
 	Minor int
+
+	disableKubernetes bool
+	disableEtcd       bool
 }
 
 // Well-known Talos version contracts.
 var (
 	TalosVersionCurrent = (*VersionContract)(nil)
-	TalosVersion1_14    = &VersionContract{1, 14}
-	TalosVersion1_13    = &VersionContract{1, 13}
-	TalosVersion1_12    = &VersionContract{1, 12}
-	TalosVersion1_11    = &VersionContract{1, 11}
-	TalosVersion1_10    = &VersionContract{1, 10}
-	TalosVersion1_9     = &VersionContract{1, 9}
-	TalosVersion1_8     = &VersionContract{1, 8}
-	TalosVersion1_7     = &VersionContract{1, 7}
-	TalosVersion1_6     = &VersionContract{1, 6}
-	TalosVersion1_5     = &VersionContract{1, 5}
-	TalosVersion1_4     = &VersionContract{1, 4}
-	TalosVersion1_3     = &VersionContract{1, 3}
-	TalosVersion1_2     = &VersionContract{1, 2}
-	TalosVersion1_1     = &VersionContract{1, 1}
-	TalosVersion1_0     = &VersionContract{1, 0}
+	TalosVersion1_14    = &VersionContract{Major: 1, Minor: 14}
+	TalosVersion1_13    = &VersionContract{Major: 1, Minor: 13}
+	TalosVersion1_12    = &VersionContract{Major: 1, Minor: 12}
+	TalosVersion1_11    = &VersionContract{Major: 1, Minor: 11}
+	TalosVersion1_10    = &VersionContract{Major: 1, Minor: 10}
+	TalosVersion1_9     = &VersionContract{Major: 1, Minor: 9}
+	TalosVersion1_8     = &VersionContract{Major: 1, Minor: 8}
+	TalosVersion1_7     = &VersionContract{Major: 1, Minor: 7}
+	TalosVersion1_6     = &VersionContract{Major: 1, Minor: 6}
+	TalosVersion1_5     = &VersionContract{Major: 1, Minor: 5}
+	TalosVersion1_4     = &VersionContract{Major: 1, Minor: 4}
+	TalosVersion1_3     = &VersionContract{Major: 1, Minor: 3}
+	TalosVersion1_2     = &VersionContract{Major: 1, Minor: 2}
+	TalosVersion1_1     = &VersionContract{Major: 1, Minor: 1}
+	TalosVersion1_0     = &VersionContract{Major: 1, Minor: 0}
 )
 
 var versionRegexp = regexp.MustCompile(`^v(\d+)\.(\d+)($|\.)`)
@@ -63,7 +66,7 @@ func ParseContractFromVersion(version string) (*VersionContract, error) {
 
 // String returns string representation of the contract.
 func (contract *VersionContract) String() string {
-	if contract == nil {
+	if contract == nil || (contract.Major == 0 && contract.Minor == 0) {
 		return "current"
 	}
 
@@ -72,15 +75,60 @@ func (contract *VersionContract) String() string {
 
 // Greater compares contract to another contract.
 func (contract *VersionContract) Greater(other *VersionContract) bool {
-	if contract == nil {
-		return other != nil
+	contractNil := contract == nil || contract.Major == 0 && contract.Minor == 0
+	otherNil := other == nil || other.Major == 0 && other.Minor == 0
+
+	if contractNil {
+		return !otherNil
 	}
 
-	if other == nil {
+	if otherNil {
 		return false
 	}
 
 	return contract.Major > other.Major || (contract.Major == other.Major && contract.Minor > other.Minor)
+}
+
+// DisableKubernetes produces new version contract with Kubernetes disabled.
+func (contract *VersionContract) DisableKubernetes() *VersionContract {
+	if contract == nil {
+		return &VersionContract{disableKubernetes: true}
+	}
+
+	newContract := *contract
+	newContract.disableKubernetes = true
+
+	return &newContract
+}
+
+// DisableEtcd produces new version contract with etcd disabled.
+func (contract *VersionContract) DisableEtcd() *VersionContract {
+	if contract == nil {
+		return &VersionContract{disableEtcd: true}
+	}
+
+	newContract := *contract
+	newContract.disableEtcd = true
+
+	return &newContract
+}
+
+// KubernetesDisabled returns true if Kubernetes should be disabled in the generated config.
+func (contract *VersionContract) KubernetesDisabled() bool {
+	if contract == nil {
+		return false
+	}
+
+	return contract.disableKubernetes
+}
+
+// EtcdDisabled returns true if etcd should be disabled in the generated config.
+func (contract *VersionContract) EtcdDisabled() bool {
+	if contract == nil {
+		return false
+	}
+
+	return contract.disableEtcd
 }
 
 // PodSecurityAdmissionEnabled returns true if pod security admission should be enabled by default.

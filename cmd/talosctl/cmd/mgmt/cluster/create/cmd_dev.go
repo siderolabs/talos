@@ -132,6 +132,7 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 		forceEndpointFlag             = "endpoint"
 		kubePrismFlag                 = "kubeprism-port"
 		diskEncryptionKeyTypesFlag    = "disk-encryption-key-types"
+		skipEtcdK8sFlag               = "skip-etcd-k8s"
 	)
 
 	unImplementedFlagsDarwin := []string{
@@ -202,6 +203,7 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 		common.BoolVar(&cOps.WithJSONLogs, withJSONLogsFlag, cOps.WithJSONLogs, "enable JSON logs receiver and configure Talos to send logs there")
 		common.BoolVar(&cOps.WithUUIDHostnames, withUUIDHostnamesFlag, cOps.WithUUIDHostnames, "use machine UUIDs as default hostnames")
 		common.BoolVar(&cOps.NetworkIPv6, networkIPv6Flag, cOps.NetworkIPv6, "enable IPv6 network in the cluster")
+		common.BoolVar(&cOps.SkipEtcdK8sConfig, skipEtcdK8sFlag, cOps.SkipEtcdK8sConfig, "skip etcd and Kubernetes machine configuration (experimental)")
 
 		return common
 	}

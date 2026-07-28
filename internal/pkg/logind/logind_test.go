@@ -83,3 +83,44 @@ func TestIntegration(t *testing.T) {
 
 	assert.NoError(t, <-errCh)
 }
+
+func TestIntegrationNoKubelet(t *testing.T) {
+	// test same flow as TestIntegration, but this time without kubelet connection
+	// to ensure there is no wait for the lock that was never required
+	dir := t.TempDir()
+
+	socketPathService := filepath.Join(dir, "system_bus_service")
+	socketPathClient := filepath.Join(dir, "system_bus_client")
+
+	broker, err := logind.NewBroker(t.Context(), socketPathService, socketPathClient)
+	require.NoError(t, err)
+
+	ctx, cancel := context.WithCancel(t.Context())
+	defer cancel()
+
+	errCh := make(chan error, 1)
+
+	go func() {
+		errCh <- broker.Run(ctx)
+	}()
+
+	serviceConn, err := logind.NewServiceMock(socketPathService)
+	require.NoError(t, err)
+
+	defer serviceConn.Close() //nolint:errcheck
+
+	t.Log("emitting shutdown signal")
+
+	require.NoError(t, serviceConn.EmitShutdown())
+
+	t.Log("waiting for inhibit lock release")
+
+	assert.NoError(t, serviceConn.WaitLockRelease(ctx))
+
+	assert.NoError(t, serviceConn.Close())
+	assert.NoError(t, broker.Close())
+
+	cancel()
+
+	assert.NoError(t, <-errCh)
+}

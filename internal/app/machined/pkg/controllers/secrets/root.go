@@ -59,17 +59,19 @@ type RootEtcdController = transform.Controller[*config.MachineConfig, *secrets.E
 func NewRootEtcdController() *RootEtcdController {
 	return transform.NewController(
 		transform.Settings[*config.MachineConfig, *secrets.EtcdRoot]{
-			Name:                    "secrets.RootEtcdController",
-			MapMetadataOptionalFunc: rootMapFunc(secrets.NewEtcdRoot(secrets.EtcdRootID), true),
+			Name: "secrets.RootEtcdController",
+			MapMetadataOptionalFunc: rootMapFunc(
+				secrets.NewEtcdRoot(secrets.EtcdRootID), true,
+				func(cfg *config.MachineConfig) bool {
+					// skip the controller if the etcd secret is not present
+					return cfg.Config().Cluster().Etcd().CA() != nil
+				},
+			),
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, cfg *config.MachineConfig, res *secrets.EtcdRoot) error {
 				cfgProvider := cfg.Config()
 				etcdSecrets := res.TypedSpec()
 
 				etcdSecrets.EtcdCA = cfgProvider.Cluster().Etcd().CA()
-
-				if etcdSecrets.EtcdCA == nil {
-					return errors.New("missing cluster.etcdCA secret")
-				}
 
 				return nil
 			},

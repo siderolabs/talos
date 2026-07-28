@@ -110,7 +110,6 @@ func (in *Input) worker() ([]config.Document, error) {
 	cluster := &v1alpha1.ClusterConfig{
 		ClusterID:      nilIf(in.Options.VersionContract.DiscoveryIdentityMultidocConfig(), in.Options.SecretsBundle.Cluster.ID),     //nolint:staticcheck // legacy configuration
 		ClusterSecret:  nilIf(in.Options.VersionContract.DiscoveryIdentityMultidocConfig(), in.Options.SecretsBundle.Cluster.Secret), //nolint:staticcheck // legacy configuration
-		ClusterCA:      nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &x509.PEMEncodedCertificateAndKey{Crt: in.Options.SecretsBundle.Certs.K8s.Crt}),
 		BootstrapToken: in.Options.SecretsBundle.Secrets.BootstrapToken,
 		ControlPlane: nilIf(in.Options.VersionContract.MultidocKubernetesConfigSupported(), &v1alpha1.ControlPlaneConfig{
 			Endpoint: &v1alpha1.Endpoint{URL: controlPlaneURL},
@@ -123,6 +122,10 @@ func (in *Input) worker() ([]config.Document, error) {
 				ServiceSubnet: in.ServiceNet,
 			},
 		),
+	}
+
+	if !in.Options.VersionContract.MultidocKubernetesConfigSupported() {
+		cluster.ClusterCA = &x509.PEMEncodedCertificateAndKey{Crt: in.Options.SecretsBundle.Certs.K8s.Crt} //nolint:staticcheck // legacy configuration
 	}
 
 	if !in.Options.VersionContract.MultidocKubernetesConfigSupported() && in.Options.CNICustomURL != "" {

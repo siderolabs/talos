@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -28,7 +29,7 @@ type K8sAddressFilterSuite struct {
 	ctest.DefaultSuite
 }
 
-func (suite *K8sAddressFilterSuite) TestReconcile() {
+func (suite *K8sAddressFilterSuite) TestReconcileK8s() {
 	u, err := url.Parse("https://foo:6443")
 	suite.Require().NoError(err)
 
@@ -108,6 +109,32 @@ func (suite *K8sAddressFilterSuite) TestReconcile() {
 			"[10.32.0.0/12 fd00:10:32::/102 192.168.0.0/24 10.200.0.0/22 fd40:10:200::/112]",
 			fmt.Sprintf("%s", spec.ExcludeSubnets),
 		)
+	})
+}
+
+func (suite *K8sAddressFilterSuite) TestReconcileNoK8s() {
+	cfg := config.NewMachineConfig(
+		container.NewV1Alpha1(
+			&v1alpha1.Config{
+				ConfigVersion: "v1alpha1",
+				MachineConfig: &v1alpha1.MachineConfig{},
+				ClusterConfig: &v1alpha1.ClusterConfig{},
+			},
+		),
+	)
+	suite.Create(cfg)
+
+	ctest.AssertResources(suite, []resource.ID{k8s.NodeAddressFilterOnlyK8s, k8s.NodeAddressFilterNoK8s}, func(res *network.NodeAddressFilter, asrt *assert.Assertions) {
+		spec := res.TypedSpec()
+
+		asrt.Empty(spec.IncludeSubnets)
+
+		switch res.Metadata().ID() {
+		case k8s.NodeAddressFilterOnlyK8s:
+			asrt.Equal("[0.0.0.0/0 ::/0]", fmt.Sprintf("%s", spec.ExcludeSubnets))
+		case k8s.NodeAddressFilterNoK8s:
+			asrt.Empty(spec.ExcludeSubnets)
+		}
 	})
 }
 

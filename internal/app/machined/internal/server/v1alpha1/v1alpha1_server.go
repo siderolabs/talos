@@ -418,6 +418,13 @@ func (s *Server) Bootstrap(ctx context.Context, in *machine.BootstrapRequest) (r
 		return nil, err
 	}
 
+	hasEtcdCA := s.Controller.Runtime().Config() != nil && s.Controller.Runtime().Config().Cluster() != nil && s.Controller.Runtime().Config().Cluster().Etcd().CA() != nil
+	if !hasEtcdCA {
+		// there is no etcd CA in the machine config, but we already have machine type (previous check),
+		// so reject the bootstrap as a terminal error
+		return nil, status.Error(codes.InvalidArgument, "etcd is not configured, bootstrap is not possible")
+	}
+
 	timeCtx, timeCtxCancel := context.WithTimeout(ctx, 5*time.Second)
 	defer timeCtxCancel()
 

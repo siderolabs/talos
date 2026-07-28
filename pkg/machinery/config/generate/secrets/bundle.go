@@ -266,7 +266,7 @@ func (bundle *Bundle) populate(versionContract *config.VersionContract) error {
 		bundle.Certs = &Certs{}
 	}
 
-	if bundle.Certs.Etcd == nil {
+	if bundle.Certs.Etcd == nil && !versionContract.EtcdDisabled() {
 		etcd, err := NewEtcdCA(bundle.Clock.Now(), versionContract)
 		if err != nil {
 			return err
@@ -278,48 +278,50 @@ func (bundle *Bundle) populate(versionContract *config.VersionContract) error {
 		}
 	}
 
-	if bundle.Certs.K8s == nil {
-		kubernetesCA, err := NewKubernetesCA(bundle.Clock.Now(), versionContract)
-		if err != nil {
-			return err
-		}
-
-		bundle.Certs.K8s = &x509.PEMEncodedCertificateAndKey{
-			Crt: kubernetesCA.CrtPEM,
-			Key: kubernetesCA.KeyPEM,
-		}
-	}
-
-	if bundle.Certs.K8sAggregator == nil {
-		aggregatorCA, err := NewAggregatorCA(bundle.Clock.Now(), versionContract)
-		if err != nil {
-			return err
-		}
-
-		bundle.Certs.K8sAggregator = &x509.PEMEncodedCertificateAndKey{
-			Crt: aggregatorCA.CrtPEM,
-			Key: aggregatorCA.KeyPEM,
-		}
-	}
-
-	if bundle.Certs.K8sServiceAccount == nil {
-		if versionContract.UseRSAServiceAccountKey() {
-			serviceAccount, err := x509.NewRSAKey()
+	if !versionContract.KubernetesDisabled() {
+		if bundle.Certs.K8s == nil {
+			kubernetesCA, err := NewKubernetesCA(bundle.Clock.Now(), versionContract)
 			if err != nil {
 				return err
 			}
 
-			bundle.Certs.K8sServiceAccount = &x509.PEMEncodedKey{
-				Key: serviceAccount.KeyPEM,
+			bundle.Certs.K8s = &x509.PEMEncodedCertificateAndKey{
+				Crt: kubernetesCA.CrtPEM,
+				Key: kubernetesCA.KeyPEM,
 			}
-		} else {
-			serviceAccount, err := x509.NewECDSAKey()
+		}
+
+		if bundle.Certs.K8sAggregator == nil {
+			aggregatorCA, err := NewAggregatorCA(bundle.Clock.Now(), versionContract)
 			if err != nil {
 				return err
 			}
 
-			bundle.Certs.K8sServiceAccount = &x509.PEMEncodedKey{
-				Key: serviceAccount.KeyPEM,
+			bundle.Certs.K8sAggregator = &x509.PEMEncodedCertificateAndKey{
+				Crt: aggregatorCA.CrtPEM,
+				Key: aggregatorCA.KeyPEM,
+			}
+		}
+
+		if bundle.Certs.K8sServiceAccount == nil {
+			if versionContract.UseRSAServiceAccountKey() {
+				serviceAccount, err := x509.NewRSAKey()
+				if err != nil {
+					return err
+				}
+
+				bundle.Certs.K8sServiceAccount = &x509.PEMEncodedKey{
+					Key: serviceAccount.KeyPEM,
+				}
+			} else {
+				serviceAccount, err := x509.NewECDSAKey()
+				if err != nil {
+					return err
+				}
+
+				bundle.Certs.K8sServiceAccount = &x509.PEMEncodedKey{
+					Key: serviceAccount.KeyPEM,
+				}
 			}
 		}
 	}
@@ -340,32 +342,34 @@ func (bundle *Bundle) populate(versionContract *config.VersionContract) error {
 		bundle.Secrets = &Secrets{}
 	}
 
-	if bundle.Secrets.BootstrapToken == "" {
-		token, err := genToken(6, 16)
-		if err != nil {
-			return err
-		}
-
-		bundle.Secrets.BootstrapToken = token
-	}
-
-	if versionContract.Greater(config.TalosVersion1_2) {
-		if bundle.Secrets.SecretboxEncryptionSecret == "" {
-			secretboxEncryptionSecret, err := cis.CreateEncryptionToken()
+	if !versionContract.KubernetesDisabled() {
+		if bundle.Secrets.BootstrapToken == "" {
+			token, err := genToken(6, 16)
 			if err != nil {
 				return err
 			}
 
-			bundle.Secrets.SecretboxEncryptionSecret = secretboxEncryptionSecret
+			bundle.Secrets.BootstrapToken = token
 		}
-	} else {
-		if bundle.Secrets.AESCBCEncryptionSecret == "" {
-			aesCBCEncryptionSecret, err := cis.CreateEncryptionToken()
-			if err != nil {
-				return err
-			}
 
-			bundle.Secrets.AESCBCEncryptionSecret = aesCBCEncryptionSecret
+		if versionContract.Greater(config.TalosVersion1_2) {
+			if bundle.Secrets.SecretboxEncryptionSecret == "" {
+				secretboxEncryptionSecret, err := cis.CreateEncryptionToken()
+				if err != nil {
+					return err
+				}
+
+				bundle.Secrets.SecretboxEncryptionSecret = secretboxEncryptionSecret
+			}
+		} else {
+			if bundle.Secrets.AESCBCEncryptionSecret == "" {
+				aesCBCEncryptionSecret, err := cis.CreateEncryptionToken()
+				if err != nil {
+					return err
+				}
+
+				bundle.Secrets.AESCBCEncryptionSecret = aesCBCEncryptionSecret
+			}
 		}
 	}
 
@@ -425,7 +429,7 @@ func (bundle *Bundle) GenerateTalosAPIClientCertificateWithTTL(roles role.Set, c
 // Validate the bundle.
 //
 //nolint:gocyclo,cyclop
-func (bundle *Bundle) Validate() error {
+func (bundle *Bundle) Validate(versionContract *config.VersionContract) error {
 	var multiErr error
 
 	if bundle.Cluster == nil {
@@ -440,19 +444,21 @@ func (bundle *Bundle) Validate() error {
 		}
 	}
 
-	if bundle.Secrets == nil {
-		multiErr = multierror.Append(multiErr, fmt.Errorf("secrets is required"))
-	} else {
-		if bundle.Secrets.BootstrapToken == "" {
-			multiErr = multierror.Append(multiErr, fmt.Errorf("secrets.bootstraptoken is required"))
-		}
+	if !versionContract.KubernetesDisabled() {
+		if bundle.Secrets == nil {
+			multiErr = multierror.Append(multiErr, fmt.Errorf("secrets is required"))
+		} else {
+			if bundle.Secrets.BootstrapToken == "" {
+				multiErr = multierror.Append(multiErr, fmt.Errorf("secrets.bootstraptoken is required"))
+			}
 
-		if bundle.Secrets.AESCBCEncryptionSecret == "" && bundle.Secrets.SecretboxEncryptionSecret == "" {
-			multiErr = multierror.Append(multiErr, fmt.Errorf("one of [secrets.secretboxencryptionsecret, secrets.aescbcencryptionsecret] is required"))
-		}
+			if bundle.Secrets.AESCBCEncryptionSecret == "" && bundle.Secrets.SecretboxEncryptionSecret == "" {
+				multiErr = multierror.Append(multiErr, fmt.Errorf("one of [secrets.secretboxencryptionsecret, secrets.aescbcencryptionsecret] is required"))
+			}
 
-		if bundle.Secrets.AESCBCEncryptionSecret != "" && bundle.Secrets.SecretboxEncryptionSecret != "" {
-			multiErr = multierror.Append(multiErr, fmt.Errorf("only one of [secrets.secretboxencryptionsecret, secrets.aescbcencryptionsecret] is allowed"))
+			if bundle.Secrets.AESCBCEncryptionSecret != "" && bundle.Secrets.SecretboxEncryptionSecret != "" {
+				multiErr = multierror.Append(multiErr, fmt.Errorf("only one of [secrets.secretboxencryptionsecret, secrets.aescbcencryptionsecret] is allowed"))
+			}
 		}
 	}
 
@@ -462,7 +468,7 @@ func (bundle *Bundle) Validate() error {
 		multiErr = multierror.Append(multiErr, fmt.Errorf("trustdinfo.token is required"))
 	}
 
-	if err := bundle.validateCerts(); err != nil {
+	if err := bundle.validateCerts(versionContract); err != nil {
 		multiErr = multierror.Append(multiErr, err)
 	}
 
@@ -470,41 +476,45 @@ func (bundle *Bundle) Validate() error {
 }
 
 //nolint:gocyclo,cyclop
-func (bundle *Bundle) validateCerts() error {
+func (bundle *Bundle) validateCerts(versionContract *config.VersionContract) error {
 	if bundle.Certs == nil {
 		return errors.New("certs is required")
 	}
 
 	var multiErr error
 
-	if bundle.Certs.Etcd == nil {
-		multiErr = multierror.Append(multiErr, fmt.Errorf("certs.etcd is required"))
-	} else if err := validatePEMEncodedCertificateAndKey(bundle.Certs.Etcd); err != nil {
-		multiErr = multierror.Append(multiErr, fmt.Errorf("certs.etcd is invalid: %w", err))
+	if !versionContract.EtcdDisabled() {
+		if bundle.Certs.Etcd == nil {
+			multiErr = multierror.Append(multiErr, fmt.Errorf("certs.etcd is required"))
+		} else if err := validatePEMEncodedCertificateAndKey(bundle.Certs.Etcd); err != nil {
+			multiErr = multierror.Append(multiErr, fmt.Errorf("certs.etcd is invalid: %w", err))
+		}
 	}
 
-	if bundle.Certs.K8s == nil {
-		multiErr = multierror.Append(multiErr, fmt.Errorf("certs.k8s is required"))
-	} else if err := validatePEMEncodedCertificateAndKey(bundle.Certs.K8s); err != nil {
-		multiErr = multierror.Append(multiErr, fmt.Errorf("certs.k8s is invalid: %w", err))
-	}
+	if !versionContract.KubernetesDisabled() {
+		if bundle.Certs.K8s == nil {
+			multiErr = multierror.Append(multiErr, fmt.Errorf("certs.k8s is required"))
+		} else if err := validatePEMEncodedCertificateAndKey(bundle.Certs.K8s); err != nil {
+			multiErr = multierror.Append(multiErr, fmt.Errorf("certs.k8s is invalid: %w", err))
+		}
 
-	if bundle.Certs.K8sAggregator == nil {
-		multiErr = multierror.Append(multiErr, fmt.Errorf("certs.k8saggregator is required"))
-	} else if err := validatePEMEncodedCertificateAndKey(bundle.Certs.K8sAggregator); err != nil {
-		multiErr = multierror.Append(multiErr, fmt.Errorf("certs.k8saggregator is invalid: %w", err))
+		if bundle.Certs.K8sAggregator == nil {
+			multiErr = multierror.Append(multiErr, fmt.Errorf("certs.k8saggregator is required"))
+		} else if err := validatePEMEncodedCertificateAndKey(bundle.Certs.K8sAggregator); err != nil {
+			multiErr = multierror.Append(multiErr, fmt.Errorf("certs.k8saggregator is invalid: %w", err))
+		}
+
+		if bundle.Certs.K8sServiceAccount == nil {
+			multiErr = multierror.Append(multiErr, fmt.Errorf("certs.k8sserviceaccount is required"))
+		} else if _, err := bundle.Certs.K8sServiceAccount.GetKey(); err != nil {
+			multiErr = multierror.Append(multiErr, fmt.Errorf("certs.k8sserviceaccount.key is invalid: %w", err))
+		}
 	}
 
 	if bundle.Certs.OS == nil {
 		multiErr = multierror.Append(multiErr, fmt.Errorf("certs.os is required"))
 	} else if err := validatePEMEncodedCertificateAndKey(bundle.Certs.OS); err != nil {
 		multiErr = multierror.Append(multiErr, fmt.Errorf("certs.os is invalid: %w", err))
-	}
-
-	if bundle.Certs.K8sServiceAccount == nil {
-		multiErr = multierror.Append(multiErr, fmt.Errorf("certs.k8sserviceaccount is required"))
-	} else if _, err := bundle.Certs.K8sServiceAccount.GetKey(); err != nil {
-		multiErr = multierror.Append(multiErr, fmt.Errorf("certs.k8sserviceaccount.key is invalid: %w", err))
 	}
 
 	return multiErr

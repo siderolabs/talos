@@ -219,6 +219,10 @@ func (m *Maker[T]) initVersionContract() error {
 		return fmt.Errorf("error parsing Talos version %q: %w", m.Ops.TalosVersion, err)
 	}
 
+	if m.Ops.SkipEtcdK8sConfig {
+		versionContract = versionContract.DisableEtcd().DisableKubernetes()
+	}
+
 	m.VersionContract = versionContract
 
 	return nil

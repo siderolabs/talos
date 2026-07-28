@@ -347,6 +347,9 @@ func NewControlPlaneSchedulerController() *ControlPlaneSchedulerController {
 				func(machineConfig *config.MachineConfig) bool {
 					return machineConfig.Config().K8sSchedulerConfig() != nil
 				},
+				func(machineConfig *config.MachineConfig) bool {
+					return machineConfig.Config().K8sClusterConfig() != nil
+				},
 			),
 			TransformFunc: func(ctx context.Context, r controller.Reader, logger *zap.Logger, machineConfig *config.MachineConfig, res *k8s.SchedulerConfig) error {
 				schedulerConfig := machineConfig.Config().K8sSchedulerConfig()

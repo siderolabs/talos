@@ -188,6 +188,7 @@ talosctl cluster create dev [flags]
       --primary-disks int                        number of primary disks to create for each VM (each sized by --disk) (default 1)
       --registry-insecure-skip-verify strings    list of registry hostnames to skip TLS verification for
       --registry-mirror strings                  list of registry mirrors to use in format: <registry host>=<mirror URL>
+      --skip-etcd-k8s                            skip etcd and Kubernetes machine configuration (experimental)
       --skip-injecting-config                    skip injecting config from embedded metadata server, write config files to current directory
       --skip-injecting-extra-cmdline             skip injecting extra kernel cmdline parameters via EFI vars through bootloader
       --skip-k8s-node-readiness-check            skip k8s node readiness checks

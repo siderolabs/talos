@@ -13,11 +13,13 @@ import (
 	"strings"
 
 	"github.com/siderolabs/go-kubeconfig"
+	"google.golang.org/grpc/codes"
 	"k8s.io/client-go/tools/clientcmd"
 
 	clustercmd "github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster"
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops"
 	"github.com/siderolabs/talos/cmd/talosctl/cmd/mgmt/cluster/create/clusterops/configmaker"
+	"github.com/siderolabs/talos/pkg/machinery/client"
 	clientconfig "github.com/siderolabs/talos/pkg/machinery/client/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/provision/access"
@@ -106,18 +108,24 @@ func saveConfig(talosConfigObj *clientconfig.Config, talosconfigPath string) (er
 	return c.Save(talosconfigPath)
 }
 
+//nolint:gocyclo
 func mergeKubeconfig(ctx context.Context, clusterAccess *access.Adapter) error {
+	k8sconfig, err := clusterAccess.Kubeconfig(ctx)
+	if err != nil {
+		if client.StatusCode(err) == codes.FailedPrecondition {
+			// no Kubernetes, skip kubeconfig
+			return nil
+		}
+
+		return fmt.Errorf("error fetching kubeconfig: %w", err)
+	}
+
 	kubeconfigPath, err := kubeconfig.SinglePath()
 	if err != nil {
 		return err
 	}
 
 	fmt.Fprintf(os.Stderr, "\nmerging kubeconfig into %q\n", kubeconfigPath)
-
-	k8sconfig, err := clusterAccess.Kubeconfig(ctx)
-	if err != nil {
-		return fmt.Errorf("error fetching kubeconfig: %w", err)
-	}
 
 	kubeConfig, err := clientcmd.Load(k8sconfig)
 	if err != nil {

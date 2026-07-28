@@ -10,10 +10,12 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
 
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
 )
 
@@ -25,15 +27,15 @@ func DefaultClusterChecks() []ClusterCheck {
 		[]ClusterCheck{
 			// wait for all the nodes to report ready at k8s level
 			func(cluster ClusterInfo) conditions.Condition {
-				return conditions.PollingCondition("all k8s nodes to report ready", func(ctx context.Context) error {
-					if cniDisabled, err := cniDisabledStatus(ctx, cluster); err != nil {
-						return err
-					} else if cniDisabled {
-						return conditions.ErrSkipAssertion
-					}
-
-					return K8sAllNodesReadyAssertion(ctx, cluster)
-				}, 5*time.Second)
+				return conditions.PollingCondition(
+					"all k8s nodes to report ready",
+					skipIf(cluster, cniDisabledStatus,
+						func(ctx context.Context) error {
+							return K8sAllNodesReadyAssertion(ctx, cluster)
+						},
+					),
+					5*time.Second,
+				)
 			},
 
 			// wait for kube-proxy to report ready
@@ -54,24 +56,24 @@ func DefaultClusterChecks() []ClusterCheck {
 
 			// wait for coredns to report ready
 			func(cluster ClusterInfo) conditions.Condition {
-				return conditions.PollingCondition("coredns to report ready", func(ctx context.Context) error {
-					if cniDisabled, err := cniDisabledStatus(ctx, cluster); err != nil {
-						return err
-					} else if cniDisabled {
-						return conditions.ErrSkipAssertion
-					}
+				return conditions.PollingCondition(
+					"coredns to report ready",
+					skipIf(cluster, cniDisabledStatus,
+						func(ctx context.Context) error {
+							present, replicas, err := DeploymentPresent(ctx, cluster, "kube-system", "k8s-app=kube-dns")
+							if err != nil {
+								return err
+							}
 
-					present, replicas, err := DeploymentPresent(ctx, cluster, "kube-system", "k8s-app=kube-dns")
-					if err != nil {
-						return err
-					}
+							if !present {
+								return conditions.ErrSkipAssertion
+							}
 
-					if !present {
-						return conditions.ErrSkipAssertion
-					}
-
-					return K8sPodReadyAssertion(ctx, cluster, replicas, "kube-system", "k8s-app=kube-dns")
-				}, 5*time.Second)
+							return K8sPodReadyAssertion(ctx, cluster, replicas, "kube-system", "k8s-app=kube-dns")
+						},
+					),
+					5*time.Second,
+				)
 			},
 
 			// wait for all the nodes to be schedulable
@@ -82,20 +84,6 @@ func DefaultClusterChecks() []ClusterCheck {
 			},
 		},
 	)
-}
-
-func cniDisabledStatus(ctx context.Context, cluster ClusterInfo) (bool, error) {
-	cli, err := cluster.Client()
-	if err != nil {
-		return false, err
-	}
-
-	bmc, err := safe.ReaderGetByID[*k8s.BootstrapManifestsConfig](ctx, cli.COSI, k8s.BootstrapManifestsConfigID)
-	if err != nil {
-		return false, err
-	}
-
-	return bmc.TypedSpec().CNIName == constants.NoneCNI, nil
 }
 
 // K8sComponentsReadinessChecks returns a set of K8s cluster readiness checks which are specific to the k8s components
@@ -138,23 +126,41 @@ func PreBootSequenceChecks() []ClusterCheck {
 	return []ClusterCheck{
 		// wait for etcd to be healthy on all control plane nodes
 		func(cluster ClusterInfo) conditions.Condition {
-			return conditions.PollingCondition("etcd to be healthy", func(ctx context.Context) error {
-				return ServiceHealthAssertion(ctx, cluster, "etcd", WithNodeTypes(machine.TypeInit, machine.TypeControlPlane))
-			}, 5*time.Second)
+			return conditions.PollingCondition(
+				"etcd to be healthy",
+				skipIf(
+					cluster, etcdDisabled,
+					func(ctx context.Context) error {
+						return ServiceHealthAssertion(ctx, cluster, "etcd", WithNodeTypes(machine.TypeInit, machine.TypeControlPlane))
+					},
+				),
+				5*time.Second)
 		},
 
 		// wait for etcd members to be consistent across nodes
 		func(cluster ClusterInfo) conditions.Condition {
-			return conditions.PollingCondition("etcd members to be consistent across nodes", func(ctx context.Context) error {
-				return EtcdConsistentAssertion(ctx, cluster)
-			}, 5*time.Second)
+			return conditions.PollingCondition(
+				"etcd members to be consistent across nodes",
+				skipIf(
+					cluster, etcdDisabled,
+					func(ctx context.Context) error {
+						return EtcdConsistentAssertion(ctx, cluster)
+					},
+				),
+				5*time.Second)
 		},
 
 		// wait for etcd members to be the control plane nodes
 		func(cluster ClusterInfo) conditions.Condition {
-			return conditions.PollingCondition("etcd members to be control plane nodes", func(ctx context.Context) error {
-				return EtcdControlPlaneNodesAssertion(ctx, cluster)
-			}, 5*time.Second)
+			return conditions.PollingCondition(
+				"etcd members to be control plane nodes",
+				skipIf(
+					cluster, etcdDisabled,
+					func(ctx context.Context) error {
+						return EtcdControlPlaneNodesAssertion(ctx, cluster)
+					},
+				),
+				5*time.Second)
 		},
 
 		// wait for apid to be ready on all the nodes
@@ -187,9 +193,15 @@ func PreBootSequenceChecks() []ClusterCheck {
 
 		// wait for kubelet to be healthy on all
 		func(cluster ClusterInfo) conditions.Condition {
-			return conditions.PollingCondition("kubelet to be healthy", func(ctx context.Context) error {
-				return ServiceHealthAssertion(ctx, cluster, "kubelet", WithNodeTypes(machine.TypeInit, machine.TypeControlPlane))
-			}, 5*time.Second)
+			return conditions.PollingCondition(
+				"kubelet to be healthy",
+				skipIf(
+					cluster, kubeletDisabled,
+					func(ctx context.Context) error {
+						return ServiceHealthAssertion(ctx, cluster, "kubelet", WithNodeTypes(machine.TypeInit, machine.TypeControlPlane))
+					},
+				),
+				5*time.Second)
 		},
 
 		// wait for all nodes to finish booting
@@ -199,4 +211,69 @@ func PreBootSequenceChecks() []ClusterCheck {
 			}, 5*time.Second)
 		},
 	}
+}
+
+func skipIf(cluster ClusterInfo, check func(context.Context, ClusterInfo) (bool, error), assertion conditions.AssertionFunc) conditions.AssertionFunc {
+	return func(ctx context.Context) error {
+		skip, err := check(ctx, cluster)
+		if err != nil {
+			return err
+		}
+
+		if skip {
+			return conditions.ErrSkipAssertion
+		}
+
+		return assertion(ctx)
+	}
+}
+
+func etcdDisabled(ctx context.Context, cluster ClusterInfo) (bool, error) {
+	cli, err := cluster.Client()
+	if err != nil {
+		return false, err
+	}
+
+	cfg, err := safe.ReaderGetByID[*config.MachineConfig](ctx, cli.COSI, config.ActiveID)
+	if err != nil {
+		return false, err
+	}
+
+	return cfg.Config().Cluster() == nil || cfg.Config().Cluster().Etcd() == nil || cfg.Config().Cluster().Etcd().CA() == nil, nil
+}
+
+func kubeletDisabled(ctx context.Context, cluster ClusterInfo) (bool, error) {
+	cli, err := cluster.Client()
+	if err != nil {
+		return false, err
+	}
+
+	_, err = safe.ReaderGetByID[*k8s.KubeletConfig](ctx, cli.COSI, k8s.KubeletID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return true, nil
+		}
+
+		return false, err
+	}
+
+	return false, nil
+}
+
+func cniDisabledStatus(ctx context.Context, cluster ClusterInfo) (bool, error) {
+	cli, err := cluster.Client()
+	if err != nil {
+		return false, err
+	}
+
+	bmc, err := safe.ReaderGetByID[*k8s.BootstrapManifestsConfig](ctx, cli.COSI, k8s.BootstrapManifestsConfigID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return true, nil
+		}
+
+		return false, err
+	}
+
+	return bmc.TypedSpec().CNIName == constants.NoneCNI, nil
 }
