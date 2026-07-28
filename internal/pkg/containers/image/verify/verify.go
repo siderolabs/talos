@@ -174,7 +174,10 @@ func cosignCheckOptsFromRule(ctx context.Context, rule *security.ImageVerificati
 		}
 
 		return cosign.CheckOpts{
-			Offline:     true,
+			Offline: true,
+			// This is required on top of Offline to avoid tlog verification,
+			// since we don't supply trusted roots.
+			IgnoreTlog:  true,
 			SigVerifier: verifier,
 		}, nil
 	default:

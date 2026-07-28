@@ -5,10 +5,14 @@
 package cosign_test
 
 import (
+	"crypto"
+	_ "embed"
 	"testing"
 
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/sigstore/cosign/v3/pkg/cosign"
+	"github.com/sigstore/sigstore/pkg/cryptoutils"
+	"github.com/sigstore/sigstore/pkg/signature"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
@@ -33,12 +37,21 @@ func (mockRegistriesConfig) TLSs() map[string]cri.RegistryTLSConfigExtended {
 	return nil
 }
 
+//go:embed testdata/cosign.pub
+var staticSigningPubKey []byte
+
 func TestVerifyImage(t *testing.T) {
 	t.Parallel()
 
 	resolver := image.NewResolver(mockRegistriesConfig{})
 	tagFetcher := image.NewTagFetcher(mockRegistriesConfig{})
 	trustedRoot, err := cosign.TrustedRoot()
+	require.NoError(t, err)
+
+	pubKey, err := cryptoutils.UnmarshalPEMToPublicKey(staticSigningPubKey)
+	require.NoError(t, err)
+
+	pubKeyVerifier, err := signature.LoadVerifier(pubKey, crypto.SHA256)
 	require.NoError(t, err)
 
 	for _, test := range []struct {
@@ -156,6 +169,16 @@ func TestVerifyImage(t *testing.T) {
 
 			expectedError: "no valid bundle layer: failed to verify certificate identity: no matching CertificateIdentity found, last error: expected SAN " +
 				"value \"releasemgr@world\", got \"releasemgr-svc@talos-production.iam.gserviceaccount.com\"",
+		},
+		{
+			imageRef: "ghcr.io/siderolabs/kubelet:v1.19.3-1-ga70d5db@sha256:3fc16b37247f6f154d0ebf7428a28f89079a0a138c92c91fe975803d2e19ef2b",
+			checkOpts: cosign.CheckOpts{
+				Offline:     true,
+				IgnoreTlog:  true,
+				SigVerifier: pubKeyVerifier,
+			},
+
+			expectedResultMessage: "verified via bundle",
 		},
 	} {
 		t.Run(test.imageRef, func(t *testing.T) {
