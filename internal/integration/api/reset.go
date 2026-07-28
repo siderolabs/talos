@@ -343,6 +343,17 @@ func (suite *ResetSuite) TestResetDuringBoot() {
 	node := suite.RandomDiscoveredNodeInternalIP()
 	nodeCtx := client.WithNode(suite.ctx, node)
 
+	// The reset below is requested while the node is still booting, and the KUBELET volume is only
+	// mounted once the kubelet service starts, so ResetNode can't read the cert at that point.
+	// Capture it here instead, while the node is fully booted: the reboot doesn't touch the volume.
+	kubeletCertBefore, err := suite.HashKubeletCert(suite.ctx, node)
+	suite.Require().NoError(err)
+	suite.Require().NotEmpty(kubeletCertBefore, "kubelet cert should be readable on a booted node")
+
+	// EPHEMERAL is the only volume wiped below, so the kubelet PKI only survives the reset if
+	// KUBELET has a partition of its own.
+	kubeletSurvivesReset := !suite.KubeletVolumeIsDirectory(suite.ctx, node)
+
 	suite.T().Log("rebooting node", node)
 
 	bootIDBefore, err := suite.ReadBootID(nodeCtx)
@@ -373,6 +384,15 @@ func (suite *ResetSuite) TestResetDuringBoot() {
 			},
 		},
 	}, true)
+
+	kubeletCertAfter, err := suite.HashKubeletCert(suite.ctx, node)
+	suite.Require().NoError(err)
+
+	if kubeletSurvivesReset {
+		suite.Assert().Equal(kubeletCertBefore, kubeletCertAfter, "kubelet cert should be unchanged (KUBELET volume was not wiped)")
+	} else {
+		suite.Assert().NotEqual(kubeletCertBefore, kubeletCertAfter, "reset should lead to new kubelet cert being generated")
+	}
 }
 
 func init() {

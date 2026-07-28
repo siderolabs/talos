@@ -390,7 +390,10 @@ func (apiSuite *APISuite) ClearConnectionRefused(ctx context.Context, nodes ...s
 
 // HashKubeletCert returns hash of the kubelet certificate file.
 //
-// This function can be used to verify that the node ephemeral partition got wiped.
+// This function can be used to verify that the KUBELET volume got wiped.
+//
+// An empty string is returned if the certificate is not there: the KUBELET volume is only mounted
+// once the kubelet service starts, so the cert is not readable on a node which is still booting.
 func (apiSuite *APISuite) HashKubeletCert(ctx context.Context, node string) (string, error) {
 	reqCtx, reqCtxCancel := context.WithTimeout(ctx, 10*time.Second)
 	defer reqCtxCancel()
@@ -399,6 +402,10 @@ func (apiSuite *APISuite) HashKubeletCert(ctx context.Context, node string) (str
 
 	reader, err := apiSuite.Client.Read(reqCtx, "/var/lib/kubelet/pki/kubelet-client-current.pem")
 	if err != nil {
+		if client.StatusCode(err) == codes.NotFound {
+			return "", nil
+		}
+
 		return "", err
 	}
 
@@ -406,11 +413,12 @@ func (apiSuite *APISuite) HashKubeletCert(ctx context.Context, node string) (str
 
 	hash := sha256.New()
 
-	_, err = io.Copy(hash, reader)
-	if err != nil {
-		if client.StatusCode(err) != codes.NotFound { // not found, swallow it
+	if _, err = io.Copy(hash, reader); err != nil {
+		if client.StatusCode(err) != codes.NotFound {
 			return "", err
 		}
+
+		return "", reader.Close()
 	}
 
 	return hex.EncodeToString(hash.Sum(nil)), reader.Close()
@@ -668,7 +676,7 @@ func (apiSuite *APISuite) PatchV1Alpha1Config(provider config.Provider, patch fu
 
 // ResetNode wraps the reset node sequence with checks, waiting for the reset to finish and verifying the result.
 //
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func (apiSuite *APISuite) ResetNode(ctx context.Context, node string, resetSpec *machineapi.ResetRequest, runHealthChecks bool) {
 	apiSuite.T().Logf("resetting node %q with graceful %v mode %s, system %v, user %v", node, resetSpec.Graceful, resetSpec.Mode, resetSpec.SystemPartitionsToWipe, resetSpec.UserDisksToWipe)
 
@@ -699,7 +707,7 @@ func (apiSuite *APISuite) ResetNode(ctx context.Context, node string, resetSpec 
 				break
 			}
 
-			if part.Label == constants.EphemeralPartitionLabel && apiSuite.kubeletVolumeIsDirectory(ctx, node) {
+			if part.Label == constants.EphemeralPartitionLabel && apiSuite.KubeletVolumeIsDirectory(ctx, node) {
 				kubeletIsGoingToBeReset = true
 
 				break
@@ -768,17 +776,22 @@ waitLoop:
 		postReset, err := apiSuite.HashKubeletCert(ctx, node)
 		apiSuite.Require().NoError(err)
 
-		if kubeletIsGoingToBeReset {
+		switch {
+		case preReset == "":
+			// the KUBELET volume was not mounted when the reset was requested (e.g. the node was still
+			// booting), so there is nothing to compare the cert against
+			apiSuite.T().Log("skipping the kubelet cert check: the cert was not readable before the reset")
+		case kubeletIsGoingToBeReset:
 			apiSuite.Assert().NotEqual(preReset, postReset, "reset should lead to new kubelet cert being generated")
-		} else {
+		default:
 			apiSuite.Assert().Equal(preReset, postReset, "kubelet cert should be unchanged (KUBELET volume was not wiped)")
 		}
 	}
 }
 
-// kubeletVolumeIsDirectory reports whether the KUBELET system volume is backed by a directory under
+// KubeletVolumeIsDirectory reports whether the KUBELET system volume is backed by a directory under
 // EPHEMERAL (vs. a dedicated partition) on the node.
-func (apiSuite *APISuite) kubeletVolumeIsDirectory(ctx context.Context, node string) bool {
+func (apiSuite *APISuite) KubeletVolumeIsDirectory(ctx context.Context, node string) bool {
 	nodeCtx := client.WithNode(ctx, node)
 
 	volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, apiSuite.Client.COSI, constants.KubeletDataVolumeID)

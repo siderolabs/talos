@@ -8,10 +8,14 @@ package api
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/safe"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
@@ -29,7 +33,7 @@ import (
 
 // RotateCASuite verifies rotation of Talos and Kubernetes CAs.
 type RotateCASuite struct {
-	base.APISuite
+	base.K8sSuite
 
 	ctx       context.Context //nolint:containedctx
 	ctxCancel context.CancelFunc
@@ -190,6 +194,43 @@ func (suite *RotateCASuite) TestKubernetes() {
 	suite.Require().NoError(kubernetes.Rotate(rotationCtx, options))
 
 	suite.AssertClusterHealthy(rotationCtx)
+
+	suite.rollKubeProxy(suite.newRotationContext())
+}
+
+// rollKubeProxy restarts kube-proxy once the Kubernetes CA rotation is over.
+//
+// kube-proxy talks to the API server with the in-cluster kubeconfig which trusts the service account
+// CA bundle, and client-go only re-reads that CA from disk every 5 minutes, so a kube-proxy which
+// happened to pick up the intermediate CA keeps failing to watch Services and EndpointSlices long
+// after the rotation is done: it silently stops programming rules for Services created in the
+// meantime.
+func (suite *RotateCASuite) rollKubeProxy(ctx context.Context) {
+	const (
+		namespace     = "kube-system"
+		daemonSetName = "kube-proxy"
+		labelSelector = "k8s-app=kube-proxy"
+	)
+
+	daemonSets := suite.Clientset.AppsV1().DaemonSets(namespace)
+
+	_, err := daemonSets.Get(ctx, daemonSetName, metav1.GetOptions{})
+	if apierrors.IsNotFound(err) {
+		suite.T().Logf("skipping kube-proxy restart: daemonset %s/%s is not found", namespace, daemonSetName)
+
+		return
+	}
+
+	suite.Require().NoError(err)
+
+	suite.T().Logf("restarting kube-proxy")
+
+	patch := fmt.Appendf(nil, `{"spec":{"template":{"metadata":{"annotations":{"kubectl.kubernetes.io/restartedAt":%q}}}}}`, time.Now().Format(time.RFC3339Nano))
+
+	_, err = daemonSets.Patch(ctx, daemonSetName, types.StrategicMergePatchType, patch, metav1.PatchOptions{})
+	suite.Require().NoError(err)
+
+	suite.Require().NoError(suite.WaitForDaemonSetReady(ctx, 3*time.Minute, namespace, labelSelector))
 }
 
 func (suite *RotateCASuite) restartAPIServices(ctx context.Context, c *client.Client) {

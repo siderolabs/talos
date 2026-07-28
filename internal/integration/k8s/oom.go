@@ -56,7 +56,8 @@ func (suite *OomSuite) TestOom() {
 		suite.T().Skip("skipping OOM test since provisioner is not qemu")
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	// overarching timeout should be longer than the sum of all timeouts in the test
+	ctx, cancel := context.WithTimeout(context.Background(), 7*time.Minute)
 	suite.T().Cleanup(cancel)
 
 	oomPodManifest := suite.ParseManifests(oomPodSpec)
@@ -74,7 +75,7 @@ func (suite *OomSuite) TestOom() {
 		for {
 			select {
 			case <-ticker.C:
-				pods, err := suite.Clientset.CoreV1().Pods("default").List(ctx, metav1.ListOptions{
+				pods, err := suite.Clientset.CoreV1().Pods("default").List(cleanUpCtx, metav1.ListOptions{
 					LabelSelector: "app=stress-mem",
 				})
 
@@ -154,6 +155,9 @@ func (suite *OomSuite) waitForOOMKilled(ctx context.Context, timeToObserve, time
 	watchCh := make(chan state.Event)
 	workerNodes := suite.DiscoverNodeInternalIPsByType(ctx, machine.TypeWorker)
 
+	ctx, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+
 	// start watching OOM events on all worker nodes
 	for _, workerNode := range workerNodes {
 		suite.Assert().NoError(suite.Client.COSI.WatchKind(
@@ -192,6 +196,13 @@ func (suite *OomSuite) waitForOOMKilled(ctx context.Context, timeToObserve, time
 			for _, proc := range res.Processes {
 				if strings.Contains(proc, substr) {
 					numOOMObserved++
+
+					if numOOMObserved >= n {
+						// if we already observed enough OOM events, consider it a success
+						suite.T().Logf("observed %d OOM events containing process substring %q", numOOMObserved, substr)
+
+						return true
+					}
 
 					break
 				}
