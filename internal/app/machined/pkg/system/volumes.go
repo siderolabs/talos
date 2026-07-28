@@ -5,6 +5,7 @@
 package system
 
 import (
+	"cmp"
 	"context"
 	"fmt"
 	"slices"
@@ -12,6 +13,7 @@ import (
 	"sync"
 
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/siderolabs/gen/xslices"
 
@@ -160,5 +162,43 @@ func WaitForVolumesToBeMounted(st state.State, requests []volumeRequest) conditi
 		st:              st,
 		requests:        requests,
 		pendingRequests: slices.Clone(requests),
+	}
+}
+
+// FindBackingVolume walks up the parent chain of a volume which is not backed by a block device of
+// its own (e.g. a directory) and returns the ID of the closest ancestor volume which is, i.e. the
+// volume the given one resides on.
+func FindBackingVolume(ctx context.Context, st state.State, volumeID string) (string, error) {
+	seen := map[string]struct{}{volumeID: {}}
+
+	volumeStatus, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, st, volumeID)
+	if err != nil {
+		return "", fmt.Errorf("failed to get volume status %q: %w", volumeID, err)
+	}
+
+	for {
+		// overlay volumes declare their parent directly, mounted volumes (including directories) via
+		// the mount spec
+		parentID := cmp.Or(volumeStatus.TypedSpec().ParentID, volumeStatus.TypedSpec().MountSpec.ParentID)
+		if parentID == "" {
+			return "", fmt.Errorf("volume %q is not located and doesn't reside on another volume", volumeID)
+		}
+
+		if _, ok := seen[parentID]; ok {
+			return "", fmt.Errorf("cycle detected in the parent chain of volume %q at %q", volumeID, parentID)
+		}
+
+		seen[parentID] = struct{}{}
+
+		parentStatus, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, st, parentID)
+		if err != nil {
+			return "", fmt.Errorf("failed to get parent volume status %q of volume %q: %w", parentID, volumeID, err)
+		}
+
+		if parentStatus.TypedSpec().Location != "" {
+			return parentID, nil
+		}
+
+		volumeStatus = parentStatus
 	}
 }

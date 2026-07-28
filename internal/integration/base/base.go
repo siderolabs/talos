@@ -78,6 +78,10 @@ type TalosSuite struct {
 	// SkipEphemeralPolicy disables MountsSuite's nosuid/nodev/noexec assertions
 	// for the EPHEMERAL (/var) mount point.
 	SkipEphemeralPolicy bool
+	// DedicatedSystemVolumes tells that the cluster was created with the promotable system volumes
+	// placed on dedicated partitions instead of directories under EPHEMERAL, i.e. with the
+	// `hack/test/patches/dedicated-system-volumes-{controlplane,worker}.yaml` config patches applied.
+	DedicatedSystemVolumes bool
 
 	discoveredNodes cluster.Info
 }

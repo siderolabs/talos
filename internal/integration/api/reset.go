@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 
@@ -20,6 +21,7 @@ import (
 	machineapi "github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/api/storage"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
@@ -109,20 +111,113 @@ func (suite *ResetSuite) TestResetNoGracefulControlplane() {
 	suite.testResetNoGraceful(machine.TypeControlPlane)
 }
 
-// TestResetWithSpecEphemeral resets only ephemeral partition on the node.
-func (suite *ResetSuite) TestResetWithSpecEphemeral() {
+// ephemeralWithSystemVolumesToWipe is the wipe spec resetting EPHEMERAL together with every
+// promotable system volume, whatever the backing of each of them happens to be.
+func ephemeralWithSystemVolumesToWipe() []*machineapi.ResetPartitionSpec {
+	resetPartitionSpecs := make([]*machineapi.ResetPartitionSpec, 0, 1+len(config.PromotableSystemVolumeNames))
+	resetPartitionSpecs = append(resetPartitionSpecs, &machineapi.ResetPartitionSpec{
+		Label: constants.EphemeralPartitionLabel,
+		Wipe:  true,
+	})
+
+	for _, volumeID := range config.PromotableSystemVolumeNames {
+		resetPartitionSpecs = append(resetPartitionSpecs, &machineapi.ResetPartitionSpec{
+			Label: volumeID,
+			Wipe:  true,
+		})
+	}
+
+	return resetPartitionSpecs
+}
+
+// assertSystemVolumeTypes asserts the backing of each promotable system volume on the node.
+func (suite *ResetSuite) assertSystemVolumeTypes(node string, expected map[string]block.VolumeType) {
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	for _, volumeID := range config.PromotableSystemVolumeNames {
+		volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.COSI, volumeID)
+		suite.Require().NoError(err)
+		suite.Require().Equalf(expected[volumeID], volumeStatus.TypedSpec().Type, "unexpected backing of volume %q on node %s", volumeID, node)
+	}
+}
+
+// TestResetEphemeralWithSystemVolumes resets the ephemeral partition together with the system
+// volumes nested under it.
+//
+// This covers the default layout where every promotable system volume is a directory under
+// EPHEMERAL: none of them has a wipe target of its own, and they are only wiped as a side effect of
+// wiping EPHEMERAL.
+func (suite *ResetSuite) TestResetEphemeralWithSystemVolumes() {
+	if suite.DedicatedSystemVolumes {
+		suite.T().Skip("cluster is running with dedicated system volumes")
+	}
+
 	node := suite.RandomDiscoveredNodeInternalIP()
 
+	suite.assertSystemVolumeTypes(node, map[string]block.VolumeType{
+		constants.EtcdDataVolumeID:      block.VolumeTypeDirectory,
+		constants.CRIContainerdVolumeID: block.VolumeTypeDirectory,
+		constants.KubeletDataVolumeID:   block.VolumeTypeDirectory,
+		constants.LogVolumeID:           block.VolumeTypeDirectory,
+	})
+
 	suite.ResetNode(suite.ctx, node, &machineapi.ResetRequest{
-		Reboot:   true,
-		Graceful: true,
-		SystemPartitionsToWipe: []*machineapi.ResetPartitionSpec{
-			{
-				Label: constants.EphemeralPartitionLabel,
-				Wipe:  true,
+		Reboot:                 true,
+		Graceful:               true,
+		SystemPartitionsToWipe: ephemeralWithSystemVolumesToWipe(),
+	}, true)
+}
+
+// TestResetDedicatedSystemVolumes resets the ephemeral partition together with the system volumes
+// promoted onto dedicated partitions.
+//
+// The worker subtest also covers the mixed case: ETCD and CRI stay directories there, so they are
+// only accepted in the request because EPHEMERAL, the volume they reside on, is wiped as well.
+func (suite *ResetSuite) TestResetDedicatedSystemVolumes() {
+	if !suite.DedicatedSystemVolumes {
+		suite.T().Skip("cluster is not running with dedicated system volumes")
+	}
+
+	// these mirror hack/test/patches/dedicated-system-volumes-controlplane.yaml and
+	// hack/test/patches/dedicated-system-volumes-worker.yaml, and must be kept in sync with them
+	for _, test := range []struct {
+		name     string
+		nodeType machine.Type
+		expected map[string]block.VolumeType
+	}{
+		{
+			name:     "controlplane",
+			nodeType: machine.TypeControlPlane,
+			expected: map[string]block.VolumeType{
+				constants.EtcdDataVolumeID:      block.VolumeTypePartition,
+				constants.CRIContainerdVolumeID: block.VolumeTypePartition,
+				constants.KubeletDataVolumeID:   block.VolumeTypePartition,
+				constants.LogVolumeID:           block.VolumeTypePartition,
 			},
 		},
-	}, true)
+		{
+			name:     "worker",
+			nodeType: machine.TypeWorker,
+			expected: map[string]block.VolumeType{
+				constants.EtcdDataVolumeID:      block.VolumeTypeDirectory,
+				constants.CRIContainerdVolumeID: block.VolumeTypeDirectory,
+				constants.KubeletDataVolumeID:   block.VolumeTypePartition,
+				constants.LogVolumeID:           block.VolumeTypePartition,
+			},
+		},
+	} {
+		suite.Run(test.name, func() {
+			node := suite.RandomDiscoveredNodeInternalIP(test.nodeType)
+
+			suite.assertSystemVolumeTypes(node, test.expected)
+
+			suite.ResetNode(suite.ctx, node, &machineapi.ResetRequest{
+				Reboot:                 true,
+				Graceful:               true,
+				SystemPartitionsToWipe: ephemeralWithSystemVolumesToWipe(),
+			}, true)
+		})
+	}
 }
 
 // TestResetWithSpecStateAndUserDisks resets state partition and user disks on the node.

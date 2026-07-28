@@ -457,12 +457,13 @@ spec:
           - variant: default
             withUserDisk: "true"
             userDisksMounts: "/var/mnt/extra,/var/mnt/p1,/var/mnt/p2"
+            extraTestArgs: "-talos.dedicated-system-volumes"
             withConfigPatch: "@hack/test/patches/image-verification.yaml"
             withConfigPatchWorker: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml:@hack/test/patches/dedicated-system-volumes-worker.yaml"
             withConfigPatchControlPlane: "@hack/test/patches/dedicated-system-volumes-controlplane.yaml"
             qemuExtraDisks: "5"
             qemuExtraDisksDrivers: "virtiofs,ide,nvme"
-            qemuExtraDiscsTags: "disk0"
+            qemuExtraDisksTags: "disk0"
           - variant: enforcing
             tagSuffixIn: -enforcing
             extraTestArgs: -talos.enforcing
@@ -481,7 +482,7 @@ spec:
             withConfigPatchWorker: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
             qemuExtraDisks: "4"
             qemuExtraDisksDrivers: "virtiofs,ide,nvme"
-            qemuExtraDiscsTags: "disk0"
+            qemuExtraDisksTags: "disk0"
           - variant: race
             buildRace: "true"
             tagSuffix: -race
@@ -489,7 +490,7 @@ spec:
             withConfigPatchWorker: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
             qemuExtraDisks: "4"
             qemuExtraDisksDrivers: "virtiofs,ide,nvme"
-            qemuExtraDiscsTags: "disk0"
+            qemuExtraDisksTags: "disk0"
             qemuMemoryControlplanes: "4096"
             qemuMemoryWorkers: "4096"
           - variant: "13"
@@ -501,7 +502,7 @@ spec:
             withTalosVersion: "v1.13"
             qemuExtraDisks: "5"
             qemuExtraDisksDrivers: "virtiofs,ide,nvme"
-            qemuExtraDiscsTags: "disk0"
+            qemuExtraDisksTags: "disk0"
       steps:
         - name: download-artifacts
           artifactStep:
@@ -539,7 +540,7 @@ spec:
             QEMU_EXTRA_DISKS: ${{ matrix.qemuExtraDisks }}
             QEMU_EXTRA_DISKS_SIZE: "10240"
             QEMU_EXTRA_DISKS_DRIVERS: ${{ matrix.qemuExtraDisksDrivers }}
-            QEMU_EXTRA_DISKS_TAGS: ${{ matrix.qemuExtraDiscsTags }}
+            QEMU_EXTRA_DISKS_TAGS: ${{ matrix.qemuExtraDisksTags }}
             QEMU_MEMORY_CONTROLPLANES: ${{ matrix.qemuMemoryControlplanes }}
             QEMU_MEMORY_WORKERS: ${{ matrix.qemuMemoryWorkers }}
         - name: save-talos-logs

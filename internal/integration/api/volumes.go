@@ -715,7 +715,8 @@ func (suite *VolumesSuite) TestPromoteSystemVolumeRejected() {
 // is rejected by config validation. The backing of these volumes is fixed at cluster creation.
 //
 // On the QEMU integration cluster the control plane nodes provision these volumes as dedicated
-// partitions (via hack/test/patches/dedicated-system-volumes.yaml), so a control plane node is used.
+// partitions (via hack/test/patches/dedicated-system-volumes-controlplane.yaml), so a control plane
+// node is used.
 func (suite *VolumesSuite) TestDemoteSystemVolumeRejected() {
 	if testing.Short() {
 		suite.T().Skip("skipping test in short mode.")

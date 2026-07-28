@@ -48,6 +48,8 @@ var (
 	race                bool
 	skipEphemeralPolicy bool
 
+	dedicatedSystemVolumes bool
+
 	talosConfig       string
 	endpoint          string
 	k8sEndpoint       string
@@ -215,6 +217,9 @@ func init() {
 	flag.BoolVar(&virtiofsd, "talos.virtiofsd", false, "Marker to skip tests that should not be run without virtiofsd")
 	flag.BoolVar(&skipEphemeralPolicy, "talos.skip-ephemeral-policy", false,
 		"Skip MountsSuite assertions for /var (EPHEMERAL); set when the cluster was deployed with VolumeConfig EPHEMERAL mount.secure=false")
+	flag.BoolVar(&dedicatedSystemVolumes, "talos.dedicated-system-volumes", false,
+		"Set when the cluster was deployed with the hack/test/patches/dedicated-system-volumes-{controlplane,worker}.yaml config patches, "+
+			"i.e. the promotable system volumes are placed on dedicated partitions instead of directories under EPHEMERAL")
 
 	flag.StringVar(&provision_test.DefaultSettings.CIDR, "talos.provision.cidr", provision_test.DefaultSettings.CIDR, "CIDR to use to provision clusters (provision tests only)")
 	flag.Var(&provision_test.DefaultSettings.RegistryMirrors, "talos.provision.registry-mirror", "registry mirrors to use (provision tests only)")

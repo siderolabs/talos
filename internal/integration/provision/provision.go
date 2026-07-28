@@ -775,6 +775,11 @@ type clusterOptions struct {
 	WithApplyConfig         bool
 	WithSkipInjectingConfig bool
 	WithSideroLink          bool
+
+	// ConfigPatchesControlPlane and ConfigPatchesWorker are applied on top of the generated config of
+	// the respective machine type.
+	ConfigPatchesControlPlane []configpatcher.Patch
+	ConfigPatchesWorker       []configpatcher.Patch
 }
 
 // setupCluster provisions source clusters and waits for health.
@@ -1001,6 +1006,8 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 					},
 				),
 				bundle.WithPatch(extraPatches),
+				bundle.WithPatchControlPlane(options.ConfigPatchesControlPlane),
+				bundle.WithPatchWorker(options.ConfigPatchesWorker),
 			},
 			bundleOptions...,
 		)...,

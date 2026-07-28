@@ -679,19 +679,45 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 			return nil, errors.New("reset failed: invalid input, wipe mode USER_DISKS doesn't support SystemPartitionsToWipe parameter")
 		}
 
-		for _, spec := range in.GetSystemPartitionsToWipe() {
-			volumeStatus, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, s.Controller.Runtime().State().V1Alpha2().Resources(), spec.Label)
+		st := s.Controller.Runtime().State().V1Alpha2().Resources()
+
+		// the set of volumes requested to be wiped, so that a volume which resides on another volume
+		// can be matched against it regardless of the order of the entries
+		wipeRequested := xslices.ToSetFunc(
+			xslices.Filter(in.GetSystemPartitionsToWipe(), func(spec *machine.ResetPartitionSpec) bool { return spec.GetWipe() }),
+			func(spec *machine.ResetPartitionSpec) string { return spec.GetLabel() },
+		)
+
+		for _, resetPartitionSpec := range in.GetSystemPartitionsToWipe() {
+			volumeStatus, err := safe.ReaderGetByID[*block.VolumeStatus](ctx, st, resetPartitionSpec.Label)
 			if err != nil {
-				return nil, fmt.Errorf("failed to get volume status with label %q: %w", spec.Label, err)
+				return nil, fmt.Errorf("failed to get volume status with label %q: %w", resetPartitionSpec.Label, err)
 			}
 
 			if volumeStatus.TypedSpec().Location == "" {
-				return nil, fmt.Errorf("failed to reset: volume %q is not located", spec.Label)
+				// the volume has no block device of its own (e.g. a directory-backed system volume
+				// nested under EPHEMERAL): it has no wipe target, and it is only wiped as a side effect
+				// of wiping the volume it resides on, so require that volume to be wiped as well
+				backingVolume, err := system.FindBackingVolume(ctx, st, resetPartitionSpec.Label)
+				if err != nil {
+					return nil, fmt.Errorf("failed to reset: %w", err)
+				}
+
+				if _, ok := wipeRequested[backingVolume]; !ok {
+					return nil, fmt.Errorf(
+						"failed to reset: volume %q resides on volume %q, and therefore %q cannot be wiped without wiping %q",
+						resetPartitionSpec.Label, backingVolume, resetPartitionSpec.Label, backingVolume,
+					)
+				}
+
+				log.Printf("reset: volume %q (%s) is wiped as part of wiping volume %q", resetPartitionSpec.Label, volumeStatus.TypedSpec().Type, backingVolume)
+
+				continue
 			}
 
 			target := partition.VolumeWipeTargetFromVolumeStatus(volumeStatus)
 
-			if spec.Wipe {
+			if resetPartitionSpec.Wipe {
 				opts.systemDiskTargets = append(opts.systemDiskTargets, target)
 			}
 		}
