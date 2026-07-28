@@ -6,6 +6,9 @@
 (type init_t)
 (roletype system_r init_t)
 (allow init_t init_exec_t (file (execute entrypoint)))
+; machined runs at systemLow and labels, relabels and supervises every other
+; domain and file on the host, including any that carry MCS categories.
+(typeattributeset mcs_exempt_p init_t)
 
 ; System daemon sockets
 (type machine_socket_t)

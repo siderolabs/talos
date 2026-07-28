@@ -7,7 +7,7 @@
 (roletype system_r system_r)
 
 (user system_u)
-(userrange system_u (systemLow systemLow))
+(userrange system_u (systemLow systemHigh))
 (userlevel system_u systemLow)
 (userrole system_u object_r)
 (userrole system_u system_r)
