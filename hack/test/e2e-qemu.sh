@@ -357,9 +357,9 @@ function create_cluster {
     --extra-disks-serials="${QEMU_EXTRA_DISKS_SERIALS:-}" \
     --extra-disks-tags="${QEMU_EXTRA_DISKS_TAGS:-}" \
     --mtu=1430 \
-    --memory="${QEMU_MEMORY_CONTROLPLANES:-2048}" \
+    --memory="${QEMU_MEMORY_CONTROLPLANES:-4096}" \
     --memory-workers="${QEMU_MEMORY_WORKERS:-2048}" \
-    --cpus="${QEMU_CPUS:-2}" \
+    --cpus="${QEMU_CPUS:-4}" \
     --cpus-workers="${QEMU_CPUS_WORKERS:-2}" \
     --cidr=172.20.1.0/24 \
     --install-image="${INSTALLER_IMAGE}" \

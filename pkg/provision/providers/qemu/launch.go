@@ -26,6 +26,18 @@ import (
 	"github.com/siderolabs/talos/pkg/provision/providers/vm"
 )
 
+const (
+	// qemuStartAttempts bounds how many times QEMU is launched before giving up on the VM.
+	qemuStartAttempts = 5
+
+	// qemuStartBackoff is the delay before the first relaunch, doubled on every further attempt.
+	qemuStartBackoff = 500 * time.Millisecond
+
+	// qemuStartupGracePeriod separates "QEMU never came up" from "the VM ran and then died": a
+	// process which exits with an error this soon after being started never got to run the VM.
+	qemuStartupGracePeriod = 5 * time.Second
+)
+
 // LaunchConfig is passed in to the Launch function over stdin.
 type LaunchConfig struct {
 	StatePath string
@@ -452,6 +464,45 @@ func launchVM(config *LaunchConfig) error {
 		)
 	}
 
+	// QEMU runs with `-no-reboot`, so every reboot of the VM is a relaunch, and a relaunch can lose
+	// a race against the host services backing the VM's devices. The known case is virtiofsd: it
+	// exits whenever its vhost-user client disconnects and its supervisor restarts it, so for a
+	// moment after the VM goes down its socket is stale and QEMU gives up with
+	// `Failed to connect to '...': Connection refused` instead of retrying the chardev itself.
+	// Without a retry here the node stays down for the rest of the cluster's lifetime.
+	var launchErr error
+
+	for attempt := range qemuStartAttempts {
+		launchErr = runQemu(config, args)
+
+		if !errors.Is(launchErr, errQemuStartFailed) || attempt == qemuStartAttempts-1 {
+			break
+		}
+
+		backoff := qemuStartBackoff << attempt
+
+		fmt.Fprintf(os.Stderr, "%s, retrying in %s (attempt %d of %d)\n", launchErr, backoff, attempt+1, qemuStartAttempts)
+
+		select {
+		case <-time.After(backoff):
+		case sig := <-config.c:
+			fmt.Fprintf(os.Stderr, "exiting VM as signal %s was received\n", sig)
+
+			return errors.New("process stopped")
+		}
+	}
+
+	return launchErr
+}
+
+// errQemuStartFailed marks a QEMU process which never got past its own startup, as opposed to a VM
+// which ran for a while and then died: only the former is worth relaunching.
+var errQemuStartFailed = errors.New("QEMU failed to start")
+
+// runQemu starts QEMU with the given args and supervises it until the VM exits or is stopped.
+//
+//nolint:gocyclo
+func runQemu(config *LaunchConfig, args []string) error {
 	fmt.Fprintf(os.Stderr, "starting %s with args:\n%s\n", config.ArchitectureData.QemuExecutable(), strings.Join(args, " "))
 	cmd := exec.Command( //nolint:noctx // runs in background
 		config.ArchitectureData.QemuExecutable(),
@@ -462,8 +513,10 @@ func launchVM(config *LaunchConfig) error {
 	cmd.Stderr = os.Stderr
 
 	if err := startQemuCmd(config, cmd); err != nil {
-		return err
+		return fmt.Errorf("%w: %w", errQemuStartFailed, err)
 	}
+
+	startedAt := time.Now()
 
 	done := make(chan error)
 
@@ -485,6 +538,10 @@ func launchVM(config *LaunchConfig) error {
 			return errors.New("process stopped")
 		case err := <-done:
 			if err != nil {
+				if time.Since(startedAt) < qemuStartupGracePeriod {
+					return fmt.Errorf("%w: %w", errQemuStartFailed, err)
+				}
+
 				return fmt.Errorf("process exited with error %s", err)
 			}
 

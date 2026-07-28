@@ -510,7 +510,15 @@ func (k8sSuite *K8sSuite) WaitForPodToBeRunning(ctx context.Context, timeout tim
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case event := <-watcher.ResultChan():
+		case event, ok := <-watcher.ResultChan():
+			if !ok {
+				if ctx.Err() != nil {
+					return ctx.Err()
+				}
+
+				return fmt.Errorf("watcher closed waiting for pod %s/%s", namespace, podName)
+			}
+
 			if event.Type == watch.Error {
 				return fmt.Errorf("error watching pod: %v", event.Object)
 			}
@@ -528,7 +536,15 @@ func (k8sSuite *K8sSuite) WaitForPodToBeRunning(ctx context.Context, timeout tim
 			if pod.Name == podName && pod.Status.Phase == corev1.PodRunning {
 				return nil
 			}
-		case event := <-eventsWatcher.ResultChan():
+		case event, ok := <-eventsWatcher.ResultChan():
+			if !ok {
+				if ctx.Err() != nil {
+					return ctx.Err()
+				}
+
+				return fmt.Errorf("watcher closed waiting for events in namespace %s", namespace)
+			}
+
 			if event.Type == watch.Error {
 				return fmt.Errorf("error watching event: %v", event.Object)
 			}
@@ -561,6 +577,8 @@ func (k8sSuite *K8sSuite) WaitForPodToBeRunning(ctx context.Context, timeout tim
 }
 
 // WaitForDeploymentAvailable waits for the deployment with the given namespace and name to be running with the requested replicas.
+//
+//nolint:gocyclo
 func (k8sSuite *K8sSuite) WaitForDeploymentAvailable(ctx context.Context, timeout time.Duration, namespace, deplName string, replicas int32) error {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
@@ -578,7 +596,15 @@ func (k8sSuite *K8sSuite) WaitForDeploymentAvailable(ctx context.Context, timeou
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case event := <-watcher.ResultChan():
+		case event, ok := <-watcher.ResultChan():
+			if !ok {
+				if ctx.Err() != nil {
+					return ctx.Err()
+				}
+
+				return fmt.Errorf("watcher closed waiting for deployment %s/%s", namespace, deplName)
+			}
+
 			if event.Type == watch.Error {
 				return fmt.Errorf("error watching deployment: %v", event.Object)
 			}
