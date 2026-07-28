@@ -181,7 +181,7 @@ config:
         - providers:
             - secretbox:
                 keys:
-                    - name: key1
+                    - name: key2
                       secret: 45yd2Ke+sytiICojDf8aibTfgt99nzJmO53cjDqrCto=
           resources:
             - secrets

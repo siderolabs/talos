@@ -37,22 +37,51 @@ func (in *Input) generateKubernetesControlplaneConfigs(controlplaneURL *url.URL,
 		flannelConfig.FlannelBackendPort = constants.FlannelDefaultBackendPort
 	}
 
+	// The list and order of the providers is important, it should be in sync
+	// with the k8stemplates/apiserver.go legacy path, but we can't reuse the same
+	// code here, as we can't pull in the dependency on k8s machinery
+	//
+	// Preserving the names and order is important for the case when someone takes
+	// pre-1.14 cluster and regenerates the machine config using 1.14 version contract,
+	// which will update this configuration document to the new format, but the rendered
+	// configuration for kube-apiserver should match to allow secrets to be decrypted correctly.
+	var etcdEncryptionProvidersList []any
+
+	if in.Options.SecretsBundle.Secrets.SecretboxEncryptionSecret != "" {
+		etcdEncryptionProvidersList = append(etcdEncryptionProvidersList,
+			map[string]any{
+				"secretbox": map[string]any{
+					"keys": []any{
+						map[string]any{
+							"name":   "key2",
+							"secret": in.Options.SecretsBundle.Secrets.SecretboxEncryptionSecret,
+						},
+					},
+				},
+			},
+		)
+	}
+
+	if in.Options.SecretsBundle.Secrets.AESCBCEncryptionSecret != "" {
+		etcdEncryptionProvidersList = append(etcdEncryptionProvidersList,
+			map[string]any{
+				"secretbox": map[string]any{
+					"keys": []any{
+						map[string]any{
+							"name":   "key1",
+							"secret": in.Options.SecretsBundle.Secrets.AESCBCEncryptionSecret,
+						},
+					},
+				},
+			},
+		)
+	}
+
 	etcdEncryptionConfig := k8s.NewKubeEtcdEncryptionConfigV1Alpha1()
 	etcdEncryptionConfig.Config.Object = map[string]any{
 		"resources": []any{
 			map[string]any{
-				"providers": []any{
-					map[string]any{
-						"secretbox": map[string]any{
-							"keys": []any{
-								map[string]any{
-									"name":   "key1",
-									"secret": in.Options.SecretsBundle.Secrets.SecretboxEncryptionSecret,
-								},
-							},
-						},
-					},
-				},
+				"providers": etcdEncryptionProvidersList,
 				"resources": []any{
 					"secrets",
 				},
