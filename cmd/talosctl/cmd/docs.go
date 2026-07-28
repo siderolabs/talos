@@ -254,18 +254,15 @@ func ConvertIndentedCodeBlocks(s string) string {
 
 // GenMarkdownReference is the same as GenMarkdownTree, but
 // with custom filePrepender and linkHandler.
-//
-//nolint:gocyclo
 func GenMarkdownReference(cmd *cobra.Command, w io.Writer, linkHandler func(string) string) error {
-	for _, c := range cmd.Commands() {
-		// Generate docs for children of the cluster create command although the command itself is hidden.
-		if cmd.Name() == "cluster" && c.Name() == "create" {
-			if err := GenMarkdownReference(c, w, linkHandler); err != nil {
-				return err
-			}
-		}
+	// TODO: remove the "cluster create" special casing once it is completely migrated to "cluster create dev".
+	isClusterCreate := func(c *cobra.Command) bool {
+		return c.Name() == "create" && c.Parent() != nil && c.Parent().Name() == "cluster"
+	}
 
-		if !c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand() {
+	for _, c := range cmd.Commands() {
+		// Descend into the cluster create command even if it (or its flags) is hidden, as its children should be documented.
+		if !isClusterCreate(c) && (!c.IsAvailableCommand() || c.IsAdditionalHelpTopicCommand()) {
 			continue
 		}
 
@@ -275,8 +272,7 @@ func GenMarkdownReference(cmd *cobra.Command, w io.Writer, linkHandler func(stri
 	}
 
 	// Skip generating docs for the cluster create command itself and only generate docs for children.
-	// TODO: remove once "cluster create" is completely migrated to "cluster create dev".
-	if cmd.Name() == "create" && cmd.Parent() != nil && cmd.Parent().Name() == "cluster" {
+	if isClusterCreate(cmd) {
 		return nil
 	}
 
