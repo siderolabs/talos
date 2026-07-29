@@ -1209,34 +1209,6 @@ func TestValidate(t *testing.T) {
 				"\t* [networking.os.device.route[7]]: either network or gateway should be set\n\n",
 		},
 		{
-			name: "KubeSpanNoDiscovery",
-			config: &v1alpha1.Config{
-				ConfigVersion: "v1alpha1",
-				MachineConfig: &v1alpha1.MachineConfig{
-					MachineType: "controlplane",
-					MachineCA: &x509.PEMEncodedCertificateAndKey{
-						Crt: []byte("foo"),
-						Key: []byte("bar"),
-					},
-					MachineNetwork: &v1alpha1.NetworkConfig{
-						NetworkKubeSpan: &v1alpha1.NetworkKubeSpan{
-							KubeSpanEnabled: new(true),
-						},
-					},
-				},
-				ClusterConfig: &v1alpha1.ClusterConfig{
-					ControlPlane: &v1alpha1.ControlPlaneConfig{
-						Endpoint: &v1alpha1.Endpoint{
-							endpointURL,
-						},
-					},
-				},
-			},
-			// .cluster.id/.cluster.secret requirements moved to container-level validation
-			// (the identity may live in a separate DiscoveryIdentityConfig document).
-			expectedError: "1 error occurred:\n\t* .cluster.discovery should be enabled when .machine.network.kubespan is enabled\n\n",
-		},
-		{
 			name: "DiscoveryServiceEndpoint",
 			config: &v1alpha1.Config{
 				ConfigVersion: "v1alpha1",

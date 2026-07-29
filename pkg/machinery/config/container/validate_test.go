@@ -20,6 +20,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/config"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/block"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/k8s"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/network"
@@ -282,6 +283,16 @@ func TestValidateContainer(t *testing.T) {
 		},
 	}
 
+	kubespanConfig := network.NewKubeSpanV1Alpha1()
+	kubespanConfig.ConfigEnabled = new(true)
+
+	discoveryIdentityConfig := cluster.NewDiscoveryIdentityConfigV1Alpha1(
+		"MDEyMzQ1Njc4OTAxMjM0NTY3ODkwMTIzNDU2Nzg5MDE=",
+		"vlf2HU1NEZL3Ezi9Tk+RZBLJUbjnsHnTzs3wK9JNk6Q=",
+	)
+
+	discoveryServiceConfig := cluster.NewDiscoveryServiceConfigV1Alpha1("default", must.Value(url.Parse("https://discovery.api/"))(t))
+
 	for _, tt := range []struct {
 		name        string
 		documents   []config.Document
@@ -352,6 +363,23 @@ func TestValidateContainer(t *testing.T) {
 			documents: []config.Document{v1alpha1Cfg, kubeEtcdEncryptionConfig},
 
 			expectedError: "1 error occurred:\n\t* the following document kinds are only allowed on control plane machines: [KubeEtcdEncryptionConfig]\n\n",
+		},
+		{
+			name:      "kubespan without discovery",
+			documents: []config.Document{v1alpha1Cfg, kubespanConfig},
+
+			expectedError: "1 error occurred:\n\t* KubeSpan requires cluster discovery to be enabled\n\n",
+		},
+		{
+			name:      "discovery without identity",
+			documents: []config.Document{discoveryServiceConfig, kubespanConfig},
+
+			expectedError: "2 errors occurred:\n\t* cluster ID (.cluster.id or DiscoveryIdentityConfig) should be set when cluster discovery (DiscoveryServiceConfig) is enabled\n" +
+				"\t* cluster secret (.cluster.secret or DiscoveryIdentityConfig) should be set when cluster discovery (DiscoveryServiceConfig) is enabled\n\n",
+		},
+		{
+			name:      "discovery with kubespan and identity",
+			documents: []config.Document{discoveryServiceConfig, discoveryIdentityConfig, kubespanConfig},
 		},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
