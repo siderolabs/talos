@@ -90,15 +90,10 @@ func (d *Detector) IsSpike(sample Sample) bool {
 		return false
 	}
 
-	// This check was specifically removed (while it exists in systemd-timesync),
-	// as I don't understand why it's needed (@smira).
-	// It seems to give false positives when the RTT and Offset are close to each other,
-	// e.g. when NTP server is on the same LAN.
-	//
-	// if math.Abs(sample.Offset) > d.samples[indexMin].RTT {
-	// 	// do not accept anything worse than the maximum possible error of the best sample
-	// 	return true
-	// }
+	if math.Abs(sample.Offset) > d.samples[indexMin].RTT {
+		// do not accept anything worse than the maximum possible error of the best sample
+		return true
+	}
 
 	// check that diff to the last offset is not more than 3*(observed jitter)
 	return math.Abs(sample.Offset-d.samples[currentIndex].Offset) > 3*jitter
