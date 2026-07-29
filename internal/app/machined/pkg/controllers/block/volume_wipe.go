@@ -16,6 +16,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/volumes/volumeconfig"
+	machinedruntime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/pkg/partition"
 	blockpb "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
 	"github.com/siderolabs/talos/pkg/machinery/cel"
@@ -28,6 +29,7 @@ import (
 
 // VolumeWipeController reads the StagedWipeTargets META tag and wipes volumes matching its CEL selectors.
 type VolumeWipeController struct {
+	V1Alpha1Mode machinedruntime.Mode
 	MetaProvider volumeconfig.MetaProvider
 }
 
@@ -105,19 +107,25 @@ func (ctrl *VolumeWipeController) Run(ctx context.Context, r controller.Runtime,
 
 		// At this point, we know META exists and has been loaded
 
-		discoveredVolumesStatus, err := safe.ReaderGetByID[*block.DiscoveredVolumesStatus](ctx, r, block.DiscoveredVolumesStatusID)
-		if err != nil {
-			if state.IsNotFoundError(err) {
-				continue
+		// in container mode there are no real block devices to discover, so DiscoveredVolumesStatus
+		// never becomes ready; skip the wait, mirroring DevicesStatusController's container short-circuit.
+		if !ctrl.V1Alpha1Mode.InContainer() {
+			discoveredVolumesStatus, err := safe.ReaderGetByID[*block.DiscoveredVolumesStatus](ctx, r, block.DiscoveredVolumesStatusID)
+			if err != nil {
+				if state.IsNotFoundError(err) {
+					logger.Info("waiting for discovered volumes to be ready (DiscoveredVolumesStatus not found)")
+
+					continue
+				}
+
+				return fmt.Errorf("error getting discovered volumes status: %w", err)
 			}
 
-			return fmt.Errorf("error getting discovered volumes status: %w", err)
-		}
+			if !discoveredVolumesStatus.TypedSpec().Ready {
+				logger.Info("waiting for discovered volumes to be ready")
 
-		if !discoveredVolumesStatus.TypedSpec().Ready {
-			logger.Info("waiting for discovered volumes to be ready")
-
-			continue
+				continue
+			}
 		}
 
 		// Volumes are now ready, we can execute the wipe instructions.

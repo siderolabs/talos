@@ -140,11 +140,11 @@ func (ctrl *VolumeConfigController) Run(ctx context.Context, r controller.Runtim
 		for _, resource := range resources {
 			if resource.VolumeID != constants.MetaPartitionLabel {
 				volumeWipeStatus, err := safe.ReaderGetByID[*block.VolumeWipeStatus](ctx, r, block.VolumeWipeID)
-				if err != nil {
+				if err != nil && !state.IsNotFoundError(err) {
 					return fmt.Errorf("error fetching volume wipe status: %w", err)
 				}
 
-				if !volumeWipeStatus.TypedSpec().Ready {
+				if volumeWipeStatus == nil || !volumeWipeStatus.TypedSpec().Ready {
 					// Volumes not wiped yet, skip creating non-META volumes until wipe is complete
 					continue
 				}
