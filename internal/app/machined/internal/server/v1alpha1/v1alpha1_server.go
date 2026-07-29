@@ -775,7 +775,7 @@ func (s *Server) VolumeWipe(ctx context.Context, in *machine.VolumeWipeRequest) 
 	}
 
 	if in.GetOnReboot() {
-		if err := system.WipeVolumesOnReboot(ctx, s.Controller, volumeStatuses); err != nil {
+		if err := system.WipeVolumesOnReboot(ctx, s.Controller, s.Logger, volumeStatuses); err != nil {
 			return nil, err
 		}
 	} else {
@@ -785,7 +785,7 @@ func (s *Server) VolumeWipe(ctx context.Context, in *machine.VolumeWipeRequest) 
 			return nil, err
 		}
 
-		if err := system.WipeVolumesNow(ctx, s.Controller, volumeStatuses); err != nil {
+		if err := system.WipeVolumesNow(ctx, s.Controller, s.Logger, volumeStatuses); err != nil {
 			return nil, err
 		}
 	}

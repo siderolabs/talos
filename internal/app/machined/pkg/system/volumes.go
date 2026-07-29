@@ -20,6 +20,7 @@ import (
 	"github.com/google/cel-go/common/operators"
 	"github.com/google/cel-go/common/types"
 	"github.com/siderolabs/gen/xslices"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -308,18 +309,23 @@ func ResolveSystemVolumeStatuses(ctx context.Context, coreState state.CoreState,
 }
 
 // WipeVolumesOnReboot stages CEL selectors for the given volumes to be wiped on the next boot.
-func WipeVolumesOnReboot(ctx context.Context, ctrl runtime.Controller, volumeStatuses []*block.VolumeStatus) error {
+func WipeVolumesOnReboot(
+	ctx context.Context,
+	ctrl runtime.Controller,
+	logger *zap.Logger,
+	volumeStatuses []*block.VolumeStatus,
+) error {
 	selectors, err := VolumeStatusesToSelectors(volumeStatuses)
 	if err != nil {
 		return fmt.Errorf("error converting volumes to selectors: %w", err)
 	}
 
-	selectorsJSON, err := json.Marshal(selectors)
+	selectorsStr, err := json.Marshal(selectors)
 	if err != nil {
 		return fmt.Errorf("error serializing staged volume wipe selectors: %w", err)
 	}
 
-	if ok, err := ctrl.Runtime().State().Machine().Meta().SetTag(ctx, meta.StagedWipeSelectors, string(selectorsJSON)); !ok || err != nil {
+	if ok, err := ctrl.Runtime().State().Machine().Meta().SetTag(ctx, meta.StagedWipeSelectors, string(selectorsStr)); !ok || err != nil {
 		return fmt.Errorf("error adding staged partition wipe tag: %w", err)
 	}
 
@@ -327,11 +333,18 @@ func WipeVolumesOnReboot(ctx context.Context, ctrl runtime.Controller, volumeSta
 		return fmt.Errorf("error writing meta: %w", err)
 	}
 
+	logger.Sugar().Infof("staged %d volume(s) for wipe on next boot; CEL selectors: %q", len(volumeStatuses), selectorsStr)
+
 	return nil
 }
 
 // WipeVolumesNow immediately wipes each of the given volumes, failing fast on the first error.
-func WipeVolumesNow(ctx context.Context, ctrl runtime.Controller, volumeStatuses []*block.VolumeStatus) error {
+func WipeVolumesNow(
+	ctx context.Context,
+	ctrl runtime.Controller,
+	logger *zap.Logger,
+	volumeStatuses []*block.VolumeStatus,
+) error {
 	for _, volumeStatus := range volumeStatuses {
 		if volumeStatus.TypedSpec().Location == "" {
 			return fmt.Errorf(
