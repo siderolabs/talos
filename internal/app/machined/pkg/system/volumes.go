@@ -371,8 +371,8 @@ func WipeVolumesNow(
 //
 // A mounted volume can't be wiped safely while the node is running; that's what --on-reboot is for.
 // Mount state is tracked by block.VolumeMountStatus resources, keyed to a volume via VolumeID.
-func AssertVolumesNotMounted(ctx context.Context, ctrl runtime.Controller, ids []string) error {
-	mountStatuses, err := safe.StateListAll[*block.VolumeMountStatus](ctx, ctrl.Runtime().State().V1Alpha2().Resources())
+func AssertVolumesNotMounted(ctx context.Context, st state.State, ids []string) error {
+	mountStatuses, err := safe.StateListAll[*block.VolumeMountStatus](ctx, st)
 	if err != nil {
 		return status.Errorf(codes.Internal, "failed to list volume mount statuses: %s", err)
 	}

@@ -51,26 +51,53 @@ func TestSystemVolumeStatuses(t *testing.T) {
 		require.Error(t, err)
 		assert.Equal(t, codes.InvalidArgument, grpcstatus.Code(err))
 	})
+
+	t.Run("multiple valid system volumes", func(t *testing.T) {
+		stateVol := block.NewVolumeStatus(block.NamespaceName, "STATE")
+		stateVol.Metadata().Labels().Set(block.SystemVolumeLabel, "")
+		require.NoError(t, st.Create(ctx, stateVol))
+
+		result, err := system.ResolveSystemVolumeStatuses(ctx, st, []string{"EPHEMERAL", "STATE"})
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		assert.Equal(t, "EPHEMERAL", result[0].Metadata().ID())
+		assert.Equal(t, "STATE", result[1].Metadata().ID())
+	})
+
+	t.Run("one invalid ID fails the whole batch", func(t *testing.T) {
+		_, err := system.ResolveSystemVolumeStatuses(ctx, st, []string{"EPHEMERAL", "NONEXISTENT"})
+		require.Error(t, err)
+		assert.Equal(t, codes.NotFound, grpcstatus.Code(err))
+	})
 }
 
-// TODO: rework this to match latest API
-// func TestAssertVolumesNotMounted(t *testing.T) {
-// 	ctx := t.Context()
+func TestAssertVolumesNotMounted(t *testing.T) {
+	ctx := t.Context()
 
-// 	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(namespaced.NewState(inmem.Build))
 
-// 	mountStatus := block.NewVolumeMountStatus(block.NamespaceName, "EPHEMERAL-machined")
-// 	mountStatus.TypedSpec().VolumeID = "EPHEMERAL"
-// 	require.NoError(t, st.Create(ctx, mountStatus))
+	mountStatus := block.NewVolumeMountStatus(block.NamespaceName, "EPHEMERAL-machined")
+	mountStatus.TypedSpec().VolumeID = "EPHEMERAL"
+	require.NoError(t, st.Create(ctx, mountStatus))
 
-// 	t.Run("mounted volume rejected", func(t *testing.T) {
-// 		err := AssertVolumesNotMounted(ctx, st, []string{"EPHEMERAL"})
-// 		require.Error(t, err)
-// 		assert.Equal(t, codes.FailedPrecondition, grpcstatus.Code(err))
-// 		assert.Contains(t, err.Error(), "retry with --on-reboot")
-// 	})
+	t.Run("mounted volume rejected", func(t *testing.T) {
+		err := system.AssertVolumesNotMounted(ctx, st, []string{"EPHEMERAL"})
+		require.Error(t, err)
+		assert.Equal(t, codes.FailedPrecondition, grpcstatus.Code(err))
+		assert.Contains(t, err.Error(), "retry with --on-reboot")
+	})
 
-// 	t.Run("unmounted volume allowed", func(t *testing.T) {
-// 		require.NoError(t, AssertVolumesNotMounted(ctx, st, []string{"STATE"}))
-// 	})
-// }
+	t.Run("unmounted volume allowed", func(t *testing.T) {
+		require.NoError(t, system.AssertVolumesNotMounted(ctx, st, []string{"STATE"}))
+	})
+
+	t.Run("one of several requested volumes mounted is rejected", func(t *testing.T) {
+		err := system.AssertVolumesNotMounted(ctx, st, []string{"STATE", "EPHEMERAL"})
+		require.Error(t, err)
+		assert.Equal(t, codes.FailedPrecondition, grpcstatus.Code(err))
+	})
+
+	t.Run("none of several requested volumes mounted is allowed", func(t *testing.T) {
+		require.NoError(t, system.AssertVolumesNotMounted(ctx, st, []string{"STATE", "META"}))
+	})
+}

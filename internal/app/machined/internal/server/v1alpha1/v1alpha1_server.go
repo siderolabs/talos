@@ -781,7 +781,7 @@ func (s *Server) VolumeWipe(ctx context.Context, in *machine.VolumeWipeRequest) 
 	} else {
 		// an immediate wipe of a mounted (in-use) volume would destroy the live filesystem
 		// (e.g. wiping EPHEMERAL out from under a running /var); reject it and steer to --on-reboot.
-		if err := system.AssertVolumesNotMounted(ctx, s.Controller, in.GetVolumeIds()); err != nil {
+		if err := system.AssertVolumesNotMounted(ctx, s.Controller.Runtime().State().V1Alpha2().Resources(), in.GetVolumeIds()); err != nil {
 			return nil, err
 		}
 

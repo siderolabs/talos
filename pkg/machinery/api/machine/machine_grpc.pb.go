@@ -76,7 +76,6 @@ const (
 	MachineService_MetaWrite_FullMethodName                   = "/machine.MachineService/MetaWrite"
 	MachineService_MetaDelete_FullMethodName                  = "/machine.MachineService/MetaDelete"
 	MachineService_VolumeWipe_FullMethodName                  = "/machine.MachineService/VolumeWipe"
-	MachineService_StageVolumeWipe_FullMethodName             = "/machine.MachineService/StageVolumeWipe"
 	MachineService_ImageList_FullMethodName                   = "/machine.MachineService/ImageList"
 	MachineService_ImagePull_FullMethodName                   = "/machine.MachineService/ImagePull"
 )
@@ -179,8 +178,6 @@ type MachineServiceClient interface {
 	MetaDelete(ctx context.Context, in *MetaDeleteRequest, opts ...grpc.CallOption) (*MetaDeleteResponse, error)
 	// VolumeWipe wipes one or more system volumes, either immediately or staged for the next boot.
 	VolumeWipe(ctx context.Context, in *VolumeWipeRequest, opts ...grpc.CallOption) (*VolumeWipeResponse, error)
-	// StageVolumeWipe stages one or more system volumes to be wiped on the next boot.
-	StageVolumeWipe(ctx context.Context, in *StageVolumeWipeRequest, opts ...grpc.CallOption) (*StageVolumeWipeResponse, error)
 	// Deprecated: Do not use.
 	// ImageList lists images in the CRI.
 	//
@@ -825,16 +822,6 @@ func (c *machineServiceClient) VolumeWipe(ctx context.Context, in *VolumeWipeReq
 	return out, nil
 }
 
-func (c *machineServiceClient) StageVolumeWipe(ctx context.Context, in *StageVolumeWipeRequest, opts ...grpc.CallOption) (*StageVolumeWipeResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(StageVolumeWipeResponse)
-	err := c.cc.Invoke(ctx, MachineService_StageVolumeWipe_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // Deprecated: Do not use.
 func (c *machineServiceClient) ImageList(ctx context.Context, in *ImageListRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ImageListResponse], error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
@@ -964,8 +951,6 @@ type MachineServiceServer interface {
 	MetaDelete(context.Context, *MetaDeleteRequest) (*MetaDeleteResponse, error)
 	// VolumeWipe wipes one or more system volumes, either immediately or staged for the next boot.
 	VolumeWipe(context.Context, *VolumeWipeRequest) (*VolumeWipeResponse, error)
-	// StageVolumeWipe stages one or more system volumes to be wiped on the next boot.
-	StageVolumeWipe(context.Context, *StageVolumeWipeRequest) (*StageVolumeWipeResponse, error)
 	// Deprecated: Do not use.
 	// ImageList lists images in the CRI.
 	//
@@ -1144,9 +1129,6 @@ func (UnimplementedMachineServiceServer) MetaDelete(context.Context, *MetaDelete
 }
 func (UnimplementedMachineServiceServer) VolumeWipe(context.Context, *VolumeWipeRequest) (*VolumeWipeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method VolumeWipe not implemented")
-}
-func (UnimplementedMachineServiceServer) StageVolumeWipe(context.Context, *StageVolumeWipeRequest) (*StageVolumeWipeResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method StageVolumeWipe not implemented")
 }
 func (UnimplementedMachineServiceServer) ImageList(*ImageListRequest, grpc.ServerStreamingServer[ImageListResponse]) error {
 	return status.Error(codes.Unimplemented, "method ImageList not implemented")
@@ -2048,24 +2030,6 @@ func _MachineService_VolumeWipe_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
-func _MachineService_StageVolumeWipe_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(StageVolumeWipeRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MachineServiceServer).StageVolumeWipe(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: MachineService_StageVolumeWipe_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MachineServiceServer).StageVolumeWipe(ctx, req.(*StageVolumeWipeRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _MachineService_ImageList_Handler(srv interface{}, stream grpc.ServerStream) error {
 	m := new(ImageListRequest)
 	if err := stream.RecvMsg(m); err != nil {
@@ -2269,10 +2233,6 @@ var MachineService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "VolumeWipe",
 			Handler:    _MachineService_VolumeWipe_Handler,
-		},
-		{
-			MethodName: "StageVolumeWipe",
-			Handler:    _MachineService_StageVolumeWipe_Handler,
 		},
 		{
 			MethodName: "ImagePull",

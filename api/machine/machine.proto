@@ -107,8 +107,6 @@ service MachineService {
   rpc MetaDelete(MetaDeleteRequest) returns (MetaDeleteResponse);
   // VolumeWipe wipes one or more system volumes, either immediately or staged for the next boot.
   rpc VolumeWipe(VolumeWipeRequest) returns (VolumeWipeResponse);
-  // StageVolumeWipe stages one or more system volumes to be wiped on the next boot.
-  rpc StageVolumeWipe(StageVolumeWipeRequest) returns (StageVolumeWipeResponse);
   // ImageList lists images in the CRI.
   //
   // Use ImageService List RPC instead.
@@ -354,21 +352,6 @@ message VolumeWipe {
 
 message VolumeWipeResponse {
   repeated VolumeWipe messages = 1;
-}
-
-// rpc stagevolumewipe
-message StageVolumeWipeRequest {
-  // VolumeIds lists the system volume IDs to wipe on the next boot (e.g. EPHEMERAL, STATE).
-  repeated string volume_ids = 1;
-}
-
-// The stage volume wipe message containing the staging status.
-message StageVolumeWipe {
-  common.Metadata metadata = 1;
-}
-
-message StageVolumeWipeResponse {
-  repeated StageVolumeWipe messages = 1;
 }
 
 // rpc shutdown

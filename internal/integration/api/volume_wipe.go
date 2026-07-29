@@ -99,42 +99,55 @@ func (suite *VolumeWipeSuite) TestVolumeWipeImmediate() {
 	suite.Require().Error(err)
 	suite.Assert().Equal(codes.FailedPrecondition, client.StatusCode(err))
 	suite.Assert().Contains(err.Error(), "retry with --on-reboot")
+
+	// a multi-ID request is validated as a whole: one unknown ID fails the entire call,
+	// even though the other ID is valid
+	err = suite.Client.VolumeWipe(nodeCtx, &machineapi.VolumeWipeRequest{
+		VolumeIds: []string{constants.StatePartitionLabel, "NOSUCHVOLUME"},
+	})
+	suite.Require().Error(err)
+	suite.Assert().Equal(codes.NotFound, client.StatusCode(err))
 }
 
-// TestVolumeWipeStagedReboot verifies a staged (on-reboot) wipe of EPHEMERAL end-to-end.
+// TestVolumeWipeStagedReboot verifies a staged (on-reboot) wipe of multiple volumes (EPHEMERAL, META) end-to-end.
 //
-// Staging writes the StagedWipeTargets META tag with CEL selectors; on the next reboot
-// the VolumeWipeController (running as part of the normal COSI controller runtime) consumes the tag,
-// wipes the volume, and emits a VolumeWipeStatus resource. The volume is then re-provisioned.
+// Staging writes the StagedWipeTargets META tag with a CEL selector per requested volume; on the next
+// reboot the VolumeWipeController (running as part of the normal COSI controller runtime) consumes the
+// tag, wipes each matching volume, and emits a VolumeWipeStatus resource. The volumes are then
+// re-provisioned.
 func (suite *VolumeWipeSuite) TestVolumeWipeStagedReboot() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 	nodeCtx := client.WithNode(suite.ctx, node)
 
-	suite.T().Logf("staging EPHEMERAL wipe on %s", node)
+	volumeIDs := []string{constants.EphemeralPartitionLabel, constants.MetaPartitionLabel}
 
-	// Get the current EPHEMERAL volume status to know its partition UUID
-	var ephemeralUUID string
+	suite.T().Logf("staging wipe of %v on %s", volumeIDs, node)
 
-	rtestutils.AssertResource(
+	// Get the current partition UUIDs of the volumes to be wiped
+	partitionUUIDs := make(map[string]string, len(volumeIDs))
+
+	rtestutils.AssertResources(
 		nodeCtx, suite.T(), suite.Client.COSI,
-		constants.EphemeralPartitionLabel,
+		volumeIDs,
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
-			ephemeralUUID = vs.TypedSpec().PartitionUUID
-			asrt.NotEmpty(ephemeralUUID)
+			partitionUUIDs[vs.Metadata().ID()] = vs.TypedSpec().PartitionUUID
+			asrt.NotEmpty(vs.TypedSpec().PartitionUUID)
 		},
 	)
 
 	suite.Require().NoError(suite.Client.VolumeWipe(nodeCtx, &machineapi.VolumeWipeRequest{
-		VolumeIds: []string{constants.EphemeralPartitionLabel},
+		VolumeIds: volumeIDs,
 		OnReboot:  true,
 	}))
 
-	// the staged wipe tag should be written to META with a CEL selector embedding the partition UUID
+	// the staged wipe tag should be written to META with a CEL selector embedding each partition UUID
 	rtestutils.AssertResource(
 		nodeCtx, suite.T(), suite.Client.COSI,
 		runtimeres.MetaKeyTagToID(meta.StagedWipeSelectors),
 		func(metaKey *runtimeres.MetaKey, asrt *assert.Assertions) {
-			asrt.Contains(metaKey.TypedSpec().Value, ephemeralUUID)
+			for _, id := range volumeIDs {
+				asrt.Contains(metaKey.TypedSpec().Value, partitionUUIDs[id])
+			}
 		},
 	)
 
@@ -157,10 +170,10 @@ func (suite *VolumeWipeSuite) TestVolumeWipeStagedReboot() {
 		runtimeres.MetaKeyTagToID(meta.StagedWipeSelectors),
 	)
 
-	// EPHEMERAL should be re-provisioned and ready
+	// all requested volumes should be re-provisioned and ready
 	rtestutils.AssertResources(
 		client.WithNode(suite.ctx, node), suite.T(), suite.Client.COSI,
-		[]string{constants.EphemeralPartitionLabel},
+		volumeIDs,
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equal(block.VolumePhaseReady, vs.TypedSpec().Phase)
 		},

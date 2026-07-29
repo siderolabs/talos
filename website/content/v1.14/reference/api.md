@@ -255,9 +255,6 @@ description: Talos gRPC API reference.
     - [ShutdownRequest](#machine.ShutdownRequest)
     - [ShutdownResponse](#machine.ShutdownResponse)
     - [SoftIRQStat](#machine.SoftIRQStat)
-    - [StageVolumeWipe](#machine.StageVolumeWipe)
-    - [StageVolumeWipeRequest](#machine.StageVolumeWipeRequest)
-    - [StageVolumeWipeResponse](#machine.StageVolumeWipeResponse)
     - [Stat](#machine.Stat)
     - [Stats](#machine.Stats)
     - [StatsRequest](#machine.StatsRequest)
@@ -4538,51 +4535,6 @@ The messages message containing the shutdown status.
 
 
 
-<a name="machine.StageVolumeWipe"></a>
-
-### StageVolumeWipe
-The stage volume wipe message containing the staging status.
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| metadata | [common.Metadata](#common.Metadata) |  |  |
-
-
-
-
-
-
-<a name="machine.StageVolumeWipeRequest"></a>
-
-### StageVolumeWipeRequest
-rpc stagevolumewipe
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| volume_ids | [string](#string) | repeated | VolumeIds lists the system volume IDs to wipe on the next boot (e.g. EPHEMERAL, STATE). |
-
-
-
-
-
-
-<a name="machine.StageVolumeWipeResponse"></a>
-
-### StageVolumeWipeResponse
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| messages | [StageVolumeWipe](#machine.StageVolumeWipe) | repeated |  |
-
-
-
-
-
-
 <a name="machine.Stat"></a>
 
 ### Stat
@@ -5157,7 +5109,6 @@ The machine service definition.
 | MetaWrite | [MetaWriteRequest](#machine.MetaWriteRequest) | [MetaWriteResponse](#machine.MetaWriteResponse) | MetaWrite writes a META key-value pair. |
 | MetaDelete | [MetaDeleteRequest](#machine.MetaDeleteRequest) | [MetaDeleteResponse](#machine.MetaDeleteResponse) | MetaDelete deletes a META key. |
 | VolumeWipe | [VolumeWipeRequest](#machine.VolumeWipeRequest) | [VolumeWipeResponse](#machine.VolumeWipeResponse) | VolumeWipe wipes one or more system volumes, either immediately or staged for the next boot. |
-| StageVolumeWipe | [StageVolumeWipeRequest](#machine.StageVolumeWipeRequest) | [StageVolumeWipeResponse](#machine.StageVolumeWipeResponse) | StageVolumeWipe stages one or more system volumes to be wiped on the next boot. |
 | ImageList | [ImageListRequest](#machine.ImageListRequest) | [ImageListResponse](#machine.ImageListResponse) stream | ImageList lists images in the CRI.<br><br>Use ImageService List RPC instead. |
 | ImagePull | [ImagePullRequest](#machine.ImagePullRequest) | [ImagePullResponse](#machine.ImagePullResponse) | ImagePull pulls an image into the CRI.<br><br>Use ImageService Pull RPC instead. |
 
