@@ -132,9 +132,16 @@ type StatusSpec struct {
 	// Epoch is incremented every time clock jumps more than 15min.
 	Epoch int64 `protobuf:"varint,2,opt,name=epoch,proto3" json:"epoch,omitempty"`
 	// SyncDisabled indicates if time sync is disabled.
-	SyncDisabled  bool `protobuf:"varint,3,opt,name=sync_disabled,json=syncDisabled,proto3" json:"sync_disabled,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	SyncDisabled bool `protobuf:"varint,3,opt,name=sync_disabled,json=syncDisabled,proto3" json:"sync_disabled,omitempty"`
+	// SpikeDetected indicates that the last time measurement was discarded by the spike filter.
+	//
+	// A discarded measurement is not applied to the clock at all, so a filter which keeps
+	// rejecting looks exactly like a clock which is never corrected.
+	SpikeDetected bool `protobuf:"varint,4,opt,name=spike_detected,json=spikeDetected,proto3" json:"spike_detected,omitempty"`
+	// ConsecutiveSpikes is the number of time measurements discarded in a row by the spike filter.
+	ConsecutiveSpikes int64 `protobuf:"varint,5,opt,name=consecutive_spikes,json=consecutiveSpikes,proto3" json:"consecutive_spikes,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *StatusSpec) Reset() {
@@ -188,6 +195,20 @@ func (x *StatusSpec) GetSyncDisabled() bool {
 	return false
 }
 
+func (x *StatusSpec) GetSpikeDetected() bool {
+	if x != nil {
+		return x.SpikeDetected
+	}
+	return false
+}
+
+func (x *StatusSpec) GetConsecutiveSpikes() int64 {
+	if x != nil {
+		return x.ConsecutiveSpikes
+	}
+	return 0
+}
+
 var File_resource_definitions_time_time_proto protoreflect.FileDescriptor
 
 const file_resource_definitions_time_time_proto_rawDesc = "" +
@@ -202,12 +223,14 @@ const file_resource_definitions_time_time_proto_rawDesc = "" +
 	"\bconstant\x18\x06 \x01(\x03R\bconstant\x12\x1f\n" +
 	"\vsync_status\x18\a \x01(\bR\n" +
 	"syncStatus\x12\x14\n" +
-	"\x05state\x18\b \x01(\tR\x05state\"_\n" +
+	"\x05state\x18\b \x01(\tR\x05state\"\xb5\x01\n" +
 	"\n" +
 	"StatusSpec\x12\x16\n" +
 	"\x06synced\x18\x01 \x01(\bR\x06synced\x12\x14\n" +
 	"\x05epoch\x18\x02 \x01(\x03R\x05epoch\x12#\n" +
-	"\rsync_disabled\x18\x03 \x01(\bR\fsyncDisabledBr\n" +
+	"\rsync_disabled\x18\x03 \x01(\bR\fsyncDisabled\x12%\n" +
+	"\x0espike_detected\x18\x04 \x01(\bR\rspikeDetected\x12-\n" +
+	"\x12consecutive_spikes\x18\x05 \x01(\x03R\x11consecutiveSpikesBr\n" +
 	"'dev.talos.api.resource.definitions.timeZGgithub.com/siderolabs/talos/pkg/machinery/api/resource/definitions/timeb\x06proto3"
 
 var (

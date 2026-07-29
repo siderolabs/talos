@@ -35,6 +35,15 @@ type StatusSpec struct {
 
 	// SyncDisabled indicates if time sync is disabled.
 	SyncDisabled bool `yaml:"syncDisabled" protobuf:"3"`
+
+	// SpikeDetected indicates that the last time measurement was discarded by the spike filter.
+	//
+	// A discarded measurement is not applied to the clock at all, so a filter which keeps
+	// rejecting looks exactly like a clock which is never corrected.
+	SpikeDetected bool `yaml:"spikeDetected" protobuf:"4"`
+
+	// ConsecutiveSpikes is the number of time measurements discarded in a row by the spike filter.
+	ConsecutiveSpikes int `yaml:"consecutiveSpikes" protobuf:"5"`
 }
 
 // NewStatus initializes a TimeSync resource.

@@ -18,6 +18,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	timectrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/time"
 	v1alpha1runtime "github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/pkg/ntp"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
@@ -186,6 +187,24 @@ func (suite *SyncSuite) TestReconcileSyncChangeConfig() {
 		SyncDisabled: false,
 	})
 
+	mockSyncer.reportSpikeStatus(ntp.SpikeStatus{Detected: true, Consecutive: 3})
+
+	suite.assertTimeStatus(timeresource.StatusSpec{
+		Synced:            true,
+		Epoch:             1,
+		SyncDisabled:      false,
+		SpikeDetected:     true,
+		ConsecutiveSpikes: 3,
+	})
+
+	mockSyncer.reportSpikeStatus(ntp.SpikeStatus{})
+
+	suite.assertTimeStatus(timeresource.StatusSpec{
+		Synced:       true,
+		Epoch:        1,
+		SyncDisabled: false,
+	})
+
 	ctest.UpdateWithConflicts(suite, cfg, func(r *config.MachineConfig) error {
 		r.Container().RawV1Alpha1().MachineConfig.MachineTime = &v1alpha1.TimeConfig{ //nolint:staticcheck
 			TimeDisabled: new(true),
@@ -314,6 +333,8 @@ type mockSyncer struct {
 	useNTS      bool
 	syncedCh    chan struct{}
 	epochCh     chan struct{}
+	spikeCh     chan struct{}
+	spikeStatus ntp.SpikeStatus
 }
 
 func (mock *mockSyncer) Run(ctx context.Context) {
@@ -326,6 +347,25 @@ func (mock *mockSyncer) Synced() <-chan struct{} {
 
 func (mock *mockSyncer) EpochChange() <-chan struct{} {
 	return mock.epochCh
+}
+
+func (mock *mockSyncer) SpikeStatusChange() <-chan struct{} {
+	return mock.spikeCh
+}
+
+func (mock *mockSyncer) SpikeStatus() ntp.SpikeStatus {
+	mock.mu.Lock()
+	defer mock.mu.Unlock()
+
+	return mock.spikeStatus
+}
+
+func (mock *mockSyncer) reportSpikeStatus(status ntp.SpikeStatus) {
+	mock.mu.Lock()
+	mock.spikeStatus = status
+	mock.mu.Unlock()
+
+	mock.spikeCh <- struct{}{}
 }
 
 func (mock *mockSyncer) getTimeServers() (servers []string) {
@@ -355,5 +395,6 @@ func newMockSyncer(_ *zap.Logger, servers []string, useNTS bool) *mockSyncer {
 		useNTS:      useNTS,
 		syncedCh:    make(chan struct{}, 1),
 		epochCh:     make(chan struct{}, 1),
+		spikeCh:     make(chan struct{}, 1),
 	}
 }

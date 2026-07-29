@@ -27,5 +27,12 @@ message StatusSpec {
   int64 epoch = 2;
   // SyncDisabled indicates if time sync is disabled.
   bool sync_disabled = 3;
+  // SpikeDetected indicates that the last time measurement was discarded by the spike filter.
+  //
+  // A discarded measurement is not applied to the clock at all, so a filter which keeps
+  // rejecting looks exactly like a clock which is never corrected.
+  bool spike_detected = 4;
+  // ConsecutiveSpikes is the number of time measurements discarded in a row by the spike filter.
+  int64 consecutive_spikes = 5;
 }
 

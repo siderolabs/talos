@@ -330,6 +330,25 @@ func (suite *NTPSuite) TestSyncWithSpikes() {
 		syncer.Run(ctx)
 	})
 
+	// a discarded measurement is not applied to the clock at all, so the filter has to report
+	// what it is doing for the rejections to be visible at all
+	var spikeReported atomic.Bool
+
+	wg.Go(func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-syncer.SpikeStatusChange():
+				if status := syncer.SpikeStatus(); status.Detected {
+					suite.Assert().Positive(status.Consecutive)
+
+					spikeReported.Store(true)
+				}
+			}
+		}
+	})
+
 	select {
 	case <-syncer.Synced():
 	case <-time.After(10 * time.Second):
@@ -348,6 +367,10 @@ func (suite *NTPSuite) TestSyncWithSpikes() {
 			for _, adj := range suite.clockAdjustments {
 				// 1s spike should be filtered out
 				suite.Assert().Equal(time.Millisecond, adj)
+			}
+
+			if !spikeReported.Load() {
+				return retry.ExpectedErrorf("spike filter did not report a discarded measurement")
 			}
 
 			return nil

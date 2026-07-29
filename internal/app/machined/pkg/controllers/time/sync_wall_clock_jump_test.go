@@ -16,6 +16,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/time"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
+	"github.com/siderolabs/talos/internal/pkg/ntp"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -158,12 +159,14 @@ func (detector *fakeClockJumpDetector) enqueueJump() {
 type noopSyncer struct {
 	syncedCh chan struct{}
 	epochCh  chan struct{}
+	spikeCh  chan struct{}
 }
 
 func newNoopSyncer() *noopSyncer {
 	return &noopSyncer{
 		syncedCh: make(chan struct{}),
 		epochCh:  make(chan struct{}),
+		spikeCh:  make(chan struct{}),
 	}
 }
 
@@ -181,6 +184,14 @@ func (syncer *noopSyncer) sendSynced() {
 
 func (syncer *noopSyncer) EpochChange() <-chan struct{} {
 	return syncer.epochCh
+}
+
+func (syncer *noopSyncer) SpikeStatusChange() <-chan struct{} {
+	return syncer.spikeCh
+}
+
+func (syncer *noopSyncer) SpikeStatus() ntp.SpikeStatus {
+	return ntp.SpikeStatus{}
 }
 
 func (syncer *noopSyncer) SetTimeServers([]string) {}

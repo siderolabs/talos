@@ -60,6 +60,8 @@ type NTPSyncer interface {
 	Run(ctx context.Context)
 	Synced() <-chan struct{}
 	EpochChange() <-chan struct{}
+	SpikeStatusChange() <-chan struct{}
+	SpikeStatus() ntp.SpikeStatus
 	SetTimeServers([]string)
 }
 
@@ -121,11 +123,13 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 
 		syncCh  <-chan struct{}
 		epochCh <-chan struct{}
+		spikeCh <-chan struct{}
 		syncer  NTPSyncer
 
-		timeSynced bool
-		epoch      int
-		useNTS     bool
+		timeSynced  bool
+		epoch       int
+		useNTS      bool
+		spikeStatus ntp.SpikeStatus
 
 		timeSyncTimeoutTimer *stdtime.Timer
 		timeSyncTimeoutCh    <-chan stdtime.Time
@@ -158,6 +162,8 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 			timeSynced = true
 		case <-epochCh:
 			epoch++
+		case <-spikeCh:
+			spikeStatus = syncer.SpikeStatus()
 		case <-timeSyncTimeoutCh:
 			timeSynced = true
 			timeSyncTimeoutTimer = nil
@@ -248,6 +254,8 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 			syncer = nil
 			syncCh = nil
 			epochCh = nil
+			spikeCh = nil
+			spikeStatus = ntp.SpikeStatus{}
 		case !syncDisabled && syncer != nil && newUseNTS != useNTS:
 			// NTS setting changed, restart the syncer
 			logger.Info("NTS setting changed, restarting syncer", zap.Bool("useNTS", newUseNTS))
@@ -261,8 +269,10 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 			syncer = ctrl.NewNTPSyncer(logger, timeServers, useNTS)
 			syncCh = syncer.Synced()
 			epochCh = syncer.EpochChange()
+			spikeCh = syncer.SpikeStatusChange()
 
 			timeSynced = false
+			spikeStatus = ntp.SpikeStatus{}
 
 			syncCtx, syncCtxCancel = context.WithCancel(ctx) //nolint:govet,fatcontext
 
@@ -276,8 +286,10 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 			syncer = ctrl.NewNTPSyncer(logger, timeServers, useNTS)
 			syncCh = syncer.Synced()
 			epochCh = syncer.EpochChange()
+			spikeCh = syncer.SpikeStatusChange()
 
 			timeSynced = false
+			spikeStatus = ntp.SpikeStatus{}
 
 			syncCtx, syncCtxCancel = context.WithCancel(ctx) //nolint:govet,fatcontext
 
@@ -296,9 +308,11 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 
 		if err = safe.WriterModify(ctx, r, time.NewStatus(), func(r *time.Status) error {
 			*r.TypedSpec() = time.StatusSpec{
-				Epoch:        epoch,
-				Synced:       timeSynced,
-				SyncDisabled: syncDisabled,
+				Epoch:             epoch,
+				Synced:            timeSynced,
+				SyncDisabled:      syncDisabled,
+				SpikeDetected:     spikeStatus.Detected,
+				ConsecutiveSpikes: spikeStatus.Consecutive,
 			}
 
 			return nil

@@ -11876,6 +11876,8 @@ StatusSpec describes time sync state.
 | synced | [bool](#bool) |  | Synced indicates whether time is in sync. |
 | epoch | [int64](#int64) |  | Epoch is incremented every time clock jumps more than 15min. |
 | sync_disabled | [bool](#bool) |  | SyncDisabled indicates if time sync is disabled. |
+| spike_detected | [bool](#bool) |  | SpikeDetected indicates that the last time measurement was discarded by the spike filter.<br><br>A discarded measurement is not applied to the clock at all, so a filter which keeps rejecting looks exactly like a clock which is never corrected. |
+| consecutive_spikes | [int64](#int64) |  | ConsecutiveSpikes is the number of time measurements discarded in a row by the spike filter. |
 
 
 

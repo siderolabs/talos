@@ -47,7 +47,13 @@ type Syncer struct {
 
 	firstSync bool
 
+	// spikeDetector and spikeServer are only accessed from the Run goroutine.
 	spikeDetector spike.Detector
+	spikeServer   string
+
+	spikeStatusMu sync.Mutex
+	spikeStatus   SpikeStatus
+	spikeStatusCh chan struct{}
 
 	MinPoll, MaxPoll, RetryPoll time.Duration
 
@@ -76,6 +82,18 @@ type Measurement struct {
 	Spike       bool
 }
 
+// SpikeStatus describes the state of the spike filter.
+//
+// A measurement discarded as a spike is not applied to the clock at all, so a filter which
+// keeps rejecting is indistinguishable from a clock which is simply never corrected unless
+// the rejections themselves are reported.
+type SpikeStatus struct {
+	// Detected is true if the last measurement was discarded as a spike.
+	Detected bool
+	// Consecutive is the number of measurements discarded in a row.
+	Consecutive int
+}
+
 // NewSyncer creates new Syncer with default configuration.
 func NewSyncer(logger *zap.Logger, timeServers []string, useNTS bool) *Syncer {
 	syncer := &Syncer{
@@ -86,6 +104,7 @@ func NewSyncer(logger *zap.Logger, timeServers []string, useNTS bool) *Syncer {
 
 		restartSyncCh: make(chan struct{}, 1),
 		epochChangeCh: make(chan struct{}, 1),
+		spikeStatusCh: make(chan struct{}, 1),
 
 		firstSync: true,
 
@@ -116,6 +135,36 @@ func (syncer *Syncer) Synced() <-chan struct{} {
 // EpochChange returns a channel which receives a value each time jumps more than EpochLimit.
 func (syncer *Syncer) EpochChange() <-chan struct{} {
 	return syncer.epochChangeCh
+}
+
+// SpikeStatusChange returns a channel which receives a value each time the state of the
+// spike filter changes.
+func (syncer *Syncer) SpikeStatusChange() <-chan struct{} {
+	return syncer.spikeStatusCh
+}
+
+// SpikeStatus returns the current state of the spike filter.
+func (syncer *Syncer) SpikeStatus() SpikeStatus {
+	syncer.spikeStatusMu.Lock()
+	defer syncer.spikeStatusMu.Unlock()
+
+	return syncer.spikeStatus
+}
+
+func (syncer *Syncer) setSpikeStatus(status SpikeStatus) {
+	syncer.spikeStatusMu.Lock()
+	changed := syncer.spikeStatus != status
+	syncer.spikeStatus = status
+	syncer.spikeStatusMu.Unlock()
+
+	if !changed {
+		return
+	}
+
+	select {
+	case syncer.spikeStatusCh <- struct{}{}:
+	default:
+	}
 }
 
 func (syncer *Syncer) getTimeServers() []string {
@@ -169,7 +218,24 @@ func absDuration(d time.Duration) time.Duration {
 	return d
 }
 
-func (syncer *Syncer) isSpike(resp *ntp.Response) bool {
+func (syncer *Syncer) isSpike(server string, resp *ntp.Response) bool {
+	if syncer.spikeServer != server {
+		// The detector compares a sample against the round-trip times of the samples before it,
+		// which only means something while they all describe the same network path. After a
+		// failover, or after the configured server list changed, the samples of the previous
+		// server would otherwise gate the new one until they age out of the window.
+		if syncer.spikeServer != "" {
+			syncer.logger.Debug(
+				"time server changed, resetting the spike detector",
+				zap.String("previous_server", syncer.spikeServer),
+				zap.String("server", server),
+			)
+		}
+
+		syncer.spikeDetector.Reset()
+		syncer.spikeServer = server
+	}
+
 	return syncer.spikeDetector.IsSpike(spike.SampleFromNTPResponse(resp))
 }
 
@@ -195,6 +261,7 @@ func (syncer *Syncer) Run(ctx context.Context) {
 	}
 
 	pollInterval := time.Duration(0)
+	consecutiveSpikes := 0
 
 	for {
 		lastSyncServer, resp, kissOfDeath, err := syncer.query(ctx)
@@ -202,9 +269,29 @@ func (syncer *Syncer) Run(ctx context.Context) {
 			return
 		}
 
-		spike := false
+		spikeDetected := false
+
 		if resp != nil {
-			spike = resp.Spike
+			spikeDetected = resp.Spike
+
+			if spikeDetected {
+				consecutiveSpikes++
+			} else {
+				consecutiveSpikes = 0
+			}
+
+			if consecutiveSpikes == spike.SampleCount {
+				// a full window of discarded measurements: the clock is not being adjusted at all,
+				// and the detector should have adapted to the new regime by now
+				syncer.logger.Warn(
+					"spike filter discarded a full window of measurements, clock is not being adjusted",
+					zap.String("server", lastSyncServer),
+					zap.Duration("clock_offset", resp.ClockOffset),
+					zap.Duration("jitter", time.Duration(syncer.spikeDetector.Jitter()*float64(time.Second))),
+				)
+			}
+
+			syncer.setSpikeStatus(SpikeStatus{Detected: spikeDetected, Consecutive: consecutiveSpikes})
 		}
 
 		switch {
@@ -224,7 +311,16 @@ func (syncer *Syncer) Run(ctx context.Context) {
 		case pollInterval == 0:
 			// first sync
 			pollInterval = syncer.MinPoll
-		case !spike && absDuration(resp.ClockOffset) > ExpectedAccuracy:
+		case spikeDetected:
+			// The measurement was discarded, so the clock was not adjusted: poll sooner to get a
+			// usable one, and never back off. The offset of a discarded measurement says nothing
+			// about how well the clock is tracking, so letting it pick the interval (systemd-timesync
+			// tests the offset before the spike, and a spike under 25% of the expected accuracy
+			// doubles the interval there) backs off polling precisely while nothing is being applied.
+			if pollInterval > syncer.MinPoll {
+				pollInterval /= 2
+			}
+		case absDuration(resp.ClockOffset) > ExpectedAccuracy:
 			// huge offset, retry sync with minimum interval
 			pollInterval = syncer.MinPoll
 		case absDuration(resp.ClockOffset) < ExpectedAccuracy*25/100: // *0.25
@@ -232,8 +328,8 @@ func (syncer *Syncer) Run(ctx context.Context) {
 			if pollInterval < syncer.MaxPoll {
 				pollInterval *= 2
 			}
-		case spike || absDuration(resp.ClockOffset) > ExpectedAccuracy*75/100: // *0.75
-			// spike was detected or clock offset is too large, decrease poll interval
+		case absDuration(resp.ClockOffset) > ExpectedAccuracy*75/100: // *0.75
+			// clock offset is too large, decrease poll interval
 			if pollInterval > syncer.MinPoll {
 				pollInterval /= 2
 			}
@@ -248,11 +344,12 @@ func (syncer *Syncer) Run(ctx context.Context) {
 			"sample stats",
 			zap.Duration("jitter", time.Duration(syncer.spikeDetector.Jitter()*float64(time.Second))),
 			zap.Duration("poll_interval", pollInterval),
-			zap.Bool("spike", spike),
+			zap.Bool("spike", spikeDetected),
+			zap.Int("consecutive_spikes", consecutiveSpikes),
 			zap.Bool("resp_exists", resp != nil),
 		)
 
-		if resp != nil && !spike {
+		if resp != nil && !spikeDetected {
 			err = syncer.adjustTime(resp.ClockOffset, resp.Leap, lastSyncServer, pollInterval, rtcClock)
 			if err == nil {
 				if !syncer.timeSyncNotified {
@@ -479,7 +576,7 @@ func (syncer *Syncer) queryNTP(server string) (*Measurement, bool, error) {
 	return &Measurement{
 		ClockOffset: resp.ClockOffset,
 		Leap:        resp.Leap,
-		Spike:       syncer.isSpike(resp),
+		Spike:       syncer.isSpike(server, resp),
 	}, false, nil
 }
 
@@ -531,7 +628,7 @@ func (syncer *Syncer) queryNTS(server string) (*Measurement, bool, error) {
 	return &Measurement{
 		ClockOffset: resp.ClockOffset,
 		Leap:        resp.Leap,
-		Spike:       syncer.isSpike(resp),
+		Spike:       syncer.isSpike(server, resp),
 	}, false, nil
 }
 
@@ -717,6 +814,12 @@ func (syncer *Syncer) adjustTime(offset time.Duration, leapSecond ntp.LeapIndica
 		}
 
 		if jump {
+			// The clock was stepped, so the offsets in the spike detector window were measured
+			// against a clock which no longer exists: keeping them would have the detector compare
+			// the corrected clock against the uncorrected one. systemd-timesync does the same
+			// through its poll_resync flag whenever the clock changes underneath it.
+			syncer.spikeDetector.Reset()
+
 			if rtcClock != nil {
 				if rtcErr := rtcClock.Set(time.Now().Add(offset)); rtcErr != nil {
 					syncer.logger.Error("error syncing RTC", zap.Error(rtcErr))
