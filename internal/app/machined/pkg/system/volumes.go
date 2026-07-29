@@ -315,17 +315,31 @@ func WipeVolumesOnReboot(
 	logger *zap.Logger,
 	volumeStatuses []*block.VolumeStatus,
 ) error {
-	selectors, err := VolumeStatusesToSelectors(volumeStatuses)
+	newSelectors, err := VolumeStatusesToSelectors(volumeStatuses)
 	if err != nil {
 		return fmt.Errorf("error converting volumes to selectors: %w", err)
 	}
 
-	selectorsStr, err := json.Marshal(selectors)
+	allSelectors := newSelectors
+
+	stagedSelectorsStr, ok := ctrl.Runtime().State().Machine().Meta().ReadTag(meta.StagedWipeSelectors)
+	if ok {
+		existingWipeSelectors := make([]cel.Expression, 0, len(newSelectors))
+		if err := json.Unmarshal([]byte(stagedSelectorsStr), &existingWipeSelectors); err != nil {
+			return fmt.Errorf("error parsing existing staged wipe selectors: %w", err)
+		}
+
+		allSelectors = append(existingWipeSelectors, allSelectors...)
+	}
+
+	allSelectors = xslices.Deduplicate(allSelectors, func(e cel.Expression) string { return e.String() })
+
+	allSelectorsBytes, err := json.Marshal(allSelectors)
 	if err != nil {
 		return fmt.Errorf("error serializing staged volume wipe selectors: %w", err)
 	}
 
-	if ok, err := ctrl.Runtime().State().Machine().Meta().SetTag(ctx, meta.StagedWipeSelectors, string(selectorsStr)); !ok || err != nil {
+	if ok, err := ctrl.Runtime().State().Machine().Meta().SetTag(ctx, meta.StagedWipeSelectors, string(allSelectorsBytes)); !ok || err != nil {
 		return fmt.Errorf("error adding staged partition wipe tag: %w", err)
 	}
 
@@ -333,7 +347,7 @@ func WipeVolumesOnReboot(
 		return fmt.Errorf("error writing meta: %w", err)
 	}
 
-	logger.Sugar().Infof("staged %d volume(s) for wipe on next boot; CEL selectors: %q", len(volumeStatuses), selectorsStr)
+	logger.Sugar().Infof("staged %d volume(s) for wipe on next boot; CEL selectors: %q", len(volumeStatuses), allSelectorsBytes)
 
 	return nil
 }
