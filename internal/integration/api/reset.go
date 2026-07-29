@@ -137,7 +137,16 @@ func (suite *ResetSuite) assertSystemVolumeTypes(node string, expected map[strin
 	for _, volumeID := range config.PromotableSystemVolumeNames {
 		volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.COSI, volumeID)
 		suite.Require().NoError(err)
-		suite.Require().Equalf(expected[volumeID], volumeStatus.TypedSpec().Type, "unexpected backing of volume %q on node %s", volumeID, node)
+
+		suite.Require().Equalf(
+			expected[volumeID],
+			volumeStatus.TypedSpec().Type,
+			"unexpected backing of volume %q on node %s. Expected %q, got %q",
+			volumeID,
+			node,
+			expected[volumeID],
+			volumeStatus.TypedSpec().Type,
+		)
 	}
 }
 
