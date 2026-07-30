@@ -359,7 +359,7 @@ func init() {
 		fmt.Sprintf("%s:%s", images.InstallerImageRepository("metal"), version.Trim(version.Tag)),
 		"the container image to use for performing the install")
 	upgradeCmd.Flags().StringVar(
-		&upgradeCmdFlags.namespace, "namespace", "inmem",
+		&upgradeCmdFlags.namespace, "namespace", "system",
 		"namespace to use: \"system\" (etcd and kubelet images), \"cri\" for all Kubernetes workloads, \"inmem\" for in-memory containerd instance",
 	)
 	upgradeCmd.Flags().VarP(

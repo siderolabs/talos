@@ -9,6 +9,7 @@ import (
 	"context"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -24,9 +25,11 @@ import (
 	"github.com/siderolabs/go-procfs/procfs"
 
 	"github.com/siderolabs/talos/internal/app/internal/ctrhelper"
+	"github.com/siderolabs/talos/internal/app/lifecycle/internal/containerpid"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
 	containerdrunner "github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/siderolabs/talos/internal/pkg/capability"
+	"github.com/siderolabs/talos/internal/pkg/cgroup"
 	"github.com/siderolabs/talos/internal/pkg/install"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
@@ -97,15 +100,21 @@ func runInstallerContainer(ctx context.Context, pidRecorder pid.Recorder, rc *co
 		return fmt.Errorf("installer image %q not found in containerd store: %w", rc.imageRef, err)
 	}
 
-	// build container spec
-	mounts := buildMounts()
-	args := buildInstallerArgs(rc.disk, rc.platform, &options)
-	specOpts := buildSpecOpts(img, args, mounts, options.Environment(nil))
-
 	containerID, err := generateContainerID()
 	if err != nil {
 		return fmt.Errorf("failed to generate container ID: %v", err)
 	}
+
+	// Pin the installer to a fixed cgroup instead of the containerd default (which is derived
+	// from the containerd namespace and the container ID): it is a critical system component,
+	// so it gets a named cgroup like the other ones under 'system', and the path is known here
+	// without asking containerd for the container spec back.
+	cgroupPath := cgroup.Path(constants.CgroupInstaller)
+
+	// build container spec
+	mounts := buildMounts()
+	args := buildInstallerArgs(rc.disk, rc.platform, &options)
+	specOpts := buildSpecOpts(img, args, mounts, options.Environment(nil), cgroupPath)
 
 	// create container
 	ctr, err := c8dClient.NewContainer(
@@ -169,15 +178,29 @@ func runInstallerContainer(ctx context.Context, pidRecorder pid.Recorder, rc *co
 		return fmt.Errorf("failed to start task: %w", err)
 	}
 
-	if err := pidRecorder("installer", int32(task.Pid()), false); err != nil {
-		return fmt.Errorf("failed to record installer PID: %w", err)
-	}
+	localPID, err := containerpid.NewResolver().Resolve(cgroupPath, task.Pid())
 
-	defer func() {
-		if err := pidRecorder("installer", 0, true); err != nil {
-			log.Printf("failed to clear installer PID record: %v", err)
+	switch {
+	case errors.Is(err, containerpid.ErrGone):
+		// nothing left to record; the task exit status handled below carries the real failure
+		log.Printf("not recording installer PID: %v", err)
+	case err != nil:
+		stdoutW.Close() //nolint:errcheck
+
+		return fmt.Errorf("failed to resolve installer PID: %w", err)
+	default:
+		if err := pidRecorder("installer", localPID, false); err != nil {
+			stdoutW.Close() //nolint:errcheck
+
+			return fmt.Errorf("failed to record installer PID: %w", err)
 		}
-	}()
+
+		defer func() {
+			if err := pidRecorder("installer", 0, true); err != nil {
+				log.Printf("failed to clear installer PID record: %v", err)
+			}
+		}()
+	}
 
 	statusC, err := task.Wait(detachedCtx)
 	if err != nil {
@@ -316,11 +339,12 @@ func buildInstallerArgs(disk, platform string, options *install.Options) []strin
 }
 
 // buildSpecOpts constructs the OCI spec options for the installer container.
-func buildSpecOpts(img client.Image, args []string, mounts []specs.Mount, env []string) []oci.SpecOpts {
+func buildSpecOpts(img client.Image, args []string, mounts []specs.Mount, env []string, cgroupPath string) []oci.SpecOpts {
 	specOpts := []oci.SpecOpts{
 		containerdrunner.WithImageConfigStripped(img),
 		oci.WithProcessArgs(args...),
 		oci.WithEnv(env),
+		oci.WithCgroup(cgroupPath),
 		oci.WithHostNamespace(specs.NetworkNamespace),
 		oci.WithHostNamespace(specs.PIDNamespace),
 		oci.WithMounts(mounts),

@@ -318,6 +318,11 @@ type upgradeOptions struct {
 	// Use the legacy MachineService.Upgrade path instead.
 	UpgradeStage  bool
 	TargetVersion string
+	// Use in-memory containerd: in general we should prefer to use CRI containerd,
+	// but we should use in-memory for 'enforcing' mode due to SELinux restrictions.
+	//
+	// Ignored for legacy upgrade paths (before 1.13).
+	UpgradeUseInmemoryContainerd bool
 }
 
 //nolint:gocyclo,cyclop
@@ -366,8 +371,12 @@ func (suite *BaseSuite) tryUpgradeViaLifecycleService(
 	suite.T().Logf("pre-pulling installer image %q on node %s", options.TargetInstallerImage, node.IPs[0])
 
 	containerdInstance := &common.ContainerdInstance{
-		Driver:    common.ContainerDriver_CONTAINERD,
+		Driver:    common.ContainerDriver_CRI,
 		Namespace: common.ContainerdNamespace_NS_SYSTEM,
+	}
+
+	if options.UpgradeUseInmemoryContainerd {
+		containerdInstance.Driver = common.ContainerDriver_CONTAINERD
 	}
 
 	nodes := []string{node.IPs[0].String()}

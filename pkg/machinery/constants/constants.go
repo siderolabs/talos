@@ -866,6 +866,9 @@ const (
 	// CgroupExtensions is the cgroup name for system extension processes.
 	CgroupExtensions = CgroupSystem + "/extensions"
 
+	// CgroupInstaller is the cgroup name for the installer container (install/upgrade).
+	CgroupInstaller = CgroupSystem + "/installer"
+
 	// CgroupDashboard is the cgroup name for dashboard process.
 	CgroupDashboard = CgroupSystem + "/dashboard"
 
