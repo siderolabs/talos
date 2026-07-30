@@ -68,9 +68,79 @@ type volumesMountedCondition struct {
 	pendingRequests []volumeRequest
 }
 
+func checkVolumeLifecycleEvent(event state.Event) error {
+	switch event.Type {
+	case state.Created, state.Updated:
+		if event.Resource.Metadata().Phase() != resource.PhaseRunning {
+			return fmt.Errorf("volume lifecycle is not running, cannot mount volumes")
+		}
+	case state.Destroyed:
+		return fmt.Errorf("volume lifecycle is destroyed, cannot mount volumes")
+	case state.Bootstrapped, state.Noop:
+		return fmt.Errorf("unexpected event type %q for volume lifecycle", event.Type)
+	case state.Errored:
+		return fmt.Errorf("watch error: %w", event.Error)
+	}
+
+	return nil
+}
+
+//nolint:gocyclo
+func waitForMountStatusReadyWithLifecycle(ctx context.Context, st state.State, lifecycleWatchCh <-chan state.Event, requestID string) error {
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+
+	mountStatusWatchCh := make(chan state.Event)
+
+	if err := st.Watch(ctx, block.NewVolumeMountStatus(block.NamespaceName, requestID).Metadata(), mountStatusWatchCh); err != nil {
+		return fmt.Errorf("failed to watch volume mount status %q: %w", requestID, err)
+	}
+
+	for {
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case event := <-lifecycleWatchCh:
+			if err := checkVolumeLifecycleEvent(event); err != nil {
+				return err
+			}
+		case event := <-mountStatusWatchCh:
+			switch event.Type {
+			case state.Created, state.Updated:
+				if event.Resource.Metadata().Phase() == resource.PhaseRunning {
+					return nil
+				}
+			case state.Destroyed:
+				// ignore
+			case state.Errored:
+				return fmt.Errorf("watch error: %w", event.Error)
+			case state.Bootstrapped, state.Noop:
+				return fmt.Errorf("unexpected event type %q for mount status", event.Type)
+			}
+		}
+	}
+}
+
+//nolint:gocyclo
 func (cond *volumesMountedCondition) Wait(ctx context.Context) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
+
+	lifecycleWatchCh := make(chan state.Event)
+
+	if err := cond.st.Watch(ctx, block.NewVolumeLifecycle(block.NamespaceName, block.VolumeLifecycleID).Metadata(), lifecycleWatchCh); err != nil {
+		return fmt.Errorf("failed to watch volume lifecycle: %w", err)
+	}
+
+	// wait for the initial watch event
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case event := <-lifecycleWatchCh:
+		if err := checkVolumeLifecycleEvent(event); err != nil {
+			return err
+		}
+	}
 
 	// we mount all requests sequentially one by one
 	for idx := range cond.requests {
@@ -91,17 +161,11 @@ func (cond *volumesMountedCondition) Wait(ctx context.Context) error {
 			}
 
 			// wait for the mount status
-			_, err := cond.st.WatchFor(
-				ctx,
-				block.NewVolumeMountStatus(block.NamespaceName, req.requestID).Metadata(),
-				state.WithEventTypes(state.Created, state.Updated),
-				state.WithPhases(resource.PhaseRunning),
-			)
-			if err != nil {
+			if err := waitForMountStatusReadyWithLifecycle(ctx, cond.st, lifecycleWatchCh, req.requestID); err != nil {
 				return err
 			}
 
-			err = cond.lockVolumeMountStatus(ctx, req.requestID)
+			err := cond.lockVolumeMountStatus(ctx, req.requestID)
 			if err == nil {
 				break
 			}

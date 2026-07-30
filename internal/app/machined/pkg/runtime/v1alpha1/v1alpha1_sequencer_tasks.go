@@ -443,17 +443,26 @@ func StartAllServices(runtime.Sequence, any) (runtime.TaskExecutionFunc, string)
 func StopServicesEphemeral(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
 		// stopping 'cri' service stops everything which depends on it (kubelet, etcd, ...)
-		return system.Services(nil).StopWithRevDepenencies(ctx, "cri", "trustd")
+		return system.Services(r).StopWithRevDepenencies(ctx, "cri", "trustd")
 	}, "stopServicesForUpgrade"
 }
 
 // StopAllServices represents the StopAllServices task.
 func StopAllServices(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
-		system.Services(nil).Shutdown(ctx)
+		system.Services(r).Shutdown(ctx)
 
 		return nil
 	}, "stopAllServices"
+}
+
+// DenyNewServices represents the DenyNewServices task.
+func DenyNewServices(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) (err error) {
+		system.Services(r).DenyNewServices()
+
+		return nil
+	}, "denyNewServices"
 }
 
 // SetupSharedFilesystems represents the SetupSharedFilesystems task.

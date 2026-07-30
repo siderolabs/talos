@@ -185,6 +185,9 @@ func (*Sequencer) Install(r runtime.Runtime) []runtime.Phase {
 				"saveMeta", // saving META here to merge in-memory changes with the on-disk ones from the installer
 				FlushMeta,
 			).Append(
+				"denyNewServices",
+				DenyNewServices,
+			).Append(
 				"volumeFinalize",
 				TeardownVolumeLifecycle,
 			).Append(
@@ -448,7 +451,10 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 	case runtime.ModeContainer:
 		return nil
 	default:
-		phases = phases.AppendWhen(
+		phases = phases.Append(
+			"denyNewServices",
+			DenyNewServices,
+		).AppendWhen(
 			!skipNodeRegistration,
 			"drain",
 			CordonAndDrainNode,
@@ -509,6 +515,9 @@ func stopAllPhaselist(r runtime.Runtime, enableKexec bool) PhaseList {
 		)
 	default:
 		phases = phases.Append(
+			"denyNewServices",
+			DenyNewServices,
+		).Append(
 			"stopServices",
 			StopServicesEphemeral,
 		).Append(
@@ -552,6 +561,9 @@ func (*Sequencer) EmergencyVolumeCleanup(r runtime.Runtime) []runtime.Phase {
 		// no volume cleanup needed in container mode
 	default:
 		phases = phases.Append(
+			"denyNewServices",
+			DenyNewServices,
+		).Append(
 			"umount",
 			UnmountPodMounts,
 		).Append(
