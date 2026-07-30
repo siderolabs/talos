@@ -121,20 +121,9 @@ func (ctrl *VolumeConfigController) Run(ctx context.Context, r controller.Runtim
 			return err
 		}
 
-		transformers := append(
-			volumeconfig.GetSystemVolumeTransformers(ctx, encryptionMeta, ctrl.V1Alpha1Mode.InContainer(), ctrl.V1Alpha1Mode.IsAgent()),
-			volumeconfig.UserVolumeTransformers...,
-		)
-
-		var resources []volumeconfig.VolumeResource
-
-		for _, transformer := range transformers {
-			r, err := transformer(cfg)
-			if err != nil {
-				return err
-			}
-
-			resources = append(resources, r...)
+		resources, err := volumeconfig.BuildVolumeResources(ctx, cfg, encryptionMeta, ctrl.V1Alpha1Mode.InContainer(), ctrl.V1Alpha1Mode.IsAgent())
+		if err != nil {
+			return err
 		}
 
 		volumeConfigsByID, volumeMountRequestsByID, err := ctrl.getExistingVolumes(ctx, r)

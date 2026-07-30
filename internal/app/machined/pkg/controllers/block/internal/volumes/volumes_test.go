@@ -129,6 +129,31 @@ func TestCompareVolumeConfigs(t *testing.T) {
 
 			expected: -1,
 		},
+		{
+			// resA is "A" and resB is "B", so equivalent specs are ordered by volume ID
+			name: "equivalent specs are ordered by ID",
+
+			a: &block.VolumeConfigSpec{
+				Provisioning: block.ProvisioningSpec{
+					Wave: block.WaveSystemDisk,
+					PartitionSpec: block.PartitionSpec{
+						MinSize: 100,
+						MaxSize: 200,
+					},
+				},
+			},
+			b: &block.VolumeConfigSpec{
+				Provisioning: block.ProvisioningSpec{
+					Wave: block.WaveSystemDisk,
+					PartitionSpec: block.PartitionSpec{
+						MinSize: 100,
+						MaxSize: 200,
+					},
+				},
+			},
+
+			expected: -1,
+		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
