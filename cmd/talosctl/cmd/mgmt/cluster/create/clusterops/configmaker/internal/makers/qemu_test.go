@@ -160,6 +160,37 @@ func TestQemuMaker_Disks(t *testing.T) {
 	}, workerDisks)
 }
 
+func TestQemuMaker_ExtraDisksOnControlplanes(t *testing.T) {
+	cOps := clusterops.GetCommon()
+	qOps := clusterops.GetQemu()
+
+	disks := flags.Disks{}
+	err := disks.Set("virtio:10GiB,nvme:20GiB,virtio:30GiB")
+	require.NoError(t, err)
+
+	qOps.Disks = disks
+	qOps.ExtraDisksOnControlplanes = true
+	cOps.Controlplanes = 1
+	cOps.Workers = 1
+
+	m, err := makers.NewQemu(makers.MakerOptions[clusterops.Qemu]{
+		ExtraOps:    qOps,
+		CommonOps:   cOps,
+		Provisioner: testProvisioner{},
+	})
+	require.NoError(t, err)
+
+	req, err := m.GetClusterConfigs()
+	require.NoError(t, err)
+
+	controlplaneDisks := req.ClusterRequest.Nodes[0].Disks
+	workerDisks := req.ClusterRequest.Nodes[1].Disks
+
+	assert.Equal(t, 3, len(controlplaneDisks))
+	assert.Equal(t, 3, len(workerDisks))
+	assert.Equal(t, workerDisks, controlplaneDisks)
+}
+
 func TestQemuMaker_DiskEncryption_StatePartition(t *testing.T) {
 	cOps := clusterops.GetCommon()
 	qOps := clusterops.GetQemu()

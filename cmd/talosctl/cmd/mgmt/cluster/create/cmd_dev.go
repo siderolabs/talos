@@ -91,6 +91,7 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 		extraDisksTagsFlag              = "extra-disks-tags"
 		extraDisksSerialsFlag           = "extra-disks-serials"
 		extraDiskSizeFlag               = "extra-disks-size"
+		extraDisksOnControlplanesFlag   = "extra-disks-on-controlplanes"
 		targetArchFlag                  = "arch"
 		cniBinPathFlag                  = "cni-bin-path"
 		cniConfDirFlag                  = "cni-conf-dir"
@@ -330,6 +331,8 @@ func getCreateCmd(cmdName string, hidden bool) *cobra.Command {
 	createCmd.Flags().StringSliceVar(&legacyOps.extraDisksTags, extraDisksTagsFlag, nil, "tags for each extra disk (only used by virtiofs)")
 	createCmd.Flags().StringSliceVar(&legacyOps.extraDisksSerials, extraDisksSerialsFlag, nil, "serials for each extra disk")
 	createCmd.Flags().IntVar(&legacyOps.extraDiskSize, extraDiskSizeFlag, 5*1024, "default limit on disk size in MB (each VM)")
+	createCmd.Flags().BoolVar(&qOps.ExtraDisksOnControlplanes, extraDisksOnControlplanesFlag, false,
+		"attach the extra disks to controlplane machines as well (by default they are attached only to workers)")
 
 	clustercmd.AddProvisionerFlag(createCmd)
 	cli.Should(createCmd.Flags().MarkHidden(clustercmd.ProvisionerFlagName))

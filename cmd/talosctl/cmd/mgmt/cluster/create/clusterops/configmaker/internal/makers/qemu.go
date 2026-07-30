@@ -502,7 +502,7 @@ func (m *Qemu) getLegacyDiskEncryptionPatch(keys []*v1alpha1.EncryptionKey) (con
 }
 
 func (m *Qemu) initDisks() error {
-	workerExtraDisks := make([]*provision.Disk, 0, len(m.EOps.Disks.Requests())-1)
+	extraDisks := make([]*provision.Disk, 0, len(m.EOps.Disks.Requests())-1)
 
 	// Every node gets PrimaryDisks identical primary disks (cloned from the
 	// first disk request). More than one lets a node build an MD array across
@@ -524,9 +524,9 @@ func (m *Qemu) initDisks() error {
 		})
 	}
 
-	// get worker extra disks
+	// get extra disks
 	for _, d := range m.EOps.Disks.Requests()[1:] {
-		workerExtraDisks = append(workerExtraDisks, &provision.Disk{
+		extraDisks = append(extraDisks, &provision.Disk{
 			Size:            d.Size.Bytes(),
 			SkipPreallocate: !m.EOps.PreallocateDisks,
 			Driver:          d.Driver,
@@ -545,8 +545,8 @@ func (m *Qemu) initDisks() error {
 	}
 
 	m.ForEachNode(func(i int, node *provision.NodeRequest) {
-		if node.Type == machine.TypeWorker {
-			node.Disks = slices.Concat(node.Disks, workerExtraDisks)
+		if node.Type == machine.TypeWorker || m.EOps.ExtraDisksOnControlplanes {
+			node.Disks = slices.Concat(node.Disks, extraDisks)
 		}
 	})
 

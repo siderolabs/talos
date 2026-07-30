@@ -115,6 +115,7 @@ type Qemu struct {
 	Nameservers               []string
 	Disks                     flags.Disks
 	PrimaryDisks              int
+	ExtraDisksOnControlplanes bool
 	DiskBlockSize             uint
 	PreallocateDisks          bool
 	ClusterUserVolumes        []string
