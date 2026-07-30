@@ -133,7 +133,7 @@ func TestSetupRollbackOnError(t *testing.T) {
 func mountTargets(t *testing.T) []string {
 	t.Helper()
 
-	data, err := os.ReadFile("/proc/self/mountinfo")
+	data, err := os.ReadFile("/proc/thread-self/mountinfo")
 	require.NoError(t, err)
 
 	var targets []string
@@ -154,11 +154,11 @@ func isMounted(t *testing.T, target string) bool {
 }
 
 // isUnbindable reports whether the mount at target carries the "unbindable"
-// propagation type (per /proc/self/mountinfo optional fields).
+// propagation type (per /proc/thread-self/mountinfo optional fields).
 func isUnbindable(t *testing.T, target string) bool {
 	t.Helper()
 
-	data, err := os.ReadFile("/proc/self/mountinfo")
+	data, err := os.ReadFile("/proc/thread-self/mountinfo")
 	require.NoError(t, err)
 
 	for line := range strings.SplitSeq(strings.TrimSpace(string(data)), "\n") {
