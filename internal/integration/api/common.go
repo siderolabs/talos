@@ -9,7 +9,6 @@ package api
 import (
 	"context"
 	"strings"
-	"testing"
 	"time"
 
 	"github.com/siderolabs/go-retry/retry"
@@ -237,10 +236,6 @@ func (suite *CommonSuite) TestBaseOCISpec() {
 		suite.T().Skip("skipping ulimits test since provisioner is docker")
 	}
 
-	if testing.Short() {
-		suite.T().Skip("skipping test in short mode.")
-	}
-
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 
 	k8sNode, err := suite.GetK8sNodeByInternalIP(suite.ctx, node)
@@ -264,18 +259,22 @@ func (suite *CommonSuite) TestBaseOCISpec() {
 		},
 	}
 
-	suite.PatchMachineConfig(nodeCtx, ociRuntimeOverride)
-
-	ts := suite.LatestServiceEventTimestamp(suite.ctx, node, "cri")
-
-	suite.AssertServiceEventsInOrder(suite.ctx, node, "cri", ts, []string{
+	expectedCRIEvents := []string{
 		"Stopping",
 		"Finished",
 		"Starting",
 		"Waiting",
 		"Preparing",
 		"Running",
-	})
+	}
+
+	// Capture the baseline before applying the config: CRI can emit Stopping before ApplyConfiguration returns.
+	ts := suite.LatestServiceEventTimestamp(suite.ctx, node, "cri")
+
+	defer suite.RemoveMachineConfigDocuments(nodeCtx, criconfig.CRIBaseRuntimeSpecConfigKind)
+
+	suite.PatchMachineConfig(nodeCtx, ociRuntimeOverride)
+	suite.AssertServiceEventsInOrder(suite.ctx, node, "cri", ts, expectedCRIEvents)
 
 	ociUlimits1PodDef, err := suite.NewPod("oci-ulimits-test-1")
 	suite.Require().NoError(err)
@@ -295,21 +294,14 @@ func (suite *CommonSuite) TestBaseOCISpec() {
 	suite.Require().Equal("", stderr)
 	suite.Require().Equal("1024\n", stdout)
 
-	// Delete immediately before switching to the CRIBaseRuntimeSpecConfig document.
+	// Delete immediately before removing the CRIBaseRuntimeSpecConfig document.
 	suite.Assert().NoError(ociUlimits1PodDef.Delete(suite.ctx))
-
-	suite.RemoveMachineConfigDocuments(nodeCtx, criconfig.CRIBaseRuntimeSpecConfigKind)
 
 	ts = suite.LatestServiceEventTimestamp(suite.ctx, node, "cri")
 
-	suite.AssertServiceEventsInOrder(suite.ctx, node, "cri", ts, []string{
-		"Stopping",
-		"Finished",
-		"Starting",
-		"Waiting",
-		"Preparing",
-		"Running",
-	})
+	suite.RemoveMachineConfigDocuments(nodeCtx, criconfig.CRIBaseRuntimeSpecConfigKind)
+
+	suite.AssertServiceEventsInOrder(suite.ctx, node, "cri", ts, expectedCRIEvents)
 
 	ociUlimits2PodDef, err := suite.NewPod("oci-ulimits-test-2")
 	suite.Require().NoError(err)

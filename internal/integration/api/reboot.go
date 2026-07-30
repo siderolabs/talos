@@ -287,6 +287,8 @@ func (suite *RebootSuite) TestRebootAllNodes() {
 		suite.Assert().NoError(<-errCh)
 	}
 
+	suite.ClearConnectionRefused(suite.ctx, nodes...)
+
 	if suite.Cluster != nil {
 		// without cluster state we can't do deep checks, but basic reboot test still works
 		// NB: using `ctx` here to have client talking to init node by default
