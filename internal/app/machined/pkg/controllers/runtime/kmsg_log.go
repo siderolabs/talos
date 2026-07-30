@@ -167,9 +167,11 @@ func (ctrl *KmsgLogDeliveryController) deliverLogs(ctx context.Context, r contro
 			return nil
 		case <-r.EventCh():
 			// config changed, restart the loop
+			r.QueueReconcile()
+
 			return nil
 		case <-ctrl.drainSub.EventCh():
-			// drain started, assume that ksmg is drained if there're no new messages in drainTimeout
+			// drain started, assume that kmsg is drained if there're no new messages in drainTimeout
 			drainTimer = time.NewTimer(drainTimeout)
 			drainTimerCh = drainTimer.C
 
