@@ -17,6 +17,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
 
 // KernelModuleConfigController watches v1alpha1.Config, creates/updates/deletes kernel module specs.
@@ -39,6 +40,11 @@ func (ctrl *KernelModuleConfigController) Inputs() []controller.Input {
 		{
 			Namespace: network.NamespaceName,
 			Type:      network.LinkSpecType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: storage.NamespaceName,
+			Type:      storage.MDArraySpecType,
 			Kind:      controller.InputWeak,
 		},
 	}
@@ -77,6 +83,11 @@ func (ctrl *KernelModuleConfigController) Run(ctx context.Context, r controller.
 			return fmt.Errorf("error listing link specs: %w", err)
 		}
 
+		mdaSpecs, err := safe.ReaderListAll[*storage.MDArraySpec](ctx, r)
+		if err != nil {
+			return fmt.Errorf("error md array specs specs: %w", err)
+		}
+
 		r.StartTrackingOutputs()
 
 		if cfg != nil {
@@ -101,6 +112,13 @@ func (ctrl *KernelModuleConfigController) Run(ctx context.Context, r controller.
 			// as long as they are created by Talos
 			if linkSpec.TypedSpec().Kind == network.LinkKindVRF {
 				modules["vrf"] = struct{}{}
+			}
+		}
+
+		for mdaSpec := range mdaSpecs.All() {
+			// TODO: add support for other RAID levels if needed
+			if mdaSpec.TypedSpec().Level == storage.MDLevelRAID1 {
+				modules["raid1"] = struct{}{}
 			}
 		}
 

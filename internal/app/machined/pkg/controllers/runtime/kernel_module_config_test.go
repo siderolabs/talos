@@ -17,6 +17,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 	runtimeresource "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
+	"github.com/siderolabs/talos/pkg/machinery/resources/storage"
 )
 
 type KernelModuleConfigSuite struct {
@@ -107,6 +108,36 @@ func (suite *KernelModuleConfigSuite) TestReconcileMultiDocConfig() {
 	ctest.AssertResource(suite, "vrf", func(r *runtimeresource.KernelModuleSpec, asrt *assert.Assertions) {
 		asrt.Equal("vrf", r.TypedSpec().Name)
 	})
+}
+
+func (suite *KernelModuleConfigSuite) TestReconcileMDArraySpecs() {
+	suite.Require().NoError(suite.Runtime().RegisterController(&runtimecontrollers.KernelModuleConfigController{}))
+
+	md0 := storage.NewMDArraySpec(storage.NamespaceName, "md0")
+	md0.TypedSpec().Level = storage.MDLevelRAID1
+
+	md1 := storage.NewMDArraySpec(storage.NamespaceName, "md1")
+	md1.TypedSpec().Level = storage.MDLevelRAID1
+
+	suite.Create(md0)
+	suite.Create(md1)
+
+	// both arrays collapse into a single raid1 module spec
+	ctest.AssertResource(suite, "raid1", func(r *runtimeresource.KernelModuleSpec, asrt *assert.Assertions) {
+		asrt.Equal("raid1", r.TypedSpec().Name)
+		asrt.Empty(r.TypedSpec().Parameters)
+	})
+
+	// one array left, module is still required
+	suite.Destroy(md0)
+
+	ctest.AssertResource(suite, "raid1", func(r *runtimeresource.KernelModuleSpec, asrt *assert.Assertions) {
+		asrt.Equal("raid1", r.TypedSpec().Name)
+	})
+
+	suite.Destroy(md1)
+
+	ctest.AssertNoResource[*runtimeresource.KernelModuleSpec](suite, "raid1")
 }
 
 func TestKernelModuleConfigSuite(t *testing.T) {
