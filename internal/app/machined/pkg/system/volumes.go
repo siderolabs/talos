@@ -29,6 +29,7 @@ import (
 	"github.com/siderolabs/talos/pkg/conditions"
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/meta"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
@@ -280,11 +281,19 @@ func FindBackingVolume(ctx context.Context, st state.State, volumeID string) (st
 }
 
 // ResolveSystemVolumeStatuses resolves the given volume IDs to their VolumeStatus, validating that each one
-// exists and is a system volume. It returns a gRPC status error suitable for returning from the API.
+// exists, is a system volume, and is not META. It returns a gRPC status error suitable for returning from the API.
 func ResolveSystemVolumeStatuses(ctx context.Context, coreState state.CoreState, volumeIDs []string) ([]*block.VolumeStatus, error) {
 	result := make([]*block.VolumeStatus, 0, len(volumeIDs))
 
 	for _, id := range volumeIDs {
+		// META is the one system volume which can't be wiped: it carries the staged wipe instructions
+		// themselves, and it is the only volume provisioned before the wipe runs (see VolumeConfigController),
+		// so wiping it drops a partition which is already in use and never gets reprovisioned in that boot.
+		if id == constants.MetaPartitionLabel {
+			return nil, status.Errorf(codes.InvalidArgument,
+				"volume %q can't be wiped: it holds the staged wipe instructions and the machine's unique token", id)
+		}
+
 		volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](ctx, coreState, id)
 		if err != nil {
 			if state.IsNotFoundError(err) {

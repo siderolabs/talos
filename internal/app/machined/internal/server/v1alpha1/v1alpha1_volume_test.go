@@ -17,6 +17,7 @@ import (
 	grpcstatus "google.golang.org/grpc/status"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 )
 
@@ -69,6 +70,25 @@ func TestSystemVolumeStatuses(t *testing.T) {
 		require.Error(t, err)
 		assert.Equal(t, codes.NotFound, grpcstatus.Code(err))
 	})
+
+	// META can't be wiped: it holds the staged wipe instructions, and it's the only volume provisioned
+	// before the wipe runs, so dropping its partition leaves it stale-Ready for the rest of the boot.
+	t.Run("META is rejected", func(t *testing.T) {
+		metaVol := block.NewVolumeStatus(block.NamespaceName, constants.MetaPartitionLabel)
+		metaVol.Metadata().Labels().Set(block.SystemVolumeLabel, "")
+		require.NoError(t, st.Create(ctx, metaVol))
+
+		_, err := system.ResolveSystemVolumeStatuses(ctx, st, []string{constants.MetaPartitionLabel})
+		require.Error(t, err)
+		assert.Equal(t, codes.InvalidArgument, grpcstatus.Code(err))
+		assert.Contains(t, err.Error(), "can't be wiped")
+	})
+
+	t.Run("META fails the whole batch", func(t *testing.T) {
+		_, err := system.ResolveSystemVolumeStatuses(ctx, st, []string{"EPHEMERAL", constants.MetaPartitionLabel})
+		require.Error(t, err)
+		assert.Equal(t, codes.InvalidArgument, grpcstatus.Code(err))
+	})
 }
 
 func TestAssertVolumesNotMounted(t *testing.T) {
@@ -98,6 +118,6 @@ func TestAssertVolumesNotMounted(t *testing.T) {
 	})
 
 	t.Run("none of several requested volumes mounted is allowed", func(t *testing.T) {
-		require.NoError(t, system.AssertVolumesNotMounted(ctx, st, []string{"STATE", "META"}))
+		require.NoError(t, system.AssertVolumesNotMounted(ctx, st, []string{"STATE", "EFI"}))
 	})
 }

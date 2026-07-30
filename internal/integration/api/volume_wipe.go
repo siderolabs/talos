@@ -9,7 +9,6 @@ package api
 import (
 	"context"
 	"encoding/json"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -114,6 +113,14 @@ func (suite *VolumeWipeSuite) TestVolumeWipeValidation() {
 	suite.Require().Error(err)
 	suite.Assert().Equal(codes.NotFound, client.StatusCode(err))
 
+	// META is never a legal wipe target, and it poisons the whole batch (see TestVolumeWipeMetaRejected)
+	err = suite.Client.VolumeWipe(nodeCtx, &machineapi.VolumeWipeRequest{
+		VolumeIds: []string{constants.EphemeralPartitionLabel, constants.MetaPartitionLabel},
+		OnReboot:  true,
+	})
+	suite.Require().Error(err)
+	suite.Assert().Equal(codes.InvalidArgument, client.StatusCode(err))
+
 	// a staged (on-reboot) request for an unknown volume ID also fails synchronously, with no
 	// partial effect on the staged wipe selectors persisted in META
 	readStagedSelectors := func() (value string, exists bool) {
@@ -142,17 +149,21 @@ func (suite *VolumeWipeSuite) TestVolumeWipeValidation() {
 	suite.Assert().Equal(valueBefore, valueAfter, "a failed staged wipe request must not modify the staged wipe selectors tag")
 }
 
-// TestVolumeWipeStagedReboot verifies a staged (on-reboot) wipe of multiple volumes (EPHEMERAL, META) end-to-end.
+// TestVolumeWipeStagedReboot verifies a staged (on-reboot) wipe of multiple volumes (EPHEMERAL, STATE) end-to-end.
 //
 // Staging writes the StagedWipeTargets META tag with a CEL selector per requested volume; on the next
 // reboot the VolumeWipeController (running as part of the normal COSI controller runtime) consumes the
 // tag, wipes each matching volume, and emits a VolumeWipeStatus resource. The volumes are then
 // re-provisioned.
+//
+// Wiping STATE discards the machine config stored there; the QEMU provisioner passes `talos.config=`
+// on the kernel cmdline, so the node re-acquires it from the platform source on the next boot. Any
+// config patch applied to this worker by an earlier test is lost in the process.
 func (suite *VolumeWipeSuite) TestVolumeWipeStagedReboot() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 	nodeCtx := client.WithNode(suite.ctx, node)
 
-	volumeIDs := []string{constants.EphemeralPartitionLabel, constants.MetaPartitionLabel}
+	volumeIDs := []string{constants.EphemeralPartitionLabel, constants.StatePartitionLabel}
 
 	suite.T().Logf("staging wipe of %v on %s", volumeIDs, node)
 
@@ -278,7 +289,7 @@ func (suite *VolumeWipeSuite) TestVolumeWipeStagedAccumulatesAcrossCalls() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 	nodeCtx := client.WithNode(suite.ctx, node)
 
-	firstVolumeID, secondVolumeID := constants.EphemeralPartitionLabel, constants.MetaPartitionLabel
+	firstVolumeID, secondVolumeID := constants.EphemeralPartitionLabel, constants.StatePartitionLabel
 
 	partitionUUIDs := make(map[string]string, 2)
 
@@ -360,60 +371,57 @@ func (suite *VolumeWipeSuite) TestVolumeWipeStagedAccumulatesAcrossCalls() {
 	)
 }
 
-// TestVolumeWipeImmediateSuccess verifies a real (non-rejected) immediate wipe of a single volume.
+// TestVolumeWipeMetaRejected verifies that META is refused as a wipe target in both modes.
 //
-// META is the only built-in system volume that is never mounted while the node is running (it's
-// accessed as a raw block device, not through the mount system), so it's the one safe target for a
-// live, no-reboot wipe. Wipe() drops the partition entry itself, but VolumeStatus's state machine
-// doesn't revisit an already-Ready volume to notice that, so the effect is verified via the
-// DiscoveredVolume disappearing instead (the same pattern used for BlockDeviceWipe elsewhere).
-//
-// The dropped partition is only reprovisioned on the next boot, so this test finishes with a
-// reboot: without it, META's VolumeStatus would stay stale (reporting the now-gone partition as
-// Ready) for whatever other test happens to run next against the same node.
-func (suite *VolumeWipeSuite) TestVolumeWipeImmediateSuccess() {
+// META can't be wiped: it carries the staged wipe instructions themselves, and it is the only
+// volume provisioned before the wipe runs (VolumeConfigController exempts it from the
+// VolumeWipeStatus gate, since the selectors have to be readable first). Wiping it drops a
+// partition which is already provisioned and in use, and VolumeStatus's state machine never
+// revisits an already-Ready volume to notice — so META would stay stale-Ready, reporting a
+// device path that no longer exists, and every later META write would fail with ENOENT for the
+// rest of that boot.
+func (suite *VolumeWipeSuite) TestVolumeWipeMetaRejected() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 	nodeCtx := client.WithNode(suite.ctx, node)
 
 	volumeID := constants.MetaPartitionLabel
 
-	var location string
+	var partitionUUIDBefore string
 
 	rtestutils.AssertResource(
 		nodeCtx, suite.T(), suite.Client.COSI,
 		volumeID,
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
-			location = vs.TypedSpec().Location
-			asrt.NotEmpty(location)
+			partitionUUIDBefore = vs.TypedSpec().PartitionUUID
+			asrt.NotEmpty(partitionUUIDBefore)
 		},
 	)
 
-	suite.T().Logf("wiping %s on %s immediately", volumeID, node)
+	for _, onReboot := range []bool{false, true} {
+		suite.T().Logf("wiping %s on %s (on_reboot=%v), expecting rejection", volumeID, node, onReboot)
 
-	suite.Require().NoError(suite.Client.VolumeWipe(nodeCtx, &machineapi.VolumeWipeRequest{
-		VolumeIds: []string{volumeID},
-		OnReboot:  false,
-	}))
+		err := suite.Client.VolumeWipe(nodeCtx, &machineapi.VolumeWipeRequest{
+			VolumeIds: []string{volumeID},
+			OnReboot:  onReboot,
+		})
+		suite.Require().Error(err)
+		suite.Assert().Equal(codes.InvalidArgument, client.StatusCode(err))
+		suite.Assert().Contains(err.Error(), "can't be wiped")
+	}
 
-	rtestutils.AssertNoResource[*block.DiscoveredVolume](nodeCtx, suite.T(), suite.Client.COSI, filepath.Base(location))
-
-	suite.T().Logf("rebooting %s to restore %s to a freshly reprovisioned state", node, volumeID)
-
-	suite.AssertRebooted(
-		suite.ctx, node,
-		func(nodeCtx context.Context) error {
-			return base.IgnoreGRPCUnavailable(suite.Client.Reboot(nodeCtx))
-		},
-		10*time.Minute,
-		suite.CleanupFailedPods,
-	)
-
+	// META must be untouched, and no wipe may have been staged for the next boot
 	rtestutils.AssertResource(
-		client.WithNode(suite.ctx, node), suite.T(), suite.Client.COSI,
+		nodeCtx, suite.T(), suite.Client.COSI,
 		volumeID,
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
+			asrt.Equal(partitionUUIDBefore, vs.TypedSpec().PartitionUUID, "META must not be wiped")
 			asrt.Equal(block.VolumePhaseReady, vs.TypedSpec().Phase)
 		},
+	)
+
+	rtestutils.AssertNoResource[*runtimeres.MetaKey](
+		nodeCtx, suite.T(), suite.Client.COSI,
+		runtimeres.MetaKeyTagToID(meta.StagedWipeSelectors),
 	)
 }
 
@@ -423,24 +431,24 @@ func (suite *VolumeWipeSuite) TestVolumeWipeImmediateRejectsPartialBatch() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 	nodeCtx := client.WithNode(suite.ctx, node)
 
-	unmountedVolumeID := constants.MetaPartitionLabel
+	otherVolumeID := constants.StatePartitionLabel
 	mountedVolumeID := constants.EphemeralPartitionLabel
 
 	var partitionUUIDBefore string
 
 	rtestutils.AssertResource(
 		nodeCtx, suite.T(), suite.Client.COSI,
-		unmountedVolumeID,
+		otherVolumeID,
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 			partitionUUIDBefore = vs.TypedSpec().PartitionUUID
 			asrt.NotEmpty(partitionUUIDBefore)
 		},
 	)
 
-	suite.T().Logf("wiping %s (mounted) and %s (unmounted) on %s immediately, expecting rejection", mountedVolumeID, unmountedVolumeID, node)
+	suite.T().Logf("wiping %s (mounted) and %s on %s immediately, expecting rejection", mountedVolumeID, otherVolumeID, node)
 
 	err := suite.Client.VolumeWipe(nodeCtx, &machineapi.VolumeWipeRequest{
-		VolumeIds: []string{unmountedVolumeID, mountedVolumeID},
+		VolumeIds: []string{otherVolumeID, mountedVolumeID},
 		OnReboot:  false,
 	})
 	suite.Require().Error(err)
@@ -448,10 +456,10 @@ func (suite *VolumeWipeSuite) TestVolumeWipeImmediateRejectsPartialBatch() {
 
 	rtestutils.AssertResource(
 		nodeCtx, suite.T(), suite.Client.COSI,
-		unmountedVolumeID,
+		otherVolumeID,
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equal(partitionUUIDBefore, vs.TypedSpec().PartitionUUID,
-				"the valid, unmounted volume in the batch must not be touched when the whole request is rejected")
+				"the other volume in the batch must not be touched when the whole request is rejected")
 		},
 	)
 }

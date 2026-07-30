@@ -21,6 +21,7 @@ import (
 	blockpb "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/block"
 	"github.com/siderolabs/talos/pkg/machinery/cel"
 	"github.com/siderolabs/talos/pkg/machinery/cel/celenv"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/meta"
 	"github.com/siderolabs/talos/pkg/machinery/proto"
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
@@ -217,6 +218,15 @@ func (ctrl *VolumeWipeController) Run(ctx context.Context, r controller.Runtime,
 
 			if wipeTarget == nil {
 				logger.Sugar().Errorf("failed to execute staged wipe for volume %q: no matching volume", selector)
+
+				continue
+			}
+
+			// the API refuses to stage a META wipe, but a tag staged by an older version of Talos (or written
+			// by hand) can still name it; wiping META here would drop a partition which is already provisioned
+			// and in use for this boot, and nothing would reprovision it until the next reboot
+			if wipeTarget.GetLabel() == constants.MetaPartitionLabel {
+				logger.Sugar().Warnf("refusing staged wipe of %s: META can't be wiped", wipeTarget)
 
 				continue
 			}

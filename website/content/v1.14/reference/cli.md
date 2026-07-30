@@ -3814,6 +3814,9 @@ Wipe one or more system volumes by their volume ID (e.g. EPHEMERAL, STATE).
 By default the volume is wiped immediately; a volume which is currently in use
 cannot be wiped live, use --on-reboot to stage the wipe for the next boot.
 
+The META volume cannot be wiped: it holds the staged wipe instructions and the
+machine's unique token.
+
 ```
 talosctl wipe volume <volume ID>... [flags]
 ```
