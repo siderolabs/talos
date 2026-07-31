@@ -190,14 +190,17 @@ func (ctrl *UnattendedInstallController) reconcile(
 		if !state.IsNotFoundError(err) {
 			return fmt.Errorf("error getting unattended install status: %w", err)
 		}
-	} else if existing.TypedSpec().Phase == runtime.UnattendedInstallPhaseInstalled {
+	} else if phase := existing.TypedSpec().Phase; phase == runtime.UnattendedInstallPhaseInstalled || phase == runtime.UnattendedInstallPhaseWaitingForReboot {
 		// re-affirm the status (so CleanupOutputs retains it): the install target is fixed and a new
 		// disk later matching the selector must not trigger a reinstall.
-		return ctrl.setStatus(ctx, r, doc, runtime.UnattendedInstallPhaseInstalled, nil)
+		//
+		// the phase is preserved as is: `waiting-for-reboot` must never be downgraded to `installed`,
+		// as the phase gates APIs which shouldn't run in the pre-reboot window (e.g. bootstrap).
+		return ctrl.setStatus(ctx, r, doc, phase, nil)
 	}
 
 	if ctrl.InstalledFunc() {
-		return ctrl.setStatus(ctx, r, doc, runtime.UnattendedInstallPhaseInstalled, nil)
+		return ctrl.setStatus(ctx, r, doc, ctrl.installedPhase(doc), nil)
 	}
 
 	// resolve the target disk from the CEL selector against the discovered disks.
@@ -239,13 +242,7 @@ func (ctrl *UnattendedInstallController) reconcile(
 
 	// the installer already ran this boot: don't run it again, just keep the status as installed.
 	if ctrl.installDone {
-		installPhase := runtime.UnattendedInstallPhaseInstalled
-
-		if ctrl.shouldReboot(doc) {
-			installPhase = runtime.UnattendedInstallPhaseWaitingForReboot
-		}
-
-		return ctrl.setStatus(ctx, r, doc, installPhase, nil)
+		return ctrl.setStatus(ctx, r, doc, ctrl.installedPhase(doc), nil)
 	}
 
 	installerImage := doc.InstallerImage()
@@ -276,8 +273,6 @@ func (ctrl *UnattendedInstallController) reconcile(
 
 	logger.Info("install successful")
 
-	installPhase := runtime.UnattendedInstallPhaseInstalled
-
 	if ctrl.shouldReboot(doc) {
 		logger.Info("requesting reboot after successful install")
 
@@ -286,13 +281,24 @@ func (ctrl *UnattendedInstallController) reconcile(
 		}); err != nil {
 			return fmt.Errorf("failed to create reboot request: %w", err)
 		}
-
-		installPhase = runtime.UnattendedInstallPhaseWaitingForReboot
 	} else {
 		logger.Info("not rebooting after successful install (reboot disabled)")
 	}
 
-	return ctrl.setStatus(ctx, r, doc, installPhase, nil)
+	return ctrl.setStatus(ctx, r, doc, ctrl.installedPhase(doc), nil)
+}
+
+// installedPhase returns the phase to report once the install is complete for this boot.
+//
+// If the node is going to reboot after the install, the phase stays `waiting-for-reboot` until the
+// reboot actually happens: reporting `installed` would open up the APIs gated on this phase (e.g.
+// bootstrap) in the window before the reboot, and any such action would be lost on reboot.
+func (ctrl *UnattendedInstallController) installedPhase(doc talosconfig.UnattendedInstallConfig) runtime.UnattendedInstallPhase {
+	if ctrl.installDone && ctrl.shouldReboot(doc) {
+		return runtime.UnattendedInstallPhaseWaitingForReboot
+	}
+
+	return runtime.UnattendedInstallPhaseInstalled
 }
 
 func (ctrl *UnattendedInstallController) getInstallerFromBootEntry(ctx context.Context, r controller.Runtime) (string, error) {

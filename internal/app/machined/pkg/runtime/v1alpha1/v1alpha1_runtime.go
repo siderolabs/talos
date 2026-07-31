@@ -157,7 +157,9 @@ func (r *Runtime) NodeName() (string, error) {
 
 // IsBootstrapAllowed checks whether bootstrap is allowed.
 //
-// CRI must be running and healthy, and an in-progress unattended install must not be in a pre-reboot phase.
+// CRI must be running and healthy, an in-progress unattended install must not be in a pre-reboot phase,
+// and no reboot should be pending: the bootstrap state is in-memory, so a bootstrap performed right
+// before a reboot would be silently lost.
 func (r *Runtime) IsBootstrapAllowed() bool {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
@@ -186,6 +188,16 @@ func (r *Runtime) IsBootstrapAllowed() bool {
 	}
 
 	if status != nil && status.TypedSpec().Phase != runtimeres.UnattendedInstallPhaseInstalled {
+		return false
+	}
+
+	// the RebootRequest resource is only created once a reboot was requested, and it is never destroyed,
+	// so anything but "not found" (including a failed lookup) means bootstrap should not proceed.
+	if _, err = safe.ReaderGetByID[*runtimeres.RebootRequest](
+		ctx,
+		r.s.V1Alpha2().Resources(),
+		runtimeres.RebootRequestID,
+	); !state.IsNotFoundError(err) {
 		return false
 	}
 

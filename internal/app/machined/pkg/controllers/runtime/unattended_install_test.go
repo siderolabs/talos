@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -198,6 +199,41 @@ func (suite *UnattendedInstallSuite) TestAlreadyInstalledNoDisk() {
 
 	suite.Assert().EqualValues(0, installCalls.Load())
 	rtestutils.AssertNoResource[*runtime.RebootRequest](suite.Ctx(), suite.T(), suite.State(), runtime.RebootRequestID)
+}
+
+// TestNoDowngradeToInstalled ensures the phase stays `waiting-for-reboot` once the install is done and
+// a reboot was requested, even though the node now reports itself as installed (the installer wrote META).
+//
+// The phase gates the bootstrap API: reporting `installed` in the pre-reboot window would allow a
+// bootstrap which is then silently lost on the reboot.
+func (suite *UnattendedInstallSuite) TestNoDowngradeToInstalled() {
+	var (
+		installed    atomic.Bool
+		installCalls atomic.Int64
+	)
+
+	suite.register(&installed, &installCalls)
+	suite.createConfig()
+	suite.createDisk("sda")
+
+	rtestutils.AssertResource[*runtime.UnattendedInstallStatus](suite.Ctx(), suite.T(), suite.State(), runtime.UnattendedInstallStatusID,
+		func(status *runtime.UnattendedInstallStatus, asrt *assert.Assertions) {
+			asrt.Equal(runtime.UnattendedInstallPhaseWaitingForReboot, status.TypedSpec().Phase)
+		})
+
+	// the installer wrote META, so the node now reports itself as installed, and the disk it partitioned
+	// triggers another reconcile before the reboot happens.
+	installed.Store(true)
+	suite.createDisk("sdb")
+
+	suite.Assert().Never(func() bool {
+		status, err := safe.StateGetByID[*runtime.UnattendedInstallStatus](suite.Ctx(), suite.State(), runtime.UnattendedInstallStatusID)
+		suite.Require().NoError(err)
+
+		return status.TypedSpec().Phase != runtime.UnattendedInstallPhaseWaitingForReboot
+	}, time.Second, 100*time.Millisecond)
+
+	suite.Assert().EqualValues(1, installCalls.Load())
 }
 
 // TestNoReinstallOnNewDisk ensures a new disk matching the selector after a completed install does not
