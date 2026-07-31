@@ -26,9 +26,10 @@ import (
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/mgmt/helpers"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
 	"github.com/siderolabs/talos/pkg/machinery/config/encoder"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/k8s"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/security"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 
 //go:embed httproot/*
@@ -73,13 +74,14 @@ var airgappedCmd = &cobra.Command{
 }
 
 func generateConfigPatch(caPEM []byte) error {
-	patch1 := &v1alpha1.Config{
-		ClusterConfig: &v1alpha1.ClusterConfig{
-			ExtraManifests: []string{
-				fmt.Sprintf("https://%s/debug.yaml", net.JoinHostPort(airgappedFlags.advertisedAddress.String(), strconv.Itoa(airgappedFlags.httpsPort))),
-			},
-		},
+	manifestURL, err := url.Parse(fmt.Sprintf("https://%s/debug.yaml", net.JoinHostPort(airgappedFlags.advertisedAddress.String(), strconv.Itoa(airgappedFlags.httpsPort))))
+	if err != nil {
+		return fmt.Errorf("error parsing manifest URL: %w", err)
 	}
+
+	patch1 := k8s.NewKubeExternalManifestConfigV1Alpha1()
+	patch1.MetaName = "debug-manifest"
+	patch1.URLSpec = meta.URL{URL: manifestURL}
 
 	patch2 := runtime.NewEnvironmentV1Alpha1()
 
