@@ -92,13 +92,15 @@ func (ctrl *HostDNSConfigController) Run(ctx context.Context, r controller.Runti
 			res.TypedSpec().ListenAddresses = []netip.AddrPort{
 				netip.MustParseAddrPort("127.0.0.53:53"),
 			}
+			// Keep resolv.conf pointed at Host DNS during early bootstrap. The active
+			// machine configuration can disable it once it is loaded.
+			res.TypedSpec().Enabled = cfg == nil
+			res.TypedSpec().ResolveMemberNames = false
 
 			res.TypedSpec().ServiceHostDNSAddress = netip.Addr{}
 			res.TypedSpec().ServiceHostDNSAddressV6 = netip.Addr{}
 
 			if hostDNSConfig == nil {
-				res.TypedSpec().Enabled = false
-
 				return nil
 			}
 
