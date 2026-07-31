@@ -175,6 +175,152 @@ func TestFilledFormModeDHCP(t *testing.T) {
 	}, *config)
 }
 
+func TestFilledFormModeDHCPVLAN(t *testing.T) {
+	formData := dashboard.NetworkConfigFormData{
+		Iface:  "eth0",
+		VLANID: "100",
+		Mode:   dashboard.ModeDHCP,
+	}
+
+	config, err := formData.ToPlatformNetworkConfig()
+	assert.NoError(t, err)
+
+	assert.Equal(t, runtime.PlatformNetworkConfig{
+		Links: []network.LinkSpecSpec{
+			{
+				Name:        "eth0",
+				Logical:     false,
+				Up:          true,
+				Type:        nethelpers.LinkEther,
+				ConfigLayer: network.ConfigPlatform,
+			},
+			{
+				Name:       "eth0.100",
+				Logical:    true,
+				Up:         true,
+				Type:       nethelpers.LinkEther,
+				Kind:       network.LinkKindVLAN,
+				ParentName: "eth0",
+				VLAN: network.VLANSpec{
+					VID:      100,
+					Protocol: nethelpers.VLANProtocol8021Q,
+				},
+				ConfigLayer: network.ConfigPlatform,
+			},
+		},
+		Operators: []network.OperatorSpecSpec{
+			{
+				Operator:  network.OperatorDHCP4,
+				LinkName:  "eth0.100",
+				RequireUp: true,
+				DHCP4: network.DHCP4OperatorSpec{
+					RouteMetric: 1024,
+				},
+				ConfigLayer: network.ConfigPlatform,
+			},
+		},
+	}, *config)
+}
+
+func TestFilledFormModeStaticVLAN(t *testing.T) {
+	formData := dashboard.NetworkConfigFormData{
+		Iface:     "eth42",
+		VLANID:    " 4094 ",
+		Mode:      dashboard.ModeStatic,
+		Addresses: "1.2.3.4/24",
+		Gateway:   "3.4.5.6",
+	}
+
+	config, err := formData.ToPlatformNetworkConfig()
+	assert.NoError(t, err)
+
+	assert.Equal(t, runtime.PlatformNetworkConfig{
+		Links: []network.LinkSpecSpec{
+			{
+				Name:        "eth42",
+				Logical:     false,
+				Up:          true,
+				Type:        nethelpers.LinkEther,
+				ConfigLayer: network.ConfigPlatform,
+			},
+			{
+				Name:       "eth42.4094",
+				Logical:    true,
+				Up:         true,
+				Type:       nethelpers.LinkEther,
+				Kind:       network.LinkKindVLAN,
+				ParentName: "eth42",
+				VLAN: network.VLANSpec{
+					VID:      4094,
+					Protocol: nethelpers.VLANProtocol8021Q,
+				},
+				ConfigLayer: network.ConfigPlatform,
+			},
+		},
+		Addresses: []network.AddressSpecSpec{
+			{
+				Address:     netip.MustParsePrefix("1.2.3.4/24"),
+				LinkName:    "eth42.4094",
+				Family:      nethelpers.FamilyInet4,
+				Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+				ConfigLayer: network.ConfigPlatform,
+			},
+		},
+		Routes: []network.RouteSpecSpec{
+			{
+				Family:      nethelpers.FamilyInet4,
+				Gateway:     netip.MustParseAddr("3.4.5.6"),
+				OutLinkName: "eth42.4094",
+				Table:       nethelpers.TableMain,
+				Scope:       nethelpers.ScopeGlobal,
+				Type:        nethelpers.TypeUnicast,
+				Protocol:    nethelpers.ProtocolStatic,
+				ConfigLayer: network.ConfigPlatform,
+			},
+		},
+	}, *config)
+}
+
+func TestFilledFormVLANIDInvalid(t *testing.T) {
+	for _, test := range []struct {
+		name        string
+		vlanID      string
+		expectedErr string
+	}{
+		{
+			name:        "not a number",
+			vlanID:      "foo",
+			expectedErr: "VLAN ID: strconv.Atoi",
+		},
+		{
+			name:        "zero",
+			vlanID:      "0",
+			expectedErr: "VLAN ID must be in the range 1..4094, got 0",
+		},
+		{
+			name:        "out of range",
+			vlanID:      "4095",
+			expectedErr: "VLAN ID must be in the range 1..4094, got 4095",
+		},
+		{
+			name:        "negative",
+			vlanID:      "-1",
+			expectedErr: "VLAN ID must be in the range 1..4094, got -1",
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			formData := dashboard.NetworkConfigFormData{
+				Iface:  "eth0",
+				VLANID: test.vlanID,
+				Mode:   dashboard.ModeDHCP,
+			}
+
+			_, err := formData.ToPlatformNetworkConfig()
+			assert.ErrorContains(t, err, test.expectedErr)
+		})
+	}
+}
+
 func TestFilledFormModeStaticNoAddresses(t *testing.T) {
 	formData := dashboard.NetworkConfigFormData{
 		Iface: "eth0",

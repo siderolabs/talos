@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"net/netip"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -36,6 +37,7 @@ type NetworkConfigFormData struct {
 	DNSServers  string
 	TimeServers string
 	Iface       string
+	VLANID      string
 	Mode        string
 	Addresses   string
 	Gateway     string
@@ -107,12 +109,39 @@ func (formData *NetworkConfigFormData) ToPlatformNetworkConfig() (*runtime.Platf
 			},
 		}
 
+		// the physical link is always brought up, but if a VLAN ID is set, the L3 config (addresses, routes, DHCP)
+		// is bound to the logical VLAN link layered on top of it instead of the physical link itself
+		linkName := formData.Iface
+
+		if strings.TrimSpace(formData.VLANID) != "" {
+			vlanID, vlanErr := parseVLANID(formData.VLANID)
+			if vlanErr != nil {
+				errs = multierror.Append(errs, vlanErr)
+			} else {
+				linkName = nethelpers.VLANLinkName(formData.Iface, vlanID)
+
+				config.Links = append(config.Links, network.LinkSpecSpec{
+					Name:       linkName,
+					Logical:    true,
+					Up:         true,
+					Type:       nethelpers.LinkEther,
+					Kind:       network.LinkKindVLAN,
+					ParentName: formData.Iface,
+					VLAN: network.VLANSpec{
+						VID:      vlanID,
+						Protocol: nethelpers.VLANProtocol8021Q,
+					},
+					ConfigLayer: network.ConfigPlatform,
+				})
+			}
+		}
+
 		switch formData.Mode {
 		case ModeDHCP:
 			config.Operators = []network.OperatorSpecSpec{
 				{
 					Operator:  network.OperatorDHCP4,
-					LinkName:  formData.Iface,
+					LinkName:  linkName,
 					RequireUp: true,
 					DHCP4: network.DHCP4OperatorSpec{
 						RouteMetric: 1024,
@@ -121,7 +150,7 @@ func (formData *NetworkConfigFormData) ToPlatformNetworkConfig() (*runtime.Platf
 				},
 			}
 		case ModeStatic:
-			config.Addresses, err = formData.buildAddresses(formData.Iface)
+			config.Addresses, err = formData.buildAddresses(linkName)
 			if err != nil {
 				errs = multierror.Append(errs, err)
 			}
@@ -130,7 +159,7 @@ func (formData *NetworkConfigFormData) ToPlatformNetworkConfig() (*runtime.Platf
 				errs = multierror.Append(errs, errors.New("no addresses specified"))
 			}
 
-			config.Routes, err = formData.buildRoutes(formData.Iface)
+			config.Routes, err = formData.buildRoutes(linkName)
 			if err != nil {
 				errs = multierror.Append(errs, err)
 			}
@@ -229,6 +258,20 @@ func (formData *NetworkConfigFormData) buildRoutes(linkName string) ([]network.R
 			ConfigLayer: network.ConfigPlatform,
 		},
 	}, nil
+}
+
+// parseVLANID parses and range-checks a VLAN ID.
+func parseVLANID(text string) (uint16, error) {
+	vlanID, err := strconv.Atoi(strings.TrimSpace(text))
+	if err != nil {
+		return 0, fmt.Errorf("VLAN ID: %w", err)
+	}
+
+	if vlanID < 1 || vlanID > 4094 {
+		return 0, fmt.Errorf("VLAN ID must be in the range 1..4094, got %d", vlanID)
+	}
+
+	return uint16(vlanID), nil
 }
 
 func (formData *NetworkConfigFormData) splitInputList(text string) []string {
