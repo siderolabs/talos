@@ -7,6 +7,7 @@ package hydrophone
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -165,19 +166,38 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 	testRunner := conformance.NewTestRunner(config, clientset)
 	testClient := client.NewClient(cfg, clientset, config.Namespace)
 
-	cleanup := func() error {
+	// cleanup waits for the conformance namespace to be deleted, which might block forever if the namespace
+	// is stuck terminating, so it is always bounded by the delete timeout.
+	cleanup := func(ctx context.Context) error {
+		ctx, cancel := withTimeout(ctx, options.DeleteTimeout)
+		defer cancel()
+
 		if err := testRunner.Cleanup(ctx); err != nil {
+			if errors.Is(err, context.DeadlineExceeded) {
+				return fmt.Errorf("timed out after %s waiting for the %q namespace to be deleted: %w", options.DeleteTimeout, config.Namespace, err)
+			}
+
 			return fmt.Errorf("failed to cleanup: %w", err)
 		}
 
 		return nil
 	}
 
-	defer cleanup() //nolint:errcheck
+	// the deferred cleanup should run even if the context is canceled (e.g. on Ctrl-C or on test timeout)
+	defer func() {
+		if err := cleanup(context.WithoutCancel(ctx)); err != nil {
+			fmt.Fprintf(os.Stderr, "warning: %s\n", err)
+		}
+	}()
 
-	if err = cleanup(); err != nil {
+	if err = cleanup(ctx); err != nil {
 		return err
 	}
+
+	// bound the test run phase: the Kubernetes client has no timeout set (see above), so any of the calls
+	// below might block forever if the cluster becomes unresponsive.
+	runCtx, runCancel := withTimeout(ctx, options.RunTimeout)
+	defer runCancel()
 
 	verboseGinkgo := config.Verbosity >= 6
 	showSpinner := !verboseGinkgo && config.Verbosity > 2 && options.UseSpinner && os.Getenv("CI") == ""
@@ -185,7 +205,7 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 	fmt.Printf("running conformance tests version %s\n", options.KubernetesVersion)
 	fmt.Printf("running tests: %s\n", strings.Join(options.RunTests, "|"))
 
-	if err := testRunner.Deploy(ctx, strings.Join(options.RunTests, "|"), "", verboseGinkgo, config.StartupTimeout); err != nil {
+	if err := testRunner.Deploy(runCtx, strings.Join(options.RunTests, "|"), "", verboseGinkgo, config.StartupTimeout); err != nil {
 		return fmt.Errorf("failed to deploy tests: %w", err)
 	}
 
@@ -199,7 +219,7 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 	}
 
 	// PrintE2ELogs is a long running method
-	if err := testClient.PrintE2ELogs(ctx); err != nil {
+	if err := testClient.PrintE2ELogs(runCtx); err != nil {
 		return fmt.Errorf("failed to get test logs: %w", err)
 	}
 
@@ -209,7 +229,7 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 
 	fmt.Printf("tests finished after %v.\n", time.Since(before).Round(time.Second))
 
-	exitCode, err := testClient.FetchExitCode(ctx)
+	exitCode, err := testClient.FetchExitCode(runCtx)
 	if err != nil {
 		return fmt.Errorf("failed to determine exit code: %w", err)
 	}
@@ -221,7 +241,7 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 	}
 
 	if options.RetrieveResults {
-		if err := testClient.FetchFiles(ctx, config.OutputDir); err != nil {
+		if err := testClient.FetchFiles(runCtx, config.OutputDir); err != nil {
 			return fmt.Errorf("failed to download results: %w", err)
 		}
 
@@ -235,5 +255,14 @@ func Run(ctx context.Context, cluster cluster.K8sProvider, options *Options) err
 		}
 	}
 
-	return cleanup()
+	return cleanup(ctx)
+}
+
+// withTimeout applies the timeout to the context, if the timeout is set.
+func withTimeout(ctx context.Context, timeout time.Duration) (context.Context, context.CancelFunc) {
+	if timeout <= 0 {
+		return context.WithCancel(ctx)
+	}
+
+	return context.WithTimeout(ctx, timeout)
 }
