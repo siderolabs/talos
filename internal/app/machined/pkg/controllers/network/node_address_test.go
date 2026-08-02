@@ -22,6 +22,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/internal/addressutil"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
@@ -128,6 +129,7 @@ func (suite *NodeAddressSuite) TestFilters() {
 		"2001:470:6d:30e:4a62:b3ba:180b:b5b8/64",
 		"127.0.0.1/8",
 		"fdae:41e4:649b:9303:7886:731d:1ce9:4d4/128",
+		constants.HostDNSAddressV6 + "/128",
 	} {
 		suite.newAddress(netip.MustParsePrefix(addr), linkUp)
 	}

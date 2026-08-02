@@ -136,7 +136,7 @@ func (ctrl *NodeAddressController) Run(ctx context.Context, r controller.Runtime
 
 			ip := addr.TypedSpec().Address
 
-			if ip.Addr().IsLoopback() || ip.Addr().IsMulticast() || ip.Addr().IsLinkLocalUnicast() {
+			if ip.Addr().IsLoopback() || ip.Addr().IsMulticast() || ip.Addr().IsLinkLocalUnicast() || ip.Addr() == hostDNSIPv6 {
 				return false
 			}
 
