@@ -49,7 +49,6 @@ func (c *Client) getConn(opts ...grpc.DialOption) (*grpcConnectionWrapper, error
 				// grpc.UseCompressor(gzip.Name),
 				grpc.MaxCallRecvMsgSize(constants.GRPCMaxMessageSize),
 			),
-			grpc.WithSharedWriteBuffer(true),
 		},
 		c.options.grpcDialOptions,
 		opts,
