@@ -394,6 +394,11 @@ func WipeVolumesNow(
 //
 // A mounted volume can't be wiped safely while the node is running; that's what --on-reboot is for.
 // Mount state is tracked by block.VolumeMountStatus resources, keyed to a volume via VolumeID.
+//
+// This is also what keeps WipeVolumesNow from dropping the partition of a volume which is already
+// provisioned for this boot: its VolumeStatus would stay ready, pointing at a device which no longer
+// exists, and nothing would reprovision the volume until the next reboot. Every system volume backed
+// by a partition is mounted, so in practice this rejects them all.
 func AssertVolumesNotMounted(ctx context.Context, st state.State, ids []string) error {
 	mountStatuses, err := safe.StateListAll[*block.VolumeMountStatus](ctx, st)
 	if err != nil {
