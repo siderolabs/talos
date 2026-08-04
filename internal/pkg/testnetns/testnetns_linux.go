@@ -24,6 +24,8 @@ const childEnvironment = "TALOS_TEST_NETNS_CHILD"
 // interface is initially down; callers must configure it if needed. Tests still
 // share one namespace and must clean up their fixtures between cases.
 // Creating the namespace requires CAP_SYS_ADMIN, as provided by privileged CI.
+// When running as a non-root user, a user namespace mapping the current user
+// to root is created as well, so tests run as (namespaced) root in that case.
 // Namespace creation failures fail the suite rather than silently losing tests.
 func Run(run func() int) int {
 	if os.Getenv(childEnvironment) == "1" {
@@ -35,6 +37,16 @@ func Run(run func() int) int {
 
 	cmd.Env = append(os.Environ(), childEnvironment+"=1")
 	cmd.SysProcAttr = &syscall.SysProcAttr{Cloneflags: syscall.CLONE_NEWNET}
+
+	if uid := os.Geteuid(); uid != 0 {
+		// Unprivileged users can create a network namespace only together with a
+		// user namespace which grants them CAP_SYS_ADMIN, so map the current
+		// user to root inside of it.
+		cmd.SysProcAttr.Cloneflags |= syscall.CLONE_NEWUSER
+		cmd.SysProcAttr.UidMappings = []syscall.SysProcIDMap{{ContainerID: 0, HostID: uid, Size: 1}}
+		cmd.SysProcAttr.GidMappings = []syscall.SysProcIDMap{{ContainerID: 0, HostID: os.Getegid(), Size: 1}}
+		cmd.SysProcAttr.GidMappingsEnableSetgroups = false
+	}
 
 	if err := cmd.Run(); err != nil {
 		var exitErr *exec.ExitError

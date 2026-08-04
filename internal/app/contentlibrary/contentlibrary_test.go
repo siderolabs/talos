@@ -18,7 +18,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/opencontainers/go-digest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -184,7 +183,7 @@ func setupWithState(t *testing.T, ready bool) (*contentlibrary.Service, string, 
 
 	path := t.TempDir()
 
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	contentLibraryStatus := hypervisor.NewContentLibraryStatus(hypervisor.NamespaceName, testLibrary)
 	contentLibraryStatus.TypedSpec().VolumeID = "u-vm-images"

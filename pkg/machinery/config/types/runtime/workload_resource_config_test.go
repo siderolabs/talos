@@ -13,7 +13,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -140,7 +139,7 @@ hostDNS:
 				require.NoError(t, err)
 
 				for _, inContainer := range []bool{false, true} {
-					_, err = provider.ValidateAtRuntime(t.Context(), state.WrapCore(namespaced.NewState(inmem.Build)), workloadValidationMode{inContainer: inContainer})
+					_, err = provider.ValidateAtRuntime(t.Context(), state.WrapCore(inmem.NewState()), workloadValidationMode{inContainer: inContainer})
 					if test.invalid {
 						require.Error(t, err, "expected error got nil")
 						assert.Contains(t, err.Error(), root+".memory.limit")
@@ -161,7 +160,7 @@ hostDNS:
 		cfg.VirtualMachinesConfig = workloadMemoryRoot(fmt.Sprintf("%dB", int64(math.MaxInt64)))
 		provider, err := container.New(cfg)
 		require.NoError(t, err)
-		_, err = provider.ValidateAtRuntime(t.Context(), state.WrapCore(namespaced.NewState(inmem.Build)), validationMode{})
+		_, err = provider.ValidateAtRuntime(t.Context(), state.WrapCore(inmem.NewState()), validationMode{})
 		require.Error(t, err, "expected error got nil")
 
 		for _, root := range []string{"kubepods", "taloscontainers", "virtualMachines"} {

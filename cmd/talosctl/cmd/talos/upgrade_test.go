@@ -10,7 +10,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -123,7 +122,7 @@ func TestReadNodeImageParamsSkipsOverriddenReads(t *testing.T) {
 	)
 
 	// only the platform is always read from the node, any other read would fail with NotFound
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	platform := runtime.NewPlatformMetadataSpec(runtime.NamespaceName, runtime.PlatformMetadataID)
 	platform.TypedSpec().Platform = "metal"
@@ -144,7 +143,7 @@ func TestReadNodeImageParamsNotFromFactory(t *testing.T) {
 	flags := parseUpgradeFlags(t)
 
 	// empty state: the node has no ImageFactorySchematic
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	_, err := readNodeImageParams(t.Context(), st, imageParamsFromFlags(), newChangedImageFlags(flags))
 	require.ErrorContains(t, err, "not installed from Image Factory")
@@ -169,7 +168,7 @@ func TestReadNodeImageParamsEmptyFactoryURL(t *testing.T) {
 func newNodeImageState(t *testing.T) state.State {
 	t.Helper()
 
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	schematic := runtime.NewImageFactorySchematic(runtime.NamespaceName, runtime.ImageFactorySchematicID)
 	schematic.TypedSpec().SchematicID = "node-schematic"

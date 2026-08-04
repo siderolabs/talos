@@ -18,8 +18,9 @@ import (
 )
 
 const (
-	modeEnvironment  = "TALOS_TEST_NETNS_MODE"
-	childEnvironment = "TALOS_TEST_NETNS_CHILD"
+	modeEnvironment        = "TALOS_TEST_NETNS_MODE"
+	childEnvironment       = "TALOS_TEST_NETNS_CHILD"
+	parentNetNSEnvironment = "TALOS_TEST_NETNS_PARENT"
 )
 
 func TestMain(m *testing.M) {
@@ -41,6 +42,11 @@ func TestChild(t *testing.T) {
 		input, err := io.ReadAll(os.Stdin)
 		require.NoError(t, err)
 		require.Equal(t, "forwarded stdin", string(input))
+
+		netns, err := os.Readlink("/proc/self/ns/net")
+		require.NoError(t, err)
+		require.NotEqual(t, os.Getenv(parentNetNSEnvironment), netns)
+
 		fmt.Fprintln(os.Stdout, "forwarded stdout")
 		fmt.Fprintln(os.Stderr, "forwarded stderr")
 	case "fail":
@@ -53,6 +59,9 @@ func TestChild(t *testing.T) {
 }
 
 func TestRun(t *testing.T) {
+	parentNetNS, err := os.Readlink("/proc/self/ns/net")
+	require.NoError(t, err)
+
 	for _, tt := range []struct {
 		mode   string
 		code   int
@@ -66,7 +75,7 @@ func TestRun(t *testing.T) {
 		t.Run(tt.mode, func(t *testing.T) {
 			cmd := exec.CommandContext(t.Context(), os.Args[0], "-test.run=^TestChild$", "-test.v")
 
-			cmd.Env = append(os.Environ(), modeEnvironment+"="+tt.mode, childEnvironment+"=")
+			cmd.Env = append(os.Environ(), modeEnvironment+"="+tt.mode, childEnvironment+"=", parentNetNSEnvironment+"="+parentNetNS)
 			cmd.Stdin = strings.NewReader("forwarded stdin")
 			output, err := cmd.CombinedOutput()
 

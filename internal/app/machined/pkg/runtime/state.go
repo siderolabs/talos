@@ -57,6 +57,7 @@ type ClusterState any
 // V1Alpha2State defines the next generation (v2) interface binding into v1 runtime.
 type V1Alpha2State interface {
 	Resources() state.State
+	RunBackgroundCleanup(context.Context) error
 
 	NamespaceRegistry() *registry.NamespaceRegistry
 	ResourceRegistry() *registry.ResourceRegistry

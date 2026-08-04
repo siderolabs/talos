@@ -14,7 +14,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/cosi-project/runtime/pkg/state/registry"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -46,7 +45,7 @@ func setup(t *testing.T) (raw, wrapped state.State) {
 
 	ctx := t.Context()
 
-	raw = state.WrapCore(namespaced.NewState(inmem.Build))
+	raw = state.WrapCore(inmem.NewState())
 
 	namespaceRegistry := registry.NewNamespaceRegistry(raw)
 	resourceRegistry := registry.NewResourceRegistry(raw)

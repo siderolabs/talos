@@ -11,7 +11,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/hypervisor/internal/disks"
@@ -39,7 +38,7 @@ func TestObserveCopyVolumeRequiresQualifiedSuccess(t *testing.T) {
 		{name: "new source dependency", phase: storage.StoragePoolVolumeCopyPhaseSucceeded, changeSource: true},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			st := state.WrapCore(namespaced.NewState(inmem.Build))
+			st := state.WrapCore(inmem.NewState())
 			request := storage.NewStoragePoolVolumeSpec(storage.NamespaceName, "images/one.raw")
 			*request.TypedSpec() = storage.StoragePoolVolumeSpecSpec{
 				Pool: "images", Name: "one.raw", Format: "raw",

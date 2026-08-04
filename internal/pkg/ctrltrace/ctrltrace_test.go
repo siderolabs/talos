@@ -21,7 +21,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/conformance"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
@@ -44,7 +43,7 @@ func TestTraceRoundTrip(t *testing.T) {
 
 	require.True(t, ctrltrace.Enabled())
 
-	st := state.WrapCore(ctrltrace.WrapState(namespaced.NewState(inmem.Build)))
+	st := state.WrapCore(ctrltrace.WrapState(inmem.NewState()))
 
 	ctx := ctrltrace.WithCaller(t.Context(), "test.Controller")
 
@@ -96,7 +95,7 @@ func TestControllerWrapperAttributesReads(t *testing.T) {
 
 	tracer := ctrltrace.New(ctrltrace.Options{Path: path})
 
-	st := state.WrapCore(ctrltrace.WrapState(namespaced.NewState(inmem.Build)))
+	st := state.WrapCore(ctrltrace.WrapState(inmem.NewState()))
 
 	rt, err := osruntime.NewRuntime(st, zaptest.NewLogger(t))
 	require.NoError(t, err)
@@ -288,7 +287,7 @@ func TestSpecIsRecordedAsYAML(t *testing.T) {
 
 	tracer := ctrltrace.New(ctrltrace.Options{Path: path, WithSpecs: true})
 
-	st := state.WrapCore(ctrltrace.WrapState(namespaced.NewState(inmem.Build)))
+	st := state.WrapCore(ctrltrace.WrapState(inmem.NewState()))
 	ctx := ctrltrace.WithCaller(t.Context(), "block.DisksController")
 
 	disk := block.NewDisk(block.NamespaceName, "nvme0n1")

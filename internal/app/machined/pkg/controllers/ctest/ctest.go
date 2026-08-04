@@ -17,7 +17,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -52,13 +51,7 @@ func (suite *DefaultSuite) SetupTest() {
 
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), suite.Timeout)
 
-	suite.state = state.WrapCore(namespaced.NewState(
-		func(ns resource.Namespace) state.CoreState {
-			return inmem.NewStateWithOptions(
-				inmem.WithHistoryMaxCapacity(1000),
-			)(ns)
-		},
-	))
+	suite.state = state.WrapCore(inmem.NewState())
 
 	var err error
 

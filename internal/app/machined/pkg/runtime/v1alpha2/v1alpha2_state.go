@@ -6,22 +6,25 @@ package v1alpha2
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/cosi-project/runtime/pkg/state/registry"
+	"github.com/siderolabs/gen/panicsafe"
 
 	"github.com/siderolabs/talos/internal/pkg/ctrltrace"
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
 )
 
 // State implements runtime.V1alpha2State interface.
 type State struct {
-	resources state.State
+	inmemState *inmem.State
+	resources  state.State
 
 	namespaceRegistry *registry.NamespaceRegistry
 	resourceRegistry  *registry.ResourceRegistry
@@ -33,15 +36,13 @@ func NewState() (*State, error) {
 
 	ctx := context.TODO()
 
-	s.resources = state.WrapCore(ctrltrace.WrapState(namespaced.NewState(
-		func(ns string) state.CoreState {
-			return inmem.NewStateWithOptions(
-				inmem.WithHistoryInitialCapacity(8),
-				inmem.WithHistoryMaxCapacity(1536),
-				inmem.WithHistoryGap(4),
-			)(ns)
-		},
-	)))
+	s.inmemState = inmem.NewStateWithOptions(
+		inmem.WithHistoryInitialCapacity(constants.InmemHistoryInitialCapacity),
+		inmem.WithHistoryMaxCapacity(constants.InmemHistoryMaxCapacity),
+		inmem.WithHistoryGap(constants.InmemHistoryGap),
+	)
+
+	s.resources = state.WrapCore(ctrltrace.WrapState(s.inmemState))
 	s.namespaceRegistry = registry.NewNamespaceRegistry(s.resources)
 	s.resourceRegistry = registry.NewResourceRegistry(s.resources)
 
@@ -124,4 +125,15 @@ func (s *State) SetConfig(ctx context.Context, id string, cfg talosconfig.Provid
 	cfgResource.Metadata().SetVersion(oldCfg.Metadata().Version())
 
 	return s.resources.Update(ctx, cfgResource)
+}
+
+// RunBackgroundCleanup removes stale events from the event buffer.
+func (s *State) RunBackgroundCleanup(ctx context.Context) error {
+	if err := panicsafe.RunErr(func() error {
+		return s.inmemState.RunHistoryCleanup(ctx, constants.InmemCleanupInterval)
+	}); err != nil {
+		return fmt.Errorf("failed to run history cleanup: %w", err)
+	}
+
+	return nil
 }

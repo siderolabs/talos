@@ -19,7 +19,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/goleak"
@@ -459,7 +458,7 @@ func TestConsoleLiveValidationRPCStatus(t *testing.T) {
 	} {
 		t.Run(test.mode, func(t *testing.T) {
 			connector, d, peerDone, _ := consoleFixture(t, test.mode)
-			st := state.WrapCore(namespaced.NewState(inmem.Build))
+			st := state.WrapCore(inmem.NewState())
 
 			system := hardware.NewSystemInformation(hardware.SystemInformationID)
 			system.TypedSpec().UUID = consoleMachineUUID
@@ -596,7 +595,7 @@ func TestConsoleImmediatePostHandshakeDisconnectReleasesServiceSlot(t *testing.T
 	socket, peerDone := handshakeDisconnectFixture(t, connections)
 	connector := libvirtdomain.New(socket, "qemu:///system")
 	d := libvirtdomain.Domain{Name: "guest", UUID: libvirtdomain.UUID(uuid.MustParse(consoleMachineUUID), "guest")}
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	system := hardware.NewSystemInformation(hardware.SystemInformationID)
 	system.TypedSpec().UUID = consoleMachineUUID
@@ -939,7 +938,7 @@ func testMalformedHandshakeReleasesServiceSlot(t *testing.T, mode string) {
 	socket, peerDone := startupFailureFixture(t, mode, mode)
 	connector := libvirtdomain.New(socket, "qemu:///system")
 	d := libvirtdomain.Domain{Name: "guest", UUID: libvirtdomain.UUID(uuid.MustParse(consoleMachineUUID), "guest")}
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	system := hardware.NewSystemInformation(hardware.SystemInformationID)
 	system.TypedSpec().UUID = consoleMachineUUID

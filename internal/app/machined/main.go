@@ -204,7 +204,7 @@ func run() error {
 	)...)
 }
 
-//nolint:gocyclo
+//nolint:gocyclo,cyclop
 func runEntrypoint(ctx context.Context, c *v1alpha1runtime.Controller) (returnErr error) {
 	errCh := make(chan error)
 
@@ -270,6 +270,12 @@ func runEntrypoint(ctx context.Context, c *v1alpha1runtime.Controller) (returnEr
 		}
 
 		log.Printf("controller runtime finished")
+	})
+
+	controllerWaitGroup.Go(func() {
+		if e := c.Runtime().State().V1Alpha2().RunBackgroundCleanup(ctx); e != nil {
+			errCh <- e
+		}
 	})
 
 	// Load machined service.

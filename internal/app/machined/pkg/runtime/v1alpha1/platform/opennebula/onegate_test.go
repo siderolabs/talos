@@ -10,7 +10,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -63,7 +62,7 @@ func TestOnegateProxyRoute(t *testing.T) {
 	t.Parallel()
 
 	o := &opennebula.OpenNebula{}
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	tests := []struct {
 		name      string
@@ -133,7 +132,7 @@ func TestOnegateRouteAttachedToFirstStaticInterface(t *testing.T) {
 	t.Parallel()
 
 	o := &opennebula.OpenNebula{}
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	// ETH0=dhcp, ETH1=static — route must be on eth1 (first static).
 	ctx := []byte(`ETH0_MAC = "02:00:c0:a8:01:5c"

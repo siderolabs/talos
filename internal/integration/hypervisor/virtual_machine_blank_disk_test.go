@@ -17,7 +17,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v4"
 
@@ -58,9 +57,7 @@ func TestBlankDiskCleanupWaitsForVolumeWithdrawal(t *testing.T) {
 	defer cancel()
 
 	st := &watchedVolumeState{
-		State: state.WrapCore(namespaced.NewState(func(ns resource.Namespace) state.CoreState {
-			return inmem.NewStateWithOptions()(ns)
-		})),
+		State:   state.WrapCore(inmem.NewState()),
 		watched: make(chan resource.Type, 2),
 	}
 	id := storage.StoragePoolVolumeID("test-pool", "test-disk.qcow2")

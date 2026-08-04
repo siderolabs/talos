@@ -19,7 +19,7 @@ require (
 	github.com/buger/jsonparser v1.6.1 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/pb33f/go-yaml v0.1.1 // indirect
-	golang.org/x/net v0.61.0 // indirect
+	golang.org/x/net v0.62.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
 	golang.org/x/tools v0.52.0 // indirect
 )

@@ -12,7 +12,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -62,7 +61,7 @@ func TestCondition(t *testing.T) {
 		t.Run(tt.Name, func(t *testing.T) {
 			t.Parallel()
 
-			state := state.WrapCore(namespaced.NewState(inmem.Build))
+			state := state.WrapCore(inmem.NewState())
 
 			status := network.NewStatus(network.NamespaceName, network.StatusID)
 			*status.TypedSpec() = tt.Status
