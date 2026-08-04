@@ -1,3 +1,79 @@
+## [Talos 1.13.8](https://github.com/siderolabs/talos/releases/tag/v1.13.8) (2026-08-04)
+
+Welcome to the v1.13.8 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.18.42
+CoreDNS: 1.14.6
+Flannel: 0.28.8
+
+Talos is built with Go 1.26.5.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Mateusz Urbanek
+* Noel Georgi
+* ctr49
+* imusmanmalik
+* kastakhov
+
+### Changes
+<details><summary>13 commits</summary>
+<p>
+
+* [`76de777df`](https://github.com/siderolabs/talos/commit/76de777dfbe29f3cd03ef748ed552b87c2432310) chore: update dependencies
+* [`77d5fe2cc`](https://github.com/siderolabs/talos/commit/77d5fe2ccb248cd5fd5a19c48d17c6ed7340c0d8) chore: update pkgs
+* [`a7db9b227`](https://github.com/siderolabs/talos/commit/a7db9b227753b34dfde09b5e222c91d7bca583d4) fix: verify the public key signed images correctly
+* [`d76938912`](https://github.com/siderolabs/talos/commit/d769389122206d18ba5c3f1a0fecac8c674fd799) fix: use context without cancelation for etcd locks
+* [`3a2abc01e`](https://github.com/siderolabs/talos/commit/3a2abc01eb63327717eac6633d177bdff06b72d8) fix: redact resource specs in the merge controllers
+* [`153179702`](https://github.com/siderolabs/talos/commit/1531797029ed3a96b4f478cbbf8ec200341168c1) fix(machined): preserve health when services reach running
+* [`fc757545c`](https://github.com/siderolabs/talos/commit/fc757545c0673e5ca993d817334184dea959ad49) fix: race with PCR extensions and volume unlock
+* [`2a51fb18f`](https://github.com/siderolabs/talos/commit/2a51fb18f3fd3533f75865842c97f5030bf8244c) feat: update Flannel to 0.28.8
+* [`05471d31d`](https://github.com/siderolabs/talos/commit/05471d31dfcf01e9298160fab52f031239da0056) feat: update CoreDNS to 1.14.6
+* [`9e0b1caba`](https://github.com/siderolabs/talos/commit/9e0b1caba5306146a2382ced53f569221d45bf92) fix: volume mount race (third attempt) around service restart
+* [`c5cb36528`](https://github.com/siderolabs/talos/commit/c5cb365288231d6364fa9dcc2538bce7ea3b9879) fix: ignore insecure-only imager assets
+* [`c67b10d29`](https://github.com/siderolabs/talos/commit/c67b10d2929ef4bf06c9afaafb6410c0ccbfdf3f) test: update Calico in canal reset test
+* [`9eca6ea4a`](https://github.com/siderolabs/talos/commit/9eca6ea4a65085f701218eee66d0e51e8c81e90b) fix: preserve trailing rate-limited trigger events
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>6 commits</summary>
+<p>
+
+* [`f677246`](https://github.com/siderolabs/pkgs/commit/f677246a73ed1353a1e0ec9e92f0027b2f759978) chore: update kernel
+* [`6c5daf2`](https://github.com/siderolabs/pkgs/commit/6c5daf21828e3305e2efef7e5a1cd8d8304df2fb) chore: replace gnu mirror
+* [`4304e87`](https://github.com/siderolabs/pkgs/commit/4304e87fe468b379b16eecaf970b0271f8d6c1ad) feat: bump kernel to 6.18.41
+* [`e66edeb`](https://github.com/siderolabs/pkgs/commit/e66edebb6e3bd0621388e36c32765fd06de369c6) feat: enable PCF8523 RTC support for arm64
+* [`b2e51fc`](https://github.com/siderolabs/pkgs/commit/b2e51fc7a135c9a7d08970b7e154d1fbf46305ab) feat: bump kernel to 6.18.40
+* [`33195c5`](https://github.com/siderolabs/pkgs/commit/33195c57a081d8507ed79a4820def5b97123e827) feat: enable CONFIG_NFT_SOCKET in the kernel
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/google/cel-go**         v0.28.0 -> v0.29.0
+* **github.com/gopacket/gopacket**     v1.5.0 -> v1.6.1
+* **github.com/klauspost/compress**    v1.18.6 -> v1.18.7
+* **github.com/siderolabs/pkgs**       v1.13.0-49-g91fe0a0 -> v1.13.0-55-gf677246
+* **github.com/sigstore/sigstore-go**  v1.2.0 -> v1.2.1
+* **golang.org/x/net**                 v0.55.0 -> v0.57.0
+* **golang.org/x/sync**                v0.20.0 -> v0.22.0
+* **golang.org/x/sys**                 v0.45.0 -> v0.47.0
+* **golang.org/x/term**                v0.43.0 -> v0.45.0
+* **golang.org/x/text**                v0.37.0 -> v0.40.0
+* **google.golang.org/grpc**           v1.81.1 -> v1.82.1
+
+Previous release can be found at [v1.13.7](https://github.com/siderolabs/talos/releases/tag/v1.13.7)
+
 ## [Talos 1.13.7](https://github.com/siderolabs/talos/releases/tag/v1.13.7) (2026-07-21)
 
 Welcome to the v1.13.7 release of Talos!
