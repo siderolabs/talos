@@ -12,7 +12,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/go-retry/retry"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -49,7 +48,7 @@ func TestUpgradeFallbackControllerSuite(t *testing.T) {
 	require.NoError(t, f.Truncate(1024*1024))
 	require.NoError(t, f.Close())
 
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	m, err := meta.New(t.Context(), st, meta.WithFixedPath(path))
 	require.NoError(t, err)

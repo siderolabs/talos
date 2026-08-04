@@ -22,6 +22,8 @@ replace (
 	golang.zx2c4.com/wireguard/wgctrl => github.com/siderolabs/wgctrl-go v0.0.0-20251029173431-c4fd5f6a4e72
 )
 
+replace github.com/cosi-project/runtime => github.com/smira/os-runtime v0.0.0-20260805105338-c3f9cbb4a1f7
+
 // Kubernetes dependencies sharing the same version.
 require (
 	k8s.io/api v0.37.0-beta.0
@@ -192,7 +194,7 @@ require (
 	golang.org/x/text v0.40.0
 	golang.org/x/time v0.15.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10
-	google.golang.org/grpc v1.82.1
+	google.golang.org/grpc v1.83.0
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
 	gopkg.in/typ.v4 v4.4.0
 	k8s.io/klog/v2 v2.140.0

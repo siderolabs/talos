@@ -10,7 +10,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/services"
@@ -21,7 +20,7 @@ import (
 func TestCreateOverlayMountRequests(t *testing.T) {
 	t.Parallel()
 
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	require.NoError(t, services.CreateOverlayMountRequests(t.Context(), st))
 	require.NoError(t, services.CreateOverlayMountRequests(t.Context(), st))

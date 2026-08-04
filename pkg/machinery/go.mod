@@ -5,6 +5,8 @@ go 1.26.5
 // forked ethtool introduces missing APIs
 replace github.com/mdlayher/ethtool => github.com/siderolabs/ethtool v0.6.0-sidero
 
+replace github.com/cosi-project/runtime => github.com/smira/os-runtime v0.0.0-20260805105338-c3f9cbb4a1f7
+
 require (
 	github.com/blang/semver/v4 v4.0.0
 	github.com/containerd/go-cni v1.1.13
@@ -34,7 +36,7 @@ require (
 	golang.org/x/net v0.57.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20260720211330-0afa2a65878a
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260720211330-0afa2a65878a
-	google.golang.org/grpc v1.82.1
+	google.golang.org/grpc v1.83.0
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
 )
 

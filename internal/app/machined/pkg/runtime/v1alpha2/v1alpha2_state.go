@@ -6,12 +6,12 @@ package v1alpha2
 
 import (
 	"context"
+	stdtime "time"
 
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/cosi-project/runtime/pkg/state/registry"
 
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config"
@@ -50,15 +50,7 @@ func NewState() (*State, error) {
 
 	ctx := context.TODO()
 
-	s.resources = state.WrapCore(namespaced.NewState(
-		func(ns string) state.CoreState {
-			return inmem.NewStateWithOptions(
-				inmem.WithHistoryInitialCapacity(8),
-				inmem.WithHistoryMaxCapacity(1024),
-				inmem.WithHistoryGap(4),
-			)(ns)
-		},
-	))
+	s.resources = state.WrapCore(inmem.NewStateWithOptions(inmem.WithHistoryCleanup(ctx, 15*stdtime.Minute)))
 	s.namespaceRegistry = registry.NewNamespaceRegistry(s.resources)
 	s.resourceRegistry = registry.NewResourceRegistry(s.resources)
 
