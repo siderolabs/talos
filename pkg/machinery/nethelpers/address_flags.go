@@ -23,6 +23,20 @@ func (flags AddressFlags) String() string {
 	return strings.Join(values, ",")
 }
 
+// Managed masks out the address flags which are managed by Talos.
+//
+// See [AddressFlagsManaged].
+func (flags AddressFlags) Managed() AddressFlags {
+	return flags & AddressFlagsManaged
+}
+
+// Unmanaged returns the address flags which are managed by the kernel.
+//
+// See [AddressFlagsManaged].
+func (flags AddressFlags) Unmanaged() AddressFlags {
+	return flags &^ AddressFlagsManaged
+}
+
 // AddressFlagsString converts string representation of flags into AddressFlags.
 func AddressFlagsString(s string) (AddressFlags, error) {
 	flags := AddressFlags(0)
@@ -72,4 +86,27 @@ const (
 	AddressNoPrefixRoute                          // noprefixroute
 	AddressMCAutoJoin                             // mcautojoin
 	AddressStablePrivacy                          // stableprivacy
+)
+
+// AddressFlagsManaged is a bitmask of the address flags which are managed (i.e. can be set and enforced) by Talos.
+//
+// All other flags are managed by the kernel: they are reported as part of the address status, but they
+// should never appear in an address spec, and they should be ignored when the desired state of an address is
+// compared with the actual state, as the kernel sets and clears them on its own:
+//
+//   - AddressTemporary (IFA_F_SECONDARY) is set by the kernel for any IPv4 address which shares the subnet with
+//     an address already assigned to the link (and for the temporary IPv6 addresses)
+//   - AddressTentative and AddressOptimistic are set while IPv6 DAD is in progress, and cleared once it completes
+//   - AddressDADFailed is set when IPv6 DAD fails
+//   - AddressDeprecated and AddressStablePrivacy are set by the kernel for the addresses it manages itself (SLAAC)
+//
+// AddressPermanent is kept in the managed set: the kernel derives it from the address lifetime, and Talos always
+// assigns addresses without a lifetime, so the flag is stable for the addresses Talos manages.
+const AddressFlagsManaged = AddressFlags(
+	AddressPermanent |
+		AddressNoDAD |
+		AddressHome |
+		AddressManagementTemp |
+		AddressNoPrefixRoute |
+		AddressMCAutoJoin,
 )

@@ -33,7 +33,21 @@ func NewAddressMergeController() controller.Controller {
 					continue
 				}
 
-				addresses[id] = address.TypedSpec()
+				spec := *address.TypedSpec()
+
+				// drop the flags which are managed by the kernel, as Talos can't set or enforce them
+				if unmanaged := spec.Flags.Unmanaged(); unmanaged != 0 {
+					logger.Warn(
+						"dropping kernel-managed address flags",
+						zap.String("address", id),
+						zap.Stringer("layer", spec.ConfigLayer),
+						zap.Stringer("flags", unmanaged),
+					)
+
+					spec.Flags = spec.Flags.Managed()
+				}
+
+				addresses[id] = &spec
 			}
 
 			return addresses

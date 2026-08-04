@@ -101,6 +101,29 @@ func (suite *AddressMergeSuite) TestMerge() {
 	suite.assertNoAddress("eth0/10.0.0.35/32")
 }
 
+func (suite *AddressMergeSuite) TestMergeKernelManagedFlags() {
+	// kernel-managed flags should never make it into the final address spec
+	static := network.NewAddressSpec(network.ConfigNamespaceName, "configuration/eth0/10.0.0.35/32")
+	*static.TypedSpec() = network.AddressSpecSpec{
+		Address:     netip.MustParsePrefix("10.0.0.35/32"),
+		LinkName:    "eth0",
+		Family:      nethelpers.FamilyInet4,
+		Scope:       nethelpers.ScopeGlobal,
+		Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent | nethelpers.AddressTemporary | nethelpers.AddressTentative | nethelpers.AddressDADFailed),
+		ConfigLayer: network.ConfigMachineConfiguration,
+	}
+
+	suite.Create(static)
+
+	suite.assertAddresses(
+		[]string{
+			"eth0/10.0.0.35/32",
+		}, func(r *network.AddressSpec, asrt *assert.Assertions) {
+			asrt.Equal(nethelpers.AddressFlags(nethelpers.AddressPermanent), r.TypedSpec().Flags)
+		},
+	)
+}
+
 func (suite *AddressMergeSuite) TestMergeFlapping() {
 	// simulate two conflicting address definitions which are getting removed/added constantly
 	dhcp := network.NewAddressSpec(network.ConfigNamespaceName, "dhcp/eth0/10.0.0.1/8")

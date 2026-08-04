@@ -17,6 +17,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/jsimonetti/rtnetlink/v2"
+	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/sys/unix"
@@ -37,39 +38,19 @@ func (suite *AddressSpecSuite) uniqueDummyInterface() string {
 }
 
 func assertLinkAddress(asrt *assert.Assertions, linkName, address string) {
-	addr := netip.MustParsePrefix(address)
-
-	iface, err := net.InterfaceByName(linkName)
-	asrt.NoError(err)
-
-	conn, err := rtnetlink.Dial(nil)
-	asrt.NoError(err)
-
-	defer conn.Close() //nolint:errcheck
-
-	linkAddresses, err := conn.Address.List()
-	asrt.NoError(err)
-
-	for _, linkAddress := range linkAddresses {
-		if linkAddress.Index != uint32(iface.Index) {
-			continue
-		}
-
-		if int(linkAddress.PrefixLength) != addr.Bits() {
-			continue
-		}
-
-		if !linkAddress.Attributes.Address.Equal(addr.Addr().AsSlice()) {
-			continue
-		}
-
-		return
+	if findLinkAddress(asrt, linkName, address) == nil {
+		asrt.Failf("address not found", "address %s not found on %q", address, linkName)
 	}
-
-	asrt.Failf("address not found", "address %s not found on %q", addr, linkName)
 }
 
 func assertNoLinkAddress(asrt *assert.Assertions, linkName, address string) {
+	if findLinkAddress(asrt, linkName, address) != nil {
+		asrt.Failf("address is still there", "address %s is assigned to %q", address, linkName)
+	}
+}
+
+// findLinkAddress returns the address as assigned to the link, or nil if it is not assigned.
+func findLinkAddress(asrt *assert.Assertions, linkName, address string) *rtnetlink.AddressMessage {
 	addr := netip.MustParsePrefix(address)
 
 	iface, err := net.InterfaceByName(linkName)
@@ -85,9 +66,11 @@ func assertNoLinkAddress(asrt *assert.Assertions, linkName, address string) {
 
 	for _, linkAddress := range linkAddresses {
 		if linkAddress.Index == uint32(iface.Index) && int(linkAddress.PrefixLength) == addr.Bits() && linkAddress.Attributes.Address.Equal(addr.Addr().AsSlice()) {
-			asrt.Failf("address is still there", "address %s is assigned to %q", addr, linkName)
+			return &linkAddress
 		}
 	}
+
+	return nil
 }
 
 func (suite *AddressSpecSuite) TestLoopback() {
@@ -217,6 +200,94 @@ func (suite *AddressSpecSuite) TestDummy() {
 	suite.Require().NoError(err)
 
 	suite.Destroy(dummy)
+}
+
+// TestDummySecondary verifies that the addresses sharing the subnet are not being re-created in a loop:
+// the kernel marks all but the first IPv4 address in the subnet as IFA_F_SECONDARY, and Talos should not
+// try to enforce the flags it doesn't manage.
+func (suite *AddressSpecSuite) TestDummySecondary() {
+	dummyInterface := suite.uniqueDummyInterface()
+
+	conn, err := rtnetlink.Dial(nil)
+	suite.Require().NoError(err)
+
+	defer conn.Close() //nolint:errcheck
+
+	suite.Require().NoError(
+		conn.Link.New(
+			&rtnetlink.LinkMessage{
+				Type: unix.ARPHRD_ETHER,
+				Attributes: &rtnetlink.LinkAttributes{
+					Name: dummyInterface,
+					MTU:  1400,
+					Info: &rtnetlink.LinkInfo{
+						Kind: "dummy",
+					},
+				},
+			},
+		),
+	)
+
+	iface, err := net.InterfaceByName(dummyInterface)
+	suite.Require().NoError(err)
+
+	defer conn.Link.Delete(uint32(iface.Index)) //nolint:errcheck
+
+	addresses := []string{"10.99.0.1/24", "10.99.0.2/24"}
+
+	specs := xslices.Map(addresses, func(address string) *network.AddressSpec {
+		spec := network.NewAddressSpec(network.NamespaceName, dummyInterface+"/"+address)
+		*spec.TypedSpec() = network.AddressSpecSpec{
+			Address:     netip.MustParsePrefix(address),
+			LinkName:    dummyInterface,
+			Family:      nethelpers.FamilyInet4,
+			Scope:       nethelpers.ScopeGlobal,
+			ConfigLayer: network.ConfigDefault,
+			Flags:       nethelpers.AddressFlags(nethelpers.AddressPermanent),
+		}
+
+		suite.Create(spec)
+
+		return spec
+	})
+
+	suite.Assert().EventuallyWithT(func(collect *assert.CollectT) {
+		for _, address := range addresses {
+			assertLinkAddress(assert.New(collect), dummyInterface, address)
+		}
+	}, 3*time.Second, 10*time.Millisecond)
+
+	// the kernel should have marked the second address as secondary
+	secondary := findLinkAddress(suite.Assert(), dummyInterface, addresses[1])
+	suite.Require().NotNil(secondary)
+	suite.Assert().NotZero(secondary.Attributes.Flags & uint32(nethelpers.AddressTemporary))
+
+	// remember the creation timestamps of the addresses, they should not change as the addresses
+	// should not be re-created
+	created := xslices.Map(addresses, func(address string) uint32 {
+		addr := findLinkAddress(suite.Assert(), dummyInterface, address)
+		suite.Require().NotNil(addr)
+
+		return addr.Attributes.CacheInfo.Created
+	})
+
+	// force the controller to reconcile the addresses a couple of times
+	for range 3 {
+		for _, spec := range specs {
+			res, err := suite.State().Get(suite.Ctx(), spec.Metadata())
+			suite.Require().NoError(err)
+
+			suite.Update(res)
+		}
+
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	for i, address := range addresses {
+		addr := findLinkAddress(suite.Assert(), dummyInterface, address)
+		suite.Require().NotNil(addr)
+		suite.Assert().Equalf(created[i], addr.Attributes.CacheInfo.Created, "address %s was re-created", address)
+	}
 }
 
 func (suite *AddressSpecSuite) TestDummyAlias() {
