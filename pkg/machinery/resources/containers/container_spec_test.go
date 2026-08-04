@@ -12,7 +12,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -72,7 +71,7 @@ func TestTimeReady(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			st := state.WrapCore(namespaced.NewState(inmem.Build))
+			st := state.WrapCore(inmem.NewState())
 
 			if tt.setup != nil {
 				status := timeres.NewStatus()
@@ -280,7 +279,7 @@ func TestContainersReady(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			st := state.WrapCore(namespaced.NewState(inmem.Build))
+			st := state.WrapCore(inmem.NewState())
 
 			if tt.setup != nil {
 				status := containers.NewContainerStatus(containers.NamespaceName, "other")
@@ -311,7 +310,7 @@ func TestReady(t *testing.T) {
 
 	ctx := t.Context()
 
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	networkStatus := network.NewStatus(network.NamespaceName, network.StatusID)
 	networkStatus.TypedSpec().AddressReady = true
@@ -397,7 +396,7 @@ func TestReadyMissingStatuses(t *testing.T) {
 	ctx := t.Context()
 
 	// No network or time Status resources exist in this state, exercising the not-found path.
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	dependsOn := containers.ContainerDependsOnSpec{
 		Networks:   []string{"addresses"},

@@ -11,7 +11,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v4"
@@ -53,7 +52,7 @@ func TestApplyNetworkConfigV2a(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			ctx := t.Context()
-			st := state.WrapCore(namespaced.NewState(inmem.Build))
+			st := state.WrapCore(inmem.NewState())
 
 			eth1 := network.NewLinkStatus(network.NamespaceName, "eth1")
 			eth1.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0x68, 0x05, 0xca, 0xb8, 0xf1, 0xf8}

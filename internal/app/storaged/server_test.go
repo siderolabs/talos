@@ -9,7 +9,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -45,7 +44,7 @@ func TestGetSystemDiskPathsForListing(t *testing.T) {
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			ctx := t.Context()
-			st := state.WrapCore(namespaced.NewState(inmem.Build))
+			st := state.WrapCore(inmem.NewState())
 
 			systemDisk := block.NewSystemDisk(block.NamespaceName, block.SystemDiskID)
 			systemDisk.TypedSpec().DiskID = "md127"

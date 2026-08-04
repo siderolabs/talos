@@ -15,7 +15,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/nclient4"
 	"github.com/stretchr/testify/assert"
@@ -177,7 +176,7 @@ func (testPlatform) Name() string { return "metal" }
 func runDHCP4(t *testing.T, srv *fakeDHCPServer, readyAddresses ...string) (*operator.DHCP4, <-chan struct{}) {
 	t.Helper()
 
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	for _, addr := range readyAddresses {
 		require.NoError(t, st.Create(t.Context(), network.NewAddressStatus(network.NamespaceName, network.AddressID("eth0", netip.MustParsePrefix(addr)))))

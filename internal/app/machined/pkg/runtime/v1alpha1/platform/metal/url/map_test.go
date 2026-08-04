@@ -11,7 +11,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -73,7 +72,7 @@ func TestMapValues(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			st := state.WrapCore(namespaced.NewState(inmem.Build))
+			st := state.WrapCore(inmem.NewState())
 
 			ctx, cancel := context.WithTimeout(t.Context(), 5*time.Second)
 			defer cancel()

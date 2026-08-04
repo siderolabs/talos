@@ -6,14 +6,15 @@ package v1alpha2
 
 import (
 	"context"
+	"log"
+	stdtime "time"
 
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/cosi-project/runtime/pkg/state/registry"
+	"github.com/siderolabs/gen/panicsafe"
 
-	"github.com/siderolabs/talos/internal/pkg/ctrltrace"
 	talosconfig "github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/resources"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
@@ -33,15 +34,19 @@ func NewState() (*State, error) {
 
 	ctx := context.TODO()
 
-	s.resources = state.WrapCore(ctrltrace.WrapState(namespaced.NewState(
-		func(ns string) state.CoreState {
-			return inmem.NewStateWithOptions(
-				inmem.WithHistoryInitialCapacity(8),
-				inmem.WithHistoryMaxCapacity(1536),
-				inmem.WithHistoryGap(4),
-			)(ns)
-		},
-	)))
+	inmemState := inmem.NewState()
+
+	go func() {
+		// TODO: refactor me later
+		err := panicsafe.RunErr(func() error {
+			return inmemState.RunHistoryCleanup(ctx, 15*stdtime.Minute)
+		})
+		if err != nil {
+			log.Printf("failed to run history cleanup: %v", err) //nolint:loglinter // temporary code
+		}
+	}()
+
+	s.resources = state.WrapCore(inmemState)
 	s.namespaceRegistry = registry.NewNamespaceRegistry(s.resources)
 	s.resourceRegistry = registry.NewResourceRegistry(s.resources)
 

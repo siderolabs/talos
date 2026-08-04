@@ -10,7 +10,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/cosi-project/runtime/pkg/state/registry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -24,7 +23,7 @@ import (
 func TestVirtualMachineCPUPlacementRegister(t *testing.T) {
 	t.Parallel()
 
-	resources := state.WrapCore(namespaced.NewState(inmem.Build))
+	resources := state.WrapCore(inmem.NewState())
 
 	require.NoError(t, registry.NewResourceRegistry(resources).Register(t.Context(), &hypervisor.VirtualMachineCPUPlacement{}))
 }

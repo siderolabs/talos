@@ -10,7 +10,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -614,7 +613,7 @@ func TestLatestInstanceStatus(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	const containerID = "nginx"
 
@@ -644,7 +643,7 @@ func TestLatestInstanceStatusNone(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	got, err := containers.LatestInstanceStatus(ctx, st, "nginx")
 	require.NoError(t, err)
@@ -661,7 +660,7 @@ func TestCurrentInstanceSpec(t *testing.T) {
 	t.Run("nil status returns nil", func(t *testing.T) {
 		t.Parallel()
 
-		st := state.WrapCore(namespaced.NewState(inmem.Build))
+		st := state.WrapCore(inmem.NewState())
 
 		got, err := containers.CurrentInstanceSpec(ctx, st, containerID, nil)
 		require.NoError(t, err)
@@ -671,7 +670,7 @@ func TestCurrentInstanceSpec(t *testing.T) {
 	t.Run("status without a matching spec returns nil", func(t *testing.T) {
 		t.Parallel()
 
-		st := state.WrapCore(namespaced.NewState(inmem.Build))
+		st := state.WrapCore(inmem.NewState())
 
 		status := containers.NewContainerInstanceStatus(containers.NamespaceName, containers.InstanceID(containerID, 0))
 		status.TypedSpec().Generation = 0
@@ -684,7 +683,7 @@ func TestCurrentInstanceSpec(t *testing.T) {
 	t.Run("returns the spec matching the status's generation", func(t *testing.T) {
 		t.Parallel()
 
-		st := state.WrapCore(namespaced.NewState(inmem.Build))
+		st := state.WrapCore(inmem.NewState())
 
 		spec := containers.NewContainerInstanceSpec(containers.NamespaceName, containers.InstanceID(containerID, 2))
 		spec.TypedSpec().ContainerID = containerID

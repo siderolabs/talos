@@ -12,7 +12,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 
@@ -35,7 +34,7 @@ func TestProductionBuildIsInert(t *testing.T) {
 	assert.Nil(t, ctrltrace.Setup("v0.0.0-test"))
 	assert.NoError(t, ctrltrace.Setup("v0.0.0-test").Close())
 
-	st := namespaced.NewState(inmem.Build)
+	st := inmem.NewState()
 	assert.Same(t, st, ctrltrace.WrapState(st))
 
 	ctrl := noopController{}

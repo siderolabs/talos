@@ -5,6 +5,8 @@ go 1.26.8
 // forked ethtool introduces missing APIs
 replace github.com/mdlayher/ethtool => github.com/siderolabs/ethtool v0.6.1-sidero
 
+replace github.com/cosi-project/runtime => github.com/smira/os-runtime v0.0.0-20260916172933-a919e5703a02
+
 require (
 	cel.dev/cel-go v0.33.0
 	github.com/blang/semver/v4 v4.0.0

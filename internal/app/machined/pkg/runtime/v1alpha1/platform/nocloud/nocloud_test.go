@@ -13,7 +13,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/gen/xtesting/must"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -110,7 +109,7 @@ func TestParseNetworkConfig(t *testing.T) {
 
 			n := &nocloud.Nocloud{}
 
-			st := state.WrapCore(namespaced.NewState(inmem.Build))
+			st := state.WrapCore(inmem.NewState())
 
 			devicesReady := runtime.NewDevicesStatus(runtime.NamespaceName, runtime.DevicesID)
 			devicesReady.TypedSpec().Ready = true

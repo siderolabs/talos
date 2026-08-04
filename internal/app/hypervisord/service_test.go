@@ -15,7 +15,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/digitalocean/go-libvirt"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
@@ -38,7 +37,7 @@ const machineUUID = "c737f778-82a1-48dd-990b-67901031bcc5"
 func setup(t *testing.T) state.State {
 	t.Helper()
 
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 	system := hardware.NewSystemInformation(hardware.SystemInformationID)
 	system.TypedSpec().UUID = machineUUID
 	require.NoError(t, st.Create(t.Context(), system))

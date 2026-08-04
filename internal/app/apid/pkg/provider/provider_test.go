@@ -16,7 +16,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/crypto/x509"
 	"github.com/stretchr/testify/suite"
 
@@ -57,7 +56,7 @@ func TestTLSConfigSuite(t *testing.T) {
 
 func (suite *TLSConfigSuite) SetupTest() {
 	suite.ctx, suite.ctxCancel = context.WithTimeout(suite.T().Context(), 10*time.Second)
-	suite.resources = state.WrapCore(namespaced.NewState(inmem.Build))
+	suite.resources = state.WrapCore(inmem.NewState())
 	suite.watches = nil
 }
 

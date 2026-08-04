@@ -10,7 +10,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/cosi-project/runtime/pkg/state/registry"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -21,7 +20,7 @@ import (
 func TestRegisterResource(t *testing.T) {
 	ctx := t.Context()
 
-	resources := state.WrapCore(namespaced.NewState(inmem.Build))
+	resources := state.WrapCore(inmem.NewState())
 	resourceRegistry := registry.NewResourceRegistry(resources)
 
 	for _, resource := range []meta.ResourceWithRD{

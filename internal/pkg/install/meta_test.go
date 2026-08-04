@@ -11,7 +11,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/require"
 
 	"github.com/siderolabs/talos/internal/pkg/install"
@@ -45,7 +44,7 @@ func (m *fakeMeta) Flush() error {
 func stateWithMetaVolume(t *testing.T, ctx context.Context, phase blockres.VolumePhase) state.State { //nolint:revive
 	t.Helper()
 
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	volumeStatus := blockres.NewVolumeStatus(blockres.NamespaceName, constants.MetaPartitionLabel)
 	volumeStatus.TypedSpec().Phase = phase
