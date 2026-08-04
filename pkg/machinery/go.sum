@@ -24,8 +24,6 @@ github.com/containerd/go-cni v1.1.13 h1:eFSGOKlhoYNxpJ51KRIMHZNlg5UgocXEIEBGkY7H
 github.com/containerd/go-cni v1.1.13/go.mod h1:nTieub0XDRmvCZ9VI/SBG6PyqT95N4FIhxsauF1vSBI=
 github.com/containernetworking/cni v1.3.0 h1:v6EpN8RznAZj9765HhXQrtXgX+ECGebEYEmnuFjskwo=
 github.com/containernetworking/cni v1.3.0/go.mod h1:Bs8glZjjFfGPHMw6hQu82RUgEPNGEaBb9KS5KtNMnJ4=
-github.com/cosi-project/runtime v1.16.3 h1:EQ1oubPjAVPnAFc5GhSGfHuiPcm8b2g2XsPnpl+Wq0g=
-github.com/cosi-project/runtime v1.16.3/go.mod h1:p3nyBuIqeipcfQHuM9uGjLkFN2gYA9GJFL4oSEEtmm0=
 github.com/dlclark/regexp2 v1.11.0 h1:G/nrcoOa7ZXlpoa/91N3X7mM3r8eIlMBBJZvsz/mxKI=
 github.com/dlclark/regexp2 v1.11.0/go.mod h1:DHkYz0B9wPfa6wondMfaivmHpzrQ3v9q8cnmRbL6yW8=
 github.com/dustin/go-humanize v1.0.1 h1:GzkhY7T5VNhEkwH0PVJgjz+fX1rhBrR7pRT3mDkpeCY=
@@ -114,6 +112,8 @@ github.com/siderolabs/net v0.4.0 h1:1bOgVay/ijPkJz4qct98nHsiB/ysLQU0KLoBC4qLm7I=
 github.com/siderolabs/net v0.4.0/go.mod h1:/ibG+Hm9HU27agp5r9Q3eZicEfjquzNzQNux5uEk0kM=
 github.com/siderolabs/protoenc v0.2.4 h1:D3Fpn2nQSQOhl8ZlAxijZAf7K6F8CM1uZq0afIGsr8Q=
 github.com/siderolabs/protoenc v0.2.4/go.mod h1:i5XLHjfv5vyi7LhQrSEo19HCA+lYtDd7CWxsoWp9XE8=
+github.com/smira/os-runtime v0.0.0-20260916172933-a919e5703a02 h1:NaAs3F5qF9h46+lZdTuyP/WyRP6Ya7xBTqEAYlOqQaU=
+github.com/smira/os-runtime v0.0.0-20260916172933-a919e5703a02/go.mod h1:EgQYtRinShr8wpJaU6GnvrSi1DMpDqQcxUpBAGBsyNY=
 github.com/stretchr/objx v0.5.3 h1:jmXUvGomnU1o3W/V5h2VEradbpJDwGrzugQQvL0POH4=
 github.com/stretchr/objx v0.5.3/go.mod h1:rDQraq+vQZU7Fde9LOZLr8Tax6zZvy4kuNKF+QYS+U0=
 github.com/stretchr/testify v1.12.1 h1:EuwCh5fleGS7H32xRwO3wRGT7DxrDhLAT6FF8MpWDWE=

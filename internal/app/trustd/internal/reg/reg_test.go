@@ -14,7 +14,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/crypto/x509"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -31,7 +30,7 @@ func TestCertificate(t *testing.T) {
 	ctx, cancel := context.WithCancel(t.Context())
 	defer cancel()
 
-	resources := state.WrapCore(namespaced.NewState(inmem.Build))
+	resources := state.WrapCore(inmem.NewState())
 
 	ca, err := gensecrets.NewTalosCA(time.Now())
 	require.NoError(t, err)

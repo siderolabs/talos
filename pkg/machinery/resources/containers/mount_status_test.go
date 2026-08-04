@@ -9,7 +9,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -222,7 +221,7 @@ func TestGetResolvedMounts(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			t.Parallel()
 
-			resources := state.WrapCore(namespaced.NewState(inmem.Build))
+			resources := state.WrapCore(inmem.NewState())
 
 			if test.create {
 				status := containers.NewContainerMountStatus(containers.NamespaceName, containerID)

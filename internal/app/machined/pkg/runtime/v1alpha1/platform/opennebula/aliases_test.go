@@ -10,7 +10,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -34,7 +33,7 @@ func TestParseAliases(t *testing.T) {
 	t.Parallel()
 
 	o := &opennebula.OpenNebula{}
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	alias0IPv4 := network.AddressSpecSpec{
 		Address:     netip.MustParsePrefix("192.168.1.100/24"),
@@ -281,7 +280,7 @@ func TestParseErrors(t *testing.T) {
 	t.Parallel()
 
 	o := &opennebula.OpenNebula{}
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	t.Run("malformed alias IPv4 returns descriptive error", func(t *testing.T) {
 		t.Parallel()

@@ -10,7 +10,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v4"
@@ -32,7 +31,7 @@ var expectedNetworkConfigNoNetworkFlag string
 
 func TestParseMetadata(t *testing.T) {
 	o := &opennebula.OpenNebula{}
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	networkConfig, err := o.ParseMetadata(st, oneContextPlain)
 	require.NoError(t, err)
@@ -49,7 +48,7 @@ func TestParseMetadata(t *testing.T) {
 // server-side OpenNebula directive and should not gate guest-side processing.
 func TestParseMetadataNoNetworkFlag(t *testing.T) {
 	o := &opennebula.OpenNebula{}
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	networkConfig, err := o.ParseMetadata(st, oneContextPlainNoNetworkFlag)
 	require.NoError(t, err)

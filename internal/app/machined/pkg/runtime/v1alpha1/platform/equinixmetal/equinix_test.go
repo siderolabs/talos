@@ -12,7 +12,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.yaml.in/yaml/v4"
@@ -43,7 +42,7 @@ func TestParseMetadata(t *testing.T) {
 
 	ctx := t.Context()
 
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	eth1 := network.NewLinkStatus(network.NamespaceName, "eth1")
 	eth1.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0x68, 0x05, 0xca, 0xb8, 0xf1, 0xf8}
@@ -71,7 +70,7 @@ func TestParseMetadata2Bonds(t *testing.T) {
 
 	ctx := t.Context()
 
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	eth0 := network.NewLinkStatus(network.NamespaceName, "eth0")
 	eth0.TypedSpec().PermanentAddr = nethelpers.HardwareAddr{0xe4, 0x43, 0x4b, 0xd0, 0x7b, 0x50}
