@@ -1,3 +1,72 @@
+## [Talos 1.12.11](https://github.com/siderolabs/talos/releases/tag/v1.12.11) (2026-08-05)
+
+Welcome to the v1.12.11 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.18.42
+
+Talos is built with Go 1.25.12.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Mateusz Urbanek
+* Noel Georgi
+
+### Changes
+<details><summary>11 commits</summary>
+<p>
+
+* [`b2a8cda18`](https://github.com/siderolabs/talos/commit/b2a8cda18f494caf8fb40f2fca028247f0989af1) fix: update diff library to v1.0.1
+* [`2c5aa00c8`](https://github.com/siderolabs/talos/commit/2c5aa00c8849d95c543460c4284de048fc155a22) fix: panics in diff algorithms
+* [`56ec4c050`](https://github.com/siderolabs/talos/commit/56ec4c050a83dcae0d77cfe16431684af191cca1) chore: update go dependencies
+* [`07a7bc334`](https://github.com/siderolabs/talos/commit/07a7bc334e3801b01bd9b03c3610307371154e29) fix: use context without cancelation for etcd locks
+* [`d0b50aa76`](https://github.com/siderolabs/talos/commit/d0b50aa7622be979fbfe85fbee6b9d9e27a19054) fix: redact resource specs in the merge controllers
+* [`1c6d69c01`](https://github.com/siderolabs/talos/commit/1c6d69c0185756cff388b550fd671f17f6b02646) fix: race with PCR extensions and volume unlock
+* [`7acd4d632`](https://github.com/siderolabs/talos/commit/7acd4d632493cf8055ef11dac60b7fc21c203a42) fix: volume mount race (third attempt) around service restart
+* [`9a90e9878`](https://github.com/siderolabs/talos/commit/9a90e9878227aa5db1387a3f3d43cfc6ad9bb91e) fix: preserve trailing rate-limited trigger events
+* [`5bb874987`](https://github.com/siderolabs/talos/commit/5bb87498792e0cf7c564e0359f79ce08a3857c77) fix: add ca-certificates to talosctl
+* [`636c61ff6`](https://github.com/siderolabs/talos/commit/636c61ff66ea744cb2c4db59d4dc06d81c8a4cb2) fix: oom podruntime protection
+* [`b8ab06f42`](https://github.com/siderolabs/talos/commit/b8ab06f429eda4c0a74ec03a3391f920c516031a) chore: update kernel to 6.18.42
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>6 commits</summary>
+<p>
+
+* [`f921142`](https://github.com/siderolabs/pkgs/commit/f921142408daaa99034aee9c9e5070274a6cc329) fix: patch nvidia support pci_resize_resource exclude_bars argument
+* [`c80e83f`](https://github.com/siderolabs/pkgs/commit/c80e83f29469cf4858911f9876fc1fff7b27d8a2) chore: replace gnu mirror
+* [`45e036d`](https://github.com/siderolabs/pkgs/commit/45e036d15c2bb75991a303b832b74302f6cd4b04) chore: update kernel
+* [`fbd81c3`](https://github.com/siderolabs/pkgs/commit/fbd81c3eca242a6464d2ac323cd3cebe3749ed6a) feat: bump kernel to 6.18.41
+* [`cf0d226`](https://github.com/siderolabs/pkgs/commit/cf0d226a82fb539e56ea1cf7659a39132249a274) feat: bump kernel to 6.18.40
+* [`1a9c50a`](https://github.com/siderolabs/pkgs/commit/1a9c50a76825c96bcf90b80dbb4fc35082cf80d2) feat: update Linux to 6.18.39
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/google/cel-go**       v0.26.1 -> v0.29.0
+* **github.com/gopacket/gopacket**   v1.5.0 -> v1.6.1
+* **github.com/klauspost/compress**  v1.18.5 -> v1.18.7
+* **github.com/siderolabs/pkgs**     v1.12.0-97-g4f4aef1 -> v1.12.0-103-gf921142
+* **golang.org/x/net**               v0.56.0 -> v0.57.0
+* **golang.org/x/oauth2**            v0.34.0 -> v0.36.0
+* **golang.org/x/sync**              v0.21.0 -> v0.22.0
+* **golang.org/x/sys**               v0.46.0 -> v0.47.0
+* **golang.org/x/term**              v0.44.0 -> v0.45.0
+* **golang.org/x/text**              v0.38.0 -> v0.40.0
+* **google.golang.org/grpc**         v1.79.3 -> v1.82.1
+
+Previous release can be found at [v1.12.10](https://github.com/siderolabs/talos/releases/tag/v1.12.10)
+
 ## [Talos 1.12.10](https://github.com/siderolabs/talos/releases/tag/v1.12.10) (2026-07-16)
 
 Welcome to the v1.12.10 release of Talos!
