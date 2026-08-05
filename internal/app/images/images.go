@@ -17,6 +17,8 @@ import (
 	"github.com/containerd/platforms"
 	"github.com/distribution/reference"
 	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"go.uber.org/zap/zapio"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -94,6 +96,9 @@ func (svc *Service) Pull(req *machine.ImageServicePullRequest, srv grpc.ServerSt
 	//nolint:errcheck
 	defer client.Close()
 
+	logWriter := &zapio.Writer{Log: svc.logger, Level: zapcore.DebugLevel}
+	defer logWriter.Close() //nolint:errcheck
+
 	img, err := image.Pull(
 		ctx,
 		cri.RegistryBuilder(svc.controller.Runtime().State().V1Alpha2().Resources()),
@@ -101,7 +106,7 @@ func (svc *Service) Pull(req *machine.ImageServicePullRequest, srv grpc.ServerSt
 		client,
 		req.GetImageRef(),
 		image.WithSkipIfAlreadyPulled(),
-		image.WithMaxNotFoundRetries(0), // return an error immediately if the image is not found
+		image.WithLogWriter(logWriter),
 		image.WithProgressReporter(image.NewSimpleProgressReporter(func(lpp progress.LayerPullProgress) {
 			srv.Send(&machine.ImageServicePullResponse{ //nolint:errcheck
 				Response: &machine.ImageServicePullResponse_PullProgress{

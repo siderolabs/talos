@@ -85,7 +85,7 @@ func RunInstallerContainer(
 	if img == nil || err != nil && errdefs.IsNotFound(err) {
 		log.Printf("pulling %q", ref)
 
-		img, err = image.Pull(ctx, registryBuilder, resources, client, ref, image.WithProgressReporter(console.NewProgressReporter))
+		img, err = image.PullWithRetriesAndTimeout(ctx, registryBuilder, resources, client, ref, image.WithProgressReporter(console.NewProgressReporter))
 	}
 
 	if err != nil {

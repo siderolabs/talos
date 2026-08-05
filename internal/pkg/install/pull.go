@@ -39,7 +39,7 @@ func PullAndValidateInstallerImage(ctx context.Context, resources state.State, r
 
 	defer client.Close() //nolint:errcheck
 
-	img, err := image.Pull(
+	img, err := image.PullWithRetriesAndTimeout(
 		containerdctx, registryBuilder, resources, client, ref,
 		image.WithSkipIfAlreadyPulled(),
 		image.WithProgressReporter(console.NewProgressReporter),
