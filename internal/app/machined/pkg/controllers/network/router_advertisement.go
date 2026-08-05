@@ -34,7 +34,17 @@ var allNodesMulticast = netip.MustParseAddr("ff02::1")
 // It also enables net.ipv6.conf.<iface>.accept_ra=2 on those links (accept RAs while forwarding)
 // so this node learns the neighbor's link-local in return.
 type RouterAdvertisementController struct {
-	senders map[string]context.CancelFunc
+	senders map[string]raSender
+}
+
+type raSender struct {
+	cancel context.CancelFunc
+	done   chan struct{}
+}
+
+func (sender raSender) stop() {
+	sender.cancel()
+	<-sender.done
 }
 
 // Name implements controller.Controller interface.
@@ -70,7 +80,7 @@ func (ctrl *RouterAdvertisementController) Outputs() []controller.Output {
 
 // Run implements controller.Controller interface.
 func (ctrl *RouterAdvertisementController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
-	ctrl.senders = map[string]context.CancelFunc{}
+	ctrl.senders = map[string]raSender{}
 
 	defer ctrl.stopAll()
 
@@ -90,11 +100,15 @@ func (ctrl *RouterAdvertisementController) Run(ctx context.Context, r controller
 }
 
 func (ctrl *RouterAdvertisementController) stopAll() {
-	for _, cancel := range ctrl.senders {
-		cancel()
+	for _, sender := range ctrl.senders {
+		sender.cancel()
 	}
 
-	ctrl.senders = map[string]context.CancelFunc{}
+	for _, sender := range ctrl.senders {
+		<-sender.done
+	}
+
+	ctrl.senders = map[string]raSender{}
 }
 
 //nolint:gocyclo
@@ -128,9 +142,9 @@ func (ctrl *RouterAdvertisementController) reconcile(ctx context.Context, r cont
 	}
 
 	// reconcile RA-sender goroutines: start for new interfaces, stop for removed ones.
-	for iface, cancel := range ctrl.senders {
+	for iface, sender := range ctrl.senders {
 		if _, ok := interfaces[iface]; !ok {
-			cancel()
+			sender.stop()
 			delete(ctrl.senders, iface)
 		}
 	}
@@ -141,9 +155,18 @@ func (ctrl *RouterAdvertisementController) reconcile(ctx context.Context, r cont
 		}
 
 		senderCtx, cancel := context.WithCancel(ctx)
-		ctrl.senders[iface] = cancel
+		sender := raSender{
+			cancel: cancel,
+			done:   make(chan struct{}),
+		}
 
-		go ctrl.runSender(senderCtx, iface, logger)
+		ctrl.senders[iface] = sender
+
+		go func() {
+			defer close(sender.done)
+
+			ctrl.runSender(senderCtx, iface, logger)
+		}()
 	}
 
 	// enable accept_ra=2 on each unnumbered interface so we learn the neighbor's link-local.
