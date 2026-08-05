@@ -34,6 +34,10 @@ func (suite *IPTablesSuite) SetupTest() {
 	if !suite.Capabilities().RunsTalosKernel {
 		suite.T().Skip("skipping kernel test since Talos kernel is not running")
 	}
+
+	if suite.SelinuxEnforcing {
+		suite.T().Skip("skipping in SELinux enforcing mode: host namespace debug mode doesn't function")
+	}
 }
 
 // TearDownTest ...
