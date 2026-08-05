@@ -838,8 +838,8 @@ github.com/siderolabs/go-smbios v0.3.4 h1:3HvW8lf+kw+HnC67XzdCH8WhkDeX+K9W4VmV54
 github.com/siderolabs/go-smbios v0.3.4/go.mod h1:lNA6mNOsqhDQcE7HnAtATOa8F9CU8Q69M5wyNUSU0Co=
 github.com/siderolabs/go-tail v0.1.1 h1:3XeJgd97OHyFAIE7nQEMcRhOfnv7DvXbu0BRKbtT6u8=
 github.com/siderolabs/go-tail v0.1.1/go.mod h1:IihAL39acadXHfb5fEAOKK2DaDFIrG2+VD3b2H/ziZ0=
-github.com/siderolabs/go-talos-support v0.3.0 h1:8+JErCZAc2jRTtSJKkW1xFJxetX/b5m/YesMgVnz2v4=
-github.com/siderolabs/go-talos-support v0.3.0/go.mod h1:IB9sOkhUgjGJFuuBs+TZVdjgG01ly8/Ku9SOshINvSU=
+github.com/siderolabs/go-talos-support v0.3.1 h1:2cIct5nxGby8B7NNALO5WL3WbCe9S1se/3/nT0H/x7Q=
+github.com/siderolabs/go-talos-support v0.3.1/go.mod h1:3fljgD3YQGB2+nJfWLLt482/C8epdqge70fWH+VtuiU=
 github.com/siderolabs/grpc-proxy v0.5.2 h1:o34tS02IxbX3qeXe0MM99zE2XhfWHuvdBtSWWRD9HNI=
 github.com/siderolabs/grpc-proxy v0.5.2/go.mod h1:ygf+gqFxWdymAXuP4qMHTa+j6SvasdcFg3XkhpvUvDw=
 github.com/siderolabs/kms-client v0.2.0 h1:8RniCStUI75RTZO8qkhHOSVOnEU1AvvsKqJ7FqW/8NA=
@@ -1338,8 +1338,8 @@ google.golang.org/grpc v1.23.0/go.mod h1:Y5yQAOtifL1yxbo5wqy6BxZv8vAUGQwXBOALyac
 google.golang.org/grpc v1.25.1/go.mod h1:c3i+UQWmh7LiEpx4sFZnkU36qjEYZ0imhYfXVyQciAY=
 google.golang.org/grpc v1.27.0/go.mod h1:qbnxyOmOxrQa7FizSgH+ReBfzJrCY1pSN7KXBS8abTk=
 google.golang.org/grpc v1.33.2/go.mod h1:JMHMWHQWaTccqQQlmk3MJZS+GWXOdAesneDmEnv2fbc=
-google.golang.org/grpc v1.82.1 h1:NnAxzGRA0677vCa4BUkOAnO5+FfQqVl9iUXeD0IqcGE=
-google.golang.org/grpc v1.82.1/go.mod h1:yzTZ1TB1Z3SG+LIYaI+WiE8D5+PZ3ArnrSp8zF3+/ZA=
+google.golang.org/grpc v1.83.0 h1:JeNZEKJFbQxArAMl+hiytHauacDNqJUllNfmIMmpqnQ=
+google.golang.org/grpc v1.83.0/go.mod h1:kDyl6SKsiHKt0uylY5gtn5cEjkrIOhQOGDgIc4JGwzQ=
 google.golang.org/protobuf v0.0.0-20200109180630-ec00e32a8dfd/go.mod h1:DFci5gLYBciE7Vtevhsrf46CRTquxDuWsQurQQe4oz8=
 google.golang.org/protobuf v0.0.0-20200221191635-4d8936d0db64/go.mod h1:kwYJMbMJ01Woi6D6+Kah6886xMZcty6N08ah7+eCXa0=
 google.golang.org/protobuf v0.0.0-20200228230310-ab0ca4ff8a60/go.mod h1:cfTl7dwQJ+fmap5saPgwCLgHXTUD7jkjRqWcaiX5VyM=
