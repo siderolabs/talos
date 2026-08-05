@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/state"
-	"github.com/siderolabs/go-debug"
 	"github.com/siderolabs/grpc-proxy/proxy"
 	"golang.org/x/sync/errgroup"
 	"google.golang.org/grpc"
@@ -117,15 +116,12 @@ func runService(ctx context.Context, resources state.State, config *runtime.APIS
 
 	networkServer := func() *grpc.Server {
 		injector := &authz.Injector{
-			Mode: authz.Enabled,
+			Mode:    authz.Enabled,
+			Verbose: true,
 		}
 
 		if config.TypedSpec().ReadonlyRoleMode {
 			injector.Mode = authz.ReadOnlyWithAdminOnSiderolink
-		}
-
-		if debug.Enabled {
-			injector.Logger = log.New(log.Writer(), "apid/authz/injector/http ", log.Flags()).Printf
 		}
 
 		return factory.NewServer(

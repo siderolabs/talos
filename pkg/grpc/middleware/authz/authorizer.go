@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	grpclog "github.com/siderolabs/talos/pkg/grpc/middleware/log"
 	"github.com/siderolabs/talos/pkg/machinery/role"
 )
 
@@ -25,15 +26,6 @@ type Authorizer struct {
 
 	// Defines roles for gRPC methods not present in Rules.
 	FallbackRoles role.Set
-
-	// Logger.
-	Logger func(format string, v ...any)
-}
-
-func (a *Authorizer) logf(format string, v ...any) {
-	if a.Logger != nil {
-		a.Logger(format, v...)
-	}
 }
 
 // authorize returns error if the user is not authorized (doesn't have a valid role) to call the given gRPC method.
@@ -41,18 +33,19 @@ func (a *Authorizer) logf(format string, v ...any) {
 func (a *Authorizer) authorize(ctx context.Context, method string) error {
 	allowedRoles, found := a.Rules[method]
 	if !found {
-		a.logf("no explicit rule found for %q, falling back to %v", method, a.FallbackRoles.Strings())
+		grpclog.Annotatef(ctx, "no explicit rule found, falling back to %v", a.FallbackRoles.Strings())
+
 		allowedRoles = a.FallbackRoles
 	}
 
 	clientRoles := GetRoles(ctx)
 	if allowedRoles.IncludesAny(clientRoles) {
-		a.logf("authorized (%v includes %v)", allowedRoles.Strings(), clientRoles.Strings())
+		grpclog.Annotatef(ctx, "authorized (%v includes %v)", allowedRoles.Strings(), clientRoles.Strings())
 
 		return nil
 	}
 
-	a.logf("not authorized (%v doesn't include %v)", allowedRoles.Strings(), clientRoles.Strings())
+	grpclog.Annotatef(ctx, "not authorized (%v doesn't include %v)", allowedRoles.Strings(), clientRoles.Strings())
 
 	return ErrNotAuthorized
 }

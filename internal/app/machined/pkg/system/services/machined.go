@@ -7,7 +7,6 @@ package services
 import (
 	"context"
 	"io"
-	"log"
 	"net"
 	"os"
 	"path/filepath"
@@ -160,17 +159,13 @@ type machinedService struct {
 // Main is an entrypoint to the API service.
 func (s *machinedService) Main(ctx context.Context, _ runtime.Runtime, logWriter io.Writer) error {
 	injector := &authz.Injector{
-		Mode: authz.MetadataOnly,
-	}
-
-	if debug.Enabled {
-		injector.Logger = log.New(logWriter, "machined/authz/injector ", log.Flags()).Printf
+		Mode:    authz.MetadataOnly,
+		Verbose: debug.Enabled,
 	}
 
 	authorizer := &authz.Authorizer{
 		Rules:         rules,
 		FallbackRoles: role.MakeSet(role.Admin),
-		Logger:        log.New(logWriter, "machined/authz/authorizer ", log.Flags()).Printf,
 	}
 
 	// machined's own identity, used to recognize the kernel static usermode helper
@@ -226,7 +221,6 @@ func (s *machinedService) Main(ctx context.Context, _ runtime.Runtime, logWriter
 				AllowNamespaceMatch: true,
 			},
 		},
-		Logger: log.New(logWriter, "machined/authz/unix/authorizer ", log.Flags()).Printf,
 	}
 
 	logger := logging.ZapLogger(

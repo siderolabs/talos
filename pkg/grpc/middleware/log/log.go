@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware/v2"
 	"github.com/siderolabs/gen/maps"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
@@ -64,6 +65,8 @@ func (m *Middleware) UnaryInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req any, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (any, error) {
 		startTime := time.Now()
 
+		ctx, annotations := withAnnotations(ctx)
+
 		resp, err := handler(ctx, req)
 
 		duration := time.Since(startTime)
@@ -74,7 +77,7 @@ func (m *Middleware) UnaryInterceptor() grpc.UnaryServerInterceptor {
 			msg = err.Error()
 		}
 
-		m.logger.Printf("%s [%s] %s unary %s (%s)", code, info.FullMethod, duration, msg, ExtractMetadata(ctx))
+		m.logger.Printf("%s [%s] %s unary %s%s (%s)", code, info.FullMethod, duration, msg, annotations, ExtractMetadata(ctx))
 
 		return resp, err
 	}
@@ -85,7 +88,12 @@ func (m *Middleware) StreamInterceptor() grpc.StreamServerInterceptor {
 	return func(srv any, stream grpc.ServerStream, info *grpc.StreamServerInfo, handler grpc.StreamHandler) error {
 		startTime := time.Now()
 
-		err := handler(srv, stream)
+		ctx, annotations := withAnnotations(stream.Context())
+
+		wrapped := grpc_middleware.WrapServerStream(stream)
+		wrapped.WrappedContext = ctx
+
+		err := handler(srv, wrapped)
 
 		duration := time.Since(startTime)
 		code := status.Code(err)
@@ -95,7 +103,7 @@ func (m *Middleware) StreamInterceptor() grpc.StreamServerInterceptor {
 			msg = err.Error()
 		}
 
-		m.logger.Printf("%s [%s] %s stream %s (%s)", code, info.FullMethod, duration, msg, ExtractMetadata(stream.Context()))
+		m.logger.Printf("%s [%s] %s stream %s%s (%s)", code, info.FullMethod, duration, msg, annotations, ExtractMetadata(ctx))
 
 		return err
 	}

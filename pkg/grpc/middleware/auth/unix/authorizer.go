@@ -18,6 +18,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/siderolabs/talos/pkg/grpc/middleware/authz"
+	grpclog "github.com/siderolabs/talos/pkg/grpc/middleware/log"
 	"github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/role"
 )
@@ -62,15 +63,6 @@ type Authorizer struct {
 
 	// UsermodeHelperRoles is the role set granted to a recognized usermode helper.
 	UsermodeHelperRoles role.Set
-
-	// Logger.
-	Logger func(format string, v ...any)
-}
-
-func (a *Authorizer) logf(format string, v ...any) {
-	if a.Logger != nil {
-		a.Logger(format, v...)
-	}
 }
 
 func (a *Authorizer) matchService(servicePID *runtime.ServicePID, pid int32, mountNamespace string) (role.Set, bool) {
@@ -109,7 +101,7 @@ func (a *Authorizer) matchUsermodeHelper(creds PeerCredentials) bool {
 func (a *Authorizer) Authorize(ctx context.Context) (role.Set, error) {
 	peerCreds, ok := GetPeerCredentials(ctx)
 	if !ok {
-		a.logf("no peer credentials found in context")
+		grpclog.Annotatef(ctx, "no peer credentials found in context")
 
 		return role.Set{}, ErrNotAuthorized
 	}
@@ -130,7 +122,7 @@ func (a *Authorizer) Authorize(ctx context.Context) (role.Set, error) {
 	for servicePID := range servicePIDs.All() {
 		allowedRoles, matched := a.matchService(servicePID, pid, mountNamespace)
 		if matched {
-			a.logf("authorized based on PID (%d) match with service %q (allowed roles %s)", pid, servicePID.Metadata().ID(), allowedRoles.Strings())
+			grpclog.Annotatef(ctx, "authorized based on PID (%d) match with service %q (allowed roles %s)", pid, servicePID.Metadata().ID(), allowedRoles.Strings())
 
 			return allowedRoles, nil
 		}
@@ -140,7 +132,7 @@ func (a *Authorizer) Authorize(ctx context.Context) (role.Set, error) {
 	// this same binary in this same mount namespace, but has an ephemeral PID that never appears as
 	// a service PID, so it would otherwise fall through to the watch below and time out.
 	if a.matchUsermodeHelper(peerCreds) {
-		a.logf("authorized usermode helper (PID %d) with roles %s", pid, a.UsermodeHelperRoles.Strings())
+		grpclog.Annotatef(ctx, "authorized usermode helper (PID %d) with roles %s", pid, a.UsermodeHelperRoles.Strings())
 
 		return a.UsermodeHelperRoles, nil
 	}
@@ -155,7 +147,7 @@ func (a *Authorizer) Authorize(ctx context.Context) (role.Set, error) {
 	for {
 		select {
 		case <-ctx.Done():
-			a.logf("timed out waiting for runner state to be populated with PID (%d)", pid)
+			grpclog.Annotatef(ctx, "timed out waiting for runner state to be populated with PID (%d)", pid)
 
 			return role.Set{}, ErrNotAuthorized
 		case wrappedEvent := <-eventCh:
@@ -168,7 +160,7 @@ func (a *Authorizer) Authorize(ctx context.Context) (role.Set, error) {
 
 				allowedRoles, matched := a.matchService(servicePID, pid, mountNamespace)
 				if matched {
-					a.logf("authorized based on PID (%d) match with service %q (allowed roles %s)", pid, servicePID.Metadata().ID(), allowedRoles.Strings())
+					grpclog.Annotatef(ctx, "authorized based on PID (%d) match with service %q (allowed roles %s)", pid, servicePID.Metadata().ID(), allowedRoles.Strings())
 
 					return allowedRoles, nil
 				}
