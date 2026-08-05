@@ -106,9 +106,7 @@ func (t *Trustd) PreFunc(ctx context.Context, r runtime.Runtime) error {
 		return err
 	}
 
-	t.runtimeServer = grpc.NewServer(
-		grpc.SharedWriteBuffer(true),
-	)
+	t.runtimeServer = grpc.NewServer()
 	v1alpha1.RegisterStateServer(t.runtimeServer, server.NewState(resources))
 
 	go t.runtimeServer.Serve(listener) //nolint:errcheck

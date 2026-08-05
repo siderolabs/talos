@@ -145,7 +145,6 @@ func (h *KMSKeyHandler) getConn() (*grpc.ClientConn, error) {
 	return grpc.NewClient(
 		endpoint.Host,
 		grpc.WithTransportCredentials(transportCredentials),
-		grpc.WithSharedWriteBuffer(true),
 		grpc.WithContextDialer(dialer.DynamicProxyDialerWithTLSConfig(httpdefaults.RootCAsTLSConfig)),
 	)
 }

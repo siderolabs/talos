@@ -65,7 +65,6 @@ func (l *Local) GetConnection(ctx context.Context, _ string) (context.Context, *
 			grpc.MaxCallRecvMsgSize(constants.GRPCMaxMessageSize),
 			grpc.ForceCodecV2(proxy.Codec()),
 		),
-		grpc.WithSharedWriteBuffer(true),
 		grpc.WithNoProxy(),
 	)
 
