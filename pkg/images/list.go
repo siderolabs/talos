@@ -35,17 +35,34 @@ type Versions struct {
 // The integration test verifies that our constant is accurate.
 const DefaultSandboxImage = "registry.k8s.io/pause:3.10.2"
 
+// Flannel returns the Flannel image built into Talos, mirrored from docker.io/flannel/flannel.
+//
+// It is not configurable, so it never depends on the machine configuration.
+func Flannel() name.Tag {
+	return mustParseTag(fmt.Sprintf("ghcr.io/siderolabs/flannel:%s", constants.FlannelVersion))
+}
+
+// KubeNetworkPolicies returns the kube-network-policies image built into Talos.
+//
+// It is not configurable, so it never depends on the machine configuration.
+func KubeNetworkPolicies() name.Tag {
+	return mustParseTag(fmt.Sprintf("registry.k8s.io/networking/kube-network-policies:%s", constants.KubeNetworkPoliciesVersion))
+}
+
 // List returns default image versions.
+//
+// It panics on any image which is empty in the config, so it should only be used with
+// a config which is known to have all images set (e.g. a synthetic one built in talosctl).
 func List(config config.Config) Versions {
 	var images Versions
 
 	images.Etcd = mustParseTag(config.Cluster().Etcd().Image())
 	images.CoreDNS = mustParseTag(config.K8sCoreDNSConfig().Image())
-	images.Flannel = mustParseTag(fmt.Sprintf("ghcr.io/siderolabs/flannel:%s", constants.FlannelVersion)) // mirrored from docker.io/flannel/flannel
+	images.Flannel = Flannel()
 	images.Kubelet = mustParseTag(config.K8sKubeletConfig().Image())
 	images.KubeAPIServer = mustParseTag(config.K8sAPIServerConfig().Image())
 	images.KubeControllerManager = mustParseTag(config.K8sControllerManagerConfig().Image())
-	images.KubeNetworkPolicies = mustParseTag(fmt.Sprintf("registry.k8s.io/networking/kube-network-policies:%s", constants.KubeNetworkPoliciesVersion))
+	images.KubeNetworkPolicies = KubeNetworkPolicies()
 	images.KubeProxy = mustParseTag(config.K8sProxyConfig().Image())
 	images.KubeScheduler = mustParseTag(config.K8sSchedulerConfig().Image())
 

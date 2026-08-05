@@ -413,8 +413,6 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 					}
 				}
 
-				images := images.List(cfgProvider)
-
 				var (
 					server                                         string
 					flannelKubeServiceHost, flannelKubeServicePort string
@@ -457,7 +455,7 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 
 				if k8sFlannelCNIConfig := cfgProvider.K8sFlannelCNIConfig(); k8sFlannelCNIConfig != nil {
 					res.TypedSpec().FlannelEnabled = true
-					res.TypedSpec().FlannelImage = images.Flannel.String()
+					res.TypedSpec().FlannelImage = images.Flannel().String()
 					res.TypedSpec().FlannelBackendType = k8sFlannelCNIConfig.BackendType()
 					res.TypedSpec().FlannelBackendPort = k8sFlannelCNIConfig.BackendPort().ValueOrZero()
 
@@ -477,7 +475,7 @@ func NewControlPlaneBootstrapManifestsController() *ControlPlaneBootstrapManifes
 					res.TypedSpec().FlannelKubeServiceHost = flannelKubeServiceHost
 					res.TypedSpec().FlannelKubeServicePort = flannelKubeServicePort
 					res.TypedSpec().FlannelKubeNetworkPoliciesEnabled = k8sFlannelCNIConfig.KubeNetworkPoliciesEnabled()
-					res.TypedSpec().FlannelKubeNetworkPoliciesImage = images.KubeNetworkPolicies.String()
+					res.TypedSpec().FlannelKubeNetworkPoliciesImage = images.KubeNetworkPolicies().String()
 					res.TypedSpec().CNIName = constants.FlannelCNI
 				} else {
 					res.TypedSpec().FlannelEnabled = false

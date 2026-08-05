@@ -896,6 +896,62 @@ func (suite *K8sControlPlaneSuite) TestReconcileKubeProxyMode() {
 	)
 }
 
+// TestReconcileKubeProxyDisabled verifies that a KubeProxyConfig document with kube-proxy disabled
+// (and, as validation allows in that case, no image set) is handled without a panic.
+func (suite *K8sControlPlaneSuite) TestReconcileKubeProxyDisabled() {
+	u, err := url.Parse("https://foo:6443")
+	suite.Require().NoError(err)
+
+	clusterCfg := k8scfg.NewKubeClusterConfigV1Alpha1()
+	clusterCfg.ClusterNameConfig = "test"
+	clusterCfg.ClusterEndpointConfig = meta.URL{URL: u}
+
+	networkCfg := k8scfg.NewKubeNetworkConfigV1Alpha1()
+	networkCfg.NetworkPodSubnets = []meta.Prefix{
+		{Prefix: netip.MustParsePrefix(constants.DefaultIPv4PodCIDR)},
+	}
+	networkCfg.NetworkServiceSubnets = []meta.Prefix{
+		{Prefix: netip.MustParsePrefix(constants.DefaultIPv4ServiceCIDR)},
+	}
+
+	// kube-proxy is disabled, so no image is set: this is a valid config,
+	// see TestKubeProxyConfigValidate/disabled
+	proxyCfg := k8scfg.NewKubeProxyConfigV1Alpha1()
+	proxyCfg.ProxyEnabled = new(false)
+
+	ctr, err := container.New(
+		&v1alpha1.Config{
+			ConfigVersion: "v1alpha1",
+			MachineConfig: &v1alpha1.MachineConfig{
+				MachineType: "controlplane",
+			},
+			ClusterConfig: &v1alpha1.ClusterConfig{},
+		},
+		clusterCfg,
+		networkCfg,
+		proxyCfg,
+		k8scfg.NewKubeFlannelCNIConfigV1Alpha1(),
+	)
+	suite.Require().NoError(err)
+
+	suite.setupMachine(config.NewMachineConfig(ctr))
+
+	rtestutils.AssertResources(
+		suite.Ctx(), suite.T(), suite.State(), []resource.ID{k8s.BootstrapManifestsConfigID},
+		func(cfg *k8s.BootstrapManifestsConfig, assert *assert.Assertions) {
+			assert.False(cfg.TypedSpec().ProxyEnabled)
+			assert.Empty(cfg.TypedSpec().ProxyImage)
+
+			// non-configurable images are always rendered
+			assert.Equal("ghcr.io/siderolabs/flannel:"+constants.FlannelVersion, cfg.TypedSpec().FlannelImage)
+			assert.Equal(
+				"registry.k8s.io/networking/kube-network-policies:"+constants.KubeNetworkPoliciesVersion,
+				cfg.TypedSpec().FlannelKubeNetworkPoliciesImage,
+			)
+		},
+	)
+}
+
 func TestK8sControlPlaneSuite(t *testing.T) {
 	t.Parallel()
 
