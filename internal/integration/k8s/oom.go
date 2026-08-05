@@ -96,7 +96,7 @@ func (suite *OomSuite) TestOom() {
 
 	suite.Require().NoError(suite.WaitForDeploymentAvailable(ctx, time.Minute, "default", "stress-mem", 2))
 
-	// Figure out number of replicas, this is ballpark estimation of 15 replicas per 2GB of memory (per worker node)
+	// Figure out number of replicas, this is ballpark estimation of 30 replicas per 2GB of memory (per worker node)
 	numWorkers := len(suite.DiscoverNodeInternalIPsByType(ctx, machine.TypeWorker))
 	suite.Require().Greaterf(numWorkers, 0, "at least one worker node is required for the test")
 
@@ -104,7 +104,7 @@ func (suite *OomSuite) TestOom() {
 	suite.Require().NoError(err)
 
 	memoryBytes := memInfo.GetMessages()[0].GetMeminfo().GetMemtotal() * 1024
-	numReplicas := int((memoryBytes/1024/1024+2048-1)/2048) * numWorkers * 25
+	numReplicas := int((memoryBytes/1024/1024+2048-1)/2048) * numWorkers * 30
 
 	suite.T().Logf("detected memory: %s, workers %d => scaling to %d replicas",
 		humanize.IBytes(memoryBytes), numWorkers, numReplicas)
