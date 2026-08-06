@@ -13,6 +13,7 @@ import (
 	"github.com/containerd/containerd/v2/pkg/oci"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
@@ -67,20 +68,31 @@ func (suite *CRIBaseRuntimeSpecSuite) TestOverrides() {
 			},
 		},
 	})
-	ctest.AssertResource(suite, constants.CRIBaseRuntimeSpec, func(etcFile *files.EtcFileSpec, asrt *assert.Assertions) {
-		contents := etcFile.TypedSpec().Contents
+	suite.AssertWithin(5*time.Second, 10*time.Millisecond, ctest.WrapRetry(func(asrt *assert.Assertions, _ *require.Assertions) {
+		etcFile, err := ctest.Get[*files.EtcFileSpec](
+			suite,
+			files.NewEtcFileSpec(files.NamespaceName, constants.CRIBaseRuntimeSpec).Metadata(),
+		)
+		if !asrt.NoError(err) {
+			return
+		}
 
 		var ociSpec oci.Spec
 
-		asrt.NoError(json.Unmarshal(contents, &ociSpec))
+		if !asrt.NoError(json.Unmarshal(etcFile.TypedSpec().Contents, &ociSpec)) {
+			return
+		}
 
-		asrt.Len(ociSpec.Process.Rlimits, 1)
+		if !asrt.Len(ociSpec.Process.Rlimits, 1) {
+			return
+		}
+
 		asrt.Equal("RLIMIT_NOFILE", ociSpec.Process.Rlimits[0].Type)
 		asrt.Equal(uint64(1024), ociSpec.Process.Rlimits[0].Hard)
 		asrt.Equal(uint64(1024), ociSpec.Process.Rlimits[0].Soft)
 		asrt.Equal("/default", ociSpec.Process.Cwd)
 		asrt.True(ociSpec.Process.NoNewPrivileges)
-	})
+	}))
 }
 
 func (suite *CRIBaseRuntimeSpecSuite) createRuntimeSpecConfig(id resource.ID, spec map[string]any) {
