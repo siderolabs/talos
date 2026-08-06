@@ -7,6 +7,10 @@
 package cli
 
 import (
+	"bytes"
+	"strings"
+	"time"
+
 	"github.com/siderolabs/talos/internal/integration/base"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 )
@@ -21,9 +25,29 @@ func (suite *PcapSuite) SuiteName() string {
 	return "cli.PcapSuite"
 }
 
-// TestNodeTraffic verifies that packet capture can observe traffic on a stable interface.
-func (suite *PcapSuite) TestNodeTraffic() {
-	suite.RunCLI([]string{"pcap", "--interface", "eth0", "--nodes", suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane), "--duration", "2s"}) // default checks for stdout not empty
+// TestLoopback verifies that loopback traffic can be captured reliably.
+func (suite *PcapSuite) TestLoopback() {
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane)
+
+	cmd := suite.MakeCMDFn([]string{"pcap", "--interface", "lo", "--nodes", node, "--duration", "3s"})()
+
+	var stdout, stderr bytes.Buffer
+
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+
+	suite.Require().NoError(cmd.Start())
+
+	time.Sleep(250 * time.Millisecond)
+
+	for range 3 {
+		suite.RunCLI([]string{"read", "--nodes", node, "/proc/net/dev"})
+		time.Sleep(250 * time.Millisecond)
+	}
+
+	suite.Require().NoError(cmd.Wait(), "pcap failed, stdout: %q, stderr: %q", stdout.String(), stderr.String())
+	suite.Assert().NotEmpty(strings.TrimSpace(stdout.String()), "stdout should be not empty")
+	suite.Assert().Empty(stderr.String(), "stderr should be empty")
 }
 
 func init() {
