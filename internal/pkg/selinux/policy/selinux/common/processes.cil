@@ -143,6 +143,9 @@
 ; Mayastor
 (allow any_p hugetlbfs_t (fs_classes (rw)))
 
+; NFS and others, frequently used by CSI drivers
+(allow any_p network_fs_t (fs_classes (rw)))
+
 ; ceph-osd accesses io_uring
 (allow any_p self (anon_inode (map read write create)))
 
