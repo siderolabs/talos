@@ -425,6 +425,8 @@ func TestGetPromotableSystemVolumesTransformer(t *testing.T) {
 			assert.Equal(t, block.WaveSystemDisk, vc.TypedSpec().Provisioning.Wave)
 			assert.Equal(t, volumeID, vc.TypedSpec().Provisioning.PartitionSpec.Label)
 			assert.Equal(t, block.FilesystemTypeXFS, vc.TypedSpec().Provisioning.FilesystemSpec.Type)
+			assert.True(t, vc.TypedSpec().Mount.Secure)
+			assert.Equal(t, volumeID == constants.EtcdDataVolumeID || volumeID == constants.LogVolumeID, vc.TypedSpec().Mount.NoExec)
 
 			locator, err := vc.TypedSpec().Locator.Match.MarshalText()
 			require.NoError(t, err)
@@ -511,20 +513,23 @@ func TestGetPromotableSystemVolumesTransformer(t *testing.T) {
 		assertPromoted(t, resources, constants.LogVolumeID)
 	})
 
-	t.Run("promoted mount is secure by default", func(t *testing.T) {
-		t.Parallel()
+	for _, volumeID := range []string{constants.EtcdDataVolumeID, constants.LogVolumeID} {
+		t.Run("promoted "+volumeID+" is secure by default", func(t *testing.T) {
+			t.Parallel()
 
-		transformer := volumeconfig.GetPromotableSystemVolumesTransformer(false)
-		resources, err := transformer(promoteCfg(t, constants.LogVolumeID))
-		require.NoError(t, err)
-
-		testTransformFunc(t, findResource(t, resources, constants.LogVolumeID).TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
+			transformer := volumeconfig.GetPromotableSystemVolumesTransformer(false)
+			resources, err := transformer(promoteCfg(t, volumeID))
 			require.NoError(t, err)
 
-			assert.Equal(t, block.VolumeTypePartition, vc.TypedSpec().Type)
-			assert.True(t, vc.TypedSpec().Mount.Secure, "promoted volume is secure by default (like EPHEMERAL)")
+			testTransformFunc(t, findResource(t, resources, volumeID).TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
+				require.NoError(t, err)
+
+				assert.Equal(t, block.VolumeTypePartition, vc.TypedSpec().Type)
+				assert.True(t, vc.TypedSpec().Mount.Secure)
+				assert.True(t, vc.TypedSpec().Mount.NoExec)
+			})
 		})
-	})
+	}
 
 	t.Run("promoted mount honors mount.secure=false", func(t *testing.T) {
 		t.Parallel()
@@ -547,6 +552,7 @@ func TestGetPromotableSystemVolumesTransformer(t *testing.T) {
 
 			assert.Equal(t, block.VolumeTypePartition, vc.TypedSpec().Type)
 			assert.False(t, vc.TypedSpec().Mount.Secure, "promoted LOG should honor mount.secure=false")
+			assert.False(t, vc.TypedSpec().Mount.NoExec, "promoted LOG should honor mount.secure=false")
 		})
 	})
 
@@ -844,6 +850,7 @@ func TestEphemeralVolumeSecure(t *testing.T) {
 		testTransformFunc(t, resources[0].TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
 			require.NoError(t, err)
 			assert.False(t, vc.TypedSpec().Mount.Secure, "EPHEMERAL should not be secure without explicit configuration")
+			assert.False(t, vc.TypedSpec().Mount.NoExec, "EPHEMERAL should allow execution")
 		})
 	})
 
@@ -864,6 +871,7 @@ func TestEphemeralVolumeSecure(t *testing.T) {
 		testTransformFunc(t, resources[0].TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
 			require.NoError(t, err)
 			assert.True(t, vc.TypedSpec().Mount.Secure)
+			assert.False(t, vc.TypedSpec().Mount.NoExec, "EPHEMERAL should allow execution")
 		})
 	})
 
@@ -886,6 +894,7 @@ func TestEphemeralVolumeSecure(t *testing.T) {
 			testTransformFunc(t, resources[0].TransformFunc, func(t *testing.T, vc *block.VolumeConfig, err error) {
 				require.NoError(t, err)
 				assert.Equal(t, secure, vc.TypedSpec().Mount.Secure)
+				assert.False(t, vc.TypedSpec().Mount.NoExec, "EPHEMERAL should always allow execution")
 			})
 		})
 	}

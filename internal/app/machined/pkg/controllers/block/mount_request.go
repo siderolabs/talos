@@ -108,6 +108,7 @@ func (ctrl *MountRequestController) Run(ctx context.Context, r controller.Runtim
 					Detached:          volumeMountRequest.TypedSpec().Detached,
 					DisableAccessTime: volumeMountRequest.TypedSpec().DisableAccessTime,
 					Secure:            volumeMountRequest.TypedSpec().Secure,
+					NoExec:            volumeMountRequest.TypedSpec().NoExec,
 				}
 			}
 
@@ -123,6 +124,8 @@ func (ctrl *MountRequestController) Run(ctx context.Context, r controller.Runtim
 			desiredMountRequest.DisableAccessTime = desiredMountRequest.DisableAccessTime || volumeMountRequest.TypedSpec().DisableAccessTime
 			// secure if any requester wants it secure
 			desiredMountRequest.Secure = desiredMountRequest.Secure || volumeMountRequest.TypedSpec().Secure
+			// noexec if any requester wants it noexec
+			desiredMountRequest.NoExec = desiredMountRequest.NoExec || volumeMountRequest.TypedSpec().NoExec
 			desiredMountRequest.ParentMountID = volumeStatus.TypedSpec().MountSpec.ParentID
 		}
 

@@ -240,37 +240,14 @@ DHCPv4 search domains are now applied to the resolver configuration.
 DHCPv4 configuration now supports `ignoreRoutes` option to ignore routes provided by DHCPv4 servers.
 """
 
-    [notes.EPHEMERAL]
-        title = "noexec on EPHEMERAL (/var)"
-        description = """\
-Talos 1.14 clusters now default the EPHEMERAL volume (`/var`) to `noexec` in addition to the existing `nosuid` and `nodev`
-mount options through generated machine configuration.
-
-Existing machines are not affected on upgrades.
-
-Note: Workloads that execute binaries placed under `/var` can break on new machines.
-Longhorn v1 and [vCluster](https://www.vcluster.com/docs/vcluster/troubleshoot/noexec-emptydir-volumes) are known to be affected.
-For example, Longhorn v1's `instance-manager` executes engine binaries that the `engine-image` DaemonSet places under
-`/var/lib/longhorn/engine-binaries/`, which now fails with `permission denied`.
-Affected users can opt out via a `VolumeConfig` document:
-
-```yaml
-apiVersion: v1alpha1
-kind: VolumeConfig
-name: EPHEMERAL
-mount:
-  secure: false
-```
-
-> NOTE: Setting `secure: false` will also disable `nosuid` and `nodev`, which may have security implications. Use with caution.
-
-Longhorn v2 (SPDK data engine) runs the data plane inside the instance manager process and is not affected.
-"""
-
     [notes.systemVolumes]
         title = "Dedicated System Volumes"
         description = """\
-The `ETCD`, `CRI`, `KUBELET` and `LOG` system volumes (`/var/lib/etcd`, `/var/lib/containerd`, `/var/lib/kubelet` and `/var/log`) can now be placed on dedicated partitions via a `VolumeConfig` document with `provisioning` set (optionally encrypted). By default they remain directories under the `EPHEMERAL` volume.
+The `ETCD`, `CRI`, `KUBELET` and `LOG` system volumes (`/var/lib/etcd`, `/var/lib/containerd`, `/var/lib/kubelet` and `/var/log`)
+can now be placed on dedicated partitions via a `VolumeConfig` document with `provisioning` set (optionally encrypted).
+By default they remain directories under the `EPHEMERAL` volume.
+
+`ETCD` and `LOG` volumes are mounted with `noexec` in addition to `nosuid` and `nodev` when `secure: true` is set.
 
 ```yaml
 apiVersion: v1alpha1
@@ -283,7 +260,7 @@ provisioning:
 
 The backing (directory vs. dedicated partition) is fixed at cluster creation: switching an already-provisioned node between the two is rejected.
 
-A dedicated partition has its own mount, so the `mount.secure` option (`nosuid`/`noexec`/`nodev`, enabled by default) can be set per volume; directory-backed volumes inherit the `EPHEMERAL` mount options.
+A dedicated partition has its own mount, so the `mount.secure` option (`nosuid`/`nodev`, enabled by default) can be set per volume; directory-backed volumes inherit the `EPHEMERAL` mount options. Talos additionally applies `noexec` to dedicated ETCD and LOG volumes, while CRI and KUBELET remain executable.
 
 Note that with `ETCD` on a dedicated partition, etcd data no longer lives under `EPHEMERAL`. Resetting a control plane node with only the `EPHEMERAL` partition wiped will not clear etcd data; wipe the `ETCD` volume to reset etcd.
 """

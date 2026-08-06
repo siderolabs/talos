@@ -182,6 +182,7 @@ message MountRequestSpec {
   bool detached = 6;
   bool disable_access_time = 7;
   bool secure = 8;
+  bool no_exec = 9;
 }
 
 // MountSpec is the spec for volume mount.
@@ -206,9 +207,10 @@ message MountSpec {
   string bind_target = 9;
   // Parameters are additional filesystem mount options used when mounting the volume.
   repeated ParameterSpec parameters = 10;
-  // Secure applies MOUNT_ATTR_NOSUID\|NODEV\|NOEXEC to the mount. Set for
-  // config-only mounts; leave false for mounts hosting executables.
+  // Secure applies MOUNT_ATTR_NOSUID\|NODEV to the mount.
   bool secure = 11;
+  // NoExec applies MOUNT_ATTR_NOEXEC to the mount.
+  bool no_exec = 12;
 }
 
 // MountStatusSpec is the spec for MountStatus.
@@ -343,6 +345,7 @@ message VolumeMountRequestSpec {
   bool detached = 4;
   bool disable_access_time = 5;
   bool secure = 6;
+  bool no_exec = 7;
 }
 
 // VolumeMountStatusSpec is the spec for VolumeMountStatus.
@@ -354,6 +357,7 @@ message VolumeMountStatusSpec {
   bool detached = 5;
   bool disable_access_time = 6;
   bool secure = 7;
+  bool no_exec = 8;
 }
 
 // VolumeStatusSpec is the spec for VolumeStatus resource.
