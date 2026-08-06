@@ -40,6 +40,7 @@ func (suite *PcapSuite) TestLoopback() {
 
 	suite.Require().NoError(cmd.Start())
 
+	// Give pcap a moment to initialize before generating loopback traffic.
 	time.Sleep(trafficGenDelay)
 
 	for range 3 {
