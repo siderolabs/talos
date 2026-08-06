@@ -73,8 +73,7 @@ jobs:
             tagSuffix: -race
             variant: race
             withConfigPatchWorker: '@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml'
-          - extraTestArgs: -talos.skip-ephemeral-policy
-            qemuExtraDisks: "5"
+          - qemuExtraDisks: "5"
             qemuExtraDisksDrivers: virtiofs,ide,nvme
             qemuExtraDisksTags: disk0
             userDisksMounts: /var/mnt/extra,/var/mnt/p1,/var/mnt/p2

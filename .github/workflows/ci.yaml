@@ -4201,7 +4201,6 @@ jobs:
           make ci-temp-release-tag
       - name: e2e-qemu
         env:
-          EXTRA_TEST_ARGS: -talos.skip-ephemeral-policy
           IMAGE_REGISTRY: registry.dev.siderolabs.io
           QEMU_EXTRA_DISKS: "5"
           QEMU_EXTRA_DISKS_DRIVERS: virtiofs,ide,nvme

@@ -26,6 +26,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/internal/ctrhelper"
 	"github.com/siderolabs/talos/internal/app/lifecycle/internal/containerpid"
+	"github.com/siderolabs/talos/internal/app/lifecycle/internal/output"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
 	containerdrunner "github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/siderolabs/talos/internal/pkg/capability"
@@ -213,7 +214,7 @@ func runInstallerContainer(ctx context.Context, pidRecorder pid.Recorder, rc *co
 	sendDone := make(chan error, 1)
 
 	go func() {
-		sendDone <- streamOutput(stdoutR, rc.send)
+		sendDone <- output.Stream(stdoutR, rc.send)
 	}()
 
 	// wait for task to exit
@@ -243,28 +244,6 @@ func runInstallerContainer(ctx context.Context, pidRecorder pid.Recorder, rc *co
 	}
 
 	return nil
-}
-
-// streamOutput reads from r line by line and sends each line via the send callback.
-func streamOutput(r io.Reader, send sendFunc) error {
-	buf := make([]byte, 512)
-
-	for {
-		n, err := r.Read(buf)
-		if n > 0 {
-			if sendErr := send(string(buf[:n])); sendErr != nil {
-				return fmt.Errorf("failed to send message: %w", sendErr)
-			}
-		}
-
-		if err != nil {
-			if err == io.EOF {
-				return nil
-			}
-
-			return fmt.Errorf("failed to read output: %w", err)
-		}
-	}
 }
 
 // buildMounts constructs the OCI mounts for the installer container.
