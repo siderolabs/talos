@@ -20,6 +20,8 @@ type PcapSuite struct {
 	base.CLISuite
 }
 
+const trafficGenDelay = 250 * time.Millisecond
+
 // SuiteName ...
 func (suite *PcapSuite) SuiteName() string {
 	return "cli.PcapSuite"
@@ -38,11 +40,11 @@ func (suite *PcapSuite) TestLoopback() {
 
 	suite.Require().NoError(cmd.Start())
 
-	time.Sleep(250 * time.Millisecond)
+	time.Sleep(trafficGenDelay)
 
 	for range 3 {
 		suite.RunCLI([]string{"read", "--nodes", node, "/proc/net/dev"})
-		time.Sleep(250 * time.Millisecond)
+		time.Sleep(trafficGenDelay)
 	}
 
 	suite.Require().NoError(cmd.Wait(), "pcap failed, stdout: %q, stderr: %q", stdout.String(), stderr.String())
