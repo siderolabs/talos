@@ -10,4 +10,5 @@ var (
 	MultipathEqualForTest     = multipathEqual
 	BGPLinkStatusSpecsForTest = bgpLinkStatusSpecs
 	BGPAddressSpecsForTest    = bgpAddressStatusSpecs
+	ResolveBondPrimaryForTest = resolveBondPrimary
 )

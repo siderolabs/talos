@@ -298,7 +298,8 @@ func (container *Container) validateContainer(mode validation.RuntimeMode) error
 		slices.Sort(kinds)
 		kinds = slices.Compact(kinds)
 
-		errs = multierror.Append(errs,
+		errs = multierror.Append(
+			errs,
 			fmt.Errorf(
 				"the following document kinds are only allowed on control plane machines: %v",
 				kinds,

@@ -725,6 +725,10 @@ type BondMasterSpec struct {
 	// ARPAllTargets specifies whether ARP probes should be sent to any or all targets.
 	ArpAllTargets enums.NethelpersARPAllTargets `protobuf:"varint,5,opt,name=arp_all_targets,json=arpAllTargets,proto3,enum=talos.resource.definitions.enums.NethelpersARPAllTargets" json:"arp_all_targets,omitempty"`
 	// PrimaryIndex is a device index specifying which slave is the primary device.
+	//
+	// This is the resolved form of Primary: it is what the kernel reports back, and it is filled in
+	// by the link spec controller right before applying the settings. Configuration layers should set
+	// Primary instead, as interface indexes are not stable.
 	PrimaryIndex uint32 `protobuf:"varint,6,opt,name=primary_index,json=primaryIndex,proto3" json:"primary_index,omitempty"`
 	// PrimaryReselect specifies the policy under which the primary slave should be reselected.
 	PrimaryReselect enums.NethelpersPrimaryReselect `protobuf:"varint,7,opt,name=primary_reselect,json=primaryReselect,proto3,enum=talos.resource.definitions.enums.NethelpersPrimaryReselect" json:"primary_reselect,omitempty"`
@@ -774,7 +778,11 @@ type BondMasterSpec struct {
 	// ADLACPActive specifies whether to send LACPDU frames periodically.
 	AdlacpActive enums.NethelpersADLACPActive `protobuf:"varint,27,opt,name=adlacp_active,json=adlacpActive,proto3,enum=talos.resource.definitions.enums.NethelpersADLACPActive" json:"adlacp_active,omitempty"`
 	// MissedMax is the number of arp_interval monitor checks that must fail in order for an interface to be marked down by the ARP monitor.
-	MissedMax     uint32 `protobuf:"varint,28,opt,name=missed_max,json=missedMax,proto3" json:"missed_max,omitempty"`
+	MissedMax uint32 `protobuf:"varint,28,opt,name=missed_max,json=missedMax,proto3" json:"missed_max,omitempty"`
+	// Primary is the name of the slave link which should be used as the primary device.
+	//
+	// Only meaningful for the active-backup, balance-tlb and balance-alb modes.
+	Primary       string `protobuf:"bytes,29,opt,name=primary,proto3" json:"primary,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1003,6 +1011,13 @@ func (x *BondMasterSpec) GetMissedMax() uint32 {
 		return x.MissedMax
 	}
 	return 0
+}
+
+func (x *BondMasterSpec) GetPrimary() string {
+	if x != nil {
+		return x.Primary
+	}
+	return ""
 }
 
 // BondSlave contains a bond's master name and slave index.
@@ -6026,7 +6041,7 @@ const file_resource_definitions_network_network_proto_rawDesc = "" +
 	"\baccepted\x18\t \x01(\rR\baccepted\x12\x1b\n" +
 	"\tbfd_state\x18\n" +
 	" \x01(\tR\bbfdState\x12\x1a\n" +
-	"\binstance\x18\v \x01(\tR\binstance\"\x8a\f\n" +
+	"\binstance\x18\v \x01(\tR\binstance\"\xa4\f\n" +
 	"\x0eBondMasterSpec\x12H\n" +
 	"\x04mode\x18\x01 \x01(\x0e24.talos.resource.definitions.enums.NethelpersBondModeR\x04mode\x12_\n" +
 	"\vhash_policy\x18\x02 \x01(\x0e2>.talos.resource.definitions.enums.NethelpersBondXmitHashPolicyR\n" +
@@ -6062,7 +6077,8 @@ const file_resource_definitions_network_network_proto_rawDesc = "" +
 	"\rnsip6_targets\x18\x1a \x03(\v2\r.common.NetIPR\fnsip6Targets\x12]\n" +
 	"\radlacp_active\x18\x1b \x01(\x0e28.talos.resource.definitions.enums.NethelpersADLACPActiveR\fadlacpActive\x12\x1d\n" +
 	"\n" +
-	"missed_max\x18\x1c \x01(\rR\tmissedMax\"M\n" +
+	"missed_max\x18\x1c \x01(\rR\tmissedMax\x12\x18\n" +
+	"\aprimary\x18\x1d \x01(\tR\aprimary\"M\n" +
 	"\tBondSlave\x12\x1f\n" +
 	"\vmaster_name\x18\x01 \x01(\tR\n" +
 	"masterName\x12\x1f\n" +

@@ -68,6 +68,9 @@ routes:
 # # Whether to send LACPDU frames periodically, defaults to "on" if mode is 802.3ad.
 # adLACPActive: on
 
+# # Name of the link (interface) which should be used as the primary slave of the bond.
+# primary: enp1s2
+
 # # Policy under which the primary slave should be reselected.
 # primaryReselect: always
 
@@ -140,7 +143,10 @@ adUserPortKey: 0
 |`adLACPActive` |ADLACPActive |Whether to send LACPDU frames periodically, defaults to "on" if mode is 802.3ad. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 adLACPActive: on
 {{< /highlight >}}</details> |`on`<br />`off`<br /> |
-|`primaryReselect` |PrimaryReselect |Policy under which the primary slave should be reselected. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`primary` |string |Name of the link (interface) which should be used as the primary slave of the bond.<br>Link aliases can be used here as well.<br><br>The primary link, when up, is always the active one; the other links are only used when the<br>primary is down. Only meaningful for the "active-backup", "balance-tlb" and "balance-alb" modes.<br><br>Must be one of the links listed in `links`. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+primary: enp1s2
+{{< /highlight >}}</details> | |
+|`primaryReselect` |PrimaryReselect |Policy under which the primary slave should be reselected.<br><br>Has no effect unless `primary` is set. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 primaryReselect: always
 {{< /highlight >}}</details> |`always`<br />`better`<br />`failure`<br /> |
 |`resendIGMP` |uint32 |The number of times IGMP packets should be resent.  | |

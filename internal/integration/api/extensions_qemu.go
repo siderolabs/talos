@@ -331,14 +331,16 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsZFS() {
 
 	suite.Require().NotEmpty(userDisks, "expected at least one user disks to be available")
 
-	stdout, exitCode, err := suite.RunDebugContainer(suite.ctx, node,
+	stdout, exitCode, err := suite.RunDebugContainer(
+		suite.ctx, node,
 		"zpool", "create", "-m", "/var/tank", "tank", userDisks[0],
 	)
 	suite.Require().NoError(err)
 	suite.Require().EqualValues(0, exitCode, "zpool create failed: %s", stdout)
 	suite.Require().Equal("", stdout)
 
-	stdout, exitCode, err = suite.RunDebugContainer(suite.ctx, node,
+	stdout, exitCode, err = suite.RunDebugContainer(
+		suite.ctx, node,
 		"zfs", "create", "-V", "1gb", "tank/vol",
 	)
 	suite.Require().NoError(err)
@@ -422,7 +424,8 @@ func (suite *ExtensionsSuiteQEMU) checkZFSPoolMounted(t *assert.CollectT, node s
 func (suite *ExtensionsSuiteQEMU) TestExtensionsUtilLinuxTools() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 
-	stdout, exitCode, err := suite.RunDebugContainer(suite.ctx, node,
+	stdout, exitCode, err := suite.RunDebugContainer(
+		suite.ctx, node,
 		"/usr/local/sbin/fstrim", "--version",
 	)
 	suite.Require().NoError(err)

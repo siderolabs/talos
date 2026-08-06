@@ -327,7 +327,8 @@ func (suite *RebootSuite) TestRebootWithFailingUserVolume() {
 	defer suite.RemoveMachineConfigDocumentsByName(nodeCtx, blockcfg.UserVolumeConfigKind, volumeID)
 
 	// the user volume should fail to allocate (no disk matched the selector)
-	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{userVolumeID},
+	rtestutils.AssertResources(
+		nodeCtx, suite.T(), suite.Client.COSI, []string{userVolumeID},
 		func(vs *block.VolumeStatus, asrt *assert.Assertions) {
 			asrt.Equal(block.VolumePhaseFailed, vs.TypedSpec().Phase)
 		},

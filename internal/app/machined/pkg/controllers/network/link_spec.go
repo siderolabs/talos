@@ -235,6 +235,32 @@ func findLink(links []rtnetlink.LinkMessage, name string, allowAliases bool) *rt
 	return nil
 }
 
+// resolveBondPrimary returns a copy of the bond master spec with PrimaryIndex resolved from Primary,
+// along with the link the primary resolved to (nil if it isn't present).
+//
+// The configuration layers name the primary slave, while the kernel's IFLA_BOND_PRIMARY is an interface
+// index. Indexes are not stable across reboots, renames or NIC re-plugs, so the resolution has to happen
+// against the live link list every time the settings are applied rather than once at config parsing time.
+//
+// If the primary link is not present right now, PrimaryIndex is left unset, which means "don't touch the
+// primary": the attribute is not encoded, so the kernel keeps whatever it has. Applying it anyway would be
+// actively harmful — the kernel resolves an unknown index to an empty name and *clears* the primary. The
+// controller watches RTMGRP_LINK, so a primary which shows up later converges on the next reconcile.
+func resolveBondPrimary(bondMaster network.BondMasterSpec, links []rtnetlink.LinkMessage) (network.BondMasterSpec, *rtnetlink.LinkMessage) {
+	bondMaster.PrimaryIndex = nil
+
+	if bondMaster.Primary == "" {
+		return bondMaster, nil
+	}
+
+	primaryLink := findLink(links, bondMaster.Primary, true)
+	if primaryLink != nil {
+		bondMaster.PrimaryIndex = new(primaryLink.Index)
+	}
+
+	return bondMaster, primaryLink
+}
+
 func rawLinkData(link *rtnetlink.LinkMessage) []byte {
 	if link == nil || link.Attributes == nil || link.Attributes.Info == nil || link.Attributes.Info.Data == nil {
 		return nil
@@ -476,7 +502,9 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 			}
 
 			if link.TypedSpec().Kind == network.LinkKindBond {
-				data, err = networkadapter.BondMasterSpec(&link.TypedSpec().BondMaster).Encode()
+				bondMaster, _ := resolveBondPrimary(link.TypedSpec().BondMaster, *links)
+
+				data, err = networkadapter.BondMasterSpec(&bondMaster).Encode()
 				if err != nil {
 					return fmt.Errorf("error encoding bond attributes for link %q: %w", link.TypedSpec().Name, err)
 				}
@@ -558,19 +586,38 @@ func (ctrl *LinkSpecController) syncLink(ctx context.Context, r controller.Runti
 				return fmt.Errorf("error parsing bond attributes for %q: %w", link.TypedSpec().Name, err)
 			}
 
-			// primaryIndex might be reported from the kernel, but if it's nil in the spec, we should treat it as equal
-			if existingBond.PrimaryIndex != nil && link.TypedSpec().BondMaster.PrimaryIndex == nil {
-				existingBond.PrimaryIndex = nil
-			}
+			// the spec carries the primary as a link name, but the kernel talks in interface indexes, and those
+			// are not stable, so resolve the name against the current link list on every reconcile
+			expectedBond, primaryLink := resolveBondPrimary(link.TypedSpec().BondMaster, *links)
 
-			if !existingBond.Equal(&link.TypedSpec().BondMaster) {
+			// decide on the primary here rather than leaving it to Equal, which is deliberately lenient about it.
+			//
+			// The kernel only reports IFLA_BOND_PRIMARY while the primary slave is actually enslaved, so its answer
+			// is only worth comparing against once the primary link has joined the bond. Outside of that, an unset
+			// primary on the kernel side doesn't mean drift:
+			//
+			//   - the primary link hasn't been enslaved yet: the name we asked for is already pending in the bond's
+			//     params, and bond_enslave picks it up when the link joins;
+			//   - the primary link is gone (unplugged, driver unloaded): the kernel dropped it, and re-applying would
+			//     tear the bond down and re-enslave every remaining slave exactly when a failover is in flight;
+			//   - nothing asks for a primary at all: whatever the kernel has stays put.
+			primaryEnslaved := expectedBond.PrimaryIndex != nil &&
+				primaryLink != nil && pointer.SafeDeref(primaryLink.Attributes.Master) == existing.Index
+
+			primaryDiffers := primaryEnslaved &&
+				(existingBond.PrimaryIndex == nil || *existingBond.PrimaryIndex != *expectedBond.PrimaryIndex)
+
+			// take the primary out of the picture for Equal, which is only asked about the remaining settings
+			existingBond.PrimaryIndex = expectedBond.PrimaryIndex
+
+			if primaryDiffers || !existingBond.Equal(&expectedBond) {
 				logger.Debug(
 					"updating bond settings",
 					zap.String("old", fmt.Sprintf("%+v", existingBond)),
-					zap.String("new", fmt.Sprintf("%+v", link.TypedSpec().BondMaster)),
+					zap.String("new", fmt.Sprintf("%+v", expectedBond)),
 				)
 
-				data, err := networkadapter.BondMasterSpec(&link.TypedSpec().BondMaster).Encode()
+				data, err := networkadapter.BondMasterSpec(&expectedBond).Encode()
 				if err != nil {
 					return fmt.Errorf("error encoding bond attributes for %q: %w", link.TypedSpec().Name, err)
 				}

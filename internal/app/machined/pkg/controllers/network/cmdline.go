@@ -283,7 +283,7 @@ func ParseCmdlineNetwork(cmdline *procfs.Cmdline, linkNameResolver *network.Link
 			bondLinkSpec.MTU = uint32(mtu)
 		}
 
-		if err := SetBondMasterLegacy(&bondLinkSpec, &bondOptions); err != nil {
+		if err := SetBondMasterLegacy(&bondLinkSpec, &bondOptions, linkNameResolver.Resolve); err != nil {
 			return settings, fmt.Errorf("error setting bond master: %w", err)
 		}
 

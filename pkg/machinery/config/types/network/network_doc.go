@@ -486,10 +486,17 @@ func (BondConfigV1Alpha1) Doc() *encoder.Doc {
 				},
 			},
 			{
+				Name:        "primary",
+				Type:        "string",
+				Note:        "",
+				Description: "Name of the link (interface) which should be used as the primary slave of the bond.\nLink aliases can be used here as well.\n\nThe primary link, when up, is always the active one; the other links are only used when the\nprimary is down. Only meaningful for the \"active-backup\", \"balance-tlb\" and \"balance-alb\" modes.\n\nMust be one of the links listed in `links`.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Name of the link (interface) which should be used as the primary slave of the bond." /* encoder.LineComment */, "" /* encoder.FootComment */},
+			},
+			{
 				Name:        "primaryReselect",
 				Type:        "PrimaryReselect",
 				Note:        "",
-				Description: "Policy under which the primary slave should be reselected.",
+				Description: "Policy under which the primary slave should be reselected.\n\nHas no effect unless `primary` is set.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Policy under which the primary slave should be reselected." /* encoder.LineComment */, "" /* encoder.FootComment */},
 				Values: []string{
 					"always",
@@ -588,9 +595,10 @@ func (BondConfigV1Alpha1) Doc() *encoder.Doc {
 	doc.Fields[18].AddExample("", 65535)
 	doc.Fields[19].AddExample("", 0)
 	doc.Fields[20].AddExample("", "on")
-	doc.Fields[21].AddExample("", "always")
-	doc.Fields[27].AddExample("", 1)
-	doc.Fields[28].AddExample("", 0)
+	doc.Fields[21].AddExample("", "enp1s2")
+	doc.Fields[22].AddExample("", "always")
+	doc.Fields[28].AddExample("", 1)
+	doc.Fields[29].AddExample("", 0)
 
 	return doc
 }
