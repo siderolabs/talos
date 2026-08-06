@@ -27,8 +27,7 @@ jobs:
             extraTestArgs: -talos.csi.timeout=30m
             longhornEngine: v2
           - csi: longhorn-v1
-            extraTestArgs: -talos.skip-ephemeral-policy
-            extraWorkerPatch: :@_out/kubelet-fat-patch.yaml:@hack/test/patches/ephemeral-insecure.yaml
+            extraWorkerPatch: :@_out/kubelet-fat-patch.yaml
             longhornEngine: v1
       fail-fast: false
       max-parallel: 2

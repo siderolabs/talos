@@ -352,6 +352,7 @@ func HandleUserVolumeMountRequest(userVolumeConfig configconfig.UserVolumeConfig
 	return func(m *block.VolumeMountRequest) error {
 		m.TypedSpec().DisableAccessTime = userVolumeConfig.Mount().DisableAccessTime()
 		m.TypedSpec().Secure = userVolumeConfig.Mount().Secure()
+		m.TypedSpec().NoExec = userVolumeConfig.Mount().Secure()
 
 		return nil
 	}
@@ -364,6 +365,7 @@ func HandleExistingVolumeMountRequest(existingVolumeConfig configconfig.Existing
 		m.TypedSpec().ReadOnly = existingVolumeConfig.Mount().ReadOnly()
 		m.TypedSpec().DisableAccessTime = existingVolumeConfig.Mount().DisableAccessTime()
 		m.TypedSpec().Secure = existingVolumeConfig.Mount().Secure()
+		m.TypedSpec().NoExec = existingVolumeConfig.Mount().Secure()
 
 		return nil
 	}
@@ -375,6 +377,7 @@ func HandleExternalVolumeMountRequest(externalVolumeConfig configconfig.External
 		m.TypedSpec().ReadOnly = externalVolumeConfig.Mount().ReadOnly()
 		m.TypedSpec().DisableAccessTime = externalVolumeConfig.Mount().DisableAccessTime()
 		m.TypedSpec().Secure = externalVolumeConfig.Mount().Secure()
+		m.TypedSpec().NoExec = externalVolumeConfig.Mount().Secure()
 
 		return nil
 	}

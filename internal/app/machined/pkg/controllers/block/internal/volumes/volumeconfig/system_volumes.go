@@ -64,6 +64,7 @@ func GetStateVolumeTransformer(encryptionMeta *runtime.MetaKey, inContainer, isA
 					UID:          0,
 					GID:          0,
 					Secure:       true,
+					NoExec:       true,
 				}).WriterFunc()
 		} else {
 			// STATE configuration should be always created, but it depends on the configuration presence
@@ -194,6 +195,7 @@ func GetOverlayVolumesTransformer(inContainer bool) func(configconfig.Config) ([
 						UID:          0,
 						GID:          0,
 						Secure:       overlay.Secure,
+						NoExec:       overlay.Secure,
 					}).WriterFunc(),
 			})
 		}
@@ -217,6 +219,7 @@ func manageStateNoConfig(encryptionMeta *runtime.MetaKey, isAgent bool) func(vc 
 			UID:          0,
 			GID:          0,
 			Secure:       true,
+			NoExec:       true,
 		}).WithLocator(match).
 		WithFunc(func(spec *block.VolumeConfigSpec) error {
 			if encryptionMeta != nil {
@@ -259,6 +262,7 @@ func manageStateConfigPresent(cfg configconfig.Config) func(vc *block.VolumeConf
 				UID:          0,
 				GID:          0,
 				Secure:       true,
+				NoExec:       true,
 			}).
 			WithProvisioning(block.ProvisioningSpec{
 				Wave: block.WaveSystemDisk,
@@ -377,9 +381,10 @@ func GetPromotableSystemVolumesTransformer(inContainer bool) volumeConfigTransfo
 				// placed on a dedicated partition
 				provisioning := extraVolumeConfig.Provisioning()
 
-				// a dedicated partition has its own mount, so honor the configured mount.secure
-				// (nosuid/noexec/nodev); a directory-backed volume inherits the EPHEMERAL mount.
+				// A dedicated partition has its own mount, so honor the configured mount.secure.
+				// ETCD and LOG remain noexec, while CRI and KUBELET host executables.
 				mountSpec.Secure = extraVolumeConfig.Mount().Secure()
+				mountSpec.NoExec = extraVolumeConfig.Mount().Secure() && (volume.ID == constants.EtcdDataVolumeID || volume.ID == constants.LogVolumeID)
 
 				builder = NewBuilder().
 					WithType(block.VolumeTypePartition).

@@ -1580,11 +1580,6 @@ spec:
         maxParallel: 2
         flatJobMatrix: true
         labelKeys: [csi]
-        # v2 (SPDK) is the default-secure path; v1 needs noexec disabled on
-        # /var so the instance-manager can exec engine binaries it drops
-        # under /var/lib/longhorn/engine-binaries/. The v1 path also tells
-        # MountsSuite to skip the /var policy check via
-        # -talos.skip-ephemeral-policy.
         include:
           - csi: longhorn
             longhornEngine: v2
@@ -1592,8 +1587,8 @@ spec:
             extraTestArgs: "-talos.csi.timeout=30m"
           - csi: longhorn-v1
             longhornEngine: v1
-            extraWorkerPatch: ":@_out/kubelet-fat-patch.yaml:@hack/test/patches/ephemeral-insecure.yaml"
-            extraTestArgs: "-talos.skip-ephemeral-policy"
+            extraWorkerPatch: ":@_out/kubelet-fat-patch.yaml"
+            extraTestArgs: ""
       steps:
         - name: download-artifacts
           artifactStep:

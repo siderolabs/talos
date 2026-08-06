@@ -37,6 +37,7 @@ type mountContext struct {
 	readOnly          bool
 	disableAccessTime bool
 	secure            bool
+	noExec            bool
 	unmounter         func() error
 }
 
@@ -629,6 +630,10 @@ func (ctrl *MountController) handleDiskMountOperation(
 			opts = append(opts, mount.WithSecure())
 		}
 
+		if mountRequest.TypedSpec().NoExec {
+			opts = append(opts, mount.WithNoExec())
+		}
+
 		if mountRequest.TypedSpec().ReadOnly {
 			opts = append(opts, mount.WithReadOnly())
 		}
@@ -670,6 +675,7 @@ func (ctrl *MountController) handleDiskMountOperation(
 			zap.Stringer("filesystem", mountFilesystem),
 			zap.Bool("read_only", mountRequest.TypedSpec().ReadOnly),
 			zap.Bool("secure", mountRequest.TypedSpec().Secure),
+			zap.Bool("no_exec", mountRequest.TypedSpec().NoExec),
 			zap.Bool("disable_access_time", mountRequest.TypedSpec().DisableAccessTime),
 			zap.Bool("detached", mountRequest.TypedSpec().Detached),
 		)
@@ -679,6 +685,7 @@ func (ctrl *MountController) handleDiskMountOperation(
 			readOnly:          mountRequest.TypedSpec().ReadOnly,
 			disableAccessTime: mountRequest.TypedSpec().DisableAccessTime,
 			secure:            mountRequest.TypedSpec().Secure,
+			noExec:            mountRequest.TypedSpec().NoExec,
 			unmounter:         manager.Unmount,
 		}
 		ctrl.activeMounts[mountRequest.Metadata().ID()] = mountCtx
@@ -739,6 +746,22 @@ func (ctrl *MountController) handleDiskMountOperation(
 		mountCtx.secure = mountRequest.TypedSpec().Secure
 	}
 
+	//nolint:dupl
+	if mountCtx.noExec != mountRequest.TypedSpec().NoExec {
+		err := mountCtx.point.SetNoExec(mountRequest.TypedSpec().NoExec)
+		if err != nil {
+			return fmt.Errorf("failed to update noexec for %q: %w", mountRequest.Metadata().ID(), err)
+		}
+
+		logger.Info(
+			"volume mount attributes updated",
+			zap.String("volume", volumeStatus.Metadata().ID()),
+			zap.String("no_exec", fmt.Sprintf("%v -> %v", mountCtx.noExec, mountRequest.TypedSpec().NoExec)),
+		)
+
+		mountCtx.noExec = mountRequest.TypedSpec().NoExec
+	}
+
 	return nil
 }
 
@@ -762,6 +785,10 @@ func (ctrl *MountController) handleOverlayMountOperation(
 
 	if volumeStatus.TypedSpec().MountSpec.Secure {
 		overlayOpts = append(overlayOpts, mount.WithSecure())
+	}
+
+	if volumeStatus.TypedSpec().MountSpec.NoExec {
+		overlayOpts = append(overlayOpts, mount.WithNoExec())
 	}
 
 	manager := mount.NewVarOverlay(

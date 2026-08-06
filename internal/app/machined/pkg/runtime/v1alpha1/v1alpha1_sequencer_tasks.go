@@ -1392,6 +1392,7 @@ func MountEphemeralPartition(runtime.Sequence, any) (runtime.TaskExecutionFunc, 
 
 		vol, _ := r.Config().Volumes().ByName(constants.EphemeralPartitionLabel)
 		mountRequest.TypedSpec().Secure = vol.Mount().Secure()
+		mountRequest.TypedSpec().NoExec = false
 		mountRequest.TypedSpec().DisableAccessTime = vol.Mount().DisableAccessTime()
 
 		if err := r.State().V1Alpha2().Resources().Create(ctx, mountRequest); err != nil {
@@ -1450,8 +1451,8 @@ func MountPromotableSystemPartitions(runtime.Sequence, any) (runtime.TaskExecuti
 			mountRequest := blockres.NewVolumeMountRequest(blockres.NamespaceName, name)
 			mountRequest.TypedSpec().VolumeID = name
 			mountRequest.TypedSpec().Requester = "sequencer"
-			// honor the configured mount options; secure drives nosuid/noexec/nodev on the partition.
 			mountRequest.TypedSpec().Secure = vol.Mount().Secure()
+			mountRequest.TypedSpec().NoExec = mountRequest.TypedSpec().Secure && (name == constants.EtcdDataVolumeID || name == constants.LogVolumeID)
 			mountRequest.TypedSpec().DisableAccessTime = vol.Mount().DisableAccessTime()
 
 			if err := r.State().V1Alpha2().Resources().Create(ctx, mountRequest); err != nil {

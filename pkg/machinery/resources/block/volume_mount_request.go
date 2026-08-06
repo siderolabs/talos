@@ -30,6 +30,7 @@ type VolumeMountRequestSpec struct {
 	Detached          bool   `yaml:"detached" protobuf:"4"`
 	DisableAccessTime bool   `yaml:"disableAccessTime" protobuf:"5"`
 	Secure            bool   `yaml:"secure" protobuf:"6"`
+	NoExec            bool   `yaml:"noExec" protobuf:"7"`
 }
 
 // NewVolumeMountRequest initializes a VolumeMountRequest resource.

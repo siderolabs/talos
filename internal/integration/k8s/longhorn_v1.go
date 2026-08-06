@@ -36,12 +36,6 @@ var (
 )
 
 // LongHornV1Suite tests deploying Longhorn with the v1 data engine.
-//
-// The v1 engine's instance-manager exec's engine binaries it drops under
-// /var/lib/longhorn/engine-binaries/, which only works when /var is mounted
-// without noexec. The matching CI matrix entry applies
-// hack/test/patches/ephemeral-insecure.yaml to disable Secure on the EPHEMERAL
-// VolumeConfig.
 type LongHornV1Suite struct {
 	base.K8sSuite
 }
