@@ -720,6 +720,178 @@ func (suite *LinkSpecSuite) TestBondActiveBackup() {
 	})
 }
 
+// bondWithSlaves builds an active-backup bond with the given primary (by name) plus two dummy slaves.
+//
+// The slaves are returned separately from the bond so that a test can create the slave links first,
+// which is what happens with real NICs: the physical links already exist by the time the bond is built.
+func (suite *LinkSpecSuite) bondWithSlaves(primary func(dummyNames []string) string) (bondName string, dummyNames []string, dummies []resource.Resource, bond resource.Resource) {
+	bondName = suite.uniqueDummyInterface()
+
+	for range 2 {
+		dummyNames = append(dummyNames, suite.uniqueDummyInterface())
+	}
+
+	for idx, dummyName := range dummyNames {
+		dummy := network.NewLinkSpec(network.NamespaceName, dummyName)
+		*dummy.TypedSpec() = network.LinkSpecSpec{
+			Name:    dummyName,
+			Type:    nethelpers.LinkEther,
+			Kind:    "dummy",
+			Up:      true,
+			Logical: true,
+			BondSlave: network.BondSlave{
+				MasterName: bondName,
+				SlaveIndex: idx,
+			},
+			ConfigLayer: network.ConfigDefault,
+		}
+
+		dummies = append(dummies, dummy)
+	}
+
+	bondSpec := network.NewLinkSpec(network.NamespaceName, bondName)
+	*bondSpec.TypedSpec() = network.LinkSpecSpec{
+		Name:    bondName,
+		Type:    nethelpers.LinkEther,
+		Kind:    network.LinkKindBond,
+		Up:      true,
+		Logical: true,
+		BondMaster: network.BondMasterSpec{
+			Mode:            nethelpers.BondModeActiveBackup,
+			HashPolicy:      nethelpers.BondXmitPolicyLayer2,
+			LACPRate:        nethelpers.LACPRateSlow,
+			ARPValidate:     nethelpers.ARPValidateNone,
+			ARPAllTargets:   nethelpers.ARPAllTargetsAny,
+			Primary:         primary(dummyNames),
+			PrimaryReselect: nethelpers.PrimaryReselectAlways,
+			FailOverMac:     nethelpers.FailOverMACNone,
+		},
+		ConfigLayer: network.ConfigDefault,
+	}
+
+	networkadapter.BondMasterSpec(&bondSpec.TypedSpec().BondMaster).FillDefaults()
+
+	return bondName, dummyNames, dummies, bondSpec
+}
+
+// assertBondSettingsNotReapplied checks that the bond settings converged on the first apply.
+//
+// A mismatch between the spec and what the kernel reports makes the link spec controller bring the
+// bond down and unslave every slave before rewriting the settings, so a primary which never compares
+// equal would flap the bond on every reconcile.
+func (suite *LinkSpecSuite) assertBondSettingsNotReapplied(bondName string) {
+	for _, entry := range suite.observedLogs.FilterMessage("controller failed").All() {
+		suite.Require().NotContains(fmt.Sprint(entry.ContextMap()["error"]), bondName)
+	}
+
+	for _, entry := range suite.observedLogs.FilterMessage("updating bond settings").All() {
+		suite.Require().NotEqual(bondName, entry.ContextMap()["link"])
+	}
+}
+
+// TestBondPrimary checks that a primary named in the spec is resolved to the slave's interface index
+// and reported back by the kernel.
+func (suite *LinkSpecSuite) TestBondPrimary() {
+	// deliberately pick the *second* slave, so a pass can't be explained by the bond just defaulting
+	// to the first link that came up
+	bondName, dummyNames, dummies, bond := suite.bondWithSlaves(func(dummyNames []string) string { return dummyNames[1] })
+	primaryName := dummyNames[1]
+
+	// bring the slave links up first, so the primary can be resolved when the bond is created
+	for _, res := range dummies {
+		suite.Create(res)
+	}
+
+	var primaryIndex uint32
+
+	ctest.AssertResource(suite, primaryName, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.NotZero(r.TypedSpec().Index)
+
+		primaryIndex = r.TypedSpec().Index
+	})
+
+	suite.Create(bond)
+
+	ctest.AssertResource(suite, bondName, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Equal(network.LinkKindBond, r.TypedSpec().Kind)
+
+		if asrt.NotNil(r.TypedSpec().BondMaster.PrimaryIndex) {
+			asrt.Equal(primaryIndex, *r.TypedSpec().BondMaster.PrimaryIndex)
+		}
+	})
+
+	// the primary resolved on the first pass, so the settings should have been written exactly once
+	suite.assertBondSettingsNotReapplied(bondName)
+
+	for _, res := range append(dummies, bond) {
+		suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), res.Metadata()))
+	}
+
+	ctest.AssertNoResource[*network.LinkStatus](suite, bondName)
+}
+
+// TestBondPrimaryAppliedLate covers the ordering where the bond is created before its slaves exist —
+// the primary can't be resolved yet, so it has to be applied on a later reconcile once the slave shows
+// up. Without that, a bond whose slaves are logical links would silently never get a primary.
+func (suite *LinkSpecSuite) TestBondPrimaryAppliedLate() {
+	bondName, dummyNames, dummies, bond := suite.bondWithSlaves(func(dummyNames []string) string { return dummyNames[1] })
+	primaryName := dummyNames[1]
+
+	// everything at once: SortLinks puts the bond master ahead of its slaves, so the bond is created
+	// while the slave links still don't exist
+	for _, res := range append(dummies, bond) {
+		suite.Create(res)
+	}
+
+	var primaryIndex uint32
+
+	ctest.AssertResource(suite, primaryName, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.NotZero(r.TypedSpec().Index)
+
+		primaryIndex = r.TypedSpec().Index
+	})
+
+	ctest.AssertResource(suite, bondName, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Equal(network.LinkKindBond, r.TypedSpec().Kind)
+
+		if asrt.NotNil(r.TypedSpec().BondMaster.PrimaryIndex) {
+			asrt.Equal(primaryIndex, *r.TypedSpec().BondMaster.PrimaryIndex)
+		}
+	})
+
+	for _, res := range append(dummies, bond) {
+		suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), res.Metadata()))
+	}
+
+	ctest.AssertNoResource[*network.LinkStatus](suite, bondName)
+}
+
+// TestBondPrimaryNotPresent checks that naming a primary which doesn't exist doesn't break the bond,
+// and — more importantly — doesn't put the controller into a loop where it rewrites the bond settings
+// on every reconcile because the unresolvable name never matches what the kernel reports.
+func (suite *LinkSpecSuite) TestBondPrimaryNotPresent() {
+	bondName, _, dummies, bond := suite.bondWithSlaves(func([]string) string { return "tlos-absent0" })
+
+	for _, res := range append(dummies, bond) {
+		suite.Create(res)
+	}
+
+	ctest.AssertResource(suite, bondName, func(r *network.LinkStatus, asrt *assert.Assertions) {
+		asrt.Equal(network.LinkKindBond, r.TypedSpec().Kind)
+		asrt.Contains([]nethelpers.OperationalState{nethelpers.OperStateUp, nethelpers.OperStateUnknown}, r.TypedSpec().OperationalState)
+		// no primary was ever applied, so the kernel doesn't report one
+		asrt.Nil(r.TypedSpec().BondMaster.PrimaryIndex)
+	})
+
+	suite.assertBondSettingsNotReapplied(bondName)
+
+	for _, res := range append(dummies, bond) {
+		suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), res.Metadata()))
+	}
+
+	ctest.AssertNoResource[*network.LinkStatus](suite, bondName)
+}
+
 //nolint:gocyclo
 func (suite *LinkSpecSuite) TestBond8023ad() {
 	bondName := suite.uniqueDummyInterface()

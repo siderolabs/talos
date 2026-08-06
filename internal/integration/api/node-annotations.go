@@ -149,7 +149,8 @@ func (suite *NodeAnnotationsSuite) setNodeAnnotations(nodeIP string, nodeAnnotat
 			nodeConfig.AnnotationsConfig = nodeAnnotations
 
 			return nil
-		})
+		},
+	)
 	suite.Require().NoError(err)
 
 	bytes, err := nodeConfig.Bytes()

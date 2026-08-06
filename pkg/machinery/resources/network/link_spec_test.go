@@ -115,7 +115,7 @@ bondMaster:
     lacpRate: fast
     arpValidate: all
     arpAllTargets: any
-    primary: 3
+    primaryIndex: 3
     primaryReselect: better
     failOverMac: follow
     adSelect: count

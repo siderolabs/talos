@@ -137,6 +137,10 @@ func (o *BondConfigV1Alpha1) DeepCopy() *BondConfigV1Alpha1 {
 		cp.BondADLACPActive = new(nethelpers.ADLACPActive)
 		*cp.BondADLACPActive = *o.BondADLACPActive
 	}
+	if o.BondPrimary != nil {
+		cp.BondPrimary = new(string)
+		*cp.BondPrimary = *o.BondPrimary
+	}
 	if o.BondPrimaryReselect != nil {
 		cp.BondPrimaryReselect = new(nethelpers.PrimaryReselect)
 		*cp.BondPrimaryReselect = *o.BondPrimaryReselect

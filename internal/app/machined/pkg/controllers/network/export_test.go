@@ -6,6 +6,7 @@ package network
 
 // Test exports for unexported route helpers (consumed by the external network_test package).
 var (
-	BuildMultipathForTest = buildMultipath
-	MultipathEqualForTest = multipathEqual
+	BuildMultipathForTest     = buildMultipath
+	MultipathEqualForTest     = multipathEqual
+	ResolveBondPrimaryForTest = resolveBondPrimary
 )

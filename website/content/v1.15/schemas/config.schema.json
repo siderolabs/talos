@@ -3966,6 +3966,13 @@
           "markdownDescription": "Whether to send LACPDU frames periodically, defaults to \"on\" if mode is 802.3ad.",
           "x-intellij-html-description": "\u003cp\u003eWhether to send LACPDU frames periodically, defaults to \u0026ldquo;on\u0026rdquo; if mode is 802.3ad.\u003c/p\u003e\n"
         },
+        "primary": {
+          "type": "string",
+          "title": "primary",
+          "description": "Name of the link (interface) which should be used as the primary slave of the bond.\n\nThe primary link, when up, is always the active one; the other links are only used when the\nprimary is down. Only meaningful for the “active-backup”, “balance-tlb” and “balance-alb” modes.\n\nMust be one of the links listed in links.\n",
+          "markdownDescription": "Name of the link (interface) which should be used as the primary slave of the bond.\n\nThe primary link, when up, is always the active one; the other links are only used when the\nprimary is down. Only meaningful for the \"active-backup\", \"balance-tlb\" and \"balance-alb\" modes.\n\nMust be one of the links listed in `links`.",
+          "x-intellij-html-description": "\u003cp\u003eName of the link (interface) which should be used as the primary slave of the bond.\u003c/p\u003e\n\n\u003cp\u003eThe primary link, when up, is always the active one; the other links are only used when the\nprimary is down. Only meaningful for the \u0026ldquo;active-backup\u0026rdquo;, \u0026ldquo;balance-tlb\u0026rdquo; and \u0026ldquo;balance-alb\u0026rdquo; modes.\u003c/p\u003e\n\n\u003cp\u003eMust be one of the links listed in \u003ccode\u003elinks\u003c/code\u003e.\u003c/p\u003e\n"
+        },
         "primaryReselect": {
           "enum": [
             "always",
@@ -3973,9 +3980,9 @@
             "failure"
           ],
           "title": "primaryReselect",
-          "description": "Policy under which the primary slave should be reselected.\n",
-          "markdownDescription": "Policy under which the primary slave should be reselected.",
-          "x-intellij-html-description": "\u003cp\u003ePolicy under which the primary slave should be reselected.\u003c/p\u003e\n"
+          "description": "Policy under which the primary slave should be reselected.\n\nHas no effect unless primary is set.\n",
+          "markdownDescription": "Policy under which the primary slave should be reselected.\n\nHas no effect unless `primary` is set.",
+          "x-intellij-html-description": "\u003cp\u003ePolicy under which the primary slave should be reselected.\u003c/p\u003e\n\n\u003cp\u003eHas no effect unless \u003ccode\u003eprimary\u003c/code\u003e is set.\u003c/p\u003e\n"
         },
         "resendIGMP": {
           "type": "integer",

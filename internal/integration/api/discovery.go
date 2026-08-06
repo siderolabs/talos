@@ -284,7 +284,8 @@ func (suite *DiscoverySuite) TestServiceEndpoints() {
 		return cluster.ServiceEndpoint{Name: c.Name(), Endpoint: addr, Insecure: insecure}
 	})
 
-	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{cluster.ConfigID},
+	rtestutils.AssertResources(
+		nodeCtx, suite.T(), suite.Client.COSI, []string{cluster.ConfigID},
 		func(cfg *cluster.Config, asrt *assert.Assertions) {
 			asrt.ElementsMatch(expected, cfg.TypedSpec().ServiceEndpoints)
 		},
@@ -324,7 +325,8 @@ func (suite *DiscoverySuite) TestDiscoveryServiceConfigDocument() {
 	suite.PatchMachineConfig(nodeCtx, cfgDocument)
 
 	// the cluster Config resource should now include the extra named endpoint
-	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{cluster.ConfigID},
+	rtestutils.AssertResources(
+		nodeCtx, suite.T(), suite.Client.COSI, []string{cluster.ConfigID},
 		func(cfg *cluster.Config, asrt *assert.Assertions) {
 			asrt.Contains(xslices.Map(cfg.TypedSpec().ServiceEndpoints, func(ep cluster.ServiceEndpoint) string { return ep.Name }), extraName)
 		},
@@ -339,7 +341,8 @@ func (suite *DiscoverySuite) TestDiscoveryServiceConfigDocument() {
 	suite.RemoveMachineConfigDocumentsByName(nodeCtx, clustertypes.DiscoveryServiceKind, extraName)
 
 	// after removal, the extra endpoint disappears from the resource
-	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{cluster.ConfigID},
+	rtestutils.AssertResources(
+		nodeCtx, suite.T(), suite.Client.COSI, []string{cluster.ConfigID},
 		func(cfg *cluster.Config, asrt *assert.Assertions) {
 			asrt.NotContains(xslices.Map(cfg.TypedSpec().ServiceEndpoints, func(ep cluster.ServiceEndpoint) string { return ep.Name }), extraName)
 		},
@@ -373,7 +376,8 @@ func (suite *DiscoverySuite) TestDiscoveryServiceConfigDocument() {
 	suite.RemoveMachineConfigDocuments(nodeCtx, clustertypes.DiscoveryServiceKind)
 
 	// the cluster Config resource should no longer carry any service endpoints
-	rtestutils.AssertResources(nodeCtx, suite.T(), suite.Client.COSI, []string{cluster.ConfigID},
+	rtestutils.AssertResources(
+		nodeCtx, suite.T(), suite.Client.COSI, []string{cluster.ConfigID},
 		func(cfg *cluster.Config, asrt *assert.Assertions) {
 			asrt.Empty(cfg.TypedSpec().ServiceEndpoints)
 		},

@@ -105,6 +105,10 @@ message BondMasterSpec {
   // ARPAllTargets specifies whether ARP probes should be sent to any or all targets.
   talos.resource.definitions.enums.NethelpersARPAllTargets arp_all_targets = 5;
   // PrimaryIndex is a device index specifying which slave is the primary device.
+  //
+  // This is the resolved form of Primary: it is what the kernel reports back, and it is filled in
+  // by the link spec controller right before applying the settings. Configuration layers should set
+  // Primary instead, as interface indexes are not stable.
   uint32 primary_index = 6;
   // PrimaryReselect specifies the policy under which the primary slave should be reselected.
   talos.resource.definitions.enums.NethelpersPrimaryReselect primary_reselect = 7;
@@ -155,6 +159,10 @@ message BondMasterSpec {
   talos.resource.definitions.enums.NethelpersADLACPActive adlacp_active = 27;
   // MissedMax is the number of arp_interval monitor checks that must fail in order for an interface to be marked down by the ARP monitor.
   uint32 missed_max = 28;
+  // Primary is the name of the slave link which should be used as the primary device.
+  //
+  // Only meaningful for the active-backup, balance-tlb and balance-alb modes.
+  string primary = 29;
 }
 
 // BondSlave contains a bond's master name and slave index.

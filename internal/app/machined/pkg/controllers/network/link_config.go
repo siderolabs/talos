@@ -350,7 +350,7 @@ func (ctrl *LinkConfigController) processDevicesConfiguration(
 		}
 
 		if device.Bond() != nil {
-			if err := SetBondMasterLegacy(linkMap[deviceInterface], device.Bond()); err != nil {
+			if err := SetBondMasterLegacy(linkMap[deviceInterface], device.Bond(), linkNameResolver.Resolve); err != nil {
 				logger.Error("error parsing bond config", zap.Error(err))
 			}
 		}
@@ -477,7 +477,7 @@ func (ctrl *LinkConfigController) processLinkConfigs(linkMap map[string]*network
 			parentLink := linkNameResolver.Resolve(specificLinkConfig.ParentLink())
 			vlanLink(linkMap[linkName], linkName, parentLink, networkVLANConfigToVlaner{specificLinkConfig})
 		case talosconfig.NetworkBondConfig:
-			SendBondMaster(linkMap[linkName], specificLinkConfig)
+			SendBondMaster(linkMap[linkName], specificLinkConfig, linkNameResolver.Resolve)
 
 			bondedLinks := xslices.Map(specificLinkConfig.Links(), linkNameResolver.Resolve)
 

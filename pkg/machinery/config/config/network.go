@@ -292,6 +292,7 @@ type NetworkBondConfig interface {
 	ADActorSysPrio() optional.Optional[uint16]
 	ADUserPortKey() optional.Optional[uint16]
 	ADLACPActive() optional.Optional[nethelpers.ADLACPActive]
+	Primary() optional.Optional[string]
 	PrimaryReselect() optional.Optional[nethelpers.PrimaryReselect]
 	ResendIGMP() optional.Optional[uint32]
 	MinLinks() optional.Optional[uint32]

@@ -10001,7 +10001,7 @@ BondMasterSpec describes bond settings if Kind == "bond".
 | lacp_rate | [talos.resource.definitions.enums.NethelpersLACPRate](#talos.resource.definitions.enums.NethelpersLACPRate) |  | LACPRate specifies the rate at which LACPDU frames are sent. |
 | arp_validate | [talos.resource.definitions.enums.NethelpersARPValidate](#talos.resource.definitions.enums.NethelpersARPValidate) |  | ARPValidate specifies whether or not ARP probes and replies should be validated. |
 | arp_all_targets | [talos.resource.definitions.enums.NethelpersARPAllTargets](#talos.resource.definitions.enums.NethelpersARPAllTargets) |  | ARPAllTargets specifies whether ARP probes should be sent to any or all targets. |
-| primary_index | [uint32](#uint32) |  | PrimaryIndex is a device index specifying which slave is the primary device. |
+| primary_index | [uint32](#uint32) |  | PrimaryIndex is a device index specifying which slave is the primary device.<br><br>This is the resolved form of Primary: it is what the kernel reports back, and it is filled in by the link spec controller right before applying the settings. Configuration layers should set Primary instead, as interface indexes are not stable. |
 | primary_reselect | [talos.resource.definitions.enums.NethelpersPrimaryReselect](#talos.resource.definitions.enums.NethelpersPrimaryReselect) |  | PrimaryReselect specifies the policy under which the primary slave should be reselected. |
 | fail_over_mac | [talos.resource.definitions.enums.NethelpersFailOverMAC](#talos.resource.definitions.enums.NethelpersFailOverMAC) |  | FailOverMac whether active-backup mode should set all slaves to the same MAC address at enslavement, when enabled, or perform special handling. |
 | ad_select | [talos.resource.definitions.enums.NethelpersADSelect](#talos.resource.definitions.enums.NethelpersADSelect) |  | ADSelect specifies the aggregate selection policy for 802.3ad. |
@@ -10024,6 +10024,7 @@ BondMasterSpec describes bond settings if Kind == "bond".
 | nsip6_targets | [common.NetIP](#common.NetIP) | repeated | NSIP6Targets is the list of IPv6 addresses to use for NS link monitoring when ARPInterval is set.<br><br>Maximum of 16 targets are supported. |
 | adlacp_active | [talos.resource.definitions.enums.NethelpersADLACPActive](#talos.resource.definitions.enums.NethelpersADLACPActive) |  | ADLACPActive specifies whether to send LACPDU frames periodically. |
 | missed_max | [uint32](#uint32) |  | MissedMax is the number of arp_interval monitor checks that must fail in order for an interface to be marked down by the ARP monitor. |
+| primary | [string](#string) |  | Primary is the name of the slave link which should be used as the primary device.<br><br>Only meaningful for the active-backup, balance-tlb and balance-alb modes. |
 
 
 

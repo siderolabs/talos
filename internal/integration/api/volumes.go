@@ -469,7 +469,8 @@ func (suite *VolumesSuite) TestUserVolumesPartition() {
 		userVolumesWithTrimSchedule = userVolumeIDs[1:2]
 	}
 
-	rtestutils.AssertResources(ctx, suite.T(), suite.Client.COSI, userVolumesWithTrimSchedule,
+	rtestutils.AssertResources(
+		ctx, suite.T(), suite.Client.COSI, userVolumesWithTrimSchedule,
 		func(vs *block.VolumeTrimSchedule, asrt *assert.Assertions) {
 			expectedInterval := constants.DefaultFilesystemTrimInterval
 
