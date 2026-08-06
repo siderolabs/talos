@@ -145,23 +145,22 @@ func upgradeViaLifecycleService(ctx context.Context, clientFactory *global.Clien
 	var nodeNames map[string]string
 
 	if upgradeCmdFlags.drain {
+		// Register the uncordon before draining: drainNodes returns the nodes it
+		// cordoned even on error, so a drain that fails after cordoning some nodes
+		// no longer leaves them SchedulingDisabled when the upgrade aborts below.
+		defer func() {
+			if len(nodeNames) > 0 {
+				if uncordonErr := uncordonNodes(ctx, clientFactory, nodeNames, upgradeCmdFlags.timeout, rep); uncordonErr != nil {
+					retErr = errors.Join(retErr, uncordonErr)
+				}
+			}
+		}()
+
 		nodeNames, err = drainNodes(ctx, clientFactory, upgradeCmdFlags.drainTimeout, rep)
 		if err != nil {
 			return err
 		}
 	}
-
-	defer func() {
-		if !upgradeCmdFlags.drain {
-			return
-		}
-
-		if len(nodeNames) > 0 {
-			if uncordonErr := uncordonNodes(ctx, clientFactory, nodeNames, upgradeCmdFlags.timeout, rep); uncordonErr != nil {
-				retErr = errors.Join(retErr, uncordonErr)
-			}
-		}
-	}()
 
 	if !upgradeCmdFlags.noReboot {
 		err = rebootInternal(ctx, clientFactory, upgradeCmdFlags.wait, upgradeCmdFlags.debug, upgradeCmdFlags.timeout, rep, opts...)
