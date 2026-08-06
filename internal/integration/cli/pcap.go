@@ -21,9 +21,9 @@ func (suite *PcapSuite) SuiteName() string {
 	return "cli.PcapSuite"
 }
 
-// TestLoopback verifies that there are some packets on loopback interface.
-func (suite *PcapSuite) TestLoopback() {
-	suite.RunCLI([]string{"pcap", "--interface", "lo", "--nodes", suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane), "--duration", "2s"}) // default checks for stdout not empty
+// TestNodeTraffic verifies that packet capture can observe traffic on a stable interface.
+func (suite *PcapSuite) TestNodeTraffic() {
+	suite.RunCLI([]string{"pcap", "--interface", "eth0", "--nodes", suite.RandomDiscoveredNodeInternalIP(machine.TypeControlPlane), "--duration", "2s"}) // default checks for stdout not empty
 }
 
 func init() {
