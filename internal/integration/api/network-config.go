@@ -552,6 +552,79 @@ func (suite *NetworkConfigSuite) TestBondConfig() {
 	rtestutils.AssertNoResource[*networkres.RouteStatus](nodeCtx, suite.T(), suite.Client.COSI, routeID)
 }
 
+// TestBondPrimaryConfig tests that the bond primary named in the config is applied to the kernel.
+//
+// The kernel reports IFLA_BOND_PRIMARY as an interface index, while the config names the link, so this
+// covers the name-to-index resolution end to end.
+func (suite *NetworkConfigSuite) TestBondPrimaryConfig() {
+	if suite.Cluster == nil {
+		suite.T().Skip("skipping if cluster is not qemu/docker")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
+	nodeCtx := client.WithNode(suite.ctx, node)
+
+	suite.T().Logf("testing on node %q", node)
+
+	dummyNames := xslices.Map([]int{0, 1}, func(int) string {
+		return fmt.Sprintf("dummy%d", rand.IntN(10000))
+	})
+
+	dummyConfigs := xslices.Map(dummyNames, func(name string) any {
+		return network.NewDummyLinkConfigV1Alpha1(name)
+	})
+
+	// deliberately the second link, so a pass can't be explained by the bond defaulting to the first slave
+	primaryName := dummyNames[1]
+
+	bondName := "agg." + strconv.Itoa(rand.IntN(10000))
+
+	bond := network.NewBondConfigV1Alpha1(bondName)
+	bond.BondLinks = dummyNames
+	bond.BondMode = new(nethelpers.BondModeActiveBackup)
+	bond.BondMIIMon = new(uint32(100))
+	bond.BondPrimary = new(primaryName)
+	bond.BondPrimaryReselect = new(nethelpers.PrimaryReselectAlways)
+	bond.LinkUp = new(true)
+
+	suite.PatchMachineConfig(nodeCtx, append(dummyConfigs, bond)...)
+
+	var primaryIndex uint32
+
+	rtestutils.AssertResource(
+		nodeCtx, suite.T(), suite.Client.COSI, primaryName,
+		func(link *networkres.LinkStatus, asrt *assert.Assertions) {
+			asrt.Equal("dummy", link.TypedSpec().Kind)
+			asrt.NotZero(link.TypedSpec().MasterIndex)
+			asrt.NotZero(link.TypedSpec().Index)
+
+			primaryIndex = link.TypedSpec().Index
+		},
+	)
+
+	rtestutils.AssertResource(
+		nodeCtx, suite.T(), suite.Client.COSI, bondName,
+		func(link *networkres.LinkStatus, asrt *assert.Assertions) {
+			asrt.Equal("bond", link.TypedSpec().Kind)
+			asrt.Equal(nethelpers.BondModeActiveBackup, link.TypedSpec().BondMaster.Mode)
+			asrt.Equal(nethelpers.PrimaryReselectAlways, link.TypedSpec().BondMaster.PrimaryReselect)
+
+			if asrt.NotNil(link.TypedSpec().BondMaster.PrimaryIndex) {
+				asrt.Equal(primaryIndex, *link.TypedSpec().BondMaster.PrimaryIndex)
+			}
+		},
+	)
+
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.BondKind, bondName)
+	suite.RemoveMachineConfigDocumentsByName(nodeCtx, network.DummyLinkKind, dummyNames...)
+
+	for _, dummyName := range dummyNames {
+		rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, dummyName)
+	}
+
+	rtestutils.AssertNoResource[*networkres.LinkStatus](nodeCtx, suite.T(), suite.Client.COSI, bondName)
+}
+
 // TestBridgeConfig tests creation of bridge interfaces.
 func (suite *NetworkConfigSuite) TestBridgeConfig() {
 	if suite.Cluster == nil {

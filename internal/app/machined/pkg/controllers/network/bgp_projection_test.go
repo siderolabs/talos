@@ -34,11 +34,13 @@ func TestBGPStatusSpecProjection(t *testing.T) {
 		LinkIndex: 10,
 	}
 
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		map[string]network.LinkStatusSpec{"eth0": *link.TypedSpec()},
 		netctrl.BGPLinkStatusSpecsForTest(slices.Values([]*network.LinkStatus{link})),
 	)
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		[]network.AddressStatusSpec{*address.TypedSpec()},
 		netctrl.BGPAddressSpecsForTest(slices.Values([]*network.AddressStatus{address})),
 	)

@@ -155,18 +155,21 @@ func TestBGPRouteImportLifecycle(t *testing.T) {
 func TestBGPImportFamilies(t *testing.T) {
 	t.Parallel()
 
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		[]bgppacket.Family{bgppacket.RF_IPv4_UC},
 		internalbgp.ImportFamiliesForTest([]netip.Prefix{
 			netip.MustParsePrefix("198.51.100.0/24"),
 			netip.MustParsePrefix("203.0.113.0/24"),
 		}),
 	)
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		[]bgppacket.Family{bgppacket.RF_IPv6_UC},
 		internalbgp.ImportFamiliesForTest([]netip.Prefix{netip.MustParsePrefix("2001:db8::/32")}),
 	)
-	assert.Equal(t,
+	assert.Equal(
+		t,
 		[]bgppacket.Family{bgppacket.RF_IPv4_UC, bgppacket.RF_IPv6_UC},
 		internalbgp.ImportFamiliesForTest([]netip.Prefix{
 			netip.MustParsePrefix("198.51.100.0/24"),

@@ -130,7 +130,8 @@ func (suite *ProxyURLSuite) TestProxyURL() {
 		endpoint = currentCtx.Endpoints[0]
 	}
 
-	c, err := client.New(suite.ctx,
+	c, err := client.New(
+		suite.ctx,
 		client.WithConfigContext(&ctxWithProxy),
 		client.WithEndpoints(endpoint),
 	)

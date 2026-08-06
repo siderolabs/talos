@@ -8,7 +8,9 @@ package network
 
 import (
 	"errors"
+	"fmt"
 	"net/netip"
+	"slices"
 
 	"github.com/siderolabs/gen/optional"
 	"github.com/siderolabs/go-pointer"
@@ -237,7 +239,21 @@ type BondConfigV1Alpha1 struct {
 	//     - "off"
 	BondADLACPActive *nethelpers.ADLACPActive `yaml:"adLACPActive,omitempty"`
 	//   description: |
+	//     Name of the link (interface) which should be used as the primary slave of the bond.
+	//     Link aliases can be used here as well.
+	//
+	//     The primary link, when up, is always the active one; the other links are only used when the
+	//     primary is down. Only meaningful for the "active-backup", "balance-tlb" and "balance-alb" modes.
+	//
+	//     Must be one of the links listed in `links`.
+	//   examples:
+	//    - value: >
+	//       "enp1s2"
+	BondPrimary *string `yaml:"primary,omitempty"`
+	//   description: |
 	//     Policy under which the primary slave should be reselected.
+	//
+	//     Has no effect unless `primary` is set.
 	//   examples:
 	//    - value: >
 	//       "always"
@@ -363,8 +379,51 @@ func (s *BondConfigV1Alpha1) Validate(validation.RuntimeMode, ...validation.Opti
 		warnings = append(warnings, s.validateFor8023AD()...)
 	}
 
+	primaryWarnings, primaryErrs := s.validatePrimary()
+	errs, warnings = errors.Join(errs, primaryErrs), append(warnings, primaryWarnings...)
+
 	extraWarnings, extraErrs := s.CommonLinkConfig.Validate()
 	errs, warnings = errors.Join(errs, extraErrs), append(warnings, extraWarnings...)
+
+	return warnings, errs
+}
+
+// usesPrimary mirrors the kernel's bond_uses_primary(): the primary slave only has an effect in the
+// modes which have a single active slave at a time.
+func (s *BondConfigV1Alpha1) usesPrimary() bool {
+	if s.BondMode == nil {
+		return false
+	}
+
+	switch *s.BondMode {
+	case nethelpers.BondModeActiveBackup, nethelpers.BondModeTLB, nethelpers.BondModeALB:
+		return true
+	case nethelpers.BondModeRoundrobin, nethelpers.BondModeXOR, nethelpers.BondModeBroadcast, nethelpers.BondMode8023AD:
+		return false
+	default:
+		return false
+	}
+}
+
+func (s *BondConfigV1Alpha1) validatePrimary() ([]string, error) {
+	var (
+		errs     error
+		warnings []string
+	)
+
+	if s.BondPrimary != nil {
+		if *s.BondPrimary == "" {
+			errs = errors.Join(errs, errors.New("primary link name can't be empty"))
+		} else if !slices.Contains(s.BondLinks, *s.BondPrimary) {
+			errs = errors.Join(errs, fmt.Errorf("primary link %q is not in the list of bonded links", *s.BondPrimary))
+		}
+
+		if s.BondMode != nil && !s.usesPrimary() {
+			errs = errors.Join(errs, fmt.Errorf("primary link is not supported in %q bond mode", *s.BondMode))
+		}
+	} else if s.BondPrimaryReselect != nil && s.usesPrimary() {
+		warnings = append(warnings, "primaryReselect has no effect unless primary is specified")
+	}
 
 	return warnings, errs
 }
@@ -533,6 +592,15 @@ func (s *BondConfigV1Alpha1) ADLACPActive() optional.Optional[nethelpers.ADLACPA
 	}
 
 	return optional.Some(*s.BondADLACPActive)
+}
+
+// Primary implements NetworkBondConfig interface.
+func (s *BondConfigV1Alpha1) Primary() optional.Optional[string] {
+	if s.BondPrimary == nil {
+		return optional.None[string]()
+	}
+
+	return optional.Some(*s.BondPrimary)
 }
 
 // PrimaryReselect implements NetworkBondConfig interface.

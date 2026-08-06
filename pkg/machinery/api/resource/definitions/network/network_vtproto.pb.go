@@ -822,6 +822,15 @@ func (m *BondMasterSpec) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if len(m.Primary) > 0 {
+		i -= len(m.Primary)
+		copy(dAtA[i:], m.Primary)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Primary)))
+		i--
+		dAtA[i] = 0x1
+		i--
+		dAtA[i] = 0xea
+	}
 	if m.MissedMax != 0 {
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.MissedMax))
 		i--
@@ -6436,6 +6445,10 @@ func (m *BondMasterSpec) SizeVT() (n int) {
 	if m.MissedMax != 0 {
 		n += 2 + protohelpers.SizeOfVarint(uint64(m.MissedMax))
 	}
+	l = len(m.Primary)
+	if l > 0 {
+		n += 2 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
 	n += len(m.unknownFields)
 	return n
 }
@@ -10907,6 +10920,38 @@ func (m *BondMasterSpec) UnmarshalVT(dAtA []byte) error {
 					break
 				}
 			}
+		case 29:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Primary", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Primary = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
