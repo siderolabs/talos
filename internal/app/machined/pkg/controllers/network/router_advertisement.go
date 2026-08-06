@@ -15,6 +15,7 @@ import (
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/mdlayher/ndp"
+	"github.com/siderolabs/gen/panicsafe"
 	"go.uber.org/zap"
 
 	"github.com/siderolabs/talos/pkg/machinery/kernel"
@@ -165,7 +166,11 @@ func (ctrl *RouterAdvertisementController) reconcile(ctx context.Context, r cont
 		go func() {
 			defer close(sender.done)
 
-			ctrl.runSender(senderCtx, iface, logger)
+			if err := panicsafe.Run(func() {
+				ctrl.runSender(senderCtx, iface, logger)
+			}); err != nil {
+				logger.Error("router advertisement sender panicked", zap.String("interface", iface), zap.Error(err))
+			}
 		}()
 	}
 
