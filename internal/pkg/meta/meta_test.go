@@ -13,7 +13,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -36,7 +35,7 @@ func setupTest(t *testing.T) (*meta.Meta, string, state.State) {
 
 	require.NoError(t, f.Close())
 
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	m, err := meta.New(t.Context(), st, meta.WithFixedPath(path))
 	require.NoError(t, err)

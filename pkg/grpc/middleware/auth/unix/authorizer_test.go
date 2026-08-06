@@ -11,7 +11,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/peer"
@@ -29,7 +28,7 @@ const (
 func newUsermodeHelperAuthorizer(t *testing.T) *unix.Authorizer {
 	t.Helper()
 
-	st := state.WrapCore(namespaced.NewState(inmem.Build))
+	st := state.WrapCore(inmem.NewState())
 
 	return &unix.Authorizer{
 		Resources:           st,
@@ -106,7 +105,7 @@ func TestAuthorizerUsermodeHelperDisabled(t *testing.T) {
 	// without SelfExeIno configured (as in apid/trustd authorizers) the check is disabled,
 	// even for otherwise-matching credentials.
 	a := &unix.Authorizer{
-		Resources:           state.WrapCore(namespaced.NewState(inmem.Build)),
+		Resources:           state.WrapCore(inmem.NewState()),
 		UsermodeHelperRoles: role.MakeSet(role.Admin, role.Operator),
 	}
 

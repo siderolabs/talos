@@ -15,7 +15,6 @@ import (
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/gen/xslices"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
@@ -65,7 +64,7 @@ func TestVolumeConfigSuite(t *testing.T) {
 				suite.Require().NoError(f.Truncate(1024 * 1024))
 				suite.Require().NoError(f.Close())
 
-				st := state.WrapCore(namespaced.NewState(inmem.Build))
+				st := state.WrapCore(inmem.NewState())
 
 				m, err := intmeta.New(t.Context(), st, intmeta.WithFixedPath(path))
 				suite.Require().NoError(err)
