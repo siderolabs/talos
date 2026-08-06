@@ -26,9 +26,9 @@ ARTIFACTS := _out
 EMBED_TARGET ?= embed
 
 TOOLS_PREFIX ?= ghcr.io/siderolabs/tools
-TOOLS ?= v1.14.0-alpha.0-26-g08071b1
+TOOLS ?= v1.14.0-alpha.0-29-g80fd6eb
 PKGS_PREFIX ?= ghcr.io/siderolabs
-PKGS ?= v1.14.0-alpha.0-121-g4c14c73
+PKGS ?= v1.14.0-alpha.0-125-ge5b0a80
 GENERATE_VEX_PREFIX ?= ghcr.io/siderolabs/generate-vex
 GENERATE_VEX ?= latest
 
@@ -106,13 +106,13 @@ TALOSCTL_EXECUTABLE := $(PWD)/$(ARTIFACTS)/$(TALOSCTL_DEFAULT_TARGET)-$(ARCH)
 INTEGRATION_TEST := integration-test
 INTEGRATION_TEST_PROVISION_DEFAULT_TARGET := integration-test-provision-$(OPERATING_SYSTEM)
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-KUBECTL_VERSION ?= v1.37.0-beta.0
+KUBECTL_VERSION ?= v1.37.0-rc.0
 # renovate: datasource=github-releases depName=kastenhq/kubestr
 KUBESTR_VERSION ?= v0.4.49
 # renovate: datasource=github-releases depName=helm/helm
 HELM_VERSION ?= v4.2.3
 # renovate: datasource=github-releases depName=cilium/cilium-cli
-CILIUM_CLI_VERSION ?= v0.19.6
+CILIUM_CLI_VERSION ?= v0.19.7
 # renovate: datasource=github-releases depName=microsoft/secureboot_objects
 MICROSOFT_SECUREBOOT_RELEASE ?= v1.1.3
 
@@ -264,7 +264,7 @@ COMMON_ARGS += --build-arg=ZSTD_COMPRESSION_LEVEL=$(ZSTD_COMPRESSION_LEVEL)
 
 CI_ARGS ?=
 
-EXTENSIONS_FILTER_COMMAND ?= grep -vE 'tailscale|xen-guest-agent|nvidia|vmtoolsd-guest-agent|metal-agent|cloudflared|zerotier|nebula|newt|netbird|multipath-tools|trident-iscsi-tools|-snapshotter|hyperv-guest-agent'
+EXTENSIONS_FILTER_COMMAND ?= grep -vE 'tailscale|xen-guest-agent|nvidia|vmtoolsd-guest-agent|metal-agent|cloudflared|zerotier|nebula|newt|netbird|multipath-tools|trident-iscsi-tools|-snapshotter|hyperv-guest-agent|/qemu:'
 
 all: initramfs kernel installer imager talosctl talosctl-image talos
 
