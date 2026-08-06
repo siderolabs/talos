@@ -1,0 +1,123 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+//nolint:testpackage
+package runtime
+
+import (
+	"testing"
+
+	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
+	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	grpcstatus "google.golang.org/grpc/status"
+
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
+)
+
+func TestSystemVolumeStatuses(t *testing.T) {
+	ctx := t.Context()
+
+	st := state.WrapCore(namespaced.NewState(inmem.Build))
+
+	sysVol := block.NewVolumeStatus(block.NamespaceName, "EPHEMERAL")
+	sysVol.Metadata().Labels().Set(block.SystemVolumeLabel, "")
+	require.NoError(t, st.Create(ctx, sysVol))
+
+	userVol := block.NewVolumeStatus(block.NamespaceName, "my-user-volume")
+	userVol.Metadata().Labels().Set(block.UserVolumeLabel, "")
+	require.NoError(t, st.Create(ctx, userVol))
+
+	t.Run("valid system volume", func(t *testing.T) {
+		result, err := system.ResolveSystemVolumeStatuses(ctx, st, []string{"EPHEMERAL"})
+		require.NoError(t, err)
+		require.Len(t, result, 1)
+		assert.Equal(t, "EPHEMERAL", result[0].Metadata().ID())
+	})
+
+	t.Run("unknown volume", func(t *testing.T) {
+		_, err := system.ResolveSystemVolumeStatuses(ctx, st, []string{"NONEXISTENT"})
+		require.Error(t, err)
+		assert.Equal(t, codes.NotFound, grpcstatus.Code(err))
+	})
+
+	t.Run("non-system volume", func(t *testing.T) {
+		_, err := system.ResolveSystemVolumeStatuses(ctx, st, []string{"my-user-volume"})
+		require.Error(t, err)
+		assert.Equal(t, codes.InvalidArgument, grpcstatus.Code(err))
+	})
+
+	t.Run("multiple valid system volumes", func(t *testing.T) {
+		stateVol := block.NewVolumeStatus(block.NamespaceName, "STATE")
+		stateVol.Metadata().Labels().Set(block.SystemVolumeLabel, "")
+		require.NoError(t, st.Create(ctx, stateVol))
+
+		result, err := system.ResolveSystemVolumeStatuses(ctx, st, []string{"EPHEMERAL", "STATE"})
+		require.NoError(t, err)
+		require.Len(t, result, 2)
+		assert.Equal(t, "EPHEMERAL", result[0].Metadata().ID())
+		assert.Equal(t, "STATE", result[1].Metadata().ID())
+	})
+
+	t.Run("one invalid ID fails the whole batch", func(t *testing.T) {
+		_, err := system.ResolveSystemVolumeStatuses(ctx, st, []string{"EPHEMERAL", "NONEXISTENT"})
+		require.Error(t, err)
+		assert.Equal(t, codes.NotFound, grpcstatus.Code(err))
+	})
+
+	// META can't be wiped: it holds the staged wipe instructions, and it's the only volume provisioned
+	// before the wipe runs, so dropping its partition leaves it stale-Ready for the rest of the boot.
+	t.Run("META is rejected", func(t *testing.T) {
+		metaVol := block.NewVolumeStatus(block.NamespaceName, constants.MetaPartitionLabel)
+		metaVol.Metadata().Labels().Set(block.SystemVolumeLabel, "")
+		require.NoError(t, st.Create(ctx, metaVol))
+
+		_, err := system.ResolveSystemVolumeStatuses(ctx, st, []string{constants.MetaPartitionLabel})
+		require.Error(t, err)
+		assert.Equal(t, codes.InvalidArgument, grpcstatus.Code(err))
+		assert.Contains(t, err.Error(), "can't be wiped")
+	})
+
+	t.Run("META fails the whole batch", func(t *testing.T) {
+		_, err := system.ResolveSystemVolumeStatuses(ctx, st, []string{"EPHEMERAL", constants.MetaPartitionLabel})
+		require.Error(t, err)
+		assert.Equal(t, codes.InvalidArgument, grpcstatus.Code(err))
+	})
+}
+
+func TestAssertVolumesNotMounted(t *testing.T) {
+	ctx := t.Context()
+
+	st := state.WrapCore(namespaced.NewState(inmem.Build))
+
+	mountStatus := block.NewVolumeMountStatus(block.NamespaceName, "EPHEMERAL-machined")
+	mountStatus.TypedSpec().VolumeID = "EPHEMERAL"
+	require.NoError(t, st.Create(ctx, mountStatus))
+
+	t.Run("mounted volume rejected", func(t *testing.T) {
+		err := system.AssertVolumesNotMounted(ctx, st, []string{"EPHEMERAL"})
+		require.Error(t, err)
+		assert.Equal(t, codes.FailedPrecondition, grpcstatus.Code(err))
+		assert.Contains(t, err.Error(), "retry with --on-reboot")
+	})
+
+	t.Run("unmounted volume allowed", func(t *testing.T) {
+		require.NoError(t, system.AssertVolumesNotMounted(ctx, st, []string{"STATE"}))
+	})
+
+	t.Run("one of several requested volumes mounted is rejected", func(t *testing.T) {
+		err := system.AssertVolumesNotMounted(ctx, st, []string{"STATE", "EPHEMERAL"})
+		require.Error(t, err)
+		assert.Equal(t, codes.FailedPrecondition, grpcstatus.Code(err))
+	})
+
+	t.Run("none of several requested volumes mounted is allowed", func(t *testing.T) {
+		require.NoError(t, system.AssertVolumesNotMounted(ctx, st, []string{"STATE", "EFI"}))
+	})
+}
