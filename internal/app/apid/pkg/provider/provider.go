@@ -10,6 +10,7 @@ import (
 	"context"
 	stdlibtls "crypto/tls"
 	stdx509 "crypto/x509"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -74,6 +75,8 @@ func NewTLSConfig(ctx context.Context, resources state.State, skipClientCertVeri
 }
 
 // Watch for changes in API certificates and updates the TLSConfig.
+//
+//nolint:gocyclo
 func (tlsConfig *TLSConfig) Watch(ctx context.Context, onUpdate func()) error {
 	for {
 		var event state.Event
@@ -91,6 +94,11 @@ func (tlsConfig *TLSConfig) Watch(ctx context.Context, onUpdate func()) error {
 			// ignore, we'll get another event
 			continue
 		case state.Errored:
+			if ctx.Err() != nil || errors.Is(event.Error, context.Canceled) {
+				// shutting down
+				return nil //nolint:nilerr // we're shutting down, so this is not an error
+			}
+
 			return fmt.Errorf("error watching API certificates: %w", event.Error)
 		}
 

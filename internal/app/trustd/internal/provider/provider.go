@@ -10,8 +10,8 @@ import (
 	"context"
 	stdlibtls "crypto/tls"
 	stdx509 "crypto/x509"
+	"errors"
 	"fmt"
-	"log"
 	"sync"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -91,7 +91,12 @@ func (tlsConfig *TLSConfig) Watch(ctx context.Context) error {
 			// ignore, we'll get another event
 			continue
 		case state.Errored:
-			log.Printf("error watching for trustd certificates: %s", event.Error)
+			if ctx.Err() != nil || errors.Is(event.Error, context.Canceled) {
+				// shutting down
+				return nil //nolint:nilerr // we're shutting down, so this is not an error
+			}
+
+			return fmt.Errorf("error watching for trustd certificates: %w", event.Error)
 		}
 
 		trustdCerts := event.Resource.(*secrets.Trustd) //nolint:forcetypeassert

@@ -7,6 +7,7 @@ package apid
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"log"
@@ -99,6 +100,11 @@ outerLoop:
 			case state.Destroyed:
 				serviceConfig = nil
 			case state.Errored:
+				if ctx.Err() != nil || errors.Is(event.Error(), context.Canceled) {
+					// shutting down
+					break outerLoop
+				}
+
 				return fmt.Errorf("service config watch error: %w", event.Error())
 			case state.Bootstrapped, state.Noop:
 				// ignore
