@@ -401,6 +401,16 @@ description: Talos gRPC API reference.
     - [MemberSpec](#talos.resource.definitions.cluster.MemberSpec)
     - [ServiceEndpoint](#talos.resource.definitions.cluster.ServiceEndpoint)
   
+- [resource/definitions/containers/containers.proto](#resource/definitions/containers/containers.proto)
+    - [ContainerDependsOnSpec](#talos.resource.definitions.containers.ContainerDependsOnSpec)
+    - [ContainerImageSpec](#talos.resource.definitions.containers.ContainerImageSpec)
+    - [ContainerMountSpec](#talos.resource.definitions.containers.ContainerMountSpec)
+    - [ContainerNetworkSpec](#talos.resource.definitions.containers.ContainerNetworkSpec)
+    - [ContainerResourcesSpec](#talos.resource.definitions.containers.ContainerResourcesSpec)
+    - [ContainerRunAsSpec](#talos.resource.definitions.containers.ContainerRunAsSpec)
+    - [ContainerSecuritySpec](#talos.resource.definitions.containers.ContainerSecuritySpec)
+    - [ContainerSpecSpec](#talos.resource.definitions.containers.ContainerSpecSpec)
+  
 - [resource/definitions/cri/cri.proto](#resource/definitions/cri/cri.proto)
     - [BaseRuntimeSpecConfigSpec](#talos.resource.definitions.cri.BaseRuntimeSpecConfigSpec)
     - [CustomizationConfigSpec](#talos.resource.definitions.cri.CustomizationConfigSpec)
@@ -7176,6 +7186,170 @@ ServiceEndpoint describes a service endpoint for discovery.
 | name | [string](#string) |  |  |
 | endpoint | [string](#string) |  |  |
 | insecure | [bool](#bool) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
+<a name="resource/definitions/containers/containers.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## resource/definitions/containers/containers.proto
+
+
+
+<a name="talos.resource.definitions.containers.ContainerDependsOnSpec"></a>
+
+### ContainerDependsOnSpec
+ContainerDependsOnSpec is the resolved dependency set.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| paths | [string](#string) | repeated |  |
+| networks | [string](#string) | repeated |  |
+| time | [bool](#bool) |  |  |
+| containers | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.containers.ContainerImageSpec"></a>
+
+### ContainerImageSpec
+ContainerImageSpec is a resolved container image reference.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| ref | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.containers.ContainerMountSpec"></a>
+
+### ContainerMountSpec
+ContainerMountSpec is a resolved mount.
+
+Exactly one of VolumeID, Tmpfs or HostPath describes the source; Kind says which.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| kind | [string](#string) |  | Kind is one of "userVolume", "tmpfs" or "hostPath". |
+| volume_id | [string](#string) |  | VolumeID is the block volume ID for a userVolume mount, e.g. "u-web-content". |
+| source | [string](#string) |  | Source is the host path for a hostPath mount. |
+| destination | [string](#string) |  | Destination inside the container. |
+| size | [uint64](#uint64) |  | Size of a tmpfs mount, in bytes; zero means the kernel default. |
+| options | [string](#string) | repeated | Options with the read-only default already applied. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.containers.ContainerNetworkSpec"></a>
+
+### ContainerNetworkSpec
+ContainerNetworkSpec is the resolved network configuration.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| host_network | [bool](#bool) |  | HostNetwork shares the host network namespace instead of creating an empty one. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.containers.ContainerResourcesSpec"></a>
+
+### ContainerResourcesSpec
+ContainerResourcesSpec is the resolved cgroup configuration, in bytes and millicores.
+
+Zero means unset, which for a limit means unlimited.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| memory_limit | [uint64](#uint64) |  |  |
+| cpu_limit | [uint64](#uint64) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.containers.ContainerRunAsSpec"></a>
+
+### ContainerRunAsSpec
+ContainerRunAsSpec is the resolved uid/gid override.
+
+Nil means use the image's own USER for that half.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| uid | [int32](#int32) |  |  |
+| gid | [int32](#int32) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.containers.ContainerSecuritySpec"></a>
+
+### ContainerSecuritySpec
+ContainerSecuritySpec is the resolved security posture.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| privileged | [bool](#bool) |  | Privileged grants all grantable capabilities and all devices, matching what extension services get implicitly. |
+| capabilities_add | [string](#string) | repeated |  |
+| capabilities_drop | [string](#string) | repeated |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.containers.ContainerSpecSpec"></a>
+
+### ContainerSpecSpec
+ContainerSpecSpec is the spec for ContainerSpec.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| image | [ContainerImageSpec](#talos.resource.definitions.containers.ContainerImageSpec) |  | Image is the OCI reference in canonical form, already normalized by ContainerConfigController. |
+| entrypoint | [string](#string) | repeated |  |
+| args | [string](#string) | repeated |  |
+| working_dir | [string](#string) |  |  |
+| run_as | [ContainerRunAsSpec](#talos.resource.definitions.containers.ContainerRunAsSpec) |  |  |
+| environment | [string](#string) | repeated |  |
+| mounts | [ContainerMountSpec](#talos.resource.definitions.containers.ContainerMountSpec) | repeated |  |
+| security | [ContainerSecuritySpec](#talos.resource.definitions.containers.ContainerSecuritySpec) |  |  |
+| network | [ContainerNetworkSpec](#talos.resource.definitions.containers.ContainerNetworkSpec) |  |  |
+| resources | [ContainerResourcesSpec](#talos.resource.definitions.containers.ContainerResourcesSpec) |  |  |
+| depends_on | [ContainerDependsOnSpec](#talos.resource.definitions.containers.ContainerDependsOnSpec) |  |  |
 
 
 

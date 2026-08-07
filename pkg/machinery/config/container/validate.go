@@ -256,6 +256,12 @@ func (container *Container) validateContainer(mode validation.RuntimeMode) error
 		}
 	}
 
+	// Container dependencies must form a DAG, and must only reference containers that exist.
+	// A per-document Validate() cannot see the other documents, so this is a container-level check.
+	if err := validateContainerDependencies(container.ContainerConfigs()); err != nil {
+		errs = multierror.Append(errs, err)
+	}
+
 	// KubeSpan requires a cluster identity, provided either by the deprecated .cluster.id/.cluster.secret
 	// or by a DiscoveryIdentityConfig document. The identity may live in a separate document, so this
 	// cross-document check is done at the container level.

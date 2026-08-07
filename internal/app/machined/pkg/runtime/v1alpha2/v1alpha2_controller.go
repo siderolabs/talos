@@ -23,6 +23,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cluster"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/config"
+	containerctrls "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/containers"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/cri"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/etcd"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/files"
@@ -251,6 +252,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 			V1Alpha1ServiceManager: system.Services(ctrl.v1alpha1Runtime),
 		},
 		&cri.RuntimeSpecConfigController{},
+		&containerctrls.ConfigController{},
 		&cri.CustomizationConfigController{},
 		cri.NewImageGCController("containerd", false),
 		cri.NewImageGCController("cri", true),
