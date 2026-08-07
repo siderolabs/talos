@@ -258,6 +258,21 @@ func (au *AWSUploader) registerAMI(ctx context.Context, region string, svc *ec2.
 	return g.Wait()
 }
 
+// imageTags are applied to both the AMI and the snapshot backing it, so that cleanup
+// tooling can apply a retention policy without parsing image names.
+func (au *AWSUploader) imageTags(imageName string) []types.Tag {
+	return []types.Tag{
+		{
+			Key:   new("Name"),
+			Value: new(imageName),
+		},
+		{
+			Key:   new(BuildTypeTagKey),
+			Value: new(au.Options.BuildType),
+		},
+	}
+}
+
 //nolint:gocyclo
 func (au *AWSUploader) tagSnapshot(ctx context.Context, svc *ec2.Client, snapshotID, imageName string) {
 	if snapshotID == "" {
@@ -266,10 +281,7 @@ func (au *AWSUploader) tagSnapshot(ctx context.Context, svc *ec2.Client, snapsho
 
 	_, tagErr := svc.CreateTags(ctx, &ec2.CreateTagsInput{
 		Resources: []string{snapshotID},
-		Tags: []types.Tag{{
-			Key:   new("Name"),
-			Value: new(imageName),
-		}},
+		Tags:      au.imageTags(imageName),
 	})
 	if tagErr != nil {
 		log.Printf("WARNING: failed to tag snapshot %s: %v", snapshotID, tagErr)
@@ -422,6 +434,12 @@ func (au *AWSUploader) registerAMIArch(ctx context.Context, region string, svc *
 		Description:        new(fmt.Sprintf("Talos AMI %s %s %s", au.Options.Tag, arch, region)),
 		Architecture:       awsArchitectures[arch],
 		ImdsSupport:        types.ImdsSupportValuesV20,
+		TagSpecifications: []types.TagSpecification{
+			{
+				ResourceType: types.ResourceTypeImage,
+				Tags:         au.imageTags(imageName),
+			},
+		},
 	}
 
 	registerResp, err := svc.RegisterImage(ctx, registerReq)

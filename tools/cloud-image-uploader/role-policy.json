@@ -26,6 +26,7 @@
             "ec2:ModifySnapshotAttribute",
             "ec2:CopySnapshot",
             "ec2:RegisterImage",
+            "ec2:CreateTags",
             "ec2:Describe*"
          ],
          "Resource":"*"

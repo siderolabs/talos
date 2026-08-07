@@ -15,6 +15,7 @@ type Options struct {
 	Tag           string
 	ArtifactsPath string
 	NamePrefix    string
+	BuildType     string
 	Architectures []string
 	TargetClouds  []string
 

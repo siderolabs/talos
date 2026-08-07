@@ -71,6 +71,10 @@ func run() error {
 
 	pflag.Parse()
 
+	DefaultOptions.BuildType = DeriveBuildType(DefaultOptions.Tag, DefaultOptions.NamePrefix)
+
+	log.Printf("derived build type %q from tag %q", DefaultOptions.BuildType, DefaultOptions.Tag)
+
 	seed := make([]byte, 8)
 	if _, err = cryptorand.Read(seed); err != nil {
 		log.Fatalf("error seeding rand: %s", err)

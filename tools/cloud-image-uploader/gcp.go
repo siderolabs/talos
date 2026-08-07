@@ -267,6 +267,9 @@ func (u *GCPUploder) insertImage(imageName, arch string) (operationID, imageLink
 				Type: "UEFI_COMPATIBLE",
 			},
 		},
+		Labels: map[string]string{
+			BuildTypeLabelKey: u.Options.BuildType,
+		},
 		Name: imageName,
 		RawDisk: &compute.ImageRawDisk{
 			Source: u.imagePath,
