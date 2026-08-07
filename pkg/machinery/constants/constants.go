@@ -378,7 +378,7 @@ const (
 
 	// DefaultKubernetesVersion is the default target version of the control plane.
 	// renovate: datasource=github-releases depName=kubernetes/kubernetes
-	DefaultKubernetesVersion = "1.37.0-beta.0"
+	DefaultKubernetesVersion = "1.37.0-rc.0"
 
 	// SupportedKubernetesVersions is the number of Kubernetes versions supported by Talos starting from DefaultKubernetesVersion going backwards.
 	SupportedKubernetesVersions = 6
@@ -1305,7 +1305,7 @@ const (
 	// KubeNetworkPoliciesVersion is the version of kube-network-policies when network policies are enabled for flannel.
 	//
 	// renovate: datasource=docker depName=registry.k8s.io/networking/kube-network-policies
-	KubeNetworkPoliciesVersion = "v1.1.0"
+	KubeNetworkPoliciesVersion = "v1.1.1"
 
 	// PlatformMetal is the name of the metal platform.
 	PlatformMetal = "metal"
