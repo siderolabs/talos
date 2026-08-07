@@ -66,6 +66,9 @@ type Config interface { //nolint:interfacebloat
 	K8sKubePrismConfig() K8sKubePrismConfig
 	K8sTalosAPIAccessConfig() K8sTalosAPIAccessConfig
 
+	// - containers:
+	ContainerConfigs() []ContainerConfig
+
 	// - block devices/storage:
 	Volumes() VolumesConfig
 	UserVolumeConfigs() []UserVolumeConfig

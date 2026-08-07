@@ -18,6 +18,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cluster"
 	"github.com/siderolabs/talos/pkg/machinery/resources/config"
+	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/cri"
 	"github.com/siderolabs/talos/pkg/machinery/resources/etcd"
 	"github.com/siderolabs/talos/pkg/machinery/resources/files"
@@ -88,6 +89,7 @@ func NewState() (*State, error) {
 		{network.NamespaceName, "Networking resources."},
 		{network.ConfigNamespaceName, "Networking configuration resources."},
 		{cri.NamespaceName, "CRI Seccomp resources."},
+		{containers.NamespaceName, "Talos-managed container resources."},
 		{secrets.NamespaceName, "Resources with secret material."},
 		{security.NamespaceName, "Security resources."},
 		{perf.NamespaceName, "Stats resources."},
@@ -118,6 +120,7 @@ func NewState() (*State, error) {
 		&block.VolumeStatus{},
 		&block.VolumeTrimSchedule{},
 		&block.ZswapStatus{},
+		&containers.ContainerSpec{},
 		&block.FSScrubSchedule{},
 		&block.FSScrubStatus{},
 		&cluster.Affiliate{},

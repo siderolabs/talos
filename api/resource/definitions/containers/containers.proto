@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+package talos.resource.definitions.containers;
+
+option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/containers";
+option java_package = "dev.talos.api.resource.definitions.containers";
+
+// ContainerDependsOnSpec is the resolved dependency set.
+message ContainerDependsOnSpec {
+  repeated string paths = 1;
+  repeated string networks = 2;
+  bool time = 3;
+  repeated string containers = 4;
+}
+
+// ContainerMountSpec is a resolved mount.
+//
+// Exactly one of VolumeID, Tmpfs or HostPath describes the source; Kind says which.
+message ContainerMountSpec {
+  // Kind is one of "userVolume", "tmpfs" or "hostPath".
+  string kind = 1;
+  // VolumeID is the block volume ID for a userVolume mount, e.g. "u-web-content".
+  string volume_id = 2;
+  // Source is the host path for a hostPath mount.
+  string source = 3;
+  // Destination inside the container.
+  string destination = 4;
+  // Size of a tmpfs mount, in bytes; zero means the kernel default.
+  uint64 size = 5;
+  // Options with the read-only default already applied.
+  repeated string options = 6;
+}
+
+// ContainerNetworkSpec is the resolved network configuration.
+message ContainerNetworkSpec {
+  // HostNetwork shares the host network namespace instead of creating an empty one.
+  bool host_network = 1;
+}
+
+// ContainerResourcesSpec is the resolved cgroup configuration, in bytes and millicores.
+//
+// Zero means unset, which for a limit means unlimited.
+message ContainerResourcesSpec {
+  uint64 memory_limit = 1;
+  uint64 cpu_limit = 2;
+}
+
+// ContainerRunAsSpec is the resolved uid/gid override.
+//
+// Nil means use the image's own USER for that half.
+message ContainerRunAsSpec {
+  int32 uid = 1;
+  int32 gid = 2;
+}
+
+// ContainerSecuritySpec is the resolved security posture.
+message ContainerSecuritySpec {
+  // Privileged grants all grantable capabilities and all devices, matching what extension
+  // services get implicitly.
+  bool privileged = 1;
+  repeated string capabilities_add = 2;
+  repeated string capabilities_drop = 3;
+}
+
+// ContainerSpecSpec is the spec for ContainerSpec.
+message ContainerSpecSpec {
+  // Image is the OCI reference in canonical form, already normalized by ContainerConfigController.
+  string image = 1;
+  repeated string entrypoint = 2;
+  repeated string args = 3;
+  string working_dir = 4;
+  ContainerRunAsSpec run_as = 5;
+  repeated string environment = 6;
+  repeated ContainerMountSpec mounts = 7;
+  ContainerSecuritySpec security = 8;
+  ContainerNetworkSpec network = 9;
+  ContainerResourcesSpec resources = 10;
+  ContainerDependsOnSpec depends_on = 11;
+}
+
