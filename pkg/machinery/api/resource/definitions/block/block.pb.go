@@ -1196,6 +1196,7 @@ type MountRequestSpec struct {
 	Detached          bool                   `protobuf:"varint,6,opt,name=detached,proto3" json:"detached,omitempty"`
 	DisableAccessTime bool                   `protobuf:"varint,7,opt,name=disable_access_time,json=disableAccessTime,proto3" json:"disable_access_time,omitempty"`
 	Secure            bool                   `protobuf:"varint,8,opt,name=secure,proto3" json:"secure,omitempty"`
+	NoExec            bool                   `protobuf:"varint,9,opt,name=no_exec,json=noExec,proto3" json:"no_exec,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -1286,6 +1287,13 @@ func (x *MountRequestSpec) GetSecure() bool {
 	return false
 }
 
+func (x *MountRequestSpec) GetNoExec() bool {
+	if x != nil {
+		return x.NoExec
+	}
+	return false
+}
+
 // MountSpec is the spec for volume mount.
 type MountSpec struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -1309,9 +1317,10 @@ type MountSpec struct {
 	BindTarget string `protobuf:"bytes,9,opt,name=bind_target,json=bindTarget,proto3" json:"bind_target,omitempty"`
 	// Parameters are additional filesystem mount options used when mounting the volume.
 	Parameters []*ParameterSpec `protobuf:"bytes,10,rep,name=parameters,proto3" json:"parameters,omitempty"`
-	// Secure applies MOUNT_ATTR_NOSUID\|NODEV\|NOEXEC to the mount. Set for
-	// config-only mounts; leave false for mounts hosting executables.
-	Secure        bool `protobuf:"varint,11,opt,name=secure,proto3" json:"secure,omitempty"`
+	// Secure applies MOUNT_ATTR_NOSUID\|NODEV to the mount.
+	Secure bool `protobuf:"varint,11,opt,name=secure,proto3" json:"secure,omitempty"`
+	// NoExec applies MOUNT_ATTR_NOEXEC to the mount.
+	NoExec        bool `protobuf:"varint,12,opt,name=no_exec,json=noExec,proto3" json:"no_exec,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1419,6 +1428,13 @@ func (x *MountSpec) GetParameters() []*ParameterSpec {
 func (x *MountSpec) GetSecure() bool {
 	if x != nil {
 		return x.Secure
+	}
+	return false
+}
+
+func (x *MountSpec) GetNoExec() bool {
+	if x != nil {
+		return x.NoExec
 	}
 	return false
 }
@@ -2269,6 +2285,7 @@ type VolumeMountRequestSpec struct {
 	Detached          bool                   `protobuf:"varint,4,opt,name=detached,proto3" json:"detached,omitempty"`
 	DisableAccessTime bool                   `protobuf:"varint,5,opt,name=disable_access_time,json=disableAccessTime,proto3" json:"disable_access_time,omitempty"`
 	Secure            bool                   `protobuf:"varint,6,opt,name=secure,proto3" json:"secure,omitempty"`
+	NoExec            bool                   `protobuf:"varint,7,opt,name=no_exec,json=noExec,proto3" json:"no_exec,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -2345,6 +2362,13 @@ func (x *VolumeMountRequestSpec) GetSecure() bool {
 	return false
 }
 
+func (x *VolumeMountRequestSpec) GetNoExec() bool {
+	if x != nil {
+		return x.NoExec
+	}
+	return false
+}
+
 // VolumeMountStatusSpec is the spec for VolumeMountStatus.
 type VolumeMountStatusSpec struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
@@ -2355,6 +2379,7 @@ type VolumeMountStatusSpec struct {
 	Detached          bool                   `protobuf:"varint,5,opt,name=detached,proto3" json:"detached,omitempty"`
 	DisableAccessTime bool                   `protobuf:"varint,6,opt,name=disable_access_time,json=disableAccessTime,proto3" json:"disable_access_time,omitempty"`
 	Secure            bool                   `protobuf:"varint,7,opt,name=secure,proto3" json:"secure,omitempty"`
+	NoExec            bool                   `protobuf:"varint,8,opt,name=no_exec,json=noExec,proto3" json:"no_exec,omitempty"`
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
@@ -2434,6 +2459,13 @@ func (x *VolumeMountStatusSpec) GetDisableAccessTime() bool {
 func (x *VolumeMountStatusSpec) GetSecure() bool {
 	if x != nil {
 		return x.Secure
+	}
+	return false
+}
+
+func (x *VolumeMountStatusSpec) GetNoExec() bool {
+	if x != nil {
+		return x.NoExec
 	}
 	return false
 }
@@ -3010,7 +3042,7 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\vLocatorSpec\x12;\n" +
 	"\x05match\x18\x01 \x01(\v2%.google.api.expr.v1alpha1.CheckedExprR\x05match\x12D\n" +
 	"\n" +
-	"disk_match\x18\x02 \x01(\v2%.google.api.expr.v1alpha1.CheckedExprR\tdiskMatch\"\x9e\x02\n" +
+	"disk_match\x18\x02 \x01(\v2%.google.api.expr.v1alpha1.CheckedExprR\tdiskMatch\"\xb7\x02\n" +
 	"\x10MountRequestSpec\x12\x1b\n" +
 	"\tvolume_id\x18\x01 \x01(\tR\bvolumeId\x12&\n" +
 	"\x0fparent_mount_id\x18\x02 \x01(\tR\rparentMountId\x12\x1e\n" +
@@ -3021,7 +3053,8 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\tread_only\x18\x05 \x01(\bR\breadOnly\x12\x1a\n" +
 	"\bdetached\x18\x06 \x01(\bR\bdetached\x12.\n" +
 	"\x13disable_access_time\x18\a \x01(\bR\x11disableAccessTime\x12\x16\n" +
-	"\x06secure\x18\b \x01(\bR\x06secure\"\x9a\x03\n" +
+	"\x06secure\x18\b \x01(\bR\x06secure\x12\x17\n" +
+	"\ano_exec\x18\t \x01(\bR\x06noExec\"\xb3\x03\n" +
 	"\tMountSpec\x12\x1f\n" +
 	"\vtarget_path\x18\x01 \x01(\tR\n" +
 	"targetPath\x12#\n" +
@@ -3038,7 +3071,8 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"parameters\x18\n" +
 	" \x03(\v2/.talos.resource.definitions.block.ParameterSpecR\n" +
 	"parameters\x12\x16\n" +
-	"\x06secure\x18\v \x01(\bR\x06secure\"\xbd\x03\n" +
+	"\x06secure\x18\v \x01(\bR\x06secure\x12\x17\n" +
+	"\ano_exec\x18\f \x01(\bR\x06noExec\"\xbd\x03\n" +
 	"\x0fMountStatusSpec\x12F\n" +
 	"\x04spec\x18\x01 \x01(\v22.talos.resource.definitions.block.MountRequestSpecR\x04spec\x12\x16\n" +
 	"\x06target\x18\x02 \x01(\tR\x06target\x12\x16\n" +
@@ -3109,14 +3143,15 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\rtrim_interval\x18\t \x01(\v2\x19.google.protobuf.DurationR\ftrimInterval\x12#\n" +
 	"\rscrub_enabled\x18\n" +
 	" \x01(\bR\fscrubEnabled\x12@\n" +
-	"\x0escrub_interval\x18\v \x01(\v2\x19.google.protobuf.DurationR\rscrubInterval\"\xd4\x01\n" +
+	"\x0escrub_interval\x18\v \x01(\v2\x19.google.protobuf.DurationR\rscrubInterval\"\xed\x01\n" +
 	"\x16VolumeMountRequestSpec\x12\x1b\n" +
 	"\tvolume_id\x18\x01 \x01(\tR\bvolumeId\x12\x1c\n" +
 	"\trequester\x18\x02 \x01(\tR\trequester\x12\x1b\n" +
 	"\tread_only\x18\x03 \x01(\bR\breadOnly\x12\x1a\n" +
 	"\bdetached\x18\x04 \x01(\bR\bdetached\x12.\n" +
 	"\x13disable_access_time\x18\x05 \x01(\bR\x11disableAccessTime\x12\x16\n" +
-	"\x06secure\x18\x06 \x01(\bR\x06secure\"\xeb\x01\n" +
+	"\x06secure\x18\x06 \x01(\bR\x06secure\x12\x17\n" +
+	"\ano_exec\x18\a \x01(\bR\x06noExec\"\x84\x02\n" +
 	"\x15VolumeMountStatusSpec\x12\x1b\n" +
 	"\tvolume_id\x18\x01 \x01(\tR\bvolumeId\x12\x1c\n" +
 	"\trequester\x18\x02 \x01(\tR\trequester\x12\x16\n" +
@@ -3124,7 +3159,8 @@ const file_resource_definitions_block_block_proto_rawDesc = "" +
 	"\tread_only\x18\x04 \x01(\bR\breadOnly\x12\x1a\n" +
 	"\bdetached\x18\x05 \x01(\bR\bdetached\x12.\n" +
 	"\x13disable_access_time\x18\x06 \x01(\bR\x11disableAccessTime\x12\x16\n" +
-	"\x06secure\x18\a \x01(\bR\x06secure\"\x89\f\n" +
+	"\x06secure\x18\a \x01(\bR\x06secure\x12\x17\n" +
+	"\ano_exec\x18\b \x01(\bR\x06noExec\"\x89\f\n" +
 	"\x10VolumeStatusSpec\x12H\n" +
 	"\x05phase\x18\x01 \x01(\x0e22.talos.resource.definitions.enums.BlockVolumePhaseR\x05phase\x12\x1a\n" +
 	"\blocation\x18\x02 \x01(\tR\blocation\x12#\n" +

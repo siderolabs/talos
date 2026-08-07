@@ -334,7 +334,7 @@ func (p *Point) SetDisableAccessTime(disable bool) error {
 	}, 0)
 }
 
-// SetSecure sets or clears the nosuid, nodev, and noexec mount attributes.
+// SetSecure sets or clears the nosuid and nodev mount attributes.
 func (p *Point) SetSecure(secure bool) error {
 	if p.detached {
 		return nil
@@ -342,12 +342,29 @@ func (p *Point) SetSecure(secure bool) error {
 
 	if secure {
 		return p.setattr(&unix.MountAttr{
-			Attr_set: unix.MOUNT_ATTR_NOSUID | unix.MOUNT_ATTR_NODEV | unix.MOUNT_ATTR_NOEXEC,
+			Attr_set: unix.MOUNT_ATTR_NOSUID | unix.MOUNT_ATTR_NODEV,
 		}, 0)
 	}
 
 	return p.setattr(&unix.MountAttr{
-		Attr_clr: unix.MOUNT_ATTR_NOSUID | unix.MOUNT_ATTR_NODEV | unix.MOUNT_ATTR_NOEXEC,
+		Attr_clr: unix.MOUNT_ATTR_NOSUID | unix.MOUNT_ATTR_NODEV,
+	}, 0)
+}
+
+// SetNoExec sets or clears the noexec mount attribute.
+func (p *Point) SetNoExec(noExec bool) error {
+	if p.detached {
+		return nil
+	}
+
+	if noExec {
+		return p.setattr(&unix.MountAttr{
+			Attr_set: unix.MOUNT_ATTR_NOEXEC,
+		}, 0)
+	}
+
+	return p.setattr(&unix.MountAttr{
+		Attr_clr: unix.MOUNT_ATTR_NOEXEC,
 	}, 0)
 }
 

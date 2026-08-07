@@ -26,8 +26,8 @@ import (
 // MountsSuite verifies mount flag policy on a running node.
 //
 // Policy (see siderolabs/talos#11946):
-//   - every rw mount must carry MOUNT_ATTR_NOSUID, MOUNT_ATTR_NOEXEC,
-//     MOUNT_ATTR_NODEV unless explicitly exempt
+//   - every rw mount must carry MOUNT_ATTR_NOSUID and MOUNT_ATTR_NODEV unless explicitly exempt
+//   - mounts which don't host executables must carry MOUNT_ATTR_NOEXEC
 //   - device nodes are not allowed outside /dev and /dev/pts: NODEV is
 //     non-negotiable for every other mountpoint
 type MountsSuite struct {
@@ -144,14 +144,13 @@ func workloadManaged(m mountInfo) bool {
 	return false
 }
 
-// noexecExemptPrefixes lists mount path prefixes where executing binaries
-// is part of the design. Read-only mounts are exempt elsewhere via the
-// `ro` option. /var (EPHEMERAL) is intentionally NOT exempt: containerd
-// container exec goes through overlay rootfs at /run/containerd/.../rootfs
-// which is a separate mount with its own flags.
-var noexecExemptPrefixes = []string{
-	"/opt",                               // CNI plugins, containerd plugins
-	constants.ExtensionServiceRootfsPath, // /usr/local/lib/containers — extension service rootfs overlays (iscsid, etc.)
+// noexecExemptPaths lists mount path prefixes where executing binaries
+// is part of the design. Read-only mounts are exempt elsewhere via the `ro` option.
+var noexecExemptPaths = []string{
+	"/opt",                          // CNI plugins, containerd plugins
+	constants.EphemeralMountPoint,   // /var — Talos ephemeral volume (EPHEMERAL)
+	constants.CRIContainerdDataPath, // /var/lib/containerd — containerd data (CRI)
+	constants.KubeletDataPath,       // /var/lib/kubelet — kubelet data (KUBELET)
 }
 
 // promotableSystemVolumePathToID maps the mount point of each promotable system volume
@@ -165,10 +164,9 @@ var promotableSystemVolumePathToID = map[string]string{
 }
 
 // promotableSystemVolumePartition returns the volume ID (and true) when the mount is a promotable
-// system volume promoted onto a dedicated partition (mounted from a block device). Whether such a
-// mount carries the secure flags (nosuid/noexec/nodev) is governed by the volume's mount.secure
-// setting, so the caller asserts against that. When not promoted, the volume is a directory on
-// EPHEMERAL and does not appear as a separate mount, so the /var assertion enforces the policy.
+// system volume promoted onto a dedicated partition (mounted from a block device). Its security
+// options are governed by internal policy. When not promoted, the volume is a directory on
+// EPHEMERAL and does not appear as a separate mount.
 func promotableSystemVolumePartition(m mountInfo) (string, bool) {
 	volumeID, ok := promotableSystemVolumePathToID[m.mountPoint]
 	if !ok {
@@ -196,13 +194,18 @@ func noexecExempt(m mountInfo) bool {
 		return true
 	}
 
-	for _, p := range noexecExemptPrefixes {
-		if m.mountPoint == p || strings.HasPrefix(m.mountPoint, p+"/") {
-			return true
-		}
+	// handle extension rootfs paths separately
+	// /usr/local/lib/containers — extension service rootfs overlays (iscsid, etc.)
+	if strings.HasPrefix(m.mountPoint, constants.ExtensionServiceRootfsPath) {
+		return true
 	}
 
-	return false
+	// longhorn volumes we need to skip in the noexec check
+	if m.mountPoint == "/var/mnt/longhorn" {
+		return true
+	}
+
+	return slices.Contains(noexecExemptPaths, m.mountPoint)
 }
 
 // TestNodevPolicy asserts every mount outside /dev and /dev/pts carries nodev.
@@ -219,13 +222,28 @@ func (suite *MountsSuite) TestNosuidPolicy() {
 	}, "no SUID binaries anywhere in Talos")
 }
 
-// TestNoexecPolicy asserts every rw mount carries noexec, except
-// documented exemptions (EPHEMERAL, /opt/cni, kubelet plugins
-// helpers). Read-only mounts are exempt (signed rootfs / extension
-// squashfs).
+// TestNoexecPolicy asserts every rw mount carries noexec, except documented mounts which host
+// executables. Read-only mounts are exempt (signed rootfs / extension squashfs).
 func (suite *MountsSuite) TestNoexecPolicy() {
 	suite.runPolicy("noexec", noexecExempt,
 		"binaries should only execute from RO or explicitly exempt mounts")
+}
+
+// TestEphemeralExecPolicy asserts EPHEMERAL remains executable.
+func (suite *MountsSuite) TestEphemeralExecPolicy() {
+	for _, node := range suite.DiscoverNodeInternalIPs(suite.ctx) {
+		suite.Run(node, func() {
+			for _, m := range suite.readMountInfo(node) {
+				if m.mountPoint == constants.EphemeralMountPoint {
+					suite.Assert().False(m.has("noexec"), "EPHEMERAL must allow execution")
+
+					return
+				}
+			}
+
+			suite.Fail("EPHEMERAL mount not found")
+		})
+	}
 }
 
 func (suite *MountsSuite) runPolicy(opt string, exempt func(mountInfo) bool, rationale string) {
@@ -246,17 +264,15 @@ func (suite *MountsSuite) checkOptOnNode(node, opt string, exempt func(mountInfo
 	)
 
 	for _, m := range mounts {
-		// a promotable system volume (ETCD/CRI/KUBELET/LOG) promoted onto a dedicated partition
-		// carries the secure flags (nosuid/noexec/nodev) only when its mount.secure is set, so
-		// assert the mount matches the configured value. When not promoted it is a directory on
-		// EPHEMERAL (not a separate mount) and the /var assertion below still enforces the policy.
+		// A promotable system volume promoted onto a dedicated partition has explicit security policy.
+		// When not promoted it is a directory on EPHEMERAL and inherits the /var mount policy.
 		if volumeID, promoted := promotableSystemVolumePartition(m); promoted {
 			entry := fmt.Sprintf("%s (fstype=%s, source=%s)", m.mountPoint, m.fsType, m.source)
 
-			switch secure := suite.promotableVolumeSecure(node, volumeID); {
-			case secure && !m.has(opt):
+			switch enabled := suite.promotableVolumeOption(node, volumeID, opt); {
+			case enabled && !m.has(opt):
 				violations = append(violations, entry)
-			case !secure && m.has(opt):
+			case !enabled && m.has(opt):
 				unexpected = append(unexpected, entry)
 			}
 
@@ -264,16 +280,6 @@ func (suite *MountsSuite) checkOptOnNode(node, opt string, exempt func(mountInfo
 		}
 
 		if workloadManaged(m) || exempt(m) {
-			continue
-		}
-
-		// /var honors the EPHEMERAL VolumeConfig's mount.secure setting; when
-		// the cluster was deployed with secure=false skip the assertion to match
-		// the configured policy rather than the secure-by-default one.
-		//
-		// also `/var/mnt/longhorn` is a directory volume, so it inherits the mount
-		// flags from `/var`
-		if suite.SkipEphemeralPolicy && slices.Contains([]string{constants.EphemeralMountPoint, "/var/mnt/longhorn"}, m.mountPoint) {
 			continue
 		}
 
@@ -293,18 +299,21 @@ func (suite *MountsSuite) checkOptOnNode(node, opt string, exempt func(mountInfo
 
 	suite.Assert().Empty(
 		unexpected,
-		"promoted promotable system-volume partitions carry %s despite mount.secure=false:\n  %s",
+		"promoted promotable system-volume partitions carry %s despite the option being disabled:\n  %s",
 		opt, strings.Join(unexpected, "\n  "),
 	)
 }
 
-// promotableVolumeSecure reports the effective mount.secure setting of a promotable system volume
-// on a node, read from its block.VolumeStatus.
-func (suite *MountsSuite) promotableVolumeSecure(node, volumeID string) bool {
+// promotableVolumeOption reports whether a mount option is enabled for a promotable system volume.
+func (suite *MountsSuite) promotableVolumeOption(node, volumeID, opt string) bool {
 	nodeCtx := client.WithNode(suite.ctx, node)
 
 	volumeStatus, err := safe.StateGetByID[*block.VolumeStatus](nodeCtx, suite.Client.COSI, volumeID)
 	suite.Require().NoError(err)
+
+	if opt == "noexec" {
+		return volumeStatus.TypedSpec().MountSpec.NoExec
+	}
 
 	return volumeStatus.TypedSpec().MountSpec.Secure
 }

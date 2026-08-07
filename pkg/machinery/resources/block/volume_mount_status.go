@@ -31,6 +31,7 @@ type VolumeMountStatusSpec struct {
 	Detached          bool   `yaml:"detached" protobuf:"5"`
 	DisableAccessTime bool   `yaml:"disableAccessTime" protobuf:"6"`
 	Secure            bool   `yaml:"secure" protobuf:"7"`
+	NoExec            bool   `yaml:"noExec" protobuf:"8"`
 
 	root any
 }

@@ -75,8 +75,9 @@ func TestUserVolumeTransformer(t *testing.T) {
 				})
 
 				testMountTransformFunc(t, resources[0].MountTransformFunc, func(t *testing.T, m *block.VolumeMountRequest, err error) {
-					// default mount transform is noop
 					require.NoError(t, err)
+					assert.True(t, m.TypedSpec().Secure)
+					assert.True(t, m.TypedSpec().NoExec)
 				})
 			},
 		},
@@ -296,6 +297,8 @@ func TestExistingVolumeTransformer(t *testing.T) {
 					require.NoError(t, err)
 
 					assert.False(t, m.TypedSpec().ReadOnly, "expected read-write mount")
+					assert.True(t, m.TypedSpec().Secure)
+					assert.True(t, m.TypedSpec().NoExec)
 				})
 			},
 		},
@@ -325,6 +328,8 @@ func TestExistingVolumeTransformer(t *testing.T) {
 					require.NoError(t, err)
 
 					assert.True(t, m.TypedSpec().ReadOnly, "expected read-only mount")
+					assert.True(t, m.TypedSpec().Secure)
+					assert.True(t, m.TypedSpec().NoExec)
 				})
 			},
 		},
@@ -400,6 +405,8 @@ func TestExternalVolumeTransformer(t *testing.T) {
 					require.NoError(t, err)
 
 					assert.False(t, m.TypedSpec().ReadOnly, "expected read-write mount")
+					assert.True(t, m.TypedSpec().Secure)
+					assert.True(t, m.TypedSpec().NoExec)
 				})
 			},
 		},
@@ -442,6 +449,8 @@ func TestExternalVolumeTransformer(t *testing.T) {
 					require.NoError(t, err)
 
 					assert.True(t, m.TypedSpec().ReadOnly, "expected read-write mount")
+					assert.True(t, m.TypedSpec().Secure)
+					assert.True(t, m.TypedSpec().NoExec)
 				})
 			},
 		},

@@ -6655,6 +6655,7 @@ MountRequestSpec is the spec for MountRequest.
 | detached | [bool](#bool) |  |  |
 | disable_access_time | [bool](#bool) |  |  |
 | secure | [bool](#bool) |  |  |
+| no_exec | [bool](#bool) |  |  |
 
 
 
@@ -6679,7 +6680,8 @@ MountSpec is the spec for volume mount.
 | recursive_relabel | [bool](#bool) |  | RecursiveRelabel is the recursive relabel/chown flag for the mount target. |
 | bind_target | [string](#string) |  | BindTarget is an optional path on the host to bind-mount the volume onto. |
 | parameters | [ParameterSpec](#talos.resource.definitions.block.ParameterSpec) | repeated | Parameters are additional filesystem mount options used when mounting the volume. |
-| secure | [bool](#bool) |  | Secure applies MOUNT_ATTR_NOSUID\|NODEV\|NOEXEC to the mount. Set for config-only mounts; leave false for mounts hosting executables. |
+| secure | [bool](#bool) |  | Secure applies MOUNT_ATTR_NOSUID\|NODEV to the mount. |
+| no_exec | [bool](#bool) |  | NoExec applies MOUNT_ATTR_NOEXEC to the mount. |
 
 
 
@@ -6904,6 +6906,7 @@ VolumeMountRequestSpec is the spec for VolumeMountRequest.
 | detached | [bool](#bool) |  |  |
 | disable_access_time | [bool](#bool) |  |  |
 | secure | [bool](#bool) |  |  |
+| no_exec | [bool](#bool) |  |  |
 
 
 
@@ -6925,6 +6928,7 @@ VolumeMountStatusSpec is the spec for VolumeMountStatus.
 | detached | [bool](#bool) |  |  |
 | disable_access_time | [bool](#bool) |  |  |
 | secure | [bool](#bool) |  |  |
+| no_exec | [bool](#bool) |  |  |
 
 
 
