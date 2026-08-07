@@ -177,10 +177,9 @@ func upgradeInternal(ctx context.Context, clientFactory *global.ClientFactory, c
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 
-	var (
-		errs error
-		w    lifecycle.ProgressWriter
-	)
+	var errs error
+
+	w := lifecycle.NewProgressWriter(rep.IsColorized())
 
 	finishedUpgrades := map[string]int32{}
 
@@ -228,7 +227,7 @@ func upgradeInternal(ctx context.Context, clientFactory *global.ClientFactory, c
 
 				status = reporter.StatusError
 
-				fmt.Fprintf(&sb, "%s: upgrade failed with exit code %d\n", node, exitCode)
+				fmt.Fprintln(&sb, w.Failure(node, "upgrade", exitCode))
 			} else {
 				fmt.Fprintf(&sb, "%s: upgrade completed\n", node)
 			}
