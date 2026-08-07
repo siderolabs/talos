@@ -448,6 +448,11 @@ func (container *Container) EthernetConfigs() []config.EthernetConfig {
 	return findMatchingDocs[config.EthernetConfig](container.documents)
 }
 
+// ContainerConfigs implements config.Config interface.
+func (container *Container) ContainerConfigs() []config.ContainerConfig {
+	return findMatchingDocs[config.ContainerConfig](container.documents)
+}
+
 // UserVolumeConfigs implements config.Config interface.
 func (container *Container) UserVolumeConfigs() []config.UserVolumeConfig {
 	return findMatchingDocs[config.UserVolumeConfig](container.documents)

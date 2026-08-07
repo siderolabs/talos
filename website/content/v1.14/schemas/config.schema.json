@@ -1082,6 +1082,422 @@
       ],
       "description": "DiscoveryServiceConfig is a config document to configure a discovery service."
     },
+    "container.ContainerCapabilities": {
+      "properties": {
+        "add": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "add",
+          "description": "Capabilities to grant, without the CAP_ prefix.\n",
+          "markdownDescription": "Capabilities to grant, without the `CAP_` prefix.",
+          "x-intellij-html-description": "\u003cp\u003eCapabilities to grant, without the \u003ccode\u003eCAP_\u003c/code\u003e prefix.\u003c/p\u003e\n"
+        },
+        "drop": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "drop",
+          "description": "Capabilities to remove, without the CAP_ prefix. ALL removes every capability.\n",
+          "markdownDescription": "Capabilities to remove, without the `CAP_` prefix. `ALL` removes every capability.",
+          "x-intellij-html-description": "\u003cp\u003eCapabilities to remove, without the \u003ccode\u003eCAP_\u003c/code\u003e prefix. \u003ccode\u003eALL\u003c/code\u003e removes every capability.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "ContainerCapabilities adjusts the container's Linux capabilities."
+    },
+    "container.ContainerConfigV1Alpha1": {
+      "properties": {
+        "apiVersion": {
+          "enum": [
+            "v1alpha1"
+          ],
+          "title": "apiVersion",
+          "description": "apiVersion is the API version of the resource.\n",
+          "markdownDescription": "apiVersion is the API version of the resource.",
+          "x-intellij-html-description": "\u003cp\u003eapiVersion is the API version of the resource.\u003c/p\u003e\n"
+        },
+        "kind": {
+          "enum": [
+            "ContainerConfig"
+          ],
+          "title": "kind",
+          "description": "kind is the kind of the resource.\n",
+          "markdownDescription": "kind is the kind of the resource.",
+          "x-intellij-html-description": "\u003cp\u003ekind is the kind of the resource.\u003c/p\u003e\n"
+        },
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the container.\n\nMust be between 1 and 63 characters long, and can only contain lowercase ASCII\nletters, digits and hyphens. It is used as the containerd container ID and as the\ncontainer’s log identifier, so it may not collide with a Talos service name.\n",
+          "markdownDescription": "Name of the container.\n\nMust be between 1 and 63 characters long, and can only contain lowercase ASCII\nletters, digits and hyphens. It is used as the containerd container ID and as the\ncontainer's log identifier, so it may not collide with a Talos service name.",
+          "x-intellij-html-description": "\u003cp\u003eName of the container.\u003c/p\u003e\n\n\u003cp\u003eMust be between 1 and 63 characters long, and can only contain lowercase ASCII\nletters, digits and hyphens. It is used as the containerd container ID and as the\ncontainer\u0026rsquo;s log identifier, so it may not collide with a Talos service name.\u003c/p\u003e\n"
+        },
+        "image": {
+          "type": "string",
+          "title": "image",
+          "description": "OCI image reference supplying the container’s root filesystem.\n\nA digest-pinned reference (repo@sha256:...) is recommended: it is the only form\nthat guarantees the same bytes on every pull. Short references are accepted and\nnormalized, so nginx becomes index.docker.io/library/nginx:latest.\n",
+          "markdownDescription": "OCI image reference supplying the container's root filesystem.\n\nA digest-pinned reference (`repo@sha256:...`) is recommended: it is the only form\nthat guarantees the same bytes on every pull. Short references are accepted and\nnormalized, so `nginx` becomes `index.docker.io/library/nginx:latest`.",
+          "x-intellij-html-description": "\u003cp\u003eOCI image reference supplying the container\u0026rsquo;s root filesystem.\u003c/p\u003e\n\n\u003cp\u003eA digest-pinned reference (\u003ccode\u003erepo@sha256:...\u003c/code\u003e) is recommended: it is the only form\nthat guarantees the same bytes on every pull. Short references are accepted and\nnormalized, so \u003ccode\u003enginx\u003c/code\u003e becomes \u003ccode\u003eindex.docker.io/library/nginx:latest\u003c/code\u003e.\u003c/p\u003e\n"
+        },
+        "entrypoint": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "entrypoint",
+          "description": "Overrides the image’s ENTRYPOINT.\n\nUnset means the image’s own entrypoint is used.\n",
+          "markdownDescription": "Overrides the image's ENTRYPOINT.\n\nUnset means the image's own entrypoint is used.",
+          "x-intellij-html-description": "\u003cp\u003eOverrides the image\u0026rsquo;s ENTRYPOINT.\u003c/p\u003e\n\n\u003cp\u003eUnset means the image\u0026rsquo;s own entrypoint is used.\u003c/p\u003e\n"
+        },
+        "args": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "args",
+          "description": "Overrides the image’s CMD.\n",
+          "markdownDescription": "Overrides the image's CMD.",
+          "x-intellij-html-description": "\u003cp\u003eOverrides the image\u0026rsquo;s CMD.\u003c/p\u003e\n"
+        },
+        "workingDir": {
+          "type": "string",
+          "title": "workingDir",
+          "description": "Overrides the image’s WORKDIR.\n",
+          "markdownDescription": "Overrides the image's WORKDIR.",
+          "x-intellij-html-description": "\u003cp\u003eOverrides the image\u0026rsquo;s WORKDIR.\u003c/p\u003e\n"
+        },
+        "runAs": {
+          "$ref": "#/$defs/container.ContainerRunAs",
+          "title": "runAs",
+          "description": "Overrides the image’s USER uid and/or gid.\n\nThere are no user namespaces, so a container running as uid 0 is root on the host.\n",
+          "markdownDescription": "Overrides the image's USER uid and/or gid.\n\nThere are no user namespaces, so a container running as uid 0 is root on the host.",
+          "x-intellij-html-description": "\u003cp\u003eOverrides the image\u0026rsquo;s USER uid and/or gid.\u003c/p\u003e\n\n\u003cp\u003eThere are no user namespaces, so a container running as uid 0 is root on the host.\u003c/p\u003e\n"
+        },
+        "environment": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "environment",
+          "description": "Environment variables, in KEY=value form, merged over the image’s own ENV.\n\nValues are stored in the machine configuration verbatim, so treat anything put here\nas being as sensitive as the machine configuration itself.\n",
+          "markdownDescription": "Environment variables, in `KEY=value` form, merged over the image's own ENV.\n\nValues are stored in the machine configuration verbatim, so treat anything put here\nas being as sensitive as the machine configuration itself.",
+          "x-intellij-html-description": "\u003cp\u003eEnvironment variables, in \u003ccode\u003eKEY=value\u003c/code\u003e form, merged over the image\u0026rsquo;s own ENV.\u003c/p\u003e\n\n\u003cp\u003eValues are stored in the machine configuration verbatim, so treat anything put here\nas being as sensitive as the machine configuration itself.\u003c/p\u003e\n"
+        },
+        "mounts": {
+          "items": {
+            "$ref": "#/$defs/container.ContainerMount"
+          },
+          "type": "array",
+          "title": "mounts",
+          "description": "Filesystems to mount into the container.\n",
+          "markdownDescription": "Filesystems to mount into the container.",
+          "x-intellij-html-description": "\u003cp\u003eFilesystems to mount into the container.\u003c/p\u003e\n"
+        },
+        "security": {
+          "$ref": "#/$defs/container.ContainerSecurity",
+          "title": "security",
+          "description": "Security settings for the container.\n",
+          "markdownDescription": "Security settings for the container.",
+          "x-intellij-html-description": "\u003cp\u003eSecurity settings for the container.\u003c/p\u003e\n"
+        },
+        "network": {
+          "$ref": "#/$defs/container.ContainerNetwork",
+          "title": "network",
+          "description": "Network settings for the container.\n",
+          "markdownDescription": "Network settings for the container.",
+          "x-intellij-html-description": "\u003cp\u003eNetwork settings for the container.\u003c/p\u003e\n"
+        },
+        "resources": {
+          "$ref": "#/$defs/container.ContainerResources",
+          "title": "resources",
+          "description": "Resource limits, applied as cgroup v2 settings.\n",
+          "markdownDescription": "Resource limits, applied as cgroup v2 settings.",
+          "x-intellij-html-description": "\u003cp\u003eResource limits, applied as cgroup v2 settings.\u003c/p\u003e\n"
+        },
+        "dependsOn": {
+          "$ref": "#/$defs/container.ContainerDependsOn",
+          "title": "dependsOn",
+          "description": "Conditions which must be satisfied before the container is started.\n",
+          "markdownDescription": "Conditions which must be satisfied before the container is started.",
+          "x-intellij-html-description": "\u003cp\u003eConditions which must be satisfied before the container is started.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "apiVersion",
+        "kind"
+      ],
+      "description": "ContainerConfig is a container configuration document.\\nContainerConfig declares a container to be run by Talos directly, without Kubernetes.\\n\\nThe container is started as soon as the configuration is applied, with no image rebuild\\nand no reboot. It runs against the CRI containerd instance in the dedicated\\n`taloscontainers` namespace, and is restarted automatically 5 seconds after it stops.\\n\\nContainers are not Talos services: they do not appear in `talosctl services`, and\\n`talosctl service` does not apply to them. Status is reported via `ContainerStatus`.\\n"
+    },
+    "container.ContainerDependsOn": {
+      "properties": {
+        "paths": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "paths",
+          "description": "Host paths which must exist before the container starts.\n\nPolled, so a path that never appears leaves the container waiting indefinitely.\n",
+          "markdownDescription": "Host paths which must exist before the container starts.\n\nPolled, so a path that never appears leaves the container waiting indefinitely.",
+          "x-intellij-html-description": "\u003cp\u003eHost paths which must exist before the container starts.\u003c/p\u003e\n\n\u003cp\u003ePolled, so a path that never appears leaves the container waiting indefinitely.\u003c/p\u003e\n"
+        },
+        "networks": {
+          "enum": [
+            "addresses",
+            "connectivity",
+            "hostname",
+            "etcfiles"
+          ],
+          "title": "networks",
+          "description": "Network readiness conditions which must be satisfied.\n",
+          "markdownDescription": "Network readiness conditions which must be satisfied.",
+          "x-intellij-html-description": "\u003cp\u003eNetwork readiness conditions which must be satisfied.\u003c/p\u003e\n"
+        },
+        "time": {
+          "type": "boolean",
+          "title": "time",
+          "description": "Whether the clock must be synchronized before the container starts.\n",
+          "markdownDescription": "Whether the clock must be synchronized before the container starts.",
+          "x-intellij-html-description": "\u003cp\u003eWhether the clock must be synchronized before the container starts.\u003c/p\u003e\n"
+        },
+        "containers": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "containers",
+          "description": "Other containers, by document name, which must be running first.\n\nCycles are rejected when the machine configuration is applied.\n",
+          "markdownDescription": "Other containers, by document name, which must be running first.\n\nCycles are rejected when the machine configuration is applied.",
+          "x-intellij-html-description": "\u003cp\u003eOther containers, by document name, which must be running first.\u003c/p\u003e\n\n\u003cp\u003eCycles are rejected when the machine configuration is applied.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "ContainerDependsOn gates container startup on external conditions."
+    },
+    "container.ContainerMount": {
+      "properties": {
+        "userVolume": {
+          "$ref": "#/$defs/container.UserVolumeMount",
+          "title": "userVolume",
+          "description": "Mount a user volume, referenced by the name of its UserVolumeConfig document.\n\nThe volume is mounted from /var/mnt/\u0026lt;name\u0026gt; on the host. Declaring this mount also\nmakes the container wait for the volume to be mounted before it starts.\n",
+          "markdownDescription": "Mount a user volume, referenced by the name of its `UserVolumeConfig` document.\n\nThe volume is mounted from `/var/mnt/\u003cname\u003e` on the host. Declaring this mount also\nmakes the container wait for the volume to be mounted before it starts.",
+          "x-intellij-html-description": "\u003cp\u003eMount a user volume, referenced by the name of its \u003ccode\u003eUserVolumeConfig\u003c/code\u003e document.\u003c/p\u003e\n\n\u003cp\u003eThe volume is mounted from \u003ccode\u003e/var/mnt/\u0026lt;name\u0026gt;\u003c/code\u003e on the host. Declaring this mount also\nmakes the container wait for the volume to be mounted before it starts.\u003c/p\u003e\n"
+        },
+        "tmpfs": {
+          "$ref": "#/$defs/container.TmpfsMount",
+          "title": "tmpfs",
+          "description": "Mount a tmpfs for scratch space.\n",
+          "markdownDescription": "Mount a tmpfs for scratch space.",
+          "x-intellij-html-description": "\u003cp\u003eMount a tmpfs for scratch space.\u003c/p\u003e\n"
+        },
+        "hostPath": {
+          "$ref": "#/$defs/container.HostPathMount",
+          "title": "hostPath",
+          "description": "Bind-mount a path from the host.\n\nThe source must already exist; Talos will not create it. This is the widest of the\nthree sources and the only one that can reach arbitrary host state.\n",
+          "markdownDescription": "Bind-mount a path from the host.\n\nThe source must already exist; Talos will not create it. This is the widest of the\nthree sources and the only one that can reach arbitrary host state.",
+          "x-intellij-html-description": "\u003cp\u003eBind-mount a path from the host.\u003c/p\u003e\n\n\u003cp\u003eThe source must already exist; Talos will not create it. This is the widest of the\nthree sources and the only one that can reach arbitrary host state.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "ContainerMount describes a single filesystem to mount into the container.\\n\\nExactly one source must be set. Raw OCI mounts are deliberately not exposed; every source is\\ntyped so that Talos can reason about what a container is allowed to reach.\\n"
+    },
+    "container.ContainerNetwork": {
+      "properties": {
+        "mode": {
+          "type": "string",
+          "title": "mode",
+          "description": "Network mode.\n\nnone gives the container its own empty network namespace with no host access.\nhost shares the host network namespace, so the container sees every interface and\ncan bind any port.\n",
+          "markdownDescription": "Network mode.\n\n`none` gives the container its own empty network namespace with no host access.\n`host` shares the host network namespace, so the container sees every interface and\ncan bind any port.",
+          "x-intellij-html-description": "\u003cp\u003eNetwork mode.\u003c/p\u003e\n\n\u003cp\u003e\u003ccode\u003enone\u003c/code\u003e gives the container its own empty network namespace with no host access.\n\u003ccode\u003ehost\u003c/code\u003e shares the host network namespace, so the container sees every interface and\ncan bind any port.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "ContainerNetwork configures the container's network namespace."
+    },
+    "container.ContainerResourceLimits": {
+      "properties": {
+        "cpu": {
+          "type": "string",
+          "title": "cpu",
+          "description": "CPU ceiling in millicores, mapped onto cgroup v2 cpu.max.\n\n1000m is one core.\n",
+          "markdownDescription": "CPU ceiling in millicores, mapped onto cgroup v2 `cpu.max`.\n\n`1000m` is one core.",
+          "x-intellij-html-description": "\u003cp\u003eCPU ceiling in millicores, mapped onto cgroup v2 \u003ccode\u003ecpu.max\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003e\u003ccode\u003e1000m\u003c/code\u003e is one core.\u003c/p\u003e\n"
+        },
+        "memory": {
+          "type": "string",
+          "title": "memory",
+          "description": "Memory ceiling, mapped onto cgroup v2 memory.max.\n\nExceeding it OOM-kills the container.\n",
+          "markdownDescription": "Memory ceiling, mapped onto cgroup v2 `memory.max`.\n\nExceeding it OOM-kills the container.",
+          "x-intellij-html-description": "\u003cp\u003eMemory ceiling, mapped onto cgroup v2 \u003ccode\u003ememory.max\u003c/code\u003e.\u003c/p\u003e\n\n\u003cp\u003eExceeding it OOM-kills the container.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "ContainerResourceLimits are hard ceilings."
+    },
+    "container.ContainerResources": {
+      "properties": {
+        "limits": {
+          "$ref": "#/$defs/container.ContainerResourceLimits",
+          "title": "limits",
+          "description": "Hard ceilings the container cannot exceed.\n",
+          "markdownDescription": "Hard ceilings the container cannot exceed.",
+          "x-intellij-html-description": "\u003cp\u003eHard ceilings the container cannot exceed.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "ContainerResources configures cgroup v2 resource limits."
+    },
+    "container.ContainerRunAs": {
+      "properties": {
+        "uid": {
+          "type": "integer",
+          "title": "uid",
+          "description": "UID to run the container’s entrypoint as.\n\nUnset means use the image’s own USER. There are no user namespaces, so uid 0 is host\nroot.\n",
+          "markdownDescription": "UID to run the container's entrypoint as.\n\nUnset means use the image's own USER. There are no user namespaces, so uid 0 is host\nroot.",
+          "x-intellij-html-description": "\u003cp\u003eUID to run the container\u0026rsquo;s entrypoint as.\u003c/p\u003e\n\n\u003cp\u003eUnset means use the image\u0026rsquo;s own USER. There are no user namespaces, so uid 0 is host\nroot.\u003c/p\u003e\n"
+        },
+        "gid": {
+          "type": "integer",
+          "title": "gid",
+          "description": "GID to run the container’s entrypoint as.\n\nUnset means use the image’s own USER.\n",
+          "markdownDescription": "GID to run the container's entrypoint as.\n\nUnset means use the image's own USER.",
+          "x-intellij-html-description": "\u003cp\u003eGID to run the container\u0026rsquo;s entrypoint as.\u003c/p\u003e\n\n\u003cp\u003eUnset means use the image\u0026rsquo;s own USER.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "ContainerRunAs overrides the image's user and group."
+    },
+    "container.ContainerSecurity": {
+      "properties": {
+        "profile": {
+          "type": "string",
+          "title": "profile",
+          "description": "Security profile.\n\nrestricted drops all capabilities, allows no device access, and mounts the rootfs\nand sysfs read-only. privileged grants all grantable capabilities and all devices,\nwhich is what extension services get implicitly.\n",
+          "markdownDescription": "Security profile.\n\n`restricted` drops all capabilities, allows no device access, and mounts the rootfs\nand sysfs read-only. `privileged` grants all grantable capabilities and all devices,\nwhich is what extension services get implicitly.",
+          "x-intellij-html-description": "\u003cp\u003eSecurity profile.\u003c/p\u003e\n\n\u003cp\u003e\u003ccode\u003erestricted\u003c/code\u003e drops all capabilities, allows no device access, and mounts the rootfs\nand sysfs read-only. \u003ccode\u003eprivileged\u003c/code\u003e grants all grantable capabilities and all devices,\nwhich is what extension services get implicitly.\u003c/p\u003e\n"
+        },
+        "capabilities": {
+          "$ref": "#/$defs/container.ContainerCapabilities",
+          "title": "capabilities",
+          "description": "Linux capabilities to add or drop on top of the profile.\n",
+          "markdownDescription": "Linux capabilities to add or drop on top of the profile.",
+          "x-intellij-html-description": "\u003cp\u003eLinux capabilities to add or drop on top of the profile.\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "ContainerSecurity configures the container's security posture."
+    },
+    "container.HostPathMount": {
+      "properties": {
+        "source": {
+          "type": "string",
+          "title": "source",
+          "description": "Absolute path on the host. Must already exist.\n",
+          "markdownDescription": "Absolute path on the host. Must already exist.",
+          "x-intellij-html-description": "\u003cp\u003eAbsolute path on the host. Must already exist.\u003c/p\u003e\n"
+        },
+        "destination": {
+          "type": "string",
+          "title": "destination",
+          "description": "Absolute path inside the container’s mount namespace.\n",
+          "markdownDescription": "Absolute path inside the container's mount namespace.",
+          "x-intellij-html-description": "\u003cp\u003eAbsolute path inside the container\u0026rsquo;s mount namespace.\u003c/p\u003e\n"
+        },
+        "options": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "options",
+          "description": "Mount options. Host path mounts are read-only by default (ro).\n",
+          "markdownDescription": "Mount options. Host path mounts are read-only by default (`ro`).",
+          "x-intellij-html-description": "\u003cp\u003eMount options. Host path mounts are read-only by default (\u003ccode\u003ero\u003c/code\u003e).\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "HostPathMount bind-mounts a host path."
+    },
+    "container.TmpfsMount": {
+      "properties": {
+        "destination": {
+          "type": "string",
+          "title": "destination",
+          "description": "Absolute path inside the container’s mount namespace.\n",
+          "markdownDescription": "Absolute path inside the container's mount namespace.",
+          "x-intellij-html-description": "\u003cp\u003eAbsolute path inside the container\u0026rsquo;s mount namespace.\u003c/p\u003e\n"
+        },
+        "size": {
+          "type": "string",
+          "title": "size",
+          "description": "Size of the tmpfs, e.g. 64MiB. Empty means the kernel default.\n",
+          "markdownDescription": "Size of the tmpfs, e.g. `64MiB`. Empty means the kernel default.",
+          "x-intellij-html-description": "\u003cp\u003eSize of the tmpfs, e.g. \u003ccode\u003e64MiB\u003c/code\u003e. Empty means the kernel default.\u003c/p\u003e\n"
+        },
+        "options": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "title": "options",
+          "description": "Mount options. Tmpfs mounts are writable by default (rw).\n",
+          "markdownDescription": "Mount options. Tmpfs mounts are writable by default (`rw`).",
+          "x-intellij-html-description": "\u003cp\u003eMount options. Tmpfs mounts are writable by default (\u003ccode\u003erw\u003c/code\u003e).\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "TmpfsMount mounts a tmpfs."
+    },
+    "container.UserVolumeMount": {
+      "properties": {
+        "name": {
+          "type": "string",
+          "title": "name",
+          "description": "Name of the UserVolumeConfig document to mount.\n",
+          "markdownDescription": "Name of the `UserVolumeConfig` document to mount.",
+          "x-intellij-html-description": "\u003cp\u003eName of the \u003ccode\u003eUserVolumeConfig\u003c/code\u003e document to mount.\u003c/p\u003e\n"
+        },
+        "destination": {
+          "type": "string",
+          "title": "destination",
+          "description": "Absolute path inside the container’s mount namespace.\n",
+          "markdownDescription": "Absolute path inside the container's mount namespace.",
+          "x-intellij-html-description": "\u003cp\u003eAbsolute path inside the container\u0026rsquo;s mount namespace.\u003c/p\u003e\n"
+        },
+        "options": {
+          "enum": [
+            "ro",
+            "rw",
+            "noexec",
+            "nosuid",
+            "nodev",
+            "noatime",
+            "rbind",
+            "rshared"
+          ],
+          "title": "options",
+          "description": "Mount options. User volume mounts are read-only by default (ro).\n",
+          "markdownDescription": "Mount options. User volume mounts are read-only by default (`ro`).",
+          "x-intellij-html-description": "\u003cp\u003eMount options. User volume mounts are read-only by default (\u003ccode\u003ero\u003c/code\u003e).\u003c/p\u003e\n"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "UserVolumeMount mounts a user volume by name."
+    },
     "cri.CRIBaseRuntimeSpecConfigV1Alpha1": {
       "properties": {
         "apiVersion": {
@@ -7272,6 +7688,9 @@
     },
     {
       "$ref": "#/$defs/cluster.DiscoveryServiceConfigV1Alpha1"
+    },
+    {
+      "$ref": "#/$defs/container.ContainerConfigV1Alpha1"
     },
     {
       "$ref": "#/$defs/cri.CRIBaseRuntimeSpecConfigV1Alpha1"
