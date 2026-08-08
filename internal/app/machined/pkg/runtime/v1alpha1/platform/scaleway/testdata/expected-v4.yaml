@@ -1,0 +1,88 @@
+addresses:
+    - address: 51.158.100.1/32
+      linkName: eth0
+      family: inet4
+      scope: global
+      flags: permanent
+      layer: platform
+    - address: 2001:bc8:1234:5678:dc00:1ff:fe14:a73b/64
+      linkName: eth0
+      family: inet6
+      scope: global
+      flags: permanent
+      layer: platform
+links:
+    - name: eth0
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      layer: platform
+routes:
+    - family: inet4
+      dst: 169.254.42.42/32
+      src: ""
+      gateway: ""
+      outLinkName: eth0
+      table: main
+      priority: 4096
+      scope: link
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+    - family: inet4
+      dst: 62.210.0.1/32
+      src: ""
+      gateway: ""
+      outLinkName: eth0
+      table: main
+      priority: 3072
+      scope: link
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+    - family: inet4
+      dst: ""
+      src: ""
+      gateway: 62.210.0.1
+      outLinkName: eth0
+      table: main
+      priority: 2048
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+    - family: inet6
+      dst: ""
+      src: ""
+      gateway: fe80::dc00:ff:fe12:3456
+      outLinkName: eth0
+      table: main
+      priority: 2048
+      scope: global
+      type: unicast
+      flags: ""
+      protocol: static
+      layer: platform
+hostnames:
+    - hostname: scw-talos-v4
+      domainname: ""
+      layer: platform
+resolvers: []
+timeServers: []
+operators: []
+externalIPs:
+    - 51.158.100.1
+    - 2001:bc8:1234:5678:dc00:1ff:fe14:a73b
+metadata:
+    platform: scaleway
+    hostname: scw-talos-v4
+    region: fr-par
+    zone: fr-par-1
+    instanceType: DEV1-M
+    instanceId: 44444444-4444-4444-4444-444444444444
+    providerId: scaleway://instance/fr-par-1/44444444-4444-4444-4444-444444444444
