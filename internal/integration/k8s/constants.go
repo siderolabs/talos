@@ -10,7 +10,7 @@ package k8s
 const (
 	// RookCephHelmChartVersion is the version of the Rook Ceph Helm chart to use.
 	// renovate: datasource=helm versioning=helm depName=rook-ceph registryUrl=https://charts.rook.io/release
-	RookCephHelmChartVersion = "v1.20.2"
+	RookCephHelmChartVersion = "v1.20.3"
 	// CephCSIDriversHelmChartVersion is the version of the Ceph-CSI drivers Helm chart to use.
 	// Starting with Rook v1.20 the CSI drivers are no longer deployed by the operator chart and
 	// have to be installed separately via the ceph-csi-drivers chart.
