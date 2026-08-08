@@ -124,12 +124,7 @@ func applyDefaultSettings(presetOps Options, cOps *clusterops.Common, qOps *clus
 		installerName += secureBootSuffix
 	}
 
-	installerURL, err := url.JoinPath(presetOps.ImageFactoryURL.Host, installerName, presetOps.SchematicID+":"+cOps.TalosVersion)
-	if err != nil {
-		return fmt.Errorf("failed to build installer image URL: %w", err)
-	}
-
-	qOps.NodeInstallImage = installerURL
+	qOps.NodeInstallImage = fmt.Sprintf("%s/%s/%s:%s", presetOps.ImageFactoryURL.Host, installerName, presetOps.SchematicID, cOps.TalosVersion)
 
 	return nil
 }
