@@ -124,12 +124,10 @@ func applyDefaultSettings(presetOps Options, cOps *clusterops.Common, qOps *clus
 		installerName += secureBootSuffix
 	}
 
-	installerURL, err := url.JoinPath(presetOps.ImageFactoryURL.Host, installerName, presetOps.SchematicID+":"+cOps.TalosVersion)
-	if err != nil {
-		return fmt.Errorf("failed to build installer image URL: %w", err)
-	}
-
-	qOps.NodeInstallImage = installerURL
+	// The installer image reference is an OCI image reference (host/name:tag),
+	// not an HTTP URL: url.JoinPath rejects hosts with an explicit port (e.g.
+	// 127.0.0.1:8080), so build the reference directly.
+	qOps.NodeInstallImage = fmt.Sprintf("%s/%s/%s:%s", presetOps.ImageFactoryURL.Host, installerName, presetOps.SchematicID, cOps.TalosVersion)
 
 	return nil
 }
