@@ -128,3 +128,21 @@ func TestMaintenance(t *testing.T) {
 	require.True(t, cOps.SkipInjectingConfig)
 	require.False(t, cOps.ApplyConfigEnabled)
 }
+
+func TestInstallerImageWithPort(t *testing.T) {
+	imageFactoryURL, err := url.Parse("http://127.0.0.1:8080")
+	require.NoError(t, err)
+
+	cOps := clusterops.GetCommon()
+	qOps := clusterops.GetQemu()
+	qOps.TargetArch = "arm64"
+	cOps.TalosVersion = "v9.9.9"
+
+	err = preset.Apply(preset.Options{
+		SchematicID:     "123schematic123",
+		ImageFactoryURL: imageFactoryURL,
+	}, &cOps, &qOps, []string{preset.PXE{}.Name()})
+	require.NoError(t, err)
+
+	require.Equal(t, "127.0.0.1:8080/metal-installer/123schematic123:v9.9.9", qOps.NodeInstallImage)
+}
