@@ -10,7 +10,7 @@ replace (
 	github.com/mdlayher/ethtool => github.com/siderolabs/ethtool v0.6.0-sidero
 
 	// see https://github.com/mdlayher/kobject/pull/5
-	github.com/mdlayher/kobject => github.com/smira/kobject v0.0.0-20240304111826-49c8d4613389
+	github.com/mdlayher/kobject => github.com/smira/kobject 19ca17470d7d
 
 	// replace to disable assembly implementation (see https://github.com/beevik/nts/issues/1#issuecomment-4879122150)
 	github.com/secure-io/siv-go => github.com/smira/siv-go v0.0.0-20260706144621-2093d2730928
@@ -28,7 +28,7 @@ require (
 	k8s.io/apiextensions-apiserver v0.37.0-beta.0
 	k8s.io/apimachinery v0.37.0-beta.0
 	k8s.io/apiserver v0.37.0-beta.0
-	k8s.io/client-go v0.37.0-beta.0
+	k8s.io/client-go v11.0.0+incompatible
 	k8s.io/component-base v0.37.0-beta.0
 	k8s.io/cri-api v0.37.0-beta.0
 	k8s.io/kube-proxy v0.37.0-beta.0
@@ -40,22 +40,22 @@ require (
 
 require (
 	cloud.google.com/go/compute/metadata v0.9.0
-	codeberg.org/miekg/dns v0.6.84
+	codeberg.org/miekg/dns v0.6.90
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.22.0
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.14.0
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azcertificates v1.5.0
 	github.com/Azure/azure-sdk-for-go/sdk/security/keyvault/azkeys v1.5.0
 	github.com/alexflint/go-filemutex v1.3.0
-	github.com/aws/aws-sdk-go-v2 v1.43.0
-	github.com/aws/aws-sdk-go-v2/config v1.32.31
-	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.31
-	github.com/aws/aws-sdk-go-v2/service/acm v1.43.0
-	github.com/aws/aws-sdk-go-v2/service/kms v1.55.0
-	github.com/aws/smithy-go v1.27.4
+	github.com/aws/aws-sdk-go-v2 v1.43.4
+	github.com/aws/aws-sdk-go-v2/config v1.32.35
+	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.35
+	github.com/aws/aws-sdk-go-v2/service/acm v1.43.4
+	github.com/aws/aws-sdk-go-v2/service/kms v1.55.4
+	github.com/aws/smithy-go v1.27.7
 	github.com/beevik/ntp v1.5.0
 	github.com/beevik/nts v0.3.1
 	github.com/blang/semver/v4 v4.0.0
-	github.com/cenkalti/backoff/v4 v4.3.0
+	github.com/cenkalti/backoff/v7 v7.0.0
 	github.com/containerd/cgroups/v3 v3.1.3
 	github.com/containerd/containerd/api v1.11.1
 	github.com/containerd/containerd/v2 v2.3.3
@@ -70,7 +70,7 @@ require (
 	github.com/cosi-project/runtime v1.16.2
 	github.com/detailyang/go-fallocate v0.0.0-20180908115635-432fa640bd2e
 	github.com/distribution/reference v0.6.0
-	github.com/docker/cli v29.6.2+incompatible
+	github.com/docker/cli v29.7.2+incompatible
 	github.com/dustin/go-humanize v1.0.1
 	github.com/elastic/go-libaudit/v2 v2.6.2
 	github.com/equinix-ms/go-vmw-guestrpc v1.0.0
@@ -80,13 +80,13 @@ require (
 	github.com/freddierice/go-losetup/v2 v2.0.1
 	github.com/fsnotify/fsnotify v1.10.1
 	github.com/g0rbe/go-chattr v1.0.1
-	github.com/gdamore/tcell/v2 v2.13.10
+	github.com/gdamore/tcell/v3 v3.4.1
 	github.com/gertd/go-pluralize v0.2.1
 	github.com/godbus/dbus/v5 v5.2.2
 	github.com/golang/mock v1.7.0-rc.1
 	github.com/google/cadvisor/lib v0.60.5
-	github.com/google/cel-go v0.29.2
-	github.com/google/go-containerregistry v0.21.7
+	github.com/google/cel-go v0.31.0
+	github.com/google/go-containerregistry v0.21.9
 	github.com/google/go-tpm v0.9.8
 	github.com/google/nftables v0.3.0
 	github.com/google/uuid v1.6.0
@@ -97,16 +97,16 @@ require (
 	github.com/hashicorp/go-envparse v0.1.0
 	github.com/hashicorp/go-getter/v2 v2.2.3
 	github.com/hashicorp/go-multierror v1.1.1
-	github.com/hetznercloud/hcloud-go/v2 v2.45.0
-	github.com/insomniacslk/dhcp v0.0.0-20260719225207-c76316d4aa82
+	github.com/hetznercloud/hcloud-go/v2 v2.47.0
+	github.com/insomniacslk/dhcp v0.0.0-20260728151720-c308df0fdcef
 	github.com/jeromer/syslogparser v1.1.0
-	github.com/jsimonetti/rtnetlink/v2 v2.2.1-0.20260714114318-c87a4183a51a
+	github.com/jsimonetti/rtnetlink/v2 43bafec815b3
 	github.com/jxskiss/base62 v1.1.0
-	github.com/klauspost/compress v1.19.1
+	github.com/klauspost/compress v1.19.2
 	github.com/klauspost/cpuid/v2 v2.4.0
 	github.com/linode/go-metadata v0.3.0
 	github.com/martinlindhe/base36 v1.1.1
-	github.com/mattn/go-isatty v0.0.23
+	github.com/mattn/go-isatty v0.0.24
 	github.com/mdlayher/arp v0.0.0-20260528070854-93566ba168e9
 	github.com/mdlayher/ethtool v0.6.1
 	github.com/mdlayher/genetlink v1.4.0
@@ -117,13 +117,13 @@ require (
 	github.com/mdp/qrterminal/v3 v3.2.1
 	github.com/miekg/dns v1.1.72
 	github.com/moby/moby/api v1.55.0
-	github.com/moby/moby/client v0.5.0
+	github.com/moby/moby/client v0.5.1
 	github.com/navidys/tvxwidgets v0.14.0
 	github.com/nberlee/go-netstat v0.1.2
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.1
 	github.com/opencontainers/runtime-spec v1.3.0
-	github.com/osrg/gobgp/v4 v4.7.1-0.20260728014820-31e136b73c64
+	github.com/osrg/gobgp/v4 v4.8.0
 	github.com/packethost/packngo v0.31.0
 	github.com/pelletier/go-toml/v2 v2.4.3
 	github.com/pin/tftp/v3 v3.2.0
@@ -135,7 +135,7 @@ require (
 	github.com/rs/xid v1.6.0
 	github.com/ryanuber/go-glob v1.0.0
 	github.com/safchain/ethtool v0.7.0
-	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.36
+	github.com/scaleway/scaleway-sdk-go v1.0.0-beta.37
 	github.com/siderolabs/crypto v0.6.5
 	github.com/siderolabs/discovery-api v0.1.8
 	github.com/siderolabs/discovery-client v0.1.15
@@ -163,9 +163,9 @@ require (
 	github.com/siderolabs/proto-codec v0.1.4
 	github.com/siderolabs/siderolink v0.3.16
 	github.com/siderolabs/talos/pkg/machinery v1.14.0-beta.1
-	github.com/sigstore/cosign/v3 v3.1.2
-	github.com/sigstore/sigstore v1.10.8
-	github.com/sigstore/sigstore-go v1.2.2
+	github.com/sigstore/cosign/v3 v3.1.3
+	github.com/sigstore/sigstore v1.10.9
+	github.com/sigstore/sigstore-go v1.3.0
 	github.com/sirupsen/logrus v1.9.4
 	github.com/spf13/cobra v1.10.2
 	github.com/spf13/pflag v1.0.10
@@ -193,7 +193,7 @@ require (
 	golang.org/x/time v0.15.0
 	golang.zx2c4.com/wireguard/wgctrl v0.0.0-20241231184526-a9ab2273dd10
 	google.golang.org/grpc v1.83.0
-	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af
+	google.golang.org/protobuf 644d0267c26e
 	gopkg.in/typ.v4 v4.4.0
 	k8s.io/klog/v2 v2.140.0
 	kernel.org/pub/linux/libs/security/libcap/cap v1.2.78
