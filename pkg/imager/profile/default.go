@@ -123,6 +123,19 @@ var Default = map[string]Profile{
 			},
 		},
 	},
+	"alibabacloud": {
+		Platform:   "alibabacloud",
+		SecureBoot: new(false),
+		Output: Output{
+			Kind:      OutKindImage,
+			OutFormat: OutFormatRaw,
+			ImageOptions: &ImageOptions{
+				DiskSize:          MinRAWDiskSize,
+				DiskFormat:        DiskFormatQCOW2,
+				DiskFormatOptions: "cluster_size=8k",
+			},
+		},
+	},
 	"aws": {
 		Platform:   "aws",
 		SecureBoot: new(false),

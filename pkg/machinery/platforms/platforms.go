@@ -385,5 +385,18 @@ func CloudPlatforms() []Platform {
 				BootMethodISO,
 			},
 		},
+		{
+			Name: "alibabacloud",
+
+			Label:       "AlibabaCloud",
+			Description: "Runs on Alibaba Cloud virtual machines",
+
+			Architectures:   []Arch{ArchAmd64, ArchArm64},
+			DiskImageSuffix: "qcow2",
+			BootMethods: []BootMethod{
+				BootMethodDiskImage,
+			},
+			MinVersion: semver.MustParse("1.14.0-beta.2"),
+		},
 	}
 }

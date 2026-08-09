@@ -1,0 +1,45 @@
+addresses: []
+links:
+    - name: eth0
+      logical: false
+      up: true
+      mtu: 0
+      kind: ""
+      type: netrom
+      layer: platform
+routes: []
+hostnames:
+    - hostname: node
+      domainname: example.com
+      layer: platform
+resolvers:
+    - dnsServers:
+        - 100.100.2.136
+      layer: platform
+timeServers:
+    - timeServers:
+        - ntp.aliyun.com
+      layer: platform
+operators:
+    - operator: dhcp4
+      linkName: eth0
+      requireUp: true
+      dhcp4:
+        routeMetric: 1024
+      layer: platform
+    - operator: dhcp6
+      linkName: eth0
+      requireUp: true
+      dhcp6:
+        routeMetric: 1024
+      layer: platform
+externalIPs:
+    - 203.0.113.10
+metadata:
+    platform: alibabacloud
+    hostname: node.example.com
+    region: cn-hangzhou
+    zone: cn-hangzhou-a
+    instanceType: ecs.g7.large
+    instanceId: i-example
+    providerId: cn-hangzhou.i-example

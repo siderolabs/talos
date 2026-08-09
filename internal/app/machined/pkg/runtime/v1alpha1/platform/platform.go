@@ -16,6 +16,7 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/akamai"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/alibabacloud"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/aws"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/azure"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform/cloudstack"
@@ -99,6 +100,8 @@ func newPlatform(platform string) (p runtime.Platform, err error) {
 	switch platform {
 	case "akamai":
 		p = &akamai.Akamai{}
+	case "alibabacloud":
+		p = &alibabacloud.Alibabacloud{}
 	case "aws":
 		return aws.NewAWS()
 	case "azure":

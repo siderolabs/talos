@@ -1,0 +1,15 @@
+{
+  "Hostname": "node.example.com",
+  "InstanceID": "i-example",
+  "InstanceType": "ecs.g7.large",
+  "Region": "cn-hangzhou",
+  "Zone": "cn-hangzhou-a",
+  "DNSServers": ["100.100.2.136"],
+  "NTPServers": ["ntp.aliyun.com"],
+  "PublicIPv4": "203.0.113.10",
+  "PrimaryInterface": {
+    "MAC": "00:16:3e:00:00:01",
+    "PrivateIPv4s": ["192.168.1.10"],
+    "IPv6s": ["2408:4000::10"]
+  }
+}
