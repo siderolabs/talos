@@ -224,9 +224,9 @@
         "secure": {
           "type": "boolean",
           "title": "secure",
-          "description": "Enable secure mount options (nosuid, nodev).\n\nDefaults to true for better security.\n",
-          "markdownDescription": "Enable secure mount options (nosuid, nodev).\n\nDefaults to true for better security.",
-          "x-intellij-html-description": "\u003cp\u003eEnable secure mount options (nosuid, nodev).\u003c/p\u003e\n\n\u003cp\u003eDefaults to true for better security.\u003c/p\u003e\n"
+          "description": "Enable secure mount options (nosuid, nodev, noexec).\n\nDefaults to true for better security.\n",
+          "markdownDescription": "Enable secure mount options (nosuid, nodev, noexec).\n\nDefaults to true for better security.",
+          "x-intellij-html-description": "\u003cp\u003eEnable secure mount options (nosuid, nodev, noexec).\u003c/p\u003e\n\n\u003cp\u003eDefaults to true for better security.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -316,9 +316,9 @@
         "secure": {
           "type": "boolean",
           "title": "secure",
-          "description": "Enable secure mount options (nosuid, nodev).\n\nDefaults to true for better security.\n",
-          "markdownDescription": "Enable secure mount options (nosuid, nodev).\n\nDefaults to true for better security.",
-          "x-intellij-html-description": "\u003cp\u003eEnable secure mount options (nosuid, nodev).\u003c/p\u003e\n\n\u003cp\u003eDefaults to true for better security.\u003c/p\u003e\n"
+          "description": "Enable secure mount options (nosuid, nodev, noexec).\n\nDefaults to true for better security.\n",
+          "markdownDescription": "Enable secure mount options (nosuid, nodev, noexec).\n\nDefaults to true for better security.",
+          "x-intellij-html-description": "\u003cp\u003eEnable secure mount options (nosuid, nodev, noexec).\u003c/p\u003e\n\n\u003cp\u003eDefaults to true for better security.\u003c/p\u003e\n"
         },
         "virtiofs": {
           "$ref": "#/$defs/block.VirtiofsMountSpec",
@@ -495,9 +495,9 @@
         "secure": {
           "type": "boolean",
           "title": "secure",
-          "description": "Enable secure mount options (nosuid, nodev).\n\nDefaults to true for better security.\nSupported only for EPHEMERAL volume.\n",
-          "markdownDescription": "Enable secure mount options (nosuid, nodev).\n\nDefaults to true for better security.\nSupported only for EPHEMERAL volume.",
-          "x-intellij-html-description": "\u003cp\u003eEnable secure mount options (nosuid, nodev).\u003c/p\u003e\n\n\u003cp\u003eDefaults to true for better security.\nSupported only for EPHEMERAL volume.\u003c/p\u003e\n"
+          "description": "Enable secure mount options (nosuid, nodev).\n\nFor dedicated ETCD and LOG volumes, this also enables noexec.\n\nDefaults to true for better security.\nSupported for EPHEMERAL and dedicated ETCD, CRI, KUBELET and LOG volumes.\n",
+          "markdownDescription": "Enable secure mount options (nosuid, nodev).\n\nFor dedicated ETCD and LOG volumes, this also enables noexec.\n\nDefaults to true for better security.\nSupported for EPHEMERAL and dedicated ETCD, CRI, KUBELET and LOG volumes.",
+          "x-intellij-html-description": "\u003cp\u003eEnable secure mount options (nosuid, nodev).\u003c/p\u003e\n\n\u003cp\u003eFor dedicated ETCD and LOG volumes, this also enables noexec.\u003c/p\u003e\n\n\u003cp\u003eDefaults to true for better security.\nSupported for EPHEMERAL and dedicated ETCD, CRI, KUBELET and LOG volumes.\u003c/p\u003e\n"
         },
         "disableAccessTime": {
           "type": "boolean",
@@ -716,9 +716,9 @@
         "secure": {
           "type": "boolean",
           "title": "secure",
-          "description": "Enable secure mount options (nosuid, nodev).\n\nDefaults to true for better security.\n",
-          "markdownDescription": "Enable secure mount options (nosuid, nodev).\n\nDefaults to true for better security.",
-          "x-intellij-html-description": "\u003cp\u003eEnable secure mount options (nosuid, nodev).\u003c/p\u003e\n\n\u003cp\u003eDefaults to true for better security.\u003c/p\u003e\n"
+          "description": "Enable secure mount options (nosuid, nodev, noexec).\n\nDefaults to true for better security.\n",
+          "markdownDescription": "Enable secure mount options (nosuid, nodev, noexec).\n\nDefaults to true for better security.",
+          "x-intellij-html-description": "\u003cp\u003eEnable secure mount options (nosuid, nodev, noexec).\u003c/p\u003e\n\n\u003cp\u003eDefaults to true for better security.\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

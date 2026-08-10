@@ -123,8 +123,10 @@ type MountSpec struct {
 	//   description: |
 	//     Enable secure mount options (nosuid, nodev).
 	//
+	//     For dedicated ETCD and LOG volumes, this also enables noexec.
+	//
 	//     Defaults to true for better security.
-	//     Supported only for EPHEMERAL volume.
+	//     Supported for EPHEMERAL and dedicated ETCD, CRI, KUBELET and LOG volumes.
 	MountSecure *bool `yaml:"secure,omitempty"`
 	//   description: |
 	//     If true, disable file access time updates.

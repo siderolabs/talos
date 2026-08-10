@@ -89,7 +89,7 @@ type ExternalMountSpec struct {
 	//     If true, disable file access time updates.
 	MountDisableAccessTime *bool `yaml:"disableAccessTime,omitempty"`
 	//   description: |
-	//     Enable secure mount options (nosuid, nodev).
+	//     Enable secure mount options (nosuid, nodev, noexec).
 	//
 	//     Defaults to true for better security.
 	MountSecure *bool `yaml:"secure,omitempty"`

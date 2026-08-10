@@ -425,8 +425,8 @@ func (ExistingMountSpec) Doc() *encoder.Doc {
 				Name:        "secure",
 				Type:        "bool",
 				Note:        "",
-				Description: "Enable secure mount options (nosuid, nodev).\n\nDefaults to true for better security.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable secure mount options (nosuid, nodev)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Enable secure mount options (nosuid, nodev, noexec).\n\nDefaults to true for better security.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable secure mount options (nosuid, nodev, noexec)." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
@@ -506,8 +506,8 @@ func (ExternalMountSpec) Doc() *encoder.Doc {
 				Name:        "secure",
 				Type:        "bool",
 				Note:        "",
-				Description: "Enable secure mount options (nosuid, nodev).\n\nDefaults to true for better security.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable secure mount options (nosuid, nodev)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Enable secure mount options (nosuid, nodev, noexec).\n\nDefaults to true for better security.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable secure mount options (nosuid, nodev, noexec)." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
 				Name:        "virtiofs",
@@ -861,8 +861,8 @@ func (UserMountSpec) Doc() *encoder.Doc {
 				Name:        "secure",
 				Type:        "bool",
 				Note:        "",
-				Description: "Enable secure mount options (nosuid, nodev).\n\nDefaults to true for better security.",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable secure mount options (nosuid, nodev)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Enable secure mount options (nosuid, nodev, noexec).\n\nDefaults to true for better security.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable secure mount options (nosuid, nodev, noexec)." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 		},
 	}
@@ -1053,7 +1053,7 @@ func (MountSpec) Doc() *encoder.Doc {
 				Name:        "secure",
 				Type:        "bool",
 				Note:        "",
-				Description: "Enable secure mount options (nosuid, nodev).\n\nDefaults to true for better security.\nSupported only for EPHEMERAL volume.",
+				Description: "Enable secure mount options (nosuid, nodev).\n\nFor dedicated ETCD and LOG volumes, this also enables noexec.\n\nDefaults to true for better security.\nSupported for EPHEMERAL and dedicated ETCD, CRI, KUBELET and LOG volumes.",
 				Comments:    [3]string{"" /* encoder.HeadComment */, "Enable secure mount options (nosuid, nodev)." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
