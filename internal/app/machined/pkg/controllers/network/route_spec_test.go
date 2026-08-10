@@ -242,6 +242,94 @@ func (suite *RouteSpecSuite) TestDefaultRoute() {
 	suite.Assert().NoError(suite.assertNoRoute(netip.Prefix{}, netip.MustParseAddr("127.0.11.2")))
 }
 
+func (suite *RouteSpecSuite) TestIPv6DefaultPriorityLifecycle() {
+	dummyInterface := suite.uniqueDummyInterface()
+
+	conn, err := rtnetlink.Dial(nil)
+	suite.Require().NoError(err)
+
+	defer conn.Close() //nolint:errcheck
+
+	suite.Require().NoError(
+		conn.Link.New(
+			&rtnetlink.LinkMessage{
+				Type:   unix.ARPHRD_ETHER,
+				Flags:  unix.IFF_UP,
+				Change: unix.IFF_UP,
+				Attributes: &rtnetlink.LinkAttributes{
+					Name: dummyInterface,
+					Info: &rtnetlink.LinkInfo{Kind: "dummy"},
+				},
+			},
+		),
+	)
+
+	iface, err := net.InterfaceByName(dummyInterface)
+	suite.Require().NoError(err)
+
+	defer conn.Link.Delete(uint32(iface.Index)) //nolint:errcheck
+
+	localIP := net.ParseIP("2001:db8:1399:1::2").To16()
+
+	suite.Require().NoError(
+		conn.Address.New(
+			&rtnetlink.AddressMessage{
+				Family:       unix.AF_INET6,
+				PrefixLength: 64,
+				Scope:        unix.RT_SCOPE_UNIVERSE,
+				Index:        uint32(iface.Index),
+				Attributes: &rtnetlink.AddressAttributes{
+					Address: localIP,
+					Local:   localIP,
+				},
+			},
+		),
+	)
+
+	destination := netip.MustParsePrefix("2001:db8:1399:2::/64")
+	gateway := netip.MustParseAddr("2001:db8:1399:1::1")
+	route := network.NewRouteSpec(network.NamespaceName, "ipv6-default-priority")
+	*route.TypedSpec() = network.RouteSpecSpec{
+		Family:      nethelpers.FamilyInet6,
+		Destination: destination,
+		Gateway:     gateway,
+		Source:      netip.MustParseAddr("2001:db8:1399:1::2"),
+		Table:       nethelpers.TableMain,
+		OutLinkName: dummyInterface,
+		Protocol:    nethelpers.ProtocolBGP,
+		Type:        nethelpers.TypeUnicast,
+		Scope:       nethelpers.ScopeGlobal,
+		ConfigLayer: network.ConfigOperator,
+	}
+
+	suite.Create(route)
+
+	suite.Require().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error {
+				return suite.assertRoute(destination, gateway, func(message rtnetlink.RouteMessage) error {
+					if message.Attributes.Priority != network.DefaultRouteMetric {
+						return retry.ExpectedErrorf(
+							"route priority expected %d, got %d",
+							network.DefaultRouteMetric,
+							message.Attributes.Priority,
+						)
+					}
+
+					return nil
+				})
+			},
+		),
+	)
+
+	suite.Require().NoError(suite.State().TeardownAndDestroy(suite.Ctx(), route.Metadata()))
+	suite.Require().NoError(
+		retry.Constant(3*time.Second, retry.WithUnits(100*time.Millisecond)).Retry(
+			func() error { return suite.assertNoRoute(destination, gateway) },
+		),
+	)
+}
+
 func (suite *RouteSpecSuite) TestDefaultAndInterfaceRoutes() {
 	dummyInterface := suite.uniqueDummyInterface()
 

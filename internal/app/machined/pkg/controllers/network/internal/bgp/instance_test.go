@@ -7,6 +7,7 @@ package bgp_test
 import (
 	"net/netip"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,6 +16,44 @@ import (
 	internalbgp "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network/internal/bgp"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
+
+func TestOriginatedPathWithdrawalPropagates(t *testing.T) {
+	ctx := t.Context()
+	fabricPort := freeBGPImportTestPort(t)
+	originServer := startBGPImportTestServer(t, ctx, 65001, "192.0.2.1", -1)
+	fabricServer := startBGPImportTestServer(t, ctx, 65000, "192.0.2.2", fabricPort)
+	connectBGPImportTestFabric(t, ctx, originServer, fabricServer, fabricPort)
+
+	instance := internalbgp.NewInstance()
+	internalbgp.SetInstanceServerForTest(instance, originServer)
+
+	prefixes := []netip.Prefix{
+		netip.MustParsePrefix("198.51.100.0/24"),
+		netip.MustParsePrefix("2001:db8:1234::/48"),
+	}
+
+	require.NoError(t, instance.ReconcileOriginated(prefixes))
+	require.Eventually(t, func() bool {
+		for _, prefix := range prefixes {
+			if listBGPImportTestPath(t, fabricServer, prefix) == nil {
+				return false
+			}
+		}
+
+		return true
+	}, 5*time.Second, 10*time.Millisecond, "originated paths were not advertised to the fabric peer")
+
+	require.NoError(t, instance.ReconcileOriginated(nil))
+	require.Eventually(t, func() bool {
+		for _, prefix := range prefixes {
+			if listBGPImportTestPath(t, fabricServer, prefix) != nil {
+				return false
+			}
+		}
+
+		return true
+	}, 5*time.Second, 10*time.Millisecond, "originated paths were not withdrawn from the fabric peer")
+}
 
 func TestNewInstance(t *testing.T) {
 	t.Parallel()
@@ -100,11 +139,29 @@ func TestInstanceServerLifecycleAndReconciliation(t *testing.T) {
 	))
 	assert.Empty(t, internalbgp.InstancePeerKeysForTest(instance))
 
-	prefix := netip.MustParsePrefix("10.0.0.2/32")
-	require.NoError(t, instance.ReconcileOriginated([]netip.Prefix{prefix}))
-	assert.True(t, internalbgp.InstanceOriginatedForTest(instance, prefix))
+	stalePrefix := netip.MustParsePrefix("192.0.2.128/25")
+	retainedPrefix := netip.MustParsePrefix("2001:db8:1234::/48")
+	newPrefix := netip.MustParsePrefix("198.51.100.0/24")
+
+	require.NoError(t, instance.ReconcileOriginated([]netip.Prefix{stalePrefix, retainedPrefix}))
+	assert.True(t, internalbgp.InstanceOriginatedForTest(instance, stalePrefix))
+	assert.True(t, internalbgp.InstanceOriginatedForTest(instance, retainedPrefix))
+	require.NotNil(t, listBGPImportTestPath(t, server, stalePrefix))
+	require.NotNil(t, listBGPImportTestPath(t, server, retainedPrefix))
+
+	require.NoError(t, instance.ReconcileOriginated([]netip.Prefix{retainedPrefix, newPrefix}))
+	assert.False(t, internalbgp.InstanceOriginatedForTest(instance, stalePrefix))
+	assert.True(t, internalbgp.InstanceOriginatedForTest(instance, retainedPrefix))
+	assert.True(t, internalbgp.InstanceOriginatedForTest(instance, newPrefix))
+	assert.Nil(t, listBGPImportTestPath(t, server, stalePrefix))
+	require.NotNil(t, listBGPImportTestPath(t, server, retainedPrefix))
+	require.NotNil(t, listBGPImportTestPath(t, server, newPrefix))
+
 	require.NoError(t, instance.ReconcileOriginated(nil))
-	assert.False(t, internalbgp.InstanceOriginatedForTest(instance, prefix))
+	assert.False(t, internalbgp.InstanceOriginatedForTest(instance, retainedPrefix))
+	assert.False(t, internalbgp.InstanceOriginatedForTest(instance, newPrefix))
+	assert.Nil(t, listBGPImportTestPath(t, server, retainedPrefix))
+	assert.Nil(t, listBGPImportTestPath(t, server, newPrefix))
 
 	require.NoError(t, instance.EnsureServer(
 		t.Context(),

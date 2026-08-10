@@ -6,6 +6,7 @@ package bgp_test
 
 import (
 	"net/netip"
+	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -19,30 +20,36 @@ import (
 func TestRuntimeStateResolve(t *testing.T) {
 	t.Parallel()
 
-	state := internalbgp.NewRuntimeState(
-		map[string]network.LinkStatusSpec{
-			"vrf-blue": {
-				Index: 10,
-				Kind:  network.LinkKindVRF,
-			},
-			"dummy0": {
-				Index:       11,
-				MasterIndex: 10,
-				Alias:       "node-ip",
-			},
-			"eth1": {
-				Index:       12,
-				MasterIndex: 10,
-				AltNames:    []string{"fabric0"},
-			},
-		},
-		[]network.AddressStatusSpec{
-			{Address: netip.MustParsePrefix("2001:db8::2/64"), LinkName: "dummy0", LinkIndex: 11},
-			{Address: netip.MustParsePrefix("10.0.0.2/32"), LinkName: "dummy0", LinkIndex: 11},
-			{Address: netip.MustParsePrefix("127.0.0.1/8"), LinkName: "dummy0", LinkIndex: 11},
-			{Address: netip.MustParsePrefix("fe80::1/64"), LinkName: "dummy0", LinkIndex: 11},
-		},
-	)
+	linkStatuses := []*network.LinkStatus{
+		network.NewLinkStatus(network.NamespaceName, "vrf-blue"),
+		network.NewLinkStatus(network.NamespaceName, "dummy0"),
+		network.NewLinkStatus(network.NamespaceName, "eth1"),
+	}
+	*linkStatuses[0].TypedSpec() = network.LinkStatusSpec{Index: 10, Kind: network.LinkKindVRF}
+	*linkStatuses[1].TypedSpec() = network.LinkStatusSpec{Index: 11, MasterIndex: 10, Alias: "node-ip"}
+	*linkStatuses[2].TypedSpec() = network.LinkStatusSpec{Index: 12, MasterIndex: 10, AltNames: []string{"fabric0"}}
+
+	addressSpecs := []network.AddressStatusSpec{
+		{Address: netip.MustParsePrefix("2001:db8::2/64"), LinkName: "dummy0", LinkIndex: 11},
+		{Address: netip.MustParsePrefix("2001:db8::3/64"), LinkName: "dummy0", LinkIndex: 11},
+		{Address: netip.MustParsePrefix("2001:db8:1::5/128"), LinkName: "dummy0", LinkIndex: 11},
+		{Address: netip.MustParsePrefix("10.0.0.2/24"), LinkName: "dummy0", LinkIndex: 11},
+		{Address: netip.MustParsePrefix("10.0.0.3/24"), LinkName: "dummy0", LinkIndex: 11},
+		{Address: netip.MustParsePrefix("192.0.2.5/32"), LinkName: "dummy0", LinkIndex: 11},
+		{Address: netip.MustParsePrefix("127.0.0.1/8"), LinkName: "dummy0", LinkIndex: 11},
+		{Address: netip.MustParsePrefix("::1/128"), LinkName: "dummy0", LinkIndex: 11},
+		{Address: netip.MustParsePrefix("fe80::1/64"), LinkName: "dummy0", LinkIndex: 11},
+		{Address: netip.MustParsePrefix("ff02::1/16"), LinkName: "dummy0", LinkIndex: 11},
+	}
+	addressStatuses := make([]*network.AddressStatus, 0, len(addressSpecs))
+
+	for _, spec := range addressSpecs {
+		status := network.NewAddressStatus(network.NamespaceName, spec.LinkName+"/"+spec.Address.String())
+		*status.TypedSpec() = spec
+		addressStatuses = append(addressStatuses, status)
+	}
+
+	state := internalbgp.NewRuntimeStateFromResources(slices.Values(linkStatuses), slices.Values(addressStatuses))
 
 	input := network.BGPInstanceConfigSpec{
 		LocalASN:       65001,
@@ -62,8 +69,10 @@ func TestRuntimeStateResolve(t *testing.T) {
 	assert.Equal(t, []string{"dummy0"}, resolved.Spec.AdvertiseLinks)
 	assert.Equal(t, "eth1", resolved.Spec.Neighbors[0].Link)
 	assert.Equal(t, []netip.Prefix{
-		netip.MustParsePrefix("10.0.0.2/32"),
-		netip.MustParsePrefix("2001:db8::2/128"),
+		netip.MustParsePrefix("10.0.0.0/24"),
+		netip.MustParsePrefix("192.0.2.5/32"),
+		netip.MustParsePrefix("2001:db8::/64"),
+		netip.MustParsePrefix("2001:db8:1::5/128"),
 	}, resolved.AdvertisedPrefixes)
 	assert.Equal(t, netip.MustParseAddr("10.0.0.2"), resolved.RouterID)
 

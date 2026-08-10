@@ -66,7 +66,9 @@ func TestBuildOriginatedPath(t *testing.T) {
 		family bgppacket.Family
 	}{
 		{prefix: netip.MustParsePrefix("10.0.0.1/32"), family: bgppacket.RF_IPv4_UC},
+		{prefix: netip.MustParsePrefix("192.0.2.128/25"), family: bgppacket.RF_IPv4_UC},
 		{prefix: netip.MustParsePrefix("2001:db8::1/128"), family: bgppacket.RF_IPv6_UC},
+		{prefix: netip.MustParsePrefix("2001:db8:1234::/48"), family: bgppacket.RF_IPv6_UC},
 	} {
 		path, err := internalbgp.BuildOriginatedPath(test.prefix)
 		require.NoError(t, err)

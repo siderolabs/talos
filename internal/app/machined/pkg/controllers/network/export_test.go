@@ -6,8 +6,6 @@ package network
 
 // Test exports for unexported route helpers (consumed by the external network_test package).
 var (
-	BuildMultipathForTest     = buildMultipath
-	MultipathEqualForTest     = multipathEqual
-	BGPLinkStatusSpecsForTest = bgpLinkStatusSpecs
-	BGPAddressSpecsForTest    = bgpAddressStatusSpecs
+	BuildMultipathForTest = buildMultipath
+	MultipathEqualForTest = multipathEqual
 )

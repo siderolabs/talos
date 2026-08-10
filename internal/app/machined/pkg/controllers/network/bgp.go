@@ -7,7 +7,6 @@ package network
 import (
 	"context"
 	"fmt"
-	"iter"
 	"net/netip"
 	"slices"
 
@@ -27,9 +26,9 @@ import (
 
 // BGPController runs embedded GoBGP routing instances driven by projected BGPInstanceConfig resources.
 //
-// It originates the addresses of the configured links as host routes, installs the routes it
-// learns from its neighbors as network.RouteSpec resources, and exposes peer state as
-// network.BGPPeerStatus resources.
+// It originates the addresses of the configured links as connected networks using their configured
+// prefix lengths, installs the routes it learns from its neighbors as network.RouteSpec resources,
+// and exposes peer state as network.BGPPeerStatus resources.
 type BGPController struct {
 	// ListenPort overrides the default BGP port when non-zero. Negative values disable listeners.
 	// It is used by focused controller tests to avoid binding a host port.
@@ -154,26 +153,6 @@ func instanceOutputs(ctx context.Context, name resource.ID, instance *internalbg
 	}
 }
 
-func bgpLinkStatusSpecs(statuses iter.Seq[*network.LinkStatus]) map[string]network.LinkStatusSpec {
-	result := map[string]network.LinkStatusSpec{}
-
-	for status := range statuses {
-		result[status.Metadata().ID()] = *status.TypedSpec()
-	}
-
-	return result
-}
-
-func bgpAddressStatusSpecs(statuses iter.Seq[*network.AddressStatus]) []network.AddressStatusSpec {
-	var result []network.AddressStatusSpec
-
-	for status := range statuses {
-		result = append(result, *status.TypedSpec())
-	}
-
-	return result
-}
-
 //nolint:gocyclo,cyclop
 func (ctrl *BGPController) reconcile(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	configs, err := safe.ReaderListAll[*network.BGPInstanceConfig](ctx, r)
@@ -191,10 +170,7 @@ func (ctrl *BGPController) reconcile(ctx context.Context, r controller.Runtime, 
 		return fmt.Errorf("error listing address statuses: %w", err)
 	}
 
-	runtimeState := internalbgp.NewRuntimeState(
-		bgpLinkStatusSpecs(linkStatuses.All()),
-		bgpAddressStatusSpecs(addressStatuses.All()),
-	)
+	runtimeState := internalbgp.NewRuntimeStateFromResources(linkStatuses.All(), addressStatuses.All())
 	neighborResolver := internalbgp.NewNeighborResolver()
 
 	desired := map[resource.ID]struct{}{}

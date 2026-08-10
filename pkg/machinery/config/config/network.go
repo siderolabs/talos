@@ -439,7 +439,7 @@ type NetworkBGPInstanceConfig interface {
 	// RouteSource is the preferred source address set on BGP-installed routes (kernel src / RTA_PREFSRC);
 	// zero value lets the kernel select the source.
 	RouteSource() netip.Addr
-	// AdvertiseLinks lists link names or aliases whose addresses are originated as host routes (/32, /128).
+	// AdvertiseLinks lists link names or aliases whose addresses are originated as connected networks using their configured prefix lengths.
 	AdvertiseLinks() []string
 	// Multipath enables ECMP (multiple best paths) for received routes.
 	Multipath() bool

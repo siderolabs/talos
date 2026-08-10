@@ -88,7 +88,7 @@ type BGPInstanceConfigV1Alpha1 struct {
 	//     type: string
 	BGPRouteSource meta.Addr `yaml:"routeSource,omitempty"`
 	//   description: |
-	//     Names or aliases of the links whose addresses are originated into BGP as host routes (/32, /128).
+	//     Names or aliases of the links whose addresses are originated into BGP as connected networks using their configured prefix lengths.
 	//   examples:
 	//    - value: >
 	//       []string{"dummy0"}

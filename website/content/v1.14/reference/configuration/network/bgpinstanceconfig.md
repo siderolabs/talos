@@ -18,7 +18,7 @@ apiVersion: v1alpha1
 kind: BGPInstanceConfig
 name: fabric # Name of the BGP routing instance.
 localASN: 65001 # Local autonomous system number for the BGP instance.
-# Names or aliases of the links whose addresses are originated into BGP as host routes (/32, /128).
+# Names or aliases of the links whose addresses are originated into BGP as connected networks using their configured prefix lengths.
 advertise:
     - dummy0
 multipath: true # Enable ECMP (multipath) for routes learned from multiple neighbors. Defaults to false.
@@ -70,7 +70,7 @@ routerID: 10.0.0.1
 |`routeSource` |Addr |Preferred source address set on routes installed from BGP (the kernel route `src` / RTA_PREFSRC,<br>equivalent to FRR's `ip protocol bgp route-map SETSRC`). If not set, the kernel selects the source address. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 routeSource: 10.0.0.1
 {{< /highlight >}}</details> | |
-|`advertise` |[]string |Names or aliases of the links whose addresses are originated into BGP as host routes (/32, /128). <details><summary>Show example(s)</summary>{{< highlight yaml >}}
+|`advertise` |[]string |Names or aliases of the links whose addresses are originated into BGP as connected networks using their configured prefix lengths. <details><summary>Show example(s)</summary>{{< highlight yaml >}}
 advertise:
     - dummy0
 {{< /highlight >}}</details> | |

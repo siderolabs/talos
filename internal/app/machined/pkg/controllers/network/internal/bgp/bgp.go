@@ -95,7 +95,7 @@ func afiSafi(afi gobgpapi.Family_Afi, multipath bool) *gobgpapi.AfiSafi {
 	return as
 }
 
-// BuildOriginatedPath builds a host-route path advertising the given prefix with next-hop self.
+// BuildOriginatedPath builds a path advertising the given prefix with next-hop self.
 func BuildOriginatedPath(prefix netip.Prefix) (*apiutil.Path, error) {
 	nlri, err := bgppacket.NewIPAddrPrefix(prefix)
 	if err != nil {

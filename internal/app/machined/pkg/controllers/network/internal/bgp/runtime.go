@@ -6,6 +6,7 @@ package bgp
 
 import (
 	"fmt"
+	"iter"
 	"maps"
 	"net/netip"
 	"slices"
@@ -28,6 +29,26 @@ type RuntimeState struct {
 	addressLinks     map[netip.Addr][]string
 	addressesByLink  map[uint32]map[netip.Addr]struct{}
 	addresses        []network.AddressStatusSpec
+}
+
+// NewRuntimeStateFromResources builds an indexed network runtime snapshot from status resources.
+func NewRuntimeStateFromResources(
+	links iter.Seq[*network.LinkStatus],
+	addresses iter.Seq[*network.AddressStatus],
+) *RuntimeState {
+	linkSpecs := map[string]network.LinkStatusSpec{}
+
+	for status := range links {
+		linkSpecs[status.Metadata().ID()] = *status.TypedSpec()
+	}
+
+	var addressSpecs []network.AddressStatusSpec
+
+	for status := range addresses {
+		addressSpecs = append(addressSpecs, *status.TypedSpec())
+	}
+
+	return NewRuntimeState(linkSpecs, addressSpecs)
 }
 
 // NewRuntimeState builds an indexed network runtime snapshot.
@@ -108,12 +129,12 @@ func (state *RuntimeState) Resolve(spec network.BGPInstanceConfigSpec) (Resolved
 		return ResolvedConfig{}, err
 	}
 
-	advertised := state.advertisedPrefixes(resolved.AdvertiseLinks)
+	advertisedAddresses := state.advertisedAddresses(resolved.AdvertiseLinks)
 
 	return ResolvedConfig{
 		Spec:               resolved,
-		AdvertisedPrefixes: advertised,
-		RouterID:           routerID(resolved.RouterID, advertised),
+		AdvertisedPrefixes: connectedPrefixes(advertisedAddresses),
+		RouterID:           routerID(resolved.RouterID, advertisedAddresses),
 	}, nil
 }
 
@@ -236,7 +257,7 @@ func (state *RuntimeState) linkByIndex(index uint32) (string, network.LinkStatus
 	return name, state.linksByName[name]
 }
 
-func (state *RuntimeState) advertisedPrefixes(links []string) []netip.Prefix {
+func (state *RuntimeState) advertisedAddresses(links []string) []netip.Prefix {
 	linkSet := make(map[string]struct{}, len(links))
 	for _, link := range links {
 		linkSet[link] = struct{}{}
@@ -246,7 +267,7 @@ func (state *RuntimeState) advertisedPrefixes(links []string) []netip.Prefix {
 		return nil
 	}
 
-	var prefixes []netip.Prefix
+	var addresses []netip.Prefix
 
 	for _, address := range state.addresses {
 		if _, ok := linkSet[address.LinkName]; !ok {
@@ -259,14 +280,32 @@ func (state *RuntimeState) advertisedPrefixes(links []string) []netip.Prefix {
 			continue
 		}
 
-		prefixes = append(prefixes, netip.PrefixFrom(addr, addr.BitLen()))
+		addresses = append(addresses, address.Address)
 	}
 
-	slices.SortFunc(prefixes, func(left, right netip.Prefix) int {
+	slices.SortFunc(addresses, func(left, right netip.Prefix) int {
 		return left.Addr().Compare(right.Addr())
 	})
 
-	return prefixes
+	return addresses
+}
+
+func connectedPrefixes(addresses []netip.Prefix) []netip.Prefix {
+	prefixes := make([]netip.Prefix, 0, len(addresses))
+
+	for _, address := range addresses {
+		prefixes = append(prefixes, address.Masked())
+	}
+
+	slices.SortFunc(prefixes, func(left, right netip.Prefix) int {
+		if cmp := left.Addr().Compare(right.Addr()); cmp != 0 {
+			return cmp
+		}
+
+		return left.Bits() - right.Bits()
+	})
+
+	return slices.Compact(prefixes)
 }
 
 func routerID(configured netip.Addr, advertised []netip.Prefix) netip.Addr {

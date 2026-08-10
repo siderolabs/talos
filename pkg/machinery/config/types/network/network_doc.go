@@ -64,8 +64,8 @@ func (BGPInstanceConfigV1Alpha1) Doc() *encoder.Doc {
 				Name:        "advertise",
 				Type:        "[]string",
 				Note:        "",
-				Description: "Names or aliases of the links whose addresses are originated into BGP as host routes (/32, /128).",
-				Comments:    [3]string{"" /* encoder.HeadComment */, "Names or aliases of the links whose addresses are originated into BGP as host routes (/32, /128)." /* encoder.LineComment */, "" /* encoder.FootComment */},
+				Description: "Names or aliases of the links whose addresses are originated into BGP as connected networks using their configured prefix lengths.",
+				Comments:    [3]string{"" /* encoder.HeadComment */, "Names or aliases of the links whose addresses are originated into BGP as connected networks using their configured prefix lengths." /* encoder.LineComment */, "" /* encoder.FootComment */},
 			},
 			{
 				Name:        "multipath",

@@ -291,9 +291,9 @@ func (suite *BGPSuite) assertSessionsEstablished(nodeCtx context.Context, count 
 	)
 }
 
-// assertLearnedLoopback waits until the destination is installed via the expected number of
+// assertLearnedRoute waits until the destination is installed via the expected number of
 // IPv6-link-local next-hops (RFC 8950), one per fabric link.
-func (suite *BGPSuite) assertLearnedLoopback(nodeCtx context.Context, dest netip.Prefix, hops int) {
+func (suite *BGPSuite) assertLearnedRoute(nodeCtx context.Context, dest netip.Prefix, hops int) {
 	suite.Eventually(func() bool {
 		routes, err := safe.StateListAll[*networkres.RouteStatus](nodeCtx, suite.Client.COSI)
 		require.NoError(suite.T(), err)
@@ -320,6 +320,98 @@ func (suite *BGPSuite) assertLearnedLoopback(nodeCtx context.Context, dest netip
 
 		return false
 	}, time.Minute, time.Second, "route to %s via %d link-local next-hop(s) not installed", dest, hops)
+}
+
+func (suite *BGPSuite) learnedRouteExists(nodeCtx context.Context, dest netip.Prefix) bool {
+	routes, err := safe.StateListAll[*networkres.RouteStatus](nodeCtx, suite.Client.COSI)
+	require.NoError(suite.T(), err)
+
+	for route := range routes.All() {
+		spec := route.TypedSpec()
+
+		if spec.Destination == dest && spec.Protocol == nethelpers.ProtocolBGP {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (suite *BGPSuite) assertLearnedRouteAbsent(nodeCtx context.Context, dest netip.Prefix) {
+	suite.Never(
+		func() bool { return suite.learnedRouteExists(nodeCtx, dest) },
+		5*time.Second,
+		500*time.Millisecond,
+		"unexpected BGP route to %s installed",
+		dest,
+	)
+}
+
+func (suite *BGPSuite) waitForLearnedRouteRemoved(nodeCtx context.Context, dest netip.Prefix) {
+	suite.Eventually(
+		func() bool { return !suite.learnedRouteExists(nodeCtx, dest) },
+		time.Minute,
+		time.Second,
+		"BGP route to %s was not withdrawn",
+		dest,
+	)
+}
+
+func (suite *BGPSuite) assertConnectedPrefixOrigination(nodes []string) {
+	// Add non-host IPv4 and IPv6 addresses to a dedicated link on one node, advertise that link through
+	// the existing unnumbered fabric instance, and verify a different node learns the masked networks.
+	suite.Require().GreaterOrEqual(len(nodes), 2, "connected-prefix origination requires two CLOS nodes")
+
+	const advertisedLink = "bgp-prefixes"
+
+	originCtx := client.WithNode(suite.ctx, nodes[0])
+	witnessCtx := client.WithNode(suite.ctx, nodes[1])
+	witnessHops := len(suite.closFabricLinks(witnessCtx))
+	ipv4Address := netip.MustParsePrefix("198.18.128.1/17")
+	ipv6Address := netip.MustParsePrefix("2001:db8:1399::1/48")
+	advertisedNetworks := []netip.Prefix{ipv4Address.Masked(), ipv6Address.Masked()}
+	hostRoutes := []netip.Prefix{
+		netip.PrefixFrom(ipv4Address.Addr(), ipv4Address.Addr().BitLen()),
+		netip.PrefixFrom(ipv6Address.Addr(), ipv6Address.Addr().BitLen()),
+	}
+
+	link := network.NewDummyLinkConfigV1Alpha1(advertisedLink)
+	link.LinkUp = new(true)
+	link.LinkAddresses = []network.AddressConfig{
+		{AddressAddress: ipv4Address},
+		{AddressAddress: ipv6Address},
+	}
+
+	fabricPatch := network.NewBGPInstanceConfigV1Alpha1("fabric")
+	fabricPatch.BGPAdvertise = []string{"lo", advertisedLink}
+
+	fabricResetPatch := network.NewBGPInstanceConfigV1Alpha1("fabric")
+	fabricResetPatch.BGPAdvertise = []string{"lo"}
+
+	defer suite.RemoveMachineConfigDocumentsByName(originCtx, network.DummyLinkKind, advertisedLink)
+	defer suite.PatchMachineConfig(originCtx, fabricResetPatch)
+
+	suite.PatchMachineConfig(originCtx, link, fabricPatch)
+
+	for _, prefix := range advertisedNetworks {
+		suite.assertLearnedRoute(witnessCtx, prefix, witnessHops)
+	}
+
+	for _, prefix := range hostRoutes {
+		suite.assertLearnedRouteAbsent(witnessCtx, prefix)
+	}
+
+	suite.PatchMachineConfig(originCtx, fabricResetPatch)
+
+	for _, prefix := range advertisedNetworks {
+		suite.waitForLearnedRouteRemoved(witnessCtx, prefix)
+	}
+
+	suite.RemoveMachineConfigDocumentsByName(originCtx, network.DummyLinkKind, advertisedLink)
+
+	suite.assertSessionsEstablished(originCtx, len(suite.closFabricLinks(originCtx)))
+	suite.assertSessionsEstablished(witnessCtx, witnessHops)
+	suite.assertLearnedRoute(witnessCtx, netip.MustParsePrefix(nodes[0]+"/32"), witnessHops)
 }
 
 // TestBGPCLOS verifies a full-CLOS cluster (--with-bgp-clos): every node has NO management net0, only
@@ -363,13 +455,15 @@ func (suite *BGPSuite) TestBGPCLOS() {
 				continue
 			}
 
-			suite.assertLearnedLoopback(nodeCtx, netip.MustParsePrefix(other+"/32"), len(uplinks))
+			suite.assertLearnedRoute(nodeCtx, netip.MustParsePrefix(other+"/32"), len(uplinks))
 		}
 
 		// authentic CLOS edge: no net0/DHCP — the only routable address is the loopback on lo, every
 		// physical interface is IPv6-link-local only.
 		suite.assertNoManagementAddress(nodeCtx)
 	}
+
+	suite.assertConnectedPrefixOrigination(nodes)
 
 	// anycast control-plane HA: every control-plane node advertises a shared k8s-API VIP /32, so the
 	// fabric ECMPs across the CPs and a non-control-plane node reaches the API purely over BGP. (The
@@ -397,7 +491,7 @@ func (suite *BGPSuite) TestBGPCLOS() {
 	}
 
 	workerCtx := client.WithNode(suite.ctx, workers[0])
-	suite.assertLearnedLoopback(workerCtx, netip.PrefixFrom(vip, vip.BitLen()), len(suite.closFabricLinks(workerCtx)))
+	suite.assertLearnedRoute(workerCtx, netip.PrefixFrom(vip, vip.BitLen()), len(suite.closFabricLinks(workerCtx)))
 }
 
 // discoverCLOSVIP returns the shared anycast k8s-API VIP carried on a control-plane node's lo: the global
@@ -651,21 +745,21 @@ func (suite *BGPSuite) TestBGPCLOSFailover() {
 	// baseline: one session per uplink (BFD up), target learned via every uplink (ECMP).
 	suite.assertSessionsEstablished(nodeCtx, len(uplinks))
 	suite.assertBFDUp(nodeCtx)
-	suite.assertLearnedLoopback(nodeCtx, target, len(uplinks))
+	suite.assertLearnedRoute(nodeCtx, target, len(uplinks))
 
 	// bring one uplink down: BFD detects the peer loss and tears that session down; the route fails over
 	// to the surviving uplink(s).
 	suite.setLinkUp(nodeCtx, uplinks[0], false)
 
 	suite.assertSessionsEstablished(nodeCtx, len(uplinks)-1)
-	suite.assertLearnedLoopback(nodeCtx, target, len(uplinks)-1)
+	suite.assertLearnedRoute(nodeCtx, target, len(uplinks)-1)
 
 	// restore the uplink: the session re-establishes (BFD up) and the ECMP next-hop returns.
 	suite.setLinkUp(nodeCtx, uplinks[0], true)
 
 	suite.assertSessionsEstablished(nodeCtx, len(uplinks))
 	suite.assertBFDUp(nodeCtx)
-	suite.assertLearnedLoopback(nodeCtx, target, len(uplinks))
+	suite.assertLearnedRoute(nodeCtx, target, len(uplinks))
 }
 
 // setLinkUp toggles the admin state of a fabric uplink via a merged LinkConfig patch.

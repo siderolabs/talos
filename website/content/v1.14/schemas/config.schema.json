@@ -3182,9 +3182,9 @@
           },
           "type": "array",
           "title": "advertise",
-          "description": "Names or aliases of the links whose addresses are originated into BGP as host routes (/32, /128).\n",
-          "markdownDescription": "Names or aliases of the links whose addresses are originated into BGP as host routes (/32, /128).",
-          "x-intellij-html-description": "\u003cp\u003eNames or aliases of the links whose addresses are originated into BGP as host routes (/32, /128).\u003c/p\u003e\n"
+          "description": "Names or aliases of the links whose addresses are originated into BGP as connected networks using their configured prefix lengths.\n",
+          "markdownDescription": "Names or aliases of the links whose addresses are originated into BGP as connected networks using their configured prefix lengths.",
+          "x-intellij-html-description": "\u003cp\u003eNames or aliases of the links whose addresses are originated into BGP as connected networks using their configured prefix lengths.\u003c/p\u003e\n"
         },
         "multipath": {
           "type": "boolean",
