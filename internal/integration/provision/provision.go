@@ -195,32 +195,17 @@ func (suite *BaseSuite) TearDownSuite() {
 
 // waitForClusterHealth asserts cluster health after any change.
 func (suite *BaseSuite) waitForClusterHealth() {
-	runs := 1
+	checkCtx, checkCtxCancel := context.WithTimeout(suite.ctx, 15*time.Minute)
+	defer checkCtxCancel()
 
-	singleNodeCluster := len(suite.Cluster.Info().Nodes) == 1
-	if singleNodeCluster {
-		// run health check several times for single node clusters,
-		// as self-hosted control plane is not stable after reboot
-		runs = 3
-	}
-
-	for run := range runs {
-		if run > 0 {
-			time.Sleep(15 * time.Second)
-		}
-
-		checkCtx, checkCtxCancel := context.WithTimeout(suite.ctx, 15*time.Minute)
-		defer checkCtxCancel()
-
-		suite.Require().NoError(
-			check.Wait(
-				checkCtx,
-				suite.clusterAccess,
-				check.DefaultClusterChecks(),
-				check.StderrReporter(),
-			),
-		)
-	}
+	suite.Require().NoError(
+		check.Wait(
+			checkCtx,
+			suite.clusterAccess,
+			check.DefaultClusterChecks(),
+			check.StderrReporter(),
+		),
+	)
 }
 
 func (suite *BaseSuite) untaint(name string) {
@@ -296,6 +281,17 @@ func (suite *BaseSuite) assertCmdlineContains(client *talosclient.Client, node s
 	suite.Assert().Contains(cmdline.TypedSpec().Cmdline, expectedCmdlineContains, "expected cmdline to contain %q", expectedCmdlineContains)
 }
 
+func (suite *BaseSuite) assertCmdlineNotContains(client *talosclient.Client, node string, expectedCmdlineContains string) {
+	ctx := talosclient.WithNode(suite.ctx, node)
+
+	cmdline, err := safe.ReaderGetByID[*runtime.KernelCmdline](ctx, client.COSI, runtime.KernelCmdlineID)
+	suite.Require().NoError(err)
+
+	suite.Assert().NotEmpty(cmdline, "expected cmdline to be not empty")
+
+	suite.Assert().NotContains(cmdline.TypedSpec().Cmdline, expectedCmdlineContains, "expected cmdline not to contain %q", expectedCmdlineContains)
+}
+
 func (suite *BaseSuite) readVersion(nodeCtx context.Context, client *talosclient.Client) (
 	version string,
 	err error,
@@ -313,19 +309,19 @@ func (suite *BaseSuite) readVersion(nodeCtx context.Context, client *talosclient
 }
 
 type upgradeOptions struct {
+	SourceVersion string
+
 	TargetInstallerImage string
-	// Deprecated: staged upgrades are not supported by the new LifecycleService API.
-	// Use the legacy MachineService.Upgrade path instead.
-	UpgradeStage  bool
-	TargetVersion string
+	TargetVersion        string
 	// Use in-memory containerd: in general we should prefer to use CRI containerd,
 	// but we should use in-memory for 'enforcing' mode due to SELinux restrictions.
 	//
 	// Ignored for legacy upgrade paths (before 1.13).
 	UpgradeUseInmemoryContainerd bool
+	// RebootPowercycle control how the machine is rebooted (only for lifecycle upgrades).
+	RebootPowercycle bool
 }
 
-//nolint:gocyclo,cyclop
 func (suite *BaseSuite) upgradeNode(client *talosclient.Client, node provision.NodeInfo, options upgradeOptions) {
 	suite.T().Logf("upgrading node %s", node.IPs[0])
 
@@ -334,25 +330,42 @@ func (suite *BaseSuite) upgradeNode(client *talosclient.Client, node provision.N
 
 	nodeCtx := talosclient.WithNode(ctx, node.IPs[0].String())
 
-	// Staged upgrades are not supported by the new LifecycleService API,
-	// so skip straight to the legacy path.
-	if !options.UpgradeStage {
-		if suite.tryUpgradeViaLifecycleService(nodeCtx, client, node, options) {
-			// LifecycleService.Upgrade succeeded — trigger reboot and wait.
-			suite.T().Logf("upgrade via LifecycleService succeeded, rebooting node %s", node.IPs[0])
+	if suite.tryUpgradeViaLifecycleService(nodeCtx, client, node, options) {
+		// LifecycleService.Upgrade succeeded — trigger reboot and wait.
+		rebootMode := "kexec"
 
-			suite.Require().NoError(client.Reboot(nodeCtx))
-			suite.waitForUpgrade(nodeCtx, client, node, options)
+		var rebootOptions []talosclient.RebootMode
 
-			return
+		if options.RebootPowercycle {
+			rebootMode = "powercycle"
+			rebootOptions = []talosclient.RebootMode{talosclient.WithPowerCycle}
 		}
 
-		suite.T().Logf("LifecycleService.Upgrade not available, falling back to legacy MachineService.Upgrade")
+		suite.T().Logf("upgrade via LifecycleService succeeded, rebooting node %s via %s", node.IPs[0], rebootMode)
+
+		suite.rebootNode(nodeCtx, client, rebootOptions)
+		suite.waitForUpgrade(nodeCtx, client, node, options.TargetVersion)
+
+		return
 	}
+
+	suite.T().Logf("LifecycleService.Upgrade not available, falling back to legacy MachineService.Upgrade")
 
 	// Legacy path: MachineService.Upgrade (handles image pull, install, and reboot in one call).
 	suite.upgradeNodeLegacy(nodeCtx, client, options)
-	suite.waitForUpgrade(nodeCtx, client, node, options)
+	suite.waitForUpgrade(nodeCtx, client, node, options.TargetVersion)
+}
+
+func (suite *BaseSuite) rollbackNode(client *talosclient.Client, node provision.NodeInfo, options upgradeOptions) {
+	suite.T().Logf("rolling back node %s", node.IPs[0])
+
+	ctx, cancel := context.WithCancel(suite.ctx)
+	defer cancel()
+
+	nodeCtx := talosclient.WithNode(ctx, node.IPs[0].String())
+
+	suite.rollbackNodeLegacy(nodeCtx, client)
+	suite.waitForUpgrade(nodeCtx, client, node, options.SourceVersion)
 }
 
 // tryUpgradeViaLifecycleService attempts to upgrade via the new streaming
@@ -588,8 +601,6 @@ func (suite *BaseSuite) upgradeViaLifecycleService(
 
 // upgradeNodeLegacy performs an upgrade using the legacy (deprecated) MachineService.Upgrade
 // unary API, which handles image pull, install, and reboot in a single call.
-//
-//nolint:gocyclo
 func (suite *BaseSuite) upgradeNodeLegacy(
 	nodeCtx context.Context,
 	c *talosclient.Client,
@@ -605,7 +616,7 @@ func (suite *BaseSuite) upgradeNodeLegacy(
 			resp, err = c.Upgrade( //nolint:staticcheck // using deprecated API for testing backward compatibility
 				nodeCtx,
 				options.TargetInstallerImage,
-				options.UpgradeStage,
+				false,
 				false,
 			)
 			if err != nil {
@@ -629,10 +640,57 @@ func (suite *BaseSuite) upgradeNodeLegacy(
 
 	actorID := resp.Messages[0].ActorId
 
+	suite.waitForSequencerReboot(nodeCtx, c, actorID, "upgrade")
+}
+
+// rollbackNodeLegacy performs a rollback using legacy API
+//
+// Note: we don't have new API yet, but we should have eventually.
+func (suite *BaseSuite) rollbackNodeLegacy(
+	nodeCtx context.Context,
+	c *talosclient.Client,
+) {
+	err := c.Rollback(nodeCtx)
+	suite.Require().NoError(err)
+
+	suite.waitForSequencerReboot(nodeCtx, c, "", "rollback")
+}
+
+// rebootNode performs a reboot using legacy API
+//
+//nolint:gocyclo
+func (suite *BaseSuite) rebootNode(
+	nodeCtx context.Context,
+	c *talosclient.Client,
+	rebootModes []talosclient.RebootMode,
+) {
+	resp, err := c.RebootWithResponse(nodeCtx, rebootModes...)
+	suite.Require().NoError(err)
+
+	actorID := resp.GetMessages()[0].GetActorId()
+
+	suite.waitForSequencerReboot(nodeCtx, c, actorID, "reboot")
+}
+
+//nolint:gocyclo
+func (suite *BaseSuite) waitForSequencerReboot(
+	nodeCtx context.Context,
+	c *talosclient.Client,
+	actorID string,
+	actionName string,
+) {
 	eventCh := make(chan talosclient.EventResult)
 
+	eventOpts := []talosclient.EventsOptionFunc{
+		talosclient.WithTailEvents(-1),
+	}
+
+	if actorID != "" {
+		eventOpts = append(eventOpts, talosclient.WithActorID(actorID))
+	}
+
 	// watch for events
-	suite.Require().NoError(c.EventsWatchV2(nodeCtx, eventCh, talosclient.WithActorID(actorID), talosclient.WithTailEvents(-1)))
+	suite.Require().NoError(c.EventsWatchV2(nodeCtx, eventCh, eventOpts...))
 
 	waitTimer := time.NewTimer(5 * time.Minute)
 	defer waitTimer.Stop()
@@ -646,20 +704,20 @@ waitLoop:
 			switch msg := ev.Event.Payload.(type) {
 			case *machineapi.SequenceEvent:
 				if msg.Error != nil {
-					suite.FailNow("upgrade failed", "%s: %s", msg.Error.Message, msg.Error.Code)
+					suite.FailNow(actionName+" failed", "%s: %s", msg.Error.Message, msg.Error.Code)
 				}
 			case *machineapi.PhaseEvent:
-				if msg.Action == machineapi.PhaseEvent_START && msg.Phase == "kexec" {
+				if msg.Action == machineapi.PhaseEvent_START && (msg.Phase == "kexec" || msg.Phase == "stopEverything") {
 					// about to be rebooted
 					break waitLoop
 				}
 
 				if msg.Action == machineapi.PhaseEvent_STOP {
-					suite.T().Logf("upgrade phase %q finished", msg.Phase)
+					suite.T().Logf(actionName+" phase %q finished", msg.Phase)
 				}
 			}
 		case <-waitTimer.C:
-			suite.FailNow("timeout waiting for upgrade to finish")
+			suite.FailNow("timeout waiting for %s to finish", actionName)
 		case <-nodeCtx.Done():
 			suite.FailNow("context canceled")
 		}
@@ -673,7 +731,7 @@ func (suite *BaseSuite) waitForUpgrade(
 	nodeCtx context.Context,
 	c *talosclient.Client,
 	node provision.NodeInfo,
-	options upgradeOptions,
+	expectedVersion string,
 ) {
 	// wait for the apid to be shut down
 	time.Sleep(10 * time.Second)
@@ -692,12 +750,12 @@ func (suite *BaseSuite) waitForUpgrade(
 					return retry.ExpectedError(err)
 				}
 
-				if version != options.TargetVersion {
+				if version != expectedVersion {
 					// upgrade not finished yet
 					return retry.ExpectedErrorf(
 						"node %q version doesn't match expected: expected %q, got %q",
 						node.IPs[0].String(),
-						options.TargetVersion,
+						expectedVersion,
 						version,
 					)
 				}
