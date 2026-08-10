@@ -8,14 +8,16 @@ package base
 
 import (
 	"context"
+	"time"
 
+	"github.com/siderolabs/go-retry/retry"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/tools/clientcmd"
 	clientcmdapi "k8s.io/client-go/tools/clientcmd/api"
 
 	"github.com/siderolabs/talos/pkg/cluster"
+	"github.com/siderolabs/talos/pkg/kubernetes"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
@@ -34,7 +36,6 @@ func discoverNodesK8s(ctx context.Context, client *client.Client, suite *TalosSu
 		return nil, err
 	}
 
-	// patch timeout
 	if suite.K8sEndpoint != "" {
 		config.Host = suite.K8sEndpoint
 	}
@@ -44,8 +45,24 @@ func discoverNodesK8s(ctx context.Context, client *client.Client, suite *TalosSu
 		return nil, err
 	}
 
-	nodes, err := clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
-	if err != nil {
+	var nodes *corev1.NodeList
+
+	if err = retry.Constant(30*time.Second, retry.WithUnits(time.Second)).
+		RetryWithContext(
+			ctx,
+			func(ctx context.Context) error {
+				nodes, err = clientset.CoreV1().Nodes().List(ctx, metav1.ListOptions{})
+				if err == nil {
+					return nil
+				}
+
+				if kubernetes.IsRetryableError(err) {
+					return retry.ExpectedError(err)
+				}
+
+				return err
+			},
+		); err != nil {
 		return nil, err
 	}
 
