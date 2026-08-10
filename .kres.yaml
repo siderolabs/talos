@@ -746,11 +746,11 @@ spec:
         labelKeys: [track]
         include:
           - track: "0"
-            buildTrustedBootStableArtifacts: "true"
-          - track: "1"
             buildEnforcing: "true"
-          - track: "2"
             buildExtraCmdline: "true"
+          - track: "1"
+            buildTrustedBootStableArtifacts: "true"
+          - track: "2"
           - track: "3"
       steps:
         - name: download-artifacts
