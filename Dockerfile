@@ -1376,9 +1376,15 @@ COPY --link --from=integration-test-provision-linux-build /src/integration.test 
 # All depend on lint-go-config (gating) by bind-mounting /verified from it.
 # Cache mounts: Go cache shared (concurrency-safe), lint cache locked (golangci-lint corruption protection).
 
-FROM base AS lint-golangci-lint-custom
+FROM base AS golangci-lint-plugin-builder
 RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=shared \
-    go tool github.com/golangci/golangci-lint/v2/cmd/golangci-lint custom
+    go build -o /usr/local/bin/golangci-lint github.com/golangci/golangci-lint/v2/cmd/golangci-lint
+
+FROM golangci-lint-plugin-builder AS lint-golangci-lint-custom
+ARG TARGETOS
+ARG TARGETARCH
+RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=shared \
+    GOOS=${TARGETOS} GOARCH=${TARGETARCH} golangci-lint custom
 
 FROM scratch AS golangci-lint-custom
 COPY --link --from=lint-golangci-lint-custom /src/custom-gcl /custom-gcl
