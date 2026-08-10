@@ -14,12 +14,28 @@ import (
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/google/nftables"
 	"github.com/google/nftables/expr"
+	"github.com/mdlayher/netlink"
 	"go.uber.org/zap"
 
 	networkadapter "github.com/siderolabs/talos/internal/app/machined/pkg/adapters/network"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 )
+
+// nfTablesSocketBufferSize is the netlink socket send/receive buffer size for the nftables connection.
+//
+// The whole ruleset is committed as a single netlink batch, which runs into two independent kernel
+// limits if the socket is left at the 208 KiB defaults (`net.core.{r,w}mem_default`):
+//
+//   - the batch is written with one `sendmsg`, which the kernel rejects with EMSGSIZE once the batch
+//     exceeds `sk_sndbuf - 32`;
+//   - the kernel queues an ACK for every message in the batch before that `sendmsg` returns, and
+//     accounts them by skb `truesize` (~768 B floor each), so the receive queue overruns and the
+//     failure surfaces as ENOBUFS on the following `recvmsg`.
+//
+// The receive side is the tighter of the two by roughly 5x, since ACKs echo the request back and the
+// `truesize` floor inflates the small messages the ruleset is made of.
+const nfTablesSocketBufferSize = 8 * 1024 * 1024
 
 // NfTablesChainController applies network.NfTablesChain to the Linux nftables interface.
 type NfTablesChainController struct {
@@ -55,6 +71,23 @@ func (ctrl *NfTablesChainController) Run(ctx context.Context, r controller.Runti
 		ctrl.TableName = constants.DefaultNfTablesTableName
 	}
 
+	conn, err := nftables.New(
+		nftables.AsLasting(),
+		nftables.WithSockOptions(func(nc *netlink.Conn) error {
+			// these try SO_{RCV,SND}BUFFORCE first, so they are not capped by `net.core.{r,w}mem_max`.
+			if err := nc.SetReadBuffer(nfTablesSocketBufferSize); err != nil {
+				return err
+			}
+
+			return nc.SetWriteBuffer(nfTablesSocketBufferSize)
+		}),
+	)
+	if err != nil {
+		return fmt.Errorf("error creating nftables connection: %w", err)
+	}
+
+	defer conn.CloseLasting() //nolint:errcheck
+
 	for {
 		select {
 		case <-ctx.Done():
@@ -62,9 +95,7 @@ func (ctrl *NfTablesChainController) Run(ctx context.Context, r controller.Runti
 		case <-r.EventCh():
 		}
 
-		var conn nftables.Conn
-
-		if err := ctrl.preCreateIptablesNFTable(logger, &conn); err != nil {
+		if err := ctrl.preCreateIptablesNFTable(logger, conn); err != nil {
 			return fmt.Errorf("error pre-creating iptables-nft table: %w", err)
 		}
 
