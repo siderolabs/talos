@@ -253,6 +253,9 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		},
 		&cri.RuntimeSpecConfigController{},
 		&containerctrls.ConfigController{},
+		&containerctrls.ImageController{
+			State: ctrl.v1alpha1Runtime.State().V1Alpha2().Resources(),
+		},
 		&cri.CustomizationConfigController{},
 		cri.NewImageGCController("containerd", false),
 		cri.NewImageGCController("cri", true),

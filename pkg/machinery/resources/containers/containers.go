@@ -10,13 +10,15 @@
 //	ContainerConfig (machine config) -> ContainerSpec -> ContainerInstanceSpec -> ContainerInstanceStatus
 //
 // with ContainerImageStatus and ContainerMountStatus gating the step from spec to instance, and
-// ContainerStatus as the aggregated user-facing surface. This package currently only carries
-// ContainerSpec; the remaining resources arrive in follow-up controllers.
+// ContainerStatus as the aggregated user-facing surface. This package currently carries
+// ContainerSpec and ContainerImageStatus; the remaining resources arrive in follow-up controllers.
 package containers
 
 import "github.com/cosi-project/runtime/pkg/resource"
 
-//go:generate go tool github.com/siderolabs/deep-copy -type ContainerSpecSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+//go:generate go tool github.com/siderolabs/deep-copy -type ContainerSpecSpec -type ContainerImageStatusSpec -header-file ../../../../hack/boilerplate.txt -o deep_copy.generated.go .
+
+//go:generate go tool github.com/dmarkham/enumer -type=ContainerImagePhase -linecomment -text
 
 // NamespaceName contains resources for Talos-managed containers.
 const NamespaceName resource.Namespace = "containers"

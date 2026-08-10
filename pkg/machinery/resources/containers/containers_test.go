@@ -28,6 +28,7 @@ func TestRegisterResource(t *testing.T) {
 
 	for _, res := range []meta.ResourceWithRD{
 		&containers.ContainerSpec{},
+		&containers.ContainerImageStatus{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, res))
 	}
@@ -79,6 +80,22 @@ func TestProtobufRoundTrip(t *testing.T) {
 	}
 
 	assertRoundTrip(t, spec)
+}
+
+// TestImageStatusProtobufRoundTrip guards the protobuf tags on ContainerImageStatusSpec, including
+// that the phase enum survives the trip as more than its zero value.
+func TestImageStatusProtobufRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	status := containers.NewContainerImageStatus(containers.NamespaceName, "nginx")
+	*status.TypedSpec() = containers.ContainerImageStatusSpec{
+		Phase:  containers.ContainerImagePhaseFailed,
+		Image:  "docker.io/library/nginx:latest",
+		Digest: "sha256:abc123",
+		Error:  "signature verification denied",
+	}
+
+	assertRoundTrip(t, status)
 }
 
 func assertRoundTrip[T resource.Resource](t *testing.T, res T) {

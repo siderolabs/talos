@@ -5,6 +5,8 @@ package talos.resource.definitions.containers;
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/containers";
 option java_package = "dev.talos.api.resource.definitions.containers";
 
+import "resource/definitions/enums/enums.proto";
+
 // ContainerDependsOnSpec is the resolved dependency set.
 message ContainerDependsOnSpec {
   repeated string paths = 1;
@@ -16,6 +18,17 @@ message ContainerDependsOnSpec {
 // ContainerImageSpec is a resolved container image reference.
 message ContainerImageSpec {
   string ref = 1;
+}
+
+// ContainerImageStatusSpec is the spec for ContainerImageStatus.
+message ContainerImageStatusSpec {
+  talos.resource.definitions.enums.ContainersContainerImagePhase phase = 1;
+  // Image is the reference that was requested, in canonical form.
+  string image = 2;
+  // Digest is the resolved digest, set once the pull completes.
+  string digest = 3;
+  // Error is the last pull failure, verbatim.
+  string error = 4;
 }
 
 // ContainerMountSpec is a resolved mount.

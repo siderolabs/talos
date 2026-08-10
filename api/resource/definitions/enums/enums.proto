@@ -818,6 +818,14 @@ enum StorageMDMetadata {
   MD_METADATA12 = 1;
 }
 
+// ContainersContainerImagePhase describes the state of a container's image pull.
+enum ContainersContainerImagePhase {
+  CONTAINER_IMAGE_PHASE_PENDING = 0;
+  CONTAINER_IMAGE_PHASE_PULLING = 1;
+  CONTAINER_IMAGE_PHASE_READY = 2;
+  CONTAINER_IMAGE_PHASE_FAILED = 3;
+}
+
 // CriImageCacheStatus describes image cache status type.
 enum CriImageCacheStatus {
   IMAGE_CACHE_STATUS_UNKNOWN = 0;
