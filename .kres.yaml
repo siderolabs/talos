@@ -1815,6 +1815,11 @@ spec:
             PLATFORM: linux/amd64,linux/arm64
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: cloud-images
+          environment:
+            # this job only verifies that the image creation pipeline works, so a single
+            # region is enough - no need to publish to every enabled AWS region
+            CLOUD_IMAGES_EXTRA_ARGS: |-
+              --aws-regions=us-east-1
     - name: integration-build-image-cache
       buildxOptions:
         enabled: true
