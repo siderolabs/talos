@@ -12,7 +12,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
 
@@ -83,7 +82,7 @@ func TestAddressOverlapCheck(t *testing.T) {
 			t.Parallel()
 
 			logger := zaptest.NewLogger(t)
-			st := state.WrapCore(namespaced.NewState(inmem.Build))
+			st := state.WrapCore(inmem.NewState())
 
 			in, err := generate.NewInput("test-cluster", "https://localhost", constants.DefaultKubernetesVersion)
 			require.NoError(t, err)

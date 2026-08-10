@@ -12,7 +12,6 @@ import (
 
 	"github.com/cosi-project/runtime/pkg/state"
 	"github.com/cosi-project/runtime/pkg/state/impl/inmem"
-	"github.com/cosi-project/runtime/pkg/state/impl/namespaced"
 	"github.com/siderolabs/crypto/x509"
 	"github.com/siderolabs/gen/xtesting/must"
 	"github.com/stretchr/testify/require"
@@ -484,7 +483,7 @@ func TestRuntimeValidateSystemVolumeBacking(t *testing.T) {
 			t.Parallel()
 
 			ctx := context.Background()
-			st := state.WrapCore(namespaced.NewState(inmem.Build))
+			st := state.WrapCore(inmem.NewState())
 
 			if test.seedStatus {
 				vs := blockres.NewVolumeStatus(blockres.NamespaceName, constants.KubeletDataVolumeID)

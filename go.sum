@@ -194,8 +194,6 @@ github.com/coreos/go-semver v0.3.1 h1:yi21YpKnrx1gt5R+la8n5WgS0kCrsPp33dmEyHReZr
 github.com/coreos/go-semver v0.3.1/go.mod h1:irMmmIw/7yzSRPWryHsK7EYSg09caPQL03VsM8rvUec=
 github.com/coreos/go-systemd/v22 v22.7.0 h1:LAEzFkke61DFROc7zNLX/WA2i5J8gYqe0rSj9KI28KA=
 github.com/coreos/go-systemd/v22 v22.7.0/go.mod h1:xNUYtjHu2EDXbsxz1i41wouACIwT7Ybq9o0BQhMwD0w=
-github.com/cosi-project/runtime v1.16.2 h1:sgjOMrnaElrja93kkJJJIQYwd45PhpGl9cBci9yqn5c=
-github.com/cosi-project/runtime v1.16.2/go.mod h1:+GrSnmJjMfWMe6NubevwwXQf/v7afddDLeCbLonvvps=
 github.com/cpuguy83/go-md2man/v2 v2.0.6/go.mod h1:oOW0eioCTA6cOiMLiUPZOpcVxMig6NIQQ7OS05n1F4g=
 github.com/cpuguy83/go-md2man/v2 v2.0.7 h1:zbFlGlXEAKlwXpmvle3d8Oe3YnkKIK4xSRTd3sHPnBo=
 github.com/cpuguy83/go-md2man/v2 v2.0.7/go.mod h1:oOW0eioCTA6cOiMLiUPZOpcVxMig6NIQQ7OS05n1F4g=
@@ -882,6 +880,8 @@ github.com/sirupsen/logrus v1.9.4 h1:TsZE7l11zFCLZnZ+teH4Umoq5BhEIfIzfRDZ1Uzql2w
 github.com/sirupsen/logrus v1.9.4/go.mod h1:ftWc9WdOfJ0a92nsE2jF5u5ZwH8Bv2zdeOC42RjbV2g=
 github.com/smira/kobject v0.0.0-20240304111826-49c8d4613389 h1:f/5NRv5IGZxbjBhc5MnlbNmyuXBPxvekhBAUzyKWyLY=
 github.com/smira/kobject v0.0.0-20240304111826-49c8d4613389/go.mod h1:+SexPO1ZvdbbWUdUnyXEWv3+4NwHZjKhxOmQqHY4Pqc=
+github.com/smira/os-runtime v0.0.0-20260805105338-c3f9cbb4a1f7 h1:K2DNrOa5L579Jd3ZINBjN8CI2+n2B88/Wv4/IVvGxZU=
+github.com/smira/os-runtime v0.0.0-20260805105338-c3f9cbb4a1f7/go.mod h1:rHqlcEfmTZxBdpsXVmfww1Ji0MpmiD/mUWQ+NFaUUP0=
 github.com/smira/siv-go v0.0.0-20260706144621-2093d2730928 h1:jLGRk/3hqXLnAjFhChWXFLc+uUbKeyQIvCBciG/CsPs=
 github.com/smira/siv-go v0.0.0-20260706144621-2093d2730928/go.mod h1:aI+8yClBW+1uovkHw6HM01YXnYB8vohtB9C83wzx34E=
 github.com/soheilhy/cmux v0.1.5 h1:jjzc5WVemNEDTLwv9tlmemhC73tI08BNOIGwBOo10Js=
