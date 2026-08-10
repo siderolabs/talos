@@ -75,6 +75,116 @@ func TestGetSystemDisk(t *testing.T) {
 	})
 }
 
+func TestGetSystemDiskDevicePaths(t *testing.T) {
+	type deviceSpec struct {
+		parent      string
+		secondaries []string
+	}
+
+	for _, test := range []struct {
+		name       string
+		systemDisk *block.SystemDiskSpec
+		devices    map[string]deviceSpec
+		expected   []string
+		wantError  string
+	}{
+		{
+			name: "absent system disk",
+		},
+		{
+			name: "plain system disk",
+			systemDisk: &block.SystemDiskSpec{
+				DiskID:  "sda",
+				DevPath: "/dev/sda",
+			},
+			devices: map[string]deviceSpec{"sda": {}},
+			expected: []string{
+				"/dev/sda",
+			},
+		},
+		{
+			name: "stacked system disk",
+			systemDisk: &block.SystemDiskSpec{
+				DiskID:  "md127",
+				DevPath: "/dev/disk/by-id/md-name-talos:boot",
+			},
+			devices: map[string]deviceSpec{
+				"md127": {secondaries: []string{"dm-0", "vdb"}},
+				"dm-0":  {secondaries: []string{"vda"}},
+				"vda":   {},
+				"vdb":   {},
+			},
+			expected: []string{
+				"/dev/disk/by-id/md-name-talos:boot",
+				"/dev/md127",
+				"/dev/dm-0",
+				"/dev/vda",
+				"/dev/vdb",
+			},
+		},
+		{
+			name: "partition-backed system disk",
+			systemDisk: &block.SystemDiskSpec{
+				DiskID:  "md127",
+				DevPath: "/dev/md127",
+			},
+			devices: map[string]deviceSpec{
+				"md127": {secondaries: []string{"vda1", "vdb1"}},
+				"vda1":  {parent: "vda"},
+				"vdb1":  {parent: "vdb"},
+				"vda":   {},
+				"vdb":   {},
+			},
+			expected: []string{
+				"/dev/md127",
+				"/dev/vda1",
+				"/dev/vdb1",
+				"/dev/vda",
+				"/dev/vdb",
+			},
+		},
+		{
+			name: "incomplete topology",
+			systemDisk: &block.SystemDiskSpec{
+				DiskID:  "md127",
+				DevPath: "/dev/md127",
+			},
+			devices: map[string]deviceSpec{
+				"md127": {secondaries: []string{"vda", "vdb"}},
+				"vda":   {},
+			},
+			wantError: `block device "vdb" backing the system disk is missing`,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			ctx := t.Context()
+			st := state.WrapCore(namespaced.NewState(inmem.Build))
+
+			if test.systemDisk != nil {
+				createSystemDisk(ctx, t, st, test.systemDisk.DiskID, test.systemDisk.DevPath)
+			}
+
+			for id, spec := range test.devices {
+				device := block.NewDevice(block.NamespaceName, id)
+				device.TypedSpec().Parent = spec.parent
+				device.TypedSpec().Secondaries = spec.secondaries
+
+				require.NoError(t, st.Create(ctx, device))
+			}
+
+			paths, err := block.GetSystemDiskDevicePaths(ctx, st)
+			if test.wantError != "" {
+				require.EqualError(t, err, test.wantError)
+
+				return
+			}
+
+			require.NoError(t, err)
+			assert.ElementsMatch(t, test.expected, paths)
+		})
+	}
+}
+
 func TestGetSystemDiskPaths(t *testing.T) {
 	// a directory-backed system volume (e.g. ETCD/KUBELET/CRI as a directory on EPHEMERAL)
 	// carries neither Location nor ParentLocation, so it must not contribute any disk path.

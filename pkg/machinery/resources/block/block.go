@@ -8,6 +8,7 @@ package block
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 	"slices"
 
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -85,6 +86,54 @@ func GetSystemDisk(ctx context.Context, st state.State) (*SystemDiskSpec, error)
 	}
 
 	return systemDisk.TypedSpec(), nil
+}
+
+// GetSystemDiskDevicePaths returns the system disk path and all block devices
+// which recursively back it.
+func GetSystemDiskDevicePaths(ctx context.Context, st state.State) ([]string, error) {
+	systemDisk, err := GetSystemDisk(ctx, st)
+	if err != nil || systemDisk == nil {
+		return nil, err
+	}
+
+	devices, err := safe.StateListAll[*Device](ctx, st)
+	if err != nil {
+		return nil, fmt.Errorf("error listing block devices: %w", err)
+	}
+
+	devicesByID := map[string]*Device{}
+	for device := range devices.All() {
+		devicesByID[device.Metadata().ID()] = device
+	}
+
+	paths := map[string]struct{}{systemDisk.DevPath: {}}
+	pending := []string{systemDisk.DiskID}
+	visited := map[string]struct{}{}
+
+	for len(pending) > 0 {
+		deviceID := pending[len(pending)-1]
+		pending = pending[:len(pending)-1]
+
+		if _, ok := visited[deviceID]; ok {
+			continue
+		}
+
+		visited[deviceID] = struct{}{}
+		paths[filepath.Join("/dev", deviceID)] = struct{}{}
+
+		device, ok := devicesByID[deviceID]
+		if !ok {
+			return nil, fmt.Errorf("block device %q backing the system disk is missing", deviceID)
+		}
+
+		if device.TypedSpec().Parent != "" {
+			pending = append(pending, device.TypedSpec().Parent)
+		}
+
+		pending = append(pending, device.TypedSpec().Secondaries...)
+	}
+
+	return maps.Keys(paths), nil
 }
 
 // GetSystemDiskPaths returns the path(s) of system disk and STATE, EPHEMERAL,

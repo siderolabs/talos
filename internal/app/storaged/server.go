@@ -39,13 +39,45 @@ type Server struct {
 	Controller runtime.Controller
 }
 
+// GetSystemDiskPathsForListing returns the full system disk topology when available,
+// falling back to the direct system disk while block-device discovery is incomplete.
+func GetSystemDiskPathsForListing(ctx context.Context, st state.State) ([]string, error) {
+	systemDiskPaths, err := block.GetSystemDiskDevicePaths(ctx, st)
+	if err == nil {
+		return systemDiskPaths, nil
+	}
+
+	log.Printf("failed to resolve system disk device topology, falling back to the direct system disk: %v", err)
+
+	systemDisk, fallbackErr := block.GetSystemDisk(ctx, st)
+	if fallbackErr != nil {
+		return nil, fmt.Errorf("failed to get system disk after device topology lookup failed: %w", fallbackErr)
+	}
+
+	if systemDisk == nil {
+		return nil, nil
+	}
+
+	directPath := filepath.Join("/dev", systemDisk.DiskID)
+	if directPath == systemDisk.DevPath {
+		return []string{directPath}, nil
+	}
+
+	return []string{systemDisk.DevPath, directPath}, nil
+}
+
 // Disks implements storage.StorageService.
 func (s *Server) Disks(ctx context.Context, in *emptypb.Empty) (reply *storage.DisksResponse, err error) {
 	st := s.Controller.Runtime().State().V1Alpha2().Resources()
 
-	systemDisk, err := safe.StateGetByID[*block.SystemDisk](ctx, st, block.SystemDiskID)
-	if err != nil && !state.IsNotFoundError(err) {
+	systemDiskPaths, err := GetSystemDiskPathsForListing(ctx, st)
+	if err != nil {
 		return nil, err
+	}
+
+	systemDisks := map[string]struct{}{}
+	for _, path := range systemDiskPaths {
+		systemDisks[path] = struct{}{}
 	}
 
 	disks, err := safe.StateListAll[*block.Disk](ctx, st)
@@ -69,6 +101,8 @@ func (s *Server) Disks(ctx context.Context, in *emptypb.Empty) (reply *storage.D
 			diskType = storage.Disk_SSD
 		}
 
+		_, isSystemDisk := systemDisks[filepath.Join("/dev", d.Metadata().ID())]
+
 		return &storage.Disk{
 			DeviceName: filepath.Join("/dev", d.Metadata().ID()),
 			Model:      d.TypedSpec().Model,
@@ -79,7 +113,7 @@ func (s *Server) Disks(ctx context.Context, in *emptypb.Empty) (reply *storage.D
 			Uuid:       d.TypedSpec().UUID,
 			Type:       diskType,
 			BusPath:    d.TypedSpec().BusPath,
-			SystemDisk: systemDisk != nil && d.Metadata().ID() == systemDisk.TypedSpec().DiskID,
+			SystemDisk: isSystemDisk,
 			Subsystem:  d.TypedSpec().SubSystem,
 			Readonly:   d.TypedSpec().Readonly,
 		}

@@ -659,10 +659,12 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 			},
 		)
 
-		systemDisk, err := block.GetSystemDisk(ctx, s.Controller.Runtime().State().V1Alpha2().Resources())
+		systemDiskPaths, err := block.GetSystemDiskDevicePaths(ctx, s.Controller.Runtime().State().V1Alpha2().Resources())
 		if err != nil {
-			return nil, fmt.Errorf("system disk lookup failed: %w", err)
+			return nil, fmt.Errorf("system disk devices lookup failed: %w", err)
 		}
+
+		systemDisks := xslices.ToSet(systemDiskPaths)
 
 		// validate input
 		for _, deviceName := range in.GetUserDisksToWipe() {
@@ -675,7 +677,7 @@ func (s *Server) Reset(ctx context.Context, in *machine.ResetRequest) (reply *ma
 				return nil, fmt.Errorf("reset user disk failed: device %s is readonly", deviceName)
 			}
 
-			if systemDisk != nil && deviceName == systemDisk.DevPath {
+			if _, isSystemDisk := systemDisks[deviceName]; isSystemDisk {
 				return nil, fmt.Errorf("reset user disk failed: device %s is the system disk", deviceName)
 			}
 		}
