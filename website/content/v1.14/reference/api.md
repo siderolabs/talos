@@ -306,6 +306,7 @@ description: Talos gRPC API reference.
     - [BlockFilesystemType](#talos.resource.definitions.enums.BlockFilesystemType)
     - [BlockVolumePhase](#talos.resource.definitions.enums.BlockVolumePhase)
     - [BlockVolumeType](#talos.resource.definitions.enums.BlockVolumeType)
+    - [ContainersContainerImagePhase](#talos.resource.definitions.enums.ContainersContainerImagePhase)
     - [CriImageCacheCopyStatus](#talos.resource.definitions.enums.CriImageCacheCopyStatus)
     - [CriImageCacheStatus](#talos.resource.definitions.enums.CriImageCacheStatus)
     - [KubespanPeerState](#talos.resource.definitions.enums.KubespanPeerState)
@@ -404,6 +405,7 @@ description: Talos gRPC API reference.
 - [resource/definitions/containers/containers.proto](#resource/definitions/containers/containers.proto)
     - [ContainerDependsOnSpec](#talos.resource.definitions.containers.ContainerDependsOnSpec)
     - [ContainerImageSpec](#talos.resource.definitions.containers.ContainerImageSpec)
+    - [ContainerImageStatusSpec](#talos.resource.definitions.containers.ContainerImageStatusSpec)
     - [ContainerMountSpec](#talos.resource.definitions.containers.ContainerMountSpec)
     - [ContainerNetworkSpec](#talos.resource.definitions.containers.ContainerNetworkSpec)
     - [ContainerResourcesSpec](#talos.resource.definitions.containers.ContainerResourcesSpec)
@@ -5279,6 +5281,20 @@ BlockVolumeType describes volume type.
 
 
 
+<a name="talos.resource.definitions.enums.ContainersContainerImagePhase"></a>
+
+### ContainersContainerImagePhase
+ContainersContainerImagePhase describes the state of a container's image pull.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| CONTAINER_IMAGE_PHASE_PENDING | 0 |  |
+| CONTAINER_IMAGE_PHASE_PULLING | 1 |  |
+| CONTAINER_IMAGE_PHASE_READY | 2 |  |
+| CONTAINER_IMAGE_PHASE_FAILED | 3 |  |
+
+
+
 <a name="talos.resource.definitions.enums.CriImageCacheCopyStatus"></a>
 
 ### CriImageCacheCopyStatus
@@ -7235,6 +7251,24 @@ ContainerImageSpec is a resolved container image reference.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | ref | [string](#string) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.containers.ContainerImageStatusSpec"></a>
+
+### ContainerImageStatusSpec
+ContainerImageStatusSpec is the spec for ContainerImageStatus.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| phase | [talos.resource.definitions.enums.ContainersContainerImagePhase](#talos.resource.definitions.enums.ContainersContainerImagePhase) |  |  |
+| image | [string](#string) |  | Image is the reference that was requested, in canonical form. |
+| digest | [string](#string) |  | Digest is the resolved digest, set once the pull completes. |
+| error | [string](#string) |  | Error is the last pull failure, verbatim. |
 
 
 

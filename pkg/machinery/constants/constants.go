@@ -576,6 +576,12 @@ const (
 	// K8sContainerdNamespace is the Containerd namespace for CRI pods.
 	K8sContainerdNamespace = "k8s.io"
 
+	// TalosContainersContainerdNamespace is the Containerd namespace for containers declared via ContainerConfig.
+	//
+	// These run against the CRI containerd instance, but in their own namespace so that they neither
+	// collide with Kubernetes pods nor depend on Kubernetes being configured.
+	TalosContainersContainerdNamespace = "taloscontainers"
+
 	// CRIContainerdAddress is the path to the CRI containerd socket address.
 	CRIContainerdAddress = "/run/containerd/containerd.sock"
 

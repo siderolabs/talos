@@ -121,6 +121,7 @@ func NewState() (*State, error) {
 		&block.VolumeTrimSchedule{},
 		&block.ZswapStatus{},
 		&containers.ContainerSpec{},
+		&containers.ContainerImageStatus{},
 		&block.FSScrubSchedule{},
 		&block.FSScrubStatus{},
 		&cluster.Affiliate{},
