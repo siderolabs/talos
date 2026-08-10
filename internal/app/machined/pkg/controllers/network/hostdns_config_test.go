@@ -11,16 +11,13 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
-	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
 	netctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/network"
 	"github.com/siderolabs/talos/pkg/machinery/config/container"
-	"github.com/siderolabs/talos/pkg/machinery/config/types/meta"
 	networkcfg "github.com/siderolabs/talos/pkg/machinery/config/types/network"
-	siderolinkcfg "github.com/siderolabs/talos/pkg/machinery/config/types/siderolink"
 	"github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
@@ -247,49 +244,6 @@ func (suite *HostDNSConfigSuite) TestLegacyConfigForwardKubeDNSIPv6Only() {
 		network.LayeredID(network.ConfigOperator, network.AddressID("lo", netip.MustParsePrefix(constants.HostDNSAddress+"/32"))),
 		rtestutils.WithNamespace(network.ConfigNamespaceName),
 	)
-}
-
-func (suite *HostDNSConfigSuite) TestPartialConfigKeepsHostDNSEnabled() {
-	rc := networkcfg.NewResolverConfigV1Alpha1()
-	rc.ResolverHostDNS = networkcfg.HostDNSConfig{
-		HostDNSEnabled:            new(true),
-		HostDNSResolveMemberNames: new(true),
-	}
-
-	ctr, err := container.New(&v1alpha1.Config{ConfigVersion: "v1alpha1", MachineConfig: &v1alpha1.MachineConfig{}}, rc)
-	suite.Require().NoError(err)
-
-	suite.Create(config.NewMachineConfig(ctr))
-
-	ctest.AssertResource(suite, network.HostDNSConfigID, func(r *network.HostDNSConfig, asrt *assert.Assertions) {
-		asrt.True(r.TypedSpec().Enabled)
-		asrt.True(r.TypedSpec().ResolveMemberNames)
-	})
-
-	// replace it with a partial config (no v1alpha1 document), the way a SideroLink config document
-	// is applied in maintenance mode: it configures no host DNS, so host DNS should stay enabled
-	apiURL, err := url.Parse("https://siderolink.api/?jointoken=foo")
-	suite.Require().NoError(err)
-
-	sideroLinkCfg := siderolinkcfg.NewConfigV1Alpha1()
-	sideroLinkCfg.APIUrlConfig = meta.URL{URL: apiURL}
-
-	partialCtr, err := container.New(sideroLinkCfg)
-	suite.Require().NoError(err)
-
-	current, err := safe.StateGetByID[*config.MachineConfig](suite.Ctx(), suite.State(), config.ActiveID)
-	suite.Require().NoError(err)
-
-	partial := config.NewMachineConfig(partialCtr)
-	partial.Metadata().SetVersion(current.Metadata().Version())
-
-	suite.Update(partial)
-
-	ctest.AssertResource(suite, network.HostDNSConfigID, func(r *network.HostDNSConfig, asrt *assert.Assertions) {
-		// resolveMemberNames flipping back proves the controller reconciled the partial config
-		asrt.False(r.TypedSpec().ResolveMemberNames)
-		asrt.True(r.TypedSpec().Enabled)
-	})
 }
 
 func (suite *HostDNSConfigSuite) TestResolverConfigDocument() {

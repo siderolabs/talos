@@ -94,12 +94,7 @@ func (ctrl *HostDNSConfigController) Run(ctx context.Context, r controller.Runti
 			}
 			// Keep resolv.conf pointed at Host DNS during early bootstrap. The active
 			// machine configuration can disable it once it is loaded.
-			//
-			// A partial machine configuration (no v1alpha1 document, e.g. a SideroLink config
-			// applied in maintenance mode) carries no Host DNS settings, and must not disable it:
-			// stopping the listener breaks in-flight name resolution, as Go caches
-			// /etc/resolv.conf for 5 seconds and keeps sending queries to 127.0.0.53.
-			res.TypedSpec().Enabled = cfg == nil || cfg.Provider().RawV1Alpha1() == nil
+			res.TypedSpec().Enabled = cfg == nil
 			res.TypedSpec().ResolveMemberNames = false
 
 			res.TypedSpec().ServiceHostDNSAddress = netip.Addr{}
