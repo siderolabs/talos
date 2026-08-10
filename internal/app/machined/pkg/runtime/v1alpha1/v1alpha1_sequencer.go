@@ -535,13 +535,16 @@ func stopAllPhaselist(r runtime.Runtime, enableKexec bool) PhaseList {
 		).Append(
 			"volumeFinalize",
 			TeardownVolumeLifecycle,
-		).AppendWhen(
-			enableKexec,
-			"kexec",
-			KexecPrepare,
 		).Append(
 			"stopEverything",
 			StopAllServices,
+		).AppendWhen(
+			// kexec is prepared after all services are stopped, as `kexec_file_load` needs to allocate
+			// memory for the kernel and the initramfs, and it might fail on low-memory machines while the
+			// services are still running
+			enableKexec,
+			"kexec",
+			KexecPrepare,
 		)
 	}
 

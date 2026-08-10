@@ -13,8 +13,10 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"time"
 
 	containerd "github.com/containerd/containerd/v2/client"
+	"github.com/containerd/containerd/v2/core/images"
 	"github.com/containerd/containerd/v2/pkg/cio"
 	"github.com/containerd/containerd/v2/pkg/namespaces"
 	"github.com/containerd/containerd/v2/pkg/oci"
@@ -37,6 +39,9 @@ import (
 	configcore "github.com/siderolabs/talos/pkg/machinery/config"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
+
+// imageRemoveTimeout is the timeout for removing the installer image once the install is done.
+const imageRemoveTimeout = 30 * time.Second
 
 // RunInstallerContainer performs an installation via the installer container.
 //
@@ -71,12 +76,35 @@ func RunInstallerContainer(
 
 	defer client.Close() //nolint:errcheck
 
+	var img containerd.Image
+
+	// The system containerd keeps its state on a tmpfs (`/system`), so the installer image contents
+	// and the snapshots unpacked from it stay pinned in memory once pulled.
+	//
+	// Install/upgrade is always followed by a reboot, so drop the image as soon as the installer is
+	// done to free up the memory before the reboot sequence runs `kexec_file_load`, which needs to
+	// allocate memory for the kernel and the initramfs.
+	//
+	// This is deferred before the lease is acquired (and before the container is created), so that it
+	// runs once the lease is released and the container is gone: otherwise the image contents are
+	// still referenced, and the garbage collection triggered by the removal is a no-op.
+	installSucceeded := false
+
+	defer func() {
+		if !installSucceeded || img == nil {
+			// keep the image around, so that a retry doesn't have to pull it again
+			return
+		}
+
+		if err := removeImage(client, img); err != nil {
+			log.Printf("failed to remove the installer image %q: %s", ref, err)
+		}
+	}()
+
 	var done func(context.Context) error
 
 	ctx, done, err = client.WithLease(ctx)
 	defer done(ctx) //nolint:errcheck
-
-	var img containerd.Image
 
 	if !options.Pull {
 		img, err = client.GetImage(ctx, ref)
@@ -274,6 +302,43 @@ func RunInstallerContainer(
 	code := status.ExitCode()
 	if code != 0 {
 		return fmt.Errorf("task %q failed: exit code %d", "upgrade", code)
+	}
+
+	installSucceeded = true
+
+	return nil
+}
+
+// removeImage removes the image from the system containerd.
+//
+// A single pull creates several image records pointing to the same target (the tagged reference, the
+// digest and the canonical reference, see `manageAliases`), so all of them have to go for the
+// contents to be actually garbage collected.
+func removeImage(client *containerd.Client, img containerd.Image) error {
+	// The context the installer ran with carries a lease which is already released by now, and it
+	// might be canceled as well, so build a fresh one.
+	ctx, cancel := context.WithTimeout(context.Background(), imageRemoveTimeout)
+	defer cancel()
+
+	ctx = namespaces.WithNamespace(ctx, constants.SystemContainerdNamespace)
+
+	imageService := client.ImageService()
+
+	digest := img.Target().Digest
+
+	allImages, err := imageService.List(ctx)
+	if err != nil {
+		return fmt.Errorf("error listing images: %w", err)
+	}
+
+	for _, image := range allImages {
+		if image.Target.Digest != digest {
+			continue
+		}
+
+		if err := imageService.Delete(ctx, image.Name, images.SynchronousDelete()); err != nil && !errdefs.IsNotFound(err) {
+			return fmt.Errorf("error deleting image %q: %w", image.Name, err)
+		}
 	}
 
 	return nil
