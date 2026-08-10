@@ -635,6 +635,44 @@ func (s *NfTablesChainSuite) TestICMPTypeMatch() {
 }`)
 }
 
+// TestLargeRuleset verifies that a ruleset too big for the default netlink socket buffers still
+// gets applied, as the whole ruleset is committed in a single netlink batch.
+//
+// With the 208 KiB defaults this trips both of the limits described on nfTablesSocketBufferSize:
+// ENOBUFS on the receive side past ~91 rules, and EMSGSIZE on the send side past ~443.
+//
+// See https://github.com/siderolabs/talos/issues/14001.
+func (s *NfTablesChainSuite) TestLargeRuleset() {
+	// each rule carries an anonymous set, costing two netlink messages on top of the rule itself:
+	// ~1500 messages and ~240 KB on the wire, past both limits
+	const numRules = 500
+
+	chain := network.NewNfTablesChain(network.NamespaceName, "test1")
+	chain.TypedSpec().Type = nethelpers.ChainTypeFilter
+	chain.TypedSpec().Hook = nethelpers.ChainHookInput
+	chain.TypedSpec().Priority = nethelpers.ChainPriorityFilter
+	chain.TypedSpec().Policy = nethelpers.VerdictAccept
+	chain.TypedSpec().Rules = make([]network.NfTablesRule, 0, numRules)
+
+	for i := range numRules {
+		chain.TypedSpec().Rules = append(chain.TypedSpec().Rules, network.NfTablesRule{
+			MatchSourceAddress: &network.NfTablesAddressMatch{
+				IncludeSubnets: []netip.Prefix{
+					netip.PrefixFrom(netip.AddrFrom4([4]byte{10, byte(i >> 8), byte(i), 0}), 24),
+				},
+			},
+			Verdict: new(nethelpers.VerdictAccept),
+		})
+	}
+
+	s.Require().NoError(s.State().Create(s.Ctx(), chain))
+
+	// the ruleset is too large to compare verbatim, so just check that every rule made it through
+	s.Eventually(func() bool {
+		return strings.Count(s.nftOutput(), "ip saddr") == numRules
+	}, 5*time.Second, 100*time.Millisecond)
+}
+
 func TestNftablesChainSuite(t *testing.T) {
 	if os.Geteuid() != 0 {
 		t.Skip("requires root")
