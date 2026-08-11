@@ -1294,7 +1294,7 @@ const (
 	// And sign the image using image-signer.
 	//
 	// renovate: datasource=github-releases depName=flannel-io/flannel
-	FlannelVersion = "0.28.8"
+	FlannelVersion = "0.28.9"
 
 	// FlannelDefaultBackend is the default backend for flannel.
 	FlannelDefaultBackend = "vxlan"

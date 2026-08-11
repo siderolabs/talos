@@ -22,7 +22,7 @@ Linux: 6.18.44
 Kubernetes: 1.37.0-rc.0
 containerd: 2.3.3
 etcd: 3.7.1
-Flannel: 0.28.8
+Flannel: 0.28.9
 runc: 1.5.1
 CoreDNS: 1.14.6
 
