@@ -10,7 +10,7 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
 	github.com/siderolabs/gen v0.8.7
 	go.yaml.in/yaml/v4 v4.0.0-rc.6
-	mvdan.cc/gofumpt v0.10.0
+	mvdan.cc/gofumpt v0.11.0
 )
 
 require (
@@ -18,7 +18,9 @@ require (
 	github.com/bahlo/generic-list-go v0.2.0 // indirect
 	github.com/buger/jsonparser v1.2.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
+	golang.org/x/mod v0.38.0 // indirect
 	golang.org/x/net v0.57.0 // indirect
+	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/text v0.40.0 // indirect
 	golang.org/x/tools v0.48.0 // indirect
 )
