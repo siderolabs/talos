@@ -304,6 +304,12 @@ func (c *Config) GenerateAssets(opts options.InstallOptions) ([]partition.Option
 		})
 	}
 
+	if opts.ExtraInstallStep != nil {
+		if err := opts.ExtraInstallStep(); err != nil {
+			return nil, err
+		}
+	}
+
 	return partitionOptions, nil
 }
 
