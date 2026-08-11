@@ -75,8 +75,18 @@ func (c *Config) Install(opts options.InstallOptions) (*options.InstallResult, e
 		opts.BootDisk,
 		mountSpecs,
 		func() error {
+			if err := c.copyAssets(opts); err != nil {
+				return err
+			}
+
 			if err := c.runGrubInstall(context.Background(), opts, efiFound); err != nil {
 				return err
+			}
+
+			if opts.ExtraInstallStep != nil {
+				if err := opts.ExtraInstallStep(); err != nil {
+					return err
+				}
 			}
 
 			return nil
@@ -197,7 +207,7 @@ func (c *Config) generateGrubImage(ctx context.Context, opts options.InstallOpti
 
 	copyInstructions = append(copyInstructions, utils.SourceDestination(
 		grubEFIPath,
-		filepath.Join(opts.MountPrefix, constants.EFIMountPoint, efiFile),
+		filepath.Join(opts.MountPrefix, "EFI", efiFile),
 	))
 
 	if err := utils.CopyFiles(
@@ -211,7 +221,7 @@ func (c *Config) generateGrubImage(ctx context.Context, opts options.InstallOpti
 }
 
 //nolint:gocyclo
-func (c *Config) generateAssets(opts options.InstallOptions) error {
+func (c *Config) copyAssets(opts options.InstallOptions) error {
 	cmdline := opts.Cmdline
 
 	// if we have a kernel path, assume that the kernel and initramfs are available

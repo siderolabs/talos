@@ -86,7 +86,7 @@ func TestGenerateAssets(t *testing.T) {
 				Printf:               func(string, ...any) {},
 			}
 
-			require.NoError(t, sdboot.GenerateAssets(&sdboot.Config{}, opts, ukiFileName))
+			require.NoError(t, sdboot.CopyAssets(&sdboot.Config{}, opts, ukiFileName))
 
 			loaderDir := filepath.Join(mountPrefix, constants.EFIMountPoint, "loader")
 

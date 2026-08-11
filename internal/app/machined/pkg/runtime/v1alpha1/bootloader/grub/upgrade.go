@@ -63,7 +63,7 @@ func (c *Config) Upgrade(opts options.InstallOptions) (*options.InstallResult, e
 				return err
 			}
 
-			if err := c.generateAssets(opts); err != nil {
+			if err := c.copyAssets(opts); err != nil {
 				return err
 			}
 

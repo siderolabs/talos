@@ -24,7 +24,7 @@ import (
 // Config describes a dual-boot bootloader.
 // this is a dummy implementation of the bootloader interface
 // allowing to install GRUB for BIOS and sd-boot for UEFI
-// so we only care about `GenerateAssets()`.
+// so we only care about `PrepareBootPartitions()`.
 type Config struct{}
 
 // New creates a new bootloader.
@@ -32,23 +32,32 @@ func New() *Config {
 	return &Config{}
 }
 
-// GenerateAssets generates the dual-boot bootloader assets and returns the partition options with source directory set.
-func (c *Config) GenerateAssets(opts options.InstallOptions) ([]partition.Options, error) {
+// PrepareBootPartitions prepares the set of partitions to create for the bootloader.
+//
+// In image mode, this also pre-populates the assets to be written to the bootloader partitions
+// when formatting the filesystem.
+// In install mode, this only returns a list of partitions to create, and the assets are written to the partitions during Install.
+func (c *Config) PrepareBootPartitions(opts options.InstallOptions) ([]partition.Options, error) {
 	if opts.Arch == "arm64" {
 		return nil, fmt.Errorf("dual-boot bootloader is not supported on arm64 architecture, either GRUB or sd-boot must be used")
 	}
 
-	// here we'll use the grub and sd-boot GenerateAssets logic
+	if !opts.ImageMode {
+		return nil, fmt.Errorf("dual-boot bootloader is only supported in image mode")
+	}
+
+	// here we'll use the grub and sd-boot PrepareBootPartitions logic
 	// and remove the grub `EFI` directory after we're done
-	if _, err := grub.NewConfig().GenerateAssets(opts); err != nil {
+	if _, err := grub.NewConfig().PrepareBootPartitions(opts); err != nil {
 		return nil, fmt.Errorf("failed to install GRUB bootloader: %w", err)
 	}
 
-	if err := os.RemoveAll(filepath.Join(opts.MountPrefix, constants.EFIMountPoint)); err != nil {
+	// cleanup the GRUB EFI assets directory, since we don't need it for dual-boot
+	if err := os.RemoveAll(filepath.Join(opts.MountPrefix, "EFI")); err != nil {
 		return nil, fmt.Errorf("failed to cleanup GRUB EFI assets directory: %w", err)
 	}
 
-	if _, err := sdboot.New().GenerateAssets(opts); err != nil {
+	if _, err := sdboot.New().PrepareBootPartitions(opts); err != nil {
 		return nil, fmt.Errorf("failed to generate sd-boot assets: %w", err)
 	}
 
@@ -70,13 +79,11 @@ func (c *Config) GenerateAssets(opts options.InstallOptions) ([]partition.Option
 		),
 	}
 
-	if opts.ImageMode {
-		partitionOptions = xslices.Map(partitionOptions, func(o partition.Options) partition.Options {
-			o.Reproducible = true
+	partitionOptions = xslices.Map(partitionOptions, func(o partition.Options) partition.Options {
+		o.Reproducible = true
 
-			return o
-		})
-	}
+		return o
+	})
 
 	return partitionOptions, nil
 }

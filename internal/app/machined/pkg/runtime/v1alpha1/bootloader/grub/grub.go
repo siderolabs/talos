@@ -93,24 +93,31 @@ func (c *Config) KexecLoad(r runtime.Runtime, disk string) error {
 	return err
 }
 
-// GenerateAssets generates the bootloader assets and returns partition options to create the bootloader partitions.
-func (c *Config) GenerateAssets(opts options.InstallOptions) ([]partition.Options, error) {
-	if err := c.generateAssets(opts); err != nil {
-		return nil, err
-	}
-
+// PrepareBootPartitions prepares the set of partitions to create for the bootloader.
+//
+// In image mode, this also pre-populates the assets to be written to the bootloader partitions
+// when formatting the filesystem.
+// In install mode, this only returns a list of partitions to create, and the assets are written to the partitions during Install.
+func (c *Config) PrepareBootPartitions(opts options.InstallOptions) ([]partition.Options, error) {
 	quirk := quirks.New(opts.Version)
 
 	efiFormatOptions := []partition.FormatOption{
 		partition.WithLabel(constants.EFIPartitionLabel),
 	}
 
+	bootFormatOptions := []partition.FormatOption{
+		partition.WithLabel(constants.BootPartitionLabel),
+	}
+
 	if opts.ImageMode {
-		// in bios install mode grub generated assets only contains the grub config file and kernel and initramfs
-		// so we don't need to set the source directory for the EFI partition
 		efiFormatOptions = append(
 			efiFormatOptions,
 			partition.WithSourceDirectory(filepath.Join(opts.MountPrefix, "EFI")),
+		)
+
+		bootFormatOptions = append(
+			bootFormatOptions,
+			partition.WithSourceDirectory(filepath.Join(opts.MountPrefix, constants.BootMountPoint)),
 		)
 	}
 
@@ -124,8 +131,7 @@ func (c *Config) GenerateAssets(opts options.InstallOptions) ([]partition.Option
 		partition.NewPartitionOptions(
 			false,
 			quirk,
-			partition.WithLabel(constants.BootPartitionLabel),
-			partition.WithSourceDirectory(filepath.Join(opts.MountPrefix, constants.BootMountPoint)),
+			bootFormatOptions...,
 		),
 	}
 
@@ -135,11 +141,15 @@ func (c *Config) GenerateAssets(opts options.InstallOptions) ([]partition.Option
 
 			return o
 		})
-	}
 
-	if opts.ExtraInstallStep != nil {
-		if err := opts.ExtraInstallStep(); err != nil {
+		if err := c.copyAssets(opts); err != nil {
 			return nil, err
+		}
+
+		if opts.ExtraInstallStep != nil {
+			if err := opts.ExtraInstallStep(); err != nil {
+				return nil, err
+			}
 		}
 	}
 

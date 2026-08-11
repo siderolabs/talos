@@ -25,10 +25,16 @@ import (
 
 // Bootloader describes a bootloader.
 type Bootloader interface {
-	GenerateAssets(options options.InstallOptions) ([]partition.Options, error)
+	// PrepareBootPartitions prepares the set of partitions to create for the bootloader.
+	//
+	// In image mode, this also pre-populates the assets to be written to the bootloader partitions
+	// when formatting the filesystem.
+	// In install mode, this only returns a list of partitions to create, and the assets are written to the partitions during Install.
+	PrepareBootPartitions(options options.InstallOptions) ([]partition.Options, error)
 	// Install the bootloader.
 	//
 	// Install mounts the partitions as required.
+	// Install is not called in image mode.
 	Install(options options.InstallOptions) (*options.InstallResult, error)
 	// Upgrade upgrades the bootloader installation.
 	//
