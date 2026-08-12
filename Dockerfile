@@ -1381,13 +1381,17 @@ RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=shared \
     go build -o /usr/local/bin/golangci-lint github.com/golangci/golangci-lint/v2/cmd/golangci-lint
 
 FROM golangci-lint-plugin-builder AS lint-golangci-lint-custom
+RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=shared \
+    golangci-lint custom
+
+FROM golangci-lint-plugin-builder AS golangci-lint-custom-target
 ARG TARGETOS
 ARG TARGETARCH
 RUN --mount=type=cache,target=/.cache,id=talos/.cache,sharing=shared \
     GOOS=${TARGETOS} GOARCH=${TARGETARCH} golangci-lint custom
 
 FROM scratch AS golangci-lint-custom
-COPY --link --from=lint-golangci-lint-custom /src/custom-gcl /custom-gcl
+COPY --link --from=golangci-lint-custom-target /src/custom-gcl /custom-gcl
 
 FROM base AS lint-go-config
 COPY --link --from=lint-golangci-lint-custom /src/custom-gcl /usr/local/bin/custom-gcl
