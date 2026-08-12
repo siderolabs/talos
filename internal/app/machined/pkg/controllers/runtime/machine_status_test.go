@@ -198,7 +198,9 @@ func (suite *MachineStatusSuite) TestReconcile() {
 	suite.Require().Never(
 		func() bool {
 			status, err := safe.StateGetByID[*runtime.MachineStatus](ctx, st, runtime.MachineStatusID)
-			suite.NoError(err, "status should exist")
+			if err != nil {
+				return false
+			}
 
 			return status.TypedSpec().Stage != runtime.MachineStageShuttingDown
 		},

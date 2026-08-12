@@ -226,9 +226,16 @@ func (suite *UnattendedInstallSuite) TestNoDowngradeToInstalled() {
 	installed.Store(true)
 	suite.createDisk("sdb")
 
+	// Capture ctx/state in locals: Never leaks its last condition goroutine past
+	// return, and reading suite.Ctx()/suite.State() there races the next test's
+	// SetupTest overwriting those fields.
+	ctx, st := suite.Ctx(), suite.State()
+
 	suite.Assert().Never(func() bool {
-		status, err := safe.StateGetByID[*runtime.UnattendedInstallStatus](suite.Ctx(), suite.State(), runtime.UnattendedInstallStatusID)
-		suite.Require().NoError(err)
+		status, err := safe.StateGetByID[*runtime.UnattendedInstallStatus](ctx, st, runtime.UnattendedInstallStatusID)
+		if err != nil {
+			return false
+		}
 
 		return status.TypedSpec().Phase != runtime.UnattendedInstallPhaseWaitingForReboot
 	}, time.Second, 100*time.Millisecond)
