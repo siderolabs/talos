@@ -70,7 +70,7 @@ func (ctrl *CRIConfigController) Outputs() []controller.Output {
 // Run implements controller.Controller interface.
 func (ctrl *CRIConfigController) Run(ctx context.Context, r controller.Runtime, logger *zap.Logger) error {
 	src := filepath.Join(constants.CRIConfdPath, "hosts")
-	dest := filepath.Join("etc", src)
+	dest := filepath.Join(constants.EtcCRIConfdPath, "hosts")
 
 	for {
 		select {

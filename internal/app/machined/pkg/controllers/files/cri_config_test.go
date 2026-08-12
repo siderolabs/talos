@@ -8,10 +8,14 @@ import (
 	"bytes"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/pelletier/go-toml/v2"
+	"github.com/siderolabs/crypto/x509"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
@@ -69,6 +73,16 @@ func TestCRIConfigSuite(t *testing.T) {
 
 func (suite *CRIConfigSuite) TestMergedConfigAndHosts() {
 	cfg := crires.NewRegistriesConfig()
+	cfg.TypedSpec().RegistryTLSs = map[string]*crires.RegistryTLSConfig{
+		"registry.example.com:5000": {
+			TLSCA: []byte("fake-ca"),
+			TLSClientIdentity: &x509.PEMEncodedCertificateAndKey{
+				Crt: []byte("fake-client-cert"),
+				Key: []byte("fake-client-key"),
+			},
+		},
+	}
+
 	cfg.TypedSpec().RegistryMirrors = map[string]*crires.RegistryMirrorConfig{
 		"docker.io": {
 			MirrorEndpoints: []crires.RegistryEndpointConfig{{EndpointEndpoint: "https://mirror.example.com"}},
@@ -127,6 +141,44 @@ func (suite *CRIConfigSuite) TestMergedConfigAndHosts() {
 	hosts, err := xfs.ReadFile(suite.root, filepath.Join(constants.CRIConfdPath, "hosts", "docker.io", "hosts.toml"))
 	suite.Require().NoError(err)
 	suite.Contains(string(hosts), "https://mirror.example.com")
+
+	suite.AssertWithin(time.Second, 10*time.Millisecond, ctest.WrapRetry(func(asrt *assert.Assertions, _ *require.Assertions) {
+		tlsHosts, err := xfs.ReadFile(suite.root, filepath.Join(constants.CRIConfdPath, "hosts", "registry.example.com_5000_", "hosts.toml"))
+		if !asrt.NoError(err) {
+			return
+		}
+
+		var tlsHostConfig struct {
+			CACert string      `toml:"ca"`
+			Client [][2]string `toml:"client"`
+		}
+
+		if !asrt.NoError(toml.Unmarshal(tlsHosts, &tlsHostConfig)) || !asrt.True(filepath.IsAbs(tlsHostConfig.CACert)) {
+			return
+		}
+
+		if !asrt.Len(tlsHostConfig.Client, 1) {
+			return
+		}
+
+		for path, expected := range map[string]string{
+			tlsHostConfig.CACert:       "fake-ca",
+			tlsHostConfig.Client[0][0]: "fake-client-cert",
+			tlsHostConfig.Client[0][1]: "fake-client-key",
+		} {
+			relPath, found := strings.CutPrefix(path, "/etc/")
+			if !asrt.True(found, "expected path %q to be under /etc", path) {
+				return
+			}
+
+			contents, readErr := xfs.ReadFile(suite.root, relPath)
+			if !asrt.NoError(readErr) {
+				return
+			}
+
+			asrt.Equal(expected, string(contents))
+		}
+	}))
 
 	suite.Destroy(qualified)
 
