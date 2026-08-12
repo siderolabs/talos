@@ -200,11 +200,6 @@ func noexecExempt(m mountInfo) bool {
 		return true
 	}
 
-	// longhorn volumes we need to skip in the noexec check
-	if m.mountPoint == "/var/mnt/longhorn" {
-		return true
-	}
-
 	return slices.Contains(noexecExemptPaths, m.mountPoint)
 }
 
@@ -264,6 +259,14 @@ func (suite *MountsSuite) checkOptOnNode(node, opt string, exempt func(mountInfo
 	)
 
 	for _, m := range mounts {
+		if suite.SkipEphemeralPolicy && slices.Contains([]string{
+			constants.EphemeralMountPoint,
+			"/var/mnt/longhorn",
+			"/var/mnt/openebs",
+		}, m.mountPoint) {
+			continue
+		}
+
 		// A promotable system volume promoted onto a dedicated partition has explicit security policy.
 		// When not promoted it is a directory on EPHEMERAL and inherits the /var mount policy.
 		if volumeID, promoted := promotableSystemVolumePartition(m); promoted {

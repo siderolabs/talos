@@ -75,6 +75,8 @@ type TalosSuite struct {
 	Virtiofsd bool
 	// Race informs test suites about race detector being enabled (e.g. for skipping incompatible tests)
 	Race bool
+	// SkipEphemeralPolicy disables MountsSuite's policy assertions for EPHEMERAL-backed fixture mounts.
+	SkipEphemeralPolicy bool
 	// DedicatedSystemVolumes tells that the cluster was created with the promotable system volumes
 	// placed on dedicated partitions instead of directories under EPHEMERAL, i.e. with the
 	// `hack/test/patches/dedicated-system-volumes-{controlplane,worker}.yaml` config patches applied.

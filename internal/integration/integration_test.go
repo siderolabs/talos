@@ -34,18 +34,19 @@ var allSuites []suite.TestingSuite
 
 // Flag values.
 var (
-	failFast         bool
-	trustedBoot      bool
-	selinuxEnforcing bool
-	extensionsQEMU   bool
-	extensionsNvidia bool
-	bgpEnabled       bool
-	bgpCLOSEnabled   bool
-	ciliumBGPEnabled bool
-	verifyUKIBooted  bool
-	airgapped        bool
-	virtiofsd        bool
-	race             bool
+	failFast            bool
+	trustedBoot         bool
+	selinuxEnforcing    bool
+	extensionsQEMU      bool
+	extensionsNvidia    bool
+	bgpEnabled          bool
+	bgpCLOSEnabled      bool
+	ciliumBGPEnabled    bool
+	verifyUKIBooted     bool
+	airgapped           bool
+	virtiofsd           bool
+	race                bool
+	skipEphemeralPolicy bool
 
 	dedicatedSystemVolumes bool
 
@@ -146,6 +147,7 @@ func TestIntegration(t *testing.T) {
 				Airgapped:              airgapped,
 				Virtiofsd:              virtiofsd,
 				Race:                   race,
+				SkipEphemeralPolicy:    skipEphemeralPolicy,
 				DedicatedSystemVolumes: dedicatedSystemVolumes,
 			})
 		}
@@ -214,6 +216,8 @@ func init() {
 	flag.StringVar(&csiTestTimeout, "talos.csi.timeout", "15m", "CSI test timeout")
 	flag.BoolVar(&airgapped, "talos.airgapped", false, "Marker to skip tests that should not be run on airgapped talos cluster")
 	flag.BoolVar(&virtiofsd, "talos.virtiofsd", false, "Marker to skip tests that should not be run without virtiofsd")
+	flag.BoolVar(&skipEphemeralPolicy, "talos.skip-ephemeral-policy", false,
+		"Skip MountsSuite assertions for EPHEMERAL-backed fixture mounts")
 	flag.BoolVar(&dedicatedSystemVolumes, "talos.dedicated-system-volumes", false,
 		"Set when the cluster was deployed with the hack/test/patches/dedicated-system-volumes-{controlplane,worker}.yaml config patches, "+
 			"i.e. the promotable system volumes are placed on dedicated partitions instead of directories under EPHEMERAL")

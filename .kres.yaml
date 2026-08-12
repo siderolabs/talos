@@ -1530,6 +1530,7 @@ spec:
             withConfigPatchWorker: ""
           - csi: openebs
             qemuCpusWorkers: "4"
+            extraTestArgs: "-talos.skip-ephemeral-policy"
             withConfigPatchControlplane: "@hack/test/patches/openebs-cp.yaml"
             withConfigPatchWorker: "@hack/test/patches/openebs.yaml"
       steps:
@@ -1552,7 +1553,7 @@ spec:
             QEMU_EXTRA_DISKS_SIZE: 12288
             WITH_CONFIG_PATCH_CONTROLPLANE: ${{ matrix.withConfigPatchControlplane }}
             WITH_CONFIG_PATCH_WORKER: ${{ matrix.withConfigPatchWorker }}
-            EXTRA_TEST_ARGS: -talos.csi=${{ matrix.csi }}
+            EXTRA_TEST_ARGS: -talos.csi=${{ matrix.csi }} ${{ matrix.extraTestArgs }}
             IMAGE_REGISTRY: registry.dev.siderolabs.io
         - name: save-fio-benchmark
           artifactStep:
@@ -1593,11 +1594,11 @@ spec:
           - csi: longhorn
             longhornEngine: v2
             extraWorkerPatch: ""
-            extraTestArgs: "-talos.csi.timeout=30m"
+            extraTestArgs: "-talos.csi.timeout=30m -talos.skip-ephemeral-policy"
           - csi: longhorn-v1
             longhornEngine: v1
             extraWorkerPatch: ":@_out/kubelet-fat-patch.yaml"
-            extraTestArgs: ""
+            extraTestArgs: "-talos.skip-ephemeral-policy"
       steps:
         - name: download-artifacts
           artifactStep:
