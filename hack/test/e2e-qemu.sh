@@ -273,7 +273,7 @@ case "${WITH_EPHEMERAL_NODE:-false}" in
     ;;
   *)
     # Fully ephemeral node: STATE and EPHEMERAL on tmpfs. Forced single-node cluster.
-    QEMU_FLAGS+=("--config-patch=@hack/test/patches/ephemeral-memory.yaml")
+    QEMU_FLAGS+=("--config-patch-control-plane=@hack/test/patches/ephemeral-memory.yaml")
     QEMU_CONTROLPLANES=1
     QEMU_WORKERS=0
     QEMU_MEMORY_CONTROLPLANES="${QEMU_MEMORY_CONTROLPLANES:-6144}"
