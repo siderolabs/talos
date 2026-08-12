@@ -190,6 +190,7 @@ func (p *provisioner) createNode(ctx context.Context, state *provision.State, cl
 		TFTPServer:                nodeReq.TFTPServer,
 		IPXEBootFileName:          nodeReq.IPXEBootFilename,
 		APIBindAddress:            apiBind,
+		ExtraQEMUArgs:             nodeReq.ExtraQEMUArgs,
 		IOMMUEnabled:              opts.IOMMUEnabled,
 		Network:                   getLaunchNetworkConfig(state, clusterReq, nodeReq),
 

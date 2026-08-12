@@ -237,6 +237,13 @@ type NodeRequest struct {
 	// This doesn't apply to boots from ISO or from the disk image.
 	ExtraKernelArgs *procfs.Cmdline
 
+	// ExtraQEMUArgs passes additional command-line arguments verbatim to the
+	// QEMU process for this node (QEMU provisioner only). This is a generic
+	// extension point for provisioners that need to attach extra QEMU devices
+	// (for example an emulated BMC) without the provision library having to know
+	// about them.
+	ExtraQEMUArgs []string
+
 	// SDStubKernelArgs passes additional kernel args via the systemd-stub.
 	//
 	// This applies to boots from ISO and from the disk image.

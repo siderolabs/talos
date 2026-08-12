@@ -82,6 +82,9 @@ type LaunchConfig struct {
 	// API
 	APIBindAddress *net.TCPAddr
 
+	// ExtraQEMUArgs is appended verbatim to the QEMU command line.
+	ExtraQEMUArgs []string
+
 	// sd-stub
 	sdStubExtraCmdline       string
 	sdStubExtraCmdlineConfig string
@@ -463,6 +466,10 @@ func launchVM(config *LaunchConfig) error {
 			"base=2011-11-11T11:11:00,clock=rt",
 		)
 	}
+
+	// Extra caller-supplied QEMU arguments (e.g. an emulated BMC device set),
+	// appended last so they can reference devices declared above.
+	args = append(args, config.ExtraQEMUArgs...)
 
 	// QEMU runs with `-no-reboot`, so every reboot of the VM is a relaunch, and a relaunch can lose
 	// a race against the host services backing the VM's devices. The known case is virtiofsd: it
