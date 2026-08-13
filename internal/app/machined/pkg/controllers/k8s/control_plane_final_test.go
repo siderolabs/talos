@@ -872,6 +872,32 @@ func (suite *ControlPlaneAPIServerFinalSuite) TestTransform() {
 			}(),
 		},
 		{
+			// Regression for siderolabs/talos#14030: on the legacy `.cluster.apiServer` path Talos doesn't
+			// render an authentication config file, so a user-supplied `authentication-config` extra arg must
+			// be passed through rather than rejected. `--anonymous-auth=false` stays, matching Talos <= 1.13.
+			name:    "legacy path: user-supplied authentication-config in extra args",
+			k8sRoot: baseK8sRoot(),
+			input: func() k8s.APIServerConfigSpec {
+				s := baseSpec()
+				s.UseAuthenticationConfig = false
+				s.ExtraArgs = map[string]k8s.ArgValues{
+					"authentication-config": {Values: []string{"/var/apiserver/conf/auth-config.yaml"}},
+				}
+
+				return s
+			}(),
+			expected: func() k8s.APIServerConfigSpec {
+				s := baseSpec()
+				s.Args = withAnonymousAuth(withAuthArgs(
+					commonArgs(defaultAudiences, defaultIssuers),
+					"--authentication-config=/var/apiserver/conf/auth-config.yaml",
+					"--authorization-config="+authzConfigPath,
+				))
+
+				return s
+			}(),
+		},
+		{
 			// Pass-through fields, conditional advertise-address & cloud-provider, and additive extra args.
 			name:    "pass-through fields, advertised address, cloud provider and extra args",
 			k8sRoot: baseK8sRoot(),
@@ -1095,13 +1121,20 @@ func (suite *ControlPlaneAPIServerFinalSuite) TestTransform() {
 // TestRejectsDeniedExtraArgs verifies that extra args which collide with a MergeDenied
 // policy cause the transform to fail, so no final APIServerConfig is produced.
 func (suite *ControlPlaneAPIServerFinalSuite) TestRejectsDeniedExtraArgs() {
-	for _, arg := range []string{
-		"tls-min-version",
-		"tls-cert-file",
-		"proxy-client-key-file",
-		"etcd-servers",
+	for _, tt := range []struct {
+		arg string
+		// useAuthenticationConfig makes Talos render & own the structured authentication config file.
+		useAuthenticationConfig bool
+	}{
+		{arg: "tls-min-version"},
+		{arg: "tls-cert-file"},
+		{arg: "proxy-client-key-file"},
+		{arg: "etcd-servers"},
+		// authentication-config is only denied when Talos itself renders the file, see
+		// "legacy path: user-supplied authentication-config in extra args" for the other half.
+		{arg: "authentication-config", useAuthenticationConfig: true},
 	} {
-		suite.Run(arg, func() {
+		suite.Run(tt.arg, func() {
 			setK8sRoot(suite, secrets.KubernetesRootSpec{
 				APIAudiences: []string{"https://localhost:6443"},
 				IssuerURL:    "https://localhost:6443",
@@ -1109,13 +1142,14 @@ func (suite *ControlPlaneAPIServerFinalSuite) TestRejectsDeniedExtraArgs() {
 
 			in := k8s.NewAPIServerConfig(k8s.APIServerConfigID)
 			*in.TypedSpec() = k8s.APIServerConfigSpec{
-				Image:                "registry.k8s.io/kube-apiserver:v1.32.0",
-				ControlPlaneEndpoint: "https://localhost:6443",
-				EtcdServers:          []string{"https://127.0.0.1:2379"},
-				LocalPort:            6443,
-				ServiceCIDRs:         []string{"10.96.0.0/12"},
+				Image:                   "registry.k8s.io/kube-apiserver:v1.32.0",
+				ControlPlaneEndpoint:    "https://localhost:6443",
+				EtcdServers:             []string{"https://127.0.0.1:2379"},
+				LocalPort:               6443,
+				ServiceCIDRs:            []string{"10.96.0.0/12"},
+				UseAuthenticationConfig: tt.useAuthenticationConfig,
 				ExtraArgs: map[string]k8s.ArgValues{
-					arg: {Values: []string{"override"}},
+					tt.arg: {Values: []string{"override"}},
 				},
 			}
 

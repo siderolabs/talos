@@ -36,6 +36,8 @@ import (
 type ControlPlaneAPIServerFinalController = transform.Controller[*k8s.APIServerConfig, *k8s.APIServerConfig]
 
 // NewControlPlaneAPIServerFinalController instantiates the controller.
+//
+//nolint:gocyclo
 func NewControlPlaneAPIServerFinalController() *ControlPlaneAPIServerFinalController {
 	return transform.NewController(
 		transform.Settings[*k8s.APIServerConfig, *k8s.APIServerConfig]{
@@ -170,7 +172,13 @@ func NewControlPlaneAPIServerFinalController() *ControlPlaneAPIServerFinalContro
 					"tls-min-version":                  argsbuilder.MergeDenied,
 					"tls-private-key-file":             argsbuilder.MergeDenied,
 					"authorization-config":             argsbuilder.MergeDenied,
-					"authentication-config":            argsbuilder.MergeDenied,
+				}
+
+				// Talos only owns the structured authentication config file when it renders one, so the flag
+				// is denied in extra args in that case. On the legacy `.cluster.apiServer` path Talos never
+				// sets the flag, so the user is free to point kube-apiserver at their own file.
+				if cfg.UseAuthenticationConfig {
+					mergePolicies["authentication-config"] = argsbuilder.MergeDenied
 				}
 
 				if err := builder.Merge(extraArgs, argsbuilder.WithMergePolicies(mergePolicies)); err != nil {
