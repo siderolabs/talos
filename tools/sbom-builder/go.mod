@@ -7,7 +7,7 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/spdx/tools-golang v0.6.0-rc4
 	github.com/stretchr/testify v1.11.1
-	golang.org/x/mod v0.38.0
+	golang.org/x/mod v0.39.0
 	modernc.org/sqlite v1.56.0
 )
 
