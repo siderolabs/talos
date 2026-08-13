@@ -115,6 +115,21 @@ func (options Options) CreateUEFI(ctx context.Context, printf func(string, ...an
 		return nil, err
 	}
 
+	// Ship a placeholder random seed, marked read-only below.
+	//
+	// systemd-boot v261 grew a code path which creates /loader/random-seed when the file is missing and the
+	// firmware handed out entropy, and it does so without checking whether the medium can be written to. On
+	// an ISO booted as an El Torito CD/DVD that means a create is attempted against read-only media, and some
+	// firmware faults there rather than returning an error, taking the machine down with a synchronous
+	// exception right after a boot entry is selected: https://github.com/siderolabs/talos/issues/14029
+	//
+	// Providing the file keeps systemd-boot out of that path entirely: the open fails with a plain error and
+	// the seed is left alone, which is what systemd <= 260 did. The contents are never consumed (the file is
+	// read-only, and so is the medium), so a fixed placeholder keeps the ISO reproducible.
+	if err := os.WriteFile(filepath.Join(options.ScratchDir, "loader/random-seed"), make([]byte, 32), 0o444); err != nil {
+		return nil, err
+	}
+
 	if options.UKISigningCertDerPath != "" {
 		if err := os.MkdirAll(filepath.Join(options.ScratchDir, "EFI/keys"), 0o755); err != nil {
 			return nil, err
@@ -167,6 +182,21 @@ func (options Options) CreateUEFI(ctx context.Context, printf func(string, ...an
 			filepath.Join(options.ScratchDir, "EFI"),
 			filepath.Join(options.ScratchDir, "loader"),
 			"::",
+		},
+	); err != nil {
+		return nil, err
+	}
+
+	// Mark the random seed read-only, so that systemd-boot >= 261.2 recognizes it as a seed it should not
+	// manage, and so that the open in older versions fails before any write is attempted.
+	if _, err := cmd.RunWithOptions(
+		ctx,
+		"mattrib",
+		[]string{
+			"-i",
+			efiBootImg,
+			"+r",
+			"::/loader/random-seed",
 		},
 	); err != nil {
 		return nil, err
