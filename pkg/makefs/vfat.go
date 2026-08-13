@@ -37,6 +37,10 @@ func VFAT(ctx context.Context, partname string, setters ...Option) error {
 		args = append(args, "-S", strconv.FormatUint(uint64(opts.SectorSize), 10))
 	}
 
+	if opts.SectorsPerCluster > 0 {
+		args = append(args, "-s", strconv.FormatUint(uint64(opts.SectorsPerCluster), 10))
+	}
+
 	args = append(args, partname)
 
 	_, err := cmd.RunWithOptions(ctx, "mkfs.vfat", args)

@@ -20,6 +20,7 @@ type Options struct {
 	ConfigFile             string
 	SourceDirectory        string
 	SectorSize             uint
+	SectorsPerCluster      uint
 	DeviceSize             uint64
 	MinAllocationGroupSize uint64
 	Force                  bool
@@ -81,6 +82,19 @@ func WithSourceDirectory(sourceDir string) Option {
 func WithSectorSize(sectorSize uint) Option {
 	return func(o *Options) {
 		o.SectorSize = sectorSize
+	}
+}
+
+// WithSectorsPerCluster overrides the cluster size (in sectors) used by mkfs.
+//
+// It is only honored by VFAT. Zero leaves the mkfs defaults alone.
+//
+// Note that FAT type is derived from the cluster count by most implementations,
+// so growing the cluster size on a small filesystem may push it below the 65525
+// cluster minimum and turn a FAT32 filesystem into one that reads as FAT16.
+func WithSectorsPerCluster(sectorsPerCluster uint) Option {
+	return func(o *Options) {
+		o.SectorsPerCluster = sectorsPerCluster
 	}
 }
 
