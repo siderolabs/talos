@@ -1,6 +1,6 @@
 module github.com/siderolabs/talos/tools/cloud-image-uploader
 
-go 1.26.5
+go 1.26.6
 
 require (
 	cloud.google.com/go/storage v1.64.0

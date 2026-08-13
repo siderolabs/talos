@@ -448,7 +448,7 @@ COPY --link --from=proto-format-build /src/api /api/
 COPY --link --from=proto-format-build /src/pkg/provision/api /pkg/provision/api/
 COPY --link --from=generate-build-clean /api/resource/definitions/ /api/resource/definitions/
 COPY --link --from=generate-build-clean /api/machinery /pkg/machinery/
-COPY --link --from=generate-build-clean /api/docs/api.md /website/content/v1.14/reference/api.md
+COPY --link --from=generate-build-clean /api/docs/api.md /website/content/v1.15/reference/api.md
 COPY --link --from=generate-build-clean /pkg/provision/api /pkg/provision/api/
 COPY --link --from=go-generate /src/pkg/imager/profile/ /pkg/imager/profile/
 COPY --link --from=go-generate /src/pkg/machinery/resources/ /pkg/machinery/resources/
@@ -1521,9 +1521,9 @@ RUN --mount=type=bind,from=talosctl-targetarch,source=/talosctl-${TARGETOS}-${TA
 COPY ./pkg/machinery/config/schemas/*.schema.json /tmp/schemas/
 
 FROM scratch AS docs
-COPY --link --from=docs-build /tmp/configuration/ /website/content/v1.14/reference/configuration/
-COPY --link --from=docs-build /tmp/cli.md /website/content/v1.14/reference/
-COPY --link --from=docs-build /tmp/schemas /website/content/v1.14/schemas/
+COPY --link --from=docs-build /tmp/configuration/ /website/content/v1.15/reference/configuration/
+COPY --link --from=docs-build /tmp/cli.md /website/content/v1.15/reference/
+COPY --link --from=docs-build /tmp/schemas /website/content/v1.15/schemas/
 
 # The talosctl-cni-bundle builds the CNI bundle for talosctl.
 

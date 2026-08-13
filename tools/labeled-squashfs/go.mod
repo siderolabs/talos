@@ -1,3 +1,3 @@
 module github.com/siderolabs/talos/tools/labeled-squashfs
 
-go 1.26.5
+go 1.26.6
