@@ -44,7 +44,7 @@ func (suite *UpgradeSuite) TestIncompatibleMachineConfig() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 
 	config, _ := suite.RunCLI([]string{"get", "--nodes", node, "mc", "v1alpha1", "--output", "jsonpath={.spec}"})
-	suite.Require().Contains(config, "kind: DiscoveryServiceConfig", "downgrade must be guaranteed to fail before touching disk")
+	suite.Require().Contains(config, "kind: ImageVerificationConfig", "downgrade must be guaranteed to fail before touching disk")
 
 	suite.RunCLI(
 		[]string{
