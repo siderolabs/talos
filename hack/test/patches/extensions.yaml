@@ -155,3 +155,30 @@ apiVersion: v1alpha1
 kind: SysctlConfig
 params:
   user.max_user_namespaces: "11255"
+---
+# cachefilesd extension configs:
+# - load the module
+# - add user volume for the cache root
+# - config to activate the extension
+apiVersion: v1alpha1
+kind: KernelModuleConfig
+name: cachefiles
+---
+apiVersion: v1alpha1
+kind: UserVolumeConfig
+name: fscache
+volumeType: directory
+---
+apiVersion: v1alpha1
+kind: EtcFileConfig
+name: cachefilesd.conf
+mode: 0o644
+contents: |
+  dir /var/mnt/fscache
+  tag mycache
+  brun 10%
+  bcull 7%
+  bstop 3%
+  frun 10%
+  fcull 7%
+  fstop 3%
