@@ -10,7 +10,7 @@ import "google/protobuf/timestamp.proto";
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/machine";
 option java_package = "dev.talos.api.machine";
 
-// The machine service definition.
+// The ImageService provides utilities for OCI images.
 service ImageService {
   // List images in the containerd.
   rpc List(ImageServiceListRequest) returns (stream ImageServiceListResponse);

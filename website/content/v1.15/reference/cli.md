@@ -1250,6 +1250,43 @@ talosctl debug [<image-tar-path|image ref>] [flags]
 
 * [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
 
+## talosctl diskfree
+
+Retrieve disk usage information for mounted volumes
+
+### Synopsis
+
+Reports storage and inode usage for the volumes Talos has mounted.
+
+Only volumes backed by a filesystem of their own are listed. Directory, symlink and
+overlay volumes are omitted, since their usage is already accounted for by the volume
+they sit on top of.
+
+This is a per-volume view rather than the node's full mount table: use
+'talosctl mounts' to see every mount the kernel reports.
+
+```
+talosctl diskfree [volume ID] [flags]
+```
+
+### Options
+
+```
+  -b, --bytes                      print sizes in bytes rather than in human-readable format
+  -c, --cluster string             cluster to connect to if a proxy endpoint is used
+      --context string             context to be used in command
+  -e, --endpoints strings          override default endpoints in Talos configuration
+  -h, --help                       help for diskfree
+  -i, --inodes                     list inode information instead of block usage
+  -n, --nodes strings              target the specified nodes
+      --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
+      --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
+```
+
+### SEE ALSO
+
+* [talosctl](#talosctl)	 - A CLI for out-of-band management of Kubernetes nodes created by Talos
+
 ## talosctl dmesg
 
 Retrieve kernel logs
@@ -3852,6 +3889,7 @@ A CLI for out-of-band management of Kubernetes nodes created by Talos
 * [talosctl copy](#talosctl-copy)	 - Copy data out from the node
 * [talosctl dashboard](#talosctl-dashboard)	 - Cluster dashboard with node overview, logs and real-time metrics
 * [talosctl debug](#talosctl-debug)	 - Run a debug container from an image archive or reference
+* [talosctl diskfree](#talosctl-diskfree)	 - Retrieve disk usage information for mounted volumes
 * [talosctl dmesg](#talosctl-dmesg)	 - Retrieve kernel logs
 * [talosctl edit](#talosctl-edit)	 - Edit Talos node machine configuration with the default editor.
 * [talosctl etcd](#talosctl-etcd)	 - Manage etcd

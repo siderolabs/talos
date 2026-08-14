@@ -64,6 +64,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/mdd"
 	"github.com/siderolabs/talos/internal/app/resources"
+	machinestorage "github.com/siderolabs/talos/internal/app/storage"
 	storaged "github.com/siderolabs/talos/internal/app/storaged"
 	"github.com/siderolabs/talos/internal/pkg/containers"
 	taloscontainerd "github.com/siderolabs/talos/internal/pkg/containers/containerd"
@@ -153,6 +154,7 @@ func (s *Server) Register(obj *grpc.Server) {
 
 	machine.RegisterMachineServiceServer(obj, s)
 	machine.RegisterImageServiceServer(obj, images.NewService(s.Controller, s.Logger))
+	machine.RegisterStorageServiceServer(obj, machinestorage.NewService())
 	machine.RegisterDebugServiceServer(obj, &debug.Service{})
 	machine.RegisterLifecycleServiceServer(obj, lifecycle.NewService(s.Controller.Runtime(), s.Logger))
 	cluster.RegisterClusterServiceServer(obj, s)

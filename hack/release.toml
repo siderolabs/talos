@@ -47,6 +47,12 @@ This means that Secure Boot images will now have `lockdown=integrity` enabled by
 Users can override it by adding `lockdown=confidentiality` to the kernel command line through Image Factory if they require it.
 """
 
+    [notes.diskfree]
+        title = "Disk Free"
+        description = """\
+A new `talosctl diskfree` command (aliased to `df`) reports storage and inode usage for mounted volumes.
+"""
+
 [make_deps]
 
     [make_deps.tools]

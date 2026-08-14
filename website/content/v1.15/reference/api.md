@@ -293,6 +293,12 @@ description: Talos gRPC API reference.
   
     - [MDService](#machine.MDService)
   
+- [machine/storage.proto](#machine/storage.proto)
+    - [StorageServiceStatfsRequest](#machine.StorageServiceStatfsRequest)
+    - [StorageServiceStatfsResponse](#machine.StorageServiceStatfsResponse)
+  
+    - [StorageService](#machine.StorageService)
+  
 - [resource/config/config.proto](#resource/config/config.proto)
     - [MachineConfigSpec](#resource.config.MachineConfigSpec)
     - [MachineTypeSpec](#resource.config.MachineTypeSpec)
@@ -1543,7 +1549,7 @@ DebugService provides debugging and inspection capabilities for a Talos node.
 <a name="machine.ImageService"></a>
 
 ### ImageService
-The machine service definition.
+The ImageService provides utilities for OCI images.
 
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
@@ -5118,6 +5124,67 @@ MDService maintains MD (Multiple Device, software RAID) arrays.
 | Method Name | Request Type | Response Type | Description |
 | ----------- | ------------ | ------------- | ------------|
 | Destroy | [MDDestroyRequest](#machine.MDDestroyRequest) | [.google.protobuf.Empty](#google.protobuf.Empty) | Destroy stops the array and clears the superblock on every member.<br><br>The array must not be in use (e.g. mounted or claimed by another device) at the time of the call. |
+
+ <!-- end services -->
+
+
+
+<a name="machine/storage.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## machine/storage.proto
+
+
+
+<a name="machine.StorageServiceStatfsRequest"></a>
+
+### StorageServiceStatfsRequest
+StorageServiceStatfsRequest is the request message for Statfs.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| path | [string](#string) |  | Path is the mount point or a file/directory within the mounted file system. |
+
+
+
+
+
+
+<a name="machine.StorageServiceStatfsResponse"></a>
+
+### StorageServiceStatfsResponse
+StorageServiceStatfsResponse is the response message for Statfs.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| size | [uint64](#uint64) |  | Size is the total size of the volume in bytes. |
+| used | [uint64](#uint64) |  | Used is the amount of used space in bytes. |
+| available | [uint64](#uint64) |  | Available is the amount of space available to unprivileged users in bytes. |
+| inodes | [uint64](#uint64) |  | Inodes is the total number of inodes in the filesystem. |
+| inodes_used | [uint64](#uint64) |  | InodesUsed is the number of used inodes. |
+| inodes_free | [uint64](#uint64) |  | InodesFree is the number of free inodes. |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+
+<a name="machine.StorageService"></a>
+
+### StorageService
+The storage service provides utilities for working with disks and block devices.
+
+| Method Name | Request Type | Response Type | Description |
+| ----------- | ------------ | ------------- | ------------|
+| Statfs | [StorageServiceStatfsRequest](#machine.StorageServiceStatfsRequest) | [StorageServiceStatfsResponse](#machine.StorageServiceStatfsResponse) | Statfs returns filesystem statistics for the filesystem containing the given path. |
 
  <!-- end services -->
 

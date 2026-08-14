@@ -32,7 +32,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// The machine service definition.
+// The ImageService provides utilities for OCI images.
 type ImageServiceClient interface {
 	// List images in the containerd.
 	List(ctx context.Context, in *ImageServiceListRequest, opts ...grpc.CallOption) (grpc.ServerStreamingClient[ImageServiceListResponse], error)
@@ -129,7 +129,7 @@ func (c *imageServiceClient) Verify(ctx context.Context, in *ImageServiceVerifyR
 // All implementations must embed UnimplementedImageServiceServer
 // for forward compatibility.
 //
-// The machine service definition.
+// The ImageService provides utilities for OCI images.
 type ImageServiceServer interface {
 	// List images in the containerd.
 	List(*ImageServiceListRequest, grpc.ServerStreamingServer[ImageServiceListResponse]) error

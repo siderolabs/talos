@@ -52,6 +52,8 @@ var rules = map[string]role.Set{
 	"/machine.LifecycleService/Install": role.MakeSet(role.Admin),
 	"/machine.LifecycleService/Upgrade": role.MakeSet(role.Admin),
 
+	"/machine.StorageService/Statfs": role.MakeSet(role.Admin, role.Operator, role.Reader),
+
 	"/machine.MachineService/ApplyConfiguration": role.MakeSet(
 		role.Admin,
 		// for maintenance only, verified in the handler
