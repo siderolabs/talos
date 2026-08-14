@@ -271,8 +271,8 @@ func (s *UserVolumeConfigV1Alpha1) Validate(validation.RuntimeMode, ...validatio
 			validationErrors = errors.Join(validationErrors, errors.New("filesystem spec is invalid for volumeType directory"))
 		}
 
-		if !s.MountSpec.IsZero() {
-			validationErrors = errors.Join(validationErrors, errors.New("mount spec is invalid for volumeType directory"))
+		if s.MountSpec.MountDisableAccessTime != nil {
+			validationErrors = errors.Join(validationErrors, errors.New("mount.disableAccessTime is invalid for volumeType directory"))
 		}
 
 	case block.VolumeTypeDisk:
