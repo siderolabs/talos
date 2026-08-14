@@ -127,6 +127,7 @@ func (svc *Extension) getOCIOptions(envVars []string, mounts []specs.Mount) []oc
 		containerd.WithRootfsPropagation(svc.Spec.Container.Security.RootfsPropagation),
 		oci.WithMounts(mounts),
 		oci.WithHostNamespace(specs.NetworkNamespace),
+		oci.WithHostNamespace(specs.IPCNamespace),
 		oci.WithSelinuxLabel(""),
 		oci.WithApparmorProfile(""),
 		oci.WithCapabilities(capability.AllGrantableCapabilities()),
