@@ -11,8 +11,6 @@ import (
 	"time"
 
 	"github.com/siderolabs/talos/internal/integration/base"
-	"github.com/siderolabs/talos/pkg/machinery/client"
-	"github.com/siderolabs/talos/pkg/machinery/config/machine"
 )
 
 // IPTablesSuite ...
@@ -123,26 +121,12 @@ func (suite *IPTablesSuite) TestLegacyXTables() {
 		suite.T().Skip("skipping kernel test since Talos kernel is not running")
 	}
 
-	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
-
-	memoryInfo, err := suite.Client.Memory(client.WithNode(suite.ctx, node))
-	suite.Require().NoError(err)
-
-	suite.Require().Len(memoryInfo.GetMessages(), 1)
-
-	// memTotal is in KiB, so 1.5GiB is our threshold for skipping the test on low-memory nodes
-	if memoryInfo.GetMessages()[0].GetMeminfo().GetMemtotal() < 1536*1024 {
-		suite.T().Skip("skipping test on low-memory node, debug container image is too large")
-	}
-
-	suite.T().Logf("using node %s", node)
+	node := suite.RandomDiscoveredNodeInternalIP()
 
 	// this is a regression test mimicking operations done by Cilium
-	out, exitCode, err := suite.RunDebugContainer(suite.ctx, node, "sh", "-c", xtablesProbeScript)
-	suite.Require().NoError(err)
+	out, exitCode := suite.RunDebugContainer(suite.ctx, node, "sh", "-c", xtablesProbeScript)
 
 	suite.T().Logf("output:\n%s", out)
-
 	suite.Assert().Zero(exitCode, "iptables-nft probes failed with exit code %d, output:\n%s", exitCode, out)
 }
 

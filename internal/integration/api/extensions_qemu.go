@@ -331,28 +331,22 @@ func (suite *ExtensionsSuiteQEMU) TestExtensionsZFS() {
 
 	suite.Require().NotEmpty(userDisks, "expected at least one user disks to be available")
 
-	stdout, exitCode, err := suite.RunDebugContainer(suite.ctx, node,
+	stdout, exitCode := suite.RunDebugContainer(suite.ctx, node,
 		"zpool", "create", "-m", "/var/tank", "tank", userDisks[0],
 	)
-	suite.Require().NoError(err)
 	suite.Require().EqualValues(0, exitCode, "zpool create failed: %s", stdout)
 	suite.Require().Equal("", stdout)
 
-	stdout, exitCode, err = suite.RunDebugContainer(suite.ctx, node,
+	stdout, exitCode = suite.RunDebugContainer(suite.ctx, node,
 		"zfs", "create", "-V", "1gb", "tank/vol",
 	)
-	suite.Require().NoError(err)
 	suite.Require().EqualValues(0, exitCode, "zfs create failed: %s", stdout)
 	suite.Require().Equal("", stdout)
 
 	defer func() {
-		if _, _, err := suite.RunDebugContainer(suite.ctx, node, "zfs", "destroy", "tank/vol"); err != nil {
-			suite.T().Logf("failed to remove zfs dataset tank/vol: %v", err)
-		}
+		suite.RunDebugContainer(suite.ctx, node, "zfs", "destroy", "tank/vol")
 
-		if _, _, err := suite.RunDebugContainer(suite.ctx, node, "zpool", "destroy", "tank"); err != nil {
-			suite.T().Logf("failed to remove zpool tank: %v", err)
-		}
+		suite.RunDebugContainer(suite.ctx, node, "zpool", "destroy", "tank")
 
 		// Wipe the disk so no zfs label lingers (otherwise the pool is re-discovered
 		// as a volume after the test).
@@ -422,10 +416,9 @@ func (suite *ExtensionsSuiteQEMU) checkZFSPoolMounted(t *assert.CollectT, node s
 func (suite *ExtensionsSuiteQEMU) TestExtensionsUtilLinuxTools() {
 	node := suite.RandomDiscoveredNodeInternalIP(machine.TypeWorker)
 
-	stdout, exitCode, err := suite.RunDebugContainer(suite.ctx, node,
+	stdout, exitCode := suite.RunDebugContainer(suite.ctx, node,
 		"/usr/local/sbin/fstrim", "--version",
 	)
-	suite.Require().NoError(err)
 	suite.Require().EqualValues(0, exitCode, "fstrim --version failed: %s", stdout)
 	suite.Require().Contains(stdout, "fstrim from util-linux")
 }

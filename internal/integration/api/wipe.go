@@ -129,8 +129,7 @@ func (suite *WipeSuite) TestWipeFilesystem() {
 
 	userDisk := userDisks[0]
 
-	stdout, exitCode, err := suite.RunDebugContainer(suite.ctx, node, "mkfs.xfs", userDisk)
-	suite.Require().NoError(err)
+	stdout, exitCode := suite.RunDebugContainer(suite.ctx, node, "mkfs.xfs", userDisk)
 	suite.Require().EqualValues(0, exitCode, "mkfs.xfs failed: %s", stdout)
 
 	// now Talos should report the disk as xfs formatted
@@ -139,7 +138,7 @@ func (suite *WipeSuite) TestWipeFilesystem() {
 	nodeCtx := client.WithNode(suite.ctx, node)
 
 	// wait for Talos to discover xfs
-	_, err = suite.Client.COSI.WatchFor(
+	_, err := suite.Client.COSI.WatchFor(
 		nodeCtx,
 		block.NewDiscoveredVolume(block.NamespaceName, deviceName).Metadata(),
 		state.WithEventTypes(state.Created, state.Updated),
