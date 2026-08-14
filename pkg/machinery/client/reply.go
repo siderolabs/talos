@@ -61,7 +61,7 @@ func filterMessages(resp any, err error) (any, error) {
 	}
 
 	respStructPtr := reflect.ValueOf(resp)
-	if respStructPtr.Kind() != reflect.Ptr {
+	if respStructPtr.Kind() != reflect.Pointer {
 		panic("response should be pointer to struct")
 	}
 
@@ -87,7 +87,7 @@ func filterMessages(resp any, err error) (any, error) {
 
 	for i := 0; i < messagesField.Len(); {
 		MessagesPtr := messagesField.Index(i)
-		if MessagesPtr.Kind() != reflect.Ptr {
+		if MessagesPtr.Kind() != reflect.Pointer {
 			panic("Messages slice should container pointers")
 		}
 
@@ -101,7 +101,7 @@ func filterMessages(resp any, err error) (any, error) {
 			panic("Messages metadata field missing")
 		}
 
-		if metadataField.Kind() != reflect.Ptr {
+		if metadataField.Kind() != reflect.Pointer {
 			panic("Messages metadata field should be a pointer")
 		}
 
@@ -140,12 +140,12 @@ func filterMessages(resp any, err error) (any, error) {
 			panic("metadata.Status field missing")
 		}
 
-		if statusField.Kind() != reflect.Ptr {
+		if statusField.Kind() != reflect.Pointer {
 			panic("metadata.Status should be pointer")
 		}
 
 		if !statusField.IsZero() {
-			statusValue, ok := statusField.Interface().(*rpcstatus.Status)
+			statusValue, ok := reflect.TypeAssert[*rpcstatus.Status](statusField)
 			if !ok {
 				panic("metadata.Status should be of type *status.Status")
 			}

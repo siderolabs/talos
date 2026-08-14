@@ -15,12 +15,14 @@ import (
 	"slices"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/mgmt/helpers"
@@ -30,6 +32,8 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/api/storage"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	networkcfg "github.com/siderolabs/talos/pkg/machinery/config/types/network"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
@@ -109,6 +113,51 @@ func (suite *MaintenanceBasicSuite) TestAPI() {
 				suite.Assert().Equal(DefaultSettings.CurrentVersion, version.GetMessages()[0].GetVersion().GetTag())
 			}
 		}, time.Minute, time.Second, "version API should be available")
+	})
+
+	suite.Run("testing machine config apply try with no prior config", func() {
+		// it doesn't matter which machine to use, as they are all same in maintenance mode right now
+		maintenanceClient := maintenanceClients[0]
+
+		hostnameConfig := networkcfg.NewHostnameConfigV1Alpha1()
+		hostnameConfig.ConfigHostname = "my-node"
+		hostnameConfig.ConfigAuto = new(nethelpers.AutoHostnameKindOff)
+
+		machineConfig, err := container.New(hostnameConfig)
+		suite.Require().NoError(err)
+
+		machineConfigBytes, err := machineConfig.Bytes()
+		suite.Require().NoError(err)
+
+		const tryModeTimeout = 5 * time.Second
+
+		// apply with short try mode interval
+		_, err = maintenanceClient.ApplyConfiguration(suite.ctx, &machine.ApplyConfigurationRequest{
+			Data:           machineConfigBytes,
+			Mode:           machine.ApplyConfigurationRequest_TRY,
+			TryModeTimeout: durationpb.New(tryModeTimeout),
+		})
+		suite.Require().NoError(err)
+
+		// now hostname should be as we set
+		rtestutils.AssertResource(
+			suite.ctx, suite.T(), maintenanceClient.COSI, network.HostnameID,
+			func(hs *network.HostnameStatus, asrt *assert.Assertions) {
+				asrt.Equal("my-node", hs.TypedSpec().Hostname)
+			},
+		)
+
+		// give the test twice the try mode timeout to ensure that the config is rolled back
+		waitCtx, cancel := context.WithTimeout(suite.ctx, 2*tryModeTimeout)
+		defer cancel()
+
+		// eventually, config should be rolled back, and hostname should change back
+		rtestutils.AssertResource(
+			waitCtx, suite.T(), maintenanceClient.COSI, network.HostnameID,
+			func(hs *network.HostnameStatus, asrt *assert.Assertions) {
+				asrt.NotEqual("my-node", hs.TypedSpec().Hostname)
+			},
+		)
 	})
 
 	suite.Run("testing basic maintenance APIs", func() {
