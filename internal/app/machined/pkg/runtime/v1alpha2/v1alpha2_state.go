@@ -339,6 +339,15 @@ func (s *State) GetConfig(ctx context.Context) (talosconfig.Provider, error) {
 func (s *State) SetConfig(ctx context.Context, id string, cfg talosconfig.Provider) error {
 	cfgResource := config.NewMachineConfigWithID(cfg, id)
 
+	if cfg == nil {
+		err := s.resources.Destroy(ctx, cfgResource.Metadata())
+		if err != nil && !state.IsNotFoundError(err) {
+			return err
+		}
+
+		return nil
+	}
+
 	oldCfg, err := s.resources.Get(ctx, cfgResource.Metadata())
 	if err != nil {
 		if state.IsNotFoundError(err) {

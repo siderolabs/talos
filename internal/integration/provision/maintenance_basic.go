@@ -15,12 +15,14 @@ import (
 	"slices"
 	"time"
 
+	"github.com/cosi-project/runtime/pkg/resource/rtestutils"
 	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/stretchr/testify/assert"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/emptypb"
 
 	"github.com/siderolabs/talos/cmd/talosctl/pkg/mgmt/helpers"
@@ -30,9 +32,12 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/api/machine"
 	"github.com/siderolabs/talos/pkg/machinery/api/storage"
 	"github.com/siderolabs/talos/pkg/machinery/client"
+	"github.com/siderolabs/talos/pkg/machinery/config/container"
+	"github.com/siderolabs/talos/pkg/machinery/config/types/runtime"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/nethelpers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	runtimeres "github.com/siderolabs/talos/pkg/machinery/resources/runtime"
 )
 
 // MaintenanceBasicSuite ...
@@ -108,6 +113,47 @@ func (suite *MaintenanceBasicSuite) TestAPI() {
 				suite.Assert().Equal(DefaultSettings.CurrentVersion, version.GetMessages()[0].GetVersion().GetTag())
 			}
 		}, time.Minute, time.Second, "version API should be available")
+	})
+
+	suite.Run("testing machine config apply try with no prior config", func() {
+		// it doesn't matter which machine to use, as they are all same in maintenance mode right now
+		maintenanceClient := maintenanceClients[0]
+
+		sysctlConfig := runtime.NewSysctlConfigV1Alpha1()
+		sysctlConfig.Params = map[string]string{
+			"fs.inotify.max_user_watches": "12288",
+		}
+
+		machineConfig, err := container.New(sysctlConfig)
+		suite.Require().NoError(err)
+
+		machineConfigBytes, err := machineConfig.Bytes()
+		suite.Require().NoError(err)
+
+		const tryModeTimeout = 5 * time.Second
+
+		// apply with short try mode interval
+		_, err = maintenanceClient.ApplyConfiguration(suite.ctx, &machine.ApplyConfigurationRequest{
+			Data:           machineConfigBytes,
+			Mode:           machine.ApplyConfigurationRequest_TRY,
+			TryModeTimeout: durationpb.New(tryModeTimeout),
+		})
+		suite.Require().NoError(err)
+
+		// now sysctl spec should be active
+		rtestutils.AssertResource(
+			suite.ctx, suite.T(), maintenanceClient.COSI, "proc.sys.fs.inotify.max_user_watches",
+			func(*runtimeres.KernelParamSpec, *assert.Assertions) {},
+		)
+
+		// give the test twice the try mode timeout to ensure that the config is rolled back
+		waitCtx, cancel := context.WithTimeout(suite.ctx, 2*tryModeTimeout)
+		defer cancel()
+
+		// eventually, config should be rolled back, and sysctl spec should be removed
+		rtestutils.AssertNoResource[*runtimeres.KernelParamSpec](
+			waitCtx, suite.T(), maintenanceClient.COSI, "proc.sys.fs.inotify.max_user_watches",
+		)
 	})
 
 	suite.Run("testing basic maintenance APIs", func() {
