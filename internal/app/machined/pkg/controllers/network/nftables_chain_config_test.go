@@ -110,6 +110,25 @@ func (suite *NfTablesChainConfigTestSuite) TestDefaultAccept() {
 					Verdict:     new(nethelpers.VerdictAccept),
 				},
 				{
+					MatchConntrackState: &network.NfTablesConntrackStateMatch{
+						States: []nethelpers.ConntrackState{
+							nethelpers.ConntrackStateEstablished,
+							nethelpers.ConntrackStateRelated,
+						},
+					},
+					AnonCounter: true,
+					Verdict:     new(nethelpers.VerdictAccept),
+				},
+				{
+					MatchConntrackState: &network.NfTablesConntrackStateMatch{
+						States: []nethelpers.ConntrackState{
+							nethelpers.ConntrackStateInvalid,
+						},
+					},
+					AnonCounter: true,
+					Verdict:     new(nethelpers.VerdictDrop),
+				},
+				{
 					MatchSourceAddress: &network.NfTablesAddressMatch{
 						IncludeSubnets: []netip.Prefix{
 							netip.MustParsePrefix("10.0.0.0/8"),
