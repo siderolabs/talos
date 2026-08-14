@@ -263,7 +263,7 @@ func deleteStructFrom(searchIn reflect.Value, searchFor string, path []string, k
 
 				// if the field value implements Stringer, use it for comparison instead of the default string conversion
 				if fieldVal.CanInterface() {
-					if stringer, ok := fieldVal.Interface().(fmt.Stringer); ok {
+					if stringer, ok := reflect.TypeAssert[fmt.Stringer](fieldVal); ok {
 						fieldStr = stringer.String()
 					}
 				}
