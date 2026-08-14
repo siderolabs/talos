@@ -20,6 +20,13 @@
 (typetransition pod_containerd_t run_t chr_file pod_containerd_run_t)
 (typetransition pod_containerd_t run_t blk_file pod_containerd_run_t)
 (typetransition pod_containerd_t run_t fifo_file pod_containerd_run_t)
+; /run/cilium and similar, managed by high-privilege pods
+(typetransition pod_p run_t file pod_containerd_run_t)
+(typetransition pod_p run_t dir pod_containerd_run_t)
+(typetransition pod_p run_t lnk_file pod_containerd_run_t)
+(typetransition pod_p run_t chr_file pod_containerd_run_t)
+(typetransition pod_p run_t blk_file pod_containerd_run_t)
+(typetransition pod_p run_t fifo_file pod_containerd_run_t)
 
 (allow pod_containerd_t pod_containerd_run_t (fs_classes (rw)))
 
@@ -173,8 +180,8 @@
 (allow pod_containerd_t devpts_t (fs_classes (rw)))
 (allow pod_p devpts_t (fs_classes (rw)))
 
-; ; cilium
-; (allow pod_containerd_t pod_p (unix_stream_socket (connectto)))
+; cilium-cni (called by CRI) connecting to /run/cilium/cilium.sock (exposed by agent pod)
+(allow pod_containerd_t pod_p (unix_stream_socket (connectto)))
 
 ; pkg/flannel
 (allow pod_p cni_conf_t (fs_classes (rw)))
