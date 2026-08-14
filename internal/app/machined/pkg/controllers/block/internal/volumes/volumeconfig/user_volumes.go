@@ -45,12 +45,11 @@ func UserVolumeTransformer(c configconfig.Config) ([]VolumeResource, error) {
 		userVolumeResource := VolumeResource{
 			VolumeID:           volumeID,
 			Label:              block.UserVolumeLabel,
-			MountTransformFunc: HandleUserVolumeMountRequest(userVolumeConfig), // This is overridden for Directory type below.
+			MountTransformFunc: HandleUserVolumeMountRequest(userVolumeConfig),
 		}
 
 		switch userVolumeConfig.Type().ValueOr(block.VolumeTypePartition) {
 		case block.VolumeTypeDirectory:
-			userVolumeResource.MountTransformFunc = DefaultMountTransform
 			userVolumeResource.TransformFunc = NewBuilder().
 				WithType(block.VolumeTypeDirectory).
 				WithMount(block.MountSpec{

@@ -115,8 +115,9 @@ func TestUserVolumeTransformer(t *testing.T) {
 				})
 
 				testMountTransformFunc(t, resources[0].MountTransformFunc, func(t *testing.T, m *block.VolumeMountRequest, err error) {
-					// default mount transform is noop
 					require.NoError(t, err)
+					assert.True(t, m.TypedSpec().Secure)
+					assert.True(t, m.TypedSpec().NoExec)
 				})
 			},
 		},
