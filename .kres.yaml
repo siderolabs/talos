@@ -928,9 +928,12 @@ spec:
         flatJobMatrix: true
         labelKeys: [test]
         include:
-          - test: e2e-firewall
+          - test: e2e-firewall-block
             shortIntegrationTest: "yes"
             withFirewall: block
+          - test: e2e-firewall-accept
+            shortIntegrationTest: "yes"
+            withFirewall: accept
           - test: e2e-bgp
             shortIntegrationTest: "yes"
             withBGP: "true"
