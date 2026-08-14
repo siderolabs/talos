@@ -23,9 +23,7 @@ import (
 // on the node via the DebugService, returning the combined stdout/stderr output and the exit code.
 // Note: in non-TTY mode the server multiplexes stdout and stderr into a single stream, so the
 // returned output contains both.
-//
-//nolint:gocyclo
-func (apiSuite *APISuite) RunDebugContainer(ctx context.Context, node string, args ...string) (string, int32, error) {
+func (apiSuite *APISuite) RunDebugContainer(ctx context.Context, node string, args ...string) (string, int32) {
 	nodeCtx := client.WithNode(ctx, node)
 
 	containerd := &common.ContainerdInstance{
@@ -36,11 +34,9 @@ func (apiSuite *APISuite) RunDebugContainer(ctx context.Context, node string, ar
 	// pull the image into the system namespace first
 	rcv, err := apiSuite.Client.ImageClient.Pull(nodeCtx, &machineapi.ImageServicePullRequest{
 		Containerd: containerd,
-		ImageRef:   constants.DebugHostNsImage,
+		ImageRef:   constants.DebugNixyBoxImage,
 	})
-	if err != nil {
-		return "", 0, fmt.Errorf("failed to pull image %q: %w", constants.DebugHostNsImage, err)
-	}
+	apiSuite.Require().NoError(err, "failed to pull image %q", constants.DebugNixyBoxImage)
 
 	var pulledImage string
 
@@ -51,18 +47,18 @@ func (apiSuite *APISuite) RunDebugContainer(ctx context.Context, node string, ar
 				break
 			}
 
-			return "", 0, fmt.Errorf("failed to pull image %q: %w", constants.DebugHostNsImage, err)
+			apiSuite.Require().NoError(err, "failed to pull image %q", constants.DebugNixyBoxImage)
 		}
 
 		pulledImage = msg.GetName()
 	}
 
-	cli, err := apiSuite.Client.DebugClient.ContainerRun(nodeCtx)
-	if err != nil {
-		return "", 0, fmt.Errorf("failed to start debug container: %w", err)
-	}
+	apiSuite.Require().NotEmpty(pulledImage, "expected pulled image name in the response")
 
-	if err = cli.Send(&machineapi.DebugContainerRunRequest{
+	cli, err := apiSuite.Client.DebugClient.ContainerRun(nodeCtx)
+	apiSuite.Require().NoError(err, "failed to start debug container stream")
+
+	err = cli.Send(&machineapi.DebugContainerRunRequest{
 		Request: &machineapi.DebugContainerRunRequest_Spec{
 			Spec: &machineapi.DebugContainerRunRequestSpec{
 				Containerd: containerd,
@@ -71,14 +67,12 @@ func (apiSuite *APISuite) RunDebugContainer(ctx context.Context, node string, ar
 				Profile:    machineapi.DebugContainerRunRequestSpec_PROFILE_HOST_NS,
 			},
 		},
-	}); err != nil {
-		return "", 0, fmt.Errorf("failed to send debug container spec: %w", err)
-	}
+	})
+	apiSuite.Require().NoError(err, "failed to send debug container spec")
 
 	// no interactive input is sent, close the send side right away
-	if err = cli.CloseSend(); err != nil {
-		return "", 0, fmt.Errorf("failed to close debug container send stream: %w", err)
-	}
+	err = cli.CloseSend()
+	apiSuite.Require().NoError(err, "failed to close debug container send stream")
 
 	var (
 		out         strings.Builder
@@ -95,7 +89,7 @@ func (apiSuite *APISuite) RunDebugContainer(ctx context.Context, node string, ar
 				break
 			}
 
-			return out.String(), 0, fmt.Errorf("error receiving debug container output: %w", err)
+			apiSuite.Require().NoError(err, "error receiving debug container output")
 		}
 
 		switch resp := msg.GetResp().(type) {
@@ -108,8 +102,8 @@ func (apiSuite *APISuite) RunDebugContainer(ctx context.Context, node string, ar
 	}
 
 	if !gotExitCode {
-		return out.String(), 0, fmt.Errorf("debug container stream closed without an exit code")
+		apiSuite.Require().NoError(fmt.Errorf("debug container stream closed without an exit code"))
 	}
 
-	return out.String(), exitCode, nil
+	return out.String(), exitCode
 }

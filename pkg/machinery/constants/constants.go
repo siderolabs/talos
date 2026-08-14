@@ -806,6 +806,13 @@ const (
 	// mount namespace.
 	DebugHostNsImage = "docker.io/nixos/nix:latest"
 
+	// DebugNixyBoxImage is a tiny image used in the integration tests.
+	// It has Nix-like layout, but it contains only statically linked shell
+	// based on busybox.
+	// This image is small to ensure safe use in the integration tests,
+	// as the image is pulled to the tmpfs.
+	DebugNixyBoxImage = "ghcr.io/siderolabs/nixybox:v2026.06.0"
+
 	// DebugHostNsWorkdirBase is the disk-backed base directory for PROFILE_HOST_NS
 	// overlay upper/work layers. It lives on the EPHEMERAL partition (/var) so that
 	// writes to the session root (nix eval cache, /tmp, /etc) and the /nix store do
