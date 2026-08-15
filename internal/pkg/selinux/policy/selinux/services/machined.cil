@@ -89,7 +89,11 @@
 ; rootfs.sqsh
 (allow kernel_t rootfs_t (file (read)))
 
-; initramfs init before switching root
+; initramfs init before switching root.
+; this context does persist even after exiting the initramfs phase
+; when rootfs is mounted using overlay, initramfs_t is still checked
+; as the FS creator, and must have some permissions (most often execute)
+; for the callers to be able to have these permissions on the overlay
 (allow initramfs_t device_t (fs_classes (rw)))
 (allow initramfs_t rootfs_t (fs_classes (ro)))
 (allow initramfs_t self (process_classes (full)))
