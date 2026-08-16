@@ -217,7 +217,7 @@ func handleFileOp(st fs.FileInfo, srcPath, dstPath string, op func(string) error
 
 	defer src.Close() //nolint:errcheck
 
-	dst, err := os.OpenFile(dstPath, os.O_CREATE|os.O_WRONLY, st.Mode().Perm())
+	dst, err := os.OpenFile(dstPath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, st.Mode().Perm())
 	if err != nil {
 		return err
 	}
