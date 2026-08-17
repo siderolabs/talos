@@ -406,12 +406,14 @@ description: Talos gRPC API reference.
     - [ContainerDependsOnSpec](#talos.resource.definitions.containers.ContainerDependsOnSpec)
     - [ContainerImageSpec](#talos.resource.definitions.containers.ContainerImageSpec)
     - [ContainerImageStatusSpec](#talos.resource.definitions.containers.ContainerImageStatusSpec)
+    - [ContainerInstanceSpecSpec](#talos.resource.definitions.containers.ContainerInstanceSpecSpec)
     - [ContainerMountSpec](#talos.resource.definitions.containers.ContainerMountSpec)
     - [ContainerNetworkSpec](#talos.resource.definitions.containers.ContainerNetworkSpec)
     - [ContainerResourcesSpec](#talos.resource.definitions.containers.ContainerResourcesSpec)
     - [ContainerRunAsSpec](#talos.resource.definitions.containers.ContainerRunAsSpec)
     - [ContainerSecuritySpec](#talos.resource.definitions.containers.ContainerSecuritySpec)
     - [ContainerSpecSpec](#talos.resource.definitions.containers.ContainerSpecSpec)
+    - [ResolvedMountSpec](#talos.resource.definitions.containers.ResolvedMountSpec)
   
 - [resource/definitions/cri/cri.proto](#resource/definitions/cri/cri.proto)
     - [BaseRuntimeSpecConfigSpec](#talos.resource.definitions.cri.BaseRuntimeSpecConfigSpec)
@@ -7275,6 +7277,36 @@ ContainerImageStatusSpec is the spec for ContainerImageStatus.
 
 
 
+<a name="talos.resource.definitions.containers.ContainerInstanceSpecSpec"></a>
+
+### ContainerInstanceSpecSpec
+ContainerInstanceSpecSpec is the spec for ContainerInstanceSpec.
+
+It carries a resolved snapshot of everything needed to run one execution, so whatever runs it
+never has to re-read the container spec or image status. That keeps the execution independent of
+later changes to those inputs: a spec change destroys this instance rather than mutating it.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| container_id | [string](#string) |  | ContainerID is the name of the owning container, i.e. the ContainerSpec ID. |
+| generation | [uint64](#uint64) |  | Generation is this instance's sequence number for that container. |
+| image | [string](#string) |  | Image is the digest-resolved reference to run. |
+| entrypoint | [string](#string) | repeated |  |
+| args | [string](#string) | repeated |  |
+| working_dir | [string](#string) |  |  |
+| run_as | [ContainerRunAsSpec](#talos.resource.definitions.containers.ContainerRunAsSpec) |  |  |
+| environment | [string](#string) | repeated |  |
+| mounts | [ResolvedMountSpec](#talos.resource.definitions.containers.ResolvedMountSpec) | repeated | Mounts are fully resolved, with host source paths filled in. |
+| security | [ContainerSecuritySpec](#talos.resource.definitions.containers.ContainerSecuritySpec) |  |  |
+| network | [ContainerNetworkSpec](#talos.resource.definitions.containers.ContainerNetworkSpec) |  |  |
+| resources | [ContainerResourcesSpec](#talos.resource.definitions.containers.ContainerResourcesSpec) |  |  |
+
+
+
+
+
+
 <a name="talos.resource.definitions.containers.ContainerMountSpec"></a>
 
 ### ContainerMountSpec
@@ -7384,6 +7416,25 @@ ContainerSpecSpec is the spec for ContainerSpec.
 | network | [ContainerNetworkSpec](#talos.resource.definitions.containers.ContainerNetworkSpec) |  |  |
 | resources | [ContainerResourcesSpec](#talos.resource.definitions.containers.ContainerResourcesSpec) |  |  |
 | depends_on | [ContainerDependsOnSpec](#talos.resource.definitions.containers.ContainerDependsOnSpec) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.containers.ResolvedMountSpec"></a>
+
+### ResolvedMountSpec
+ResolvedMountSpec is a mount with its host-side source resolved.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| kind | [string](#string) |  |  |
+| source | [string](#string) |  | Source is the host path to bind from; empty for tmpfs. |
+| destination | [string](#string) |  |  |
+| size | [uint64](#uint64) |  |  |
+| options | [string](#string) | repeated |  |
 
 
 

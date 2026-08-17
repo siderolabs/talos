@@ -3949,215 +3949,6 @@ func (StorageMDMetadata) EnumDescriptor() ([]byte, []int) {
 	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{51}
 }
 
-// ContainersContainerImagePhase describes the state of a container's image pull.
-type ContainersContainerImagePhase int32
-
-const (
-	ContainersContainerImagePhase_CONTAINER_IMAGE_PHASE_PENDING ContainersContainerImagePhase = 0
-	ContainersContainerImagePhase_CONTAINER_IMAGE_PHASE_PULLING ContainersContainerImagePhase = 1
-	ContainersContainerImagePhase_CONTAINER_IMAGE_PHASE_READY   ContainersContainerImagePhase = 2
-	ContainersContainerImagePhase_CONTAINER_IMAGE_PHASE_FAILED  ContainersContainerImagePhase = 3
-)
-
-// Enum value maps for ContainersContainerImagePhase.
-var (
-	ContainersContainerImagePhase_name = map[int32]string{
-		0: "CONTAINER_IMAGE_PHASE_PENDING",
-		1: "CONTAINER_IMAGE_PHASE_PULLING",
-		2: "CONTAINER_IMAGE_PHASE_READY",
-		3: "CONTAINER_IMAGE_PHASE_FAILED",
-	}
-	ContainersContainerImagePhase_value = map[string]int32{
-		"CONTAINER_IMAGE_PHASE_PENDING": 0,
-		"CONTAINER_IMAGE_PHASE_PULLING": 1,
-		"CONTAINER_IMAGE_PHASE_READY":   2,
-		"CONTAINER_IMAGE_PHASE_FAILED":  3,
-	}
-)
-
-func (x ContainersContainerImagePhase) Enum() *ContainersContainerImagePhase {
-	p := new(ContainersContainerImagePhase)
-	*p = x
-	return p
-}
-
-func (x ContainersContainerImagePhase) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (ContainersContainerImagePhase) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[52].Descriptor()
-}
-
-func (ContainersContainerImagePhase) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[52]
-}
-
-func (x ContainersContainerImagePhase) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use ContainersContainerImagePhase.Descriptor instead.
-func (ContainersContainerImagePhase) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{52}
-}
-
-// CriImageCacheStatus describes image cache status type.
-type CriImageCacheStatus int32
-
-const (
-	CriImageCacheStatus_IMAGE_CACHE_STATUS_UNKNOWN   CriImageCacheStatus = 0
-	CriImageCacheStatus_IMAGE_CACHE_STATUS_DISABLED  CriImageCacheStatus = 1
-	CriImageCacheStatus_IMAGE_CACHE_STATUS_PREPARING CriImageCacheStatus = 2
-	CriImageCacheStatus_IMAGE_CACHE_STATUS_READY     CriImageCacheStatus = 3
-)
-
-// Enum value maps for CriImageCacheStatus.
-var (
-	CriImageCacheStatus_name = map[int32]string{
-		0: "IMAGE_CACHE_STATUS_UNKNOWN",
-		1: "IMAGE_CACHE_STATUS_DISABLED",
-		2: "IMAGE_CACHE_STATUS_PREPARING",
-		3: "IMAGE_CACHE_STATUS_READY",
-	}
-	CriImageCacheStatus_value = map[string]int32{
-		"IMAGE_CACHE_STATUS_UNKNOWN":   0,
-		"IMAGE_CACHE_STATUS_DISABLED":  1,
-		"IMAGE_CACHE_STATUS_PREPARING": 2,
-		"IMAGE_CACHE_STATUS_READY":     3,
-	}
-)
-
-func (x CriImageCacheStatus) Enum() *CriImageCacheStatus {
-	p := new(CriImageCacheStatus)
-	*p = x
-	return p
-}
-
-func (x CriImageCacheStatus) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (CriImageCacheStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[53].Descriptor()
-}
-
-func (CriImageCacheStatus) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[53]
-}
-
-func (x CriImageCacheStatus) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use CriImageCacheStatus.Descriptor instead.
-func (CriImageCacheStatus) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{53}
-}
-
-// CriImageCacheCopyStatus describes image cache copy status type.
-type CriImageCacheCopyStatus int32
-
-const (
-	CriImageCacheCopyStatus_IMAGE_CACHE_COPY_STATUS_UNKNOWN CriImageCacheCopyStatus = 0
-	CriImageCacheCopyStatus_IMAGE_CACHE_COPY_STATUS_SKIPPED CriImageCacheCopyStatus = 1
-	CriImageCacheCopyStatus_IMAGE_CACHE_COPY_STATUS_PENDING CriImageCacheCopyStatus = 2
-	CriImageCacheCopyStatus_IMAGE_CACHE_COPY_STATUS_READY   CriImageCacheCopyStatus = 3
-)
-
-// Enum value maps for CriImageCacheCopyStatus.
-var (
-	CriImageCacheCopyStatus_name = map[int32]string{
-		0: "IMAGE_CACHE_COPY_STATUS_UNKNOWN",
-		1: "IMAGE_CACHE_COPY_STATUS_SKIPPED",
-		2: "IMAGE_CACHE_COPY_STATUS_PENDING",
-		3: "IMAGE_CACHE_COPY_STATUS_READY",
-	}
-	CriImageCacheCopyStatus_value = map[string]int32{
-		"IMAGE_CACHE_COPY_STATUS_UNKNOWN": 0,
-		"IMAGE_CACHE_COPY_STATUS_SKIPPED": 1,
-		"IMAGE_CACHE_COPY_STATUS_PENDING": 2,
-		"IMAGE_CACHE_COPY_STATUS_READY":   3,
-	}
-)
-
-func (x CriImageCacheCopyStatus) Enum() *CriImageCacheCopyStatus {
-	p := new(CriImageCacheCopyStatus)
-	*p = x
-	return p
-}
-
-func (x CriImageCacheCopyStatus) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (CriImageCacheCopyStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[54].Descriptor()
-}
-
-func (CriImageCacheCopyStatus) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[54]
-}
-
-func (x CriImageCacheCopyStatus) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use CriImageCacheCopyStatus.Descriptor instead.
-func (CriImageCacheCopyStatus) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{54}
-}
-
-// KubespanPeerState is KubeSpan peer current state.
-type KubespanPeerState int32
-
-const (
-	KubespanPeerState_PEER_STATE_UNKNOWN KubespanPeerState = 0
-	KubespanPeerState_PEER_STATE_UP      KubespanPeerState = 1
-	KubespanPeerState_PEER_STATE_DOWN    KubespanPeerState = 2
-)
-
-// Enum value maps for KubespanPeerState.
-var (
-	KubespanPeerState_name = map[int32]string{
-		0: "PEER_STATE_UNKNOWN",
-		1: "PEER_STATE_UP",
-		2: "PEER_STATE_DOWN",
-	}
-	KubespanPeerState_value = map[string]int32{
-		"PEER_STATE_UNKNOWN": 0,
-		"PEER_STATE_UP":      1,
-		"PEER_STATE_DOWN":    2,
-	}
-)
-
-func (x KubespanPeerState) Enum() *KubespanPeerState {
-	p := new(KubespanPeerState)
-	*p = x
-	return p
-}
-
-func (x KubespanPeerState) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (KubespanPeerState) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[55].Descriptor()
-}
-
-func (KubespanPeerState) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[55]
-}
-
-func (x KubespanPeerState) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use KubespanPeerState.Descriptor instead.
-func (KubespanPeerState) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{55}
-}
-
 // NetworkConfigLayer describes network configuration layers, with lowest priority first.
 type NetworkConfigLayer int32
 
@@ -4198,11 +3989,11 @@ func (x NetworkConfigLayer) String() string {
 }
 
 func (NetworkConfigLayer) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[56].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[52].Descriptor()
 }
 
 func (NetworkConfigLayer) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[56]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[52]
 }
 
 func (x NetworkConfigLayer) Number() protoreflect.EnumNumber {
@@ -4211,7 +4002,7 @@ func (x NetworkConfigLayer) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NetworkConfigLayer.Descriptor instead.
 func (NetworkConfigLayer) EnumDescriptor() ([]byte, []int) {
-	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{56}
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{52}
 }
 
 // NetworkOperator enumerates Talos network operators.
@@ -4248,11 +4039,11 @@ func (x NetworkOperator) String() string {
 }
 
 func (NetworkOperator) Descriptor() protoreflect.EnumDescriptor {
-	return file_resource_definitions_enums_enums_proto_enumTypes[57].Descriptor()
+	return file_resource_definitions_enums_enums_proto_enumTypes[53].Descriptor()
 }
 
 func (NetworkOperator) Type() protoreflect.EnumType {
-	return &file_resource_definitions_enums_enums_proto_enumTypes[57]
+	return &file_resource_definitions_enums_enums_proto_enumTypes[53]
 }
 
 func (x NetworkOperator) Number() protoreflect.EnumNumber {
@@ -4261,6 +4052,215 @@ func (x NetworkOperator) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use NetworkOperator.Descriptor instead.
 func (NetworkOperator) EnumDescriptor() ([]byte, []int) {
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{53}
+}
+
+// ContainersContainerImagePhase describes the state of a container's image pull.
+type ContainersContainerImagePhase int32
+
+const (
+	ContainersContainerImagePhase_CONTAINER_IMAGE_PHASE_PENDING ContainersContainerImagePhase = 0
+	ContainersContainerImagePhase_CONTAINER_IMAGE_PHASE_PULLING ContainersContainerImagePhase = 1
+	ContainersContainerImagePhase_CONTAINER_IMAGE_PHASE_READY   ContainersContainerImagePhase = 2
+	ContainersContainerImagePhase_CONTAINER_IMAGE_PHASE_FAILED  ContainersContainerImagePhase = 3
+)
+
+// Enum value maps for ContainersContainerImagePhase.
+var (
+	ContainersContainerImagePhase_name = map[int32]string{
+		0: "CONTAINER_IMAGE_PHASE_PENDING",
+		1: "CONTAINER_IMAGE_PHASE_PULLING",
+		2: "CONTAINER_IMAGE_PHASE_READY",
+		3: "CONTAINER_IMAGE_PHASE_FAILED",
+	}
+	ContainersContainerImagePhase_value = map[string]int32{
+		"CONTAINER_IMAGE_PHASE_PENDING": 0,
+		"CONTAINER_IMAGE_PHASE_PULLING": 1,
+		"CONTAINER_IMAGE_PHASE_READY":   2,
+		"CONTAINER_IMAGE_PHASE_FAILED":  3,
+	}
+)
+
+func (x ContainersContainerImagePhase) Enum() *ContainersContainerImagePhase {
+	p := new(ContainersContainerImagePhase)
+	*p = x
+	return p
+}
+
+func (x ContainersContainerImagePhase) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ContainersContainerImagePhase) Descriptor() protoreflect.EnumDescriptor {
+	return file_resource_definitions_enums_enums_proto_enumTypes[54].Descriptor()
+}
+
+func (ContainersContainerImagePhase) Type() protoreflect.EnumType {
+	return &file_resource_definitions_enums_enums_proto_enumTypes[54]
+}
+
+func (x ContainersContainerImagePhase) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ContainersContainerImagePhase.Descriptor instead.
+func (ContainersContainerImagePhase) EnumDescriptor() ([]byte, []int) {
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{54}
+}
+
+// CriImageCacheStatus describes image cache status type.
+type CriImageCacheStatus int32
+
+const (
+	CriImageCacheStatus_IMAGE_CACHE_STATUS_UNKNOWN   CriImageCacheStatus = 0
+	CriImageCacheStatus_IMAGE_CACHE_STATUS_DISABLED  CriImageCacheStatus = 1
+	CriImageCacheStatus_IMAGE_CACHE_STATUS_PREPARING CriImageCacheStatus = 2
+	CriImageCacheStatus_IMAGE_CACHE_STATUS_READY     CriImageCacheStatus = 3
+)
+
+// Enum value maps for CriImageCacheStatus.
+var (
+	CriImageCacheStatus_name = map[int32]string{
+		0: "IMAGE_CACHE_STATUS_UNKNOWN",
+		1: "IMAGE_CACHE_STATUS_DISABLED",
+		2: "IMAGE_CACHE_STATUS_PREPARING",
+		3: "IMAGE_CACHE_STATUS_READY",
+	}
+	CriImageCacheStatus_value = map[string]int32{
+		"IMAGE_CACHE_STATUS_UNKNOWN":   0,
+		"IMAGE_CACHE_STATUS_DISABLED":  1,
+		"IMAGE_CACHE_STATUS_PREPARING": 2,
+		"IMAGE_CACHE_STATUS_READY":     3,
+	}
+)
+
+func (x CriImageCacheStatus) Enum() *CriImageCacheStatus {
+	p := new(CriImageCacheStatus)
+	*p = x
+	return p
+}
+
+func (x CriImageCacheStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (CriImageCacheStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_resource_definitions_enums_enums_proto_enumTypes[55].Descriptor()
+}
+
+func (CriImageCacheStatus) Type() protoreflect.EnumType {
+	return &file_resource_definitions_enums_enums_proto_enumTypes[55]
+}
+
+func (x CriImageCacheStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use CriImageCacheStatus.Descriptor instead.
+func (CriImageCacheStatus) EnumDescriptor() ([]byte, []int) {
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{55}
+}
+
+// CriImageCacheCopyStatus describes image cache copy status type.
+type CriImageCacheCopyStatus int32
+
+const (
+	CriImageCacheCopyStatus_IMAGE_CACHE_COPY_STATUS_UNKNOWN CriImageCacheCopyStatus = 0
+	CriImageCacheCopyStatus_IMAGE_CACHE_COPY_STATUS_SKIPPED CriImageCacheCopyStatus = 1
+	CriImageCacheCopyStatus_IMAGE_CACHE_COPY_STATUS_PENDING CriImageCacheCopyStatus = 2
+	CriImageCacheCopyStatus_IMAGE_CACHE_COPY_STATUS_READY   CriImageCacheCopyStatus = 3
+)
+
+// Enum value maps for CriImageCacheCopyStatus.
+var (
+	CriImageCacheCopyStatus_name = map[int32]string{
+		0: "IMAGE_CACHE_COPY_STATUS_UNKNOWN",
+		1: "IMAGE_CACHE_COPY_STATUS_SKIPPED",
+		2: "IMAGE_CACHE_COPY_STATUS_PENDING",
+		3: "IMAGE_CACHE_COPY_STATUS_READY",
+	}
+	CriImageCacheCopyStatus_value = map[string]int32{
+		"IMAGE_CACHE_COPY_STATUS_UNKNOWN": 0,
+		"IMAGE_CACHE_COPY_STATUS_SKIPPED": 1,
+		"IMAGE_CACHE_COPY_STATUS_PENDING": 2,
+		"IMAGE_CACHE_COPY_STATUS_READY":   3,
+	}
+)
+
+func (x CriImageCacheCopyStatus) Enum() *CriImageCacheCopyStatus {
+	p := new(CriImageCacheCopyStatus)
+	*p = x
+	return p
+}
+
+func (x CriImageCacheCopyStatus) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (CriImageCacheCopyStatus) Descriptor() protoreflect.EnumDescriptor {
+	return file_resource_definitions_enums_enums_proto_enumTypes[56].Descriptor()
+}
+
+func (CriImageCacheCopyStatus) Type() protoreflect.EnumType {
+	return &file_resource_definitions_enums_enums_proto_enumTypes[56]
+}
+
+func (x CriImageCacheCopyStatus) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use CriImageCacheCopyStatus.Descriptor instead.
+func (CriImageCacheCopyStatus) EnumDescriptor() ([]byte, []int) {
+	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{56}
+}
+
+// KubespanPeerState is KubeSpan peer current state.
+type KubespanPeerState int32
+
+const (
+	KubespanPeerState_PEER_STATE_UNKNOWN KubespanPeerState = 0
+	KubespanPeerState_PEER_STATE_UP      KubespanPeerState = 1
+	KubespanPeerState_PEER_STATE_DOWN    KubespanPeerState = 2
+)
+
+// Enum value maps for KubespanPeerState.
+var (
+	KubespanPeerState_name = map[int32]string{
+		0: "PEER_STATE_UNKNOWN",
+		1: "PEER_STATE_UP",
+		2: "PEER_STATE_DOWN",
+	}
+	KubespanPeerState_value = map[string]int32{
+		"PEER_STATE_UNKNOWN": 0,
+		"PEER_STATE_UP":      1,
+		"PEER_STATE_DOWN":    2,
+	}
+)
+
+func (x KubespanPeerState) Enum() *KubespanPeerState {
+	p := new(KubespanPeerState)
+	*p = x
+	return p
+}
+
+func (x KubespanPeerState) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (KubespanPeerState) Descriptor() protoreflect.EnumDescriptor {
+	return file_resource_definitions_enums_enums_proto_enumTypes[57].Descriptor()
+}
+
+func (KubespanPeerState) Type() protoreflect.EnumType {
+	return &file_resource_definitions_enums_enums_proto_enumTypes[57]
+}
+
+func (x KubespanPeerState) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use KubespanPeerState.Descriptor instead.
+func (KubespanPeerState) EnumDescriptor() ([]byte, []int) {
 	return file_resource_definitions_enums_enums_proto_rawDescGZIP(), []int{57}
 }
 
@@ -4951,7 +4951,17 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x0eMD_LEVEL_RAID1\x10\x00*9\n" +
 	"\x11StorageMDMetadata\x12\x11\n" +
 	"\rMD_METADATA10\x10\x00\x12\x11\n" +
-	"\rMD_METADATA12\x10\x01*\xa8\x01\n" +
+	"\rMD_METADATA12\x10\x01*\x88\x01\n" +
+	"\x12NetworkConfigLayer\x12\x12\n" +
+	"\x0eCONFIG_DEFAULT\x10\x00\x12\x12\n" +
+	"\x0eCONFIG_CMDLINE\x10\x01\x12\x13\n" +
+	"\x0fCONFIG_PLATFORM\x10\x02\x12\x13\n" +
+	"\x0fCONFIG_OPERATOR\x10\x03\x12 \n" +
+	"\x1cCONFIG_MACHINE_CONFIGURATION\x10\x04*K\n" +
+	"\x0fNetworkOperator\x12\x12\n" +
+	"\x0eOPERATOR_DHCP4\x10\x00\x12\x12\n" +
+	"\x0eOPERATOR_DHCP6\x10\x01\x12\x10\n" +
+	"\fOPERATOR_VIP\x10\x02*\xa8\x01\n" +
 	"\x1dContainersContainerImagePhase\x12!\n" +
 	"\x1dCONTAINER_IMAGE_PHASE_PENDING\x10\x00\x12!\n" +
 	"\x1dCONTAINER_IMAGE_PHASE_PULLING\x10\x01\x12\x1f\n" +
@@ -4970,17 +4980,7 @@ const file_resource_definitions_enums_enums_proto_rawDesc = "" +
 	"\x11KubespanPeerState\x12\x16\n" +
 	"\x12PEER_STATE_UNKNOWN\x10\x00\x12\x11\n" +
 	"\rPEER_STATE_UP\x10\x01\x12\x13\n" +
-	"\x0fPEER_STATE_DOWN\x10\x02*\x88\x01\n" +
-	"\x12NetworkConfigLayer\x12\x12\n" +
-	"\x0eCONFIG_DEFAULT\x10\x00\x12\x12\n" +
-	"\x0eCONFIG_CMDLINE\x10\x01\x12\x13\n" +
-	"\x0fCONFIG_PLATFORM\x10\x02\x12\x13\n" +
-	"\x0fCONFIG_OPERATOR\x10\x03\x12 \n" +
-	"\x1cCONFIG_MACHINE_CONFIGURATION\x10\x04*K\n" +
-	"\x0fNetworkOperator\x12\x12\n" +
-	"\x0eOPERATOR_DHCP4\x10\x00\x12\x12\n" +
-	"\x0eOPERATOR_DHCP6\x10\x01\x12\x10\n" +
-	"\fOPERATOR_VIP\x10\x02Bt\n" +
+	"\x0fPEER_STATE_DOWN\x10\x02Bt\n" +
 	"(dev.talos.api.resource.definitions.enumsZHgithub.com/siderolabs/talos/pkg/machinery/api/resource/definitions/enumsb\x06proto3"
 
 var (
@@ -5049,12 +5049,12 @@ var file_resource_definitions_enums_enums_proto_goTypes = []any{
 	(StorageMDArrayPhase)(0),             // 49: talos.resource.definitions.enums.StorageMDArrayPhase
 	(StorageMDLevel)(0),                  // 50: talos.resource.definitions.enums.StorageMDLevel
 	(StorageMDMetadata)(0),               // 51: talos.resource.definitions.enums.StorageMDMetadata
-	(ContainersContainerImagePhase)(0),   // 52: talos.resource.definitions.enums.ContainersContainerImagePhase
-	(CriImageCacheStatus)(0),             // 53: talos.resource.definitions.enums.CriImageCacheStatus
-	(CriImageCacheCopyStatus)(0),         // 54: talos.resource.definitions.enums.CriImageCacheCopyStatus
-	(KubespanPeerState)(0),               // 55: talos.resource.definitions.enums.KubespanPeerState
-	(NetworkConfigLayer)(0),              // 56: talos.resource.definitions.enums.NetworkConfigLayer
-	(NetworkOperator)(0),                 // 57: talos.resource.definitions.enums.NetworkOperator
+	(NetworkConfigLayer)(0),              // 52: talos.resource.definitions.enums.NetworkConfigLayer
+	(NetworkOperator)(0),                 // 53: talos.resource.definitions.enums.NetworkOperator
+	(ContainersContainerImagePhase)(0),   // 54: talos.resource.definitions.enums.ContainersContainerImagePhase
+	(CriImageCacheStatus)(0),             // 55: talos.resource.definitions.enums.CriImageCacheStatus
+	(CriImageCacheCopyStatus)(0),         // 56: talos.resource.definitions.enums.CriImageCacheCopyStatus
+	(KubespanPeerState)(0),               // 57: talos.resource.definitions.enums.KubespanPeerState
 }
 var file_resource_definitions_enums_enums_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
