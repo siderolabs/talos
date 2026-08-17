@@ -25,6 +25,18 @@ containerd: 2.3.4
 Talos is built with Go 1.26.6.
 """
 
+    [notes.ipvs]
+        title = "IPVS Support"
+        description = """\
+Following Kubernetes deprecation of IPVS support (`kube-proxy`), Talos Linux now ships IPVS as kernel modules which are not loaded by default.
+
+If you require IPVS support, you can enable it by loading the following kernel modules:
+
+* `ip_vs` (core)
+* `ip_vs_rr`, `ip_vs_wrr`, `ip_vs_lc`, `ip_vs_sh` or `ip_vs_mh` (scheduling algorithms)
+* `xt_ipvs` (nftables/iptables match)
+"""
+
 [make_deps]
 
     [make_deps.tools]

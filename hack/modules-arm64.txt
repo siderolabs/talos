@@ -315,6 +315,13 @@ kernel/lib/parman.ko
 kernel/lib/raid6/raid6_pq.ko
 kernel/net/ipv4/ip_gre.ko
 kernel/net/ipv6/ip6_gre.ko
+kernel/net/netfilter/ipvs/ip_vs.ko
+kernel/net/netfilter/ipvs/ip_vs_lc.ko
+kernel/net/netfilter/ipvs/ip_vs_mh.ko
+kernel/net/netfilter/ipvs/ip_vs_rr.ko
+kernel/net/netfilter/ipvs/ip_vs_sh.ko
+kernel/net/netfilter/ipvs/ip_vs_wrr.ko
+kernel/net/netfilter/xt_ipvs.ko
 kernel/net/openvswitch/vport-gre.ko
 kernel/net/sunrpc/xprtrdma/rpcrdma.ko
 kernel/net/tls/tls.ko
