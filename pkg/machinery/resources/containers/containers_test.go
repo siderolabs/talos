@@ -29,6 +29,7 @@ func TestRegisterResource(t *testing.T) {
 	for _, res := range []meta.ResourceWithRD{
 		&containers.ContainerSpec{},
 		&containers.ContainerImageStatus{},
+		&containers.ContainerInstanceSpec{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, res))
 	}
@@ -96,6 +97,48 @@ func TestImageStatusProtobufRoundTrip(t *testing.T) {
 	}
 
 	assertRoundTrip(t, status)
+}
+
+// TestInstanceProtobufRoundTrip guards the protobuf tags on ContainerInstanceSpecSpec.
+func TestInstanceProtobufRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	spec := containers.NewContainerInstanceSpec(containers.NamespaceName, containers.InstanceID("nginx", 3))
+	*spec.TypedSpec() = containers.ContainerInstanceSpecSpec{
+		ContainerID: "nginx",
+		Generation:  3,
+		Image:       "docker.io/library/nginx@sha256:abc123",
+		Entrypoint:  []string{"/entrypoint.sh"},
+		Args:        []string{"nginx", "-g", "daemon off;"},
+		WorkingDir:  "/srv",
+		RunAs: containers.ContainerRunAsSpec{
+			UID: new(int32(65534)),
+			GID: new(int32(65534)),
+		},
+		Environment: []string{"NGINX_PORT=8080"},
+		Mounts: []containers.ResolvedMountSpec{
+			{
+				Kind:        containers.MountKindHostPath,
+				Source:      "/dev",
+				Destination: "/dev",
+				Options:     []string{"ro"},
+			},
+			{
+				Kind:        containers.MountKindTmpfs,
+				Destination: "/tmp",
+				Size:        64 << 20,
+			},
+		},
+		Security: containers.ContainerSecuritySpec{
+			Privileged:       true,
+			CapabilitiesAdd:  []string{"NET_ADMIN"},
+			CapabilitiesDrop: []string{"ALL"},
+		},
+		Network:   containers.ContainerNetworkSpec{HostNetwork: true},
+		Resources: containers.ContainerResourcesSpec{MemoryLimit: 1 << 29, CPULimit: 1500},
+	}
+
+	assertRoundTrip(t, spec)
 }
 
 func assertRoundTrip[T resource.Resource](t *testing.T, res T) {

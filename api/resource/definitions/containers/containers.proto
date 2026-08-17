@@ -31,6 +31,30 @@ message ContainerImageStatusSpec {
   string error = 4;
 }
 
+// ContainerInstanceSpecSpec is the spec for ContainerInstanceSpec.
+//
+// It carries a resolved snapshot of everything needed to run one execution, so whatever runs it
+// never has to re-read the container spec or image status. That keeps the execution independent of
+// later changes to those inputs: a spec change destroys this instance rather than mutating it.
+message ContainerInstanceSpecSpec {
+  // ContainerID is the name of the owning container, i.e. the ContainerSpec ID.
+  string container_id = 1;
+  // Generation is this instance's sequence number for that container.
+  uint64 generation = 2;
+  // Image is the digest-resolved reference to run.
+  string image = 3;
+  repeated string entrypoint = 4;
+  repeated string args = 5;
+  string working_dir = 6;
+  ContainerRunAsSpec run_as = 7;
+  repeated string environment = 8;
+  // Mounts are fully resolved, with host source paths filled in.
+  repeated ResolvedMountSpec mounts = 9;
+  ContainerSecuritySpec security = 10;
+  ContainerNetworkSpec network = 11;
+  ContainerResourcesSpec resources = 12;
+}
+
 // ContainerMountSpec is a resolved mount.
 //
 // Exactly one of VolumeID, Tmpfs or HostPath describes the source; Kind says which.
@@ -94,5 +118,15 @@ message ContainerSpecSpec {
   ContainerNetworkSpec network = 9;
   ContainerResourcesSpec resources = 10;
   ContainerDependsOnSpec depends_on = 11;
+}
+
+// ResolvedMountSpec is a mount with its host-side source resolved.
+message ResolvedMountSpec {
+  string kind = 1;
+  // Source is the host path to bind from; empty for tmpfs.
+  string source = 2;
+  string destination = 3;
+  uint64 size = 4;
+  repeated string options = 5;
 }
 

@@ -5,13 +5,29 @@
 package containers
 
 import (
+	"context"
+	"fmt"
+	"os"
+	"time"
+
+	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
 	"github.com/cosi-project/runtime/pkg/resource/protobuf"
 	"github.com/cosi-project/runtime/pkg/resource/typed"
+	"github.com/cosi-project/runtime/pkg/safe"
+	"github.com/cosi-project/runtime/pkg/state"
+	"github.com/siderolabs/gen/optional"
 
 	"github.com/siderolabs/talos/pkg/machinery/proto"
+	"github.com/siderolabs/talos/pkg/machinery/resources/network"
+	timeres "github.com/siderolabs/talos/pkg/machinery/resources/time"
 )
+
+// pathPollInterval is how often to re-check dependsOn.paths entries.
+//
+// Paths are the one dependency with no COSI equivalent, so they have to be polled.
+const pathPollInterval = time.Second
 
 // ContainerSpecType is type of ContainerSpec resource.
 const ContainerSpecType = resource.Type("ContainerSpecs.containers.talos.dev")
@@ -41,6 +57,39 @@ type ContainerSpecSpec struct {
 	Network   ContainerNetworkSpec   `yaml:"network,omitempty" protobuf:"9"`
 	Resources ContainerResourcesSpec `yaml:"resources,omitempty" protobuf:"10"`
 	DependsOn ContainerDependsOnSpec `yaml:"dependsOn,omitempty" protobuf:"11"`
+}
+
+// Ready reports the container's unmet dependencies (image, mounts, dependsOn gates),
+// and how soon to recheck them.
+//
+// containerID is the owning ContainerSpec resource's ID: the spec itself doesn't carry it.
+//
+// dependsOn.containers is not checked here: it would need the aggregated ContainerStatus, which
+// only arrives with StatusController.
+func (spec ContainerSpecSpec) Ready(ctx context.Context, r controller.Reader, containerID string) ([]string, optional.Optional[time.Duration], error) {
+	var waitingFor []string
+
+	imageDigest, err := GetImageDigest(ctx, r, containerID, spec.Image.Ref)
+	if err != nil {
+		return nil, optional.None[time.Duration](), err
+	}
+
+	if imageDigest == "" {
+		waitingFor = append(waitingFor, "image")
+	}
+
+	if _, mountsReady := ResolveInstanceMounts(spec.Mounts); !mountsReady {
+		waitingFor = append(waitingFor, "mounts")
+	}
+
+	unmet, wakeUpAfter, err := spec.DependsOn.Ready(ctx, r)
+	if err != nil {
+		return nil, optional.None[time.Duration](), err
+	}
+
+	waitingFor = append(waitingFor, unmet...)
+
+	return waitingFor, wakeUpAfter, nil
 }
 
 // ContainerMountSpec is a resolved mount.
@@ -108,6 +157,124 @@ type ContainerDependsOnSpec struct {
 	Networks   []string `yaml:"networks,omitempty" protobuf:"2"`
 	Time       bool     `yaml:"time,omitempty" protobuf:"3"`
 	Containers []string `yaml:"containers,omitempty" protobuf:"4"`
+}
+
+// Ready reports the declared dependsOn gates that are not yet satisfied, and how soon the caller
+// should recheck gates Ready cannot itself observe an event for (currently only Paths).
+//
+// Returns: unsatisfied dependencies, duration to wait before rechecking, error.
+func (dependsOn ContainerDependsOnSpec) Ready(
+	ctx context.Context,
+	r controller.Reader,
+) ([]string, optional.Optional[time.Duration], error) {
+	var waitingFor []string
+
+	// dependsOn.networks
+	unmetNetworks, err := dependsOn.NetworksReady(ctx, r)
+	if err != nil {
+		return nil, optional.None[time.Duration](), fmt.Errorf("failed to check network ready: %w", err)
+	}
+
+	waitingFor = append(waitingFor, unmetNetworks...)
+
+	// dependsOn.time
+	timeReady, err := dependsOn.TimeReady(ctx, r)
+	if err != nil {
+		return nil, optional.None[time.Duration](), fmt.Errorf("failed to check time ready: %w", err)
+	}
+
+	if !timeReady {
+		waitingFor = append(waitingFor, "time")
+	}
+
+	// dependsOn.paths
+	for _, path := range dependsOn.Paths {
+		if _, err := os.Stat(path); err != nil {
+			waitingFor = append(waitingFor, "path: "+path)
+		}
+	}
+
+	var wakeUpAfter optional.Optional[time.Duration]
+	if len(dependsOn.Paths) > 0 {
+		// Paths have no event to wake us, so poll while any are declared.
+		wakeUpAfter = optional.Some(pathPollInterval)
+	}
+
+	return waitingFor, wakeUpAfter, nil
+}
+
+// TimeReady reports whether the dependsOn.time gate is satisfied.
+//
+// A status resource that doesn't exist yet counts as not satisfied. If time sync is disabled on
+// the node, this gate can never be satisfied, and a container declaring it stays blocked: the
+// dependency was declared explicitly, so an unsynced clock should never be silently accepted.
+func (dependsOn ContainerDependsOnSpec) TimeReady(ctx context.Context, r controller.Reader) (bool, error) {
+	if !dependsOn.Time {
+		// Doesn't depend on time sync, so it's satisfied regardless of the time status.
+		return true, nil
+	}
+
+	status, err := safe.ReaderGetByID[*timeres.Status](ctx, r, timeres.StatusID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return false, nil
+		}
+
+		return false, fmt.Errorf("failed to get time status: %w", err)
+	}
+
+	return status.TypedSpec().Synced, nil
+}
+
+// NetworksReady reports the declared dependsOn.networks conditions that are not yet satisfied.
+//
+// A status resource that doesn't exist yet counts every declared condition as not satisfied.
+func (dependsOn ContainerDependsOnSpec) NetworksReady(ctx context.Context, r controller.Reader) ([]string, error) {
+	if dependsOn.Networks == nil {
+		return nil, nil
+	}
+
+	status, err := safe.ReaderGetByID[*network.Status](ctx, r, network.StatusID)
+	if err != nil {
+		if !state.IsNotFoundError(err) {
+			return nil, fmt.Errorf("failed to get network status: %w", err)
+		}
+
+		status = nil
+	}
+
+	var waitingFor []string
+
+	for _, condition := range dependsOn.Networks {
+		if !dependsOn.NetworkConditionMet(status, condition) {
+			waitingFor = append(waitingFor, "network: "+condition)
+		}
+	}
+
+	return waitingFor, nil
+}
+
+// NetworkConditionMet reports whether one declared dependsOn.networks condition is satisfied.
+func (ContainerDependsOnSpec) NetworkConditionMet(status *network.Status, condition string) bool {
+	if status == nil {
+		return false
+	}
+
+	spec := status.TypedSpec()
+
+	switch condition {
+	case "addresses":
+		return network.AddressReady(spec)
+	case "connectivity":
+		return network.ConnectivityReady(spec)
+	case "hostname":
+		return network.HostnameReady(spec)
+	case "etcfiles":
+		return network.EtcFilesReady(spec)
+	default:
+		// Validation rejects unknown conditions, so this is unreachable from configuration.
+		return false
+	}
 }
 
 // ContainerRunAsSpec is the resolved uid/gid override.

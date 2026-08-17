@@ -818,6 +818,22 @@ enum StorageMDMetadata {
   MD_METADATA12 = 1;
 }
 
+// NetworkConfigLayer describes network configuration layers, with lowest priority first.
+enum NetworkConfigLayer {
+  CONFIG_DEFAULT = 0;
+  CONFIG_CMDLINE = 1;
+  CONFIG_PLATFORM = 2;
+  CONFIG_OPERATOR = 3;
+  CONFIG_MACHINE_CONFIGURATION = 4;
+}
+
+// NetworkOperator enumerates Talos network operators.
+enum NetworkOperator {
+  OPERATOR_DHCP4 = 0;
+  OPERATOR_DHCP6 = 1;
+  OPERATOR_VIP = 2;
+}
+
 // ContainersContainerImagePhase describes the state of a container's image pull.
 enum ContainersContainerImagePhase {
   CONTAINER_IMAGE_PHASE_PENDING = 0;
@@ -847,21 +863,5 @@ enum KubespanPeerState {
   PEER_STATE_UNKNOWN = 0;
   PEER_STATE_UP = 1;
   PEER_STATE_DOWN = 2;
-}
-
-// NetworkConfigLayer describes network configuration layers, with lowest priority first.
-enum NetworkConfigLayer {
-  CONFIG_DEFAULT = 0;
-  CONFIG_CMDLINE = 1;
-  CONFIG_PLATFORM = 2;
-  CONFIG_OPERATOR = 3;
-  CONFIG_MACHINE_CONFIGURATION = 4;
-}
-
-// NetworkOperator enumerates Talos network operators.
-enum NetworkOperator {
-  OPERATOR_DHCP4 = 0;
-  OPERATOR_DHCP6 = 1;
-  OPERATOR_VIP = 2;
 }
 
