@@ -4152,6 +4152,7 @@ The messages message containing the restart status.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | metadata | [common.Metadata](#common.Metadata) |  |  |
+| actor_id | [string](#string) |  |  |
 
 
 

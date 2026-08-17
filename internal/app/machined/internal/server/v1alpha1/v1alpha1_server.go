@@ -365,7 +365,9 @@ func (s *Server) Reboot(ctx context.Context, in *machine.RebootRequest) (reply *
 
 // Rollback implements the machine.MachineServer interface.
 func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (*machine.RollbackResponse, error) {
-	log.Printf("rollback via API received")
+	actorID := uuid.New().String()
+
+	log.Printf("rollback via API received. actor id: %s", actorID)
 
 	if err := s.checkSupported(runtime.Rollback); err != nil {
 		return nil, err
@@ -391,8 +393,10 @@ func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (*ma
 		return nil, err
 	}
 
+	rebootCtx := context.WithValue(context.Background(), runtime.ActorIDCtxKey{}, actorID)
+
 	go func() {
-		if err := s.Controller.Run(context.Background(), runtime.SequenceReboot, in, runtime.WithTakeover()); err != nil {
+		if err := s.Controller.Run(rebootCtx, runtime.SequenceReboot, in, runtime.WithTakeover()); err != nil {
 			if !runtime.IsRebootError(err) {
 				log.Println("reboot failed:", err)
 			}
@@ -401,7 +405,9 @@ func (s *Server) Rollback(ctx context.Context, in *machine.RollbackRequest) (*ma
 
 	return &machine.RollbackResponse{
 		Messages: []*machine.Rollback{
-			{},
+			{
+				ActorId: actorID,
+			},
 		},
 	}, nil
 }
