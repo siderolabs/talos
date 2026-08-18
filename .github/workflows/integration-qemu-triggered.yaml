@@ -72,6 +72,7 @@ jobs:
             qemuMemoryWorkers: "4096"
             tagSuffix: -race
             variant: race
+            withConfigPatch: '@hack/test/patches/image-verification.yaml'
             withConfigPatchWorker: '@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml'
           - extraTestArgs: -talos.skip-ephemeral-policy
             qemuExtraDisks: "5"
