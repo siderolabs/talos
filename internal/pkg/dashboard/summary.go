@@ -198,7 +198,7 @@ func (widget *SummaryGrid) updateLogViewer() {
 func (widget *SummaryGrid) logViewer(node string) *components.LogViewer {
 	logViewer, ok := widget.logViewers[node]
 	if !ok {
-		logViewer = components.NewLogViewer()
+		logViewer = components.NewLogViewer(widget.app)
 
 		widget.logViewers[node] = logViewer
 	}
