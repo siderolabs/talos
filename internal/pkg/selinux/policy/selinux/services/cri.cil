@@ -46,6 +46,7 @@
 (allow pod_containerd_t bin_exec_t (fs_classes (ro)))
 ; (allow pod_p cni_conf_t (fs_classes (rw)))
 (allow pod_containerd_t cni_state_t (fs_classes (rw)))
+(allow pod_p cni_state_t (fs_classes (rw)))
 
 ; Logs
 (allow pod_containerd_t pods_log_t (fs_classes (rw)))
@@ -163,7 +164,7 @@
 (allow pod_p devpts_t (fs_classes (rw)))
 
 ; ; cilium
-; (allow pod_containerd_t pod_p (unix_stream_socket (connectto)))
+(allow pod_containerd_t pod_p (unix_stream_socket (connectto)))
 
 ; pkg/flannel
 (allow pod_p cni_conf_t (fs_classes (rw)))
@@ -210,6 +211,16 @@
 (allow pod_t cni_plugin_t (fs_classes (rw)))
 ; `install` also seems to test the plugin
 (allow pod_t cni_plugin_t (file (execute execute_no_trans)))
+
+; CNI agents manage pinned BPF programs/maps owned by containerd processes.
+(allow pod_p pod_containerd_t (bpf (prog_run)))
+(allow pod_p sys_containerd_t (bpf (prog_run)))
+
+; Host diagnostics mounted into pods can expose proc entries labelled with the
+; owning process domain instead of procfs_t.
+(allow pod_p init_t (file (getattr open read)))
+(allow pod_p rootfs_t (filesystem (getattr)))
+(allow pod_p udev_run_t (fs_classes (ro)))
 
 ; TinK is an example of what needs this. Docker in a pod will also require this.
 (allow pod_p cgroup_t (fs_classes (rw)))

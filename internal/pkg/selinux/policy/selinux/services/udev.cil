@@ -112,3 +112,4 @@
 (allow udev_t bin_exec_t (file (execute execute_no_trans)))
 (allow udev_t kernel_t (system (ipc_info)))
 (allow udev_t any_p (sem (all)))
+(allow udev_t initramfs_t (fd (use)))
