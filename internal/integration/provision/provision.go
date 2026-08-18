@@ -168,7 +168,18 @@ func (suite *BaseSuite) TearDownSuite() {
 	}
 
 	if suite.Cluster != nil {
-		suite.Assert().NoError(suite.provisioner.Destroy(suite.ctx, suite.Cluster))
+		// Save logs and support archives under /tmp/{logs,support}-<cluster>.{tar.gz,zip}
+		// so the kres save-talos-logs step (artifactPath: /tmp/logs-*.tar.gz,
+		// additionalArtifacts: /tmp/support-*.zip) can upload them on failure.
+		clusterName := suite.Cluster.Info().ClusterName
+
+		suite.Assert().NoError(
+			suite.provisioner.Destroy(
+				suite.ctx, suite.Cluster,
+				provision.WithSaveClusterLogsArchivePath(fmt.Sprintf("/tmp/logs-%s.tar.gz", clusterName)),
+				provision.WithSaveSupportArchivePath(fmt.Sprintf("/tmp/support-%s.zip", clusterName)),
+			),
+		)
 	}
 
 	suite.ctxCancel()
