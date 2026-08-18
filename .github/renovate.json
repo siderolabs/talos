@@ -6,7 +6,7 @@
         ":dependencyDashboard",
         ":gitSignOff",
         ":semanticCommitScopeDisabled",
-        "schedule:earlyMondays"
+        "schedule:nonOfficeHours"
     ],
     "customManagers": [
         {

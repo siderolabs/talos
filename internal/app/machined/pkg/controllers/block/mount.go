@@ -650,7 +650,11 @@ func (ctrl *MountController) handleDiskMountOperation(
 			return fmt.Errorf("failed to mount %q: %w", mountRequest.Metadata().ID(), err)
 		}
 
-		if !mountRequest.TypedSpec().ReadOnly && !mountRequest.TypedSpec().Detached {
+		// external volumes are provided by the host (e.g. virtiofs): the mode and ownership of the mount root
+		// belong to the host, not to Talos, and the SELinux label is already applied by the mount itself.
+		if !mountRequest.TypedSpec().ReadOnly &&
+			!mountRequest.TypedSpec().Detached &&
+			volumeStatus.TypedSpec().Type != block.VolumeTypeExternal {
 			if err = ctrl.updateTargetSettings(mountTarget, volumeStatus.TypedSpec().Filesystem, volumeStatus.TypedSpec().MountSpec); err != nil {
 				manager.Unmount() //nolint:errcheck
 
