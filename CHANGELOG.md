@@ -1,3 +1,79 @@
+## [Talos 1.13.9](https://github.com/siderolabs/talos/releases/tag/v1.13.9) (2026-08-18)
+
+Welcome to the v1.13.9 release of Talos!
+
+
+
+Please try out the release binaries and report any issues at
+https://github.com/siderolabs/talos/issues.
+
+### Component Updates
+
+Linux: 6.18.44
+containerd: 2.2.7
+Kubernetes: 1.36.3
+
+Talos is built with Go 1.26.6.
+
+
+### Contributors
+
+* Andrey Smirnov
+* Noel Georgi
+
+### Changes
+<details><summary>6 commits</summary>
+<p>
+
+* [`9ade215ce`](https://github.com/siderolabs/talos/commit/9ade215ced0546aa1a59525a183fed6ec7472cf7) feat: update Kubernetes to 1.36.3
+* [`14343cd29`](https://github.com/siderolabs/talos/commit/14343cd2913ccfe278c1acdc0713eb881da2f2e3) test: save the provision test logs
+* [`b33e5fce2`](https://github.com/siderolabs/talos/commit/b33e5fce2c65249ea534610cb019bf8b0ffdf102) fix: support try mode apply without prior config
+* [`6a8f29591`](https://github.com/siderolabs/talos/commit/6a8f29591366cef7f83e42b753e6b0c1420ad5ea) fix: share IPC namespace with the host for extension services
+* [`b525b8290`](https://github.com/siderolabs/talos/commit/b525b82900e56c92a51721e5adf6cadc54db6a03) fix: size the receive/send buffers for nftables netlink
+* [`7ac52642c`](https://github.com/siderolabs/talos/commit/7ac52642cff3c8995884eb7bcdca54f257d254ff) feat: update Go to 1.26.6
+</p>
+</details>
+
+### Changes from siderolabs/pkgs
+<details><summary>5 commits</summary>
+<p>
+
+* [`f541ca4`](https://github.com/siderolabs/pkgs/commit/f541ca434ee63964319bb912e370f0ed407f8a18) feat: bump kernel to 6.18.44
+* [`a4f2c26`](https://github.com/siderolabs/pkgs/commit/a4f2c2607bdb1326760ce08edaeabec8d5e02d9a) feat: bump kernel to 6.18.43
+* [`79a7531`](https://github.com/siderolabs/pkgs/commit/79a753140cee4bb8f968b7f95683773938cdb37f) feat: update Linux firmware to 20260810
+* [`89d76bf`](https://github.com/siderolabs/pkgs/commit/89d76bf7e1aca2b750e93d6c2492421518aef86c) feat: update backportable dependencies
+* [`af6c08a`](https://github.com/siderolabs/pkgs/commit/af6c08a34b7b94c48b09dd6022d151406fef5c32) feat: update Go to 1.26.6
+</p>
+</details>
+
+### Changes from siderolabs/tools
+<details><summary>1 commit</summary>
+<p>
+
+* [`a201d19`](https://github.com/siderolabs/tools/commit/a201d197a0ddb199a8a81d7d6043664bb16dca4a) feat: update Go to 1.26.6
+</p>
+</details>
+
+### Dependency Changes
+
+* **github.com/siderolabs/pkgs**      v1.13.0-55-gf677246 -> v1.13.0-60-gf541ca4
+* **github.com/siderolabs/tools**     v1.13.0-8-gc2844e6 -> v1.13.0-9-ga201d19
+* **golang.org/x/net**                v0.57.0 -> v0.58.0
+* **golang.org/x/text**               v0.40.0 -> v0.41.0
+* **k8s.io/api**                      v0.36.2 -> v0.36.3
+* **k8s.io/apiextensions-apiserver**  v0.36.2 -> v0.36.3
+* **k8s.io/apimachinery**             v0.36.2 -> v0.36.3
+* **k8s.io/apiserver**                v0.36.2 -> v0.36.3
+* **k8s.io/client-go**                v0.36.2 -> v0.36.3
+* **k8s.io/component-base**           v0.36.2 -> v0.36.3
+* **k8s.io/cri-api**                  v0.36.2 -> v0.36.3
+* **k8s.io/kube-scheduler**           v0.36.2 -> v0.36.3
+* **k8s.io/kubectl**                  v0.36.2 -> v0.36.3
+* **k8s.io/kubelet**                  v0.36.2 -> v0.36.3
+* **k8s.io/pod-security-admission**   v0.36.2 -> v0.36.3
+
+Previous release can be found at [v1.13.8](https://github.com/siderolabs/talos/releases/tag/v1.13.8)
+
 ## [Talos 1.13.8](https://github.com/siderolabs/talos/releases/tag/v1.13.8) (2026-08-04)
 
 Welcome to the v1.13.8 release of Talos!
