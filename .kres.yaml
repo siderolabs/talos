@@ -499,6 +499,7 @@ spec:
             buildRace: "true"
             tagSuffix: -race
             extraTestArgs: "-talos.race"
+            withConfigPatch: "@hack/test/patches/image-verification.yaml"
             withConfigPatchWorker: "@hack/test/patches/ephemeral-nvme.yaml:@hack/test/patches/dm-raid-module.yaml"
             qemuExtraDisks: "4"
             qemuExtraDisksDrivers: "virtiofs,ide,nvme"
