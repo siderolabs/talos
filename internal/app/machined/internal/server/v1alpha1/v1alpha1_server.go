@@ -1317,40 +1317,29 @@ func (s *Server) Kubeconfig(empty *emptypb.Empty, obj machine.MachineService_Kub
 // Logs provides a service or container logs can be requested and the contents of the
 // log file are streamed in chunks.
 func (s *Server) Logs(req *machine.LogsRequest, l machine.MachineService_LogsServer) (err error) {
-	var chunk chunker.Chunker
+	var (
+		chunk chunker.Chunker
+		file  io.Closer
+	)
 
 	switch {
 	case req.Namespace == constants.SystemContainerdNamespace || req.Id == "kubelet":
-		var options []runtime.LogOption
-
-		if req.Follow {
-			options = append(options, runtime.WithFollow())
-		}
-
-		if req.TailLines >= 0 {
-			options = append(options, runtime.WithTailLines(int(req.TailLines)))
-		}
-
-		var logR io.ReadCloser
-
-		logR, err = s.Controller.Runtime().Logging().ServiceLog(req.Id).Reader(options...)
-		if err != nil {
-			return err
-		}
-
-		//nolint:errcheck
-		defer logR.Close()
-
-		chunk = stream.NewChunker(l.Context(), logR)
+		chunk, file, err = s.serviceLogChunker(l.Context(), req, req.Id)
+	case req.Namespace == constants.TalosContainersContainerdNamespace:
+		// Containers declared via ContainerConfig log to a buffer keyed by container, not by
+		// instance, so that successive restarts append to one buffer and logs outlive the
+		// container: see containers.RuntimeController.
+		chunk, file, err = s.serviceLogChunker(l.Context(), req, constants.TalosContainersLogPrefix+req.Id)
 	default:
-		var file io.Closer
-
-		if chunk, file, err = k8slogs(l.Context(), req); err != nil {
-			return err
-		}
-		//nolint:errcheck
-		defer file.Close()
+		chunk, file, err = k8slogs(l.Context(), req)
 	}
+
+	if err != nil {
+		return err
+	}
+
+	//nolint:errcheck
+	defer file.Close()
 
 	for data := range chunk.Read() {
 		if err = l.Send(&common.Data{Bytes: data}); err != nil {
@@ -1359,6 +1348,26 @@ func (s *Server) Logs(req *machine.LogsRequest, l machine.MachineService_LogsSer
 	}
 
 	return nil
+}
+
+// serviceLogChunker opens the named entry in the in-memory service log buffer for streaming.
+func (s *Server) serviceLogChunker(ctx context.Context, req *machine.LogsRequest, id string) (chunker.Chunker, io.Closer, error) {
+	var options []runtime.LogOption
+
+	if req.Follow {
+		options = append(options, runtime.WithFollow())
+	}
+
+	if req.TailLines >= 0 {
+		options = append(options, runtime.WithTailLines(int(req.TailLines)))
+	}
+
+	logR, err := s.Controller.Runtime().Logging().ServiceLog(id).Reader(options...)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return stream.NewChunker(ctx, logR), logR, nil
 }
 
 // LogsContainers provide a list of registered log containers.

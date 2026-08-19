@@ -1128,7 +1128,7 @@ talosctl containers [flags]
       --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for containers
-  -k, --kubernetes                 use the k8s.io containerd namespace
+      --namespace string           namespace to use: "system" (default, Talos service containers), "cri" for Kubernetes workloads, "taloscontainers" for containers declared via ContainerConfig (default "system")
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
@@ -2222,7 +2222,7 @@ talosctl image cache-cert-gen [flags]
   -c, --cluster string             cluster to connect to if a proxy endpoint is used
       --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
-      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "cri")
+      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance, "taloscontainers" for containers declared via ContainerConfig (default "cri")
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
@@ -2274,7 +2274,7 @@ talosctl images default | talosctl images cache-create --image-cache-path=/tmp/t
   -c, --cluster string             cluster to connect to if a proxy endpoint is used
       --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
-      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "cri")
+      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance, "taloscontainers" for containers declared via ContainerConfig (default "cri")
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
@@ -2313,7 +2313,7 @@ talosctl image cache-serve [flags]
   -c, --cluster string             cluster to connect to if a proxy endpoint is used
       --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
-      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "cri")
+      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance, "taloscontainers" for containers declared via ContainerConfig (default "cri")
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
@@ -2348,7 +2348,7 @@ talosctl image k8s-bundle [flags]
   -c, --cluster string             cluster to connect to if a proxy endpoint is used
       --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
-      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "cri")
+      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance, "taloscontainers" for containers declared via ContainerConfig (default "cri")
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
@@ -2378,7 +2378,7 @@ talosctl image list [flags]
   -c, --cluster string             cluster to connect to if a proxy endpoint is used
       --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
-      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "cri")
+      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance, "taloscontainers" for containers declared via ContainerConfig (default "cri")
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
@@ -2408,7 +2408,7 @@ talosctl image pull <image> [flags]
   -c, --cluster string             cluster to connect to if a proxy endpoint is used
       --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
-      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "cri")
+      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance, "taloscontainers" for containers declared via ContainerConfig (default "cri")
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
@@ -2438,7 +2438,7 @@ talosctl image remove <image> [flags]
   -c, --cluster string             cluster to connect to if a proxy endpoint is used
       --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
-      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "cri")
+      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance, "taloscontainers" for containers declared via ContainerConfig (default "cri")
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
@@ -2470,7 +2470,7 @@ talosctl image talos-bundle [talos-version] [flags]
   -c, --cluster string             cluster to connect to if a proxy endpoint is used
       --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
-      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "cri")
+      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance, "taloscontainers" for containers declared via ContainerConfig (default "cri")
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
@@ -2491,7 +2491,7 @@ Manage container images
       --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for image
-      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance (default "cri")
+      --namespace string           namespace to use: "system" (etcd and kubelet images), "cri" for all Kubernetes workloads, "inmem" for in-memory containerd instance, "taloscontainers" for containers declared via ContainerConfig (default "cri")
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
@@ -2700,7 +2700,7 @@ talosctl logs <service name> [flags]
   -f, --follow                     specify if the logs should be streamed
   -h, --help                       help for logs
   -i, --insecure                   use the insecure (encrypted with no auth) maintenance service
-  -k, --kubernetes                 use the k8s.io containerd namespace
+      --namespace string           namespace to use: "system" (default, Talos service containers), "cri" for Kubernetes workloads, "taloscontainers" for containers declared via ContainerConfig (default "system")
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --tail int32                 lines of log file to display (default is to show from the beginning) (default -1)
@@ -3206,7 +3206,7 @@ talosctl restart <id> [flags]
       --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for restart
-  -k, --kubernetes                 use the k8s.io containerd namespace
+      --namespace string           namespace to use: "system" (default, Talos service containers), "cri" for Kubernetes workloads, "taloscontainers" for containers declared via ContainerConfig (default "system")
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
@@ -3358,7 +3358,7 @@ talosctl stats [flags]
       --context string             context to be used in command
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for stats
-  -k, --kubernetes                 use the k8s.io containerd namespace
+      --namespace string           namespace to use: "system" (default, Talos service containers), "cri" for Kubernetes workloads, "taloscontainers" for containers declared via ContainerConfig (default "system")
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order

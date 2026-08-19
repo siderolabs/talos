@@ -631,6 +631,16 @@ contents: |
 The extension does not provide a default configuration, so `multipathd` remains waiting until `/etc/multipath.conf` is present.
 """
 
+    [notes.containers_namespace]
+        title = "Unified --namespace Flag"
+        description = """\
+`talosctl containers`, `logs`, `stats` and `restart` now select the containerd namespace through the same `--namespace` flag and vocabulary already used by `talosctl image` and `talosctl debug`: `system` (the default), `cri` for Kubernetes workloads, and `taloscontainers` for containers declared via a `ContainerConfig` document.
+
+The `--kubernetes`/`-k` flag is deprecated in favor of `--namespace cri`.
+
+`talosctl image list` also supports `--namespace taloscontainers`, to inspect images pulled for `ContainerConfig` containers. `talosctl debug` does not support the `taloscontainers` namespace.
+"""
+
 [make_deps]
 
     [make_deps.tools]

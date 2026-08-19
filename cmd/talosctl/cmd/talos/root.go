@@ -31,21 +31,49 @@ import (
 // GlobalArgs is the common arguments for the root command.
 var GlobalArgs global.Args
 
-// kubernetesNamespaceFlag is embedded into command flag structs that select between
-// the system and Kubernetes containerd namespaces via the --kubernetes flag.
-type kubernetesNamespaceFlag struct {
+// containerNamespaceFlag is embedded into command flag structs that select which containerd
+// namespace to address, via the same --namespace flag and vocabulary shared with talosctl
+// image/debug/upgrade, or, for backwards compatibility, via the deprecated --kubernetes/-k alias for
+// --namespace cri.
+type containerNamespaceFlag struct {
+	imageCmdFlagsType
+
 	kubernetes bool
 }
 
-// useKubernetesNamespace reports whether the Kubernetes containerd namespace is selected.
-func (f kubernetesNamespaceFlag) useKubernetesNamespace() bool {
-	return f.kubernetes
+// resolveContainerNamespace returns the containerd namespace to address and the driver to read it
+// with.
+//
+// The CRI driver exists only for Kubernetes pods, where it is what groups containers under the pod
+// they belong to; every other namespace, taloscontainers included, is read through the containerd
+// driver. Which containerd socket that means follows from the namespace itself, and the server works
+// that out, so there is nothing to select for here.
+func (f containerNamespaceFlag) resolveContainerNamespace() (string, common.ContainerDriver, error) {
+	if f.kubernetes {
+		return constants.K8sContainerdNamespace, common.ContainerDriver_CRI, nil
+	}
+
+	return f.containerNamespace()
 }
 
-// containerNamespaceFlags is implemented by command flag structs carrying the
-// --kubernetes namespace selector; used by the container completion helpers.
+// addContainerNamespaceFlags registers the namespace selectors on cmd.
+//
+// Both flags are registered together, along with their mutual exclusion, because they are two ways of
+// naming the same thing: accepting both would leave the command addressing one namespace while the
+// operator had asked for another.
+func addContainerNamespaceFlags(cmd *cobra.Command, flags *containerNamespaceFlag) {
+	cmd.Flags().BoolVarP(&flags.kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
+	cmd.Flags().MarkDeprecated("kubernetes", "use --namespace cri instead") //nolint:errcheck
+	cmd.Flags().StringVar(&flags.namespace, "namespace", "system",
+		"namespace to use: \"system\" (default, Talos service containers), \"cri\" for Kubernetes workloads, \""+
+			constants.TalosContainersContainerdNamespace+"\" for containers declared via ContainerConfig")
+	cmd.MarkFlagsMutuallyExclusive("kubernetes", "namespace")
+}
+
+// containerNamespaceFlags is implemented by command flag structs carrying the namespace selectors;
+// used by the container completion helpers.
 type containerNamespaceFlags interface {
-	useKubernetesNamespace() bool
+	resolveContainerNamespace() (string, common.ContainerDriver, error)
 }
 
 const pathAutoCompleteLimit = 500
@@ -243,19 +271,11 @@ func getContainersFromNode(ctx context.Context, flags containerNamespaceFlags) [
 
 	defer clientFactory.Close() //nolint:errcheck
 
-	kubernetes := flags.useKubernetesNamespace()
+	namespace, driver, err := flags.resolveContainerNamespace()
+	if err != nil {
+		cobra.CompError(fmt.Sprintf("error resolving namespace: %v", err))
 
-	var (
-		namespace string
-		driver    common.ContainerDriver
-	)
-
-	if kubernetes {
-		namespace = constants.K8sContainerdNamespace
-		driver = common.ContainerDriver_CRI
-	} else {
-		namespace = constants.SystemContainerdNamespace
-		driver = common.ContainerDriver_CONTAINERD
+		return nil
 	}
 
 	responseChan := multiplex.UnaryViaFactory(
@@ -280,7 +300,9 @@ func getContainersFromNode(ctx context.Context, flags containerNamespaceFlags) [
 					continue
 				}
 
-				if kubernetes && p.Id == p.PodId {
+				// Only the CRI driver reports pod sandboxes, and a sandbox is not something to name on
+				// the command line, so it is left out of the suggestions.
+				if driver == common.ContainerDriver_CRI && p.Id == p.PodId {
 					continue
 				}
 

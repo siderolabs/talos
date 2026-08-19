@@ -985,6 +985,7 @@ description: Talos gRPC API reference.
 | NS_UNKNOWN | 0 |  |
 | NS_SYSTEM | 1 |  |
 | NS_CRI | 2 |  |
+| NS_TALOSCONTAINERS | 3 | NS_TALOSCONTAINERS is the namespace for containers declared via a ContainerConfig document. |
 
 
  <!-- end enums -->
