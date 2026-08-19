@@ -683,6 +683,7 @@ description: Talos gRPC API reference.
   
 - [resource/definitions/time/time.proto](#resource/definitions/time/time.proto)
     - [AdjtimeStatusSpec](#talos.resource.definitions.time.AdjtimeStatusSpec)
+    - [NTPStatusSpec](#talos.resource.definitions.time.NTPStatusSpec)
     - [StatusSpec](#talos.resource.definitions.time.StatusSpec)
   
 - [resource/definitions/v1alpha1/v1alpha1.proto](#resource/definitions/v1alpha1/v1alpha1.proto)
@@ -12077,10 +12078,31 @@ AdjtimeStatusSpec describes Linux internal adjtime state.
 
 
 
+<a name="talos.resource.definitions.time.NTPStatusSpec"></a>
+
+### NTPStatusSpec
+NTPStatusSpec describes the state of the NTP client.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| spike_detected | [bool](#bool) |  | SpikeDetected indicates that the last time measurement was discarded by the spike filter.<br><br>A discarded measurement is not applied to the clock at all, so a filter which keeps rejecting looks exactly like a clock which is never corrected. |
+| consecutive_spikes | [int64](#int64) |  | ConsecutiveSpikes is the number of time measurements discarded in a row by the spike filter. |
+
+
+
+
+
+
 <a name="talos.resource.definitions.time.StatusSpec"></a>
 
 ### StatusSpec
 StatusSpec describes time sync state.
+
+This spec is used as a reconcile trigger by other controllers (most notably the
+certificate generating ones in the `secrets` package), so it should only ever carry
+fields which change rarely: anything which changes on every NTP poll belongs in
+[NTPStatusSpec] instead.
 
 
 | Field | Type | Label | Description |
@@ -12088,8 +12110,6 @@ StatusSpec describes time sync state.
 | synced | [bool](#bool) |  | Synced indicates whether time is in sync. |
 | epoch | [int64](#int64) |  | Epoch is incremented every time clock jumps more than 15min. |
 | sync_disabled | [bool](#bool) |  | SyncDisabled indicates if time sync is disabled. |
-| spike_detected | [bool](#bool) |  | SpikeDetected indicates that the last time measurement was discarded by the spike filter.<br><br>A discarded measurement is not applied to the clock at all, so a filter which keeps rejecting looks exactly like a clock which is never corrected. |
-| consecutive_spikes | [int64](#int64) |  | ConsecutiveSpikes is the number of time measurements discarded in a row by the spike filter. |
 
 
 
