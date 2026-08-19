@@ -52,6 +52,10 @@ func (ctrl *SyncController) Outputs() []controller.Output {
 			Type: time.StatusType,
 			Kind: controller.OutputExclusive,
 		},
+		{
+			Type: time.NTPStatusType,
+			Kind: controller.OutputExclusive,
+		},
 	}
 }
 
@@ -306,13 +310,25 @@ func (ctrl *SyncController) Run(ctx context.Context, r controller.Runtime, logge
 			timeSynced = true
 		}
 
-		if err = safe.WriterModify(ctx, r, time.NewStatus(), func(r *time.Status) error {
-			*r.TypedSpec() = time.StatusSpec{
-				Epoch:             epoch,
-				Synced:            timeSynced,
-				SyncDisabled:      syncDisabled,
+		// NOTE: TimeStatus is used as a reconcile trigger by the certificate generating controllers,
+		// so it should only carry the fields which change rarely; the spike filter state, which
+		// changes on every NTP poll, goes into NTPStatus instead.
+		if err = safe.WriterModify(ctx, r, time.NewNTPStatus(), func(r *time.NTPStatus) error {
+			*r.TypedSpec() = time.NTPStatusSpec{
 				SpikeDetected:     spikeStatus.Detected,
 				ConsecutiveSpikes: spikeStatus.Consecutive,
+			}
+
+			return nil
+		}); err != nil {
+			return fmt.Errorf("error updating NTP status: %w", err) //nolint:govet
+		}
+
+		if err = safe.WriterModify(ctx, r, time.NewStatus(), func(r *time.Status) error {
+			*r.TypedSpec() = time.StatusSpec{
+				Epoch:        epoch,
+				Synced:       timeSynced,
+				SyncDisabled: syncDisabled,
 			}
 
 			return nil

@@ -19,7 +19,23 @@ message AdjtimeStatusSpec {
   string state = 8;
 }
 
+// NTPStatusSpec describes the state of the NTP client.
+message NTPStatusSpec {
+  // SpikeDetected indicates that the last time measurement was discarded by the spike filter.
+  //
+  // A discarded measurement is not applied to the clock at all, so a filter which keeps
+  // rejecting looks exactly like a clock which is never corrected.
+  bool spike_detected = 1;
+  // ConsecutiveSpikes is the number of time measurements discarded in a row by the spike filter.
+  int64 consecutive_spikes = 2;
+}
+
 // StatusSpec describes time sync state.
+//
+// This spec is used as a reconcile trigger by other controllers (most notably the
+// certificate generating ones in the `secrets` package), so it should only ever carry
+// fields which change rarely: anything which changes on every NTP poll belongs in
+// [NTPStatusSpec] instead.
 message StatusSpec {
   // Synced indicates whether time is in sync.
   bool synced = 1;
@@ -27,12 +43,5 @@ message StatusSpec {
   int64 epoch = 2;
   // SyncDisabled indicates if time sync is disabled.
   bool sync_disabled = 3;
-  // SpikeDetected indicates that the last time measurement was discarded by the spike filter.
-  //
-  // A discarded measurement is not applied to the clock at all, so a filter which keeps
-  // rejecting looks exactly like a clock which is never corrected.
-  bool spike_detected = 4;
-  // ConsecutiveSpikes is the number of time measurements discarded in a row by the spike filter.
-  int64 consecutive_spikes = 5;
 }
 
