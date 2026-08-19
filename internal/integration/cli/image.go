@@ -17,7 +17,9 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/siderolabs/talos/internal/integration/base"
+	"github.com/siderolabs/talos/pkg/images"
 	"github.com/siderolabs/talos/pkg/machinery/config/machine"
+	"github.com/siderolabs/talos/pkg/machinery/constants"
 	"github.com/siderolabs/talos/pkg/machinery/version"
 )
 
@@ -204,6 +206,30 @@ func (suite *ImageSuite) TestCacheCreateFlat() {
 
 	assert.DirExistsf(suite.T(), cacheDir+"/blob", "blob directory should exist in the image cache directory")
 	assert.DirExistsf(suite.T(), cacheDir+"/manifests", "manifests directory should exist in the image cache directory")
+}
+
+// TestListTalosContainers verifies that the image pulled for a container declared via a
+// ContainerConfig document is visible through --namespace taloscontainers.
+func (suite *ImageSuite) TestListTalosContainers() {
+	if testing.Short() {
+		suite.T().Skip("skipping in short mode")
+	}
+
+	if suite.Airgapped {
+		suite.T().Skip("skipping test in airgapped mode, the test pulls an image")
+	}
+
+	node := suite.RandomDiscoveredNodeInternalIP()
+	name := "talosctl-it-image-list"
+
+	cleanup := applyTalosContainer(&suite.CLISuite, node, name, images.DefaultSandboxImage, nil, nil)
+	defer cleanup()
+
+	suite.RunAndWaitForMatch(
+		[]string{"image", "list", "--namespace", constants.TalosContainersContainerdNamespace, "--nodes", node},
+		regexp.MustCompile("pause"),
+		talosContainerStartTimeout,
+	)
 }
 
 func init() {

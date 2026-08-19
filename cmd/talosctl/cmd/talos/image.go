@@ -68,6 +68,8 @@ func (flags imageCmdFlagsType) apiNamespace() (common.ContainerdNamespace, error
 		return common.ContainerdNamespace_NS_CRI, nil
 	case "system":
 		return common.ContainerdNamespace_NS_SYSTEM, nil
+	case constants.TalosContainersContainerdNamespace:
+		return common.ContainerdNamespace_NS_TALOSCONTAINERS, nil
 	default:
 		return 0, fmt.Errorf("unsupported namespace %q", flags.namespace)
 	}
@@ -90,8 +92,29 @@ func (flags imageCmdFlagsType) containerdInstance() (*common.ContainerdInstance,
 			Driver:    common.ContainerDriver_CONTAINERD,
 			Namespace: common.ContainerdNamespace_NS_SYSTEM,
 		}, nil
+	case constants.TalosContainersContainerdNamespace:
+		return &common.ContainerdInstance{
+			Driver:    common.ContainerDriver_CONTAINERD,
+			Namespace: common.ContainerdNamespace_NS_TALOSCONTAINERS,
+		}, nil
 	default:
 		return nil, fmt.Errorf("unsupported namespace %q", flags.namespace)
+	}
+}
+
+// containerNamespace resolves the raw containerd namespace and driver used by the container-listing
+// RPCs (containers, logs, stats, restart), which take the namespace as a string directly rather than
+// through the ContainerdNamespace enum used by the image and debug commands.
+func (flags imageCmdFlagsType) containerNamespace() (string, common.ContainerDriver, error) {
+	switch flags.namespace {
+	case "cri":
+		return constants.K8sContainerdNamespace, common.ContainerDriver_CRI, nil
+	case "system":
+		return constants.SystemContainerdNamespace, common.ContainerDriver_CONTAINERD, nil
+	case constants.TalosContainersContainerdNamespace:
+		return constants.TalosContainersContainerdNamespace, common.ContainerDriver_CONTAINERD, nil
+	default:
+		return "", 0, fmt.Errorf("namespace %q is not supported by this command", flags.namespace)
 	}
 }
 
@@ -1048,7 +1071,8 @@ var imageCacheCertGenCmdFlags struct {
 func init() {
 	imageCmd.PersistentFlags().StringVar(
 		&imageCmdFlags.namespace, "namespace", "cri",
-		"namespace to use: \"system\" (etcd and kubelet images), \"cri\" for all Kubernetes workloads, \"inmem\" for in-memory containerd instance",
+		"namespace to use: \"system\" (etcd and kubelet images), \"cri\" for all Kubernetes workloads, \"inmem\" for in-memory containerd instance, \""+
+			constants.TalosContainersContainerdNamespace+"\" for containers declared via ContainerConfig",
 	)
 	addCommand(imageCmd)
 

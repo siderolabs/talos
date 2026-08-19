@@ -30,6 +30,8 @@ func containerdNamespaceHelper(ctx context.Context, ns common.ContainerdNamespac
 		namespaceName = constants.K8sContainerdNamespace
 	case common.ContainerdNamespace_NS_SYSTEM:
 		namespaceName = constants.SystemContainerdNamespace
+	case common.ContainerdNamespace_NS_TALOSCONTAINERS:
+		namespaceName = constants.TalosContainersContainerdNamespace
 	case common.ContainerdNamespace_NS_UNKNOWN:
 		fallthrough
 	default:

@@ -11,14 +11,12 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	"github.com/siderolabs/talos/pkg/machinery/client/multiplex"
-	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
 var restartCmdFlags struct {
-	kubernetesNamespaceFlag
+	containerNamespaceFlag
 }
 
 // restartCmd represents the restart command.
@@ -44,17 +42,9 @@ var restartCmd = &cobra.Command{
 
 		defer clientFactory.Close() //nolint:errcheck
 
-		var (
-			namespace string
-			driver    common.ContainerDriver
-		)
-
-		if restartCmdFlags.kubernetes {
-			namespace = constants.K8sContainerdNamespace
-			driver = common.ContainerDriver_CRI
-		} else {
-			namespace = constants.SystemContainerdNamespace
-			driver = common.ContainerDriver_CONTAINERD
+		namespace, driver, err := restartCmdFlags.resolveContainerNamespace()
+		if err != nil {
+			return err
 		}
 
 		responseChan := multiplex.UnaryViaFactory(
@@ -77,7 +67,7 @@ var restartCmd = &cobra.Command{
 }
 
 func init() {
-	restartCmd.Flags().BoolVarP(&restartCmdFlags.kubernetes, "kubernetes", "k", false, "use the k8s.io containerd namespace")
+	addContainerNamespaceFlags(restartCmd, &restartCmdFlags.containerNamespaceFlag)
 
 	restartCmd.Flags().Bool("use-cri", false, "use the CRI driver")
 	restartCmd.Flags().MarkHidden("use-cri") //nolint:errcheck

@@ -96,6 +96,8 @@ enum ContainerdNamespace {
   NS_UNKNOWN = 0;
   NS_SYSTEM = 1;
   NS_CRI = 2;
+  // NS_TALOSCONTAINERS is the namespace for containers declared via a ContainerConfig document.
+  NS_TALOSCONTAINERS = 3;
 }
 
 message ContainerdInstance {

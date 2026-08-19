@@ -57,6 +57,10 @@ var debugCmd = &cobra.Command{
 
 	Args: cobra.RangeArgs(0, 1),
 	RunE: func(cmd *cobra.Command, args []string) error {
+		if debugCmdFlags.namespace == constants.TalosContainersContainerdNamespace {
+			return fmt.Errorf("talosctl debug does not support the %q namespace", constants.TalosContainersContainerdNamespace)
+		}
+
 		ctx := cmd.Context()
 
 		clientFactory, err := NewClientFactory(ctx, nil)
