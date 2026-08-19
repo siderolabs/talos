@@ -582,6 +582,12 @@ const (
 	// collide with Kubernetes pods nor depend on Kubernetes being configured.
 	TalosContainersContainerdNamespace = "taloscontainers"
 
+	// TalosContainersLogPrefix is the service log name prefix for containers declared via ContainerConfig.
+	//
+	// Keyed by container config, not by instance: successive generations append to one buffer, so restart
+	// history reads as a single continuous log.
+	TalosContainersLogPrefix = TalosContainersContainerdNamespace + "-"
+
 	// CRIContainerdAddress is the path to the CRI containerd socket address.
 	CRIContainerdAddress = "/run/containerd/containerd.sock"
 
