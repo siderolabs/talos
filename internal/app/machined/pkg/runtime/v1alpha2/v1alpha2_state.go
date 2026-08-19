@@ -122,6 +122,7 @@ func NewState() (*State, error) {
 		&block.ZswapStatus{},
 		&containers.ContainerSpec{},
 		&containers.ContainerImageStatus{},
+		&containers.ContainerMountStatus{},
 		&containers.ContainerInstanceSpec{},
 		&containers.ContainerInstanceStatus{},
 		&containers.ContainerLifecycle{},

@@ -48,6 +48,11 @@ func (ctrl *InstanceController) Inputs() []controller.Input {
 		},
 		{
 			Namespace: containers.NamespaceName,
+			Type:      containers.ContainerMountStatusType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: containers.NamespaceName,
 			Type:      containers.ContainerInstanceStatusType,
 			Kind:      controller.InputWeak,
 		},
@@ -180,7 +185,7 @@ func (ctrl *InstanceController) reconcileInstance(
 	ctx context.Context,
 	r controller.Runtime,
 	logger *zap.Logger,
-	spec *containers.ContainerSpec,
+	containerSpec *containers.ContainerSpec,
 	instances []*containers.ContainerInstanceSpec,
 ) (optional.Optional[time.Duration], error) {
 	var currentInstance *containers.ContainerInstanceSpec
@@ -188,13 +193,13 @@ func (ctrl *InstanceController) reconcileInstance(
 		currentInstance = instances[len(instances)-1]
 	}
 
-	containerID := spec.Metadata().ID()
+	containerSpecID := containerSpec.Metadata().ID()
 
 	nextGeneration := uint64(0)
 
 	// Babysit the existing instance until the spec changes.
 	if currentInstance != nil {
-		wasDestroyed, wakeUpAfter, err := ctrl.reconcileExistingInstance(ctx, r, logger, spec, currentInstance)
+		wasDestroyed, wakeUpAfter, err := ctrl.reconcileExistingInstance(ctx, r, logger, containerSpec, currentInstance)
 		if err != nil {
 			return optional.None[time.Duration](), err
 		}
@@ -207,14 +212,14 @@ func (ctrl *InstanceController) reconcileInstance(
 	}
 
 	// No container exists now, but dependencies may be unmet.
-	waitingFor, wakeUpAfter, err := spec.TypedSpec().Ready(ctx, r, containerID)
+	waitingFor, wakeUpAfter, err := containerSpec.TypedSpec().Ready(ctx, r, containerSpecID)
 	if err != nil {
 		return optional.None[time.Duration](), err
 	}
 
 	if len(waitingFor) > 0 {
 		logger.Debug("container is waiting on dependencies",
-			zap.String("container", containerID),
+			zap.String("container", containerSpecID),
 			zap.Strings("waitingFor", waitingFor),
 		)
 
@@ -222,18 +227,21 @@ func (ctrl *InstanceController) reconcileInstance(
 	}
 
 	// We're good to create a new instance.
-	imageDigest, err := containers.GetImageDigest(ctx, r, containerID, spec.TypedSpec().Image.Ref)
+	imageDigest, err := containers.GetImageDigest(ctx, r, containerSpecID, containerSpec.TypedSpec().Image.Ref)
 	if err != nil {
 		return optional.None[time.Duration](), err
 	}
 
-	mounts, _ := containers.ResolveInstanceMounts(spec.TypedSpec().Mounts)
-
-	if err := ctrl.createInstanceSpec(ctx, r, containerID, nextGeneration, spec, imageDigest, mounts); err != nil {
+	resolvedMounts, err := containerSpec.TypedSpec().GetResolvedMounts(ctx, r, containerSpecID)
+	if err != nil {
 		return optional.None[time.Duration](), err
 	}
 
-	logger.Info("container instance created", zap.String("container", containerID), zap.Uint64("generation", nextGeneration), zap.String("image", imageDigest))
+	if err := ctrl.createInstanceSpec(ctx, r, containerSpec, nextGeneration, imageDigest, resolvedMounts); err != nil {
+		return optional.None[time.Duration](), err
+	}
+
+	logger.Info("container instance created", zap.String("container", containerSpecID), zap.Uint64("generation", nextGeneration), zap.String("image", imageDigest))
 
 	return optional.None[time.Duration](), nil
 }
@@ -410,31 +418,31 @@ func (ctrl *InstanceController) checkRestartDue(
 // createInstanceSpec creates a new ContainerInstanceSpec with all fields populated from the spec and resolved values.
 func (ctrl *InstanceController) createInstanceSpec(
 	ctx context.Context,
-	r controller.Runtime,
-	containerID string,
+	runtime controller.Runtime,
+	containerSpec *containers.ContainerSpec,
 	generation uint64,
-	spec *containers.ContainerSpec,
 	digest string,
 	mounts []containers.ResolvedMountSpec,
 ) error {
-	instanceID := containers.InstanceID(containerID, generation)
+	containerSpecID := containerSpec.Metadata().ID()
+	instanceID := containers.InstanceID(containerSpecID, generation)
 
-	return safe.WriterModify(ctx, r,
+	return safe.WriterModify(ctx, runtime,
 		containers.NewContainerInstanceSpec(containers.NamespaceName, instanceID),
 		func(res *containers.ContainerInstanceSpec) error {
 			instanceSpec := res.TypedSpec()
-			instanceSpec.ContainerID = containerID
+			instanceSpec.ContainerID = containerSpecID
 			instanceSpec.Generation = generation
 			instanceSpec.Image = digest
-			instanceSpec.Entrypoint = spec.TypedSpec().Entrypoint
-			instanceSpec.Args = spec.TypedSpec().Args
-			instanceSpec.WorkingDir = spec.TypedSpec().WorkingDir
-			instanceSpec.RunAs = spec.TypedSpec().RunAs
-			instanceSpec.Environment = spec.TypedSpec().Environment
+			instanceSpec.Entrypoint = containerSpec.TypedSpec().Entrypoint
+			instanceSpec.Args = containerSpec.TypedSpec().Args
+			instanceSpec.WorkingDir = containerSpec.TypedSpec().WorkingDir
+			instanceSpec.RunAs = containerSpec.TypedSpec().RunAs
+			instanceSpec.Environment = containerSpec.TypedSpec().Environment
 			instanceSpec.Mounts = mounts
-			instanceSpec.Security = spec.TypedSpec().Security
-			instanceSpec.Network = spec.TypedSpec().Network
-			instanceSpec.Resources = spec.TypedSpec().Resources
+			instanceSpec.Security = containerSpec.TypedSpec().Security
+			instanceSpec.Network = containerSpec.TypedSpec().Network
+			instanceSpec.Resources = containerSpec.TypedSpec().Resources
 
 			return nil
 		},

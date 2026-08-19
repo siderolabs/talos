@@ -77,11 +77,13 @@ type ContainerInstanceSpecSpec struct {
 //gotagsrewrite:gen
 type ResolvedMountSpec struct {
 	Kind string `yaml:"kind" protobuf:"1"`
-	// Source is the host path to bind from; empty for tmpfs.
+	// Source is the host path to bind from; empty for tmpfs and userVolume.
 	Source      string   `yaml:"source,omitempty" protobuf:"2"`
 	Destination string   `yaml:"destination" protobuf:"3"`
 	Size        uint64   `yaml:"size,omitempty" protobuf:"4"`
 	Options     []string `yaml:"options,omitempty" protobuf:"5"`
+	// VolumeID is the resolved userVolume's ID; empty for tmpfs and hostPath.
+	VolumeID string `yaml:"volumeID,omitempty" protobuf:"6"`
 }
 
 // NewContainerInstanceSpec initializes a ContainerInstanceSpec resource.
@@ -207,8 +209,8 @@ func init() {
 //
 // The instance carries a resolved snapshot precisely so this comparison is possible: a running
 // container is never mutated in place, it is replaced.
-func (instanceSpec ContainerInstanceSpecSpec) InSyncWithContainerSpec(ctx context.Context, r controller.Reader, s *ContainerSpecSpec) (bool, error) {
-	imageDigest, err := GetImageDigest(ctx, r, instanceSpec.ContainerID, s.Image.Ref)
+func (instanceSpec ContainerInstanceSpecSpec) InSyncWithContainerSpec(ctx context.Context, r controller.Reader, containerSpec *ContainerSpecSpec) (bool, error) {
+	imageDigest, err := GetImageDigest(ctx, r, instanceSpec.ContainerID, containerSpec.Image.Ref)
 	if err != nil {
 		return false, err
 	}
@@ -217,17 +219,22 @@ func (instanceSpec ContainerInstanceSpecSpec) InSyncWithContainerSpec(ctx contex
 		return false, nil
 	}
 
-	resolvedMounts, mountsReady := ResolveInstanceMounts(s.Mounts)
+	expectedResolvedMounts, err := containerSpec.GetResolvedMounts(ctx, r, instanceSpec.ContainerID)
+	if err != nil {
+		return false, err
+	}
 
-	if !mountsReady {
+	if !MountsResolvedMatchDeclared(expectedResolvedMounts, containerSpec.Mounts) {
+		// Nothing to compare against, and a mount that has gone away is not drift to be fixed by
+		// replacing the instance: it is handled by the container being stopped.
 		return false, nil
 	}
 
-	inSync := ProcessEqual(s, &instanceSpec) &&
-		ResolvedMountsEqual(resolvedMounts, instanceSpec.Mounts) &&
-		SecurityEqual(s.Security, instanceSpec.Security) &&
-		s.Network == instanceSpec.Network &&
-		s.Resources == instanceSpec.Resources
+	inSync := containerSpec.InstanceProcessEqual(instanceSpec) &&
+		ResolvedMountsEqual(expectedResolvedMounts, instanceSpec.Mounts) &&
+		containerSpec.Security.Equal(instanceSpec.Security) &&
+		containerSpec.Network == instanceSpec.Network &&
+		containerSpec.Resources == instanceSpec.Resources
 
 	return inSync, nil
 }
@@ -255,58 +262,6 @@ func GetImageDigest(ctx context.Context, r controller.Reader, containerID, image
 	return imageStatus.TypedSpec().Digest, nil
 }
 
-// ResolveInstanceMounts resolves a container's mounts from the ContainerSpec.
-func ResolveInstanceMounts(mounts []ContainerMountSpec) (resolved []ResolvedMountSpec, ready bool) {
-	ready = true
-
-	for _, mount := range mounts {
-		switch mount.Kind {
-		case MountKindUserVolume:
-			// A userVolume mount needs MountController to learn its real host path, which doesn't
-			// exist yet, so any containers mounting userVolumes will deadlock as not-ready. This
-			// will start working once we complete the mount implementation.
-			ready = false
-		case MountKindTmpfs:
-			resolved = append(resolved, ResolvedMountSpec{
-				Kind:        mount.Kind,
-				Destination: mount.Destination,
-				Size:        mount.Size,
-				Options:     mount.Options,
-			})
-		case MountKindHostPath:
-			resolved = append(resolved, ResolvedMountSpec{
-				Kind:        mount.Kind,
-				Source:      mount.Source,
-				Destination: mount.Destination,
-				Options:     mount.Options,
-			})
-		}
-	}
-
-	return resolved, ready
-}
-
-// ProcessEqual compares the parts of the spec that describe the process itself.
-func ProcessEqual(s *ContainerSpecSpec, i *ContainerInstanceSpecSpec) bool {
-	return slices.Equal(s.Entrypoint, i.Entrypoint) &&
-		slices.Equal(s.Args, i.Args) &&
-		s.WorkingDir == i.WorkingDir &&
-		RunAsEqual(s.RunAs, i.RunAs) &&
-		slices.Equal(s.Environment, i.Environment)
-}
-
-// SecurityEqual compares two security specs field by field, as they carry slices.
-func SecurityEqual(a, b ContainerSecuritySpec) bool {
-	return a.Privileged == b.Privileged &&
-		slices.Equal(a.CapabilitiesAdd, b.CapabilitiesAdd) &&
-		slices.Equal(a.CapabilitiesDrop, b.CapabilitiesDrop)
-}
-
-// RunAsEqual compares two RunAs specs, treating nil UID/GID halves as equal only to each other.
-func RunAsEqual(a, b ContainerRunAsSpec) bool {
-	return Int32PtrEqual(a.UID, b.UID) && Int32PtrEqual(a.GID, b.GID)
-}
-
 // Int32PtrEqual compares two int32 pointers, treating nil as equal only to nil.
 func Int32PtrEqual(a, b *int32) bool {
 	if a == nil || b == nil {
@@ -323,6 +278,7 @@ func ResolvedMountsEqual(a, b []ResolvedMountSpec) bool {
 			x.Source == y.Source &&
 			x.Destination == y.Destination &&
 			x.Size == y.Size &&
+			x.VolumeID == y.VolumeID &&
 			slices.Equal(x.Options, y.Options)
 	})
 }

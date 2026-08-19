@@ -59,7 +59,7 @@ type UserVolumeMount struct {
 	//     Absolute path inside the container's mount namespace.
 	MountDestination string `yaml:"destination"`
 	//   description: |
-	//     Mount options. User volume mounts are read-only by default (`ro`).
+	//     Mount options. User volume mounts are writable by default (`rw`).
 	//   values:
 	//     - ro
 	//     - rw
@@ -98,7 +98,7 @@ type HostPathMount struct {
 	//     Absolute path inside the container's mount namespace.
 	MountDestination string `yaml:"destination"`
 	//   description: |
-	//     Mount options. Host path mounts are read-only by default (`ro`).
+	//     Mount options. Host path mounts are writable by default (`rw`).
 	MountOpts []string `yaml:"options,omitempty"`
 }
 
@@ -229,7 +229,7 @@ func (m *UserVolumeMount) Name() string { return m.VolumeName }
 func (m *UserVolumeMount) Destination() string { return m.MountDestination }
 
 // MountOptions implements config.ContainerUserVolumeMountConfig interface.
-func (m *UserVolumeMount) MountOptions() []string { return normalizeOptions(m.MountOpts) }
+func (m *UserVolumeMount) MountOptions() []string { return normalizeWritableOptions(m.MountOpts) }
 
 // Destination implements config.ContainerTmpfsMountConfig interface.
 func (m *TmpfsMount) Destination() string { return m.MountDestination }
@@ -238,7 +238,7 @@ func (m *TmpfsMount) Destination() string { return m.MountDestination }
 func (m *TmpfsMount) Size() string { return m.MountSize }
 
 // MountOptions implements config.ContainerTmpfsMountConfig interface.
-func (m *TmpfsMount) MountOptions() []string { return normalizeTmpfsOptions(m.MountOpts) }
+func (m *TmpfsMount) MountOptions() []string { return normalizeWritableOptions(m.MountOpts) }
 
 // Source implements config.ContainerHostPathMountConfig interface.
 func (m *HostPathMount) Source() string { return m.MountSource }
@@ -247,28 +247,11 @@ func (m *HostPathMount) Source() string { return m.MountSource }
 func (m *HostPathMount) Destination() string { return m.MountDestination }
 
 // MountOptions implements config.ContainerHostPathMountConfig interface.
-func (m *HostPathMount) MountOptions() []string { return normalizeOptions(m.MountOpts) }
+func (m *HostPathMount) MountOptions() []string { return normalizeWritableOptions(m.MountOpts) }
 
-// normalizeOptions applies the read-only default.
+// normalizeWritableOptions applies the writable default shared by every container mount kind.
 //
-// Mounts are read-only unless the configuration says otherwise, which is the inverse of the OCI
-// default and matches the security posture in the RFD.
-func normalizeOptions(options []string) []string {
-	if slices.Contains(options, "rw") {
-		return slices.DeleteFunc(slices.Clone(options), func(o string) bool { return o == "rw" })
-	}
-
-	if slices.Contains(options, "ro") {
-		return slices.Clone(options)
-	}
-
-	return append(slices.Clone(options), "ro")
-}
-
-// normalizeTmpfsOptions applies the writable default for tmpfs mounts (inverse of normalizeOptions).
-//
-// A tmpfs is private scratch space, not a view onto host or volume state, so it defaults to `rw`;
-// an explicit `ro` is honored, and a redundant explicit `rw` is stripped since it's the default.
-func normalizeTmpfsOptions(options []string) []string {
+// An explicit `ro` is honored, and a redundant explicit `rw` is stripped since it's the default.
+func normalizeWritableOptions(options []string) []string {
 	return slices.DeleteFunc(slices.Clone(options), func(o string) bool { return o == "rw" })
 }

@@ -36,7 +36,7 @@ mounts:
       userVolume:
         name: web-content # Name of the `UserVolumeConfig` document to mount.
         destination: /usr/share/nginx/html # Absolute path inside the container's mount namespace.
-        # Mount options. User volume mounts are read-only by default (`ro`).
+        # Mount options. User volume mounts are writable by default (`rw`).
         options:
             - ro
     - # Mount a tmpfs for scratch space.
@@ -133,7 +133,7 @@ UserVolumeMount mounts a user volume by name.
 |-------|------|-------------|----------|
 |`name` |string |Name of the `UserVolumeConfig` document to mount.  | |
 |`destination` |string |Absolute path inside the container's mount namespace.  | |
-|`options` |[]string |Mount options. User volume mounts are read-only by default (`ro`).  |`ro`<br />`rw`<br />`noexec`<br />`nosuid`<br />`nodev`<br />`noatime`<br />`rbind`<br />`rshared`<br /> |
+|`options` |[]string |Mount options. User volume mounts are writable by default (`rw`).  |`ro`<br />`rw`<br />`noexec`<br />`nosuid`<br />`nodev`<br />`noatime`<br />`rbind`<br />`rshared`<br /> |
 
 
 
@@ -171,7 +171,7 @@ HostPathMount bind-mounts a host path.
 |-------|------|-------------|----------|
 |`source` |string |Absolute path on the host. Must already exist.  | |
 |`destination` |string |Absolute path inside the container's mount namespace.  | |
-|`options` |[]string |Mount options. Host path mounts are read-only by default (`ro`).  | |
+|`options` |[]string |Mount options. Host path mounts are writable by default (`rw`).  | |
 
 
 

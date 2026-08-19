@@ -1421,9 +1421,9 @@
           },
           "type": "array",
           "title": "options",
-          "description": "Mount options. Host path mounts are read-only by default (ro).\n",
-          "markdownDescription": "Mount options. Host path mounts are read-only by default (`ro`).",
-          "x-intellij-html-description": "\u003cp\u003eMount options. Host path mounts are read-only by default (\u003ccode\u003ero\u003c/code\u003e).\u003c/p\u003e\n"
+          "description": "Mount options. Host path mounts are writable by default (rw).\n",
+          "markdownDescription": "Mount options. Host path mounts are writable by default (`rw`).",
+          "x-intellij-html-description": "\u003cp\u003eMount options. Host path mounts are writable by default (\u003ccode\u003erw\u003c/code\u003e).\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,
@@ -1489,9 +1489,9 @@
             "rshared"
           ],
           "title": "options",
-          "description": "Mount options. User volume mounts are read-only by default (ro).\n",
-          "markdownDescription": "Mount options. User volume mounts are read-only by default (`ro`).",
-          "x-intellij-html-description": "\u003cp\u003eMount options. User volume mounts are read-only by default (\u003ccode\u003ero\u003c/code\u003e).\u003c/p\u003e\n"
+          "description": "Mount options. User volume mounts are writable by default (rw).\n",
+          "markdownDescription": "Mount options. User volume mounts are writable by default (`rw`).",
+          "x-intellij-html-description": "\u003cp\u003eMount options. User volume mounts are writable by default (\u003ccode\u003erw\u003c/code\u003e).\u003c/p\u003e\n"
         }
       },
       "additionalProperties": false,

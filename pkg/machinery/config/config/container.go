@@ -51,7 +51,7 @@ type ContainerUserVolumeMountConfig interface {
 	Name() string
 	// Destination inside the container.
 	Destination() string
-	// MountOptions with the read-only default already applied.
+	// MountOptions with the writable default already applied.
 	MountOptions() []string
 }
 
@@ -61,7 +61,7 @@ type ContainerTmpfsMountConfig interface {
 	Destination() string
 	// Size of the tmpfs; empty means the kernel default.
 	Size() string
-	// MountOptions with the read-only default already applied.
+	// MountOptions with the writable default already applied.
 	MountOptions() []string
 }
 
@@ -71,7 +71,7 @@ type ContainerHostPathMountConfig interface {
 	Source() string
 	// Destination inside the container.
 	Destination() string
-	// MountOptions with the read-only default already applied.
+	// MountOptions with the writable default already applied.
 	MountOptions() []string
 }
 

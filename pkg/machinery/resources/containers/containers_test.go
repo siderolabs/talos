@@ -32,6 +32,7 @@ func TestRegisterResource(t *testing.T) {
 		&containers.ContainerImageStatus{},
 		&containers.ContainerInstanceSpec{},
 		&containers.ContainerInstanceStatus{},
+		&containers.ContainerMountStatus{},
 		&containers.ContainerLifecycle{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, res))
@@ -159,6 +160,33 @@ func TestInstanceStatusProtobufRoundTrip(t *testing.T) {
 		Error:       "signal: killed",
 		StartedAt:   time.Unix(1700000000, 0).UTC(),
 		FinishedAt:  time.Unix(1700000123, 0).UTC(),
+	}
+
+	assertRoundTrip(t, status)
+}
+
+// TestMountStatusProtobufRoundTrip guards the protobuf tags on ContainerMountStatusSpec.
+func TestMountStatusProtobufRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	status := containers.NewContainerMountStatus(containers.NamespaceName, "nginx")
+	*status.TypedSpec() = containers.ContainerMountStatusSpec{
+		Ready: true,
+		Mounts: []containers.ResolvedMountSpec{
+			{
+				Kind:        containers.MountKindUserVolume,
+				Source:      "/var/mnt/web-content",
+				Destination: "/usr/share/nginx/html",
+				Options:     []string{"ro"},
+				VolumeID:    "u-web-content",
+			},
+			{
+				Kind:        containers.MountKindTmpfs,
+				Destination: "/tmp",
+				Size:        64 << 20,
+			},
+		},
+		Error: "volume \"u-other\" is not mounted",
 	}
 
 	assertRoundTrip(t, status)

@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
@@ -65,11 +66,11 @@ type ContainerSpecSpec struct {
 // containerID is the owning ContainerSpec resource's ID: the spec itself doesn't carry it.
 //
 // dependsOn.containers is not checked here: it would need the aggregated ContainerStatus, which
-// only arrives with StatusController.
-func (spec ContainerSpecSpec) Ready(ctx context.Context, r controller.Reader, containerID string) ([]string, optional.Optional[time.Duration], error) {
+// only arrives with ContainerStatusController (github.com/siderolabs/talos/issues/14104).
+func (containerSpec ContainerSpecSpec) Ready(ctx context.Context, r controller.Reader, containerID string) ([]string, optional.Optional[time.Duration], error) {
 	var waitingFor []string
 
-	imageDigest, err := GetImageDigest(ctx, r, containerID, spec.Image.Ref)
+	imageDigest, err := GetImageDigest(ctx, r, containerID, containerSpec.Image.Ref)
 	if err != nil {
 		return nil, optional.None[time.Duration](), err
 	}
@@ -78,11 +79,16 @@ func (spec ContainerSpecSpec) Ready(ctx context.Context, r controller.Reader, co
 		waitingFor = append(waitingFor, "image")
 	}
 
-	if _, mountsReady := ResolveInstanceMounts(spec.Mounts); !mountsReady {
+	resolvedMounts, err := containerSpec.GetResolvedMounts(ctx, r, containerID)
+	if err != nil {
+		return nil, optional.None[time.Duration](), err
+	}
+
+	if !MountsResolvedMatchDeclared(resolvedMounts, containerSpec.Mounts) {
 		waitingFor = append(waitingFor, "mounts")
 	}
 
-	unmet, wakeUpAfter, err := spec.DependsOn.Ready(ctx, r)
+	unmet, wakeUpAfter, err := containerSpec.DependsOn.Ready(ctx, r)
 	if err != nil {
 		return nil, optional.None[time.Duration](), err
 	}
@@ -90,6 +96,76 @@ func (spec ContainerSpecSpec) Ready(ctx context.Context, r controller.Reader, co
 	waitingFor = append(waitingFor, unmet...)
 
 	return waitingFor, wakeUpAfter, nil
+}
+
+// GetResolvedMounts returns the mounts MountController has most recently resolved for this
+// container, or nil if it has not written a status yet, or has not marked one ready.
+//
+// This does not check the result against the spec's own declared mounts: the status is written by
+// another controller, so a spec edit is visible here before the resolution catches up, and a caller
+// that cares whether the result is stale must check it separately, e.g. with
+// MountsResolvedMatchDeclared.
+//
+// containerID is the owning ContainerSpec resource's ID: the spec itself doesn't carry it.
+func (containerSpec ContainerSpecSpec) GetResolvedMounts(
+	ctx context.Context,
+	r controller.Reader,
+	containerID string,
+) ([]ResolvedMountSpec, error) {
+	status, err := safe.ReaderGetByID[*ContainerMountStatus](ctx, r, containerID)
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return nil, nil
+		}
+
+		return nil, fmt.Errorf("failed to get mount status %q: %w", containerID, err)
+	}
+
+	if !status.TypedSpec().Ready {
+		return nil, nil
+	}
+
+	return status.TypedSpec().Mounts, nil
+}
+
+// InstanceProcessEqual compares the parts of the spec that describe the process itself.
+func (containerSpec ContainerSpecSpec) InstanceProcessEqual(instanceSpec ContainerInstanceSpecSpec) bool {
+	return slices.Equal(containerSpec.Entrypoint, instanceSpec.Entrypoint) &&
+		slices.Equal(containerSpec.Args, instanceSpec.Args) &&
+		containerSpec.WorkingDir == instanceSpec.WorkingDir &&
+		containerSpec.RunAs.Equal(instanceSpec.RunAs) &&
+		slices.Equal(containerSpec.Environment, instanceSpec.Environment)
+}
+
+// MountsResolvedMatchDeclared reports whether resolved describes the same mounts as declared.
+//
+// nolint: gocyclo
+func MountsResolvedMatchDeclared(resolved []ResolvedMountSpec, declared []ContainerMountSpec) bool {
+	if len(resolved) != len(declared) {
+		return false
+	}
+
+	for i, mount := range declared {
+		r := resolved[i]
+
+		if r.Kind != mount.Kind || r.Destination != mount.Destination || r.Size != mount.Size {
+			return false
+		}
+
+		if !slices.Equal(r.Options, mount.Options) {
+			return false
+		}
+
+		if mount.Kind == MountKindHostPath && r.Source != mount.Source {
+			return false
+		}
+
+		if mount.Kind == MountKindUserVolume && r.VolumeID != mount.VolumeID {
+			return false
+		}
+	}
+
+	return true
 }
 
 // ContainerMountSpec is a resolved mount.
@@ -108,7 +184,7 @@ type ContainerMountSpec struct {
 	Destination string `yaml:"destination" protobuf:"4"`
 	// Size of a tmpfs mount, in bytes; zero means the kernel default.
 	Size uint64 `yaml:"size,omitempty" protobuf:"5"`
-	// Options with the read-only default already applied.
+	// Options with the writable default already applied.
 	Options []string `yaml:"options,omitempty" protobuf:"6"`
 }
 
@@ -129,6 +205,13 @@ type ContainerSecuritySpec struct {
 
 	CapabilitiesAdd  []string `yaml:"capabilitiesAdd,omitempty" protobuf:"2"`
 	CapabilitiesDrop []string `yaml:"capabilitiesDrop,omitempty" protobuf:"3"`
+}
+
+// Equal compares two security specs field by field, as they carry slices.
+func (a ContainerSecuritySpec) Equal(b ContainerSecuritySpec) bool {
+	return a.Privileged == b.Privileged &&
+		slices.Equal(a.CapabilitiesAdd, b.CapabilitiesAdd) &&
+		slices.Equal(a.CapabilitiesDrop, b.CapabilitiesDrop)
 }
 
 // ContainerNetworkSpec is the resolved network configuration.
@@ -285,6 +368,11 @@ func (ContainerDependsOnSpec) NetworkConditionMet(status *network.Status, condit
 type ContainerRunAsSpec struct {
 	UID *int32 `yaml:"uid,omitempty" protobuf:"1"`
 	GID *int32 `yaml:"gid,omitempty" protobuf:"2"`
+}
+
+// Equal compares two RunAs specs, treating nil UID/GID halves as equal only to each other.
+func (a ContainerRunAsSpec) Equal(b ContainerRunAsSpec) bool {
+	return Int32PtrEqual(a.UID, b.UID) && Int32PtrEqual(a.GID, b.GID)
 }
 
 // ContainerImageSpec is a resolved container image reference.
