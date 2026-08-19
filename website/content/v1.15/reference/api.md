@@ -416,6 +416,7 @@ description: Talos gRPC API reference.
     - [ContainerInstanceSpecSpec](#talos.resource.definitions.containers.ContainerInstanceSpecSpec)
     - [ContainerInstanceStatusSpec](#talos.resource.definitions.containers.ContainerInstanceStatusSpec)
     - [ContainerMountSpec](#talos.resource.definitions.containers.ContainerMountSpec)
+    - [ContainerMountStatusSpec](#talos.resource.definitions.containers.ContainerMountStatusSpec)
     - [ContainerNetworkSpec](#talos.resource.definitions.containers.ContainerNetworkSpec)
     - [ContainerResourcesSpec](#talos.resource.definitions.containers.ContainerResourcesSpec)
     - [ContainerRunAsSpec](#talos.resource.definitions.containers.ContainerRunAsSpec)
@@ -7429,7 +7430,24 @@ Exactly one of VolumeID, Tmpfs or HostPath describes the source; Kind says which
 | source | [string](#string) |  | Source is the host path for a hostPath mount. |
 | destination | [string](#string) |  | Destination inside the container. |
 | size | [uint64](#uint64) |  | Size of a tmpfs mount, in bytes; zero means the kernel default. |
-| options | [string](#string) | repeated | Options with the read-only default already applied. |
+| options | [string](#string) | repeated | Options with the writable default already applied. |
+
+
+
+
+
+
+<a name="talos.resource.definitions.containers.ContainerMountStatusSpec"></a>
+
+### ContainerMountStatusSpec
+ContainerMountStatusSpec is the spec for ContainerMountStatus.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| ready | [bool](#bool) |  | Ready is true once every mount the container declares is available. |
+| mounts | [ResolvedMountSpec](#talos.resource.definitions.containers.ResolvedMountSpec) | repeated | Mounts are the resolved mounts, with host source paths filled in. Only meaningful when Ready. |
+| error | [string](#string) |  | Error describes why the mounts are not ready. |
 
 
 
@@ -7538,10 +7556,11 @@ ResolvedMountSpec is a mount with its host-side source resolved.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | kind | [string](#string) |  |  |
-| source | [string](#string) |  | Source is the host path to bind from; empty for tmpfs. |
+| source | [string](#string) |  | Source is the host path to bind from; empty for tmpfs and userVolume. |
 | destination | [string](#string) |  |  |
 | size | [uint64](#uint64) |  |  |
 | options | [string](#string) | repeated |  |
+| volume_id | [string](#string) |  | VolumeID is the resolved userVolume's ID; empty for tmpfs and hostPath. |
 
 
 

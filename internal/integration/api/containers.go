@@ -10,6 +10,8 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"math/rand"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -25,8 +27,10 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
 	"github.com/siderolabs/talos/pkg/machinery/client"
 	configcontainer "github.com/siderolabs/talos/pkg/machinery/config/config"
+	blockcfg "github.com/siderolabs/talos/pkg/machinery/config/types/block"
 	containercfg "github.com/siderolabs/talos/pkg/machinery/config/types/container"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 )
 
@@ -43,6 +47,18 @@ const (
 
 // containerStartTimeout covers an image pull on a cold node plus the controller chain.
 const containerStartTimeout = 5 * time.Minute
+
+// To help track finalizers.
+const containerMountControllerName = "containers.MountController"
+
+// containerMountRequestID builds the ID of the volume mount request, and so of the resulting
+// block.VolumeMountStatus, for one container mounting one user volume.
+//
+// Per container rather than per volume, which is what lets two containers hold the same volume
+// independently.
+func containerMountRequestID(containerName, volumeName string) string {
+	return containerMountControllerName + "/" + containerName + "/" + constants.UserVolumePrefix + volumeName
+}
 
 // ContainersSuite verifies containers declared via ContainerConfig.
 type ContainersSuite struct {
@@ -602,8 +618,8 @@ func (suite *ContainersSuite) TestHostPathMount() {
 
 	suite.Assert().Contains(logs, "MOUNTED", "host path was not mounted into the container")
 
-	// Host path mounts default to ro.
-	suite.Assert().Contains(logs, "READONLY", "host path mount is writable but no rw option was given")
+	// Host path mounts default to rw.
+	suite.Assert().Contains(logs, "WRITABLE", "host path mount is read-only despite no ro option being given")
 }
 
 // TestDependsOnPaths verifies that a container declaring dependsOn.paths waits for the path to exist
@@ -681,7 +697,6 @@ func (suite *ContainersSuite) TestDependsOnPaths() {
 
 		suite.T().Logf("starting container %q to create %s", writer, marker)
 
-		// rw, unlike the defaulted-to-ro mount the host path test asserts.
 		const writerMountPoint = "/hostvar"
 
 		writerDoc := suite.shellContainer(writer,
@@ -691,7 +706,6 @@ func (suite *ContainersSuite) TestDependsOnPaths() {
 				HostPathMount: &containercfg.HostPathMount{
 					MountSource:      "/var",
 					MountDestination: writerMountPoint,
-					MountOpts:        []string{"rw"},
 				},
 			},
 		}
@@ -770,6 +784,166 @@ func (suite *ContainersSuite) TestLogs() {
 	}
 }
 
+// TestContainerUserVolumeMount covers a container mounting a user volume: the volume is requested and
+// held while the container runs, the resolved host path is a working mount inside the container, and
+// the hold is given back once the container is gone.
+func (suite *ContainersSuite) TestContainerUserVolumeMount() {
+	ctx, name, node := suite.setupContainer("uservolume")
+	volumeName := suite.setupUserVolume(ctx, node, "uservol")
+
+	const destination = "/mnt/data"
+
+	// The write is what proves the resolved host path is really mounted here: the resource assertions
+	// below only show what the controllers agreed on, not what the container can reach. Parked with
+	// sleep afterwards because a container that exits is restarted, which would race the assertion
+	// that it is running.
+	doc := suite.shellContainer(name,
+		"echo volume-ok > "+destination+"/probe && cat "+destination+"/probe && sleep 3600")
+	doc.MountsConfig = []containercfg.ContainerMount{
+		{
+			UserVolumeMount: &containercfg.UserVolumeMount{
+				VolumeName:       volumeName,
+				MountDestination: destination,
+			},
+		},
+	}
+
+	suite.applyContainers(ctx, doc)
+
+	// The host path is only knowable once the volume is actually mounted, which is what the mount
+	// status reports.
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, name,
+		func(status *containers.ContainerMountStatus, asrt *assert.Assertions) {
+			asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
+
+			if !asrt.Len(status.TypedSpec().Mounts, 1) {
+				return
+			}
+
+			asrt.Equal(filepath.Join(constants.UserVolumeMountPoint, volumeName), status.TypedSpec().Mounts[0].Source)
+			asrt.Equal(destination, status.TypedSpec().Mounts[0].Destination)
+		})
+
+	suite.assertContainerLogged(ctx, name, "volume-ok")
+
+	// The mount gate is what was blocking this before the controller existed.
+	suite.assertContainerRunning(ctx, name, "with the user volume mounted")
+
+	requestID := containerMountRequestID(name, volumeName)
+
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, requestID,
+		func(request *block.VolumeMountRequest, asrt *assert.Assertions) {
+			asrt.False(request.TypedSpec().ReadOnly, "volume was requested read-only despite the rw default")
+		})
+
+	// The hold: the finalizer on the mount status is what stops the volume being unmounted from under
+	// the running container.
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, requestID,
+		func(status *block.VolumeMountStatus, asrt *assert.Assertions) {
+			asrt.Equal(filepath.Join(constants.UserVolumeMountPoint, volumeName), status.TypedSpec().Target)
+			asrt.True(status.Metadata().Finalizers().Has(containerMountControllerName),
+				"the mount is not held for the container, finalizers: %v", status.Metadata().Finalizers())
+		})
+
+	suite.T().Logf("removing container config %q", name)
+
+	suite.RemoveMachineConfigDocumentsByName(ctx, containercfg.ContainerConfigKind, name)
+
+	// The hold has to be given back, or tearing the volume down would block on our finalizer.
+	rtestutils.AssertNoResource[*containers.ContainerMountStatus](ctx, suite.T(), suite.Client.COSI, name)
+	rtestutils.AssertNoResource[*block.VolumeMountRequest](ctx, suite.T(), suite.Client.COSI, requestID)
+
+	suite.T().Logf("removing user volume %q", volumeName)
+
+	suite.RemoveMachineConfigDocumentsByName(ctx, blockcfg.UserVolumeConfigKind, volumeName)
+
+	// And the volume itself is then really unmounted, which is only possible because the hold was
+	// released above.
+	rtestutils.AssertNoResource[*block.MountStatus](ctx, suite.T(), suite.Client.COSI,
+		constants.UserVolumePrefix+volumeName)
+}
+
+// TestUserVolumeMountWritableByDefault verifies that a user volume mounted without options is
+// writable, both as requested of the block subsystem and as the container finds it.
+func (suite *ContainersSuite) TestUserVolumeMountWritableByDefault() {
+	ctx, name, node := suite.setupContainer("volume-rw")
+	volumeName := suite.setupUserVolume(ctx, node, "volrw")
+
+	const destination = "/mnt/data"
+
+	// The destination is checked first: the image does not ship it, so a mount that never happened
+	// would make the write fail and read as READONLY, passing this test for the wrong reason.
+	doc := suite.shellContainer(name,
+		"[ -d "+destination+" ] || { echo NOTMOUNTED; exit 0; }; "+
+			"touch "+destination+"/probe 2>/dev/null && echo WRITABLE || echo READONLY")
+	doc.MountsConfig = []containercfg.ContainerMount{
+		{
+			UserVolumeMount: &containercfg.UserVolumeMount{
+				VolumeName:       volumeName,
+				MountDestination: destination,
+			},
+		},
+	}
+
+	suite.applyContainers(ctx, doc)
+
+	logs := suite.assertContainerLogged(ctx, name, "READONLY", "WRITABLE", "NOTMOUNTED")
+
+	suite.Assert().NotContains(logs, "NOTMOUNTED", "the user volume was not mounted into the container")
+	suite.Assert().Contains(logs, "WRITABLE", "user volume mount is read-only despite no ro option being given")
+
+	// The other half of the contract: writable has to reach the block subsystem as well, so that this
+	// container counts as a writable holder of the volume.
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, containerMountRequestID(name, volumeName),
+		func(request *block.VolumeMountRequest, asrt *assert.Assertions) {
+			asrt.False(request.TypedSpec().ReadOnly, "volume %q was requested read-only", volumeName)
+		})
+}
+
+// TestUserVolumeMountGate verifies that a container whose volume has not been declared is withheld,
+// and starts once the volume shows up.
+//
+// The pause image is used because it is already on every node, so nothing here waits on a pull; what
+// is being timed is the gate, not the registry.
+func (suite *ContainersSuite) TestUserVolumeMountGate() {
+	ctx, name, node := suite.setupContainer("volume-gate")
+
+	// Named but not declared: the volume config is applied only further down.
+	volumeName := fmt.Sprintf("itv-gate-%04x", rand.Int31())
+
+	doc := suite.newContainer(name, containerPauseImage)
+	doc.MountsConfig = []containercfg.ContainerMount{
+		{
+			UserVolumeMount: &containercfg.UserVolumeMount{
+				VolumeName:       volumeName,
+				MountDestination: "/mnt/data",
+			},
+		},
+	}
+
+	suite.applyContainers(ctx, doc)
+
+	suite.T().Logf("verifying container %q waits for the undeclared volume %q", name, volumeName)
+
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, name,
+		func(status *containers.ContainerMountStatus, asrt *assert.Assertions) {
+			asrt.False(status.TypedSpec().Ready, "mounts are ready without the volume being declared")
+			asrt.Contains(status.TypedSpec().Error, volumeName)
+		})
+
+	// The user-visible half of the gate: an unresolvable mount withholds the container itself.
+	suite.assertNoInstance(ctx, name)
+
+	suite.declareUserVolume(ctx, node, volumeName)
+
+	rtestutils.AssertResource(ctx, suite.T(), suite.Client.COSI, name,
+		func(status *containers.ContainerMountStatus, asrt *assert.Assertions) {
+			asrt.True(status.TypedSpec().Ready, "error: %q", status.TypedSpec().Error)
+		})
+
+	suite.assertContainerRunning(ctx, name, "once the volume was declared")
+}
+
 // setupContainer returns a node-scoped context and a container name unique to this test, and registers
 // removal of that container's config. Registering the cleanup here rather than after the container is
 // applied means a failure part-way through does not leave the container running for the rest of the
@@ -790,6 +964,41 @@ func (suite *ContainersSuite) setupContainer(purpose string) (context.Context, s
 	})
 
 	return ctx, name, node
+}
+
+// setupUserVolume declares a user volume unique to this test and returns its name.
+//
+// Directory-backed, so it needs no spare disk and these tests run on any cluster, unlike the
+// disk-provisioned volumes in the volumes suite.
+func (suite *ContainersSuite) setupUserVolume(ctx context.Context, node, purpose string) string {
+	// Kept short deliberately: a user volume name becomes a partition label, so it is bounded, unlike
+	// the container config names the other tests derive from a timestamp.
+	name := fmt.Sprintf("itv-%s-%04x", purpose, rand.Int31())
+
+	suite.declareUserVolume(ctx, node, name)
+
+	return name
+}
+
+// declareUserVolume applies a directory-backed user volume by name, and registers its removal.
+//
+// Separate from setupUserVolume so that a test can name a volume first and declare it later, which is
+// what covers a container waiting on a volume that does not exist yet.
+func (suite *ContainersSuite) declareUserVolume(ctx context.Context, node, name string) {
+	suite.T().Logf("declaring user volume %q on node %s", name, node)
+
+	doc := blockcfg.NewUserVolumeConfigV1Alpha1()
+	doc.MetaName = name
+	doc.VolumeType = new(block.VolumeTypeDirectory)
+
+	suite.T().Cleanup(func() {
+		// suite.ctx is likely canceled by the time this runs.
+		cleanupCtx := client.WithNode(context.Background(), node)
+
+		suite.RemoveMachineConfigDocumentsByName(cleanupCtx, blockcfg.UserVolumeConfigKind, name)
+	})
+
+	suite.PatchMachineConfig(ctx, doc)
 }
 
 // newContainer builds a ContainerConfig document.

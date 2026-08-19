@@ -18,6 +18,7 @@ import (
 
 	containersctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/containers"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/ctest"
+	"github.com/siderolabs/talos/pkg/machinery/resources/block"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/network"
 	timeres "github.com/siderolabs/talos/pkg/machinery/resources/time"
@@ -55,6 +56,7 @@ func TestInstanceSuite(t *testing.T) {
 			Timeout: 15 * time.Second,
 			AfterSetup: func(suite *ctest.DefaultSuite) {
 				suite.Require().NoError(suite.Runtime().RegisterController(&containersctrl.InstanceController{}))
+				suite.Require().NoError(suite.Runtime().RegisterController(&containersctrl.MountController{}))
 			},
 		},
 	})
@@ -186,6 +188,11 @@ func (suite *InstanceSuite) SetupTest() {
 	suite.DefaultSuite.SetupTest()
 
 	suite.clockGeneration = 0
+
+	// MountController treats a missing barrier as the node going down and does nothing, so nothing
+	// would ever become ready without it.
+	suite.Require().NoError(suite.State().Create(suite.Ctx(),
+		containers.NewContainerLifecycle(containers.NamespaceName, containers.ContainerLifecycleID)))
 }
 
 func (suite *InstanceSuite) TestNoInstanceUntilImageReady() {
@@ -473,10 +480,44 @@ func (suite *InstanceSuite) TestUserVolumeMountStaysPending() {
 	})
 	suite.markImageReady()
 
-	// There is no MountController yet to resolve the volume's host path, so the container never
-	// becomes ready.
+	// The volume's host path is only known once it is actually mounted, so the container waits.
 	suite.tick()
 	suite.assertNoInstance(0)
+}
+
+// TestStartsOnceUserVolumeIsMounted is the other half: the container starts once the volume is
+// mounted, with the resolved host path on the instance it runs from.
+func (suite *InstanceSuite) TestStartsOnceUserVolumeIsMounted() {
+	suite.createSpec(func(spec *containers.ContainerSpecSpec) {
+		spec.Mounts = []containers.ContainerMountSpec{
+			{
+				Kind:        containers.MountKindUserVolume,
+				VolumeID:    "u-web-content",
+				Destination: "/usr/share/nginx/html",
+			},
+		}
+	})
+	suite.markImageReady()
+
+	requestID := "containers.MountController/" + testContainer + "/u-web-content"
+
+	ctest.AssertResource(suite, requestID, func(*block.VolumeMountRequest, *assert.Assertions) {})
+
+	mountStatus := block.NewVolumeMountStatus(block.NamespaceName, requestID)
+	mountStatus.TypedSpec().VolumeID = "u-web-content"
+	mountStatus.TypedSpec().Requester = "containers.MountController"
+	mountStatus.TypedSpec().Target = "/var/mnt/web-content"
+
+	suite.Require().NoError(suite.State().Create(suite.Ctx(), mountStatus))
+
+	ctest.AssertResource(suite, containers.InstanceID(testContainer, 0), func(instance *containers.ContainerInstanceSpec, asrt *assert.Assertions) {
+		if !asrt.Len(instance.TypedSpec().Mounts, 1) {
+			return
+		}
+
+		asrt.Equal("/var/mnt/web-content", instance.TypedSpec().Mounts[0].Source)
+		asrt.Equal("/usr/share/nginx/html", instance.TypedSpec().Mounts[0].Destination)
+	})
 }
 
 // TestResolvesTmpfsAndHostPathMounts covers the mount kinds that need no MountController.

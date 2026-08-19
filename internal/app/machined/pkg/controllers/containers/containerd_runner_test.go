@@ -7,8 +7,8 @@ package containers_test
 import (
 	"testing"
 
+	specs "github.com/opencontainers/runtime-spec/specs-go"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	containersctrl "github.com/siderolabs/talos/internal/app/machined/pkg/controllers/containers"
 	"github.com/siderolabs/talos/pkg/machinery/resources/containers"
@@ -87,72 +87,96 @@ func TestParseNumericUser(t *testing.T) {
 	}
 }
 
+// TestMountsResolvedToOCI covers the translation of every resolved mount kind.
+//
+// Every kind has to be handled: a kind that falls through is dropped silently, and the container then
+// runs without a mount it declared, which is only visible once something inside it looks for the
+// destination.
 func TestMountsResolvedToOCI(t *testing.T) {
-	tests := []struct {
-		name  string
-		input []containers.ResolvedMountSpec
-		check func(t *testing.T, mounts any)
+	t.Parallel()
+
+	for _, test := range []struct {
+		name     string
+		mounts   []containers.ResolvedMountSpec
+		expected []specs.Mount
 	}{
 		{
-			name:  "empty mounts",
-			input: []containers.ResolvedMountSpec{},
-			check: func(t *testing.T, mounts any) {
-				assert.Nil(t, mounts)
-			},
+			name: "none",
 		},
 		{
-			name: "tmpfs mount",
-			input: []containers.ResolvedMountSpec{
+			name: "tmpfs with a size",
+			mounts: []containers.ResolvedMountSpec{
 				{
 					Kind:        containers.MountKindTmpfs,
-					Destination: "/tmp",
-					Size:        1024 * 1024,
-					Options:     []string{"noexec"},
+					Destination: "/scratch",
+					Size:        1024,
 				},
 			},
-			check: func(t *testing.T, mounts any) {
-				// Just verify it's not nil and has 1 element
-				require.NotNil(t, mounts)
-				// Can't easily introspect the mount without importing specs
+			expected: []specs.Mount{
+				{
+					Type:        "tmpfs",
+					Source:      "tmpfs",
+					Destination: "/scratch",
+					Options:     []string{"nosuid", "nodev", "size=1024"},
+				},
 			},
 		},
 		{
-			name: "hostpath mount",
-			input: []containers.ResolvedMountSpec{
+			name: "host path, read-only",
+			mounts: []containers.ResolvedMountSpec{
 				{
 					Kind:        containers.MountKindHostPath,
-					Source:      "/host/path",
-					Destination: "/container/path",
+					Source:      "/var/log",
+					Destination: "/host-log",
 					Options:     []string{"ro"},
 				},
 			},
-			check: func(t *testing.T, mounts any) {
-				require.NotNil(t, mounts)
+			expected: []specs.Mount{
+				{
+					Type:        "bind",
+					Source:      "/var/log",
+					Destination: "/host-log",
+					Options:     []string{"rbind", "ro"},
+				},
 			},
 		},
 		{
-			name: "mixed mounts",
-			input: []containers.ResolvedMountSpec{
+			// The source is the path the volume is mounted at, filled in by MountController.
+			name: "user volume",
+			mounts: []containers.ResolvedMountSpec{
 				{
-					Kind:        containers.MountKindTmpfs,
-					Destination: "/tmp",
-				},
-				{
-					Kind:        containers.MountKindHostPath,
-					Source:      "/host/data",
-					Destination: "/data",
+					Kind:        containers.MountKindUserVolume,
+					Source:      "/var/mnt/data",
+					Destination: "/mnt/data",
 				},
 			},
-			check: func(t *testing.T, mounts any) {
-				require.NotNil(t, mounts)
+			expected: []specs.Mount{
+				{
+					Type:        "bind",
+					Source:      "/var/mnt/data",
+					Destination: "/mnt/data",
+					Options:     []string{"rbind"},
+				},
 			},
 		},
-	}
+		{
+			name: "all kinds keep their declared order",
+			mounts: []containers.ResolvedMountSpec{
+				{Kind: containers.MountKindUserVolume, Source: "/var/mnt/data", Destination: "/mnt/data"},
+				{Kind: containers.MountKindTmpfs, Destination: "/scratch"},
+				{Kind: containers.MountKindHostPath, Source: "/var/log", Destination: "/host-log"},
+			},
+			expected: []specs.Mount{
+				{Type: "bind", Source: "/var/mnt/data", Destination: "/mnt/data", Options: []string{"rbind"}},
+				{Type: "tmpfs", Source: "tmpfs", Destination: "/scratch", Options: []string{"nosuid", "nodev"}},
+				{Type: "bind", Source: "/var/log", Destination: "/host-log", Options: []string{"rbind"}},
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			mounts := containersctrl.MountsResolvedToOCI(tt.input)
-			tt.check(t, mounts)
+			assert.Equal(t, test.expected, containersctrl.MountsResolvedToOCI(test.mounts))
 		})
 	}
 }

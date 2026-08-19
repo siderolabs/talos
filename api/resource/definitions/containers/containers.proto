@@ -90,8 +90,18 @@ message ContainerMountSpec {
   string destination = 4;
   // Size of a tmpfs mount, in bytes; zero means the kernel default.
   uint64 size = 5;
-  // Options with the read-only default already applied.
+  // Options with the writable default already applied.
   repeated string options = 6;
+}
+
+// ContainerMountStatusSpec is the spec for ContainerMountStatus.
+message ContainerMountStatusSpec {
+  // Ready is true once every mount the container declares is available.
+  bool ready = 1;
+  // Mounts are the resolved mounts, with host source paths filled in. Only meaningful when Ready.
+  repeated ResolvedMountSpec mounts = 2;
+  // Error describes why the mounts are not ready.
+  string error = 3;
 }
 
 // ContainerNetworkSpec is the resolved network configuration.
@@ -144,10 +154,12 @@ message ContainerSpecSpec {
 // ResolvedMountSpec is a mount with its host-side source resolved.
 message ResolvedMountSpec {
   string kind = 1;
-  // Source is the host path to bind from; empty for tmpfs.
+  // Source is the host path to bind from; empty for tmpfs and userVolume.
   string source = 2;
   string destination = 3;
   uint64 size = 4;
   repeated string options = 5;
+  // VolumeID is the resolved userVolume's ID; empty for tmpfs and hostPath.
+  string volume_id = 6;
 }
 

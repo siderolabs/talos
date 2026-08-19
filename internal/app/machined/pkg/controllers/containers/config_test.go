@@ -128,8 +128,8 @@ func (suite *ConfigSuite) TestResolvesMounts() {
 
 		asrt.Equal(containers.MountKindHostPath, mounts[3].Kind)
 		asrt.Equal("/dev", mounts[3].Source)
-		// Read-only by default.
-		asrt.Equal([]string{"ro"}, mounts[3].Options)
+		// Writable by default.
+		asrt.NotContains(mounts[3].Options, "ro")
 	})
 }
 

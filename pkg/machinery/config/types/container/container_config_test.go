@@ -88,7 +88,6 @@ mounts:
   - userVolume:
       name: director-data
       destination: /var/lib/director
-      options: [rw]
   - tmpfs:
       destination: /tmp
       size: 64MiB
@@ -143,7 +142,7 @@ dependsOn:
 	mounts := cfg.Mounts()
 	require.Len(t, mounts, 3)
 
-	// rw is honored, and stripped from the option list handed downstream.
+	// A user volume with no options is writable by default.
 	uv, ok := mounts[0].UserVolume().Get()
 	require.True(t, ok)
 	assert.Equal(t, "director-data", uv.Name())
@@ -155,10 +154,10 @@ dependsOn:
 	require.True(t, ok)
 	assert.NotContains(t, tmpfs.MountOptions(), "ro")
 
-	// A mount with no options is read-only by default.
+	// A host path with no options is writable by default.
 	hp, ok := mounts[2].HostPath().Get()
 	require.True(t, ok)
-	assert.Equal(t, []string{"ro"}, hp.MountOptions())
+	assert.NotContains(t, hp.MountOptions(), "ro")
 }
 
 func TestContainerConfigValidationErrors(t *testing.T) {

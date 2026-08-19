@@ -256,6 +256,7 @@ func (ctrl *Controller) Run(ctx context.Context, drainer *runtime.Drainer) error
 		&containerctrls.ImageController{
 			State: ctrl.v1alpha1Runtime.State().V1Alpha2().Resources(),
 		},
+		&containerctrls.MountController{},
 		&containerctrls.InstanceController{},
 		&containerctrls.RuntimeController{
 			Runtime: ctrl.v1alpha1Runtime,
