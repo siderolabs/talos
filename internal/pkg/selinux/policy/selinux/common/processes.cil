@@ -130,9 +130,13 @@
 ; allow reading cgroup info
 (allow any_p cgroup_t (fs_classes (ro)))
 
-; ; cilium-agent
-; (allow any_p self (perf_event (all)))
-; (allow any_p bpf_t (fs_classes (rw)))
+; cilium-agent
+(allow pod_p self (perf_event (all)))
+; bpffs for pinning BPF objects
+(allow pod_p bpf_t (fs_classes (rw)))
+; nsenter from Cilium's apply-sysctl-overwrites
+; Actually does not find sysctl directories and exits
+(allow pod_t sandboxd_t (fs_classes (ro)))
 
 ; fio
 (allow any_p self (shm (all)))
