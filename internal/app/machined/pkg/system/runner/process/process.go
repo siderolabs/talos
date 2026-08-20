@@ -5,6 +5,7 @@
 package process
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/fs"
@@ -28,7 +29,6 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/v1alpha1/platform"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/internal/lastlog"
 	"github.com/siderolabs/talos/internal/pkg/cgroup"
@@ -41,19 +41,14 @@ type processRunner struct {
 	args  *runner.Args
 	opts  *runner.Options
 	debug bool
-
-	stop    chan struct{}
-	stopped chan struct{}
 }
 
 // NewRunner creates runner.Runner that runs a process on the host.
 func NewRunner(debug bool, args *runner.Args, setters ...runner.Option) runner.Runner {
 	r := &processRunner{
-		args:    args,
-		opts:    runner.DefaultOptions(),
-		debug:   debug,
-		stop:    make(chan struct{}),
-		stopped: make(chan struct{}),
+		args:  args,
+		opts:  runner.DefaultOptions(),
+		debug: debug,
 	}
 
 	for _, setter := range setters {
@@ -69,22 +64,11 @@ func (p *processRunner) Open() error {
 }
 
 // Run implements the Runner interface.
-func (p *processRunner) Run(eventSink events.Recorder, pidRecorder pid.Recorder) error {
-	defer close(p.stopped)
-
-	return p.run(eventSink, pidRecorder)
-}
-
-// Stop implements the Runner interface.
-func (p *processRunner) Stop() error {
-	close(p.stop)
-
-	<-p.stopped
-
-	p.stop = make(chan struct{})
-	p.stopped = make(chan struct{})
-
-	return nil
+//
+// A host process's exit code is not recovered from the reaper, so how it ended is carried by the
+// error rather than by Status.ExitCode.
+func (p *processRunner) Run(ctx context.Context, eventSink events.Recorder, onStart runner.OnStart) (runner.Status, error) {
+	return p.run(ctx, eventSink, onStart)
 }
 
 // Close implements the Runner interface.
@@ -415,10 +399,12 @@ func setSchedulingPolicy(p *processRunner, pid int, schedulingPolicy uint) error
 }
 
 //nolint:gocyclo
-func (p *processRunner) run(eventSink events.Recorder, pidRecorder pid.Recorder) error {
+func (p *processRunner) run(ctx context.Context, eventSink events.Recorder, onStart runner.OnStart) (runner.Status, error) {
+	var status runner.Status
+
 	cg, err := cgroup.CreateCgroup(p.opts.CgroupPath)
 	if err != nil {
-		return fmt.Errorf("error creating cgroup: %w", err)
+		return status, fmt.Errorf("error creating cgroup: %w", err)
 	}
 
 	defer func() {
@@ -432,13 +418,13 @@ func (p *processRunner) run(eventSink events.Recorder, pidRecorder pid.Recorder)
 
 	cmdWrapper, err := p.build(&lastLog)
 	if err != nil {
-		return fmt.Errorf("error building command: %w", err)
+		return status, fmt.Errorf("error building command: %w", err)
 	}
 
 	defer cmdWrapper.afterStart()
 
 	if p.opts.Sandbox != nil {
-		return p.runInSandbox(eventSink, pidRecorder, &cmdWrapper, &lastLog)
+		return p.runInSandbox(ctx, eventSink, onStart, &cmdWrapper, &lastLog)
 	}
 
 	notifyCh := make(chan reaper.ProcessInfo, 8)
@@ -450,21 +436,17 @@ func (p *processRunner) run(eventSink events.Recorder, pidRecorder pid.Recorder)
 
 	pid, err := cmdWrapper.launcher.Launch(&cmdWrapper)
 	if err != nil {
-		return fmt.Errorf("error starting process: %w", err)
+		return status, fmt.Errorf("error starting process: %w", err)
 	}
 
-	if err := pidRecorder(p.args.ID, int32(pid), false); err != nil {
-		return fmt.Errorf("recording pid: %w", err)
-	}
+	status.Started = true
 
-	defer func() {
-		if err := pidRecorder(p.args.ID, int32(pid), true); err != nil {
-			log.Printf("error clearing pid: %v", err)
-		}
-	}()
+	if onStart != nil {
+		onStart(int32(pid))
+	}
 
 	if err := applyProperties(p, pid); err != nil {
-		return err
+		return status, err
 	}
 
 	cmdWrapper.afterStart()
@@ -473,7 +455,7 @@ func (p *processRunner) run(eventSink events.Recorder, pidRecorder pid.Recorder)
 
 	process, err := os.FindProcess(pid)
 	if err != nil {
-		return fmt.Errorf("could not find process: %w", err)
+		return status, fmt.Errorf("could not find process: %w", err)
 	}
 
 	waitCh := make(chan error)
@@ -489,8 +471,8 @@ func (p *processRunner) run(eventSink events.Recorder, pidRecorder pid.Recorder)
 			err = fmt.Errorf("%w (last log %q)", err, lastLog.GetLastLog())
 		}
 
-		return err
-	case <-p.stop:
+		return status, err
+	case <-ctx.Done():
 		// graceful stop the service
 		eventSink(events.StateStopping, "Sending SIGTERM to %s", p)
 
@@ -501,7 +483,7 @@ func (p *processRunner) run(eventSink events.Recorder, pidRecorder pid.Recorder)
 	select {
 	case <-waitCh:
 		// stopped process exited
-		return nil
+		return status, nil
 	case <-time.After(p.opts.GracefulShutdownTimeout):
 		// kill the process
 		eventSink(events.StateStopping, "Sending SIGKILL to %s", p)
@@ -513,7 +495,7 @@ func (p *processRunner) run(eventSink events.Recorder, pidRecorder pid.Recorder)
 	// wait for process to terminate
 	<-waitCh
 
-	return nil
+	return status, nil
 }
 
 func (p *processRunner) String() string {
@@ -525,16 +507,19 @@ func (p *processRunner) String() string {
 //
 //nolint:gocyclo
 func (p *processRunner) runInSandbox(
+	ctx context.Context,
 	eventSink events.Recorder,
-	pidRecorder pid.Recorder,
+	onStart runner.OnStart,
 	cmdWrapper *commandWrapper,
 	lastLog *lastlog.Writer,
-) error {
+) (runner.Status, error) {
+	var status runner.Status
+
 	// Resolve the launcher fresh on every (re)launch so that a recreated sandbox
 	// namespace is picked up after the previous one was torn down.
 	wns := p.opts.Sandbox()
 	if wns == nil {
-		return fmt.Errorf("sandbox namespace not available yet")
+		return status, fmt.Errorf("sandbox namespace not available yet")
 	}
 
 	env := slices.Concat([]string{constants.EnvPath}, p.opts.Env, os.Environ())
@@ -551,25 +536,21 @@ func (p *processRunner) runInSandbox(
 
 	handle, err := wns.Launch(cfg)
 	if err != nil {
-		return fmt.Errorf("error starting process in sandbox ns: %w", err)
+		return status, fmt.Errorf("error starting process in sandbox ns: %w", err)
 	}
 
 	defer handle.Close() //nolint:errcheck
 
 	hostPID := handle.HostPID()
 
-	if err := pidRecorder(p.args.ID, int32(hostPID), false); err != nil {
-		return fmt.Errorf("recording pid: %w", err)
+	status.Started = true
+
+	if onStart != nil {
+		onStart(int32(hostPID))
 	}
 
-	defer func() {
-		if err := pidRecorder(p.args.ID, int32(hostPID), true); err != nil {
-			log.Printf("error clearing pid: %v", err)
-		}
-	}()
-
 	if err := applyProperties(p, hostPID); err != nil {
-		return err
+		return status, err
 	}
 
 	// Close machined's copies of the log pipe write-ends (child has them now).
@@ -590,8 +571,8 @@ func (p *processRunner) runInSandbox(
 			err = fmt.Errorf("%w (last log %q)", err, lastLog.GetLastLog())
 		}
 
-		return err
-	case <-p.stop:
+		return status, err
+	case <-ctx.Done():
 		eventSink(events.StateStopping, "Sending SIGTERM to %s", p)
 
 		//nolint:errcheck
@@ -600,7 +581,7 @@ func (p *processRunner) runInSandbox(
 
 	select {
 	case <-waitCh:
-		return nil
+		return status, nil
 	case <-time.After(p.opts.GracefulShutdownTimeout):
 		eventSink(events.StateStopping, "Sending SIGKILL to %s", p)
 
@@ -610,5 +591,5 @@ func (p *processRunner) runInSandbox(
 
 	<-waitCh
 
-	return nil
+	return status, nil
 }
