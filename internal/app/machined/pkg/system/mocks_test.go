@@ -13,7 +13,6 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/health"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/pkg/conditions"
 )
@@ -113,16 +112,17 @@ func (m *MockRunner) Close() error {
 	return nil
 }
 
-func (m *MockRunner) Run(eventSink events.Recorder, _ pid.Recorder) error {
+func (m *MockRunner) Run(ctx context.Context, eventSink events.Recorder, _ runner.OnStart) (runner.Status, error) {
 	eventSink(events.StateRunning, "Running")
 
-	return <-m.exitCh
-}
+	status := runner.Status{Started: true}
 
-func (m *MockRunner) Stop() error {
-	close(m.exitCh)
-
-	return nil
+	select {
+	case err := <-m.exitCh:
+		return status, err
+	case <-ctx.Done():
+		return status, nil
+	}
 }
 
 func (m *MockRunner) String() string {
@@ -141,12 +141,8 @@ func (MockFinishingRunner) Close() error {
 	return nil
 }
 
-func (MockFinishingRunner) Run(events.Recorder, pid.Recorder) error {
-	return nil
-}
-
-func (MockFinishingRunner) Stop() error {
-	return nil
+func (MockFinishingRunner) Run(context.Context, events.Recorder, runner.OnStart) (runner.Status, error) {
+	return runner.Status{Started: true}, nil
 }
 
 func (MockFinishingRunner) String() string {

@@ -322,16 +322,34 @@ func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) er
 	//nolint:errcheck
 	defer runnr.Close()
 
+	// The runner reports the PID rather than recording it itself, so publishing it as a resource is
+	// this supervisor's business. The runner is run under its own context so that the PID is cleared
+	// once the run is over, whichever way it ended.
+	runCtx, cancelRun := context.WithCancel(ctx)
+	defer cancelRun()
+
 	errCh := make(chan error)
 
 	go func() {
-		errCh <- runnr.Run(func(s events.ServiceState, msg string, args ...any) {
+		_, err := runnr.Run(runCtx, func(s events.ServiceState, msg string, args ...any) {
 			svcrunner.UpdateState(ctx, s, msg, args...)
 
 			if _, healthSupported := svcrunner.service.(HealthcheckedService); healthSupported && s != events.StateRunning {
 				svcrunner.healthState.Update(false, "service not running")
 			}
-		}, svcrunner.pidRecorder)
+		}, func(pid int32) {
+			if err := svcrunner.pidRecorder(svcrunner.id, pid, false); err != nil {
+				log.Printf("error recording pid for %q: %v", svcrunner.id, err)
+			}
+		})
+
+		// clear the PID before reporting the result: delivering the result lets run() return and
+		// the service be restarted, and a later clear would destroy the new run's PID resource.
+		if pidErr := svcrunner.pidRecorder(svcrunner.id, 0, true); pidErr != nil {
+			log.Printf("error clearing pid for %q: %v", svcrunner.id, pidErr)
+		}
+
+		errCh <- err
 	}()
 
 	if healthSvc, ok := svcrunner.service.(HealthcheckedService); ok {
@@ -367,13 +385,10 @@ func (svcrunner *ServiceRunner) run(ctx context.Context, runnr runner.Runner) er
 
 	select {
 	case <-ctx.Done():
-		err := runnr.Stop()
+		// Canceling the run context is the stop signal; the runner returns once it has stopped.
+		cancelRun()
 
 		<-errCh
-
-		if err != nil {
-			return fmt.Errorf("error stopping service: %w", err)
-		}
 	case err := <-errCh:
 		if err != nil {
 			return fmt.Errorf("error running service: %w", err)
