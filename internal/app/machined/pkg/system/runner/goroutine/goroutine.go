@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log"
 	stdlibruntime "runtime"
 	"sync"
 	"time"
@@ -18,7 +17,6 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 )
 
@@ -32,11 +30,6 @@ type goroutineRunner struct {
 	runtime runtime.Runtime
 
 	opts *runner.Options
-
-	ctx       context.Context //nolint:containedctx
-	ctxCancel context.CancelFunc
-
-	wg sync.WaitGroup
 }
 
 // FuncMain is a entrypoint into the service.
@@ -53,8 +46,6 @@ func NewRunner(r runtime.Runtime, id string, main FuncMain, setters ...runner.Op
 		opts:    runner.DefaultOptions(),
 	}
 
-	run.ctx, run.ctxCancel = context.WithCancel(context.Background())
-
 	for _, setter := range setters {
 		setter(run.opts)
 	}
@@ -68,46 +59,39 @@ func (r *goroutineRunner) Open() error {
 }
 
 // Run implements the Runner interface.
-func (r *goroutineRunner) Run(eventSink events.Recorder, pidRecorder pid.Recorder) error {
-	r.wg.Add(1)
-	defer r.wg.Done()
+//
+// A goroutine service shares the machined process, so there is no exit code of its own to report:
+// how it ended is carried by the error.
+func (r *goroutineRunner) Run(ctx context.Context, eventSink events.Recorder, onStart runner.OnStart) (runner.Status, error) {
+	status := runner.Status{Started: true}
 
-	pid := int32(unix.Getpid())
-
-	if err := pidRecorder(r.id, pid, false); err != nil {
-		return fmt.Errorf("recording pid: %w", err)
+	if onStart != nil {
+		onStart(int32(unix.Getpid()))
 	}
-
-	defer func() {
-		if err := pidRecorder(r.id, pid, true); err != nil {
-			log.Printf("error clearing pid: %v", err)
-		}
-	}()
 
 	eventSink(events.StateRunning, "Service started as goroutine")
 
 	errCh := make(chan error)
-	ctx := r.ctx
 
 	go func() {
 		errCh <- r.wrappedMain(ctx)
 	}()
 
 	select {
-	case <-r.ctx.Done():
+	case <-ctx.Done():
 		eventSink(events.StateStopping, "Service stopping")
 	case err := <-errCh:
 		// service finished on its own
-		return err
+		return status, err
 	}
 
 	select {
 	case <-time.After(r.opts.GracefulShutdownTimeout * 2):
 		eventSink(events.StateStopping, "Service hasn't stopped gracefully on timeout, aborting")
 
-		return ErrAborted
+		return status, ErrAborted
 	case err := <-errCh:
-		return err
+		return status, err
 	}
 }
 
@@ -134,17 +118,6 @@ func (r *goroutineRunner) wrappedMain(ctx context.Context) (err error) {
 	}
 
 	return writerCloser()
-}
-
-// Stop implements the Runner interface.
-func (r *goroutineRunner) Stop() error {
-	r.ctxCancel()
-
-	r.wg.Wait()
-
-	r.ctx, r.ctxCancel = context.WithCancel(context.Background())
-
-	return nil
 }
 
 // Close implements the Runner interface.

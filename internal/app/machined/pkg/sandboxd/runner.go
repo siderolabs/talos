@@ -5,6 +5,7 @@
 package sandboxd
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -16,7 +17,6 @@ import (
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/internal/pkg/cgroup"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
@@ -39,17 +39,12 @@ const ServiceID = "sandboxd"
 // into the new namespace via the per-launch launcher getter.
 type sandboxRunner struct {
 	rt runtime.Runtime
-
-	stop    chan struct{}
-	stopped chan struct{}
 }
 
 // NewRunner returns a runner.Runner managing the sandboxd lifecycle.
 func NewRunner(rt runtime.Runtime) runner.Runner {
 	return &sandboxRunner{
-		rt:      rt,
-		stop:    make(chan struct{}),
-		stopped: make(chan struct{}),
+		rt: rt,
 	}
 }
 
@@ -62,27 +57,18 @@ func (s *sandboxRunner) Close() error { return nil }
 // String implements runner.Runner.
 func (s *sandboxRunner) String() string { return "Process(\"sandboxd\")" }
 
-// Stop implements runner.Runner.
-func (s *sandboxRunner) Stop() error {
-	close(s.stop)
-
-	<-s.stopped
-
-	s.stop = make(chan struct{})
-	s.stopped = make(chan struct{})
-
-	return nil
-}
-
 // Run implements runner.Runner.
 //
+// sandboxd is a host process whose exit code is not recovered, so how it ended is carried by the
+// error rather than by Status.ExitCode.
+//
 //nolint:gocyclo
-func (s *sandboxRunner) Run(eventSink events.Recorder, pidRecorder pid.Recorder) error {
-	defer close(s.stopped)
+func (s *sandboxRunner) Run(ctx context.Context, eventSink events.Recorder, onStart runner.OnStart) (runner.Status, error) {
+	var status runner.Status
 
 	cg, err := cgroup.CreateCgroup(constants.CgroupSystemSandbox)
 	if err != nil {
-		return fmt.Errorf("error creating cgroup: %w", err)
+		return status, fmt.Errorf("error creating cgroup: %w", err)
 	}
 
 	defer func() {
@@ -94,14 +80,14 @@ func (s *sandboxRunner) Run(eventSink events.Recorder, pidRecorder pid.Recorder)
 
 	cgFile, err := os.Open(filepath.Join(constants.CgroupMountPath, cgroup.Path(constants.CgroupSystemSandbox)))
 	if err != nil {
-		return fmt.Errorf("error opening cgroup file: %w", err)
+		return status, fmt.Errorf("error opening cgroup file: %w", err)
 	}
 
 	defer cgFile.Close() //nolint:errcheck
 
 	readyR, readyW, err := os.Pipe()
 	if err != nil {
-		return fmt.Errorf("creating ready pipe: %w", err)
+		return status, fmt.Errorf("creating ready pipe: %w", err)
 	}
 
 	defer readyR.Close() //nolint:errcheck
@@ -109,7 +95,7 @@ func (s *sandboxRunner) Run(eventSink events.Recorder, pidRecorder pid.Recorder)
 	// sandboxd's stdin (/dev/null); it never reads stdin.
 	devNull, err := os.Open(os.DevNull)
 	if err != nil {
-		return fmt.Errorf("opening /dev/null: %w", err)
+		return status, fmt.Errorf("opening /dev/null: %w", err)
 	}
 
 	defer devNull.Close() //nolint:errcheck
@@ -119,14 +105,14 @@ func (s *sandboxRunner) Run(eventSink events.Recorder, pidRecorder pid.Recorder)
 	// machined reads logR; sandboxd writes logW (its fds 1 and 2).
 	logSink, err := s.rt.Logging().ServiceLog(ServiceID).Writer()
 	if err != nil {
-		return fmt.Errorf("creating sandboxd log writer: %w", err)
+		return status, fmt.Errorf("creating sandboxd log writer: %w", err)
 	}
 
 	logR, logW, err := os.Pipe()
 	if err != nil {
 		logSink.Close() //nolint:errcheck
 
-		return fmt.Errorf("creating log pipe: %w", err)
+		return status, fmt.Errorf("creating log pipe: %w", err)
 	}
 
 	defer logW.Close() //nolint:errcheck // child owns its copy after launch
@@ -144,7 +130,7 @@ func (s *sandboxRunner) Run(eventSink events.Recorder, pidRecorder pid.Recorder)
 	// and the launch can fail — controlInit then needs only its post-launch close.
 	controlFds, err := syscall.Socketpair(syscall.AF_UNIX, syscall.SOCK_SEQPACKET|syscall.SOCK_CLOEXEC, 0)
 	if err != nil {
-		return fmt.Errorf("creating control socketpair: %w", err)
+		return status, fmt.Errorf("creating control socketpair: %w", err)
 	}
 
 	controlMachined := os.NewFile(uintptr(controlFds[0]), "control-machined")
@@ -184,13 +170,13 @@ func (s *sandboxRunner) Run(eventSink events.Recorder, pidRecorder pid.Recorder)
 	controlInit.Close() //nolint:errcheck
 
 	if err != nil {
-		return fmt.Errorf("launching sandboxd: %w", err)
+		return status, fmt.Errorf("launching sandboxd: %w", err)
 	}
 
 	// os.FindProcess never fails on Linux (returns a process handle for any pid).
 	process, err := os.FindProcess(pid)
 	if err != nil {
-		return fmt.Errorf("finding process for PID %d: %w", pid, err)
+		return status, fmt.Errorf("finding process for PID %d: %w", pid, err)
 	}
 
 	waitCh := make(chan error, 1)
@@ -206,7 +192,7 @@ func (s *sandboxRunner) Run(eventSink events.Recorder, pidRecorder pid.Recorder)
 		process.Kill() //nolint:errcheck
 		<-waitCh
 
-		return fmt.Errorf("sandboxd failed to start: %w", rerr)
+		return status, fmt.Errorf("sandboxd failed to start: %w", rerr)
 	}
 
 	controlConn, err := unixConn(controlMachined)
@@ -214,7 +200,7 @@ func (s *sandboxRunner) Run(eventSink events.Recorder, pidRecorder pid.Recorder)
 		process.Kill() //nolint:errcheck
 		<-waitCh
 
-		return fmt.Errorf("wrapping control socket: %w", err)
+		return status, fmt.Errorf("wrapping control socket: %w", err)
 	}
 
 	client := &Client{control: controlConn}
@@ -228,15 +214,11 @@ func (s *sandboxRunner) Run(eventSink events.Recorder, pidRecorder pid.Recorder)
 		client.close()
 	}
 
-	if err := pidRecorder(ServiceID, int32(process.Pid), false); err != nil {
-		process.Kill() //nolint:errcheck
-		<-waitCh
-		teardown()
+	status.Started = true
 
-		return fmt.Errorf("recording pid: %w", err)
+	if onStart != nil {
+		onStart(int32(process.Pid)) //nolint:gosec
 	}
-
-	defer pidRecorder(ServiceID, int32(process.Pid), true) //nolint:errcheck
 
 	eventSink(events.StateRunning, "sandboxd started with PID %d", process.Pid)
 
@@ -252,8 +234,8 @@ func (s *sandboxRunner) Run(eventSink events.Recorder, pidRecorder pid.Recorder)
 			werr = fmt.Errorf("exited")
 		}
 
-		return fmt.Errorf("sandboxd exited, namespace lost: %w", werr)
-	case <-s.stop:
+		return status, fmt.Errorf("sandboxd exited, namespace lost: %w", werr)
+	case <-ctx.Done():
 		// sandboxd ignores SIGTERM (it is PID 1 of its namespace); SIGKILL it from
 		// the parent namespace, which the kernel then turns into teardown of the
 		// whole namespace.
@@ -263,7 +245,7 @@ func (s *sandboxRunner) Run(eventSink events.Recorder, pidRecorder pid.Recorder)
 		<-waitCh
 		teardown()
 
-		return nil
+		return status, nil
 	}
 }
 

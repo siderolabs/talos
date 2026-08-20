@@ -6,6 +6,7 @@
 package runner
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"time"
@@ -19,7 +20,6 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/runtime/logging"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 )
 
@@ -27,9 +27,27 @@ import (
 type Runner interface {
 	fmt.Stringer
 	Open() error
-	Run(events.Recorder, pid.Recorder) error
-	Stop() error
+	// Run runs the process to completion and reports how it ended.
+	//
+	// Canceling ctx asks the process to stop gracefully, and Run returns once it has. A Runner may be
+	// run more than once, which is what lets the restart wrapper drive it.
+	Run(ctx context.Context, eventSink events.Recorder, onStart OnStart) (Status, error)
 	Close() error
+}
+
+// OnStart is a callback, called with the process PID when it's started.
+type OnStart func(pid int32)
+
+// Status is how a single run ended.
+type Status struct {
+	// Started reports whether the process ever ran. When it is false the run failed before that
+	// point, which is a different thing from a process that ran and exited.
+	Started bool
+	// ExitCode is the process's exit code, and is meaningful only when Started.
+	//
+	// A runner which cannot observe a numeric exit code reports zero and describes the failure in
+	// its error instead.
+	ExitCode int
 }
 
 // Args represents the required options for services.
