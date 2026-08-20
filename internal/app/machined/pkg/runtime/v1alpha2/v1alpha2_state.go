@@ -123,6 +123,8 @@ func NewState() (*State, error) {
 		&containers.ContainerSpec{},
 		&containers.ContainerImageStatus{},
 		&containers.ContainerInstanceSpec{},
+		&containers.ContainerInstanceStatus{},
+		&containers.ContainerLifecycle{},
 		&block.FSScrubSchedule{},
 		&block.FSScrubStatus{},
 		&cluster.Affiliate{},

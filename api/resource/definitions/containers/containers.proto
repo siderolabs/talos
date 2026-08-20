@@ -5,6 +5,7 @@ package talos.resource.definitions.containers;
 option go_package = "github.com/siderolabs/talos/pkg/machinery/api/resource/definitions/containers";
 option java_package = "dev.talos.api.resource.definitions.containers";
 
+import "google/protobuf/timestamp.proto";
 import "resource/definitions/enums/enums.proto";
 
 // ContainerDependsOnSpec is the resolved dependency set.
@@ -53,6 +54,26 @@ message ContainerInstanceSpecSpec {
   ContainerSecuritySpec security = 10;
   ContainerNetworkSpec network = 11;
   ContainerResourcesSpec resources = 12;
+}
+
+// ContainerInstanceStatusSpec is the spec for ContainerInstanceStatus.
+message ContainerInstanceStatusSpec {
+  // ContainerID is the name of the owning container, i.e. the ContainerSpec ID.
+  string container_id = 1;
+  // Generation is the reported instance's sequence number for that container.
+  uint64 generation = 2;
+  // Phase is the current execution phase.
+  talos.resource.definitions.enums.ContainersContainerInstancePhase phase = 3;
+  // PID is the task's process ID while running.
+  uint32 pid = 4;
+  // ExitCode is the task's exit code, meaningful only once Phase is ContainerInstancePhaseTerminated.
+  int32 exit_code = 5;
+  // Error describes why the task never started or exited abnormally.
+  string error = 6;
+  // StartedAt is when the task's process started.
+  google.protobuf.Timestamp started_at = 7;
+  // FinishedAt is when the task stopped running.
+  google.protobuf.Timestamp finished_at = 8;
 }
 
 // ContainerMountSpec is a resolved mount.

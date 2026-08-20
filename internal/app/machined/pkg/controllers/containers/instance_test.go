@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
+	"github.com/cosi-project/runtime/pkg/safe"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/suite"
 
@@ -118,6 +119,28 @@ func (suite *InstanceSuite) assertInstance(generation uint64) {
 		func(instance *containers.ContainerInstanceSpec, asrt *assert.Assertions) {
 			asrt.Equal(generation, instance.TypedSpec().Generation)
 		})
+}
+
+// setInstanceStatus fakes the runtime controller's output for a generation of testContainer's
+// instance, creating or updating the status as needed.
+func (suite *InstanceSuite) setInstanceStatus(generation uint64, phase containers.ContainerInstancePhase, finishedAt time.Time) {
+	id := containers.InstanceID(testContainer, generation)
+
+	status := containers.NewContainerInstanceStatus(containers.NamespaceName, id)
+	status.TypedSpec().ContainerID = testContainer
+	status.TypedSpec().Generation = generation
+	status.TypedSpec().Phase = phase
+	status.TypedSpec().FinishedAt = finishedAt
+
+	if err := suite.State().Create(suite.Ctx(), status); err == nil {
+		return
+	}
+
+	ctest.UpdateWithConflicts(suite, status, func(res *containers.ContainerInstanceStatus) error {
+		*res.TypedSpec() = *status.TypedSpec()
+
+		return nil
+	})
 }
 
 // assertNoInstance asserts that the given generation of testContainer's instance does not exist.
@@ -834,4 +857,124 @@ func (suite *InstanceSuite) TestRemovesInstancesWhenSpecGoesAway() {
 		containers.NewContainerSpec(containers.NamespaceName, testContainer).Metadata()))
 
 	suite.assertNoInstance(0)
+}
+
+// TestRestartsAfterTermination covers the runtime controller's status feeding back into a restart,
+// once RestartInterval has elapsed since the instance finished.
+func (suite *InstanceSuite) TestRestartsAfterTermination() {
+	suite.createSpec()
+	suite.markImageReady()
+
+	suite.assertInstance(0)
+
+	suite.setInstanceStatus(0, containers.ContainerInstancePhaseTerminated, time.Now().Add(-2*containersctrl.RestartInterval))
+
+	ctest.AssertResource(suite, containers.InstanceID(testContainer, 1), func(instance *containers.ContainerInstanceSpec, asrt *assert.Assertions) {
+		asrt.Equal(uint64(1), instance.TypedSpec().Generation)
+	})
+
+	// The terminated instance is destroyed rather than kept around: nothing is retained.
+	suite.assertNoInstance(0)
+}
+
+// TestDoesNotRestartBeforeInterval covers the other half: a broken controller that restarts
+// immediately would also pass TestRestartsAfterTermination alone.
+func (suite *InstanceSuite) TestDoesNotRestartBeforeInterval() {
+	suite.createSpec()
+	suite.markImageReady()
+
+	suite.assertInstance(0)
+
+	suite.setInstanceStatus(0, containers.ContainerInstancePhaseTerminated, time.Now())
+
+	suite.tick()
+	suite.assertNoInstance(1)
+
+	suite.setInstanceStatus(0, containers.ContainerInstancePhaseTerminated, time.Now().Add(-2*containersctrl.RestartInterval))
+
+	ctest.AssertResource(suite, containers.InstanceID(testContainer, 1), func(*containers.ContainerInstanceSpec, *assert.Assertions) {})
+}
+
+// TestFailedInstanceRestarts covers the failed phase restarting exactly like a terminated one.
+func (suite *InstanceSuite) TestFailedInstanceRestarts() {
+	suite.createSpec()
+	suite.markImageReady()
+
+	suite.assertInstance(0)
+
+	suite.setInstanceStatus(0, containers.ContainerInstancePhaseFailed, time.Now().Add(-2*containersctrl.RestartInterval))
+
+	ctest.AssertResource(suite, containers.InstanceID(testContainer, 1), func(*containers.ContainerInstanceSpec, *assert.Assertions) {})
+}
+
+// TestRestartWaitsForInstanceToStop covers a restart while something still holds the instance.
+//
+// Destroying the terminated instance before creating its replacement is what keeps none around, and
+// that destruction is not instant: the runtime controller holds a finalizer until the task is stopped
+// and its runtime state cleaned up. Creating the replacement without waiting for that would run two
+// containers of the same name at once, and giving up on the wait would leave the container down for
+// good.
+func (suite *InstanceSuite) TestRestartWaitsForInstanceToStop() {
+	suite.createSpec()
+	suite.markImageReady()
+
+	suite.assertInstance(0)
+
+	instanceMD := containers.NewContainerInstanceSpec(containers.NamespaceName, containers.InstanceID(testContainer, 0)).Metadata()
+
+	// Stands in for the runtime controller still stopping the task.
+	suite.AddFinalizer(instanceMD, "test")
+
+	suite.setInstanceStatus(0, containers.ContainerInstancePhaseTerminated, time.Now().Add(-2*containersctrl.RestartInterval))
+
+	// The restart is due, so the instance is on its way out, but it cannot be replaced yet.
+	ctest.AssertResource(suite, containers.InstanceID(testContainer, 0), func(instance *containers.ContainerInstanceSpec, asrt *assert.Assertions) {
+		asrt.Equal(resource.PhaseTearingDown, instance.Metadata().Phase())
+	})
+
+	suite.tick()
+	suite.assertNoInstance(1)
+
+	suite.RemoveFinalizer(instanceMD, "test")
+
+	ctest.AssertResource(suite, containers.InstanceID(testContainer, 1), func(*containers.ContainerInstanceSpec, *assert.Assertions) {})
+	suite.assertNoInstance(0)
+}
+
+// TestKeepsNoOldInstances covers the invariant across a run of restarts: a container is only ever
+// represented by one instance, and terminated ones are not accumulated.
+//
+// Checking it after several restarts rather than one is the point: a leak of one instance per restart
+// is invisible in a single-restart test, and this is the shape that catches it.
+func (suite *InstanceSuite) TestKeepsNoOldInstances() {
+	suite.createSpec()
+	suite.markImageReady()
+
+	suite.assertInstance(0)
+
+	const restarts = 5
+
+	for generation := range uint64(restarts) {
+		suite.setInstanceStatus(generation, containers.ContainerInstancePhaseTerminated, time.Now().Add(-2*containersctrl.RestartInterval))
+
+		ctest.AssertResource(suite, containers.InstanceID(testContainer, generation+1), func(*containers.ContainerInstanceSpec, *assert.Assertions) {})
+
+		// Every generation before the current one is gone, not merely the oldest.
+		for older := range generation + 1 {
+			suite.assertNoInstance(older)
+		}
+	}
+
+	instances, err := safe.StateListAll[*containers.ContainerInstanceSpec](suite.Ctx(), suite.State())
+	suite.Require().NoError(err)
+
+	count := 0
+
+	for instance := range instances.All() {
+		if instance.TypedSpec().ContainerID == testContainer {
+			count++
+		}
+	}
+
+	suite.Require().Equal(1, count, "expected exactly one instance for %q", testContainer)
 }

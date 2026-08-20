@@ -289,3 +289,99 @@ func TestReadyMissingStatuses(t *testing.T) {
 	_, wakeUpAfterSet := wakeUpAfter.Get()
 	assert.False(t, wakeUpAfterSet)
 }
+
+func TestOCISpecOpts(t *testing.T) {
+	t.Parallel()
+
+	grantable := []string{"CAP_NET_BIND_SERVICE", "CAP_CHOWN", "CAP_SETFCAP"}
+
+	tests := []struct {
+		name       string
+		spec       containers.ContainerSecuritySpec
+		expectOpts int
+	}{
+		{
+			name: "privileged mode",
+			spec: containers.ContainerSecuritySpec{
+				Privileged: true,
+			},
+			expectOpts: 2,
+		},
+		{
+			name: "restricted mode",
+			spec: containers.ContainerSecuritySpec{
+				Privileged: false,
+			},
+			expectOpts: 2,
+		},
+		{
+			name: "drop capabilities",
+			spec: containers.ContainerSecuritySpec{
+				CapabilitiesDrop: []string{"NET_RAW"},
+			},
+			expectOpts: 3,
+		},
+		{
+			name: "drop all capabilities",
+			spec: containers.ContainerSecuritySpec{
+				CapabilitiesDrop: []string{"ALL"},
+			},
+			expectOpts: 3,
+		},
+		{
+			name: "add capabilities",
+			spec: containers.ContainerSecuritySpec{
+				CapabilitiesAdd: []string{"NET_BIND_SERVICE", "CHOWN"},
+			},
+			expectOpts: 3,
+		},
+		{
+			name: "drop and add capabilities",
+			spec: containers.ContainerSecuritySpec{
+				CapabilitiesDrop: []string{"NET_RAW", "SETFCAP"},
+				CapabilitiesAdd:  []string{"NET_BIND_SERVICE"},
+			},
+			expectOpts: 4,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			opts := tt.spec.OCISpecOpts(grantable)
+			assert.Equal(t, tt.expectOpts, len(opts))
+		})
+	}
+}
+
+func TestPrefixCapabilities(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		input    []string
+		expected []string
+	}{
+		{
+			input:    []string{},
+			expected: []string{},
+		},
+		{
+			input:    []string{"NET_BIND_SERVICE"},
+			expected: []string{"CAP_NET_BIND_SERVICE"},
+		},
+		{
+			input:    []string{"CHOWN", "SETFCAP", "NET_RAW"},
+			expected: []string{"CAP_CHOWN", "CAP_SETFCAP", "CAP_NET_RAW"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run("", func(t *testing.T) {
+			t.Parallel()
+
+			result := containers.PrefixCapabilities(tt.input)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}

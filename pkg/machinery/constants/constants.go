@@ -582,6 +582,12 @@ const (
 	// collide with Kubernetes pods nor depend on Kubernetes being configured.
 	TalosContainersContainerdNamespace = "taloscontainers"
 
+	// TalosContainersLogPrefix is the service log name prefix for containers declared via ContainerConfig.
+	//
+	// Keyed by container config, not by instance: successive generations append to one buffer, so restart
+	// history reads as a single continuous log.
+	TalosContainersLogPrefix = TalosContainersContainerdNamespace + "-"
+
 	// CRIContainerdAddress is the path to the CRI containerd socket address.
 	CRIContainerdAddress = "/run/containerd/containerd.sock"
 
@@ -828,6 +834,12 @@ const (
 	// SelinuxLabelUnconfinedSysContainer is the SELinux label for system containers without label set (normally extensions).
 	SelinuxLabelUnconfinedSysContainer = "system_u:system_r:unconfined_container_t:s0"
 
+	// SelinuxLabelTalosContainer is the SELinux label for containers declared via ContainerConfig.
+	//
+	// Distinct from the pod label even though both run on the CRI containerd: these are not pods, and
+	// a domain of their own is what lets them be told apart in audit and confined separately.
+	SelinuxLabelTalosContainer = "system_u:system_r:taloscontainer_t:s0"
+
 	// SelinuxLabelUnconfinedService is the SELinux label for process without label set (normally should not occur).
 	SelinuxLabelUnconfinedService = "system_u:system_r:unconfined_service_t:s0"
 
@@ -900,6 +912,12 @@ const (
 
 	// CgroupSystemSandboxMillicores is the CPU weight for the sandbox cgroup.
 	CgroupSystemSandboxMillicores = 100
+
+	// CgroupTalosContainersRoot is the cgroup containing containers declared via ContainerConfig.
+	CgroupTalosContainersRoot = "taloscontainers"
+
+	// CgroupTalosContainersMillicores is the CPU weight for the taloscontainers root cgroup.
+	CgroupTalosContainersMillicores = 1000
 
 	// CgroupPodRuntimeRoot is the cgroup containing Kubernetes runtime components.
 	CgroupPodRuntimeRoot = "podruntime"
