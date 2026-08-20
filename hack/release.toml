@@ -19,7 +19,7 @@ preface = """
         title = "Component Updates"
         description = """\
 Linux: 6.18.44
-Kubernetes: 1.37.0-rc.0
+Kubernetes: 1.37.0-rc.1
 containerd: 2.3.3
 etcd: 3.7.1
 Flannel: 0.28.9
