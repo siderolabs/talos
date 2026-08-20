@@ -23,7 +23,7 @@ Kubernetes: 1.37.0-rc.1
 containerd: 2.3.4
 CoreDNS: 1.14.7
 
-Talos is built with Go 1.26.6.
+Talos is built with Go 1.26.7.
 """
 
     [notes.ipvs]

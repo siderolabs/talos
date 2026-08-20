@@ -1,6 +1,6 @@
 module github.com/siderolabs/talos
 
-go 1.26.5
+go 1.26.7
 
 replace (
 	// forked coredns so we don't carry caddy and other stuff into the Talos

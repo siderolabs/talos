@@ -1,6 +1,6 @@
 module github.com/siderolabs/talos/tools/redactgen
 
-go 1.26.6
+go 1.26.7
 
 require golang.org/x/tools v0.49.0
 
