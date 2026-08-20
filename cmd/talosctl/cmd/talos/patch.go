@@ -129,7 +129,7 @@ var patchCmd = &cobra.Command{
 			return errors.New("either --patch or --patch-file should be defined")
 		}
 
-		patches, err := configpatcher.LoadPatches(patchCmdFlags.patch)
+		patches, err := configpatcher.LoadPatchesWithContext(cmd.Context(), patchCmdFlags.patch)
 		if err != nil {
 			return err
 		}
@@ -154,7 +154,7 @@ var patchCmd = &cobra.Command{
 func init() {
 	patchCmd.Flags().StringVar(&patchCmdFlags.namespace, "namespace", "", "resource namespace (default is to use default namespace per resource)")
 	patchCmd.Flags().StringVar(&patchCmdFlags.patchFile, "patch-file", "", "a file containing a patch to be applied to the resource.")
-	patchCmd.Flags().StringArrayVarP(&patchCmdFlags.patch, "patch", "p", nil, "the patch to be applied to the resource file, use @file to read a patch from file.")
+	patchCmd.Flags().StringArrayVarP(&patchCmdFlags.patch, "patch", "p", nil, "the patch to be applied to the resource file, use @file to read a patch from file, or an http(s) URL to fetch it.")
 	patchCmd.Flags().BoolVar(&patchCmdFlags.dryRun, "dry-run", false, "print the change summary and patch preview without applying the changes")
 	patchCmd.Flags().DurationVar(&patchCmdFlags.configTryTimeout, "timeout", constants.ConfigTryTimeout, "the config will be rolled back after specified timeout (if try mode is selected)")
 	helpers.AddModeFlags(&patchCmdFlags.Mode, patchCmd)

@@ -78,7 +78,7 @@ var applyConfigCmd = &cobra.Command{
 				patches []configpatcher.Patch
 			)
 
-			patches, err = configpatcher.LoadPatches(applyConfigCmdFlags.patches)
+			patches, err = configpatcher.LoadPatchesWithContext(cmd.Context(), applyConfigCmdFlags.patches)
 			if err != nil {
 				return err
 			}

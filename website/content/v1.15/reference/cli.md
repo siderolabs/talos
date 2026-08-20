@@ -138,7 +138,7 @@ talosctl cluster create dev [flags]
       --cni-cache-dir string                     CNI cache directory path (default "/home/user/.talos/cni/cache")
       --cni-conf-dir string                      CNI config directory path (default "/home/user/.talos/cni/conf.d")
       --config-injection-method string           a method to inject machine config: default is HTTP server, 'metal-iso' to mount an ISO
-      --config-patch stringArray                 patch generated machineconfigs (applied to all node types), use @file to read a patch from file
+      --config-patch stringArray                 patch generated machineconfigs (applied to all node types), use @file to read a patch from file, or an http(s) URL to fetch it
       --config-patch-control-plane stringArray   patch generated machineconfigs (applied to 'controlplane' type)
       --config-patch-worker stringArray          patch generated machineconfigs (applied to 'worker' type)
       --control-plane-port int                   control plane port (load balancer and local API port) (default 6443)
@@ -253,7 +253,7 @@ talosctl cluster create docker [flags]
 ### Options
 
 ```
-      --config-patch stringArray                 patch generated machineconfigs (applied to all node types), use @file to read a patch from file
+      --config-patch stringArray                 patch generated machineconfigs (applied to all node types), use @file to read a patch from file, or an http(s) URL to fetch it
       --config-patch-controlplanes stringArray   patch generated machineconfigs (applied to 'controlplane' type)
       --config-patch-workers stringArray         patch generated machineconfigs (applied to 'worker' type)
       --cpus-controlplanes string                the share of CPUs as fraction for each control plane/VM (default "2.0")
@@ -309,7 +309,7 @@ talosctl cluster create qemu [flags]
 
 ```
       --cidr string                              CIDR of the cluster network (default "10.5.0.0/24")
-      --config-patch stringArray                 patch generated machineconfigs (applied to all node types), use @file to read a patch from file
+      --config-patch stringArray                 patch generated machineconfigs (applied to all node types), use @file to read a patch from file, or an http(s) URL to fetch it
       --config-patch-controlplanes stringArray   patch generated machineconfigs (applied to 'controlplane' type)
       --config-patch-workers stringArray         patch generated machineconfigs (applied to 'worker' type)
       --controlplanes int                        the number of controlplanes to create (default 1)
@@ -1836,7 +1836,7 @@ talosctl gen config <cluster name> <cluster endpoint> [flags]
 
 ```
       --additional-sans strings                  additional Subject-Alt-Names for the APIServer certificate
-      --config-patch stringArray                 patch generated machineconfigs (applied to all node types), use @file to read a patch from file
+      --config-patch stringArray                 patch generated machineconfigs (applied to all node types), use @file to read a patch from file, or an http(s) URL to fetch it
       --config-patch-control-plane stringArray   patch generated machineconfigs (applied to 'init' and 'controlplane' types)
       --config-patch-worker stringArray          patch generated machineconfigs (applied to 'worker' type)
       --dns-domain string                        the dns domain to use for cluster (default "cluster.local")
@@ -2749,7 +2749,7 @@ talosctl machineconfig patch <machineconfig-file> [flags]
 ```
   -h, --help                help for patch
   -o, --output string       output destination. if not specified, output will be printed to stdout
-  -p, --patch stringArray   patch generated machineconfigs (applied to all node types), use @file to read a patch from file
+  -p, --patch stringArray   patch generated machineconfigs (applied to all node types), use @file to read a patch from file, or an http(s) URL to fetch it
 ```
 
 ### SEE ALSO
@@ -2970,7 +2970,7 @@ talosctl patch machineconfig [flags]
   -m, --mode auto, no-reboot, staged, try   apply config mode (default auto)
       --namespace string                    resource namespace (default is to use default namespace per resource)
   -n, --nodes strings                       target the specified nodes
-  -p, --patch stringArray                   the patch to be applied to the resource file, use @file to read a patch from file.
+  -p, --patch stringArray                   the patch to be applied to the resource file, use @file to read a patch from file, or an http(s) URL to fetch it.
       --patch-file string                   a file containing a patch to be applied to the resource.
       --siderov1-keys-dir string            the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --talosconfig string                  the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order

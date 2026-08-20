@@ -30,7 +30,7 @@ var patchCmd = &cobra.Command{
 			return err
 		}
 
-		patches, err := configpatcher.LoadPatches(patchCmdFlags.patches)
+		patches, err := configpatcher.LoadPatchesWithContext(cmd.Context(), patchCmdFlags.patches)
 		if err != nil {
 			return err
 		}
@@ -66,7 +66,7 @@ var patchCmd = &cobra.Command{
 
 func init() {
 	// use StringArrayVarP instead of StringSliceVarP to prevent cobra from splitting the patch string on commas
-	patchCmd.Flags().StringArrayVarP(&patchCmdFlags.patches, "patch", "p", nil, "patch generated machineconfigs (applied to all node types), use @file to read a patch from file")
+	patchCmd.Flags().StringArrayVarP(&patchCmdFlags.patches, "patch", "p", nil, "patch generated machineconfigs (applied to all node types), use @file to read a patch from file, or an http(s) URL to fetch it")
 	patchCmd.Flags().StringVarP(&patchCmdFlags.output, "output", "o", "", "output destination. if not specified, output will be printed to stdout")
 
 	Cmd.AddCommand(patchCmd)

@@ -102,7 +102,7 @@ func addWorkersMemoryFlag(flagset *pflag.FlagSet, bind *bytesize.ByteSize, flagN
 }
 
 func addConfigPatchFlag(flagset *pflag.FlagSet, bind *[]string, flagName string) {
-	flagset.StringArrayVar(bind, flagName, nil, "patch generated machineconfigs (applied to all node types), use @file to read a patch from file")
+	flagset.StringArrayVar(bind, flagName, nil, "patch generated machineconfigs (applied to all node types), use @file to read a patch from file, or an http(s) URL to fetch it")
 }
 
 func addConfigPatchControlPlaneFlag(flagset *pflag.FlagSet, bind *[]string, flagName string) {
