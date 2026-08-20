@@ -79,10 +79,14 @@ func DefaultArgs(quirks quirks.Quirks) []string {
 }
 
 // SecureBootArgs returns the kernel commandline options required for secure boot.
-func SecureBootArgs(quirks.Quirks) []string {
-	return []string{
-		"lockdown=confidentiality",
+func SecureBootArgs(q quirks.Quirks) []string {
+	args := []string{}
+
+	if q.ForcesLockdownConfidentiality() {
+		args = append(args, "lockdown=confidentiality")
 	}
+
+	return args
 }
 
 // Param represents a kernel system property.

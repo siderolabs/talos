@@ -377,3 +377,15 @@ func (q Quirks) NvmeCoreIoTimeoutAWSOnly() bool {
 
 	return q.v.GTE(minTalosVersionNvmeCoreIoTimeoutAWSOnly)
 }
+
+var maxTalosVersionForceLockdownConfidentiality = semver.MustParse("1.14.0")
+
+// ForcesLockdownConfidentiality returns true if the Talos version should have lockdown=confidentiality by default.
+func (q Quirks) ForcesLockdownConfidentiality() bool {
+	// if the version doesn't parse, we assume it's latest Talos
+	if q.v == nil {
+		return false
+	}
+
+	return q.v.LT(maxTalosVersionForceLockdownConfidentiality)
+}
