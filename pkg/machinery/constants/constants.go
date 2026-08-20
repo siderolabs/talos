@@ -391,7 +391,7 @@ const (
 
 	// DefaultCoreDNSVersion is the default version for the CoreDNS.
 	// renovate: datasource=docker depName=registry.k8s.io/coredns/coredns
-	DefaultCoreDNSVersion = "v1.14.6"
+	DefaultCoreDNSVersion = "v1.14.7"
 
 	// LabelNodeRoleControlPlane is the node label required by a control plane node.
 	LabelNodeRoleControlPlane = "node-role.kubernetes.io/control-plane"
