@@ -23,17 +23,9 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/resources/v1alpha1"
 )
 
-// InstanceController decides when a container should be running.
-//
-// It owns no side effects and holds no containerd client or goroutine: given a spec and the gating
-// statuses, it decides whether a ContainerInstanceSpec should exist. That makes dependency gating
-// testable without any infrastructure.
-//
-// Three gates the RFD describes are not yet enforced here: a userVolume mount (no MountController
-// yet to resolve its host path, so a container declaring one simply stays pending),
-// dependsOn.containers (no aggregated ContainerStatus yet to check a peer's health against), and
-// restart-after-termination (no ContainerInstanceStatus producer yet, so a generation only advances
-// on a spec change). All three land with their respective controllers.
+// RestartInterval is how long to wait after an instance terminates before starting the next one.
+const RestartInterval = 5 * time.Second
+
 type InstanceController struct{}
 
 // Name implements controller.Controller interface.
@@ -52,6 +44,11 @@ func (ctrl *InstanceController) Inputs() []controller.Input {
 		{
 			Namespace: containers.NamespaceName,
 			Type:      containers.ContainerImageStatusType,
+			Kind:      controller.InputWeak,
+		},
+		{
+			Namespace: containers.NamespaceName,
+			Type:      containers.ContainerInstanceStatusType,
 			Kind:      controller.InputWeak,
 		},
 		{
@@ -306,12 +303,13 @@ func (ctrl *InstanceController) destroyInstance(
 	return true, nil
 }
 
-// reconcileExistingInstance checks whether an existing instance is still the one to be running, and
-// tears it down if it is not.
+// reconcileExistingInstance checks whether the next generation should be created now.
 //
-// Returns (wasDestroyed, wakeUpAfter, error). A false wasDestroyed means the instance is to be left
-// where it is for now, either because it matches the spec or because its replacement cannot start
-// yet.
+// Returns (proceed, wakeUpAfter, error). A false proceed means the instance is to be left where it
+// is for now, either because it matches the spec, because it terminated but the restart interval has
+// not elapsed, or because its replacement cannot start yet. A true proceed means it is gone: a
+// replacement is only ever created once the instance it replaces has been destroyed, so a container
+// has at most one instance at a time and no terminated ones are kept around.
 func (ctrl *InstanceController) reconcileExistingInstance(
 	ctx context.Context,
 	r controller.Runtime,
@@ -321,10 +319,7 @@ func (ctrl *InstanceController) reconcileExistingInstance(
 ) (bool, optional.Optional[time.Duration], error) {
 	containerID := spec.Metadata().ID()
 
-	// An instance already being torn down is finished off whatever the spec now says: the stop was
-	// decided in an earlier pass and the container is on its way down, so a spec change that happens
-	// to restore the old values cannot take it back. Comparing it against the spec here would report
-	// it in sync and strand it tearing down forever.
+	// An instance already being torn down is finished regardless of the spec.
 	if newestInstance.Metadata().Phase() != resource.PhaseTearingDown {
 		inSync, err := newestInstance.TypedSpec().InSyncWithContainerSpec(ctx, r, spec.TypedSpec())
 		if err != nil {
@@ -332,31 +327,40 @@ func (ctrl *InstanceController) reconcileExistingInstance(
 		}
 
 		if inSync {
-			return false, optional.None[time.Duration](), nil
-		}
+			restartDue, wakeUpAfter, err := ctrl.checkRestartDue(ctx, r, newestInstance)
+			if err != nil {
+				return false, optional.None[time.Duration](), err
+			}
 
-		// A spec change invalidates the existing instance: a running container is never mutated in
-		// place, it is replaced. Its replacement has to be startable first, though, otherwise a spec
-		// edit made while a gate is unmet stops a healthy container for as long as the gate stays
-		// unmet, which for a userVolume mount is forever.
-		waitingFor, wakeUpAfter, err := spec.TypedSpec().Ready(ctx, r, containerID)
-		if err != nil {
-			return false, optional.None[time.Duration](), err
-		}
+			if !restartDue {
+				return false, wakeUpAfter, nil
+			}
 
-		if len(waitingFor) > 0 {
-			logger.Debug("container spec changed, but its replacement is waiting on dependencies",
+			logger.Info("container terminated, restart interval elapsed, replacing the instance",
 				zap.String("container", containerID),
-				zap.Strings("waitingFor", waitingFor),
+				zap.Uint64("generation", newestInstance.TypedSpec().Generation),
 			)
+		} else {
+			// A spec change invalidates the existing instance.
+			waitingFor, wakeUpAfter, err := spec.TypedSpec().Ready(ctx, r, containerID)
+			if err != nil {
+				return false, optional.None[time.Duration](), err
+			}
 
-			return false, wakeUpAfter, nil
+			if len(waitingFor) > 0 {
+				logger.Debug("container spec changed, but its replacement is waiting on dependencies",
+					zap.String("container", containerID),
+					zap.Strings("waitingFor", waitingFor),
+				)
+
+				return false, wakeUpAfter, nil
+			}
+
+			logger.Info("container spec changed, replacing the instance",
+				zap.String("container", containerID),
+				zap.Uint64("generation", newestInstance.TypedSpec().Generation),
+			)
 		}
-
-		logger.Info("container spec changed, replacing the instance",
-			zap.String("container", containerID),
-			zap.Uint64("generation", newestInstance.TypedSpec().Generation),
-		)
 	}
 
 	destroyed, err := ctrl.destroyInstance(ctx, r, logger, newestInstance)
@@ -368,6 +372,36 @@ func (ctrl *InstanceController) reconcileExistingInstance(
 		// Still tearing down. InputDestroyReady wakes us when it is gone, and this pass repeats
 		// with the same outcome until then.
 		return false, optional.None[time.Duration](), nil
+	}
+
+	return true, optional.None[time.Duration](), nil
+}
+
+// checkRestartDue reports whether a terminated instance should be replaced now.
+//
+// A false result with no wake time means the instance has no status yet, or has one that is not
+// done, i.e. it is still starting or running. A false result with a wake time means it terminated,
+// but RestartInterval has not yet elapsed since it did.
+func (ctrl *InstanceController) checkRestartDue(
+	ctx context.Context,
+	r controller.Reader,
+	instance *containers.ContainerInstanceSpec,
+) (bool, optional.Optional[time.Duration], error) {
+	status, err := safe.ReaderGetByID[*containers.ContainerInstanceStatus](ctx, r, instance.Metadata().ID())
+	if err != nil {
+		if state.IsNotFoundError(err) {
+			return false, optional.None[time.Duration](), nil
+		}
+
+		return false, optional.None[time.Duration](), fmt.Errorf("failed to get instance status %q: %w", instance.Metadata().ID(), err)
+	}
+
+	if !status.TypedSpec().Phase.Done() {
+		return false, optional.None[time.Duration](), nil
+	}
+
+	if remaining := RestartInterval - time.Since(status.TypedSpec().FinishedAt); remaining > 0 {
+		return false, optional.Some(remaining), nil
 	}
 
 	return true, optional.None[time.Duration](), nil

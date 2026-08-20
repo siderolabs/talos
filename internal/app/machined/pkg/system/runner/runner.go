@@ -11,6 +11,7 @@ import (
 	"io"
 	"time"
 
+	"github.com/containerd/cgroups/v3/cgroup2"
 	containerd "github.com/containerd/containerd/v2/client"
 	"github.com/containerd/containerd/v2/pkg/oci"
 	"github.com/opencontainers/runtime-spec/specs-go"
@@ -88,6 +89,14 @@ type Options struct {
 	OOMScoreAdj int
 	// CgroupPath (optional) sets the cgroup path to use
 	CgroupPath string
+	// CgroupResources (optional) sets the resource limits for the cgroup; when nil they come from
+	// the built-in table keyed by cgroup name.
+	CgroupResources *cgroup2.Resources
+	// LogID (optional) is the identifier the process's log is registered under; defaults to the
+	// runner's ID.
+	LogID string
+	// HostNetworkFiles mounts the host's /etc/hosts and /etc/resolv.conf into the container.
+	HostNetworkFiles bool
 	// OverrideSeccompProfile default Linux seccomp profile.
 	OverrideSeccompProfile func(*specs.LinuxSeccomp)
 	// DroppedCapabilities is the list of capabilities to drop.
@@ -130,6 +139,7 @@ func DefaultOptions() *Options {
 		ContainerdAddress:       constants.CRIContainerdAddress,
 		Stdin:                   nil,
 		OOMScoreAdj:             0,
+		HostNetworkFiles:        true,
 	}
 }
 
@@ -207,6 +217,37 @@ func WithOOMScoreAdj(score int) Option {
 func WithCgroupPath(path string) Option {
 	return func(args *Options) {
 		args.CgroupPath = path
+	}
+}
+
+// WithCgroupResources sets the resource limits for the cgroup.
+//
+// Without this the limits come from the built-in table keyed by cgroup name, which is what the Talos
+// services want; a caller running arbitrary workloads has limits of its own to apply.
+func WithCgroupResources(resources *cgroup2.Resources) Option {
+	return func(args *Options) {
+		args.CgroupResources = resources
+	}
+}
+
+// WithLogID sets the identifier the process's log is registered under.
+//
+// It defaults to the runner's ID. Setting it apart matters when the process ID is not the identity
+// the logs should follow, e.g. one container restarted as a succession of differently-named
+// instances whose output belongs in one place.
+func WithLogID(id string) Option {
+	return func(args *Options) {
+		args.LogID = id
+	}
+}
+
+// WithHostNetworkFiles controls whether the host's /etc/hosts and /etc/resolv.conf are mounted in.
+//
+// On by default, which is what a service sharing the host network wants; a container with a network
+// namespace of its own has no business seeing them.
+func WithHostNetworkFiles(enabled bool) Option {
+	return func(args *Options) {
+		args.HostNetworkFiles = enabled
 	}
 }
 

@@ -41,6 +41,7 @@ func DefaultTasks() []Task {
 		MountPseudoLate,
 		SetupSystemDirectories,
 		InitVolumeLifecycle,
+		InitContainerLifecycle,
 		MountCgroups,
 		SetRLimit,
 		SetEnvironmentVariables,

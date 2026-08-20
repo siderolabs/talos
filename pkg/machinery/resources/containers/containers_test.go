@@ -6,6 +6,7 @@ package containers_test
 
 import (
 	"testing"
+	"time"
 
 	"github.com/cosi-project/runtime/pkg/resource"
 	"github.com/cosi-project/runtime/pkg/resource/meta"
@@ -30,6 +31,8 @@ func TestRegisterResource(t *testing.T) {
 		&containers.ContainerSpec{},
 		&containers.ContainerImageStatus{},
 		&containers.ContainerInstanceSpec{},
+		&containers.ContainerInstanceStatus{},
+		&containers.ContainerLifecycle{},
 	} {
 		assert.NoError(t, resourceRegistry.Register(ctx, res))
 	}
@@ -139,6 +142,35 @@ func TestInstanceProtobufRoundTrip(t *testing.T) {
 	}
 
 	assertRoundTrip(t, spec)
+}
+
+// TestInstanceStatusProtobufRoundTrip guards the protobuf tags on ContainerInstanceStatusSpec,
+// including that the phase enum and timestamps survive the trip as more than their zero values.
+func TestInstanceStatusProtobufRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	status := containers.NewContainerInstanceStatus(containers.NamespaceName, containers.InstanceID("nginx", 3))
+	*status.TypedSpec() = containers.ContainerInstanceStatusSpec{
+		ContainerID: "nginx",
+		Generation:  3,
+		Phase:       containers.ContainerInstancePhaseTerminated,
+		PID:         1234,
+		ExitCode:    137,
+		Error:       "signal: killed",
+		StartedAt:   time.Unix(1700000000, 0).UTC(),
+		FinishedAt:  time.Unix(1700000123, 0).UTC(),
+	}
+
+	assertRoundTrip(t, status)
+}
+
+// TestLifecycleProtobufRoundTrip guards the (empty) protobuf tags on ContainerLifecycleSpec.
+func TestLifecycleProtobufRoundTrip(t *testing.T) {
+	t.Parallel()
+
+	lifecycle := containers.NewContainerLifecycle(containers.NamespaceName, containers.ContainerLifecycleID)
+
+	assertRoundTrip(t, lifecycle)
 }
 
 func assertRoundTrip[T resource.Resource](t *testing.T, res T) {
