@@ -578,6 +578,15 @@ target the same way. All in-tree (non-CSI) volume plugins are deprecated for the
 may be removed in a later release.
 """
 
+    [notes.lockdown]
+        title = "Secure Boot images no longer have lockdown=confidentiality enabled by default"
+        description = """\
+Secure Boot images no longer have `lockdown=confidentiality` enabled by default.
+This change was made to improve compatibility with eBPF tooling under default schematic.
+This means that Secure Boot images will now have `lockdown=integrity` enabled by default (implicitly), which is the recommended setting for most users.
+Users can override it by adding `lockdown=confidentiality` to the kernel command line through Image Factory if they require it.
+"""
+
 [make_deps]
 
     [make_deps.tools]

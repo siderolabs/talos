@@ -179,9 +179,21 @@ func TestSecureBootArgs(t *testing.T) {
 		{
 			name: "latest",
 
-			expected: []string{
-				"lockdown=confidentiality",
-			},
+			expected: []string{},
+		},
+		{
+			name: "v1.13",
+
+			quirks: quirks.New("v1.13.0"),
+
+			expected: []string{"lockdown=confidentiality"},
+		},
+		{
+			name: "v1.14",
+
+			quirks: quirks.New("v1.14.0"),
+
+			expected: []string{},
 		},
 	} {
 		t.Run(test.name, func(t *testing.T) {
