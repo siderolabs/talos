@@ -90,6 +90,23 @@ func NewClientFromControlPlaneIPs(ctx context.Context, resources state.State, di
 	return NewClient(ctx, endpoints, dialOpts...)
 }
 
+// PromoteMember promotes a learner member to a voting member.
+//
+// It is a fail-fast version of clientv3's MemberPromote: clientv3 hardcodes grpc.WaitForReady(true)
+// in its default call options (and provides no way to override it via clientv3.Config), which makes
+// a call against an endpoint which is not accepting connections block until the context deadline
+// instead of returning the connection error. As the promotion call has to find a voting member to
+// talk to, blocking on a dead endpoint is exactly the wrong behavior.
+func (c *Client) PromoteMember(ctx context.Context, memberID uint64) error {
+	_, err := clientv3.RetryClusterClient(c.Client).MemberPromote(
+		ctx,
+		&etcdserverpb.MemberPromoteRequest{ID: memberID},
+		grpc.WaitForReady(false),
+	)
+
+	return clientv3.ContextError(ctx, err)
+}
+
 // ValidateForUpgrade validates the etcd cluster state to ensure that performing
 // an upgrade is safe.
 func (c *Client) ValidateForUpgrade(ctx context.Context, config config.Config) error {

@@ -75,6 +75,16 @@ type Etcd struct {
 	// if the new member was added as a learner during the service start, its ID is kept here
 	learnerMemberID uint64
 
+	// etcd client URLs advertised by this node, so that they can be excluded from the promotion endpoints:
+	// a learner can never promote itself
+	selfEndpoints []string
+
+	// etcd client URLs of the voting members as seen at the moment this node joined the cluster
+	//
+	// these are the URLs etcd itself advertises, so they are preferred over the discovered control plane
+	// endpoints, which are node addresses that might not be running etcd at all
+	votingMemberEndpoints []string
+
 	promoteCtxCancel context.CancelFunc
 }
 
@@ -116,8 +126,10 @@ func (e *Etcd) PreFunc(ctx context.Context, r runtime.Runtime) error {
 
 	e.imgRef = img.Target().Digest.String()
 
-	// Clear any previously set learner member ID
+	// Clear any state left over from a previous service start.
 	e.learnerMemberID = 0
+	e.votingMemberEndpoints = nil
+	e.selfEndpoints = getEtcdURLs(spec.TypedSpec().AdvertisedAddresses, constants.EtcdClientPort)
 
 	switch t := r.Config().Machine().Type(); t {
 	case machine.TypeInit:
@@ -208,7 +220,7 @@ func (e *Etcd) Runner(r runtime.Runtime) (runner.Runner, error) {
 		promoteCtx, e.promoteCtxCancel = context.WithCancel(context.Background())
 
 		go func() {
-			if err := promoteMember(promoteCtx, r, e.learnerMemberID); err != nil && !errors.Is(err, context.Canceled) {
+			if err := promoteMember(promoteCtx, r, e.selfEndpoints, e.votingMemberEndpoints, e.learnerMemberID); err != nil && !errors.Is(err, context.Canceled) {
 				log.Printf("failed promoting member: %s", err)
 			} else if err == nil {
 				log.Printf("successfully promoted etcd member")
@@ -324,7 +336,18 @@ func addMember(ctx context.Context, r runtime.Runtime, addrs []string, name stri
 	return list, add.Member.ID, nil
 }
 
-func buildInitialCluster(ctx context.Context, r runtime.Runtime, name string, peerAddrs []string) (initial string, learnerMemberID uint64, err error) {
+// joinResult describes the outcome of joining the etcd cluster as a learner.
+type joinResult struct {
+	// initialCluster is the value for the etcd --initial-cluster flag.
+	initialCluster string
+	// learnerMemberID is the ID this node was assigned as a learner.
+	learnerMemberID uint64
+	// votingMemberEndpoints are the etcd client URLs advertised by the voting members of the cluster.
+	votingMemberEndpoints []string
+}
+
+//nolint:gocyclo
+func buildInitialCluster(ctx context.Context, r runtime.Runtime, name string, peerAddrs []string) (result joinResult, err error) {
 	var (
 		id      uint64
 		lastNag time.Time
@@ -371,7 +394,10 @@ func buildInitialCluster(ctx context.Context, r runtime.Runtime, name string, pe
 			return retry.ExpectedError(err)
 		}
 
-		var conf []string
+		var (
+			conf                  []string
+			votingMemberEndpoints []string
+		)
 
 		for _, memb := range resp.Members {
 			for _, u := range memb.PeerURLs {
@@ -382,17 +408,26 @@ func buildInitialCluster(ctx context.Context, r runtime.Runtime, name string, pe
 
 				conf = append(conf, fmt.Sprintf("%s=%s", n, u))
 			}
+
+			// a learner (including this node) can't serve the promotion call, so only voting members are of interest
+			if memb.ID != id && !memb.IsLearner {
+				votingMemberEndpoints = append(votingMemberEndpoints, memb.ClientURLs...)
+			}
 		}
 
-		initial = strings.Join(conf, ",")
+		result = joinResult{
+			initialCluster:        strings.Join(conf, ","),
+			learnerMemberID:       id,
+			votingMemberEndpoints: votingMemberEndpoints,
+		}
 
 		return nil
 	})
 	if err != nil {
-		return "", 0, fmt.Errorf("failed to build cluster arguments: %w", err)
+		return joinResult{}, fmt.Errorf("failed to build cluster arguments: %w", err)
 	}
 
-	return initial, id, nil
+	return result, nil
 }
 
 //nolint:gocyclo
@@ -446,10 +481,12 @@ func (e *Etcd) argsForInit(ctx context.Context, r runtime.Runtime, spec *etcdres
 			if upgraded {
 				denyListArgs.Set("initial-cluster-state", argsbuilder.Value{"existing"})
 
-				initialCluster, e.learnerMemberID, err = buildInitialCluster(ctx, r, spec.Name, getEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort))
-				if err != nil {
-					return err
+				join, joinErr := buildInitialCluster(ctx, r, spec.Name, getEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort))
+				if joinErr != nil {
+					return joinErr
 				}
+
+				initialCluster, e.learnerMemberID, e.votingMemberEndpoints = join.initialCluster, join.learnerMemberID, join.votingMemberEndpoints
 			}
 
 			denyListArgs.Set("initial-cluster", argsbuilder.Value{initialCluster})
@@ -536,10 +573,12 @@ func (e *Etcd) argsForControlPlane(ctx context.Context, r runtime.Runtime, spec 
 			if e.Bootstrap {
 				initialCluster = formatClusterURLs(spec.Name, getEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort))
 			} else {
-				initialCluster, e.learnerMemberID, err = buildInitialCluster(ctx, r, spec.Name, getEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort))
-				if err != nil {
-					return fmt.Errorf("failed to build initial etcd cluster: %w", err)
+				join, joinErr := buildInitialCluster(ctx, r, spec.Name, getEtcdURLs(spec.AdvertisedAddresses, constants.EtcdPeerPort))
+				if joinErr != nil {
+					return fmt.Errorf("failed to build initial etcd cluster: %w", joinErr)
 				}
+
+				initialCluster, e.learnerMemberID, e.votingMemberEndpoints = join.initialCluster, join.learnerMemberID, join.votingMemberEndpoints
 			}
 
 			denyListArgs.Set("initial-cluster", argsbuilder.Value{initialCluster})
@@ -601,52 +640,72 @@ func (e *Etcd) recoverFromSnapshot(spec *etcdresource.SpecSpec) error {
 	return filetree.ChownRecursive(constants.EtcdDataPath, constants.EtcdUserID, constants.EtcdUserID)
 }
 
-func promoteMember(ctx context.Context, r runtime.Runtime, memberID uint64) error {
-	// try to promote a member until it succeeds (call might fail until the member catches up with the leader)
-	// promote member call will fail until member catches up with the master
-	//
-	// iterate over all endpoints until we find the one which works
-	// if we stick with the default behavior, we might hit the member being promoted, and that will never
-	// promote itself.
-	idx := 0
+// promoteEndpointTimeout bounds a single promotion call against a single endpoint.
+//
+// Client.PromoteMember reports an endpoint which refuses connections almost immediately, so this
+// timeout only bounds endpoints which accept the connection but never answer (e.g. a blackholed
+// address or a wedged member).
+const promoteEndpointTimeout = 5 * time.Second
 
-	return retry.Constant(10*time.Minute,
-		retry.WithUnits(15*time.Second),
-		retry.WithAttemptTimeout(30*time.Second),
+// promoteMember promotes this node from a learner to a voting member of the etcd cluster.
+//
+// The call is retried until it succeeds, as it fails while the learner is still catching up with
+// the leader. Each attempt walks the full list of candidate endpoints: the promotion has to be
+// served by a voting member, so the endpoint of the member being promoted (which is always part of
+// the discovered control plane endpoints) can never be the one which works.
+//
+// votingMemberEndpoints are the client URLs etcd itself advertises for the voting members, captured
+// when this node joined; they are tried first, as the discovered control plane endpoints are node
+// addresses which might not be running etcd at all (e.g. the Kubernetes control plane endpoint, or a
+// node address outside of the configured etcd listen subnets).
+func promoteMember(ctx context.Context, r runtime.Runtime, selfEndpoints, votingMemberEndpoints []string, memberID uint64) error {
+	self := xslices.ToSetFunc(selfEndpoints, normalizeEtcdEndpoint)
+
+	// The attempt timeout is only a backstop: an attempt normally ends once every endpoint has been
+	// tried, each bounded by promoteEndpointTimeout. It is deliberately large enough to walk a
+	// realistic endpoint list, so that the endpoints at the tail are not starved.
+	return retry.Constant(
+		10*time.Minute,
+		retry.WithUnits(2*time.Second),
+		retry.WithAttemptTimeout(time.Minute),
 		retry.WithJitter(time.Second),
 		retry.WithErrorLogging(true),
 	).RetryWithContext(ctx, func(ctx context.Context) error {
-		endpoints, err := etcd.GetEndpoints(ctx, r.State().V1Alpha2().Resources())
+		discoveredEndpoints, err := etcd.GetEndpoints(ctx, r.State().V1Alpha2().Resources())
 		if err != nil {
 			return retry.ExpectedError(err)
 		}
+
+		endpoints := promotionEndpoints(self, votingMemberEndpoints, discoveredEndpoints)
 
 		if len(endpoints) == 0 {
 			return retry.ExpectedErrorf("no endpoints")
 		}
 
-		// try to iterate all available endpoints in the time available for an attempt
-		for range endpoints {
+		errs := make([]error, 0, len(endpoints))
+
+		for _, endpoint := range endpoints {
 			select {
 			case <-ctx.Done():
 				return retry.ExpectedError(ctx.Err())
 			default:
 			}
 
-			endpoint := endpoints[idx%len(endpoints)]
-			idx++
-
-			err = attemptPromote(ctx, endpoint, memberID)
-			if err == nil {
+			if err = attemptPromote(ctx, endpoint, memberID); err == nil {
 				return nil
 			}
+
+			errs = append(errs, fmt.Errorf("%s: %w", endpoint, err))
 		}
 
-		return retry.ExpectedError(err)
+		return retry.ExpectedError(errors.Join(errs...))
 	})
 }
 
 func attemptPromote(ctx context.Context, endpoint string, memberID uint64) error {
+	ctx, cancel := context.WithTimeout(ctx, promoteEndpointTimeout)
+	defer cancel()
+
 	client, err := etcd.NewClient(ctx, []string{endpoint})
 	if err != nil {
 		return err
@@ -654,9 +713,48 @@ func attemptPromote(ctx context.Context, endpoint string, memberID uint64) error
 
 	defer client.Close() //nolint:errcheck
 
-	_, err = client.MemberPromote(ctx, memberID)
+	return client.PromoteMember(ctx, memberID)
+}
 
-	return err
+// promotionEndpoints builds the ordered list of endpoints to try the promotion call against.
+//
+// The endpoints etcd advertises for the voting members come first, followed by the discovered
+// control plane endpoints; endpoints belonging to this node are dropped, as a learner can't promote
+// itself, and duplicates across the two sources are collapsed.
+func promotionEndpoints(self map[string]struct{}, votingMemberEndpoints, discoveredEndpoints []string) []string {
+	total := len(votingMemberEndpoints) + len(discoveredEndpoints)
+
+	endpoints := make([]string, 0, total)
+	seen := make(map[string]struct{}, total)
+
+	for _, endpoint := range slices.Concat(votingMemberEndpoints, discoveredEndpoints) {
+		endpoint = normalizeEtcdEndpoint(endpoint)
+
+		if _, ok := self[endpoint]; ok {
+			continue
+		}
+
+		if _, ok := seen[endpoint]; ok {
+			continue
+		}
+
+		seen[endpoint] = struct{}{}
+
+		endpoints = append(endpoints, endpoint)
+	}
+
+	return endpoints
+}
+
+// normalizeEtcdEndpoint strips the scheme off an etcd endpoint, so that endpoints coming from
+// different sources (etcd member client URLs vs. discovered control plane addresses) can be
+// compared and de-duplicated.
+func normalizeEtcdEndpoint(endpoint string) string {
+	if _, hostPort, ok := strings.Cut(endpoint, "://"); ok {
+		return hostPort
+	}
+
+	return endpoint
 }
 
 // IsDirEmpty checks if a directory is empty or not.
