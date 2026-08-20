@@ -1,0 +1,12 @@
+; Containers declared via ContainerConfig, run by Talos itself in the taloscontainers namespace.
+;
+; They run on the CRI containerd, so the shim starting them is pod_containerd_t, which the policy
+; only permits to transition to pod_p types. The automatic transition that containerd applies takes
+; pods to pod_t, and these are not pods: they get a domain of their own so they can be told apart in
+; audit, and so their confinement can diverge from pod_t later.
+;
+; The transition is not automatic. It cannot be: the automatic one keys off the executable's type,
+; which is containerd_state_t for these and for pods alike. The container's process label is set
+; explicitly instead, by ContainerRuntimeController.
+(type taloscontainer_t)
+(call pod_p (taloscontainer_t))

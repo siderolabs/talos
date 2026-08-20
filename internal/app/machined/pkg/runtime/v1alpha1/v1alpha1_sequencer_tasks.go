@@ -66,6 +66,7 @@ import (
 	"github.com/siderolabs/talos/pkg/machinery/constants"
 	metamachinery "github.com/siderolabs/talos/pkg/machinery/meta"
 	blockres "github.com/siderolabs/talos/pkg/machinery/resources/block"
+	containersres "github.com/siderolabs/talos/pkg/machinery/resources/containers"
 	crires "github.com/siderolabs/talos/pkg/machinery/resources/cri"
 	resourcefiles "github.com/siderolabs/talos/pkg/machinery/resources/files"
 	"github.com/siderolabs/talos/pkg/machinery/resources/k8s"
@@ -1880,15 +1881,18 @@ func WaitForCARoots(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	}, "waitForCARoots"
 }
 
-// TeardownVolumeLifecycle tears down volume lifecycle resource.
-func TeardownVolumeLifecycle(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+// teardownLifecycleResource tears down a lifecycle barrier resource and waits for it to be released.
+//
+// Such a resource carries no data: the finalizer set is the payload. Every controller that owns
+// something which has to be wound down before a given point in the shutdown holds a finalizer on it,
+// so tearing it down and waiting for that set to empty is how a phase waits for a subsystem to be
+// wound down.
+func teardownLifecycleResource(md *resource.Metadata) runtime.TaskExecutionFunc {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 		ctx, cancel := context.WithTimeout(ctx, 5*time.Minute)
 		defer cancel()
 
-		volumeLifecycle := blockres.NewVolumeLifecycle(blockres.NamespaceName, blockres.VolumeLifecycleID).Metadata()
-
-		_, err := r.State().V1Alpha2().Resources().Teardown(ctx, volumeLifecycle)
+		_, err := r.State().V1Alpha2().Resources().Teardown(ctx, md)
 		if err != nil {
 			if state.IsNotFoundError(err) {
 				return nil
@@ -1897,13 +1901,29 @@ func TeardownVolumeLifecycle(runtime.Sequence, any) (runtime.TaskExecutionFunc, 
 			return err
 		}
 
-		_, err = r.State().V1Alpha2().Resources().WatchFor(ctx, volumeLifecycle, state.WithFinalizerEmpty())
-		if err != nil {
+		if _, err = r.State().V1Alpha2().Resources().WatchFor(ctx, md, state.WithFinalizerEmpty()); err != nil {
 			return err
 		}
 
-		return r.State().V1Alpha2().Resources().Destroy(ctx, volumeLifecycle)
-	}, "teardownLifecycle"
+		return r.State().V1Alpha2().Resources().Destroy(ctx, md)
+	}
+}
+
+// TeardownVolumeLifecycle tears down volume lifecycle resource.
+func TeardownVolumeLifecycle(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return teardownLifecycleResource(
+		blockres.NewVolumeLifecycle(blockres.NamespaceName, blockres.VolumeLifecycleID).Metadata(),
+	), "teardownLifecycle"
+}
+
+// TeardownContainerLifecycle tears down the container shutdown barrier resource.
+//
+// Unlike TeardownVolumeLifecycle, this runs before stopServices: that phase is what stops the CRI
+// containerd instance itself, so a barrier torn down after it would find containerd already gone.
+func TeardownContainerLifecycle(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
+	return teardownLifecycleResource(
+		containersres.NewContainerLifecycle(containersres.NamespaceName, containersres.ContainerLifecycleID).Metadata(),
+	), "teardownContainerLifecycle"
 }
 
 func pauseOnFailure(callback func(runtime.Sequence, any) (runtime.TaskExecutionFunc, string),

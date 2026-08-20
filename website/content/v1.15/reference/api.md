@@ -313,6 +313,7 @@ description: Talos gRPC API reference.
     - [BlockVolumePhase](#talos.resource.definitions.enums.BlockVolumePhase)
     - [BlockVolumeType](#talos.resource.definitions.enums.BlockVolumeType)
     - [ContainersContainerImagePhase](#talos.resource.definitions.enums.ContainersContainerImagePhase)
+    - [ContainersContainerInstancePhase](#talos.resource.definitions.enums.ContainersContainerInstancePhase)
     - [CriImageCacheCopyStatus](#talos.resource.definitions.enums.CriImageCacheCopyStatus)
     - [CriImageCacheStatus](#talos.resource.definitions.enums.CriImageCacheStatus)
     - [KubespanPeerState](#talos.resource.definitions.enums.KubespanPeerState)
@@ -413,6 +414,7 @@ description: Talos gRPC API reference.
     - [ContainerImageSpec](#talos.resource.definitions.containers.ContainerImageSpec)
     - [ContainerImageStatusSpec](#talos.resource.definitions.containers.ContainerImageStatusSpec)
     - [ContainerInstanceSpecSpec](#talos.resource.definitions.containers.ContainerInstanceSpecSpec)
+    - [ContainerInstanceStatusSpec](#talos.resource.definitions.containers.ContainerInstanceStatusSpec)
     - [ContainerMountSpec](#talos.resource.definitions.containers.ContainerMountSpec)
     - [ContainerNetworkSpec](#talos.resource.definitions.containers.ContainerNetworkSpec)
     - [ContainerResourcesSpec](#talos.resource.definitions.containers.ContainerResourcesSpec)
@@ -5365,6 +5367,20 @@ ContainersContainerImagePhase describes the state of a container's image pull.
 
 
 
+<a name="talos.resource.definitions.enums.ContainersContainerInstancePhase"></a>
+
+### ContainersContainerInstancePhase
+ContainersContainerInstancePhase describes the state of a container instance's execution.
+
+| Name | Number | Description |
+| ---- | ------ | ----------- |
+| CONTAINER_INSTANCE_PHASE_CREATED | 0 |  |
+| CONTAINER_INSTANCE_PHASE_RUNNING | 1 |  |
+| CONTAINER_INSTANCE_PHASE_TERMINATED | 2 |  |
+| CONTAINER_INSTANCE_PHASE_FAILED | 3 |  |
+
+
+
 <a name="talos.resource.definitions.enums.CriImageCacheCopyStatus"></a>
 
 ### CriImageCacheCopyStatus
@@ -7369,6 +7385,28 @@ later changes to those inputs: a spec change destroys this instance rather than 
 | security | [ContainerSecuritySpec](#talos.resource.definitions.containers.ContainerSecuritySpec) |  |  |
 | network | [ContainerNetworkSpec](#talos.resource.definitions.containers.ContainerNetworkSpec) |  |  |
 | resources | [ContainerResourcesSpec](#talos.resource.definitions.containers.ContainerResourcesSpec) |  |  |
+
+
+
+
+
+
+<a name="talos.resource.definitions.containers.ContainerInstanceStatusSpec"></a>
+
+### ContainerInstanceStatusSpec
+ContainerInstanceStatusSpec is the spec for ContainerInstanceStatus.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| container_id | [string](#string) |  | ContainerID is the name of the owning container, i.e. the ContainerSpec ID. |
+| generation | [uint64](#uint64) |  | Generation is the reported instance's sequence number for that container. |
+| phase | [talos.resource.definitions.enums.ContainersContainerInstancePhase](#talos.resource.definitions.enums.ContainersContainerInstancePhase) |  | Phase is the current execution phase. |
+| pid | [uint32](#uint32) |  | PID is the task's process ID while running. |
+| exit_code | [int32](#int32) |  | ExitCode is the task's exit code, meaningful only once Phase is ContainerInstancePhaseTerminated. |
+| error | [string](#string) |  | Error describes why the task never started or exited abnormally. |
+| started_at | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | StartedAt is when the task's process started. |
+| finished_at | [google.protobuf.Timestamp](#google.protobuf.Timestamp) |  | FinishedAt is when the task stopped running. |
 
 
 

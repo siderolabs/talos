@@ -8,6 +8,7 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"time"
 
 	"github.com/cosi-project/runtime/pkg/controller"
 	"github.com/cosi-project/runtime/pkg/resource"
@@ -22,8 +23,9 @@ import (
 
 // InstanceID builds the ID of a ContainerInstanceSpec from a container name and generation.
 //
-// Generations are numbered rather than reusing the container name so that creating the next
-// instance never has to wait for the previous one to be destroyed.
+// Generations are numbered rather than reusing the container name so that each execution attempt has
+// an identity of its own: a status then refers unambiguously to one attempt, and the instance created
+// to replace another cannot be confused with it, nor collide with a destruction still in flight.
 func InstanceID(container string, generation uint64) resource.ID {
 	return fmt.Sprintf("%s-%d", container, generation)
 }
@@ -120,6 +122,83 @@ func init() {
 	proto.RegisterDefaultTypes()
 
 	if err := protobuf.RegisterDynamic(ContainerInstanceSpecType, &ContainerInstanceSpec{}); err != nil {
+		panic(err)
+	}
+}
+
+// ContainerInstanceStatusType is type of ContainerInstanceStatus resource.
+const ContainerInstanceStatusType = resource.Type("ContainerInstanceStatuses.containers.talos.dev")
+
+// ContainerInstanceStatus resource reports the execution state of a ContainerInstanceSpec.
+//
+// It is produced by RuntimeController, the only component that actually runs the instance's task.
+// The ID matches the ContainerInstanceSpec it reports on.
+type ContainerInstanceStatus = typed.Resource[ContainerInstanceStatusSpec, ContainerInstanceStatusExtension]
+
+// ContainerInstanceStatusSpec is the spec for ContainerInstanceStatus.
+//
+//gotagsrewrite:gen
+type ContainerInstanceStatusSpec struct {
+	// ContainerID is the name of the owning container, i.e. the ContainerSpec ID.
+	ContainerID string `yaml:"containerID" protobuf:"1"`
+	// Generation is the reported instance's sequence number for that container.
+	Generation uint64 `yaml:"generation" protobuf:"2"`
+	// Phase is the current execution phase.
+	Phase ContainerInstancePhase `yaml:"phase" protobuf:"3"`
+	// PID is the task's process ID while running.
+	PID uint32 `yaml:"pid,omitempty" protobuf:"4"`
+	// ExitCode is the task's exit code, meaningful only once Phase is ContainerInstancePhaseTerminated.
+	ExitCode int32 `yaml:"exitCode,omitempty" protobuf:"5"`
+	// Error describes why the task never started or exited abnormally.
+	Error string `yaml:"error,omitempty" protobuf:"6"`
+	// StartedAt is when the task's process started.
+	StartedAt time.Time `yaml:"startedAt,omitempty" protobuf:"7"`
+	// FinishedAt is when the task stopped running.
+	FinishedAt time.Time `yaml:"finishedAt,omitempty" protobuf:"8"`
+}
+
+// NewContainerInstanceStatus initializes a ContainerInstanceStatus resource.
+func NewContainerInstanceStatus(namespace resource.Namespace, id resource.ID) *ContainerInstanceStatus {
+	return typed.NewResource[ContainerInstanceStatusSpec, ContainerInstanceStatusExtension](
+		resource.NewMetadata(namespace, ContainerInstanceStatusType, id, resource.VersionUndefined),
+		ContainerInstanceStatusSpec{},
+	)
+}
+
+// ContainerInstanceStatusExtension is auxiliary resource data for ContainerInstanceStatus.
+type ContainerInstanceStatusExtension struct{}
+
+// ResourceDefinition implements meta.ResourceDefinitionProvider interface.
+func (ContainerInstanceStatusExtension) ResourceDefinition() meta.ResourceDefinitionSpec {
+	return meta.ResourceDefinitionSpec{
+		Type:             ContainerInstanceStatusType,
+		Aliases:          []resource.Type{"containerinstancestatus", "containerinstancestatuses"},
+		DefaultNamespace: NamespaceName,
+		PrintColumns: []meta.PrintColumn{
+			{
+				Name:     "Container",
+				JSONPath: `{.containerID}`,
+			},
+			{
+				Name:     "Phase",
+				JSONPath: `{.phase}`,
+			},
+			{
+				Name:     "PID",
+				JSONPath: `{.pid}`,
+			},
+			{
+				Name:     "Exit Code",
+				JSONPath: `{.exitCode}`,
+			},
+		},
+	}
+}
+
+func init() {
+	proto.RegisterDefaultTypes()
+
+	if err := protobuf.RegisterDynamic(ContainerInstanceStatusType, &ContainerInstanceStatus{}); err != nil {
 		panic(err)
 	}
 }

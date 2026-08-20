@@ -80,6 +80,18 @@ func (c *containerdRunner) Open() error {
 		return err
 	}
 
+	// Callers do not Close a runner whose Open failed, so anything that fails past this point has to
+	// release the client itself or it leaks along with its gRPC connection.
+	opened := false
+
+	defer func() {
+		if !opened {
+			c.client.Close() //nolint:errcheck
+
+			c.client = nil
+		}
+	}()
+
 	var image containerd.Image
 
 	if c.opts.ContainerImage != "" {
@@ -115,23 +127,29 @@ func (c *containerdRunner) Open() error {
 		return fmt.Errorf("failed to create container %q: %w", c.args.ID, err)
 	}
 
+	opened = true
+
 	return nil
 }
 
 // Close implements runner.Runner interface.
+//
+// The client is closed whatever happens to the container: a task that would not die after SIGKILL is
+// still holding its container, so deleting it fails, and returning there would leak the client.
 func (c *containerdRunner) Close() error {
+	var errs error
+
 	if c.container != nil {
-		err := c.container.Delete(c.ctx, containerd.WithSnapshotCleanup)
-		if err != nil {
-			return err
+		if err := c.container.Delete(c.ctx, containerd.WithSnapshotCleanup); err != nil {
+			errs = errors.Join(errs, err)
 		}
 	}
 
-	if c.client == nil {
-		return nil
+	if c.client != nil {
+		errs = errors.Join(errs, c.client.Close())
 	}
 
-	return c.client.Close()
+	return errs
 }
 
 // Run implements runner.Runner interface.
@@ -178,12 +196,17 @@ func (c *containerdRunner) Run(ctx context.Context, eventSink events.Recorder, o
 		}
 	}
 
-	logW, err = c.opts.LoggingManager.ServiceLog(c.args.ID).Writer()
+	logID := c.opts.LogID
+	if logID == "" {
+		logID = c.args.ID
+	}
+
+	logW, err = c.opts.LoggingManager.ServiceLog(logID).Writer()
 	if err != nil {
 		return status, fmt.Errorf("error creating log: %w", err)
 	}
 
-	cg, err := cgroup.CreateCgroup(c.opts.CgroupPath)
+	cg, err := c.createCgroup()
 	if err != nil {
 		return status, fmt.Errorf("error creating cgroup: %w", err)
 	}
@@ -352,6 +375,15 @@ func isContainerdUnavailable(err error) bool {
 	return errdefs.IsUnavailable(err) || status.Code(err) == codes.Unavailable
 }
 
+// createCgroup creates the cgroup for the task, with caller-supplied limits when there are any.
+func (c *containerdRunner) createCgroup() (cgroup.CommonCgroup, error) {
+	if c.opts.CgroupResources != nil {
+		return cgroup.CreateCgroupWithResources(c.opts.CgroupPath, c.opts.CgroupResources)
+	}
+
+	return cgroup.CreateCgroup(c.opts.CgroupPath)
+}
+
 func (c *containerdRunner) newContainerOpts(
 	image containerd.Image,
 	specOpts []oci.SpecOpts,
@@ -393,10 +425,15 @@ func (c *containerdRunner) newOCISpecOpts(image oci.Image) []oci.SpecOpts {
 		specOpts,
 		oci.WithProcessArgs(c.args.ProcessArgs...),
 		oci.WithEnv(c.opts.Env),
-		oci.WithHostHostsFile,
-		oci.WithHostResolvconf,
 		oci.WithNoNewPrivileges,
 	)
+
+	if c.opts.HostNetworkFiles {
+		specOpts = append(specOpts,
+			oci.WithHostHostsFile,
+			oci.WithHostResolvconf,
+		)
+	}
 
 	if c.opts.OOMScoreAdj != 0 {
 		specOpts = append(
