@@ -1807,11 +1807,7 @@ func ReloadMeta(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 func FlushMeta(runtime.Sequence, any) (runtime.TaskExecutionFunc, string) {
 	return func(ctx context.Context, logger *log.Logger, r runtime.Runtime) error {
 		// META partition should be created at this point.
-		if _, err := waitForVolumeReady(ctx, r, constants.MetaPartitionLabel); err != nil {
-			return err
-		}
-
-		return r.State().Machine().Meta().Flush()
+		return install.SyncMeta(ctx, r.State().V1Alpha2().Resources(), r.State().Machine().Meta())
 	}, "flushMeta"
 }
 
@@ -1961,8 +1957,4 @@ func logError(err error, logger *log.Logger) error {
 	logger.Printf("WARNING: task failed: %s", err)
 
 	return nil
-}
-
-func waitForVolumeReady(ctx context.Context, r runtime.Runtime, volumeID string) (*blockres.VolumeStatus, error) {
-	return blockres.WaitForVolumePhase(ctx, r.State().V1Alpha2().Resources(), volumeID, blockres.VolumePhaseReady)
 }

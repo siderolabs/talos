@@ -759,7 +759,12 @@ type clusterOptions struct {
 	ControlplaneNodes int
 	WorkerNodes       int
 
+	// InjectExtraKernelArgs injects kernel args via the systemd-stub, i.e. they only take effect on
+	// the UKI boot of an installed machine.
 	InjectExtraKernelArgs *procfs.Cmdline
+	// InjectBootKernelArgs injects kernel args directly on the kernel command line, i.e. they take
+	// effect on the initial (pre-install) boot as well.
+	InjectBootKernelArgs *procfs.Cmdline
 
 	SourceKernelPath     string
 	SourceInitramfsPath  string
@@ -1019,6 +1024,7 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 					},
 				},
 				Config:              suite.configBundle.ControlPlane(),
+				ExtraKernelArgs:     options.InjectBootKernelArgs,
 				SDStubKernelArgs:    options.InjectExtraKernelArgs,
 				SkipInjectingConfig: options.WithSkipInjectingConfig,
 			},
@@ -1041,6 +1047,7 @@ func (suite *BaseSuite) setupCluster(options clusterOptions) {
 					},
 				},
 				Config:              suite.configBundle.Worker(),
+				ExtraKernelArgs:     options.InjectBootKernelArgs,
 				SDStubKernelArgs:    options.InjectExtraKernelArgs,
 				SkipInjectingConfig: options.WithSkipInjectingConfig,
 			},
