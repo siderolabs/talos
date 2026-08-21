@@ -25,7 +25,7 @@ func NewBaseSparklineGroup(title string, labels, dataLabels []string) *BaseSpark
 	flex := tview.NewFlex().SetDirection(tview.FlexRow)
 	root := tview.NewFrame(flex).
 		SetBorders(0, 0, 0, 0, 0, 0).
-		AddText(title, true, tview.AlignLeft, tcell.ColorDefault)
+		AddText(title, true, tview.AlignLeft, tview.Styles.PrimaryTextColor)
 
 	colors := []tcell.Color{tcell.ColorRed, tcell.ColorGreen}
 
@@ -35,7 +35,7 @@ func NewBaseSparklineGroup(title string, labels, dataLabels []string) *BaseSpark
 		sparklines[i] = tvxwidgets.NewSparkline()
 		sparklines[i].SetBorder(false)
 		sparklines[i].SetDataTitle(labels[i])
-		sparklines[i].SetTitleColor(tcell.ColorDefault)
+		sparklines[i].SetTitleColor(tview.Styles.PrimaryTextColor)
 		sparklines[i].SetLineColor(colors[i%len(colors)])
 
 		flex.AddItem(sparklines[i], 0, 1, false)

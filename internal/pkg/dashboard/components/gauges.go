@@ -7,7 +7,6 @@ package components
 import (
 	"math"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/navidys/tvxwidgets"
 	"github.com/rivo/tview"
 
@@ -34,7 +33,7 @@ func NewSystemGauges() *SystemGauges {
 
 	cpuFrame := tview.NewFrame(cpuGauge)
 	cpuFrame.SetBorders(0, 0, 0, 0, 0, 0).
-		AddText("[::b]CPU", true, tview.AlignLeft, tcell.ColorDefault)
+		AddText("[::b]CPU", true, tview.AlignLeft, tview.Styles.PrimaryTextColor)
 
 	root.AddItem(cpuFrame, 0, 0, 1, 1, 0, 0, false)
 
@@ -45,7 +44,7 @@ func NewSystemGauges() *SystemGauges {
 
 	memFrame := tview.NewFrame(memGauge)
 	memFrame.SetBorders(0, 0, 0, 0, 0, 0).
-		AddText("[::b]MEM", true, tview.AlignLeft, tcell.ColorDefault)
+		AddText("[::b]MEM", true, tview.AlignLeft, tview.Styles.PrimaryTextColor)
 
 	root.AddItem(memFrame, 1, 0, 1, 1, 0, 0, false)
 

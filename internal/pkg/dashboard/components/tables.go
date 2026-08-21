@@ -44,15 +44,42 @@ func NewProcessTable() *ProcessTable {
 	widget.SetSelectedStyle(tcell.StyleDefault.Attributes(tcell.AttrReverse))
 
 	// Header cells are created once and never replaced.
-	widget.SetCell(0, 0, &tview.TableCell{Text: "[::b]PID", Align: tview.AlignRight, MaxWidth: pidWidth, NotSelectable: true})
-	widget.SetCell(0, 1, &tview.TableCell{Text: "[::b]S", Align: tview.AlignCenter, MaxWidth: stateWidth, NotSelectable: true})
-	widget.SetCell(0, 2, &tview.TableCell{Text: "[::b]CPU%", Align: tview.AlignRight, MaxWidth: cpuWidth, NotSelectable: true})
-	widget.SetCell(0, 3, &tview.TableCell{Text: "[::b]MEM%", Align: tview.AlignRight, MaxWidth: memWidth, NotSelectable: true})
-	widget.SetCell(0, 4, &tview.TableCell{Text: "[::b]VIRT", Align: tview.AlignRight, MaxWidth: virtWidth, NotSelectable: true})
-	widget.SetCell(0, 5, &tview.TableCell{Text: "[::b]RES", Align: tview.AlignRight, MaxWidth: resWidth, NotSelectable: true})
-	widget.SetCell(0, 6, &tview.TableCell{Text: "[::b]TIME+", Align: tview.AlignRight, MaxWidth: timeWidth, NotSelectable: true})
-	widget.SetCell(0, 7, &tview.TableCell{Text: "[::b]THR", Align: tview.AlignRight, MaxWidth: threadsWidth, NotSelectable: true})
-	widget.SetCell(0, 8, &tview.TableCell{Text: "[::b]COMMAND", Align: tview.AlignLeft, NotSelectable: true, Expansion: 1})
+	widget.SetCell(0, 0, &tview.TableCell{
+		Text: "[::b]PID", Align: tview.AlignRight, MaxWidth: pidWidth, NotSelectable: true,
+		Color: tview.Styles.PrimaryTextColor, BackgroundColor: tview.Styles.PrimitiveBackgroundColor,
+	})
+	widget.SetCell(0, 1, &tview.TableCell{
+		Text: "[::b]S", Align: tview.AlignCenter, MaxWidth: stateWidth, NotSelectable: true,
+		Color: tview.Styles.PrimaryTextColor, BackgroundColor: tview.Styles.PrimitiveBackgroundColor,
+	})
+	widget.SetCell(0, 2, &tview.TableCell{
+		Text: "[::b]CPU%", Align: tview.AlignRight, MaxWidth: cpuWidth, NotSelectable: true,
+		Color: tview.Styles.PrimaryTextColor, BackgroundColor: tview.Styles.PrimitiveBackgroundColor,
+	})
+	widget.SetCell(0, 3, &tview.TableCell{
+		Text: "[::b]MEM%", Align: tview.AlignRight, MaxWidth: memWidth, NotSelectable: true,
+		Color: tview.Styles.PrimaryTextColor, BackgroundColor: tview.Styles.PrimitiveBackgroundColor,
+	})
+	widget.SetCell(0, 4, &tview.TableCell{
+		Text: "[::b]VIRT", Align: tview.AlignRight, MaxWidth: virtWidth, NotSelectable: true,
+		Color: tview.Styles.PrimaryTextColor, BackgroundColor: tview.Styles.PrimitiveBackgroundColor,
+	})
+	widget.SetCell(0, 5, &tview.TableCell{
+		Text: "[::b]RES", Align: tview.AlignRight, MaxWidth: resWidth, NotSelectable: true,
+		Color: tview.Styles.PrimaryTextColor, BackgroundColor: tview.Styles.PrimitiveBackgroundColor,
+	})
+	widget.SetCell(0, 6, &tview.TableCell{
+		Text: "[::b]TIME+", Align: tview.AlignRight, MaxWidth: timeWidth, NotSelectable: true,
+		Color: tview.Styles.PrimaryTextColor, BackgroundColor: tview.Styles.PrimitiveBackgroundColor,
+	})
+	widget.SetCell(0, 7, &tview.TableCell{
+		Text: "[::b]THR", Align: tview.AlignRight, MaxWidth: threadsWidth, NotSelectable: true,
+		Color: tview.Styles.PrimaryTextColor, BackgroundColor: tview.Styles.PrimitiveBackgroundColor,
+	})
+	widget.SetCell(0, 8, &tview.TableCell{
+		Text: "[::b]COMMAND", Align: tview.AlignLeft, NotSelectable: true, Expansion: 1,
+		Color: tview.Styles.PrimaryTextColor, BackgroundColor: tview.Styles.PrimitiveBackgroundColor,
+	})
 
 	// Pre-allocate the noData placeholder in row 1.
 	widget.ensureDataRows(1)
@@ -83,15 +110,15 @@ func (widget *ProcessTable) ensureDataRows(n int) {
 
 		var cells [processTableCols]*tview.TableCell
 
-		cells[0] = &tview.TableCell{Align: tview.AlignRight, MaxWidth: pidWidth}
-		cells[1] = &tview.TableCell{Align: tview.AlignCenter, MaxWidth: stateWidth}
-		cells[2] = &tview.TableCell{Align: tview.AlignRight, MaxWidth: cpuWidth}
-		cells[3] = &tview.TableCell{Align: tview.AlignRight, MaxWidth: memWidth}
-		cells[4] = &tview.TableCell{Align: tview.AlignRight, MaxWidth: virtWidth}
-		cells[5] = &tview.TableCell{Align: tview.AlignRight, MaxWidth: resWidth}
-		cells[6] = &tview.TableCell{Align: tview.AlignRight, MaxWidth: timeWidth}
-		cells[7] = &tview.TableCell{Align: tview.AlignRight, MaxWidth: threadsWidth}
-		cells[8] = &tview.TableCell{Align: tview.AlignLeft, Expansion: 1}
+		cells[0] = &tview.TableCell{Align: tview.AlignRight, MaxWidth: pidWidth, Color: tview.Styles.PrimaryTextColor, BackgroundColor: tview.Styles.PrimitiveBackgroundColor}
+		cells[1] = &tview.TableCell{Align: tview.AlignCenter, MaxWidth: stateWidth, Color: tview.Styles.PrimaryTextColor, BackgroundColor: tview.Styles.PrimitiveBackgroundColor}
+		cells[2] = &tview.TableCell{Align: tview.AlignRight, MaxWidth: cpuWidth, Color: tview.Styles.PrimaryTextColor, BackgroundColor: tview.Styles.PrimitiveBackgroundColor}
+		cells[3] = &tview.TableCell{Align: tview.AlignRight, MaxWidth: memWidth, Color: tview.Styles.PrimaryTextColor, BackgroundColor: tview.Styles.PrimitiveBackgroundColor}
+		cells[4] = &tview.TableCell{Align: tview.AlignRight, MaxWidth: virtWidth, Color: tview.Styles.PrimaryTextColor, BackgroundColor: tview.Styles.PrimitiveBackgroundColor}
+		cells[5] = &tview.TableCell{Align: tview.AlignRight, MaxWidth: resWidth, Color: tview.Styles.PrimaryTextColor, BackgroundColor: tview.Styles.PrimitiveBackgroundColor}
+		cells[6] = &tview.TableCell{Align: tview.AlignRight, MaxWidth: timeWidth, Color: tview.Styles.PrimaryTextColor, BackgroundColor: tview.Styles.PrimitiveBackgroundColor}
+		cells[7] = &tview.TableCell{Align: tview.AlignRight, MaxWidth: threadsWidth, Color: tview.Styles.PrimaryTextColor, BackgroundColor: tview.Styles.PrimitiveBackgroundColor}
+		cells[8] = &tview.TableCell{Align: tview.AlignLeft, Expansion: 1, Color: tview.Styles.PrimaryTextColor, BackgroundColor: tview.Styles.PrimitiveBackgroundColor}
 
 		widget.dataCells = append(widget.dataCells, cells)
 

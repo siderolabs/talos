@@ -33,7 +33,7 @@ func NewBaseGraph(title string, labels []string) *BaseGraph {
 
 	root := tview.NewFrame(widget.plot).
 		SetBorders(0, 0, 0, 0, 0, 0).
-		AddText(title, true, tview.AlignCenter, tcell.ColorDefault)
+		AddText(title, true, tview.AlignCenter, tview.Styles.PrimaryTextColor)
 
 	widget.plot.SetBorder(false)
 	widget.plot.SetLineColor([]tcell.Color{
