@@ -102,7 +102,7 @@ func NewResourceExplorerGrid(ctx context.Context, dashboard *Dashboard) *Resourc
 	widget.filterInput = tview.NewInputField()
 	widget.filterInput.SetLabel("filter: ")
 	widget.filterInput.SetLabelColor(tcell.ColorYellow)
-	widget.filterInput.SetFieldBackgroundColor(tcell.ColorDefault)
+	widget.filterInput.SetFieldBackgroundColor(tview.Styles.PrimitiveBackgroundColor)
 	widget.filterInput.SetChangedFunc(func(text string) {
 		widget.filterText = text
 		widget.renderTypesTable()
@@ -286,8 +286,10 @@ func (widget *ResourceExplorerGrid) deactivateFilter(clearText bool) {
 func (widget *ResourceExplorerGrid) loadResourceTypes() {
 	widget.initTypesTableHeader()
 	widget.typesTable.SetCell(1, 0, &tview.TableCell{
-		Text:          "[gray]Loading...[-]",
-		NotSelectable: true,
+		Text:            "[gray]Loading...[-]",
+		NotSelectable:   true,
+		Color:           tview.Styles.PrimaryTextColor,
+		BackgroundColor: tview.Styles.PrimitiveBackgroundColor,
 	})
 
 	ctx := utils.NodeContext(widget.ctx, widget.selectedNode)
@@ -298,8 +300,10 @@ func (widget *ResourceExplorerGrid) loadResourceTypes() {
 			widget.app.QueueUpdateDraw(func() {
 				widget.initTypesTableHeader()
 				widget.typesTable.SetCell(1, 0, &tview.TableCell{
-					Text:          fmt.Sprintf("[red]%s[-]", formatError(err)),
-					NotSelectable: true,
+					Text:            fmt.Sprintf("[red]%s[-]", formatError(err)),
+					NotSelectable:   true,
+					Color:           tview.Styles.PrimaryTextColor,
+					BackgroundColor: tview.Styles.PrimitiveBackgroundColor,
 				})
 			})
 
@@ -361,21 +365,24 @@ func (widget *ResourceExplorerGrid) renderTypesTable() {
 		}
 
 		widget.typesTable.SetCell(row, 0, &tview.TableCell{
-			Text:      spec.Type,
-			Align:     tview.AlignLeft,
-			Color:     tcell.ColorWhite,
-			Reference: rd, // used by selectResourceType to retrieve the RD
-			Expansion: 1,
+			Text:            spec.Type,
+			Align:           tview.AlignLeft,
+			Color:           tview.Styles.PrimaryTextColor,
+			BackgroundColor: tview.Styles.PrimitiveBackgroundColor,
+			Reference:       rd,
+			Expansion:       1,
 		})
 		widget.typesTable.SetCell(row, 1, &tview.TableCell{
-			Text:  spec.DefaultNamespace,
-			Align: tview.AlignLeft,
-			Color: tcell.ColorWhite,
+			Text:            spec.DefaultNamespace,
+			Align:           tview.AlignLeft,
+			Color:           tview.Styles.PrimaryTextColor,
+			BackgroundColor: tview.Styles.PrimitiveBackgroundColor,
 		})
 		widget.typesTable.SetCell(row, 2, &tview.TableCell{
-			Text:  strings.Join(spec.Aliases, ", "),
-			Align: tview.AlignLeft,
-			Color: tcell.ColorGray,
+			Text:            strings.Join(spec.Aliases, ", "),
+			Align:           tview.AlignLeft,
+			Color:           tview.Styles.PrimaryTextColor,
+			BackgroundColor: tview.Styles.PrimitiveBackgroundColor,
 		})
 
 		row++
@@ -465,8 +472,10 @@ func (widget *ResourceExplorerGrid) initResourceTableHeader() {
 	}
 
 	widget.resourceTable.SetCell(1, 0, &tview.TableCell{
-		Text:          "[gray]Loading...[-]",
-		NotSelectable: true,
+		Text:            "[gray]Loading...[-]",
+		NotSelectable:   true,
+		Color:           tview.Styles.PrimaryTextColor,
+		BackgroundColor: tview.Styles.PrimitiveBackgroundColor,
 	})
 }
 
@@ -491,7 +500,7 @@ func (widget *ResourceExplorerGrid) renderResourceTable() {
 		md := res.Metadata()
 
 		phaseText := tview.Escape(md.Phase().String())
-		phaseColor := tcell.ColorWhite
+		phaseColor := tview.Styles.PrimaryTextColor
 
 		if md.Phase() == resource.PhaseTearingDown {
 			phaseText = "[red]" + phaseText + "[-]"
@@ -499,25 +508,29 @@ func (widget *ResourceExplorerGrid) renderResourceTable() {
 		}
 
 		widget.resourceTable.SetCell(i+1, 0, &tview.TableCell{
-			Text:      tview.Escape(md.ID()),
-			Align:     tview.AlignLeft,
-			Color:     tcell.ColorWhite,
-			Expansion: 1,
+			Text:            tview.Escape(md.ID()),
+			Align:           tview.AlignLeft,
+			Color:           tview.Styles.PrimaryTextColor,
+			BackgroundColor: tview.Styles.PrimitiveBackgroundColor,
+			Expansion:       1,
 		})
 		widget.resourceTable.SetCell(i+1, 1, &tview.TableCell{
-			Text:  tview.Escape(md.Version().String()),
-			Align: tview.AlignLeft,
-			Color: tcell.ColorGray,
+			Text:            tview.Escape(md.Version().String()),
+			Align:           tview.AlignLeft,
+			Color:           tview.Styles.PrimaryTextColor,
+			BackgroundColor: tview.Styles.PrimitiveBackgroundColor,
 		})
 		widget.resourceTable.SetCell(i+1, 2, &tview.TableCell{
-			Text:  phaseText,
-			Align: tview.AlignLeft,
-			Color: phaseColor,
+			Text:            phaseText,
+			Align:           tview.AlignLeft,
+			Color:           phaseColor,
+			BackgroundColor: tview.Styles.PrimitiveBackgroundColor,
 		})
 		widget.resourceTable.SetCell(i+1, 3, &tview.TableCell{
-			Text:  tview.Escape(md.Owner()),
-			Align: tview.AlignLeft,
-			Color: tcell.ColorGray,
+			Text:            tview.Escape(md.Owner()),
+			Align:           tview.AlignLeft,
+			Color:           tview.Styles.PrimaryTextColor,
+			BackgroundColor: tview.Styles.PrimitiveBackgroundColor,
 		})
 
 		if len(widget.dynamicColumns) > 0 {
@@ -530,9 +543,10 @@ func (widget *ResourceExplorerGrid) renderResourceTable() {
 				}
 
 				widget.resourceTable.SetCell(i+1, 4+j, &tview.TableCell{
-					Text:  tview.Escape(text),
-					Align: tview.AlignLeft,
-					Color: tcell.ColorWhite,
+					Text:            tview.Escape(text),
+					Align:           tview.AlignLeft,
+					Color:           tview.Styles.PrimaryTextColor,
+					BackgroundColor: tview.Styles.PrimitiveBackgroundColor,
 				})
 			}
 		}
@@ -670,9 +684,11 @@ func (widget *ResourceExplorerGrid) marshalSpec(res resource.Resource) any {
 func (widget *ResourceExplorerGrid) showResourceTableError(msg string) {
 	widget.initResourceTableHeader()
 	widget.resourceTable.SetCell(1, 0, &tview.TableCell{
-		Text:          fmt.Sprintf("[red]%s[-]", tview.Escape(msg)),
-		NotSelectable: true,
-		Expansion:     1,
+		Text:            fmt.Sprintf("[red]%s[-]", tview.Escape(msg)),
+		NotSelectable:   true,
+		Expansion:       1,
+		Color:           tview.Styles.PrimaryTextColor,
+		BackgroundColor: tview.Styles.PrimitiveBackgroundColor,
 	})
 }
 
@@ -865,9 +881,10 @@ func writeScalar(sb *strings.Builder, node *yaml.Node) {
 // headerCell creates a bold header cell for tables.
 func headerCell(text string) *tview.TableCell {
 	return &tview.TableCell{
-		Text:          "[::b]" + text,
-		Align:         tview.AlignLeft,
-		NotSelectable: true,
-		Color:         tcell.ColorWhite,
+		Text:            "[::b]" + text,
+		Align:           tview.AlignLeft,
+		NotSelectable:   true,
+		Color:           tview.Styles.PrimaryTextColor,
+		BackgroundColor: tview.Styles.PrimitiveBackgroundColor,
 	}
 }

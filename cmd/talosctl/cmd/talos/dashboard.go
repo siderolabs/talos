@@ -14,6 +14,7 @@ import (
 
 var dashboardCmdFlags struct {
 	interval time.Duration
+	theme    string
 }
 
 // dashboardCmd represents the monitor command.
@@ -55,11 +56,13 @@ Keyboard shortcuts:
 			dashboard.WithScreens(dashboard.ScreenSummary, dashboard.ScreenMonitor, dashboard.ScreenResourceExplorer),
 			dashboard.WithAllowExitKeys(true),
 			dashboard.WithNodes(clientFactory.Nodes()...),
+			dashboard.WithTheme(dashboard.Theme(dashboardCmdFlags.theme)),
 		)
 	},
 }
 
 func init() {
 	dashboardCmd.Flags().DurationVarP(&dashboardCmdFlags.interval, "update-interval", "d", 3*time.Second, "interval between updates")
+	dashboardCmd.Flags().StringVarP(&dashboardCmdFlags.theme, "theme", "t", "dark", "color theme (dark, light)")
 	addCommand(dashboardCmd)
 }

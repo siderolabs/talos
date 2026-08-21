@@ -119,7 +119,7 @@ func NewNetworkConfigGrid(ctx context.Context, dashboard *Dashboard) *NetworkCon
 	})
 	widget.interfaceDropdown.SetListStyles(
 		tcell.StyleDefault.Foreground(tview.Styles.PrimitiveBackgroundColor).Background(tview.Styles.MoreContrastBackgroundColor),
-		tcell.StyleDefault.Foreground(tcell.ColorBlack).Background(tview.Styles.PrimaryTextColor),
+		tcell.StyleDefault.Foreground(tview.Styles.PrimitiveBackgroundColor).Background(tview.Styles.PrimaryTextColor),
 	)
 
 	widget.vlanIDField = tview.NewInputField().SetLabel(formItemVLANID).SetAcceptanceFunc(tview.InputFieldInteger)
@@ -132,7 +132,7 @@ func NewNetworkConfigGrid(ctx context.Context, dashboard *Dashboard) *NetworkCon
 	})
 	widget.modeDropdown.SetListStyles(
 		tcell.StyleDefault.Foreground(tview.Styles.PrimitiveBackgroundColor).Background(tview.Styles.MoreContrastBackgroundColor),
-		tcell.StyleDefault.Foreground(tcell.ColorBlack).Background(tview.Styles.PrimaryTextColor),
+		tcell.StyleDefault.Foreground(tview.Styles.PrimitiveBackgroundColor).Background(tview.Styles.PrimaryTextColor),
 	)
 
 	widget.addressesField = tview.NewInputField().SetLabel(formItemAddresses)

@@ -9,11 +9,20 @@ import (
 	"time"
 )
 
+// Theme defines the color theme for the dashboard.
+type Theme string
+
+const (
+	ThemeDark  Theme = "dark"
+	ThemeLight Theme = "light"
+)
+
 type options struct {
 	interval      time.Duration
 	allowExitKeys bool
 	screens       []Screen
 	nodes         []string
+	theme         Theme
 }
 
 func defaultOptions() *options {
@@ -26,6 +35,7 @@ func defaultOptions() *options {
 			ScreenNetworkConfig,
 		},
 		nodes: []string{""}, // use "local" node by default
+		theme: ThemeDark,
 	}
 }
 
@@ -58,5 +68,12 @@ func WithScreens(screens ...Screen) Option {
 func WithNodes(nodes ...string) Option {
 	return func(o *options) {
 		o.nodes = slices.Clone(nodes)
+	}
+}
+
+// WithTheme sets the color theme for the dashboard.
+func WithTheme(theme Theme) Option {
+	return func(o *options) {
+		o.theme = theme
 	}
 }

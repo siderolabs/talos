@@ -27,14 +27,15 @@ func NewHorizontalLine(label string) *HorizontalLine {
 
 	// set the background to be a horizontal line
 	widget.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
+		colors := CurrentColors()
 		labelLength := len(widget.label)
 
 		for i := x; i < x+width; i++ {
 			for j := y; j < y+height; j++ {
 				if j == y && i >= leftGap && i-leftGap < labelLength {
-					screen.SetContent(i, j, widget.label[i-leftGap], nil, tcell.StyleDefault.Foreground(tcell.ColorYellow))
+					screen.SetContent(i, j, widget.label[i-leftGap], nil, tcell.StyleDefault.Foreground(tcell.ColorYellow).Background(colors.BackgroundColor))
 				} else {
-					screen.SetContent(i, j, tview.BoxDrawingsLightHorizontal, nil, tcell.StyleDefault.Foreground(tcell.ColorWhite))
+					screen.SetContent(i, j, tview.BoxDrawingsLightHorizontal, nil, tcell.StyleDefault.Foreground(colors.LineColor).Background(colors.BackgroundColor))
 				}
 			}
 		}

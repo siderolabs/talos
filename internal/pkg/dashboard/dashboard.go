@@ -139,7 +139,7 @@ func buildDashboard(ctx context.Context, cli *client.Client, opts ...Option) (*D
 	}
 
 	nodes := getSortedNodeAliases(options.nodes)
-
+	components.SetTheme(components.Theme(options.theme))
 	dashboard := &Dashboard{
 		cli:      cli,
 		interval: options.interval,
