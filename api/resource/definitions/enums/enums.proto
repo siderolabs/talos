@@ -842,6 +842,14 @@ enum ContainersContainerImagePhase {
   CONTAINER_IMAGE_PHASE_FAILED = 3;
 }
 
+// ContainersContainerInstancePhase describes the state of a container instance's execution.
+enum ContainersContainerInstancePhase {
+  CONTAINER_INSTANCE_PHASE_CREATED = 0;
+  CONTAINER_INSTANCE_PHASE_RUNNING = 1;
+  CONTAINER_INSTANCE_PHASE_TERMINATED = 2;
+  CONTAINER_INSTANCE_PHASE_FAILED = 3;
+}
+
 // CriImageCacheStatus describes image cache status type.
 enum CriImageCacheStatus {
   IMAGE_CACHE_STATUS_UNKNOWN = 0;

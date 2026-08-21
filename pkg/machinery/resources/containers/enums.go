@@ -16,3 +16,21 @@ const (
 	ContainerImagePhaseReady                              // ready
 	ContainerImagePhaseFailed                             // failed
 )
+
+// ContainerInstancePhase describes the state of a container instance's execution.
+type ContainerInstancePhase int
+
+// Container instance phases.
+//
+//structprotogen:gen_enum
+const (
+	ContainerInstancePhaseCreated    ContainerInstancePhase = iota // created
+	ContainerInstancePhaseRunning                                  // running
+	ContainerInstancePhaseTerminated                               // terminated
+	ContainerInstancePhaseFailed                                   // failed
+)
+
+// Done reports whether the instance has finished executing, successfully or not.
+func (phase ContainerInstancePhase) Done() bool {
+	return phase == ContainerInstancePhaseTerminated || phase == ContainerInstancePhaseFailed
+}

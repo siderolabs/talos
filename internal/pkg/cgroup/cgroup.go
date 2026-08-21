@@ -230,6 +230,14 @@ func getCgroupV2Resources(name string) *cgroup2.Resources {
 				Weight: new(MillicoresToCPUWeight(MilliCores(constants.CgroupSystemSandboxMillicores))),
 			},
 		}
+	case constants.CgroupTalosContainersRoot:
+		// No memory reservation at the root: these are user workloads, not a reserved system
+		// component. Per-container limits are applied directly by the container runtime controller.
+		return &cgroup2.Resources{
+			CPU: &cgroup2.CPU{
+				Weight: new(MillicoresToCPUWeight(MilliCores(constants.CgroupTalosContainersMillicores))),
+			},
+		}
 	}
 
 	return &cgroup2.Resources{}
@@ -237,8 +245,11 @@ func getCgroupV2Resources(name string) *cgroup2.Resources {
 
 // CreateCgroup creates a cgroup, with resources limits if configured and supported.
 func CreateCgroup(name string) (CommonCgroup, error) {
-	resources := getCgroupV2Resources(name)
+	return CreateCgroupWithResources(name, getCgroupV2Resources(name))
+}
 
+// CreateCgroupWithResources creates a cgroup with the given resource limits, if supported.
+func CreateCgroupWithResources(name string, resources *cgroup2.Resources) (CommonCgroup, error) {
 	if containermode.InContainer() {
 		// don't attempt to set resources in container mode, as they might conflict with the parent cgroup tree
 		resources = &cgroup2.Resources{}

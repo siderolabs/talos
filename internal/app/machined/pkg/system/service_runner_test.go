@@ -20,7 +20,7 @@ import (
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/events"
 	"github.com/siderolabs/talos/internal/app/machined/pkg/system/health"
-	"github.com/siderolabs/talos/internal/app/machined/pkg/system/pid"
+	"github.com/siderolabs/talos/internal/app/machined/pkg/system/runner"
 	"github.com/siderolabs/talos/pkg/conditions"
 )
 
@@ -256,7 +256,6 @@ type blockedRunningRunner struct {
 	allowRunning     <-chan struct{}
 	runningPublished chan<- struct{}
 	exitCh           chan error
-	stopOnce         sync.Once
 }
 
 func (runnr *blockedRunningRunner) Open() error {
@@ -267,19 +266,24 @@ func (runnr *blockedRunningRunner) Close() error {
 	return nil
 }
 
-func (runnr *blockedRunningRunner) Run(eventSink events.Recorder, _ pid.Recorder) error {
-	<-runnr.allowRunning
+func (runnr *blockedRunningRunner) Run(ctx context.Context, eventSink events.Recorder, _ runner.OnStart) (runner.Status, error) {
+	select {
+	case <-runnr.allowRunning:
+	case <-ctx.Done():
+		return runner.Status{}, nil
+	}
 
 	eventSink(events.StateRunning, "Running")
 	close(runnr.runningPublished)
 
-	return <-runnr.exitCh
-}
+	status := runner.Status{Started: true}
 
-func (runnr *blockedRunningRunner) Stop() error {
-	runnr.stopOnce.Do(func() { close(runnr.exitCh) })
-
-	return nil
+	select {
+	case err := <-runnr.exitCh:
+		return status, err
+	case <-ctx.Done():
+		return status, nil
+	}
 }
 
 func (runnr *blockedRunningRunner) String() string {

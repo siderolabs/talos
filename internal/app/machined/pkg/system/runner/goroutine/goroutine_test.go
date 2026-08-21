@@ -27,14 +27,15 @@ import (
 	v1alpha1cfg "github.com/siderolabs/talos/pkg/machinery/config/types/v1alpha1"
 )
 
-func MockEventSink(state events.ServiceState, message string, args ...any) {
-	log.Printf("state %s: %s", state, fmt.Sprintf(message, args...))
+// assertRunSucceeds runs the runner to completion and asserts it ended cleanly.
+func (suite *GoroutineSuite) assertRunSucceeds(r runner.Runner) {
+	_, err := r.Run(context.Background(), MockEventSink, nil)
+
+	suite.Assert().NoError(err)
 }
 
-func MockPidRecorder(id string, pid int32, clearEntry bool) error {
-	log.Printf("recording pid for %s: %d (clear: %v)", id, pid, clearEntry)
-
-	return nil
+func MockEventSink(state events.ServiceState, message string, args ...any) {
+	log.Printf("state %s: %s", state, fmt.Sprintf(message, args...))
 }
 
 type GoroutineSuite struct {
@@ -79,9 +80,7 @@ func (suite *GoroutineSuite) TestRunSuccess() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
-	suite.Assert().NoError(r.Run(MockEventSink, MockPidRecorder))
-	// calling stop when Run has finished is no-op
-	suite.Assert().NoError(r.Stop())
+	suite.assertRunSucceeds(r)
 }
 
 func (suite *GoroutineSuite) TestRunFail() {
@@ -94,9 +93,8 @@ func (suite *GoroutineSuite) TestRunFail() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
-	suite.Assert().EqualError(r.Run(MockEventSink, MockPidRecorder), "service failed")
-	// calling stop when Run has finished is no-op
-	suite.Assert().NoError(r.Stop())
+	_, runErr := r.Run(context.Background(), MockEventSink, nil)
+	suite.Assert().EqualError(runErr, "service failed")
 }
 
 func (suite *GoroutineSuite) TestRunPanic() {
@@ -109,11 +107,9 @@ func (suite *GoroutineSuite) TestRunPanic() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
-	err := r.Run(MockEventSink, MockPidRecorder)
+	_, err := r.Run(context.Background(), MockEventSink, nil)
 	suite.Assert().Error(err)
 	suite.Assert().Regexp("^panic in service: service panic.*", err.Error())
-	// calling stop when Run has finished is no-op
-	suite.Assert().NoError(r.Stop())
 }
 
 func (suite *GoroutineSuite) TestStop() {
@@ -128,10 +124,15 @@ func (suite *GoroutineSuite) TestStop() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
+	runCtx, runCancel := context.WithCancel(context.Background())
+	defer runCancel()
+
 	errCh := make(chan error)
 
 	go func() {
-		errCh <- r.Run(MockEventSink, MockPidRecorder)
+		_, runErr := r.Run(runCtx, MockEventSink, nil)
+
+		errCh <- runErr
 	}()
 
 	time.Sleep(20 * time.Millisecond)
@@ -142,7 +143,7 @@ func (suite *GoroutineSuite) TestStop() {
 	default:
 	}
 
-	suite.Assert().NoError(r.Stop())
+	runCancel()
 	suite.Assert().NoError(<-errCh)
 }
 
@@ -161,10 +162,15 @@ func (suite *GoroutineSuite) TestStuckOnStop() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
+	runCtx, runCancel := context.WithCancel(context.Background())
+	defer runCancel()
+
 	errCh := make(chan error)
 
 	go func() {
-		errCh <- r.Run(MockEventSink, MockPidRecorder)
+		_, runErr := r.Run(runCtx, MockEventSink, nil)
+
+		errCh <- runErr
 	}()
 
 	time.Sleep(20 * time.Millisecond)
@@ -175,7 +181,7 @@ func (suite *GoroutineSuite) TestStuckOnStop() {
 	default:
 	}
 
-	suite.Assert().NoError(r.Stop())
+	runCancel()
 	suite.Assert().ErrorIs(<-errCh, goroutine.ErrAborted)
 }
 
@@ -192,7 +198,7 @@ func (suite *GoroutineSuite) TestRunLogs() {
 
 	defer func() { suite.Assert().NoError(r.Close()) }()
 
-	suite.Assert().NoError(r.Run(MockEventSink, MockPidRecorder))
+	suite.assertRunSucceeds(r)
 
 	logFile, err := os.Open(filepath.Join(suite.tmpDir, "logtest.log"))
 	suite.Assert().NoError(err)

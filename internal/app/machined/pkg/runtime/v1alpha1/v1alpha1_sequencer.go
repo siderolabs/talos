@@ -188,6 +188,9 @@ func (*Sequencer) Install(r runtime.Runtime) []runtime.Phase {
 				"denyNewServices",
 				DenyNewServices,
 			).Append(
+				"stopContainers",
+				TeardownContainerLifecycle,
+			).Append(
 				"volumeFinalize",
 				TeardownVolumeLifecycle,
 			).Append(
@@ -465,6 +468,9 @@ func (*Sequencer) Upgrade(r runtime.Runtime, in *machineapi.UpgradeRequest) []ru
 			"dbus",
 			StopDBus,
 		).Append(
+			"stopContainers",
+			TeardownContainerLifecycle,
+		).Append(
 			"stopServices",
 			StopServicesEphemeral,
 		).Append(
@@ -517,6 +523,9 @@ func stopAllPhaselist(r runtime.Runtime, enableKexec bool) PhaseList {
 		phases = phases.Append(
 			"denyNewServices",
 			DenyNewServices,
+		).Append(
+			"stopContainers",
+			TeardownContainerLifecycle,
 		).Append(
 			"stopServices",
 			StopServicesEphemeral,
