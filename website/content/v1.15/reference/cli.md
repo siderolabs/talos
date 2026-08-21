@@ -1129,6 +1129,7 @@ talosctl containers [flags]
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for containers
   -k, --kubernetes                 use the k8s.io containerd namespace
+      --namespace string           containerd namespace to address, e.g. taloscontainers
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
@@ -2686,6 +2687,18 @@ talosctl list [path] [flags]
 
 Retrieve logs for a service
 
+### Synopsis
+
+Retrieve logs for a Talos service or a container.
+
+With no flags the argument names a Talos service.
+
+With -k it names a Kubernetes container, whose logs are read from disk.
+
+With --namespace taloscontainers it names a container declared via a
+ContainerConfig document. Those logs are held in memory and outlive the container, so they stay
+readable after it exits, and successive restarts append to one buffer.
+
 ```
 talosctl logs <service name> [flags]
 ```
@@ -2701,6 +2714,7 @@ talosctl logs <service name> [flags]
   -h, --help                       help for logs
   -i, --insecure                   use the insecure (encrypted with no auth) maintenance service
   -k, --kubernetes                 use the k8s.io containerd namespace
+      --namespace string           containerd namespace to address, e.g. taloscontainers
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --tail int32                 lines of log file to display (default is to show from the beginning) (default -1)
@@ -3359,6 +3373,7 @@ talosctl stats [flags]
   -e, --endpoints strings          override default endpoints in Talos configuration
   -h, --help                       help for stats
   -k, --kubernetes                 use the k8s.io containerd namespace
+      --namespace string           containerd namespace to address, e.g. taloscontainers
   -n, --nodes strings              target the specified nodes
       --siderov1-keys-dir string   the path to the SideroV1 auth PGP keys directory, defaults to 'SIDEROV1_KEYS_DIR' env variable if set, otherwise '$HOME/.talos/keys'; only valid for Contexts that use SideroV1 auth
       --talosconfig string         the path to the Talos configuration file, defaults to 'TALOSCONFIG' env variable if set, otherwise '$HOME/.talos/config' and '/var/run/secrets/talos.dev/config' in order
