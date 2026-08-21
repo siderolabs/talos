@@ -31,6 +31,7 @@ import (
 	containerdrunner "github.com/siderolabs/talos/internal/app/machined/pkg/system/runner/containerd"
 	"github.com/siderolabs/talos/internal/pkg/capability"
 	"github.com/siderolabs/talos/internal/pkg/cgroup"
+	"github.com/siderolabs/talos/internal/pkg/environment"
 	"github.com/siderolabs/talos/internal/pkg/install"
 	"github.com/siderolabs/talos/internal/pkg/selinux"
 	"github.com/siderolabs/talos/pkg/machinery/api/common"
@@ -115,7 +116,7 @@ func runInstallerContainer(ctx context.Context, pidRecorder pid.Recorder, rc *co
 	// build container spec
 	mounts := buildMounts()
 	args := buildInstallerArgs(rc.disk, rc.platform, &options)
-	specOpts := buildSpecOpts(img, args, mounts, options.Environment(nil), cgroupPath)
+	specOpts := buildSpecOpts(img, args, mounts, options.Environment(environment.Get(nil)), cgroupPath)
 
 	// create container
 	ctr, err := c8dClient.NewContainer(
