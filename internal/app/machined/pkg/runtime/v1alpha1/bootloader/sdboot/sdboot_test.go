@@ -165,3 +165,141 @@ func TestFindMatchingUKIFile(t *testing.T) {
 		require.Equal(t, test.expectedFile, foundFile)
 	}
 }
+
+func TestFindBootedUKIFile(t *testing.T) {
+	t.Parallel()
+
+	existingFiles := []string{
+		"/EFI/Linux/Talos-old.efi",
+		"/EFI/Linux/Talos-current.efi",
+	}
+
+	for _, test := range []struct {
+		name          string
+		defaultEntry  string
+		selectedEntry string
+		oneShotEntry  string
+		rebootReason  string
+		expectedEntry string
+		expectedFound bool
+	}{
+		{
+			// an operator picked a non-default entry in the sd-boot menu: that entry is the one running
+			name:          "manual_selection_uses_selected_entry",
+			defaultEntry:  "Talos-old.efi",
+			selectedEntry: "Talos-current.efi",
+			expectedEntry: "Talos-current.efi",
+			expectedFound: true,
+		},
+		{
+			// the installer just pointed the default at the new UKI, but the old one is still running
+			name:          "post_upgrade_firmware_boot_uses_selected_entry",
+			defaultEntry:  "Talos-current.efi",
+			selectedEntry: "Talos-old.efi",
+			expectedEntry: "Talos-old.efi",
+			expectedFound: true,
+		},
+		{
+			name:          "kexec_uses_installer_updated_default",
+			defaultEntry:  "Talos-current.efi",
+			selectedEntry: "Talos-old.efi",
+			oneShotEntry:  "kexec reboot",
+			rebootReason:  "reboot",
+			expectedEntry: "Talos-current.efi",
+			expectedFound: true,
+		},
+		{
+			name:          "missing_selected_entry_falls_back_to_default",
+			defaultEntry:  "Talos-current.efi",
+			selectedEntry: "Talos-missing.efi",
+			expectedEntry: "Talos-current.efi",
+			expectedFound: true,
+		},
+		{
+			name:          "missing_kexec_default_falls_back_to_selected",
+			defaultEntry:  "Talos-missing.efi",
+			selectedEntry: "Talos-current.efi",
+			oneShotEntry:  "kexec reboot",
+			rebootReason:  "reboot",
+			expectedEntry: "Talos-current.efi",
+			expectedFound: true,
+		},
+		{
+			name:          "no_matching_entry",
+			defaultEntry:  "Talos-missing-default.efi",
+			selectedEntry: "Talos-missing-selected.efi",
+			expectedFound: false,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			entry, found := sdboot.FindBootedUKIFile(
+				existingFiles,
+				test.defaultEntry,
+				test.selectedEntry,
+				test.oneShotEntry,
+				test.rebootReason,
+			)
+
+			require.Equal(t, test.expectedFound, found)
+			require.Equal(t, test.expectedEntry, entry)
+		})
+	}
+}
+
+func TestFindNextBootUKIFile(t *testing.T) {
+	t.Parallel()
+
+	existingFiles := []string{
+		"/EFI/Linux/Talos-old.efi",
+		"/EFI/Linux/Talos-current.efi",
+	}
+
+	for _, test := range []struct {
+		name          string
+		defaultEntry  string
+		selectedEntry string
+		expectedEntry string
+		expectedFound bool
+	}{
+		{
+			// the installer updated the default, kexec has to boot the new UKI and not the running one
+			name:          "post_upgrade_uses_default_entry",
+			defaultEntry:  "Talos-current.efi",
+			selectedEntry: "Talos-old.efi",
+			expectedEntry: "Talos-current.efi",
+			expectedFound: true,
+		},
+		{
+			// rollback moved the default back, kexec has to boot the previous UKI
+			name:          "rollback_uses_default_entry",
+			defaultEntry:  "Talos-old.efi",
+			selectedEntry: "Talos-current.efi",
+			expectedEntry: "Talos-old.efi",
+			expectedFound: true,
+		},
+		{
+			// booted off a disk image, the installer never ran, so there is no default yet
+			name:          "missing_default_falls_back_to_selected",
+			selectedEntry: "Talos-current.efi",
+			expectedEntry: "Talos-current.efi",
+			expectedFound: true,
+		},
+		{
+			name:          "no_matching_entry",
+			defaultEntry:  "Talos-missing-default.efi",
+			selectedEntry: "Talos-missing-selected.efi",
+			expectedFound: false,
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			t.Parallel()
+
+			entry, found := sdboot.FindNextBootUKIFile(existingFiles, test.defaultEntry, test.selectedEntry)
+
+			require.Equal(t, test.expectedFound, found)
+			require.Equal(t, test.expectedEntry, entry)
+		})
+	}
+}
