@@ -70,6 +70,12 @@ func TestVolumeConfigSuite(t *testing.T) {
 				m, err := intmeta.New(t.Context(), st, intmeta.WithFixedPath(path))
 				suite.Require().NoError(err)
 
+				// VolumeConfigController gates non-META volumes on the wipe status being
+				// ready; in tests wiping is assumed complete.
+				wipeStatus := block.NewVolumeWipeStatus(block.NamespaceName, block.VolumeWipeID)
+				wipeStatus.TypedSpec().Ready = true
+				suite.Require().NoError(suite.State().Create(suite.Ctx(), wipeStatus))
+
 				suite.Require().NoError(suite.Runtime().RegisterController(
 					&blockctrls.VolumeConfigController{
 						MetaProvider: metaProvider{meta: m},

@@ -332,6 +332,16 @@ func (c *Client) ResetGenericWithResponse(ctx context.Context, req *machineapi.R
 	return resp, err
 }
 
+// VolumeWipe wipes one or more system volumes, either immediately or staged for the next boot.
+func (c *Client) VolumeWipe(ctx context.Context, req *machineapi.VolumeWipeRequest) error {
+	resp, err := c.MachineClient.VolumeWipe(ctx, req)
+	if err == nil {
+		_, err = FilterMessages(resp, err)
+	}
+
+	return err
+}
+
 // RebootMode provides various mode through which the reboot process can be done.
 type RebootMode func(*machineapi.RebootRequest)
 

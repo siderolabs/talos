@@ -105,6 +105,8 @@ service MachineService {
   rpc MetaWrite(MetaWriteRequest) returns (MetaWriteResponse);
   // MetaDelete deletes a META key.
   rpc MetaDelete(MetaDeleteRequest) returns (MetaDeleteResponse);
+  // VolumeWipe wipes one or more system volumes, either immediately or staged for the next boot.
+  rpc VolumeWipe(VolumeWipeRequest) returns (VolumeWipeResponse);
   // ImageList lists images in the CRI.
   //
   // Use ImageService List RPC instead.
@@ -333,6 +335,23 @@ message Reset {
 
 message ResetResponse {
   repeated Reset messages = 1;
+}
+
+// rpc volumewipe
+message VolumeWipeRequest {
+  // VolumeIds lists the system volume IDs to wipe (e.g. EPHEMERAL, STATE).
+  repeated string volume_ids = 1;
+  // OnReboot stages the wipe to happen on the next boot instead of immediately.
+  bool on_reboot = 2;
+}
+
+// The volume wipe message containing the wipe status.
+message VolumeWipe {
+  common.Metadata metadata = 1;
+}
+
+message VolumeWipeResponse {
+  repeated VolumeWipe messages = 1;
 }
 
 // rpc shutdown
