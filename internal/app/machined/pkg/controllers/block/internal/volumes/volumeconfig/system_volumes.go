@@ -10,8 +10,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-
-	"github.com/siderolabs/go-pointer"
+	"strconv"
 
 	"github.com/siderolabs/talos/internal/app/machined/pkg/controllers/block/internal/volumes"
 	"github.com/siderolabs/talos/internal/pkg/partition"
@@ -111,10 +110,9 @@ func GetEphemeralVolumeTransformer(inContainer bool) volumeConfigTransformer {
 			volumeConfigurator = func(vc *block.VolumeConfig) error {
 				extraVolumeConfig, _ := cfg.Volumes().ByName(constants.EphemeralPartitionLabel)
 
-				// Check if memory type is specified
-				if extraVolumeConfig.Type().ValueOr(block.VolumeTypePartition) == block.VolumeTypeMemory {
-					minSize := extraVolumeConfig.Provisioning().MinSize().ValueOr(quirks.New("").PartitionSizes().EphemeralMinSize())
+				q := quirks.New("")
 
+				if extraVolumeConfig.Type().ValueOr(block.VolumeTypePartition) == block.VolumeTypeMemory {
 					return NewBuilder().
 						WithType(block.VolumeTypeMemory).
 						WithMount(block.MountSpec{
@@ -125,9 +123,15 @@ func GetEphemeralVolumeTransformer(inContainer bool) volumeConfigTransformer {
 							GID:          0,
 							Parameters: []block.ParameterSpec{
 								{
-									Type:   block.FSParameterTypeStringValue,
-									Name:   "size",
-									String: pointer.To(fmt.Sprintf("%d", minSize)),
+									Type: block.FSParameterTypeStringValue,
+									Name: "size",
+									String: new(strconv.FormatUint(
+										max(
+											extraVolumeConfig.Provisioning().MinSize().ValueOr(q.PartitionSizes().EphemeralMinSize()),
+											q.PartitionSizes().EphemeralMinSize(),
+										),
+										10,
+									)),
 								},
 							},
 						}).
@@ -271,6 +275,27 @@ func manageStateNoConfig(encryptionMeta *runtime.MetaKey, isAgent bool) func(vc 
 func manageStateConfigPresent(cfg configconfig.Config) func(vc *block.VolumeConfig) error {
 	return func(vc *block.VolumeConfig) error {
 		extraVolumeConfig, _ := cfg.Volumes().ByName(constants.StatePartitionLabel)
+
+		if extraVolumeConfig.Type().ValueOr(block.VolumeTypePartition) == block.VolumeTypeMemory {
+			return NewBuilder().
+				WithType(block.VolumeTypeMemory).
+				WithMount(block.MountSpec{
+					TargetPath:   constants.StateMountPoint,
+					SelinuxLabel: constants.StateSelinuxLabel,
+					FileMode:     0o700,
+					UID:          0,
+					GID:          0,
+					Secure:       true,
+					Parameters: []block.ParameterSpec{
+						{
+							Type:   block.FSParameterTypeStringValue,
+							Name:   "size",
+							String: new(strconv.FormatUint(quirks.New("").PartitionSizes().StateSize(), 10)),
+						},
+					},
+				}).
+				Apply(vc.TypedSpec())
+		}
 
 		encryptionConfig := extraVolumeConfig.Encryption()
 		if encryptionConfig == nil {
