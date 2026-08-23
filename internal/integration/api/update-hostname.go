@@ -37,6 +37,10 @@ func (suite *UpdateHostnameSuite) SuiteName() string {
 
 // SetupTest ...
 func (suite *UpdateHostnameSuite) SetupTest() {
+	if suite.EphemeralNode || suite.EphemeralWorkers {
+		suite.T().Skip("skipping: UpdateHostnameSuite reboots nodes and expects the applied config to persist, which is incompatible with ephemeral nodes")
+	}
+
 	// make sure API calls have timeout
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 5*time.Minute)
 }

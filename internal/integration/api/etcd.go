@@ -42,6 +42,10 @@ func (suite *EtcdSuite) SuiteName() string {
 
 // SetupTest ...
 func (suite *EtcdSuite) SetupTest() {
+	if suite.EphemeralNode {
+		suite.T().Skip("skipping: etcd state lives under EPHEMERAL (tmpfs) and does not survive reboots on ephemeral nodes")
+	}
+
 	// make sure we abort at some point in time, but give enough room for Etcds
 	suite.ctx, suite.ctxCancel = context.WithTimeout(context.Background(), 30*time.Minute)
 }

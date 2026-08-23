@@ -342,6 +342,18 @@ case "${WITH_EPHEMERAL_NODE:-false}" in
     ;;
 esac
 
+case "${WITH_EPHEMERAL_WORKERS:-false}" in
+  false)
+    ;;
+  *)
+    # Ephemeral workers: STATE and EPHEMERAL on tmpfs on workers only; control planes stay disk-backed.
+    QEMU_FLAGS+=("--config-patch-worker=@hack/test/patches/ephemeral-memory-worker.yaml")
+    QEMU_MEMORY_WORKERS="${QEMU_MEMORY_WORKERS:-6144}"
+    EXTRA_TEST_ARGS="${EXTRA_TEST_ARGS:-} -talos.ephemeral-workers"
+    export EXTRA_TEST_ARGS
+    ;;
+esac
+
 case "${WITH_AIRGAPPED:-false}" in
   no-proxy)
     INSTALLER_IMAGE="${INSTALLER_IMAGE/registry.dev.siderolabs.io/172.20.1.1:5000}"

@@ -89,6 +89,13 @@ type TalosSuite struct {
 	// placed on dedicated partitions instead of directories under EPHEMERAL, i.e. with the
 	// `hack/test/patches/dedicated-system-volumes-{controlplane,worker}.yaml` config patches applied.
 	DedicatedSystemVolumes bool
+	// EphemeralNode marks that every node in the cluster is fully ephemeral:
+	// STATE and EPHEMERAL volumes are backed by tmpfs and wiped on reboot.
+	EphemeralNode bool
+	// EphemeralWorkers marks that worker nodes (only) are fully ephemeral:
+	// STATE and EPHEMERAL volumes on workers are backed by tmpfs and wiped on reboot,
+	// while control plane nodes keep disk-backed volumes.
+	EphemeralWorkers bool
 
 	discoveredNodes cluster.Info
 }
